@@ -2301,106 +2301,83 @@ shiny::shinyServer(function(input, output, session) {
     shiny::tabsetPanel(
       type = "tab",
       id = "conceptSetComparisonBrowserTimeSeries",
-      shiny::tabPanel(title = "Concept Set Browser",
-                      value = "conceptSetBrowser",
-                      shiny::conditionalPanel(
-                        condition = "output.isConceptIdFromLeftOrRightConceptTableSelected",
-                        shinydashboard::box(
-                          title = paste0(
-                            getSelectedConceptNameActive(),
-                            " (",
-                            getSelectedConceptIdActive(),
-                            ")"
-                          ),
-                          collapsible = TRUE,
-                          collapsed = FALSE,
-                          width = NULL,
-                          tags$h4(),
-                          tags$table(width = "100%",
-                                     tags$tr(
-                                       tags$td(
-                                         shinyWidgets::pickerInput(
-                                           inputId = "choicesForRelationshipName",
-                                           label = "Relationship Category:",
-                                           choices = relationship$relationshipName %>% sort(),
-                                           selected = relationship$relationshipName %>% sort(),
-                                           multiple = TRUE,
-                                           width = 200,
-                                           inline = TRUE,
-                                           choicesOpt = list(style = rep_len("color: black;", 999)),
-                                           options = shinyWidgets::pickerOptions(
-                                             actionsBox = TRUE,
-                                             liveSearch = TRUE,
-                                             size = 10,
-                                             liveSearchStyle = "contains",
-                                             liveSearchPlaceholder = "Type here to search",
-                                             virtualScroll = 50
-                                           )
-                                         )
-                                       ),
-                                       
-                                       tags$td(
-                                         shinyWidgets::pickerInput(
-                                           inputId = "choicesForRelationshipDistance",
-                                           label = "Distance:",
-                                           choices = getConceptRelationshipDistanceChoices(),
-                                           multiple = FALSE,
-                                           width = 200,
-                                           inline = TRUE,
-                                           choicesOpt = list(style = rep_len("color: black;", 999)),
-                                           options = shinyWidgets::pickerOptions(
-                                             actionsBox = TRUE,
-                                             liveSearch = TRUE,
-                                             size = 10,
-                                             liveSearchStyle = "contains",
-                                             liveSearchPlaceholder = "Type here to search",
-                                             virtualScroll = 50
-                                           )
-                                         )
-                                       ),
-                                       tags$td(
-                                         align = "right",
-                                         shiny::downloadButton(
-                                           "saveDetailsOfSelectedConceptId",
-                                           label = "",
-                                           icon = shiny::icon("download"),
-                                           style = "margin-top: 5px; margin-bottom: 5px;"
-                                         )
-                                       )
-                                     )),
-                          DT::dataTableOutput(outputId = "detailsOfSelectedConceptId")
-                        )
-                      )
-                      ),
-    shiny::tabPanel(title = "Concept Set Comparison",
-                    value = "conceptSetComparison",
-                    shinydashboard::box(width = NULL,
-                                            DT::dataTableOutput(outputId = "conceptSetComparisonTable")
-                                        )
-                    )
+      shiny::tabPanel(
+        title = "Concept Set Browser",
+        value = "conceptSetBrowser",
+        shiny::conditionalPanel(
+          condition = "output.isConceptIdFromLeftOrRightConceptTableSelected",
+          tags$h4(
+            paste0(
+              getSelectedConceptNameActive(),
+              " (",
+              getSelectedConceptIdActive(),
+              ")"
+            )
+          ),
+          tags$table(width = "100%",
+                     tags$tr(
+                       tags$td(
+                         shinyWidgets::pickerInput(
+                           inputId = "choicesForRelationshipName",
+                           label = "Relationship Category:",
+                           choices = relationship$relationshipName %>% sort(),
+                           selected = relationship$relationshipName %>% sort(),
+                           multiple = TRUE,
+                           width = 200,
+                           inline = TRUE,
+                           choicesOpt = list(style = rep_len("color: black;", 999)),
+                           options = shinyWidgets::pickerOptions(
+                             actionsBox = TRUE,
+                             liveSearch = TRUE,
+                             size = 10,
+                             liveSearchStyle = "contains",
+                             liveSearchPlaceholder = "Type here to search",
+                             virtualScroll = 50
+                           )
+                         )
+                       ),
+                       
+                       tags$td(
+                         shinyWidgets::pickerInput(
+                           inputId = "choicesForRelationshipDistance",
+                           label = "Distance:",
+                           choices = getConceptRelationshipDistanceChoices(),
+                           multiple = FALSE,
+                           width = 200,
+                           inline = TRUE,
+                           choicesOpt = list(style = rep_len("color: black;", 999)),
+                           options = shinyWidgets::pickerOptions(
+                             actionsBox = TRUE,
+                             liveSearch = TRUE,
+                             size = 10,
+                             liveSearchStyle = "contains",
+                             liveSearchPlaceholder = "Type here to search",
+                             virtualScroll = 50
+                           )
+                         )
+                       ),
+                       tags$td(
+                         align = "right",
+                         shiny::downloadButton(
+                           "saveDetailsOfSelectedConceptId",
+                           label = "",
+                           icon = shiny::icon("download"),
+                           style = "margin-top: 5px; margin-bottom: 5px;"
+                         )
+                       )
+                     )),
+          DT::dataTableOutput(outputId = "detailsOfSelectedConceptId")
+          
+        )
+      ),
+      shiny::tabPanel(
+        title = "Concept Set Comparison",
+        value = "conceptSetComparison",
+        DT::dataTableOutput(outputId = "conceptSetComparisonTable")
+        
+      )
     )
-    # shiny::column(
-    #   12,
-    #   shiny::column(
-    #     8,
-    #     
-    #   ),
-    #   shiny::column(
-    #     4,
-    #     shiny::conditionalPanel(
-    #       condition = "output.cohortDefinitionSelectedRowCount == 2 &
-    #                  input.conceptSetsTypeLeft == 'Resolved' &
-    #                  input.conceptSetsTypeRight == 'Resolved' &
-    #                  output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
-    #                  output.isConceptSetExpressionPresentInSelectedCohortRight == true &
-    #                  input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
-    #                  input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
-    #       shinydashboard::box(title = "hello",width = NULL,
-    #                           DT::dataTableOutput(outputId = "conceptSetComparisonTable")
-    #                           )
-    #     )
-    #   )
-    # )
+  
   })
   
   observe({
