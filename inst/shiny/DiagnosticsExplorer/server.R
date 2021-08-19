@@ -5702,11 +5702,12 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(input$domainFieldOptionsInIndexEventData)) {
       return(NULL)
     }
+    browser()
     if (all(!is.null(input$conceptSetsSelectedFromOneCohort),
             length(input$conceptSetsSelectedFromOneCohort) > 0)) {
       indexEventBreakdown <- indexEventBreakdown %>% 
         dplyr::inner_join(getConceptDetailsForCohortIdFilteredToSelectedConceptSet(),
-                          by = c("cohortId", "conceptSetId"))
+                          by = c("cohortId", "conceptId"))
     }
     
     # index event is computed for all the concept in concept universe getConceptSetNamesFromCohortDefinition()
