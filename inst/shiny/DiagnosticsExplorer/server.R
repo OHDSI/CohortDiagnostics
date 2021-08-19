@@ -8096,15 +8096,6 @@ shiny::shinyServer(function(input, output, session) {
         ")"
       )
       
-      data <- data %>%
-        dplyr::rename(
-          "meanTarget" = mean1,
-          "sDTarget" = sd1,
-          "meanComparator" = mean2,
-          "sDComparator" = sd2,
-          "stdDiff" = stdDiff
-        )
-      
       temporalCovariateChoicesSelected <-
         temporalCovariateChoices %>%
         dplyr::filter(.data$timeId %in% c(getTimeIdsFromDropdown())) %>%
@@ -8122,10 +8113,10 @@ shiny::shinyServer(function(input, output, session) {
               id_cols = c("covariateName"),
               names_from = "choices",
               values_from = c(
-                "meanTarget",
-                "sDTarget",
-                "meanComparator",
-                "sDComparator",
+                "mean1",
+                "sd1",
+                "mean2",
+                "sd2",
                 "stdDiff"
               ),
               values_fill = 0
@@ -8150,10 +8141,10 @@ shiny::shinyServer(function(input, output, session) {
           table <- table %>%
             dplyr::arrange(.data$choices) %>%
             dplyr::rename(
-              aMeanTarget = "meanTarget",
-              bSdTarget = "sDTarget",
-              cMeanComparator = "meanComparator",
-              dSdComparator = "sDComparator"
+              aMeanTarget = "mean1",
+              bSdTarget = "sd1",
+              cMeanComparator = "mean2",
+              dSdComparator = "sd2"
             ) %>%
             tidyr::pivot_longer(
               cols = c(
@@ -8201,8 +8192,8 @@ shiny::shinyServer(function(input, output, session) {
             tidyr::pivot_wider(
               id_cols = c("covariateName"),
               names_from = "choices",
-              values_from = c("meanTarget", 
-                              "meanComparator", 
+              values_from = c("mean1", 
+                              "mean1", 
                               "stdDiff"),
               values_fill = 0
             )
@@ -8221,8 +8212,8 @@ shiny::shinyServer(function(input, output, session) {
         } else {
           table <- table %>%
             tidyr::pivot_longer(
-              cols = c("meanTarget", 
-                       "meanComparator"),
+              cols = c("mean1", 
+                       "mean2"),
               names_to = "type",
               values_to = "values"
             ) %>%
