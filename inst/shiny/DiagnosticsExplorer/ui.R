@@ -1050,7 +1050,7 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       tags$td(
         shiny::radioButtons(
-          inputId = "temporalProportionOrContinuous",
+          inputId = "temporalCharacterizationOutputTypeProportionOrContinuous",
           label = "",
           choices = c("All", "Proportion", "Continuous"),
           selected = "Proportion",
