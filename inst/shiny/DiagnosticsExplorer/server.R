@@ -478,8 +478,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##Cohort count----
   ###getCohortCountData----
-  #!!! why do we need this reactive function - cant we use cohortCount object
-  # in memory - with enhancement for addShortName + sort? (global.R)
+  #used to display counts in cohort definition panels
   getCohortCountData <- shiny::reactive(x = {
     if (all(is(dataSource, "environment"),!exists('cohortCount'))) {
       return(NULL)
@@ -510,7 +509,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <-
-      cohortCount %>% #!!! either use data loaded in global.R or getCohortCountData - we dont need both
+      cohortCount %>%
       dplyr::filter(.data$cohortId %in% row$cohortId) %>%
       dplyr::filter(.data$databaseId %in% database$databaseId) %>%
       dplyr::select(.data$databaseId,
@@ -648,7 +647,6 @@ shiny::shinyServer(function(input, output, session) {
         cohortDefinition <-
           RJSONIO::fromJSON(selectionsInCohortTable[i, ]$json,
                             digits = 23)
-        #!!!!!!getCirceRenderedExpression function takes list object as input - not JSON (reversed changes in shared.R)
         details[[i]] <-
           getCirceRenderedExpression(cohortDefinition = cohortDefinition)
       }
@@ -1421,8 +1419,14 @@ shiny::shinyServer(function(input, output, session) {
         return(8)
       }
     })
+  ###!!!!!!!!!!! make vocabulary choices multiselect - if more than one is sleected
+  # append all conceptId from all the selected vocabulary choices into one table
+  # make each selected vocabulary choice a column name
+  # add check mark if the concept id is present in that vocabulary choice
+  # by default - make this multiselected - top 3
   
   ##Inclusion rule ----
+  #!!!!!! default selected
   ###getSimplifiedInclusionRuleData----
   getSimplifiedInclusionRuleData <- shiny::reactive(x = {
     data <-
@@ -4517,7 +4521,7 @@ shiny::shinyServer(function(input, output, session) {
                   fileName = file)
     }
   )
-  
+  #!!!!!!!!!! bug inclusion rule is not workin
   ##output: cohortCountsTable----
   output$cohortCountsTable <- DT::renderDataTable(expr = {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
