@@ -1015,7 +1015,7 @@ bodyTabItems <- shinydashboard::tabItems(
     tags$table(tags$tr(
       tags$td(
         shinyWidgets::pickerInput(
-          inputId = "temporalAnalysisNameFilter",
+          inputId = "temporalCharacterizationAnalysisNameOptions",
           label = "Analysis name",
           choices = c(""),
           selected = c(""),
@@ -1033,7 +1033,7 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       tags$td(
         shinyWidgets::pickerInput(
-          inputId = "temporalDomainNameFilter",
+          inputId = "temporalCharacterizationDomainNameOptions",
           label = "Domain name",
           choices = c(""),
           selected = c(""),

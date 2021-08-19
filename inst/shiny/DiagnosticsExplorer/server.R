@@ -7213,7 +7213,7 @@ shiny::shinyServer(function(input, output, session) {
       !is.null(getTemporalCharacterizationAnalysisNameOptions()),
       getTemporalCharacterizationAnalysisNameOptions() != "",
       length(getTemporalCharacterizationAnalysisNameOptions()) > 0
-    )) {#!!!!!!!!!!!!why isnt this working?
+    )) {
       data <- data %>%
         dplyr::filter(.data$analysisName %in% getTemporalCharacterizationAnalysisNameOptions())
     }
