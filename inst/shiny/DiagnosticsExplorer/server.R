@@ -5702,6 +5702,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(input$domainFieldOptionsInIndexEventData)) {
       return(NULL)
     }
+    
     if (all(!is.null(input$conceptSetsSelectedFromOneCohort),
             length(input$conceptSetsSelectedFromOneCohort) > 0)) {
       indexEventBreakdown <- indexEventBreakdown %>% 
@@ -6625,12 +6626,23 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     subset <- getConceptSetNamesFromOneCohort()$name
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "conceptSetsSelectedFromOneCohort",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset
-    )
+    if (input$tabs == "indexEventBreakdown") {
+      shinyWidgets::updatePickerInput(
+        session = session,
+        inputId = "conceptSetsSelectedFromOneCohort",
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        choices = subset,
+        selected = subset
+      )
+    } else {
+      shinyWidgets::updatePickerInput(
+        session = session,
+        inputId = "conceptSetsSelectedFromOneCohort",
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        choices = subset
+      )
+    }
+    
   })
   
   conceptIdsInConceptSetsSelectedFromOneCohort <- shiny::reactive(x = {

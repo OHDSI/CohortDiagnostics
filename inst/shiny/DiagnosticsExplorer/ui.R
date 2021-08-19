@@ -1144,7 +1144,7 @@ bodyTabItems <- shinydashboard::tabItems(
                             tags$table(tags$tr(
                               tags$td(
                                 shinyWidgets::pickerInput(
-                                  inputId = "charCompareAnalysisNameFilter",
+                                  inputId = "compareCharacterizationAnalysisNameFilter",
                                   label = "Analysis name",
                                   choices = c(""),
                                   selected = c(""),
@@ -1163,7 +1163,7 @@ bodyTabItems <- shinydashboard::tabItems(
                               ),
                               tags$td(
                                 shinyWidgets::pickerInput(
-                                  inputId = "charaCompareDomainNameFilter",
+                                  inputId = "compareCharacterizationDomainNameFilter",
                                   label = "Domain name",
                                   choices = c(""),
                                   selected = c(""),
