@@ -7605,6 +7605,20 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::filter(.data$isBinary == 'N')
     }
+    
+    if (all(
+      !is.null(input$conceptSetsSelectedFromOneCohort),
+      length(input$conceptSetsSelectedFromOneCohort) > 0
+    )) {
+      data <- data  %>%
+        dplyr::inner_join(
+          getConceptDetailsForCohortIdFilteredToSelectedConceptSet() %>% 
+            dplyr::select(.data$conceptId) %>% 
+            dplyr::distinct(),
+          by = c("conceptId")
+        )
+    }
+    
     if (any(is.null(data), 
             nrow(data) == 0)) {
       return(NULL)
@@ -8079,12 +8093,15 @@ shiny::shinyServer(function(input, output, session) {
       
       if (all(
         !is.null(input$conceptSetsSelectedFromOneCohort),
-        input$conceptSetsSelectedFromOneCohort != "",
-        length(input$conceptSetsSelectedFromOneCohort) >= 0
+        length(input$conceptSetsSelectedFromOneCohort) > 0
       )) {
-        browser() #!!! there is a bug here getResoledAndMappedConceptIdsForFilters
-        balance <- balance %>%
-          dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+        data <- data  %>%
+          dplyr::inner_join(
+            getConceptDetailsForCohortIdFilteredToSelectedConceptSet() %>% 
+              dplyr::select(.data$conceptId) %>% 
+              dplyr::distinct(),
+            by = c("conceptId")
+          )
       }
       
       if (any(is.null(data),
