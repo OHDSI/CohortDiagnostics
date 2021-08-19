@@ -6462,7 +6462,7 @@ shiny::shinyServer(function(input, output, session) {
   ###Update: temporalCharacterizationAnalysisNameOptions----
   shiny::observe({
     subset <-
-      getTemporalCharacterizationTableData()$analysisName %>% unique() %>% sort()
+      getTemporalCharacterizationData()$analysisName %>% unique() %>% sort()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "temporalCharacterizationAnalysisNameOptions",
@@ -6475,7 +6475,7 @@ shiny::shinyServer(function(input, output, session) {
   ###Update: temporalCharacterizationDomainNameOptions----
   shiny::observe({
     subset <-
-      getTemporalCharacterizationTableData()$domainId %>% unique() %>% sort()
+      getTemporalCharacterizationData()$domainId %>% unique() %>% sort()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "temporalCharacterizationDomainNameOptions",
@@ -7027,12 +7027,24 @@ shiny::shinyServer(function(input, output, session) {
                                                " (",
                                                .data$covariateId, ")")
       )
-    
+    return(data)
+  })
+  
+  ### getTemporalCharacterizationDataFiltered ------
+  getTemporalCharacterizationDataFiltered <- shiny::reactive(x = {
+    if (input$tabs != "temporalCharacterization") {
+      return(NULL)
+    }
+    data <- getTemporalCharacterizationData()
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
     if (all(
       !is.null(getTemporalCharacterizationAnalysisNameOptions()),
       getTemporalCharacterizationAnalysisNameOptions() != "",
       length(getTemporalCharacterizationAnalysisNameOptions()) > 0
-    )) {
+    )) {#!!!!!!!!!!!!why isnt this working?
       data <- data %>%
         dplyr::filter(.data$analysisName %in% getTemporalCharacterizationAnalysisNameOptions())
     }
@@ -7041,7 +7053,7 @@ shiny::shinyServer(function(input, output, session) {
       !is.null(getCharacterizationDomainNameOptions()),
       getCharacterizationDomainNameOptions() != "",
       length(getCharacterizationDomainNameOptions()) > 0
-    )) {
+    )) {#!!!!!!!!!!!!why isnt this working?
       data <- data %>%
         dplyr::filter(.data$domainId %in% getCharacterizationDomainNameOptions())
     }
@@ -7057,6 +7069,16 @@ shiny::shinyServer(function(input, output, session) {
     } else if (input$temporalCharacterizationOutputTypeProportionOrContinuous == "Continuous") {
       data <- data %>%
         dplyr::filter(.data$isBinary == 'N')
+    }
+    
+    if (all(!is.null(input$conceptSetsToFilterCharacterization),
+            input$conceptSetsToFilterCharacterization != "",
+            length(input$conceptSetsToFilterCharacterization) > 0)) {
+      browser()  #!!! bug here  getResoledAndMappedConceptIdsForFilters()
+      if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
+        data <- data %>%
+          dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+      }
     }
     
     if (any(is.null(data),
@@ -7079,23 +7101,13 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       return(NULL)
     }
-    data <- getTemporalCharacterizationData()
+    data <- getTemporalCharacterizationDataFiltered()
     if (any(is.null(data),
             nrow(data) == 0)) {
       return(NULL)
     }
     data <- data %>%
       dplyr::select(-.data$cohortId, -.data$databaseId)
-    
-    if (all(!is.null(input$conceptSetsToFilterCharacterization),
-            input$conceptSetsToFilterCharacterization != "",
-            length(input$conceptSetsToFilterCharacterization) > 0)) {
-      browser()  #!!! bug here  getResoledAndMappedConceptIdsForFilters()
-      if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
-        data <- data %>%
-          dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
-      }
-    }
     
     data <- data %>%
       tidyr::pivot_wider(
@@ -7203,8 +7215,9 @@ shiny::shinyServer(function(input, output, session) {
   
   ###Update: compareCharacterizationAnalysisNameFilter----
   shiny::observe({
-    data <- getCompareCharacterizationDataFiltered()
-    if (all(!is.null(data), nrow(data) > 0)) {
+    data <- getCompareCharacterizationData()
+    if (all(!is.null(data), 
+            nrow(data) > 0)) {
       subset <- data$analysisName %>% unique() %>% sort()
       shinyWidgets::updatePickerInput(
         session = session,
@@ -7218,8 +7231,9 @@ shiny::shinyServer(function(input, output, session) {
   
   ###Update: compareCharacterizationDomainNameFilter----
   shiny::observe({
-    data <- getCompareCharacterizationDataFiltered()
-    if (all(!is.null(data), nrow(data) > 0)) {
+    data <- getCompareCharacterizationData()
+    if (all(!is.null(data), 
+            nrow(data) > 0)) {
       subset <- data$domainId %>% unique() %>% sort()
       shinyWidgets::updatePickerInput(
         session = session,
@@ -7281,8 +7295,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ## Compare Characterization ----
-  ### getCompareCharacterizationDataFiltered ------
-  getCompareCharacterizationDataFiltered <- shiny::reactive({
+  ### getCompareCharacterizationData ------
+  getCompareCharacterizationData <- shiny::reactive({
     if (input$tabs != "compareCohortCharacterization") {
       return(NULL)
     }
@@ -7360,6 +7374,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
+    # enhanced
     balance <- balance %>%
       dplyr::mutate(absStdDiff = abs(.data$stdDiff)) %>% 
       dplyr::rename(covariateNameFull = .data$covariateName) %>% 
@@ -7368,28 +7383,40 @@ shiny::shinyServer(function(input, output, session) {
                                                                          pattern = 'age group|gender') ~ .data$covariateNameFull,
                                                      TRUE ~ gsub(".*: ","",.data$covariateNameFull))) %>% 
       dplyr::mutate(covariateName = paste0(.data$covariateName, " (", .data$covariateId, ")"))
+  })
+  
+  ###getCompareCharacterizationDataFiltered----
+  getCompareCharacterizationDataFiltered <-  shiny::reactive({
+    if (input$tabs != "compareCohortCharacterization") {
+      return(NULL)
+    }
+    data <- getCompareCharacterizationData()
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
     
     if (all(input$characterizationCompareMethod == "Raw table",
             input$charCompareProportionOrContinuous == "Proportion")) {
-      balance <- balance %>%
+      data <- data %>%
         dplyr::filter(.data$isBinary == 'Y')
     } else if (all(input$characterizationCompareMethod == "Raw table",
                    input$charCompareProportionOrContinuous == "Continuous")) {
-      balance <- balance %>%
+      data <- data %>%
         dplyr::filter(.data$isBinary == 'N')
     }
     if (input$compareCharacterizationProportionOrContinous == "Proportion") {
-      balance <- balance %>%
+      data <- data %>%
         dplyr::filter(.data$isBinary == 'Y')
     } else if (input$compareCharacterizationProportionOrContinous == "Continuous") {
-      balance <- balance %>%
+      data <- data %>%
         dplyr::filter(.data$isBinary == 'N')
     }
-    if (any(is.null(balance), 
-            nrow(balance) == 0)) {
+    if (any(is.null(data), 
+            nrow(data) == 0)) {
       return(NULL)
     }
-    return(balance)
+    return(data)
   })
   
   ###getCompareCharacterizationTablePretty----
@@ -7429,16 +7456,15 @@ shiny::shinyServer(function(input, output, session) {
     if (all(!is.null(getCompareCharacterizationAnalysisNameFilter()),
             getCompareCharacterizationAnalysisNameFilter() != "",
             length(getCompareCharacterizationAnalysisNameFilter()) > 0)) {
-      data <- data %>%
+      data <- data %>% #!!!! why is it not working?
         dplyr::filter(.data$analysisName %in% getCompareCharacterizationAnalysisNameFilter())
       
     }
     if (all(!is.null(getCompareCharacterizationDomainNameFilter()),
             getCompareCharacterizationDomainNameFilter() != "",
             length(getCompareCharacterizationDomainNameFilter()) > 0)) {
-      data <- data %>%
+      data <- data %>% #!!!! why is it not working?
         dplyr::filter(.data$analysisName %in% getCompareCharacterizationDomainNameFilter())
-      
     }
     if (all(
       !is.null(input$conceptSetsToFilterCharacterization),
