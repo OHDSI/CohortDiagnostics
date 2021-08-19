@@ -1083,7 +1083,7 @@ bodyTabItems <- shinydashboard::tabItems(
       tags$tr(
         tags$td(
           shiny::radioButtons(
-            inputId = "charCompareType",
+            inputId = "characterizationCompareMethod",
             label = "",
             choices = c("Pretty table", "Raw table", "Plot"),
             selected = "Plot",
@@ -1093,7 +1093,7 @@ bodyTabItems <- shinydashboard::tabItems(
         tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
         tags$td(
           shiny::conditionalPanel(
-            condition = "input.charCompareType == 'Plot'",
+            condition = "input.characterizationCompareMethod == 'Plot'",
             shiny::sliderInput(
               inputId = "compareCohortXMeanFilter",
               label = "Filter X-axis",
@@ -1110,7 +1110,7 @@ bodyTabItems <- shinydashboard::tabItems(
         tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
         tags$td(
           shiny::conditionalPanel(
-            condition = "input.charCompareType == 'Plot'",
+            condition = "input.characterizationCompareMethod == 'Plot'",
             shiny::sliderInput(
               inputId = "compareCohortYMeanFilter",
               label = "Filter Y-axis",
@@ -1126,7 +1126,7 @@ bodyTabItems <- shinydashboard::tabItems(
         ),
         tags$td(
           shiny::conditionalPanel(
-            condition = "input.charCompareType == 'Raw table'",
+            condition = "input.characterizationCompareMethod == 'Raw table'",
             shiny::radioButtons(
               inputId = "compareCharacterizationColumnFilters",
               label = "Display",
@@ -1139,7 +1139,7 @@ bodyTabItems <- shinydashboard::tabItems(
       )
     ),
     
-    shiny::conditionalPanel(condition = "input.charCompareType == 'Raw table' | input.charCompareType=='Plot'",
+    shiny::conditionalPanel(condition = "input.characterizationCompareMethod == 'Raw table' | input.characterizationCompareMethod=='Plot'",
                             tags$table(tags$tr(
                               tags$td(
                                 shinyWidgets::pickerInput(
@@ -1181,7 +1181,7 @@ bodyTabItems <- shinydashboard::tabItems(
                               ),
                               tags$td(
                                 shiny::radioButtons(
-                                  inputId = "charCompareProportionOrContinuous",
+                                  inputId = "compareCharacterizationProportionOrContinous",
                                   label = "",
                                   choices = c("All", "Proportion", "Continuous"),
                                   selected = "Proportion",
@@ -1189,7 +1189,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                 )
                               )
                             ))),
-    shiny::conditionalPanel(condition = "input.charCompareType=='Pretty table' | input.charCompareType=='Raw table'",
+    shiny::conditionalPanel(condition = "input.characterizationCompareMethod=='Pretty table' | input.characterizationCompareMethod=='Raw table'",
                             tags$table(width = "100%", 
                                        tags$tr(
                                          tags$td(align = "right",
@@ -1202,16 +1202,25 @@ bodyTabItems <- shinydashboard::tabItems(
                                          )
                                        )
                             ),
-                            DT::dataTableOutput("charCompareTable")),
+                            # tags$td(
+                            #   shiny::radioButtons(
+                            #     inputId = "compareCharacterizationProportionOrContinous",
+                            #     label = "",
+                            #     choices = c("All", "Proportion", "Continuous"),
+                            #     selected = "Proportion",
+                            #     inline = TRUE
+                            #   )
+                            # ),
+                            DT::dataTableOutput("compareCharacterizationTable")),
     shiny::conditionalPanel(
-      condition = "input.charCompareType=='Plot'",
+      condition = "input.characterizationCompareMethod=='Plot'",
       shinydashboard::box(
         title = "Compare Cohort Characterization",
         width = NULL,
         status = "primary",
         shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
         ggiraph::ggiraphOutput(
-          outputId = "charComparePlot",
+          outputId = "compareCharacterizationPlot",
           width = "100%",
           height = "100%"
         )
@@ -1290,7 +1299,7 @@ bodyTabItems <- shinydashboard::tabItems(
                             tags$table(tags$tr(
                               tags$td(
                                 shinyWidgets::pickerInput(
-                                  inputId = "temporalCompareAnalysisNameFilter",
+                                  inputId = "compareTemporalCharcterizationDataFiltered",
                                   label = "Analysis name",
                                   choices = c(""),
                                   selected = c(""),
