@@ -1299,7 +1299,7 @@ bodyTabItems <- shinydashboard::tabItems(
                             tags$table(tags$tr(
                               tags$td(
                                 shinyWidgets::pickerInput(
-                                  inputId = "compareTemporalCharcterizationDataFiltered",
+                                  inputId = "compareTemporalCharacterizationAnalysisNameFilter",
                                   label = "Analysis name",
                                   choices = c(""),
                                   selected = c(""),
@@ -1317,7 +1317,7 @@ bodyTabItems <- shinydashboard::tabItems(
                               ),
                               tags$td(
                                 shinyWidgets::pickerInput(
-                                  inputId = "temporalCompareDomainNameFilter",
+                                  inputId = "compareTemporalCharacterizationDomainNameFilter",
                                   label = "Domain name",
                                   choices = c(""),
                                   selected = c(""),
@@ -1358,7 +1358,7 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )
       ),
-      DT::dataTableOutput(outputId = "temporalCharacterizationCompareTable")
+      DT::dataTableOutput(outputId = "compareTemporalCharacterizationTable")
     ),
     shiny::conditionalPanel(
       condition = "input.temporalCharacterizationType=='Plot'",
@@ -1367,7 +1367,7 @@ bodyTabItems <- shinydashboard::tabItems(
         width = NULL,
         status = "primary",
         ggiraph::ggiraphOutput(
-          outputId = "temporalCharComparePlot",
+          outputId = "compareTemporalCharacterizationPlot",
           width = "100%",
           height = "100%"
         )

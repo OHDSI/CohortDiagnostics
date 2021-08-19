@@ -7245,6 +7245,40 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ###getCompareTemporalCharacterizationDomainNameFilter----
+  getCompareTemporalCharacterizationDomainNameFilter <-  shiny::reactive(x = {
+    return(input$compareTemporalCharacterizationDomainNameFilter)
+  })
+  ###Update: compareTemporalCharacterizationDomainNameFilter----
+  shiny::observe({
+    subset <-
+      getCompareTemporalCharcterizationData()$domainId %>% unique() %>% sort()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "compareTemporalCharacterizationDomainNameFilter",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  ###getCompareTemporalCharacterizationAnalysisNameFilter----
+  getCompareTemporalCharacterizationAnalysisNameFilter <-  shiny::reactive(x = {
+    return(input$compareTemporalCharacterizationAnalysisNameFilter)
+  })
+  ###Update: compareTemporalCharacterizationAnalysisNameFilter----
+  shiny::observe({
+    subset <-
+      getCompareTemporalCharcterizationData()$analysisName %>% unique() %>% sort()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "compareTemporalCharacterizationAnalysisNameFilter",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
   ###getMultipleCompareCharacterizationData----
   getMultipleCompareCharacterizationData <- shiny::reactive(x = {
     if (!any(
@@ -7314,7 +7348,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     if (is.null(getMultipleCompareCharacterizationData()$analysisRef)) {
-      warning("No analysis ref dta found")
+      warning("No analysis reference data found")
       return(NULL)
     }
 
@@ -7738,456 +7772,480 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##Compare Temporal Characterization.-----
-  getCompareTemporalCharcterizationDataFiltered <- shiny::reactive(x = {
-    return(input$getCompareTemporalCharcterizationDataFiltered)
+  ###getCompareTemporalCharcterizationData----
+  getCompareTemporalCharcterizationData <- shiny::reactive(x = {
+    if (input$tabs != "compareTemporalCharacterization") {
+      return(NULL)
+    }
+    if (any(
+      is.null(getMultipleCompareCharacterizationData()),
+      length(getMultipleCompareCharacterizationData()) == 0
+    )) {
+      return(NULL)
+    }
+    if (is.null(getMultipleCompareCharacterizationData()$covariateRef)) {
+      warning("No covariate reference data found")
+      return(NULL)
+    }
+    if (is.null(getMultipleCompareCharacterizationData()$covariateValue)) {
+      return(NULL)
+    }
+    if (is.null(getMultipleCompareCharacterizationData()$analysisRef)) {
+      warning("No analysis reference data found")
+      return(NULL)
+    }
+    data <-
+      getMultipleCompareCharacterizationData()$covariateValue %>%
+      dplyr::filter(.data$characterizationSource %in% c('CT', 'FT')) %>%
+      dplyr::filter(.data$timeId %in% getTimeIdsFromDropdown()) %>%
+      dplyr::select(-.data$startDay,-.data$endDay) %>%
+      dplyr::inner_join(
+        getMultipleCompareCharacterizationData()$covariateRef,
+        by = c("covariateId", "characterizationSource")
+      ) %>%
+      dplyr::inner_join(
+        getMultipleCompareCharacterizationData()$analysisRef,
+        by = c("analysisId", "characterizationSource")
+      ) %>%
+      dplyr::select(-.data$startDay,-.data$endDay) %>%
+      dplyr::distinct() %>%
+      dplyr::inner_join(getMultipleCompareCharacterizationData()$temporalTimeRef,
+                        by = 'timeId') %>%
+      dplyr::inner_join(temporalCovariateChoices, by = 'timeId') %>%
+      dplyr::select(-.data$missingMeansZero)
+    
+    covs1 <- data %>%
+      dplyr::filter(.data$cohortId == getCohortIdFromDropdown()) %>%
+      dplyr::mutate(
+        analysisNameLong = paste0(
+          .data$analysisName,
+          " (",
+          as.character(.data$startDay),
+          " to ",
+          as.character(.data$endDay),
+          ")"
+        )
+      ) %>%
+      dplyr::relocate(
+        .data$cohortId,
+        .data$databaseId,
+        .data$analysisId,
+        .data$covariateId,
+        .data$covariateName,
+        .data$isBinary
+      ) %>%
+      dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
+    if (any(is.null(covs1),
+            nrow(covs1) == 0)) {
+      return(NULL)
+    }
+    
+    covs2 <- data %>%
+      dplyr::filter(.data$cohortId == getComparatorCohortIdFromDropdown()) %>%
+      dplyr::mutate(
+        analysisNameLong = paste0(
+          .data$analysisName,
+          " (",
+          as.character(.data$startDay),
+          " to ",
+          as.character(.data$endDay),
+          ")"
+        )
+      ) %>%
+      dplyr::relocate(
+        .data$cohortId,
+        .data$databaseId,
+        .data$analysisId,
+        .data$covariateId,
+        .data$covariateName,
+        .data$isBinary
+      ) %>%
+      dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
+    if (any(is.null(covs2),
+            nrow(covs2) == 0)) {
+      return(NULL)
+    }
+    
+    # enhancement
+    data <-
+      compareTemporalCohortCharacteristics(covs1, covs2) %>%
+      dplyr::mutate(absStdDiff = abs(.data$stdDiff)) %>%
+      dplyr::mutate(covariateName = gsub(".*: ", "", .data$covariateName)) %>%
+      dplyr::mutate(covariateName = paste0(.data$covariateName, " (", .data$covariateId, ")"))
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
+    return(data)
   })
   
-  temporalCompareDomainNameFilter <-  shiny::reactive(x = {
-    return(input$temporalCompareDomainNameFilter)
-  })
-  ## Data ------
-
-  computeBalanceForCompareTemporalCharacterization <-
-    shiny::reactive({
-      validate(need((length(getCohortIdFromDropdown(
-      )) > 0),
-      paste0("Please select cohort.")))
-      validate(need((length(
-        getComparatorCohortIdFromDropdown()
-      ) > 0),
-      paste0("Please select comparator cohort.")))
-      validate(need((getComparatorCohortIdFromDropdown() != getCohortIdFromDropdown()),
-                    paste0("Please select different cohorts for target and comparator cohorts.")
-      ))
-      validate(need((length(input$database) > 0),
-                    paste0("Please select atleast one datasource.")
-      ))
-      validate(need((length(getTimeIdsFromDropdown()) > 0), paste0("Please select time id")))
-      
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(message = paste0("Computing compare temporal characterization."), value = 0)
-      
-      validate(need(!is.null(getMultipleCompareCharacterizationData()$covariateValue) &&
-                      nrow(getMultipleCompareCharacterizationData()$covariateValue) > 0, "No Characterization data"))
-      
-      data <- getMultipleCompareCharacterizationData()$covariateValue %>% 
-        dplyr::filter(.data$characterizationSource %in% c('CT', 'FT')) %>% 
-        dplyr::filter(.data$timeId %in% getTimeIdsFromDropdown()) %>% 
-        dplyr::select(-.data$startDay, -.data$endDay) %>% 
-        dplyr::inner_join(getMultipleCompareCharacterizationData()$covariateRef, 
-                          by = c("covariateId", "characterizationSource")) %>% 
-        dplyr::inner_join(getMultipleCompareCharacterizationData()$analysisRef, 
-                          by = c("analysisId", "characterizationSource")) %>% 
-        dplyr::select(-.data$startDay, -.data$endDay) %>% 
-        dplyr::distinct() %>% 
-        dplyr::inner_join(getMultipleCompareCharacterizationData()$temporalTimeRef, 
-                          by = 'timeId') %>% 
-        dplyr::inner_join(temporalCovariateChoices, by = 'timeId') %>% 
-        dplyr::select(-.data$missingMeansZero)
-      
-      covs1 <- data %>% 
-        dplyr::filter(.data$cohortId == getCohortIdFromDropdown()) %>% 
-        dplyr::mutate(analysisNameLong = paste0(.data$analysisName, 
-                                                " (", 
-                                                as.character(.data$startDay), 
-                                                " to ", 
-                                                as.character(.data$endDay), 
-                                                ")")) %>% 
-        dplyr::relocate(.data$cohortId, 
-                        .data$databaseId, 
-                        .data$analysisId,
-                        .data$covariateId, 
-                        .data$covariateName,
-                        .data$isBinary) %>% 
-        dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
-      
-      validate(need((nrow(covs1) > 0), paste0("Target cohort id:", getCohortIdFromDropdown(), " does not have data.")))
-      covs2 <- data %>% 
-        dplyr::filter(.data$cohortId == getComparatorCohortIdFromDropdown()) %>% 
-        dplyr::mutate(analysisNameLong = paste0(.data$analysisName, 
-                                                " (", 
-                                                as.character(.data$startDay), 
-                                                " to ", 
-                                                as.character(.data$endDay), 
-                                                ")")) %>% 
-        dplyr::relocate(.data$cohortId, 
-                        .data$databaseId, 
-                        .data$analysisId,
-                        .data$covariateId, 
-                        .data$covariateName,
-                        .data$isBinary) %>% 
-        dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
-      validate(need((nrow(covs2) > 0), paste0("Target cohort id:", getComparatorCohortIdFromDropdown(), " does not have data.")))
-      
-      balance <-
-        compareTemporalCohortCharacteristics(covs1, covs2) %>%
-        dplyr::mutate(absStdDiff = abs(.data$stdDiff)) %>% 
-        dplyr::mutate(covariateName = gsub(".*: ","",.data$covariateName)) %>% 
-        dplyr::mutate(covariateName = paste0(.data$covariateName, " (", .data$covariateId, ")"))
-      
-      if (input$temporalCharacterizationType == "Raw table" &&
-          input$temporalCharacterProportionOrContinuous == "Proportion") {
-        balance <- balance %>%
+  ###getCompareTemporalCharcterizationDataFiltered----
+  getCompareTemporalCharcterizationDataFiltered <-
+    shiny::reactive(x = {
+      if (input$tabs != "compareTemporalCharacterization") {
+        return(NULL)
+      }
+      data <- getCompareTemporalCharcterizationData()
+      if (any(is.null(data),
+              nrow(data) == 0)) {
+        return(NULL)
+      }
+      if (input$temporalCharacterProportionOrContinuous == "Proportion") {
+        data <- data %>%
           dplyr::filter(.data$isBinary == 'Y')
-      } else if (input$temporalCharacterizationType == "Raw table" &&
-                 input$temporalCharacterProportionOrContinuous == "Continuous") {
-        balance <- balance %>%
+      } else if (input$temporalCharacterProportionOrContinuous == "Continuous") {
+        data <- data %>%
           dplyr::filter(.data$isBinary == 'N')
       }
       
-      if (input$temporalCharacterizationType == "Plot" &&
-          input$temporalCharacterProportionOrContinuous == "Proportion") {
-        balance <- balance %>%
-          dplyr::filter(.data$isBinary == 'Y')
-      } else if (input$temporalCharacterizationType == "Plot" &&
-                 input$temporalCharacterProportionOrContinuous == "Continuous") {
-        balance <- balance %>%
-          dplyr::filter(.data$isBinary == 'N')
+      if (all(
+        !is.null(getCompareTemporalCharacterizationAnalysisNameFilter()),
+        length(getCompareTemporalCharacterizationAnalysisNameFilter()) > 0,
+        getCompareTemporalCharacterizationAnalysisNameFilter() != ""
+      )) {
+        data <- data %>%
+          dplyr::filter(
+            .data$analysisName %in% getCompareTemporalCharacterizationAnalysisNameFilter()
+          )
       }
       
-      return(balance)
+      if (all(
+        !is.null(getCompareTemporalCharacterizationDomainNameFilter()),
+        length(getCompareTemporalCharacterizationDomainNameFilter()) > 0,
+        getCompareTemporalCharacterizationDomainNameFilter() != ""
+      )) {
+        data <- data %>%
+          dplyr::filter(.data$domainId %in% getCompareTemporalCharacterizationDomainNameFilter())
+      }
+      
+      if (all(
+        !is.null(input$conceptSetsToFilterCharacterization),
+        input$conceptSetsToFilterCharacterization != "",
+        length(input$conceptSetsToFilterCharacterization) >= 0
+      )) {
+        browser() #!!! there is a bug here getResoledAndMappedConceptIdsForFilters
+        balance <- balance %>%
+          dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+      }
+      
+      if (any(is.null(data),
+              nrow(data) == 0)) {
+        return(NULL)
+      }
+      return(data)
     })
   
-  output$saveCompareTemporalCharacterizationTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "compareTemporalCharacterization")
-    },
-    content = function(file) {
-      downloadCsv(x = computeBalanceForCompareTemporalCharacterization(), 
-                  fileName = file)
-    }
-  )
+  ###getCompareTemporalCharcterizationTableData----
+  getCompareTemporalCharcterizationTableData <-
+    shiny::reactive({
+      if (input$tabs != "compareTemporalCharacterization") {
+        return(NULL)
+      }
+      data <- getCompareTemporalCharcterizationDataFiltered()
+      if (any(is.null(data),
+              nrow(data) == 0)) {
+        return(NULL)
+      }
+      return(data)
+    })
   
-  shiny::observe({
-    subset <-
-      computeBalanceForCompareTemporalCharacterization()$analysisName %>% unique() %>% sort()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "compareTemporalCharcterizationDataFiltered",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
-  
-  shiny::observe({
-    subset <-
-      computeBalanceForCompareTemporalCharacterization()$domainId %>% unique() %>% sort()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "temporalCompareDomainNameFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
-  
-  ## Output ------
-  output$temporalCharacterizationCompareTable <-
+  ### Output: compareTemporalCharacterizationTable ------
+  output$compareTemporalCharacterizationTable <-
     DT::renderDataTable(expr = {
-      balance <- computeBalanceForCompareTemporalCharacterization()
-      
-      validate(need(nrow(balance) > 0,
-                    "No data available for selected combination."))
+      if (input$tabs != "compareTemporalCharacterization") {
+        return(NULL)
+      }
       
       progress <- shiny::Progress$new()
       on.exit(progress$close())
-      progress$set(message = paste0("Rendering compare temporal characterization table."), value = 0)
+      progress$set(
+        message = paste0("Computing compare temporal characterization."),
+        value = 0
+      )
+      data <- getCompareTemporalCharcterizationTableData()
+      validate(need(
+        all(!is.null(data),
+            nrow(data) > 0),
+        "No data available for selected combination."
+      ))
       
-      if (input$temporalCharacterizationType == "Pretty table") {
-        # table <- prepareTable1Comp(balance)
-        # if (nrow(table) > 0) {
-        #   table <- table %>%
-        #     dplyr::arrange(.data$sortOrder) %>%
-        #     dplyr::select(-.data$sortOrder) %>%
-        #     dplyr::select(-.data$cohortId1, -.data$cohortId2)
-        # } else {
-        #   return(dplyr::tibble(Note = "No data for covariates that are part of pretty table."))
-        # }
-        # options = list(
-        #   pageLength = 100,
-        #   lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        #   searching = TRUE,
-        #   scrollX = TRUE,
-        #   scrollY = "60vh",
-        #   searchHighlight = TRUE,
-        #   lengthChange = TRUE,
-        #   ordering = FALSE,
-        #   paging = TRUE,
-        #   columnDefs = list(minCellPercentDef(1:2))
-        # )
-        # 
-        # table <- DT::datatable(
-        #   table,
-        #   options = options,
-        #   rownames = FALSE,
-        #   colnames = c("Characteristic", "Target", "Comparator", "Std. Diff."),
-        #   escape = FALSE,
-        #   filter = "top",
-        #   class = "stripe nowrap compact"
-        # )
-        # table <- DT::formatStyle(
-        #   table = table,
-        #   columns = 2:4,
-        #   background = DT::styleColorBar(c(0, 1), "lightblue"),
-        #   backgroundSize = "98% 88%",
-        #   backgroundRepeat = "no-repeat",
-        #   backgroundPosition = "center"
-        # )
-        # table <- DT::formatStyle(
-        #   table = table,
-        #   columns = 4,
-        #   background = styleAbsColorBar(1, "lightblue", "pink"),
-        #   backgroundSize = "98% 88%",
-        #   backgroundRepeat = "no-repeat",
-        #   backgroundPosition = "center"
-        # )
-        # table <- DT::formatRound(table, 4, digits = 2)
-      } else {
-        balance <- balance %>%
-          dplyr::filter(.data$analysisName %in% getCompareTemporalCharcterizationDataFiltered()) %>%
-          dplyr::filter(.data$domainId %in% temporalCompareDomainNameFilter())
+      targetCohortIdValue <- data %>%
+        dplyr::filter(!is.na(.data$cohortId1)) %>% 
+        dplyr::pull(.data$cohortId1) %>% 
+        unique()
+      comparatorcohortIdValue <- data %>% 
+        dplyr::filter(!is.na(.data$cohortId2)) %>% 
+        dplyr::pull(.data$cohortId2) %>% 
+        unique()
+      databaseIdForCohortCharacterization <- data$databaseId %>% 
+        unique()
+      
+      targetCohortShortName <- cohort %>%
+        dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>%
+        dplyr::select(.data$shortName) %>%
+        dplyr::pull()
+      comparatorCohortShortName <- cohort %>%
+        dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>%
+        dplyr::select(.data$shortName) %>%
+        dplyr::pull()
+      
+      targetCohortSubjects <- cohortCount %>%
+        dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>%
+        dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>%
+        dplyr::pull(.data$cohortSubjects)
+      comparatorCohortSubjects <- cohortCount %>%
+        dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>%
+        dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>%
+        dplyr::pull(.data$cohortSubjects)
+      
+      targetCohortHeader <- paste0(
+        targetCohortShortName,
+        " (n = ",
+        scales::comma(targetCohortSubjects,
+                      accuracy = 1),
+        ")"
+      )
+      comparatorCohortHeader <- paste0(
+        comparatorCohortShortName,
+        " (n = ",
+        scales::comma(comparatorCohortSubjects,
+                      accuracy = 1),
+        ")"
+      )
+      
+      data <- data %>%
+        dplyr::rename(
+          "meanTarget" = mean1,
+          "sDTarget" = sd1,
+          "meanComparator" = mean2,
+          "sDComparator" = sd2,
+          "stdDiff" = stdDiff
+        )
+      
+      temporalCovariateChoicesSelected <-
+        temporalCovariateChoices %>%
+        dplyr::filter(.data$timeId %in% c(getTimeIdsFromDropdown())) %>%
+        dplyr::arrange(.data$timeId) %>%
+        dplyr::pull(.data$choices)
+      
+      if (input$temporalCharacterizationTypeColumnFilter == "Mean and Standard Deviation") {
+        table <- data %>%
+          dplyr::arrange(desc(abs(.data$stdDiff)))
         
-        if (all(!is.null(input$conceptSetsToFilterCharacterization),
-                input$conceptSetsToFilterCharacterization != "",
-                lenght(input$conceptSetsToFilterCharacterization) >= 0)) {
-          browser() #!!! there is a bug here getResoledAndMappedConceptIdsForFilters
-          balance <- balance %>% 
-            dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
-        }
-        
-        validate(need(all(!is.null(balance), nrow(balance) > 0),
-                      "No data available for selected combination."))
-        # 
-        # if (nrow(balance) == 0) {
-        #   return(dplyr::tibble(Note = "No data for the selected combination."))
-        # }
-        
-        targetCohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId1)) %>% dplyr::pull(.data$cohortId1) %>% unique()
-        comparatorcohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId2)) %>% dplyr::pull(.data$cohortId2) %>% unique()
-        databaseIdForCohortCharacterization <- balance$databaseId %>% unique()
-        
-        targetCohortShortName <- cohort %>% 
-          dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>% 
-          dplyr::select(.data$shortName) %>% 
-          dplyr::pull()
-        
-        comparatorCohortShortName <- cohort %>% 
-          dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>% 
-          dplyr::select(.data$shortName) %>% 
-          dplyr::pull()
-        
-        targetCohortSubjects <- cohortCount %>% 
-          dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>% 
-          dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>% 
-          dplyr::pull(.data$cohortSubjects)
-        
-        comparatorCohortSubjects <- cohortCount %>% 
-          dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>% 
-          dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>% 
-          dplyr::pull(.data$cohortSubjects)
-        
-        targetCohortHeader <- paste0(targetCohortShortName,
-                                     " (n = ",
-                                     scales::comma(targetCohortSubjects,
-                                                   accuracy = 1),
-                                     ")")
-        
-        comparatorCohortHeader <- paste0(comparatorCohortShortName,
-                                         " (n = ",
-                                         scales::comma(comparatorCohortSubjects,
-                                                       accuracy = 1),
-                                         ")")
-        
-        balance <- balance %>% 
-          dplyr::rename("meanTarget" = mean1, 
-                        "sDTarget" = sd1,
-                        "meanComparator" = mean2,
-                        "sDComparator" = sd2,
-                        "stdDiff" = stdDiff)
-        
-        temporalCovariateChoicesSelected <-
-          temporalCovariateChoices %>%
-          dplyr::filter(.data$timeId %in% c(getTimeIdsFromDropdown())) %>%
-          dplyr::arrange(.data$timeId) %>% 
-          dplyr::pull(.data$choices)
-        
-        if (input$temporalCharacterizationTypeColumnFilter == "Mean and Standard Deviation") {
-          table <- balance %>%
-            # dplyr::mutate(covariateName = paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
-            dplyr::arrange(desc(abs(.data$stdDiff)))
+        if (length(temporalCovariateChoicesSelected) == 1) {
+          table <- table %>%
+            dplyr::arrange(.data$choices) %>%
+            tidyr::pivot_wider(
+              id_cols = c("covariateName"),
+              names_from = "choices",
+              values_from = c(
+                "meanTarget",
+                "sDTarget",
+                "meanComparator",
+                "sDComparator",
+                "stdDiff"
+              ),
+              values_fill = 0
+            )
           
-          if (length(temporalCovariateChoicesSelected) == 1) {
-            table <- table %>%
-              dplyr::arrange(.data$choices) %>% 
-              tidyr::pivot_wider(id_cols = c("covariateName"),
-                                 names_from = "choices",
-                                 values_from = c("meanTarget","sDTarget","meanComparator","sDComparator","stdDiff"),
-                                 values_fill = 0
-              )
-            
-            columnDefs <- list(truncateStringDef(0, 80),
-                               minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 5), digits = 2))
-            
-            colorBarColumns <- 1 + 1:(length(temporalCovariateChoicesSelected) * 5)
-            
-            colspan <- 5
-            
-            containerColumns <- c(paste0("Mean ", targetCohortShortName),
-                                  paste0("SD ", targetCohortShortName),
-                                  paste0("Mean ", comparatorCohortShortName),
-                                  paste0("SD ", comparatorCohortShortName),
-                                  "Std. Diff")
-          } else {
-            table <- table %>% 
-              dplyr::arrange(.data$choices) %>% 
-              dplyr::rename(aMeanTarget = "meanTarget", 
-                            bSdTarget = "sDTarget",
-                            cMeanComparator = "meanComparator",
-                            dSdComparator = "sDComparator") %>% 
-              tidyr::pivot_longer(cols = c("aMeanTarget","bSdTarget","cMeanComparator","dSdComparator"),
-                                  names_to = "type", 
-                                  values_to = "values" 
-              ) %>% 
-              dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>% 
-              dplyr::arrange(.data$databaseId, .data$startDay, .data$endDay, .data$type) %>% 
-              tidyr::pivot_wider(id_cols = c("covariateName"),
-                                 names_from = "names",
-                                 values_from = c("values"),
-                                 values_fill = 0
-              )
-            
-            columnDefs <- list(truncateStringDef(0, 80),
-                               minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 4), digits = 2))
-            
-            colorBarColumns <- 1 + 1:(length(temporalCovariateChoicesSelected) * 4)
-            
-            colspan <- 4
-            
-            containerColumns <- c(paste0("Mean ", targetCohortShortName),
-                                  paste0("SD ", targetCohortShortName),
-                                  paste0("Mean ", comparatorCohortShortName),
-                                  paste0("SD ", comparatorCohortShortName))
-          }
+          columnDefs <- list(truncateStringDef(0, 80),
+                             minCellRealDef(1:(
+                               length(temporalCovariateChoicesSelected) * 5
+                             ), digits = 2))
+          colorBarColumns <-
+            1 + 1:(length(temporalCovariateChoicesSelected) * 5)
+          colspan <- 5
+          containerColumns <-
+            c(
+              paste0("Mean ", targetCohortShortName),
+              paste0("SD ", targetCohortShortName),
+              paste0("Mean ", comparatorCohortShortName),
+              paste0("SD ", comparatorCohortShortName),
+              "Std. Diff"
+            )
         } else {
+          table <- table %>%
+            dplyr::arrange(.data$choices) %>%
+            dplyr::rename(
+              aMeanTarget = "meanTarget",
+              bSdTarget = "sDTarget",
+              cMeanComparator = "meanComparator",
+              dSdComparator = "sDComparator"
+            ) %>%
+            tidyr::pivot_longer(
+              cols = c(
+                "aMeanTarget",
+                "bSdTarget",
+                "cMeanComparator",
+                "dSdComparator"
+              ),
+              names_to = "type",
+              values_to = "values"
+            ) %>%
+            dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>%
+            dplyr::arrange(.data$databaseId,
+                           .data$startDay,
+                           .data$endDay,
+                           .data$type) %>%
+            tidyr::pivot_wider(
+              id_cols = c("covariateName"),
+              names_from = "names",
+              values_from = c("values"),
+              values_fill = 0
+            )
           
-          table <- balance %>%
-            # dplyr::mutate(covariateName = paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
-            dplyr::arrange(desc(abs(.data$stdDiff))) 
-          
-          if (length(temporalCovariateChoicesSelected) == 1) {
-            table <- table %>% 
-              tidyr::pivot_wider(id_cols = c("covariateName"),
-                                 names_from = "choices",
-                                 values_from = c("meanTarget", "meanComparator", "stdDiff"),
-                                 values_fill = 0
-              )
-            
-            containerColumns <- c(targetCohortShortName, comparatorCohortShortName, "Std. Diff")
-            
-            columnDefs <- list(truncateStringDef(0, 80),
-                               minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 3), digits = 2))
-            colorBarColumns <- 1 + 1:(length(temporalCovariateChoicesSelected) * 3)
-            
-            colspan <- 3
-          } else {
-            table <- table %>% 
-              tidyr::pivot_longer(cols = c("meanTarget", "meanComparator"), 
-                                  names_to = "type", 
-                                  values_to = "values") %>% 
-              dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>%
-              dplyr::arrange(.data$startDay, .data$endDay) %>% 
-              tidyr::pivot_wider(id_cols = c("covariateName"),
-                                 names_from = "names",
-                                 values_from = "values",
-                                 values_fill = 0
-              )
-            
-            containerColumns <- c(targetCohortShortName, comparatorCohortShortName)
-            
-            columnDefs <- list(truncateStringDef(0, 80),
-                               minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 2), digits = 2))
-            colorBarColumns <- 1 + 1:(length(temporalCovariateChoicesSelected) * 2)
-            colspan <- 2
-          }
+          columnDefs <- list(truncateStringDef(0, 80),
+                             minCellRealDef(1:(
+                               length(temporalCovariateChoicesSelected) * 4
+                             ), digits = 2))
+          colorBarColumns <-
+            1 + 1:(length(temporalCovariateChoicesSelected) * 4)
+          colspan <- 4
+          containerColumns <-
+            c(
+              paste0("Mean ", targetCohortShortName),
+              paste0("SD ", targetCohortShortName),
+              paste0("Mean ", comparatorCohortShortName),
+              paste0("SD ", comparatorCohortShortName)
+            )
         }
+      } else { # only Mean
+        table <- data %>%
+          dplyr::arrange(desc(abs(.data$stdDiff)))
         
-        sketch <- htmltools::withTags(table(class = "display",
-                                            thead(tr(
-                                              th(rowspan = 2, "Covariate Name"),
-                                              lapply(temporalCovariateChoicesSelected, th, colspan = colspan, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                            ),
-                                            tr(
-                                              lapply(rep(
-                                                containerColumns, length(temporalCovariateChoicesSelected)
-                                              ), th, style = "border-right:1px solid grey")
-                                            ))))
-        
-        options = list(
-          pageLength = 100,
-          lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-          searching = TRUE,
-          searchHighlight = TRUE,
-          scrollX = TRUE,
-          scrollY = "60vh",
-          lengthChange = TRUE,
-          ordering = TRUE,
-          paging = TRUE,
-          columnDefs = columnDefs
-        )
-        
-        table <- DT::datatable(
-          table,
-          options = options,
-          rownames = FALSE,
-          container = sketch,
-          colnames = colnames(table) %>%
-            camelCaseToTitleCase(),
-          escape = FALSE,
-          filter = "top",
-          class = "stripe nowrap compact"
-        )
-        table <- DT::formatStyle(
-          table = table,
-          columns = colorBarColumns,
-          background = DT::styleColorBar(c(0, 1), "lightblue"),
-          backgroundSize = "98% 88%",
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center"
-        )
+        if (length(temporalCovariateChoicesSelected) == 1) {
+          table <- table %>%
+            tidyr::pivot_wider(
+              id_cols = c("covariateName"),
+              names_from = "choices",
+              values_from = c("meanTarget", 
+                              "meanComparator", 
+                              "stdDiff"),
+              values_fill = 0
+            )
+          
+          containerColumns <-
+            c(targetCohortShortName,
+              comparatorCohortShortName,
+              "Std. Diff")
+          columnDefs <- list(truncateStringDef(0, 80),
+                             minCellRealDef(1:(
+                               length(temporalCovariateChoicesSelected) * 3
+                             ), digits = 2))
+          colorBarColumns <-
+            1 + 1:(length(temporalCovariateChoicesSelected) * 3)
+          colspan <- 3
+        } else {
+          table <- table %>%
+            tidyr::pivot_longer(
+              cols = c("meanTarget", 
+                       "meanComparator"),
+              names_to = "type",
+              values_to = "values"
+            ) %>%
+            dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>%
+            dplyr::arrange(.data$startDay, .data$endDay) %>%
+            tidyr::pivot_wider(
+              id_cols = c("covariateName"),
+              names_from = "names",
+              values_from = "values",
+              values_fill = 0
+            )
+          
+          containerColumns <-
+            c(targetCohortShortName, comparatorCohortShortName)
+          columnDefs <- list(truncateStringDef(0, 80),
+                             minCellRealDef(1:(
+                               length(temporalCovariateChoicesSelected) * 2
+                             ), digits = 2))
+          colorBarColumns <-
+            1 + 1:(length(temporalCovariateChoicesSelected) * 2)
+          colspan <- 2
+        }
       }
+      
+      sketch <- htmltools::withTags(table(class = "display",
+                                          thead(tr(
+                                            th(rowspan = 2, "Covariate Name"),
+                                            lapply(
+                                              temporalCovariateChoicesSelected,
+                                              th,
+                                              colspan = colspan,
+                                              class = "dt-center",
+                                              style = "border-right:1px solid silver;border-bottom:1px solid silver"
+                                            )
+                                          ),
+                                          tr(
+                                            lapply(rep(
+                                              containerColumns,
+                                              length(temporalCovariateChoicesSelected)
+                                            ), th, style = "border-right:1px solid grey")
+                                          ))))
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        scrollY = "60vh",
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        columnDefs = columnDefs
+      )
+      
+      table <- DT::datatable(
+        table,
+        options = options,
+        rownames = FALSE,
+        container = sketch,
+        colnames = colnames(table) %>%
+          camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      table <- DT::formatStyle(
+        table = table,
+        columns = colorBarColumns,
+        background = DT::styleColorBar(c(0, 1), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      
       return(table)
     }, server = TRUE)
   
+  ###saveCompareTemporalCharacterizationTable----
+  output$saveCompareTemporalCharacterizationTable <-
+    downloadHandler(
+      filename = function() {
+        getCsvFileNameWithDateTime(string = "compareTemporalCharacterization")
+      },
+      content = function(file) {
+        downloadCsv(x = getCompareTemporalCharcterizationTableData(),
+                    fileName = file)
+      }
+    )
+  
   ##!!!!!!!!!!!!! address https://github.com/OHDSI/CohortDiagnostics/issues/444
-  output$temporalCharComparePlot <- ggiraph::renderggiraph(expr = {
-    data <- computeBalanceForCompareTemporalCharacterization()
-    validate(need(nrow(data) != 0, paste0("No data for the selected combination.")))
-    
+  ###compareTemporalCharacterizationPlot----
+  output$compareTemporalCharacterizationPlot <- ggiraph::renderggiraph(expr = {
+    if (input$tabs != "compareTemporalCharacterization") {
+      return(NULL)
+    }
     progress <- shiny::Progress$new()
     on.exit(progress$close())
-    progress$set(message = paste0("Rendering plot for compare temporal characterization."), value = 0)
-    
-    data <- data %>%
-      dplyr::filter(.data$analysisName %in% getCompareTemporalCharcterizationDataFiltered()) %>%
-      dplyr::filter(.data$domainId %in% temporalCompareDomainNameFilter()) 
-    
-    if (!is.null(input$conceptSetsToFilterCharacterization)) {
-      browser() #!!!! there is a bug here - where is getResoledAndMappedConceptIdsForFilters()
-      if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
-        data <- data %>% 
-          dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
-      } else {
-        data <- data[0,]
-      }
-    }
-    
-    validate(need(nrow(data) != 0, paste0("No data for the selected combination.")))
-    
-    validate(need((nrow(data) - nrow(data[data$mean1 < 0.001, ])) > 5 &&
-                    (nrow(data) - nrow(data[data$mean2 < 0.001, ])) > 5, paste0("No data for the selected combination.")))
-    
+    progress$set(
+      message = paste0("Rendering plot for compare temporal characterization."),
+      value = 0
+    )
+    data <- getCompareTemporalCharcterizationTableData()
+    validate(need(all(!is.null(data),
+                      nrow(data) > 0), 
+                  paste0("No data for the selected combination.")))
     plot <-
       plotTemporalCompareStandardizedDifference(
         balance = data,
