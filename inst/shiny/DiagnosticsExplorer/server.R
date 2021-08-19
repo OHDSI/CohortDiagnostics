@@ -2314,8 +2314,10 @@ shiny::shinyServer(function(input, output, session) {
                                                  shinyWidgets::pickerInput(
                                                    inputId = "choicesForRelationshipName",
                                                    label = "Relationship Category:",
-                                                   choices = relationship$relationshipName %>% sort(),
-                                                   selected = relationship$relationshipName %>% sort(),
+                                                   choices = c(relationship$relationshipName,
+                                                               "Not applicable") %>% sort(),
+                                                   selected = c(relationship$relationshipName,
+                                                                "Not applicable") %>% sort(),
                                                    multiple = TRUE,
                                                    width = 200,
                                                    inline = TRUE,
@@ -2431,7 +2433,6 @@ shiny::shinyServer(function(input, output, session) {
             length(conceptMetadata) == 0)) {
       return(NULL)
     }
-    browser()
     conceptAncestor <- conceptMetadata$conceptAncestor %>% 
       dplyr::filter(.data$descendantConceptId %in% selectedConceptId) %>% 
       dplyr::rename("conceptId" = .data$ancestorConceptId,
@@ -2450,7 +2451,7 @@ shiny::shinyServer(function(input, output, session) {
     conceptAncestor <- dplyr::bind_rows(conceptAncestor,
                                         conceptDescendant) %>% 
       dplyr::distinct() %>% 
-      dplyr::arrange(.data$levelsOfSeparation)
+      dplyr::arrange(dplyr::desc(.data$levelsOfSeparation))
     return(conceptAncestor)
   })
   
@@ -2460,10 +2461,14 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <-
-      data %>% 
-      dplyr::distinct(.data$levelsOfSeparation) %>% 
-      dplyr::pull(.data$levelsOfSeparation) %>% 
-      sort()
+      c(
+        "Not applicable",
+        data %>%
+          dplyr::distinct(.data$levelsOfSeparation) %>%
+          dplyr::arrange(dplyr::desc(.data$levelsOfSeparation)) %>%
+          dplyr::pull(.data$levelsOfSeparation) %>%
+          as.character()
+      ) %>% unique()
     return(data)
   })
   
@@ -2503,7 +2508,6 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(.data$conceptId, .data$relationships, .data$relationshipId) %>% 
       dplyr::distinct() %>% 
       dplyr::arrange(.data$conceptId) 
-    
     concept <- conceptMetadata$concept %>% 
       dplyr::left_join(conceptMetadata$conceptCount %>% 
                          dplyr::filter(.data$databaseId %in% getDatabaseIdsForselectedConceptSet()),
@@ -2522,8 +2526,11 @@ shiny::shinyServer(function(input, output, session) {
                     .data$standardConcept,
                     .data$vocabularyId,
                     .data$relationshipId) %>% 
-      dplyr::arrange(dplyr::desc(.data$conceptCount))
-    
+      dplyr::arrange(dplyr::desc(.data$conceptCount)) %>%
+      dplyr::mutate(levelsOfSeparation = as.character(.data$levelsOfSeparation)) %>% 
+      tidyr::replace_na(list(relationships = "Not applicable",
+                             levelsOfSeparation = "Not applicable"))
+    browser()
     if (any(
       !is.null(input$choicesForRelationshipName),
       length(input$choicesForRelationshipName) > 0
