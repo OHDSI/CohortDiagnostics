@@ -6901,13 +6901,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::filter(.data$domainId %in% getCharacterizationDomainNameOptions())
     }
-    if (!is.null(input$conceptSetsSelectedFromOneCohort)) {
-      ##!!! there is a bug here getResoledAndMappedConceptIdsForFilters() 
-      if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
-        data <- data %>% 
-          dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
-      }
-    }
+    
     if (any(is.null(data),
             nrow(data) == 0)) {
       return(NULL)
@@ -7204,16 +7198,14 @@ shiny::shinyServer(function(input, output, session) {
     
     if (all(
       !is.null(input$conceptSetsSelectedFromOneCohort),
-      length(input$conceptSetsSelectedFromOneCohort) > 0,
-      input$conceptSetsSelectedFromOneCohort != ""
+      length(input$conceptSetsSelectedFromOneCohort) > 0
     )) {
-      browser()
-      covariatesTofilter <- covariatesTofilter  %>%
+      data <- data  %>%
         dplyr::inner_join(
           getConceptDetailsForCohortIdFilteredToSelectedConceptSet() %>% 
-            dplyr::select(.data$conceptId) %>% 
+            dplyr::select(.data$conceptId, .data$cohortId) %>% 
             dplyr::distinct(),
-          by = c("conceptId")
+          by = c("conceptId", "cohortId")
         )
     }
     
@@ -7246,16 +7238,6 @@ shiny::shinyServer(function(input, output, session) {
     } else if (input$temporalCharacterizationOutputTypeProportionOrContinuous == "Continuous") {
       data <- data %>%
         dplyr::filter(.data$isBinary == 'N')
-    }
-    
-    if (all(!is.null(input$conceptSetsSelectedFromOneCohort),
-            input$conceptSetsSelectedFromOneCohort != "",
-            length(input$conceptSetsSelectedFromOneCohort) > 0)) {
-      browser()  #!!! bug here  getResoledAndMappedConceptIdsForFilters()
-      if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
-        data <- data %>%
-          dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
-      }
     }
     
     if (any(is.null(data),
