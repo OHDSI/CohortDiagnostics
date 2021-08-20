@@ -251,6 +251,7 @@ shiny::shinyServer(function(input, output, session) {
       return(data)
     })
   
+  
   ##getConceptCountConceptIdLevel----
   getConceptCountConceptIdLevel <-
     shiny::reactive(x = {
@@ -353,13 +354,8 @@ shiny::shinyServer(function(input, output, session) {
                    value = 0)
       
       conceptCount <- data$conceptCount %>%
-        dplyr::inner_join(getNonEraCdmTableNames(),
-                          by = c('domainTableShort')) %>%
-        dplyr::mutate(periodBegin = ISOdate(
-          year = .data$eventYear,
-          month = 1,
-          day = 1
-        )) %>%
+        dplyr::filter(.data$domainTableShort %in% getNonEraCdmTableNames()$domainTableShort) %>%
+        dplyr::mutate(periodBegin = lubridate::as_date(paste0(.data$eventYear,"-01-01"))) %>% #Lubridate exponetially faster that baseR as.Date and  ISODate
         dplyr::group_by(.data$conceptId,
                         .data$databaseId,
                         .data$periodBegin) %>%
@@ -440,6 +436,16 @@ shiny::shinyServer(function(input, output, session) {
       choices = subset,
       selected = subset[2]
     )
+  })
+
+  consolidatedSelectedFeildsValue <- reactiveVal(list()) 
+  #_____________----
+  #Reset Consolidated reactive val----
+  observeEvent(eventExpr = input$tabs,
+               handlerExpr = {
+    if (input$tabs == "cohortDefinition") {
+      consolidatedSelectedFeildsValue(list())
+    }
   })
   
   #______________----
@@ -2476,6 +2482,69 @@ shiny::shinyServer(function(input, output, session) {
       )
     })
   
+  observeEvent(eventExpr = input$resolvedConceptsTableLeft_rows_selected,handlerExpr = {
+    consolidatedSelectedFeildsValue(list())
+    idx <- input$cohortDefinitionOrphanConceptTableLeft_rows_selected
+    selectedConceptId <- getConceptSetDetailsLeft()$orphanConcepts$conceptId[idx]
+    selectedConceptSetId <- getConceptSetExpressionLeft()$id
+    selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
+      dplyr::pull(.data$databaseId)
+    selectedCohortId <- getLastTwoRowSelectedInCohortTable()$cohortId[1]
+    consolidatedSelectedFeildsValue(list(
+      cohortId = selectedCohortId,
+      conceptSetId = selectedConceptSetId,
+      databaseId = selectedDatabaseId,
+      conceptId = selectedConceptId
+    ))
+  })
+  
+  observeEvent(eventExpr = input$resolvedConceptsTableRight_rows_selected,handlerExpr = {
+    consolidatedSelectedFeildsValue(list())
+    idx <- input$cohortDefinitionOrphanConceptTableRight_rows_selected
+    selectedConceptId <- getConceptSetDetailsRight()$resolvedConcepts$conceptId[idx]
+    selectedConceptSetId <- getConceptSetExpressionRight()$id
+    selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
+      dplyr::pull(.data$databaseId)
+    selectedCohortId <- getLastTwoRowSelectedInCohortTable()$cohortId[2]
+    consolidatedSelectedFeildsValue(list(
+      cohortId = selectedCohortId,
+      conceptSetId = selectedConceptSetId,
+      databaseId = selectedDatabaseId,
+      conceptId = selectedConceptId
+    ))
+  })
+  
+  observeEvent(eventExpr = input$cohortDefinitionOrphanConceptTableLeft_rows_selected,handlerExpr = {
+    consolidatedSelectedFeildsValue(list())
+    idx <- input$cohortDefinitionOrphanConceptTableLeft_rows_selected
+    selectedConceptId <- getConceptSetDetailsLeft()$orphanConcepts$conceptId[idx]
+    selectedConceptSetId <- getConceptSetExpressionLeft()$id
+    selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
+      dplyr::pull(.data$databaseId)
+    selectedCohortId <- getLastTwoRowSelectedInCohortTable()$cohortId[1]
+    consolidatedSelectedFeildsValue(list(
+      cohortId = selectedCohortId,
+      conceptSetId = selectedConceptSetId,
+      databaseId = selectedDatabaseId,
+      conceptId = selectedConceptId
+    ))
+  })
+  
+  observeEvent(eventExpr = input$cohortDefinitionOrphanConceptTableRight_rows_selected,handlerExpr = {
+    consolidatedSelectedFeildsValue(list())
+    idx <- input$cohortDefinitionOrphanConceptTableRight_rows_selected
+    selectedConceptId <- getConceptSetDetailsRight()$orphanConcepts$conceptId[idx]
+    selectedConceptSetId <- getConceptSetExpressionRight()$id
+    selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
+      dplyr::pull(.data$databaseId)
+    selectedCohortId <- getLastTwoRowSelectedInCohortTable()$cohortId[2]
+    consolidatedSelectedFeildsValue(list(
+      cohortId = selectedCohortId,
+      conceptSetId = selectedConceptSetId,
+      databaseId = selectedDatabaseId,
+      conceptId = selectedConceptId
+    ))
+  })
   
   getSelectedConceptIdActive <- reactiveVal(NULL)
   getSelectedConceptNameActive <- reactiveVal(NULL)
@@ -2576,7 +2645,6 @@ shiny::shinyServer(function(input, output, session) {
           
         )
         inc = inc + 1
-        
       }
       
       if (all(
@@ -2685,26 +2753,26 @@ shiny::shinyServer(function(input, output, session) {
   
   output$conceptSetTimeSeriesPlot <-  ggiraph::renderggiraph({
     # working on the plot
-    # getConceptCountTsibbleAtConceptIdYearLevel()
-    # 
-    # data <- getFixedTimeSeriesDataForPlot()
-    # validate(need(
-    #   all(!is.null(data),
-    #       nrow(data) > 0),
-    #   "No timeseries data for the cohort of this series type"
-    # ))
-    # plot <- plotTimeSeriesFromTsibble(
-    #   tsibbleData = data,
-    #   yAxisLabel = titleCaseToCamelCase(input$timeSeriesPlotFilters),
-    #   indexAggregationType = input$timeSeriesAggregationPeriodSelection,
-    #   timeSeriesStatistics = input$timeSeriesStatistics
-    # )
-    # plot <- ggiraph::girafe(
-    #   ggobj = plot,
-    #   options = list(ggiraph::opts_sizing(width = .5),
-    #                  ggiraph::opts_zoom(max = 5))
-    # )
-    # return(plot)
+    getConceptCountTsibbleAtConceptIdYearLevel()
+
+    data <- getFixedTimeSeriesDataForPlot()
+    validate(need(
+      all(!is.null(data),
+          nrow(data) > 0),
+      "No timeseries data for the cohort of this series type"
+    ))
+    plot <- plotTimeSeriesFromTsibble(
+      tsibbleData = data,
+      yAxisLabel = titleCaseToCamelCase(input$timeSeriesPlotFilters),
+      indexAggregationType = input$timeSeriesAggregationPeriodSelection,
+      timeSeriesStatistics = input$timeSeriesStatistics
+    )
+    plot <- ggiraph::girafe(
+      ggobj = plot,
+      options = list(ggiraph::opts_sizing(width = .5),
+                     ggiraph::opts_zoom(max = 5))
+    )
+    return(plot)
     return(NULL)
   })
   
