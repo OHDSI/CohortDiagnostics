@@ -669,11 +669,12 @@ getResultsConceptSubjects <- function(dataSource,
 }
 
 
-#' Returns a metadata for a given list of concept ids
+#' Returns a metadata for concept ids
 #'
 #' @description
 #' Returns a metadata for a given list of concept ids that includes concept synonyms,
-#' concept relationship, concept ancestor, concept count
+#' concept relationship, concept ancestor, concept count per database,
+#' concept cooccurrence on index date per database and cohortId.
 #'
 #' @template DataSource
 #'
@@ -681,7 +682,9 @@ getResultsConceptSubjects <- function(dataSource,
 #' 
 #' @template VocabularyDatabaseSchema
 #'
-#' @param conceptIds     A list of concept ids to get counts for
+#' @param cohortIds     (optional) A list of cohort ids to limit the metadata result
+#'
+#' @param conceptIds    (optional) A list of concept ids to limit the metadata result
 #'
 #' @return
 #' Returns a list of data frames (tibbles)
@@ -689,9 +692,11 @@ getResultsConceptSubjects <- function(dataSource,
 #' @export
 getConceptMetadata <- function(dataSource,
                                databaseIds = NULL,
+                               cohortIds = NULL,
                                vocabularyDatabaseSchema = NULL,
                                conceptIds = NULL) {
   data <- list()
+  # results not dependent on cohort definition
   data$conceptRelationship <-
     getConceptRelationship(
       dataSource = dataSource,
@@ -709,6 +714,9 @@ getConceptMetadata <- function(dataSource,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     conceptIds = conceptIds
   )
+  
+  # results dependent on cohort definition
+  
   
   conceptIdList <- c(
     data$conceptRelationship$conceptId1,
