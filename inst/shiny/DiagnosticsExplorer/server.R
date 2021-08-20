@@ -1305,12 +1305,12 @@ shiny::shinyServer(function(input, output, session) {
   ###getConceptSetDetailsRight----
   getConceptSetDetailsRight <- shiny::reactive({
     if (any(
-      is.null(getLastTwoRowSelectedInCohortTable()[1, ]),
-      nrow(getLastTwoRowSelectedInCohortTable()[1, ]) == 0
+      is.null(getLastTwoRowSelectedInCohortTable()[2, ]),
+      nrow(getLastTwoRowSelectedInCohortTable()[2, ]) == 0
     )) {
       return(NULL)
     }
-    selectedCohort <- getLastTwoRowSelectedInCohortTable()[1, ]
+    selectedCohort <- getLastTwoRowSelectedInCohortTable()[2, ]
     
     if (any(
       is.null(getConceptSetExpressionRight()),
@@ -2484,11 +2484,11 @@ shiny::shinyServer(function(input, output, session) {
   #Dynamic UI rendering for relationship table -----
   output$dynamicUIForRelationshipAndComparisonTable <-
     shiny::renderUI({
-      shiny::tabsetPanel(
-        type = "tab",
-        id = "conceptSetComparisonBrowserTimeSeries",
-        shiny::tabPanel(
-          title = "Concept Set Browser",
+      inc <-  1
+      panels <- list()
+      if (!is.null(getSelectedConceptIdActive())) {
+        panels[[inc]] <- shiny::tabPanel(
+          title = "conceptSetBrowser",
           value = "conceptSetBrowser",
           shiny::conditionalPanel(
             condition = "output.isConceptIdFromLeftOrRightConceptTableSelected",
@@ -2556,33 +2556,59 @@ shiny::shinyServer(function(input, output, session) {
                        )),
             DT::dataTableOutput(outputId = "detailsOfSelectedConceptId")
           )
-        ),
-        shiny::tabPanel(
-          title = "Concept Set Comparison - MAKE CONDITIONAL on two cohort selected",
+        )
+        inc = inc + 1
+        
+        
+        panels[[inc]] <- shiny::tabPanel(
+          title = "conceptSetTimeSeries",
+          value = "conceptSetTimeSeries",
+          tags$h5(
+            paste0(
+              getSelectedConceptNameActive(),
+              " (",
+              getSelectedConceptIdActive(),
+              ")"
+            )
+          ),
+          DT::dataTableOutput(outputId = "conceptSetTimeSeriesPlot")
+          
+        )
+        inc = inc + 1
+        
+      }
+      
+      if (all(
+        length(input$cohortDefinitionTable_rows_selected) == 2,
+        !is.null(getConceptSetExpressionLeft()),
+        !is.null(getConceptSetExpressionRight())
+      )) {
+        panels[[inc]] <- shiny::tabPanel(
+          title = "conceptSetComparison",
           value = "conceptSetComparison",
           DT::dataTableOutput(outputId = "conceptSetComparisonTable")
         )
-      )
+      }
+      do.call(tabsetPanel, panels)
     })
   
-  observe({
-    if (is.null(getSelectedConceptIdActive()) &&
-        !is.null(getConceptSetExpressionLeft())) {
-      shiny::hideTab(inputId = "conceptSetComparisonBrowserTimeSeries", target = "conceptSetBrowser")
-    } else {
-      shiny::showTab(inputId = "conceptSetComparisonBrowserTimeSeries", target = "conceptSetBrowser")
-    }
-  })
+  # observe({
+  #   if (all(is.null(getSelectedConceptIdActive()), !is.null(getConceptSetExpressionLeft()))) {
+  #     hideTab(inputId = "conceptSetComparisonBrowserTimeSeries",target = "conceptSetBrowser", session = session)
+  #     hideTab(inputId = "conceptSetComparisonBrowserTimeSeries",target = "conceptSetTimeSeries", session = session)
+  #   } else {
+  #     showTab(inputId = "conceptSetComparisonBrowserTimeSeries",target = "conceptSetBrowser", session = session)
+  #     showTab(inputId = "conceptSetComparisonBrowserTimeSeries",target = "conceptSetTimeSeries", session = session)
+  #   }
+  #   if (any(length(input$cohortDefinitionTable_rows_selected) != 2,
+  #           is.null(getConceptSetExpressionLeft()),
+  #           is.null(getConceptSetExpressionRight()))) {
+  #     hideTab(inputId = "conceptSetComparisonBrowserTimeSeries", target = "conceptSetComparison", session = session)
+  #   } else {
+  #     showTab(inputId = "conceptSetComparisonBrowserTimeSeries", target = "conceptSetComparison", session = session)
+  #   }
+  # })
   
-  observe({
-    if (length(input$cohortDefinitionTable_rows_selected) != 2 ||
-        is.null(getConceptSetExpressionLeft()) ||
-        is.null(getConceptSetExpressionRight())) {
-      shiny::hideTab(inputId = "conceptSetComparisonBrowserTimeSeries", target = "conceptSetComparison")
-    } else {
-      shiny::showTab(inputId = "conceptSetComparisonBrowserTimeSeries", target = "conceptSetComparison")
-    }
-  })
   
   output$conceptSetComparisonTable <- DT::renderDT(expr = {
     resolvedConceptsLeft <- getConceptSetDetailsLeft()$resolvedConcepts
@@ -2629,6 +2655,7 @@ shiny::shinyServer(function(input, output, session) {
           ""
         )
     }
+    
     options = list(
       pageLength = 20,
       searching = TRUE,
@@ -2653,6 +2680,31 @@ shiny::shinyServer(function(input, output, session) {
       class = "stripe nowrap compact"
     )
     return(dataTable)
+  })
+  
+  output$conceptSetTimeSeriesPlot <-  ggiraph::renderggiraph({
+    # working on the plot
+    # getConceptCountTsibbleAtConceptIdYearLevel()
+    # 
+    # data <- getFixedTimeSeriesDataForPlot()
+    # validate(need(
+    #   all(!is.null(data),
+    #       nrow(data) > 0),
+    #   "No timeseries data for the cohort of this series type"
+    # ))
+    # plot <- plotTimeSeriesFromTsibble(
+    #   tsibbleData = data,
+    #   yAxisLabel = titleCaseToCamelCase(input$timeSeriesPlotFilters),
+    #   indexAggregationType = input$timeSeriesAggregationPeriodSelection,
+    #   timeSeriesStatistics = input$timeSeriesStatistics
+    # )
+    # plot <- ggiraph::girafe(
+    #   ggobj = plot,
+    #   options = list(ggiraph::opts_sizing(width = .5),
+    #                  ggiraph::opts_zoom(max = 5))
+    # )
+    # return(plot)
+    return(NULL)
   })
   
   #getConceptMetadataDetails----
