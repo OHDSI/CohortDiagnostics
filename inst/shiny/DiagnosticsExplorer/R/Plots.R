@@ -45,9 +45,12 @@ plotTimeSeriesFromTsibble <-
       fabletools::components() %>%
       tidyr::pivot_longer(cols = pivotBy ,
                           names_to = "fieldName",
-                          values_to = "fieldValues") %>% 
-      dplyr::mutate(periodBegin = as.Date(.data$periodBegin))
+                          values_to = "fieldValues") 
     
+    if (indexAggregationType != "Yearly") {
+      data  <- data %>%
+        dplyr::mutate(periodBegin = as.Date(.data$periodBegin))
+    }
     
     aesthetics <-
       list(
@@ -63,11 +66,11 @@ plotTimeSeriesFromTsibble <-
         " = ",
         data$fieldValues,
         "\nPeriod Begin = ",
-        data$period,
+        data$periodBegin,
         "\nDatabase ID = ",
         data$databaseId,
-        "\nCohort ID = ",
-        data$cohortId
+        "\nCohort = ",
+        data$cohortShortName
       )
     )
     
