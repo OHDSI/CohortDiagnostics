@@ -383,22 +383,22 @@ shiny::shinyServer(function(input, output, session) {
   # an alternative design maybe to load into R memory on start up (global.R)
   # but the size may become too large and we may want to filter to cohorts/database of choice
   # to do this - we have to replace by function that joins cohortId/databaseId choices to resolved concepts
-  # getConceptCooccurrenceData <-
-  #   shiny::reactive(x = {
-  #     progress <- shiny::Progress$new()
-  #     on.exit(progress$close())
-  #     progress$set(message = paste0("Caching concept cooccurrence for reuse"),
-  #                  value = 0)
-  #     cooccurrence <-
-  #       getResultsConceptCooccurrence(dataSource = dataSource,
-  #                                     databaseIds = database$databaseId,
-  #                                     cohortIds = cohort$cohortId)
-  #     if (any(is.null(cooccurrence),
-  #             nrow(cooccurrence) == 0)) {
-  #       return(NULL)
-  #     }
-  #     return(cooccurrence)
-  #   })
+  getConceptCooccurrenceData <-
+    shiny::reactive(x = {
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message = paste0("Caching concept cooccurrence for reuse"),
+                   value = 0)
+      cooccurrence <-
+        getResultsConceptCooccurrence(dataSource = dataSource,
+                                      databaseIds = database$databaseId,
+                                      cohortIds = cohort$cohortId)
+      if (any(is.null(cooccurrence),
+              nrow(cooccurrence) == 0)) {
+        return(NULL)
+      }
+      return(cooccurrence)
+    })
   
   ##getCohortSortedByCohortId ----
   getCohortSortedByCohortId <- shiny::reactive({
@@ -1066,37 +1066,6 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  
-  ###getConceptCooccurrenceLeft----
-  getConceptCooccurrenceLeft <- shiny::reactive({
-    row <- getLastTwoRowSelectedInCohortTable()[1, ]
-    data <- getResultsConceptCooccurrence(dataSource = dataSource,
-                                          cohortIds = row$cohortId)
-    if (is.null(data)) {
-      return(NULL)
-    }
-    return(data)
-  })
-  
-  ###getConceptCooccurrenceRight----
-  getConceptCooccurrenceRight <- shiny::reactive({
-    row <- getLastTwoRowSelectedInCohortTable()
-    if (nrow(row) == 2) {
-      row <- row[2, ]
-    } else {
-      return(NULL)
-    }
-    if (is.null(input$choiceForConceptSetDetailsRight)) {
-      return(NULL)
-    }
-    data <- getResultsConceptCooccurrence(dataSource = dataSource,
-                                          cohortIds = row$cohortId)
-    if (is.null(data)) {
-      return(NULL)
-    }
-    return(data)
-  })
-  
   ###getConceptIdOfInterestLeft----
   getConceptIdOfInterestLeft <- shiny::reactive({
     conceptIds <- dplyr::bind_rows(
@@ -1123,13 +1092,6 @@ shiny::shinyServer(function(input, output, session) {
         conceptAncestor$ancestorConceptId,
         conceptAncestor$descendantConceptId
       ) %>%
-        unique()
-    }
-    conceptCooccurrence <- getConceptCooccurrenceLeft()
-    if (all(!is.null(conceptCooccurrence),
-            nrow(conceptCooccurrence) > 0)) {
-      conceptIds <- c(conceptIds,
-                      conceptCooccurrence$coConceptId) %>%
         unique()
     }
     if (any(is.null(conceptIds),
@@ -1165,13 +1127,6 @@ shiny::shinyServer(function(input, output, session) {
         conceptAncestor$ancestorConceptId,
         conceptAncestor$descendantConceptId
       ) %>%
-        unique()
-    }
-    conceptCooccurrence <- getConceptCooccurrenceRight()
-    if (all(!is.null(conceptCooccurrence),
-            nrow(conceptCooccurrence) > 0)) {
-      conceptIds <- c(conceptIds,
-                      conceptCooccurrence$coConceptId) %>%
         unique()
     }
     if (any(is.null(conceptIds),
@@ -1305,13 +1260,6 @@ shiny::shinyServer(function(input, output, session) {
                                subjectCount = 0)) %>%
         dplyr::arrange(dplyr::desc(.data$conceptCount))
     }
-    conceptCooccurrence <- getConceptCooccurrenceLeft()
-    if (all(!is.null(conceptCooccurrence),
-            nrow(conceptCooccurrence) > 0)) {
-      data$conceptCooccurrence <- conceptCooccurrence %>%
-        dplyr::filter(.data$cohortId %in% selectedCohort$cohortId) %>%
-        dplyr::filter(.data$databaseId %in% selectedDatabaseId)
-    }
     data$relationship <- relationship
     data$concept <- getConceptDetailsLeft()
     concept <- data$concept %>%
@@ -1348,12 +1296,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::relocate(.data$conceptId, .data$conceptName) %>%
         dplyr::select(-.data$conceptSetId) %>%
         dplyr::arrange(dplyr::desc(.data$conceptCount))
-    }
-    if (!is.null(data$conceptCooccurrence)) {
-      data$conceptCooccurrence <- data$conceptCooccurrence %>%
-        dplyr::left_join(concept,
-                         by = ("coConceptId" = "conceptId")) %>%
-        dplyr::relocate(.data$coConceptId, .data$conceptName)
     }
     return(data)
   })
@@ -1433,13 +1375,6 @@ shiny::shinyServer(function(input, output, session) {
                                subjectCount = 0)) %>%
         dplyr::arrange(dplyr::desc(.data$conceptCount))
     }
-    conceptCooccurrence <- getConceptCooccurrenceRight()
-    if (all(!is.null(conceptCooccurrence),
-            nrow(conceptCooccurrence) > 0)) {
-      data$conceptCooccurrence <- conceptCooccurrence %>%
-        dplyr::filter(.data$cohortId %in% selectedCohort$cohortId) %>%
-        dplyr::filter(.data$databaseId %in% selectedDatabaseId)
-    }
     data$relationship <- relationship
     data$concept <- getConceptDetailsRight()
     concept <- data$concept %>%
@@ -1476,12 +1411,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::relocate(.data$conceptId, .data$conceptName) %>%
         dplyr::select(-.data$conceptSetId) %>%
         dplyr::arrange(dplyr::desc(.data$conceptCount))
-    }
-    if (!is.null(data$conceptCooccurrence)) {
-      data$conceptCooccurrence <- data$conceptCooccurrence %>%
-        dplyr::left_join(concept,
-                         by = ("coConceptId" = "conceptId")) %>%
-        dplyr::relocate(.data$coConceptId, .data$conceptName)
     }
     return(data)
   })
@@ -1916,7 +1845,8 @@ shiny::shinyServer(function(input, output, session) {
                                               ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                             ))))
         
-        columnDefs <- minCellCountDef(1 + (1:(length(databaseIds) * 4)))
+        columnDefs <-
+          minCellCountDef(1 + (1:(length(databaseIds) * 4)))
       }
       
       options = list(
@@ -2547,13 +2477,9 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   
-  
   getSelectedConceptIdActive <- reactiveVal(NULL)
   getSelectedConceptNameActive <- reactiveVal(NULL)
-  getDatabaseIdsForselectedConceptSet <-
-    reactiveVal(NULL) ### why make this reactive, this should be the input$ object
-  
-  
+  getDatabaseIdsForselectedConceptSet <- reactiveVal(NULL)
   
   #Dynamic UI rendering for relationship table -----
   output$dynamicUIForRelationshipAndComparisonTable <-
@@ -2598,7 +2524,6 @@ shiny::shinyServer(function(input, output, session) {
                              )
                            )
                          ),
-                         
                          tags$td(
                            shinyWidgets::pickerInput(
                              inputId = "choicesForRelationshipDistance",
@@ -2630,17 +2555,14 @@ shiny::shinyServer(function(input, output, session) {
                          )
                        )),
             DT::dataTableOutput(outputId = "detailsOfSelectedConceptId")
-            
           )
         ),
         shiny::tabPanel(
-          title = "Concept Set Comparison",
+          title = "Concept Set Comparison - MAKE CONDITIONAL on two cohort selected",
           value = "conceptSetComparison",
           DT::dataTableOutput(outputId = "conceptSetComparisonTable")
-          
         )
       )
-      
     })
   
   observe({
@@ -2843,30 +2765,9 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  #output: detailsOfSelectedConceptId----
-  #!!!! this is now a generic output object that may be used in many pages
-  output$detailsOfSelectedConceptId <- DT::renderDT(expr = {
-    validate(need(all(
-      !is.null(getSelectedConceptIdActive()),
-      length(getSelectedConceptIdActive()) > 0
-    ),
-    "No concept id selected."))
-    validate(need(all(
-      !is.null(getDatabaseIdsForselectedConceptSet()),
-      length(getDatabaseIdsForselectedConceptSet()) > 0
-    ),
-    "No database id selected."))
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(
-      message = paste0(
-        "Computing concept relationship for concept id:",
-        getSelectedConceptIdActive()
-      ),
-      value = 0
-    )
-    
-    
+  #getDetailsForSelectedConceptId----
+  getDetailsForSelectedConceptId <- shiny::reactive(x = {
+    #!!!!!!!!! add error handling
     conceptMetadata <- getConceptMetadataDetails()
     if (any(is.null(conceptMetadata),
             length(conceptMetadata) == 0)) {
@@ -2888,6 +2789,7 @@ shiny::shinyServer(function(input, output, session) {
                     .data$relationshipId) %>%
       dplyr::distinct() %>%
       dplyr::arrange(.data$conceptId)
+    
     concept <- conceptMetadata$concept %>%
       dplyr::left_join(
         conceptMetadata$conceptCount %>%
@@ -2935,10 +2837,52 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$levelsOfSeparation %in%
                         input$choicesForRelationshipDistance)
     }
-    
     concept <- concept %>%
       dplyr::select(-.data$relationshipId)
     
+    conceptCooccurrence <- getResultsConceptCooccurrence(dataSource = dataSource,
+                                                         cohortIds = getLastTwoRowSelectedInCohortTable()$cohortId[[1]])
+    if (all(!is.null(conceptCooccurrence),
+            nrow(conceptCooccurrence) > 0)) {
+      conceptCooccurrence <- conceptCooccurrence %>% 
+        dplyr::filter(.data$conceptId %in% getSelectedConceptIdActive()) %>% 
+        dplyr::select(-.data$conceptId, -.data$cohortId) %>% 
+        dplyr::rename(conceptId = .data$coConceptId) %>% 
+        tidyr::pivot_wider(id_cols = c("conceptId"), 
+                           names_from = "databaseId", 
+                           names_prefix = "indexDateCoOccurrence ",
+                           values_from = "conceptCount")
+      concept <- concept %>% 
+        dplyr::left_join(conceptCooccurrence,
+                         by = "conceptId") %>% 
+        dplyr::relocate(colnames(conceptCooccurrence)) %>% 
+        dplyr::relocate("conceptId", "conceptName")
+    }
+    return(concept)
+  })
+  
+  #output: detailsOfSelectedConceptId----
+  output$detailsOfSelectedConceptId <- DT::renderDT(expr = {
+    validate(need(all(
+      !is.null(getSelectedConceptIdActive()),
+      length(getSelectedConceptIdActive()) > 0
+    ),
+    "No concept id selected."))
+    validate(need(all(
+      !is.null(getDatabaseIdsForselectedConceptSet()),
+      length(getDatabaseIdsForselectedConceptSet()) > 0
+    ),
+    "No database id selected."))
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(
+      message = paste0(
+        "Computing concept relationship for concept id:",
+        getSelectedConceptIdActive()
+      ),
+      value = 0
+    )
+    data <- getDetailsForSelectedConceptId()
     options = list(
       pageLength = 10,
       searching = TRUE,
@@ -2949,9 +2893,9 @@ shiny::shinyServer(function(input, output, session) {
     )
     
     table <- DT::datatable(
-      concept,
+      data,
       options = options,
-      colnames = colnames(concept) %>% camelCaseToTitleCase(),
+      colnames = colnames(data) %>% camelCaseToTitleCase(),
       rownames = FALSE,
       escape = FALSE,
       filter = "top",
@@ -2960,7 +2904,7 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   })
   
-  ###Get the most recently selected Concept Id in resolved table Left ----
+  ###Get the most recent selected Concept Id in resolved table Left ----
   observeEvent(eventExpr = {
     is.null(input$resolvedConceptsTableLeft_rows_selected)
   },
@@ -2996,7 +2940,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  ###Get the most recently selected Concept Id in resolved table Right ----
+  ###Get the most recent selected Concept Id in resolved table Right ----
   observeEvent(eventExpr = {
     is.null(input$resolvedConceptsTableRight_rows_selected)
   },
@@ -3103,8 +3047,6 @@ shiny::shinyServer(function(input, output, session) {
       getSelectedConceptNameActive(selctedConceptName)
     }
   })
-  
-  
   
   ##output: isConceptIdFromLeftOrRightConceptTableSelected----
   output$isConceptIdFromLeftOrRightConceptTableSelected <-
@@ -3679,7 +3621,8 @@ shiny::shinyServer(function(input, output, session) {
                                               ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                             ))))
         
-        columnDefs <- minCellCountDef(1 + (1:(length(databaseIds) * 4)))
+        columnDefs <-
+          minCellCountDef(1 + (1:(length(databaseIds) * 4)))
       }
       
       options = list(
@@ -6581,9 +6524,11 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     if (input$indexEventBreakdownValueFilter == "Percentage") {
-      minimumCellPercent <- minCellPercentDef(3 + 1:(length(databaseIds) * noOfMergeColumns))
+      minimumCellPercent <-
+        minCellPercentDef(3 + 1:(length(databaseIds) * noOfMergeColumns))
     } else {
-      minimumCellPercent <- minCellCountDef(3 + 1:(length(databaseIds) * noOfMergeColumns))
+      minimumCellPercent <-
+        minCellCountDef(3 + 1:(length(databaseIds) * noOfMergeColumns))
     }
     options = list(
       pageLength = 1000,
