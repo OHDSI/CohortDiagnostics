@@ -19,82 +19,110 @@ addShortName <-
     
   }
 
-plotTimeSeries <- function(data, columnFilter, timeSeriesAggressionPeriodFilter = "Monthly", timeSeriesPlotCategory = c()) {
-  if (is.null(data)) {
-    return(NULL)
-  }
-  
-  data$Total <- data[[columnFilter]]
-  
-  if (timeSeriesAggressionPeriodFilter == "Yearly") {
-    pivotBy <- c("Total", "trend", "remainder")
-  } else {
-    pivotBy <- c("Total", "trend", "season_year", "remainder")
-  }
-  data <- data %>%
-    fabletools::model(feasts::STL(Total ~ season(window = Inf))) %>%
-    fabletools::components() %>%
-    tidyr::pivot_longer(cols = pivotBy ,
-                        names_to = "fieldName",
-                        values_to = "fieldValues")
-  
-  if (timeSeriesAggressionPeriodFilter != "Yearly") {
-    data$periodBegin <- as.Date(data$periodBegin)
-  }
-  
-  
-  aesthetics <-
-    list(
-      x = "periodBegin",
-      y = "fieldValues",
-      group = "fieldName",
-      color = "fieldName"
+#!!!!!! make plotTimeSeries generic enough that it maybe used every where there is time series
+###!! given an input tsibble, it should be smart enough to plot
+plotTimeSeriesFromTsibble <-
+  function(tsibbleData,
+           yAxisLabel,
+           indexAggregationType = "Monthly", #indexAggregationType -- can be inferred ?
+           timeSeriesStatistics = c()) {
+    if (is.null(data)) {
+      return(NULL)
+    }
+    data <- tsibbleData %>% 
+      dplyr::mutate(Total = .data$value) %>% 
+      dplyr::select(-.data$value)
+
+    #if aggregationPeriod is 'Year' then STL will not return 'season_year'
+    if (indexAggregationType == "Yearly") {
+      pivotBy <- c("Total", "trend", "remainder")
+    } else {
+      pivotBy <- c("Total", "trend", "season_year", "remainder")
+    }
+    
+    data <- data %>%
+      fabletools::model(feasts::STL(Total ~  season(window = Inf))) %>%
+      fabletools::components() %>%
+      tidyr::pivot_longer(cols = pivotBy ,
+                          names_to = "fieldName",
+                          values_to = "fieldValues") 
+    
+    if (indexAggregationType != "Yearly") {
+      data  <- data %>%
+        dplyr::mutate(periodBegin = as.Date(.data$periodBegin))
+    }
+    
+    aesthetics <-
+      list(
+        x = "periodBegin",
+        y = "fieldValues",
+        group = "fieldName",
+        color = "fieldName"
+      )
+    
+    data$tooltip <- c(
+      paste0(
+        data$fieldName,
+        " = ",
+        data$fieldValues,
+        "\nPeriod Begin = ",
+        data$periodBegin,
+        "\nDatabase ID = ",
+        data$databaseId,
+        "\nCohort = ",
+        data$cohortShortName
+      )
     )
-  
-  data$tooltip <- c(
-    paste0(
-      data$fieldName,
-      " = ",
-      data$fieldValues,
-      "\nPeriod Begin = ",
-      data$periodBegin,
-      "\nDatabase ID = ",
-      data$databaseId,
-      "\nCohort ID = ",
-      data$cohortId
-    )
-  )
-  
-  # Filtering by Decomposition plot category
-  data <- data[data$fieldName %in% timeSeriesPlotCategory,]
-  
-  plot <-
-    ggplot2::ggplot(data = data, do.call(ggplot2::aes_string, aesthetics)) +
-    ggplot2::theme_bw() +
-    ggiraph::geom_line_interactive(ggplot2::aes(), size = 0.2, alpha = 0.6) +
-    ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip),
-                                    size = 0.1,
-                                    alpha = 0.6) +
-    ggplot2::labs(x = "Period Begin", y = "") +
-    ggplot2::scale_y_continuous(labels = scales::comma) +
-    ggplot2::theme(legend.position = "none") +
-    ggplot2::facet_grid(databaseId + cohortId~factor(
-      fieldName,
-      levels = c("Total", "trend", "season_year", "remainder")
-    ), scales = "free_y") +
-    ggplot2::theme(
-      strip.text = ggplot2::element_text(size = 6),
-      axis.text = ggplot2::element_text(size = 5),
-      plot.title = ggplot2::element_text(size = 7),
-      plot.subtitle =  ggplot2::element_text(size = 7),
-      axis.title = ggplot2::element_text(size = 7)
-    )
-  
-  plot <- ggiraph::girafe(ggobj = plot,
-                          options = list(ggiraph::opts_sizing(width = .5),
-                                         ggiraph::opts_zoom(max = 5)))
-  return(plot)
-}
+    
+    # Filtering by Decomposition plot category
+    data <- data[data$fieldName %in% timeSeriesStatistics, ]
+    
+    plot <-
+      ggplot2::ggplot(data = data, do.call(ggplot2::aes_string, aesthetics)) +
+      ggplot2::theme_bw() +
+      ggiraph::geom_line_interactive(ggplot2::aes(), size = 0.2, alpha = 0.6) +
+      ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip),
+                                      size = 0.1,
+                                      alpha = 0.6) +
+      ggplot2::labs(x = "Period Begin", y = yAxisLabel) +
+      ggplot2::scale_y_continuous(labels = scales::comma) +
+      ggplot2::theme(legend.position = "none") +
+      facet_nested(databaseId + cohortShortName ~ factor(
+        fieldName,
+        levels = c("Total", "trend", "season_year", "remainder")
+      ),
+      scales = "free_y") +
+      ggplot2::theme(
+        strip.text = ggplot2::element_text(size = 4),
+        axis.text = ggplot2::element_text(size = 4),
+        plot.title = ggplot2::element_text(size = 7),
+        plot.subtitle =  ggplot2::element_text(size = 7),
+        axis.title = ggplot2::element_text(size = 5),
+        panel.border = ggplot2::element_blank()
+      )
+    
+    spacing <- data %>%
+      dplyr::distinct(.data$databaseId, .data$cohortShortName) %>%
+      dplyr::arrange(.data$databaseId) %>%
+      dplyr::group_by(.data$databaseId) %>%
+      dplyr::summarise(count = dplyr::n()) %>%
+      dplyr::ungroup()
+    spacing <-
+      unlist(sapply(spacing$count, function(x)
+        c(1, rep(0.5, x - 1))))[-1]
+    
+    if (length(spacing) > 0) {
+      plot <-
+        plot + ggplot2::theme(
+          panel.spacing.y = ggplot2::unit(spacing, "lines"),
+          strip.background = ggplot2::element_blank()
+        )
+    } else {
+      plot <-
+        plot + ggplot2::theme(strip.background = ggplot2::element_blank())
+    }
+    return(plot)
+  }
 
 plotTimeDistribution <- function(data, shortNameRef = NULL) {
   errorMessage <- checkmate::makeAssertCollection()

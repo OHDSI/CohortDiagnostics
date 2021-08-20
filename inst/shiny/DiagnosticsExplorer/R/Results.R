@@ -161,12 +161,12 @@ pivotOrphanConceptResult <- function(data,
   table <- data %>%
     dplyr::select(.data$databaseId,
                   .data$conceptId,
-                  .data$conceptSubjects,
+                  .data$subjectCount,
                   .data$conceptCount) %>%
     dplyr::group_by(.data$databaseId,
                     .data$conceptId) %>%
     dplyr::summarise(
-      conceptSubjects = sum(.data$conceptSubjects),
+      conceptSubjects = sum(.data$subjectCount),
       conceptCount = sum(.data$conceptCount),
       .groups = 'keep'
     ) %>%
