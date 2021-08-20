@@ -790,47 +790,14 @@ getConceptMetadata <- function(dataSource,
 getResultsResolvedConcepts <- function(dataSource,
                                        databaseIds = NULL,
                                        cohortIds = NULL) {
-  table <- "conceptResolved"
-  if (is(dataSource, "environment")) {
-    if (any(!exists(table),
-            length(table) == 0,
-            nrow(table) == 0)) {
-      return(NULL)
-    }
-    resolved <- get(table, envir = dataSource)
-    if (!is.null(databaseIds)) {
-      resolved <- resolved %>%
-        dplyr::filter(.data$databaseId %in% !!databaseIds)
-    }
-    if (!is.null(cohortIds)) {
-      resolved <- resolved %>%
-        dplyr::filter(.data$cohortId %in% !!cohortIds)
-    }
-    if (any(is.null(resolved),
-            nrow(resolved) == 0)) {
-      return(NULL)
-    }
-  } else {
-    sql <- "SELECT *
-            FROM @results_database_schema.concept_resolved
-            {@cohort_id == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
-            {@cohort_id != '' & @database_id !=''} ? { WHERE database_id in (@database_id) AND cohort_id in (@cohort_id)}
-            {@cohort_id != '' & @database_id ==''} ? { WHERE cohort_id in (@cohort_id)}
-            ORDER BY concept_id;"
-    resolved <-
-      renderTranslateQuerySql(
-        connection = dataSource$connection,
-        sql = sql,
-        results_database_schema = dataSource$resultsDatabaseSchema,
-        database_id = quoteLiterals(databaseIds),
-        cohort_id = cohortIds,
-        snakeCaseToCamelCase = TRUE
-      )
-  }
-  return(resolved)
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = "conceptResolved"
+  )
+  return(data)
 }
-
-
 
 
 #' Returns excluded concepts for a list of cohortIds and databaseIds combinations
@@ -852,44 +819,13 @@ getResultsResolvedConcepts <- function(dataSource,
 getResultsExcludedConcepts <- function(dataSource,
                                        databaseIds = NULL,
                                        cohortIds = NULL) {
-  table <- "conceptExcluded"
-  if (is(dataSource, "environment")) {
-    if (any(!exists(table),
-            length(table) == 0,
-            nrow(table) == 0)) {
-      return(NULL)
-    }
-    excluded <- get(table, envir = dataSource)
-    if (!is.null(databaseIds)) {
-      excluded <- excluded %>%
-        dplyr::filter(.data$databaseId %in% !!databaseIds)
-    }
-    if (!is.null(cohortIds)) {
-      excluded <- excluded %>%
-        dplyr::filter(.data$cohortId %in% !!cohortIds)
-    }
-    if (any(is.null(excluded),
-            nrow(excluded) == 0)) {
-      return(NULL)
-    }
-  } else {
-    sql <- "SELECT *
-            FROM @results_database_schema.concept_concept_excluded
-            {@cohort_id == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
-            {@cohort_id != '' & @database_id !=''} ? { WHERE database_id in (@database_id) AND cohort_id in (@cohort_id)}
-            {@cohort_id != '' & @database_id ==''} ? { WHERE cohort_id in (@cohort_id)}
-            ORDER BY concept_id;"
-    excluded <-
-      renderTranslateQuerySql(
-        connection = dataSource$connection,
-        sql = sql,
-        results_database_schema = dataSource$resultsDatabaseSchema,
-        database_id = quoteLiterals(databaseIds),
-        cohort_id = cohortIds,
-        snakeCaseToCamelCase = TRUE
-      )
-  }
-  return(excluded)
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = "conceptExcluded"
+  )
+  return(data)
 }
 
 
@@ -924,10 +860,33 @@ getResultsOrphanConcept <- function(dataSource,
 
 
 
-
-
-
-
+#' Returns concept cooccurrence for a list of cohortIds and databaseIds combinations
+#'
+#' @description
+#' Given a list of cohortIds, databaseIds combinations the function returns
+#' precomputed concept cooccurrence conceptIds for the combination.
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a data frame (tibble)
+#'
+#' @export
+getResultsConceptCooccurrence <- function(dataSource,
+                                       databaseIds = NULL,
+                                       cohortIds = NULL) {
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = "conceptCooccurrence"
+  )
+  return(data)
+}
 
 
 getConceptSetDetailsFromCohortDefinition <-
