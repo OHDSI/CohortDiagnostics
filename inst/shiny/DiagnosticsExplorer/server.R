@@ -53,6 +53,7 @@ shiny::shinyServer(function(input, output, session) {
                         by = c("cohortId", "conceptSetId"))
     return(data)
   })
+  
   ##getCohortIdsFromDropdown----
   getCohortIdsFromDropdown <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
@@ -371,6 +372,30 @@ shiny::shinyServer(function(input, output, session) {
                        .data$periodBegin)
       return(data)
     })
+  
+  
+  ##getConceptCooccurrenceData----
+  #loads the entire data into R memory.
+  # an alternative design maybe to load into R memory on start up (global.R)
+  # but the size may become too large and we may want to filter to cohorts/database of choice
+  # to do this - we have to replace by function that joins cohortId/databaseId choices to resolved concepts
+  getConceptCooccurrenceData <-
+    shiny::reactive(x = {
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message = paste0("Caching concept cooccurrence for reuse"),
+                   value = 0)
+      cooccurrence <-
+        getResultsConceptCooccurrence(dataSource = dataSource,
+                                      databaseIds = database$databaseId,
+                                      cohortIds = cohort$cohortId)
+      if (any(is.null(cooccurrence),
+              nrow(cooccurrence) == 0)) {
+        return(NULL)
+      }
+      return(cooccurrence)
+    })
+  
   
   ##getCohortSortedByCohortId ----
   getCohortSortedByCohortId <- shiny::reactive({
@@ -834,10 +859,6 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(data)) {
       return(NULL)
     }
-    if (nrow(data) > 0) {
-      data <- data %>%
-        dplyr::select(.data$databaseId, .data$conceptSetId, .data$conceptId)
-    }
     return(data)
   })
   
@@ -857,10 +878,6 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(data)) {
       return(NULL)
     }
-    if (nrow(data) > 0) {
-      data <- data %>%
-        dplyr::select(.data$databaseId, .data$conceptSetId, .data$conceptId)
-    }
     return(data)
   })
   
@@ -871,10 +888,6 @@ shiny::shinyServer(function(input, output, session) {
                                        cohortIds = row$cohortId)
     if (is.null(data)) {
       return(NULL)
-    }
-    if (nrow(data) > 0) {
-      data <- data %>%
-        dplyr::select(.data$databaseId, .data$conceptSetId, .data$conceptId)
     }
     return(data)
   })
@@ -895,10 +908,6 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(data)) {
       return(NULL)
     }
-    if (nrow(data) > 0) {
-      data <- data %>%
-        dplyr::select(.data$databaseId, .data$conceptSetId, .data$conceptId)
-    }
     return(data)
   })
   
@@ -912,8 +921,6 @@ shiny::shinyServer(function(input, output, session) {
     }
     excluded <- getExcludedConceptsLeft()
     if (nrow(data) > 0) {
-      data <- data %>%
-        dplyr::select(.data$databaseId, .data$conceptSetId, .data$conceptId)
       if (all(!is.null(excluded),
               nrow(excluded) > 0)) {
         excludedConceptIds <- excluded %>% 
@@ -944,8 +951,6 @@ shiny::shinyServer(function(input, output, session) {
     }
     excluded <- getExcludedConceptsLeft()
     if (nrow(data) > 0) {
-      data <- data %>%
-        dplyr::select(.data$databaseId, .data$conceptSetId, .data$conceptId)
       if (all(!is.null(excluded),
               nrow(excluded) > 0)) {
         excludedConceptIds <- excluded %>% 
@@ -1045,7 +1050,39 @@ shiny::shinyServer(function(input, output, session) {
     )
     return(data)
   })
-
+  
+  
+  ###getConceptCooccurrenceLeft----
+  getConceptCooccurrenceLeft <- shiny::reactive({
+    row <- getLastTwoRowSelectedInCohortTable()[1,]
+    data <- getResultsConceptCooccurrence(dataSource = dataSource,
+                                       cohortIds = row$cohortId)
+    if (is.null(data)) {
+      return(NULL)
+    }
+    return(data)
+  })
+  
+  ###getConceptCooccurrenceRight----
+  getConceptCooccurrenceRight <- shiny::reactive({
+    row <- getLastTwoRowSelectedInCohortTable()
+    if (nrow(row) == 2) {
+      row <- row[2,]
+    } else {
+      return(NULL)
+    }
+    if (is.null(input$choiceForConceptSetDetailsRight)) {
+      return(NULL)
+    }
+    data <- getResultsConceptCooccurrence(dataSource = dataSource,
+                                          cohortIds = row$cohortId)
+    if (is.null(data)) {
+      return(NULL)
+    }
+    return(data)
+  })
+  
+  
   ###getConceptIdOfInterestLeft----
   getConceptIdOfInterestLeft <- shiny::reactive({
     conceptIds <- dplyr::bind_rows(getResolvedConceptsLeft(),
@@ -1069,6 +1106,15 @@ shiny::shinyServer(function(input, output, session) {
         conceptIds,
         conceptAncestor$ancestorConceptId,
         conceptAncestor$descendantConceptId
+      ) %>%
+        unique()
+    }
+    conceptCooccurrence <- getConceptCooccurrenceLeft()
+    if (all(!is.null(conceptCooccurrence),
+            nrow(conceptCooccurrence) > 0)) {
+      conceptIds <- c(
+        conceptIds,
+        conceptCooccurrence$coConceptId
       ) %>%
         unique()
     }
@@ -1106,6 +1152,19 @@ shiny::shinyServer(function(input, output, session) {
         conceptAncestor$descendantConceptId
       ) %>%
         unique()
+    }
+    conceptCooccurrence <- getConceptCooccurrenceRight()
+    if (all(!is.null(conceptCooccurrence),
+            nrow(conceptCooccurrence) > 0)) {
+      conceptIds <- c(
+        conceptIds,
+        conceptCooccurrence$coConceptId
+      ) %>%
+        unique()
+    }
+    if (any(is.null(conceptIds),
+            length(conceptIds) == 0)) {
+      return(NULL)
     }
     if (any(is.null(conceptIds),
             length(conceptIds) == 0)) {
@@ -1171,7 +1230,6 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     selectedCohort <- getLastTwoRowSelectedInCohortTable()[1,]
-    
     if (any(is.null(getConceptSetExpressionLeft()),
             nrow(getConceptSetExpressionLeft()) == 0)) {
       return(NULL)
@@ -1194,6 +1252,7 @@ shiny::shinyServer(function(input, output, session) {
     if (all(!is.null(resolvedConcepts),
             nrow(resolvedConcepts) > 0)) {
       data$resolvedConcepts <- resolvedConcepts %>%
+        dplyr::filter(.data$cohortId %in% selectedCohort$cohortId) %>%
         dplyr::filter(.data$databaseId %in% selectedDatabaseId) %>%
         dplyr::filter(.data$conceptSetId %in% selectedConceptSetId) %>%
         dplyr::left_join(conceptCountSummary,
@@ -1207,6 +1266,7 @@ shiny::shinyServer(function(input, output, session) {
     if (all(!is.null(excludedConcepts),
             nrow(excludedConcepts) > 0)) {
       data$excludedConcepts <- excludedConcepts %>%
+        dplyr::filter(.data$cohortId %in% selectedCohort$cohortId) %>%
         dplyr::filter(.data$databaseId %in% selectedDatabaseId) %>%
         dplyr::filter(.data$conceptSetId %in% selectedConceptSetId) %>%
         dplyr::left_join(conceptCountSummary,
@@ -1220,6 +1280,7 @@ shiny::shinyServer(function(input, output, session) {
     if (all(!is.null(orphanConcepts),
             nrow(orphanConcepts) > 0)) {
       data$orphanConcepts <- orphanConcepts %>%
+        dplyr::filter(.data$cohortId %in% selectedCohort) %>%
         dplyr::filter(.data$databaseId %in% selectedDatabaseId) %>%
         dplyr::filter(.data$conceptSetId %in% selectedConceptSetId) %>%
         dplyr::left_join(conceptCountSummary,
@@ -1229,9 +1290,16 @@ shiny::shinyServer(function(input, output, session) {
                                subjectCount = 0)) %>%
         dplyr::arrange(dplyr::desc(.data$conceptCount))
     }
+    conceptCooccurrence <- getConceptCooccurrenceLeft()
+    if (all(!is.null(conceptCooccurrence),
+            nrow(conceptCooccurrence) > 0)) {
+      data$conceptCooccurrence <- conceptCooccurrence %>%
+        dplyr::filter(.data$cohortId %in% selectedCohort$cohortId) %>%
+        dplyr::filter(.data$databaseId %in% selectedDatabaseId)
+    }
     data$relationship <- relationship
     data$concept <- getConceptDetailsLeft()
-    concept <- data$concep %>%
+    concept <- data$concept %>%
       dplyr::select(
         .data$conceptId,
         .data$conceptName,
@@ -1266,8 +1334,15 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::select(-.data$conceptSetId) %>%
         dplyr::arrange(dplyr::desc(.data$conceptCount))
     }
+    if (!is.null(data$conceptCooccurrence)) {
+      data$conceptCooccurrence <- data$conceptCooccurrence %>%
+        dplyr::left_join(concept,
+                         by = ("coConceptId" = "conceptId")) %>%
+        dplyr::relocate(.data$coConceptId, .data$conceptName)
+    }
     return(data)
   })
+  
   
   
   
@@ -1280,7 +1355,6 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     selectedCohort <- getLastTwoRowSelectedInCohortTable()[1,]
-    
     if (any(is.null(getConceptSetExpressionRight()),
             nrow(getConceptSetExpressionRight()) == 0)) {
       return(NULL)
@@ -1303,6 +1377,7 @@ shiny::shinyServer(function(input, output, session) {
     if (all(!is.null(resolvedConcepts),
             nrow(resolvedConcepts) > 0)) {
       data$resolvedConcepts <- resolvedConcepts %>%
+        dplyr::filter(.data$cohortId %in% selectedCohort$cohortId) %>%
         dplyr::filter(.data$databaseId %in% selectedDatabaseId) %>%
         dplyr::filter(.data$conceptSetId %in% selectedConceptSetId) %>%
         dplyr::left_join(conceptCountSummary,
@@ -1316,6 +1391,7 @@ shiny::shinyServer(function(input, output, session) {
     if (all(!is.null(excludedConcepts),
             nrow(excludedConcepts) > 0)) {
       data$excludedConcepts <- excludedConcepts %>%
+        dplyr::filter(.data$cohortId %in% selectedCohort$cohortId) %>%
         dplyr::filter(.data$databaseId %in% selectedDatabaseId) %>%
         dplyr::filter(.data$conceptSetId %in% selectedConceptSetId) %>%
         dplyr::left_join(conceptCountSummary,
@@ -1329,6 +1405,7 @@ shiny::shinyServer(function(input, output, session) {
     if (all(!is.null(orphanConcepts),
             nrow(orphanConcepts) > 0)) {
       data$orphanConcepts <- orphanConcepts %>%
+        dplyr::filter(.data$cohortId %in% selectedCohort) %>%
         dplyr::filter(.data$databaseId %in% selectedDatabaseId) %>%
         dplyr::filter(.data$conceptSetId %in% selectedConceptSetId) %>%
         dplyr::left_join(conceptCountSummary,
@@ -1338,9 +1415,16 @@ shiny::shinyServer(function(input, output, session) {
                                subjectCount = 0)) %>%
         dplyr::arrange(dplyr::desc(.data$conceptCount))
     }
+    conceptCooccurrence <- getConceptCooccurrenceRight()
+    if (all(!is.null(conceptCooccurrence),
+            nrow(conceptCooccurrence) > 0)) {
+      data$conceptCooccurrence <- conceptCooccurrence %>%
+        dplyr::filter(.data$cohortId %in% selectedCohort$cohortId) %>%
+        dplyr::filter(.data$databaseId %in% selectedDatabaseId)
+    }
     data$relationship <- relationship
     data$concept <- getConceptDetailsRight()
-    concept <- data$concep %>%
+    concept <- data$concept %>%
       dplyr::select(
         .data$conceptId,
         .data$conceptName,
@@ -1374,6 +1458,12 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::relocate(.data$conceptId, .data$conceptName) %>%
         dplyr::select(-.data$conceptSetId) %>%
         dplyr::arrange(dplyr::desc(.data$conceptCount))
+    }
+    if (!is.null(data$conceptCooccurrence)) {
+      data$conceptCooccurrence <- data$conceptCooccurrence %>%
+        dplyr::left_join(concept,
+                         by = ("coConceptId" = "conceptId")) %>%
+        dplyr::relocate(.data$coConceptId, .data$conceptName)
     }
     return(data)
   })
@@ -2458,6 +2548,12 @@ shiny::shinyServer(function(input, output, session) {
         value = "conceptSetComparison",
         DT::dataTableOutput(outputId = "conceptSetComparisonTable")
         
+      ),
+      shiny::tabPanel(#!!! add concept cooccurrence
+        title = "Concept co-occurrence",
+        value = "conceptSetComparison",
+        DT::dataTableOutput(outputId = "conceptSetComparisonTable")
+        
       )
     )
   
@@ -2557,6 +2653,12 @@ shiny::shinyServer(function(input, output, session) {
     if (any(is.null(data),
             length(data) == 0)) {
       return(NULL)
+    }
+    conceptCooccurrenceData <- getConceptCooccurrenceData()
+    if (all(!is.null(conceptCooccurrenceData),
+            nrow(conceptCooccurrenceData) > 0)) {
+     data$conceptCooccurrence <- conceptCooccurrenceData %>% 
+       dplyr::filter(.data$conceptId %in% selectedConceptId)
     }
     return(data)
   })
