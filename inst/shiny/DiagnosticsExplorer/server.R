@@ -2486,9 +2486,10 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       inc <-  1
       panels <- list()
+      #Adopts new method, Since UI is rendered dynamically,We can only Hide/Show the tab only after DOM loads.
       if (!is.null(getSelectedConceptIdActive())) {
         panels[[inc]] <- shiny::tabPanel(
-          title = "conceptSetBrowser",
+          title = "Concept Set Browser",
           value = "conceptSetBrowser",
           shiny::conditionalPanel(
             condition = "output.isConceptIdFromLeftOrRightConceptTableSelected",
@@ -2561,7 +2562,7 @@ shiny::shinyServer(function(input, output, session) {
         
         
         panels[[inc]] <- shiny::tabPanel(
-          title = "conceptSetTimeSeries",
+          title = "Time Series Plot",
           value = "conceptSetTimeSeries",
           tags$h5(
             paste0(
@@ -2584,7 +2585,7 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(getConceptSetExpressionRight())
       )) {
         panels[[inc]] <- shiny::tabPanel(
-          title = "conceptSetComparison",
+          title = "Concept Set Comparison",
           value = "conceptSetComparison",
           DT::dataTableOutput(outputId = "conceptSetComparisonTable")
         )
