@@ -2158,8 +2158,7 @@ shiny::shinyServer(function(input, output, session) {
               DT::dataTableOutput(outputId = "cohortCountsTableForSelectedCohortLeft"),
               tags$br(),
               shiny::conditionalPanel(
-                condition = "output.isDatabaseIdFoundForSelectedCohortCountLeft &
-                                         output.getSimplifiedInclusionRuleResultsLeftHasData == true",
+                condition = "output.isDatabaseIdFoundForSelectedCohortCountLeft == true",
                 tags$h3("Inclusion Rules"),
                 tags$table(width = "100%",
                            tags$tr(
@@ -2174,7 +2173,8 @@ shiny::shinyServer(function(input, output, session) {
                              ),
                              tags$td(
                                shiny::conditionalPanel(
-                                 condition = "input.cohortDefinitionInclusionRuleType == 'Simplified'",
+                                 condition = "input.cohortDefinitionInclusionRuleType == 'Simplified' &
+                                         output.getSimplifiedInclusionRuleResultsLeftHasData == true",
                                  shiny::radioButtons(
                                    inputId = "cohortDefinitionInclusionRuleTableFilters",
                                    label = "Filter by",
@@ -2411,8 +2411,7 @@ shiny::shinyServer(function(input, output, session) {
               DT::dataTableOutput(outputId = "cohortCountsTableForSelectedCohortRight"),
               tags$br(),
               shiny::conditionalPanel(
-                condition = "output.doesDatabaseIdFoundForSelectedCohortCountRight &
-                                         output.getSimplifiedInclusionRuleResultsRightHasData == true",
+                condition = "output.doesDatabaseIdFoundForSelectedCohortCountRight == true",
                 tags$h3("Inclusion Rules"),
                 tags$table(width = "100%",
                            tags$tr(
@@ -2427,7 +2426,8 @@ shiny::shinyServer(function(input, output, session) {
                              ),
                              tags$td(
                                shiny::conditionalPanel(
-                                 condition = "input.cohortDefinitionSecondInclusionRuleType == 'Simplified'",
+                                 condition = "input.cohortDefinitionSecondInclusionRuleType == 'Simplified' &
+                                         output.getSimplifiedInclusionRuleResultsRightHasData == true",
                                  shiny::radioButtons(
                                    inputId = "cohortDefinitionSecondInclusionRuleTableFilters",
                                    label = "Filter by",
@@ -3730,8 +3730,8 @@ shiny::shinyServer(function(input, output, session) {
   ##output: cohortCountsTableForSelectedCohortRight----
   output$cohortCountsTableForSelectedCohortRight <-
     DT::renderDataTable(expr = {
-      row <- getSelectedCohortInCohortTableOfCohortDefinitionTabForRightPanel()
-      if (is.null(row)) {
+      if (any(is.null(getSelectedCohortInCohortTableOfCohortDefinitionTabForRightPanel()), 
+              is.null(getCountsForSelectedCohortsRight()))) {
         return(NULL)
       } else {
         data <- getCountsForSelectedCohortsRight()
