@@ -159,7 +159,7 @@ sidebarMenu <-
       input.tabs != 'timeDistribution'",
       shinyWidgets::pickerInput(
         inputId = "cohort",
-        label = "Cohort",
+        label = "selectedCompoundCohortName",
         choices = c(""),
         multiple = FALSE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
@@ -180,7 +180,7 @@ sidebarMenu <-
       input.tabs == 'incidenceRate' |
       input.tabs == 'timeDistribution'",
       shinyWidgets::pickerInput(
-        inputId = "cohorts",
+        inputId = "selectedCompoundCohortNames",
         label = "Cohorts",
         choices = c(""),
         selected = c(""),
@@ -201,7 +201,7 @@ sidebarMenu <-
       condition = "input.tabs == 'compareCohortCharacterization'|
         input.tabs == 'compareTemporalCharacterization'",
       shinyWidgets::pickerInput(
-        inputId = "comparatorCohort",
+        inputId = "selectedComparatorCompoundCohortNames",
         label = "Comparator",
         choices = c(""),
         multiple = FALSE,
