@@ -137,7 +137,7 @@ sidebarMenu <-
                 unique() %>%
                 sort()
             )) %>%
-            dplyr::pull(.data$temporalCovariateChoices),
+            dplyr::pull(.data$choices),
           options = shinyWidgets::pickerOptions(
             actionsBox = TRUE,
             liveSearch = TRUE,
