@@ -3467,7 +3467,6 @@ shiny::shinyServer(function(input, output, session) {
   )
   
   #output: cohortDefinitionResolvedConceptTableLeft----
-  #!!! lets make this like orphan concept with sketch over database/vocabulary choices + sketch.
   output$cohortDefinitionResolvedConceptTableLeft <-
     DT::renderDataTable(expr = {
       validate(need(
@@ -3548,6 +3547,93 @@ shiny::shinyServer(function(input, output, session) {
       data <- getConceptSetDetailsLeft()
       if (orphanConcepts %in% names(data)) {
         data <- data$orphanConcepts
+      }
+      downloadCsv(x = data, fileName = file)
+    }
+  )
+  
+  #output: cohortDefinitionExcludedConceptTableLeft----
+  output$cohortDefinitionExcludedConceptTableLeft <-
+    DT::renderDataTable(expr = {
+      validate(need(
+        length(getConceptSetExpressionLeft()$id) > 0,
+        "Please select concept set"
+      ))
+      data <- getConceptSetDetailsLeft()
+      if ("excludedConcepts" %in% names(data)) {
+        data <- data$excludedConcepts
+      } else {
+        data <- NULL
+      }
+      validate(need((all(
+        !is.null(data), nrow(data) > 0
+      )),
+      "No excluded concept ids"))
+      
+      columnDef <- list(truncateStringDef(1, 80))
+      maxCount <- NULL
+      maxSubject <- NULL
+      if ("subjects" %in% colnames(data) &&
+          "count" %in% colnames(data)) {
+        columnDef <- list(truncateStringDef(1, 80), minCellCountDef(2:3))
+        maxCount <- max(data$count, na.rm = TRUE)
+        maxSubject <- max(data$subjects, na.rm = TRUE)
+      }
+      
+      options = list(
+        pageLength = 1000,
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        info = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        scrollY = "20vh",
+        columnDefs = columnDef
+      )
+      
+      dataTable <- DT::datatable(
+        data,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(data) %>% camelCaseToTitleCase(),
+        escape = FALSE,
+        selection = 'single',
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  3,
+        background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  4,
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      return(dataTable)
+    }, server = TRUE)
+  
+  #output: saveExcludedConceptsTableLeft----
+  output$saveExcludedConceptsTableLeft <-  downloadHandler(
+    filename = function() {
+      getCsvFileNameWithDateTime(string = "excludedConcepts")
+    },
+    content = function(file) {
+      browser()
+      data <- getConceptSetDetailsLeft()
+      if (excludedConcept %in% names(data)) {
+        data <- data$excludedConcept
       }
       downloadCsv(x = data, fileName = file)
     }
@@ -4122,7 +4208,6 @@ shiny::shinyServer(function(input, output, session) {
   
   
   ##output: cohortDefinitionResolvedConceptTableRight----
-  #!!! lets make this like orphan concept with sketch over database/vocabulary choices + sketch.
   output$cohortDefinitionResolvedConceptTableRight <-
     DT::renderDataTable(expr = {
       validate(need(
@@ -4203,6 +4288,93 @@ shiny::shinyServer(function(input, output, session) {
       if (resolvedConcepts %in% names(data)) {
         data <- data$resolvedConcepts %>%
           dplyr::select(-.data$databaseId,-.data$conceptSetId)
+      }
+      downloadCsv(x = data, fileName = file)
+    }
+  )
+  
+  #output: cohortDefinitionExcludedConceptTableRight----
+  output$cohortDefinitionExcludedConceptTableRight <-
+    DT::renderDataTable(expr = {
+      validate(need(
+        length(getConceptSetExpressionRight()$id) > 0,
+        "Please select concept set"
+      ))
+      data <- getConceptSetDetailsRight()
+      if ("excludedConcepts" %in% names(data)) {
+        data <- data$excludedConcepts
+      } else {
+        data <- NULL
+      }
+      validate(need((all(
+        !is.null(data), nrow(data) > 0
+      )),
+      "No excluded concept ids"))
+      
+      columnDef <- list(truncateStringDef(1, 80))
+      maxCount <- NULL
+      maxSubject <- NULL
+      if ("subjects" %in% colnames(data) &&
+          "count" %in% colnames(data)) {
+        columnDef <- list(truncateStringDef(1, 80), minCellCountDef(2:3))
+        maxCount <- max(data$count, na.rm = TRUE)
+        maxSubject <- max(data$subjects, na.rm = TRUE)
+      }
+      
+      options = list(
+        pageLength = 1000,
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        info = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        scrollY = "20vh",
+        columnDefs = columnDef
+      )
+      
+      dataTable <- DT::datatable(
+        data,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(data) %>% camelCaseToTitleCase(),
+        escape = FALSE,
+        selection = 'single',
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  3,
+        background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  4,
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      return(dataTable)
+    }, server = TRUE)
+  
+  #output: saveExcludedConceptsTableRight----
+  output$saveExcludedConceptsTableRight <-  downloadHandler(
+    filename = function() {
+      getCsvFileNameWithDateTime(string = "excludedConcepts")
+    },
+    content = function(file) {
+      browser()
+      data <- getConceptSetDetailsRight()
+      if (excludedConcept %in% names(data)) {
+        data <- data$excludedConcept
       }
       downloadCsv(x = data, fileName = file)
     }
