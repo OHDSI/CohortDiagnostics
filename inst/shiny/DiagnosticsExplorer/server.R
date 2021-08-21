@@ -6699,7 +6699,7 @@ shiny::shinyServer(function(input, output, session) {
       indexEventBreakdown <- indexEventBreakdown %>%
         dplyr::inner_join(
           getResolvedConceptIdsForCohortFilteredBySelectedConceptSets(),
-          by = c("cohortId", "conceptId")
+          by = c("cohortId", "conceptId","databaseId")
         )
     }
     

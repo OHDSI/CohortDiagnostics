@@ -158,8 +158,8 @@ sidebarMenu <-
       input.tabs != 'incidenceRate' &
       input.tabs != 'timeDistribution'",
       shinyWidgets::pickerInput(
-        inputId = "cohort",
-        label = "selectedCompoundCohortName",
+        inputId = "selectedCompoundCohortName",
+        label = "cohort",
         choices = c(""),
         multiple = FALSE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
