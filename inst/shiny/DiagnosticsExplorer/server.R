@@ -3654,6 +3654,16 @@ shiny::shinyServer(function(input, output, session) {
                         nrow(data) > 0),
                     "No orphan concepts"))
       
+      browser()
+      columnDef <- list(truncateStringDef(1, 80))
+      maxCount <- NULL
+      maxSubject <- NULL
+      if ("subjects" %in% colnames(data) &&
+          "count" %in% colnames(data)) {
+        columnDef <- list(truncateStringDef(1, 80), minCellCountDef(2:3))
+        maxCount <- max(data$count, na.rm = TRUE)
+        maxSubject <- max(data$subjects, na.rm = TRUE)
+      }
       
       options = list(
         pageLength = 1000,
@@ -4352,7 +4362,6 @@ shiny::shinyServer(function(input, output, session) {
       getCsvFileNameWithDateTime(string = "excludedConcepts")
     },
     content = function(file) {
-      browser()
       data <- getConceptSetDetailsRight()
       if (excludedConcept %in% names(data)) {
         data <- data$excludedConcept
@@ -4382,7 +4391,15 @@ shiny::shinyServer(function(input, output, session) {
                         nrow(data) > 0),
                     "No orphan concepts"))
       
-      
+      columnDef <- list(truncateStringDef(1, 80))
+      maxCount <- NULL
+      maxSubject <- NULL
+      if ("subjects" %in% colnames(data) &&
+          "count" %in% colnames(data)) {
+        columnDef <- list(truncateStringDef(1, 80), minCellCountDef(2:3))
+        maxCount <- max(data$count, na.rm = TRUE)
+        maxSubject <- max(data$subjects, na.rm = TRUE)
+      }
       options = list(
         pageLength = 1000,
         lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
