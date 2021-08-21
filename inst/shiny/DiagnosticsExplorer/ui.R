@@ -100,7 +100,7 @@ sidebarMenu <-
       input.tabs == 'visitContext' |
       input.tabs == 'cohortOverlap'",
       shinyWidgets::pickerInput(
-        inputId = "databases",
+        inputId = "selectedDatabaseIds",
         label = "Database",
         choices = database$databaseId,
         selected = database$databaseId[1],
@@ -137,7 +137,7 @@ sidebarMenu <-
                 unique() %>%
                 sort()
             )) %>%
-            dplyr::pull("choices"),
+            dplyr::pull(.data$temporalCovariateChoices),
           options = shinyWidgets::pickerOptions(
             actionsBox = TRUE,
             liveSearch = TRUE,
