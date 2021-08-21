@@ -531,12 +531,6 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
-  
-  
-  
-  
-  
-  
   #consolidate selections from orphanConceptTable in cohort definition tab - left
   observeEvent(
     eventExpr = input$cohortDefinitionOrphanConceptTableLeft_rows_selected,
@@ -3660,62 +3654,49 @@ shiny::shinyServer(function(input, output, session) {
                         nrow(data) > 0),
                     "No orphan concepts"))
       
-      sketch <- htmltools::withTags(table(class = "display",
-                                          thead(
-                                            tr(
-                                              th(rowspan = 2, "Concept ID"),
-                                              th(rowspan = 2, "Concept Name"),
-                                              th(rowspan = 2, "Vocabulary ID"),
-                                              th(rowspan = 2, "Concept Code"),
-                                              lapply(
-                                                orphanConceptDataDatabaseIds,
-                                                th,
-                                                colspan = 2,
-                                                class = "dt-center"
-                                              )
-                                            ),
-                                            tr(lapply(rep(
-                                              c("Subjects", "Counts"),
-                                              length(orphanConceptDataDatabaseIds)
-                                            ), th))
-                                          )))
       
       options = list(
-        pageLength = 10,
+        pageLength = 1000,
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
         searching = TRUE,
-        scrollX = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
         paging = TRUE,
-        columnDefs = list(truncateStringDef(1, 100),
-                          minCellCountDef(3 + (1:(
-                            length(orphanConceptDataDatabaseIds) * 2
-                          ))))
+        info = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        scrollY = "20vh",
+        columnDefs = columnDef
       )
       
-      table <- DT::datatable(
+      dataTable <- DT::datatable(
         data,
         options = options,
-        colnames = colnames(data),
         rownames = FALSE,
-        container = sketch,
+        colnames = colnames(data) %>% camelCaseToTitleCase(),
         escape = FALSE,
         selection = 'single',
         filter = "top",
         class = "stripe nowrap compact"
       )
       
-      table <- DT::formatStyle(
-        table = table,
-        columns =  4 + (1:(
-          length(orphanConceptDataDatabaseIds) * 2
-        )),
-        background = DT::styleColorBar(c(0, orphanConceptDataMaxCount), "lightblue"),
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  3,
+        background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
         backgroundPosition = "center"
       )
-      return(table)
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  4,
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      return(dataTable)
     }, server = TRUE)
   
   #output: conceptsetExpressionJsonLeft----
@@ -4401,63 +4382,49 @@ shiny::shinyServer(function(input, output, session) {
                         nrow(data) > 0),
                     "No orphan concepts"))
       
-      sketch <- htmltools::withTags(table(class = "display",
-                                          thead(
-                                            tr(
-                                              th(rowspan = 2, "Concept ID"),
-                                              th(rowspan = 2, "Concept Name"),
-                                              th(rowspan = 2, "Vocabulary ID"),
-                                              th(rowspan = 2, "Concept Code"),
-                                              lapply(
-                                                orphanConceptDataDatabaseIds,
-                                                th,
-                                                colspan = 2,
-                                                class = "dt-center"
-                                              )
-                                            ),
-                                            tr(lapply(rep(
-                                              c("Subjects", "Counts"),
-                                              length(orphanConceptDataDatabaseIds)
-                                            ), th))
-                                          )))
       
       options = list(
-        pageLength = 10,
+        pageLength = 1000,
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
         searching = TRUE,
-        scrollX = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
         paging = TRUE,
-        columnDefs = list(truncateStringDef(1, 100),
-                          minCellCountDef(3 + (1:(
-                            length(orphanConceptDataDatabaseIds) * 2
-                          ))))
+        info = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        scrollY = "20vh",
+        columnDefs = columnDef
       )
       
-      table <- DT::datatable(
+      dataTable <- DT::datatable(
         data,
         options = options,
-        colnames = colnames(data),
         rownames = FALSE,
-        container = sketch,
+        colnames = colnames(data) %>% camelCaseToTitleCase(),
         escape = FALSE,
-        filter = "top",
         selection = 'single',
+        filter = "top",
         class = "stripe nowrap compact"
       )
       
-      table <- DT::formatStyle(
-        table = table,
-        columns =  4 + (1:(
-          length(orphanConceptDataDatabaseIds) * 2
-        )),
-        background = DT::styleColorBar(c(0, orphanConceptDataMaxCount), "lightblue"),
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  3,
+        background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
         backgroundPosition = "center"
       )
-      return(table)
-      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  4,
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      return(dataTable)
     }, server = TRUE)
   
   ##output: saveCohortDefinitionOrphanConceptTableRight----
