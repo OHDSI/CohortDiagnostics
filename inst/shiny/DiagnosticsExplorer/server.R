@@ -5069,7 +5069,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$cohortId %in% getCohortIdsFromSelectedCompoundCohortNames()) %>% 
       dplyr::filter(.data$databaseId %in% getDatabaseIdsFromDropdown()) %>% 
       dplyr::inner_join(cohort %>% 
-                          dplyr::select(.data$cohortId, .data$shortName)) %>%
+                          dplyr::select(.data$cohortId, .data$shortName),
+                        by = "cohortId") %>%
       dplyr::arrange(.data$shortName, .data$databaseId)
     if (any(is.null(data),
             nrow(data) == 0)) {
@@ -5317,7 +5318,6 @@ shiny::shinyServer(function(input, output, session) {
         backgroundRepeat = "no-repeat",
         backgroundPosition = "center"
       )
-      
     }
     return(dataTable)
   }, server = TRUE)
@@ -5375,7 +5375,7 @@ shiny::shinyServer(function(input, output, session) {
                     "There is no inclusion rule data for this cohort."))
       
       databaseIds <- unique(table$databaseId)
-      
+      #!!!! move to seperate reactive function - to do the pivot step. reuse that for download button and here.
       table <- table %>%
         tidyr::pivot_longer(
           cols = c(
@@ -5392,8 +5392,6 @@ shiny::shinyServer(function(input, output, session) {
           values_from = .data$value
         ) %>%
         dplyr::select(-.data$cohortId)
-      
-      
       
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(tr(
