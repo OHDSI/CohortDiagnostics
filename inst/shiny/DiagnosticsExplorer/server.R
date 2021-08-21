@@ -406,20 +406,188 @@ shiny::shinyServer(function(input, output, session) {
         )
       return(data)
     })
+  
   ##reactiveVal: consolidatedSelectedFieldValue----
-  consolidatedSelectedFieldValue <- reactiveVal(list()) 
+  consolidatedSelectedFieldValue <- reactiveVal(list())
   #Reset Consolidated reactive val
   observeEvent(eventExpr = input$tabs,
                handlerExpr = {
-    if (input$tabs %in% c("cohortDefinition",
-                          "indexEventBreakdown",
-                          "cohortCharacterization",
-                          "temporalCharacterization",
-                          "compareCohortCharacterization",
-                          "compareTemporalCharacterization")) {
+                 if (input$tabs %in% c(
+                   "cohortDefinition",
+                   "indexEventBreakdown",
+                   "cohortCharacterization",
+                   "temporalCharacterization",
+                   "compareCohortCharacterization",
+                   "compareTemporalCharacterization"
+                 )) {
+                   consolidatedSelectedFieldValue(list())
+                 }
+               })
+  
+  #consolidate selections from resolvedConceptTable in cohort definition tab - left
+  observeEvent(
+    eventExpr = input$cohortDefinitionResolvedConceptTableLeft_rows_selected,
+    handlerExpr = {
       consolidatedSelectedFieldValue(list())
+      idx <- input$cohortDefinitionResolvedConceptTableLeft_rows_selected
+      selectedConceptId <-
+        getConceptSetDetailsLeft()$resolvedConcepts$conceptId[idx]
+      selectedConceptSetId <- getConceptSetExpressionLeft()$id
+      selectedDatabaseId <-
+        getSelectedDatabaseForConceptSetLeft() %>%
+        dplyr::pull(.data$databaseId)
+      selectedCohortId <-
+        getSelectedCohortInCohortTableOfCohortDefinitionTabForLeftPanel()$cohortId
+      consolidatedSelectedFieldValue(
+        list(
+          cohortId = selectedCohortId$cohortId,
+          conceptSetId = selectedConceptSetId,
+          databaseId = selectedDatabaseId,
+          conceptId = selectedConceptId
+        )
+      )
     }
-  })
+  )
+  
+  #consolidate selections from resolvedConceptTable in cohort definition tab - right
+  observeEvent(
+    eventExpr = input$cohortDefinitionResolvedConceptTableRight_rows_selected,
+    handlerExpr = {
+      consolidatedSelectedFieldValue(list())
+      browser()
+      idx <- input$cohortDefinitionResolvedConceptTableRight_rows_selected
+      selectedConceptId <-
+        getConceptSetDetailsRight()$resolvedConcepts$conceptId[idx]
+      selectedConceptSetId <- getConceptSetExpressionRight()$id
+      selectedDatabaseId <-
+        getSelectedDatabaseForConceptSetRight() %>%
+        dplyr::pull(.data$databaseId)
+      selectedCohortId <-
+        getSelectedCohortInCohortTableOfCohortDefinitionTabForRightPanel()$cohortId
+      consolidatedSelectedFieldValue(
+        list(
+          cohortId = selectedCohortId$cohortId,
+          conceptSetId = selectedConceptSetId,
+          databaseId = selectedDatabaseId,
+          conceptId = selectedConceptId
+        )
+      )
+    }
+  )
+  
+  
+  
+  
+  
+  #consolidate selections from excludedConceptTable in cohort definition tab - left
+  observeEvent(
+    eventExpr = input$cohortDefinitionExcludedConceptTableLeft_rows_selected,
+    handlerExpr = {
+      consolidatedSelectedFieldValue(list())
+      browser()
+      idx <-
+        input$cohortDefinitionExcludedConceptTableLeft_rows_selected
+      selectedConceptId <-
+        getConceptSetDetailsLeft()$orphanConcepts$conceptId[idx]
+      selectedConceptSetId <- getConceptSetExpressionLeft()$id
+      selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
+        dplyr::pull(.data$databaseId)
+      selectedCohortId <-
+        getSelectedCohortInCohortTableOfCohortDefinitionTabForLeftPanel()
+      consolidatedSelectedFieldValue(
+        list(
+          cohortId = selectedCohortId$cohortId,
+          conceptSetId = selectedConceptSetId,
+          databaseId = selectedDatabaseId,
+          conceptId = selectedConceptId
+        )
+      )
+    }
+  )
+  
+  #consolidate selections from excludedConceptTable in cohort definition tab - right
+  observeEvent(
+    eventExpr = input$cohortDefinitionExcludedConceptTableRight_rows_selected,
+    handlerExpr = {
+      consolidatedSelectedFieldValue(list())
+      browser()
+      idx <-
+        input$cohortDefinitionOrphanConceptTableRight_rows_selected
+      selectedConceptId <-
+        getConceptSetDetailsRight()$orphanConcepts$conceptId[idx]
+      selectedConceptSetId <- getConceptSetExpressionRight()$id
+      selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
+        dplyr::pull(.data$databaseId)
+      selectedCohortId <-
+        getSelectedCohortInCohortTableOfCohortDefinitionTabForRightPanel
+      consolidatedSelectedFieldValue(
+        list(
+          cohortId = selectedCohortId$cohortId,
+          conceptSetId = selectedConceptSetId,
+          databaseId = selectedDatabaseId,
+          conceptId = selectedConceptId
+        )
+      )
+    }
+  )
+  
+  
+  
+  
+  
+  
+  
+  #consolidate selections from orphanConceptTable in cohort definition tab - left
+  observeEvent(
+    eventExpr = input$cohortDefinitionOrphanConceptTableLeft_rows_selected,
+    handlerExpr = {
+      consolidatedSelectedFieldValue(list())
+      browser()
+      idx <-
+        input$cohortDefinitionOrphanConceptTableLeft_rows_selected
+      selectedConceptId <-
+        getConceptSetDetailsLeft()$orphanConcepts$conceptId[idx]
+      selectedConceptSetId <- getConceptSetExpressionLeft()$id
+      selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
+        dplyr::pull(.data$databaseId)
+      selectedCohortId <-
+        getSelectedCohortInCohortTableOfCohortDefinitionTabForLeftPanel()
+      consolidatedSelectedFieldValue(
+        list(
+          cohortId = selectedCohortId$cohortId,
+          conceptSetId = selectedConceptSetId,
+          databaseId = selectedDatabaseId,
+          conceptId = selectedConceptId
+        )
+      )
+    }
+  )
+  
+  #consolidate selections from orphanConceptTable in cohort definition tab - right
+  observeEvent(
+    eventExpr = input$cohortDefinitionOrphanConceptTableRight_rows_selected,
+    handlerExpr = {
+      consolidatedSelectedFieldValue(list())
+      browser()
+      idx <-
+        input$cohortDefinitionOrphanConceptTableRight_rows_selected
+      selectedConceptId <-
+        getConceptSetDetailsRight()$orphanConcepts$conceptId[idx]
+      selectedConceptSetId <- getConceptSetExpressionRight()$id
+      selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
+        dplyr::pull(.data$databaseId)
+      selectedCohortId <-
+        getSelectedCohortInCohortTableOfCohortDefinitionTabForRightPanel
+      consolidatedSelectedFieldValue(
+        list(
+          cohortId = selectedCohortId$cohortId,
+          conceptSetId = selectedConceptSetId,
+          databaseId = selectedDatabaseId,
+          conceptId = selectedConceptId
+        )
+      )
+    }
+  )
   
   #______________----
   #cohortDefinition tab----
@@ -1467,6 +1635,7 @@ shiny::shinyServer(function(input, output, session) {
   getConceptSetComparisonDetailsLeft <- shiny::reactive(x = {
     data <- getConceptSetDetailsLeft()
     if ("orphanConcepts" %in% names(data)) {
+      browser()
       data <- pivotOrphanConceptResult(data = data$orphanConcepts,
                                        dataSource = dataSource)
       return(data)
@@ -1479,6 +1648,7 @@ shiny::shinyServer(function(input, output, session) {
   getConceptSetComparisonDetailsRight <- shiny::reactive(x = {
     data <- getConceptSetDetailsRight()
     if ("orphanConcepts" %in% names(data)) {
+      browser()
       data <- pivotOrphanConceptResult(data = data$orphanConcepts,
                                        dataSource = dataSource)
     } else {
@@ -2148,14 +2318,14 @@ shiny::shinyServer(function(input, output, session) {
                                  tags$td(
                                    align = "right",
                                    shiny::downloadButton(
-                                     "saveResolvedConceptsTableLeft",
+                                     "saveCohortDefinitionResolvedConceptTableLeft",
                                      label = "",
                                      icon = shiny::icon("download"),
                                      style = "margin-top: 5px; margin-bottom: 5px;"
                                    )
                                  )
                                )),
-                    DT::dataTableOutput(outputId = "resolvedConceptsTableLeft")
+                    DT::dataTableOutput(outputId = "cohortDefinitionResolvedConceptTableLeft")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.conceptSetsTypeLeft == 'Excluded'",
@@ -2165,14 +2335,14 @@ shiny::shinyServer(function(input, output, session) {
                                  tags$td(
                                    align = "right",
                                    shiny::downloadButton(
-                                     "saveExcludedConceptsTableLeft",
+                                     "saveCohortDefinitionExcludedConceptTableLeft",
                                      label = "",
                                      icon = shiny::icon("download"),
                                      style = "margin-top: 5px; margin-bottom: 5px;"
                                    )
                                  )
                                )),
-                    DT::dataTableOutput(outputId = "excludedConceptsTableLeft")
+                    DT::dataTableOutput(outputId = "cohortDefinitionExcludedConceptTableLeft")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.conceptSetsTypeLeft == 'Orphan concepts'",
@@ -2201,7 +2371,6 @@ shiny::shinyServer(function(input, output, session) {
                   )
                 )
               )
-              
             ),
             
             shiny::tabPanel(
@@ -2399,14 +2568,14 @@ shiny::shinyServer(function(input, output, session) {
                                  tags$td(
                                    align = "right",
                                    shiny::downloadButton(
-                                     "saveResolvedConceptsTableRight",
+                                     "saveCohortDefinitionResolvedConceptTableRight",
                                      label = "",
                                      icon = shiny::icon("download"),
                                      style = "margin-top: 5px; margin-bottom: 5px;"
                                    )
                                  )
                                )),
-                    DT::dataTableOutput(outputId = "resolvedConceptsTableRight")
+                    DT::dataTableOutput(outputId = "cohortDefinitionResolvedConceptTableRight")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.conceptSetsTypeRight == 'Excluded'",
@@ -2415,14 +2584,14 @@ shiny::shinyServer(function(input, output, session) {
                                  tags$td(
                                    align = "right",
                                    shiny::downloadButton(
-                                     "saveExcludedConceptsTableRight",
+                                     "saveCohortDefinitionExcludedConceptTableRight",
                                      label = "",
                                      icon = shiny::icon("download"),
                                      style = "margin-top: 5px; margin-bottom: 5px;"
                                    )
                                  )
                                )),
-                    DT::dataTableOutput(outputId = "excludedConceptsTableRight")
+                    DT::dataTableOutput(outputId = "cohortDefinitionExcludedConceptTableRight")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.conceptSetsTypeRight == 'Orphan concepts'",
@@ -2477,69 +2646,6 @@ shiny::shinyServer(function(input, output, session) {
       )
     })
   
-  observeEvent(eventExpr = input$resolvedConceptsTableLeft_rows_selected,handlerExpr = {
-    consolidatedSelectedFieldValue(list())
-    idx <- input$cohortDefinitionOrphanConceptTableLeft_rows_selected
-    selectedConceptId <- getConceptSetDetailsLeft()$orphanConcepts$conceptId[idx]
-    selectedConceptSetId <- getConceptSetExpressionLeft()$id
-    selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
-      dplyr::pull(.data$databaseId)
-    selectedCohortId <- getSelectedRowsInCohortTableOfCohortDefinitionTab()$cohortId[1]
-    consolidatedSelectedFieldValue(list(
-      cohortId = selectedCohortId,
-      conceptSetId = selectedConceptSetId,
-      databaseId = selectedDatabaseId,
-      conceptId = selectedConceptId
-    ))
-  })
-  
-  observeEvent(eventExpr = input$resolvedConceptsTableRight_rows_selected,handlerExpr = {
-    consolidatedSelectedFieldValue(list())
-    idx <- input$cohortDefinitionOrphanConceptTableRight_rows_selected
-    selectedConceptId <- getConceptSetDetailsRight()$resolvedConcepts$conceptId[idx]
-    selectedConceptSetId <- getConceptSetExpressionRight()$id
-    selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
-      dplyr::pull(.data$databaseId)
-    selectedCohortId <- getSelectedRowsInCohortTableOfCohortDefinitionTab()$cohortId[2]
-    consolidatedSelectedFieldValue(list(
-      cohortId = selectedCohortId,
-      conceptSetId = selectedConceptSetId,
-      databaseId = selectedDatabaseId,
-      conceptId = selectedConceptId
-    ))
-  })
-  
-  observeEvent(eventExpr = input$cohortDefinitionOrphanConceptTableLeft_rows_selected,handlerExpr = {
-    consolidatedSelectedFieldValue(list())
-    idx <- input$cohortDefinitionOrphanConceptTableLeft_rows_selected
-    selectedConceptId <- getConceptSetDetailsLeft()$orphanConcepts$conceptId[idx]
-    selectedConceptSetId <- getConceptSetExpressionLeft()$id
-    selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
-      dplyr::pull(.data$databaseId)
-    selectedCohortId <- getSelectedRowsInCohortTableOfCohortDefinitionTab()$cohortId[1]
-    consolidatedSelectedFieldValue(list(
-      cohortId = selectedCohortId,
-      conceptSetId = selectedConceptSetId,
-      databaseId = selectedDatabaseId,
-      conceptId = selectedConceptId
-    ))
-  })
-  
-  observeEvent(eventExpr = input$cohortDefinitionOrphanConceptTableRight_rows_selected,handlerExpr = {
-    consolidatedSelectedFieldValue(list())
-    idx <- input$cohortDefinitionOrphanConceptTableRight_rows_selected
-    selectedConceptId <- getConceptSetDetailsRight()$orphanConcepts$conceptId[idx]
-    selectedConceptSetId <- getConceptSetExpressionRight()$id
-    selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
-      dplyr::pull(.data$databaseId)
-    selectedCohortId <- getSelectedRowsInCohortTableOfCohortDefinitionTab()$cohortId[2]
-    consolidatedSelectedFieldValue(list(
-      cohortId = selectedCohortId,
-      conceptSetId = selectedConceptSetId,
-      databaseId = selectedDatabaseId,
-      conceptId = selectedConceptId
-    ))
-  })
   
   getSelectedConceptIdActive <- reactiveVal(NULL)
   getSelectedConceptNameActive <- reactiveVal(NULL)
@@ -3027,13 +3133,13 @@ shiny::shinyServer(function(input, output, session) {
   
   ###Get the most recent selected Concept Id in resolved table Left ----
   observeEvent(eventExpr = {
-    is.null(input$resolvedConceptsTableLeft_rows_selected)
+    is.null(input$cohortDefinitionResolvedConceptTableLeft_rows_selected)
   },
   handlerExpr = {
-    idx <- input$resolvedConceptsTableLeft_rows_selected
+    idx <- input$cohortDefinitionResolvedConceptTableLeft_rows_selected
     if (is.null(idx)) {
       #If row is deselected in Left table, then search for the selected row in Right table
-      idx <- input$resolvedConceptsTableRight_rows_selected
+      idx <- input$cohortDefinitionResolvedConceptTableRight_rows_selected
       if (is.null(idx)) {
         getSelectedConceptIdActive(NULL)
         getSelectedConceptNameActive(NULL)
@@ -3063,12 +3169,12 @@ shiny::shinyServer(function(input, output, session) {
   
   ###Get the most recent selected Concept Id in resolved table Right ----
   observeEvent(eventExpr = {
-    is.null(input$resolvedConceptsTableRight_rows_selected)
+    is.null(input$cohortDefinitionResolvedConceptTableRight_rows_selected)
   },
   handlerExpr = {
-    idx <- input$resolvedConceptsTableRight_rows_selected
+    idx <- input$cohortDefinitionResolvedConceptTableRight_rows_selected
     if (is.null(idx)) {
-      idx <- input$resolvedConceptsTableLeft_rows_selected
+      idx <- input$cohortDefinitionResolvedConceptTableLeft_rows_selected
       if (is.null(idx)) {
         getSelectedConceptIdActive(NULL)
         getSelectedConceptNameActive(NULL)
@@ -3123,6 +3229,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     if ("orphanConcepts" %in% names(data)) {
       getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
+      browser()
       data <- pivotOrphanConceptResult(data = data$orphanConcepts,
                                        dataSource = dataSource)
       selctedConceptId <- data$conceptId[idx]
@@ -3160,6 +3267,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     if ("orphanConcepts" %in% names(data)) {
       getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
+      browser()
       data <- pivotOrphanConceptResult(data = data$orphanConcepts,
                                        dataSource = dataSource)
       selctedConceptId <- data$conceptId[idx]
@@ -3344,8 +3452,8 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   
-  #output: saveResolvedConceptsTableLeft----
-  output$saveResolvedConceptsTableLeft <-  downloadHandler(
+  #output: saveCohortDefinitionResolvedConceptTableLeft----
+  output$saveCohortDefinitionResolvedConceptTableLeft <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "ResolvedConcepts")
     },
@@ -3358,9 +3466,9 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
-  #output: resolvedConceptsTableLeft----
+  #output: cohortDefinitionResolvedConceptTableLeft----
   #!!! lets make this like orphan concept with sketch over database/vocabulary choices + sketch.
-  output$resolvedConceptsTableLeft <-
+  output$cohortDefinitionResolvedConceptTableLeft <-
     DT::renderDataTable(expr = {
       validate(need(
         length(getConceptSetExpressionLeft()$id) > 0,
@@ -3450,12 +3558,15 @@ shiny::shinyServer(function(input, output, session) {
     DT::renderDataTable(expr = {
       data <- getConceptSetDetailsLeft()
       if ("orphanConcepts" %in% names(data)) {
+        data <- data$orphanConcepts
+        if (any(is.null(data),
+                nrow(data) == 0)) {
+          return(NULL)
+        }
         orphanConceptDataDatabaseIds <-
-          unique(data$orphanConcepts$databaseId)
+          unique(data$databaseId)
         orphanConceptDataMaxCount <-
-          max(data$orphanConcepts$subjectCount , na.rm = TRUE)
-        data <- pivotOrphanConceptResult(data = data$orphanConcepts,
-                                         dataSource = dataSource)
+          max(data$subjectCount , na.rm = TRUE)
       } else {
         return(NULL)
       }
@@ -4010,9 +4121,9 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   
-  ##output: resolvedConceptsTableRight----
+  ##output: cohortDefinitionResolvedConceptTableRight----
   #!!! lets make this like orphan concept with sketch over database/vocabulary choices + sketch.
-  output$resolvedConceptsTableRight <-
+  output$cohortDefinitionResolvedConceptTableRight <-
     DT::renderDataTable(expr = {
       validate(need(
         length(getConceptSetExpressionRight()$id) > 0,
@@ -4082,8 +4193,8 @@ shiny::shinyServer(function(input, output, session) {
       return(dataTable)
     }, server = TRUE)
   
-  ##output: saveResolvedConceptsTableRight----
-  output$saveResolvedConceptsTableRight <-  downloadHandler(
+  ##output: saveCohortDefinitionResolvedConceptTableRight----
+  output$saveCohortDefinitionResolvedConceptTableRight <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "resolvedConceptSet")
     },
@@ -4101,12 +4212,16 @@ shiny::shinyServer(function(input, output, session) {
     DT::renderDataTable(expr = {
       data <- getConceptSetDetailsRight()
       if ("orphanConcepts" %in% names(data)) {
+        data <- data$orphanConcepts
+        data <- data$orphanConcepts
+        if (any(is.null(data),
+                nrow(data) == 0)) {
+          return(NULL)
+        }
         orphanConceptDataDatabaseIds <-
-          unique(data$orphanConcepts$databaseId)
+          unique(data$databaseId)
         orphanConceptDataMaxCount <-
-          max(data$orphanConcepts$subjectCount , na.rm = TRUE)
-        data <- pivotOrphanConceptResult(data = data$orphanConcepts,
-                                         dataSource = dataSource)
+          max(data$subjectCount , na.rm = TRUE)
       } else {
         return(NULL)
       }
