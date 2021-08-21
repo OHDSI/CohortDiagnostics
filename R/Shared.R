@@ -699,6 +699,7 @@ getConceptMetadata <- function(dataSource,
                                conceptAncestor = TRUE,
                                conceptSynonym = TRUE,
                                conceptCount = TRUE) {
+  browser()
   data <- list()
   # results not dependent on cohort definition
   if (conceptRelationship) {

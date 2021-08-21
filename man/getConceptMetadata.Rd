@@ -2,13 +2,18 @@
 % Please edit documentation in R/Shared.R
 \name{getConceptMetadata}
 \alias{getConceptMetadata}
-\title{Returns a metadata for a given list of concept ids}
+\title{Returns a metadata for concept ids}
 \usage{
 getConceptMetadata(
   dataSource,
   databaseIds = NULL,
+  cohortIds = NULL,
   vocabularyDatabaseSchema = NULL,
-  conceptIds = NULL
+  conceptIds = NULL,
+  conceptRelationship = TRUE,
+  conceptAncestor = TRUE,
+  conceptSynonym = TRUE,
+  conceptCount = TRUE
 )
 }
 \arguments{
@@ -23,17 +28,20 @@ and uploaded using \code{uploadResults}}
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
 
+\item{cohortIds}{(optional) A list of cohort ids to limit the metadata result}
+
 \item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
 commonly the same as cdmDatabaseSchema. Note that for 
 SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
 
-\item{conceptIds}{A list of concept ids to get counts for}
+\item{conceptIds}{(optional) A list of concept ids to limit the metadata result}
 }
 \value{
 Returns a list of data frames (tibbles)
 }
 \description{
 Returns a metadata for a given list of concept ids that includes concept synonyms,
-concept relationship, concept ancestor, concept count
+concept relationship, concept ancestor, concept count per database,
+concept cooccurrence on index date per database and cohortId.
 }

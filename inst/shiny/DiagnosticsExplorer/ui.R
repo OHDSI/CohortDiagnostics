@@ -266,7 +266,7 @@ bodyTabItems <- shinydashboard::tabItems(
                           tags$td(
                             align = "right",
                             shiny::downloadButton(
-                              outputId = "saveCohortDefinitionButton",
+                              outputId = "downloadAllCohortDetails",
                               label = NULL,
                               icon = shiny::icon("download"),
                               style = "margin-top: 5px; margin-bottom: 5px;"
