@@ -679,7 +679,7 @@ getResultsConceptSubjects <- function(dataSource,
 #' @template DataSource
 #'
 #' @template DatabaseIds
-#' 
+#'
 #' @template VocabularyDatabaseSchema
 #'
 #' @param cohortIds     (optional) A list of cohort ids to limit the metadata result
@@ -747,9 +747,11 @@ getConceptMetadata <- function(dataSource,
   # results dependent on databaseId
   if (conceptCount) {
     data$conceptCountDetails <-
-      getResultsConceptCount(dataSource = dataSource,
-                             databaseIds = databaseIds,
-                             conceptIds = conceptIdList)
+      getResultsConceptCount(
+        dataSource = dataSource,
+        databaseIds = databaseIds,
+        conceptIds = conceptIdList
+      )
     
     conceptCount <- data$conceptCountDetails %>%
       dplyr::rename('domainTableShort' = .data$domainTable) %>%
@@ -762,9 +764,11 @@ getConceptMetadata <- function(dataSource,
       dplyr::ungroup()
     
     data$conceptSubjectsDetails <-
-      getResultsConceptCount(dataSource = dataSource,
-                             databaseIds = databaseIds,
-                             conceptIds = conceptIdList)
+      getResultsConceptCount(
+        dataSource = dataSource,
+        databaseIds = databaseIds,
+        conceptIds = conceptIdList
+      )
     conceptSubjects <- data$conceptSubjectsDetails %>%
       dplyr::rename('domainTableShort' = .data$domainTable) %>%
       dplyr::inner_join(nonEraCdmTables,
@@ -933,8 +937,8 @@ getConceptSetDetailsFromCohortDefinition <-
       i <- i + 1
       conceptSetExpressionDetails[[i]] <-
         getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
-                                                         conceptSetExpression[i, ]$expression$items) %>%
-        dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
+                                                         conceptSetExpression[i,]$expression$items) %>%
+        dplyr::mutate(id = conceptSetExpression[i, ]$id) %>%
         dplyr::relocate(.data$id) %>%
         dplyr::arrange(.data$id)
     }
@@ -977,10 +981,13 @@ getConceptSetDataFrameFromConceptSetExpression <-
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
           dplyr::mutate(INCLUDE_MAPPED = FALSE)
       }
-      conceptSetExpressionDetails <- conceptSetExpressionDetails %>% 
-        tidyr::replace_na(list(IS_EXCLUDED = FALSE,
-                               INCLUDE_DESCENDANTS = FALSE,
-                               INCLUDE_MAPPED = FALSE))
+      conceptSetExpressionDetails <-
+        conceptSetExpressionDetails %>%
+        tidyr::replace_na(list(
+          IS_EXCLUDED = FALSE,
+          INCLUDE_DESCENDANTS = FALSE,
+          INCLUDE_MAPPED = FALSE
+        ))
       colnames(conceptSetExpressionDetails) <-
         snakeCaseToCamelCase(colnames(conceptSetExpressionDetails))
     }
@@ -1469,7 +1476,6 @@ getResultsCohortRelationships <- function(dataSource,
 getCohortOverlap <- function(dataSource,
                              cohortIds = NULL,
                              databaseIds = NULL) {
-  
   cohortCounts <-
     getResultsCohortCount(dataSource = dataSource,
                           cohortIds = cohortIds,
@@ -1792,7 +1798,7 @@ getCohortRelationshipCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101,-102,-103,-104,-201,-202,-203,-204)
+    analysisId <- c(-101, -102, -103, -104, -201, -202, -203, -204)
     analysisName <- c(
       "CohortOccurrenceAnyTimePrior",
       "CohortOccurrenceLongTerm",
@@ -1813,7 +1819,7 @@ getCohortRelationshipCharacterizationResults <-
       "bothSubjects",
       "bothSubjects"
     )
-    startDay <- c(-99999,-365,-180,-30,-99999,-365,-180,-30)
+    startDay <- c(-99999, -365, -180, -30, -99999, -365, -180, -30)
     endDay <- c(0, 0, 0, 0, 0, 0, 0, 0)
     analysisRef <-
       dplyr::tibble(analysisId, analysisName, valueField, startDay, endDay) %>%
@@ -1837,10 +1843,10 @@ getCohortRelationshipCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          startDay = analysisRef[j,]$startDay,
-          endDay = analysisRef[j,]$endDay,
-          analysisId = analysisRef[j,]$analysisId,
-          valueField = analysisRef[j,]$valueField,
+          startDay = analysisRef[j, ]$startDay,
+          endDay = analysisRef[j, ]$endDay,
+          analysisId = analysisRef[j, ]$analysisId,
+          valueField = analysisRef[j, ]$valueField,
           cohortCounts = cohortCounts
         )
     }
@@ -1997,7 +2003,7 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101,-201)
+    analysisId <- c(-101, -201)
     analysisName <- c("CohortEraStart", "CohortEraOverlap")
     valueField <- c("cSubjectsStart",
                     "bothSubjects")
@@ -2022,8 +2028,8 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          valueField = analysisRef[j,]$valueField,
-          analysisId = analysisRef[j,]$analysisId,
+          valueField = analysisRef[j, ]$valueField,
+          analysisId = analysisRef[j, ]$analysisId,
           temporalTimeRef = temporalTimeRef,
           cohortCounts = cohortCounts
         )
@@ -2283,7 +2289,7 @@ getMultipleCharacterizationResults <-
       dplyr::bind_rows(
         featureExtractionTemporalcharacterization$temporalTimeRef,
         cohortAsFeatureTemporalCharacterizationResults$temporalTimeRef
-      ) %>% 
+      ) %>%
       dplyr::distinct()
     if (all(!is.null(temporalTimeRef), nrow(temporalTimeRef) == 0)) {
       temporalTimeRef <- NULL
@@ -2659,7 +2665,7 @@ getDomainInformation <- function(versionNumber = NULL,
   
   data <- list()
   data$wide <- domains
-  data$long <- data <- dplyr::bind_rows(
+  data$long <- dplyr::bind_rows(
     data$wide %>%
       dplyr::select(
         .data$domainTableShort,
@@ -2689,7 +2695,7 @@ getDomainInformation <- function(versionNumber = NULL,
                                                  pattern = 'era')) %>%
     dplyr::mutate(isSourceField = stringr::str_detect(string = .data$domainField,
                                                       pattern = 'source'))
-  return(domains)
+  return(data)
 }
 
 .replaceNaInDataFrameWithEmptyString <- function(data) {

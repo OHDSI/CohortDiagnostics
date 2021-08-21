@@ -167,13 +167,14 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ##getNonEraCdmTableNames----
-  getNonEraCdmTableNames <- shiny::reactive({
-    data <- getOmopDomainInformation()$wide %>%
+  ##getNonEraCdmTableShortNames----
+  getNonEraCdmTableShortNames <- shiny::reactive({
+    data <- getOmopDomainInformation() %>%
       dplyr::filter(.data$isEraTable == FALSE) %>%
       dplyr::select(.data$domainTableShort) %>%
       dplyr::distinct() %>%
-      dplyr::arrange()
+      dplyr::arrange() %>% 
+      dplyr::pull()
     return(data)
   })
   
@@ -234,8 +235,7 @@ shiny::shinyServer(function(input, output, session) {
                    value = 0)
       
       conceptCount <- data$conceptCount %>%
-        dplyr::inner_join(getNonEraCdmTableNames(),
-                          by = c('domainTableShort')) %>%
+        dplyr::filter(.data$domainTableShort %in% getNonEraCdmTableShortNames()) %>%
         dplyr::group_by(.data$conceptId,
                         .data$databaseId) %>%
         dplyr::summarise(conceptCount = sum(.data$conceptCount),
@@ -243,8 +243,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::ungroup()
       
       conceptSubjects <- data$conceptSubjects %>%
-        dplyr::inner_join(getNonEraCdmTableNames(),
-                          by = c('domainTableShort')) %>%
+        dplyr::filter(.data$domainTableShort %in% getNonEraCdmTableShortNames()) %>%
         dplyr::group_by(.data$conceptId,
                         .data$databaseId) %>%
         dplyr::summarise(subjectCount = max(.data$subjectCount),
@@ -279,8 +278,7 @@ shiny::shinyServer(function(input, output, session) {
       )
       
       conceptCount <- data$conceptCount %>%
-        dplyr::inner_join(getNonEraCdmTableNames(),
-                          by = c('domainTableShort')) %>%
+        dplyr::filter(.data$domainTableShort %in% getNonEraCdmTableShortNames()) %>%
         dplyr::mutate(periodBegin = ISOdate(
           year = .data$eventYear,
           month = .data$eventMonth,
@@ -321,7 +319,7 @@ shiny::shinyServer(function(input, output, session) {
                    value = 0)
       
       conceptCount <- data$conceptCount %>%
-        dplyr::filter(.data$domainTableShort %in% getNonEraCdmTableNames()$domainTableShort) %>%
+        dplyr::filter(.data$domainTableShort %in% getNonEraCdmTableShortNames()) %>%
         dplyr::mutate(periodBegin = lubridate::as_date(paste0(.data$eventYear,"-01-01"))) %>% #Lubridate exponetially faster that baseR as.Date and  ISODate
         dplyr::group_by(.data$conceptId,
                         .data$databaseId,

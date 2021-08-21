@@ -669,19 +669,22 @@ getResultsConceptSubjects <- function(dataSource,
 }
 
 
-#' Returns a metadata for a given list of concept ids
+#' Returns a metadata for concept ids
 #'
 #' @description
 #' Returns a metadata for a given list of concept ids that includes concept synonyms,
-#' concept relationship, concept ancestor, concept count
+#' concept relationship, concept ancestor, concept count per database,
+#' concept cooccurrence on index date per database and cohortId.
 #'
 #' @template DataSource
 #'
 #' @template DatabaseIds
-#' 
+#'
 #' @template VocabularyDatabaseSchema
 #'
-#' @param conceptIds     A list of concept ids to get counts for
+#' @param cohortIds     (optional) A list of cohort ids to limit the metadata result
+#'
+#' @param conceptIds    (optional) A list of concept ids to limit the metadata result
 #'
 #' @return
 #' Returns a list of data frames (tibbles)
@@ -689,43 +692,49 @@ getResultsConceptSubjects <- function(dataSource,
 #' @export
 getConceptMetadata <- function(dataSource,
                                databaseIds = NULL,
+                               cohortIds = NULL,
                                vocabularyDatabaseSchema = NULL,
-                               conceptIds = NULL) {
+                               conceptIds = NULL,
+                               conceptRelationship = TRUE,
+                               conceptAncestor = TRUE,
+                               conceptSynonym = TRUE,
+                               conceptCount = TRUE) {
   data <- list()
-  data$conceptRelationship <-
-    getConceptRelationship(
+  # results not dependent on cohort definition
+  if (conceptRelationship) {
+    data$conceptRelationship <-
+      getConceptRelationship(
+        dataSource = dataSource,
+        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+        conceptIds = conceptIds
+      )
+  }
+  
+  if (conceptAncestor) {
+    data$conceptAncestor <-
+      getConceptAncestor(
+        dataSource = dataSource,
+        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+        conceptIds = conceptIds
+      )
+  }
+  
+  if (conceptSynonym) {
+    data$conceptSynonym <- getConceptSynonym(
       dataSource = dataSource,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       conceptIds = conceptIds
     )
-  data$conceptAncestor <-
-    getConceptAncestor(
-      dataSource = dataSource,
-      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      conceptIds = conceptIds
-    )
-  data$conceptSynonym <- getConceptSynonym(
-    dataSource = dataSource,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    conceptIds = conceptIds
-  )
+  }
   
   conceptIdList <- c(
+    conceptId,
     data$conceptRelationship$conceptId1,
     data$conceptRelationship$conceptId2,
     data$conceptAncestor$ancestorConceptId,
     data$conceptAncestor$descendantConceptId
   ) %>%
     unique()
-  
-  data$conceptCountDetails <-
-    getResultsConceptCount(dataSource = dataSource,
-                           databaseIds = databaseIds,
-                           conceptIds = conceptIdList)
-  data$conceptSubjectsDetails <-
-    getResultsConceptCount(dataSource = dataSource,
-                           databaseIds = databaseIds,
-                           conceptIds = conceptIdList)
   
   nonEraCdmTables <- getDomainInformation() %>%
     dplyr::mutate(isEraTable = stringr::str_detect(string = .data$domainTable,
@@ -735,31 +744,47 @@ getConceptMetadata <- function(dataSource,
     dplyr::distinct() %>%
     dplyr::arrange()
   
-  conceptCount <- data$conceptCountDetails %>%
-    dplyr::rename('domainTableShort' = .data$domainTable) %>% 
-    dplyr::inner_join(nonEraCdmTables,
-                      by = c('domainTableShort')) %>%
-    dplyr::group_by(.data$conceptId,
-                    .data$databaseId) %>%
-    dplyr::summarise(conceptCount = sum(.data$conceptCount),
-                     .groups = 'keep') %>%
-    dplyr::ungroup()
-  
-  conceptSubjects <- data$conceptSubjectsDetails %>%
-    dplyr::rename('domainTableShort' = .data$domainTable) %>% 
-    dplyr::inner_join(nonEraCdmTables,
-                      by = c('domainTableShort')) %>%
-    dplyr::group_by(.data$conceptId,
-                    .data$databaseId) %>%
-    dplyr::summarise(subjectCount = max(.data$conceptCount),
-                     .groups = 'keep') %>%
-    dplyr::ungroup()
-  
-  data$conceptCount <- conceptCount %>%
-    dplyr::inner_join(conceptSubjects,
-                      by = c('databaseId',
-                             'conceptId')) %>%
-    dplyr::arrange(.data$conceptId, .data$databaseId)
+  # results dependent on databaseId
+  if (conceptCount) {
+    data$conceptCountDetails <-
+      getResultsConceptCount(
+        dataSource = dataSource,
+        databaseIds = databaseIds,
+        conceptIds = conceptIdList
+      )
+    
+    conceptCount <- data$conceptCountDetails %>%
+      dplyr::rename('domainTableShort' = .data$domainTable) %>%
+      dplyr::inner_join(nonEraCdmTables,
+                        by = c('domainTableShort')) %>%
+      dplyr::group_by(.data$conceptId,
+                      .data$databaseId) %>%
+      dplyr::summarise(conceptCount = sum(.data$conceptCount),
+                       .groups = 'keep') %>%
+      dplyr::ungroup()
+    
+    data$conceptSubjectsDetails <-
+      getResultsConceptCount(
+        dataSource = dataSource,
+        databaseIds = databaseIds,
+        conceptIds = conceptIdList
+      )
+    conceptSubjects <- data$conceptSubjectsDetails %>%
+      dplyr::rename('domainTableShort' = .data$domainTable) %>%
+      dplyr::inner_join(nonEraCdmTables,
+                        by = c('domainTableShort')) %>%
+      dplyr::group_by(.data$conceptId,
+                      .data$databaseId) %>%
+      dplyr::summarise(subjectCount = max(.data$conceptCount),
+                       .groups = 'keep') %>%
+      dplyr::ungroup()
+    
+    data$conceptCount <- conceptCount %>%
+      dplyr::inner_join(conceptSubjects,
+                        by = c('databaseId',
+                               'conceptId')) %>%
+      dplyr::arrange(.data$conceptId, .data$databaseId)
+  }
   
   data$concept <- getConcept(
     dataSource = dataSource,
@@ -877,8 +902,8 @@ getResultsOrphanConcept <- function(dataSource,
 #'
 #' @export
 getResultsConceptCooccurrence <- function(dataSource,
-                                       databaseIds = NULL,
-                                       cohortIds = NULL) {
+                                          databaseIds = NULL,
+                                          cohortIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
@@ -912,8 +937,8 @@ getConceptSetDetailsFromCohortDefinition <-
       i <- i + 1
       conceptSetExpressionDetails[[i]] <-
         getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
-                                                         conceptSetExpression[i, ]$expression$items) %>%
-        dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
+                                                         conceptSetExpression[i,]$expression$items) %>%
+        dplyr::mutate(id = conceptSetExpression[i, ]$id) %>%
         dplyr::relocate(.data$id) %>%
         dplyr::arrange(.data$id)
     }
@@ -956,10 +981,13 @@ getConceptSetDataFrameFromConceptSetExpression <-
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
           dplyr::mutate(INCLUDE_MAPPED = FALSE)
       }
-      conceptSetExpressionDetails <- conceptSetExpressionDetails %>% 
-        tidyr::replace_na(list(IS_EXCLUDED = FALSE,
-                               INCLUDE_DESCENDANTS = FALSE,
-                               INCLUDE_MAPPED = FALSE))
+      conceptSetExpressionDetails <-
+        conceptSetExpressionDetails %>%
+        tidyr::replace_na(list(
+          IS_EXCLUDED = FALSE,
+          INCLUDE_DESCENDANTS = FALSE,
+          INCLUDE_MAPPED = FALSE
+        ))
       colnames(conceptSetExpressionDetails) <-
         snakeCaseToCamelCase(colnames(conceptSetExpressionDetails))
     }
@@ -1448,7 +1476,6 @@ getResultsCohortRelationships <- function(dataSource,
 getCohortOverlap <- function(dataSource,
                              cohortIds = NULL,
                              databaseIds = NULL) {
-  
   cohortCounts <-
     getResultsCohortCount(dataSource = dataSource,
                           cohortIds = cohortIds,
@@ -1771,7 +1798,7 @@ getCohortRelationshipCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101,-102,-103,-104,-201,-202,-203,-204)
+    analysisId <- c(-101, -102, -103, -104, -201, -202, -203, -204)
     analysisName <- c(
       "CohortOccurrenceAnyTimePrior",
       "CohortOccurrenceLongTerm",
@@ -1792,7 +1819,7 @@ getCohortRelationshipCharacterizationResults <-
       "bothSubjects",
       "bothSubjects"
     )
-    startDay <- c(-99999,-365,-180,-30,-99999,-365,-180,-30)
+    startDay <- c(-99999, -365, -180, -30, -99999, -365, -180, -30)
     endDay <- c(0, 0, 0, 0, 0, 0, 0, 0)
     analysisRef <-
       dplyr::tibble(analysisId, analysisName, valueField, startDay, endDay) %>%
@@ -1816,10 +1843,10 @@ getCohortRelationshipCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          startDay = analysisRef[j,]$startDay,
-          endDay = analysisRef[j,]$endDay,
-          analysisId = analysisRef[j,]$analysisId,
-          valueField = analysisRef[j,]$valueField,
+          startDay = analysisRef[j, ]$startDay,
+          endDay = analysisRef[j, ]$endDay,
+          analysisId = analysisRef[j, ]$analysisId,
+          valueField = analysisRef[j, ]$valueField,
           cohortCounts = cohortCounts
         )
     }
@@ -1976,7 +2003,7 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101,-201)
+    analysisId <- c(-101, -201)
     analysisName <- c("CohortEraStart", "CohortEraOverlap")
     valueField <- c("cSubjectsStart",
                     "bothSubjects")
@@ -2001,8 +2028,8 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          valueField = analysisRef[j,]$valueField,
-          analysisId = analysisRef[j,]$analysisId,
+          valueField = analysisRef[j, ]$valueField,
+          analysisId = analysisRef[j, ]$analysisId,
           temporalTimeRef = temporalTimeRef,
           cohortCounts = cohortCounts
         )
@@ -2262,7 +2289,7 @@ getMultipleCharacterizationResults <-
       dplyr::bind_rows(
         featureExtractionTemporalcharacterization$temporalTimeRef,
         cohortAsFeatureTemporalCharacterizationResults$temporalTimeRef
-      ) %>% 
+      ) %>%
       dplyr::distinct()
     if (all(!is.null(temporalTimeRef), nrow(temporalTimeRef) == 0)) {
       temporalTimeRef <- NULL
@@ -2554,7 +2581,7 @@ convertMdToHtml <- function(markdown) {
 #' @param packageName e.g. 'CohortDiagnostics'
 #'
 #' @return
-#' A tibble data frame object with domain information
+#' A list with two tibble data frame objects with domain information represented in wide and long format respectively.
 getDomainInformation <- function(versionNumber = NULL,
                                  packageName = NULL) {
   ParallelLogger::logTrace("  - Reading domains.csv")
@@ -2566,12 +2593,8 @@ getDomainInformation <- function(versionNumber = NULL,
         readr::read_csv("domains.csv",
                         guess_max = min(1e7),
                         col_types = readr::cols())
-      ParallelLogger::logTrace(
-        paste0(
-          "  - Retrieved domains.csv ",
-          packageName
-        )
-      )
+      ParallelLogger::logTrace(paste0("  - Retrieved domains.csv ",
+                                      packageName))
     } else {
       stop("Can't find domains.csv file in package")
     }
@@ -2582,21 +2605,21 @@ getDomainInformation <- function(versionNumber = NULL,
                   package = packageName)
     if (!pathToCsv == "") {
       domains <-
-        readr::read_csv(file = pathToCsv, 
-                        guess_max = min(1e7),
-                        col_types = readr::cols())
-    } else {
-      stop(
-        paste0(
-          "domains.csv was not found in installed package: ",
-          packageName
+        readr::read_csv(
+          file = pathToCsv,
+          guess_max = min(1e7),
+          col_types = readr::cols()
         )
-      )
+    } else {
+      stop(paste0(
+        "domains.csv was not found in installed package: ",
+        packageName
+      ))
     }
   }
   
   domains <- domains %>%
-    .replaceNaInDataFrameWithEmptyString() %>% 
+    .replaceNaInDataFrameWithEmptyString() %>%
     dplyr::mutate(domainTableShort = stringr::str_sub(
       string = toupper(.data$domain),
       start = 1,
@@ -2635,7 +2658,44 @@ getDomainInformation <- function(versionNumber = NULL,
       pattern = " ",
       replacement = ""
     )
-  return(domains)
+  
+  domains <- domains  %>%
+    dplyr::mutate(isEraTable = stringr::str_detect(string = .data$domainTable,
+                                                   pattern = 'era'))
+  
+  data <- list()
+  data$wide <- domains
+  data$long <- dplyr::bind_rows(
+    data$wide %>%
+      dplyr::select(
+        .data$domainTableShort,
+        .data$domainTable,
+        .data$domainConceptIdShort,
+        .data$domainConceptId
+      ) %>%
+      dplyr::rename(
+        domainFieldShort = .data$domainConceptIdShort,
+        domainField = .data$domainConceptId
+      ),
+    data$wide %>%
+      dplyr::select(
+        .data$domainTableShort,
+        .data$domainSourceConceptIdShort,
+        .data$domainTable,
+        .data$domainSourceConceptId
+      ) %>%
+      dplyr::rename(
+        domainFieldShort = .data$domainSourceConceptIdShort,
+        domainField = .data$domainSourceConceptId
+      )
+  ) %>%
+    dplyr::distinct() %>%
+    dplyr::filter(.data$domainFieldShort != "") %>%
+    dplyr::mutate(eraTable = stringr::str_detect(string = .data$domainTable,
+                                                 pattern = 'era')) %>%
+    dplyr::mutate(isSourceField = stringr::str_detect(string = .data$domainField,
+                                                      pattern = 'source'))
+  return(data)
 }
 
 .replaceNaInDataFrameWithEmptyString <- function(data) {
