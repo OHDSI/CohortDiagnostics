@@ -7058,6 +7058,49 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
+  ## IndexEventBreakdown Consolidated reactive val update----
+  observeEvent(
+    eventExpr = input$indexEventBreakdownTable_rows_selected,
+    handlerExpr = {
+      idx <-
+        input$indexEventBreakdownTable_rows_selected
+      selectedConceptId <-
+        getIndexEventBreakdownDataTable()$conceptId[idx]
+      selectedConceptSetId <- conceptSets %>%
+        dplyr::filter(.data$conceptSetName %in% input$conceptSetsSelectedFromOneCohort) %>%
+        dplyr::pull(.data$conceptSetId) %>%
+        unique()
+      selectedDatabaseId <-
+        input$selectedDatabaseIds
+      #Extracting cohortId from selectedCompoundCohortName
+      selectedCohortId <-
+        gsub("\\(|\\)",
+             "",
+             substring(
+               input$selectedCompoundCohortName,
+               regexpr("[(][0-9]+[)]{1}", input$selectedCompoundCohortName)
+             ))
+      if (all(
+        isNullCheckPassed(selectedConceptId),
+        isNullCheckPassed(selectedConceptSetId),
+        isNullCheckPassed(selectedDatabaseId),
+        isNullCheckPassed(selectedCohortId)
+      )) {
+        consolidatedSelectedFieldValue(
+          list(
+            cohortId = selectedCohortId,
+            conceptSetId = selectedConceptSetId,
+            databaseId = selectedDatabaseId,
+            conceptId = selectedConceptId
+          )
+        )
+      } else {
+        consolidatedSelectedFieldValue(list())
+      }
+      
+    }
+  )
+  
   #______________----
   # Visit Context -----
   ##getVisitContextData----

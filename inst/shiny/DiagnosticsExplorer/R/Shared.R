@@ -19,6 +19,14 @@
 # this script is shared between Cohort Diagnostics and Diagnostics Explorer
 
 # private function - not exported
+isNullCheckPassed <- function(data) {
+  if (any(is.null(data), length(data) == 0, nrow(data) == 0)) {
+    return(FALSE)
+  }
+  return(TRUE)
+}
+
+# private function - not exported
 camelCaseToTitleCase <- function(string) {
   string <- gsub("([A-Z])", " \\1", string)
   string <- gsub("([a-z])([0-9])", "\\1 \\2", string)
