@@ -2205,8 +2205,6 @@ shiny::shinyServer(function(input, output, session) {
               value = "cohortDefinitionOneDetailsTextTabPanel",
               tags$br(),
               shinydashboard::box(
-                #!!!!!!!!fix height and vertical scroll bar
-                #!!! remove boundary margin colors
                 title = "Readable definitions",
                 width = NULL,
                 status = NULL,
@@ -2218,11 +2216,14 @@ shiny::shinyServer(function(input, output, session) {
                 shiny::htmlOutput("circeRVersionInCohortDefinitionLeft"),
                 shiny::htmlOutput("cohortDefinitionTextLeft")
               ),
-              #!!!!!!put metadata in its own shinydashboard box
-              shiny::htmlOutput("cohortDetailsTextLeft"),
-              tags$head(
-                tags$style("#cohortDetailsTextLeft { max-height:400px};")
-              )
+              shinydashboard::box(
+                title = "Meta data",
+                width = NULL,
+                status = NULL,
+                collapsible = TRUE,
+                collapsed = FALSE,
+                solidHeader = FALSE,
+                shiny::htmlOutput("cohortDetailsTextLeft"))
             ),
             shiny::tabPanel(
               #!!!!!!!!!if cohort has no concept sets - make gray color or say 'No Concept sets'
@@ -2467,13 +2468,17 @@ shiny::shinyServer(function(input, output, session) {
                 copyToClipboardButton(toCopyId = "cohortDefinitionTextRight",
                                       style = "margin-top: 5px; margin-bottom: 5px;"),
                 shiny::htmlOutput("circeRVersionInCohortDefinitionRight"),
-                shiny::htmlOutput("cohortDefinitionTextRight"),
-                tags$head(
-                  tags$style("#cohortDefinitionTextRight { max-height:400px};")
-                )
+                shiny::htmlOutput("cohortDefinitionTextRight")
               ),
-              #!!!! put metadata in its own shiny dashboard box
-              shiny::htmlOutput("cohortDetailsTextRight")
+              shinydashboard::box(
+                title = "Meta data",
+                width = NULL,
+                status = NULL,
+                collapsible = TRUE,
+                collapsed = FALSE,
+                solidHeader = FALSE,
+                shiny::htmlOutput("cohortDetailsTextRight")
+              )
             ),
             shiny::tabPanel(
               title = "Concept Sets",
