@@ -915,7 +915,7 @@ getResultsConceptCooccurrence <- function(dataSource,
 }
 
 
-extractConceptSetFromCohortDefinition <-
+getConceptSetDetailsFromCohortDefinition <-
   function(cohortDefinitionExpression) {
     if ("expression" %in% names(cohortDefinitionExpression)) {
       expression <- cohortDefinitionExpression$expression
