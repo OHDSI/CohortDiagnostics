@@ -19,6 +19,28 @@
 # this script is shared between Cohort Diagnostics and Diagnostics Explorer
 
 # private function - not exported
+doesObjectHaveData <- function(data) {
+  result <- TRUE
+  if (is.null(data)) {
+    result <- FALSE
+    return(result)
+  }
+  if (is.data.frame(data)) {
+    if (nrow(data) == 0) {
+      result <- FALSE
+      return(result)
+    }
+  }
+  if (!is.data.frame(data)) {
+    if (length(data) == 0) {
+      result <- FALSE
+      return(result)
+    }
+    return(result)
+  }
+}
+
+# private function - not exported
 camelCaseToTitleCase <- function(string) {
   string <- gsub("([A-Z])", " \\1", string)
   string <- gsub("([a-z])([0-9])", "\\1 \\2", string)
@@ -699,7 +721,6 @@ getConceptMetadata <- function(dataSource,
                                conceptAncestor = TRUE,
                                conceptSynonym = TRUE,
                                conceptCount = TRUE) {
-  browser()
   data <- list()
   # results not dependent on cohort definition
   if (conceptRelationship) {

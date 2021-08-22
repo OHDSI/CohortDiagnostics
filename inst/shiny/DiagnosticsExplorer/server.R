@@ -424,6 +424,53 @@ shiny::shinyServer(function(input, output, session) {
                  }
                })
   
+  #consolidate selections from cohortDefinitionTable in cohort definition tab - left & right
+  observeEvent(
+    eventExpr = input$cohortDefinitionTable_rows_selected,
+    handlerExpr = {
+      browser()
+      data <- consolidationOfSelectedFieldValues(input = input,
+                                                 cohort = getCohortSortedByCohortId())
+      consolidatedSelectedFieldValue(data)
+    }
+  )
+  
+  #consolidate selections from conceptSetExpressionTable in cohort definition tab - left
+  observeEvent(
+    eventExpr = input$conceptsetExpressionTableLeft_rows_selected,
+    handlerExpr = {
+      browser()
+      data <- consolidationOfSelectedFieldValues(input = input,
+                                                 cohort = getCohortSortedByCohortId())
+      consolidatedSelectedFieldValue(data)
+    }
+  )
+  
+  #consolidate selections from conceptSetExpressionTable in cohort definition tab - Right
+  observeEvent(
+    eventExpr = input$conceptsetExpressionTableRight_rows_selected,
+    handlerExpr = {
+      consolidatedSelectedFieldValue(list())
+      idx <- input$conceptsetExpressionTableRight_rows_selected
+      selectedConceptId <- NULL
+      selectedConceptSetId <- getConceptSetExpressionRight()$id
+      selectedDatabaseId <-
+        getSelectedDatabaseForConceptSetRight() %>%
+        dplyr::pull(.data$databaseId)
+      selectedCohortId <-
+        getSelectedCohortInCohortTableOfCohortDefinitionTabForRightPanel()$cohortId
+      consolidatedSelectedFieldValue(
+        list(
+          cohortId = selectedCohortId,
+          conceptSetId = selectedConceptSetId,
+          databaseId = selectedDatabaseId,
+          conceptId = selectedConceptId
+        )
+      )
+      return(consolidatedSelectedFieldValue)
+    }
+  )
+  
   #consolidate selections from resolvedConceptTable in cohort definition tab - left
   observeEvent(
     eventExpr = input$cohortDefinitionResolvedConceptTableLeft_rows_selected,
@@ -440,12 +487,13 @@ shiny::shinyServer(function(input, output, session) {
         getSelectedCohortInCohortTableOfCohortDefinitionTabForLeftPanel()$cohortId
       consolidatedSelectedFieldValue(
         list(
-          cohortId = selectedCohortId$cohortId,
+          cohortId = selectedCohortId,
           conceptSetId = selectedConceptSetId,
           databaseId = selectedDatabaseId,
           conceptId = selectedConceptId
         )
       )
+      return(consolidatedSelectedFieldValue)
     }
   )
   
@@ -466,17 +514,15 @@ shiny::shinyServer(function(input, output, session) {
         getSelectedCohortInCohortTableOfCohortDefinitionTabForRightPanel()$cohortId
       consolidatedSelectedFieldValue(
         list(
-          cohortId = selectedCohortId$cohortId,
+          cohortId = selectedCohortId,
           conceptSetId = selectedConceptSetId,
           databaseId = selectedDatabaseId,
           conceptId = selectedConceptId
         )
       )
+      return(consolidatedSelectedFieldValue)
     }
   )
-  
-  
-  
   
   
   #consolidate selections from excludedConceptTable in cohort definition tab - left
@@ -496,12 +542,13 @@ shiny::shinyServer(function(input, output, session) {
         getSelectedCohortInCohortTableOfCohortDefinitionTabForLeftPanel()
       consolidatedSelectedFieldValue(
         list(
-          cohortId = selectedCohortId$cohortId,
+          cohortId = selectedCohortId,
           conceptSetId = selectedConceptSetId,
           databaseId = selectedDatabaseId,
           conceptId = selectedConceptId
         )
       )
+      return(consolidatedSelectedFieldValue)
     }
   )
   
@@ -522,12 +569,13 @@ shiny::shinyServer(function(input, output, session) {
         getSelectedCohortInCohortTableOfCohortDefinitionTabForRightPanel
       consolidatedSelectedFieldValue(
         list(
-          cohortId = selectedCohortId$cohortId,
+          cohortId = selectedCohortId,
           conceptSetId = selectedConceptSetId,
           databaseId = selectedDatabaseId,
           conceptId = selectedConceptId
         )
       )
+      return(consolidatedSelectedFieldValue)
     }
   )
   
@@ -548,12 +596,13 @@ shiny::shinyServer(function(input, output, session) {
         getSelectedCohortInCohortTableOfCohortDefinitionTabForLeftPanel()
       consolidatedSelectedFieldValue(
         list(
-          cohortId = selectedCohortId$cohortId,
+          cohortId = selectedCohortId,
           conceptSetId = selectedConceptSetId,
           databaseId = selectedDatabaseId,
           conceptId = selectedConceptId
         )
       )
+      return(consolidatedSelectedFieldValue)
     }
   )
   
@@ -574,12 +623,13 @@ shiny::shinyServer(function(input, output, session) {
         getSelectedCohortInCohortTableOfCohortDefinitionTabForRightPanel
       consolidatedSelectedFieldValue(
         list(
-          cohortId = selectedCohortId$cohortId,
+          cohortId = selectedCohortId,
           conceptSetId = selectedConceptSetId,
           databaseId = selectedDatabaseId,
           conceptId = selectedConceptId
         )
       )
+      return(consolidatedSelectedFieldValue)
     }
   )
   
@@ -1401,6 +1451,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getConceptSetDetailsLeft----
   getConceptSetDetailsLeft <- shiny::reactive({
+    browser()
     selectedCohort <-
       getSelectedCohortInCohortTableOfCohortDefinitionTabForLeftPanel()
     if (any(is.null(selectedCohort),
@@ -7081,10 +7132,10 @@ shiny::shinyServer(function(input, output, session) {
                regexpr("[(][0-9]+[)]{1}", input$selectedCompoundCohortName)
              ))
       if (all(
-        isNullCheckPassed(selectedConceptId),
-        isNullCheckPassed(selectedConceptSetId),
-        isNullCheckPassed(selectedDatabaseId),
-        isNullCheckPassed(selectedCohortId)
+        doesObjectHaveData(selectedConceptId),
+        doesObjectHaveData(selectedConceptSetId),
+        doesObjectHaveData(selectedDatabaseId),
+        doesObjectHaveData(selectedCohortId)
       )) {
         consolidatedSelectedFieldValue(
           list(

@@ -126,3 +126,56 @@ sumCounts <- function(counts) {
     return(result)
   }
 }
+
+
+
+consolidationOfSelectedFieldValues <- function(input,
+                                               cohort = getCohortSortedByCohortId(),
+                                               conceptSetExpression) {
+  data <- list()
+  if (input$tabs == 'cohortDefinition') {
+    if (!is.null(input$cohortDefinitionTable_rows_selected)) {
+      if (length(input$cohortDefinitionTable_rows_selected) > 1) {
+        # get the last two rows selected - this is only for cohort table to enable LEFT/RIGHT comparison
+        lastRowsSelected <-
+          idx[c(
+            length(input$cohortDefinitionTable_rows_selected),
+            length(input$cohortDefinitionTable_rows_selected) - 1
+          )]
+        data$cohortIdLeft <- cohort[lastRowsSelected[[1]],]$cohortId
+        data$cohortIdRight <- cohort[lastRowsSelected[[2]],]$cohortId
+      } else {
+        lastRowsSelected <- input$cohortDefinitionTable_rows_selected
+        data$cohortIdLeft <- cohort[lastRowsSelected[[1]],]$cohortId
+        data$cohortIdRight <- NULL
+      }
+    }
+    if (all(
+      !is.null(input$conceptsetExpressionTableLeft_rows_selected),
+      !is.null(data$cohortIdLeft)
+    )) {
+      conceptSetDetails <-
+        getConceptSetDetailsFromCohortDefinition(
+          cohortDefinitionExpression = RJSONIO::fromJSON(
+            cohort %>%
+              dplyr::filter(.data$cohortId == data$cohortIdLeft) %>%
+              dplyr::pull(.data$json)
+          )
+        )
+    }
+    if (all(
+      !is.null(input$conceptsetExpressionTableRight_rows_selected),
+      !is.null(data$cohortIdRight)
+    )) {
+      data$conceptSetRight <-
+        getConceptSetDetailsFromCohortDefinition(
+          cohortDefinitionExpression = RJSONIO::fromJSON(
+            cohort %>%
+              dplyr::filter(.data$cohortId == data$cohortIdRight) %>%
+              dplyr::pull(.data$json)
+          )
+        )
+    }
+  }
+  return(data)
+}

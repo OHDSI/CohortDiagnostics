@@ -19,11 +19,25 @@
 # this script is shared between Cohort Diagnostics and Diagnostics Explorer
 
 # private function - not exported
-isNullCheckPassed <- function(data) {
-  if (any(is.null(data), length(data) == 0, nrow(data) == 0)) {
-    return(FALSE)
+doesObjectHaveData <- function(data) {
+  result <- TRUE
+  if (is.null(data)) {
+    result <- FALSE
+    return(result)
   }
-  return(TRUE)
+  if (is.data.frame(data)) {
+    if (nrow(data) == 0) {
+      result <- FALSE
+      return(result)
+    }
+  }
+  if (!is.data.frame(data)) {
+    if (length(data) == 0) {
+      result <- FALSE
+      return(result)
+  }
+  return(result)
+  }
 }
 
 # private function - not exported
