@@ -132,14 +132,19 @@ sumCounts <- function(counts) {
 consolidationOfSelectedFieldValues <- function(input,
                                                cohort = NULL,
                                                conceptSetExpressionAndDetails = NULL,
-                                               database) {
+                                               database = NULL,
+                                               resolvedConceptSetDataLeft = NULL,
+                                               resolvedConceptSetDataRight = NULL,
+                                               orphanConceptSetDataLeft = NULL,
+                                               orphanConceptSetDataRight = NULL,
+                                               excludedConceptSetDataLeft = NULL,
+                                               excludedConceptSetDataRight = NULL) {
   data <- list()
   ##########################Cohort Definition tab ##########################
   if (input$tabs == 'cohortDefinition') {
     #selection of cohort
     if (doesObjectHaveData(input$cohortDefinitionTable_rows_selected)) {
       if (length(input$cohortDefinitionTable_rows_selected) > 1) {
-        browser()
         # get the last two rows selected - this is only for cohort table to enable LEFT/RIGHT comparison
         lastRowsSelected <-
           input$cohortDefinitionTable_rows_selected[c(
@@ -193,6 +198,30 @@ consolidationOfSelectedFieldValues <- function(input,
           .data$databaseIdWithVocabularyVersion == input$choiceForConceptSetDetailsRight
         ) %>% 
         dplyr::pull(.data$databaseId)
+    }
+    #selection on concept id
+    if (doesObjectHaveData(input$cohortDefinitionResolvedConceptTableLeft_rows_selected)) {
+      data$selectedConceptIdLeft <- resolvedConceptSetDataLeft[input$cohortDefinitionResolvedConceptTableLeft_rows_selected,]$conceptId
+    }
+    if (doesObjectHaveData(input$cohortDefinitionResolvedConceptTableRight_rows_selected)) {
+      browser()
+      data$selectedConceptIdRight <- resolvedConceptSetDataRight[input$cohortDefinitionResolvedConceptTableRight_rows_selected,]$conceptId
+    }
+    if (doesObjectHaveData(input$cohortDefinitionExcludedConceptTableLeft_rows_selected)) {
+      browser()
+      data$selectedConceptIdLeft <- excludedConceptSetDataLeft[input$cohortDefinitionExcludedConceptTableLeft_rows_selected,]$conceptId
+    }
+    if (doesObjectHaveData(input$cohortDefinitionExcludedConceptTableRight_rows_selected)) {
+      browser()
+      data$selectedConceptIdRight <- excludedConceptSetDataRight[input$cohortDefinitionExcludedConceptTableRight_rows_selected,]$conceptId
+    }
+    if (doesObjectHaveData(input$cohortDefinitionOrphanConceptTableLeft_rows_selected)) {
+      browser()
+      data$selectedConceptIdLeft <- orphanConceptSetDataLeft[input$cohortDefinitionOrphanConceptTableLeft_rows_selected,]$conceptId
+    }
+    if (doesObjectHaveData(input$cohortDefinitionOrphanConceptTableRight_rows_selected)) {
+      browser()
+      data$selectedConceptIdRight <- orphanConceptSetDataRight[input$cohortDefinitionOrphanConceptTableRight_rows_selected,]$conceptId
     }
   }
   

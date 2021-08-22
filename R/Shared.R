@@ -23,18 +23,15 @@ doesObjectHaveData <- function(data) {
   result <- TRUE
   if (is.null(data)) {
     result <- FALSE
-    return(result)
   }
   if (is.data.frame(data)) {
     if (nrow(data) == 0) {
       result <- FALSE
-      return(result)
     }
   }
   if (!is.data.frame(data)) {
     if (length(data) == 0) {
       result <- FALSE
-      return(result)
     }
     return(result)
   }
@@ -661,7 +658,138 @@ getResultsConceptCount <- function(dataSource,
 }
 
 
-
+#' Returns summary data from concept_count table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns summary data from concept_count table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @template DatabaseIds
+#'
+#' @param conceptIds     A list of concept ids to get counts for
+#'
+#' @param minDate       Minimum date of range
+#' @param maxDate       Maximum date of range
+#'
+#' @return
+#' Returns a data frame (tibble)
+#'
+#' @export
+getResultsConceptCountSummary <- function(dataSource,
+                                          databaseIds,
+                                          conceptIds,
+                                          minDate = NULL,
+                                          maxDate = NULL) {
+  if (!is.null(minDate)) {
+    warning('minDate is currently not implemented, ignoring')
+  }
+  if (!is.null(maxDate)) {
+    warning('maxDate is currently not implemented, ignoring')
+  }
+  
+  if (is(dataSource, "environment")) {
+    if (!exists("conceptCount", envir = dataSource)) {
+      return(NULL)
+    }
+    if (is.null(conceptCount)) {
+      return(NULL)
+    }
+    if (!exists("conceptSubjects", envir = dataSource)) {
+      return(NULL)
+    }
+    if (is.null(conceptSubjects)) {
+      return(NULL)
+    }
+    data1 <- conceptCount %>%
+      dplyr::filter(.data$conceptId %in% !!conceptIds) %>%
+      dplyr::filter(.data$databaseId %in% !!databaseIds) %>%
+      dplyr::group_by(.data$conceptId, .data$databaseId) %>%
+      dplyr::summarize(conceptCount = sum(.data$conceptCount),
+                       .groups = "keep") %>%
+      dplyr::ungroup() %>%
+      dplyr::select(.data$databaseId, .data$conceptId, .data$conceptCount)
+    
+    data2 <- conceptSubjects %>%
+      dplyr::filter(.data$conceptId %in% !!conceptIds) %>%
+      dplyr::filter(.data$databaseId %in% !!databaseIds) %>%
+      dplyr::filter(.data$domainTable %in% c("CO",
+                                             "DR",
+                                             "ME",
+                                             "OB",
+                                             "PR",
+                                             "VI",
+                                             "DE")) %>%
+      dplyr::group_by(.data$conceptId, .data$databaseId) %>%
+      dplyr::summarize(subjectCount = max(.data$subjectCount),
+                       .groups = "keep") %>%
+      dplyr::ungroup() %>%
+      dplyr::select(.data$databaseId, .data$conceptId, .data$subjectCount)
+    
+    data <- data1 %>%
+      dplyr::inner_join(data2,
+                        by = c("databaseId", "conceptId")) %>%
+      dplyr::arrange(dplyr::desc(.data$subjectCount))
+    
+  } else {
+    if (is.null(dataSource$connection)) {
+      stop("No connection provided. Unable to query database.")
+    }
+    
+    if (!DatabaseConnector::dbIsValid(dataSource$connection)) {
+      stop("Connection to database seems to be closed.")
+    }
+    
+    sql <- "SELECT database_id,
+              concept_id,
+            	concept_count,
+            	subject_count
+            FROM (
+            	SELECT database_id, concept_id,
+            		sum(concept_count) concept_count
+            	FROM @results_database_schema.concept_count
+            	WHERE database_id IN (@database_id)
+            		AND cohort_id IN (@conceptIds)
+            	GROUP BY database_id, concept_id
+            	) a
+            INNER JOIN (
+            	SELECT database_id,
+            	  concept_id,
+            		max(subjectCount) subject_count
+            	FROM @results_database_schema.concept_subjects
+            	WHERE database_id IN (@database_id)
+            		AND cohort_id IN (@conceptIds)
+            		AND domainTable IN (
+            			'CO',
+            			'DR',
+            			'ME',
+            			'OB',
+            			'PR',
+            			'VI',
+            			'DE'
+            			)
+            	GROUP BY database_id, concept_id
+            	) b ON a.concept_id = b.concept_id AND
+            	a.database_id = b.database_id
+            	ORDER BY a.database_id, a.concept_id desc
+            ;"
+    data <-
+      renderTranslateQuerySql(
+        connection = dataSource$connection,
+        sql = sql,
+        results_database_schema = dataSource$resultsDatabaseSchema,
+        cohort_ids = cohortIds,
+        data_table = camelCaseToSnakeCase(dataTableName),
+        database_id = quoteLiterals(databaseIds),
+        snakeCaseToCamelCase = TRUE
+      )
+  }
+  
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
+  return(data)
+}
 
 #' Returns data from concept_subjects table of Cohort Diagnostics results data model
 #'
@@ -843,6 +971,36 @@ getResultsResolvedConcepts <- function(dataSource,
     databaseIds = databaseIds,
     dataTableName = "conceptResolved"
   )
+  conceptIdDetails <- getConcept(dataSource = dataSource,
+                                 conceptIds = data$conceptId %>% unique()) %>%
+    dplyr::select(
+      .data$conceptId,
+      .data$conceptName,
+      .data$vocabularyId,
+      .data$domainId,
+      .data$standardConcept
+    )
+  conceptCount <-
+    getResultsConceptCountSummary(
+      dataSource = dataSource,
+      conceptIds = data$conceptId %>% unique(),
+      databaseIds = databaseIds
+    )
+  data <- data %>%
+    dplyr::inner_join(conceptIdDetails,
+                      by = "conceptId") %>%
+    dplyr::left_join(conceptCount,
+                     by = c("databaseId",
+                            "conceptId")) %>%
+    dplyr::relocate(
+      .data$databaseId,
+      .data$cohortId,
+      .data$conceptSetId,
+      .data$conceptId,
+      .data$conceptName,
+      .data$conceptCount,
+      .data$subjectCount
+    )
   return(data)
 }
 
@@ -872,9 +1030,38 @@ getResultsExcludedConcepts <- function(dataSource,
     databaseIds = databaseIds,
     dataTableName = "conceptExcluded"
   )
+  conceptIdDetails <- getConcept(dataSource = dataSource,
+                                 conceptIds = data$conceptId %>% unique()) %>%
+    dplyr::select(
+      .data$conceptId,
+      .data$conceptName,
+      .data$vocabularyId,
+      .data$domainId,
+      .data$standardConcept
+    )
+  conceptCount <-
+    getResultsConceptCountSummary(
+      dataSource = dataSource,
+      conceptIds = data$conceptId %>% unique(),
+      databaseIds = databaseIds
+    )
+  data <- data %>%
+    dplyr::inner_join(conceptIdDetails,
+                      by = "conceptId") %>%
+    dplyr::left_join(conceptCount,
+                     by = c("databaseId",
+                            "conceptId")) %>%
+    dplyr::relocate(
+      .data$databaseId,
+      .data$cohortId,
+      .data$conceptSetId,
+      .data$conceptId,
+      .data$conceptName,
+      .data$conceptCount,
+      .data$subjectCount
+    )
   return(data)
 }
-
 
 
 #' Returns data from orphan_concept table of Cohort Diagnostics results data model
@@ -901,10 +1088,38 @@ getResultsOrphanConcept <- function(dataSource,
     databaseIds = databaseIds,
     dataTableName = "orphanConcept"
   )
+  conceptIdDetails <- getConcept(dataSource = dataSource,
+                                 conceptIds = data$conceptId %>% unique()) %>%
+    dplyr::select(
+      .data$conceptId,
+      .data$conceptName,
+      .data$vocabularyId,
+      .data$domainId,
+      .data$standardConcept
+    )
+  conceptCount <-
+    getResultsConceptCountSummary(
+      dataSource = dataSource,
+      conceptIds = data$conceptId %>% unique(),
+      databaseIds = databaseIds
+    )
+  data <- data %>%
+    dplyr::inner_join(conceptIdDetails,
+                      by = "conceptId") %>%
+    dplyr::left_join(conceptCount,
+                     by = c("databaseId",
+                            "conceptId")) %>%
+    dplyr::relocate(
+      .data$databaseId,
+      .data$cohortId,
+      .data$conceptSetId,
+      .data$conceptId,
+      .data$conceptName,
+      .data$conceptCount,
+      .data$subjectCount
+    )
   return(data)
 }
-
-
 
 
 #' Returns concept cooccurrence for a list of cohortIds and databaseIds combinations
@@ -959,8 +1174,8 @@ getConceptSetDetailsFromCohortDefinition <-
       i <- i + 1
       conceptSetExpressionDetails[[i]] <-
         getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
-                                                         conceptSetExpression[i,]$expression$items) %>%
-        dplyr::mutate(id = conceptSetExpression[i, ]$id) %>%
+                                                         conceptSetExpression[i, ]$expression$items) %>%
+        dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
         dplyr::relocate(.data$id) %>%
         dplyr::arrange(.data$id)
     }
@@ -1820,7 +2035,7 @@ getCohortRelationshipCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101, -102, -103, -104, -201, -202, -203, -204)
+    analysisId <- c(-101,-102,-103,-104,-201,-202,-203,-204)
     analysisName <- c(
       "CohortOccurrenceAnyTimePrior",
       "CohortOccurrenceLongTerm",
@@ -1841,7 +2056,7 @@ getCohortRelationshipCharacterizationResults <-
       "bothSubjects",
       "bothSubjects"
     )
-    startDay <- c(-99999, -365, -180, -30, -99999, -365, -180, -30)
+    startDay <- c(-99999,-365,-180,-30,-99999,-365,-180,-30)
     endDay <- c(0, 0, 0, 0, 0, 0, 0, 0)
     analysisRef <-
       dplyr::tibble(analysisId, analysisName, valueField, startDay, endDay) %>%
@@ -1865,10 +2080,10 @@ getCohortRelationshipCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          startDay = analysisRef[j, ]$startDay,
-          endDay = analysisRef[j, ]$endDay,
-          analysisId = analysisRef[j, ]$analysisId,
-          valueField = analysisRef[j, ]$valueField,
+          startDay = analysisRef[j,]$startDay,
+          endDay = analysisRef[j,]$endDay,
+          analysisId = analysisRef[j,]$analysisId,
+          valueField = analysisRef[j,]$valueField,
           cohortCounts = cohortCounts
         )
     }
@@ -2025,7 +2240,7 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101, -201)
+    analysisId <- c(-101,-201)
     analysisName <- c("CohortEraStart", "CohortEraOverlap")
     valueField <- c("cSubjectsStart",
                     "bothSubjects")
@@ -2050,8 +2265,8 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          valueField = analysisRef[j, ]$valueField,
-          analysisId = analysisRef[j, ]$analysisId,
+          valueField = analysisRef[j,]$valueField,
+          analysisId = analysisRef[j,]$analysisId,
           temporalTimeRef = temporalTimeRef,
           cohortCounts = cohortCounts
         )
