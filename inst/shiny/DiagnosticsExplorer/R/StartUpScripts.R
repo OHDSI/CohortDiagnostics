@@ -131,7 +131,9 @@ sumCounts <- function(counts) {
 
 consolidationOfSelectedFieldValues <- function(input,
                                                cohort = NULL,
-                                               conceptSetExpressionAndDetails = NULL,
+                                               conceptSets = NULL,
+                                               conceptSetExpressionLeft = NULL,
+                                               conceptSetExpressionRight = NULL,
                                                database = NULL,
                                                resolvedConceptSetDataLeft = NULL,
                                                resolvedConceptSetDataRight = NULL,
@@ -167,7 +169,7 @@ consolidationOfSelectedFieldValues <- function(input,
       doesObjectHaveData(input$conceptsetExpressionTableLeft_rows_selected),
       doesObjectHaveData(data$cohortIdLeft)
     )) {
-      if (doesObjectHaveData(conceptSetExpressionAndDetails)) {
+      if (doesObjectHaveData(conceptSetExpressionLeft)) {
         selectedConceptSet <-
           conceptSetExpressionAndDetails[[1]]$conceptSetExpression[input$conceptsetExpressionTableLeft_rows_selected, ]
         data$conceptSetIdLeft <- selectedConceptSet$id
