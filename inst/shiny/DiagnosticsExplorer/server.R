@@ -943,7 +943,7 @@ shiny::shinyServer(function(input, output, session) {
     details <- list()
     for (i in 1:nrow(getSelectedRowsInCohortTableOfCohortDefinitionTab())) {
       conceptSetDetailsFromCohortDefinition <-
-        getConceptSetDetailsFromCohortDefinition(
+        extractConceptSetFromCohortDefinitionExpression(
           cohortDefinitionExpression = RJSONIO::fromJSON(getSelectedRowsInCohortTableOfCohortDefinitionTab()[i, ]$json)
         )
       details[[i]] <- conceptSetDetailsFromCohortDefinition
@@ -7619,7 +7619,7 @@ shiny::shinyServer(function(input, output, session) {
     jsonExpression <-
       RJSONIO::fromJSON(jsonExpression$json, digits = 23)
     expression <-
-      getConceptSetDetailsFromCohortDefinition(cohortDefinitionExpression = jsonExpression)
+      extractConceptSetFromCohortDefinitionExpression(cohortDefinitionExpression = jsonExpression)
     
     if (!is.null(expression)) {
       expression <- expression$conceptSetExpression %>%
