@@ -407,123 +407,25 @@ shiny::shinyServer(function(input, output, session) {
       return(data)
     })
   
+  getUserSelection <- shiny::reactive(x = {
+    list(
+      tabs = input$tabs,
+      cohortDefinitionTable_rows_selected = input$cohortDefinitionTable_rows_selected,
+      conceptsetExpressionTableLeft_rows_selected = input$conceptsetExpressionTableLeft_rows_selected,
+      conceptsetExpressionTableRight_rows_selected = input$conceptsetExpressionTableRight_rows_selected
+    )
+  })
   ##reactiveVal: consolidatedSelectedFieldValue----
   consolidatedSelectedFieldValue <- reactiveVal(list())
   #Reset Consolidated reactive val
-  observeEvent(eventExpr = input$tabs,
+  observeEvent(eventExpr = getUserSelection(),
                handlerExpr = {
-                 if (input$tabs %in% c(
-                   "cohortDefinition",
-                   "indexEventBreakdown",
-                   "cohortCharacterization",
-                   "temporalCharacterization",
-                   "compareCohortCharacterization",
-                   "compareTemporalCharacterization"
-                 )) {
-                   consolidatedSelectedFieldValue(list())
-                 }
+                 data <- consolidationOfSelectedFieldValues(input = input,
+                                                            cohort = getCohortSortedByCohortId(),
+                                                            conceptSetExpressionAndDetails = getConceptSetExpressionAndDetails(),
+                                                            database = database)
+                 consolidatedSelectedFieldValue(data)
                })
-  
-  #consolidate selections from cohortDefinitionTable in cohort definition tab - left & right
-  observeEvent(
-    eventExpr = input$cohortDefinitionTable_rows_selected,
-    handlerExpr = {
-      browser()
-      data <- consolidationOfSelectedFieldValues(input = input,
-                                                 cohort = getCohortSortedByCohortId())
-      consolidatedSelectedFieldValue(data)
-    }
-  )
-  
-  #consolidate selections from conceptSetExpressionTable in cohort definition tab - left
-  observeEvent(
-    eventExpr = input$conceptsetExpressionTableLeft_rows_selected,
-    handlerExpr = {
-      browser()
-      data <- consolidationOfSelectedFieldValues(input = input,
-                                                 cohort = getCohortSortedByCohortId())
-      consolidatedSelectedFieldValue(data)
-    }
-  )
-  
-  #consolidate selections from conceptSetExpressionTable in cohort definition tab - Right
-  observeEvent(
-    eventExpr = input$conceptsetExpressionTableRight_rows_selected,
-    handlerExpr = {
-      consolidatedSelectedFieldValue(list())
-      idx <- input$conceptsetExpressionTableRight_rows_selected
-      selectedConceptId <- NULL
-      selectedConceptSetId <- getConceptSetExpressionRight()$id
-      selectedDatabaseId <-
-        getSelectedDatabaseForConceptSetRight() %>%
-        dplyr::pull(.data$databaseId)
-      selectedCohortId <-
-        getSelectedCohortInCohortTableOfCohortDefinitionTabForRightPanel()$cohortId
-      consolidatedSelectedFieldValue(
-        list(
-          cohortId = selectedCohortId,
-          conceptSetId = selectedConceptSetId,
-          databaseId = selectedDatabaseId,
-          conceptId = selectedConceptId
-        )
-      )
-      return(consolidatedSelectedFieldValue)
-    }
-  )
-  
-  #consolidate selections from resolvedConceptTable in cohort definition tab - left
-  observeEvent(
-    eventExpr = input$cohortDefinitionResolvedConceptTableLeft_rows_selected,
-    handlerExpr = {
-      consolidatedSelectedFieldValue(list())
-      idx <- input$cohortDefinitionResolvedConceptTableLeft_rows_selected
-      selectedConceptId <-
-        getConceptSetDetailsLeft()$resolvedConcepts$conceptId[idx]
-      selectedConceptSetId <- getConceptSetExpressionLeft()$id
-      selectedDatabaseId <-
-        getSelectedDatabaseForConceptSetLeft() %>%
-        dplyr::pull(.data$databaseId)
-      selectedCohortId <-
-        getSelectedCohortInCohortTableOfCohortDefinitionTabForLeftPanel()$cohortId
-      consolidatedSelectedFieldValue(
-        list(
-          cohortId = selectedCohortId,
-          conceptSetId = selectedConceptSetId,
-          databaseId = selectedDatabaseId,
-          conceptId = selectedConceptId
-        )
-      )
-      return(consolidatedSelectedFieldValue)
-    }
-  )
-  
-  #consolidate selections from resolvedConceptTable in cohort definition tab - right
-  observeEvent(
-    eventExpr = input$cohortDefinitionResolvedConceptTableRight_rows_selected,
-    handlerExpr = {
-      consolidatedSelectedFieldValue(list())
-      browser()
-      idx <- input$cohortDefinitionResolvedConceptTableRight_rows_selected
-      selectedConceptId <-
-        getConceptSetDetailsRight()$resolvedConcepts$conceptId[idx]
-      selectedConceptSetId <- getConceptSetExpressionRight()$id
-      selectedDatabaseId <-
-        getSelectedDatabaseForConceptSetRight() %>%
-        dplyr::pull(.data$databaseId)
-      selectedCohortId <-
-        getSelectedCohortInCohortTableOfCohortDefinitionTabForRightPanel()$cohortId
-      consolidatedSelectedFieldValue(
-        list(
-          cohortId = selectedCohortId,
-          conceptSetId = selectedConceptSetId,
-          databaseId = selectedDatabaseId,
-          conceptId = selectedConceptId
-        )
-      )
-      return(consolidatedSelectedFieldValue)
-    }
-  )
-  
   
   #consolidate selections from excludedConceptTable in cohort definition tab - left
   observeEvent(
@@ -987,7 +889,7 @@ shiny::shinyServer(function(input, output, session) {
   ##Concept set ----
   ###getConceptSetExpressionAndDetails----
   getConceptSetExpressionAndDetails <- shiny::reactive({
-    if (is.null(getSelectedRowsInCohortTableOfCohortDefinitionTab())) {
+    if (is.null(getSelectedRowsInCohortTableOfCohortDefinitionTab())) { #!! change getSelectedRowsInCohortTableOfCohortDefinitionTab to use consolidated
       return(NULL)
     }
     details <- list()

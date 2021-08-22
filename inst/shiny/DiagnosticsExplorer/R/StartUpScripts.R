@@ -130,52 +130,91 @@ sumCounts <- function(counts) {
 
 
 consolidationOfSelectedFieldValues <- function(input,
-                                               cohort = getCohortSortedByCohortId(),
-                                               conceptSetExpression) {
+                                               cohort = NULL,
+                                               conceptSetExpressionAndDetails = NULL,
+                                               database) {
   data <- list()
+  ##########################Cohort Definition tab ##########################
   if (input$tabs == 'cohortDefinition') {
-    if (!is.null(input$cohortDefinitionTable_rows_selected)) {
+    #selection of cohort
+    if (doesObjectHaveData(input$cohortDefinitionTable_rows_selected)) {
       if (length(input$cohortDefinitionTable_rows_selected) > 1) {
+        browser()
         # get the last two rows selected - this is only for cohort table to enable LEFT/RIGHT comparison
         lastRowsSelected <-
-          idx[c(
+          input$cohortDefinitionTable_rows_selected[c(
             length(input$cohortDefinitionTable_rows_selected),
             length(input$cohortDefinitionTable_rows_selected) - 1
           )]
-        data$cohortIdLeft <- cohort[lastRowsSelected[[1]],]$cohortId
-        data$cohortIdRight <- cohort[lastRowsSelected[[2]],]$cohortId
+        data$cohortIdLeft <-
+          cohort[lastRowsSelected[[1]], ]$cohortId
+        data$cohortIdRight <-
+          cohort[lastRowsSelected[[2]], ]$cohortId
       } else {
         lastRowsSelected <- input$cohortDefinitionTable_rows_selected
-        data$cohortIdLeft <- cohort[lastRowsSelected[[1]],]$cohortId
+        data$cohortIdLeft <-
+          cohort[lastRowsSelected[[1]], ]$cohortId
         data$cohortIdRight <- NULL
       }
     }
+    #selection on concept set id
     if (all(
-      !is.null(input$conceptsetExpressionTableLeft_rows_selected),
-      !is.null(data$cohortIdLeft)
+      doesObjectHaveData(input$conceptsetExpressionTableLeft_rows_selected),
+      doesObjectHaveData(data$cohortIdLeft)
     )) {
-      conceptSetDetails <-
-        getConceptSetDetailsFromCohortDefinition(
-          cohortDefinitionExpression = RJSONIO::fromJSON(
-            cohort %>%
-              dplyr::filter(.data$cohortId == data$cohortIdLeft) %>%
-              dplyr::pull(.data$json)
-          )
-        )
+      if (doesObjectHaveData(conceptSetExpressionAndDetails)) {
+        selectedConceptSet <-
+          conceptSetExpressionAndDetails[[1]]$conceptSetExpression[input$conceptsetExpressionTableLeft_rows_selected, ]
+        data$conceptSetIdLeft <- selectedConceptSet$id
+      }
+      
+      if (all(
+        doesObjectHaveData(input$conceptsetExpressionTableRight_rows_selected),
+        doesObjectHaveData(data$cohortIdRight)
+      )) {
+        if (doesObjectHaveData(conceptSetExpressionAndDetails)) {
+          selectedConceptSet <-
+            conceptSetExpressionAndDetails[[1]]$conceptSetExpression[input$conceptsetExpressionTableRight_rows_selected, ]
+          data$conceptSetIdRight <- selectedConceptSet$id
+        }
+      }
     }
-    if (all(
-      !is.null(input$conceptsetExpressionTableRight_rows_selected),
-      !is.null(data$cohortIdRight)
-    )) {
-      data$conceptSetRight <-
-        getConceptSetDetailsFromCohortDefinition(
-          cohortDefinitionExpression = RJSONIO::fromJSON(
-            cohort %>%
-              dplyr::filter(.data$cohortId == data$cohortIdRight) %>%
-              dplyr::pull(.data$json)
-          )
-        )
+    #selection on database id
+    if (doesObjectHaveData(input$choiceForConceptSetDetailsLeft)) {
+      data$selectedDatabaseIdLeft <- database %>%
+        dplyr::filter(
+          .data$databaseIdWithVocabularyVersion == input$choiceForConceptSetDetailsLeft
+        ) %>% 
+        dplyr::pull(.data$databaseId)
     }
+    if (doesObjectHaveData(input$choiceForConceptSetDetailsRight)) {
+      data$selectedDatabaseIdRight <- database %>%
+        dplyr::filter(
+          .data$databaseIdWithVocabularyVersion == input$choiceForConceptSetDetailsRight
+        ) %>% 
+        dplyr::pull(.data$databaseId)
+    }
+  }
+  
+  ####################################################
+  if (input$tabs == 'indexEventBreakdown') {
+    data <- list()
+  }
+  ####################################################
+  if (input$tabs == 'cohortCharacterization') {
+    data <- list()
+  }
+  ####################################################
+  if (input$tabs == 'temporalCharacterization') {
+    data <- list()
+  }
+  ####################################################
+  if (input$tabs == 'compareCohortCharacterization') {
+    data <- list()
+  }
+  ####################################################
+  if (input$tabs == 'compareTemporalCharacterization') {
+    data <- list()
   }
   return(data)
 }
