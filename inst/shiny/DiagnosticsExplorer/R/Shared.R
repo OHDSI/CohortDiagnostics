@@ -34,7 +34,7 @@ doesObjectHaveData <- function(data) {
       result <- FALSE
     }
   }
-  return(result)
+    return(result)
 }
 
 # private function - not exported

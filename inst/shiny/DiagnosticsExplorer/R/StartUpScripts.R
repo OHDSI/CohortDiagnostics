@@ -166,24 +166,22 @@ consolidationOfSelectedFieldValues <- function(input,
     }
     #selection on concept set id
     if (all(
-      doesObjectHaveData(input$conceptsetExpressionTableLeft_rows_selected),
+      doesObjectHaveData(input$conceptSetsInCohortLeft_rows_selected),
       doesObjectHaveData(data$cohortIdLeft)
     )) {
-      if (doesObjectHaveData(conceptSetExpressionLeft)) {
-        selectedConceptSet <-
-          conceptSetExpressionAndDetails[[1]]$conceptSetExpression[input$conceptsetExpressionTableLeft_rows_selected, ]
-        data$conceptSetIdLeft <- selectedConceptSet$id
-      }
+      browser()
+      selectedConceptSet <-
+        conceptSetExpressionAndDetails[[1]]$conceptSetExpression[input$conceptsetExpressionTableLeft_rows_selected,]
+      data$conceptSetIdLeft <- selectedConceptSet$id
       
       if (all(
-        doesObjectHaveData(input$conceptsetExpressionTableRight_rows_selected),
+        doesObjectHaveData(input$conceptSetsInCohortRight_rows_selected),
         doesObjectHaveData(data$cohortIdRight)
       )) {
-        if (doesObjectHaveData(conceptSetExpressionAndDetails)) {
-          selectedConceptSet <-
-            conceptSetExpressionAndDetails[[1]]$conceptSetExpression[input$conceptsetExpressionTableRight_rows_selected, ]
-          data$conceptSetIdRight <- selectedConceptSet$id
-        }
+        browser()
+        selectedConceptSet <-
+          conceptSetExpressionAndDetails[[1]]$conceptSetExpression[input$conceptsetExpressionTableRight_rows_selected,]
+        data$conceptSetIdRight <- selectedConceptSet$id
       }
     }
     #selection on database id
