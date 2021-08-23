@@ -237,7 +237,8 @@ shiny::shinyServer(function(input, output, session) {
     list(input$selectedCompoundCohortNames_open,
          input$tabs)#observeEvent limits reactivity to when a tab changes, or 'cohorts' selection changes.
   }, handlerExpr = {
-    if (any(isFALSE(input$selectedCompoundCohortNames_open),!is.null(input$tabs))) {
+    if (any(isFALSE(input$selectedCompoundCohortNames_open),
+            !is.null(input$tabs))) {
       selectedCohortIds <- cohort %>%
         dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortNames) %>%
         dplyr::arrange(.data$cohortId) %>%
@@ -316,8 +317,7 @@ shiny::shinyServer(function(input, output, session) {
   }, handlerExpr = {
     if (exists('temporalCovariateChoices') &&
         (any(
-          isFALSE(input$typesOfTemporalCovariates_open),
-          !is.null(input$tabs)
+          isFALSE(input$typesOfTemporalCovariates_open),!is.null(input$tabs)
         ))) {
       selectedTimeIds <- temporalCovariateChoices %>%
         dplyr::filter(.data$choices %in% input$typesOfTemporalCovariates) %>%
@@ -333,7 +333,8 @@ shiny::shinyServer(function(input, output, session) {
     list(input$selectedDatabaseIds_open,
          input$tabs)
   }, handlerExpr = {
-    if (any(isFALSE(input$selectedDatabaseIds_open),!is.null(input$tabs))) {
+    if (any(isFALSE(input$selectedDatabaseIds_open),
+            !is.null(input$tabs))) {
       selectedDatabaseIds <- input$selectedDatabaseIds
       getDatabaseIdsFromDropdown(selectedDatabaseIds)
     }
@@ -474,7 +475,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     options = list(
       pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+      lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
       searching = TRUE,
       ordering = TRUE,
       paging = TRUE,
@@ -516,7 +517,7 @@ shiny::shinyServer(function(input, output, session) {
         #returns a vector of two integers,
         # the first integer is the cohortId for the left panel
         # the second integer is the cohort Id for right panel
-        return(cohortData[lastRowsSelected, ])
+        return(cohortData[lastRowsSelected,])
       }
     })
   
@@ -565,7 +566,7 @@ shiny::shinyServer(function(input, output, session) {
                                   tags$tr(
                                     tags$td(tags$strong("Metadata: ")),
                                     tags$td(HTML("&nbsp;&nbsp;")),
-                                    tags$td(data[i,]$metadata)
+                                    tags$td(data[i, ]$metadata)
                                   ))
       #!!!!!!!!!!!!!!!!!!parse cohort[i,]$metadata from JSON to data table, iterate and present
     }
@@ -583,7 +584,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::distinct(.data$cohortId)
       
       if (!is.null(subset)) {
-        return(subset[idx,])
+        return(subset[idx, ])
       } else {
         return(NULL)
       }
@@ -616,7 +617,7 @@ shiny::shinyServer(function(input, output, session) {
         progress$inc(1 / nrow(selectionsInCohortTable),
                      detail = paste("Doing part", i))
         cohortDefinition <-
-          RJSONIO::fromJSON(selectionsInCohortTable[i, ]$json,
+          RJSONIO::fromJSON(selectionsInCohortTable[i,]$json,
                             digits = 23)
         details[[i]] <-
           getCirceRenderedExpression(cohortDefinition = cohortDefinition)
@@ -644,7 +645,7 @@ shiny::shinyServer(function(input, output, session) {
         details[[i]] <- tags$table(tags$tr(tags$td(
           paste(
             "rendered for cohort id:",
-            row[i, ]$cohortId,
+            row[i,]$cohortId,
             "using CirceR version: ",
             getCirceRPackageVersionInformation()
           )
@@ -731,7 +732,8 @@ shiny::shinyServer(function(input, output, session) {
   ###getConceptSetExpressionLeft----
   getConceptSetExpressionLeft <- shiny::reactive(x = {
     if (all(
-      !doesObjectHaveData(consolidatedSelectedFieldValue()$cohortIdLeft),!doesObjectHaveData(consolidatedSelectedFieldValue()$conceptSetIdLeft)
+      !doesObjectHaveData(consolidatedSelectedFieldValue()$cohortIdLeft),
+      !doesObjectHaveData(consolidatedSelectedFieldValue()$conceptSetIdLeft)
     )) {
       return(NULL)
     }
@@ -749,7 +751,8 @@ shiny::shinyServer(function(input, output, session) {
   ###getConceptSetExpressionRight----
   getConceptSetExpressionRight <- shiny::reactive(x = {
     if (all(
-      !doesObjectHaveData(consolidatedSelectedFieldValue()$cohortIdRight),!doesObjectHaveData(consolidatedSelectedFieldValue()$conceptSetIdRight)
+      !doesObjectHaveData(consolidatedSelectedFieldValue()$cohortIdRight),
+      !doesObjectHaveData(consolidatedSelectedFieldValue()$conceptSetIdRight)
     )) {
       return(NULL)
     }
@@ -1077,7 +1080,8 @@ shiny::shinyServer(function(input, output, session) {
   ###getSimplifiedInclusionRuleResultsLeft----
   getSimplifiedInclusionRuleResultsLeft <- shiny::reactive(x = {
     if (any(
-      !doesObjectHaveData(consolidatedSelectedFieldValue()$cohortIdLeft),!doesObjectHaveData(consolidatedSelectedFieldValue()$databaseIdLeft)
+      !doesObjectHaveData(consolidatedSelectedFieldValue()$cohortIdLeft),
+      !doesObjectHaveData(consolidatedSelectedFieldValue()$databaseIdLeft)
     )) {
       return(NULL)
     }
@@ -1103,7 +1107,8 @@ shiny::shinyServer(function(input, output, session) {
   ###getSimplifiedInclusionRuleResultsRight----
   getSimplifiedInclusionRuleResultsRight <- shiny::reactive(x = {
     if (any(
-      !doesObjectHaveData(consolidatedSelectedFieldValue()$cohortIdRight),!doesObjectHaveData(consolidatedSelectedFieldValue()$databaseIdRight)
+      !doesObjectHaveData(consolidatedSelectedFieldValue()$cohortIdRight),
+      !doesObjectHaveData(consolidatedSelectedFieldValue()$databaseIdRight)
     )) {
       return(NULL)
     }
@@ -1221,7 +1226,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
@@ -1332,7 +1337,9 @@ shiny::shinyServer(function(input, output, session) {
       if (input$cohortDefinitionInclusionRuleTableFilters == "Meet") {
         table <- table %>%
           dplyr::select(
-            -dplyr::contains("Total"),-dplyr::contains("Gain"),-dplyr::contains("Remain")
+            -dplyr::contains("Total"),
+            -dplyr::contains("Gain"),
+            -dplyr::contains("Remain")
           )
         colnames(table) <-
           stringr::str_replace(
@@ -1346,7 +1353,9 @@ shiny::shinyServer(function(input, output, session) {
       } else if (input$cohortDefinitionInclusionRuleTableFilters == "Totals") {
         table <- table %>%
           dplyr::select(
-            -dplyr::contains("Meet"),-dplyr::contains("Gain"),-dplyr::contains("Remain")
+            -dplyr::contains("Meet"),
+            -dplyr::contains("Gain"),
+            -dplyr::contains("Remain")
           )
         colnames(table) <-
           stringr::str_replace(
@@ -1360,7 +1369,9 @@ shiny::shinyServer(function(input, output, session) {
       } else if (input$cohortDefinitionInclusionRuleTableFilters == "Gain") {
         table <- table %>%
           dplyr::select(
-            -dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Remain")
+            -dplyr::contains("Total"),
+            -dplyr::contains("Meet"),
+            -dplyr::contains("Remain")
           )
         colnames(table) <-
           stringr::str_replace(
@@ -1374,7 +1385,9 @@ shiny::shinyServer(function(input, output, session) {
       } else if (input$cohortDefinitionInclusionRuleTableFilters == "Remain") {
         table <- table %>%
           dplyr::select(
-            -dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Gain")
+            -dplyr::contains("Total"),
+            -dplyr::contains("Meet"),
+            -dplyr::contains("Gain")
           )
         colnames(table) <-
           stringr::str_replace(
@@ -1411,7 +1424,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
         searching = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
@@ -2145,7 +2158,9 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       if (all(
-        length(input$cohortDefinitionTable_rows_selected) == 2,!is.null(getConceptSetExpressionLeft()),!is.null(getConceptSetExpressionRight())
+        length(input$cohortDefinitionTable_rows_selected) == 2,
+        !is.null(getConceptSetExpressionLeft()),
+        !is.null(getConceptSetExpressionRight())
       )) {
         panels[[inc]] <- shiny::tabPanel(
           title = "Concept Set Comparison",
@@ -2449,7 +2464,7 @@ shiny::shinyServer(function(input, output, session) {
       browser()
       conceptCooccurrence <- conceptCooccurrence %>%
         dplyr::filter(.data$conceptId %in% getSelectedConceptIdActive()) %>%
-        dplyr::select(-.data$conceptId,-.data$cohortId) %>%
+        dplyr::select(-.data$conceptId, -.data$cohortId) %>%
         dplyr::rename(conceptId = .data$coConceptId) %>%
         tidyr::pivot_wider(
           id_cols = c("conceptId"),
@@ -2545,7 +2560,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
@@ -2616,7 +2631,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
@@ -2697,7 +2712,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
@@ -2778,7 +2793,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
@@ -2866,7 +2881,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
@@ -2939,7 +2954,7 @@ shiny::shinyServer(function(input, output, session) {
       maxCohortEntries <- max(data$cohortEntries)
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
@@ -3051,9 +3066,7 @@ shiny::shinyServer(function(input, output, session) {
       if (input$cohortDefinitionSecondInclusionRuleTableFilters == "Meet") {
         table <- table %>%
           dplyr::select(
-            -dplyr::contains("Total"),
-            -dplyr::contains("Gain"),
-            -dplyr::contains("Remain")
+            -dplyr::contains("Total"),-dplyr::contains("Gain"),-dplyr::contains("Remain")
           )
         colnames(table) <-
           stringr::str_replace(
@@ -3067,9 +3080,7 @@ shiny::shinyServer(function(input, output, session) {
       } else if (input$cohortDefinitionSecondInclusionRuleTableFilters == "Totals") {
         table <- table %>%
           dplyr::select(
-            -dplyr::contains("Meet"),
-            -dplyr::contains("Gain"),
-            -dplyr::contains("Remain")
+            -dplyr::contains("Meet"),-dplyr::contains("Gain"),-dplyr::contains("Remain")
           )
         colnames(table) <-
           stringr::str_replace(
@@ -3083,9 +3094,7 @@ shiny::shinyServer(function(input, output, session) {
       } else if (input$cohortDefinitionSecondInclusionRuleTableFilters == "Gain") {
         table <- table %>%
           dplyr::select(
-            -dplyr::contains("Total"),
-            -dplyr::contains("Meet"),
-            -dplyr::contains("Remain")
+            -dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Remain")
           )
         colnames(table) <-
           stringr::str_replace(
@@ -3099,9 +3108,7 @@ shiny::shinyServer(function(input, output, session) {
       } else if (input$cohortDefinitionSecondInclusionRuleTableFilters == "Remain") {
         table <- table %>%
           dplyr::select(
-            -dplyr::contains("Total"),
-            -dplyr::contains("Meet"),
-            -dplyr::contains("Gain")
+            -dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Gain")
           )
         colnames(table) <-
           stringr::str_replace(
@@ -3138,7 +3145,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
@@ -3283,7 +3290,7 @@ shiny::shinyServer(function(input, output, session) {
       browser()
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
@@ -3345,7 +3352,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
@@ -3423,7 +3430,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
@@ -3501,7 +3508,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
@@ -3585,7 +3592,7 @@ shiny::shinyServer(function(input, output, session) {
       }
       options = list(
         pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
@@ -3797,7 +3804,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         ordering = TRUE,
         paging = TRUE,
@@ -3851,7 +3858,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         ordering = TRUE,
         paging = TRUE,
@@ -3904,7 +3911,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         ordering = TRUE,
         paging = TRUE,
@@ -3957,7 +3964,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         ordering = TRUE,
         paging = TRUE,
@@ -4018,7 +4025,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         ordering = TRUE,
         paging = TRUE,
@@ -4079,7 +4086,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         ordering = TRUE,
         paging = TRUE,
@@ -4140,7 +4147,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         ordering = TRUE,
         paging = TRUE,
@@ -4201,7 +4208,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         ordering = TRUE,
         paging = TRUE,
@@ -4614,7 +4621,7 @@ shiny::shinyServer(function(input, output, session) {
   #used to display counts in cohort definition panels
   getCohortCountDataForSelectedDatabaseIdsCohortIds <-
     shiny::reactive(x = {
-      if (all(is(dataSource, "environment"), !exists('cohortCount')))
+      if (all(is(dataSource, "environment"),!exists('cohortCount')))
       {
         return(NULL)
       }
@@ -4794,7 +4801,7 @@ shiny::shinyServer(function(input, output, session) {
                                           ))))
       options = list(
         pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
@@ -4857,7 +4864,7 @@ shiny::shinyServer(function(input, output, session) {
         
         options = list(
           pageLength = 1000,
-          lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+          lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
           searching = TRUE,
           lengthChange = TRUE,
           ordering = TRUE,
@@ -4995,7 +5002,7 @@ shiny::shinyServer(function(input, output, session) {
                                           ))))
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
         searching = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
@@ -5026,8 +5033,7 @@ shiny::shinyServer(function(input, output, session) {
   getIncidenceRateData <- reactive({
     if (input$tabs == "incidenceRate")
     {
-      if (all(is(dataSource, "environment"),
-              !exists('incidenceRate')))
+      if (all(is(dataSource, "environment"),!exists('incidenceRate')))
       {
         return(NULL)
       }
@@ -5125,7 +5131,7 @@ shiny::shinyServer(function(input, output, session) {
     {
       ageFilter <- getIncidenceRateData() %>%
         dplyr::select(.data$ageGroup) %>%
-        dplyr::filter(.data$ageGroup != "NA",!is.na(.data$ageGroup)) %>%
+        dplyr::filter(.data$ageGroup != "NA", !is.na(.data$ageGroup)) %>%
         dplyr::distinct() %>%
         dplyr::arrange(as.integer(sub(
           pattern = '-.+$', '', x = .data$ageGroup
@@ -5148,7 +5154,7 @@ shiny::shinyServer(function(input, output, session) {
     {
       genderFilter <- getIncidenceRateData() %>%
         dplyr::select(.data$gender) %>%
-        dplyr::filter(.data$gender != "NA",!is.na(.data$gender)) %>%
+        dplyr::filter(.data$gender != "NA", !is.na(.data$gender)) %>%
         dplyr::distinct() %>%
         dplyr::arrange(.data$gender)
       
@@ -5170,7 +5176,7 @@ shiny::shinyServer(function(input, output, session) {
     {
       calendarFilter <- getIncidenceRateData() %>%
         dplyr::select(.data$calendarYear) %>%
-        dplyr::filter(.data$calendarYear != "NA",!is.na(.data$calendarYear)) %>%
+        dplyr::filter(.data$calendarYear != "NA", !is.na(.data$calendarYear)) %>%
         dplyr::distinct(.data$calendarYear) %>%
         dplyr::arrange(.data$calendarYear)
       
@@ -5234,7 +5240,7 @@ shiny::shinyServer(function(input, output, session) {
     shiny::reactive({
       calendarFilter <- getIncidenceRateData() %>%
         dplyr::select(.data$calendarYear) %>%
-        dplyr::filter(.data$calendarYear != "NA",!is.na(.data$calendarYear)) %>%
+        dplyr::filter(.data$calendarYear != "NA", !is.na(.data$calendarYear)) %>%
         dplyr::distinct(.data$calendarYear) %>%
         dplyr::arrange(.data$calendarYear)
       calendarFilter <-
@@ -5249,12 +5255,12 @@ shiny::shinyServer(function(input, output, session) {
     shiny::reactive({
       incidenceRateFilter <- getIncidenceRateData() %>%
         dplyr::select(.data$incidenceRate) %>%
-        dplyr::filter(.data$incidenceRate != "NA",!is.na(.data$incidenceRate)) %>%
+        dplyr::filter(.data$incidenceRate != "NA", !is.na(.data$incidenceRate)) %>%
         dplyr::distinct(.data$incidenceRate) %>%
         dplyr::arrange(.data$incidenceRate)
       incidenceRateFilter <-
         incidenceRateFilter[incidenceRateFilter$incidenceRate >= input$YscaleMinAndMax[1] &
-                              incidenceRateFilter$incidenceRate <= input$YscaleMinAndMax[2],] %>%
+                              incidenceRateFilter$incidenceRate <= input$YscaleMinAndMax[2], ] %>%
         dplyr::pull(.data$incidenceRate)
       return(incidenceRateFilter)
     })
@@ -5361,7 +5367,7 @@ shiny::shinyServer(function(input, output, session) {
       {
         return(NULL)
       }
-      if (all(is(dataSource, "environment"),!exists('timeSeries'))) {
+      if (all(is(dataSource, "environment"), !exists('timeSeries'))) {
         return(NULL)
       }
       
@@ -5454,7 +5460,7 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       data <-
         data[as.character(data$periodBegin) >= input$timeSeriesPeriodRangeFilter[1] &
-               as.character(data$periodBegin) <= input$timeSeriesPeriodRangeFilter[2], ]
+               as.character(data$periodBegin) <= input$timeSeriesPeriodRangeFilter[2],]
     }
     if (any(is.null(data),
             nrow(data) == 0))
@@ -5634,7 +5640,7 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::mutate(cohortShortName = .data$shortName),
         by = "cohortId"
       ) %>%
-      dplyr::select(-.data$cohortId, -.data$shortName) %>%
+      dplyr::select(-.data$cohortId,-.data$shortName) %>%
       dplyr::relocate(.data$databaseId,
                       .data$cohortShortName,
                       .data$seriesType) %>%
@@ -5671,7 +5677,7 @@ shiny::shinyServer(function(input, output, session) {
     
     options = list(
       pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
       searching = TRUE,
       ordering = TRUE,
       paging = TRUE,
@@ -5734,7 +5740,8 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       return(NULL)
     }
-    if (all(is(dataSource, "environment"),!exists('timeDistribution')))
+    if (all(is(dataSource, "environment"),
+            !exists('timeDistribution')))
     {
       return(NULL)
     }
@@ -5801,7 +5808,7 @@ shiny::shinyServer(function(input, output, session) {
     
     options = list(
       pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
       searching = TRUE,
       searchHighlight = TRUE,
       scrollX = TRUE,
@@ -5848,8 +5855,7 @@ shiny::shinyServer(function(input, output, session) {
     {
       return(NULL)
     }
-    if (all(is(dataSource, "environment"),
-            !exists('indexEventBreakdown'))) {
+    if (all(is(dataSource, "environment"),!exists('indexEventBreakdown'))) {
       return(NULL)
     }
     data <-
@@ -5988,7 +5994,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::inner_join(getOmopDomainInformationLong(),
                         by = c('domainTableShort',
                                'domainFieldShort')) %>%
-      dplyr::select(-.data$domainTableShort,-.data$domainFieldShort)
+      dplyr::select(-.data$domainTableShort, -.data$domainFieldShort)
     return(indexEventBreakdown)
   })
   
@@ -6170,7 +6176,7 @@ shiny::shinyServer(function(input, output, session) {
         values_fill = 0
       ) %>%
       dplyr::distinct()
-    data <- data[order(-data[6]), ]
+    data <- data[order(-data[6]),]
     return(data)
   })
   
@@ -6223,7 +6229,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     data <- data %>%
-      dplyr::select(-.data$cohortEntries,-.data$cohortSubjects) %>%
+      dplyr::select(-.data$cohortEntries, -.data$cohortSubjects) %>%
       dplyr::mutate(type = paste0(
         .data$databaseId,
         " (",
@@ -6245,7 +6251,7 @@ shiny::shinyServer(function(input, output, session) {
         values_fill = 0
       ) %>%
       dplyr::distinct()
-    data <- data[order(-data[7]), ]
+    data <- data[order(-data[7]),]
     return(data)
   })
   
@@ -6346,7 +6352,7 @@ shiny::shinyServer(function(input, output, session) {
       }
       options = list(
         pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
@@ -6418,7 +6424,10 @@ shiny::shinyServer(function(input, output, session) {
                regexpr("[(][0-9]+[)]{1}", input$selectedCompoundCohortName)
              ))
       if (all(
-        !doesObjectHaveData(selectedConceptId),!doesObjectHaveData(selectedConceptSetId),!doesObjectHaveData(selectedDatabaseId),!doesObjectHaveData(selectedCohortId)
+        !doesObjectHaveData(selectedConceptId),
+        !doesObjectHaveData(selectedConceptSetId),
+        !doesObjectHaveData(selectedDatabaseId),
+        !doesObjectHaveData(selectedCohortId)
       )) {
         consolidatedSelectedFieldValue(
           list(
@@ -6446,7 +6455,7 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       return(NULL)
     }
-    if (all(is(dataSource, "environment"),!exists('visitContext')))
+    if (all(is(dataSource, "environment"), !exists('visitContext')))
     {
       return(NULL)
     }
@@ -6511,7 +6520,10 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::mutate(recordsValue = .data$records)
     }
     visitContextData <- visitContextData %>%
-      dplyr::select(-.data$subjects,-.data$records,-.data$cohortSubjects,-.data$cohortEntries) %>%
+      dplyr::select(-.data$subjects,
+                    -.data$records,
+                    -.data$cohortSubjects,
+                    -.data$cohortEntries) %>%
       dplyr::rename(subjects = .data$subjectsValue,
                     records = .data$recordsValue)
     visitContextReference <-
@@ -6615,7 +6627,7 @@ shiny::shinyServer(function(input, output, session) {
         values_fill = 0
       ) %>%
       dplyr::distinct()
-    data <- data[order(-data[3]), ]
+    data <- data[order(-data[3]),]
     return(data)
   })
   
@@ -6654,9 +6666,7 @@ shiny::shinyServer(function(input, output, session) {
     {
       data <- data %>%
         dplyr::select(
-          -dplyr::contains("During"),
-          -dplyr::contains("On visit"),
-          -dplyr::contains("After")
+          -dplyr::contains("During"),-dplyr::contains("On visit"),-dplyr::contains("After")
         )
       colnames(data) <-
         stringr::str_replace(
@@ -6670,9 +6680,7 @@ shiny::shinyServer(function(input, output, session) {
       {
         data <- data %>%
           dplyr::select(
-            -dplyr::contains("Before"),
-            -dplyr::contains("On visit"),
-            -dplyr::contains("After")
+            -dplyr::contains("Before"),-dplyr::contains("On visit"),-dplyr::contains("After")
           )
         colnames(data) <-
           stringr::str_replace(
@@ -6686,9 +6694,7 @@ shiny::shinyServer(function(input, output, session) {
         {
           data <- data %>%
             dplyr::select(
-              -dplyr::contains("During"),
-              -dplyr::contains("Before"),
-              -dplyr::contains("After")
+              -dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("After")
             )
           colnames(data) <-
             stringr::str_replace(
@@ -6702,9 +6708,7 @@ shiny::shinyServer(function(input, output, session) {
           {
             data <- data %>%
               dplyr::select(
-                -dplyr::contains("During"),
-                -dplyr::contains("Before"),
-                -dplyr::contains("On visit")
+                -dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("On visit")
               )
             colnames(data) <-
               stringr::str_replace(
@@ -6846,7 +6850,7 @@ shiny::shinyServer(function(input, output, session) {
     
     options = list(
       pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+      lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
       searching = TRUE,
       searchHighlight = TRUE,
       scrollX = TRUE,
@@ -6907,7 +6911,8 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       return(NULL)
     }
-    if (all(is(dataSource, "environment"),!exists('cohortRelationships')))
+    if (all(is(dataSource, "environment"),
+            !exists('cohortRelationships')))
     {
       return(NULL)
     }
@@ -7098,7 +7103,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getMultipleCharacterizationData----
   getMultipleCharacterizationData <- shiny::reactive(x = {
-    if (all(is(dataSource, "environment"),!any(
+    if (all(is(dataSource, "environment"), !any(
       exists('covariateValue'),
       exists('temporalCovariateValue')
     ))) {
@@ -7189,7 +7194,7 @@ shiny::shinyServer(function(input, output, session) {
     characterizationDataValue <-
       getMultipleCharacterizationData()$covariateValue %>%
       dplyr::filter(.data$characterizationSource %in% c('C', 'F')) %>% #C - cohort, F is Feature
-      dplyr::select(-.data$timeId,-.data$startDay,-.data$endDay) %>% # remove temporal characterization data
+      dplyr::select(-.data$timeId, -.data$startDay, -.data$endDay) %>% # remove temporal characterization data
       dplyr::inner_join(covariatesTofilter,
                         by = c('covariateId', 'characterizationSource')) %>%
       dplyr::inner_join(
@@ -7421,9 +7426,9 @@ shiny::shinyServer(function(input, output, session) {
     data <-  data %>%
       dplyr::inner_join(covariateNames,
                         by = "covariateId") %>%
-      dplyr::select(-.data$covariateId,-.data$cohortId,-.data$conceptId) %>%
+      dplyr::select(-.data$covariateId, -.data$cohortId, -.data$conceptId) %>%
       dplyr::relocate(.data$covariateName)
-    data <- data[order(-data[2]),]
+    data <- data[order(-data[2]), ]
     return(data)
   })
   
@@ -7474,7 +7479,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         scrollX = TRUE,
         scrollY = "100vh",
@@ -7522,7 +7527,7 @@ shiny::shinyServer(function(input, output, session) {
       {
         options = list(
           pageLength = 1000,
-          lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+          lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
           searching = TRUE,
           searchHighlight = TRUE,
           scrollX = TRUE,
@@ -7580,7 +7585,7 @@ shiny::shinyServer(function(input, output, session) {
       {
         options = list(
           pageLength = 1000,
-          lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+          lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
           searching = TRUE,
           searchHighlight = TRUE,
           scrollX = TRUE,
@@ -7688,7 +7693,7 @@ shiny::shinyServer(function(input, output, session) {
       ) %>%
       dplyr::inner_join(
         getMultipleCharacterizationData()$analysisRef %>%
-          dplyr::select(-.data$startDay, -.data$endDay),
+          dplyr::select(-.data$startDay,-.data$endDay),
         by = c('analysisId', 'characterizationSource')
       ) %>%
       dplyr::distinct() %>%
@@ -7794,7 +7799,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
-      dplyr::select(-.data$cohortId,-.data$databaseId)
+      dplyr::select(-.data$cohortId, -.data$databaseId)
     
     data <- data %>%
       tidyr::pivot_wider(
@@ -7839,7 +7844,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
         searching = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
@@ -7986,7 +7991,7 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       
-      if (all(is(dataSource, "environment"),!any(
+      if (all(is(dataSource, "environment"), !any(
         exists('covariateValue'),
         exists('temporalCovariateValue')
       ))) {
@@ -8057,7 +8062,7 @@ shiny::shinyServer(function(input, output, session) {
     data <-
       getMultipleCompareCharacterizationData()$covariateValue %>%
       dplyr::filter(.data$characterizationSource %in% c('C', 'F')) %>%
-      dplyr::select(-.data$timeId, -.data$startDay, -.data$endDay) %>%
+      dplyr::select(-.data$timeId,-.data$startDay,-.data$endDay) %>%
       dplyr::inner_join(
         getMultipleCompareCharacterizationData()$covariateRef,
         by = c("covariateId", "characterizationSource")
@@ -8220,7 +8225,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>%
       dplyr::arrange(.data$sortOrder) %>%
       dplyr::select(-.data$sortOrder) %>%
-      dplyr::select(-.data$cohortId1, -.data$cohortId2)
+      dplyr::select(-.data$cohortId1,-.data$cohortId2)
     return(data)
   })
   
@@ -8353,7 +8358,7 @@ shiny::shinyServer(function(input, output, session) {
         
         options = list(
           pageLength = 100,
-          lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+          lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
           searching = TRUE,
           scrollX = TRUE,
           scrollY = "60vh",
@@ -8449,7 +8454,7 @@ shiny::shinyServer(function(input, output, session) {
         
         options = list(
           pageLength = 100,
-          lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+          lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
           searching = TRUE,
           searchHighlight = TRUE,
           scrollX = TRUE,
@@ -8574,7 +8579,7 @@ shiny::shinyServer(function(input, output, session) {
       getMultipleCompareCharacterizationData()$covariateValue %>%
       dplyr::filter(.data$characterizationSource %in% c('CT', 'FT')) %>%
       dplyr::filter(.data$timeId %in% getTimeIdsFromSelectedTemporalCovariateChoices()) %>%
-      dplyr::select(-.data$startDay, -.data$endDay) %>%
+      dplyr::select(-.data$startDay,-.data$endDay) %>%
       dplyr::inner_join(
         getMultipleCompareCharacterizationData()$covariateRef,
         by = c("covariateId", "characterizationSource")
@@ -8583,7 +8588,7 @@ shiny::shinyServer(function(input, output, session) {
         getMultipleCompareCharacterizationData()$analysisRef,
         by = c("analysisId", "characterizationSource")
       ) %>%
-      dplyr::select(-.data$startDay, -.data$endDay) %>%
+      dplyr::select(-.data$startDay,-.data$endDay) %>%
       dplyr::distinct() %>%
       dplyr::inner_join(getMultipleCompareCharacterizationData()$temporalTimeRef,
                         by = 'timeId') %>%
@@ -9059,7 +9064,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
         searching = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
@@ -9177,7 +9182,7 @@ shiny::shinyServer(function(input, output, session) {
                   "Not available."))
     options = list(
       pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+      lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
       searching = TRUE,
       lengthChange = TRUE,
       ordering = TRUE,
@@ -9335,7 +9340,7 @@ shiny::shinyServer(function(input, output, session) {
                                            digits = 23))
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
         searching = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
@@ -9525,7 +9530,7 @@ shiny::shinyServer(function(input, output, session) {
     for (i in 1:nrow(cohortSelected))
     {
       filteredDatabaseIds <-
-        databaseIdsWithCount[databaseIdsWithCount$cohortId == cohortSelected$cohortId[i],] %>%
+        databaseIdsWithCount[databaseIdsWithCount$cohortId == cohortSelected$cohortId[i], ] %>%
         dplyr::pull()
       
       count <- length(filteredDatabaseIds)
