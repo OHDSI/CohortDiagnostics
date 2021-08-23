@@ -2552,11 +2552,17 @@ shiny::shinyServer(function(input, output, session) {
   #output: conceptsetExpressionTableLeft----
   output$conceptsetExpressionTableLeft <-
     DT::renderDataTable(expr = {
-      data <- getConceptSetExpressionLeft()
+      if (is.null(consolidatedSelectedFieldValue()$cohortIdLeft)) {
+        return(NULL)
+      }
+      data <- conceptSets %>% 
+        dplyr::filter(.data$cohortId %in% consolidatedSelectedFieldValue()$cohortIdLeft) %>% 
+        dplyr::select(.data$conceptSetId,
+                      .data$conceptSetName) %>% 
+        dplyr::arrange(.data$conceptSetId)
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
-      browser()
       
       options = list(
         pageLength = 100,
@@ -3283,11 +3289,17 @@ shiny::shinyServer(function(input, output, session) {
   ##output: conceptsetExpressionTableRight----
   output$conceptsetExpressionTableRight <-
     DT::renderDataTable(expr = {
-      data <- getConceptSetExpressionRight()
+      if (is.null(consolidatedSelectedFieldValue()$cohortIdLeft)) {
+        return(NULL)
+      }
+      data <- conceptSets %>% 
+        dplyr::filter(.data$cohortId %in% consolidatedSelectedFieldValue()$cohortIdLeft) %>% 
+        dplyr::select(.data$conceptSetId,
+                      .data$conceptSetName) %>% 
+        dplyr::arrange(.data$conceptSetId)
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
-      browser()
       options = list(
         pageLength = 100,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
