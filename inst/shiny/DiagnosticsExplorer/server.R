@@ -2326,7 +2326,6 @@ shiny::shinyServer(function(input, output, session) {
   #getConceptRelationshipForSelectedConceptId----
   getConceptRelationshipForSelectedConceptId <-
     shiny::reactive(x = {
-      browser()
       selectedConceptId <- getSelectedConceptIdActive()
       if (any(is.null(selectedConceptId),
               length(selectedConceptId) == 0)) {
@@ -2493,7 +2492,6 @@ shiny::shinyServer(function(input, output, session) {
                                     cohortIds = getSelectedRowsInCohortTableOfCohortDefinitionTab()$cohortId[[1]])
     if (all(!is.null(conceptCooccurrence),
             nrow(conceptCooccurrence) > 0)) {
-      browser()
       conceptCooccurrence <- conceptCooccurrence %>%
         dplyr::filter(.data$conceptId %in% getSelectedConceptIdActive()) %>%
         dplyr::select(-.data$conceptId, -.data$cohortId) %>%
@@ -2534,7 +2532,7 @@ shiny::shinyServer(function(input, output, session) {
       ),
       value = 0
     )
-    browser()
+    
     data <- getDetailsForSelectedConceptId()
     options = list(
       pageLength = 10,
@@ -2685,7 +2683,7 @@ shiny::shinyServer(function(input, output, session) {
       if (!doesObjectHaveData(consolidatedConceptSetIdLeft())) {
         return(NULL)
       }
-      browser()
+      
       data <- conceptSets %>% 
         dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft()) %>% 
         dplyr::filter(.data$conceptSetid %in% consolidatedConceptSetIdLeft()) %>% 
@@ -2979,7 +2977,6 @@ shiny::shinyServer(function(input, output, session) {
       getCsvFileNameWithDateTime(string = "excludedConcepts")
     },
     content = function(file) {
-      browser()
       data <- getConceptSetDetailsLeft()
       if (excludedConcept %in% names(data)) {
         data <- data$excludedConcept
@@ -3430,7 +3427,6 @@ shiny::shinyServer(function(input, output, session) {
       if (!doesObjectHaveData(consolidatedConceptSetIdRight())) {
         return(NULL)
       }
-      browser()
       data <- conceptSets %>% 
         dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight()) %>% 
         dplyr::filter(.data$conceptSetid %in% consolidatedConceptSetIdRight()) %>% 
@@ -5084,7 +5080,7 @@ shiny::shinyServer(function(input, output, session) {
         nrow(getCohortIdFromSelectedRowInCohortCountTable()) > 0,
         "No cohorts chosen"
       ))
-      browser()
+      
       table <- getResultsInclusionRuleStatistics(
         dataSource = dataSource,
         cohortIds = getCohortIdFromSelectedRowInCohortCountTable()$cohortId,
@@ -5892,7 +5888,7 @@ shiny::shinyServer(function(input, output, session) {
     {
       return(NULL)
     }
-    browser()
+    
     data <- data %>%
       dplyr::inner_join(cohort %>%
                           dplyr::select(.data$cohortId,
@@ -8394,7 +8390,6 @@ shiny::shinyServer(function(input, output, session) {
       input$conceptSetsSelectedFromOneCohort != "",
       length(input$conceptSetsSelectedFromOneCohort) > 0
     )) {
-      browser()
       data <-
         data %>% #!!! there is a bug here getResoledAndMappedConceptIdsForFilters
         dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
