@@ -1030,6 +1030,10 @@ getResultsExcludedConcepts <- function(dataSource,
     databaseIds = databaseIds,
     dataTableName = "conceptExcluded"
   )
+  if (any((is.null(data)),
+         nrow(data) == 0)) {
+    return(NULL)
+  }
   conceptIdDetails <- getConcept(dataSource = dataSource,
                                  conceptIds = data$conceptId %>% unique()) %>%
     dplyr::select(
@@ -1039,12 +1043,22 @@ getResultsExcludedConcepts <- function(dataSource,
       .data$domainId,
       .data$standardConcept
     )
+  
+  if (any((is.null(conceptIdDetails)),
+          nrow(conceptIdDetails) == 0)) {
+    return(NULL)
+  }
+  
   conceptCount <-
     getResultsConceptCountSummary(
       dataSource = dataSource,
       conceptIds = data$conceptId %>% unique(),
       databaseIds = databaseIds
     )
+  if (any((is.null(conceptCount)),
+          nrow(conceptCount) == 0)) {
+    return(NULL)
+  }
   data <- data %>%
     dplyr::inner_join(conceptIdDetails,
                       by = "conceptId") %>%
@@ -1088,6 +1102,11 @@ getResultsOrphanConcept <- function(dataSource,
     databaseIds = databaseIds,
     dataTableName = "orphanConcept"
   )
+  if (any((is.null(data)),
+          nrow(data) == 0)) {
+    return(NULL)
+  }
+  
   conceptIdDetails <- getConcept(dataSource = dataSource,
                                  conceptIds = data$conceptId %>% unique()) %>%
     dplyr::select(
@@ -1097,12 +1116,22 @@ getResultsOrphanConcept <- function(dataSource,
       .data$domainId,
       .data$standardConcept
     )
+  if (any((is.null(conceptIdDetails)),
+          nrow(conceptIdDetails) == 0)) {
+    return(NULL)
+  }
+  
   conceptCount <-
     getResultsConceptCountSummary(
       dataSource = dataSource,
       conceptIds = data$conceptId %>% unique(),
       databaseIds = databaseIds
     )
+  if (any((is.null(conceptCount)),
+          nrow(conceptCount) == 0)) {
+    return(NULL)
+  }
+  
   data <- data %>%
     dplyr::inner_join(conceptIdDetails,
                       by = "conceptId") %>%

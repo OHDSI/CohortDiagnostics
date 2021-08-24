@@ -773,8 +773,12 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(conceptSetExpression)) {
       return(NULL)
     }
+    conceptSetExpressionList <- conceptSetExpression %>% 
+      dplyr::pull(.data$conceptSetExpression) %>%
+      RJSONIO::fromJSON(digits = 23)
+      
     data <-
-      getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression)
+      getConceptSetDataFrameFromConceptSetExpression(conceptSetExpressionList)
     return(data)
   })
   
@@ -872,7 +876,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>%
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdLeft())
     excluded <- getExcludedConceptsLeft()
-    if (!doesObjectHaveData(excluded)) {
+    if (doesObjectHaveData(excluded)) {
       excludedConceptIds <- excluded %>%
         dplyr::select(.data$conceptId) %>%
         dplyr::distinct()
@@ -895,7 +899,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>%
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdRight())
     excluded <- getExcludedConceptsRight()
-    if (!doesObjectHaveData(excluded)) {
+    if (doesObjectHaveData(excluded)) {
       excludedConceptIds <- excluded %>%
         dplyr::select(.data$conceptId) %>%
         dplyr::distinct()
@@ -1109,7 +1113,6 @@ shiny::shinyServer(function(input, output, session) {
   ##Inclusion rule ----
   ###getSimplifiedInclusionRuleResultsLeft----
   getSimplifiedInclusionRuleResultsLeft <- shiny::reactive(x = {
-    browser()
     if (any(
       !doesObjectHaveData(consolidatedCohortIdLeft()),
       !doesObjectHaveData(consolidatedDatabaseIdLeft())
@@ -2828,7 +2831,7 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortDefinitionResolvedConceptTableLeft <-
     DT::renderDataTable(expr = {
       validate(need(
-        length(getConceptSetExpressionLeft()$id) > 0,
+        length(consolidatedCohortIdLeft()) > 0,
         "Please select concept set"
       ))
       data <- getResolvedConceptsLeft()
@@ -2909,7 +2912,7 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortDefinitionExcludedConceptTableLeft <-
     DT::renderDataTable(expr = {
       validate(need(
-        length(getConceptSetExpressionLeft()$id) > 0,
+        length(consolidatedCohortIdLeft()) > 0,
         "Please select concept set"
       ))
       data <- getExcludedConceptsLeft()
