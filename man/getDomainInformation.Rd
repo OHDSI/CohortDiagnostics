@@ -12,7 +12,7 @@ getDomainInformation(versionNumber = NULL, packageName = NULL)
 \item{packageName}{e.g. 'CohortDiagnostics'}
 }
 \value{
-A tibble data frame object with domain information
+A list with two tibble data frame objects with domain information represented in wide and long format respectively.
 }
 \description{
 Get domain information
