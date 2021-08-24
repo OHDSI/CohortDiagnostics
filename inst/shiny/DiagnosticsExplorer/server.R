@@ -798,8 +798,11 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(conceptSetExpression)) {
       return(NULL)
     }
+    conceptSetExpressionList <- conceptSetExpression %>% 
+      dplyr::pull(.data$conceptSetExpression) %>%
+      RJSONIO::fromJSON(digits = 23)
     data <-
-      getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression)
+      getConceptSetDataFrameFromConceptSetExpression(conceptSetExpressionList)
     return(data)
   })
   
@@ -1951,14 +1954,14 @@ shiny::shinyServer(function(input, output, session) {
               DT::dataTableOutput(outputId = "conceptSetsInCohortRight"),
               tags$br(),
               shiny::conditionalPanel(
-                condition = "output.output.isAConceptSetSelectedForCohortRight == true",
+                condition = "output.isAConceptSetSelectedForCohortRight == true",
                 shinydashboard::box(
                   title = shiny::textOutput(outputId = "conceptSetExpressionNameRight"),
                   solidHeader = FALSE,
                   width = NULL,
                   collapsible = TRUE,
                   collapsed = FALSE,
-                  shiny::conditionalPanel(condition = "output.output.isAConceptSetSelectedForCohortRight == true",
+                  shiny::conditionalPanel(condition = "output.isAConceptSetSelectedForCohortRight == true",
                                           tags$table(
                                             tags$tr(
                                               tags$td(
@@ -2004,7 +2007,7 @@ shiny::shinyServer(function(input, output, session) {
                                             ))
                                           )),
                   shiny::conditionalPanel(
-                    condition = "output.output.isAConceptSetSelectedForCohortRight == true &
+                    condition = "output.isAConceptSetSelectedForCohortRight == true &
                                                       input.conceptSetsTypeRight != 'Resolved' &
                                                       input.conceptSetsTypeRight != 'Excluded' &
                                                       input.conceptSetsTypeRight != 'Json' &
@@ -2125,7 +2128,7 @@ shiny::shinyServer(function(input, output, session) {
           title = "Concept Set Browser",
           value = "conceptSetBrowser",
           shiny::conditionalPanel(
-            condition = "output.isConceptIdFromLeftOrRightConceptTableSelected",
+            condition = "output.isConceptIdFromLeftOrRightConceptTableSelected==true",
             tags$h4(
               paste0(
                 getSelectedConceptNameActive(),
@@ -3018,13 +3021,11 @@ shiny::shinyServer(function(input, output, session) {
       if (any(is.null(data),
               nrow(data) == 0)) {
         return(NULL)
-        
+      } else {
         orphanConceptDataDatabaseIds <-
           unique(data$databaseId)
         orphanConceptDataMaxCount <-
           max(data$subjectCount , na.rm = TRUE)
-      } else {
-        return(NULL)
       }
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
@@ -3086,10 +3087,15 @@ shiny::shinyServer(function(input, output, session) {
   
   #output: conceptsetExpressionJsonLeft----
   output$conceptsetExpressionJsonLeft <- shiny::renderText({
-    if (is.null(getConceptSetExpressionLeft())) {
+    if (any(!doesObjectHaveData(getConceptSetExpressionLeft()),
+            !doesObjectHaveData(consolidatedConceptSetIdLeft()))) {
       return(NULL)
     }
-    getConceptSetExpressionLeft()$json
+    conceptSetExpression <- conceptSets %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft()) %>%
+      dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdLeft()) %>% 
+      dplyr::pull(.data$conceptSetExpression)
+    
   })
   
   #!!!!!!!!!!!! add excluded
@@ -3488,12 +3494,12 @@ shiny::shinyServer(function(input, output, session) {
   
   
   ##output: output.isAConceptSetSelectedForCohortRight----
-  output$output.isAConceptSetSelectedForCohortRight <-
+  output$isAConceptSetSelectedForCohortRight <-
     shiny::reactive(x = {
       input$conceptSetsInCohortRight_rows_selected
     })
   shiny::outputOptions(x = output,
-                       name = "output.isAConceptSetSelectedForCohortRight",
+                       name = "isAConceptSetSelectedForCohortRight",
                        suspendWhenHidden = FALSE)
   
   ##output: conceptSetsExpressionTableRight----
@@ -3739,15 +3745,14 @@ shiny::shinyServer(function(input, output, session) {
     DT::renderDataTable(expr = {
       data <- getOrphanConceptsRight()
       if (any(is.null(data),
-              nrow(data) == 0))
-      {
+              nrow(data) == 0)) {
         return(NULL)
+      } else {
+        orphanConceptDataDatabaseIds <-
+          unique(data$databaseId)
+        orphanConceptDataMaxCount <-
+          max(data$subjectCount , na.rm = TRUE)
       }
-      
-      orphanConceptDataDatabaseIds <-
-        unique(data$databaseId)
-      orphanConceptDataMaxCount <-
-        max(data$subjectCount , na.rm = TRUE)
       
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
@@ -3822,12 +3827,14 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: conceptsetExpressionJsonRight----
   output$conceptsetExpressionJsonRight <- shiny::renderText({
+    if (any(!doesObjectHaveData(consolidatedCohortIdRight()),
+            !doesObjectHaveData(consolidatedConceptSetIdRight()))) {
+      return(NULL)
+    }
     conceptSetExpression <- conceptSets %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight()) %>%
-      dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdRight()) %>%
-      dplyr::pull(.data$conceptSetExpression) %>%
-      RJSONIO::fromJSON(digits = 23) %>%
-      RJSONIO::toJSON(digits = 23, pretty = TRUE)
+      dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdRight()) %>% 
+      dplyr::pull(.data$conceptSetExpression)
     return(conceptSetExpression)
   })
 
