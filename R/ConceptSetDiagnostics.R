@@ -803,6 +803,7 @@ getConceptRecordCountByMonth <- function(connection,
                                          conceptIdUniverse = "#concept_tracking") {
   ParallelLogger::logTrace(" - Counting concepts by person id, calendar month and year")
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
+  domains <- domains$wide
   sql <- "SELECT @domain_concept_id concept_id,
           	YEAR(@domain_start_date) event_year,
           	MONTH(@domain_start_date) event_month,
@@ -907,6 +908,7 @@ getConceptSubjectCount <- function(connection,
                                    conceptIdUniverse = "#concept_tracking") {
   ParallelLogger::logTrace(" - Counting unique person count by concept id")
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
+  domains <- domains$wide
   sql <- "SELECT @domain_concept_id concept_id,
           	COUNT_BIG(DISTINCT person_id) subject_count
           FROM @cdm_database_schema.@domain_table
@@ -1002,6 +1004,7 @@ getBreakdownIndexEvents <- function(cohortIds,
                                     tempEmulationSchema,
                                     conceptIdUniverse = "#concept_tracking") {
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
+  domains <- domains$wide
   sql <- "SELECT cohort_definition_id cohort_id,
               	@domain_concept_id AS concept_id,
               	COUNT(*) AS concept_count,
@@ -1098,6 +1101,7 @@ getIndexDateConceptCooccurrence <- function(connection,
                                             cohortIds,
                                             conceptIdUniverse = "#concept_tracking") {
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
+  domains <- domains$wide
   sqlDdlDrop <-
     "IF OBJECT_ID('tempdb..#concept_cooccurrence', 'U') IS NOT NULL
                 	      DROP TABLE #concept_cooccurrence;
@@ -1229,7 +1233,8 @@ getConceptSourceStandardMapping <- function(connection,
                                             tempEmulationSchema,
                                             sourceValue = FALSE,
                                             conceptIdUniverse = "#concept_tracking") {
-  domains <- getDomainInformation(packageName = 'CohortDiagnostics') %>%
+  domains <- getDomainInformation(packageName = 'CohortDiagnostics')
+  domains <- domains$wide %>%
     dplyr::filter(nchar(.data$domainSourceConceptId) > 1)
   
   sql <- "WITH concept_id_universe
