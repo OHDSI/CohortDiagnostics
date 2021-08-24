@@ -1109,6 +1109,7 @@ shiny::shinyServer(function(input, output, session) {
   ##Inclusion rule ----
   ###getSimplifiedInclusionRuleResultsLeft----
   getSimplifiedInclusionRuleResultsLeft <- shiny::reactive(x = {
+    browser()
     if (any(
       !doesObjectHaveData(consolidatedCohortIdLeft()),
       !doesObjectHaveData(consolidatedDatabaseIdLeft())
@@ -1303,7 +1304,7 @@ shiny::shinyServer(function(input, output, session) {
   #output: isDatabaseIdFoundForSelectedCohortCountLeft----
   output$isDatabaseIdFoundForSelectedCohortCountLeft <-
     shiny::reactive(x = {
-      return(!is.null(consolidatedCohortIdLeft()))
+      return(!is.null(getSimplifiedInclusionRuleResultsLeft()))
     })
   shiny::outputOptions(x = output,
                        name = "isDatabaseIdFoundForSelectedCohortCountLeft",
@@ -3134,7 +3135,7 @@ shiny::shinyServer(function(input, output, session) {
   ##reactive: isDatabaseIdFoundForSelectedCohortCountRight----
   output$isDatabaseIdFoundForSelectedCohortCountRight <-
     shiny::reactive(x = {
-      return(!is.null(consolidatedDatabaseIdRight()))
+      return(!is.null(getSimplifiedInclusionRuleResultsRight()))
     })
   shiny::outputOptions(x = output,
                        name = "isDatabaseIdFoundForSelectedCohortCountRight",
