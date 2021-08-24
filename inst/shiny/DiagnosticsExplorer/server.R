@@ -406,6 +406,8 @@ shiny::shinyServer(function(input, output, session) {
       cohortDefinitionExcludedConceptTableRight_rows_selected = input$cohortDefinitionExcludedConceptTableRight_rows_selected,
       cohortDefinitionOrphanConceptTableLeft_rows_selected = input$cohortDefinitionOrphanConceptTableLeft_rows_selected,
       cohortDefinitionOrphanConceptTableRight_rows_selected = input$cohortDefinitionOrphanConceptTableRight_rows_selected
+      # cohortDefinitionSimplifiedInclusionRuleTableLeft_rows_selected = input$simplifiedInclusionRuleTableForSelectedCohortCountLeft_rows_selected,
+      # cohortDefinitionSimplifiedInclusionTableRight_rows_selected = input$simplifiedInclusionRuleTableForSelectedCohortCountRight_rows_selected
     )
   })
   
@@ -1111,55 +1113,76 @@ shiny::shinyServer(function(input, output, session) {
   # by default - make this multiselected - top 3
   
   ##Inclusion rule ----
+  ###getDatabaseIdForSelectedCohortCountLeft----
+  getDatabaseIdForSelectedCohortCountLeft <- shiny::reactive(x = {
+    idx <- input$cohortCountsTableForSelectedCohortLeft_rows_selected
+    if (!doesObjectHaveData(idx)) {
+      return(NULL)
+    }
+    
+    databaseIds <- getCountsForSelectedCohortsLeft()[idx, ] %>% 
+      dplyr::pull(.data$databaseId)
+    
+    return(databaseIds)
+  })
+  
   ###getSimplifiedInclusionRuleResultsLeft----
   getSimplifiedInclusionRuleResultsLeft <- shiny::reactive(x = {
     if (any(
       !doesObjectHaveData(consolidatedCohortIdLeft()),
-      !doesObjectHaveData(consolidatedDatabaseIdLeft())
+      !doesObjectHaveData(getDatabaseIdForSelectedCohortCountLeft())
     )) {
       return(NULL)
     }
-    
+    browser()
     data <-
       getResultsInclusionRuleStatistics(
         dataSource = dataSource,
         cohortIds = consolidatedCohortIdLeft(),
-        databaseIds = consolidatedDatabaseIdLeft()
+        databaseIds = getDatabaseIdForSelectedCohortCountLeft()
       )
     
     if (any(is.null(data),
             nrow(data) == 0)) {
       return(NULL)
     }
-    data <- data %>%
-      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdLeft()) %>%
-      dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft())
+    
     return(data)
+  })
+  
+  ###getDatabaseIdForSelectedCohortCountRight----
+  getDatabaseIdForSelectedCohortCountRight <- shiny::reactive(x = {
+    idx <- input$cohortCountsTableForSelectedCohortRight_rows_selected
+    if (!doesObjectHaveData(idx)) {
+      return(NULL)
+    }
+    
+    databaseIds <- getCountsForSelectedCohortsRight()[idx, ] %>% 
+      dplyr::pull(.data$databaseId)
+    
+    return(databaseIds)
   })
   
   ###getSimplifiedInclusionRuleResultsRight----
   getSimplifiedInclusionRuleResultsRight <- shiny::reactive(x = {
     if (any(
       !doesObjectHaveData(consolidatedCohortIdRight()),
-      !doesObjectHaveData(consolidatedDatabaseIdRight())
+      !doesObjectHaveData(getDatabaseIdForSelectedCohortCountRight())
     )) {
       return(NULL)
     }
-    
+    browser()
     data <-
       getResultsInclusionRuleStatistics(
         dataSource = dataSource,
         cohortIds = consolidatedCohortIdRight(),
-        databaseIds = consolidatedDatabaseIdRight()
+        databaseIds = getDatabaseIdForSelectedCohortCountRight()
       )
     
     if (any(is.null(data),
             nrow(data) == 0)) {
       return(NULL)
     }
-    data <- data %>%
-      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdRight()) %>%
-      dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight())
     return(data)
   })
   
@@ -1318,8 +1341,7 @@ shiny::shinyServer(function(input, output, session) {
   output$simplifiedInclusionRuleTableForSelectedCohortCountLeft <-
     DT::renderDataTable(expr = {
       if (any(
-        is.null(consolidatedCohortIdLeft()),
-        is.null(consolidatedDatabaseIdLeft())
+        is.null(consolidatedCohortIdLeft())
       )) {
         return(NULL)
       }
@@ -1332,7 +1354,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::inner_join(cohortCount,
                           by = c("cohortId", "databaseId")) %>%
         dplyr::filter(.data$cohortId == consolidatedCohortIdLeft()) %>%
-        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdLeft()) %>%
+        dplyr::filter(.data$databaseId %in% getDatabaseIdForSelectedCohortCountLeft()) %>%
         dplyr::select(.data$cohortSubjects) %>%
         dplyr::pull(.data$cohortSubjects) %>% unique()
       
@@ -3148,8 +3170,7 @@ shiny::shinyServer(function(input, output, session) {
   output$simplifiedInclusionRuleTableForSelectedCohortCountRight <-
     DT::renderDataTable(expr = {
       if (any(
-        is.null(consolidatedCohortIdRight()),
-        is.null(consolidatedDatabaseIdRight())
+        is.null(consolidatedCohortIdRight())
       )) {
         return(NULL)
       }
@@ -3163,7 +3184,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::inner_join(cohortCount,
                           by = c("cohortId", "databaseId")) %>%
         dplyr::filter(.data$cohortId == consolidatedCohortIdRight()) %>%
-        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdLeft()) %>%
+        dplyr::filter(.data$databaseId %in% getDatabaseIdForSelectedCohortCountRight()) %>%
         dplyr::select(.data$cohortSubjects) %>%
         dplyr::pull(.data$cohortSubjects) %>%
         unique()
