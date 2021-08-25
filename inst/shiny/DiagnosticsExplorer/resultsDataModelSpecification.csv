@@ -48,6 +48,7 @@ cohort_relationships,t_before_c_subjects,bigint,Yes,No,No,Yes,2.2
 cohort_relationships,c_in_t_subjects,bigint,Yes,No,No,Yes,2.2
 cohort_relationships,c_person_days,bigint,Yes,No,No,Yes,2.2
 cohort_relationships,c_subjects_start,bigint,Yes,No,No,Yes,2.2
+cohort_relationships,c_subjects_exist,bigint,Yes,No,No,Yes,2.2
 cohort_relationships,c_subjects_end,bigint,Yes,No,No,Yes,2.2
 cohort_relationships,same_day_subjects,bigint,Yes,No,No,Yes,2.2
 concept,concept_id,int,Yes,Yes,No,Yes,2.2
