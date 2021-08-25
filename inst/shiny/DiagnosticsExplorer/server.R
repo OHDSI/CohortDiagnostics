@@ -778,17 +778,30 @@ shiny::shinyServer(function(input, output, session) {
     conceptSetExpressionList <- conceptSetExpression %>% 
       dplyr::pull(.data$conceptSetExpression) %>%
       RJSONIO::fromJSON(digits = 23)
-      
+    
     data <-
       getConceptSetDataFrameFromConceptSetExpression(conceptSetExpressionList)
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    data <- data %>% 
+      dplyr::select(.data$conceptId,
+                    .data$conceptCode,
+                    .data$conceptName,
+                    .data$domainId,
+                    .data$standardConcept,
+                    .data$invalidReason,
+                    .data$isExcluded,
+                    .data$includeDescendants,
+                    .data$includeMapped
+                    )
     return(data)
   })
   
   ###getConceptSetExpressionRight----
   getConceptSetExpressionRight <- shiny::reactive(x = {
     if (all(
-      !doesObjectHaveData(consolidatedCohortIdRight()),
-      !doesObjectHaveData(consolidatedConceptSetIdRight())
+      !doesObjectHaveData(consolidatedCohortIdRight()),!doesObjectHaveData(consolidatedConceptSetIdRight())
     )) {
       return(NULL)
     }
@@ -798,11 +811,26 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(conceptSetExpression)) {
       return(NULL)
     }
-    conceptSetExpressionList <- conceptSetExpression %>% 
+    conceptSetExpressionList <- conceptSetExpression %>%
       dplyr::pull(.data$conceptSetExpression) %>%
       RJSONIO::fromJSON(digits = 23)
     data <-
       getConceptSetDataFrameFromConceptSetExpression(conceptSetExpressionList)
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::select(
+        .data$conceptId,
+        .data$conceptCode,
+        .data$conceptName,
+        .data$domainId,
+        .data$standardConcept,
+        .data$invalidReason,
+        .data$isExcluded,
+        .data$includeDescendants,
+        .data$includeMapped
+      )
     return(data)
   })
   
@@ -818,7 +846,9 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdLeft())
+      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdLeft()) %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>% 
+      dplyr::arrange(dplyr::desc(.data$conceptCount))
     return(data)
   })
   
@@ -833,7 +863,9 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdRight())
+      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdRight()) %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>% 
+      dplyr::arrange(dplyr::desc(.data$conceptCount))
     return(data)
   })
   
@@ -848,7 +880,9 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdLeft())
+      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdLeft()) %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>% 
+      dplyr::arrange(dplyr::desc(.data$conceptCount))
     return(data)
   })
   
@@ -863,7 +897,9 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdRight())
+      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdRight()) %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>% 
+      dplyr::arrange(dplyr::desc(.data$conceptCount))
     return(data)
   })
   
@@ -888,6 +924,10 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::anti_join(y = excludedConceptIds, by = "conceptId")
     }
+    data <- data  %>%
+      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdLeft()) %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>% 
+      dplyr::arrange(dplyr::desc(.data$conceptCount))
     return(data)
   })
   
@@ -911,6 +951,9 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::anti_join(y = excludedConceptIds, by = "conceptId")
     }
+    data <- data %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>% 
+      dplyr::arrange(dplyr::desc(.data$conceptCount))
     return(data)
   })
   
@@ -1093,7 +1136,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getDataForConceptSetComparison----
   getDataForConceptSetComparison <- shiny::reactive(x = {
-    leftData <- getConceptSetDetailsLeft()$resolvedConcepts
+    leftData <- getConcept()$resolvedConcepts
     rightData <- getConceptSetDetailsRight()$resolvedConcepts
     data <- list(leftData = leftData, rightData = rightData)
     return(data)
@@ -1567,6 +1610,9 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(json)) {
       return(NULL)
     }
+    json <- json %>% 
+      RJSONIO::fromJSON(digits = 23) %>% 
+      RJSONIO::toJSON(digits = 23, pretty = TRUE)
     return(json)
   })
   
@@ -1744,7 +1790,8 @@ shiny::shinyServer(function(input, output, session) {
                                                   "Resolved",
                                                   "Excluded",
                                                   "Orphan concepts",
-                                                  "Json"
+                                                  "Json" #!!! change to 'Concept Set Json'
+                                                  #!!! add  "Concept Set Sql"
                                                 ),
                                                 #!!! add concept set sql
                                                 selected = "Concept Set Expression",
@@ -2233,9 +2280,8 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   output$conceptSetComparisonTable <- DT::renderDT(expr = {
-    resolvedConceptsLeft <- getConceptSetDetailsLeft()$resolvedConcepts
-    resolvedConceptsRight <-
-      getConceptSetDetailsRight()$resolvedConcepts
+    resolvedConceptsLeft <- getResolvedConceptsLeft()
+    resolvedConceptsRight <- getResolvedConceptsRight()
     if (any(
       is.null(resolvedConceptsLeft),
       length(resolvedConceptsLeft) == 0,
@@ -2925,10 +2971,7 @@ shiny::shinyServer(function(input, output, session) {
       getCsvFileNameWithDateTime(string = "orphanConcepts")
     },
     content = function(file) {
-      data <- getConceptSetDetailsLeft()
-      if (orphanConcepts %in% names(data)) {
-        data <- data$orphanConcepts
-      }
+      data <- getOrphanConceptsLeft()
       downloadCsv(x = data, fileName = file)
     }
   )
@@ -3006,10 +3049,7 @@ shiny::shinyServer(function(input, output, session) {
       getCsvFileNameWithDateTime(string = "excludedConcepts")
     },
     content = function(file) {
-      data <- getConceptSetDetailsLeft()
-      if (excludedConcept %in% names(data)) {
-        data <- data$excludedConcept
-      }
+      data <- getExcludedConceptsLeft()
       downloadCsv(x = data, fileName = file)
     }
   )
@@ -3398,6 +3438,9 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(json)) {
       return(NULL)
     }
+    json <- json %>% 
+      RJSONIO::fromJSON(digits = 23) %>% 
+      RJSONIO::toJSON(digits = 23, pretty = TRUE)
     return(json)
   })
   
@@ -3864,7 +3907,7 @@ shiny::shinyServer(function(input, output, session) {
                              inputId = "conceptSetsTypeRight",
                              selected = "Orphan concepts")
         } else if (input$conceptSetsTypeLeft == "Json") {
-          #!! call this "Concept Set JSON"
+          #!!! call this "Concept Set JSON"
           updateRadioButtons(session = session,
                              inputId = "conceptSetsTypeRight",
                              selected = "Json")
@@ -4158,16 +4201,18 @@ shiny::shinyServer(function(input, output, session) {
     )
     
     if (any(
-      length(getConceptSetDetailsLeft()$ExcludedConcepts) == 0,
-      length(getConceptSetDetailsRight()$ExcludedConcepts) == 0
+      is.null(getExcludedConceptsLeft()),
+      nrow(getExcludedConceptsLeft()) == 0,
+      is.null(getExcludedConceptsRight()),
+      nrow(getExcludedConceptsRight()) == 0
     )) {
       return(NULL)
     }
     
     result <-
       dplyr::setdiff(
-        getConceptSetDetailsLeft()$ExcludedConcepts,
-        getConceptSetDetailsRight()$ExcludedConcepts
+        getExcludedConceptsLeft(),
+        getExcludedConceptsRight()
       )
     
     if (any(is.null(result), nrow(result) == 0))
@@ -4219,16 +4264,18 @@ shiny::shinyServer(function(input, output, session) {
     )
     
     if (any(
-      length(getConceptSetDetailsLeft()$ExcludedConcepts) == 0,
-      length(getConceptSetDetailsRight()$ExcludedConcepts) == 0
+      is.null(getExcludedConceptsLeft()),
+      length(getExcludedConceptsLeft()) == 0,
+      is.null(getExcludedConceptsRight),
+      length(getExcludedConceptsRight()) == 0
     )) {
       return(NULL)
     }
     
     result <-
       dplyr::setdiff(
-        getConceptSetDetailsLeft()$ExcludedConcepts,
-        getConceptSetDetailsRight()$ExcludedConcepts
+        getExcludedConceptsLeft(),
+        getExcludedConceptsRight()
       )
     
     if (nrow(result) == 0)
@@ -4280,16 +4327,18 @@ shiny::shinyServer(function(input, output, session) {
     )
     
     if (any(
-      length(getConceptSetDetailsLeft()$ExcludedConcepts) == 0,
-      length(getConceptSetDetailsRight()$ExcludedConcepts) == 0
+      is.null(getExcludedConceptsLeft()),
+      nrow(getExcludedConceptsLeft() == 0),
+      is.null(getExcludedConceptsRight()),
+      nrow(getExcludedConceptsLeft() == 0)
     )) {
       return(NULL)
     }
     
     result <-
       dplyr::intersect(
-        getConceptSetDetailsLeft()$ExcludedConcepts,
-        getConceptSetDetailsRight()$ExcludedConcepts
+        getExcludedConceptsLeft(),
+        getExcludedConceptsRight()
       )
     
     if (nrow(result) == 0)
@@ -4341,16 +4390,18 @@ shiny::shinyServer(function(input, output, session) {
     )
     
     if (any(
-      length(getConceptSetDetailsLeft()$ExcludedConcepts) == 0,
-      length(getConceptSetDetailsRight()$ExcludedConcepts) == 0
+      is.null(getExcludedConceptsLeft()),
+      nrow(getExcludedConceptsLeft() == 0),
+      is.null(getExcludedConceptsRight()),
+      nrow(getExcludedConceptsLeft() == 0)
     )) {
       return(NULL)
     }
     
     result <-
       dplyr::union(
-        getConceptSetDetailsLeft()$ExcludedConcepts,
-        getConceptSetDetailsRight()$ExcludedConcepts
+        getExcludedConceptsLeft(),
+        getExcludedConceptsRight()
       )
     
     if (nrow(result) == 0)
