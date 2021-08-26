@@ -10,6 +10,7 @@ Bug fixes:
 See issue https://github.com/OHDSI/CohortDiagnostics/issues/497
 4. readr == 2.0 introduced default lazy loading that appears to hold locks on file in windows. Requiring the use of readr v1.4. use devtools::install_version("readr", version = "1.4", repos = "http://cran.us.r-project.org") to install if needed.
 
+
 CohortDiagnostics 2.1.0
 =======================
 
