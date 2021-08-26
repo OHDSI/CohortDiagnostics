@@ -2348,7 +2348,7 @@ shiny::shinyServer(function(input, output, session) {
     } else if (input$conceptSetsTypeLeft == "Excluded" &
                input$conceptSetsTypeRight == 'Excluded') {
       dataLeft <- getExcludedConceptsLeft()
-      dataRight <- getExcludedConceptsLeft()
+      dataRight <- getExcludedConceptsRight()
     }  else if (input$conceptSetsTypeLeft == "Orphan concepts" &
                 input$conceptSetsTypeRight == 'Orphan concepts') {
       dataLeft <- getOrphanConceptsLeft()
