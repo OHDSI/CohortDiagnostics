@@ -374,8 +374,7 @@ shiny::shinyServer(function(input, output, session) {
   getResolvedConceptIdsForCohortFilteredBySelectedConceptSets <-
     shiny::reactive({
       data <- getResolvedConceptIdsForCohort()
-      if (any(is.null(data),
-              nrow(data) == 0)) {
+      if (!doesObjectHaveData(data)) {
         return(NULL)
       }
       data <- data %>%
@@ -557,8 +556,7 @@ shiny::shinyServer(function(input, output, session) {
   getCohortMetadataLeft <- shiny::reactive(x = {
     data <- cohort %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft())
-    if (any(is.null(data),
-            nrow(data) == 0)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     details <-  tags$table(style = "margin-top: 5px;",
@@ -575,8 +573,7 @@ shiny::shinyServer(function(input, output, session) {
   getCohortMetadataRight <- shiny::reactive(x = {
     data <- cohort %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight())
-    if (any(is.null(data),
-            nrow(data) == 0)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     details <-  tags$table(style = "margin-top: 5px;",
@@ -868,8 +865,7 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$databaseId == !!databaseId) %>%
           dplyr::select(.data$cohortSubjects, .data$cohortEntries)
       }
-      if (any(is.null(data),
-              nrow(data) == 0)) {
+      if (!doesObjectHaveData(data)) {
         return(NULL)
       }
       return(data)
@@ -886,8 +882,7 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$databaseId == !!databaseId) %>%
           dplyr::select(.data$cohortSubjects, .data$cohortEntries)
       }
-      if (any(is.null(data),
-              nrow(data) == 0)) {
+      if (!doesObjectHaveData(data)) {
         return(NULL)
       }
       return(data)
@@ -982,6 +977,9 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdLeft()) %>% 
       dplyr::select(-.data$conceptSetId, -.data$cohortId) %>% 
       dplyr::arrange(dplyr::desc(.data$conceptCount))
+    if (is.null(data)) {
+      return(NULL)
+    }
     return(data)
   })
   
@@ -1016,6 +1014,9 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdLeft()) %>% 
       dplyr::select(-.data$conceptSetId, -.data$cohortId) %>% 
       dplyr::arrange(dplyr::desc(.data$conceptCount))
+    if (is.null(data)) {
+      return(NULL)
+    }
     return(data)
   })
   
@@ -1049,6 +1050,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>%
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdLeft())
+    
     excluded <- getExcludedConceptsLeft()
     if (doesObjectHaveData(excluded)) {
       excludedConceptIds <- excluded %>%
@@ -1061,6 +1063,9 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdLeft()) %>% 
       dplyr::select(-.data$conceptSetId, -.data$cohortId) %>% 
       dplyr::arrange(dplyr::desc(.data$conceptCount))
+    if (is.null(data)) {
+      return(NULL)
+    }
     return(data)
   })
   
@@ -1071,7 +1076,7 @@ shiny::shinyServer(function(input, output, session) {
       cohortIds = consolidatedCohortIdRight(),
       databaseIds = consolidatedDatabaseIdRight()
     )
-    if (is.null(data)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -1321,8 +1326,7 @@ shiny::shinyServer(function(input, output, session) {
         databaseIds = getDatabaseIdForSelectedCohortCountLeft()
       )
     
-    if (any(is.null(data),
-            nrow(data) == 0)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     
@@ -1358,8 +1362,7 @@ shiny::shinyServer(function(input, output, session) {
         databaseIds = getDatabaseIdForSelectedCohortCountRight()
       )
     
-    if (any(is.null(data),
-            nrow(data) == 0)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     return(data)
@@ -2535,7 +2538,7 @@ shiny::shinyServer(function(input, output, session) {
   
   getConceptRelationshipDistanceChoices <- reactive({
     data <- getConceptAncestorForSelectedConceptId()
-    if (is.null(data)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <-
@@ -2861,7 +2864,7 @@ shiny::shinyServer(function(input, output, session) {
   output$isAConceptSetSelectedForCohortLeft <-
     shiny::reactive(x = {
       data <- input$conceptSetsInCohortLeft_rows_selected
-      return(!is.null(data))
+      return(doesObjectHaveData(data))
     })
   shiny::outputOptions(x = output,
                        name = "isAConceptSetSelectedForCohortLeft",
@@ -2882,7 +2885,7 @@ shiny::shinyServer(function(input, output, session) {
   output$conceptSetsExpressionTableLeft <-
     DT::renderDataTable(expr = {
       data <- getConceptSetExpressionLeft()
-      if (is.null(data)) {
+      if (!doesObjectHaveData(data)) {
         return(NULL)
       }
       
@@ -3121,8 +3124,7 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortDefinitionOrphanConceptTableLeft <-
     DT::renderDataTable(expr = {
       data <- getOrphanConceptsLeft()
-      if (any(is.null(data),
-              nrow(data) == 0)) {
+      if (!doesObjectHaveData(data)) {
         return(NULL)
       } else {
         orphanConceptDataDatabaseIds <-
@@ -3802,8 +3804,7 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortDefinitionOrphanConceptTableRight <-
     DT::renderDataTable(expr = {
       data <- getOrphanConceptsRight()
-      if (any(is.null(data),
-              nrow(data) == 0)) {
+      if (!doesObjectHaveData(data)) {
         return(NULL)
       } else {
         orphanConceptDataDatabaseIds <-
@@ -4864,9 +4865,7 @@ shiny::shinyServer(function(input, output, session) {
                             dplyr::select(.data$cohortId, .data$shortName),
                           by = "cohortId") %>%
         dplyr::arrange(.data$shortName, .data$databaseId)
-      if (any(is.null(data),
-              nrow(data) == 0))
-      {
+      if (!doesObjectHaveData(data)) {
         return(NULL)
       }
       return(data)
@@ -4892,9 +4891,7 @@ shiny::shinyServer(function(input, output, session) {
   ##getCohortCountDataSubjectRecord----
   getCohortCountDataSubjectRecord <- shiny::reactive(x = {
     data <- getCohortCountDataForSelectedDatabaseIdsCohortIds()
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -4942,9 +4939,7 @@ shiny::shinyServer(function(input, output, session) {
   ##getCohortCountDataSubject----
   getCohortCountDataSubject <- shiny::reactive(x = {
     data <- getCohortCountDataForSelectedDatabaseIdsCohortIds()
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -4964,9 +4959,7 @@ shiny::shinyServer(function(input, output, session) {
   ##getCohortCountDataRecord----
   getCohortCountDataRecord <- shiny::reactive(x = {
     data <- getCohortCountDataForSelectedDatabaseIdsCohortIds()
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -5303,14 +5296,12 @@ shiny::shinyServer(function(input, output, session) {
       "Calendar Year" %in% input$irStratification
     
     data <- getIncidenceRateData()
-    if (any(is.null(data), nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
       dplyr::filter(.data$databaseId %in% getDatabaseIdsFromDropdown())
-    if (any(is.null(data), nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     
@@ -5342,8 +5333,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::filter(.data$cohortCount >= input$minSubjetCount)
     }
-    if (any(is.null(data), nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     return(data)
@@ -5634,9 +5624,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>%
       dplyr::filter(.data$databaseId %in% getDatabaseIdsFromDropdown())
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     if (calendarIntervalFirstLetter == 'y')
@@ -5688,9 +5676,7 @@ shiny::shinyServer(function(input, output, session) {
         data[as.character(data$periodBegin) >= input$timeSeriesPeriodRangeFilter[1] &
                as.character(data$periodBegin) <= input$timeSeriesPeriodRangeFilter[2],]
     }
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     
@@ -5705,8 +5691,7 @@ shiny::shinyServer(function(input, output, session) {
         subjectsEnd = 0
       )
     
-    if (nrow(data) == 0)
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     return(data)
@@ -5715,8 +5700,7 @@ shiny::shinyServer(function(input, output, session) {
   ##reactive: getTimeSeriesDescription----
   getTimeSeriesDescription <- shiny::reactive({
     data <- getFixedTimeSeriesTsibble()
-    if (any(is.null(data), nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     calendarIntervalFirstLetter <-
@@ -5776,7 +5760,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data[[calendarIntervalFirstLetter]]
-    if (any(is.null(data), nrow(data) == 0)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     if (calendarIntervalFirstLetter == 'y') {
@@ -5981,9 +5965,7 @@ shiny::shinyServer(function(input, output, session) {
   
   getTimeDistributionTableData <- reactive({
     data <- getTimeDistributionData()
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     
@@ -6305,9 +6287,7 @@ shiny::shinyServer(function(input, output, session) {
   ##getIndexEventBreakdownDataLong----
   getIndexEventBreakdownDataLong <- shiny::reactive(x = {
     data <- getIndexEventBreakdownDataFiltered()
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     if (input$indexEventBreakdownValueFilter == "Percentage") {
@@ -6362,9 +6342,7 @@ shiny::shinyServer(function(input, output, session) {
   ##getIndexEventBreakdownDataWide----
   getIndexEventBreakdownDataWide <- shiny::reactive(x = {
     data <- getIndexEventBreakdownDataLong()
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -6422,9 +6400,7 @@ shiny::shinyServer(function(input, output, session) {
   ##getIndexEventBreakdownDataTable----
   getIndexEventBreakdownDataTable <- shiny::reactive(x = {
     data <- getIndexEventBreakdownDataLong()
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     cohortAndPersonCount <- data %>%
@@ -6792,9 +6768,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- getVisitContexDataEnhanced()
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -6806,9 +6780,7 @@ shiny::shinyServer(function(input, output, session) {
   ##getVisitContextDataLong----
   getVisitContextDataLong <- shiny::reactive(x = {
     data <- getVisitContexDataFiltered()
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -6831,9 +6803,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- getVisitContextDataLong()
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -6866,9 +6836,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- getVisitContextDataWide()
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     isPerson <- input$visitContextPersonOrRecords == 'Person'
@@ -7144,9 +7112,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- getCohortOverlap(dataSource = dataSource,
                              cohortIds = getCohortIdsFromSelectedCompoundCohortNames())
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     return(data)
@@ -7155,9 +7121,7 @@ shiny::shinyServer(function(input, output, session) {
   ##getCohortOverlapDataFiltered----
   getCohortOverlapDataFiltered <- reactive(x = {
     data <- getCohortOverlapData()
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -7467,10 +7431,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- getCharacterizationDataFiltered()
-    if (any(is.null(data), nrow(data) == 0)) {
-      return(NULL)
-    }
-    if (any(is.null(data), nrow(data) == 0)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     if (input$charType == "Raw") {
@@ -7506,8 +7467,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- getCharacterizationTableData()
-    if (any(is.null(data),
-            nrow(data) == 0)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     table <- data %>%
@@ -7587,8 +7547,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- getCharacterizationTableData()
-    if (any(is.null(data),
-            nrow(data) == 0)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     if (all(
@@ -7608,9 +7567,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$domainId %in% getCharacterizationDomainNameOptions())
     }
     
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     
@@ -7942,8 +7899,7 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       data <- getTemporalCharacterizationData()
-      if (any(is.null(data),
-              nrow(data) == 0)) {
+      if (!doesObjectHaveData(data)) {
         return(NULL)
       }
       
@@ -7996,9 +7952,7 @@ shiny::shinyServer(function(input, output, session) {
             dplyr::filter(.data$isBinary == 'N')
         }
       
-      if (any(is.null(data),
-              nrow(data) == 0))
-      {
+      if (!doesObjectHaveData(data)) {
         return(NULL)
       }
       return(data)
@@ -8019,9 +7973,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- getTemporalCharacterizationDataFiltered()
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -8038,9 +7990,7 @@ shiny::shinyServer(function(input, output, session) {
                       .data$covariateName) %>%
       dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with('Start'))))
     
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     return(data)
@@ -8379,8 +8329,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- getCompareCharacterizationData()
-    if (any(is.null(data),
-            nrow(data) == 0)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     
@@ -8422,9 +8371,7 @@ shiny::shinyServer(function(input, output, session) {
         )
     }
     
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     return(data)
@@ -8437,15 +8384,13 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- getCompareCharacterizationDataFiltered()
-    if (any(is.null(data),
-            nrow(data) == 0)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
       dplyr::mutate(covariateName = .data$covariateNameFull) %>%
       prepareTable1Comp()
-    if (any(is.null(data),
-            nrow(data) == 0)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -8462,8 +8407,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- getCompareCharacterizationDataFiltered()
-    if (any(is.null(data),
-            nrow(data) == 0)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     if (all(
@@ -8492,9 +8436,7 @@ shiny::shinyServer(function(input, output, session) {
         data %>% #!!! there is a bug here getResoledAndMappedConceptIdsForFilters
         dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
     }
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     
@@ -8880,9 +8822,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(absStdDiff = abs(.data$stdDiff)) %>%
       dplyr::mutate(covariateName = gsub(".*: ", "", .data$covariateName)) %>%
       dplyr::mutate(covariateName = paste0(.data$covariateName, " (", .data$covariateId, ")"))
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     return(data)
@@ -8896,8 +8836,7 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       data <- getCompareTemporalCharcterizationData()
-      if (any(is.null(data),
-              nrow(data) == 0)) {
+      if (!doesObjectHaveData(data)) {
         return(NULL)
       }
       if (input$temporalCharacterProportionOrContinuous == "Proportion") {
@@ -8941,9 +8880,7 @@ shiny::shinyServer(function(input, output, session) {
           )
       }
       
-      if (any(is.null(data),
-              nrow(data) == 0))
-      {
+      if (!doesObjectHaveData(data)) {
         return(NULL)
       }
       return(data)
@@ -8957,8 +8894,7 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       data <- getCompareTemporalCharcterizationDataFiltered()
-      if (any(is.null(data),
-              nrow(data) == 0)) {
+      if (!doesObjectHaveData(data)) {
         return(NULL)
       }
       
@@ -9525,9 +9461,7 @@ shiny::shinyServer(function(input, output, session) {
   ##output: metadataInfoDetailsText----
   output$metadataInfoDetailsText <- shiny::renderUI(expr = {
     data <- getMetadataParsed()
-    if (any(is.null(data),
-            nrow(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     tags$table(tags$tr(tags$td(
@@ -9548,9 +9482,7 @@ shiny::shinyServer(function(input, output, session) {
   output$packageDependencySnapShotTable <-
     DT::renderDataTable(expr = {
       data <- getMetadataInformation()
-      if (all(!is.null(data),
-              nrow(data) == 0))
-      {
+      if (!doesObjectHaveData(data)) {
         return(NULL)
       }
       data <- data %>%
@@ -9592,9 +9524,7 @@ shiny::shinyServer(function(input, output, session) {
   output$argumentsAtDiagnosticsInitiationJson <-
     shiny::renderText(expr = {
       data <- getMetadataInformation()
-      if (any(is.null(data),
-              nrow(data) == 0))
-      {
+      if (!doesObjectHaveData(data)) {
         return(NULL)
       }
       data <- data %>%
