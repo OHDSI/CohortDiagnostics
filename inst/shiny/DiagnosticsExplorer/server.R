@@ -528,44 +528,6 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
-  ###getCohortMetadataLeft----
-  getCohortMetadataLeft <- shiny::reactive(x = {
-    data <- cohort %>%
-      dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft())
-    if (any(is.null(data),
-            nrow(data) == 0)) {
-      return(NULL)
-    }
-    details <-  tags$table(style = "margin-top: 5px;",
-                           tags$tr(
-                             tags$td(tags$strong("Metadata: ")),
-                             tags$td(HTML("&nbsp;&nbsp;")),
-                             tags$td(data$metadata)
-                           ))
-    #!!!!!!!!!!!!!!!!!!parse cohort[i,]$metadata from JSON to data table, iterate and present
-    
-    return(details)
-  })
-  
-  
-  ###getCohortMetadataRight----
-  getCohortMetadataRight <- shiny::reactive(x = {
-    data <- cohort %>%
-      dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight())
-    if (any(is.null(data),
-            nrow(data) == 0)) {
-      return(NULL)
-    }
-    details <-  tags$table(style = "margin-top: 5px;",
-                           tags$tr(
-                             tags$td(tags$strong("Metadata: ")),
-                             tags$td(HTML("&nbsp;&nbsp;")),
-                             tags$td(data[i,]$metadata)
-                           ))
-    #!!!!!!!!!!!!!!!!!!parse cohort[i,]$metadata from JSON to data table, iterate and present
-    
-    return(details)
-  })
   
   ###getCohortIdFromSelectedRowInCohortCountTable----
   getCohortIdFromSelectedRowInCohortCountTable <- reactive({
@@ -585,96 +547,284 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##Human readable text----
-  ###getCirceRenderedExpressionDetailsLeft----
-  getCirceRenderedExpressionDetailsLeft <- shiny::reactive(x = {
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(
-      message = paste0(
-        "Rendering human readable cohort definition using CirceR ",
-        getCirceRPackageVersionInformation()
-      ),
-      value = 0
-    )
-    if (!doesObjectHaveData(consolidatedCohortIdLeft())) {
-      return(NULL)
-    }
-    selectionsInCohortTable <- cohort %>%
-      dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft())
-    if (!doesObjectHaveData(selectionsInCohortTable)) {
-      return(NULL)
-    }
-    
-    details <- list()
-    for (i in (1:nrow(selectionsInCohortTable))) {
-      progress$inc(detail = paste("Cohort id ", consolidatedCohortIdLeft()))
-      cohortDefinition <-
-        RJSONIO::fromJSON(selectionsInCohortTable[i, ]$json,
-                          digits = 23)
-      details[[i]] <-
-        getCirceRenderedExpression(cohortDefinition = cohortDefinition)
-    }
-    return(details)
-  })
-  
-  ###getCirceRenderedExpressionDetailsRight----
-  getCirceRenderedExpressionDetailsRight <- shiny::reactive(x = {
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(
-      message = paste0(
-        "Rendering human readable cohort definition using CirceR ",
-        getCirceRPackageVersionInformation()
-      ),
-      value = 0
-    )
-    if (!doesObjectHaveData(consolidatedCohortIdRight())) {
-      return(NULL)
-    }
-    selectionsInCohortTable <- cohort %>%
-      dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight())
-    if (!doesObjectHaveData(selectionsInCohortTable)) {
-      return(NULL)
-    }
-    
-    details <- list()
-    for (i in (1:nrow(selectionsInCohortTable))) {
-      progress$inc(detail = paste("Cohort id ", consolidatedCohortIdLeft()))
-      cohortDefinition <-
-        RJSONIO::fromJSON(selectionsInCohortTable[i, ]$json,
-                          digits = 23)
-      details[[i]] <-
-        getCirceRenderedExpression(cohortDefinition = cohortDefinition)
-    }
-    return(details)
-  })
-  
   ###getCirceRPackageVersionInformation----
   getCirceRPackageVersionInformation <- shiny::reactive(x = {
     packageVersion <- as.character(packageVersion('CirceR'))
     return(packageVersion)
   })
   
-  ###getCirceRPackageVersionLeft----
-  getCirceRPackageVersionLeft <- shiny::reactive(x = {
-    browser()
-    row <- getSelectedRowsInCohortTableOfCohortDefinitionTab()
-    if (is.null(row)) {
+  ###getCohortMetadataLeft----
+  getCohortMetadataLeft <- shiny::reactive(x = {
+    data <- cohort %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft())
+    if (any(is.null(data),
+            nrow(data) == 0)) {
       return(NULL)
-    } else {
-      details <- list()
-      for (i in 1:nrow(row)) {
-        details[[i]] <- tags$table(tags$tr(tags$td(
-          paste(
-            "rendered for cohort id:",
-            row[i,]$cohortId,
-            "using CirceR version: ",
-            getCirceRPackageVersionInformation()
-          )
-        )))
-      }
-      return(details)
     }
+    details <-  tags$table(style = "margin-top: 5px;",
+                           tags$tr(
+                             tags$td(tags$strong("Metadata: ")),
+                             tags$td(HTML("&nbsp;&nbsp;")),
+                             tags$td(data$metadata)
+                           ))
+    
+    return(details)
+  })
+  
+  ###getCohortMetadataRight----
+  getCohortMetadataRight <- shiny::reactive(x = {
+    data <- cohort %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight())
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
+    details <-  tags$table(style = "margin-top: 5px;",
+                           tags$tr(
+                             tags$td(tags$strong("Metadata: ")),
+                             tags$td(HTML("&nbsp;&nbsp;")),
+                             tags$td(data$metadata)
+                           ))
+    
+    return(details)
+  })
+  
+  ###getCirceRenderedExpressionDetailsLeft----
+  getCirceRenderedExpressionDetailsLeft <- shiny::reactive(x = {
+    if (!doesObjectHaveData(consolidatedCohortIdLeft())) {
+      return(NULL)
+    }
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(
+      message = paste0(
+        "Rendering human readable cohort definition using CirceR ",
+        getCirceRPackageVersionInformation(),
+        " for cohort id: ",
+        consolidatedCohortIdLeft()
+      ),
+      value = 0
+    )
+    selectionsInCohortTable <- cohort %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft())
+    if (!doesObjectHaveData(selectionsInCohortTable)) {
+      return(NULL)
+    }
+    cohortDefinition <-
+      RJSONIO::fromJSON(selectionsInCohortTable$json,
+                        digits = 23)
+    details <-
+      getCirceRenderedExpression(cohortDefinition = cohortDefinition)
+    return(details)
+  })
+  
+  ###getCirceRenderedExpressionDetailsRight----
+  getCirceRenderedExpressionDetailsRight <- shiny::reactive(x = {
+    if (!doesObjectHaveData(consolidatedCohortIdRight())) {
+      return(NULL)
+    }
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(
+      message = paste0(
+        "Rendering human readable cohort definition using CirceR ",
+        getCirceRPackageVersionInformation(),
+        " for cohort id: ",
+        consolidatedCohortIdRight()
+      ),
+      value = 0
+    )
+    selectionsInCohortTable <- cohort %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight())
+    if (!doesObjectHaveData(selectionsInCohortTable)) {
+      return(NULL)
+    }
+    cohortDefinition <-
+      RJSONIO::fromJSON(selectionsInCohortTable$json,
+                        digits = 23)
+    details <-
+      getCirceRenderedExpression(cohortDefinition = cohortDefinition)
+    return(details)
+  })
+  
+  ###output: cohortDefinitionTextRight----
+  output$cohortDefinitionTextRight <- shiny::renderUI(expr = {
+    getCirceRenderedExpressionDetailsRight()$cohortHtmlExpression %>%
+      shiny::HTML()
+  })
+  
+  ###output: cohortDefinitionTextLeft----
+  output$cohortDefinitionTextLeft <- shiny::renderUI(expr = {
+    getCirceRenderedExpressionDetailsLeft()$cohortHtmlExpression %>%
+      shiny::HTML()
+  })
+  
+  ###output: circeRVersionInCohortDefinitionLeft----
+  output$circeRVersionInCohortDefinitionLeft <-
+    shiny::renderUI(expr = {
+      if (!doesObjectHaveData(consolidatedCohortIdLeft())) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(getCirceRPackageVersionInformation())) {
+        return(NULL)
+      }
+      version <- tags$table(tags$tr(tags$td(
+        paste(
+          "rendered for cohort id:",
+          consolidatedCohortIdLeft(),
+          "using CirceR version: ",
+          getCirceRPackageVersionInformation()
+        )
+      )))
+      return(version)
+    })
+  
+  ###output: circeRVersionInCohortDefinitionRight----
+  output$circeRVersionInCohortDefinitionRight <-
+    shiny::renderUI(expr = {
+      if (!doesObjectHaveData(consolidatedCohortIdRight())) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(getCirceRPackageVersionInformation())) {
+        return(NULL)
+      }
+      version <- tags$table(tags$tr(tags$td(
+        paste(
+          "rendered for cohort id:",
+          consolidatedCohortIdRight(),
+          "using CirceR version: ",
+          getCirceRPackageVersionInformation()
+        )
+      )))
+      return(version)
+    })
+  
+  ###output: circeRVersionIncohortDefinitionSqlLeft----
+  output$circeRVersionIncohortDefinitionSqlLeft <-
+    shiny::renderUI(expr = {
+      if (!doesObjectHaveData(consolidatedCohortIdLeft())) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(getCirceRPackageVersionInformation())) {
+        return(NULL)
+      }
+      version <- tags$table(tags$tr(tags$td(
+        paste(
+          "rendered for cohort id:",
+          consolidatedCohortIdLeft(),
+          "using CirceR version: ",
+          getCirceRPackageVersionInformation()
+        )
+      )))
+      return(version)
+    })
+  
+  ###output: circeRVersionInCohortDefinitionSqlRight----
+  output$circeRVersionInCohortDefinitionSqlRight <-
+    shiny::renderUI(expr = {
+      if (!doesObjectHaveData(consolidatedCohortIdRight())) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(getCirceRPackageVersionInformation())) {
+        return(NULL)
+      }
+      version <- tags$table(tags$tr(tags$td(
+        paste(
+          "rendered for cohort id:",
+          consolidatedCohortIdRight(),
+          "using CirceR version: ",
+          getCirceRPackageVersionInformation()
+        )
+      )))
+      return(version)
+    })
+  
+  ###output: nameOfSelectedCohortInCohortDefinitionTableLeft----
+  #Show cohort names in UI
+  output$nameOfSelectedCohortInCohortDefinitionTableLeft <-
+    shiny::renderUI(expr = {
+      if (!doesObjectHaveData(consolidatedCohortIdLeft())) {
+        return(NULL)
+      }
+      cohortName <- cohort %>%
+        dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft()) %>%
+        dplyr::pull(.data$compoundName)
+      
+      if (!doesObjectHaveData(cohortName)) {
+        return(NULL)
+      }
+      tags$table(height = '60',
+                 style = "overflow : auto",
+                 tags$tr(tags$td(tags$b(
+                   "Selected cohort: "
+                 )),
+                 tags$td(cohortName)))
+      
+    })
+  
+  
+  ###output: nameOfSelectedCohortInCohortDefinitionTableRight----
+  output$nameOfSelectedCohortInCohortDefinitionTableRight <-
+    shiny::renderUI(expr = {
+      if (!doesObjectHaveData(consolidatedCohortIdRight())) {
+        return(NULL)
+      }
+      cohortName <- cohort %>%
+        dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight()) %>%
+        dplyr::pull(.data$compoundName)
+      
+      if (!doesObjectHaveData(cohortName)) {
+        return(NULL)
+      }
+      tags$table(height = '60',
+                 style = "overflow : auto",
+                 tags$tr(tags$td(tags$b(
+                   "Selected cohort:"
+                 )),
+                 tags$td(cohortName)))
+      
+    })
+  
+  ##Cohort SQL----
+  ###output: cohortDefinitionSqlLeft----
+  output$cohortDefinitionSqlLeft <- shiny::renderText({
+    if (!doesObjectHaveData(consolidatedCohortIdLeft())) {
+      return(NULL)
+    }
+    json <- cohort %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft()) %>%
+      dplyr::pull(.data$json)
+    if (!doesObjectHaveData(json)) {
+      return(NULL)
+    }
+    options <- CirceR::createGenerateOptions(generateStats = TRUE)
+    expression <-
+      CirceR::cohortExpressionFromJson(expressionJson = json)
+    if (is.null(expression)) {
+      return(NULL)
+    }
+    return(CirceR::buildCohortQuery(expression = expression, options = options))
+  })
+  
+  ###output: cohortDefinitionSqlRight----
+  output$cohortDefinitionSqlRight <- shiny::renderText({
+    if (!doesObjectHaveData(consolidatedCohortIdRight())) {
+      return(NULL)
+    }
+    json <- cohort %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight()) %>%
+      dplyr::pull(.data$json)
+    if (!doesObjectHaveData(json)) {
+      return(NULL)
+    }
+    options <-
+      CirceR::createGenerateOptions(generateStats = TRUE)
+    expression <-
+      CirceR::cohortExpressionFromJson(expressionJson = json)
+    if (is.null(expression)) {
+      return(NULL)
+    }
+    return(CirceR::buildCohortQuery(expression = expression, options = options))
   })
   
   ##Cohort count in cohort definition tab----
@@ -1229,55 +1379,24 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   
-  #output: nameOfSelectedCohortInCohortDefinitionTableLeft----
-  #Show cohort names in UI
-  output$nameOfSelectedCohortInCohortDefinitionTableLeft <-
-    shiny::renderUI(expr = {
-      if (!doesObjectHaveData(consolidatedCohortIdLeft())) {
-        return(NULL)
-      }
-      
-      cohortName <- cohort %>%
-        dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft()) %>%
-        dplyr::pull(.data$compoundName)
-      
-      if (!doesObjectHaveData(cohortName)) {
-        return(NULL)
-      }
-      
-      tags$table(height = '60',
-                 style = "overflow : auto",
-                 tags$tr(tags$td(tags$b(
-                   "Selected cohort: "
-                 )),
-                 tags$td(cohortName)))
-      
-    })
+ ################----------------------------
   
   
-  #output: nameOfSelectedCohortInCohortDefinitionTableRight----
-  output$nameOfSelectedCohortInCohortDefinitionTableRight <-
-    shiny::renderUI(expr = {
-      if (!doesObjectHaveData(consolidatedCohortIdRight())) {
-        return(NULL)
-      }
-      
-      cohortName <- cohort %>%
-        dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight()) %>%
-        dplyr::pull(.data$compoundName)
-      
-      if (!doesObjectHaveData(cohortName)) {
-        return(NULL)
-      }
-      
-      tags$table(height = '60',
-                 style = "overflow : auto",
-                 tags$tr(tags$td(tags$b(
-                   "Selected cohort:"
-                 )),
-                 tags$td(cohortName)))
-      
-    })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   
   #output: cohortDetailsTextLeft----
@@ -1568,23 +1687,6 @@ shiny::shinyServer(function(input, output, session) {
                        name = "getSimplifiedInclusionRuleResultsLeftHasData",
                        suspendWhenHidden = FALSE)
   
-  #output: cohortDefinitionTextLeft----
-  output$cohortDefinitionTextLeft <- shiny::renderUI(expr = {
-    getCirceRenderedExpressionDetailsLeft()$cohortHtmlExpression %>%
-      shiny::HTML()
-  })
-  
-  #output: circeRVersionInCohortDefinitionLeft----
-  output$circeRVersionInCohortDefinitionLeft <-
-    shiny::renderUI(expr = {
-      version <- getCirceRPackageVersion()[[1]]
-      if (is.null(version)) {
-        return(NULL)
-      } else {
-        version
-      }
-    })
-  
   #output: cohortDefinitionJsonLeft----
   output$cohortDefinitionJsonLeft <- shiny::renderText({
     json <- cohort %>%
@@ -1598,33 +1700,6 @@ shiny::shinyServer(function(input, output, session) {
       RJSONIO::toJSON(digits = 23, pretty = TRUE)
     return(json)
   })
-  
-  #output: cohortDefinitionSqlLeft----
-  output$cohortDefinitionSqlLeft <- shiny::renderText({
-    json <- cohort %>%
-      dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft()) %>%
-      dplyr::pull(.data$json)
-    if (!doesObjectHaveData(json)) {
-      return(NULL)
-    }
-    options <- CirceR::createGenerateOptions(generateStats = TRUE)
-    expression <-
-      CirceR::cohortExpressionFromJson(expressionJson = json)
-    if (is.null(expression)) {
-      return(NULL)
-    }
-    return(CirceR::buildCohortQuery(expression = expression, options = options))
-  })
-  
-  #output: circeRVersionIncohortDefinitionSqlLeft----
-  output$circeRVersionIncohortDefinitionSqlLeft <-
-    shiny::renderUI(expr = {
-      version <- getCirceRPackageVersion()[[1]]
-      if (is.null(version)) {
-        return(NULL)
-      }
-      return(version)
-    })
   
   #output: cohortDefinitionSelectedRowCount----
   output$cohortDefinitionSelectedRowCount <- shiny::reactive({
@@ -3393,26 +3468,6 @@ shiny::shinyServer(function(input, output, session) {
                        name = "getSimplifiedInclusionRuleResultsRightHasData",
                        suspendWhenHidden = FALSE)
   
-  ##output: circeRVersionInCohortDefinitionRight----
-  output$circeRVersionInCohortDefinitionRight <-
-    shiny::renderUI(expr = {
-      version <- getCirceRPackageVersion()
-      if (is.null(version))
-      {
-        return(NULL)
-      }
-      if (length(version) > 1) {
-        version <- version[[2]]
-      }
-      return(version)
-    })
-  
-  ##output: cohortDefinitionTextRight----
-  output$cohortDefinitionTextRight <- shiny::renderUI(expr = {
-    browser()
-    getCirceRenderedExpressionDetailsRight()$cohortHtmlExpression %>%
-      shiny::HTML()
-  })
   
   ##output: cohortDefinitionJsonRight----
   output$cohortDefinitionJsonRight <- shiny::renderText({
@@ -3428,35 +3483,6 @@ shiny::shinyServer(function(input, output, session) {
     return(json)
   })
   
-  ##output: circeRVersionInCohortDefinitionSqlRight----
-  output$circeRVersionInCohortDefinitionSqlRight <-
-    shiny::renderUI(expr = {
-      version <- getCirceRPackageVersion()[[2]]
-      if (is.null(version))
-      {
-        return(NULL)
-      } else {
-        version
-      }
-    })
-  
-  ##output: cohortDefinitionSqlRight----
-  output$cohortDefinitionSqlRight <- shiny::renderText({
-    json <- cohort %>%
-      dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight()) %>%
-      dplyr::pull(.data$json)
-    if (!doesObjectHaveData(json)) {
-      return(NULL)
-    }
-    options <-
-      CirceR::createGenerateOptions(generateStats = TRUE)
-    expression <-
-      CirceR::cohortExpressionFromJson(expressionJson = json)
-    if (is.null(expression)) {
-      return(NULL)
-    }
-    return(CirceR::buildCohortQuery(expression = expression, options = options))
-  })
   
   #output: conceptSetExpressionNameRight----
   output$conceptSetExpressionNameRight <-
