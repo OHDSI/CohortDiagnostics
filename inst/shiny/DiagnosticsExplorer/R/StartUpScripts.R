@@ -203,23 +203,18 @@ consolidationOfSelectedFieldValues <- function(input,
       data$selectedConceptIdLeft <- resolvedConceptSetDataLeft[input$cohortDefinitionResolvedConceptTableLeft_rows_selected,]$conceptId
     }
     if (doesObjectHaveData(input$cohortDefinitionResolvedConceptTableRight_rows_selected)) {
-      browser()
       data$selectedConceptIdRight <- resolvedConceptSetDataRight[input$cohortDefinitionResolvedConceptTableRight_rows_selected,]$conceptId
     }
     if (doesObjectHaveData(input$cohortDefinitionExcludedConceptTableLeft_rows_selected)) {
-      browser()
       data$selectedConceptIdLeft <- excludedConceptSetDataLeft[input$cohortDefinitionExcludedConceptTableLeft_rows_selected,]$conceptId
     }
     if (doesObjectHaveData(input$cohortDefinitionExcludedConceptTableRight_rows_selected)) {
-      browser()
       data$selectedConceptIdRight <- excludedConceptSetDataRight[input$cohortDefinitionExcludedConceptTableRight_rows_selected,]$conceptId
     }
     if (doesObjectHaveData(input$cohortDefinitionOrphanConceptTableLeft_rows_selected)) {
-      browser()
       data$selectedConceptIdLeft <- orphanConceptSetDataLeft[input$cohortDefinitionOrphanConceptTableLeft_rows_selected,]$conceptId
     }
     if (doesObjectHaveData(input$cohortDefinitionOrphanConceptTableRight_rows_selected)) {
-      browser()
       data$selectedConceptIdRight <- orphanConceptSetDataRight[input$cohortDefinitionOrphanConceptTableRight_rows_selected,]$conceptId
     }
   }

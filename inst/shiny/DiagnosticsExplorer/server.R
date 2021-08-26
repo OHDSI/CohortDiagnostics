@@ -2228,7 +2228,7 @@ shiny::shinyServer(function(input, output, session) {
       inc <-  1
       panels <- list()
       #Adopts new method, Since UI is rendered dynamically,We can only Hide/Show the tab only after DOM loads.
-      if (!is.null(getSelectedConceptIdActive())) {
+      if (!is.null(consolidatedConceptIdLeft()) || !is.null(consolidatedConceptIdRight())) {
         panels[[inc]] <- shiny::tabPanel(
           title = "Concept Set Browser",
           value = "conceptSetBrowser",
@@ -2338,34 +2338,39 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   output$conceptSetComparisonTable <- DT::renderDT(expr = {
-    resolvedConceptsLeft <- getResolvedConceptsLeft()
-    resolvedConceptsRight <- getResolvedConceptsRight()
-    if (any(
-      is.null(resolvedConceptsLeft),
-      length(resolvedConceptsLeft) == 0,
-      is.null(resolvedConceptsRight),
-      length(resolvedConceptsRight) == 0
-    )) {
-      return(NULL)
-    }
-    
+   #Intial values
+    dataLeft <- NULL
+    dataRight <- NULL
     if (input$conceptSetsTypeLeft == "Resolved" &
         input$conceptSetsTypeRight == 'Resolved') {
-      combinedResult <-
-        resolvedConceptsLeft %>%
-        dplyr::union(resolvedConceptsRight) %>%
-        dplyr::arrange(.data$conceptId) %>%
-        dplyr::select(.data$conceptId, .data$conceptName) %>%
-        dplyr::mutate(left = "", right = "")
-      
-      cohortIdsPresentInLeft <- resolvedConceptsLeft %>%
-        dplyr::pull(.data$conceptId) %>%
-        unique()
-      
-      cohortIdsPresentInRight <- resolvedConceptsRight %>%
-        dplyr::pull(.data$conceptId) %>%
-        unique()
+      dataLeft <- getResolvedConceptsLeft()
+      dataRight <- getResolvedConceptsRight()
+    } else if (input$conceptSetsTypeLeft == "Excluded" &
+               input$conceptSetsTypeRight == 'Excluded') {
+      dataLeft <- getExcludedConceptsLeft()
+      dataRight <- getExcludedConceptsLeft()
+    }  else if (input$conceptSetsTypeLeft == "Orphan concepts" &
+                input$conceptSetsTypeRight == 'Orphan concepts') {
+      dataLeft <- getOrphanConceptsLeft()
+      dataRight <- getOrphanConceptsRight()
     }
+    if(any(!doesObjectHaveData(dataLeft),!doesObjectHaveData(dataRight))) {
+      return(NULL)
+    }
+    combinedResult <-
+      dataLeft %>%
+      dplyr::union(dataRight) %>%
+      dplyr::arrange(.data$conceptId) %>%
+      dplyr::select(.data$conceptId, .data$conceptName) %>%
+      dplyr::mutate(left = "", right = "")
+    
+    cohortIdsPresentInLeft <- dataLeft %>%
+      dplyr::pull(.data$conceptId) %>%
+      unique()
+    
+    cohortIdsPresentInRight <- dataRight %>%
+      dplyr::pull(.data$conceptId) %>%
+      unique()
     
     for (i in 1:nrow(combinedResult)) {
       combinedResult$left[i] <-
