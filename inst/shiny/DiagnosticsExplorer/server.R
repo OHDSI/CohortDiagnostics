@@ -420,46 +420,6 @@ shiny::shinyServer(function(input, output, session) {
   consolidatedConceptIdLeft <- reactiveVal(NULL)
   consolidatedConceptIdRight <- reactiveVal(NULL)
   
-  # observeEvent(eventExpr = list(input$tabs,
-  #                               input$cohortDefinitionTable_rows_selected),
-  #              handlerExpr = {
-  #                data <- consolidationOfSelectedFieldValues(
-  #                  input = input,
-  #                  consolidationType = "cohort",
-  #                  cohort = getCohortSortedByCohortId()
-  #                )
-  #                consolidatedCohortIdLeft(data$cohortIdLeft)
-  #                consolidatedCohortIdRight(data$cohortIdRight)
-  #               })
-  # 
-  # observeEvent(eventExpr = list(input$tabs,
-  #                               input$conceptSetsInCohortLeft_rows_selected,
-  #                               input$conceptSetsInCohortRight_rows_selected),
-  #              handlerExpr = {
-  #                data <- consolidationOfSelectedFieldValues(
-  #                  input = input,
-  #                  consolidationType = "conceptSet",
-  #                  conceptSets = conceptSets,
-  #                  conceptSetExpressionLeft = getConceptSetsInCohortDataLeft(),
-  #                  conceptSetExpressionRight = getConceptSetsInCohortDataRight()
-  #                )
-  #                consolidatedConceptSetIdLeft(data$conceptSetIdLeft)
-  #                consolidatedConceptSetIdRight(data$conceptSetIdRight)
-  #              })
-  # 
-  # observeEvent(eventExpr = list(input$tabs,
-  #                               input$conceptSetsInCohortLeft_rows_selected,
-  #                               input$conceptSetsInCohortRight_rows_selected),
-  #              handlerExpr = {
-  #                data <- consolidationOfSelectedFieldValues(
-  #                  input = input,
-  #                  consolidationType = "database",
-  #                  database = database
-  #                )
-  #                consolidatedDatabaseIdLeft(data$selectedDatabaseIdLeft)
-  #                consolidatedDatabaseIdRight(data$selectedDatabaseIdRight)
-  #              })
-  
   ##reactiveVal: consolidatedSelectedFieldValue----
   consolidatedSelectedFieldValue <- reactiveVal(list())
   #Reset Consolidated reactive val
@@ -479,7 +439,6 @@ shiny::shinyServer(function(input, output, session) {
                    excludedConceptSetDataLeft = getExcludedConceptsLeft(),
                    excludedConceptSetDataRight = getExcludedConceptsRight()
                  )
-                 # consolidatedSelectedFieldValue(data)
                  consolidatedCohortIdLeft(data$cohortIdLeft)
                  consolidatedCohortIdRight(data$cohortIdRight)
                  consolidatedConceptSetIdLeft(data$conceptSetIdLeft)
@@ -489,8 +448,6 @@ shiny::shinyServer(function(input, output, session) {
                  consolidatedConceptIdLeft(data$selectedConceptIdLeft)
                  consolidatedConceptIdRight(data$selectedConceptIdRight)
                })
-  
-
   
   #______________----
   #cohortDefinition tab----
@@ -537,32 +494,11 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
-  
-  ###getSelectedRowsInCohortTableOfCohortDefinitionTab----
-  # What rows were selected in cohort table
-  getSelectedRowsInCohortTableOfCohortDefinitionTab <-
-    shiny::reactive({
-      idx <- input$cohortDefinitionTable_rows_selected
-      if (is.null(idx)) {
-        return(NULL)
-      } else {
-        cohortData <- getCohortSortedByCohortId()
-        if (length(idx) > 1) {
-          # get the last two rows selected
-          lastRowsSelected <- idx[c(length(idx), length(idx) - 1)]
-        } else {
-          lastRowsSelected <- idx
-        }
-        #returns a vector of two integers,
-        # the first integer is the cohortId for the left panel
-        # the second integer is the cohort Id for right panel
-        return(cohortData[lastRowsSelected,])
-      }
-    })
-  
+
   ###output: isCohortDefinitionRowSelected----
   output$isCohortDefinitionRowSelected <- reactive({
-    return(!is.null(getSelectedRowsInCohortTableOfCohortDefinitionTab()))
+    return(any(!is.null(consolidatedCohortIdLeft()),
+               !is.null(consolidatedCohortIdRight())))
   })
   # send output to UI
   shiny::outputOptions(x = output,
@@ -592,25 +528,43 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
-  ###getSelectedCohortMetaData----
-  getSelectedCohortMetaData <- shiny::reactive(x = {
-    data <- getSelectedRowsInCohortTableOfCohortDefinitionTab()
+  ###getCohortMetadataLeft----
+  getCohortMetadataLeft <- shiny::reactive(x = {
+    data <- cohort %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft())
     if (any(is.null(data),
             nrow(data) == 0)) {
       return(NULL)
     }
-    details <- list()
-    for (i in 1:nrow(data)) {
-      details[[i]] <-  tags$table(style = "margin-top: 5px;",
-                                  tags$tr(
-                                    tags$td(tags$strong("Metadata: ")),
-                                    tags$td(HTML("&nbsp;&nbsp;")),
-                                    tags$td(data[i, ]$metadata)
-                                  ))
-      #!!!!!!!!!!!!!!!!!!parse cohort[i,]$metadata from JSON to data table, iterate and present
-    }
-    return(details)
+    details <-  tags$table(style = "margin-top: 5px;",
+                           tags$tr(
+                             tags$td(tags$strong("Metadata: ")),
+                             tags$td(HTML("&nbsp;&nbsp;")),
+                             tags$td(data$metadata)
+                           ))
+    #!!!!!!!!!!!!!!!!!!parse cohort[i,]$metadata from JSON to data table, iterate and present
     
+    return(details)
+  })
+  
+  
+  ###getCohortMetadataRight----
+  getCohortMetadataRight <- shiny::reactive(x = {
+    data <- cohort %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight())
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
+    details <-  tags$table(style = "margin-top: 5px;",
+                           tags$tr(
+                             tags$td(tags$strong("Metadata: ")),
+                             tags$td(HTML("&nbsp;&nbsp;")),
+                             tags$td(data[i,]$metadata)
+                           ))
+    #!!!!!!!!!!!!!!!!!!parse cohort[i,]$metadata from JSON to data table, iterate and present
+    
+    return(details)
   })
   
   ###getCohortIdFromSelectedRowInCohortCountTable----
@@ -631,8 +585,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##Human readable text----
-  ###getCirceRenderedExpressionDetails----
-  getCirceRenderedExpressionDetails <- shiny::reactive(x = {
+  ###getCirceRenderedExpressionDetailsLeft----
+  getCirceRenderedExpressionDetailsLeft <- shiny::reactive(x = {
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(
@@ -642,27 +596,55 @@ shiny::shinyServer(function(input, output, session) {
       ),
       value = 0
     )
-    if (any(
-      is.null(getSelectedRowsInCohortTableOfCohortDefinitionTab()),
-      nrow(getSelectedRowsInCohortTableOfCohortDefinitionTab()) == 0
-    )) {
+    if (!doesObjectHaveData(consolidatedCohortIdLeft())) {
       return(NULL)
     }
-    selectionsInCohortTable <-
-      getSelectedRowsInCohortTableOfCohortDefinitionTab()
-    if (nrow(getSelectedRowsInCohortTableOfCohortDefinitionTab()) > 0) {
-      details <- list()
-      for (i in (1:nrow(selectionsInCohortTable))) {
-        progress$inc(1 / nrow(selectionsInCohortTable),
-                     detail = paste("Doing part", i))
-        cohortDefinition <-
-          RJSONIO::fromJSON(selectionsInCohortTable[i,]$json,
-                            digits = 23)
-        details[[i]] <-
-          getCirceRenderedExpression(cohortDefinition = cohortDefinition)
-      }
-    } else {
+    selectionsInCohortTable <- cohort %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft())
+    if (!doesObjectHaveData(selectionsInCohortTable)) {
       return(NULL)
+    }
+    
+    details <- list()
+    for (i in (1:nrow(selectionsInCohortTable))) {
+      progress$inc(detail = paste("Cohort id ", consolidatedCohortIdLeft()))
+      cohortDefinition <-
+        RJSONIO::fromJSON(selectionsInCohortTable[i, ]$json,
+                          digits = 23)
+      details[[i]] <-
+        getCirceRenderedExpression(cohortDefinition = cohortDefinition)
+    }
+    return(details)
+  })
+  
+  ###getCirceRenderedExpressionDetailsRight----
+  getCirceRenderedExpressionDetailsRight <- shiny::reactive(x = {
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(
+      message = paste0(
+        "Rendering human readable cohort definition using CirceR ",
+        getCirceRPackageVersionInformation()
+      ),
+      value = 0
+    )
+    if (!doesObjectHaveData(consolidatedCohortIdRight())) {
+      return(NULL)
+    }
+    selectionsInCohortTable <- cohort %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight())
+    if (!doesObjectHaveData(selectionsInCohortTable)) {
+      return(NULL)
+    }
+    
+    details <- list()
+    for (i in (1:nrow(selectionsInCohortTable))) {
+      progress$inc(detail = paste("Cohort id ", consolidatedCohortIdLeft()))
+      cohortDefinition <-
+        RJSONIO::fromJSON(selectionsInCohortTable[i, ]$json,
+                          digits = 23)
+      details[[i]] <-
+        getCirceRenderedExpression(cohortDefinition = cohortDefinition)
     }
     return(details)
   })
@@ -673,8 +655,9 @@ shiny::shinyServer(function(input, output, session) {
     return(packageVersion)
   })
   
-  ###getCirceRPackageVersion----
-  getCirceRPackageVersion <- shiny::reactive(x = {
+  ###getCirceRPackageVersionLeft----
+  getCirceRPackageVersionLeft <- shiny::reactive(x = {
+    browser()
     row <- getSelectedRowsInCohortTableOfCohortDefinitionTab()
     if (is.null(row)) {
       return(NULL)
@@ -1299,7 +1282,7 @@ shiny::shinyServer(function(input, output, session) {
   
   #output: cohortDetailsTextLeft----
   output$cohortDetailsTextLeft <- shiny::renderUI({
-    row <- getSelectedCohortMetaData()[[1]]
+    row <- getCohortMetadataLeft()
     if (is.null(row) || length(row) == 0) {
       return(NULL)
     }
@@ -1307,7 +1290,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   #output: cohortDetailsTextRight----
   output$cohortDetailsTextRight <- shiny::renderUI({
-    row <- getSelectedCohortMetaData()
+    row <- getCohortMetadataRight()
     if (is.null(row) || length(row) == 0) {
       return(NULL)
     }
@@ -1587,7 +1570,7 @@ shiny::shinyServer(function(input, output, session) {
   
   #output: cohortDefinitionTextLeft----
   output$cohortDefinitionTextLeft <- shiny::renderUI(expr = {
-    getCirceRenderedExpressionDetails()[[1]]$cohortHtmlExpression %>%
+    getCirceRenderedExpressionDetailsLeft()$cohortHtmlExpression %>%
       shiny::HTML()
   })
   
@@ -2561,7 +2544,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     concept <- concept %>%
       dplyr::select(-.data$relationshipId)
-    
+    browser()
     conceptCooccurrence <-
       getResultsConceptCooccurrence(dataSource = dataSource,
                                     cohortIds = getSelectedRowsInCohortTableOfCohortDefinitionTab()$cohortId[[1]])
@@ -3426,7 +3409,8 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: cohortDefinitionTextRight----
   output$cohortDefinitionTextRight <- shiny::renderUI(expr = {
-    getCirceRenderedExpressionDetails()[[2]]$cohortHtmlExpression %>%
+    browser()
+    getCirceRenderedExpressionDetailsRight()$cohortHtmlExpression %>%
       shiny::HTML()
   })
   
