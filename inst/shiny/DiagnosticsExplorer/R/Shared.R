@@ -878,7 +878,7 @@ getConceptMetadata <- function(dataSource,
   }
   
   conceptIdList <- c(
-    conceptId,
+    conceptIds,
     data$conceptRelationship$conceptId1,
     data$conceptRelationship$conceptId2,
     data$conceptAncestor$ancestorConceptId,
@@ -886,7 +886,7 @@ getConceptMetadata <- function(dataSource,
   ) %>%
     unique()
   
-  nonEraCdmTables <- getDomainInformation() %>%
+  nonEraCdmTables <- getDomainInformation()$long %>%
     dplyr::mutate(isEraTable = stringr::str_detect(string = .data$domainTable,
                                                    pattern = 'era')) %>%
     dplyr::filter(.data$isEraTable == FALSE) %>%

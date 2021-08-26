@@ -2220,10 +2220,53 @@ shiny::shinyServer(function(input, output, session) {
       )
     })
   
-  
+  getSelectedCohortIdActive <- reactiveVal(NULL)
+  getSelectedConceptSetIdActive <- reactiveVal(NULL)
   getSelectedConceptIdActive <- reactiveVal(NULL)
   getSelectedConceptNameActive <- reactiveVal(NULL)
   getDatabaseIdsForselectedConceptSet <- reactiveVal(NULL)
+  
+  observeEvent(eventExpr = consolidatedConceptIdLeft(),handlerExpr = {
+    if (input$conceptSetsTypeLeft == "Resolved") {
+      data <- getResolvedConceptsLeft()
+    } else if (input$conceptSetsTypeLeft == "Excluded") {
+      data <- getExcludedConceptsLeft()
+    }  else if (input$conceptSetsTypeLeft == "Orphan concepts") {
+      data <- getOrphanConceptsLeft()
+    }
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    getSelectedConceptSetIdActive(consolidatedConceptSetIdLeft)
+    getSelectedCohortIdActive(consolidatedCohortIdLeft())
+    getSelectedConceptIdActive(consolidatedConceptIdLeft())
+    conceptName <- data %>% 
+      dplyr::filter(.data$conceptId == consolidatedConceptIdLeft()) %>% 
+      dplyr::pull(.data$conceptName)
+    getSelectedConceptNameActive(conceptName)
+    getDatabaseIdsForselectedConceptSet(consolidatedDatabaseIdLeft())
+  })
+  
+  observeEvent(eventExpr = consolidatedConceptIdRight(),handlerExpr = {
+    if (input$conceptSetsTypeRight == "Resolved") {
+      data <- getResolvedConceptsRight()
+    } else if (input$conceptSetsTypeRight == "Excluded") {
+      data <- getExcludedConceptsRight()
+    }  else if (input$conceptSetsTypeRight == "Orphan concepts") {
+      data <- getOrphanConceptsRight()
+    }
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    getSelectedConceptSetIdActive(consolidatedConceptSetIdRight)
+    getSelectedCohortIdActive(consolidatedCohortIdRight())
+    getSelectedConceptIdActive(consolidatedConceptIdRight())
+    conceptName <- data %>% 
+      dplyr::filter(.data$conceptId == consolidatedConceptIdRight()) %>% 
+      dplyr::pull(.data$conceptName)
+    getSelectedConceptNameActive(conceptName)
+    getDatabaseIdsForselectedConceptSet(consolidatedDatabaseIdRight())
+  })
   
   #Dynamic UI rendering for relationship table -----
   output$dynamicUIForRelationshipAndComparisonTable <-
@@ -2320,7 +2363,9 @@ shiny::shinyServer(function(input, output, session) {
               ")"
             )
           ),
-          DT::dataTableOutput(outputId = "conceptSetTimeSeriesPlot")
+          ggiraph::ggiraphOutput(outputId = "conceptSetTimeSeriesPlot",
+                                 width = "100%",
+                                 height = "100%")
           
         )
         inc = inc + 1
@@ -2341,7 +2386,7 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   output$conceptSetComparisonTable <- DT::renderDT(expr = {
-   #Intial values
+    #Setting Initial values
     dataLeft <- NULL
     dataRight <- NULL
     if (input$conceptSetsTypeLeft == "Resolved" &
@@ -2357,7 +2402,7 @@ shiny::shinyServer(function(input, output, session) {
       dataLeft <- getOrphanConceptsLeft()
       dataRight <- getOrphanConceptsRight()
     }
-    if(any(!doesObjectHaveData(dataLeft),!doesObjectHaveData(dataRight))) {
+    if (any(!doesObjectHaveData(dataLeft),!doesObjectHaveData(dataRight))) {
       return(NULL)
     }
     combinedResult <-
@@ -2627,10 +2672,9 @@ shiny::shinyServer(function(input, output, session) {
     }
     concept <- concept %>%
       dplyr::select(-.data$relationshipId)
-    browser()
     conceptCooccurrence <-
       getResultsConceptCooccurrence(dataSource = dataSource,
-                                    cohortIds = getSelectedRowsInCohortTableOfCohortDefinitionTab()$cohortId[[1]])
+                                    cohortIds = getSelectedCohortIdActive())
     if (all(!is.null(conceptCooccurrence),
             nrow(conceptCooccurrence) > 0)) {
       conceptCooccurrence <- conceptCooccurrence %>%
