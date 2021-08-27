@@ -39,6 +39,10 @@ plotTimeSeriesFromTsibble <-
         group = "fieldName",
         color = "fieldName"
       )
+    #!!!!!!!!!!!!! dummy name if no cohort
+    if (is.null(data$cohortShortName)) {
+      data$cohortShortName <- "cohort"
+    }
     
     data$tooltip <- c(
       paste0(
@@ -49,9 +53,9 @@ plotTimeSeriesFromTsibble <-
         data$periodBegin,
         "\nDatabase ID = ",
         data$databaseId
-        # ,
-        # "\nCohort = ",
-        # data$cohortShortName #!!!!!!!!!!!! add cohort short name
+        ,
+        "\nCohort = ",
+        data$cohortShortName
       )
     )
     

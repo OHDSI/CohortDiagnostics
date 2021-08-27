@@ -143,8 +143,6 @@ consolidationOfSelectedFieldValues <- function(input,
   data <- list()
   ##########################Cohort Definition tab ##########################
   if (input$tabs == 'cohortDefinition') {
-    data$leftSideActive <- FALSE
-    data$rightSideActive <- FALSE
     #selection of cohort
     if (doesObjectHaveData(input$cohortDefinitionTable_rows_selected)) {
       if (length(input$cohortDefinitionTable_rows_selected) > 1) {

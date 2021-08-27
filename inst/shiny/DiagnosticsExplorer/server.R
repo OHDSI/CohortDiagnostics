@@ -2139,7 +2139,8 @@ shiny::shinyServer(function(input, output, session) {
       inc <-  1
       panels <- list()
       #Adopts new method, Since UI is rendered dynamically,We can only Hide/Show the tab only after DOM loads.
-      if (doesObjectHaveData(getMetadataForConceptId())) {
+      if (any(doesObjectHaveData(consolidatedConceptIdLeft()),
+              doesObjectHaveData(consolidatedConceptIdRight()))) {
         data <- getMetadataForConceptId()
         panels[[inc]] <- shiny::tabPanel(
           title = "Concept Set Browser",
@@ -2216,7 +2217,6 @@ shiny::shinyServer(function(input, output, session) {
           )
         )
         inc = inc + 1
-        
         
         panels[[inc]] <- shiny::tabPanel(
           title = "Time Series Plot",
@@ -2339,10 +2339,9 @@ shiny::shinyServer(function(input, output, session) {
           nrow(data) > 0),
       "No timeseries data for the cohort of this series type"
     ))
-    browser()
     plot <- plotTimeSeriesFromTsibble(
       tsibbleData = data,
-      yAxisLabel = titleCaseToCamelCase(input$timeSeriesPlotFilters),
+      yAxisLabel = "Counts", #!!!! radio button for counts and subjects titleCaseToCamelCase(input$timeSeriesPlotFilters),
       indexAggregationType = input$timeSeriesAggregationPeriodSelection,
       timeSeriesStatistics = input$timeSeriesStatistics
     )
@@ -2377,13 +2376,12 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  
   ##output: conceptBrowserTable----
   output$conceptBrowserTable <- DT::renderDT(expr = {
-    if (consolidateCohortDefinitionActiveSideLeft()) {
+    if (doesObjectHaveData(consolidateCohortDefinitionActiveSideLeft())) {
       conceptId <- consolidatedConceptIdLeft()
     }
-    if (consolidateCohortDefinitionActiveSideRight()) {
+    if (doesObjectHaveData(consolidateCohortDefinitionActiveSideRight())) {
       conceptId <- consolidatedConceptIdRight()
     }
     validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
