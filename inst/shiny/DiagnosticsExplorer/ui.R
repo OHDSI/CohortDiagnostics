@@ -827,7 +827,14 @@ bodyTabItems <- shinydashboard::tabItems(
                  )
                )
     ),
-    DT::dataTableOutput(outputId = "indexEventBreakdownTable")
+    DT::dataTableOutput(outputId = "indexEventBreakdownTable"),
+    tags$br(),
+    shiny::column(12,
+                  shiny::conditionalPanel(
+                    condition = "true",
+                    shiny::uiOutput(outputId = "dynamicUIForRelationshipAndTemeSeriesForIndexEvent")
+                  )
+    )
   ),
   shinydashboard::tabItem(
     tabName = "visitContext",

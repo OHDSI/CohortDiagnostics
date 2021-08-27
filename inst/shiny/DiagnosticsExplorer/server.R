@@ -302,7 +302,8 @@ shiny::shinyServer(function(input, output, session) {
       selectedCompoundCohortName = input$selectedCompoundCohortName,
       selectedCompoundCohortName = input$selectedCompoundCohortName,
       selectedCompoundCohortNames = input$selectedCompoundCohortNames,
-      conceptSetsSelectedCohortLeft = input$conceptSetsSelectedCohortLeft
+      conceptSetsSelectedCohortLeft = input$conceptSetsSelectedCohortLeft,
+      input$indexEventBreakdownTable_rows_selected
       # cohortDefinitionSimplifiedInclusionRuleTableLeft_rows_selected = input$simplifiedInclusionRuleTableForSelectedCohortCountLeft_rows_selected,
       # cohortDefinitionSimplifiedInclusionTableRight_rows_selected = input$simplifiedInclusionRuleTableForSelectedCohortCountRight_rows_selected
     )
@@ -1739,7 +1740,6 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       return(NULL)
     }
-    browser()
     data <-
       getResultsInclusionRuleStatistics(
         dataSource = dataSource,
@@ -1775,7 +1775,6 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       return(NULL)
     }
-    browser()
     data <-
       getResultsInclusionRuleStatistics(
         dataSource = dataSource,
@@ -6340,6 +6339,209 @@ shiny::shinyServer(function(input, output, session) {
       )
       return(table)
     }, server = TRUE)
+  
+  output$dynamicUIForRelationshipAndTemeSeriesForIndexEvent <-
+    shiny::renderUI({
+      inc <-  1
+      panels <- list()
+      #Adopts new method, Since UI is rendered dynamically,We can only Hide/Show the tab only after DOM loads.
+      if (doesObjectHaveData(consolidatedConceptIdLeft())) {
+        data <- getMetadataForConceptId()
+        panels[[inc]] <- shiny::tabPanel(
+          title = "Concept Set Browser",
+          value = "conceptSetBrowser",
+          shiny::conditionalPanel(
+            condition = "output.isConceptIdFromLeftOrRightConceptTableSelected==true",
+            tags$h4(
+              paste0(
+                data$conceptName,
+                " (",
+                data$conceptId,
+                ")"
+              )
+            ),
+            tags$table(width = "100%",
+                       tags$tr(
+                         tags$td(
+                           shinyWidgets::pickerInput(
+                             inputId = "choicesForRelationshipNameForIndexEvent",
+                             label = "Relationship Category:",
+                             choices = c(
+                               'Not applicable',
+                               data$relationshipName
+                             ),
+                             selected = c(
+                               'Not applicable',
+                               data$relationshipName
+                             ),
+                             multiple = TRUE,
+                             width = 200,
+                             inline = TRUE,
+                             choicesOpt = list(style = rep_len("color: black;", 999)),
+                             options = shinyWidgets::pickerOptions(
+                               actionsBox = TRUE,
+                               liveSearch = TRUE,
+                               size = 10,
+                               liveSearchStyle = "contains",
+                               liveSearchPlaceholder = "Type here to search",
+                               virtualScroll = 50
+                             )
+                           )
+                         ),
+                         tags$td(
+                           shinyWidgets::pickerInput(
+                             inputId = "choicesForRelationshipDistanceForIndexEvent",
+                             label = "Distance:",
+                             choices = data$conceptAncestorDistance,
+                             selected = data$conceptAncestorDistance,
+                             multiple = TRUE,
+                             width = 200,
+                             inline = TRUE,
+                             choicesOpt = list(style = rep_len("color: black;", 999)),
+                             options = shinyWidgets::pickerOptions(
+                               actionsBox = TRUE,
+                               liveSearch = TRUE,
+                               size = 10,
+                               liveSearchStyle = "contains",
+                               liveSearchPlaceholder = "Type here to search",
+                               virtualScroll = 50
+                             )
+                           )
+                         ),
+                         tags$td(
+                           align = "right",
+                           shiny::downloadButton(
+                             "saveDetailsOfSelectedConceptIdForIndexEvent",
+                             label = "",
+                             icon = shiny::icon("download"),
+                             style = "margin-top: 5px; margin-bottom: 5px;"
+                           )
+                         )
+                       )),
+            DT::dataTableOutput(outputId = "conceptBrowserTableForIndexEvent")
+          )
+        )
+        inc = inc + 1
+        
+        panels[[inc]] <- shiny::tabPanel(
+          title = "Time Series Plot",
+          value = "conceptSetTimeSeriesForIndexEvent",
+          tags$h5(
+            paste0(
+              data$conceptName,
+              " (",
+              data$conceptId,
+              ")"
+            )
+          ),
+          ggiraph::ggiraphOutput(outputId = "conceptSetTimeSeriesPlotForIndexEvent",
+                                 width = "100%",
+                                 height = "100%")
+        )
+        inc = inc + 1
+      }
+      
+      do.call(tabsetPanel, panels)
+    })
+  
+  ##output: conceptBrowserTableForIndexEvent----
+  output$conceptBrowserTableForIndexEvent <- DT::renderDT(expr = {
+    if (doesObjectHaveData(consolidateCohortDefinitionActiveSideLeft())) {
+      conceptId <- consolidatedConceptIdLeft()
+    }
+    
+    validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
+    
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(
+      message = paste0(
+        "Computing concept relationship for concept id:",
+        conceptId
+      ),
+      value = 0
+    )
+    data <- getMetadataForConceptId()
+    validate(need(doesObjectHaveData(data), "No information for selected concept id."))
+    data <- data$conceptRelationshipTable
+    
+    if (doesObjectHaveData(input$choicesForRelationshipNameForIndexEvent)) {
+      data <- data %>%
+        dplyr::inner_join(relationship %>% 
+                            dplyr::filter(.data$relationshipName %in% input$choicesForRelationshipNameForIndexEvent) %>% 
+                            dplyr::select(.data$relationshipId) %>% 
+                            dplyr::distinct(),
+                          by = "relationshipId")
+    }
+    if (doesObjectHaveData(input$choicesForRelationshipDistanceForIndexEvent)) {
+      data <- data %>%
+        dplyr::filter(.data$levelsOfSeparation %in%
+                        input$choicesForRelationshipDistanceForIndexEvent)
+    }
+    
+    options = list(
+      pageLength = 10,
+      searching = TRUE,
+      scrollX = TRUE,
+      lengthChange = TRUE,
+      ordering = TRUE,
+      paging = TRUE
+    )
+    
+    table <- DT::datatable(
+      data,
+      options = options,
+      colnames = colnames(data) %>% camelCaseToTitleCase(),
+      rownames = FALSE,
+      escape = FALSE,
+      filter = "top",
+      class = "stripe nowrap compact"
+    )
+    return(table)
+  })
+  
+  ##output: conceptSetTimeSeriesPlotForIndexEvent----
+  output$conceptSetTimeSeriesPlotForIndexEvent <-  ggiraph::renderggiraph({
+    data <- getMetadataForConceptId()
+    if(!doesObjectHaveData(data)) {
+      return(null)
+    }
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(
+      message = paste0(
+        "Computing concept relationship for concept id:",
+        conceptId
+      ),
+      value = 0
+    )
+    # working on the plot
+    if (input$timeSeriesAggregationPeriodSelection == "Monthly") {
+      data <- data$conceptIdYearMonthLevelTsibble
+    } else {
+      data <- data$conceptIdYearLevelTsibble
+    }
+    validate(need(
+      all(!is.null(data),
+          nrow(data) > 0),
+      "No timeseries data for the cohort of this series type"
+    ))
+    plot <- plotTimeSeriesFromTsibble(
+      tsibbleData = data,
+      yAxisLabel = "Counts", #!!!! radio button for counts and subjects titleCaseToCamelCase(input$timeSeriesPlotFilters),
+      indexAggregationType = input$timeSeriesAggregationPeriodSelection,
+      timeSeriesStatistics = input$timeSeriesStatistics
+    )
+    plot <- ggiraph::girafe(
+      ggobj = plot,
+      options = list(
+        ggiraph::opts_sizing(width = .5),
+        ggiraph::opts_zoom(max = 5)
+      )
+    )
+    return(plot)---
+      return(NULL)
+  })
   
   #______________----
   # Visit Context -----

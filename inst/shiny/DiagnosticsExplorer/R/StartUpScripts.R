@@ -223,7 +223,6 @@ consolidationOfSelectedFieldValues <- function(input,
       data$rightSideActive <- TRUE
     }
   }
-  
   ####################################################
   if (input$tabs == 'indexEventBreakdown') {
     data <- list()
@@ -256,7 +255,8 @@ consolidationOfSelectedFieldValues <- function(input,
     }
     if (all(doesObjectHaveData(indexEventBreakdownDataTable),
             doesObjectHaveData(input$indexEventBreakdownTable_rows_selected))) {
-      data$selectedConceptIdLeft <- indexEventBreakdownDataTable[input$indexEventBreakdownTable_rows_selected,]$conceptId
+      lastRowsSelected <- input$indexEventBreakdownTable_rows_selected[length(input$indexEventBreakdownTable_rows_selected)]
+      data$selectedConceptIdLeft <- indexEventBreakdownDataTable[lastRowsSelected, ]$conceptId
       data$leftSideActive <- TRUE
     }
   }
