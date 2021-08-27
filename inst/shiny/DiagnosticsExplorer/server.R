@@ -125,7 +125,7 @@ shiny::shinyServer(function(input, output, session) {
   #Selections----
   # 
   # ##getCohortIdFromSelectedCompoundCohortName----
-  getCohortIdFromSelectedCompoundCohortName <- shiny::reactive({
+  getCohortIdFromSelectedCompoundCohortName <- shiny::reactive({##!!! replace with consolidated
     data <- cohort %>%
       dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortName) %>%
       dplyr::arrange(.data$cohortId) %>%
@@ -153,27 +153,29 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   
-  ##pickerInput: conceptSetsSelectedFromOneCohort----
+  ##pickerInput: conceptSetsSelectedCohortLeft----
   #defined in UI
   shiny::observe({
-    if (is.null(getConceptSetNamesFromOneCohort())) {
+    data <- conceptSets %>% 
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft()) %>% 
+      dplyr::pull(.data$conceptSetName)
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    subset <- getConceptSetNamesFromOneCohort()$name
     if (input$tabs == "indexEventBreakdown") {
       shinyWidgets::updatePickerInput(
         session = session,
-        inputId = "conceptSetsSelectedFromOneCohort",
+        inputId = "conceptSetsSelectedCohortLeft",
         choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = subset,
-        selected = subset
+        choices = data,
+        selected = data
       )
     } else {
       shinyWidgets::updatePickerInput(
         session = session,
-        inputId = "conceptSetsSelectedFromOneCohort",
+        inputId = "conceptSetsSelectedCohortLeft",
         choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = subset
+        choices = data
       )
     }
   })
@@ -289,7 +291,7 @@ shiny::shinyServer(function(input, output, session) {
   #                         .data$conceptSetName) %>%
   #           dplyr::filter(
   #             .data$conceptSetName %in%
-  #               input$conceptSetsSelectedFromOneCohort
+  #               input$conceptSetsSelectedCohortLeft
   #           ),
   #         by = c("cohortId", "conceptSetId")
   #       )
@@ -311,7 +313,10 @@ shiny::shinyServer(function(input, output, session) {
       cohortDefinitionOrphanConceptTableRight_rows_selected = input$cohortDefinitionOrphanConceptTableRight_rows_selected,
       selectedDatabaseId = input$selectedDatabaseId,
       selectedDatabaseIds = input$selectedDatabaseIds,
-      selectedCompoundCohortName = input$selectedCompoundCohortName
+      selectedCompoundCohortName = input$selectedCompoundCohortName,
+      selectedCompoundCohortName = input$selectedCompoundCohortName,
+      selectedCompoundCohortNames = input$selectedCompoundCohortNames,
+      conceptSetsSelectedCohortLeft = input$conceptSetsSelectedCohortLeft
       # cohortDefinitionSimplifiedInclusionRuleTableLeft_rows_selected = input$simplifiedInclusionRuleTableForSelectedCohortCountLeft_rows_selected,
       # cohortDefinitionSimplifiedInclusionTableRight_rows_selected = input$simplifiedInclusionRuleTableForSelectedCohortCountRight_rows_selected
     )
@@ -5956,7 +5961,6 @@ shiny::shinyServer(function(input, output, session) {
   ##getIndexEventBreakdownDataFiltered----
   getIndexEventBreakdownDataFiltered <- shiny::reactive(x = {
     indexEventBreakdown <- getIndexEventBreakdownDataEnhanced()
-    browser()
     if (!doesObjectHaveData(indexEventBreakdown)) {
       return(NULL)
     }
@@ -5966,10 +5970,10 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(input$domainFieldOptionsInIndexEventData)) {
       return(NULL)
     }
-    if (!doesObjectHaveData(consolidatedConceptSetIdLeft())) {
+    if (!doesObjectHaveData(consolidatedDatabaseIdLeft())) {
       return(NULL)
     }
-    if (!doesObjectHaveData(consolidatedDatabaseIdLeft())) {
+    if (!doesObjectHaveData(consolidatedConceptSetIdLeft())) {
       return(NULL)
     }
     if (!doesObjectHaveData(getResolvedConceptsLeft())) {
@@ -6024,6 +6028,8 @@ shiny::shinyServer(function(input, output, session) {
     } else if (input$indexEventBreakdownTableRadioButton == "Standard concepts") {
       return(indexEventBreakdown %>% dplyr::filter(.data$standardConcept == 'S'))
     } else {
+      #!!!! check why indexEventBreakdown is not returning data for non standard concept
+      # why are there no non standard concepts in index event breakdown.
       return(indexEventBreakdown %>% dplyr::filter(is.na(.data$standardConcept)))
     }
     return(indexEventBreakdown)
@@ -6352,48 +6358,48 @@ shiny::shinyServer(function(input, output, session) {
     }, server = TRUE)
   
   ## IndexEventBreakdown Consolidated reactive val update----
-  observeEvent(
-    eventExpr = input$indexEventBreakdownTable_rows_selected,
-    handlerExpr = {
-      idx <-
-        input$indexEventBreakdownTable_rows_selected
-      selectedConceptId <-
-        getIndexEventBreakdownDataTable()$conceptId[idx]
-      selectedConceptSetId <- conceptSets %>%
-        dplyr::filter(.data$conceptSetName %in% input$conceptSetsSelectedFromOneCohort) %>%
-        dplyr::pull(.data$conceptSetId) %>%
-        unique()
-      selectedDatabaseId <-
-        input$selectedDatabaseIds
-      #Extracting cohortId from selectedCompoundCohortName
-      selectedCohortId <-
-        gsub("\\(|\\)",
-             "",
-             substring(
-               input$selectedCompoundCohortName,
-               regexpr("[(][0-9]+[)]{1}", input$selectedCompoundCohortName)
-             ))
-      if (all(
-        !doesObjectHaveData(selectedConceptId),
-        !doesObjectHaveData(selectedConceptSetId),
-        !doesObjectHaveData(selectedDatabaseId),
-        !doesObjectHaveData(selectedCohortId)
-      )) {
-        consolidatedSelectedFieldValue(
-          list(
-            cohortId = selectedCohortId,
-            conceptSetId = selectedConceptSetId,
-            databaseId = selectedDatabaseId,
-            conceptId = selectedConceptId
-          )
-        )
-      } else
-      {
-        consolidatedSelectedFieldValue(list())
-      }
-      
-    }
-  )
+  # observeEvent(
+  #   eventExpr = input$indexEventBreakdownTable_rows_selected,
+  #   handlerExpr = {
+  #     idx <-
+  #       input$indexEventBreakdownTable_rows_selected
+  #     selectedConceptId <-
+  #       getIndexEventBreakdownDataTable()$conceptId[idx]
+  #     selectedConceptSetId <- conceptSets %>%
+  #       dplyr::filter(.data$conceptSetName %in% input$conceptSetsSelectedCohortLeft) %>%
+  #       dplyr::pull(.data$conceptSetId) %>%
+  #       unique()
+  #     selectedDatabaseId <-
+  #       input$selectedDatabaseIds
+  #     #Extracting cohortId from selectedCompoundCohortName
+  #     selectedCohortId <-
+  #       gsub("\\(|\\)",
+  #            "",
+  #            substring(
+  #              input$selectedCompoundCohortName,
+  #              regexpr("[(][0-9]+[)]{1}", input$selectedCompoundCohortName)
+  #            ))
+  #     if (all(
+  #       !doesObjectHaveData(selectedConceptId),
+  #       !doesObjectHaveData(selectedConceptSetId),
+  #       !doesObjectHaveData(selectedDatabaseId),
+  #       !doesObjectHaveData(selectedCohortId)
+  #     )) {
+  #       consolidatedSelectedFieldValue(
+  #         list(
+  #           cohortId = selectedCohortId,
+  #           conceptSetId = selectedConceptSetId,
+  #           databaseId = selectedDatabaseId,
+  #           conceptId = selectedConceptId
+  #         )
+  #       )
+  #     } else
+  #     {
+  #       consolidatedSelectedFieldValue(list())
+  #     }
+  #     
+  #   }
+  # )
   
   #______________----
   # Visit Context -----
@@ -6849,7 +6855,7 @@ shiny::shinyServer(function(input, output, session) {
   # Characterization/Temporal Characterization ------
   ## Shared----
   ###getConceptSetNamesFromOneCohort----
-  getConceptSetNamesFromOneCohort <- shiny::reactive(x = {
+  getConceptSetNamesFromOneCohort <- shiny::reactive(x = {#!!!!!!!!!!!consolidated
     if (any(
       length(getCohortIdFromSelectedCompoundCohortName()) == 0,
       length(getDatabaseIdsFromDropdown()) == 0
@@ -7035,9 +7041,9 @@ shiny::shinyServer(function(input, output, session) {
       getMultipleCharacterizationData()$covariateRef
     
     if (all(
-      !is.null(input$conceptSetsSelectedFromOneCohort),
-      length(input$conceptSetsSelectedFromOneCohort) > 0,
-      input$conceptSetsSelectedFromOneCohort != ""
+      !is.null(input$conceptSetsSelectedCohortLeft),
+      length(input$conceptSetsSelectedCohortLeft) > 0,
+      input$conceptSetsSelectedCohortLeft != ""
     )) {
       covariatesTofilter <- covariatesTofilter  %>%
         dplyr::inner_join(
@@ -7579,8 +7585,8 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       if (all(
-        !is.null(input$conceptSetsSelectedFromOneCohort),
-        length(input$conceptSetsSelectedFromOneCohort) > 0
+        !is.null(input$conceptSetsSelectedCohortLeft),
+        length(input$conceptSetsSelectedCohortLeft) > 0
       )) {
         data <- data  %>%
           dplyr::inner_join(
@@ -8034,8 +8040,8 @@ shiny::shinyServer(function(input, output, session) {
       }
     
     if (all(
-      !is.null(input$conceptSetsSelectedFromOneCohort),
-      length(input$conceptSetsSelectedFromOneCohort) > 0
+      !is.null(input$conceptSetsSelectedCohortLeft),
+      length(input$conceptSetsSelectedCohortLeft) > 0
     )) {
       data <- data  %>%
         dplyr::inner_join(
@@ -8103,9 +8109,9 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$analysisName %in% getCompareCharacterizationDomainNameFilter())
     }
     if (all(
-      !is.null(input$conceptSetsSelectedFromOneCohort),
-      input$conceptSetsSelectedFromOneCohort != "",
-      length(input$conceptSetsSelectedFromOneCohort) > 0
+      !is.null(input$conceptSetsSelectedCohortLeft),
+      input$conceptSetsSelectedCohortLeft != "",
+      length(input$conceptSetsSelectedCohortLeft) > 0
     )) {
       data <-
         data %>% #!!! there is a bug here getResoledAndMappedConceptIdsForFilters
@@ -8543,8 +8549,8 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       if (all(
-        !is.null(input$conceptSetsSelectedFromOneCohort),
-        length(input$conceptSetsSelectedFromOneCohort) > 0
+        !is.null(input$conceptSetsSelectedCohortLeft),
+        length(input$conceptSetsSelectedCohortLeft) > 0
       )) {
         data <- data  %>%
           dplyr::inner_join(
