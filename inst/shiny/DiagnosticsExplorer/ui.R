@@ -74,7 +74,7 @@ sidebarMenu <-
       input.tabs != 'visitContext' &
       input.tabs != 'cohortOverlap'",
       shinyWidgets::pickerInput(
-        inputId = "database",
+        inputId = "selectedDatabaseId",
         label = "Database",
         choices = database$databaseId,
         selected = database$databaseId[1],

@@ -12,8 +12,6 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  
-  
   #!!!!!!!!!!!!!!lets remove it
   ##getConceptCountData----
   #loads the entire data into R memory.
@@ -52,7 +50,6 @@ shiny::shinyServer(function(input, output, session) {
       data$conceptSubjects <- conceptSubjects
       return(data)
     })
-  
   
   ##getConceptCountConceptIdLevel----
   getConceptCountConceptIdLevel <-
@@ -311,7 +308,10 @@ shiny::shinyServer(function(input, output, session) {
       cohortDefinitionExcludedConceptTableLeft_rows_selected = input$cohortDefinitionExcludedConceptTableLeft_rows_selected,
       cohortDefinitionExcludedConceptTableRight_rows_selected = input$cohortDefinitionExcludedConceptTableRight_rows_selected,
       cohortDefinitionOrphanConceptTableLeft_rows_selected = input$cohortDefinitionOrphanConceptTableLeft_rows_selected,
-      cohortDefinitionOrphanConceptTableRight_rows_selected = input$cohortDefinitionOrphanConceptTableRight_rows_selected
+      cohortDefinitionOrphanConceptTableRight_rows_selected = input$cohortDefinitionOrphanConceptTableRight_rows_selected,
+      selectedDatabaseId = input$selectedDatabaseId,
+      selectedDatabaseIds = input$selectedDatabaseIds,
+      selectedCompoundCohortName = input$selectedCompoundCohortName
       # cohortDefinitionSimplifiedInclusionRuleTableLeft_rows_selected = input$simplifiedInclusionRuleTableForSelectedCohortCountLeft_rows_selected,
       # cohortDefinitionSimplifiedInclusionTableRight_rows_selected = input$simplifiedInclusionRuleTableForSelectedCohortCountRight_rows_selected
     )
@@ -5956,13 +5956,27 @@ shiny::shinyServer(function(input, output, session) {
   ##getIndexEventBreakdownDataFiltered----
   getIndexEventBreakdownDataFiltered <- shiny::reactive(x = {
     indexEventBreakdown <- getIndexEventBreakdownDataEnhanced()
-    if (any(
-      !doesObjectHaveData(indexEventBreakdown),!doesObjectHaveData(input$domainTableOptionsInIndexEventData),!doesObjectHaveData(input$domainFieldOptionsInIndexEventData),!doesObjectHaveData(input$conceptSetsSelectedFromOneCohort),!doesObjectHaveData(getResolvedConceptsLeft())
-    )) {
+    browser()
+    if (!doesObjectHaveData(indexEventBreakdown)) {
       return(NULL)
     }
-    
+    if (!doesObjectHaveData(input$domainTableOptionsInIndexEventData)) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(input$domainFieldOptionsInIndexEventData)) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(consolidatedConceptSetIdLeft())) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(consolidatedDatabaseIdLeft())) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(getResolvedConceptsLeft())) {
+      return(NULL)
+    }
     indexEventBreakdown <- indexEventBreakdown %>%
+      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdLeft()) %>% 
       dplyr::inner_join(
         getResolvedConceptsLeft() %>%
           dplyr::select(.data$conceptId,
@@ -6151,6 +6165,9 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::inner_join(cohortAndPersonCount,
                         by = c('cohortId',
                                'databaseId'))
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
     
     if (input$indexEventBreakdownTableFilter == "Records") {
       data <- data %>%
@@ -6184,6 +6201,9 @@ shiny::shinyServer(function(input, output, session) {
         values_fill = 0
       ) %>%
       dplyr::distinct()
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
     data <- data[order(-data[7]),]
     return(data)
   })
@@ -6204,7 +6224,7 @@ shiny::shinyServer(function(input, output, session) {
       indexEventBreakdownDataTable <-
         getIndexEventBreakdownDataTable()
       validate(need(doesObjectHaveData(indexEventBreakdownDataTable),
-        "No index event breakdown data for the chosen combination."
+                    "No index event breakdown data for the chosen combination."
       ))
       data <- indexEventBreakdownDataTable %>%
         dplyr::select(-.data$cohortId)
@@ -7846,7 +7866,7 @@ shiny::shinyServer(function(input, output, session) {
           " and comparator cohort:",
           getComparatorCohortIdFromSelectedCompoundCohortName(),
           ' for ',
-          input$database
+          input$selectedDatabaseId
         ),
         value = 0
       )
@@ -7857,7 +7877,7 @@ shiny::shinyServer(function(input, output, session) {
           getCohortIdFromSelectedCompoundCohortName(),
           getComparatorCohortIdFromSelectedCompoundCohortName()
         ) %>% unique(),
-        databaseIds = input$database
+        databaseIds = input$selectedDatabaseId
       )
       return(data)
     })
@@ -8965,7 +8985,7 @@ shiny::shinyServer(function(input, output, session) {
   #getMetadataInformation----
   getMetadataInformation <- shiny::reactive(x = {
     data <- metadata %>%
-      dplyr::filter(.data$databaseId == input$database)
+      dplyr::filter(.data$databaseId == input$selectedDatabaseId)
     return(data)
   })
   
@@ -9288,7 +9308,7 @@ shiny::shinyServer(function(input, output, session) {
       getCohortCountResult(
         dataSource = dataSource,
         cohortIds = getCohortIdFromSelectedCompoundCohortName(),
-        databaseIds = input$database
+        databaseIds = input$selectedDatabaseId
       ) %>%
       dplyr::left_join(y = cohort, by = "cohortId") %>%
       dplyr::arrange(.data$cohortName)
@@ -9708,7 +9728,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$temporalCharacterizationSelectedDatabase <-
     shiny::renderUI({
-      return(input$database)
+      return(input$selectedDatabaseId)
     })
   
   output$cohortCharCompareSelectedCohort <- shiny::renderUI({
@@ -9722,7 +9742,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$cohortCharCompareSelectedDatabase <-
     shiny::renderUI({
-      return(input$database)
+      return(input$selectedDatabaseId)
     })
   
   output$temporalCharCompareSelectedCohort <-
@@ -9737,7 +9757,6 @@ shiny::shinyServer(function(input, output, session) {
   
   output$temporalCharCompareSelectedDatabase <-
     shiny::renderUI({
-      return(input$database)
+      return(input$selectedDatabaseId)
     })
-  
 })

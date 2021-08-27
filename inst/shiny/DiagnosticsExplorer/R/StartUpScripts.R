@@ -240,12 +240,11 @@ consolidationOfSelectedFieldValues <- function(input,
         unique()
     }
     #mutli select databaseId
-    if (doesObjectHaveData(input$database)) {
-      data$selectedDatabaseIdLeft <- input$database
+    if (doesObjectHaveData(input$selectedDatabaseIds)) {
+      data$selectedDatabaseIdLeft <- input$selectedDatabaseIds
     }
     #mutli select concept set id for one cohort
     if (doesObjectHaveData(input$conceptSetsSelectedFromOneCohort)) {
-      browser()
       data$conceptSetIdLeft <- input$conceptSetsSelectedFromOneCohort
     }
   }
