@@ -2371,12 +2371,15 @@ shiny::shinyServer(function(input, output, session) {
   
   ##getMetadataForConceptId----
   getMetadataForConceptId <- shiny::reactive(x = {
-    if (consolidateCohortDefinitionActiveSideLeft()) {
+    conceptId <- NULL
+    if (doesObjectHaveData(consolidateCohortDefinitionActiveSideLeft())) {
       conceptId <- consolidatedConceptIdLeft()
     }
-    if (consolidateCohortDefinitionActiveSideRight()) {
-      browser()
+    if (doesObjectHaveData(consolidateCohortDefinitionActiveSideRight())) {
       conceptId <- consolidatedConceptIdRight()
+    }
+    if (is.null(conceptId)) {
+      return(NULL)
     }
     data <- getConceptMetadata(dataSource = dataSource,
                                conceptIds = conceptId)
