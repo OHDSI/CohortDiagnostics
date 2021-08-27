@@ -6191,22 +6191,19 @@ shiny::shinyServer(function(input, output, session) {
   ##output: indexEventBreakdownTable----
   output$indexEventBreakdownTable <-
     DT::renderDataTable(expr = {
-      validate(need(
-        length(getDatabaseIdsFromDropdown()) > 0,
-        "No data sources chosen"
-      ))
-      # validate(need(
-      #   length(getCohortIdFromSelectedCompoundCohortName()) > 0,
-      #   "No cohorts chosen chosen"
-      # ))
-      
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = paste0(
+          "Get index event breakdown data ",
+          " for cohort id: ",
+          consolidatedCohortIdLeft()
+        ),
+        value = 0
+      )
       indexEventBreakdownDataTable <-
         getIndexEventBreakdownDataTable()
-      validate(need(
-        all(
-          !is.null(indexEventBreakdownDataTable),
-          nrow(indexEventBreakdownDataTable) > 0
-        ),
+      validate(need(doesObjectHaveData(indexEventBreakdownDataTable),
         "No index event breakdown data for the chosen combination."
       ))
       data <- indexEventBreakdownDataTable %>%
