@@ -20,21 +20,24 @@
 
 # private function - not exported
 doesObjectHaveData <- function(data) {
-  result <- TRUE
   if (is.null(data)) {
-    result <- FALSE
+    return(FALSE)
   }
   if (is.data.frame(data)) {
     if (nrow(data) == 0) {
-      result <- FALSE
+      return(FALSE)
     }
   }
   if (!is.data.frame(data)) {
     if (length(data) == 0) {
-      result <- FALSE
+      return(FALSE)
+    }
+    if (all(length(data) == 1,
+            data == "")) {
+      return(FALSE)
     }
   }
-    return(result)
+  return(TRUE)
 }
 
 # private function - not exported
@@ -1760,8 +1763,6 @@ getResultsIncidenceRate <- function(dataSource,
   )
   return(data)
 }
-
-
 
 
 

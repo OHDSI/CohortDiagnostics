@@ -230,6 +230,24 @@ consolidationOfSelectedFieldValues <- function(input,
   ####################################################
   if (input$tabs == 'indexEventBreakdown') {
     data <- list()
+    #single select cohortId
+    if (all(!is.null(input$selectedCompoundCohortName),
+            !is.null(cohort))) {
+      data$cohortIdLeft <- cohort %>%
+        dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortName) %>%
+        dplyr::arrange(.data$cohortId) %>%
+        dplyr::pull(.data$cohortId) %>%
+        unique()
+    }
+    #mutli select databaseId
+    if (doesObjectHaveData(input$database)) {
+      data$selectedDatabaseIdLeft <- input$database
+    }
+    #mutli select concept set id for one cohort
+    if (doesObjectHaveData(input$conceptSetsSelectedFromOneCohort)) {
+      browser()
+      data$conceptSetIdLeft <- input$conceptSetsSelectedFromOneCohort
+    }
   }
   ####################################################
   if (input$tabs == 'cohortCharacterization') {

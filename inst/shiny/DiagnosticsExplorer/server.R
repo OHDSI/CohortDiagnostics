@@ -1,23 +1,9 @@
 shiny::shinyServer(function(input, output, session) {
   #______________----
   #Reactive functions that are initiated on start up----
-  ##getOmopDomainInformation---
-  getOmopDomainInformation <- shiny::reactive(x = {
-    data <- getDomainInformation()
-    data <- data$wide
-    return(data)
-  })
-  
-  ##getOmopDomainInformationLong---
-  getOmopDomainInformationLong <- shiny::reactive(x = {
-    data <- getDomainInformation()
-    data <- data$long
-    return(data)
-  })
-  
   ##getNonEraCdmTableShortNames----
   getNonEraCdmTableShortNames <- shiny::reactive({
-    data <- getOmopDomainInformation() %>%
+    data <- getDomainInformation()$wide %>%
       dplyr::filter(.data$isEraTable == FALSE) %>%
       dplyr::select(.data$domainTableShort) %>%
       dplyr::distinct() %>%
@@ -140,8 +126,8 @@ shiny::shinyServer(function(input, output, session) {
   
   #______________----
   #Selections----
-  
-  ##getCohortIdFromSelectedCompoundCohortName----
+  # 
+  # ##getCohortIdFromSelectedCompoundCohortName----
   getCohortIdFromSelectedCompoundCohortName <- shiny::reactive({
     data <- cohort %>%
       dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortName) %>%
@@ -276,41 +262,42 @@ shiny::shinyServer(function(input, output, session) {
   
   #______________----
   #Shared/reused----
-  ##getResolvedConceptIdsForCohort----
-  getResolvedConceptIdsForCohort <- shiny::reactive({
-    if (any(
-      is.null(getCohortIdFromSelectedCompoundCohortName()),
-      length(getCohortIdFromSelectedCompoundCohortName()) == 0
-    )) {
-      return(NULL)
-    }
-    resolvedConcepts <-
-      getResultsResolvedConcepts(dataSource = dataSource,
-                                 cohortIds = getCohortIdFromSelectedCompoundCohortName())
-    return(resolvedConcepts)
-  })
+  # ##getResolvedConceptIdsForCohort----
+  # getResolvedConceptIdsForCohort <- shiny::reactive({
+  #   if (any(
+  #     is.null(getCohortIdFromSelectedCompoundCohortName()),
+  #     length(getCohortIdFromSelectedCompoundCohortName()) == 0
+  #   )) {
+  #     return(NULL)
+  #   }
+  #   resolvedConcepts <-
+  #     getResultsResolvedConcepts(dataSource = dataSource,
+  #                                cohortIds = getCohortIdFromSelectedCompoundCohortName())
+  #   return(resolvedConcepts)
+  # })
   
-  ##getResolvedConceptIdsForCohortFilteredBySelectedConceptSets----
-  getResolvedConceptIdsForCohortFilteredBySelectedConceptSets <-
-    shiny::reactive({
-      data <- getResolvedConceptIdsForCohort()
-      if (!doesObjectHaveData(data)) {
-        return(NULL)
-      }
-      data <- data %>%
-        dplyr::inner_join(
-          conceptSets %>%
-            dplyr::select(.data$cohortId,
-                          .data$conceptSetId,
-                          .data$conceptSetName) %>%
-            dplyr::filter(
-              .data$conceptSetName %in%
-                input$conceptSetsSelectedFromOneCohort
-            ),
-          by = c("cohortId", "conceptSetId")
-        )
-      return(data)
-    })
+  # #getResolvedConceptIdsForCohortFilteredBySelectedConceptSets----
+  # getResolvedConceptIdsForCohortFilteredBySelectedConceptSets <-
+  #   shiny::reactive({
+  #     data <- getResolvedConceptsLeft()
+  #     if (!doesObjectHaveData(data)) {
+  #       return(NULL)
+  #     }
+  #     browser()
+  #     data <- data %>%
+  #       dplyr::inner_join(
+  #         conceptSets %>%
+  #           dplyr::select(.data$cohortId,
+  #                         .data$conceptSetId,
+  #                         .data$conceptSetName) %>%
+  #           dplyr::filter(
+  #             .data$conceptSetName %in%
+  #               input$conceptSetsSelectedFromOneCohort
+  #           ),
+  #         by = c("cohortId", "conceptSetId")
+  #       )
+  #     return(data)
+  #   })
   
   ##getUserSelection----
   getUserSelection <- shiny::reactive(x = {
@@ -1403,14 +1390,17 @@ shiny::shinyServer(function(input, output, session) {
       cohortIds = consolidatedCohortIdLeft(),
       databaseIds = consolidatedDatabaseIdLeft()
     )
-    if (is.null(data)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    data <- data %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdLeft()) %>% 
+    if (doesObjectHaveData(consolidatedConceptSetIdLeft())) {
+      data <- data %>%
+        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdLeft())
+    }
+    data <- data %>% 
       dplyr::select(-.data$conceptSetId, -.data$cohortId) %>% 
       dplyr::arrange(dplyr::desc(.data$conceptCount))
-    if (is.null(data)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     return(data)
@@ -1420,16 +1410,22 @@ shiny::shinyServer(function(input, output, session) {
   getResolvedConceptsRight <- shiny::reactive({
     data <- getResultsResolvedConcepts(
       dataSource = dataSource,
-      cohortIds = consolidatedCohortIdRight(),
-      databaseIds = consolidatedDatabaseIdRight()
+      cohortIds = consolidatedCohortIdRight()$long(),
+      databaseIds = consolidatedDatabaseIdRight()$long()
     )
-    if (is.null(data)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    data <- data %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdRight()) %>% 
+    if (doesObjectHaveData(consolidatedConceptSetIdRight())) {
+      data <- data %>%
+        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdRight()$long())
+    }
+    data <- data %>% 
       dplyr::select(-.data$conceptSetId, -.data$cohortId) %>% 
       dplyr::arrange(dplyr::desc(.data$conceptCount))
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
     return(data)
   })
   
@@ -5812,54 +5808,54 @@ shiny::shinyServer(function(input, output, session) {
   # Index event breakdown ------
   ##getIndexEventBreakdownData----
   getIndexEventBreakdownData <- shiny::reactive(x = {
-    if (any(length(getDatabaseIdsFromDropdown()) == 0))
-    {
+    if (any(is.null(input$tabs),!input$tabs == "indexEventBreakdown")) {
       return(NULL)
     }
-    if (all(is(dataSource, "environment"),!exists('indexEventBreakdown'))) {
+    if (any(length(consolidatedCohortIdLeft()) == 0)) {
+      return(NULL)
+    }
+    if (all(is(dataSource, "environment"),
+            !exists('indexEventBreakdown'))) {
       return(NULL)
     }
     data <-
       getResultsIndexEventBreakdown(dataSource = dataSource,
-                                    cohortIds = getCohortIdFromSelectedCompoundCohortName())
+                                    cohortIds = consolidatedCohortIdLeft())
     return(data)
   })
   
   ##pickerInput: domainTableOptionsInIndexEventData----
   shiny::observe({
-    if (all(!is.null(getIndexEventBreakdownData()),
-            nrow(getIndexEventBreakdownData()) > 0))
-    {
-      data <- getIndexEventBreakdownData() %>%
-        dplyr::rename("domainTableShort" = .data$domainTable) %>%
-        dplyr::inner_join(
-          getOmopDomainInformationLong() %>%
-            dplyr::select(
-              .data$domainTableShort,
-              .data$domainTable,
-              .data$eraTable
-            ),
-          by = "domainTableShort"
-        ) %>%
-        dplyr::arrange(.data$domainTable,
-                       .data$domainField)
-      choices <- data %>%
-        dplyr::select(.data$domainTable) %>%
-        dplyr::distinct() %>%
-        dplyr::pull() %>%
-        snakeCaseToCamelCase() %>%
-        camelCaseToTitleCase()
-      choicesSelected <- data %>%
-        dplyr::filter(.data$eraTable == FALSE) %>%
-        dplyr::select(.data$domainTable) %>%
-        dplyr::distinct() %>%
-        dplyr::pull() %>%
-        snakeCaseToCamelCase() %>%
-        camelCaseToTitleCase()
-    } else
-    {
+    if (!doesObjectHaveData(getIndexEventBreakdownData())) {
       return(NULL)
     }
+    data <- getIndexEventBreakdownData() %>%
+      dplyr::rename("domainTableShort" = .data$domainTable) %>%
+      dplyr::inner_join(
+        getDomainInformation()$long %>%
+          dplyr::select(.data$domainTableShort,
+                        .data$domainTable,
+                        .data$eraTable),
+        by = "domainTableShort"
+      ) %>%
+      dplyr::arrange(.data$domainTable,
+                     .data$domainField)
+    
+    choices <- data %>%
+      dplyr::select(.data$domainTable) %>%
+      dplyr::distinct() %>%
+      dplyr::pull() %>%
+      snakeCaseToCamelCase() %>%
+      camelCaseToTitleCase()
+    
+    choicesSelected <- data %>%
+      dplyr::filter(.data$eraTable == FALSE) %>%
+      dplyr::select(.data$domainTable) %>%
+      dplyr::distinct() %>%
+      dplyr::pull() %>%
+      snakeCaseToCamelCase() %>%
+      camelCaseToTitleCase()
+    
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "domainTableOptionsInIndexEventData",
@@ -5871,13 +5867,13 @@ shiny::shinyServer(function(input, output, session) {
   
   ##pickerInput: domainFieldOptionsInIndexEventData----
   shiny::observe({
-    if (all(!is.null(getIndexEventBreakdownData()),
-            nrow(getIndexEventBreakdownData()) > 0))
-    {
+    if (!doesObjectHaveData(getIndexEventBreakdownData())) {
+      return(NULL)
+    }
       data <- getIndexEventBreakdownData() %>%
         dplyr::rename("domainFieldShort" = .data$domainField) %>%
         dplyr::inner_join(
-          getOmopDomainInformationLong() %>%
+          getDomainInformation()$long %>%
             dplyr::select(
               .data$domainFieldShort,
               .data$domainField,
@@ -5885,12 +5881,14 @@ shiny::shinyServer(function(input, output, session) {
             ),
           by = "domainFieldShort"
         )
+      
       choices <- data %>%
         dplyr::select(.data$domainField) %>%
         dplyr::distinct() %>%
         dplyr::pull() %>%
         snakeCaseToCamelCase() %>%
         camelCaseToTitleCase()
+      
       choicesSelected <- data %>%
         dplyr::filter(.data$eraTable == FALSE) %>%
         dplyr::select(.data$domainField) %>%
@@ -5898,10 +5896,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::pull() %>%
         snakeCaseToCamelCase() %>%
         camelCaseToTitleCase()
-    } else
-    {
-      return(NULL)
-    }
+      
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "domainFieldOptionsInIndexEventData",
@@ -5914,12 +5909,10 @@ shiny::shinyServer(function(input, output, session) {
   ##getIndexEventBreakdownDataEnhanced----
   getIndexEventBreakdownDataEnhanced <- shiny::reactive(x = {
     indexEventBreakdown <- getIndexEventBreakdownData()
-    if (any(is.null(indexEventBreakdown),
-            nrow(indexEventBreakdown) == 0))
-    {
+    if (!doesObjectHaveData(indexEventBreakdown)) {
       return(NULL)
     }
-    if (is.null(cohortCount)) {
+    if (!doesObjectHaveData(cohortCount)) {
       return(NULL)
     }
     conceptIdDetails <- getConcept(dataSource = dataSource,
@@ -5928,6 +5921,9 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(conceptIdDetails)) {
       return(NULL)
     }
+    #!!! future idea for index event breakdown - metric on conceptProportion
+    # what proportion of concepts in dataSource is in index event
+    
     indexEventBreakdown <- indexEventBreakdown %>%
       dplyr::inner_join(
         conceptIdDetails %>%
@@ -5939,9 +5935,7 @@ shiny::shinyServer(function(input, output, session) {
             .data$standardConcept
           ),
         by = c("conceptId")
-      )
-    
-    indexEventBreakdown <- indexEventBreakdown %>%
+      ) %>%
       dplyr::inner_join(cohortCount,
                         by = c('databaseId', 'cohortId')) %>%
       dplyr::mutate(
@@ -5952,7 +5946,7 @@ shiny::shinyServer(function(input, output, session) {
         domainFieldShort = .data$domainField,
         domainTableShort = .data$domainTable
       ) %>%
-      dplyr::inner_join(getOmopDomainInformationLong(),
+      dplyr::inner_join(getDomainInformation()$long,
                         by = c('domainTableShort',
                                'domainFieldShort')) %>%
       dplyr::select(-.data$domainTableShort, -.data$domainFieldShort)
@@ -5962,30 +5956,22 @@ shiny::shinyServer(function(input, output, session) {
   ##getIndexEventBreakdownDataFiltered----
   getIndexEventBreakdownDataFiltered <- shiny::reactive(x = {
     indexEventBreakdown <- getIndexEventBreakdownDataEnhanced()
-    if (any(is.null(indexEventBreakdown),
-            nrow(indexEventBreakdown) == 0))
-    {
-      return(NULL)
-    }
-    if (is.null(input$domainTableOptionsInIndexEventData)) {
-      return(NULL)
-    }
-    if (is.null(input$domainFieldOptionsInIndexEventData)) {
-      return(NULL)
-    }
-    
-    if (all(
-      !is.null(input$conceptSetsSelectedFromOneCohort),
-      length(input$conceptSetsSelectedFromOneCohort) > 0
+    if (any(
+      !doesObjectHaveData(indexEventBreakdown),!doesObjectHaveData(input$domainTableOptionsInIndexEventData),!doesObjectHaveData(input$domainFieldOptionsInIndexEventData),!doesObjectHaveData(input$conceptSetsSelectedFromOneCohort),!doesObjectHaveData(getResolvedConceptsLeft())
     )) {
-      indexEventBreakdown <- indexEventBreakdown %>%
-        dplyr::inner_join(
-          getResolvedConceptIdsForCohortFilteredBySelectedConceptSets(),
-          by = c("cohortId", "conceptId", "databaseId")
-        )
+      return(NULL)
     }
     
-    domainTableSelected <- getOmopDomainInformationLong() %>%
+    indexEventBreakdown <- indexEventBreakdown %>%
+      dplyr::inner_join(
+        getResolvedConceptsLeft() %>%
+          dplyr::select(.data$conceptId,
+                        .data$databaseId) %>%
+          dplyr::distinct(),
+        by = c("conceptId", "databaseId")
+      )
+    
+    domainTableSelected <- getDomainInformation()$long %>%
       dplyr::filter(
         .data$domainTable %in% c(
           input$domainTableOptionsInIndexEventData %>%
@@ -5996,13 +5982,11 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::pull(.data$domainTable) %>%
       unique() %>%
       sort()
-    if (any(is.null(domainTableSelected),
-            length(domainTableSelected) == 0))
-    {
+    if (!doesObjectHaveData(domainTableSelected)) {
       return(NULL)
     }
     
-    domainFieldSelected <- getOmopDomainInformationLong() %>%
+    domainFieldSelected <- getDomainInformation()$long %>%
       dplyr::filter(
         .data$domainField %in% c(
           input$domainFieldOptionsInIndexEventData %>%
@@ -6013,9 +5997,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::pull(.data$domainField) %>%
       unique() %>%
       sort()
-    if (any(is.null(domainFieldSelected),
-            length(domainFieldSelected) == 0))
-    {
+    if (!doesObjectHaveData(domainFieldSelected)) {
       return(NULL)
     }
     
@@ -6023,17 +6005,13 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$domainTable %in% domainTableSelected) %>%
       dplyr::filter(.data$domainField %in% domainFieldSelected)
     
-    if (input$indexEventBreakdownTableRadioButton == 'All')
-    {
+    if (input$indexEventBreakdownTableRadioButton == 'All') {
       return(indexEventBreakdown)
-    } else
-      if (input$indexEventBreakdownTableRadioButton == "Standard concepts")
-      {
-        return(indexEventBreakdown %>% dplyr::filter(.data$standardConcept == 'S'))
-      } else
-      {
-        return(indexEventBreakdown %>% dplyr::filter(is.na(.data$standardConcept)))
-      }
+    } else if (input$indexEventBreakdownTableRadioButton == "Standard concepts") {
+      return(indexEventBreakdown %>% dplyr::filter(.data$standardConcept == 'S'))
+    } else {
+      return(indexEventBreakdown %>% dplyr::filter(is.na(.data$standardConcept)))
+    }
     return(indexEventBreakdown)
   })
   
@@ -6217,10 +6195,10 @@ shiny::shinyServer(function(input, output, session) {
         length(getDatabaseIdsFromDropdown()) > 0,
         "No data sources chosen"
       ))
-      validate(need(
-        length(getCohortIdFromSelectedCompoundCohortName()) > 0,
-        "No cohorts chosen chosen"
-      ))
+      # validate(need(
+      #   length(getCohortIdFromSelectedCompoundCohortName()) > 0,
+      #   "No cohorts chosen chosen"
+      # ))
       
       indexEventBreakdownDataTable <-
         getIndexEventBreakdownDataTable()
@@ -6404,6 +6382,10 @@ shiny::shinyServer(function(input, output, session) {
   # Visit Context -----
   ##getVisitContextData----
   getVisitContextData <- shiny::reactive(x = {
+    if (all(doesObjectHaveData(input$tab),
+            input$tab != "visitContext")) {
+      return(NULL)
+    }
     if (any(
       is.null(getDatabaseIdsFromDropdown()),
       length(getDatabaseIdsFromDropdown()) == 0
