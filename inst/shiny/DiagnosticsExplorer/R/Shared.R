@@ -458,10 +458,12 @@ getConceptRelationship <- function(dataSource = .GlobalEnv,
             nrow(table) == 0)) {
       return(NULL)
     }
-    data <- get(table, envir = dataSource) %>%
-      dplyr::filter(.data$conceptId1 %in% conceptIds |
-                      .data$conceptId2 %in% conceptIds)
-    
+    data <- get(table, envir = dataSource)
+    if (doesObjectHaveData(conceptIds)) {
+      data <- data %>% 
+        dplyr::filter(.data$conceptId1 %in% conceptIds |
+                        .data$conceptId2 %in% conceptIds)
+    }
   } else {
     sql <-
       "SELECT *
@@ -897,11 +899,9 @@ getConceptMetadata <- function(dataSource,
   # results dependent on databaseId
   if (conceptCount) {
     data$conceptCountDetails <-
-      getResultsConceptCount(
-        dataSource = dataSource,
-        databaseIds = databaseIds,
-        conceptIds = conceptIdList
-      )
+      getResultsConceptCount(dataSource = dataSource,
+                             databaseIds = databaseIds,
+                             conceptIds = conceptIdList)
     
     conceptCount <- data$conceptCountDetails %>%
       dplyr::rename('domainTableShort' = .data$domainTable) %>%
@@ -914,11 +914,9 @@ getConceptMetadata <- function(dataSource,
       dplyr::ungroup()
     
     data$conceptSubjectsDetails <-
-      getResultsConceptCount(
-        dataSource = dataSource,
-        databaseIds = databaseIds,
-        conceptIds = conceptIdList
-      )
+      getResultsConceptCount(dataSource = dataSource,
+                             databaseIds = databaseIds,
+                             conceptIds = conceptIdList)
     conceptSubjects <- data$conceptSubjectsDetails %>%
       dplyr::rename('domainTableShort' = .data$domainTable) %>%
       dplyr::inner_join(nonEraCdmTables,
@@ -941,6 +939,146 @@ getConceptMetadata <- function(dataSource,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     conceptIds = conceptIdList
   )
+  data$conceptId <- conceptIds
+  
+  if (length(conceptIds) == 1) {
+    #output for concept relationship table in shiny app
+    conceptRelationship <- data$conceptRelationship %>%
+      dplyr::filter(.data$conceptId1 == data$conceptId) %>%
+      dplyr::select(-.data$conceptId1) %>%
+      dplyr::filter(is.na(.data$invalidReason)) %>%
+      dplyr::rename("conceptId" = .data$conceptId2) %>%
+      dplyr::select(.data$conceptId,
+                    .data$relationshipId) %>% 
+      dplyr::filter(.data$conceptId != data$conceptId)
+    
+    conceptAncestor <- data$conceptAncestor %>%
+      dplyr::filter(.data$descendantConceptId %in% data$conceptId) %>%
+      dplyr::rename(
+        "conceptId" = .data$ancestorConceptId,
+        "levelsOfSeparation" = .data$minLevelsOfSeparation
+      ) %>%
+      dplyr::select(.data$conceptId,
+                    .data$levelsOfSeparation) %>%
+      dplyr::distinct() %>%
+      dplyr::mutate(levelsOfSeparation = levelsOfSeparation * -1) %>% 
+      dplyr::filter(.data$conceptId != data$conceptId)
+    
+    conceptDescendant <- data$conceptAncestor %>%
+      dplyr::filter(.data$ancestorConceptId %in% data$conceptId) %>%
+      dplyr::rename(
+        "conceptId" = .data$descendantConceptId,
+        "levelsOfSeparation" = .data$minLevelsOfSeparation
+      ) %>%
+      dplyr::select(.data$conceptId,
+                    .data$levelsOfSeparation) %>%
+      dplyr::distinct() %>% 
+      dplyr::filter(.data$conceptId != data$conceptId)
+    
+    conceptAncestor <- dplyr::bind_rows(conceptAncestor,
+                                        conceptDescendant) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(dplyr::desc(.data$levelsOfSeparation))
+    
+    conceptCount <- data$conceptCount %>%
+      tidyr::pivot_longer(
+        cols = c(.data$conceptCount, .data$subjectCount),
+        names_to = "names",
+        values_to = "values"
+      ) %>%
+      dplyr::mutate(names = paste0(.data$names,
+                                   " ",
+                                   .data$databaseId)) %>%
+      tidyr::pivot_wider(
+        id_cols = .data$conceptId,
+        names_from = .data$names,
+        values_from = .data$values
+      )
+    
+    data$conceptRelationshipTable <-
+      data$concept %>%
+      dplyr::select(
+        -.data$invalidReason,
+        -.data$validStartDate,
+        -.data$validEndDate,
+        -.data$conceptClassId
+      ) %>%
+      dplyr::left_join(conceptCount,
+                       by = "conceptId") %>%
+      dplyr::left_join(conceptRelationship,
+                       by = 'conceptId') %>%
+      dplyr::left_join(conceptAncestor,
+                       by = "conceptId") %>%
+      dplyr::relocate(.data$conceptId,
+                      .data$conceptName,
+                      .data$conceptCode,
+                      dplyr::contains(" ")) %>%
+      dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with("conceptCount")))) %>%
+      dplyr::mutate(levelsOfSeparation = as.character(.data$levelsOfSeparation)) %>%
+      tidyr::replace_na(list(relationships = "Not applicable",
+                             levelsOfSeparation = "Not applicable"))
+    
+    data$conceptName <- data$concept %>%
+      dplyr::filter(.data$conceptId == data$conceptId) %>%
+      dplyr::pull(.data$conceptName)
+    data$relationshipName <- relationship %>%
+      dplyr::select(.data$relationshipId, .data$relationshipName) %>%
+      dplyr::inner_join(data$conceptRelationship, by = "relationshipId") %>%
+      dplyr::select(.data$relationshipName) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange() %>%
+      dplyr::pull()
+    data$conceptAncestorDistance <- data$conceptAncestor %>%
+      dplyr::select(.data$minLevelsOfSeparation) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(.data$minLevelsOfSeparation) %>%
+      dplyr::rename(levelsOfSeparation = .data$minLevelsOfSeparation) %>%
+      dplyr::pull()
+    
+    data$conceptIdYearMonthLevelTsibble <- data$conceptCountDetails %>%
+      dplyr::filter(.data$conceptId == data$conceptId) %>%
+      dplyr::rename("domainTableShort" = .data$domainTable) %>%
+      dplyr::rename("domainFieldShort" = .data$domainField) %>%
+      dplyr::filter(.data$domainTableShort %in% nonEraCdmTables$domainTableShort) %>%
+      dplyr::mutate(periodBegin = lubridate::as_date(paste0(
+        .data$eventYear,
+        "-",
+        .data$eventMonth,
+        "-01"
+      ))) %>% #Lubridate exponetially faster that baseR as.Date and  ISODate
+      dplyr::group_by(.data$conceptId,
+                      .data$databaseId,
+                      .data$periodBegin) %>%
+      dplyr::summarise(value = sum(.data$conceptCount),
+                       .groups = 'keep') %>%
+      dplyr::ungroup() %>%
+      dplyr::filter(.data$value > 0) %>%
+      tsibble::as_tsibble(key = c(.data$conceptId, .data$databaseId),
+                          index = .data$periodBegin) %>%
+      dplyr::arrange(.data$conceptId,
+                     .data$databaseId,
+                     .data$periodBegin)
+    
+    
+    data$conceptIdYearLevelTsibble <- data$conceptCountDetails %>%
+      dplyr::filter(.data$conceptId == data$conceptId) %>%
+      dplyr::rename("domainTableShort" = .data$domainTable) %>%
+      dplyr::rename("domainFieldShort" = .data$domainField) %>%
+      dplyr::filter(.data$domainTableShort %in% nonEraCdmTables$domainTableShort) %>%
+      dplyr::mutate(periodBegin = lubridate::as_date(paste0(.data$eventYear, "-01-01"))) %>% #Lubridate exponetially faster that baseR as.Date and  ISODate
+      dplyr::group_by(.data$conceptId,
+                      .data$databaseId,
+                      .data$periodBegin) %>%
+      dplyr::summarise(value = sum(.data$conceptCount),
+                       .groups = 'keep') %>%
+      dplyr::ungroup() %>%
+      dplyr::filter(.data$value > 0) %>%
+      tsibble::as_tsibble(key = c(.data$conceptId, .data$databaseId),
+                          index = .data$periodBegin) %>%
+      dplyr::arrange(.data$conceptId,
+                     .data$databaseId,
+                     .data$periodBegin)
+  }
   return(data)
 }
 

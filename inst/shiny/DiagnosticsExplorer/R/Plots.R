@@ -20,6 +20,7 @@ plotTimeSeriesFromTsibble <-
     }
     
     data <- data %>%
+      tsibble::fill_gaps(Total = 0) %>% 
       fabletools::model(feasts::STL(Total ~  season(window = Inf))) %>%
       fabletools::components() %>%
       tidyr::pivot_longer(cols = pivotBy ,
@@ -47,9 +48,10 @@ plotTimeSeriesFromTsibble <-
         "\nPeriod Begin = ",
         data$periodBegin,
         "\nDatabase ID = ",
-        data$databaseId,
-        "\nCohort = ",
-        data$cohortShortName
+        data$databaseId
+        # ,
+        # "\nCohort = ",
+        # data$cohortShortName #!!!!!!!!!!!! add cohort short name
       )
     )
     

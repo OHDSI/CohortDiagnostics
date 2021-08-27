@@ -107,86 +107,6 @@ shiny::shinyServer(function(input, output, session) {
       return(data)
     })
   
-  ##!!!! use getConceptCountTsibbleAtConceptIdYearMonthLevel to plot time series when
-  # a concept id is selected any where in resolved, excluded or orphan
-  ##getConceptCountTsibbleAtConceptIdYearMonthLevel----
-  getConceptCountTsibbleAtConceptIdYearMonthLevel <-
-    shiny::reactive(x = {
-      data <- getConceptCountData()
-      if (any(is.null(data),
-              length(data) == 0)) {
-        return(NULL)
-      }
-      
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(
-        message = paste0("Aggregating concept counts (Year & Month)"),
-        value = 0
-      )
-      
-      conceptCount <- data$conceptCount %>%
-        dplyr::filter(.data$domainTableShort %in% getNonEraCdmTableShortNames()) %>%
-        dplyr::mutate(periodBegin = ISOdate(
-          year = .data$eventYear,
-          month = .data$eventMonth,
-          day = 1
-        )) %>%
-        dplyr::group_by(.data$conceptId,
-                        .data$databaseId,
-                        .data$periodBegin) %>%
-        dplyr::summarise(conceptCount = sum(.data$conceptCount),
-                         .groups = 'keep') %>%
-        dplyr::ungroup() %>%
-        dplyr::filter(.data$conceptCount > 0) %>%
-        tsibble::as_tsibble(
-          key = c(.data$conceptId, .data$databaseId),
-          index = .data$periodBegin
-        ) %>%
-        tsibble::fill_gaps(conceptCount = 0) %>%
-        dplyr::arrange(.data$conceptId,
-                       .data$databaseId,
-                       .data$periodBegin)
-      return(data)
-    })
-  
-  ##!!!! use getConceptCountTsibbleAtConceptIdYearMonthLevel to plot time series when
-  # a concept id is selected any where in resolved, excluded or orphan
-  ##getConceptCountTsibbleAtConceptIdYearLevel----
-  getConceptCountTsibbleAtConceptIdYearLevel <-
-    shiny::reactive(x = {
-      data <- getConceptCountData()
-      if (any(is.null(data),
-              length(data) == 0)) {
-        return(NULL)
-      }
-      
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(message = paste0("Aggregating concept counts (Year)"),
-                   value = 0)
-      
-      conceptCount <- data$conceptCount %>%
-        dplyr::filter(.data$domainTableShort %in% getNonEraCdmTableShortNames()) %>%
-        dplyr::mutate(periodBegin = lubridate::as_date(paste0(.data$eventYear, "-01-01"))) %>% #Lubridate exponetially faster that baseR as.Date and  ISODate
-        dplyr::group_by(.data$conceptId,
-                        .data$databaseId,
-                        .data$periodBegin) %>%
-        dplyr::summarise(conceptCount = sum(.data$conceptCount),
-                         .groups = 'keep') %>%
-        dplyr::ungroup() %>%
-        dplyr::filter(.data$conceptCount > 0) %>%
-        tsibble::as_tsibble(
-          key = c(.data$conceptId, .data$databaseId),
-          index = .data$periodBegin
-        ) %>%
-        tsibble::fill_gaps(conceptCount = 0) %>%
-        dplyr::arrange(.data$conceptId,
-                       .data$databaseId,
-                       .data$periodBegin)
-      return(data)
-    })
-  
   ##getConceptCooccurrenceData----
   #loads the entire data into R memory.
   # an alternative design maybe to load into R memory on start up (global.R)
@@ -418,6 +338,8 @@ shiny::shinyServer(function(input, output, session) {
   consolidatedDatabaseIdRight <- reactiveVal(NULL)
   consolidatedConceptIdLeft <- reactiveVal(NULL)
   consolidatedConceptIdRight <- reactiveVal(NULL)
+  consolidateCohortDefinitionActiveSideLeft <- reactiveVal(NULL)
+  consolidateCohortDefinitionActiveSideRight <- reactiveVal(NULL)
   
   ##reactiveVal: consolidatedSelectedFieldValue----
   consolidatedSelectedFieldValue <- reactiveVal(list())
@@ -446,6 +368,8 @@ shiny::shinyServer(function(input, output, session) {
                  consolidatedDatabaseIdRight(data$selectedDatabaseIdRight)
                  consolidatedConceptIdLeft(data$selectedConceptIdLeft)
                  consolidatedConceptIdRight(data$selectedConceptIdRight)
+                 consolidateCohortDefinitionActiveSideLeft(data$leftSideActive)
+                 consolidateCohortDefinitionActiveSideRight(data$rightSideActive)
                })
   
   #______________----
@@ -2221,61 +2145,14 @@ shiny::shinyServer(function(input, output, session) {
                        name = "cohortDefinitionSelectedRowCount",
                        suspendWhenHidden = FALSE)
   
-  getSelectedCohortIdActive <- reactiveVal(NULL)
-  getSelectedConceptSetIdActive <- reactiveVal(NULL)
-  getSelectedConceptIdActive <- reactiveVal(NULL)
-  getSelectedConceptNameActive <- reactiveVal(NULL)
-  getDatabaseIdsForselectedConceptSet <- reactiveVal(NULL)
-  
-  observeEvent(eventExpr = consolidatedConceptIdLeft(),handlerExpr = {
-    if (input$conceptSetsTypeLeft == "Resolved") {
-      data <- getResolvedConceptsLeft()
-    } else if (input$conceptSetsTypeLeft == "Excluded") {
-      data <- getExcludedConceptsLeft()
-    }  else if (input$conceptSetsTypeLeft == "Orphan concepts") {
-      data <- getOrphanConceptsLeft()
-    }
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    getSelectedConceptSetIdActive(consolidatedConceptSetIdLeft)
-    getSelectedCohortIdActive(consolidatedCohortIdLeft())
-    getSelectedConceptIdActive(consolidatedConceptIdLeft())
-    conceptName <- data %>% 
-      dplyr::filter(.data$conceptId == consolidatedConceptIdLeft()) %>% 
-      dplyr::pull(.data$conceptName)
-    getSelectedConceptNameActive(conceptName)
-    getDatabaseIdsForselectedConceptSet(consolidatedDatabaseIdLeft())
-  })
-  
-  observeEvent(eventExpr = consolidatedConceptIdRight(),handlerExpr = {
-    if (input$conceptSetsTypeRight == "Resolved") {
-      data <- getResolvedConceptsRight()
-    } else if (input$conceptSetsTypeRight == "Excluded") {
-      data <- getExcludedConceptsRight()
-    }  else if (input$conceptSetsTypeRight == "Orphan concepts") {
-      data <- getOrphanConceptsRight()
-    }
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    getSelectedConceptSetIdActive(consolidatedConceptSetIdRight)
-    getSelectedCohortIdActive(consolidatedCohortIdRight())
-    getSelectedConceptIdActive(consolidatedConceptIdRight())
-    conceptName <- data %>% 
-      dplyr::filter(.data$conceptId == consolidatedConceptIdRight()) %>% 
-      dplyr::pull(.data$conceptName)
-    getSelectedConceptNameActive(conceptName)
-    getDatabaseIdsForselectedConceptSet(consolidatedDatabaseIdRight())
-  })
-  
   #Dynamic UI rendering for relationship table -----
   output$dynamicUIForRelationshipAndComparisonTable <-
     shiny::renderUI({
       inc <-  1
       panels <- list()
       #Adopts new method, Since UI is rendered dynamically,We can only Hide/Show the tab only after DOM loads.
-      if (!is.null(consolidatedConceptIdLeft()) || !is.null(consolidatedConceptIdRight())) {
+      if (doesObjectHaveData(getMetadataForConceptId())) {
+        data <- getMetadataForConceptId()
         panels[[inc]] <- shiny::tabPanel(
           title = "Concept Set Browser",
           value = "conceptSetBrowser",
@@ -2283,9 +2160,9 @@ shiny::shinyServer(function(input, output, session) {
             condition = "output.isConceptIdFromLeftOrRightConceptTableSelected==true",
             tags$h4(
               paste0(
-                getSelectedConceptNameActive(),
+                data$conceptName,
                 " (",
-                getSelectedConceptIdActive(),
+                data$conceptId,
                 ")"
               )
             ),
@@ -2297,11 +2174,11 @@ shiny::shinyServer(function(input, output, session) {
                              label = "Relationship Category:",
                              choices = c(
                                'Not applicable',
-                               relationship$relationshipName %>% sort()
+                               data$relationshipName
                              ),
                              selected = c(
                                'Not applicable',
-                               relationship$relationshipName %>% sort()
+                               data$relationshipName
                              ),
                              multiple = TRUE,
                              width = 200,
@@ -2321,8 +2198,8 @@ shiny::shinyServer(function(input, output, session) {
                            shinyWidgets::pickerInput(
                              inputId = "choicesForRelationshipDistance",
                              label = "Distance:",
-                             choices = getConceptRelationshipDistanceChoices(),
-                             selected = getConceptRelationshipDistanceChoices(),
+                             choices = data$conceptAncestorDistance,
+                             selected = data$conceptAncestorDistance,
                              multiple = TRUE,
                              width = 200,
                              inline = TRUE,
@@ -2347,7 +2224,7 @@ shiny::shinyServer(function(input, output, session) {
                            )
                          )
                        )),
-            DT::dataTableOutput(outputId = "detailsOfSelectedConceptId")
+            DT::dataTableOutput(outputId = "conceptBrowserTable")
           )
         )
         inc = inc + 1
@@ -2358,16 +2235,15 @@ shiny::shinyServer(function(input, output, session) {
           value = "conceptSetTimeSeries",
           tags$h5(
             paste0(
-              getSelectedConceptNameActive(),
+              data$conceptName,
               " (",
-              getSelectedConceptIdActive(),
+              data$conceptId,
               ")"
             )
           ),
           ggiraph::ggiraphOutput(outputId = "conceptSetTimeSeriesPlot",
                                  width = "100%",
                                  height = "100%")
-          
         )
         inc = inc + 1
       }
@@ -2463,15 +2339,19 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$conceptSetTimeSeriesPlot <-  ggiraph::renderggiraph({
+    data <- getMetadataForConceptId()
     # working on the plot
-    getConceptCountTsibbleAtConceptIdYearLevel()
-    
-    data <- getFixedTimeSeriesDataForPlot()
+    if (input$timeSeriesAggregationPeriodSelection == "Monthly") {
+      data <- data$conceptIdYearMonthLevelTsibble
+    } else {
+      data <- data$conceptIdYearLevelTsibble
+    }
     validate(need(
       all(!is.null(data),
           nrow(data) > 0),
       "No timeseries data for the cohort of this series type"
     ))
+    browser()
     plot <- plotTimeSeriesFromTsibble(
       tsibbleData = data,
       yAxisLabel = titleCaseToCamelCase(input$timeSeriesPlotFilters),
@@ -2489,237 +2369,61 @@ shiny::shinyServer(function(input, output, session) {
     return(NULL)
   })
   
-  #getConceptMetadataDetails----
-  getConceptMetadataDetails <- shiny::reactive(x = {
-    selectedConceptId <- getSelectedConceptIdActive()
-    if (any(is.null(selectedConceptId),
-            length(selectedConceptId) == 0)) {
-      return(NULL)
+  ##getMetadataForConceptId----
+  getMetadataForConceptId <- shiny::reactive(x = {
+    if (consolidateCohortDefinitionActiveSideLeft()) {
+      conceptId <- consolidatedConceptIdLeft()
     }
-    selectedDatabaseId <- getDatabaseIdsForselectedConceptSet()
-    if (any(is.null(selectedDatabaseId),
-            length(selectedDatabaseId) == 0)) {
-      return(NULL)
+    if (consolidateCohortDefinitionActiveSideRight()) {
+      browser()
+      conceptId <- consolidatedConceptIdRight()
     }
     data <- getConceptMetadata(dataSource = dataSource,
-                               conceptIds = selectedConceptId)
-    if (any(is.null(data),
-            length(data) == 0)) {
-      return(NULL)
-    }
-    return(data)
-  })
-  
-  #getConceptRelationshipForSelectedConceptId----
-  getConceptRelationshipForSelectedConceptId <-
-    shiny::reactive(x = {
-      selectedConceptId <- getSelectedConceptIdActive()
-      if (any(is.null(selectedConceptId),
-              length(selectedConceptId) == 0)) {
-        return(NULL)
-      }
-      selectedDatabaseId <- getDatabaseIdsForselectedConceptSet()
-      if (any(is.null(selectedDatabaseId),
-              length(selectedDatabaseId) == 0)) {
-        return(NULL)
-      }
-      conceptMetadata <- getConceptMetadataDetails()
-      if (any(is.null(conceptMetadata),
-              length(conceptMetadata) == 0)) {
-        return(NULL)
-      }
-      conceptRelationship <- conceptMetadata$conceptRelationship %>%
-        dplyr::filter(.data$conceptId1 %in% selectedConceptId) %>%
-        dplyr::select(-.data$conceptId1) %>%
-        dplyr::filter(is.na(.data$invalidReason)) %>%
-        dplyr::rename("conceptId" = .data$conceptId2) %>%
-        dplyr::select(.data$conceptId,
-                      .data$relationshipId)
-      return(conceptRelationship)
-    })
-  
-  #getConceptAncestorForSelectedConceptId----
-  getConceptAncestorForSelectedConceptId <-
-    shiny::reactive(x = {
-      selectedConceptId <- getSelectedConceptIdActive()
-      if (any(is.null(selectedConceptId),
-              length(selectedConceptId) == 0)) {
-        return(NULL)
-      }
-      selectedDatabaseId <- getDatabaseIdsForselectedConceptSet()
-      if (any(is.null(selectedDatabaseId),
-              length(selectedDatabaseId) == 0)) {
-        return(NULL)
-      }
-      conceptMetadata <- getConceptMetadataDetails()
-      if (any(is.null(conceptMetadata),
-              length(conceptMetadata) == 0)) {
-        return(NULL)
-      }
-      conceptAncestor <- conceptMetadata$conceptAncestor %>%
-        dplyr::filter(.data$descendantConceptId %in% selectedConceptId) %>%
-        dplyr::rename(
-          "conceptId" = .data$ancestorConceptId,
-          "levelsOfSeparation" = .data$minLevelsOfSeparation
-        ) %>%
-        dplyr::select(.data$conceptId,
-                      .data$levelsOfSeparation) %>%
-        dplyr::distinct() %>%
-        dplyr::mutate(levelsOfSeparation = levelsOfSeparation * -1)
-      conceptDescendant <- conceptMetadata$conceptAncestor %>%
-        dplyr::filter(.data$ancestorConceptId %in% selectedConceptId) %>%
-        dplyr::rename(
-          "conceptId" = .data$descendantConceptId,
-          "levelsOfSeparation" = .data$minLevelsOfSeparation
-        ) %>%
-        dplyr::select(.data$conceptId,
-                      .data$levelsOfSeparation) %>%
-        dplyr::distinct()
-      conceptAncestor <- dplyr::bind_rows(conceptAncestor,
-                                          conceptDescendant) %>%
-        dplyr::distinct() %>%
-        dplyr::arrange(dplyr::desc(.data$levelsOfSeparation))
-      return(conceptAncestor)
-    })
-  
-  getConceptRelationshipDistanceChoices <- reactive({
-    data <- getConceptAncestorForSelectedConceptId()
+                               conceptIds = conceptId)
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    data <-
-      c(
-        "Not applicable",
-        data %>%
-          dplyr::distinct(.data$levelsOfSeparation) %>%
-          dplyr::arrange(dplyr::desc(.data$levelsOfSeparation)) %>%
-          dplyr::pull(.data$levelsOfSeparation) %>%
-          as.character()
-      ) %>% unique()
     return(data)
   })
   
-  #getDetailsForSelectedConceptId----
-  getDetailsForSelectedConceptId <- shiny::reactive(x = {
-    #!!!!!!!!! add error handling
-    conceptMetadata <- getConceptMetadataDetails()
-    if (any(is.null(conceptMetadata),
-            length(conceptMetadata) == 0)) {
-      return(NULL)
-    }
-    conceptRelationships <-
-      getConceptRelationshipForSelectedConceptId() %>%
-      dplyr::inner_join(
-        relationship %>%
-          dplyr::select(.data$relationshipId,
-                        .data$relationshipName),
-        by = "relationshipId"
-      ) %>%
-      dplyr::group_by(.data$conceptId) %>%
-      dplyr::mutate(relationships = paste0(.data$relationshipName, collapse = ",<br> ")) %>%  #!!! collapse with line break if possible
-      dplyr::ungroup() %>%
-      dplyr::select(.data$conceptId,
-                    .data$relationships,
-                    .data$relationshipId) %>%
-      dplyr::distinct() %>%
-      dplyr::arrange(.data$conceptId)
-    
-    concept <- conceptMetadata$concept %>%
-      dplyr::left_join(
-        conceptMetadata$conceptCount %>%
-          dplyr::filter(
-            .data$databaseId %in% getDatabaseIdsForselectedConceptSet()
-          ),
-        by = "conceptId"
-      ) %>%
-      dplyr::left_join(conceptRelationships,
-                       by = 'conceptId') %>%
-      dplyr::left_join(getConceptAncestorForSelectedConceptId(),
-                       by = "conceptId") %>%
-      dplyr::select(
-        .data$conceptId,
-        .data$conceptName,
-        .data$relationships,
-        .data$levelsOfSeparation,
-        .data$conceptCount,
-        .data$subjectCount,
-        .data$conceptCode,
-        .data$standardConcept,
-        .data$vocabularyId,
-        .data$relationshipId
-      ) %>%
-      dplyr::arrange(dplyr::desc(.data$conceptCount)) %>%
-      dplyr::mutate(levelsOfSeparation = as.character(.data$levelsOfSeparation)) %>%
-      tidyr::replace_na(list(relationships = "Not applicable",
-                             levelsOfSeparation = "Not applicable"))
-    
-    if (!is.null(input$choicesForRelationshipName)) {
-      concept <- concept %>%
-        dplyr::rowwise() %>%
-        dplyr::mutate(hits = sum(
-          stringr::str_detect(
-            string = .data$relationships,
-            pattern = input$choicesForRelationshipName
-          )
-        )) %>%
-        dplyr::filter(.data$hits > 0) %>%
-        dplyr::select(-.data$hits)
-    }
-    
-    if (!is.null(input$choicesForRelationshipDistance)) {
-      concept <- concept %>%
-        dplyr::filter(.data$levelsOfSeparation %in%
-                        input$choicesForRelationshipDistance)
-    }
-    concept <- concept %>%
-      dplyr::select(-.data$relationshipId)
-    conceptCooccurrence <-
-      getResultsConceptCooccurrence(dataSource = dataSource,
-                                    cohortIds = getSelectedCohortIdActive())
-    if (all(!is.null(conceptCooccurrence),
-            nrow(conceptCooccurrence) > 0)) {
-      conceptCooccurrence <- conceptCooccurrence %>%
-        dplyr::filter(.data$conceptId %in% getSelectedConceptIdActive()) %>%
-        dplyr::select(-.data$conceptId, -.data$cohortId) %>%
-        dplyr::rename(conceptId = .data$coConceptId) %>%
-        tidyr::pivot_wider(
-          id_cols = c("conceptId"),
-          names_from = "databaseId",
-          names_prefix = "indexDateCoOccurrence ",
-          values_from = "conceptCount"
-        )
-      concept <- concept %>%
-        dplyr::left_join(conceptCooccurrence,
-                         by = "conceptId") %>%
-        dplyr::relocate(colnames(conceptCooccurrence)) %>%
-        dplyr::relocate("conceptId", "conceptName")
-    }
-    return(concept)
-  })
   
-  #output: detailsOfSelectedConceptId----
-  output$detailsOfSelectedConceptId <- DT::renderDT(expr = {
-    validate(need(all(
-      !is.null(getSelectedConceptIdActive()),
-      length(getSelectedConceptIdActive()) > 0
-    ),
-    "No concept id selected."))
-    validate(need(all(
-      !is.null(getDatabaseIdsForselectedConceptSet()),
-      length(getDatabaseIdsForselectedConceptSet()) > 0
-    ),
-    "No database id selected."))
+  ##output: conceptBrowserTable----
+  output$conceptBrowserTable <- DT::renderDT(expr = {
+    if (consolidateCohortDefinitionActiveSideLeft()) {
+      conceptId <- consolidatedConceptIdLeft()
+    }
+    if (consolidateCohortDefinitionActiveSideRight()) {
+      conceptId <- consolidatedConceptIdRight()
+    }
+    validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
+    
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(
       message = paste0(
         "Computing concept relationship for concept id:",
-        getSelectedConceptIdActive()
+        conceptId
       ),
       value = 0
     )
+    data <- getMetadataForConceptId()
+    validate(need(doesObjectHaveData(data), "No information for selected concept id."))
+    data <- data$conceptRelationshipTable
     
-    data <- getDetailsForSelectedConceptId()
+    if (doesObjectHaveData(input$choicesForRelationshipName)) {
+      data <- data %>%
+        dplyr::inner_join(relationship %>% 
+                            dplyr::filter(.data$relationshipName %in% input$choicesForRelationshipName) %>% 
+                            dplyr::select(.data$relationshipId) %>% 
+                            dplyr::distinct(),
+                          by = "relationshipId")
+    }
+    if (doesObjectHaveData(input$choicesForRelationshipDistance)) {
+      data <- data %>%
+        dplyr::filter(.data$levelsOfSeparation %in%
+                        input$choicesForRelationshipDistance)
+    }
+    
     options = list(
       pageLength = 10,
       searching = TRUE,
@@ -2740,13 +2444,13 @@ shiny::shinyServer(function(input, output, session) {
     )
     return(table)
   })
-  
+
   
   ##output: isConceptIdFromLeftOrRightConceptTableSelected----
   output$isConceptIdFromLeftOrRightConceptTableSelected <-
     shiny::reactive(x = {
-      return(any(!is.null(consolidatedConceptSetIdLeft()),
-                 !is.null(consolidatedConceptSetIdRight())))
+      return(any(consolidateCohortDefinitionActiveSideLeft(),
+                 consolidateCohortDefinitionActiveSideRight()))
     })
   shiny::outputOptions(x = output,
                        name = "isConceptIdFromLeftOrRightConceptTableSelected",
@@ -2770,6 +2474,7 @@ shiny::shinyServer(function(input, output, session) {
       }
     })
   
+  ##getConceptSetsInCohortDataLeft----
   getConceptSetsInCohortDataLeft <- reactive({
     if (!doesObjectHaveData(consolidatedCohortIdLeft())) {
       return(NULL)
