@@ -2361,7 +2361,7 @@ shiny::shinyServer(function(input, output, session) {
         ggiraph::opts_zoom(max = 5)
       )
     )
-    return(plot)
+    return(plot)---
     return(NULL)
   })
   
@@ -6494,8 +6494,8 @@ shiny::shinyServer(function(input, output, session) {
   ##getVisitContexDataFiltered----
   getVisitContexDataFiltered <- shiny::reactive(x = {
     if (any(
-      is.null(getDatabaseIdsFromDropdown()),
-      length(getDatabaseIdsFromDropdown()) == 0
+      !doesObjectHaveData(input$visitContextTableFilters),
+      !doesObjectHaveData(input$visitContextPersonOrRecords)
     )) {
       return(NULL)
     }
@@ -6506,42 +6506,59 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>%
       dplyr::filter(.data$cohortId == getCohortIdFromSelectedCompoundCohortName()) %>%
       dplyr::filter(.data$databaseId %in% getDatabaseIdsFromDropdown())
+    
+    if (input$visitContextTableFilters == "Before") {
+      data <- data %>% 
+        dplyr::filter(.data$visitContext == "Before")
+    } else if (input$visitContextTableFilters == "During") {
+      data <- data %>% 
+        dplyr::filter(.data$visitContext == "During visit")
+    } else if (input$visitContextTableFilters == "During") {
+      data <- data %>% 
+        dplyr::filter(.data$visitContext == "On visit start")
+    } else if (input$visitContextTableFilters == "After") {
+      data <- data %>% 
+        dplyr::filter(.data$visitContext == "After")
+    }
+    isPerson <- input$visitContextPersonOrRecords == 'Person'
+    if (isPerson)
+    {
+      data <- data %>% 
+        dplyr::select(-.data$records)
+    } else {
+      data <- data %>% 
+        dplyr::select(-.data$subjects)
+    }
     return(data)
   })
   
-  ##getVisitContextDataLong----
-  getVisitContextDataLong <- shiny::reactive(x = {
+  ##getVisitContextTableData----
+  getVisitContextTableData <- shiny::reactive(x = {
     data <- getVisitContexDataFiltered()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    # Apply Pivot Longer
+    pivotColumns <- c()
+    if (input$visitContextPersonOrRecords == 'Person') {
+      pivotColumns <- c("subjects")
+    } else {
+      pivotColumns <- c("records")
+    }
     data <- data %>%
       tidyr::pivot_longer(
         names_to = "type",
-        cols = c("records", "subjects"),
+        cols = pivotColumns,
         values_to = "count"
       )
     data <- tidyr::replace_na(data,
                               replace = list("count" = 0))
-    return(data)
-  })
-  
-  ##getVisitContextDataWide----
-  getVisitContextDataWide <- shiny::reactive(x = {
-    if (any(
-      is.null(getDatabaseIdsFromDropdown()),
-      length(getDatabaseIdsFromDropdown()) == 0
-    )) {
-      return(NULL)
-    }
-    data <- getVisitContextDataLong()
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    data <- data %>%
-      dplyr::arrange(.data$databaseId,
-                     .data$visitContext,
-                     .data$type) %>%
+    
+    #Apply Pivot Wider
+    data <- data %>% 
+    dplyr::arrange(.data$databaseId,
+                   .data$visitContext,
+                   .data$type) %>%
       dplyr::mutate(type = paste0(.data$databaseId,
                                   " ",
                                   .data$visitContext,
@@ -6556,93 +6573,6 @@ shiny::shinyServer(function(input, output, session) {
       ) %>%
       dplyr::distinct()
     data <- data[order(-data[3]),]
-    return(data)
-  })
-  
-  ##getVisitContextTableData----
-  getVisitContextTableData <- shiny::reactive(x = {
-    if (any(
-      is.null(getDatabaseIdsFromDropdown()),
-      length(getDatabaseIdsFromDropdown()) == 0
-    )) {
-      return(NULL)
-    }
-    data <- getVisitContextDataWide()
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    isPerson <- input$visitContextPersonOrRecords == 'Person'
-    if (isPerson)
-    {
-      data <- data %>%
-        dplyr::select(-dplyr::contains(" records"))
-      colnames(data) <- colnames(data) %>%
-        stringr::str_replace_all(pattern = " subjects",
-                                 replacement = "")
-    } else
-    {
-      data <- data %>%
-        dplyr::select(-dplyr::contains(" subjects"))
-      colnames(data) <- colnames(data) %>%
-        stringr::str_replace_all(pattern = " records",
-                                 replacement = "")
-    }
-    
-    if (input$visitContextTableFilters == "Before")
-    {
-      data <- data %>%
-        dplyr::select(
-          -dplyr::contains("During"),-dplyr::contains("On visit"),-dplyr::contains("After")
-        )
-      colnames(data) <-
-        stringr::str_replace(
-          string = colnames(data),
-          pattern = ' Before',
-          replacement = ''
-        )
-      
-    } else
-      if (input$visitContextTableFilters == "During")
-      {
-        data <- data %>%
-          dplyr::select(
-            -dplyr::contains("Before"),-dplyr::contains("On visit"),-dplyr::contains("After")
-          )
-        colnames(data) <-
-          stringr::str_replace(
-            string = colnames(data),
-            pattern = ' During visit',
-            replacement = ''
-          )
-        
-      } else
-        if (input$visitContextTableFilters == "Simultaneous")
-        {
-          data <- data %>%
-            dplyr::select(
-              -dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("After")
-            )
-          colnames(data) <-
-            stringr::str_replace(
-              string = colnames(data),
-              pattern = ' On visit start',
-              replacement = ''
-            )
-          
-        } else
-          if (input$visitContextTableFilters == "After")
-          {
-            data <- data %>%
-              dplyr::select(
-                -dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("On visit")
-              )
-            colnames(data) <-
-              stringr::str_replace(
-                string = colnames(data),
-                pattern = ' After',
-                replacement = ''
-              )
-          }
     return(data)
   })
   
@@ -6678,9 +6608,7 @@ shiny::shinyServer(function(input, output, session) {
       "No cohorts chosen"
     ))
     data <- getVisitContextTableData()
-    validate(need(
-      all(!is.null(data),
-          nrow(data) > 0),
+    validate(need(doesObjectHaveData(data),
       "No data available for selected combination."
     ))
     table <- data %>%
@@ -6702,6 +6630,7 @@ shiny::shinyServer(function(input, output, session) {
           ")"
         )) %>%
         dplyr::pull(.data$databaseIdWithCount)
+      maxSubjects <- getVisitContexDataFiltered()$subjects %>% max(na.rm = TRUE)
     } else
     {
       databaseIdsWithCount <- cohortCounts %>%
@@ -6712,17 +6641,11 @@ shiny::shinyServer(function(input, output, session) {
           ")"
         )) %>%
         dplyr::pull(.data$databaseIdWithCount)
+      maxSubjects <- getVisitContexDataFiltered()$records %>% max(na.rm = TRUE)
     }
     
-    #max count
-    visitConceptLong <- getVisitContextDataLong()
-    if (any(is.null(visitConceptLong),
-            nrow(visitConceptLong) == 0))
-    {
-      return(NULL)
-    }
-    maxSubjects <- visitConceptLong$count %>% max()
-    visitContextSequence <- visitConceptLong$visitContext %>%
+  
+    visitContextSequence <- getVisitContexDataFiltered()$visitContext %>%
       unique()
     #ensure columns names are aligned
     for (i in (length(visitContextSequence):1))
