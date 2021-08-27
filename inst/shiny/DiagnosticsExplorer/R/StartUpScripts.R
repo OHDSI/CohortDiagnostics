@@ -241,7 +241,14 @@ consolidationOfSelectedFieldValues <- function(input,
     }
     #mutli select databaseId
     if (doesObjectHaveData(input$selectedDatabaseIds)) {
-      data$selectedDatabaseIdLeft <- input$selectedDatabaseIds
+      if (all(
+        doesObjectHaveData(input$selectedDatabaseIds_open),
+        isTRUE(input$selectedDatabaseIds_open)
+      )) {
+        data$selectedDatabaseIdLeft <- NULL
+      } else {
+        data$selectedDatabaseIdLeft <- input$selectedDatabaseIds
+      }
     }
     #mutli select concept set id for one cohort
     if (doesObjectHaveData(input$conceptSetsSelectedCohortLeft)) {
