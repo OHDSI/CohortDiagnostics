@@ -127,8 +127,6 @@ sumCounts <- function(counts) {
   }
 }
 
-
-
 consolidationOfSelectedFieldValues <- function(input,
                                                cohort = NULL,
                                                conceptSets = NULL,
@@ -140,7 +138,8 @@ consolidationOfSelectedFieldValues <- function(input,
                                                orphanConceptSetDataLeft = NULL,
                                                orphanConceptSetDataRight = NULL,
                                                excludedConceptSetDataLeft = NULL,
-                                               excludedConceptSetDataRight = NULL) {
+                                               excludedConceptSetDataRight = NULL,
+                                               indexEventBreakdownDataTable = NULL) {
   data <- list()
   ##########################Cohort Definition tab ##########################
   if (input$tabs == 'cohortDefinition') {
@@ -256,6 +255,11 @@ consolidationOfSelectedFieldValues <- function(input,
         dplyr::filter(.data$cohortId %in% data$cohortIdLeft) %>% 
         dplyr::filter(.data$conceptSetName %in% input$conceptSetsSelectedCohortLeft) %>% 
         dplyr::pull(.data$conceptSetId)
+    }
+    if (all(doesObjectHaveData(indexEventBreakdownDataTable),
+            doesObjectHaveData(input$indexEventBreakdownTable_rows_selected))) {
+      data$selectedConceptIdLeft <- indexEventBreakdownDataTable[input$indexEventBreakdownTable_rows_selected,]$conceptId
+      data$leftSideActive <- TRUE
     }
   }
   ####################################################

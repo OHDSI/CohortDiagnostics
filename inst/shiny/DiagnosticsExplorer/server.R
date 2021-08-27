@@ -336,7 +336,8 @@ shiny::shinyServer(function(input, output, session) {
                    orphanConceptSetDataLeft = getOrphanConceptsLeft(),
                    orphanConceptSetDataRight = getOrphanConceptsRight(),
                    excludedConceptSetDataLeft = getExcludedConceptsLeft(),
-                   excludedConceptSetDataRight = getExcludedConceptsRight()
+                   excludedConceptSetDataRight = getExcludedConceptsRight(),
+                   indexEventBreakdownDataTable = getIndexEventBreakdownDataTable()
                  )
                  consolidatedCohortIdLeft(data$cohortIdLeft)
                  consolidatedCohortIdRight(data$cohortIdRight)
@@ -6331,7 +6332,6 @@ shiny::shinyServer(function(input, output, session) {
         )
       }
       
-      
       table <- DT::formatStyle(
         table = table,
         columns = columnColor,
@@ -6342,50 +6342,6 @@ shiny::shinyServer(function(input, output, session) {
       )
       return(table)
     }, server = TRUE)
-  
-  ## IndexEventBreakdown Consolidated reactive val update----
-  # observeEvent(
-  #   eventExpr = input$indexEventBreakdownTable_rows_selected,
-  #   handlerExpr = {
-  #     idx <-
-  #       input$indexEventBreakdownTable_rows_selected
-  #     selectedConceptId <-
-  #       getIndexEventBreakdownDataTable()$conceptId[idx]
-  #     selectedConceptSetId <- conceptSets %>%
-  #       dplyr::filter(.data$conceptSetName %in% input$conceptSetsSelectedCohortLeft) %>%
-  #       dplyr::pull(.data$conceptSetId) %>%
-  #       unique()
-  #     selectedDatabaseId <-
-  #       input$selectedDatabaseIds
-  #     #Extracting cohortId from selectedCompoundCohortName
-  #     selectedCohortId <-
-  #       gsub("\\(|\\)",
-  #            "",
-  #            substring(
-  #              input$selectedCompoundCohortName,
-  #              regexpr("[(][0-9]+[)]{1}", input$selectedCompoundCohortName)
-  #            ))
-  #     if (all(
-  #       !doesObjectHaveData(selectedConceptId),
-  #       !doesObjectHaveData(selectedConceptSetId),
-  #       !doesObjectHaveData(selectedDatabaseId),
-  #       !doesObjectHaveData(selectedCohortId)
-  #     )) {
-  #       consolidatedSelectedFieldValue(
-  #         list(
-  #           cohortId = selectedCohortId,
-  #           conceptSetId = selectedConceptSetId,
-  #           databaseId = selectedDatabaseId,
-  #           conceptId = selectedConceptId
-  #         )
-  #       )
-  #     } else
-  #     {
-  #       consolidatedSelectedFieldValue(list())
-  #     }
-  #     
-  #   }
-  # )
   
   #______________----
   # Visit Context -----
