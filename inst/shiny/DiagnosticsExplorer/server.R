@@ -1740,7 +1740,11 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    databaseIds <- getCountsForSelectedCohortsLeft()[idx, ] %>% 
+    databaseIds <- getCountsForSelectedCohortsLeft()[idx,]
+    if (!doesObjectHaveData(databaseIds)) {
+      return(NULL)
+    }
+    databaseIds <- databaseIds %>%
       dplyr::pull(.data$databaseId)
     
     return(databaseIds)
@@ -1775,9 +1779,12 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    databaseIds <- getCountsForSelectedCohortsRight()[idx, ] %>% 
+    databaseIds <- getCountsForSelectedCohortsRight()[idx, ]
+    if (!doesObjectHaveData(databaseIds)) {
+      return(NULL)
+    }
+    databaseIds <- databaseIds %>% 
       dplyr::pull(.data$databaseId)
-    
     return(databaseIds)
   })
   
@@ -1814,27 +1821,6 @@ shiny::shinyServer(function(input, output, session) {
       getResultsCohortSummaryStats(dataSource = dataSource)
     return(data)
   })
-  
-  
- ################----------------------------
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
   
   #output: targetCohortDetailsText----
   output$targetCohortDetailsText <- shiny::renderUI({
