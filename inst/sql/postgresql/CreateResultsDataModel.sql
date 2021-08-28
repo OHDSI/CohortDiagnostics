@@ -239,6 +239,18 @@ CREATE TABLE concept_sets (
 			PRIMARY KEY(cohort_id, concept_set_id)
 );
 
+--Table concept_sets_optimized
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE concept_sets_optimized (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			concept_set_id INT NOT NULL,
+			excluded INT NOT NULL,
+			removed INT NOT NULL,
+			PRIMARY KEY(database_id, cohort_id, concept_set_id, excluded, removed)
+);
+
+
 --Table concept_count
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE concept_subjects (

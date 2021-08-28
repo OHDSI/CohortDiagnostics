@@ -131,6 +131,40 @@ runConceptSetDiagnostics <- function(connection = NULL,
     )
   )
   
+  # Optimize unique concept set----
+  ParallelLogger::logInfo("  - Optimizing concept sets found in cohorts.")
+  optimizedConceptSet <- list()
+  browser()
+  for (i in (1:nrow(uniqueConceptSets))) {
+    uniqueConceptSet <- uniqueConceptSets[[i]]
+    conceptSetExpression <- RJSONIO::fromJSON(uniqueConceptSet$conceptSetExpression)
+    optimizationRecommendation <- 
+      getOptimizationRecommendationForConceptSetExpression(conceptSetExpression = conceptSetExpression, 
+                                                           connection = connection, 
+                                                           vocabularyDatabaseSchema = vocabDatabaseSchema, 
+                                                           tempEmulationSchema = tempEmulationSchema)
+    if (!is.null(optimizationRecommendation)) {
+      optimizationRecommendation <- optimizationRecommendation %>% 
+        dplyr::inner_join(conceptSets %>% 
+                            dplyr::select(.data$uniqueConc)) %>% 
+        dplyr::inner_join(conceptSets %>% 
+                            dplyr::select(.data$uniqueConceptSetId,
+                                          .data$cohortId,
+                                          .data$conceptSetId),
+                          by = "uniqueConceptSetId")
+      optimizedConceptSet[[i]] <- optimizationRecommendation %>% 
+        dplyr::select(.data$cohortId,
+                      .data$conceptSetId,
+                      .data$conceptId,
+                      .data$excluded,
+                      .data$removed
+                      ) %>% 
+        dplyr::distinct()
+    }
+  }
+  conceptSetDiagnosticsResults$conceptSetsOptimized <- dplyr::bind_rows(optimizedConceptSet)
+  
+  
   # Instantiate (resolve) unique concept sets----
   ParallelLogger::logInfo("  - Resolving concept sets found in cohorts.")
   conceptSetDiagnosticsResults$conceptResolved <-
@@ -1479,31 +1513,43 @@ getExcludedConceptSets <- function(connection,
 #'
 #' @template Connection
 #'
-#' @template ConnectionDetails
-#'
 #' @template VocabularyDatabaseSchema
+#' 
+#' @template TempEmulationSchema
 #'
 #' @param conceptSetExpression   An R Object (list) with concept set expression. This maybe generated
 #'                               by first getting the JSON representation of concept set expression and
 #'                               converting it to a list using RJSONIO::fromJson(digits = 23)
 #'
 #' @export
-getOptimizationRecommendationForConceptSetTable <-
+getOptimizationRecommendationForConceptSetExpression <-
   function(conceptSetExpression,
            vocabularyDatabaseSchema = 'vocabulary',
+           tempEmulationSchema = tempEmulationSchema,
            connectionDetails = NULL,
            connection = NULL) {
-    conceptSetExpressionDataFrame <- getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression)
+    conceptSetExpressionDataFrame <-
+      getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression)
     if (nrow(conceptSetExpressionDataFrame) <= 1) {
       # no optimization necessary
       return(
         conceptSetExpressionDataFrame %>%
-          dplyr::mutate(
-            excluded = as.integer(.data$isExcluded),
-            removed = 0
-          ) %>%
+          dplyr::mutate(excluded = as.integer(.data$isExcluded),
+                        removed = 0) %>%
           dplyr::select(.data$conceptId, .data$excluded, .data$removed)
       )
+    }
+    
+    if (all(is.null(connectionDetails),
+            is.null(connection))) {
+      stop('Please provide either connection or connectionDetails to connect to database.')
+    }
+    # Set up connection to server----
+    if (is.null(connection)) {
+      if (!is.null(connectionDetails)) {
+        connection <- DatabaseConnector::connect(connectionDetails)
+        on.exit(DatabaseConnector::disconnect(connection))
+      }
     }
     
     conceptSetConceptIdsExcluded <-
@@ -1543,23 +1589,37 @@ getOptimizationRecommendationForConceptSetTable <-
     
     sql <-
       SqlRender::readSql(
-        sourceFile = system.file(
-          "sql",
-          "sql_server",
-          'OptimizeConceptSetWithTemporaryTable.sql',
-          package = "CohortDiagnostics"
-        )
+        sourceFile = system.file("sql",
+                                 "sql_server",
+                                 'OptimizeConceptSet.sql',
+                                 package = "CohortDiagnostics")
       )
     
-    data <- renderTranslateExecuteRetrieveSql(
+    DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
-      connectionDetails = connectionDetails,
       sql = sql,
+      reportOverallTime = FALSE,
+      progressBar = FALSE,
       vocabulary_database_schema = vocabularyDatabaseSchema,
       conceptSetConceptIdsExcluded = conceptSetConceptIdsExcluded,
       conceptSetConceptIdsDescendantsExcluded = conceptSetConceptIdsDescendantsExcluded,
       conceptSetConceptIdsNotExcluded = conceptSetConceptIdsNotExcluded,
       conceptSetConceptIdsDescendantsNotExcluded = conceptSetConceptIdsDescendantsNotExcluded
+    )
+    
+    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                       sql = "SELECT * FROM #optimized_set;",
+                                                       snakeCaseToCamelCase = TRUE)
+    
+    sqlCleanUp <-
+      "IF OBJECT_ID('tempdb..#optimized_set', 'U') IS NOT NULL
+	        DROP TABLE #optimized_set;"
+    
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = sqlCleanUp,
+      reportOverallTime = FALSE,
+      progressBar = FALSE
     )
     return(data)
   }
