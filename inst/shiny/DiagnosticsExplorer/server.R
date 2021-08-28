@@ -2983,7 +2983,7 @@ shiny::shinyServer(function(input, output, session) {
   ##output: comparatorCohortDefinitionCohortCountsTable----
   output$comparatorCohortDefinitionCohortCountsTable <-
     DT::renderDataTable(expr = {
-      data <- getCountsForSelectedCohortsLeft()
+      data <- getCountsForSelectedCohortsRight()
       validate(need(
         all(!is.null(data),
             nrow(data) > 0),
