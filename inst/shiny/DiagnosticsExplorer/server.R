@@ -2953,8 +2953,9 @@ shiny::shinyServer(function(input, output, session) {
     conceptSetExpression <- conceptSets %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft()) %>%
       dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdLeft()) %>% 
-      dplyr::pull(.data$conceptSetExpression)
-    
+      dplyr::pull(.data$conceptSetExpression) %>% 
+      RJSONIO::fromJSON(digits = 23) %>% 
+      RJSONIO::toJSON(digits = 23, pretty = TRUE)
   })
   
   #output: targetConceptsetExpressionSql----
@@ -3662,7 +3663,9 @@ shiny::shinyServer(function(input, output, session) {
     conceptSetExpression <- conceptSets %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight()) %>%
       dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdRight()) %>% 
-      dplyr::pull(.data$conceptSetExpression)
+      dplyr::pull(.data$conceptSetExpression) %>% 
+      RJSONIO::fromJSON(digits = 23) %>% 
+      RJSONIO::toJSON(digits = 23)
     return(conceptSetExpression)
   })
   
