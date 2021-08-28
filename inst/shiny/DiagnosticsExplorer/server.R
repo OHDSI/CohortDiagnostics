@@ -3651,7 +3651,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdRight()) %>% 
       dplyr::pull(.data$conceptSetExpression) %>% 
       RJSONIO::fromJSON(digits = 23) %>% 
-      RJSONIO::toJSON(digits = 23)
+      RJSONIO::toJSON(digits = 23, pretty = TRUE)
     return(conceptSetExpression)
   })
   
