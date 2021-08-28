@@ -1417,15 +1417,15 @@ shiny::shinyServer(function(input, output, session) {
   getResolvedConceptsRight <- shiny::reactive({
     data <- getResultsResolvedConcepts(
       dataSource = dataSource,
-      cohortIds = consolidatedCohortIdRight()$long(),
-      databaseIds = consolidatedDatabaseIdRight()$long()
+      cohortIds = consolidatedCohortIdRight(),
+      databaseIds = consolidatedDatabaseIdRight()
     )
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     if (doesObjectHaveData(consolidatedConceptSetIdRight())) {
       data <- data %>%
-        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdRight()$long())
+        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdRight())
     }
     data <- data %>% 
       dplyr::select(-.data$conceptSetId, -.data$cohortId) %>% 
