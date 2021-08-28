@@ -494,7 +494,7 @@ shiny::shinyServer(function(input, output, session) {
                                                   "Resolved",
                                                   "Excluded",
                                                   "Orphan concepts",
-                                                  "Concept Set Json" #!!! change to 'Concept Set Json'
+                                                  "Concept Set Json"
                                                   #!!! add  "Concept Set Sql"
                                                 ),
                                                 #!!! add concept set sql
@@ -542,7 +542,6 @@ shiny::shinyServer(function(input, output, session) {
                   ),
                   shiny::conditionalPanel(
                     condition = "input.targetConceptSetsType == 'Excluded'",
-                    #!!!!! currently not working - also should be dynamic
                     tags$table(width = "100%",
                                tags$tr(
                                  tags$td(
@@ -2454,11 +2453,12 @@ shiny::shinyServer(function(input, output, session) {
       }
       data <- conceptSets %>%
         dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft()) %>%
-        dplyr::filter(.data$cohortId %in% consolidatedConceptSetIdLeft()) %>%
+        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdLeft()) %>%
         dplyr::pull(.data$conceptSetName)
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
+      return(data)
     })
   
   ##getConceptSetsInCohortDataLeft----
@@ -3240,11 +3240,12 @@ shiny::shinyServer(function(input, output, session) {
       }
       data <- conceptSets %>%
         dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight()) %>%
-        dplyr::filter(.data$cohortId %in% consolidatedConceptSetIdRight()) %>%
+        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdRight()) %>%
         dplyr::pull(.data$conceptSetName)
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
+      return(data)
     })
   
   ##output: conceptsetExpressionTableRight----
