@@ -610,7 +610,6 @@ shiny::shinyServer(function(input, output, session) {
       )
     })
   
-  #!!!!! inclusion rule - make by default selected and shown
   ##Dynamic UI rendering for right side -----
   output$dynamicUIGenerationForCohortSelectedRight <-
     shiny::renderUI(expr = {
@@ -1874,6 +1873,7 @@ shiny::shinyServer(function(input, output, session) {
         rownames = FALSE,
         escape = FALSE,
         filter = "top",
+        selection = list(mode = 'multiple', selected = 1),
         class = "stripe nowrap compact"
       )
       
@@ -2980,6 +2980,7 @@ shiny::shinyServer(function(input, output, session) {
         colnames = colnames(data) %>% camelCaseToTitleCase(),
         rownames = FALSE,
         escape = FALSE,
+        selection = list(mode = 'multiple', selected = 1),
         filter = "top",
         class = "stripe nowrap compact"
       )
