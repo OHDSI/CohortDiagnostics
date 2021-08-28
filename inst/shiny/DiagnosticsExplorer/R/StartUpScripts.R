@@ -183,10 +183,10 @@ consolidationOfSelectedFieldValues <- function(input,
       }
     }
     #selection on database id
-    if (doesObjectHaveData(input$choiceForConceptSetDetailsLeft)) {
+    if (doesObjectHaveData(input$targetVocabularyChoiceForConceptSetDetails)) {
       data$selectedDatabaseIdLeft <- database %>%
         dplyr::filter(
-          .data$databaseIdWithVocabularyVersion == input$choiceForConceptSetDetailsLeft
+          .data$databaseIdWithVocabularyVersion == input$targetVocabularyChoiceForConceptSetDetails
         ) %>% 
         dplyr::pull(.data$databaseId)
     }
@@ -198,8 +198,8 @@ consolidationOfSelectedFieldValues <- function(input,
         dplyr::pull(.data$databaseId)
     }
     #selection on concept id
-    if (doesObjectHaveData(input$cohortDefinitionResolvedConceptTableLeft_rows_selected)) {
-      data$selectedConceptIdLeft <- resolvedConceptSetDataLeft[input$cohortDefinitionResolvedConceptTableLeft_rows_selected,]$conceptId
+    if (doesObjectHaveData(input$targetCohortDefinitionResolvedConceptTable_rows_selected)) {
+      data$selectedConceptIdLeft <- resolvedConceptSetDataLeft[input$targetCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
       data$leftSideActive <- TRUE
     }
     if (doesObjectHaveData(input$cohortDefinitionResolvedConceptTableRight_rows_selected)) {
