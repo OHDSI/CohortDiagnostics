@@ -118,7 +118,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   uniqueConceptSets <-
     conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ] %>%
     dplyr::select(-.data$cohortId, -.data$conceptSetId)
-  rm("conceptSets")
+ 
   ParallelLogger::logTrace(
     paste0(
       " - Note: There are ",
@@ -134,9 +134,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
   # Optimize unique concept set----
   ParallelLogger::logInfo("  - Optimizing concept sets found in cohorts.")
   optimizedConceptSet <- list()
-  browser()
   for (i in (1:nrow(uniqueConceptSets))) {
-    uniqueConceptSet <- uniqueConceptSets[[i]]
+    uniqueConceptSet <- uniqueConceptSets[i,]
     conceptSetExpression <- RJSONIO::fromJSON(uniqueConceptSet$conceptSetExpression)
     optimizationRecommendation <- 
       getOptimizationRecommendationForConceptSetExpression(conceptSetExpression = conceptSetExpression, 
@@ -145,8 +144,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                                            tempEmulationSchema = tempEmulationSchema)
     if (!is.null(optimizationRecommendation)) {
       optimizationRecommendation <- optimizationRecommendation %>% 
-        dplyr::inner_join(conceptSets %>% 
-                            dplyr::select(.data$uniqueConc)) %>% 
+        dplyr::mutate(uniqueConceptSetId = uniqueConceptSet$uniqueConceptSetId) %>% 
         dplyr::inner_join(conceptSets %>% 
                             dplyr::select(.data$uniqueConceptSetId,
                                           .data$cohortId,
@@ -163,7 +161,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     }
   }
   conceptSetDiagnosticsResults$conceptSetsOptimized <- dplyr::bind_rows(optimizedConceptSet)
-  
+  rm("conceptSets")
   
   # Instantiate (resolve) unique concept sets----
   ParallelLogger::logInfo("  - Resolving concept sets found in cohorts.")
@@ -1621,5 +1619,11 @@ getOptimizationRecommendationForConceptSetExpression <-
       reportOverallTime = FALSE,
       progressBar = FALSE
     )
+    data <- data %>% 
+      dplyr::filter(.data$conceptId != 0)
+    
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
     return(data)
   }
