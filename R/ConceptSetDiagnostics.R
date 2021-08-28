@@ -1472,3 +1472,94 @@ getExcludedConceptSets <- function(connection,
   )
   return(excludedConcepts)
 }
+
+
+
+#' given a concept set table, get optimization recommendation
+#'
+#' @template Connection
+#'
+#' @template ConnectionDetails
+#'
+#' @template VocabularyDatabaseSchema
+#'
+#' @param conceptSetExpression   An R Object (list) with concept set expression. This maybe generated
+#'                               by first getting the JSON representation of concept set expression and
+#'                               converting it to a list using RJSONIO::fromJson(digits = 23)
+#'
+#' @export
+getOptimizationRecommendationForConceptSetTable <-
+  function(conceptSetExpression,
+           vocabularyDatabaseSchema = 'vocabulary',
+           connectionDetails = NULL,
+           connection = NULL) {
+    conceptSetExpressionDataFrame <- getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression)
+    if (nrow(conceptSetExpressionDataFrame) <= 1) {
+      # no optimization necessary
+      return(
+        conceptSetExpressionDataFrame %>%
+          dplyr::mutate(
+            excluded = as.integer(.data$isExcluded),
+            removed = 0
+          ) %>%
+          dplyr::select(.data$conceptId, .data$excluded, .data$removed)
+      )
+    }
+    
+    conceptSetConceptIdsExcluded <-
+      conceptSetExpressionDataFrame %>%
+      dplyr::filter(.data$isExcluded == TRUE) %>%
+      dplyr::pull(.data$conceptId)
+    
+    conceptSetConceptIdsDescendantsExcluded <-
+      conceptSetExpressionDataFrame %>%
+      dplyr::filter(.data$isExcluded == TRUE) %>%
+      dplyr::filter(.data$includeDescendants == TRUE) %>%
+      dplyr::pull(.data$conceptId)
+    
+    conceptSetConceptIdsNotExcluded <-
+      conceptSetExpressionDataFrame %>%
+      dplyr::filter(!.data$isExcluded == TRUE) %>%
+      dplyr::pull(.data$conceptId)
+    
+    conceptSetConceptIdsDescendantsNotExcluded <-
+      conceptSetExpressionDataFrame %>%
+      dplyr::filter(!.data$isExcluded == TRUE) %>%
+      dplyr::filter(.data$includeDescendants == TRUE) %>%
+      dplyr::pull(.data$conceptId)
+    
+    if (!doesObjectHaveData(conceptSetConceptIdsExcluded)) {
+      conceptSetConceptIdsExcluded <- 0
+    }
+    if (!doesObjectHaveData(conceptSetConceptIdsDescendantsExcluded)) {
+      conceptSetConceptIdsDescendantsExcluded <- 0
+    }
+    if (!doesObjectHaveData(conceptSetConceptIdsNotExcluded)) {
+      conceptSetConceptIdsNotExcluded <- 0
+    }
+    if (!doesObjectHaveData(conceptSetConceptIdsDescendantsNotExcluded)) {
+      conceptSetConceptIdsDescendantsNotExcluded <- 0
+    }
+    
+    sql <-
+      SqlRender::readSql(
+        sourceFile = system.file(
+          "sql",
+          "sql_server",
+          'OptimizeConceptSetWithTemporaryTable.sql',
+          package = "CohortDiagnostics"
+        )
+      )
+    
+    data <- renderTranslateExecuteRetrieveSql(
+      connection = connection,
+      connectionDetails = connectionDetails,
+      sql = sql,
+      vocabulary_database_schema = vocabularyDatabaseSchema,
+      conceptSetConceptIdsExcluded = conceptSetConceptIdsExcluded,
+      conceptSetConceptIdsDescendantsExcluded = conceptSetConceptIdsDescendantsExcluded,
+      conceptSetConceptIdsNotExcluded = conceptSetConceptIdsNotExcluded,
+      conceptSetConceptIdsDescendantsNotExcluded = conceptSetConceptIdsDescendantsNotExcluded
+    )
+    return(data)
+  }
