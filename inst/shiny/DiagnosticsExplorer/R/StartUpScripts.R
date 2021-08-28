@@ -174,11 +174,11 @@ consolidationOfSelectedFieldValues <- function(input,
       data$conceptSetIdLeft <- selectedConceptSet$conceptSetId
       
       if (all(
-        doesObjectHaveData(input$conceptSetsInCohortRight_rows_selected),
+        doesObjectHaveData(input$comparatorCohortDefinitionConceptSets_rows_selected),
         doesObjectHaveData(data$cohortIdRight)
       )) {
         selectedConceptSet <-
-          conceptSetExpressionRight[input$conceptSetsInCohortRight_rows_selected,]
+          conceptSetExpressionRight[input$comparatorCohortDefinitionConceptSets_rows_selected,]
         data$conceptSetIdRight <- selectedConceptSet$conceptSetId
       }
     }
@@ -190,10 +190,10 @@ consolidationOfSelectedFieldValues <- function(input,
         ) %>% 
         dplyr::pull(.data$databaseId)
     }
-    if (doesObjectHaveData(input$choiceForConceptSetDetailsRight)) {
+    if (doesObjectHaveData(input$comparatorVocabularyChoiceForConceptSetDetails)) {
       data$selectedDatabaseIdRight <- database %>%
         dplyr::filter(
-          .data$databaseIdWithVocabularyVersion == input$choiceForConceptSetDetailsRight
+          .data$databaseIdWithVocabularyVersion == input$comparatorVocabularyChoiceForConceptSetDetails
         ) %>% 
         dplyr::pull(.data$databaseId)
     }
@@ -202,24 +202,24 @@ consolidationOfSelectedFieldValues <- function(input,
       data$selectedConceptIdLeft <- resolvedConceptSetDataLeft[input$targetCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
       data$leftSideActive <- TRUE
     }
-    if (doesObjectHaveData(input$cohortDefinitionResolvedConceptTableRight_rows_selected)) {
-      data$selectedConceptIdRight <- resolvedConceptSetDataRight[input$cohortDefinitionResolvedConceptTableRight_rows_selected,]$conceptId
+    if (doesObjectHaveData(input$comparatorCohortDefinitionResolvedConceptTable_rows_selected)) {
+      data$selectedConceptIdRight <- resolvedConceptSetDataRight[input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
       data$rightSideActive <- TRUE
     }
     if (doesObjectHaveData(input$targetCohortDefinitionExcludedConceptTable_rows_selected)) {
       data$selectedConceptIdLeft <- excludedConceptSetDataLeft[input$targetCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
       data$leftSideActive <- TRUE
     }
-    if (doesObjectHaveData(input$cohortDefinitionExcludedConceptTableRight_rows_selected)) {
-      data$selectedConceptIdRight <- excludedConceptSetDataRight[input$cohortDefinitionExcludedConceptTableRight_rows_selected,]$conceptId
+    if (doesObjectHaveData(input$comparatorCohortDefinitionExcludedConceptTable_rows_selected)) {
+      data$selectedConceptIdRight <- excludedConceptSetDataRight[input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
       data$rightSideActive <- TRUE
     }
     if (doesObjectHaveData(input$targetCohortDefinitionOrphanConceptTable_rows_selected)) {
       data$selectedConceptIdLeft <- orphanConceptSetDataLeft[input$targetCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
       data$leftSideActive <- TRUE
     }
-    if (doesObjectHaveData(input$cohortDefinitionOrphanConceptTableRight_rows_selected)) {
-      data$selectedConceptIdRight <- orphanConceptSetDataRight[input$cohortDefinitionOrphanConceptTableRight_rows_selected,]$conceptId
+    if (doesObjectHaveData(input$comparatorCohortDefinitionOrphanConceptTable_rows_selected)) {
+      data$selectedConceptIdRight <- orphanConceptSetDataRight[input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
       data$rightSideActive <- TRUE
     }
   }

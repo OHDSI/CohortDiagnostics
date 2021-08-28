@@ -289,13 +289,13 @@ shiny::shinyServer(function(input, output, session) {
       tabs = input$tabs,
       cohortDefinitionTable_rows_selected = input$cohortDefinitionTable_rows_selected,
       conceptsetExpressionTableLeft_rows_selected = input$targetCohortDefinitionConceptSetsTable_rows_selected,
-      conceptsetExpressionTableRight_rows_selected = input$conceptSetsInCohortRight_rows_selected,
+      conceptsetExpressionTableRight_rows_selected = input$comparatorCohortDefinitionConceptSets_rows_selected,
       targetCohortDefinitionResolvedConceptTable_rows_selected = input$targetCohortDefinitionResolvedConceptTable_rows_selected,
-      cohortDefinitionResolvedConceptTableRight_rows_selected = input$cohortDefinitionResolvedConceptTableRight_rows_selected,
+      comparatorCohortDefinitionResolvedConceptTable_rows_selected = input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,
       targetCohortDefinitionExcludedConceptTable_rows_selected = input$targetCohortDefinitionExcludedConceptTable_rows_selected,
-      cohortDefinitionExcludedConceptTableRight_rows_selected = input$cohortDefinitionExcludedConceptTableRight_rows_selected,
+      comparatorCohortDefinitionExcludedConceptTable_rows_selected = input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,
       targetCohortDefinitionOrphanConceptTable_rows_selected = input$targetCohortDefinitionOrphanConceptTable_rows_selected,
-      cohortDefinitionOrphanConceptTableRight_rows_selected = input$cohortDefinitionOrphanConceptTableRight_rows_selected,
+      comparatorCohortDefinitionOrphanConceptTable_rows_selected = input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,
       selectedDatabaseId = input$selectedDatabaseId,
       selectedDatabaseIds = input$selectedDatabaseIds,
       selectedDatabaseIds_open = input$selectedDatabaseIds_open,
@@ -305,7 +305,7 @@ shiny::shinyServer(function(input, output, session) {
       conceptSetsSelectedCohortLeft = input$conceptSetsSelectedCohortLeft,
       input$indexEventBreakdownTable_rows_selected
       # cohortDefinitionSimplifiedInclusionRuleTableLeft_rows_selected = input$targetCohortDefinitionSimplifiedInclusionRuleTable_rows_selected,
-      # cohortDefinitionSimplifiedInclusionTableRight_rows_selected = input$simplifiedInclusionRuleTableForSelectedCohortCountRight_rows_selected
+      # cohortDefinitionSimplifiedInclusionTableRight_rows_selected = input$comparatorCohortDefinitionSimplifiedInclusionRuleTable_rows_selected
     )
   })
   
@@ -654,7 +654,7 @@ shiny::shinyServer(function(input, output, session) {
                                  condition = "input.comparatorCohortDefinitionInclusionRuleType == 'Simplified' &
                                          output.getComparatorSimplifiedInclusionRuleResultsHasData == true",
                                  shiny::radioButtons(
-                                   inputId = "cohortDefinitionSecondInclusionRuleTableFilters",
+                                   inputId = "comparatorCohortDefinitionInclusionRuleTableFilters",
                                    label = "Filter by",
                                    choices = c("All", "Meet", "Gain", "Remain", "Totals"),
                                    selected = "All",
@@ -665,7 +665,7 @@ shiny::shinyServer(function(input, output, session) {
                              tags$td(
                                align = "right",
                                shiny::downloadButton(
-                                 "saveSimplifiedInclusionRuleTableForSelectedCohortCountRight",
+                                 "saveComparatorCohortDefinitionSimplifiedInclusionRuleTable",
                                  label = "",
                                  icon = shiny::icon("download"),
                                  style = "margin-top: 5px; margin-bottom: 5px;"
@@ -674,13 +674,13 @@ shiny::shinyServer(function(input, output, session) {
                            )),
                 shiny::conditionalPanel(
                   condition = "input.comparatorCohortDefinitionInclusionRuleType == 'Simplified'",
-                  DT::dataTableOutput(outputId = "simplifiedInclusionRuleTableForSelectedCohortCountRight")
+                  DT::dataTableOutput(outputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTable")
                 )
               )
             ),
             shiny::tabPanel(
               title = "Details",
-              value = "cohortDefinitionTwoDetailsTextTabPanel",
+              value = "comparatorCohortDefinitionDetailsTextTabPanel",
               tags$br(),
               shinydashboard::box(
                 title = "Readable definitions",
@@ -689,10 +689,10 @@ shiny::shinyServer(function(input, output, session) {
                 collapsible = TRUE,
                 collapsed = FALSE,
                 solidHeader = FALSE,
-                copyToClipboardButton(toCopyId = "cohortDefinitionTextRight",
+                copyToClipboardButton(toCopyId = "comparatorCohortDefinitionText",
                                       style = "margin-top: 5px; margin-bottom: 5px;"),
-                shiny::htmlOutput("circeRVersionInCohortDefinitionRight"),
-                shiny::htmlOutput("cohortDefinitionTextRight")
+                shiny::htmlOutput("circeRVersionInComparatorCohortDefinition"),
+                shiny::htmlOutput("comparatorCohortDefinitionText")
               ),
               shinydashboard::box(
                 title = "Meta data",
@@ -701,30 +701,30 @@ shiny::shinyServer(function(input, output, session) {
                 collapsible = TRUE,
                 collapsed = FALSE,
                 solidHeader = FALSE,
-                shiny::htmlOutput("cohortDetailsTextRight")
+                shiny::htmlOutput("comparatorCohortDefinitioncohortDetailsText")
               )
             ),
             shiny::tabPanel(
               title = "Concept Sets",
               #!!!!!!!!!if cohort has no concept sets - make gray color or say 'No Concept sets'
-              value = "conceptSetTwoTabPanel",
-              DT::dataTableOutput(outputId = "conceptSetsInCohortRight"),
+              value = "comparatorCohortDefinitionConceptSetTabPanel",
+              DT::dataTableOutput(outputId = "comparatorCohortDefinitionConceptSets"),
               tags$br(),
               shiny::conditionalPanel(
-                condition = "output.isAConceptSetSelectedForCohortRight == true",
+                condition = "output.isComparatorCohortDefinitionConceptSetRowSelected == true",
                 shinydashboard::box(
-                  title = shiny::textOutput(outputId = "conceptSetExpressionNameRight"),
+                  title = shiny::textOutput(outputId = "comparatorCohortDefinitionConceptSetExpressionName"),
                   solidHeader = FALSE,
                   width = NULL,
                   collapsible = TRUE,
                   collapsed = FALSE,
-                  shiny::conditionalPanel(condition = "output.isAConceptSetSelectedForCohortRight == true",
+                  shiny::conditionalPanel(condition = "output.isComparatorCohortDefinitionConceptSetRowSelected == true",
                                           tags$table(
                                             tags$tr(
                                               tags$td(
                                                 shinyWidgets::pickerInput(
                                                   #!!! lets make this multi-selected for databaseId/vocabulary choices
-                                                  inputId = "choiceForConceptSetDetailsRight",
+                                                  inputId = "comparatorVocabularyChoiceForConceptSetDetails",
                                                   label = "Vocabulary version choices:",
                                                   choices = sourcesOfVocabularyTables,
                                                   multiple = FALSE,
@@ -742,13 +742,13 @@ shiny::shinyServer(function(input, output, session) {
                                                 )
                                               ),
                                               tags$td(
-                                                shiny::htmlOutput("personAndRecordCountForConceptSetRowSelectedRight")
+                                                shiny::htmlOutput("personAndRecordCountForComparatorCohortSelected")
                                               )
                                             ),
                                             tags$tr(tags$td(
                                               colspan = 2,
                                               shiny::radioButtons(
-                                                inputId = "conceptSetsTypeRight",
+                                                inputId = "comparatorConceptSetsType",
                                                 label = "",
                                                 choices = c(
                                                   "Concept Set Expression",
@@ -764,90 +764,90 @@ shiny::shinyServer(function(input, output, session) {
                                             ))
                                           )),
                   shiny::conditionalPanel(
-                    condition = "output.isAConceptSetSelectedForCohortRight == true &
-                                                      input.conceptSetsTypeRight != 'Resolved' &
-                                                      input.conceptSetsTypeRight != 'Excluded' &
-                                                      input.conceptSetsTypeRight != 'Json' &
-                                                      input.conceptSetsTypeRight != 'Orphan concepts' &
-                                                      input.conceptSetsTypeRight != 'Concept Set Sql'",
+                    condition = "output.isComparatorCohortDefinitionConceptSetRowSelected == true &
+                                                      input.comparatorConceptSetsType != 'Resolved' &
+                                                      input.comparatorConceptSetsType != 'Excluded' &
+                                                      input.comparatorConceptSetsType != 'Json' &
+                                                      input.comparatorConceptSetsType != 'Orphan concepts' &
+                                                      input.comparatorConceptSetsType != 'Concept Set Sql'",
                     tags$table(width = "100%",
                                tags$tr(
                                  tags$td(
                                    align = "right",
                                    shiny::downloadButton(
-                                     "saveConceptSetsExpressionTableRight",
+                                     "saveComparatorConceptSetsExpressionTable",
                                      label = "",
                                      icon = shiny::icon("download"),
                                      style = "margin-top: 5px; margin-bottom: 5px;"
                                    )
                                  )
                                )),
-                    DT::dataTableOutput(outputId = "conceptSetsExpressionTableRight")
+                    DT::dataTableOutput(outputId = "comparatorCohortDefinitionConceptSetsExpressionTable")
                   ),
                   shiny::conditionalPanel(
-                    condition = "input.conceptSetsTypeRight == 'Resolved'",
+                    condition = "input.comparatorConceptSetsType == 'Resolved'",
                     tags$table(width = "100%",
                                tags$tr(
                                  tags$td(
                                    align = "right",
                                    shiny::downloadButton(
-                                     "saveCohortDefinitionResolvedConceptTableRight",
+                                     "saveComparatorCohortDefinitionResolvedConceptTable",
                                      label = "",
                                      icon = shiny::icon("download"),
                                      style = "margin-top: 5px; margin-bottom: 5px;"
                                    )
                                  )
                                )),
-                    DT::dataTableOutput(outputId = "cohortDefinitionResolvedConceptTableRight")
+                    DT::dataTableOutput(outputId = "comparatorCohortDefinitionResolvedConceptTable")
                   ),
                   shiny::conditionalPanel(
-                    condition = "input.conceptSetsTypeRight == 'Excluded'",
+                    condition = "input.comparatorConceptSetsType == 'Excluded'",
                     tags$table(width = "100%",
                                tags$tr(
                                  tags$td(
                                    align = "right",
                                    shiny::downloadButton(
-                                     "saveCohortDefinitionExcludedConceptTableRight",
+                                     "saveComparatorCohortDefinitionExcludedConceptTable",
                                      label = "",
                                      icon = shiny::icon("download"),
                                      style = "margin-top: 5px; margin-bottom: 5px;"
                                    )
                                  )
                                )),
-                    DT::dataTableOutput(outputId = "cohortDefinitionExcludedConceptTableRight")
+                    DT::dataTableOutput(outputId = "comparatorCohortDefinitionExcludedConceptTable")
                   ),
                   shiny::conditionalPanel(
-                    condition = "input.conceptSetsTypeRight == 'Orphan concepts'",
+                    condition = "input.comparatorConceptSetsType == 'Orphan concepts'",
                     tags$table(width = "100%",
                                tags$tr(
                                  tags$td(
                                    align = "right",
                                    shiny::downloadButton(
-                                     "saveCohortDefinitionOrphanConceptTableRight",
+                                     "saveComparatorCohortDefinitionOrphanConceptTable",
                                      label = "",
                                      icon = shiny::icon("download"),
                                      style = "margin-top: 5px; margin-bottom: 5px;"
                                    )
                                  )
                                )),
-                    DT::dataTableOutput(outputId = "cohortDefinitionOrphanConceptTableRight")
+                    DT::dataTableOutput(outputId = "comparatorCohortDefinitionOrphanConceptTable")
                   ),
                   shiny::conditionalPanel(
-                    condition = "input.conceptSetsTypeRight == 'Json'",
-                    copyToClipboardButton(toCopyId = "conceptsetExpressionJsonRight",
+                    condition = "input.comparatorConceptSetsType == 'Json'",
+                    copyToClipboardButton(toCopyId = "comparatorCohortDefinitionConceptsetExpressionJson",
                                           style = "margin-top: 5px; margin-bottom: 5px;"),
-                    shiny::verbatimTextOutput(outputId = "conceptsetExpressionJsonRight"),
+                    shiny::verbatimTextOutput(outputId = "comparatorCohortDefinitionConceptsetExpressionJson"),
                     tags$head(
-                      tags$style("#conceptsetExpressionJsonRight { max-height:400px};")
+                      tags$style("#comparatorCohortDefinitionConceptsetExpressionJson { max-height:400px};")
                     )
                   ),
                   shiny::conditionalPanel(
-                    condition = "input.conceptSetsTypeRight == 'Concept Set Sql'",
-                    copyToClipboardButton(toCopyId = "comparatorConceptsetExpressionSql",
+                    condition = "input.comparatorConceptSetsType == 'Concept Set Sql'",
+                    copyToClipboardButton(toCopyId = "comparatorCohortDefinitionConceptsetExpressionSql",
                                           style = "margin-top: 5px; margin-bottom: 5px;"),
-                    shiny::verbatimTextOutput(outputId = "comparatorConceptsetExpressionSql"),
+                    shiny::verbatimTextOutput(outputId = "comparatorCohortDefinitionConceptsetExpressionSql"),
                     tags$head(
-                      tags$style("#comparatorConceptsetExpressionSql { max-height:400px};")
+                      tags$style("#comparatorCohortDefinitionConceptsetExpressionSql { max-height:400px};")
                     )
                   )
                 )
@@ -856,21 +856,21 @@ shiny::shinyServer(function(input, output, session) {
             
             shiny::tabPanel(
               title = "Cohort JSON",
-              value = "cohortDefinitionTwoJsonTabPanel",
-              copyToClipboardButton("cohortDefinitionJsonRight", style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::verbatimTextOutput("cohortDefinitionJsonRight"),
+              value = "comparatorCohortDefinitionJsonTabPanel",
+              copyToClipboardButton("comparatorCohortDefinitionJson", style = "margin-top: 5px; margin-bottom: 5px;"),
+              shiny::verbatimTextOutput("comparatorCohortDefinitionJson"),
               tags$head(
-                tags$style("#cohortDefinitionJsonRight { max-height:400px};")
+                tags$style("#comparatorCohortDefinitionJson { max-height:400px};")
               )
             ),
             shiny::tabPanel(
               title = "Cohort SQL",
-              value = "cohortDefinitionTwoSqlTabPanel",
-              copyToClipboardButton("cohortDefinitionSqlRight", style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::htmlOutput("circeRVersionInCohortDefinitionSqlRight"),
-              shiny::verbatimTextOutput("cohortDefinitionSqlRight"),
+              value = "comparatorCohortDefinitionSqlTabPanel",
+              copyToClipboardButton("comparatorCohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
+              shiny::htmlOutput("circeRVersionInComparatorCohortDefinitionSql"),
+              shiny::verbatimTextOutput("comparatorCohortDefinitionSql"),
               tags$head(
-                tags$style("#cohortDefinitionSqlRight { max-height:400px};")
+                tags$style("#comparatorCohortDefinitionSql { max-height:400px};")
               )
             )
           )
@@ -1071,8 +1071,8 @@ shiny::shinyServer(function(input, output, session) {
     return(details)
   })
   
-  ###output: cohortDefinitionTextRight----
-  output$cohortDefinitionTextRight <- shiny::renderUI(expr = {
+  ###output: comparatorCohortDefinitionText----
+  output$comparatorCohortDefinitionText <- shiny::renderUI(expr = {
     getCirceRenderedExpressionDetailsRight()$cohortHtmlExpression %>%
       shiny::HTML()
   })
@@ -1103,8 +1103,8 @@ shiny::shinyServer(function(input, output, session) {
       return(version)
     })
   
-  ###output: circeRVersionInCohortDefinitionRight----
-  output$circeRVersionInCohortDefinitionRight <-
+  ###output: circeRVersionInComparatorCohortDefinition----
+  output$circeRVersionInComparatorCohortDefinition <-
     shiny::renderUI(expr = {
       if (!doesObjectHaveData(consolidatedCohortIdRight())) {
         return(NULL)
@@ -1143,8 +1143,8 @@ shiny::shinyServer(function(input, output, session) {
       return(version)
     })
   
-  ###output: circeRVersionInCohortDefinitionSqlRight----
-  output$circeRVersionInCohortDefinitionSqlRight <-
+  ###output: circeRVersionInComparatorCohortDefinitionSql----
+  output$circeRVersionInComparatorCohortDefinitionSql <-
     shiny::renderUI(expr = {
       if (!doesObjectHaveData(consolidatedCohortIdRight())) {
         return(NULL)
@@ -1230,8 +1230,8 @@ shiny::shinyServer(function(input, output, session) {
     return(CirceR::buildCohortQuery(expression = expression, options = options))
   })
   
-  ###output: cohortDefinitionSqlRight----
-  output$cohortDefinitionSqlRight <- shiny::renderText({
+  ###output: comparatorCohortDefinitionSql----
+  output$comparatorCohortDefinitionSql <- shiny::renderText({
     if (!doesObjectHaveData(consolidatedCohortIdRight())) {
       return(NULL)
     }
@@ -1830,8 +1830,8 @@ shiny::shinyServer(function(input, output, session) {
     }
     return(row)
   })
-  #output: cohortDetailsTextRight----
-  output$cohortDetailsTextRight <- shiny::renderUI({
+  #output: comparatorCohortDefinitioncohortDetailsText----
+  output$comparatorCohortDefinitioncohortDetailsText <- shiny::renderUI({
     row <- getCohortMetadataRight()
     if (is.null(row) || length(row) == 0) {
       return(NULL)
@@ -2255,15 +2255,15 @@ shiny::shinyServer(function(input, output, session) {
     dataLeft <- NULL
     dataRight <- NULL
     if (input$targetConceptSetsType == "Resolved" &
-        input$conceptSetsTypeRight == 'Resolved') {
+        input$comparatorConceptSetsType == 'Resolved') {
       dataLeft <- getResolvedConceptsLeft()
       dataRight <- getResolvedConceptsRight()
     } else if (input$targetConceptSetsType == "Excluded" &
-               input$conceptSetsTypeRight == 'Excluded') {
+               input$comparatorConceptSetsType == 'Excluded') {
       dataLeft <- getExcludedConceptsLeft()
       dataRight <- getExcludedConceptsRight()
     }  else if (input$targetConceptSetsType == "Orphan concepts" &
-                input$conceptSetsTypeRight == 'Orphan concepts') {
+                input$comparatorConceptSetsType == 'Orphan concepts') {
       dataLeft <- getOrphanConceptsLeft()
       dataRight <- getOrphanConceptsRight()
     }
@@ -2521,8 +2521,8 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  #output: conceptSetsInCohortRight----
-  output$conceptSetsInCohortRight <-
+  #output: comparatorCohortDefinitionConceptSets----
+  output$comparatorCohortDefinitionConceptSets <-
     DT::renderDataTable(expr = {
       data <- getConceptSetsInCohortDataRight()
       if (!doesObjectHaveData(data)) {
@@ -3032,8 +3032,8 @@ shiny::shinyServer(function(input, output, session) {
                        name = "isDatabaseIdFoundForSelectedComparatorCohortCount",
                        suspendWhenHidden = FALSE)
   
-  ##output: simplifiedInclusionRuleTableForSelectedCohortCountRight----
-  output$simplifiedInclusionRuleTableForSelectedCohortCountRight <-
+  ##output: comparatorCohortDefinitionSimplifiedInclusionRuleTable----
+  output$comparatorCohortDefinitionSimplifiedInclusionRuleTable <-
     DT::renderDataTable(expr = {
       if (any(
         is.null(consolidatedCohortIdRight())
@@ -3089,7 +3089,7 @@ shiny::shinyServer(function(input, output, session) {
         ) %>%
         dplyr::select(-.data$cohortId)
       
-      if (input$cohortDefinitionSecondInclusionRuleTableFilters == "Meet") {
+      if (input$comparatorCohortDefinitionInclusionRuleTableFilters == "Meet") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Total"),-dplyr::contains("Gain"),-dplyr::contains("Remain")
@@ -3103,7 +3103,7 @@ shiny::shinyServer(function(input, output, session) {
         
         columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
         
-      } else if (input$cohortDefinitionSecondInclusionRuleTableFilters == "Totals") {
+      } else if (input$comparatorCohortDefinitionInclusionRuleTableFilters == "Totals") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Meet"),-dplyr::contains("Gain"),-dplyr::contains("Remain")
@@ -3117,7 +3117,7 @@ shiny::shinyServer(function(input, output, session) {
         
         columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
         
-      } else if (input$cohortDefinitionSecondInclusionRuleTableFilters == "Gain") {
+      } else if (input$comparatorCohortDefinitionInclusionRuleTableFilters == "Gain") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Remain")
@@ -3131,7 +3131,7 @@ shiny::shinyServer(function(input, output, session) {
         
         columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
         
-      } else if (input$cohortDefinitionSecondInclusionRuleTableFilters == "Remain") {
+      } else if (input$comparatorCohortDefinitionInclusionRuleTableFilters == "Remain") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Gain")
@@ -3182,7 +3182,7 @@ shiny::shinyServer(function(input, output, session) {
                           columnDefs)
       )
       
-      if (input$cohortDefinitionSecondInclusionRuleTableFilters == "All") {
+      if (input$comparatorCohortDefinitionInclusionRuleTableFilters == "All") {
         table <- DT::datatable(
           table,
           options = options,
@@ -3207,8 +3207,8 @@ shiny::shinyServer(function(input, output, session) {
       return(table)
     }, server = TRUE)
   
-  ##output: saveSimplifiedInclusionRuleTableForSelectedCohortCountRight----
-  output$saveSimplifiedInclusionRuleTableForSelectedCohortCountRight <-
+  ##output: saveComparatorCohortDefinitionSimplifiedInclusionRuleTable----
+  output$saveComparatorCohortDefinitionSimplifiedInclusionRuleTable <-
     downloadHandler(
       filename = function()
       {
@@ -3231,8 +3231,8 @@ shiny::shinyServer(function(input, output, session) {
                        suspendWhenHidden = FALSE)
   
   
-  ##output: cohortDefinitionJsonRight----
-  output$cohortDefinitionJsonRight <- shiny::renderText({
+  ##output: comparatorCohortDefinitionJson----
+  output$comparatorCohortDefinitionJson <- shiny::renderText({
     json <- cohort %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdRight()) %>%
       dplyr::pull(.data$json)
@@ -3246,8 +3246,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   
-  #output: conceptSetExpressionNameRight----
-  output$conceptSetExpressionNameRight <-
+  #output: comparatorCohortDefinitionConceptSetExpressionName----
+  output$comparatorCohortDefinitionConceptSetExpressionName <-
     shiny::renderText(expr = {
       if (!doesObjectHaveData(consolidatedCohortIdRight())) {
         return(NULL)
@@ -3309,17 +3309,17 @@ shiny::shinyServer(function(input, output, session) {
     }, server = TRUE)
   
   
-  ##output: output.isAConceptSetSelectedForCohortRight----
-  output$isAConceptSetSelectedForCohortRight <-
+  ##output: isComparatorCohortDefinitionConceptSetRowSelected----
+  output$isComparatorCohortDefinitionConceptSetRowSelected <-
     shiny::reactive(x = {
-      input$conceptSetsInCohortRight_rows_selected
+      input$comparatorCohortDefinitionConceptSets_rows_selected
     })
   shiny::outputOptions(x = output,
-                       name = "isAConceptSetSelectedForCohortRight",
+                       name = "isComparatorCohortDefinitionConceptSetRowSelected",
                        suspendWhenHidden = FALSE)
   
-  ##output: conceptSetsExpressionTableRight----
-  output$conceptSetsExpressionTableRight <-
+  ##output: comparatorCohortDefinitionConceptSetsExpressionTable----
+  output$comparatorCohortDefinitionConceptSetsExpressionTable <-
     DT::renderDataTable(expr = {
       data <- getConceptSetExpressionRight()
       if (!doesObjectHaveData(data))
@@ -3371,8 +3371,8 @@ shiny::shinyServer(function(input, output, session) {
       return(dataTable)
     }, server = TRUE)
   
-  ##output: saveConceptSetsExpressionTableRight----
-  output$saveConceptSetsExpressionTableRight <-
+  ##output: saveComparatorConceptSetsExpressionTable----
+  output$saveComparatorConceptSetsExpressionTable <-
     downloadHandler(
       filename = function()
       {
@@ -3385,8 +3385,8 @@ shiny::shinyServer(function(input, output, session) {
       }
     )
   
-  ##output: personAndRecordCountForConceptSetRowSelectedRight----
-  output$personAndRecordCountForConceptSetRowSelectedRight <-
+  ##output: personAndRecordCountForComparatorCohortSelected----
+  output$personAndRecordCountForComparatorCohortSelected <-
     shiny::renderUI({
       row <- getCountsForSelectedCohortsRightFilteredToDatabaseId()
       if (is.null(row))
@@ -3403,8 +3403,8 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   
-  ##output: cohortDefinitionResolvedConceptTableRight----
-  output$cohortDefinitionResolvedConceptTableRight <-
+  ##output: comparatorCohortDefinitionResolvedConceptTable----
+  output$comparatorCohortDefinitionResolvedConceptTable <-
     DT::renderDataTable(expr = {
       data <- getResolvedConceptsRight()
       validate(need((all(
@@ -3466,8 +3466,8 @@ shiny::shinyServer(function(input, output, session) {
       return(dataTable)
     }, server = TRUE)
   
-  ##output: saveCohortDefinitionResolvedConceptTableRight----
-  output$saveCohortDefinitionResolvedConceptTableRight <-
+  ##output: saveComparatorCohortDefinitionResolvedConceptTable----
+  output$saveComparatorCohortDefinitionResolvedConceptTable <-
     downloadHandler(
       filename = function()
       {
@@ -3480,8 +3480,8 @@ shiny::shinyServer(function(input, output, session) {
       }
     )
   
-  #output: cohortDefinitionExcludedConceptTableRight----
-  output$cohortDefinitionExcludedConceptTableRight <-
+  #output: comparatorCohortDefinitionExcludedConceptTable----
+  output$comparatorCohortDefinitionExcludedConceptTable <-
     DT::renderDataTable(expr = {
       data <- getExcludedConceptsRight()
       validate(need((all(
@@ -3557,7 +3557,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
-  output$cohortDefinitionOrphanConceptTableRight <-
+  output$comparatorCohortDefinitionOrphanConceptTable <-
     DT::renderDataTable(expr = {
       data <- getOrphanConceptsRight()
       if (!doesObjectHaveData(data)) {
@@ -3626,8 +3626,8 @@ shiny::shinyServer(function(input, output, session) {
       return(dataTable)
     }, server = TRUE)
   
-  ##output: saveCohortDefinitionOrphanConceptTableRight----
-  output$saveCohortDefinitionOrphanConceptTableRight <-
+  ##output: saveComparatorCohortDefinitionOrphanConceptTable----
+  output$saveComparatorCohortDefinitionOrphanConceptTable <-
     downloadHandler(
       filename = function()
       {
@@ -3640,8 +3640,8 @@ shiny::shinyServer(function(input, output, session) {
       }
     )
   
-  ##output: conceptsetExpressionJsonRight----
-  output$conceptsetExpressionJsonRight <- shiny::renderText({
+  ##output: comparatorCohortDefinitionConceptsetExpressionJson----
+  output$comparatorCohortDefinitionConceptsetExpressionJson <- shiny::renderText({
     if (any(!doesObjectHaveData(consolidatedCohortIdRight()),
             !doesObjectHaveData(consolidatedConceptSetIdRight()))) {
       return(NULL)
@@ -3655,8 +3655,8 @@ shiny::shinyServer(function(input, output, session) {
     return(conceptSetExpression)
   })
   
-  ##output: comparatorConceptsetExpressionSql----
-  output$comparatorConceptsetExpressionSql <- shiny::renderText({
+  ##output: comparatorCohortDefinitionConceptsetExpressionSql----
+  output$comparatorCohortDefinitionConceptsetExpressionSql <- shiny::renderText({
     if (any(!doesObjectHaveData(consolidatedCohortIdRight()),
             !doesObjectHaveData(consolidatedConceptSetIdRight()))) {
       return(NULL)
@@ -3677,76 +3677,76 @@ shiny::shinyServer(function(input, output, session) {
       if (!is.null(input$targetConceptSetsType)) {
         if (input$targetConceptSetsType == "Concept Set Expression") {
           updateRadioButtons(session = session,
-                             inputId = "conceptSetsTypeRight",
+                             inputId = "comparatorConceptSetsType",
                              selected = "Concept Set Expression")
         } else if (input$targetConceptSetsType == "Resolved") {
           updateRadioButtons(session = session,
-                             inputId = "conceptSetsTypeRight",
+                             inputId = "comparatorConceptSetsType",
                              selected = "Resolved")
         }
         else if (input$targetConceptSetsType == "Excluded") {
           updateRadioButtons(session = session,
-                             inputId = "conceptSetsTypeRight",
+                             inputId = "comparatorConceptSetsType",
                              selected = "Excluded")
         } else if (input$targetConceptSetsType == "Orphan concepts") {
           updateRadioButtons(session = session,
-                             inputId = "conceptSetsTypeRight",
+                             inputId = "comparatorConceptSetsType",
                              selected = "Orphan concepts")
         } else if (input$targetConceptSetsType == "Concept Set Json") {
           updateRadioButtons(session = session,
-                             inputId = "conceptSetsTypeRight",
+                             inputId = "comparatorConceptSetsType",
                              selected = "Json")
         } else if (input$targetConceptSetsType == "Concept Set Sql") {
           updateRadioButtons(session = session,
-                             inputId = "conceptSetsTypeRight",
+                             inputId = "comparatorConceptSetsType",
                              selected = "Concept Set Sql")
         }
       }
       
       if (!is.null(input$targetCohortDefinitionTabSetPanel)) {
         if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionDetailsTextTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "cohortDefinitionTwoDetailsTextTabPanel")
+          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "comparatorCohortDefinitionDetailsTextTabPanel")
         } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionCohortCountTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "comparatorCohortDefinitionCohortCountTabPanel")
         } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionConceptSetTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "conceptSetTwoTabPanel")
+          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "comparatorCohortDefinitionConceptSetTabPanel")
         } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionJsonTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "cohortDefinitionTwoJsonTabPanel")
+          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "comparatorCohortDefinitionJsonTabPanel")
         } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionSqlTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "cohortDefinitionTwoSqlTabPanel")
+          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "comparatorCohortDefinitionSqlTabPanel")
         }
       }
     }
   })
   
   shiny::observeEvent(eventExpr = {
-    list(input$conceptSetsTypeRight,
+    list(input$comparatorConceptSetsType,
          input$comparatorCohortDefinitionTabSetPanel)
   }, handlerExpr = {
     if (getWidthOfLeftPanelForCohortDetailBrowserInCohortDefinitionTabBasedOnNoOfRowSelectedInCohortTable() == 6) {
-      if (!is.null(input$conceptSetsTypeRight)) {
-        if (input$conceptSetsTypeRight == "Concept Set Expression") {
+      if (!is.null(input$comparatorConceptSetsType)) {
+        if (input$comparatorConceptSetsType == "Concept Set Expression") {
           updateRadioButtons(session = session,
                              inputId = "targetConceptSetsType",
                              selected = "Concept Set Expression")
-        } else if (input$conceptSetsTypeRight == "Resolved") {
+        } else if (input$comparatorConceptSetsType == "Resolved") {
           updateRadioButtons(session = session,
                              inputId = "targetConceptSetsType",
                              selected = "Resolved")
-        } else if (input$conceptSetsTypeRight == "Excluded") {
+        } else if (input$comparatorConceptSetsType == "Excluded") {
           updateRadioButtons(session = session,
                              inputId = "targetConceptSetsType",
                              selected = "Excluded")
-        } else if (input$conceptSetsTypeRight == "Orphan concepts") {
+        } else if (input$comparatorConceptSetsType == "Orphan concepts") {
           updateRadioButtons(session = session,
                              inputId = "targetConceptSetsType",
                              selected = "Orphan concepts")
-        } else if (input$conceptSetsTypeRight == "Json") {
+        } else if (input$comparatorConceptSetsType == "Json") {
           #!! call this "Concept Set JSON"
           updateRadioButtons(session = session,
                              inputId = "targetConceptSetsType",
                              selected = "Concept Set Json")
-        } else if (input$conceptSetsTypeRight == "Concept Set Sql") {
+        } else if (input$comparatorConceptSetsType == "Concept Set Sql") {
           updateRadioButtons(session = session,
                              inputId = "targetConceptSetsType",
                              selected = "Concept Set Sql")
@@ -3754,15 +3754,15 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       if (!is.null(input$comparatorCohortDefinitionTabSetPanel)) {
-        if (input$comparatorCohortDefinitionTabSetPanel == "cohortDefinitionTwoDetailsTextTabPanel") {
+        if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionDetailsTextTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionDetailsTextTabPanel")
         } else if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionCohortCountTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionCohortCountTabPanel")
-        } else if (input$comparatorCohortDefinitionTabSetPanel == "conceptSetTwoTabPanel") {
+        } else if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionConceptSetTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionConceptSetTabPanel")
-        } else if (input$comparatorCohortDefinitionTabSetPanel == "cohortDefinitionTwoJsonTabPanel") {
+        } else if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionJsonTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionJsonTabPanel")
-        } else if (input$comparatorCohortDefinitionTabSetPanel == "cohortDefinitionTwoSqlTabPanel") {
+        } else if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionSqlTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionSqlTabPanel")
         }
       }
@@ -3775,7 +3775,7 @@ shiny::shinyServer(function(input, output, session) {
   output$resolvedConceptsPresentInLeft <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$choiceForConceptSetDetailsRight,
+        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -3829,7 +3829,7 @@ shiny::shinyServer(function(input, output, session) {
   output$resolvedConceptsPresentInRight <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$choiceForConceptSetDetailsRight,
+        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -3882,7 +3882,7 @@ shiny::shinyServer(function(input, output, session) {
   output$resolvedConceptsPresentInBoth <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$choiceForConceptSetDetailsRight,
+        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -3935,7 +3935,7 @@ shiny::shinyServer(function(input, output, session) {
   output$resolvedConceptsPresentInEither <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$choiceForConceptSetDetailsRight,
+        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -3988,7 +3988,7 @@ shiny::shinyServer(function(input, output, session) {
   output$excludedConceptsPresentInLeft <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$choiceForConceptSetDetailsRight,
+        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4051,7 +4051,7 @@ shiny::shinyServer(function(input, output, session) {
   output$excludedConceptsPresentInRight <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$choiceForConceptSetDetailsRight,
+        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4114,7 +4114,7 @@ shiny::shinyServer(function(input, output, session) {
   output$excludedConceptsPresentInBoth <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$choiceForConceptSetDetailsRight,
+        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4177,7 +4177,7 @@ shiny::shinyServer(function(input, output, session) {
   output$excludedConceptsPresentInEither <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$choiceForConceptSetDetailsRight,
+        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4240,7 +4240,7 @@ shiny::shinyServer(function(input, output, session) {
   output$orphanConceptsPresentInLeft <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$choiceForConceptSetDetailsRight,
+        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4336,7 +4336,7 @@ shiny::shinyServer(function(input, output, session) {
   output$orphanConceptsPresentInRight <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$choiceForConceptSetDetailsRight,
+        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4432,7 +4432,7 @@ shiny::shinyServer(function(input, output, session) {
   output$orphanConceptsPresentInBoth <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$choiceForConceptSetDetailsRight,
+        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4528,7 +4528,7 @@ shiny::shinyServer(function(input, output, session) {
   output$orphanConceptsPresentInEither <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$choiceForConceptSetDetailsRight,
+        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
