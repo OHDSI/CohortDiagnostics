@@ -288,7 +288,7 @@ shiny::shinyServer(function(input, output, session) {
     list(
       tabs = input$tabs,
       cohortDefinitionTable_rows_selected = input$cohortDefinitionTable_rows_selected,
-      conceptsetExpressionTableLeft_rows_selected = input$conceptSetsInCohortLeft_rows_selected,
+      conceptsetExpressionTableLeft_rows_selected = input$targetCohortDefinitionConceptSetsTable_rows_selected,
       conceptsetExpressionTableRight_rows_selected = input$conceptSetsInCohortRight_rows_selected,
       cohortDefinitionResolvedConceptTableLeft_rows_selected = input$cohortDefinitionResolvedConceptTableLeft_rows_selected,
       cohortDefinitionResolvedConceptTableRight_rows_selected = input$cohortDefinitionResolvedConceptTableRight_rows_selected,
@@ -304,7 +304,7 @@ shiny::shinyServer(function(input, output, session) {
       selectedCompoundCohortNames = input$selectedCompoundCohortNames,
       conceptSetsSelectedCohortLeft = input$conceptSetsSelectedCohortLeft,
       input$indexEventBreakdownTable_rows_selected
-      # cohortDefinitionSimplifiedInclusionRuleTableLeft_rows_selected = input$simplifiedInclusionRuleTableForSelectedCohortCountLeft_rows_selected,
+      # cohortDefinitionSimplifiedInclusionRuleTableLeft_rows_selected = input$targetCohortDefinitionSimplifiedInclusionRuleTable_rows_selected,
       # cohortDefinitionSimplifiedInclusionTableRight_rows_selected = input$simplifiedInclusionRuleTableForSelectedCohortCountRight_rows_selected
     )
   })
@@ -364,7 +364,7 @@ shiny::shinyServer(function(input, output, session) {
         shiny::conditionalPanel(
           condition = "output.cohortDefinitionSelectedRowCount > 0 &
                      output.isCohortDefinitionRowSelected == true",
-          shiny::htmlOutput(outputId = "nameOfSelectedCohortInCohortDefinitionTableLeft"),
+          shiny::htmlOutput(outputId = "targetCohortSelectedInCohortDefinitionTable"),
           shiny::tabsetPanel(
             type = "tab",
             id = "targetCohortDefinitionTabSetPanel",
@@ -375,13 +375,13 @@ shiny::shinyServer(function(input, output, session) {
               DT::dataTableOutput(outputId = "targetCohortDefinitionCohortCountTable"),
               tags$br(),
               shiny::conditionalPanel(
-                condition = "output.isDatabaseIdFoundForSelectedCohortCountLeft == true",
+                condition = "output.isDatabaseIdFoundForSelectedTargetCohortCount == true",
                 tags$h3("Inclusion Rules"),
                 tags$table(width = "100%",
                            tags$tr(
                              tags$td(
                                shiny::radioButtons(
-                                 inputId = "cohortDefinitionInclusionRuleType",
+                                 inputId = "targetCohortDefinitionInclusionRuleType",
                                  label = "Select: ",
                                  choices = c("Simplified", "Detailed"),
                                  selected = "Simplified",
@@ -390,10 +390,10 @@ shiny::shinyServer(function(input, output, session) {
                              ),
                              tags$td(
                                shiny::conditionalPanel(
-                                 condition = "input.cohortDefinitionInclusionRuleType == 'Simplified' &
-                                         output.getSimplifiedInclusionRuleResultsLeftHasData == true",
+                                 condition = "input.targetCohortDefinitionInclusionRuleType == 'Simplified' &
+                                         output.getSimplifiedInclusionRuleResultsTargetHasData == true",
                                  shiny::radioButtons(
-                                   inputId = "cohortDefinitionInclusionRuleTableFilters",
+                                   inputId = "targetCohortDefinitionInclusionRuleTableFilters",
                                    label = "Filter by",
                                    choices = c("All", "Meet", "Gain", "Remain", "Totals"),
                                    selected = "All",
@@ -404,7 +404,7 @@ shiny::shinyServer(function(input, output, session) {
                              tags$td(
                                align = "right",
                                shiny::downloadButton(
-                                 "saveSimplifiedInclusionRuleTableForSelectedCohortCountLeft",
+                                 "saveTargetCohortDefinitionSimplifiedInclusionRuleTable",
                                  label = "",
                                  icon = shiny::icon("download"),
                                  style = "margin-top: 5px; margin-bottom: 5px;"
@@ -412,14 +412,14 @@ shiny::shinyServer(function(input, output, session) {
                              )
                            )),
                 shiny::conditionalPanel(
-                  condition = "input.cohortDefinitionInclusionRuleType == 'Simplified'",
-                  DT::dataTableOutput(outputId = "simplifiedInclusionRuleTableForSelectedCohortCountLeft")
+                  condition = "input.targetCohortDefinitionInclusionRuleType == 'Simplified'",
+                  DT::dataTableOutput(outputId = "targetCohortDefinitionSimplifiedInclusionRuleTable")
                 )
               )
             ),
             shiny::tabPanel(
               title = "Details",
-              value = "cohortDefinitionOneDetailsTextTabPanel",
+              value = "targetCohortDefinitionDetailsTextTabPanel",
               tags$br(),
               shinydashboard::box(
                 title = "Readable definitions",
@@ -428,10 +428,10 @@ shiny::shinyServer(function(input, output, session) {
                 collapsible = TRUE,
                 collapsed = FALSE,
                 solidHeader = FALSE,
-                copyToClipboardButton(toCopyId = "cohortDefinitionTextLeft",
+                copyToClipboardButton(toCopyId = "targetCohortDefinitionText",
                                       style = "margin-top: 5px; margin-bottom: 5px;"),
-                shiny::htmlOutput("circeRVersionInCohortDefinitionLeft"),
-                shiny::htmlOutput("cohortDefinitionTextLeft")
+                shiny::htmlOutput("targetCohortDefinitioncirceRVersion"),
+                shiny::htmlOutput("targetCohortDefinitionText")
               ),
               shinydashboard::box(
                 title = "Meta data",
@@ -440,17 +440,17 @@ shiny::shinyServer(function(input, output, session) {
                 collapsible = TRUE,
                 collapsed = FALSE,
                 solidHeader = FALSE,
-                shiny::htmlOutput("cohortDetailsTextLeft")
+                shiny::htmlOutput("targetCohortDetailsText")
               )
             ),
             shiny::tabPanel(
               #!!!!!!!!!if cohort has no concept sets - make gray color or say 'No Concept sets'
               title = "Concept Sets",
-              value = "conceptSetOneTabPanel",
-              DT::dataTableOutput(outputId = "conceptSetsInCohortLeft"),
+              value = "targetCohortDefinitionConceptSetTabPanel",
+              DT::dataTableOutput(outputId = "targetCohortDefinitionConceptSetsTable"),
               tags$br(),
               shiny::conditionalPanel(
-                condition = "output.isAConceptSetSelectedForCohortLeft == true",
+                condition = "output.isTargetCohortDefinitionConceptSetsTableRowSelected == true",
                 shinydashboard::box(
                   title = shiny::textOutput(outputId = "conceptSetExpressionNameLeft"),
                   ###!!!! selected concept set name + cohort information
@@ -458,7 +458,7 @@ shiny::shinyServer(function(input, output, session) {
                   solidHeader = FALSE,
                   collapsible = TRUE,
                   collapsed = FALSE,
-                  shiny::conditionalPanel(condition = "output.isAConceptSetSelectedForCohortLeft == true",
+                  shiny::conditionalPanel(condition = "output.isTargetCohortDefinitionConceptSetsTableRowSelected == true",
                                           tags$table(
                                             tags$tr(
                                               tags$td(
@@ -505,7 +505,7 @@ shiny::shinyServer(function(input, output, session) {
                                             ))
                                           )),
                   shiny::conditionalPanel(
-                    condition = "output.isAConceptSetSelectedForCohortLeft == true &
+                    condition = "output.isTargetCohortDefinitionConceptSetsTableRowSelected == true &
                                                       input.conceptSetsTypeLeft != 'Resolved' &
                                                       input.conceptSetsTypeLeft != 'Excluded' &
                                                       input.conceptSetsTypeLeft != 'Json' &
@@ -1063,14 +1063,14 @@ shiny::shinyServer(function(input, output, session) {
       shiny::HTML()
   })
   
-  ###output: cohortDefinitionTextLeft----
-  output$cohortDefinitionTextLeft <- shiny::renderUI(expr = {
+  ###output: targetCohortDefinitionText----
+  output$targetCohortDefinitionText <- shiny::renderUI(expr = {
     getCirceRenderedExpressionDetailsLeft()$cohortHtmlExpression %>%
       shiny::HTML()
   })
   
-  ###output: circeRVersionInCohortDefinitionLeft----
-  output$circeRVersionInCohortDefinitionLeft <-
+  ###output: targetCohortDefinitioncirceRVersion----
+  output$targetCohortDefinitioncirceRVersion <-
     shiny::renderUI(expr = {
       if (!doesObjectHaveData(consolidatedCohortIdLeft())) {
         return(NULL)
@@ -1149,9 +1149,9 @@ shiny::shinyServer(function(input, output, session) {
       return(version)
     })
   
-  ###output: nameOfSelectedCohortInCohortDefinitionTableLeft----
+  ###output: targetCohortSelectedInCohortDefinitionTable----
   #Show cohort names in UI
-  output$nameOfSelectedCohortInCohortDefinitionTableLeft <-
+  output$targetCohortSelectedInCohortDefinitionTable <-
     shiny::renderUI(expr = {
       if (!doesObjectHaveData(consolidatedCohortIdLeft())) {
         return(NULL)
@@ -1822,8 +1822,8 @@ shiny::shinyServer(function(input, output, session) {
   
   
   
-  #output: cohortDetailsTextLeft----
-  output$cohortDetailsTextLeft <- shiny::renderUI({
+  #output: targetCohortDetailsText----
+  output$targetCohortDetailsText <- shiny::renderUI({
     row <- getCohortMetadataLeft()
     if (is.null(row) || length(row) == 0) {
       return(NULL)
@@ -1898,18 +1898,18 @@ shiny::shinyServer(function(input, output, session) {
       return(dataTable)
     }, server = TRUE)
   
-  #output: isDatabaseIdFoundForSelectedCohortCountLeft----
-  output$isDatabaseIdFoundForSelectedCohortCountLeft <-
+  #output: isDatabaseIdFoundForSelectedTargetCohortCount----
+  output$isDatabaseIdFoundForSelectedTargetCohortCount <-
     shiny::reactive(x = {
       return(!is.null(getSimplifiedInclusionRuleResultsLeft()))
     })
   shiny::outputOptions(x = output,
-                       name = "isDatabaseIdFoundForSelectedCohortCountLeft",
+                       name = "isDatabaseIdFoundForSelectedTargetCohortCount",
                        suspendWhenHidden = FALSE)
   
   #!!!!!! inclusion rule needs simple and detailed tabs. detailed will replicate Atlas UI
-  #output: simplifiedInclusionRuleTableForSelectedCohortCountLeft----
-  output$simplifiedInclusionRuleTableForSelectedCohortCountLeft <-
+  #output: targetCohortDefinitionSimplifiedInclusionRuleTable----
+  output$targetCohortDefinitionSimplifiedInclusionRuleTable <-
     DT::renderDataTable(expr = {
       if (any(
         is.null(consolidatedCohortIdLeft())
@@ -1963,7 +1963,7 @@ shiny::shinyServer(function(input, output, session) {
         ) %>%
         dplyr::select(-.data$cohortId)
       
-      if (input$cohortDefinitionInclusionRuleTableFilters == "Meet") {
+      if (input$targetCohortDefinitionInclusionRuleTableFilters == "Meet") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Total"),
@@ -1979,7 +1979,7 @@ shiny::shinyServer(function(input, output, session) {
         
         columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
         
-      } else if (input$cohortDefinitionInclusionRuleTableFilters == "Totals") {
+      } else if (input$targetCohortDefinitionInclusionRuleTableFilters == "Totals") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Meet"),
@@ -1995,7 +1995,7 @@ shiny::shinyServer(function(input, output, session) {
         
         columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
         
-      } else if (input$cohortDefinitionInclusionRuleTableFilters == "Gain") {
+      } else if (input$targetCohortDefinitionInclusionRuleTableFilters == "Gain") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Total"),
@@ -2011,7 +2011,7 @@ shiny::shinyServer(function(input, output, session) {
         
         columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
         
-      } else if (input$cohortDefinitionInclusionRuleTableFilters == "Remain") {
+      } else if (input$targetCohortDefinitionInclusionRuleTableFilters == "Remain") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Total"),
@@ -2064,7 +2064,7 @@ shiny::shinyServer(function(input, output, session) {
                           columnDefs)
       )
       
-      if (input$cohortDefinitionInclusionRuleTableFilters == "All") {
+      if (input$targetCohortDefinitionInclusionRuleTableFilters == "All") {
         table <- DT::datatable(
           table,
           options = options,
@@ -2089,8 +2089,8 @@ shiny::shinyServer(function(input, output, session) {
       return(table)
     }, server = TRUE)
   
-  #output: saveSimplifiedInclusionRuleTableForSelectedCohortCountLeft----
-  output$saveSimplifiedInclusionRuleTableForSelectedCohortCountLeft <-
+  #output: saveTargetCohortDefinitionSimplifiedInclusionRuleTable----
+  output$saveTargetCohortDefinitionSimplifiedInclusionRuleTable <-
     downloadHandler(
       filename = function() {
         getCsvFileNameWithDateTime(string = "InclusionRule")
@@ -2100,14 +2100,14 @@ shiny::shinyServer(function(input, output, session) {
       }
     )
   
-  ##output: getSimplifiedInclusionRuleResultsLeftHasData----
-  output$getSimplifiedInclusionRuleResultsLeftHasData <-
+  ##output: getSimplifiedInclusionRuleResultsTargetHasData----
+  output$getSimplifiedInclusionRuleResultsTargetHasData <-
     shiny::reactive(x = {
       return(nrow(getSimplifiedInclusionRuleResultsLeft()) > 0)
     })
   
   shiny::outputOptions(x = output,
-                       name = "getSimplifiedInclusionRuleResultsLeftHasData",
+                       name = "getSimplifiedInclusionRuleResultsTargetHasData",
                        suspendWhenHidden = FALSE)
   
   #output: cohortDefinitionJsonLeft----
@@ -2474,8 +2474,8 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  #output: conceptSetsInCohortLeft----
-  output$conceptSetsInCohortLeft <-
+  #output: targetCohortDefinitionConceptSetsTable----
+  output$targetCohortDefinitionConceptSetsTable <-
     DT::renderDataTable(expr = {
       data <- getConceptSetsInCohortDataLeft()
       if (!doesObjectHaveData(data)) {
@@ -2598,14 +2598,14 @@ shiny::shinyServer(function(input, output, session) {
       return(dataTable)
     }, server = TRUE)
   
-  #output: isAConceptSetSelectedForCohortLeft----
-  output$isAConceptSetSelectedForCohortLeft <-
+  #output: isTargetCohortDefinitionConceptSetsTableRowSelected----
+  output$isTargetCohortDefinitionConceptSetsTableRowSelected <-
     shiny::reactive(x = {
-      data <- input$conceptSetsInCohortLeft_rows_selected
+      data <- input$targetCohortDefinitionConceptSetsTable_rows_selected
       return(doesObjectHaveData(data))
     })
   shiny::outputOptions(x = output,
-                       name = "isAConceptSetSelectedForCohortLeft",
+                       name = "isTargetCohortDefinitionConceptSetsTableRowSelected",
                        suspendWhenHidden = FALSE)
   
   #output: saveConceptSetsExpressionTableLeft----
@@ -3669,11 +3669,11 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       if (!is.null(input$targetCohortDefinitionTabSetPanel)) {
-        if (input$targetCohortDefinitionTabSetPanel == "cohortDefinitionOneDetailsTextTabPanel") {
+        if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionDetailsTextTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "cohortDefinitionTwoTabSetPanel", selected = "cohortDefinitionTwoDetailsTextTabPanel")
         } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionCohortCountTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "cohortDefinitionTwoTabSetPanel", selected = "cohortDefinitionTwoCohortCountTabPanel")
-        } else if (input$targetCohortDefinitionTabSetPanel == "conceptSetOneTabPanel") {
+        } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionConceptSetTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "cohortDefinitionTwoTabSetPanel", selected = "conceptSetTwoTabPanel")
         } else if (input$targetCohortDefinitionTabSetPanel == "cohortDefinitionOneJsonTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "cohortDefinitionTwoTabSetPanel", selected = "cohortDefinitionTwoJsonTabPanel")
@@ -3716,11 +3716,11 @@ shiny::shinyServer(function(input, output, session) {
       
       if (!is.null(input$cohortDefinitionTwoTabSetPanel)) {
         if (input$cohortDefinitionTwoTabSetPanel == "cohortDefinitionTwoDetailsTextTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "cohortDefinitionOneDetailsTextTabPanel")
+          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionDetailsTextTabPanel")
         } else if (input$cohortDefinitionTwoTabSetPanel == "cohortDefinitionTwoCohortCountTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionCohortCountTabPanel")
         } else if (input$cohortDefinitionTwoTabSetPanel == "conceptSetTwoTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "conceptSetOneTabPanel")
+          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionConceptSetTabPanel")
         } else if (input$cohortDefinitionTwoTabSetPanel == "cohortDefinitionTwoJsonTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "cohortDefinitionOneJsonTabPanel")
         } else if (input$cohortDefinitionTwoTabSetPanel == "cohortDefinitionTwoSqlTabPanel") {

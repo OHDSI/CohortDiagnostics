@@ -166,11 +166,11 @@ consolidationOfSelectedFieldValues <- function(input,
     
     #selection on concept set id
     if (all(
-      doesObjectHaveData(input$conceptSetsInCohortLeft_rows_selected),
+      doesObjectHaveData(input$targetCohortDefinitionConceptSetsTable_rows_selected),
       doesObjectHaveData(data$cohortIdLeft)
     )) {
       selectedConceptSet <-
-        conceptSetExpressionLeft[input$conceptSetsInCohortLeft_rows_selected,]
+        conceptSetExpressionLeft[input$targetCohortDefinitionConceptSetsTable_rows_selected,]
       data$conceptSetIdLeft <- selectedConceptSet$conceptSetId
       
       if (all(
@@ -178,7 +178,7 @@ consolidationOfSelectedFieldValues <- function(input,
         doesObjectHaveData(data$cohortIdRight)
       )) {
         selectedConceptSet <-
-          conceptSetExpressionRight[input$conceptSetsInCohortLeft_rows_selected,]
+          conceptSetExpressionRight[input$conceptSetsInCohortRight_rows_selected,]
         data$conceptSetIdRight <- selectedConceptSet$conceptSetId
       }
     }
