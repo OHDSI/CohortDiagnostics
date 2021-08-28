@@ -140,7 +140,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     optimizationRecommendation <- 
       getOptimizationRecommendationForConceptSetExpression(conceptSetExpression = conceptSetExpression, 
                                                            connection = connection, 
-                                                           vocabularyDatabaseSchema = vocabDatabaseSchema, 
+                                                           vocabularyDatabaseSchema = vocabularyDatabaseSchema, 
                                                            tempEmulationSchema = tempEmulationSchema)
     if (!is.null(optimizationRecommendation)) {
       optimizationRecommendation <- optimizationRecommendation %>% 
