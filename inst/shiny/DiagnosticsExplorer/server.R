@@ -292,9 +292,9 @@ shiny::shinyServer(function(input, output, session) {
       conceptsetExpressionTableRight_rows_selected = input$conceptSetsInCohortRight_rows_selected,
       targetCohortDefinitionResolvedConceptTable_rows_selected = input$targetCohortDefinitionResolvedConceptTable_rows_selected,
       cohortDefinitionResolvedConceptTableRight_rows_selected = input$cohortDefinitionResolvedConceptTableRight_rows_selected,
-      cohortDefinitionExcludedConceptTableLeft_rows_selected = input$cohortDefinitionExcludedConceptTableLeft_rows_selected,
+      targetCohortDefinitionExcludedConceptTable_rows_selected = input$targetCohortDefinitionExcludedConceptTable_rows_selected,
       cohortDefinitionExcludedConceptTableRight_rows_selected = input$cohortDefinitionExcludedConceptTableRight_rows_selected,
-      cohortDefinitionOrphanConceptTableLeft_rows_selected = input$cohortDefinitionOrphanConceptTableLeft_rows_selected,
+      targetCohortDefinitionOrphanConceptTable_rows_selected = input$targetCohortDefinitionOrphanConceptTable_rows_selected,
       cohortDefinitionOrphanConceptTableRight_rows_selected = input$cohortDefinitionOrphanConceptTableRight_rows_selected,
       selectedDatabaseId = input$selectedDatabaseId,
       selectedDatabaseIds = input$selectedDatabaseIds,
@@ -548,14 +548,14 @@ shiny::shinyServer(function(input, output, session) {
                                  tags$td(
                                    align = "right",
                                    shiny::downloadButton(
-                                     "saveCohortDefinitionExcludedConceptTableLeft",
+                                     "saveTargetCohortDefinitionExcludedConceptTable",
                                      label = "",
                                      icon = shiny::icon("download"),
                                      style = "margin-top: 5px; margin-bottom: 5px;"
                                    )
                                  )
                                )),
-                    DT::dataTableOutput(outputId = "cohortDefinitionExcludedConceptTableLeft")
+                    DT::dataTableOutput(outputId = "targetCohortDefinitionExcludedConceptTable")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.targetConceptSetsType == 'Orphan concepts'",
@@ -571,15 +571,15 @@ shiny::shinyServer(function(input, output, session) {
                                    )
                                  )
                                )),
-                    DT::dataTableOutput(outputId = "cohortDefinitionOrphanConceptTableLeft")
+                    DT::dataTableOutput(outputId = "targetCohortDefinitionOrphanConceptTable")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.targetConceptSetsType == 'Concept Set Json'",
-                    copyToClipboardButton(toCopyId = "conceptsetExpressionJsonLeft",
+                    copyToClipboardButton(toCopyId = "targetConceptsetExpressionJson",
                                           style = "margin-top: 5px; margin-bottom: 5px;"),
-                    shiny::verbatimTextOutput(outputId = "conceptsetExpressionJsonLeft"),
+                    shiny::verbatimTextOutput(outputId = "targetConceptsetExpressionJson"),
                     tags$head(
-                      tags$style("#conceptsetExpressionJsonLeft { max-height:400px};")
+                      tags$style("#targetConceptsetExpressionJson { max-height:400px};")
                     )
                   )
                 )
@@ -588,21 +588,21 @@ shiny::shinyServer(function(input, output, session) {
             
             shiny::tabPanel(
               title = "Cohort JSON",
-              value = "cohortDefinitionOneJsonTabPanel",
-              copyToClipboardButton("cohortDefinitionJsonLeft", style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::verbatimTextOutput("cohortDefinitionJsonLeft"),
+              value = "targetCohortDefinitionJsonTabPanel",
+              copyToClipboardButton("targetCohortDefinitionJson", style = "margin-top: 5px; margin-bottom: 5px;"),
+              shiny::verbatimTextOutput("targetCohortDefinitionJson"),
               tags$head(
-                tags$style("#cohortDefinitionJsonLeft { max-height:400px};")
+                tags$style("#targetCohortDefinitionJson { max-height:400px};")
               )
             ),
             shiny::tabPanel(
               title = "Cohort SQL",
-              value = "cohortDefinitionOneSqlTabPanel",
-              copyToClipboardButton("cohortDefinitionSqlLeft", style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::htmlOutput("circeRVersionIncohortDefinitionSqlLeft"),
-              shiny::verbatimTextOutput("cohortDefinitionSqlLeft"),
+              value = "targetCohortDefinitionSqlTabPanel",
+              copyToClipboardButton("targetCohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
+              shiny::htmlOutput("circeRVersionInTargetcohortDefinitionSql"),
+              shiny::verbatimTextOutput("targetCohortDefinitionSql"),
               tags$head(
-                tags$style("#cohortDefinitionSqlLeft { max-height:400px};")
+                tags$style("#targetCohortDefinitionSql { max-height:400px};")
               )
             )
           )
@@ -1108,8 +1108,8 @@ shiny::shinyServer(function(input, output, session) {
       return(version)
     })
   
-  ###output: circeRVersionIncohortDefinitionSqlLeft----
-  output$circeRVersionIncohortDefinitionSqlLeft <-
+  ###output: targetCohortDefinitionSql----
+  output$targetCohortDefinitionSql <-
     shiny::renderUI(expr = {
       if (!doesObjectHaveData(consolidatedCohortIdLeft())) {
         return(NULL)
@@ -1195,8 +1195,8 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   ##Cohort SQL----
-  ###output: cohortDefinitionSqlLeft----
-  output$cohortDefinitionSqlLeft <- shiny::renderText({
+  ###output: targetCohortDefinitionSql----
+  output$targetCohortDefinitionSql <- shiny::renderText({
     if (!doesObjectHaveData(consolidatedCohortIdLeft())) {
       return(NULL)
     }
@@ -2109,8 +2109,8 @@ shiny::shinyServer(function(input, output, session) {
                        name = "getSimplifiedInclusionRuleResultsTargetHasData",
                        suspendWhenHidden = FALSE)
   
-  #output: cohortDefinitionJsonLeft----
-  output$cohortDefinitionJsonLeft <- shiny::renderText({
+  #output: targetCohortDefinitionJson----
+  output$targetCohortDefinitionJson <- shiny::renderText({
     json <- cohort %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft()) %>%
       dplyr::pull(.data$json)
@@ -2779,8 +2779,8 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
-  #output: cohortDefinitionExcludedConceptTableLeft----
-  output$cohortDefinitionExcludedConceptTableLeft <-
+  #output: targetCohortDefinitionExcludedConceptTable----
+  output$targetCohortDefinitionExcludedConceptTable <-
     DT::renderDataTable(expr = {
       validate(need(
         length(consolidatedCohortIdLeft()) > 0,
@@ -2857,8 +2857,8 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
-  #output: cohortDefinitionOrphanConceptTableLeft----
-  output$cohortDefinitionOrphanConceptTableLeft <-
+  #output: targetCohortDefinitionOrphanConceptTable----
+  output$targetCohortDefinitionOrphanConceptTable <-
     DT::renderDataTable(expr = {
       data <- getOrphanConceptsLeft()
       if (!doesObjectHaveData(data)) {
@@ -2927,8 +2927,8 @@ shiny::shinyServer(function(input, output, session) {
       return(dataTable)
     }, server = TRUE)
   
-  #output: conceptsetExpressionJsonLeft----
-  output$conceptsetExpressionJsonLeft <- shiny::renderText({
+  #output: targetConceptsetExpressionJson----
+  output$targetConceptsetExpressionJson <- shiny::renderText({
     if (any(!doesObjectHaveData(getConceptSetExpressionLeft()),
             !doesObjectHaveData(consolidatedConceptSetIdLeft()))) {
       return(NULL)
@@ -3674,9 +3674,9 @@ shiny::shinyServer(function(input, output, session) {
           shiny::updateTabsetPanel(session, inputId = "cohortDefinitionTwoTabSetPanel", selected = "cohortDefinitionTwoCohortCountTabPanel")
         } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionConceptSetTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "cohortDefinitionTwoTabSetPanel", selected = "conceptSetTwoTabPanel")
-        } else if (input$targetCohortDefinitionTabSetPanel == "cohortDefinitionOneJsonTabPanel") {
+        } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionJsonTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "cohortDefinitionTwoTabSetPanel", selected = "cohortDefinitionTwoJsonTabPanel")
-        } else if (input$targetCohortDefinitionTabSetPanel == "cohortDefinitionOneSqlTabPanel") {
+        } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionSqlTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "cohortDefinitionTwoTabSetPanel", selected = "cohortDefinitionTwoSqlTabPanel")
         }
       }
@@ -3721,9 +3721,9 @@ shiny::shinyServer(function(input, output, session) {
         } else if (input$cohortDefinitionTwoTabSetPanel == "conceptSetTwoTabPanel") {
           shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionConceptSetTabPanel")
         } else if (input$cohortDefinitionTwoTabSetPanel == "cohortDefinitionTwoJsonTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "cohortDefinitionOneJsonTabPanel")
+          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionJsonTabPanel")
         } else if (input$cohortDefinitionTwoTabSetPanel == "cohortDefinitionTwoSqlTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "cohortDefinitionOneSqlTabPanel")
+          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionSqlTabPanel")
         }
       }
     }
