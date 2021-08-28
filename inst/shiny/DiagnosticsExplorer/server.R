@@ -755,7 +755,7 @@ shiny::shinyServer(function(input, output, session) {
                                                   "Resolved",
                                                   "Excluded",
                                                   "Orphan concepts",
-                                                  "Json",
+                                                  "Concept Set Json",
                                                   "Concept Set Sql"
                                                 ),
                                                 selected = "Concept Set Expression",
@@ -767,7 +767,7 @@ shiny::shinyServer(function(input, output, session) {
                     condition = "output.isComparatorCohortDefinitionConceptSetRowSelected == true &
                                                       input.comparatorConceptSetsType != 'Resolved' &
                                                       input.comparatorConceptSetsType != 'Excluded' &
-                                                      input.comparatorConceptSetsType != 'Json' &
+                                                      input.comparatorConceptSetsType != 'Concept Set Json' &
                                                       input.comparatorConceptSetsType != 'Orphan concepts' &
                                                       input.comparatorConceptSetsType != 'Concept Set Sql'",
                     tags$table(width = "100%",
@@ -833,7 +833,7 @@ shiny::shinyServer(function(input, output, session) {
                     DT::dataTableOutput(outputId = "comparatorCohortDefinitionOrphanConceptTable")
                   ),
                   shiny::conditionalPanel(
-                    condition = "input.comparatorConceptSetsType == 'Json'",
+                    condition = "input.comparatorConceptSetsType == 'Concept Set Json'",
                     copyToClipboardButton(toCopyId = "comparatorCohortDefinitionConceptsetExpressionJson",
                                           style = "margin-top: 5px; margin-bottom: 5px;"),
                     shiny::verbatimTextOutput(outputId = "comparatorCohortDefinitionConceptsetExpressionJson"),
@@ -3695,7 +3695,7 @@ shiny::shinyServer(function(input, output, session) {
         } else if (input$targetConceptSetsType == "Concept Set Json") {
           updateRadioButtons(session = session,
                              inputId = "comparatorConceptSetsType",
-                             selected = "Json")
+                             selected = "Concept Set Json")
         } else if (input$targetConceptSetsType == "Concept Set Sql") {
           updateRadioButtons(session = session,
                              inputId = "comparatorConceptSetsType",
@@ -3741,7 +3741,7 @@ shiny::shinyServer(function(input, output, session) {
           updateRadioButtons(session = session,
                              inputId = "targetConceptSetsType",
                              selected = "Orphan concepts")
-        } else if (input$comparatorConceptSetsType == "Json") {
+        } else if (input$comparatorConceptSetsType == "Concept Set Json") {
           #!! call this "Concept Set JSON"
           updateRadioButtons(session = session,
                              inputId = "targetConceptSetsType",
