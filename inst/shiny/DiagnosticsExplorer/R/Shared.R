@@ -89,6 +89,23 @@ quoteLiterals <- function(x) {
   }
 }
 
+# used to get the short name in plots
+addShortName <- function(data, shortNameRef = NULL, cohortIdColumn = "cohortId", shortNameColumn = "shortName") {
+  if (is.null(shortNameRef)) {
+    shortNameRef <- data %>%
+      dplyr::distinct(.data$cohortId) %>%
+      dplyr::arrange(.data$cohortId) %>%
+      dplyr::mutate(shortName = paste0("C", dplyr::row_number()))
+  } 
+  
+  shortNameRef <- shortNameRef %>%
+    dplyr::distinct(.data$cohortId, .data$shortName) 
+  colnames(shortNameRef) <- c(cohortIdColumn, shortNameColumn)
+  data <- data %>%
+    dplyr::inner_join(shortNameRef, by = cohortIdColumn)
+  return(data)
+}
+
 
 #' Get specifications for Cohort Diagnostics results data model
 #'
