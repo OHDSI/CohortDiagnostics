@@ -1853,7 +1853,6 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    browser()
     return(data)
   })
   
