@@ -184,7 +184,7 @@ consolidationOfSelectedFieldValues <- function(input,
     }
     #selection on database id
     if (doesObjectHaveData(input$targetVocabularyChoiceForConceptSetDetails)) {
-      data$selectedDatabaseIdLeft <- database %>%
+      data$selectedDatabaseIdTarget <- database %>%
         dplyr::filter(
           .data$databaseIdWithVocabularyVersion == input$targetVocabularyChoiceForConceptSetDetails
         ) %>% 
@@ -224,7 +224,9 @@ consolidationOfSelectedFieldValues <- function(input,
     }
   }
   ####################################################
-  if (input$tabs == 'indexEventBreakdown' || input$tabs == 'visitContext') {
+  if (input$tabs == 'indexEventBreakdown' || 
+      input$tabs == 'visitContext' ||
+      input$tabs == 'cohortCharacterization') {
     data <- list()
     #single select cohortId
     if (all(!is.null(input$selectedCompoundCohortName),
@@ -240,9 +242,9 @@ consolidationOfSelectedFieldValues <- function(input,
       if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
           isTRUE(input$selectedDatabaseIds_open) ||
           doesObjectHaveData(input$tabs)) {
-        data$selectedDatabaseIdLeft <- input$selectedDatabaseIds
+        data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
       } else {
-        data$selectedDatabaseIdLeft <- NULL
+        data$selectedDatabaseIdTarget <- NULL
       }
     }
     #mutli select concept set id for one cohort
@@ -302,9 +304,9 @@ consolidationOfSelectedFieldValues <- function(input,
       if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
         isTRUE(input$selectedDatabaseIds_open) ||
         doesObjectHaveData(input$tabs)) {
-        data$selectedDatabaseIdLeft <- input$selectedDatabaseIds
+        data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
       } else {
-        data$selectedDatabaseIdLeft <- NULL
+        data$selectedDatabaseIdTarget <- NULL
       }
     }
     

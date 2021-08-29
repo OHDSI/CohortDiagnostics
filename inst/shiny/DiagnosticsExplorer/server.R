@@ -344,7 +344,7 @@ shiny::shinyServer(function(input, output, session) {
                  consolidatedCohortIdComparator(data$cohortIdComparator)
                  consolidatedConceptSetIdTarget(data$conceptSetIdLeft)
                  consolidatedConceptSetIdComparator(data$conceptSetIdRight)
-                 consolidatedDatabaseIdTarget(data$selectedDatabaseIdLeft)
+                 consolidatedDatabaseIdTarget(data$selectedDatabaseIdTarget)
                  consolidatedDatabaseIdComparator(data$selectedDatabaseIdRight)
                  consolidatedConceptIdLeft(data$selectedConceptIdLeft)
                  consolidatedConceptIdRight(data$selectedConceptIdRight)
@@ -1211,7 +1211,7 @@ shiny::shinyServer(function(input, output, session) {
   #output: targetCohortDetailsText----
   output$targetCohortDetailsText <- shiny::renderUI({
     row <- getCohortMetadataLeft()
-    if (doesObjectHaveData(row) {
+    if (doesObjectHaveData(row)) {
       return(NULL)
     }
     return(row)
@@ -1219,7 +1219,7 @@ shiny::shinyServer(function(input, output, session) {
   #output: comparatorCohortDefinitioncohortDetailsText----
   output$comparatorCohortDefinitioncohortDetailsText <- shiny::renderUI({
     row <- getCohortMetadataRight()
-    if (doesObjectHaveData(row) {
+    if (doesObjectHaveData(row)) {
       return(NULL)
     }
     if (length(row) == 2) {
