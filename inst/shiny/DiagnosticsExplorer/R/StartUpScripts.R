@@ -152,22 +152,22 @@ consolidationOfSelectedFieldValues <- function(input,
             length(input$cohortDefinitionTable_rows_selected),
             length(input$cohortDefinitionTable_rows_selected) - 1
           )]
-        data$cohortIdLeft <-
+        data$cohortIdTarget <-
           cohort[lastRowsSelected[[1]], ]$cohortId
-        data$cohortIdRight <-
+        data$cohortIdComparator <-
           cohort[lastRowsSelected[[2]], ]$cohortId
       } else {
         lastRowsSelected <- input$cohortDefinitionTable_rows_selected
-        data$cohortIdLeft <-
+        data$cohortIdTarget <-
           cohort[lastRowsSelected[[1]], ]$cohortId
-        data$cohortIdRight <- NULL
+        data$cohortIdComparator <- NULL
       }
     }
     
     #selection on concept set id
     if (all(
       doesObjectHaveData(input$targetCohortDefinitionConceptSetsTable_rows_selected),
-      doesObjectHaveData(data$cohortIdLeft)
+      doesObjectHaveData(data$cohortIdTarget)
     )) {
       selectedConceptSet <-
         conceptSetExpressionLeft[input$targetCohortDefinitionConceptSetsTable_rows_selected,]
@@ -175,7 +175,7 @@ consolidationOfSelectedFieldValues <- function(input,
       
       if (all(
         doesObjectHaveData(input$comparatorCohortDefinitionConceptSets_rows_selected),
-        doesObjectHaveData(data$cohortIdRight)
+        doesObjectHaveData(data$cohortIdComparator)
       )) {
         selectedConceptSet <-
           conceptSetExpressionRight[input$comparatorCohortDefinitionConceptSets_rows_selected,]
@@ -229,7 +229,7 @@ consolidationOfSelectedFieldValues <- function(input,
     #single select cohortId
     if (all(!is.null(input$selectedCompoundCohortName),
             !is.null(cohort))) {
-      data$cohortIdLeft <- cohort %>%
+      data$cohortIdTarget <- cohort %>%
         dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortName) %>%
         dplyr::arrange(.data$cohortId) %>%
         dplyr::pull(.data$cohortId) %>%
@@ -249,7 +249,7 @@ consolidationOfSelectedFieldValues <- function(input,
     #mutli select concept set id for one cohort
     if (doesObjectHaveData(input$conceptSetsSelectedCohortLeft)) {
       data$conceptSetIdLeft <- conceptSets %>% 
-        dplyr::filter(.data$cohortId %in% data$cohortIdLeft) %>% 
+        dplyr::filter(.data$cohortId %in% data$cohortIdTarget) %>% 
         dplyr::filter(.data$conceptSetName %in% input$conceptSetsSelectedCohortLeft) %>% 
         dplyr::pull(.data$conceptSetId)
     }
@@ -290,7 +290,7 @@ consolidationOfSelectedFieldValues <- function(input,
         isTRUE(input$selectedCompoundCohortNames_open) || 
         doesObjectHaveData(input$tabs)
       ) {
-        data$cohortIdLeft <- cohort %>%
+        data$cohortIdTarget <- cohort %>%
           dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortNames) %>%
           dplyr::arrange(.data$cohortId) %>%
           dplyr::pull(.data$cohortId) %>%
