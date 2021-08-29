@@ -374,6 +374,7 @@ shiny::shinyServer(function(input, output, session) {
               tags$br(),
               DT::dataTableOutput(outputId = "targetCohortDefinitionCohortCountTable"),
               tags$br(),
+              #!!!!! here we will need to collapsible boxes (simplified/detailed with simplified selected by default. targetCohortDefinitionSimplifiedInclusionRuleTableFilters is in simplified)
               shiny::conditionalPanel(
                 condition = "output.isDatabaseIdFoundForSelectedTargetCohortCount == true",
                 tags$h3("Inclusion Rules"),
@@ -383,17 +384,17 @@ shiny::shinyServer(function(input, output, session) {
                                shiny::radioButtons(
                                  inputId = "targetCohortDefinitionInclusionRuleType",
                                  label = "Select: ",
-                                 choices = c("Simplified", "Detailed"),
-                                 selected = "Simplified",
+                                 choices = c("Events", "Persons"),
+                                 selected = "Events",
                                  inline = TRUE
                                )
                              ),
                              tags$td(
                                shiny::conditionalPanel(
-                                 condition = "input.targetCohortDefinitionInclusionRuleType == 'Simplified' &
+                                 condition = "input.targetCohortDefinitionInclusionRuleType == 'Events' &
                                          output.getSimplifiedInclusionRuleResultsTargetHasData == true",
                                  shiny::radioButtons(
-                                   inputId = "targetCohortDefinitionInclusionRuleTableFilters",
+                                   inputId = "targetCohortDefinitionSimplifiedInclusionRuleTableFilters",
                                    label = "Filter by",
                                    choices = c("All", "Meet", "Gain", "Remain", "Totals"),
                                    selected = "All",
@@ -635,6 +636,9 @@ shiny::shinyServer(function(input, output, session) {
               tags$br(),
               DT::dataTableOutput(outputId = "comparatorCohortDefinitionCohortCountsTable"),
               tags$br(),
+              #!!!!! here we will need to collapsible boxes (simplified/detailed with simplified selected by default)
+              #!!!! filter (all, meet, gain etc) are in simplified
+              #!!!! comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters is in simplified)
               shiny::conditionalPanel(
                 condition = "output.isDatabaseIdFoundForSelectedComparatorCohortCount == true",
                 tags$h3("Inclusion Rules"),
@@ -654,7 +658,7 @@ shiny::shinyServer(function(input, output, session) {
                                  condition = "input.comparatorCohortDefinitionInclusionRuleType == 'Simplified' &
                                          output.getComparatorSimplifiedInclusionRuleResultsHasData == true",
                                  shiny::radioButtons(
-                                   inputId = "comparatorCohortDefinitionInclusionRuleTableFilters",
+                                   inputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters",
                                    label = "Filter by",
                                    choices = c("All", "Meet", "Gain", "Remain", "Totals"),
                                    selected = "All",
@@ -1886,7 +1890,6 @@ shiny::shinyServer(function(input, output, session) {
         cohortIds = consolidatedCohortIdComparator(),
         databaseIds = getDatabaseIdFromSelectedRowInCohortCountTableComparator()
       )
-    browser()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -1971,7 +1974,7 @@ shiny::shinyServer(function(input, output, session) {
         ) %>%
         dplyr::select(-.data$cohortId)
       
-      if (input$targetCohortDefinitionInclusionRuleTableFilters == "Meet") {
+      if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "Meet") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Total"),
@@ -1987,7 +1990,7 @@ shiny::shinyServer(function(input, output, session) {
         
         columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
         
-      } else if (input$targetCohortDefinitionInclusionRuleTableFilters == "Totals") {
+      } else if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "Totals") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Meet"),
@@ -2003,7 +2006,7 @@ shiny::shinyServer(function(input, output, session) {
         
         columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
         
-      } else if (input$targetCohortDefinitionInclusionRuleTableFilters == "Gain") {
+      } else if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "Gain") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Total"),
@@ -2019,7 +2022,7 @@ shiny::shinyServer(function(input, output, session) {
         
         columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
         
-      } else if (input$targetCohortDefinitionInclusionRuleTableFilters == "Remain") {
+      } else if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "Remain") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Total"),
@@ -2072,7 +2075,7 @@ shiny::shinyServer(function(input, output, session) {
                           columnDefs)
       )
       
-      if (input$targetCohortDefinitionInclusionRuleTableFilters == "All") {
+      if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "All") {
         table <- DT::datatable(
           table,
           options = options,
@@ -3099,7 +3102,7 @@ shiny::shinyServer(function(input, output, session) {
         ) %>%
         dplyr::select(-.data$cohortId)
       
-      if (input$comparatorCohortDefinitionInclusionRuleTableFilters == "Meet") {
+      if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "Meet") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Total"),-dplyr::contains("Gain"),-dplyr::contains("Remain")
@@ -3113,7 +3116,7 @@ shiny::shinyServer(function(input, output, session) {
         
         columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
         
-      } else if (input$comparatorCohortDefinitionInclusionRuleTableFilters == "Totals") {
+      } else if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "Totals") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Meet"),-dplyr::contains("Gain"),-dplyr::contains("Remain")
@@ -3127,7 +3130,7 @@ shiny::shinyServer(function(input, output, session) {
         
         columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
         
-      } else if (input$comparatorCohortDefinitionInclusionRuleTableFilters == "Gain") {
+      } else if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "Gain") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Remain")
@@ -3141,7 +3144,7 @@ shiny::shinyServer(function(input, output, session) {
         
         columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
         
-      } else if (input$comparatorCohortDefinitionInclusionRuleTableFilters == "Remain") {
+      } else if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "Remain") {
         table <- table %>%
           dplyr::select(
             -dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Gain")
@@ -3192,7 +3195,7 @@ shiny::shinyServer(function(input, output, session) {
                           columnDefs)
       )
       
-      if (input$comparatorCohortDefinitionInclusionRuleTableFilters == "All") {
+      if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "All") {
         table <- DT::datatable(
           table,
           options = options,
