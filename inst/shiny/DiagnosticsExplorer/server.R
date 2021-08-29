@@ -1271,8 +1271,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##Cohort count in cohort definition tab----
-  ###getCountsForSelectedCohortsLeft----
-  getCountsForSelectedCohortsLeft <- shiny::reactive(x = {
+  ###getCountsForSelectedCohortsTarget----
+  getCountsForSelectedCohortsTarget <- shiny::reactive(x = {
     data <- cohortCount %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
       dplyr::select(.data$databaseId,
@@ -1285,8 +1285,8 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###getCountsForSelectedCohortsRight----
-  getCountsForSelectedCohortsRight <- shiny::reactive(x = {
+  ###getCountsForSelectedCohortsComparator----
+  getCountsForSelectedCohortsComparator <- shiny::reactive(x = {
     data <- cohortCount %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator()) %>%
       dplyr::select(.data$databaseId,
@@ -1304,40 +1304,34 @@ shiny::shinyServer(function(input, output, session) {
   getCountsForSelectedCohortsTargetFilteredToDatabaseId <-
     shiny::reactive(x = {
       databaseId <- consolidatedDatabaseIdTarget()
-      data <- getCountsForSelectedCohortsLeft()
-      if (all(!is.null(data),
-              nrow(data) > 0)) {
-        data <- data %>%
-          dplyr::filter(.data$databaseId == !!databaseId) %>%
-          dplyr::select(.data$cohortSubjects, .data$cohortEntries)
-      }
+      data <- getCountsForSelectedCohortsTarget()
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
+      data <- data %>%
+        dplyr::filter(.data$databaseId == !!databaseId) %>%
+        dplyr::select(.data$cohortSubjects, .data$cohortEntries)
       return(data)
     })
   
-  ###getCountsForSelectedCohortsRightFilteredToDatabaseId----
-  getCountsForSelectedCohortsRightFilteredToDatabaseId <-
+  ###getCountsForSelectedCohortsComparatorFilteredToDatabaseId----
+  getCountsForSelectedCohortsComparatorFilteredToDatabaseId <-
     shiny::reactive(x = {
       databaseId <- consolidatedDatabaseIdComparator()
-      data <- getCountsForSelectedCohortsRight()
-      if (all(!is.null(data),
-              nrow(data) > 0)) {
-        data <- data %>%
-          dplyr::filter(.data$databaseId == !!databaseId) %>%
-          dplyr::select(.data$cohortSubjects, .data$cohortEntries)
-      }
+      data <- getCountsForSelectedCohortsComparator()
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
+      data <- data %>%
+        dplyr::filter(.data$databaseId == !!databaseId) %>%
+        dplyr::select(.data$cohortSubjects, .data$cohortEntries)
       return(data)
     })
   
   ###output: targetCohortDefinitionCohortCountTable----
   output$targetCohortDefinitionCohortCountTable <-
     DT::renderDataTable(expr = {
-      data <- getCountsForSelectedCohortsLeft()
+      data <- getCountsForSelectedCohortsTarget()
       validate(need(
         all(!is.null(data),
             nrow(data) > 0),
@@ -1826,14 +1820,13 @@ shiny::shinyServer(function(input, output, session) {
   # by default - make this multiselected - top 3
   
   ##Inclusion rule ----
-  ###getDatabaseIdForSelectedCohortCountLeft----
-  getDatabaseIdForSelectedCohortCountLeft <- shiny::reactive(x = {
+  ###getDatabaseIdFromSelectedRowInCohortCountTableTarget----
+  getDatabaseIdFromSelectedRowInCohortCountTableTarget <- shiny::reactive(x = {
     idx <- input$targetCohortDefinitionCohortCountTable_rows_selected
     if (!doesObjectHaveData(idx)) {
       return(NULL)
     }
-    
-    databaseIds <- getCountsForSelectedCohortsLeft()[idx,]
+    databaseIds <- getCountsForSelectedCohortsTarget()[idx,]
     if (!doesObjectHaveData(databaseIds)) {
       return(NULL)
     }
@@ -1843,11 +1836,11 @@ shiny::shinyServer(function(input, output, session) {
     return(databaseIds)
   })
   
-  ###getSimplifiedInclusionRuleResultsLeft----
-  getSimplifiedInclusionRuleResultsLeft <- shiny::reactive(x = {
+  ###getSimplifiedInclusionRuleResultsTarget----
+  getSimplifiedInclusionRuleResultsTarget <- shiny::reactive(x = {
     if (any(
       !doesObjectHaveData(consolidatedCohortIdTarget()),
-      !doesObjectHaveData(getDatabaseIdForSelectedCohortCountLeft())
+      !doesObjectHaveData(getDatabaseIdFromSelectedRowInCohortCountTableTarget())
     )) {
       return(NULL)
     }
@@ -1855,24 +1848,23 @@ shiny::shinyServer(function(input, output, session) {
       getResultsInclusionRuleStatistics(
         dataSource = dataSource,
         cohortIds = consolidatedCohortIdTarget(),
-        databaseIds = getDatabaseIdForSelectedCohortCountLeft()
+        databaseIds = getDatabaseIdFromSelectedRowInCohortCountTableTarget()
       )
-    
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    
+    browser()
     return(data)
   })
   
-  ###getDatabaseIdForSelectedCohortCountRight----
-  getDatabaseIdForSelectedCohortCountRight <- shiny::reactive(x = {
+  ###getDatabaseIdFromSelectedRowInCohortCountTableComparator----
+  getDatabaseIdFromSelectedRowInCohortCountTableComparator <- shiny::reactive(x = {
     idx <- input$comparatorCohortDefinitionCohortCountsTable_rows_selected
     if (!doesObjectHaveData(idx)) {
       return(NULL)
     }
     
-    databaseIds <- getCountsForSelectedCohortsRight()[idx, ]
+    databaseIds <- getCountsForSelectedCohortsComparator()[idx, ]
     if (!doesObjectHaveData(databaseIds)) {
       return(NULL)
     }
@@ -1881,11 +1873,11 @@ shiny::shinyServer(function(input, output, session) {
     return(databaseIds)
   })
   
-  ###getSimplifiedInclusionRuleResultsRight----
-  getSimplifiedInclusionRuleResultsRight <- shiny::reactive(x = {
+  ###getSimplifiedInclusionRuleResultsComparator----
+  getSimplifiedInclusionRuleResultsComparator <- shiny::reactive(x = {
     if (any(
       !doesObjectHaveData(consolidatedCohortIdComparator()),
-      !doesObjectHaveData(getDatabaseIdForSelectedCohortCountRight())
+      !doesObjectHaveData(getDatabaseIdFromSelectedRowInCohortCountTableComparator())
     )) {
       return(NULL)
     }
@@ -1893,9 +1885,9 @@ shiny::shinyServer(function(input, output, session) {
       getResultsInclusionRuleStatistics(
         dataSource = dataSource,
         cohortIds = consolidatedCohortIdComparator(),
-        databaseIds = getDatabaseIdForSelectedCohortCountRight()
+        databaseIds = getDatabaseIdFromSelectedRowInCohortCountTableComparator()
       )
-    
+    browser()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -1918,7 +1910,7 @@ shiny::shinyServer(function(input, output, session) {
   #output: isDatabaseIdFoundForSelectedTargetCohortCount----
   output$isDatabaseIdFoundForSelectedTargetCohortCount <-
     shiny::reactive(x = {
-      return(!is.null(getSimplifiedInclusionRuleResultsLeft()))
+      return(!is.null(getSimplifiedInclusionRuleResultsTarget()))
     })
   shiny::outputOptions(x = output,
                        name = "isDatabaseIdFoundForSelectedTargetCohortCount",
@@ -1933,7 +1925,7 @@ shiny::shinyServer(function(input, output, session) {
       )) {
         return(NULL)
       }
-      table <- getSimplifiedInclusionRuleResultsLeft()
+      table <- getSimplifiedInclusionRuleResultsTarget()
       validate(need((nrow(table) > 0),
                     "There is no inclusion rule data for this cohort."))
       
@@ -1942,7 +1934,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::inner_join(cohortCount,
                           by = c("cohortId", "databaseId")) %>%
         dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
-        dplyr::filter(.data$databaseId %in% getDatabaseIdForSelectedCohortCountLeft()) %>%
+        dplyr::filter(.data$databaseId %in% getDatabaseIdFromSelectedRowInCohortCountTableTarget()) %>%
         dplyr::select(.data$cohortSubjects) %>%
         dplyr::pull(.data$cohortSubjects) %>% unique()
       
@@ -2113,14 +2105,14 @@ shiny::shinyServer(function(input, output, session) {
         getCsvFileNameWithDateTime(string = "InclusionRule")
       },
       content = function(file) {
-        downloadCsv(x = getSimplifiedInclusionRuleResultsLeft(), fileName = file)
+        downloadCsv(x = getSimplifiedInclusionRuleResultsTarget(), fileName = file)
       }
     )
   
   ##output: getSimplifiedInclusionRuleResultsTargetHasData----
   output$getSimplifiedInclusionRuleResultsTargetHasData <-
     shiny::reactive(x = {
-      return(nrow(getSimplifiedInclusionRuleResultsLeft()) > 0)
+      return(nrow(getSimplifiedInclusionRuleResultsTarget()) > 0)
     })
   
   shiny::outputOptions(x = output,
@@ -2989,7 +2981,7 @@ shiny::shinyServer(function(input, output, session) {
   ##output: comparatorCohortDefinitionCohortCountsTable----
   output$comparatorCohortDefinitionCohortCountsTable <-
     DT::renderDataTable(expr = {
-      data <- getCountsForSelectedCohortsRight()
+      data <- getCountsForSelectedCohortsComparator()
       validate(need(
         all(!is.null(data),
             nrow(data) > 0),
@@ -3045,7 +3037,7 @@ shiny::shinyServer(function(input, output, session) {
   ##reactive: isDatabaseIdFoundForSelectedComparatorCohortCount----
   output$isDatabaseIdFoundForSelectedComparatorCohortCount <-
     shiny::reactive(x = {
-      return(!is.null(getSimplifiedInclusionRuleResultsRight()))
+      return(!is.null(getSimplifiedInclusionRuleResultsComparator()))
     })
   shiny::outputOptions(x = output,
                        name = "isDatabaseIdFoundForSelectedComparatorCohortCount",
@@ -3060,7 +3052,7 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       
-      table <- getSimplifiedInclusionRuleResultsRight()
+      table <- getSimplifiedInclusionRuleResultsComparator()
       validate(need((nrow(table) > 0),
                     "There is no inclusion rule data for this cohort."))
       
@@ -3069,7 +3061,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::inner_join(cohortCount,
                           by = c("cohortId", "databaseId")) %>%
         dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>%
-        dplyr::filter(.data$databaseId %in% getDatabaseIdForSelectedCohortCountRight()) %>%
+        dplyr::filter(.data$databaseId %in% getDatabaseIdFromSelectedRowInCohortCountTableComparator()) %>%
         dplyr::select(.data$cohortSubjects) %>%
         dplyr::pull(.data$cohortSubjects) %>%
         unique()
@@ -3235,14 +3227,14 @@ shiny::shinyServer(function(input, output, session) {
       },
       content = function(file)
       {
-        downloadCsv(x = getSimplifiedInclusionRuleResultsRight(), fileName = file)
+        downloadCsv(x = getSimplifiedInclusionRuleResultsComparator(), fileName = file)
       }
     )
   
   ##output: getComparatorSimplifiedInclusionRuleResultsHasData----
   output$getComparatorSimplifiedInclusionRuleResultsHasData <-
     shiny::reactive(x = {
-      return(!is.null(getSimplifiedInclusionRuleResultsRight()))
+      return(!is.null(getSimplifiedInclusionRuleResultsComparator()))
     })
   
   shiny::outputOptions(x = output,
@@ -3407,7 +3399,7 @@ shiny::shinyServer(function(input, output, session) {
   ##output: personAndRecordCountForComparatorCohortSelected----
   output$personAndRecordCountForComparatorCohortSelected <-
     shiny::renderUI({
-      row <- getCountsForSelectedCohortsRightFilteredToDatabaseId()
+      row <- getCountsForSelectedCohortsComparatorFilteredToDatabaseId()
       if (is.null(row))
       {
         return(NULL)
