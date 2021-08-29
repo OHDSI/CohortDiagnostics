@@ -7247,7 +7247,7 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       covariatesTofilter <- covariatesTofilter  %>%
         dplyr::inner_join(
-          getResolvedConceptIdsForCohortFilteredBySelectedConceptSets() %>%
+          getResolvedConceptsTarget() %>%
             dplyr::select(.data$conceptId) %>%
             dplyr::distinct(),
           by = c("conceptId")
@@ -7790,7 +7790,7 @@ shiny::shinyServer(function(input, output, session) {
       )) {
         data <- data  %>%
           dplyr::inner_join(
-            getResolvedConceptIdsForCohortFilteredBySelectedConceptSets() %>%
+            getResolvedConceptsTarget() %>%
               dplyr::select(.data$conceptId, .data$cohortId) %>%
               dplyr::distinct(),
             by = c("conceptId", "cohortId")
@@ -8245,7 +8245,7 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       data <- data  %>%
         dplyr::inner_join(
-          getResolvedConceptIdsForCohortFilteredBySelectedConceptSets() %>%
+          getResolvedConceptsTarget() %>%
             dplyr::select(.data$conceptId) %>%
             dplyr::distinct(),
           by = c("conceptId")
@@ -8754,7 +8754,7 @@ shiny::shinyServer(function(input, output, session) {
       )) {
         data <- data  %>%
           dplyr::inner_join(
-            getResolvedConceptIdsForCohortFilteredBySelectedConceptSets() %>%
+            getResolvedConceptsTarget() %>%
               dplyr::select(.data$conceptId) %>%
               dplyr::distinct(),
             by = c("conceptId")

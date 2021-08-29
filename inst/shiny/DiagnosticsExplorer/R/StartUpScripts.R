@@ -283,7 +283,8 @@ consolidationOfSelectedFieldValues <- function(input,
       input$tabs == 'incidenceRate' ||
       input$tabs == 'timeSeries' ||
       input$tabs == 'timeDistribution' ||
-      input$tabs == 'cohortOverlap') {
+      input$tabs == 'cohortOverlap' ||
+      input$tabs == 'cohortCharacterization') {
     data <- list()
     #multi select cohortId
     if (doesObjectHaveData(input$selectedCompoundCohortNames)) {
