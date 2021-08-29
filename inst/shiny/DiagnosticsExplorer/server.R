@@ -2356,15 +2356,21 @@ shiny::shinyServer(function(input, output, session) {
     return(NULL)
   })
   
+  recentlySelectedConceptId <- reactiveVal(NULL)
+  observeEvent(eventExpr = consolidatedConceptIdLeft(),
+               handlerExpr = {
+                 recentlySelectedConceptId(consolidatedConceptIdLeft())
+               })
+  
+  observeEvent(eventExpr = consolidatedConceptIdRight(),
+               handlerExpr = {
+                 recentlySelectedConceptId(consolidatedConceptIdRight())
+               })
+  
+  
   ##getMetadataForConceptId----
   getMetadataForConceptId <- shiny::reactive(x = {
-    conceptId <- NULL
-    if (doesObjectHaveData(consolidateCohortDefinitionActiveSideLeft())) {
-      conceptId <- consolidatedConceptIdLeft()
-    }
-    if (doesObjectHaveData(consolidateCohortDefinitionActiveSideRight())) {
-      conceptId <- consolidatedConceptIdRight()
-    }
+    conceptId <- recentlySelectedConceptId()
     if (is.null(conceptId)) {
       return(NULL)
     }
@@ -2376,14 +2382,11 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+
   ##output: conceptBrowserTable----
   output$conceptBrowserTable <- DT::renderDT(expr = {
-    if (doesObjectHaveData(consolidateCohortDefinitionActiveSideLeft())) {
-      conceptId <- consolidatedConceptIdLeft()
-    }
-    if (doesObjectHaveData(consolidateCohortDefinitionActiveSideRight())) {
-      conceptId <- consolidatedConceptIdRight()
-    }
+    
+    conceptId <- recentlySelectedConceptId()
     validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
     
     progress <- shiny::Progress$new()
