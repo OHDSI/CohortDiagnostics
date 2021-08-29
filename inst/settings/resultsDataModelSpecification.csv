@@ -109,7 +109,7 @@ concept_sets,cohort_id,bigint,Yes,Yes,No,Yes,2.2
 concept_sets,concept_set_id,int,Yes,Yes,No,Yes,2.2
 concept_sets,concept_set_sql,varchar,Yes,No,No,Yes,2.2
 concept_sets,concept_set_name,varchar(255),Yes,No,No,Yes,2.2
-concept_sets,concept_set_expression,varchar,Yes,No,No,Yes,2.
+concept_sets,concept_set_expression,varchar,Yes,No,No,Yes,2.2
 concept_sets_optimized,database_id,varchar,Yes,Yes,No,Yes,2.2
 concept_sets_optimized,cohort_id,bigint,Yes,Yes,No,Yes,2.2
 concept_sets_optimized,concept_set_id,int,Yes,Yes,No,Yes,2.2
