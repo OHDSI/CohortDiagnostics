@@ -276,5 +276,33 @@ consolidationOfSelectedFieldValues <- function(input,
   if (input$tabs == 'compareTemporalCharacterization') {
     data <- list()
   }
+  if (input$tabs == 'cohortCounts') {
+    data <- list()
+    #multi select cohortId
+    if (doesObjectHaveData(input$selectedCompoundCohortNames)) {
+      if (doesObjectHaveData(input$selectedCompoundCohortNames_open) ||
+        isTRUE(input$selectedCompoundCohortNames_open) || 
+        doesObjectHaveData(input$tabs)
+      ) {
+        data$cohortIdLeft <- cohort %>%
+          dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortNames) %>%
+          dplyr::arrange(.data$cohortId) %>%
+          dplyr::pull(.data$cohortId) %>%
+          unique()
+      }
+    }
+    
+    #mutli select databaseId
+    if (doesObjectHaveData(input$selectedDatabaseIds)) {
+      if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
+        isTRUE(input$selectedDatabaseIds_open) ||
+        doesObjectHaveData(input$tabs)) {
+        data$selectedDatabaseIdLeft <- input$selectedDatabaseIds
+      } else {
+        data$selectedDatabaseIdLeft <- NULL
+      }
+    }
+    
+  }
   return(data)
 }

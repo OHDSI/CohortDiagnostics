@@ -300,8 +300,8 @@ shiny::shinyServer(function(input, output, session) {
       selectedDatabaseIds = input$selectedDatabaseIds,
       selectedDatabaseIds_open = input$selectedDatabaseIds_open,
       selectedCompoundCohortName = input$selectedCompoundCohortName,
-      selectedCompoundCohortName = input$selectedCompoundCohortName,
       selectedCompoundCohortNames = input$selectedCompoundCohortNames,
+      selectedCompoundCohortNames_open = input$selectedCompoundCohortNames_open,
       conceptSetsSelectedCohortLeft = input$conceptSetsSelectedCohortLeft,
       input$indexEventBreakdownTable_rows_selected
       # cohortDefinitionSimplifiedInclusionRuleTableLeft_rows_selected = input$targetCohortDefinitionSimplifiedInclusionRuleTable_rows_selected,
@@ -4631,12 +4631,12 @@ shiny::shinyServer(function(input, output, session) {
       }
       if (any(
         length(consolidatedDatabaseIdLeft()) == 0,
-        length(getCohortIdsFromSelectedCompoundCohortNames()) == 0
+        length(consolidatedCohortIdLeft()) == 0
       )) {
         return(NULL)
       }
       data <- cohortCount %>%
-        dplyr::filter(.data$cohortId %in% getCohortIdsFromSelectedCompoundCohortNames()) %>%
+        dplyr::filter(.data$cohortId %in% consolidatedCohortIdLeft()) %>%
         dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdLeft()) %>%
         dplyr::inner_join(cohort %>%
                             dplyr::select(.data$cohortId, .data$shortName),
@@ -4763,7 +4763,7 @@ shiny::shinyServer(function(input, output, session) {
       "No data sources chosen"
     ))
     validate(need(
-      length(getCohortIdsFromSelectedCompoundCohortNames()) > 0,
+      length(consolidatedCohortIdLeft()) > 0,
       "No cohorts chosen"
     ))
     #!!! add error handling
