@@ -276,7 +276,13 @@ consolidationOfSelectedFieldValues <- function(input,
   if (input$tabs == 'compareTemporalCharacterization') {
     data <- list()
   }
-  if (input$tabs == 'cohortCounts') {
+  
+  ####################################################
+  if (input$tabs == 'cohortCounts' ||
+      input$tabs == 'incidenceRate' ||
+      input$tabs == 'timeSeries' ||
+      input$tabs == 'timeDistribution' ||
+      input$tabs == 'cohortOverlap') {
     data <- list()
     #multi select cohortId
     if (doesObjectHaveData(input$selectedCompoundCohortNames)) {
