@@ -1208,6 +1208,26 @@ shiny::shinyServer(function(input, output, session) {
       
     })
   
+  #output: targetCohortDetailsText----
+  output$targetCohortDetailsText <- shiny::renderUI({
+    row <- getCohortMetadataLeft()
+    if (doesObjectHaveData(row) {
+      return(NULL)
+    }
+    return(row)
+  })
+  #output: comparatorCohortDefinitioncohortDetailsText----
+  output$comparatorCohortDefinitioncohortDetailsText <- shiny::renderUI({
+    row <- getCohortMetadataRight()
+    if (doesObjectHaveData(row) {
+      return(NULL)
+    }
+    if (length(row) == 2) {
+      row <- row[[2]]
+    }
+    return(row)
+  })
+  
   ##Cohort SQL----
   ###output: targetCohortDefinitionSql----
   output$targetCohortDefinitionSql <- shiny::renderText({
@@ -1313,6 +1333,62 @@ shiny::shinyServer(function(input, output, session) {
       }
       return(data)
     })
+  
+  ###output: targetCohortDefinitionCohortCountTable----
+  output$targetCohortDefinitionCohortCountTable <-
+    DT::renderDataTable(expr = {
+      data <- getCountsForSelectedCohortsLeft()
+      validate(need(
+        all(!is.null(data),
+            nrow(data) > 0),
+        "There is no inclusion rule data for this cohort."
+      ))
+      maxCohortSubjects <- max(data$cohortSubjects)
+      maxCohortEntries <- max(data$cohortEntries)
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        info = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        columnDefs = list(minCellCountDef(1:2))
+      )
+      
+      dataTable <- DT::datatable(
+        data,
+        options = options,
+        colnames = colnames(data) %>% camelCaseToTitleCase(),
+        rownames = FALSE,
+        escape = FALSE,
+        filter = "top",
+        selection = list(mode = 'multiple', selected = 1),
+        class = "stripe nowrap compact"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns = 2,
+        background = DT::styleColorBar(c(0, maxCohortSubjects), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns = 3,
+        background = DT::styleColorBar(c(0, maxCohortEntries), "#ffd699"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      return(dataTable)
+    }, server = TRUE)
   
   ##Concept set ----
   ###getConceptSetExpressionTarget----
@@ -1838,83 +1914,6 @@ shiny::shinyServer(function(input, output, session) {
       getResultsCohortSummaryStats(dataSource = dataSource)
     return(data)
   })
-  
-  #output: targetCohortDetailsText----
-  output$targetCohortDetailsText <- shiny::renderUI({
-    row <- getCohortMetadataLeft()
-    if (is.null(row) || length(row) == 0) {
-      return(NULL)
-    }
-    return(row)
-  })
-  #output: comparatorCohortDefinitioncohortDetailsText----
-  output$comparatorCohortDefinitioncohortDetailsText <- shiny::renderUI({
-    row <- getCohortMetadataRight()
-    if (is.null(row) || length(row) == 0) {
-      return(NULL)
-    }
-    if (length(row) == 2) {
-      row <- row[[2]]
-    }
-    return(row)
-  })
-  
-  
-  #output: cohortCountsTableForSelectedCohortLeft----
-  output$targetCohortDefinitionCohortCountTable <-
-    DT::renderDataTable(expr = {
-      data <- getCountsForSelectedCohortsLeft()
-      validate(need(
-        all(!is.null(data),
-            nrow(data) > 0),
-        "There is no inclusion rule data for this cohort."
-      ))
-      maxCohortSubjects <- max(data$cohortSubjects)
-      maxCohortEntries <- max(data$cohortEntries)
-      
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        columnDefs = list(minCellCountDef(1:2))
-      )
-      
-      dataTable <- DT::datatable(
-        data,
-        options = options,
-        colnames = colnames(data) %>% camelCaseToTitleCase(),
-        rownames = FALSE,
-        escape = FALSE,
-        filter = "top",
-        selection = list(mode = 'multiple', selected = 1),
-        class = "stripe nowrap compact"
-      )
-      
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns = 2,
-        background = DT::styleColorBar(c(0, maxCohortSubjects), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
-      
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns = 3,
-        background = DT::styleColorBar(c(0, maxCohortEntries), "#ffd699"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
-      return(dataTable)
-    }, server = TRUE)
   
   #output: isDatabaseIdFoundForSelectedTargetCohortCount----
   output$isDatabaseIdFoundForSelectedTargetCohortCount <-
