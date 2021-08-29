@@ -284,7 +284,10 @@ consolidationOfSelectedFieldValues <- function(input,
       input$tabs == 'timeSeries' ||
       input$tabs == 'timeDistribution' ||
       input$tabs == 'cohortOverlap' ||
-      input$tabs == 'cohortCharacterization') {
+      input$tabs == 'cohortCharacterization' ||
+      input$tabs == "temporalCharacterization" ||
+      input$tabs == 'compareCohortCharacterization' ||
+      input$tabs == 'compareTemporalCharacterization') {
     data <- list()
     #multi select cohortId
     if (doesObjectHaveData(input$selectedCompoundCohortNames)) {
@@ -300,17 +303,27 @@ consolidationOfSelectedFieldValues <- function(input,
       }
     }
     
-    #mutli select databaseId
-    if (doesObjectHaveData(input$selectedDatabaseIds)) {
-      if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
-        isTRUE(input$selectedDatabaseIds_open) ||
-        doesObjectHaveData(input$tabs)) {
-        data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
+    if (input$tabs == "temporalCharacterization" ||
+        input$tabs == 'compareCohortCharacterization' ||
+        input$tabs == 'compareTemporalCharacterization'
+        ) {
+      if (doesObjectHaveData(input$selectedDatabaseId)) {
+        data$selectedDatabaseIdTarget <- input$selectedDatabaseId
       } else {
         data$selectedDatabaseIdTarget <- NULL
       }
+    } else {
+      #mutli select databaseId
+      if (doesObjectHaveData(input$selectedDatabaseIds)) {
+        if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
+            isTRUE(input$selectedDatabaseIds_open) ||
+            doesObjectHaveData(input$tabs)) {
+          data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
+        } else {
+          data$selectedDatabaseIdTarget <- NULL
+        }
+      }
     }
-    
   }
   return(data)
 }
