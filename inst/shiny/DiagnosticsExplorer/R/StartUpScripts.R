@@ -224,7 +224,7 @@ consolidationOfSelectedFieldValues <- function(input,
     }
   }
   ####################################################
-  if (input$tabs == 'indexEventBreakdown') {
+  if (input$tabs == 'indexEventBreakdown' || input$tabs == 'visitContext') {
     data <- list()
     #single select cohortId
     if (all(!is.null(input$selectedCompoundCohortName),
@@ -237,13 +237,12 @@ consolidationOfSelectedFieldValues <- function(input,
     }
     #mutli select databaseId
     if (doesObjectHaveData(input$selectedDatabaseIds)) {
-      if (all(
-        doesObjectHaveData(input$selectedDatabaseIds_open),
-        isTRUE(input$selectedDatabaseIds_open)
-      )) {
-        data$selectedDatabaseIdLeft <- NULL
-      } else {
+      if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
+          isTRUE(input$selectedDatabaseIds_open) ||
+          doesObjectHaveData(input$tabs)) {
         data$selectedDatabaseIdLeft <- input$selectedDatabaseIds
+      } else {
+        data$selectedDatabaseIdLeft <- NULL
       }
     }
     #mutli select concept set id for one cohort
