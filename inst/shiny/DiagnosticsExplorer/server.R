@@ -9686,7 +9686,11 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   selectedCohort <- shiny::reactive({
-    return(input$cohort)
+    return(input$selectedCompoundCohortName)
+  })
+  
+  selectedComparatorCohort <- shiny::reactive({
+    return(input$selectedComparatorCompoundCohortNames)
   })
   
   buildCohortConditionTable <-
@@ -10012,7 +10016,7 @@ shiny::shinyServer(function(input, output, session) {
       selectedCohort()
     )),
     tr(
-      td(input$selectedComparatorCompoundCohortNames)
+      td(selectedComparatorCohort())
     )))
   })
   
@@ -10027,7 +10031,7 @@ shiny::shinyServer(function(input, output, session) {
         selectedCohort()
       )),
       tr(
-        td(input$selectedComparatorCompoundCohortNames)
+        td(selectedComparatorCohort())
       )))
     })
   
