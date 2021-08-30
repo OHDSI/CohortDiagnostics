@@ -25,7 +25,7 @@ Imports:
   dplyr (>= 1.0.0),
   methods,
   ParallelLogger (>= 2.0.2),
-  readr (>= 1.4.0),
+  readr (>= 2.0.1),
   RJSONIO,
   rlang,
   ROhdsiWebApi (>= 1.2.0),
