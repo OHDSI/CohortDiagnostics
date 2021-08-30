@@ -6401,9 +6401,9 @@ shiny::shinyServer(function(input, output, session) {
                                                 tr(
                                                   th(rowspan = 2, "Concept Id"),
                                                   th(rowspan = 2, "Concept Name"),
+                                                  th(rowspan = 2, "Vocabulary Id"),
                                                   th(rowspan = 2, "Domain Table"),
                                                   th(rowspan = 2, "Domain Field"),
-                                                  th(rowspan = 2, "Vocabulary Id"),
                                                   lapply(
                                                     databaseIds,
                                                     th,
