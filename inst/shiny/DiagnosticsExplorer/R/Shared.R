@@ -762,26 +762,25 @@ getResultsConceptCountSummary <- function(dataSource,
       stop("Connection to database seems to be closed.")
     }
     
-    sql <- "SELECT database_id,
-              concept_id,
-            	concept_count,
-            	subject_count
+    sql <- "SELECT a.database_id,
+              a.concept_id,
+            	a.concept_count,
+            	b.subject_count
             FROM (
             	SELECT database_id, concept_id,
             		sum(concept_count) concept_count
             	FROM @results_database_schema.concept_count
             	WHERE database_id IN (@database_id)
-            		AND cohort_id IN (@conceptIds)
             	GROUP BY database_id, concept_id
             	) a
             INNER JOIN (
             	SELECT database_id,
             	  concept_id,
-            		max(subjectCount) subject_count
+            		max(subject_count) subject_count
             	FROM @results_database_schema.concept_subjects
             	WHERE database_id IN (@database_id)
-            		AND cohort_id IN (@conceptIds)
-            		AND domainTable IN (
+            		AND concept_id IN (@conceptIds)
+            		AND domain_table IN (
             			'CO',
             			'DR',
             			'ME',
@@ -800,9 +799,8 @@ getResultsConceptCountSummary <- function(dataSource,
         connection = dataSource$connection,
         sql = sql,
         results_database_schema = dataSource$resultsDatabaseSchema,
-        cohort_ids = cohortIds,
-        data_table = camelCaseToSnakeCase(dataTableName),
         database_id = quoteLiterals(databaseIds),
+        conceptIds = conceptIds,
         snakeCaseToCamelCase = TRUE
       )
   }

@@ -1154,6 +1154,9 @@ shiny::shinyServer(function(input, output, session) {
           getCirceRPackageVersionInformation()
         )
       )))
+      if (!doesObjectHaveData(version)) {
+        return(NULL)
+      }
       return(version)
     })
   
@@ -1174,6 +1177,9 @@ shiny::shinyServer(function(input, output, session) {
           getCirceRPackageVersionInformation()
         )
       )))
+      if (!doesObjectHaveData(version)) {
+        return(NULL)
+      }
       return(version)
     })
   
@@ -1477,6 +1483,12 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getResolvedConceptsTarget----
   getResolvedConceptsTarget <- shiny::reactive({
+    if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+      return(NULL)
+    }
     data <- getResultsResolvedConcepts(
       dataSource = dataSource,
       cohortIds = consolidatedCohortIdTarget(),
