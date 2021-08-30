@@ -104,11 +104,37 @@ recordTasksDone <-
     if (length(list(...)[[1]]) == 0) {
       return()
     }
+    packageVersionReadrIs2OrGreater <- packageVersion('readr') %>% 
+      as.character %>% 
+      substr(start = 1, stop = 1) %>% 
+      as.numeric() >= 2
+    
     if (file.exists(recordKeepingFile)) {
-      recordKeeping <-  readr::read_csv(recordKeepingFile,
-                                        col_types = readr::cols(),
-                                        guess_max = min(1e7))
-      recordKeeping$timeStamp <- as.character(recordKeeping$timeStamp)
+      if (packageVersionReadrIs2OrGreater) {
+        #reading record keeping file into memory
+        #prevent lazy loading to avoid lock on file
+        recordKeeping <-  readr::read_csv(
+          file = recordKeepingFile,
+          col_types = readr::cols(),
+          na = character(),
+          guess_max = min(1e7),
+          lazy = FALSE
+        ) %>% dplyr::collect()
+        #additionally deleting record keeping file to avoid lock errors when rewriting later
+        file.remove(x = recordKeepingFile) #file.remove will show an error if it couldnt delete the file.
+      } else {
+        warning(
+          "Package 'readr' version 1.x.x detected. CohortDiagnostics requires the use of version 2+"
+        )
+        recordKeeping <-  readr::read_csv(
+          file = recordKeepingFile,
+          col_types = readr::cols(),
+          na = character(),
+          guess_max = min(1e7)
+        )
+      }
+      recordKeeping$timeStamp <-
+        as.character(recordKeeping$timeStamp)
       if ('cohortId' %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
           dplyr::mutate(cohortId = as.double(.data$cohortId))
@@ -119,7 +145,7 @@ recordTasksDone <-
       }
       idx <- getKeyIndex(list(...), recordKeeping)
       if (length(idx) > 0) {
-        recordKeeping <- recordKeeping[-idx,]
+        recordKeeping <- recordKeeping[-idx, ]
       }
     } else {
       recordKeeping <- dplyr::tibble()
