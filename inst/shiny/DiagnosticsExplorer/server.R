@@ -6288,22 +6288,26 @@ shiny::shinyServer(function(input, output, session) {
     
     if (input$indexEventBreakdownTableFilter == "Records") {
       data <- data %>%
-        dplyr::mutate(cohortCountValue = .data$cohortEntries)
+        dplyr::mutate(type = paste0(
+          .data$databaseId,
+          " (",
+          .data$cohortEntries,
+          ") ",
+          .data$type
+        ))
     }
     if (input$indexEventBreakdownTableFilter == "Persons") {
       data <- data %>%
-        dplyr::mutate(cohortCountValue = .data$cohortSubjects)
+        dplyr::mutate(type = paste0(
+          .data$databaseId,
+          " (",
+          .data$cohortSubjects,
+          ") ",
+          .data$type
+        ))
     }
     
     data <- data %>%
-      dplyr::select(-.data$cohortEntries, -.data$cohortSubjects) %>%
-      dplyr::mutate(type = paste0(
-        .data$databaseId,
-        " (",
-        .data$cohortCountValue,
-        ") ",
-        .data$type
-      )) %>%
       tidyr::pivot_wider(
         id_cols = c(
           "cohortId",
@@ -6311,7 +6315,9 @@ shiny::shinyServer(function(input, output, session) {
           "conceptName",
           "vocabularyId",
           "domainTable",
-          "domainField"
+          "domainField",
+          "cohortEntries",
+          "cohortSubjects"
         ),
         names_from = type,
         values_from = count,
@@ -6321,7 +6327,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    data <- data[order(-data[7]),]
+    data <- data[order(-data[9]),]
     return(data)
   })
   
@@ -6347,14 +6353,20 @@ shiny::shinyServer(function(input, output, session) {
         )
       )
       data <- indexEventBreakdownDataTable %>%
-        dplyr::select(-.data$cohortId)
+        dplyr::select(-.data$cohortId, -.data$cohortSubjects, -.data$cohortEntries)
       maxCount <-
-        max(indexEventBreakdownDataTable[7], na.rm = TRUE)
+        max(indexEventBreakdownDataTable[9], na.rm = TRUE)
       databaseIds <- input$selectedDatabaseIds
       
+      personCount <- indexEventBreakdownDataTable %>% 
+        dplyr::pull(.data$cohortSubjects) %>% 
+        unique()
+      
+      recordCount <- indexEventBreakdownDataTable %>% 
+        dplyr::pull(.data$cohortEntries) %>% 
+        unique()
       noOfMergeColumns <- 1
-      if (input$indexEventBreakdownTableFilter == "Records")
-      {
+      if (input$indexEventBreakdownTableFilter == "Records") {
         data <- data %>%
           dplyr::select(-dplyr::contains("subjectValue"))
         colnames(data) <-
@@ -6363,10 +6375,8 @@ shiny::shinyServer(function(input, output, session) {
             pattern = 'conceptValue',
             replacement = ''
           )
-        columnColor <- 4 + 1:(length(databaseIds))
-      } else
-        if (input$indexEventBreakdownTableFilter == "Persons")
-        {
+        columnColor <- 5 + 1:(length(databaseIds))
+      } else if (input$indexEventBreakdownTableFilter == "Persons") {
           data <- data %>%
             dplyr::select(-dplyr::contains("conceptValue"))
           colnames(data) <-
@@ -6375,12 +6385,10 @@ shiny::shinyServer(function(input, output, session) {
               pattern = 'subjectValue',
               replacement = ''
             )
-          columnColor <- 4 + 1:(length(databaseIds))
-        } else
-        {
+          columnColor <- 5 + 1:(length(databaseIds))
+        } else {
           recordAndPersonColumnName <- c()
-          for (i in 1:length(consolidatedDatabaseIdTarget()))
-          {
+          for (i in 1:length(consolidatedDatabaseIdTarget())) {
             recordAndPersonColumnName <-
               c(
                 recordAndPersonColumnName,
@@ -6393,7 +6401,8 @@ shiny::shinyServer(function(input, output, session) {
                                                 tr(
                                                   th(rowspan = 2, "Concept Id"),
                                                   th(rowspan = 2, "Concept Name"),
-                                                  th(rowspan = 2, "Domain field"),
+                                                  th(rowspan = 2, "Domain Table"),
+                                                  th(rowspan = 2, "Domain Field"),
                                                   th(rowspan = 2, "Vocabulary Id"),
                                                   lapply(
                                                     databaseIds,
@@ -6407,18 +6416,16 @@ shiny::shinyServer(function(input, output, session) {
                                                   lapply(recordAndPersonColumnName, th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                                 )
                                               )))
-          columnColor <- 4 + 1:(length(databaseIds) * 2)
+          columnColor <- 5 + 1:(length(databaseIds) * 2)
           noOfMergeColumns <- 2
         }
       
-      if (input$indexEventBreakdownValueFilter == "Percentage")
-      {
+      if (input$indexEventBreakdownValueFilter == "Percentage") {
         minimumCellPercent <-
-          minCellPercentDef(3 + 1:(length(databaseIds) * noOfMergeColumns))
-      } else
-      {
+          minCellPercentDef(4 + 1:(length(databaseIds) * noOfMergeColumns))
+      } else {
         minimumCellPercent <-
-          minCellCountDef(3 + 1:(length(databaseIds) * noOfMergeColumns))
+          minCellCountDef(4 + 1:(length(databaseIds) * noOfMergeColumns))
       }
       options = list(
         pageLength = 1000,
@@ -6433,8 +6440,7 @@ shiny::shinyServer(function(input, output, session) {
         columnDefs = list(minimumCellPercent)
       )
       
-      if (input$indexEventBreakdownTableFilter == "Both")
-      {
+      if (input$indexEventBreakdownTableFilter == "Both") {
         table <- DT::datatable(
           data,
           options = options,
@@ -6445,8 +6451,7 @@ shiny::shinyServer(function(input, output, session) {
           escape = FALSE,
           filter = "top"
         )
-      } else
-      {
+      } else {
         table <- DT::datatable(
           data,
           options = options,
