@@ -2162,7 +2162,7 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       inc <-  1
       panels <- list()
-      #Adopts new method, Since UI is rendered dynamically,We can only Hide/Show the tab only after DOM loads.
+      #Modifying rendered UI after load
       if (any(
         doesObjectHaveData(consolidatedConceptIdLeft()),
         doesObjectHaveData(consolidatedConceptIdRight())
@@ -6433,7 +6433,7 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       inc <-  1
       panels <- list()
-      #Adopts new method, Since UI is rendered dynamically,We can only Hide/Show the tab only after DOM loads.
+      #Modifying rendered UI after load
       if (doesObjectHaveData(consolidatedConceptIdLeft())) {
         data <- getMetadataForConceptId()
         panels[[inc]] <- shiny::tabPanel(
