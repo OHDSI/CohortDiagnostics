@@ -39,7 +39,7 @@ withr::defer({
 }
 
 
-test_that("Create schema", {
+testthat::test_that("Create schema", {
   createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
   
   specifications <- getResultsDataModelSpecifications()
