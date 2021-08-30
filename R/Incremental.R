@@ -106,10 +106,6 @@ recordTasksDone <-
     if (length(list(...)[[1]]) == 0) {
       return()
     }
-    packageVersionReadrIs2OrGreater <- packageVersion('readr') %>% 
-      as.character %>% 
-      substr(start = 1, stop = 1) %>% 
-      as.numeric() >= 2
     
     if (file.exists(recordKeepingFile)) {
       #reading record keeping file into memory
