@@ -4670,14 +4670,14 @@ shiny::shinyServer(function(input, output, session) {
   #used to display counts in cohort definition panels
   getCohortCountDataForSelectedDatabaseIdsCohortIds <-
     shiny::reactive(x = {
-      if (all(is(dataSource, "environment"),!exists('cohortCount')))
-      {
+      if (all(is(dataSource, "environment"),
+              !exists('cohortCount'))) {
         return(NULL)
       }
-      if (any(
-        length(consolidatedDatabaseIdTarget()) == 0,
-        length(consolidatedCohortIdTarget()) == 0
-      )) {
+      if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
         return(NULL)
       }
       data <- cohortCount %>%
@@ -4692,23 +4692,6 @@ shiny::shinyServer(function(input, output, session) {
       }
       return(data)
     })
-  
-  ##doesCohortCountTableHaveData----
-  output$doesCohortCountTableHaveData <- shiny::reactive({
-    data <- getCohortCountDataForSelectedDatabaseIdsCohortIds()
-    if (any(
-      is.null(getCohortCountDataForSelectedDatabaseIdsCohortIds()),
-      nrow(getCohortCountDataForSelectedDatabaseIdsCohortIds())
-    ))
-    {
-      return(FALSE)
-    } else {
-      return(TRUE)
-    }
-  })
-  shiny::outputOptions(output,
-                       "doesCohortCountTableHaveData",
-                       suspendWhenHidden = FALSE)
   
   ##getCohortCountDataSubjectRecord----
   getCohortCountDataSubjectRecord <- shiny::reactive(x = {
@@ -4811,9 +4794,11 @@ shiny::shinyServer(function(input, output, session) {
       length(consolidatedCohortIdTarget()) > 0,
       "No cohorts chosen"
     ))
-    #!!! add error handling
-    
     data <- getCohortCountDataForSelectedDatabaseIdsCohortIds()
+    validate(need(all(doesObjectHaveData(data)),
+      "No data for the combination"
+    ))
+    
     maxValueSubjects <- max(data$cohortSubjects)
     maxValueEntries <- max(data$cohortEntries)
     databaseIds <- sort(unique(data$databaseId))
@@ -4866,8 +4851,7 @@ shiny::shinyServer(function(input, output, session) {
         filter = "top",
         class = "stripe nowrap compact"
       )
-      for (i in 1:length(databaseIds))
-      {
+      for (i in 1:length(databaseIds)) {
         dataTable <- DT::formatStyle(
           table = dataTable,
           columns = i * 2,
