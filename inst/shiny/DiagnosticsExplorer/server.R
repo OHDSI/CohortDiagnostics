@@ -1951,8 +1951,8 @@ shiny::shinyServer(function(input, output, session) {
                           by = c("cohortId", "databaseId")) %>%
         dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
         dplyr::filter(.data$databaseId %in% getDatabaseIdFromSelectedRowInCohortCountTableTarget()) %>%
-        dplyr::select(.data$cohortSubjects) %>%
-        dplyr::pull(.data$cohortSubjects) %>% unique()
+        dplyr::select(.data$cohortEntries) %>%
+        dplyr::pull(.data$cohortEntries) %>% unique()
       
       databaseIdsWithCount <-
         paste(databaseIds,
@@ -1963,7 +1963,7 @@ shiny::shinyServer(function(input, output, session) {
       table <- table %>%
         dplyr::inner_join(
           cohortCount %>%
-            dplyr::select(.data$databaseId, .data$cohortId, .data$cohortSubjects),
+            dplyr::select(.data$databaseId, .data$cohortId, .data$cohortEntries),
           by = c('databaseId', 'cohortId')
         ) %>%
         tidyr::pivot_longer(
@@ -1977,7 +1977,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::mutate(name = paste0(
           .data$databaseId,
           "<br>(n = ",
-          scales::comma(x = .data$cohortSubjects, accuracy = 1),
+          scales::comma(x = .data$cohortEntries, accuracy = 1),
           ")_",
           .data$name
         )) %>%
@@ -3088,8 +3088,8 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(
           .data$databaseId %in% getDatabaseIdFromSelectedRowInCohortCountTableComparator()
         ) %>%
-        dplyr::select(.data$cohortSubjects) %>%
-        dplyr::pull(.data$cohortSubjects) %>%
+        dplyr::select(.data$cohortEntries) %>%
+        dplyr::pull(.data$cohortEntries) %>%
         unique()
       
       databaseIdsWithCount <-
@@ -3101,7 +3101,7 @@ shiny::shinyServer(function(input, output, session) {
       table <- table %>%
         dplyr::inner_join(
           cohortCount %>%
-            dplyr::select(.data$databaseId, .data$cohortId, .data$cohortSubjects),
+            dplyr::select(.data$databaseId, .data$cohortId, .data$cohortEntries),
           by = c('databaseId', 'cohortId')
         ) %>%
         tidyr::pivot_longer(
@@ -3115,7 +3115,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::mutate(name = paste0(
           .data$databaseId,
           "<br>(n = ",
-          scales::comma(x = .data$cohortSubjects, accuracy = 1),
+          scales::comma(x = .data$cohortEntries, accuracy = 1),
           ")_",
           .data$name
         )) %>%
