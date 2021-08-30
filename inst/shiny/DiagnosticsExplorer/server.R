@@ -319,8 +319,8 @@ shiny::shinyServer(function(input, output, session) {
   consolidatedConceptSetIdComparator <- reactiveVal(NULL)
   consolidatedDatabaseIdTarget <- reactiveVal(NULL)
   consolidatedDatabaseIdComparator <- reactiveVal(NULL)
-  consolidatedConceptIdLeft <- reactiveVal(NULL)
-  consolidatedConceptIdRight <- reactiveVal(NULL)
+  consolidatedConceptIdTarget <- reactiveVal(NULL)
+  consolidatedConceptIdComparator <- reactiveVal(NULL)
   consolidateCohortDefinitionActiveSideTarget <- reactiveVal(NULL)
   consolidateCohortDefinitionActiveSideComparator <-
     reactiveVal(NULL)
@@ -347,12 +347,12 @@ shiny::shinyServer(function(input, output, session) {
                  )
                  consolidatedCohortIdTarget(data$cohortIdTarget)
                  consolidatedCohortIdComparator(data$cohortIdComparator)
-                 consolidatedConceptSetIdTarget(data$conceptSetIdLeft)
-                 consolidatedConceptSetIdComparator(data$conceptSetIdRight)
+                 consolidatedConceptSetIdTarget(data$conceptSetIdTarget)
+                 consolidatedConceptSetIdComparator(data$conceptSetIdComparator)
                  consolidatedDatabaseIdTarget(data$selectedDatabaseIdTarget)
                  consolidatedDatabaseIdComparator(data$selectedDatabaseIdRight)
-                 consolidatedConceptIdLeft(data$selectedConceptIdLeft)
-                 consolidatedConceptIdRight(data$selectedConceptIdRight)
+                 consolidatedConceptIdTarget(data$selectedConceptIdTarget)
+                 consolidatedConceptIdComparator(data$selectedConceptIdComparator)
                  consolidateCohortDefinitionActiveSideTarget(data$leftSideActive)
                  consolidateCohortDefinitionActiveSideComparator(data$rightSideActive)
                })
@@ -2178,8 +2178,8 @@ shiny::shinyServer(function(input, output, session) {
       panels <- list()
       #Modifying rendered UI after load
       if (any(
-        doesObjectHaveData(consolidatedConceptIdLeft()),
-        doesObjectHaveData(consolidatedConceptIdRight())
+        doesObjectHaveData(consolidatedConceptIdTarget()),
+        doesObjectHaveData(consolidatedConceptIdComparator())
       )) {
         data <- getMetadataForConceptId()
         panels[[inc]] <- shiny::tabPanel(
@@ -2396,13 +2396,13 @@ shiny::shinyServer(function(input, output, session) {
     tempList <- list()
     tempList$cohortId <- consolidatedCohortIdTarget()
     tempList$conceptSetId <-
-      consolidatedConceptSetIdLeft()
+      consolidatedConceptSetIdTarget()
     tempList$databaseId <-
       consolidatedDatabaseIdTarget()
-    if (is.null(consolidatedConceptIdLeft())) {
-      tempList$conceptId <- consolidatedConceptIdRight()
+    if (is.null(consolidatedConceptIdTarget())) {
+      tempList$conceptId <- consolidatedConceptIdComparator()
     } else {
-      tempList$conceptId <- consolidatedConceptIdLeft()
+      tempList$conceptId <- consolidatedConceptIdTarget()
     }
     activeSelected(tempList)
   })
@@ -2412,13 +2412,13 @@ shiny::shinyServer(function(input, output, session) {
     tempList$cohortId <-
       consolidatedCohortIdComparator()
     tempList$conceptSetId <-
-      consolidatedConceptSetIdRight()
+      consolidatedConceptSetIdComparator()
     tempList$databaseId <-
       consolidatedDatabaseIdComparator()
-    if (is.null(consolidatedConceptIdRight())) {
-      tempList$conceptId <- consolidatedConceptIdLeft()
+    if (is.null(consolidatedConceptIdComparator())) {
+      tempList$conceptId <- consolidatedConceptIdTarget()
     } else {
-      tempList$conceptId <- consolidatedConceptIdRight()
+      tempList$conceptId <- consolidatedConceptIdComparator()
     }
     activeSelected(tempList)
   })
@@ -6476,7 +6476,7 @@ shiny::shinyServer(function(input, output, session) {
       inc <-  1
       panels <- list()
       # Modifying rendered UI after load
-      if (any(doesObjectHaveData(consolidatedConceptIdLeft()),doesObjectHaveData(consolidatedConceptIdRight()))) {
+      if (any(doesObjectHaveData(consolidatedConceptIdTarget()),doesObjectHaveData(consolidatedConceptIdComparator()))) {
         data <- getMetadataForConceptId()
         panels[[inc]] <- shiny::tabPanel(
           title = "Concept Set Browser",
@@ -6571,7 +6571,7 @@ shiny::shinyServer(function(input, output, session) {
   ##output: conceptBrowserTableForIndexEvent----
   output$conceptBrowserTableForIndexEvent <- DT::renderDT(expr = {
     if (doesObjectHaveData(consolidateCohortDefinitionActiveSideTarget())) {
-      conceptId <- consolidatedConceptIdLeft()
+      conceptId <- consolidatedConceptIdTarget()
     }
     data <- getMetadataForConceptId()
     validate(need(

@@ -171,7 +171,7 @@ consolidationOfSelectedFieldValues <- function(input,
     )) {
       selectedConceptSet <-
         conceptSetExpressionLeft[input$targetCohortDefinitionConceptSetsTable_rows_selected,]
-      data$conceptSetIdLeft <- selectedConceptSet$conceptSetId
+      data$conceptSetIdTarget <- selectedConceptSet$conceptSetId
       
       if (all(
         doesObjectHaveData(input$comparatorCohortDefinitionConceptSets_rows_selected),
@@ -179,7 +179,7 @@ consolidationOfSelectedFieldValues <- function(input,
       )) {
         selectedConceptSet <-
           conceptSetExpressionRight[input$comparatorCohortDefinitionConceptSets_rows_selected,]
-        data$conceptSetIdRight <- selectedConceptSet$conceptSetId
+        data$conceptSetIdComparator <- selectedConceptSet$conceptSetId
       }
     }
     #selection on database id
@@ -199,27 +199,27 @@ consolidationOfSelectedFieldValues <- function(input,
     }
     #selection on concept id
     if (doesObjectHaveData(input$targetCohortDefinitionResolvedConceptTable_rows_selected)) {
-      data$selectedConceptIdLeft <- resolvedConceptSetDataLeft[input$targetCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
+      data$selectedConceptIdTarget <- resolvedConceptSetDataLeft[input$targetCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
       data$leftSideActive <- TRUE
     }
     if (doesObjectHaveData(input$comparatorCohortDefinitionResolvedConceptTable_rows_selected)) {
-      data$selectedConceptIdRight <- resolvedConceptSetDataRight[input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
+      data$selectedConceptIdComparator <- resolvedConceptSetDataRight[input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
       data$rightSideActive <- TRUE
     }
     if (doesObjectHaveData(input$targetCohortDefinitionExcludedConceptTable_rows_selected)) {
-      data$selectedConceptIdLeft <- excludedConceptSetDataLeft[input$targetCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
+      data$selectedConceptIdTarget <- excludedConceptSetDataLeft[input$targetCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
       data$leftSideActive <- TRUE
     }
     if (doesObjectHaveData(input$comparatorCohortDefinitionExcludedConceptTable_rows_selected)) {
-      data$selectedConceptIdRight <- excludedConceptSetDataRight[input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
+      data$selectedConceptIdComparator <- excludedConceptSetDataRight[input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
       data$rightSideActive <- TRUE
     }
     if (doesObjectHaveData(input$targetCohortDefinitionOrphanConceptTable_rows_selected)) {
-      data$selectedConceptIdLeft <- orphanConceptSetDataLeft[input$targetCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
+      data$selectedConceptIdTarget <- orphanConceptSetDataLeft[input$targetCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
       data$leftSideActive <- TRUE
     }
     if (doesObjectHaveData(input$comparatorCohortDefinitionOrphanConceptTable_rows_selected)) {
-      data$selectedConceptIdRight <- orphanConceptSetDataRight[input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
+      data$selectedConceptIdComparator <- orphanConceptSetDataRight[input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
       data$rightSideActive <- TRUE
     }
   }
@@ -249,7 +249,7 @@ consolidationOfSelectedFieldValues <- function(input,
     }
     #mutli select concept set id for one cohort
     if (doesObjectHaveData(input$conceptSetsSelectedCohortLeft)) {
-      data$conceptSetIdLeft <- conceptSets %>% 
+      data$conceptSetIdTarget <- conceptSets %>% 
         dplyr::filter(.data$cohortId %in% data$cohortIdTarget) %>% 
         dplyr::filter(.data$conceptSetName %in% input$conceptSetsSelectedCohortLeft) %>% 
         dplyr::pull(.data$conceptSetId)
@@ -257,7 +257,7 @@ consolidationOfSelectedFieldValues <- function(input,
     if (all(doesObjectHaveData(indexEventBreakdownDataTable),
             doesObjectHaveData(input$indexEventBreakdownTable_rows_selected))) {
       lastRowsSelected <- input$indexEventBreakdownTable_rows_selected[length(input$indexEventBreakdownTable_rows_selected)]
-      data$selectedConceptIdLeft <- indexEventBreakdownDataTable[lastRowsSelected, ]$conceptId
+      data$selectedConceptIdTarget <- indexEventBreakdownDataTable[lastRowsSelected, ]$conceptId
       data$leftSideActive <- TRUE
     }
   }
