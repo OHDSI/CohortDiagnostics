@@ -2394,7 +2394,14 @@ shiny::shinyServer(function(input, output, session) {
     conceptId <- recentlySelectedConceptId()
     if (is.null(conceptId)) {
       return(NULL)
-    }
+    }    
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(
+      message = paste0("Getting metadata for concept id:",
+                       conceptId),
+      value = 0
+    )
     data <- getConceptMetadata(dataSource = dataSource,
                                conceptIds = conceptId)
     if (!doesObjectHaveData(data)) {
@@ -6525,16 +6532,6 @@ shiny::shinyServer(function(input, output, session) {
     if (doesObjectHaveData(consolidateCohortDefinitionActiveSideTarget())) {
       conceptId <- consolidatedConceptIdLeft()
     }
-    
-    validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
-    
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(
-      message = paste0("Computing concept relationship for concept id:",
-                       conceptId),
-      value = 0
-    )
     data <- getMetadataForConceptId()
     validate(need(
       doesObjectHaveData(data),
@@ -6590,13 +6587,6 @@ shiny::shinyServer(function(input, output, session) {
       if (!doesObjectHaveData(data)) {
         return(null)
       }
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(
-        message = paste0("Computing concept relationship for concept id:",
-                         conceptId),
-        value = 0
-      )
       # working on the plot
       if (input$timeSeriesAggregationPeriodSelection == "Monthly") {
         data <- data$conceptIdYearMonthLevelTsibble
@@ -6608,6 +6598,13 @@ shiny::shinyServer(function(input, output, session) {
             nrow(data) > 0),
         "No timeseries data for the cohort of this series type"
       ))
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = paste0("Computing Time series plot for:",
+                         conceptId),
+        value = 0
+      )
       plot <- plotTimeSeriesFromTsibble(
         tsibbleData = data,
         yAxisLabel = "Counts",
