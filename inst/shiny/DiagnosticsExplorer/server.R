@@ -416,7 +416,7 @@ shiny::shinyServer(function(input, output, session) {
                              )
                            )),
                 shiny::conditionalPanel(
-                  condition = "input.targetCohortDefinitionInclusionRuleType == 'Simplified'",
+                  condition = "input.targetCohortDefinitionInclusionRuleType == 'Events'",
                   DT::dataTableOutput(outputId = "targetCohortDefinitionSimplifiedInclusionRuleTable")
                 )
               )
@@ -651,14 +651,14 @@ shiny::shinyServer(function(input, output, session) {
                                shiny::radioButtons(
                                  inputId = "comparatorCohortDefinitionInclusionRuleType",
                                  label = "Filter by",
-                                 choices = c("Simplified", "Detailed"),
-                                 selected = "Simplified",
+                                 choices = c("Events", "Persons"),
+                                 selected = "Events",
                                  inline = TRUE
                                )
                              ),
                              tags$td(
                                shiny::conditionalPanel(
-                                 condition = "input.comparatorCohortDefinitionInclusionRuleType == 'Simplified' &
+                                 condition = "input.comparatorCohortDefinitionInclusionRuleType == 'Events' &
                                          output.getComparatorSimplifiedInclusionRuleResultsHasData == true",
                                  shiny::radioButtons(
                                    inputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters",
@@ -680,7 +680,7 @@ shiny::shinyServer(function(input, output, session) {
                              )
                            )),
                 shiny::conditionalPanel(
-                  condition = "input.comparatorCohortDefinitionInclusionRuleType == 'Simplified'",
+                  condition = "input.comparatorCohortDefinitionInclusionRuleType == 'Events'",
                   DT::dataTableOutput(outputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTable")
                 )
               )
@@ -2179,6 +2179,7 @@ shiny::shinyServer(function(input, output, session) {
               data$conceptId,
               ")"
             )),
+            tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", ")),
             tags$table(width = "100%",
                        tags$tr(
                          tags$td(
