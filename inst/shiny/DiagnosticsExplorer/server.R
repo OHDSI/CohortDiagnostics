@@ -305,7 +305,9 @@ shiny::shinyServer(function(input, output, session) {
       selectedCompoundCohortNames = input$selectedCompoundCohortNames,
       selectedCompoundCohortNames_open = input$selectedCompoundCohortNames_open,
       conceptSetsSelectedCohortLeft = input$conceptSetsSelectedCohortLeft,
-      input$indexEventBreakdownTable_rows_selected
+      input$indexEventBreakdownTable_rows_selected,
+      input$targetVocabularyChoiceForConceptSetDetails,
+      input$comparatorVocabularyChoiceForConceptSetDetails
       # cohortDefinitionSimplifiedInclusionRuleTableLeft_rows_selected = input$targetCohortDefinitionSimplifiedInclusionRuleTable_rows_selected,
       # cohortDefinitionSimplifiedInclusionTableRight_rows_selected = input$comparatorCohortDefinitionSimplifiedInclusionRuleTable_rows_selected
     )
@@ -2389,21 +2391,42 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)---return(NULL)
   })
   
-  recentlySelectedConceptId <- reactiveVal(NULL)
-  observeEvent(eventExpr = consolidatedConceptIdLeft(),
-               handlerExpr = {
-                 recentlySelectedConceptId(consolidatedConceptIdLeft())
-               })
+  activeSelected <- reactiveVal(list())
+  observe({
+    tempList <- list()
+    tempList$cohortId <- consolidatedCohortIdTarget()
+    tempList$conceptSetId <-
+      consolidatedConceptSetIdLeft()
+    tempList$databaseId <-
+      consolidatedDatabaseIdTarget()
+    if (is.null(consolidatedConceptIdLeft())) {
+      tempList$conceptId <- consolidatedConceptIdRight()
+    } else {
+      tempList$conceptId <- consolidatedConceptIdLeft()
+    }
+    activeSelected(tempList)
+  })
   
-  observeEvent(eventExpr = consolidatedConceptIdRight(),
-               handlerExpr = {
-                 recentlySelectedConceptId(consolidatedConceptIdRight())
-               })
+  observe({
+    tempList <- list()
+    tempList$cohortId <-
+      consolidatedCohortIdComparator()
+    tempList$conceptSetId <-
+      consolidatedConceptSetIdRight()
+    tempList$databaseId <-
+      consolidatedDatabaseIdComparator()
+    if (is.null(consolidatedConceptIdRight())) {
+      tempList$conceptId <- consolidatedConceptIdLeft()
+    } else {
+      tempList$conceptId <- consolidatedConceptIdRight()
+    }
+    activeSelected(tempList)
+  })
   
   
   ##getMetadataForConceptId----
   getMetadataForConceptId <- shiny::reactive(x = {
-    conceptId <- recentlySelectedConceptId()
+    conceptId <- activeSelected()$conceptId
     if (is.null(conceptId)) {
       return(NULL)
     }    
@@ -2425,7 +2448,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: conceptBrowserTable----
   output$conceptBrowserTable <- DT::renderDT(expr = {
-    conceptId <- recentlySelectedConceptId()
+    conceptId <- activeSelected()$conceptId
     validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
     
     progress <- shiny::Progress$new()
@@ -2435,12 +2458,34 @@ shiny::shinyServer(function(input, output, session) {
                        conceptId),
       value = 0
     )
+  
     data <- getMetadataForConceptId()
     validate(need(
       doesObjectHaveData(data),
       "No information for selected concept id."
     ))
     data <- data$conceptRelationshipTable
+    
+    notSelectedDatabaseIds <- database %>%
+                                   dplyr::filter(.data$databaseId != activeSelected()$databaseId) %>% 
+                                   dplyr::pull(.data$databaseId) %>%
+                                   unique()
+    databaseIdMergedWithConceptCount <- paste("conceptCount",activeSelected()$databaseId)
+    databaseIdMergedWithSubjectCount <- paste("subjectCount",activeSelected()$databaseId)
+    
+    if (doesObjectHaveData(notSelectedDatabaseIds)) {
+      data <- data %>% 
+        dplyr::select(
+          -dplyr::contains(notSelectedDatabaseIds)
+        )
+    }
+    
+    colnames(data) <-
+      stringr::str_replace(
+        string = colnames(data),
+        pattern = paste0(" ",activeSelected()$databaseId),
+        replacement = ''
+      )
     
     if (doesObjectHaveData(input$choicesForRelationshipName)) {
       data <- data %>%
@@ -6406,6 +6451,7 @@ shiny::shinyServer(function(input, output, session) {
           data,
           options = options,
           rownames = FALSE,
+          selection = "single",
           colnames = colnames(data) %>%
             camelCaseToTitleCase(),
           escape = FALSE,
@@ -6429,8 +6475,8 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       inc <-  1
       panels <- list()
-      #Modifying rendered UI after load
-      if (doesObjectHaveData(consolidatedConceptIdLeft())) {
+      # Modifying rendered UI after load
+      if (any(doesObjectHaveData(consolidatedConceptIdLeft()),doesObjectHaveData(consolidatedConceptIdRight()))) {
         data <- getMetadataForConceptId()
         panels[[inc]] <- shiny::tabPanel(
           title = "Concept Set Browser",
@@ -6501,7 +6547,6 @@ shiny::shinyServer(function(input, output, session) {
           )
         )
         inc = inc + 1
-        
         panels[[inc]] <- shiny::tabPanel(
           title = "Time Series Plot",
           value = "conceptSetTimeSeriesForIndexEvent",
