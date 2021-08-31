@@ -288,23 +288,23 @@ shiny::shinyServer(function(input, output, session) {
   ##getUserSelection----
   getUserSelection <- shiny::reactive(x = {
     list(
-      tabs = input$tabs,
-      cohortDefinitionTable_rows_selected = input$cohortDefinitionTable_rows_selected,
-      conceptsetExpressionTableTarget_rows_selected = input$targetCohortDefinitionConceptSetsTable_rows_selected,
-      conceptsetExpressionTableComparator_rows_selected = input$comparatorCohortDefinitionConceptSets_rows_selected,
-      targetCohortDefinitionResolvedConceptTable_rows_selected = input$targetCohortDefinitionResolvedConceptTable_rows_selected,
-      comparatorCohortDefinitionResolvedConceptTable_rows_selected = input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,
-      targetCohortDefinitionExcludedConceptTable_rows_selected = input$targetCohortDefinitionExcludedConceptTable_rows_selected,
-      comparatorCohortDefinitionExcludedConceptTable_rows_selected = input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,
-      targetCohortDefinitionOrphanConceptTable_rows_selected = input$targetCohortDefinitionOrphanConceptTable_rows_selected,
-      comparatorCohortDefinitionOrphanConceptTable_rows_selected = input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,
-      selectedDatabaseId = input$selectedDatabaseId,
-      selectedDatabaseIds = input$selectedDatabaseIds,
-      selectedDatabaseIds_open = input$selectedDatabaseIds_open,
-      selectedCompoundCohortName = input$selectedCompoundCohortName,
-      selectedCompoundCohortNames = input$selectedCompoundCohortNames,
-      selectedCompoundCohortNames_open = input$selectedCompoundCohortNames_open,
-      conceptSetsSelectedCohortLeft = input$conceptSetsSelectedCohortLeft,
+      input$tabs,
+      input$cohortDefinitionTable_rows_selected,
+      input$targetCohortDefinitionConceptSetsTable_rows_selected,
+      input$comparatorCohortDefinitionConceptSets_rows_selected,
+      input$targetCohortDefinitionResolvedConceptTable_rows_selected,
+      input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,
+      input$targetCohortDefinitionExcludedConceptTable_rows_selected,
+      input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,
+      input$targetCohortDefinitionOrphanConceptTable_rows_selected,
+      input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,
+      input$selectedDatabaseId,
+      input$selectedDatabaseIds,
+      input$selectedDatabaseIds_open,
+      input$selectedCompoundCohortName,
+      input$selectedCompoundCohortNames,
+      input$selectedCompoundCohortNames_open,
+      input$conceptSetsSelectedCohortLeft,
       input$indexEventBreakdownTable_rows_selected,
       input$targetVocabularyChoiceForConceptSetDetails,
       input$comparatorVocabularyChoiceForConceptSetDetails
@@ -2262,10 +2262,46 @@ shiny::shinyServer(function(input, output, session) {
             data$conceptId,
             ")"
           )),
+          shiny::column(
+            12,
+            shiny::column(
+              6,
+              shinyWidgets::pickerInput(
+                inputId = "timeSeriesStatisticsForCohortDefinition",
+                label = "Time series statistics:",
+                width = 300,
+                choices = c("Total", "trend", "season_year", "remainder"),
+                ##!!! rename Total as Raw
+                selected = c("trend"),
+                multiple = TRUE,
+                choicesOpt = list(style = rep_len("color: black;", 999)),
+                options = shinyWidgets::pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  size = 10,
+                  dropupAuto = TRUE,
+                  liveSearchStyle = "contains",
+                  liveSearchPlaceholder = "Type here to search",
+                  virtualScroll = 50
+                )
+              )
+            ),
+            shiny::column(6,
+                          shiny::radioButtons(
+                            inputId = "timeSeriesAggregationForCohortDefinition",
+                            label = "Aggregation period:",
+                            choices = c("Monthly", "Quaterly","Yearly"),
+                            selected = "Monthly",
+                            inline = TRUE
+                          ))
+          ),
+          shiny::column(
+            12,
           ggiraph::ggiraphOutput(
             outputId = "conceptSetTimeSeriesPlot",
             width = "100%",
             height = "100%"
+          )
           )
         )
         inc = inc + 1
@@ -2364,22 +2400,34 @@ shiny::shinyServer(function(input, output, session) {
   output$conceptSetTimeSeriesPlot <-  ggiraph::renderggiraph({
     data <- getMetadataForConceptId()
     # working on the plot
-    if (input$timeSeriesAggregationPeriodSelection == "Monthly") {
+    if (input$timeSeriesAggregationForCohortDefinition == "Monthly") {
       data <- data$conceptIdYearMonthLevelTsibble
     } else {
       data <- data$conceptIdYearLevelTsibble
     }
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(
+      message = paste0("Building Time Series plot for concept id:",
+                       activeSelected()$conceptId),
+      value = 0
+    )
+    
     validate(need(
       all(!is.null(data),
           nrow(data) > 0),
       "No timeseries data for the cohort of this series type"
     ))
+    
+    data <- data %>% 
+      dplyr::filter(.data$databaseId %in% activeSelected()$databaseId)
+    
     plot <- plotTimeSeriesFromTsibble(
       tsibbleData = data,
       yAxisLabel = "Counts",
       #!!!! radio button for counts and subjects titleCaseToCamelCase(input$timeSeriesPlotFilters),
-      indexAggregationType = input$timeSeriesAggregationPeriodSelection,
-      timeSeriesStatistics = input$timeSeriesStatistics
+      indexAggregationType = input$timeSeriesAggregationForCohortDefinition,
+      timeSeriesStatistics = input$timeSeriesStatisticsForCohortDefinition
     )
     plot <- ggiraph::girafe(
       ggobj = plot,
