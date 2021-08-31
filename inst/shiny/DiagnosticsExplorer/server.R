@@ -1139,8 +1139,8 @@ shiny::shinyServer(function(input, output, session) {
       return(version)
     })
   
-  ###output: targetCohortDefinitionSql----
-  output$targetCohortDefinitionSql <-
+  ###output: circeRVersionInTargetcohortDefinitionSql----
+  output$circeRVersionInTargetcohortDefinitionSql <-
     shiny::renderUI(expr = {
       if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
         return(NULL)
