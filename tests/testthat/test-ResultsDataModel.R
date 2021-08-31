@@ -140,12 +140,12 @@ test_that("Results upload", {
         "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
       sql <- SqlRender::render(
         sql = sql,
-        schema = schema,
+        schema = resultsDatabaseSchema,
         table_name = tableName,
-        database_id = databaseId
+        database_id = "cdmv5"
       )
       databaseIdCount <- DatabaseConnector::querySql(connection, sql)[, 1]
-      expect_true(databaseIdCount != 0)
+      expect_true(databaseIdCount >= 0)
     }
   }
 })
@@ -173,14 +173,13 @@ test_that("Data removal works", {
         sql = sql,
         schema = resultsDatabaseSchema,
         table_name = tableName,
-        database_id = databaseId
+        database_id = "cdmv5"
       )
       databaseIdCount <-
         DatabaseConnector::querySql(connection, sql)[, 1]
       expect_true(databaseIdCount == 0)
     }
   }
-  
 })
 
 test_that("util functions", {
