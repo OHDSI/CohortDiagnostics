@@ -113,7 +113,6 @@ recordTasksDone <-
       recordKeeping <-  readr::read_csv(
         file = recordKeepingFile,
         col_types = readr::cols(),
-        # na = character(),
         guess_max = min(1e7),
         lazy = FALSE
       )

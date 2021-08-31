@@ -1,3 +1,6 @@
+library(CohortDiagnostics)
+library(testthat)
+
 if (Sys.getenv("DONT_DOWNLOAD_JDBC_DRIVERS", "") == "TRUE") {
   jdbcDriverFolder <- Sys.getenv("DATABASECONNECTOR_JAR_FOLDER")
 } else {
@@ -44,8 +47,11 @@ withr::defer({
 }
 
 
-testthat::test_that("Create schema", {
-  createResultsDataModel(connectionDetails = connectionDetails, 
+test_that("Create schema", {
+  # dropSchemaIfExists <- paste0("DROP SCHEMA IF EXISTS ", cohortDiagnosticsSchema, " CASCADE; CREATE SCHEMA ", cohortDiagnosticsSchema,";")
+  # DatabaseConnector::renderTranslateExecuteSql(sql = dropSchemaIfExists,
+  #                                              connection = DatabaseConnector::connect(connectionDetails = connectionDetails))
+  createResultsDataModel(connectionDetails = connectionDetails,
                          schema = cohortDiagnosticsSchema)
   
   specifications <- getResultsDataModelSpecifications()
@@ -54,7 +60,7 @@ testthat::test_that("Create schema", {
     expect_true(.tableExists(connection, cohortDiagnosticsSchema, tableName))
   }
   # Bad schema name
-  expect_error(createResultsDataModel(connection = connection, 
+  expect_error(createResultsDataModel(connection = connection,
                                       schema = "non_existant_schema"))
 })
 
