@@ -113,7 +113,7 @@ recordTasksDone <-
       recordKeeping <-  readr::read_csv(
         file = recordKeepingFile,
         col_types = readr::cols(),
-        na = character(),
+        # na = character(),
         guess_max = min(1e7),
         lazy = FALSE
       )
@@ -125,6 +125,10 @@ recordTasksDone <-
       if ('cohortId' %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
           dplyr::mutate(cohortId = as.double(.data$cohortId))
+      }
+      if ('cohortId2' %in% colnames(recordKeeping)) {
+        recordKeeping <- recordKeeping %>%
+          dplyr::mutate(cohortId2 = as.double(.data$cohortId2))
       }
       if ('comparatorId' %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
@@ -233,7 +237,8 @@ saveIncremental <- function(data, fileName, ...) {
   if (file.exists(fileName)) {
     previousData <- readr::read_csv(fileName,
                                     col_types = readr::cols(),
-                                    guess_max = min(1e7))
+                                    guess_max = min(1e7),
+                                    lazy = FALSE)
     if ((nrow(previousData)) > 0) {
       if (!length(list(...)) == 0) {
         idx <- getKeyIndex(list(...), previousData)

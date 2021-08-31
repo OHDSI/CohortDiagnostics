@@ -1,27 +1,32 @@
-jdbcDriverFolder <- tempfile("jdbcDrivers")
-DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = jdbcDriverFolder)
-connectionDetails <-
-  DatabaseConnector::createConnectionDetails(
-    dbms = "postgresql",
-    user = Sys.getenv("CDM5_POSTGRESQL_USER"),
-    password = URLdecode(Sys.getenv("CDM5_POSTGRESQL_PASSWORD")),
-    server = Sys.getenv("CDM5_POSTGRESQL_SERVER"),
-    pathToDriver = jdbcDriverFolder
-  )
+if (Sys.getenv("DONT_DOWNLOAD_JDBC_DRIVERS", "") == "TRUE") {
+  jdbcDriverFolder <- Sys.getenv("DATABASECONNECTOR_JAR_FOLDER")
+} else {
+  jdbcDriverFolder <- tempfile("jdbcDrivers")
+  DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = jdbcDriverFolder)
+  
+  withr::defer({
+    unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
+  }, testthat::teardown_env())
+}
+
+connectionDetails <- DatabaseConnector::createConnectionDetails(
+  dbms = "postgresql",
+  user = Sys.getenv("CDM5_POSTGRESQL_USER"),
+  password = URLdecode(Sys.getenv("CDM5_POSTGRESQL_PASSWORD")),
+  server = Sys.getenv("CDM5_POSTGRESQL_SERVER"),
+  pathToDriver = jdbcDriverFolder
+)
 
 cdmDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
 vocabularyDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
-cohortDiagnosticsSchema <-
-  Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
+cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
 oracleTempSchema <- NULL
 cohortTable <- "cohort"
-connection <-
-  DatabaseConnector::connect(connectionDetails = connectionDetails)
+connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
 folder <- tempfile("cohortDiagnosticsTest")
 
 withr::defer({
   DatabaseConnector::disconnect(connection)
-  unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
   unlink(folder, recursive = TRUE, force = TRUE)
 }, testthat::teardown_env())
 
@@ -40,7 +45,8 @@ withr::defer({
 
 
 testthat::test_that("Create schema", {
-  createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
+  createResultsDataModel(connectionDetails = connectionDetails, 
+                         schema = cohortDiagnosticsSchema)
   
   specifications <- getResultsDataModelSpecifications()
   
@@ -48,7 +54,8 @@ testthat::test_that("Create schema", {
     expect_true(.tableExists(connection, cohortDiagnosticsSchema, tableName))
   }
   # Bad schema name
-  expect_error(createResultsDataModel(connection = connection, schema = "non_existant_schema"))
+  expect_error(createResultsDataModel(connection = connection, 
+                                      schema = "non_existant_schema"))
 })
 
 
@@ -128,9 +135,8 @@ test_that("Results upload", {
         table_name = tableName,
         database_id = databaseId
       )
-      databaseIdCount <-
-        DatabaseConnector::querySql(connection, sql)[, 1]
-      expect_true(databaseIdCount = !0)
+      databaseIdCount <- DatabaseConnector::querySql(connection, sql)[, 1]
+      expect_true(databaseIdCount != 0)
     }
   }
 })
@@ -153,8 +159,7 @@ test_that("Data removal works", {
         databaseId = "cdmv5"
       )
       
-      sql <-
-        "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
+      sql <- "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
       sql <- SqlRender::render(
         sql = sql,
         schema = cohortDiagnosticsSchema,
