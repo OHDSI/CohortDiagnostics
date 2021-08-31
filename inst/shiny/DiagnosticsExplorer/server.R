@@ -205,7 +205,7 @@ shiny::shinyServer(function(input, output, session) {
           isFALSE(input$typesOfTemporalCovariates_open),!is.null(input$tabs)
         ))) {
       selectedTimeIds <- temporalCovariateChoices %>%
-        dplyr::filter(.data$choices %in% input$typesOfTemporalCovariates) %>%
+        dplyr::filter(.data$choices %in% input$timeIdChoices) %>%
         dplyr::pull(.data$timeId)
       getTimeIdsFromSelectedTemporalCovariateChoices(selectedTimeIds)
     }
@@ -8031,7 +8031,7 @@ shiny::shinyServer(function(input, output, session) {
         ordering = TRUE,
         paging = TRUE,
         columnDefs = list(truncateStringDef(0, 80),
-                          minCellPercentDef(1:(
+                          minCellPercentDef(1+ 1:(
                             length(temporalCovariateChoicesSelected$choices)
                           )))
       )
@@ -8049,7 +8049,7 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- DT::formatStyle(
         table = table,
-        columns = (1 + (
+        columns = (2 + (
           1:length(temporalCovariateChoicesSelected$choices)
         )),
         #0 index

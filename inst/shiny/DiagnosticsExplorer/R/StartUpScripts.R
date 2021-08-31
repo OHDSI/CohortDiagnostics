@@ -226,8 +226,12 @@ consolidationOfSelectedFieldValues <- function(input,
   ####################################################
   if (input$tabs == 'indexEventBreakdown' || 
       input$tabs == 'visitContext' ||
-      input$tabs == 'cohortCharacterization') {
+      input$tabs == 'cohortCharacterization' ||
+      input$tabs == 'temporalCharacterization' ||
+      input$tabs == 'compareCohortCharacterization' ||
+      input$tabs == 'compareTemporalCharacterization') {
     data <- list()
+    
     #single select cohortId
     if (all(!is.null(input$selectedCompoundCohortName),
             !is.null(cohort))) {
@@ -238,15 +242,27 @@ consolidationOfSelectedFieldValues <- function(input,
         unique()
     }
     #mutli select databaseId
-    if (doesObjectHaveData(input$selectedDatabaseIds)) {
-      if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
-          isTRUE(input$selectedDatabaseIds_open) ||
-          doesObjectHaveData(input$tabs)) {
-        data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
+    if (input$tabs == 'temporalCharacterization' ||
+        input$tabs == 'compareCohortCharacterization' ||
+        input$tabs == 'compareTemporalCharacterization') {
+      
+      if (doesObjectHaveData(input$selectedDatabaseId)) {
+        data$selectedDatabaseIdTarget <- input$selectedDatabaseId
       } else {
         data$selectedDatabaseIdTarget <- NULL
       }
+    } else {
+      if (doesObjectHaveData(input$selectedDatabaseIds)) {
+        if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
+            isTRUE(input$selectedDatabaseIds_open) ||
+            doesObjectHaveData(input$tabs)) {
+          data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
+        } else {
+          data$selectedDatabaseIdTarget <- NULL
+        }
+      }
     }
+   
     #mutli select concept set id for one cohort
     if (doesObjectHaveData(input$conceptSetsSelectedCohortLeft)) {
       data$conceptSetIdTarget <- conceptSets %>% 
@@ -261,39 +277,19 @@ consolidationOfSelectedFieldValues <- function(input,
       data$leftSideActive <- TRUE
     }
   }
-  ####################################################
-  if (input$tabs == 'cohortCharacterization') {
-    data <- list()
-  }
-  ####################################################
-  if (input$tabs == 'temporalCharacterization') {
-    data <- list()
-  }
-  ####################################################
-  if (input$tabs == 'compareCohortCharacterization') {
-    data <- list()
-  }
-  ####################################################
-  if (input$tabs == 'compareTemporalCharacterization') {
-    data <- list()
-  }
   
   ####################################################
   if (input$tabs == 'cohortCounts' ||
       input$tabs == 'incidenceRate' ||
       input$tabs == 'timeSeries' ||
       input$tabs == 'timeDistribution' ||
-      input$tabs == 'cohortOverlap' ||
-      input$tabs == 'cohortCharacterization' ||
-      input$tabs == "temporalCharacterization" ||
-      input$tabs == 'compareCohortCharacterization' ||
-      input$tabs == 'compareTemporalCharacterization') {
+      input$tabs == 'cohortOverlap') {
     data <- list()
     #multi select cohortId
     if (doesObjectHaveData(input$selectedCompoundCohortNames)) {
       if (doesObjectHaveData(input$selectedCompoundCohortNames_open) ||
-        isTRUE(input$selectedCompoundCohortNames_open) || 
-        doesObjectHaveData(input$tabs)
+          isTRUE(input$selectedCompoundCohortNames_open) || 
+          doesObjectHaveData(input$tabs)
       ) {
         data$cohortIdTarget <- cohort %>%
           dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortNames) %>%
@@ -303,27 +299,17 @@ consolidationOfSelectedFieldValues <- function(input,
       }
     }
     
-    if (input$tabs == "temporalCharacterization" ||
-        input$tabs == 'compareCohortCharacterization' ||
-        input$tabs == 'compareTemporalCharacterization'
-        ) {
-      if (doesObjectHaveData(input$selectedDatabaseId)) {
-        data$selectedDatabaseIdTarget <- input$selectedDatabaseId
+    #mutli select databaseId
+    if (doesObjectHaveData(input$selectedDatabaseIds)) {
+      if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
+          isTRUE(input$selectedDatabaseIds_open) ||
+          doesObjectHaveData(input$tabs)) {
+        data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
       } else {
         data$selectedDatabaseIdTarget <- NULL
       }
-    } else {
-      #mutli select databaseId
-      if (doesObjectHaveData(input$selectedDatabaseIds)) {
-        if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
-            isTRUE(input$selectedDatabaseIds_open) ||
-            doesObjectHaveData(input$tabs)) {
-          data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
-        } else {
-          data$selectedDatabaseIdTarget <- NULL
-        }
-      }
     }
+    
   }
   return(data)
 }
