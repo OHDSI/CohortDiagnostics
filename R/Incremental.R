@@ -277,7 +277,8 @@ saveIncremental <- function(data, fileName, ...) {
       fileName,
       col_types = readr::cols(),
       na = character(),
-      guess_max = min(1e7)
+      guess_max = min(1e7), 
+      lazy = FALSE
     )
     ParallelLogger::logTrace(
       paste0(
