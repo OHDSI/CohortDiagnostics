@@ -115,7 +115,7 @@ test_that("Record keeping of multiple type tasks", {
   expect_true(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
-      cohortId2 = 2,
+      comparatorId = 2,
       task = "Compare cohorts",
       checksum = checksum2,
       recordKeepingFile = rkf
@@ -124,7 +124,7 @@ test_that("Record keeping of multiple type tasks", {
   
   CohortDiagnostics:::recordTasksDone(
     cohortId = 1,
-    cohortId2 = 2,
+    comparatorId = 2,
     task = "Compare cohorts",
     checksum = checksum2,
     recordKeepingFile = rkf
@@ -145,7 +145,7 @@ test_that("Record keeping of multiple type tasks", {
   expect_true(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
-      cohortId2 = 2,
+      comparatorId = 2,
       task = "Compare cohorts",
       checksum = checksum2a,
       recordKeepingFile = rkf
@@ -154,7 +154,7 @@ test_that("Record keeping of multiple type tasks", {
   
   CohortDiagnostics:::recordTasksDone(
     cohortId = 1,
-    cohortId2 = 2,
+    comparatorId = 2,
     task = "Compare cohorts",
     checksum = checksum2a,
     recordKeepingFile = rkf
@@ -163,7 +163,7 @@ test_that("Record keeping of multiple type tasks", {
   expect_false(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
-      cohortId2 = 2,
+      comparatorId = 2,
       task = "Compare cohorts",
       checksum = checksum2a,
       recordKeepingFile = rkf

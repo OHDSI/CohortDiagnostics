@@ -117,18 +117,12 @@ recordTasksDone <-
         guess_max = min(1e7),
         lazy = FALSE
       )
-      #additionally deleting record keeping file to avoid lock errors when rewriting later
-      file.remove(x = recordKeepingFile) #file.remove will show an error if it couldnt delete the file.
       
       recordKeeping$timeStamp <-
         as.character(recordKeeping$timeStamp)
       if ('cohortId' %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
           dplyr::mutate(cohortId = as.double(.data$cohortId))
-      }
-      if ('cohortId2' %in% colnames(recordKeeping)) {
-        recordKeeping <- recordKeeping %>%
-          dplyr::mutate(cohortId2 = as.double(.data$cohortId2))
       }
       if ('comparatorId' %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
