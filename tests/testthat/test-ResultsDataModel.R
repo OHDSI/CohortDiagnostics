@@ -23,6 +23,9 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(
 cdmDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
 vocabularyDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
 cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
+resultsDatabaseSchema <- paste0("r", 
+                                as.character(gsub("[: -]", "" , Sys.time(), perl=TRUE)),
+                                as.character(sample(1:100, 1)))
 oracleTempSchema <- NULL
 cohortTable <- "cohort"
 connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
@@ -48,16 +51,16 @@ withr::defer({
 
 
 test_that("Create schema", {
-  # dropSchemaIfExists <- paste0("DROP SCHEMA IF EXISTS ", cohortDiagnosticsSchema, " CASCADE; CREATE SCHEMA ", cohortDiagnosticsSchema,";")
-  # DatabaseConnector::renderTranslateExecuteSql(sql = dropSchemaIfExists,
-  #                                              connection = DatabaseConnector::connect(connectionDetails = connectionDetails))
+  dropSchemaIfExists <- paste0("DROP SCHEMA IF EXISTS ", resultsDatabaseSchema, " CASCADE; CREATE SCHEMA ", resultsDatabaseSchema,";")
+  DatabaseConnector::renderTranslateExecuteSql(sql = dropSchemaIfExists,
+                                               connection = DatabaseConnector::connect(connectionDetails = connectionDetails))
   createResultsDataModel(connectionDetails = connectionDetails,
-                         schema = cohortDiagnosticsSchema)
+                         schema = resultsDatabaseSchema)
   
   specifications <- getResultsDataModelSpecifications()
   
   for (tableName in unique(specifications$tableName)) {
-    expect_true(.tableExists(connection, cohortDiagnosticsSchema, tableName))
+    expect_true(.tableExists(connection, resultsDatabaseSchema, tableName))
   }
   # Bad schema name
   expect_error(createResultsDataModel(connection = connection,
@@ -118,7 +121,7 @@ test_that("Results upload", {
   for (i in (1:length(listOfZipFilesToUpload))) {
     uploadResults(
       connectionDetails = connectionDetails,
-      schema = cohortDiagnosticsSchema,
+      schema = resultsDatabaseSchema,
       zipFileName = listOfZipFilesToUpload[[i]]
     )
   }
@@ -160,7 +163,7 @@ test_that("Data removal works", {
     if ("database_id" %in% primaryKey) {
       deleteAllRecordsForDatabaseId(
         connection = connection,
-        schema = cohortDiagnosticsSchema,
+        schema = resultsDatabaseSchema,
         tableName = tableName,
         databaseId = "cdmv5"
       )
@@ -168,7 +171,7 @@ test_that("Data removal works", {
       sql <- "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
       sql <- SqlRender::render(
         sql = sql,
-        schema = cohortDiagnosticsSchema,
+        schema = resultsDatabaseSchema,
         table_name = tableName,
         database_id = databaseId
       )
@@ -183,4 +186,10 @@ test_that("Data removal works", {
 test_that("util functions", {
   expect_true(naToEmpty(NA) == "")
   expect_true(naToZero(NA) == 0)
+})
+
+test_that("Drop schema", {
+  dropSchemaIfExists <- paste0("DROP SCHEMA IF EXISTS ", resultsDatabaseSchema, " CASCADE;")
+  DatabaseConnector::renderTranslateExecuteSql(sql = dropSchemaIfExists,
+                                               connection = DatabaseConnector::connect(connectionDetails = connectionDetails))
 })
