@@ -153,6 +153,9 @@ test_that("Results upload", {
 test_that("Data removal works", {
   specifications <- getResultsDataModelSpecifications()
   
+  if (DBI::dbIsValid(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+  }
   for (tableName in unique(specifications$tableName)) {
     primaryKey <- specifications %>%
       dplyr::filter(.data$tableName == !!tableName &
