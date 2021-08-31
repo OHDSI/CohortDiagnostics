@@ -164,7 +164,7 @@ test_that("Data removal works", {
       dplyr::pull()
     
     if ("database_id" %in% primaryKey) {
-      deleteAllRecordsForDatabaseId(
+      CohortDiagnostics:::deleteAllRecordsForDatabaseId(
         connection = connection,
         schema = resultsDatabaseSchema,
         tableName = tableName,
