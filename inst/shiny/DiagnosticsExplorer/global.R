@@ -20,10 +20,10 @@ defaultResultsSchema <- 'thrombosisthrombocytopenia'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
-defaultDatabaseMode <- TRUE # Use file system if FALSE
+defaultDatabaseMode <- FALSE # Use file system if FALSE
 
-appInformationText <- "V 2.1"
-appInformationText <- "Powered by OHDSI Cohort Diagnostics application - Version 2.1. This app is working in"
+appInformationText <- "V 2.1.1"
+appInformationText <- "Powered by OHDSI Cohort Diagnostics application - Version 2.1.1 This app is working in"
 if (defaultDatabaseMode) {
   appInformationText <- paste0(appInformationText, " database")
 } else {

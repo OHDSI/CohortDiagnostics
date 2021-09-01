@@ -31,7 +31,8 @@ isTaskRequired <-
     if (file.exists(recordKeepingFile)) {
       recordKeeping <-  readr::read_csv(recordKeepingFile,
                                         col_types = readr::cols(),
-                                        guess_max = min(1e7))
+                                        guess_max = min(1e7), 
+                                        lazy = FALSE)
       task <- recordKeeping[getKeyIndex(list(...), recordKeeping),]
       if (nrow(task) == 0) {
         return(TRUE)
@@ -62,7 +63,8 @@ getRequiredTasks <- function(..., checksum, recordKeepingFile) {
   if (file.exists(recordKeepingFile) && length(tasks[[1]]) > 0) {
     recordKeeping <-  readr::read_csv(recordKeepingFile,
                                       col_types = readr::cols(),
-                                      guess_max = min(1e7))
+                                      guess_max = min(1e7), 
+                                      lazy = FALSE)
     tasks$checksum <- checksum
     tasks <- dplyr::as_tibble(tasks)
     if (all(names(tasks) %in% names(recordKeeping))) {
@@ -104,11 +106,19 @@ recordTasksDone <-
     if (length(list(...)[[1]]) == 0) {
       return()
     }
+    
     if (file.exists(recordKeepingFile)) {
-      recordKeeping <-  readr::read_csv(recordKeepingFile,
-                                        col_types = readr::cols(),
-                                        guess_max = min(1e7))
-      recordKeeping$timeStamp <- as.character(recordKeeping$timeStamp)
+      #reading record keeping file into memory
+      #prevent lazy loading to avoid lock on file
+      recordKeeping <-  readr::read_csv(
+        file = recordKeepingFile,
+        col_types = readr::cols(),
+        guess_max = min(1e7),
+        lazy = FALSE
+      )
+      
+      recordKeeping$timeStamp <-
+        as.character(recordKeeping$timeStamp)
       if ('cohortId' %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
           dplyr::mutate(cohortId = as.double(.data$cohortId))
@@ -220,7 +230,8 @@ saveIncremental <- function(data, fileName, ...) {
   if (file.exists(fileName)) {
     previousData <- readr::read_csv(fileName,
                                     col_types = readr::cols(),
-                                    guess_max = min(1e7))
+                                    guess_max = min(1e7),
+                                    lazy = FALSE)
     if ((nrow(previousData)) > 0) {
       if (!length(list(...)) == 0) {
         idx <- getKeyIndex(list(...), previousData)
@@ -237,7 +248,6 @@ saveIncremental <- function(data, fileName, ...) {
       } else {
         data <- data %>% tidyr::tibble()
       }
-      
     }
   }
   readr::write_csv(data, fileName)

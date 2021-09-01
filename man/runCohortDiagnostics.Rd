@@ -31,7 +31,7 @@ runCohortDiagnostics(
   runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
-  runTimeSeries = TRUE,
+  runTimeSeries = FALSE,
   runCohortOverlap = TRUE,
   runCohortCharacterization = TRUE,
   covariateSettings = createDefaultCovariateSettings(),

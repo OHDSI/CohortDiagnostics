@@ -11,3 +11,4 @@ errorReportR.txt
 .RDataTmp
 *.log
 *log.txt
+tests/testthat/testthat-problems.rds
