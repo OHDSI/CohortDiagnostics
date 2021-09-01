@@ -8030,8 +8030,8 @@ shiny::shinyServer(function(input, output, session) {
         lengthChange = TRUE,
         ordering = TRUE,
         paging = TRUE,
-        columnDefs = list(truncateStringDef(0, 80),
-                          minCellPercentDef(1+ 1:(
+        columnDefs = list(truncateStringDef(1, 70),
+                          minCellPercentDef(1 + 1:(
                             length(temporalCovariateChoicesSelected$choices)
                           )))
       )
