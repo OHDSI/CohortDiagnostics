@@ -306,10 +306,7 @@ shiny::shinyServer(function(input, output, session) {
       input$selectedCompoundCohortNames_open,
       input$conceptSetsSelectedCohortLeft,
       input$indexEventBreakdownTable_rows_selected,
-      input$targetVocabularyChoiceForConceptSetDetails,
-      input$comparatorVocabularyChoiceForConceptSetDetails
-      # cohortDefinitionSimplifiedInclusionRuleTableLeft_rows_selected = input$targetCohortDefinitionSimplifiedInclusionRuleTable_rows_selected,
-      # cohortDefinitionSimplifiedInclusionTableRight_rows_selected = input$comparatorCohortDefinitionSimplifiedInclusionRuleTable_rows_selected
+      input$targetVocabularyChoiceForConceptSetDetails
     )
   })
   
@@ -318,7 +315,6 @@ shiny::shinyServer(function(input, output, session) {
   consolidatedConceptSetIdTarget <- reactiveVal(NULL)
   consolidatedConceptSetIdComparator <- reactiveVal(NULL)
   consolidatedDatabaseIdTarget <- reactiveVal(NULL)
-  consolidatedDatabaseIdComparator <- reactiveVal(NULL)
   consolidatedConceptIdTarget <- reactiveVal(NULL)
   consolidatedConceptIdComparator <- reactiveVal(NULL)
   consolidateCohortDefinitionActiveSideTarget <- reactiveVal(NULL)
@@ -350,7 +346,6 @@ shiny::shinyServer(function(input, output, session) {
                  consolidatedConceptSetIdTarget(data$conceptSetIdTarget)
                  consolidatedConceptSetIdComparator(data$conceptSetIdComparator)
                  consolidatedDatabaseIdTarget(data$selectedDatabaseIdTarget)
-                 consolidatedDatabaseIdComparator(data$selectedDatabaseIdRight)
                  consolidatedConceptIdTarget(data$selectedConceptIdTarget)
                  consolidatedConceptIdComparator(data$selectedConceptIdComparator)
                  consolidateCohortDefinitionActiveSideTarget(data$leftSideActive)
@@ -465,31 +460,6 @@ shiny::shinyServer(function(input, output, session) {
                   collapsed = FALSE,
                   shiny::conditionalPanel(condition = "output.isTargetCohortDefinitionConceptSetsTableRowSelected == true",
                                           tags$table(
-                                            tags$tr(
-                                              tags$td(
-                                                shinyWidgets::pickerInput(
-                                                  #!!! lets make this multi-selected for databaseId/vocabulary choices
-                                                  inputId = "targetVocabularyChoiceForConceptSetDetails",
-                                                  label = "Vocabulary version choices:",
-                                                  choices = sourcesOfVocabularyTables,
-                                                  multiple = FALSE,
-                                                  width = 200,
-                                                  inline = TRUE,
-                                                  choicesOpt = list(style = rep_len("color: black;", 999)),
-                                                  options = shinyWidgets::pickerOptions(
-                                                    actionsBox = TRUE,
-                                                    liveSearch = TRUE,
-                                                    size = 10,
-                                                    liveSearchStyle = "contains",
-                                                    liveSearchPlaceholder = "Type here to search",
-                                                    virtualScroll = 50
-                                                  )
-                                                )
-                                              ),
-                                              tags$td(
-                                                shiny::htmlOutput("personAndRecordCountForTargetConceptSetRowSelected")
-                                              )
-                                            ),
                                             tags$tr(tags$td(
                                               colspan = 2,
                                               shiny::radioButtons(
@@ -715,7 +685,6 @@ shiny::shinyServer(function(input, output, session) {
             ),
             shiny::tabPanel(
               title = "Concept Sets",
-              #!!!!!!!!!if cohort has no concept sets - make gray color or say 'No Concept sets'
               value = "comparatorCohortDefinitionConceptSetTabPanel",
               DT::dataTableOutput(outputId = "comparatorCohortDefinitionConceptSets"),
               tags$br(),
@@ -729,31 +698,6 @@ shiny::shinyServer(function(input, output, session) {
                   collapsed = FALSE,
                   shiny::conditionalPanel(condition = "output.isComparatorCohortDefinitionConceptSetRowSelected == true",
                                           tags$table(
-                                            tags$tr(
-                                              tags$td(
-                                                shinyWidgets::pickerInput(
-                                                  #!!! lets make this multi-selected for databaseId/vocabulary choices
-                                                  inputId = "comparatorVocabularyChoiceForConceptSetDetails",
-                                                  label = "Vocabulary version choices:",
-                                                  choices = sourcesOfVocabularyTables,
-                                                  multiple = FALSE,
-                                                  width = 200,
-                                                  inline = TRUE,
-                                                  choicesOpt = list(style = rep_len("color: black;", 999)),
-                                                  options = shinyWidgets::pickerOptions(
-                                                    actionsBox = TRUE,
-                                                    liveSearch = TRUE,
-                                                    size = 10,
-                                                    liveSearchStyle = "contains",
-                                                    liveSearchPlaceholder = "Type here to search",
-                                                    virtualScroll = 50
-                                                  )
-                                                )
-                                              ),
-                                              tags$td(
-                                                shiny::htmlOutput("personAndRecordCountForComparatorCohortSelected")
-                                              )
-                                            ),
                                             tags$tr(tags$td(
                                               colspan = 2,
                                               shiny::radioButtons(
@@ -1322,35 +1266,6 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  
-  ###getCountsForSelectedCohortsTargetFilteredToDatabaseId----
-  getCountsForSelectedCohortsTargetFilteredToDatabaseId <-
-    shiny::reactive(x = {
-      databaseId <- consolidatedDatabaseIdTarget()
-      data <- getCountsForSelectedCohortsTarget()
-      if (!doesObjectHaveData(data)) {
-        return(NULL)
-      }
-      data <- data %>%
-        dplyr::filter(.data$databaseId == !!databaseId) %>%
-        dplyr::select(.data$cohortSubjects, .data$cohortEntries)
-      return(data)
-    })
-  
-  ###getCountsForSelectedCohortsComparatorFilteredToDatabaseId----
-  getCountsForSelectedCohortsComparatorFilteredToDatabaseId <-
-    shiny::reactive(x = {
-      databaseId <- consolidatedDatabaseIdComparator()
-      data <- getCountsForSelectedCohortsComparator()
-      if (!doesObjectHaveData(data)) {
-        return(NULL)
-      }
-      data <- data %>%
-        dplyr::filter(.data$databaseId == !!databaseId) %>%
-        dplyr::select(.data$cohortSubjects, .data$cohortEntries)
-      return(data)
-    })
-  
   ###output: targetCohortDefinitionCohortCountTable----
   output$targetCohortDefinitionCohortCountTable <-
     DT::renderDataTable(expr = {
@@ -1517,7 +1432,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getResultsResolvedConcepts(
       dataSource = dataSource,
       cohortIds = consolidatedCohortIdComparator(),
-      databaseIds = consolidatedDatabaseIdComparator()
+      databaseIds = consolidatedDatabaseIdTarget()
     )
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -1569,7 +1484,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
       return(NULL)
     }
-    if (!doesObjectHaveData(consolidatedDatabaseIdComparator())) {
+    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
     if (!doesObjectHaveData(consolidatedConceptSetIdComparator())) {
@@ -1578,7 +1493,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getResultsExcludedConcepts(
       dataSource = dataSource,
       cohortIds = consolidatedCohortIdComparator(),
-      databaseIds = consolidatedDatabaseIdComparator()
+      databaseIds = consolidatedDatabaseIdTarget()
     )
     if (is.null(data)) {
       return(NULL)
@@ -1627,7 +1542,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getResultsOrphanConcept(
       dataSource = dataSource,
       cohortIds = consolidatedCohortIdComparator(),
-      databaseIds = consolidatedDatabaseIdComparator()
+      databaseIds = consolidatedDatabaseIdTarget()
     )
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -2462,7 +2377,7 @@ shiny::shinyServer(function(input, output, session) {
     tempList$conceptSetId <-
       consolidatedConceptSetIdComparator()
     tempList$databaseId <-
-      consolidatedDatabaseIdComparator()
+      consolidatedDatabaseIdTarget()
     if (is.null(consolidatedConceptIdComparator())) {
       tempList$conceptId <- consolidatedConceptIdTarget()
     } else {
@@ -2817,25 +2732,6 @@ shiny::shinyServer(function(input, output, session) {
       )
       return(dataTable)
     }, server = TRUE)
-  
-  
-  
-  #output: personAndRecordCountForTargetConceptSetRowSelected----
-  output$personAndRecordCountForTargetConceptSetRowSelected <-
-    shiny::renderUI({
-      row <- getCountsForSelectedCohortsTargetFilteredToDatabaseId()
-      if (is.null(row)) {
-        return(NULL)
-      } else {
-        tags$table(tags$tr(
-          tags$td(tags$b("Subjects: ")),
-          tags$td(scales::comma(row$cohortSubjects, accuracy = 1)),
-          tags$td(tags$b("Records: ")),
-          tags$td(scales::comma(row$cohortEntries, accuracy = 1))
-        ))
-      }
-    })
-  
   
   #output: saveTargetCohortDefinitionResolvedConceptTable----
   output$saveTargetCohortDefinitionResolvedConceptTable <-
@@ -3535,24 +3431,6 @@ shiny::shinyServer(function(input, output, session) {
       }
     )
   
-  ##output: personAndRecordCountForComparatorCohortSelected----
-  output$personAndRecordCountForComparatorCohortSelected <-
-    shiny::renderUI({
-      row <- getCountsForSelectedCohortsComparatorFilteredToDatabaseId()
-      if (is.null(row))
-      {
-        return(NULL)
-      } else {
-        tags$table(tags$tr(
-          tags$td(tags$b("Subjects: ")),
-          tags$td(scales::comma(row$cohortSubjects, accuracy = 1)),
-          tags$td(tags$b("Records: ")),
-          tags$td(scales::comma(row$cohortEntries, accuracy = 1))
-        ))
-      }
-    })
-  
-  
   ##output: comparatorCohortDefinitionResolvedConceptTable----
   output$comparatorCohortDefinitionResolvedConceptTable <-
     DT::renderDataTable(expr = {
@@ -3933,7 +3811,7 @@ shiny::shinyServer(function(input, output, session) {
   output$resolvedConceptsPresentInLeft <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
+        input$targetVocabularyChoiceForConceptSetDetails == input$targetVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -3987,7 +3865,7 @@ shiny::shinyServer(function(input, output, session) {
   output$resolvedConceptsPresentInRight <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
+        input$targetVocabularyChoiceForConceptSetDetails == input$targetVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4040,7 +3918,7 @@ shiny::shinyServer(function(input, output, session) {
   output$resolvedConceptsPresentInBoth <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
+        input$targetVocabularyChoiceForConceptSetDetails == input$targetVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4093,7 +3971,7 @@ shiny::shinyServer(function(input, output, session) {
   output$resolvedConceptsPresentInEither <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
+        input$targetVocabularyChoiceForConceptSetDetails == input$targetVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4146,7 +4024,7 @@ shiny::shinyServer(function(input, output, session) {
   output$excludedConceptsPresentInLeft <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
+        input$targetVocabularyChoiceForConceptSetDetails == input$targetVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4207,7 +4085,7 @@ shiny::shinyServer(function(input, output, session) {
   output$excludedConceptsPresentInRight <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
+        input$targetVocabularyChoiceForConceptSetDetails == input$targetVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4268,7 +4146,7 @@ shiny::shinyServer(function(input, output, session) {
   output$excludedConceptsPresentInBoth <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
+        input$targetVocabularyChoiceForConceptSetDetails == input$targetVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4329,7 +4207,7 @@ shiny::shinyServer(function(input, output, session) {
   output$excludedConceptsPresentInEither <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
+        input$targetVocabularyChoiceForConceptSetDetails == input$targetVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4390,7 +4268,7 @@ shiny::shinyServer(function(input, output, session) {
   output$orphanConceptsPresentInLeft <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
+        input$targetVocabularyChoiceForConceptSetDetails == input$targetVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4486,7 +4364,7 @@ shiny::shinyServer(function(input, output, session) {
   output$orphanConceptsPresentInRight <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
+        input$targetVocabularyChoiceForConceptSetDetails == input$targetVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4582,7 +4460,7 @@ shiny::shinyServer(function(input, output, session) {
   output$orphanConceptsPresentInBoth <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
+        input$targetVocabularyChoiceForConceptSetDetails == input$targetVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )
@@ -4678,7 +4556,7 @@ shiny::shinyServer(function(input, output, session) {
   output$orphanConceptsPresentInEither <- DT::renderDT({
     validate(
       need(
-        input$targetVocabularyChoiceForConceptSetDetails == input$comparatorVocabularyChoiceForConceptSetDetails,
+        input$targetVocabularyChoiceForConceptSetDetails == input$targetVocabularyChoiceForConceptSetDetails,
         "Please select same database for comparison"
       )
     )

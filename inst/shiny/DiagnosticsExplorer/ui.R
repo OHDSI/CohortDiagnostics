@@ -239,6 +239,27 @@ sidebarMenu <-
           virtualScroll = 50
         )
       )
+    ),
+    shiny::conditionalPanel(
+      condition = "input.tabs == 'cohortDefinition'",
+      shinyWidgets::pickerInput(
+        inputId = "targetVocabularyChoiceForConceptSetDetails",
+        label = "Vocabulary version choices:",
+        choices = sourcesOfVocabularyTables,
+        selected = sourcesOfVocabularyTables[1],
+        multiple = TRUE,
+        width = 200,
+        inline = TRUE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          size = 10,
+          liveSearchStyle = "contains",
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+        )
+      )
     )
   )
 
