@@ -7,7 +7,6 @@
 getConceptMetadata(
   dataSource,
   databaseIds = NULL,
-  cohortIds = NULL,
   vocabularyDatabaseSchema = NULL,
   conceptIds = NULL,
   conceptRelationship = TRUE,
@@ -27,8 +26,6 @@ and uploaded using \code{uploadResults}}
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
-
-\item{cohortIds}{(optional) A list of cohort ids to limit the metadata result}
 
 \item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
 commonly the same as cdmDatabaseSchema. Note that for 

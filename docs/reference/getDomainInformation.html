@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Returns list with circe generated documentation — getCirceRenderedExpression • CohortDiagnostics</title>
+<title>Get domain information — getDomainInformation • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Returns list with circe generated documentation — getCirceRenderedExpression" />
-<meta property="og:description" content="Returns list with circe generated documentation" />
+<meta property="og:title" content="Get domain information — getDomainInformation" />
+<meta property="og:description" content="Get domain information" />
 
 
 
@@ -141,29 +141,29 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Returns list with circe generated documentation</h1>
+    <h1>Get domain information</h1>
     <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/Shared.R'><code>R/Shared.R</code></a></small>
-    <div class="hidden name"><code>getCirceRenderedExpression.Rd</code></div>
+    <div class="hidden name"><code>getDomainInformation.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Returns list with circe generated documentation</p>
+    <p>Get domain information</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getCirceRenderedExpression</span><span class='op'>(</span><span class='va'>cohortDefinition</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>getDomainInformation</span><span class='op'>(</span>packageName <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>cohortDefinition</th>
-      <td><p>An object with a list representation of the cohort definition expression.</p></td>
+      <th>packageName</th>
+      <td><p>e.g. 'CohortDiagnostics'</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>list object</p>
+    <p>A list with two tibble data frame objects with domain information represented in wide and long format respectively.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

@@ -224,7 +224,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       ' - OracleTempSchema has been deprecated by DatabaseConnector. Please use tempEmulationSchema instead.'
     )
   }
-  
+  databaseId <- as.character(databaseId)
   if (any(is.null(databaseName), is.na(databaseName))) {
     databaseName <- databaseId
     ParallelLogger::logTrace(' - Databasename was not provided.')
@@ -960,9 +960,9 @@ runCohortDiagnostics <- function(packageName = NULL,
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
   
-  packageName <- packageName()
-  packageVersion <- if (!getPackageName() == ".GlobalEnv") {
-    as.character(packageVersion(packageName()))
+  packageName <- utils::packageName()
+  packageVersion <- if (!methods::getPackageName() == ".GlobalEnv") {
+    as.character(utils::packageVersion(packageName))
   } else {
     ''
   }
