@@ -103,18 +103,18 @@ testthat::test_that("Record keeping of single type tasks", {
 })
 
 testthat::test_that("Record keeping of multiple type tasks", {
-  rkf <- tempfile()
+  rkf <- paste0(tempfile(), ".csv")
   
   sql1 <- "SELECT * FROM my_table WHERE x = 1;"
   checksum1 <- CohortDiagnostics:::computeChecksum(sql1)
   testthat::expect_true(
+    CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
       task = "Run SQL",
       checksum = checksum1,
       recordKeepingFile = rkf
     )
   )
-  
   CohortDiagnostics:::recordTasksDone(
     cohortId = 1,
     task = "Run SQL",
@@ -132,32 +132,32 @@ testthat::test_that("Record keeping of multiple type tasks", {
     )
   )
   
+  rkf2 <- paste0(tempfile(), ".csv")
   sql2 <- "SELECT * FROM my_table WHERE x = 1 AND y = 1;"
   checksum2 <- CohortDiagnostics:::computeChecksum(sql2)
   testthat::expect_true(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
-      cohortId2 = 2,
+      comparatorId = 2,
       task = "Compare cohorts",
       checksum = checksum2,
-      recordKeepingFile = rkf
+      recordKeepingFile = rkf2
     )
   )
-  
   CohortDiagnostics:::recordTasksDone(
     cohortId = 1,
-    cohortId2 = 2,
+    comparatorId = 2,
     task = "Compare cohorts",
     checksum = checksum2,
-    recordKeepingFile = rkf
+    recordKeepingFile = rkf2
   )
-  
   testthat::expect_false(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
-      task = "Run SQL",
-      checksum = checksum1,
-      recordKeepingFile = rkf
+      comparatorId = 2,
+      task = "Compare cohorts",
+      checksum = checksum2,
+      recordKeepingFile = rkf2
     )
   )
   
@@ -168,14 +168,14 @@ testthat::test_that("Record keeping of multiple type tasks", {
     comparatorId = '2',
     task = "Check Comparator Cohort id",
     checksum = checksum2,
-    recordKeepingFile = rkf
+    recordKeepingFile = rkf2
   )
   testthat::expect_true(
     CohortDiagnostics:::isTaskRequired(
       comparatorId = 2,
       task = "Check Comparator Cohort id",
       checksum = checksum1,
-      recordKeepingFile = rkf
+      recordKeepingFile = rkf2
     )
   )
   
@@ -185,32 +185,33 @@ testthat::test_that("Record keeping of multiple type tasks", {
   testthat::expect_true(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
-      cohortId2 = 2,
+      comparatorId = 2,
       task = "Compare cohorts",
       checksum = checksum2a,
-      recordKeepingFile = rkf
+      recordKeepingFile = rkf2
     )
   )
   
   CohortDiagnostics:::recordTasksDone(
     cohortId = 1,
-    cohortId2 = 2,
+    comparatorId = 2,
     task = "Compare cohorts",
     checksum = checksum2a,
-    recordKeepingFile = rkf
+    recordKeepingFile = rkf2
   )
   
   testthat::expect_false(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
-      cohortId2 = 2,
+      comparatorId = 2,
       task = "Compare cohorts",
       checksum = checksum2a,
-      recordKeepingFile = rkf
+      recordKeepingFile = rkf2
     )
   )
   
   unlink(rkf)
+  unlink(rkf2)
 })
 
 testthat::test_that("Record keeping of multiple tasks at once", {

@@ -30,10 +30,9 @@ testthat::test_that("Test file encoding - using latin", {
   tempfileLatin <- tempfile()
   latinEncoding <- "fa\xE7ile"
   writeLines(latinEncoding, con = tempfileLatin)
-  testthat::expect_error(CohortDiagnostics:::checkInputFileEncoding(fileName = tempfileLatin))
+  testthat::expect_warning(CohortDiagnostics:::checkInputFileEncoding(fileName = tempfileLatin))
   unlink(tempfileLatin)
 })
-
 
 
 testthat::test_that("Check mismatch between SQL and inclusion rules", {
