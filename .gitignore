@@ -13,5 +13,4 @@ errorReportR.txt
 *log.txt
 inst/shiny/DiagnosticsExplorer/data/PreMerged.RData
 tests/testthat/testthat-problems.rds
-sql
 *.LNK

@@ -371,14 +371,19 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     fetchStats(cohortInclusionResultFile)
   
   cohortResult <- list()
-  for (cohortId in unique(results$cohortInclusion %>% dplyr::pull(.data$cohortId))) {
-    cohortResult[[cohortId]] <-
+  cohortIdsWithInclusionRules <- results$cohortInclusion %>% dplyr::pull(.data$cohortId) %>% unique() %>% sort() %>% as.integer()
+  for (i in 1:length(cohortIdsWithInclusionRules)) {
+    cId <- cohortIdsWithInclusionRules[[i]]
+    ci <-  results$cohortInclusion %>% dplyr::filter(.data$cohortId == cId)
+    ciR <- results$cohortInclusionResult %>% filter(.data$cohortId == cId)
+    ciS <- results$cohortInclusionStats %>% filter(.data$cohortId == cId)
+    cohortResult[[i]] <-
       simplifyInclusionStats(
-        cohortInclusion = results$cohortInclusion %>% dplyr::filter(.data$cohortId == cohortId),
-        cohortInclusionResult = results$cohortInclusionResult %>% filter(.data$cohortId == cohortId),
-        cohortInclusionStats = results$cohortInclusionStats %>% filter(.data$cohortId == cohortId)
+        cohortInclusion = ci,
+        cohortInclusionResult = ciR,
+        cohortInclusionStats = ciS
       ) %>%
-      dplyr::mutate(cohortId = !!cohortId)
+      dplyr::mutate(cohortId = !!cId)
   }
   results$inclusionRuleStats <-
     dplyr::bind_rows(cohortResult)

@@ -20,6 +20,7 @@ plotTimeSeriesFromTsibble <-
     }
     
     data <- data %>%
+      tsibble::fill_gaps(Total = 0) %>% 
       fabletools::model(feasts::STL(Total ~  season(window = Inf))) %>%
       fabletools::components() %>%
       tidyr::pivot_longer(cols = pivotBy ,
@@ -38,6 +39,10 @@ plotTimeSeriesFromTsibble <-
         group = "fieldName",
         color = "fieldName"
       )
+    #!!!!!!!!!!!!! dummy name if no cohort
+    if (is.null(data$cohortShortName)) {
+      data$cohortShortName <- "cohort"
+    }
     
     data$tooltip <- c(
       paste0(
@@ -47,7 +52,8 @@ plotTimeSeriesFromTsibble <-
         "\nPeriod Begin = ",
         data$periodBegin,
         "\nDatabase ID = ",
-        data$databaseId,
+        data$databaseId
+        ,
         "\nCohort = ",
         data$cohortShortName
       )

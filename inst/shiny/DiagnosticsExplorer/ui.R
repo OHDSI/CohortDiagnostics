@@ -74,7 +74,7 @@ sidebarMenu <-
       input.tabs != 'visitContext' &
       input.tabs != 'cohortOverlap'",
       shinyWidgets::pickerInput(
-        inputId = "database",
+        inputId = "selectedDatabaseId",
         label = "Database",
         choices = database$databaseId,
         selected = database$databaseId[1],
@@ -224,11 +224,32 @@ sidebarMenu <-
       input.tabs == 'indexEventBreakdown' |
       input.tabs == 'compareTemporalCharacterization'",
       shinyWidgets::pickerInput(
-        inputId = "conceptSetsSelectedFromOneCohort",
+        inputId = "conceptSetsSelectedCohortLeft",
         label = "Concept sets",
         choices = c(""),
         selected = c(""),
         multiple = TRUE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          size = 10,
+          liveSearchStyle = "contains",
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+        )
+      )
+    ),
+    shiny::conditionalPanel(
+      condition = "input.tabs == 'cohortDefinition'",
+      shinyWidgets::pickerInput(
+        inputId = "targetVocabularyChoiceForConceptSetDetails",
+        label = "Vocabulary version choices:",
+        choices = sourcesOfVocabularyTables,
+        selected = sourcesOfVocabularyTables[1],
+        multiple = TRUE,
+        width = 200,
+        inline = TRUE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE,
@@ -280,9 +301,9 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::column(12,
       shiny::conditionalPanel(
                         condition = "output.cohortDefinitionSelectedRowCount >= 1 &
-                       input.conceptSetsTypeLeft != 'Concept Set Expression' &
-                       input.conceptSetsTypeLeft != 'Json' &
-                       input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
+                       input.targetConceptSetsType != 'Concept Set Expression' &
+                       input.targetConceptSetsType != 'Concept Set Json' &
+                       input.targetCohortDefinitionTabSetPanel == 'targetCohortDefinitionConceptSetTabPanel'",
                         shiny::uiOutput(outputId = "dynamicUIForRelationshipAndComparisonTable")
                         )
                         )
@@ -827,7 +848,14 @@ bodyTabItems <- shinydashboard::tabItems(
                  )
                )
     ),
-    DT::dataTableOutput(outputId = "indexEventBreakdownTable")
+    DT::dataTableOutput(outputId = "indexEventBreakdownTable"),
+    tags$br(),
+    shiny::column(12,
+                  shiny::conditionalPanel(
+                    condition = "true",
+                    shiny::uiOutput(outputId = "dynamicUIForRelationshipAndTemeSeriesForIndexEvent")
+                  )
+    )
   ),
   shinydashboard::tabItem(
     tabName = "visitContext",
