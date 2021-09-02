@@ -123,8 +123,6 @@ recordTasksDone <-
         guess_max = min(1e7),
         lazy = FALSE
       )
-      #additionally deleting record keeping file to avoid lock errors when rewriting later
-      file.remove(x = recordKeepingFile) #file.remove will show an error if it couldnt delete the file.
       
       recordKeeping$timeStamp <-
         as.character(recordKeeping$timeStamp)

@@ -86,7 +86,8 @@ testthat::test_that("Record keeping of single type tasks", {
   
   # make duplication in rkf and check if it is recognized i.e. corrupted rkf
   rkf2 <- readr::read_csv(file = rkf, 
-                          col_types = readr::cols())
+                          col_types = readr::cols(), 
+                          lazy = FALSE)
   rkf2 <- dplyr::bind_rows(rkf2, rkf2)
   readr::write_excel_csv(x = rkf2, file = rkf)
   testthat::expect_error(
@@ -107,7 +108,6 @@ testthat::test_that("Record keeping of multiple type tasks", {
   sql1 <- "SELECT * FROM my_table WHERE x = 1;"
   checksum1 <- CohortDiagnostics:::computeChecksum(sql1)
   testthat::expect_true(
-    CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
       task = "Run SQL",
       checksum = checksum1,
@@ -343,7 +343,8 @@ testthat::test_that("Incremental save", {
   testthat::expect_equivalent(readr::read_csv(
     tmpFile,
     col_types = readr::cols(),
-    guess_max = min(1e7)
+    guess_max = min(1e7), 
+    lazy = FALSE
   ),
   goldStandard)
   unlink(tmpFile)
@@ -362,7 +363,8 @@ testthat::test_that("Incremental save with empty key", {
   testthat::expect_equivalent(readr::read_csv(
     tmpFile,
     col_types = readr::cols(),
-    guess_max = min(1e7)
+    guess_max = min(1e7),
+    lazy = FALSE
   ),
   data)
   unlink(tmpFile)
