@@ -4,11 +4,9 @@
 \alias{getDomainInformation}
 \title{Get domain information}
 \usage{
-getDomainInformation(versionNumber = NULL, packageName = NULL)
+getDomainInformation(packageName = NULL)
 }
 \arguments{
-\item{versionNumber}{Which version of Cohort Diagnostics. Default will be the most recent version.}
-
 \item{packageName}{e.g. 'CohortDiagnostics'}
 }
 \value{

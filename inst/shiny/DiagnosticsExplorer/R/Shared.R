@@ -89,23 +89,6 @@ quoteLiterals <- function(x) {
   }
 }
 
-# used to get the short name in plots
-addShortName <- function(data, shortNameRef = NULL, cohortIdColumn = "cohortId", shortNameColumn = "shortName") {
-  if (is.null(shortNameRef)) {
-    shortNameRef <- data %>%
-      dplyr::distinct(.data$cohortId) %>%
-      dplyr::arrange(.data$cohortId) %>%
-      dplyr::mutate(shortName = paste0("C", dplyr::row_number()))
-  } 
-  
-  shortNameRef <- shortNameRef %>%
-    dplyr::distinct(.data$cohortId, .data$shortName) 
-  colnames(shortNameRef) <- c(cohortIdColumn, shortNameColumn)
-  data <- data %>%
-    dplyr::inner_join(shortNameRef, by = cohortIdColumn)
-  return(data)
-}
-
 
 #' Get specifications for Cohort Diagnostics results data model
 #'
@@ -714,16 +697,18 @@ getResultsConceptCountSummary <- function(dataSource,
     if (!exists("conceptCount", envir = dataSource)) {
       return(NULL)
     }
-    if (is.null(conceptCount)) {
+    conceptCountL <- get("conceptCount")
+    if (is.null(conceptCountL)) {
       return(NULL)
     }
     if (!exists("conceptSubjects", envir = dataSource)) {
       return(NULL)
     }
-    if (is.null(conceptSubjects)) {
+    conceptSubjectsL <- get("conceptSubjects")
+    if (is.null(conceptSubjectsL)) {
       return(NULL)
     }
-    data1 <- conceptCount %>%
+    data1 <- conceptCountL %>%
       dplyr::filter(.data$conceptId %in% !!conceptIds) %>%
       dplyr::filter(.data$databaseId %in% !!databaseIds) %>%
       dplyr::group_by(.data$conceptId, .data$databaseId) %>%
@@ -732,7 +717,7 @@ getResultsConceptCountSummary <- function(dataSource,
       dplyr::ungroup() %>%
       dplyr::select(.data$databaseId, .data$conceptId, .data$conceptCount)
     
-    data2 <- conceptSubjects %>%
+    data2 <- conceptSubjectsL %>%
       dplyr::filter(.data$conceptId %in% !!conceptIds) %>%
       dplyr::filter(.data$databaseId %in% !!databaseIds) %>%
       dplyr::filter(.data$domainTable %in% c("CO",
@@ -852,8 +837,6 @@ getResultsConceptSubjects <- function(dataSource,
 #'
 #' @template VocabularyDatabaseSchema
 #'
-#' @param cohortIds     (optional) A list of cohort ids to limit the metadata result
-#'
 #' @param conceptIds    (optional) A list of concept ids to limit the metadata result
 #'
 #' @return
@@ -862,7 +845,6 @@ getResultsConceptSubjects <- function(dataSource,
 #' @export
 getConceptMetadata <- function(dataSource,
                                databaseIds = NULL,
-                               cohortIds = NULL,
                                vocabularyDatabaseSchema = NULL,
                                conceptIds = NULL,
                                conceptRelationship = TRUE,
@@ -870,6 +852,8 @@ getConceptMetadata <- function(dataSource,
                                conceptSynonym = TRUE,
                                conceptCount = TRUE) {
   data <- list()
+  
+  relationship <- getVocabularyRelationship(dataSource = dataSource)
   # results not dependent on cohort definition
   if (conceptRelationship) {
     data$conceptRelationship <-
@@ -979,7 +963,7 @@ getConceptMetadata <- function(dataSource,
       dplyr::select(.data$conceptId,
                     .data$levelsOfSeparation) %>%
       dplyr::distinct() %>%
-      dplyr::mutate(levelsOfSeparation = levelsOfSeparation * -1) %>% 
+      dplyr::mutate(levelsOfSeparation = .data$levelsOfSeparation * -1) %>% 
       dplyr::filter(.data$conceptId != data$conceptId)
     
     conceptDescendant <- data$conceptAncestor %>%
@@ -1187,7 +1171,7 @@ getResultsExcludedConcepts <- function(dataSource,
     dataTableName = "conceptExcluded"
   )
   if (any((is.null(data)),
-         nrow(data) == 0)) {
+          nrow(data) == 0)) {
     return(NULL)
   }
   conceptIdDetails <- getConcept(dataSource = dataSource,
@@ -1416,6 +1400,23 @@ getConceptSetDataFrameFromConceptSetExpression <-
     return(conceptSetExpressionDetails)
   }
 
+# Vocabulary ----
+#' Returns data from relationship table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from relationship table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @return
+#' Returns a data frame (tibble)
+#'
+#' @export
+getVocabularyRelationship <- function(dataSource) {
+  data <- getDataFromResultsDatabaseSchema(dataSource,
+                                           dataTableName = "relationship")
+  return(data)
+}
 
 
 
@@ -1831,10 +1832,6 @@ getResultsIndexEventBreakdown <- function(dataSource,
 getResultsVisitContext <- function(dataSource,
                                    cohortIds = NULL,
                                    databaseIds = NULL) {
-  cohortCounts <-
-    getResultsCohortCount(dataSource = dataSource,
-                          cohortIds = cohortIds,
-                          databaseIds = databaseIds)
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
@@ -2945,7 +2942,7 @@ getResultsTemporalAnalysisRef <- function(dataSource) {
 #' @description
 #' Returns list with circe generated documentation
 #'
-#' @param cohortDefinitionExpression An object with a list representation of the cohort definition expression.
+#' @param cohortDefinition An object with a list representation of the cohort definition expression.
 #'
 #' @return list object
 #'
@@ -2996,14 +2993,11 @@ convertMdToHtml <- function(markdown) {
 
 #' Get domain information
 #'
-#' @param versionNumber Which version of Cohort Diagnostics. Default will be the most recent version.
-#'
 #' @param packageName e.g. 'CohortDiagnostics'
 #'
 #' @return
 #' A list with two tibble data frame objects with domain information represented in wide and long format respectively.
-getDomainInformation <- function(versionNumber = NULL,
-                                 packageName = NULL) {
+getDomainInformation <- function(packageName = NULL) {
   ParallelLogger::logTrace("  - Reading domains.csv")
   
   

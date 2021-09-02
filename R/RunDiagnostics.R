@@ -960,9 +960,9 @@ runCohortDiagnostics <- function(packageName = NULL,
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
   
-  packageName <- packageName()
-  packageVersion <- if (!getPackageName() == ".GlobalEnv") {
-    as.character(packageVersion(packageName()))
+  packageName <- utils::packageName()
+  packageVersion <- if (!methods::getPackageName() == ".GlobalEnv") {
+    as.character(utils::packageVersion(packageName))
   } else {
     ''
   }

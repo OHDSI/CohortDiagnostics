@@ -7,7 +7,7 @@
 getCirceRenderedExpression(cohortDefinition)
 }
 \arguments{
-\item{cohortDefinitionExpression}{An object with a list representation of the cohort definition expression.}
+\item{cohortDefinition}{An object with a list representation of the cohort definition expression.}
 }
 \value{
 list object
