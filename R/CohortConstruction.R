@@ -371,7 +371,15 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     fetchStats(cohortInclusionResultFile)
   
   cohortResult <- list()
-  cohortIdsWithInclusionRules <- results$cohortInclusion %>% dplyr::pull(.data$cohortId) %>% unique() %>% sort() %>% as.integer()
+  cohortIdsWithInclusionRules <- results$cohortInclusion %>% 
+    dplyr::pull(.data$cohortId) %>% 
+    unique() %>% 
+    sort() %>% 
+    as.integer()
+  if (any(is.null(cohortIdsWithInclusionRules),
+          length(cohortIdsWithInclusionRules) == 0)) {
+    return(NULL)
+  }
   for (i in 1:length(cohortIdsWithInclusionRules)) {
     cId <- cohortIdsWithInclusionRules[[i]]
     ci <-  results$cohortInclusion %>% dplyr::filter(.data$cohortId == cId)

@@ -498,22 +498,26 @@ runCohortDiagnostics <- function(packageName = NULL,
         output <-
           getInclusionStatisticsFromFiles(cohortIds = subset$cohortId,
                                           folder = inclusionStatisticsFolder)
-        writeToAllOutputToCsv(
-          object = output,
-          exportFolder = exportFolder,
-          databaseId = databaseId,
-          incremental = incremental,
-          minCellCount = minCellCount
-        )
-        recordTasksDone(
-          cohortId = subset$cohortId,
-          task = "runInclusionStatistics",
-          checksum = subset$checksum,
-          recordKeepingFile = recordKeepingFile,
-          incremental = incremental
-        )
-        Andromeda::close(output)
-        rm("output")
+        if (!is.null(output)) {
+          writeToAllOutputToCsv(
+            object = output,
+            exportFolder = exportFolder,
+            databaseId = databaseId,
+            incremental = incremental,
+            minCellCount = minCellCount
+          )
+          recordTasksDone(
+            cohortId = subset$cohortId,
+            task = "runInclusionStatistics",
+            checksum = subset$checksum,
+            recordKeepingFile = recordKeepingFile,
+            incremental = incremental
+          )
+          Andromeda::close(output)
+          rm("output")
+        } else {
+          ParallelLogger::logInfo("  - None of the cohorts had inclusion rules.")
+        }
       } else {
         ParallelLogger::logInfo("  - Skipping in incremental mode.")
       }
