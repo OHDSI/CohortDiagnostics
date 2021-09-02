@@ -2,7 +2,7 @@
 % Please edit documentation in R/Shared.R
 \name{getConceptAncestor}
 \alias{getConceptAncestor}
-\title{Returns data from concept ancestor table for list of concept ids}
+\title{Returns data from concept ancestor table for vector of concept ids}
 \usage{
 getConceptAncestor(
   dataSource = .GlobalEnv,
@@ -22,10 +22,12 @@ and uploaded using \code{uploadResults}}
 commonly the same as cdmDatabaseSchema. Note that for 
 SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
+
+\item{conceptIds}{a vector of concept ids}
 }
 \value{
 Returns a data frame (tibble)
 }
 \description{
-Returns data from concept ancestor table for list of concept ids
+Returns data from concept ancestor table for vector of concept ids
 }

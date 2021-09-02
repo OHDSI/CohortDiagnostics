@@ -501,10 +501,12 @@ getConceptRelationship <- function(dataSource = .GlobalEnv,
 
 
 
-#' Returns data from concept ancestor table for list of concept ids
+#' Returns data from concept ancestor table for vector of concept ids
 #'
 #' @description
-#' Returns data from concept ancestor table for list of concept ids
+#' Returns data from concept ancestor table for vector of concept ids
+#' 
+#' @param conceptIds a vector of concept ids 
 #'
 #' @template DataSource
 #'
