@@ -224,7 +224,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       ' - OracleTempSchema has been deprecated by DatabaseConnector. Please use tempEmulationSchema instead.'
     )
   }
-  
+  databaseId <- as.character(databaseId)
   if (any(is.null(databaseName), is.na(databaseName))) {
     databaseName <- databaseId
     ParallelLogger::logTrace(' - Databasename was not provided.')
