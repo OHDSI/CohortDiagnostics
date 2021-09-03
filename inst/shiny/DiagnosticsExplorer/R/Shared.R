@@ -1620,6 +1620,10 @@ getResultsFixedTimeSeries <- function(dataSource,
     databaseIds = databaseIds,
     dataTableName = "timeSeries"
   )
+  if (any(is.null(data),
+          nrow(data) ==0)) {
+    return(NULL)
+  }
   dataCohort0 <- data %>%
     dplyr::filter(.data$cohortId == 0) %>%
     dplyr::select(-.data$cohortId) %>%
