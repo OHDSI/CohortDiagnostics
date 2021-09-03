@@ -501,10 +501,12 @@ getConceptRelationship <- function(dataSource = .GlobalEnv,
 
 
 
-#' Returns data from concept ancestor table for list of concept ids
+#' Returns data from concept ancestor table for vector of concept ids
 #'
 #' @description
-#' Returns data from concept ancestor table for list of concept ids
+#' Returns data from concept ancestor table for vector of concept ids
+#' 
+#' @param conceptIds a vector of concept ids 
 #'
 #' @template DataSource
 #'
@@ -836,6 +838,14 @@ getResultsConceptSubjects <- function(dataSource,
 #' @template DatabaseIds
 #'
 #' @template VocabularyDatabaseSchema
+#' 
+#' @param conceptRelationship  Do you want conceptRelationship?
+#' 
+#' @param conceptAncestor  Do you want conceptAncestor?
+#' 
+#' @param conceptSynonym  Do you want conceptSynonym?
+#' 
+#' @param conceptCount  Do you want conceptCount?
 #'
 #' @param conceptIds    (optional) A list of concept ids to limit the metadata result
 #'
@@ -1679,45 +1689,47 @@ getResultsFixedTimeSeries <- function(dataSource,
     )
   )
   
-  if (nrow(data) > 0) {
-    intervals <- data$calendarInterval %>% unique()
-    dataList <- list()
-    for (i in (1:length(intervals))) {
-      intervalData <- data %>%
-        dplyr::filter(.data$calendarInterval == intervals[[i]]) %>%
-        dplyr::select(-.data$calendarInterval)
-      if (intervals[[i]] == 'y') {
-        intervalData <- intervalData %>%
-          dplyr::mutate(periodBegin = clock::get_year(.data$periodBegin))
-      }
-      if (intervals[[i]] == 'q') {
-        intervalData <- intervalData %>%
-          dplyr::mutate(periodBegin = tsibble::yearquarter(.data$periodBegin))
-      }
-      if (intervals[[i]] == 'm') {
-        intervalData <- intervalData %>%
-          dplyr::mutate(periodBegin = tsibble::yearmonth(.data$periodBegin))
-      }
+  if (any(is.null(data),
+          nrow(data) == 0)) {
+    return(NULL)
+  }
+  intervals <- data$calendarInterval %>% unique()
+  dataList <- list()
+  for (i in (1:length(intervals))) {
+    intervalData <- data %>%
+      dplyr::filter(.data$calendarInterval == intervals[[i]]) %>%
+      dplyr::select(-.data$calendarInterval)
+    if (intervals[[i]] == 'y') {
       intervalData <- intervalData %>%
-        dplyr::relocate(.data$databaseId, .data$cohortId, .data$seriesType) %>%
-        dplyr::mutate(
-          records = abs(.data$records),
-          subjects = abs(.data$subjects),
-          personDays = abs(.data$personDays),
-          recordsStart = abs(.data$recordsStart),
-          subjectsStart = abs(.data$subjectsStart),
-          recordsEnd = abs(.data$recordsEnd),
-          subjectsEnd = abs(.data$subjectsEnd)
-        ) %>%
-        tsibble::as_tsibble(
-          key = c(.data$databaseId, .data$cohortId, .data$seriesType),
-          index = .data$periodBegin
-        ) %>%
-        dplyr::arrange(.data$databaseId, .data$cohortId, .data$seriesType)
-      dataList[[intervals[[i]]]] <- intervalData
-      attr(x = dataList[[intervals[[i]]]],
-           which = 'timeSeriesDescription') <- timeSeriesDescription
+        dplyr::mutate(periodBegin = clock::get_year(.data$periodBegin))
     }
+    if (intervals[[i]] == 'q') {
+      intervalData <- intervalData %>%
+        dplyr::mutate(periodBegin = tsibble::yearquarter(.data$periodBegin))
+    }
+    if (intervals[[i]] == 'm') {
+      intervalData <- intervalData %>%
+        dplyr::mutate(periodBegin = tsibble::yearmonth(.data$periodBegin))
+    }
+    intervalData <- intervalData %>%
+      dplyr::relocate(.data$databaseId, .data$cohortId, .data$seriesType) %>%
+      dplyr::mutate(
+        records = abs(.data$records),
+        subjects = abs(.data$subjects),
+        personDays = abs(.data$personDays),
+        recordsStart = abs(.data$recordsStart),
+        subjectsStart = abs(.data$subjectsStart),
+        recordsEnd = abs(.data$recordsEnd),
+        subjectsEnd = abs(.data$subjectsEnd)
+      ) %>%
+      tsibble::as_tsibble(
+        key = c(.data$databaseId, .data$cohortId, .data$seriesType),
+        index = .data$periodBegin
+      ) %>%
+      dplyr::arrange(.data$databaseId, .data$cohortId, .data$seriesType)
+    dataList[[intervals[[i]]]] <- intervalData
+    attr(x = dataList[[intervals[[i]]]],
+         which = 'timeSeriesDescription') <- timeSeriesDescription
   }
   return(dataList)
 }
