@@ -2805,68 +2805,13 @@ shiny::shinyServer(function(input, output, session) {
       data <- getOrphanConceptsLeft()
       if (!doesObjectHaveData(data)) {
         return(NULL)
-      } else {
-        orphanConceptDataDatabaseIds <-
-          unique(data$databaseId)
-        orphanConceptDataMaxCount <-
-          max(data$subjectCount , na.rm = TRUE)
-      }
+      } 
+      
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
                     "No orphan concepts"))
       
-      columnDef <- list(truncateStringDef(1, 80))
-      maxCount <- NULL
-      maxSubject <- NULL
-      if ("subjects" %in% colnames(data) &&
-          "count" %in% colnames(data)) {
-        columnDef <- list(truncateStringDef(1, 80), minCellCountDef(2:3))
-        maxCount <- max(data$count, na.rm = TRUE)
-        maxSubject <- max(data$subjects, na.rm = TRUE)
-      }
-      
-      options = list(
-        pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = "20vh",
-        columnDefs = columnDef
-      )
-      
-      dataTable <- DT::datatable(
-        data,
-        options = options,
-        rownames = FALSE,
-        colnames = colnames(data) %>% camelCaseToTitleCase(),
-        escape = FALSE,
-        selection = 'single',
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns =  3,
-        background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns =  4,
-        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
-      return(dataTable)
+      return(getSketchDesignForTablesInCohortDefinitionTab(data = data))
     }, server = TRUE)
   
   #output: targetConceptsetExpressionJson----
@@ -3389,68 +3334,13 @@ shiny::shinyServer(function(input, output, session) {
       data <- getOrphanConceptsRight()
       if (!doesObjectHaveData(data)) {
         return(NULL)
-      } else {
-        orphanConceptDataDatabaseIds <-
-          unique(data$databaseId)
-        orphanConceptDataMaxCount <-
-          max(data$subjectCount , na.rm = TRUE)
-      }
+      } 
       
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
                     "No orphan concepts"))
       
-      columnDef <- list(truncateStringDef(1, 80))
-      maxCount <- NULL
-      maxSubject <- NULL
-      if ("subjects" %in% colnames(data) &&
-          "count" %in% colnames(data)) {
-        columnDef <- list(truncateStringDef(1, 80), minCellCountDef(2:3))
-        maxCount <- max(data$count, na.rm = TRUE)
-        maxSubject <- max(data$subjects, na.rm = TRUE)
-      }
-      options = list(
-        pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = "20vh",
-        columnDefs = columnDef
-      )
-      
-      dataTable <- DT::datatable(
-        data,
-        options = options,
-        rownames = FALSE,
-        colnames = colnames(data) %>% camelCaseToTitleCase(),
-        escape = FALSE,
-        selection = 'single',
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns =  3,
-        background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns =  4,
-        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
-      return(dataTable)
+      return(getSketchDesignForTablesInCohortDefinitionTab(data = data))
     }, server = TRUE)
   
   ##output: saveComparatorCohortDefinitionOrphanConceptTable----
