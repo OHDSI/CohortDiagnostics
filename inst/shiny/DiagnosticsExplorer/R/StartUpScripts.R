@@ -202,19 +202,14 @@ consolidationOfSelectedFieldValues <- function(input,
       }
     }
     #selection on database id
-    if (doesObjectHaveData(input$targetVocabularyChoiceForConceptSetDetails)) {
-      data$selectedDatabaseIdTarget <- database %>%
-        dplyr::filter(
-          .data$databaseIdWithVocabularyVersion == input$targetVocabularyChoiceForConceptSetDetails
-        ) %>% 
-        dplyr::pull(.data$databaseId)
-    }
-    if (doesObjectHaveData(input$comparatorVocabularyChoiceForConceptSetDetails)) {
-      data$selectedDatabaseIdRight <- database %>%
-        dplyr::filter(
-          .data$databaseIdWithVocabularyVersion == input$comparatorVocabularyChoiceForConceptSetDetails
-        ) %>% 
-        dplyr::pull(.data$databaseId)
+    if (doesObjectHaveData(input$selectedDatabaseIds)) {
+      if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
+          isTRUE(input$selectedDatabaseIds_open) ||
+          doesObjectHaveData(input$tabs)) {
+        data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
+      } else {
+        data$selectedDatabaseIdTarget <- NULL
+      }
     }
     #selection on concept id
     if (doesObjectHaveData(input$targetCohortDefinitionResolvedConceptTable_rows_selected)) {
@@ -260,7 +255,7 @@ consolidationOfSelectedFieldValues <- function(input,
         dplyr::pull(.data$cohortId) %>%
         unique()
     }
-    #mutli select databaseId
+    #mutli select databaseId/ single select databaseId
     if (input$tabs == 'temporalCharacterization' ||
         input$tabs == 'compareCohortCharacterization' ||
         input$tabs == 'compareTemporalCharacterization') {
