@@ -838,6 +838,14 @@ getResultsConceptSubjects <- function(dataSource,
 #' @template DatabaseIds
 #'
 #' @template VocabularyDatabaseSchema
+#' 
+#' @param conceptRelationship  Do you want conceptRelationship?
+#' 
+#' @param conceptAncestor  Do you want conceptAncestor?
+#' 
+#' @param conceptSynonym  Do you want conceptSynonym?
+#' 
+#' @param conceptCount  Do you want conceptCount?
 #'
 #' @param conceptIds    (optional) A list of concept ids to limit the metadata result
 #'
@@ -1681,7 +1689,10 @@ getResultsFixedTimeSeries <- function(dataSource,
     )
   )
   
-  if (nrow(data) > 0) {
+  if (any(is.null(data),
+          nrow(data) == 0)) {
+    return(NULL)
+  }
     intervals <- data$calendarInterval %>% unique()
     dataList <- list()
     for (i in (1:length(intervals))) {
@@ -1720,8 +1731,7 @@ getResultsFixedTimeSeries <- function(dataSource,
       attr(x = dataList[[intervals[[i]]]],
            which = 'timeSeriesDescription') <- timeSeriesDescription
     }
-  }
-  return(dataList)
+    return(dataList)
 }
 
 

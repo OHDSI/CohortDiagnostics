@@ -33,6 +33,14 @@ SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
 
 \item{conceptIds}{(optional) A list of concept ids to limit the metadata result}
+
+\item{conceptRelationship}{Do you want conceptRelationship?}
+
+\item{conceptAncestor}{Do you want conceptAncestor?}
+
+\item{conceptSynonym}{Do you want conceptSynonym?}
+
+\item{conceptCount}{Do you want conceptCount?}
 }
 \value{
 Returns a list of data frames (tibbles)
