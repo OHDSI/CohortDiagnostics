@@ -906,8 +906,8 @@ test_that("Data Retrieval", {
   ## Concept id details ----
   #### Pos ----
   conceptIdDetailsFromFile <-
-    CohortDiagnostics::getResultsConcept(dataSource = dataSourcePreMergedFile,
-                                         conceptIds = c(192671, 201826, 1124300, 1124300))
+    CohortDiagnostics::getConcept(dataSource = dataSourcePreMergedFile,
+                                  conceptIds = c(192671, 201826, 1124300, 1124300))
   testthat::expect_true(nrow(conceptIdDetailsFromFile) >= 0)
   # should throw warning
   conceptIdDetailsFromFile2 <-
@@ -1239,14 +1239,14 @@ test_that("Data Retrieval", {
   ## Concept id details ----
   #### Pos ----
   conceptIdDetailsFromDb <-
-    CohortDiagnostics::getResultsConcept(dataSource = dataSourceDatabase,
-                                         conceptIds = c(192671, 201826, 1124300, 1124300))
+    CohortDiagnostics::getConcept(dataSource = dataSourceDatabase,
+                                  conceptIds = c(192671, 201826, 1124300, 1124300))
   testthat::expect_true(nrow(conceptIdDetailsFromDb) >= 0)
   # testthat::expect_true(dplyr::all_equal(conceptIdDetailsFromDb, conceptIdDetailsFromFile))
   # should throw warning
   conceptIdDetailsFromDb2 <-
     suppressWarnings(
-      CohortDiagnostics::getResultsConcept(
+      CohortDiagnostics::getConcept(
         dataSource = dataSourceDatabase,
         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
         conceptIds = c(192671, 201826, 1124300, 1124300)
@@ -1257,7 +1257,7 @@ test_that("Data Retrieval", {
   # testthat::expect_true(dplyr::all_equal(conceptIdDetailsFromDb2, conceptIdDetailsFromFile2))
   #### Neg ----
   testthat::expect_null(suppressWarnings(
-    CohortDiagnostics::getResultsConcept(
+    CohortDiagnostics::getConcept(
       dataSource = dataSourceDatabase,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       conceptIds = c(-1111)
@@ -1389,7 +1389,7 @@ test_that("Data removal works", {
       connection = connection,
       schema = cohortDiagnosticsSchema,
       tableName = 'cohort_count',
-      keyValues = cohortTableDataBeforeDelete[1, ]
+      keyValues = cohortTableDataBeforeDelete[1,]
     )
     cohortTableDataAfterDelete <-
       CohortDiagnostics::getResultsCohortCount(dataSource = dataSourceDatabase)
