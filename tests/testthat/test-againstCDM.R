@@ -1086,9 +1086,12 @@ test_that("Data Retrieval", {
     CohortDiagnostics::getResultsFixedTimeSeries(dataSource = dataSourceDatabase,
                                                  databaseIds = 'cdmV5')
   testthat::expect_true(length(timeSeriesFromDb2) >= 0)
-  testthat::expect_true(dplyr::all_equal(timeSeriesFromDb2$m, timeSeriesFromFile2$m))
-  testthat::expect_true(dplyr::all_equal(timeSeriesFromDb2$y, timeSeriesFromFile2$y))
-  testthat::expect_true(dplyr::all_equal(timeSeriesFromDb2$q, timeSeriesFromFile2$q))
+  if (any(!is.null(timeSeriesFromDb2$m),
+          !is.null(timeSeriesFromFile2$m))) {
+    testthat::expect_true(dplyr::all_equal(timeSeriesFromDb2$m, timeSeriesFromFile2$m))
+    testthat::expect_true(dplyr::all_equal(timeSeriesFromDb2$y, timeSeriesFromFile2$y))
+    testthat::expect_true(dplyr::all_equal(timeSeriesFromDb2$q, timeSeriesFromFile2$q))
+  }
   #### Neg ----
   testthat::expect_null(
     CohortDiagnostics::getResultsFixedTimeSeries(
