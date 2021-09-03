@@ -978,7 +978,7 @@ test_that("Data Retrieval", {
   
   #### Pos ----
   cohortOverlapDataFromFile <-
-    CohortDiagnostics::getCohortOverlapData(
+    CohortDiagnostics::getCohortOverlap(
       dataSource = dataSourcePreMergedFile,
       cohortIds = c(18348, 18350),
       databaseIds = 'cdmV5'
@@ -987,7 +987,7 @@ test_that("Data Retrieval", {
   #### Neg ----
   testthat::expect_null(conceptIdDetails <-
                           suppressWarnings(
-                            CohortDiagnostics::getCohortOverlapData(
+                            CohortDiagnostics::getCohortOverlap(
                               dataSource = dataSourcePreMergedFile,
                               cohortIds = -1111,
                               databaseIds = 'cdmV5'
@@ -1343,7 +1343,7 @@ test_that("Data Retrieval", {
   ## Cohort Overlap ----
   #### Pos ----
   cohortOverlapDataFromDb <-
-    CohortDiagnostics::getCohortOverlapData(
+    CohortDiagnostics::getCohortOverlap(
       dataSource = dataSourceDatabase,
       cohortIds = c(18348, 18350),
       databaseIds = 'cdmV5'
@@ -1353,7 +1353,7 @@ test_that("Data Retrieval", {
   #### Neg ----
   testthat::expect_null(conceptIdDetails <-
                           suppressWarnings(
-                            CohortDiagnostics::getCohortOverlapData(
+                            CohortDiagnostics::getCohortOverlap(
                               dataSource = dataSourceDatabase,
                               cohortIds = -1111,
                               databaseIds = 'cdmV5'
