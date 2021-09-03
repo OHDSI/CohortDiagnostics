@@ -22,7 +22,6 @@ if (runDatabaseTests) {
 
 if (runDatabaseTests) {
   testthat::test_that("Run Cohort Diagnostics without instantiated cohorts", {
-    
     # Diagnostics before instantiation ----
     ## no cohort table get cohort count ----
     testthat::expect_warning(
@@ -114,7 +113,7 @@ if (runDatabaseTests) {
         cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
         generateInclusionStats = TRUE,
         createCohortTable = TRUE,
-        incremental = TRUE, 
+        incremental = TRUE,
         incrementalFolder = tempdir(),
         inclusionStatisticsFolder = NULL,
         baseUrl = baseUrl,
@@ -134,7 +133,7 @@ if (runDatabaseTests) {
         cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
         generateInclusionStats = TRUE,
         createCohortTable = TRUE,
-        incremental = TRUE, 
+        incremental = TRUE,
         incrementalFolder = NULL,
         inclusionStatisticsFolder = tempdir(),
         baseUrl = baseUrl,
@@ -726,7 +725,7 @@ test_that("Data Retrieval", {
   ## Cohort Count ----
   #### Pos ----
   cohortCountFromFile <-
-    CohortDiagnostics::getResultsFromCohortCount(
+    CohortDiagnostics::getResultsCohortCount(
       dataSource = dataSourcePreMergedFile,
       cohortIds = c(
         14906,
@@ -748,7 +747,7 @@ test_that("Data Retrieval", {
   testthat::expect_true(nrow(cohortCountFromFile) > 0)
   #### Neg ----
   testthat::expect_null(
-    CohortDiagnostics::getResultsFromCohortCount(
+    CohortDiagnostics::getResultsCohortCount(
       dataSource = dataSourcePreMergedFile,
       cohortIds = c(-11111),
       databaseIds = 'cdmV5'
@@ -758,7 +757,7 @@ test_that("Data Retrieval", {
   ## Time series ----
   #### Pos ----
   timeSeriesFromFile <-
-    CohortDiagnostics::getResultsFromFixedTimeSeries(
+    CohortDiagnostics::getResultsFixedTimeSeries(
       dataSource = dataSourcePreMergedFile,
       cohortIds = c(17492, 17692),
       databaseIds = 'cdmV5'
@@ -768,15 +767,15 @@ test_that("Data Retrieval", {
     length(timeSeriesFromFile) >= 0
   ))
   timeSeriesFromFile2 <-
-    CohortDiagnostics::getResultsFromFixedTimeSeries(dataSource = dataSourcePreMergedFile,
-                                                     databaseIds = 'cdmV5')
+    CohortDiagnostics::getResultsFixedTimeSeries(dataSource = dataSourcePreMergedFile,
+                                                 databaseIds = 'cdmV5')
   testthat::expect_true(any(
     is.null(timeSeriesFromFile2),
     length(timeSeriesFromFile2) >= 0
   ))
   #### Neg ----
   testthat::expect_null(
-    CohortDiagnostics::getResultsFromFixedTimeSeries(
+    CohortDiagnostics::getResultsFixedTimeSeries(
       dataSource = dataSourcePreMergedFile,
       cohortIds = -11111,
       databaseIds = 'cdmV5d'
@@ -786,7 +785,7 @@ test_that("Data Retrieval", {
   ## Time Distribution ----
   #### Pos ----
   timeDistributionFromFile <-
-    CohortDiagnostics::getResultsFromTimeDistribution(
+    CohortDiagnostics::getResultsTimeDistribution(
       dataSource = dataSourcePreMergedFile,
       cohortIds = c(17492, 17692),
       databaseIds = 'cdmV5'
@@ -794,7 +793,7 @@ test_that("Data Retrieval", {
   testthat::expect_true(nrow(timeDistributionFromFile) >= 0)
   #### Pos ----
   testthat::expect_null(
-    CohortDiagnostics::getResultsFromTimeDistribution(
+    CohortDiagnostics::getResultsTimeDistribution(
       dataSource = dataSourcePreMergedFile,
       cohortIds = -11111,
       databaseIds = 'cdmV5d'
@@ -804,7 +803,7 @@ test_that("Data Retrieval", {
   ## Incidence rate ----
   #### Pos ----
   incidenceRateFromFile <-
-    CohortDiagnostics::getResultsFromIncidenceRate(
+    CohortDiagnostics::getResultsIncidenceRate(
       dataSource = dataSourcePreMergedFile,
       cohortIds = c(17492, 17692),
       databaseIds = 'cdmV5'
@@ -814,22 +813,22 @@ test_that("Data Retrieval", {
     nrow(incidenceRateFromFile) >= 0
   )) # no data in eunomia
   incidenceRateFromFile2 <-
-    CohortDiagnostics::getResultsFromIncidenceRate(dataSource = dataSourcePreMergedFile,
-                                                   databaseIds = 'cdmV5')
+    CohortDiagnostics::getResultsIncidenceRate(dataSource = dataSourcePreMergedFile,
+                                               databaseIds = 'cdmV5')
   testthat::expect_true(any(
     is.null(incidenceRateFromFile2),
     nrow(incidenceRateFromFile2) >= 0
   )) # no data in eunomia
   incidenceRateFromFile3 <-
-    CohortDiagnostics::getResultsFromIncidenceRate(dataSource = dataSourcePreMergedFile,
-                                                   databaseIds = 'cdmV5')
+    CohortDiagnostics::getResultsIncidenceRate(dataSource = dataSourcePreMergedFile,
+                                               databaseIds = 'cdmV5')
   testthat::expect_true(any(
     is.null(incidenceRateFromFile3),
     nrow(incidenceRateFromFile3) >= 0
   )) # no data in eunomia
   #### Neg ----
   testthat::expect_null(
-    CohortDiagnostics::getResultsFromIncidenceRate(
+    CohortDiagnostics::getResultsIncidenceRate(
       dataSource = dataSourcePreMergedFile,
       cohortIds = -11111,
       databaseIds = 'cdmV5'
@@ -839,16 +838,16 @@ test_that("Data Retrieval", {
   ## Inclusion rules ----
   #### Pos ----
   inclusionRulesFromFile <-
-    CohortDiagnostics::getResultsFromInclusionRuleStatistics(dataSource = dataSourcePreMergedFile,
-                                                             cohortIds = 18350,
-                                                             databaseIds = 'cdmV5')
+    CohortDiagnostics::getResultsInclusionRuleStatistics(dataSource = dataSourcePreMergedFile,
+                                                         cohortIds = 18350,
+                                                         databaseIds = 'cdmV5')
   testthat::expect_true(nrow(inclusionRulesFromFile) >= 0)
   inclusionRulesFromFile2 <-
-    CohortDiagnostics::getResultsFromInclusionRuleStatistics(dataSource = dataSourcePreMergedFile)
+    CohortDiagnostics::getResultsInclusionRuleStatistics(dataSource = dataSourcePreMergedFile)
   testthat::expect_true(nrow(inclusionRulesFromFile2) >= 0)
   #### Neg ----
   testthat::expect_null(
-    CohortDiagnostics::getResultsFromInclusionRuleStatistics(
+    CohortDiagnostics::getResultsInclusionRuleStatistics(
       dataSource = dataSourcePreMergedFile,
       cohortIds = -1111,
       databaseIds = 'cdmV5'
@@ -858,16 +857,16 @@ test_that("Data Retrieval", {
   ## Index event breakdown ----
   #### Pos ----
   indexEventBreakdownFromFile <-
-    CohortDiagnostics::getResultsFromIndexEventBreakdown(dataSource = dataSourcePreMergedFile,
-                                                         cohortIds = 18348,
-                                                         databaseIds = 'cdmV5')
+    CohortDiagnostics::getResultsIndexEventBreakdown(dataSource = dataSourcePreMergedFile,
+                                                     cohortIds = 18348,
+                                                     databaseIds = 'cdmV5')
   testthat::expect_true(nrow(indexEventBreakdownFromFile) >= 0)
   indexEventBreakdownFromFile2 <-
-    CohortDiagnostics::getResultsFromIndexEventBreakdown(dataSource = dataSourcePreMergedFile)
+    CohortDiagnostics::getResultsIndexEventBreakdown(dataSource = dataSourcePreMergedFile)
   testthat::expect_true(nrow(indexEventBreakdownFromFile2) >= 0)
   #### Neg ----
   testthat::expect_null(
-    CohortDiagnostics::getResultsFromIndexEventBreakdown(
+    CohortDiagnostics::getResultsIndexEventBreakdown(
       dataSource = dataSourcePreMergedFile,
       cohortIds = -1111,
       databaseIds = 'cdmV5'
@@ -877,16 +876,16 @@ test_that("Data Retrieval", {
   ## Visit context ----
   #### Pos ----
   visitContextFromFile <-
-    CohortDiagnostics::getResultsFromVisitContext(dataSource = dataSourcePreMergedFile,
-                                                  cohortIds = 18348,
-                                                  databaseIds = 'cdmV5')
+    CohortDiagnostics::getResultsVisitContext(dataSource = dataSourcePreMergedFile,
+                                              cohortIds = 18348,
+                                              databaseIds = 'cdmV5')
   testthat::expect_true(nrow(visitContextFromFile) >= 0)
   visitContextFromFile2 <-
-    CohortDiagnostics::getResultsFromVisitContext(dataSource = dataSourcePreMergedFile)
+    CohortDiagnostics::getResultsVisitContext(dataSource = dataSourcePreMergedFile)
   testthat::expect_true(nrow(visitContextFromFile2) >= 0)
   #### Neg ----
   testthat::expect_null(
-    CohortDiagnostics::getResultsFromVisitContext(
+    CohortDiagnostics::getResultsVisitContext(
       dataSource = dataSourcePreMergedFile,
       cohortIds = -1111,
       databaseIds = 'cdmV5'
@@ -896,24 +895,24 @@ test_that("Data Retrieval", {
   ## Orphan concept ----
   #### Pos ----
   # orphanConceptFromFile <-
-  #   CohortDiagnostics::getResultsFromOrphanConcept(dataSource = dataSourcePreMergedFile,
+  #   CohortDiagnostics::getResultsOrphanConcept(dataSource = dataSourcePreMergedFile,
   #                                                  cohortIds = 18348,
   #                                                  databaseIds = 'cdmV5')
   # testthat::expect_true(nrow(orphanConceptFromFile) >= 0)
   # orphanConceptFromFile2 <-
-  #   CohortDiagnostics::getResultsFromOrphanConcept(dataSource = dataSourcePreMergedFile)
+  #   CohortDiagnostics::getResultsOrphanConcept(dataSource = dataSourcePreMergedFile)
   # testthat::expect_true(nrow(orphanConceptFromFile2) >= 0)
   
   ## Concept id details ----
   #### Pos ----
   conceptIdDetailsFromFile <-
-    CohortDiagnostics::getResultsFromConcept(dataSource = dataSourcePreMergedFile,
-                                             conceptIds = c(192671, 201826, 1124300, 1124300))
+    CohortDiagnostics::getConcept(dataSource = dataSourcePreMergedFile,
+                                  conceptIds = c(192671, 201826, 1124300, 1124300))
   testthat::expect_true(nrow(conceptIdDetailsFromFile) >= 0)
   # should throw warning
   conceptIdDetailsFromFile2 <-
     suppressWarnings(
-      CohortDiagnostics::getResultsFromConcept(
+      CohortDiagnostics::getConcept(
         dataSource = dataSourcePreMergedFile,
         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
         conceptIds = c(192671, 201826, 1124300, 1124300)
@@ -922,28 +921,28 @@ test_that("Data Retrieval", {
   testthat::expect_true(nrow(conceptIdDetailsFromFile2) >= 0)
   #### Neg ----
   testthat::expect_null(suppressWarnings(
-    CohortDiagnostics::getResultsFromConcept(
+    CohortDiagnostics::getConcept(
       dataSource = dataSourcePreMergedFile,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       conceptIds = c(-1111)
     )
   ))
   
-   ## Cohort Relationship ----
+  ## Cohort Relationship ----
   #### Pos ----
   cohortRelationshipsFromFile <-
-    CohortDiagnostics::getResultsFromCohortRelationships(dataSource = dataSourcePreMergedFile,
-                                                         cohortIds = 18348,
-                                                         databaseIds = 'cdmV5')
+    CohortDiagnostics::getResultsCohortRelationships(dataSource = dataSourcePreMergedFile,
+                                                     cohortIds = 18348,
+                                                     databaseIds = 'cdmV5')
   testthat::expect_true(nrow(cohortRelationshipsFromFile) >= 0)
   cohortRelationshipsFromFile2 <-
-    CohortDiagnostics::getResultsFromCohortRelationships(dataSource = dataSourcePreMergedFile)
+    CohortDiagnostics::getResultsCohortRelationships(dataSource = dataSourcePreMergedFile)
   testthat::expect_true(nrow(cohortRelationshipsFromFile2) >= 0)
   #### Neg ----
   testthat::expect_null(
     conceptIdDetails <-
       suppressWarnings(
-        CohortDiagnostics::getResultsFromCohortRelationships(
+        CohortDiagnostics::getResultsCohortRelationships(
           dataSource = dataSourcePreMergedFile,
           cohortIds = -1111,
           databaseIds = 'cdmV5'
@@ -979,7 +978,7 @@ test_that("Data Retrieval", {
   
   #### Pos ----
   cohortOverlapDataFromFile <-
-    CohortDiagnostics::getCohortOverlapData(
+    CohortDiagnostics::getCohortOverlap(
       dataSource = dataSourcePreMergedFile,
       cohortIds = c(18348, 18350),
       databaseIds = 'cdmV5'
@@ -988,7 +987,7 @@ test_that("Data Retrieval", {
   #### Neg ----
   testthat::expect_null(conceptIdDetails <-
                           suppressWarnings(
-                            CohortDiagnostics::getCohortOverlapData(
+                            CohortDiagnostics::getCohortOverlap(
                               dataSource = dataSourcePreMergedFile,
                               cohortIds = -1111,
                               databaseIds = 'cdmV5'
@@ -1019,7 +1018,7 @@ test_that("Data Retrieval", {
   # )
   # # get data on instantiated cohorts usin dbpool connection
   # testthat::expect_true(nrow(
-  #   CohortDiagnostics::getResultsFromCohortCount(dataSource = dataSourceDatabase)
+  #   CohortDiagnostics::getResultsCohortCount(dataSource = dataSourceDatabase)
   # ) >= 0)
   # pool::poolClose(connectionPool)
   # dataSourceDatabase <- NULL
@@ -1040,7 +1039,7 @@ test_that("Data Retrieval", {
   
   ## Cohort Count ----
   #### Pos ----
-  cohortCountFromDb <- CohortDiagnostics::getResultsFromCohortCount(
+  cohortCountFromDb <- CohortDiagnostics::getResultsCohortCount(
     dataSource = dataSourceDatabase,
     cohortIds = c(
       14906,
@@ -1063,7 +1062,7 @@ test_that("Data Retrieval", {
   testthat::expect_true(dplyr::all_equal(cohortCountFromDb, cohortCountFromFile))
   #### Neg ----
   testthat::expect_null(
-    CohortDiagnostics::getResultsFromCohortCount(
+    CohortDiagnostics::getResultsCohortCount(
       dataSource = dataSourceDatabase,
       cohortIds = c(-11111),
       databaseIds = 'cdmV5'
@@ -1073,7 +1072,7 @@ test_that("Data Retrieval", {
   ## Time series ----
   #### Pos ----
   timeSeriesFromDb <-
-    CohortDiagnostics::getResultsFromFixedTimeSeries(
+    CohortDiagnostics::getResultsFixedTimeSeries(
       dataSource = dataSourceDatabase,
       cohortIds = c(17492, 17692),
       databaseIds = 'cdmV5'
@@ -1084,15 +1083,18 @@ test_that("Data Retrieval", {
   testthat::expect_true(dplyr::all_equal(timeSeriesFromDb$y, timeSeriesFromFile$y))
   testthat::expect_true(dplyr::all_equal(timeSeriesFromDb$q, timeSeriesFromFile$q))
   timeSeriesFromDb2 <-
-    CohortDiagnostics::getResultsFromFixedTimeSeries(dataSource = dataSourceDatabase,
-                                                     databaseIds = 'cdmV5')
+    CohortDiagnostics::getResultsFixedTimeSeries(dataSource = dataSourceDatabase,
+                                                 databaseIds = 'cdmV5')
   testthat::expect_true(length(timeSeriesFromDb2) >= 0)
-  testthat::expect_true(dplyr::all_equal(timeSeriesFromDb2$m, timeSeriesFromFile2$m))
-  testthat::expect_true(dplyr::all_equal(timeSeriesFromDb2$y, timeSeriesFromFile2$y))
-  testthat::expect_true(dplyr::all_equal(timeSeriesFromDb2$q, timeSeriesFromFile2$q))
+  if (any(!is.null(timeSeriesFromDb2$m),
+          !is.null(timeSeriesFromFile2$m))) {
+    testthat::expect_true(dplyr::all_equal(timeSeriesFromDb2$m, timeSeriesFromFile2$m))
+    testthat::expect_true(dplyr::all_equal(timeSeriesFromDb2$y, timeSeriesFromFile2$y))
+    testthat::expect_true(dplyr::all_equal(timeSeriesFromDb2$q, timeSeriesFromFile2$q))
+  }
   #### Neg ----
   testthat::expect_null(
-    CohortDiagnostics::getResultsFromFixedTimeSeries(
+    CohortDiagnostics::getResultsFixedTimeSeries(
       dataSource = dataSourceDatabase,
       cohortIds = -11111,
       databaseIds = 'cdmV5d'
@@ -1102,7 +1104,7 @@ test_that("Data Retrieval", {
   ## Time Distribution ----
   #### Pos ----
   timeDistributionFromDb <-
-    CohortDiagnostics::getResultsFromTimeDistribution(
+    CohortDiagnostics::getResultsTimeDistribution(
       dataSource = dataSourceDatabase,
       cohortIds = c(17492, 17692),
       databaseIds = 'cdmV5'
@@ -1111,7 +1113,7 @@ test_that("Data Retrieval", {
   testthat::expect_true(dplyr::all_equal(timeDistributionFromDb, timeDistributionFromFile))
   #### Pos ----
   testthat::expect_null(
-    CohortDiagnostics::getResultsFromTimeDistribution(
+    CohortDiagnostics::getResultsTimeDistribution(
       dataSource = dataSourceDatabase,
       cohortIds = -11111,
       databaseIds = 'cdmV5d'
@@ -1121,7 +1123,7 @@ test_that("Data Retrieval", {
   ## Incidence rate ----
   #### Pos ----
   incidenceRateFromDb <-
-    CohortDiagnostics::getResultsFromIncidenceRate(
+    CohortDiagnostics::getResultsIncidenceRate(
       dataSource = dataSourceDatabase,
       cohortIds = c(17492, 17692),
       databaseIds = 'cdmV5'
@@ -1134,8 +1136,8 @@ test_that("Data Retrieval", {
   testthat::expect_true(is.null(incidenceRateFromDb) &&
                           is.null(incidenceRateFromFile))
   incidenceRateFromDb2 <-
-    CohortDiagnostics::getResultsFromIncidenceRate(dataSource = dataSourceDatabase,
-                                                   databaseIds = 'cdmV5')
+    CohortDiagnostics::getResultsIncidenceRate(dataSource = dataSourceDatabase,
+                                               databaseIds = 'cdmV5')
   testthat::expect_true(any(
     is.null(incidenceRateFromDb2),
     nrow(incidenceRateFromDb2) >= 0
@@ -1144,8 +1146,8 @@ test_that("Data Retrieval", {
                           is.null(incidenceRateFromFile2))
   
   incidenceRateFromDb3 <-
-    CohortDiagnostics::getResultsFromIncidenceRate(dataSource = dataSourceDatabase,
-                                                   databaseIds = 'cdmV5')
+    CohortDiagnostics::getResultsIncidenceRate(dataSource = dataSourceDatabase,
+                                               databaseIds = 'cdmV5')
   testthat::expect_true(any(
     is.null(incidenceRateFromDb3),
     nrow(incidenceRateFromDb3) >= 0
@@ -1154,7 +1156,7 @@ test_that("Data Retrieval", {
                           is.null(incidenceRateFromFile3))
   #### Neg ----
   testthat::expect_null(
-    CohortDiagnostics::getResultsFromIncidenceRate(
+    CohortDiagnostics::getResultsIncidenceRate(
       dataSource = dataSourceDatabase,
       cohortIds = -11111,
       databaseIds = 'cdmV5'
@@ -1164,18 +1166,18 @@ test_that("Data Retrieval", {
   ## Inclusion rules ----
   #### Pos ----
   inclusionRulesFromDb <-
-    CohortDiagnostics::getResultsFromInclusionRuleStatistics(dataSource = dataSourceDatabase,
-                                                             cohortIds = 18350,
-                                                             databaseIds = 'cdmV5')
+    CohortDiagnostics::getResultsInclusionRuleStatistics(dataSource = dataSourceDatabase,
+                                                         cohortIds = 18350,
+                                                         databaseIds = 'cdmV5')
   testthat::expect_true(nrow(inclusionRulesFromDb) >= 0)
   testthat::expect_true(dplyr::all_equal(inclusionRulesFromDb, inclusionRulesFromFile))
   inclusionRulesFromDb2 <-
-    CohortDiagnostics::getResultsFromInclusionRuleStatistics(dataSource = dataSourceDatabase)
+    CohortDiagnostics::getResultsInclusionRuleStatistics(dataSource = dataSourceDatabase)
   testthat::expect_true(nrow(inclusionRulesFromDb2) >= 0)
   testthat::expect_true(dplyr::all_equal(inclusionRulesFromDb2, inclusionRulesFromFile2))
   #### Neg ----
   testthat::expect_null(
-    CohortDiagnostics::getResultsFromInclusionRuleStatistics(
+    CohortDiagnostics::getResultsInclusionRuleStatistics(
       dataSource = dataSourceDatabase,
       cohortIds = -1111,
       databaseIds = 'cdmV5'
@@ -1185,18 +1187,18 @@ test_that("Data Retrieval", {
   ## Index event breakdown ----
   #### Pos ----
   indexEventBreakdownFromDb <-
-    CohortDiagnostics::getResultsFromIndexEventBreakdown(dataSource = dataSourceDatabase,
-                                                         cohortIds = 18348,
-                                                         databaseIds = 'cdmV5')
+    CohortDiagnostics::getResultsIndexEventBreakdown(dataSource = dataSourceDatabase,
+                                                     cohortIds = 18348,
+                                                     databaseIds = 'cdmV5')
   testthat::expect_true(nrow(indexEventBreakdownFromDb) >= 0)
   testthat::expect_true(dplyr::all_equal(indexEventBreakdownFromDb, indexEventBreakdownFromFile))
   indexEventBreakdownFromDb2 <-
-    CohortDiagnostics::getResultsFromIndexEventBreakdown(dataSource = dataSourceDatabase)
+    CohortDiagnostics::getResultsIndexEventBreakdown(dataSource = dataSourceDatabase)
   testthat::expect_true(nrow(indexEventBreakdownFromDb2) >= 0)
   testthat::expect_true(dplyr::all_equal(indexEventBreakdownFromDb2, indexEventBreakdownFromFile2))
   #### Neg ----
   testthat::expect_null(
-    CohortDiagnostics::getResultsFromIndexEventBreakdown(
+    CohortDiagnostics::getResultsIndexEventBreakdown(
       dataSource = dataSourceDatabase,
       cohortIds = -1111,
       databaseIds = 'cdmV5'
@@ -1206,18 +1208,18 @@ test_that("Data Retrieval", {
   ## Visit context ----
   #### Pos ----
   visitContextFromDb <-
-    CohortDiagnostics::getResultsFromVisitContext(dataSource = dataSourceDatabase,
-                                                  cohortIds = 18348,
-                                                  databaseIds = 'cdmV5')
+    CohortDiagnostics::getResultsVisitContext(dataSource = dataSourceDatabase,
+                                              cohortIds = 18348,
+                                              databaseIds = 'cdmV5')
   testthat::expect_true(nrow(visitContextFromDb) >= 0)
   testthat::expect_true(dplyr::all_equal(visitContextFromDb, visitContextFromFile))
   visitContextFromDb2 <-
-    CohortDiagnostics::getResultsFromVisitContext(dataSource = dataSourceDatabase)
+    CohortDiagnostics::getResultsVisitContext(dataSource = dataSourceDatabase)
   testthat::expect_true(nrow(visitContextFromDb2) >= 0)
   testthat::expect_true(dplyr::all_equal(visitContextFromDb2, visitContextFromFile2))
   #### Neg ----
   testthat::expect_null(
-    CohortDiagnostics::getResultsFromVisitContext(
+    CohortDiagnostics::getResultsVisitContext(
       dataSource = dataSourceDatabase,
       cohortIds = -1111,
       databaseIds = 'cdmV5'
@@ -1227,27 +1229,27 @@ test_that("Data Retrieval", {
   ## Orphan concept ----
   #### Pos ----
   # orphanConceptFromDb <-
-  #   CohortDiagnostics::getResultsFromOrphanConcept(dataSource = dataSourceDatabase,
+  #   CohortDiagnostics::getResultsOrphanConcept(dataSource = dataSourceDatabase,
   #                                                  cohortIds = 18348,
   #                                                  databaseIds = 'cdmV5')
   # testthat::expect_true(nrow(orphanConceptFromDb) >= 0)
   # testthat::expect_true(dplyr::all_equal(orphanConceptFromDb, orphanConceptFromFile))
   # orphanConceptFromDb2 <-
-  #   CohortDiagnostics::getResultsFromOrphanConcept(dataSource = dataSourceDatabase)
+  #   CohortDiagnostics::getResultsOrphanConcept(dataSource = dataSourceDatabase)
   # testthat::expect_true(nrow(orphanConceptFromDb2) >= 0)
   # testthat::expect_true(dplyr::all_equal(orphanConceptFromDb2, orphanConceptFromFile2))
-  # 
+  #
   ## Concept id details ----
   #### Pos ----
   conceptIdDetailsFromDb <-
-    CohortDiagnostics::getResultsFromConcept(dataSource = dataSourceDatabase,
-                                             conceptIds = c(192671, 201826, 1124300, 1124300))
+    CohortDiagnostics::getConcept(dataSource = dataSourceDatabase,
+                                  conceptIds = c(192671, 201826, 1124300, 1124300))
   testthat::expect_true(nrow(conceptIdDetailsFromDb) >= 0)
   # testthat::expect_true(dplyr::all_equal(conceptIdDetailsFromDb, conceptIdDetailsFromFile))
   # should throw warning
   conceptIdDetailsFromDb2 <-
     suppressWarnings(
-      CohortDiagnostics::getResultsFromConcept(
+      CohortDiagnostics::getConcept(
         dataSource = dataSourceDatabase,
         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
         conceptIds = c(192671, 201826, 1124300, 1124300)
@@ -1258,31 +1260,31 @@ test_that("Data Retrieval", {
   # testthat::expect_true(dplyr::all_equal(conceptIdDetailsFromDb2, conceptIdDetailsFromFile2))
   #### Neg ----
   testthat::expect_null(suppressWarnings(
-    CohortDiagnostics::getResultsFromConcept(
+    CohortDiagnostics::getConcept(
       dataSource = dataSourceDatabase,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       conceptIds = c(-1111)
     )
   ))
   
-
+  
   ## Cohort Relationship ----
   #### Pos ----
   cohortRelationshipsFromDb <-
-    CohortDiagnostics::getResultsFromCohortRelationships(dataSource = dataSourceDatabase,
-                                                         cohortIds = 18348,
-                                                         databaseIds = 'cdmV5')
+    CohortDiagnostics::getResultsCohortRelationships(dataSource = dataSourceDatabase,
+                                                     cohortIds = 18348,
+                                                     databaseIds = 'cdmV5')
   testthat::expect_true(nrow(cohortRelationshipsFromDb) >= 0)
   testthat::expect_true(dplyr::all_equal(cohortRelationshipsFromDb, cohortRelationshipsFromFile))
   cohortRelationshipsFromDb2 <-
-    CohortDiagnostics::getResultsFromCohortRelationships(dataSource = dataSourceDatabase)
+    CohortDiagnostics::getResultsCohortRelationships(dataSource = dataSourceDatabase)
   testthat::expect_true(nrow(cohortRelationshipsFromDb2) >= 0)
   testthat::expect_true(dplyr::all_equal(cohortRelationshipsFromDb2, cohortRelationshipsFromFile2))
   #### Neg ----
   testthat::expect_null(
     conceptIdDetails <-
       suppressWarnings(
-        CohortDiagnostics::getResultsFromCohortRelationships(
+        CohortDiagnostics::getResultsCohortRelationships(
           dataSource = dataSourceDatabase,
           cohortIds = -1111,
           databaseIds = 'cdmV5'
@@ -1344,7 +1346,7 @@ test_that("Data Retrieval", {
   ## Cohort Overlap ----
   #### Pos ----
   cohortOverlapDataFromDb <-
-    CohortDiagnostics::getCohortOverlapData(
+    CohortDiagnostics::getCohortOverlap(
       dataSource = dataSourceDatabase,
       cohortIds = c(18348, 18350),
       databaseIds = 'cdmV5'
@@ -1354,7 +1356,7 @@ test_that("Data Retrieval", {
   #### Neg ----
   testthat::expect_null(conceptIdDetails <-
                           suppressWarnings(
-                            CohortDiagnostics::getCohortOverlapData(
+                            CohortDiagnostics::getCohortOverlap(
                               dataSource = dataSourceDatabase,
                               cohortIds = -1111,
                               databaseIds = 'cdmV5'
@@ -1378,8 +1380,8 @@ test_that("Data removal works", {
     resultsDatabaseSchema = cohortDiagnosticsSchema
   )
   cohortTableDataBeforeDelete <-
-    CohortDiagnostics::getResultsFromCohortCount(dataSource = dataSourceDatabase,
-                                                 databaseIds = 'cdmV5')
+    CohortDiagnostics::getResultsCohortCount(dataSource = dataSourceDatabase,
+                                             databaseIds = 'cdmV5')
   
   if (!is.null(cohortTableDataBeforeDelete)) {
     colnames(cohortTableDataBeforeDelete) <-
@@ -1393,7 +1395,7 @@ test_that("Data removal works", {
       keyValues = cohortTableDataBeforeDelete[1,]
     )
     cohortTableDataAfterDelete <-
-      CohortDiagnostics::getResultsFromCohortCount(dataSource = dataSourceDatabase)
+      CohortDiagnostics::getResultsCohortCount(dataSource = dataSourceDatabase)
     
     testthat::expect_true(nrow(cohortTableDataBeforeDelete) >
                             nrow(cohortTableDataAfterDelete))

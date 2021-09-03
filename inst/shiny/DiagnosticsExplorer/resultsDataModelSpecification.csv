@@ -48,6 +48,7 @@ cohort_relationships,t_before_c_subjects,bigint,Yes,No,No,Yes,2.2
 cohort_relationships,c_in_t_subjects,bigint,Yes,No,No,Yes,2.2
 cohort_relationships,c_person_days,bigint,Yes,No,No,Yes,2.2
 cohort_relationships,c_subjects_start,bigint,Yes,No,No,Yes,2.2
+cohort_relationships,c_subjects_exist,bigint,Yes,No,No,Yes,2.2
 cohort_relationships,c_subjects_end,bigint,Yes,No,No,Yes,2.2
 cohort_relationships,same_day_subjects,bigint,Yes,No,No,Yes,2.2
 concept,concept_id,int,Yes,Yes,No,Yes,2.2
@@ -109,6 +110,11 @@ concept_sets,concept_set_id,int,Yes,Yes,No,Yes,2.2
 concept_sets,concept_set_sql,varchar,Yes,No,No,Yes,2.2
 concept_sets,concept_set_name,varchar(255),Yes,No,No,Yes,2.2
 concept_sets,concept_set_expression,varchar,Yes,No,No,Yes,2.2
+concept_sets_optimized,database_id,varchar,Yes,Yes,No,Yes,2.2
+concept_sets_optimized,cohort_id,bigint,Yes,Yes,No,Yes,2.2
+concept_sets_optimized,concept_set_id,int,Yes,Yes,No,Yes,2.2
+concept_sets_optimized,excluded,int,Yes,Yes,No,Yes,2.2
+concept_sets_optimized,removed,int,Yes,Yes,No,Yes,2.2
 concept_synonym,concept_id,int,Yes,Yes,No,Yes,2.2
 concept_synonym,concept_synonym_name,varchar,Yes,Yes,No,Yes,2.2
 concept_synonym,language_concept_id,int,Yes,Yes,No,Yes,2.2

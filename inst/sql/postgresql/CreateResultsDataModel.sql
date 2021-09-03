@@ -19,6 +19,7 @@ DROP TABLE IF EXISTS concept_resolved;
 DROP TABLE IF EXISTS concept_subjects;
 DROP TABLE IF EXISTS cohort_summary_stats;
 DROP TABLE IF EXISTS concept_sets;
+DROP TABLE IF EXISTS concept_sets_optimized;
 DROP TABLE IF EXISTS concept_synonym;
 DROP TABLE IF EXISTS covariate_ref;
 DROP TABLE IF EXISTS covariate_value;
@@ -139,6 +140,7 @@ CREATE TABLE cohort_relationships (
 			same_day_subjects BIGINT NOT NULL,
 			c_person_days BIGINT NOT NULL,
 			c_subjects_start BIGINT NOT NULL,
+			c_subjects_exist BIGINT NOT NULL,
 			c_subjects_end BIGINT NOT NULL,
 			c_in_t_subjects BIGINT NOT NULL,
 			PRIMARY KEY(database_id, cohort_id, comparator_cohort_id, start_day, end_day)
@@ -237,6 +239,18 @@ CREATE TABLE concept_sets (
 			concept_set_expression VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, concept_set_id)
 );
+
+--Table concept_sets_optimized
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE concept_sets_optimized (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			concept_set_id INT NOT NULL,
+			excluded INT NOT NULL,
+			removed INT NOT NULL,
+			PRIMARY KEY(database_id, cohort_id, concept_set_id, excluded, removed)
+);
+
 
 --Table concept_count
 --HINT DISTRIBUTE ON RANDOM
@@ -387,7 +401,7 @@ CREATE TABLE index_event_breakdown (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE metadata (
 			database_id VARCHAR NOT NULL,
-			start_time TIMESTAMP NOT NULL,
+			start_time VARCHAR NOT NULL,
 			variable_field VARCHAR NOT NULL,
 			value_field VARCHAR,
 			PRIMARY KEY(database_id, start_time, variable_field)

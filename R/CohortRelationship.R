@@ -270,6 +270,7 @@ runCohortRelationshipDiagnostics <-
         .data$sameDaySubjects,
         .data$cPersonDays,
         .data$cSubjectsStart,
+        .data$cSubjectsExist,
         .data$cSubjectsEnd,
         .data$cInTSubjects
       ) %>%

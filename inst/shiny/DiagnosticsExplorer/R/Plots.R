@@ -1,24 +1,3 @@
-addShortName <-
-  function(data,
-           shortNameRef = NULL,
-           cohortIdColumn = "cohortId",
-           shortNameColumn = "shortName") {
-    if (is.null(shortNameRef)) {
-      shortNameRef <- data %>%
-        dplyr::distinct(.data$cohortId) %>%
-        dplyr::arrange(.data$cohortId) %>%
-        dplyr::mutate(shortName = paste0("C", dplyr::row_number()))
-    }
-    
-    shortNameRef <- shortNameRef %>%
-      dplyr::distinct(.data$cohortId, .data$shortName)
-    colnames(shortNameRef) <- c(cohortIdColumn, shortNameColumn)
-    data <- data %>%
-      dplyr::inner_join(shortNameRef, by = cohortIdColumn)
-    return(data)
-    
-  }
-
 #!!!!!! make plotTimeSeries generic enough that it maybe used every where there is time series
 ###!! given an input tsibble, it should be smart enough to plot
 plotTimeSeriesFromTsibble <-
@@ -41,6 +20,7 @@ plotTimeSeriesFromTsibble <-
     }
     
     data <- data %>%
+      tsibble::fill_gaps(Total = 0) %>% 
       fabletools::model(feasts::STL(Total ~  season(window = Inf))) %>%
       fabletools::components() %>%
       tidyr::pivot_longer(cols = pivotBy ,
@@ -59,6 +39,10 @@ plotTimeSeriesFromTsibble <-
         group = "fieldName",
         color = "fieldName"
       )
+    #!!!!!!!!!!!!! dummy name if no cohort
+    if (is.null(data$cohortShortName)) {
+      data$cohortShortName <- "cohort"
+    }
     
     data$tooltip <- c(
       paste0(
@@ -68,7 +52,8 @@ plotTimeSeriesFromTsibble <-
         "\nPeriod Begin = ",
         data$periodBegin,
         "\nDatabase ID = ",
-        data$databaseId,
+        data$databaseId
+        ,
         "\nCohort = ",
         data$cohortShortName
       )
