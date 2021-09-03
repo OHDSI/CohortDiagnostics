@@ -3,7 +3,7 @@
 
 library(magrittr)
 logFolder <-
-  "D:\\temp\\outputFolder\\packageMode"
+  "D:\\studyResults\\epi855P"
 diagnosticsFileName <- "CreatedDiagnostics.csv"
 
 listFiles <-

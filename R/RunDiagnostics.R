@@ -224,7 +224,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       ' - OracleTempSchema has been deprecated by DatabaseConnector. Please use tempEmulationSchema instead.'
     )
   }
-  
+  databaseId <- as.character(databaseId)
   if (any(is.null(databaseName), is.na(databaseName))) {
     databaseName <- databaseId
     ParallelLogger::logTrace(' - Databasename was not provided.')
@@ -498,22 +498,26 @@ runCohortDiagnostics <- function(packageName = NULL,
         output <-
           getInclusionStatisticsFromFiles(cohortIds = subset$cohortId,
                                           folder = inclusionStatisticsFolder)
-        writeToAllOutputToCsv(
-          object = output,
-          exportFolder = exportFolder,
-          databaseId = databaseId,
-          incremental = incremental,
-          minCellCount = minCellCount
-        )
-        recordTasksDone(
-          cohortId = subset$cohortId,
-          task = "runInclusionStatistics",
-          checksum = subset$checksum,
-          recordKeepingFile = recordKeepingFile,
-          incremental = incremental
-        )
-        Andromeda::close(output)
-        rm("output")
+        if (!is.null(output)) {
+          writeToAllOutputToCsv(
+            object = output,
+            exportFolder = exportFolder,
+            databaseId = databaseId,
+            incremental = incremental,
+            minCellCount = minCellCount
+          )
+          recordTasksDone(
+            cohortId = subset$cohortId,
+            task = "runInclusionStatistics",
+            checksum = subset$checksum,
+            recordKeepingFile = recordKeepingFile,
+            incremental = incremental
+          )
+          Andromeda::close(output)
+          rm("output")
+        } else {
+          ParallelLogger::logInfo("  - None of the cohorts had inclusion rules.")
+        }
       } else {
         ParallelLogger::logInfo("  - Skipping in incremental mode.")
       }
@@ -778,15 +782,6 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (runCohortRelationship) {
     ParallelLogger::logInfo("Computing Cohort Relationship")
     startCohortRelationship <- Sys.time()
-    
-    # no point in incremental for cohort relationship, because we have
-    # to compute the relationship between combinations of target and
-    # comparators. What do we increment on - target? Then we
-    # will still have to read all the comparator cohorts which
-    # is the full cohort table
-    # The only purpose of incremental is to prevent re-run
-    # Its all or none - Even if one cohort need computation, everything is run
-    
     subset <- subsetToRequiredCohorts(
       cohorts = cohorts %>%
         dplyr::filter(.data$cohortId %in% instantiatedCohorts),
@@ -969,9 +964,9 @@ runCohortDiagnostics <- function(packageName = NULL,
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
   
-  packageName <- packageName()
-  packageVersion <- if (!getPackageName() == ".GlobalEnv") {
-    as.character(packageVersion(packageName()))
+  packageName <- utils::packageName()
+  packageVersion <- if (!methods::getPackageName() == ".GlobalEnv") {
+    as.character(utils::packageVersion(packageName))
   } else {
     ''
   }

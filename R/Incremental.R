@@ -33,7 +33,8 @@ isTaskRequired <-
         recordKeepingFile,
         col_types = readr::cols(),
         na = character(),
-        guess_max = min(1e7)
+        guess_max = min(1e7), 
+        lazy = FALSE
       )
       task <- recordKeeping[getKeyIndex(list(...), recordKeeping), ]
       if (nrow(task) == 0) {
@@ -67,7 +68,8 @@ getRequiredTasks <- function(..., checksum, recordKeepingFile) {
       recordKeepingFile,
       col_types = readr::cols(),
       na = character(),
-      guess_max = min(1e7)
+      guess_max = min(1e7), 
+      lazy = FALSE
     )
     tasks$checksum <- checksum
     tasks <- dplyr::as_tibble(tasks)
@@ -107,18 +109,21 @@ recordTasksDone <-
     if (!incremental) {
       return()
     }
-    
     if (length(list(...)[[1]]) == 0) {
       return()
     }
     
     if (file.exists(recordKeepingFile)) {
+      #reading record keeping file into memory
+      #prevent lazy loading to avoid lock on file
       recordKeeping <-  readr::read_csv(
-        recordKeepingFile,
+        file = recordKeepingFile,
         col_types = readr::cols(),
         na = character(),
-        guess_max = min(1e7)
+        guess_max = min(1e7),
+        lazy = FALSE
       )
+      
       recordKeeping$timeStamp <-
         as.character(recordKeeping$timeStamp)
       # ensure cohortId and comparatorId are always integer while reading
@@ -132,7 +137,7 @@ recordTasksDone <-
       }
       idx <- getKeyIndex(list(...), recordKeeping)
       if (length(idx) > 0) {
-        recordKeeping <- recordKeeping[-idx, ]
+        recordKeeping <- recordKeeping[-idx,]
       }
     } else {
       recordKeeping <- dplyr::tibble()
@@ -148,6 +153,7 @@ recordTasksDone <-
       newRow$comparatorId <- as.double(newRow$comparatorId)
     }
     recordKeeping <- dplyr::bind_rows(recordKeeping, newRow)
+  
     readr::write_excel_csv(
       x = recordKeeping,
       file = recordKeepingFile,
@@ -269,7 +275,8 @@ saveIncremental <- function(data, fileName, ...) {
       fileName,
       col_types = readr::cols(),
       na = character(),
-      guess_max = min(1e7)
+      guess_max = min(1e7), 
+      lazy = FALSE
     )
     ParallelLogger::logTrace(
       paste0(

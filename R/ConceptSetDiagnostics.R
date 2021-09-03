@@ -118,7 +118,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   uniqueConceptSets <-
     conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ] %>%
     dplyr::select(-.data$cohortId, -.data$conceptSetId)
-  rm("conceptSets")
+ 
   ParallelLogger::logTrace(
     paste0(
       " - Note: There are ",
@@ -130,6 +130,38 @@ runConceptSetDiagnostics <- function(connection = NULL,
       " concept sets in all cohort definitions."
     )
   )
+  
+  # Optimize unique concept set----
+  ParallelLogger::logInfo("  - Optimizing concept sets found in cohorts.")
+  optimizedConceptSet <- list()
+  for (i in (1:nrow(uniqueConceptSets))) {
+    uniqueConceptSet <- uniqueConceptSets[i,]
+    conceptSetExpression <- RJSONIO::fromJSON(uniqueConceptSet$conceptSetExpression)
+    optimizationRecommendation <- 
+      getOptimizationRecommendationForConceptSetExpression(conceptSetExpression = conceptSetExpression, 
+                                                           connection = connection, 
+                                                           vocabularyDatabaseSchema = vocabularyDatabaseSchema, 
+                                                           tempEmulationSchema = tempEmulationSchema)
+    if (!is.null(optimizationRecommendation)) {
+      optimizationRecommendation <- optimizationRecommendation %>% 
+        dplyr::mutate(uniqueConceptSetId = uniqueConceptSet$uniqueConceptSetId) %>% 
+        dplyr::inner_join(conceptSets %>% 
+                            dplyr::select(.data$uniqueConceptSetId,
+                                          .data$cohortId,
+                                          .data$conceptSetId),
+                          by = "uniqueConceptSetId")
+      optimizedConceptSet[[i]] <- optimizationRecommendation %>% 
+        dplyr::select(.data$cohortId,
+                      .data$conceptSetId,
+                      .data$conceptId,
+                      .data$excluded,
+                      .data$removed
+                      ) %>% 
+        dplyr::distinct()
+    }
+  }
+  conceptSetDiagnosticsResults$conceptSetsOptimized <- dplyr::bind_rows(optimizedConceptSet)
+  rm("conceptSets")
   
   # Instantiate (resolve) unique concept sets----
   ParallelLogger::logInfo("  - Resolving concept sets found in cohorts.")
@@ -803,6 +835,7 @@ getConceptRecordCountByMonth <- function(connection,
                                          conceptIdUniverse = "#concept_tracking") {
   ParallelLogger::logTrace(" - Counting concepts by person id, calendar month and year")
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
+  domains <- domains$wide
   sql <- "SELECT @domain_concept_id concept_id,
           	YEAR(@domain_start_date) event_year,
           	MONTH(@domain_start_date) event_month,
@@ -907,6 +940,7 @@ getConceptSubjectCount <- function(connection,
                                    conceptIdUniverse = "#concept_tracking") {
   ParallelLogger::logTrace(" - Counting unique person count by concept id")
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
+  domains <- domains$wide
   sql <- "SELECT @domain_concept_id concept_id,
           	COUNT_BIG(DISTINCT person_id) subject_count
           FROM @cdm_database_schema.@domain_table
@@ -1002,6 +1036,7 @@ getBreakdownIndexEvents <- function(cohortIds,
                                     tempEmulationSchema,
                                     conceptIdUniverse = "#concept_tracking") {
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
+  domains <- domains$wide
   sql <- "SELECT cohort_definition_id cohort_id,
               	@domain_concept_id AS concept_id,
               	COUNT(*) AS concept_count,
@@ -1098,6 +1133,7 @@ getIndexDateConceptCooccurrence <- function(connection,
                                             cohortIds,
                                             conceptIdUniverse = "#concept_tracking") {
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
+  domains <- domains$wide
   sqlDdlDrop <-
     "IF OBJECT_ID('tempdb..#concept_cooccurrence', 'U') IS NOT NULL
                 	      DROP TABLE #concept_cooccurrence;
@@ -1229,7 +1265,8 @@ getConceptSourceStandardMapping <- function(connection,
                                             tempEmulationSchema,
                                             sourceValue = FALSE,
                                             conceptIdUniverse = "#concept_tracking") {
-  domains <- getDomainInformation(packageName = 'CohortDiagnostics') %>%
+  domains <- getDomainInformation(packageName = 'CohortDiagnostics')
+  domains <- domains$wide %>%
     dplyr::filter(nchar(.data$domainSourceConceptId) > 1)
   
   sql <- "WITH concept_id_universe
@@ -1467,3 +1504,126 @@ getExcludedConceptSets <- function(connection,
   )
   return(excludedConcepts)
 }
+
+
+
+#' given a concept set table, get optimization recommendation
+#'
+#' @template Connection
+#'
+#' @template VocabularyDatabaseSchema
+#' 
+#' @template TempEmulationSchema
+#'
+#' @param conceptSetExpression   An R Object (list) with concept set expression. This maybe generated
+#'                               by first getting the JSON representation of concept set expression and
+#'                               converting it to a list using RJSONIO::fromJson(digits = 23)
+#'
+#' @export
+getOptimizationRecommendationForConceptSetExpression <-
+  function(conceptSetExpression,
+           vocabularyDatabaseSchema = 'vocabulary',
+           tempEmulationSchema = tempEmulationSchema,
+           connectionDetails = NULL,
+           connection = NULL) {
+    conceptSetExpressionDataFrame <-
+      getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression)
+    if (nrow(conceptSetExpressionDataFrame) <= 1) {
+      # no optimization necessary
+      return(
+        conceptSetExpressionDataFrame %>%
+          dplyr::mutate(excluded = as.integer(.data$isExcluded),
+                        removed = 0) %>%
+          dplyr::select(.data$conceptId, .data$excluded, .data$removed)
+      )
+    }
+    
+    if (all(is.null(connectionDetails),
+            is.null(connection))) {
+      stop('Please provide either connection or connectionDetails to connect to database.')
+    }
+    # Set up connection to server----
+    if (is.null(connection)) {
+      if (!is.null(connectionDetails)) {
+        connection <- DatabaseConnector::connect(connectionDetails)
+        on.exit(DatabaseConnector::disconnect(connection))
+      }
+    }
+    
+    conceptSetConceptIdsExcluded <-
+      conceptSetExpressionDataFrame %>%
+      dplyr::filter(.data$isExcluded == TRUE) %>%
+      dplyr::pull(.data$conceptId)
+    
+    conceptSetConceptIdsDescendantsExcluded <-
+      conceptSetExpressionDataFrame %>%
+      dplyr::filter(.data$isExcluded == TRUE) %>%
+      dplyr::filter(.data$includeDescendants == TRUE) %>%
+      dplyr::pull(.data$conceptId)
+    
+    conceptSetConceptIdsNotExcluded <-
+      conceptSetExpressionDataFrame %>%
+      dplyr::filter(!.data$isExcluded == TRUE) %>%
+      dplyr::pull(.data$conceptId)
+    
+    conceptSetConceptIdsDescendantsNotExcluded <-
+      conceptSetExpressionDataFrame %>%
+      dplyr::filter(!.data$isExcluded == TRUE) %>%
+      dplyr::filter(.data$includeDescendants == TRUE) %>%
+      dplyr::pull(.data$conceptId)
+    
+    if (!doesObjectHaveData(conceptSetConceptIdsExcluded)) {
+      conceptSetConceptIdsExcluded <- 0
+    }
+    if (!doesObjectHaveData(conceptSetConceptIdsDescendantsExcluded)) {
+      conceptSetConceptIdsDescendantsExcluded <- 0
+    }
+    if (!doesObjectHaveData(conceptSetConceptIdsNotExcluded)) {
+      conceptSetConceptIdsNotExcluded <- 0
+    }
+    if (!doesObjectHaveData(conceptSetConceptIdsDescendantsNotExcluded)) {
+      conceptSetConceptIdsDescendantsNotExcluded <- 0
+    }
+    
+    sql <-
+      SqlRender::readSql(
+        sourceFile = system.file("sql",
+                                 "sql_server",
+                                 'OptimizeConceptSet.sql',
+                                 package = "CohortDiagnostics")
+      )
+    
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = sql,
+      reportOverallTime = FALSE,
+      progressBar = FALSE,
+      vocabulary_database_schema = vocabularyDatabaseSchema,
+      conceptSetConceptIdsExcluded = conceptSetConceptIdsExcluded,
+      conceptSetConceptIdsDescendantsExcluded = conceptSetConceptIdsDescendantsExcluded,
+      conceptSetConceptIdsNotExcluded = conceptSetConceptIdsNotExcluded,
+      conceptSetConceptIdsDescendantsNotExcluded = conceptSetConceptIdsDescendantsNotExcluded
+    )
+    
+    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                       sql = "SELECT * FROM #optimized_set;",
+                                                       snakeCaseToCamelCase = TRUE)
+    
+    sqlCleanUp <-
+      "IF OBJECT_ID('tempdb..#optimized_set', 'U') IS NOT NULL
+	        DROP TABLE #optimized_set;"
+    
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = sqlCleanUp,
+      reportOverallTime = FALSE,
+      progressBar = FALSE
+    )
+    data <- data %>% 
+      dplyr::filter(.data$conceptId != 0)
+    
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
+    return(data)
+  }

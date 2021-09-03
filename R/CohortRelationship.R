@@ -245,7 +245,7 @@ runCohortRelationshipDiagnostics <-
         andromedaTableName = 'temp'
       )
       
-      if (!"cohortRelationship" %in% names(resultsInAndromeda)) {
+      if (!"cohortRelationships" %in% names(resultsInAndromeda)) {
         resultsInAndromeda$cohortRelationships <- resultsInAndromeda$temp
       } else {
         Andromeda::appendToTable(resultsInAndromeda$cohortRelationships,
@@ -270,6 +270,7 @@ runCohortRelationshipDiagnostics <-
         .data$sameDaySubjects,
         .data$cPersonDays,
         .data$cSubjectsStart,
+        .data$cSubjectsExist,
         .data$cSubjectsEnd,
         .data$cInTSubjects
       ) %>%

@@ -1,3 +1,22 @@
+
+# used to get the short name in plots
+addShortName <- function(data, shortNameRef = NULL, cohortIdColumn = "cohortId", shortNameColumn = "shortName") {
+  if (is.null(shortNameRef)) {
+    shortNameRef <- data %>%
+      dplyr::distinct(.data$cohortId) %>%
+      dplyr::arrange(.data$cohortId) %>%
+      dplyr::mutate(shortName = paste0("C", dplyr::row_number()))
+  } 
+  
+  shortNameRef <- shortNameRef %>%
+    dplyr::distinct(.data$cohortId, .data$shortName) 
+  colnames(shortNameRef) <- c(cohortIdColumn, shortNameColumn)
+  data <- data %>%
+    dplyr::inner_join(shortNameRef, by = cohortIdColumn)
+  return(data)
+}
+
+
 getSubjectCountsByDatabasae <-
   function(data, cohortId, databaseIds) {
     data %>%
@@ -125,4 +144,191 @@ sumCounts <- function(counts) {
   } else {
     return(result)
   }
+}
+
+consolidationOfSelectedFieldValues <- function(input,
+                                               cohort = NULL,
+                                               conceptSets = NULL,
+                                               conceptSetExpressionLeft = NULL,
+                                               conceptSetExpressionRight = NULL,
+                                               database = NULL,
+                                               resolvedConceptSetDataLeft = NULL,
+                                               resolvedConceptSetDataRight = NULL,
+                                               orphanConceptSetDataLeft = NULL,
+                                               orphanConceptSetDataRight = NULL,
+                                               excludedConceptSetDataLeft = NULL,
+                                               excludedConceptSetDataRight = NULL,
+                                               indexEventBreakdownDataTable = NULL) {
+  data <- list()
+  ##########################Cohort Definition tab ##########################
+  if (input$tabs == 'cohortDefinition') {
+    #selection of cohort
+    if (doesObjectHaveData(input$cohortDefinitionTable_rows_selected)) {
+      if (length(input$cohortDefinitionTable_rows_selected) > 1) {
+        # get the last two rows selected - this is only for cohort table to enable LEFT/RIGHT comparison
+        lastRowsSelected <-
+          input$cohortDefinitionTable_rows_selected[c(
+            length(input$cohortDefinitionTable_rows_selected),
+            length(input$cohortDefinitionTable_rows_selected) - 1
+          )]
+        data$cohortIdTarget <-
+          cohort[lastRowsSelected[[1]], ]$cohortId
+        data$cohortIdComparator <-
+          cohort[lastRowsSelected[[2]], ]$cohortId
+      } else {
+        lastRowsSelected <- input$cohortDefinitionTable_rows_selected
+        data$cohortIdTarget <-
+          cohort[lastRowsSelected[[1]], ]$cohortId
+        data$cohortIdComparator <- NULL
+      }
+    }
+    
+    #selection on concept set id
+    if (all(
+      doesObjectHaveData(input$targetCohortDefinitionConceptSetsTable_rows_selected),
+      doesObjectHaveData(data$cohortIdTarget)
+    )) {
+      selectedConceptSet <-
+        conceptSetExpressionLeft[input$targetCohortDefinitionConceptSetsTable_rows_selected,]
+      data$conceptSetIdTarget <- selectedConceptSet$conceptSetId
+      
+      if (all(
+        doesObjectHaveData(input$comparatorCohortDefinitionConceptSets_rows_selected),
+        doesObjectHaveData(data$cohortIdComparator)
+      )) {
+        selectedConceptSet <-
+          conceptSetExpressionRight[input$comparatorCohortDefinitionConceptSets_rows_selected,]
+        data$conceptSetIdComparator <- selectedConceptSet$conceptSetId
+      }
+    }
+    #selection on database id
+    if (doesObjectHaveData(input$targetVocabularyChoiceForConceptSetDetails)) {
+      data$selectedDatabaseIdTarget <- database %>%
+        dplyr::filter(
+          .data$databaseIdWithVocabularyVersion == input$targetVocabularyChoiceForConceptSetDetails
+        ) %>% 
+        dplyr::pull(.data$databaseId)
+    }
+    if (doesObjectHaveData(input$comparatorVocabularyChoiceForConceptSetDetails)) {
+      data$selectedDatabaseIdRight <- database %>%
+        dplyr::filter(
+          .data$databaseIdWithVocabularyVersion == input$comparatorVocabularyChoiceForConceptSetDetails
+        ) %>% 
+        dplyr::pull(.data$databaseId)
+    }
+    #selection on concept id
+    if (doesObjectHaveData(input$targetCohortDefinitionResolvedConceptTable_rows_selected)) {
+      data$selectedConceptIdTarget <- resolvedConceptSetDataLeft[input$targetCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
+      data$leftSideActive <- TRUE
+    }
+    if (doesObjectHaveData(input$comparatorCohortDefinitionResolvedConceptTable_rows_selected)) {
+      data$selectedConceptIdComparator <- resolvedConceptSetDataRight[input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
+      data$rightSideActive <- TRUE
+    }
+    if (doesObjectHaveData(input$targetCohortDefinitionExcludedConceptTable_rows_selected)) {
+      data$selectedConceptIdTarget <- excludedConceptSetDataLeft[input$targetCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
+      data$leftSideActive <- TRUE
+    }
+    if (doesObjectHaveData(input$comparatorCohortDefinitionExcludedConceptTable_rows_selected)) {
+      data$selectedConceptIdComparator <- excludedConceptSetDataRight[input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
+      data$rightSideActive <- TRUE
+    }
+    if (doesObjectHaveData(input$targetCohortDefinitionOrphanConceptTable_rows_selected)) {
+      data$selectedConceptIdTarget <- orphanConceptSetDataLeft[input$targetCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
+      data$leftSideActive <- TRUE
+    }
+    if (doesObjectHaveData(input$comparatorCohortDefinitionOrphanConceptTable_rows_selected)) {
+      data$selectedConceptIdComparator <- orphanConceptSetDataRight[input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
+      data$rightSideActive <- TRUE
+    }
+  }
+  ####################################################
+  if (input$tabs == 'indexEventBreakdown' || 
+      input$tabs == 'visitContext' ||
+      input$tabs == 'cohortCharacterization' ||
+      input$tabs == 'temporalCharacterization' ||
+      input$tabs == 'compareCohortCharacterization' ||
+      input$tabs == 'compareTemporalCharacterization') {
+    data <- list()
+    
+    #single select cohortId
+    if (all(!is.null(input$selectedCompoundCohortName),
+            !is.null(cohort))) {
+      data$cohortIdTarget <- cohort %>%
+        dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortName) %>%
+        dplyr::arrange(.data$cohortId) %>%
+        dplyr::pull(.data$cohortId) %>%
+        unique()
+    }
+    #mutli select databaseId
+    if (input$tabs == 'temporalCharacterization' ||
+        input$tabs == 'compareCohortCharacterization' ||
+        input$tabs == 'compareTemporalCharacterization') {
+      
+      if (doesObjectHaveData(input$selectedDatabaseId)) {
+        data$selectedDatabaseIdTarget <- input$selectedDatabaseId
+      } else {
+        data$selectedDatabaseIdTarget <- NULL
+      }
+    } else {
+      if (doesObjectHaveData(input$selectedDatabaseIds)) {
+        if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
+            isTRUE(input$selectedDatabaseIds_open) ||
+            doesObjectHaveData(input$tabs)) {
+          data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
+        } else {
+          data$selectedDatabaseIdTarget <- NULL
+        }
+      }
+    }
+   
+    #mutli select concept set id for one cohort
+    if (doesObjectHaveData(input$conceptSetsSelectedCohortLeft)) {
+      data$conceptSetIdTarget <- conceptSets %>% 
+        dplyr::filter(.data$cohortId %in% data$cohortIdTarget) %>% 
+        dplyr::filter(.data$conceptSetName %in% input$conceptSetsSelectedCohortLeft) %>% 
+        dplyr::pull(.data$conceptSetId)
+    }
+    if (all(doesObjectHaveData(indexEventBreakdownDataTable),
+            doesObjectHaveData(input$indexEventBreakdownTable_rows_selected))) {
+      lastRowsSelected <- input$indexEventBreakdownTable_rows_selected[length(input$indexEventBreakdownTable_rows_selected)]
+      data$selectedConceptIdTarget <- indexEventBreakdownDataTable[lastRowsSelected, ]$conceptId
+      data$leftSideActive <- TRUE
+    }
+  }
+  
+  ####################################################
+  if (input$tabs == 'cohortCounts' ||
+      input$tabs == 'incidenceRate' ||
+      input$tabs == 'timeSeries' ||
+      input$tabs == 'timeDistribution' ||
+      input$tabs == 'cohortOverlap') {
+    data <- list()
+    #multi select cohortId
+    if (doesObjectHaveData(input$selectedCompoundCohortNames)) {
+      if (doesObjectHaveData(input$selectedCompoundCohortNames_open) ||
+          isTRUE(input$selectedCompoundCohortNames_open) || 
+          doesObjectHaveData(input$tabs)
+      ) {
+        data$cohortIdTarget <- cohort %>%
+          dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortNames) %>%
+          dplyr::arrange(.data$cohortId) %>%
+          dplyr::pull(.data$cohortId) %>%
+          unique()
+      }
+    }
+    
+    #mutli select databaseId
+    if (doesObjectHaveData(input$selectedDatabaseIds)) {
+      if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
+          isTRUE(input$selectedDatabaseIds_open) ||
+          doesObjectHaveData(input$tabs)) {
+        data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
+      } else {
+        data$selectedDatabaseIdTarget <- NULL
+      }
+    }
+    
+  }
+  return(data)
 }
