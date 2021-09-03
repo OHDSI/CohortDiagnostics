@@ -3481,20 +3481,36 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No resolved concept ids"))
-      columnDef <- list(truncateStringDef(1, 80))
-      maxCount <- NULL
-      maxSubject <- NULL
-      if ("subjects" %in% colnames(data) &&
-          "count" %in% colnames(data))
-      {
-        columnDef <- list(truncateStringDef(1, 80), minCellCountDef(2:3))
-        maxCount <- max(data$count, na.rm = TRUE)
-        maxSubject <- max(data$subjects, na.rm = TRUE)
-      }
+      
+      databaseIds <- sort(unique(data$databaseId))
+      maxCount <- max(data$conceptCount, na.rm = TRUE)
+      maxSubject <- max(data$subjectCount, na.rm = TRUE)
+      
+      data <- data %>% 
+        tidyr::pivot_longer(
+          names_to = "type",
+          cols = c("conceptCount", "subjectCount"),
+          values_to = "count"
+        ) %>% 
+        dplyr::mutate(type = paste0(.data$type,
+                                    " ",
+                                    .data$databaseId)) %>% 
+        tidyr::pivot_wider(
+          id_cols = c(
+            "conceptId",
+            "conceptName",
+            "vocabularyId",
+            "domainId",
+            "standardConcept"
+          ),
+          names_from = type,
+          values_from = count,
+          values_fill = 0
+        )
       
       options = list(
         pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
@@ -3503,13 +3519,39 @@ shiny::shinyServer(function(input, output, session) {
         searchHighlight = TRUE,
         scrollX = TRUE,
         scrollY = "20vh",
-        columnDefs = columnDef
+        columnDefs = list(truncateStringDef(1, 50))
       )
+      
+      sketch <- htmltools::withTags(table(class = "display",
+                                          thead(
+                                            tr(
+                                              th(rowspan = 2, "Concept Id"),
+                                              th(rowspan = 2, "Concept Name"),
+                                              th(rowspan = 2, "Vocabulary Id"),
+                                              th(rowspan = 2, "Domain Id"),
+                                              th(rowspan = 2, "Standard Concept"),
+                                              lapply(
+                                                databaseIds,
+                                                th,
+                                                colspan = 2,
+                                                class = "dt-center",
+                                                style = "border-right:1px solid silver;border-bottom:1px solid silver"
+                                              )
+                                            ),
+                                            tr(
+                                              lapply(rep(
+                                                c("Records", "Subjects"), length(databaseIds)
+                                              ),
+                                              th,
+                                              style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                            )
+                                          )))
       
       dataTable <- DT::datatable(
         data,
         options = options,
         rownames = FALSE,
+        container = sketch,
         colnames = colnames(data) %>% camelCaseToTitleCase(),
         escape = FALSE,
         selection = 'single',
@@ -3519,7 +3561,7 @@ shiny::shinyServer(function(input, output, session) {
       
       dataTable <- DT::formatStyle(
         table = dataTable,
-        columns =  3,
+        columns =  5 + 1:(length(databaseIds) * 2),
         background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
@@ -3527,7 +3569,7 @@ shiny::shinyServer(function(input, output, session) {
       )
       dataTable <- DT::formatStyle(
         table = dataTable,
-        columns =  4,
+        columns =  5 + 1:(length(databaseIds) * 2),
         background = DT::styleColorBar(c(0, maxCount), "lightblue"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
