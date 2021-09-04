@@ -474,9 +474,16 @@ bodyTabItems <- shinydashboard::tabItems(
                                  )
                                )
                              )),)
+        ),
+        tags$tr(
+          tags$td(colspan = 6, align = 'right',
+            shiny::actionButton(
+              inputId = "renderIncidentRatePlot",
+              label = "Render Plot"
+            )
+          )
         )
       ),
-      shiny::htmlOutput(outputId = "hoverInfoIr"),
       ggiraph::ggiraphOutput(
         outputId = "incidenceRatePlot",
         width = "100%",
