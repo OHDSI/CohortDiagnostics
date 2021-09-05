@@ -3227,7 +3227,7 @@ shiny::shinyServer(function(input, output, session) {
   ##output: isComparatorCohortDefinitionConceptSetRowSelected----
   output$isComparatorCohortDefinitionConceptSetRowSelected <-
     shiny::reactive(x = {
-      input$comparatorCohortDefinitionConceptSets_rows_selected
+      return(!is.null(input$comparatorCohortDefinitionConceptSets_rows_selected))
     })
   shiny::outputOptions(x = output,
                        name = "isComparatorCohortDefinitionConceptSetRowSelected",
@@ -3237,8 +3237,7 @@ shiny::shinyServer(function(input, output, session) {
   output$comparatorCohortDefinitionConceptSetsExpressionTable <-
     DT::renderDataTable(expr = {
       data <- getConceptSetExpressionComparator()
-      if (!doesObjectHaveData(data))
-      {
+      if (!doesObjectHaveData(data)) {
         return(NULL)
       }
       
@@ -3270,7 +3269,7 @@ shiny::shinyServer(function(input, output, session) {
         searchHighlight = TRUE,
         scrollX = TRUE,
         scrollY = "20vh",
-        columnDefs = list(truncateStringDef(1, 80))
+        columnDefs = list(truncateStringDef(2, 80))
       )
       
       dataTable <- DT::datatable(
