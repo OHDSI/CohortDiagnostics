@@ -2337,8 +2337,10 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>% 
       dplyr::filter(.data$databaseId %in% activeSelected()$databaseId)
     
+    tsibbleDataFromSTLModel <- getSTLModelTsibbleData(tsibbleData = data)
+    
     plot <- plotTimeSeriesFromTsibble(
-      tsibbleData = data,
+      tsibbleData = tsibbleDataFromSTLModel,
       yAxisLabel = "Counts",
       #!!!! radio button for counts and subjects titleCaseToCamelCase(input$timeSeriesPlotFilters),
       indexAggregationType = input$timeSeriesAggregationForCohortDefinition,
@@ -4560,12 +4562,16 @@ shiny::shinyServer(function(input, output, session) {
           nrow(data) > 0),
       "No timeseries data for the cohort of this series type"
     ))
+    
+    tsibbleDataFromSTLModel <- getSTLModelTsibbleData(tsibbleData = data)
+    
     plot <- plotTimeSeriesFromTsibble(
-      tsibbleData = data,
+      tsibbleData = tsibbleDataFromSTLModel,
       yAxisLabel = titleCaseToCamelCase(input$timeSeriesPlotFilters),
       indexAggregationType = input$timeSeriesAggregationPeriodSelection,
       timeSeriesStatistics = input$timeSeriesStatistics
     )
+    
     plot <- ggiraph::girafe(
       ggobj = plot,
       options = list(

@@ -8,9 +8,7 @@ plotTimeSeriesFromTsibble <-
     if (is.null(data)) {
       return(NULL)
     }
-    data <- tsibbleData %>% 
-      dplyr::mutate(Total = .data$value) %>% 
-      dplyr::select(-.data$value)
+   
 
     #if aggregationPeriod is 'Year' then STL will not return 'season_year'
     if (indexAggregationType == "Yearly") {
@@ -19,10 +17,7 @@ plotTimeSeriesFromTsibble <-
       pivotBy <- c("Total", "trend", "season_year", "remainder")
     }
     
-    data <- data %>%
-      tsibble::fill_gaps(Total = 0) %>% 
-      fabletools::model(feasts::STL(Total ~  season(window = Inf))) %>%
-      fabletools::components() %>%
+    data <- tsibbleData %>%
       tidyr::pivot_longer(cols = pivotBy ,
                           names_to = "fieldName",
                           values_to = "fieldValues") 
