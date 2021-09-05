@@ -335,6 +335,23 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data) {
   maxCount <- max(data$conceptCount, na.rm = TRUE)
   maxSubject <- max(data$subjectCount, na.rm = TRUE)
   
+  personAndRecordCount <- data %>% 
+    dplyr::inner_join(cohortCount) %>% 
+    dplyr::select(.data$cohortSubjects, .data$cohortEntries) %>% 
+    dplyr::distinct() %>%
+    dplyr::mutate(cohortSubjects = scales::comma(.data$cohortSubjects,
+                                                 accuracy = 1)) %>%
+    dplyr::mutate(cohortEntries = scales::comma(.data$cohortEntries,
+                                                accuracy = 1))
+  
+  recordCount <- personAndRecordCount %>% 
+    dplyr::select(.data$cohortEntries) %>% 
+    dplyr::pull()
+  
+  personCount <- personAndRecordCount %>% 
+    dplyr::select(.data$cohortSubjects) %>% 
+    dplyr::pull()
+  
   data <- data %>% 
     tidyr::pivot_longer(
       names_to = "type",
@@ -371,6 +388,15 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data) {
     columnDefs = list(truncateStringDef(1, 50))
   )
   
+  recordAndPersonColumnName <- c()
+  for (i in 1:length(databaseIds)) {
+    recordAndPersonColumnName <-
+      c(
+        recordAndPersonColumnName,
+        paste0("Records (", recordCount[i], ")"),
+        paste0("Person (", personCount[i], ")")
+      )
+  }
   sketch <- htmltools::withTags(table(class = "display",
                                       thead(
                                         tr(
@@ -388,11 +414,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data) {
                                           )
                                         ),
                                         tr(
-                                          lapply(rep(
-                                            c("Records", "Subjects"), length(databaseIds)
-                                          ),
-                                          th,
-                                          style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                          lapply(recordAndPersonColumnName, th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                         )
                                       )))
   

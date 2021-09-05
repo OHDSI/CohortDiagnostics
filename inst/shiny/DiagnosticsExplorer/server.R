@@ -2759,7 +2759,7 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No resolved concept ids"))
-      
+    
       return(getSketchDesignForTablesInCohortDefinitionTab(data = data))
     }, server = TRUE)
   
