@@ -2256,35 +2256,77 @@ shiny::shinyServer(function(input, output, session) {
     if (any(!doesObjectHaveData(target),!doesObjectHaveData(comparator))) {
       return(NULL)
     }
+    
     combinedResult <-
       target %>%
       dplyr::union(comparator) %>%
       dplyr::arrange(.data$conceptId) %>%
-      dplyr::select(.data$conceptId, .data$conceptName) %>%
+      dplyr::select(.data$conceptId, .data$conceptName, .data$databaseId) %>%
       dplyr::mutate(left = "", right = "")
     
-    cohortIdsPresentInLeft <- target %>%
+    databaseIds <- unique(combinedResult$databaseId)
+    
+    conceptIdsPresentInTarget <- target %>%
       dplyr::pull(.data$conceptId) %>%
       unique()
     
-    cohortIdsPresentInRight <- comparator %>%
+    conceptIdsPresentInComparator <- comparator %>%
       dplyr::pull(.data$conceptId) %>%
       unique()
     
     for (i in 1:nrow(combinedResult)) {
       combinedResult$left[i] <-
         ifelse(
-          combinedResult$conceptId[i] %in% cohortIdsPresentInLeft,
+          combinedResult$conceptId[i] %in% conceptIdsPresentInTarget,
           as.character(icon("check")),
           ""
         )
       combinedResult$right[i] <-
         ifelse(
-          combinedResult$conceptId[i] %in% cohortIdsPresentInRight,
+          combinedResult$conceptId[i] %in% conceptIdsPresentInComparator,
           as.character(icon("check")),
           ""
         )
     }
+    
+    combinedResult <- combinedResult %>% 
+      dplyr::mutate(left = as.character(.data$left)) %>% 
+      dplyr::mutate(right = as.character(.data$right)) %>% 
+      tidyr::pivot_longer(
+        names_to = "type",
+        cols = c("left", "right"),
+        values_to = "count"
+      ) %>% 
+      dplyr::mutate(type = paste0(.data$type,
+                                  " ",
+                                  .data$databaseId)) %>% 
+      tidyr::pivot_wider(
+        id_cols = c(
+          "conceptId",
+          "conceptName"
+        ),
+        names_from = type,
+        values_from = count
+      )
+    
+    sketch <- htmltools::withTags(table(class = "display",
+                                        thead(tr(
+                                          th(rowspan = 2, "Concept ID"),
+                                          th(rowspan = 2, "Concept Name"),
+                                          lapply(
+                                            databaseIds,
+                                            th,
+                                            colspan = 2,
+                                            class = "dt-center",
+                                            style = "border-right:1px solid silver;border-bottom:1px solid silver"
+                                          )
+                                        ),
+                                        tr(
+                                          lapply(rep(
+                                            c("From Target", "From Comparator"),
+                                            length(databaseIds)
+                                          ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                        ))))
     
     options = list(
       pageLength = 20,
@@ -2302,6 +2344,7 @@ shiny::shinyServer(function(input, output, session) {
     dataTable <- DT::datatable(
       combinedResult,
       options = options,
+      container = sketch,
       colnames = colnames(combinedResult) %>% camelCaseToTitleCase(),
       rownames = FALSE,
       escape = FALSE,
