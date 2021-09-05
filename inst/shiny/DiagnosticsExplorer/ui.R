@@ -277,8 +277,8 @@ bodyTabItems <- shinydashboard::tabItems(
                           )
                         ))),    
       DT::dataTableOutput(outputId = "cohortDefinitionTable"),
-      shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedLeft"),
-      shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedRight"),
+      shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedTarget"),
+      shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedComparator"),
       tags$br(),
       shiny::column(12,
                     shiny::conditionalPanel(

@@ -330,15 +330,15 @@ shiny::shinyServer(function(input, output, session) {
                    input = input,
                    cohort = getCohortSortedByCohortId(),
                    conceptSets = conceptSets,
-                   conceptSetExpressionLeft = getConceptSetsInCohortDataTarget(),
-                   conceptSetExpressionRight = getConceptSetsInCohortDataComparator(),
+                   conceptSetExpressionTarget = getConceptSetsInCohortDataTarget(),
+                   conceptSetExpressionComparator = getConceptSetsInCohortDataComparator(),
                    database = database,
-                   resolvedConceptSetDataLeft = getResolvedConceptsTarget(),
-                   resolvedConceptSetDataRight = getResolvedConceptsComparator(),
-                   orphanConceptSetDataLeft = getOrphanConceptsLeft(),
-                   orphanConceptSetDataRight = getOrphanConceptsRight(),
-                   excludedConceptSetDataLeft = getExcludedConceptsLeft(),
-                   excludedConceptSetDataRight = getExcludedConceptsRight(),
+                   resolvedConceptSetDataTarget = getResolvedConceptsTarget(),
+                   resolvedConceptSetDataComparator = getResolvedConceptsComparator(),
+                   orphanConceptSetDataTarget = getOrphanConceptsTarget(),
+                   orphanConceptSetDataComparator = getOrphanConceptsComparator(),
+                   excludedConceptSetDataTarget = getExcludedConceptsTarget(),
+                   excludedConceptSetDataComparator = getExcludedConceptsComparator(),
                    indexEventBreakdownDataTable = getIndexEventBreakdownDataTable()
                  )
                  consolidatedCohortIdTarget(data$cohortIdTarget)
@@ -357,7 +357,7 @@ shiny::shinyServer(function(input, output, session) {
   ##Cohort definition----
   
   ##Dynamic UI rendering for left side -----
-  output$dynamicUIGenerationForCohortSelectedLeft <-
+  output$dynamicUIGenerationForCohortSelectedTarget <-
     shiny::renderUI(expr = {
       shiny::column(
         getWidthOfLeftPanelForCohortDetailBrowserInCohortDefinitionTabBasedOnNoOfRowSelectedInCohortTable(),
@@ -594,7 +594,7 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   ##Dynamic UI rendering for right side -----
-  output$dynamicUIGenerationForCohortSelectedRight <-
+  output$dynamicUIGenerationForCohortSelectedComparator <-
     shiny::renderUI(expr = {
       shiny::column(
         getWidthOfLeftPanelForCohortDetailBrowserInCohortDefinitionTabBasedOnNoOfRowSelectedInCohortTable(),
@@ -1450,8 +1450,8 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###getExcludedConceptsLeft----
-  getExcludedConceptsLeft <- shiny::reactive({
+  ###getExcludedConceptsTarget----
+  getExcludedConceptsTarget <- shiny::reactive({
     if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
       return(NULL)
     }
@@ -1479,8 +1479,8 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###getExcludedConceptsRight----
-  getExcludedConceptsRight <- shiny::reactive({
+  ###getExcludedConceptsComparator----
+  getExcludedConceptsComparator <- shiny::reactive({
     if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
       return(NULL)
     }
@@ -1506,8 +1506,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   
-  ###getOrphanConceptsLeft----
-  getOrphanConceptsLeft <- shiny::reactive({
+  ###getOrphanConceptsTarget----
+  getOrphanConceptsTarget <- shiny::reactive({
     data <- getResultsOrphanConcept(
       dataSource = dataSource,
       cohortIds = consolidatedCohortIdTarget(),
@@ -1519,7 +1519,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>%
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget())
     
-    excluded <- getExcludedConceptsLeft()
+    excluded <- getExcludedConceptsTarget()
     if (doesObjectHaveData(excluded)) {
       excludedConceptIds <- excluded %>%
         dplyr::select(.data$conceptId) %>%
@@ -1537,8 +1537,8 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###getOrphanConceptsRight----
-  getOrphanConceptsRight <- shiny::reactive({
+  ###getOrphanConceptsComparator----
+  getOrphanConceptsComparator <- shiny::reactive({
     data <- getResultsOrphanConcept(
       dataSource = dataSource,
       cohortIds = consolidatedCohortIdComparator(),
@@ -1549,7 +1549,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>%
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdComparator())
-    excluded <- getExcludedConceptsRight()
+    excluded <- getExcludedConceptsComparator()
     if (doesObjectHaveData(excluded)) {
       excludedConceptIds <- excluded %>%
         dplyr::select(.data$conceptId) %>%
@@ -1563,12 +1563,12 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###getConceptRelationshipsLeft----
-  getConceptRelationshipsLeft <- shiny::reactive({
+  ###getConceptRelationshipsTarget----
+  getConceptRelationshipsTarget <- shiny::reactive({
     conceptIds <- dplyr::bind_rows(
       getResolvedConceptsTarget(),
-      getExcludedConceptsLeft(),
-      getOrphanConceptsLeft()
+      getExcludedConceptsTarget(),
+      getOrphanConceptsTarget()
     ) %>%
       dplyr::pull(.data$conceptId) %>%
       unique() %>%
@@ -1586,12 +1586,12 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###getConceptRelationshipsRight----
-  getConceptRelationshipsRight <- shiny::reactive({
+  ###getConceptRelationshipsComparator----
+  getConceptRelationshipsComparator <- shiny::reactive({
     conceptIds <- dplyr::bind_rows(
       getResolvedConceptsComparator(),
-      getExcludedConceptsRight(),
-      getOrphanConceptsRight()
+      getExcludedConceptsComparator(),
+      getOrphanConceptsComparator()
     ) %>%
       dplyr::pull(.data$conceptId) %>%
       unique() %>%
@@ -1609,12 +1609,12 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###getConceptAncestorLeft----
-  getConceptAncestorLeft <- shiny::reactive({
+  ###getConceptAncestorTarget----
+  getConceptAncestorTarget <- shiny::reactive({
     conceptIds <- dplyr::bind_rows(
       getResolvedConceptsTarget(),
-      getExcludedConceptsLeft(),
-      getOrphanConceptsLeft()
+      getExcludedConceptsTarget(),
+      getOrphanConceptsTarget()
     ) %>%
       dplyr::pull(.data$conceptId) %>%
       unique() %>%
@@ -1632,12 +1632,12 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###getConceptAncestorRight----
-  getConceptAncestorRight <- shiny::reactive({
+  ###getConceptAncestorComparator----
+  getConceptAncestorComparator <- shiny::reactive({
     conceptIds <- dplyr::bind_rows(
       getResolvedConceptsComparator(),
-      getExcludedConceptsRight(),
-      getOrphanConceptsRight()
+      getExcludedConceptsComparator(),
+      getOrphanConceptsComparator()
     ) %>%
       dplyr::pull(.data$conceptId) %>%
       unique() %>%
@@ -1655,17 +1655,17 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###getConceptIdOfInterestLeft----
-  getConceptIdOfInterestLeft <- shiny::reactive({
+  ###getConceptIdOfInterestTarget----
+  getConceptIdOfInterestTarget <- shiny::reactive({
     conceptIds <- dplyr::bind_rows(
       getResolvedConceptsTarget(),
-      getExcludedConceptsLeft(),
-      getOrphanConceptsLeft()
+      getExcludedConceptsTarget(),
+      getOrphanConceptsTarget()
     ) %>%
       dplyr::pull(.data$conceptId) %>%
       unique() %>%
       sort()
-    conceptRelationship <- getConceptRelationshipsLeft()
+    conceptRelationship <- getConceptRelationshipsTarget()
     if (all(!is.null(conceptRelationship),
             nrow(conceptRelationship) > 0)) {
       conceptIds <- c(conceptIds,
@@ -1673,7 +1673,7 @@ shiny::shinyServer(function(input, output, session) {
                       conceptRelationship$conceptId2) %>%
         unique()
     }
-    conceptAncestor <- getConceptAncestorLeft()
+    conceptAncestor <- getConceptAncestorTarget()
     if (all(!is.null(conceptAncestor),
             nrow(conceptAncestor) > 0)) {
       conceptIds <- c(
@@ -1690,17 +1690,17 @@ shiny::shinyServer(function(input, output, session) {
     return(conceptIds %>% unique() %>% sort())
   })
   
-  ###getConceptIdOfInterestRight----
-  getConceptIdOfInterestRight <- shiny::reactive({
+  ###getConceptIdOfInterestComparator----
+  getConceptIdOfInterestComparator <- shiny::reactive({
     conceptIds <- dplyr::bind_rows(
       getResolvedConceptsComparator(),
-      getExcludedConceptsRight(),
-      getOrphanConceptsRight()
+      getExcludedConceptsComparator(),
+      getOrphanConceptsComparator()
     ) %>%
       dplyr::pull(.data$conceptId) %>%
       unique() %>%
       sort()
-    conceptRelationship <- getConceptRelationshipsRight()
+    conceptRelationship <- getConceptRelationshipsComparator()
     if (all(!is.null(conceptRelationship),
             nrow(conceptRelationship) > 0)) {
       conceptIds <- c(conceptIds,
@@ -1708,7 +1708,7 @@ shiny::shinyServer(function(input, output, session) {
                       conceptRelationship$conceptId2) %>%
         unique()
     }
-    conceptAncestor <- getConceptAncestorRight()
+    conceptAncestor <- getConceptAncestorComparator()
     if (all(!is.null(conceptAncestor),
             nrow(conceptAncestor) > 0)) {
       conceptIds <- c(
@@ -1727,25 +1727,6 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     return(conceptIds %>% unique() %>% sort())
-  })
-  
-  ###getConceptSetComparisonDetailsRight----
-  getConceptSetComparisonDetailsRight <- shiny::reactive(x = {
-    data <- getConceptSetDetailsRight()
-    if ("orphanConcepts" %in% names(data)) {
-      data <- pivotOrphanConceptResult(data = data$orphanConcepts,
-                                       dataSource = dataSource)
-    } else {
-      return(NULL)
-    }
-  })
-  
-  ###getDataForConceptSetComparison----
-  getDataForConceptSetComparison <- shiny::reactive(x = {
-    leftData <- getConcept()$resolvedConcepts
-    rightData <- getConceptSetDetailsRight()$resolvedConcepts
-    data <- list(leftData = leftData, rightData = rightData)
-    return(data)
   })
   
   ###getWidthOfRelationshipTableForSelectedConcepts----
@@ -2246,12 +2227,12 @@ shiny::shinyServer(function(input, output, session) {
       comparator <- getResolvedConceptsComparator()
     } else if (input$targetConceptSetsType == "Excluded" &
                input$comparatorConceptSetsType == 'Excluded') {
-      target <- getExcludedConceptsLeft()
-      comparator <- getExcludedConceptsRight()
+      target <- getExcludedConceptsTarget()
+      comparator <- getExcludedConceptsComparator()
     }  else if (input$targetConceptSetsType == "Orphan concepts" &
                 input$comparatorConceptSetsType == 'Orphan concepts') {
-      target <- getOrphanConceptsLeft()
-      comparator <- getOrphanConceptsRight()
+      target <- getOrphanConceptsTarget()
+      comparator <- getOrphanConceptsComparator()
     }
     if (any(!doesObjectHaveData(target),!doesObjectHaveData(comparator))) {
       return(NULL)
@@ -2812,7 +2793,7 @@ shiny::shinyServer(function(input, output, session) {
       getCsvFileNameWithDateTime(string = "orphanConcepts")
     },
     content = function(file) {
-      data <- getOrphanConceptsLeft()
+      data <- getOrphanConceptsTarget()
       downloadCsv(x = data, fileName = file)
     }
   )
@@ -2824,7 +2805,7 @@ shiny::shinyServer(function(input, output, session) {
         length(consolidatedCohortIdTarget()) > 0,
         "Please select concept set"
       ))
-      data <- getExcludedConceptsLeft()
+      data <- getExcludedConceptsTarget()
       validate(need((all(
         !is.null(data), nrow(data) > 0
       )),
@@ -2839,7 +2820,7 @@ shiny::shinyServer(function(input, output, session) {
       getCsvFileNameWithDateTime(string = "excludedConcepts")
     },
     content = function(file) {
-      data <- getExcludedConceptsLeft()
+      data <- getExcludedConceptsTarget()
       downloadCsv(x = data, fileName = file)
     }
   )
@@ -2847,7 +2828,7 @@ shiny::shinyServer(function(input, output, session) {
   #output: targetCohortDefinitionOrphanConceptTable----
   output$targetCohortDefinitionOrphanConceptTable <-
     DT::renderDataTable(expr = {
-      data <- getOrphanConceptsLeft()
+      data <- getOrphanConceptsTarget()
       if (!doesObjectHaveData(data)) {
         return(NULL)
       } 
@@ -3348,7 +3329,7 @@ shiny::shinyServer(function(input, output, session) {
   #output: comparatorCohortDefinitionExcludedConceptTable----
   output$comparatorCohortDefinitionExcludedConceptTable <-
     DT::renderDataTable(expr = {
-      data <- getExcludedConceptsRight()
+      data <- getExcludedConceptsComparator()
       validate(need((all(
         !is.null(data), nrow(data) > 0
       )),
@@ -3369,14 +3350,14 @@ shiny::shinyServer(function(input, output, session) {
     },
     content = function(file)
     {
-      data <- getExcludedConceptsRight()
+      data <- getExcludedConceptsComparator()
       downloadCsv(x = data, fileName = file)
     }
   )
   
   output$comparatorCohortDefinitionOrphanConceptTable <-
     DT::renderDataTable(expr = {
-      data <- getOrphanConceptsRight()
+      data <- getOrphanConceptsComparator()
       if (!doesObjectHaveData(data)) {
         return(NULL)
       } 
@@ -3397,7 +3378,7 @@ shiny::shinyServer(function(input, output, session) {
       },
       content = function(file)
       {
-        downloadCsv(x = getOrphanConceptsRight(),
+        downloadCsv(x = getOrphanConceptsComparator(),
                     fileName = file)
       }
     )
