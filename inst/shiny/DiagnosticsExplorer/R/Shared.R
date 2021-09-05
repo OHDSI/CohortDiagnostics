@@ -3137,17 +3137,3 @@ getDomainInformation <- function(packageName = NULL) {
     dplyr::mutate(dplyr::across(where(is.logical), ~ tidyr::replace_na(.x, as.character('')))) %>%
     dplyr::mutate(dplyr::across(where(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
 }
-
-
-getSTLModelTsibbleData <- function(tsibbleData) {
-  if (is.null(data)) {
-    return(NULL)
-  }
-  data <- tsibbleData %>% 
-    dplyr::mutate(Total = .data$value) %>% 
-    dplyr::select(-.data$value) %>%
-    tsibble::fill_gaps(Total = 0) %>% 
-    fabletools::model(feasts::STL(Total ~  season(window = Inf))) %>%
-    fabletools::components()
-  return(data)
-}

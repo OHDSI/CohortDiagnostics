@@ -426,3 +426,17 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data) {
   )
   return(dataTable)
 }
+
+getSTLModelTsibbleData <- function(tsibbleData) {
+  if (is.null(data)) {
+    return(NULL)
+  }
+  data <- tsibbleData %>% 
+    dplyr::mutate(Total = .data$value) %>% 
+    dplyr::select(-.data$value) %>%
+    tsibble::fill_gaps(Total = 0) %>% 
+    fabletools::model(feasts::STL(Total ~  season(window = Inf))) %>%
+    fabletools::components()
+  return(data)
+}
+
