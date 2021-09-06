@@ -2545,7 +2545,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
         dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdTarget()) %>%
         dplyr::pull(.data$conceptSetName)
-      data <- paste0(data, " (Cohort id: ", consolidatedCohortIdTarget(), ")")
+      data <- paste0("Target cohort:", data, " (", consolidatedCohortIdTarget(), ")")
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
@@ -3176,7 +3176,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator()) %>%
         dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdComparator()) %>%
         dplyr::pull(.data$conceptSetName)
-      data <- paste0(data, " (Cohort id: ", consolidatedCohortIdComparator(), ")")
+      data <- paste0("Comparator cohort:", data, " (", consolidatedCohortIdComparator(), ")")
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
