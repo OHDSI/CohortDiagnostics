@@ -454,6 +454,7 @@ shiny::shinyServer(function(input, output, session) {
                 condition = "output.isTargetCohortDefinitionConceptSetsTableRowSelected == true",
                 shinydashboard::box(
                   title = shiny::textOutput(outputId = "targetConceptSetExpressionName"),
+                  ###!!!! add another textOutput with much smaller font and put cohort name here (next line)
                   width = NULL,
                   solidHeader = FALSE,
                   collapsible = TRUE,
@@ -691,7 +692,8 @@ shiny::shinyServer(function(input, output, session) {
               shiny::conditionalPanel(
                 condition = "output.isComparatorCohortDefinitionConceptSetRowSelected == true",
                 shinydashboard::box(
-                  title = shiny::textOutput(outputId = "comparatorCohortDefinitionConceptSetExpressionName"),
+                  title = shiny::textOutput(outputId = "comparatorConceptSetExpressionName"),
+                  ###!!!! add another textOutput with much smaller font and put cohort name here (next line)
                   solidHeader = FALSE,
                   width = NULL,
                   collapsible = TRUE,
@@ -2543,6 +2545,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
         dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdTarget()) %>%
         dplyr::pull(.data$conceptSetName)
+      data <- paste0(data, " (Cohort id: ", consolidatedCohortIdTarget(), ")")
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
@@ -3160,8 +3163,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   
-  #output: comparatorCohortDefinitionConceptSetExpressionName----
-  output$comparatorCohortDefinitionConceptSetExpressionName <-
+  #output: comparatorConceptSetExpressionName----
+  output$comparatorConceptSetExpressionName <-
     shiny::renderText(expr = {
       if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
         return(NULL)
@@ -3173,6 +3176,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator()) %>%
         dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdComparator()) %>%
         dplyr::pull(.data$conceptSetName)
+      data <- paste0(data, " (Cohort id: ", consolidatedCohortIdComparator(), ")")
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
