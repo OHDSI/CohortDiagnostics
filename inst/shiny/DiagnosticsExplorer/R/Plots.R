@@ -1,5 +1,6 @@
 #!!!!!! make plotTimeSeries generic enough that it maybe used every where there is time series
 ###!! given an input tsibble, it should be smart enough to plot
+library(plotly)
 plotTimeSeriesFromTsibble <-
   function(tsibbleData,
            yAxisLabel,
@@ -8,100 +9,157 @@ plotTimeSeriesFromTsibble <-
     if (is.null(data)) {
       return(NULL)
     }
-   
-
-    #if aggregationPeriod is 'Year' then STL will not return 'season_year'
-    if (indexAggregationType == "Yearly") {
-      pivotBy <- c("Total", "trend", "remainder")
-    } else {
-      pivotBy <- c("Total", "trend", "season_year", "remainder")
-    }
-    
-    data <- tsibbleData %>%
-      tidyr::pivot_longer(cols = pivotBy ,
-                          names_to = "fieldName",
-                          values_to = "fieldValues") 
     
     if (indexAggregationType != "Yearly") {
-      data  <- data %>%
+      tsibbleData  <- tsibbleData %>%
         dplyr::mutate(periodBegin = as.Date(.data$periodBegin))
     }
-    
-    aesthetics <-
-      list(
-        x = "periodBegin",
-        y = "fieldValues",
-        group = "fieldName",
-        color = "fieldName"
-      )
-    #!!!!!!!!!!!!! dummy name if no cohort
-    if (is.null(data$cohortShortName)) {
-      data$cohortShortName <- "cohort"
-    }
-    
-    data$tooltip <- c(
+    tsibbleData$tooltip <- c(
       paste0(
-        data$fieldName,
-        " = ",
-        data$fieldValues,
-        "\nPeriod Begin = ",
-        data$periodBegin,
-        "\nDatabase ID = ",
-        data$databaseId
-        ,
+        "Database ID = ",
+        tsibbleData$databaseId,
         "\nCohort = ",
-        data$cohortShortName
+        tsibbleData$cohortShortName
       )
     )
     
-    # Filtering by Decomposition plot category
-    data <- data[data$fieldName %in% timeSeriesStatistics, ]
+    # # Using Plotly
+    plots <- list()
+    distinctDatabaseId <- tsibbleData$databaseId %>% unique()
+     for (i in 1:length(timeSeriesStatistics)) {
+       databasePlots <- list()
+       for (j in 1:length(distinctDatabaseId)) {
+         data <- tsibbleData %>% dplyr::filter(.data$databaseId == distinctDatabaseId[j])
+         distinctCohortShortName <- data$cohortShortName %>%  unique()
+         cohortPlots <- lapply(distinctCohortShortName, function(var3) {
+           filteredData <- data %>% dplyr::filter(.data$cohortShortName == var3)
+           plot <- plotly::plot_ly(filteredData, x = ~periodBegin, y = as.formula(paste0("~", timeSeriesStatistics[i]))) %>%
+             plotly::add_lines(name = var3, text = ~tooltip) %>% 
+             plotly::layout(showlegend = FALSE)
+           if (i == 1) {
+             plot <- plot %>%
+               plotly::layout(annotations = list(x = 0.5 , y = 1, text = var3, showarrow = F, 
+                                         xref = 'paper', yref = 'paper'))
+           }
+          if (i != length(timeSeriesStatistics)) {
+             plot <- plot %>% plotly::layout(xaxis = list(showticklabels = FALSE))
+           }
+           return(plot)
+         })
+         databasePlot <- plotly::subplot(cohortPlots, shareY = TRUE, titleX = FALSE) 
+         if (i == 1) {
+           databasePlot <- databasePlot %>%
+             plotly::layout(annotations = list(x = 0.5 , y = 1.05, text = distinctDatabaseId[j], showarrow = F, 
+                                       xref = 'paper', yref = 'paper'))
+         }
+         databasePlots[[j]] <- databasePlot
+       }
+       plots[[i]] <- plotly::subplot(databasePlots,margin = 0.02,shareY = TRUE)
+     }
+    finalPlot <- plotly::subplot(plots,nrows = length(plots)) 
     
-    plot <-
-      ggplot2::ggplot(data = data, do.call(ggplot2::aes_string, aesthetics)) +
-      ggplot2::theme_bw() +
-      ggiraph::geom_line_interactive(ggplot2::aes(), size = 0.2, alpha = 0.6) +
-      ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip),
-                                      size = 0.1,
-                                      alpha = 0.6) +
-      ggplot2::labs(x = "Period Begin", y = yAxisLabel) +
-      ggplot2::scale_y_continuous(labels = scales::comma) +
-      ggplot2::theme(legend.position = "none") +
-      facet_nested(databaseId + cohortShortName ~ factor(
-        fieldName,
-        levels = c("Total", "trend", "season_year", "remainder")
-      ),
-      scales = "free_y") +
-      ggplot2::theme(
-        strip.text = ggplot2::element_text(size = 4),
-        axis.text = ggplot2::element_text(size = 4),
-        plot.title = ggplot2::element_text(size = 7),
-        plot.subtitle =  ggplot2::element_text(size = 7),
-        axis.title = ggplot2::element_text(size = 5),
-        panel.border = ggplot2::element_blank()
-      )
     
-    spacing <- data %>%
-      dplyr::distinct(.data$databaseId, .data$cohortShortName) %>%
-      dplyr::arrange(.data$databaseId) %>%
-      dplyr::group_by(.data$databaseId) %>%
-      dplyr::summarise(count = dplyr::n()) %>%
-      dplyr::ungroup()
-    spacing <-
-      unlist(sapply(spacing$count, function(x)
-        c(1, rep(0.5, x - 1))))[-1]
     
-    if (length(spacing) > 0) {
-      plot <-
-        plot + ggplot2::theme(
-          panel.spacing.y = ggplot2::unit(spacing, "lines"),
-          strip.background = ggplot2::element_blank()
-        )
-    } else {
-      plot <-
-        plot + ggplot2::theme(strip.background = ggplot2::element_blank())
-    }
-    return(plot)
+    # USING ggiraph and ggplot2
+    # tsibbleData1 <- tsibbleData
+    # if aggregationPeriod is 'Year' then STL will not return 'season_year'
+    # if (indexAggregationType == "Yearly") {
+    #   pivotBy <- c("Total", "trend", "remainder")
+    # } else {
+    #   pivotBy <- c("Total", "trend", "season_year", "remainder")
+    # }
+    # 
+    # data <- tsibbleData %>%
+    #   tidyr::pivot_longer(cols = pivotBy ,
+    #                       names_to = "fieldName",
+    #                       values_to = "fieldValues")
+    
+    # aesthetics <-
+    #   list(
+    #     x = "periodBegin",
+    #     y = "fieldValues",
+    #     group = "fieldName",
+    #     color = "fieldName",
+    #     text = "tooltip"
+    #   )
+    # #!!!!!!!!!!!!! dummy name if no cohort
+    # if (is.null(data$cohortShortName)) {
+    #   data$cohortShortName <- "cohort"
+    # }
+    # 
+    # data$tooltip <- c(
+    #   paste0(
+    #     # data$fieldName,
+    #     # " = ",
+    #     # data$fieldValues,
+    #     # "\nPeriod Begin = ",
+    #     # data$periodBegin,
+    #     "Database ID = ",
+    #     data$databaseId
+    #     ,
+    #     "\nCohort = ",
+    #     data$cohortShortName
+    #   )
+    # )
+    # 
+    # # Filtering by Decomposition plot category
+    # data <- data[data$fieldName %in% timeSeriesStatistics, ]
+    # 
+    # distinctDatabaseId <- data$databaseId %>% unique()
+    # distinctCohortShortName <- data$cohortShortName %>% unique()
+    # xAxisFontSize <- 18
+    # if (length(distinctDatabaseId)* length(distinctCohortShortName) >= 30) {
+    #   xAxisFontSize <- 12
+    # }
+    # 
+    # plot <-
+    #   ggplot2::ggplot(data = data, do.call(ggplot2::aes_string, aesthetics)) +
+    #   ggplot2::theme_bw() +
+    #   # ggplot2::geom_line()+
+    #   # ggplot2::geom_point()+
+    #   ggiraph::geom_line_interactive(ggplot2::aes(), size = 0.5, alpha = 0.6) +
+    #   ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip),
+    #                                   size = 0.7,
+    #                                   alpha = 0.9) +
+    #   ggplot2::labs(x = "Period Begin", y = yAxisLabel) +
+    #   ggplot2::scale_y_continuous(labels = scales::comma) +
+    #   ggplot2::theme(legend.position = "none") +
+    #   facet_nested(factor(
+    #     fieldName,
+    #     levels = c("Total", "trend", "season_year", "remainder")
+    #   ) ~ databaseId + cohortShortName,
+    #   scales = "free_y") +
+    #   ggplot2::theme(
+    #     strip.text = ggplot2::element_text(size = 18),
+    #     axis.text.y = ggplot2::element_text(size = 18),
+    #     plot.title = ggplot2::element_text(size = 20),
+    #     plot.subtitle =  ggplot2::element_text(size = 20),
+    #     axis.title = ggplot2::element_text(size = 18),
+    #     axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5,size = xAxisFontSize),
+    #     panel.border = ggplot2::element_blank(),
+    #     strip.placement = "outside", 
+    #     strip.background.x = ggplot2::element_rect(color = "black",fill = "white"),
+    #     strip.background.y = ggplot2::element_blank()
+    #   )
+    # 
+    # spacing <- data %>%
+    #   dplyr::distinct(.data$databaseId, .data$cohortShortName) %>%
+    #   dplyr::arrange(.data$databaseId) %>%
+    #   dplyr::group_by(.data$databaseId) %>%
+    #   dplyr::summarise(count = dplyr::n()) %>%
+    #   dplyr::ungroup()
+    # spacing <-
+    #   unlist(sapply(spacing$count, function(x)
+    #     c(1, rep(0.5, x - 1))))[-1]
+    # 
+    # if (length(spacing) > 0) {
+    #   plot <-
+    #     plot + ggplot2::theme(
+    #       panel.spacing.y = ggplot2::unit(spacing[1], "lines")
+    #     )
+    # }
+    
+    return(finalPlot)
   }
 
 plotTimeDistribution <- function(data, shortNameRef = NULL) {

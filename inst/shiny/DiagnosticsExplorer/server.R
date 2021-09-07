@@ -4574,7 +4574,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##output: fixedTimeSeriesPlot----
-  output$fixedTimeSeriesPlot <- ggiraph::renderggiraph({
+  output$fixedTimeSeriesPlot <- plotly::renderPlotly ({
     validate(need(
       all(
         !is.null(input$timeSeriesTypeFilter),
@@ -4599,13 +4599,17 @@ shiny::shinyServer(function(input, output, session) {
       timeSeriesStatistics = input$timeSeriesStatistics
     )
     
-    plot <- ggiraph::girafe(
-      ggobj = plot,
-      options = list(
-        ggiraph::opts_sizing(width = .5),
-        ggiraph::opts_zoom(max = 5)
-      )
-    )
+    plot <- plotly::ggplotly(plot)
+    
+    # plot <- ggiraph::girafe(
+    #   ggobj = plot,
+    #   width_svg = 24,
+    #   height_svg = 10,
+    #   options = list(
+    #     ggiraph::opts_sizing(rescale = TRUE),
+    #     ggiraph::opts_zoom(max = 5)
+    #   )
+    # )
     return(plot)
   })
   

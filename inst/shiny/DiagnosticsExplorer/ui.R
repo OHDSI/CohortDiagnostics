@@ -625,7 +625,7 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::conditionalPanel(
         condition = "input.timeSeriesType=='Plot'",
        shiny::column(12,
-          ggiraph::ggiraphOutput("fixedTimeSeriesPlot",width ="100%", height = "100%")
+          plotly::plotlyOutput("fixedTimeSeriesPlot", height = "600px")
         )
       )
     )
