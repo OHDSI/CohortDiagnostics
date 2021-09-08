@@ -136,25 +136,6 @@ shiny::shinyServer(function(input, output, session) {
       return(data)
     })
   
-  ##reactiveVal: getCohortIdsFromSelectedCompoundCohortNames----
-  getCohortIdsFromSelectedCompoundCohortNames <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(input$selectedCompoundCohortNames_open,
-         input$tabs)#observeEvent limits reactivity to when a tab changes, or 'cohorts' selection changes.
-  }, handlerExpr = {
-    if (any(isFALSE(input$selectedCompoundCohortNames_open),
-            !is.null(input$tabs))) {
-      selectedCohortIds <- cohort %>%
-        dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortNames) %>%
-        dplyr::arrange(.data$cohortId) %>%
-        dplyr::pull(.data$cohortId) %>%
-        unique() %>%
-        sort()
-      getCohortIdsFromSelectedCompoundCohortNames(selectedCohortIds)
-    }
-  })
-  
-  
   ##pickerInput: conceptSetsSelectedCohortLeft----
   #defined in UI
   shiny::observe({
@@ -3738,7 +3719,7 @@ shiny::shinyServer(function(input, output, session) {
       {
         return(NULL)
       }
-      if (any(length(getCohortIdsFromSelectedCompoundCohortNames()) == 0)) {
+      if (any(length(consolidatedCohortIdTarget()) == 0)) {
         return(NULL)
       }
       progress <- shiny::Progress$new()
@@ -3747,7 +3728,7 @@ shiny::shinyServer(function(input, output, session) {
                    value = 0)
       
       data <- getResultsIncidenceRate(dataSource = dataSource,
-                                      cohortIds =  getCohortIdsFromSelectedCompoundCohortNames())
+                                      cohortIds =  consolidatedCohortIdTarget())
       if (all(!is.null(data),
               nrow(data) > 0)) {
         data <- data %>%
@@ -3916,7 +3897,7 @@ shiny::shinyServer(function(input, output, session) {
   handlerExpr = {
     if (any(
       length(consolidatedDatabaseIdTarget()) == 0,
-      length(getCohortIdsFromSelectedCompoundCohortNames()) == 0
+      length(consolidatedCohortIdTarget()) == 0
     )) {
       return(NULL)
     }
@@ -4031,7 +4012,7 @@ shiny::shinyServer(function(input, output, session) {
       "No data sources chosen"
     ))
     validate(need(
-      length(getCohortIdsFromSelectedCompoundCohortNames()) > 0,
+      length(consolidatedCohortIdTarget()) > 0,
       "No cohorts chosen"
     ))
     
@@ -4043,7 +4024,7 @@ shiny::shinyServer(function(input, output, session) {
     shiny::withProgress(
       message = paste(
         "Building incidence rate plot data for ",
-        length(getCohortIdsFromSelectedCompoundCohortNames()),
+        length(consolidatedCohortIdTarget()),
         " cohorts and ",
         length(consolidatedDatabaseIdTarget()),
         " databases"
@@ -4061,8 +4042,8 @@ shiny::shinyServer(function(input, output, session) {
   getFixedTimeSeriesTsibble <- reactive({
     if (input$tabs == "timeSeries")
     {
-      #!!!getCohortIdsFromSelectedCompoundCohortNames() is returning '' -why?
-      if (any(length(getCohortIdsFromSelectedCompoundCohortNames()) == 0))
+      #!!!consolidatedCohortIdTarget() is returning '' -why?
+      if (any(length(consolidatedCohortIdTarget()) == 0))
       {
         return(NULL)
       }
@@ -4076,7 +4057,7 @@ shiny::shinyServer(function(input, output, session) {
                    value = 0)
       
       data <- getResultsFixedTimeSeries(dataSource = dataSource,
-                                        cohortIds =  getCohortIdsFromSelectedCompoundCohortNames())
+                                        cohortIds =  consolidatedCohortIdTarget())
       return(data)
     } else {
       return(NULL)
@@ -4087,7 +4068,7 @@ shiny::shinyServer(function(input, output, session) {
   getFixedTimeSeriesTsibbleFiltered <- reactive({
     if (any(
       length(consolidatedDatabaseIdTarget()) == 0,
-      length(getCohortIdsFromSelectedCompoundCohortNames()) == 0
+      length(consolidatedCohortIdTarget()) == 0
     )) {
       return(NULL)
     }
@@ -4448,7 +4429,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- getResultsTimeDistribution(
       dataSource = dataSource,
-      cohortIds =  getCohortIdsFromSelectedCompoundCohortNames(),
+      cohortIds =  consolidatedCohortIdTarget(),
       databaseIds = consolidatedDatabaseIdTarget()
     )
     return(data)
@@ -5679,7 +5660,7 @@ shiny::shinyServer(function(input, output, session) {
   getCohortOverlapData <- reactive({
     if (any(
       length(consolidatedDatabaseIdTarget()) == 0,
-      length(getCohortIdsFromSelectedCompoundCohortNames()) == 0
+      length(consolidatedCohortIdTarget()) == 0
     )) {
       return(NULL)
     }
@@ -5689,7 +5670,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- getCohortOverlap(dataSource = dataSource,
-                             cohortIds = getCohortIdsFromSelectedCompoundCohortNames())
+                             cohortIds = consolidatedCohortIdTarget())
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -5710,7 +5691,7 @@ shiny::shinyServer(function(input, output, session) {
   ##output: overlapPlot----
   output$overlapPlot <- ggiraph::renderggiraph(expr = {
     validate(need(
-      length(getCohortIdsFromSelectedCompoundCohortNames()) > 0,
+      length(consolidatedCohortIdTarget()) > 0,
       paste0("Please select Target Cohort(s)")
     ))
     progress <- shiny::Progress$new()
@@ -8237,8 +8218,8 @@ shiny::shinyServer(function(input, output, session) {
   
   selectedCohorts <- shiny::reactive({
     if (any(
-      is.null(getCohortIdsFromSelectedCompoundCohortNames()),
-      length(getCohortIdsFromSelectedCompoundCohortNames()) == 0
+      is.null(consolidatedCohortIdTarget()),
+      length(consolidatedCohortIdTarget()) == 0
     )) {
       return(NULL)
     }
@@ -8256,7 +8237,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     cohortSelected <- getCohortSortedByCohortId() %>%
-      dplyr::filter(.data$cohortId %in%  getCohortIdsFromSelectedCompoundCohortNames()) %>%
+      dplyr::filter(.data$cohortId %in%  consolidatedCohortIdTarget()) %>%
       dplyr::arrange(.data$cohortId)
     
     databaseIdsWithCount <- cohortCount %>%
