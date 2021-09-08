@@ -123,19 +123,6 @@ shiny::shinyServer(function(input, output, session) {
   
   #______________----
   #Selections----
-  #
-  # ##getCohortIdFromSelectedCompoundCohortName----
-  getCohortIdFromSelectedCompoundCohortName <-
-    shiny::reactive({
-      ##!!! replace with consolidated
-      data <- cohort %>%
-        dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortName) %>%
-        dplyr::arrange(.data$cohortId) %>%
-        dplyr::pull(.data$cohortId) %>%
-        unique()
-      return(data)
-    })
-  
   ##pickerInput: conceptSetsSelectedCohortLeft----
   #defined in UI
   shiny::observe({
@@ -5297,7 +5284,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     visitContext <-
       getResultsVisitContext(dataSource = dataSource,
-                             cohortIds = getCohortIdFromSelectedCompoundCohortName())
+                             cohortIds = consolidatedCohortIdTarget())
     if (any(is.null(visitContext),
             nrow(visitContext) == 0))
     {
@@ -5397,7 +5384,8 @@ shiny::shinyServer(function(input, output, session) {
   getVisitContexDataFiltered <- shiny::reactive(x = {
     if (any(
       !doesObjectHaveData(input$visitContextTableFilters),
-      !doesObjectHaveData(input$visitContextPersonOrRecords)
+      !doesObjectHaveData(input$visitContextPersonOrRecords),
+      !doesObjectHaveData(consolidatedCohortIdTarget())
     )) {
       return(NULL)
     }
@@ -5406,7 +5394,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
-      dplyr::filter(.data$cohortId == getCohortIdFromSelectedCompoundCohortName()) %>%
+      dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
       dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget())
     
     if (input$visitContextTableFilters == "Before") {
@@ -5504,7 +5492,7 @@ shiny::shinyServer(function(input, output, session) {
       "No data sources chosen"
     ))
     validate(need(
-      length(getCohortIdFromSelectedCompoundCohortName()) > 0,
+      length(consolidatedCohortIdTarget()) > 0,
       "No cohorts chosen"
     ))
     data <- getVisitContextTableData()
@@ -5517,7 +5505,7 @@ shiny::shinyServer(function(input, output, session) {
     
     # header labels
     cohortCounts <- cohortCount %>%
-      dplyr::filter(.data$cohortId == getCohortIdFromSelectedCompoundCohortName()) %>%
+      dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
       dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
       dplyr::arrange(.data$cohortId, .data$databaseId)
     isPerson <- input$visitContextPersonOrRecords == 'Person'
@@ -5737,14 +5725,14 @@ shiny::shinyServer(function(input, output, session) {
     shiny::reactive(x = {
       #!!!!!!!!!!!consolidated
       if (any(
-        length(getCohortIdFromSelectedCompoundCohortName()) == 0,
+        length(consolidatedCohortIdTarget()) == 0,
         length(consolidatedDatabaseIdTarget()) == 0
       )) {
         return(NULL)
       }
       
       jsonExpression <- getCohortSortedByCohortId() %>%
-        dplyr::filter(.data$cohortId == getCohortIdFromSelectedCompoundCohortName()) %>%
+        dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
         dplyr::select(.data$json)
       
       jsonExpression <-
@@ -5867,7 +5855,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     if (any(
-      length(getCohortIdFromSelectedCompoundCohortName()) != 1,
+      length(consolidatedCohortIdTarget()) != 1,
       length(consolidatedDatabaseIdTarget()) == 0
     )) {
       return(NULL)
@@ -5877,13 +5865,13 @@ shiny::shinyServer(function(input, output, session) {
     progress$set(
       message = paste0(
         "Extracting characterization data for target cohort:",
-        getCohortIdFromSelectedCompoundCohortName()
+        consolidatedCohortIdTarget()
       ),
       value = 0
     )
     data <- getMultipleCharacterizationResults(
       dataSource = dataSource,
-      cohortIds = getCohortIdFromSelectedCompoundCohortName(),
+      cohortIds = consolidatedCohortIdTarget(),
       databaseIds = consolidatedDatabaseIdTarget()
     )
     return(data)
@@ -6052,7 +6040,7 @@ shiny::shinyServer(function(input, output, session) {
       characteristics %>%
         dplyr::filter(.data$header == 1) %>%
         dplyr::mutate(
-          cohortId = sort(getCohortIdFromSelectedCompoundCohortName())[[1]],
+          cohortId = sort(consolidatedCohortIdTarget())[[1]],
           databaseId = sort(consolidatedDatabaseIdTarget()[[1]])
         ),
       characteristics %>%
@@ -6061,7 +6049,7 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::tibble(databaseId = consolidatedDatabaseIdTarget())
         ) %>%
         tidyr::crossing(
-          dplyr::tibble(cohortId = getCohortIdFromSelectedCompoundCohortName())
+          dplyr::tibble(cohortId = consolidatedCohortIdTarget())
         )
     ) %>%
       dplyr::arrange(.data$sortOrder, .data$databaseId, .data$cohortId)
@@ -6186,8 +6174,8 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- getCharacterizationTableData()
     validate(need(all(
-      !is.null(getCohortIdFromSelectedCompoundCohortName()),
-      length(getCohortIdFromSelectedCompoundCohortName()) > 0
+      !is.null(consolidatedCohortIdTarget()),
+      length(consolidatedCohortIdTarget()) > 0
     ),
     "No data for the combination"))
     validate(need(!is.null(data), "No data for the combination"))
@@ -6197,7 +6185,7 @@ shiny::shinyServer(function(input, output, session) {
     cohortCounts <- data %>%
       dplyr::inner_join(cohortCount,
                         by = c("cohortId", "databaseId")) %>%
-      dplyr::filter(.data$cohortId == getCohortIdFromSelectedCompoundCohortName()) %>%
+      dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
       dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
       dplyr::select(.data$cohortSubjects) %>%
       dplyr::pull(.data$cohortSubjects) %>%
@@ -6738,7 +6726,7 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       if (any(
-        length(getCohortIdFromSelectedCompoundCohortName()) != 1,
+        length(consolidatedCohortIdTarget()) != 1,
         length(getComparatorCohortIdFromSelectedCompoundCohortName()) != 1,
         length(consolidatedDatabaseIdTarget()) == 0
       )) {
@@ -6750,7 +6738,7 @@ shiny::shinyServer(function(input, output, session) {
       progress$set(
         message = paste0(
           "Extracting temporal characterization data for target cohort:",
-          getCohortIdFromSelectedCompoundCohortName(),
+          consolidatedCohortIdTarget(),
           " and comparator cohort:",
           getComparatorCohortIdFromSelectedCompoundCohortName(),
           ' for ',
@@ -6762,7 +6750,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- getMultipleCharacterizationResults(
         dataSource = dataSource,
         cohortIds = c(
-          getCohortIdFromSelectedCompoundCohortName(),
+          consolidatedCohortIdTarget(),
           getComparatorCohortIdFromSelectedCompoundCohortName()
         ) %>% unique(),
         databaseIds = input$selectedDatabaseId
@@ -6812,7 +6800,7 @@ shiny::shinyServer(function(input, output, session) {
       )
     
     covs1 <- data %>%
-      dplyr::filter(.data$cohortId == getCohortIdFromSelectedCompoundCohortName()) %>%
+      dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
       dplyr::mutate(
         analysisNameLong = paste0(
           .data$analysisName,
@@ -7326,7 +7314,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-.data$missingMeansZero)
     
     covs1 <- data %>%
-      dplyr::filter(.data$cohortId == getCohortIdFromSelectedCompoundCohortName()) %>%
+      dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
       dplyr::mutate(
         analysisNameLong = paste0(
           .data$analysisName,
@@ -8189,32 +8177,6 @@ shiny::shinyServer(function(input, output, session) {
                       {
                         showInfoBox("Time Series", "html/timeSeries.html")
                       })
-  
-  # Cohort labels ----
-  targetCohortCount <- shiny::reactive({
-    targetCohortWithCount <-
-      getCohortCountResult(
-        dataSource = dataSource,
-        cohortIds = getCohortIdFromSelectedCompoundCohortName(),
-        databaseIds = input$selectedDatabaseId
-      ) %>%
-      dplyr::left_join(y = cohort, by = "cohortId") %>%
-      dplyr::arrange(.data$cohortName)
-    return(targetCohortWithCount)
-  })
-  
-  targetCohortCountHtml <- shiny::reactive({
-    targetCohortCount <- targetCohortCount()
-    return(htmltools::withTags(div(
-      h5(
-        "Target: ",
-        targetCohortCount$cohortName,
-        " ( n = ",
-        scales::comma(x = targetCohortCount$cohortSubjects),
-        " )"
-      )
-    )))
-  })
   
   selectedCohorts <- shiny::reactive({
     if (any(
