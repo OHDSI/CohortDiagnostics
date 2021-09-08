@@ -25,36 +25,52 @@ plotTimeSeriesFromTsibble <-
     
     # # Using Plotly
     plots <- list()
+    distinctCohortShortName <- tsibbleData$cohortShortName %>%  unique()
     distinctDatabaseId <- tsibbleData$databaseId %>% unique()
      for (i in 1:length(timeSeriesStatistics)) {
-       databasePlots <- list()
-       for (j in 1:length(distinctDatabaseId)) {
-         data <- tsibbleData %>% dplyr::filter(.data$databaseId == distinctDatabaseId[j])
-         distinctCohortShortName <- data$cohortShortName %>%  unique()
-         cohortPlots <- lapply(distinctCohortShortName, function(var3) {
-           filteredData <- data %>% dplyr::filter(.data$cohortShortName == var3)
+       cohortPlots <- list()
+       for (j in 1:length(distinctCohortShortName)) {
+         data <- tsibbleData %>% dplyr::filter(.data$cohortShortName == distinctCohortShortName[j])
+         databasePlots <- lapply(distinctDatabaseId, function(var3) {
+           filteredData <- data %>% dplyr::filter(.data$databaseId == var3)
            plot <- plotly::plot_ly(filteredData, x = ~periodBegin, y = as.formula(paste0("~", timeSeriesStatistics[i]))) %>%
-             plotly::add_lines(name = var3, text = ~tooltip) %>% 
+             plotly::add_lines(name = var3, text = ~paste(tooltip,"\nStatistics = ",timeSeriesStatistics[i]) ) %>% 
              plotly::layout(showlegend = FALSE)
-           if (i == 1) {
+           if (i == 1 && j == 1) {
              plot <- plot %>%
-               plotly::layout(annotations = list(x = 0.5 , y = 1, text = var3, showarrow = F, 
+               plotly::layout(annotations = list(x = 0.5 , y = 1.1, text = var3, showarrow = F, 
                                          xref = 'paper', yref = 'paper'))
            }
-          if (i != length(timeSeriesStatistics)) {
+           # X axis should be shown only for last row plots
+          if (i != length(timeSeriesStatistics) || j != length(distinctCohortShortName)) {
              plot <- plot %>% plotly::layout(xaxis = list(showticklabels = FALSE))
            }
            return(plot)
          })
-         databasePlot <- plotly::subplot(cohortPlots, shareY = TRUE, titleX = FALSE) 
-         if (i == 1) {
-           databasePlot <- databasePlot %>%
-             plotly::layout(annotations = list(x = 0.5 , y = 1.05, text = distinctDatabaseId[j], showarrow = F, 
-                                       xref = 'paper', yref = 'paper'))
-         }
-         databasePlots[[j]] <- databasePlot
+         cohortPlot <- plotly::subplot(databasePlots, shareY = TRUE, titleX = FALSE) %>%
+           plotly::layout(annotations = list(x = 0.0,
+                                             y = 0.5,
+                                             text = distinctCohortShortName[j],
+                                             showarrow = FALSE,
+                                             xref = "paper",
+                                             yref = "paper",
+                                             textangle = -90,
+                                             bordercolor = "rgb(200, 0, 25)"))
+
+         cohortPlots[[j]] <- cohortPlot
        }
-       plots[[i]] <- plotly::subplot(databasePlots,margin = 0.02,shareY = TRUE)
+       plots[[i]] <- plotly::subplot(cohortPlots,nrows = length(cohortPlots)) %>%
+         plotly::layout(annotations = list(x = -0.04,
+                                           y = 0.5,
+                                           text = timeSeriesStatistics[i],
+                                           showarrow = FALSE,
+                                           xref = "paper",
+                                           yref = "paper",
+                                          textangle = -90,
+                                          bordercolor = "rgb(150, 150, 150)"))
+       
+         # plotly::layout(annotations = list(x = -0.05 , y = 0.5, text = timeSeriesStatistics[i], showarrow = F, 
+         #                                   xref = 'paper', yref = 'paper'))
      }
     finalPlot <- plotly::subplot(plots,nrows = length(plots)) 
     
