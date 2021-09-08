@@ -330,28 +330,49 @@ consolidationOfSelectedFieldValues <- function(input,
 
 #takes data as input and returns data table with sketch design
 #used in resolved, excluded and orphan concepts in cohort definition tab
-getSketchDesignForTablesInCohortDefinitionTab <- function(data) {
+getSketchDesignForTablesInCohortDefinitionTab <- function(data, databaseCount) {
   databaseIds <- sort(unique(data$databaseId))
-  maxCount <- max(data$conceptCount, na.rm = TRUE)
-  maxSubject <- max(data$subjectCount, na.rm = TRUE)
   
+  sketchFieldsInData <- c()
+  sketchFieldsInDatabaseCount <- c()
+  maxCount <- NULL
+  maxSubject <- NULL
+  if (all('conceptCount' %in% colnames(data),
+          'cohortEntries' %in% colnames(databaseCount))) {
+    sketchFieldsInData <- c(sketchFieldsInData, "conceptCount")
+    sketchFieldsInDatabaseCount <- c(sketchFieldsInDatabaseCount, "cohortEntries")
+    maxCount <- max(data$conceptCount, na.rm = TRUE)
+  }
+  if (all('subjectCount' %in% colnames(data),
+          'cohortSubjects' %in% colnames(databaseCount))) {
+    sketchFieldsInData <- c(sketchFieldsInData, "subjectCount")
+    sketchFieldsInDatabaseCount <- c(sketchFieldsInDatabaseCount, "cohortSubjects")
+    maxSubject <- max(data$subjectCount, na.rm = TRUE)
+  }
   personAndRecordCount <- data %>%
-    dplyr::select(.data$databaseId, .data$cohortId) %>% 
-    dplyr::inner_join(cohortCount,
-                      by = c("databaseId", "cohortId")) %>% 
-    dplyr::select(.data$databaseId, .data$cohortSubjects, .data$cohortEntries) %>% 
-    dplyr::distinct() %>%
-    dplyr::mutate(cohortSubjects = scales::comma(.data$cohortSubjects,
-                                                 accuracy = 1)) %>%
-    dplyr::mutate(cohortEntries = scales::comma(.data$cohortEntries,
-                                                accuracy = 1)) %>%
+    dplyr::select(.data$databaseId) %>% 
+    dplyr::inner_join(databaseCount,
+                      by = c("databaseId")) %>% 
+    dplyr::select(.data$databaseId, sketchFieldsInDatabaseCount) %>% 
+    dplyr::distinct()
+  if ('cohortSubjects' %in% colnames(personAndRecordCount)) {
+    personAndRecordCount <- personAndRecordCount %>% 
+      dplyr::mutate(cohortSubjects = scales::comma(.data$cohortSubjects,
+                                                   accuracy = 1))
+  }
+  if ('cohortEntries' %in% colnames(personAndRecordCount)) {
+    personAndRecordCount <- personAndRecordCount %>% 
+      dplyr::mutate(cohortEntries = scales::comma(.data$cohortEntries,
+                                                  accuracy = 1))
+  }
+  personAndRecordCount <- personAndRecordCount %>% 
     dplyr::arrange(.data$databaseId)
   
   dataTransformed <- data %>%
     dplyr::arrange(.data$databaseId) %>% 
     tidyr::pivot_longer(
       names_to = "type",
-      cols = c("conceptCount", "subjectCount"),
+      cols = sketchFieldsInData,
       values_to = "count"
     ) %>%
     dplyr::mutate(type = paste0(.data$type,
@@ -384,15 +405,20 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data) {
     scrollY = "20vh",
     columnDefs = list(truncateStringDef(1, 50))
   )
-  
   recordAndPersonColumnName <- c()
   for (i in 1:nrow(personAndRecordCount)) {
-    recordAndPersonColumnName <-
-      c(
-        recordAndPersonColumnName,
-        paste0("Records (", personAndRecordCount[i,]$cohortEntries, ")"),
-        paste0("Person (", personAndRecordCount[i,]$cohortSubjects, ")")
-      )
+    if ('cohortEntries' %in% colnames(personAndRecordCount)) {
+      recordAndPersonColumnName <-
+        c(
+          recordAndPersonColumnName,
+          paste0("Records (", personAndRecordCount[i,]$cohortEntries, ")"))
+    }
+    if ('cohortSubjects' %in% colnames(personAndRecordCount)) {
+      recordAndPersonColumnName <-
+        c(
+          recordAndPersonColumnName,
+          paste0("Person (", personAndRecordCount[i,]$cohortSubjects, ")"))
+    }
   }
   sketch <- htmltools::withTags(table(class = "display",
                                       thead(
@@ -427,22 +453,26 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data) {
     class = "stripe nowrap compact"
   )
   
-  dataTable <- DT::formatStyle(
-    table = dataTable,
-    columns =  5 + 1:(length(databaseIds) * 2),
-    background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
-    backgroundSize = "98% 88%",
-    backgroundRepeat = "no-repeat",
-    backgroundPosition = "center"
-  )
-  dataTable <- DT::formatStyle(
-    table = dataTable,
-    columns =  5 + 1:(length(databaseIds) * 2),
-    background = DT::styleColorBar(c(0, maxCount), "lightblue"),
-    backgroundSize = "98% 88%",
-    backgroundRepeat = "no-repeat",
-    backgroundPosition = "center"
-  )
+  if (!is.null(maxSubject)) {
+    dataTable <- DT::formatStyle(
+      table = dataTable,
+      columns =  5 + 1:(length(databaseIds) * 2),
+      background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
+      backgroundSize = "98% 88%",
+      backgroundRepeat = "no-repeat",
+      backgroundPosition = "center"
+    )
+  }
+  if (!is.null(maxCount)) {
+    dataTable <- DT::formatStyle(
+      table = dataTable,
+      columns =  5 + 1:(length(databaseIds) * 2),
+      background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+      backgroundSize = "98% 88%",
+      backgroundRepeat = "no-repeat",
+      backgroundPosition = "center"
+    )
+  }
   return(dataTable)
 }
 

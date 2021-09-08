@@ -913,7 +913,7 @@ getConceptMetadata <- function(dataSource,
     data$conceptCountDetails <-
       getResultsConceptCount(dataSource = dataSource,
                              databaseIds = databaseIds,
-                             conceptIds = conceptIdList)
+                             conceptIds = conceptIds)
     
     conceptCount <- data$conceptCountDetails %>%
       dplyr::rename('domainTableShort' = .data$domainTable) %>%
@@ -1009,25 +1009,13 @@ getConceptMetadata <- function(dataSource,
     
     data$conceptRelationshipTable <-
       data$concept %>%
-      dplyr::select(
-        -.data$invalidReason,
-        -.data$validStartDate,
-        -.data$validEndDate,
-        -.data$conceptClassId
-      ) %>%
-      dplyr::left_join(conceptCount,
-                       by = "conceptId") %>%
+      dplyr::select(.data$conceptId) %>% 
       dplyr::left_join(conceptRelationship,
                        by = 'conceptId') %>%
       dplyr::left_join(conceptAncestor,
                        by = "conceptId") %>%
-      dplyr::relocate(.data$conceptId,
-                      .data$conceptName,
-                      .data$conceptCode,
-                      dplyr::contains(" ")) %>%
-      dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with("conceptCount")))) %>%
       dplyr::mutate(levelsOfSeparation = as.character(.data$levelsOfSeparation)) %>%
-      tidyr::replace_na(list(relationships = "Not applicable",
+      tidyr::replace_na(list(relationshipId = "Not applicable",
                              levelsOfSeparation = "Not applicable"))
     
     data$conceptName <- data$concept %>%

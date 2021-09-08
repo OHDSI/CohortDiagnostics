@@ -2261,37 +2261,31 @@ shiny::shinyServer(function(input, output, session) {
                        conceptId),
       value = 0
     )
-  
     data <- getMetadataForConceptId()
     validate(need(
       doesObjectHaveData(data),
       "No information for selected concept id."
     ))
-    data <- data$conceptRelationshipTable
-    
-    notSelectedDatabaseIds <- database %>%
-                                   dplyr::filter(.data$databaseId != activeSelected()$databaseId) %>% 
-                                   dplyr::pull(.data$databaseId) %>%
-                                   unique()
-    databaseIdMergedWithConceptCount <- paste("conceptCount",activeSelected()$databaseId)
-    databaseIdMergedWithSubjectCount <- paste("subjectCount",activeSelected()$databaseId)
-    
-    if (doesObjectHaveData(notSelectedDatabaseIds)) {
-      data <- data %>% 
-        dplyr::select(
-          -dplyr::contains(notSelectedDatabaseIds)
-        )
+    if (isTRUE(consolidateCohortDefinitionActiveSideTarget())) {
+      cohortId <- consolidatedCohortIdTarget()
     }
+    if (isTRUE(consolidateCohortDefinitionActiveSideComparator())) {
+      cohortId <- consolidatedCohortIdComparator()
+    }
+    conceptCooccurrence <-
+      getResultsConceptCooccurrence(
+        dataSource = dataSource,
+        databaseIds = activeSelected()$databaseId,
+        cohortIds = cohortId
+      ) %>%
+      dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>%
+      dplyr::select(-.data$cohortId,-.data$conceptId) %>%
+      dplyr::rename(conceptId = .data$coConceptId)
     
-    colnames(data) <-
-      stringr::str_replace(
-        string = colnames(data),
-        pattern = paste0(" ",activeSelected()$databaseId),
-        replacement = ''
-      )
+    conceptRelationshipTable <- data$conceptRelationshipTable
     
     if (doesObjectHaveData(input$choicesForRelationshipName)) {
-      data <- data %>%
+      conceptRelationshipTable <- conceptRelationshipTable %>%
         dplyr::inner_join(
           relationship %>%
             dplyr::filter(
@@ -2303,29 +2297,30 @@ shiny::shinyServer(function(input, output, session) {
         )
     }
     if (doesObjectHaveData(input$choicesForRelationshipDistance)) {
-      data <- data %>%
+      conceptRelationshipTable <- conceptRelationshipTable %>%
         dplyr::filter(.data$levelsOfSeparation %in%
                         input$choicesForRelationshipDistance)
     }
     
-    options = list(
-      pageLength = 10,
-      searching = TRUE,
-      scrollX = TRUE,
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE
-    )
-    
-    table <- DT::datatable(
-      data,
-      options = options,
-      colnames = colnames(data) %>% camelCaseToTitleCase(),
-      rownames = FALSE,
-      escape = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
+    conceptRelationshipTable <- conceptRelationshipTable %>%
+      dplyr::inner_join(conceptCooccurrence,
+                        by = "conceptId") %>%
+      dplyr::inner_join(data$concept,
+                        by = "conceptId")
+    if (!doesObjectHaveData(conceptRelationshipTable)) {
+      return(NULL)
+    }
+    table <-
+      getSketchDesignForTablesInCohortDefinitionTab(
+        conceptRelationshipTable,
+        databaseCount = data$conceptCount %>%
+          dplyr::rename(
+            cohortEntries = .data$conceptCount,
+            cohortSubjects = .data$subjectCount
+          ) %>%
+          dplyr::filter(.data$databaseId %in% activeSelected()$databaseId) %>%
+          dplyr::filter(.data$conceptId %in% activeSelected()$conceptId)
+      )
     return(table)
   })
   
@@ -2598,7 +2593,9 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No resolved concept ids"))
-      return(getSketchDesignForTablesInCohortDefinitionTab(data = data))
+      return(getSketchDesignForTablesInCohortDefinitionTab(data = data, 
+                                                           databaseCount = cohortCount %>% 
+                                                             dplyr::filter(.data$cohortId == consolidatedCohortIdTarget())))
     }, server = TRUE)
   
   #output: saveOrphanConceptsTableTarget----
@@ -2625,7 +2622,9 @@ shiny::shinyServer(function(input, output, session) {
       )),
       "No excluded concept ids"))
       
-      return(getSketchDesignForTablesInCohortDefinitionTab(data = data))
+      return(getSketchDesignForTablesInCohortDefinitionTab(data = data, 
+                                                           databaseCount = cohortCount %>% 
+                                                             dplyr::filter(.data$cohortId == consolidatedCohortIdTarget())))
     }, server = TRUE)
   
   #output: saveExcludedConceptsTableLeft----
@@ -2651,7 +2650,9 @@ shiny::shinyServer(function(input, output, session) {
                         nrow(data) > 0),
                     "No orphan concepts"))
       
-      return(getSketchDesignForTablesInCohortDefinitionTab(data = data))
+      return(getSketchDesignForTablesInCohortDefinitionTab(data = data, 
+                                                           databaseCount = cohortCount %>% 
+                                                             dplyr::filter(.data$cohortId == consolidatedCohortIdTarget())))
     }, server = TRUE)
   
   #output: targetConceptsetExpressionJson----
@@ -3123,7 +3124,9 @@ shiny::shinyServer(function(input, output, session) {
       )),
       "No resolved concept ids"))
       
-      return(getSketchDesignForTablesInCohortDefinitionTab(data = data))
+      return(getSketchDesignForTablesInCohortDefinitionTab(data = data, 
+                                                           databaseCount = cohortCount %>% 
+                                                             dplyr::filter(.data$cohortId == consolidatedCohortIdComparator())))
     }, server = TRUE)
   
   ##output: saveComparatorCohortDefinitionResolvedConceptTable----
@@ -3153,7 +3156,9 @@ shiny::shinyServer(function(input, output, session) {
       maxCount <- max(data$conceptCount, na.rm = TRUE)
       maxSubject <- max(data$subjectCount, na.rm = TRUE)
       
-      return(getSketchDesignForTablesInCohortDefinitionTab(data = data))
+      return(getSketchDesignForTablesInCohortDefinitionTab(data = data, 
+                                                           databaseCount = cohortCount %>% 
+                                                             dplyr::filter(.data$cohortId == consolidatedCohortIdComparator())))
     }, server = TRUE)
   
   #output: saveExcludedConceptsTableRight----
@@ -3180,7 +3185,9 @@ shiny::shinyServer(function(input, output, session) {
                         nrow(data) > 0),
                     "No orphan concepts"))
       
-      return(getSketchDesignForTablesInCohortDefinitionTab(data = data))
+      return(getSketchDesignForTablesInCohortDefinitionTab(data = data, 
+                                                           databaseCount = cohortCount %>% 
+                                                             dplyr::filter(.data$cohortId == consolidatedCohortIdComparator())))
     }, server = TRUE)
   
   ##output: saveComparatorCohortDefinitionOrphanConceptTable----

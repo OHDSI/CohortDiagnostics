@@ -1220,7 +1220,7 @@ getIndexDateConceptCooccurrence <- function(connection,
                           SELECT a.cohort_id,
                           	a.concept_id,
                           	b.concept_id co_concept_id,
-                          	count(*) concept_count
+                          	count(*) subject_count
                           FROM cooccurrence a
                           INNER JOIN cooccurrence b ON a.cohort_id = b.cohort_id
                           	AND a.person_id = b.person_id

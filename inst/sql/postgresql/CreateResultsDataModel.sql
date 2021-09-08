@@ -199,7 +199,7 @@ CREATE TABLE concept_cooccurrence (
 			cohort_id BIGINT NOT NULL,
 			concept_id BIGINT NOT NULL,
 			co_concept_id BIGINT NOT NULL,
-			concept_count BIGINT NOT NULL,
+			subject_count BIGINT NOT NULL,
 			PRIMARY KEY(database_id, cohort_id, concept_id, co_concept_id)
 );
 
