@@ -1421,7 +1421,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdTarget())
     }
     data <- data %>%
-      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
       dplyr::arrange(dplyr::desc(.data$conceptCount))
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -1444,7 +1443,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdComparator())
     }
     data <- data %>%
-      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
       dplyr::arrange(dplyr::desc(.data$conceptCount))
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -1473,7 +1471,6 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>%
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget()) %>%
-      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
       dplyr::arrange(dplyr::desc(.data$conceptCount))
     if (is.null(data)) {
       return(NULL)
@@ -1502,7 +1499,6 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>%
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdComparator()) %>%
-      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
       dplyr::arrange(dplyr::desc(.data$conceptCount))
     return(data)
   })
@@ -1531,7 +1527,6 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data  %>%
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget()) %>%
-      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
       dplyr::arrange(dplyr::desc(.data$conceptCount))
     if (is.null(data)) {
       return(NULL)
@@ -1560,7 +1555,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::anti_join(y = excludedConceptIds, by = "conceptId")
     }
     data <- data %>%
-      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
       dplyr::arrange(dplyr::desc(.data$conceptCount))
     return(data)
   })
@@ -2786,7 +2780,6 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No resolved concept ids"))
-    
       return(getSketchDesignForTablesInCohortDefinitionTab(data = data))
     }, server = TRUE)
   

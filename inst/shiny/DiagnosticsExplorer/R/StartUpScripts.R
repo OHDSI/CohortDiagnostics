@@ -335,32 +335,29 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data) {
   maxCount <- max(data$conceptCount, na.rm = TRUE)
   maxSubject <- max(data$subjectCount, na.rm = TRUE)
   
-  personAndRecordCount <- data %>% 
-    dplyr::inner_join(cohortCount) %>% 
-    dplyr::select(.data$cohortSubjects, .data$cohortEntries) %>% 
+  personAndRecordCount <- data %>%
+    dplyr::select(.data$databaseId, .data$cohortId) %>% 
+    dplyr::inner_join(cohortCount,
+                      by = c("databaseId", "cohortId")) %>% 
+    dplyr::select(.data$databaseId, .data$cohortSubjects, .data$cohortEntries) %>% 
     dplyr::distinct() %>%
     dplyr::mutate(cohortSubjects = scales::comma(.data$cohortSubjects,
                                                  accuracy = 1)) %>%
     dplyr::mutate(cohortEntries = scales::comma(.data$cohortEntries,
-                                                accuracy = 1))
+                                                accuracy = 1)) %>%
+    dplyr::arrange(.data$databaseId)
   
-  recordCount <- personAndRecordCount %>% 
-    dplyr::select(.data$cohortEntries) %>% 
-    dplyr::pull()
-  
-  personCount <- personAndRecordCount %>% 
-    dplyr::select(.data$cohortSubjects) %>% 
-    dplyr::pull()
-  
-  data <- data %>% 
+  dataTransformed <- data %>%
+    dplyr::arrange(.data$databaseId) %>% 
     tidyr::pivot_longer(
       names_to = "type",
       cols = c("conceptCount", "subjectCount"),
       values_to = "count"
-    ) %>% 
+    ) %>%
     dplyr::mutate(type = paste0(.data$type,
                                 " ",
-                                .data$databaseId)) %>% 
+                                .data$databaseId)) %>%
+    dplyr::arrange(.data$databaseId, .data$type) %>% 
     tidyr::pivot_wider(
       id_cols = c(
         "conceptId",
@@ -389,12 +386,12 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data) {
   )
   
   recordAndPersonColumnName <- c()
-  for (i in 1:length(databaseIds)) {
+  for (i in 1:nrow(personAndRecordCount)) {
     recordAndPersonColumnName <-
       c(
         recordAndPersonColumnName,
-        paste0("Records (", recordCount[i], ")"),
-        paste0("Person (", personCount[i], ")")
+        paste0("Records (", personAndRecordCount[i,]$cohortEntries, ")"),
+        paste0("Person (", personAndRecordCount[i,]$cohortSubjects, ")")
       )
   }
   sketch <- htmltools::withTags(table(class = "display",
@@ -402,9 +399,9 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data) {
                                         tr(
                                           th(rowspan = 2, "Concept Id"),
                                           th(rowspan = 2, "Concept Name"),
-                                          th(rowspan = 2, "Vocabulary Id"),
-                                          th(rowspan = 2, "Domain Id"),
-                                          th(rowspan = 2, "Standard Concept"),
+                                          th(rowspan = 2, "Vocabulary"),
+                                          th(rowspan = 2, "Domain"),
+                                          th(rowspan = 2, "Standard"),
                                           lapply(
                                             databaseIds,
                                             th,
@@ -419,11 +416,11 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data) {
                                       )))
   
   dataTable <- DT::datatable(
-    data,
+    dataTransformed,
     options = options,
     rownames = FALSE,
     container = sketch,
-    colnames = colnames(data) %>% camelCaseToTitleCase(),
+    colnames = colnames(dataTransformed) %>% camelCaseToTitleCase(),
     escape = FALSE,
     selection = 'single',
     filter = "top",
