@@ -3,76 +3,160 @@
 library(plotly)
 plotTimeSeriesFromTsibble <-
   function(tsibbleData,
-           yAxisLabel,
+           plotFilters,
            indexAggregationType = "Monthly", #indexAggregationType -- can be inferred ?
-           timeSeriesStatistics = c()) {
+           timeSeriesStatistics = c(),
+           timeSeriesPeriodRangeFilter = c(2010,2021)) {
     if (is.null(data)) {
       return(NULL)
     }
     
+    
+    # plotFilters <- yAxisLabel
+    # tempData <- tsibbleData <- tempData
+    # tsibbleData <- tsibbleData[[1]]
+    
+    
     if (indexAggregationType != "Yearly") {
-      tsibbleData  <- tsibbleData %>%
-        dplyr::mutate(periodBegin = as.Date(.data$periodBegin))
+      tsibbleData <- lapply(tsibbleData, function(data){
+        data  <- data %>%
+          dplyr::mutate(periodBegin = as.Date(.data$periodBegin))
+      })
+      
     }
-    tsibbleData$tooltip <- c(
-      paste0(
-        "Database ID = ",
-        tsibbleData$databaseId,
-        "\nCohort = ",
-        tsibbleData$cohortShortName
-      )
-    )
+    
+    # tsibbleData$tooltip <- c(
+    #   paste0(
+    #     "Database ID = ",
+    #     tsibbleData$databaseId,
+    #     "\nCohort = ",
+    #     tsibbleData$cohortShortName
+    #   )
+    # )
+    
+    distinctCohortShortName <- c()
+    for (i in 1:length(tsibbleData)) {
+      data  <- tsibbleData[[i]]$cohortShortName %>% unique()
+      distinctCohortShortName <- union(distinctCohortShortName,data)
+    }
+    
+    distinctDatabaseId <- c()
+    for (i in 1:length(tsibbleData)) {
+      data  <- tsibbleData[[i]]$databaseId %>% unique()
+      distinctDatabaseId <- union(distinctDatabaseId,data)
+    }
+    
+    cohortPlot <- list()
+    for (i in 1:length(distinctCohortShortName)) {
+      filterPlots <- list()
+      for (j in 1:length(plotFilters)) {
+        data <- tsibbleData[[j]] %>% dplyr::filter(.data$cohortShortName == distinctCohortShortName[i])
+        statisticsPlots <- list()
+        for (k in 1:length(timeSeriesStatistics)) {
+          databasePlots <- lapply(distinctDatabaseId, function(databaseId) {
+            filteredData <- data %>% dplyr::filter(.data$databaseId == databaseId)
+            plot <- plotly::plot_ly(filteredData, x = ~periodBegin, y = as.formula(paste0("~", timeSeriesStatistics[k]))) %>%
+              plotly::add_lines(name = databaseId, text = ~paste("Statistics = ",timeSeriesStatistics[k],
+                                                                 "\nDatabase ID = ",.data$databaseId,
+                                                                "\nCohort = ",.data$cohortShortName
+                                                                 )) %>% 
+              plotly::layout(showlegend = FALSE, xaxis = list(range = c(as.Date(paste(timeSeriesPeriodRangeFilter[1], 1, 1, sep = "-")), 
+                                                                        as.Date(paste(timeSeriesPeriodRangeFilter[1], 1, 1, sep = "-")))
+                                                              ))
+            if (i == 1 && j == 1 && k == 1) {
+              plot <- plot %>%
+                plotly::layout(annotations = list(x = 0.5 , y = 1.0, text = databaseId, showarrow = F, 
+                                                  xref = 'paper', yref = 'paper'))
+            }
+            # X axis should be shown only for last row plots
+            if (i != length(distinctCohortShortName) || j != length(plotFilters) || k != length(timeSeriesStatistics)) {
+              plot <- plot %>% plotly::layout(xaxis = list(showticklabels = FALSE))
+            }
+            return(plot)
+          })
+          statisticsPlot <- plotly::subplot(databasePlots, shareY = TRUE, titleX = FALSE) %>%
+            plotly::layout(annotations = list(x = 0.04,
+                                              y = 0.5,
+                                              text = timeSeriesStatistics[k],
+                                              showarrow = FALSE,
+                                              xref = "paper",
+                                              yref = "paper",
+                                              textangle = -90,
+                                              bordercolor = "rgb(200, 0, 25)"))
+          
+          statisticsPlots[[k]] <- statisticsPlot
+        }
+        filterPlots[[j]] <- plotly::subplot(statisticsPlots, nrows = length(statisticsPlots)) %>%
+          plotly::layout(annotations = list(x = 0.0,
+                                            y = 0.5,
+                                            text = plotFilters[j],
+                                            showarrow = FALSE,
+                                            xref = "paper",
+                                            yref = "paper",
+                                            textangle = -90,
+                                            bordercolor = "rgb(150, 150, 150)"))
+        
+      }
+      cohortPlot[[i]] <- plotly::subplot(filterPlots,nrows = length(filterPlots)) %>%
+        plotly::layout(annotations = list(x = -0.04,
+                                          y = 0.5,
+                                          text = distinctCohortShortName[i],
+                                          showarrow = FALSE,
+                                          xref = "paper",
+                                          yref = "paper",
+                                          textangle = -90,
+                                          bordercolor = "rgb(10, 200, 70)"))
+    }
+    finalPlot <- plotly::subplot(cohortPlot,nrows = length(cohortPlot)) 
     
     # # Using Plotly
-    plots <- list()
-    distinctCohortShortName <- tsibbleData$cohortShortName %>%  unique()
-    distinctDatabaseId <- tsibbleData$databaseId %>% unique()
-     for (i in 1:length(timeSeriesStatistics)) {
-       cohortPlots <- list()
-       for (j in 1:length(distinctCohortShortName)) {
-         data <- tsibbleData %>% dplyr::filter(.data$cohortShortName == distinctCohortShortName[j])
-         databasePlots <- lapply(distinctDatabaseId, function(var3) {
-           filteredData <- data %>% dplyr::filter(.data$databaseId == var3)
-           plot <- plotly::plot_ly(filteredData, x = ~periodBegin, y = as.formula(paste0("~", timeSeriesStatistics[i]))) %>%
-             plotly::add_lines(name = var3, text = ~paste(tooltip,"\nStatistics = ",timeSeriesStatistics[i]) ) %>% 
-             plotly::layout(showlegend = FALSE)
-           if (i == 1 && j == 1) {
-             plot <- plot %>%
-               plotly::layout(annotations = list(x = 0.5 , y = 1.1, text = var3, showarrow = F, 
-                                         xref = 'paper', yref = 'paper'))
-           }
-           # X axis should be shown only for last row plots
-          if (i != length(timeSeriesStatistics) || j != length(distinctCohortShortName)) {
-             plot <- plot %>% plotly::layout(xaxis = list(showticklabels = FALSE))
-           }
-           return(plot)
-         })
-         cohortPlot <- plotly::subplot(databasePlots, shareY = TRUE, titleX = FALSE) %>%
-           plotly::layout(annotations = list(x = 0.0,
-                                             y = 0.5,
-                                             text = distinctCohortShortName[j],
-                                             showarrow = FALSE,
-                                             xref = "paper",
-                                             yref = "paper",
-                                             textangle = -90,
-                                             bordercolor = "rgb(200, 0, 25)"))
-
-         cohortPlots[[j]] <- cohortPlot
-       }
-       plots[[i]] <- plotly::subplot(cohortPlots,nrows = length(cohortPlots)) %>%
-         plotly::layout(annotations = list(x = -0.04,
-                                           y = 0.5,
-                                           text = timeSeriesStatistics[i],
-                                           showarrow = FALSE,
-                                           xref = "paper",
-                                           yref = "paper",
-                                          textangle = -90,
-                                          bordercolor = "rgb(150, 150, 150)"))
-       
-         # plotly::layout(annotations = list(x = -0.05 , y = 0.5, text = timeSeriesStatistics[i], showarrow = F, 
-         #                                   xref = 'paper', yref = 'paper'))
-     }
-    finalPlot <- plotly::subplot(plots,nrows = length(plots)) 
+   
+    #  for (i in 1:length(timeSeriesStatistics)) {
+    #    cohortPlots <- list()
+    #    for (j in 1:length(distinctCohortShortName)) {
+    #      data <- tsibbleData %>% dplyr::filter(.data$cohortShortName == distinctCohortShortName[j])
+    #      databasePlots <- lapply(distinctDatabaseId, function(var3) {
+    #        filteredData <- data %>% dplyr::filter(.data$databaseId == var3)
+    #        plot <- plotly::plot_ly(filteredData, x = ~periodBegin, y = as.formula(paste0("~", timeSeriesStatistics[i]))) %>%
+    #          plotly::add_lines(name = var3, text = ~paste("\nStatistics = ",timeSeriesStatistics[i]) ) %>% 
+    #          plotly::layout(showlegend = FALSE)
+    #        if (i == 1 && j == 1) {
+    #          plot <- plot %>%
+    #            plotly::layout(annotations = list(x = 0.5 , y = 1.1, text = var3, showarrow = F, 
+    #                                      xref = 'paper', yref = 'paper'))
+    #        }
+    #        # X axis should be shown only for last row plots
+    #       if (i != length(timeSeriesStatistics) || j != length(distinctCohortShortName)) {
+    #          plot <- plot %>% plotly::layout(xaxis = list(showticklabels = FALSE))
+    #        }
+    #        return(plot)
+    #      })
+    #      cohortPlot <- plotly::subplot(databasePlots, shareY = TRUE, titleX = FALSE) %>%
+    #        plotly::layout(annotations = list(x = 0.0,
+    #                                          y = 0.5,
+    #                                          text = distinctCohortShortName[j],
+    #                                          showarrow = FALSE,
+    #                                          xref = "paper",
+    #                                          yref = "paper",
+    #                                          textangle = -90,
+    #                                          bordercolor = "rgb(200, 0, 25)"))
+    # 
+    #      cohortPlots[[j]] <- cohortPlot
+    #    }
+    #    plots[[i]] <- plotly::subplot(cohortPlots,nrows = length(cohortPlots)) %>%
+    #      plotly::layout(annotations = list(x = -0.04,
+    #                                        y = 0.5,
+    #                                        text = timeSeriesStatistics[i],
+    #                                        showarrow = FALSE,
+    #                                        xref = "paper",
+    #                                        yref = "paper",
+    #                                       textangle = -90,
+    #                                       bordercolor = "rgb(150, 150, 150)"))
+    #    
+    #      # plotly::layout(annotations = list(x = -0.05 , y = 0.5, text = timeSeriesStatistics[i], showarrow = F, 
+    #      #                                   xref = 'paper', yref = 'paper'))
+    #  }
+    # finalPlot <- plotly::subplot(plots,nrows = length(plots)) 
     
     
     

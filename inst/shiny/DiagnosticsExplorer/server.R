@@ -4291,8 +4291,9 @@ shiny::shinyServer(function(input, output, session) {
         .data$seriesType,
         .data$periodBegin,
         titleCaseToCamelCase(input$timeSeriesPlotFilters)
-      ) %>%
-      dplyr::rename(value = titleCaseToCamelCase(input$timeSeriesPlotFilters))
+      ) 
+    # %>%
+    #   dplyr::rename(value = titleCaseToCamelCase(input$timeSeriesPlotFilters))
     data <- data %>%
       dplyr::left_join(
         cohort %>%
@@ -4376,13 +4377,14 @@ shiny::shinyServer(function(input, output, session) {
       "No timeseries data for the cohort of this series type"
     ))
     
-    tsibbleDataFromSTLModel <- getSTLModelTsibbleData(tsibbleData = data)
+    tsibbleDataFromSTLModel <- getSTLModelTsibbleData(tsibbleData = data , titleCaseToCamelCase(input$timeSeriesPlotFilters))
     
     plot <- plotTimeSeriesFromTsibble(
       tsibbleData = tsibbleDataFromSTLModel,
-      yAxisLabel = titleCaseToCamelCase(input$timeSeriesPlotFilters),
+      plotFilters = titleCaseToCamelCase(input$timeSeriesPlotFilters),
       indexAggregationType = input$timeSeriesAggregationPeriodSelection,
-      timeSeriesStatistics = input$timeSeriesStatistics
+      timeSeriesStatistics = input$timeSeriesStatistics,
+      timeSeriesPeriodRangeFilter = input$timeSeriesPeriodRangeFilter
     )
     
     plot <- plotly::ggplotly(plot)

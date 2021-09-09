@@ -164,9 +164,11 @@ addInfo <- function(item, infoId) {
 
 createShinyBoxFromOutputId <- function(outputId) {
   shinydashboard::box(
-    # title = "Reference",
+    title = "Cohort Details",
     status = "warning",
     width = "100%",
+    collapsible = TRUE,
+    collapsed = TRUE,
     tags$div(style = "max-height: 100px; overflow-y: auto",
              shiny::uiOutput(outputId = outputId))
   )

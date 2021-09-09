@@ -476,16 +476,28 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data, databaseCount) {
   return(dataTable)
 }
 
-getSTLModelTsibbleData <- function(tsibbleData) {
+getSTLModelTsibbleData <- function(tsibbleData, plotFilters = value) {
   if (is.null(data)) {
     return(NULL)
   }
-  data <- tsibbleData %>% 
-    dplyr::mutate(Total = .data$value) %>% 
-    dplyr::select(-.data$value) %>%
-    tsibble::fill_gaps(Total = 0) %>% 
-    fabletools::model(feasts::STL(Total ~  season(window = Inf))) %>%
-    fabletools::components()
-  return(data)
+   
+  modelData <- lapply(plotFilters, function(plotfilter) {
+    data <- tsibbleData
+    data$Total <-  data[[plotfilter]]
+    data <- data %>% 
+      dplyr::select(.data$databaseId,
+                    .data$cohortShortName,
+                    .data$seriesType,
+                    .data$periodBegin,
+                    .data$Total,
+                    .data$cohortId) %>%
+      tsibble::fill_gaps(Total = 0) %>% 
+      fabletools::model(feasts::STL(Total ~  season(window = Inf))) %>%
+      fabletools::components()
+    return(data)
+    
+  })
+ 
+  return(modelData)
 }
 

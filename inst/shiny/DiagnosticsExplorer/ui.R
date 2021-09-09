@@ -591,9 +591,10 @@ bodyTabItems <- shinydashboard::tabItems(
         6,
         shiny::conditionalPanel(
           condition = "input.timeSeriesType=='Plot'",
-          shiny::radioButtons(
+          shinyWidgets::pickerInput(
             inputId = "timeSeriesPlotFilters",
-            label = "Filter By :",
+            label = "Filter By:",
+            width = 300,
             choices = c("Records",
                         "Subjects",
                         "Person Days",
@@ -601,8 +602,18 @@ bodyTabItems <- shinydashboard::tabItems(
                         "Subjects Start", 
                         "Records End", 
                         "Subjects End"),
-            selected = "Subjects",
-            inline = TRUE
+            selected = c("Subjects"),
+            multiple = TRUE,
+            choicesOpt = list(style = rep_len("color: black;", 999)),
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              size = 10,
+              dropupAuto = TRUE,
+              liveSearchStyle = "contains",
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
           )
         ),
       ),
@@ -625,7 +636,7 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::conditionalPanel(
         condition = "input.timeSeriesType=='Plot'",
        shiny::column(12,
-          plotly::plotlyOutput("fixedTimeSeriesPlot", height = "600px")
+          plotly::plotlyOutput("fixedTimeSeriesPlot",height = "55vh"),
         )
       )
     )
