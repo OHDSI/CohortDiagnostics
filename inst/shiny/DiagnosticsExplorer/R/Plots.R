@@ -53,10 +53,10 @@ plotTimeSeriesFromTsibble <-
         data <- tsibbleData[[j]] %>% dplyr::filter(.data$cohortShortName == distinctCohortShortName[i])
         statisticsPlots <- list()
         for (k in 1:length(timeSeriesStatistics)) {
-          databasePlots <- lapply(distinctDatabaseId, function(databaseId) {
-            filteredData <- data %>% dplyr::filter(.data$databaseId == databaseId)
+          databasePlots <- lapply(distinctDatabaseId, function(singleDatabaseId) {
+            filteredData <- data %>% dplyr::filter(.data$databaseId == singleDatabaseId)
             plot <- plotly::plot_ly(filteredData, x = ~periodBegin, y = as.formula(paste0("~", timeSeriesStatistics[k]))) %>%
-              plotly::add_lines(name = databaseId, text = ~paste("Statistics = ",timeSeriesStatistics[k],
+              plotly::add_lines(name = singleDatabaseId, text = ~paste("Statistics = ",timeSeriesStatistics[k],
                                                                  "\nDatabase ID = ",.data$databaseId,
                                                                 "\nCohort = ",.data$cohortShortName
                                                                  )) %>% 
@@ -65,7 +65,7 @@ plotTimeSeriesFromTsibble <-
                                                               ))
             if (i == 1 && j == 1 && k == 1) {
               plot <- plot %>%
-                plotly::layout(annotations = list(x = 0.5 , y = 1.0, text = databaseId, showarrow = F, 
+                plotly::layout(annotations = list(x = 0.5 , y = 1.0, text = singleDatabaseId, showarrow = F, 
                                                   xref = 'paper', yref = 'paper'))
             }
             # X axis should be shown only for last row plots
