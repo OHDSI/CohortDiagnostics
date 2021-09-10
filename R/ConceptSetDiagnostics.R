@@ -1060,6 +1060,10 @@ getBreakdownIndexEvents <- function(cohortIds,
                                     conceptIdUniverse = "#concept_tracking") {
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide
+  nonEraTables <- domains %>% 
+    dplyr::filter(.data$isEraTable == FALSE) %>% 
+    dplyr::pull(.data$domainTableShort) %>% 
+    unique()
   sql <- "SELECT cohort_definition_id cohort_id,
               	@domain_concept_id AS concept_id,
               	COUNT(*) AS concept_count,
