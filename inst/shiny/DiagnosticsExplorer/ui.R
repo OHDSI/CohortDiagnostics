@@ -636,7 +636,10 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::conditionalPanel(
         condition = "input.timeSeriesType=='Plot'",
        shiny::column(12,
-          plotly::plotlyOutput("fixedTimeSeriesPlot",height = "55vh"),
+          plotly::plotlyOutput("fixedTimeSeriesPlot",height = "auto"),
+          tags$head(
+            tags$style("#fixedTimeSeriesPlot { width: '90vw' !important};")
+          )
         )
       )
     )

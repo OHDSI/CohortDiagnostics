@@ -4360,6 +4360,7 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   })
   
+  
   ##output: fixedTimeSeriesPlot----
   output$fixedTimeSeriesPlot <- plotly::renderPlotly ({
     validate(need(

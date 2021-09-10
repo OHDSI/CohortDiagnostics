@@ -107,7 +107,10 @@ plotTimeSeriesFromTsibble <-
                                           textangle = -90,
                                           bordercolor = "rgb(10, 200, 70)"))
     }
-    finalPlot <- plotly::subplot(cohortPlot,nrows = length(cohortPlot)) 
+    
+    noOfPlotRows <- length(distinctCohortShortName) * length(plotFilters) * length(timeSeriesStatistics)
+    finalPlot <- plotly::subplot(cohortPlot,nrows = length(cohortPlot)) %>%  
+      plotly::layout(autosize = T, height = noOfPlotRows * 150)
     
     # # Using Plotly
    
