@@ -4315,9 +4315,13 @@ shiny::shinyServer(function(input, output, session) {
           nrow(data) > 0),
       "No timeseries data for the cohort of this series type"
     ))
-    
-    tsibbleDataFromSTLModel <- getSTLModelTsibbleData(tsibbleData = data , titleCaseToCamelCase(input$timeSeriesPlotFilters))
-    
+    validate(need(titleCaseToCamelCase(input$timeSeriesPlotFilters) %in% colnames(data),
+      paste0(paste0(input$timeSeriesPlotFilters, collapse = ","), " not found in tsibble")
+    ))
+    debug(getSTLModelTsibbleData)
+    tsibbleDataFromSTLModel <- getSTLModelTsibbleData(tsibbleData = data, 
+                                                      valueFields = titleCaseToCamelCase(input$timeSeriesPlotFilters))
+    browser()
     plot <- plotTimeSeriesFromTsibble(
       tsibbleData = tsibbleDataFromSTLModel,
       plotFilters = titleCaseToCamelCase(input$timeSeriesPlotFilters),
