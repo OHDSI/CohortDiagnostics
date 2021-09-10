@@ -78,35 +78,32 @@ plotTimeSeriesFromTsibble <-
           statisticsPlot <- plotly::subplot(databasePlots, shareY = TRUE, titleX = FALSE) %>%
             plotly::layout(annotations = list(x = -0.05,
                                               y = 0.5,
-                                              text = timeSeriesStatistics[k],
+                                              text = camelCaseToTitleCase(timeSeriesStatistics[k]),
                                               showarrow = FALSE,
                                               xref = "paper",
                                               yref = "paper",
-                                              textangle = -90,
-                                              bordercolor = "rgb(200, 0, 25)"))
+                                              textangle = -90))
           
           statisticsPlots[[k]] <- statisticsPlot
         }
         filterPlots[[j]] <- plotly::subplot(statisticsPlots, nrows = length(statisticsPlots)) %>%
-          plotly::layout(annotations = list(x = -0.08,
+          plotly::layout(annotations = list(x = -0.07,
                                             y = 0.5,
-                                            text = plotFilters[j],
+                                            text = camelCaseToTitleCase(plotFilters[j]),
                                             showarrow = FALSE,
                                             xref = "paper",
                                             yref = "paper",
-                                            textangle = -90,
-                                            bordercolor = "rgb(150, 150, 150)"))
+                                            textangle = -90))
         
       }
       cohortPlot[[i]] <- plotly::subplot(filterPlots,nrows = length(filterPlots)) %>%
-        plotly::layout(annotations = list(x = -0.11,
+        plotly::layout(annotations = list(x = -0.09,
                                           y = 0.5,
-                                          text = distinctCohortShortName[i],
+                                          text = camelCaseToTitleCase(distinctCohortShortName[i]),
                                           showarrow = FALSE,
                                           xref = "paper",
                                           yref = "paper",
-                                          textangle = -90,
-                                          bordercolor = "rgb(10, 200, 70)"))
+                                          textangle = -90))
     }
     m <- list(
       l = 150,
