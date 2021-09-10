@@ -4388,17 +4388,13 @@ shiny::shinyServer(function(input, output, session) {
       timeSeriesPeriodRangeFilter = input$timeSeriesPeriodRangeFilter
     )
     
-    plot <- plotly::ggplotly(plot)
+    distinctCohortShortName <- c()
+    for (i in 1:length(tsibbleDataFromSTLModel)) {
+      data  <- tsibbleDataFromSTLModel[[i]]$cohortShortName %>% unique()
+      distinctCohortShortName <- union(distinctCohortShortName,data)
+    }
     
-    # plot <- ggiraph::girafe(
-    #   ggobj = plot,
-    #   width_svg = 24,
-    #   height_svg = 10,
-    #   options = list(
-    #     ggiraph::opts_sizing(rescale = TRUE),
-    #     ggiraph::opts_zoom(max = 5)
-    #   )
-    # )
+    plot <- plotly::ggplotly(plot)
     return(plot)
   })
   
