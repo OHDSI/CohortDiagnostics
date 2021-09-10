@@ -13,7 +13,10 @@ getConceptMetadata(
   getConceptRelationship = TRUE,
   getConceptAncestor = TRUE,
   getConceptSynonym = TRUE,
-  getConceptCount = TRUE
+  getConceptCount = TRUE,
+  getConceptCooccurrence = TRUE,
+  getIndexEventCount = TRUE,
+  getConceptMappingCount = TRUE
 )
 }
 \arguments{
@@ -44,6 +47,12 @@ schema name, for example 'vocabulary.dbo'.}
 \item{getConceptSynonym}{Do you want conceptSynonym?}
 
 \item{getConceptCount}{Do you want conceptCount?}
+
+\item{getConceptCooccurrence}{Do you want concept cooccurrence?}
+
+\item{getIndexEventCount}{Do you want index event concept count?}
+
+\item{getConceptMappingCount}{Do you want concept mapping count?}
 }
 \value{
 Returns a list of data frames (tibbles)

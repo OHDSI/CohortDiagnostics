@@ -61,7 +61,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
           is.null(connection))) {
     stop('Please provide either connection or connectionDetails to connect to database.')
   }
-  
   # Set up connection to server----
   ParallelLogger::logTrace(" - Setting up connection")
   if (is.null(connection)) {
@@ -161,7 +160,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
     }
   }
   conceptSetDiagnosticsResults$conceptSetsOptimized <- dplyr::bind_rows(optimizedConceptSet) %>% 
-    dplyr::distinct()
+    dplyr::distinct() %>% 
+    dplyr::tibble()
   rm("conceptSets")
   
   # Instantiate (resolve) unique concept sets----
@@ -824,6 +824,10 @@ getConceptRecordCount <- function(connection,
   ParallelLogger::logTrace(" - Counting concepts by person id, calendar month and year")
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide
+  nonEraTables <- domains %>% 
+    dplyr::filter(.data$isEraTable == FALSE) %>% 
+    dplyr::pull(.data$domainTableShort) %>% 
+    unique()
   sql1 <- "SELECT @domain_concept_id concept_id,
           	YEAR(@domain_start_date) event_year,
           	MONTH(@domain_start_date) event_month,
@@ -887,7 +891,7 @@ getConceptRecordCount <- function(connection,
       concept_id_universe = conceptIdUniverse,
       snakeCaseToCamelCase = TRUE
     )
-    if (!rowData$eraTable) {
+    if (!rowData$isEraTable) {
       data2 <- renderTranslateQuerySql(
         connection = connection,
         sql = sql2,
@@ -951,7 +955,7 @@ getConceptRecordCount <- function(connection,
             dplyr::distinct(),
           by = 'conceptId'
         )
-      if (!rowData$eraTable) {
+      if (!rowData$isEraTable) {
         nsData2 <- renderTranslateQuerySql(
           connection = connection,
           sql = sql2,
@@ -1141,6 +1145,7 @@ getBreakdownIndexEvents <- function(cohortIds,
     dplyr::distinct()
   data <- dplyr::bind_rows(data,
                            data %>% 
+                             dplyr::filter(.data$domainTable %in% c(nonEraTables)) %>% 
                              dplyr::group_by(.data$cohortId,
                                              .data$conceptId
                                              ) %>% 
@@ -1150,6 +1155,7 @@ getBreakdownIndexEvents <- function(cohortIds,
                              dplyr::mutate(domainField = "All",
                                            domainTable = "All"),
                            data %>%
+                             dplyr::filter(.data$domainTable %in% c(nonEraTables)) %>% 
                              dplyr::group_by(.data$cohortId,
                                              .data$conceptId,
                                              .data$domainTable
@@ -1374,6 +1380,17 @@ getConceptSourceStandardMapping <- function(connection,
       .data$conceptCount,
       .data$subjectCount
     )
+  conceptMapping <- dplyr::bind_rows(conceptMapping,
+                                     conceptMapping %>% 
+                             dplyr::group_by(.data$conceptId,
+                                             .data$sourceConceptId
+                             ) %>% 
+                             dplyr::summarise(conceptCount = sum(.data$conceptCount),
+                                              subjectCount = max(.data$subjectCount), 
+                                              .groups = "keep") %>% 
+                             dplyr::mutate(domainTable = "All")
+  ) %>% 
+    dplyr::distinct()
   return(conceptMapping)
 }
 
