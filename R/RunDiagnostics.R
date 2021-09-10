@@ -1078,7 +1078,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   )
   metadata <- dplyr::tibble(
     databaseId = as.character(!!databaseId),
-    startTime = paste0(as.character(startDateTime)),
+    startTime = paste0("TM_", as.character(startDateTime)),
     variableField = variableField,
     valueField = valueField
   )

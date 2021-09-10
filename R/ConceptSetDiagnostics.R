@@ -1377,6 +1377,7 @@ getConceptSourceStandardMapping <- function(connection,
     conceptMapping[[i]]$domainTable <- rowData$domainTableShort
   }
   conceptMapping <- dplyr::bind_rows(conceptMapping) %>%
+    dplyr::distinct() %>% 
     dplyr::arrange(
       .data$domainTable,
       .data$conceptId,
