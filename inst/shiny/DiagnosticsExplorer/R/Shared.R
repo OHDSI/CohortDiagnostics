@@ -699,47 +699,17 @@ getResultsConceptCountSummary <- function(dataSource,
     if (!exists("conceptCount", envir = dataSource)) {
       return(NULL)
     }
-    conceptCountL <- get("conceptCount")
-    if (is.null(conceptCountL)) {
-      return(NULL)
-    }
-    if (!exists("conceptSubjects", envir = dataSource)) {
-      return(NULL)
-    }
-    conceptSubjectsL <- get("conceptSubjects")
-    if (is.null(conceptSubjectsL)) {
-      return(NULL)
-    }
-    data1 <- conceptCountL %>%
+    data <- get("conceptCount") %>%
+      dplyr::filter(.data$domainField == "All") %>%
+      dplyr::filter(.data$domainTable == "All") %>%
+      dplyr::filter(.data$eventYear == 0) %>% 
+      dplyr::filter(.data$eventMonth == 0) %>% 
       dplyr::filter(.data$conceptId %in% !!conceptIds) %>%
       dplyr::filter(.data$databaseId %in% !!databaseIds) %>%
-      dplyr::group_by(.data$conceptId, .data$databaseId) %>%
-      dplyr::summarize(conceptCount = sum(.data$conceptCount),
-                       .groups = "keep") %>%
-      dplyr::ungroup() %>%
-      dplyr::select(.data$databaseId, .data$conceptId, .data$conceptCount)
-    
-    data2 <- conceptSubjectsL %>%
-      dplyr::filter(.data$conceptId %in% !!conceptIds) %>%
-      dplyr::filter(.data$databaseId %in% !!databaseIds) %>%
-      dplyr::filter(.data$domainTable %in% c("CO",
-                                             "DR",
-                                             "ME",
-                                             "OB",
-                                             "PR",
-                                             "VI",
-                                             "DE")) %>%
-      dplyr::group_by(.data$conceptId, .data$databaseId) %>%
-      dplyr::summarize(subjectCount = max(.data$subjectCount),
-                       .groups = "keep") %>%
-      dplyr::ungroup() %>%
-      dplyr::select(.data$databaseId, .data$conceptId, .data$subjectCount)
-    
-    data <- data1 %>%
-      dplyr::inner_join(data2,
-                        by = c("databaseId", "conceptId")) %>%
-      dplyr::arrange(dplyr::desc(.data$subjectCount))
-    
+      dplyr::select(.data$databaseId,
+                    .data$conceptId,
+                    .data$conceptCount,
+                    .data$subjectCount)
   } else {
     if (is.null(dataSource$connection)) {
       stop("No connection provided. Unable to query database.")
@@ -753,32 +723,13 @@ getResultsConceptCountSummary <- function(dataSource,
               a.concept_id,
             	a.concept_count,
             	b.subject_count
-            FROM (
-            	SELECT database_id, concept_id,
-            		sum(concept_count) concept_count
-            	FROM @results_database_schema.concept_count
-            	WHERE database_id IN (@database_id)
-            	GROUP BY database_id, concept_id
-            	) a
-            INNER JOIN (
-            	SELECT database_id,
-            	  concept_id,
-            		max(subject_count) subject_count
-            	FROM @results_database_schema.concept_subjects
+            FROM @results_database_schema.concept_count
             	WHERE database_id IN (@database_id)
             		AND concept_id IN (@conceptIds)
-            		AND domain_table IN (
-            			'CO',
-            			'DR',
-            			'ME',
-            			'OB',
-            			'PR',
-            			'VI',
-            			'DE'
-            			)
-            	GROUP BY database_id, concept_id
-            	) b ON a.concept_id = b.concept_id AND
-            	a.database_id = b.database_id
+            		AND domain_table IN ('All')
+            		AND domain_field IN ('All')
+            		AND event_year = 0
+            		AND event_month = 0
             	ORDER BY a.database_id, a.concept_id desc
             ;"
     data <-

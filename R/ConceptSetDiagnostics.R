@@ -869,7 +869,7 @@ getConceptRecordCount <- function(connection,
   
   standardConcepts <- list()
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i,]
+    rowData <- domains[i, ]
     ParallelLogger::logTrace(paste0(
       "   - Working on ",
       rowData$domainTable,
@@ -887,29 +887,33 @@ getConceptRecordCount <- function(connection,
       concept_id_universe = conceptIdUniverse,
       snakeCaseToCamelCase = TRUE
     )
-    data2 <- renderTranslateQuerySql(
-      connection = connection,
-      sql = sql2,
-      tempEmulationSchema = tempEmulationSchema,
-      domain_table = rowData$domainTable,
-      domain_concept_id = rowData$domainConceptId,
-      cdm_database_schema = cdmDatabaseSchema,
-      domain_start_date = rowData$domainStartDate,
-      concept_id_universe = conceptIdUniverse,
-      snakeCaseToCamelCase = TRUE
-    )
-    data3 <- renderTranslateQuerySql(
-      connection = connection,
-      sql = sql3,
-      tempEmulationSchema = tempEmulationSchema,
-      domain_table = rowData$domainTable,
-      domain_concept_id = rowData$domainConceptId,
-      cdm_database_schema = cdmDatabaseSchema,
-      domain_start_date = rowData$domainStartDate,
-      concept_id_universe = conceptIdUniverse,
-      snakeCaseToCamelCase = TRUE
-    )
-    
+    if (!rowData$eraTable) {
+      data2 <- renderTranslateQuerySql(
+        connection = connection,
+        sql = sql2,
+        tempEmulationSchema = tempEmulationSchema,
+        domain_table = rowData$domainTable,
+        domain_concept_id = rowData$domainConceptId,
+        cdm_database_schema = cdmDatabaseSchema,
+        domain_start_date = rowData$domainStartDate,
+        concept_id_universe = conceptIdUniverse,
+        snakeCaseToCamelCase = TRUE
+      )
+      data3 <- renderTranslateQuerySql(
+        connection = connection,
+        sql = sql3,
+        tempEmulationSchema = tempEmulationSchema,
+        domain_table = rowData$domainTable,
+        domain_concept_id = rowData$domainConceptId,
+        cdm_database_schema = cdmDatabaseSchema,
+        domain_start_date = rowData$domainStartDate,
+        concept_id_universe = conceptIdUniverse,
+        snakeCaseToCamelCase = TRUE
+      )
+    } else {
+      data2 <- dplyr::tibble()
+      data3 <- dplyr::tibble()
+    }
     standardConcepts[[i]] <- dplyr::bind_rows(data1,
                                               data2,
                                               data3) %>%
@@ -921,7 +925,7 @@ getConceptRecordCount <- function(connection,
   
   nonStandardConcepts <- list()
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i,]
+    rowData <- domains[i, ]
     if (nchar(rowData$domainSourceConceptId) > 4) {
       ParallelLogger::logTrace(paste0(
         "   - Working on ",
@@ -947,45 +951,50 @@ getConceptRecordCount <- function(connection,
             dplyr::distinct(),
           by = 'conceptId'
         )
-      nsData2 <- renderTranslateQuerySql(
-        connection = connection,
-        sql = sql2,
-        tempEmulationSchema = tempEmulationSchema,
-        domain_table = rowData$domainTable,
-        domain_concept_id = rowData$domainSourceConceptId,
-        cdm_database_schema = cdmDatabaseSchema,
-        domain_start_date = rowData$domainStartDate,
-        concept_id_universe = conceptIdUniverse,
-        snakeCaseToCamelCase = TRUE
-      ) %>%
-        # conceptIds - only keep concept id that were never found in standard fields
-        dplyr::anti_join(
-          y = standardConcepts %>%
-            dplyr::select(.data$conceptId) %>%
-            dplyr::distinct(),
-          by = 'conceptId'
-        )
-      nsData3 <- renderTranslateQuerySql(
-        connection = connection,
-        sql = sql3,
-        tempEmulationSchema = tempEmulationSchema,
-        domain_table = rowData$domainTable,
-        domain_concept_id = rowData$domainSourceConceptId,
-        cdm_database_schema = cdmDatabaseSchema,
-        domain_start_date = rowData$domainStartDate,
-        concept_id_universe = conceptIdUniverse,
-        snakeCaseToCamelCase = TRUE
-      ) %>%
-        # conceptIds - only keep concept id that were never found in standard fields
-        dplyr::anti_join(
-          y = standardConcepts %>%
-            dplyr::select(.data$conceptId) %>%
-            dplyr::distinct(),
-          by = 'conceptId'
-        )
-        nonStandardConcepts[[i]] <- dplyr::bind_rows(nsData1,
-                                                     nsData2,
-                                                     nsData3) %>% 
+      if (!rowData$eraTable) {
+        nsData2 <- renderTranslateQuerySql(
+          connection = connection,
+          sql = sql2,
+          tempEmulationSchema = tempEmulationSchema,
+          domain_table = rowData$domainTable,
+          domain_concept_id = rowData$domainSourceConceptId,
+          cdm_database_schema = cdmDatabaseSchema,
+          domain_start_date = rowData$domainStartDate,
+          concept_id_universe = conceptIdUniverse,
+          snakeCaseToCamelCase = TRUE
+        ) %>%
+          # conceptIds - only keep concept id that were never found in standard fields
+          dplyr::anti_join(
+            y = standardConcepts %>%
+              dplyr::select(.data$conceptId) %>%
+              dplyr::distinct(),
+            by = 'conceptId'
+          )
+        nsData3 <- renderTranslateQuerySql(
+          connection = connection,
+          sql = sql3,
+          tempEmulationSchema = tempEmulationSchema,
+          domain_table = rowData$domainTable,
+          domain_concept_id = rowData$domainSourceConceptId,
+          cdm_database_schema = cdmDatabaseSchema,
+          domain_start_date = rowData$domainStartDate,
+          concept_id_universe = conceptIdUniverse,
+          snakeCaseToCamelCase = TRUE
+        ) %>%
+          # conceptIds - only keep concept id that were never found in standard fields
+          dplyr::anti_join(
+            y = standardConcepts %>%
+              dplyr::select(.data$conceptId) %>%
+              dplyr::distinct(),
+            by = 'conceptId'
+          )
+      } else {
+        data2 <- dplyr::tibble()
+        data3 <- dplyr::tibble()
+      }
+      nonStandardConcepts[[i]] <- dplyr::bind_rows(nsData1,
+                                                   nsData2,
+                                                   nsData3) %>%
         dplyr::mutate(domainTable = rowData$domainTableShort) %>%
         dplyr::mutate(domainField = rowData$domainConceptIdShort)
     }
