@@ -160,7 +160,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
         dplyr::distinct()
     }
   }
-  conceptSetDiagnosticsResults$conceptSetsOptimized <- dplyr::bind_rows(optimizedConceptSet)
+  conceptSetDiagnosticsResults$conceptSetsOptimized <- dplyr::bind_rows(optimizedConceptSet) %>% 
+    dplyr::distinct()
   rm("conceptSets")
   
   # Instantiate (resolve) unique concept sets----
