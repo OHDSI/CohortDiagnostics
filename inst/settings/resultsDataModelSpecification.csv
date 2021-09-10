@@ -80,6 +80,7 @@ concept_count,concept_id,int,Yes,Yes,No,Yes,2.2
 concept_count,event_year,int,Yes,Yes,No,Yes,2.2
 concept_count,event_month,int,Yes,Yes,No,Yes,2.2
 concept_count,concept_count,float,Yes,No,No,Yes,2.2
+concept_count,subject_count,float,Yes,No,No,Yes,2.2
 concept_excluded,database_id,varchar,Yes,Yes,No,Yes,2.2
 concept_excluded,cohort_id,bigint,Yes,Yes,No,Yes,2.2
 concept_excluded,concept_set_id,int,Yes,Yes,No,Yes,2.2
@@ -94,11 +95,6 @@ concept_resolved,database_id,varchar,Yes,Yes,No,Yes,2.2
 concept_resolved,cohort_id,bigint,Yes,Yes,No,Yes,2.2
 concept_resolved,concept_set_id,int,Yes,Yes,No,Yes,2.2
 concept_resolved,concept_id,int,Yes,Yes,No,Yes,2.2
-concept_subjects,database_id,varchar,Yes,Yes,No,Yes,2.2
-concept_subjects,domain_table,varchar,Yes,Yes,No,Yes,2.2
-concept_subjects,domain_field,varchar,Yes,Yes,Yes,Yes,2.2
-concept_subjects,concept_id,int,Yes,Yes,No,Yes,2.2
-concept_subjects,subject_count,float,Yes,No,No,Yes,2.2
 concept_mapping,database_id,varchar,Yes,Yes,No,Yes,2.2
 concept_mapping,domain_table,varchar,Yes,No,No,Yes,2.2
 concept_mapping,concept_id,int,Yes,Yes,No,Yes,2.2

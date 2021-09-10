@@ -331,48 +331,49 @@ consolidationOfSelectedFieldValues <- function(input,
 #takes data as input and returns data table with sketch design
 #used in resolved, excluded and orphan concepts in cohort definition tab
 getSketchDesignForTablesInCohortDefinitionTab <- function(data, databaseCount) {
+  colnamesInData <- colnames(data)
+  colnamesInData <- colnamesInData[!colnamesInData %in% "databaseId"]
+  colnamesInData <- colnamesInData[!colnamesInData %in% "persons"]
+  colnamesInData <- colnamesInData[!colnamesInData %in% "records"]
   databaseIds <- sort(unique(data$databaseId))
   
-  sketchFieldsInData <- c()
-  sketchFieldsInDatabaseCount <- c()
+  fieldsInData <- c()
   maxCount <- NULL
   maxSubject <- NULL
-  if (all('conceptCount' %in% colnames(data),
-          'cohortEntries' %in% colnames(databaseCount))) {
-    sketchFieldsInData <- c(sketchFieldsInData, "conceptCount")
-    sketchFieldsInDatabaseCount <- c(sketchFieldsInDatabaseCount, "cohortEntries")
-    maxCount <- max(data$conceptCount, na.rm = TRUE)
+  if (all('records' %in% colnames(data),
+          'records' %in% colnames(databaseCount))) {
+    fieldsInData <- c(fieldsInData, "records")
+    maxCount <- max(data$records, na.rm = TRUE)
   }
-  if (all('subjectCount' %in% colnames(data),
-          'cohortSubjects' %in% colnames(databaseCount))) {
-    sketchFieldsInData <- c(sketchFieldsInData, "subjectCount")
-    sketchFieldsInDatabaseCount <- c(sketchFieldsInDatabaseCount, "cohortSubjects")
-    maxSubject <- max(data$subjectCount, na.rm = TRUE)
+  if (all('persons' %in% colnames(data),
+          'persons' %in% colnames(databaseCount))) {
+    fieldsInData <- c(fieldsInData, "persons")
+    maxSubject <- max(data$persons, na.rm = TRUE)
   }
-  personAndRecordCount <- data %>%
+  databasePersonAndRecordCount <- data %>%
     dplyr::select(.data$databaseId) %>% 
     dplyr::inner_join(databaseCount,
                       by = c("databaseId")) %>% 
-    dplyr::select(.data$databaseId, sketchFieldsInDatabaseCount) %>% 
+    dplyr::select(.data$databaseId, fieldsInData) %>% 
     dplyr::distinct()
-  if ('cohortSubjects' %in% colnames(personAndRecordCount)) {
-    personAndRecordCount <- personAndRecordCount %>% 
-      dplyr::mutate(cohortSubjects = scales::comma(.data$cohortSubjects,
+  if ('persons' %in% colnames(databasePersonAndRecordCount)) {
+    databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
+      dplyr::mutate(persons = scales::comma(.data$persons,
                                                    accuracy = 1))
   }
-  if ('cohortEntries' %in% colnames(personAndRecordCount)) {
-    personAndRecordCount <- personAndRecordCount %>% 
-      dplyr::mutate(cohortEntries = scales::comma(.data$cohortEntries,
+  if ('records' %in% colnames(databasePersonAndRecordCount)) {
+    databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
+      dplyr::mutate(records = scales::comma(.data$records,
                                                   accuracy = 1))
   }
-  personAndRecordCount <- personAndRecordCount %>% 
+  databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
     dplyr::arrange(.data$databaseId)
   
   dataTransformed <- data %>%
     dplyr::arrange(.data$databaseId) %>% 
     tidyr::pivot_longer(
       names_to = "type",
-      cols = sketchFieldsInData,
+      cols = fieldsInData,
       values_to = "count"
     ) %>%
     dplyr::mutate(type = paste0(.data$type,
@@ -380,13 +381,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data, databaseCount) {
                                 .data$databaseId)) %>%
     dplyr::arrange(.data$databaseId, .data$type) %>% 
     tidyr::pivot_wider(
-      id_cols = c(
-        "conceptId",
-        "conceptName",
-        "vocabularyId",
-        "domainId",
-        "standardConcept"
-      ),
+      id_cols = colnamesInData,
       names_from = type,
       values_from = count,
       values_fill = 0
@@ -405,29 +400,28 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data, databaseCount) {
     scrollY = "20vh",
     columnDefs = list(truncateStringDef(1, 50))
   )
-  recordAndPersonColumnName <- c()
-  for (i in 1:nrow(personAndRecordCount)) {
-    if ('cohortEntries' %in% colnames(personAndRecordCount)) {
-      recordAndPersonColumnName <-
+  databaseRecordAndPersonColumnName <- c()
+  for (i in 1:nrow(databasePersonAndRecordCount)) {
+    if ('records' %in% colnames(databasePersonAndRecordCount)) {
+      databaseRecordAndPersonColumnName <-
         c(
-          recordAndPersonColumnName,
-          paste0("Records (", personAndRecordCount[i,]$cohortEntries, ")"))
+          databaseRecordAndPersonColumnName,
+          paste0("Records (", databasePersonAndRecordCount[i,]$records, ")"))
     }
-    if ('cohortSubjects' %in% colnames(personAndRecordCount)) {
-      recordAndPersonColumnName <-
+    if ('persons' %in% colnames(databasePersonAndRecordCount)) {
+      databaseRecordAndPersonColumnName <-
         c(
-          recordAndPersonColumnName,
-          paste0("Person (", personAndRecordCount[i,]$cohortSubjects, ")"))
+          databaseRecordAndPersonColumnName,
+          paste0("Persons (", databasePersonAndRecordCount[i,]$persons, ")"))
     }
   }
+  #!!!!!!! dynamically generate rowspan from colnamesInData
   sketch <- htmltools::withTags(table(class = "display",
                                       thead(
                                         tr(
-                                          th(rowspan = 2, "Concept Id"),
-                                          th(rowspan = 2, "Concept Name"),
-                                          th(rowspan = 2, "Vocabulary"),
-                                          th(rowspan = 2, "Domain"),
-                                          th(rowspan = 2, "Standard"),
+                                          lapply(camelCaseToTitleCase(colnamesInData),
+                                                 th,
+                                                 rowspan = 2),
                                           lapply(
                                             databaseIds,
                                             th,
@@ -437,7 +431,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data, databaseCount) {
                                           )
                                         ),
                                         tr(
-                                          lapply(recordAndPersonColumnName, th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                          lapply(databaseRecordAndPersonColumnName, th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                         )
                                       )))
   

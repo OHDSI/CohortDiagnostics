@@ -837,17 +837,25 @@ getResultsConceptSubjects <- function(dataSource,
 #'
 #' @template DatabaseIds
 #'
+#' @template CohortIds
+#'
+#' @template ConceptIds
+#' 
 #' @template VocabularyDatabaseSchema
 #' 
-#' @param conceptRelationship  Do you want conceptRelationship?
+#' @param getConceptRelationship  Do you want conceptRelationship?
 #' 
-#' @param conceptAncestor  Do you want conceptAncestor?
+#' @param getConceptAncestor  Do you want conceptAncestor?
 #' 
-#' @param conceptSynonym  Do you want conceptSynonym?
+#' @param getConceptSynonym  Do you want conceptSynonym?
 #' 
-#' @param conceptCount  Do you want conceptCount?
-#'
-#' @param conceptIds    (optional) A list of concept ids to limit the metadata result
+#' @param getConceptCount  Do you want conceptCount?
+#' 
+#' @param getConceptCooccurrence  Do you want concept cooccurrence?
+#' 
+#' @param getIndexEventCount  Do you want index event concept count?
+#' 
+#' @param getConceptMappingCount  Do you want concept mapping count?
 #'
 #' @return
 #' Returns a list of data frames (tibbles)
@@ -855,35 +863,80 @@ getResultsConceptSubjects <- function(dataSource,
 #' @export
 getConceptMetadata <- function(dataSource,
                                databaseIds = NULL,
+                               cohortIds = NULL,
                                vocabularyDatabaseSchema = NULL,
                                conceptIds = NULL,
-                               conceptRelationship = TRUE,
-                               conceptAncestor = TRUE,
-                               conceptSynonym = TRUE,
-                               conceptCount = TRUE) {
+                               getConceptRelationship = TRUE,
+                               getConceptAncestor = TRUE,
+                               getConceptSynonym = TRUE,
+                               getConceptCount = TRUE,
+                               getConceptCooccurrence = TRUE,
+                               getIndexEventCount = TRUE,
+                               getConceptMappingCount = TRUE) {
   data <- list()
-  
-  relationship <- getVocabularyRelationship(dataSource = dataSource)
+  data$relationship <-
+    getVocabularyRelationship(dataSource = dataSource)
   # results not dependent on cohort definition
-  if (conceptRelationship) {
+  if (getConceptRelationship) {
     data$conceptRelationship <-
       getConceptRelationship(
         dataSource = dataSource,
         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
         conceptIds = conceptIds
       )
+    #output for concept relationship table in shiny app
+    conceptRelationship <- data$conceptRelationship %>%
+      dplyr::filter(is.na(.data$invalidReason)) %>%
+      dplyr::rename("conceptId" = .data$conceptId2,
+                    "referenceConceptId" = .data$conceptId1) %>%
+      dplyr::select(.data$referenceConceptId,
+                    .data$conceptId,
+                    .data$relationshipId) %>%
+      dplyr::filter(.data$referenceConceptId != .data$conceptId)
   }
   
-  if (conceptAncestor) {
+  if (getConceptAncestor) {
     data$conceptAncestor <-
       getConceptAncestor(
         dataSource = dataSource,
         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
         conceptIds = conceptIds
       )
+    
+    conceptAncestor <- dplyr::bind_rows(
+      data$conceptAncestor %>%
+        dplyr::rename(
+          "referenceConceptId" = .data$descendantConceptId,
+          "conceptId" = .data$ancestorConceptId,
+          "levelsOfSeparation" = .data$minLevelsOfSeparation
+        ) %>%
+        dplyr::select(
+          .data$referenceConceptId,
+          .data$conceptId,
+          .data$levelsOfSeparation
+        ) %>%
+        dplyr::distinct() %>%
+        dplyr::mutate(levelsOfSeparation = .data$levelsOfSeparation * -1) %>%
+        dplyr::filter(.data$referenceConceptId != .data$conceptId),
+      data$conceptAncestor %>%
+        dplyr::rename(
+          "referenceConceptId" = .data$ancestorConceptId,
+          "conceptId" = .data$descendantConceptId,
+          "levelsOfSeparation" = .data$minLevelsOfSeparation
+        ) %>%
+        dplyr::select(
+          .data$referenceConceptId,
+          .data$conceptId,
+          .data$levelsOfSeparation
+        ) %>%
+        dplyr::distinct() %>%
+        dplyr::filter(.data$referenceConceptId != .data$conceptId)
+    ) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(dplyr::desc(.data$levelsOfSeparation))
   }
   
-  if (conceptSynonym) {
+  if (getConceptSynonym) {
     data$conceptSynonym <- getConceptSynonym(
       dataSource = dataSource,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
@@ -900,6 +953,46 @@ getConceptMetadata <- function(dataSource,
   ) %>%
     unique()
   
+  data$concept <- getConcept(
+    dataSource = dataSource,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    conceptIds = conceptIdList
+  )
+  
+  if (all(getConceptAncestor, getConceptRelationship)) {
+    data$conceptRelationshipTable <-
+      dplyr::bind_rows(
+        conceptRelationship %>% dplyr::select(.data$referenceConceptId,
+                                              .data$conceptId),
+        conceptAncestor %>% dplyr::select(.data$referenceConceptId,
+                                          .data$conceptId)
+      ) %>%
+      dplyr::distinct() %>%
+      dplyr::left_join(conceptRelationship,
+                       by = c('referenceConceptId', 'conceptId')) %>%
+      dplyr::left_join(conceptAncestor,
+                       by = c('referenceConceptId', 'conceptId')) %>%
+      dplyr::mutate(levelsOfSeparation = as.character(.data$levelsOfSeparation)) %>%
+      tidyr::replace_na(list(relationshipId = "Not applicable",
+                             levelsOfSeparation = "Not applicable"))
+    data$relationshipName <- c(
+      "Not applicable",
+      relationship %>%
+        dplyr::select(.data$relationshipId, .data$relationshipName) %>%
+        dplyr::inner_join(data$conceptRelationshipTable, by = "relationshipId") %>%
+        dplyr::select(.data$relationshipName) %>%
+        dplyr::distinct() %>%
+        dplyr::arrange() %>%
+        dplyr::pull()
+    )
+    data$conceptAncestorDistance <-
+      data$conceptRelationshipTable %>%
+      dplyr::select(.data$levelsOfSeparation) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(.data$levelsOfSeparation) %>%
+      dplyr::pull()
+  }
+  
   nonEraCdmTables <- getDomainInformation()$long %>%
     dplyr::mutate(isEraTable = stringr::str_detect(string = .data$domainTable,
                                                    pattern = 'era')) %>%
@@ -909,13 +1002,13 @@ getConceptMetadata <- function(dataSource,
     dplyr::arrange()
   
   # results dependent on databaseId
-  if (conceptCount) {
-    data$conceptCountDetails <-
+  if (getConceptCount) {
+    data$databaseConceptCountDetails <-
       getResultsConceptCount(dataSource = dataSource,
                              databaseIds = databaseIds,
-                             conceptIds = conceptIds)
+                             conceptIds = conceptIdList)
     
-    conceptCount <- data$conceptCountDetails %>%
+    databaseConceptCount <- data$databaseConceptCountDetails %>%
       dplyr::rename('domainTableShort' = .data$domainTable) %>%
       dplyr::inner_join(nonEraCdmTables,
                         by = c('domainTableShort')) %>%
@@ -925,11 +1018,12 @@ getConceptMetadata <- function(dataSource,
                        .groups = 'keep') %>%
       dplyr::ungroup()
     
-    data$conceptSubjectsDetails <-
+    data$databaseConceptSubjectsDetails <-
       getResultsConceptCount(dataSource = dataSource,
                              databaseIds = databaseIds,
                              conceptIds = conceptIdList)
-    conceptSubjects <- data$conceptSubjectsDetails %>%
+    databaseConceptSubjects <-
+      data$databaseConceptSubjectsDetails %>%
       dplyr::rename('domainTableShort' = .data$domainTable) %>%
       dplyr::inner_join(nonEraCdmTables,
                         by = c('domainTableShort')) %>%
@@ -939,104 +1033,14 @@ getConceptMetadata <- function(dataSource,
                        .groups = 'keep') %>%
       dplyr::ungroup()
     
-    data$conceptCount <- conceptCount %>%
-      dplyr::inner_join(conceptSubjects,
+    data$databaseConceptCount <- databaseConceptCount %>%
+      dplyr::inner_join(databaseConceptSubjects,
                         by = c('databaseId',
                                'conceptId')) %>%
       dplyr::arrange(.data$conceptId, .data$databaseId)
-  }
-  
-  data$concept <- getConcept(
-    dataSource = dataSource,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    conceptIds = conceptIdList
-  )
-  data$conceptId <- conceptIds
-  
-  if (length(conceptIds) == 1) {
-    #output for concept relationship table in shiny app
-    conceptRelationship <- data$conceptRelationship %>%
-      dplyr::filter(.data$conceptId1 == data$conceptId) %>%
-      dplyr::select(-.data$conceptId1) %>%
-      dplyr::filter(is.na(.data$invalidReason)) %>%
-      dplyr::rename("conceptId" = .data$conceptId2) %>%
-      dplyr::select(.data$conceptId,
-                    .data$relationshipId) %>% 
-      dplyr::filter(.data$conceptId != data$conceptId)
     
-    conceptAncestor <- data$conceptAncestor %>%
-      dplyr::filter(.data$descendantConceptId %in% data$conceptId) %>%
-      dplyr::rename(
-        "conceptId" = .data$ancestorConceptId,
-        "levelsOfSeparation" = .data$minLevelsOfSeparation
-      ) %>%
-      dplyr::select(.data$conceptId,
-                    .data$levelsOfSeparation) %>%
-      dplyr::distinct() %>%
-      dplyr::mutate(levelsOfSeparation = .data$levelsOfSeparation * -1) %>% 
-      dplyr::filter(.data$conceptId != data$conceptId)
-    
-    conceptDescendant <- data$conceptAncestor %>%
-      dplyr::filter(.data$ancestorConceptId %in% data$conceptId) %>%
-      dplyr::rename(
-        "conceptId" = .data$descendantConceptId,
-        "levelsOfSeparation" = .data$minLevelsOfSeparation
-      ) %>%
-      dplyr::select(.data$conceptId,
-                    .data$levelsOfSeparation) %>%
-      dplyr::distinct() %>% 
-      dplyr::filter(.data$conceptId != data$conceptId)
-    
-    conceptAncestor <- dplyr::bind_rows(conceptAncestor,
-                                        conceptDescendant) %>%
-      dplyr::distinct() %>%
-      dplyr::arrange(dplyr::desc(.data$levelsOfSeparation))
-    
-    conceptCount <- data$conceptCount %>%
-      tidyr::pivot_longer(
-        cols = c(.data$conceptCount, .data$subjectCount),
-        names_to = "names",
-        values_to = "values"
-      ) %>%
-      dplyr::mutate(names = paste0(.data$names,
-                                   " ",
-                                   .data$databaseId)) %>%
-      tidyr::pivot_wider(
-        id_cols = .data$conceptId,
-        names_from = .data$names,
-        values_from = .data$values
-      )
-    
-    data$conceptRelationshipTable <-
-      data$concept %>%
-      dplyr::select(.data$conceptId) %>% 
-      dplyr::left_join(conceptRelationship,
-                       by = 'conceptId') %>%
-      dplyr::left_join(conceptAncestor,
-                       by = "conceptId") %>%
-      dplyr::mutate(levelsOfSeparation = as.character(.data$levelsOfSeparation)) %>%
-      tidyr::replace_na(list(relationshipId = "Not applicable",
-                             levelsOfSeparation = "Not applicable"))
-    
-    data$conceptName <- data$concept %>%
-      dplyr::filter(.data$conceptId == data$conceptId) %>%
-      dplyr::pull(.data$conceptName)
-    data$relationshipName <- relationship %>%
-      dplyr::select(.data$relationshipId, .data$relationshipName) %>%
-      dplyr::inner_join(data$conceptRelationship, by = "relationshipId") %>%
-      dplyr::select(.data$relationshipName) %>%
-      dplyr::distinct() %>%
-      dplyr::arrange() %>%
-      dplyr::pull()
-    data$conceptAncestorDistance <- data$conceptAncestor %>%
-      dplyr::select(.data$minLevelsOfSeparation) %>%
-      dplyr::distinct() %>%
-      dplyr::arrange(.data$minLevelsOfSeparation) %>%
-      dplyr::rename(levelsOfSeparation = .data$minLevelsOfSeparation) %>%
-      dplyr::pull()
-    
-    data$conceptIdYearMonthLevelTsibble <- data$conceptCountDetails %>%
-      dplyr::filter(.data$conceptId == data$conceptId) %>%
+    data$databaseConceptIdYearMonthLevelTsibble <-
+      data$databaseConceptCountDetails %>%
       dplyr::rename("domainTableShort" = .data$domainTable) %>%
       dplyr::rename("domainFieldShort" = .data$domainField) %>%
       dplyr::filter(.data$domainTableShort %in% nonEraCdmTables$domainTableShort) %>%
@@ -1053,15 +1057,17 @@ getConceptMetadata <- function(dataSource,
                        .groups = 'keep') %>%
       dplyr::ungroup() %>%
       dplyr::filter(.data$value > 0) %>%
-      tsibble::as_tsibble(key = c(.data$conceptId, .data$databaseId),
-                          index = .data$periodBegin) %>%
+      tsibble::as_tsibble(
+        key = c(.data$conceptId, .data$databaseId),
+        index = .data$periodBegin
+      ) %>%
       dplyr::arrange(.data$conceptId,
                      .data$databaseId,
                      .data$periodBegin)
     
     
-    data$conceptIdYearLevelTsibble <- data$conceptCountDetails %>%
-      dplyr::filter(.data$conceptId == data$conceptId) %>%
+    data$databaseConceptIdYearLevelTsibble <-
+      data$databaseConceptCountDetails %>%
       dplyr::rename("domainTableShort" = .data$domainTable) %>%
       dplyr::rename("domainFieldShort" = .data$domainField) %>%
       dplyr::filter(.data$domainTableShort %in% nonEraCdmTables$domainTableShort) %>%
@@ -1073,11 +1079,54 @@ getConceptMetadata <- function(dataSource,
                        .groups = 'keep') %>%
       dplyr::ungroup() %>%
       dplyr::filter(.data$value > 0) %>%
-      tsibble::as_tsibble(key = c(.data$conceptId, .data$databaseId),
-                          index = .data$periodBegin) %>%
+      tsibble::as_tsibble(
+        key = c(.data$conceptId, .data$databaseId),
+        index = .data$periodBegin
+      ) %>%
       dplyr::arrange(.data$conceptId,
                      .data$databaseId,
                      .data$periodBegin)
+  }
+  
+  if (!is.null(cohortIds)) {
+    if (getConceptCooccurrence) {
+      data$conceptCooccurrence <-
+        getResultsConceptCooccurrence(
+          dataSource = dataSource,
+          databaseIds = databaseIds,
+          cohortIds = cohortIds
+        ) %>%
+        dplyr::filter(.data$conceptId %in% c(data$concept$conceptId %>% unique())) %>%
+        dplyr::select(
+          .data$conceptId,
+          .data$databaseId,
+          .data$cohortId,
+          .data$coConceptId,
+          .data$subjectCount
+        ) %>%
+        dplyr::rename("referenceConceptId" = .data$conceptId) %>%
+        dplyr::rename("conceptId" = .data$coConceptId) %>%
+        dplyr::arrange(
+          .data$referenceConceptId,
+          .data$databaseId,
+          .data$cohortId,
+          dplyr::desc(.data$subjectCount)
+        )
+    }
+    if (getIndexEventCount) {
+      data$indexEventBreakdown <-
+        getResultsIndexEventBreakdown(
+          dataSource = dataSource,
+          cohortIds = cohortIds,
+          databaseIds = databaseIds
+        ) %>%
+        dplyr::filter(.data$conceptId %in% c(data$concept$conceptId %>% unique())) %>%
+        dplyr::filter(.data$domainTable %in% "All") %>%
+        dplyr::filter(.data$domainField %in% "All")
+    }
+  }
+  if (getConceptMappingCount) {
+    
   }
   return(data)
 }

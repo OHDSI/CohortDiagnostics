@@ -11,109 +11,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::pull()
     return(data)
   })
-  
-  #!!!!!!!!!!!!!!lets remove it
-  ##getConceptCountData----
-  #loads the entire data into R memory.
-  # an alternative design maybe to load into R memory on start up (global.R)
-  # but the size may become too large and we may want to filter to cohorts/database of choice
-  # to do this - we have to replace by function that joins cohortId/databaseId choices to resolved concepts
-  getConceptCountData <-
-    shiny::reactive(x = {
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(message = paste0("Caching concept counts for reuse"),
-                   value = 0)
-      data <- list()
-      conceptCount <-
-        getResultsConceptCount(dataSource = dataSource,
-                               databaseIds = database$databaseId)
-      if (any(is.null(conceptCount),
-              nrow(conceptCount) == 0)) {
-        return(NULL)
-      }
-      conceptCount <- conceptCount %>%
-        dplyr::rename(domainTableShort = .data$domainTable) %>%
-        dplyr::rename(domainFieldShort = .data$domainField)
-      
-      conceptSubjects <-
-        getResultsConceptSubjects(dataSource = dataSource,
-                                  databaseIds = database$databaseId)
-      if (any(is.null(conceptSubjects),
-              nrow(conceptSubjects) == 0)) {
-        return(NULL)
-      }
-      conceptSubjects <- conceptSubjects %>%
-        dplyr::rename(domainTableShort = .data$domainTable) %>%
-        dplyr::rename(domainFieldShort = .data$domainField)
-      data$conceptCount <- conceptCount
-      data$conceptSubjects <- conceptSubjects
-      return(data)
-    })
-  
-  ##getConceptCountConceptIdLevel----
-  getConceptCountConceptIdLevel <-
-    shiny::reactive(x = {
-      data <- getConceptCountData()
-      if (any(is.null(data),
-              length(data) == 0)) {
-        return(NULL)
-      }
-      
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(message = paste0("Aggregating concept counts"),
-                   value = 0)
-      
-      conceptCount <- data$conceptCount %>%
-        dplyr::filter(.data$domainTableShort %in% getNonEraCdmTableShortNames()) %>%
-        dplyr::group_by(.data$conceptId,
-                        .data$databaseId) %>%
-        dplyr::summarise(conceptCount = sum(.data$conceptCount),
-                         .groups = 'keep') %>%
-        dplyr::ungroup()
-      
-      conceptSubjects <- data$conceptSubjects %>%
-        dplyr::filter(.data$domainTableShort %in% getNonEraCdmTableShortNames()) %>%
-        dplyr::group_by(.data$conceptId,
-                        .data$databaseId) %>%
-        dplyr::summarise(subjectCount = max(.data$subjectCount),
-                         .groups = 'keep') %>%
-        dplyr::ungroup()
-      
-      data <- conceptCount %>%
-        dplyr::inner_join(conceptSubjects,
-                          by = c('databaseId',
-                                 'conceptId')) %>%
-        dplyr::arrange(.data$conceptId, .data$databaseId)
-      
-      return(data)
-    })
-  
-  ##getConceptCooccurrenceData----
-  #loads the entire data into R memory.
-  # an alternative design maybe to load into R memory on start up (global.R)
-  # but the size may become too large and we may want to filter to cohorts/database of choice
-  # to do this - we have to replace by function that joins cohortId/databaseId choices to resolved concepts
-  getConceptCooccurrenceData <-
-    shiny::reactive(x = {
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(message = paste0("Caching concept cooccurrence for reuse"),
-                   value = 0)
-      cooccurrence <-
-        getResultsConceptCooccurrence(
-          dataSource = dataSource,
-          databaseIds = database$databaseId,
-          cohortIds = cohort$cohortId
-        )
-      if (any(is.null(cooccurrence),
-              nrow(cooccurrence) == 0)) {
-        return(NULL)
-      }
-      return(cooccurrence)
-    })
-  
+ 
   ##getCohortSortedByCohortId ----
   getCohortSortedByCohortId <- shiny::reactive({
     data <- cohort %>%
@@ -213,45 +111,6 @@ shiny::shinyServer(function(input, output, session) {
       selected = subset[2]
     )
   })
-  
-  #______________----
-  #Shared/reused----
-  # ##getResolvedConceptIdsForCohort----
-  # getResolvedConceptIdsForCohort <- shiny::reactive({
-  #   if (any(
-  #     is.null(getCohortIdFromSelectedCompoundCohortName()),
-  #     length(getCohortIdFromSelectedCompoundCohortName()) == 0
-  #   )) {
-  #     return(NULL)
-  #   }
-  #   resolvedConcepts <-
-  #     getResultsResolvedConcepts(dataSource = dataSource,
-  #                                cohortIds = getCohortIdFromSelectedCompoundCohortName())
-  #   return(resolvedConcepts)
-  # })
-  
-  # #getResolvedConceptIdsForCohortFilteredBySelectedConceptSets----
-  # getResolvedConceptIdsForCohortFilteredBySelectedConceptSets <-
-  #   shiny::reactive({
-  #     data <- getResolvedConceptsTarget()
-  #     if (!doesObjectHaveData(data)) {
-  #       return(NULL)
-  #     }
-  #     browser()
-  #     data <- data %>%
-  #       dplyr::inner_join(
-  #         conceptSets %>%
-  #           dplyr::select(.data$cohortId,
-  #                         .data$conceptSetId,
-  #                         .data$conceptSetName) %>%
-  #           dplyr::filter(
-  #             .data$conceptSetName %in%
-  #               input$conceptSetsSelectedCohortLeft
-  #           ),
-  #         by = c("cohortId", "conceptSetId")
-  #       )
-  #     return(data)
-  #   })
   
   ##getUserSelection----
   getUserSelection <- shiny::reactive(x = {
@@ -1855,10 +1714,7 @@ shiny::shinyServer(function(input, output, session) {
       inc <-  1
       panels <- list()
       #Modifying rendered UI after load
-      if (any(
-        doesObjectHaveData(consolidatedConceptIdTarget()),
-        doesObjectHaveData(consolidatedConceptIdComparator())
-      )) {
+      if (!is.null(activeSelected()$conceptId)) {
         data <- getMetadataForConceptId()
         panels[[inc]] <- shiny::tabPanel(
           title = "Concept Set Browser",
@@ -1866,9 +1722,13 @@ shiny::shinyServer(function(input, output, session) {
           shiny::conditionalPanel(
             condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
             tags$h4(paste0(
-              data$conceptName,
+              data$concept %>% 
+                dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
+                dplyr::pull(.data$conceptName) %>% 
+                unique() %>% 
+                min(),
               " (",
-              data$conceptId,
+              activeSelected()$conceptId,
               ")"
             )),
             tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", ")),
@@ -2197,21 +2057,49 @@ shiny::shinyServer(function(input, output, session) {
   
   ##getMetadataForConceptId----
   getMetadataForConceptId <- shiny::reactive(x = {
-    conceptId <- activeSelected()$conceptId
-    if (is.null(conceptId)) {
+    if (is.null(activeSelected()$conceptId)) {#currently expecting to be vector of 1 (single select)
       return(NULL)
-    }    
+    }
+    if (length(activeSelected()$conceptId) != 1) {
+      stop("Only single select is supported for conceptId")
+    }
+    if (is.null(activeSelected()$cohortId)) {#currently expecting to be vector of 1 (single select)
+      return(NULL)
+    }
+    if (length(activeSelected()$cohortId) != 1) {
+      stop("Only single select is supported for cohortId")
+    }
+    if (is.null(activeSelected()$databaseId)) {#currently expecting to be vector of 1 or more (multiselect)
+      return(NULL)
+    }
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(
       message = paste0("Getting metadata for concept id:",
-                       conceptId),
+                       activeSelected()$conceptId,
+                       " in cohort: ",
+                       activeSelected()$cohortId),
       value = 0
     )
     data <- getConceptMetadata(dataSource = dataSource,
-                               conceptIds = conceptId)
+                               databaseIds = activeSelected()$databaseId,
+                               cohortIds = activeSelected()$cohortId,
+                               conceptIds = activeSelected()$conceptId)
     if (!doesObjectHaveData(data)) {
       return(NULL)
+    }
+    if (!is.null(data$conceptCooccurrence)) {
+      data$conceptCooccurrence <-
+        data$conceptCooccurrence %>%
+        dplyr::filter(.data$referenceConceptId == activeSelected()$conceptId) %>%
+        dplyr::filter(.data$cohortId == activeSelected()$cohortId) %>%
+        dplyr::select(-.data$referenceConceptId)
+    }
+    if (!is.null(data$conceptRelationshipTable)) {
+      data$conceptRelationshipTable <-
+        data$conceptRelationshipTable %>%
+        dplyr::filter(.data$referenceConceptId == activeSelected()$conceptId) %>%
+        dplyr::select(-.data$referenceConceptId)
     }
     return(data)
   })
@@ -2221,6 +2109,10 @@ shiny::shinyServer(function(input, output, session) {
   output$conceptBrowserTable <- DT::renderDT(expr = {
     conceptId <- activeSelected()$conceptId
     validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
+    cohortId <- activeSelected()$cohortId
+    validate(need(doesObjectHaveData(conceptId), "No cohort id selected."))
+    databaseId <- activeSelected()$databaseId
+    validate(need(doesObjectHaveData(databaseId), "No database id selected."))
     
     progress <- shiny::Progress$new()
     on.exit(progress$close())
@@ -2234,61 +2126,75 @@ shiny::shinyServer(function(input, output, session) {
       doesObjectHaveData(data),
       "No information for selected concept id."
     ))
-    if (isTRUE(consolidateCohortDefinitionActiveSideTarget())) {
-      cohortId <- consolidatedCohortIdTarget()
-    }
-    if (isTRUE(consolidateCohortDefinitionActiveSideComparator())) {
-      cohortId <- consolidatedCohortIdComparator()
-    }
-    conceptCooccurrence <-
-      getResultsConceptCooccurrence(
-        dataSource = dataSource,
-        databaseIds = activeSelected()$databaseId,
-        cohortIds = cohortId
-      ) %>%
-      dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>%
-      dplyr::select(-.data$cohortId,-.data$conceptId) %>%
-      dplyr::rename(conceptId = .data$coConceptId)
     
-    conceptRelationshipTable <- data$conceptRelationshipTable
-    
-    if (doesObjectHaveData(input$choicesForRelationshipName)) {
-      conceptRelationshipTable <- conceptRelationshipTable %>%
-        dplyr::inner_join(
-          relationship %>%
-            dplyr::filter(
-              .data$relationshipName %in% input$choicesForRelationshipName
-            ) %>%
-            dplyr::select(.data$relationshipId) %>%
-            dplyr::distinct(),
-          by = "relationshipId"
-        )
+    if (any(
+      doesObjectHaveData(input$choicesForRelationshipName),
+      doesObjectHaveData(input$choicesForRelationshipDistance)
+    )) {
+      conceptRelationshipTable <- data$conceptRelationshipTable
+      if (doesObjectHaveData(input$choicesForRelationshipName)) {
+        conceptRelationshipTable <- conceptRelationshipTable %>%
+          dplyr::inner_join(
+            relationship %>%
+              dplyr::filter(
+                .data$relationshipName %in% c(input$choicesForRelationshipName)
+              ) %>%
+              dplyr::select(.data$relationshipId) %>%
+              dplyr::distinct(),
+            by = "relationshipId"
+          )
+      }
+      if (doesObjectHaveData(input$choicesForRelationshipDistance)) {
+        conceptRelationshipTable <- conceptRelationshipTable %>%
+          dplyr::filter(.data$levelsOfSeparation %in%
+                          input$choicesForRelationshipDistance)
+      }
     }
-    if (doesObjectHaveData(input$choicesForRelationshipDistance)) {
-      conceptRelationshipTable <- conceptRelationshipTable %>%
-        dplyr::filter(.data$levelsOfSeparation %in%
-                        input$choicesForRelationshipDistance)
-    }
-    
     conceptRelationshipTable <- conceptRelationshipTable %>%
-      dplyr::inner_join(conceptCooccurrence,
-                        by = "conceptId") %>%
       dplyr::inner_join(data$concept,
                         by = "conceptId")
     if (!doesObjectHaveData(conceptRelationshipTable)) {
       return(NULL)
     }
-    table <-
-      getSketchDesignForTablesInCohortDefinitionTab(
-        conceptRelationshipTable,
-        databaseCount = data$conceptCount %>%
-          dplyr::rename(
-            cohortEntries = .data$conceptCount,
-            cohortSubjects = .data$subjectCount
-          ) %>%
-          dplyr::filter(.data$databaseId %in% activeSelected()$databaseId) %>%
-          dplyr::filter(.data$conceptId %in% activeSelected()$conceptId)
+    #!!!!!!!!!!switch
+    #!!!!!!!!!!!!!!!if cohort count is selected then
+    # conceptRelationshipTable <- conceptRelationshipTable %>%
+    #   dplyr::left_join(data$conceptCooccurrence %>%
+    #                       dplyr::select(-.data$cohortId),
+    #                     by = "conceptId")
+    # databaseCount <- data$indexEventBreakdown %>%
+    #   dplyr::filter(.data$conceptId %in% conceptId) %>%
+    #   dplyr::select(.data$databaseId, .data$conceptCount, .data$subjectCount) %>%
+    #   dplyr::rename("records" = .data$conceptCount,
+    #                 "persons" = .data$subjectCount)
+    #!!!!!!!!!!!!!!!if database count is selected then
+    conceptRelationshipTable <- conceptRelationshipTable %>%
+      tidyr::crossing(dplyr::tibble(databaseId = !!databaseId)) %>% 
+      dplyr::left_join(data$databaseConceptCount,
+                       by = c("databaseId", "conceptId")) %>%
+      dplyr::rename("records" = .data$conceptCount,
+                    "persons" = .data$subjectCount) %>%
+      dplyr::select(
+        .data$databaseId,
+        .data$conceptId,
+        .data$conceptName,
+        .data$domainId,
+        .data$vocabularyId,
+        .data$standardConcept,
+        .data$levelsOfSeparation,
+        .data$relationshipId,
+        .data$records,
+        .data$persons
       )
+    databaseCount <- cohortCount %>%
+      dplyr::filter(.data$cohortId == !!cohortId) %>%
+      dplyr::filter(.data$databaseId %in% !!databaseId) %>%
+      dplyr::select(-.data$cohortId) %>%
+      dplyr::rename("persons" = .data$cohortSubjects,
+                    "records" = .data$cohortEntries)
+    table <-
+      getSketchDesignForTablesInCohortDefinitionTab(conceptRelationshipTable,
+                                                    databaseCount = databaseCount)
     return(table)
   })
   
@@ -2561,9 +2467,16 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No resolved concept ids"))
-      return(getSketchDesignForTablesInCohortDefinitionTab(data = data, 
-                                                           databaseCount = cohortCount %>% 
-                                                             dplyr::filter(.data$cohortId == consolidatedCohortIdTarget())))
+      databaseCount <- cohortCount %>% 
+        dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
+        dplyr::rename("records" = .data$cohortEntries,
+                      "persons" = .data$cohortSubjects)
+      data <- data %>% 
+        dplyr::rename("records" = .data$conceptCount,
+                      "persons" = .data$subjectCount)
+      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
+                                                             databaseCount = databaseCount)
+      return(table)
     }, server = TRUE)
   
   #output: saveOrphanConceptsTableTarget----
@@ -2585,14 +2498,17 @@ shiny::shinyServer(function(input, output, session) {
         "Please select concept set"
       ))
       data <- getExcludedConceptsTarget()
-      validate(need((all(
-        !is.null(data), nrow(data) > 0
-      )),
-      "No excluded concept ids"))
-      
-      return(getSketchDesignForTablesInCohortDefinitionTab(data = data, 
-                                                           databaseCount = cohortCount %>% 
-                                                             dplyr::filter(.data$cohortId == consolidatedCohortIdTarget())))
+      validate(need(doesObjectHaveData(data), "No excluded concept ids"))
+      databaseCount <- cohortCount %>% 
+        dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
+        dplyr::rename("records" = .data$cohortEntries,
+                      "persons" = .data$cohortSubjects)
+      data <- data %>% 
+        dplyr::rename("records" = .data$conceptCount,
+                      "persons" = .data$subjectCount)
+      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
+                                                             databaseCount = databaseCount)
+      return(table)
     }, server = TRUE)
   
   #output: saveExcludedConceptsTableLeft----
@@ -2612,15 +2528,20 @@ shiny::shinyServer(function(input, output, session) {
       data <- getOrphanConceptsTarget()
       if (!doesObjectHaveData(data)) {
         return(NULL)
-      } 
-      
+      }
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
                     "No orphan concepts"))
-      
-      return(getSketchDesignForTablesInCohortDefinitionTab(data = data, 
-                                                           databaseCount = cohortCount %>% 
-                                                             dplyr::filter(.data$cohortId == consolidatedCohortIdTarget())))
+      databaseCount <- cohortCount %>% 
+        dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
+        dplyr::rename("records" = .data$cohortEntries,
+                      "persons" = .data$cohortSubjects)
+      data <- data %>% 
+        dplyr::rename("records" = .data$conceptCount,
+                      "persons" = .data$subjectCount)
+      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
+                                                             databaseCount = databaseCount)
+      return(table)
     }, server = TRUE)
   
   #output: targetConceptsetExpressionJson----
@@ -3091,10 +3012,16 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No resolved concept ids"))
-      
-      return(getSketchDesignForTablesInCohortDefinitionTab(data = data, 
-                                                           databaseCount = cohortCount %>% 
-                                                             dplyr::filter(.data$cohortId == consolidatedCohortIdComparator())))
+      databaseCount <- cohortCount %>% 
+        dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
+        dplyr::rename("records" = .data$cohortEntries,
+                      "persons" = .data$cohortSubjects)
+      data <- data %>% 
+        dplyr::rename("records" = .data$conceptCount,
+                      "persons" = .data$subjectCount)
+      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
+                                                             databaseCount = databaseCount)
+      return(table)
     }, server = TRUE)
   
   ##output: saveComparatorCohortDefinitionResolvedConceptTable----
@@ -3123,14 +3050,20 @@ shiny::shinyServer(function(input, output, session) {
       databaseIds <- sort(unique(data$databaseId))
       maxCount <- max(data$conceptCount, na.rm = TRUE)
       maxSubject <- max(data$subjectCount, na.rm = TRUE)
-      
-      return(getSketchDesignForTablesInCohortDefinitionTab(data = data, 
-                                                           databaseCount = cohortCount %>% 
-                                                             dplyr::filter(.data$cohortId == consolidatedCohortIdComparator())))
+      databaseCount <- cohortCount %>% 
+        dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
+        dplyr::rename("records" = .data$cohortEntries,
+                      "persons" = .data$cohortSubjects)
+      data <- data %>% 
+        dplyr::rename("records" = .data$conceptCount,
+                      "persons" = .data$subjectCount)
+      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
+                                                             databaseCount = databaseCount)
+      return(table)
     }, server = TRUE)
   
-  #output: saveExcludedConceptsTableRight----
-  output$saveExcludedConceptsTableRight <-  downloadHandler(
+  #output: saveExcludedConceptsTableComparator----
+  output$saveExcludedConceptsTableComparator <-  downloadHandler(
     filename = function()
     {
       getCsvFileNameWithDateTime(string = "excludedConcepts")
@@ -3152,10 +3085,15 @@ shiny::shinyServer(function(input, output, session) {
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
                     "No orphan concepts"))
-      
-      return(getSketchDesignForTablesInCohortDefinitionTab(data = data, 
-                                                           databaseCount = cohortCount %>% 
-                                                             dplyr::filter(.data$cohortId == consolidatedCohortIdComparator())))
+      databaseCount <- cohortCount %>% 
+        dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
+        dplyr::rename("records" = .data$cohortEntries,
+                      "persons" = .data$cohortSubjects)
+      data <- data %>% 
+        dplyr::rename("records" = .data$conceptCount,
+                      "persons" = .data$subjectCount)
+      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
+                                                             databaseCount = databaseCount)
     }, server = TRUE)
   
   ##output: saveComparatorCohortDefinitionOrphanConceptTable----

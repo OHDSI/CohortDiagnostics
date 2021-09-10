@@ -301,7 +301,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   # get concept record count----
   ParallelLogger::logInfo("  - Counting concepts in data source.")
   conceptSetDiagnosticsResults$conceptCount <-
-    getConceptRecordCountByMonth(
+    getConceptRecordCount(
       connection = connection,
       cdmDatabaseSchema = cdmDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
@@ -312,20 +312,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       conceptSetDiagnosticsResults$conceptCount %>%
       dplyr::filter(.data$conceptId < 200000000)
   }
-  
-  # get concept subject count----
-  conceptSetDiagnosticsResults$conceptSubjects <-
-    getConceptSubjectCount(
-      connection = connection,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      tempEmulationSchema = tempEmulationSchema,
-      conceptIdUniverse = "#concept_tracking"
-    )
-  if (!keepCustomConceptId) {
-    conceptSetDiagnosticsResults$conceptSubjects <-
-      conceptSetDiagnosticsResults$conceptSubjects %>%
-      dplyr::filter(.data$conceptId < 200000000)
-  }
+
   # get concept mapping----
   ParallelLogger::logInfo("  - Mapping concepts.")
   conceptSetDiagnosticsResults$conceptMapping <-
@@ -827,19 +814,20 @@ getOrphanConcepts <- function(connectionDetails = NULL,
   return(orphanCodes)
 }
 
-# function: getConceptRecordCountByMonth ----
+# function: getConceptRecordCount ----
 ### Concept counts by month -----
-getConceptRecordCountByMonth <- function(connection,
+getConceptRecordCount <- function(connection,
                                          cdmDatabaseSchema,
                                          tempEmulationSchema,
                                          conceptIdUniverse = "#concept_tracking") {
   ParallelLogger::logTrace(" - Counting concepts by person id, calendar month and year")
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide
-  sql <- "SELECT @domain_concept_id concept_id,
+  sql1 <- "SELECT @domain_concept_id concept_id,
           	YEAR(@domain_start_date) event_year,
           	MONTH(@domain_start_date) event_month,
-          	COUNT_BIG(*) concept_count
+          	COUNT_BIG(*) concept_count,
+          	COUNT_BIG(DISTINCT person_id) subject_count
           FROM @cdm_database_schema.@domain_table
           INNER JOIN (
           	SELECT DISTINCT concept_id
@@ -850,6 +838,33 @@ getConceptRecordCountByMonth <- function(connection,
           GROUP BY @domain_concept_id,
           	YEAR(@domain_start_date),
           	MONTH(@domain_start_date);"
+  sql2 <- "SELECT @domain_concept_id concept_id,
+          	YEAR(@domain_start_date) event_year,
+          	0 as event_month,
+          	COUNT_BIG(*) concept_count,
+          	COUNT_BIG(DISTINCT person_id) subject_count
+          FROM @cdm_database_schema.@domain_table
+          INNER JOIN (
+          	SELECT DISTINCT concept_id
+          	FROM @concept_id_universe
+          	) c
+          	ON @domain_concept_id = concept_id
+          WHERE YEAR(@domain_start_date) > 0
+          GROUP BY @domain_concept_id,
+          	YEAR(@domain_start_date);"
+  sql3 <- "SELECT @domain_concept_id concept_id,
+          	0 as event_year,
+          	0 as event_month,
+          	COUNT_BIG(*) concept_count,
+          	COUNT_BIG(DISTINCT person_id) subject_count
+          FROM @cdm_database_schema.@domain_table
+          INNER JOIN (
+          	SELECT DISTINCT concept_id
+          	FROM @concept_id_universe
+          	) c
+          	ON @domain_concept_id = concept_id
+          WHERE YEAR(@domain_start_date) > 0
+          GROUP BY @domain_concept_id;"
   
   standardConcepts <- list()
   for (i in (1:nrow(domains))) {
@@ -860,9 +875,9 @@ getConceptRecordCountByMonth <- function(connection,
       ".",
       rowData$domainConceptId
     ))
-    standardConcepts[[i]] <- renderTranslateQuerySql(
+    data1 <- renderTranslateQuerySql(
       connection = connection,
-      sql = sql,
+      sql = sql1,
       tempEmulationSchema = tempEmulationSchema,
       domain_table = rowData$domainTable,
       domain_concept_id = rowData$domainConceptId,
@@ -870,7 +885,33 @@ getConceptRecordCountByMonth <- function(connection,
       domain_start_date = rowData$domainStartDate,
       concept_id_universe = conceptIdUniverse,
       snakeCaseToCamelCase = TRUE
-    ) %>%
+    )
+    data2 <- renderTranslateQuerySql(
+      connection = connection,
+      sql = sql2,
+      tempEmulationSchema = tempEmulationSchema,
+      domain_table = rowData$domainTable,
+      domain_concept_id = rowData$domainConceptId,
+      cdm_database_schema = cdmDatabaseSchema,
+      domain_start_date = rowData$domainStartDate,
+      concept_id_universe = conceptIdUniverse,
+      snakeCaseToCamelCase = TRUE
+    )
+    data3 <- renderTranslateQuerySql(
+      connection = connection,
+      sql = sql3,
+      tempEmulationSchema = tempEmulationSchema,
+      domain_table = rowData$domainTable,
+      domain_concept_id = rowData$domainConceptId,
+      cdm_database_schema = cdmDatabaseSchema,
+      domain_start_date = rowData$domainStartDate,
+      concept_id_universe = conceptIdUniverse,
+      snakeCaseToCamelCase = TRUE
+    )
+    
+    standardConcepts[[i]] <- dplyr::bind_rows(data1,
+                                              data2,
+                                              data3) %>%
       dplyr::mutate(domainTable = rowData$domainTableShort) %>%
       dplyr::mutate(domainField = rowData$domainConceptIdShort)
   }
@@ -887,10 +928,9 @@ getConceptRecordCountByMonth <- function(connection,
         ".",
         rowData$domainSourceConceptId
       ))
-      
-      nonStandardConcepts[[i]] <- renderTranslateQuerySql(
+      nsData1 <- renderTranslateQuerySql(
         connection = connection,
-        sql = sql,
+        sql = sql1,
         tempEmulationSchema = tempEmulationSchema,
         domain_table = rowData$domainTable,
         domain_concept_id = rowData$domainSourceConceptId,
@@ -905,7 +945,46 @@ getConceptRecordCountByMonth <- function(connection,
             dplyr::select(.data$conceptId) %>%
             dplyr::distinct(),
           by = 'conceptId'
-        ) %>%
+        )
+      nsData2 <- renderTranslateQuerySql(
+        connection = connection,
+        sql = sql2,
+        tempEmulationSchema = tempEmulationSchema,
+        domain_table = rowData$domainTable,
+        domain_concept_id = rowData$domainSourceConceptId,
+        cdm_database_schema = cdmDatabaseSchema,
+        domain_start_date = rowData$domainStartDate,
+        concept_id_universe = conceptIdUniverse,
+        snakeCaseToCamelCase = TRUE
+      ) %>%
+        # conceptIds - only keep concept id that were never found in standard fields
+        dplyr::anti_join(
+          y = standardConcepts %>%
+            dplyr::select(.data$conceptId) %>%
+            dplyr::distinct(),
+          by = 'conceptId'
+        )
+      nsData3 <- renderTranslateQuerySql(
+        connection = connection,
+        sql = sql3,
+        tempEmulationSchema = tempEmulationSchema,
+        domain_table = rowData$domainTable,
+        domain_concept_id = rowData$domainSourceConceptId,
+        cdm_database_schema = cdmDatabaseSchema,
+        domain_start_date = rowData$domainStartDate,
+        concept_id_universe = conceptIdUniverse,
+        snakeCaseToCamelCase = TRUE
+      ) %>%
+        # conceptIds - only keep concept id that were never found in standard fields
+        dplyr::anti_join(
+          y = standardConcepts %>%
+            dplyr::select(.data$conceptId) %>%
+            dplyr::distinct(),
+          by = 'conceptId'
+        )
+        nonStandardConcepts[[i]] <- dplyr::bind_rows(nsData1,
+                                                     nsData2,
+                                                     nsData3) %>% 
         dplyr::mutate(domainTable = rowData$domainTableShort) %>%
         dplyr::mutate(domainField = rowData$domainConceptIdShort)
     }
@@ -920,7 +999,8 @@ getConceptRecordCountByMonth <- function(connection,
       .data$conceptId,
       .data$eventYear,
       .data$eventMonth,
-      .data$conceptCount
+      .data$conceptCount,
+      .data$subjectCount
     ) %>%
     dplyr::distinct() %>%
     dplyr::arrange(
@@ -930,99 +1010,28 @@ getConceptRecordCountByMonth <- function(connection,
       .data$eventYear,
       .data$eventMonth
     )
-  return(data)
-}
-
-
-getConceptSubjectCount <- function(connection,
-                                   cdmDatabaseSchema,
-                                   tempEmulationSchema,
-                                   conceptIdUniverse = "#concept_tracking") {
-  ParallelLogger::logTrace(" - Counting unique person count by concept id")
-  domains <- getDomainInformation(packageName = 'CohortDiagnostics')
-  domains <- domains$wide
-  sql <- "SELECT @domain_concept_id concept_id,
-          	COUNT_BIG(DISTINCT person_id) subject_count
-          FROM @cdm_database_schema.@domain_table
-          INNER JOIN (
-          	SELECT DISTINCT concept_id
-          	FROM @concept_id_universe
-          	) c
-          	ON @domain_concept_id = concept_id
-          WHERE YEAR(@domain_start_date) > 0
-          GROUP BY @domain_concept_id;"
-  
-  standardConcepts <- list()
-  for (i in (1:nrow(domains))) {
-    rowData <- domains[i, ]
-    ParallelLogger::logTrace(paste0(
-      "   - Working on ",
-      rowData$domainTable,
-      ".",
-      rowData$domainConceptId
-    ))
-    standardConcepts[[i]] <- renderTranslateQuerySql(
-      connection = connection,
-      sql = sql,
-      tempEmulationSchema = tempEmulationSchema,
-      domain_table = rowData$domainTable,
-      domain_concept_id = rowData$domainConceptId,
-      cdm_database_schema = cdmDatabaseSchema,
-      domain_start_date = rowData$domainStartDate,
-      concept_id_universe = conceptIdUniverse,
-      snakeCaseToCamelCase = TRUE
-    ) %>%
-      dplyr::mutate(domainTable = rowData$domainTableShort) %>%
-      dplyr::mutate(domainField = rowData$domainConceptIdShort)
-  }
-  standardConcepts <- dplyr::bind_rows(standardConcepts) %>%
+  data <- dplyr::bind_rows(data,
+                   data %>% 
+                     dplyr::group_by(.data$conceptId,
+                                     .data$eventYear,
+                                     .data$eventMonth) %>% 
+                     dplyr::summarise(conceptCount = sum(.data$conceptCount),
+                                      subjectCount = max(.data$subjectCount), 
+                                      .groups = "keep") %>% 
+                     dplyr::mutate(domainField = "All",
+                                   domainTable = "All"),
+                   data %>%
+                     dplyr::group_by(.data$conceptId,
+                                     .data$eventYear,
+                                     .data$eventMonth,
+                                     .data$domainTable
+                     ) %>% 
+                     dplyr::summarise(conceptCount = sum(.data$conceptCount),
+                                      subjectCount = max(.data$subjectCount), 
+                                      .groups = "keep") %>% 
+                     dplyr::mutate(domainField = "All")
+  ) %>% 
     dplyr::distinct()
-  
-  nonStandardConcepts <- list()
-  for (i in (1:nrow(domains))) {
-    rowData <- domains[i, ]
-    if (nchar(rowData$domainSourceConceptId) > 4) {
-      ParallelLogger::logTrace(
-        paste0(
-          "   - Working on ",
-          rowData$domainTable,
-          ".",
-          rowData$domainSourceConceptId
-        )
-      )
-      
-      nonStandardConcepts[[i]] <- renderTranslateQuerySql(
-        connection = connection,
-        sql = sql,
-        tempEmulationSchema = tempEmulationSchema,
-        domain_table = rowData$domainTable,
-        domain_concept_id = rowData$domainSourceConceptId,
-        cdm_database_schema = cdmDatabaseSchema,
-        domain_start_date = rowData$domainStartDate,
-        concept_id_universe = conceptIdUniverse,
-        snakeCaseToCamelCase = TRUE
-      ) %>%
-        # conceptIds - only keep concept id that were never found in standard fields
-        dplyr::anti_join(
-          y = standardConcepts %>%
-            dplyr::select(.data$conceptId) %>%
-            dplyr::distinct(),
-          by = 'conceptId'
-        ) %>%
-        dplyr::mutate(domainTable = rowData$domainTableShort) %>%
-        dplyr::mutate(domainField = rowData$domainConceptIdShort)
-    }
-  }
-  nonStandardConcepts <-
-    dplyr::bind_rows(nonStandardConcepts)
-  data <-
-    dplyr::bind_rows(standardConcepts, nonStandardConcepts) %>%
-    dplyr::select(.data$domainTable,
-                  .data$domainField,
-                  .data$conceptId,
-                  .data$subjectCount) %>%
-    dplyr::distinct() %>%
-    dplyr::arrange(.data$domainTable, .data$domainField, .data$conceptId)
   return(data)
 }
 
@@ -1116,10 +1125,32 @@ getBreakdownIndexEvents <- function(cohortIds,
   }
   breakdownDataNonStandard <-
     dplyr::bind_rows(breakdownDataNonStandard)
-  return(
+  data <- 
     dplyr::bind_rows(breakdownDataNonStandard,
-                     breakdownDataStandard) %>% dplyr::distinct()
-  )
+                     breakdownDataStandard) %>% 
+    dplyr::distinct()
+  data <- dplyr::bind_rows(data,
+                           data %>% 
+                             dplyr::group_by(.data$cohortId,
+                                             .data$conceptId
+                                             ) %>% 
+                             dplyr::summarise(conceptCount = sum(.data$conceptCount),
+                                              subjectCount = max(.data$subjectCount), 
+                                              .groups = "keep") %>% 
+                             dplyr::mutate(domainField = "All",
+                                           domainTable = "All"),
+                           data %>%
+                             dplyr::group_by(.data$cohortId,
+                                             .data$conceptId,
+                                             .data$domainTable
+                             ) %>% 
+                             dplyr::summarise(conceptCount = sum(.data$conceptCount),
+                                              subjectCount = max(.data$subjectCount), 
+                                              .groups = "keep") %>% 
+                             dplyr::mutate(domainField = "All")
+                             ) %>% 
+    dplyr::distinct()
+  return(data)
 }
 
 

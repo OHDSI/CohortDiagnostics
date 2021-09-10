@@ -319,9 +319,3 @@ if (!showVisitContext) {
 sourcesOfVocabularyTables <-
   getSourcesOfVocabularyTables(dataSource = dataSource,
                                database = database)
-
-#temporary till new premerged file
-if (exists("conceptCooccurrence")) {
-  conceptCooccurrence <- conceptCooccurrence %>% 
-    dplyr::rename(subjectCount = .data$conceptCount)
-}
