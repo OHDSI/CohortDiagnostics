@@ -2002,8 +2002,8 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- data %>% 
       dplyr::filter(.data$databaseId %in% activeSelected()$databaseId)
-    
-    tsibbleDataFromSTLModel <- getSTLModelTsibbleData(tsibbleData = data)
+    browser()
+    tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data)
     
     plot <- plotTimeSeriesFromTsibble(
       tsibbleData = tsibbleDataFromSTLModel,
@@ -4318,10 +4318,8 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(titleCaseToCamelCase(input$timeSeriesPlotFilters) %in% colnames(data),
       paste0(paste0(input$timeSeriesPlotFilters, collapse = ","), " not found in tsibble")
     ))
-    debug(getSTLModelTsibbleData)
-    tsibbleDataFromSTLModel <- getSTLModelTsibbleData(tsibbleData = data, 
+    tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data, 
                                                       valueFields = titleCaseToCamelCase(input$timeSeriesPlotFilters))
-    browser()
     plot <- plotTimeSeriesFromTsibble(
       tsibbleData = tsibbleDataFromSTLModel,
       plotFilters = titleCaseToCamelCase(input$timeSeriesPlotFilters),
