@@ -965,13 +965,7 @@ getConceptMetadata <- function(dataSource,
       dplyr::pull()
   }
   
-  nonEraCdmTables <- getDomainInformation()$long %>%
-    dplyr::mutate(isEraTable = stringr::str_detect(string = .data$domainTable,
-                                                   pattern = 'era')) %>%
-    dplyr::filter(.data$isEraTable == FALSE) %>%
-    dplyr::select(.data$domainTableShort) %>%
-    dplyr::distinct() %>%
-    dplyr::arrange()
+  data$cdmTables <- getDomainInformation()$long
   
   # results dependent on databaseId
   if (getConceptCount) {
@@ -994,50 +988,62 @@ getConceptMetadata <- function(dataSource,
       data$databaseConceptCountDetails %>%
       dplyr::rename("domainTableShort" = .data$domainTable) %>%
       dplyr::rename("domainFieldShort" = .data$domainField) %>%
-      dplyr::filter(.data$domainTableShort %in% nonEraCdmTables$domainTableShort) %>%
-      dplyr::filter(.data$eventYear > 1000, .data$eventMonth > 0) %>% 
+      dplyr::filter(.data$domainTableShort %in% c(data$cdmTables$domainTableShort %>% unique(), "All")) %>%
+      dplyr::filter(.data$eventYear > 0, .data$eventMonth > 0) %>% 
       dplyr::mutate(periodBegin = lubridate::as_date(paste0(
         .data$eventYear,
         "-",
         .data$eventMonth,
         "-01"
-      ))) %>% #Lubridate exponetially faster that baseR as.Date and  ISODate
-      dplyr::group_by(.data$conceptId,
-                      .data$databaseId,
-                      .data$periodBegin) %>%
-      dplyr::summarise(value = sum(.data$conceptCount),
-                       .groups = 'keep') %>%
-      dplyr::ungroup() %>%
-      dplyr::filter(.data$value > 0) %>% 
+      ))) %>% 
+      dplyr::select(.data$conceptId,
+                    .data$databaseId,
+                    .data$domainFieldShort,
+                    .data$domainTableShort,
+                    .data$periodBegin,
+                    .data$conceptCount,
+                    .data$subjectCount) %>% 
       tsibble::as_tsibble(
-        key = c(.data$conceptId, .data$databaseId),
+        key = c(.data$conceptId, .data$databaseId, .data$domainFieldShort, .data$domainTableShort),
         index = .data$periodBegin
       ) %>%
       dplyr::arrange(.data$conceptId,
                      .data$databaseId,
-                     .data$periodBegin)
+                     .data$domainFieldShort,
+                     .data$domainTableShort,
+                     .data$periodBegin,
+                     .data$conceptCount,
+                     .data$subjectCount)
     
     data$databaseConceptIdYearLevelTsibble <-
-         data$databaseConceptCountDetails %>%
+      data$databaseConceptCountDetails %>%
       dplyr::rename("domainTableShort" = .data$domainTable) %>%
       dplyr::rename("domainFieldShort" = .data$domainField) %>%
-      dplyr::filter(.data$domainTableShort %in% nonEraCdmTables$domainTableShort) %>%
-      dplyr::filter(.data$eventYear > 1000) %>% 
-      dplyr::mutate(periodBegin = lubridate::as_date(paste0(.data$eventYear, "-01-01"))) %>% #Lubridate exponetially faster that baseR as.Date and  ISODate
-      dplyr::group_by(.data$conceptId,
-                      .data$databaseId,
-                      .data$periodBegin) %>%
-      dplyr::summarise(value = sum(.data$conceptCount),
-                       .groups = 'keep') %>%
-      dplyr::ungroup() %>%
-      dplyr::filter(.data$value > 0) %>%
+      dplyr::filter(.data$domainTableShort %in% c(data$cdmTables$domainTableShort %>% unique(), "All")) %>%
+      dplyr::filter(.data$eventYear > 0, .data$eventMonth == 0) %>% 
+      dplyr::mutate(periodBegin = lubridate::as_date(paste0(
+        .data$eventYear,
+        "-",
+        "01-01"
+      ))) %>% 
+      dplyr::select(.data$conceptId,
+                    .data$databaseId,
+                    .data$domainFieldShort,
+                    .data$domainTableShort,
+                    .data$periodBegin,
+                    .data$conceptCount,
+                    .data$subjectCount) %>% 
       tsibble::as_tsibble(
-        key = c(.data$conceptId, .data$databaseId),
+        key = c(.data$conceptId, .data$databaseId, .data$domainFieldShort, .data$domainTableShort),
         index = .data$periodBegin
       ) %>%
       dplyr::arrange(.data$conceptId,
                      .data$databaseId,
-                     .data$periodBegin)
+                     .data$domainFieldShort,
+                     .data$domainTableShort,
+                     .data$periodBegin,
+                     .data$conceptCount,
+                     .data$subjectCount)
   }
   
   if (!is.null(cohortIds)) {
@@ -1072,9 +1078,7 @@ getConceptMetadata <- function(dataSource,
           cohortIds = cohortIds,
           databaseIds = databaseIds
         ) %>%
-        dplyr::filter(.data$conceptId %in% c(data$concept$conceptId %>% unique())) %>%
-        dplyr::filter(.data$domainTable %in% "All") %>%
-        dplyr::filter(.data$domainField %in% "All")
+        dplyr::filter(.data$conceptId %in% c(data$concept$conceptId %>% unique()))
     }
   }
   if (getConceptMappingCount) {

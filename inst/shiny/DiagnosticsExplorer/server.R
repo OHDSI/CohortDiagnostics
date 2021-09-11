@@ -2088,7 +2088,7 @@ shiny::shinyServer(function(input, output, session) {
                        activeSelected()$cohortId),
       value = 0
     )
-    data$databaseConceptCount <-
+    data <-
       getConceptMetadata(
         dataSource = dataSource,
         databaseIds = activeSelected()$databaseId,
@@ -5178,11 +5178,12 @@ shiny::shinyServer(function(input, output, session) {
       if (!doesObjectHaveData(data)) {
         return(null)
       }
+      browser()
       # working on the plot
       if (input$timeSeriesAggregationPeriodSelection == "Monthly") {
-        data <- data$conceptIdYearMonthLevelTsibble
+        data <- data$databaseConceptIdYearMonthLevelTsibble
       } else {
-        data <- data$conceptIdYearLevelTsibble
+        data <- data$databaseConceptIdYearLevelTsibble
       }
       validate(need(
         all(!is.null(data),
