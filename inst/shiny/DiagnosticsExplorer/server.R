@@ -183,9 +183,15 @@ shiny::shinyServer(function(input, output, session) {
   #cohortDefinition tab----
   ##Cohort definition----
   
-  ##Dynamic UI rendering for left side -----
+  ##Dynamic UI rendering for target side -----
   output$dynamicUIGenerationForCohortSelectedTarget <-
     shiny::renderUI(expr = {
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = "Rendering the UI for target cohort details",
+        value = 0
+      )
       shiny::column(
         getWidthOfLeftPanelForCohortDetailBrowserInCohortDefinitionTabBasedOnNoOfRowSelectedInCohortTable(),
         shiny::conditionalPanel(
@@ -421,9 +427,15 @@ shiny::shinyServer(function(input, output, session) {
       )
     })
   
-  ##Dynamic UI rendering for right side -----
+  ##Dynamic UI rendering for comparator side -----
   output$dynamicUIGenerationForCohortSelectedComparator <-
     shiny::renderUI(expr = {
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = "Rendering the UI for target cohort details",
+        value = 0
+      )
       shiny::column(
         getWidthOfLeftPanelForCohortDetailBrowserInCohortDefinitionTabBasedOnNoOfRowSelectedInCohortTable(),
         shiny::conditionalPanel(
@@ -1717,11 +1729,18 @@ shiny::shinyServer(function(input, output, session) {
   #Dynamic UI rendering for relationship table -----
   output$dynamicUIForRelationshipAndComparisonTable <-
     shiny::renderUI({
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = "Rendering the UI for concept browser",
+        value = 0
+      )
       inc <-  1
       panels <- list()
       #Modifying rendered UI after load
       if (!is.null(activeSelected()$conceptId)) {
         data <- getMetadataForConceptId()
+        validate(need(doesObjectHaveData(data), "No data for selected combination"))
         panels[[inc]] <- shiny::tabPanel(
           title = "Concept Set Browser",
           value = "conceptSetBrowser",
@@ -2136,12 +2155,12 @@ shiny::shinyServer(function(input, output, session) {
       doesObjectHaveData(data),
       "No information for selected concept id."
     ))
-    
+    conceptRelationshipTable <- data$conceptRelationshipTable %>% 
+      dplyr::filter(.data$conceptId != activeSelected()$conceptId)
     if (any(
       doesObjectHaveData(input$choicesForRelationshipName),
       doesObjectHaveData(input$choicesForRelationshipDistance)
     )) {
-      conceptRelationshipTable <- data$conceptRelationshipTable
       if (doesObjectHaveData(input$choicesForRelationshipName)) {
         conceptRelationshipTable <- conceptRelationshipTable %>%
           dplyr::inner_join(
@@ -2162,13 +2181,14 @@ shiny::shinyServer(function(input, output, session) {
     }
     conceptRelationshipTable <- conceptRelationshipTable %>%
       dplyr::inner_join(data$concept,
-                        by = "conceptId")
+                        by = "conceptId") %>%
+      tidyr::crossing(dplyr::tibble(databaseId = !!databaseId))
     if (!doesObjectHaveData(conceptRelationshipTable)) {
       return(NULL)
     }
     #!!!!!!!!!!switch
     #!!!!!!!!!!!!!!!if cohort count is selected then
-    # conceptRelationshipTable <- conceptRelationshipTable %>%
+    # conceptRelationshipTable <- conceptRelationshipTable %>% 
     #   dplyr::left_join(data$conceptCooccurrence %>%
     #                       dplyr::select(-.data$cohortId),
     #                     by = "conceptId")
@@ -2179,7 +2199,6 @@ shiny::shinyServer(function(input, output, session) {
     #                 "persons" = .data$subjectCount)
     #!!!!!!!!!!!!!!!if database count is selected then
     conceptRelationshipTable <- conceptRelationshipTable %>%
-      tidyr::crossing(dplyr::tibble(databaseId = !!databaseId)) %>% 
       dplyr::left_join(data$databaseConceptCount,
                        by = c("databaseId", "conceptId")) %>%
       dplyr::rename("records" = .data$conceptCount,
@@ -2195,13 +2214,13 @@ shiny::shinyServer(function(input, output, session) {
         .data$relationshipId,
         .data$records,
         .data$persons
-      )
-    databaseCount <- cohortCount %>%
-      dplyr::filter(.data$cohortId == !!cohortId) %>%
-      dplyr::filter(.data$databaseId %in% !!databaseId) %>%
-      dplyr::select(-.data$cohortId) %>%
-      dplyr::rename("persons" = .data$cohortSubjects,
-                    "records" = .data$cohortEntries)
+      ) %>% 
+      dplyr::arrange(.data$databaseId, .data$conceptId, dplyr::desc(.data$records))
+    databaseCount <- data$databaseConceptCount %>%
+      dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
+      dplyr::filter(.data$databaseId %in% activeSelected()$databaseId) %>%
+      dplyr::rename("persons" = .data$subjectCount,
+                    "records" = .data$conceptCount)
     table <-
       getSketchDesignForTablesInCohortDefinitionTab(conceptRelationshipTable,
                                                     databaseCount = databaseCount)

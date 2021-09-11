@@ -955,14 +955,15 @@ getConceptMetadata <- function(dataSource,
         dplyr::distinct() %>%
         dplyr::arrange() %>%
         dplyr::pull()
-    )
+    ) %>% unique()
     #drop down for concept relationship table in shiny app
     data$conceptAncestorDistance <-
       data$conceptRelationshipTable %>%
       dplyr::select(.data$levelsOfSeparation) %>%
       dplyr::distinct() %>%
       dplyr::arrange(.data$levelsOfSeparation) %>%
-      dplyr::pull()
+      dplyr::pull() %>% 
+      unique()
   }
   
   data$cdmTables <- getDomainInformation()$long

@@ -386,6 +386,9 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data, databaseCount) {
       values_from = count,
       values_fill = 0
     )
+  # sort descending by first count field
+  dataTransformed <- dataTransformed %>% 
+    dplyr::arrange(dplyr::desc(dplyr::across(dplyr::contains("records"))))
   
   options = list(
     pageLength = 1000,
