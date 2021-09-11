@@ -854,6 +854,7 @@ getConceptMetadata <- function(dataSource,
         conceptIds = conceptIds
       )
     
+    #output for concept relationship table in shiny app
     conceptAncestor <- dplyr::bind_rows(
       data$conceptAncestor %>%
         dplyr::rename(
@@ -911,6 +912,7 @@ getConceptMetadata <- function(dataSource,
   )
   
   if (all(getConceptAncestor, getConceptRelationship)) {
+    #output for concept relationship table in shiny app
     data$conceptRelationshipTable <-
       dplyr::bind_rows(
         conceptRelationship %>% dplyr::select(.data$referenceConceptId,
@@ -926,6 +928,8 @@ getConceptMetadata <- function(dataSource,
       dplyr::mutate(levelsOfSeparation = as.character(.data$levelsOfSeparation)) %>%
       tidyr::replace_na(list(relationshipId = "Not applicable",
                              levelsOfSeparation = "Not applicable"))
+    
+    #drop down for concept relationship table in shiny app
     data$relationshipName <- c(
       "Not applicable",
       relationship %>%
@@ -936,6 +940,7 @@ getConceptMetadata <- function(dataSource,
         dplyr::arrange() %>%
         dplyr::pull()
     )
+    #drop down for concept relationship table in shiny app
     data$conceptAncestorDistance <-
       data$conceptRelationshipTable %>%
       dplyr::select(.data$levelsOfSeparation) %>%

@@ -816,7 +816,6 @@ getOrphanConcepts <- function(connectionDetails = NULL,
 }
 
 # function: getConceptRecordCount ----
-### Concept counts by month -----
 getConceptRecordCount <- function(connection,
                                          cdmDatabaseSchema,
                                          tempEmulationSchema,

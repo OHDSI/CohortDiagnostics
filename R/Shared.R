@@ -854,6 +854,7 @@ getConceptMetadata <- function(dataSource,
         conceptIds = conceptIds
       )
     
+    #output for concept relationship table in shiny app
     conceptAncestor <- dplyr::bind_rows(
       data$conceptAncestor %>%
         dplyr::rename(
@@ -911,6 +912,7 @@ getConceptMetadata <- function(dataSource,
   )
   
   if (all(getConceptAncestor, getConceptRelationship)) {
+    #output for concept relationship table in shiny app
     data$conceptRelationshipTable <-
       dplyr::bind_rows(
         conceptRelationship %>% dplyr::select(.data$referenceConceptId,
@@ -926,6 +928,8 @@ getConceptMetadata <- function(dataSource,
       dplyr::mutate(levelsOfSeparation = as.character(.data$levelsOfSeparation)) %>%
       tidyr::replace_na(list(relationshipId = "Not applicable",
                              levelsOfSeparation = "Not applicable"))
+    
+    #drop down for concept relationship table in shiny app
     data$relationshipName <- c(
       "Not applicable",
       relationship %>%
@@ -936,6 +940,7 @@ getConceptMetadata <- function(dataSource,
         dplyr::arrange() %>%
         dplyr::pull()
     )
+    #drop down for concept relationship table in shiny app
     data$conceptAncestorDistance <-
       data$conceptRelationshipTable %>%
       dplyr::select(.data$levelsOfSeparation) %>%
@@ -995,6 +1000,7 @@ getConceptMetadata <- function(dataSource,
       dplyr::rename("domainTableShort" = .data$domainTable) %>%
       dplyr::rename("domainFieldShort" = .data$domainField) %>%
       dplyr::filter(.data$domainTableShort %in% nonEraCdmTables$domainTableShort) %>%
+      dplyr::filter(.data$eventYear > 1000, .data$eventMonth > 0) %>% 
       dplyr::mutate(periodBegin = lubridate::as_date(paste0(
         .data$eventYear,
         "-",
@@ -1007,7 +1013,7 @@ getConceptMetadata <- function(dataSource,
       dplyr::summarise(value = sum(.data$conceptCount),
                        .groups = 'keep') %>%
       dplyr::ungroup() %>%
-      dplyr::filter(.data$value > 0) %>%
+      dplyr::filter(.data$value > 0) %>% 
       tsibble::as_tsibble(
         key = c(.data$conceptId, .data$databaseId),
         index = .data$periodBegin
@@ -1022,6 +1028,7 @@ getConceptMetadata <- function(dataSource,
       dplyr::rename("domainTableShort" = .data$domainTable) %>%
       dplyr::rename("domainFieldShort" = .data$domainField) %>%
       dplyr::filter(.data$domainTableShort %in% nonEraCdmTables$domainTableShort) %>%
+      dplyr::filter(.data$eventYear > 1000) %>% 
       dplyr::mutate(periodBegin = lubridate::as_date(paste0(.data$eventYear, "-01-01"))) %>% #Lubridate exponetially faster that baseR as.Date and  ISODate
       dplyr::group_by(.data$conceptId,
                       .data$databaseId,

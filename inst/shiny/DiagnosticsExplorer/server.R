@@ -1245,7 +1245,8 @@ shiny::shinyServer(function(input, output, session) {
     }
     if (doesObjectHaveData(consolidatedConceptSetIdTarget())) {
       data <- data %>%
-        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdTarget())
+        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdTarget()) %>% 
+        dplyr::select(-.data$conceptSetId, -.data$cohortId)
     }
     data <- data %>%
       dplyr::arrange(dplyr::desc(.data$conceptCount))
@@ -1267,7 +1268,8 @@ shiny::shinyServer(function(input, output, session) {
     }
     if (doesObjectHaveData(consolidatedConceptSetIdComparator())) {
       data <- data %>%
-        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdComparator())
+        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdComparator()) %>% 
+        dplyr::select(-.data$conceptSetId, -.data$cohortId)
     }
     data <- data %>%
       dplyr::arrange(dplyr::desc(.data$conceptCount))
@@ -1297,7 +1299,8 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget()) %>%
+      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget()) %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
       dplyr::arrange(dplyr::desc(.data$conceptCount))
     if (is.null(data)) {
       return(NULL)
@@ -1325,7 +1328,8 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdComparator()) %>%
+      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdComparator()) %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
       dplyr::arrange(dplyr::desc(.data$conceptCount))
     return(data)
   })
@@ -1353,7 +1357,8 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::anti_join(y = excludedConceptIds, by = "conceptId")
     }
     data <- data  %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget()) %>%
+      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget()) %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
       dplyr::arrange(dplyr::desc(.data$conceptCount))
     if (is.null(data)) {
       return(NULL)
@@ -1381,7 +1386,8 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::anti_join(y = excludedConceptIds, by = "conceptId")
     }
-    data <- data %>%
+    data <- data %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
       dplyr::arrange(dplyr::desc(.data$conceptCount))
     return(data)
   })
@@ -1885,6 +1891,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::union(comparator) %>%
       dplyr::arrange(.data$conceptId) %>%
       dplyr::select(.data$conceptId, .data$conceptName, .data$databaseId) %>%
+      dplyr::distinct() %>% 
       dplyr::mutate(left = "", right = "")
     
     databaseIds <- unique(combinedResult$databaseId)

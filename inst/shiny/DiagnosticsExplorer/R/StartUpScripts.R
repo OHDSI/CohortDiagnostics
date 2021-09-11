@@ -354,7 +354,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data, databaseCount) {
     dplyr::select(.data$databaseId) %>% 
     dplyr::inner_join(databaseCount,
                       by = c("databaseId")) %>% 
-    dplyr::select(.data$databaseId, fieldsInData) %>% 
+    dplyr::select(.data$databaseId, dplyr::all_of(fieldsInData)) %>% 
     dplyr::distinct()
   if ('persons' %in% colnames(databasePersonAndRecordCount)) {
     databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
@@ -379,7 +379,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data, databaseCount) {
     dplyr::mutate(type = paste0(.data$type,
                                 " ",
                                 .data$databaseId)) %>%
-    dplyr::arrange(.data$databaseId, .data$type) %>% 
+    dplyr::arrange(.data$databaseId, dplyr::desc(.data$type)) %>% #descending to ensure records before persons
     tidyr::pivot_wider(
       id_cols = colnamesInData,
       names_from = type,
