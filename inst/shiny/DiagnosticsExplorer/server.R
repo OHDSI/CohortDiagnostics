@@ -2089,140 +2089,6 @@ shiny::shinyServer(function(input, output, session) {
       do.call(tabsetPanel, panels)
     })
   
-  output$conceptSetTimeSeriesPlot <-  plotly::renderPlotly({
-    data <- getMetadataForConceptId()
-    # working on the plot
-    if (input$timeSeriesAggregationForCohortDefinition == "Monthly") {
-      data <- data$databaseConceptIdYearMonthLevelTsibble
-    } else {
-      data <- data$databaseConceptIdYearLevelTsibble
-    }
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(
-      message = paste0("Building Time Series plot for concept id:",
-                       activeSelected()$conceptId),
-      value = 0
-    )
-    
-    validate(need(
-      all(!is.null(data),
-          nrow(data) > 0),
-      "No timeseries data for the cohort of this series type"
-    ))
-    
-    data <- data %>% 
-      dplyr::filter(.data$databaseId %in% activeSelected()$databaseId)
-    
-    tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
-                                                                          valueFields = c("conceptCount", "subjectCount"))
-    
-    plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
-      tsibbleData = tsibbleDataFromSTLModel,
-      plotFilters = c("conceptCount", "subjectCount"),
-      #!!!! radio button for counts and subjects titleCaseToCamelCase(input$timeSeriesPlotFilters),
-      indexAggregationType = input$timeSeriesAggregationForCohortDefinition,
-      timeSeriesStatistics = input$timeSeriesStatisticsForCohortDefinition
-    )
-    plot <- plotly::ggplotly(plot)
-    return(plot)
-  })
-  
-  
-  ##output: conceptBrowserTable----
-  output$conceptBrowserTable <- DT::renderDT(expr = {
-    conceptId <- activeSelected()$conceptId
-    validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
-    cohortId <- activeSelected()$cohortId
-    validate(need(doesObjectHaveData(conceptId), "No cohort id selected."))
-    databaseId <- activeSelected()$databaseId
-    validate(need(doesObjectHaveData(databaseId), "No database id selected."))
-    
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(
-      message = paste0("Computing concept relationship for concept id:",
-                       conceptId),
-      value = 0
-    )
-    data <- getMetadataForConceptId()
-    validate(need(
-      doesObjectHaveData(data),
-      "No information for selected concept id."
-    ))
-    conceptRelationshipTable <- data$conceptRelationshipTable %>% 
-      dplyr::filter(.data$conceptId != activeSelected()$conceptId)
-    if (any(
-      doesObjectHaveData(input$choicesForRelationshipName),
-      doesObjectHaveData(input$choicesForRelationshipDistance)
-    )) {
-      if (doesObjectHaveData(input$choicesForRelationshipName)) {
-        conceptRelationshipTable <- conceptRelationshipTable %>%
-          dplyr::inner_join(
-            relationship %>%
-              dplyr::filter(
-                .data$relationshipName %in% c(input$choicesForRelationshipName)
-              ) %>%
-              dplyr::select(.data$relationshipId) %>%
-              dplyr::distinct(),
-            by = "relationshipId"
-          )
-      }
-      if (doesObjectHaveData(input$choicesForRelationshipDistance)) {
-        conceptRelationshipTable <- conceptRelationshipTable %>%
-          dplyr::filter(.data$levelsOfSeparation %in%
-                          input$choicesForRelationshipDistance)
-      }
-    }
-    conceptRelationshipTable <- conceptRelationshipTable %>%
-      dplyr::inner_join(data$concept,
-                        by = "conceptId") %>%
-      tidyr::crossing(dplyr::tibble(databaseId = !!databaseId))
-    if (!doesObjectHaveData(conceptRelationshipTable)) {
-      return(NULL)
-    }
-    #!!!!!!!!!!switch
-    #!!!!!!!!!!!!!!!if cohort count is selected then
-    # conceptRelationshipTable <- conceptRelationshipTable %>% 
-    #   dplyr::left_join(data$conceptCooccurrence %>%
-    #                       dplyr::select(-.data$cohortId),
-    #                     by = "conceptId")
-    # databaseCount <- data$indexEventBreakdown %>%
-    #   dplyr::filter(.data$conceptId %in% conceptId) %>%
-    #   dplyr::select(.data$databaseId, .data$conceptCount, .data$subjectCount) %>%
-    #   dplyr::rename("records" = .data$conceptCount,
-    #                 "persons" = .data$subjectCount)
-    #!!!!!!!!!!!!!!!if database count is selected then
-    conceptRelationshipTable <- conceptRelationshipTable %>%
-      dplyr::left_join(data$databaseConceptCount,
-                       by = c("databaseId", "conceptId")) %>%
-      dplyr::rename("records" = .data$conceptCount,
-                    "persons" = .data$subjectCount) %>%
-      dplyr::select(
-        .data$databaseId,
-        .data$conceptId,
-        .data$conceptName,
-        .data$domainId,
-        .data$vocabularyId,
-        .data$standardConcept,
-        .data$levelsOfSeparation,
-        .data$relationshipId,
-        .data$records,
-        .data$persons
-      ) %>% 
-      dplyr::arrange(.data$databaseId, .data$conceptId, dplyr::desc(.data$records))
-    databaseCount <- data$databaseConceptCount %>%
-      dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
-      dplyr::filter(.data$databaseId %in% activeSelected()$databaseId) %>%
-      dplyr::rename("persons" = .data$subjectCount,
-                    "records" = .data$conceptCount)
-    table <-
-      getSketchDesignForTablesInCohortDefinitionTab(conceptRelationshipTable,
-                                                    databaseCount = databaseCount)
-    return(table)
-  })
-  
-  
   ##output: isConceptIdFromTargetOrComparatorConceptTableSelected----
   output$isConceptIdFromTargetOrComparatorConceptTableSelected <-
     shiny::reactive(x = {
@@ -3167,6 +3033,140 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::pull(.data$conceptSetSql)
       return(conceptSetExpression)
     })
+  
+  output$conceptSetTimeSeriesPlot <-  plotly::renderPlotly({
+    data <- getMetadataForConceptId()
+    # working on the plot
+    if (input$timeSeriesAggregationForCohortDefinition == "Monthly") {
+      data <- data$databaseConceptIdYearMonthLevelTsibble
+    } else {
+      data <- data$databaseConceptIdYearLevelTsibble
+    }
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(
+      message = paste0("Building Time Series plot for concept id:",
+                       activeSelected()$conceptId),
+      value = 0
+    )
+    
+    validate(need(
+      all(!is.null(data),
+          nrow(data) > 0),
+      "No timeseries data for the cohort of this series type"
+    ))
+    
+    data <- data %>% 
+      dplyr::filter(.data$databaseId %in% activeSelected()$databaseId)
+    
+    tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
+                                                                          valueFields = c("conceptCount", "subjectCount"))
+    
+    plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
+      tsibbleData = tsibbleDataFromSTLModel,
+      plotFilters = c("conceptCount", "subjectCount"),
+      #!!!! radio button for counts and subjects titleCaseToCamelCase(input$timeSeriesPlotFilters),
+      indexAggregationType = input$timeSeriesAggregationForCohortDefinition,
+      timeSeriesStatistics = input$timeSeriesStatisticsForCohortDefinition
+    )
+    plot <- plotly::ggplotly(plot)
+    return(plot)
+  })
+  
+  
+  ##output: conceptBrowserTable----
+  output$conceptBrowserTable <- DT::renderDT(expr = {
+    conceptId <- activeSelected()$conceptId
+    validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
+    cohortId <- activeSelected()$cohortId
+    validate(need(doesObjectHaveData(conceptId), "No cohort id selected."))
+    databaseId <- activeSelected()$databaseId
+    validate(need(doesObjectHaveData(databaseId), "No database id selected."))
+    
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(
+      message = paste0("Computing concept relationship for concept id:",
+                       conceptId),
+      value = 0
+    )
+    data <- getMetadataForConceptId()
+    validate(need(
+      doesObjectHaveData(data),
+      "No information for selected concept id."
+    ))
+    conceptRelationshipTable <- data$conceptRelationshipTable %>% 
+      dplyr::filter(.data$conceptId != activeSelected()$conceptId)
+    if (any(
+      doesObjectHaveData(input$choicesForRelationshipName),
+      doesObjectHaveData(input$choicesForRelationshipDistance)
+    )) {
+      if (doesObjectHaveData(input$choicesForRelationshipName)) {
+        conceptRelationshipTable <- conceptRelationshipTable %>%
+          dplyr::inner_join(
+            relationship %>%
+              dplyr::filter(
+                .data$relationshipName %in% c(input$choicesForRelationshipName)
+              ) %>%
+              dplyr::select(.data$relationshipId) %>%
+              dplyr::distinct(),
+            by = "relationshipId"
+          )
+      }
+      if (doesObjectHaveData(input$choicesForRelationshipDistance)) {
+        conceptRelationshipTable <- conceptRelationshipTable %>%
+          dplyr::filter(.data$levelsOfSeparation %in%
+                          input$choicesForRelationshipDistance)
+      }
+    }
+    conceptRelationshipTable <- conceptRelationshipTable %>%
+      dplyr::inner_join(data$concept,
+                        by = "conceptId") %>%
+      tidyr::crossing(dplyr::tibble(databaseId = !!databaseId))
+    if (!doesObjectHaveData(conceptRelationshipTable)) {
+      return(NULL)
+    }
+    #!!!!!!!!!!switch
+    #!!!!!!!!!!!!!!!if cohort count is selected then
+    # conceptRelationshipTable <- conceptRelationshipTable %>% 
+    #   dplyr::left_join(data$conceptCooccurrence %>%
+    #                       dplyr::select(-.data$cohortId),
+    #                     by = "conceptId")
+    # databaseCount <- data$indexEventBreakdown %>%
+    #   dplyr::filter(.data$conceptId %in% conceptId) %>%
+    #   dplyr::select(.data$databaseId, .data$conceptCount, .data$subjectCount) %>%
+    #   dplyr::rename("records" = .data$conceptCount,
+    #                 "persons" = .data$subjectCount)
+    #!!!!!!!!!!!!!!!if database count is selected then
+    conceptRelationshipTable <- conceptRelationshipTable %>%
+      dplyr::left_join(data$databaseConceptCount,
+                       by = c("databaseId", "conceptId")) %>%
+      dplyr::rename("records" = .data$conceptCount,
+                    "persons" = .data$subjectCount) %>%
+      dplyr::select(
+        .data$databaseId,
+        .data$conceptId,
+        .data$conceptName,
+        .data$domainId,
+        .data$vocabularyId,
+        .data$standardConcept,
+        .data$levelsOfSeparation,
+        .data$relationshipId,
+        .data$records,
+        .data$persons
+      ) %>% 
+      dplyr::arrange(.data$databaseId, .data$conceptId, dplyr::desc(.data$records))
+    databaseCount <- data$databaseConceptCount %>%
+      dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
+      dplyr::filter(.data$databaseId %in% activeSelected()$databaseId) %>%
+      dplyr::rename("persons" = .data$subjectCount,
+                    "records" = .data$conceptCount)
+    table <-
+      getSketchDesignForTablesInCohortDefinitionTab(conceptRelationshipTable,
+                                                    databaseCount = databaseCount)
+    return(table)
+  })
+  
   
   #Radio button synchronization----
   shiny::observeEvent(eventExpr = {
