@@ -2088,11 +2088,14 @@ shiny::shinyServer(function(input, output, session) {
                        activeSelected()$cohortId),
       value = 0
     )
-    data <- getConceptMetadata(dataSource = dataSource,
-                               databaseIds = activeSelected()$databaseId,
-                               cohortIds = activeSelected()$cohortId,
-                               conceptIds = activeSelected()$conceptId)
-    if (!doesObjectHaveData(data)) {
+    data$databaseConceptCount <-
+      getConceptMetadata(
+        dataSource = dataSource,
+        databaseIds = activeSelected()$databaseId,
+        cohortIds = activeSelected()$cohortId,
+        conceptIds = activeSelected()$conceptId
+      )
+    if (!doesObjectHaveData(data$databaseConceptCount)) {
       return(NULL)
     }
     if (!is.null(data$conceptCooccurrence)) {
