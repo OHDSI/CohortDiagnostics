@@ -473,7 +473,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data, databaseCount) {
   return(dataTable)
 }
 
-getStlModelOutputForTsibbleDataValueFields <- function(tsibbleData, valueFields = value) {
+getStlModelOutputForTsibbleDataValueFields <- function(tsibbleData, valueFields = "value") {
   if (is.null(data)) {
     return(NULL)
   }

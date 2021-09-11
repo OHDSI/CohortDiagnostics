@@ -36,7 +36,7 @@ plotTimeSeriesFromTsibble <-
     
     distinctCohortShortName <- c()
     for (i in 1:length(tsibbleData)) {
-      data  <- tsibbleData[[i]]$cohortShortName %>% unique()
+      data  <- tsibbleData[[i]]$cohortShortName  %>% unique()
       distinctCohortShortName <- union(distinctCohortShortName,data)
     }
     
@@ -267,6 +267,91 @@ plotTimeSeriesFromTsibble <-
     
     return(finalPlot)
   }
+
+plotTimeSeriesForCohortDefinitionFromTsibble <-
+  function(tsibbleData,
+           plotFilters,
+           indexAggregationType = "Monthly", #indexAggregationType -- can be inferred ?
+           timeSeriesStatistics = c(),
+           timeSeriesPeriodRangeFilter = c(2010,2021)) {
+    if (is.null(data)) {
+      return(NULL)
+    }
+    
+    if (indexAggregationType != "Yearly") {
+      tsibbleData <- lapply(tsibbleData, function(data){
+        data  <- data %>%
+          dplyr::mutate(periodBegin = as.Date(.data$periodBegin))
+      })
+    }
+    
+    distinctDatabaseId <- c()
+    for (i in 1:length(tsibbleData)) {
+      data  <- tsibbleData[[i]]$databaseId %>% unique()
+      distinctDatabaseId <- union(distinctDatabaseId,data)
+    }
+    
+    cohortPlot <- list()
+    noOfPlotRows <- length(plotFilters) * length(timeSeriesStatistics)
+      filterPlots <- list()
+      for (j in 1:length(plotFilters)) {
+        data <- tsibbleData[[j]]
+        statisticsPlots <- list()
+        for (k in 1:length(timeSeriesStatistics)) {
+          databasePlots <- lapply(distinctDatabaseId, function(singleDatabaseId) {
+            filteredData <- data %>% dplyr::filter(.data$databaseId == singleDatabaseId)
+            plot <- plotly::plot_ly(filteredData, x = ~periodBegin, y = as.formula(paste0("~", timeSeriesStatistics[k])),height = 200 * noOfPlotRows) %>%
+              plotly::add_lines(name = singleDatabaseId, text = ~paste("Statistics = ",timeSeriesStatistics[k],
+                                                                       "\nDatabase ID = ",.data$databaseId
+              )) %>% 
+              plotly::layout(showlegend = FALSE, xaxis = list(range = c(as.Date(paste(timeSeriesPeriodRangeFilter[1], 1, 1, sep = "-")), 
+                                                                        as.Date(paste(timeSeriesPeriodRangeFilter[1], 1, 1, sep = "-")))
+              ))
+            if (j == 1 && k == 1) {
+              plot <- plot %>%
+                plotly::layout(annotations = list(x = 0.5 , y = 1.2, text = singleDatabaseId, showarrow = F, 
+                                                  xref = 'paper', yref = 'paper'))
+            }
+            # X axis should be shown only for last row plots
+            if ( j != length(plotFilters) || k != length(timeSeriesStatistics)) {
+              plot <- plot %>% plotly::layout(xaxis = list(showticklabels = FALSE))
+            }
+            return(plot)
+          })
+          statisticsPlot <- plotly::subplot(databasePlots, shareY = TRUE, titleX = FALSE) %>%
+            plotly::layout(annotations = list(x = -0.05,
+                                              y = 0.5,
+                                              text = camelCaseToTitleCase(timeSeriesStatistics[k]),
+                                              showarrow = FALSE,
+                                              xref = "paper",
+                                              yref = "paper",
+                                              textangle = -90))
+          
+          statisticsPlots[[k]] <- statisticsPlot
+        }
+        filterPlots[[j]] <- plotly::subplot(statisticsPlots, nrows = length(statisticsPlots)) %>%
+          plotly::layout(annotations = list(x = -0.1,
+                                            y = 0.5,
+                                            text = camelCaseToTitleCase(plotFilters[j]),
+                                            showarrow = FALSE,
+                                            xref = "paper",
+                                            yref = "paper",
+                                            textangle = -90))
+        
+      }
+    m <- list(
+      l = 150,
+      r = 0,
+      b = 0,
+      t = 50,
+      pad = 4
+    )
+    finalPlot <- plotly::subplot(filterPlots,nrows = length(filterPlots)) %>%  
+      plotly::layout(autosize = T, margin = m)
+    
+    return(finalPlot)
+  }
+    
 
 plotTimeDistribution <- function(data, shortNameRef = NULL) {
   errorMessage <- checkmate::makeAssertCollection()

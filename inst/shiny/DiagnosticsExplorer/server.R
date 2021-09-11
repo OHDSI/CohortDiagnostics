@@ -1860,7 +1860,7 @@ shiny::shinyServer(function(input, output, session) {
           ),
           shiny::column(
             12,
-          ggiraph::ggiraphOutput(
+          plotly::plotlyOutput(
             outputId = "conceptSetTimeSeriesPlot",
             width = "100%",
             height = "100%"
@@ -2004,13 +2004,13 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   })
   
-  output$conceptSetTimeSeriesPlot <-  ggiraph::renderggiraph({
+  output$conceptSetTimeSeriesPlot <-  plotly::renderPlotly({
     data <- getMetadataForConceptId()
     # working on the plot
     if (input$timeSeriesAggregationForCohortDefinition == "Monthly") {
-      data <- data$conceptIdYearMonthLevelTsibble
+      data <- data$databaseConceptIdYearMonthLevelTsibble
     } else {
-      data <- data$conceptIdYearLevelTsibble
+      data <- data$databaseConceptIdYearLevelTsibble
     }
     progress <- shiny::Progress$new()
     on.exit(progress$close())
@@ -2028,24 +2028,20 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- data %>% 
       dplyr::filter(.data$databaseId %in% activeSelected()$databaseId)
-    browser()
-    tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data)
     
-    plot <- plotTimeSeriesFromTsibble(
+    tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
+                                                                          valueFields = c("conceptCount", "subjectCount"))
+    
+    
+    plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
       tsibbleData = tsibbleDataFromSTLModel,
-      yAxisLabel = "Counts",
+      plotFilters = c("conceptCount", "subjectCount"),
       #!!!! radio button for counts and subjects titleCaseToCamelCase(input$timeSeriesPlotFilters),
       indexAggregationType = input$timeSeriesAggregationForCohortDefinition,
       timeSeriesStatistics = input$timeSeriesStatisticsForCohortDefinition
     )
-    plot <- ggiraph::girafe(
-      ggobj = plot,
-      options = list(
-        ggiraph::opts_sizing(width = .5),
-        ggiraph::opts_zoom(max = 5)
-      )
-    )
-    return(plot)---return(NULL)
+    plot <- plotly::ggplotly(plot)
+    return(plot)
   })
   
   activeSelected <- reactiveVal(list())
@@ -4349,6 +4345,7 @@ shiny::shinyServer(function(input, output, session) {
     ))
     tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data, 
                                                       valueFields = titleCaseToCamelCase(input$timeSeriesPlotFilters))
+    browser()
     plot <- plotTimeSeriesFromTsibble(
       tsibbleData = tsibbleDataFromSTLModel,
       plotFilters = titleCaseToCamelCase(input$timeSeriesPlotFilters),
@@ -5197,12 +5194,11 @@ shiny::shinyServer(function(input, output, session) {
       if (!doesObjectHaveData(data)) {
         return(null)
       }
-      browser()
       # working on the plot
       if (input$timeSeriesAggregationPeriodSelection == "Monthly") {
-        data <- data$databaseConceptIdYearMonthLevelTsibble
+        data <- data$conceptIdYearMonthLevelTsibble
       } else {
-        data <- data$databaseConceptIdYearLevelTsibble
+        data <- data$conceptIdYearLevelTsibble
       }
       validate(need(
         all(!is.null(data),
