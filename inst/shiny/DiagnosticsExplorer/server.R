@@ -5121,7 +5121,7 @@ shiny::shinyServer(function(input, output, session) {
             data$conceptId,
             ")"
           )),
-          ggiraph::ggiraphOutput(
+          plotly::plotlyOutput(
             outputId = "conceptSetTimeSeriesPlotForIndexEvent",
             width = "100%",
             height = "100%"
@@ -5188,44 +5188,42 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: conceptSetTimeSeriesPlotForIndexEvent----
   output$conceptSetTimeSeriesPlotForIndexEvent <-
-    ggiraph::renderggiraph({
+    plotly::renderPlotly({
       data <- getMetadataForConceptId()
       if (!doesObjectHaveData(data)) {
         return(null)
       }
       # working on the plot
       if (input$timeSeriesAggregationPeriodSelection == "Monthly") {
-        data <- data$conceptIdYearMonthLevelTsibble
+        data <- data$databaseConceptIdYearMonthLevelTsibble
       } else {
-        data <- data$conceptIdYearLevelTsibble
+        data <- data$databaseConceptIdYearLevelTsibble
       }
       validate(need(
         all(!is.null(data),
             nrow(data) > 0),
         "No timeseries data for the cohort of this series type"
       ))
+      browser()
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(
         message = paste0("Computing Time series plot for:",
-                         conceptId),
+                         activeSelected()$conceptId),
         value = 0
       )
-      plot <- plotTimeSeriesFromTsibble(
-        tsibbleData = data,
-        yAxisLabel = "Counts",
+      
+      tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
+                                                                            valueFields = c("conceptCount", "subjectCount"))
+      plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
+        tsibbleData = tsibbleDataFromSTLModel,
+        plotFilters = c("conceptCount", "subjectCount"),
         #!!!! radio button for counts and subjects titleCaseToCamelCase(input$timeSeriesPlotFilters),
         indexAggregationType = input$timeSeriesAggregationPeriodSelection,
         timeSeriesStatistics = input$timeSeriesStatistics
       )
-      plot <- ggiraph::girafe(
-        ggobj = plot,
-        options = list(
-          ggiraph::opts_sizing(width = .5),
-          ggiraph::opts_zoom(max = 5)
-        )
-      )
-      return(plot)---return(NULL)
+      plot <- plotly::ggplotly(plot)
+      return(plot)
     })
   
   #______________----
