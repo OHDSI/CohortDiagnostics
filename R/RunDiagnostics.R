@@ -546,6 +546,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           nrow(cohorts) - nrow(subset)
         ))
       }
+      browser()
       output <- runConceptSetDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,

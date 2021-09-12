@@ -3038,10 +3038,16 @@ shiny::shinyServer(function(input, output, session) {
     data <- getMetadataForConceptId()
     # working on the plot
     if (input$timeSeriesAggregationForCohortDefinition == "Monthly") {
-      data <- data$databaseConceptIdYearMonthLevelTsibble
+      data <- data$databaseConceptIdYearMonthLevelTsibble %>% 
+        dplyr::filter(.data$conceptId == activeSelected()$conceptId)
     } else {
-      data <- data$databaseConceptIdYearLevelTsibble
+      data <- data$databaseConceptIdYearLevelTsibble %>% 
+        dplyr::filter(.data$conceptId == activeSelected()$conceptId)
     }
+    #!!!!!!!!########## filter domain table and domain field in data$cdmTables - default "All"
+    data <- data %>% 
+      dplyr::filter(.data$domainTableShort == "All") %>% #need input object
+      dplyr::filter(.data$domainFieldShort == "All") #need input object
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(
@@ -3049,24 +3055,18 @@ shiny::shinyServer(function(input, output, session) {
                        activeSelected()$conceptId),
       value = 0
     )
-    
-    validate(need(
-      all(!is.null(data),
-          nrow(data) > 0),
+    validate(need(doesObjectHaveData(data),
       "No timeseries data for the cohort of this series type"
     ))
-    
     data <- data %>% 
-      dplyr::filter(.data$databaseId %in% activeSelected()$databaseId)
-    
+      dplyr::filter(.data$databaseId %in% activeSelected()$databaseId) %>% 
+      dplyr::rename("records" = .data$conceptCount,
+                    "persons" = .data$subjectCount)
     tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
-                                                                          valueFields = c("conceptCount", "subjectCount"))
-    
+                                                                          valueFields = c("records", "persons"))
+
     plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
-      tsibbleData = tsibbleDataFromSTLModel,
-      plotFilters = c("conceptCount", "subjectCount"),
-      #!!!! radio button for counts and subjects titleCaseToCamelCase(input$timeSeriesPlotFilters),
-      indexAggregationType = input$timeSeriesAggregationForCohortDefinition,
+      stlModeledTsibbleData = tsibbleDataFromSTLModel,
       timeSeriesStatistics = input$timeSeriesStatisticsForCohortDefinition
     )
     plot <- plotly::ggplotly(plot)
@@ -4344,7 +4344,7 @@ shiny::shinyServer(function(input, output, session) {
     ))
     tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data, 
                                                       valueFields = titleCaseToCamelCase(input$timeSeriesPlotFilters))
-    
+    browser()
     plot <- plotTimeSeriesFromTsibble(
       tsibbleData = tsibbleDataFromSTLModel,
       plotFilters = titleCaseToCamelCase(input$timeSeriesPlotFilters),
@@ -5212,12 +5212,10 @@ shiny::shinyServer(function(input, output, session) {
                          activeSelected()$conceptId),
         value = 0
       )
-      
-      tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
-                                                                            valueFields = c("conceptCount", "subjectCount"))
-      plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
-        tsibbleData = tsibbleDataFromSTLModel,
-        plotFilters = c("conceptCount", "subjectCount"),
+      browser()
+      plot <- plotTimeSeriesFromTsibble(
+        tsibbleData = data,
+        yAxisLabel = "Counts",
         #!!!! radio button for counts and subjects titleCaseToCamelCase(input$timeSeriesPlotFilters),
         indexAggregationType = input$timeSeriesAggregationPeriodSelection,
         timeSeriesStatistics = input$timeSeriesStatistics

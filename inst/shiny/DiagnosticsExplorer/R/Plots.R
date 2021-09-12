@@ -1,6 +1,6 @@
 #!!!!!! make plotTimeSeries generic enough that it maybe used every where there is time series
 ###!! given an input tsibble, it should be smart enough to plot
-library(plotly)
+# library(plotly)
 plotTimeSeriesFromTsibble <-
   function(tsibbleData,
            plotFilters,
@@ -38,7 +38,8 @@ plotTimeSeriesFromTsibble <-
     distinctCohortShortName <- c()
     for (i in 1:length(tsibbleData)) {
       data  <- tsibbleData[[i]]$cohortShortName  %>% unique()
-      distinctCohortShortName <- union(distinctCohortShortName, data)
+      distinctCohortShortName <-
+        union(distinctCohortShortName, data)
     }
     
     distinctDatabaseId <- c()
@@ -102,7 +103,8 @@ plotTimeSeriesFromTsibble <-
               }
               # X axis should be shown only for last row plots
               if (i != length(distinctCohortShortName) ||
-                  j != length(plotFilters) || k != length(timeSeriesStatistics)) {
+                  j != length(plotFilters) ||
+                  k != length(timeSeriesStatistics)) {
                 plot <-
                   plot %>% plotly::layout(xaxis = list(showticklabels = FALSE))
               }
@@ -317,117 +319,102 @@ plotTimeSeriesFromTsibble <-
     return(finalPlot)
   }
 
+#make plotTs a separate standalone function that takes dataframe with required fields databaaseId, periodDate, Total and trend - and plots it
+#!!!!!return a plot with overlay of Total and trend - currently only showing Total
+#!!!! should be used everywhere else
+plotTs <- function(data,
+                   plotHeight,
+                   xAxisMin,
+                   xAxisMax) {
+  plotTrend <-
+    plotly::plot_ly(
+      data = data,
+      x = ~ periodDate,
+      y = ~ trend,
+      #overlay Total and trend - with trend having bold line, while Total should have dots
+      height = plotHeight
+    ) %>%
+    plotly::add_lines(
+      name = data$databaseId %>% unique(),
+      text = ~ paste("Statistics = smooth",
+                     "\nDatabase ID = ",
+                     .data$databaseId)
+    ) %>%
+    plotly::layout(showlegend = FALSE,
+                   xaxis = list(range = c(xAxisMin, xAxisMax)))
+  plotTotal <-
+    plotly::plot_ly(
+      data = data,
+      x = ~ periodDate,
+      y = ~ Total,
+      #overlay Total and trend - with trend having bold line, while Total should have dots
+      height = plotHeight
+    ) %>%
+    plotly::add_markers(
+      #make markers semi transparent and gray in color
+      name = data$databaseId %>% unique(),
+      text = ~ paste("Statistics = raw",
+                     "\nDatabase ID = ",
+                     .data$databaseId)
+    ) %>%
+    plotly::layout(showlegend = FALSE,
+                   xaxis = list(range = xAxisMin, xAxisMax))
+  return(plotTrend)
+}
+
+
 plotTimeSeriesForCohortDefinitionFromTsibble <-
-  function(tsibbleData,
-           plotFilters,
-           indexAggregationType = "Monthly",
-           #indexAggregationType -- can be inferred ?
+  function(stlModeledTsibbleData,
            timeSeriesStatistics = c(),
            timeSeriesPeriodRangeFilter = c(2010, 2021)) {
-    if (is.null(data)) {
+    if (is.null(stlModeledTsibbleData)) {
       return(NULL)
     }
-    
-    if (indexAggregationType != "Yearly") {
-      tsibbleData <- lapply(tsibbleData, function(data) {
-        data  <- data %>%
-          dplyr::mutate(periodBegin = as.Date(.data$periodBegin))
-      })
-    }
-    
+    yAxisValues <- names(stlModeledTsibbleData)
     distinctDatabaseId <- c()
-    for (i in 1:length(tsibbleData)) {
-      data  <- tsibbleData[[i]]$databaseId %>% unique()
-      distinctDatabaseId <- union(distinctDatabaseId, data)
+    for (i in 1:length(yAxisValues)) {
+      if ("dcmp_ts" %in% class(stlModeledTsibbleData[[i]])) {
+        distinctDatabaseId <- c(distinctDatabaseId,
+                                stlModeledTsibbleData[[i]]$databaseId) %>% unique()
+      }
     }
     
     cohortPlot <- list()
-    noOfPlotRows <-
-      length(plotFilters) * length(timeSeriesStatistics)
-    filterPlots <- list()
-    for (j in 1:length(plotFilters)) {
-      data <- tsibbleData[[j]]
-      statisticsPlots <- list()
-      for (k in 1:length(timeSeriesStatistics)) {
-        databasePlots <-
-          lapply(distinctDatabaseId, function(singleDatabaseId) {
-            filteredData <-
-              data %>% dplyr::filter(.data$databaseId == singleDatabaseId)
-            plot <-
-              plotly::plot_ly(
-                filteredData,
-                x = ~ periodBegin,
-                y = as.formula(paste0("~", timeSeriesStatistics[k])),
-                height = 200 * noOfPlotRows
-              ) %>%
-              plotly::add_lines(
-                name = singleDatabaseId,
-                text = ~ paste(
-                  "Statistics = ",
-                  timeSeriesStatistics[k],
-                  "\nDatabase ID = ",
-                  .data$databaseId
-                )
-              ) %>%
-              plotly::layout(showlegend = FALSE, xaxis = list(range = c(
-                as.Date(paste(
-                  timeSeriesPeriodRangeFilter[1], 1, 1, sep = "-"
-                )),
-                as.Date(paste(
-                  timeSeriesPeriodRangeFilter[1], 1, 1, sep = "-"
-                ))
-              )))
-            if (j == 1 && k == 1) {
-              plot <- plot %>%
-                plotly::layout(
-                  annotations = list(
-                    x = 0.5 ,
-                    y = 1.2,
-                    text = singleDatabaseId,
-                    showarrow = F,
-                    xref = 'paper',
-                    yref = 'paper'
-                  )
-                )
-            }
-            # X axis should be shown only for last row plots
-            if (j != length(plotFilters) ||
-                k != length(timeSeriesStatistics)) {
-              plot <-
-                plot %>% plotly::layout(xaxis = list(showticklabels = FALSE))
-            }
-            return(plot)
-          })
-        statisticsPlot <-
-          plotly::subplot(databasePlots, shareY = TRUE, titleX = FALSE) %>%
-          plotly::layout(
-            annotations = list(
-              x = -0.05,
-              y = 0.5,
-              text = camelCaseToTitleCase(timeSeriesStatistics[k]),
-              showarrow = FALSE,
-              xref = "paper",
-              yref = "paper",
-              textangle = -90
-            )
-          )
-        
-        statisticsPlots[[k]] <- statisticsPlot
-      }
-      filterPlots[[j]] <-
-        plotly::subplot(statisticsPlots, nrows = length(statisticsPlots)) %>%
-        plotly::layout(
-          annotations = list(
-            x = -0.1,
-            y = 0.5,
-            text = camelCaseToTitleCase(plotFilters[j]),
-            showarrow = FALSE,
-            xref = "paper",
-            yref = "paper",
-            textangle = -90
-          )
+    noOfPlotRows <- length(yAxisValues)
+    yAxisValuesPlots <- list()
+    for (j in 1:length(yAxisValues)) {
+      data <- stlModeledTsibbleData[[j]]
+      databasePlots <- list()
+      for (l in (1:length(distinctDatabaseId))) {
+        databasePlots[[l]] <- plotTs(
+          data = data %>%
+            dplyr::filter(.data$databaseId %in% distinctDatabaseId[[l]]),
+          plotHeight =  200 * noOfPlotRows,
+          xAxisMin = as.Date(paste0(timeSeriesPeriodRangeFilter[1], "-01-01")),
+          xAxisMax = as.Date(paste0(timeSeriesPeriodRangeFilter[2], "-12-31"))
         )
-      
+        
+        # if (j == 1 && k == 1) {
+        #   plot <- plot %>%
+        #     plotly::layout(
+        #       annotations = list(
+        #         x = 0.5 ,
+        #         y = 1.2,
+        #         text = singleDatabaseId,
+        #         showarrow = F,
+        #         xref = 'paper',
+        #         yref = 'paper'
+        #       )
+        #     )
+        # }
+        # # X axis should be shown only for last row plots
+        # if (j != length(yAxisValues) ||
+        #     k != length(timeSeriesStatistics)) {
+        #   plot <-
+        #     plot %>% plotly::layout(xaxis = list(showticklabels = FALSE))
+        # }
+      }
+      yAxisValuesPlots[[yAxisValues[[j]]]] <- plotly::subplot(databasePlots, shareY = TRUE, titleX = FALSE)
     }
     m <- list(
       l = 150,
@@ -437,9 +424,12 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
       pad = 4
     )
     finalPlot <-
-      plotly::subplot(filterPlots, nrows = length(filterPlots)) %>%
+      plotly::subplot(yAxisValuesPlots, nrows = length(yAxisValuesPlots)) %>%
       plotly::layout(autosize = T, margin = m)
     
+    #!!! add database Id to x-axis 
+    #!!! show both Total and trend in plotTs
+    #!!! show y - labels -- value of yAxisValues
     return(finalPlot)
   }
 
@@ -821,7 +811,7 @@ plotIncidenceRate <- function(data,
     }
   } else {
     if (stratifyByAgeGroup) {
-      plot <- plot + ggplot2::facet_grid( ~ ageGroup)
+      plot <- plot + ggplot2::facet_grid(~ ageGroup)
     }
   }
   height <-

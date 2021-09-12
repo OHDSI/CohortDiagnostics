@@ -474,25 +474,39 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data, databaseCount) {
 }
 
 getStlModelOutputForTsibbleDataValueFields <- function(tsibbleData, valueFields = "value") {
-  if (is.null(data)) {
+  if (!doesObjectHaveData(tsibbleData)) {
+    return(NULL)
+  }
+  if (!"tbl_ts" %in% class(tsibbleData)) {
+    warning("object is not of tsibble class")
     return(NULL)
   }
   keys <- colnames(attributes(tsibbleData)$key %>%
                      dplyr::select(-".rows"))
   index <- attributes(tsibbleData)$index %>%
     as.character()
-  
+  if (!all(valueFields %in% colnames(tsibbleData))) {
+    warning(paste0("Cannot find: " , paste0(setdiff(valueFields, colnames(tsibbleData)), collapse = ",")))
+    valueFields <- valueFields[!valueFields %in% setdiff(valueFields, colnames(tsibbleData))]
+  }
   modelData <- list()
   for (i in (1:length(valueFields))) {
     valueField <- valueFields[[i]]
-    modelData[[i]] <- tsibbleData %>% 
+    modelData[[valueField]] <- tsibbleData %>% 
       dplyr::select(dplyr::all_of(keys), 
                     dplyr::all_of(index), 
                     dplyr::all_of(valueField)) %>%
       dplyr::rename(Total = dplyr::all_of(valueField)) %>% 
       tsibble::fill_gaps(Total = 0) %>% 
-      fabletools::model(feasts::STL(Total ~  season(window = Inf))) %>%
+      fabletools::model(feasts::STL(Total ~  trend(window = 36))) %>%
       fabletools::components()
+    if (tsibble::is_yearmonth(modelData[[valueField]]$periodBegin)) {
+      modelData[[valueField]] <- modelData[[valueField]] %>% 
+        dplyr::mutate(periodDate = as.Date(.data$periodBegin))
+    } else if (is.integer(modelData[[valueField]]$periodBegin)) {
+      modelData[[valueField]] <- modelData[[valueField]] %>% 
+        dplyr::mutate(periodDate = as.Date(paste0(.data$periodBegin, "-01-01")))
+    }
   }
   return(modelData)
 }

@@ -1004,6 +1004,7 @@ getConceptMetadata <- function(dataSource,
                     .data$periodBegin,
                     .data$conceptCount,
                     .data$subjectCount) %>% 
+      dplyr::mutate(periodBegin = tsibble::yearmonth(.data$periodBegin)) %>% 
       tsibble::as_tsibble(
         key = c(.data$conceptId, .data$databaseId, .data$domainFieldShort, .data$domainTableShort),
         index = .data$periodBegin
@@ -1034,6 +1035,7 @@ getConceptMetadata <- function(dataSource,
                     .data$periodBegin,
                     .data$conceptCount,
                     .data$subjectCount) %>% 
+      dplyr::mutate(periodBegin = clock::get_year(.data$periodBegin)) %>% 
       tsibble::as_tsibble(
         key = c(.data$conceptId, .data$databaseId, .data$domainFieldShort, .data$domainTableShort),
         index = .data$periodBegin
