@@ -298,22 +298,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            signif(delta, 3),
                            " ",
                            attr(delta, "units"))
-
-  # get concept record count----
-  ParallelLogger::logInfo("  - Counting concepts in data source.")
-  conceptSetDiagnosticsResults$conceptCount <-
-    getConceptRecordCount(
-      connection = connection,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      tempEmulationSchema = tempEmulationSchema,
-      conceptIdUniverse = "#concept_tracking"
-    )
-  if (!keepCustomConceptId) {
-    conceptSetDiagnosticsResults$conceptCount <-
-      conceptSetDiagnosticsResults$conceptCount %>%
-      dplyr::filter(.data$conceptId < 200000000)
-  }
-
   # get concept mapping----
   ParallelLogger::logInfo("  - Mapping concepts.")
   conceptSetDiagnosticsResults$conceptMapping <-
@@ -330,6 +314,23 @@ runConceptSetDiagnostics <- function(connection = NULL,
       dplyr::filter(is.na(.data$sourceConceptId) ||
                       .data$sourceConceptId < 200000000)
   }
+
+  # get concept record count----
+  ParallelLogger::logInfo("  - Counting concepts in data source.")
+  conceptSetDiagnosticsResults$conceptCount <-
+    getConceptRecordCount(
+      connection = connection,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      conceptIdUniverse = "#concept_tracking"
+    )
+  if (!keepCustomConceptId) {
+    conceptSetDiagnosticsResults$conceptCount <-
+      conceptSetDiagnosticsResults$conceptCount %>%
+      dplyr::filter(.data$conceptId < 200000000)
+  }
+
+  
   
   conceptSetDiagnosticsResults$conceptSets <-
     conceptSetDiagnosticsResults$conceptSets %>%
@@ -1318,13 +1319,31 @@ getConceptSourceStandardMapping <- function(connection,
   domains <- domains$wide %>%
     dplyr::filter(nchar(.data$domainSourceConceptId) > 1)
   
-  sql <- "WITH concept_id_universe
+  sqlConceptMapping <-
+    "IF OBJECT_ID('tempdb..#concept_mapping', 'U') IS NOT NULL
+                      	DROP TABLE #concept_mapping;
+                      CREATE TABLE #concept_mapping (concept_id INT,
+                                                    source_concept_id INT,
+                                                    domain_table VARCHAR(10),
+                                                    concept_count BIGINT,
+                                                    subject_count BIGINT);"
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sqlConceptMapping,
+    tempEmulationSchema = tempEmulationSchema,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  
+  sqlMapping <- "WITH concept_id_universe
           AS (
           	SELECT DISTINCT concept_id
           	FROM @concept_id_universe
           	)
+          INSERT INTO #concept_mapping
           SELECT @domain_concept_id concept_id,
           	@domain_source_concept_id source_concept_id,
+          	'@domainTable' domain_table,
           	COUNT(*) AS concept_count,
           	COUNT(DISTINCT person_id) AS subject_count
           FROM @cdm_database_schema.@domain_table
@@ -1340,34 +1359,36 @@ getConceptSourceStandardMapping <- function(connection,
   
   conceptMapping <- list()
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i,]
+    rowData <- domains[i, ]
     ParallelLogger::logTrace(paste0(
       "  - Working on ",
       rowData$domainTable,
       ".",
       rowData$domainConceptId
     ))
-    sqlRendered <- SqlRender::render(sql = sql,
-                                     domain_table = rowData$domainTable,
-                                     domain_concept_id = rowData$domainConceptId,
-                                     domain_source_concept_id = rowData$domainSourceConceptId,
-                                     cdm_database_schema = cdmDatabaseSchema,
-                                     concept_id_universe = conceptIdUniverse)
-    conceptMapping[[i]] <- renderTranslateQuerySql(
+    renderTranslateExecuteSql(
       connection = connection,
-      sql = sql,
+      sql = sqlMapping,
       tempEmulationSchema = tempEmulationSchema,
       domain_table = rowData$domainTable,
       domain_concept_id = rowData$domainConceptId,
       domain_source_concept_id = rowData$domainSourceConceptId,
       cdm_database_schema = cdmDatabaseSchema,
       concept_id_universe = conceptIdUniverse,
-      snakeCaseToCamelCase = TRUE
+      domainTable = rowData$domainTableShort, 
+      reportOverallTime = FALSE, 
+      progressBar = FALSE
     )
-    conceptMapping[[i]]$domainTable <- rowData$domainTableShort
   }
-  conceptMapping <- dplyr::bind_rows(conceptMapping) %>%
-    dplyr::distinct() %>% 
+  sql <- "SELECT * FROM #concept_mapping;"
+  conceptMapping <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = sql,
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = tempEmulationSchema
+    ) %>%
+    dplyr::distinct() %>%
     dplyr::arrange(
       .data$domainTable,
       .data$conceptId,
@@ -1375,17 +1396,41 @@ getConceptSourceStandardMapping <- function(connection,
       .data$conceptCount,
       .data$subjectCount
     )
-  conceptMapping <- dplyr::bind_rows(conceptMapping,
-                                     conceptMapping %>% 
-                             dplyr::group_by(.data$conceptId,
-                                             .data$sourceConceptId
-                             ) %>% 
-                             dplyr::summarise(conceptCount = sum(.data$conceptCount),
-                                              subjectCount = max(.data$subjectCount), 
-                                              .groups = "keep") %>% 
-                             dplyr::mutate(domainTable = "All")
-  ) %>% 
+  conceptMapping <- dplyr::bind_rows(
+    conceptMapping,
+    conceptMapping %>%
+      dplyr::group_by(.data$conceptId,
+                      .data$sourceConceptId) %>%
+      dplyr::summarise(
+        conceptCount = sum(.data$conceptCount),
+        subjectCount = max(.data$subjectCount),
+        .groups = "keep"
+      ) %>%
+      dplyr::mutate(domainTable = "All")
+  ) %>%
     dplyr::distinct()
+  
+  sql <- "INSERT INTO @concept_id_table (concept_id)
+                  SELECT DISTINCT source_concept_id concept_id
+                  FROM #concept_mapping;"
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sql,
+    tempEmulationSchema = tempEmulationSchema,
+    concept_id_table = "#concept_tracking",
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  sqlDdlDrop <-
+    "IF OBJECT_ID('tempdb..#concept_mapping', 'U') IS NOT NULL
+                	      DROP TABLE #concept_mapping;"
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sqlDdlDrop,
+    tempEmulationSchema = tempEmulationSchema,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
   return(conceptMapping)
 }
 
