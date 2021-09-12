@@ -365,7 +365,6 @@ plotTs <- function(data,
 
 plotTimeSeriesForCohortDefinitionFromTsibble <-
   function(stlModeledTsibbleData,
-           timeSeriesStatistics = c(),
            timeSeriesPeriodRangeFilter = c(2010, 2021)) {
     if (is.null(stlModeledTsibbleData)) {
       return(NULL)

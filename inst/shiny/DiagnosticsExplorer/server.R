@@ -2020,7 +2020,6 @@ shiny::shinyServer(function(input, output, session) {
           )
         )
         inc = inc + 1
-        
         panels[[inc]] <- shiny::tabPanel(
           title = "Time Series Plot",
           value = "conceptSetTimeSeries",
@@ -2034,25 +2033,6 @@ shiny::shinyServer(function(input, output, session) {
             12,
             shiny::column(
               6,
-              shinyWidgets::pickerInput(
-                inputId = "timeSeriesStatisticsForCohortDefinition",
-                label = "Time series statistics:",
-                width = 300,
-                choices = c("Total", "trend", "season_year", "remainder"),
-                ##!!! rename Total as Raw
-                selected = c("trend"),
-                multiple = TRUE,
-                choicesOpt = list(style = rep_len("color: black;", 999)),
-                options = shinyWidgets::pickerOptions(
-                  actionsBox = TRUE,
-                  liveSearch = TRUE,
-                  size = 10,
-                  dropupAuto = TRUE,
-                  liveSearchStyle = "contains",
-                  liveSearchPlaceholder = "Type here to search",
-                  virtualScroll = 50
-                )
-              )
             ),
             shiny::column(6,
                           shiny::radioButtons(
@@ -3066,8 +3046,7 @@ shiny::shinyServer(function(input, output, session) {
                                                                           valueFields = c("records", "persons"))
 
     plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
-      stlModeledTsibbleData = tsibbleDataFromSTLModel,
-      timeSeriesStatistics = input$timeSeriesStatisticsForCohortDefinition
+      stlModeledTsibbleData = tsibbleDataFromSTLModel
     )
     plot <- plotly::ggplotly(plot)
     return(plot)
