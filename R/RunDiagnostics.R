@@ -148,7 +148,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  incremental = FALSE,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
   startDateTime <- Sys.time()
-  
   if (all(is.null(connectionDetails),
           is.null(connection))) {
     stop('Please provide either connection or connectionDetails to connect to database.')
@@ -547,6 +546,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         ))
       }
       browser()
+      debug(enforceMinCellValue)
       output <- runConceptSetDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
