@@ -401,7 +401,10 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data, databaseCount) {
     searchHighlight = TRUE,
     scrollX = TRUE,
     scrollY = "20vh",
-    columnDefs = list(truncateStringDef(1, 50))
+    columnDefs = list(truncateStringDef(1, 50),
+                      minCellCountDef(4 + (1:(
+                        2 * length(databaseIds)
+                      ))))
   )
   databaseRecordAndPersonColumnName <- c()
   for (i in 1:nrow(databasePersonAndRecordCount)) {

@@ -2058,7 +2058,7 @@ shiny::shinyServer(function(input, output, session) {
                           shiny::radioButtons(
                             inputId = "timeSeriesAggregationForCohortDefinition",
                             label = "Aggregation period:",
-                            choices = c("Monthly", "Quaterly","Yearly"),
+                            choices = c("Monthly", "Yearly"),
                             selected = "Monthly",
                             inline = TRUE
                           ))
