@@ -1313,7 +1313,6 @@ getIndexDateConceptCooccurrence <- function(connection,
 getConceptSourceStandardMapping <- function(connection,
                                             cdmDatabaseSchema,
                                             tempEmulationSchema,
-                                            sourceValue = FALSE,
                                             conceptIdUniverse = "#concept_tracking") {
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide %>%
@@ -1325,31 +1324,19 @@ getConceptSourceStandardMapping <- function(connection,
           	FROM @concept_id_universe
           	)
           SELECT @domain_concept_id concept_id,
-          	{@domain_source_concept_id != '' } ? { @domain_source_concept_id source_concept_id,
-          	} {@sourceValue} ? { @domain_source_value source_value,
-          	} COUNT(*) AS concept_count,
+          	@domain_source_concept_id source_concept_id,
+          	COUNT(*) AS concept_count,
           	COUNT(DISTINCT person_id) AS subject_count
           FROM @cdm_database_schema.@domain_table
-          LEFT JOIN concept_id_universe a
-          	ON @domain_concept_id = a.concept_id {@domain_source_concept_id != '' } ? {
-          LEFT JOIN concept_id_universe b
-          	ON @domain_source_concept_id = b.concept_id}
+          INNER JOIN concept_id_universe a ON @domain_concept_id = a.concept_id
           WHERE (
-          		@domain_concept_id IS NOT NULL
-          		AND @domain_concept_id > 0 {@domain_source_concept_id != '' } ? {
-          		AND @domain_source_concept_id IS NOT NULL
-          		AND @domain_source_concept_id > 0 }
+          		@domain_source_concept_id IS NOT NULL
+          		AND @domain_source_concept_id > 0
           		)
-          	AND (
-          		a.concept_id IS NOT NULL {@domain_source_concept_id != '' } ? {
-          		OR b.concept_id IS NOT NULL}
-          		)
-          GROUP BY @domain_concept_id {@domain_source_concept_id != '' } ? {,
-          	@domain_source_concept_id } {@sourceValue} ? {,
-          	@domain_source_value }
-          ORDER BY @domain_concept_id {@domain_source_concept_id != '' } ? {,
-          	@domain_source_concept_id } {@sourceValue} ? {,
-          	@domain_source_value };"
+          GROUP BY @domain_concept_id,
+          	@domain_source_concept_id
+          ORDER BY @domain_concept_id,
+          	@domain_source_concept_id;"
   
   conceptMapping <- list()
   for (i in (1:nrow(domains))) {
@@ -1360,6 +1347,12 @@ getConceptSourceStandardMapping <- function(connection,
       ".",
       rowData$domainConceptId
     ))
+    sqlRendered <- SqlRender::render(sql = sql,
+                                     domain_table = rowData$domainTable,
+                                     domain_concept_id = rowData$domainConceptId,
+                                     domain_source_concept_id = rowData$domainSourceConceptId,
+                                     cdm_database_schema = cdmDatabaseSchema,
+                                     concept_id_universe = conceptIdUniverse)
     conceptMapping[[i]] <- renderTranslateQuerySql(
       connection = connection,
       sql = sql,
@@ -1367,10 +1360,8 @@ getConceptSourceStandardMapping <- function(connection,
       domain_table = rowData$domainTable,
       domain_concept_id = rowData$domainConceptId,
       domain_source_concept_id = rowData$domainSourceConceptId,
-      domain_source_value = rowData$domainSourceValue,
       cdm_database_schema = cdmDatabaseSchema,
       concept_id_universe = conceptIdUniverse,
-      sourceValue = sourceValue,
       snakeCaseToCamelCase = TRUE
     )
     conceptMapping[[i]]$domainTable <- rowData$domainTableShort
