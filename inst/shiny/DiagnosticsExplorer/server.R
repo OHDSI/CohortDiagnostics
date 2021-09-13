@@ -2055,28 +2055,18 @@ shiny::shinyServer(function(input, output, session) {
         panels[[inc]] <- shiny::tabPanel(
           title = "Time Series Plot",
           value = "conceptSetTimeSeries",
-          tags$h5(paste0(
-            data$conceptName,
-            " (",
-            data$conceptId,
-            ")"
-          )),
           shiny::column(
-            12,
-            shiny::column(
-              6,
-            ),
-            shiny::column(6,
-                          shiny::radioButtons(
-                            inputId = "timeSeriesAggregationForCohortDefinition",
-                            label = "Aggregation period:",
-                            choices = c("Monthly", "Yearly"),
-                            selected = "Monthly",
-                            inline = TRUE
-                          ))
+            width = 12,
+            shiny::radioButtons(
+              inputId = "timeSeriesAggregationForCohortDefinition",
+              label = "Aggregation period:",
+              choices = c("Monthly", "Yearly"),
+              selected = "Monthly",
+              inline = TRUE
+            )
           ),
           shiny::column(
-            12,
+            width = 12,
             plotly::plotlyOutput(
               outputId = "conceptSetTimeSeriesPlot",
               width = "100%",
