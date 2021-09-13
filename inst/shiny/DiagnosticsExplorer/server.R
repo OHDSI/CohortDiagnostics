@@ -3086,7 +3086,9 @@ shiny::shinyServer(function(input, output, session) {
                     "persons" = .data$subjectCount)
     tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
                                                                           valueFields = c("records", "persons"))
+    
 
+    
     plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
       stlModeledTsibbleData = tsibbleDataFromSTLModel
     )
@@ -4439,13 +4441,13 @@ shiny::shinyServer(function(input, output, session) {
       timeSeriesPeriodRangeFilter = input$timeSeriesPeriodRangeFilter
     )
     
-    distinctCohortShortName <- c()
-    for (i in 1:length(tsibbleDataFromSTLModel)) {
-      data  <- tsibbleDataFromSTLModel[[i]]$cohortShortName %>% unique()
-      distinctCohortShortName <- union(distinctCohortShortName,data)
-    }
-    
-    plot <- plotly::ggplotly(plot)
+    # distinctCohortShortName <- c()
+    # for (i in 1:length(tsibbleDataFromSTLModel)) {
+    #   data  <- tsibbleDataFromSTLModel[[i]]$cohortShortName %>% unique()
+    #   distinctCohortShortName <- union(distinctCohortShortName,data)
+    # }
+    # 
+    # plot <- plotly::ggplotly(plot)
     return(plot)
   })
   

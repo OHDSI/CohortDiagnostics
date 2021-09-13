@@ -48,7 +48,7 @@ plotTimeSeriesFromTsibble <-
       distinctDatabaseId <- union(distinctDatabaseId, data)
     }
     
-    cohortPlot <- list()
+    cohortPlots <- list()
     noOfPlotRows <-
       length(distinctCohortShortName) * length(plotFilters) * length(timeSeriesStatistics)
     for (i in 1:length(distinctCohortShortName)) {
@@ -141,7 +141,7 @@ plotTimeSeriesFromTsibble <-
           )
         
       }
-      cohortPlot[[i]] <-
+      cohortPlots[[i]] <-
         plotly::subplot(filterPlots, nrows = length(filterPlots)) %>%
         plotly::layout(
           annotations = list(
@@ -163,7 +163,7 @@ plotTimeSeriesFromTsibble <-
       pad = 4
     )
     finalPlot <-
-      plotly::subplot(cohortPlot, nrows = length(cohortPlot)) %>%
+      plotly::subplot(cohortPlots, nrows = length(cohortPlots)) %>%
       plotly::layout(autosize = T, margin = m)
     
     # # Using Plotly
@@ -326,40 +326,31 @@ plotTs <- function(data,
                    plotHeight,
                    xAxisMin,
                    xAxisMax) {
-  plotTrend <-
+  plot <-
     plotly::plot_ly(
       data = data,
-      x = ~ periodDate,
-      y = ~ trend,
-      #overlay Total and trend - with trend having bold line, while Total should have dots
       height = plotHeight
     ) %>%
-    plotly::add_lines(
-      name = data$databaseId %>% unique(),
-      text = ~ paste("Statistics = smooth",
-                     "\nDatabase ID = ",
-                     .data$databaseId)
-    ) %>%
+    plotly::add_trace(x = ~ periodDate,
+                      y = ~ trend,
+                      mode = "line+marker",
+                      type = "scatter",
+                      name = "Trends",
+                      text = ~ paste("Statistics = smooth",
+                                     "\nDatabase ID = ",.data$databaseId,
+                                     "\nSTL type = Trends")) %>%
+    plotly::add_markers(x = ~ periodDate,
+                      y = ~ Total,
+                      name = "Total",
+                      text = ~ paste("Statistics = smooth",
+                                     "\nDatabase ID = ",.data$databaseId,
+                                     "\nSTL type = Total")) %>%
     plotly::layout(showlegend = FALSE,
                    xaxis = list(range = c(xAxisMin, xAxisMax)))
-  plotTotal <-
-    plotly::plot_ly(
-      data = data,
-      x = ~ periodDate,
-      y = ~ Total,
-      #overlay Total and trend - with trend having bold line, while Total should have dots
-      height = plotHeight
-    ) %>%
-    plotly::add_markers(
-      #make markers semi transparent and gray in color
-      name = data$databaseId %>% unique(),
-      text = ~ paste("Statistics = raw",
-                     "\nDatabase ID = ",
-                     .data$databaseId)
-    ) %>%
-    plotly::layout(showlegend = FALSE,
-                   xaxis = list(range = xAxisMin, xAxisMax))
-  return(plotTrend)
+  
+  
+  
+  return(plot)
 }
 
 
@@ -391,32 +382,42 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
           plotHeight =  200 * noOfPlotRows,
           xAxisMin = as.Date(paste0(timeSeriesPeriodRangeFilter[1], "-01-01")),
           xAxisMax = as.Date(paste0(timeSeriesPeriodRangeFilter[2], "-12-31"))
-        )
+        ) 
         
-        # if (j == 1 && k == 1) {
-        #   plot <- plot %>%
-        #     plotly::layout(
-        #       annotations = list(
-        #         x = 0.5 ,
-        #         y = 1.2,
-        #         text = singleDatabaseId,
-        #         showarrow = F,
-        #         xref = 'paper',
-        #         yref = 'paper'
-        #       )
-        #     )
-        # }
-        # # X axis should be shown only for last row plots
-        # if (j != length(yAxisValues) ||
-        #     k != length(timeSeriesStatistics)) {
-        #   plot <-
-        #     plot %>% plotly::layout(xaxis = list(showticklabels = FALSE))
-        # }
+        if (j == 1) {
+          databasePlots[[l]] <- databasePlots[[l]] %>%
+            plotly::layout(
+              annotations = list(
+                x = 0.5 ,
+                y = 1.2,
+                text = distinctDatabaseId[[l]],
+                showarrow = F,
+                xref = 'paper',
+                yref = 'paper'
+              )
+            )
+        }
+        if (j != length(yAxisValues)) {
+          databasePlots[[l]] <-
+            databasePlots[[l]] %>% plotly::layout(xaxis = list(showticklabels = FALSE))
+        }
+       
       }
-      yAxisValuesPlots[[yAxisValues[[j]]]] <- plotly::subplot(databasePlots, shareY = TRUE, titleX = FALSE)
+      yAxisValuesPlots[[yAxisValues[[j]]]] <- plotly::subplot(databasePlots, shareY = TRUE, titleX = FALSE) %>% 
+        plotly::layout(
+          annotations = list(
+            x = -0.04,
+            y = 0.5,
+            text = camelCaseToTitleCase(yAxisValues[[j]]),
+            showarrow = FALSE,
+            xref = "paper",
+            yref = "paper",
+            textangle = -90
+          )
+        )
     }
     m <- list(
-      l = 150,
+      l = 50,
       r = 0,
       b = 0,
       t = 50,

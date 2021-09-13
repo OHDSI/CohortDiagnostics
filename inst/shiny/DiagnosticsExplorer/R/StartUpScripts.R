@@ -506,7 +506,7 @@ getStlModelOutputForTsibbleDataValueFields <- function(tsibbleData, valueFields 
     if (tsibble::is_yearmonth(modelData[[valueField]]$periodBegin)) {
       modelData[[valueField]] <- modelData[[valueField]] %>% 
         dplyr::mutate(periodDate = as.Date(.data$periodBegin))
-    } else if (is.integer(modelData[[valueField]]$periodBegin)) {
+    } else if (is.double(modelData[[valueField]]$periodBegin)) {
       modelData[[valueField]] <- modelData[[valueField]] %>% 
         dplyr::mutate(periodDate = as.Date(paste0(.data$periodBegin, "-01-01")))
     }
