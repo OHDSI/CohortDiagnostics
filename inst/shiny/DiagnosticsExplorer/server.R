@@ -1980,21 +1980,11 @@ shiny::shinyServer(function(input, output, session) {
         #   ")"
         # )),
         # tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", ")),
-        
         panels[[inc]] <- shiny::tabPanel(
           title = "Concept Set Browser",
           value = "conceptSetBrowser",
           shiny::conditionalPanel(
             condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-            tags$h4(paste0(
-              data$concept %>% 
-                dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
-                dplyr::pull(.data$conceptName),
-              " (",
-              activeSelected()$conceptId,
-              ")"
-            )),
-            tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", ")),
             tags$table(width = "100%",
                        tags$tr(
                          tags$td(
@@ -2052,7 +2042,6 @@ shiny::shinyServer(function(input, output, session) {
         )
         inc = inc + 1
         if (doesObjectHaveData(data$mappedNonStandard)) {
-          browser()
           panels[[inc]] <- shiny::tabPanel(
             title = "Non standard counts",
             value = "nonStandardCount",
@@ -2109,7 +2098,17 @@ shiny::shinyServer(function(input, output, session) {
           DT::dataTableOutput(outputId = "conceptSetComparisonTable")
         )
       }
-      do.call(tabsetPanel, panels)
+      shiny::conditionalPanel(
+        condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
+        shinydashboard::box(
+          title = shiny::htmlOutput(outputId = "conceptSetBowserConceptSynonymName"),
+          width =  NULL,
+          status = NULL,
+          collapsible = TRUE,
+          collapsed = TRUE,
+          do.call(tabsetPanel, panels)
+        )
+      )
     })
   
   ##output: isConceptIdFromTargetOrComparatorConceptTableSelected----
@@ -3095,6 +3094,34 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
+  ##output:: conceptSetBowserConceptSynonymName
+  output$conceptSetBowserConceptSynonymName <- shiny::renderUI(expr = {
+     data <- getMetadataForConceptId()
+    
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    
+    tags$table(
+      tags$tr(
+        tags$td(
+          tags$h4(paste0(
+            data$concept %>% 
+              dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
+              dplyr::pull(.data$conceptName),
+            " (",
+            activeSelected()$conceptId,
+            ")"
+          ))
+        )
+      ),
+      tags$tr(
+        tags$td(
+          tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", "))
+        )
+      )
+    )
+  })
   
   ##output: conceptBrowserTable----
   output$conceptBrowserTable <- DT::renderDT(expr = {
