@@ -5273,16 +5273,20 @@ shiny::shinyServer(function(input, output, session) {
       }
       # working on the plot
       if (input$timeSeriesAggregationPeriodSelection == "Monthly") {
-        data <- data$databaseConceptIdYearMonthLevelTsibble
+        data <- data$databaseConceptIdYearMonthLevelTsibble %>% 
+          dplyr::filter(.data$conceptId == consolidatedConceptIdTarget())
       } else {
-        data <- data$databaseConceptIdYearLevelTsibble
+        data <- data$databaseConceptIdYearLevelTsibble %>% 
+          dplyr::filter(.data$conceptId == consolidatedConceptIdTarget())
       }
+      data <- data %>% 
+        dplyr::filter(.data$domainTableShort == "All") %>% #need input object
+        dplyr::filter(.data$domainFieldShort == "All") #need input object
       validate(need(
         all(!is.null(data),
             nrow(data) > 0),
         "No timeseries data for the cohort of this series type"
       ))
-      browser()
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(
@@ -5290,15 +5294,18 @@ shiny::shinyServer(function(input, output, session) {
                          activeSelected()$conceptId),
         value = 0
       )
-      browser()
-      plot <- plotTimeSeriesFromTsibble(
-        tsibbleData = data,
-        yAxisLabel = "Counts",
-        #!!!! radio button for counts and subjects titleCaseToCamelCase(input$timeSeriesPlotFilters),
-        indexAggregationType = input$timeSeriesAggregationPeriodSelection,
-        timeSeriesStatistics = input$timeSeriesStatistics
+      data <- data %>% 
+        dplyr::filter(.data$databaseId %in% input$selectedDatabaseIds) %>% 
+        dplyr::rename("records" = .data$conceptCount,
+                      "persons" = .data$subjectCount)
+      tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
+                                                                            valueFields = c("records", "persons"))
+      
+      
+      
+      plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
+        stlModeledTsibbleData = tsibbleDataFromSTLModel
       )
-      plot <- plotly::ggplotly(plot)
       return(plot)
     })
   
