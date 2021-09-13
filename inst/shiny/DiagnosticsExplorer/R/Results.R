@@ -237,6 +237,8 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
                                         .data$vocabularyId,
                                         .data$standardConcept),
                           by = c("conceptId"))
+    } else {
+      return(NULL)
     }
   } else {
     sql <- "SELECT index_event_breakdown.*,
@@ -317,6 +319,9 @@ getIncludedConceptResult <- function(dataSource = .GlobalEnv,
                                      cohortId,
                                      databaseIds) {
   if (is(dataSource, "environment")) {
+    if (!exists("includedSourceConcept")) {
+      return(NULL)
+    }
     data <- get("includedSourceConcept", envir = dataSource) %>% 
       dplyr::filter(.data$cohortId == !!cohortId &
                       .data$databaseId %in% !!databaseIds) %>% 
@@ -371,6 +376,7 @@ getOrphanConceptResult <- function(dataSource = .GlobalEnv,
                                    cohortId,
                                    databaseIds) {
   if (is(dataSource, "environment")) {
+    if (!exists("orphanConcept")) {return(NULL)}
     data <- get("orphanConcept", envir = dataSource) %>% 
       dplyr::filter(.data$cohortId == !!cohortId &
                       .data$databaseId %in% !!databaseIds) %>% 
