@@ -665,6 +665,35 @@ getResultsConceptCount <- function(dataSource,
 }
 
 
+
+#' Returns data from concept_mapping table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from concept_mapping table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @template DatabaseIds
+#'
+#' @param conceptIds     A list of concept ids to get counts for
+#'
+#' @return
+#' Returns a data frame (tibble)
+#'
+#' @export
+getResultsConceptMapping <- function(dataSource,
+                                     databaseIds = NULL,
+                                     conceptIds = NULL) {
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    databaseIds = databaseIds,
+    conceptIds = conceptIds,
+    dataTableName = "conceptMapping"
+  )
+  return(data)
+}
+
+
 #' Returns summary data from concept_count table of Cohort Diagnostics results data model
 #'
 #' @description
@@ -912,12 +941,22 @@ getConceptMetadata <- function(dataSource,
       dplyr::distinct()
   }
   
+  if (getConceptMappingCount) {
+    data$conceptMapping <- 
+      getResultsConceptMapping(
+        dataSource = dataSource,
+        databaseIds = databaseIds,
+        conceptIds = conceptIds
+      )
+  }
+  
   conceptIdList <- c(
     conceptIds,
     data$conceptRelationship$conceptId1,
     data$conceptRelationship$conceptId2,
     data$conceptAncestor$ancestorConceptId,
-    data$conceptAncestor$descendantConceptId
+    data$conceptAncestor$descendantConceptId,
+    data$conceptMapping$sourceConceptId
   ) %>%
     unique()
   
@@ -1083,9 +1122,6 @@ getConceptMetadata <- function(dataSource,
         ) %>%
         dplyr::filter(.data$conceptId %in% c(data$concept$conceptId %>% unique()))
     }
-  }
-  if (getConceptMappingCount) {
-    
   }
   return(data)
 }

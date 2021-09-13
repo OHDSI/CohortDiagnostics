@@ -1920,13 +1920,37 @@ shiny::shinyServer(function(input, output, session) {
         data$conceptCooccurrence %>%
         dplyr::filter(.data$referenceConceptId == activeSelected()$conceptId) %>%
         dplyr::filter(.data$cohortId == activeSelected()$cohortId) %>%
-        dplyr::select(-.data$referenceConceptId)
+        dplyr::select(-.data$referenceConceptId, -.data$cohortId) %>% 
+        dplyr::arrange(.data$databaseId, dplyr::desc(.data$subjectCount))
     }
     if (!is.null(data$conceptRelationshipTable)) {
       data$conceptRelationshipTable <-
         data$conceptRelationshipTable %>%
         dplyr::filter(.data$referenceConceptId == activeSelected()$conceptId) %>%
         dplyr::select(-.data$referenceConceptId)
+    }
+    if (!is.null(data$conceptMapping)) {
+      data$mappedNonStandard <-
+        data$concept %>% 
+        dplyr::filter(is.na(.data$standardConcept) |
+                        !.data$standardConcept == 'S') %>% 
+        dplyr::select(.data$conceptId, 
+                      .data$conceptName,
+                      .data$vocabularyId,
+                      .data$standardConcept) %>% 
+        dplyr::inner_join(data$conceptMapping %>%
+                            dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>%
+                            dplyr::select(-.data$conceptId) %>% 
+                            dplyr::rename("conceptId" = .data$sourceConceptId) %>% 
+                            dplyr::select(.data$databaseId,
+                                          .data$domainTable,
+                                          .data$conceptId,
+                                          .data$conceptCount,
+                                          .data$subjectCount) %>% 
+                            dplyr::distinct() %>% 
+                            dplyr::arrange(dplyr::desc(.data$subjectCount)),
+                          by = "conceptId") %>% 
+        dplyr::distinct()
     }
     return(data)
   })
@@ -1954,9 +1978,7 @@ shiny::shinyServer(function(input, output, session) {
             tags$h4(paste0(
               data$concept %>% 
                 dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
-                dplyr::pull(.data$conceptName) %>% 
-                unique() %>% 
-                min(),
+                dplyr::pull(.data$conceptName),
               " (",
               activeSelected()$conceptId,
               ")"
@@ -1968,10 +1990,8 @@ shiny::shinyServer(function(input, output, session) {
                            shinyWidgets::pickerInput(
                              inputId = "choicesForRelationshipName",
                              label = "Relationship Category:",
-                             choices = c('Not applicable',
-                                         data$relationshipName),
-                             selected = c('Not applicable',
-                                          data$relationshipName),
+                             choices = c(data$relationshipName),
+                             selected = c(data$relationshipName),
                              multiple = TRUE,
                              width = 200,
                              inline = TRUE,
