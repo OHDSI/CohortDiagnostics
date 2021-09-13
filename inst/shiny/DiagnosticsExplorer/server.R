@@ -1936,8 +1936,7 @@ shiny::shinyServer(function(input, output, session) {
                         !.data$standardConcept == 'S') %>% 
         dplyr::select(.data$conceptId, 
                       .data$conceptName,
-                      .data$vocabularyId,
-                      .data$standardConcept) %>% 
+                      .data$vocabularyId) %>% 
         dplyr::inner_join(data$conceptMapping %>%
                             dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>%
                             dplyr::select(-.data$conceptId) %>% 
@@ -1970,6 +1969,18 @@ shiny::shinyServer(function(input, output, session) {
       if (!is.null(activeSelected()$conceptId)) {
         data <- getMetadataForConceptId()
         validate(need(doesObjectHaveData(data), "No data for selected combination"))
+        
+        #!!!!! put selectd concept details as a shared header
+        # tags$h4(paste0(
+        #   data$concept %>% 
+        #     dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
+        #     dplyr::pull(.data$conceptName),
+        #   " (",
+        #   activeSelected()$conceptId,
+        #   ")"
+        # )),
+        # tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", ")),
+        
         panels[[inc]] <- shiny::tabPanel(
           title = "Concept Set Browser",
           value = "conceptSetBrowser",
@@ -2040,6 +2051,18 @@ shiny::shinyServer(function(input, output, session) {
           )
         )
         inc = inc + 1
+        if (doesObjectHaveData(data$mappedNonStandard)) {
+          browser()
+          panels[[inc]] <- shiny::tabPanel(
+            title = "Non standard counts",
+            value = "nonStandardCount",
+            shiny::conditionalPanel(
+              condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
+              DT::dataTableOutput(outputId = "nonStandardCount")
+            )
+          )
+          inc = inc + 1
+        }
         panels[[inc]] <- shiny::tabPanel(
           title = "Time Series Plot",
           value = "conceptSetTimeSeries",
@@ -3165,6 +3188,43 @@ shiny::shinyServer(function(input, output, session) {
                                                     databaseCount = databaseCount)
     return(table)
   })
+  
+  
+  
+  ##output: nonStandardCount----
+  output$nonStandardCount <- DT::renderDT(expr = {
+    conceptId <- activeSelected()$conceptId
+    validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
+    cohortId <- activeSelected()$cohortId
+    validate(need(doesObjectHaveData(conceptId), "No cohort id selected."))
+    databaseId <- activeSelected()$databaseId
+    validate(need(doesObjectHaveData(databaseId), "No database id selected."))
+    
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(
+      message = paste0("Computing concept relationship for concept id:",
+                       conceptId),
+      value = 0
+    )
+    data <- getMetadataForConceptId()
+    validate(need(
+      doesObjectHaveData(data),
+      "No information for selected concept id."
+    ))
+    conceptMapping <- data$mappedNonStandard %>%
+      dplyr::rename("persons" = .data$subjectCount,
+                    "records" = .data$conceptCount)
+    databaseCount <- data$databaseConceptCount %>% 
+      dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>%
+      dplyr::rename("persons" = .data$subjectCount,
+                    "records" = .data$conceptCount)
+    table <-
+      getSketchDesignForTablesInCohortDefinitionTab(conceptMapping,
+                                                    databaseCount = databaseCount)
+    return(table)
+  })
+  
   
   
   #Radio button synchronization----

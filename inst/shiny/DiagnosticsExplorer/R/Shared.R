@@ -32,9 +32,10 @@ doesObjectHaveData <- function(data) {
     if (length(data) == 0) {
       return(FALSE)
     }
-    if (all(length(data) == 1,
-            data == "")) {
-      return(FALSE)
+    if (length(data) == 1) {
+      if (data == "") {
+        return(FALSE)
+      }
     }
   }
   return(TRUE)
