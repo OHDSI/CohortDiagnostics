@@ -3204,7 +3204,8 @@ shiny::shinyServer(function(input, output, session) {
                     "records" = .data$conceptCount)
     table <-
       getSketchDesignForTablesInCohortDefinitionTab(conceptRelationshipTable,
-                                                    databaseCount = databaseCount)
+                                                    databaseCount = databaseCount,
+                                                    numberOfColums = 6)
     return(table)
   })
   
@@ -3226,6 +3227,7 @@ shiny::shinyServer(function(input, output, session) {
                        conceptId),
       value = 0
     )
+    
     data <- getMetadataForConceptId()
     validate(need(
       doesObjectHaveData(data),
@@ -3240,7 +3242,8 @@ shiny::shinyServer(function(input, output, session) {
                     "records" = .data$conceptCount)
     table <-
       getSketchDesignForTablesInCohortDefinitionTab(conceptMapping,
-                                                    databaseCount = databaseCount)
+                                                    databaseCount = databaseCount,
+                                                    numberOfColums = 3)
     return(table)
   })
   
