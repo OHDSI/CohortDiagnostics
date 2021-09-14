@@ -5200,12 +5200,6 @@ shiny::shinyServer(function(input, output, session) {
         panels[[inc]] <- shiny::tabPanel(
           title = "Time Series Plot",
           value = "conceptSetTimeSeriesForIndexEvent",
-          tags$h5(paste0(
-            data$conceptName,
-            " (",
-            data$conceptId,
-            ")"
-          )),
           plotly::plotlyOutput(
             outputId = "conceptSetTimeSeriesPlotForIndexEvent",
             width = "100%",
