@@ -7,12 +7,16 @@
 getConceptMetadata(
   dataSource,
   databaseIds = NULL,
+  cohortIds = NULL,
   vocabularyDatabaseSchema = NULL,
   conceptIds = NULL,
-  conceptRelationship = TRUE,
-  conceptAncestor = TRUE,
-  conceptSynonym = TRUE,
-  conceptCount = TRUE
+  getConceptRelationship = TRUE,
+  getConceptAncestor = TRUE,
+  getConceptSynonym = TRUE,
+  getConceptCount = TRUE,
+  getConceptCooccurrence = TRUE,
+  getIndexEventCount = TRUE,
+  getConceptMappingCount = TRUE
 )
 }
 \arguments{
@@ -27,20 +31,28 @@ and uploaded using \code{uploadResults}}
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
 
+\item{cohortIds}{A vector of one or more Cohort Ids.}
+
 \item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
 commonly the same as cdmDatabaseSchema. Note that for 
 SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
 
-\item{conceptIds}{(optional) A list of concept ids to limit the metadata result}
+\item{conceptIds}{A vector of one or more Concept Ids.}
 
-\item{conceptRelationship}{Do you want conceptRelationship?}
+\item{getConceptRelationship}{Do you want conceptRelationship?}
 
-\item{conceptAncestor}{Do you want conceptAncestor?}
+\item{getConceptAncestor}{Do you want conceptAncestor?}
 
-\item{conceptSynonym}{Do you want conceptSynonym?}
+\item{getConceptSynonym}{Do you want conceptSynonym?}
 
-\item{conceptCount}{Do you want conceptCount?}
+\item{getConceptCount}{Do you want conceptCount?}
+
+\item{getConceptCooccurrence}{Do you want concept cooccurrence?}
+
+\item{getIndexEventCount}{Do you want index event concept count?}
+
+\item{getConceptMappingCount}{Do you want concept mapping count?}
 }
 \value{
 Returns a list of data frames (tibbles)

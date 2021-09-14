@@ -16,7 +16,6 @@ DROP TABLE IF EXISTS concept_excluded;
 DROP TABLE IF EXISTS concept_mapping;
 DROP TABLE IF EXISTS concept_relationship;
 DROP TABLE IF EXISTS concept_resolved;
-DROP TABLE IF EXISTS concept_subjects;
 DROP TABLE IF EXISTS cohort_summary_stats;
 DROP TABLE IF EXISTS concept_sets;
 DROP TABLE IF EXISTS concept_sets_optimized;
@@ -189,6 +188,7 @@ CREATE TABLE concept_count (
 			event_year INT NOT NULL,
 			event_month INT NOT NULL,
 			concept_count FLOAT NOT NULL,
+			subject_count FLOAT NOT NULL,
 			PRIMARY KEY(database_id, domain_table, domain_field, concept_id, event_year, event_month)
 );
 
@@ -199,7 +199,7 @@ CREATE TABLE concept_cooccurrence (
 			cohort_id BIGINT NOT NULL,
 			concept_id BIGINT NOT NULL,
 			co_concept_id BIGINT NOT NULL,
-			concept_count BIGINT NOT NULL,
+			subject_count BIGINT NOT NULL,
 			PRIMARY KEY(database_id, cohort_id, concept_id, co_concept_id)
 );
 
@@ -249,18 +249,6 @@ CREATE TABLE concept_sets_optimized (
 			excluded INT NOT NULL,
 			removed INT NOT NULL,
 			PRIMARY KEY(database_id, cohort_id, concept_set_id, excluded, removed)
-);
-
-
---Table concept_count
---HINT DISTRIBUTE ON RANDOM
-CREATE TABLE concept_subjects (
-			database_id VARCHAR NOT NULL,
-			domain_table VARCHAR NOT NULL,
-			domain_field VARCHAR NULL,
-			concept_id INT NOT NULL,
-			subject_count FLOAT NOT NULL,
-			PRIMARY KEY(database_id, domain_table, domain_field, concept_id)
 );
 
 

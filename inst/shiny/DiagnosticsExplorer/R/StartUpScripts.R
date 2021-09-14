@@ -149,15 +149,15 @@ sumCounts <- function(counts) {
 consolidationOfSelectedFieldValues <- function(input,
                                                cohort = NULL,
                                                conceptSets = NULL,
-                                               conceptSetExpressionLeft = NULL,
-                                               conceptSetExpressionRight = NULL,
+                                               conceptSetExpressionTarget = NULL,
+                                               conceptSetExpressionComparator = NULL,
                                                database = NULL,
-                                               resolvedConceptSetDataLeft = NULL,
-                                               resolvedConceptSetDataRight = NULL,
-                                               orphanConceptSetDataLeft = NULL,
-                                               orphanConceptSetDataRight = NULL,
-                                               excludedConceptSetDataLeft = NULL,
-                                               excludedConceptSetDataRight = NULL,
+                                               resolvedConceptSetDataTarget = NULL,
+                                               resolvedConceptSetDataComparator = NULL,
+                                               orphanConceptSetDataTarget = NULL,
+                                               orphanConceptSetDataComparator = NULL,
+                                               excludedConceptSetDataTarget = NULL,
+                                               excludedConceptSetDataComparator = NULL,
                                                indexEventBreakdownDataTable = NULL) {
   data <- list()
   ##########################Cohort Definition tab ##########################
@@ -189,7 +189,7 @@ consolidationOfSelectedFieldValues <- function(input,
       doesObjectHaveData(data$cohortIdTarget)
     )) {
       selectedConceptSet <-
-        conceptSetExpressionLeft[input$targetCohortDefinitionConceptSetsTable_rows_selected,]
+        conceptSetExpressionTarget[input$targetCohortDefinitionConceptSetsTable_rows_selected,]
       data$conceptSetIdTarget <- selectedConceptSet$conceptSetId
       
       if (all(
@@ -197,48 +197,43 @@ consolidationOfSelectedFieldValues <- function(input,
         doesObjectHaveData(data$cohortIdComparator)
       )) {
         selectedConceptSet <-
-          conceptSetExpressionRight[input$comparatorCohortDefinitionConceptSets_rows_selected,]
+          conceptSetExpressionComparator[input$comparatorCohortDefinitionConceptSets_rows_selected,]
         data$conceptSetIdComparator <- selectedConceptSet$conceptSetId
       }
     }
     #selection on database id
-    if (doesObjectHaveData(input$targetVocabularyChoiceForConceptSetDetails)) {
-      data$selectedDatabaseIdTarget <- database %>%
-        dplyr::filter(
-          .data$databaseIdWithVocabularyVersion == input$targetVocabularyChoiceForConceptSetDetails
-        ) %>% 
-        dplyr::pull(.data$databaseId)
-    }
-    if (doesObjectHaveData(input$comparatorVocabularyChoiceForConceptSetDetails)) {
-      data$selectedDatabaseIdRight <- database %>%
-        dplyr::filter(
-          .data$databaseIdWithVocabularyVersion == input$comparatorVocabularyChoiceForConceptSetDetails
-        ) %>% 
-        dplyr::pull(.data$databaseId)
+    if (doesObjectHaveData(input$selectedDatabaseIds)) {
+      if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
+          isTRUE(input$selectedDatabaseIds_open) ||
+          doesObjectHaveData(input$tabs)) {
+        data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
+      } else {
+        data$selectedDatabaseIdTarget <- NULL
+      }
     }
     #selection on concept id
     if (doesObjectHaveData(input$targetCohortDefinitionResolvedConceptTable_rows_selected)) {
-      data$selectedConceptIdTarget <- resolvedConceptSetDataLeft[input$targetCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
+      data$selectedConceptIdTarget <- resolvedConceptSetDataTarget[input$targetCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
       data$leftSideActive <- TRUE
     }
     if (doesObjectHaveData(input$comparatorCohortDefinitionResolvedConceptTable_rows_selected)) {
-      data$selectedConceptIdComparator <- resolvedConceptSetDataRight[input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
+      data$selectedConceptIdComparator <- resolvedConceptSetDataComparator[input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
       data$rightSideActive <- TRUE
     }
     if (doesObjectHaveData(input$targetCohortDefinitionExcludedConceptTable_rows_selected)) {
-      data$selectedConceptIdTarget <- excludedConceptSetDataLeft[input$targetCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
+      data$selectedConceptIdTarget <- excludedConceptSetDataTarget[input$targetCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
       data$leftSideActive <- TRUE
     }
     if (doesObjectHaveData(input$comparatorCohortDefinitionExcludedConceptTable_rows_selected)) {
-      data$selectedConceptIdComparator <- excludedConceptSetDataRight[input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
+      data$selectedConceptIdComparator <- excludedConceptSetDataComparator[input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
       data$rightSideActive <- TRUE
     }
     if (doesObjectHaveData(input$targetCohortDefinitionOrphanConceptTable_rows_selected)) {
-      data$selectedConceptIdTarget <- orphanConceptSetDataLeft[input$targetCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
+      data$selectedConceptIdTarget <- orphanConceptSetDataTarget[input$targetCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
       data$leftSideActive <- TRUE
     }
     if (doesObjectHaveData(input$comparatorCohortDefinitionOrphanConceptTable_rows_selected)) {
-      data$selectedConceptIdComparator <- orphanConceptSetDataRight[input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
+      data$selectedConceptIdComparator <- orphanConceptSetDataComparator[input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
       data$rightSideActive <- TRUE
     }
   }
@@ -260,7 +255,7 @@ consolidationOfSelectedFieldValues <- function(input,
         dplyr::pull(.data$cohortId) %>%
         unique()
     }
-    #mutli select databaseId
+    #mutli select databaseId/ single select databaseId
     if (input$tabs == 'temporalCharacterization' ||
         input$tabs == 'compareCohortCharacterization' ||
         input$tabs == 'compareTemporalCharacterization') {
@@ -332,3 +327,190 @@ consolidationOfSelectedFieldValues <- function(input,
   }
   return(data)
 }
+
+#takes data as input and returns data table with sketch design
+#used in resolved, excluded and orphan concepts in cohort definition tab
+getSketchDesignForTablesInCohortDefinitionTab <- function(data, databaseCount) {
+  colnamesInData <- colnames(data)
+  colnamesInData <- colnamesInData[!colnamesInData %in% "databaseId"]
+  colnamesInData <- colnamesInData[!colnamesInData %in% "persons"]
+  colnamesInData <- colnamesInData[!colnamesInData %in% "records"]
+  databaseIds <- sort(unique(data$databaseId))
+  
+  fieldsInData <- c()
+  maxCount <- NULL
+  maxSubject <- NULL
+  if (all('records' %in% colnames(data),
+          'records' %in% colnames(databaseCount))) {
+    fieldsInData <- c(fieldsInData, "records")
+    maxCount <- max(data$records, na.rm = TRUE)
+  }
+  if (all('persons' %in% colnames(data),
+          'persons' %in% colnames(databaseCount))) {
+    fieldsInData <- c(fieldsInData, "persons")
+    maxSubject <- max(data$persons, na.rm = TRUE)
+  }
+  databasePersonAndRecordCount <- data %>%
+    dplyr::select(.data$databaseId) %>% 
+    dplyr::inner_join(databaseCount,
+                      by = c("databaseId")) %>% 
+    dplyr::select(.data$databaseId, dplyr::all_of(fieldsInData)) %>% 
+    dplyr::distinct()
+  if ('persons' %in% colnames(databasePersonAndRecordCount)) {
+    databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
+      dplyr::mutate(persons = scales::comma(.data$persons,
+                                                   accuracy = 1))
+  }
+  if ('records' %in% colnames(databasePersonAndRecordCount)) {
+    databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
+      dplyr::mutate(records = scales::comma(.data$records,
+                                                  accuracy = 1))
+  }
+  databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
+    dplyr::arrange(.data$databaseId)
+  
+  dataTransformed <- data %>%
+    dplyr::arrange(.data$databaseId) %>% 
+    tidyr::pivot_longer(
+      names_to = "type",
+      cols = fieldsInData,
+      values_to = "count"
+    ) %>%
+    dplyr::mutate(type = paste0(.data$type,
+                                " ",
+                                .data$databaseId)) %>%
+    dplyr::arrange(.data$databaseId, dplyr::desc(.data$type)) %>% #descending to ensure records before persons
+    tidyr::pivot_wider(
+      id_cols = colnamesInData,
+      names_from = type,
+      values_from = count,
+      values_fill = 0
+    )
+  # sort descending by first count field
+  dataTransformed <- dataTransformed %>% 
+    dplyr::arrange(dplyr::desc(dplyr::across(dplyr::contains("records"))))
+  
+  options = list(
+    pageLength = 1000,
+    lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+    searching = TRUE,
+    lengthChange = TRUE,
+    ordering = TRUE,
+    paging = TRUE,
+    info = TRUE,
+    searchHighlight = TRUE,
+    scrollX = TRUE,
+    scrollY = "20vh",
+    columnDefs = list(truncateStringDef(1, 50),
+                      minCellCountDef(4 + (1:(
+                        2 * length(databaseIds)
+                      ))))
+  )
+  databaseRecordAndPersonColumnName <- c()
+  for (i in 1:nrow(databasePersonAndRecordCount)) {
+    if ('records' %in% colnames(databasePersonAndRecordCount)) {
+      databaseRecordAndPersonColumnName <-
+        c(
+          databaseRecordAndPersonColumnName,
+          paste0("Records (", databasePersonAndRecordCount[i,]$records, ")"))
+    }
+    if ('persons' %in% colnames(databasePersonAndRecordCount)) {
+      databaseRecordAndPersonColumnName <-
+        c(
+          databaseRecordAndPersonColumnName,
+          paste0("Persons (", databasePersonAndRecordCount[i,]$persons, ")"))
+    }
+  }
+  #!!!!!!! dynamically generate rowspan from colnamesInData
+  sketch <- htmltools::withTags(table(class = "display",
+                                      thead(
+                                        tr(
+                                          lapply(camelCaseToTitleCase(colnamesInData),
+                                                 th,
+                                                 rowspan = 2),
+                                          lapply(
+                                            databaseIds,
+                                            th,
+                                            colspan = 2,
+                                            class = "dt-center",
+                                            style = "border-right:1px solid silver;border-bottom:1px solid silver"
+                                          )
+                                        ),
+                                        tr(
+                                          lapply(databaseRecordAndPersonColumnName, th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                        )
+                                      )))
+  
+  dataTable <- DT::datatable(
+    dataTransformed,
+    options = options,
+    rownames = FALSE,
+    container = sketch,
+    colnames = colnames(dataTransformed) %>% camelCaseToTitleCase(),
+    escape = FALSE,
+    selection = 'single',
+    filter = "top",
+    class = "stripe nowrap compact"
+  )
+  
+  if (!is.null(maxSubject)) {
+    dataTable <- DT::formatStyle(
+      table = dataTable,
+      columns =  5 + 1:(length(databaseIds) * 2),
+      background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
+      backgroundSize = "98% 88%",
+      backgroundRepeat = "no-repeat",
+      backgroundPosition = "center"
+    )
+  }
+  if (!is.null(maxCount)) {
+    dataTable <- DT::formatStyle(
+      table = dataTable,
+      columns =  5 + 1:(length(databaseIds) * 2),
+      background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+      backgroundSize = "98% 88%",
+      backgroundRepeat = "no-repeat",
+      backgroundPosition = "center"
+    )
+  }
+  return(dataTable)
+}
+
+getStlModelOutputForTsibbleDataValueFields <- function(tsibbleData, valueFields = "value") {
+  if (!doesObjectHaveData(tsibbleData)) {
+    return(NULL)
+  }
+  if (!"tbl_ts" %in% class(tsibbleData)) {
+    warning("object is not of tsibble class")
+    return(NULL)
+  }
+  keys <- colnames(attributes(tsibbleData)$key %>%
+                     dplyr::select(-".rows"))
+  index <- attributes(tsibbleData)$index %>%
+    as.character()
+  if (!all(valueFields %in% colnames(tsibbleData))) {
+    warning(paste0("Cannot find: " , paste0(setdiff(valueFields, colnames(tsibbleData)), collapse = ",")))
+    valueFields <- valueFields[!valueFields %in% setdiff(valueFields, colnames(tsibbleData))]
+  }
+  modelData <- list()
+  for (i in (1:length(valueFields))) {
+    valueField <- valueFields[[i]]
+    modelData[[valueField]] <- tsibbleData %>% 
+      dplyr::select(dplyr::all_of(keys), 
+                    dplyr::all_of(index), 
+                    dplyr::all_of(valueField)) %>%
+      dplyr::rename(Total = dplyr::all_of(valueField)) %>% 
+      tsibble::fill_gaps(Total = 0) %>% 
+      fabletools::model(feasts::STL(Total ~  trend(window = 36))) %>%
+      fabletools::components()
+    if (tsibble::is_yearmonth(modelData[[valueField]]$periodBegin)) {
+      modelData[[valueField]] <- modelData[[valueField]] %>% 
+        dplyr::mutate(periodDate = as.Date(.data$periodBegin))
+    } else if (is.double(modelData[[valueField]]$periodBegin)) {
+      modelData[[valueField]] <- modelData[[valueField]] %>% 
+        dplyr::mutate(periodDate = as.Date(paste0(.data$periodBegin, "-01-01")))
+    }
+  }
+  return(modelData)
+}
+

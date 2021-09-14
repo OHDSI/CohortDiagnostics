@@ -47,9 +47,8 @@ enforceMinCellValue <-
   function(data, fieldName, minValues, silent = FALSE) {
     if (!silent) {
       censoredRecords <- data %>%
-        dplyr::filter(!is.na(.data[[fieldName]]) &&
-                        .data[[fieldName]] > !!minValues &&
-                        .data[[fieldName]] != 0) %>%
+        dplyr::filter(.data[[fieldName]] <= !!minValues) %>% 
+        dplyr::filter(.data[[fieldName]] != 0) %>%
         dplyr::summarize(n = dplyr::n()) %>%
         dplyr::pull(.data$n)
       
@@ -71,11 +70,9 @@ enforceMinCellValue <-
     data <- data %>%
       dplyr::mutate(
         !!fieldName := dplyr::case_when(
-          !is.na(.data[[fieldName]]) &&
-            .data[[fieldName]] > !!minValues &&
-            .data[[fieldName]] != 0 ~ .data[[fieldName]],
-          TRUE ~ !!minValues *
-            -1
+          .data[[fieldName]] <= !!minValues &
+            .data[[fieldName]] > 0 ~ !!minValues * -1,
+          TRUE ~ .data[[fieldName]]
         )
       )
     return(data)
@@ -84,13 +81,20 @@ enforceMinCellValue <-
 
 
 enforceMinCellValueInDataframe <- function(data,
-                                           columnNames = colnames(data),
+                                           columnNames,
                                            minCellCount = 5) {
-  for (i in (1:length(columnNames))) {
-    if (columnNames[[i]] %in% colnames(data)) {
+  if (is.null(columnNames)) {
+    return(data)
+  }
+  presentInBoth <- intersect(columnNames, colnames(data))
+  if (length(presentInBoth) == 0) {
+    return(data)
+  }
+  for (i in (1:length(presentInBoth))) {
+    if (presentInBoth[[i]] %in% colnames(data)) {
       data <-
         enforceMinCellValue(data = data,
-                            fieldName = columnNames[[i]],
+                            fieldName = presentInBoth[[i]],
                             minValues = minCellCount)
     }
   }
@@ -137,7 +141,9 @@ writeToAllOutputToCsv <- function(object,
     c(
       "baseCount",
       "cohortCount",
-      "cohortEntries.",
+      "cohortEntries",
+      "cohortSubjects",
+      "conceptCount",
       "finalCount",
       "gainCount",
       "gainSubjects",

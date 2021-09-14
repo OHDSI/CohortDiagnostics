@@ -14,18 +14,18 @@ connectionDetails <- createConnectionDetails(
   password = Sys.getenv("shinydbPW")
 )
 # 
-connectionDetails <- createConnectionDetails(
-  dbms = "postgresql",
-  server = paste(
-    keyring::key_get("shinydbServer"),
-    keyring::key_get("shinydbDatabase"),
-    sep = "/"
-  ),
-  port = keyring::key_get("shinydbPort"),
-  user = keyring::key_get("shinydbUser"),
-  password = keyring::key_get("shinydbPW")
-)
-resultsSchema <- 'ohdsi2021Reproducibility'
+# connectionDetails <- createConnectionDetails(
+#   dbms = "postgresql",
+#   server = paste(
+#     keyring::key_get("shinydbServer"),
+#     keyring::key_get("shinydbDatabase"),
+#     sep = "/"
+#   ),
+#   port = keyring::key_get("shinydbPort"),
+#   user = keyring::key_get("shinydbUser"),
+#   password = keyring::key_get("shinydbPW")
+# )
+resultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
 
 # commenting this function as it maybe accidentally run - loosing data.
 # DatabaseConnector::renderTranslateExecuteSql(connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
@@ -37,7 +37,7 @@ resultsSchema <- 'ohdsi2021Reproducibility'
 
 Sys.setenv("POSTGRES_PATH" = Sys.getenv('POSTGRES_PATH'))
 
-folderWithZipFilesToUpload <- "D:\\temp\\outputFolder\\packageMode"
+folderWithZipFilesToUpload <- "D:\\studyResults\\SkeletonCohortDiagnosticsStudyP"
 listOfZipFilesToUpload <-
   list.files(
     path = folderWithZipFilesToUpload,

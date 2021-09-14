@@ -98,7 +98,10 @@ sidebarMenu <-
       input.tabs == 'cohortCounts' |
       input.tabs == 'indexEventBreakdown' |
       input.tabs == 'visitContext' |
-      input.tabs == 'cohortOverlap'",
+      input.tabs == 'cohortOverlap' |
+      input.targetConceptSetsType == 'Resolved' |
+      input.targetConceptSetsType == 'Excluded' |
+      input.targetConceptSetsType == 'Orphan concepts'",
       shinyWidgets::pickerInput(
         inputId = "selectedDatabaseIds",
         label = "Database",
@@ -239,27 +242,6 @@ sidebarMenu <-
           virtualScroll = 50
         )
       )
-    ),
-    shiny::conditionalPanel(
-      condition = "input.tabs == 'cohortDefinition'",
-      shinyWidgets::pickerInput(
-        inputId = "targetVocabularyChoiceForConceptSetDetails",
-        label = "Vocabulary version choices:",
-        choices = sourcesOfVocabularyTables,
-        selected = sourcesOfVocabularyTables[1],
-        multiple = TRUE,
-        width = 200,
-        inline = TRUE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
-          liveSearch = TRUE,
-          size = 10,
-          liveSearchStyle = "contains",
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50
-        )
-      )
     )
   )
 
@@ -295,117 +277,18 @@ bodyTabItems <- shinydashboard::tabItems(
                           )
                         ))),    
       DT::dataTableOutput(outputId = "cohortDefinitionTable"),
-      shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedLeft"),
-      shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedRight"),
+      shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedTarget"),
+      shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedComparator"),
       tags$br(),
       shiny::column(12,
-      shiny::conditionalPanel(
-                        condition = "output.cohortDefinitionSelectedRowCount >= 1 &
+                    shiny::conditionalPanel(
+                      condition = "output.cohortDefinitionSelectedRowCount >= 1 &
                        input.targetConceptSetsType != 'Concept Set Expression' &
                        input.targetConceptSetsType != 'Concept Set Json' &
                        input.targetCohortDefinitionTabSetPanel == 'targetCohortDefinitionConceptSetTabPanel'",
-                        shiny::uiOutput(outputId = "dynamicUIForRelationshipAndComparisonTable")
-                        )
-                        )
-      # shiny::column(width = 12,
-      #               shiny::conditionalPanel(
-      #                 condition = "output.cohortDefinitionSelectedRowCount == 2 &
-      #                input.conceptSetsTypeLeft == 'Resolved' &
-      #                input.conceptSetsTypeRight == 'Resolved' &
-      #                output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
-      #                output.isConceptSetExpressionPresentInSelectedCohortRight == true &
-      #                input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
-      #                input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
-      #                 shiny::tabsetPanel(
-      #                   id = "resolvedConceptDifference",
-      #                   shiny::tabPanel(
-      #                     title = "Present in left",
-      #                     tags$br(),
-      #                     DT::dataTableOutput(outputId = "resolvedConceptsPresentInLeft")
-      #                   ),
-      #                   shiny::tabPanel(
-      #                     title = "Present in Right",
-      #                     tags$br(),
-      #                     DT::dataTableOutput(outputId = "resolvedConceptsPresentInRight")
-      #                   ),
-      #                   shiny::tabPanel(
-      #                     title = "Present in Both",
-      #                     tags$br(),
-      #                     DT::dataTableOutput(outputId = "resolvedConceptsPresentInBoth")
-      #                   ),
-      #                   shiny::tabPanel(
-      #                     title = "Present in Either",
-      #                     tags$br(),
-      #                     DT::dataTableOutput(outputId = "resolvedConceptsPresentInEither")
-      #                   )
-      #                 )
-      #               )),
-      # shiny::column(width = 12,
-      #               shiny::conditionalPanel(
-      #                 condition = "output.cohortDefinitionSelectedRowCount == 2 &
-      #                              input.conceptSetsTypeLeft == 'Excluded' &
-      #                              input.conceptSetsTypeRight == 'Excluded' &
-      #                              output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
-      #                              output.isConceptSetExpressionPresentInSelectedCohortRight == true &
-      #                              input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
-      #                              input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
-      #                 shiny::tabsetPanel(
-      #                   id = "mappedConceptDifference",
-      #                   shiny::tabPanel(
-      #                     title = "Present in left",
-      #                     tags$br(),
-      #                     DT::dataTableOutput(outputId = "excludedConceptsPresentInLeft")
-      #                   ),
-      #                   shiny::tabPanel(
-      #                     title = "Present in Right",
-      #                     tags$br(),
-      #                     DT::dataTableOutput(outputId = "excludedConceptsPresentInRight")
-      #                   ),
-      #                   shiny::tabPanel(
-      #                     title = "Present in Both",
-      #                     tags$br(),
-      #                     DT::dataTableOutput(outputId = "excludedConceptsPresentInBoth")
-      #                   ),
-      #                   shiny::tabPanel(
-      #                     title = "Present in Either",
-      #                     tags$br(),
-      #                     DT::dataTableOutput(outputId = "excludedConceptsPresentInEither")
-      #                   )
-      #                 )
-      #               )),
-      # shiny::column(width = 12,
-      #               shiny::conditionalPanel(
-      #                 condition = "output.cohortDefinitionSelectedRowCount == 2 &
-      #                              input.conceptSetsTypeLeft == 'Orphan concepts' &
-      #                              input.conceptSetsTypeRight == 'Orphan concepts'&
-      #                              output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
-      #                              output.isConceptSetExpressionPresentInSelectedCohortRight == true &
-      #                              input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
-      #                              input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
-      #                 shiny::tabsetPanel(
-      #                   id = "orphanConceptsDifference",
-      #                   shiny::tabPanel(
-      #                     title = "Present in left",
-      #                     tags$br(),
-      #                     DT::dataTableOutput(outputId = "orphanConceptsPresentInLeft")
-      #                   ),
-      #                   shiny::tabPanel(
-      #                     title = "Present in right",
-      #                     tags$br(),
-      #                     DT::dataTableOutput(outputId = "orphanConceptsPresentInRight")
-      #                   ),
-      #                   shiny::tabPanel(
-      #                     title = "Present in both",
-      #                     tags$br(),
-      #                     DT::dataTableOutput(outputId = "orphanConceptsPresentInBoth")
-      #                   ),
-      #                   shiny::tabPanel(
-      #                     title = "Present in either",
-      #                     tags$br(),
-      #                     DT::dataTableOutput(outputId = "orphanConceptsPresentInEither")
-      #                   )
-      #                 )
-      #               ))
+                      shiny::uiOutput(outputId = "dynamicUIForRelationshipAndComparisonTable")
+                    )
+      )
     )
   ),
   shinydashboard::tabItem(
@@ -591,9 +474,16 @@ bodyTabItems <- shinydashboard::tabItems(
                                  )
                                )
                              )),)
+        ),
+        tags$tr(
+          tags$td(colspan = 6, align = 'right',
+            shiny::actionButton(
+              inputId = "renderIncidentRatePlot",
+              label = "Render Plot"
+            )
+          )
         )
       ),
-      shiny::htmlOutput(outputId = "hoverInfoIr"),
       ggiraph::ggiraphOutput(
         outputId = "incidenceRatePlot",
         width = "100%",
@@ -701,9 +591,10 @@ bodyTabItems <- shinydashboard::tabItems(
         6,
         shiny::conditionalPanel(
           condition = "input.timeSeriesType=='Plot'",
-          shiny::radioButtons(
+          shinyWidgets::pickerInput(
             inputId = "timeSeriesPlotFilters",
-            label = "Filter By :",
+            label = "Filter By:",
+            width = 300,
             choices = c("Records",
                         "Subjects",
                         "Person Days",
@@ -711,8 +602,18 @@ bodyTabItems <- shinydashboard::tabItems(
                         "Subjects Start", 
                         "Records End", 
                         "Subjects End"),
-            selected = "Subjects",
-            inline = TRUE
+            selected = c("Subjects"),
+            multiple = TRUE,
+            choicesOpt = list(style = rep_len("color: black;", 999)),
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              size = 10,
+              dropupAuto = TRUE,
+              liveSearchStyle = "contains",
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
           )
         ),
       ),
@@ -735,7 +636,10 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::conditionalPanel(
         condition = "input.timeSeriesType=='Plot'",
        shiny::column(12,
-          ggiraph::ggiraphOutput("fixedTimeSeriesPlot",width ="100%", height = "100%")
+          plotly::plotlyOutput("fixedTimeSeriesPlot",height = "auto"),
+          tags$head(
+            tags$style("#fixedTimeSeriesPlot { width: '90vw' !important};")
+          )
         )
       )
     )

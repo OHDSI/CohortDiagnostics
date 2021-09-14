@@ -148,7 +148,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  incremental = FALSE,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
   startDateTime <- Sys.time()
-  
   if (all(is.null(connectionDetails),
           is.null(connection))) {
     stop('Please provide either connection or connectionDetails to connect to database.')
@@ -546,6 +545,8 @@ runCohortDiagnostics <- function(packageName = NULL,
           nrow(cohorts) - nrow(subset)
         ))
       }
+      browser()
+      debug(enforceMinCellValue)
       output <- runConceptSetDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
@@ -1078,7 +1079,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   )
   metadata <- dplyr::tibble(
     databaseId = as.character(!!databaseId),
-    startTime = paste0(as.character(startDateTime)),
+    startTime = paste0("TM_", as.character(startDateTime)),
     variableField = variableField,
     valueField = valueField
   )
