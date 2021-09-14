@@ -325,26 +325,30 @@ plotTimeSeriesFromTsibble <-
 plotTs <- function(data,
                    plotHeight,
                    xAxisMin,
-                   xAxisMax) {
+                   xAxisMax,
+                   valueType = "Records") {
   plot <-
     plotly::plot_ly(
       data = data,
       height = plotHeight
     ) %>%
-    plotly::add_trace(x = ~ periodDate,
-                      y = ~ trend,
-                      mode = "line+marker",
-                      type = "scatter",
-                      name = "Trends",
-                      text = ~ paste("Statistics = smooth",
-                                     "\nDatabase ID = ",.data$databaseId,
-                                     "\nSTL type = Trends")) %>%
     plotly::add_markers(x = ~ periodDate,
                       y = ~ Total,
+                      alpha = 0.1, 
+                      size = I(20),
+                      color = I("black"),
                       name = "Total",
-                      text = ~ paste("Statistics = smooth",
+                      text = ~ paste("Statistics = TOTAL",
                                      "\nDatabase ID = ",.data$databaseId,
-                                     "\nSTL type = Total")) %>%
+                                     "\nvalueType = ",valueType )) %>%
+    plotly::add_trace(x = ~ periodDate,
+                      y = ~ trend,
+                      mode = "line",
+                      type = "scatter",
+                      name = "Trends",
+                      text = ~ paste("Statistics = TREND",
+                                     "\nDatabase ID = ",.data$databaseId,
+                                     "\nvalueType = ",valueType )) %>%
     plotly::layout(showlegend = FALSE,
                    xaxis = list(range = c(xAxisMin, xAxisMax)))
   
@@ -381,7 +385,8 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
             dplyr::filter(.data$databaseId %in% distinctDatabaseId[[l]]),
           plotHeight =  200 * noOfPlotRows,
           xAxisMin = as.Date(paste0(timeSeriesPeriodRangeFilter[1], "-01-01")),
-          xAxisMax = as.Date(paste0(timeSeriesPeriodRangeFilter[2], "-12-31"))
+          xAxisMax = as.Date(paste0(timeSeriesPeriodRangeFilter[2], "-12-31")),
+          valueType = yAxisValues[[j]]
         ) 
         
         if (j == 1) {
@@ -417,7 +422,7 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
         )
     }
     m <- list(
-      l = 50,
+      l = 80,
       r = 0,
       b = 0,
       t = 50,

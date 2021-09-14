@@ -5269,7 +5269,7 @@ shiny::shinyServer(function(input, output, session) {
     plotly::renderPlotly({
       data <- getMetadataForConceptId()
       if (!doesObjectHaveData(data)) {
-        return(null)
+        return(NULL)
       }
       # working on the plot
       if (input$timeSeriesAggregationPeriodSelection == "Monthly") {
