@@ -1912,6 +1912,9 @@ shiny::shinyServer(function(input, output, session) {
         cohortIds = activeSelected()$cohortId,
         conceptIds = activeSelected()$conceptId
       )
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
     if (!doesObjectHaveData(data$databaseConceptCount)) {
       return(NULL)
     }
