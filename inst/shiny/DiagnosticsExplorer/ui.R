@@ -500,7 +500,7 @@ bodyTabItems <- shinydashboard::tabItems(
           shiny::radioButtons(
             inputId = "timeSeriesAggregationPeriodSelection",
             label = "Aggregation period:",
-            choices = c("Monthly", "Quaterly","Yearly"),
+            choices = c("Monthly","Yearly"),
             selected = "Monthly",
             inline = TRUE
           )
@@ -541,11 +541,6 @@ bodyTabItems <- shinydashboard::tabItems(
           shiny::uiOutput(outputId = "timeSeriesTypeLong")
         )
       )
-      # tags$tr(
-      #   tags$td(
-      #     shiny::uiOutput(outputId = "timeSeriesTypeLong")
-      #   )
-      # )
     ),
     shinydashboard::box(
       title = "Time Series",
@@ -563,30 +558,6 @@ bodyTabItems <- shinydashboard::tabItems(
           inline = TRUE
         )
       ),
-      # shiny::column(
-      #   3,
-      #   shiny::conditionalPanel(
-      #     condition = "input.timeSeriesType=='Plot'",
-      #     shinyWidgets::pickerInput(
-      #       inputId = "timeSeriesStatistics",
-      #       label = "Time series statistics:",
-      #       width = 300,
-      #       choices = c("Total", "trend", "season_year", "remainder"), ##!!! rename Total as Raw
-      #       selected = c("trend"),
-      #       multiple = TRUE,
-      #       choicesOpt = list(style = rep_len("color: black;", 999)),
-      #       options = shinyWidgets::pickerOptions(
-      #         actionsBox = TRUE,
-      #         liveSearch = TRUE,
-      #         size = 10,
-      #         dropupAuto = TRUE,
-      #         liveSearchStyle = "contains",
-      #         liveSearchPlaceholder = "Type here to search",
-      #         virtualScroll = 50
-      #       )
-      #     )
-      #   )
-      # ),
       shiny::column(
         6,
         shiny::conditionalPanel(
