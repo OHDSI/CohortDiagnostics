@@ -63,12 +63,12 @@ shiny::shinyServer(function(input, output, session) {
   getTimeIdsFromSelectedTemporalCovariateChoices <-
     reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
-    list(input$typesOfTemporalCovariates_open,
+    list(input$timeIdChoices_open,
          input$tabs)
   }, handlerExpr = {
     if (exists('temporalCovariateChoices') &&
         (any(
-          isFALSE(input$typesOfTemporalCovariates_open),!is.null(input$tabs)
+          isFALSE(input$timeIdChoices_open),!is.null(input$tabs)
         ))) {
       selectedTimeIds <- temporalCovariateChoices %>%
         dplyr::filter(.data$choices %in% input$timeIdChoices) %>%
