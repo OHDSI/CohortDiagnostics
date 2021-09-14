@@ -167,12 +167,24 @@ shiny::shinyServer(function(input, output, session) {
                    excludedConceptSetDataTarget = getExcludedConceptsTarget(),
                    excludedConceptSetDataComparator = getExcludedConceptsComparator(),
                    indexEventBreakdownDataTable = getIndexEventBreakdownDataTable()
-                 )
-                 consolidatedCohortIdTarget(data$cohortIdTarget)
+                 ) 
+                 
+                 if ((isFALSE(input$selectedCompoundCohortNames_open) ||
+                     is.null(input$selectedCompoundCohortNames_open)) && 
+                     doesObjectHaveData(input$tabs)) {
+                   consolidatedCohortIdTarget(data$cohortIdTarget)
+                 }
+                 
                  consolidatedCohortIdComparator(data$cohortIdComparator)
                  consolidatedConceptSetIdTarget(data$conceptSetIdTarget)
                  consolidatedConceptSetIdComparator(data$conceptSetIdComparator)
-                 consolidatedDatabaseIdTarget(data$selectedDatabaseIdTarget)
+                 
+                 if ((isFALSE(input$selectedDatabaseIds_open) ||
+                      is.null(input$selectedDatabaseIds_open)) && 
+                     doesObjectHaveData(input$tabs)) {
+                   consolidatedDatabaseIdTarget(data$selectedDatabaseIdTarget)
+                 }
+                 
                  consolidatedConceptIdTarget(data$selectedConceptIdTarget)
                  consolidatedConceptIdComparator(data$selectedConceptIdComparator)
                  consolidateCohortDefinitionActiveSideTarget(data$leftSideActive)

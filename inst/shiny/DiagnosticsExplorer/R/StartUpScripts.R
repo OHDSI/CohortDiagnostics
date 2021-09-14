@@ -203,13 +203,7 @@ consolidationOfSelectedFieldValues <- function(input,
     }
     #selection on database id
     if (doesObjectHaveData(input$selectedDatabaseIds)) {
-      if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
-          isTRUE(input$selectedDatabaseIds_open) ||
-          doesObjectHaveData(input$tabs)) {
         data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
-      } else {
-        data$selectedDatabaseIdTarget <- NULL
-      }
     }
     #selection on concept id
     if (doesObjectHaveData(input$targetCohortDefinitionResolvedConceptTable_rows_selected)) {
@@ -267,13 +261,7 @@ consolidationOfSelectedFieldValues <- function(input,
       }
     } else {
       if (doesObjectHaveData(input$selectedDatabaseIds)) {
-        if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
-            isTRUE(input$selectedDatabaseIds_open) ||
-            doesObjectHaveData(input$tabs)) {
-          data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
-        } else {
-          data$selectedDatabaseIdTarget <- NULL
-        }
+        data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
       }
     }
    
@@ -301,27 +289,16 @@ consolidationOfSelectedFieldValues <- function(input,
     data <- list()
     #multi select cohortId
     if (doesObjectHaveData(input$selectedCompoundCohortNames)) {
-      if (doesObjectHaveData(input$selectedCompoundCohortNames_open) ||
-          isTRUE(input$selectedCompoundCohortNames_open) || 
-          doesObjectHaveData(input$tabs)
-      ) {
         data$cohortIdTarget <- cohort %>%
           dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortNames) %>%
           dplyr::arrange(.data$cohortId) %>%
           dplyr::pull(.data$cohortId) %>%
           unique()
-      }
     }
     
     #mutli select databaseId
     if (doesObjectHaveData(input$selectedDatabaseIds)) {
-      if (doesObjectHaveData(input$selectedDatabaseIds_open) ||
-          isTRUE(input$selectedDatabaseIds_open) ||
-          doesObjectHaveData(input$tabs)) {
-        data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
-      } else {
-        data$selectedDatabaseIdTarget <- NULL
-      }
+      data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
     }
     
   }
