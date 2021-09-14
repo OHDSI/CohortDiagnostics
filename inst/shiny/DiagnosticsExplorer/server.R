@@ -1404,6 +1404,35 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  ##getConceptSetSynonyms-----
+  getConceptSetSynonyms <- shiny::reactive(x = {
+    data <- getMetadataForConceptId()
+    
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    
+    tags$table(
+      tags$tr(
+        tags$td(
+          tags$h4(paste0(
+            data$concept %>% 
+              dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
+              dplyr::pull(.data$conceptName),
+            " (",
+            activeSelected()$conceptId,
+            ")"
+          ))
+        )
+      ),
+      tags$tr(
+        tags$td(
+          tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", "))
+        )
+      )
+    )
+  })
+  
   ##Inclusion rule ----
   ###getDatabaseIdFromSelectedRowInCohortCountTableTarget----
   getDatabaseIdFromSelectedRowInCohortCountTableTarget <-
@@ -3088,31 +3117,11 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output:: conceptSetBowserConceptSynonymName
   output$conceptSetBowserConceptSynonymName <- shiny::renderUI(expr = {
-     data <- getMetadataForConceptId()
-    
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    
-    tags$table(
-      tags$tr(
-        tags$td(
-          tags$h4(paste0(
-            data$concept %>% 
-              dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
-              dplyr::pull(.data$conceptName),
-            " (",
-            activeSelected()$conceptId,
-            ")"
-          ))
-        )
-      ),
-      tags$tr(
-        tags$td(
-          tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", "))
-        )
-      )
-    )
+     data <- getConceptSetSynonyms()
+     if (!doesObjectHaveData(data)) {
+       return(NULL)
+     }
+     return(data)
   })
   
   ##output: conceptBrowserTable----
@@ -5127,12 +5136,6 @@ shiny::shinyServer(function(input, output, session) {
           value = "conceptSetBrowser",
           shiny::conditionalPanel(
             condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-            tags$h4(paste0(
-              data$conceptName,
-              " (",
-              data$conceptId,
-              ")"
-            )),
             tags$table(width = "100%",
                        tags$tr(
                          tags$td(
@@ -5208,9 +5211,27 @@ shiny::shinyServer(function(input, output, session) {
         )
         inc = inc + 1
       }
-      
-      do.call(tabsetPanel, panels)
+      shiny::conditionalPanel(
+        condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
+        shinydashboard::box(
+          title = shiny::htmlOutput(outputId = "conceptSetSynonymsForIndexEventBreakdown"),
+          width = NULL,
+          status = NULL,
+          collapsible = TRUE,
+          collapsed = TRUE,
+          do.call(tabsetPanel, panels)
+        )
+      )
     })
+  
+  ##output: conceptSetSynonymsForIndexEventBreakdown----
+  output$conceptSetSynonymsForIndexEventBreakdown <- shiny::renderUI(expr = {
+    data <- getConceptSetSynonyms()
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    return(data)
+  })
   
   ##output: conceptBrowserTableForIndexEvent----
   output$conceptBrowserTableForIndexEvent <- DT::renderDT(expr = {
