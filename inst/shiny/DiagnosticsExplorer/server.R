@@ -4422,12 +4422,10 @@ shiny::shinyServer(function(input, output, session) {
     ))
     tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data, 
                                                       valueFields = titleCaseToCamelCase(input$timeSeriesPlotFilters))
-    browser()
     plot <- plotTimeSeriesFromTsibble(
       tsibbleData = tsibbleDataFromSTLModel,
       plotFilters = titleCaseToCamelCase(input$timeSeriesPlotFilters),
       indexAggregationType = input$timeSeriesAggregationPeriodSelection,
-      timeSeriesStatistics = input$timeSeriesStatistics,
       timeSeriesPeriodRangeFilter = input$timeSeriesPeriodRangeFilter
     )
     
