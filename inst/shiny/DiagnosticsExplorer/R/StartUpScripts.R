@@ -493,3 +493,85 @@ getStlModelOutputForTsibbleDataValueFields <- function(tsibbleData, valueFields 
   return(modelData)
 }
 
+getDatabaseAndCohortCountForConceptIdsInDatabase <- function(data, dataSource) {
+  conceptMetadata <- getConceptMetadata(
+    dataSource = dataSource,
+    cohortIds = data$cohortId %>% unique(),
+    databaseIds = data$databaseId %>% unique(),
+    conceptIds = data$conceptId %>% unique(),
+    getIndexEventCount = TRUE,
+    getConceptCount = TRUE,
+    getConceptRelationship = FALSE,
+    getConceptAncestor = FALSE,
+    getConceptSynonym = FALSE,
+    getDatabaseMetadata = TRUE,
+    getConceptCooccurrence = FALSE,
+    getConceptMappingCount = FALSE,
+    getFixedTimeSeries = FALSE,
+    getRelativeTimeSeries = FALSE
+  )
+  if (!is.null(conceptMetadata$indexEventBreakdown)) {
+    if (all(
+      !is.null(conceptMetadata$indexEventBreakdown),
+      nrow(conceptMetadata$indexEventBreakdown) > 0
+    )) {
+      data <- data %>%
+        dplyr::left_join(
+          conceptMetadata$indexEventBreakdown %>%
+            dplyr::filter(.data$domainTable == "All") %>%
+            dplyr::select(
+              .data$conceptId,
+              .data$databaseId,
+              .data$conceptCount,
+              .data$subjectCount
+            ) %>%
+            dplyr::rename(
+              conceptCountCohort = .data$conceptCount,
+              subjectCountCohort = .data$subjectCount
+            ),
+          by = c("conceptId", "databaseId")
+        )
+    }
+  }
+  if (!is.null(conceptMetadata$databaseConceptCount)) {
+    data <- data %>%
+      dplyr::left_join(
+        conceptMetadata$databaseConceptCount,
+        by = c("conceptId", "databaseId")
+      )
+  }
+  if (!is.null(conceptMetadata$concept)) {
+    data <- data %>%
+      dplyr::inner_join(
+        conceptMetadata$concept %>%
+          dplyr::select(
+            .data$conceptId,
+            .data$conceptName,
+            .data$vocabularyId,
+            .data$domainId,
+            .data$standardConcept
+          ),
+        by = c("conceptId")
+      ) %>% 
+      dplyr::relocate(.data$conceptId,
+                      .data$conceptName,
+                      .data$vocabularyId,
+                      .data$domainId,
+                      .data$standardConcept) %>% 
+      dplyr::rename("standard" = .data$standardConcept)
+  }
+  if (!is.null(conceptMetadata$databaseCount)) {
+    attr(x = data, which = "databaseCount") <-
+      conceptMetadata$databaseCount
+  }
+  if ('conceptCount' %in% colnames(data)) {
+    data <- data %>%
+      dplyr::arrange(dplyr::desc(.data$conceptCount))
+  } else {
+    data$conceptcount <- as.integer(NA)
+  }
+  if (!'subjectCount' %in% colnames(data)) {
+    data$subjectCount <- as.integer(NA)
+  }
+  return(data)
+}

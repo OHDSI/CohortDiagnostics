@@ -1250,7 +1250,6 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  
   ###getResolvedConceptsTarget----
   getResolvedConceptsTarget <- shiny::reactive({
     if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
@@ -1269,14 +1268,15 @@ shiny::shinyServer(function(input, output, session) {
     }
     if (doesObjectHaveData(consolidatedConceptSetIdTarget())) {
       data <- data %>%
-        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdTarget()) %>% 
-        dplyr::select(-.data$conceptSetId, -.data$cohortId)
+        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdTarget())
     }
-    data <- data %>%
-      dplyr::arrange(dplyr::desc(.data$conceptCount))
+    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(data = data, 
+                                                             dataSource = dataSource)
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    data <- data %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId)
     return(data)
   })
   
@@ -1292,14 +1292,15 @@ shiny::shinyServer(function(input, output, session) {
     }
     if (doesObjectHaveData(consolidatedConceptSetIdComparator())) {
       data <- data %>%
-        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdComparator()) %>% 
-        dplyr::select(-.data$conceptSetId, -.data$cohortId)
+        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdComparator())
     }
-    data <- data %>%
-      dplyr::arrange(dplyr::desc(.data$conceptCount))
+    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(data = data, 
+                                                             dataSource = dataSource)
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    data <- data %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId)
     return(data)
   })
   
@@ -1322,13 +1323,14 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(data)) {
       return(NULL)
     }
-    data <- data %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget()) %>% 
-      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
-      dplyr::arrange(dplyr::desc(.data$conceptCount))
+    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(data = data, 
+                                                             dataSource = dataSource)
     if (is.null(data)) {
       return(NULL)
     }
+    data <- data %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
+      dplyr::arrange(dplyr::desc(.data$conceptCount))
     return(data)
   })
   
@@ -1352,7 +1354,10 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdComparator()) %>% 
+      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdComparator())
+    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(data = data, 
+                                                             dataSource = dataSource)
+    data <- data %>% 
       dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
       dplyr::arrange(dplyr::desc(.data$conceptCount))
     return(data)
@@ -1361,6 +1366,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getOrphanConceptsTarget----
   getOrphanConceptsTarget <- shiny::reactive({
+    browser()
     data <- getResultsOrphanConcept(
       dataSource = dataSource,
       cohortIds = consolidatedCohortIdTarget(),
@@ -1381,12 +1387,14 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::anti_join(y = excludedConceptIds, by = "conceptId")
     }
     data <- data  %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget()) %>% 
-      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
-      dplyr::arrange(dplyr::desc(.data$conceptCount))
+      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget())
+    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(data = data, 
+                                                             dataSource = dataSource)
     if (is.null(data)) {
       return(NULL)
     }
+    data <- data %>%
+      dplyr::select(-.data$conceptSetId,-.data$cohortId)
     return(data)
   })
   
@@ -1395,13 +1403,14 @@ shiny::shinyServer(function(input, output, session) {
     data <- getResultsOrphanConcept(
       dataSource = dataSource,
       cohortIds = consolidatedCohortIdComparator(),
-      databaseIds = consolidatedDatabaseIdTarget()
+      databaseIds = consolidatedDatabaseIdComparator()
     )
-    if (!doesObjectHaveData(data)) {
+    if (is.null(data)) {
       return(NULL)
     }
     data <- data %>%
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdComparator())
+    
     excluded <- getExcludedConceptsComparator()
     if (doesObjectHaveData(excluded)) {
       excludedConceptIds <- excluded %>%
@@ -1410,9 +1419,15 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::anti_join(y = excludedConceptIds, by = "conceptId")
     }
-    data <- data %>% 
-      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
-      dplyr::arrange(dplyr::desc(.data$conceptCount))
+    data <- data  %>%
+      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdComparator())
+    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(data = data, 
+                                                             dataSource = dataSource)
+    if (is.null(data)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::select(-.data$conceptSetId,-.data$cohortId)
     return(data)
   })
   

@@ -824,6 +824,8 @@ getResultsConceptSubjects <- function(dataSource,
 #' 
 #' @template VocabularyDatabaseSchema
 #' 
+#' @param getDatabaseMetadata Do you want to get database metadata i.e. person/records/person days in observation table
+#' 
 #' @param getConceptRelationship  Do you want conceptRelationship?
 #' 
 #' @param getConceptAncestor  Do you want conceptAncestor?
@@ -851,6 +853,7 @@ getConceptMetadata <- function(dataSource,
                                cohortIds = NULL,
                                vocabularyDatabaseSchema = NULL,
                                conceptIds = NULL,
+                               getDatabaseMetadata = TRUE,
                                getConceptRelationship = TRUE,
                                getConceptAncestor = TRUE,
                                getConceptSynonym = TRUE,
@@ -862,10 +865,35 @@ getConceptMetadata <- function(dataSource,
                                getRelativeTimeSeries = TRUE) {
   givenConceptId <- conceptIds
   data <- list()
-  data$relationship <-
-    getVocabularyRelationship(dataSource = dataSource)
+  if (!is.null(databaseIds)) {
+    if (getDatabaseMetadata) {
+      databaseMetadata <- getResultsMetadata(dataSource = dataSource)
+      if (!is.null(databaseMetadata)) {
+        data$databaseCount <- databaseMetadata %>%
+          dplyr::filter(.data$databaseId %in% databaseIds) %>%
+          dplyr::filter(
+            .data$variableField %in% c(
+              "personsInDatasource",
+              "recordsInDatasource",
+              "personDaysInDatasource"
+            )
+          ) %>%
+          dplyr::group_by(.data$variableField) %>%
+          dplyr::summarise(valueField = max(.data$valueField),
+                           .groups = "keep") %>%
+          tidyr::pivot_wider(names_from = "variableField", values_from = "valueField") %>%
+          dplyr::rename(
+            "persons" = .data$personsInDatasource,
+            "records" = .data$recordsInDatasource,
+            "personDays" = .data$personDaysInDatasource
+          )
+      }
+    }
+  }
   # results not dependent on cohort definition
   if (getConceptRelationship) {
+    data$relationship <-
+      getVocabularyRelationship(dataSource = dataSource)
     data$conceptRelationship <-
       getConceptRelationship(
         dataSource = dataSource,
@@ -1018,109 +1046,109 @@ getConceptMetadata <- function(dataSource,
       unique()
   }
   
-  data$cdmTables <- getDomainInformation()$long
-  
   # results dependent on databaseId
-  if (getConceptCount) {
+  if (all(getConceptCount,!is.null(databaseIds))) {
+    data$cdmTables <- getDomainInformation()$long
     data$databaseConceptCountDetails <-
       getResultsConceptCount(dataSource = dataSource,
                              databaseIds = databaseIds,
                              conceptIds = conceptIdList)
-    
-    data$databaseConceptCount <-
-      data$databaseConceptCountDetails %>%
-      dplyr::filter(.data$domainTable == "All") %>%
-      dplyr::filter(.data$domainField == "All") %>%
-      dplyr::filter(.data$eventYear == 0) %>%
-      dplyr::filter(.data$eventMonth == 0) %>%
-      dplyr::select(.data$conceptId,
-                    .data$databaseId,
-                    .data$conceptCount,
-                    .data$subjectCount)
-    
-    if (getFixedTimeSeries) {
-      data$databaseConceptIdYearMonthLevelTsibble <-
+    if (!is.null(data$databaseConceptCountDetails)) {
+      data$databaseConceptCount <-
         data$databaseConceptCountDetails %>%
-        dplyr::rename("domainTableShort" = .data$domainTable) %>%
-        dplyr::rename("domainFieldShort" = .data$domainField) %>%
-        dplyr::filter(
-          .data$domainTableShort %in% c(data$cdmTables$domainTableShort %>% unique(), "All")
-        ) %>%
-        dplyr::filter(.data$eventYear > 0, .data$eventMonth > 0) %>%
-        dplyr::mutate(periodBegin = lubridate::as_date(paste0(
-          .data$eventYear,
-          "-",
-          .data$eventMonth,
-          "-01"
-        ))) %>%
-        dplyr::select(
-          .data$conceptId,
-          .data$databaseId,
-          .data$domainFieldShort,
-          .data$domainTableShort,
-          .data$periodBegin,
-          .data$conceptCount,
-          .data$subjectCount
-        ) %>%
-        dplyr::mutate(periodBegin = tsibble::yearmonth(.data$periodBegin)) %>%
-        tsibble::as_tsibble(
-          key = c(
-            .data$conceptId,
-            .data$databaseId,
-            .data$domainFieldShort,
-            .data$domainTableShort
-          ),
-          index = .data$periodBegin
-        ) %>%
-        dplyr::arrange(
-          .data$conceptId,
-          .data$databaseId,
-          .data$domainFieldShort,
-          .data$domainTableShort,
-          .data$periodBegin,
-          .data$conceptCount,
-          .data$subjectCount
-        )
+        dplyr::filter(.data$domainTable == "All") %>%
+        dplyr::filter(.data$domainField == "All") %>%
+        dplyr::filter(.data$eventYear == 0) %>%
+        dplyr::filter(.data$eventMonth == 0) %>%
+        dplyr::select(.data$conceptId,
+                      .data$databaseId,
+                      .data$conceptCount,
+                      .data$subjectCount)
       
-      data$databaseConceptIdYearLevelTsibble <-
-        data$databaseConceptCountDetails %>%
-        dplyr::rename("domainTableShort" = .data$domainTable) %>%
-        dplyr::rename("domainFieldShort" = .data$domainField) %>%
-        dplyr::filter(
-          .data$domainTableShort %in% c(data$cdmTables$domainTableShort %>% unique(), "All")
-        ) %>%
-        dplyr::filter(.data$eventYear > 0, .data$eventMonth == 0) %>%
-        dplyr::mutate(periodBegin = lubridate::as_date(paste0(.data$eventYear,
-                                                              "-",
-                                                              "01-01"))) %>%
-        dplyr::select(
-          .data$conceptId,
-          .data$databaseId,
-          .data$domainFieldShort,
-          .data$domainTableShort,
-          .data$periodBegin,
-          .data$conceptCount,
-          .data$subjectCount
-        ) %>%
-        dplyr::mutate(periodBegin = clock::get_year(.data$periodBegin)) %>%
-        tsibble::as_tsibble(
-          key = c(
+      if (getFixedTimeSeries) {
+        data$databaseConceptIdYearMonthLevelTsibble <-
+          data$databaseConceptCountDetails %>%
+          dplyr::rename("domainTableShort" = .data$domainTable) %>%
+          dplyr::rename("domainFieldShort" = .data$domainField) %>%
+          dplyr::filter(
+            .data$domainTableShort %in% c(data$cdmTables$domainTableShort %>% unique(), "All")
+          ) %>%
+          dplyr::filter(.data$eventYear > 0, .data$eventMonth > 0) %>%
+          dplyr::mutate(periodBegin = lubridate::as_date(paste0(
+            .data$eventYear,
+            "-",
+            .data$eventMonth,
+            "-01"
+          ))) %>%
+          dplyr::select(
             .data$conceptId,
             .data$databaseId,
             .data$domainFieldShort,
-            .data$domainTableShort
-          ),
-          index = .data$periodBegin
-        ) %>%
-        dplyr::arrange(
-          .data$conceptId,
-          .data$databaseId,
-          .data$domainFieldShort,
-          .data$domainTableShort,
-          .data$periodBegin,
-          .data$conceptCount,
-          .data$subjectCount
-        )
+            .data$domainTableShort,
+            .data$periodBegin,
+            .data$conceptCount,
+            .data$subjectCount
+          ) %>%
+          dplyr::mutate(periodBegin = tsibble::yearmonth(.data$periodBegin)) %>%
+          tsibble::as_tsibble(
+            key = c(
+              .data$conceptId,
+              .data$databaseId,
+              .data$domainFieldShort,
+              .data$domainTableShort
+            ),
+            index = .data$periodBegin
+          ) %>%
+          dplyr::arrange(
+            .data$conceptId,
+            .data$databaseId,
+            .data$domainFieldShort,
+            .data$domainTableShort,
+            .data$periodBegin,
+            .data$conceptCount,
+            .data$subjectCount
+          )
+        
+        data$databaseConceptIdYearLevelTsibble <-
+          data$databaseConceptCountDetails %>%
+          dplyr::rename("domainTableShort" = .data$domainTable) %>%
+          dplyr::rename("domainFieldShort" = .data$domainField) %>%
+          dplyr::filter(
+            .data$domainTableShort %in% c(data$cdmTables$domainTableShort %>% unique(), "All")
+          ) %>%
+          dplyr::filter(.data$eventYear > 0, .data$eventMonth == 0) %>%
+          dplyr::mutate(periodBegin = lubridate::as_date(paste0(.data$eventYear,
+                                                                "-",
+                                                                "01-01"))) %>%
+          dplyr::select(
+            .data$conceptId,
+            .data$databaseId,
+            .data$domainFieldShort,
+            .data$domainTableShort,
+            .data$periodBegin,
+            .data$conceptCount,
+            .data$subjectCount
+          ) %>%
+          dplyr::mutate(periodBegin = clock::get_year(.data$periodBegin)) %>%
+          tsibble::as_tsibble(
+            key = c(
+              .data$conceptId,
+              .data$databaseId,
+              .data$domainFieldShort,
+              .data$domainTableShort
+            ),
+            index = .data$periodBegin
+          ) %>%
+          dplyr::arrange(
+            .data$conceptId,
+            .data$databaseId,
+            .data$domainFieldShort,
+            .data$domainTableShort,
+            .data$periodBegin,
+            .data$conceptCount,
+            .data$subjectCount
+          )
+      }
     }
   }
   
@@ -1182,13 +1210,11 @@ getConceptMetadata <- function(dataSource,
           ) %>%
           dplyr::inner_join(relativeTimeSeries$temporalCovariateRef,
                             by = "covariateId") %>%
-          dplyr::select(-.data$covariateId,-.data$covariateName) %>%
+          dplyr::select(-.data$covariateId, -.data$covariateName) %>%
           dplyr::inner_join(relativeTimeSeries$temporalAnalysisRef,
                             by = "analysisId") %>%
           dplyr::filter(.data$isBinary == 'Y') %>%
-          dplyr::select(-.data$isBinary,
-                        -.data$missingMeansZero,
-                        -.data$analysisId) %>%
+          dplyr::select(-.data$isBinary,-.data$missingMeansZero,-.data$analysisId) %>%
           dplyr::inner_join(
             relativeTimeSeries$temporalTimeRef %>%
               dplyr::filter(.data$endDay - .data$startDay == 30) %>%
@@ -1262,36 +1288,10 @@ getResultsResolvedConcepts <- function(dataSource,
     databaseIds = databaseIds,
     dataTableName = "conceptResolved"
   )
-  conceptIdDetails <- getConcept(dataSource = dataSource,
-                                 conceptIds = data$conceptId %>% unique()) %>%
-    dplyr::select(
-      .data$conceptId,
-      .data$conceptName,
-      .data$vocabularyId,
-      .data$domainId,
-      .data$standardConcept
-    )
-  conceptCount <-
-    getResultsConceptCountSummary(
-      dataSource = dataSource,
-      conceptIds = data$conceptId %>% unique(),
-      databaseIds = databaseIds
-    )
-  data <- data %>%
-    dplyr::inner_join(conceptIdDetails,
-                      by = "conceptId") %>%
-    dplyr::left_join(conceptCount,
-                     by = c("databaseId",
-                            "conceptId")) %>%
-    dplyr::relocate(
-      .data$databaseId,
-      .data$cohortId,
-      .data$conceptSetId,
-      .data$conceptId,
-      .data$conceptName,
-      .data$conceptCount,
-      .data$subjectCount
-    )
+  if (any((is.null(data)),
+          nrow(data) == 0)) {
+    return(NULL)
+  }
   return(data)
 }
 
@@ -1325,46 +1325,6 @@ getResultsExcludedConcepts <- function(dataSource,
           nrow(data) == 0)) {
     return(NULL)
   }
-  conceptIdDetails <- getConcept(dataSource = dataSource,
-                                 conceptIds = data$conceptId %>% unique()) %>%
-    dplyr::select(
-      .data$conceptId,
-      .data$conceptName,
-      .data$vocabularyId,
-      .data$domainId,
-      .data$standardConcept
-    )
-  
-  if (any((is.null(conceptIdDetails)),
-          nrow(conceptIdDetails) == 0)) {
-    return(NULL)
-  }
-  
-  conceptCount <-
-    getResultsConceptCountSummary(
-      dataSource = dataSource,
-      conceptIds = data$conceptId %>% unique(),
-      databaseIds = databaseIds
-    )
-  if (any((is.null(conceptCount)),
-          nrow(conceptCount) == 0)) {
-    return(NULL)
-  }
-  data <- data %>%
-    dplyr::inner_join(conceptIdDetails,
-                      by = "conceptId") %>%
-    dplyr::left_join(conceptCount,
-                     by = c("databaseId",
-                            "conceptId")) %>%
-    dplyr::relocate(
-      .data$databaseId,
-      .data$cohortId,
-      .data$conceptSetId,
-      .data$conceptId,
-      .data$conceptName,
-      .data$conceptCount,
-      .data$subjectCount
-    )
   return(data)
 }
 
@@ -1397,47 +1357,6 @@ getResultsOrphanConcept <- function(dataSource,
           nrow(data) == 0)) {
     return(NULL)
   }
-  
-  conceptIdDetails <- getConcept(dataSource = dataSource,
-                                 conceptIds = data$conceptId %>% unique()) %>%
-    dplyr::select(
-      .data$conceptId,
-      .data$conceptName,
-      .data$vocabularyId,
-      .data$domainId,
-      .data$standardConcept
-    )
-  if (any((is.null(conceptIdDetails)),
-          nrow(conceptIdDetails) == 0)) {
-    return(NULL)
-  }
-  
-  conceptCount <-
-    getResultsConceptCountSummary(
-      dataSource = dataSource,
-      conceptIds = data$conceptId %>% unique(),
-      databaseIds = databaseIds
-    )
-  if (any((is.null(conceptCount)),
-          nrow(conceptCount) == 0)) {
-    return(NULL)
-  }
-  
-  data <- data %>%
-    dplyr::inner_join(conceptIdDetails,
-                      by = "conceptId") %>%
-    dplyr::left_join(conceptCount,
-                     by = c("databaseId",
-                            "conceptId")) %>%
-    dplyr::relocate(
-      .data$databaseId,
-      .data$cohortId,
-      .data$conceptSetId,
-      .data$conceptId,
-      .data$conceptName,
-      .data$conceptCount,
-      .data$subjectCount
-    )
   return(data)
 }
 
