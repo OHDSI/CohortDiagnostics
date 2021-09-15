@@ -920,7 +920,11 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- getOrphanConceptResult(dataSource = dataSource,
                                    cohortId = row$cohortId,
-                                   databaseIds = getDatabaseIdInCohortConceptSet()) %>% 
+                                   databaseIds = getDatabaseIdInCohortConceptSet())
+    if (is.null(data)) {
+      return(NULL)
+    }
+    data <- data %>% 
       dplyr::filter(.data$conceptSetName == cohortDefinitionConceptSetExpressionRow()$name)
   })
   
@@ -2293,6 +2297,10 @@ shiny::shinyServer(function(input, output, session) {
         cohortIds = cohortId(),
         databaseIds = databaseIds()
       )
+      if (any(is.null(data),
+              nrow(data) == 0)) {
+        return(NULL)
+      }
       if (!is.null(data)) {
         if (!'domainTable' %in% colnames(data)) {
           data$domainTable <- "Not in data"
