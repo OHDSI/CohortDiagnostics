@@ -928,7 +928,13 @@ getConceptMetadata <- function(dataSource,
         )
     ) %>%
       dplyr::distinct() %>%
-      dplyr::arrange(.data$conceptId)
+      dplyr::arrange(.data$conceptId) %>% 
+      dplyr::group_by(.data$referenceConceptId, .data$conceptId)
+    
+    #!!!!!!!!! need to collapse relationshipId - to avoid duplication. need to make them come with line break
+    # %>% 
+    #   dplyr::mutate(relationshipId = paste(.data$relationshipId, sep = "<br>", collapse = ";")) %>% 
+    #   dplyr::ungroup()
   }
   
   if (getConceptAncestor) {
