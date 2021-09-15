@@ -4783,7 +4783,6 @@ shiny::shinyServer(function(input, output, session) {
     }
     #!!! future idea for index event breakdown - metric on conceptProportion
     # what proportion of concepts in dataSource is in index event
-    
     indexEventBreakdown <- indexEventBreakdown %>%
       dplyr::inner_join(
         conceptIdDetails %>%
@@ -4966,8 +4965,7 @@ shiny::shinyServer(function(input, output, session) {
         .data$type
       ) %>%
       dplyr::summarise(
-        conceptValue = sum(.data$conceptValue),
-        subjectValue = max(.data$subjectValue),
+        count = sum(.data$count),
         .groups = 'keep'
       ) %>%
       dplyr::ungroup() %>%
@@ -4985,8 +4983,8 @@ shiny::shinyServer(function(input, output, session) {
         values_from = count,
         values_fill = 0
       ) %>%
-      dplyr::distinct()
-    data <- data[order(-data[6]),]
+      dplyr::distinct() %>% 
+      dplyr::arrange(dplyr::desc(abs(dplyr::across(.cols = dplyr::contains("Value")))))
     return(data)
   })
   
@@ -5005,17 +5003,14 @@ shiny::shinyServer(function(input, output, session) {
   
   ##getIndexEventBreakdownDataTable----
   getIndexEventBreakdownDataTable <- shiny::reactive(x = {
-    data <- getIndexEventBreakdownDataLong()
+    data <- getIndexEventBreakdownDataWide()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    cohortAndPersonCount <- data %>%
-      dplyr::select(.data$cohortId,
-                    .data$databaseId) %>%
-      dplyr::distinct() %>%
-      dplyr::inner_join(cohortCount,
-                        by = c('databaseId',
-                               'cohortId')) %>%
+    
+    cohortAndPersonCount <- cohortCount %>% 
+      dplyr::filter(.data$databaseId %in% activeSelected()$databaseId) %>% 
+      dplyr::filter(.data$cohortId %in% activeSelected()$cohortId) %>%
       dplyr::distinct() %>%
       dplyr::mutate(cohortSubjects = scales::comma(.data$cohortSubjects,
                                                    accuracy = 1)) %>%
@@ -5029,7 +5024,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    
+    browser()
     if (input$indexEventBreakdownTableFilter == "Records") {
       data <- data %>%
         dplyr::mutate(type = paste0(
