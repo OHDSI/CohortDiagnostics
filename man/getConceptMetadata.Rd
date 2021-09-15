@@ -10,13 +10,16 @@ getConceptMetadata(
   cohortIds = NULL,
   vocabularyDatabaseSchema = NULL,
   conceptIds = NULL,
+  getDatabaseMetadata = TRUE,
   getConceptRelationship = TRUE,
   getConceptAncestor = TRUE,
   getConceptSynonym = TRUE,
   getConceptCount = TRUE,
   getConceptCooccurrence = TRUE,
   getIndexEventCount = TRUE,
-  getConceptMappingCount = TRUE
+  getConceptMappingCount = TRUE,
+  getFixedTimeSeries = TRUE,
+  getRelativeTimeSeries = TRUE
 )
 }
 \arguments{
@@ -40,6 +43,8 @@ schema name, for example 'vocabulary.dbo'.}
 
 \item{conceptIds}{A vector of one or more Concept Ids.}
 
+\item{getDatabaseMetadata}{Do you want to get database metadata i.e. person/records/person days in observation table}
+
 \item{getConceptRelationship}{Do you want conceptRelationship?}
 
 \item{getConceptAncestor}{Do you want conceptAncestor?}
@@ -53,6 +58,10 @@ schema name, for example 'vocabulary.dbo'.}
 \item{getIndexEventCount}{Do you want index event concept count?}
 
 \item{getConceptMappingCount}{Do you want concept mapping count?}
+
+\item{getFixedTimeSeries}{Do you want a conceptIds database level time series data reported on actual dates?}
+
+\item{getRelativeTimeSeries}{Do you want cohort level time series data reported relative to cohort start date?}
 }
 \value{
 Returns a list of data frames (tibbles)
