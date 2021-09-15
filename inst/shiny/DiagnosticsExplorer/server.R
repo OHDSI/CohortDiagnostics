@@ -8028,30 +8028,14 @@ shiny::shinyServer(function(input, output, session) {
       lengthChange = TRUE,
       ordering = TRUE,
       paging = TRUE,
-      searchHighlight = TRUE,
-      columnDefs = list(list(
-        width = "50%", targets = 4
-      ))
+      searchHighlight = TRUE
     )
-    sketch <- htmltools::withTags(table(class = "display",
-                                        thead(tr(
-                                          th(rowspan = 2, "ID"),
-                                          th(rowspan = 2, "Name"),
-                                          th(
-                                            "Vocabulary version",
-                                            colspan = 2,
-                                            class = "dt-center",
-                                            style = "border-right:1px solid silver;border-bottom:1px solid silver"
-                                          ),
-                                          th(rowspan = 2, "Description")
-                                        ),
-                                        tr(
-                                          lapply(c("CDM source", "Vocabulary table"), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                        ))))
+  
     table <- DT::datatable(
       data ,
       options = options,
-      container = sketch,
+      colnames = colnames(data) %>%
+        camelCaseToTitleCase(),
       rownames = FALSE,
       class = "stripe compact"
     )
