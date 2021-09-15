@@ -1448,10 +1448,22 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  ##getNameAndSynonymForActiveSelectedConceptId----
+  getNameAndSynonymForActiveSelectedConceptId <- shiny::reactive(x = {
+    if (is.null(activeSelected()$conceptId)) {#currently expecting to be vector of 1 (single select)
+      return(NULL)
+    }
+    data <- list()
+    data$concept <- getConcept(dataSource = dataSource,
+                                   conceptIds = activeSelected()$conceptId)
+    data$conceptSynonym <- getConceptSynonym(dataSource = dataSource,
+                                              conceptIds = activeSelected()$conceptId)
+    return(data)
+  })
+  
   ##getConceptSetSynonyms-----
   getConceptSetSynonyms <- shiny::reactive(x = {
-    data <- getMetadataForConceptId()
-    
+    data <- getNameAndSynonymForActiveSelectedConceptId()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -1950,7 +1962,6 @@ shiny::shinyServer(function(input, output, session) {
     }
     activeSelected(tempList)
   })
-  
   
   ##getMetadataForConceptId----
   getMetadataForConceptId <- shiny::reactive(x = {
