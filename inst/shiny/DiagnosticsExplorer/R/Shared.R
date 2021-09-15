@@ -443,21 +443,21 @@ getExecutionMetadata <- function(dataSource) {
   if ('personDaysInDatasource' %in% colnames(data)) {
     data$personDaysInDatasource <-
       tryCatch(
-        expr = as.integer(data$personDaysInDatasource),
+        expr = as.numeric(data$personDaysInDatasource),
         error = data$personDaysInDatasource
       )
   }
   if ('recordsInDatasource' %in% colnames(data)) {
     data$recordsInDatasource <-
       tryCatch(
-        expr = as.integer(data$recordsInDatasource),
+        expr = as.numeric(data$recordsInDatasource),
         error = data$recordsInDatasource
       )
   }
   if ('personDaysInDatasource' %in% colnames(data)) {
     data$personDaysInDatasource <-
       tryCatch(
-        expr = as.integer(data$personDaysInDatasource),
+        expr = as.numeric(data$personDaysInDatasource),
         error = data$personDaysInDatasource
       )
   }
@@ -974,8 +974,16 @@ getConceptMetadata <- function(dataSource,
   if (!is.null(databaseIds)) {
     if (getDatabaseMetadata) {
       databaseMetadata <- getExecutionMetadata(dataSource = dataSource)
-      data$databaseCount <- databaseMetadata$databaseCount %>% 
-        dplyr::filter(.data$databaseId %in% c(databaseIds))
+      if (!is.null(databaseMetadata)) {
+        data$databaseCount <- databaseMetadata %>%
+          dplyr::filter(.data$databaseId %in% c(databaseIds)) %>%
+          dplyr::select(
+            .data$databaseId,
+            .data$personDaysInDatasource,
+            .data$personsInDatasource,
+            .data$recordsInDatasource
+          )
+      }
     }
   }
   # results not dependent on cohort definition
@@ -1018,7 +1026,6 @@ getConceptMetadata <- function(dataSource,
       dplyr::distinct() %>%
       dplyr::arrange(.data$conceptId) %>% 
       dplyr::group_by(.data$referenceConceptId, .data$conceptId)
-    browser()
     
     #!!!!!!!!! need to collapse relationshipId - to avoid duplication. need to make them come with line break
     # %>% 

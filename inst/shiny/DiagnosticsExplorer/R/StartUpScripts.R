@@ -568,7 +568,7 @@ getDatabaseAndCohortCountForConceptIdsInDatabase <- function(data, dataSource) {
     data <- data %>%
       dplyr::arrange(dplyr::desc(.data$conceptCount))
   } else {
-    data$conceptcount <- as.integer(NA)
+    data$conceptCount <- as.integer(NA)
   }
   if (!'subjectCount' %in% colnames(data)) {
     data$subjectCount <- as.integer(NA)
