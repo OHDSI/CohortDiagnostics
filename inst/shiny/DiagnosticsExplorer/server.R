@@ -1366,7 +1366,6 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getOrphanConceptsTarget----
   getOrphanConceptsTarget <- shiny::reactive({
-    browser()
     data <- getResultsOrphanConcept(
       dataSource = dataSource,
       cohortIds = consolidatedCohortIdTarget(),
