@@ -305,7 +305,7 @@ shiny::shinyServer(function(input, output, session) {
                   collapsible = TRUE,
                   collapsed = FALSE,
                   shiny::conditionalPanel(condition = "output.isTargetCohortDefinitionConceptSetsTableRowSelected == true",
-                                          tags$table(
+                                          tags$table(width = "100%",
                                             tags$tr(tags$td(
                                               colspan = 2,
                                               shiny::radioButtons(
@@ -322,6 +322,15 @@ shiny::shinyServer(function(input, output, session) {
                                                 selected = "Concept Set Expression",
                                                 inline = TRUE
                                               )
+                                            ),
+                                            tags$td(align = "right",
+                                                    shiny::radioButtons(
+                                                      inputId = "targetConceptSetsCohortANdDatabaseLevelFilter",
+                                                      label = "",
+                                                      choices = c("Database level", "Cohort Level"),
+                                                      selected = "Database level",
+                                                      inline = TRUE
+                                                    )
                                             ))
                                           )),
                   shiny::conditionalPanel(
@@ -567,6 +576,15 @@ shiny::shinyServer(function(input, output, session) {
                                                 selected = "Concept Set Expression",
                                                 inline = TRUE
                                               )
+                                            ),
+                                            tags$td(align = "right",
+                                                    shiny::radioButtons(
+                                                      inputId = "comparatorConceptSetsCohortANdDatabaseLevelFilter",
+                                                      label = "",
+                                                      choices = c("Database level", "Cohort Level"),
+                                                      selected = "Database level",
+                                                      inline = TRUE
+                                                    )
                                             ))
                                           )),
                   shiny::conditionalPanel(
@@ -2431,9 +2449,21 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
-      data <- data %>% 
-        dplyr::rename("records" = .data$conceptCount,
-                      "persons" = .data$subjectCount)
+      
+      if (input$targetConceptSetsCohortANdDatabaseLevelFilter == "Database level") {
+        data <- data %>% 
+          dplyr::rename("records" = .data$conceptCount,
+                        "persons" = .data$subjectCount)
+        data <- data %>% 
+          dplyr::select(-.data$conceptCountCohort, -.data$subjectCountCohort)
+      } else {
+        data <- data %>% 
+          dplyr::rename("records" = .data$conceptCountCohort,
+                        "persons" = .data$subjectCountCohort)
+        data <- data %>% 
+          dplyr::select(-.data$conceptCount, -.data$subjectCount)
+      }
+      
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount)
       return(table)
@@ -2976,9 +3006,23 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
-      data <- data %>% 
-        dplyr::rename("records" = .data$conceptCount,
-                      "persons" = .data$subjectCount)
+      
+      if (input$comparatorConceptSetsCohortANdDatabaseLevelFilter == "Database level") {
+        data <- data %>% 
+          dplyr::rename("records" = .data$conceptCount,
+                        "persons" = .data$subjectCount)
+        
+        data <- data %>% 
+          dplyr::select(-.data$conceptCountCohort, -.data$subjectCountCohort)
+      } else {
+        data <- data %>% 
+          dplyr::rename("records" = .data$conceptCountCohort,
+                        "persons" = .data$subjectCountCohort)
+        
+        data <- data %>% 
+          dplyr::select(-.data$conceptCount, -.data$subjectCount)
+      }
+      
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount)
       return(table)
