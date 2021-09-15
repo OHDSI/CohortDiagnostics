@@ -352,9 +352,115 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
 #' Returns a data frame (tibble)
 #'
 #' @export
-getResultsMetadata <- function(dataSource) {
-  data <- getDataFromResultsDatabaseSchema(dataSource,
-                                           dataTableName = "metadata")
+getExecutionMetadata <- function(dataSource) {
+  databaseMetadata <-
+    getDataFromResultsDatabaseSchema(dataSource,
+                                     dataTableName = "metadata")
+  if (is.null(databaseMetadata)) {
+    return(NULL)
+  }
+  databaseMetadata <- databaseMetadata %>%
+    dplyr::filter(!.data$variableField == "databaseId")
+  columnNames <-
+    databaseMetadata$variableField %>% unique() %>% sort()
+  columnNamesNoJson <-
+    columnNames[stringr::str_detect(string = tolower(columnNames),
+                                    pattern = "json",
+                                    negate = TRUE)]
+  columnNamesJson <-
+    columnNames[stringr::str_detect(string = tolower(columnNames),
+                                    pattern = "json",
+                                    negate = FALSE)]
+  transposeNonJsons <- databaseMetadata %>%
+    dplyr::filter(.data$variableField %in% c(columnNamesNoJson)) %>%
+    dplyr::rename(name = "variableField") %>%
+    dplyr::group_by(.data$databaseId, .data$startTime, .data$name) %>%
+    dplyr::summarise(valueField = max(.data$valueField),
+                     .groups = "keep") %>%
+    dplyr::ungroup() %>%
+    tidyr::pivot_wider(names_from = .data$name,
+                       values_from = .data$valueField) %>%
+    dplyr::mutate(startTime = stringr::str_replace(
+      string = .data$startTime,
+      pattern = "TM_",
+      replacement = ""
+    ))
+  transposeNonJsons$startTime <-
+    transposeNonJsons$startTime %>% lubridate::as_datetime()
+  
+  transposeJsons <- databaseMetadata %>%
+    dplyr::filter(.data$variableField %in% c(columnNamesJson)) %>%
+    dplyr::rename(name = "variableField") %>%
+    dplyr::group_by(.data$databaseId, .data$startTime, .data$name) %>%
+    dplyr::summarise(valueField = max(.data$valueField),
+                     .groups = "keep") %>%
+    dplyr::ungroup() %>%
+    tidyr::pivot_wider(names_from = .data$name,
+                       values_from = .data$valueField) %>%
+    dplyr::mutate(startTime = stringr::str_replace(
+      string = .data$startTime,
+      pattern = "TM_",
+      replacement = ""
+    ))
+  transposeJsons$startTime <-
+    transposeJsons$startTime %>% lubridate::as_datetime()
+  
+  transposeJsonsTemp <- list()
+  for (i in (1:nrow(transposeJsons))) {
+    transposeJsonsTemp[[i]] <- transposeJsons[i,]
+    for (j in (1:length(columnNamesJson))) {
+      transposeJsonsTemp[[i]][[columnNamesJson[[j]]]] <-
+        transposeJsonsTemp[[i]][[columnNamesJson[[j]]]] %>%
+        RJSONIO::fromJSON(digits = 23) %>%
+        RJSONIO::toJSON(digits = 23)
+    }
+  }
+  transposeJsons <- dplyr::bind_rows(transposeJsonsTemp)
+  data <- transposeNonJsons %>%
+    dplyr::left_join(transposeJsons,
+                     by = c("databaseId", "startTime"))
+  if ('observationPeriodMaxDate' %in% colnames(data)) {
+    data$observationPeriodMaxDate <-
+      tryCatch(
+        expr = lubridate::as_date(data$observationPeriodMaxDate),
+        error = data$observationPeriodMaxDate
+      )
+  }
+  if ('observationPeriodMinDate' %in% colnames(data)) {
+    data$observationPeriodMinDate <-
+      tryCatch(
+        expr = lubridate::as_date(data$observationPeriodMinDate),
+        error = data$observationPeriodMinDate
+      )
+  }
+  if ('sourceReleaseDate' %in% colnames(data)) {
+    data$sourceReleaseDate <-
+      tryCatch(
+        expr = lubridate::as_date(data$sourceReleaseDate),
+        error = data$sourceReleaseDate
+      )
+  }
+  if ('personDaysInDatasource' %in% colnames(data)) {
+    data$personDaysInDatasource <-
+      tryCatch(
+        expr = as.integer(data$personDaysInDatasource),
+        error = data$personDaysInDatasource
+      )
+  }
+  if ('recordsInDatasource' %in% colnames(data)) {
+    data$recordsInDatasource <-
+      tryCatch(
+        expr = as.integer(data$recordsInDatasource),
+        error = data$recordsInDatasource
+      )
+  }
+  if ('personDaysInDatasource' %in% colnames(data)) {
+    data$personDaysInDatasource <-
+      tryCatch(
+        expr = as.integer(data$personDaysInDatasource),
+        error = data$personDaysInDatasource
+      )
+  }
   return(data)
 }
 
@@ -867,27 +973,9 @@ getConceptMetadata <- function(dataSource,
   data <- list()
   if (!is.null(databaseIds)) {
     if (getDatabaseMetadata) {
-      databaseMetadata <- getResultsMetadata(dataSource = dataSource)
-      if (!is.null(databaseMetadata)) {
-        data$databaseCount <- databaseMetadata %>%
-          dplyr::filter(.data$databaseId %in% databaseIds) %>%
-          dplyr::filter(
-            .data$variableField %in% c(
-              "personsInDatasource",
-              "recordsInDatasource",
-              "personDaysInDatasource"
-            )
-          ) %>%
-          dplyr::group_by(.data$variableField) %>%
-          dplyr::summarise(valueField = max(.data$valueField),
-                           .groups = "keep") %>%
-          tidyr::pivot_wider(names_from = "variableField", values_from = "valueField") %>%
-          dplyr::rename(
-            "persons" = .data$personsInDatasource,
-            "records" = .data$recordsInDatasource,
-            "personDays" = .data$personDaysInDatasource
-          )
-      }
+      databaseMetadata <- getExecutionMetadata(dataSource = dataSource)
+      data$databaseCount <- databaseMetadata$databaseCount %>% 
+        dplyr::filter(.data$databaseId %in% c(databaseIds))
     }
   }
   # results not dependent on cohort definition
@@ -930,6 +1018,7 @@ getConceptMetadata <- function(dataSource,
       dplyr::distinct() %>%
       dplyr::arrange(.data$conceptId) %>% 
       dplyr::group_by(.data$referenceConceptId, .data$conceptId)
+    browser()
     
     #!!!!!!!!! need to collapse relationshipId - to avoid duplication. need to make them come with line break
     # %>% 

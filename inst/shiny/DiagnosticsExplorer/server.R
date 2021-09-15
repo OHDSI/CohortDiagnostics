@@ -7950,35 +7950,52 @@ shiny::shinyServer(function(input, output, session) {
   #Metadata----
   #getMetadataInformation----
   getMetadataInformation <- shiny::reactive(x = {
-    data <- metadata %>%
-      dplyr::filter(.data$databaseId == input$selectedDatabaseId)
+    data <- getExecutionMetadata(dataSource = dataSource)
+    if (!doesObjectHaveData(data)) {
+      return(data)
+    }
     return(data)
   })
   
-  #getDataSourceInformation----
-  getDataSourceInformation <- shiny::reactive(x = {
-    data <- database
-    if (!'vocabularyVersionCdm' %in% colnames(database))
-    {
+  #getMetadataInformationFilteredToDatabaseId----
+  getMetadataInformationFilteredToDatabaseId <- shiny::reactive(x = {
+    data <- getMetadataInformation() 
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::filter(.data$databaseId == input$selectedDatabaseId)
+    if (!'vocabularyVersionCdm' %in% colnames(data)) {
       data$vocabularyVersionCdm <- "NA"
     }
     if (!'vocabularyVersion' %in% colnames(database)) {
       data$vocabularyVersion <- "NA"
     }
+    colNamesRequired <- c("databaseId",
+                          "startTime",
+                          "cdmReleaseDate",
+                          "cdmSourceName",
+                          "datasourceName",
+                          "datasourceDescription",
+                          "sourceDescription",
+                          "vocabularyVersionCdm",
+                          "vocabularyVersion",
+                          "sourceReleaseDate",
+                          "observationPeriodMaxDate",
+                          "observationPeriodMinDate",
+                          "personsInDatasource",
+                          "recordsInDatasource",
+                          "personDaysInDatasource")
+    colNamesObserved <- colnames(data)
+    presentInBoth <- intersect(colNamesRequired, colNamesObserved)
     data <- data %>%
-      dplyr::select(
-        .data$databaseId,
-        .data$databaseName,
-        .data$vocabularyVersionCdm,
-        .data$vocabularyVersion,
-        .data$description
-      )
+      dplyr::select(dplyr::all_of(presentInBoth))
     return(data)
   })
   
   ##output: databaseInformationTable----
   output$databaseInformationTable <- DT::renderDataTable(expr = {
-    data <- getDataSourceInformation()
+    data <- getMetadataInformationFilteredToDatabaseId()
     validate(need(all(!is.null(data),
                       nrow(data) > 0),
                   "Not available."))
