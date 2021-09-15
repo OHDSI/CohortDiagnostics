@@ -367,7 +367,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
     )
   # sort descending by first count field
   dataTransformed <- dataTransformed %>% 
-    dplyr::arrange(dplyr::desc(dplyr::across(dplyr::contains("records"))))
+    dplyr::arrange(dplyr::desc(abs(dplyr::across(dplyr::contains("records")))))
   
   options = list(
     pageLength = 1000,
@@ -566,12 +566,15 @@ getDatabaseAndCohortCountForConceptIdsInDatabase <- function(data, dataSource) {
   }
   if ('conceptCount' %in% colnames(data)) {
     data <- data %>%
-      dplyr::arrange(dplyr::desc(.data$conceptCount))
+      dplyr::arrange(dplyr::desc(abs(.data$conceptCount)))
   } else {
     data$conceptCount <- as.integer(NA)
   }
   if (!'subjectCount' %in% colnames(data)) {
     data$subjectCount <- as.integer(NA)
   }
+  data <- data %>%
+    dplyr::mutate(dplyr::across(.cols = dplyr::contains("ount"),
+                                .fns = ~ tidyr::replace_na(.x, 0)))
   return(data)
 }
