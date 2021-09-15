@@ -1355,7 +1355,7 @@ getConceptMetadata <- function(dataSource,
               .data$domainId,
               .data$analysisName
             ),
-            index = .data$periodBegin
+            index = .data$periodBegin  #x-axis
           )
       }
     }

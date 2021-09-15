@@ -10,29 +10,6 @@ plotTimeSeriesFromTsibble <-
       return(NULL)
     }
     
-    
-    # plotFilters <- yAxisLabel
-    # tempData <- tsibbleData <- tempData
-    # tsibbleData <- tsibbleData[[1]]
-    
-    
-    # if (indexAggregationType != "Yearly") {
-    #   tsibbleData <- lapply(tsibbleData, function(data) {
-    #     data  <- data %>%
-    #       dplyr::mutate(periodBegin = as.Date(.data$periodBegin))
-    #   })
-    #   
-    # }
-    
-    # tsibbleData$tooltip <- c(
-    #   paste0(
-    #     "Database ID = ",
-    #     tsibbleData$databaseId,
-    #     "\nCohort = ",
-    #     tsibbleData$cohortShortName
-    #   )
-    # )
-    
     distinctCohortShortName <- c()
     for (i in 1:length(tsibbleData)) {
       data  <- tsibbleData[[i]]$cohortShortName  %>% unique()
@@ -384,7 +361,10 @@ plotTs <- function(data,
 
 plotTimeSeriesForCohortDefinitionFromTsibble <-
   function(stlModeledTsibbleData,
-           timeSeriesPeriodRangeFilter = c(2010, 2021)) {
+           timeSeriesPeriodRangeFilter = c(2010, 2021),
+           conceptId = NULL,
+           conceptName = NULL,
+           conceptSynonym = NULL) {
     if (is.null(stlModeledTsibbleData)) {
       return(NULL)
     }
@@ -448,13 +428,22 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
     m <- list(
       l = 80,
       r = 0,
-      b = 0,
+      b = 100,
       t = 50,
       pad = 4
     )
     finalPlot <-
       plotly::subplot(yAxisValuesPlots, nrows = length(yAxisValuesPlots)) %>%
-      plotly::layout(autosize = T, margin = m)
+      plotly::layout(autosize = T,
+                     margin = m,
+                     annotations = list(
+                       x = 0.5 ,
+                       y = -0.25,
+                       text = paste0(conceptName," (",conceptId,")","\n",conceptSynonym),
+                       showarrow = F,
+                       xref = 'paper',
+                       yref = 'paper'
+                     ))
     
     #!!! add database Id to x-axis 
     #!!! show both Total and trend in plotTs

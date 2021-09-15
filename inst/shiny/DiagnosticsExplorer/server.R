@@ -3132,13 +3132,25 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$databaseId %in% activeSelected()$databaseId) %>% 
       dplyr::rename("records" = .data$conceptCount,
                     "persons" = .data$subjectCount)
+    
     tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
                                                                           valueFields = c("records", "persons"))
     
 
+    conceptName <- getMetadataForConceptId()$concept %>% 
+      dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
+      dplyr::pull(.data$conceptName)
+    
+    conceptSynonym <- getMetadataForConceptId()$conceptSynonym$conceptSynonymName %>% 
+      unique() %>%
+      sort() %>% 
+      paste0(collapse = ", ")
     
     plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
-      stlModeledTsibbleData = tsibbleDataFromSTLModel
+      stlModeledTsibbleData = tsibbleDataFromSTLModel,
+      conceptId = activeSelected()$conceptId,
+      conceptName = conceptName,
+      conceptSynonym = conceptSynonym
     )
     plot <- plotly::ggplotly(plot)
     return(plot)
@@ -5346,10 +5358,20 @@ shiny::shinyServer(function(input, output, session) {
       tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
                                                                             valueFields = c("records", "persons"))
       
+      conceptName <- getMetadataForConceptId()$concept %>% 
+        dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
+        dplyr::pull(.data$conceptName)
       
+      conceptSynonym <- getMetadataForConceptId()$conceptSynonym$conceptSynonymName %>% 
+        unique() %>%
+        sort() %>% 
+        paste0(collapse = ", ")
       
       plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
-        stlModeledTsibbleData = tsibbleDataFromSTLModel
+        stlModeledTsibbleData = tsibbleDataFromSTLModel,
+        conceptId = activeSelected()$conceptId,
+        conceptName = conceptName,
+        conceptSynonym = conceptSynonym
       )
       return(plot)
     })
