@@ -1,3 +1,10 @@
+CohortDiagnostics 2.1.2
+=======================
+
+Bug fixes:
+1. DiagnosticsExplorer fixes a bug of app failure when runIndexEventBreakdown, runOrphanConcepts, includedSourceConcept is set to FALSE
+
+
 CohortDiagnostics 2.1.1
 =======================
 
