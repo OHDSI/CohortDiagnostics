@@ -1448,7 +1448,7 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ##getNameAndSynonymForActiveSelectedConceptId----
+  ###getNameAndSynonymForActiveSelectedConceptId----
   getNameAndSynonymForActiveSelectedConceptId <- shiny::reactive(x = {
     if (is.null(activeSelected()$conceptId)) {#currently expecting to be vector of 1 (single select)
       return(NULL)
@@ -1461,7 +1461,7 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ##getConceptSetSynonyms-----
+  ###getConceptSetSynonyms-----
   getConceptSetSynonyms <- shiny::reactive(x = {
     data <- getNameAndSynonymForActiveSelectedConceptId()
     if (!doesObjectHaveData(data)) {
@@ -3848,122 +3848,109 @@ shiny::shinyServer(function(input, output, session) {
   # Incidence rate -------
   ##reactive: getIncidenceRateData----
   getIncidenceRateData <- reactive({
-    if (input$tabs == "incidenceRate")
-    {
-      if (all(is(dataSource, "environment"),!exists('incidenceRate')))
-      {
-        return(NULL)
-      }
-      if (any(length(consolidatedCohortIdTarget()) == 0)) {
-        return(NULL)
-      }
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(message = paste0("Getting incidence rate data."),
-                   value = 0)
-      
-      data <- getResultsIncidenceRate(dataSource = dataSource,
-                                      cohortIds =  consolidatedCohortIdTarget())
-      if (all(!is.null(data),
-              nrow(data) > 0)) {
-        data <- data %>%
-          dplyr::mutate(
-            incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0,
-                                             TRUE ~ .data$incidenceRate)
-          )
-      }
-      return(data)
-    } else
-    {
+    if (any(is.null(input$tabs), !input$tabs == "incidenceRate")) {
       return(NULL)
     }
+    if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+      return(NULL)
+    }
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Getting incidence rate data."),
+                 value = 0)
+    data <- getResultsIncidenceRate(dataSource = dataSource,
+                                    cohortIds =  consolidatedCohortIdTarget(), 
+                                    databaseIds = consolidatedDatabaseIdTarget())
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::mutate(incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0,
+                                                     TRUE ~ .data$incidenceRate))
+    return(data)
   })
   
   ##pickerInput - incidenceRateAgeFilter----
   shiny::observe({
-    if (!is.null(getIncidenceRateData()) &&
-        nrow(getIncidenceRateData()) > 0)
-    {
-      ageFilter <- getIncidenceRateData() %>%
-        dplyr::select(.data$ageGroup) %>%
-        dplyr::filter(.data$ageGroup != "NA", !is.na(.data$ageGroup)) %>%
-        dplyr::distinct() %>%
-        dplyr::arrange(as.integer(sub(
-          pattern = '-.+$', '', x = .data$ageGroup
-        )))
-      
-      shinyWidgets::updatePickerInput(
-        session = session,
-        inputId = "incidenceRateAgeFilter",
-        selected = ageFilter$ageGroup,
-        choices = ageFilter$ageGroup,
-        choicesOpt = list(style = rep_len("color: black;", 999))
-      )
+    if (!doesObjectHaveData(getIncidenceRateData())) {
+      return(NULL)
     }
+    ageFilter <- getIncidenceRateData() %>%
+      dplyr::select(.data$ageGroup) %>%
+      dplyr::filter(.data$ageGroup != "NA",!is.na(.data$ageGroup)) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(as.integer(sub(
+        pattern = '-.+$', '', x = .data$ageGroup
+      )))
+    
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "incidenceRateAgeFilter",
+      selected = ageFilter$ageGroup,
+      choices = ageFilter$ageGroup,
+      choicesOpt = list(style = rep_len("color: black;", 999))
+    )
   })
   
   ##pickerInput - incidenceRateGenderFilter----
   shiny::observe({
-    if (!is.null(getIncidenceRateData()) &&
-        nrow(getIncidenceRateData()) > 0)
-    {
-      genderFilter <- getIncidenceRateData() %>%
-        dplyr::select(.data$gender) %>%
-        dplyr::filter(.data$gender != "NA", !is.na(.data$gender)) %>%
-        dplyr::distinct() %>%
-        dplyr::arrange(.data$gender)
-      
-      shinyWidgets::updatePickerInput(
-        session = session,
-        inputId = "incidenceRateGenderFilter",
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = genderFilter$gender,
-        selected = genderFilter$gender
-      )
+    if (!doesObjectHaveData(getIncidenceRateData())) {
+      return(NULL)
     }
+    genderFilter <- getIncidenceRateData() %>%
+      dplyr::select(.data$gender) %>%
+      dplyr::filter(.data$gender != "NA",!is.na(.data$gender)) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(.data$gender)
+    
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "incidenceRateGenderFilter",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = genderFilter$gender,
+      selected = genderFilter$gender
+    )
   })
   
   ##pickerInput - incidenceRateCalendarFilter & YscaleMinAndMax----
-  ##!!!why are two picker input in the same observe event - should it be seperate?
   shiny::observe({
-    if (!is.null(getIncidenceRateData()) &&
-        nrow(getIncidenceRateData()) > 0)
-    {
-      calendarFilter <- getIncidenceRateData() %>%
-        dplyr::select(.data$calendarYear) %>%
-        dplyr::filter(.data$calendarYear != "NA", !is.na(.data$calendarYear)) %>%
-        dplyr::distinct(.data$calendarYear) %>%
-        dplyr::arrange(.data$calendarYear)
-      
-      minValue <- min(calendarFilter$calendarYear)
-      
-      maxValue <- max(calendarFilter$calendarYear)
-      
-      shiny::updateSliderInput(
-        session = session,
-        inputId = "incidenceRateCalendarFilter",
-        min = minValue,
-        max = maxValue,
-        value = c(2010, maxValue)
-      )
-      
-      minIncidenceRateValue <-
-        round(min(getIncidenceRateData()$incidenceRate), digits = 2)
-      
-      maxIncidenceRateValue <-
-        round(max(getIncidenceRateData()$incidenceRate), digits = 2)
-      
-      shiny::updateSliderInput(
-        session = session,
-        inputId = "YscaleMinAndMax",
-        min = 0,
-        max = maxIncidenceRateValue,
-        value = c(minIncidenceRateValue, maxIncidenceRateValue),
-        step = round((maxIncidenceRateValue - minIncidenceRateValue) / 5,
-                     digits = 2
-        )
-      )
+    if (!doesObjectHaveData(getIncidenceRateData())) {
+      return(NULL)
     }
+    calendarFilter <- getIncidenceRateData() %>%
+      dplyr::select(.data$calendarYear) %>%
+      dplyr::filter(.data$calendarYear != "NA",!is.na(.data$calendarYear)) %>%
+      dplyr::distinct(.data$calendarYear) %>%
+      dplyr::arrange(.data$calendarYear)
+    
+    minValue <- min(calendarFilter$calendarYear)
+    maxValue <- max(calendarFilter$calendarYear)
+    
+    shiny::updateSliderInput(
+      session = session,
+      inputId = "incidenceRateCalendarFilter",
+      min = minValue,
+      max = maxValue,
+      value = c(2010, maxValue)
+    )
+    
+    minIncidenceRateValue <-
+      round(min(getIncidenceRateData()$incidenceRate), digits = 2)
+    
+    maxIncidenceRateValue <-
+      round(max(getIncidenceRateData()$incidenceRate), digits = 2)
+    
+    shiny::updateSliderInput(
+      session = session,
+      inputId = "YscaleMinAndMax",
+      min = 0,
+      max = maxIncidenceRateValue,
+      value = c(minIncidenceRateValue, maxIncidenceRateValue),
+      step = round((
+        maxIncidenceRateValue - minIncidenceRateValue
+      ) / 5,
+      digits = 2)
+    )
   })
   
   ##reactiveVal: incidenceRateAgeFilterValues----
@@ -3990,15 +3977,16 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  ##reactive: getIncidenceRateFilteredOnCalendarFilterValue----
-  getIncidenceRateFilteredOnCalendarFilterValue <-
+  ##reactive: getIncidenceRateCalendarYears----
+  getIncidenceRateCalendarYears <-
     shiny::reactive({
       if (!doesObjectHaveData(getIncidenceRateData())) {
         return(NULL)
       }
       calendarFilter <- getIncidenceRateData() %>%
         dplyr::select(.data$calendarYear) %>%
-        dplyr::filter(.data$calendarYear != "NA", !is.na(.data$calendarYear)) %>%
+        dplyr::filter(.data$calendarYear != "NA", 
+                      !is.na(.data$calendarYear)) %>%
         dplyr::distinct(.data$calendarYear) %>%
         dplyr::arrange(.data$calendarYear)
       calendarFilter <-
@@ -4008,12 +3996,13 @@ shiny::shinyServer(function(input, output, session) {
       return(calendarFilter)
     })
   
-  ##reactive: getIncidenceRateFilteredOnYScaleFilterValue----
-  getIncidenceRateFilteredOnYScaleFilterValue <-
+  ##reactive: getIncidenceRateFilteredOnYScale----
+  getIncidenceRateFilteredOnYScale <-
     shiny::reactive({
       incidenceRateFilter <- getIncidenceRateData() %>%
         dplyr::select(.data$incidenceRate) %>%
-        dplyr::filter(.data$incidenceRate != "NA", !is.na(.data$incidenceRate)) %>%
+        dplyr::filter(.data$incidenceRate != "NA", 
+                      !is.na(.data$incidenceRate)) %>%
         dplyr::distinct(.data$incidenceRate) %>%
         dplyr::arrange(.data$incidenceRate)
       incidenceRateFilter <-
@@ -4027,7 +4016,7 @@ shiny::shinyServer(function(input, output, session) {
   getIncidentRatePlot <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(!is.null(input$tabs), input$renderIncidentRatePlot, 
-         doesObjectHaveData(getIncidenceRateFilteredOnCalendarFilterValue()))
+         doesObjectHaveData(getIncidenceRateCalendarYears()))
   },
   handlerExpr = {
     if (any(
@@ -4097,12 +4086,12 @@ shiny::shinyServer(function(input, output, session) {
     
     if (stratifyByCalendarYear) {
       data <- data %>%
-        dplyr::filter(.data$calendarYear %in% getIncidenceRateFilteredOnCalendarFilterValue())
+        dplyr::filter(.data$calendarYear %in% getIncidenceRateCalendarYears())
     }
     
     if (input$irYscaleFixed) {
       data <- data %>%
-        dplyr::filter(.data$incidenceRate %in% getIncidenceRateFilteredOnYScaleFilterValue())
+        dplyr::filter(.data$incidenceRate %in% getIncidenceRateFilteredOnYScale())
     }
     
     validate(need(
@@ -4128,12 +4117,10 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: saveIncidenceRateData----
   output$saveIncidenceRateData <-  downloadHandler(
-    filename = function()
-    {
+    filename = function() {
       getCsvFileNameWithDateTime(string = "IncidenceRate")
     },
-    content = function(file)
-    {
+    content = function(file) {
       downloadCsv(x = getIncidenceRateData(),
                   fileName = file)
     }
@@ -4163,8 +4150,7 @@ shiny::shinyServer(function(input, output, session) {
         " cohorts and ",
         length(consolidatedDatabaseIdTarget()),
         " databases"
-      ),
-      {
+      ), {
         return(getIncidentRatePlot())
       },
       detail = "Please Wait"
@@ -4551,6 +4537,9 @@ shiny::shinyServer(function(input, output, session) {
   #Time Distribution----
   ##output: getTimeDistributionData----
   getTimeDistributionData <- reactive({
+    if (any(is.null(input$tabs),!input$tabs == "timeDistribution")) {
+      return(NULL)
+    }
     if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
