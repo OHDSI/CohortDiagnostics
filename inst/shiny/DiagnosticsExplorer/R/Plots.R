@@ -518,7 +518,9 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   
   distinctDatabaseId <- plotData$databaseId %>% unique()
   distinctTimeMetric <- plotData$timeMetric %>% unique()
+
   
+ plotHeight <- length(distinctDatabaseId) * length(sortShortName$shortName) * 100
   databasePlots <- list()
   for (i in 1:length(distinctDatabaseId)) {
     filteredDataByDatabase <- plotData %>%
@@ -529,21 +531,43 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
         dplyr::filter((.data$shortName == sortShortName$shortName[j]))
       timeMetricPlots <- list()
       for (k in 1:length(distinctTimeMetric)) {
-        rowdata <- filteredDataByCohort %>%
+        rowData <- filteredDataByCohort %>%
           dplyr::filter(.data$timeMetric == distinctTimeMetric[k])
         selectedRowdata <-
           c(
-            rowdata$minValue,
-            rowdata$p25Value,
-            rowdata$medianValue,
-            rowdata$p75Value,
-            rowdata$maxValue
+            rowData$minValue,
+            rowData$p25Value,
+            rowData$medianValue,
+            rowData$p75Value,
+            rowData$maxValue
           )
         timeMetricPlots[[k]] <-
-          plotly::plot_ly(x = selectedRowdata, type = "box") %>%
+          plotly::plot_ly(x = selectedRowdata, 
+                          type = "box",
+                          color = I('#440154FF'),
+                          text = ~paste0(
+                            rowData$shortName,
+                            "\nDatabase = ",
+                            rowData$databaseId,
+                            "\nMin = ",
+                            scales::comma(rowData$minValue, accuracy = 1),
+                            "\nP25 = ",
+                            scales::comma(rowData$p25Value, accuracy = 1),
+                            "\nMedian = ",
+                            scales::comma(rowData$medianValue, accuracy = 1),
+                            "\nP75 = ",
+                            scales::comma(rowData$p75Value, accuracy = 1),
+                            "\nMax = ",
+                            scales::comma(rowData$maxValue, accuracy = 1),
+                            "\nTime Measure = ",
+                            rowData$timeMetric,
+                            "\nAverage = ",
+                            scales::comma(x = rowData$averageValue, accuracy = 0.01)
+                          ),
+                          height = plotHeight) %>%
           plotly::layout(
             showlegend = FALSE,
-            xaxis = list(range = c(xAxisMin, xAxisMax)),
+            xaxis = list(range = c(xAxisMin, xAxisMax), tickformat = ",d"),
             yaxis = list(showticklabels = FALSE)
           )
         
@@ -554,7 +578,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
                 x = 0.5 + (k - (length(
                   distinctTimeMetric
                 ) + 1) / 2) * 0.3,
-                y = 1.03,
+                y = 1.1,
                 text = camelCaseToTitleCase(distinctTimeMetric[[k]]),
                 showarrow = FALSE,
                 xref = "paper",
@@ -578,8 +602,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
             text = camelCaseToTitleCase(sortShortName$shortName[j]),
             showarrow = FALSE,
             xref = "paper",
-            yref = "paper",
-            textangle = -90
+            yref = "paper"
           )
         )
     }
@@ -610,43 +633,6 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
     plotly::layout(autosize = T, margin = m)
   
   return(finalPlot)
-  
-  # plot <- ggplot2::ggplot(data = plotData) +
-  #   ggplot2::aes(
-  #     x = .data$shortName,
-  #     ymin = .data$minValue,
-  #     lower = .data$p25Value,
-  #     middle = .data$medianValue,
-  #     upper = .data$p75Value,
-  #     ymax = .data$maxValue,
-  #     average = .data$averageValue
-  #   ) +
-  #   ggplot2::geom_errorbar(size = 0.5) +
-  #   ggiraph::geom_boxplot_interactive(
-  #     ggplot2::aes(tooltip = tooltip),
-  #     stat = "identity",
-  #     fill = rgb(0, 0, 0.8, alpha = 0.25),
-  #     size = 0.2
-  #   ) +
-  #   ggplot2::facet_grid(databaseId ~ timeMetric, scales = "free") +
-  #   ggplot2::coord_flip() +
-  #   ggplot2::theme(
-  #     panel.grid.major.y = ggplot2::element_blank(),
-  #     panel.grid.minor.y = ggplot2::element_blank(),
-  #     axis.title.y = ggplot2::element_blank(),
-  #     axis.ticks.y = ggplot2::element_blank(),
-  #     strip.background = ggplot2::element_blank(),
-  #     strip.text.y = ggplot2::element_text(size = 5)
-  #   )
-  # height <-
-  #   1.5 + 0.4 * nrow(dplyr::distinct(plotData, .data$databaseId, .data$shortName))
-  # plot <- ggiraph::girafe(
-  #   ggobj = plot,
-  #   options = list(ggiraph::opts_sizing(width = .7),
-  #                  ggiraph::opts_zoom(max = 5)),
-  #   width_svg = 12,
-  #   height_svg = height
-  # )
 }
 
 plotIncidenceRate <- function(data,
