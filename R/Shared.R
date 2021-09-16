@@ -443,21 +443,21 @@ getExecutionMetadata <- function(dataSource) {
   if ('personDaysInDatasource' %in% colnames(data)) {
     data$personDaysInDatasource <-
       tryCatch(
-        expr = as.integer(data$personDaysInDatasource),
+        expr = as.numeric(data$personDaysInDatasource),
         error = data$personDaysInDatasource
       )
   }
   if ('recordsInDatasource' %in% colnames(data)) {
     data$recordsInDatasource <-
       tryCatch(
-        expr = as.integer(data$recordsInDatasource),
+        expr = as.numeric(data$recordsInDatasource),
         error = data$recordsInDatasource
       )
   }
   if ('personDaysInDatasource' %in% colnames(data)) {
     data$personDaysInDatasource <-
       tryCatch(
-        expr = as.integer(data$personDaysInDatasource),
+        expr = as.numeric(data$personDaysInDatasource),
         error = data$personDaysInDatasource
       )
   }
@@ -1026,7 +1026,6 @@ getConceptMetadata <- function(dataSource,
       dplyr::distinct() %>%
       dplyr::arrange(.data$conceptId) %>% 
       dplyr::group_by(.data$referenceConceptId, .data$conceptId)
-    browser()
     
     #!!!!!!!!! need to collapse relationshipId - to avoid duplication. need to make them come with line break
     # %>% 
@@ -1356,7 +1355,7 @@ getConceptMetadata <- function(dataSource,
               .data$domainId,
               .data$analysisName
             ),
-            index = .data$periodBegin
+            index = .data$periodBegin  #x-axis
           )
       }
     }
@@ -3127,7 +3126,7 @@ getResultsTemporalAnalysisRef <- function(dataSource) {
 #'
 #' @export
 getCirceRenderedExpression <- function(cohortDefinition) {
-  cohortJson <- RJSONIO::toJSON(x = cohortDefinition, digits = 23)
+  cohortJson <- RJSONIO::toJSON(x = cohortDefinition, digits = 23, pretty = TRUE)
   circeExpression <-
     CirceR::cohortExpressionFromJson(expressionJson = cohortJson)
   circeExpressionMarkdown <-

@@ -3126,7 +3126,7 @@ getResultsTemporalAnalysisRef <- function(dataSource) {
 #'
 #' @export
 getCirceRenderedExpression <- function(cohortDefinition) {
-  cohortJson <- RJSONIO::toJSON(x = cohortDefinition, digits = 23)
+  cohortJson <- RJSONIO::toJSON(x = cohortDefinition, digits = 23, pretty = TRUE)
   circeExpression <-
     CirceR::cohortExpressionFromJson(expressionJson = cohortJson)
   circeExpressionMarkdown <-
