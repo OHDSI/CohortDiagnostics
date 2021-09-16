@@ -4159,52 +4159,46 @@ shiny::shinyServer(function(input, output, session) {
   
   #______________----
   # Time Series -----
+  #!!!!!!!!!!!!needs another hard look and clean up
   ##reactive: getFixedTimeSeriesTsibble ------
   getFixedTimeSeriesTsibble <- reactive({
-    if (input$tabs == "timeSeries")
-    {
-      #!!!consolidatedCohortIdTarget() is returning '' -why?
-      if (any(length(consolidatedCohortIdTarget()) == 0))
-      {
-        return(NULL)
-      }
-      if (all(is(dataSource, "environment"), !exists('timeSeries'))) {
-        return(NULL)
-      }
-      
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(message = paste0("Getting time series data."),
-                   value = 0)
-      
-      data <- getResultsFixedTimeSeries(dataSource = dataSource,
-                                        cohortIds =  consolidatedCohortIdTarget())
-      return(data)
-    } else {
+    if (any(is.null(input$tabs), !input$tabs == "timeSeries")) {
       return(NULL)
     }
+    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+      return(NULL)
+    }
+    if (all(is(dataSource, "environment"),!exists('timeDistribution'))) {
+      return(NULL)
+    }
+    
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Getting time series data."),
+                 value = 0)
+    
+    data <- getResultsFixedTimeSeries(dataSource = dataSource,
+                                      cohortIds =  consolidatedCohortIdTarget())
+    return(data)
   })
   
   ##reactive: getFixedTimeSeriesTsibbleFiltered----
   getFixedTimeSeriesTsibbleFiltered <- reactive({
-    if (any(
-      length(consolidatedDatabaseIdTarget()) == 0,
-      length(consolidatedCohortIdTarget()) == 0
-    )) {
+    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
     calendarIntervalFirstLetter <-
       tolower(substr(input$timeSeriesAggregationPeriodSelection, 1, 1))
     data <- getFixedTimeSeriesTsibble()
-    if (is.null(data))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     
     data <- data[[calendarIntervalFirstLetter]]
-    if (any(is.null(data),
-            length(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -4212,32 +4206,27 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    if (calendarIntervalFirstLetter == 'y')
-    {
+    if (calendarIntervalFirstLetter == 'y') {
       data <- data %>%
         dplyr::mutate(periodBeginRaw = as.Date(paste0(
           as.character(.data$periodBegin), '-01-01'
         )))
-    } else
-    {
+    } else {
       data <- data %>%
         dplyr::mutate(periodBeginRaw = as.Date(.data$periodBegin))
     }
     
-    if (calendarIntervalFirstLetter == 'm')
-    {
+    if (calendarIntervalFirstLetter == 'm') {
       data <- data %>%
         dplyr::mutate(periodEnd = clock::add_months(x = as.Date(.data$periodBeginRaw), n = 1) %>%
                         clock::add_days(n = -1))
     }
-    if (calendarIntervalFirstLetter == 'q')
-    {
+    if (calendarIntervalFirstLetter == 'q') {
       data <- data %>%
         dplyr::mutate(periodEnd = clock::add_quarters(x = as.Date(.data$periodBeginRaw), n = 1) %>%
                         clock::add_days(n = -1))
     }
-    if (calendarIntervalFirstLetter == 'y')
-    {
+    if (calendarIntervalFirstLetter == 'y') {
       data <- data %>%
         dplyr::mutate(periodEnd = clock::add_years(x = as.Date(.data$periodBeginRaw), n = 1) %>%
                         clock::add_days(n = -1))
