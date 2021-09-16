@@ -493,7 +493,7 @@ getStlModelOutputForTsibbleDataValueFields <- function(tsibbleData, valueFields 
   return(modelData)
 }
 
-getDatabaseAndCohortCountForConceptIdsInDatabase <- function(data, dataSource) {
+getDatabaseAndCohortCountForConceptIdsInDatabase <- function(data, dataSource, databaseCount = TRUE) {
   conceptMetadata <- getConceptMetadata(
     dataSource = dataSource,
     cohortIds = data$cohortId %>% unique(),
@@ -510,35 +510,40 @@ getDatabaseAndCohortCountForConceptIdsInDatabase <- function(data, dataSource) {
     getFixedTimeSeries = FALSE,
     getRelativeTimeSeries = FALSE
   )
-  if (!is.null(conceptMetadata$indexEventBreakdown)) {
-    if (all(
-      !is.null(conceptMetadata$indexEventBreakdown),
-      nrow(conceptMetadata$indexEventBreakdown) > 0
-    )) {
+  if (!databaseCount) {
+    if (!is.null(conceptMetadata$indexEventBreakdown)) {
+      if (all(
+        !is.null(conceptMetadata$indexEventBreakdown),
+        nrow(conceptMetadata$indexEventBreakdown) > 0
+      )) {
+        data <- data %>%
+          dplyr::left_join(
+            conceptMetadata$indexEventBreakdown %>%
+              dplyr::filter(.data$domainTable == "All") %>%
+              dplyr::select(
+                .data$conceptId,
+                .data$databaseId,
+                .data$conceptCount,
+                .data$subjectCount
+              ) %>%
+              dplyr::rename(
+                "records" = .data$conceptCount,
+                "persons" = .data$subjectCount
+              ),
+            by = c("conceptId", "databaseId")
+          )
+      }
+    }
+  } else {
+    if (!is.null(conceptMetadata$databaseConceptCount)) {
       data <- data %>%
-        dplyr::left_join(
-          conceptMetadata$indexEventBreakdown %>%
-            dplyr::filter(.data$domainTable == "All") %>%
-            dplyr::select(
-              .data$conceptId,
-              .data$databaseId,
-              .data$conceptCount,
-              .data$subjectCount
-            ) %>%
-            dplyr::rename(
-              conceptCountCohort = .data$conceptCount,
-              subjectCountCohort = .data$subjectCount
-            ),
-          by = c("conceptId", "databaseId")
+        dplyr::left_join(conceptMetadata$databaseConceptCount,
+                         by = c("conceptId", "databaseId")) %>%
+        dplyr::rename(
+          "records" = .data$conceptCount,
+          "persons" = .data$subjectCount
         )
     }
-  }
-  if (!is.null(conceptMetadata$databaseConceptCount)) {
-    data <- data %>%
-      dplyr::left_join(
-        conceptMetadata$databaseConceptCount,
-        by = c("conceptId", "databaseId")
-      )
   }
   if (!is.null(conceptMetadata$concept)) {
     data <- data %>%
@@ -564,14 +569,14 @@ getDatabaseAndCohortCountForConceptIdsInDatabase <- function(data, dataSource) {
     attr(x = data, which = "databaseCount") <-
       conceptMetadata$databaseCount
   }
-  if ('conceptCount' %in% colnames(data)) {
+  if ('records' %in% colnames(data)) {
     data <- data %>%
-      dplyr::arrange(dplyr::desc(abs(.data$conceptCount)))
+      dplyr::arrange(dplyr::desc(abs(.data$records)))
   } else {
-    data$conceptCount <- as.integer(NA)
+    data$records <- as.integer(NA)
   }
-  if (!'subjectCount' %in% colnames(data)) {
-    data$subjectCount <- as.integer(NA)
+  if (!'persons' %in% colnames(data)) {
+    data$persons <- as.integer(NA)
   }
   data <- data %>%
     dplyr::mutate(dplyr::across(.cols = dplyr::contains("ount"),

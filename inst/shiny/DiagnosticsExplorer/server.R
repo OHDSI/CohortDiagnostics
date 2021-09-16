@@ -325,7 +325,7 @@ shiny::shinyServer(function(input, output, session) {
                                             ),
                                             tags$td(align = "right",
                                                     shiny::radioButtons(
-                                                      inputId = "targetConceptSetsCohortANdDatabaseLevelFilter",
+                                                      inputId = "targetConceptIdCountSource",
                                                       label = "",
                                                       choices = c("Database level", "Cohort Level"),
                                                       selected = "Database level",
@@ -579,7 +579,7 @@ shiny::shinyServer(function(input, output, session) {
                                             ),
                                             tags$td(align = "right",
                                                     shiny::radioButtons(
-                                                      inputId = "comparatorConceptSetsCohortANdDatabaseLevelFilter",
+                                                      inputId = "comparatorConceptIdCountSource",
                                                       label = "",
                                                       choices = c("Database level", "Cohort Level"),
                                                       selected = "Database level",
@@ -1288,8 +1288,12 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdTarget())
     }
-    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(data = data, 
-                                                             dataSource = dataSource)
+    browser()
+    data <- getDatabaseAndCohortCountForConceptIds(
+      data = data,
+      dataSource = dataSource,
+      databaseCount = input$targetConceptIdCountSource == "Database level"
+    )
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -1312,8 +1316,11 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdComparator())
     }
-    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(data = data, 
-                                                             dataSource = dataSource)
+    data <- getDatabaseAndCohortCountForConceptIds(
+      data = data,
+      dataSource = dataSource,
+      databaseCount = input$comparatorConceptIdCountSource == "Database level"
+    )
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -1341,7 +1348,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(data)) {
       return(NULL)
     }
-    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(data = data, 
+    data <- getDatabaseAndCohortCountForConceptIds(data = data, 
                                                              dataSource = dataSource)
     if (is.null(data)) {
       return(NULL)
@@ -1373,7 +1380,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>%
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdComparator())
-    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(data = data, 
+    data <- getDatabaseAndCohortCountForConceptIds(data = data, 
                                                              dataSource = dataSource)
     data <- data %>% 
       dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
@@ -1405,7 +1412,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data  %>%
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget())
-    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(data = data, 
+    data <- getDatabaseAndCohortCountForConceptIds(data = data, 
                                                              dataSource = dataSource)
     if (is.null(data)) {
       return(NULL)
@@ -1438,7 +1445,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data  %>%
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdComparator())
-    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(data = data, 
+    data <- getDatabaseAndCohortCountForConceptIds(data = data, 
                                                              dataSource = dataSource)
     if (is.null(data)) {
       return(NULL)
@@ -2461,7 +2468,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
       
-      if (input$targetConceptSetsCohortANdDatabaseLevelFilter == "Database level") {
+      if (input$targetConceptIdCountSource == "Database level") {
         data <- data %>% 
           dplyr::rename("records" = .data$conceptCount,
                         "persons" = .data$subjectCount)
@@ -3018,7 +3025,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
       
-      if (input$comparatorConceptSetsCohortANdDatabaseLevelFilter == "Database level") {
+      if (input$comparatorConceptIdCountSource == "Database level") {
         data <- data %>% 
           dplyr::rename("records" = .data$conceptCount,
                         "persons" = .data$subjectCount)
