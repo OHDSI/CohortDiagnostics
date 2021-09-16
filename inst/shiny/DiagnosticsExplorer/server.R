@@ -4619,7 +4619,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   ##output: timeDistributionPlot----
-  output$timeDistributionPlot <- ggiraph::renderggiraph(expr = {
+  output$timeDistributionPlot <- plotly::renderPlotly(expr = {
     validate(need(doesObjectHaveData(consolidatedDatabaseIdTarget()),
       "No data sources chosen"))
     data <- getTimeDistributionData()

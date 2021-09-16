@@ -623,7 +623,10 @@ bodyTabItems <- shinydashboard::tabItems(
       status = "primary",
       tags$br(),
       tags$h4("Time distribution"),
-      ggiraph::ggiraphOutput("timeDistributionPlot", width = "100%", height = "100%"),
+      plotly::plotlyOutput("timeDistributionPlot", height = "auto"),
+      tags$head(
+        tags$style("#timeDistributionPlot { width: '90vw' !important};")
+      ),
       tags$table(width = "100%", 
                  tags$tr(
                    tags$td(align = "right",
