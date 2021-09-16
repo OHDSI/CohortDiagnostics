@@ -3338,7 +3338,9 @@ shiny::shinyServer(function(input, output, session) {
   #Radio button synchronization----
   shiny::observeEvent(eventExpr = {
     list(input$targetConceptSetsType,
-         input$targetCohortDefinitionTabSetPanel)
+         input$targetCohortDefinitionTabSetPanel,
+         input$targetConceptIdCountSource
+         )
   }, handlerExpr = {
     if (getWidthOfLeftPanelForCohortDetailBrowserInCohortDefinitionTabBasedOnNoOfRowSelectedInCohortTable() == 6) {
       if (!is.null(input$targetConceptSetsType)) {
@@ -3369,18 +3371,40 @@ shiny::shinyServer(function(input, output, session) {
                              selected = "Concept Set Sql")
         }
       }
+    
+      if (!is.null(input$targetConceptIdCountSource)) {
+        if (input$targetConceptIdCountSource == "Database level") {
+          updateRadioButtons(session = session,
+                             inputId = "comparatorConceptIdCountSource",
+                             selected = "Database level")
+        } else {
+          updateRadioButtons(session = session,
+                             inputId = "comparatorConceptIdCountSource",
+                             selected = "Cohort Level")
+        }
+      }
       
       if (!is.null(input$targetCohortDefinitionTabSetPanel)) {
         if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionDetailsTextTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "comparatorCohortDefinitionDetailsTextTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "comparatorCohortDefinitionTabSetPanel", 
+                                   selected = "comparatorCohortDefinitionDetailsTextTabPanel")
         } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionCohortCountTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "comparatorCohortDefinitionCohortCountTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "comparatorCohortDefinitionTabSetPanel", 
+                                   selected = "comparatorCohortDefinitionCohortCountTabPanel")
         } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionConceptSetTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "comparatorCohortDefinitionConceptSetTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "comparatorCohortDefinitionTabSetPanel", 
+                                   selected = "comparatorCohortDefinitionConceptSetTabPanel")
         } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionJsonTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "comparatorCohortDefinitionJsonTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "comparatorCohortDefinitionTabSetPanel", 
+                                   selected = "comparatorCohortDefinitionJsonTabPanel")
         } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionSqlTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "comparatorCohortDefinitionSqlTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "comparatorCohortDefinitionTabSetPanel", 
+                                   selected = "comparatorCohortDefinitionSqlTabPanel")
         }
       }
     }
@@ -3389,7 +3413,8 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observeEvent(eventExpr = {
     list(
       input$comparatorConceptSetsType,
-      input$comparatorCohortDefinitionTabSetPanel
+      input$comparatorCohortDefinitionTabSetPanel,
+      input$comparatorConceptIdCountSource
     )
   }, handlerExpr = {
     if (getWidthOfLeftPanelForCohortDetailBrowserInCohortDefinitionTabBasedOnNoOfRowSelectedInCohortTable() == 6) {
@@ -3411,7 +3436,6 @@ shiny::shinyServer(function(input, output, session) {
                              inputId = "targetConceptSetsType",
                              selected = "Orphan concepts")
         } else if (input$comparatorConceptSetsType == "Concept Set Json") {
-          #!! call this "Concept Set JSON"
           updateRadioButtons(session = session,
                              inputId = "targetConceptSetsType",
                              selected = "Concept Set Json")
@@ -3424,15 +3448,37 @@ shiny::shinyServer(function(input, output, session) {
       
       if (!is.null(input$comparatorCohortDefinitionTabSetPanel)) {
         if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionDetailsTextTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionDetailsTextTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "targetCohortDefinitionTabSetPanel", 
+                                   selected = "targetCohortDefinitionDetailsTextTabPanel")
         } else if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionCohortCountTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionCohortCountTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "targetCohortDefinitionTabSetPanel", 
+                                   selected = "targetCohortDefinitionCohortCountTabPanel")
         } else if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionConceptSetTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionConceptSetTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "targetCohortDefinitionTabSetPanel", 
+                                   selected = "targetCohortDefinitionConceptSetTabPanel")
         } else if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionJsonTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionJsonTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "targetCohortDefinitionTabSetPanel", 
+                                   selected = "targetCohortDefinitionJsonTabPanel")
         } else if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionSqlTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionSqlTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "targetCohortDefinitionTabSetPanel", 
+                                   selected = "targetCohortDefinitionSqlTabPanel")
+        }
+      }
+      
+      if (!is.null(input$comparatorConceptIdCountSource)) {
+        if (input$comparatorConceptIdCountSource == "Database level") {
+          updateRadioButtons(session = session,
+                             inputId = "targetConceptIdCountSource",
+                             selected = "Database level")
+        } else {
+          updateRadioButtons(session = session,
+                             inputId = "targetConceptIdCountSource",
+                             selected = "Cohort Level")
         }
       }
     }
