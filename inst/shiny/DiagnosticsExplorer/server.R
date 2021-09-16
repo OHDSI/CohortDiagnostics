@@ -5007,66 +5007,19 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    
-    cohortAndPersonCount <- cohortCount %>% 
-      dplyr::filter(.data$databaseId %in% activeSelected()$databaseId) %>% 
-      dplyr::filter(.data$cohortId %in% activeSelected()$cohortId) %>%
-      dplyr::distinct() %>%
-      dplyr::mutate(cohortSubjects = scales::comma(.data$cohortSubjects,
-                                                   accuracy = 1)) %>%
-      dplyr::mutate(cohortEntries = scales::comma(.data$cohortEntries,
-                                                  accuracy = 1))
-    
-    data <- data %>%
-      dplyr::inner_join(cohortAndPersonCount,
-                        by = c('cohortId',
-                               'databaseId'))
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    browser()
     if (input$indexEventBreakdownTableFilter == "Records") {
       data <- data %>%
-        dplyr::mutate(type = paste0(
-          .data$databaseId,
-          " (",
-          .data$cohortEntries,
-          ") ",
-          .data$type
-        ))
+        dplyr::select(-dplyr::contains("subjectValue"))
     }
     if (input$indexEventBreakdownTableFilter == "Persons") {
       data <- data %>%
-        dplyr::mutate(type = paste0(
-          .data$databaseId,
-          " (",
-          .data$cohortSubjects,
-          ") ",
-          .data$type
-        ))
+        dplyr::select(-dplyr::contains("conceptValue"))
     }
-    
-    data <- data %>%
-      tidyr::pivot_wider(
-        id_cols = c(
-          "cohortId",
-          "conceptId",
-          "conceptName",
-          "vocabularyId",
-          "domainTable",
-          "domainField",
-          "cohortEntries",
-          "cohortSubjects"
-        ),
-        names_from = type,
-        values_from = count,
-        values_fill = 0
-      ) %>%
-      dplyr::distinct()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    data <- data[order(-data[9]),]
+    data <- data%>% 
+      dplyr::arrange(dplyr::desc(abs(dplyr::across(.cols = dplyr::contains("Value")))))
     return(data)
   })
   
@@ -5083,27 +5036,33 @@ shiny::shinyServer(function(input, output, session) {
         ),
         value = 0
       )
-      indexEventBreakdownDataTable <-
+      data <-
         getIndexEventBreakdownDataTable()
       validate(
         need(
-          doesObjectHaveData(indexEventBreakdownDataTable),
+          doesObjectHaveData(data),
           "No index event breakdown data for the chosen combination."
         )
       )
-      data <- indexEventBreakdownDataTable %>%
-        dplyr::select(-.data$cohortId, -.data$cohortSubjects, -.data$cohortEntries)
-      maxCount <-
-        max(indexEventBreakdownDataTable[9], na.rm = TRUE)
+      data <- data %>% 
+        dplyr::select(-.data$cohortId)
+      maxCount <- data %>% 
+        dplyr::summarise(dplyr::across(dplyr::contains("value"), ~ max(.x))) %>% 
+        tidyr::pivot_longer(values_to = "value", cols = dplyr::everything()) %>% 
+        dplyr::pull() %>% 
+        max()
       databaseIds <- input$selectedDatabaseIds
       
-      personCount <- indexEventBreakdownDataTable %>% 
-        dplyr::pull(.data$cohortSubjects) %>% 
-        unique()
+      personCount <- cohortCount %>% 
+        dplyr::filter(.data$cohortId %in% c(data$cohortId %>% unique())) %>% 
+        dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
+        dplyr::select(.data$databaseId, .data$cohortSubjects)
       
-      recordCount <- indexEventBreakdownDataTable %>% 
-        dplyr::pull(.data$cohortEntries) %>% 
-        unique()
+      recordCount <- cohortCount %>% 
+        dplyr::filter(.data$cohortId %in% c(data$cohortId %>% unique())) %>% 
+        dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
+        dplyr::pull(.data$databaseId, .data$cohortEntries)
+      
       noOfMergeColumns <- 1
       if (input$indexEventBreakdownTableFilter == "Records") {
         data <- data %>%
