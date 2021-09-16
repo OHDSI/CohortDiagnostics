@@ -4551,15 +4551,11 @@ shiny::shinyServer(function(input, output, session) {
   #Time Distribution----
   ##output: getTimeDistributionData----
   getTimeDistributionData <- reactive({
-    if (any(
-      is.null(consolidatedDatabaseIdTarget()),
-      length(consolidatedDatabaseIdTarget()) == 0
-    )) {
+    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
     if (all(is(dataSource, "environment"),
-            !exists('timeDistribution')))
-    {
+            !exists('timeDistribution'))) {
       return(NULL)
     }
     data <- getResultsTimeDistribution(
@@ -4602,12 +4598,10 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: saveTimeDistributionTable----
   output$saveTimeDistributionTable <-  downloadHandler(
-    filename = function()
-    {
+    filename = function() {
       getCsvFileNameWithDateTime(string = "timeDistribution")
     },
-    content = function(file)
-    {
+    content = function(file) {
       downloadCsv(x = getTimeDistributionTableData(),
                   fileName = file)
     }
@@ -4616,11 +4610,8 @@ shiny::shinyServer(function(input, output, session) {
   ##output: timeDistributionTable----
   output$timeDistributionTable <- DT::renderDataTable(expr = {
     data <- getTimeDistributionTableData()
-    validate(need(
-      all(!is.null(data), nrow(data) > 0),
-      "No data available for selected combination."
-    ))
-    
+    validate(need(doesObjectHaveData(data), 
+             "No data available for selected combination."))
     options = list(
       pageLength = 100,
       lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -4651,14 +4642,12 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: timeDistributionPlot----
   output$timeDistributionPlot <- ggiraph::renderggiraph(expr = {
-    validate(need(
-      length(consolidatedDatabaseIdTarget()) > 0,
-      "No data sources chosen"
-    ))
+    validate(need(doesObjectHaveData(consolidatedDatabaseIdTarget()),
+      "No data sources chosen"))
     data <- getTimeDistributionData()
-    validate(need(nrow(data) > 0, paste0("No data for this combination")))
-    plot <-
-      plotTimeDistribution(data = data, shortNameRef = cohort)
+    validate(need(doesObjectHaveData(data), 
+                  "No data for this combination"))
+    plot <- plotTimeDistribution(data = data, shortNameRef = cohort)
     return(plot)
   })
   
