@@ -268,14 +268,16 @@ renderTranslateQuerySql <-
       if (is.null(attr(connection, "dbms"))) {
         stop("dbms not provided. Unable to translate query.")
       }
-      return(
-        DatabaseConnector::renderTranslateQuerySql(
-          connection = connection,
-          sql = sql,
-          ...,
-          snakeCaseToCamelCase = snakeCaseToCamelCase
+      data <-
+        suppressWarnings(
+          DatabaseConnector::renderTranslateQuerySql(
+            connection = connection,
+            sql = sql,
+            ...,
+            snakeCaseToCamelCase = snakeCaseToCamelCase
+          )
         ) %>% dplyr::tibble()
-      )
+      return(data)
     }
   }
 
@@ -286,10 +288,10 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              conceptSetIds = NULL,
                                              databaseIds = NULL,
                                              dataTableName) {
-  object <- c("cohortId", "conceptId", "databaseId", "conceptSetId")
-  objects <- paste0(object, "s")
-  
+  browser()
   if (is(dataSource, "environment")) {
+    object <- c("cohortId", "conceptId", "databaseId", "conceptSetId")
+    objects <- paste0(object, "s")
     if (!exists(dataTableName, envir = dataSource)) {
       return(NULL)
     }
@@ -315,34 +317,24 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
       stop("Connection to database seems to be closed.")
     }
     
-    sql <- "SELECT *
-            FROM  @results_database_schema.@data_table;"
-    
-    sqlWhere <- ""
-    for (i in (1:length(object))) {
-      if (!is.null(get(objects[[i]]))) {
-        if (length(sqlWhere) >= 3) {
-          sqlWhere <- paste0(sqlWhere,
-                             paste0(camelCaseToSnakeCase(object[[i]]), " in (@", camelCaseToSnakeCase(object[[i]]), ")"),
-                             collapse = " AND ")
-        } else {
-          sqlWhere <- paste0(camelCaseToSnakeCase(object[[i]]), " in (@", camelCaseToSnakeCase(object[[i]]), ")")
-          }
-      }
-    }
-      if (length(sqlWhere) >= 3) {
-        sql <- paste0(sql,
-                      " where ",
-                      sqlWhere)
-      }
+    sql <- "SELECT * \n
+            FROM  @results_database_schema.@data_table \n
+            WHERE 1 = 1 \n
+              {@database_id !=''} ? {AND database_id in (@database_id) \n}
+              {@cohort_id !=''} ? {AND cohort_id in (@cohort_id) \n}
+              {@concept_id !=''} ? {AND concept_id in (@concept_id) \n}
+              {@concept_set_id !=''} ? {AND concept_set_id in (@concept_set_id) \n}
+            ;"
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sql,
         results_database_schema = dataSource$resultsDatabaseSchema,
-        cohort_ids = cohortIds,
+        cohort_id = cohortIds,
         data_table = camelCaseToSnakeCase(dataTableName),
         database_id = quoteLiterals(databaseIds),
+        concept_id = conceptIds,
+        concept_set_id = conceptSetIds,
         snakeCaseToCamelCase = TRUE
       )
   }
