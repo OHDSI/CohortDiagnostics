@@ -478,32 +478,10 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   plotData <-
     addShortName(data = data, shortNameRef = shortNameRef)
   
-  # plotData$tooltip <- c(
-  #   paste0(
-  #     plotData$shortName,
-  #     "\nDatabase = ",
-  #     plotData$databaseId,
-  #     "\nMin = ",
-  #     scales::comma(plotData$minValue, accuracy = 1),
-  #     "\nP25 = ",
-  #     scales::comma(plotData$p25Value, accuracy = 1),
-  #     "\nMedian = ",
-  #     scales::comma(plotData$medianValue, accuracy = 1),
-  #     "\nP75 = ",
-  #     scales::comma(plotData$p75Value, accuracy = 1),
-  #     "\nMax = ",
-  #     scales::comma(plotData$maxValue, accuracy = 1),
-  #     "\nTime Measure = ",
-  #     plotData$timeMetric,
-  #     "\nAverage = ",
-  #     scales::comma(x = plotData$averageValue, accuracy = 0.01)
-  #   )
-  # )
-  
   sortShortName <- plotData %>%
     dplyr::select(.data$shortName) %>%
     dplyr::distinct() %>%
-    dplyr::arrange(-as.integer(sub(
+    dplyr::arrange(as.integer(sub(
       pattern = '^C', '', x = .data$shortName
     )))
   
@@ -525,88 +503,77 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   for (i in 1:length(distinctDatabaseId)) {
     filteredDataByDatabase <- plotData %>%
       dplyr::filter(.data$databaseId == distinctDatabaseId[i])
-    cohortPlots <- list()
-    for (j in 1:length(sortShortName$shortName)) {
-      filteredDataByCohort <- filteredDataByDatabase %>%
-        dplyr::filter((.data$shortName == sortShortName$shortName[j]))
-      timeMetricPlots <- list()
-      for (k in 1:length(distinctTimeMetric)) {
-        rowData <- filteredDataByCohort %>%
-          dplyr::filter(.data$timeMetric == distinctTimeMetric[k])
-        selectedRowdata <-
-          c(
-            rowData$minValue,
-            rowData$p25Value,
-            rowData$medianValue,
-            rowData$p75Value,
-            rowData$maxValue
+    timeMetricPlots  <- list()
+    for (j in 1:length(distinctTimeMetric)) {
+      filteredDataByTimeMetric <- filteredDataByDatabase %>%
+        dplyr::filter(.data$timeMetric == distinctTimeMetric[j])
+      cohortPlots <- plotly::plot_ly(height = plotHeight)
+      for (k in 1:length(sortShortName$shortName)) {
+        rowData <-  filteredDataByTimeMetric %>%
+          dplyr::filter((.data$shortName == sortShortName$shortName[k]))
+        selectedRowdata <- c(
+            ifelse(length(rowData$minValue) > 0,rowData$minValue,''),
+            ifelse(length(rowData$p25Value) > 0,rowData$p25Value,''),
+            ifelse(length(rowData$medianValue) > 0,rowData$medianValue,''),
+            ifelse(length(rowData$p75Value) > 0,rowData$p75Value,''),
+            ifelse(length(rowData$maxValue) > 0,rowData$maxValue,'')
           )
-        timeMetricPlots[[k]] <-
-          plotly::plot_ly(x = selectedRowdata, 
-                          type = "box",
-                          color = I('#440154FF'),
-                          text = ~paste0(
-                            rowData$shortName,
-                            "\nDatabase = ",
-                            rowData$databaseId,
-                            "\nMin = ",
-                            scales::comma(rowData$minValue, accuracy = 1),
-                            "\nP25 = ",
-                            scales::comma(rowData$p25Value, accuracy = 1),
-                            "\nMedian = ",
-                            scales::comma(rowData$medianValue, accuracy = 1),
-                            "\nP75 = ",
-                            scales::comma(rowData$p75Value, accuracy = 1),
-                            "\nMax = ",
-                            scales::comma(rowData$maxValue, accuracy = 1),
-                            "\nTime Measure = ",
-                            rowData$timeMetric,
-                            "\nAverage = ",
-                            scales::comma(x = rowData$averageValue, accuracy = 0.01)
-                          ),
-                          height = plotHeight) %>%
-          plotly::layout(
-            showlegend = FALSE,
-            xaxis = list(range = c(xAxisMin, xAxisMax), tickformat = ",d"),
-            yaxis = list(showticklabels = FALSE)
-          )
-        
-        if (i == 1 && j == 1) {
-          timeMetricPlots[[k]] <- timeMetricPlots[[k]] %>%
-            plotly::layout(
-              annotations = list(
-                x = 0.5 + (k - (length(
-                  distinctTimeMetric
-                ) + 1) / 2) * 0.3,
-                y = 1.1,
-                text = camelCaseToTitleCase(distinctTimeMetric[[k]]),
-                showarrow = FALSE,
-                xref = "paper",
-                yref = "paper"
-              )
-            )
-        }
-        
-        if (j != length(sortShortName$shortName)) {
-          timeMetricPlots[[k]] <-
-            timeMetricPlots[[k]] %>% plotly::layout(xaxis = list(showticklabels = FALSE))
-        }
-        
+        cohortPlots <- cohortPlots %>% 
+          plotly::add_boxplot(x = selectedRowdata,
+                              name = sortShortName$shortName[k],
+                              color = I('#440154FF'),
+                              boxpoints = FALSE,
+                              text = ~paste0(
+                                rowData$shortName,
+                                "\nDatabase = ",
+                                rowData$databaseId,
+                                "\nMin = ",
+                                scales::comma(rowData$minValue, accuracy = 1),
+                                "\nP25 = ",
+                                scales::comma(rowData$p25Value, accuracy = 1),
+                                "\nMedian = ",
+                                scales::comma(rowData$medianValue, accuracy = 1),
+                                "\nP75 = ",
+                                scales::comma(rowData$p75Value, accuracy = 1),
+                                "\nMax = ",
+                                scales::comma(rowData$maxValue, accuracy = 1),
+                                "\nTime Measure = ",
+                                rowData$timeMetric,
+                                "\nAverage = ",
+                                scales::comma(x = rowData$averageValue, accuracy = 0.01)
+                              ))
       }
-      cohortPlots[[j]] <- plotly::subplot(timeMetricPlots) %>%
+      
+      cohortPlots <- cohortPlots %>%
         plotly::layout(
-          annotations = list(
-            x = -0.02,
-            y = 0.5,
-            text = camelCaseToTitleCase(sortShortName$shortName[j]),
-            showarrow = FALSE,
-            xref = "paper",
-            yref = "paper"
+        showlegend = FALSE,
+        xaxis = list(range = c(xAxisMin, xAxisMax), tickformat = ",d")
+      )
+      
+      if (i != length(distinctDatabaseId) && length(distinctDatabaseId) < 3) {
+        cohortPlots <-
+          cohortPlots %>% plotly::layout(xaxis = list(showticklabels = FALSE))
+      }
+     
+      if (i == 1) {
+        cohortPlots <- cohortPlots %>%
+          plotly::layout(
+            annotations = list(
+              x = 0.5 + (j - (length(
+                distinctTimeMetric
+              ) + 1) / 2) * 0.3,
+              y = 1.1,
+              text = camelCaseToTitleCase(distinctTimeMetric[[j]]),
+              showarrow = FALSE,
+              xref = "paper",
+              yref = "paper"
+            )
           )
-        )
+      }
+      timeMetricPlots[[j]] <- cohortPlots
     }
     databasePlots[[i]] <-
-      plotly::subplot(cohortPlots, nrows = length(cohortPlots), margin = 0) %>%
+      plotly::subplot(timeMetricPlots) %>%
       plotly::layout(
         annotations = list(
           x = 1.02,
@@ -615,11 +582,13 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
           showarrow = FALSE,
           xref = "paper",
           yref = "paper",
-          textangle = 90
+          xanchor = "right",
+          yanchor = "middle",
+          textangle = 90,
+          font = list(size = 18)
         )
       )
   }
-  
   m <- list(
     l = 50,
     r = 50,
@@ -627,8 +596,8 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
     t = 50
   )
   finalPlot <-
-    plotly::subplot(databasePlots, nrows = length(databasePlots)) %>%
-    plotly::layout(autosize = T, margin = m)
+    plotly::subplot(databasePlots, nrows = length(databasePlots), margin = 0.008) %>% 
+    plotly::layout(margin = m)
   
   return(finalPlot)
 }
