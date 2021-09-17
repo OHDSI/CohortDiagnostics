@@ -587,8 +587,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
             )
         }
         
-        if (i != length(distinctDatabaseId) ||
-            j != length(sortShortName$shortName)) {
+        if (j != length(sortShortName$shortName)) {
           timeMetricPlots[[k]] <-
             timeMetricPlots[[k]] %>% plotly::layout(xaxis = list(showticklabels = FALSE))
         }
@@ -607,7 +606,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
         )
     }
     databasePlots[[i]] <-
-      plotly::subplot(cohortPlots, nrows = length(cohortPlots)) %>%
+      plotly::subplot(cohortPlots, nrows = length(cohortPlots), margin = 0) %>%
       plotly::layout(
         annotations = list(
           x = 1.02,
@@ -625,8 +624,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
     l = 50,
     r = 50,
     b = 0,
-    t = 50,
-    pad = 4
+    t = 50
   )
   finalPlot <-
     plotly::subplot(databasePlots, nrows = length(databasePlots)) %>%
