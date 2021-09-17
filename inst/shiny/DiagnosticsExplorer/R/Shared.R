@@ -283,8 +283,12 @@ renderTranslateQuerySql <-
 getDataFromResultsDatabaseSchema <- function(dataSource,
                                              cohortIds = NULL,
                                              conceptIds = NULL,
+                                             conceptSetIds = NULL,
                                              databaseIds = NULL,
                                              dataTableName) {
+  object <- c("cohortId", "conceptId", "databaseId", "conceptSetId")
+  objects <- paste0(object, "s")
+  
   if (is(dataSource, "environment")) {
     if (!exists(dataTableName, envir = dataSource)) {
       return(NULL)
@@ -296,17 +300,11 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
       warning(paste0(dataTableName, " in environment was found to have o rows."))
     }
     data <- get(dataTableName, envir = dataSource)
-    if (!is.null(cohortIds)) {
-      data <- data %>%
-        dplyr::filter(.data$cohortId %in% !!cohortIds)
-    }
-    if (!is.null(databaseIds)) {
-      data <- data %>%
-        dplyr::filter(.data$databaseId %in% !!databaseIds)
-    }
-    if (!is.null(conceptIds)) {
-      data <- data %>%
-        dplyr::filter(.data$conceptId %in% !!conceptIds)
+    for (i in (1:length(object))) {
+      if (!is.null(get(objects[[i]]))) {
+        data <- data %>%
+          dplyr::filter(!!as.name(object[[i]]) %in% !!get(objects[[i]]))
+      }
     }
   } else {
     if (is.null(dataSource$connection)) {
@@ -318,11 +316,25 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     }
     
     sql <- "SELECT *
-            FROM  @results_database_schema.@data_table
-            {@cohort_ids == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
-            {@cohort_ids != '' & @database_id !=''} ? {  WHERE database_id in (@database_id) AND cohort_id in (@cohort_ids)}
-            {@cohort_ids != '' & @database_id ==''} ? {  WHERE cohort_id in (@cohort_ids)}
-            ;"
+            FROM  @results_database_schema.@data_table;"
+    
+    sqlWhere <- ""
+    for (i in (1:length(object))) {
+      if (!is.null(get(objects[[i]]))) {
+        if (length(sqlWhere) >= 3) {
+          sqlWhere <- paste0(sqlWhere,
+                             paste0(camelCaseToSnakeCase(object[[i]]), " in (@", camelCaseToSnakeCase(object[[i]]), ")"),
+                             collapse = " AND ")
+        } else {
+          sqlWhere <- paste0(camelCaseToSnakeCase(object[[i]]), " in (@", camelCaseToSnakeCase(object[[i]]), ")")
+          }
+      }
+    }
+      if (length(sqlWhere) >= 3) {
+        sql <- paste0(sql,
+                      " where ",
+                      sqlWhere)
+      }
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
@@ -334,7 +346,6 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         snakeCaseToCamelCase = TRUE
       )
   }
-  
   if (nrow(data) == 0) {
     return(NULL)
   }
