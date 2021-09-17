@@ -287,11 +287,14 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              conceptIds = NULL,
                                              conceptSetIds = NULL,
                                              databaseIds = NULL,
+                                             vocabularyDatabaseSchema = NULL,
                                              dataTableName) {
-  browser()
   if (is(dataSource, "environment")) {
     object <- c("cohortId", "conceptId", "databaseId", "conceptSetId")
     objects <- paste0(object, "s")
+    if (!is.null(vocabularyDatabaseSchema)) {
+      "vocabularyDatabaseSchema provided for function 'getResultsConcept', \nbut working in local file mode. VocabularyDatabaseSchema will be ignored."
+    }
     if (!exists(dataTableName, envir = dataSource)) {
       return(NULL)
     }
@@ -325,11 +328,16 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
               {@concept_id !=''} ? {AND concept_id in (@concept_id) \n}
               {@concept_set_id !=''} ? {AND concept_set_id in (@concept_set_id) \n}
             ;"
+    if (!is.null(vocabularyDatabaseSchema)) {
+      resultsDatabaseSchema <- vocabularyDatabaseSchema
+    } else {
+      resultsDatabaseSchema <- dataSource$resultsDatabaseSchema
+    }
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sql,
-        results_database_schema = dataSource$resultsDatabaseSchema,
+        results_database_schema = resultsDatabaseSchema,
         cohort_id = cohortIds,
         data_table = camelCaseToSnakeCase(dataTableName),
         database_id = quoteLiterals(databaseIds),
@@ -488,54 +496,14 @@ getExecutionMetadata <- function(dataSource) {
 getConcept <- function(dataSource = .GlobalEnv,
                        vocabularyDatabaseSchema = NULL,
                        conceptIds = NULL) {
-  table <- "concept"
-  if (!is.null(vocabularyDatabaseSchema) &&
-      is(dataSource, "environment")) {
-    warning(
-      "vocabularyDatabaseSchema provided for function 'getResultsConcept', \nbut working in local file mode. VocabularyDatabaseSchema will be ignored."
-    )
+  if (!is.null(vocabularyDatabaseSchema)) {
+    resultsDatabaseSchema <- vocabularyDatabaseSchema
   }
-  if (is(dataSource, "environment")) {
-    if (any(!exists(table),
-            length(table) == 0,
-            nrow(table) == 0)) {
-      return(NULL)
-    }
-    data <- get(table, envir = dataSource)
-    if (!is.null(conceptIds)) {
-      data <- data %>%
-        dplyr::filter(.data$conceptId %in% conceptIds)
-    }
-  } else {
-    sql <- "SELECT *
-            FROM @vocabulary_database_schema.concept
-            {@concept_ids != ''} ? {WHERE concept_id IN (@concept_ids)};"
-    if (!is.null(conceptIds)) {
-      sql <-
-        SqlRender::render(sql = sql,
-                          concept_ids = conceptIds)
-    }
-    if (!is.null(vocabularyDatabaseSchema)) {
-      sql <-
-        SqlRender::render(sql = sql,
-                          vocabulary_database_schema = vocabularyDatabaseSchema)
-    } else {
-      sql <-
-        SqlRender::render(
-          sql = sql,
-          vocabulary_database_schema = dataSource$vocabularyDatabaseSchema
-        )
-    }
-    data <-
-      renderTranslateQuerySql(
-        connection = dataSource$connection,
-        sql = sql,
-        snakeCaseToCamelCase = TRUE
-      )
-  }
-  if (nrow(data) == 0) {
-    return(NULL)
-  }
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource = dataSource,
+    dataTableName = "concept",
+    conceptIds = !!conceptIds
+  )
   return(data)
 }
 
