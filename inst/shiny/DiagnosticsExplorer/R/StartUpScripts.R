@@ -496,9 +496,9 @@ getStlModelOutputForTsibbleDataValueFields <- function(tsibbleData, valueFields 
 getDatabaseAndCohortCountForConceptIdsInDatabase <- function(data, dataSource, databaseCount = TRUE) {
   conceptMetadata <- getConceptMetadata(
     dataSource = dataSource,
-    cohortIds = data$cohortId %>% unique(),
-    databaseIds = data$databaseId %>% unique(),
-    conceptIds = data$conceptId %>% unique(),
+    cohortId = data$cohortId %>% unique(),
+    databaseId = data$databaseId %>% unique(),
+    conceptId = data$conceptId %>% unique(),
     getIndexEventCount = TRUE,
     getConceptCount = TRUE,
     getConceptRelationship = FALSE,

@@ -7,7 +7,7 @@
 getConceptSynonym(
   dataSource = .GlobalEnv,
   vocabularyDatabaseSchema = NULL,
-  conceptIds = NULL
+  conceptId = NULL
 )
 }
 \arguments{

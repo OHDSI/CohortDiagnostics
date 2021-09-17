@@ -6,10 +6,10 @@
 \usage{
 getConceptMetadata(
   dataSource,
-  databaseIds = NULL,
-  cohortIds = NULL,
+  databaseId = NULL,
+  cohortId = NULL,
   vocabularyDatabaseSchema = NULL,
-  conceptIds = NULL,
+  conceptId = NULL,
   getDatabaseMetadata = TRUE,
   getConceptRelationship = TRUE,
   getConceptAncestor = TRUE,
@@ -30,18 +30,10 @@ compiled into RData using \code{preMergeDiagnosticsFiles}. Database DataSources 
 database (only a postgres database is supported) with tables created with DDL function \code{createResultsDataModel}
 and uploaded using \code{uploadResults}}
 
-\item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
-character field values from the `databaseId` field of the `database` table 
-of the results data model.}
-
-\item{cohortIds}{A vector of one or more Cohort Ids.}
-
 \item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
 commonly the same as cdmDatabaseSchema. Note that for 
 SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
-
-\item{conceptIds}{A vector of one or more Concept Ids.}
 
 \item{getDatabaseMetadata}{Do you want to get database metadata i.e. person/records/person days in observation table}
 
@@ -62,6 +54,14 @@ schema name, for example 'vocabulary.dbo'.}
 \item{getFixedTimeSeries}{Do you want a conceptIds database level time series data reported on actual dates?}
 
 \item{getRelativeTimeSeries}{Do you want cohort level time series data reported relative to cohort start date?}
+
+\item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
+character field values from the `databaseId` field of the `database` table 
+of the results data model.}
+
+\item{cohortIds}{A vector of one or more Cohort Ids.}
+
+\item{conceptIds}{A vector of one or more Concept Ids.}
 }
 \value{
 Returns a list of data frames (tibbles)

@@ -87,7 +87,7 @@ getResultsConceptCountSummary <- function(dataSource,
 }
 Returns data from concept_subjects table of Cohort Diagnostics results data model}
 \usage{
-getResultsConceptSubjects(dataSource, databaseIds = NULL, conceptIds = NULL)
+getResultsConceptSubjects(dataSource, databaseIds = NULL, conceptId = NULL)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 

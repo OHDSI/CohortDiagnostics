@@ -4,7 +4,7 @@
 \alias{getResultsConceptCount}
 \title{Returns data from concept_count table of Cohort Diagnostics results data model}
 \usage{
-getResultsConceptCount(dataSource, databaseIds = NULL, conceptIds = NULL)
+getResultsConceptCount(dataSource, databaseId = NULL, conceptId = NULL)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 

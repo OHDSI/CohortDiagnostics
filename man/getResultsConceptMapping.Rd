@@ -4,7 +4,7 @@
 \alias{getResultsConceptMapping}
 \title{Returns data from concept_mapping table of Cohort Diagnostics results data model}
 \usage{
-getResultsConceptMapping(dataSource, databaseIds = NULL, conceptIds = NULL)
+getResultsConceptMapping(dataSource, databaseIds = NULL, conceptId = NULL)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 

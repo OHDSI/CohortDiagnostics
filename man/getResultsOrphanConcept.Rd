@@ -4,7 +4,12 @@
 \alias{getResultsOrphanConcept}
 \title{Returns data from orphan_concept table of Cohort Diagnostics results data model}
 \usage{
-getResultsOrphanConcept(dataSource, cohortIds = NULL, databaseIds = NULL)
+getResultsOrphanConcept(
+  dataSource,
+  cohortId = NULL,
+  databaseId = NULL,
+  conceptSetId = NULL
+)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 

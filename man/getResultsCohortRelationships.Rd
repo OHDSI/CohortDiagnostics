@@ -4,7 +4,7 @@
 \alias{getResultsCohortRelationships}
 \title{Returns data from cohort_relationships table of Cohort Diagnostics results data model}
 \usage{
-getResultsCohortRelationships(dataSource, cohortIds = NULL, databaseIds = NULL)
+getResultsCohortRelationships(dataSource, cohortId = NULL, databaseId = NULL)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 

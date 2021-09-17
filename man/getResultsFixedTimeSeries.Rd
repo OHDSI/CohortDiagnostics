@@ -4,7 +4,7 @@
 \alias{getResultsFixedTimeSeries}
 \title{Returns data from time_series table of Cohort Diagnostics results data model}
 \usage{
-getResultsFixedTimeSeries(dataSource, cohortIds = NULL, databaseIds = NULL)
+getResultsFixedTimeSeries(dataSource, cohortId = NULL, databaseId = NULL)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 

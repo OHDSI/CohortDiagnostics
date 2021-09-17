@@ -6,8 +6,8 @@
 \usage{
 getResultsInclusionRuleStatistics(
   dataSource,
-  cohortIds = NULL,
-  databaseIds = NULL
+  cohortId = NULL,
+  databaseId = NULL
 )
 }
 \arguments{

@@ -4,7 +4,7 @@
 \alias{getResultsConceptCooccurrence}
 \title{Returns concept cooccurrence for a list of cohortIds and databaseIds combinations}
 \usage{
-getResultsConceptCooccurrence(dataSource, databaseIds = NULL, cohortIds = NULL)
+getResultsConceptCooccurrence(dataSource, databaseId = NULL, cohortId = NULL)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 
@@ -14,11 +14,11 @@ compiled into RData using \code{preMergeDiagnosticsFiles}. Database DataSources 
 database (only a postgres database is supported) with tables created with DDL function \code{createResultsDataModel}
 and uploaded using \code{uploadResults}}
 
+\item{cohortIds}{A vector of one or more Cohort Ids.}
+
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
-
-\item{cohortIds}{A vector of one or more Cohort Ids.}
 }
 \value{
 Returns a data frame (tibble)
