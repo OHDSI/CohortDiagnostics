@@ -5772,8 +5772,8 @@ shiny::shinyServer(function(input, output, session) {
     {
       return(NULL)
     }
-    data <- getCohortOverlap(dataSource = dataSource,
-                             cohortIds = consolidatedCohortIdTarget())
+    data <- getResultsCohortOverlap(dataSource = dataSource,
+                                    cohortIds = consolidatedCohortIdTarget())
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }

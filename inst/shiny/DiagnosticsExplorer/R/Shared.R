@@ -2068,7 +2068,7 @@ getResultsCohortRelationships <- function(dataSource,
 #' Returns data for use in cohort_overlap
 #'
 #' @export
-getCohortOverlap <- function(dataSource,
+getResultsCohortOverlap <- function(dataSource,
                              cohortIds = NULL,
                              databaseIds = NULL) {
   cohortCounts <-
@@ -3298,4 +3298,77 @@ getDomainInformation <- function(packageName = NULL) {
     dplyr::mutate(dplyr::across(where(is.character), ~ tidyr::replace_na(.x, as.character('')))) %>%
     dplyr::mutate(dplyr::across(where(is.logical), ~ tidyr::replace_na(.x, as.character('')))) %>%
     dplyr::mutate(dplyr::across(where(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
+}
+
+
+
+#' Extract results from cohort diagnostics
+#'
+#' @description
+#' Extract results from cohort diagnostics results data model for vector of cohort ids
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @return
+#' list of R objects that may then be converted to reports
+#' @export
+getResultsCompiledOutput <- function(dataSource,
+                                     cohortIds) {
+  output <- list()
+  for (i in (1:length(cohortIds))) {
+    output[[paste0("cohortId", cohortIds[[i]])]][["cohort"]] <-
+      getResultsCohort(dataSource = dataSource) %>%
+      dplyr::filter(.data$cohortId %in% cohortIds[[i]])
+    output[[paste0("cohortId", cohortIds[[i]])]][["cohortCount"]] <-
+      getResultsCohortCount(dataSource = dataSource,
+                            cohortIds = cohortIds[[i]])
+    output[[paste0("cohortId", cohortIds[[i]])]][["inclusionRuleStatistics"]] <-
+      getResultsInclusionRuleStatistics(dataSource = dataSource,
+                                        cohortIds = cohortIds[[i]])
+    output[[paste0("cohortId", cohortIds[[i]])]][["cohortInclusion"]] <-
+      getResultsCohortInclusion(dataSource = dataSource,
+                                cohortIds = cohortIds[[i]])
+    output[[paste0("cohortId", cohortIds[[i]])]][["cohortInclusionStats"]] <-
+      getResultsCohortInclusionStats(dataSource = dataSource,
+                                     cohortIds = cohortIds[[i]])
+    output[[paste0("cohortId", cohortIds[[i]])]][["cohortSummaryStats"]] <-
+      getResultsCohortSummaryStats(dataSource = dataSource,
+                                   cohortIds = cohortIds[[i]])
+    output[[paste0("cohortId", cohortIds[[i]])]][["fixedTimeSeries"]] <-
+      getResultsFixedTimeSeries(dataSource = dataSource,
+                                cohortIds = cohortIds[[i]])
+    output[[paste0("cohortId", cohortIds[[i]])]][["timeDistribution"]] <-
+      getResultsTimeDistribution(dataSource = dataSource,
+                                 cohortIds = cohortIds[[i]])
+    output[[paste0("cohortId", cohortIds[[i]])]][["incidenceRate"]] <-
+      getResultsIncidenceRate(dataSource = dataSource,
+                              cohortIds = cohortIds[[i]])
+    output[[paste0("cohortId", cohortIds[[i]])]][["indexEventBreakdown"]] <-
+      getResultsIndexEventBreakdown(dataSource = dataSource,
+                                    cohortIds = cohortIds[[i]])
+    output[[paste0("cohortId", cohortIds[[i]])]][["visitContext"]] <-
+      getResultsVisitContext(dataSource = dataSource,
+                             cohortIds = cohortIds[[i]])
+    output[[paste0("cohortId", cohortIds[[i]])]][["cohortRelationships"]] <-
+      getResultsCohortRelationships(dataSource = dataSource,
+                                    cohortIds = cohortIds[[i]])
+    output[[paste0("cohortId", cohortIds[[i]])]][["cohortOverlap"]] <-
+      getResultsCohortOverlap(dataSource = dataSource,
+                              cohortIds = cohortIds[[i]])
+    output[[paste0("cohortId", cohortIds[[i]])]][["circe"]] <-
+      getCirceRenderedExpression(
+        cohortDefinition = output[[paste0("cohortId", cohortIds[[i]])]][["cohort"]] %>%
+          dplyr::pull(.data$json) %>%
+          RJSONIO::fromJSON(digits = 23)
+      )
+    output[[paste0("cohortId", cohortIds[[i]])]][["resolvedConcepts"]] <-
+      getResultsResolvedConcepts(dataSource = dataSource,
+                                 cohortIds = cohortIds[[i]])
+    output[[paste0("cohortId", cohortIds[[i]])]][["characterization"]] <-
+      getMultipleCharacterizationResults(dataSource = dataSource,
+                                         cohortIds = cohortIds[[i]])
+  }
+  return(output)
 }
