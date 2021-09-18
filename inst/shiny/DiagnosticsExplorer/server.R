@@ -1276,6 +1276,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
+    
     data <- getResultsResolvedConcepts(
       dataSource = dataSource,
       cohortId = consolidatedCohortIdTarget(),
@@ -1285,6 +1286,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    
     data <- getDatabaseAndCohortCountForConceptIdsInDatabase(
       data = data,
       dataSource = dataSource,
@@ -2065,16 +2067,6 @@ shiny::shinyServer(function(input, output, session) {
         data <- getMetadataForConceptId()
         validate(need(doesObjectHaveData(data), "No data for selected combination"))
         
-        #!!!!! put selectd concept details as a shared header
-        # tags$h4(paste0(
-        #   data$concept %>% 
-        #     dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
-        #     dplyr::pull(.data$conceptName),
-        #   " (",
-        #   activeSelected()$conceptId,
-        #   ")"
-        # )),
-        # tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", ")),
         panels[[inc]] <- shiny::tabPanel(
           title = "Concept Set Browser",
           value = "conceptSetBrowser",
@@ -2459,7 +2451,7 @@ shiny::shinyServer(function(input, output, session) {
         length(consolidatedCohortIdTarget()) > 0,
         "Please select concept set"
       ))
-      browser()
+      
       data <- getResolvedConceptsTarget()
       validate(need((all(
         !is.null(data), nrow(data) > 0

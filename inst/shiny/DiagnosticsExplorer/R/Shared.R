@@ -514,7 +514,7 @@ getConcept <- function(dataSource = .GlobalEnv,
   data <- getDataFromResultsDatabaseSchema(
     dataSource = dataSource,
     dataTableName = "concept",
-    conceptId = !!conceptId
+    conceptId = conceptId
   )
   return(data)
 }
