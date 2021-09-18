@@ -1005,7 +1005,8 @@ plotCohortComparisonStandardizedDifference <- function(balance,
       "Procedure",
       "Cohort")
   balance$domain <- balance$domainId
-  balance$domain[!balance$domain %in% domains] <- "other"
+  balance$domain[!balance$domain %in% domains] <- "Other"
+
   
   if (domain != "all") {
     balance <- balance %>%
@@ -1059,22 +1060,32 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   # Code used to generate palette:
   # writeLines(paste(RColorBrewer::brewer.pal(n = length(domains), name = "Dark2"), collapse = "\", \""))
   
-  # Make sure colors are consistent, no matter which domains are included:
-  colors <-
-    c(
-      "#1B9E77",
-      "#D95F02",
-      "#7570B3",
-      "#E7298A",
-      "#66A61E",
-      "#E6AB02",
-      "#A6761D",
-      "#444444"
+  balance <- balance %>% 
+    dplyr::inner_join(
+      read.csv('colorReference.csv') %>% 
+        dplyr::filter(.data$type == "domain") %>% 
+        dplyr::mutate(domain = .data$name, colors = .data$value) %>% 
+        dplyr::select(.data$domain,.data$colors),
+      by = "domain"
     )
-  colors <- colors[c(domains, "other") %in% unique(balance$domain)]
   
-  balance$domain <-
-    factor(balance$domain, levels = c(domains, "other"))
+  
+  # Make sure colors are consistent, no matter which domains are included:
+  # colors <-
+  #   c(
+  #     "#1B9E77",
+  #     "#D95F02",
+  #     "#7570B3",
+  #     "#E7298A",
+  #     "#66A61E",
+  #     "#E6AB02",
+  #     "#A6761D",
+  #     "#444444"
+  #   )
+  # colors <- colors[c(domains, "other") %in% unique(balance$domain)]
+  # 
+  # balance$domain <-
+  #   factor(balance$domain, levels = c(domains, "other")) %>% unique()
   
   # targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
   # comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
@@ -1086,41 +1097,17 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     dplyr::distinct(balance$comparatorCohort) %>%
     dplyr::pull()
   
-  plot <-
-    ggplot2::ggplot(balance,
-                    ggplot2::aes(
-                      x = .data$mean1,
-                      y = .data$mean2,
-                      color = .data$domain
-                    )) +
-    ggiraph::geom_point_interactive(
-      ggplot2::aes(tooltip = .data$tooltip),
-      size = 3,
-      shape = 16,
-      alpha = 0.5
-    ) +
-    ggplot2::geom_abline(slope = 1,
-                         intercept = 0,
-                         linetype = "dashed") +
-    ggplot2::geom_hline(yintercept = 0) +
-    ggplot2::geom_vline(xintercept = 0) +
-    # ggplot2::scale_x_continuous("Mean") +
-    # ggplot2::scale_y_continuous("Mean") +
-    ggplot2::xlab(paste("Covariate Mean in ", xCohort)) +
-    ggplot2::ylab(paste("Covariate Mean in ", yCohort)) +
-    ggplot2::scale_color_manual("Domain", values = colors) +
-    facet_nested(databaseId + targetCohort ~ comparatorCohort) +
-    ggplot2::theme(strip.background = ggplot2::element_blank()) +
-    ggplot2::xlim(xLimitMin, xLimitMax) +
-    ggplot2::ylim(yLimitMin, yLimitMax)
+  plot <- plotly::plot_ly(balance, x = ~mean1, y = ~mean2, text = ~tooltip, type = 'scatter',
+          mode = "markers", color = ~domain, colors = ~colors, opacity = 0.4, marker = list(size = 12,
+                                                                                            line = list(color = 'rgb(255,255,255)', width = 1))) %>% 
+    plotly::layout(xaxis = list(title = list(text =  paste("Covariate Mean in ", xCohort),
+                                             font = list(size = 18)),
+                                range = c(0, 1)),
+                   yaxis = list(title = list(text =  paste("Covariate Mean in ", yCohort),
+                                             font = list(size = 18)),
+                                range = c(0, 1))
+                   )
   
-  plot <- ggiraph::girafe(
-    ggobj = plot,
-    options = list(ggiraph::opts_sizing(width = .7),
-                   ggiraph::opts_zoom(max = 5)),
-    width_svg = 12,
-    height_svg = 5
-  )
   return(plot)
 }
 

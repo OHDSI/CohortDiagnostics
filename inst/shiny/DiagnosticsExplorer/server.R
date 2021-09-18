@@ -7341,7 +7341,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ###compareCharacterizationPlot----
   output$compareCharacterizationPlot <-
-    ggiraph::renderggiraph(expr = {
+    plotly::renderPlotly(expr = {
       if (input$tabs != "compareCohortCharacterization")
       {
         return(NULL)
