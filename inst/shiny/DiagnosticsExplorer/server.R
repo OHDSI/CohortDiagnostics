@@ -298,8 +298,7 @@ shiny::shinyServer(function(input, output, session) {
               shiny::conditionalPanel(
                 condition = "output.isTargetCohortDefinitionConceptSetsTableRowSelected == true",
                 shinydashboard::box(
-                  title = shiny::textOutput(outputId = "targetConceptSetExpressionName"),
-                  ###!!!! add another textOutput with much smaller font and put cohort name here (next line)
+                  title = shiny::htmlOutput(outputId = "targetConceptSetExpressionName"),
                   width = NULL,
                   solidHeader = FALSE,
                   collapsible = TRUE,
@@ -552,8 +551,7 @@ shiny::shinyServer(function(input, output, session) {
               shiny::conditionalPanel(
                 condition = "output.isComparatorCohortDefinitionConceptSetRowSelected == true",
                 shinydashboard::box(
-                  title = shiny::textOutput(outputId = "comparatorConceptSetExpressionName"),
-                  ###!!!! add another textOutput with much smaller font and put cohort name here (next line)
+                  title = shiny::htmlOutput(outputId = "comparatorConceptSetExpressionName"),
                   solidHeader = FALSE,
                   width = NULL,
                   collapsible = TRUE,
@@ -2204,22 +2202,35 @@ shiny::shinyServer(function(input, output, session) {
   
   #output: targetConceptSetExpressionName----
   output$targetConceptSetExpressionName <-
-    shiny::renderText(expr = {
+    shiny::renderUI(expr = {
       if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
         return(NULL)
       }
       if (!doesObjectHaveData(consolidatedConceptSetIdTarget())) {
         return(NULL)
       }
-      data <- conceptSets %>%
+      
+      conceptSetName <- conceptSets %>%
         dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
         dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdTarget()) %>%
         dplyr::pull(.data$conceptSetName)
-      data <- paste0("Target cohort:", data, " (", consolidatedCohortIdTarget(), ")")
-      if (!doesObjectHaveData(data)) {
-        return(NULL)
-      }
-      return(data)
+      
+      cohortName <- cohort %>% 
+        dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
+        dplyr::pull(.data$compoundName)
+      
+      tags$table(
+        tags$tr(
+          tags$td(
+            tags$h4(paste0("Concept set name:", conceptSetName))
+          )
+        ),
+        tags$tr(
+          tags$td(
+            tags$h6("Target cohort:", cohortName, "(", consolidatedCohortIdTarget(), ")")
+          )
+        )
+      )
     })
   
   ##getConceptSetsInCohortDataTarget----
@@ -2850,22 +2861,35 @@ shiny::shinyServer(function(input, output, session) {
   
   #output: comparatorConceptSetExpressionName----
   output$comparatorConceptSetExpressionName <-
-    shiny::renderText(expr = {
+    shiny::renderUI(expr = {
       if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
         return(NULL)
       }
       if (!doesObjectHaveData(consolidatedConceptSetIdComparator())) {
         return(NULL)
       }
-      data <- conceptSets %>%
+      
+      conceptSetName <- conceptSets %>%
         dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator()) %>%
         dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdComparator()) %>%
         dplyr::pull(.data$conceptSetName)
-      data <- paste0("Comparator cohort:", data, " (", consolidatedCohortIdComparator(), ")")
-      if (!doesObjectHaveData(data)) {
-        return(NULL)
-      }
-      return(data)
+      
+      cohortName <- cohort %>% 
+        dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
+        dplyr::pull(.data$compoundName)
+      
+      tags$table(
+        tags$tr(
+          tags$td(
+            tags$h4(paste0("Concept set name:", conceptSetName))
+          )
+        ),
+        tags$tr(
+          tags$td(
+            tags$h6("Comparator cohort:", cohortName, "(", consolidatedCohortIdComparator(), ")")
+          )
+        )
+      )
     })
   
   ##output: conceptsetExpressionTableComparator----
