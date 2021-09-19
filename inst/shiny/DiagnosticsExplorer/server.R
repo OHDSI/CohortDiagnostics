@@ -7948,7 +7948,7 @@ shiny::shinyServer(function(input, output, session) {
   ##!!!!!!!!!!!!! address https://github.com/OHDSI/CohortDiagnostics/issues/444
   ###compareTemporalCharacterizationPlot----
   output$compareTemporalCharacterizationPlot <-
-    ggiraph::renderggiraph(expr = {
+    plotly::renderPlotly(expr = {
       if (input$tabs != "compareTemporalCharacterization")
       {
         return(NULL)

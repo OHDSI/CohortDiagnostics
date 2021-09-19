@@ -1273,10 +1273,13 @@ bodyTabItems <- shinydashboard::tabItems(
         title = "Compare Temporal Characterization",
         width = NULL,
         status = "primary",
-        ggiraph::ggiraphOutput(
+        plotly::plotlyOutput(
           outputId = "compareTemporalCharacterizationPlot",
           width = "100%",
-          height = "100%"
+          height = "auto"
+        ),
+        tags$head(
+          tags$style("#compareTemporalCharacterizationPlot { width: '90vw' !important};")
         )
       )
     )

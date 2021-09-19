@@ -1178,26 +1178,34 @@ plotTemporalCompareStandardizedDifference <- function(balance,
         balance$choices
       )
     )
+  balance <- balance %>% 
+    dplyr::inner_join(
+      read.csv('colorReference.csv') %>% 
+        dplyr::filter(.data$type == "domain") %>% 
+        dplyr::mutate(domain = .data$name, colors = .data$value) %>% 
+        dplyr::select(.data$domain,.data$colors),
+      by = "domain"
+    )
   
   # Code used to generate palette:
   # writeLines(paste(RColorBrewer::brewer.pal(n = length(domains), name = "Dark2"), collapse = "\", \""))
   
   # Make sure colors are consistent, no matter which domains are included:
-  colors <-
-    c(
-      "#1B9E77",
-      "#D95F02",
-      "#7570B3",
-      "#E7298A",
-      "#66A61E",
-      "#E6AB02",
-      "#A6761D",
-      "#444444"
-    )
-  colors <- colors[c(domains, "other") %in% unique(balance$domain)]
+  # colors <-
+  #   c(
+  #     "#1B9E77",
+  #     "#D95F02",
+  #     "#7570B3",
+  #     "#E7298A",
+  #     "#66A61E",
+  #     "#E6AB02",
+  #     "#A6761D",
+  #     "#444444"
+  #   )
+  # colors <- colors[c(domains, "other") %in% unique(balance$domain)]
   
-  balance$domain <-
-    factor(balance$domain, levels = c(domains, "other"))
+  # balance$domain <-
+  #   factor(balance$domain, levels = c(domains, "other"))
   
   # targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
   # comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
@@ -1217,48 +1225,95 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   #   dplyr::distinct() %>%
   #   dplyr::arrange(.data$startDay) %>%
   #   dplyr::pull(.data$choices)
-  
-  plot <-
-    ggplot2::ggplot(balance,
-                    ggplot2::aes(
-                      x = .data$mean1,
-                      y = .data$mean2,
-                      color = .data$domain
-                    )) +
-    ggiraph::geom_point_interactive(
-      ggplot2::aes(tooltip = .data$tooltip),
-      size = 3,
-      shape = 16,
-      alpha = 0.5
-    ) +
-    ggplot2::geom_abline(slope = 1,
-                         intercept = 0,
-                         linetype = "dashed") +
-    ggplot2::geom_hline(yintercept = 0) +
-    ggplot2::geom_vline(xintercept = 0) +
-    ggplot2::xlab(paste("Covariate Mean in ", xCohort)) +
-    ggplot2::ylab(paste("Covariate Mean in ", yCohort)) +
-    # ggplot2::scale_x_continuous("Mean") +
-    # ggplot2::scale_y_continuous("Mean") +
-    ggplot2::scale_color_manual("Domain", values = colors) +
-    ggplot2::facet_grid(cols = ggplot2::vars(choices)) + # need to facet by 'startDay' that way it is arranged in numeric order.
-    # but labels should be based on choices
-    # ggplot2::facet_wrap(~choices) +
-    ggplot2::theme(
-      strip.background = ggplot2::element_blank(),
-      panel.spacing = ggplot2::unit(2, "lines")
-    ) +
-    ggplot2::xlim(xLimitMin, xLimitMax) +
-    ggplot2::ylim(yLimitMin, yLimitMax)
-  
-  numberOfTimeIds <- balance$timeId %>% unique() %>% length()
-  
-  plot <- ggiraph::girafe(
-    ggobj = plot,
-    options = list(ggiraph::opts_sizing(rescale = TRUE)),
-    width_svg = max(8, 3 * numberOfTimeIds),
-    height_svg = 3
+  distinctChoices <- balance$choices %>% unique()
+  choicesPlot <- list()
+  for (i in 1:length(distinctChoices)) {
+    filteredData <- balance %>% 
+      dplyr::filter(.data$choices == distinctChoices[i])
+    choicesPlot[[i]] <- plotly::plot_ly(filteredData, x = ~mean1, y = ~mean2, text = ~tooltip, type = 'scatter', height = (as.integer(length(distinctChoices)/6) + 1) * 500,
+                            mode = "markers", color = ~domain, colors = ~colors, opacity = 0.5, marker = list(size = 12,
+                                                                                                              line = list(color = 'rgb(255,255,255)', width = 1))) %>% 
+      plotly::layout(
+        xaxis = list(range = c(0, 1)),
+        yaxis = list(range = c(0, 1)),
+        annotations = list(
+                       x = 0.5 ,
+                       y = 1.05,
+                       text = distinctChoices[[i]],
+                       showarrow = F,
+                       xanchor = "center",
+                       yanchor = "middle",
+                       xref = 'paper',
+                       yref = 'paper'
+                     ))
+  }
+  m <- list(
+    l = 100,
+    r = 0,
+    b = 100,
+    t = 50
   )
+  plot <- plotly::subplot(choicesPlot, nrows = as.integer(length(distinctChoices)/6) + 1, margin = 0.01) %>% 
+    plotly::layout(showlegend = FALSE,
+                   # yaxis = list(title = list(text =  paste("Covariate Mean in ", yCohort),
+                   #                           font = list(size = 18))),
+                   annotations = list(
+                     x = c(0.5, -0.04) ,
+                     y = c(-0.1 +  0.0145 * (as.integer(length(distinctChoices)/6) + 1), 0.5),
+                     text = c(paste("Covariate Mean in ", xCohort), paste("Covariate Mean in ", yCohort)),
+                     showarrow = F,
+                     xanchor = "center",
+                     yanchor = "middle",
+                     xref = 'paper',
+                     yref = 'paper',
+                     font = list(size = 18),
+                     textangle = c(0, -90)
+                   ),
+                   margin = m) 
+    
+    
+  
+  # plot <-
+  #   ggplot2::ggplot(balance,
+  #                   ggplot2::aes(
+  #                     x = .data$mean1,
+  #                     y = .data$mean2,
+  #                     color = .data$domain
+  #                   )) +
+  #   ggiraph::geom_point_interactive(
+  #     ggplot2::aes(tooltip = .data$tooltip),
+  #     size = 3,
+  #     shape = 16,
+  #     alpha = 0.5
+  #   ) +
+  #   ggplot2::geom_abline(slope = 1,
+  #                        intercept = 0,
+  #                        linetype = "dashed") +
+  #   ggplot2::geom_hline(yintercept = 0) +
+  #   ggplot2::geom_vline(xintercept = 0) +
+  #   ggplot2::xlab(paste("Covariate Mean in ", xCohort)) +
+  #   ggplot2::ylab(paste("Covariate Mean in ", yCohort)) +
+  #   # ggplot2::scale_x_continuous("Mean") +
+  #   # ggplot2::scale_y_continuous("Mean") +
+  #   ggplot2::scale_color_manual("Domain", values = colors) +
+  #   ggplot2::facet_grid(cols = ggplot2::vars(choices)) + # need to facet by 'startDay' that way it is arranged in numeric order.
+  #   # but labels should be based on choices
+  #   # ggplot2::facet_wrap(~choices) +
+  #   ggplot2::theme(
+  #     strip.background = ggplot2::element_blank(),
+  #     panel.spacing = ggplot2::unit(2, "lines")
+  #   ) +
+  #   ggplot2::xlim(xLimitMin, xLimitMax) +
+  #   ggplot2::ylim(yLimitMin, yLimitMax)
+  # 
+  # numberOfTimeIds <- balance$timeId %>% unique() %>% length()
+  # 
+  # plot <- ggiraph::girafe(
+  #   ggobj = plot,
+  #   options = list(ggiraph::opts_sizing(rescale = TRUE)),
+  #   width_svg = max(8, 3 * numberOfTimeIds),
+  #   height_svg = 3
+  # )
   return(plot)
 }
 
