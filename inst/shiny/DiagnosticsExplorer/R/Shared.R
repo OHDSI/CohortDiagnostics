@@ -1234,8 +1234,8 @@ getConceptMetadata <- function(dataSource,
   if (getRelativeTimeSeries) {
     relativeTimeSeries <-
       getFeatureExtractionTemporalCharacterization(dataSource = dataSource,
-                                                   cohortId = cohortId,
-                                                   databaseId = databaseId)
+                                                   cohortIds = cohortId,
+                                                   databaseIds = databaseId)
     if (!is.null(relativeTimeSeries)) {
       #filter to active conceptId
       if (!is.null(relativeTimeSeries$temporalCovariateRef)) {
@@ -2020,8 +2020,8 @@ getResultsCohortOverlap <- function(dataSource,
                              databaseIds = NULL) {
   cohortCounts <-
     getResultsCohortCount(dataSource = dataSource,
-                          cohortIds = cohortIds,
-                          databaseIds = databaseIds)
+                          cohortId = cohortIds,
+                          databaseId = databaseIds)
   
   if (any(is.null(cohortCounts),
           nrow(cohortCounts) == 0)) {
@@ -2036,8 +2036,8 @@ getResultsCohortOverlap <- function(dataSource,
   
   cohortRelationship <-
     getResultsCohortRelationships(dataSource = dataSource,
-                                  cohortIds = cohortIds,
-                                  databaseIds = databaseIds)
+                                  cohortId = cohortIds,
+                                  databaseId = databaseIds)
   
   if (any(is.null(cohortRelationship),
           nrow(cohortRelationship) == 0)) {
@@ -2176,12 +2176,12 @@ getFeatureExtractionCharacterization <-
                           conceptId = covariateRef$conceptId %>% unique())
     covariateValue <-
       getResultsCovariateValue(dataSource = dataSource,
-                               cohortIds = cohortIds,
-                               databaseIds = databaseIds)
+                               cohortId = cohortIds,
+                               databaseId = databaseIds)
     covariateValueDist <-
       getResultsCovariateValueDist(dataSource = dataSource,
-                                   cohortIds = cohortIds,
-                                   databaseIds = databaseIds)
+                                   cohortId = cohortIds,
+                                   databaseId = databaseIds)
     return(
       list(
         analysisRef = analysisRef,
@@ -2227,13 +2227,13 @@ getFeatureExtractionTemporalCharacterization <-
                           conceptId = temporalCovariateRef$conceptId %>% unique())
     temporalCovariateValue <-
       getResultsTemporalCovariateValue(dataSource = dataSource,
-                                       cohortIds = cohortIds,
-                                       databaseIds = databaseIds)
+                                       cohortId = cohortIds,
+                                       databaseId = databaseIds)
     # temporary till https://github.com/OHDSI/FeatureExtraction/issues/127
     temporalCovariateValueDist <-
       getResultsTemporalCovariateValueDist(dataSource = dataSource,
-                                           cohortIds = cohortIds,
-                                           databaseIds = databaseIds)
+                                           cohortId = cohortIds,
+                                           databaseId = databaseIds)
     if (all(!is.null(temporalCovariateValueDist),
             nrow(temporalCovariateValueDist) > 0)) {
       temporalCovariateValueDist <- temporalCovariateValueDist %>%
@@ -2279,14 +2279,14 @@ getCohortRelationshipCharacterizationResults <-
     # meta information
     cohortCounts <-
       getResultsCohortCount(dataSource = dataSource,
-                            cohortIds = cohortIds,
-                            databaseIds = databaseIds)
+                            cohortId = cohortIds,
+                            databaseId = databaseIds)
     cohort <- getResultsCohort(dataSource = dataSource)
     
     cohortRelationships <-
       getResultsCohortRelationships(dataSource = dataSource,
-                                    cohortIds = cohortIds,
-                                    databaseIds = databaseIds)
+                                    cohortId = cohortIds,
+                                    databaseId = databaseIds)
     
     # comparator cohort was on or after target cohort
     summarizeCohortRelationship <- function(data,
@@ -2481,14 +2481,14 @@ getCohortAsFeatureTemporalCharacterizationResults <-
     # meta information
     cohortCounts <-
       getResultsCohortCount(dataSource = dataSource,
-                            cohortIds = cohortIds,
-                            databaseIds = databaseIds)
+                            cohortId = cohortIds,
+                            databaseId = databaseIds)
     cohort <- getResultsCohort(dataSource = dataSource)
     
     cohortRelationships <-
       getResultsCohortRelationships(dataSource = dataSource,
-                                    cohortIds = cohortIds,
-                                    databaseIds = databaseIds)
+                                    cohortId = cohortIds,
+                                    databaseId = databaseIds)
     
     if (is.null(cohortRelationships) ||
         nrow(cohortRelationships) == 0) {
@@ -3270,37 +3270,37 @@ getResultsCompiledOutput <- function(dataSource,
       dplyr::filter(.data$cohortId %in% cohortIds[[i]])
     output[[paste0("cohortId", cohortIds[[i]])]][["cohortCount"]] <-
       getResultsCohortCount(dataSource = dataSource,
-                            cohortIds = cohortIds[[i]])
+                            cohortId = cohortIds[[i]])
     output[[paste0("cohortId", cohortIds[[i]])]][["inclusionRuleStatistics"]] <-
       getResultsInclusionRuleStatistics(dataSource = dataSource,
-                                        cohortIds = cohortIds[[i]])
+                                        cohortId = cohortIds[[i]])
     output[[paste0("cohortId", cohortIds[[i]])]][["cohortInclusion"]] <-
       getResultsCohortInclusion(dataSource = dataSource,
-                                cohortIds = cohortIds[[i]])
+                                cohortId = cohortIds[[i]])
     output[[paste0("cohortId", cohortIds[[i]])]][["cohortInclusionStats"]] <-
       getResultsCohortInclusionStats(dataSource = dataSource,
-                                     cohortIds = cohortIds[[i]])
+                                     cohortId = cohortIds[[i]])
     output[[paste0("cohortId", cohortIds[[i]])]][["cohortSummaryStats"]] <-
       getResultsCohortSummaryStats(dataSource = dataSource,
-                                   cohortIds = cohortIds[[i]])
+                                   cohortId = cohortIds[[i]])
     output[[paste0("cohortId", cohortIds[[i]])]][["fixedTimeSeries"]] <-
       getResultsFixedTimeSeries(dataSource = dataSource,
-                                cohortIds = cohortIds[[i]])
+                                cohortId = cohortIds[[i]])
     output[[paste0("cohortId", cohortIds[[i]])]][["timeDistribution"]] <-
       getResultsTimeDistribution(dataSource = dataSource,
-                                 cohortIds = cohortIds[[i]])
+                                 cohortId = cohortIds[[i]])
     output[[paste0("cohortId", cohortIds[[i]])]][["incidenceRate"]] <-
       getResultsIncidenceRate(dataSource = dataSource,
-                              cohortIds = cohortIds[[i]])
+                              cohortId = cohortIds[[i]])
     output[[paste0("cohortId", cohortIds[[i]])]][["indexEventBreakdown"]] <-
       getResultsIndexEventBreakdown(dataSource = dataSource,
-                                    cohortIds = cohortIds[[i]])
+                                    cohortId = cohortIds[[i]])
     output[[paste0("cohortId", cohortIds[[i]])]][["visitContext"]] <-
       getResultsVisitContext(dataSource = dataSource,
-                             cohortIds = cohortIds[[i]])
+                             cohortId = cohortIds[[i]])
     output[[paste0("cohortId", cohortIds[[i]])]][["cohortRelationships"]] <-
       getResultsCohortRelationships(dataSource = dataSource,
-                                    cohortIds = cohortIds[[i]])
+                                    cohortId = cohortIds[[i]])
     output[[paste0("cohortId", cohortIds[[i]])]][["cohortOverlap"]] <-
       getResultsCohortOverlap(dataSource = dataSource,
                               cohortIds = cohortIds[[i]])
@@ -3312,7 +3312,7 @@ getResultsCompiledOutput <- function(dataSource,
       )
     output[[paste0("cohortId", cohortIds[[i]])]][["resolvedConcepts"]] <-
       getResultsResolvedConcepts(dataSource = dataSource,
-                                 cohortIds = cohortIds[[i]])
+                                 cohortId = cohortIds[[i]])
     output[[paste0("cohortId", cohortIds[[i]])]][["characterization"]] <-
       getMultipleCharacterizationResults(dataSource = dataSource,
                                          cohortIds = cohortIds[[i]])
