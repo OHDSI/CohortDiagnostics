@@ -6,9 +6,9 @@
 \usage{
 getResultsOrphanConcept(
   dataSource,
-  cohortId = NULL,
-  databaseId = NULL,
-  conceptSetId = NULL
+  cohortIds = NULL,
+  databaseIds = NULL,
+  conceptSetIds = NULL
 )
 }
 \arguments{
@@ -24,6 +24,8 @@ and uploaded using \code{uploadResults}}
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
+
+\item{conceptSetIds}{A vector of one or more Concept set Ids.}
 }
 \value{
 Returns a data frame (tibble).

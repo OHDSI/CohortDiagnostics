@@ -6,9 +6,9 @@
 \usage{
 getResultsResolvedConcepts(
   dataSource,
-  databaseId = NULL,
-  cohortId = NULL,
-  conceptSetId = NULL
+  databaseIds = NULL,
+  cohortIds = NULL,
+  conceptSetIds = NULL
 )
 }
 \arguments{
@@ -19,11 +19,11 @@ compiled into RData using \code{preMergeDiagnosticsFiles}. Database DataSources 
 database (only a postgres database is supported) with tables created with DDL function \code{createResultsDataModel}
 and uploaded using \code{uploadResults}}
 
-\item{cohortIds}{A vector of one or more Cohort Ids.}
-
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
+
+\item{cohortIds}{A vector of one or more Cohort Ids.}
 }
 \value{
 Returns a data frame (tibble)

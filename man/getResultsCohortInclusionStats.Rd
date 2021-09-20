@@ -4,7 +4,11 @@
 \alias{getResultsCohortInclusionStats}
 \title{Returns data from cohort_inclusion_stats table of Cohort Diagnostics results data model}
 \usage{
-getResultsCohortInclusionStats(dataSource, cohortId = NULL, databaseId = NULL)
+getResultsCohortInclusionStats(
+  dataSource,
+  cohortIds = NULL,
+  databaseIds = NULL
+)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 
