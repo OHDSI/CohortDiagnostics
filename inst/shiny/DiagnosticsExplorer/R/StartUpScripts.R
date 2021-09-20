@@ -352,7 +352,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
     dplyr::arrange(.data$databaseId) %>% 
     tidyr::pivot_longer(
       names_to = "type",
-      cols = fieldsInData,
+      cols = dplyr::all_of(fieldsInData),
       values_to = "count"
     ) %>%
     dplyr::mutate(type = paste0(.data$type,
@@ -361,7 +361,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
     dplyr::distinct() %>% 
     dplyr::arrange(.data$databaseId, dplyr::desc(.data$type)) %>% #descending to ensure records before persons
     tidyr::pivot_wider(
-      id_cols = colnamesInData,
+      id_cols = dplyr::all_of(colnamesInData),
       names_from = type,
       values_from = count,
       values_fill = 0
