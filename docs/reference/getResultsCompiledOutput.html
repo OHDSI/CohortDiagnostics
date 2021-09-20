@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Returns concept cooccurrence for a list of cohortIds and databaseIds combinations — getResultsConceptCooccurrence • CohortDiagnostics</title>
+<title>Extract results from cohort diagnostics — getResultsCompiledOutput • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,9 +39,8 @@
 
 
 
-<meta property="og:title" content="Returns concept cooccurrence for a list of cohortIds and databaseIds combinations — getResultsConceptCooccurrence" />
-<meta property="og:description" content="Given a list of cohortIds, databaseIds combinations the function returns
-precomputed concept cooccurrence conceptIds for the combination." />
+<meta property="og:title" content="Extract results from cohort diagnostics — getResultsCompiledOutput" />
+<meta property="og:description" content="Extract results from cohort diagnostics results data model for vector of cohort ids" />
 
 
 
@@ -142,22 +141,16 @@ precomputed concept cooccurrence conceptIds for the combination." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Returns concept cooccurrence for a list of cohortIds and databaseIds combinations</h1>
+    <h1>Extract results from cohort diagnostics</h1>
     <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/Shared.R'><code>R/Shared.R</code></a></small>
-    <div class="hidden name"><code>getResultsConceptCooccurrence.Rd</code></div>
+    <div class="hidden name"><code>getResultsCompiledOutput.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Given a list of cohortIds, databaseIds combinations the function returns
-precomputed concept cooccurrence conceptIds for the combination.</p>
+    <p>Extract results from cohort diagnostics results data model for vector of cohort ids</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getResultsConceptCooccurrence</span><span class='op'>(</span>
-  <span class='va'>dataSource</span>,
-  databaseIds <span class='op'>=</span> <span class='cn'>NULL</span>,
-  cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
-  conceptIds <span class='op'>=</span> <span class='cn'>NULL</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>getResultsCompiledOutput</span><span class='op'>(</span><span class='va'>dataSource</span>, <span class='va'>cohortIds</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -172,24 +165,14 @@ database (only a postgres database is supported) with tables created with DDL fu
 and uploaded using <code>uploadResults</code></p></td>
     </tr>
     <tr>
-      <th>databaseIds</th>
-      <td><p>A vector one or more databaseIds to retrieve the results for. This is a 
-character field values from the `databaseId` field of the `database` table 
-of the results data model.</p></td>
-    </tr>
-    <tr>
       <th>cohortIds</th>
       <td><p>A vector of one or more Cohort Ids.</p></td>
-    </tr>
-    <tr>
-      <th>conceptId</th>
-      <td><p>A vector of one or more Concept Ids.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Returns a data frame (tibble)</p>
+    <p>list of R objects that may then be converted to reports</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
