@@ -2229,7 +2229,7 @@ shiny::shinyServer(function(input, output, session) {
         ),
         tags$tr(
           tags$td(
-            tags$h6("Target cohort:", cohortName, "(", consolidatedCohortIdTarget(), ")")
+            tags$h6("Target cohort:", cohortName)
           )
         )
       )
@@ -2887,7 +2887,7 @@ shiny::shinyServer(function(input, output, session) {
         ),
         tags$tr(
           tags$td(
-            tags$h6("Comparator cohort:", cohortName, "(", consolidatedCohortIdComparator(), ")")
+            tags$h6("Comparator cohort:", cohortName)
           )
         )
       )
