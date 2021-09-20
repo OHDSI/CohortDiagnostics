@@ -1109,6 +1109,9 @@ shiny::shinyServer(function(input, output, session) {
   ##Cohort count in cohort definition tab----
   ###getCountsForSelectedCohortsTarget----
   getCountsForSelectedCohortsTarget <- shiny::reactive(x = {
+    if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+      return(NULL)
+    }
     data <- cohortCount %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
       dplyr::select(.data$databaseId,
@@ -1144,8 +1147,8 @@ shiny::shinyServer(function(input, output, session) {
             nrow(data) > 0),
         "There is no inclusion rule data for this cohort."
       ))
-      maxCohortSubjects <- max(data$cohortSubjects)
-      maxCohortEntries <- max(data$cohortEntries)
+      maxCohortSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ubjects")
+      maxCohortEntries <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ntries")
       
       options = list(
         pageLength = 100,
@@ -2587,8 +2590,8 @@ shiny::shinyServer(function(input, output, session) {
             nrow(data) > 0),
         "There is no inclusion rule data for this cohort."
       ))
-      maxCohortSubjects <- max(data$cohortSubjects)
-      maxCohortEntries <- max(data$cohortEntries)
+      maxCohortSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ubjects")
+      maxCohortEntries <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ntries")
       options = list(
         pageLength = 100,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -3050,8 +3053,8 @@ shiny::shinyServer(function(input, output, session) {
       "No excluded concept ids"))
       
       databaseIds <- sort(unique(data$databaseId))
-      maxCount <- max(data$conceptCount, na.rm = TRUE)
-      maxSubject <- max(data$subjectCount, na.rm = TRUE)
+      maxCount <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ount")
+      maxSubject <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ubject")
       databaseCount <- cohortCount %>% 
         dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
         dplyr::rename("records" = .data$cohortEntries,
@@ -3620,8 +3623,8 @@ shiny::shinyServer(function(input, output, session) {
       "No data for the combination"
     ))
     
-    maxValueSubjects <- max(data$cohortSubjects)
-    maxValueEntries <- max(data$cohortEntries)
+    maxValueSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ubjects")
+    maxValueEntries <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ntries")
     databaseIds <- sort(unique(data$databaseId))
     
     if (input$cohortCountsTableColumnFilter == "Both")
@@ -5042,11 +5045,7 @@ shiny::shinyServer(function(input, output, session) {
       )
       data <- data %>% 
         dplyr::select(-.data$cohortId)
-      maxCount <- data %>% 
-        dplyr::summarise(dplyr::across(dplyr::contains("value"), ~ max(.x))) %>% 
-        tidyr::pivot_longer(values_to = "value", cols = dplyr::everything()) %>% 
-        dplyr::pull() %>% 
-        max()
+      maxCount <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "value")
       databaseIds <- input$selectedDatabaseIds
       
       personCount <- cohortCount %>% 
@@ -5636,8 +5635,8 @@ shiny::shinyServer(function(input, output, session) {
           ")"
         )) %>%
         dplyr::pull(.data$databaseIdWithCount)
-      maxSubjects <-
-        getVisitContexDataFiltered()$subjects %>% max(na.rm = TRUE)
+      maxSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = getVisitContexDataFiltered(), 
+                                                                string = "ubjects")
     } else
     {
       databaseIdsWithCount <- cohortCounts %>%
@@ -5648,8 +5647,8 @@ shiny::shinyServer(function(input, output, session) {
           ")"
         )) %>%
         dplyr::pull(.data$databaseIdWithCount)
-      maxSubjects <-
-        getVisitContexDataFiltered()$records %>% max(na.rm = TRUE)
+      maxSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = getVisitContexDataFiltered(), 
+                                                                   string = "ecords")
     }
     
     

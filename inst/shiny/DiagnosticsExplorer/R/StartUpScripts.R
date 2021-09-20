@@ -585,3 +585,12 @@ getDatabaseOrCohortCountForConceptIds <- function(data, dataSource, databaseCoun
     dplyr::distinct()
   return(data)
 }
+
+
+getMaxValueForStringMatchedColumnsInDataFrame <- function(data, string) {
+  data %>% 
+    dplyr::summarise(dplyr::across(dplyr::contains(string), ~ max(.x))) %>% 
+    tidyr::pivot_longer(values_to = "value", cols = dplyr::everything()) %>% 
+    dplyr::pull() %>% 
+    max(na.rm = TRUE)
+}
