@@ -538,11 +538,10 @@ getConcept <- function(dataSource = .GlobalEnv,
 getConceptRelationship <- function(dataSource = .GlobalEnv,
                                    vocabularyDatabaseSchema = NULL,
                                    conceptId = NULL) {
-  browser()
   data <- getDataFromResultsDatabaseSchema(
     dataSource = dataSource,
     dataTableName = "conceptRelationship",
-    conceptId1 = !!conceptId
+    conceptId1 = conceptId
   )
   return(data)
 }
@@ -741,91 +740,6 @@ getResultsConceptMapping <- function(dataSource,
   return(data)
 }
 
-
-#' #' Returns summary data from concept_count table of Cohort Diagnostics results data model
-#' #'
-#' #' @description
-#' #' Returns summary data from concept_count table of Cohort Diagnostics results data model
-#' #'
-#' #' @template DataSource
-#' #'
-#' #' @template DatabaseIds
-#' #'
-#' #' @param conceptIds     A list of concept ids to get counts for
-#' #'
-#' #' @param minDate       Minimum date of range
-#' #' @param maxDate       Maximum date of range
-#' #'
-#' #' @return
-#' #' Returns a data frame (tibble)
-#' #'
-#' #' @export
-#' getResultsConceptCountSummary <- function(dataSource,
-#'                                           databaseIds,
-#'                                           conceptIds,
-#'                                           minDate = NULL,
-#'                                           maxDate = NULL) {
-#'   if (!is.null(minDate)) {
-#'     warning('minDate is currently not implemented, ignoring')
-#'   }
-#'   if (!is.null(maxDate)) {
-#'     warning('maxDate is currently not implemented, ignoring')
-#'   }
-#'   
-#'   if (is(dataSource, "environment")) {
-#'     if (!exists("conceptCount", envir = dataSource)) {
-#'       return(NULL)
-#'     }
-#'     data <- get("conceptCount") %>%
-#'       dplyr::filter(.data$domainField == "All") %>%
-#'       dplyr::filter(.data$domainTable == "All") %>%
-#'       dplyr::filter(.data$eventYear == 0) %>% 
-#'       dplyr::filter(.data$eventMonth == 0) %>% 
-#'       dplyr::filter(.data$conceptId %in% !!conceptIds) %>%
-#'       dplyr::filter(.data$databaseId %in% !!databaseIds) %>%
-#'       dplyr::select(.data$databaseId,
-#'                     .data$conceptId,
-#'                     .data$conceptCount,
-#'                     .data$subjectCount)
-#'   } else {
-#'     if (is.null(dataSource$connection)) {
-#'       stop("No connection provided. Unable to query database.")
-#'     }
-#'     
-#'     if (!DatabaseConnector::dbIsValid(dataSource$connection)) {
-#'       stop("Connection to database seems to be closed.")
-#'     }
-#'     
-#'     sql <- "SELECT a.database_id,
-#'               a.concept_id,
-#'             	a.concept_count,
-#'             	b.subject_count
-#'             FROM @results_database_schema.concept_count
-#'             	WHERE database_id IN (@database_id)
-#'             		AND concept_id IN (@conceptIds)
-#'             		AND domain_table IN ('All')
-#'             		AND domain_field IN ('All')
-#'             		AND event_year = 0
-#'             		AND event_month = 0
-#'             	ORDER BY a.database_id, a.concept_id desc
-#'             ;"
-#'     data <-
-#'       renderTranslateQuerySql(
-#'         connection = dataSource$connection,
-#'         sql = sql,
-#'         results_database_schema = dataSource$resultsDatabaseSchema,
-#'         database_id = quoteLiterals(databaseIds),
-#'         conceptIds = conceptIds,
-#'         snakeCaseToCamelCase = TRUE
-#'       )
-#'   }
-#'   
-#'   if (nrow(data) == 0) {
-#'     return(NULL)
-#'   }
-#'   return(data)
-#' }
-
 #' Returns data from concept_subjects table of Cohort Diagnostics results data model
 #'
 #' @description
@@ -940,8 +854,7 @@ getConceptMetadata <- function(dataSource,
     #output for concept relationship table in shiny app
     conceptRelationship <- dplyr::bind_rows(
       data$conceptRelationship %>%
-        dplyr::filter(is.na(.data$invalidReason) &
-                        .data$conceptId1 == conceptId) %>%
+        dplyr::filter(is.na(.data$invalidReason)) %>%
         dplyr::rename(
           "conceptId" = .data$conceptId2,
           "referenceConceptId" = .data$conceptId1
@@ -952,8 +865,7 @@ getConceptMetadata <- function(dataSource,
           .data$relationshipId
         ),
       data$conceptRelationship %>%
-        dplyr::filter(is.na(.data$invalidReason) &
-                        .data$conceptId2 == conceptId) %>%
+        dplyr::filter(is.na(.data$invalidReason)) %>%
         dplyr::rename(
           "conceptId" = .data$conceptId1,
           "referenceConceptId" = .data$conceptId2
@@ -967,6 +879,7 @@ getConceptMetadata <- function(dataSource,
       dplyr::distinct() %>%
       dplyr::arrange(.data$conceptId) %>% 
       dplyr::group_by(.data$referenceConceptId, .data$conceptId)
+    browser()
     
     #!!!!!!!!! need to collapse relationshipId - to avoid duplication. need to make them come with line break
     # %>% 
@@ -1201,9 +1114,9 @@ getConceptMetadata <- function(dataSource,
         getResultsConceptCooccurrence(
           dataSource = dataSource,
           databaseId = databaseId,
-          cohortId = cohortId
+          cohortId = cohortId,
+          conceptId = data$concept$conceptId %>% unique()
         ) %>%
-        dplyr::filter(.data$conceptId %in% c(data$concept$conceptId %>% unique())) %>%
         dplyr::select(
           .data$conceptId,
           .data$databaseId,
@@ -1225,9 +1138,9 @@ getConceptMetadata <- function(dataSource,
         getResultsIndexEventBreakdown(
           dataSource = dataSource,
           cohortId = cohortId,
-          databaseId = databaseId
-        ) %>%
-        dplyr::filter(.data$conceptId %in% c(data$concept$conceptId %>% unique()))
+          databaseId = databaseId,
+          conceptId = data$concept$conceptId %>% unique()
+        )
     }
   }
   
@@ -1419,6 +1332,8 @@ getResultsOrphanConcept <- function(dataSource,
 #' @template DataSource
 #'
 #' @template CohortIds
+#' 
+#' @template ConceptId
 #'
 #' @template DatabaseIds
 #'
@@ -1428,12 +1343,14 @@ getResultsOrphanConcept <- function(dataSource,
 #' @export
 getResultsConceptCooccurrence <- function(dataSource,
                                           databaseId = NULL,
-                                          cohortId = NULL) {
+                                          cohortId = NULL,
+                                          conceptId = conceptId) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortId = cohortId,
     databaseId = databaseId,
-    dataTableName = "conceptCooccurrence"
+    dataTableName = "conceptCooccurrence",
+    conceptId = conceptId
   )
   return(data)
 }
@@ -1925,12 +1842,14 @@ getResultsIncidenceRate <- function(dataSource,
 #' @export
 getResultsIndexEventBreakdown <- function(dataSource,
                                           cohortId = NULL,
-                                          databaseId = NULL) {
+                                          databaseId = NULL,
+                                          conceptId = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortId = cohortId,
     databaseId = databaseId,
-    dataTableName = "indexEventBreakdown"
+    dataTableName = "indexEventBreakdown",
+    conceptId = conceptId
   )
   return(data)
 }
@@ -1963,10 +1882,6 @@ getResultsVisitContext <- function(dataSource,
     databaseId = databaseId,
     dataTableName = "visitContext"
   )
-  if (any(is.null(data),
-          nrow(data) == 0)) {
-    return(NULL)
-  }
   return(data)
 }
 
@@ -2143,11 +2058,6 @@ getResultsCohortOverlap <- function(dataSource,
 
 
 ## Characterization ----
-
-
-
-
-
 #' Returns cohort characterization output of feature extraction
 #'
 #' @description

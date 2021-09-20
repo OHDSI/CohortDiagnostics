@@ -358,6 +358,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
     dplyr::mutate(type = paste0(.data$type,
                                 " ",
                                 .data$databaseId)) %>%
+    dplyr::distinct() %>% 
     dplyr::arrange(.data$databaseId, dplyr::desc(.data$type)) %>% #descending to ensure records before persons
     tidyr::pivot_wider(
       id_cols = colnamesInData,
@@ -493,7 +494,7 @@ getStlModelOutputForTsibbleDataValueFields <- function(tsibbleData, valueFields 
   return(modelData)
 }
 
-getDatabaseAndCohortCountForConceptIdsInDatabase <- function(data, dataSource, databaseCount = TRUE) {
+getDatabaseOrCohortCountForConceptIds <- function(data, dataSource, databaseCount = TRUE) {
   conceptMetadata <- getConceptMetadata(
     dataSource = dataSource,
     cohortId = data$cohortId %>% unique(),
@@ -580,6 +581,7 @@ getDatabaseAndCohortCountForConceptIdsInDatabase <- function(data, dataSource, d
   }
   data <- data %>%
     dplyr::mutate(dplyr::across(.cols = dplyr::contains("ount"),
-                                .fns = ~ tidyr::replace_na(.x, 0)))
+                                .fns = ~ tidyr::replace_na(.x, 0))) %>% 
+    dplyr::distinct()
   return(data)
 }

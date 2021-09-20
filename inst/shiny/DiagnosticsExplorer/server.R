@@ -1274,7 +1274,6 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
-    
     data <- getResultsResolvedConcepts(
       dataSource = dataSource,
       cohortId = consolidatedCohortIdTarget(),
@@ -1285,7 +1284,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(
+    data <- getDatabaseOrCohortCountForConceptIds(
       data = data,
       dataSource = dataSource,
       databaseCount = input$targetConceptIdCountSource == "Database level"
@@ -1309,7 +1308,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(
+    data <- getDatabaseOrCohortCountForConceptIds(
       data = data,
       dataSource = dataSource,
       databaseCount = input$comparatorConceptIdCountSource == "Database level"
@@ -1342,7 +1341,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(data)) {
       return(NULL)
     }
-    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(
+    data <- getDatabaseOrCohortCountForConceptIds(
       data = data, 
       dataSource = dataSource,
       databaseCount = input$targetConceptIdCountSource == "Database level"
@@ -1375,7 +1374,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(data)) {
       return(NULL)
     }
-    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(
+    data <- getDatabaseOrCohortCountForConceptIds(
       data = data, 
       dataSource = dataSource,
       databaseCount = input$comparatorConceptIdCountSource == "Database level")
@@ -1407,7 +1406,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data  %>%
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget())
-    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(
+    data <- getDatabaseOrCohortCountForConceptIds(
       data = data, 
       dataSource = dataSource,
       databaseCount = input$targetConceptIdCountSource == "Database level"
@@ -1425,7 +1424,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getResultsOrphanConcept(
       dataSource = dataSource,
       cohortId = consolidatedCohortIdComparator(),
-      databaseId = consolidatedDatabaseIdComparator(),
+      databaseId = consolidatedDatabaseIdTarget(),# there is no consolidatedDatabaseIdComparator
       conceptSetId = consolidatedConceptIdComparator()
     )
     if (is.null(data)) {
@@ -1443,7 +1442,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- data  %>%
       dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdComparator())
     
-    data <- getDatabaseAndCohortCountForConceptIdsInDatabase(
+    data <- getDatabaseOrCohortCountForConceptIds(
       data = data, 
       dataSource = dataSource,
       databaseCount = input$comparatorConceptIdCountSource == "Database level")
@@ -2472,7 +2471,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
-      
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount)
       return(table)
@@ -3033,12 +3031,10 @@ shiny::shinyServer(function(input, output, session) {
   ##output: saveComparatorCohortDefinitionResolvedConceptTable----
   output$saveComparatorCohortDefinitionResolvedConceptTable <-
     downloadHandler(
-      filename = function()
-      {
+      filename = function() {
         getCsvFileNameWithDateTime(string = "resolvedConceptSet")
       },
-      content = function(file)
-      {
+      content = function(file) {
         data <- getResolvedConceptsComparator()
         downloadCsv(x = data, fileName = file)
       }
