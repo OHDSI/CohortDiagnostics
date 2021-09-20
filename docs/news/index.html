@@ -149,19 +149,33 @@
 <a href="#cohortdiagnostics-220" class="anchor"></a>CohortDiagnostics 2.2.0</h1>
 <p>Changes:</p>
 <ol>
-<li>Additional fields added to database_id (person_days, persons, records, observation_period_min_date, observation_period_max_date)</li>
-<li>Optimized cohort overlap sql. Old SQL that was running only two cohorts at a time, is replaced by an optimized SQL that is able to run all cohorts at a time.</li>
-<li>Exported functions computeCohortOverlap, getCohortCharacteristics, getCohortCount, instantiateCohortSet, getVisitContext, getTimeDistributions, getIncidenceRate, runConceptSetDiagnostics</li>
-<li>Metadata.csv now collects the versions of OHDSI packages and R version used.</li>
-<li>Metadata from source data includes additional database level information - including distribution of persons by calendar period.</li>
-<li>Added several new functions to get results from results data model</li>
-<li>Diagnostics explorer shiny app has a robust cohort comparison viewer - when two cohorts are selected.</li>
-<li>New modules added to Diagnostics explorer to support output of getTimeSeries and computeCohortTemporalRelationship.</li>
-<li>Add concept_cooccurrence diagnostic</li>
+<li>Code optimization - the logic for concept set diagnostics (including orphan), cohort overlap are rewritten for speed.</li>
+<li>Real time diagnostics mode - it is now possible to iterate diagnostics by calling one diagnostics modality at a time. E.g. computeCohortOverlap</li>
+<li>Ability to get results from Cohort Diagnostics results data model using several new functions that start getResults*</li>
+<li>New time series functionality: fixedTimeseries and RelativeTimeSeries</li>
+<li>Now details of inclusion rules are available - replicating the experience seen in Atlas.</li>
+<li>Concept coocurrence and concept relationship provides drill down diagnostics for concept id.</li>
+<li>Diagnostics explorer shiny app has been improved with new getTimeSeries, performance improvement, new visualizations.</li>
 </ol>
+</div>
+    <div id="cohortdiagnostics-212" class="section level1">
+<h1 class="page-header" data-toc-text="2.1.2">
+<a href="#cohortdiagnostics-212" class="anchor"></a>CohortDiagnostics 2.1.2</h1>
 <p>Bug fixes:</p>
 <ol>
-<li>Fixed inclusion rule display - when wrong inclusion rules were being shown in cohort counts</li>
+<li>DiagnosticsExplorer fixes a bug of app failure when runIndexEventBreakdown, runOrphanConcepts, includedSourceConcept is set to FALSE</li>
+</ol>
+</div>
+    <div id="cohortdiagnostics-211" class="section level1">
+<h1 class="page-header" data-toc-text="2.1.1">
+<a href="#cohortdiagnostics-211" class="anchor"></a>CohortDiagnostics 2.1.1</h1>
+<p>Bug fixes:</p>
+<ol>
+<li>DiagnosticsExplorer shiny app bug fixes: inclusion rule display.</li>
+<li>Handle situation where cdm_source may have more than one row record. warning + use max value for vocabularyVersion.</li>
+<li>Switch off runTimeSeries for BigQuery because of SQL translation issue, to be addressed in version 2.3. <a href="https://github.com/OHDSI/CohortDiagnostics/issues/503" class="uri">https://github.com/OHDSI/CohortDiagnostics/issues/503</a> Also runTimeSeries is set to FALSE by default.</li>
+<li>Fixed a bug in DDL - temporal_covariate_value_dist <a href="https://github.com/OHDSI/CohortDiagnostics/issues/490" class="uri">https://github.com/OHDSI/CohortDiagnostics/issues/490</a> See issue <a href="https://github.com/OHDSI/CohortDiagnostics/issues/497" class="uri">https://github.com/OHDSI/CohortDiagnostics/issues/497</a>
+</li>
 </ol>
 </div>
     <div id="cohortdiagnostics-210" class="section level1">
