@@ -508,6 +508,7 @@ getExecutionMetadata <- function(dataSource) {
 getConcept <- function(dataSource = .GlobalEnv,
                        vocabularyDatabaseSchema = NULL,
                        conceptIds = NULL) {
+  resultsDatabaseSchema <- NULL
   if (!is.null(vocabularyDatabaseSchema)) {
     resultsDatabaseSchema <- vocabularyDatabaseSchema
   }
@@ -558,7 +559,7 @@ getRelationship <- function(dataSource = .GlobalEnv) {
 #' @export
 getConceptRelationship <- function(dataSource = .GlobalEnv,
                                    vocabularyDatabaseSchema = NULL,
-                                   conceptId = NULL) {
+                                   conceptId1 = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource = dataSource,
     dataTableName = "conceptRelationship",
@@ -870,7 +871,7 @@ getConceptMetadata <- function(dataSource,
       getConceptRelationship(
         dataSource = dataSource,
         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-        conceptIds = conceptIds
+        conceptId1 = conceptIds
       )
     #output for concept relationship table in shiny app
     conceptRelationship <- dplyr::bind_rows(

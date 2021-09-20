@@ -2002,9 +2002,9 @@ shiny::shinyServer(function(input, output, session) {
     data <-
       getConceptMetadata(
         dataSource = dataSource,
-        databaseId = activeSelected()$databaseId,
-        cohortId = activeSelected()$cohortId,
-        conceptId = activeSelected()$conceptId
+        databaseIds = activeSelected()$databaseId,
+        cohortIds = activeSelected()$cohortId,
+        conceptIds = activeSelected()$conceptId
       )
     if (!doesObjectHaveData(data)) {
       return(NULL)
