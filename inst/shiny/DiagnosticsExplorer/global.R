@@ -6,7 +6,6 @@ source("R/StartUpScripts.R")
 source("R/DisplayFunctions.R")
 source("R/Tables.R")
 source("R/Plots.R")
-source("R/Results.R")
 
 #Set values to NULL
 connectionPool <- NULL

@@ -4,7 +4,12 @@
 \alias{getResultsResolvedConcepts}
 \title{Returns resolved concepts for a list of cohortIds and databaseIds combinations}
 \usage{
-getResultsResolvedConcepts(dataSource, databaseIds = NULL, cohortIds = NULL)
+getResultsResolvedConcepts(
+  dataSource,
+  databaseIds = NULL,
+  cohortIds = NULL,
+  conceptSetIds = NULL
+)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 

@@ -500,7 +500,7 @@ bodyTabItems <- shinydashboard::tabItems(
           shiny::radioButtons(
             inputId = "timeSeriesAggregationPeriodSelection",
             label = "Aggregation period:",
-            choices = c("Monthly", "Quaterly","Yearly"),
+            choices = c("Monthly","Yearly"),
             selected = "Monthly",
             inline = TRUE
           )
@@ -541,11 +541,6 @@ bodyTabItems <- shinydashboard::tabItems(
           shiny::uiOutput(outputId = "timeSeriesTypeLong")
         )
       )
-      # tags$tr(
-      #   tags$td(
-      #     shiny::uiOutput(outputId = "timeSeriesTypeLong")
-      #   )
-      # )
     ),
     shinydashboard::box(
       title = "Time Series",
@@ -561,30 +556,6 @@ bodyTabItems <- shinydashboard::tabItems(
           choices = c("Table", "Plot"),
           selected = "Table",
           inline = TRUE
-        )
-      ),
-      shiny::column(
-        3,
-        shiny::conditionalPanel(
-          condition = "input.timeSeriesType=='Plot'",
-          shinyWidgets::pickerInput(
-            inputId = "timeSeriesStatistics",
-            label = "Time series statistics:",
-            width = 300,
-            choices = c("Total", "trend", "season_year", "remainder"), ##!!! rename Total as Raw
-            selected = c("trend"),
-            multiple = TRUE,
-            choicesOpt = list(style = rep_len("color: black;", 999)),
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              liveSearch = TRUE,
-              size = 10,
-              dropupAuto = TRUE,
-              liveSearchStyle = "contains",
-              liveSearchPlaceholder = "Type here to search",
-              virtualScroll = 50
-            )
-          )
         )
       ),
       shiny::column(
@@ -652,7 +623,10 @@ bodyTabItems <- shinydashboard::tabItems(
       status = "primary",
       tags$br(),
       tags$h4("Time distribution"),
-      ggiraph::ggiraphOutput("timeDistributionPlot", width = "100%", height = "100%"),
+      plotly::plotlyOutput("timeDistributionPlot", height = "auto"),
+      tags$head(
+        tags$style("#timeDistributionPlot { width: '90vw' !important};")
+      ),
       tags$table(width = "100%", 
                  tags$tr(
                    tags$td(align = "right",
@@ -1152,7 +1126,7 @@ bodyTabItems <- shinydashboard::tabItems(
         width = NULL,
         status = "primary",
         shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
-        ggiraph::ggiraphOutput(
+        plotly::plotlyOutput(
           outputId = "compareCharacterizationPlot",
           width = "100%",
           height = "100%"
@@ -1299,10 +1273,13 @@ bodyTabItems <- shinydashboard::tabItems(
         title = "Compare Temporal Characterization",
         width = NULL,
         status = "primary",
-        ggiraph::ggiraphOutput(
+        plotly::plotlyOutput(
           outputId = "compareTemporalCharacterizationPlot",
           width = "100%",
-          height = "100%"
+          height = "auto"
+        ),
+        tags$head(
+          tags$style("#compareTemporalCharacterizationPlot { width: '90vw' !important};")
         )
       )
     )

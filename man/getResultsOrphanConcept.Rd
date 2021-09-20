@@ -4,7 +4,12 @@
 \alias{getResultsOrphanConcept}
 \title{Returns data from orphan_concept table of Cohort Diagnostics results data model}
 \usage{
-getResultsOrphanConcept(dataSource, cohortIds = NULL, databaseIds = NULL)
+getResultsOrphanConcept(
+  dataSource,
+  cohortIds = NULL,
+  databaseIds = NULL,
+  conceptSetIds = NULL
+)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 
@@ -19,6 +24,8 @@ and uploaded using \code{uploadResults}}
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
+
+\item{conceptSetIds}{A vector of one or more Concept set Ids.}
 }
 \value{
 Returns a data frame (tibble).

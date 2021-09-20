@@ -4,7 +4,12 @@
 \alias{getResultsConceptCooccurrence}
 \title{Returns concept cooccurrence for a list of cohortIds and databaseIds combinations}
 \usage{
-getResultsConceptCooccurrence(dataSource, databaseIds = NULL, cohortIds = NULL)
+getResultsConceptCooccurrence(
+  dataSource,
+  databaseIds = NULL,
+  cohortIds = NULL,
+  conceptIds = NULL
+)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 
@@ -19,6 +24,8 @@ character field values from the `databaseId` field of the `database` table
 of the results data model.}
 
 \item{cohortIds}{A vector of one or more Cohort Ids.}
+
+\item{conceptId}{A vector of one or more Concept Ids.}
 }
 \value{
 Returns a data frame (tibble)

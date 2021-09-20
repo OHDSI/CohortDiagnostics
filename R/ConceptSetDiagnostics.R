@@ -824,10 +824,6 @@ getConceptRecordCount <- function(connection,
   ParallelLogger::logTrace(" - Counting concepts by person id, calendar month and year")
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide
-  nonEraTables <- domains %>% 
-    dplyr::filter(.data$isEraTable == FALSE) %>% 
-    dplyr::pull(.data$domainTableShort) %>% 
-    unique()
   sql1 <- "SELECT @domain_concept_id concept_id,
           	YEAR(@domain_start_date) event_year,
           	MONTH(@domain_start_date) event_month,

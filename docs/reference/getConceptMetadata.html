@@ -160,13 +160,16 @@ concept cooccurrence on index date per database and cohortId.</p>
   cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
   vocabularyDatabaseSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
   conceptIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  getDatabaseMetadata <span class='op'>=</span> <span class='cn'>TRUE</span>,
   getConceptRelationship <span class='op'>=</span> <span class='cn'>TRUE</span>,
   getConceptAncestor <span class='op'>=</span> <span class='cn'>TRUE</span>,
   getConceptSynonym <span class='op'>=</span> <span class='cn'>TRUE</span>,
   getConceptCount <span class='op'>=</span> <span class='cn'>TRUE</span>,
   getConceptCooccurrence <span class='op'>=</span> <span class='cn'>TRUE</span>,
   getIndexEventCount <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  getConceptMappingCount <span class='op'>=</span> <span class='cn'>TRUE</span>
+  getConceptMappingCount <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  getFixedTimeSeries <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  getRelativeTimeSeries <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -203,6 +206,10 @@ schema name, for example 'vocabulary.dbo'.</p></td>
       <td><p>A vector of one or more Concept Ids.</p></td>
     </tr>
     <tr>
+      <th>getDatabaseMetadata</th>
+      <td><p>Do you want to get database metadata i.e. person/records/person days in observation table</p></td>
+    </tr>
+    <tr>
       <th>getConceptRelationship</th>
       <td><p>Do you want conceptRelationship?</p></td>
     </tr>
@@ -229,6 +236,14 @@ schema name, for example 'vocabulary.dbo'.</p></td>
     <tr>
       <th>getConceptMappingCount</th>
       <td><p>Do you want concept mapping count?</p></td>
+    </tr>
+    <tr>
+      <th>getFixedTimeSeries</th>
+      <td><p>Do you want a conceptIds database level time series data reported on actual dates?</p></td>
+    </tr>
+    <tr>
+      <th>getRelativeTimeSeries</th>
+      <td><p>Do you want cohort level time series data reported relative to cohort start date?</p></td>
     </tr>
     </table>
 

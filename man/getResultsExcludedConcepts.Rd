@@ -4,7 +4,12 @@
 \alias{getResultsExcludedConcepts}
 \title{Returns excluded concepts for a list of cohortIds and databaseIds combinations}
 \usage{
-getResultsExcludedConcepts(dataSource, databaseIds = NULL, cohortIds = NULL)
+getResultsExcludedConcepts(
+  dataSource,
+  databaseIds = NULL,
+  cohortId = NULL,
+  conceptSetId = NULL
+)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 

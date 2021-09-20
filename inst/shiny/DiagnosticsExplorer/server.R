@@ -63,12 +63,12 @@ shiny::shinyServer(function(input, output, session) {
   getTimeIdsFromSelectedTemporalCovariateChoices <-
     reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
-    list(input$typesOfTemporalCovariates_open,
+    list(input$timeIdChoices_open,
          input$tabs)
   }, handlerExpr = {
     if (exists('temporalCovariateChoices') &&
         (any(
-          isFALSE(input$typesOfTemporalCovariates_open),!is.null(input$tabs)
+          isFALSE(input$timeIdChoices_open),!is.null(input$tabs)
         ))) {
       selectedTimeIds <- temporalCovariateChoices %>%
         dplyr::filter(.data$choices %in% input$timeIdChoices) %>%
@@ -167,12 +167,24 @@ shiny::shinyServer(function(input, output, session) {
                    excludedConceptSetDataTarget = getExcludedConceptsTarget(),
                    excludedConceptSetDataComparator = getExcludedConceptsComparator(),
                    indexEventBreakdownDataTable = getIndexEventBreakdownDataTable()
-                 )
-                 consolidatedCohortIdTarget(data$cohortIdTarget)
+                 ) 
+                 
+                 if ((isFALSE(input$selectedCompoundCohortNames_open) ||
+                     is.null(input$selectedCompoundCohortNames_open)) && 
+                     doesObjectHaveData(input$tabs)) {
+                   consolidatedCohortIdTarget(data$cohortIdTarget)
+                 }
+                 
                  consolidatedCohortIdComparator(data$cohortIdComparator)
                  consolidatedConceptSetIdTarget(data$conceptSetIdTarget)
                  consolidatedConceptSetIdComparator(data$conceptSetIdComparator)
-                 consolidatedDatabaseIdTarget(data$selectedDatabaseIdTarget)
+                 
+                 if ((isFALSE(input$selectedDatabaseIds_open) ||
+                      is.null(input$selectedDatabaseIds_open)) && 
+                     doesObjectHaveData(input$tabs)) {
+                   consolidatedDatabaseIdTarget(data$selectedDatabaseIdTarget)
+                 }
+                 
                  consolidatedConceptIdTarget(data$selectedConceptIdTarget)
                  consolidatedConceptIdComparator(data$selectedConceptIdComparator)
                  consolidateCohortDefinitionActiveSideTarget(data$leftSideActive)
@@ -286,14 +298,13 @@ shiny::shinyServer(function(input, output, session) {
               shiny::conditionalPanel(
                 condition = "output.isTargetCohortDefinitionConceptSetsTableRowSelected == true",
                 shinydashboard::box(
-                  title = shiny::textOutput(outputId = "targetConceptSetExpressionName"),
-                  ###!!!! add another textOutput with much smaller font and put cohort name here (next line)
+                  title = shiny::htmlOutput(outputId = "targetConceptSetExpressionName"),
                   width = NULL,
                   solidHeader = FALSE,
                   collapsible = TRUE,
                   collapsed = FALSE,
                   shiny::conditionalPanel(condition = "output.isTargetCohortDefinitionConceptSetsTableRowSelected == true",
-                                          tags$table(
+                                          tags$table(width = "100%",
                                             tags$tr(tags$td(
                                               colspan = 2,
                                               shiny::radioButtons(
@@ -310,6 +321,15 @@ shiny::shinyServer(function(input, output, session) {
                                                 selected = "Concept Set Expression",
                                                 inline = TRUE
                                               )
+                                            ),
+                                            tags$td(align = "right",
+                                                    shiny::radioButtons(
+                                                      inputId = "targetConceptIdCountSource",
+                                                      label = "",
+                                                      choices = c("Database level", "Cohort Level"),
+                                                      selected = "Database level",
+                                                      inline = TRUE
+                                                    )
                                             ))
                                           )),
                   shiny::conditionalPanel(
@@ -531,8 +551,7 @@ shiny::shinyServer(function(input, output, session) {
               shiny::conditionalPanel(
                 condition = "output.isComparatorCohortDefinitionConceptSetRowSelected == true",
                 shinydashboard::box(
-                  title = shiny::textOutput(outputId = "comparatorConceptSetExpressionName"),
-                  ###!!!! add another textOutput with much smaller font and put cohort name here (next line)
+                  title = shiny::htmlOutput(outputId = "comparatorConceptSetExpressionName"),
                   solidHeader = FALSE,
                   width = NULL,
                   collapsible = TRUE,
@@ -555,6 +574,15 @@ shiny::shinyServer(function(input, output, session) {
                                                 selected = "Concept Set Expression",
                                                 inline = TRUE
                                               )
+                                            ),
+                                            tags$td(align = "right",
+                                                    shiny::radioButtons(
+                                                      inputId = "comparatorConceptIdCountSource",
+                                                      label = "",
+                                                      choices = c("Database level", "Cohort Level"),
+                                                      selected = "Database level",
+                                                      inline = TRUE
+                                                    )
                                             ))
                                           )),
                   shiny::conditionalPanel(
@@ -1081,6 +1109,9 @@ shiny::shinyServer(function(input, output, session) {
   ##Cohort count in cohort definition tab----
   ###getCountsForSelectedCohortsTarget----
   getCountsForSelectedCohortsTarget <- shiny::reactive(x = {
+    if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+      return(NULL)
+    }
     data <- cohortCount %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
       dplyr::select(.data$databaseId,
@@ -1116,8 +1147,8 @@ shiny::shinyServer(function(input, output, session) {
             nrow(data) > 0),
         "There is no inclusion rule data for this cohort."
       ))
-      maxCohortSubjects <- max(data$cohortSubjects)
-      maxCohortEntries <- max(data$cohortEntries)
+      maxCohortSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ubjects")
+      maxCohortEntries <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ntries")
       
       options = list(
         pageLength = 100,
@@ -1238,7 +1269,6 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  
   ###getResolvedConceptsTarget----
   getResolvedConceptsTarget <- shiny::reactive({
     if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
@@ -1249,22 +1279,24 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- getResultsResolvedConcepts(
       dataSource = dataSource,
-      cohortIds = consolidatedCohortIdTarget(),
-      databaseIds = consolidatedDatabaseIdTarget()
+      cohortId = consolidatedCohortIdTarget(),
+      databaseId = consolidatedDatabaseIdTarget(),
+      conceptSetId = consolidatedConceptIdTarget()
     )
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    if (doesObjectHaveData(consolidatedConceptSetIdTarget())) {
-      data <- data %>%
-        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdTarget()) %>% 
-        dplyr::select(-.data$conceptSetId, -.data$cohortId)
-    }
-    data <- data %>%
-      dplyr::arrange(dplyr::desc(.data$conceptCount))
+    
+    data <- getDatabaseOrCohortCountForConceptIds(
+      data = data,
+      dataSource = dataSource,
+      databaseCount = input$targetConceptIdCountSource == "Database level"
+    )
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    data <- data %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId)
     return(data)
   })
   
@@ -1272,22 +1304,23 @@ shiny::shinyServer(function(input, output, session) {
   getResolvedConceptsComparator <- shiny::reactive({
     data <- getResultsResolvedConcepts(
       dataSource = dataSource,
-      cohortIds = consolidatedCohortIdComparator(),
-      databaseIds = consolidatedDatabaseIdTarget()
+      cohortId = consolidatedCohortIdComparator(),
+      databaseId = consolidatedDatabaseIdTarget(),
+      conceptSetId = consolidatedConceptSetIdComparator()
     )
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    if (doesObjectHaveData(consolidatedConceptSetIdComparator())) {
-      data <- data %>%
-        dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdComparator()) %>% 
-        dplyr::select(-.data$conceptSetId, -.data$cohortId)
-    }
-    data <- data %>%
-      dplyr::arrange(dplyr::desc(.data$conceptCount))
+    data <- getDatabaseOrCohortCountForConceptIds(
+      data = data,
+      dataSource = dataSource,
+      databaseCount = input$comparatorConceptIdCountSource == "Database level"
+    )
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    data <- data %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId)
     return(data)
   })
   
@@ -1304,19 +1337,23 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- getResultsExcludedConcepts(
       dataSource = dataSource,
-      cohortIds = consolidatedCohortIdTarget(),
-      databaseIds = consolidatedDatabaseIdTarget()
+      cohortId = consolidatedCohortIdTarget(),
+      databaseId = consolidatedDatabaseIdTarget(),
+      conceptSetId = consolidatedConceptIdTarget()
     )
     if (is.null(data)) {
       return(NULL)
     }
-    data <- data %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget()) %>% 
-      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
-      dplyr::arrange(dplyr::desc(.data$conceptCount))
+    data <- getDatabaseOrCohortCountForConceptIds(
+      data = data, 
+      dataSource = dataSource,
+      databaseCount = input$targetConceptIdCountSource == "Database level"
+    )
     if (is.null(data)) {
       return(NULL)
     }
+    data <- data %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId)
     return(data)
   })
   
@@ -1333,16 +1370,19 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- getResultsExcludedConcepts(
       dataSource = dataSource,
-      cohortIds = consolidatedCohortIdComparator(),
-      databaseIds = consolidatedDatabaseIdTarget()
+      cohortId = consolidatedCohortIdComparator(),
+      databaseId = consolidatedDatabaseIdTarget(), #same for both target and comparator
+      conceptSetId = consolidatedConceptIdComparator()
     )
     if (is.null(data)) {
       return(NULL)
     }
-    data <- data %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdComparator()) %>% 
-      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
-      dplyr::arrange(dplyr::desc(.data$conceptCount))
+    data <- getDatabaseOrCohortCountForConceptIds(
+      data = data, 
+      dataSource = dataSource,
+      databaseCount = input$comparatorConceptIdCountSource == "Database level")
+    data <- data %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId)
     return(data)
   })
   
@@ -1351,14 +1391,13 @@ shiny::shinyServer(function(input, output, session) {
   getOrphanConceptsTarget <- shiny::reactive({
     data <- getResultsOrphanConcept(
       dataSource = dataSource,
-      cohortIds = consolidatedCohortIdTarget(),
-      databaseIds = consolidatedDatabaseIdTarget()
+      cohortId = consolidatedCohortIdTarget(),
+      databaseId = consolidatedDatabaseIdTarget(),
+      conceptSetId = consolidatedConceptIdTarget()
     )
     if (is.null(data)) {
       return(NULL)
     }
-    data <- data %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget())
     
     excluded <- getExcludedConceptsTarget()
     if (doesObjectHaveData(excluded)) {
@@ -1369,12 +1408,17 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::anti_join(y = excludedConceptIds, by = "conceptId")
     }
     data <- data  %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget()) %>% 
-      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
-      dplyr::arrange(dplyr::desc(.data$conceptCount))
+      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget())
+    data <- getDatabaseOrCohortCountForConceptIds(
+      data = data, 
+      dataSource = dataSource,
+      databaseCount = input$targetConceptIdCountSource == "Database level"
+    )
     if (is.null(data)) {
       return(NULL)
     }
+    data <- data %>%
+      dplyr::select(-.data$conceptSetId,-.data$cohortId)
     return(data)
   })
   
@@ -1382,14 +1426,14 @@ shiny::shinyServer(function(input, output, session) {
   getOrphanConceptsComparator <- shiny::reactive({
     data <- getResultsOrphanConcept(
       dataSource = dataSource,
-      cohortIds = consolidatedCohortIdComparator(),
-      databaseIds = consolidatedDatabaseIdTarget()
+      cohortId = consolidatedCohortIdComparator(),
+      databaseId = consolidatedDatabaseIdTarget(),# there is no consolidatedDatabaseIdComparator
+      conceptSetId = consolidatedConceptIdComparator()
     )
-    if (!doesObjectHaveData(data)) {
+    if (is.null(data)) {
       return(NULL)
     }
-    data <- data %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdComparator())
+    
     excluded <- getExcludedConceptsComparator()
     if (doesObjectHaveData(excluded)) {
       excludedConceptIds <- excluded %>%
@@ -1398,10 +1442,61 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::anti_join(y = excludedConceptIds, by = "conceptId")
     }
-    data <- data %>% 
-      dplyr::select(-.data$conceptSetId, -.data$cohortId) %>%
-      dplyr::arrange(dplyr::desc(.data$conceptCount))
+    data <- data  %>%
+      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdComparator())
+    
+    data <- getDatabaseOrCohortCountForConceptIds(
+      data = data, 
+      dataSource = dataSource,
+      databaseCount = input$comparatorConceptIdCountSource == "Database level")
+    
+    if (is.null(data)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::select(-.data$conceptSetId,-.data$cohortId)
     return(data)
+  })
+  
+  ###getNameAndSynonymForActiveSelectedConceptId----
+  getNameAndSynonymForActiveSelectedConceptId <- shiny::reactive(x = {
+    if (is.null(activeSelected()$conceptId)) {#currently expecting to be vector of 1 (single select)
+      return(NULL)
+    }
+    data <- list()
+    data$concept <- getConcept(dataSource = dataSource,
+                               conceptId = activeSelected()$conceptId)
+    data$conceptSynonym <- getConceptSynonym(dataSource = dataSource,
+                                              conceptId = activeSelected()$conceptId)
+    return(data)
+  })
+  
+  ###getConceptSetSynonyms-----
+  getConceptSetSynonyms <- shiny::reactive(x = {
+    data <- getNameAndSynonymForActiveSelectedConceptId()
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    
+    tags$table(
+      tags$tr(
+        tags$td(
+          tags$h4(paste0(
+            data$concept %>% 
+              dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
+              dplyr::pull(.data$conceptName),
+            " (",
+            activeSelected()$conceptId,
+            ")"
+          ))
+        )
+      ),
+      tags$tr(
+        tags$td(
+          tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", "))
+        )
+      )
+    )
   })
   
   ##Inclusion rule ----
@@ -1432,8 +1527,8 @@ shiny::shinyServer(function(input, output, session) {
     data <-
       getResultsInclusionRuleStatistics(
         dataSource = dataSource,
-        cohortIds = consolidatedCohortIdTarget(),
-        databaseIds = getDatabaseIdFromSelectedRowInCohortCountTableTarget()
+        cohortId = consolidatedCohortIdTarget(),
+        databaseId = getDatabaseIdFromSelectedRowInCohortCountTableTarget()
       )
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -1472,8 +1567,8 @@ shiny::shinyServer(function(input, output, session) {
       data <-
         getResultsInclusionRuleStatistics(
           dataSource = dataSource,
-          cohortIds = consolidatedCohortIdComparator(),
-          databaseIds = getDatabaseIdFromSelectedRowInCohortCountTableComparator()
+          cohortId = consolidatedCohortIdComparator(),
+          databaseId = getDatabaseIdFromSelectedRowInCohortCountTableComparator()
         )
       if (!doesObjectHaveData(data)) {
         return(NULL)
@@ -1878,7 +1973,6 @@ shiny::shinyServer(function(input, output, session) {
     activeSelected(tempList)
   })
   
-  
   ##getMetadataForConceptId----
   getMetadataForConceptId <- shiny::reactive(x = {
     if (is.null(activeSelected()$conceptId)) {#currently expecting to be vector of 1 (single select)
@@ -1908,10 +2002,13 @@ shiny::shinyServer(function(input, output, session) {
     data <-
       getConceptMetadata(
         dataSource = dataSource,
-        databaseIds = activeSelected()$databaseId,
-        cohortIds = activeSelected()$cohortId,
-        conceptIds = activeSelected()$conceptId
+        databaseId = activeSelected()$databaseId,
+        cohortId = activeSelected()$cohortId,
+        conceptId = activeSelected()$conceptId
       )
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
     if (!doesObjectHaveData(data$databaseConceptCount)) {
       return(NULL)
     }
@@ -1970,16 +2067,6 @@ shiny::shinyServer(function(input, output, session) {
         data <- getMetadataForConceptId()
         validate(need(doesObjectHaveData(data), "No data for selected combination"))
         
-        #!!!!! put selectd concept details as a shared header
-        # tags$h4(paste0(
-        #   data$concept %>% 
-        #     dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
-        #     dplyr::pull(.data$conceptName),
-        #   " (",
-        #   activeSelected()$conceptId,
-        #   ")"
-        # )),
-        # tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", ")),
         panels[[inc]] <- shiny::tabPanel(
           title = "Concept Set Browser",
           value = "conceptSetBrowser",
@@ -2117,22 +2204,35 @@ shiny::shinyServer(function(input, output, session) {
   
   #output: targetConceptSetExpressionName----
   output$targetConceptSetExpressionName <-
-    shiny::renderText(expr = {
+    shiny::renderUI(expr = {
       if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
         return(NULL)
       }
       if (!doesObjectHaveData(consolidatedConceptSetIdTarget())) {
         return(NULL)
       }
-      data <- conceptSets %>%
+      
+      conceptSetName <- conceptSets %>%
         dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
         dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdTarget()) %>%
         dplyr::pull(.data$conceptSetName)
-      data <- paste0("Target cohort:", data, " (", consolidatedCohortIdTarget(), ")")
-      if (!doesObjectHaveData(data)) {
-        return(NULL)
-      }
-      return(data)
+      
+      cohortName <- cohort %>% 
+        dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
+        dplyr::pull(.data$compoundName)
+      
+      tags$table(
+        tags$tr(
+          tags$td(
+            tags$h4(paste0("Concept set name:", conceptSetName))
+          )
+        ),
+        tags$tr(
+          tags$td(
+            tags$h6("Target cohort:", cohortName, "(", consolidatedCohortIdTarget(), ")")
+          )
+        )
+      )
     })
   
   ##getConceptSetsInCohortDataTarget----
@@ -2364,6 +2464,7 @@ shiny::shinyServer(function(input, output, session) {
         length(consolidatedCohortIdTarget()) > 0,
         "Please select concept set"
       ))
+      
       data <- getResolvedConceptsTarget()
       validate(need((all(
         !is.null(data), nrow(data) > 0
@@ -2373,9 +2474,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
-      data <- data %>% 
-        dplyr::rename("records" = .data$conceptCount,
-                      "persons" = .data$subjectCount)
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount)
       return(table)
@@ -2405,9 +2503,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
-      data <- data %>% 
-        dplyr::rename("records" = .data$conceptCount,
-                      "persons" = .data$subjectCount)
+      
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount)
       return(table)
@@ -2438,9 +2534,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
-      data <- data %>% 
-        dplyr::rename("records" = .data$conceptCount,
-                      "persons" = .data$subjectCount)
+
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount)
       return(table)
@@ -2496,8 +2590,8 @@ shiny::shinyServer(function(input, output, session) {
             nrow(data) > 0),
         "There is no inclusion rule data for this cohort."
       ))
-      maxCohortSubjects <- max(data$cohortSubjects)
-      maxCohortEntries <- max(data$cohortEntries)
+      maxCohortSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ubjects")
+      maxCohortEntries <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ntries")
       options = list(
         pageLength = 100,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -2768,22 +2862,35 @@ shiny::shinyServer(function(input, output, session) {
   
   #output: comparatorConceptSetExpressionName----
   output$comparatorConceptSetExpressionName <-
-    shiny::renderText(expr = {
+    shiny::renderUI(expr = {
       if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
         return(NULL)
       }
       if (!doesObjectHaveData(consolidatedConceptSetIdComparator())) {
         return(NULL)
       }
-      data <- conceptSets %>%
+      
+      conceptSetName <- conceptSets %>%
         dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator()) %>%
         dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdComparator()) %>%
         dplyr::pull(.data$conceptSetName)
-      data <- paste0("Comparator cohort:", data, " (", consolidatedCohortIdComparator(), ")")
-      if (!doesObjectHaveData(data)) {
-        return(NULL)
-      }
-      return(data)
+      
+      cohortName <- cohort %>% 
+        dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
+        dplyr::pull(.data$compoundName)
+      
+      tags$table(
+        tags$tr(
+          tags$td(
+            tags$h4(paste0("Concept set name:", conceptSetName))
+          )
+        ),
+        tags$tr(
+          tags$td(
+            tags$h6("Comparator cohort:", cohortName, "(", consolidatedCohortIdComparator(), ")")
+          )
+        )
+      )
     })
   
   ##output: conceptsetExpressionTableComparator----
@@ -2918,9 +3025,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
-      data <- data %>% 
-        dplyr::rename("records" = .data$conceptCount,
-                      "persons" = .data$subjectCount)
+      
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount)
       return(table)
@@ -2929,12 +3034,10 @@ shiny::shinyServer(function(input, output, session) {
   ##output: saveComparatorCohortDefinitionResolvedConceptTable----
   output$saveComparatorCohortDefinitionResolvedConceptTable <-
     downloadHandler(
-      filename = function()
-      {
+      filename = function() {
         getCsvFileNameWithDateTime(string = "resolvedConceptSet")
       },
-      content = function(file)
-      {
+      content = function(file) {
         data <- getResolvedConceptsComparator()
         downloadCsv(x = data, fileName = file)
       }
@@ -2950,15 +3053,13 @@ shiny::shinyServer(function(input, output, session) {
       "No excluded concept ids"))
       
       databaseIds <- sort(unique(data$databaseId))
-      maxCount <- max(data$conceptCount, na.rm = TRUE)
-      maxSubject <- max(data$subjectCount, na.rm = TRUE)
+      maxCount <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ount")
+      maxSubject <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ubject")
       databaseCount <- cohortCount %>% 
         dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
-      data <- data %>% 
-        dplyr::rename("records" = .data$conceptCount,
-                      "persons" = .data$subjectCount)
+  
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount)
       return(table)
@@ -2991,9 +3092,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
-      data <- data %>% 
-        dplyr::rename("records" = .data$conceptCount,
-                      "persons" = .data$subjectCount)
+
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount)
     }, server = TRUE)
@@ -3074,13 +3173,25 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$databaseId %in% activeSelected()$databaseId) %>% 
       dplyr::rename("records" = .data$conceptCount,
                     "persons" = .data$subjectCount)
+    
     tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
                                                                           valueFields = c("records", "persons"))
     
 
+    conceptName <- getMetadataForConceptId()$concept %>% 
+      dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
+      dplyr::pull(.data$conceptName)
+    
+    conceptSynonym <- getMetadataForConceptId()$conceptSynonym$conceptSynonymName %>% 
+      unique() %>%
+      sort() %>% 
+      paste0(collapse = ", ")
     
     plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
-      stlModeledTsibbleData = tsibbleDataFromSTLModel
+      stlModeledTsibbleData = tsibbleDataFromSTLModel,
+      conceptId = activeSelected()$conceptId,
+      conceptName = conceptName,
+      conceptSynonym = conceptSynonym
     )
     plot <- plotly::ggplotly(plot)
     return(plot)
@@ -3088,31 +3199,11 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output:: conceptSetBowserConceptSynonymName
   output$conceptSetBowserConceptSynonymName <- shiny::renderUI(expr = {
-     data <- getMetadataForConceptId()
-    
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    
-    tags$table(
-      tags$tr(
-        tags$td(
-          tags$h4(paste0(
-            data$concept %>% 
-              dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
-              dplyr::pull(.data$conceptName),
-            " (",
-            activeSelected()$conceptId,
-            ")"
-          ))
-        )
-      ),
-      tags$tr(
-        tags$td(
-          tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", "))
-        )
-      )
-    )
+     data <- getConceptSetSynonyms()
+     if (!doesObjectHaveData(data)) {
+       return(NULL)
+     }
+     return(data)
   })
   
   ##output: conceptBrowserTable----
@@ -3204,7 +3295,8 @@ shiny::shinyServer(function(input, output, session) {
                     "records" = .data$conceptCount)
     table <-
       getSketchDesignForTablesInCohortDefinitionTab(conceptRelationshipTable,
-                                                    databaseCount = databaseCount)
+                                                    databaseCount = databaseCount,
+                                                    numberOfColums = 6)
     return(table)
   })
   
@@ -3226,6 +3318,7 @@ shiny::shinyServer(function(input, output, session) {
                        conceptId),
       value = 0
     )
+    
     data <- getMetadataForConceptId()
     validate(need(
       doesObjectHaveData(data),
@@ -3240,7 +3333,8 @@ shiny::shinyServer(function(input, output, session) {
                     "records" = .data$conceptCount)
     table <-
       getSketchDesignForTablesInCohortDefinitionTab(conceptMapping,
-                                                    databaseCount = databaseCount)
+                                                    databaseCount = databaseCount,
+                                                    numberOfColums = 3)
     return(table)
   })
   
@@ -3249,7 +3343,9 @@ shiny::shinyServer(function(input, output, session) {
   #Radio button synchronization----
   shiny::observeEvent(eventExpr = {
     list(input$targetConceptSetsType,
-         input$targetCohortDefinitionTabSetPanel)
+         input$targetCohortDefinitionTabSetPanel,
+         input$targetConceptIdCountSource
+         )
   }, handlerExpr = {
     if (getWidthOfLeftPanelForCohortDetailBrowserInCohortDefinitionTabBasedOnNoOfRowSelectedInCohortTable() == 6) {
       if (!is.null(input$targetConceptSetsType)) {
@@ -3280,18 +3376,40 @@ shiny::shinyServer(function(input, output, session) {
                              selected = "Concept Set Sql")
         }
       }
+    
+      if (!is.null(input$targetConceptIdCountSource)) {
+        if (input$targetConceptIdCountSource == "Database level") {
+          updateRadioButtons(session = session,
+                             inputId = "comparatorConceptIdCountSource",
+                             selected = "Database level")
+        } else {
+          updateRadioButtons(session = session,
+                             inputId = "comparatorConceptIdCountSource",
+                             selected = "Cohort Level")
+        }
+      }
       
       if (!is.null(input$targetCohortDefinitionTabSetPanel)) {
         if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionDetailsTextTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "comparatorCohortDefinitionDetailsTextTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "comparatorCohortDefinitionTabSetPanel", 
+                                   selected = "comparatorCohortDefinitionDetailsTextTabPanel")
         } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionCohortCountTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "comparatorCohortDefinitionCohortCountTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "comparatorCohortDefinitionTabSetPanel", 
+                                   selected = "comparatorCohortDefinitionCohortCountTabPanel")
         } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionConceptSetTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "comparatorCohortDefinitionConceptSetTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "comparatorCohortDefinitionTabSetPanel", 
+                                   selected = "comparatorCohortDefinitionConceptSetTabPanel")
         } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionJsonTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "comparatorCohortDefinitionJsonTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "comparatorCohortDefinitionTabSetPanel", 
+                                   selected = "comparatorCohortDefinitionJsonTabPanel")
         } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortDefinitionSqlTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "comparatorCohortDefinitionTabSetPanel", selected = "comparatorCohortDefinitionSqlTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "comparatorCohortDefinitionTabSetPanel", 
+                                   selected = "comparatorCohortDefinitionSqlTabPanel")
         }
       }
     }
@@ -3300,7 +3418,8 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observeEvent(eventExpr = {
     list(
       input$comparatorConceptSetsType,
-      input$comparatorCohortDefinitionTabSetPanel
+      input$comparatorCohortDefinitionTabSetPanel,
+      input$comparatorConceptIdCountSource
     )
   }, handlerExpr = {
     if (getWidthOfLeftPanelForCohortDetailBrowserInCohortDefinitionTabBasedOnNoOfRowSelectedInCohortTable() == 6) {
@@ -3322,7 +3441,6 @@ shiny::shinyServer(function(input, output, session) {
                              inputId = "targetConceptSetsType",
                              selected = "Orphan concepts")
         } else if (input$comparatorConceptSetsType == "Concept Set Json") {
-          #!! call this "Concept Set JSON"
           updateRadioButtons(session = session,
                              inputId = "targetConceptSetsType",
                              selected = "Concept Set Json")
@@ -3335,15 +3453,37 @@ shiny::shinyServer(function(input, output, session) {
       
       if (!is.null(input$comparatorCohortDefinitionTabSetPanel)) {
         if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionDetailsTextTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionDetailsTextTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "targetCohortDefinitionTabSetPanel", 
+                                   selected = "targetCohortDefinitionDetailsTextTabPanel")
         } else if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionCohortCountTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionCohortCountTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "targetCohortDefinitionTabSetPanel", 
+                                   selected = "targetCohortDefinitionCohortCountTabPanel")
         } else if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionConceptSetTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionConceptSetTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "targetCohortDefinitionTabSetPanel", 
+                                   selected = "targetCohortDefinitionConceptSetTabPanel")
         } else if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionJsonTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionJsonTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "targetCohortDefinitionTabSetPanel", 
+                                   selected = "targetCohortDefinitionJsonTabPanel")
         } else if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionSqlTabPanel") {
-          shiny::updateTabsetPanel(session, inputId = "targetCohortDefinitionTabSetPanel", selected = "targetCohortDefinitionSqlTabPanel")
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "targetCohortDefinitionTabSetPanel", 
+                                   selected = "targetCohortDefinitionSqlTabPanel")
+        }
+      }
+      
+      if (!is.null(input$comparatorConceptIdCountSource)) {
+        if (input$comparatorConceptIdCountSource == "Database level") {
+          updateRadioButtons(session = session,
+                             inputId = "targetConceptIdCountSource",
+                             selected = "Database level")
+        } else {
+          updateRadioButtons(session = session,
+                             inputId = "targetConceptIdCountSource",
+                             selected = "Cohort Level")
         }
       }
     }
@@ -3483,8 +3623,8 @@ shiny::shinyServer(function(input, output, session) {
       "No data for the combination"
     ))
     
-    maxValueSubjects <- max(data$cohortSubjects)
-    maxValueEntries <- max(data$cohortEntries)
+    maxValueSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ubjects")
+    maxValueEntries <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ntries")
     databaseIds <- sort(unique(data$databaseId))
     
     if (input$cohortCountsTableColumnFilter == "Both")
@@ -3664,8 +3804,8 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- getResultsInclusionRuleStatistics(
         dataSource = dataSource,
-        cohortIds = getCohortIdFromSelectedRowInCohortCountTable()$cohortId,
-        databaseIds = consolidatedDatabaseIdTarget()
+        cohortId = getCohortIdFromSelectedRowInCohortCountTable()$cohortId,
+        databaseId = consolidatedDatabaseIdTarget()
       )
       
       validate(need((nrow(table) > 0),
@@ -3740,122 +3880,109 @@ shiny::shinyServer(function(input, output, session) {
   # Incidence rate -------
   ##reactive: getIncidenceRateData----
   getIncidenceRateData <- reactive({
-    if (input$tabs == "incidenceRate")
-    {
-      if (all(is(dataSource, "environment"),!exists('incidenceRate')))
-      {
-        return(NULL)
-      }
-      if (any(length(consolidatedCohortIdTarget()) == 0)) {
-        return(NULL)
-      }
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(message = paste0("Getting incidence rate data."),
-                   value = 0)
-      
-      data <- getResultsIncidenceRate(dataSource = dataSource,
-                                      cohortIds =  consolidatedCohortIdTarget())
-      if (all(!is.null(data),
-              nrow(data) > 0)) {
-        data <- data %>%
-          dplyr::mutate(
-            incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0,
-                                             TRUE ~ .data$incidenceRate)
-          )
-      }
-      return(data)
-    } else
-    {
+    if (any(is.null(input$tabs), !input$tabs == "incidenceRate")) {
       return(NULL)
     }
+    if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+      return(NULL)
+    }
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Getting incidence rate data."),
+                 value = 0)
+    data <- getResultsIncidenceRate(dataSource = dataSource,
+                                    cohortId =  consolidatedCohortIdTarget(), 
+                                    databaseId = consolidatedDatabaseIdTarget())
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::mutate(incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0,
+                                                     TRUE ~ .data$incidenceRate))
+    return(data)
   })
   
   ##pickerInput - incidenceRateAgeFilter----
   shiny::observe({
-    if (!is.null(getIncidenceRateData()) &&
-        nrow(getIncidenceRateData()) > 0)
-    {
-      ageFilter <- getIncidenceRateData() %>%
-        dplyr::select(.data$ageGroup) %>%
-        dplyr::filter(.data$ageGroup != "NA", !is.na(.data$ageGroup)) %>%
-        dplyr::distinct() %>%
-        dplyr::arrange(as.integer(sub(
-          pattern = '-.+$', '', x = .data$ageGroup
-        )))
-      
-      shinyWidgets::updatePickerInput(
-        session = session,
-        inputId = "incidenceRateAgeFilter",
-        selected = ageFilter$ageGroup,
-        choices = ageFilter$ageGroup,
-        choicesOpt = list(style = rep_len("color: black;", 999))
-      )
+    if (!doesObjectHaveData(getIncidenceRateData())) {
+      return(NULL)
     }
+    ageFilter <- getIncidenceRateData() %>%
+      dplyr::select(.data$ageGroup) %>%
+      dplyr::filter(.data$ageGroup != "NA",!is.na(.data$ageGroup)) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(as.integer(sub(
+        pattern = '-.+$', '', x = .data$ageGroup
+      )))
+    
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "incidenceRateAgeFilter",
+      selected = ageFilter$ageGroup,
+      choices = ageFilter$ageGroup,
+      choicesOpt = list(style = rep_len("color: black;", 999))
+    )
   })
   
   ##pickerInput - incidenceRateGenderFilter----
   shiny::observe({
-    if (!is.null(getIncidenceRateData()) &&
-        nrow(getIncidenceRateData()) > 0)
-    {
-      genderFilter <- getIncidenceRateData() %>%
-        dplyr::select(.data$gender) %>%
-        dplyr::filter(.data$gender != "NA", !is.na(.data$gender)) %>%
-        dplyr::distinct() %>%
-        dplyr::arrange(.data$gender)
-      
-      shinyWidgets::updatePickerInput(
-        session = session,
-        inputId = "incidenceRateGenderFilter",
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = genderFilter$gender,
-        selected = genderFilter$gender
-      )
+    if (!doesObjectHaveData(getIncidenceRateData())) {
+      return(NULL)
     }
+    genderFilter <- getIncidenceRateData() %>%
+      dplyr::select(.data$gender) %>%
+      dplyr::filter(.data$gender != "NA",!is.na(.data$gender)) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(.data$gender)
+    
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "incidenceRateGenderFilter",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = genderFilter$gender,
+      selected = genderFilter$gender
+    )
   })
   
   ##pickerInput - incidenceRateCalendarFilter & YscaleMinAndMax----
-  ##!!!why are two picker input in the same observe event - should it be seperate?
   shiny::observe({
-    if (!is.null(getIncidenceRateData()) &&
-        nrow(getIncidenceRateData()) > 0)
-    {
-      calendarFilter <- getIncidenceRateData() %>%
-        dplyr::select(.data$calendarYear) %>%
-        dplyr::filter(.data$calendarYear != "NA", !is.na(.data$calendarYear)) %>%
-        dplyr::distinct(.data$calendarYear) %>%
-        dplyr::arrange(.data$calendarYear)
-      
-      minValue <- min(calendarFilter$calendarYear)
-      
-      maxValue <- max(calendarFilter$calendarYear)
-      
-      shiny::updateSliderInput(
-        session = session,
-        inputId = "incidenceRateCalendarFilter",
-        min = minValue,
-        max = maxValue,
-        value = c(2010, maxValue)
-      )
-      
-      minIncidenceRateValue <-
-        round(min(getIncidenceRateData()$incidenceRate), digits = 2)
-      
-      maxIncidenceRateValue <-
-        round(max(getIncidenceRateData()$incidenceRate), digits = 2)
-      
-      shiny::updateSliderInput(
-        session = session,
-        inputId = "YscaleMinAndMax",
-        min = 0,
-        max = maxIncidenceRateValue,
-        value = c(minIncidenceRateValue, maxIncidenceRateValue),
-        step = round((maxIncidenceRateValue - minIncidenceRateValue) / 5,
-                     digits = 2
-        )
-      )
+    if (!doesObjectHaveData(getIncidenceRateData())) {
+      return(NULL)
     }
+    calendarFilter <- getIncidenceRateData() %>%
+      dplyr::select(.data$calendarYear) %>%
+      dplyr::filter(.data$calendarYear != "NA",!is.na(.data$calendarYear)) %>%
+      dplyr::distinct(.data$calendarYear) %>%
+      dplyr::arrange(.data$calendarYear)
+    
+    minValue <- min(calendarFilter$calendarYear)
+    maxValue <- max(calendarFilter$calendarYear)
+    
+    shiny::updateSliderInput(
+      session = session,
+      inputId = "incidenceRateCalendarFilter",
+      min = minValue,
+      max = maxValue,
+      value = c(2010, maxValue)
+    )
+    
+    minIncidenceRateValue <-
+      round(min(getIncidenceRateData()$incidenceRate), digits = 2)
+    
+    maxIncidenceRateValue <-
+      round(max(getIncidenceRateData()$incidenceRate), digits = 2)
+    
+    shiny::updateSliderInput(
+      session = session,
+      inputId = "YscaleMinAndMax",
+      min = 0,
+      max = maxIncidenceRateValue,
+      value = c(minIncidenceRateValue, maxIncidenceRateValue),
+      step = round((
+        maxIncidenceRateValue - minIncidenceRateValue
+      ) / 5,
+      digits = 2)
+    )
   })
   
   ##reactiveVal: incidenceRateAgeFilterValues----
@@ -3882,15 +4009,16 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  ##reactive: getIncidenceRateFilteredOnCalendarFilterValue----
-  getIncidenceRateFilteredOnCalendarFilterValue <-
+  ##reactive: getIncidenceRateCalendarYears----
+  getIncidenceRateCalendarYears <-
     shiny::reactive({
       if (!doesObjectHaveData(getIncidenceRateData())) {
         return(NULL)
       }
       calendarFilter <- getIncidenceRateData() %>%
         dplyr::select(.data$calendarYear) %>%
-        dplyr::filter(.data$calendarYear != "NA", !is.na(.data$calendarYear)) %>%
+        dplyr::filter(.data$calendarYear != "NA", 
+                      !is.na(.data$calendarYear)) %>%
         dplyr::distinct(.data$calendarYear) %>%
         dplyr::arrange(.data$calendarYear)
       calendarFilter <-
@@ -3900,12 +4028,13 @@ shiny::shinyServer(function(input, output, session) {
       return(calendarFilter)
     })
   
-  ##reactive: getIncidenceRateFilteredOnYScaleFilterValue----
-  getIncidenceRateFilteredOnYScaleFilterValue <-
+  ##reactive: getIncidenceRateFilteredOnYScale----
+  getIncidenceRateFilteredOnYScale <-
     shiny::reactive({
       incidenceRateFilter <- getIncidenceRateData() %>%
         dplyr::select(.data$incidenceRate) %>%
-        dplyr::filter(.data$incidenceRate != "NA", !is.na(.data$incidenceRate)) %>%
+        dplyr::filter(.data$incidenceRate != "NA", 
+                      !is.na(.data$incidenceRate)) %>%
         dplyr::distinct(.data$incidenceRate) %>%
         dplyr::arrange(.data$incidenceRate)
       incidenceRateFilter <-
@@ -3919,7 +4048,7 @@ shiny::shinyServer(function(input, output, session) {
   getIncidentRatePlot <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(!is.null(input$tabs), input$renderIncidentRatePlot, 
-         doesObjectHaveData(getIncidenceRateFilteredOnCalendarFilterValue()))
+         doesObjectHaveData(getIncidenceRateCalendarYears()))
   },
   handlerExpr = {
     if (any(
@@ -3989,12 +4118,12 @@ shiny::shinyServer(function(input, output, session) {
     
     if (stratifyByCalendarYear) {
       data <- data %>%
-        dplyr::filter(.data$calendarYear %in% getIncidenceRateFilteredOnCalendarFilterValue())
+        dplyr::filter(.data$calendarYear %in% getIncidenceRateCalendarYears())
     }
     
     if (input$irYscaleFixed) {
       data <- data %>%
-        dplyr::filter(.data$incidenceRate %in% getIncidenceRateFilteredOnYScaleFilterValue())
+        dplyr::filter(.data$incidenceRate %in% getIncidenceRateFilteredOnYScale())
     }
     
     validate(need(
@@ -4020,12 +4149,10 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: saveIncidenceRateData----
   output$saveIncidenceRateData <-  downloadHandler(
-    filename = function()
-    {
+    filename = function() {
       getCsvFileNameWithDateTime(string = "IncidenceRate")
     },
-    content = function(file)
-    {
+    content = function(file) {
       downloadCsv(x = getIncidenceRateData(),
                   fileName = file)
     }
@@ -4055,8 +4182,7 @@ shiny::shinyServer(function(input, output, session) {
         " cohorts and ",
         length(consolidatedDatabaseIdTarget()),
         " databases"
-      ),
-      {
+      ), {
         return(getIncidentRatePlot())
       },
       detail = "Please Wait"
@@ -4065,52 +4191,46 @@ shiny::shinyServer(function(input, output, session) {
   
   #______________----
   # Time Series -----
+  #!!!!!!!!!!!!needs another hard look and clean up
   ##reactive: getFixedTimeSeriesTsibble ------
   getFixedTimeSeriesTsibble <- reactive({
-    if (input$tabs == "timeSeries")
-    {
-      #!!!consolidatedCohortIdTarget() is returning '' -why?
-      if (any(length(consolidatedCohortIdTarget()) == 0))
-      {
-        return(NULL)
-      }
-      if (all(is(dataSource, "environment"), !exists('timeSeries'))) {
-        return(NULL)
-      }
-      
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(message = paste0("Getting time series data."),
-                   value = 0)
-      
-      data <- getResultsFixedTimeSeries(dataSource = dataSource,
-                                        cohortIds =  consolidatedCohortIdTarget())
-      return(data)
-    } else {
+    if (any(is.null(input$tabs), !input$tabs == "timeSeries")) {
       return(NULL)
     }
+    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+      return(NULL)
+    }
+    if (all(is(dataSource, "environment"),!exists('timeDistribution'))) {
+      return(NULL)
+    }
+    
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Getting time series data."),
+                 value = 0)
+    
+    data <- getResultsFixedTimeSeries(dataSource = dataSource,
+                                      cohortId =  consolidatedCohortIdTarget())
+    return(data)
   })
   
   ##reactive: getFixedTimeSeriesTsibbleFiltered----
   getFixedTimeSeriesTsibbleFiltered <- reactive({
-    if (any(
-      length(consolidatedDatabaseIdTarget()) == 0,
-      length(consolidatedCohortIdTarget()) == 0
-    )) {
+    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
     calendarIntervalFirstLetter <-
       tolower(substr(input$timeSeriesAggregationPeriodSelection, 1, 1))
     data <- getFixedTimeSeriesTsibble()
-    if (is.null(data))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     
     data <- data[[calendarIntervalFirstLetter]]
-    if (any(is.null(data),
-            length(data) == 0))
-    {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -4118,32 +4238,27 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    if (calendarIntervalFirstLetter == 'y')
-    {
+    if (calendarIntervalFirstLetter == 'y') {
       data <- data %>%
         dplyr::mutate(periodBeginRaw = as.Date(paste0(
           as.character(.data$periodBegin), '-01-01'
         )))
-    } else
-    {
+    } else {
       data <- data %>%
         dplyr::mutate(periodBeginRaw = as.Date(.data$periodBegin))
     }
     
-    if (calendarIntervalFirstLetter == 'm')
-    {
+    if (calendarIntervalFirstLetter == 'm') {
       data <- data %>%
         dplyr::mutate(periodEnd = clock::add_months(x = as.Date(.data$periodBeginRaw), n = 1) %>%
                         clock::add_days(n = -1))
     }
-    if (calendarIntervalFirstLetter == 'q')
-    {
+    if (calendarIntervalFirstLetter == 'q') {
       data <- data %>%
         dplyr::mutate(periodEnd = clock::add_quarters(x = as.Date(.data$periodBeginRaw), n = 1) %>%
                         clock::add_days(n = -1))
     }
-    if (calendarIntervalFirstLetter == 'y')
-    {
+    if (calendarIntervalFirstLetter == 'y') {
       data <- data %>%
         dplyr::mutate(periodEnd = clock::add_years(x = as.Date(.data$periodBeginRaw), n = 1) %>%
                         clock::add_days(n = -1))
@@ -4422,12 +4537,10 @@ shiny::shinyServer(function(input, output, session) {
     ))
     tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data, 
                                                       valueFields = titleCaseToCamelCase(input$timeSeriesPlotFilters))
-    browser()
     plot <- plotTimeSeriesFromTsibble(
       tsibbleData = tsibbleDataFromSTLModel,
       plotFilters = titleCaseToCamelCase(input$timeSeriesPlotFilters),
       indexAggregationType = input$timeSeriesAggregationPeriodSelection,
-      timeSeriesStatistics = input$timeSeriesStatistics,
       timeSeriesPeriodRangeFilter = input$timeSeriesPeriodRangeFilter
     )
     
@@ -4445,21 +4558,20 @@ shiny::shinyServer(function(input, output, session) {
   #Time Distribution----
   ##output: getTimeDistributionData----
   getTimeDistributionData <- reactive({
-    if (any(
-      is.null(consolidatedDatabaseIdTarget()),
-      length(consolidatedDatabaseIdTarget()) == 0
-    )) {
+    if (any(is.null(input$tabs),!input$tabs == "timeDistribution")) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
     if (all(is(dataSource, "environment"),
-            !exists('timeDistribution')))
-    {
+            !exists('timeDistribution'))) {
       return(NULL)
     }
     data <- getResultsTimeDistribution(
       dataSource = dataSource,
-      cohortIds =  consolidatedCohortIdTarget(),
-      databaseIds = consolidatedDatabaseIdTarget()
+      cohortId =  consolidatedCohortIdTarget(),
+      databaseId = consolidatedDatabaseIdTarget()
     )
     return(data)
   })
@@ -4496,12 +4608,10 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: saveTimeDistributionTable----
   output$saveTimeDistributionTable <-  downloadHandler(
-    filename = function()
-    {
+    filename = function() {
       getCsvFileNameWithDateTime(string = "timeDistribution")
     },
-    content = function(file)
-    {
+    content = function(file) {
       downloadCsv(x = getTimeDistributionTableData(),
                   fileName = file)
     }
@@ -4510,11 +4620,8 @@ shiny::shinyServer(function(input, output, session) {
   ##output: timeDistributionTable----
   output$timeDistributionTable <- DT::renderDataTable(expr = {
     data <- getTimeDistributionTableData()
-    validate(need(
-      all(!is.null(data), nrow(data) > 0),
-      "No data available for selected combination."
-    ))
-    
+    validate(need(doesObjectHaveData(data), 
+             "No data available for selected combination."))
     options = list(
       pageLength = 100,
       lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -4544,15 +4651,13 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   ##output: timeDistributionPlot----
-  output$timeDistributionPlot <- ggiraph::renderggiraph(expr = {
-    validate(need(
-      length(consolidatedDatabaseIdTarget()) > 0,
-      "No data sources chosen"
-    ))
+  output$timeDistributionPlot <- plotly::renderPlotly(expr = {
+    validate(need(doesObjectHaveData(consolidatedDatabaseIdTarget()),
+      "No data sources chosen"))
     data <- getTimeDistributionData()
-    validate(need(nrow(data) > 0, paste0("No data for this combination")))
-    plot <-
-      plotTimeDistribution(data = data, shortNameRef = cohort)
+    validate(need(doesObjectHaveData(data), 
+                  "No data for this combination"))
+    plot <- plotTimeDistribution(data = data, shortNameRef = cohort)
     return(plot)
   })
   
@@ -4572,7 +4677,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <-
       getResultsIndexEventBreakdown(dataSource = dataSource,
-                                    cohortIds = consolidatedCohortIdTarget())
+                                    cohortId = consolidatedCohortIdTarget())
     return(data)
   })
   
@@ -4670,14 +4775,13 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     conceptIdDetails <- getConcept(dataSource = dataSource,
-                                   conceptIds = indexEventBreakdown$conceptId %>%
+                                   conceptId = indexEventBreakdown$conceptId %>%
                                      unique())
     if (is.null(conceptIdDetails)) {
       return(NULL)
     }
     #!!! future idea for index event breakdown - metric on conceptProportion
     # what proportion of concepts in dataSource is in index event
-    
     indexEventBreakdown <- indexEventBreakdown %>%
       dplyr::inner_join(
         conceptIdDetails %>%
@@ -4860,8 +4964,7 @@ shiny::shinyServer(function(input, output, session) {
         .data$type
       ) %>%
       dplyr::summarise(
-        conceptValue = sum(.data$conceptValue),
-        subjectValue = max(.data$subjectValue),
+        count = sum(.data$count),
         .groups = 'keep'
       ) %>%
       dplyr::ungroup() %>%
@@ -4879,8 +4982,8 @@ shiny::shinyServer(function(input, output, session) {
         values_from = count,
         values_fill = 0
       ) %>%
-      dplyr::distinct()
-    data <- data[order(-data[6]),]
+      dplyr::distinct() %>% 
+      dplyr::arrange(dplyr::desc(abs(dplyr::across(.cols = dplyr::contains("Value")))))
     return(data)
   })
   
@@ -4899,73 +5002,23 @@ shiny::shinyServer(function(input, output, session) {
   
   ##getIndexEventBreakdownDataTable----
   getIndexEventBreakdownDataTable <- shiny::reactive(x = {
-    data <- getIndexEventBreakdownDataLong()
+    data <- getIndexEventBreakdownDataWide()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    cohortAndPersonCount <- data %>%
-      dplyr::select(.data$cohortId,
-                    .data$databaseId) %>%
-      dplyr::distinct() %>%
-      dplyr::inner_join(cohortCount,
-                        by = c('databaseId',
-                               'cohortId')) %>%
-      dplyr::distinct() %>%
-      dplyr::mutate(cohortSubjects = scales::comma(.data$cohortSubjects,
-                                                   accuracy = 1)) %>%
-      dplyr::mutate(cohortEntries = scales::comma(.data$cohortEntries,
-                                                  accuracy = 1))
-    
-    data <- data %>%
-      dplyr::inner_join(cohortAndPersonCount,
-                        by = c('cohortId',
-                               'databaseId'))
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    
     if (input$indexEventBreakdownTableFilter == "Records") {
       data <- data %>%
-        dplyr::mutate(type = paste0(
-          .data$databaseId,
-          " (",
-          .data$cohortEntries,
-          ") ",
-          .data$type
-        ))
+        dplyr::select(-dplyr::contains("subjectValue"))
     }
     if (input$indexEventBreakdownTableFilter == "Persons") {
       data <- data %>%
-        dplyr::mutate(type = paste0(
-          .data$databaseId,
-          " (",
-          .data$cohortSubjects,
-          ") ",
-          .data$type
-        ))
+        dplyr::select(-dplyr::contains("conceptValue"))
     }
-    
-    data <- data %>%
-      tidyr::pivot_wider(
-        id_cols = c(
-          "cohortId",
-          "conceptId",
-          "conceptName",
-          "vocabularyId",
-          "domainTable",
-          "domainField",
-          "cohortEntries",
-          "cohortSubjects"
-        ),
-        names_from = type,
-        values_from = count,
-        values_fill = 0
-      ) %>%
-      dplyr::distinct()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    data <- data[order(-data[9]),]
+    data <- data%>% 
+      dplyr::arrange(dplyr::desc(abs(dplyr::across(.cols = dplyr::contains("Value")))))
     return(data)
   })
   
@@ -4982,27 +5035,29 @@ shiny::shinyServer(function(input, output, session) {
         ),
         value = 0
       )
-      indexEventBreakdownDataTable <-
+      data <-
         getIndexEventBreakdownDataTable()
       validate(
         need(
-          doesObjectHaveData(indexEventBreakdownDataTable),
+          doesObjectHaveData(data),
           "No index event breakdown data for the chosen combination."
         )
       )
-      data <- indexEventBreakdownDataTable %>%
-        dplyr::select(-.data$cohortId, -.data$cohortSubjects, -.data$cohortEntries)
-      maxCount <-
-        max(indexEventBreakdownDataTable[9], na.rm = TRUE)
+      data <- data %>% 
+        dplyr::select(-.data$cohortId)
+      maxCount <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "value")
       databaseIds <- input$selectedDatabaseIds
       
-      personCount <- indexEventBreakdownDataTable %>% 
-        dplyr::pull(.data$cohortSubjects) %>% 
-        unique()
+      personCount <- cohortCount %>% 
+        dplyr::filter(.data$cohortId %in% c(data$cohortId %>% unique())) %>% 
+        dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
+        dplyr::select(.data$databaseId, .data$cohortSubjects)
       
-      recordCount <- indexEventBreakdownDataTable %>% 
-        dplyr::pull(.data$cohortEntries) %>% 
-        unique()
+      recordCount <- cohortCount %>% 
+        dplyr::filter(.data$cohortId %in% c(data$cohortId %>% unique())) %>% 
+        dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
+        dplyr::pull(.data$databaseId, .data$cohortEntries)
+      
       noOfMergeColumns <- 1
       if (input$indexEventBreakdownTableFilter == "Records") {
         data <- data %>%
@@ -5126,12 +5181,6 @@ shiny::shinyServer(function(input, output, session) {
           value = "conceptSetBrowser",
           shiny::conditionalPanel(
             condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-            tags$h4(paste0(
-              data$conceptName,
-              " (",
-              data$conceptId,
-              ")"
-            )),
             tags$table(width = "100%",
                        tags$tr(
                          tags$td(
@@ -5193,12 +5242,6 @@ shiny::shinyServer(function(input, output, session) {
         panels[[inc]] <- shiny::tabPanel(
           title = "Time Series Plot",
           value = "conceptSetTimeSeriesForIndexEvent",
-          tags$h5(paste0(
-            data$conceptName,
-            " (",
-            data$conceptId,
-            ")"
-          )),
           plotly::plotlyOutput(
             outputId = "conceptSetTimeSeriesPlotForIndexEvent",
             width = "100%",
@@ -5207,9 +5250,27 @@ shiny::shinyServer(function(input, output, session) {
         )
         inc = inc + 1
       }
-      
-      do.call(tabsetPanel, panels)
+      shiny::conditionalPanel(
+        condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
+        shinydashboard::box(
+          title = shiny::htmlOutput(outputId = "conceptSetSynonymsForIndexEventBreakdown"),
+          width = NULL,
+          status = NULL,
+          collapsible = TRUE,
+          collapsed = TRUE,
+          do.call(tabsetPanel, panels)
+        )
+      )
     })
+  
+  ##output: conceptSetSynonymsForIndexEventBreakdown----
+  output$conceptSetSynonymsForIndexEventBreakdown <- shiny::renderUI(expr = {
+    data <- getConceptSetSynonyms()
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    return(data)
+  })
   
   ##output: conceptBrowserTableForIndexEvent----
   output$conceptBrowserTableForIndexEvent <- DT::renderDT(expr = {
@@ -5301,10 +5362,20 @@ shiny::shinyServer(function(input, output, session) {
       tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
                                                                             valueFields = c("records", "persons"))
       
+      conceptName <- getMetadataForConceptId()$concept %>% 
+        dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
+        dplyr::pull(.data$conceptName)
       
+      conceptSynonym <- getMetadataForConceptId()$conceptSynonym$conceptSynonymName %>% 
+        unique() %>%
+        sort() %>% 
+        paste0(collapse = ", ")
       
       plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
-        stlModeledTsibbleData = tsibbleDataFromSTLModel
+        stlModeledTsibbleData = tsibbleDataFromSTLModel,
+        conceptId = activeSelected()$conceptId,
+        conceptName = conceptName,
+        conceptSynonym = conceptSynonym
       )
       return(plot)
     })
@@ -5329,7 +5400,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     visitContext <-
       getResultsVisitContext(dataSource = dataSource,
-                             cohortIds = consolidatedCohortIdTarget())
+                             cohortId = consolidatedCohortIdTarget())
     if (any(is.null(visitContext),
             nrow(visitContext) == 0))
     {
@@ -5340,7 +5411,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!'visitConceptName' %in% colnames(visitContext))
     {
       concepts <- getConcept(dataSource = dataSource,
-                             conceptIds = visitContext$visitConceptId %>% unique()) %>%
+                             conceptId = visitContext$visitConceptId %>% unique()) %>%
         dplyr::rename(
           visitConceptId = .data$conceptId,
           visitConceptName = .data$conceptName
@@ -5564,8 +5635,8 @@ shiny::shinyServer(function(input, output, session) {
           ")"
         )) %>%
         dplyr::pull(.data$databaseIdWithCount)
-      maxSubjects <-
-        getVisitContexDataFiltered()$subjects %>% max(na.rm = TRUE)
+      maxSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = getVisitContexDataFiltered(), 
+                                                                string = "ubjects")
     } else
     {
       databaseIdsWithCount <- cohortCounts %>%
@@ -5576,8 +5647,8 @@ shiny::shinyServer(function(input, output, session) {
           ")"
         )) %>%
         dplyr::pull(.data$databaseIdWithCount)
-      maxSubjects <-
-        getVisitContexDataFiltered()$records %>% max(na.rm = TRUE)
+      maxSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = getVisitContexDataFiltered(), 
+                                                                   string = "ecords")
     }
     
     
@@ -5702,8 +5773,8 @@ shiny::shinyServer(function(input, output, session) {
     {
       return(NULL)
     }
-    data <- getCohortOverlap(dataSource = dataSource,
-                             cohortIds = consolidatedCohortIdTarget())
+    data <- getResultsCohortOverlap(dataSource = dataSource,
+                                    cohortId = consolidatedCohortIdTarget())
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -5916,8 +5987,8 @@ shiny::shinyServer(function(input, output, session) {
     )
     data <- getMultipleCharacterizationResults(
       dataSource = dataSource,
-      cohortIds = consolidatedCohortIdTarget(),
-      databaseIds = consolidatedDatabaseIdTarget()
+      cohortId = consolidatedCohortIdTarget(),
+      databaseId = consolidatedDatabaseIdTarget()
     )
     return(data)
   })
@@ -6794,11 +6865,11 @@ shiny::shinyServer(function(input, output, session) {
       
       data <- getMultipleCharacterizationResults(
         dataSource = dataSource,
-        cohortIds = c(
+        cohortId = c(
           consolidatedCohortIdTarget(),
           getComparatorCohortIdFromSelectedCompoundCohortName()
         ) %>% unique(),
-        databaseIds = input$selectedDatabaseId
+        databaseId = input$selectedDatabaseId
       )
       return(data)
     })
@@ -7281,7 +7352,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ###compareCharacterizationPlot----
   output$compareCharacterizationPlot <-
-    ggiraph::renderggiraph(expr = {
+    plotly::renderPlotly(expr = {
       if (input$tabs != "compareCohortCharacterization")
       {
         return(NULL)
@@ -7872,7 +7943,7 @@ shiny::shinyServer(function(input, output, session) {
   ##!!!!!!!!!!!!! address https://github.com/OHDSI/CohortDiagnostics/issues/444
   ###compareTemporalCharacterizationPlot----
   output$compareTemporalCharacterizationPlot <-
-    ggiraph::renderggiraph(expr = {
+    plotly::renderPlotly(expr = {
       if (input$tabs != "compareTemporalCharacterization")
       {
         return(NULL)
@@ -7905,35 +7976,52 @@ shiny::shinyServer(function(input, output, session) {
   #Metadata----
   #getMetadataInformation----
   getMetadataInformation <- shiny::reactive(x = {
-    data <- metadata %>%
-      dplyr::filter(.data$databaseId == input$selectedDatabaseId)
+    data <- getExecutionMetadata(dataSource = dataSource)
+    if (!doesObjectHaveData(data)) {
+      return(data)
+    }
     return(data)
   })
   
-  #getDataSourceInformation----
-  getDataSourceInformation <- shiny::reactive(x = {
-    data <- database
-    if (!'vocabularyVersionCdm' %in% colnames(database))
-    {
+  #getMetadataInformationFilteredToDatabaseId----
+  getMetadataInformationFilteredToDatabaseId <- shiny::reactive(x = {
+    data <- getMetadataInformation() 
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::filter(.data$databaseId == input$selectedDatabaseId)
+    if (!'vocabularyVersionCdm' %in% colnames(data)) {
       data$vocabularyVersionCdm <- "NA"
     }
     if (!'vocabularyVersion' %in% colnames(database)) {
       data$vocabularyVersion <- "NA"
     }
+    colNamesRequired <- c("databaseId",
+                          "startTime",
+                          "cdmReleaseDate",
+                          "cdmSourceName",
+                          "datasourceName",
+                          "datasourceDescription",
+                          "sourceDescription",
+                          "vocabularyVersionCdm",
+                          "vocabularyVersion",
+                          "sourceReleaseDate",
+                          "observationPeriodMaxDate",
+                          "observationPeriodMinDate",
+                          "personsInDatasource",
+                          "recordsInDatasource",
+                          "personDaysInDatasource")
+    colNamesObserved <- colnames(data)
+    presentInBoth <- intersect(colNamesRequired, colNamesObserved)
     data <- data %>%
-      dplyr::select(
-        .data$databaseId,
-        .data$databaseName,
-        .data$vocabularyVersionCdm,
-        .data$vocabularyVersion,
-        .data$description
-      )
+      dplyr::select(dplyr::all_of(presentInBoth))
     return(data)
   })
   
   ##output: databaseInformationTable----
   output$databaseInformationTable <- DT::renderDataTable(expr = {
-    data <- getDataSourceInformation()
+    data <- getMetadataInformationFilteredToDatabaseId()
     validate(need(all(!is.null(data),
                       nrow(data) > 0),
                   "Not available."))
@@ -7944,30 +8032,14 @@ shiny::shinyServer(function(input, output, session) {
       lengthChange = TRUE,
       ordering = TRUE,
       paging = TRUE,
-      searchHighlight = TRUE,
-      columnDefs = list(list(
-        width = "50%", targets = 4
-      ))
+      searchHighlight = TRUE
     )
-    sketch <- htmltools::withTags(table(class = "display",
-                                        thead(tr(
-                                          th(rowspan = 2, "ID"),
-                                          th(rowspan = 2, "Name"),
-                                          th(
-                                            "Vocabulary version",
-                                            colspan = 2,
-                                            class = "dt-center",
-                                            style = "border-right:1px solid silver;border-bottom:1px solid silver"
-                                          ),
-                                          th(rowspan = 2, "Description")
-                                        ),
-                                        tr(
-                                          lapply(c("CDM source", "Vocabulary table"), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                        ))))
+  
     table <- DT::datatable(
       data ,
       options = options,
-      container = sketch,
+      colnames = colnames(data) %>%
+        camelCaseToTitleCase(),
       rownames = FALSE,
       class = "stripe compact"
     )

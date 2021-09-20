@@ -982,11 +982,11 @@ runCohortDiagnostics <- function(packageName = NULL,
     #4
     "argumentsAtDiagnosticsInitiationJson",
     #5
-    "Rversion",
+    "rversion",
     #6
-    "CurrentPackage",
+    "currentPackage",
     #7
-    "CurrentPackageVersion",
+    "currentPackageVersion",
     #8
     "sourceDescription",
     #9
@@ -1000,24 +1000,22 @@ runCohortDiagnostics <- function(packageName = NULL,
     #13
     "vocabularyVersion",
     #14
-    "databaseId",
-    #15
     "datasourceName",
-    #16
+    #15
     "datasourceDescription",
-    #17
+    #16
     "vocabularyVersionCdm",
-    #18
+    #17
     "vocabularyVersion",
-    #19
+    #18
     "observationPeriodMinDate",
-    #20
+    #19
     "observationPeriodMaxDate",
-    #21
+    #20
     "personsInDatasource",
-    #22
+    #21
     "recordsInDatasource",
-    #23
+    #22
     "personDaysInDatasource" #24
   )
   valueField <-   c(
@@ -1057,24 +1055,22 @@ runCohortDiagnostics <- function(packageName = NULL,
       cdmSourceInformation$vocabularyVersion
     )),
     #14
-    as.character(databaseId),
-    #15
     as.character(databaseName),
-    #16
+    #15
     as.character(databaseDescription),
-    #17
+    #16
     as.character(nullToEmpty(cdmSourceInformation$vocabularyVersion)),
-    #18
+    #17
     as.character(vocabularyVersion),
-    #19
+    #18
     as.character(observationPeriodDateRange$observationPeriodMinDate),
-    #20
+    #19
     as.character(observationPeriodDateRange$observationPeriodMaxDate),
-    #21
+    #20
     as.character(observationPeriodDateRange$persons),
-    #22
+    #21
     as.character(observationPeriodDateRange$records),
-    #23
+    #22
     as.character(observationPeriodDateRange$personDays) #24
   )
   metadata <- dplyr::tibble(
