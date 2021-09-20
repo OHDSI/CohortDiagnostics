@@ -508,6 +508,7 @@ getExecutionMetadata <- function(dataSource) {
 getConcept <- function(dataSource = .GlobalEnv,
                        vocabularyDatabaseSchema = NULL,
                        conceptIds = NULL) {
+  resultsDatabaseSchema <- NULL
   if (!is.null(vocabularyDatabaseSchema)) {
     resultsDatabaseSchema <- vocabularyDatabaseSchema
   }
