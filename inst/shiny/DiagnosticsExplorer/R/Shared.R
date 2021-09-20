@@ -1955,8 +1955,11 @@ getResultsCohortRelationships <- function(dataSource,
 #'
 #' @export
 getResultsCohortOverlap <- function(dataSource,
-                                    cohortIds = NULL,
+                                    targetCohortIds = NULL,
+                                    comparatorCohortIds = NULL,
                                     databaseIds = NULL) {
+  
+  cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique()
   cohortCounts <-
     getResultsCohortCount(dataSource = dataSource,
                           cohortIds = cohortIds,
@@ -1967,11 +1970,9 @@ getResultsCohortOverlap <- function(dataSource,
     return(NULL)
   }
   
-  combisOfTargetComparator <- t(utils::combn(cohortIds, 2)) %>%
-    as.data.frame() %>%
-    dplyr::tibble()
-  colnames(combisOfTargetComparator) <-
-    c('targetCohortId', 'comparatorCohortId')
+  combisOfTargetComparator <- tidyr::crossing(dplyr::tibble(targetCohortId = targetCohortIds),
+                                              dplyr::tibble(comparatorCohortId = comparatorCohortIds)) %>%
+    dplyr::filter(.data$targetCohortId != .data$comparatorCohortId)
   
   cohortRelationship <-
     getResultsCohortRelationships(dataSource = dataSource,

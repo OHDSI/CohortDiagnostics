@@ -5773,8 +5773,10 @@ shiny::shinyServer(function(input, output, session) {
     {
       return(NULL)
     }
+    #!!!!! change ui drop down
     data <- getResultsCohortOverlap(dataSource = dataSource,
-                                    cohortId = consolidatedCohortIdTarget())
+                                    cohortId = consolidatedCohortIdTarget(),
+                                    cohortId = consolidatedCohortIdCompartor())
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
