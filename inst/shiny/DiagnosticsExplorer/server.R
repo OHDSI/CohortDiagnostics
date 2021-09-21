@@ -782,24 +782,6 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
-  
-  ###getCohortIdFromSelectedRowInCohortCountTable----
-  getCohortIdFromSelectedRowInCohortCountTable <- reactive({
-    idx <- input$cohortCountsTable_rows_selected
-    if (is.null(idx)) {
-      return(NULL)
-    } else {
-      subset <- getCohortCountDataForSelectedDatabaseIdsCohortIds() %>%
-        dplyr::distinct(.data$cohortId)
-      
-      if (!is.null(subset)) {
-        return(subset[idx, ])
-      } else {
-        return(NULL)
-      }
-    }
-  })
-  
   ##Human readable text----
   ###getCirceRPackageVersionInformation----
   getCirceRPackageVersionInformation <- shiny::reactive(x = {
@@ -3775,6 +3757,22 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
+  ###getCohortIdFromSelectedRowInCohortCountTable----
+  getCohortIdFromSelectedRowInCohortCountTable <- reactive({
+    idx <- input$cohortCountsTable_rows_selected
+    if (is.null(idx)) {
+      return(NULL)
+    } else {
+      subset <- getCohortCountDataForSelectedDatabaseIdsCohortIds() %>%
+        dplyr::distinct(.data$cohortId)
+      
+      if (!is.null(subset)) {
+        return(subset[idx, ])
+      } else {
+        return(NULL)
+      }
+    }
+  })
   
   ##output: doesSelectedRowInCohortCountTableHaveCohortId----
   output$doesSelectedRowInCohortCountTableHaveCohortId <-
@@ -3785,8 +3783,8 @@ shiny::shinyServer(function(input, output, session) {
                 "doesSelectedRowInCohortCountTableHaveCohortId",
                 suspendWhenHidden = FALSE)
   
-  ##output: inclusionRuleStatForCohortSeletedTable----
-  output$inclusionRuleStatForCohortSeletedTable <-
+  ##output: inclusionRuleStatisticsForCohortSeletedTable----
+  output$inclusionRuleStatisticsForCohortSeletedTable <-
     DT::renderDataTable(expr = {
       validate(need(
         length(consolidatedDatabaseIdTarget()) > 0,
