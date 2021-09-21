@@ -4,7 +4,12 @@
 \alias{getResultsCohortOverlap}
 \title{Returns data for use in cohort_overlap}
 \usage{
-getResultsCohortOverlap(dataSource, cohortIds = NULL, databaseIds = NULL)
+getResultsCohortOverlap(
+  dataSource,
+  targetCohortIds = NULL,
+  comparatorCohortIds = NULL,
+  databaseIds = NULL
+)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 
@@ -14,7 +19,9 @@ compiled into RData using \code{preMergeDiagnosticsFiles}. Database DataSources 
 database (only a postgres database is supported) with tables created with DDL function \code{createResultsDataModel}
 and uploaded using \code{uploadResults}}
 
-\item{cohortIds}{A vector of one or more Cohort Ids.}
+\item{targetCohortIds}{A vector of cohort ids representing target cohorts}
+
+\item{comparatorCohortIds}{A vector of cohort ids representing comparator cohorts}
 
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 

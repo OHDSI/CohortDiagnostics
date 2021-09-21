@@ -559,12 +559,12 @@ getRelationship <- function(dataSource = .GlobalEnv) {
 #' @export
 getConceptRelationship <- function(dataSource = .GlobalEnv,
                                    vocabularyDatabaseSchema = NULL,
-                                   conceptId1 = NULL) {
+                                   conceptIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource = dataSource,
     dataTableName = "conceptRelationship",
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    conceptId1 = conceptId
+    conceptId1 = conceptIds
   )
   return(data)
 }
@@ -871,7 +871,7 @@ getConceptMetadata <- function(dataSource,
       getConceptRelationship(
         dataSource = dataSource,
         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-        conceptId1 = conceptIds
+        conceptIds = conceptIds
       )
     #output for concept relationship table in shiny app
     conceptRelationship <- dplyr::bind_rows(
@@ -1946,7 +1946,9 @@ getResultsCohortRelationships <- function(dataSource,
 #'
 #' @template DataSource
 #'
-#' @template CohortIds
+#' @param targetCohortIds A vector of cohort ids representing target cohorts
+#' 
+#' @param comparatorCohortIds A vector of cohort ids representing comparator cohorts
 #'
 #' @template DatabaseIds
 #'
@@ -1955,8 +1957,11 @@ getResultsCohortRelationships <- function(dataSource,
 #'
 #' @export
 getResultsCohortOverlap <- function(dataSource,
-                                    cohortIds = NULL,
+                                    targetCohortIds = NULL,
+                                    comparatorCohortIds = NULL,
                                     databaseIds = NULL) {
+  
+  cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique()
   cohortCounts <-
     getResultsCohortCount(dataSource = dataSource,
                           cohortIds = cohortIds,
@@ -1967,11 +1972,9 @@ getResultsCohortOverlap <- function(dataSource,
     return(NULL)
   }
   
-  combisOfTargetComparator <- t(utils::combn(cohortIds, 2)) %>%
-    as.data.frame() %>%
-    dplyr::tibble()
-  colnames(combisOfTargetComparator) <-
-    c('targetCohortId', 'comparatorCohortId')
+  combisOfTargetComparator <- tidyr::crossing(dplyr::tibble(targetCohortId = targetCohortIds),
+                                              dplyr::tibble(comparatorCohortId = comparatorCohortIds)) %>%
+    dplyr::filter(.data$targetCohortId != .data$comparatorCohortId)
   
   cohortRelationship <-
     getResultsCohortRelationships(dataSource = dataSource,
@@ -1986,7 +1989,8 @@ getResultsCohortOverlap <- function(dataSource,
   fullOffSet <-  cohortRelationship %>%
     dplyr::filter(.data$startDay == -99999) %>%
     dplyr::filter(.data$endDay == 99999) %>%
-    dplyr::filter(.data$comparatorCohortId %in% cohortIds) %>%
+    dplyr::filter(.data$cohortId %in% targetCohortIds) %>%
+    dplyr::filter(.data$comparatorCohortId %in% comparatorCohortIds) %>%
     dplyr::select(.data$databaseId,
                   .data$cohortId,
                   .data$comparatorCohortId,
@@ -2010,8 +2014,6 @@ getResultsCohortOverlap <- function(dataSource,
     dplyr::mutate(cOnlySubjects = .data$comparatorCohortSubjects - .data$bothSubjects) %>%
     dplyr::mutate(eitherSubjects = .data$cOnlySubjects + .data$tOnlySubjects + .data$bothSubjects) %>%
     dplyr::rename(targetCohortId = .data$cohortId) %>%
-    dplyr::inner_join(combisOfTargetComparator,
-                      by = c('targetCohortId', 'comparatorCohortId')) %>%
     dplyr::select(
       .data$databaseId,
       .data$targetCohortId,
@@ -2043,7 +2045,9 @@ getResultsCohortOverlap <- function(dataSource,
         ),
       by = c('databaseId', 'cohortId', 'comparatorCohortId')
     ) %>%
-    dplyr::rename(targetCohortId = .data$cohortId)
+    dplyr::rename(targetCohortId = .data$cohortId) %>% 
+    dplyr::filter(.data$cohortId %in% targetCohortIds) %>%
+    dplyr::filter(.data$comparatorCohortId %in% comparatorCohortIds)
   
   noOffset <- cohortRelationship %>%
     dplyr::filter(.data$comparatorCohortId %in% cohortIds) %>%
@@ -2067,7 +2071,9 @@ getResultsCohortOverlap <- function(dataSource,
         dplyr::select(-.data$sameDaySubjects),
       by = c('databaseId', 'cohortId', 'comparatorCohortId')
     ) %>%
-    dplyr::rename(targetCohortId = .data$cohortId)
+    dplyr::rename(targetCohortId = .data$cohortId) %>% 
+    dplyr::filter(.data$cohortId %in% targetCohortIds) %>%
+    dplyr::filter(.data$comparatorCohortId %in% comparatorCohortIds)
   
   result <- fullOffSet %>%
     dplyr::left_join(beforeOffset,
