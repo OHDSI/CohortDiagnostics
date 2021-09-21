@@ -2079,7 +2079,8 @@ getResultsCohortOverlap <- function(dataSource,
     dplyr::left_join(beforeOffset,
                      by = c('databaseId', 'targetCohortId', 'comparatorCohortId')) %>%
     dplyr::left_join(noOffset,
-                     by = c('databaseId', 'targetCohortId', 'comparatorCohortId'))
+                     by = c('databaseId', 'targetCohortId', 'comparatorCohortId')) %>% 
+    dplyr::filter(.data$targetCohortId == .data$comparatorCohortId)
   
   return(result)
 }
