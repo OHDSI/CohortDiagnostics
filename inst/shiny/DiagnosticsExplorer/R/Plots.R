@@ -1230,9 +1230,10 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   for (i in 1:length(distinctChoices)) {
     filteredData <- balance %>% 
       dplyr::filter(.data$choices == distinctChoices[i])
-    choicesPlot[[i]] <- plotly::plot_ly(filteredData, x = ~mean1, y = ~mean2, text = ~tooltip, type = 'scatter', height = (as.integer(length(distinctChoices)/6) + 1) * 500,
-                            mode = "markers", color = ~domain, colors = ~colors, opacity = 0.5, marker = list(size = 12,
-                                                                                                              line = list(color = 'rgb(255,255,255)', width = 1))) %>% 
+    choicesPlot[[i]] <- plotly::plot_ly(filteredData, x = ~mean1, y = ~mean2, text = ~tooltip, type = 'scatter', height = max(1,ceiling(length(distinctChoices)/5)) * 430,
+                            mode = "markers", color = ~domain, colors = ~colors, opacity = 0.5, marker = list(size = 15,
+                                                                                                              line = list(color = 'rgb(255,255,255)', width = 1))) %>%
+     
       plotly::layout(
         xaxis = list(range = c(0, 1)),
         yaxis = list(range = c(0, 1)),
@@ -1245,7 +1246,16 @@ plotTemporalCompareStandardizedDifference <- function(balance,
                        yanchor = "middle",
                        xref = 'paper',
                        yref = 'paper'
-                     ))
+                     ),
+        hoverlabel = list(
+          bgcolor = "rgba(255,255,255,0.8)",
+          font = list(
+            color = "black"
+          )
+        )) %>% 
+      plotly::add_segments(x = 0, y = 0, xend = 1, yend = 1,
+                           line = list(width = 0.5, color = "rgb(160,160,160)", dash = "dash"))
+      
   }
   m <- list(
     l = 100,
@@ -1253,13 +1263,13 @@ plotTemporalCompareStandardizedDifference <- function(balance,
     b = 100,
     t = 50
   )
-  plot <- plotly::subplot(choicesPlot, nrows = as.integer(length(distinctChoices)/6) + 1, margin = 0.01) %>% 
+  plot <- plotly::subplot(choicesPlot, nrows = max(1,ceiling(length(distinctChoices)/5)), margin = 0.01) %>% 
     plotly::layout(showlegend = FALSE,
                    # yaxis = list(title = list(text =  paste("Covariate Mean in ", yCohort),
                    #                           font = list(size = 18))),
                    annotations = list(
                      x = c(0.5, -0.04) ,
-                     y = c(-0.1 +  0.0145 * (as.integer(length(distinctChoices)/6) + 1), 0.5),
+                     y = c(-0.1 +  0.0145 * max(1,ceiling(length(distinctChoices)/5)), 0.5),
                      text = c(paste("Covariate Mean in ", xCohort), paste("Covariate Mean in ", yCohort)),
                      showarrow = F,
                      xanchor = "center",
