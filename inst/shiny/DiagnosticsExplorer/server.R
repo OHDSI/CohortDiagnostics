@@ -3572,6 +3572,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
+      dplyr::rename(cohort = .data$shortName) %>% 
       dplyr::select(.data$cohort, .data$databaseId,
                     .data$cohortSubjects) %>%
       dplyr::mutate(columnName = paste0(.data$databaseId)) %>%
@@ -3592,6 +3593,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
+      dplyr::rename(cohort = .data$shortName) %>% 
       dplyr::select(.data$cohort, .data$databaseId,
                     .data$cohortEntries) %>%
       dplyr::mutate(columnName = paste0(.data$databaseId)) %>%
@@ -3627,10 +3629,8 @@ shiny::shinyServer(function(input, output, session) {
     maxValueEntries <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ntries")
     databaseIds <- sort(unique(data$databaseId))
     
-    if (input$cohortCountsTableColumnFilter == "Both")
-    {
+    if (input$cohortCountsTableColumnFilter == "Both") {
       table <- getCohortCountDataSubjectRecord()
-      #!!!!!!!! add a radio button to toggle cohort short name vs cohort full name
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(tr(
                                             th(rowspan = 2, "Cohort"),
@@ -3697,16 +3697,12 @@ shiny::shinyServer(function(input, output, session) {
           backgroundPosition = "center"
         )
       }
-    } else
-      if (input$cohortCountsTableColumnFilter == "Subjects Only" ||
-          input$cohortCountsTableColumnFilter == "Records Only")
-      {
-        if (input$cohortCountsTableColumnFilter == "Subjects Only")
-        {
+    } else if (input$cohortCountsTableColumnFilter == "Subjects Only" ||
+          input$cohortCountsTableColumnFilter == "Records Only") {
+        if (input$cohortCountsTableColumnFilter == "Subjects Only") {
           maxValue <- maxValueSubjects
           table <- getCohortCountDataSubject()
-        } else
-        {
+        } else {
           maxValue <- maxValueEntries
           table <- getCohortCountDataRecord()
         }
@@ -3739,7 +3735,6 @@ shiny::shinyServer(function(input, output, session) {
           class = "stripe nowrap compact"
         )
         
-        #!!!!!!!! add a radio button to toggle cohort short name vs cohort full name
         dataTable <- DT::formatStyle(
           table = dataTable,
           columns = 1 + 1:(length(databaseIds)),

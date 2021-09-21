@@ -294,27 +294,26 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortCounts",
     createShinyBoxFromOutputId("cohortCountsSelectedCohorts"),
-    shiny::conditionalPanel(
-      condition = "output.doesCohortCountTableHasData == true",
-      shiny::radioButtons(
-        inputId = "cohortCountsTableColumnFilter",
-        label = "Display",
-        choices = c("Both", "Subjects Only", "Records Only"), 
-        selected = "Both",
-        inline = TRUE
-      ),
-      tags$table(width = "100%", 
-                 tags$tr(
-                   tags$td(align = "right",
-                           shiny::downloadButton(
-                             "saveCohortCountsTable",
-                             label = "",
-                             icon = shiny::icon("download"),
-                             style = "margin-top: 5px; margin-bottom: 5px;"
-                           )
+    tags$table(width = "100%", 
+               tags$tr(
+                 tags$td(
+                   shiny::radioButtons(
+                     inputId = "cohortCountsTableColumnFilter",
+                     label = "Display",
+                     choices = c("Both", "Subjects Only", "Records Only"), 
+                     selected = "Both",
+                     inline = TRUE
                    )
+                 ),
+                 tags$td(align = "right",
+                         shiny::downloadButton(
+                           "saveCohortCountsTable",
+                           label = "",
+                           icon = shiny::icon("download"),
+                           style = "margin-top: 5px; margin-bottom: 5px;"
+                         )
                  )
-      )
+               )
     ),
     DT::dataTableOutput("cohortCountsTable"),
     tags$br(),
