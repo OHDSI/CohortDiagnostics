@@ -101,7 +101,8 @@ sidebarMenu <-
       input.tabs == 'cohortOverlap' |
       input.targetConceptSetsType == 'Resolved' |
       input.targetConceptSetsType == 'Excluded' |
-      input.targetConceptSetsType == 'Orphan concepts'",
+      input.targetConceptSetsType == 'Orphan concepts' |
+      input.targetCohortDefinitionTabSetPanel == 'targetCohortdefinitionInclusionRuleTabPanel'",
       shinyWidgets::pickerInput(
         inputId = "selectedDatabaseIds",
         label = "Database",

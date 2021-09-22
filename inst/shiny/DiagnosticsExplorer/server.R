@@ -240,50 +240,49 @@ shiny::shinyServer(function(input, output, session) {
               title = "Cohort Count",
               value = "targetCohortDefinitionCohortCountTabPanel",
               tags$br(),
-              DT::dataTableOutput(outputId = "targetCohortDefinitionCohortCountTable"),
+              DT::dataTableOutput(outputId = "targetCohortDefinitionCohortCountTable")
+            ),
+            shiny::tabPanel(
+              title = "Inclusion rules",
+              value = "targetCohortdefinitionInclusionRuleTabPanel",
               tags$br(),
-              #!!!!! here we will need to collapsible boxes (simplified/detailed with simplified selected by default. targetCohortDefinitionSimplifiedInclusionRuleTableFilters is in simplified)
-              shiny::conditionalPanel(
-                condition = "output.isDatabaseIdFoundForSelectedTargetCohortCount == true",
-                tags$h3("Inclusion Rules"),
-                tags$table(width = "100%",
-                           tags$tr(
-                             tags$td(
+              tags$table(width = "100%",
+                         tags$tr(
+                           tags$td(
+                             shiny::radioButtons(
+                               inputId = "targetCohortDefinitionInclusionRuleType",
+                               label = "Select: ",
+                               choices = c("Events", "Persons"),
+                               selected = "Events",
+                               inline = TRUE
+                             )
+                           ),
+                           tags$td(
+                             shiny::conditionalPanel(
+                               condition = "input.targetCohortDefinitionInclusionRuleType == 'Events' &
+                                         output.getSimplifiedInclusionRuleResultsTargetHasData == true",
                                shiny::radioButtons(
-                                 inputId = "targetCohortDefinitionInclusionRuleType",
-                                 label = "Select: ",
-                                 choices = c("Events", "Persons"),
-                                 selected = "Events",
+                                 inputId = "targetCohortDefinitionSimplifiedInclusionRuleTableFilters",
+                                 label = "Filter by",
+                                 choices = c("All", "Meet", "Gain", "Remain", "Totals"),
+                                 selected = "All",
                                  inline = TRUE
                                )
-                             ),
-                             tags$td(
-                               shiny::conditionalPanel(
-                                 condition = "input.targetCohortDefinitionInclusionRuleType == 'Events' &
-                                         output.getSimplifiedInclusionRuleResultsTargetHasData == true",
-                                 shiny::radioButtons(
-                                   inputId = "targetCohortDefinitionSimplifiedInclusionRuleTableFilters",
-                                   label = "Filter by",
-                                   choices = c("All", "Meet", "Gain", "Remain", "Totals"),
-                                   selected = "All",
-                                   inline = TRUE
-                                 )
-                               )
-                             ),
-                             tags$td(
-                               align = "right",
-                               shiny::downloadButton(
-                                 "saveTargetCohortDefinitionSimplifiedInclusionRuleTable",
-                                 label = "",
-                                 icon = shiny::icon("download"),
-                                 style = "margin-top: 5px; margin-bottom: 5px;"
-                               )
                              )
-                           )),
-                shiny::conditionalPanel(
-                  condition = "input.targetCohortDefinitionInclusionRuleType == 'Events'",
-                  DT::dataTableOutput(outputId = "targetCohortDefinitionSimplifiedInclusionRuleTable")
-                )
+                           ),
+                           tags$td(
+                             align = "right",
+                             shiny::downloadButton(
+                               "saveTargetCohortDefinitionSimplifiedInclusionRuleTable",
+                               label = "",
+                               icon = shiny::icon("download"),
+                               style = "margin-top: 5px; margin-bottom: 5px;"
+                             )
+                           )
+                         )),
+              shiny::conditionalPanel(
+                condition = "input.targetCohortDefinitionInclusionRuleType == 'Events'",
+                DT::dataTableOutput(outputId = "targetCohortDefinitionSimplifiedInclusionRuleTable")
               )
             ),
             shiny::tabPanel(
@@ -313,7 +312,6 @@ shiny::shinyServer(function(input, output, session) {
               )
             ),
             shiny::tabPanel(
-              #!!!!!!!!!if cohort has no concept sets - make gray color or say 'No Concept sets'
               title = "Concept Sets",
               value = "targetCohortDefinitionConceptSetTabPanel",
               DT::dataTableOutput(outputId = "targetCohortDefinitionConceptSetsTable"),
@@ -492,52 +490,49 @@ shiny::shinyServer(function(input, output, session) {
               title = "Cohort Count",
               value = "comparatorCohortDefinitionCohortCountTabPanel",
               tags$br(),
-              DT::dataTableOutput(outputId = "comparatorCohortDefinitionCohortCountsTable"),
+              DT::dataTableOutput(outputId = "comparatorCohortDefinitionCohortCountsTable")
+            ),
+            shiny::tabPanel(
+              title = "Inclusion rules",
+              value = "comparatorCohortDefinitionUnclusionRuleTabPanel",
               tags$br(),
-              #!!!!! here we will need to collapsible boxes (simplified/detailed with simplified selected by default)
-              #!!!! filter (all, meet, gain etc) are in simplified
-              #!!!! comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters is in simplified)
-              shiny::conditionalPanel(
-                condition = "output.isDatabaseIdFoundForSelectedComparatorCohortCount == true",
-                tags$h3("Inclusion Rules"),
-                tags$table(width = "100%",
-                           tags$tr(
-                             tags$td(
+              tags$table(width = "100%",
+                         tags$tr(
+                           tags$td(
+                             shiny::radioButtons(
+                               inputId = "comparatorCohortDefinitionInclusionRuleType",
+                               label = "Filter by",
+                               choices = c("Events", "Persons"),
+                               selected = "Events",
+                               inline = TRUE
+                             )
+                           ),
+                           tags$td(
+                             shiny::conditionalPanel(
+                               condition = "input.comparatorCohortDefinitionInclusionRuleType == 'Events' &
+                                         output.getComparatorSimplifiedInclusionRuleResultsHasData == true",
                                shiny::radioButtons(
-                                 inputId = "comparatorCohortDefinitionInclusionRuleType",
+                                 inputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters",
                                  label = "Filter by",
-                                 choices = c("Events", "Persons"),
-                                 selected = "Events",
+                                 choices = c("All", "Meet", "Gain", "Remain", "Totals"),
+                                 selected = "All",
                                  inline = TRUE
                                )
-                             ),
-                             tags$td(
-                               shiny::conditionalPanel(
-                                 condition = "input.comparatorCohortDefinitionInclusionRuleType == 'Events' &
-                                         output.getComparatorSimplifiedInclusionRuleResultsHasData == true",
-                                 shiny::radioButtons(
-                                   inputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters",
-                                   label = "Filter by",
-                                   choices = c("All", "Meet", "Gain", "Remain", "Totals"),
-                                   selected = "All",
-                                   inline = TRUE
-                                 )
-                               )
-                             ),
-                             tags$td(
-                               align = "right",
-                               shiny::downloadButton(
-                                 "saveComparatorCohortDefinitionSimplifiedInclusionRuleTable",
-                                 label = "",
-                                 icon = shiny::icon("download"),
-                                 style = "margin-top: 5px; margin-bottom: 5px;"
-                               )
                              )
-                           )),
-                shiny::conditionalPanel(
-                  condition = "input.comparatorCohortDefinitionInclusionRuleType == 'Events'",
-                  DT::dataTableOutput(outputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTable")
-                )
+                           ),
+                           tags$td(
+                             align = "right",
+                             shiny::downloadButton(
+                               "saveComparatorCohortDefinitionSimplifiedInclusionRuleTable",
+                               label = "",
+                               icon = shiny::icon("download"),
+                               style = "margin-top: 5px; margin-bottom: 5px;"
+                             )
+                           )
+                         )),
+              shiny::conditionalPanel(
+                condition = "input.comparatorCohortDefinitionInclusionRuleType == 'Events'",
+                DT::dataTableOutput(outputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTable")
               )
             ),
             shiny::tabPanel(
@@ -1504,28 +1499,11 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  ##Inclusion rule ----
-  ###getDatabaseIdFromSelectedRowInCohortCountTableTarget----
-  getDatabaseIdFromSelectedRowInCohortCountTableTarget <-
-    shiny::reactive(x = {
-      idx <- input$targetCohortDefinitionCohortCountTable_rows_selected
-      if (!doesObjectHaveData(idx)) {
-        return(NULL)
-      }
-      databaseIds <- getCountsForSelectedCohortsTarget()[idx,]
-      if (!doesObjectHaveData(databaseIds)) {
-        return(NULL)
-      }
-      databaseIds <- databaseIds %>%
-        dplyr::pull(.data$databaseId)
-      return(databaseIds)
-    })
-  
   ###getSimplifiedInclusionRuleResultsTarget----
   getSimplifiedInclusionRuleResultsTarget <- shiny::reactive(x = {
     if (any(
       !doesObjectHaveData(consolidatedCohortIdTarget()),
-      !doesObjectHaveData(getDatabaseIdFromSelectedRowInCohortCountTableTarget())
+      !doesObjectHaveData(consolidatedDatabaseIdTarget())
     )) {
       return(NULL)
     }
@@ -1533,7 +1511,7 @@ shiny::shinyServer(function(input, output, session) {
       getResultsInclusionRuleStatistics(
         dataSource = dataSource,
         cohortId = consolidatedCohortIdTarget(),
-        databaseId = getDatabaseIdFromSelectedRowInCohortCountTableTarget()
+        databaseId = consolidatedDatabaseIdTarget()
       )
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -1541,31 +1519,12 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###getDatabaseIdFromSelectedRowInCohortCountTableComparator----
-  getDatabaseIdFromSelectedRowInCohortCountTableComparator <-
-    shiny::reactive(x = {
-      idx <-
-        input$comparatorCohortDefinitionCohortCountsTable_rows_selected
-      if (!doesObjectHaveData(idx)) {
-        return(NULL)
-      }
-      databaseIds <- getCountsForSelectedCohortsComparator()[idx, ]
-      if (!doesObjectHaveData(databaseIds)) {
-        return(NULL)
-      }
-      databaseIds <- databaseIds %>%
-        dplyr::pull(.data$databaseId)
-      return(databaseIds)
-    })
-  
   ###getSimplifiedInclusionRuleResultsComparator----
   getSimplifiedInclusionRuleResultsComparator <-
     shiny::reactive(x = {
       if (any(
         !doesObjectHaveData(consolidatedCohortIdComparator()),
-        !doesObjectHaveData(
-          getDatabaseIdFromSelectedRowInCohortCountTableComparator()
-        )
+        !doesObjectHaveData(consolidatedDatabaseIdTarget())
       )) {
         return(NULL)
       }
@@ -1573,7 +1532,7 @@ shiny::shinyServer(function(input, output, session) {
         getResultsInclusionRuleStatistics(
           dataSource = dataSource,
           cohortId = consolidatedCohortIdComparator(),
-          databaseId = getDatabaseIdFromSelectedRowInCohortCountTableComparator()
+          databaseId = consolidatedDatabaseIdTarget()
         )
       if (!doesObjectHaveData(data)) {
         return(NULL)
@@ -1619,7 +1578,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::inner_join(cohortCount,
                           by = c("cohortId", "databaseId")) %>%
         dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
-        dplyr::filter(.data$databaseId %in% getDatabaseIdFromSelectedRowInCohortCountTableTarget()) %>%
+        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
         dplyr::select(.data$cohortEntries) %>%
         dplyr::pull(.data$cohortEntries) %>% unique()
       
@@ -2667,9 +2626,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::inner_join(cohortCount,
                           by = c("cohortId", "databaseId")) %>%
         dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>%
-        dplyr::filter(
-          .data$databaseId %in% getDatabaseIdFromSelectedRowInCohortCountTableComparator()
-        ) %>%
+        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
         dplyr::select(.data$cohortEntries) %>%
         dplyr::pull(.data$cohortEntries) %>%
         unique()
@@ -3415,6 +3372,10 @@ shiny::shinyServer(function(input, output, session) {
           shiny::updateTabsetPanel(session, 
                                    inputId = "comparatorCohortDefinitionTabSetPanel", 
                                    selected = "comparatorCohortDefinitionSqlTabPanel")
+        } else if (input$targetCohortDefinitionTabSetPanel == "targetCohortdefinitionInclusionRuleTabPanel") {
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "comparatorCohortDefinitionTabSetPanel", 
+                                   selected = "comparatorCohortDefinitionUnclusionRuleTabPanel")
         }
       }
     }
@@ -3477,6 +3438,10 @@ shiny::shinyServer(function(input, output, session) {
           shiny::updateTabsetPanel(session, 
                                    inputId = "targetCohortDefinitionTabSetPanel", 
                                    selected = "targetCohortDefinitionSqlTabPanel")
+        } else if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionSqlTabPanel") {
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "targetCohortDefinitionTabSetPanel", 
+                                   selected = "targetCohortdefinitionInclusionRuleTabPanel")
         }
       }
       
