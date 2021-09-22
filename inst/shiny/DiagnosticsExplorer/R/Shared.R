@@ -2046,7 +2046,7 @@ getResultsCohortOverlap <- function(dataSource,
       by = c('databaseId', 'cohortId', 'comparatorCohortId')
     ) %>%
     dplyr::rename(targetCohortId = .data$cohortId) %>% 
-    dplyr::filter(.data$cohortId %in% targetCohortIds) %>%
+    dplyr::filter(.data$targetCohortId %in% targetCohortIds) %>%
     dplyr::filter(.data$comparatorCohortId %in% comparatorCohortIds)
   
   noOffset <- cohortRelationship %>%
@@ -2072,7 +2072,7 @@ getResultsCohortOverlap <- function(dataSource,
       by = c('databaseId', 'cohortId', 'comparatorCohortId')
     ) %>%
     dplyr::rename(targetCohortId = .data$cohortId) %>% 
-    dplyr::filter(.data$cohortId %in% targetCohortIds) %>%
+    dplyr::filter(.data$targetCohortId %in% targetCohortIds) %>%
     dplyr::filter(.data$comparatorCohortId %in% comparatorCohortIds)
   
   result <- fullOffSet %>%
@@ -2080,7 +2080,7 @@ getResultsCohortOverlap <- function(dataSource,
                      by = c('databaseId', 'targetCohortId', 'comparatorCohortId')) %>%
     dplyr::left_join(noOffset,
                      by = c('databaseId', 'targetCohortId', 'comparatorCohortId')) %>% 
-    dplyr::filter(.data$targetCohortId == .data$comparatorCohortId)
+    dplyr::filter(.data$targetCohortId != .data$comparatorCohortId)
   
   return(result)
 }

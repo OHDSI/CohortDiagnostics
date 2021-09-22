@@ -201,10 +201,30 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
+      condition = "input.tabs == 'cohortOverlap'",
+      shinyWidgets::pickerInput(
+        inputId = "selectedComparatorCompoundCohortNames",
+        label = "Comparators",
+        choices = c(""),
+        selected = c(""),
+        multiple = TRUE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          liveSearchStyle = "contains",
+          size = 10,
+          dropupAuto = TRUE,
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+        )
+      )
+    ),
+    shiny::conditionalPanel(
       condition = "input.tabs == 'compareCohortCharacterization'|
         input.tabs == 'compareTemporalCharacterization'",
       shinyWidgets::pickerInput(
-        inputId = "selectedComparatorCompoundCohortNames",
+        inputId = "selectedComparatorCompoundCohortName",
         label = "Comparator",
         choices = c(""),
         multiple = FALSE,
@@ -810,7 +830,7 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )
       ),
-      ggiraph::ggiraphOutput("overlapPlot", width = "100%", height = "100%")
+      plotly::plotlyOutput("overlapPlot", height = "auto")
     )
   ),
   shinydashboard::tabItem(

@@ -52,6 +52,17 @@ shiny::shinyServer(function(input, output, session) {
   getComparatorCohortIdFromSelectedCompoundCohortName <-
     shiny::reactive({
       data <- cohort %>%
+        dplyr::filter(.data$compoundName %in% input$selectedComparatorCompoundCohortName) %>%
+        dplyr::arrange(.data$cohortId) %>%
+        dplyr::pull(.data$cohortId) %>%
+        unique()
+      return(data)
+    })
+  
+  ##getComparatorCohortIdFromSelectedCompoundCohortName----
+  getComparatorCohortIdFromSelectedCompoundCohortNames <-
+    shiny::reactive({
+      data <- cohort %>%
         dplyr::filter(.data$compoundName %in% input$selectedComparatorCompoundCohortNames) %>%
         dplyr::arrange(.data$cohortId) %>%
         dplyr::pull(.data$cohortId) %>%
@@ -100,6 +111,18 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
+  ##pickerInput: selectedComparatorCompoundCohortName----
+  shiny::observe({
+    subset <- getCohortSortedByCohortId()$compoundName
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "selectedComparatorCompoundCohortName",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset[2]
+    )
+  })
+  
   ##pickerInput: selectedComparatorCompoundCohortNames----
   shiny::observe({
     subset <- getCohortSortedByCohortId()$compoundName
@@ -108,7 +131,7 @@ shiny::shinyServer(function(input, output, session) {
       inputId = "selectedComparatorCompoundCohortNames",
       choicesOpt = list(style = rep_len("color: black;", 999)),
       choices = subset,
-      selected = subset[2]
+      selected = c(subset[3], subset[4])
     )
   })
   
@@ -5767,8 +5790,8 @@ shiny::shinyServer(function(input, output, session) {
     }
     #!!!!! change ui drop down
     data <- getResultsCohortOverlap(dataSource = dataSource,
-                                    cohortId = consolidatedCohortIdTarget(),
-                                    cohortId = consolidatedCohortIdCompartor())
+                                    targetCohortIds = consolidatedCohortIdTarget(),
+                                    comparatorCohortIds = getComparatorCohortIdFromSelectedCompoundCohortNames())
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -5787,7 +5810,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##output: overlapPlot----
-  output$overlapPlot <- ggiraph::renderggiraph(expr = {
+  output$overlapPlot <- plotly::renderPlotly(expr = {
     validate(need(
       length(consolidatedCohortIdTarget()) > 0,
       paste0("Please select Target Cohort(s)")
@@ -5806,6 +5829,7 @@ shiny::shinyServer(function(input, output, session) {
       nrow(data) > 0,
       paste0("No cohort overlap data for this combination.")
     ))
+    
     plot <- plotCohortOverlap(
       data = data,
       shortNameRef = cohort,
@@ -8293,7 +8317,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   selectedComparatorCohort <- shiny::reactive({
-    return(input$selectedComparatorCompoundCohortNames)
+    return(input$selectedComparatorCompoundCohortName)
   })
   
   buildCohortConditionTable <-
