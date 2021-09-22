@@ -3482,6 +3482,10 @@ shiny::shinyServer(function(input, output, session) {
           shiny::updateTabsetPanel(session, 
                                    inputId = "targetCohortDefinitionTabSetPanel", 
                                    selected = "targetCohortdefinitionInclusionRuleTabPanel")
+        } else if (input$comparatorCohortDefinitionTabSetPanel == "comparatorCohortDefinitionUnclusionRuleTabPanel") {
+          shiny::updateTabsetPanel(session, 
+                                   inputId = "targetCohortDefinitionTabSetPanel", 
+                                   selected = "targetCohortdefinitionInclusionRuleTabPanel")
         }
       }
       
