@@ -3306,7 +3306,9 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observeEvent(eventExpr = {
     list(input$targetConceptSetsType,
          input$targetCohortDefinitionTabSetPanel,
-         input$targetConceptIdCountSource
+         input$targetConceptIdCountSource,
+         input$targetCohortDefinitionInclusionRuleType,
+         input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters
          )
   }, handlerExpr = {
     if (getWidthOfLeftPanelForCohortDetailBrowserInCohortDefinitionTabBasedOnNoOfRowSelectedInCohortTable() == 6) {
@@ -3378,6 +3380,42 @@ shiny::shinyServer(function(input, output, session) {
                                    selected = "comparatorCohortDefinitionUnclusionRuleTabPanel")
         }
       }
+      
+      if (!is.null(input$targetCohortDefinitionInclusionRuleType)) {
+        if (input$targetCohortDefinitionInclusionRuleType == "Events") {
+          updateRadioButtons(session = session,
+                             inputId = "comparatorCohortDefinitionInclusionRuleType",
+                             selected = "Events")
+        } else {
+          updateRadioButtons(session = session,
+                             inputId = "comparatorCohortDefinitionInclusionRuleType",
+                             selected = "Persons")
+        }
+      }
+      
+      if (!is.null(input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters)) {
+        if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "All") {
+          updateRadioButtons(session = session,
+                             inputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters",
+                             selected = "All")
+        } else if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "Meet"){
+          updateRadioButtons(session = session,
+                             inputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters",
+                             selected = "Meet")
+        } else if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "Gain"){
+          updateRadioButtons(session = session,
+                             inputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters",
+                             selected = "Gain")
+        } else if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "Remain"){
+          updateRadioButtons(session = session,
+                             inputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters",
+                             selected = "Remain")
+        } else if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "Totals"){
+          updateRadioButtons(session = session,
+                             inputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters",
+                             selected = "Totals")
+        }
+      }
     }
   })
   
@@ -3385,7 +3423,9 @@ shiny::shinyServer(function(input, output, session) {
     list(
       input$comparatorConceptSetsType,
       input$comparatorCohortDefinitionTabSetPanel,
-      input$comparatorConceptIdCountSource
+      input$comparatorConceptIdCountSource,
+      input$comparatorCohortDefinitionInclusionRuleType,
+      input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters
     )
   }, handlerExpr = {
     if (getWidthOfLeftPanelForCohortDetailBrowserInCohortDefinitionTabBasedOnNoOfRowSelectedInCohortTable() == 6) {
@@ -3454,6 +3494,42 @@ shiny::shinyServer(function(input, output, session) {
           updateRadioButtons(session = session,
                              inputId = "targetConceptIdCountSource",
                              selected = "Cohort Level")
+        }
+      }
+      
+      if (!is.null(input$comparatorCohortDefinitionInclusionRuleType)) {
+        if (input$comparatorCohortDefinitionInclusionRuleType == "Events") {
+          updateRadioButtons(session = session,
+                             inputId = "targetCohortDefinitionInclusionRuleType",
+                             selected = "Events")
+        } else {
+          updateRadioButtons(session = session,
+                             inputId = "targetCohortDefinitionInclusionRuleType",
+                             selected = "Persons")
+        }
+      }
+      
+      if (!is.null(input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters)) {
+        if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "All") {
+          updateRadioButtons(session = session,
+                             inputId = "targetCohortDefinitionSimplifiedInclusionRuleTableFilters",
+                             selected = "All")
+        } else if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "Meet"){
+          updateRadioButtons(session = session,
+                             inputId = "targetCohortDefinitionSimplifiedInclusionRuleTableFilters",
+                             selected = "Meet")
+        } else if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "Gain"){
+          updateRadioButtons(session = session,
+                             inputId = "targetCohortDefinitionSimplifiedInclusionRuleTableFilters",
+                             selected = "Gain")
+        } else if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "Remain"){
+          updateRadioButtons(session = session,
+                             inputId = "targetCohortDefinitionSimplifiedInclusionRuleTableFilters",
+                             selected = "Remain")
+        } else if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "Totals"){
+          updateRadioButtons(session = session,
+                             inputId = "targetCohortDefinitionSimplifiedInclusionRuleTableFilters",
+                             selected = "Totals")
         }
       }
     }
