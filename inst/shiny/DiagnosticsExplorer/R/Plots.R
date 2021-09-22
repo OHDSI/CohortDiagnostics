@@ -1456,6 +1456,29 @@ plotCohortOverlap <- function(data,
       )
     )
   
+  plotDataSummary <- plotData %>%
+    dplyr::select(
+      .data$targetShortName,
+      .data$comparatorShortName,
+      .data$databaseId,
+      .data$value
+    ) %>%
+    dplyr::group_by(
+      .data$targetShortName,
+      .data$comparatorShortName,
+      .data$databaseId
+    ) %>%
+    dplyr::summarize(totalSubjects = sum(.data$value), .groups = "keep")
+  
+  plotData <- plotData %>%
+    dplyr::inner_join(plotDataSummary,
+      by = c("targetShortName",
+             "comparatorShortName",
+             "databaseId")
+    ) %>% 
+    dplyr::mutate(percent = round(.data$value/.data$totalSubjects, digits = 1)) %>% 
+    dplyr::select(-.data$totalSubjects)
+  
   plotData$subjectsIn <-
     factor(
       plotData$subjectsIn,
