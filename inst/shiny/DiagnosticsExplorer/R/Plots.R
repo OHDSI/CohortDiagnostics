@@ -1476,19 +1476,26 @@ plotCohortOverlap <- function(data,
              "comparatorShortName",
              "databaseId")
     ) %>% 
-    dplyr::mutate(percent = round(.data$value/.data$totalSubjects, digits = 1)) %>% 
-    dplyr::select(-.data$totalSubjects)
+    dplyr::mutate(percent = round(.data$value /
+                                              .data$totalSubjects,
+                                            digits = 5)) 
   
   plotData$subjectsIn <-
     factor(
       plotData$subjectsIn,
-      levels = c("Right cohort only", "Both cohorts", "Left cohort only")
+      levels = c("Left cohort only", "Both cohorts", "Right cohort only")
     )
   
   if (yAxis == "Percentages") {
-    xAxisBarType = "percent"
+    xAxisTickFormat <- "%"
+    plotData <- plotData %>% 
+      dplyr::mutate(xAxisValues = .data$percent) 
+    xAxisMax <- 1
   } else {
-    xAxisBarType = ""
+    xAxisTickFormat <- ""
+    plotData <- plotData %>% 
+      dplyr::mutate(xAxisValues = .data$value)
+    xAxisMax <- max(plotData$totalSubjects) 
   }
   
   
@@ -1508,21 +1515,20 @@ plotCohortOverlap <- function(data,
   
   
   
-  # plotData <- plotData %>%
-  #   dplyr::arrange(
-  #     targetShortName = factor(.data$targetShortName, levels = sortTargetShortName$targetShortName),
-  #     .data$targetShortName
-  #   ) %>%
-  #   dplyr::arrange(
-  #     comparatorShortName = factor(.data$comparatorShortName, levels = sortComparatorShortName$comparatorShortName),
-  #     .data$comparatorShortName
-  #   )
+  plotData <- plotData %>%
+    dplyr::arrange(
+      targetShortName = factor(.data$targetShortName, levels = sortTargetShortName$targetShortName),
+      .data$targetShortName
+    ) %>%
+    dplyr::arrange(
+      comparatorShortName = factor(.data$comparatorShortName, levels = sortComparatorShortName$comparatorShortName),
+      .data$comparatorShortName
+    )
     
   
-  distinctTargetShortName <- plotData$targetShortName %>% unique()
+  
   distinctComparatorShortName <- plotData$comparatorShortName %>% unique()
   distinctDatabaseIds <- plotData$databaseId %>% unique()
-  
   databasePlots <- list()
   for (i in 1:length(distinctDatabaseIds)) {
     plotDataFilteredByDatabaseId <- plotData %>% 
@@ -1537,22 +1543,45 @@ plotCohortOverlap <- function(data,
       } else {
         showLegend <- FALSE
       }
+     
       if (j == length(distinctComparatorShortName)) {
         xAxisTickLabels <- TRUE
       } else {
         xAxisTickLabels <- FALSE
       }
+      
+      if (i == 1) {
+        yAxisTickLabels <- TRUE
+      } else {
+        yAxisTickLabels <- FALSE
+      }
+      if(nrow(plotDataFilteredByComparator)>0) {
+        distinctTargetShortName <- plotDataFilteredByComparator$targetShortName %>% unique()
+        annotationStartValue <- round(1 / (length(distinctTargetShortName) * 2), digits = 3)
+        annotationEndValue <- 0.999
+        annotationInterval <- annotationStartValue * 2
+      } else {
+        distinctTargetShortName <- c()
+        annotationStartValue <- 0
+        annotationEndValue <- 0
+        annotationInterval <- 0
+      }
+     
       comparatorPlots[[j]] <- plotly::plot_ly(plotDataFilteredByComparator,
-                                              x = ~value, y = ~targetShortName, type = 'bar',
+                                              x = ~xAxisValues, y = ~targetShortName, type = 'bar',
                                               name = ~subjectsIn, text = ~tooltip,
-                                              color = ~subjectsIn, colors = c(rgb(0.8, 0.2, 0.2), rgb(0.3, 0.2, 0.4), rgb(0.4, 0.4, 0.9)),
+                                              color = ~subjectsIn, colors = c( rgb(0.4, 0.4, 0.9), rgb(0.3, 0.2, 0.4),rgb(0.8, 0.2, 0.2)),
                                               showlegend = showLegend, height = 200 * length(distinctComparatorShortName)) %>%
-        plotly::layout(barmode = 'stack',barnorm = xAxisBarType,
-                       xaxis = list(showticklabels = xAxisTickLabels),
+        plotly::layout(barmode = 'stack',
+                       legend = list(orientation = "h",x = 0.4),
+                       xaxis = list(range = c(0, xAxisMax),
+                                    showticklabels = xAxisTickLabels,
+                                    tickformat = xAxisTickFormat),
+                       yaxis = list(showticklabels = yAxisTickLabels),
                        annotations = list(
-                         x = 1.05 ,
-                         y = 0.5,
-                         text = distinctComparatorShortName[j],
+                         x = rep(1 + length(distinctDatabaseIds) * 0.01,length(distinctTargetShortName)) ,
+                         y = seq(annotationStartValue, annotationEndValue, annotationInterval),
+                         text = rep(ifelse(i == length(distinctDatabaseIds),distinctComparatorShortName[j],""),length(distinctTargetShortName)),
                          showarrow = F,
                          xanchor = "center",
                          yanchor = "middle",
@@ -1564,7 +1593,7 @@ plotCohortOverlap <- function(data,
     databasePlots[[i]] <- plotly::subplot(comparatorPlots,nrows = length(comparatorPlots)) %>% 
       plotly::layout(annotations = list(
                        x = 0.5 ,
-                       y = 1.005,
+                       y = 1.05,
                        text = distinctDatabaseIds[i],
                        showarrow = F,
                        xanchor = "center",
@@ -1574,7 +1603,14 @@ plotCohortOverlap <- function(data,
                        font = list(size = 14)
                      ))
   }
-  plot <- plotly::subplot(databasePlots) 
+  m <- list(
+    l = 50,
+    r = 50,
+    b = 100,
+    t = 50
+  )
+  plot <- plotly::subplot(databasePlots) %>% 
+    plotly::layout(margin = m)
   
   # plotData$targetShortName <- factor(plotData$targetShortName,
   #                                    levels = sortTargetShortName$targetShortName)
