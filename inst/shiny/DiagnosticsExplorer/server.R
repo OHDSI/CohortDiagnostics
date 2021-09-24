@@ -1277,11 +1277,12 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
+    
     data <- getResultsResolvedConcepts(
       dataSource = dataSource,
       cohortId = consolidatedCohortIdTarget(),
       databaseId = consolidatedDatabaseIdTarget(),
-      conceptSetId = consolidatedConceptIdTarget()
+      conceptSetId = consolidatedConceptSetIdTarget()
     )
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -1339,7 +1340,7 @@ shiny::shinyServer(function(input, output, session) {
       dataSource = dataSource,
       cohortId = consolidatedCohortIdTarget(),
       databaseId = consolidatedDatabaseIdTarget(),
-      conceptSetId = consolidatedConceptIdTarget()
+      conceptSetId = consolidatedConceptSetIdTarget()
     )
     if (is.null(data)) {
       return(NULL)
@@ -1372,7 +1373,7 @@ shiny::shinyServer(function(input, output, session) {
       dataSource = dataSource,
       cohortId = consolidatedCohortIdComparator(),
       databaseId = consolidatedDatabaseIdTarget(), #same for both target and comparator
-      conceptSetId = consolidatedConceptIdComparator()
+      conceptSetId = consolidatedConceptSetIdComparator()
     )
     if (is.null(data)) {
       return(NULL)
@@ -1393,7 +1394,7 @@ shiny::shinyServer(function(input, output, session) {
       dataSource = dataSource,
       cohortId = consolidatedCohortIdTarget(),
       databaseId = consolidatedDatabaseIdTarget(),
-      conceptSetId = consolidatedConceptIdTarget()
+      conceptSetId = consolidatedConceptSetIdTarget()
     )
     if (is.null(data)) {
       return(NULL)
@@ -1428,7 +1429,7 @@ shiny::shinyServer(function(input, output, session) {
       dataSource = dataSource,
       cohortId = consolidatedCohortIdComparator(),
       databaseId = consolidatedDatabaseIdTarget(),# there is no consolidatedDatabaseIdComparator
-      conceptSetId = consolidatedConceptIdComparator()
+      conceptSetId = consolidatedConceptSetIdComparator()
     )
     if (is.null(data)) {
       return(NULL)
@@ -3015,8 +3016,8 @@ shiny::shinyServer(function(input, output, session) {
       "No excluded concept ids"))
       
       databaseIds <- sort(unique(data$databaseId))
-      maxCount <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ount")
-      maxSubject <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ubject")
+      maxCount <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "records")
+      maxSubject <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "persons")
       databaseCount <- cohortCount %>% 
         dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
         dplyr::rename("records" = .data$cohortEntries,
