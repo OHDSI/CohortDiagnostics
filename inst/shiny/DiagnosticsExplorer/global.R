@@ -13,16 +13,26 @@ connectionPool <- NULL
 #Load default environment variables----
 defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
+
+# OHDSI Shiny DB
 defaultServer <- Sys.getenv("shinydbServer")
 defaultDatabase <- Sys.getenv("shinydbDatabase")
 defaultPort <- 5432
 defaultUser <- Sys.getenv("shinydbUser")
 defaultPassword <- Sys.getenv("shinydbPw")
-defaultResultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
+# OHDSI Phenotype DB
+# defaultServer <- Sys.getenv("phenotypeLibraryDbServer")
+# defaultDatabase <- Sys.getenv("phenotypeLibraryDbDatabase")
+# defaultPort <- 5432
+# defaultUser <- Sys.getenv("phenotypeLibraryDbUser")
+# defaultPassword <- Sys.getenv("phenotypeLibraryDbPassword")
+
+#Mode
+defaultDatabaseMode <- TRUE # Use file system if FALSE
+defaultResultsSchema <- 'phenotypeLibraryTest'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
-#Mode
-defaultDatabaseMode <- FALSE # Use file system if FALSE
+
 
 #Configuration variables ----
 showIncidenceRate <- TRUE
@@ -33,8 +43,7 @@ showVisitContext <- TRUE
 #Since Characterization and CompareCharacterization uses the same table
 showCharacterizationAndCompareCharacterization <- TRUE
 #Since TemporalCharacterization and CompareTemporalCharacterization uses the same table
-showTemporalCharacterizationAndCompareTemporalCharacterization <-
-  TRUE
+showTemporalCharacterizationAndCompareTemporalCharacterization <- TRUE
 #show all time id choices or only the primary time id choices
 filterTemporalChoicesToPrimaryOptions <- FALSE
 
