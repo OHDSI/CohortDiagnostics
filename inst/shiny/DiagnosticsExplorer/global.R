@@ -21,15 +21,18 @@ defaultPort <- 5432
 defaultUser <- Sys.getenv("shinydbUser")
 defaultPassword <- Sys.getenv("shinydbPw")
 # OHDSI Phenotype DB
-# defaultServer <- Sys.getenv("phenotypeLibraryDbServer")
-# defaultDatabase <- Sys.getenv("phenotypeLibraryDbDatabase")
+# defaultServer <- Sys.getenv("phoebedbServer")
+# defaultDatabase <- Sys.getenv("phoebedb")
 # defaultPort <- 5432
-# defaultUser <- Sys.getenv("phenotypeLibraryDbUser")
-# defaultPassword <- Sys.getenv("phenotypeLibraryDbPassword")
+# defaultUser <- Sys.getenv("phoebedbUser")
+# defaultPassword <- Sys.getenv("phoebedbPw")
+# defaultResultsSchema <- "phenotypeLibrary"
+# defaultVocabularySchema <- "phenotypeLibrary"
+
 
 #Mode
 defaultDatabaseMode <- TRUE # Use file system if FALSE
-defaultResultsSchema <- 'phenotypeLibraryTest'
+defaultResultsSchema <- 'phenotypeLibrary'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
