@@ -183,9 +183,9 @@ runCohortRelationshipDiagnostics <-
     seqStartCustom6 <- c(-99999)
     seqEndCustom6 <- c(99999)
     
-    # custom sequence 7 - for temporal characterization
+    # custom sequence 7 - every day from -31 to + 31
     seqStartCustom7 <- c(-31:31)
-    seqEndCustom7 <- seqStartCustom7+1
+    seqEndCustom7 <- seqStartCustom7
     
     seqStart <-
       c(
@@ -195,10 +195,10 @@ runCohortRelationshipDiagnostics <-
         seqStartCustom4,
         seqStartCustom5,
         seqStartCustom6,
+        seqStartCustom7,
         seqStart30,
         seqStart180,
-        seqStart365,
-        seqStartCustom7
+        seqStart365
       )
     seqEnd <-
       c(
@@ -208,10 +208,10 @@ runCohortRelationshipDiagnostics <-
         seqEndCustom4,
         seqEndCustom5,
         seqEndCustom6,
+        seqEndCustom7,
         seqEnd30,
         seqEnd180,
-        seqEnd365,
-        seqEndCustom7
+        seqEnd365
       )
     
     timePeriods <- dplyr::tibble(startDay = seqStart,
