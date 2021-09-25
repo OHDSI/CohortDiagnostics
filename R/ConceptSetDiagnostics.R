@@ -1222,6 +1222,7 @@ getConceptCooccurrence <- function(connection,
           WHERE c.cohort_definition_id IN (@cohortIds)
           	AND d1.@domain_concept_id1 != d2.@domain_concept_id2
           GROUP BY cohort_definition_id,
+                    datediff(dd, d1.@domain_start_date, c.cohort_start_date),
                     d1.@domain_concept_id1,
                     d2.@domain_concept_id2;"
   
