@@ -287,8 +287,7 @@ runCohortRelationshipDiagnostics <-
         .data$cohortId,
         .data$comparatorCohortId,
         .data$startDay,
-        .data$endDay,
-        .data$bothSubjects
+        .data$endDay
       )
     resultsInAndromeda$timePeriods <- NULL
     delta <- Sys.time() - startTime
