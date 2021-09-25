@@ -101,7 +101,8 @@ sidebarMenu <-
       input.tabs == 'cohortOverlap' |
       input.targetConceptSetsType == 'Resolved' |
       input.targetConceptSetsType == 'Excluded' |
-      input.targetConceptSetsType == 'Orphan concepts'",
+      input.targetConceptSetsType == 'Orphan concepts' |
+      input.targetCohortDefinitionTabSetPanel == 'targetCohortdefinitionInclusionRuleTabPanel'",
       shinyWidgets::pickerInput(
         inputId = "selectedDatabaseIds",
         label = "Database",
@@ -201,10 +202,30 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
+      condition = "input.tabs == 'cohortOverlap'",
+      shinyWidgets::pickerInput(
+        inputId = "selectedComparatorCompoundCohortNames",
+        label = "Comparators",
+        choices = c(""),
+        selected = c(""),
+        multiple = TRUE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          liveSearchStyle = "contains",
+          size = 10,
+          dropupAuto = TRUE,
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+        )
+      )
+    ),
+    shiny::conditionalPanel(
       condition = "input.tabs == 'compareCohortCharacterization'|
         input.tabs == 'compareTemporalCharacterization'",
       shinyWidgets::pickerInput(
-        inputId = "selectedComparatorCompoundCohortNames",
+        inputId = "selectedComparatorCompoundCohortName",
         label = "Comparator",
         choices = c(""),
         multiple = FALSE,
@@ -294,27 +315,26 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortCounts",
     createShinyBoxFromOutputId("cohortCountsSelectedCohorts"),
-    shiny::conditionalPanel(
-      condition = "output.doesCohortCountTableHasData == true",
-      shiny::radioButtons(
-        inputId = "cohortCountsTableColumnFilter",
-        label = "Display",
-        choices = c("Both", "Subjects Only", "Records Only"), 
-        selected = "Both",
-        inline = TRUE
-      ),
-      tags$table(width = "100%", 
-                 tags$tr(
-                   tags$td(align = "right",
-                           shiny::downloadButton(
-                             "saveCohortCountsTable",
-                             label = "",
-                             icon = shiny::icon("download"),
-                             style = "margin-top: 5px; margin-bottom: 5px;"
-                           )
+    tags$table(width = "100%", 
+               tags$tr(
+                 tags$td(
+                   shiny::radioButtons(
+                     inputId = "cohortCountsTableColumnFilter",
+                     label = "Display",
+                     choices = c("Both", "Subjects Only", "Records Only"), 
+                     selected = "Both",
+                     inline = TRUE
                    )
+                 ),
+                 tags$td(align = "right",
+                         shiny::downloadButton(
+                           "saveCohortCountsTable",
+                           label = "",
+                           icon = shiny::icon("download"),
+                           style = "margin-top: 5px; margin-bottom: 5px;"
+                         )
                  )
-      )
+               )
     ),
     DT::dataTableOutput("cohortCountsTable"),
     tags$br(),
@@ -328,10 +348,10 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::uiOutput(outputId = "cohortCountsCategories")
     ),
     shiny::conditionalPanel(
-      condition = "output.doesCohortIdFoundOnCohortCountRowSelect == true",
+      condition = "output.doesSelectedRowInCohortCountTableHaveCohortId == true",
       tags$br(),
       tags$h3("Inclusion Rules"),
-      DT::dataTableOutput("inclusionRuleStatForCohortSeletedTable")
+      DT::dataTableOutput("inclusionRuleStatisticsForCohortSeletedTable")
     )
   ),
   shinydashboard::tabItem(
@@ -811,7 +831,7 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )
       ),
-      ggiraph::ggiraphOutput("overlapPlot", width = "100%", height = "100%")
+      plotly::plotlyOutput("overlapPlot", height = "auto")
     )
   ),
   shinydashboard::tabItem(

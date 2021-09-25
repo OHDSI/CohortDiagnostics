@@ -167,9 +167,7 @@ createShinyBoxFromOutputId <- function(outputId) {
     title = "Cohort Details",
     status = "warning",
     width = "100%",
-    collapsible = TRUE,
-    collapsed = TRUE,
-    tags$div(style = "max-height: 100px; overflow-y: auto",
+    tags$div(style = "max-height: 60px; overflow-y: auto",
              shiny::uiOutput(outputId = outputId))
   )
 }
@@ -196,7 +194,7 @@ createShinyBoxWithSplitForTwoOutputIds <- function(leftOutputId,
     # title = "Reference",
     status = "warning",
     width = "100%",
-    tags$div(style = "max-height: 100px; overflow-y: auto",
+    tags$div(style = "max-height: 60px; overflow-y: auto",
              tags$table(width = "100%",
                         tags$tr(
                           tags$td(

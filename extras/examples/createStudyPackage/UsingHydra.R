@@ -1,11 +1,11 @@
-#remotes::install_github("OHDSI/Hydra")
+#remotes::install_github("OHDSI/Hydra", ref = "develop")
 outputFolder <- "d:/temp/output"  # location where you study package will be created
 
 
 ########## Please populate the information below #####################
 version <- "v0.1.0"
-name <- "Thrombosis With Thrombocytopenia Syndrome cohorts - an OHDSI network study"
-packageName <- "ThrombosisWithThrombocytopeniaSyndrome"
+name <- "OHDSI Phenotype library"
+packageName <- "phenotypeLibrary"
 skeletonVersion <- "v0.0.1"
 createdBy <- "rao@ohdsi.org"
 createdDate <- Sys.Date() # default
@@ -13,34 +13,18 @@ modifiedBy <- "rao@ohdsi.org"
 modifiedDate <- Sys.Date()
 skeletonType <- "CohortDiagnosticsStudy"
 organizationName <- "OHDSI"
-description <- "Cohort diagnostics on Thrombosis With Thrombocytopenia Syndrome cohorts."
+description <- "Cohorts that are part of the OHDSI Phenotype library."
 
 
 library(magrittr)
 # Set up
-baseUrl <- Sys.getenv("baseUrlUnsecure")
-cohortIds <- c(22040,
-               22042,
-               22041,
-               22039,
-               22038,
-               22037,
-               22036,
-               22035,
-               22034,
-               22033,
-               22031,
-               22032,
-               22030,
-               22028,
-               22029)
+baseUrl <- Sys.getenv("ohdsiAtlasPhenotype")
+ROhdsiWebApi::authorizeWebApi(baseUrl = baseUrl, 
+                              authMethod = "db", 
+                              webApiUsername = keyring::key_get(service = "ohdsiAtlasPhenotypeUser"),
+                              webApiPassword = keyring::key_get(service = "ohdsiAtlasPhenotypePassword"))
+studyCohorts <- ROhdsiWebApi::getCohortDefinitionsMetaData(baseUrl = baseUrl)
 
-
-
-################# end of user input ##############
-webApiCohorts <- ROhdsiWebApi::getCohortDefinitionsMetaData(baseUrl = baseUrl)
-studyCohorts <-  webApiCohorts %>%
-        dplyr::filter(.data$id %in% cohortIds)
 
 # compile them into a data table
 cohortDefinitionsArray <- list()

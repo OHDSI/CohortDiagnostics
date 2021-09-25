@@ -521,7 +521,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
         cohortPlots <- cohortPlots %>% 
           plotly::add_boxplot(x = selectedRowdata,
                               name = sortShortName$shortName[k],
-                              color = I('#440154FF'),
+                              color = I('#0000CC'),
                               boxpoints = FALSE,
                               text = ~paste0(
                                 rowData$shortName,
@@ -1230,9 +1230,10 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   for (i in 1:length(distinctChoices)) {
     filteredData <- balance %>% 
       dplyr::filter(.data$choices == distinctChoices[i])
-    choicesPlot[[i]] <- plotly::plot_ly(filteredData, x = ~mean1, y = ~mean2, text = ~tooltip, type = 'scatter', height = (as.integer(length(distinctChoices)/6) + 1) * 500,
-                            mode = "markers", color = ~domain, colors = ~colors, opacity = 0.5, marker = list(size = 12,
-                                                                                                              line = list(color = 'rgb(255,255,255)', width = 1))) %>% 
+    choicesPlot[[i]] <- plotly::plot_ly(filteredData, x = ~mean1, y = ~mean2, text = ~tooltip, type = 'scatter', height = max(1,ceiling(length(distinctChoices)/5)) * 430,
+                            mode = "markers", color = ~domain, colors = ~colors, opacity = 0.5, marker = list(size = 15,
+                                                                                                              line = list(color = 'rgb(255,255,255)', width = 1))) %>%
+     
       plotly::layout(
         xaxis = list(range = c(0, 1)),
         yaxis = list(range = c(0, 1)),
@@ -1245,7 +1246,16 @@ plotTemporalCompareStandardizedDifference <- function(balance,
                        yanchor = "middle",
                        xref = 'paper',
                        yref = 'paper'
-                     ))
+                     ),
+        hoverlabel = list(
+          bgcolor = "rgba(255,255,255,0.8)",
+          font = list(
+            color = "black"
+          )
+        )) %>% 
+      plotly::add_segments(x = 0, y = 0, xend = 1, yend = 1,
+                           line = list(width = 0.5, color = "rgb(160,160,160)", dash = "dash"))
+      
   }
   m <- list(
     l = 100,
@@ -1253,13 +1263,13 @@ plotTemporalCompareStandardizedDifference <- function(balance,
     b = 100,
     t = 50
   )
-  plot <- plotly::subplot(choicesPlot, nrows = as.integer(length(distinctChoices)/6) + 1, margin = 0.01) %>% 
+  plot <- plotly::subplot(choicesPlot, nrows = max(1,ceiling(length(distinctChoices)/5)), margin = 0.01) %>% 
     plotly::layout(showlegend = FALSE,
                    # yaxis = list(title = list(text =  paste("Covariate Mean in ", yCohort),
                    #                           font = list(size = 18))),
                    annotations = list(
                      x = c(0.5, -0.04) ,
-                     y = c(-0.1 +  0.0145 * (as.integer(length(distinctChoices)/6) + 1), 0.5),
+                     y = c(-0.1 +  0.0145 * max(1,ceiling(length(distinctChoices)/5)), 0.5),
                      text = c(paste("Covariate Mean in ", xCohort), paste("Covariate Mean in ", yCohort)),
                      showarrow = F,
                      xanchor = "center",
@@ -1348,7 +1358,7 @@ plotCohortOverlap <- function(data,
   #   add = errorMessage
   # )
   # checkmate::reportAssertions(collection = errorMessage)
-  
+ 
   
   data <- data %>%
     addShortName(
@@ -1446,22 +1456,53 @@ plotCohortOverlap <- function(data,
       )
     )
   
+  plotDataSummary <- plotData %>%
+    dplyr::select(
+      .data$targetShortName,
+      .data$comparatorShortName,
+      .data$databaseId,
+      .data$value
+    ) %>%
+    dplyr::group_by(
+      .data$targetShortName,
+      .data$comparatorShortName,
+      .data$databaseId
+    ) %>%
+    dplyr::summarize(totalSubjects = sum(.data$value), .groups = "keep")
+  
+  plotData <- plotData %>%
+    dplyr::inner_join(plotDataSummary,
+      by = c("targetShortName",
+             "comparatorShortName",
+             "databaseId")
+    ) %>% 
+    dplyr::mutate(percent = round(.data$value /
+                                              .data$totalSubjects,
+                                            digits = 5)) 
+  
   plotData$subjectsIn <-
     factor(
       plotData$subjectsIn,
-      levels = c("Right cohort only", "Both cohorts", "Left cohort only")
+      levels = c("Left cohort only", "Both cohorts", "Right cohort only")
     )
   
   if (yAxis == "Percentages") {
-    position = "fill"
+    xAxisTickFormat <- "%"
+    plotData <- plotData %>% 
+      dplyr::mutate(xAxisValues = .data$percent) 
+    xAxisMax <- 1
   } else {
-    position = "stack"
+    xAxisTickFormat <- ""
+    plotData <- plotData %>% 
+      dplyr::mutate(xAxisValues = .data$value)
+    xAxisMax <- max(plotData$totalSubjects) 
   }
+  
   
   sortTargetShortName <- plotData %>%
     dplyr::select(.data$targetShortName) %>%
     dplyr::distinct() %>%
-    dplyr::arrange(-as.integer(sub(
+    dplyr::arrange(as.integer(sub(
       pattern = '^C', '', x = .data$targetShortName
     )))
   
@@ -1472,6 +1513,8 @@ plotCohortOverlap <- function(data,
       pattern = '^C', '', x = .data$comparatorShortName
     )))
   
+  
+  
   plotData <- plotData %>%
     dplyr::arrange(
       targetShortName = factor(.data$targetShortName, levels = sortTargetShortName$targetShortName),
@@ -1481,53 +1524,140 @@ plotCohortOverlap <- function(data,
       comparatorShortName = factor(.data$comparatorShortName, levels = sortComparatorShortName$comparatorShortName),
       .data$comparatorShortName
     )
+    
   
-  plotData$targetShortName <- factor(plotData$targetShortName,
-                                     levels = sortTargetShortName$targetShortName)
   
-  plotData$comparatorShortName <-
-    factor(plotData$comparatorShortName,
-           levels = sortComparatorShortName$comparatorShortName)
-  
-  plot <- ggplot2::ggplot(data = plotData) +
-    ggplot2::aes(
-      fill = .data$subjectsIn,
-      y = .data$targetShortName,
-      x = .data$value,
-      tooltip = .data$tooltip,
-      group = .data$subjectsIn
-    ) +
-    ggplot2::ylab(label = "") +
-    ggplot2::xlab(label = "") +
-    ggplot2::scale_fill_manual("Subjects in", values = c(rgb(0.8, 0.2, 0.2), rgb(0.3, 0.2, 0.4), rgb(0.4, 0.4, 0.9))) +
-    ggplot2::facet_grid(comparatorShortName ~ databaseId) +
-    ggplot2::theme(
-      panel.background = ggplot2::element_blank(),
-      strip.background = ggplot2::element_blank(),
-      panel.grid.major.x = ggplot2::element_line(color = "gray"),
-      axis.ticks.y = ggplot2::element_blank(),
-      panel.spacing = ggplot2::unit(2, "lines")
-    ) +
-    ggiraph::geom_bar_interactive(position = position,
-                                  alpha = 0.6,
-                                  stat = "identity")
-  if (yAxis == "Percentages") {
-    plot <- plot + ggplot2::scale_x_continuous(labels = scales::percent)
-  } else {
-    plot <-
-      plot + ggplot2::scale_x_continuous(labels = scales::comma, n.breaks = 3)
+  distinctComparatorShortName <- plotData$comparatorShortName %>% unique()
+  distinctDatabaseIds <- plotData$databaseId %>% unique()
+  databasePlots <- list()
+  for (i in 1:length(distinctDatabaseIds)) {
+    plotDataFilteredByDatabaseId <- plotData %>% 
+      dplyr::filter(.data$databaseId == distinctDatabaseIds[i])
+    comparatorPlots <- list()
+    for (j in 1:length(distinctComparatorShortName)) {
+      plotDataFilteredByComparator <- plotDataFilteredByDatabaseId %>% 
+        dplyr::filter(.data$comparatorShortName == distinctComparatorShortName[j])
+      
+      if (i == 1 && j == 1) {
+        showLegend <- TRUE
+      } else {
+        showLegend <- FALSE
+      }
+     
+      if (j == length(distinctComparatorShortName)) {
+        xAxisTickLabels <- TRUE
+      } else {
+        xAxisTickLabels <- FALSE
+      }
+      
+      if (i == 1) {
+        yAxisTickLabels <- TRUE
+      } else {
+        yAxisTickLabels <- FALSE
+      }
+      if(nrow(plotDataFilteredByComparator)>0) {
+        distinctTargetShortName <- plotDataFilteredByComparator$targetShortName %>% unique()
+        annotationStartValue <- round(1 / (length(distinctTargetShortName) * 2), digits = 3)
+        annotationEndValue <- 0.999
+        annotationInterval <- annotationStartValue * 2
+      } else {
+        distinctTargetShortName <- c()
+        annotationStartValue <- 0
+        annotationEndValue <- 0
+        annotationInterval <- 0
+      }
+     
+      comparatorPlots[[j]] <- plotly::plot_ly(plotDataFilteredByComparator,
+                                              x = ~xAxisValues, y = ~targetShortName, type = 'bar',
+                                              name = ~subjectsIn, text = ~tooltip,
+                                              color = ~subjectsIn, colors = c( rgb(0.4, 0.4, 0.9), rgb(0.3, 0.2, 0.4),rgb(0.8, 0.2, 0.2)),
+                                              showlegend = showLegend, height = 200 * length(distinctComparatorShortName)) %>%
+        plotly::layout(barmode = 'stack',
+                       legend = list(orientation = "h",x = 0.4),
+                       xaxis = list(range = c(0, xAxisMax),
+                                    showticklabels = xAxisTickLabels,
+                                    tickformat = xAxisTickFormat),
+                       yaxis = list(showticklabels = yAxisTickLabels),
+                       annotations = list(
+                         x = rep(1 + length(distinctDatabaseIds) * 0.01,length(distinctTargetShortName)) ,
+                         y = seq(annotationStartValue, annotationEndValue, annotationInterval),
+                         text = rep(ifelse(i == length(distinctDatabaseIds),distinctComparatorShortName[j],""),length(distinctTargetShortName)),
+                         showarrow = F,
+                         xanchor = "center",
+                         yanchor = "middle",
+                         xref = 'paper',
+                         yref = 'paper',
+                         font = list(size = 14)
+                       ))
+    }
+    databasePlots[[i]] <- plotly::subplot(comparatorPlots,nrows = length(comparatorPlots)) %>% 
+      plotly::layout(annotations = list(
+                       x = 0.5 ,
+                       y = 1.05,
+                       text = distinctDatabaseIds[i],
+                       showarrow = F,
+                       xanchor = "center",
+                       yanchor = "middle",
+                       xref = 'paper',
+                       yref = 'paper',
+                       font = list(size = 14)
+                     ))
   }
-  width <- length(unique(plotData$databaseId))
-  height <-
-    nrow(
-      plotData %>% dplyr::select(.data$targetShortName, .data$comparatorShortName) %>% dplyr::distinct()
-    )
-  plot <- ggiraph::girafe(
-    ggobj = plot,
-    options = list(ggiraph::opts_sizing(rescale = TRUE)),
-    width_svg = max(12, 2 * width),
-    height_svg = max(2, 0.5 * height)
+  m <- list(
+    l = 50,
+    r = 50,
+    b = 100,
+    t = 50
   )
+  plot <- plotly::subplot(databasePlots) %>% 
+    plotly::layout(margin = m)
+  
+  # plotData$targetShortName <- factor(plotData$targetShortName,
+  #                                    levels = sortTargetShortName$targetShortName)
+  # 
+  # plotData$comparatorShortName <-
+  #   factor(plotData$comparatorShortName,
+  #          levels = sortComparatorShortName$comparatorShortName)
+  
+  # plot <- ggplot2::ggplot(data = plotData) +
+  #   ggplot2::aes(
+  #     fill = .data$subjectsIn,
+  #     y = .data$targetShortName,
+  #     x = .data$value,
+  #     tooltip = .data$tooltip,
+  #     group = .data$subjectsIn
+  #   ) +
+  #   ggplot2::ylab(label = "") +
+  #   ggplot2::xlab(label = "") +
+  #   ggplot2::scale_fill_manual("Subjects in", values = c(rgb(0.8, 0.2, 0.2), rgb(0.3, 0.2, 0.4), rgb(0.4, 0.4, 0.9))) +
+  #   ggplot2::facet_grid(comparatorShortName ~ databaseId) +
+  #   ggplot2::theme(
+  #     panel.background = ggplot2::element_blank(),
+  #     strip.background = ggplot2::element_blank(),
+  #     panel.grid.major.x = ggplot2::element_line(color = "gray"),
+  #     axis.ticks.y = ggplot2::element_blank(),
+  #     panel.spacing = ggplot2::unit(2, "lines")
+  #   ) +
+  #   ggiraph::geom_bar_interactive(position = position,
+  #                                 alpha = 0.6,
+  #                                 stat = "identity")
+  # if (yAxis == "Percentages") {
+  #   plot <- plot + ggplot2::scale_x_continuous(labels = scales::percent)
+  # } else {
+  #   plot <-
+  #     plot + ggplot2::scale_x_continuous(labels = scales::comma, n.breaks = 3)
+  # }
+  # width <- length(unique(plotData$databaseId))
+  # height <-
+  #   nrow(
+  #     plotData %>% dplyr::select(.data$targetShortName, .data$comparatorShortName) %>% dplyr::distinct()
+  #   )
+  # plot <- ggiraph::girafe(
+  #   ggobj = plot,
+  #   options = list(ggiraph::opts_sizing(rescale = TRUE)),
+  #   width_svg = max(12, 2 * width),
+  #   height_svg = max(2, 0.5 * height)
+  # )
   return(plot)
 }
 

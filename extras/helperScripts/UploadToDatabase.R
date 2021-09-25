@@ -13,6 +13,20 @@ connectionDetails <- createConnectionDetails(
   user = Sys.getenv("shinydbUser"),
   password = Sys.getenv("shinydbPW")
 )
+
+
+# OHDSI's Phenotype library server:
+# connectionDetails <- createConnectionDetails(
+#   dbms = "postgresql",
+#   server = paste(
+#     Sys.getenv("phenotypeLibraryDbServer"),
+#     Sys.getenv("phenotypeLibraryDbDatabase"),
+#     sep = "/"
+#   ),
+#   port = Sys.getenv("phenotypeLibraryDbPort"),
+#   user = Sys.getenv("phenotypeLibraryDbUser"),
+#   password = Sys.getenv("phenotypeLibraryDbPassword")
+# )
 # 
 # connectionDetails <- createConnectionDetails(
 #   dbms = "postgresql",
@@ -25,6 +39,7 @@ connectionDetails <- createConnectionDetails(
 #   user = keyring::key_get("shinydbUser"),
 #   password = keyring::key_get("shinydbPW")
 # )
+
 resultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
 
 # commenting this function as it maybe accidentally run - loosing data.

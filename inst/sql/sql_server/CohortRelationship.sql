@@ -63,7 +63,7 @@ SELECT t.cohort_definition_id cohort_id
 FROM #target_subset t
 INNER JOIN #comparator_subset c ON c.subject_id = t.subject_id
 	AND c.cohort_definition_id != t.cohort_definition_id
-	AND c.cohort_end_date >= t.cohort_start_date
-	AND c.cohort_start_date <= t.cohort_end_date
+--	AND c.cohort_end_date >= t.cohort_start_date --DATEADD(day, @start_day_offset, t.cohort_start_date)
+--	AND c.cohort_start_date <= t.cohort_end_date --DATEADD(day, @end_day_offset, t.cohort_end_date)
 GROUP BY t.cohort_definition_id
 	,c.cohort_definition_id;
