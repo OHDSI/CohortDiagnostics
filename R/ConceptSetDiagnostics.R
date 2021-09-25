@@ -1220,7 +1220,7 @@ getConceptCooccurrence <- function(connection,
           	AND d2.@domain_start_date >= dateadd(day,-31,d2.@domain_start_date)
           	AND d2.@domain_start_date <= dateadd(day,31,d2.@domain_start_date)
           WHERE c.cohort_definition_id IN (@cohortIds)
-          	AND d1.@domain_concept_id != d2.@domain_concept_id
+          	AND d1.@domain_concept_id1 != d2.@domain_concept_id2
           GROUP BY cohort_definition_id,
                     d1.@domain_concept_id1,
                     d2.@domain_concept_id2;"
