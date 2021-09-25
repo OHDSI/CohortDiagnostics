@@ -270,15 +270,18 @@ runCohortRelationshipDiagnostics <-
         .data$comparatorCohortId,
         .data$startDay,
         .data$endDay,
-        .data$bothSubjects,
-        .data$cBeforeTSubjects,
-        .data$tBeforeCSubjects,
-        .data$sameDaySubjects,
-        .data$cPersonDays,
-        .data$cSubjectsStart,
-        .data$cSubjectsExist,
-        .data$cSubjectsEnd,
-        .data$cInTSubjects
+        .data$subjects,
+        .data$subCsBeforeTs,
+        .data$subCsOnTs,
+        .data$subCsAfterTs,
+        .data$subCsBeforeTe,
+        .data$subCsOnTe,
+        .data$subCsAfterTe,
+        .data$subCsWindowTs,
+        .data$subCsWindowTe,
+        .data$subCeWindowTs,
+        .data$subCeWindowTe,
+        .data$subCWithinT
       ) %>%
       dplyr::arrange(
         .data$cohortId,
