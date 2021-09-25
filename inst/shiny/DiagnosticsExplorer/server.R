@@ -6908,7 +6908,7 @@ shiny::shinyServer(function(input, output, session) {
           consolidatedCohortIdTarget(),
           getComparatorCohortIdFromSelectedCompoundCohortName()
         ) %>% unique(),
-        databaseId = input$selectedDatabaseId
+        databaseId = consolidatedDatabaseIdTarget()
       )
       return(data)
     })
@@ -6919,10 +6919,7 @@ shiny::shinyServer(function(input, output, session) {
     if (input$tabs != "compareCohortCharacterization") {
       return(NULL)
     }
-    if (any(
-      is.null(getMultipleCompareCharacterizationData()),
-      length(getMultipleCompareCharacterizationData()) == 0
-    )) {
+    if (!doesObjectHaveData(getMultipleCompareCharacterizationData())) {
       return(NULL)
     }
     if (is.null(getMultipleCompareCharacterizationData()$covariateRef)) {
@@ -7078,13 +7075,15 @@ shiny::shinyServer(function(input, output, session) {
     if (input$tabs != "compareCohortCharacterization") {
       return(NULL)
     }
+    
     data <- getCompareCharacterizationDataFiltered()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     data <- data %>%
-      dplyr::mutate(covariateName = .data$covariateNameFull) %>%
-      prepareTable1Comp()
+      dplyr::mutate(covariateName = .data$covariateNameFull) 
+    
+      data <- prepareTable1Comp(balance = data)
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -7109,7 +7108,7 @@ shiny::shinyServer(function(input, output, session) {
       getCompareCharacterizationAnalysisNameFilter() != "",
       length(getCompareCharacterizationAnalysisNameFilter()) > 0
     )) {
-      data <- data %>% #!!!! why is it not working?
+      data <- data %>% 
         dplyr::filter(.data$analysisName %in% getCompareCharacterizationAnalysisNameFilter())
       
     }
@@ -7118,18 +7117,18 @@ shiny::shinyServer(function(input, output, session) {
       getCompareCharacterizationDomainNameFilter() != "",
       length(getCompareCharacterizationDomainNameFilter()) > 0
     )) {
-      data <- data %>% #!!!! why is it not working?
+      data <- data %>%
         dplyr::filter(.data$analysisName %in% getCompareCharacterizationDomainNameFilter())
     }
-    if (all(
-      !is.null(input$conceptSetsSelectedCohortLeft),
-      input$conceptSetsSelectedCohortLeft != "",
-      length(input$conceptSetsSelectedCohortLeft) > 0
-    )) {
-      data <-
-        data %>% #!!! there is a bug here getResoledAndMappedConceptIdsForFilters
-        dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
-    }
+    # if (all(
+    #   !is.null(input$conceptSetsSelectedCohortLeft),
+    #   input$conceptSetsSelectedCohortLeft != "",
+    #   length(input$conceptSetsSelectedCohortLeft) > 0
+    # )) {
+    #   data <-
+    #     data %>% #!!! there is a bug here getResoledAndMappedConceptIdsForFilters
+    #     dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+    # }
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -7215,6 +7214,58 @@ shiny::shinyServer(function(input, output, session) {
           "No data available for selected combination."
         ))
         
+        databaseIds <- data %>% 
+          dplyr::select(.data$databaseId) %>% 
+          dplyr::filter(.data$databaseId != "NA") %>% 
+          dplyr::pull() %>% unique()
+        
+        data <- data %>%
+          tidyr::pivot_longer(
+            cols = c(
+              "MeanT",
+              "MeanC",
+              "StdDiff"
+            ),
+            names_to = "type",
+            values_to = "values"
+          ) %>%
+          dplyr::group_by(.data$type) %>%
+          dplyr::summarise(
+            .data$characteristic,
+            .data$databaseId,
+            .data$type,
+            .data$values
+          ) %>%
+          dplyr::mutate(names = paste0(.data$type, "", .data$databaseId)) %>%
+          dplyr::ungroup() %>%
+          tidyr::pivot_wider(
+            id_cols = "characteristic",
+            names_from = "names",
+            values_from = "values"
+          ) %>% 
+          dplyr::select(-.data$MeanCNA, -.data$MeanTNA, -.data$StdDiffNA)
+        
+        sketch <- htmltools::withTags(table(class = "display",
+                                            thead(tr(
+                                              th(rowspan = 2, "Covariate Name"),
+                                              lapply(
+                                                databaseIds,
+                                                th,
+                                                colspan = 3,
+                                                class = "dt-center",
+                                                style = "border-right:1px solid silver;border-bottom:1px solid silver"
+                                              )
+                                            ),
+                                            tr(
+                                              lapply(rep(
+                                                c("MeanC", "MeanT", "StdDiff"),
+                                                length(databaseIds)
+                                              ),
+                                              th,
+                                              style = "border-right:1px solid grey")
+                                            ))))
+        
+        
         options = list(
           pageLength = 100,
           lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -7225,7 +7276,7 @@ shiny::shinyServer(function(input, output, session) {
           lengthChange = TRUE,
           ordering = FALSE,
           paging = TRUE,
-          columnDefs = list(minCellPercentDef(1:2))
+          columnDefs = list(minCellPercentDef(1:length(databaseIds) * 3))
         )
         table <- DT::datatable(
           data,
@@ -7237,26 +7288,20 @@ shiny::shinyServer(function(input, output, session) {
             comparatorCohortHeader,
             "Std. Diff."
           ),
+          container = sketch,
           escape = FALSE,
           filter = "top",
           class = "stripe nowrap compact"
         )
         table <- DT::formatStyle(
           table = table,
-          columns = 2:4,
+          columns = (1 + (1:length(databaseIds) * 3)),
           background = DT::styleColorBar(c(0, 1), "lightblue"),
           backgroundSize = "98% 88%",
           backgroundRepeat = "no-repeat",
           backgroundPosition = "center"
         )
-        table <- DT::formatStyle(
-          table = table,
-          columns = 4,
-          background = styleAbsColorBar(1, "lightblue", "pink"),
-          backgroundSize = "98% 88%",
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center"
-        )
+        
         table <- DT::formatRound(table, 4, digits = 2)
       } else {
         progress <- shiny::Progress$new()
