@@ -545,8 +545,6 @@ runCohortDiagnostics <- function(packageName = NULL,
           nrow(cohorts) - nrow(subset)
         ))
       }
-      browser()
-      debug(enforceMinCellValue)
       output <- runConceptSetDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
