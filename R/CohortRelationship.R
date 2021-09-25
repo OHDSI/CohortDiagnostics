@@ -185,7 +185,7 @@ runCohortRelationshipDiagnostics <-
     
     # custom sequence 7 - for temporal characterization
     seqStartCustom7 <- c(-31:31)
-    seqEndCustom7 <- seqStartCustom1+1
+    seqEndCustom7 <- seqStartCustom7+1
     
     seqStart <-
       c(
