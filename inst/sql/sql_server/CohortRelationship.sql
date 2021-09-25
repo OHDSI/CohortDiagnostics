@@ -75,7 +75,7 @@ SELECT t.cohort_definition_id cohort_id
 			END) sub_ce_window_te
 	-- comparator cohort subjects end within period (incidence) relative to target end date [How many subjects in comparator cohort end within a window of days relative to target end date]
 	
-	COUNT_BIG(DISTINCT CASE 
+	,COUNT_BIG(DISTINCT CASE 
 			WHEN c.cohort_start_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
 				AND c.cohort_start_date <= DATEADD(day, @end_day_offset, t.cohort_end_date)
 				AND c.cohort_end_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
