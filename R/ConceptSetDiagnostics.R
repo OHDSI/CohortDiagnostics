@@ -1173,11 +1173,11 @@ getBreakdownIndexEvents <- function(cohortIds,
 # function: getConceptCooccurrence ----
 ### conceptCooccurrence -----
 getConceptCooccurrence <- function(connection,
-                                            cdmDatabaseSchema,
-                                            tempEmulationSchema,
-                                            cohortTable,
-                                            cohortDatabaseSchema,
-                                            cohortIds,
+                                   cdmDatabaseSchema,
+                                   tempEmulationSchema,
+                                   cohortTable,
+                                   cohortDatabaseSchema,
+                                   cohortIds,
                                    conceptIdUniverse = "#concept_tracking") {
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide
@@ -1226,7 +1226,7 @@ getConceptCooccurrence <- function(connection,
                     d2.@domain_concept_id2;"
   
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i, ]
+    rowData <- domains[i,]
     ParallelLogger::logTrace(paste0(
       "  - Working on ",
       rowData$domainTable,
@@ -1251,12 +1251,14 @@ getConceptCooccurrence <- function(connection,
     )
     if (all(!is.na((rowData$domainSourceConceptId)),
             nchar(rowData$domainSourceConceptId) > 4)) {
-      ParallelLogger::logTrace(paste0(
-        "  - Working on ",
-        rowData$domainTable,
-        ".",
-        rowData$domainSourceConceptId
-      ))
+      ParallelLogger::logTrace(
+        paste0(
+          "  - Working on ",
+          rowData$domainTable,
+          ".",
+          rowData$domainSourceConceptId
+        )
+      )
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sql,
@@ -1288,9 +1290,11 @@ getConceptCooccurrence <- function(connection,
     reportOverallTime = FALSE
   )
   conceptCooccurrence <-
-    DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                               sql = "select * from #concept_cooccurrence;",
-                                               snakeCaseToCamelCase = TRUE) %>%
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "select * from #concept_cooccurrence;",
+      snakeCaseToCamelCase = TRUE
+    ) %>%
     dplyr::tibble()
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
