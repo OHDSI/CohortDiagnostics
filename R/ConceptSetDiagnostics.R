@@ -232,6 +232,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       cdmDatabaseSchema = cdmDatabaseSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
+      minCellCount = minCellCount,
       tempEmulationSchema = tempEmulationSchema,
       conceptIdUniverse = "#concept_tracking"
     )
