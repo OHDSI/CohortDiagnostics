@@ -5686,8 +5686,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
       dplyr::arrange(.data$cohortId, .data$databaseId)
     isPerson <- input$visitContextPersonOrRecords == 'Person'
-    if (isPerson)
-    {
+    if (isPerson) {
       databaseIdsWithCount <- cohortCounts %>%
         dplyr::mutate(databaseIdWithCount = paste0(
           .data$databaseId,
@@ -5698,8 +5697,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::pull(.data$databaseIdWithCount)
       maxSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = getVisitContexDataFiltered(), 
                                                                 string = "ubjects")
-    } else
-    {
+    } else {
       databaseIdsWithCount <- cohortCounts %>%
         dplyr::mutate(databaseIdWithCount = paste0(
           .data$databaseId,
@@ -5734,8 +5732,7 @@ shiny::shinyServer(function(input, output, session) {
                            replacement = "Visits After")
     
     totalColumns <- 1
-    if (input$visitContextTableFilters == "All")
-    {
+    if (input$visitContextTableFilters == "All") {
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(tr(
                                             th(rowspan = 2, "Visit"),
@@ -5760,8 +5757,7 @@ shiny::shinyServer(function(input, output, session) {
     columnDefs <-
       minCellCountDef(1:(length(databaseIdsWithCount) * totalColumns))
     
-    if (input$visitContextValueFilter == "Percentage")
-    {
+    if (input$visitContextValueFilter == "Percentage") {
       columnDefs <-
         minCellPercentDef(1:(length(databaseIdsWithCount) * totalColumns))
     }
@@ -5783,8 +5779,7 @@ shiny::shinyServer(function(input, output, session) {
       )
     )
     
-    if (input$visitContextTableFilters == "All")
-    {
+    if (input$visitContextTableFilters == "All") {
       table <- DT::datatable(
         table,
         options = options,
@@ -5795,8 +5790,7 @@ shiny::shinyServer(function(input, output, session) {
         escape = FALSE,
         filter = "top"
       )
-    } else
-    {
+    } else {
       table <- DT::datatable(
         table,
         options = options,
@@ -7276,7 +7270,7 @@ shiny::shinyServer(function(input, output, session) {
           lengthChange = TRUE,
           ordering = FALSE,
           paging = TRUE,
-          columnDefs = list(minCellPercentDef(1:length(databaseIds) * 3))
+          columnDefs = list(minCellPercentDef(1:(length(databaseIds) * 3)))
         )
         table <- DT::datatable(
           data,
@@ -7295,7 +7289,7 @@ shiny::shinyServer(function(input, output, session) {
         )
         table <- DT::formatStyle(
           table = table,
-          columns = (1 + (1:length(databaseIds) * 3)),
+          columns = (1 + 1:(length(databaseIds) * 3)),
           background = DT::styleColorBar(c(0, 1), "lightblue"),
           backgroundSize = "98% 88%",
           backgroundRepeat = "no-repeat",
@@ -7310,48 +7304,91 @@ shiny::shinyServer(function(input, output, session) {
           message = paste0("Rendering raw table for compare characterization."),
           value = 0
         )
+        
+        databaseIds <- unique(balance$databaseId)
+        table <- balance %>%
+          dplyr::select(
+            .data$covariateName,
+            .data$mean1,
+            .data$sd1,
+            .data$mean2,
+            .data$sd2,
+            .data$stdDiff,
+            .data$databaseId
+          ) %>%
+          dplyr::rename("meanTarget" = mean1,
+                        "sdTarget" = sd1,
+                        "meanComparator" = mean2,
+                        "sdComparator" = sd2) %>% 
+          tidyr::pivot_longer(
+            cols = c(
+              "meanTarget",
+              "sdTarget",
+              "meanComparator",
+              "sdComparator",
+              "stdDiff"
+            ),
+            names_to = "type",
+            values_to = "values"
+          ) %>% 
+          dplyr::mutate(names = paste0(.data$databaseId, " ", .data$type)) 
+        
         if (input$compareCharacterizationColumnFilters == "Mean and Standard Deviation") {
-          table <- balance %>%
-            dplyr::select(
-              .data$covariateName,
-              .data$mean1,
-              .data$sd1,
-              .data$mean2,
-              .data$sd2,
-              .data$stdDiff
-            ) %>%
-            dplyr::arrange(desc(.data$stdDiff))
+          sketchColumns <- c("Mean 1", "Sd 1", "Mean 2", "Sd 2", "StdDiff")
+          sketchCOlspan <- 5
           
           columsDefs <- list(truncateStringDef(0, 80),
-                             minCellRealDef(1:5, digits = 2))
+                             minCellRealDef(1:(length(
+                               databaseIds
+                             ) * 5), digits = 2))
           
-          colorBarColumns <- c(2, 4)
-          
-          standardDifferenceColumn <- 6
-          
-          table <- table %>%
-            dplyr::rename(!!targetCohortHeader := .data$meanTarget) %>%
-            dplyr::rename(!!comparatorCohortHeader := .data$meanComparator)
+          colorBarColumns <- (1 + 1:(length(databaseIds) * 5))
+          # standardDifferenceColumn <- 4
           
         } else {
-          table <- balance %>%
-            dplyr::select(.data$covariateName,
-                          .data$mean1,
-                          .data$mean2,
-                          .data$stdDiff) %>%
-            dplyr::rename("target" = mean1,
-                          "comparator" = mean2)
+          table <- table %>% 
+            dplyr::filter(.data$type == "meanTarget" |
+                          .data$type == "meanComparator" |
+                          .data$type == "stdDiff")
+          
+          sketchColumns <- c("Mean 1", "Mean 2", "StdDiff")
+          sketchCOlspan <- 3
           
           columsDefs <- list(truncateStringDef(0, 80),
-                             minCellRealDef(1:3, digits = 2))
-          
-          colorBarColumns <- c(2, 3)
-          standardDifferenceColumn <- 4
-          
-          table <- table %>%
-            dplyr::rename(!!targetCohortHeader := .data$target) %>%
-            dplyr::rename(!!comparatorCohortHeader := .data$comparator)
+                             minCellRealDef(1:(length(
+                               databaseIds
+                             ) * 3), digits = 2))
+          colorBarColumns <- (1 + 1:(length(databaseIds) * 3))
+          # standardDifferenceColumn <- 4
         }
+        
+        table <- table %>% 
+          tidyr::pivot_wider(
+          id_cols = "covariateName",
+          names_from = "names",
+          values_from = "values",
+          values_fill = 0
+        )
+        
+        sketch <- htmltools::withTags(table(class = "display",
+                                            thead(tr(
+                                              th(rowspan = 2, "Covariate Name"),
+                                              lapply(
+                                                databaseIds,
+                                                th,
+                                                colspan = sketchCOlspan,
+                                                class = "dt-center",
+                                                style = "border-right:1px solid silver;border-bottom:1px solid silver"
+                                              )
+                                            ),
+                                            tr(
+                                              lapply(rep(
+                                                sketchColumns,
+                                                length(databaseIds)
+                                              ),
+                                              th,
+                                              style = "border-right:1px solid grey")
+                                            ))))
         
         options = list(
           pageLength = 100,
@@ -7369,6 +7406,7 @@ shiny::shinyServer(function(input, output, session) {
         table <- DT::datatable(
           table,
           options = options,
+          container = sketch,
           rownames = FALSE,
           colnames = colnames(table) %>%
             camelCaseToTitleCase(),
@@ -7384,14 +7422,14 @@ shiny::shinyServer(function(input, output, session) {
           backgroundRepeat = "no-repeat",
           backgroundPosition = "center"
         )
-        table <- DT::formatStyle(
-          table = table,
-          columns = standardDifferenceColumn,
-          background = styleAbsColorBar(1, "lightblue", "pink"),
-          backgroundSize = "98% 88%",
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center"
-        )
+        # table <- DT::formatStyle(
+        #   table = table,
+        #   columns = standardDifferenceColumn,
+        #   background = styleAbsColorBar(1, "lightblue", "pink"),
+        #   backgroundSize = "98% 88%",
+        #   backgroundRepeat = "no-repeat",
+        #   backgroundPosition = "center"
+        # )
       }
       return(table)
     }, server = TRUE)
