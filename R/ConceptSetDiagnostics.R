@@ -823,7 +823,8 @@ getConceptRecordCount <- function(connection,
           AND @domain_concept_id > 0
           GROUP BY @domain_concept_id,
           	YEAR(@domain_start_date),
-          	MONTH(@domain_start_date);"
+          	MONTH(@domain_start_date)
+          HAVING COUNT_BIG(DISTINCT person_id) > 5;" #remove very low counts because it becomes too much
   sql2 <- "SELECT @domain_concept_id concept_id,
           	YEAR(@domain_start_date) event_year,
           	0 as event_month,
@@ -838,7 +839,8 @@ getConceptRecordCount <- function(connection,
           WHERE YEAR(@domain_start_date) > 0
           AND @domain_concept_id > 0
           GROUP BY @domain_concept_id,
-          	YEAR(@domain_start_date);"
+          	YEAR(@domain_start_date)
+          HAVING COUNT_BIG(DISTINCT person_id) > 5;"
   sql3 <- "SELECT @domain_concept_id concept_id,
           	0 as event_year,
           	0 as event_month,
@@ -863,7 +865,7 @@ getConceptRecordCount <- function(connection,
       ".",
       rowData$domainConceptId
     ))
-    ParallelLogger::logTrace("    - Counting concepts by calendar month and year")
+    ParallelLogger::logTrace("    - Counting concepts by calendar month and year (filtered to min 5 subject count)")
     data1 <- renderTranslateQuerySql(
       connection = connection,
       sql = sql1,
@@ -876,7 +878,7 @@ getConceptRecordCount <- function(connection,
       snakeCaseToCamelCase = TRUE
     )
     if (!rowData$isEraTable) {
-      ParallelLogger::logTrace("    - Counting concepts by calendar year")
+      ParallelLogger::logTrace("    - Counting concepts by calendar year (filtered to min 5 subject count)")
       data2 <- renderTranslateQuerySql(
         connection = connection,
         sql = sql2,
@@ -888,7 +890,7 @@ getConceptRecordCount <- function(connection,
         concept_id_universe = conceptIdUniverse,
         snakeCaseToCamelCase = TRUE
       )
-      ParallelLogger::logTrace("    - Counting concepts without calendar period")
+      ParallelLogger::logTrace("    - Counting concepts without calendar period (no filter)")
       data3 <- renderTranslateQuerySql(
         connection = connection,
         sql = sql3,
@@ -926,7 +928,7 @@ getConceptRecordCount <- function(connection,
         ".",
         rowData$domainSourceConceptId
       ))
-      ParallelLogger::logTrace("    - Counting concepts by calendar month and year")
+      ParallelLogger::logTrace("    - Counting concepts by calendar month and year (filtered to min 5 subject count)")
       nsData1 <- renderTranslateQuerySql(
         connection = connection,
         sql = sql1,
@@ -938,7 +940,7 @@ getConceptRecordCount <- function(connection,
         concept_id_universe = conceptIdUniverse,
         snakeCaseToCamelCase = TRUE
       )
-      ParallelLogger::logTrace("     - Remvoing concepts found in standard field")
+      ParallelLogger::logTrace("     - Removing concepts found in standard field (filtered to min 5 subject count)")
       nsData1 <- nsData1 %>% 
         # conceptIds - only keep concept id that were never found in standard fields
         dplyr::anti_join(
@@ -946,7 +948,7 @@ getConceptRecordCount <- function(connection,
           by = 'conceptId'
         )
       if (!rowData$isEraTable) {
-        ParallelLogger::logTrace("    - Counting concepts by calendar year")
+        ParallelLogger::logTrace("    - Counting concepts by calendar year (no filter)")
         nsData2 <- renderTranslateQuerySql(
           connection = connection,
           sql = sql2,
@@ -958,7 +960,7 @@ getConceptRecordCount <- function(connection,
           concept_id_universe = conceptIdUniverse,
           snakeCaseToCamelCase = TRUE
         )
-        ParallelLogger::logTrace("     - Remvoing concepts found in standard field")
+        ParallelLogger::logTrace("     - Removing concepts found in standard field")
         nsData2 <- nsData2 %>% 
           # conceptIds - only keep concept id that were never found in standard fields
           dplyr::anti_join(
@@ -977,7 +979,7 @@ getConceptRecordCount <- function(connection,
           concept_id_universe = conceptIdUniverse,
           snakeCaseToCamelCase = TRUE
         ) 
-        ParallelLogger::logTrace("     - Remvoing concepts found in standard field")
+        ParallelLogger::logTrace("     - Removing concepts found in standard field")
         nsData3 <- nsData3 %>%
           # conceptIds - only keep concept id that were never found in standard fields
           dplyr::anti_join(
