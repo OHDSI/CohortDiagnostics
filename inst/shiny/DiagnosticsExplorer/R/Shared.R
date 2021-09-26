@@ -1373,9 +1373,10 @@ getResultsConceptCooccurrence <- function(dataSource,
     dataSource,
     cohortId = cohortIds,
     databaseId = databaseIds,
-    conceptId = conceptIds,
-    dataTableName = "conceptCooccurrence"
+    dataTableName = "indexEventBreakdown"
   )
+  browser()
+  #needs to be post processed
   return(data)
 }
 

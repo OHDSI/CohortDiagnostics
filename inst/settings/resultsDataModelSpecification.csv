@@ -71,11 +71,6 @@ concept_ancestor,max_levels_of_separation,int,Yes,No,No,Yes,2.2
 concept_class,concept_class_id,varchar,Yes,Yes,No,Yes,2.2
 concept_class,concept_class_name,varchar,Yes,Yes,No,Yes,2.2
 concept_class,concept_class_concept_id,int,Yes,Yes,No,Yes,2.2
-concept_cooccurrence,database_id,varchar,Yes,Yes,No,Yes,2.2
-concept_cooccurrence,cohort_id,bigint,Yes,Yes,No,Yes,2.2
-concept_cooccurrence,concept_id,int,Yes,Yes,No,Yes,2.2
-concept_cooccurrence,co_concept_id,int,Yes,Yes,No,Yes,2.2
-concept_cooccurrence,subject_count,bigint,Yes,Yes,No,Yes,2.2
 concept_count,database_id,varchar,Yes,Yes,No,Yes,2.2
 concept_count,domain_table,varchar,Yes,Yes,No,Yes,2.2
 concept_count,domain_field,varchar,Yes,Yes,No,Yes,2.2
@@ -167,6 +162,7 @@ inclusion_rule_stats,cohort_id,bigint,Yes,Yes,No,Yes,2.2
 inclusion_rule_stats,database_id,varchar,Yes,Yes,No,Yes,2.2
 index_event_breakdown,database_id,varchar,Yes,Yes,No,Yes,2.2
 index_event_breakdown,cohort_id,bigint,Yes,Yes,No,Yes,2.2
+index_event_breakdown,days_relative_index,bigint,Yes,Yes,No,Yes,2.2
 index_event_breakdown,domain_field,varchar,Yes,Yes,No,Yes,2.2
 index_event_breakdown,domain_table,varchar,Yes,Yes,No,Yes,2.2
 index_event_breakdown,concept_id,int,Yes,Yes,No,Yes,2.2

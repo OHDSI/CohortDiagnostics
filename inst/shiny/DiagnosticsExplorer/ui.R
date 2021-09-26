@@ -72,7 +72,8 @@ sidebarMenu <-
       input.tabs != 'indexEventBreakdown' &
       input.tabs != 'cohortDefinition' &
       input.tabs != 'visitContext' &
-      input.tabs != 'cohortOverlap'",
+      input.tabs != 'cohortOverlap' &&
+      input.tabs != 'compareCohortCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "selectedDatabaseId",
         label = "Database",
@@ -102,7 +103,8 @@ sidebarMenu <-
       input.targetConceptSetsType == 'Resolved' |
       input.targetConceptSetsType == 'Excluded' |
       input.targetConceptSetsType == 'Orphan concepts' |
-      input.targetCohortDefinitionTabSetPanel == 'targetCohortdefinitionInclusionRuleTabPanel'",
+      input.targetCohortDefinitionTabSetPanel == 'targetCohortdefinitionInclusionRuleTabPanel' |
+      input.tabs == 'compareCohortCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "selectedDatabaseIds",
         label = "Database",

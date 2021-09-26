@@ -251,7 +251,6 @@ consolidationOfSelectedFieldValues <- function(input,
     }
     #mutli select databaseId/ single select databaseId
     if (input$tabs == 'temporalCharacterization' ||
-        input$tabs == 'compareCohortCharacterization' ||
         input$tabs == 'compareTemporalCharacterization') {
       
       if (doesObjectHaveData(input$selectedDatabaseId)) {
