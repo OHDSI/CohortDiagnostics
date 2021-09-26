@@ -1065,7 +1065,7 @@ getBreakdownIndexEvents <- function(cohortIds,
                                     	domain_table VARCHAR(50),
                                     	domain_field VARCHAR(50),
                                     	subject_count BIGINT,
-                                    	record_count BIGINT
+                                    	concept_count BIGINT
                                     	);"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
@@ -1099,7 +1099,7 @@ getBreakdownIndexEvents <- function(cohortIds,
           GROUP BY cohort_definition_id,
           	datediff(dd, c.cohort_start_date, d1.@domain_start_date),
           	d1.@domain_concept_id
-          HAVING COUNT(DISTINCT c.subject_id) > @minCellCount
+          HAVING COUNT(DISTINCT c.subject_id) > @minCellCount -- there is probably no value in vary rare code
   ;"
   
   for (i in (1:nrow(domains))) {
@@ -1187,6 +1187,7 @@ getBreakdownIndexEvents <- function(cohortIds,
                                                         concept_id;",
                                                snakeCaseToCamelCase = TRUE) %>%
     dplyr::tibble()
+  #COmmenting out code related to extracting data for each domain table. This creates too much data
   # data <- dplyr::bind_rows(
   #   data,
   #   data %>%
