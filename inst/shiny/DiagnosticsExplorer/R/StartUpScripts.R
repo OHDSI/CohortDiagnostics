@@ -163,23 +163,18 @@ consolidationOfSelectedFieldValues <- function(input,
   ##########################Cohort Definition tab ##########################
   if (input$tabs == 'cohortDefinition') {
     #selection of cohort
-    if (doesObjectHaveData(input$cohortDefinitionTable_rows_selected)) {
-      if (length(input$cohortDefinitionTable_rows_selected) > 1) {
-        # get the last two rows selected - this is only for cohort table to enable LEFT/RIGHT comparison
-        lastRowsSelected <-
-          input$cohortDefinitionTable_rows_selected[c(
-            length(input$cohortDefinitionTable_rows_selected),
-            length(input$cohortDefinitionTable_rows_selected) - 1
-          )]
-        data$cohortIdTarget <-
-          cohort[lastRowsSelected[[1]], ]$cohortId
-        data$cohortIdComparator <-
-          cohort[lastRowsSelected[[2]], ]$cohortId
-      } else {
-        lastRowsSelected <- input$cohortDefinitionTable_rows_selected
-        data$cohortIdTarget <-
-          cohort[lastRowsSelected[[1]], ]$cohortId
-        data$cohortIdComparator <- NULL
+    if (doesObjectHaveData(input$selectedCompoundCohortName) ||
+        doesObjectHaveData(input$selectedComparatorCompoundCohortName)) {
+      # get the last two rows selected - this is only for cohort table to enable LEFT/RIGHT comparison
+      if (input$selectedCompoundCohortName != "") {
+        data$cohortIdTarget <- cohort %>% 
+          dplyr::filter(.data$compoundName == input$selectedCompoundCohortName) %>% 
+          dplyr::pull(.data$cohortId)
+      }
+      if (doesObjectHaveData(input$selectedComparatorCompoundCohortName)) {
+        data$cohortIdComparator <- cohort %>% 
+          dplyr::filter(.data$compoundName == input$selectedComparatorCompoundCohortName) %>% 
+          dplyr::pull(.data$cohortId)
       }
     }
     

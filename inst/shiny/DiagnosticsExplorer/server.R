@@ -114,12 +114,18 @@ shiny::shinyServer(function(input, output, session) {
   ##pickerInput: selectedComparatorCompoundCohortName----
   shiny::observe({
     subset <- getCohortSortedByCohortId()$compoundName
+    
+    if (input$tabs == "cohortDefinition") {
+      selected <- NULL
+    } else {
+      selected <- subset[2]
+    }
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "selectedComparatorCompoundCohortName",
       choicesOpt = list(style = rep_len("color: black;", 999)),
       choices = subset,
-      selected = subset[2]
+      selected = selected
     )
   })
   
@@ -139,7 +145,6 @@ shiny::shinyServer(function(input, output, session) {
   getUserSelection <- shiny::reactive(x = {
     list(
       input$tabs,
-      input$cohortDefinitionTable_rows_selected,
       input$targetCohortDefinitionConceptSetsTable_rows_selected,
       input$comparatorCohortDefinitionConceptSets_rows_selected,
       input$targetCohortDefinitionResolvedConceptTable_rows_selected,
@@ -152,6 +157,7 @@ shiny::shinyServer(function(input, output, session) {
       input$selectedDatabaseIds,
       input$selectedDatabaseIds_open,
       input$selectedCompoundCohortName,
+      input$selectedComparatorCompoundCohortName,
       input$selectedCompoundCohortNames,
       input$selectedCompoundCohortNames_open,
       input$conceptSetsSelectedCohortLeft,
@@ -230,8 +236,7 @@ shiny::shinyServer(function(input, output, session) {
       shiny::column(
         getWidthOfLeftPanelForCohortDetailBrowserInCohortDefinitionTabBasedOnNoOfRowSelectedInCohortTable(),
         shiny::conditionalPanel(
-          condition = "output.cohortDefinitionSelectedRowCount > 0 &
-                     output.isCohortDefinitionRowSelected == true",
+          condition = "output.isCohortDefinitionRowSelected == true",
           shiny::htmlOutput(outputId = "targetCohortSelectedInCohortDefinitionTable"),
           shiny::tabsetPanel(
             type = "tab",
@@ -480,7 +485,7 @@ shiny::shinyServer(function(input, output, session) {
       shiny::column(
         getWidthOfLeftPanelForCohortDetailBrowserInCohortDefinitionTabBasedOnNoOfRowSelectedInCohortTable(),
         shiny::conditionalPanel(
-          condition = "output.cohortDefinitionSelectedRowCount == 2 &
+          condition = "output.isComparatorSelected == true &
                      output.isCohortDefinitionRowSelected == true",
           shiny::htmlOutput(outputId = "nameOfComparatorSelectedCohortInCohortDefinitionTable"),
           shiny::tabsetPanel(
@@ -781,8 +786,7 @@ shiny::shinyServer(function(input, output, session) {
   #Used to set the half view or full view
   getWidthOfLeftPanelForCohortDetailBrowserInCohortDefinitionTabBasedOnNoOfRowSelectedInCohortTable <-
     shiny::reactive(x = {
-      length <- length(input$cohortDefinitionTable_rows_selected)
-      if (length == 2) {
+      if (doesObjectHaveData(consolidatedCohortIdComparator())) {
         return(6)
       } else {
         return(12)
@@ -1778,12 +1782,12 @@ shiny::shinyServer(function(input, output, session) {
     return(json)
   })
   
-  #output: cohortDefinitionSelectedRowCount----
-  output$cohortDefinitionSelectedRowCount <- shiny::reactive({
-    return(length(input$cohortDefinitionTable_rows_selected))
+  #output: isComparatorSelected----
+  output$isComparatorSelected <- shiny::reactive({
+    return(!is.null(consolidatedCohortIdComparator()))
   })
   shiny::outputOptions(x = output,
-                       name = "cohortDefinitionSelectedRowCount",
+                       name = "isComparatorSelected",
                        suspendWhenHidden = FALSE)
   
   output$conceptSetComparisonTable <- DT::renderDT(expr = {
