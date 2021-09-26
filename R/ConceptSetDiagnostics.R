@@ -912,6 +912,9 @@ getConceptRecordCount <- function(connection,
   }
   standardConcepts <- dplyr::bind_rows(standardConcepts) %>%
     dplyr::distinct()
+  conceptIdsFoundInStandardField <- standardConcepts %>%
+    dplyr::select(.data$conceptId) %>%
+    dplyr::distinct()
   
   nonStandardConcepts <- list()
   for (i in (1:nrow(domains))) {
@@ -934,12 +937,12 @@ getConceptRecordCount <- function(connection,
         domain_start_date = rowData$domainStartDate,
         concept_id_universe = conceptIdUniverse,
         snakeCaseToCamelCase = TRUE
-      ) %>%
+      )
+      ParallelLogger::logTrace("     - Remvoing concepts found in standard field")
+      nsData1 <- nsData1 %>% 
         # conceptIds - only keep concept id that were never found in standard fields
         dplyr::anti_join(
-          y = standardConcepts %>%
-            dplyr::select(.data$conceptId) %>%
-            dplyr::distinct(),
+          y = conceptIdsFoundInStandardField,
           by = 'conceptId'
         )
       if (!rowData$isEraTable) {
@@ -954,12 +957,12 @@ getConceptRecordCount <- function(connection,
           domain_start_date = rowData$domainStartDate,
           concept_id_universe = conceptIdUniverse,
           snakeCaseToCamelCase = TRUE
-        ) %>%
+        )
+        ParallelLogger::logTrace("     - Remvoing concepts found in standard field")
+        nsData2 <- nsData2 %>% 
           # conceptIds - only keep concept id that were never found in standard fields
           dplyr::anti_join(
-            y = standardConcepts %>%
-              dplyr::select(.data$conceptId) %>%
-              dplyr::distinct(),
+            y = conceptIdsFoundInStandardField,
             by = 'conceptId'
           )
         ParallelLogger::logTrace("    - Counting concepts without calendar period")
@@ -973,12 +976,12 @@ getConceptRecordCount <- function(connection,
           domain_start_date = rowData$domainStartDate,
           concept_id_universe = conceptIdUniverse,
           snakeCaseToCamelCase = TRUE
-        ) %>%
+        ) 
+        ParallelLogger::logTrace("     - Remvoing concepts found in standard field")
+        nsData3 <- nsData3 %>%
           # conceptIds - only keep concept id that were never found in standard fields
           dplyr::anti_join(
-            y = standardConcepts %>%
-              dplyr::select(.data$conceptId) %>%
-              dplyr::distinct(),
+            y = conceptIdsFoundInStandardField,
             by = 'conceptId'
           )
       } else {
