@@ -34,6 +34,8 @@
 #' @param    cohorts                 A dataframe object with required fields cohortId, sql, json, cohortName
 #'
 #' @template CohortTable
+#' 
+#' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #'
 #' @param keepCustomConceptId         (Optional) Default FALSE. Do you want to keep concept id above 2 billion.
 #'                                    Per OMOP conventions any conceptId >= 2 billion are considered site specific
@@ -51,6 +53,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      cohortIds = NULL,
                                      cohortDatabaseSchema = NULL,
                                      keepCustomConceptId = FALSE,
+                                     minCellCount = 5, 
                                      cohortTable = NULL) {
   ParallelLogger::logTrace(" - Running concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
@@ -306,6 +309,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       connection = connection,
       cdmDatabaseSchema = cdmDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
+      minCellCount = minCellCount,
       conceptIdUniverse = "#concept_tracking"
     )
   if (!keepCustomConceptId) {
@@ -805,42 +809,69 @@ getOrphanConcepts <- function(connectionDetails = NULL,
 getConceptRecordCount <- function(connection,
                                   cdmDatabaseSchema,
                                   tempEmulationSchema,
+                                  minCellCount,
                                   conceptIdUniverse = "#concept_tracking") {
+  if (!is.null(minCellCount)) {
+    ParallelLogger::logTrace(paste0("  - minCellCount set to ", 
+                                    minCellCount, 
+                                    ", counts less than ", 
+                                    minCellCount, 
+                                    " * 10 maybe suppressed. Note suppression only applies to conceptIds that are not related to cohort definition."))
+    minCount <- minCellCount * 10
+  } else {
+    ParallelLogger::logTrace(paste0("  - minCellCount is NULL. Using default suppression of 50. Note suppression only applies to conceptIds that are not related to cohort definition."))
+    minCount <- 50
+  }
+  
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide
-  sql1 <- "SELECT @domain_concept_id concept_id,
-          	YEAR(@domain_start_date) event_year,
-          	MONTH(@domain_start_date) event_month,
-          	COUNT_BIG(*) concept_count,
-          	COUNT_BIG(DISTINCT person_id) subject_count
-          FROM @cdm_database_schema.@domain_table
-          INNER JOIN (
-          	SELECT DISTINCT concept_id
-          	FROM @concept_id_universe
-          	) c
-          	ON @domain_concept_id = concept_id
-          WHERE YEAR(@domain_start_date) > 0
-          AND @domain_concept_id > 0
-          GROUP BY @domain_concept_id,
-          	YEAR(@domain_start_date),
-          	MONTH(@domain_start_date)
-          HAVING COUNT_BIG(DISTINCT person_id) > 5;" #remove very low counts because it becomes too much
-  sql2 <- "SELECT @domain_concept_id concept_id,
-          	YEAR(@domain_start_date) event_year,
-          	0 as event_month,
-          	COUNT_BIG(*) concept_count,
-          	COUNT_BIG(DISTINCT person_id) subject_count
-          FROM @cdm_database_schema.@domain_table
-          INNER JOIN (
-          	SELECT DISTINCT concept_id
-          	FROM @concept_id_universe
-          	) c
-          	ON @domain_concept_id = concept_id
-          WHERE YEAR(@domain_start_date) > 0
-          AND @domain_concept_id > 0
-          GROUP BY @domain_concept_id,
-          	YEAR(@domain_start_date)
-          HAVING COUNT_BIG(DISTINCT person_id) > 5;"
+  sql1 <- "SELECT concept_id, 
+                  event_year, 
+                  event_month, 
+                  concept_count, 
+                  subject_count
+          FROM (
+          	SELECT @domain_concept_id concept_id,
+          		YEAR(@domain_start_date) event_year,
+          		MONTH(@domain_start_date) event_month,
+          		COUNT_BIG(*) concept_count,
+          		COUNT_BIG(DISTINCT person_id) subject_count
+          	FROM @cdm_database_schema.@domain_table
+          	INNER JOIN (
+          		SELECT DISTINCT concept_id
+          		FROM @concept_id_universe
+          		) c ON @domain_concept_id = concept_id
+          	WHERE YEAR(@domain_start_date) > 0
+          		AND @domain_concept_id > 0
+          	GROUP BY @domain_concept_id,
+          		YEAR(@domain_start_date),
+          		MONTH(@domain_start_date)
+          	) f
+          WHERE subject_count > @minCount;" #remove very low counts because it becomes too much
+  sql2 <- "SELECT concept_id, 
+                  event_year, 
+                  event_month, 
+                  concept_count, 
+                  subject_count
+            FROM (
+            SELECT 
+                @domain_concept_id concept_id,
+              	YEAR(@domain_start_date) event_year,
+              	0 as event_month,
+              	COUNT_BIG(*) concept_count,
+              	COUNT_BIG(DISTINCT person_id) subject_count
+              FROM @cdm_database_schema.@domain_table
+              INNER JOIN (
+              	SELECT DISTINCT concept_id
+              	FROM @concept_id_universe
+              	) c
+              	ON @domain_concept_id = concept_id
+              WHERE YEAR(@domain_start_date) > 0
+              AND @domain_concept_id > 0
+              GROUP BY @domain_concept_id,
+              	YEAR(@domain_start_date)
+            ) f
+            WHERE subject_count > @minCount;"
   sql3 <- "SELECT @domain_concept_id concept_id,
           	0 as event_year,
           	0 as event_month,
@@ -865,7 +896,9 @@ getConceptRecordCount <- function(connection,
       ".",
       rowData$domainConceptId
     ))
-    ParallelLogger::logTrace("    - Counting concepts by calendar month and year (filtered to min 5 subject count)")
+    ParallelLogger::logTrace(paste0("    - Counting concepts by calendar month and year (filtered to min ",
+                                    minCount,
+                                    " subject count)"))
     data1 <- renderTranslateQuerySql(
       connection = connection,
       sql = sql1,
@@ -875,10 +908,13 @@ getConceptRecordCount <- function(connection,
       cdm_database_schema = cdmDatabaseSchema,
       domain_start_date = rowData$domainStartDate,
       concept_id_universe = conceptIdUniverse,
+      minCount = minCount,
       snakeCaseToCamelCase = TRUE
     )
     if (!rowData$isEraTable) {
-      ParallelLogger::logTrace("    - Counting concepts by calendar year (filtered to min 5 subject count)")
+      ParallelLogger::logTrace(paste0("    - Counting concepts by calendar year (filtered to min ",
+                                      minCount,
+                                      " subject count)"))
       data2 <- renderTranslateQuerySql(
         connection = connection,
         sql = sql2,
@@ -888,6 +924,7 @@ getConceptRecordCount <- function(connection,
         cdm_database_schema = cdmDatabaseSchema,
         domain_start_date = rowData$domainStartDate,
         concept_id_universe = conceptIdUniverse,
+        minCount = minCount,
         snakeCaseToCamelCase = TRUE
       )
       ParallelLogger::logTrace("    - Counting concepts without calendar period (no filter)")
@@ -928,7 +965,9 @@ getConceptRecordCount <- function(connection,
         ".",
         rowData$domainSourceConceptId
       ))
-      ParallelLogger::logTrace("    - Counting concepts by calendar month and year (filtered to min 5 subject count)")
+      ParallelLogger::logTrace(paste0("    - Counting concepts by calendar month and year (filtered to min ",
+                                      minCount,
+                                      " subject count)"))
       nsData1 <- renderTranslateQuerySql(
         connection = connection,
         sql = sql1,
@@ -938,9 +977,12 @@ getConceptRecordCount <- function(connection,
         cdm_database_schema = cdmDatabaseSchema,
         domain_start_date = rowData$domainStartDate,
         concept_id_universe = conceptIdUniverse,
+        minCount = minCount,
         snakeCaseToCamelCase = TRUE
       )
-      ParallelLogger::logTrace("     - Removing concepts found in standard field (filtered to min 5 subject count)")
+      ParallelLogger::logTrace(paste0("     - Removing concepts found in standard field (filtered to min ",
+                                      minCount,
+                                      " subject count)"))
       nsData1 <- nsData1 %>% 
         # conceptIds - only keep concept id that were never found in standard fields
         dplyr::anti_join(
@@ -958,6 +1000,7 @@ getConceptRecordCount <- function(connection,
           cdm_database_schema = cdmDatabaseSchema,
           domain_start_date = rowData$domainStartDate,
           concept_id_universe = conceptIdUniverse,
+          minCount = minCount,
           snakeCaseToCamelCase = TRUE
         )
         ParallelLogger::logTrace("     - Removing concepts found in standard field")
@@ -1053,7 +1096,19 @@ getBreakdownIndexEvents <- function(cohortIds,
                                     tempEmulationSchema,
                                     rangeMin = -40,
                                     rangeMax = 40,
+                                    minCellCount,
                                     conceptIdUniverse = "#concept_tracking") {
+  if (!is.null(minCellCount)) {
+    ParallelLogger::logTrace(paste0("  - minCellCount set to ", 
+                                    minCellCount, 
+                                    ", counts less than ", 
+                                    minCellCount, 
+                                    " * 10 maybe suppressed. Note suppression only applies to conceptIds that are not related to cohort definition."))
+    minCount <- minCellCount * 10
+  } else {
+    ParallelLogger::logTrace(paste0("  - minCellCount is NULL. Using default suppression of 50. Note suppression only applies to conceptIds that are not related to cohort definition."))
+    minCount <- 50
+  }
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide
   nonEraTables <- domains %>%
@@ -1121,7 +1176,7 @@ getBreakdownIndexEvents <- function(cohortIds,
           	SELECT DISTINCT concept_id
           	FROM @conceptIdUniverse
           	) cu ON f.concept_id = cu.concept_id
-          WHERE subject_count > 100
+          WHERE subject_count > @minCount
           	OR cu.concept_id IS NOT NULL;;"
   #-- there is probably no value in vary rare code, especially if it is not part of conceptIdUniverse
   #-- note concept_id that are part of the conceptIdUniverse are not filtered out if count < 100
@@ -1132,8 +1187,12 @@ getBreakdownIndexEvents <- function(cohortIds,
       "  - Working on ",
       rowData$domainTable,
       ".",
-      rowData$domainConceptId
+      rowData$domainConceptId,
+      " (filtered to min ",
+      minCount,
+      " subject count if concept id not related to cohort definition.)"
     ))
+    
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sql,
@@ -1150,6 +1209,7 @@ getBreakdownIndexEvents <- function(cohortIds,
       domain_table_short = rowData$domainTableShort,
       domain_field_short = rowData$domainConceptIdShort,
       conceptIdUniverse = conceptIdUniverse,
+      minCount = minCount,
       reportOverallTime = FALSE, 
       progressBar = FALSE
     )
@@ -1163,7 +1223,10 @@ getBreakdownIndexEvents <- function(cohortIds,
         "  - Working on ",
         rowData$domainTable,
         ".",
-        rowData$domainSourceConceptId
+        rowData$domainSourceConceptId,
+        " (filtered to min ",
+        minCount,
+        " subject count if concept id not related to cohort definition.)"
       ))
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
@@ -1214,7 +1277,7 @@ getBreakdownIndexEvents <- function(cohortIds,
                                                         days_relative_index;",
                                                snakeCaseToCamelCase = TRUE) %>%
     dplyr::tibble()
-  #COmmenting out code related to extracting data for each domain table. This creates too much data
+  #Commenting out code related to extracting data for each domain table. This creates too much data
   # data <- dplyr::bind_rows(
   #   data,
   #   data %>%

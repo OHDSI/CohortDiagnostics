@@ -553,7 +553,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohorts = cohorts,
         cohortIds = subset$cohortId,
         cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable
+        cohortTable = cohortTable,
+        minCellCount = minCellCount
       )
       writeToAllOutputToCsv(
         object = output,
