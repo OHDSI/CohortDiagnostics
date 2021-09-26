@@ -1041,8 +1041,8 @@ getBreakdownIndexEvents <- function(cohortIds,
                                     cohortDatabaseSchema,
                                     cohortTable,
                                     tempEmulationSchema,
-                                    rangeMin = -31,
-                                    rangeMax = 31,
+                                    rangeMin = -40,
+                                    rangeMax = 40,
                                     minCellCount = 5,
                                     conceptIdUniverse = "#concept_tracking") {
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
@@ -1184,7 +1184,10 @@ getBreakdownIndexEvents <- function(cohortIds,
                                                       FROM #indx_breakdown
                                                       group by cohort_id,
                                                         days_relative_index,
-                                                        concept_id;",
+                                                        concept_id
+                                                      order by cohort_id,
+                                                        concept_id,
+                                                        days_relative_index;",
                                                snakeCaseToCamelCase = TRUE) %>%
     dplyr::tibble()
   #COmmenting out code related to extracting data for each domain table. This creates too much data
