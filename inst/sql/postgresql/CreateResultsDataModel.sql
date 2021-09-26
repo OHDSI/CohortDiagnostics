@@ -195,17 +195,6 @@ CREATE TABLE concept_count (
 			PRIMARY KEY(database_id, domain_table, domain_field, concept_id, event_year, event_month)
 );
 
---Table concept_cooccurrence
---HINT DISTRIBUTE ON RANDOM
-CREATE TABLE concept_cooccurrence (
-			database_id VARCHAR NOT NULL,
-			cohort_id BIGINT NOT NULL,
-			concept_id BIGINT NOT NULL,
-			co_concept_id BIGINT NOT NULL,
-			subject_count BIGINT NOT NULL,
-			PRIMARY KEY(database_id, cohort_id, concept_id, co_concept_id)
-);
-
 
 --Table concept_mapping
 --HINT DISTRIBUTE ON RANDOM
@@ -380,12 +369,13 @@ CREATE TABLE inclusion_rule_stats (
 CREATE TABLE index_event_breakdown (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
+			days_relative_index BIGINT NOT NULL,
 			domain_table VARCHAR NOT NULL,
 			domain_field VARCHAR NOT NULL,
 			concept_id INT NOT NULL,
 			concept_count FLOAT NOT NULL,
 			subject_count FLOAT NOT NULL,
-			PRIMARY KEY(concept_id, cohort_id, database_id, domain_field, domain_table)
+			PRIMARY KEY(database_id, cohort_id, days_relative_index, domain_table, domain_field, concept_id)
 );
 
 --Table metadata

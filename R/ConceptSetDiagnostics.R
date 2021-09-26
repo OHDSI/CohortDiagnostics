@@ -34,6 +34,8 @@
 #' @param    cohorts                 A dataframe object with required fields cohortId, sql, json, cohortName
 #'
 #' @template CohortTable
+#' 
+#' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #'
 #' @param keepCustomConceptId         (Optional) Default FALSE. Do you want to keep concept id above 2 billion.
 #'                                    Per OMOP conventions any conceptId >= 2 billion are considered site specific
@@ -51,6 +53,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      cohortIds = NULL,
                                      cohortDatabaseSchema = NULL,
                                      keepCustomConceptId = FALSE,
+                                     minCellCount = 5,
                                      cohortTable = NULL) {
   ParallelLogger::logTrace(" - Running concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
@@ -230,27 +233,12 @@ runConceptSetDiagnostics <- function(connection = NULL,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
       tempEmulationSchema = tempEmulationSchema,
+      minCellCount = minCellCount,
       conceptIdUniverse = "#concept_tracking"
     )
   if (!keepCustomConceptId) {
     conceptSetDiagnosticsResults$indexEventBreakdown <-
       conceptSetDiagnosticsResults$indexEventBreakdown %>%
-      dplyr::filter(.data$conceptId < 200000000)
-  }
-  ParallelLogger::logInfo("  - Looking for concept co-occurrence on index date.")
-  conceptSetDiagnosticsResults$conceptCooccurrence <-
-    getConceptCooccurrence(
-      connection = connection,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      tempEmulationSchema = tempEmulationSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      cohortIds = subset$cohortId,
-      conceptIdUniverse = "#concept_tracking"
-    )
-  if (!keepCustomConceptId) {
-    conceptSetDiagnosticsResults$conceptCooccurrence <-
-      conceptSetDiagnosticsResults$conceptCooccurrence %>%
       dplyr::filter(.data$conceptId < 200000000)
   }
   
@@ -1053,143 +1041,26 @@ getBreakdownIndexEvents <- function(cohortIds,
                                     cohortDatabaseSchema,
                                     cohortTable,
                                     tempEmulationSchema,
+                                    rangeMin = -31,
+                                    rangeMax = 31,
+                                    minCellCount = 5,
                                     conceptIdUniverse = "#concept_tracking") {
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide
-  nonEraTables <- domains %>% 
-    dplyr::filter(.data$isEraTable == FALSE) %>% 
-    dplyr::pull(.data$domainTableShort) %>% 
+  nonEraTables <- domains %>%
+    dplyr::filter(.data$isEraTable == FALSE) %>%
+    dplyr::pull(.data$domainTableShort) %>%
     unique()
-  sql <- "SELECT cohort_definition_id cohort_id,
-              	@domain_concept_id AS concept_id,
-              	COUNT(*) AS concept_count,
-              	COUNT(DISTINCT subject_id) AS subject_count
-              FROM @cohort_database_schema.@cohort_table
-              INNER JOIN @cdm_database_schema.@domain_table
-              	ON subject_id = person_id
-              		AND cohort_start_date = @domain_start_date
-              INNER JOIN (select distinct concept_id from @concept_id_universe) a
-              	ON @domain_concept_id = concept_id
-              WHERE cohort_definition_id IN (@cohort_id)
-              GROUP BY @domain_concept_id,
-                  cohort_definition_id;"
-  
-  breakdownDataStandard <- list()
-  for (i in (1:nrow(domains))) {
-    rowData <- domains[i,]
-    ParallelLogger::logTrace(paste0(
-      "  - Working on ",
-      rowData$domainTable,
-      ".",
-      rowData$domainConceptId
-    ))
-    breakdownDataStandard[[i]] <- renderTranslateQuerySql(
-      connection = connection,
-      sql = sql,
-      tempEmulationSchema = tempEmulationSchema,
-      domain_table = rowData$domainTable,
-      domain_concept_id = rowData$domainConceptId,
-      cdm_database_schema = cdmDatabaseSchema,
-      cohort_database_schema = cohortDatabaseSchema,
-      domain_start_date = rowData$domainStartDate,
-      concept_id_universe = conceptIdUniverse,
-      cohort_id = cohortIds,
-      cohort_table = cohortTable,
-      snakeCaseToCamelCase = TRUE
-    ) %>%
-      dplyr::mutate(
-        domainTable = rowData$domainTableShort,
-        domainField = rowData$domainConceptIdShort
-      )
-  }
-  breakdownDataStandard <- dplyr::bind_rows(breakdownDataStandard)
-  
-  breakdownDataNonStandard <- list()
-  for (i in (1:nrow(domains))) {
-    rowData <- domains[i,]
-    if (all(!is.na(rowData$domainSourceConceptId),
-            nchar(rowData$domainSourceConceptId) > 4)) {
-      ParallelLogger::logTrace(
-        paste0(
-          "  - Working on ",
-          rowData$domainTable,
-          ".",
-          rowData$domainSourceConceptId
-        )
-      )
-      breakdownDataNonStandard[[i]] <- renderTranslateQuerySql(
-        connection = connection,
-        sql = sql,
-        tempEmulationSchema = tempEmulationSchema,
-        domain_table = rowData$domainTable,
-        domain_concept_id = rowData$domainSourceConceptId,
-        cdm_database_schema = cdmDatabaseSchema,
-        cohort_database_schema = cohortDatabaseSchema,
-        domain_start_date = rowData$domainStartDate,
-        concept_id_universe = conceptIdUniverse,
-        cohort_id = cohortIds,
-        cohort_table = cohortTable,
-        snakeCaseToCamelCase = TRUE
-      ) %>%
-        dplyr::mutate(
-          domainTable = rowData$domainTableShort,
-          domainField = rowData$domainSourceConceptIdShort
-        )
-    }
-  }
-  breakdownDataNonStandard <-
-    dplyr::bind_rows(breakdownDataNonStandard)
-  data <- 
-    dplyr::bind_rows(breakdownDataNonStandard,
-                     breakdownDataStandard) %>% 
-    dplyr::distinct()
-  data <- dplyr::bind_rows(data,
-                           data %>% 
-                             dplyr::filter(.data$domainTable %in% c(nonEraTables)) %>% 
-                             dplyr::group_by(.data$cohortId,
-                                             .data$conceptId
-                             ) %>% 
-                             dplyr::summarise(conceptCount = sum(.data$conceptCount),
-                                              subjectCount = max(.data$subjectCount), 
-                                              .groups = "keep") %>% 
-                             dplyr::mutate(domainField = "All",
-                                           domainTable = "All"),
-                           data %>%
-                             dplyr::filter(.data$domainTable %in% c(nonEraTables)) %>% 
-                             dplyr::group_by(.data$cohortId,
-                                             .data$conceptId,
-                                             .data$domainTable
-                             ) %>% 
-                             dplyr::summarise(conceptCount = sum(.data$conceptCount),
-                                              subjectCount = max(.data$subjectCount), 
-                                              .groups = "keep") %>% 
-                             dplyr::mutate(domainField = "All")
-  ) %>% 
-    dplyr::distinct()
-  return(data)
-}
-
-
-# function: getConceptCooccurrence ----
-### conceptCooccurrence -----
-getConceptCooccurrence <- function(connection,
-                                   cdmDatabaseSchema,
-                                   tempEmulationSchema,
-                                   cohortTable,
-                                   cohortDatabaseSchema,
-                                   cohortIds,
-                                   conceptIdUniverse = "#concept_tracking") {
-  domains <- getDomainInformation(packageName = 'CohortDiagnostics')
-  domains <- domains$wide
   sqlDdlDrop <-
-    "IF OBJECT_ID('tempdb..#concept_cooccurrence', 'U') IS NOT NULL
-                	      DROP TABLE #concept_cooccurrence;
-  CREATE TABLE #concept_cooccurrence (
+    "IF OBJECT_ID('tempdb..#indx_breakdown', 'U') IS NOT NULL
+                	      DROP TABLE #indx_breakdown;"
+  sqlDdlCreate <- "
+  CREATE TABLE #indx_breakdown (
                                     	cohort_id BIGINT,
+                                    	days_relative_index BIGINT,
                                     	concept_id INT,
-                                    	co_concept_id INT,
-                                    	domain_table VARCHAR(20),
-                                    	co_concept_is_std VARCHAR(1),
+                                    	domain_table VARCHAR(50),
+                                    	domain_field VARCHAR(50),
                                     	subject_count BIGINT,
                                     	record_count BIGINT
                                     	);"
@@ -1200,34 +1071,33 @@ getConceptCooccurrence <- function(connection,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  
-  sql <- "INSERT INTO #concept_cooccurrence
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sqlDdlCreate,
+    tempEmulationSchema = tempEmulationSchema,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  sql <- "INSERT INTO #indx_breakdown
           SELECT cohort_definition_id cohort_id,
-            datediff(dd, d1.@domain_start_date, c.cohort_start_date) days,
-          	d1.@domain_concept_id1 concept_id,
-          	d2.@domain_concept_id2 co_concept_id, -- switch between standard/source
-          	'@domain_table' domain_table,
-          	'@fieldType' co_concept_is_std, -- switch between standard/source if domain_concept_id2 is not standard = 'N' else 'S'
-          	COUNT(distinct c.subject_id) subject_count,
+          	datediff(dd, c.cohort_start_date, d1.@domain_start_date) days_relative_index,
+          	d1.@domain_concept_id concept_id,
+          	'@domain_table_short' domain_table,
+          	'@domain_field_short' domain_field,
+          	COUNT(DISTINCT c.subject_id) subject_count,
           	COUNT(*) record_count
           FROM @cohort_database_schema.@cohort_table c
-          INNER JOIN @cdm_database_schema.@domain_table d1
-          ON subject_id = d1.person_id
-          	AND d1.@domain_start_date >= dateadd(day,-31,d1.@domain_start_date)
-          	AND d1.@domain_start_date <= dateadd(day,31,d1.@domain_start_date)
-          INNER JOIN @cdm_database_schema.@domain_table d2
-          ON subject_id = d2.person_id
-          	AND d2.@domain_start_date >= dateadd(day,-31,d2.@domain_start_date)
-          	AND d2.@domain_start_date <= dateadd(day,31,d2.@domain_start_date)
+          INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
+          	AND datediff(dd, c.cohort_start_date, d1.@domain_start_date) > @rangeMin
+          	AND datediff(dd, c.cohort_start_date, d1.@domain_start_date) < @rangeMax
           WHERE c.cohort_definition_id IN (@cohortIds)
-          	AND d1.@domain_concept_id1 != d2.@domain_concept_id2
           GROUP BY cohort_definition_id,
-                    datediff(dd, d1.@domain_start_date, c.cohort_start_date),
-                    d1.@domain_concept_id1,
-                    d2.@domain_concept_id2;"
+          	datediff(dd, c.cohort_start_date, d1.@domain_start_date),
+          	d1.@domain_concept_id
+          HAVING COUNT(DISTINCT c.subject_id) > @minCellCount;"
   
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i,]
+    rowData <- domains[i, ]
     ParallelLogger::logTrace(paste0(
       "  - Working on ",
       rowData$domainTable,
@@ -1238,50 +1108,57 @@ getConceptCooccurrence <- function(connection,
       connection = connection,
       sql = sql,
       tempEmulationSchema = tempEmulationSchema,
-      domain_concept_id1 = rowData$domainConceptId,
-      domain_concept_id2 = rowData$domainConceptId,
-      fieldType = "S",
+      domain_table = rowData$domainTable,
+      domain_concept_id = rowData$domainConceptId,
       cdm_database_schema = cdmDatabaseSchema,
       cohort_database_schema = cohortDatabaseSchema,
-      domain_table = rowData$domainTable,
       domain_start_date = rowData$domainStartDate,
       cohortIds = cohortIds,
       cohort_table = cohortTable,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
+      rangeMin = rangeMin,
+      rangeMax = rangeMax,
+      minCellCount = minCellCount,
+      domain_table_short = rowData$domainTableShort,
+      domain_field_short = rowData$domainConceptIdShort,
+      reportOverallTime = FALSE, 
+      progressBar = FALSE
     )
-    if (all(!is.na((rowData$domainSourceConceptId)),
+  }
+  
+  for (i in (1:nrow(domains))) {
+    rowData <- domains[i, ]
+    if (all(!is.na(rowData$domainSourceConceptId),
             nchar(rowData$domainSourceConceptId) > 4)) {
-      ParallelLogger::logTrace(
-        paste0(
-          "  - Working on ",
-          rowData$domainTable,
-          ".",
-          rowData$domainSourceConceptId
-        )
-      )
+      ParallelLogger::logTrace(paste0(
+        "  - Working on ",
+        rowData$domainTable,
+        ".",
+        rowData$domainSourceConceptId
+      ))
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sql,
         tempEmulationSchema = tempEmulationSchema,
-        domain_concept_id1 = rowData$domainConceptId,
-        domain_concept_id2 = rowData$domainSourceConceptId,
-        fieldType = "N",
+        domain_table = rowData$domainTable,
+        domain_concept_id = rowData$domainSourceConceptId,
         cdm_database_schema = cdmDatabaseSchema,
         cohort_database_schema = cohortDatabaseSchema,
-        domain_table = rowData$domainTable,
         domain_start_date = rowData$domainStartDate,
         cohortIds = cohortIds,
         cohort_table = cohortTable,
-        progressBar = FALSE,
-        reportOverallTime = FALSE
+        rangeMin = rangeMin,
+        rangeMax = rangeMax,
+        minCellCount = minCellCount,
+        domain_table_short = rowData$domainTableShort,
+        domain_field_short = rowData$domainSourceConceptIdShort,
+        reportOverallTime = FALSE, 
+        progressBar = FALSE
       )
     }
   }
-  
   sql <- "INSERT INTO @concept_id_table (concept_id)
-                  SELECT DISTINCT co_concept_id
-                  FROM #concept_cooccurrence;"
+                  SELECT DISTINCT concept_id
+                  FROM #indx_breakdown;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
@@ -1290,13 +1167,46 @@ getConceptCooccurrence <- function(connection,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  conceptCooccurrence <-
-    DatabaseConnector::renderTranslateQuerySql(
-      connection = connection,
-      sql = "select * from #concept_cooccurrence;",
-      snakeCaseToCamelCase = TRUE
-    ) %>%
+  
+  data <-
+    DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                               sql = "SELECT DISTINCT * FROM #indx_breakdown;",
+                                               snakeCaseToCamelCase = TRUE) %>%
+    dplyr::distinct() %>%
     dplyr::tibble()
+  browser()
+  data <- dplyr::bind_rows(
+    data,
+    data %>%
+      dplyr::filter(.data$domainTable %in% c(nonEraTables)) %>%
+      dplyr::group_by(.data$cohortId,
+                      .data$conceptId,
+                      .data$daysRelativeIndex) %>%
+      dplyr::summarise(
+        conceptCount = sum(.data$conceptCount),
+        subjectCount = max(.data$subjectCount),
+        .groups = "keep"
+      ) %>%
+      dplyr::mutate(domainField = "All",
+                    domainTable = "All"),
+    data %>%
+      dplyr::filter(.data$domainTable %in% c(nonEraTables)) %>%
+      dplyr::group_by(
+        .data$cohortId,
+        .data$conceptId,
+        .data$daysRelativeIndex,
+        .data$domainTable
+      ) %>%
+      dplyr::summarise(
+        conceptCount = sum(.data$conceptCount),
+        subjectCount = max(.data$subjectCount),
+        .groups = "keep"
+      ) %>%
+      dplyr::mutate(domainField = "All")
+  ) %>%
+    dplyr::distinct()
+  
+  
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sqlDdlDrop,
@@ -1304,9 +1214,8 @@ getConceptCooccurrence <- function(connection,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  return(conceptCooccurrence)
+  return(data)
 }
-
 
 
 # function: getConceptSourceStandardMapping ----
@@ -1342,7 +1251,7 @@ getConceptSourceStandardMapping <- function(connection,
           INSERT INTO #concept_mapping
           SELECT @domain_concept_id concept_id,
           	@domain_source_concept_id source_concept_id,
-          	'@domainTable' domain_table,
+          	'@domainTableShort' domain_table,
           	COUNT(*) AS concept_count,
           	COUNT(DISTINCT person_id) AS subject_count
           FROM @cdm_database_schema.@domain_table
@@ -1374,7 +1283,7 @@ getConceptSourceStandardMapping <- function(connection,
       domain_source_concept_id = rowData$domainSourceConceptId,
       cdm_database_schema = cdmDatabaseSchema,
       concept_id_universe = conceptIdUniverse,
-      domainTable = rowData$domainTableShort, 
+      domainTableShort = rowData$domainTableShort, 
       reportOverallTime = FALSE, 
       progressBar = FALSE
     )
