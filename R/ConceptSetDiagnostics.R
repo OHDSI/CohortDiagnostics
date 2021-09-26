@@ -1051,6 +1051,9 @@ getBreakdownIndexEvents <- function(cohortIds,
     dplyr::filter(.data$isEraTable == FALSE) %>%
     dplyr::pull(.data$domainTableShort) %>%
     unique()
+  domains <- domains %>% 
+    dplyr::filter(.data$domainTableShort %in% c(nonEraTables))
+  
   sqlDdlDrop <-
     "IF OBJECT_ID('tempdb..#indx_breakdown', 'U') IS NOT NULL
                 	      DROP TABLE #indx_breakdown;"
@@ -1085,16 +1088,19 @@ getBreakdownIndexEvents <- function(cohortIds,
           	'@domain_table_short' domain_table,
           	'@domain_field_short' domain_field,
           	COUNT(DISTINCT c.subject_id) subject_count,
-          	COUNT(*) record_count
+          	COUNT(*) concept_count
           FROM @cohort_database_schema.@cohort_table c
           INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
           	AND datediff(dd, c.cohort_start_date, d1.@domain_start_date) > @rangeMin
           	AND datediff(dd, c.cohort_start_date, d1.@domain_start_date) < @rangeMax
           WHERE c.cohort_definition_id IN (@cohortIds)
+            AND d1.@domain_concept_id != 0
+            AND d1.@domain_concept_id IS NOT NULL
           GROUP BY cohort_definition_id,
           	datediff(dd, c.cohort_start_date, d1.@domain_start_date),
           	d1.@domain_concept_id
-          HAVING COUNT(DISTINCT c.subject_id) > @minCellCount;"
+          HAVING COUNT(DISTINCT c.subject_id) > @minCellCount
+  ;"
   
   for (i in (1:nrow(domains))) {
     rowData <- domains[i, ]
@@ -1170,40 +1176,47 @@ getBreakdownIndexEvents <- function(cohortIds,
   
   data <-
     DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                               sql = "SELECT DISTINCT * FROM #indx_breakdown;",
+                                               sql = "SELECT DISTINCT cohort_id,
+                                                        days_relative_index,
+                                                        concept_id,
+                                                        max(subject_count) subject_count,
+                                                        sum(concept_count) concept_count
+                                                      FROM #indx_breakdown
+                                                      group by cohort_id,
+                                                        days_relative_index,
+                                                        concept_id;",
                                                snakeCaseToCamelCase = TRUE) %>%
-    dplyr::distinct() %>%
     dplyr::tibble()
-  data <- dplyr::bind_rows(
-    data,
-    data %>%
-      dplyr::filter(.data$domainTable %in% c(nonEraTables)) %>%
-      dplyr::group_by(.data$cohortId,
-                      .data$conceptId,
-                      .data$daysRelativeIndex) %>%
-      dplyr::summarise(
-        conceptCount = sum(.data$conceptCount),
-        subjectCount = max(.data$subjectCount),
-        .groups = "keep"
-      ) %>%
-      dplyr::mutate(domainField = "All",
-                    domainTable = "All"),
-    data %>%
-      dplyr::filter(.data$domainTable %in% c(nonEraTables)) %>%
-      dplyr::group_by(
-        .data$cohortId,
-        .data$conceptId,
-        .data$daysRelativeIndex,
-        .data$domainTable
-      ) %>%
-      dplyr::summarise(
-        conceptCount = sum(.data$conceptCount),
-        subjectCount = max(.data$subjectCount),
-        .groups = "keep"
-      ) %>%
-      dplyr::mutate(domainField = "All")
-  ) %>%
-    dplyr::distinct()
+  # data <- dplyr::bind_rows(
+  #   data,
+  #   data %>%
+  #     dplyr::filter(.data$domainTable %in% c(nonEraTables)) %>%
+  #     dplyr::group_by(.data$cohortId,
+  #                     .data$conceptId,
+  #                     .data$daysRelativeIndex) %>%
+  #     dplyr::summarise(
+  #       conceptCount = sum(.data$conceptCount),
+  #       subjectCount = max(.data$subjectCount),
+  #       .groups = "keep"
+  #     ) %>%
+  #     dplyr::mutate(domainField = "All",
+  #                   domainTable = "All"),
+  #   data %>%
+  #     dplyr::filter(.data$domainTable %in% c(nonEraTables)) %>%
+  #     dplyr::group_by(
+  #       .data$cohortId,
+  #       .data$conceptId,
+  #       .data$daysRelativeIndex,
+  #       .data$domainTable
+  #     ) %>%
+  #     dplyr::summarise(
+  #       conceptCount = sum(.data$conceptCount),
+  #       subjectCount = max(.data$subjectCount),
+  #       .groups = "keep"
+  #     ) %>%
+  #     dplyr::mutate(domainField = "All")
+  # ) %>%
+  #   dplyr::distinct()
   
   
   DatabaseConnector::renderTranslateExecuteSql(
