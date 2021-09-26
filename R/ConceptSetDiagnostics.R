@@ -1174,7 +1174,6 @@ getBreakdownIndexEvents <- function(cohortIds,
                                                snakeCaseToCamelCase = TRUE) %>%
     dplyr::distinct() %>%
     dplyr::tibble()
-  browser()
   data <- dplyr::bind_rows(
     data,
     data %>%
