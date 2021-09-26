@@ -806,7 +806,6 @@ getConceptRecordCount <- function(connection,
                                   cdmDatabaseSchema,
                                   tempEmulationSchema,
                                   conceptIdUniverse = "#concept_tracking") {
-  ParallelLogger::logTrace(" - Counting concepts by person id, calendar month and year")
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide
   sql1 <- "SELECT @domain_concept_id concept_id,
@@ -861,6 +860,7 @@ getConceptRecordCount <- function(connection,
       ".",
       rowData$domainConceptId
     ))
+    ParallelLogger::logTrace("    - Counting concepts by calendar month and year")
     data1 <- renderTranslateQuerySql(
       connection = connection,
       sql = sql1,
@@ -873,6 +873,7 @@ getConceptRecordCount <- function(connection,
       snakeCaseToCamelCase = TRUE
     )
     if (!rowData$isEraTable) {
+      ParallelLogger::logTrace("    - Counting concepts by calendar year")
       data2 <- renderTranslateQuerySql(
         connection = connection,
         sql = sql2,
@@ -884,6 +885,7 @@ getConceptRecordCount <- function(connection,
         concept_id_universe = conceptIdUniverse,
         snakeCaseToCamelCase = TRUE
       )
+      ParallelLogger::logTrace("    - Counting concepts without calendar period")
       data3 <- renderTranslateQuerySql(
         connection = connection,
         sql = sql3,
@@ -918,6 +920,7 @@ getConceptRecordCount <- function(connection,
         ".",
         rowData$domainSourceConceptId
       ))
+      ParallelLogger::logTrace("    - Counting concepts by calendar month and year")
       nsData1 <- renderTranslateQuerySql(
         connection = connection,
         sql = sql1,
@@ -937,6 +940,7 @@ getConceptRecordCount <- function(connection,
           by = 'conceptId'
         )
       if (!rowData$isEraTable) {
+        ParallelLogger::logTrace("    - Counting concepts by calendar year")
         nsData2 <- renderTranslateQuerySql(
           connection = connection,
           sql = sql2,
@@ -955,6 +959,7 @@ getConceptRecordCount <- function(connection,
               dplyr::distinct(),
             by = 'conceptId'
           )
+        ParallelLogger::logTrace("    - Counting concepts without calendar period")
         nsData3 <- renderTranslateQuerySql(
           connection = connection,
           sql = sql3,
