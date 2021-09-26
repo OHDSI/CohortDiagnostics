@@ -1083,7 +1083,7 @@ getBreakdownIndexEvents <- function(cohortIds,
   )
   sql <- "INSERT INTO #indx_breakdown
           SELECT cohort_definition_id cohort_id,
-          	datediff(dd, c.cohort_start_date, d1.@domain_start_date) days_relative_index,
+          	datediff(dd, d1.@domain_start_date, c.cohort_start_date) days_relative_index,
           	d1.@domain_concept_id concept_id,
           	'@domain_table_short' domain_table,
           	'@domain_field_short' domain_field,
@@ -1091,13 +1091,13 @@ getBreakdownIndexEvents <- function(cohortIds,
           	COUNT(*) concept_count
           FROM @cohort_database_schema.@cohort_table c
           INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
-          	AND datediff(dd, c.cohort_start_date, d1.@domain_start_date) > @rangeMin
-          	AND datediff(dd, c.cohort_start_date, d1.@domain_start_date) < @rangeMax
+          	AND datediff(dd, d1.@domain_start_date, c.cohort_start_date) > @rangeMin
+          	AND datediff(dd, d1.@domain_start_date, c.cohort_start_date) < @rangeMax
           WHERE c.cohort_definition_id IN (@cohortIds)
             AND d1.@domain_concept_id != 0
             AND d1.@domain_concept_id IS NOT NULL
           GROUP BY cohort_definition_id,
-          	datediff(dd, c.cohort_start_date, d1.@domain_start_date),
+          	datediff(dd, d1.@domain_start_date, c.cohort_start_date),
           	d1.@domain_concept_id
           HAVING COUNT(DISTINCT c.subject_id) > @minCellCount -- there is probably no value in vary rare code
   ;"
