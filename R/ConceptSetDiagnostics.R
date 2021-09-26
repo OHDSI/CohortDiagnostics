@@ -820,6 +820,7 @@ getConceptRecordCount <- function(connection,
           	) c
           	ON @domain_concept_id = concept_id
           WHERE YEAR(@domain_start_date) > 0
+          AND @domain_concept_id > 0
           GROUP BY @domain_concept_id,
           	YEAR(@domain_start_date),
           	MONTH(@domain_start_date);"
@@ -835,6 +836,7 @@ getConceptRecordCount <- function(connection,
           	) c
           	ON @domain_concept_id = concept_id
           WHERE YEAR(@domain_start_date) > 0
+          AND @domain_concept_id > 0
           GROUP BY @domain_concept_id,
           	YEAR(@domain_start_date);"
   sql3 <- "SELECT @domain_concept_id concept_id,
@@ -849,6 +851,7 @@ getConceptRecordCount <- function(connection,
           	) c
           	ON @domain_concept_id = concept_id
           WHERE YEAR(@domain_start_date) > 0
+          AND @domain_concept_id > 0
           GROUP BY @domain_concept_id;"
   
   standardConcepts <- list()
