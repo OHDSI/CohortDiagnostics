@@ -157,7 +157,6 @@ sidebarMenu <-
     },
     shiny::conditionalPanel(
       condition = "input.tabs != 'databaseInformation' &
-      input.tabs != 'cohortDefinition' &
       input.tabs != 'timeSeries' &
       input.tabs != 'cohortCounts' &
       input.tabs != 'cohortOverlap'&
@@ -224,16 +223,17 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs == 'compareCohortCharacterization'|
-        input.tabs == 'compareTemporalCharacterization'",
+      condition = "input.tabs == 'compareCohortCharacterization' |
+        input.tabs == 'compareTemporalCharacterization' |
+        input.tabs == 'cohortDefinition'",
       shinyWidgets::pickerInput(
         inputId = "selectedComparatorCompoundCohortName",
         label = "Comparator",
         choices = c(""),
-        multiple = FALSE,
+        multiple = TRUE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
+          maxOptions = 1,
           liveSearch = TRUE,
           liveSearchStyle = "contains",
           size = 10,

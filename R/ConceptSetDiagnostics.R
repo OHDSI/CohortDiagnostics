@@ -34,8 +34,6 @@
 #' @param    cohorts                 A dataframe object with required fields cohortId, sql, json, cohortName
 #'
 #' @template CohortTable
-#' 
-#' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #'
 #' @param keepCustomConceptId         (Optional) Default FALSE. Do you want to keep concept id above 2 billion.
 #'                                    Per OMOP conventions any conceptId >= 2 billion are considered site specific
@@ -53,7 +51,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      cohortIds = NULL,
                                      cohortDatabaseSchema = NULL,
                                      keepCustomConceptId = FALSE,
-                                     minCellCount = 5,
                                      cohortTable = NULL) {
   ParallelLogger::logTrace(" - Running concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
@@ -124,7 +121,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   ParallelLogger::logTrace(
     paste0(
       " - Note: There are ",
-      scales::comma(length(uniqueConceptSets)),
+      scales::comma(nrow(uniqueConceptSets)),
       " unique concept set ids in ",
       scales::comma(
         conceptSetDiagnosticsResults$conceptSets %>% dplyr::summarise(n = dplyr::n()) %>% dplyr::pull(.data$n)
@@ -233,7 +230,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
       tempEmulationSchema = tempEmulationSchema,
-      minCellCount = minCellCount,
       conceptIdUniverse = "#concept_tracking"
     )
   if (!keepCustomConceptId) {
@@ -701,7 +697,8 @@ resolveConceptSets <- function(uniqueConceptSets,
       connection = connection,
       sql =  "INSERT INTO @concept_tracking_table
             SELECT DISTINCT concept_id
-            FROM @concept_sets_table;",
+            FROM @concept_sets_table
+            WHERE concept_id != 0;",
       tempEmulationSchema = tempEmulationSchema,
       concept_tracking_table = conceptTrackingTable,
       concept_sets_table = conceptSetsTable,
@@ -1043,7 +1040,6 @@ getBreakdownIndexEvents <- function(cohortIds,
                                     tempEmulationSchema,
                                     rangeMin = -40,
                                     rangeMax = 40,
-                                    minCellCount = 5,
                                     conceptIdUniverse = "#concept_tracking") {
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide
@@ -1082,25 +1078,40 @@ getBreakdownIndexEvents <- function(cohortIds,
     reportOverallTime = FALSE
   )
   sql <- "INSERT INTO #indx_breakdown
-          SELECT cohort_definition_id cohort_id,
-          	datediff(dd, d1.@domain_start_date, c.cohort_start_date) days_relative_index,
-          	d1.@domain_concept_id concept_id,
+          SELECT cohort_id,
+          	days_relative_index,
+          	f.concept_id,
+          	domain_table,
+          	domain_field,
+          	subject_count,
+          	concept_count
+          FROM (
+          	SELECT cohort_definition_id cohort_id,
+          		datediff(dd, d1.@domain_start_date, c.cohort_start_date) days_relative_index,
+          		d1.@domain_concept_id concept_id,
           	'@domain_table_short' domain_table,
           	'@domain_field_short' domain_field,
-          	COUNT(DISTINCT c.subject_id) subject_count,
-          	COUNT(*) concept_count
-          FROM @cohort_database_schema.@cohort_table c
-          INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
-          	AND datediff(dd, d1.@domain_start_date, c.cohort_start_date) > @rangeMin
-          	AND datediff(dd, d1.@domain_start_date, c.cohort_start_date) < @rangeMax
-          WHERE c.cohort_definition_id IN (@cohortIds)
-            AND d1.@domain_concept_id != 0
-            AND d1.@domain_concept_id IS NOT NULL
-          GROUP BY cohort_definition_id,
-          	datediff(dd, d1.@domain_start_date, c.cohort_start_date),
-          	d1.@domain_concept_id
-          HAVING COUNT(DISTINCT c.subject_id) > @minCellCount -- there is probably no value in vary rare code
-  ;"
+          		COUNT(DISTINCT c.subject_id) subject_count,
+          		COUNT(*) concept_count
+          	FROM @cohort_database_schema.@cohort_table c
+          	INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
+          		AND datediff(dd, d1.@domain_start_date, c.cohort_start_date) > @rangeMin
+          		AND datediff(dd, d1.@domain_start_date, c.cohort_start_date) < @rangeMax
+          	WHERE c.cohort_definition_id IN (@cohortIds)
+          		AND d1.@domain_concept_id != 0
+          		AND d1.@domain_concept_id IS NOT NULL
+          	GROUP BY cohort_definition_id,
+          		datediff(dd, d1.@domain_start_date, c.cohort_start_date),
+          		d1.@domain_concept_id
+          	) f
+          LEFT JOIN (
+          	SELECT DISTINCT concept_id
+          	FROM @conceptIdUniverse
+          	) cu ON f.concept_id = cu.concept_id
+          WHERE subject_count > 100
+          	OR cu.concept_id IS NOT NULL;;"
+  #-- there is probably no value in vary rare code, especially if it is not part of conceptIdUniverse
+  #-- note concept_id that are part of the conceptIdUniverse are not filtered out if count < 100
   
   for (i in (1:nrow(domains))) {
     rowData <- domains[i, ]
@@ -1123,9 +1134,9 @@ getBreakdownIndexEvents <- function(cohortIds,
       cohort_table = cohortTable,
       rangeMin = rangeMin,
       rangeMax = rangeMax,
-      minCellCount = minCellCount,
       domain_table_short = rowData$domainTableShort,
       domain_field_short = rowData$domainConceptIdShort,
+      conceptIdUniverse = conceptIdUniverse,
       reportOverallTime = FALSE, 
       progressBar = FALSE
     )
@@ -1154,9 +1165,9 @@ getBreakdownIndexEvents <- function(cohortIds,
         cohort_table = cohortTable,
         rangeMin = rangeMin,
         rangeMax = rangeMax,
-        minCellCount = minCellCount,
         domain_table_short = rowData$domainTableShort,
         domain_field_short = rowData$domainSourceConceptIdShort,
+        conceptIdUniverse = conceptIdUniverse,
         reportOverallTime = FALSE, 
         progressBar = FALSE
       )
@@ -1418,12 +1429,14 @@ getExcludedConceptSets <- function(connection,
             SELECT DISTINCT concept_id
             FROM @vocabulary_database_schema.concept
             WHERE concept_id IN (@noDescendants)
+            and concept_id != 0
 
             UNION
 
             SELECT DISTINCT descendant_concept_id concept_id
             FROM @vocabulary_database_schema.concept_ancestor
             WHERE ancestor_concept_id IN (@descendants)
+            and ancestor_concept_id != 0
     ;"
     if (length(conceptIdsWithOutDescendantsInExclude) == 0) {
       noDescendants <- -1
