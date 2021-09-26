@@ -938,7 +938,7 @@ getConceptRecordCount <- function(connection,
         concept_id_universe = conceptIdUniverse,
         snakeCaseToCamelCase = TRUE
       )
-      ParallelLogger::logTrace("     - Remvoing concepts found in standard field")
+      ParallelLogger::logTrace("     - Removing concepts found in standard field")
       nsData1 <- nsData1 %>% 
         # conceptIds - only keep concept id that were never found in standard fields
         dplyr::anti_join(
@@ -958,7 +958,7 @@ getConceptRecordCount <- function(connection,
           concept_id_universe = conceptIdUniverse,
           snakeCaseToCamelCase = TRUE
         )
-        ParallelLogger::logTrace("     - Remvoing concepts found in standard field")
+        ParallelLogger::logTrace("     - Removing concepts found in standard field")
         nsData2 <- nsData2 %>% 
           # conceptIds - only keep concept id that were never found in standard fields
           dplyr::anti_join(
@@ -977,7 +977,7 @@ getConceptRecordCount <- function(connection,
           concept_id_universe = conceptIdUniverse,
           snakeCaseToCamelCase = TRUE
         ) 
-        ParallelLogger::logTrace("     - Remvoing concepts found in standard field")
+        ParallelLogger::logTrace("     - Removing concepts found in standard field")
         nsData3 <- nsData3 %>%
           # conceptIds - only keep concept id that were never found in standard fields
           dplyr::anti_join(
