@@ -1245,6 +1245,7 @@ getBreakdownIndexEvents <- function(cohortIds,
         domain_table_short = rowData$domainTableShort,
         domain_field_short = rowData$domainSourceConceptIdShort,
         conceptIdUniverse = conceptIdUniverse,
+        minCount = minCount,
         reportOverallTime = FALSE, 
         progressBar = FALSE
       )
