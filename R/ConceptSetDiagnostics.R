@@ -124,7 +124,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   ParallelLogger::logTrace(
     paste0(
       " - Note: There are ",
-      scales::comma(length(uniqueConceptSets)),
+      scales::comma(nrow(uniqueConceptSets)),
       " unique concept set ids in ",
       scales::comma(
         conceptSetDiagnosticsResults$conceptSets %>% dplyr::summarise(n = dplyr::n()) %>% dplyr::pull(.data$n)
