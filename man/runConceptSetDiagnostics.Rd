@@ -14,7 +14,6 @@ runConceptSetDiagnostics(
   cohortIds = NULL,
   cohortDatabaseSchema = NULL,
   keepCustomConceptId = FALSE,
-  minCellCount = 5,
   cohortTable = NULL
 )
 }
@@ -54,8 +53,6 @@ this should include both the database and schema name, for example
 \item{keepCustomConceptId}{(Optional) Default FALSE. Do you want to keep concept id above 2 billion.
 Per OMOP conventions any conceptId >= 2 billion are considered site specific
 custom value that are not shipped as part of default OMOP vocabulary tables.}
-
-\item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
 
 \item{cohortTable}{Name of the cohort table.}
 }
