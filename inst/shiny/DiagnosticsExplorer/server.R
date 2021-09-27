@@ -5726,8 +5726,8 @@ shiny::shinyServer(function(input, output, session) {
   
   #______________----
   # Cohort Overlap ------
-  ##getCohortOverlapData----
-  getCohortOverlapData <- reactive({
+  ##cohortOverlapData----
+  cohortOverlapData <- reactive({
     if (any(
       length(consolidatedDatabaseIdTarget()) == 0,
       length(consolidatedCohortIdTarget()) == 0
@@ -5735,30 +5735,19 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     if (all(is(dataSource, "environment"),
-            !exists('cohortRelationships')))
-    {
+            !exists('cohortRelationships'))) {
       return(NULL)
     }
-    #!!!!! change ui drop down
     data <- getResultsCohortOverlap(dataSource = dataSource,
                                     targetCohortIds = consolidatedCohortIdTarget(),
+                                    databaseIds = consolidatedDatabaseIdTarget(),
                                     comparatorCohortIds = getComparatorCohortIdFromSelectedCompoundCohortNames())
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     return(data)
   })
-  
-  ##getCohortOverlapDataFiltered----
-  getCohortOverlapDataFiltered <- reactive(x = {
-    data <- getCohortOverlapData()
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    data <- data %>%
-      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget())
-    return(data)
-  })
+
   
   ##output: overlapPlot----
   output$overlapPlot <- plotly::renderPlotly(expr = {
@@ -5771,7 +5760,7 @@ shiny::shinyServer(function(input, output, session) {
     progress$set(message = paste0("Plotting cohort overlap."),
                  value = 0)
     
-    data <- getCohortOverlapDataFiltered()
+    data <- cohortOverlapData()
     validate(need(
       !is.null(data),
       paste0("No cohort overlap data for this combination")
@@ -5789,15 +5778,14 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
+  
   ##output: saveCohortOverlapTable----
   output$saveCohortOverlapTable <-  downloadHandler(
-    filename = function()
-    {
+    filename = function() {
       getCsvFileNameWithDateTime(string = "cohortOverlap")
     },
-    content = function(file)
-    {
-      downloadCsv(x = getCohortOverlapDataFiltered(),
+    content = function(file) {
+      downloadCsv(x = cohortOverlapData(),
                   fileName = file)
     }
   )

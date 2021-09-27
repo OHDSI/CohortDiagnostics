@@ -1966,7 +1966,6 @@ getResultsCohortOverlap <- function(dataSource,
                                     targetCohortIds = NULL,
                                     comparatorCohortIds = NULL,
                                     databaseIds = NULL) {
-  browser()
   cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique()
   cohortCounts <-
     getResultsCohortCount(dataSource = dataSource,
@@ -2019,74 +2018,49 @@ getResultsCohortOverlap <- function(dataSource,
     ) %>%
     dplyr::mutate(cOnlySubjects = .data$comparatorCohortSubjects - .data$subjects) %>%
     dplyr::mutate(eitherSubjects = .data$cOnlySubjects + .data$tOnlySubjects + .data$subjects) %>%
-    dplyr::rename(targetCohortId = .data$cohortId) %>%
+    dplyr::rename(targetCohortId = .data$cohortId,
+                  bothSubjects = .data$subjects) %>%
     dplyr::select(
       .data$databaseId,
       .data$targetCohortId,
       .data$comparatorCohortId,
-      .data$subjects,
+      .data$bothSubjects,
       .data$tOnlySubjects,
       .data$cOnlySubjects,
       .data$eitherSubjects
-    ) %>% 
-    dplyr::mutate(bothSubjects = .data$subjects)
-  
-  
-  beforeOffset <- cohortRelationship %>%
-    dplyr::filter(.data$comparatorCohortId %in% cohortIds) %>%
-    dplyr::filter(.data$startDay == -99999) %>%
-    dplyr::filter(.data$endDay == -1) %>%
-    dplyr::select(
-      .data$databaseId,
-      .data$cohortId,
-      .data$comparatorCohortId,
-      .data$tBeforeCSubjects
     )
-  beforeOffset <- beforeOffset %>%
-    dplyr::inner_join(
-      beforeOffset %>%
-        dplyr::rename(
-          comparatorCohortId = .data$cohortId,
-          cohortId = .data$comparatorCohortId,
-          cBeforeTSubjects = .data$tBeforeCSubjects
-        ),
-      by = c('databaseId', 'cohortId', 'comparatorCohortId')
-    ) %>%
-    dplyr::rename(targetCohortId = .data$cohortId) %>% 
-    dplyr::filter(.data$targetCohortId %in% targetCohortIds) %>%
-    dplyr::filter(.data$comparatorCohortId %in% comparatorCohortIds)
   
   noOffset <- cohortRelationship %>%
-    dplyr::filter(.data$comparatorCohortId %in% cohortIds) %>%
+    dplyr::filter(.data$comparatorCohortId %in% comparatorCohortIds) %>%
+    dplyr::filter(.data$cohortId %in% targetCohortIds) %>%
     dplyr::filter(.data$startDay == 0) %>%
     dplyr::filter(.data$endDay == 0) %>%
     dplyr::select(
       .data$databaseId,
       .data$cohortId,
       .data$comparatorCohortId,
-      .data$sameDaySubjects,
-      .data$cInTSubjects
-    )
-  noOffset <- noOffset %>%
-    dplyr::inner_join(
-      noOffset %>%
-        dplyr::rename(
-          comparatorCohortId = .data$cohortId,
-          cohortId = .data$comparatorCohortId,
-          tInCSubjects = .data$cInTSubjects
-        ) %>%
-        dplyr::select(-.data$sameDaySubjects),
-      by = c('databaseId', 'cohortId', 'comparatorCohortId')
-    ) %>%
-    dplyr::rename(targetCohortId = .data$cohortId) %>% 
-    dplyr::filter(.data$targetCohortId %in% targetCohortIds) %>%
-    dplyr::filter(.data$comparatorCohortId %in% comparatorCohortIds)
+      .data$subCsBeforeTs,
+      .data$subCWithinT,
+      .data$subCsAfterTs,
+      .data$subCsAfterTe,
+      .data$subCsBeforeTs,
+      .data$subCsBeforeTe,
+      .data$subCsOnTs,
+      .data$subCsOnTe
+    ) %>% 
+    dplyr::rename(cBeforeTSubjects = .data$subCsBeforeTs,
+                  targetCohortId = .data$cohortId,
+                  cInTSubjects = .data$subCWithinT,
+                  cStartAfterTStart = .data$subCsAfterTs,
+                  cStartAfterTEnd = .data$subCsAfterTe,
+                  cStartBeforeTStart = .data$subCsBeforeTs,
+                  cStartBeforeTEnd = .data$subCsBeforeTe,
+                  cStartOnTStart = .data$subCsOnTs,
+                  cStartOnTEnd = .data$subCsOnTe)
   
   result <- fullOffSet %>%
-    dplyr::left_join(beforeOffset,
-                     by = c('databaseId', 'targetCohortId', 'comparatorCohortId')) %>%
     dplyr::left_join(noOffset,
-                     by = c('databaseId', 'targetCohortId', 'comparatorCohortId')) %>% 
+                     by = c('databaseId', 'targetCohortId', 'comparatorCohortId')) %>%
     dplyr::filter(.data$targetCohortId != .data$comparatorCohortId)
   
   return(result)
