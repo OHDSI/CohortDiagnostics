@@ -1281,7 +1281,6 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
-    
     data <- getResultsResolvedConcepts(
       dataSource = dataSource,
       cohortId = consolidatedCohortIdTarget(),
@@ -2439,6 +2438,7 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No resolved concept ids"))
+      browser()
       databaseCount <- cohortCount %>% 
         dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
         dplyr::rename("records" = .data$cohortEntries,
@@ -4730,123 +4730,32 @@ shiny::shinyServer(function(input, output, session) {
   # Index event breakdown ------
   ##getIndexEventBreakdownData----
   getIndexEventBreakdownData <- shiny::reactive(x = {
-    if (any(is.null(input$tabs),!input$tabs == "indexEventBreakdown")) {
-      return(NULL)
-    }
-    if (any(length(consolidatedCohortIdTarget()) == 0)) {
+    if (any(is.null(input$tabs),
+            !input$tabs == "indexEventBreakdown",
+            length(consolidatedCohortIdTarget()) == 0,
+            !doesObjectHaveData(consolidatedDatabaseIdTarget()),
+            !doesObjectHaveData(getResolvedConceptsTarget()))) {
       return(NULL)
     }
     if (all(is(dataSource, "environment"),
             !exists('indexEventBreakdown'))) {
       return(NULL)
     }
-    data <-
+    indexEventBreakdown <-
       getResultsIndexEventBreakdown(dataSource = dataSource,
-                                    cohortId = consolidatedCohortIdTarget())
-    return(data)
-  })
-  
-  ##pickerInput: domainTableOptionsInIndexEventData----
-  shiny::observe({
-    if (!doesObjectHaveData(getIndexEventBreakdownData())) {
+                                    cohortId = consolidatedCohortIdTarget(),
+                                    databaseIds = consolidatedDatabaseIdTarget())
+    if (is.null(indexEventBreakdown)) {
       return(NULL)
     }
-    data <- getIndexEventBreakdownData() %>%
-      dplyr::rename("domainTableShort" = .data$domainTable) %>%
-      dplyr::inner_join(
-        getDomainInformation()$long %>%
-          dplyr::select(
-            .data$domainTableShort,
-            .data$domainTable,
-            .data$eraTable
-          ),
-        by = "domainTableShort"
-      ) %>%
-      dplyr::arrange(.data$domainTable,
-                     .data$domainField)
     
-    choices <- data %>%
-      dplyr::select(.data$domainTable) %>%
-      dplyr::distinct() %>%
-      dplyr::pull() %>%
-      snakeCaseToCamelCase() %>%
-      camelCaseToTitleCase()
-    
-    choicesSelected <- data %>%
-      dplyr::filter(.data$eraTable == FALSE) %>%
-      dplyr::select(.data$domainTable) %>%
-      dplyr::distinct() %>%
-      dplyr::pull() %>%
-      snakeCaseToCamelCase() %>%
-      camelCaseToTitleCase()
-    
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "domainTableOptionsInIndexEventData",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = choices,
-      selected = choicesSelected
-    )
-  })
-  
-  ##pickerInput: domainFieldOptionsInIndexEventData----
-  shiny::observe({
-    if (!doesObjectHaveData(getIndexEventBreakdownData())) {
-      return(NULL)
-    }
-    data <- getIndexEventBreakdownData() %>%
-      dplyr::rename("domainFieldShort" = .data$domainField) %>%
-      dplyr::inner_join(
-        getDomainInformation()$long %>%
-          dplyr::select(
-            .data$domainFieldShort,
-            .data$domainField,
-            .data$eraTable
-          ),
-        by = "domainFieldShort"
-      )
-    
-    choices <- data %>%
-      dplyr::select(.data$domainField) %>%
-      dplyr::distinct() %>%
-      dplyr::pull() %>%
-      snakeCaseToCamelCase() %>%
-      camelCaseToTitleCase()
-    
-    choicesSelected <- data %>%
-      dplyr::filter(.data$eraTable == FALSE) %>%
-      dplyr::select(.data$domainField) %>%
-      dplyr::distinct() %>%
-      dplyr::pull() %>%
-      snakeCaseToCamelCase() %>%
-      camelCaseToTitleCase()
-    
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "domainFieldOptionsInIndexEventData",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = choices,
-      selected = choicesSelected
-    )
-  })
-  
-  ##getIndexEventBreakdownDataEnhanced----
-  getIndexEventBreakdownDataEnhanced <- shiny::reactive(x = {
-    indexEventBreakdown <- getIndexEventBreakdownData()
-    if (!doesObjectHaveData(indexEventBreakdown)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(cohortCount)) {
-      return(NULL)
-    }
     conceptIdDetails <- getConcept(dataSource = dataSource,
                                    conceptId = indexEventBreakdown$conceptId %>%
                                      unique())
     if (is.null(conceptIdDetails)) {
       return(NULL)
     }
-    #!!! future idea for index event breakdown - metric on conceptProportion
-    # what proportion of concepts in dataSource is in index event
+    
     indexEventBreakdown <- indexEventBreakdown %>%
       dplyr::inner_join(
         conceptIdDetails %>%
@@ -4865,40 +4774,6 @@ shiny::shinyServer(function(input, output, session) {
         subjectPercent = .data$subjectCount / .data$cohortSubjects,
         conceptPercent = .data$conceptCount / .data$cohortEntries
       ) %>%
-      dplyr::rename(
-        domainFieldShort = .data$domainField,
-        domainTableShort = .data$domainTable
-      ) %>%
-      dplyr::inner_join(getDomainInformation()$long,
-                        by = c('domainTableShort',
-                               'domainFieldShort')) %>%
-      dplyr::select(-.data$domainTableShort, -.data$domainFieldShort)
-    return(indexEventBreakdown)
-  })
-  
-  ##getIndexEventBreakdownDataFiltered----
-  getIndexEventBreakdownDataFiltered <- shiny::reactive(x = {
-    indexEventBreakdown <- getIndexEventBreakdownDataEnhanced()
-    if (!doesObjectHaveData(indexEventBreakdown)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(input$domainTableOptionsInIndexEventData)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(input$domainFieldOptionsInIndexEventData)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(consolidatedConceptSetIdTarget())) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(getResolvedConceptsTarget())) {
-      return(NULL)
-    }
-    indexEventBreakdown <- indexEventBreakdown %>%
-      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
       dplyr::inner_join(
         getResolvedConceptsTarget() %>%
           dplyr::select(.data$conceptId,
@@ -4907,40 +4782,72 @@ shiny::shinyServer(function(input, output, session) {
         by = c("conceptId", "databaseId")
       )
     
-    domainTableSelected <- getDomainInformation()$long %>%
-      dplyr::filter(
-        .data$domainTable %in% c(
-          input$domainTableOptionsInIndexEventData %>%
-            titleCaseToCamelCase() %>%
-            camelCaseToSnakeCase()
-        )
-      ) %>%
-      dplyr::pull(.data$domainTable) %>%
-      unique() %>%
-      sort()
-    if (!doesObjectHaveData(domainTableSelected)) {
+    return(indexEventBreakdown)
+  })
+  
+  ##pickerInput: domainTableOptionsInIndexEventData----
+  shiny::observe({
+    if (!doesObjectHaveData(getIndexEventBreakdownData())) {
       return(NULL)
     }
+    # data <- getIndexEventBreakdownData() %>%
+    #   dplyr::rename("domainTableShort" = .data$domainTable) %>%
+    #   dplyr::inner_join(
+    #     getDomainInformation()$long %>%
+    #       dplyr::select(
+    #         .data$domainTableShort,
+    #         .data$domainTable,
+    #         .data$eraTable
+    #       ),
+    #     by = "domainTableShort"
+    #   ) %>%
+    #   dplyr::arrange(.data$domainTable,
+    #                  .data$domainField)
     
-    domainFieldSelected <- getDomainInformation()$long %>%
-      dplyr::filter(
-        .data$domainField %in% c(
-          input$domainFieldOptionsInIndexEventData %>%
-            titleCaseToCamelCase() %>%
-            camelCaseToSnakeCase()
-        )
-      ) %>%
-      dplyr::pull(.data$domainField) %>%
-      unique() %>%
-      sort()
-    if (!doesObjectHaveData(domainFieldSelected)) {
+    choices <- "To be removed"
+    
+    choicesSelected <- choices
+    
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "domainTableOptionsInIndexEventData",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = choices,
+      selected = choicesSelected
+    )
+  })
+  
+  ##pickerInput: domainFieldOptionsInIndexEventData----
+  shiny::observe({
+    if (!doesObjectHaveData(getIndexEventBreakdownData())) {
       return(NULL)
     }
+
     
-    indexEventBreakdown <- indexEventBreakdown %>%
-      dplyr::filter(.data$domainTable %in% domainTableSelected) %>%
-      dplyr::filter(.data$domainField %in% domainFieldSelected)
+    choices <- "To be removed"
     
+    choicesSelected <- "To be removed"
+    
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "domainFieldOptionsInIndexEventData",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = choices,
+      selected = choicesSelected
+    )
+  })
+  
+  #getIndexEventBreakdownDataFiltered----
+  getIndexEventBreakdownDataFiltered <- shiny::reactive(x = {
+    indexEventBreakdown <- getIndexEventBreakdownData()
+    if (!doesObjectHaveData(indexEventBreakdown)) {
+      return(NULL)
+    }
+    browser()
+    
+    indexEventBreakdown <- indexEventBreakdown %>% 
+      dplyr::filter(.data$daysRelativeIndex == 0) #!! in new design, we have multiple daysRelativeIndex
+
     if (input$indexEventBreakdownTableRadioButton == 'All') {
       return(indexEventBreakdown)
     } else if (input$indexEventBreakdownTableRadioButton == "Standard concepts") {
@@ -4948,9 +4855,10 @@ shiny::shinyServer(function(input, output, session) {
     } else {
       #!!!! check why indexEventBreakdown is not returning data for non standard concept
       # why are there no non standard concepts in index event breakdown.
-      return(indexEventBreakdown %>% dplyr::filter(is.na(.data$standardConcept)))
+      return(indexEventBreakdown %>% dplyr::filter(is.na(.data$standardConcept) |
+                                                     .data$standardConcept != "S"))
     }
-    return(indexEventBreakdown)
+    return(NULL)
   })
   
   ##getIndexEventBreakdownDataLong----
@@ -5054,12 +4962,10 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: saveBreakdownTable----
   output$saveBreakdownTable <-  downloadHandler(
-    filename = function()
-    {
+    filename = function() {
       getCsvFileNameWithDateTime(string = "indexEventBreakdown")
     },
-    content = function(file)
-    {
+    content = function(file) {
       downloadCsv(x = getIndexEventBreakdownDataWide(),
                   fileName = file)
     }
@@ -5100,6 +5006,7 @@ shiny::shinyServer(function(input, output, session) {
         ),
         value = 0
       )
+      browser()
       data <-
         getIndexEventBreakdownDataTable()
       validate(
@@ -5819,8 +5726,8 @@ shiny::shinyServer(function(input, output, session) {
   
   #______________----
   # Cohort Overlap ------
-  ##getCohortOverlapData----
-  getCohortOverlapData <- reactive({
+  ##cohortOverlapData----
+  cohortOverlapData <- reactive({
     if (any(
       length(consolidatedDatabaseIdTarget()) == 0,
       length(consolidatedCohortIdTarget()) == 0
@@ -5828,30 +5735,19 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     if (all(is(dataSource, "environment"),
-            !exists('cohortRelationships')))
-    {
+            !exists('cohortRelationships'))) {
       return(NULL)
     }
-    #!!!!! change ui drop down
     data <- getResultsCohortOverlap(dataSource = dataSource,
                                     targetCohortIds = consolidatedCohortIdTarget(),
+                                    databaseIds = consolidatedDatabaseIdTarget(),
                                     comparatorCohortIds = getComparatorCohortIdFromSelectedCompoundCohortNames())
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     return(data)
   })
-  
-  ##getCohortOverlapDataFiltered----
-  getCohortOverlapDataFiltered <- reactive(x = {
-    data <- getCohortOverlapData()
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    data <- data %>%
-      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget())
-    return(data)
-  })
+
   
   ##output: overlapPlot----
   output$overlapPlot <- plotly::renderPlotly(expr = {
@@ -5864,7 +5760,7 @@ shiny::shinyServer(function(input, output, session) {
     progress$set(message = paste0("Plotting cohort overlap."),
                  value = 0)
     
-    data <- getCohortOverlapDataFiltered()
+    data <- cohortOverlapData()
     validate(need(
       !is.null(data),
       paste0("No cohort overlap data for this combination")
@@ -5882,15 +5778,14 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
+  
   ##output: saveCohortOverlapTable----
   output$saveCohortOverlapTable <-  downloadHandler(
-    filename = function()
-    {
+    filename = function() {
       getCsvFileNameWithDateTime(string = "cohortOverlap")
     },
-    content = function(file)
-    {
-      downloadCsv(x = getCohortOverlapDataFiltered(),
+    content = function(file) {
+      downloadCsv(x = cohortOverlapData(),
                   fileName = file)
     }
   )
@@ -6058,8 +5953,7 @@ shiny::shinyServer(function(input, output, session) {
   ##Characterization----
   ### getCharacterizationDataFiltered ----
   getCharacterizationDataFiltered <- shiny::reactive(x = {
-    if (input$tabs != "cohortCharacterization")
-    {
+    if (input$tabs != "cohortCharacterization") {
       return(NULL)
     }
     if (any(
@@ -6068,17 +5962,14 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       return(NULL)
     }
-    if (is.null(getMultipleCharacterizationData()$covariateRef))
-    {
+    if (is.null(getMultipleCharacterizationData()$covariateRef)) {
       warning("No covariate reference data found")
       return(NULL)
     }
-    if (is.null(getMultipleCharacterizationData()$covariateValue))
-    {
+    if (is.null(getMultipleCharacterizationData()$covariateValue)) {
       return(NULL)
     }
-    if (is.null(getMultipleCharacterizationData()$analysisRef))
-    {
+    if (is.null(getMultipleCharacterizationData()$analysisRef)) {
       warning("No analysis ref dta found")
       return(NULL)
     }
@@ -6129,21 +6020,18 @@ shiny::shinyServer(function(input, output, session) {
       )
     
     if (any(is.null(characterizationDataValue),
-            nrow(characterizationDataValue) == 0))
-    {
+            nrow(characterizationDataValue) == 0)) {
       return(NULL)
     }
     
     if (all(input$charType == "Raw",
-            input$charProportionOrContinuous == "Proportion"))
-    {
+            input$charProportionOrContinuous == "Proportion")) {
       #!!!! show numbers as percentage in data table
       characterizationDataValue <- characterizationDataValue %>%
         dplyr::filter(.data$isBinary == 'Y')
     } else
       if (all(input$charType == "Raw",
-              input$charProportionOrContinuous == "Continuous"))
-      {
+              input$charProportionOrContinuous == "Continuous")) {
         characterizationDataValue <- characterizationDataValue %>%
           dplyr::filter(.data$isBinary == 'N')
       }
@@ -6153,8 +6041,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getCharacterizationTableData----
   getCharacterizationTableData <- shiny::reactive(x = {
-    if (input$tabs != "cohortCharacterization")
-    {
+    if (input$tabs != "cohortCharacterization") {
       return(NULL)
     }
     data <- getCharacterizationDataFiltered()
@@ -6189,8 +6076,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getCharacterizationTableDataPretty----
   getCharacterizationTableDataPretty <- shiny::reactive(x = {
-    if (input$tabs != "cohortCharacterization")
-    {
+    if (input$tabs != "cohortCharacterization") {
       return(NULL)
     }
     data <- getCharacterizationTableData()
@@ -6271,8 +6157,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getCharacterizationRawData----
   getCharacterizationRawData <- shiny::reactive(x = {
-    if (input$tabs != "cohortCharacterization")
-    {
+    if (input$tabs != "cohortCharacterization") {
       return(NULL)
     }
     data <- getCharacterizationTableData()
@@ -6306,8 +6191,7 @@ shiny::shinyServer(function(input, output, session) {
                     .data$conceptId) %>%
       dplyr::distinct()
     
-    if (input$characterizationColumnFilters == "Mean and Standard Deviation")
-    {
+    if (input$characterizationColumnFilters == "Mean and Standard Deviation") {
       data <- data %>%
         dplyr::arrange(.data$databaseId,
                        .data$cohortId) %>%
@@ -6322,8 +6206,7 @@ shiny::shinyServer(function(input, output, session) {
           values_from = .data$value,
           values_fill = 0
         )
-    } else
-    {
+    } else {
       data <- data %>%
         dplyr::arrange(.data$databaseId, .data$cohortId) %>%
         dplyr::select(-.data$sd) %>%

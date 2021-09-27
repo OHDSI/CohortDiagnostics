@@ -514,7 +514,7 @@ getDatabaseOrCohortCountForConceptIds <- function(data, dataSource, databaseCoun
         data <- data %>%
           dplyr::left_join(
             conceptMetadata$indexEventBreakdown %>%
-              dplyr::filter(.data$domainTable == "All") %>%
+              dplyr::filter(.data$daysRelativeIndex == 0) %>%
               dplyr::select(
                 .data$conceptId,
                 .data$databaseId,

@@ -91,10 +91,14 @@ runCohortRelationshipDiagnostics <-
 	                      DROP TABLE @subset_cohort_table;
 
 	                      --HINT DISTRIBUTE_ON_KEY(subject_id)
-                        SELECT *
-                        INTO @subset_cohort_table
-                        FROM @cohort_database_schema.@cohort_table
-                        WHERE cohort_definition_id IN (@cohort_ids);"
+                        SELECT cohort_definition_id, 
+  	                              subject_id,
+  	                              min(cohort_start_date) cohort_start_date,
+  	                              min(cohort_end_date) cohort_end_date
+                          FROM @cohort_database_schema.@cohort_table
+                          WHERE cohort_definition_id IN (@cohort_ids)
+                          GROUP BY cohort_definition_id,
+                                    subject_id;"
     
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,

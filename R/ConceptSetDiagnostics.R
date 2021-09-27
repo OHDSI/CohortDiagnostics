@@ -381,12 +381,21 @@ runConceptSetDiagnostics <- function(connection = NULL,
       camelCaseToTitleCase(vocabularyTables3[[i]])
     ), "'")
     sql <-
-      "SELECT DISTINCT a.* FROM @vocabulary_database_schema.@table a
-            LEFT JOIN (SELECT distinct concept_id FROM @unique_concept_id_table) b1
-              ON a.concept_id_1 = b1.concept_id
-            LEFT JOIN (SELECT distinct concept_id FROM @unique_concept_id_table) b2
-              ON a.concept_id_2 = b2.concept_id
-            WHERE b1.concept_id IS NOT NULL or b2.concept_id IS NOT NULL;"
+      " SELECT a.*
+        FROM @vocabulary_database_schema.@table a
+        INNER JOIN (
+        	SELECT DISTINCT concept_id
+        	FROM @unique_concept_id_table
+        	) b1 ON a.concept_id_1 = b1.concept_id
+        
+        UNION
+        
+        SELECT a.*
+        FROM @vocabulary_database_schema.@table a
+        INNER JOIN (
+        	SELECT DISTINCT concept_id
+        	FROM @unique_concept_id_table
+        	) b2 ON a.concept_id_2 = b2.concept_id;"
     conceptSetDiagnosticsResults[[vocabularyTables3[[i]]]] <-
       renderTranslateQuerySql(
         connection = connection,
