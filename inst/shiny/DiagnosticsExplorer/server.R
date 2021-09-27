@@ -5965,8 +5965,7 @@ shiny::shinyServer(function(input, output, session) {
   ##Characterization----
   ### getCharacterizationDataFiltered ----
   getCharacterizationDataFiltered <- shiny::reactive(x = {
-    if (input$tabs != "cohortCharacterization")
-    {
+    if (input$tabs != "cohortCharacterization") {
       return(NULL)
     }
     if (any(
@@ -5975,17 +5974,14 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       return(NULL)
     }
-    if (is.null(getMultipleCharacterizationData()$covariateRef))
-    {
+    if (is.null(getMultipleCharacterizationData()$covariateRef)) {
       warning("No covariate reference data found")
       return(NULL)
     }
-    if (is.null(getMultipleCharacterizationData()$covariateValue))
-    {
+    if (is.null(getMultipleCharacterizationData()$covariateValue)) {
       return(NULL)
     }
-    if (is.null(getMultipleCharacterizationData()$analysisRef))
-    {
+    if (is.null(getMultipleCharacterizationData()$analysisRef)) {
       warning("No analysis ref dta found")
       return(NULL)
     }
@@ -6036,21 +6032,18 @@ shiny::shinyServer(function(input, output, session) {
       )
     
     if (any(is.null(characterizationDataValue),
-            nrow(characterizationDataValue) == 0))
-    {
+            nrow(characterizationDataValue) == 0)) {
       return(NULL)
     }
     
     if (all(input$charType == "Raw",
-            input$charProportionOrContinuous == "Proportion"))
-    {
+            input$charProportionOrContinuous == "Proportion")) {
       #!!!! show numbers as percentage in data table
       characterizationDataValue <- characterizationDataValue %>%
         dplyr::filter(.data$isBinary == 'Y')
     } else
       if (all(input$charType == "Raw",
-              input$charProportionOrContinuous == "Continuous"))
-      {
+              input$charProportionOrContinuous == "Continuous")) {
         characterizationDataValue <- characterizationDataValue %>%
           dplyr::filter(.data$isBinary == 'N')
       }
@@ -6060,8 +6053,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getCharacterizationTableData----
   getCharacterizationTableData <- shiny::reactive(x = {
-    if (input$tabs != "cohortCharacterization")
-    {
+    if (input$tabs != "cohortCharacterization") {
       return(NULL)
     }
     data <- getCharacterizationDataFiltered()
@@ -6096,8 +6088,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getCharacterizationTableDataPretty----
   getCharacterizationTableDataPretty <- shiny::reactive(x = {
-    if (input$tabs != "cohortCharacterization")
-    {
+    if (input$tabs != "cohortCharacterization") {
       return(NULL)
     }
     data <- getCharacterizationTableData()
@@ -6178,8 +6169,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getCharacterizationRawData----
   getCharacterizationRawData <- shiny::reactive(x = {
-    if (input$tabs != "cohortCharacterization")
-    {
+    if (input$tabs != "cohortCharacterization") {
       return(NULL)
     }
     data <- getCharacterizationTableData()
@@ -6213,8 +6203,7 @@ shiny::shinyServer(function(input, output, session) {
                     .data$conceptId) %>%
       dplyr::distinct()
     
-    if (input$characterizationColumnFilters == "Mean and Standard Deviation")
-    {
+    if (input$characterizationColumnFilters == "Mean and Standard Deviation") {
       data <- data %>%
         dplyr::arrange(.data$databaseId,
                        .data$cohortId) %>%
@@ -6229,8 +6218,7 @@ shiny::shinyServer(function(input, output, session) {
           values_from = .data$value,
           values_fill = 0
         )
-    } else
-    {
+    } else {
       data <- data %>%
         dplyr::arrange(.data$databaseId, .data$cohortId) %>%
         dplyr::select(-.data$sd) %>%

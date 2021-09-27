@@ -1966,7 +1966,7 @@ getResultsCohortOverlap <- function(dataSource,
                                     targetCohortIds = NULL,
                                     comparatorCohortIds = NULL,
                                     databaseIds = NULL) {
-  
+  browser()
   cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique()
   cohortCounts <-
     getResultsCohortCount(dataSource = dataSource,
@@ -2000,14 +2000,14 @@ getResultsCohortOverlap <- function(dataSource,
     dplyr::select(.data$databaseId,
                   .data$cohortId,
                   .data$comparatorCohortId,
-                  .data$bothSubjects) %>%
+                  .data$subjects) %>%
     dplyr::inner_join(
       cohortCounts %>%
         dplyr::select(-.data$cohortEntries) %>%
         dplyr::rename(targetCohortSubjects = .data$cohortSubjects),
       by = c('databaseId', 'cohortId')
     ) %>%
-    dplyr::mutate(tOnlySubjects = .data$targetCohortSubjects - .data$bothSubjects) %>%
+    dplyr::mutate(tOnlySubjects = .data$targetCohortSubjects - .data$subjects) %>%
     dplyr::inner_join(
       cohortCounts %>%
         dplyr::select(-.data$cohortEntries) %>%
@@ -2017,18 +2017,19 @@ getResultsCohortOverlap <- function(dataSource,
         ),
       by = c('databaseId', 'comparatorCohortId')
     ) %>%
-    dplyr::mutate(cOnlySubjects = .data$comparatorCohortSubjects - .data$bothSubjects) %>%
-    dplyr::mutate(eitherSubjects = .data$cOnlySubjects + .data$tOnlySubjects + .data$bothSubjects) %>%
+    dplyr::mutate(cOnlySubjects = .data$comparatorCohortSubjects - .data$subjects) %>%
+    dplyr::mutate(eitherSubjects = .data$cOnlySubjects + .data$tOnlySubjects + .data$subjects) %>%
     dplyr::rename(targetCohortId = .data$cohortId) %>%
     dplyr::select(
       .data$databaseId,
       .data$targetCohortId,
       .data$comparatorCohortId,
-      .data$bothSubjects,
+      .data$subjects,
       .data$tOnlySubjects,
       .data$cOnlySubjects,
       .data$eitherSubjects
-    )
+    ) %>% 
+    dplyr::mutate(bothSubjects = .data$subjects)
   
   
   beforeOffset <- cohortRelationship %>%
