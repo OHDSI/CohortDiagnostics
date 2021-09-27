@@ -310,7 +310,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
       connection = connection,
       cdmDatabaseSchema = cdmDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
-      minCellCount = minCellCount,
       conceptIdUniverse = "#concept_tracking"
     )
   if (!keepCustomConceptId) {
@@ -810,31 +809,44 @@ getOrphanConcepts <- function(connectionDetails = NULL,
 getConceptRecordCount <- function(connection,
                                   cdmDatabaseSchema,
                                   tempEmulationSchema,
-                                  minCellCount,
                                   conceptIdUniverse = "#concept_tracking") {
-  if (!is.null(minCellCount)) {
-    ParallelLogger::logTrace(paste0("  - minCellCount set to ", 
-                                    minCellCount, 
-                                    ", counts less than ", 
-                                    minCellCount, 
-                                    " * 10 maybe suppressed. Note suppression only applies to conceptIds that are not related to cohort definition."))
-    minCount <- minCellCount * 10
-  } else {
-    ParallelLogger::logTrace(paste0("  - minCellCount is NULL. Using default suppression of 50. Note suppression only applies to conceptIds that are not related to cohort definition."))
-    minCount <- 50
-  }
   
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
-  domains <- domains$wide
-  sql1 <- "SELECT concept_id, 
-                  event_year, 
-                  event_month, 
-                  concept_count, 
-                  subject_count
-          FROM (
+  domains <- domains$wide %>%
+    dplyr::filter(.data$isEraTable == FALSE)
+  #filtering out ERA tables because they are supposed to be derived tables, and counting them is double counting
+  sqlDdlDrop <-
+    "IF OBJECT_ID('tempdb..#concept_count_temp', 'U') IS NOT NULL
+                	      DROP TABLE #concept_count_temp;"
+  sqlDdlCreate <- "
+  CREATE TABLE #concept_count_temp (
+                                    	concept_id INT,
+                                    	event_year INT,
+                                    	event_month INT,
+                                    	concept_is_standard VARCHAR(1),
+                                    	concept_count BIGINT,
+                                    	subject_count BIGINT
+                                    	);"
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sqlDdlDrop,
+    tempEmulationSchema = tempEmulationSchema,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sqlDdlCreate,
+    tempEmulationSchema = tempEmulationSchema,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  
+  sql1 <- "INSERT INTO #concept_count_temp
           	SELECT @domain_concept_id concept_id,
           		YEAR(@domain_start_date) event_year,
           		MONTH(@domain_start_date) event_month,
+          		'Y' concept_is_standard,
           		COUNT_BIG(*) concept_count,
           		COUNT_BIG(DISTINCT person_id) subject_count
           	FROM @cdm_database_schema.@domain_table
@@ -846,61 +858,120 @@ getConceptRecordCount <- function(connection,
           		AND @domain_concept_id > 0
           	GROUP BY @domain_concept_id,
           		YEAR(@domain_start_date),
-          		MONTH(@domain_start_date)
-          	) f
-          WHERE subject_count > @minCount;" #remove very low counts because it becomes too much
-  sql2 <- "SELECT concept_id, 
-                  event_year, 
-                  event_month, 
-                  concept_count, 
-                  subject_count
-            FROM (
-            SELECT 
-                @domain_concept_id concept_id,
-              	YEAR(@domain_start_date) event_year,
-              	0 as event_month,
-              	COUNT_BIG(*) concept_count,
-              	COUNT_BIG(DISTINCT person_id) subject_count
-              FROM @cdm_database_schema.@domain_table
-              INNER JOIN (
-              	SELECT DISTINCT concept_id
-              	FROM @concept_id_universe
-              	) c
-              	ON @domain_concept_id = concept_id
-              WHERE YEAR(@domain_start_date) > 0
-              AND @domain_concept_id > 0
-              GROUP BY @domain_concept_id,
-              	YEAR(@domain_start_date)
-            ) f
-            WHERE subject_count > @minCount;"
-  sql3 <- "SELECT @domain_concept_id concept_id,
-          	0 as event_year,
-          	0 as event_month,
-          	COUNT_BIG(*) concept_count,
-          	COUNT_BIG(DISTINCT person_id) subject_count
-          FROM @cdm_database_schema.@domain_table
-          INNER JOIN (
-          	SELECT DISTINCT concept_id
-          	FROM @concept_id_universe
-          	) c
-          	ON @domain_concept_id = concept_id
-          WHERE YEAR(@domain_start_date) > 0
-          AND @domain_concept_id > 0
-          GROUP BY @domain_concept_id;"
+          		MONTH(@domain_start_date);"
+  sql2 <- " INSERT INTO #concept_count_temp
+            SELECT @domain_concept_id concept_id,
+            	YEAR(@domain_start_date) event_year,
+            	0 AS event_month,
+            	'Y' concept_is_standard,
+            	COUNT_BIG(*) concept_count,
+            	COUNT_BIG(DISTINCT person_id) subject_count
+            FROM @cdm_database_schema.@domain_table
+            INNER JOIN (
+            	SELECT DISTINCT concept_id
+            	FROM @concept_id_universe
+            	) c ON @domain_concept_id = concept_id
+            WHERE YEAR(@domain_start_date) > 0
+            	AND @domain_concept_id > 0
+            GROUP BY @domain_concept_id,
+            	YEAR(@domain_start_date);"
+  sql3 <- "INSERT INTO #concept_count_temp
+            SELECT @domain_concept_id concept_id,
+            	0 as event_year,
+            	0 as event_month,
+          		'Y' concept_is_standard,
+            	COUNT_BIG(*) concept_count,
+            	COUNT_BIG(DISTINCT person_id) subject_count
+            FROM @cdm_database_schema.@domain_table
+            INNER JOIN (
+            	SELECT DISTINCT concept_id
+            	FROM @concept_id_universe
+            	) c
+            	ON @domain_concept_id = concept_id
+            WHERE YEAR(@domain_start_date) > 0
+            AND @domain_concept_id > 0
+            GROUP BY @domain_concept_id;"
+  
+  
+  sql4 <- "INSERT INTO #concept_count_temp
+          	SELECT @domain_concept_id concept_id,
+          		YEAR(@domain_start_date) event_year,
+          		MONTH(@domain_start_date) event_month,
+          		'N' concept_is_standard,
+          		COUNT_BIG(*) concept_count,
+          		COUNT_BIG(DISTINCT person_id) subject_count
+          	FROM @cdm_database_schema.@domain_table dt
+          	INNER JOIN (
+          		SELECT DISTINCT concept_id
+          		FROM @concept_id_universe
+          		) c ON @domain_concept_id = concept_id
+          	LEFT JOIN (
+          	  SELECT DISTINCT concept_id
+          	  FROM #concept_count_temp
+          	  WHERE concept_is_standard = 'Y'
+          	) std
+          	ON @domain_concept_id = std.concept_id
+          	WHERE YEAR(@domain_start_date) > 0
+          		AND @domain_concept_id > 0
+          		AND std.concept_id IS NULL
+          	GROUP BY @domain_concept_id,
+          		YEAR(@domain_start_date),
+          		MONTH(@domain_start_date);"
+  sql5 <- " INSERT INTO #concept_count_temp
+            SELECT @domain_concept_id concept_id,
+            	YEAR(@domain_start_date) event_year,
+            	0 AS event_month,
+            	'N' concept_is_standard,
+            	COUNT_BIG(*) concept_count,
+            	COUNT_BIG(DISTINCT person_id) subject_count
+            FROM @cdm_database_schema.@domain_table
+            INNER JOIN (
+            	SELECT DISTINCT concept_id
+            	FROM @concept_id_universe
+            	) c ON @domain_concept_id = concept_id
+            LEFT JOIN (
+            	SELECT DISTINCT concept_id
+            	FROM #concept_count_temp
+          	  WHERE concept_is_standard = 'Y'
+            	) std ON @domain_concept_id = std.concept_id
+            WHERE YEAR(@domain_start_date) > 0
+            	AND @domain_concept_id > 0
+            	AND std.concept_id IS NULL
+            GROUP BY @domain_concept_id,
+            	YEAR(@domain_start_date);"
+  sql6 <- " INSERT INTO #concept_count_temp
+            SELECT @domain_concept_id concept_id,
+            	0 AS event_year,
+            	0 AS event_month,
+            	'N' concept_is_standard,
+            	COUNT_BIG(*) concept_count,
+            	COUNT_BIG(DISTINCT person_id) subject_count
+            FROM @cdm_database_schema.@domain_table
+            INNER JOIN (
+            	SELECT DISTINCT concept_id
+            	FROM @concept_id_universe
+            	) c ON @domain_concept_id = concept_id
+            LEFT JOIN (
+            	SELECT DISTINCT concept_id
+            	FROM #concept_count_temp
+          	  WHERE concept_is_standard = 'Y'
+            	) std ON @domain_concept_id = std.concept_id
+            WHERE YEAR(@domain_start_date) > 0
+            	AND @domain_concept_id > 0
+            	AND std.concept_id IS NULL
+            GROUP BY @domain_concept_id;"
   
   standardConcepts <- list()
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i, ]
+    rowData <- domains[i,]
     ParallelLogger::logTrace(paste0(
       "   - Working on ",
       rowData$domainTable,
       ".",
       rowData$domainConceptId
     ))
-    ParallelLogger::logTrace(paste0("    - Counting concepts by calendar month and year (filtered to min ",
-                                    minCount,
-                                    " subject count)"))
-    data1 <- renderTranslateQuerySql(
+    ParallelLogger::logTrace("    - Counting concepts by calendar month and year")
+    DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sql1,
       tempEmulationSchema = tempEmulationSchema,
@@ -909,54 +980,37 @@ getConceptRecordCount <- function(connection,
       cdm_database_schema = cdmDatabaseSchema,
       domain_start_date = rowData$domainStartDate,
       concept_id_universe = conceptIdUniverse,
-      minCount = minCount,
-      snakeCaseToCamelCase = TRUE
+      progressBar = FALSE,
+      reportOverallTime = FALSE
     )
-    if (!rowData$isEraTable) {
-      ParallelLogger::logTrace(paste0("    - Counting concepts by calendar year (filtered to min ",
-                                      minCount,
-                                      " subject count)"))
-      data2 <- renderTranslateQuerySql(
-        connection = connection,
-        sql = sql2,
-        tempEmulationSchema = tempEmulationSchema,
-        domain_table = rowData$domainTable,
-        domain_concept_id = rowData$domainConceptId,
-        cdm_database_schema = cdmDatabaseSchema,
-        domain_start_date = rowData$domainStartDate,
-        concept_id_universe = conceptIdUniverse,
-        minCount = minCount,
-        snakeCaseToCamelCase = TRUE
-      )
-      ParallelLogger::logTrace("    - Counting concepts without calendar period (no filter)")
-      data3 <- renderTranslateQuerySql(
-        connection = connection,
-        sql = sql3,
-        tempEmulationSchema = tempEmulationSchema,
-        domain_table = rowData$domainTable,
-        domain_concept_id = rowData$domainConceptId,
-        cdm_database_schema = cdmDatabaseSchema,
-        domain_start_date = rowData$domainStartDate,
-        concept_id_universe = conceptIdUniverse,
-        snakeCaseToCamelCase = TRUE
-      )
-    } else {
-      data2 <- dplyr::tibble()
-      data3 <- dplyr::tibble()
-    }
-    standardConcepts[[i]] <- dplyr::bind_rows(data1,
-                                              data2,
-                                              data3) %>%
-      dplyr::mutate(domainTable = rowData$domainTableShort) %>%
-      dplyr::mutate(domainField = rowData$domainConceptIdShort)
+    ParallelLogger::logTrace("    - Counting concepts by calendar year")
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = sql2,
+      tempEmulationSchema = tempEmulationSchema,
+      domain_table = rowData$domainTable,
+      domain_concept_id = rowData$domainConceptId,
+      cdm_database_schema = cdmDatabaseSchema,
+      domain_start_date = rowData$domainStartDate,
+      concept_id_universe = conceptIdUniverse,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+    ParallelLogger::logTrace("    - Counting concepts without calendar period")
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = sql3,
+      tempEmulationSchema = tempEmulationSchema,
+      domain_table = rowData$domainTable,
+      domain_concept_id = rowData$domainConceptId,
+      cdm_database_schema = cdmDatabaseSchema,
+      domain_start_date = rowData$domainStartDate,
+      concept_id_universe = conceptIdUniverse,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
   }
-  standardConcepts <- dplyr::bind_rows(standardConcepts) %>%
-    dplyr::distinct()
-  conceptIdsFoundInStandardField <- standardConcepts %>%
-    dplyr::select(.data$conceptId) %>%
-    dplyr::distinct()
   
-  nonStandardConcepts <- list()
   for (i in (1:nrow(domains))) {
     rowData <- domains[i, ]
     if (nchar(rowData$domainSourceConceptId) > 4) {
@@ -966,124 +1020,68 @@ getConceptRecordCount <- function(connection,
         ".",
         rowData$domainSourceConceptId
       ))
-      ParallelLogger::logTrace(paste0("    - Counting concepts by calendar month and year (filtered to min ",
-                                      minCount,
-                                      " subject count)"))
-      nsData1 <- renderTranslateQuerySql(
+      ParallelLogger::logTrace("    - Counting concepts by calendar month and year")
+      DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
-        sql = sql1,
+        sql = sql4,
         tempEmulationSchema = tempEmulationSchema,
         domain_table = rowData$domainTable,
         domain_concept_id = rowData$domainSourceConceptId,
         cdm_database_schema = cdmDatabaseSchema,
         domain_start_date = rowData$domainStartDate,
         concept_id_universe = conceptIdUniverse,
-        minCount = minCount,
-        snakeCaseToCamelCase = TRUE
+        progressBar = FALSE,
+        reportOverallTime = FALSE
       )
-      ParallelLogger::logTrace(paste0("     - Removing concepts found in standard field (filtered to min ",
-                                      minCount,
-                                      " subject count)"))
-      nsData1 <- nsData1 %>% 
-        # conceptIds - only keep concept id that were never found in standard fields
-        dplyr::anti_join(
-          y = conceptIdsFoundInStandardField,
-          by = 'conceptId'
-        )
-      if (!rowData$isEraTable) {
-        ParallelLogger::logTrace("    - Counting concepts by calendar year (no filter)")
-        nsData2 <- renderTranslateQuerySql(
-          connection = connection,
-          sql = sql2,
-          tempEmulationSchema = tempEmulationSchema,
-          domain_table = rowData$domainTable,
-          domain_concept_id = rowData$domainSourceConceptId,
-          cdm_database_schema = cdmDatabaseSchema,
-          domain_start_date = rowData$domainStartDate,
-          concept_id_universe = conceptIdUniverse,
-          minCount = minCount,
-          snakeCaseToCamelCase = TRUE
-        )
-        ParallelLogger::logTrace("     - Removing concepts found in standard field")
-        nsData2 <- nsData2 %>% 
-          # conceptIds - only keep concept id that were never found in standard fields
-          dplyr::anti_join(
-            y = conceptIdsFoundInStandardField,
-            by = 'conceptId'
-          )
-        ParallelLogger::logTrace("    - Counting concepts without calendar period")
-        nsData3 <- renderTranslateQuerySql(
-          connection = connection,
-          sql = sql3,
-          tempEmulationSchema = tempEmulationSchema,
-          domain_table = rowData$domainTable,
-          domain_concept_id = rowData$domainSourceConceptId,
-          cdm_database_schema = cdmDatabaseSchema,
-          domain_start_date = rowData$domainStartDate,
-          concept_id_universe = conceptIdUniverse,
-          snakeCaseToCamelCase = TRUE
-        ) 
-        ParallelLogger::logTrace("     - Removing concepts found in standard field")
-        nsData3 <- nsData3 %>%
-          # conceptIds - only keep concept id that were never found in standard fields
-          dplyr::anti_join(
-            y = conceptIdsFoundInStandardField,
-            by = 'conceptId'
-          )
-      } else {
-        data2 <- dplyr::tibble()
-        data3 <- dplyr::tibble()
-      }
-      nonStandardConcepts[[i]] <- dplyr::bind_rows(nsData1,
-                                                   nsData2,
-                                                   nsData3) %>%
-        dplyr::mutate(domainTable = rowData$domainTableShort) %>%
-        dplyr::mutate(domainField = rowData$domainConceptIdShort)
+      ParallelLogger::logTrace("    - Counting concepts by calendar year")
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection = connection,
+        sql = sql5,
+        tempEmulationSchema = tempEmulationSchema,
+        domain_table = rowData$domainTable,
+        domain_concept_id = rowData$domainSourceConceptId,
+        cdm_database_schema = cdmDatabaseSchema,
+        domain_start_date = rowData$domainStartDate,
+        concept_id_universe = conceptIdUniverse,
+        progressBar = FALSE,
+        reportOverallTime = FALSE
+      )
+      ParallelLogger::logTrace("    - Counting concepts by calendar year")
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection = connection,
+        sql = sql6,
+        tempEmulationSchema = tempEmulationSchema,
+        domain_table = rowData$domainTable,
+        domain_concept_id = rowData$domainSourceConceptId,
+        cdm_database_schema = cdmDatabaseSchema,
+        domain_start_date = rowData$domainStartDate,
+        concept_id_universe = conceptIdUniverse,
+        progressBar = FALSE,
+        reportOverallTime = FALSE
+      )
     }
   }
-  nonStandardConcepts <-
-    dplyr::bind_rows(nonStandardConcepts)
+  
+  retrieveSql <- "SELECT concept_id, event_year, event_month,
+                    sum(concept_count) concept_count,
+                    max(subject_count) subject_count
+                  FROM #concept_count_temp
+                  GROUP BY concept_id, event_year, event_month
+                  ORDER By concept_id, event_year, event_month;"
   data <-
-    dplyr::bind_rows(standardConcepts, nonStandardConcepts) %>%
-    dplyr::select(
-      .data$domainTable,
-      .data$domainField,
-      .data$conceptId,
-      .data$eventYear,
-      .data$eventMonth,
-      .data$conceptCount,
-      .data$subjectCount
-    ) %>%
-    dplyr::distinct() %>%
-    dplyr::arrange(
-      .data$domainTable,
-      .data$domainField,
-      .data$conceptId,
-      .data$eventYear,
-      .data$eventMonth
-    )
-  data <- dplyr::bind_rows(data,
-                           data %>% 
-                             dplyr::group_by(.data$conceptId,
-                                             .data$eventYear,
-                                             .data$eventMonth) %>% 
-                             dplyr::summarise(conceptCount = sum(.data$conceptCount),
-                                              subjectCount = max(.data$subjectCount), 
-                                              .groups = "keep") %>% 
-                             dplyr::mutate(domainField = "All",
-                                           domainTable = "All"),
-                           data %>%
-                             dplyr::group_by(.data$conceptId,
-                                             .data$eventYear,
-                                             .data$eventMonth,
-                                             .data$domainTable
-                             ) %>% 
-                             dplyr::summarise(conceptCount = sum(.data$conceptCount),
-                                              subjectCount = max(.data$subjectCount), 
-                                              .groups = "keep") %>% 
-                             dplyr::mutate(domainField = "All")
-  ) %>% 
-    dplyr::distinct()
+    DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                               sql = sql,
+                                               snakeCaseToCamelCase = TRUE) %>%
+    dplyr::tibble()
+  # i was thinking of keeping counts at the table level - but the file size became too big
+  # so i decided to not include them
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sqlDdlDrop,
+    tempEmulationSchema = tempEmulationSchema,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
   return(data)
 }
 
@@ -1100,23 +1098,32 @@ getBreakdownIndexEvents <- function(cohortIds,
                                     minCellCount,
                                     conceptIdUniverse = "#concept_tracking") {
   if (!is.null(minCellCount)) {
-    ParallelLogger::logTrace(paste0("  - minCellCount set to ", 
-                                    minCellCount, 
-                                    ", counts less than ", 
-                                    minCellCount, 
-                                    " * 10 maybe suppressed. Note suppression only applies to conceptIds that are not related to cohort definition."))
+    ParallelLogger::logTrace(
+      paste0(
+        "  - minCellCount set to ",
+        minCellCount,
+        ", counts less than ",
+        minCellCount,
+        " * 10 maybe suppressed. Note suppression only applies to conceptIds that are not related to cohort definition."
+      )
+    )
     minCount <- minCellCount * 10
   } else {
-    ParallelLogger::logTrace(paste0("  - minCellCount is NULL. Using default suppression of 50. Note suppression only applies to conceptIds that are not related to cohort definition."))
+    ParallelLogger::logTrace(
+      paste0(
+        "  - minCellCount is NULL. Using default suppression of 50. Note suppression only applies to conceptIds that are not related to cohort definition."
+      )
+    )
     minCount <- 50
   }
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide
   nonEraTables <- domains %>%
+    #filtering out ERA tables because they are supposed to be derived tables, and counting them is double counting
     dplyr::filter(.data$isEraTable == FALSE) %>%
     dplyr::pull(.data$domainTableShort) %>%
     unique()
-  domains <- domains %>% 
+  domains <- domains %>%
     dplyr::filter(.data$domainTableShort %in% c(nonEraTables))
   
   sqlDdlDrop <-
@@ -1124,14 +1131,12 @@ getBreakdownIndexEvents <- function(cohortIds,
                 	      DROP TABLE #indx_breakdown;"
   sqlDdlCreate <- "
   CREATE TABLE #indx_breakdown (
-                                    	cohort_id BIGINT,
-                                    	days_relative_index BIGINT,
-                                    	concept_id INT,
-                                    	domain_table VARCHAR(50),
-                                    	domain_field VARCHAR(50),
-                                    	subject_count BIGINT,
-                                    	concept_count BIGINT
-                                    	);"
+                              	cohort_id BIGINT,
+                              	days_relative_index BIGINT,
+                              	concept_id INT,
+                              	subject_count BIGINT,
+                              	concept_count BIGINT
+                              	);"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sqlDdlDrop,
@@ -1150,16 +1155,12 @@ getBreakdownIndexEvents <- function(cohortIds,
           SELECT cohort_id,
           	days_relative_index,
           	f.concept_id,
-          	domain_table,
-          	domain_field,
           	subject_count,
           	concept_count
           FROM (
           	SELECT cohort_definition_id cohort_id,
           		datediff(dd, d1.@domain_start_date, c.cohort_start_date) days_relative_index,
           		d1.@domain_concept_id concept_id,
-          	'@domain_table_short' domain_table,
-          	'@domain_field_short' domain_field,
           		COUNT(DISTINCT c.subject_id) subject_count,
           		COUNT(*) concept_count
           	FROM @cohort_database_schema.@cohort_table c
@@ -1178,21 +1179,24 @@ getBreakdownIndexEvents <- function(cohortIds,
           	FROM @conceptIdUniverse
           	) cu ON f.concept_id = cu.concept_id
           WHERE subject_count > @minCount
-          	OR cu.concept_id IS NOT NULL;;"
+          	OR (cu.concept_id IS NOT NULL AND days_relative_index = 0);"
   #-- there is probably no value in vary rare code, especially if it is not part of conceptIdUniverse
   #-- note concept_id that are part of the conceptIdUniverse are not filtered out if count < 100
+  #-- concept_id that are part of conceptIdUniverse but does not belong to TRUE index date are filtered out if count < 100
   
   for (i in (1:nrow(domains))) {
     rowData <- domains[i, ]
-    ParallelLogger::logTrace(paste0(
-      "  - Working on ",
-      rowData$domainTable,
-      ".",
-      rowData$domainConceptId,
-      " (filtered to min ",
-      minCount,
-      " subject count if concept id not related to cohort definition.)"
-    ))
+    ParallelLogger::logTrace(
+      paste0(
+        "  - Working on ",
+        rowData$domainTable,
+        ".",
+        rowData$domainConceptId,
+        " (filtered to min ",
+        minCount,
+        " subject count if concept id not related to cohort definition.)"
+      )
+    )
     
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
@@ -1207,11 +1211,9 @@ getBreakdownIndexEvents <- function(cohortIds,
       cohort_table = cohortTable,
       rangeMin = rangeMin,
       rangeMax = rangeMax,
-      domain_table_short = rowData$domainTableShort,
-      domain_field_short = rowData$domainConceptIdShort,
       conceptIdUniverse = conceptIdUniverse,
       minCount = minCount,
-      reportOverallTime = FALSE, 
+      reportOverallTime = FALSE,
       progressBar = FALSE
     )
   }
@@ -1220,15 +1222,17 @@ getBreakdownIndexEvents <- function(cohortIds,
     rowData <- domains[i, ]
     if (all(!is.na(rowData$domainSourceConceptId),
             nchar(rowData$domainSourceConceptId) > 4)) {
-      ParallelLogger::logTrace(paste0(
-        "  - Working on ",
-        rowData$domainTable,
-        ".",
-        rowData$domainSourceConceptId,
-        " (filtered to min ",
-        minCount,
-        " subject count if concept id not related to cohort definition.)"
-      ))
+      ParallelLogger::logTrace(
+        paste0(
+          "  - Working on ",
+          rowData$domainTable,
+          ".",
+          rowData$domainSourceConceptId,
+          " (filtered to min ",
+          minCount,
+          " subject count if concept id not related to cohort definition.)"
+        )
+      )
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sql,
@@ -1242,11 +1246,9 @@ getBreakdownIndexEvents <- function(cohortIds,
         cohort_table = cohortTable,
         rangeMin = rangeMin,
         rangeMax = rangeMax,
-        domain_table_short = rowData$domainTableShort,
-        domain_field_short = rowData$domainSourceConceptIdShort,
         conceptIdUniverse = conceptIdUniverse,
         minCount = minCount,
-        reportOverallTime = FALSE, 
+        reportOverallTime = FALSE,
         progressBar = FALSE
       )
     }
@@ -1264,54 +1266,25 @@ getBreakdownIndexEvents <- function(cohortIds,
   )
   
   data <-
-    DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                               sql = "SELECT DISTINCT cohort_id,
-                                                        days_relative_index,
-                                                        concept_id,
-                                                        max(subject_count) subject_count,
-                                                        sum(concept_count) concept_count
-                                                      FROM #indx_breakdown
-                                                      group by cohort_id,
-                                                        days_relative_index,
-                                                        concept_id
-                                                      order by cohort_id,
-                                                        concept_id,
-                                                        days_relative_index;",
-                                               snakeCaseToCamelCase = TRUE) %>%
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT DISTINCT cohort_id,
+                days_relative_index,
+                concept_id,
+                max(subject_count) subject_count,
+                sum(concept_count) concept_count
+              FROM #indx_breakdown
+              group by cohort_id,
+                days_relative_index,
+                concept_id
+              order by cohort_id,
+                concept_id,
+                days_relative_index;",
+      snakeCaseToCamelCase = TRUE
+    ) %>%
     dplyr::tibble()
-  #Commenting out code related to extracting data for each domain table. This creates too much data
-  # data <- dplyr::bind_rows(
-  #   data,
-  #   data %>%
-  #     dplyr::filter(.data$domainTable %in% c(nonEraTables)) %>%
-  #     dplyr::group_by(.data$cohortId,
-  #                     .data$conceptId,
-  #                     .data$daysRelativeIndex) %>%
-  #     dplyr::summarise(
-  #       conceptCount = sum(.data$conceptCount),
-  #       subjectCount = max(.data$subjectCount),
-  #       .groups = "keep"
-  #     ) %>%
-  #     dplyr::mutate(domainField = "All",
-  #                   domainTable = "All"),
-  #   data %>%
-  #     dplyr::filter(.data$domainTable %in% c(nonEraTables)) %>%
-  #     dplyr::group_by(
-  #       .data$cohortId,
-  #       .data$conceptId,
-  #       .data$daysRelativeIndex,
-  #       .data$domainTable
-  #     ) %>%
-  #     dplyr::summarise(
-  #       conceptCount = sum(.data$conceptCount),
-  #       subjectCount = max(.data$subjectCount),
-  #       .groups = "keep"
-  #     ) %>%
-  #     dplyr::mutate(domainField = "All")
-  # ) %>%
-  #   dplyr::distinct()
-  
-  
+  # i was thinking of keeping counts at the table level - but the file size became too big
+  # so i decided to not include them
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sqlDdlDrop,
