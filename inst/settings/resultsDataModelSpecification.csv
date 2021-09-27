@@ -72,8 +72,6 @@ concept_class,concept_class_id,varchar,Yes,Yes,No,Yes,2.2
 concept_class,concept_class_name,varchar,Yes,Yes,No,Yes,2.2
 concept_class,concept_class_concept_id,int,Yes,Yes,No,Yes,2.2
 concept_count,database_id,varchar,Yes,Yes,No,Yes,2.2
-concept_count,domain_table,varchar,Yes,Yes,No,Yes,2.2
-concept_count,domain_field,varchar,Yes,Yes,No,Yes,2.2
 concept_count,concept_id,int,Yes,Yes,No,Yes,2.2
 concept_count,event_year,int,Yes,Yes,No,Yes,2.2
 concept_count,event_month,int,Yes,Yes,No,Yes,2.2
