@@ -810,7 +810,6 @@ getConceptRecordCount <- function(connection,
                                   cdmDatabaseSchema,
                                   tempEmulationSchema,
                                   conceptIdUniverse = "#concept_tracking") {
-  
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide %>%
     dplyr::filter(.data$isEraTable == FALSE)
@@ -841,7 +840,7 @@ getConceptRecordCount <- function(connection,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  
+  #REASON for many SQL --DISTINCT subject_count cannot be computed from aggregation query of calendar month level data
   sql1 <- "INSERT INTO #concept_count_temp
           	SELECT @domain_concept_id concept_id,
           		YEAR(@domain_start_date) event_year,
@@ -963,7 +962,7 @@ getConceptRecordCount <- function(connection,
   
   standardConcepts <- list()
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i,]
+    rowData <- domains[i, ]
     ParallelLogger::logTrace(paste0(
       "   - Working on ",
       rowData$domainTable,
@@ -1012,7 +1011,7 @@ getConceptRecordCount <- function(connection,
   }
   
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i, ]
+    rowData <- domains[i,]
     if (nchar(rowData$domainSourceConceptId) > 4) {
       ParallelLogger::logTrace(paste0(
         "   - Working on ",
