@@ -1281,7 +1281,6 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
-    
     data <- getResultsResolvedConcepts(
       dataSource = dataSource,
       cohortId = consolidatedCohortIdTarget(),
@@ -2439,6 +2438,7 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No resolved concept ids"))
+      browser()
       databaseCount <- cohortCount %>% 
         dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
         dplyr::rename("records" = .data$cohortEntries,

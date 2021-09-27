@@ -289,12 +289,14 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              conceptSetId = NULL,
                                              databaseId = NULL,
                                              vocabularyDatabaseSchema = NULL,
+                                             daysRelativeIndex = NULL,
                                              dataTableName) {
   if (is(dataSource, "environment")) {
     object <- c("cohortId",
                 "conceptId",
                 "databaseId",
-                "conceptSetId")
+                "conceptSetId",
+                "daysRelativeIndex")
     if (!is.null(vocabularyDatabaseSchema)) {
       paste0("vocabularyDatabaseSchema provided for function 'getResultsConcept', ",
              "\nbut working in local file mode. VocabularyDatabaseSchema will be ignored.")
@@ -305,17 +307,20 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     if (is.null(get(dataTableName))) {
       return(NULL)
     }
-    if (nrow(get(dataTableName, envir = dataSource)) == 0) {
+    data <- get(dataTableName, envir = dataSource)
+    if (nrow(data) == 0) {
       warning(paste0(dataTableName, " in environment was found to have o rows."))
     }
-    data <- get(dataTableName, envir = dataSource)
+    colnamesData <- colnames(data)
     for (i in (1:length(object))) {
-      if (!is.null(get(object[[i]]))) {
+      if (all(!is.null(get(object[[i]])),
+              object[[i]] %in% colnamesData)) {
         data <- data %>%
           dplyr::filter(!!as.name(object[[i]]) %in% !!get(object[[i]]))
       }
     }
     if (doesObjectHaveData(conceptId1)) {#for concept relationship only
+      browser()
       data <- data %>% 
         dplyr::filter(.data$conceptId1 %in% conceptId |
                         .data$conceptId2 %in% conceptId)
@@ -1035,8 +1040,6 @@ getConceptMetadata <- function(dataSource,
     if (!is.null(data$databaseConceptCountDetails)) {
       data$databaseConceptCount <-
         data$databaseConceptCountDetails %>%
-        dplyr::filter(.data$domainTable == "All") %>%
-        dplyr::filter(.data$domainField == "All") %>%
         dplyr::filter(.data$eventYear == 0) %>%
         dplyr::filter(.data$eventMonth == 0) %>%
         dplyr::select(.data$conceptId,
@@ -1860,6 +1863,7 @@ getResultsIncidenceRate <- function(dataSource,
 #'
 #' @template DatabaseIds
 #'
+#' @param daysRelativeIndex  A vector of integers representing the offset in relation to index date (-40 to 40)
 #' @return
 #' Returns a data frame (tibble) with results that conform to index_event_breakdown
 #' table in Cohort Diagnostics results data model.
@@ -1868,7 +1872,8 @@ getResultsIncidenceRate <- function(dataSource,
 getResultsIndexEventBreakdown <- function(dataSource,
                                           cohortIds = NULL,
                                           databaseIds = NULL,
-                                          conceptIds = NULL) {
+                                          conceptIds = NULL,
+                                          daysRelativeIndex = 0) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortId = cohortIds,
