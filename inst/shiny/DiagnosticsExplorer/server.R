@@ -4730,123 +4730,32 @@ shiny::shinyServer(function(input, output, session) {
   # Index event breakdown ------
   ##getIndexEventBreakdownData----
   getIndexEventBreakdownData <- shiny::reactive(x = {
-    if (any(is.null(input$tabs),!input$tabs == "indexEventBreakdown")) {
-      return(NULL)
-    }
-    if (any(length(consolidatedCohortIdTarget()) == 0)) {
+    if (any(is.null(input$tabs),
+            !input$tabs == "indexEventBreakdown",
+            length(consolidatedCohortIdTarget()) == 0,
+            !doesObjectHaveData(consolidatedDatabaseIdTarget()),
+            !doesObjectHaveData(getResolvedConceptsTarget()))) {
       return(NULL)
     }
     if (all(is(dataSource, "environment"),
             !exists('indexEventBreakdown'))) {
       return(NULL)
     }
-    data <-
+    indexEventBreakdown <-
       getResultsIndexEventBreakdown(dataSource = dataSource,
-                                    cohortId = consolidatedCohortIdTarget())
-    return(data)
-  })
-  
-  ##pickerInput: domainTableOptionsInIndexEventData----
-  shiny::observe({
-    if (!doesObjectHaveData(getIndexEventBreakdownData())) {
+                                    cohortId = consolidatedCohortIdTarget(),
+                                    databaseIds = consolidatedDatabaseIdTarget())
+    if (is.null(indexEventBreakdown)) {
       return(NULL)
     }
-    data <- getIndexEventBreakdownData() %>%
-      dplyr::rename("domainTableShort" = .data$domainTable) %>%
-      dplyr::inner_join(
-        getDomainInformation()$long %>%
-          dplyr::select(
-            .data$domainTableShort,
-            .data$domainTable,
-            .data$eraTable
-          ),
-        by = "domainTableShort"
-      ) %>%
-      dplyr::arrange(.data$domainTable,
-                     .data$domainField)
     
-    choices <- data %>%
-      dplyr::select(.data$domainTable) %>%
-      dplyr::distinct() %>%
-      dplyr::pull() %>%
-      snakeCaseToCamelCase() %>%
-      camelCaseToTitleCase()
-    
-    choicesSelected <- data %>%
-      dplyr::filter(.data$eraTable == FALSE) %>%
-      dplyr::select(.data$domainTable) %>%
-      dplyr::distinct() %>%
-      dplyr::pull() %>%
-      snakeCaseToCamelCase() %>%
-      camelCaseToTitleCase()
-    
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "domainTableOptionsInIndexEventData",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = choices,
-      selected = choicesSelected
-    )
-  })
-  
-  ##pickerInput: domainFieldOptionsInIndexEventData----
-  shiny::observe({
-    if (!doesObjectHaveData(getIndexEventBreakdownData())) {
-      return(NULL)
-    }
-    data <- getIndexEventBreakdownData() %>%
-      dplyr::rename("domainFieldShort" = .data$domainField) %>%
-      dplyr::inner_join(
-        getDomainInformation()$long %>%
-          dplyr::select(
-            .data$domainFieldShort,
-            .data$domainField,
-            .data$eraTable
-          ),
-        by = "domainFieldShort"
-      )
-    
-    choices <- data %>%
-      dplyr::select(.data$domainField) %>%
-      dplyr::distinct() %>%
-      dplyr::pull() %>%
-      snakeCaseToCamelCase() %>%
-      camelCaseToTitleCase()
-    
-    choicesSelected <- data %>%
-      dplyr::filter(.data$eraTable == FALSE) %>%
-      dplyr::select(.data$domainField) %>%
-      dplyr::distinct() %>%
-      dplyr::pull() %>%
-      snakeCaseToCamelCase() %>%
-      camelCaseToTitleCase()
-    
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "domainFieldOptionsInIndexEventData",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = choices,
-      selected = choicesSelected
-    )
-  })
-  
-  ##getIndexEventBreakdownDataEnhanced----
-  getIndexEventBreakdownDataEnhanced <- shiny::reactive(x = {
-    indexEventBreakdown <- getIndexEventBreakdownData()
-    if (!doesObjectHaveData(indexEventBreakdown)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(cohortCount)) {
-      return(NULL)
-    }
     conceptIdDetails <- getConcept(dataSource = dataSource,
                                    conceptId = indexEventBreakdown$conceptId %>%
                                      unique())
     if (is.null(conceptIdDetails)) {
       return(NULL)
     }
-    #!!! future idea for index event breakdown - metric on conceptProportion
-    # what proportion of concepts in dataSource is in index event
+    
     indexEventBreakdown <- indexEventBreakdown %>%
       dplyr::inner_join(
         conceptIdDetails %>%
@@ -4865,40 +4774,6 @@ shiny::shinyServer(function(input, output, session) {
         subjectPercent = .data$subjectCount / .data$cohortSubjects,
         conceptPercent = .data$conceptCount / .data$cohortEntries
       ) %>%
-      dplyr::rename(
-        domainFieldShort = .data$domainField,
-        domainTableShort = .data$domainTable
-      ) %>%
-      dplyr::inner_join(getDomainInformation()$long,
-                        by = c('domainTableShort',
-                               'domainFieldShort')) %>%
-      dplyr::select(-.data$domainTableShort, -.data$domainFieldShort)
-    return(indexEventBreakdown)
-  })
-  
-  ##getIndexEventBreakdownDataFiltered----
-  getIndexEventBreakdownDataFiltered <- shiny::reactive(x = {
-    indexEventBreakdown <- getIndexEventBreakdownDataEnhanced()
-    if (!doesObjectHaveData(indexEventBreakdown)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(input$domainTableOptionsInIndexEventData)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(input$domainFieldOptionsInIndexEventData)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(consolidatedConceptSetIdTarget())) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(getResolvedConceptsTarget())) {
-      return(NULL)
-    }
-    indexEventBreakdown <- indexEventBreakdown %>%
-      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
       dplyr::inner_join(
         getResolvedConceptsTarget() %>%
           dplyr::select(.data$conceptId,
@@ -4907,40 +4782,72 @@ shiny::shinyServer(function(input, output, session) {
         by = c("conceptId", "databaseId")
       )
     
-    domainTableSelected <- getDomainInformation()$long %>%
-      dplyr::filter(
-        .data$domainTable %in% c(
-          input$domainTableOptionsInIndexEventData %>%
-            titleCaseToCamelCase() %>%
-            camelCaseToSnakeCase()
-        )
-      ) %>%
-      dplyr::pull(.data$domainTable) %>%
-      unique() %>%
-      sort()
-    if (!doesObjectHaveData(domainTableSelected)) {
+    return(indexEventBreakdown)
+  })
+  
+  ##pickerInput: domainTableOptionsInIndexEventData----
+  shiny::observe({
+    if (!doesObjectHaveData(getIndexEventBreakdownData())) {
       return(NULL)
     }
+    # data <- getIndexEventBreakdownData() %>%
+    #   dplyr::rename("domainTableShort" = .data$domainTable) %>%
+    #   dplyr::inner_join(
+    #     getDomainInformation()$long %>%
+    #       dplyr::select(
+    #         .data$domainTableShort,
+    #         .data$domainTable,
+    #         .data$eraTable
+    #       ),
+    #     by = "domainTableShort"
+    #   ) %>%
+    #   dplyr::arrange(.data$domainTable,
+    #                  .data$domainField)
     
-    domainFieldSelected <- getDomainInformation()$long %>%
-      dplyr::filter(
-        .data$domainField %in% c(
-          input$domainFieldOptionsInIndexEventData %>%
-            titleCaseToCamelCase() %>%
-            camelCaseToSnakeCase()
-        )
-      ) %>%
-      dplyr::pull(.data$domainField) %>%
-      unique() %>%
-      sort()
-    if (!doesObjectHaveData(domainFieldSelected)) {
+    choices <- "To be removed"
+    
+    choicesSelected <- choices
+    
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "domainTableOptionsInIndexEventData",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = choices,
+      selected = choicesSelected
+    )
+  })
+  
+  ##pickerInput: domainFieldOptionsInIndexEventData----
+  shiny::observe({
+    if (!doesObjectHaveData(getIndexEventBreakdownData())) {
       return(NULL)
     }
+
     
-    indexEventBreakdown <- indexEventBreakdown %>%
-      dplyr::filter(.data$domainTable %in% domainTableSelected) %>%
-      dplyr::filter(.data$domainField %in% domainFieldSelected)
+    choices <- "To be removed"
     
+    choicesSelected <- "To be removed"
+    
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "domainFieldOptionsInIndexEventData",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = choices,
+      selected = choicesSelected
+    )
+  })
+  
+  #getIndexEventBreakdownDataFiltered----
+  getIndexEventBreakdownDataFiltered <- shiny::reactive(x = {
+    indexEventBreakdown <- getIndexEventBreakdownData()
+    if (!doesObjectHaveData(indexEventBreakdown)) {
+      return(NULL)
+    }
+    browser()
+    
+    indexEventBreakdown <- indexEventBreakdown %>% 
+      dplyr::filter(.data$daysRelativeIndex == 0) #!! in new design, we have multiple daysRelativeIndex
+
     if (input$indexEventBreakdownTableRadioButton == 'All') {
       return(indexEventBreakdown)
     } else if (input$indexEventBreakdownTableRadioButton == "Standard concepts") {
@@ -4948,9 +4855,10 @@ shiny::shinyServer(function(input, output, session) {
     } else {
       #!!!! check why indexEventBreakdown is not returning data for non standard concept
       # why are there no non standard concepts in index event breakdown.
-      return(indexEventBreakdown %>% dplyr::filter(is.na(.data$standardConcept)))
+      return(indexEventBreakdown %>% dplyr::filter(is.na(.data$standardConcept) |
+                                                     .data$standardConcept != "S"))
     }
-    return(indexEventBreakdown)
+    return(NULL)
   })
   
   ##getIndexEventBreakdownDataLong----
@@ -5054,12 +4962,10 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: saveBreakdownTable----
   output$saveBreakdownTable <-  downloadHandler(
-    filename = function()
-    {
+    filename = function() {
       getCsvFileNameWithDateTime(string = "indexEventBreakdown")
     },
-    content = function(file)
-    {
+    content = function(file) {
       downloadCsv(x = getIndexEventBreakdownDataWide(),
                   fileName = file)
     }
@@ -5100,6 +5006,7 @@ shiny::shinyServer(function(input, output, session) {
         ),
         value = 0
       )
+      browser()
       data <-
         getIndexEventBreakdownDataTable()
       validate(
