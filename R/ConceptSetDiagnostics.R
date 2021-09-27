@@ -960,7 +960,6 @@ getConceptRecordCount <- function(connection,
             	AND std.concept_id IS NULL
             GROUP BY @domain_concept_id;"
   
-  standardConcepts <- list()
   for (i in (1:nrow(domains))) {
     rowData <- domains[i, ]
     ParallelLogger::logTrace(paste0(
@@ -1045,7 +1044,7 @@ getConceptRecordCount <- function(connection,
         progressBar = FALSE,
         reportOverallTime = FALSE
       )
-      ParallelLogger::logTrace("    - Counting concepts by calendar year")
+      ParallelLogger::logTrace("    - Counting concepts - no calendar stratification")
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sql6,
@@ -1060,17 +1059,15 @@ getConceptRecordCount <- function(connection,
       )
     }
   }
-  
   retrieveSql <- "SELECT concept_id, event_year, event_month,
                     sum(concept_count) concept_count,
                     max(subject_count) subject_count
                   FROM #concept_count_temp
                   GROUP BY concept_id, event_year, event_month
                   ORDER By concept_id, event_year, event_month;"
-  data <-
-    DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                               sql = sql,
-                                               snakeCaseToCamelCase = TRUE) %>%
+  data <- renderTranslateQuerySql(connection = connection,
+                                  sql = retrieveSql,
+                                  snakeCaseToCamelCase = TRUE) %>%
     dplyr::tibble()
   # i was thinking of keeping counts at the table level - but the file size became too big
   # so i decided to not include them
