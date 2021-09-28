@@ -4,7 +4,7 @@
 SELECT cohort_definition_id cohort_id,
 	time_id,
 	COUNT_BIG(*) records, -- records in calendar period
-	COUNT_BIG(DISTINCT subject_id) subjects, -- unique subjects
+	COUNT_BIG(DISTINCT subject_id) subjects, -- unique subjects in calendar period
 	SUM(datediff(dd, CASE 
 				WHEN cohort_start_date >= period_begin
 					THEN cohort_start_date
@@ -20,19 +20,19 @@ SELECT cohort_definition_id cohort_id,
 				THEN subject_id
 			ELSE NULL
 			END) records_start, -- records start within period
-	COUNT_BIG(DISTINCT CASE 
+	COUNT_BIG(DISTINCT CASE WHEN first_occurrence = 'Y' AND
 			WHEN cohort_start_date >= period_begin
 				AND cohort_start_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_start, -- subjects start within period
+			END) subjects_start, -- subjects start within period - incidence
 	COUNT_BIG(CASE 
 			WHEN cohort_end_date >= period_begin
 				AND cohort_end_date <= period_end
 				THEN subject_id
 			ELSE NULL
 			END) records_end, -- records end within period
-	COUNT_BIG(DISTINCT CASE 
+	COUNT_BIG(DISTINCT CASE WHEN first_occurrence = 'Y' AND 
 			WHEN cohort_end_date >= period_begin
 				AND cohort_end_date <= period_end
 				THEN subject_id
@@ -42,6 +42,5 @@ FROM #cohort_ts
 INNER JOIN #calendar_periods cp
 	ON cp.period_end >= cohort_start_date
 		AND cp.period_begin <= cohort_end_date
-WHERE cohort_definition_id IN (@cohort_ids)
 GROUP BY time_id,
 	cohort_definition_id;
