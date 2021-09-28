@@ -290,16 +290,24 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              databaseId = NULL,
                                              vocabularyDatabaseSchema = NULL,
                                              daysRelativeIndex = NULL,
+                                             startDay = NULL,
+                                             endDay = NULL,
                                              dataTableName) {
   if (is(dataSource, "environment")) {
-    object <- c("cohortId",
-                "conceptId",
-                "databaseId",
-                "conceptSetId",
-                "daysRelativeIndex")
+    object <- c(
+      "cohortId",
+      "conceptId",
+      "databaseId",
+      "conceptSetId",
+      "startDay",
+      "endDay",
+      "daysRelativeIndex"
+    )
     if (!is.null(vocabularyDatabaseSchema)) {
-      paste0("vocabularyDatabaseSchema provided for function 'getResultsConcept', ",
-             "\nbut working in local file mode. VocabularyDatabaseSchema will be ignored.")
+      paste0(
+        "vocabularyDatabaseSchema provided for function 'getResultsConcept', ",
+        "\nbut working in local file mode. VocabularyDatabaseSchema will be ignored."
+      )
     }
     if (!exists(dataTableName, envir = dataSource)) {
       return(NULL)
@@ -319,9 +327,10 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
           dplyr::filter(!!as.name(object[[i]]) %in% !!get(object[[i]]))
       }
     }
-    if (doesObjectHaveData(conceptId1)) {#for concept relationship only
+    if (doesObjectHaveData(conceptId1)) {
+      #for concept relationship only
       browser()
-      data <- data %>% 
+      data <- data %>%
         dplyr::filter(.data$conceptId1 %in% conceptId |
                         .data$conceptId2 %in% conceptId)
     }
@@ -341,7 +350,10 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
               {@cohort_id !=''} ? {AND cohort_id in (@cohort_id) \n}
               {@concept_id !=''} ? {AND concept_id in (@concept_id) \n}
               {@concept_set_id !=''} ? {AND concept_set_id in (@concept_set_id) \n}
-              {@concept_id_1 !=''} ? {(concept_id_1 IN (@concept_ids) OR concept_id_2 IN (@concept_ids)) \n}
+              {@concept_id_1 !=''} ? {AND (concept_id_1 IN (@concept_ids) OR concept_id_2 IN (@concept_ids)) \n}
+              {@start_day !=''} ? {AND start_day IN (@start_day) \n}
+              {@end_day !=''} ? {AND end_day IN (@end_day) \n}
+              {@days_relative_index !=''} ? {AND end_day IN (@days_relative_index) \n}
             ;"
     if (!is.null(vocabularyDatabaseSchema)) {
       resultsDatabaseSchema <- vocabularyDatabaseSchema
@@ -358,7 +370,11 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         database_id = quoteLiterals(databaseId),
         concept_id = conceptId,
         concept_set_id = conceptSetId,
-        concept_id_1 = conceptId1,# for concept relationship only
+        concept_id_1 = conceptId1,
+        # for concept relationship only
+        start_day = startDay,
+        end_day = endDay,
+        days_relative_index = daysRelativeIndex,
         snakeCaseToCamelCase = TRUE
       )
   }
@@ -1927,6 +1943,10 @@ getResultsVisitContext <- function(dataSource,
 #' @template cohortIds
 #'
 #' @template DatabaseIds
+#' 
+#' @param startDay A vector of days in relation to cohort_start_date of target 
+#' 
+#' @param endDay A vector of days in relation to cohort_end_date of target 
 #'
 #' @return
 #' Returns a data frame (tibble) with results that conform to cohort_relationships
@@ -1935,11 +1955,15 @@ getResultsVisitContext <- function(dataSource,
 #' @export
 getResultsCohortRelationships <- function(dataSource,
                                           cohortIds = NULL,
-                                          databaseIds = NULL) {
+                                          databaseIds = NULL,
+                                          startDay = NULL,
+                                          endDay = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource = dataSource,
     cohortId = cohortIds,
     databaseId = databaseIds,
+    startDay = startDay,
+    endDay = endDay,
     dataTableName = "cohortRelationships"
   )
   return(data)
@@ -2196,6 +2220,7 @@ getCohortRelationshipCharacterizationResults <-
   function(dataSource = .GlobalEnv,
            cohortIds = NULL,
            databaseIds = NULL) {
+    browser()
     # meta information
     cohortCounts <-
       getResultsCohortCount(dataSource = dataSource,
@@ -2206,7 +2231,9 @@ getCohortRelationshipCharacterizationResults <-
     cohortRelationships <-
       getResultsCohortRelationships(dataSource = dataSource,
                                     cohortIds = cohortIds,
-                                    databaseIds = databaseIds)
+                                    databaseIds = databaseIds,
+                                    startDay = c(-99999,-365,-180,-30,-99999,-365,-180,-30),
+                                    endDay = 0)
     
     # comparator cohort was on or after target cohort
     summarizeCohortRelationship <- function(data,
@@ -2262,27 +2289,27 @@ getCohortRelationshipCharacterizationResults <-
     
     analysisId <- c(-101,-102,-103,-104,-201,-202,-203,-204)
     analysisName <- c(
-      "CohortOccurrenceAnyTimePrior",
-      "CohortOccurrenceLongTerm",
-      "CohortOccurrenceMediumTerm",
-      "CohortOccurrenceShortTerm",
-      "CohortEraAnyTimePrior",
-      "CohortEraLongTerm",
-      "CohortEraMediumTerm",
-      "CohortEraShortTerm"
+      "CohortOccurrenceAnyTimePrior",  #subjects in comparator that start anytime prior to target start
+      "CohortOccurrenceLongTerm",      #subjects in comparator that start in long term window in relation to target start
+      "CohortOccurrenceMediumTerm",    #subjects in comparator that start in medium term window in relation to target start
+      "CohortOccurrenceShortTerm",     #subjects in comparator that start in short term window in relation to target start
+      "CohortEraAnyTimePrior",         #subjects in comparator that exist anytime prior to target start
+      "CohortEraLongTerm",             #subjects in comparator that exist in long term window in relation to target start
+      "CohortEraMediumTerm",           #subjects in comparator that exist in medium term window in relation to target start
+      "CohortEraShortTerm"             #subjects in comparator that exist in short term window in relation to target start
     )
     valueField <- c(
-      "cSubjectsStart",
-      "cSubjectsStart",
-      "cSubjectsStart",
-      "cSubjectsStart",
-      "bothSubjects",
-      "bothSubjects",
-      "bothSubjects",
-      "bothSubjects"
+      "subCsBeforeTs",
+      "subCsBeforeTs",
+      "subCsBeforeTs",
+      "subCsBeforeTs", #comparator cohort subjects start within window in relation to target cohort start
+      "subjects",
+      "subjects",
+      "subjects",
+      "subjects"          #comparator cohort subjects exist within the window in relation to target cohort start/end date
     )
     startDay <- c(-99999,-365,-180,-30,-99999,-365,-180,-30)
-    endDay <- c(0, 0, 0, 0, 0, 0, 0, 0)
+    endDay <- c(0)
     analysisRef <-
       dplyr::tibble(analysisId, analysisName, valueField, startDay, endDay) %>%
       dplyr::mutate(isBinary = 'Y',

@@ -109,32 +109,9 @@ runCohortRelationshipDiagnostics <-
       	
     cohortSubsetSqlComparator <-
       "--HINT DISTRIBUTE_ON_KEY(subject_id)
-      WITH cohort
-      AS (
       	SELECT *
       	FROM @cohort_database_schema.@cohort_table
-      	WHERE cohort_definition_id IN (@cohort_ids)
-      	),
-      cohort_first
-      AS (
-      	SELECT cohort_definition_id,
-      		subject_id,
-      		min(cohort_start_date) cohort_start_date,
-      		min(cohort_end_date) cohort_end_date
-      	FROM cohort
-      	GROUP BY cohort_definition_id,
-      		subject_id
-      	)
-      SELECT c.*,
-      	CASE 
-      		WHEN c.cohort_start_date = cf.cohort_start_date
-      			THEN 'Y'
-      		ELSE 'N'
-      		END first_occurrence
-      INTO #comparator_subset
-      FROM cohort c
-      INNER JOIN cohort_first cf ON c.cohort_definition_id = cf.cohort_definition_id
-      	AND c.subject_id = cf.subject_id;"
+      	WHERE cohort_definition_id IN (@cohort_ids);"
     
     
     ParallelLogger::logTrace("   - Target subset")
