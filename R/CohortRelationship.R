@@ -107,7 +107,6 @@ runCohortRelationshipDiagnostics <-
 	                      --HINT DISTRIBUTE_ON_KEY(subject_id)
 	                      with cohort as (
                           SELECT *
-  	                      INTO @subset_cohort_table
                             FROM @cohort_database_schema.@cohort_table
                             WHERE cohort_definition_id IN (@cohort_ids)
                         ),
