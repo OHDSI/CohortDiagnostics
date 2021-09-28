@@ -128,6 +128,7 @@ runCohortRelationshipDiagnostics <-
       			THEN 'Y'
       		ELSE 'N'
       		END first_occurrence
+      INTO #comparator_subset
       FROM cohort c
       INNER JOIN cohort_first cf ON c.cohort_definition_id = cf.cohort_definition_id
       	AND c.subject_id = cf.subject_id;"
