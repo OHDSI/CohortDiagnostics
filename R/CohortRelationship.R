@@ -110,6 +110,7 @@ runCohortRelationshipDiagnostics <-
     cohortSubsetSqlComparator <-
       "--HINT DISTRIBUTE_ON_KEY(subject_id)
       	SELECT *
+      	INTO #comparator_subset
       	FROM @cohort_database_schema.@cohort_table
       	WHERE cohort_definition_id IN (@cohort_ids);"
     
