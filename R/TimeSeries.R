@@ -74,7 +74,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
+  ParallelLogger::logTrace(" - Creating Andromeda object to collect results")
   resultsInAndromeda <- Andromeda::andromeda()
   
   sqlCount <-
@@ -217,12 +217,10 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   seriesToRun <- seriesToRun %>% sort()
   ParallelLogger::logTrace(" - Beginning time series SQL")
   
-  ParallelLogger::logTrace(" - Creating Andromeda object to collect results")
+  sqlCohortDrop <- "IF OBJECT_ID('tempdb..#cohort_ts', 'U') IS NOT NULL
+      	DROP TABLE #cohort_ts;"
   
-  sqlCohort <- "IF OBJECT_ID('tempdb..#cohort_ts', 'U') IS NOT NULL
-      	DROP TABLE #cohort_ts;
-      
-      --HINT DISTRIBUTE_ON_KEY(subject_id)
+  sqlCohort <- "--HINT DISTRIBUTE_ON_KEY(subject_id)
       WITH cohort
       AS (
       	SELECT *
@@ -250,10 +248,18 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       INNER JOIN cohort_first cf ON c.cohort_definition_id = cf.cohort_definition_id
       	AND c.subject_id = cf.subject_id;"
   
+  ParallelLogger::logTrace("   - Dropping any time series temporary tables")
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sqlCohortDrop,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  
   ParallelLogger::logTrace("   - Creating cohort table copy for time series")
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
-    sql = cohortSubsetSqlComparator,
+    sql = sqlCohort,
     cohort_database_schema = cohortDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
     cohort_table = cohortTable,
@@ -412,16 +418,24 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   resultsInAndromeda$calendarPeriods <- NULL
   resultsInAndromeda$temp <- NULL
   resultsInAndromeda$cohortCount <- NULL
-  ParallelLogger::logTrace(" - Dropping any time_series temporary tables at end")
+  ParallelLogger::logTrace(" - Dropping any time_series temporary tables at clean up")
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = "IF OBJECT_ID('tempdb..#calendar_periods', 'U') IS NOT NULL DROP TABLE #calendar_periods;",
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
+  ParallelLogger::logTrace(" - Dropping any time_series temporary tables that maybe present at clean up.")
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = tsSetUpSql,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  ParallelLogger::logTrace("   - Dropping any time series temporary tables at clean up")
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sqlCohortDrop,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
