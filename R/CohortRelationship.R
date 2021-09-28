@@ -100,6 +100,7 @@ runCohortRelationshipDiagnostics <-
       WHERE cohort_definition_id IN (@cohort_ids)
       GROUP BY cohort_definition_id
       	,subject_id;"
+    
     cohortSubsetSqlComparator <-
       "IF OBJECT_ID('tempdb..#comparator_subset', 'U') IS NOT NULL
       	DROP TABLE #comparator_subset;
@@ -131,6 +132,8 @@ runCohortRelationshipDiagnostics <-
       INNER JOIN cohort_first cf ON c.cohort_definition_id = cf.cohort_definition_id
       	AND c.subject_id = cf.subject_id;"
     
+    
+    ParallelLogger::logTrace("   - Target subset")
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = cohortSubsetSqlTarget,
@@ -142,6 +145,7 @@ runCohortRelationshipDiagnostics <-
       reportOverallTime = FALSE
     )
     
+    ParallelLogger::logTrace("   - Comparator subset")
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = cohortSubsetSqlComparator,
@@ -253,8 +257,9 @@ runCohortRelationshipDiagnostics <-
       dplyr::arrange(.data$startDay, .data$endDay) %>%
       dplyr::mutate(timeId = dplyr::row_number())
     
-    
     ParallelLogger::logTrace("   - Creating Andromeda object to collect results")
+    
+    ParallelLogger::logTrace(paste0("   - Working with ", scales::comma(nrow(timePeriods)), " time ids.")
     resultsInAndromeda <- Andromeda::andromeda()
     
     for (i in (1:nrow(timePeriods))) {
@@ -305,16 +310,27 @@ runCohortRelationshipDiagnostics <-
         .data$endDay,
         .data$subjects,
         .data$subCsBeforeTs,
+        .data$subCsBeforeTsStart,
         .data$subCsOnTs,
+        .data$subCsOnTsStart,
         .data$subCsAfterTs,
+        .data$subCsAfterTsStart,
         .data$subCsBeforeTe,
+        .data$subCsBeforeTeStart,
         .data$subCsOnTe,
+        .data$subCsOnTeStart,
         .data$subCsAfterTe,
+        .data$subCsAfterTeStart,
         .data$subCsWindowTs,
+        .data$subCsWindowTsStart,
         .data$subCsWindowTe,
+        .data$subCsWindowTeStart,
         .data$subCeWindowTs,
+        .data$subCeWindowTsStart,
         .data$subCeWindowTe,
-        .data$subCWithinT
+        .data$subCeWindowTeStart,
+        .data$subCWithinT,
+        .data$subCWithinTStart
       ) %>%
       dplyr::arrange(
         .data$cohortId,
