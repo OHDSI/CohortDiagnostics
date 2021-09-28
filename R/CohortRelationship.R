@@ -332,27 +332,27 @@ runCohortRelationshipDiagnostics <-
         .data$endDay,
         .data$subjects,
         .data$subCsBeforeTs,
-        .data$subCsBeforeTsStart,
+        .data$subCsBeforeTsFirst,
         .data$subCsOnTs,
-        .data$subCsOnTsStart,
+        .data$subCsOnTsFirst,
         .data$subCsAfterTs,
-        .data$subCsAfterTsStart,
+        .data$subCsAfterTsFirst,
         .data$subCsBeforeTe,
-        .data$subCsBeforeTeStart,
+        .data$subCsBeforeTeFirst,
         .data$subCsOnTe,
-        .data$subCsOnTeStart,
+        .data$subCsOnTeFirst,
         .data$subCsAfterTe,
-        .data$subCsAfterTeStart,
+        .data$subCsAfterTeFirst,
         .data$subCsWindowTs,
-        .data$subCsWindowTsStart,
+        .data$subCsWindowTsFirst,
         .data$subCsWindowTe,
-        .data$subCsWindowTeStart,
+        .data$subCsWindowTeFirst,
         .data$subCeWindowTs,
-        .data$subCeWindowTsStart,
+        .data$subCeWindowTsFirst,
         .data$subCeWindowTe,
-        .data$subCeWindowTeStart,
+        .data$subCeWindowTeFirst,
         .data$subCWithinT,
-        .data$subCWithinTStart
+        .data$subCWithinTFirst
       ) %>%
       dplyr::arrange(
         .data$cohortId,
@@ -364,7 +364,6 @@ runCohortRelationshipDiagnostics <-
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = cohortSubsetSqlTargetDrop,
-      cohort_database_schema = cohortDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       progressBar = FALSE,
       reportOverallTime = FALSE
@@ -372,7 +371,6 @@ runCohortRelationshipDiagnostics <-
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = cohortSubsetSqlComparatorDrop,
-      cohort_database_schema = cohortDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       progressBar = FALSE,
       reportOverallTime = FALSE
