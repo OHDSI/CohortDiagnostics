@@ -115,7 +115,6 @@ runCohortRelationshipDiagnostics <-
     	                              subject_id,
     	                              min(cohort_start_date) cohort_start_date,
     	                              min(cohort_end_date) cohort_end_date
-  	                      INTO #target_subset
                           FROM cohort
                           GROUP BY cohort_definition_id,
                                     subject_id
