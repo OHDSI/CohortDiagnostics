@@ -91,15 +91,15 @@ runCohortRelationshipDiagnostics <-
       	DROP TABLE #target_subset;
       
       --HINT DISTRIBUTE_ON_KEY(subject_id)
-      SELECT cohort_definition_id
-      	,subject_id
-      	,min(cohort_start_date) cohort_start_date
-      	,min(cohort_end_date) cohort_end_date
+      SELECT cohort_definition_id,
+      	subject_id,
+      	min(cohort_start_date) cohort_start_date,
+      	min(cohort_end_date) cohort_end_date
       INTO #target_subset
       FROM @cohort_database_schema.@cohort_table
       WHERE cohort_definition_id IN (@cohort_ids)
-      GROUP BY cohort_definition_id
-      	,subject_id;"
+      GROUP BY cohort_definition_id,
+      	subject_id;"
     
     cohortSubsetSqlComparator <-
       "IF OBJECT_ID('tempdb..#comparator_subset', 'U') IS NOT NULL
