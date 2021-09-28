@@ -4843,7 +4843,6 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(indexEventBreakdown)) {
       return(NULL)
     }
-    browser()
     
     indexEventBreakdown <- indexEventBreakdown %>% 
       dplyr::filter(.data$daysRelativeIndex == 0) #!! in new design, we have multiple daysRelativeIndex
@@ -5796,10 +5795,9 @@ shiny::shinyServer(function(input, output, session) {
   ###getConceptSetNamesFromOneCohort----
   getConceptSetNamesFromOneCohort <-
     shiny::reactive(x = {
-      #!!!!!!!!!!!consolidated
       if (any(
-        length(consolidatedCohortIdTarget()) == 0,
-        length(consolidatedDatabaseIdTarget()) == 0
+        !doesObjectHaveData(consolidatedCohortIdTarget()),
+        !doesObjectHaveData(consolidatedDatabaseIdTarget())
       )) {
         return(NULL)
       }
@@ -5813,15 +5811,13 @@ shiny::shinyServer(function(input, output, session) {
       expression <-
         getConceptSetDetailsFromCohortDefinition(cohortDefinitionExpression = jsonExpression)
       
-      if (!is.null(expression))
-      {
+      if (!is.null(expression)) {
         expression <- expression$conceptSetExpression %>%
           dplyr::select(.data$name) %>%
           dplyr::distinct() %>%
           dplyr::arrange(.data$name)
         return(expression)
-      } else
-      {
+      } else {
         return(NULL)
       }
     })
@@ -5840,8 +5836,7 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observe({
     data <- getCharacterizationTableData()
     if (any(is.null(data),
-            nrow(data$analysisName) == 0))
-    {
+            !doesObjectHaveData(data$analysisName))) {
       return(NULL)
     }
     subset <-
@@ -5859,8 +5854,7 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observe({
     data <- getCharacterizationTableData()
     if (all(!is.null(data),
-            nrow(data$domainId) > 0))
-    {
+            !doesObjectHaveData(data$domainId))) {
       subset <-
         data$domainId %>% unique() %>% sort()
       shinyWidgets::updatePickerInput(
@@ -5878,6 +5872,7 @@ shiny::shinyServer(function(input, output, session) {
     shiny::reactive(x = {
       return(input$temporalCharacterizationAnalysisNameOptions)
     })
+  
   ### getTemporalCharacterizationDomainNameOptions----
   getTemporalCharacterizationDomainNameOptions <-
     shiny::reactive(x = {
@@ -5910,9 +5905,6 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  
-  
-  
   ###getMultipleCharacterizationData----
   getMultipleCharacterizationData <- shiny::reactive(x = {
     if (all(is(dataSource, "environment"), !any(
@@ -5921,6 +5913,7 @@ shiny::shinyServer(function(input, output, session) {
     ))) {
       return(NULL)
     }
+    browser()
     if (!any(
       input$tabs == "temporalCharacterization",
       input$tabs == "cohortCharacterization"
@@ -5928,8 +5921,8 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     if (any(
-      length(consolidatedCohortIdTarget()) != 1,
-      length(consolidatedDatabaseIdTarget()) == 0
+      !doesObjectHaveData(consolidatedCohortIdTarget()),
+      !doesObjectHaveData(consolidatedDatabaseIdTarget())
     )) {
       return(NULL)
     }
