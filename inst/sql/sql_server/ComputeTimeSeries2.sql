@@ -45,10 +45,8 @@ INNER JOIN (
 	SELECT DISTINCT cohort_definition_id,
 		subject_id
 	FROM #cohort_ts
-	) c
-	ON o.person_id = c.subject_id
-INNER JOIN #calendar_periods cp
-	ON cp.period_end >= observation_period_start_date
-		AND cp.period_begin <= observation_period_end_date
+	) c ON o.person_id = c.subject_id
+INNER JOIN #calendar_periods cp ON cp.period_end >= observation_period_start_date
+	AND cp.period_begin <= observation_period_end_date
 GROUP BY time_id,
 	cohort_definition_id;

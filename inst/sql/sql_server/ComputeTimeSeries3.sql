@@ -39,7 +39,6 @@ SELECT 0 cohort_id,
 			ELSE NULL
 			END) subjects_end -- subjects end within period
 FROM @cdm_database_schema.observation_period o
-INNER JOIN #calendar_periods cp
-	ON cp.period_end >= observation_period_start_date
-		AND cp.period_begin <= observation_period_end_date
+INNER JOIN #calendar_periods cp ON cp.period_end >= observation_period_start_date
+	AND cp.period_begin <= observation_period_end_date
 GROUP BY time_id;

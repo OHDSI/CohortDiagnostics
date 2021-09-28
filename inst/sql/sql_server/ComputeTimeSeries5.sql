@@ -43,10 +43,8 @@ INNER JOIN (
 	SELECT DISTINCT cohort_definition_id,
 		subject_id
 	FROM #cohort_ts
-	) c
-	ON o.person_id = c.subject_id
-INNER JOIN #calendar_periods cp
-	ON (
+	) c ON o.person_id = c.subject_id
+INNER JOIN #calendar_periods cp ON (
 		observation_period_start_date <= period_end -- observation period start on or before calendar period end, AND
 		AND observation_period_end_date >= period_begin -- observation period end on or before calendar period end
 		)
