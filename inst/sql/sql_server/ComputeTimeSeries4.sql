@@ -38,7 +38,7 @@ SELECT cohort_definition_id cohort_id,
 				THEN subject_id
 			ELSE NULL
 			END) subjects_end -- subjects end within period
-FROM @cohort_database_schema.@cohort_table
+FROM #cohort_ts
 INNER JOIN #calendar_periods cp
 	ON (
 		cohort_start_date <= period_end -- calendar period start on or before calendar period end, AND

@@ -219,6 +219,49 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   
   ParallelLogger::logTrace(" - Creating Andromeda object to collect results")
   
+  sqlCohort <- "IF OBJECT_ID('tempdb..#cohort_ts', 'U') IS NOT NULL
+      	DROP TABLE #cohort_ts;
+      
+      --HINT DISTRIBUTE_ON_KEY(subject_id)
+      WITH cohort
+      AS (
+      	SELECT *
+      	FROM @cohort_database_schema.@cohort_table
+      	WHERE cohort_definition_id IN (@cohort_ids)
+      	),
+      cohort_first
+      AS (
+      	SELECT cohort_definition_id,
+      		subject_id,
+      		min(cohort_start_date) cohort_start_date,
+      		min(cohort_end_date) cohort_end_date
+      	FROM cohort
+      	GROUP BY cohort_definition_id,
+      		subject_id
+      	)
+      SELECT c.*,
+      	CASE 
+      		WHEN c.cohort_start_date = cf.cohort_start_date
+      			THEN 'Y'
+      		ELSE 'N'
+      		END first_occurrence
+      INTO #cohort_ts
+      FROM cohort c
+      INNER JOIN cohort_first cf ON c.cohort_definition_id = cf.cohort_definition_id
+      	AND c.subject_id = cf.subject_id;"
+  
+  ParallelLogger::logTrace("   - Creating cohort table copy for time series")
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = cohortSubsetSqlComparator,
+    cohort_database_schema = cohortDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    cohort_table = cohortTable,
+    cohort_ids = cohortIds,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  
   for (i in (1:length(seriesToRun))) {
     ParallelLogger::logTrace(paste0(" - Running ", seriesToRun[[i]]))
     if (seriesToRun[[i]] == 'ComputeTimeSeries1.sql') {
@@ -316,7 +359,6 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       sql <- SqlRender::render(
         sql = sql,
         cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable,
         cohort_ids = cohortIds,
         warnOnMissingParameters = FALSE
       )

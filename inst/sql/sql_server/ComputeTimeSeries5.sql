@@ -42,8 +42,7 @@ FROM @cdm_database_schema.observation_period o
 INNER JOIN (
 	SELECT DISTINCT cohort_definition_id,
 		subject_id
-	FROM @cohort_database_schema.@cohort_table
-	WHERE cohort_definition_id IN (@cohort_ids)
+	FROM #cohort_ts
 	) c
 	ON o.person_id = c.subject_id
 INNER JOIN #calendar_periods cp
