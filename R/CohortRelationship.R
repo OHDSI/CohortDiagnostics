@@ -125,7 +125,7 @@ runCohortRelationshipDiagnostics <-
                         FROM cohort c
                         INNER JOIN cohort_first cf
                         ON c.cohort_definition_id = cf.cohort_definition_id
-                        ON c.subject_id = cf.subject_id;"
+                        AND c.subject_id = cf.subject_id;"
     
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
