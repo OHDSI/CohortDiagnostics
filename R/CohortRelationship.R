@@ -142,7 +142,6 @@ runCohortRelationshipDiagnostics <-
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = cohortSubsetSqlTargetDrop,
-      cohort_database_schema = cohortDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       progressBar = FALSE,
       reportOverallTime = FALSE
@@ -164,7 +163,6 @@ runCohortRelationshipDiagnostics <-
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = cohortSubsetSqlComparatorDrop,
-      cohort_database_schema = cohortDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       progressBar = FALSE,
       reportOverallTime = FALSE
