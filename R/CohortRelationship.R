@@ -86,28 +86,54 @@ runCohortRelationshipDiagnostics <-
     }
     
     ParallelLogger::logTrace("  - Creating cohort table subsets")
-    cohortSubsetSql <-
-      "IF OBJECT_ID('tempdb..@subset_cohort_table', 'U') IS NOT NULL
-	                      DROP TABLE @subset_cohort_table;
+    cohortSubsetSqlTarget <-
+      "IF OBJECT_ID('tempdb..#target_subset', 'U') IS NOT NULL
+	                      DROP TABLE #target_subset;
 
 	                      --HINT DISTRIBUTE_ON_KEY(subject_id)
                         SELECT cohort_definition_id, 
   	                              subject_id,
   	                              min(cohort_start_date) cohort_start_date,
   	                              min(cohort_end_date) cohort_end_date
-	                      INTO @subset_cohort_table
+	                      INTO #target_subset
                           FROM @cohort_database_schema.@cohort_table
                           WHERE cohort_definition_id IN (@cohort_ids)
                           GROUP BY cohort_definition_id,
                                     subject_id;"
+    cohortSubsetSqlComparator <-
+      "IF OBJECT_ID('tempdb..#comparator_subset', 'U') IS NOT NULL
+	                      DROP TABLE #comparator_subset;
+
+	                      --HINT DISTRIBUTE_ON_KEY(subject_id)
+	                      with cohort as (
+                          SELECT *
+  	                      INTO @subset_cohort_table
+                            FROM @cohort_database_schema.@cohort_table
+                            WHERE cohort_definition_id IN (@cohort_ids)
+                        ),
+                        cohort_first as (
+                          SELECT cohort_definition_id, 
+    	                              subject_id,
+    	                              min(cohort_start_date) cohort_start_date,
+    	                              min(cohort_end_date) cohort_end_date
+  	                      INTO #target_subset
+                          FROM cohort
+                          GROUP BY cohort_definition_id,
+                                    subject_id
+                        )
+                        SELECT c.*,
+                              CASE WHEN c.cohort_start_date = cf.cohort_start_date THEN 'Y' ELSE 'N' END first_occurrence
+                        FROM cohort c
+                        INNER JOIN cohort_first cf
+                        ON c.cohort_definition_id = cf.cohort_definition_id
+                        ON c.subject_id = cf.subject_id;"
     
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
-      sql = cohortSubsetSql,
+      sql = cohortSubsetSqlTarget,
       cohort_database_schema = cohortDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       cohort_table = cohortTable,
-      subset_cohort_table = '#target_subset',
       cohort_ids = targetCohortIds,
       progressBar = FALSE,
       reportOverallTime = FALSE
@@ -115,11 +141,10 @@ runCohortRelationshipDiagnostics <-
     
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
-      sql = cohortSubsetSql,
+      sql = cohortSubsetSqlComparator,
       cohort_database_schema = cohortDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       cohort_table = cohortTable,
-      subset_cohort_table = '#comparator_subset',
       cohort_ids = comparatorCohortIds,
       progressBar = FALSE,
       reportOverallTime = FALSE
