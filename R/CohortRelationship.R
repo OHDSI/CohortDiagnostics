@@ -259,7 +259,7 @@ runCohortRelationshipDiagnostics <-
     
     ParallelLogger::logTrace("   - Creating Andromeda object to collect results")
     
-    ParallelLogger::logTrace(paste0("   - Working with ", scales::comma(nrow(timePeriods)), " time ids.")
+    ParallelLogger::logTrace(paste0("   - Working with ", scales::comma(nrow(timePeriods)), " time ids."))
     resultsInAndromeda <- Andromeda::andromeda()
     
     for (i in (1:nrow(timePeriods))) {
