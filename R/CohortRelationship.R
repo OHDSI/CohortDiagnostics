@@ -85,12 +85,14 @@ runCohortRelationshipDiagnostics <-
       return(NULL)
     }
     
-    ParallelLogger::logTrace("  - Creating cohort table subsets")
-    cohortSubsetSqlTarget <-
+    ParallelLogger::logTrace("  - Creating cohort table subsets")    
+    cohortSubsetSqlTargetDrop <-
       " IF OBJECT_ID('tempdb..#target_subset', 'U') IS NOT NULL
       	DROP TABLE #target_subset;
-      
-      --HINT DISTRIBUTE_ON_KEY(subject_id)
+      "
+    
+    cohortSubsetSqlTarget <-
+      "--HINT DISTRIBUTE_ON_KEY(subject_id)
       SELECT cohort_definition_id,
       	subject_id,
       	min(cohort_start_date) cohort_start_date,
@@ -101,11 +103,12 @@ runCohortRelationshipDiagnostics <-
       GROUP BY cohort_definition_id,
       	subject_id;"
     
-    cohortSubsetSqlComparator <-
+    cohortSubsetSqlComparatorDrop <-
       "IF OBJECT_ID('tempdb..#comparator_subset', 'U') IS NOT NULL
-      	DROP TABLE #comparator_subset;
-      
-      --HINT DISTRIBUTE_ON_KEY(subject_id)
+      	DROP TABLE #comparator_subset;"
+      	
+    cohortSubsetSqlComparator <-
+      "--HINT DISTRIBUTE_ON_KEY(subject_id)
       WITH cohort
       AS (
       	SELECT *
@@ -135,6 +138,16 @@ runCohortRelationshipDiagnostics <-
     
     
     ParallelLogger::logTrace("   - Target subset")
+    ParallelLogger::logTrace("    - dropping temporary table")
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = cohortSubsetSqlTargetDrop,
+      cohort_database_schema = cohortDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+    ParallelLogger::logTrace("    - creating temporary table")
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = cohortSubsetSqlTarget,
@@ -147,6 +160,16 @@ runCohortRelationshipDiagnostics <-
     )
     
     ParallelLogger::logTrace("   - Comparator subset")
+    ParallelLogger::logTrace("    - dropping temporary table")
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = cohortSubsetSqlComparatorDrop,
+      cohort_database_schema = cohortDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+    ParallelLogger::logTrace("    - creating temporary table")
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = cohortSubsetSqlComparator,
@@ -340,6 +363,22 @@ runCohortRelationshipDiagnostics <-
         .data$endDay
       )
     resultsInAndromeda$timePeriods <- NULL
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = cohortSubsetSqlTargetDrop,
+      cohort_database_schema = cohortDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = cohortSubsetSqlComparatorDrop,
+      cohort_database_schema = cohortDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
     delta <- Sys.time() - startTime
     ParallelLogger::logTrace(paste(
       " - Computing cohort relationship took",
