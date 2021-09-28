@@ -310,27 +310,16 @@ runCohortRelationshipDiagnostics <-
         .data$endDay,
         .data$subjects,
         .data$subCsBeforeTs,
-        .data$subCsBeforeTsFirst,
         .data$subCsOnTs,
-        .data$subCsOnTsFirst,
         .data$subCsAfterTs,
-        .data$subCsAfterTsFirst,
         .data$subCsBeforeTe,
-        .data$subCsBeforeTeFirst,
         .data$subCsOnTe,
-        .data$subCsOnTeFirst,
         .data$subCsAfterTe,
-        .data$subCsAfterTeFirst,
         .data$subCsWindowTs,
-        .data$subCsWindowTsFirst,
         .data$subCsWindowTe,
-        .data$subCsWindowTeFirst,
         .data$subCeWindowTs,
-        .data$subCeWindowTsFirst,
         .data$subCeWindowTe,
-        .data$subCeWindowTeFirst,
-        .data$subCWithinT,
-        .data$subCWithinTFirst
+        .data$subCWithinT
       ) %>%
       dplyr::arrange(
         .data$cohortId,
