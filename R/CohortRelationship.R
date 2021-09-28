@@ -88,7 +88,6 @@ runCohortRelationshipDiagnostics <-
     ParallelLogger::logTrace("  - Creating cohort table subsets")
     cohortSubsetSqlTarget <-
       " IF OBJECT_ID('tempdb..#target_subset', 'U') IS NOT NULL
-      	IF OBJECT_ID('tempdb..#target_subset', 'U') IS NOT NULL
       	DROP TABLE #target_subset;
       
       --HINT DISTRIBUTE_ON_KEY(subject_id)
