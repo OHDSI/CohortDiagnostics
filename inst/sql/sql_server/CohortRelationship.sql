@@ -9,7 +9,7 @@ SELECT t.cohort_definition_id cohort_id,
 			ELSE NULL
 			END) sub_cs_before_ts,
 	COUNT_BIG(DISTINCT CASE 
-			WHEN cf.first_occurrence = 'Y' AND 
+			WHEN c.first_occurrence = 'Y' AND 
 			  c.cohort_start_date < DATEADD(day, @start_day_offset, t.cohort_start_date)
 				THEN c.subject_id
 			ELSE NULL
@@ -21,7 +21,7 @@ SELECT t.cohort_definition_id cohort_id,
 			ELSE NULL
 			END) sub_cs_on_ts,
 	COUNT_BIG(DISTINCT CASE 
-			WHEN cf.first_occurrence = 'Y' AND 
+			WHEN c.first_occurrence = 'Y' AND 
 			  c.cohort_start_date = DATEADD(day, @start_day_offset, t.cohort_start_date)
 				THEN c.subject_id
 			ELSE NULL
@@ -33,7 +33,7 @@ SELECT t.cohort_definition_id cohort_id,
 			ELSE NULL
 			END) sub_cs_after_ts,
 	COUNT_BIG(DISTINCT CASE 
-			WHEN cf.first_occurrence = 'Y' AND 
+			WHEN c.first_occurrence = 'Y' AND 
 			  c.cohort_start_date > DATEADD(day, @start_day_offset, t.cohort_start_date)
 				THEN c.subject_id
 			ELSE NULL
@@ -45,7 +45,7 @@ SELECT t.cohort_definition_id cohort_id,
 			ELSE NULL
 			END) sub_cs_before_te,
 	COUNT_BIG(DISTINCT CASE 
-			WHEN cf.first_occurrence = 'Y' AND 
+			WHEN c.first_occurrence = 'Y' AND 
 			  c.cohort_start_date < DATEADD(day, @start_day_offset, t.cohort_end_date)
 				THEN c.subject_id
 			ELSE NULL
@@ -57,7 +57,7 @@ SELECT t.cohort_definition_id cohort_id,
 			ELSE NULL
 			END) sub_cs_on_te,
 	COUNT_BIG(DISTINCT CASE 
-			WHEN cf.first_occurrence = 'Y' AND 
+			WHEN c.first_occurrence = 'Y' AND 
 			  c.cohort_start_date = DATEADD(day, @start_day_offset, t.cohort_end_date)
 				THEN c.subject_id
 			ELSE NULL
@@ -69,7 +69,7 @@ SELECT t.cohort_definition_id cohort_id,
 			ELSE NULL
 			END) sub_cs_after_te,
 	COUNT_BIG(DISTINCT CASE 
-			WHEN cf.first_occurrence = 'Y' AND 
+			WHEN c.first_occurrence = 'Y' AND 
 			  c.cohort_start_date > DATEADD(day, @start_day_offset, t.cohort_end_date)
 				THEN c.subject_id
 			ELSE NULL
@@ -82,7 +82,7 @@ SELECT t.cohort_definition_id cohort_id,
 			ELSE NULL
 			END) sub_cs_window_ts,
 	COUNT_BIG(DISTINCT CASE 
-			WHEN cf.first_occurrence = 'Y' AND 
+			WHEN c.first_occurrence = 'Y' AND 
 			  c.cohort_start_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
 				AND c.cohort_start_date <= DATEADD(day, @end_day_offset, t.cohort_start_date)
 				THEN c.subject_id
@@ -96,7 +96,7 @@ SELECT t.cohort_definition_id cohort_id,
 			ELSE NULL
 			END) sub_cs_window_te,
 	COUNT_BIG(DISTINCT CASE 
-			WHEN cf.first_occurrence = 'Y' AND 
+			WHEN c.first_occurrence = 'Y' AND 
 			  c.cohort_start_date >= DATEADD(day, @start_day_offset, t.cohort_end_date)
 				AND c.cohort_start_date <= DATEADD(day, @end_day_offset, t.cohort_end_date)
 				THEN c.subject_id
@@ -110,7 +110,7 @@ SELECT t.cohort_definition_id cohort_id,
 			ELSE NULL
 			END) sub_ce_window_ts,	
 	COUNT_BIG(DISTINCT CASE 
-			WHEN cf.first_occurrence = 'Y' AND 
+			WHEN c.first_occurrence = 'Y' AND 
 			  c.cohort_end_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
 				AND c.cohort_end_date <= DATEADD(day, @end_day_offset, t.cohort_start_date)
 				THEN c.subject_id
@@ -124,7 +124,7 @@ SELECT t.cohort_definition_id cohort_id,
 			ELSE NULL
 			END) sub_ce_window_te,
 	COUNT_BIG(DISTINCT CASE 
-			WHEN cf.first_occurrence = 'Y' AND 
+			WHEN c.first_occurrence = 'Y' AND 
 			  c.cohort_end_date >= DATEADD(day, @start_day_offset, t.cohort_end_date)
 				AND c.cohort_end_date <= DATEADD(day, @end_day_offset, t.cohort_end_date)
 				THEN c.subject_id
@@ -141,7 +141,7 @@ SELECT t.cohort_definition_id cohort_id,
 			ELSE NULL
 			END) sub_c_within_t,
 	COUNT_BIG(DISTINCT CASE 
-			WHEN cf.first_occurrence = 'Y' AND 
+			WHEN c.first_occurrence = 'Y' AND 
 			  c.cohort_start_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
 				AND c.cohort_start_date <= DATEADD(day, @end_day_offset, t.cohort_end_date)
 				AND c.cohort_end_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
