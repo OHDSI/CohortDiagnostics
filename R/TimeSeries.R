@@ -359,7 +359,6 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       sql <- SqlRender::render(
         sql = sql,
         cohort_database_schema = cohortDatabaseSchema,
-        cohort_ids = cohortIds,
         warnOnMissingParameters = FALSE
       )
     }
