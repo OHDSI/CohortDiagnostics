@@ -95,6 +95,7 @@ runCohortRelationshipDiagnostics <-
   	                              subject_id,
   	                              min(cohort_start_date) cohort_start_date,
   	                              min(cohort_end_date) cohort_end_date
+	                      INTO @subset_cohort_table
                           FROM @cohort_database_schema.@cohort_table
                           WHERE cohort_definition_id IN (@cohort_ids)
                           GROUP BY cohort_definition_id,
