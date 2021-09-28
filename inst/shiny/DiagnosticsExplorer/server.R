@@ -5913,7 +5913,6 @@ shiny::shinyServer(function(input, output, session) {
     ))) {
       return(NULL)
     }
-    browser()
     if (!any(
       input$tabs == "temporalCharacterization",
       input$tabs == "cohortCharacterization"
@@ -5949,10 +5948,7 @@ shiny::shinyServer(function(input, output, session) {
     if (input$tabs != "cohortCharacterization") {
       return(NULL)
     }
-    if (any(
-      is.null(getMultipleCharacterizationData()),
-      length(getMultipleCharacterizationData()) == 0
-    )) {
+    if (!doesObjectHaveData(getMultipleCharacterizationData())) {
       return(NULL)
     }
     if (is.null(getMultipleCharacterizationData()$covariateRef)) {
@@ -5966,7 +5962,6 @@ shiny::shinyServer(function(input, output, session) {
       warning("No analysis ref dta found")
       return(NULL)
     }
-    
     covariatesTofilter <-
       getMultipleCharacterizationData()$covariateRef
     
