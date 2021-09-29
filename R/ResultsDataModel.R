@@ -424,7 +424,6 @@ uploadResults <- function(connectionDetails = NULL,
         if (nrow(chunk) == 0) {
           ParallelLogger::logInfo("   - No data left to insert. Moving to next.")
         } else {
-          browser()
           DatabaseConnector::insertTable(
             connection = connection,
             tableName = paste(env$schema, env$tableName, sep = "."),
