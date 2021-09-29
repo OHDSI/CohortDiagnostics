@@ -239,6 +239,21 @@ if (exists("cohort")) {
     ))
 }
 
+if (exists("database")) {
+  # cohort is required and is always loaded into R memory
+  database <- database %>%
+    dplyr::arrange(.data$databaseId) %>%
+    dplyr::mutate(shortName = paste0("D", dplyr::row_number())) %>%
+    dplyr::mutate(compoundName = paste0(
+      .data$shortName,
+      ": ",
+      .data$databaseName,
+      "(",
+      .data$databaseId,
+      ")"
+    ))
+}
+
 #enhancement and removing the objects based on the control variable
 if (exists("temporalTimeRef")) {
   if (all(

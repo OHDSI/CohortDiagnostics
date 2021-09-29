@@ -16,6 +16,22 @@ addShortName <- function(data, shortNameRef = NULL, cohortIdColumn = "cohortId",
   return(data)
 }
 
+addDatabaseShortName <- function(data, shortNameRef = NULL, databaseIdColumn = "databaseId", shortNameColumn = "databaseShortName") {
+  if (is.null(shortNameRef)) {
+    shortNameRef <- data %>%
+      dplyr::distinct(.data$databaseId) %>%
+      dplyr::arrange(.data$databaseId) %>%
+      dplyr::mutate(databaseShortName = paste0("C", dplyr::row_number()))
+  } 
+  
+  shortNameRef <- shortNameRef %>%
+    dplyr::distinct(.data$databaseId, .data$shortName) 
+  colnames(shortNameRef) <- c(databaseIdColumn, shortNameColumn)
+  data <- data %>%
+    dplyr::inner_join(shortNameRef, by = databaseIdColumn)
+  return(data)
+}
+
 
 getSubjectCountsByDatabasae <-
   function(data, cohortId, databaseIds) {

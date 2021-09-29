@@ -475,8 +475,17 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   )
   checkmate::reportAssertions(collection = errorMessage)
   
+  colorReference <- read.csv(paste0(getwd(),"/colorReference.csv")) %>% 
+    dplyr::filter(.data$type == "databaseShortName") %>% 
+    dplyr::mutate(databaseShortName = .data$name,color = .data$value) %>% 
+    dplyr::select(-.data$name,-.data$type,-.data$value)
+    
+
   plotData <-
-    addShortName(data = data, shortNameRef = shortNameRef)
+    addShortName(data = data, shortNameRef = shortNameRef)  %>% 
+    addDatabaseShortName(shortNameRef = database) %>% 
+    dplyr::inner_join(colorReference,by = "databaseShortName")
+    
   
   sortShortName <- plotData %>%
     dplyr::select(.data$shortName) %>%
@@ -494,15 +503,14 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   plotData$shortName <- factor(plotData$shortName,
                                levels = sortShortName$shortName)
   
-  distinctDatabaseId <- plotData$databaseId %>% unique()
-  distinctTimeMetric <- plotData$timeMetric %>% unique()
-
-  
- plotHeight <- length(distinctDatabaseId) * length(sortShortName$shortName) * 100
+  distinctDatabaseShortName <- plotData$databaseShortName %>% unique()
+  distinctTimeMetric <- c("observation time (days) prior to index", "time (days) between cohort start and end","observation time (days) after index")
+   
+ plotHeight <- length(distinctDatabaseShortName) * length(sortShortName$shortName) * 100
   databasePlots <- list()
-  for (i in 1:length(distinctDatabaseId)) {
+  for (i in 1:length(distinctDatabaseShortName)) {
     filteredDataByDatabase <- plotData %>%
-      dplyr::filter(.data$databaseId == distinctDatabaseId[i])
+      dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i])
     timeMetricPlots  <- list()
     for (j in 1:length(distinctTimeMetric)) {
       filteredDataByTimeMetric <- filteredDataByDatabase %>%
@@ -521,7 +529,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
         cohortPlots <- cohortPlots %>% 
           plotly::add_boxplot(x = selectedRowdata,
                               name = sortShortName$shortName[k],
-                              color = I('#0000CC'),
+                              color = I(rowData$color),
                               boxpoints = FALSE,
                               text = ~paste0(
                                 rowData$shortName,
@@ -550,7 +558,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
         xaxis = list(range = c(xAxisMin, xAxisMax), tickformat = ",d")
       )
       
-      if (i != length(distinctDatabaseId) && length(distinctDatabaseId) < 3) {
+      if (i != length(distinctDatabaseShortName) && length(distinctDatabaseShortName) < 3) {
         cohortPlots <-
           cohortPlots %>% plotly::layout(xaxis = list(showticklabels = FALSE))
       }
@@ -578,7 +586,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
         annotations = list(
           x = 1.02,
           y = 0.5,
-          text = camelCaseToTitleCase(distinctDatabaseId[i]),
+          text = camelCaseToTitleCase(distinctDatabaseShortName[i]),
           showarrow = FALSE,
           xref = "paper",
           yref = "paper",
