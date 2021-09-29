@@ -5072,7 +5072,7 @@ shiny::shinyServer(function(input, output, session) {
             pattern = 'conceptValue',
             replacement = ''
           )
-        columnColor <- 5 + 1:(length(databaseIds))
+        columnColor <- 3 + 1:(length(databaseIds))
       } else if (input$indexEventBreakdownTableFilter == "Persons") {
           data <- data %>%
             dplyr::select(-dplyr::contains("conceptValue"))
@@ -5082,7 +5082,7 @@ shiny::shinyServer(function(input, output, session) {
               pattern = 'subjectValue',
               replacement = ''
             )
-          columnColor <- 5 + 1:(length(databaseIds))
+          columnColor <- 3 + 1:(length(databaseIds))
         } else {
           recordAndPersonColumnName <- c()
           for (i in 1:length(consolidatedDatabaseIdTarget())) {
@@ -5099,8 +5099,6 @@ shiny::shinyServer(function(input, output, session) {
                                                   th(rowspan = 2, "Concept Id"),
                                                   th(rowspan = 2, "Concept Name"),
                                                   th(rowspan = 2, "Vocabulary Id"),
-                                                  th(rowspan = 2, "Domain Table"),
-                                                  th(rowspan = 2, "Domain Field"),
                                                   lapply(
                                                     databaseIds,
                                                     th,
@@ -5113,16 +5111,16 @@ shiny::shinyServer(function(input, output, session) {
                                                   lapply(recordAndPersonColumnName, th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                                 )
                                               )))
-          columnColor <- 5 + 1:(length(databaseIds) * 2)
+          columnColor <- 3 + 1:(length(databaseIds) * 2)
           noOfMergeColumns <- 2
         }
       
       if (input$indexEventBreakdownValueFilter == "Percentage") {
         minimumCellPercent <-
-          minCellPercentDef(4 + 1:(length(databaseIds) * noOfMergeColumns))
+          minCellPercentDef(2 + 1:(length(databaseIds) * noOfMergeColumns))
       } else {
         minimumCellPercent <-
-          minCellCountDef(4 + 1:(length(databaseIds) * noOfMergeColumns))
+          minCellCountDef(2 + 1:(length(databaseIds) * noOfMergeColumns))
       }
       options = list(
         pageLength = 1000,
@@ -5170,7 +5168,6 @@ shiny::shinyServer(function(input, output, session) {
         backgroundRepeat = "no-repeat",
         backgroundPosition = "center"
       )
-      browser()
       return(table)
     }, server = TRUE)
   
@@ -5632,7 +5629,7 @@ shiny::shinyServer(function(input, output, session) {
                            replacement = "Visits After")
     
     totalColumns <- 1
-    browser() #broken somewhere here
+     #broken somewhere here
     if (input$visitContextTableFilters == "All") {
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(tr(
