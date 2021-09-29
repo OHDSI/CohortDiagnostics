@@ -4743,8 +4743,9 @@ shiny::shinyServer(function(input, output, session) {
     indexEventBreakdown <-
       getResultsIndexEventBreakdown(dataSource = dataSource,
                                     cohortId = consolidatedCohortIdTarget(),
-                                    databaseIds = consolidatedDatabaseIdTarget())
-    if (is.null(indexEventBreakdown)) {
+                                    databaseIds = consolidatedDatabaseIdTarget(),
+                                    daysRelativeIndex = 0) #!! in new design, we have multiple daysRelativeIndex
+    if (!doesObjectHaveData(indexEventBreakdown)) {
       return(NULL)
     }
     
@@ -4836,16 +4837,12 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  #getIndexEventBreakdownDataFiltered----
+  ##getIndexEventBreakdownDataFiltered----
   getIndexEventBreakdownDataFiltered <- shiny::reactive(x = {
     indexEventBreakdown <- getIndexEventBreakdownData()
     if (!doesObjectHaveData(indexEventBreakdown)) {
       return(NULL)
     }
-    
-    indexEventBreakdown <- indexEventBreakdown %>% 
-      dplyr::filter(.data$daysRelativeIndex == 0) #!! in new design, we have multiple daysRelativeIndex
-
     if (input$indexEventBreakdownTableRadioButton == 'All') {
       return(indexEventBreakdown)
     } else if (input$indexEventBreakdownTableRadioButton == "Standard concepts") {
@@ -4882,8 +4879,6 @@ shiny::shinyServer(function(input, output, session) {
         .data$cohortId,
         .data$conceptId,
         .data$conceptName,
-        .data$domainTable,
-        .data$domainField,
         .data$vocabularyId,
         .data$conceptValue,
         .data$subjectValue
@@ -4893,8 +4888,6 @@ shiny::shinyServer(function(input, output, session) {
         .data$cohortId,
         .data$conceptId,
         .data$conceptName,
-        .data$domainTable,
-        .data$domainField,
         .data$vocabularyId
       ) %>%
       dplyr::summarise(
@@ -4930,8 +4923,6 @@ shiny::shinyServer(function(input, output, session) {
         .data$conceptId,
         .data$conceptName,
         .data$vocabularyId,
-        .data$domainTable,
-        .data$domainField,
         .data$type
       ) %>%
       dplyr::summarise(
@@ -4945,9 +4936,7 @@ shiny::shinyServer(function(input, output, session) {
           "cohortId",
           "conceptId",
           "conceptName",
-          "vocabularyId",
-          "domainTable",
-          "domainField"
+          "vocabularyId"
         ),
         names_from = type,
         values_from = count,
