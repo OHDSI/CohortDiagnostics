@@ -4610,7 +4610,8 @@ shiny::shinyServer(function(input, output, session) {
       paging = TRUE,
       scrollX = TRUE,
       info = TRUE,
-      searchHighlight = TRUE
+      searchHighlight = TRUE,
+      columnDefs = list(minCellCountDef(3:10))
     )
     dataTable <- DT::datatable(
       data,
