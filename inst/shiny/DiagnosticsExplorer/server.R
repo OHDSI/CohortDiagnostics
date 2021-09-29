@@ -4831,64 +4831,13 @@ shiny::shinyServer(function(input, output, session) {
     return(indexEventBreakdown)
   })
   
-  ##pickerInput: domainTableOptionsInIndexEventData----
-  shiny::observe({
-    if (!doesObjectHaveData(getIndexEventBreakdownData())) {
-      return(NULL)
-    }
-    # data <- getIndexEventBreakdownData() %>%
-    #   dplyr::rename("domainTableShort" = .data$domainTable) %>%
-    #   dplyr::inner_join(
-    #     getDomainInformation()$long %>%
-    #       dplyr::select(
-    #         .data$domainTableShort,
-    #         .data$domainTable,
-    #         .data$eraTable
-    #       ),
-    #     by = "domainTableShort"
-    #   ) %>%
-    #   dplyr::arrange(.data$domainTable,
-    #                  .data$domainField)
-    
-    choices <- "To be removed"
-    
-    choicesSelected <- choices
-    
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "domainTableOptionsInIndexEventData",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = choices,
-      selected = choicesSelected
-    )
-  })
-  
-  ##pickerInput: domainFieldOptionsInIndexEventData----
-  shiny::observe({
-    if (!doesObjectHaveData(getIndexEventBreakdownData())) {
-      return(NULL)
-    }
-
-    
-    choices <- "To be removed"
-    
-    choicesSelected <- "To be removed"
-    
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "domainFieldOptionsInIndexEventData",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = choices,
-      selected = choicesSelected
-    )
-  })
-  
   ##getIndexEventBreakdownDataFiltered----
   getIndexEventBreakdownDataFiltered <- shiny::reactive(x = {
     indexEventBreakdown <- getIndexEventBreakdownData()
     if (!doesObjectHaveData(indexEventBreakdown)) {
       return(NULL)
     }
+    
     if (input$indexEventBreakdownTableRadioButton == 'All') {
       return(indexEventBreakdown)
     } else if (input$indexEventBreakdownTableRadioButton == "Standard concepts") {
@@ -5021,7 +4970,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    data <- data%>% 
+    data <- data %>% 
       dplyr::arrange(dplyr::desc(abs(dplyr::across(.cols = dplyr::contains("Value")))))
     return(data)
   })
