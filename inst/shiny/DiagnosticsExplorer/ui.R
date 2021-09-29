@@ -285,21 +285,29 @@ bodyTabItems <- shinydashboard::tabItems(
     shinydashboard::box(
       width = NULL,
       status = "primary",
-      column(6,tags$h4("Cohort Definition")),
-      column(6,
-             tags$table(width = "100%",
-                        tags$tr(
-                          tags$td(
-                            align = "right",
-                            shiny::downloadButton(
-                              outputId = "downloadAllCohortDetails",
-                              label = NULL,
-                              icon = shiny::icon("download"),
-                              style = "margin-top: 5px; margin-bottom: 5px;"
+      shinydashboard::box(
+        title = "Cohort Definition",
+        status = NULL,
+        width = NULL,
+        solidHeader = FALSE,
+        collapsible = TRUE,
+        collapsed = TRUE,
+        # column(6,tags$h4("Cohort Definition")),
+        column(12,
+               tags$table(width = "100%",
+                          tags$tr(
+                            tags$td(
+                              align = "right",
+                              shiny::downloadButton(
+                                outputId = "downloadAllCohortDetails",
+                                label = NULL,
+                                icon = shiny::icon("download"),
+                                style = "margin-top: 5px; margin-bottom: 5px;"
+                              )
                             )
-                          )
-                        ))),    
-      DT::dataTableOutput(outputId = "cohortDefinitionTable"),
+                          ))),
+        DT::dataTableOutput(outputId = "cohortDefinitionTable")
+      ),
       shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedTarget"),
       shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedComparator"),
       tags$br(),

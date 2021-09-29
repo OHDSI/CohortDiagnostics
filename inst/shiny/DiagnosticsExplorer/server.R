@@ -763,7 +763,7 @@ shiny::shinyServer(function(input, output, session) {
       colnames = colnames(data) %>% camelCaseToTitleCase(),
       escape = FALSE,
       filter = "top",
-      selection = list(mode = "multiple", target = "row"),
+      selection = "none",
       class = "stripe compact"
     )
     return(dataTable)
@@ -1018,10 +1018,10 @@ shiny::shinyServer(function(input, output, session) {
       }
       tags$table(height = '60',
                  style = "overflow : auto",
-                 tags$tr(tags$td(tags$b(
+                 tags$tr(tags$td(tags$h4(
                    "Target cohort: "
                  )),
-                 tags$td(cohortName)))
+                 tags$td(tags$h4(cohortName))))
     })
   
   
@@ -1040,10 +1040,10 @@ shiny::shinyServer(function(input, output, session) {
       }
       tags$table(height = '60',
                  style = "overflow : auto",
-                 tags$tr(tags$td(tags$b(
+                 tags$tr(tags$td(tags$h4(
                    "Comparator cohort:"
                  )),
-                 tags$td(cohortName)))
+                 tags$td(tags$h4(cohortName))))
       
     })
   
@@ -1174,7 +1174,7 @@ shiny::shinyServer(function(input, output, session) {
         rownames = FALSE,
         escape = FALSE,
         filter = "top",
-        selection = list(mode = 'multiple', selected = 1),
+        selection = "none",
         class = "stripe nowrap compact"
       )
       
@@ -2579,7 +2579,7 @@ shiny::shinyServer(function(input, output, session) {
         colnames = colnames(data) %>% camelCaseToTitleCase(),
         rownames = FALSE,
         escape = FALSE,
-        selection = list(mode = 'multiple', selected = 1),
+        selection = "none",
         filter = "top",
         class = "stripe nowrap compact"
       )
