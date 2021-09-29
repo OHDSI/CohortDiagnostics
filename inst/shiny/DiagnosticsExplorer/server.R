@@ -5529,12 +5529,14 @@ shiny::shinyServer(function(input, output, session) {
       doesObjectHaveData(data),
       "No data available for selected combination."
     ))
+    
     table <- data %>%
       dplyr::select(-.data$cohortId)
     isPerson <- input$visitContextPersonOrRecords == 'Person'
     if (isPerson) {
       databaseIdsWithCount <- cohortCount %>%
         dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>% 
+        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
         dplyr::mutate(databaseIdWithCount = paste0(
           .data$databaseId,
           " (n = ",
@@ -5546,7 +5548,8 @@ shiny::shinyServer(function(input, output, session) {
                                                                 string = "ubjects")
     } else {
       databaseIdsWithCount <- cohortCount %>%
-        dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>% 
+        dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
+        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
         dplyr::mutate(databaseIdWithCount = paste0(
           .data$databaseId,
           " (n = ",
@@ -5562,7 +5565,7 @@ shiny::shinyServer(function(input, output, session) {
       getVisitContexDataFiltered()$visitContext %>%
       unique()
     #ensure columns names are aligned
-    for (i in (length(visitContextSequence):1)) {
+    for (i in 1:(length(visitContextSequence))) {
       table <- table %>%
         dplyr::relocate(.data$visitConceptName,
                         dplyr::contains(visitContextSequence[[i]]))
