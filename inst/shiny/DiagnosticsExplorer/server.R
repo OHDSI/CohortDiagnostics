@@ -5124,6 +5124,7 @@ shiny::shinyServer(function(input, output, session) {
         backgroundRepeat = "no-repeat",
         backgroundPosition = "center"
       )
+      browser()
       return(table)
     }, server = TRUE)
   
