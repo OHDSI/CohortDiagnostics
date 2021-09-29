@@ -1238,7 +1238,7 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   for (i in 1:length(distinctChoices)) {
     filteredData <- balance %>% 
       dplyr::filter(.data$choices == distinctChoices[i])
-    choicesPlot[[i]] <- plotly::plot_ly(filteredData, x = ~mean1, y = ~mean2, text = ~tooltip, type = 'scatter', height = max(1,ceiling(length(distinctChoices)/5)) * 430,
+    choicesPlot[[i]] <- plotly::plot_ly(filteredData, x = ~mean1, y = ~mean2, text = ~tooltip,hoverinfo = 'text', type = 'scatter', height = max(1,ceiling(length(distinctChoices)/5)) * 430,
                             mode = "markers", color = ~domain, colors = ~colors, opacity = 0.5, marker = list(size = 15,
                                                                                                               line = list(color = 'rgb(255,255,255)', width = 1))) %>%
      
@@ -1563,7 +1563,7 @@ plotCohortOverlap <- function(data,
       } else {
         yAxisTickLabels <- FALSE
       }
-      if(nrow(plotDataFilteredByComparator)>0) {
+      if (nrow(plotDataFilteredByComparator) > 0) {
         distinctTargetShortName <- plotDataFilteredByComparator$targetShortName %>% unique()
         annotationStartValue <- round(1 / (length(distinctTargetShortName) * 2), digits = 3)
         annotationEndValue <- 0.999
@@ -1577,9 +1577,9 @@ plotCohortOverlap <- function(data,
      
       comparatorPlots[[j]] <- plotly::plot_ly(plotDataFilteredByComparator,
                                               x = ~xAxisValues, y = ~targetShortName, type = 'bar',
-                                              name = ~subjectsIn, text = ~tooltip,
+                                              name = ~subjectsIn, text = ~tooltip, hoverinfo = 'text',
                                               color = ~subjectsIn, colors = c( rgb(0.4, 0.4, 0.9), rgb(0.3, 0.2, 0.4),rgb(0.8, 0.2, 0.2)),
-                                              showlegend = showLegend, height = 200 * length(distinctComparatorShortName)) %>%
+                                              showlegend = showLegend, height = max(400, 200 * length(distinctComparatorShortName))) %>%
         plotly::layout(barmode = 'stack',
                        legend = list(orientation = "h",x = 0.4),
                        xaxis = list(range = c(0, xAxisMax),

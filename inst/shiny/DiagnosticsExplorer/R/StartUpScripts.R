@@ -305,6 +305,13 @@ consolidationOfSelectedFieldValues <- function(input,
           dplyr::pull(.data$cohortId) %>%
           unique()
     }
+    if (doesObjectHaveData(input$selectedComparatorCompoundCohortNames) && input$tabs == 'cohortOverlap') {
+      data$cohortIdComparator <- cohort %>%
+        dplyr::filter(.data$compoundName %in% input$selectedComparatorCompoundCohortNames) %>%
+        dplyr::arrange(.data$cohortId) %>%
+        dplyr::pull(.data$cohortId) %>%
+        unique()
+    }
     
     #mutli select databaseId
     if (doesObjectHaveData(input$selectedDatabaseIds)) {

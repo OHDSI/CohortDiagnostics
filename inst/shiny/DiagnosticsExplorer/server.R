@@ -162,7 +162,9 @@ shiny::shinyServer(function(input, output, session) {
       input$selectedCompoundCohortNames_open,
       input$conceptSetsSelectedCohortLeft,
       input$indexEventBreakdownTable_rows_selected,
-      input$targetVocabularyChoiceForConceptSetDetails
+      input$targetVocabularyChoiceForConceptSetDetails,
+      input$selectedComparatorCompoundCohortNames,
+      input$selectedComparatorCompoundCohortNames_open
     )
   })
   
@@ -204,7 +206,12 @@ shiny::shinyServer(function(input, output, session) {
                    consolidatedCohortIdTarget(data$cohortIdTarget)
                  }
                  
-                 consolidatedCohortIdComparator(data$cohortIdComparator)
+                 if ((isFALSE(input$selectedComparatorCompoundCohortNames_open) ||
+                      is.null(input$selectedComparatorCompoundCohortNames_open)) && 
+                     doesObjectHaveData(input$tabs)) {
+                   consolidatedCohortIdComparator(data$cohortIdComparator)
+                 }
+                 
                  consolidatedConceptSetIdTarget(data$conceptSetIdTarget)
                  consolidatedConceptSetIdComparator(data$conceptSetIdComparator)
                  
@@ -8227,15 +8234,22 @@ shiny::shinyServer(function(input, output, session) {
   
   #!!!!!!!!what is the purpose of this?
   renderedSelectedCohorts <- shiny::reactive({
-    cohortSelected <- selectedCohorts()
-    if (any(is.null(cohortSelected),
-            nrow(cohortSelected) == 0)) {
+    targetSelectedCohort <- selectedCohorts()
+    if (any(is.null(targetSelectedCohort),
+            nrow(targetSelectedCohort) == 0)) {
       return(NULL)
     }
-    cohortSelected <- cohortSelected %>%
+    selectedCohortIds <- targetSelectedCohort$cohortId
+   
+    
+    if(doesObjectHaveData(consolidatedCohortIdComparator())) {
+      selectedCohortIds <- c(selectedCohortIds,consolidatedCohortIdComparator())
+    }
+    selecteCohortCompondName <- cohort %>% 
+      dplyr::filter(.data$cohortId %in% selectedCohortIds) %>% 
       dplyr::select(.data$compoundName)
     
-    return(apply(cohortSelected, 1, function(x)
+    return(apply(selecteCohortCompondName, 1, function(x)
       tags$tr(lapply(x, tags$td))))
   })
   
