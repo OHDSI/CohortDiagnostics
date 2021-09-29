@@ -2438,7 +2438,6 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No resolved concept ids"))
-      browser()
       databaseCount <- cohortCount %>% 
         dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
         dplyr::rename("records" = .data$cohortEntries,
@@ -5005,7 +5004,6 @@ shiny::shinyServer(function(input, output, session) {
         ),
         value = 0
       )
-      browser()
       data <-
         getIndexEventBreakdownDataTable()
       validate(
@@ -5475,6 +5473,10 @@ shiny::shinyServer(function(input, output, session) {
   
   ##getVisitContextTableData----
   getVisitContextTableData <- shiny::reactive(x = {
+    if (all(doesObjectHaveData(input$tab),
+            input$tab != "visitContext")) {
+      return(NULL)
+    }
     data <- getVisitContexDataFiltered()
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -5545,7 +5547,6 @@ shiny::shinyServer(function(input, output, session) {
       doesObjectHaveData(data),
       "No data available for selected combination."
     ))
-    browser()
     table <- data %>%
       dplyr::select(-.data$cohortId)
     isPerson <- input$visitContextPersonOrRecords == 'Person'
@@ -5595,6 +5596,7 @@ shiny::shinyServer(function(input, output, session) {
                            replacement = "Visits After")
     
     totalColumns <- 1
+    browser() #broken somewhere here
     if (input$visitContextTableFilters == "All") {
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(tr(
