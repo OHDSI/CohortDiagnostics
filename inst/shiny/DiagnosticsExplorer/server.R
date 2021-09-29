@@ -2220,19 +2220,10 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdTarget()) %>%
         dplyr::pull(.data$conceptSetName)
       
-      cohortName <- cohort %>% 
-        dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
-        dplyr::pull(.data$compoundName)
-      
       tags$table(
         tags$tr(
           tags$td(
             tags$h4(paste0("Concept set name:", conceptSetName))
-          )
-        ),
-        tags$tr(
-          tags$td(
-            tags$h6("Target cohort:", cohortName)
           )
         )
       )
@@ -2887,19 +2878,10 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdComparator()) %>%
         dplyr::pull(.data$conceptSetName)
       
-      cohortName <- cohort %>% 
-        dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
-        dplyr::pull(.data$compoundName)
-      
       tags$table(
         tags$tr(
           tags$td(
             tags$h4(paste0("Concept set name:", conceptSetName))
-          )
-        ),
-        tags$tr(
-          tags$td(
-            tags$h6("Comparator cohort:", cohortName)
           )
         )
       )
