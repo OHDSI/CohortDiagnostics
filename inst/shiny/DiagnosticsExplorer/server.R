@@ -245,6 +245,18 @@ shiny::shinyServer(function(input, output, session) {
               title = "Cohort Count",
               value = "targetCohortDefinitionCohortCountTabPanel",
               tags$br(),
+              tags$table(width = "100%",
+                         tags$tr(
+                           tags$td(
+                             align = "right",
+                             shiny::downloadButton(
+                               outputId = "downloadTargetCohortDefinitionCohortCount",
+                               label = NULL,
+                               icon = shiny::icon("download"),
+                               style = "margin-top: 5px; margin-bottom: 5px;"
+                             )
+                           )
+                         )),
               DT::dataTableOutput(outputId = "targetCohortDefinitionCohortCountTable")
             ),
             shiny::tabPanel(
@@ -495,6 +507,18 @@ shiny::shinyServer(function(input, output, session) {
               title = "Cohort Count",
               value = "comparatorCohortDefinitionCohortCountTabPanel",
               tags$br(),
+              tags$table(width = "100%",
+                         tags$tr(
+                           tags$td(
+                             align = "right",
+                             shiny::downloadButton(
+                               outputId = "downloadComparatorCohortDefinitionCohortCount",
+                               label = NULL,
+                               icon = shiny::icon("download"),
+                               style = "margin-top: 5px; margin-bottom: 5px;"
+                             )
+                           )
+                         )),
               DT::dataTableOutput(outputId = "comparatorCohortDefinitionCohortCountsTable")
             ),
             shiny::tabPanel(
@@ -1197,6 +1221,17 @@ shiny::shinyServer(function(input, output, session) {
       )
       return(dataTable)
     }, server = TRUE)
+  
+  ###output: downloadTargetCohortDefinitionCohortCount----
+  output$downloadTargetCohortDefinitionCohortCount <- downloadHandler(
+    filename = function() {
+      getCsvFileNameWithDateTime(string = "CohortCount")
+    },
+    content = function(file) {
+      data <- getCountsForSelectedCohortsTarget()
+      downloadCsv(x = data, fileName = file)
+    }
+  )
   
   ##Concept set ----
   ###getConceptSetExpressionTarget----
@@ -2604,6 +2639,17 @@ shiny::shinyServer(function(input, output, session) {
       return(dataTable)
       
     }, server = TRUE)
+  
+  ###output: downloadComparatorCohortDefinitionCohortCount----
+  output$downloadComparatorCohortDefinitionCohortCount <- downloadHandler(
+    filename = function() {
+      getCsvFileNameWithDateTime(string = "CohortCount")
+    },
+    content = function(file) {
+      data <- getCountsForSelectedCohortsComparator()
+      downloadCsv(x = data, fileName = file)
+    }
+  )
   
   ##reactive: isDatabaseIdFoundForSelectedComparatorCohortCount----
   output$isDatabaseIdFoundForSelectedComparatorCohortCount <-
