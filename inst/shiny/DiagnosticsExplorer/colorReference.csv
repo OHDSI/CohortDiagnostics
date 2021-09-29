@@ -17,7 +17,7 @@ domain,Observation,#66A61E,
 domain,Procedure,#E6AB02,
 domain,Cohort,#A6761D,
 domain,Other,#444444
-databaseShortName,D1,#072F5F
+databaseShortName,D1,#2222AA
 databaseShortName,D2,#1261A0
 databaseShortName,D3,#3895D3
 databaseShortName,D4,#58CCED
@@ -28,4 +28,5 @@ databaseShortName,D8,#88C7DC
 databaseShortName,D9,#1034A6
 databaseShortName,D10,#0080FF
 databaseShortName,D11,#0E4D92
-databaseShortName,D12,#22229F
+databaseShortName,D12,#2222AF
+databaseShortName,D13,#072F5F

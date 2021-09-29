@@ -705,43 +705,7 @@ bodyTabItems <- shinydashboard::tabItems(
             selected = "Absolute",
             inline = TRUE
           )
-        ),
-       tags$td(
-         shinyWidgets::pickerInput(
-           inputId = "domainTableOptionsInIndexEventData",
-           label = "Domain Table",
-           choices = c(""),
-           multiple = TRUE,
-           width = 200,
-           choicesOpt = list(style = rep_len("color: black;", 999)),
-           options = shinyWidgets::pickerOptions(
-             actionsBox = TRUE,
-             liveSearch = TRUE,
-             liveSearchStyle = "contains",
-             size = 10,
-             liveSearchPlaceholder = "Type here to search",
-             virtualScroll = 50
-           )
-         )
-       ),
-       tags$td(
-         shinyWidgets::pickerInput(
-           inputId = "domainFieldOptionsInIndexEventData",
-           label = "Domain Field",
-           choices = c(""),
-           multiple = TRUE,
-           width = 200,
-           choicesOpt = list(style = rep_len("color: black;", 999)),
-           options = shinyWidgets::pickerOptions(
-             actionsBox = TRUE,
-             liveSearch = TRUE,
-             liveSearchStyle = "contains",
-             size = 10,
-             liveSearchPlaceholder = "Type here to search",
-             virtualScroll = 50
-           )
-         )
-       )
+        )
       )
     ),
     tags$table(width = "100%", 
