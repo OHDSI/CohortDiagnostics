@@ -5359,81 +5359,48 @@ shiny::shinyServer(function(input, output, session) {
             input$tab != "visitContext")) {
       return(NULL)
     }
-    if (any(
-      is.null(consolidatedDatabaseIdTarget()),
-      length(consolidatedDatabaseIdTarget()) == 0
-    )) {
+    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
-    if (all(is(dataSource, "environment"), !exists('visitContext')))
-    {
+    if (all(is(dataSource, "environment"), !exists('visitContext'))) {
       return(NULL)
     }
     visitContext <-
       getResultsVisitContext(dataSource = dataSource,
-                             cohortId = consolidatedCohortIdTarget())
-    if (any(is.null(visitContext),
-            nrow(visitContext) == 0))
-    {
+                             cohortId = consolidatedCohortIdTarget(),
+                             consolidatedDatabaseIdTarget())
+    if (!doesObjectHaveData(visitContext)) {
       return(NULL)
-    }
-    
-    # to ensure backward compatibility to 2.1 when visitContext did not have visitConceptName
-    if (!'visitConceptName' %in% colnames(visitContext))
-    {
-      concepts <- getConcept(dataSource = dataSource,
-                             conceptId = visitContext$visitConceptId %>% unique()) %>%
-        dplyr::rename(
-          visitConceptId = .data$conceptId,
-          visitConceptName = .data$conceptName
-        ) %>%
-        dplyr::filter(is.na(.data$invalidReason)) %>%
-        dplyr::select(.data$visitConceptId, .data$visitConceptName)
-      
-      visitContext <- visitContext %>%
-        dplyr::left_join(concepts,
-                         by = c('visitConceptId'))
     }
     return(visitContext)
   })
   
   ##getVisitContexDataEnhanced----
   getVisitContexDataEnhanced <- shiny::reactive(x = {
-    if (any(
-      is.null(consolidatedDatabaseIdTarget()),
-      length(consolidatedDatabaseIdTarget()) == 0
-    )) {
+    if (input$tabs != "visitContext") {
       return(NULL)
     }
     visitContextData <- getVisitContextData()
-    if (any(is.null(visitContextData),
-            nrow(visitContextData) == 0))
-    {
+    if (!doesObjectHaveData(visitContextData)) {
       return(NULL)
     }
-    if (is.null(cohortCount))
-    {
+    if (is.null(cohortCount)) {
       return(NULL)
     }
     visitContextData <- visitContextData %>%
       dplyr::inner_join(cohortCount,
                         by = c('databaseId', 'cohortId'))
-    if (input$visitContextValueFilter == "Percentage")
-    {
+    if (input$visitContextValueFilter == "Percentage") {
       visitContextData <- visitContextData %>%
         dplyr::mutate(subjectsValue = .data$subjects / .data$cohortSubjects) %>%
         dplyr::mutate(recordsValue = .data$records / .data$cohortEntries)
-    } else
-    {
+    } else {
       visitContextData <- visitContextData %>%
         dplyr::mutate(subjectsValue = .data$subjects) %>%
         dplyr::mutate(recordsValue = .data$records)
     }
     visitContextData <- visitContextData %>%
-      dplyr::select(-.data$subjects,
-                    -.data$records,
-                    -.data$cohortSubjects,
-                    -.data$cohortEntries) %>%
+      dplyr::select(-.data$subjects,-.data$records,-.data$cohortSubjects,-.data$cohortEntries) %>%
       dplyr::rename(subjects = .data$subjectsValue,
                     records = .data$recordsValue)
     visitContextReference <-
@@ -5463,12 +5430,14 @@ shiny::shinyServer(function(input, output, session) {
         .data$subjects,
         .data$records
       )
-    # dplyr::mutate(visitContext = paste0(.data$databaseId, "_", .data$visitContext))
     return(visitContextReference)
   })
   
   ##getVisitContexDataFiltered----
   getVisitContexDataFiltered <- shiny::reactive(x = {
+    if (input$tabs != "visitContext") {
+      return(NULL)
+    }
     if (any(
       !doesObjectHaveData(input$visitContextTableFilters),
       !doesObjectHaveData(input$visitContextPersonOrRecords),
@@ -5480,17 +5449,13 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    data <- data %>%
-      dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
-      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget())
-    
     if (input$visitContextTableFilters == "Before") {
       data <- data %>%
         dplyr::filter(.data$visitContext == "Before")
     } else if (input$visitContextTableFilters == "During") {
       data <- data %>%
         dplyr::filter(.data$visitContext == "During visit")
-    } else if (input$visitContextTableFilters == "During") {
+    } else if (input$visitContextTableFilters == "Simultaneous") {
       data <- data %>%
         dplyr::filter(.data$visitContext == "On visit start")
     } else if (input$visitContextTableFilters == "After") {
@@ -5498,8 +5463,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$visitContext == "After")
     }
     isPerson <- input$visitContextPersonOrRecords == 'Person'
-    if (isPerson)
-    {
+    if (isPerson) {
       data <- data %>%
         dplyr::select(-.data$records)
     } else {
@@ -5524,13 +5488,9 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>%
       tidyr::pivot_longer(names_to = "type",
-                          cols = pivotColumns,
-                          values_to = "count")
-    data <- tidyr::replace_na(data,
-                              replace = list("count" = 0))
-    
-    #Apply Pivot Wider
-    data <- data %>%
+                          cols = dplyr::all_of(pivotColumns),
+                          values_to = "count") %>% 
+      tidyr::replace_na(replace = list("count" = 0)) %>% 
       dplyr::arrange(.data$databaseId,
                      .data$visitContext,
                      .data$type) %>%
@@ -5553,12 +5513,10 @@ shiny::shinyServer(function(input, output, session) {
   
   ##saveVisitContextTable----
   output$saveVisitContextTable <-  downloadHandler(
-    filename = function()
-    {
+    filename = function() {
       getCsvFileNameWithDateTime(string = "visitContext")
     },
-    content = function(file)
-    {
+    content = function(file) {
       downloadCsv(x = getVisitContextTableData(),
                   fileName = file)
     }
@@ -5587,17 +5545,13 @@ shiny::shinyServer(function(input, output, session) {
       doesObjectHaveData(data),
       "No data available for selected combination."
     ))
+    browser()
     table <- data %>%
       dplyr::select(-.data$cohortId)
-    
-    # header labels
-    cohortCounts <- cohortCount %>%
-      dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
-      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
-      dplyr::arrange(.data$cohortId, .data$databaseId)
     isPerson <- input$visitContextPersonOrRecords == 'Person'
     if (isPerson) {
-      databaseIdsWithCount <- cohortCounts %>%
+      databaseIdsWithCount <- cohortCount %>%
+        dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>% 
         dplyr::mutate(databaseIdWithCount = paste0(
           .data$databaseId,
           " (n = ",
@@ -5608,7 +5562,8 @@ shiny::shinyServer(function(input, output, session) {
       maxSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = getVisitContexDataFiltered(), 
                                                                 string = "ubjects")
     } else {
-      databaseIdsWithCount <- cohortCounts %>%
+      databaseIdsWithCount <- cohortCount %>%
+        dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>% 
         dplyr::mutate(databaseIdWithCount = paste0(
           .data$databaseId,
           " (n = ",
@@ -5620,13 +5575,11 @@ shiny::shinyServer(function(input, output, session) {
                                                                    string = "ecords")
     }
     
-    
     visitContextSequence <-
       getVisitContexDataFiltered()$visitContext %>%
       unique()
     #ensure columns names are aligned
-    for (i in (length(visitContextSequence):1))
-    {
+    for (i in (length(visitContextSequence):1)) {
       table <- table %>%
         dplyr::relocate(.data$visitConceptName,
                         dplyr::contains(visitContextSequence[[i]]))
