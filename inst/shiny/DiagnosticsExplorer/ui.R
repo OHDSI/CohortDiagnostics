@@ -784,28 +784,46 @@ bodyTabItems <- shinydashboard::tabItems(
       title = "Cohort Overlap (Subjects)",
       width = NULL,
       status = "primary",
-      tags$table(width = "100%", 
-                 tags$tr(
-                   tags$td(
-                     shiny::radioButtons(
-                       inputId = "overlapPlotType",
-                       label = "",
-                       choices = c("Percentages", "Counts"),
-                       selected = "Percentages",
-                       inline = TRUE
+      shiny::tabsetPanel(
+        type = "tab",
+        id = "cohortOverlapTab",
+        shiny::tabPanel(
+          title = "Plot",
+          value = "cohortOverlapPlotTab",
+          tags$table(width = "100%", 
+                     tags$tr(
+                       tags$td(
+                         shiny::radioButtons(
+                           inputId = "overlapPlotType",
+                           label = "",
+                           choices = c("Percentages", "Counts"),
+                           selected = "Percentages",
+                           inline = TRUE
+                         )
+                       ),
+                       
                      )
-                   ),
-                   tags$td(align = "right",
-                           shiny::downloadButton(
-                             "saveCohortOverlapTable",
-                             label = "",
-                             icon = shiny::icon("download"),
-                             style = "margin-top: 5px; margin-bottom: 5px;"
-                           )
-                   )
-                 )
-      ),
-      plotly::plotlyOutput("overlapPlot", height = "auto")
+          ),
+          plotly::plotlyOutput("overlapPlot", height = "auto")
+          ),
+        shiny::tabPanel(
+          title = "Raw Table",
+          value = "cohortOverlapTableTab",
+          tags$table(width = "100%",
+                     tags$tr(
+                       tags$td(
+                         align = "right",
+                         shiny::downloadButton(
+                           "saveCohortOverlapTable",
+                           label = "",
+                           icon = shiny::icon("download"),
+                           style = "margin-top: 5px; margin-bottom: 5px;"
+                         )
+                       )
+                     )),
+          DT::dataTableOutput(outputId = "cohortOverlapTable")
+        ))
+     
     )
   ),
   shinydashboard::tabItem(
