@@ -1482,7 +1482,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
               FROM #indx_breakdown
               group by cohort_id,
                 days_relative_index,
-                concept_id
+                concept_id,
+                co_concept_id
               order by cohort_id,
                 concept_id,
                 co_concept_id,
