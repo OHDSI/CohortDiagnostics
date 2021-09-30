@@ -2220,7 +2220,6 @@ getCohortRelationshipCharacterizationResults <-
   function(dataSource = .GlobalEnv,
            cohortIds = NULL,
            databaseIds = NULL) {
-    browser()
     # meta information
     cohortCounts <-
       getResultsCohortCount(dataSource = dataSource,
@@ -2234,7 +2233,6 @@ getCohortRelationshipCharacterizationResults <-
                                     databaseIds = databaseIds,
                                     startDay = c(-99999,-365,-180,-30,-99999,-365,-180,-30),
                                     endDay = 0)
-    
     # comparator cohort was on or after target cohort
     summarizeCohortRelationship <- function(data,
                                             startDay = NULL,
@@ -2387,15 +2385,14 @@ getCohortRelationshipCharacterizationResults <-
       ) %>%
       dplyr::arrange(.data$conceptId)
     
-    return(
-      list(
-        covariateRef = covariateRef,
-        covariateValue = result,
-        covariateValueDist = NULL,
-        analysisRef = analysisRef,
-        concept = concept
-      )
+    data <- list(
+      covariateRef = covariateRef,
+      covariateValue = result,
+      covariateValueDist = NULL,
+      analysisRef = analysisRef,
+      concept = concept
     )
+    return(data)
   }
 
 #' Returns cohort temporal feature characterization
@@ -2432,9 +2429,13 @@ getCohortAsFeatureTemporalCharacterizationResults <-
                             databaseIds = databaseIds)
     cohort <- getResultsCohort(dataSource = dataSource)
     
+    seqStart30 <- seq(-420, +420, by = 30)
+    seqEnd30 <- seqStart30 + 30
     cohortRelationships <-
       getResultsCohortRelationships(dataSource = dataSource,
                                     cohortIds = cohortIds,
+                                    startDay = c(seqStart30),
+                                    endDay = c(seqEnd30),
                                     databaseIds = databaseIds)
     
     if (is.null(cohortRelationships) ||
@@ -2494,8 +2495,8 @@ getCohortAsFeatureTemporalCharacterizationResults <-
     
     analysisId <- c(-101,-201)
     analysisName <- c("CohortEraStart", "CohortEraOverlap")
-    valueField <- c("cSubjectsStart",
-                    "bothSubjects")
+    valueField <- c("subCsAfterTs",
+                    "subjects")
     analysisRef <-
       dplyr::tibble(analysisId, analysisName, valueField) %>%
       dplyr::mutate(isBinary = 'Y',

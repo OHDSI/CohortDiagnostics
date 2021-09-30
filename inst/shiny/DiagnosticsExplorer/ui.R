@@ -285,21 +285,29 @@ bodyTabItems <- shinydashboard::tabItems(
     shinydashboard::box(
       width = NULL,
       status = "primary",
-      column(6,tags$h4("Cohort Definition")),
-      column(6,
-             tags$table(width = "100%",
-                        tags$tr(
-                          tags$td(
-                            align = "right",
-                            shiny::downloadButton(
-                              outputId = "downloadAllCohortDetails",
-                              label = NULL,
-                              icon = shiny::icon("download"),
-                              style = "margin-top: 5px; margin-bottom: 5px;"
+      shinydashboard::box(
+        title = "Cohort Definition",
+        status = NULL,
+        width = NULL,
+        solidHeader = FALSE,
+        collapsible = TRUE,
+        collapsed = TRUE,
+        # column(6,tags$h4("Cohort Definition")),
+        column(12,
+               tags$table(width = "100%",
+                          tags$tr(
+                            tags$td(
+                              align = "right",
+                              shiny::downloadButton(
+                                outputId = "downloadAllCohortDetails",
+                                label = NULL,
+                                icon = shiny::icon("download"),
+                                style = "margin-top: 5px; margin-bottom: 5px;"
+                              )
                             )
-                          )
-                        ))),    
-      DT::dataTableOutput(outputId = "cohortDefinitionTable"),
+                          ))),
+        DT::dataTableOutput(outputId = "cohortDefinitionTable")
+      ),
       shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedTarget"),
       shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedComparator"),
       tags$br(),
@@ -697,43 +705,7 @@ bodyTabItems <- shinydashboard::tabItems(
             selected = "Absolute",
             inline = TRUE
           )
-        ),
-       tags$td(
-         shinyWidgets::pickerInput(
-           inputId = "domainTableOptionsInIndexEventData",
-           label = "Domain Table",
-           choices = c(""),
-           multiple = TRUE,
-           width = 200,
-           choicesOpt = list(style = rep_len("color: black;", 999)),
-           options = shinyWidgets::pickerOptions(
-             actionsBox = TRUE,
-             liveSearch = TRUE,
-             liveSearchStyle = "contains",
-             size = 10,
-             liveSearchPlaceholder = "Type here to search",
-             virtualScroll = 50
-           )
-         )
-       ),
-       tags$td(
-         shinyWidgets::pickerInput(
-           inputId = "domainFieldOptionsInIndexEventData",
-           label = "Domain Field",
-           choices = c(""),
-           multiple = TRUE,
-           width = 200,
-           choicesOpt = list(style = rep_len("color: black;", 999)),
-           options = shinyWidgets::pickerOptions(
-             actionsBox = TRUE,
-             liveSearch = TRUE,
-             liveSearchStyle = "contains",
-             size = 10,
-             liveSearchPlaceholder = "Type here to search",
-             virtualScroll = 50
-           )
-         )
-       )
+        )
       )
     ),
     tags$table(width = "100%", 

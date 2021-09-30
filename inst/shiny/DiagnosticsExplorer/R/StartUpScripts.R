@@ -16,6 +16,22 @@ addShortName <- function(data, shortNameRef = NULL, cohortIdColumn = "cohortId",
   return(data)
 }
 
+addDatabaseShortName <- function(data, shortNameRef = NULL, databaseIdColumn = "databaseId", shortNameColumn = "databaseShortName") {
+  if (is.null(shortNameRef)) {
+    shortNameRef <- data %>%
+      dplyr::distinct(.data$databaseId) %>%
+      dplyr::arrange(.data$databaseId) %>%
+      dplyr::mutate(databaseShortName = paste0("C", dplyr::row_number()))
+  } 
+  
+  shortNameRef <- shortNameRef %>%
+    dplyr::distinct(.data$databaseId, .data$shortName) 
+  colnames(shortNameRef) <- c(databaseIdColumn, shortNameColumn)
+  data <- data %>%
+    dplyr::inner_join(shortNameRef, by = databaseIdColumn)
+  return(data)
+}
+
 
 getSubjectCountsByDatabasae <-
   function(data, cohortId, databaseIds) {
@@ -288,6 +304,13 @@ consolidationOfSelectedFieldValues <- function(input,
           dplyr::arrange(.data$cohortId) %>%
           dplyr::pull(.data$cohortId) %>%
           unique()
+    }
+    if (doesObjectHaveData(input$selectedComparatorCompoundCohortNames) && input$tabs == 'cohortOverlap') {
+      data$cohortIdComparator <- cohort %>%
+        dplyr::filter(.data$compoundName %in% input$selectedComparatorCompoundCohortNames) %>%
+        dplyr::arrange(.data$cohortId) %>%
+        dplyr::pull(.data$cohortId) %>%
+        unique()
     }
     
     #mutli select databaseId
@@ -583,7 +606,7 @@ getDatabaseOrCohortCountForConceptIds <- function(data, dataSource, databaseCoun
 
 getMaxValueForStringMatchedColumnsInDataFrame <- function(data, string) {
   data %>% 
-    dplyr::summarise(dplyr::across(dplyr::contains(string), ~ max(.x))) %>% 
+    dplyr::summarise(dplyr::across(dplyr::contains(string), ~ max(.x, na.rm = TRUE))) %>% 
     tidyr::pivot_longer(values_to = "value", cols = dplyr::everything()) %>% 
     dplyr::pull() %>% 
     max(na.rm = TRUE)

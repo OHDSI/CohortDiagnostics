@@ -125,7 +125,7 @@ if (!exists("shinySettings")) {
 ## Launch information ----
 appInformationText <- paste0(
   appInformationText,
-  " mode. Application was last initated on ",
+  " mode. Application was last initiated on ",
   lubridate::now(tzone = "EST"),
   " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/"
 )
@@ -235,6 +235,21 @@ if (exists("cohort")) {
       .data$cohortName,
       "(",
       .data$cohortId,
+      ")"
+    ))
+}
+
+if (exists("database")) {
+  # cohort is required and is always loaded into R memory
+  database <- database %>%
+    dplyr::arrange(.data$databaseId) %>%
+    dplyr::mutate(shortName = paste0("D", dplyr::row_number())) %>%
+    dplyr::mutate(compoundName = paste0(
+      .data$shortName,
+      ": ",
+      .data$databaseName,
+      "(",
+      .data$databaseId,
       ")"
     ))
 }

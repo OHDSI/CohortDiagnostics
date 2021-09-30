@@ -4,7 +4,13 @@
 \alias{getResultsCohortRelationships}
 \title{Returns data from cohort_relationships table of Cohort Diagnostics results data model}
 \usage{
-getResultsCohortRelationships(dataSource, cohortIds = NULL, databaseIds = NULL)
+getResultsCohortRelationships(
+  dataSource,
+  cohortIds = NULL,
+  databaseIds = NULL,
+  startDay = NULL,
+  endDay = NULL
+)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 
@@ -19,6 +25,10 @@ and uploaded using \code{uploadResults}}
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
+
+\item{startDay}{A vector of days in relation to cohort_start_date of target}
+
+\item{endDay}{A vector of days in relation to cohort_end_date of target}
 }
 \value{
 Returns a data frame (tibble) with results that conform to cohort_relationships
