@@ -1519,6 +1519,25 @@ getResultsCohort <- function(dataSource) {
 }
 
 
+# Database ----
+#' Returns data from Database table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from Database table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @return
+#' Returns a data frame (tibble)
+#'
+#' @export
+getResultsDatabase <- function(dataSource) {
+  data <- getDataFromResultsDatabaseSchema(dataSource,
+                                           dataTableName = "database")
+  return(data)
+}
+
+
 #' Returns data from cohort_count table of Cohort Diagnostics results data model
 #'
 #' @description
