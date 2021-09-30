@@ -1125,14 +1125,14 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
         " * 10 maybe suppressed. Note suppression only applies to conceptIds that are not related to cohort definition."
       )
     )
-    minCount <- minCellCount * 10
+    minCount <- minCellCount
   } else {
     ParallelLogger::logTrace(
       paste0(
-        "  - minCellCount is NULL. Using default suppression of 50. Note suppression only applies to conceptIds that are not related to cohort definition."
+        "  - minCellCount is NULL. Using default suppression of 5. Note suppression only applies to conceptIds that are not related to cohort definition."
       )
     )
-    minCount <- 50
+    minCount <- 5
   }
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide

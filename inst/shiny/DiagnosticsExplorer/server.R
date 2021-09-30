@@ -368,12 +368,17 @@ shiny::shinyServer(function(input, output, session) {
                                               )
                                             ),
                                             tags$td(align = "right",
-                                                    shiny::radioButtons(
-                                                      inputId = "targetConceptIdCountSource",
-                                                      label = "",
-                                                      choices = c("Database level", "Cohort Level"),
-                                                      selected = "Database level",
-                                                      inline = TRUE
+                                                    shiny::conditionalPanel(
+                                                      condition = "input.targetConceptSetsType != 'Concept Set Json' &
+                                                                   input.targetConceptSetsType != 'Concept Set Sql' &
+                                                                   input.targetConceptSetsType != 'Concept Set Expression'",
+                                                      shiny::radioButtons(
+                                                        inputId = "targetConceptIdCountSource",
+                                                        label = "",
+                                                        choices = c("Database level", "Cohort Level"),
+                                                        selected = "Database level",
+                                                        inline = TRUE
+                                                      )
                                                     )
                                             ))
                                           )),
@@ -630,12 +635,17 @@ shiny::shinyServer(function(input, output, session) {
                                               )
                                             ),
                                             tags$td(align = "right",
-                                                    shiny::radioButtons(
-                                                      inputId = "comparatorConceptIdCountSource",
-                                                      label = "",
-                                                      choices = c("Database level", "Cohort Level"),
-                                                      selected = "Database level",
-                                                      inline = TRUE
+                                                    shiny::conditionalPanel(
+                                                      condition = "input.comparatorConceptSetsType != 'Concept Set Json' &
+                                                                   input.comparatorConceptSetsType != 'Concept Set Expression' &
+                                                                   input.comparatorConceptSetsType != 'Concept Set Sql'",
+                                                      shiny::radioButtons(
+                                                        inputId = "comparatorConceptIdCountSource",
+                                                        label = "",
+                                                        choices = c("Database level", "Cohort Level"),
+                                                        selected = "Database level",
+                                                        inline = TRUE
+                                                      )
                                                     )
                                             ))
                                           )),
