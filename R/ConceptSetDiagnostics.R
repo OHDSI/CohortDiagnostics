@@ -1186,8 +1186,7 @@ getBreakdownIndexEvents <- function(cohortIds,
           WHERE subject_count > @minCount
           	OR (cu.concept_id IS NOT NULL AND days_relative_index = 0);"
   #-- there is probably no value in vary rare code, especially if it is not part of conceptIdUniverse
-  #-- note concept_id that are part of the conceptIdUniverse are not filtered out if count < 100
-  #-- concept_id that are part of conceptIdUniverse but does not belong to TRUE index date are filtered out if count < 100
+  #-- note concept_id that are part of the conceptIdUniverse are not filtered out if count <= minCount
   
   for (i in (1:nrow(domains))) {
     rowData <- domains[i, ]
@@ -1277,7 +1276,7 @@ getBreakdownIndexEvents <- function(cohortIds,
                 days_relative_index,
                 concept_id,
                 max(subject_count) subject_count,
-                sum(concept_count) concept_count
+                max(concept_count) concept_count
               FROM #indx_breakdown
               group by cohort_id,
                 days_relative_index,
@@ -1290,6 +1289,7 @@ getBreakdownIndexEvents <- function(cohortIds,
     dplyr::tibble()
   # i was thinking of keeping counts at the table level - but the file size became too big
   # so i decided to not include them
+  # keeping the max of subject_count or concept_count for any domain table, discarding the rest
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sqlDdlDrop,
