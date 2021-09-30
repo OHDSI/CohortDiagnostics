@@ -1237,6 +1237,11 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                         		AND datediff(dd, d2.@domain_start_date, c.cohort_start_date) < @rangeMax
                                         		AND d1.@domain_start_date = d2.@domain_start_date
                                         		AND d1.person_id = d2.person_id
+                                          INNER JOIN (
+                                          	SELECT DISTINCT concept_id
+                                          	FROM @conceptIdUniverse
+                                          	) cu ON d1.@domain_concept_id = cu.concept_id
+                                          AND d2.@domain_concept_id = cu.concept_id
                                         	WHERE c.cohort_definition_id IN (@cohortIds)
                                         		AND d1.@domain_concept_id != 0
                                         		AND d1.@domain_concept_id IS NOT NULL
@@ -1248,15 +1253,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                         		d1.@domain_concept_id,
                                         		d2.@domain_concept_id
                                         	) f
-                                        LEFT JOIN (
-                                        	SELECT DISTINCT concept_id
-                                        	FROM @conceptIdUniverse
-                                        	) cu ON f.concept_id = cu.concept_id
-                                        WHERE subject_count > @minCount
-                                        	OR (
-                                        		cu.concept_id IS NOT NULL
-                                        		AND days_relative_index = 0
-                                        		);"
+                                        WHERE subject_count > @minCount;"
   
   
   sqlConceptIdCoConceptIdOppositeCount <- " INSERT INTO #indx_breakdown
@@ -1286,6 +1283,12 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                             		AND datediff(dd, d2.@domain_start_date, c.cohort_start_date) < @rangeMax
                                             		AND d1.@domain_start_date = d2.@domain_start_date
                                             		AND d1.person_id = d2.person_id
+                                              INNER JOIN (
+                                              	SELECT DISTINCT concept_id
+                                              	FROM @conceptIdUniverse
+                                              	) cu ON d1.@domain_concept_id = cu.concept_id
+                                              	AND d2.@domain_source_concept_id = cu.concept_id
+                                              AND d2.@domain_concept_id = cu.concept_id
                                             	WHERE c.cohort_definition_id IN (@cohortIds)
                                             		AND d1.@domain_concept_id != 0
                                             		AND d1.@domain_concept_id IS NOT NULL
@@ -1297,15 +1300,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                             		d1.@domain_concept_id,
                                             		d2.@domain_source_concept_id
                                             	) f
-                                            LEFT JOIN (
-                                            	SELECT DISTINCT concept_id
-                                            	FROM @conceptIdUniverse
-                                            	) cu ON f.concept_id = cu.concept_id
-                                            WHERE subject_count > @minCount
-                                            	OR (
-                                            		cu.concept_id IS NOT NULL
-                                            		AND days_relative_index = 0
-                                            		);"
+                                            WHERE subject_count > @minCount;"
   
   for (i in (1:nrow(domains))) {
     rowData <- domains[i,]
