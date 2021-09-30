@@ -303,24 +303,6 @@ runCohortRelationshipDiagnostics <-
     resultsInAndromeda$cohortRelationships <-
       resultsInAndromeda$cohortRelationships %>%
       dplyr::inner_join(resultsInAndromeda$timePeriods, by = 'timeId') %>%
-      dplyr::select(
-        .data$cohortId,
-        .data$comparatorCohortId,
-        .data$startDay,
-        .data$endDay,
-        .data$subjects,
-        .data$subCsBeforeTs,
-        .data$subCsOnTs,
-        .data$subCsAfterTs,
-        .data$subCsBeforeTe,
-        .data$subCsOnTe,
-        .data$subCsAfterTe,
-        .data$subCsWindowTs,
-        .data$subCsWindowTe,
-        .data$subCeWindowTs,
-        .data$subCeWindowTe,
-        .data$subCWithinT
-      ) %>%
       dplyr::arrange(
         .data$cohortId,
         .data$comparatorCohortId,
