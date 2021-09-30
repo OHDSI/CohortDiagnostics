@@ -285,6 +285,7 @@ renderTranslateQuerySql <-
 getDataFromResultsDatabaseSchema <- function(dataSource,
                                              cohortId = NULL,
                                              conceptId = NULL,
+                                             coConceptId = NULL,
                                              conceptId1 = NULL,
                                              conceptSetId = NULL,
                                              databaseId = NULL,
@@ -297,6 +298,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     object <- c(
       "cohortId",
       "conceptId",
+      "coConceptId",
       "databaseId",
       "conceptSetId",
       "startDay",
@@ -349,6 +351,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
               {@database_id !=''} ? {AND database_id in (@database_id) \n}
               {@cohort_id !=''} ? {AND cohort_id in (@cohort_id) \n}
               {@concept_id !=''} ? {AND concept_id in (@concept_id) \n}
+              {@co_concept_id !=''} ? {AND co_concept_id in (@co_concept_id) \n}
               {@concept_set_id !=''} ? {AND concept_set_id in (@concept_set_id) \n}
               {@concept_id_1 !=''} ? {AND (concept_id_1 IN (@concept_ids) OR concept_id_2 IN (@concept_ids)) \n}
               {@start_day !=''} ? {AND start_day IN (@start_day) \n}
@@ -1366,40 +1369,6 @@ getResultsOrphanConcept <- function(dataSource,
 }
 
 
-#' Returns concept cooccurrence for a list of cohortIds and databaseIds combinations
-#'
-#' @description
-#' Given a list of cohortIds, databaseIds combinations the function returns
-#' precomputed concept cooccurrence conceptIds for the combination.
-#'
-#' @template DataSource
-#'
-#' @template CohortIds
-#' 
-#' @template ConceptId
-#'
-#' @template DatabaseIds
-#'
-#' @return
-#' Returns a data frame (tibble)
-#'
-#' @export
-getResultsConceptCooccurrence <- function(dataSource,
-                                          databaseIds = NULL,
-                                          cohortIds = NULL,
-                                          conceptIds = NULL) {
-  data <- getDataFromResultsDatabaseSchema(
-    dataSource,
-    cohortId = cohortIds,
-    databaseId = databaseIds,
-    dataTableName = "indexEventBreakdown"
-  )
-  browser()
-  #needs to be post processed
-  return(data)
-}
-
-
 getConceptSetDetailsFromCohortDefinition <-
   function(cohortDefinitionExpression) {
     if ("expression" %in% names(cohortDefinitionExpression)) {
@@ -1985,6 +1954,10 @@ getResultsIncidenceRate <- function(dataSource,
 #' @template DataSource
 #'
 #' @template CohortIds
+#' 
+#' @template ConceptIds
+#' 
+#' @param CoConceptIds A vector of integers representing co-concept ids
 #'
 #' @template DatabaseIds
 #'
@@ -1998,13 +1971,15 @@ getResultsIndexEventBreakdown <- function(dataSource,
                                           cohortIds = NULL,
                                           databaseIds = NULL,
                                           conceptIds = NULL,
+                                          coConceptIds = 0,
                                           daysRelativeIndex = 0) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortId = cohortIds,
     databaseId = databaseIds,
     dataTableName = "indexEventBreakdown",
-    conceptId = conceptIds
+    conceptId = conceptIds,
+    coConceptId = coConceptIds
   )
   return(data)
 }
