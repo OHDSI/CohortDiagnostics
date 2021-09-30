@@ -1,0 +1,112 @@
+---
+title: "Report on index event breakdown"
+author: "Gowtham Rao"
+date: "9/30/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## What Visits happened on index date?
+
+
+```{r connect, echo=TRUE}
+# dataSource <-
+#   CohortDiagnostics::createFileDataSource(premergedDataFile = "D:\\git\\github\\gowthamrao\\CohortDiagnostics\\CohortDiagnostics\\inst\\shiny\\DiagnosticsExplorer\\data\\PreMerged.RData",
+#                                           envir = .GlobalEnv)
+
+
+defaultServer <- Sys.getenv("phoebedbServer")
+defaultDatabase <- Sys.getenv("phoebedb")
+defaultPort <- 5432
+defaultUser <- Sys.getenv("phoebedbUser")
+defaultPassword <- Sys.getenv("phoebedbPw")
+defaultResultsSchema <- "phenotypeLibrary"
+defaultVocabularySchema <- "phenotypeLibrary"
+
+connectionDetails <- DatabaseConnector::createConnectionDetails(
+  dbms = 'postgresql',
+  user = defaultUser,
+  password = defaultPassword,
+  port = defaultPort,
+  server = paste0(defaultServer, "/", defaultDatabase)
+)
+connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+
+dataSource <-
+  CohortDiagnostics::createDatabaseDataSource(connection = connection,
+                                              connectionDetails = connectionDetails, 
+                                              resultsDatabaseSchema = defaultResultsSchema, 
+                                              vocabularyDatabaseSchema = defaultResultsSchema)
+```
+
+## Extract required data into R memory from data source
+
+```{r extract, echo=TRUE}
+
+databaseId <- "cprd_v1715_20210804"
+cohortId <- 2
+
+cohort <-
+  CohortDiagnostics::getResultsCohort(dataSource = dataSource, 
+                                      cohortIds = c(cohortId))
+
+cohortCount <- 
+  CohortDiagnostics::getResultsCohortCount(dataSource = dataSource,
+                                           cohortIds = c(cohortId))
+
+conceptSets <- CohortDiagnostics::getResultsConceptSet(dataSource = dataSource,
+                                                       cohortIds = c(cohortId))
+
+database <-
+  CohortDiagnostics::getResultsDatabase(dataSource = dataSource, 
+                                        databaseIds = databaseId)
+
+resolvedConcepts <-
+  CohortDiagnostics::getResultsResolvedConcepts(
+    dataSource = dataSource,
+    databaseIds = c(databaseId),
+    cohortIds = c(cohortId)
+  )
+
+indexEventBreakdown <-
+  CohortDiagnostics::getResultsIndexEventBreakdown(
+    dataSource = dataSource,
+    daysRelativeIndex = c(0),
+    databaseIds = c(databaseId),
+    cohortIds = c(cohortId)
+  )
+
+concepts <- CohortDiagnostics::getConcept(
+  dataSource = dataSource,
+  conceptIds = c(indexEventBreakdown$conceptId,
+                 resolvedConcepts$conceptId) %>% unique()
+)
+
+DatabaseConnector::disconnect(connection)
+```
+
+# co-occurrence matrix on index date
+
+```{r report, echo=TRUE}
+report <- indexEventBreakdown %>% 
+dplyr::filter(.data$daysRelativeIndex == 0) %>% 
+dplyr::filter(.data$databaseId %in% c(databaseId)) %>% 
+dplyr::filter(.data$cohortId %in% cohortId) %>% 
+dplyr::inner_join(cohortCount, by = c("databaseId", "cohortId")) %>% 
+dplyr::select(-.data$databaseId, -.data$cohortId, -.data$daysRelativeIndex) %>% 
+dplyr::inner_join(concepts %>% 
+                  dplyr::filter(.data$domainId %in% c('Visit')) %>% 
+                  dplyr::filter(is.na(.data$invalidReason)) %>% 
+                  dplyr::select(.data$conceptId, 
+                                .data$conceptName,
+                                .data$vocabularyId,
+                                .data$standardConcept),
+                  by = "conceptId")
+```
+
+```{r show, echo=TRUE}
+report
+```

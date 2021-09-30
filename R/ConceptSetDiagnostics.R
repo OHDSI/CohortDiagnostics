@@ -34,7 +34,7 @@
 #' @param    cohorts                 A dataframe object with required fields cohortId, sql, json, cohortName
 #'
 #' @template CohortTable
-#' 
+#'
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #'
 #' @param keepCustomConceptId         (Optional) Default FALSE. Do you want to keep concept id above 2 billion.
@@ -53,7 +53,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      cohortIds = NULL,
                                      cohortDatabaseSchema = NULL,
                                      keepCustomConceptId = FALSE,
-                                     minCellCount = 5, 
+                                     minCellCount = 5,
                                      cohortTable = NULL) {
   ParallelLogger::logTrace(" - Running concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
@@ -118,8 +118,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
   conceptSets <-
     conceptSetDiagnosticsResults$conceptSets %>% dplyr::collect()
   uniqueConceptSets <-
-    conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ] %>%
-    dplyr::select(-.data$cohortId, -.data$conceptSetId)
+    conceptSets[!duplicated(conceptSets$uniqueConceptSetId),] %>%
+    dplyr::select(-.data$cohortId,-.data$conceptSetId)
   
   ParallelLogger::logTrace(
     paste0(
@@ -137,33 +137,42 @@ runConceptSetDiagnostics <- function(connection = NULL,
   ParallelLogger::logInfo("  - Optimizing concept sets found in cohorts.")
   optimizedConceptSet <- list()
   for (i in (1:nrow(uniqueConceptSets))) {
-    uniqueConceptSet <- uniqueConceptSets[i,]
-    conceptSetExpression <- RJSONIO::fromJSON(uniqueConceptSet$conceptSetExpression)
-    optimizationRecommendation <- 
-      getOptimizationRecommendationForConceptSetExpression(conceptSetExpression = conceptSetExpression, 
-                                                           connection = connection, 
-                                                           vocabularyDatabaseSchema = vocabularyDatabaseSchema, 
-                                                           tempEmulationSchema = tempEmulationSchema)
+    uniqueConceptSet <- uniqueConceptSets[i, ]
+    conceptSetExpression <-
+      RJSONIO::fromJSON(uniqueConceptSet$conceptSetExpression)
+    optimizationRecommendation <-
+      getOptimizationRecommendationForConceptSetExpression(
+        conceptSetExpression = conceptSetExpression,
+        connection = connection,
+        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema
+      )
     if (!is.null(optimizationRecommendation)) {
-      optimizationRecommendation <- optimizationRecommendation %>% 
-        dplyr::mutate(uniqueConceptSetId = uniqueConceptSet$uniqueConceptSetId) %>% 
-        dplyr::inner_join(conceptSets %>% 
-                            dplyr::select(.data$uniqueConceptSetId,
-                                          .data$cohortId,
-                                          .data$conceptSetId),
-                          by = "uniqueConceptSetId")
-      optimizedConceptSet[[i]] <- optimizationRecommendation %>% 
-        dplyr::select(.data$cohortId,
-                      .data$conceptSetId,
-                      .data$conceptId,
-                      .data$excluded,
-                      .data$removed
-        ) %>% 
+      optimizationRecommendation <- optimizationRecommendation %>%
+        dplyr::mutate(uniqueConceptSetId = uniqueConceptSet$uniqueConceptSetId) %>%
+        dplyr::inner_join(
+          conceptSets %>%
+            dplyr::select(
+              .data$uniqueConceptSetId,
+              .data$cohortId,
+              .data$conceptSetId
+            ),
+          by = "uniqueConceptSetId"
+        )
+      optimizedConceptSet[[i]] <- optimizationRecommendation %>%
+        dplyr::select(
+          .data$cohortId,
+          .data$conceptSetId,
+          .data$conceptId,
+          .data$excluded,
+          .data$removed
+        ) %>%
         dplyr::distinct()
     }
   }
-  conceptSetDiagnosticsResults$conceptSetsOptimized <- dplyr::bind_rows(optimizedConceptSet) %>% 
-    dplyr::distinct() %>% 
+  conceptSetDiagnosticsResults$conceptSetsOptimized <-
+    dplyr::bind_rows(optimizedConceptSet) %>%
+    dplyr::distinct() %>%
     dplyr::tibble()
   rm("conceptSets")
   
@@ -226,7 +235,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   startBreakdownEvents <- Sys.time()
   ParallelLogger::logInfo("  - Learning about the breakdown in index events.")
   conceptSetDiagnosticsResults$indexEventBreakdown <-
-    getBreakdownIndexEvents(
+    getConceptOccurrenceRelativeToIndexDay(
       cohortIds = subset$cohortId,
       connection = connection,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -387,9 +396,9 @@ runConceptSetDiagnostics <- function(connection = NULL,
         	SELECT DISTINCT concept_id
         	FROM @unique_concept_id_table
         	) b1 ON a.concept_id_1 = b1.concept_id
-        
+
         UNION
-        
+
         SELECT a.*
         FROM @vocabulary_database_schema.@table a
         INNER JOIN (
@@ -570,7 +579,7 @@ combineConceptSetsFromCohorts <- function(cohorts) {
   conceptSetCounter <- 0
   
   for (i in (1:nrow(cohorts))) {
-    cohort <- cohorts[i, ]
+    cohort <- cohorts[i,]
     sql <-
       extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql)
     json <-
@@ -970,7 +979,7 @@ getConceptRecordCount <- function(connection,
             GROUP BY @domain_concept_id;"
   
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i, ]
+    rowData <- domains[i,]
     ParallelLogger::logTrace(paste0(
       "   - Working on ",
       rowData$domainTable,
@@ -1019,14 +1028,16 @@ getConceptRecordCount <- function(connection,
   }
   
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i,]
+    rowData <- domains[i, ]
     if (nchar(rowData$domainSourceConceptId) > 4) {
-      ParallelLogger::logTrace(paste0(
-        "   - Working on ",
-        rowData$domainTable,
-        ".",
-        rowData$domainSourceConceptId
-      ))
+      ParallelLogger::logTrace(
+        paste0(
+          "   - Working on ",
+          rowData$domainTable,
+          ".",
+          rowData$domainSourceConceptId
+        )
+      )
       ParallelLogger::logTrace("    - Counting concepts by calendar month and year")
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
@@ -1074,9 +1085,11 @@ getConceptRecordCount <- function(connection,
                   FROM #concept_count_temp
                   GROUP BY concept_id, event_year, event_month
                   ORDER By concept_id, event_year, event_month;"
-  data <- renderTranslateQuerySql(connection = connection,
-                                  sql = retrieveSql,
-                                  snakeCaseToCamelCase = TRUE) %>%
+  data <- renderTranslateQuerySql(
+    connection = connection,
+    sql = retrieveSql,
+    snakeCaseToCamelCase = TRUE
+  ) %>%
     dplyr::tibble()
   # i was thinking of keeping counts at the table level - but the file size became too big
   # so i decided to not include them
@@ -1091,17 +1104,17 @@ getConceptRecordCount <- function(connection,
 }
 
 
-# function: getBreakdownIndexEvents ----
-getBreakdownIndexEvents <- function(cohortIds,
-                                    connection,
-                                    cdmDatabaseSchema,
-                                    cohortDatabaseSchema,
-                                    cohortTable,
-                                    tempEmulationSchema,
-                                    rangeMin = -40,
-                                    rangeMax = 40,
-                                    minCellCount,
-                                    conceptIdUniverse = "#concept_tracking") {
+# function: getConceptOccurrenceRelativeToIndexDay ----
+getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
+                                                   connection,
+                                                   cdmDatabaseSchema,
+                                                   cohortDatabaseSchema,
+                                                   cohortTable,
+                                                   tempEmulationSchema,
+                                                   rangeMin = -40,
+                                                   rangeMax = 40,
+                                                   minCellCount,
+                                                   conceptIdUniverse = "#concept_tracking") {
   if (!is.null(minCellCount)) {
     ParallelLogger::logTrace(
       paste0(
@@ -1189,7 +1202,7 @@ getBreakdownIndexEvents <- function(cohortIds,
   #-- note concept_id that are part of the conceptIdUniverse are not filtered out if count <= minCount
   
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i, ]
+    rowData <- domains[i,]
     ParallelLogger::logTrace(
       paste0(
         "  - Working on ",
@@ -1223,9 +1236,11 @@ getBreakdownIndexEvents <- function(cohortIds,
   }
   
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i, ]
-    if (all(!is.na(rowData$domainSourceConceptId),
-            nchar(rowData$domainSourceConceptId) > 4)) {
+    rowData <- domains[i,]
+    if (all(
+      !is.na(rowData$domainSourceConceptId),
+      nchar(rowData$domainSourceConceptId) > 4
+    )) {
       ParallelLogger::logTrace(
         paste0(
           "  - Working on ",
@@ -1350,7 +1365,7 @@ getConceptSourceStandardMapping <- function(connection,
   
   conceptMapping <- list()
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i, ]
+    rowData <- domains[i,]
     ParallelLogger::logTrace(paste0(
       "  - Working on ",
       rowData$domainTable,
@@ -1366,8 +1381,8 @@ getConceptSourceStandardMapping <- function(connection,
       domain_source_concept_id = rowData$domainSourceConceptId,
       cdm_database_schema = cdmDatabaseSchema,
       concept_id_universe = conceptIdUniverse,
-      domainTableShort = rowData$domainTableShort, 
-      reportOverallTime = FALSE, 
+      domainTableShort = rowData$domainTableShort,
+      reportOverallTime = FALSE,
       progressBar = FALSE
     )
   }
@@ -1448,7 +1463,7 @@ getExcludedConceptSets <- function(connection,
                       .data$includeDescendants) %>%
         dplyr::distinct()
     } else {
-      conceptSetWithExclude[[i]] <- conceptSetWithExclude[[i]][0,]
+      conceptSetWithExclude[[i]] <- conceptSetWithExclude[[i]][0, ]
     }
   }
   conceptSetWithExclude <-
@@ -1603,7 +1618,7 @@ getExcludedConceptSets <- function(connection,
 #' @template Connection
 #'
 #' @template VocabularyDatabaseSchema
-#' 
+#'
 #' @template TempEmulationSchema
 #'
 #' @param conceptSetExpression   An R Object (list) with concept set expression. This maybe generated
@@ -1623,8 +1638,10 @@ getOptimizationRecommendationForConceptSetExpression <-
       # no optimization necessary
       return(
         conceptSetExpressionDataFrame %>%
-          dplyr::mutate(excluded = as.integer(.data$isExcluded),
-                        removed = 0) %>%
+          dplyr::mutate(
+            excluded = as.integer(.data$isExcluded),
+            removed = 0
+          ) %>%
           dplyr::select(.data$conceptId, .data$excluded, .data$removed)
       )
     }
@@ -1696,9 +1713,12 @@ getOptimizationRecommendationForConceptSetExpression <-
       conceptSetConceptIdsDescendantsNotExcluded = conceptSetConceptIdsDescendantsNotExcluded
     )
     
-    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                       sql = "SELECT * FROM #optimized_set;",
-                                                       snakeCaseToCamelCase = TRUE)
+    data <-
+      DatabaseConnector::renderTranslateQuerySql(
+        connection = connection,
+        sql = "SELECT * FROM #optimized_set;",
+        snakeCaseToCamelCase = TRUE
+      )
     
     sqlCleanUp <-
       "IF OBJECT_ID('tempdb..#optimized_set', 'U') IS NOT NULL
@@ -1710,7 +1730,7 @@ getOptimizationRecommendationForConceptSetExpression <-
       reportOverallTime = FALSE,
       progressBar = FALSE
     )
-    data <- data %>% 
+    data <- data %>%
       dplyr::filter(.data$conceptId != 0)
     
     if (nrow(data) == 0) {
