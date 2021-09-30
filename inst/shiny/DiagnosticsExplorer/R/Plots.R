@@ -1367,6 +1367,7 @@ plotCohortOverlap <- function(data,
   # )
   # checkmate::reportAssertions(collection = errorMessage)
  
+
   
   data <- data %>%
     addShortName(
@@ -1379,6 +1380,21 @@ plotCohortOverlap <- function(data,
       cohortIdColumn = "comparatorCohortId",
       shortNameColumn = "comparatorShortName"
     )
+  targetCohortCompoundName <- data  %>% 
+    dplyr::inner_join(cohort %>% 
+                        dplyr::mutate(targetCohortId = .data$cohortId) %>% 
+                        dplyr::select(.data$targetCohortId,.data$compoundName),
+                      by = "targetCohortId") %>% 
+    dplyr::pull(.data$compoundName) %>% unique()
+  targetCohortCompoundName <- paste("Target Cohorts :",paste(targetCohortCompoundName,collapse = ","))
+  
+  comparatorCohortCompoundName <- data  %>% 
+    dplyr::inner_join(cohort %>% 
+                        dplyr::mutate(comparatorCohortId = .data$cohortId) %>% 
+                        dplyr::select(.data$comparatorCohortId,.data$compoundName),
+                      by = "comparatorCohortId") %>% 
+    dplyr::pull(.data$compoundName) %>% unique()
+  comparatorCohortCompoundName <- paste("Comparator Cohorts :",paste(comparatorCohortCompoundName,collapse = ","))                    
   
   plotData <- data %>%
     dplyr::mutate(
@@ -1458,9 +1474,9 @@ plotCohortOverlap <- function(data,
     dplyr::mutate(
       subjectsIn = dplyr::recode(
         .data$subjectsIn,
-        absTOnlySubjects = "Left cohort only",
+        absTOnlySubjects = "Target cohort only",
         absBothSubjects = "Both cohorts",
-        absCOnlySubjects = "Right cohort only"
+        absCOnlySubjects = "Comparator cohort only"
       )
     )
   
@@ -1491,7 +1507,7 @@ plotCohortOverlap <- function(data,
   plotData$subjectsIn <-
     factor(
       plotData$subjectsIn,
-      levels = c("Left cohort only", "Both cohorts", "Right cohort only")
+      levels = c("Target cohort only", "Both cohorts", "Comparator cohort only")
     )
   
   if (yAxis == "Percentages") {
@@ -1532,10 +1548,9 @@ plotCohortOverlap <- function(data,
       comparatorShortName = factor(.data$comparatorShortName, levels = sortComparatorShortName$comparatorShortName),
       .data$comparatorShortName
     )
-    
-  
   
   distinctComparatorShortName <- plotData$comparatorShortName %>% unique()
+  # distinctTargetShortName <- plotData$targetShortName %>% unique()
   distinctDatabaseIds <- plotData$databaseId %>% unique()
   databasePlots <- list()
   for (i in 1:length(distinctDatabaseIds)) {
@@ -1579,7 +1594,7 @@ plotCohortOverlap <- function(data,
                                               x = ~xAxisValues, y = ~targetShortName, type = 'bar',
                                               name = ~subjectsIn, text = ~tooltip, hoverinfo = 'text',
                                               color = ~subjectsIn, colors = c( rgb(0.4, 0.4, 0.9), rgb(0.3, 0.2, 0.4),rgb(0.8, 0.2, 0.2)),
-                                              showlegend = showLegend, height = max(400, 200 * length(distinctComparatorShortName))) %>%
+                                              showlegend = showLegend, height = max(400, 250 * length(distinctComparatorShortName))) %>%
         plotly::layout(barmode = 'stack',
                        legend = list(orientation = "h",x = 0.4),
                        xaxis = list(range = c(0, xAxisMax),
@@ -1614,11 +1629,21 @@ plotCohortOverlap <- function(data,
   m <- list(
     l = 50,
     r = 50,
-    b = 100,
+    b = 200,
     t = 50
   )
   plot <- plotly::subplot(databasePlots) %>% 
-    plotly::layout(margin = m)
+    plotly::layout(annotations = list(
+      x = 0.5 ,
+      y = -0.4 + (0.055 * length(distinctComparatorShortName)),
+      text = paste(targetCohortCompoundName,"\n",comparatorCohortCompoundName),
+      showarrow = F,
+      xanchor = "center",
+      yanchor = "middle",
+      xref = 'paper',
+      yref = 'paper',
+      font = list(size = 14)
+    ),margin = m)
   
   # plotData$targetShortName <- factor(plotData$targetShortName,
   #                                    levels = sortTargetShortName$targetShortName)
