@@ -1240,9 +1240,9 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                         	WHERE c.cohort_definition_id IN (@cohortIds)
                                         		AND d1.@domain_concept_id != 0
                                         		AND d1.@domain_concept_id IS NOT NULL
-                                        		AND d1.@domain_source_concept_id != 0
-                                        		AND d1.@domain_source_concept_id IS NOT NULL
-                                        		AND d1.@domain_concept_id != d2.@domain_source_concept_id
+                                        		AND d2.@domain_concept_id != 0
+                                        		AND d2.@domain_concept_id IS NOT NULL
+                                        		AND d1.@domain_concept_id != d2.@domain_concept_id
                                         	GROUP BY cohort_definition_id,
                                         		datediff(dd, d1.@domain_start_date, c.cohort_start_date),
                                         		d1.@domain_concept_id,
@@ -1289,13 +1289,13 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                             	WHERE c.cohort_definition_id IN (@cohortIds)
                                             		AND d1.@domain_concept_id != 0
                                             		AND d1.@domain_concept_id IS NOT NULL
-                                            		AND d1.@domain_source_concept_id != 0
-                                            		AND d1.@domain_source_concept_id IS NOT NULL
+                                            		AND d2.@domain_source_concept_id != 0
+                                            		AND d2.@domain_source_concept_id IS NOT NULL
                                             		AND d1.@domain_concept_id != d2.@domain_source_concept_id
                                             	GROUP BY cohort_definition_id,
                                             		datediff(dd, d1.@domain_start_date, c.cohort_start_date),
                                             		d1.@domain_concept_id,
-                                            		d2.@domain_concept_id
+                                            		d2.@domain_source_concept_id
                                             	) f
                                             LEFT JOIN (
                                             	SELECT DISTINCT concept_id
@@ -1362,7 +1362,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
     ParallelLogger::logTrace(paste0("   - Performing co concept id count - different"))
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
-      sql = sqlConceptIdCoConceptIdDifferentCount,
+      sql = sqlConceptIdCoConceptIdOppositeCount,
       tempEmulationSchema = tempEmulationSchema,
       domain_table = rowData$domainTable,
       domain_concept_id = rowData$domainConceptId,
@@ -1439,7 +1439,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
       ParallelLogger::logTrace(paste0("   - Performing co concept id count - different"))
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
-        sql = sqlConceptIdCoConceptIdDifferentCount,
+        sql = sqlConceptIdCoConceptIdOppositeCount,
         tempEmulationSchema = tempEmulationSchema,
         domain_table = rowData$domainTable,
         domain_concept_id = rowData$domainConceptId,
@@ -1476,6 +1476,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
       sql = "SELECT DISTINCT cohort_id,
                 days_relative_index,
                 concept_id,
+                co_concept_id,
                 max(subject_count) subject_count,
                 max(concept_count) concept_count
               FROM #indx_breakdown
@@ -1484,6 +1485,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                 concept_id
               order by cohort_id,
                 concept_id,
+                co_concept_id,
                 days_relative_index;",
       snakeCaseToCamelCase = TRUE
     ) %>%

@@ -162,6 +162,7 @@ index_event_breakdown,database_id,varchar,Yes,Yes,No,Yes,2.2
 index_event_breakdown,cohort_id,bigint,Yes,Yes,No,Yes,2.2
 index_event_breakdown,days_relative_index,bigint,Yes,Yes,No,Yes,2.2
 index_event_breakdown,concept_id,int,Yes,Yes,No,Yes,2.2
+index_event_breakdown,co_concept_id,int,Yes,Yes,No,Yes,2.2
 index_event_breakdown,concept_count,float,Yes,No,No,Yes,2.2
 index_event_breakdown,subject_count,float,Yes,No,No,Yes,2.2
 metadata,database_id,varchar,Yes,Yes,No,Yes,2.2
