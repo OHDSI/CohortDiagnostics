@@ -1111,8 +1111,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                                    cohortDatabaseSchema,
                                                    cohortTable,
                                                    tempEmulationSchema,
-                                                   rangeMin = -40,
-                                                   rangeMax = 40,
+                                                   rangeMin = -30,
+                                                   rangeMax = 30,
                                                    minCellCount,
                                                    conceptIdUniverse = "#concept_tracking") {
   if (!is.null(minCellCount)) {
