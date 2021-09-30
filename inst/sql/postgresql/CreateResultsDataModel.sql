@@ -369,9 +369,10 @@ CREATE TABLE index_event_breakdown (
 			cohort_id BIGINT NOT NULL,
 			days_relative_index BIGINT NOT NULL,
 			concept_id INT NOT NULL,
+			co_concept_id INT NOT NULL,
 			concept_count FLOAT NOT NULL,
 			subject_count FLOAT NOT NULL,
-			PRIMARY KEY(database_id, cohort_id, days_relative_index, concept_id)
+			PRIMARY KEY(database_id, cohort_id, days_relative_index, concept_id, co_concept_id)
 );
 
 --Table metadata

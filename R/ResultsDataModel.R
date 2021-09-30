@@ -332,7 +332,7 @@ uploadResults <- function(connectionDetails = NULL,
       uploadChunk <- function(chunk, pos) {
         ParallelLogger::logTrace(
           paste0(
-            "  - Preparing to upload rows ",
+            "    - Preparing to upload rows ",
             scales::comma(pos),
             " through ",
             scales::comma(pos + nrow(chunk) - 1)

@@ -1,13 +1,41 @@
 <h3>Description</h3>
-<p>A table showing the concepts belonging to the concept sets in the entry event definition that are observed on the index date. In other words, the table lists the concepts that likely triggered the cohort entry. The counts indicate number of cohort entries where the concepts was observed on the index date. Note that multiple concepts can be present on the index date, so the sum of counts might be greater than the cohort entry count.</p>
+<p>A table showing the occurrence of concepts in relation to index date of the cohort. Filtering the tables by resolved concept_ids of the concept sets in 
+the cohort definition may provide insights on which concept_id likely triggered the cohort entry. 
+
+<h3>How was this calculated?</h3>
+We counted the occurrence of each concept_id (number of persons, number of records) with the concept_id for every day, seperately, starting -40days prior to the index date to + 40 days after the index date. These computation was performed seperately for every CDM table and the maximum of person/record count across all tables was captured. If a conceptId had a low subject count (defined as min cell count * 10 ~ commonly 50, it was removed) - to reduce file size of the exported object and to enhance privacy, except if the concept_id was part of the concept set expression of the cohort definition AND it occurred on index date of the cohort. </p>
+
+<h3>Intepretation</h3>
+This diagnositic is useful to understand the occurrence of concept_id in relation to index date (starting - 40 days to + 40 days.).
 
 <h3>Options</h3>
 <p>You can select multiple databases in the side bar to see counts from different databases side-by-side.</p>
 <p>Select the cohort to explore in the side bar.</p>
 
+<h4>Concept Co-occurrence diagnostics</h4>
+Given a selected concept_id what other concept_ids co-occurred with the selected concept_id on a certain number of days relative to index date (commonly 0 days). You can also f
+<li> How many times does the selected concept_id occur in relation to the other concept_id's (alone, or in combination)
+<li> Observe a 3-D matrix of the relationship between the selected concept_id.
+
+<h4>Filter by Domain</h4>
+Filter the concept_id by domain, eg. maybe you want to filter to the visit domain to understand visit context.
+
+<h4>Filter by one or more concept set</h4>
+Select one or more from the available concept-set (you are not limited the concept-set in the cohort being diagnosed i.e. you can select a concept set from across cohort definitions) - to filter the concepts in the table. Maybe combined with other filters.
+
+<h4>Temporal Diagnostics</h4>
+Given one or more selected concept_ids, you can visualize the temporal trend of the concept_id starting -40 to +40days in relation to the index date. 
+- Is there a temporal relationship between index date and the concept_id i.e. does the index date become an inflection point (index date misclassification bias)
+
+
 <h3>What to look for</h3>
+<h4>Simple</h4>
 <ul>
 <li>Is one concept unexpectedly dominating? For example, if our cohort identifies exposure to drugs in a class, but we notice almost everyone enters the cohort based on a single drug, we may wonder whether our results will generalize to the class.</li>
 <li>Are the highest ranking concepts different across databases? For example, is everyone in one database initiating high-dose prescriptions, and everyone in another database low-dose prescriptions? 
 </ul>
 
+
+<h4>Advanced</h4>
+<ul>
+<li>Maybe you are interested in a non-standard concept_id that you are debating if it should be included in your definition. Would observing that more than 90% of the counts of th non-standard concept_id commonly occurrs on the same day as a standard concept_id that is already in your current cohort definition change your thinking on how to build the cohort definition? </li>

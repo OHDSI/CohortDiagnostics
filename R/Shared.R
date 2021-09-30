@@ -1507,16 +1507,125 @@ getVocabularyRelationship <- function(dataSource) {
 #' Returns data from cohort table of Cohort Diagnostics results data model
 #'
 #' @template DataSource
+#' 
+#' @template CohortIds
 #'
 #' @return
 #' Returns a data frame (tibble)
 #'
 #' @export
-getResultsCohort <- function(dataSource) {
+getResultsCohort <- function(dataSource, cohortIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(dataSource,
-                                           dataTableName = "cohort")
+                                           dataTableName = "cohort", 
+                                           cohortId = cohortIds)
   return(data)
 }
+
+
+# Database ----
+#' Returns data from Database table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from Database table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#' 
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a data frame (tibble)
+#'
+#' @export
+getResultsDatabase <- function(dataSource, 
+                               databaseIds = NULL) {
+  data <- getDataFromResultsDatabaseSchema(dataSource,
+                                           dataTableName = "database", 
+                                           databaseId = databaseIds)
+  return(data)
+}
+
+
+# Concept Sets ----
+#' Returns data from Concept sets table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from Concept sets table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#' 
+#' @template CohortIds
+#' 
+#' @template ConceptSetIds
+#'
+#' @return
+#' Returns a data frame (tibble)
+#'
+#' @export
+getResultsConceptSet <- function(dataSource,
+                                 cohortIds = NULL,
+                                 conceptSetIds = NULL) {
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    dataTableName = "conceptSets",
+    cohortId = cohortIds,
+    conceptSetId = conceptSetIds
+  )
+  return(data)
+}
+
+
+# Concept Set expression
+#' Returns a Concept Set expression (R-object) from a cohort definition
+#'
+#' @description
+#' Returns a Concept Set expression from a cohort definition
+#'
+#' @template DataSource
+#'
+#' @template CohortId
+#'
+#' @template ConceptSetId
+#'
+#' @return
+#' Returns a data frame (tibble)
+#'
+#' @export
+getResultsConceptSetExpression <- function(dataSource,
+                                           cohortId,
+                                           conceptSetId) {
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    dataTableName = "conceptSet",
+    cohortId = cohortId,
+    conceptSetId = conceptSetId
+  )
+  if (length(cohortId) > 0) {
+    stop("Please only provide one integer value for cohortId")
+  }
+  if (length(cohortId) > 0) {
+    stop("Please only provide one integer value for conceptSetId")
+  }
+  if (is.null(data)) {
+    warning(
+      paste0(
+        "No concept set returned for the combination of cohort id = ",
+        cohortId,
+        " and concept set id = ",
+        conceptSetId
+      )
+    )
+  }
+  if (nrow(data) > 1) {
+    stop("More than one expression returned. Please check the integerity of your results.")
+  }
+  
+  expression <- data %>%
+    dplyr::pull(.data$concept_set_expression) %>%
+    RJSONIO::fromJSON(digits = 23)
+  
+  return(expression)
+}
+
 
 
 #' Returns data from cohort_count table of Cohort Diagnostics results data model

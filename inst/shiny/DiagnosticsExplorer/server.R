@@ -5707,6 +5707,36 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
+  output$cohortOverlapTable <- DT::renderDataTable(expr = {
+    data <- cohortOverlapData()
+    validate(need(
+      !is.null(data),
+      paste0("No cohort overlap data for this combination")
+    ))
+    validate(need(
+      nrow(data) > 0,
+      paste0("No cohort overlap data for this combination.")
+    ))
+    
+    options = list(
+      pageLength = 1000,
+      searching = TRUE,
+      scrollX = TRUE,
+      scrollY = "100vh",
+      lengthChange = TRUE,
+      ordering = FALSE,
+      paging = TRUE
+    )
+    
+    table <- DT::datatable(
+      data,
+      options = options,
+      rownames = FALSE,
+      escape = FALSE,
+      filter = "top",
+      class = "stripe nowrap compact"
+    )
+  })
   
   ##output: saveCohortOverlapTable----
   output$saveCohortOverlapTable <-  downloadHandler(
