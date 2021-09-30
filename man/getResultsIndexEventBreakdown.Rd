@@ -9,6 +9,7 @@ getResultsIndexEventBreakdown(
   cohortIds = NULL,
   databaseIds = NULL,
   conceptIds = NULL,
+  coConceptIds = 0,
   daysRelativeIndex = 0
 )
 }
@@ -26,7 +27,11 @@ and uploaded using \code{uploadResults}}
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
 
+\item{conceptIds}{A vector of one or more Concept Ids.}
+
 \item{daysRelativeIndex}{A vector of integers representing the offset in relation to index date (-40 to 40)}
+
+\item{CoConceptIds}{A vector of integers representing co-concept ids}
 }
 \value{
 Returns a data frame (tibble) with results that conform to index_event_breakdown
