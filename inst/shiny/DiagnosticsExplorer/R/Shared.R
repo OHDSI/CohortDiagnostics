@@ -372,6 +372,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         data_table = camelCaseToSnakeCase(dataTableName),
         database_id = quoteLiterals(databaseId),
         concept_id = conceptId,
+        co_concept_id = coConceptId,
         concept_set_id = conceptSetId,
         concept_id_1 = conceptId1,
         # for concept relationship only
