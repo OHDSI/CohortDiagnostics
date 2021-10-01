@@ -5820,7 +5820,7 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observe({
     data <- getCharacterizationTableData()
     if (all(!is.null(data),
-            !doesObjectHaveData(data$domainId))) {
+            doesObjectHaveData(data$domainId))) {
       subset <-
         data$domainId %>% unique() %>% sort()
       shinyWidgets::updatePickerInput(
@@ -6118,22 +6118,11 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    if (all(
-      !is.null(getCharacterizationAnalysisNameOptions()),
-      getCharacterizationAnalysisNameOptions() != "",
-      length(getCharacterizationAnalysisNameOptions()) > 0
-    )) {
-      data <- data %>%
-        dplyr::filter(.data$analysisName %in% getCharacterizationAnalysisNameOptions())
-    }
-    if (all(
-      !is.null(getCharacterizationDomainNameOptions()),
-      getCharacterizationDomainNameOptions() != "",
-      length(getCharacterizationDomainNameOptions()) > 0
-    )) {
-      data <- data %>%
-        dplyr::filter(.data$domainId %in% getCharacterizationDomainNameOptions())
-    }
+    
+    data <- data %>%
+      dplyr::filter(.data$analysisName %in% getCharacterizationAnalysisNameOptions())  %>%
+      dplyr::filter(.data$domainId %in% getCharacterizationDomainNameOptions())
+    
     
     if (!doesObjectHaveData(data)) {
       return(NULL)
