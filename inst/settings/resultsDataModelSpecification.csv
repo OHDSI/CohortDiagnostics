@@ -254,10 +254,13 @@ time_series,calendar_interval,varchar,Yes,Yes,No,Yes,2.2
 time_series,records,bigint,Yes,No,No,Yes,2.2
 time_series,subjects,bigint,Yes,No,No,Yes,2.2
 time_series,person_days,bigint,Yes,No,No,Yes,2.2
+time_series,person_days_in,bigint,Yes,No,No,Yes,2.2
 time_series,records_start,bigint,No,No,No,No,2.2
 time_series,subjects_start,bigint,No,No,No,No,2.2
+time_series,subjects_start_in,bigint,No,No,No,No,2.2
 time_series,records_end,bigint,No,No,No,No,2.2
 time_series,subjects_end,bigint,No,No,No,No,2.2
+time_series,subjects_end_in,bigint,No,No,No,No,2.2
 visit_context,cohort_id,bigint,Yes,Yes,No,Yes,2.2
 visit_context,visit_concept_id,int,Yes,Yes,No,Yes,2.2
 visit_context,visit_concept_name,varchar,Yes,No,No,Yes,2.2

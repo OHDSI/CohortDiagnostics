@@ -375,8 +375,8 @@ shiny::shinyServer(function(input, output, session) {
                                                       shiny::radioButtons(
                                                         inputId = "targetConceptIdCountSource",
                                                         label = "",
-                                                        choices = c("Database level", "Cohort Level"),
-                                                        selected = "Database level",
+                                                        choices = c("Datasource level", "Cohort Level"),
+                                                        selected = "Datasource level",
                                                         inline = TRUE
                                                       )
                                                     )
@@ -642,8 +642,8 @@ shiny::shinyServer(function(input, output, session) {
                                                       shiny::radioButtons(
                                                         inputId = "comparatorConceptIdCountSource",
                                                         label = "",
-                                                        choices = c("Database level", "Cohort Level"),
-                                                        selected = "Database level",
+                                                        choices = c("Datasource level", "Cohort Level"),
+                                                        selected = "Datasource level",
                                                         inline = TRUE
                                                       )
                                                     )
@@ -1346,7 +1346,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getDatabaseOrCohortCountForConceptIds(
       data = data,
       dataSource = dataSource,
-      databaseCount = input$targetConceptIdCountSource == "Database level"
+      databaseCount = input$targetConceptIdCountSource == "Datasource level"
     )
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -1370,7 +1370,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getDatabaseOrCohortCountForConceptIds(
       data = data,
       dataSource = dataSource,
-      databaseCount = input$comparatorConceptIdCountSource == "Database level"
+      databaseCount = input$comparatorConceptIdCountSource == "Datasource level"
     )
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -1403,7 +1403,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getDatabaseOrCohortCountForConceptIds(
       data = data, 
       dataSource = dataSource,
-      databaseCount = input$targetConceptIdCountSource == "Database level"
+      databaseCount = input$targetConceptIdCountSource == "Datasource level"
     )
     if (is.null(data)) {
       return(NULL)
@@ -1436,7 +1436,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getDatabaseOrCohortCountForConceptIds(
       data = data, 
       dataSource = dataSource,
-      databaseCount = input$comparatorConceptIdCountSource == "Database level")
+      databaseCount = input$comparatorConceptIdCountSource == "Datasource level")
     data <- data %>% 
       dplyr::select(-.data$conceptSetId, -.data$cohortId)
     return(data)
@@ -1468,7 +1468,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getDatabaseOrCohortCountForConceptIds(
       data = data, 
       dataSource = dataSource,
-      databaseCount = input$targetConceptIdCountSource == "Database level"
+      databaseCount = input$targetConceptIdCountSource == "Datasource level"
     )
     if (is.null(data)) {
       return(NULL)
@@ -1504,7 +1504,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getDatabaseOrCohortCountForConceptIds(
       data = data, 
       dataSource = dataSource,
-      databaseCount = input$comparatorConceptIdCountSource == "Database level")
+      databaseCount = input$comparatorConceptIdCountSource == "Datasource level")
     
     if (is.null(data)) {
       return(NULL)
@@ -3391,10 +3391,10 @@ shiny::shinyServer(function(input, output, session) {
       }
     
       if (!is.null(input$targetConceptIdCountSource)) {
-        if (input$targetConceptIdCountSource == "Database level") {
+        if (input$targetConceptIdCountSource == "Datasource level") {
           updateRadioButtons(session = session,
                              inputId = "comparatorConceptIdCountSource",
-                             selected = "Database level")
+                             selected = "Datasource level")
         } else {
           updateRadioButtons(session = session,
                              inputId = "comparatorConceptIdCountSource",
@@ -3539,10 +3539,10 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       if (!is.null(input$comparatorConceptIdCountSource)) {
-        if (input$comparatorConceptIdCountSource == "Database level") {
+        if (input$comparatorConceptIdCountSource == "Datasource level") {
           updateRadioButtons(session = session,
                              inputId = "targetConceptIdCountSource",
-                             selected = "Database level")
+                             selected = "Datasource level")
         } else {
           updateRadioButtons(session = session,
                              inputId = "targetConceptIdCountSource",
@@ -4300,7 +4300,6 @@ shiny::shinyServer(function(input, output, session) {
   
   #______________----
   # Time Series -----
-  #!!!!!!!!!!!!needs another hard look and clean up
   ##reactive: getFixedTimeSeriesTsibble ------
   getFixedTimeSeriesTsibble <- reactive({
     if (any(is.null(input$tabs), !input$tabs == "timeSeries")) {
@@ -4312,7 +4311,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
       return(NULL)
     }
-    if (all(is(dataSource, "environment"),!exists('timeDistribution'))) {
+    if (all(is(dataSource, "environment"),!exists('timeSeries'))) {
       return(NULL)
     }
     
@@ -4320,23 +4319,20 @@ shiny::shinyServer(function(input, output, session) {
     on.exit(progress$close())
     progress$set(message = paste0("Getting time series data."),
                  value = 0)
-    
     data <- getResultsFixedTimeSeries(dataSource = dataSource,
-                                      cohortId =  consolidatedCohortIdTarget())
+                                      cohortId =  consolidatedCohortIdTarget(),
+                                      databaseIds = consolidatedDatabaseIdTarget())
     return(data)
   })
   
   ##reactive: getFixedTimeSeriesTsibbleFiltered----
   getFixedTimeSeriesTsibbleFiltered <- reactive({
-    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
-      return(NULL)
-    }
-    calendarIntervalFirstLetter <-
-      tolower(substr(input$timeSeriesAggregationPeriodSelection, 1, 1))
     data <- getFixedTimeSeriesTsibble()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    calendarIntervalFirstLetter <-
+      tolower(substr(input$timeSeriesAggregationPeriodSelection, 1, 1))
     
     data <- data[[calendarIntervalFirstLetter]]
     if (!doesObjectHaveData(data)) {

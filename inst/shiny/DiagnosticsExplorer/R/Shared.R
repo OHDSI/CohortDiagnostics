@@ -848,7 +848,7 @@ getResultsConceptSubjects <- function(dataSource,
 #' 
 #' @param getConceptMappingCount  Do you want concept mapping count?
 #' 
-#' @param getFixedTimeSeries Do you want a conceptIds database level time series data reported on actual dates?
+#' @param getFixedTimeSeries Do you want a conceptIds datasource level time series data reported on actual dates?
 #' 
 #' @param getRelativeTimeSeries Do you want cohort level time series data reported relative to cohort start date?
 #'
@@ -1761,6 +1761,7 @@ getResultsCohortSummaryStats <- function(dataSource,
 getResultsFixedTimeSeries <- function(dataSource,
                                       cohortIds = NULL,
                                       databaseIds = NULL) {
+  browser()
   # cohortId = 0, represent all persons in observation_period
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
@@ -1805,10 +1806,13 @@ getResultsFixedTimeSeries <- function(dataSource,
         records = .data$records_1 / .data$records_2,
         subjects = .data$subjects_1 / .data$subjects_2,
         personDays = .data$personDays_1 / .data$personDays_2,
+        personDaysInc = NA,
         recordsStart = .data$recordsStart_1 / .data$recordsStart_2,
         subjectsStart = .data$subjectsStart_1 / .data$subjectsStart_2,
+        subjctsStartInc = NA,
         recordsEnd = .data$recordsEnd_1 / .data$recordsEnd_2,
-        subjectsEnd = .data$subjectsEnd_1 / .data$subjectsEnd_2
+        subjectsEnd = .data$subjectsEnd_1 / .data$subjectsEnd_2,
+        subjectsEndInc = NA
       ) %>%
       dplyr::select(-dplyr::ends_with("1")) %>%
       dplyr::select(-dplyr::ends_with("2")) %>%
@@ -1818,7 +1822,7 @@ getResultsFixedTimeSeries <- function(dataSource,
   
   timeSeriesDescription <- dplyr::tibble(
     seriesType = c('T1', 'T2', 'T3', 'T4', 'T5', 'T6',
-                   'R1', 'R2'),
+                   'R1'),
     seriesTypeShort = c(
       'Subjects cohort period',
       'Subjects observation period',
@@ -1826,8 +1830,7 @@ getResultsFixedTimeSeries <- function(dataSource,
       'Subjects cohort embedded in period',
       'Subjects observation embedded in period',
       'Persons observation embedded in period',
-      'Prevalence Proportion',
-      'Prevalence Rate'
+      'Percent of Subjects among persons in cohort period'
     ),
     seriesTypeLong = c(
       'Subjects in the cohort who have atleast one cohort day in calendar period',
@@ -1836,8 +1839,7 @@ getResultsFixedTimeSeries <- function(dataSource,
       'Subjects in the cohorts whose cohort period are embedded within calendar period',
       'Subjects in the cohorts whose observation period is embedded within calendar period',
       'Persons in the observation table whose observation period is embedded within calendar period',
-      'Prevalence proportion - count of subjects in the cohort who have atleast one cohort day in calendar period divided by count of persons in the data source who have atleast one cohort day in calendar period',
-      'Prevalence rate - calendar period persons days for subjects in the cohort who have atleast one cohort day in calendar period divided by calendar period person days for all persons in the data source who have atleast one cohort day in calendar period * 1,000 * 365t'
+      'Percent of persons in the datasource who have atlesat one cohort day in calendar period that met the cohort definition rules and had atleast one cohort day in the calendar period'
     )
   )
   
