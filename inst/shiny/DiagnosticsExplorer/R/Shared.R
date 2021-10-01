@@ -848,7 +848,7 @@ getResultsConceptSubjects <- function(dataSource,
 #' 
 #' @param getConceptMappingCount  Do you want concept mapping count?
 #' 
-#' @param getFixedTimeSeries Do you want a conceptIds database level time series data reported on actual dates?
+#' @param getFixedTimeSeries Do you want a conceptIds datasource level time series data reported on actual dates?
 #' 
 #' @param getRelativeTimeSeries Do you want cohort level time series data reported relative to cohort start date?
 #'

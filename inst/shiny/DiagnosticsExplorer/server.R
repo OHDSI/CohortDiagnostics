@@ -375,8 +375,8 @@ shiny::shinyServer(function(input, output, session) {
                                                       shiny::radioButtons(
                                                         inputId = "targetConceptIdCountSource",
                                                         label = "",
-                                                        choices = c("Database level", "Cohort Level"),
-                                                        selected = "Database level",
+                                                        choices = c("Datasource level", "Cohort Level"),
+                                                        selected = "Datasource level",
                                                         inline = TRUE
                                                       )
                                                     )
@@ -642,8 +642,8 @@ shiny::shinyServer(function(input, output, session) {
                                                       shiny::radioButtons(
                                                         inputId = "comparatorConceptIdCountSource",
                                                         label = "",
-                                                        choices = c("Database level", "Cohort Level"),
-                                                        selected = "Database level",
+                                                        choices = c("Datasource level", "Cohort Level"),
+                                                        selected = "Datasource level",
                                                         inline = TRUE
                                                       )
                                                     )
@@ -1346,7 +1346,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getDatabaseOrCohortCountForConceptIds(
       data = data,
       dataSource = dataSource,
-      databaseCount = input$targetConceptIdCountSource == "Database level"
+      databaseCount = input$targetConceptIdCountSource == "Datasource level"
     )
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -1370,7 +1370,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getDatabaseOrCohortCountForConceptIds(
       data = data,
       dataSource = dataSource,
-      databaseCount = input$comparatorConceptIdCountSource == "Database level"
+      databaseCount = input$comparatorConceptIdCountSource == "Datasource level"
     )
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -1403,7 +1403,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getDatabaseOrCohortCountForConceptIds(
       data = data, 
       dataSource = dataSource,
-      databaseCount = input$targetConceptIdCountSource == "Database level"
+      databaseCount = input$targetConceptIdCountSource == "Datasource level"
     )
     if (is.null(data)) {
       return(NULL)
@@ -1436,7 +1436,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getDatabaseOrCohortCountForConceptIds(
       data = data, 
       dataSource = dataSource,
-      databaseCount = input$comparatorConceptIdCountSource == "Database level")
+      databaseCount = input$comparatorConceptIdCountSource == "Datasource level")
     data <- data %>% 
       dplyr::select(-.data$conceptSetId, -.data$cohortId)
     return(data)
@@ -1468,7 +1468,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getDatabaseOrCohortCountForConceptIds(
       data = data, 
       dataSource = dataSource,
-      databaseCount = input$targetConceptIdCountSource == "Database level"
+      databaseCount = input$targetConceptIdCountSource == "Datasource level"
     )
     if (is.null(data)) {
       return(NULL)
@@ -1504,7 +1504,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getDatabaseOrCohortCountForConceptIds(
       data = data, 
       dataSource = dataSource,
-      databaseCount = input$comparatorConceptIdCountSource == "Database level")
+      databaseCount = input$comparatorConceptIdCountSource == "Datasource level")
     
     if (is.null(data)) {
       return(NULL)
@@ -3391,10 +3391,10 @@ shiny::shinyServer(function(input, output, session) {
       }
     
       if (!is.null(input$targetConceptIdCountSource)) {
-        if (input$targetConceptIdCountSource == "Database level") {
+        if (input$targetConceptIdCountSource == "Datasource level") {
           updateRadioButtons(session = session,
                              inputId = "comparatorConceptIdCountSource",
-                             selected = "Database level")
+                             selected = "Datasource level")
         } else {
           updateRadioButtons(session = session,
                              inputId = "comparatorConceptIdCountSource",
@@ -3539,10 +3539,10 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       if (!is.null(input$comparatorConceptIdCountSource)) {
-        if (input$comparatorConceptIdCountSource == "Database level") {
+        if (input$comparatorConceptIdCountSource == "Datasource level") {
           updateRadioButtons(session = session,
                              inputId = "targetConceptIdCountSource",
-                             selected = "Database level")
+                             selected = "Datasource level")
         } else {
           updateRadioButtons(session = session,
                              inputId = "targetConceptIdCountSource",

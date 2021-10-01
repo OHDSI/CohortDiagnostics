@@ -76,7 +76,7 @@ sidebarMenu <-
       input.tabs != 'compareCohortCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "selectedDatabaseId",
-        label = "Database",
+        label = "Datasource",
         choices = database$databaseId,
         selected = database$databaseId[1],
         multiple = FALSE,
@@ -107,7 +107,7 @@ sidebarMenu <-
       input.tabs == 'compareCohortCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "selectedDatabaseIds",
-        label = "Database",
+        label = "Datasource",
         choices = database$databaseId,
         selected = database$databaseId[1],
         multiple = TRUE,
@@ -928,7 +928,7 @@ bodyTabItems <- shinydashboard::tabItems(
     createShinyBoxWithSplitForTwoOutputIds(leftOutputId = "temporalCharacterizationSelectedCohort",
                                            leftOutputLabel = "Cohort",
                                            rightOutputId = "temporalCharacterizationSelectedDatabase",
-                                           rightOutputLabel = "Database",
+                                           rightOutputLabel = "Datasource",
                                            leftUnits = 70),
     tags$table(tags$tr(
       tags$td(
@@ -996,7 +996,7 @@ bodyTabItems <- shinydashboard::tabItems(
     createShinyBoxWithSplitForTwoOutputIds(leftOutputId = "cohortCharCompareSelectedCohort", 
                                            leftOutputLabel = "Cohort",
                                            rightOutputId = "cohortCharCompareSelectedDatabase",
-                                           rightOutputLabel = "Database",
+                                           rightOutputLabel = "Datasource",
                                            leftUnits = 70),
     tags$table(
       tags$tr(
@@ -1151,7 +1151,7 @@ bodyTabItems <- shinydashboard::tabItems(
     createShinyBoxWithSplitForTwoOutputIds(leftOutputId = "temporalCharCompareSelectedCohort", 
                                            leftOutputLabel = "Cohort",
                                            rightOutputId = "temporalCharCompareSelectedDatabase",
-                                           rightOutputLabel = "Database",
+                                           rightOutputLabel = "Datasource",
                                            leftUnits = 70),
     tags$table(
       tags$tr(

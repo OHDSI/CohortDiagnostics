@@ -1440,7 +1440,7 @@ plotCohortOverlap <- function(data,
     )  %>%
     dplyr::mutate(
       tooltip = paste0(
-        "Database: ",
+        "Source: ",
         .data$databaseId,
         "\n",
         "\n",
