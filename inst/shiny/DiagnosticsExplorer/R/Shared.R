@@ -1761,7 +1761,6 @@ getResultsCohortSummaryStats <- function(dataSource,
 getResultsFixedTimeSeries <- function(dataSource,
                                       cohortIds = NULL,
                                       databaseIds = NULL) {
-  browser()
   # cohortId = 0, represent all persons in observation_period
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
@@ -1830,7 +1829,7 @@ getResultsFixedTimeSeries <- function(dataSource,
       'Subjects cohort embedded in period',
       'Subjects observation embedded in period',
       'Persons observation embedded in period',
-      'Percent of Subjects among persons in cohort period'
+      'Percent of Subjects among persons in period'
     ),
     seriesTypeLong = c(
       'Subjects in the cohort who have atleast one cohort day in calendar period',
@@ -1839,7 +1838,7 @@ getResultsFixedTimeSeries <- function(dataSource,
       'Subjects in the cohorts whose cohort period are embedded within calendar period',
       'Subjects in the cohorts whose observation period is embedded within calendar period',
       'Persons in the observation table whose observation period is embedded within calendar period',
-      'Percent of persons in the datasource who have atlesat one cohort day in calendar period that met the cohort definition rules and had atleast one cohort day in the calendar period'
+      'Percent of persons in the datasource who have atleast one cohort day in calendar period that met the cohort definition rules in that cohort period'
     )
   )
   
