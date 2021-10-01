@@ -6597,11 +6597,7 @@ shiny::shinyServer(function(input, output, session) {
       return(input$compareCharacterizationAnalysisNameFilter)
     })
   
-  ###getCompareCharacterizationDomainNameFilter----
-  getCompareCharacterizationDomainNameFilter <-
-    shiny::reactive(x = {
-      return(input$compareCharacterizationDomainNameFilter)
-    })
+  
   
   ###Update: compareCharacterizationAnalysisNameFilter----
   shiny::observe({
@@ -6619,21 +6615,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  ###Update: compareCharacterizationDomainNameFilter----
-  shiny::observe({
-    data <- getCompareCharacterizationData()
-    if (all(!is.null(data),
-            nrow(data) > 0)) {
-      subset <- data$domainId %>% unique() %>% sort()
-      shinyWidgets::updatePickerInput(
-        session = session,
-        inputId = "compareCharacterizationDomainNameFilter",
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = subset,
-        selected = subset
-      )
-    }
-  })
+
   
   ###getCompareTemporalCharacterizationDomainNameFilter----
   getCompareTemporalCharacterizationDomainNameFilter <-
@@ -6920,14 +6902,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$analysisName %in% getCompareCharacterizationAnalysisNameFilter())
       
     }
-    if (all(
-      !is.null(getCompareCharacterizationDomainNameFilter()),
-      getCompareCharacterizationDomainNameFilter() != "",
-      length(getCompareCharacterizationDomainNameFilter()) > 0
-    )) {
-      data <- data %>%
-        dplyr::filter(.data$analysisName %in% getCompareCharacterizationDomainNameFilter())
-    }
+   
     # if (all(
     #   !is.null(input$conceptSetsSelectedCohortLeft),
     #   input$conceptSetsSelectedCohortLeft != "",
@@ -7287,11 +7262,7 @@ shiny::shinyServer(function(input, output, session) {
       plot <-
         plotCohortComparisonStandardizedDifference(
           balance = data,
-          shortNameRef = cohort,
-          xLimitMin = input$compareCohortXMeanFilter[1],
-          xLimitMax = input$compareCohortXMeanFilter[2],
-          yLimitMin = input$compareCohortYMeanFilter[1],
-          yLimitMax = input$compareCohortYMeanFilter[2]
+          shortNameRef = cohort
         )
       return(plot)
     })

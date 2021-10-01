@@ -1011,10 +1011,6 @@ plotCalendarIncidence <- function(data,
 
 plotCohortComparisonStandardizedDifference <- function(balance,
                                                        shortNameRef = NULL,
-                                                       xLimitMin = 0,
-                                                       xLimitMax = 1,
-                                                       yLimitMin = 0,
-                                                       yLimitMax = 1,
                                                        domain = "all") {
   domains <-
     c("Condition",
@@ -1090,26 +1086,6 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     )
   
   
-  # Make sure colors are consistent, no matter which domains are included:
-  # colors <-
-  #   c(
-  #     "#1B9E77",
-  #     "#D95F02",
-  #     "#7570B3",
-  #     "#E7298A",
-  #     "#66A61E",
-  #     "#E6AB02",
-  #     "#A6761D",
-  #     "#444444"
-  #   )
-  # colors <- colors[c(domains, "other") %in% unique(balance$domain)]
-  # 
-  # balance$domain <-
-  #   factor(balance$domain, levels = c(domains, "other")) %>% unique()
-  
-  # targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
-  # comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
-  
   xCohort <- balance %>%
     dplyr::distinct(balance$targetCohort) %>%
     dplyr::pull()
@@ -1117,26 +1093,44 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     dplyr::distinct(balance$comparatorCohort) %>%
     dplyr::pull()
   
-  plot <- plotly::plot_ly(balance, x = ~mean1, y = ~mean2, text = ~tooltip, type = 'scatter',
-          mode = "markers", color = ~domain, colors = ~colors, opacity = 0.4, marker = list(size = 12,
-                                                                                            line = list(color = 'rgb(255,255,255)', width = 1))) %>% 
-    plotly::layout(xaxis = list(title = list(text =  paste("Covariate Mean in ", xCohort),
-                                             font = list(size = 18)),
-                                range = c(0, 1)),
-                   yaxis = list(title = list(text =  paste("Covariate Mean in ", yCohort),
-                                             font = list(size = 18)),
-                                range = c(0, 1))
-                   )
+  browser()
   
+  balance <- balance %>% 
+    addDatabaseShortName(shortNameRef = database)
+  
+  distinctDatabaseShortName <- balance$databaseShortName %>% unique()
+  databasePlots <- list()
+  for (i in 1:length(distinctDatabaseShortName)) {
+    data <- balance %>% 
+      dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i])
+    databasePlots[[i]] <- plotly::plot_ly(balance, x = ~mean1, y = ~mean2, text = ~tooltip, type = 'scatter',
+                            mode = "markers", color = ~domain, colors = ~colors, opacity = 0.4, marker = list(size = 12,
+                                                                                                              line = list(color = 'rgb(255,255,255)', width = 1))) %>% 
+      plotly::layout(xaxis = list(title = list(text =  paste("Covariate Mean in ", xCohort),
+                                               font = list(size = 18)),
+                                  range = c(0, 1)),
+                     yaxis = list(title = list(text =  paste("Covariate Mean in ", yCohort),
+                                               font = list(size = 18)),
+                                  range = c(0, 1)),
+                     annotations = list(
+                       x = 0.5,
+                       y = 1.02,
+                       text = camelCaseToTitleCase(distinctDatabaseShortName[i]),
+                       showarrow = FALSE,
+                       xref = "paper",
+                       yref = "paper",
+                       xanchor = "center",
+                       yanchor = "middle",
+                       font = list(size = 18)
+                     )
+      )
+  }
+  plot <- plotly::subplot(databasePlots)
   return(plot)
 }
 
 plotTemporalCompareStandardizedDifference <- function(balance,
                                                       shortNameRef = NULL,
-                                                      xLimitMin = 0,
-                                                      xLimitMax = 1,
-                                                      yLimitMin = 0,
-                                                      yLimitMax = 1,
                                                       domain = "all") {
   domains <-
     c("Condition",
