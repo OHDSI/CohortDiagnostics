@@ -4311,7 +4311,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
       return(NULL)
     }
-    if (all(is(dataSource, "environment"),!exists('timeDistribution'))) {
+    if (all(is(dataSource, "environment"),!exists('timeSeries'))) {
       return(NULL)
     }
     
@@ -4319,23 +4319,20 @@ shiny::shinyServer(function(input, output, session) {
     on.exit(progress$close())
     progress$set(message = paste0("Getting time series data."),
                  value = 0)
-    
     data <- getResultsFixedTimeSeries(dataSource = dataSource,
-                                      cohortId =  consolidatedCohortIdTarget())
+                                      cohortId =  consolidatedCohortIdTarget(),
+                                      databaseIds = consolidatedDatabaseIdTarget())
     return(data)
   })
   
   ##reactive: getFixedTimeSeriesTsibbleFiltered----
   getFixedTimeSeriesTsibbleFiltered <- reactive({
-    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
-      return(NULL)
-    }
-    calendarIntervalFirstLetter <-
-      tolower(substr(input$timeSeriesAggregationPeriodSelection, 1, 1))
     data <- getFixedTimeSeriesTsibble()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    calendarIntervalFirstLetter <-
+      tolower(substr(input$timeSeriesAggregationPeriodSelection, 1, 1))
     
     data <- data[[calendarIntervalFirstLetter]]
     if (!doesObjectHaveData(data)) {
