@@ -15,24 +15,25 @@ defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
 
 # OHDSI Shiny DB
-# defaultServer <- Sys.getenv("shinydbServer")
-# defaultDatabase <- Sys.getenv("shinydbDatabase")
-# defaultPort <- 5432
-# defaultUser <- Sys.getenv("shinydbUser")
-# defaultPassword <- Sys.getenv("shinydbPw")
-# OHDSI Phenotype DB
-defaultServer <- Sys.getenv("phoebedbServer")
-defaultDatabase <- Sys.getenv("phoebedb")
+defaultServer <- Sys.getenv("shinydbServer")
+defaultDatabase <- Sys.getenv("shinydbDatabase")
 defaultPort <- 5432
-defaultUser <- Sys.getenv("phoebedbUser")
-defaultPassword <- Sys.getenv("phoebedbPw")
-defaultResultsSchema <- "phenotypeLibrary"
-defaultVocabularySchema <- "phenotypeLibrary"
+defaultUser <- Sys.getenv("shinydbUser")
+defaultPassword <- Sys.getenv("shinydbPw")
+# OHDSI Phenotype DB
+# defaultServer <- Sys.getenv("phenotypeLibraryServer")
+# defaultDatabase <- Sys.getenv("phenotypeLibrarydb")
+# defaultPort <- 5432
+# defaultUser <- Sys.getenv("phenotypeLibrarydbUser")
+# defaultPassword <- Sys.getenv("phenotypeLibrarydbPw")
+# defaultResultsSchema <- "phenotypeLibrarydbTargetSchema"
+# defaultVocabularySchema <- "phenotypeLibrarydbVocabSchema"
 
 
 #Mode
 defaultDatabaseMode <- FALSE # Use file system if FALSE
-defaultResultsSchema <- 'phenotypeLibrary'
+# defaultResultsSchema <- 'phenotypeLibrary'
+defaultResultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
