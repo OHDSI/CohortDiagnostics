@@ -6282,9 +6282,9 @@ shiny::shinyServer(function(input, output, session) {
           paging = TRUE,
           columnDefs = list(
             truncateStringDef(0, 80),
-            minCellRealDef(1:(length(
+            minCellPercentDef(1:(length(
               databaseIds
-            ) * 2), digits = 3)
+            ) * 2))
           )
         )
         sketch <- htmltools::withTags(table(class = "display",
@@ -6339,9 +6339,9 @@ shiny::shinyServer(function(input, output, session) {
           paging = TRUE,
           columnDefs = list(
             truncateStringDef(0, 80),
-            minCellRealDef(1:(length(
+            minCellPercentDef(1:(length(
               databaseIds
-            )), digits = 3)
+            )))
           )
         )
         

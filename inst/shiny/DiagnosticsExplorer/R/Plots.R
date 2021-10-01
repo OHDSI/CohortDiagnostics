@@ -475,16 +475,28 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   )
   checkmate::reportAssertions(collection = errorMessage)
   
-  colorReference <- read.csv(paste0(getwd(),"/colorReference.csv")) %>% 
-    dplyr::filter(.data$type == "databaseShortName") %>% 
-    dplyr::mutate(databaseShortName = .data$name,color = .data$value) %>% 
-    dplyr::select(-.data$name,-.data$type,-.data$value)
-    
+  initialColor <- read.csv(paste0(getwd(),"/colorReference.csv")) %>% 
+    dplyr::filter(.data$type == "database",.data$name == "database") %>% 
+    dplyr::pull(.data$value)
+  
+  colorReference <- data %>% 
+    dplyr::select(.data$databaseId) %>% 
+    unique()
 
+  lightColors <- colorRampPalette(c(initialColor, "#000000"))(ceiling(nrow(colorReference)/2) + 1) %>% 
+    head(-1) %>% 
+    tail(-1)
+  
+  darkColors <- colorRampPalette(c(initialColor, "#000000"))(floor(nrow(colorReference)/2) + 2) %>% 
+    head(-1) 
+  
+  colorReference <- colorReference %>% 
+    dplyr::mutate(color = c(lightColors,darkColors))
+ 
   plotData <-
     addShortName(data = data, shortNameRef = shortNameRef)  %>% 
     addDatabaseShortName(shortNameRef = database) %>% 
-    dplyr::inner_join(colorReference,by = "databaseShortName")
+    dplyr::inner_join(colorReference, by = "databaseId")
     
   
   sortShortName <- plotData %>%
