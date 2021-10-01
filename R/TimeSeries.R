@@ -395,19 +395,6 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     dplyr::collect() %>% #temporal solution till fix of bug in andromeda on handling dates
     # periodBegin gets converted to integer
     dplyr::inner_join(resultsInAndromeda$calendarPeriods %>% dplyr::collect(), by = c('timeId')) %>%
-    dplyr::select(
-      .data$cohortId,
-      .data$periodBegin,
-      .data$calendarInterval,
-      .data$seriesType,
-      .data$records,
-      .data$subjects,
-      .data$personDays,
-      .data$recordsStart,
-      .data$subjectsStart,
-      .data$recordsEnd,
-      .data$subjectsEnd
-    ) %>%
     dplyr::arrange(
       .data$cohortId,
       .data$periodBegin,

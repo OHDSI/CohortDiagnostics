@@ -523,10 +523,13 @@ CREATE TABLE time_series (
 			records BIGINT NOT NULL,
 			subjects BIGINT NOT NULL,
 			person_days BIGINT NOT NULL,
+			person_days_in BIGINT NOT NULL,
 			records_start BIGINT,
 			subjects_start BIGINT,
+			subjects_start_in BIGINT,
 			records_end BIGINT,
 			subjects_end BIGINT,
+			subjects_end_in BIGINT,
 			PRIMARY KEY(cohort_id, database_id, period_begin, calendar_interval, series_type)
 );
 
