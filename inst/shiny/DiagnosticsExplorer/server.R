@@ -4448,7 +4448,6 @@ shiny::shinyServer(function(input, output, session) {
         .data$periodEnd
       )
     
-    browser()
     ###!!! there is a bug here input$timeSeriesPeriodRangeFilter - min and max is returning 0
     if (any(
       input$timeSeriesPeriodRangeFilter[1] != 0,
