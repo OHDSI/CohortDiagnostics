@@ -1085,11 +1085,7 @@ bodyTabItems <- shinydashboard::tabItems(
         width = NULL,
         status = "primary",
         shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
-        plotly::plotlyOutput(
-          outputId = "compareCharacterizationPlot",
-          width = "100%",
-          height = "100%"
-        )
+        plotly::plotlyOutput(outputId = "compareCharacterizationPlot", height = "auto")
       )
     )
   ),

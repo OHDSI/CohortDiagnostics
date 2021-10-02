@@ -1093,39 +1093,86 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     dplyr::distinct(balance$comparatorCohort) %>%
     dplyr::pull()
   
-  browser()
+  targetName <- balance %>% 
+    dplyr::select(.data$cohortId1) %>% 
+    dplyr::mutate(cohortId = .data$cohortId1) %>% 
+    dplyr::inner_join(cohort, by = "cohortId") %>% 
+    dplyr::pull(.data$cohortName) %>% unique()
+  
+  comparatorName <- balance %>% 
+    dplyr::select(.data$cohortId2) %>% 
+    dplyr::mutate(cohortId = .data$cohortId2) %>% 
+    dplyr::inner_join(cohort, by = "cohortId") %>% 
+    dplyr::pull(.data$cohortName) %>% unique()
+  
   
   balance <- balance %>% 
     addDatabaseShortName(shortNameRef = database)
   
   distinctDatabaseShortName <- balance$databaseShortName %>% unique()
+  
+ 
+  
   databasePlots <- list()
   for (i in 1:length(distinctDatabaseShortName)) {
     data <- balance %>% 
       dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i])
-    databasePlots[[i]] <- plotly::plot_ly(balance, x = ~mean1, y = ~mean2, text = ~tooltip, type = 'scatter',
-                            mode = "markers", color = ~domain, colors = ~colors, opacity = 0.4, marker = list(size = 12,
-                                                                                                              line = list(color = 'rgb(255,255,255)', width = 1))) %>% 
-      plotly::layout(xaxis = list(title = list(text =  paste("Covariate Mean in ", xCohort),
-                                               font = list(size = 18)),
-                                  range = c(0, 1)),
-                     yaxis = list(title = list(text =  paste("Covariate Mean in ", yCohort),
-                                               font = list(size = 18)),
-                                  range = c(0, 1)),
-                     annotations = list(
-                       x = 0.5,
-                       y = 1.02,
-                       text = camelCaseToTitleCase(distinctDatabaseShortName[i]),
-                       showarrow = FALSE,
-                       xref = "paper",
-                       yref = "paper",
-                       xanchor = "center",
-                       yanchor = "middle",
-                       font = list(size = 18)
-                     )
-      )
+    databasePlots[[i]] <- plotly::plot_ly(balance, x = ~mean1, y = ~mean2, text = ~tooltip, type = 'scatter',height = 650,hoverinfo = 'text',
+                            mode = "markers", color = ~domain, colors = ~colors, opacity = 0.4,showlegend = ifelse(i == 1, T, F), 
+                            marker = list(size = 12, line = list(color = 'rgb(255,255,255)', width = 1))) %>% 
+      plotly::layout(
+        xaxis = list(range = c(0, 1)),
+        yaxis = list(range = c(0, 1)),
+        annotations = list(
+          x = c(-0.06, 0.5, 0.5),
+          y = c(0.5, -0.06, 1.02),
+          text = c(
+            ifelse(i == 1, paste("Covariate Mean in ", xCohort), ""),
+            paste("Covariate Mean in ", yCohort),
+            camelCaseToTitleCase(distinctDatabaseShortName[i])
+          ),
+          showarrow = FALSE,
+          xref = "paper",
+          yref = "paper",
+          xanchor = "center",
+          yanchor = "middle",
+          textangle = c(-90, 0, 0),
+          font = list(size = 18)
+        )
+      ) %>% 
+      plotly::add_segments(x = 0, y = 0, xend = 1, yend = 1,showlegend = F,
+                           line = list(width = 0.5, color = "rgb(160,160,160)", dash = "dash"))
   }
-  plot <- plotly::subplot(databasePlots)
+  
+  
+  databaseArray <- c()
+  for (i in 1:length(distinctDatabaseShortName)){
+    databaseId <- balance %>%  dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i]) %>% 
+      dplyr::pull(.data$databaseId) %>% unique()
+    databaseArray <- c(databaseArray, paste(distinctDatabaseShortName[i]," : ", databaseId))
+  }
+  databaseString  <- paste(databaseArray, collapse = ", ")
+  
+  m <- list(
+    l = 100,
+    r = 0,
+    b = 200,
+    t = 50
+  )
+  plot <- plotly::subplot(databasePlots) %>% 
+    plotly::layout(margin = m,
+                   annotations = list(
+                     x = 0.5,
+                     y = -0.2,
+                     text = paste("Target - ", xCohort, " : ", targetName,", Comparator - ", yCohort, " : ", comparatorName,"\n",
+                                  "Database - ", databaseString),
+                     showarrow = FALSE,
+                     xref = "paper",
+                     yref = "paper",
+                     xanchor = "center",
+                     yanchor = "middle",
+                     font = list(size = 18)
+                   ))
   return(plot)
 }
 
@@ -1244,7 +1291,7 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   for (i in 1:length(distinctChoices)) {
     filteredData <- balance %>% 
       dplyr::filter(.data$choices == distinctChoices[i])
-    choicesPlot[[i]] <- plotly::plot_ly(filteredData, x = ~mean1, y = ~mean2, text = ~tooltip,hoverinfo = 'text', type = 'scatter', height = max(1,ceiling(length(distinctChoices)/5)) * 430,
+    choicesPlot[[i]] <- plotly::plot_ly(filteredData, x = ~mean1, y = ~mean2, text = ~tooltip, hoverinfo = 'text', type = 'scatter', height = max(1,ceiling(length(distinctChoices)/5)) * 430,
                             mode = "markers", color = ~domain, colors = ~colors, opacity = 0.5, marker = list(size = 15,
                                                                                                               line = list(color = 'rgb(255,255,255)', width = 1))) %>%
      
