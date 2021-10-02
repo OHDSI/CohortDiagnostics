@@ -326,7 +326,8 @@ consolidationOfSelectedFieldValues <- function(input,
 #used in resolved, excluded and orphan concepts in cohort definition tab
 getSketchDesignForTablesInCohortDefinitionTab <- function(data, 
                                                           databaseCount,
-                                                          numberOfColums = 4) {
+                                                          numberOfColums = 4,
+                                                          columnFilters = "Both") {
   colnamesInData <- colnames(data)
   colnamesInData <- colnamesInData[!colnamesInData %in% "databaseId"]
   colnamesInData <- colnamesInData[!colnamesInData %in% "persons"]
@@ -336,16 +337,15 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
   fieldsInData <- c()
   maxCount <- NULL
   maxSubject <- NULL
-  if (all('records' %in% colnames(data),
-          'records' %in% colnames(databaseCount))) {
+  if (all('records' %in% colnames(data))) {
     fieldsInData <- c(fieldsInData, "records")
     maxCount <- max(data$records, na.rm = TRUE)
   }
-  if (all('persons' %in% colnames(data),
-          'persons' %in% colnames(databaseCount))) {
+  if (all('persons' %in% colnames(data))) {
     fieldsInData <- c(fieldsInData, "persons")
     maxSubject <- max(data$persons, na.rm = TRUE)
   }
+  
   databasePersonAndRecordCount <- data %>%
     dplyr::select(.data$databaseId) %>% 
     dplyr::inner_join(databaseCount,
@@ -355,12 +355,12 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
   if ('persons' %in% colnames(databasePersonAndRecordCount)) {
     databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
       dplyr::mutate(persons = scales::comma(.data$persons,
-                                                   accuracy = 1))
+                                            accuracy = 1))
   }
   if ('records' %in% colnames(databasePersonAndRecordCount)) {
     databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
       dplyr::mutate(records = scales::comma(.data$records,
-                                                  accuracy = 1))
+                                            accuracy = 1))
   }
   databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
     dplyr::arrange(.data$databaseId)
@@ -371,12 +371,29 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
       names_to = "type",
       cols = dplyr::all_of(fieldsInData),
       values_to = "count"
-    ) %>%
-    dplyr::mutate(type = paste0(.data$type,
+    )  #descending to ensure records before persons
+    
+    minimumCellCountDefs <- minCellCountDef(numberOfColums + (1:(
+      2 * length(databaseIds)
+    )))
+    
+    if (columnFilters == "Person Only") {
+      dataTransformed <- dataTransformed %>% 
+        dplyr::filter(.data$type == "persons")
+      
+      minimumCellCountDefs <- minCellCountDef(numberOfColums + (1:(length(databaseIds))))
+    } else if (columnFilters == "Record Only") {
+      dataTransformed <- dataTransformed %>% 
+        dplyr::filter(.data$type == "records")
+      
+      minimumCellCountDefs <- minCellCountDef(numberOfColums + (1:(length(databaseIds))))
+    }
+  dataTransformed <- dataTransformed %>%
+    dplyr::mutate(type = paste0( .data$databaseId,
                                 " ",
-                                .data$databaseId)) %>%
+                                .data$type)) %>%
     dplyr::distinct() %>% 
-    dplyr::arrange(.data$databaseId, dplyr::desc(.data$type)) %>% #descending to ensure records before persons
+    dplyr::arrange(.data$databaseId, dplyr::desc(.data$type)) %>%
     tidyr::pivot_wider(
       id_cols = dplyr::all_of(colnamesInData),
       names_from = type,
@@ -384,8 +401,8 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
       values_fill = 0
     )
   # sort descending by first count field
-  dataTransformed <- dataTransformed %>% 
-    dplyr::arrange(dplyr::desc(abs(dplyr::across(dplyr::contains("records")))))
+  # dataTransformed <- dataTransformed %>% 
+    # dplyr::arrange(dplyr::desc(abs(dplyr::across(dplyr::contains("records")))))
   
   options = list(
     pageLength = 1000,
@@ -399,56 +416,69 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
     scrollX = TRUE,
     scrollY = "20vh",
     columnDefs = list(truncateStringDef(1, 50),
-                      minCellCountDef(numberOfColums + (1:(
-                        2 * length(databaseIds)
-                      ))))
+                      minimumCellCountDefs)
   )
-  databaseRecordAndPersonColumnName <- c()
-  for (i in 1:nrow(databasePersonAndRecordCount)) {
-    if ('records' %in% colnames(databasePersonAndRecordCount)) {
-      databaseRecordAndPersonColumnName <-
-        c(
-          databaseRecordAndPersonColumnName,
-          paste0("Records (", databasePersonAndRecordCount[i,]$records, ")"))
+  if (columnFilters == "Both") {
+    databaseRecordAndPersonColumnName <- c()
+    for (i in 1:nrow(databasePersonAndRecordCount)) {
+      if ('records' %in% colnames(databasePersonAndRecordCount)) {
+        databaseRecordAndPersonColumnName <-
+          c(
+            databaseRecordAndPersonColumnName,
+            paste0("Records (", databasePersonAndRecordCount[i,]$records, ")"))
+      }
+      if ('persons' %in% colnames(databasePersonAndRecordCount)) {
+        databaseRecordAndPersonColumnName <-
+          c(
+            databaseRecordAndPersonColumnName,
+            paste0("Persons (", databasePersonAndRecordCount[i,]$persons, ")"))
+      }
     }
-    if ('persons' %in% colnames(databasePersonAndRecordCount)) {
-      databaseRecordAndPersonColumnName <-
-        c(
-          databaseRecordAndPersonColumnName,
-          paste0("Persons (", databasePersonAndRecordCount[i,]$persons, ")"))
-    }
-  }
-  #!!!!!!! dynamically generate rowspan from colnamesInData
-  sketch <- htmltools::withTags(table(class = "display",
-                                      thead(
-                                        tr(
-                                          lapply(camelCaseToTitleCase(colnamesInData),
-                                                 th,
-                                                 rowspan = 2),
-                                          lapply(
-                                            databaseIds,
-                                            th,
-                                            colspan = 2,
-                                            class = "dt-center",
-                                            style = "border-right:1px solid silver;border-bottom:1px solid silver"
+    
+    #!!!!!!! dynamically generate rowspan from colnamesInData
+    sketch <- htmltools::withTags(table(class = "display",
+                                        thead(
+                                          tr(
+                                            lapply(camelCaseToTitleCase(colnamesInData),
+                                                   th,
+                                                   rowspan = 2),
+                                            lapply(
+                                              databaseIds,
+                                              th,
+                                              colspan = 2,
+                                              class = "dt-center",
+                                              style = "border-right:1px solid silver;border-bottom:1px solid silver"
+                                            )
+                                          ),
+                                          tr(
+                                            lapply(databaseRecordAndPersonColumnName, th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                           )
-                                        ),
-                                        tr(
-                                          lapply(databaseRecordAndPersonColumnName, th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                        )
-                                      )))
+                                        )))
+    
+    dataTable <- DT::datatable(
+      dataTransformed,
+      options = options,
+      rownames = FALSE,
+      container = sketch,
+      colnames = colnames(dataTransformed) %>% camelCaseToTitleCase(),
+      escape = FALSE,
+      selection = 'single',
+      filter = "top",
+      class = "stripe nowrap compact"
+    )
+  } else {
+    dataTable <- DT::datatable(
+      dataTransformed,
+      options = options,
+      rownames = FALSE,
+      colnames = colnames(dataTransformed) %>% camelCaseToTitleCase(),
+      escape = FALSE,
+      selection = 'single',
+      filter = "top",
+      class = "stripe nowrap compact"
+    )
+  }
   
-  dataTable <- DT::datatable(
-    dataTransformed,
-    options = options,
-    rownames = FALSE,
-    container = sketch,
-    colnames = colnames(dataTransformed) %>% camelCaseToTitleCase(),
-    escape = FALSE,
-    selection = 'single',
-    filter = "top",
-    class = "stripe nowrap compact"
-  )
   
   if (!is.null(maxSubject)) {
     dataTable <- DT::formatStyle(
