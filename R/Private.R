@@ -150,6 +150,7 @@ writeToAllOutputToCsv <- function(object,
       "meetSubjects",
       "personCount",
       "personDays",
+      "personDaysIn",
       "personTotal",
       "records",
       "recordsEnd",
@@ -158,7 +159,9 @@ writeToAllOutputToCsv <- function(object,
       "subjectCount",
       "subjects",
       "subjectsEnd",
+      "subjectsEndIn",
       "subjectsStart",
+      "subjectsStartIn",
       "totalSubjects"
     )
   vocabularyTables <- c(
