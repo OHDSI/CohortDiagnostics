@@ -289,6 +289,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              conceptId1 = NULL,
                                              conceptSetId = NULL,
                                              databaseId = NULL,
+                                             domainTable = NULL,
                                              vocabularyDatabaseSchema = NULL,
                                              daysRelativeIndex = NULL,
                                              startDay = NULL,
@@ -303,7 +304,8 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
       "conceptSetId",
       "startDay",
       "endDay",
-      "daysRelativeIndex"
+      "daysRelativeIndex",
+      "domainTable"
     )
     if (!is.null(vocabularyDatabaseSchema)) {
       paste0(
@@ -357,6 +359,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
               {@start_day !=''} ? {AND start_day IN (@start_day) \n}
               {@end_day !=''} ? {AND end_day IN (@end_day) \n}
               {@days_relative_index !=''} ? {AND end_day IN (@days_relative_index) \n}
+              {@domain_table !=''} ? {AND domain_table IN (@domain_table) \n}
             ;"
     if (!is.null(vocabularyDatabaseSchema)) {
       resultsDatabaseSchema <- vocabularyDatabaseSchema
@@ -378,6 +381,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         # for concept relationship only
         start_day = startDay,
         end_day = endDay,
+        domain_table = domainTable,
         days_relative_index = daysRelativeIndex,
         snakeCaseToCamelCase = TRUE
       )
@@ -770,7 +774,12 @@ getResultsConceptCount <- function(dataSource,
 #'
 #' @template DatabaseIds
 #'
-#' @param conceptIds     A list of concept ids to get counts for
+#' @param conceptIds     A vector of concept ids to get counts for
+#'
+#' @param domainTable    A vector of strings representing the OMOP CDM domain tables. Valid options are
+#'                       'All' (Default) for data source level, 'condition_occurrence', 'procedure_occurrence',
+#'                      'measurement', 'visit_occurrence', 'observation', 'device_exposure'
+#'                      In this case 'All' - provides count across domain tables.
 #'
 #' @return
 #' Returns a data frame (tibble)
@@ -778,11 +787,36 @@ getResultsConceptCount <- function(dataSource,
 #' @export
 getResultsConceptMapping <- function(dataSource,
                                      databaseIds = NULL,
-                                     conceptIds = NULL) {
+                                     conceptIds = NULL,
+                                     domainTables = 'All') {
+  intersectOfTwo <- domainTables
+  if (!is.null(domainTables)) {
+    domainTable <- getDomainInformation()$long
+    intersectOfTwo <- intersect(x = tolower(domainTables),
+                                y = domainTable$domainTable) %>% 
+      unique()
+    setdiffOfTwo <- setdiff(x = tolower(domainTables),
+                            y = domainTable$domainTable) %>% 
+      unique()
+    if (length(setdiffOfTwo) > 1) {
+      warning(paste0("Cant match the following in domainTables parameter: ", paste(setdiffOfTwo, collapse = ", ")))
+      if (length(intersectOfTwo) == 0) {
+        stop("Cannot match given domainTables")
+      }
+      if (length(intersectOfTwo) > 1) {
+        warning(paste0("Returning results for following domain tables: ", paste(intersectOfTwo, collapse = ", ")))
+      }
+    }
+    intersectOfTwo <- domainTable %>% 
+      dplyr::filter(.data$domainTable %in% c(intersectOfTwo)) %>% 
+      dplyr::pull(.data$domainTableShort) %>% 
+      unique()
+  }
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     databaseId = databaseIds,
     conceptId = conceptIds,
+    domainTable = intersectOfTwo,
     dataTableName = "conceptMapping"
   )
   return(data)
