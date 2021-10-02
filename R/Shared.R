@@ -1840,13 +1840,13 @@ getResultsFixedTimeSeries <- function(dataSource,
         records = .data$records_1 / .data$records_2,
         subjects = .data$subjects_1 / .data$subjects_2,
         personDays = .data$personDays_1 / .data$personDays_2,
-        personDaysInc = NA,
+        personDaysIn = NA,
         recordsStart = .data$recordsStart_1 / .data$recordsStart_2,
         subjectsStart = .data$subjectsStart_1 / .data$subjectsStart_2,
-        subjctsStartInc = NA,
+        subjctsStartIn = NA,
         recordsEnd = .data$recordsEnd_1 / .data$recordsEnd_2,
         subjectsEnd = .data$subjectsEnd_1 / .data$subjectsEnd_2,
-        subjectsEndInc = NA
+        subjectsEndIn = NA
       ) %>%
       dplyr::select(-dplyr::ends_with("1")) %>%
       dplyr::select(-dplyr::ends_with("2")) %>%
