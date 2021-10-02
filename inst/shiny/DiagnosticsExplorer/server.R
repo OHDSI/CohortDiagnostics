@@ -5870,24 +5870,6 @@ shiny::shinyServer(function(input, output, session) {
     return(input$characterizationAnalysisNameOptions)
   })
   
-  ###Update: characterizationAnalysisNameOptions----
-  shiny::observe({
-    data <- getCharacterizationTableData()
-    if (any(is.null(data),
-            !doesObjectHaveData(data$analysisName))) {
-      return(NULL)
-    }
-    subset <-
-      data$analysisName %>% unique() %>% sort()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "characterizationAnalysisNameOptions",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
-  
   ###Update: characterizationDomainNameOptions----
   shiny::observe({
     data <- getCharacterizationTableData()
@@ -5903,6 +5885,30 @@ shiny::shinyServer(function(input, output, session) {
         selected = subset
       )
     }
+  })
+  
+  ###Update: characterizationAnalysisNameOptions----
+  shiny::observe({
+    data <- getCharacterizationTableData()
+    if (any(is.null(data),
+            !doesObjectHaveData(data$analysisName))) {
+      return(NULL)
+    }
+    
+    data <- data %>% 
+      dplyr::filter(.data$domainId %in% getCharacterizationDomainNameOptions())
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    subset <-
+      data$analysisName %>% unique() %>% sort()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "characterizationAnalysisNameOptions",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
   })
   
   ### getTemporalCharacterizationAnalysisNameOptions----
