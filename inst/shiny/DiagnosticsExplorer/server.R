@@ -5921,19 +5921,6 @@ shiny::shinyServer(function(input, output, session) {
       return(input$temporalCharacterizationDomainNameOptions)
     })
   
-  ###Update: temporalCharacterizationAnalysisNameOptions----
-  shiny::observe({
-    subset <-
-      getTemporalCharacterizationData()$analysisName %>% unique() %>% sort()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "temporalCharacterizationAnalysisNameOptions",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
-  
   ###Update: temporalCharacterizationDomainNameOptions----
   shiny::observe({
     subset <-
@@ -5941,6 +5928,26 @@ shiny::shinyServer(function(input, output, session) {
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "temporalCharacterizationDomainNameOptions",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  ###Update: temporalCharacterizationAnalysisNameOptions----
+  shiny::observe({
+    data <- getTemporalCharacterizationData()
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+  
+    subset <- data %>% 
+      dplyr::filter(.data$domainId %in% getTemporalCharacterizationDomainNameOptions()) %>% 
+      dplyr::pull(.data$analysisName) %>% unique() %>% sort()
+      
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "temporalCharacterizationAnalysisNameOptions",
       choicesOpt = list(style = rep_len("color: black;", 999)),
       choices = subset,
       selected = subset

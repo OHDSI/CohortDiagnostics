@@ -933,8 +933,8 @@ bodyTabItems <- shinydashboard::tabItems(
     tags$table(tags$tr(
       tags$td(
         shinyWidgets::pickerInput(
-          inputId = "temporalCharacterizationAnalysisNameOptions",
-          label = "Analysis name",
+          inputId = "temporalCharacterizationDomainNameOptions",
+          label = "Domain name",
           choices = c(""),
           selected = c(""),
           multiple = TRUE,
@@ -951,8 +951,8 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       tags$td(
         shinyWidgets::pickerInput(
-          inputId = "temporalCharacterizationDomainNameOptions",
-          label = "Domain name",
+          inputId = "temporalCharacterizationAnalysisNameOptions",
+          label = "Analysis name",
           choices = c(""),
           selected = c(""),
           multiple = TRUE,
