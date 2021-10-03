@@ -289,6 +289,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              conceptId1 = NULL,
                                              conceptSetId = NULL,
                                              databaseId = NULL,
+                                             domainTable = NULL,
                                              vocabularyDatabaseSchema = NULL,
                                              daysRelativeIndex = NULL,
                                              startDay = NULL,
@@ -303,7 +304,8 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
       "conceptSetId",
       "startDay",
       "endDay",
-      "daysRelativeIndex"
+      "daysRelativeIndex",
+      "domainTable"
     )
     if (!is.null(vocabularyDatabaseSchema)) {
       paste0(
@@ -357,6 +359,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
               {@start_day !=''} ? {AND start_day IN (@start_day) \n}
               {@end_day !=''} ? {AND end_day IN (@end_day) \n}
               {@days_relative_index !=''} ? {AND end_day IN (@days_relative_index) \n}
+              {@domain_table !=''} ? {AND domain_table IN (@domain_table) \n}
             ;"
     if (!is.null(vocabularyDatabaseSchema)) {
       resultsDatabaseSchema <- vocabularyDatabaseSchema
@@ -372,11 +375,13 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         data_table = camelCaseToSnakeCase(dataTableName),
         database_id = quoteLiterals(databaseId),
         concept_id = conceptId,
+        co_concept_id = coConceptId,
         concept_set_id = conceptSetId,
         concept_id_1 = conceptId1,
         # for concept relationship only
         start_day = startDay,
         end_day = endDay,
+        domain_table = domainTable,
         days_relative_index = daysRelativeIndex,
         snakeCaseToCamelCase = TRUE
       )
@@ -769,7 +774,12 @@ getResultsConceptCount <- function(dataSource,
 #'
 #' @template DatabaseIds
 #'
-#' @param conceptIds     A list of concept ids to get counts for
+#' @param conceptIds     A vector of concept ids to get counts for
+#'
+#' @param domainTable    A vector of strings representing the OMOP CDM domain tables. Valid options are
+#'                       'All' (Default) for data source level, 'condition_occurrence', 'procedure_occurrence',
+#'                      'measurement', 'visit_occurrence', 'observation', 'device_exposure'
+#'                      In this case 'All' - provides count across domain tables.
 #'
 #' @return
 #' Returns a data frame (tibble)
@@ -777,11 +787,36 @@ getResultsConceptCount <- function(dataSource,
 #' @export
 getResultsConceptMapping <- function(dataSource,
                                      databaseIds = NULL,
-                                     conceptIds = NULL) {
+                                     conceptIds = NULL,
+                                     domainTables = 'All') {
+  intersectOfTwo <- domainTables
+  if (!is.null(domainTables)) {
+    domainTable <- getDomainInformation()$long
+    intersectOfTwo <- intersect(x = tolower(domainTables),
+                                y = domainTable$domainTable) %>% 
+      unique()
+    setdiffOfTwo <- setdiff(x = tolower(domainTables),
+                            y = domainTable$domainTable) %>% 
+      unique()
+    if (length(setdiffOfTwo) > 1) {
+      warning(paste0("Cant match the following in domainTables parameter: ", paste(setdiffOfTwo, collapse = ", ")))
+      if (length(intersectOfTwo) == 0) {
+        stop("Cannot match given domainTables")
+      }
+      if (length(intersectOfTwo) > 1) {
+        warning(paste0("Returning results for following domain tables: ", paste(intersectOfTwo, collapse = ", ")))
+      }
+    }
+    intersectOfTwo <- domainTable %>% 
+      dplyr::filter(.data$domainTable %in% c(intersectOfTwo)) %>% 
+      dplyr::pull(.data$domainTableShort) %>% 
+      unique()
+  }
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     databaseId = databaseIds,
     conceptId = conceptIds,
+    domainTable = intersectOfTwo,
     dataTableName = "conceptMapping"
   )
   return(data)
@@ -1761,7 +1796,6 @@ getResultsCohortSummaryStats <- function(dataSource,
 getResultsFixedTimeSeries <- function(dataSource,
                                       cohortIds = NULL,
                                       databaseIds = NULL) {
-  browser()
   # cohortId = 0, represent all persons in observation_period
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
@@ -1806,13 +1840,13 @@ getResultsFixedTimeSeries <- function(dataSource,
         records = .data$records_1 / .data$records_2,
         subjects = .data$subjects_1 / .data$subjects_2,
         personDays = .data$personDays_1 / .data$personDays_2,
-        personDaysInc = NA,
+        personDaysIn = NA,
         recordsStart = .data$recordsStart_1 / .data$recordsStart_2,
         subjectsStart = .data$subjectsStart_1 / .data$subjectsStart_2,
-        subjctsStartInc = NA,
+        subjctsStartIn = NA,
         recordsEnd = .data$recordsEnd_1 / .data$recordsEnd_2,
         subjectsEnd = .data$subjectsEnd_1 / .data$subjectsEnd_2,
-        subjectsEndInc = NA
+        subjectsEndIn = NA
       ) %>%
       dplyr::select(-dplyr::ends_with("1")) %>%
       dplyr::select(-dplyr::ends_with("2")) %>%
@@ -1830,7 +1864,7 @@ getResultsFixedTimeSeries <- function(dataSource,
       'Subjects cohort embedded in period',
       'Subjects observation embedded in period',
       'Persons observation embedded in period',
-      'Percent of Subjects among persons in cohort period'
+      'Percent of Subjects among persons in period'
     ),
     seriesTypeLong = c(
       'Subjects in the cohort who have atleast one cohort day in calendar period',
@@ -1839,7 +1873,7 @@ getResultsFixedTimeSeries <- function(dataSource,
       'Subjects in the cohorts whose cohort period are embedded within calendar period',
       'Subjects in the cohorts whose observation period is embedded within calendar period',
       'Persons in the observation table whose observation period is embedded within calendar period',
-      'Percent of persons in the datasource who have atlesat one cohort day in calendar period that met the cohort definition rules and had atleast one cohort day in the calendar period'
+      'Percent of persons in the datasource who have atleast one cohort day in calendar period that met the cohort definition rules in that cohort period'
     )
   )
   

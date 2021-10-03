@@ -4,7 +4,12 @@
 \alias{getResultsConceptMapping}
 \title{Returns data from concept_mapping table of Cohort Diagnostics results data model}
 \usage{
-getResultsConceptMapping(dataSource, databaseIds = NULL, conceptIds = NULL)
+getResultsConceptMapping(
+  dataSource,
+  databaseIds = NULL,
+  conceptIds = NULL,
+  domainTables = "All"
+)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 
@@ -18,7 +23,12 @@ and uploaded using \code{uploadResults}}
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
 
-\item{conceptIds}{A list of concept ids to get counts for}
+\item{conceptIds}{A vector of concept ids to get counts for}
+
+\item{domainTable}{A vector of strings representing the OMOP CDM domain tables. Valid options are
+ 'All' (Default) for data source level, 'condition_occurrence', 'procedure_occurrence',
+'measurement', 'visit_occurrence', 'observation', 'device_exposure'
+In this case 'All' - provides count across domain tables.}
 }
 \value{
 Returns a data frame (tibble)

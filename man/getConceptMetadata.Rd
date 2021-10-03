@@ -59,7 +59,7 @@ schema name, for example 'vocabulary.dbo'.}
 
 \item{getConceptMappingCount}{Do you want concept mapping count?}
 
-\item{getFixedTimeSeries}{Do you want a conceptIds database level time series data reported on actual dates?}
+\item{getFixedTimeSeries}{Do you want a conceptIds datasource level time series data reported on actual dates?}
 
 \item{getRelativeTimeSeries}{Do you want cohort level time series data reported relative to cohort start date?}
 }

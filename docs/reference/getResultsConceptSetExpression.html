@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Get Feature Extraction output for set of cohorts — runCohortCharacterizationDiagnostics • CohortDiagnostics</title>
+<title>Returns a Concept Set expression (R-object) from a cohort definition — getResultsConceptSetExpression • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,12 +39,8 @@
 
 
 
-<meta property="og:title" content="Get Feature Extraction output for set of cohorts — runCohortCharacterizationDiagnostics" />
-<meta property="og:description" content="Given a set of instantiated cohorts get Characteristics for the cohort using FeatureExtraction::getDbCovariateData.
-If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
-using RFeatureExtraction::createTemporalCovariateSettings.
-Because of the large file size, the returned object is an Andromeda::andromeda class object. Use
-CohortDiagnostics::exportFeatureExtractionOutput to export the characterization results to csv." />
+<meta property="og:title" content="Returns a Concept Set expression (R-object) from a cohort definition — getResultsConceptSetExpression" />
+<meta property="og:description" content="Returns a Concept Set expression from a cohort definition" />
 
 
 
@@ -148,103 +144,42 @@ CohortDiagnostics::exportFeatureExtractionOutput to export the characterization 
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Get Feature Extraction output for set of cohorts</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/CohortCharacterizationDiagnostics.R'><code>R/CohortCharacterizationDiagnostics.R</code></a></small>
-    <div class="hidden name"><code>runCohortCharacterizationDiagnostics.Rd</code></div>
+    <h1>Returns a Concept Set expression (R-object) from a cohort definition</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/Shared.R'><code>R/Shared.R</code></a></small>
+    <div class="hidden name"><code>getResultsConceptSetExpression.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Given a set of instantiated cohorts get Characteristics for the cohort using <code><a href='https://rdrr.io/pkg/FeatureExtraction/man/getDbCovariateData.html'>FeatureExtraction::getDbCovariateData</a></code>.</p>
-<p>If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
-using <code>RFeatureExtraction::createTemporalCovariateSettings</code>.</p>
-<p>Because of the large file size, the returned object is an <code><a href='https://ohdsi.github.io/Andromeda/reference/andromeda_constructor.html'>Andromeda::andromeda</a></code> class object. Use
-<code><a href='exportFeatureExtractionOutput.html'>CohortDiagnostics::exportFeatureExtractionOutput</a></code> to export the characterization results to csv.</p>
+    <p>Returns a Concept Set expression from a cohort definition</p>
     </div>
 
-    <pre class="usage"><span class='fu'>runCohortCharacterizationDiagnostics</span><span class='op'>(</span>
-  connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
-  connection <span class='op'>=</span> <span class='cn'>NULL</span>,
-  <span class='va'>cdmDatabaseSchema</span>,
-  tempEmulationSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
-  cohortDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
-  cohortTable <span class='op'>=</span> <span class='st'>"cohort"</span>,
-  cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
-  cdmVersion <span class='op'>=</span> <span class='fl'>5</span>,
-  cutOff <span class='op'>=</span> <span class='fl'>1e-04</span>,
-  covariateSettings <span class='op'>=</span> <span class='fu'>createDefaultCovariateSettings</span><span class='op'>(</span><span class='op'>)</span>,
-  batchSize <span class='op'>=</span> <span class='fl'>50</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>getResultsConceptSetExpression</span><span class='op'>(</span><span class='va'>dataSource</span>, <span class='va'>cohortId</span>, <span class='va'>conceptSetId</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>connectionDetails</th>
-      <td><p>An object of type <code>connectionDetails</code> as created using the
-<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connection</code> is
-provided.</p></td>
+      <th>dataSource</th>
+      <td><p>A list object that is the output of <code>createDatabaseDataSource</code> or <code>createFileDataSource</code> function. 
+This object helps direct the function to query data from the database (created by <code>createDatabaseDataSource</code>)
+or a local premerged file (created by <code>createFileDataSource</code>). Premerged files are output of cohortDiagnostics
+compiled into RData using <code>preMergeDiagnosticsFiles</code>. Database DataSources are data inserted into a remote
+database (only a postgres database is supported) with tables created with DDL function <code>createResultsDataModel</code>
+and uploaded using <code>uploadResults</code></p></td>
     </tr>
     <tr>
-      <th>connection</th>
-      <td><p>An object of type <code>connection</code> as created using the
-<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/connect.html'>connect</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
-is provided, in which case a new connection will be opened at the start
-of the function, and closed when the function finishes.</p></td>
+      <th>cohortId</th>
+      <td><p>A single integer value representing the cohort id.</p></td>
     </tr>
     <tr>
-      <th>cdmDatabaseSchema</th>
-      <td><p>Schema name where your patient-level data in OMOP CDM format resides.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'cdm_data.dbo'.</p></td>
-    </tr>
-    <tr>
-      <th>tempEmulationSchema</th>
-      <td><p>Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
-tables, provide a schema with write privileges where temp tables can be created.</p></td>
-    </tr>
-    <tr>
-      <th>cohortDatabaseSchema</th>
-      <td><p>Schema name where your cohort table resides. Note that for SQL Server,
-this should include both the database and schema name, for example
-'scratch.dbo'.</p></td>
-    </tr>
-    <tr>
-      <th>cohortTable</th>
-      <td><p>Name of the cohort table.</p></td>
-    </tr>
-    <tr>
-      <th>cohortIds</th>
-      <td><p>Optionally, provide a subset of cohort IDs to restrict the
-diagnostics to.</p></td>
-    </tr>
-    <tr>
-      <th>cdmVersion</th>
-      <td><p>The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)</p></td>
-    </tr>
-    <tr>
-      <th>cutOff</th>
-      <td><p>Minimum value of the covariate value, below which data is censored.</p></td>
-    </tr>
-    <tr>
-      <th>covariateSettings</th>
-      <td><p>Either an object of type <code>covariateSettings</code> as created using one of
-the createCovariateSettings (createTemporalCovariateSettings if temporal
-characterization) function in the FeatureExtraction package, or a list
-of such objects. If unspecified, default covariate settings as specified
-by FeatureExtraction is computed, this is sufficient for presenting default
-table 1. See documentation of FeatureExtraction on how to specify
-CovariateSettings object.</p></td>
-    </tr>
-    <tr>
-      <th>batchSize</th>
-      <td><p>Optional, default set to 100 If running characterization on larget set
-of cohorts, this function allows you to batch them into chunks that run
-as a batch.</p></td>
+      <th>conceptSetId</th>
+      <td><p>A single integer value representing the concept set id in a cohort definition.</p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>Returns a data frame (tibble)</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

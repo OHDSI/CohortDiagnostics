@@ -845,8 +845,8 @@ bodyTabItems <- shinydashboard::tabItems(
                                   tags$table(tags$tr(
                                     tags$td(
                                       shinyWidgets::pickerInput(
-                                        inputId = "characterizationAnalysisNameOptions",
-                                        label = "Analysis name",
+                                        inputId = "characterizationDomainNameOptions",
+                                        label = "Domain name",
                                         choices = c(""),
                                         selected = c(""),
                                         inline = TRUE,
@@ -865,8 +865,8 @@ bodyTabItems <- shinydashboard::tabItems(
                                     ),
                                     tags$td(
                                       shinyWidgets::pickerInput(
-                                        inputId = "characterizationDomainNameOptions",
-                                        label = "Domain name",
+                                        inputId = "characterizationAnalysisNameOptions",
+                                        label = "Analysis name",
                                         choices = c(""),
                                         selected = c(""),
                                         inline = TRUE,
@@ -933,8 +933,8 @@ bodyTabItems <- shinydashboard::tabItems(
     tags$table(tags$tr(
       tags$td(
         shinyWidgets::pickerInput(
-          inputId = "temporalCharacterizationAnalysisNameOptions",
-          label = "Analysis name",
+          inputId = "temporalCharacterizationDomainNameOptions",
+          label = "Domain name",
           choices = c(""),
           selected = c(""),
           multiple = TRUE,
@@ -951,8 +951,8 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       tags$td(
         shinyWidgets::pickerInput(
-          inputId = "temporalCharacterizationDomainNameOptions",
-          label = "Domain name",
+          inputId = "temporalCharacterizationAnalysisNameOptions",
+          label = "Analysis name",
           choices = c(""),
           selected = c(""),
           multiple = TRUE,
@@ -1009,40 +1009,6 @@ bodyTabItems <- shinydashboard::tabItems(
             inline = TRUE
           ),
         ),
-        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
-        tags$td(
-          shiny::conditionalPanel(
-            condition = "input.characterizationCompareMethod == 'Plot'",
-            shiny::sliderInput(
-              inputId = "compareCohortXMeanFilter",
-              label = "Filter X-axis",
-              min = c(0.0),
-              max = c(1.0),
-              value = c(0.0, 1.0),
-              dragRange = TRUE,
-              pre = "Mean ",
-              step = 0.1,
-              sep = ""
-            )
-          )
-        ),
-        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
-        tags$td(
-          shiny::conditionalPanel(
-            condition = "input.characterizationCompareMethod == 'Plot'",
-            shiny::sliderInput(
-              inputId = "compareCohortYMeanFilter",
-              label = "Filter Y-axis",
-              min = c(0.0),
-              max = c(1.0),
-              value = c(0.0, 1.0),
-              dragRange = TRUE,
-              pre = "Mean ",
-              step = 0.1,
-              sep = ""
-            )
-          )
-        ),
         tags$td(
           shiny::conditionalPanel(
             condition = "input.characterizationCompareMethod == 'Raw table'",
@@ -1064,25 +1030,6 @@ bodyTabItems <- shinydashboard::tabItems(
                                 shinyWidgets::pickerInput(
                                   inputId = "compareCharacterizationAnalysisNameFilter",
                                   label = "Analysis name",
-                                  choices = c(""),
-                                  selected = c(""),
-                                  multiple = TRUE,
-                                  width = 200,
-                                  choicesOpt = list(style = rep_len("color: black;", 999)),
-                                  options = shinyWidgets::pickerOptions(
-                                    actionsBox = TRUE,
-                                    liveSearch = TRUE,
-                                    size = 10,
-                                    liveSearchStyle = "contains",
-                                    liveSearchPlaceholder = "Type here to search",
-                                    virtualScroll = 50
-                                  )
-                                )
-                              ),
-                              tags$td(
-                                shinyWidgets::pickerInput(
-                                  inputId = "compareCharacterizationDomainNameFilter",
-                                  label = "Domain name",
                                   choices = c(""),
                                   selected = c(""),
                                   multiple = TRUE,
@@ -1138,11 +1085,7 @@ bodyTabItems <- shinydashboard::tabItems(
         width = NULL,
         status = "primary",
         shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
-        plotly::plotlyOutput(
-          outputId = "compareCharacterizationPlot",
-          width = "100%",
-          height = "100%"
-        )
+        plotly::plotlyOutput(outputId = "compareCharacterizationPlot", height = "auto")
       )
     )
   ),
@@ -1166,39 +1109,6 @@ bodyTabItems <- shinydashboard::tabItems(
             inline = TRUE
           )
         ),
-        tags$td(
-          shiny::conditionalPanel(
-            condition = "input.temporalCharacterizationType == 'Plot'",
-            shiny::sliderInput(
-              inputId = "temporalCharacterizationXMeanFilter",
-              label = "Filter X-axis",
-              min = c(0.0),
-              max = c(1.0),
-              value = c(0.0, 1.0),
-              dragRange = TRUE,
-              pre = "Mean ",
-              step = 0.1,
-              sep = ""
-            )
-          )
-        ),
-        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
-        tags$td(
-          shiny::conditionalPanel(
-            condition = "input.temporalCharacterizationType == 'Plot'",
-            shiny::sliderInput(
-              inputId = "temporalCharacterizationYMeanFilter",
-              label = "Filter Y-axis",
-              min = c(0.0),
-              max = c(1.0),
-              value = c(0.0, 1.0),
-              dragRange = TRUE,
-              pre = "Mean ",
-              step = 0.1,
-              sep = ""
-            )
-          )
-        ),
         tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
         tags$td(
           shiny::conditionalPanel(
@@ -1218,8 +1128,8 @@ bodyTabItems <- shinydashboard::tabItems(
                             tags$table(tags$tr(
                               tags$td(
                                 shinyWidgets::pickerInput(
-                                  inputId = "compareTemporalCharacterizationAnalysisNameFilter",
-                                  label = "Analysis name",
+                                  inputId = "compareTemporalCharacterizationDomainNameFilter",
+                                  label = "Domain name",
                                   choices = c(""),
                                   selected = c(""),
                                   multiple = TRUE,
@@ -1236,8 +1146,8 @@ bodyTabItems <- shinydashboard::tabItems(
                               ),
                               tags$td(
                                 shinyWidgets::pickerInput(
-                                  inputId = "compareTemporalCharacterizationDomainNameFilter",
-                                  label = "Domain name",
+                                  inputId = "compareTemporalCharacterizationAnalysisNameFilter",
+                                  label = "Analysis name",
                                   choices = c(""),
                                   selected = c(""),
                                   multiple = TRUE,

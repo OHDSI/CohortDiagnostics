@@ -107,6 +107,9 @@
       <a href="../articles/DatabaseModeInDiagnosticsExplorer.html">Database mode in Diagnostics Explorer</a>
     </li>
     <li>
+      <a href="../articles/Report on Visits on Index Date.html">Report on index event breakdown</a>
+    </li>
+    <li>
       <a href="../articles/RunningCohortDiagnostics.html">Running cohort diagnostics</a>
     </li>
     <li>
@@ -150,7 +153,7 @@
     <p>Returns data from cohort table of Cohort Diagnostics results data model</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getResultsCohort</span><span class='op'>(</span><span class='va'>dataSource</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>getResultsCohort</span><span class='op'>(</span><span class='va'>dataSource</span>, cohortIds <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -163,6 +166,10 @@ or a local premerged file (created by <code>createFileDataSource</code>). Premer
 compiled into RData using <code>preMergeDiagnosticsFiles</code>. Database DataSources are data inserted into a remote
 database (only a postgres database is supported) with tables created with DDL function <code>createResultsDataModel</code>
 and uploaded using <code>uploadResults</code></p></td>
+    </tr>
+    <tr>
+      <th>cohortIds</th>
+      <td><p>A vector of one or more Cohort Ids.</p></td>
     </tr>
     </table>
 
