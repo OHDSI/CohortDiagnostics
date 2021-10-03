@@ -7124,7 +7124,7 @@ shiny::shinyServer(function(input, output, session) {
                                             ),
                                             tr(
                                               lapply(rep(
-                                                c("MeanC", "MeanT", "StdDiff"),
+                                                c("Target", "Comarator", "StdDiff"),
                                                 length(databaseIds)
                                               ),
                                               th,
@@ -7206,7 +7206,7 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::mutate(names = paste0(.data$databaseId, " ", .data$type)) 
         
         if (input$compareCharacterizationColumnFilters == "Mean and Standard Deviation") {
-          sketchColumns <- c("Mean 1", "Sd 1", "Mean 2", "Sd 2", "StdDiff")
+          sketchColumns <- c("Mean Target", "Sd Target", "Mean Comarator", "Sd Comparator", "StdDiff")
           sketchCOlspan <- 5
           
           columsDefs <- list(truncateStringDef(0, 80),
@@ -7223,7 +7223,7 @@ shiny::shinyServer(function(input, output, session) {
                           .data$type == "meanComparator" |
                           .data$type == "stdDiff")
           
-          sketchColumns <- c("Mean 1", "Mean 2", "StdDiff")
+          sketchColumns <- c("Target", "Comparator", "StdDiff")
           sketchCOlspan <- 3
           
           columsDefs <- list(truncateStringDef(0, 80),
