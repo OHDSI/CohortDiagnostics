@@ -1109,39 +1109,6 @@ bodyTabItems <- shinydashboard::tabItems(
             inline = TRUE
           )
         ),
-        tags$td(
-          shiny::conditionalPanel(
-            condition = "input.temporalCharacterizationType == 'Plot'",
-            shiny::sliderInput(
-              inputId = "temporalCharacterizationXMeanFilter",
-              label = "Filter X-axis",
-              min = c(0.0),
-              max = c(1.0),
-              value = c(0.0, 1.0),
-              dragRange = TRUE,
-              pre = "Mean ",
-              step = 0.1,
-              sep = ""
-            )
-          )
-        ),
-        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
-        tags$td(
-          shiny::conditionalPanel(
-            condition = "input.temporalCharacterizationType == 'Plot'",
-            shiny::sliderInput(
-              inputId = "temporalCharacterizationYMeanFilter",
-              label = "Filter Y-axis",
-              min = c(0.0),
-              max = c(1.0),
-              value = c(0.0, 1.0),
-              dragRange = TRUE,
-              pre = "Mean ",
-              step = 0.1,
-              sep = ""
-            )
-          )
-        ),
         tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
         tags$td(
           shiny::conditionalPanel(
@@ -1161,8 +1128,8 @@ bodyTabItems <- shinydashboard::tabItems(
                             tags$table(tags$tr(
                               tags$td(
                                 shinyWidgets::pickerInput(
-                                  inputId = "compareTemporalCharacterizationAnalysisNameFilter",
-                                  label = "Analysis name",
+                                  inputId = "compareTemporalCharacterizationDomainNameFilter",
+                                  label = "Domain name",
                                   choices = c(""),
                                   selected = c(""),
                                   multiple = TRUE,
@@ -1179,8 +1146,8 @@ bodyTabItems <- shinydashboard::tabItems(
                               ),
                               tags$td(
                                 shinyWidgets::pickerInput(
-                                  inputId = "compareTemporalCharacterizationDomainNameFilter",
-                                  label = "Domain name",
+                                  inputId = "compareTemporalCharacterizationAnalysisNameFilter",
+                                  label = "Analysis name",
                                   choices = c(""),
                                   selected = c(""),
                                   multiple = TRUE,

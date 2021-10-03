@@ -6723,10 +6723,17 @@ shiny::shinyServer(function(input, output, session) {
     shiny::reactive(x = {
       return(input$compareTemporalCharacterizationAnalysisNameFilter)
     })
+  
   ###Update: compareTemporalCharacterizationAnalysisNameFilter----
   shiny::observe({
+    if (!doesObjectHaveData(getCompareTemporalCharcterizationData())) {
+      return(NULL)
+    }
+    
     subset <-
-      getCompareTemporalCharcterizationData()$analysisName %>% unique() %>% sort()
+      getCompareTemporalCharcterizationData() %>% 
+      dplyr::filter(.data$domainId %in% getCompareTemporalCharacterizationDomainNameFilter()) %>% 
+      dplyr::pull(.data$analysisName) %>% unique() %>% sort()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "compareTemporalCharacterizationAnalysisNameFilter",
@@ -7914,11 +7921,7 @@ shiny::shinyServer(function(input, output, session) {
       plot <-
         plotTemporalCompareStandardizedDifference(
           balance = data,
-          shortNameRef = cohort,
-          xLimitMin = input$temporalCharacterizationXMeanFilter[1],
-          xLimitMax = input$temporalCharacterizationXMeanFilter[2],
-          yLimitMin = input$temporalCharacterizationYMeanFilter[1],
-          yLimitMax = input$temporalCharacterizationYMeanFilter[2]
+          shortNameRef = cohort
         )
       return(plot)
     })
