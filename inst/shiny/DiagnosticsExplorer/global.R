@@ -20,23 +20,22 @@ defaultDatabase <- Sys.getenv("shinydbDatabase")
 defaultPort <- 5432
 defaultUser <- Sys.getenv("shinydbUser")
 defaultPassword <- Sys.getenv("shinydbPw")
+defaultResultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
+defaultVocabularySchema <- defaultResultsSchema
+alternateVocabularySchema <- c('vocabulary')
+
 # OHDSI Phenotype DB
 # defaultServer <- Sys.getenv("phenotypeLibraryServer")
 # defaultDatabase <- Sys.getenv("phenotypeLibrarydb")
 # defaultPort <- 5432
 # defaultUser <- Sys.getenv("phenotypeLibrarydbUser")
 # defaultPassword <- Sys.getenv("phenotypeLibrarydbPw")
-# defaultResultsSchema <- "phenotypeLibrarydbTargetSchema"
-# defaultVocabularySchema <- "phenotypeLibrarydbVocabSchema"
-
+# defaultResultsSchema <- Sys.getenv("phenotypeLibrarydbTargetSchema")
+# defaultVocabularySchema <- Sys.getenv("phenotypeLibrarydbVocabSchema")
+# alternateVocabularySchema <- c('vocabulary')
 
 #Mode
 defaultDatabaseMode <- FALSE # Use file system if FALSE
-# defaultResultsSchema <- 'phenotypeLibrary'
-defaultResultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
-defaultVocabularySchema <- defaultResultsSchema
-alternateVocabularySchema <- c('vocabulary')
-
 
 #Configuration variables ----
 showIncidenceRate <- TRUE
