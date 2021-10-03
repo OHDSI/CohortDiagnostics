@@ -166,6 +166,7 @@ if (databaseMode) {
       "analysis_ref",
       "concept_sets",
       "concept_class",
+      "covariate_ref",
       "domain",
       "relationship",
       "temporal_time_ref",
