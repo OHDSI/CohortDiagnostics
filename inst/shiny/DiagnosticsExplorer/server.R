@@ -6065,11 +6065,8 @@ shiny::shinyServer(function(input, output, session) {
     covariatesTofilter <-
       getMultipleCharacterizationData()$covariateRef
     
-    if (all(
-      !is.null(input$conceptSetsSelectedCohortLeft),
-      length(input$conceptSetsSelectedCohortLeft) > 0,
-      input$conceptSetsSelectedCohortLeft != ""
-    )) {
+    if (all(doesObjectHaveData(input$conceptSetsSelectedCohortLeft),
+            doesObjectHaveData(getResolvedConceptsTarget()))) {
       covariatesTofilter <- covariatesTofilter  %>%
         dplyr::inner_join(
           getResolvedConceptsTarget() %>%
