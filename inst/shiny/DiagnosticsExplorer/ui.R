@@ -821,7 +821,7 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
     createShinyBoxFromOutputId("characterizationSelectedCohort"),
-    tags$table(
+    tags$table(width = "100%",
       tags$tr(
         tags$td(
           shiny::radioButtons(
@@ -885,34 +885,28 @@ bodyTabItems <- shinydashboard::tabItems(
                                       )
                                     )
                                   )))
-        )
-      ),
-      tags$tr(
-        tags$td(colspan = 2,
-                shiny::conditionalPanel(
-                  condition = "input.charType == 'Raw'",
-                  shiny::radioButtons(
-                    inputId = "characterizationColumnFilters",
-                    label = "Display",
-                    choices = c("Mean and Standard Deviation", "Mean only"),
-                    selected = "Mean only",
-                    inline = TRUE
-                  )
-                )
+        ),
+        tags$td(
+          shiny::conditionalPanel(
+            condition = "input.charType == 'Raw'",
+            shiny::radioButtons(
+              inputId = "characterizationColumnFilters",
+              label = "Display",
+              choices = c("Mean and Standard Deviation", "Mean only"),
+              selected = "Mean only",
+              inline = TRUE
+            )
+          )
+        ),
+        tags$td(align = "right",
+          shiny::downloadButton(
+            outputId = "saveCohortCharacterizationTable",
+            label = "",
+            icon = shiny::icon("download"),
+            style = "margin-top: 5px; margin-bottom: 5px;"
+          )
         )
       )),
-    tags$table(width = "100%", 
-               tags$tr(
-                 tags$td(align = "right",
-                         shiny::downloadButton(
-                           outputId = "saveCohortCharacterizationTable",
-                           label = "",
-                           icon = shiny::icon("download"),
-                           style = "margin-top: 5px; margin-bottom: 5px;"
-                         )
-                 )
-               )
-    ),
     DT::dataTableOutput(outputId = "characterizationTable")
   ),
   shinydashboard::tabItem(
