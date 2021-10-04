@@ -6711,19 +6711,39 @@ shiny::shinyServer(function(input, output, session) {
   ## Compare Characterization/Temporal Characterization ------
   ## Shared----
   ###getCompareCharacterizationAnalysisNameFilter----
+  
+  getCompareCharacterizationDomainNameFilter <-
+    shiny::reactive(x = {
+      return(input$compareCharacterizationDomainNameFilter)
+    })
+  
   getCompareCharacterizationAnalysisNameFilter <-
     shiny::reactive(x = {
       return(input$compareCharacterizationAnalysisNameFilter)
     })
   
-  
+  ###Update: compareCharacterizationDomainNameFilter----
+  shiny::observe({
+    data <- getCompareCharacterizationData()
+    if (doesObjectHaveData(data)) {
+      subset <- data$domainId %>% unique() %>% sort()
+      shinyWidgets::updatePickerInput(
+        session = session,
+        inputId = "compareCharacterizationDomainNameFilter",
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        choices = subset,
+        selected = subset
+      )
+    }
+  })
   
   ###Update: compareCharacterizationAnalysisNameFilter----
   shiny::observe({
     data <- getCompareCharacterizationData()
-    if (all(!is.null(data),
-            nrow(data) > 0)) {
-      subset <- data$analysisName %>% unique() %>% sort()
+    if (doesObjectHaveData(data)) {
+      subset <- data %>% 
+        dplyr::filter(.data$domainId %in% getCompareCharacterizationDomainNameFilter()) %>% 
+        dplyr::pull(.data$analysisName) %>% unique() %>% sort()
       shinyWidgets::updatePickerInput(
         session = session,
         inputId = "compareCharacterizationAnalysisNameFilter",
@@ -6733,8 +6753,6 @@ shiny::shinyServer(function(input, output, session) {
       )
     }
   })
-  
-
   
   ###getCompareTemporalCharacterizationDomainNameFilter----
   getCompareTemporalCharacterizationDomainNameFilter <-
@@ -6983,6 +7001,10 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    
+    data <- data %>% 
+      dplyr::filter(.data$domainId  %in% getCompareCharacterizationDomainNameFilter()) %>% 
+      dplyr::filter(.data$analysisName  %in% getCompareCharacterizationAnalysisNameFilter())
     return(data)
   })
   
@@ -7007,6 +7029,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange(.data$sortOrder) %>%
       dplyr::select(-.data$sortOrder) %>%
       dplyr::select(-.data$cohortId1,-.data$cohortId2)
+    
     return(data)
   })
   
@@ -7018,15 +7041,6 @@ shiny::shinyServer(function(input, output, session) {
     data <- getCompareCharacterizationDataFiltered()
     if (!doesObjectHaveData(data)) {
       return(NULL)
-    }
-    if (all(
-      !is.null(getCompareCharacterizationAnalysisNameFilter()),
-      getCompareCharacterizationAnalysisNameFilter() != "",
-      length(getCompareCharacterizationAnalysisNameFilter()) > 0
-    )) {
-      data <- data %>% 
-        dplyr::filter(.data$analysisName %in% getCompareCharacterizationAnalysisNameFilter())
-      
     }
    
     # if (all(
