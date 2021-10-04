@@ -7536,25 +7536,10 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$isBinary == 'N')
       }
       
-      if (all(
-        !is.null(getCompareTemporalCharacterizationAnalysisNameFilter()),
-        length(getCompareTemporalCharacterizationAnalysisNameFilter()) > 0,
-        getCompareTemporalCharacterizationAnalysisNameFilter() != ""
-      )) {
-        data <- data %>%
-          dplyr::filter(
-            .data$analysisName %in% getCompareTemporalCharacterizationAnalysisNameFilter()
-          )
-      }
+      data <- data %>%
+        dplyr::filter(.data$domainId %in% getCompareTemporalCharacterizationDomainNameFilter()) %>% 
+        dplyr::filter(.data$analysisName %in% getCompareTemporalCharacterizationAnalysisNameFilter())
       
-      if (all(
-        !is.null(getCompareTemporalCharacterizationDomainNameFilter()),
-        length(getCompareTemporalCharacterizationDomainNameFilter()) > 0,
-        getCompareTemporalCharacterizationDomainNameFilter() != ""
-      )) {
-        data <- data %>%
-          dplyr::filter(.data$domainId %in% getCompareTemporalCharacterizationDomainNameFilter())
-      }
       
       if (all(
         !is.null(input$conceptSetsSelectedCohortLeft),
