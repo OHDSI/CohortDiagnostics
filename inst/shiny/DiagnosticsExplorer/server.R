@@ -4749,18 +4749,32 @@ shiny::shinyServer(function(input, output, session) {
       "No timeseries data for the cohort of this series type"
     ))
     
-    selectedColumns <- getTimeSeriesColumnNameCrosswalk() %>% 
+    longNames <- getTimeSeriesColumnNameCrosswalk() %>% 
+      dplyr::filter(.data$longName %in% c(input$timeSeriesPlotFilters)) %>% 
+      dplyr::pull(.data$longName) %>% 
+      titleCaseToCamelCase()
+    shortNames <- getTimeSeriesColumnNameCrosswalk() %>% 
       dplyr::filter(.data$longName %in% c(input$timeSeriesPlotFilters)) %>% 
       dplyr::pull(.data$shortName)
     
-    validate(need(titleCaseToCamelCase(selectedColumns) %in% colnames(data),
-      paste0(paste0(selectedColumns, collapse = ","), " not found in tsibble")
+    validate(need(titleCaseToCamelCase(shortNames) %in% colnames(data),
+      paste0(paste0(shortNames, collapse = ","), " not found in tsibble")
     ))
+    renameDf <- getTimeSeriesColumnNameCrosswalk() %>% 
+      dplyr::mutate(longName = titleCaseToCamelCase(.data$longName)) %>% 
+      dplyr::select(.data$shortName, .data$longName)
+    
+    for (i in (1:nrow(renameDf))) {
+      if (renameDf[i,]$shortName %in% colnames(data)) {
+        data <- data %>%
+          dplyr::rename(!!as.name(renameDf[i,]$longName) := dplyr::all_of(renameDf[i,]$shortName))
+      }
+    }
     tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data, 
-                                                      valueFields = titleCaseToCamelCase(selectedColumns))
+                                                      valueFields = titleCaseToCamelCase(longNames))
     plot <- plotTimeSeriesFromTsibble(
       tsibbleData = tsibbleDataFromSTLModel,
-      plotFilters = titleCaseToCamelCase(selectedColumns),
+      plotFilters = longNames,
       indexAggregationType = input$timeSeriesAggregationPeriodSelection,
       timeSeriesPeriodRangeFilter = input$timeSeriesPeriodRangeFilter
     )
