@@ -7972,8 +7972,7 @@ shiny::shinyServer(function(input, output, session) {
       plot <-
         plotTemporalCompareStandardizedDifference(
           balance = data,
-          shortNameRef = cohort
-        )
+          shortNameRef = cohort)
       return(plot)
     })
   
