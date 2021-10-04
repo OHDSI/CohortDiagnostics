@@ -297,33 +297,34 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         )
       )
     }
-    if (seriesToRun[[i]] == 'ComputeTimeSeries4.sql') {
-      ParallelLogger::logInfo(
-        paste0(
-          "  - (",
-          scales::percent(i / length(seriesToRun)),
-          ") Running cohort time series T4: subjects in the cohorts whose cohort period are embedded within calendar period."
-        )
-      )
-    }
-    if (seriesToRun[[i]] == 'ComputeTimeSeries5.sql') {
-      ParallelLogger::logInfo(
-        paste0(
-          "  - (",
-          scales::percent(i / length(seriesToRun)),
-          ") Running cohort time series T5: subjects in the cohorts whose observation period is embedded within calendar period."
-        )
-      )
-    }
-    if (seriesToRun[[i]] == 'ComputeTimeSeries6.sql') {
-      ParallelLogger::logInfo(
-        paste0(
-          "  - (",
-          scales::percent(i / length(seriesToRun)),
-          ") Running datasource time series T6: persons in the observation table whose observation period is embedded within calendar period."
-        )
-      )
-    }
+    # commenting out time series 4/5/6 as it does not seem have value
+    # if (seriesToRun[[i]] == 'ComputeTimeSeries4.sql') {
+    #   ParallelLogger::logInfo(
+    #     paste0(
+    #       "  - (",
+    #       scales::percent(i / length(seriesToRun)),
+    #       ") Running cohort time series T4: subjects in the cohorts whose cohort period are embedded within calendar period."
+    #     )
+    #   )
+    # }
+    # if (seriesToRun[[i]] == 'ComputeTimeSeries5.sql') {
+    #   ParallelLogger::logInfo(
+    #     paste0(
+    #       "  - (",
+    #       scales::percent(i / length(seriesToRun)),
+    #       ") Running cohort time series T5: subjects in the cohorts whose observation period is embedded within calendar period."
+    #     )
+    #   )
+    # }
+    # if (seriesToRun[[i]] == 'ComputeTimeSeries6.sql') {
+    #   ParallelLogger::logInfo(
+    #     paste0(
+    #       "  - (",
+    #       scales::percent(i / length(seriesToRun)),
+    #       ") Running datasource time series T6: persons in the observation table whose observation period is embedded within calendar period."
+    #     )
+    #   )
+    # }
     
     sql <- SqlRender::readSql(system.file("sql/sql_server",
                                           seriesToRun[[i]],

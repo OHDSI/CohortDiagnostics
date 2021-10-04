@@ -294,6 +294,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              daysRelativeIndex = NULL,
                                              startDay = NULL,
                                              endDay = NULL,
+                                             seriesType = NULL,
                                              dataTableName) {
   if (is(dataSource, "environment")) {
     object <- c(
@@ -305,7 +306,8 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
       "startDay",
       "endDay",
       "daysRelativeIndex",
-      "domainTable"
+      "domainTable",
+      "seriesType"
     )
     if (!is.null(vocabularyDatabaseSchema)) {
       paste0(
@@ -359,6 +361,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
               {@start_day !=''} ? {AND start_day IN (@start_day) \n}
               {@end_day !=''} ? {AND end_day IN (@end_day) \n}
               {@days_relative_index !=''} ? {AND end_day IN (@days_relative_index) \n}
+              {@series_type !=''} ? {AND series_type IN (@series_type) \n}
               {@domain_table !=''} ? {AND domain_table IN (@domain_table) \n}
             ;"
     if (!is.null(vocabularyDatabaseSchema)) {
@@ -383,6 +386,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         end_day = endDay,
         domain_table = domainTable,
         days_relative_index = daysRelativeIndex,
+        series_type = seriesType,
         snakeCaseToCamelCase = TRUE
       )
   }
@@ -1795,12 +1799,33 @@ getResultsCohortSummaryStats <- function(dataSource,
 #' @export
 getResultsFixedTimeSeries <- function(dataSource,
                                       cohortIds = NULL,
-                                      databaseIds = NULL) {
+                                      databaseIds = NULL,
+                                      seriesType = c('T1', 'T2', 'T3')) {
+  fixedTimeSeriesColumnNameLong <- dplyr::tibble(
+    shortName = c("records", "subjects", "personDays", 
+                  "subjectsStartIn", "personDaysIn", "subjectsEndIn", 
+                  "recordsStart", "subjectsStart", 
+                  "recordsEnd", "subjectsEnd"
+                  ),
+    longName = c("Records Found Per Period",
+                 "Subjects Found Per Period",
+                 "Person Days Per Period", 
+                 "Incidence Subjects Per Period",
+                 "Incidence Person days Per Period",
+                 "Incident Subjects Ending Per Period",
+                 "Records Starting Per Period", 
+                 "Subjects Starting Per Period",
+                 "Records Ending Per Period", 
+                 "Subjects Ending Per Period"),
+    sequence = c(1,2,3,4,5,6,7,8,9,10)
+  ) %>% 
+    dplyr::arrange(.data$sequence)
   # cohortId = 0, represent all persons in observation_period
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortId = c(cohortIds, 0) %>% unique(),
     databaseId = databaseIds,
+    seriesType = c('T1', 'T2', 'T3'),
     dataTableName = "timeSeries"
   )
   if (any(is.null(data),
@@ -1843,7 +1868,7 @@ getResultsFixedTimeSeries <- function(dataSource,
         personDaysIn = NA,
         recordsStart = .data$recordsStart_1 / .data$recordsStart_2,
         subjectsStart = .data$subjectsStart_1 / .data$subjectsStart_2,
-        subjctsStartIn = NA,
+        subjectsStartIn = NA,
         recordsEnd = .data$recordsEnd_1 / .data$recordsEnd_2,
         subjectsEnd = .data$subjectsEnd_1 / .data$subjectsEnd_2,
         subjectsEndIn = NA
@@ -1854,26 +1879,29 @@ getResultsFixedTimeSeries <- function(dataSource,
     data <- dplyr::bind_rows(data, r1)
   }
   
+  # commenting out time series segments that have persons/subject embedded within observation period, as it 
+  # does not seem to have value
   timeSeriesDescription <- dplyr::tibble(
-    seriesType = c('T1', 'T2', 'T3', 'T4', 'T5', 'T6',
+    seriesType = c('T1', 'T2', 'T3',# 'T4', 'T5', 'T6',
                    'R1'),
     seriesTypeShort = c(
-      'Subjects cohort period',
-      'Subjects observation period',
-      'Persons observed period',
-      'Subjects cohort embedded in period',
-      'Subjects observation embedded in period',
-      'Persons observation embedded in period',
+      'Subjects in data source limited to cohort period',
+      'Subjects in data source not limited to cohort period',
+      'Persons in data source',
+      # ,
+      # 'Subjects cohort embedded in period',
+      # 'Subjects observation embedded in period',
+      # 'Persons observation embedded in period',
       'Percent of Subjects among persons in period'
     ),
     seriesTypeLong = c(
       'Subjects in the cohort who have atleast one cohort day in calendar period',
       'Subjects in the cohort who have atleast one observation day in calendar period',
       'Persons in the data source who have atleast one observation day in calendar period',
-      'Subjects in the cohorts whose cohort period are embedded within calendar period',
-      'Subjects in the cohorts whose observation period is embedded within calendar period',
-      'Persons in the observation table whose observation period is embedded within calendar period',
-      'Percent of persons in the datasource who have atleast one cohort day in calendar period that met the cohort definition rules in that cohort period'
+      # 'Subjects in the cohorts whose cohort period are embedded within calendar period',
+      # 'Subjects in the cohorts whose observation period is embedded within calendar period',
+      # 'Persons in the observation table whose observation period is embedded within calendar period',
+      'Proportion of persons who met the cohort definition in the calendar period to persons in the observation period in the same calendar period'
     )
   )
   
@@ -1918,6 +1946,8 @@ getResultsFixedTimeSeries <- function(dataSource,
     dataList[[intervals[[i]]]] <- intervalData
     attr(x = dataList[[intervals[[i]]]],
          which = 'timeSeriesDescription') <- timeSeriesDescription
+    attr(x = dataList[[intervals[[i]]]],
+         which = 'timeSeriesColumnNameCrosswalk') <- fixedTimeSeriesColumnNameLong
   }
   return(dataList)
 }
