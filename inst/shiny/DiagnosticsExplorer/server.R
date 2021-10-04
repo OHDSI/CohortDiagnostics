@@ -2025,10 +2025,8 @@ shiny::shinyServer(function(input, output, session) {
   ##getMetadataForConceptId----
   getMetadataForConceptId <- shiny::reactive(x = {
     if (is.null(activeSelected()$conceptId)) {#currently expecting to be vector of 1 (single select)
-      browser()
       return(NULL)
     }
-    browser()
     if (length(activeSelected()$conceptId) != 1) {
       stop("Only single select is supported for conceptId")
     }
@@ -2050,7 +2048,6 @@ shiny::shinyServer(function(input, output, session) {
                        activeSelected()$cohortId),
       value = 0
     )
-    browser()
     data <-
       getConceptMetadata(
         dataSource = dataSource,
@@ -3203,10 +3200,6 @@ shiny::shinyServer(function(input, output, session) {
       data <- data$databaseConceptIdYearLevelTsibble %>% 
         dplyr::filter(.data$conceptId == activeSelected()$conceptId)
     }
-    #!!!!!!!!########## filter domain table and domain field in data$cdmTables - default "All"
-    data <- data %>% 
-      dplyr::filter(.data$domainTableShort == "All") %>% #need input object
-      dplyr::filter(.data$domainFieldShort == "All") #need input object
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(
@@ -3224,7 +3217,6 @@ shiny::shinyServer(function(input, output, session) {
     
     tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
                                                                           valueFields = c("records", "persons"))
-    
 
     conceptName <- getMetadataForConceptId()$concept %>% 
       dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
@@ -3256,7 +3248,6 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: conceptBrowserTable----
   output$conceptBrowserTable <- DT::renderDT(expr = {
-    browser()
     conceptId <- activeSelected()$conceptId
     validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
     cohortId <- activeSelected()$cohortId
@@ -4905,7 +4896,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     indexEventBreakdown <-
       getResultsIndexEventBreakdown(dataSource = dataSource,
-                                    cohortId = consolidatedCohortIdTarget(),
+                                    cohortIds = consolidatedCohortIdTarget(),
                                     databaseIds = consolidatedDatabaseIdTarget(),
                                     daysRelativeIndex = 0) #!! in new design, we have multiple daysRelativeIndex
     if (!doesObjectHaveData(indexEventBreakdown)) {
@@ -5408,9 +5399,6 @@ shiny::shinyServer(function(input, output, session) {
         data <- data$databaseConceptIdYearLevelTsibble %>% 
           dplyr::filter(.data$conceptId == consolidatedConceptIdTarget())
       }
-      data <- data %>% 
-        dplyr::filter(.data$domainTableShort == "All") %>% #need input object
-        dplyr::filter(.data$domainFieldShort == "All") #need input object
       validate(need(
         all(!is.null(data),
             nrow(data) > 0),

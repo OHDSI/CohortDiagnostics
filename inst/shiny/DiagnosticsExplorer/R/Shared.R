@@ -335,7 +335,6 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     }
     if (doesObjectHaveData(conceptId1)) {
       #for concept relationship only
-      browser()
       data <- data %>%
         dplyr::filter(.data$conceptId1 %in% conceptId |
                         .data$conceptId2 %in% conceptId)
@@ -357,7 +356,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
               {@concept_id !=''} ? {AND concept_id in (@concept_id) \n}
               {@co_concept_id !=''} ? {AND co_concept_id in (@co_concept_id) \n}
               {@concept_set_id !=''} ? {AND concept_set_id in (@concept_set_id) \n}
-              {@concept_id_1 !=''} ? {AND (concept_id_1 IN (@concept_ids) OR concept_id_2 IN (@concept_ids)) \n}
+              {@concept_id_1 !=''} ? {AND (concept_id_1 IN (@concept_id_1) OR concept_id_2 IN (@concept_id_1)) \n}
               {@start_day !=''} ? {AND start_day IN (@start_day) \n}
               {@end_day !=''} ? {AND end_day IN (@end_day) \n}
               {@days_relative_index !=''} ? {AND end_day IN (@days_relative_index) \n}
@@ -384,9 +383,9 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         # for concept relationship only
         start_day = startDay,
         end_day = endDay,
-        domain_table = domainTable,
+        domain_table = quoteLiterals(domainTable),
         days_relative_index = daysRelativeIndex,
-        series_type = seriesType,
+        series_type = quoteLiterals(seriesType),
         snakeCaseToCamelCase = TRUE
       )
   }
@@ -796,11 +795,11 @@ getResultsConceptMapping <- function(dataSource,
   intersectOfTwo <- domainTables
   if (!is.null(domainTables)) {
     domainTable <- getDomainInformation()$long
-    intersectOfTwo <- intersect(x = tolower(domainTables),
-                                y = domainTable$domainTable) %>% 
+    intersectOfTwo <- intersect(x = domainTables,
+                                y = c("All", domainTable$domainTable)) %>% 
       unique()
-    setdiffOfTwo <- setdiff(x = tolower(domainTables),
-                            y = domainTable$domainTable) %>% 
+    setdiffOfTwo <- setdiff(x = domainTables,
+                            y = c("All", domainTable$domainTable)) %>% 
       unique()
     if (length(setdiffOfTwo) > 1) {
       warning(paste0("Cant match the following in domainTables parameter: ", paste(setdiffOfTwo, collapse = ", ")))
@@ -811,10 +810,6 @@ getResultsConceptMapping <- function(dataSource,
         warning(paste0("Returning results for following domain tables: ", paste(intersectOfTwo, collapse = ", ")))
       }
     }
-    intersectOfTwo <- domainTable %>% 
-      dplyr::filter(.data$domainTable %in% c(intersectOfTwo)) %>% 
-      dplyr::pull(.data$domainTableShort) %>% 
-      unique()
   }
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
@@ -964,7 +959,6 @@ getConceptMetadata <- function(dataSource,
       dplyr::distinct() %>%
       dplyr::arrange(.data$conceptId) %>% 
       dplyr::group_by(.data$referenceConceptId, .data$conceptId)
-    browser()
     
     #!!!!!!!!! need to collapse relationshipId - to avoid duplication. need to make them come with line break
     # %>% 
@@ -1020,7 +1014,7 @@ getConceptMetadata <- function(dataSource,
     data$conceptSynonym <- getConceptSynonym(
       dataSource = dataSource,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      conceptIds = conceptIds
+      conceptId = conceptIds
     ) %>%
       dplyr::distinct()
   }
@@ -1108,11 +1102,6 @@ getConceptMetadata <- function(dataSource,
       if (getFixedTimeSeries) {
         data$databaseConceptIdYearMonthLevelTsibble <-
           data$databaseConceptCountDetails %>%
-          dplyr::rename("domainTableShort" = .data$domainTable) %>%
-          dplyr::rename("domainFieldShort" = .data$domainField) %>%
-          dplyr::filter(
-            .data$domainTableShort %in% c(data$cdmTables$domainTableShort %>% unique(), "All")
-          ) %>%
           dplyr::filter(.data$eventYear > 0, .data$eventMonth > 0) %>%
           dplyr::mutate(periodBegin = lubridate::as_date(paste0(
             .data$eventYear,
@@ -1123,8 +1112,6 @@ getConceptMetadata <- function(dataSource,
           dplyr::select(
             .data$conceptId,
             .data$databaseId,
-            .data$domainFieldShort,
-            .data$domainTableShort,
             .data$periodBegin,
             .data$conceptCount,
             .data$subjectCount
@@ -1133,29 +1120,19 @@ getConceptMetadata <- function(dataSource,
           tsibble::as_tsibble(
             key = c(
               .data$conceptId,
-              .data$databaseId,
-              .data$domainFieldShort,
-              .data$domainTableShort
+              .data$databaseId
             ),
             index = .data$periodBegin
           ) %>%
           dplyr::arrange(
             .data$conceptId,
             .data$databaseId,
-            .data$domainFieldShort,
-            .data$domainTableShort,
             .data$periodBegin,
             .data$conceptCount,
             .data$subjectCount
           )
-        
         data$databaseConceptIdYearLevelTsibble <-
           data$databaseConceptCountDetails %>%
-          dplyr::rename("domainTableShort" = .data$domainTable) %>%
-          dplyr::rename("domainFieldShort" = .data$domainField) %>%
-          dplyr::filter(
-            .data$domainTableShort %in% c(data$cdmTables$domainTableShort %>% unique(), "All")
-          ) %>%
           dplyr::filter(.data$eventYear > 0, .data$eventMonth == 0) %>%
           dplyr::mutate(periodBegin = lubridate::as_date(paste0(.data$eventYear,
                                                                 "-",
@@ -1163,8 +1140,6 @@ getConceptMetadata <- function(dataSource,
           dplyr::select(
             .data$conceptId,
             .data$databaseId,
-            .data$domainFieldShort,
-            .data$domainTableShort,
             .data$periodBegin,
             .data$conceptCount,
             .data$subjectCount
@@ -1173,17 +1148,13 @@ getConceptMetadata <- function(dataSource,
           tsibble::as_tsibble(
             key = c(
               .data$conceptId,
-              .data$databaseId,
-              .data$domainFieldShort,
-              .data$domainTableShort
+              .data$databaseId
             ),
             index = .data$periodBegin
           ) %>%
           dplyr::arrange(
             .data$conceptId,
             .data$databaseId,
-            .data$domainFieldShort,
-            .data$domainTableShort,
             .data$periodBegin,
             .data$conceptCount,
             .data$subjectCount
@@ -1194,28 +1165,28 @@ getConceptMetadata <- function(dataSource,
   
   if (!is.null(cohortIds)) {
     if (getConceptCooccurrence) {
-      data$conceptCooccurrence <-
-        getResultsConceptCooccurrence(
-          dataSource = dataSource,
-          databaseIds = databaseIds,
-          cohortIds = cohortIds,
-          conceptIds = data$concept$conceptId %>% unique()
-        ) %>%
-        dplyr::select(
-          .data$conceptId,
-          .data$databaseId,
-          .data$cohortId,
-          .data$coConceptId,
-          .data$subjectCount
-        ) %>%
-        dplyr::rename("referenceConceptId" = .data$conceptId) %>%
-        dplyr::rename("conceptId" = .data$coConceptId) %>%
-        dplyr::arrange(
-          .data$referenceConceptId,
-          .data$databaseId,
-          .data$cohortId,
-          dplyr::desc(.data$subjectCount)
-        )
+      # data$conceptCooccurrence <-
+      #   getResultsConceptCooccurrence(
+      #     dataSource = dataSource,
+      #     databaseIds = databaseIds,
+      #     cohortIds = cohortIds,
+      #     conceptIds = data$concept$conceptId %>% unique()
+      #   ) %>%
+      #   dplyr::select(
+      #     .data$conceptId,
+      #     .data$databaseId,
+      #     .data$cohortId,
+      #     .data$coConceptId,
+      #     .data$subjectCount
+      #   ) %>%
+      #   dplyr::rename("referenceConceptId" = .data$conceptId) %>%
+      #   dplyr::rename("conceptId" = .data$coConceptId) %>%
+      #   dplyr::arrange(
+      #     .data$referenceConceptId,
+      #     .data$databaseId,
+      #     .data$cohortId,
+      #     dplyr::desc(.data$subjectCount)
+      #   )
     }
     if (getIndexEventCount) {
       data$indexEventBreakdown <-
@@ -3295,11 +3266,9 @@ getDomainInformation <- function(packageName = NULL) {
       pattern = " ",
       replacement = ""
     )
-  
   domains <- domains  %>%
     dplyr::mutate(isEraTable = stringr::str_detect(string = .data$domainTable,
                                                    pattern = 'era'))
-  
   data <- list()
   data$wide <- domains
   data$long <- dplyr::bind_rows(
