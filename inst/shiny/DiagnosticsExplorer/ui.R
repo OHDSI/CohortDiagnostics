@@ -313,8 +313,7 @@ bodyTabItems <- shinydashboard::tabItems(
       tags$br(),
       shiny::column(12,
                     shiny::conditionalPanel(
-                      condition = "output.cohortDefinitionSelectedRowCount >= 1 &
-                       input.targetConceptSetsType != 'Concept Set Expression' &
+                      condition = "input.targetConceptSetsType != 'Concept Set Expression' &
                        input.targetConceptSetsType != 'Concept Set Json' &
                        input.targetCohortDefinitionTabSetPanel == 'targetCohortDefinitionConceptSetTabPanel'",
                       shiny::uiOutput(outputId = "dynamicUIForRelationshipAndComparisonTable")
