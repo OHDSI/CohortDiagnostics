@@ -1225,14 +1225,14 @@ plotTemporalCompareStandardizedDifference <- function(balance,
         balance$domainId,
         "\nAnalysis: ",
         balance$analysisName,
-        "\n Y ",
-        balance$comparatorCohort,
-        ": ",
-        scales::comma(balance$mean2, accuracy = 0.01),
-        "\n X ",
+        "\n Target (",
         balance$targetCohort,
-        ": ",
+        ") : ",
         scales::comma(balance$mean1, accuracy = 0.01),
+        "\n Comparator (",
+        balance$comparatorCohort,
+        ") : ",
+        scales::comma(balance$mean2, accuracy = 0.01),
         "\nStd diff.: ",
         scales::comma(balance$stdDiff, accuracy = 0.01),
         "\nTime : ",
@@ -1278,6 +1278,19 @@ plotTemporalCompareStandardizedDifference <- function(balance,
     dplyr::distinct(balance$comparatorCohort) %>%
     dplyr::pull()
   
+  targetName <- balance %>% 
+    dplyr::select(.data$cohortId1) %>% 
+    dplyr::mutate(cohortId = .data$cohortId1) %>% 
+    dplyr::inner_join(cohort, by = "cohortId") %>% 
+    dplyr::pull(.data$cohortName) %>% unique()
+  
+  comparatorName <- balance %>% 
+    dplyr::select(.data$cohortId2) %>% 
+    dplyr::mutate(cohortId = .data$cohortId2) %>% 
+    dplyr::inner_join(cohort, by = "cohortId") %>% 
+    dplyr::pull(.data$cohortName) %>% unique()
+  
+  selectedDatabaseId <- balance$databaseId %>% unique()
   # balance <- balance %>%
   #   dplyr::arrange(.data$startDay, .data$endDay)
   
@@ -1286,18 +1299,30 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   #   dplyr::distinct() %>%
   #   dplyr::arrange(.data$startDay) %>%
   #   dplyr::pull(.data$choices)
+
+  
+  for (i in 1 : nrow(balance)) {
+    balance$tempChoices[i] <- as.integer(strsplit(balance$choices[i], " ")[[1]][2])
+  }
+  balance <- balance %>% 
+    dplyr::arrange(.data$tempChoices) %>% 
+    dplyr::select(-.data$tempChoices)
+  
   distinctChoices <- balance$choices %>% unique()
   choicesPlot <- list()
   for (i in 1:length(distinctChoices)) {
     filteredData <- balance %>% 
       dplyr::filter(.data$choices == distinctChoices[i])
-    choicesPlot[[i]] <- plotly::plot_ly(filteredData, x = ~mean1, y = ~mean2, text = ~tooltip, hoverinfo = 'text', type = 'scatter', height = max(1,ceiling(length(distinctChoices)/5)) * 430,
-                            mode = "markers", color = ~domain, colors = ~colors, opacity = 0.5, marker = list(size = 15,
-                                                                                                              line = list(color = 'rgb(255,255,255)', width = 1))) %>%
+    choicesPlot[[i]] <- plotly::plot_ly(filteredData, x = ~ mean1, y = ~ mean2, text = ~ tooltip, 
+                                        hoverinfo = 'text', type = 'scatter', 
+                                        height = max(1, ceiling(length(distinctChoices) / 5)) * 450, showlegend = ifelse(i == 1, T, F),
+                                        mode = "markers", color = ~ domain, colors = ~colors, 
+                                        opacity = 0.5, marker = list(size = 15, line = list(color = 'rgb(255,255,255)', width = 1))) %>%
      
       plotly::layout(
         xaxis = list(range = c(0, 1)),
         yaxis = list(range = c(0, 1)),
+        legend = list(orientation = 'h', x = 0.3, y = -0.15 +  0.0145 * max(1,ceiling(length(distinctChoices)/5))),
         annotations = list(
                        x = 0.5 ,
                        y = 1.05,
@@ -1314,31 +1339,36 @@ plotTemporalCompareStandardizedDifference <- function(balance,
             color = "black"
           )
         )) %>% 
-      plotly::add_segments(x = 0, y = 0, xend = 1, yend = 1,
-                           line = list(width = 0.5, color = "rgb(160,160,160)", dash = "dash"))
+      plotly::add_segments(x = 0, y = 0, xend = 1, yend = 1, showlegend = F,
+                           line = list(width = 0.5, color = "rgb(160,160,160)", dash = "dash"),
+                           marker = list(size = 0))
       
   }
   m <- list(
     l = 100,
     r = 0,
-    b = 100,
+    b = 150,
     t = 50
   )
-  plot <- plotly::subplot(choicesPlot, nrows = max(1,ceiling(length(distinctChoices)/5)), margin = 0.01) %>% 
-    plotly::layout(showlegend = FALSE,
+  plot <- plotly::subplot(choicesPlot, nrows = max(1,ceiling(length(distinctChoices)/5)), shareY = TRUE, margin = 0.01) %>% 
+    plotly::layout(
                    # yaxis = list(title = list(text =  paste("Covariate Mean in ", yCohort),
                    #                           font = list(size = 18))),
                    annotations = list(
-                     x = c(0.5, -0.04) ,
-                     y = c(-0.1 +  0.0145 * max(1,ceiling(length(distinctChoices)/5)), 0.5),
-                     text = c(paste("Covariate Mean in ", xCohort), paste("Covariate Mean in ", yCohort)),
+                     x = c(0.5, -0.04, 0.5) ,
+                     y = c(-0.125 +  0.01 * max(1,ceiling(length(distinctChoices)/5)), 0.5, -0.25 +  0.01 * max(1,ceiling(length(distinctChoices)/5))),
+                     text = c(
+                       paste("Covariate Mean in Target (", xCohort,")"), 
+                       paste("Covariate Mean in Comparator (", yCohort,")"),
+                       paste("Target - ", xCohort, " : ", targetName,", Comparator - ", yCohort, " : ", comparatorName,"\n",
+                             "Database - ", selectedDatabaseId)),
                      showarrow = F,
                      xanchor = "center",
                      yanchor = "middle",
                      xref = 'paper',
                      yref = 'paper',
-                     font = list(size = 18),
-                     textangle = c(0, -90)
+                     font = list(size = c(18,18,12)),
+                     textangle = c(0, -90, 0)
                    ),
                    margin = m) 
     
