@@ -111,6 +111,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  covariateSettings = list(
                                    FeatureExtraction::createDefaultCovariateSettings(),
                                    FeatureExtraction::createCovariateSettings(
+                                     useDemographicsAge  = TRUE,
                                      useVisitCountLongTerm = TRUE,
                                      useVisitCountShortTerm = TRUE,
                                      useVisitConceptCountLongTerm = TRUE,
@@ -805,7 +806,9 @@ runCohortDiagnostics <- function(packageName = NULL,
           tempEmulationSchema = tempEmulationSchema,
           cohortTable = cohortTable,
           targetCohortIds = subset$cohortId,
-          comparatorCohortIds = cohorts$cohortId
+          comparatorCohortIds = cohorts$cohortId,
+          incremental = incremental,
+          incrementalFolder = incrementalFolder
         )
       writeToAllOutputToCsv(
         object = output,
