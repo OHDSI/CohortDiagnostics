@@ -18,13 +18,12 @@ knitr::opts_chunk$set(echo = TRUE)
 #                                           envir = .GlobalEnv)
 
 
-defaultServer <- Sys.getenv("phoebedbServer")
-defaultDatabase <- Sys.getenv("phoebedb")
+defaultServer <- Sys.getenv("phenotypeLibraryServer")
+defaultDatabase <- Sys.getenv("phenotypeLibrarydb")
 defaultPort <- 5432
-defaultUser <- Sys.getenv("phoebedbUser")
-defaultPassword <- Sys.getenv("phoebedbPw")
-defaultResultsSchema <- "phenotypeLibrary"
-defaultVocabularySchema <- "phenotypeLibrary"
+defaultUser <- Sys.getenv("phenotypeLibrarydbUser")
+defaultPassword <- Sys.getenv("phenotypeLibrarydbPw")
+defaultResultsSchema <- Sys.getenv("phenotypeLibrarydbTargetSchema")
 
 connectionDetails <- DatabaseConnector::createConnectionDetails(
   dbms = 'postgresql',

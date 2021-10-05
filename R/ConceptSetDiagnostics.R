@@ -74,7 +74,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   }
   
   # Create concept tracking table----
-  #For some domains (e.g. Vist download all vocabulary - as it is used in visit context etc)
+  #For some domains (e.g. Visit download all vocabulary - as it is used in visit context etc)
   ParallelLogger::logTrace(" - Creating concept ID table for tracking concepts used in diagnostics")
   sql <-
     "IF OBJECT_ID('tempdb..#concept_tracking', 'U') IS NOT NULL

@@ -36,11 +36,11 @@ runCohortDiagnostics(
   runCohortRelationship = TRUE,
   runCohortCharacterization = TRUE,
   covariateSettings = list(FeatureExtraction::createDefaultCovariateSettings(),
-    FeatureExtraction::createCovariateSettings(useVisitCountLongTerm = TRUE,
-    useVisitCountShortTerm = TRUE, useVisitConceptCountLongTerm = TRUE,
-    useVisitConceptCountShortTerm = TRUE, useDemographicsPriorObservationTime = TRUE,
-    useDemographicsPostObservationTime = TRUE, useDemographicsTimeInCohort = TRUE,
-    useDemographicsIndexYearMonth = TRUE, )),
+    FeatureExtraction::createCovariateSettings(useDemographicsAge = TRUE,
+    useVisitCountLongTerm = TRUE, useVisitCountShortTerm = TRUE,
+    useVisitConceptCountLongTerm = TRUE, useVisitConceptCountShortTerm = TRUE,
+    useDemographicsPriorObservationTime = TRUE, useDemographicsPostObservationTime =
+    TRUE, useDemographicsTimeInCohort = TRUE, useDemographicsIndexYearMonth = TRUE, )),
   runTemporalCohortCharacterization = TRUE,
  
     temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence

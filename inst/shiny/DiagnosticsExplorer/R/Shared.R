@@ -1607,6 +1607,42 @@ getResultsConceptSetExpression <- function(dataSource,
 
 
 
+
+# Concept Set optimization ----
+#' Returns optimization recommendation for concept set expression
+#'
+#' @description
+#' Returns optimization recommendation for a selected concept set expression in the cohort definition
+#' and database id. Note: this optimization is pre-computed and may vary based on the vocabulary
+#' version that was used at the time of optimization.
+#'
+#' @template DataSource
+#'
+#' @template DatabaseIds
+#'
+#' @template CohortIds
+#'
+#' @template ConceptSetIds
+#'
+#' @return
+#' Returns a data frame (tibble)
+#'
+#' @export
+getOptimizedConceptSet <- function(dataSource,
+                                   databaseIds = NULL,
+                                   cohortIds = NULL,
+                                   conceptSetIds = NULL) {
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    dataTableName = "conceptSetsOptimized",
+    databaseId = databaseIds,
+    cohortId = cohortIds,
+    conceptSetId = conceptSetIds
+  )
+  return(data)
+}
+
+
 #' Returns data from cohort_count table of Cohort Diagnostics results data model
 #'
 #' @description
