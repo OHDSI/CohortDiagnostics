@@ -5104,20 +5104,22 @@ shiny::shinyServer(function(input, output, session) {
           "No index event breakdown data for the chosen combination."
         )
       )
-      data <- data %>% 
-        dplyr::select(-.data$cohortId)
+      
       maxCount <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "value")
       databaseIds <- input$selectedDatabaseIds
       
       personCount <- cohortCount %>% 
         dplyr::filter(.data$cohortId %in% c(data$cohortId %>% unique())) %>% 
         dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
-        dplyr::select(.data$databaseId, .data$cohortSubjects)
+        dplyr::pull(.data$cohortSubjects)
       
       recordCount <- cohortCount %>% 
         dplyr::filter(.data$cohortId %in% c(data$cohortId %>% unique())) %>% 
         dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
-        dplyr::pull(.data$databaseId, .data$cohortEntries)
+        dplyr::pull(.data$cohortEntries)
+      
+      data <- data %>%
+        dplyr::select(-.data$cohortId)
       
       noOfMergeColumns <- 1
       if (input$indexEventBreakdownTableFilter == "Records") {

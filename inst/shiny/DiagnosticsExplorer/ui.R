@@ -678,7 +678,7 @@ bodyTabItems <- shinydashboard::tabItems(
             inline = TRUE
           )
         ),
-        tags$td(HTML("&nbsp;&nbsp;&nbsp;")),
+        tags$td(HTML("&nbsp;"),
         tags$td(
           shiny::radioButtons(
             inputId = "indexEventBreakdownTableFilter",
@@ -688,7 +688,7 @@ bodyTabItems <- shinydashboard::tabItems(
             inline = TRUE
           )
         ),
-        tags$td(HTML("&nbsp;&nbsp;&nbsp;")),
+        tags$td(HTML("&nbsp;")),
         tags$td(
           shiny::radioButtons(
             inputId = "indexEventBreakdownValueFilter",
@@ -697,21 +697,17 @@ bodyTabItems <- shinydashboard::tabItems(
             selected = "Absolute",
             inline = TRUE
           )
+        ),
+        tags$td(
+          shiny::downloadButton(
+            "saveBreakdownTable",
+            label = "",
+            icon = shiny::icon("download"),
+            style = "margin-top: 5px; margin-bottom: 5px;"
+          )
         )
       )
-    ),
-    tags$table(width = "100%", 
-               tags$tr(
-                 tags$td(align = "right",
-                         shiny::downloadButton(
-                           "saveBreakdownTable",
-                           label = "",
-                           icon = shiny::icon("download"),
-                           style = "margin-top: 5px; margin-bottom: 5px;"
-                         )
-                 )
-               )
-    ),
+    )),
     DT::dataTableOutput(outputId = "indexEventBreakdownTable"),
     tags$br(),
     shiny::column(12,
