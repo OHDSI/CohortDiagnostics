@@ -4980,11 +4980,14 @@ shiny::shinyServer(function(input, output, session) {
     
     if (input$indexEventBreakdownTableFilter == "Records") {
       data <- data %>%
-        dplyr::mutate(databaseId = paste0(.data$databaseId, "( n =", .data$cohortEntries, ")"))
-    }
-    if (input$indexEventBreakdownTableFilter == "Persons") {
+        dplyr::mutate(databaseId = paste0(.data$databaseId, " (n = ",
+                                          scales::comma(.data$cohortEntries),
+                                          ")"))
+    } else if (input$indexEventBreakdownTableFilter == "Persons") {
       data <- data %>%
-        dplyr::mutate(databaseId = paste0(.data$databaseId, "( n =", .data$cohortSubjects, ")"))
+        dplyr::mutate(databaseId = paste0(.data$databaseId, " (n = ",
+                                          scales::comma(.data$cohortSubjects),
+                                          ")"))
     }
     data <- data %>% 
       dplyr::select(
