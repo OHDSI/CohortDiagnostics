@@ -4976,7 +4976,17 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>%
       dplyr::filter(.data$conceptId > 0) %>%
-      dplyr::arrange(.data$databaseId) %>%
+      dplyr::arrange(.data$databaseId) 
+    
+    if (input$indexEventBreakdownTableFilter == "Records") {
+      data <- data %>%
+        dplyr::mutate(databaseId = paste0(.data$databaseId, "( n =", .data$cohortEntries, ")"))
+    }
+    if (input$indexEventBreakdownTableFilter == "Persons") {
+      data <- data %>%
+        dplyr::mutate(databaseId = paste0(.data$databaseId, "( n =", .data$cohortSubjects, ")"))
+    }
+    data <- data %>% 
       dplyr::select(
         .data$databaseId,
         .data$cohortId,
@@ -5104,7 +5114,6 @@ shiny::shinyServer(function(input, output, session) {
           "No index event breakdown data for the chosen combination."
         )
       )
-      
       maxCount <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "value")
       databaseIds <- input$selectedDatabaseIds
       
