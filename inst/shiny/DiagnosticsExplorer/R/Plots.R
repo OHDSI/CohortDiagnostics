@@ -1127,8 +1127,8 @@ plotCohortComparisonStandardizedDifference <- function(balance,
           x = c(-0.06, 0.5, 0.5),
           y = c(0.5, -0.06, 1.02),
           text = c(
-            ifelse(i == 1, paste("Covariate Mean in ", xCohort), ""),
-            paste("Covariate Mean in ", yCohort),
+            ifelse(i == 1, xCohort, ""), 
+            yCohort,
             camelCaseToTitleCase(distinctDatabaseShortName[i])
           ),
           showarrow = FALSE,
@@ -1308,21 +1308,29 @@ plotTemporalCompareStandardizedDifference <- function(balance,
     dplyr::arrange(.data$tempChoices) %>% 
     dplyr::select(-.data$tempChoices)
   
-  distinctChoices <- balance$choices %>% unique()
+  distinctChoices <- balance %>% 
+    dplyr::filter(.data$choices %in% c("Start -365 to end -31",
+                                       "Start -30 to end -1",
+                                       "Start 0 to end 0",
+                                       "Start 1 to end 30",
+                                       "Start 31 to end 365")) %>% 
+    dplyr::pull(.data$choices) %>% 
+    unique()
+  
   choicesPlot <- list()
   for (i in 1:length(distinctChoices)) {
     filteredData <- balance %>% 
       dplyr::filter(.data$choices == distinctChoices[i])
     choicesPlot[[i]] <- plotly::plot_ly(filteredData, x = ~ mean1, y = ~ mean2, text = ~ tooltip, 
                                         hoverinfo = 'text', type = 'scatter', 
-                                        height = max(1, ceiling(length(distinctChoices) / 5)) * 450, showlegend = ifelse(i == 1, T, F),
+                                        height = 450, showlegend = ifelse(i == 1, T, F),
                                         mode = "markers", color = ~ domain, colors = ~colors, 
                                         opacity = 0.5, marker = list(size = 15, line = list(color = 'rgb(255,255,255)', width = 1))) %>%
      
       plotly::layout(
         xaxis = list(range = c(0, 1)),
         yaxis = list(range = c(0, 1)),
-        legend = list(orientation = 'h', x = 0.3, y = -0.15 +  0.0145 * max(1,ceiling(length(distinctChoices)/5))),
+        legend = list(orientation = 'h', x = 0.3, y = -0.30),
         annotations = list(
                        x = 0.5 ,
                        y = 1.05,
@@ -1350,16 +1358,16 @@ plotTemporalCompareStandardizedDifference <- function(balance,
     b = 150,
     t = 50
   )
-  plot <- plotly::subplot(choicesPlot, nrows = max(1,ceiling(length(distinctChoices)/5)), shareY = TRUE, margin = 0.01) %>% 
+  plot <- plotly::subplot(choicesPlot, nrows = 1, shareY = TRUE, margin = 0.01) %>% 
     plotly::layout(
                    # yaxis = list(title = list(text =  paste("Covariate Mean in ", yCohort),
                    #                           font = list(size = 18))),
                    annotations = list(
                      x = c(0.5, -0.04, 0.5) ,
-                     y = c(-0.125 +  0.01 * max(1,ceiling(length(distinctChoices)/5)), 0.5, -0.25 +  0.01 * max(1,ceiling(length(distinctChoices)/5))),
+                     y = c(-0.13, 0.5, -0.25),
                      text = c(
-                       paste("Covariate Mean in Target (", xCohort,")"), 
-                       paste("Covariate Mean in Comparator (", yCohort,")"),
+                       paste("Target (", xCohort,")"), 
+                       paste("Comparator (", yCohort,")"),
                        paste("Target - ", xCohort, " : ", targetName,", Comparator - ", yCohort, " : ", comparatorName,"\n",
                              "Database - ", selectedDatabaseId)),
                      showarrow = F,
