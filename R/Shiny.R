@@ -91,6 +91,7 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   ensure_installed("tidyr")
   ensure_installed("remotes")
   ensure_installed("CirceR")
+  ensure_installed("rmarkdown")
   
   appDir <-
     system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
