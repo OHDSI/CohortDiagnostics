@@ -361,7 +361,7 @@ runCohortRelationshipDiagnostics <-
           scales::comma(i),
           " of ",
           scales::comma(nrow(timePeriods)),
-          ") start day: ",
+          "left) start day: ",
           scales::comma(timePeriods[i,]$startDay),
           " to end day:",
           scales::comma(timePeriods[i,]$endDay)

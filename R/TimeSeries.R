@@ -181,16 +181,16 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
 
                 IF OBJECT_ID('tempdb..#d_time_series3', 'U') IS NOT NULL
                 	DROP TABLE #d_time_series3;
-
-                IF OBJECT_ID('tempdb..#c_time_series4', 'U') IS NOT NULL
-                	DROP TABLE #c_time_series4;
-
-                IF OBJECT_ID('tempdb..#c_time_series5', 'U') IS NOT NULL
-                	DROP TABLE #c_time_series5;
-
-                IF OBJECT_ID('tempdb..#d_time_series6', 'U') IS NOT NULL
-                	DROP TABLE #d_time_series6;
   "
+                # IF OBJECT_ID('tempdb..#c_time_series4', 'U') IS NOT NULL
+                # 	DROP TABLE #c_time_series4;
+                # 
+                # IF OBJECT_ID('tempdb..#c_time_series5', 'U') IS NOT NULL
+                # 	DROP TABLE #c_time_series5;
+                # 
+                # IF OBJECT_ID('tempdb..#d_time_series6', 'U') IS NOT NULL
+                # 	DROP TABLE #d_time_series6;
+
   ParallelLogger::logTrace(" - Dropping any time_series temporary tables that maybe present at start up.")
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
@@ -204,15 +204,17 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     seriesToRun <- c(
       seriesToRun,
       'ComputeTimeSeries1.sql',
-      'ComputeTimeSeries2.sql',
-      'ComputeTimeSeries4.sql',
-      'ComputeTimeSeries5.sql'
+      'ComputeTimeSeries2.sql'
     )
   }
+  # ,
+  # 'ComputeTimeSeries4.sql',
+  # 'ComputeTimeSeries5.sql'
   if (runDataSourceTimeSeries) {
     seriesToRun <- c(seriesToRun,
-                     'ComputeTimeSeries3.sql',
-                     'ComputeTimeSeries6.sql')
+                     'ComputeTimeSeries3.sql')
+    # ,
+    # 'ComputeTimeSeries6.sql'
   }
   seriesToRun <- seriesToRun %>% sort()
   ParallelLogger::logTrace(" - Beginning time series SQL")
@@ -342,12 +344,12 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       tempEmulationSchema = tempEmulationSchema,
       warnOnMissingParameters = FALSE
     )
-    
+    # ,
+    # 'ComputeTimeSeries5.sql',
+    # 'ComputeTimeSeries6.sql'
     if (seriesToRun[[i]] %in% c(
       'ComputeTimeSeries2.sql',
-      'ComputeTimeSeries3.sql',
-      'ComputeTimeSeries5.sql',
-      'ComputeTimeSeries6.sql'
+      'ComputeTimeSeries3.sql'
     )) {
       sql <- SqlRender::render(
         sql = sql,
@@ -355,13 +357,13 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         warnOnMissingParameters = FALSE
       )
     }
-    
+    # ,
+    # 'ComputeTimeSeries4.sql',
+    # 'ComputeTimeSeries5.sql',
+    # 'ComputeTimeSeries6.sql'
     if (seriesToRun[[i]] %in% c(
       'ComputeTimeSeries1.sql',
-      'ComputeTimeSeries2.sql',
-      'ComputeTimeSeries4.sql',
-      'ComputeTimeSeries5.sql',
-      'ComputeTimeSeries6.sql'
+      'ComputeTimeSeries2.sql'
     ))  {
       sql <- SqlRender::render(
         sql = sql,
