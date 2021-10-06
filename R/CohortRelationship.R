@@ -337,6 +337,14 @@ runCohortRelationshipDiagnostics <-
             dplyr::anti_join(timePeriodsPreviouslyExecuted,
                              by = c("timeId"))
           
+          ParallelLogger::logTrace(
+            paste0(
+              "    - Executing over ",
+              scales::comma(nrow(timePeriods)),
+              " time_periods."
+            )
+          )
+          
           resultsInAndromeda$cohortRelationships <- previousRunResults %>% 
             dplyr::select(-.data$startDay, -.data$endDay)
         }
@@ -349,7 +357,9 @@ runCohortRelationshipDiagnostics <-
         paste0(
           "    - Working on Time id:",
           timePeriods[i,]$timeId,
-          " start day: ",
+          " (of ",
+          scales::comma(nrow(timePeriods)),
+          ") start day: ",
           scales::comma(timePeriods[i,]$startDay),
           " to end day:",
           scales::comma(timePeriods[i,]$endDay)
