@@ -89,6 +89,11 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   ensure_installed("stringr")
   ensure_installed("SqlRender")
   ensure_installed("tidyr")
+  ensure_installed("tsibble")
+  ensure_installed("feasts")
+  ensure_installed("fable")
+  ensure_installed("remotes")
+  ensure_installed("circeR")
   
   appDir <-
     system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
