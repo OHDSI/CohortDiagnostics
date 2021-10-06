@@ -5582,11 +5582,22 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    
     # Apply Pivot Longer
     pivotColumns <- c()
     if (input$visitContextPersonOrRecords == 'Person') {
+      data <- data %>% 
+        dplyr::inner_join(cohortCount) %>% 
+        dplyr::mutate(databaseId = paste0(.data$databaseId, " (n = ",
+                                    scales::comma(.data$cohortSubjects),
+                                    ")"))
       pivotColumns <- c("subjects")
     } else {
+      data <- data %>% 
+        dplyr::inner_join(cohortCount) %>% 
+        dplyr::mutate(databaseId = paste0(.data$databaseId, " (n = ",
+                                          scales::comma(.data$cohortEntries),
+                                          ")"))
       pivotColumns <- c("records")
     }
     data <- data %>%
