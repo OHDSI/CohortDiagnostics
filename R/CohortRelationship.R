@@ -357,7 +357,9 @@ runCohortRelationshipDiagnostics <-
         paste0(
           "    - Working on Time id:",
           timePeriods[i,]$timeId,
-          " (of ",
+          " (",
+          scales::comma(i),
+          " of ",
           scales::comma(nrow(timePeriods)),
           ") start day: ",
           scales::comma(timePeriods[i,]$startDay),
