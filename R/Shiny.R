@@ -90,7 +90,7 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   ensure_installed("SqlRender")
   ensure_installed("tidyr")
   ensure_installed("remotes")
-  ensure_installed("circeR")
+  ensure_installed("CirceR")
   
   appDir <-
     system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
@@ -302,7 +302,12 @@ ensure_installed <- function(pkg) {
     if (interactive()) {
       message(msg, "\nWould you like to install it?")
       if (menu(c("Yes", "No")) == 1) {
-        install.packages(pkg)
+        if (pkg == 'CirceR') {
+          message(msg, "\nInstalling from Github")
+          remotes::install_github("OHDSI/CirceR")
+        } else {
+          install.packages(pkg)
+        }
       } else {
         stop(msg, call. = FALSE)
       }
