@@ -538,7 +538,7 @@ CREATE TABLE time_series (
 CREATE TABLE visit_context (
 			cohort_id BIGINT NOT NULL,
 			visit_concept_id INT NOT NULL,
-			visit_concept_NAME VARCHAR NOT NULL,
+			visit_concept_name VARCHAR NOT NULL,
 			visit_context VARCHAR NOT NULL,
 			subjects FLOAT NOT NULL,
 			records FLOAT NOT NULL,
