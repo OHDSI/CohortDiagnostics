@@ -1,3 +1,10 @@
+CohortDiagnostics 2.1.3
+=======================
+
+Changes:
+1. On starting diagnostics explorer using launchDiagnosticsExplorer - checks were added for remotes and CirceR https://github.com/OHDSI/CohortDiagnostics/issues/595
+
+
 CohortDiagnostics 2.1.2
 =======================
 
