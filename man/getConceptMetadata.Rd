@@ -7,12 +7,19 @@
 getConceptMetadata(
   dataSource,
   databaseIds = NULL,
+  cohortIds = NULL,
   vocabularyDatabaseSchema = NULL,
   conceptIds = NULL,
-  conceptRelationship = TRUE,
-  conceptAncestor = TRUE,
-  conceptSynonym = TRUE,
-  conceptCount = TRUE
+  getDatabaseMetadata = TRUE,
+  getConceptRelationship = TRUE,
+  getConceptAncestor = TRUE,
+  getConceptSynonym = TRUE,
+  getConceptCount = TRUE,
+  getConceptCooccurrence = TRUE,
+  getIndexEventCount = TRUE,
+  getConceptMappingCount = TRUE,
+  getFixedTimeSeries = TRUE,
+  getRelativeTimeSeries = TRUE
 )
 }
 \arguments{
@@ -27,20 +34,34 @@ and uploaded using \code{uploadResults}}
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
 
+\item{cohortIds}{A vector of one or more Cohort Ids.}
+
 \item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
 commonly the same as cdmDatabaseSchema. Note that for 
 SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
 
-\item{conceptIds}{(optional) A list of concept ids to limit the metadata result}
+\item{conceptIds}{A vector of one or more Concept Ids.}
 
-\item{conceptRelationship}{Do you want conceptRelationship?}
+\item{getDatabaseMetadata}{Do you want to get database metadata i.e. person/records/person days in observation table}
 
-\item{conceptAncestor}{Do you want conceptAncestor?}
+\item{getConceptRelationship}{Do you want conceptRelationship?}
 
-\item{conceptSynonym}{Do you want conceptSynonym?}
+\item{getConceptAncestor}{Do you want conceptAncestor?}
 
-\item{conceptCount}{Do you want conceptCount?}
+\item{getConceptSynonym}{Do you want conceptSynonym?}
+
+\item{getConceptCount}{Do you want conceptCount?}
+
+\item{getConceptCooccurrence}{Do you want concept cooccurrence?}
+
+\item{getIndexEventCount}{Do you want index event concept count?}
+
+\item{getConceptMappingCount}{Do you want concept mapping count?}
+
+\item{getFixedTimeSeries}{Do you want a conceptIds datasource level time series data reported on actual dates?}
+
+\item{getRelativeTimeSeries}{Do you want cohort level time series data reported relative to cohort start date?}
 }
 \value{
 Returns a list of data frames (tibbles)

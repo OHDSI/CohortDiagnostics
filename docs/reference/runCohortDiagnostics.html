@@ -112,6 +112,9 @@ is used as default." />
       <a href="../articles/DatabaseModeInDiagnosticsExplorer.html">Database mode in Diagnostics Explorer</a>
     </li>
     <li>
+      <a href="../articles/Report on Visits on Index Date.html">Report on index event breakdown</a>
+    </li>
+    <li>
       <a href="../articles/RunningCohortDiagnostics.html">Running cohort diagnostics</a>
     </li>
     <li>
@@ -192,11 +195,11 @@ is used as default.</p>
   runCohortRelationship <span class='op'>=</span> <span class='cn'>TRUE</span>,
   runCohortCharacterization <span class='op'>=</span> <span class='cn'>TRUE</span>,
   covariateSettings <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='fu'>FeatureExtraction</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createDefaultCovariateSettings.html'>createDefaultCovariateSettings</a></span><span class='op'>(</span><span class='op'>)</span>,
-    <span class='fu'>FeatureExtraction</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createCovariateSettings.html'>createCovariateSettings</a></span><span class='op'>(</span>useVisitCountLongTerm <span class='op'>=</span> <span class='cn'>TRUE</span>,
-    useVisitCountShortTerm <span class='op'>=</span> <span class='cn'>TRUE</span>, useVisitConceptCountLongTerm <span class='op'>=</span> <span class='cn'>TRUE</span>,
-    useVisitConceptCountShortTerm <span class='op'>=</span> <span class='cn'>TRUE</span>, useDemographicsPriorObservationTime <span class='op'>=</span> <span class='cn'>TRUE</span>,
-    useDemographicsPostObservationTime <span class='op'>=</span> <span class='cn'>TRUE</span>, useDemographicsTimeInCohort <span class='op'>=</span> <span class='cn'>TRUE</span>,
-    useDemographicsIndexYearMonth <span class='op'>=</span> <span class='cn'>TRUE</span>, <span class='op'>)</span><span class='op'>)</span>,
+    <span class='fu'>FeatureExtraction</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createCovariateSettings.html'>createCovariateSettings</a></span><span class='op'>(</span>useDemographicsAge <span class='op'>=</span> <span class='cn'>TRUE</span>,
+    useVisitCountLongTerm <span class='op'>=</span> <span class='cn'>TRUE</span>, useVisitCountShortTerm <span class='op'>=</span> <span class='cn'>TRUE</span>,
+    useVisitConceptCountLongTerm <span class='op'>=</span> <span class='cn'>TRUE</span>, useVisitConceptCountShortTerm <span class='op'>=</span> <span class='cn'>TRUE</span>,
+    useDemographicsPriorObservationTime <span class='op'>=</span> <span class='cn'>TRUE</span>, useDemographicsPostObservationTime <span class='op'>=</span>
+    <span class='cn'>TRUE</span>, useDemographicsTimeInCohort <span class='op'>=</span> <span class='cn'>TRUE</span>, useDemographicsIndexYearMonth <span class='op'>=</span> <span class='cn'>TRUE</span>, <span class='op'>)</span><span class='op'>)</span>,
   runTemporalCohortCharacterization <span class='op'>=</span> <span class='cn'>TRUE</span>,
  
     temporalCovariateSettings <span class='op'>=</span> <span class='fu'>FeatureExtraction</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createTemporalCovariateSettings.html'>createTemporalCovariateSettings</a></span><span class='op'>(</span>useConditionOccurrence
@@ -397,7 +400,7 @@ of which cohort diagnostics has been executed.</p></td>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Currently two ways of executing this function are supported, either 
-(1) [Package Mode] embedded in a study package, e.g. by hydrating a the <code>SkeletonCohortDiagnosticsStudy</code> package using <code>Hydra::hydrate</code> or 
+(1) [Package Mode] embedded in a study package, e.g. by hydrating a the <code>SkeletonCohortDiagnosticsStudy</code> package using <code><a href='https://ohdsi.github.io/Hydra/reference/hydrate.html'>Hydra::hydrate</a></code> or 
      inserting cohort specifications using <code><a href='https://ohdsi.github.io/ROhdsiWebApi/reference/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
 (2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions. Note: WebApi mode takes precedence over package mode.</p>
 <p>Structure of <code>cohortSetReference</code> or <code>cohortToCreateFile</code></p><dl>

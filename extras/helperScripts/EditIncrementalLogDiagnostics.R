@@ -3,7 +3,7 @@
 
 library(magrittr)
 logFolder <-
-  "D:\\studyResults\\epi855P"
+  "D:\\studyResults\\phenotypeLibraryP"
 diagnosticsFileName <- "CreatedDiagnostics.csv"
 
 listFiles <-
@@ -19,7 +19,7 @@ listFiles <-
 # "runCohortCharacterization", "runTemporalCohortCharacterization", "runCohortTimeSeries"
 
 
-tasksToRemove <- c("runCohortRelationship", "runCohortCharacterization", "runTemporalCohortCharacterization")
+tasksToRemove <- c("runCohortRelationship")
 
 
 
@@ -28,7 +28,8 @@ for (i in (1:length(listFiles))) {
   readr::read_csv(
     file = listFiles[[i]],
     col_types = readr::cols(),
-    guess_max = min(1e7)
+    guess_max = min(1e7),
+    lazy = FALSE 
   ) %>%
     dplyr::filter(!.data$task %in% tasksToRemove) %>%
     readr::write_excel_csv(file = listFiles[[i]])

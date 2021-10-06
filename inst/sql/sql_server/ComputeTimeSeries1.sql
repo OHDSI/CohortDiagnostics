@@ -3,8 +3,10 @@
 --- (cohort start is on/before calendar start AND cohort end is on/after calendar end))
 SELECT cohort_definition_id cohort_id,
 	time_id,
-	COUNT_BIG(*) records, -- records in calendar period
-	COUNT_BIG(DISTINCT subject_id) subjects, -- unique subjects
+	COUNT_BIG(DISTINCT CONCAT(cast(subject_id AS VARCHAR(30)), '_', cast(cohort_start_date AS VARCHAR(30)))) records,
+	-- records in calendar period
+	COUNT_BIG(DISTINCT subject_id) subjects,
+	-- unique subjects in calendar period
 	SUM(datediff(dd, CASE 
 				WHEN cohort_start_date >= period_begin
 					THEN cohort_start_date
@@ -13,35 +15,67 @@ SELECT cohort_definition_id cohort_id,
 				WHEN cohort_end_date >= period_end
 					THEN period_end
 				ELSE cohort_end_date
-				END) + 1) person_days, -- person days within period
+				END) + 1) person_days,
+	-- person days within period
+	SUM(CASE WHEN first_occurrence = 'Y' -- incident
+	    THEN datediff(dd, CASE 
+                				WHEN cohort_start_date >= period_begin
+					                THEN cohort_start_date
+                				ELSE period_begin
+                				END, 
+                				CASE 
+                				WHEN cohort_end_date >= period_end
+                					THEN period_end
+                				ELSE cohort_end_date
+                				END
+                		) + 1
+      ELSE 0 
+      END) person_days_in,
+	-- person days within period - incident
 	COUNT_BIG(CASE 
 			WHEN cohort_start_date >= period_begin
 				AND cohort_start_date <= period_end
-				THEN subject_id
+				THEN CONCAT(cast(subject_id AS VARCHAR(30)), '_', cast(cohort_start_date AS VARCHAR(30)))
 			ELSE NULL
-			END) records_start, -- records start within period
+			END) records_start,
+	-- records start within period
 	COUNT_BIG(DISTINCT CASE 
 			WHEN cohort_start_date >= period_begin
 				AND cohort_start_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_start, -- subjects start within period
+			END) subjects_start,
+	-- subjects start within period
+	COUNT_BIG(DISTINCT CASE 
+			WHEN first_occurrence = 'Y' -- incident
+				AND cohort_start_date >= period_begin
+				AND cohort_start_date <= period_end
+				THEN subject_id
+			ELSE NULL
+			END) subjects_start_in,
+	-- subjects start within period - incidence
 	COUNT_BIG(CASE 
 			WHEN cohort_end_date >= period_begin
 				AND cohort_end_date <= period_end
-				THEN subject_id
+				THEN CONCAT(cast(subject_id AS VARCHAR(30)), '_', cast(cohort_start_date AS VARCHAR(30)))
 			ELSE NULL
-			END) records_end, -- records end within period
+			END) records_end,
+	-- records end within period
 	COUNT_BIG(DISTINCT CASE 
 			WHEN cohort_end_date >= period_begin
 				AND cohort_end_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_end -- subjects end within period
-FROM @cohort_database_schema.@cohort_table
-INNER JOIN #calendar_periods cp
-	ON cp.period_end >= cohort_start_date
-		AND cp.period_begin <= cohort_end_date
-WHERE cohort_definition_id IN (@cohort_ids)
+			END) subjects_end, -- subjects end within period
+	COUNT_BIG(DISTINCT CASE 
+			WHEN first_occurrence = 'Y' -- incident
+				AND cohort_end_date >= period_begin
+				AND cohort_end_date <= period_end
+				THEN subject_id
+			ELSE NULL
+			END) subjects_end_in -- subjects end within period
+FROM #cohort_ts
+INNER JOIN #calendar_periods cp ON cp.period_end >= cohort_start_date
+	AND cp.period_begin <= cohort_end_date
 GROUP BY time_id,
 	cohort_definition_id;

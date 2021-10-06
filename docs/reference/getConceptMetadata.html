@@ -109,6 +109,9 @@ concept cooccurrence on index date per database and cohortId." />
       <a href="../articles/DatabaseModeInDiagnosticsExplorer.html">Database mode in Diagnostics Explorer</a>
     </li>
     <li>
+      <a href="../articles/Report on Visits on Index Date.html">Report on index event breakdown</a>
+    </li>
+    <li>
       <a href="../articles/RunningCohortDiagnostics.html">Running cohort diagnostics</a>
     </li>
     <li>
@@ -157,12 +160,19 @@ concept cooccurrence on index date per database and cohortId.</p>
     <pre class="usage"><span class='fu'>getConceptMetadata</span><span class='op'>(</span>
   <span class='va'>dataSource</span>,
   databaseIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
   vocabularyDatabaseSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
   conceptIds <span class='op'>=</span> <span class='cn'>NULL</span>,
-  conceptRelationship <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  conceptAncestor <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  conceptSynonym <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  conceptCount <span class='op'>=</span> <span class='cn'>TRUE</span>
+  getDatabaseMetadata <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  getConceptRelationship <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  getConceptAncestor <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  getConceptSynonym <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  getConceptCount <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  getConceptCooccurrence <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  getIndexEventCount <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  getConceptMappingCount <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  getFixedTimeSeries <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  getRelativeTimeSeries <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -184,6 +194,10 @@ character field values from the `databaseId` field of the `database` table
 of the results data model.</p></td>
     </tr>
     <tr>
+      <th>cohortIds</th>
+      <td><p>A vector of one or more Cohort Ids.</p></td>
+    </tr>
+    <tr>
       <th>vocabularyDatabaseSchema</th>
       <td><p>Schema name where your OMOP vocabulary data resides. This is 
 commonly the same as cdmDatabaseSchema. Note that for 
@@ -192,7 +206,47 @@ schema name, for example 'vocabulary.dbo'.</p></td>
     </tr>
     <tr>
       <th>conceptIds</th>
-      <td><p>(optional) A list of concept ids to limit the metadata result</p></td>
+      <td><p>A vector of one or more Concept Ids.</p></td>
+    </tr>
+    <tr>
+      <th>getDatabaseMetadata</th>
+      <td><p>Do you want to get database metadata i.e. person/records/person days in observation table</p></td>
+    </tr>
+    <tr>
+      <th>getConceptRelationship</th>
+      <td><p>Do you want conceptRelationship?</p></td>
+    </tr>
+    <tr>
+      <th>getConceptAncestor</th>
+      <td><p>Do you want conceptAncestor?</p></td>
+    </tr>
+    <tr>
+      <th>getConceptSynonym</th>
+      <td><p>Do you want conceptSynonym?</p></td>
+    </tr>
+    <tr>
+      <th>getConceptCount</th>
+      <td><p>Do you want conceptCount?</p></td>
+    </tr>
+    <tr>
+      <th>getConceptCooccurrence</th>
+      <td><p>Do you want concept cooccurrence?</p></td>
+    </tr>
+    <tr>
+      <th>getIndexEventCount</th>
+      <td><p>Do you want index event concept count?</p></td>
+    </tr>
+    <tr>
+      <th>getConceptMappingCount</th>
+      <td><p>Do you want concept mapping count?</p></td>
+    </tr>
+    <tr>
+      <th>getFixedTimeSeries</th>
+      <td><p>Do you want a conceptIds datasource level time series data reported on actual dates?</p></td>
+    </tr>
+    <tr>
+      <th>getRelativeTimeSeries</th>
+      <td><p>Do you want cohort level time series data reported relative to cohort start date?</p></td>
     </tr>
     </table>
 

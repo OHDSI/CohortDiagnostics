@@ -20,6 +20,7 @@ checkFixColumnNames <-
            tableName,
            zipFileName,
            specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
+    ParallelLogger::logInfo("    - Checking and fixing column names")
     observeredNames <- colnames(table)[order(colnames(table))] %>%
       sort()
     
@@ -66,6 +67,7 @@ checkAndFixDataTypes <-
            tableName,
            zipFileName,
            specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
+    ParallelLogger::logInfo("    - checking and fixing column data types")
     tableSpecs <- specifications %>%
       filter(.data$tableName == !!tableName)
     
@@ -140,6 +142,7 @@ checkAndFixDuplicateRows <-
            tableName,
            zipFileName,
            specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
+    ParallelLogger::logInfo("    - Checking and fixing duplicate row")
     primaryKeys <- specifications %>%
       dplyr::filter(.data$tableName == !!tableName &
                       .data$primaryKey == "Yes") %>%
@@ -329,7 +332,7 @@ uploadResults <- function(connectionDetails = NULL,
       uploadChunk <- function(chunk, pos) {
         ParallelLogger::logTrace(
           paste0(
-            "  - Preparing to upload rows ",
+            "    - Preparing to upload rows ",
             scales::comma(pos),
             " through ",
             scales::comma(pos + nrow(chunk) - 1)
@@ -357,7 +360,7 @@ uploadResults <- function(connectionDetails = NULL,
         
         # Primary key fields cannot be NULL, so for some tables convert NAs to empty or zero:
         toEmpty <- specifications %>%
-          filter(
+          dplyr::filter(
             .data$tableName == env$tableName &
               .data$emptyIsNa == "No" & grepl("varchar", .data$type)
           ) %>%
@@ -369,7 +372,7 @@ uploadResults <- function(connectionDetails = NULL,
         }
         
         tozero <- specifications %>%
-          filter(
+          dplyr::filter(
             .data$tableName == env$tableName &
               .data$emptyIsNa == "No" &
               .data$type %in% c("int", "bigint", "float")
@@ -384,9 +387,9 @@ uploadResults <- function(connectionDetails = NULL,
         # Check if inserting data would violate primary key constraints:
         if (!is.null(env$primaryKeyValuesInDb)) {
           primaryKeyValuesInChunk <- unique(chunk[env$primaryKey])
-          duplicates <- inner_join(env$primaryKeyValuesInDb,
-                                   primaryKeyValuesInChunk,
-                                   by = env$primaryKey)
+          duplicates <- dplyr::inner_join(env$primaryKeyValuesInDb,
+                                          primaryKeyValuesInChunk,
+                                          by = env$primaryKey)
           if (nrow(duplicates) != 0) {
             if ("database_id" %in% env$primaryKey ||
                 forceOverWriteOfSpecifications) {
@@ -411,7 +414,7 @@ uploadResults <- function(connectionDetails = NULL,
                 "as the data to insert. Removing from data to insert."
               )
               chunk <- chunk %>%
-                anti_join(duplicates, by = env$primaryKey)
+                dplyr::anti_join(duplicates, by = env$primaryKey)
             }
             # Remove duplicates we already dealt with:
             env$primaryKeyValuesInDb <- env$primaryKeyValuesInDb %>%
@@ -435,7 +438,7 @@ uploadResults <- function(connectionDetails = NULL,
       readr::read_csv_chunked(
         file = file.path(unzipFolder, csvFileName),
         callback = uploadChunk,
-        chunk_size = 1e7,
+        chunk_size = 1e6,
         col_types = readr::cols(),
         guess_max = 1e6,
         progress = FALSE
@@ -445,6 +448,8 @@ uploadResults <- function(connectionDetails = NULL,
       # col_types = readr::cols(),
       # guess_max = 1e6)
       
+    } else {
+      ParallelLogger::logInfo(paste0("   - ", csvFileName, " no in zip file, skipping."))
     }
   }
   invisible(lapply(unique(specifications$tableName), uploadTable))

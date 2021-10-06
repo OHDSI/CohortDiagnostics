@@ -74,7 +74,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
+  ParallelLogger::logTrace(" - Creating Andromeda object to collect results")
   resultsInAndromeda <- Andromeda::andromeda()
   
   sqlCount <-
@@ -217,7 +217,56 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   seriesToRun <- seriesToRun %>% sort()
   ParallelLogger::logTrace(" - Beginning time series SQL")
   
-  ParallelLogger::logTrace(" - Creating Andromeda object to collect results")
+  sqlCohortDrop <- "IF OBJECT_ID('tempdb..#cohort_ts', 'U') IS NOT NULL
+      	DROP TABLE #cohort_ts;"
+  
+  sqlCohort <- "--HINT DISTRIBUTE_ON_KEY(subject_id)
+      WITH cohort
+      AS (
+      	SELECT *
+      	FROM @cohort_database_schema.@cohort_table
+      	WHERE cohort_definition_id IN (@cohort_ids)
+      	),
+      cohort_first
+      AS (
+      	SELECT cohort_definition_id,
+      		subject_id,
+      		min(cohort_start_date) cohort_start_date,
+      		min(cohort_end_date) cohort_end_date
+      	FROM cohort
+      	GROUP BY cohort_definition_id,
+      		subject_id
+      	)
+      SELECT c.*,
+      	CASE 
+      		WHEN c.cohort_start_date = cf.cohort_start_date
+      			THEN 'Y'
+      		ELSE 'N'
+      		END first_occurrence
+      INTO #cohort_ts
+      FROM cohort c
+      INNER JOIN cohort_first cf ON c.cohort_definition_id = cf.cohort_definition_id
+      	AND c.subject_id = cf.subject_id;"
+  
+  ParallelLogger::logTrace("   - Dropping any time series temporary tables")
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sqlCohortDrop,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  
+  ParallelLogger::logTrace("   - Creating cohort table copy for time series")
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sqlCohort,
+    cohort_database_schema = cohortDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    cohort_table = cohortTable,
+    cohort_ids = cohortIds,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
   
   for (i in (1:length(seriesToRun))) {
     ParallelLogger::logTrace(paste0(" - Running ", seriesToRun[[i]]))
@@ -248,33 +297,34 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         )
       )
     }
-    if (seriesToRun[[i]] == 'ComputeTimeSeries4.sql') {
-      ParallelLogger::logInfo(
-        paste0(
-          "  - (",
-          scales::percent(i / length(seriesToRun)),
-          ") Running cohort time series T4: subjects in the cohorts whose cohort period are embedded within calendar period."
-        )
-      )
-    }
-    if (seriesToRun[[i]] == 'ComputeTimeSeries5.sql') {
-      ParallelLogger::logInfo(
-        paste0(
-          "  - (",
-          scales::percent(i / length(seriesToRun)),
-          ") Running cohort time series T5: subjects in the cohorts whose observation period is embedded within calendar period."
-        )
-      )
-    }
-    if (seriesToRun[[i]] == 'ComputeTimeSeries6.sql') {
-      ParallelLogger::logInfo(
-        paste0(
-          "  - (",
-          scales::percent(i / length(seriesToRun)),
-          ") Running datasource time series T6: persons in the observation table whose observation period is embedded within calendar period."
-        )
-      )
-    }
+    # commenting out time series 4/5/6 as it does not seem have value
+    # if (seriesToRun[[i]] == 'ComputeTimeSeries4.sql') {
+    #   ParallelLogger::logInfo(
+    #     paste0(
+    #       "  - (",
+    #       scales::percent(i / length(seriesToRun)),
+    #       ") Running cohort time series T4: subjects in the cohorts whose cohort period are embedded within calendar period."
+    #     )
+    #   )
+    # }
+    # if (seriesToRun[[i]] == 'ComputeTimeSeries5.sql') {
+    #   ParallelLogger::logInfo(
+    #     paste0(
+    #       "  - (",
+    #       scales::percent(i / length(seriesToRun)),
+    #       ") Running cohort time series T5: subjects in the cohorts whose observation period is embedded within calendar period."
+    #     )
+    #   )
+    # }
+    # if (seriesToRun[[i]] == 'ComputeTimeSeries6.sql') {
+    #   ParallelLogger::logInfo(
+    #     paste0(
+    #       "  - (",
+    #       scales::percent(i / length(seriesToRun)),
+    #       ") Running datasource time series T6: persons in the observation table whose observation period is embedded within calendar period."
+    #     )
+    #   )
+    # }
     
     sql <- SqlRender::readSql(system.file("sql/sql_server",
                                           seriesToRun[[i]],
@@ -316,8 +366,6 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       sql <- SqlRender::render(
         sql = sql,
         cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable,
-        cohort_ids = cohortIds,
         warnOnMissingParameters = FALSE
       )
     }
@@ -348,19 +396,6 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     dplyr::collect() %>% #temporal solution till fix of bug in andromeda on handling dates
     # periodBegin gets converted to integer
     dplyr::inner_join(resultsInAndromeda$calendarPeriods %>% dplyr::collect(), by = c('timeId')) %>%
-    dplyr::select(
-      .data$cohortId,
-      .data$periodBegin,
-      .data$calendarInterval,
-      .data$seriesType,
-      .data$records,
-      .data$subjects,
-      .data$personDays,
-      .data$recordsStart,
-      .data$subjectsStart,
-      .data$recordsEnd,
-      .data$subjectsEnd
-    ) %>%
     dplyr::arrange(
       .data$cohortId,
       .data$periodBegin,
@@ -371,16 +406,24 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   resultsInAndromeda$calendarPeriods <- NULL
   resultsInAndromeda$temp <- NULL
   resultsInAndromeda$cohortCount <- NULL
-  ParallelLogger::logTrace(" - Dropping any time_series temporary tables at end")
+  ParallelLogger::logTrace(" - Dropping any time_series temporary tables at clean up")
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = "IF OBJECT_ID('tempdb..#calendar_periods', 'U') IS NOT NULL DROP TABLE #calendar_periods;",
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
+  ParallelLogger::logTrace(" - Dropping any time_series temporary tables that maybe present at clean up.")
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = tsSetUpSql,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  ParallelLogger::logTrace("   - Dropping any time series temporary tables at clean up")
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sqlCohortDrop,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )

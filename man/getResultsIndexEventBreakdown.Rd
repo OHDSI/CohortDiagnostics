@@ -4,7 +4,14 @@
 \alias{getResultsIndexEventBreakdown}
 \title{Returns data from index_event_breakdown table of Cohort Diagnostics results data model}
 \usage{
-getResultsIndexEventBreakdown(dataSource, cohortIds = NULL, databaseIds = NULL)
+getResultsIndexEventBreakdown(
+  dataSource,
+  cohortIds = NULL,
+  databaseIds = NULL,
+  conceptIds = NULL,
+  coConceptIds = 0,
+  daysRelativeIndex = 0
+)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 
@@ -19,6 +26,12 @@ and uploaded using \code{uploadResults}}
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
+
+\item{conceptIds}{A vector of one or more Concept Ids.}
+
+\item{daysRelativeIndex}{A vector of integers representing the offset in relation to index date (-40 to 40)}
+
+\item{CoConceptIds}{A vector of integers representing co-concept ids}
 }
 \value{
 Returns a data frame (tibble) with results that conform to index_event_breakdown

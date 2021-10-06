@@ -1,31 +1,51 @@
 # Using the official uploading functions to get data from zip files into the postgres database
 library(CohortDiagnostics)
+portNumber <- 5432
 
 # OHDSI's server:
+# connectionDetails <- createConnectionDetails(
+#   dbms = "postgresql",
+#   server = paste(
+#     Sys.getenv("shinydbServer"),
+#     Sys.getenv("shinydbDatabase"),
+#     sep = "/"
+#   ),
+#   port = portNumber,
+#   user = Sys.getenv("shinydbUser"),
+#   password = Sys.getenv("shinydbPW")
+# )
+# resultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
+
+
+# OHDSI's Phenotype library server:
 connectionDetails <- createConnectionDetails(
   dbms = "postgresql",
   server = paste(
-    Sys.getenv("shinydbServer"),
-    Sys.getenv("shinydbDatabase"),
+    Sys.getenv("phenotypeLibraryServer"),
+    Sys.getenv("phenotypeLibrarydb"),
     sep = "/"
   ),
-  port = Sys.getenv("shinydbPort"),
-  user = Sys.getenv("shinydbUser"),
-  password = Sys.getenv("shinydbPW")
+  port = portNumber,
+  user = Sys.getenv("phenotypeLibrarydbUser"),
+  password = Sys.getenv("phenotypeLibrarydbPw")
 )
+resultsSchema <- Sys.getenv("phenotypeLibrarydbTargetSchema")
 # 
-connectionDetails <- createConnectionDetails(
-  dbms = "postgresql",
-  server = paste(
-    keyring::key_get("shinydbServer"),
-    keyring::key_get("shinydbDatabase"),
-    sep = "/"
-  ),
-  port = keyring::key_get("shinydbPort"),
-  user = keyring::key_get("shinydbUser"),
-  password = keyring::key_get("shinydbPW")
-)
-resultsSchema <- 'ohdsi2021Reproducibility'
+
+# other
+# connectionDetails <- createConnectionDetails(
+#   dbms = "postgresql",
+#   server = paste(
+#     keyring::key_get("shinydbServer"),
+#     keyring::key_get("shinydbDatabase"),
+#     sep = "/"
+#   ),
+#   port = portNumber,
+#   user = keyring::key_get("shinydbUser"),
+#   password = keyring::key_get("shinydbPW")
+# )
+
+
 
 # commenting this function as it maybe accidentally run - loosing data.
 # DatabaseConnector::renderTranslateExecuteSql(connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
@@ -37,7 +57,7 @@ resultsSchema <- 'ohdsi2021Reproducibility'
 
 Sys.setenv("POSTGRES_PATH" = Sys.getenv('POSTGRES_PATH'))
 
-folderWithZipFilesToUpload <- "D:\\temp\\outputFolder\\packageMode"
+folderWithZipFilesToUpload <- "D:\\studyResults\\SkeletonCohortDiagnosticsStudyP"
 listOfZipFilesToUpload <-
   list.files(
     path = folderWithZipFilesToUpload,

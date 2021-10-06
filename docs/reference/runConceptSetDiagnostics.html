@@ -108,6 +108,9 @@ the cohorts need to be instantiated." />
       <a href="../articles/DatabaseModeInDiagnosticsExplorer.html">Database mode in Diagnostics Explorer</a>
     </li>
     <li>
+      <a href="../articles/Report on Visits on Index Date.html">Report on index event breakdown</a>
+    </li>
+    <li>
       <a href="../articles/RunningCohortDiagnostics.html">Running cohort diagnostics</a>
     </li>
     <li>
@@ -162,6 +165,7 @@ the cohorts need to be instantiated.</p>
   cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
   cohortDatabaseSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
   keepCustomConceptId <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  minCellCount <span class='op'>=</span> <span class='fl'>5</span>,
   cohortTable <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
 
@@ -221,6 +225,10 @@ this should include both the database and schema name, for example
       <td><p>(Optional) Default FALSE. Do you want to keep concept id above 2 billion.
 Per OMOP conventions any conceptId &gt;= 2 billion are considered site specific
 custom value that are not shipped as part of default OMOP vocabulary tables.</p></td>
+    </tr>
+    <tr>
+      <th>minCellCount</th>
+      <td><p>The minimum cell count for fields contains person counts or fractions.</p></td>
     </tr>
     <tr>
       <th>cohortTable</th>

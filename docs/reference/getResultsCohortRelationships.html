@@ -107,6 +107,9 @@
       <a href="../articles/DatabaseModeInDiagnosticsExplorer.html">Database mode in Diagnostics Explorer</a>
     </li>
     <li>
+      <a href="../articles/Report on Visits on Index Date.html">Report on index event breakdown</a>
+    </li>
+    <li>
       <a href="../articles/RunningCohortDiagnostics.html">Running cohort diagnostics</a>
     </li>
     <li>
@@ -150,7 +153,13 @@
     <p>Returns data from cohort_relationships table of Cohort Diagnostics results data model</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getResultsCohortRelationships</span><span class='op'>(</span><span class='va'>dataSource</span>, cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>, databaseIds <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>getResultsCohortRelationships</span><span class='op'>(</span>
+  <span class='va'>dataSource</span>,
+  cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  databaseIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  startDay <span class='op'>=</span> <span class='cn'>NULL</span>,
+  endDay <span class='op'>=</span> <span class='cn'>NULL</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -173,6 +182,14 @@ and uploaded using <code>uploadResults</code></p></td>
       <td><p>A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.</p></td>
+    </tr>
+    <tr>
+      <th>startDay</th>
+      <td><p>A vector of days in relation to cohort_start_date of target</p></td>
+    </tr>
+    <tr>
+      <th>endDay</th>
+      <td><p>A vector of days in relation to cohort_end_date of target</p></td>
     </tr>
     </table>
 

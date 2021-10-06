@@ -33,6 +33,11 @@
 #' @param targetCohortIds              A vector of one or more Cohort Ids for use as target cohorts.
 #'
 #' @param comparatorCohortIds          A vector of one or more Cohort Ids for use as feature/comparator cohorts.
+#' 
+#' @param incremental                 Create only cohort diagnostics that haven't been created before?
+#' 
+#' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
+#'                                    of which cohort diagnostics has been executed.
 #'
 #' @export
 runCohortRelationshipDiagnostics <-
@@ -42,7 +47,9 @@ runCohortRelationshipDiagnostics <-
            tempEmulationSchema = NULL,
            cohortTable = "cohort",
            targetCohortIds,
-           comparatorCohortIds) {
+           comparatorCohortIds,
+           incremental = FALSE,
+           incrementalFolder = NULL) {
     startTime <- Sys.time()
     
     if (length(targetCohortIds) == 0) {
@@ -85,36 +92,73 @@ runCohortRelationshipDiagnostics <-
       return(NULL)
     }
     
-    ParallelLogger::logTrace("  - Creating cohort table subsets")
-    cohortSubsetSql <-
-      "IF OBJECT_ID('tempdb..@subset_cohort_table', 'U') IS NOT NULL
-	                      DROP TABLE @subset_cohort_table;
-
-	                      --HINT DISTRIBUTE_ON_KEY(subject_id)
-                        SELECT *
-                        INTO @subset_cohort_table
-                        FROM @cohort_database_schema.@cohort_table
-                        WHERE cohort_definition_id IN (@cohort_ids);"
+    ParallelLogger::logTrace("  - Creating cohort table subsets")    
+    cohortSubsetSqlTargetDrop <-
+      " IF OBJECT_ID('tempdb..#target_subset', 'U') IS NOT NULL
+      	DROP TABLE #target_subset;
+      "
     
+    cohortSubsetSqlTarget <-
+      "--HINT DISTRIBUTE_ON_KEY(subject_id)
+      SELECT cohort_definition_id,
+      	subject_id,
+      	min(cohort_start_date) cohort_start_date,
+      	min(cohort_end_date) cohort_end_date
+      INTO #target_subset
+      FROM @cohort_database_schema.@cohort_table
+      WHERE cohort_definition_id IN (@cohort_ids)
+      GROUP BY cohort_definition_id,
+      	subject_id;"
+    
+    cohortSubsetSqlComparatorDrop <-
+      "IF OBJECT_ID('tempdb..#comparator_subset', 'U') IS NOT NULL
+      	DROP TABLE #comparator_subset;"
+      	
+    cohortSubsetSqlComparator <-
+      "--HINT DISTRIBUTE_ON_KEY(subject_id)
+      	SELECT *
+      	INTO #comparator_subset
+      	FROM @cohort_database_schema.@cohort_table
+      	WHERE cohort_definition_id IN (@cohort_ids);"
+    
+    
+    ParallelLogger::logTrace("   - Target subset")
+    ParallelLogger::logTrace("    - dropping temporary table")
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
-      sql = cohortSubsetSql,
+      sql = cohortSubsetSqlTargetDrop,
+      tempEmulationSchema = tempEmulationSchema,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+    ParallelLogger::logTrace("    - creating temporary table")
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = cohortSubsetSqlTarget,
       cohort_database_schema = cohortDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       cohort_table = cohortTable,
-      subset_cohort_table = '#target_subset',
       cohort_ids = targetCohortIds,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )
     
+    ParallelLogger::logTrace("   - Comparator subset")
+    ParallelLogger::logTrace("    - dropping temporary table")
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
-      sql = cohortSubsetSql,
+      sql = cohortSubsetSqlComparatorDrop,
+      tempEmulationSchema = tempEmulationSchema,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+    ParallelLogger::logTrace("    - creating temporary table")
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = cohortSubsetSqlComparator,
       cohort_database_schema = cohortDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       cohort_table = cohortTable,
-      subset_cohort_table = '#comparator_subset',
       cohort_ids = comparatorCohortIds,
       progressBar = FALSE,
       reportOverallTime = FALSE
@@ -183,6 +227,10 @@ runCohortRelationshipDiagnostics <-
     seqStartCustom6 <- c(-99999)
     seqEndCustom6 <- c(99999)
     
+    # custom sequence 7 - every day from -31 to + 31
+    seqStartCustom7 <- c(-31:31)
+    seqEndCustom7 <- seqStartCustom7
+    
     seqStart <-
       c(
         seqStartCustom1,
@@ -191,6 +239,7 @@ runCohortRelationshipDiagnostics <-
         seqStartCustom4,
         seqStartCustom5,
         seqStartCustom6,
+        seqStartCustom7,
         seqStart30,
         seqStart180,
         seqStart365
@@ -203,6 +252,7 @@ runCohortRelationshipDiagnostics <-
         seqEndCustom4,
         seqEndCustom5,
         seqEndCustom6,
+        seqEndCustom7,
         seqEnd30,
         seqEnd180,
         seqEnd365
@@ -214,10 +264,86 @@ runCohortRelationshipDiagnostics <-
       dplyr::arrange(.data$startDay, .data$endDay) %>%
       dplyr::mutate(timeId = dplyr::row_number())
     
-    
     ParallelLogger::logTrace("   - Creating Andromeda object to collect results")
+    
+    ParallelLogger::logTrace(paste0("   - Working with ", scales::comma(nrow(timePeriods)), " time ids."))
     resultsInAndromeda <- Andromeda::andromeda()
     
+    if (incremental) {
+      ParallelLogger::logTrace("  - Running in Incremental mode.")
+      ParallelLogger::logTrace(
+        "    - Looking for results from previous run in incremental mode for time periods that have already executed."
+      )
+      if (file.exists(file.path(
+        incrementalFolder,
+        "CreatedDiagnosticsCohortRelationship.csv"
+      ))) {
+        ParallelLogger::logTrace(
+          "    - Found results from previous execution. Subsetting to required time periods before computing cohort relationship diagnostic."
+        )
+        previousRunResults <-
+          readr::read_csv(
+            file = file.path(
+              incrementalFolder,
+              "CreatedDiagnosticsCohortRelationship.csv"
+            ),
+            col_types = readr::cols(),
+            lazy = FALSE,
+            guess_max = 1e7
+          ) %>% 
+          dplyr::inner_join(timePeriods,
+                            by = c('startDay', 'endDay'))
+        requiredColNames <- setdiff(
+          x = c(
+            "cohortId",
+            "comparatorCohortId",
+            "startDay",
+            "endDay",
+            "timeId"
+          ),
+          y = colnames(previousRunResults)
+        )
+        if (length(requiredColNames) > 0) {
+          ParallelLogger::logWarn(
+            " - Attempted to run cohort relationship diagnostics in incremental mode,\n
+          by limiting to only the time periods that were not previously\n
+          executed. But the diagnostic file does not have the required fields. \n
+          Please check CreatedDiagnosticsCohortRelationship.csv in your incremental\n
+          folder. Ignoring the file and continuing diagnostic. File may be overwritten."
+          )
+        } else {
+          timePeriodsPreviouslyExecuted <- previousRunResults %>%
+            dplyr::select("startDay",
+                          "endDay",
+                          "timeId") %>%
+            dplyr::distinct()
+          timePeriodsPreviouslyExecuted <-
+            timePeriodsPreviouslyExecuted %>%
+            dplyr::inner_join(timePeriods,
+                              by = c("startDay",
+                                     "endDay",
+                                     "timeId")) %>% 
+            dplyr::select(.data$timeId) %>%
+            dplyr::distinct()
+          
+          ParallelLogger::logTrace(
+            paste0(
+              "    - Found previous execution to have ",
+              scales::comma(nrow(timePeriodsPreviouslyExecuted)),
+              " records. Removing time_periods corresponding to those executions and reusing previous results."
+            )
+          )
+          timePeriods <- timePeriods %>%
+            dplyr::anti_join(timePeriodsPreviouslyExecuted,
+                             by = c("timeId"))
+          
+          resultsInAndromeda$cohortRelationships <- previousRunResults %>% 
+            dplyr::select(-.data$startDay, -.data$endDay)
+        }
+      } else {
+        ParallelLogger::logTrace("    - Not found, running cohort relationship diagnostics for all time periods.")
+      }
+    }
     for (i in (1:nrow(timePeriods))) {
       ParallelLogger::logTrace(
         paste0(
@@ -251,6 +377,20 @@ runCohortRelationshipDiagnostics <-
         Andromeda::appendToTable(resultsInAndromeda$cohortRelationships,
                                  resultsInAndromeda$temp)
       }
+      readr::write_excel_csv(
+        x = resultsInAndromeda$cohortRelationships %>% 
+          dplyr::collect() %>% 
+          dplyr::inner_join(timePeriods,
+                            by = "timeId") %>% 
+          dplyr::select(-.data$timeId),
+        file = file.path(
+          incrementalFolder,
+          "CreatedDiagnosticsCohortRelationship.csv"
+        ),
+        na = "",
+        append = FALSE,
+        delim = ","
+      )
     }
     
     resultsInAndromeda$timePeriods <- timePeriods
@@ -259,29 +399,32 @@ runCohortRelationshipDiagnostics <-
     resultsInAndromeda$cohortRelationships <-
       resultsInAndromeda$cohortRelationships %>%
       dplyr::inner_join(resultsInAndromeda$timePeriods, by = 'timeId') %>%
-      dplyr::select(
-        .data$cohortId,
-        .data$comparatorCohortId,
-        .data$startDay,
-        .data$endDay,
-        .data$bothSubjects,
-        .data$cBeforeTSubjects,
-        .data$tBeforeCSubjects,
-        .data$sameDaySubjects,
-        .data$cPersonDays,
-        .data$cSubjectsStart,
-        .data$cSubjectsExist,
-        .data$cSubjectsEnd,
-        .data$cInTSubjects
-      ) %>%
       dplyr::arrange(
         .data$cohortId,
         .data$comparatorCohortId,
         .data$startDay,
-        .data$endDay,
-        .data$bothSubjects
+        .data$endDay
       )
     resultsInAndromeda$timePeriods <- NULL
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = cohortSubsetSqlTargetDrop,
+      tempEmulationSchema = tempEmulationSchema,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = cohortSubsetSqlComparatorDrop,
+      tempEmulationSchema = tempEmulationSchema,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+    unlink(x = file.path(
+      incrementalFolder,
+      "CreatedDiagnosticsCohortRelationship.csv"
+    ),
+    force = TRUE)
     delta <- Sys.time() - startTime
     ParallelLogger::logTrace(paste(
       " - Computing cohort relationship took",

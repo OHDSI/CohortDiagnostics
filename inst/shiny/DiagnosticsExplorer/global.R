@@ -6,7 +6,6 @@ source("R/StartUpScripts.R")
 source("R/DisplayFunctions.R")
 source("R/Tables.R")
 source("R/Plots.R")
-source("R/Results.R")
 
 #Set values to NULL
 connectionPool <- NULL
@@ -14,6 +13,8 @@ connectionPool <- NULL
 #Load default environment variables----
 defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
+
+# OHDSI Shiny DB
 defaultServer <- Sys.getenv("shinydbServer")
 defaultDatabase <- Sys.getenv("shinydbDatabase")
 defaultPort <- 5432
@@ -22,8 +23,19 @@ defaultPassword <- Sys.getenv("shinydbPw")
 defaultResultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
+
+# OHDSI Phenotype DB
+# defaultServer <- Sys.getenv("phenotypeLibraryServer")
+# defaultDatabase <- Sys.getenv("phenotypeLibrarydb")
+# defaultPort <- 5432
+# defaultUser <- Sys.getenv("phenotypeLibrarydbUser")
+# defaultPassword <- Sys.getenv("phenotypeLibrarydbPw")
+# defaultResultsSchema <- Sys.getenv("phenotypeLibrarydbTargetSchema")
+# defaultVocabularySchema <- Sys.getenv("phenotypeLibrarydbVocabSchema")
+# alternateVocabularySchema <- c('vocabulary')
+
 #Mode
-defaultDatabaseMode <- FALSE # Use file system if FALSE
+defaultDatabaseMode <- TRUE # Use file system if FALSE
 
 #Configuration variables ----
 showIncidenceRate <- TRUE
@@ -34,8 +46,7 @@ showVisitContext <- TRUE
 #Since Characterization and CompareCharacterization uses the same table
 showCharacterizationAndCompareCharacterization <- TRUE
 #Since TemporalCharacterization and CompareTemporalCharacterization uses the same table
-showTemporalCharacterizationAndCompareTemporalCharacterization <-
-  TRUE
+showTemporalCharacterizationAndCompareTemporalCharacterization <- TRUE
 #show all time id choices or only the primary time id choices
 filterTemporalChoicesToPrimaryOptions <- FALSE
 
@@ -114,7 +125,7 @@ if (!exists("shinySettings")) {
 ## Launch information ----
 appInformationText <- paste0(
   appInformationText,
-  " mode. Application was last initated on ",
+  " mode. Application was last initiated on ",
   lubridate::now(tzone = "EST"),
   " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/"
 )
@@ -154,6 +165,7 @@ if (databaseMode) {
       "analysis_ref",
       "concept_sets",
       "concept_class",
+      "covariate_ref",
       "domain",
       "relationship",
       "temporal_time_ref",
@@ -224,6 +236,21 @@ if (exists("cohort")) {
       .data$cohortName,
       "(",
       .data$cohortId,
+      ")"
+    ))
+}
+
+if (exists("database")) {
+  # cohort is required and is always loaded into R memory
+  database <- database %>%
+    dplyr::arrange(.data$databaseId) %>%
+    dplyr::mutate(shortName = paste0("D", dplyr::row_number())) %>%
+    dplyr::mutate(compoundName = paste0(
+      .data$shortName,
+      ": ",
+      .data$databaseName,
+      "(",
+      .data$databaseId,
       ")"
     ))
 }

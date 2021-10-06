@@ -4,7 +4,7 @@
 \alias{getResultsCohort}
 \title{Returns data from cohort table of Cohort Diagnostics results data model}
 \usage{
-getResultsCohort(dataSource)
+getResultsCohort(dataSource, cohortIds = NULL)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 
@@ -13,6 +13,8 @@ or a local premerged file (created by \code{createFileDataSource}). Premerged fi
 compiled into RData using \code{preMergeDiagnosticsFiles}. Database DataSources are data inserted into a remote
 database (only a postgres database is supported) with tables created with DDL function \code{createResultsDataModel}
 and uploaded using \code{uploadResults}}
+
+\item{cohortIds}{A vector of one or more Cohort Ids.}
 }
 \value{
 Returns a data frame (tibble)

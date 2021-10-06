@@ -68,7 +68,7 @@ runCohortCharacterizationDiagnostics <-
            cdmVersion = 5,
            cutOff = 0.0001,
            covariateSettings = createDefaultCovariateSettings(),
-           batchSize = 100) {
+           batchSize = 50) {
     startTime <- Sys.time()
     if (is.null(connection)) {
       connection <- DatabaseConnector::connect(connectionDetails)

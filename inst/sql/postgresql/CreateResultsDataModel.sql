@@ -16,7 +16,6 @@ DROP TABLE IF EXISTS concept_excluded;
 DROP TABLE IF EXISTS concept_mapping;
 DROP TABLE IF EXISTS concept_relationship;
 DROP TABLE IF EXISTS concept_resolved;
-DROP TABLE IF EXISTS concept_subjects;
 DROP TABLE IF EXISTS cohort_summary_stats;
 DROP TABLE IF EXISTS concept_sets;
 DROP TABLE IF EXISTS concept_sets_optimized;
@@ -134,15 +133,40 @@ CREATE TABLE cohort_relationships (
 			comparator_cohort_id BIGINT NOT NULL,
 			start_day FLOAT NOT NULL,
 			end_day FLOAT NOT NULL,
-			both_subjects BIGINT NOT NULL,
-			c_before_t_subjects BIGINT NOT NULL,
-			t_before_c_subjects BIGINT NOT NULL,
-			same_day_subjects BIGINT NOT NULL,
-			c_person_days BIGINT NOT NULL,
-			c_subjects_start BIGINT NOT NULL,
-			c_subjects_exist BIGINT NOT NULL,
-			c_subjects_end BIGINT NOT NULL,
-			c_in_t_subjects BIGINT NOT NULL,
+			subjects BIGINT NOT NULL,
+			sub_cs_before_ts BIGINT NOT NULL,
+			rec_cs_before_ts BIGINT NOT NULL,
+			sub_cs_on_ts BIGINT NOT NULL,
+			rec_cs_on_ts BIGINT NOT NULL,
+			sub_cs_after_ts BIGINT NOT NULL,
+			rec_cs_after_ts BIGINT NOT NULL,
+			sub_cs_before_te BIGINT NOT NULL,
+			rec_cs_before_te BIGINT NOT NULL,
+			sub_cs_on_te BIGINT NOT NULL,
+			rec_cs_on_te BIGINT NOT NULL,
+			sub_cs_after_te BIGINT NOT NULL,
+			rec_cs_after_te BIGINT NOT NULL,
+			sub_cs_window_t BIGINT NOT NULL,
+			rec_cs_window_t BIGINT NOT NULL,
+			sub_ce_window_t BIGINT NOT NULL,
+			rec_ce_window_t BIGINT NOT NULL,
+			sub_cs_window_ts BIGINT NOT NULL,
+			rec_cs_window_ts BIGINT NOT NULL,
+			sub_cs_window_te BIGINT NOT NULL,
+			rec_cs_window_te BIGINT NOT NULL,
+			sub_ce_window_ts BIGINT NOT NULL,
+			rec_ce_window_ts BIGINT NOT NULL,
+			sub_ce_window_te BIGINT NOT NULL,
+			rec_ce_window_te BIGINT NOT NULL,
+			sub_c_within_t BIGINT NOT NULL,
+			rec_c_within_t BIGINT NOT NULL,
+			c_days_before_ts BIGINT NOT NULL,
+			c_days_before_te BIGINT NOT NULL,
+			c_days_within_t_days BIGINT NOT NULL,
+			c_days_after_ts BIGINT NOT NULL,
+			c_days_after_te BIGINT NOT NULL,
+			t_days BIGINT NOT NULL,
+			c_days BIGINT NOT NULL,
 			PRIMARY KEY(database_id, cohort_id, comparator_cohort_id, start_day, end_day)
 );
 
@@ -183,24 +207,12 @@ CREATE TABLE concept_class (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE concept_count (
 			database_id VARCHAR NOT NULL,
-			domain_table VARCHAR NOT NULL,
-			domain_field VARCHAR NOT NULL,
 			concept_id INT NOT NULL,
 			event_year INT NOT NULL,
 			event_month INT NOT NULL,
 			concept_count FLOAT NOT NULL,
-			PRIMARY KEY(database_id, domain_table, domain_field, concept_id, event_year, event_month)
-);
-
---Table concept_cooccurrence
---HINT DISTRIBUTE ON RANDOM
-CREATE TABLE concept_cooccurrence (
-			database_id VARCHAR NOT NULL,
-			cohort_id BIGINT NOT NULL,
-			concept_id BIGINT NOT NULL,
-			co_concept_id BIGINT NOT NULL,
-			concept_count BIGINT NOT NULL,
-			PRIMARY KEY(database_id, cohort_id, concept_id, co_concept_id)
+			subject_count FLOAT NOT NULL,
+			PRIMARY KEY(database_id, concept_id, event_year, event_month)
 );
 
 
@@ -249,18 +261,6 @@ CREATE TABLE concept_sets_optimized (
 			excluded INT NOT NULL,
 			removed INT NOT NULL,
 			PRIMARY KEY(database_id, cohort_id, concept_set_id, excluded, removed)
-);
-
-
---Table concept_count
---HINT DISTRIBUTE ON RANDOM
-CREATE TABLE concept_subjects (
-			database_id VARCHAR NOT NULL,
-			domain_table VARCHAR NOT NULL,
-			domain_field VARCHAR NULL,
-			concept_id INT NOT NULL,
-			subject_count FLOAT NOT NULL,
-			PRIMARY KEY(database_id, domain_table, domain_field, concept_id)
 );
 
 
@@ -389,12 +389,12 @@ CREATE TABLE inclusion_rule_stats (
 CREATE TABLE index_event_breakdown (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
-			domain_table VARCHAR NOT NULL,
-			domain_field VARCHAR NOT NULL,
+			days_relative_index BIGINT NOT NULL,
 			concept_id INT NOT NULL,
+			co_concept_id INT NOT NULL,
 			concept_count FLOAT NOT NULL,
 			subject_count FLOAT NOT NULL,
-			PRIMARY KEY(concept_id, cohort_id, database_id, domain_field, domain_table)
+			PRIMARY KEY(database_id, cohort_id, days_relative_index, concept_id, co_concept_id)
 );
 
 --Table metadata
@@ -523,10 +523,13 @@ CREATE TABLE time_series (
 			records BIGINT NOT NULL,
 			subjects BIGINT NOT NULL,
 			person_days BIGINT NOT NULL,
+			person_days_in BIGINT NOT NULL,
 			records_start BIGINT,
 			subjects_start BIGINT,
+			subjects_start_in BIGINT,
 			records_end BIGINT,
 			subjects_end BIGINT,
+			subjects_end_in BIGINT,
 			PRIMARY KEY(cohort_id, database_id, period_begin, calendar_interval, series_type)
 );
 
@@ -535,7 +538,7 @@ CREATE TABLE time_series (
 CREATE TABLE visit_context (
 			cohort_id BIGINT NOT NULL,
 			visit_concept_id INT NOT NULL,
-			visit_concept_NAME VARCHAR NOT NULL,
+			visit_concept_name VARCHAR NOT NULL,
 			visit_context VARCHAR NOT NULL,
 			subjects FLOAT NOT NULL,
 			records FLOAT NOT NULL,

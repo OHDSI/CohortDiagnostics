@@ -111,6 +111,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  covariateSettings = list(
                                    FeatureExtraction::createDefaultCovariateSettings(),
                                    FeatureExtraction::createCovariateSettings(
+                                     useDemographicsAge  = TRUE,
                                      useVisitCountLongTerm = TRUE,
                                      useVisitCountShortTerm = TRUE,
                                      useVisitConceptCountLongTerm = TRUE,
@@ -148,7 +149,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  incremental = FALSE,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
   startDateTime <- Sys.time()
-  
   if (all(is.null(connectionDetails),
           is.null(connection))) {
     stop('Please provide either connection or connectionDetails to connect to database.')
@@ -554,7 +554,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohorts = cohorts,
         cohortIds = subset$cohortId,
         cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable
+        cohortTable = cohortTable,
+        minCellCount = minCellCount
       )
       writeToAllOutputToCsv(
         object = output,
@@ -805,7 +806,9 @@ runCohortDiagnostics <- function(packageName = NULL,
           tempEmulationSchema = tempEmulationSchema,
           cohortTable = cohortTable,
           targetCohortIds = subset$cohortId,
-          comparatorCohortIds = cohorts$cohortId
+          comparatorCohortIds = cohorts$cohortId,
+          incremental = incremental,
+          incrementalFolder = incrementalFolder
         )
       writeToAllOutputToCsv(
         object = output,
@@ -981,11 +984,11 @@ runCohortDiagnostics <- function(packageName = NULL,
     #4
     "argumentsAtDiagnosticsInitiationJson",
     #5
-    "Rversion",
+    "rversion",
     #6
-    "CurrentPackage",
+    "currentPackage",
     #7
-    "CurrentPackageVersion",
+    "currentPackageVersion",
     #8
     "sourceDescription",
     #9
@@ -999,24 +1002,22 @@ runCohortDiagnostics <- function(packageName = NULL,
     #13
     "vocabularyVersion",
     #14
-    "databaseId",
-    #15
     "datasourceName",
-    #16
+    #15
     "datasourceDescription",
-    #17
+    #16
     "vocabularyVersionCdm",
-    #18
+    #17
     "vocabularyVersion",
-    #19
+    #18
     "observationPeriodMinDate",
-    #20
+    #19
     "observationPeriodMaxDate",
-    #21
+    #20
     "personsInDatasource",
-    #22
+    #21
     "recordsInDatasource",
-    #23
+    #22
     "personDaysInDatasource" #24
   )
   valueField <-   c(
@@ -1056,29 +1057,27 @@ runCohortDiagnostics <- function(packageName = NULL,
       cdmSourceInformation$vocabularyVersion
     )),
     #14
-    as.character(databaseId),
-    #15
     as.character(databaseName),
-    #16
+    #15
     as.character(databaseDescription),
-    #17
+    #16
     as.character(nullToEmpty(cdmSourceInformation$vocabularyVersion)),
-    #18
+    #17
     as.character(vocabularyVersion),
-    #19
+    #18
     as.character(observationPeriodDateRange$observationPeriodMinDate),
-    #20
+    #19
     as.character(observationPeriodDateRange$observationPeriodMaxDate),
-    #21
+    #20
     as.character(observationPeriodDateRange$persons),
-    #22
+    #21
     as.character(observationPeriodDateRange$records),
-    #23
+    #22
     as.character(observationPeriodDateRange$personDays) #24
   )
   metadata <- dplyr::tibble(
     databaseId = as.character(!!databaseId),
-    startTime = paste0(as.character(startDateTime)),
+    startTime = paste0("TM_", as.character(startDateTime)),
     variableField = variableField,
     valueField = valueField
   )

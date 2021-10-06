@@ -11,7 +11,9 @@ runCohortRelationshipDiagnostics(
   tempEmulationSchema = NULL,
   cohortTable = "cohort",
   targetCohortIds,
-  comparatorCohortIds
+  comparatorCohortIds,
+  incremental = FALSE,
+  incrementalFolder = NULL
 )
 }
 \arguments{
@@ -38,6 +40,11 @@ tables, provide a schema with write privileges where temp tables can be created.
 \item{targetCohortIds}{A vector of one or more Cohort Ids for use as target cohorts.}
 
 \item{comparatorCohortIds}{A vector of one or more Cohort Ids for use as feature/comparator cohorts.}
+
+\item{incremental}{Create only cohort diagnostics that haven't been created before?}
+
+\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
+of which cohort diagnostics has been executed.}
 }
 \description{
 Given a set of cohorts, get temporal relationships between the

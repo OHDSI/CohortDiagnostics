@@ -3,7 +3,7 @@
 --- (cohort end is between (inclusive) calendar period)
 SELECT cohort_definition_id cohort_id,
 	time_id,
-	COUNT_BIG(*) records, -- records in calendar month
+	COUNT_BIG(DISTINCT CONCAT(cast(subject_id AS VARCHAR(30)), '_', cast(observation_period_start_date AS VARCHAR(30)))) records, -- records in calendar month
 	COUNT_BIG(DISTINCT subject_id) subjects, -- unique subjects
 	SUM(datediff(dd, CASE 
 				WHEN observation_period_start_date >= period_begin
@@ -14,6 +14,7 @@ SELECT cohort_definition_id cohort_id,
 					THEN period_end
 				ELSE observation_period_end_date
 				END) + 1) person_days,
+	0 person_days_in, -- person days within period - incident
 	COUNT_BIG(CASE 
 			WHEN observation_period_start_date >= period_begin
 				AND observation_period_start_date <= period_end
@@ -26,6 +27,7 @@ SELECT cohort_definition_id cohort_id,
 				THEN subject_id
 			ELSE NULL
 			END) subjects_start,
+	0 subjects_start_in,
 	COUNT_BIG(CASE 
 			WHEN observation_period_end_date >= period_begin
 				AND observation_period_end_date <= period_end
@@ -37,17 +39,15 @@ SELECT cohort_definition_id cohort_id,
 				AND observation_period_end_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_end -- subjects end within period
+			END) subjects_end, -- subjects end within period
+	0 subjects_end_in
 FROM @cdm_database_schema.observation_period o
 INNER JOIN (
 	SELECT DISTINCT cohort_definition_id,
 		subject_id
-	FROM @cohort_database_schema.@cohort_table
-	WHERE cohort_definition_id IN (@cohort_ids)
-	) c
-	ON o.person_id = c.subject_id
-INNER JOIN #calendar_periods cp
-	ON (
+	FROM #cohort_ts
+	) c ON o.person_id = c.subject_id
+INNER JOIN #calendar_periods cp ON (
 		observation_period_start_date <= period_end -- observation period start on or before calendar period end, AND
 		AND observation_period_end_date >= period_begin -- observation period end on or before calendar period end
 		)

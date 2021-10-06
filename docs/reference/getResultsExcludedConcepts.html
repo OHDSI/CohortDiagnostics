@@ -108,6 +108,9 @@ precomputed excluded conceptIds for the combination." />
       <a href="../articles/DatabaseModeInDiagnosticsExplorer.html">Database mode in Diagnostics Explorer</a>
     </li>
     <li>
+      <a href="../articles/Report on Visits on Index Date.html">Report on index event breakdown</a>
+    </li>
+    <li>
       <a href="../articles/RunningCohortDiagnostics.html">Running cohort diagnostics</a>
     </li>
     <li>
@@ -152,7 +155,12 @@ precomputed excluded conceptIds for the combination." />
 precomputed excluded conceptIds for the combination.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getResultsExcludedConcepts</span><span class='op'>(</span><span class='va'>dataSource</span>, databaseIds <span class='op'>=</span> <span class='cn'>NULL</span>, cohortIds <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>getResultsExcludedConcepts</span><span class='op'>(</span>
+  <span class='va'>dataSource</span>,
+  databaseIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortId <span class='op'>=</span> <span class='cn'>NULL</span>,
+  conceptSetId <span class='op'>=</span> <span class='cn'>NULL</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">

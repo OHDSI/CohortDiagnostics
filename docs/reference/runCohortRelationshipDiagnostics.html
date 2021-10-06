@@ -108,6 +108,9 @@ cohort_start_date of the cohorts." />
       <a href="../articles/DatabaseModeInDiagnosticsExplorer.html">Database mode in Diagnostics Explorer</a>
     </li>
     <li>
+      <a href="../articles/Report on Visits on Index Date.html">Report on index event breakdown</a>
+    </li>
+    <li>
       <a href="../articles/RunningCohortDiagnostics.html">Running cohort diagnostics</a>
     </li>
     <li>
@@ -159,7 +162,9 @@ cohort_start_date of the cohorts.</p>
   tempEmulationSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
   cohortTable <span class='op'>=</span> <span class='st'>"cohort"</span>,
   <span class='va'>targetCohortIds</span>,
-  <span class='va'>comparatorCohortIds</span>
+  <span class='va'>comparatorCohortIds</span>,
+  incremental <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  incrementalFolder <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -202,6 +207,15 @@ tables, provide a schema with write privileges where temp tables can be created.
     <tr>
       <th>comparatorCohortIds</th>
       <td><p>A vector of one or more Cohort Ids for use as feature/comparator cohorts.</p></td>
+    </tr>
+    <tr>
+      <th>incremental</th>
+      <td><p>Create only cohort diagnostics that haven't been created before?</p></td>
+    </tr>
+    <tr>
+      <th>incrementalFolder</th>
+      <td><p>If <code>incremental = TRUE</code>, specify a folder where records are kept
+of which cohort diagnostics has been executed.</p></td>
     </tr>
     </table>
 
