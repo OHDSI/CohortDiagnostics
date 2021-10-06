@@ -355,16 +355,15 @@ runCohortRelationshipDiagnostics <-
     for (i in (1:nrow(timePeriods))) {
       ParallelLogger::logTrace(
         paste0(
-          "    - Working on Time id:",
-          timePeriods[i,]$timeId,
+          "    - Working on start day: ",
+          scales::comma(timePeriods[i, ]$startDay),
+          " to end day:",
+          scales::comma(timePeriods[i, ]$endDay),
           " (",
           scales::comma(i),
           " of ",
           scales::comma(nrow(timePeriods)),
-          "left) start day: ",
-          scales::comma(timePeriods[i,]$startDay),
-          " to end day:",
-          scales::comma(timePeriods[i,]$endDay)
+          "left) "
         )
       )
       sql <- SqlRender::loadRenderTranslateSql(
