@@ -363,7 +363,7 @@ runCohortRelationshipDiagnostics <-
           scales::comma(i),
           " of ",
           scales::comma(nrow(timePeriods)),
-          " left) "
+          ")"
         )
       )
       sql <- SqlRender::loadRenderTranslateSql(
