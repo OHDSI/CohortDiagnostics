@@ -38,7 +38,7 @@ CREATE INDEX idx_analysis_name  ON analysis_ref  (analysis_name ASC);
 
 CREATE INDEX idx_cohort_id_1  ON cohort  (cohort_id ASC);
 CLUSTER cohort  USING idx_cohort_id_1 ;
-CREATE INDEX idx_cohort_name  ON analysis_ref  (cohort_name ASC);
+CREATE INDEX idx_cohort_name  ON cohort  (cohort_name ASC);
 
 CREATE INDEX idx_cohort_id_2  ON cohort_count  (cohort_id ASC);
 CLUSTER cohort_count  USING idx_cohort_id_2 ;
@@ -111,7 +111,7 @@ CREATE INDEX idx_database_id_14  ON covariate_value  (database_id ASC);
 CREATE INDEX idx_covariate_id_14  ON covariate_value  (covariate_id ASC);
 
 CREATE INDEX idx_cohort_id_15  ON covariate_value_dist  (cohort_id ASC);
-CLUSTER covariate_value_dist  USING idx_covariate_id_15 ;
+CLUSTER covariate_value_dist  USING idx_cohort_id_15 ;
 CREATE INDEX idx_database_id_15  ON covariate_value_dist  (database_id ASC);
 CREATE INDEX idx_covariate_id_15  ON covariate_value_dist  (covariate_id ASC);
 
