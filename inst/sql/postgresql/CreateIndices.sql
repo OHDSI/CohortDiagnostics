@@ -100,13 +100,13 @@ CREATE INDEX idx_concept_set_id_12  ON concept_excluded  (concept_set_id ASC);
 CREATE INDEX idx_concept_id_12  ON concept_excluded  (concept_id ASC);
 
 CREATE INDEX idx_cohort_id_13  ON concept_resolved  (cohort_id ASC);
-CLUSTER concept_resolved  USING idx_covariate_id_13 ;
+CLUSTER concept_resolved  USING idx_cohort_id_13 ;
 CREATE INDEX idx_database_id_13  ON concept_resolved  (database_id ASC);
 CREATE INDEX idx_concept_set_id_13  ON concept_resolved  (concept_set_id ASC);
 CREATE INDEX idx_concept_id_13  ON concept_resolved  (concept_id ASC);
 
 CREATE INDEX idx_cohort_id_14  ON covariate_value  (cohort_id ASC);
-CLUSTER covariate_value  USING idx_covariate_id_14 ;
+CLUSTER covariate_value  USING idx_cohort_id_14 ;
 CREATE INDEX idx_database_id_14  ON covariate_value  (database_id ASC);
 CREATE INDEX idx_covariate_id_14  ON covariate_value  (covariate_id ASC);
 
