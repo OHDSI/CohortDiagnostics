@@ -1813,7 +1813,7 @@ getResultsFixedTimeSeries <- function(dataSource,
                   "subjectsStartIn", "personDaysIn", "subjectsEndIn", 
                   "recordsStart", "subjectsStart", 
                   "recordsEnd", "subjectsEnd"
-                  ),
+    ),
     longName = c("Records Found Per Period",
                  "Subjects Found Per Period",
                  "Person Days Per Period", 
