@@ -1416,12 +1416,11 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>% 
       dplyr::left_join(count, 
                        by = c('databaseId', 'conceptId'))
-    browser()
     return(data)
   })
   
   ###getResolvedConceptsComparator----
-  getResolvedConceptsComparator <- shiny::reactive({
+  getResolvedConceptsComparatorData <- shiny::reactive({
     if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
       return(NULL)
     }
@@ -1464,14 +1463,14 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getResolvedConceptsComparator----
   getResolvedConceptsComparator <- shiny::reactive({
-    data <- getResolvedConceptsComparator()
+    data <- getResolvedConceptsComparatorData()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     count <-
       getConceptCountForCohortAndDatabase(
         dataSource = dataSource,
-        databaseIds = consolidatedDatabaseIdComparator(),
+        databaseIds = consolidatedDatabaseIdTarget(),
         conceptIds = data$conceptId %>% unique(),
         cohortIds = consolidatedCohortIdComparator(),
         databaseCount = (input$targetConceptIdCountSource == "Datasource level")
@@ -1482,7 +1481,6 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>% 
       dplyr::left_join(count, 
                        by = c('databaseId', 'conceptId'))
-    browser()
     return(data)
   })
   
@@ -2590,7 +2588,7 @@ shiny::shinyServer(function(input, output, session) {
         "Please select concept set"
       ))
       
-      data <- getResolvedConceptsTarget()
+      data <- getResolvedConceptsTarget() 
       validate(need((all(
         !is.null(data), nrow(data) > 0
       )),
@@ -2601,7 +2599,8 @@ shiny::shinyServer(function(input, output, session) {
                       "persons" = .data$cohortSubjects)
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount,
-                                                             columnFilters = input$targetCohortConceptSetColumnFilter)
+                                                             columnFilters = input$targetCohortConceptSetColumnFilter,
+                                                             numberOfColums = 2)
       return(table)
     }, server = TRUE)
   
@@ -3153,7 +3152,8 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount,
-                                                             columnFilters = input$comparatorCohortConceptSetColumnFilter)
+                                                             columnFilters = input$comparatorCohortConceptSetColumnFilter,
+                                                             numberOfColums = 2)
       return(table)
     }, server = TRUE)
   

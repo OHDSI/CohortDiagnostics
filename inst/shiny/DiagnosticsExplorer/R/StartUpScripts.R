@@ -564,7 +564,7 @@ getConceptCountForCohortAndDatabase <- function(dataSource,
                     .data$subjectCount,
                     .data$conceptCount) %>%
       dplyr::rename("records" = .data$conceptCount,
-                    "subjects" = .data$subjectCount)
+                    "persons" = .data$subjectCount)
   } else {
     data <-
       getResultsIndexEventBreakdown(
