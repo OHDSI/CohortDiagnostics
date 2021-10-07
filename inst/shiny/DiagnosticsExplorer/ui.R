@@ -1197,13 +1197,32 @@ bodyTabItems <- shinydashboard::tabItems(
         title = "Compare Temporal Characterization",
         width = NULL,
         status = "primary",
-        plotly::plotlyOutput(
-          outputId = "compareTemporalCharacterizationPlot",
-          width = "100%",
-          height = "auto"
+        shiny::tabsetPanel(
+          id = "comparatorTemporalCharPlotTabSetPanel",
+          type = "tab",
+          shiny::tabPanel(
+            title = "2D Plot",
+            value = "compareTemporalCharacterization2DPlotPanel",
+            tags$br(),
+            plotly::plotlyOutput(
+              outputId = "compareTemporalCharacterizationPlot2D",
+              width = "100%",
+              height = "auto"
+            ),
+          ),
+          shiny::tabPanel(
+            title = "3D Plot",
+            value = "compareTemporalCharacterization3DPlotPanel",
+            tags$br(),
+            plotly::plotlyOutput(
+              outputId = "compareTemporalCharacterizationPlot3D",
+              width = "100%",
+              height = 800
+            ),
+          )
         ),
         tags$head(
-          tags$style("#compareTemporalCharacterizationPlot { width: '90vw' !important};")
+          tags$style("#compareTemporalCharacterizationPlot2D,#compareTemporalCharacterizationPlot3D { width: '90vw' !important};")
         )
       )
     )

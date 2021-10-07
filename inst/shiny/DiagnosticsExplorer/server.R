@@ -7961,7 +7961,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##!!!!!!!!!!!!! address https://github.com/OHDSI/CohortDiagnostics/issues/444
   ###compareTemporalCharacterizationPlot----
-  output$compareTemporalCharacterizationPlot <-
+  output$compareTemporalCharacterizationPlot2D <-
     plotly::renderPlotly(expr = {
       if (input$tabs != "compareTemporalCharacterization") {
         return(NULL)
@@ -7984,6 +7984,33 @@ shiny::shinyServer(function(input, output, session) {
           shortNameRef = cohort)
       return(plot)
     })
+  
+  ###compareTemporalCharacterizationPlot3D----
+  output$compareTemporalCharacterizationPlot3D <-
+    plotly::renderPlotly(expr = {
+      if (input$tabs != "compareTemporalCharacterization") {
+        return(NULL)
+      }
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = paste0("Rendering plot for compare temporal characterization."),
+        value = 0
+      )
+      data <- getCompareTemporalCharcterizationDataFiltered()
+      validate(need(
+        all(!is.null(data),
+            nrow(data) > 0),
+        paste0("No data for the selected combination.")
+      ))
+      plot <-
+        plotTemporalCompareStandardizedDifference3D(
+          balance = data,
+          shortNameRef = cohort)
+      return(plot)
+    })
+  
+ 
   
   #______________----
   #Metadata----
