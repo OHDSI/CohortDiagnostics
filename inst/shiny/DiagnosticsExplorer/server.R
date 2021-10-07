@@ -8010,7 +8010,31 @@ shiny::shinyServer(function(input, output, session) {
       return(plot)
     })
   
- 
+  observeEvent (
+    eventExpr = list(input$timeIdChoices_open,
+                     input$tabs),
+    handlerExpr = {
+      if (any(isFALSE(input$timeIdChoices_open)||!is.null(input$tabs))) {
+        for (i in 1:length(input$timeIdChoices)) {
+          if (!(
+            input$timeIdChoices[i] %in% c(
+              "Start -365 to end -31",
+              "Start -30 to end -1",
+              "Start 0 to end 0",
+              "Start 1 to end 30",
+              "Start 31 to end 365"
+            )
+          ))
+          {
+            updateTabsetPanel(session,
+                              "comparatorTemporalCharPlotTabSetPanel",
+                              selected = "compareTemporalCharacterization3DPlotPanel")
+            break
+          }
+        }
+      }
+    }
+  )
   
   #______________----
   #Metadata----
