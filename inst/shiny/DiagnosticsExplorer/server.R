@@ -1473,7 +1473,7 @@ shiny::shinyServer(function(input, output, session) {
         databaseIds = consolidatedDatabaseIdTarget(),
         conceptIds = data$conceptId %>% unique(),
         cohortIds = consolidatedCohortIdComparator(),
-        databaseCount = (input$targetConceptIdCountSource == "Datasource level")
+        databaseCount = (input$comparatorConceptIdCountSource == "Datasource level")
       )
     if (!doesObjectHaveData(count)) {
       return(NULL)
@@ -1601,6 +1601,69 @@ shiny::shinyServer(function(input, output, session) {
         databaseIds = consolidatedDatabaseIdTarget(),
         conceptIds = data$conceptId %>% unique(),
         cohortIds = consolidatedCohortIdComparator(),
+        databaseCount = (input$comparatorConceptIdCountSource == "Datasource level")
+      )
+    if (!doesObjectHaveData(count)) {
+      return(NULL)
+    }
+    data <- data %>% 
+      dplyr::left_join(count, 
+                       by = c('databaseId', 'conceptId'))
+    return(data)
+  })
+  
+  #getOrphanConceptsTargetData
+  getOrphanConceptsTargetData <- shiny::reactive(x = {
+    if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(consolidatedConceptSetIdTarget())) {
+      return(NULL)
+    }
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = "Retrieving Orphan concepts for target",
+                 value = 0)
+    data <- getResultsOrphanConcept(
+      dataSource = dataSource,
+      cohortId = consolidatedCohortIdTarget(),
+      databaseId = consolidatedDatabaseIdTarget(),
+      conceptSetId = consolidatedConceptSetIdTarget()
+    )
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    conceptDetails <- getConcept(dataSource = dataSource,
+                                 conceptIds = data$conceptId %>% unique())
+    if (is.null(conceptDetails)) {
+      return(NULL)
+    }
+    conceptDetails <- conceptDetails %>%
+      dplyr::select(.data$conceptId,
+                    .data$conceptName,
+                    .data$vocabularyId)
+    
+    data <- data %>%
+      dplyr::left_join(conceptDetails,
+                       by = "conceptId") %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId)
+    return(data)
+  })
+  ###getOrphanConceptsTarget----
+  getOrphanConceptsTarget <- shiny::reactive({
+    data <- getOrphanConceptsTargetData()
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    count <-
+      getConceptCountForCohortAndDatabase(
+        dataSource = dataSource,
+        databaseIds = consolidatedDatabaseIdTarget(),
+        conceptIds = data$conceptId %>% unique(),
+        cohortIds = consolidatedCohortIdTarget(),
         databaseCount = (input$targetConceptIdCountSource == "Datasource level")
       )
     if (!doesObjectHaveData(count)) {
@@ -1612,87 +1675,67 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  
-  ###getOrphanConceptsTarget----
-  getOrphanConceptsTarget <- shiny::reactive({
+  ##getOrphanConceptsComparatorData
+  getOrphanConceptsComparatorData <- shiny::reactive(x = {
+    if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(consolidatedConceptSetIdComparator())) {
+      return(NULL)
+    }
     progress <- shiny::Progress$new()
     on.exit(progress$close())
-    progress$set(
-      message = "Calculating orphan concepts for target",
-      value = 0
-    )
+    progress$set(message = "Retrieving Orphan concepts for comparator",
+                 value = 0)
     data <- getResultsOrphanConcept(
       dataSource = dataSource,
-      cohortId = consolidatedCohortIdTarget(),
+      cohortId = consolidatedCohortIdComparator(),
       databaseId = consolidatedDatabaseIdTarget(),
-      conceptSetId = consolidatedConceptSetIdTarget()
+      conceptSetId = consolidatedConceptSetIdComparator()
     )
-    if (is.null(data)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    conceptDetails <- getConcept(dataSource = dataSource,
+                                 conceptIds = data$conceptId %>% unique())
+    if (is.null(conceptDetails)) {
+      return(NULL)
+    }
+    conceptDetails <- conceptDetails %>%
+      dplyr::select(.data$conceptId,
+                    .data$conceptName,
+                    .data$vocabularyId)
     
-    excluded <- getExcludedConceptsTarget()
-    if (doesObjectHaveData(excluded)) {
-      excludedConceptIds <- excluded %>%
-        dplyr::select(.data$conceptId) %>%
-        dplyr::distinct()
-      data <- data %>%
-        dplyr::anti_join(y = excludedConceptIds, by = "conceptId")
-    }
-    data <- data  %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdTarget())
-    data <- getDatabaseOrCohortCountForConceptIds(
-      data = data, 
-      dataSource = dataSource,
-      databaseCount = input$targetConceptIdCountSource == "Datasource level"
-    )
-    if (is.null(data)) {
-      return(NULL)
-    }
     data <- data %>%
-      dplyr::select(-.data$conceptSetId,-.data$cohortId)
+      dplyr::left_join(conceptDetails,
+                       by = "conceptId") %>% 
+      dplyr::select(-.data$conceptSetId, -.data$cohortId)
     return(data)
   })
   
   ###getOrphanConceptsComparator----
   getOrphanConceptsComparator <- shiny::reactive({
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(
-      message = "Calculating orphan concepts for comparator",
-      value = 0
-    )
-    data <- getResultsOrphanConcept(
-      dataSource = dataSource,
-      cohortId = consolidatedCohortIdComparator(),
-      databaseId = consolidatedDatabaseIdTarget(),# there is no consolidatedDatabaseIdComparator
-      conceptSetId = consolidatedConceptSetIdComparator()
-    )
-    if (is.null(data)) {
+    data <- getOrphanConceptsComparatorData()
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    
-    excluded <- getExcludedConceptsComparator()
-    if (doesObjectHaveData(excluded)) {
-      excludedConceptIds <- excluded %>%
-        dplyr::select(.data$conceptId) %>%
-        dplyr::distinct()
-      data <- data %>%
-        dplyr::anti_join(y = excludedConceptIds, by = "conceptId")
-    }
-    data <- data  %>%
-      dplyr::filter(.data$conceptSetId == consolidatedConceptSetIdComparator())
-    
-    data <- getDatabaseOrCohortCountForConceptIds(
-      data = data, 
-      dataSource = dataSource,
-      databaseCount = input$comparatorConceptIdCountSource == "Datasource level")
-    
-    if (is.null(data)) {
+    count <-
+      getConceptCountForCohortAndDatabase(
+        dataSource = dataSource,
+        databaseIds = consolidatedDatabaseIdTarget(),
+        conceptIds = data$conceptId %>% unique(),
+        cohortIds = consolidatedCohortIdComparator(),
+        databaseCount = (input$comparatorConceptIdCountSource == "Datasource level")
+      )
+    if (!doesObjectHaveData(count)) {
       return(NULL)
     }
-    data <- data %>%
-      dplyr::select(-.data$conceptSetId,-.data$cohortId)
+    data <- data %>% 
+      dplyr::left_join(count, 
+                       by = c('databaseId', 'conceptId'))
     return(data)
   })
   
@@ -2727,7 +2770,8 @@ shiny::shinyServer(function(input, output, session) {
 
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount,
-                                                             columnFilters = input$targetCohortConceptSetColumnFilter)
+                                                             columnFilters = input$targetCohortConceptSetColumnFilter,
+                                                             numberOfColums = 2)
       return(table)
     }, server = TRUE)
   
@@ -3283,7 +3327,8 @@ shiny::shinyServer(function(input, output, session) {
 
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount,
-                                                             columnFilters = input$comparatorCohortConceptSetColumnFilter)
+                                                             columnFilters = input$comparatorCohortConceptSetColumnFilter,
+                                                             numberOfColums = 2)
     }, server = TRUE)
   
   ##output: saveComparatorCohortDefinitionOrphanConceptTable----
