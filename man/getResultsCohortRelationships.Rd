@@ -7,6 +7,7 @@
 getResultsCohortRelationships(
   dataSource,
   cohortIds = NULL,
+  comparatorCohortIds = NULL,
   databaseIds = NULL,
   startDay = NULL,
   endDay = NULL
@@ -29,6 +30,8 @@ of the results data model.}
 \item{startDay}{A vector of days in relation to cohort_start_date of target}
 
 \item{endDay}{A vector of days in relation to cohort_end_date of target}
+
+\item{ComparatorCohortIds}{A vector of one or more Cohort Ids.}
 }
 \value{
 Returns a data frame (tibble) with results that conform to cohort_relationships

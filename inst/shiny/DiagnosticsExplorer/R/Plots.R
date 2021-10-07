@@ -1427,6 +1427,123 @@ plotTemporalCompareStandardizedDifference <- function(balance,
 }
 
 
+plotTemporalCompareStandardizedDifference3D <- function(balance,
+                                                      shortNameRef = NULL,
+                                                      domain = "all") {
+  domains <-
+    c("Condition",
+      "Device",
+      "Drug",
+      "Measurement",
+      "Observation",
+      "Procedure",
+      "Cohort")
+  balance$domain <- balance$domainId
+  balance$domain[!balance$domain %in% domains] <- "other"
+  if (domain != "all") {
+    balance <- balance %>%
+      dplyr::filter(.data$domain == !!domain)
+  }
+  
+  validate(need((nrow(balance) > 0), paste0("No data for selected combination.")))
+  
+  # Can't make sense of plot with > 1000 dots anyway, so remove
+  # anything with small mean in both target and comparator:
+  if (nrow(balance) > 1000) {
+    balance <- balance %>%
+      dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+  }
+  balance <- balance %>%
+    addShortName(
+      shortNameRef = shortNameRef,
+      cohortIdColumn = "cohortId1",
+      shortNameColumn = "targetCohort"
+    ) %>%
+    addShortName(
+      shortNameRef = shortNameRef,
+      cohortIdColumn = "cohortId2",
+      shortNameColumn = "comparatorCohort"
+    )
+  
+  # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
+  balance$tooltip <-
+    c(
+      paste0(
+        "Covariate Name: ",
+        balance$covariateName,
+        "\nDomain: ",
+        balance$domainId,
+        "\nAnalysis: ",
+        balance$analysisName,
+        "\n Target (",
+        balance$targetCohort,
+        ") : ",
+        scales::comma(balance$mean1, accuracy = 0.01),
+        "\n Comparator (",
+        balance$comparatorCohort,
+        ") : ",
+        scales::comma(balance$mean2, accuracy = 0.01),
+        "\nStd diff.: ",
+        scales::comma(balance$stdDiff, accuracy = 0.01),
+        "\nTime : ",
+        balance$choices
+      )
+    )
+  balance <- balance %>% 
+    dplyr::inner_join(
+      read.csv('colorReference.csv') %>% 
+        dplyr::filter(.data$type == "domain") %>% 
+        dplyr::mutate(domain = .data$name, colors = .data$value) %>% 
+        dplyr::select(.data$domain,.data$colors),
+      by = "domain"
+    )
+  
+  xCohort <- balance %>%
+    dplyr::distinct(balance$targetCohort) %>%
+    dplyr::pull()
+  yCohort <- balance %>%
+    dplyr::distinct(balance$comparatorCohort) %>%
+    dplyr::pull()
+  
+  targetName <- balance %>% 
+    dplyr::select(.data$cohortId1) %>% 
+    dplyr::mutate(cohortId = .data$cohortId1) %>% 
+    dplyr::inner_join(cohort, by = "cohortId") %>% 
+    dplyr::pull(.data$cohortName) %>% unique()
+  
+  comparatorName <- balance %>% 
+    dplyr::select(.data$cohortId2) %>% 
+    dplyr::mutate(cohortId = .data$cohortId2) %>% 
+    dplyr::inner_join(cohort, by = "cohortId") %>% 
+    dplyr::pull(.data$cohortName) %>% unique()
+  
+  selectedDatabaseId <- balance$databaseId %>% unique()
+
+  balance$tempChoices <- ''
+  for (i in 1 : nrow(balance)) {
+    balance$tempChoices[i] <- as.integer(strsplit(balance$choices[i], " ")[[1]][2])
+  }
+  balance <- balance %>% 
+    dplyr::arrange(.data$tempChoices) %>% 
+    dplyr::select(-.data$tempChoices)
+  distinctChoices <- balance$choices %>%  unique()
+  
+  plot <- plotly::plot_ly(balance,  x = ~ mean1, y = ~mean2, z = ~choices  , color = ~ domain, colors = ~colors,
+                      hoverinfo = 'text',
+                     opacity = 0.5,
+                      text = ~ tooltip)  %>% 
+    plotly::add_markers() %>% 
+    plotly::layout(scene = list(xaxis = list(title = paste0('Cohort (',xCohort,')')),
+                                yaxis = list(title = paste0('Comparator (',yCohort,')')),
+                                zaxis = list(title = '')
+                                ),title = list(text=paste("target :",targetName,"\n",
+                                                          "comparator :", comparatorName,"\n",
+                                                          "Database :", selectedDatabaseId),
+                                               x=0.5, y=0.1,font=list(size=10))
+                   )
+  return(plot)
+}
+
 
 ### cohort overlap plot ##############
 

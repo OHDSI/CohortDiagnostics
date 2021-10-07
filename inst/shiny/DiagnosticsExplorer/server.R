@@ -5582,11 +5582,22 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    
     # Apply Pivot Longer
     pivotColumns <- c()
     if (input$visitContextPersonOrRecords == 'Person') {
+      data <- data %>% 
+        dplyr::inner_join(cohortCount) %>% 
+        dplyr::mutate(databaseId = paste0(.data$databaseId, " (n = ",
+                                    scales::comma(.data$cohortSubjects),
+                                    ")"))
       pivotColumns <- c("subjects")
     } else {
+      data <- data %>% 
+        dplyr::inner_join(cohortCount) %>% 
+        dplyr::mutate(databaseId = paste0(.data$databaseId, " (n = ",
+                                          scales::comma(.data$cohortEntries),
+                                          ")"))
       pivotColumns <- c("records")
     }
     data <- data %>%
@@ -7950,7 +7961,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##!!!!!!!!!!!!! address https://github.com/OHDSI/CohortDiagnostics/issues/444
   ###compareTemporalCharacterizationPlot----
-  output$compareTemporalCharacterizationPlot <-
+  output$compareTemporalCharacterizationPlot2D <-
     plotly::renderPlotly(expr = {
       if (input$tabs != "compareTemporalCharacterization") {
         return(NULL)
@@ -7973,6 +7984,57 @@ shiny::shinyServer(function(input, output, session) {
           shortNameRef = cohort)
       return(plot)
     })
+  
+  ###compareTemporalCharacterizationPlot3D----
+  output$compareTemporalCharacterizationPlot3D <-
+    plotly::renderPlotly(expr = {
+      if (input$tabs != "compareTemporalCharacterization") {
+        return(NULL)
+      }
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = paste0("Rendering plot for compare temporal characterization."),
+        value = 0
+      )
+      data <- getCompareTemporalCharcterizationDataFiltered()
+      validate(need(
+        all(!is.null(data),
+            nrow(data) > 0),
+        paste0("No data for the selected combination.")
+      ))
+      plot <-
+        plotTemporalCompareStandardizedDifference3D(
+          balance = data,
+          shortNameRef = cohort)
+      return(plot)
+    })
+  
+  observeEvent (
+    eventExpr = list(input$timeIdChoices_open,
+                     input$tabs),
+    handlerExpr = {
+      if (any(isFALSE(input$timeIdChoices_open)||!is.null(input$tabs))) {
+        for (i in 1:length(input$timeIdChoices)) {
+          if (!(
+            input$timeIdChoices[i] %in% c(
+              "Start -365 to end -31",
+              "Start -30 to end -1",
+              "Start 0 to end 0",
+              "Start 1 to end 30",
+              "Start 31 to end 365"
+            )
+          ))
+          {
+            updateTabsetPanel(session,
+                              "comparatorTemporalCharPlotTabSetPanel",
+                              selected = "compareTemporalCharacterization3DPlotPanel")
+            break
+          }
+        }
+      }
+    }
+  )
   
   #______________----
   #Metadata----
