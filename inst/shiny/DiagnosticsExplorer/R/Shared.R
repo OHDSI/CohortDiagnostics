@@ -297,6 +297,8 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              startDay = NULL,
                                              endDay = NULL,
                                              seriesType = NULL,
+                                             eventMonth = NULL,
+                                             eventYear = NULL,
                                              dataTableName) {
   if (is(dataSource, "environment")) {
     object <- c(
@@ -311,7 +313,9 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
       "endDay",
       "daysRelativeIndex",
       "domainTable",
-      "seriesType"
+      "seriesType",
+      "eventMonth",
+      "eventYear"
     )
     if (!is.null(vocabularyDatabaseSchema)) {
       paste0(
@@ -370,6 +374,8 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
               {@relationship_id !=''} ? {AND relationship_id IN (@relationship_id) \n}
               {@series_type !=''} ? {AND series_type IN (@series_type) \n}
               {@domain_table !=''} ? {AND domain_table IN (@domain_table) \n}
+              {@event_month !=''} ? {AND event_month IN (@event_month) \n}
+              {@event_year !=''} ? {AND event_year IN (@event_year) \n}
             ;"
     if (!is.null(vocabularyDatabaseSchema)) {
       resultsDatabaseSchema <- vocabularyDatabaseSchema
@@ -396,6 +402,8 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         domain_table = quoteLiterals(domainTable),
         days_relative_index = daysRelativeIndex,
         series_type = quoteLiterals(seriesType),
+        event_month = eventMonth,
+        event_year = eventYear,
         snakeCaseToCamelCase = TRUE
       )
   }
@@ -761,6 +769,8 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
 #' @template DatabaseIds
 #'
 #' @template ConceptIds
+#' 
+#' @template eventMonth (optional) which month do you want to return data for
 #'
 #' @return
 #' Returns a data frame (tibble)
@@ -768,11 +778,15 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
 #' @export
 getResultsConceptCount <- function(dataSource,
                                    databaseIds = NULL,
-                                   conceptIds = NULL) {
+                                   conceptIds = NULL,
+                                   eventMonth = NULL,
+                                   eventYear = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     databaseId = databaseIds,
     conceptId = conceptIds,
+    eventMonth = eventMonth,
+    eventYear = eventYear,
     dataTableName = "conceptCount"
   )
   return(data)
