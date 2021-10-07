@@ -1477,6 +1477,12 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getOrphanConceptsTarget----
   getOrphanConceptsTarget <- shiny::reactive({
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(
+      message = "Calculating orphan concepts for target",
+      value = 0
+    )
     data <- getResultsOrphanConcept(
       dataSource = dataSource,
       cohortId = consolidatedCohortIdTarget(),
@@ -1512,6 +1518,12 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getOrphanConceptsComparator----
   getOrphanConceptsComparator <- shiny::reactive({
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(
+      message = "Calculating orphan concepts for comparator",
+      value = 0
+    )
     data <- getResultsOrphanConcept(
       dataSource = dataSource,
       cohortId = consolidatedCohortIdComparator(),
@@ -2565,9 +2577,6 @@ shiny::shinyServer(function(input, output, session) {
   output$targetCohortDefinitionOrphanConceptTable <-
     DT::renderDataTable(expr = {
       data <- getOrphanConceptsTarget()
-      if (!doesObjectHaveData(data)) {
-        return(NULL)
-      }
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
                     "No orphan concepts"))
@@ -3125,10 +3134,6 @@ shiny::shinyServer(function(input, output, session) {
   output$comparatorCohortDefinitionOrphanConceptTable <-
     DT::renderDataTable(expr = {
       data <- getOrphanConceptsComparator()
-      if (!doesObjectHaveData(data)) {
-        return(NULL)
-      } 
-      
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
                     "No orphan concepts"))
