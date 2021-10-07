@@ -390,7 +390,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         concept_set_id = conceptSetId,
         concept_id_1 = conceptId1,
         # for concept relationship only
-        relationship_id = relationship_id,
+        relationship_id = quoteLiterals(relationshipId),
         start_day = startDay,
         end_day = endDay,
         domain_table = quoteLiterals(domainTable),
