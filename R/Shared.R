@@ -284,6 +284,7 @@ renderTranslateQuerySql <-
 # private function - not exported
 getDataFromResultsDatabaseSchema <- function(dataSource,
                                              cohortId = NULL,
+                                             comparatorCohortId = NULL,
                                              conceptId = NULL,
                                              coConceptId = NULL,
                                              conceptId1 = NULL,
@@ -299,6 +300,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
   if (is(dataSource, "environment")) {
     object <- c(
       "cohortId",
+      "comparatorCohortId",
       "conceptId",
       "coConceptId",
       "databaseId",
@@ -353,6 +355,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
             WHERE 1 = 1 \n
               {@database_id !=''} ? {AND database_id in (@database_id) \n}
               {@cohort_id !=''} ? {AND cohort_id in (@cohort_id) \n}
+              {@comparator_cohort_id !=''} ? {AND comparator_cohort_id in (@comparator_cohort_id) \n}
               {@concept_id !=''} ? {AND concept_id in (@concept_id) \n}
               {@co_concept_id !=''} ? {AND co_concept_id in (@co_concept_id) \n}
               {@concept_set_id !=''} ? {AND concept_set_id in (@concept_set_id) \n}
@@ -374,6 +377,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         sql = sql,
         results_database_schema = resultsDatabaseSchema,
         cohort_id = cohortId,
+        comparator_cohort_id = comparator_cohort_id,
         data_table = camelCaseToSnakeCase(dataTableName),
         database_id = quoteLiterals(databaseId),
         concept_id = conceptId,
@@ -2097,7 +2101,9 @@ getResultsVisitContext <- function(dataSource,
 #'
 #' @template DataSource
 #'
-#' @template cohortIds
+#' @template CohortIds
+#'
+#' @template ComparatorCohortIds
 #'
 #' @template DatabaseIds
 #' 
@@ -2112,12 +2118,14 @@ getResultsVisitContext <- function(dataSource,
 #' @export
 getResultsCohortRelationships <- function(dataSource,
                                           cohortIds = NULL,
+                                          comparatorCohortIds = NULL,
                                           databaseIds = NULL,
                                           startDay = NULL,
                                           endDay = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource = dataSource,
     cohortId = cohortIds,
+    comparatorCohortId = comparatorCohortIds,
     databaseId = databaseIds,
     startDay = startDay,
     endDay = endDay,
@@ -2125,6 +2133,185 @@ getResultsCohortRelationships <- function(dataSource,
   )
   return(data)
 }
+
+
+
+#' Returns data for use in cohort co-occurrence matrix
+#'
+#' @description
+#' Returns a a data frame (tibble) that shows the percent (optionally number) of subjects
+#' in target cohort that are also in comparator cohort at certain days relative to 
+#' first start date of a subject in target cohort.
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#' 
+#' @template ComparatorCohortIds
+#'
+#' @template DatabaseIds
+#' 
+#' @param startDay A vector of days in relation to cohort_start_date of target 
+#' 
+#' @param endDay A vector of days in relation to cohort_end_date of target 
+#' 
+#' @param showPercent Return percent instead of raw numbers
+#'
+#' @return
+#' Returns a data frame (tibble). Note - the computation is in relation
+#' to first start of target cohort only.
+#'
+#' @export
+getResultsCohortCoOccurrenceMatrix <- function(dataSource,
+                                               targetCohortIds = NULL,
+                                               comparatorCohortIds = NULL,
+                                               databaseIds = NULL,
+                                               startDay = NULL,
+                                               endDay = NULL,
+                                               showPercent = TRUE) {
+  cohortCount <- getResultsCohortCount(
+    dataSource = dataSource,
+    cohortIds = c(targetCohortIds, comparatorCohortIds) %>% unique(),
+    databaseIds = databaseIds
+  )
+  if (is.null(data$cohortCount)) {
+    return(NULL)
+  }
+  
+  cohortRelationship <- getResultsCohortRelationships(
+    dataSource = dataSource,
+    cohortId = targetCohortIds,
+    comparatorCohortIds = comparatorCohortIds,
+    databaseIds = databaseIds,
+    startDay = startDay,
+    endDay = endDay
+  )
+  if (is.null(cohortRelationship)) {
+    return(NULL)
+  }
+  cohortRelationship <- cohortRelationship %>%
+    dplyr::mutate(records = 0) %>%
+    dplyr::rename(
+      "targetCohortId" = .data$cohortId,
+      "comparatorCohortId" = .data$comparatorCohortId,
+      "bothSubjects" = .data$subjects,
+      "bothRecords" = .data$records
+    ) %>%
+    dplyr::select(
+      .data$databaseId,
+      .data$targetCohortId,
+      .data$comparatorCohortId,
+      .data$startDay,
+      .data$endDay,
+      # overlap - comparator period overlaps target period (offset)
+      .data$bothSubjects,
+      .data$bothRecords,
+      # comparator start on Target Start
+      .data$recCsOnTs,
+      .data$subCsOnTs,
+      .data$subCsWindowT
+    )
+  
+  coOccurrenceMatrix <- cohortRelationship %>%
+    dplyr::filter(.data$startDay == .data$endDay)  %>%
+    dplyr::mutate(dayName = dplyr::case_when(
+      .data$startDay < 0 ~ paste0("dayNeg", abs(.data$startDay)),
+      TRUE ~ paste0("dayPos", abs(.data$startDay))
+    )) %>%
+    dplyr::select(
+      .data$databaseId,
+      .data$targetCohortId,
+      .data$comparatorCohortId,
+      .data$dayName,
+      .data$bothSubjects,
+      .data$subCsOnTs,
+      .data$subCsWindowT
+    )
+  
+  matrixOverlap <- coOccurrenceMatrix %>%
+    dplyr::filter(!is.na(.data$bothSubjects)) %>%
+    dplyr::select(
+      .data$databaseId,
+      .data$targetCohortId,
+      .data$comparatorCohortId,
+      .data$dayName,
+      .data$bothSubjects
+    ) %>%
+    tidyr::pivot_wider(
+      id_cols = c(
+        .data$databaseId,
+        .data$targetCohortId,
+        .data$comparatorCohortId
+      ),
+      names_from = .data$dayName,
+      values_from = .data$bothSubjects
+    ) %>%
+    dplyr::mutate(type = 'overlap')
+  
+  matrixStart <- coOccurrenceMatrix %>%
+    dplyr::filter(!is.na(.data$subCsOnTs)) %>%
+    dplyr::select(
+      .data$databaseId,
+      .data$targetCohortId,
+      .data$comparatorCohortId,
+      .data$dayName,
+      .data$subCsOnTs
+    ) %>%
+    tidyr::pivot_wider(
+      id_cols = c(
+        .data$databaseId,
+        .data$targetCohortId,
+        .data$comparatorCohortId
+      ),
+      names_from = .data$dayName,
+      values_from = .data$subCsOnTs
+    ) %>%
+    dplyr::mutate(type = 'start')
+  
+  matrixStartWindows <- coOccurrenceMatrix %>%
+    dplyr::filter(!is.na(.data$subCsWindowT)) %>%
+    dplyr::select(
+      .data$databaseId,
+      .data$targetCohortId,
+      .data$comparatorCohortId,
+      .data$dayName,
+      .data$subCsWindowT
+    ) %>%
+    tidyr::pivot_wider(
+      id_cols = c(
+        .data$databaseId,
+        .data$targetCohortId,
+        .data$comparatorCohortId
+      ),
+      names_from = .data$dayName,
+      values_from = .data$subCsWindowT
+    ) %>%
+    dplyr::mutate(type = 'startWindow')
+  
+  matrix <- dplyr::bind_rows(matrixOverlap,
+                             matrixStart,
+                             matrixStartWindows)
+  if (showPercent) {
+    matrix <- matrix %>%
+      dplyr::inner_join(
+        cohortCount %>%
+          dplyr::select(.data$databaseId,
+                        .data$cohortId,
+                        .data$cohortSubjects) %>%
+          dplyr::rename("targetCohortId" = .data$cohortId),
+        by = c("targetCohortId", "databaseId")
+      ) %>%
+      dplyr::mutate(dplyr::across(.cols = dplyr::starts_with("day")) / .data$cohortSubjects)
+  }
+  return(matrix)
+}
+
+
+
+
+
+
+
 
 #' Returns data for use in cohort_overlap
 #'
@@ -2147,6 +2334,7 @@ getResultsCohortOverlap <- function(dataSource,
                                     targetCohortIds = NULL,
                                     comparatorCohortIds = NULL,
                                     databaseIds = NULL) {
+  browser()
   cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique()
   cohortCounts <-
     getResultsCohortCount(dataSource = dataSource,
@@ -2158,14 +2346,13 @@ getResultsCohortOverlap <- function(dataSource,
     return(NULL)
   }
   
-  combisOfTargetComparator <- tidyr::crossing(dplyr::tibble(targetCohortId = targetCohortIds),
-                                              dplyr::tibble(comparatorCohortId = comparatorCohortIds)) %>%
-    dplyr::filter(.data$targetCohortId != .data$comparatorCohortId)
-  
   cohortRelationship <-
     getResultsCohortRelationships(dataSource = dataSource,
                                   cohortIds = cohortIds,
-                                  databaseIds = databaseIds)
+                                  comparatorCohortIds = comparatorCohortIds,
+                                  databaseIds = databaseIds, 
+                                  startDay = c(-99999,0),
+                                  endDay = c(99999,0))
   
   if (any(is.null(cohortRelationship),
           nrow(cohortRelationship) == 0)) {
