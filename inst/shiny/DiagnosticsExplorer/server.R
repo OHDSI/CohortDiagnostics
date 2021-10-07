@@ -1484,8 +1484,8 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###getExcludedConceptsTarget----
-  getExcludedConceptsTarget <- shiny::reactive({
+  #getExcludedConceptsTargetData
+  getExcludedConceptsTargetData <- shiny::reactive(x = {
     if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
       return(NULL)
     }
@@ -1495,30 +1495,61 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedConceptSetIdTarget())) {
       return(NULL)
     }
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = "Retrieving Exluded concepts for target",
+                 value = 0)
     data <- getResultsExcludedConcepts(
       dataSource = dataSource,
       cohortId = consolidatedCohortIdTarget(),
       databaseId = consolidatedDatabaseIdTarget(),
       conceptSetId = consolidatedConceptSetIdTarget()
     )
-    if (is.null(data)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    data <- getDatabaseOrCohortCountForConceptIds(
-      data = data, 
-      dataSource = dataSource,
-      databaseCount = input$targetConceptIdCountSource == "Datasource level"
-    )
-    if (is.null(data)) {
+    conceptDetails <- getConcept(dataSource = dataSource,
+                                 conceptIds = data$conceptId %>% unique())
+    if (is.null(conceptDetails)) {
       return(NULL)
     }
-    data <- data %>% 
+    conceptDetails <- conceptDetails %>%
+      dplyr::select(.data$conceptId,
+                    .data$conceptName,
+                    .data$vocabularyId)
+    
+    data <- data %>%
+      dplyr::left_join(conceptDetails,
+                       by = "conceptId") %>% 
       dplyr::select(-.data$conceptSetId, -.data$cohortId)
     return(data)
   })
   
-  ###getExcludedConceptsComparator----
-  getExcludedConceptsComparator <- shiny::reactive({
+  ###getExcludedConceptsTarget----
+  getExcludedConceptsTarget <- shiny::reactive({
+    data <- getExcludedConceptsTargetData()
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    count <-
+      getConceptCountForCohortAndDatabase(
+        dataSource = dataSource,
+        databaseIds = consolidatedDatabaseIdTarget(),
+        conceptIds = data$conceptId %>% unique(),
+        cohortIds = consolidatedCohortIdTarget(),
+        databaseCount = (input$targetConceptIdCountSource == "Datasource level")
+      )
+    if (!doesObjectHaveData(count)) {
+      return(NULL)
+    }
+    data <- data %>% 
+      dplyr::left_join(count, 
+                       by = c('databaseId', 'conceptId'))
+    return(data)
+   })
+  
+  #getExcludedConceptsComparatorData
+  getExcludedConceptsComparatorData <- shiny::reactive({
     if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
       return(NULL)
     }
@@ -1528,21 +1559,56 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedConceptSetIdComparator())) {
       return(NULL)
     }
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = "Retrieving Exluded concepts for comparator",
+                 value = 0)
     data <- getResultsExcludedConcepts(
       dataSource = dataSource,
       cohortId = consolidatedCohortIdComparator(),
-      databaseId = consolidatedDatabaseIdTarget(), #same for both target and comparator
+      databaseId = consolidatedDatabaseIdTarget(),
       conceptSetId = consolidatedConceptSetIdComparator()
     )
-    if (is.null(data)) {
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    data <- getDatabaseOrCohortCountForConceptIds(
-      data = data, 
-      dataSource = dataSource,
-      databaseCount = input$comparatorConceptIdCountSource == "Datasource level")
-    data <- data %>% 
+    conceptDetails <- getConcept(dataSource = dataSource,
+                                 conceptIds = data$conceptId %>% unique())
+    if (is.null(conceptDetails)) {
+      return(NULL)
+    }
+    conceptDetails <- conceptDetails %>%
+      dplyr::select(.data$conceptId,
+                    .data$conceptName,
+                    .data$vocabularyId)
+    
+    data <- data %>%
+      dplyr::left_join(conceptDetails,
+                       by = "conceptId") %>% 
       dplyr::select(-.data$conceptSetId, -.data$cohortId)
+    return(data)
+  })
+  
+  ###getExcludedConceptsComparator----
+  getExcludedConceptsComparator <- shiny::reactive({
+    data <- getExcludedConceptsComparatorData()
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    count <-
+      getConceptCountForCohortAndDatabase(
+        dataSource = dataSource,
+        databaseIds = consolidatedDatabaseIdTarget(),
+        conceptIds = data$conceptId %>% unique(),
+        cohortIds = consolidatedCohortIdComparator(),
+        databaseCount = (input$targetConceptIdCountSource == "Datasource level")
+      )
+    if (!doesObjectHaveData(count)) {
+      return(NULL)
+    }
+    data <- data %>% 
+      dplyr::left_join(count, 
+                       by = c('databaseId', 'conceptId'))
     return(data)
   })
   
@@ -2631,7 +2697,8 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount,
-                                                             columnFilters = input$targetCohortConceptSetColumnFilter)
+                                                             columnFilters = input$targetCohortConceptSetColumnFilter,
+                                                             numberOfColums = 2)
       return(table)
     }, server = TRUE)
   
@@ -3178,9 +3245,6 @@ shiny::shinyServer(function(input, output, session) {
       )),
       "No excluded concept ids"))
       
-      databaseIds <- sort(unique(data$databaseId))
-      maxCount <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "records")
-      maxSubject <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "persons")
       databaseCount <- cohortCount %>% 
         dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
         dplyr::rename("records" = .data$cohortEntries,
@@ -3188,7 +3252,8 @@ shiny::shinyServer(function(input, output, session) {
   
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount,
-                                                             columnFilters = input$comparatorCohortConceptSetColumnFilter)
+                                                             columnFilters = input$comparatorCohortConceptSetColumnFilter,
+                                                             numberOfColums = 2)
       return(table)
     }, server = TRUE)
   
