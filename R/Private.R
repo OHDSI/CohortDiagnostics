@@ -225,7 +225,7 @@ writeToAllOutputToCsv <- function(object,
     )
   }
   
-  # write vocabulary tables
+ 
   for (i in (1:length(tablesOfInterest))) {
     if (tablesOfInterest[[i]] %in% camelCaseToSnakeCase(names(object))) {
       ParallelLogger::logTrace(paste0(" - Writing data to file: ", tablesOfInterest[[i]], ".csv"))

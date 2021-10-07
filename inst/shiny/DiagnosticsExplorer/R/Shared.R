@@ -288,6 +288,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              conceptId = NULL,
                                              coConceptId = NULL,
                                              conceptId1 = NULL,
+                                             relationshipId = NULL,
                                              conceptSetId = NULL,
                                              databaseId = NULL,
                                              domainTable = NULL,
@@ -296,12 +297,15 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              startDay = NULL,
                                              endDay = NULL,
                                              seriesType = NULL,
+                                             eventMonth = NULL,
+                                             eventYear = NULL,
                                              dataTableName) {
   if (is(dataSource, "environment")) {
     object <- c(
       "cohortId",
       "comparatorCohortId",
       "conceptId",
+      "relationshipId",
       "coConceptId",
       "databaseId",
       "conceptSetId",
@@ -309,7 +313,9 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
       "endDay",
       "daysRelativeIndex",
       "domainTable",
-      "seriesType"
+      "seriesType",
+      "eventMonth",
+      "eventYear"
     )
     if (!is.null(vocabularyDatabaseSchema)) {
       paste0(
@@ -337,9 +343,11 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     }
     if (doesObjectHaveData(conceptId1)) {
       #for concept relationship only
-      data <- data %>%
-        dplyr::filter(.data$conceptId1 %in% conceptId |
-                        .data$conceptId2 %in% conceptId)
+      data <- dplyr::bind_rows(data %>%
+                                 dplyr::filter(.data$conceptId1 %in% !!conceptId1),
+                               data %>%
+                                 dplyr::filter(.data$conceptId2 %in% !!conceptId1)) %>% 
+        dplyr::distinct()
     }
   } else {
     if (is.null(dataSource$connection)) {
@@ -363,8 +371,11 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
               {@start_day !=''} ? {AND start_day IN (@start_day) \n}
               {@end_day !=''} ? {AND end_day IN (@end_day) \n}
               {@days_relative_index !=''} ? {AND end_day IN (@days_relative_index) \n}
+              {@relationship_id !=''} ? {AND relationship_id IN (@relationship_id) \n}
               {@series_type !=''} ? {AND series_type IN (@series_type) \n}
               {@domain_table !=''} ? {AND domain_table IN (@domain_table) \n}
+              {@event_month !=''} ? {AND event_month IN (@event_month) \n}
+              {@event_year !=''} ? {AND event_year IN (@event_year) \n}
             ;"
     if (!is.null(vocabularyDatabaseSchema)) {
       resultsDatabaseSchema <- vocabularyDatabaseSchema
@@ -377,7 +388,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         sql = sql,
         results_database_schema = resultsDatabaseSchema,
         cohort_id = cohortId,
-        comparator_cohort_id = comparator_cohort_id,
+        comparator_cohort_id = comparatorCohortId,
         data_table = camelCaseToSnakeCase(dataTableName),
         database_id = quoteLiterals(databaseId),
         concept_id = conceptId,
@@ -385,11 +396,14 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         concept_set_id = conceptSetId,
         concept_id_1 = conceptId1,
         # for concept relationship only
+        relationship_id = quoteLiterals(relationshipId),
         start_day = startDay,
         end_day = endDay,
         domain_table = quoteLiterals(domainTable),
         days_relative_index = daysRelativeIndex,
         series_type = quoteLiterals(seriesType),
+        event_month = eventMonth,
+        event_year = eventYear,
         snakeCaseToCamelCase = TRUE
       )
   }
@@ -595,12 +609,14 @@ getRelationship <- function(dataSource = .GlobalEnv) {
 #' @export
 getConceptRelationship <- function(dataSource = .GlobalEnv,
                                    vocabularyDatabaseSchema = NULL,
-                                   conceptIds = NULL) {
+                                   conceptIds = NULL,
+                                   relationshipIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource = dataSource,
     dataTableName = "conceptRelationship",
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    conceptId1 = conceptIds
+    conceptId1 = conceptIds,
+    relationshipId = relationshipIds
   )
   return(data)
 }
@@ -612,7 +628,7 @@ getConceptRelationship <- function(dataSource = .GlobalEnv,
 #' @description
 #' Returns data from concept ancestor table for vector of concept ids
 #' 
-#' @param conceptIds a vector of concept ids 
+#' @template ConceptIds
 #'
 #' @template DataSource
 #'
@@ -752,7 +768,9 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
 #'
 #' @template DatabaseIds
 #'
-#' @param conceptIds     A list of concept ids to get counts for
+#' @template ConceptIds
+#' 
+#' @template eventMonth (optional) which month do you want to return data for
 #'
 #' @return
 #' Returns a data frame (tibble)
@@ -760,11 +778,15 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
 #' @export
 getResultsConceptCount <- function(dataSource,
                                    databaseIds = NULL,
-                                   conceptIds = NULL) {
+                                   conceptIds = NULL,
+                                   eventMonth = NULL,
+                                   eventYear = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     databaseId = databaseIds,
     conceptId = conceptIds,
+    eventMonth = eventMonth,
+    eventYear = eventYear,
     dataTableName = "conceptCount"
   )
   return(data)
@@ -781,7 +803,7 @@ getResultsConceptCount <- function(dataSource,
 #'
 #' @template DatabaseIds
 #'
-#' @param conceptIds     A vector of concept ids to get counts for
+#' @template ConceptIds
 #'
 #' @param domainTable    A vector of strings representing the OMOP CDM domain tables. Valid options are
 #'                       'All' (Default) for data source level, 'condition_occurrence', 'procedure_occurrence',
@@ -834,7 +856,7 @@ getResultsConceptMapping <- function(dataSource,
 #'
 #' @template DatabaseIds
 #'
-#' @param conceptIds     A list of concept ids to get counts for
+#' @template ConceptIds
 #'
 #' @return
 #' Returns a data frame (tibble)
@@ -1379,6 +1401,43 @@ getResultsOrphanConcept <- function(dataSource,
           nrow(data) == 0)) {
     return(NULL)
   }
+  
+  
+  resolved <- getResultsResolvedConcepts(
+    dataSource = dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    conceptSetIds = conceptSetIds
+  )
+  if (nrow(resolved) > 0) {
+    relationship1 <- getConceptRelationship(
+      dataSource = dataSource,
+      conceptIds = resolved$conceptId %>% unique(),
+      relationshipIds = c("Maps to",
+                          "Mapped from",
+                          "Is a")
+    )
+    relationship2 <- getConceptRelationship(
+      dataSource = dataSource,
+      conceptIds = relationship1$conceptId2 %>% unique(),
+      relationshipIds = c("Maps to",
+                          "Mapped from",
+                          "Is a")
+    )
+    relationship <-
+      dplyr::bind_rows(relationship1, relationship2) %>%
+      dplyr::distinct()
+    
+    toExcludeFromOrphan <- c(relationship$conceptId2,
+                             resolved$conceptId) %>% 
+      unique()
+    
+    data <- data %>% 
+      dplyr::filter(!.data$conceptId %in% !!toExcludeFromOrphan)
+  }
+  
+  data <- data %>% 
+    dplyr::distinct()
   return(data)
 }
 
