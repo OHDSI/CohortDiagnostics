@@ -1411,7 +1411,8 @@ shiny::shinyServer(function(input, output, session) {
         databaseCount = (input$targetConceptIdCountSource == "Datasource level")
       )
     if (!doesObjectHaveData(count)) {
-      return(NULL)
+      return(data %>% 
+               dplyr::mutate("records" = NA, "persons" = NA))
     }
     data <- data %>% 
       dplyr::left_join(count, 
@@ -1476,7 +1477,8 @@ shiny::shinyServer(function(input, output, session) {
         databaseCount = (input$comparatorConceptIdCountSource == "Datasource level")
       )
     if (!doesObjectHaveData(count)) {
-      return(NULL)
+      return(data %>% 
+               dplyr::mutate("records" = NA, "persons" = NA))
     }
     data <- data %>% 
       dplyr::left_join(count, 
@@ -1540,7 +1542,8 @@ shiny::shinyServer(function(input, output, session) {
         databaseCount = (input$targetConceptIdCountSource == "Datasource level")
       )
     if (!doesObjectHaveData(count)) {
-      return(NULL)
+      return(data %>% 
+               dplyr::mutate("records" = NA, "persons" = NA))
     }
     data <- data %>% 
       dplyr::left_join(count, 
@@ -1604,7 +1607,8 @@ shiny::shinyServer(function(input, output, session) {
         databaseCount = (input$comparatorConceptIdCountSource == "Datasource level")
       )
     if (!doesObjectHaveData(count)) {
-      return(NULL)
+      return(data %>% 
+               dplyr::mutate("records" = NA, "persons" = NA))
     }
     data <- data %>% 
       dplyr::left_join(count, 
@@ -1652,6 +1656,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-.data$conceptSetId, -.data$cohortId)
     return(data)
   })
+  
   ###getOrphanConceptsTarget----
   getOrphanConceptsTarget <- shiny::reactive({
     data <- getOrphanConceptsTargetData()
@@ -1667,7 +1672,8 @@ shiny::shinyServer(function(input, output, session) {
         databaseCount = (input$targetConceptIdCountSource == "Datasource level")
       )
     if (!doesObjectHaveData(count)) {
-      return(NULL)
+      return(data %>% 
+               dplyr::mutate("records" = NA, "persons" = NA))
     }
     data <- data %>% 
       dplyr::left_join(count, 
@@ -1731,7 +1737,8 @@ shiny::shinyServer(function(input, output, session) {
         databaseCount = (input$comparatorConceptIdCountSource == "Datasource level")
       )
     if (!doesObjectHaveData(count)) {
-      return(NULL)
+      return(data %>% 
+               dplyr::mutate("records" = NA, "persons" = NA))
     }
     data <- data %>% 
       dplyr::left_join(count, 

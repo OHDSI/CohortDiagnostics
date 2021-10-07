@@ -577,7 +577,7 @@ getConceptCountForCohortAndDatabase <- function(dataSource,
         conceptIds = conceptIds,
         coConceptIds = 0
       )
-    if (!is.null(data)) {
+    if (is.null(data)) {
       return(NULL)
     }
     data <- data %>%
