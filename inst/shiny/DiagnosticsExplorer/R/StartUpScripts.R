@@ -346,12 +346,15 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
     maxSubject <- max(data$persons, na.rm = TRUE)
   }
   
-  databasePersonAndRecordCount <- data %>%
+  uniqueDatabases <- data %>% 
     dplyr::select(.data$databaseId) %>% 
+    dplyr::distinct()
+  databasePersonAndRecordCount <- uniqueDatabases %>%
     dplyr::inner_join(databaseCount,
                       by = c("databaseId")) %>% 
     dplyr::select(.data$databaseId, dplyr::all_of(fieldsInData)) %>% 
     dplyr::distinct()
+  
   if ('persons' %in% colnames(databasePersonAndRecordCount)) {
     databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
       dplyr::mutate(persons = scales::comma(.data$persons,

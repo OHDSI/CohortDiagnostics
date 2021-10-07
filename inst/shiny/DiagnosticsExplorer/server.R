@@ -1419,7 +1419,7 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###getResolvedConceptsComparator----
+  ###getResolvedConceptsComparatorData----
   getResolvedConceptsComparatorData <- shiny::reactive({
     if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
       return(NULL)
@@ -2702,8 +2702,14 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No resolved concept ids"))
-      databaseCount <- cohortCount %>% 
-        dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
+      databaseCount <-
+        dplyr::tibble(databaseId = consolidatedDatabaseIdTarget(),
+                      cohortId = consolidatedCohortIdTarget()) %>%
+        dplyr::left_join(cohortCount,
+                         by = c("databaseId",
+                                "cohortId")) %>%
+        tidyr::replace_na(replace = list("cohortEntries" = 0,
+                                         "cohortSubjects" = 0)) %>%
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
@@ -2733,8 +2739,14 @@ shiny::shinyServer(function(input, output, session) {
       ))
       data <- getExcludedConceptsTarget()
       validate(need(doesObjectHaveData(data), "No excluded concept ids"))
-      databaseCount <- cohortCount %>% 
-        dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
+      databaseCount <-
+        dplyr::tibble(databaseId = consolidatedDatabaseIdTarget(),
+                      cohortId = consolidatedCohortIdTarget()) %>%
+        dplyr::left_join(cohortCount,
+                         by = c("databaseId",
+                                "cohortId")) %>%
+        tidyr::replace_na(replace = list("cohortEntries" = 0,
+                                         "cohortSubjects" = 0)) %>%
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
       
@@ -2763,8 +2775,14 @@ shiny::shinyServer(function(input, output, session) {
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
                     "No orphan concepts"))
-      databaseCount <- cohortCount %>% 
-        dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>% 
+      databaseCount <-
+        dplyr::tibble(databaseId = consolidatedDatabaseIdTarget(),
+                      cohortId = consolidatedCohortIdTarget()) %>%
+        dplyr::left_join(cohortCount,
+                         by = c("databaseId",
+                                "cohortId")) %>%
+        tidyr::replace_na(replace = list("cohortEntries" = 0,
+                                         "cohortSubjects" = 0)) %>%
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
 
@@ -2805,8 +2823,6 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::pull(.data$conceptSetSql)
     
   })
-  
-  #!!!!!!!!!!!! add excluded
   
   #!!! on row select for resolved/excluded/orphan - we need to show for selected cohort
   #!!! a trend plot with conceptCount over time and
@@ -3256,8 +3272,14 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No resolved concept ids"))
-      databaseCount <- cohortCount %>% 
-        dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
+      databaseCount <-
+        dplyr::tibble(databaseId = consolidatedDatabaseIdTarget(),
+                      cohortId = consolidatedCohortIdComparator()) %>%
+        dplyr::left_join(cohortCount,
+                         by = c("databaseId",
+                                "cohortId")) %>%
+        tidyr::replace_na(replace = list("cohortEntries" = 0,
+                                         "cohortSubjects" = 0)) %>%
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
       
@@ -3288,9 +3310,14 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No excluded concept ids"))
-      
-      databaseCount <- cohortCount %>% 
-        dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
+      databaseCount <-
+        dplyr::tibble(databaseId = consolidatedDatabaseIdTarget(),
+                      cohortId = consolidatedCohortIdComparator()) %>%
+        dplyr::left_join(cohortCount,
+                         by = c("databaseId",
+                                "cohortId")) %>%
+        tidyr::replace_na(replace = list("cohortEntries" = 0,
+                                         "cohortSubjects" = 0)) %>%
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
   
@@ -3320,8 +3347,14 @@ shiny::shinyServer(function(input, output, session) {
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
                     "No orphan concepts"))
-      databaseCount <- cohortCount %>% 
-        dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>% 
+      databaseCount <-
+        dplyr::tibble(databaseId = consolidatedDatabaseIdTarget(),
+                      cohortId = consolidatedCohortIdComparator()) %>%
+        dplyr::left_join(cohortCount,
+                         by = c("databaseId",
+                                "cohortId")) %>%
+        tidyr::replace_na(replace = list("cohortEntries" = 0,
+                                         "cohortSubjects" = 0)) %>%
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
 
