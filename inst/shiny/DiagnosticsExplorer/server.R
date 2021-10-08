@@ -6046,6 +6046,16 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
 
+  ###output: isCohortDefinitionRowSelected----
+  output$doesCohortAndComparatorsAreSingleSelected <- reactive({
+    return(all(
+      length(consolidatedCohortIdTarget()) == 1,
+      length(getComparatorCohortIdFromSelectedCompoundCohortNames()) == 1))
+  })
+  # send output to UI
+  shiny::outputOptions(x = output,
+                       name = "doesCohortAndComparatorsAreSingleSelected",
+                       suspendWhenHidden = FALSE)
   
   ##output: overlapPlot----
   output$overlapPlot <- plotly::renderPlotly(expr = {
@@ -6075,6 +6085,35 @@ shiny::shinyServer(function(input, output, session) {
     )
     return(plot)
   })
+  
+  ##output: overlapPlot - Pie----
+  output$overlapPiePlot <- plotly::renderPlotly(expr = {
+    validate(need(
+      length(consolidatedCohortIdTarget()) > 0,
+      paste0("Please select Target Cohort(s)")
+    ))
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Plotting cohort overlap."),
+                 value = 0)
+    
+    data <- cohortOverlapData()
+    validate(need(
+      !is.null(data),
+      paste0("No cohort overlap data for this combination")
+    ))
+    validate(need(
+      nrow(data) > 0,
+      paste0("No cohort overlap data for this combination.")
+    ))
+    
+    plot <- plotCohortOverlapPie(
+      data = data,
+      shortNameRef = cohort
+    )
+    return(plot)
+  })
+  
   
   output$cohortOverlapTable <- DT::renderDataTable(expr = {
     data <- cohortOverlapData()

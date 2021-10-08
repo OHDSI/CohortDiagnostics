@@ -1903,6 +1903,104 @@ plotCohortOverlap <- function(data,
 }
 
 
+### cohort overlap plot ##############
+
+plotCohortOverlapPie <- function(data,
+                              shortNameRef = NULL) {
+  data <- data %>%
+    addShortName(
+      shortNameRef = shortNameRef,
+      cohortIdColumn = "targetCohortId",
+      shortNameColumn = "targetShortName"
+    ) %>%
+    addShortName(
+      shortNameRef = shortNameRef,
+      cohortIdColumn = "comparatorCohortId",
+      shortNameColumn = "comparatorShortName"
+    )
+  data <- data %>% addDatabaseShortName(
+      shortNameRef = database
+    )
+  
+  targetCohortCompoundName <- data  %>%
+    dplyr::inner_join(cohort %>%
+                        dplyr::mutate(targetCohortId = .data$cohortId) %>%
+                        dplyr::select(.data$targetCohortId,.data$compoundName),
+                      by = "targetCohortId") %>%
+    dplyr::pull(.data$compoundName) %>% unique()
+  targetCohortCompoundName <- paste("Target Cohort -",paste(targetCohortCompoundName,collapse = ","))
+
+  comparatorCohortCompoundName <- data  %>%
+    dplyr::inner_join(cohort %>%
+                        dplyr::mutate(comparatorCohortId = .data$cohortId) %>%
+                        dplyr::select(.data$comparatorCohortId,.data$compoundName),
+                      by = "comparatorCohortId") %>%
+    dplyr::pull(.data$compoundName) %>% unique()
+  comparatorCohortCompoundName <- paste("Comparator Cohort -",paste(comparatorCohortCompoundName,collapse = ","))
+  
+  plotData <- data %>% 
+    dplyr::mutate("Started_During" = abs(.data$cInTSubjects - .data$cStartOnTStart - .data$cStartOnTEnd)) %>% 
+    dplyr::select(.data$cStartBeforeTStart,.data$cStartOnTStart,.data$Started_During,.data$cStartOnTEnd,.data$cStartAfterTEnd,.data$databaseId,.data$databaseShortName) %>% 
+    dplyr::rename("Started before" = .data$cStartBeforeTStart,
+                  "Started on" = .data$cStartOnTStart,
+                  "Started during" = .data$Started_During,
+                  "Started at the end of" = .data$cStartOnTEnd,
+                  "Started after" = .data$cStartAfterTEnd) %>%
+    dplyr::mutate(database = paste0(.data$databaseShortName ," : ",.data$databaseId)) %>% 
+    tidyr::pivot_longer(
+      cols = c("Started before",
+               "Started on",
+               "Started during",
+               "Started at the end of",
+               "Started after"),
+      names_to = "subjectsIn",
+      values_to = "value"
+    )
+  distinctDatabaseShortName <- plotData$databaseShortName %>%  unique()
+  databaseString <- paste(plotData$database %>% unique(),collapse = ", ")
+  
+  plot <- plotly::plot_ly()
+  for (i in 1:length(distinctDatabaseShortName)) {
+    filteredData <- plotData %>% 
+      dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i])
+    
+    plot <- plot %>% 
+      plotly::add_pie(data = filteredData, 
+                      labels = ~subjectsIn, 
+                      values = ~value,
+                      title = distinctDatabaseShortName[i],  
+                      name = distinctDatabaseShortName[i],
+                      domain = list(row = 0, column = i-1),
+                      showlegend = ifelse(i == length(distinctDatabaseShortName),T,F)) 
+  }
+  m <- list(
+    l = 0,
+    r = 0,
+    b = 100,
+    t = 20
+  )
+  plot <- plot %>% 
+    plotly::layout(
+      grid = list(rows = 1, columns = length(distinctDatabaseShortName)),
+      showlegend = T,
+      legend = list(orientation = "h",   # show entries horizontally
+                    xanchor = "center",  # use center of legend as anchor
+                    x = 0.5,
+                    y = -0.25),
+      annotations = list(
+      x = 0.5 ,
+      y = -0.2,
+      text = paste(targetCohortCompoundName,"\n",comparatorCohortCompoundName,"\n",databaseString),
+      showarrow = F,
+      xanchor = "center",
+      yanchor = "bottom",
+      xref = 'paper',
+      yref = 'paper',
+      font = list(size = 10)
+    ),margin = m)
+  return(plot)
+}
+
 
 plotTsStlDecomposition <- function(data,
                                    field) {
