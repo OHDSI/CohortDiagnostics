@@ -89,7 +89,6 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   ensure_installed("stringr")
   ensure_installed("SqlRender")
   ensure_installed("tidyr")
-  ensure_installed("remotes")
   ensure_installed("CirceR")
   ensure_installed("rmarkdown")
   
@@ -304,7 +303,8 @@ ensure_installed <- function(pkg) {
       message(msg, "\nWould you like to install it?")
       if (menu(c("Yes", "No")) == 1) {
         if (pkg == 'CirceR') {
-          message(msg, "\nInstalling from Github")
+          ensure_installed("remotes")
+          message(msg, "\nInstalling from Github using remotes")
           remotes::install_github("OHDSI/CirceR")
         } else {
           install.packages(pkg)
