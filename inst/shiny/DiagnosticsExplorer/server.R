@@ -24,6 +24,12 @@ shiny::shinyServer(function(input, output, session) {
   ##pickerInput: conceptSetsSelectedCohortLeft----
   #defined in UI
   shiny::observe({
+    if (exists("conceptSets")) {
+      if (!doesObjectHaveData(conceptSets)) {
+        return(NULL)
+      }
+    }
+    
     data <- conceptSets %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
       dplyr::pull(.data$conceptSetName)
@@ -6806,6 +6812,12 @@ shiny::shinyServer(function(input, output, session) {
     if (input$tabs != "temporalCharacterization") {
       return(NULL)
     }
+    if (!exists("temporalTimeRef")) {
+      return(NULL)
+    }
+    if (!exists("temporalCovariateChoices")) {
+      return(NULL)
+    }
     if (any(
       is.null(getMultipleCharacterizationData()),
       length(getMultipleCharacterizationData()) == 0
@@ -6870,7 +6882,6 @@ shiny::shinyServer(function(input, output, session) {
             by = c("conceptId", "cohortId")
           )
       }
-      
       data <- data %>%
           dplyr::filter(.data$analysisName %in% getTemporalCharacterizationAnalysisNameOptions()) %>%
           dplyr::filter(.data$domainId %in% getTemporalCharacterizationDomainNameOptions()) %>%
@@ -6942,7 +6953,6 @@ shiny::shinyServer(function(input, output, session) {
       data <- getTemporalCharacterizationTableData()
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
-      
       temporalCovariateChoicesSelected <-
         temporalCovariateChoices %>%
         dplyr::filter(.data$timeId %in% c(getTimeIdsFromSelectedTemporalCovariateChoices())) %>%
@@ -7726,7 +7736,6 @@ shiny::shinyServer(function(input, output, session) {
       warning("No analysis reference data found")
       return(NULL)
     }
-    
     data <-
       getMultipleCompareCharacterizationData()$covariateValue %>%
       dplyr::filter(.data$characterizationSource %in% c('CT', 'FT')) %>%
@@ -8013,7 +8022,6 @@ shiny::shinyServer(function(input, output, session) {
                       accuracy = 1),
         ")"
       )
-      
       temporalCovariateChoicesSelected <-
         temporalCovariateChoices %>%
         dplyr::filter(.data$timeId %in% c(getTimeIdsFromSelectedTemporalCovariateChoices())) %>%
@@ -9018,7 +9026,6 @@ shiny::shinyServer(function(input, output, session) {
         td(selectedComparatorCohort())
       )))
     })
-  
   output$temporalCharCompareSelectedDatabase <-
     shiny::renderUI({
       return(input$selectedDatabaseId)

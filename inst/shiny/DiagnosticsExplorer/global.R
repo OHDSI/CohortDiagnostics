@@ -256,7 +256,8 @@ if (exists("database")) {
 }
 
 #enhancement and removing the objects based on the control variable
-if (exists("temporalTimeRef")) {
+if (all(exists("temporalTimeRef"),
+        doesObjectHaveData(temporalTimeRef))) {
   if (all(
     nrow(temporalTimeRef) > 0,
     showTemporalCharacterizationAndCompareTemporalCharacterization
@@ -281,6 +282,13 @@ if (exists("temporalTimeRef")) {
     rm("temporalCovariateValue")
     filterTemporalCovariateChoicesToPrimaryOptions <- FALSE
   }
+} else {
+  rm("temporalTimeRef")
+  rm("temporalAnalysisRef")
+  rm("temporalCovariateChoices")
+  rm("temporalCovariateRef")
+  rm("temporalCovariateValue")
+  filterTemporalCovariateChoicesToPrimaryOptions <- FALSE
 }
 
 #enhancement and removing the objects based on the control variable
