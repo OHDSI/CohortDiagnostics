@@ -792,7 +792,10 @@ bodyTabItems <- shinydashboard::tabItems(
                        
                      )
           ),
-          plotly::plotlyOutput("overlapPlot", height = "auto")
+          plotly::plotlyOutput("overlapPlot", height = "auto"),
+          shiny::conditionalPanel(condition = "output.doesCohortAndComparatorsAreSingleSelected",{
+            plotly::plotlyOutput("overlapPiePlot", height = 400)
+          })
           ),
         shiny::tabPanel(
           title = "Raw Table",
