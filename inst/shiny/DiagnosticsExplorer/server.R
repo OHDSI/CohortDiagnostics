@@ -621,7 +621,8 @@ shiny::shinyServer(function(input, output, session) {
       ) %>% 
         dplyr::group_by(.data$conceptId) %>% 
         dplyr::summarise(conceptSubjects = max(conceptSubjects),
-                         conceptCount = max(conceptCount)) %>% 
+                         conceptCount = max(conceptCount), 
+                         .groups = "keep") %>% 
         dplyr::distinct() %>% 
         dplyr::ungroup() %>% 
         dplyr::arrange(dplyr::desc(.data$conceptCount))
@@ -956,7 +957,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::group_by(.data$databaseId, 
                       .data$conceptId) %>%
       dplyr::summarise(conceptSubjects = sum(.data$conceptSubjects),
-                       conceptCount = sum(.data$conceptCount)) %>%
+                       conceptCount = sum(.data$conceptCount), 
+                       .groups = "keep") %>%
       dplyr::ungroup() %>%
       dplyr::arrange(.data$databaseId) %>% 
       tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
@@ -2920,7 +2922,7 @@ shiny::shinyServer(function(input, output, session) {
                       .data$sortOrder) %>%
         dplyr::distinct() %>%
         dplyr::group_by(.data$characteristic, .data$position, .data$header) %>%
-        dplyr::summarise(sortOrder = max(.data$sortOrder)) %>%
+        dplyr::summarise(sortOrder = max(.data$sortOrder), .groups = "keep") %>%
         dplyr::ungroup() %>%
         dplyr::arrange(.data$position, desc(.data$header)) %>%
         dplyr::mutate(sortOrder = dplyr::row_number()) %>%
