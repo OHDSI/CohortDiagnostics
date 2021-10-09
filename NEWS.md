@@ -4,6 +4,8 @@ CohortDiagnostics 2.1.3
 Changes:
 1. On starting diagnostics explorer using launchDiagnosticsExplorer - checks were added for remotes and CirceR https://github.com/OHDSI/CohortDiagnostics/issues/595
 
+Bug Fixes:
+1. Diagnostics explorer - characterization plot would show a warning message when one of the cohorts selected has no data. Added check for this issue.
 
 CohortDiagnostics 2.1.2
 =======================
