@@ -12,3 +12,4 @@ errorReportR.txt
 *.log
 *log.txt
 tests/testthat/testthat-problems.rds
+*.RData
