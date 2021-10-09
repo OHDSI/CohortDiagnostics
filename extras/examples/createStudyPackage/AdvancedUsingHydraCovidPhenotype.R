@@ -78,16 +78,16 @@ write(x = specifications %>% RJSONIO::toJSON(pretty = TRUE, digits = 23), file =
 ##############################################################
 ##############################################################
 #### get the skeleton from github
-# download.file(url = "https://github.com/OHDSI/SkeletonCohortDiagnosticsStudy/archive/refs/heads/main.zip",
-#                          destfile = file.path(tempFolder, 'skeleton.zip'))
-# unzip(zipfile =  file.path(tempFolder, 'skeleton.zip'), 
-#       overwrite = TRUE,
-#       exdir = file.path(tempFolder, "skeleton")
-#         )
-# fileList <- list.files(path = file.path(tempFolder, "skeleton"), full.names = TRUE, recursive = TRUE, all.files = TRUE)
-# DatabaseConnector::createZipFile(zipFile = file.path(tempFolder, 'skeleton.zip'), 
-#                                  files = fileList, 
-#                                  rootFolder = list.dirs(file.path(tempFolder, 'skeleton'), recursive = FALSE))
+download.file(url = "https://github.com/OHDSI/SkeletonCohortDiagnosticsStudy/archive/refs/heads/develop.zip",
+                         destfile = file.path(tempFolder, 'skeleton.zip'))
+unzip(zipfile =  file.path(tempFolder, 'skeleton.zip'),
+      overwrite = TRUE,
+      exdir = file.path(tempFolder, "skeleton")
+        )
+fileList <- list.files(path = file.path(tempFolder, "skeleton"), full.names = TRUE, recursive = TRUE, all.files = TRUE)
+DatabaseConnector::createZipFile(zipFile = file.path(tempFolder, 'skeleton.zip'),
+                                 files = fileList,
+                                 rootFolder = list.dirs(file.path(tempFolder, 'skeleton'), recursive = FALSE))
 
 ##############################################################
 ##############################################################
@@ -101,15 +101,15 @@ write(x = specifications %>% RJSONIO::toJSON(pretty = TRUE, digits = 23), file =
 hydraSpecificationFromFile <- Hydra::loadSpecifications(fileName = jsonFileName)
 unlink(x = outputFolder, recursive = TRUE)
 dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
-Hydra::hydrate(specifications = hydraSpecificationFromFile,
-               outputFolder = outputFolder
-)
+# Hydra::hydrate(specifications = hydraSpecificationFromFile,
+#                outputFolder = outputFolder
+# )
 
 # for advanced user using skeletons outside of Hydra
-# Hydra::hydrate(specifications = hydraSpecificationFromFile,
-#                outputFolder = outputFolder, 
-#                skeletonFileName = file.path(tempFolder, 'skeleton.zip')
-# )
+Hydra::hydrate(specifications = hydraSpecificationFromFile,
+               outputFolder = outputFolder,
+               skeletonFileName = file.path(tempFolder, 'skeleton.zip')
+)
 
 
 unlink(x = tempFolder, recursive = TRUE, force = TRUE)
