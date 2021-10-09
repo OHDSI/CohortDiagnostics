@@ -499,6 +499,10 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     dplyr::distinct(balance$comparatorCohort) %>% 
     dplyr::pull()
   
+  if (nrow(balance) ==0) {
+    return(NULL)
+  }
+  
   plot <-
     ggplot2::ggplot(balance,
                     ggplot2::aes(

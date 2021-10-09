@@ -3694,13 +3694,9 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::filter(.data$isBinary == 'N')
     }
-    
     validate(need(nrow(data) > 0,
              "No data available for selected combination."))
-    
-    # if (nrow(data) == 0) {
-    #   return(dplyr::tibble(Note = "No data for the selected combination."))
-    # }
+
     plot <-
       plotCohortComparisonStandardizedDifference(
         balance = data,
@@ -3710,6 +3706,8 @@ shiny::shinyServer(function(input, output, session) {
         yLimitMin = 0,
         yLimitMax = 1
       )
+    validate(need(!is.null(plot),
+                  "No data available for selected combination."))
     return(plot)
   })
   
