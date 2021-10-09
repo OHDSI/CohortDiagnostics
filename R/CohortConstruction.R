@@ -571,12 +571,18 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
   ParallelLogger::logInfo(" - Number of cohorts to instantiate: ", nrow(cohorts))
   
+  tables <-
+    DatabaseConnector::getTableNames(connection, cohortDatabaseSchema)
+  if (toupper(cohortTable) %in% toupper(tables)) {
+    cohortTableExists <- TRUE
+  } else {
+    cohortTableExists <- FALSE
+  }
+  
   if (createCohortTable) {
     needToCreate <- TRUE
     if (incremental) {
-      tables <-
-        DatabaseConnector::getTableNames(connection, cohortDatabaseSchema)
-      if (toupper(cohortTable) %in% toupper(tables)) {
+      if (cohortTableExists) {
         ParallelLogger::logInfo(
           "   - Note: Cohort table already exists. Running in incremental mode. Re-using cohort table."
         )
@@ -589,6 +595,10 @@ instantiateCohortSet <- function(connectionDetails = NULL,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable
       )
+    }
+  } else {
+    if (cohortTableExists) {
+      stop(paste0("Cohort table ", cohortTable, " does not exist. Please set createCohortTable = TRUE"))
     }
   }
   
