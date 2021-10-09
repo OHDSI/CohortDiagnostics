@@ -597,7 +597,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       )
     }
   } else {
-    if (cohortTableExists) {
+    if (!cohortTableExists) {
       stop(paste0("Cohort table ", cohortTable, " does not exist. Please set createCohortTable = TRUE"))
     }
   }
