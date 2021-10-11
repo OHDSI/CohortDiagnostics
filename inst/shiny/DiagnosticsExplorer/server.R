@@ -32,7 +32,7 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- conceptSets %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
-      dplyr::pull(.data$conceptSetName)
+      dplyr::pull(.data$compoundName)
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -1781,7 +1781,7 @@ shiny::shinyServer(function(input, output, session) {
       ),
       tags$tr(
         tags$td(
-          tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", "))
+          # tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", "))
         )
       )
     )
@@ -2408,6 +2408,26 @@ shiny::shinyServer(function(input, output, session) {
               width = "100%",
               height = "100%"
             )
+          )
+        )
+        inc = inc + 1
+        
+        panels[[inc]] <- shiny::tabPanel(
+          title = "Standard to Non standard mapping",
+          value = "conceptSetStandardToNonStandard",
+          # shiny::column(
+          #   width = 12,
+          #   shiny::radioButtons(
+          #     inputId = "timeSeriesAggregationForCohortDefinition",
+          #     label = "Aggregation period:",
+          #     choices = c("Monthly", "Yearly"),
+          #     selected = "Monthly",
+          #     inline = TRUE
+          #   )
+          # ),
+          shiny::conditionalPanel(
+            condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
+            DT::dataTableOutput(outputId = "conceptSetStandardToNonStandardTable")
           )
         )
         inc = inc + 1
@@ -3600,6 +3620,60 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>%
       dplyr::rename("persons" = .data$subjectCount,
                     "records" = .data$conceptCount)
+    table <-
+      getSketchDesignForTablesInCohortDefinitionTab(conceptMapping,
+                                                    databaseCount = databaseCount,
+                                                    numberOfColums = 3)
+    return(table)
+  })
+  
+  ##output: conceptSetStandardToNonStandardTable----
+  output$conceptSetStandardToNonStandardTable <- DT::renderDT(expr = {
+    conceptId <- activeSelected()$conceptId
+    validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
+    cohortId <- activeSelected()$cohortId
+    validate(need(doesObjectHaveData(conceptId), "No cohort id selected."))
+    databaseId <- activeSelected()$databaseId
+    validate(need(doesObjectHaveData(databaseId), "No database id selected."))
+    
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(
+      message = paste0("Computing concept relationship for concept id:",
+                       conceptId),
+      value = 0
+    )
+    data <- getResultsConceptMapping(dataSource, 
+                             databaseIds = databaseId,#active selected databaseid
+                             conceptIds = conceptId, # active  selected conceptId
+                             domainTables = 'All' #default
+    )
+    validate(need(
+      doesObjectHaveData(data),
+      "No information for selected concept id."
+    ))
+    
+    conceptMapping <- data %>% 
+      dplyr::inner_join(getConcept(dataSource,conceptIds = data$sourceConceptId), by = c("sourceConceptId" = "conceptId")) %>% 
+      dplyr::select(
+        .data$sourceConceptId,
+        .data$conceptName,
+        .data$vocabularyId,
+        .data$databaseId,
+        .data$domainTable,
+        .data$conceptCount,
+        .data$subjectCount
+      ) %>% 
+      dplyr::rename(
+        "conceptId" = .data$sourceConceptId,
+        "persons" = .data$subjectCount,
+        "records" = .data$conceptCount
+      )
+    
+    databaseCount <- data %>%  dplyr::group_by(.data$conceptId,.data$databaseId) %>% 
+      dplyr::summarise("persons" = sum(subjectCount),
+                       "records" = sum(conceptCount))
+    
     table <-
       getSketchDesignForTablesInCohortDefinitionTab(conceptMapping,
                                                     databaseCount = databaseCount,
@@ -5174,6 +5248,9 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(indexEventBreakdown)) {
       return(NULL)
     }
+    
+    indexEventBreakdown <- indexEventBreakdown %>% 
+      dplyr::filter(.data$domainId %in% input$indexEventDomainNameFilter)
     
     if (input$indexEventBreakdownTableRadioButton == 'All') {
       return(indexEventBreakdown)
@@ -7113,7 +7190,7 @@ shiny::shinyServer(function(input, output, session) {
       
       if (any(
         length(consolidatedCohortIdTarget()) != 1,
-        length(getComparatorCohortIdFromSelectedCompoundCohortName()) != 1,
+        # length(getComparatorCohortIdFromSelectedCompoundCohortName()) != 1,
         length(consolidatedDatabaseIdTarget()) == 0
       )) {
         return(NULL)

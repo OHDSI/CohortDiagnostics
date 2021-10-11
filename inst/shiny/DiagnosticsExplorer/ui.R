@@ -678,6 +678,27 @@ bodyTabItems <- shinydashboard::tabItems(
             inline = TRUE
           )
         ),
+        tags$td(
+          shinyWidgets::pickerInput(
+            inputId = "indexEventDomainNameFilter",
+            label = "Domain name",
+            choices = c("Visit", "Condition", "Procedure", "Observation", "Device", "Measurement", "Other"),
+            selected = c("Visit", "Condition", "Procedure", "Observation", "Device", "Measurement", "Other"),
+            inline = TRUE,
+            multiple = TRUE,
+            width = 300,
+            choicesOpt = list(style = rep_len("color: black;", 999)),
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              size = 10,
+              liveSearchStyle = "contains",
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
+          )
+        ),
+        tags$td(HTML("&nbsp;")),
         tags$td(HTML("&nbsp;"),
         tags$td(
           shiny::radioButtons(
@@ -1107,7 +1128,7 @@ bodyTabItems <- shinydashboard::tabItems(
             choices = c("Raw table", "Plot"),
             #"Pretty table", removed pretty option for compare temporal characterization
             # Pretty table can be put back in - we will need a different Table1Specs for temporal characterization
-            selected = "Plot",
+            selected = "Raw table",
             inline = TRUE
           )
         ),

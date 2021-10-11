@@ -240,6 +240,21 @@ if (exists("cohort")) {
     ))
 }
 
+if (exists("conceptSets")) {
+  # cohort is required and is always loaded into R memory
+  conceptSets <- conceptSets %>%
+    dplyr::arrange(.data$conceptSetId) %>%
+    dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>%
+    dplyr::mutate(compoundName = paste0(
+      .data$shortName,
+      ": ",
+      .data$conceptSetName,
+      "(",
+      .data$conceptSetId,
+      ")"
+    ))
+}
+
 if (exists("database")) {
   # cohort is required and is always loaded into R memory
   database <- database %>%
