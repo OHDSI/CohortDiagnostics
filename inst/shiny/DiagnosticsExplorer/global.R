@@ -277,7 +277,6 @@ if (all(exists("temporalTimeRef"),
   } else {
     rm("temporalTimeRef")
     rm("temporalAnalysisRef")
-    rm("temporalCovariateChoices")
     rm("temporalCovariateRef")
     rm("temporalCovariateValue")
     filterTemporalCovariateChoicesToPrimaryOptions <- FALSE
@@ -285,7 +284,6 @@ if (all(exists("temporalTimeRef"),
 } else {
   rm("temporalTimeRef")
   rm("temporalAnalysisRef")
-  rm("temporalCovariateChoices")
   rm("temporalCovariateRef")
   rm("temporalCovariateValue")
   filterTemporalCovariateChoicesToPrimaryOptions <- FALSE
