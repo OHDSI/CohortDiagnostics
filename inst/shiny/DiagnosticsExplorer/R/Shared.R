@@ -18,6 +18,10 @@
 # general functions ----
 # this script is shared between Cohort Diagnostics and Diagnostics Explorer
 
+utils::globalVariables(c("where"))
+#https://github.com/r-lib/tidyselect/issues/201
+#https://stackoverflow.com/questions/40251801/how-to-use-utilsglobalvariables
+
 # private function - not exported
 doesObjectHaveData <- function(data) {
   if (is.null(data)) {
@@ -770,7 +774,9 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
 #'
 #' @template ConceptIds
 #' 
-#' @template eventMonth (optional) which month do you want to return data for
+#' @template CalendarMonths
+#' 
+#' @template CalendarYears
 #'
 #' @return
 #' Returns a data frame (tibble)
@@ -779,14 +785,14 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
 getResultsConceptCount <- function(dataSource,
                                    databaseIds = NULL,
                                    conceptIds = NULL,
-                                   eventMonth = NULL,
-                                   eventYear = NULL) {
+                                   CalendarMonths = NULL,
+                                   CalendarYears = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     databaseId = databaseIds,
     conceptId = conceptIds,
-    eventMonth = eventMonth,
-    eventYear = eventYear,
+    eventMonth = CalendarMonths,
+    eventYear = CalendarYears,
     dataTableName = "conceptCount"
   )
   return(data)
@@ -2393,6 +2399,7 @@ getResultsCohortOverlap <- function(dataSource,
                                     targetCohortIds = NULL,
                                     comparatorCohortIds = NULL,
                                     databaseIds = NULL) {
+  browser()
   cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique()
   cohortCounts <-
     getResultsCohortCount(dataSource = dataSource,

@@ -18,6 +18,7 @@
 # general functions ----
 # this script is shared between Cohort Diagnostics and Diagnostics Explorer
 
+
 # private function - not exported
 doesObjectHaveData <- function(data) {
   if (is.null(data)) {
@@ -770,7 +771,9 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
 #'
 #' @template ConceptIds
 #' 
-#' @template eventMonth (optional) which month do you want to return data for
+#' @template CalendarMonths
+#' 
+#' @template CalendarYears
 #'
 #' @return
 #' Returns a data frame (tibble)
@@ -779,14 +782,14 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
 getResultsConceptCount <- function(dataSource,
                                    databaseIds = NULL,
                                    conceptIds = NULL,
-                                   eventMonth = NULL,
-                                   eventYear = NULL) {
+                                   CalendarMonths = NULL,
+                                   CalendarYears = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     databaseId = databaseIds,
     conceptId = conceptIds,
-    eventMonth = eventMonth,
-    eventYear = eventYear,
+    eventMonth = CalendarMonths,
+    eventYear = CalendarYears,
     dataTableName = "conceptCount"
   )
   return(data)
@@ -3586,14 +3589,15 @@ getDomainInformation <- function(packageName = NULL) {
   return(data)
 }
 
+
+
 .replaceNaInDataFrameWithEmptyString <- function(data) {
   #https://github.com/r-lib/tidyselect/issues/201
-  # tried utils::globalVariables("where") but get the message The namespace for package "CohortDiagnostics" is locked; no changes in the global variables list may be made.
   data %>%
     dplyr::collect() %>%
-    dplyr::mutate(dplyr::across(where(is.character), ~ tidyr::replace_na(.x, as.character('')))) %>%
-    dplyr::mutate(dplyr::across(where(is.logical), ~ tidyr::replace_na(.x, as.character('')))) %>%
-    dplyr::mutate(dplyr::across(where(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
+    dplyr::mutate(dplyr::across(tidyselect:::where(is.character), ~ tidyr::replace_na(.x, as.character('')))) %>%
+    dplyr::mutate(dplyr::across(tidyselect:::where(is.logical), ~ tidyr::replace_na(.x, as.character('')))) %>%
+    dplyr::mutate(dplyr::across(tidyselect:::where(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
 }
 
 
