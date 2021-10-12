@@ -331,6 +331,9 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
       return(NULL)
     }
     data <- get(dataTableName, envir = dataSource)
+    if (is.null(data)) {
+      warning(paste0(dataTableName, " in environment has no data."))
+    }
     if (nrow(data) == 0) {
       warning(paste0(dataTableName, " in environment was found to have o rows."))
     }
@@ -2398,7 +2401,6 @@ getResultsCohortOverlap <- function(dataSource,
                                     targetCohortIds = NULL,
                                     comparatorCohortIds = NULL,
                                     databaseIds = NULL) {
-  browser()
   cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique()
   cohortCounts <-
     getResultsCohortCount(dataSource = dataSource,
@@ -3265,6 +3267,9 @@ getResultsCovariateRef <- function(dataSource,
     if (!exists(dataTableName)) {
       return(NULL)
     }
+    if (is.null(get(dataTableName, envir = dataSource))) {
+      return(NULL)
+    }
     if (nrow(get(dataTableName, envir = dataSource)) == 0) {
       return(NULL)
     }
@@ -3299,6 +3304,9 @@ getResultsTemporalCovariateRef <- function(dataSource,
   dataTableName <- 'temporalCovariateRef'
   if (is(dataSource, "environment")) {
     if (!exists(dataTableName)) {
+      return(NULL)
+    }
+    if (is.null(get(dataTableName, envir = dataSource))) {
       return(NULL)
     }
     if (nrow(get(dataTableName, envir = dataSource)) == 0) {
@@ -3336,6 +3344,9 @@ getResultsTemporalTimeRef <- function(dataSource) {
     if (!exists(dataTableName)) {
       return(NULL)
     }
+    if (is.null(get(dataTableName, envir = dataSource))) {
+      return(NULL)
+    }
     if (nrow(get(dataTableName, envir = dataSource)) == 0) {
       return(NULL)
     }
@@ -3365,6 +3376,9 @@ getResultsAnalysisRef <- function(dataSource) {
     if (!exists(dataTableName)) {
       return(NULL)
     }
+    if (is.null(get(dataTableName, envir = dataSource))) {
+      return(NULL)
+    }
     if (nrow(get(dataTableName, envir = dataSource)) == 0) {
       return(NULL)
     }
@@ -3392,6 +3406,9 @@ getResultsTemporalAnalysisRef <- function(dataSource) {
   dataTableName <- 'temporalAnalysisRef'
   if (is(dataSource, "environment")) {
     if (!exists(dataTableName)) {
+      return(NULL)
+    }
+    if (is.null(get(dataTableName, envir = dataSource))) {
       return(NULL)
     }
     if (nrow(get(dataTableName, envir = dataSource)) == 0) {

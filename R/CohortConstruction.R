@@ -633,7 +633,6 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       )
       sql <- cohorts$sql[i]
       .warnMismatchSqlInclusionStats(sql, generateInclusionStats = generateInclusionStats)
-      warning(paste0(" - please check cohort ", cohorts$id[i],": ", cohorts$cohortName[i]))
       sql <- SqlRender::render(
         sql,
         cdm_database_schema = cdmDatabaseSchema,
