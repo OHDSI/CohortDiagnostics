@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+
 createIfNotExist <-
   function(type,
            name,
@@ -116,10 +118,13 @@ nullToEmpty <- function(x) {
   return(x)
 }
 
+
 .convertDateToString <- function(data) {
+  #https://github.com/r-lib/tidyselect/issues/201
+  #https://stackoverflow.com/questions/40251801/how-to-use-utilsglobalvariables
   data %>%
     dplyr::collect() %>%
-    dplyr::mutate(dplyr::across(where(is.date),
+    dplyr::mutate(dplyr::across(tidyselect:::where(is.date),
                                 as.character))
 }
 

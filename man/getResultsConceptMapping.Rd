@@ -23,7 +23,7 @@ and uploaded using \code{uploadResults}}
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
 
-\item{conceptIds}{A vector of concept ids to get counts for}
+\item{conceptIds}{A vector of one or more Concept Ids.}
 
 \item{domainTable}{A vector of strings representing the OMOP CDM domain tables. Valid options are
  'All' (Default) for data source level, 'condition_occurrence', 'procedure_occurrence',

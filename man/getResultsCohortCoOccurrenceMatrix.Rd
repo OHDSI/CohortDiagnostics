@@ -9,8 +9,8 @@ getResultsCohortCoOccurrenceMatrix(
   targetCohortIds = NULL,
   comparatorCohortIds = NULL,
   databaseIds = NULL,
-  startDay = NULL,
-  endDay = NULL,
+  startDays = NULL,
+  endDays = NULL,
   showPercent = TRUE
 )
 }
@@ -22,17 +22,17 @@ compiled into RData using \code{preMergeDiagnosticsFiles}. Database DataSources 
 database (only a postgres database is supported) with tables created with DDL function \code{createResultsDataModel}
 and uploaded using \code{uploadResults}}
 
+\item{targetCohortIds}{A vector of one or more Cohort Ids reprsenting target cohorts.}
+
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
 
-\item{startDay}{A vector of days in relation to cohort_start_date of target}
+\item{startDays}{A vector of integers representing the days offset}
 
-\item{endDay}{A vector of days in relation to cohort_end_date of target}
+\item{endDays}{A vector of integers representing the days offset}
 
 \item{showPercent}{Return percent instead of raw numbers}
-
-\item{cohortIds}{A vector of one or more Cohort Ids.}
 
 \item{ComparatorCohortIds}{A vector of one or more Cohort Ids.}
 }

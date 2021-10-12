@@ -24,9 +24,15 @@ shiny::shinyServer(function(input, output, session) {
   ##pickerInput: conceptSetsSelectedCohortLeft----
   #defined in UI
   shiny::observe({
+    if (exists("conceptSets")) {
+      if (!doesObjectHaveData(conceptSets)) {
+        return(NULL)
+      }
+    }
+    
     data <- conceptSets %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
-      dplyr::pull(.data$conceptSetName)
+      dplyr::pull(.data$compoundName)
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -115,17 +121,11 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observe({
     subset <- getCohortSortedByCohortId()$compoundName
     
-    if (input$tabs == "cohortDefinition") {
-      selected <- NULL
-    } else {
-      selected <- subset[2]
-    }
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "selectedComparatorCompoundCohortName",
       choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = selected
+      choices = subset
     )
   })
   
@@ -1781,7 +1781,7 @@ shiny::shinyServer(function(input, output, session) {
       ),
       tags$tr(
         tags$td(
-          tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", "))
+          # tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", "))
         )
       )
     )
@@ -2408,6 +2408,26 @@ shiny::shinyServer(function(input, output, session) {
               width = "100%",
               height = "100%"
             )
+          )
+        )
+        inc = inc + 1
+        
+        panels[[inc]] <- shiny::tabPanel(
+          title = "Standard to Non standard mapping",
+          value = "conceptSetStandardToNonStandard",
+          # shiny::column(
+          #   width = 12,
+          #   shiny::radioButtons(
+          #     inputId = "timeSeriesAggregationForCohortDefinition",
+          #     label = "Aggregation period:",
+          #     choices = c("Monthly", "Yearly"),
+          #     selected = "Monthly",
+          #     inline = TRUE
+          #   )
+          # ),
+          shiny::conditionalPanel(
+            condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
+            DT::dataTableOutput(outputId = "conceptSetStandardToNonStandardTable")
           )
         )
         inc = inc + 1
@@ -3600,6 +3620,60 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>%
       dplyr::rename("persons" = .data$subjectCount,
                     "records" = .data$conceptCount)
+    table <-
+      getSketchDesignForTablesInCohortDefinitionTab(conceptMapping,
+                                                    databaseCount = databaseCount,
+                                                    numberOfColums = 3)
+    return(table)
+  })
+  
+  ##output: conceptSetStandardToNonStandardTable----
+  output$conceptSetStandardToNonStandardTable <- DT::renderDT(expr = {
+    conceptId <- activeSelected()$conceptId
+    validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
+    cohortId <- activeSelected()$cohortId
+    validate(need(doesObjectHaveData(conceptId), "No cohort id selected."))
+    databaseId <- activeSelected()$databaseId
+    validate(need(doesObjectHaveData(databaseId), "No database id selected."))
+    
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(
+      message = paste0("Computing concept relationship for concept id:",
+                       conceptId),
+      value = 0
+    )
+    data <- getResultsConceptMapping(dataSource, 
+                             databaseIds = databaseId,#active selected databaseid
+                             conceptIds = conceptId, # active  selected conceptId
+                             domainTables = 'All' #default
+    )
+    validate(need(
+      doesObjectHaveData(data),
+      "No information for selected concept id."
+    ))
+    
+    conceptMapping <- data %>% 
+      dplyr::inner_join(getConcept(dataSource,conceptIds = data$sourceConceptId), by = c("sourceConceptId" = "conceptId")) %>% 
+      dplyr::select(
+        .data$sourceConceptId,
+        .data$conceptName,
+        .data$vocabularyId,
+        .data$databaseId,
+        .data$domainTable,
+        .data$conceptCount,
+        .data$subjectCount
+      ) %>% 
+      dplyr::rename(
+        "conceptId" = .data$sourceConceptId,
+        "persons" = .data$subjectCount,
+        "records" = .data$conceptCount
+      )
+    
+    databaseCount <- data %>%  dplyr::group_by(.data$conceptId,.data$databaseId) %>% 
+      dplyr::summarise("persons" = sum(subjectCount),
+                       "records" = sum(conceptCount))
+    
     table <-
       getSketchDesignForTablesInCohortDefinitionTab(conceptMapping,
                                                     databaseCount = databaseCount,
@@ -5174,6 +5248,9 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(indexEventBreakdown)) {
       return(NULL)
     }
+    
+    indexEventBreakdown <- indexEventBreakdown %>% 
+      dplyr::filter(.data$domainId %in% input$indexEventDomainNameFilter)
     
     if (input$indexEventBreakdownTableRadioButton == 'All') {
       return(indexEventBreakdown)
@@ -6806,6 +6883,12 @@ shiny::shinyServer(function(input, output, session) {
     if (input$tabs != "temporalCharacterization") {
       return(NULL)
     }
+    if (!exists("temporalTimeRef")) {
+      return(NULL)
+    }
+    if (!exists("temporalCovariateChoices")) {
+      return(NULL)
+    }
     if (any(
       is.null(getMultipleCharacterizationData()),
       length(getMultipleCharacterizationData()) == 0
@@ -6870,7 +6953,6 @@ shiny::shinyServer(function(input, output, session) {
             by = c("conceptId", "cohortId")
           )
       }
-      
       data <- data %>%
           dplyr::filter(.data$analysisName %in% getTemporalCharacterizationAnalysisNameOptions()) %>%
           dplyr::filter(.data$domainId %in% getTemporalCharacterizationDomainNameOptions()) %>%
@@ -6942,7 +7024,6 @@ shiny::shinyServer(function(input, output, session) {
       data <- getTemporalCharacterizationTableData()
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
-      
       temporalCovariateChoicesSelected <-
         temporalCovariateChoices %>%
         dplyr::filter(.data$timeId %in% c(getTimeIdsFromSelectedTemporalCovariateChoices())) %>%
@@ -7109,7 +7190,7 @@ shiny::shinyServer(function(input, output, session) {
       
       if (any(
         length(consolidatedCohortIdTarget()) != 1,
-        length(getComparatorCohortIdFromSelectedCompoundCohortName()) != 1,
+        # length(getComparatorCohortIdFromSelectedCompoundCohortName()) != 1,
         length(consolidatedDatabaseIdTarget()) == 0
       )) {
         return(NULL)
@@ -7726,7 +7807,6 @@ shiny::shinyServer(function(input, output, session) {
       warning("No analysis reference data found")
       return(NULL)
     }
-    
     data <-
       getMultipleCompareCharacterizationData()$covariateValue %>%
       dplyr::filter(.data$characterizationSource %in% c('CT', 'FT')) %>%
@@ -8013,7 +8093,6 @@ shiny::shinyServer(function(input, output, session) {
                       accuracy = 1),
         ")"
       )
-      
       temporalCovariateChoicesSelected <-
         temporalCovariateChoices %>%
         dplyr::filter(.data$timeId %in% c(getTimeIdsFromSelectedTemporalCovariateChoices())) %>%
@@ -9018,7 +9097,6 @@ shiny::shinyServer(function(input, output, session) {
         td(selectedComparatorCohort())
       )))
     })
-  
   output$temporalCharCompareSelectedDatabase <-
     shiny::renderUI({
       return(input$selectedDatabaseId)

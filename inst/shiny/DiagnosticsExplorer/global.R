@@ -215,7 +215,7 @@ if (databaseMode) {
 }
 
 #Adding enhancements to the objects, which are already loaded in R memory----
-if (exists("database")) {
+if (exists("database") &&  doesObjectHaveData(database)) {
   if (nrow(database) > 0 &&
       "vocabularyVersion" %in% colnames(database)) {
     database <- database %>%
@@ -225,7 +225,7 @@ if (exists("database")) {
   }
 }
 
-if (exists("cohort")) {
+if (exists("cohort")  &&  doesObjectHaveData(cohort)) {
   # cohort is required and is always loaded into R memory
   cohort <- cohort %>%
     dplyr::arrange(.data$cohortId) %>%
@@ -240,7 +240,22 @@ if (exists("cohort")) {
     ))
 }
 
-if (exists("database")) {
+if (exists("conceptSets") && doesObjectHaveData(conceptSets)) {
+  # cohort is required and is always loaded into R memory
+  conceptSets <- conceptSets %>%
+    dplyr::arrange(.data$conceptSetId) %>%
+    dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>%
+    dplyr::mutate(compoundName = paste0(
+      .data$shortName,
+      ": ",
+      .data$conceptSetName,
+      "(",
+      .data$conceptSetId,
+      ")"
+    ))
+}
+
+if (exists("database") && doesObjectHaveData(database)) {
   # cohort is required and is always loaded into R memory
   database <- database %>%
     dplyr::arrange(.data$databaseId) %>%
@@ -256,7 +271,8 @@ if (exists("database")) {
 }
 
 #enhancement and removing the objects based on the control variable
-if (exists("temporalTimeRef")) {
+if (all(exists("temporalTimeRef"),
+        doesObjectHaveData(temporalTimeRef))) {
   if (all(
     nrow(temporalTimeRef) > 0,
     showTemporalCharacterizationAndCompareTemporalCharacterization
@@ -276,15 +292,20 @@ if (exists("temporalTimeRef")) {
   } else {
     rm("temporalTimeRef")
     rm("temporalAnalysisRef")
-    rm("temporalCovariateChoices")
     rm("temporalCovariateRef")
     rm("temporalCovariateValue")
     filterTemporalCovariateChoicesToPrimaryOptions <- FALSE
   }
+} else {
+  rm("temporalTimeRef")
+  rm("temporalAnalysisRef")
+  rm("temporalCovariateRef")
+  rm("temporalCovariateValue")
+  filterTemporalCovariateChoicesToPrimaryOptions <- FALSE
 }
 
 #enhancement and removing the objects based on the control variable
-if (exists("covariateRef")) {
+if (exists("covariateRef") && doesObjectHaveData(covariateRef)) {
   if (all(nrow(covariateRef) > 0,
           showCharacterizationAndCompareCharacterization)) {
     specifications <- readr::read_csv(

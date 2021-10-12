@@ -18,7 +18,7 @@ and uploaded using \code{uploadResults}}
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
 
-\item{conceptIds}{A list of concept ids to get counts for}
+\item{conceptIds}{A vector of one or more Concept Ids.}
 }
 \value{
 Returns a data frame (tibble)

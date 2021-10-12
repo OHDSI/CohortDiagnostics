@@ -18,6 +18,7 @@
 # general functions ----
 # this script is shared between Cohort Diagnostics and Diagnostics Explorer
 
+
 # private function - not exported
 doesObjectHaveData <- function(data) {
   if (is.null(data)) {
@@ -290,10 +291,10 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              conceptId1 = NULL,
                                              relationshipId = NULL,
                                              conceptSetId = NULL,
+                                             daysRelativeIndex = NULL,
                                              databaseId = NULL,
                                              domainTable = NULL,
                                              vocabularyDatabaseSchema = NULL,
-                                             daysRelativeIndex = NULL,
                                              startDay = NULL,
                                              endDay = NULL,
                                              seriesType = NULL,
@@ -311,11 +312,11 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
       "conceptSetId",
       "startDay",
       "endDay",
-      "daysRelativeIndex",
       "domainTable",
       "seriesType",
       "eventMonth",
-      "eventYear"
+      "eventYear",
+      "daysRelativeIndex"
     )
     if (!is.null(vocabularyDatabaseSchema)) {
       paste0(
@@ -370,12 +371,12 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
               {@concept_id_1 !=''} ? {AND (concept_id_1 IN (@concept_id_1) OR concept_id_2 IN (@concept_id_1)) \n}
               {@start_day !=''} ? {AND start_day IN (@start_day) \n}
               {@end_day !=''} ? {AND end_day IN (@end_day) \n}
-              {@days_relative_index !=''} ? {AND end_day IN (@days_relative_index) \n}
               {@relationship_id !=''} ? {AND relationship_id IN (@relationship_id) \n}
               {@series_type !=''} ? {AND series_type IN (@series_type) \n}
               {@domain_table !=''} ? {AND domain_table IN (@domain_table) \n}
               {@event_month !=''} ? {AND event_month IN (@event_month) \n}
               {@event_year !=''} ? {AND event_year IN (@event_year) \n}
+              {@days_relative_index !=''} ? {AND days_relative_index IN (@days_relative_index) \n}
             ;"
     if (!is.null(vocabularyDatabaseSchema)) {
       resultsDatabaseSchema <- vocabularyDatabaseSchema
@@ -404,6 +405,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         series_type = quoteLiterals(seriesType),
         event_month = eventMonth,
         event_year = eventYear,
+        days_relative_index = daysRelativeIndex,
         snakeCaseToCamelCase = TRUE
       )
   }
@@ -770,7 +772,9 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
 #'
 #' @template ConceptIds
 #' 
-#' @template eventMonth (optional) which month do you want to return data for
+#' @template CalendarMonths
+#' 
+#' @template CalendarYears
 #'
 #' @return
 #' Returns a data frame (tibble)
@@ -779,14 +783,14 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
 getResultsConceptCount <- function(dataSource,
                                    databaseIds = NULL,
                                    conceptIds = NULL,
-                                   eventMonth = NULL,
-                                   eventYear = NULL) {
+                                   CalendarMonths = NULL,
+                                   CalendarYears = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     databaseId = databaseIds,
     conceptId = conceptIds,
-    eventMonth = eventMonth,
-    eventYear = eventYear,
+    eventMonth = CalendarMonths,
+    eventYear = CalendarYears,
     dataTableName = "conceptCount"
   )
   return(data)
@@ -1895,7 +1899,7 @@ getResultsFixedTimeSeries <- function(dataSource,
     dataSource,
     cohortId = c(cohortIds, 0) %>% unique(),
     databaseId = databaseIds,
-    seriesType = c('T1', 'T2', 'T3'),
+    seriesType = seriesType,
     dataTableName = "timeSeries"
   )
   if (any(is.null(data),
@@ -2115,7 +2119,8 @@ getResultsIndexEventBreakdown <- function(dataSource,
     databaseId = databaseIds,
     dataTableName = "indexEventBreakdown",
     conceptId = conceptIds,
-    coConceptId = coConceptIds
+    coConceptId = coConceptIds,
+    daysRelativeIndex = daysRelativeIndex
   )
   return(data)
 }
@@ -2166,9 +2171,9 @@ getResultsVisitContext <- function(dataSource,
 #'
 #' @template DatabaseIds
 #' 
-#' @param startDay A vector of days in relation to cohort_start_date of target 
+#' @param startDays A vector of days in relation to cohort_start_date of target 
 #' 
-#' @param endDay A vector of days in relation to cohort_end_date of target 
+#' @param endDays A vector of days in relation to cohort_end_date of target 
 #'
 #' @return
 #' Returns a data frame (tibble) with results that conform to cohort_relationships
@@ -2179,15 +2184,15 @@ getResultsCohortRelationships <- function(dataSource,
                                           cohortIds = NULL,
                                           comparatorCohortIds = NULL,
                                           databaseIds = NULL,
-                                          startDay = NULL,
-                                          endDay = NULL) {
+                                          startDays = NULL,
+                                          endDays = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource = dataSource,
     cohortId = cohortIds,
     comparatorCohortId = comparatorCohortIds,
     databaseId = databaseIds,
-    startDay = startDay,
-    endDay = endDay,
+    startDay = startDays,
+    endDay = endDays,
     dataTableName = "cohortRelationships"
   )
   return(data)
@@ -2204,15 +2209,15 @@ getResultsCohortRelationships <- function(dataSource,
 #'
 #' @template DataSource
 #'
-#' @template CohortIds
+#' @template TargetCohortIds
 #' 
 #' @template ComparatorCohortIds
 #'
 #' @template DatabaseIds
 #' 
-#' @param startDay A vector of days in relation to cohort_start_date of target 
+#' @template StartDays
 #' 
-#' @param endDay A vector of days in relation to cohort_end_date of target 
+#' @template endDays
 #' 
 #' @param showPercent Return percent instead of raw numbers
 #'
@@ -2225,8 +2230,8 @@ getResultsCohortCoOccurrenceMatrix <- function(dataSource,
                                                targetCohortIds = NULL,
                                                comparatorCohortIds = NULL,
                                                databaseIds = NULL,
-                                               startDay = NULL,
-                                               endDay = NULL,
+                                               startDays = NULL,
+                                               endDays = NULL,
                                                showPercent = TRUE) {
   cohortCount <- getResultsCohortCount(
     dataSource = dataSource,
@@ -2239,11 +2244,11 @@ getResultsCohortCoOccurrenceMatrix <- function(dataSource,
   
   cohortRelationship <- getResultsCohortRelationships(
     dataSource = dataSource,
-    cohortId = targetCohortIds,
+    cohortIds = targetCohortIds,
     comparatorCohortIds = comparatorCohortIds,
     databaseIds = databaseIds,
-    startDay = startDay,
-    endDay = endDay
+    startDays = startDays,
+    endDays = endDays
   )
   if (is.null(cohortRelationship)) {
     return(NULL)
@@ -2410,8 +2415,8 @@ getResultsCohortOverlap <- function(dataSource,
                                   cohortIds = cohortIds,
                                   comparatorCohortIds = comparatorCohortIds,
                                   databaseIds = databaseIds, 
-                                  startDay = c(-99999,0),
-                                  endDay = c(99999,0))
+                                  startDays = c(-99999,0),
+                                  endDays = c(99999,0))
   
   if (any(is.null(cohortRelationship),
           nrow(cohortRelationship) == 0)) {
@@ -2634,12 +2639,12 @@ getCohortRelationshipCharacterizationResults <-
       getResultsCohortRelationships(dataSource = dataSource,
                                     cohortIds = cohortIds,
                                     databaseIds = databaseIds,
-                                    startDay = c(-99999,-365,-180,-30,-99999,-365,-180,-30),
-                                    endDay = 0)
+                                    startDays = c(-99999,-365,-180,-30,-99999,-365,-180,-30),
+                                    endDays = 0)
     # comparator cohort was on or after target cohort
     summarizeCohortRelationship <- function(data,
-                                            startDay = NULL,
-                                            endDay = NULL,
+                                            startDays = NULL,
+                                            endDays = NULL,
                                             valueField = 'records',
                                             analysisId,
                                             cohortCounts) {
@@ -2649,8 +2654,8 @@ getCohortRelationshipCharacterizationResults <-
       
       data$sumValue <- data[[valueField]]
       data <- data  %>%
-        dplyr::filter(.data$startDay == !!startDay) %>%
-        dplyr::filter(.data$endDay == !!endDay) %>%
+        dplyr::filter(.data$startDay == !!startDays) %>%
+        dplyr::filter(.data$endDay == !!endDays) %>%
         dplyr::select(.data$databaseId,
                       .data$cohortId,
                       .data$comparatorCohortId,
@@ -2709,10 +2714,10 @@ getCohortRelationshipCharacterizationResults <-
       "subjects",
       "subjects"          #comparator cohort subjects exist within the window in relation to target cohort start/end date
     )
-    startDay <- c(-99999,-365,-180,-30,-99999,-365,-180,-30)
-    endDay <- c(0)
+    startDays <- c(-99999,-365,-180,-30,-99999,-365,-180,-30)
+    endDays <- c(0)
     analysisRef <-
-      dplyr::tibble(analysisId, analysisName, valueField, startDay, endDay) %>%
+      dplyr::tibble(analysisId, analysisName, valueField, startDays, endDays) %>%
       dplyr::mutate(isBinary = 'Y',
                     missingMeansZero = 'Y') %>%
       dplyr::arrange(.data$analysisId) %>%
@@ -2733,8 +2738,8 @@ getCohortRelationshipCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          startDay = analysisRef[j,]$startDay,
-          endDay = analysisRef[j,]$endDay,
+          startDays = analysisRef[j,]$startDay,
+          endDays = analysisRef[j,]$endDay,
           analysisId = analysisRef[j,]$analysisId,
           valueField = analysisRef[j,]$valueField,
           cohortCounts = cohortCounts
@@ -2837,8 +2842,8 @@ getCohortAsFeatureTemporalCharacterizationResults <-
     cohortRelationships <-
       getResultsCohortRelationships(dataSource = dataSource,
                                     cohortIds = cohortIds,
-                                    startDay = c(seqStart30),
-                                    endDay = c(seqEnd30),
+                                    startDays = c(seqStart30),
+                                    endDays = c(seqEnd30),
                                     databaseIds = databaseIds)
     
     if (is.null(cohortRelationships) ||
@@ -3586,14 +3591,15 @@ getDomainInformation <- function(packageName = NULL) {
   return(data)
 }
 
+
+
 .replaceNaInDataFrameWithEmptyString <- function(data) {
   #https://github.com/r-lib/tidyselect/issues/201
-  # tried utils::globalVariables("where") but get the message The namespace for package "CohortDiagnostics" is locked; no changes in the global variables list may be made.
   data %>%
     dplyr::collect() %>%
-    dplyr::mutate(dplyr::across(where(is.character), ~ tidyr::replace_na(.x, as.character('')))) %>%
-    dplyr::mutate(dplyr::across(where(is.logical), ~ tidyr::replace_na(.x, as.character('')))) %>%
-    dplyr::mutate(dplyr::across(where(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
+    dplyr::mutate(dplyr::across(tidyselect:::where(is.character), ~ tidyr::replace_na(.x, as.character('')))) %>%
+    dplyr::mutate(dplyr::across(tidyselect:::where(is.logical), ~ tidyr::replace_na(.x, as.character('')))) %>%
+    dplyr::mutate(dplyr::across(tidyselect:::where(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
 }
 
 
@@ -3652,7 +3658,7 @@ getResultsCompiledOutput <- function(dataSource,
                                     cohortIds = cohortIds[[i]])
     output[[paste0("cohortId", cohortIds[[i]])]][["cohortOverlap"]] <-
       getResultsCohortOverlap(dataSource = dataSource,
-                              cohortIds = cohortIds[[i]])
+                              targetCohortIds = cohortIds[[i]])
     output[[paste0("cohortId", cohortIds[[i]])]][["circe"]] <-
       getCirceRenderedExpression(
         cohortDefinition = output[[paste0("cohortId", cohortIds[[i]])]][["cohort"]] %>%

@@ -279,7 +279,7 @@ consolidationOfSelectedFieldValues <- function(input,
     if (doesObjectHaveData(input$conceptSetsSelectedCohortLeft)) {
       data$conceptSetIdTarget <- conceptSets %>% 
         dplyr::filter(.data$cohortId %in% data$cohortIdTarget) %>% 
-        dplyr::filter(.data$conceptSetName %in% input$conceptSetsSelectedCohortLeft) %>% 
+        dplyr::filter(.data$compoundName %in% input$conceptSetsSelectedCohortLeft) %>% 
         dplyr::pull(.data$conceptSetId)
     }
     if (all(doesObjectHaveData(indexEventBreakdownDataTable),

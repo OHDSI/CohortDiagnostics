@@ -23,7 +23,7 @@ commonly the same as cdmDatabaseSchema. Note that for
 SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
 
-\item{conceptIds}{a vector of concept ids}
+\item{conceptIds}{A vector of one or more Concept Ids.}
 }
 \value{
 Returns a data frame (tibble)
