@@ -123,7 +123,7 @@
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://ohdsi.github.io/Hades">hadesLogo</a>
+  <a href="https://ohdsi.github.io/Hades"><img src='https://ohdsi.github.io/Hades/images/hadesMini.png' width=80 height=17 style='vertical-align: top;'></a>
 </li>
 <li>
   <a href="https://github.com/OHDSI/CohortDiagnostics/">
@@ -153,7 +153,13 @@
     <p>Returns data from concept_count table of Cohort Diagnostics results data model</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getResultsConceptCount</span><span class='op'>(</span><span class='va'>dataSource</span>, databaseIds <span class='op'>=</span> <span class='cn'>NULL</span>, conceptIds <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>getResultsConceptCount</span><span class='op'>(</span>
+  <span class='va'>dataSource</span>,
+  databaseIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  conceptIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  CalendarMonths <span class='op'>=</span> <span class='cn'>NULL</span>,
+  CalendarYears <span class='op'>=</span> <span class='cn'>NULL</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -175,7 +181,17 @@ of the results data model.</p></td>
     </tr>
     <tr>
       <th>conceptIds</th>
-      <td><p>A list of concept ids to get counts for</p></td>
+      <td><p>A vector of one or more Concept Ids.</p></td>
+    </tr>
+    <tr>
+      <th>calendarMonth</th>
+      <td><p>A vector of one more more calendar month (valid values 0 to 12) where 1 to 12 represents calendar month, and 0 represents
+aggregation across all months.</p></td>
+    </tr>
+    <tr>
+      <th>calendarYears</th>
+      <td><p>A vector of one more more calendar years (valid values 1980 to current year or 0). Where 0 represents
+aggregation across all available years.</p></td>
     </tr>
     </table>
 
