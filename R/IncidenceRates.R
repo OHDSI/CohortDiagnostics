@@ -67,7 +67,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
     DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
   
   calendarYears <-
-    dplyr::tibble(calendarYear = seq(yearRange$startYear, yearRange$endYear, by = 1))
+    dplyr::tibble(calendarYear = seq(yearRange$startYear, min(yearRange$endYear, 9998), by = 1))
   DatabaseConnector::insertTable(
     connection = connection,
     tableName = "#calendar_years",
