@@ -6279,36 +6279,43 @@ shiny::shinyServer(function(input, output, session) {
   
   ###Update: characterizationDomainNameOptions----
   shiny::observe({
-    data <- getCharacterizationTableData()
-    if (all(!is.null(data),
-            doesObjectHaveData(data$domainId))) {
-      subset <-
-        data$domainId %>% unique() %>% sort()
-      shinyWidgets::updatePickerInput(
-        session = session,
-        inputId = "characterizationDomainNameOptions",
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = subset,
-        selected = subset
-      )
+    characterizationData <- getCharacterizationTableData()
+    if (!doesObjectHaveData(characterizationData)) {
+      return(NULL)
     }
+    if (!doesObjectHaveData(characterizationData$domainId)) {
+      return(NULL)
+    }
+    subset <-
+      characterizationData$domainId %>% unique() %>% sort()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "characterizationDomainNameOptions",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
   })
   
   ###Update: characterizationAnalysisNameOptions----
   shiny::observe({
-    data <- getCharacterizationTableData()
-    if (any(is.null(data),
-            !doesObjectHaveData(data$analysisName))) {
+    characterizationData <- getCharacterizationTableData()
+    if (!doesObjectHaveData(characterizationData)) {
       return(NULL)
     }
-    
-    data <- data %>% 
+    if (!doesObjectHaveData(characterizationData$analysisName)) {
+      return(NULL)
+    }
+    characterizationData <- characterizationData %>% 
       dplyr::filter(.data$domainId %in% getCharacterizationDomainNameOptions())
-    if (!doesObjectHaveData(data)) {
+    if (!doesObjectHaveData(characterizationData)) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(characterizationData$analysisName)) {
       return(NULL)
     }
     subset <-
-      data$analysisName %>% unique() %>% sort()
+      characterizationData$analysisName %>% unique() %>% sort()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "characterizationAnalysisNameOptions",
@@ -6332,8 +6339,15 @@ shiny::shinyServer(function(input, output, session) {
   
   ###Update: temporalCharacterizationDomainNameOptions----
   shiny::observe({
+    temporalCharacterizationData <- getTemporalCharacterizationData()
+    if (!doesObjectHaveData(temporalCharacterizationData)) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(temporalCharacterizationData$domainId)) {
+      return(NULL)
+    }
     subset <-
-      getTemporalCharacterizationData()$domainId %>% unique() %>% sort()
+      temporalCharacterizationData$domainId %>% unique() %>% sort()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "temporalCharacterizationDomainNameOptions",
@@ -6345,12 +6359,14 @@ shiny::shinyServer(function(input, output, session) {
   
   ###Update: temporalCharacterizationAnalysisNameOptions----
   shiny::observe({
-    data <- getTemporalCharacterizationData()
-    if (!doesObjectHaveData(data)) {
+    temporalCharacterizationData <- getTemporalCharacterizationData()
+    if (!doesObjectHaveData(temporalCharacterizationData)) {
       return(NULL)
     }
-  
-    subset <- data %>% 
+    if (!doesObjectHaveData(temporalCharacterizationData$domainId)) {
+      return(NULL)
+    }
+    subset <- temporalCharacterizationData %>% 
       dplyr::filter(.data$domainId %in% getTemporalCharacterizationDomainNameOptions()) %>% 
       dplyr::pull(.data$analysisName) %>% unique() %>% sort()
       
