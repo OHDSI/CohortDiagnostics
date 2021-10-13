@@ -7024,6 +7024,14 @@ shiny::shinyServer(function(input, output, session) {
       if (input$tabs != "temporalCharacterization") {
         return(NULL)
       }
+      if (any(!doesObjectHaveData(input$temporalCharacterizationDomainNameOptions),
+              input$temporalCharacterizationDomainNameOptions == "")) {
+        return(NULL)
+      }
+      if (any(!doesObjectHaveData(input$temporalCharacterizationAnalysisNameOptions),
+              input$temporalCharacterizationAnalysisNameOptions == "")) {
+        return(NULL)
+      }
       data <- getTemporalCharacterizationData()
       if (!doesObjectHaveData(data)) {
         return(NULL)
@@ -7038,8 +7046,8 @@ shiny::shinyServer(function(input, output, session) {
           )
       }
       data <- data %>%
-          dplyr::filter(.data$analysisName %in% getTemporalCharacterizationAnalysisNameOptions()) %>%
-          dplyr::filter(.data$domainId %in% getTemporalCharacterizationDomainNameOptions()) %>%
+          dplyr::filter(.data$analysisName %in% input$temporalCharacterizationAnalysisNameOptions) %>%
+          dplyr::filter(.data$domainId %in% input$temporalCharacterizationDomainNameOptions) %>%
           dplyr::filter(.data$timeId %in% getTimeIdsFromSelectedTemporalCovariateChoices())
       
       if (input$temporalCharacterizationOutputTypeProportionOrContinuous == "Proportion") {
