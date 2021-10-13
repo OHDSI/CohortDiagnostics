@@ -1644,14 +1644,14 @@ getResultsConceptSetExpression <- function(dataSource,
                                            conceptSetId) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
-    dataTableName = "conceptSet",
+    dataTableName = "conceptSets",
     cohortId = cohortId,
     conceptSetId = conceptSetId
   )
-  if (length(cohortId) > 0) {
+  if (length(cohortId) > 1) {
     stop("Please only provide one integer value for cohortId")
   }
-  if (length(cohortId) > 0) {
+  if (length(conceptSetId) > 1) {
     stop("Please only provide one integer value for conceptSetId")
   }
   if (is.null(data)) {
@@ -1667,11 +1667,9 @@ getResultsConceptSetExpression <- function(dataSource,
   if (nrow(data) > 1) {
     stop("More than one expression returned. Please check the integerity of your results.")
   }
-  
   expression <- data %>%
-    dplyr::pull(.data$concept_set_expression) %>%
+    dplyr::pull(.data$conceptSetExpression) %>%
     RJSONIO::fromJSON(digits = 23)
-  
   return(expression)
 }
 
@@ -1702,6 +1700,7 @@ getOptimizedConceptSet <- function(dataSource,
                                    databaseIds = NULL,
                                    cohortIds = NULL,
                                    conceptSetIds = NULL) {
+  browser()
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     dataTableName = "conceptSetsOptimized",
@@ -1709,6 +1708,11 @@ getOptimizedConceptSet <- function(dataSource,
     cohortId = cohortIds,
     conceptSetId = conceptSetIds
   )
+  originalConceptSetExpression <- getResultsConceptSetExpression(dataSource = dataSource,
+                                                                 cohortId = cohortIds,
+                                                                 conceptSetId = conceptSetIds)
+  originalConceptSetExpressionTable <- getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression = originalConceptSetExpression)
+  
   return(data)
 }
 

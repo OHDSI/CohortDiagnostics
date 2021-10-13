@@ -411,7 +411,7 @@ shiny::shinyServer(function(input, output, session) {
                                tags$tr(
                                  tags$td(
                                    shiny::conditionalPanel(
-                                     condition = "!output.doesTargetConceptSetsExpressionTableOptimized",
+                                     condition = "!output.canTargetConceptSetExpressionBeOptimized",
                                          shiny::actionButton(inputId = "optimizeConceptSetButton",
                                                              label = "Optimize"))),
                                  tags$td(
@@ -2660,9 +2660,24 @@ shiny::shinyServer(function(input, output, session) {
                        name = "isTargetCohortDefinitionConceptSetsTableRowSelected",
                        suspendWhenHidden = FALSE)
   
+  showOptimizedConceptSetExpressionTable <- reactiveVal(FALSE)
+  shiny::observeEvent(eventExpr = input$optimizeConceptSetButton,
+                      handlerExpr = {
+                        showOptimizedConceptSetExpressionTable(TRUE)
+                      })
+  
   #reactive: getOptimizedTargetConceptSetsExpressionTable----
   getOptimizedTargetConceptSetsExpressionTable <-
     shiny::reactive(x = {
+      if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(consolidatedConceptSetIdTarget())) {
+        return(NULL)
+      }
       result <- getOptimizedConceptSet(
         dataSource = dataSource,
         databaseIds = consolidatedDatabaseIdTarget(),
@@ -2672,12 +2687,15 @@ shiny::shinyServer(function(input, output, session) {
       return(result)
     })
   
-  output$doesTargetConceptSetsExpressionTableOptimized <-
-    shiny::reactive(x = { 
+  output$canTargetConceptSetExpressionBeOptimized <-
+    shiny::reactive(x = {
+      if (!doesObjectHaveData(getOptimizedTargetConceptSetsExpressionTable())) {
+        return(NULL)
+      }
       return(nrow(getOptimizedTargetConceptSetsExpressionTable()) == 0)
     })
   shiny::outputOptions(x = output,
-                       name = "doesTargetConceptSetsExpressionTableOptimized",
+                       name = "canTargetConceptSetExpressionBeOptimized",
                        suspendWhenHidden = FALSE)
   
   #output: saveTargetConceptSetsExpressionTable----
@@ -2690,12 +2708,6 @@ shiny::shinyServer(function(input, output, session) {
       #!!!! this may need downloadExcel() with formatted and multiple tabs
     }
   )
-  
-  showOptimizedTable <- reactiveVal(FALSE)
-  shiny::observeEvent(eventExpr = input$optimizeConceptSetButton,
-                      handlerExpr = {
-                        showOptimizedTable(TRUE)
-                      })
   
   #output: targetConceptSetsExpressionTable----
   output$targetConceptSetsExpressionTable <-
