@@ -4291,13 +4291,17 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(idx)) {
       return(NULL)
     } else {
-      subset <- getCohortCountDataForSelectedDatabaseIdsCohortIds() %>%
-        dplyr::distinct(.data$cohortId)
-      
-      if (!is.null(subset)) {
-        return(subset[idx, ])
-      } else {
+      if (!doesObjectHaveData(getCohortCountDataForSelectedDatabaseIdsCohortIds)) {
         return(NULL)
+      } else {
+        subset <- getCohortCountDataForSelectedDatabaseIdsCohortIds() %>%
+          dplyr::distinct(.data$cohortId)
+        
+        if (!is.null(subset)) {
+          return(subset[idx, ])
+        } else {
+          return(NULL)
+        }
       }
     }
   })
