@@ -6338,120 +6338,34 @@ shiny::shinyServer(function(input, output, session) {
       }
     })
   
-  ###getCharacterizationDomainNameOptions----
-  getCharacterizationDomainNameOptions <- shiny::reactive({
-    return(input$characterizationDomainNameOptions)
+  ###getDomainOptionsForCharacterization----
+  getDomainOptionsForCharacterization <- shiny::reactive({
+    multipleCharacterizationData <- getMultipleCharacterizationData()
+    if (!doesObjectHaveData(multipleCharacterizationData)) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(multipleCharacterizationData$analysisRef)) {
+      return(NULL)
+    }
+    domainIdOptions <- multipleCharacterizationData$analysisRef$domainId %>% 
+      unique() %>% 
+      sort()
+    return(domainIdOptions)
   })
   
-  ###getCharacterizationAnalysisNameOptions----
-  getCharacterizationAnalysisNameOptions <- shiny::reactive({
-    return(input$characterizationAnalysisNameOptions)
-  })
-  
-  ###Update: characterizationDomainNameOptions----
-  shiny::observe({
-    characterizationData <- getCharacterizationTableData()
-    if (!doesObjectHaveData(characterizationData)) {
+  ###getAnalysisNameOptionsForCharacterization----
+  getAnalysisNameOptionsForCharacterization <- shiny::reactive({
+    multipleCharacterizationData <- getMultipleCharacterizationData()
+    if (!doesObjectHaveData(multipleCharacterizationData)) {
       return(NULL)
     }
-    if (!doesObjectHaveData(characterizationData$domainId)) {
+    if (!doesObjectHaveData(multipleCharacterizationData$analysisRef)) {
       return(NULL)
     }
-    subset <-
-      characterizationData$domainId %>% unique() %>% sort()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "characterizationDomainNameOptions",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
-  
-  ###Update: characterizationAnalysisNameOptions----
-  shiny::observe({
-    characterizationData <- getCharacterizationTableData()
-    if (!doesObjectHaveData(characterizationData)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(characterizationData$analysisName)) {
-      return(NULL)
-    }
-    characterizationData <- characterizationData %>% 
-      dplyr::filter(.data$domainId %in% getCharacterizationDomainNameOptions())
-    if (!doesObjectHaveData(characterizationData)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(characterizationData$analysisName)) {
-      return(NULL)
-    }
-    subset <-
-      characterizationData$analysisName %>% unique() %>% sort()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "characterizationAnalysisNameOptions",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
-  
-  ### getTemporalCharacterizationAnalysisNameOptions----
-  getTemporalCharacterizationAnalysisNameOptions <-
-    shiny::reactive(x = {
-      temporalCharacterizationData <- getTemporalCharacterizationData()
-      if (!doesObjectHaveData(temporalCharacterizationData)) {
-        return(NULL)
-      }
-      if (!doesObjectHaveData(temporalCharacterizationData$analysisName)) {
-        return(NULL)
-      }
-      analysisNameOptions <- temporalCharacterizationData$analysisName %>% 
-        unique() %>% 
-        sort()
-      return(analysisNameOptions)
-    })
-  
-  ### getTemporalCharacterizationDomainNameOptions----
-  getTemporalCharacterizationDomainNameOptions <-
-    shiny::reactive(x = {
-      temporalCharacterizationData <- getTemporalCharacterizationData()
-      if (!doesObjectHaveData(temporalCharacterizationData)) {
-        return(NULL)
-      }
-      if (!doesObjectHaveData(temporalCharacterizationData$domainId)) {
-        return(NULL)
-      }
-      domainNameOptions <- temporalCharacterizationData$domainId %>% 
-        unique() %>% 
-        sort()
-      return(domainNameOptions)
-    })
-  
-  ###Update: temporalCharacterizationDomainNameOptions----
-  shiny::observe({
-    subset <-
-      getTemporalCharacterizationDomainNameOptions()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "temporalCharacterizationDomainNameOptions",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
-  
-  ###Update: temporalCharacterizationAnalysisNameOptions----
-  shiny::observe({
-    subset <-
-      getTemporalCharacterizationAnalysisNameOptions()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "temporalCharacterizationAnalysisNameOptions",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
+    anlaysisNameOptions <- multipleCharacterizationData$analysisRef$analysisName %>% 
+      unique() %>% 
+      sort()
+    return(anlaysisNameOptions)
   })
   
   ###getMultipleCharacterizationData----
@@ -6491,6 +6405,56 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  
+  
+  ###Update: characterizationDomainNameOptions----
+  shiny::observe({
+    subset <- getDomainOptionsForCharacterization()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "characterizationDomainNameOptions",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  ###Update: characterizationAnalysisNameOptions----
+  shiny::observe({
+    subset <- getAnalysisNameOptionsForCharacterization()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "characterizationAnalysisNameOptions",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  ###Update: temporalCharacterizationDomainNameOptions----
+  shiny::observe({
+    subset <- getDomainOptionsForCharacterization()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "temporalCharacterizationDomainNameOptions",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  ###Update: temporalCharacterizationAnalysisNameOptions----
+  shiny::observe({
+    subset <- getAnalysisNameOptionsForCharacterization()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "temporalCharacterizationAnalysisNameOptions",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
   ##Characterization----
   ### getCharacterizationDataFiltered ----
   getCharacterizationDataFiltered <- shiny::reactive(x = {
@@ -6514,7 +6478,7 @@ shiny::shinyServer(function(input, output, session) {
     covariatesTofilter <-
       getMultipleCharacterizationData()$covariateRef
     if (!doesObjectHaveData(covariatesTofilter)) {
-      return(NULl)
+      return(NULL)
     }
     if (all(
       doesObjectHaveData(input$conceptSetsSelectedCohortLeft),
@@ -6548,12 +6512,13 @@ shiny::shinyServer(function(input, output, session) {
     
     #enhancement
     characterizationDataValue <- characterizationDataValue %>%
-      dplyr::mutate(covariateNameShort = gsub(".*: ", "", .data$covariateName)) %>%
-      dplyr::mutate(
-        covariateNameShortCovariateId = paste0(.data$covariateNameShort,
-                                               " (",
-                                               .data$covariateId, ")")
-      )
+      dplyr::mutate(covariateNameShortCovariateId = .data$covariateName)
+      # dplyr::mutate(covariateNameShort = gsub(".*: ", "", .data$covariateName)) %>%
+      # dplyr::mutate(
+      #   covariateNameShortCovariateId = paste0(.data$covariateNameShort,
+      #                                          " (",
+      #                                          .data$covariateId, ")")
+      # )
     
     if (!doesObjectHaveData(characterizationDataValue)) {
       return(NULL)
@@ -6701,9 +6666,8 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
-      dplyr::filter(.data$analysisName %in% getCharacterizationAnalysisNameOptions())  %>%
-      dplyr::filter(.data$domainId %in% getCharacterizationDomainNameOptions())
-    
+      dplyr::filter(.data$analysisName %in% input$characterizationAnalysisNameOptions)  %>%
+      dplyr::filter(.data$domainId %in% input$characterizationDomainNameOptions)
     
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -7057,7 +7021,6 @@ shiny::shinyServer(function(input, output, session) {
           data <- data %>%
             dplyr::filter(.data$isBinary == 'N')
         }
-      
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
@@ -7116,6 +7079,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- getTemporalCharacterizationTableData()
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
+
       temporalCovariateChoicesSelected <-
         temporalCovariateChoices %>%
         dplyr::filter(.data$timeId %in% c(getTimeIdsFromSelectedTemporalCovariateChoices())) %>%
@@ -7180,11 +7144,13 @@ shiny::shinyServer(function(input, output, session) {
   
   getCompareCharacterizationDomainNameFilter <-
     shiny::reactive(x = {
+      browser()
       return(input$compareCharacterizationDomainNameFilter)
     })
   
   getCompareCharacterizationAnalysisNameFilter <-
     shiny::reactive(x = {
+      browser()
       return(input$compareCharacterizationAnalysisNameFilter)
     })
   
@@ -7277,18 +7243,21 @@ shiny::shinyServer(function(input, output, session) {
       )) {
         return(NULL)
       }
-      
-      if (all(is(dataSource, "environment"), !any(
-        exists('covariateValue'),
-        exists('temporalCovariateValue')
-      ))) {
+      if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
         return(NULL)
       }
-      
+      browser()
+      if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
+        return(NULL)
+      }
+      if (all(is(dataSource, "environment"),
+              !any(exists('covariateValue'),
+                   exists('temporalCovariateValue')))) {
+        return(NULL)
+      }
       if (any(
         length(consolidatedCohortIdTarget()) != 1,
-        # length(getComparatorCohortIdFromSelectedCompoundCohortName()) != 1,
-        length(consolidatedDatabaseIdTarget()) == 0
+        length(consolidatedCohortIdComparator()) != 1
       )) {
         return(NULL)
       }
@@ -7305,6 +7274,7 @@ shiny::shinyServer(function(input, output, session) {
         ),
         value = 0
       )
+      browser()
       
       data <- getMultipleCharacterizationResults(
         dataSource = dataSource,
