@@ -554,8 +554,8 @@ getConceptCountForCohortAndDatabase <- function(dataSource,
       dataSource = dataSource,
       databaseIds = databaseIds,
       conceptIds = conceptIds,
-      eventMonth = 0,
-      eventYear = 0
+      calendarMonths = 0,
+      calendarYears = 0
     )
     if (is.null(data)) {
       return(NULL)

@@ -786,14 +786,14 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
 getResultsConceptCount <- function(dataSource,
                                    databaseIds = NULL,
                                    conceptIds = NULL,
-                                   CalendarMonths = NULL,
-                                   CalendarYears = NULL) {
+                                   calendarMonths = NULL,
+                                   calendarYears = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     databaseId = databaseIds,
     conceptId = conceptIds,
-    eventMonth = CalendarMonths,
-    eventYear = CalendarYears,
+    eventMonth = calendarMonths,
+    eventYear = calendarYears,
     dataTableName = "conceptCount"
   )
   return(data)
