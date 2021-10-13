@@ -253,6 +253,37 @@ if (exists("conceptSets") && doesObjectHaveData(conceptSets)) {
       .data$conceptSetId,
       ")"
     ))
+} else if (exists("cohort") &&
+           doesObjectHaveData(cohort$json)) {
+  conceptSets <- list()
+  k <- 0
+  for (i in (1:nrow(cohort))) {
+     conceptSetDetails <-
+      getConceptSetDetailsFromCohortDefinition(cohortDefinitionExpression = cohort[i,]$json %>%
+                                                 RJSONIO::fromJSON(digits = 23))
+    for (j in (1:nrow(conceptSetDetails$conceptSetExpression))) {
+      k <- k + 1
+      df <- dplyr::tibble(
+        cohortId = cohort[i, ]$cohortId,
+        conceptSetId = conceptSetDetails$conceptSetExpression[j,]$id,
+        conceptSetName = conceptSetDetails$conceptSetExpression[j,]$name,
+        conceptSetSql = "Please run concept set diagnostics to get SQL.",
+        conceptSetExpression = conceptSetDetails$conceptSetExpression[j, ]$expression %>% RJSONIO::toJSON(digits = 23,
+                                                                                                          pretty = TRUE)
+      )
+      conceptSets[[k]] <- df
+    }
+  }
+  conceptSets <- dplyr::bind_rows(conceptSets) %>%
+    dplyr::arrange(.data$conceptSetId) %>%
+    dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>%
+    dplyr::mutate(compoundName = paste0(
+      .data$shortName,
+      ": ",
+      .data$conceptSetName,
+      "(",
+      .data$conceptSetId,
+      ")"))
 }
 
 if (exists("database") && doesObjectHaveData(database)) {
