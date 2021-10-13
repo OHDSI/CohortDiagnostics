@@ -6511,12 +6511,6 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(covariatesTofilter)) {
       return(NULl)
     }
-    if (!doesObjectHaveData(getResolvedConceptsTarget())) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(input$conceptSetsSelectedCohortLeft)) {
-      return(NULL)
-    }
     if (all(doesObjectHaveData(input$conceptSetsSelectedCohortLeft),
             doesObjectHaveData(getResolvedConceptsTarget()))) {
       covariatesTofilter <- covariatesTofilter  %>%
