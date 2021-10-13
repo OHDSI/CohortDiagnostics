@@ -2255,6 +2255,7 @@ shiny::shinyServer(function(input, output, session) {
                        activeSelected()$cohortId),
       value = 0
     )
+    
     data <-
       getConceptMetadata(
         dataSource = dataSource,
@@ -8529,7 +8530,8 @@ shiny::shinyServer(function(input, output, session) {
       lengthChange = TRUE,
       ordering = TRUE,
       paging = TRUE,
-      searchHighlight = TRUE
+      searchHighlight = TRUE,
+      columnDefs = list(minCellCountDef(10:14))
     )
   
     table <- DT::datatable(
