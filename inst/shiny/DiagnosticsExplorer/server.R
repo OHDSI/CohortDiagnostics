@@ -406,13 +406,14 @@ shiny::shinyServer(function(input, output, session) {
                                           )),
                   shiny::conditionalPanel(
                     condition = "output.isTargetCohortDefinitionConceptSetsTableRowSelected == true &
-                                                      input.targetConceptSetsType != 'Resolved' &
-                                                      input.targetConceptSetsType != 'Excluded' &
-                                                      input.targetConceptSetsType != 'Concept Set Json' &
-                                                      input.targetConceptSetsType != 'Orphan concepts' &
-                                                      input.targetConceptSetsType != 'Concept Set Sql'",
+                                                      input.targetConceptSetsType == 'Concept Set Expression'",
                     tags$table(width = "100%",
                                tags$tr(
+                                 tags$td(
+                                   shiny::conditionalPanel(
+                                     condition = "!output.doesTargetConceptSetsExpressionTableOptimized",
+                                         shiny::actionButton(inputId = "optimizeConceptSetButton",
+                                                             label = "Optimize"))),
                                  tags$td(
                                    align = "right",
                                    shiny::downloadButton(
@@ -2658,6 +2659,26 @@ shiny::shinyServer(function(input, output, session) {
                        name = "isTargetCohortDefinitionConceptSetsTableRowSelected",
                        suspendWhenHidden = FALSE)
   
+  #reactive: getOptimizedTargetConceptSetsExpressionTable----
+  getOptimizedTargetConceptSetsExpressionTable <-
+    shiny::reactive(x = {
+      result <- getOptimizedConceptSet(
+        dataSource = dataSource,
+        databaseIds = consolidatedDatabaseIdTarget(),
+        cohortIds = consolidatedCohortIdTarget(),
+        conceptSetIds = consolidatedConceptSetIdTarget()
+      )
+      return(result)
+    })
+  
+  output$doesTargetConceptSetsExpressionTableOptimized <-
+    shiny::reactive(x = { 
+      return(nrow(getOptimizedTargetConceptSetsExpressionTable()) == 0)
+    })
+  shiny::outputOptions(x = output,
+                       name = "doesTargetConceptSetsExpressionTableOptimized",
+                       suspendWhenHidden = FALSE)
+  
   #output: saveTargetConceptSetsExpressionTable----
   output$saveTargetConceptSetsExpressionTable <-  downloadHandler(
     filename = function() {
@@ -2668,6 +2689,12 @@ shiny::shinyServer(function(input, output, session) {
       #!!!! this may need downloadExcel() with formatted and multiple tabs
     }
   )
+  
+  showOptimizedTable <- reactiveVal(FALSE)
+  shiny::observeEvent(eventExpr = input$optimizeConceptSetButton,
+                      handlerExpr = {
+                        showOptimizedTable(TRUE)
+                      })
   
   #output: targetConceptSetsExpressionTable----
   output$targetConceptSetsExpressionTable <-
@@ -3241,6 +3268,7 @@ shiny::shinyServer(function(input, output, session) {
   shiny::outputOptions(x = output,
                        name = "isComparatorCohortDefinitionConceptSetRowSelected",
                        suspendWhenHidden = FALSE)
+  
   
   ##output: comparatorCohortDefinitionConceptSetsExpressionTable----
   output$comparatorCohortDefinitionConceptSetsExpressionTable <-
@@ -5027,6 +5055,17 @@ shiny::shinyServer(function(input, output, session) {
       "No timeseries data for the cohort of this series type"
     ))
     
+    if (nrow(data) > 20) {
+      scrollHeight <- "40vh"
+    } else {
+      scrollHeight <- TRUE
+    }
+   
+    if (input$timeSeriesTypeFilter == "Percent of Subjects among persons in period") {
+      columnDef <- list(minCellPercentDef(4:13))
+    } else {
+      columnDef <- list(minCellCountDef(4:13))
+    }
     options = list(
       pageLength = 100,
       lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -5034,9 +5073,10 @@ shiny::shinyServer(function(input, output, session) {
       ordering = TRUE,
       paging = TRUE,
       scrollX = TRUE,
+      scrollY = scrollHeight,
       info = TRUE,
       searchHighlight = TRUE,
-      columnDefs = list(minCellCountDef(3:10))
+      columnDefs = columnDef
     )
     dataTable <- DT::datatable(
       data,
