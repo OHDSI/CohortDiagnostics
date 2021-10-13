@@ -529,7 +529,7 @@ bodyTabItems <- shinydashboard::tabItems(
           shiny::radioButtons(
             inputId = "timeSeriesAggregationPeriodSelection",
             label = "Aggregation period:",
-            choices = c("Monthly","Yearly"),
+            choices = c("Monthly","Quarterly","Yearly"),
             selected = "Monthly",
             inline = TRUE
           )
