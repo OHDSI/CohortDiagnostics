@@ -2729,8 +2729,8 @@ getCohortRelationshipCharacterizationResults <-
         .data$analysisName,
         .data$valueField,
         .data$domainId,
-        .data$startDay,
-        .data$endDay,
+        .data$startDays,
+        .data$endDays,
         .data$isBinary,
         .data$missingMeansZero
       )
@@ -2740,8 +2740,8 @@ getCohortRelationshipCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          startDays = analysisRef[j,]$startDay,
-          endDays = analysisRef[j,]$endDay,
+          startDays = analysisRef[j,]$startDays,
+          endDays = analysisRef[j,]$endDays,
           analysisId = analysisRef[j,]$analysisId,
           valueField = analysisRef[j,]$valueField,
           cohortCounts = cohortCounts
