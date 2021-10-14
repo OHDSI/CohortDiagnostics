@@ -797,49 +797,54 @@ bodyTabItems <- shinydashboard::tabItems(
       title = "Cohort Overlap (Subjects)",
       width = NULL,
       status = "primary",
-      shiny::tabsetPanel(
-        type = "tab",
-        id = "cohortOverlapTab",
-        shiny::tabPanel(
-          title = "Plot",
-          value = "cohortOverlapPlotTab",
-          tags$table(width = "100%", 
-                     tags$tr(
-                       tags$td(
-                         shiny::radioButtons(
-                           inputId = "overlapPlotType",
-                           label = "",
-                           choices = c("Percentages", "Counts"),
-                           selected = "Percentages",
-                           inline = TRUE
-                         )
-                       ),
-                       
+      tags$table(width = '100%',
+                 tags$tr(
+                   tags$td(
+                     shiny::radioButtons(
+                       inputId = "overlapPlotFilter",
+                       label = "",
+                       choices = c("Plot", "Table"),
+                       selected = "Plot",
+                       inline = TRUE
                      )
-          ),
-          plotly::plotlyOutput("overlapPlot", height = "auto"),
-          shiny::conditionalPanel(condition = "output.doesCohortAndComparatorsAreSingleSelected",{
-            plotly::plotlyOutput("overlapPiePlot", height = 400)
-          })
-          ),
-        shiny::tabPanel(
-          title = "Raw Table",
-          value = "cohortOverlapTableTab",
-          tags$table(width = "100%",
-                     tags$tr(
-                       tags$td(
-                         align = "right",
-                         shiny::downloadButton(
-                           "saveCohortOverlapTable",
-                           label = "",
-                           icon = shiny::icon("download"),
-                           style = "margin-top: 5px; margin-bottom: 5px;"
-                         )
+                   ),
+                   tags$td(HTML('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;')),
+                   tags$td(
+                     shiny::conditionalPanel(
+                       condition = "input.overlapPlotFilter == 'Plot'",
+                       shiny::radioButtons(
+                         inputId = "overlapPlotType",
+                         label = "Plot type",
+                         choices = c("Percentages", "Counts"),
+                         selected = "Percentages",
+                         inline = TRUE
                        )
-                     )),
-          DT::dataTableOutput(outputId = "cohortOverlapTable")
-        ))
-     
+                     )
+                   ),
+                   tags$td(align = 'right',
+                           shiny::conditionalPanel(
+                             condition = "input.overlapPlotFilter == 'Table'",
+                             shiny::downloadButton(
+                               "saveCohortOverlapTable",
+                               label = "",
+                               icon = shiny::icon("download"),
+                               style = "margin-top: 5px; margin-bottom: 5px;"
+                             )
+                           )
+                   )
+                 )
+      ),
+      shiny::conditionalPanel(
+        condition = "input.overlapPlotFilter == 'Plot'",
+        plotly::plotlyOutput("overlapPlot", height = "auto"),
+        shiny::conditionalPanel(condition = "output.doesCohortAndComparatorsAreSingleSelected",
+                                plotly::plotlyOutput("overlapPiePlot", height = 400)
+        )
+      ),
+      shiny::conditionalPanel(
+        condition = "input.overlapPlotFilter == 'Table'",
+        DT::dataTableOutput(outputId = "cohortOverlapTable")
+      )
     )
   ),
   shinydashboard::tabItem(
