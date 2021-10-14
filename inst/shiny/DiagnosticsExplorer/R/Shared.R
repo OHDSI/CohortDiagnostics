@@ -1700,7 +1700,6 @@ getOptimizedConceptSet <- function(dataSource,
                                    databaseIds = NULL,
                                    cohortIds = NULL,
                                    conceptSetIds = NULL) {
-  browser()
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     dataTableName = "conceptSetsOptimized",
@@ -1708,12 +1707,47 @@ getOptimizedConceptSet <- function(dataSource,
     cohortId = cohortIds,
     conceptSetId = conceptSetIds
   )
+  if (is.null(data)) {
+    return(NULL)
+  }
+  if (nrow(data %>% 
+           dplyr::filter(.data$removed == 1)) == 0) {
+    return(NULL)
+  }
   originalConceptSetExpression <- getResultsConceptSetExpression(dataSource = dataSource,
                                                                  cohortId = cohortIds,
                                                                  conceptSetId = conceptSetIds)
-  originalConceptSetExpressionTable <- getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression = originalConceptSetExpression)
+  originalConceptSetExpressionTable <- getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression = 
+                                                                                        originalConceptSetExpression)
   
-  return(data)
+  excluded <- tidyr::crossing(data %>% 
+                                dplyr::select(.data$databaseId) %>% 
+                                dplyr::distinct(),
+                              originalConceptSetExpressionTable %>% 
+                                dplyr::filter(.data$isExcluded == TRUE)) %>% 
+    dplyr::inner_join(data %>% 
+                        dplyr::filter(.data$excluded == 1) %>% 
+                        dplyr::filter(.data$removed == 0),
+                      by = c("databaseId", "conceptId")) %>% 
+    dplyr::select(-.data$excluded, -.data$removed)
+  
+  notExcluded <- tidyr::crossing(data %>% 
+                                   dplyr::select(.data$databaseId) %>% 
+                                   dplyr::distinct(),
+                                 originalConceptSetExpressionTable %>% 
+                                   dplyr::filter(.data$isExcluded == FALSE)) %>% 
+    dplyr::inner_join(data %>% 
+                        dplyr::filter(.data$excluded == 0) %>% 
+                        dplyr::filter(.data$removed == 0),
+                      by = c("databaseId", "conceptId")) %>% 
+    dplyr::select(-.data$excluded, -.data$removed)
+  
+  final <- dplyr::bind_rows(excluded,
+                            notExcluded) %>% 
+    dplyr::arrange(.data$conceptId) %>% 
+    dplyr::select(-.data$cohortId,
+                  -.data$conceptSetId)
+  return(final)
 }
 
 

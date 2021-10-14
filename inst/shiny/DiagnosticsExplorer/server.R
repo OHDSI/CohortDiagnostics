@@ -2689,10 +2689,61 @@ shiny::shinyServer(function(input, output, session) {
   
   output$canTargetConceptSetExpressionBeOptimized <-
     shiny::reactive(x = {
-      if (!doesObjectHaveData(getOptimizedTargetConceptSetsExpressionTable())) {
+      if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
         return(NULL)
       }
-      return(nrow(getOptimizedTargetConceptSetsExpressionTable()) == 0)
+      if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(consolidatedConceptSetIdTarget())) {
+        return(NULL)
+      }
+      optimizedConceptSetExpression <-
+        getOptimizedTargetConceptSetsExpressionTable()
+      if (!doesObjectHaveData(optimizedConceptSetExpression)) {
+        return(FALSE)
+      }
+      originalConceptSetExpression <-
+        getResultsConceptSetExpression(
+          dataSource = dataSource,
+          cohortId = consolidatedCohortIdTarget(),
+          conceptSetId = consolidatedConceptSetIdTarget()
+        )
+      originalConceptSetExpression <-
+        getConceptSetDataFrameFromConceptSetExpression(originalConceptSetExpression)
+      originalConceptSetExpression <-
+        tidyr::crossing(
+          dplyr::tibble(databaseId = consolidatedDatabaseIdTarget()),
+          originalConceptSetExpression
+        )
+      
+      removed <-
+        originalConceptSetExpression %>%
+        dplyr::select(.data$databaseId,
+                      .data$conceptId,
+                      .data$isExcluded,
+                      .data$includeDescendants,
+                      .data$includeMapped) %>% 
+        dplyr::anti_join(
+          optimizedConceptSetExpression %>%
+            dplyr::select(.data$databaseId,
+                          .data$conceptId,
+                          .data$isExcluded,
+                          .data$includeDescendants,
+                          .data$includeMapped),
+          by = c(
+            "databaseId",
+            "conceptId",
+            "isExcluded",
+            "includeDescendants",
+            "includeMapped"
+          )
+        ) %>% dplyr::distinct()
+      
+      if (!doesObjectHaveData(removed)) {
+        return(FALSE)
+      }
+      return(nrow(removed) == 0)
     })
   shiny::outputOptions(x = output,
                        name = "canTargetConceptSetExpressionBeOptimized",
