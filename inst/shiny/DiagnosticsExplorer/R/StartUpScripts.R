@@ -536,7 +536,11 @@ getStlModelOutputForTsibbleDataValueFields <- function(tsibbleData, valueFields 
     if (tsibble::is_yearmonth(modelData[[valueField]]$periodBegin)) {
       modelData[[valueField]] <- modelData[[valueField]] %>% 
         dplyr::mutate(periodDate = as.Date(.data$periodBegin))
-    } else if (is.double(modelData[[valueField]]$periodBegin) || is.integer(modelData[[valueField]]$periodBegin)) {
+    } else if (tsibble::is_yearquarter(modelData[[valueField]]$periodBegin)) {
+      modelData[[valueField]] <- modelData[[valueField]] %>% 
+        dplyr::mutate(periodDate = as.Date(.data$periodBegin))
+    }  else if (is.double(modelData[[valueField]]$periodBegin) || 
+               is.integer(modelData[[valueField]]$periodBegin)) {
       modelData[[valueField]] <- modelData[[valueField]] %>% 
         dplyr::mutate(periodDate = as.Date(paste0(.data$periodBegin, "-01-01")))
     }
@@ -554,8 +558,8 @@ getConceptCountForCohortAndDatabase <- function(dataSource,
       dataSource = dataSource,
       databaseIds = databaseIds,
       conceptIds = conceptIds,
-      eventMonth = 0,
-      eventYear = 0
+      calendarMonths = 0,
+      calendarYears = 0
     )
     if (is.null(data)) {
       return(NULL)

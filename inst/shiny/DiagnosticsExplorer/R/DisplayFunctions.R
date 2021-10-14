@@ -200,13 +200,15 @@ createShinyBoxWithSplitForTwoOutputIds <- function(leftOutputId,
                           tags$td(
                             width = leftPercent,
                             tags$b(leftOutputLabel),
-                            shiny::uiOutput(outputId = leftOutputId)
+                            tags$div(style = "max-height: 60px; overflow-y: auto",
+                            shiny::uiOutput(outputId = leftOutputId))
                           ),
                           tags$td(
                             style = "align: right !important;",
                             width = rightPercent,
                             tags$b(rightOutputLabel),
-                            shiny::uiOutput(outputId = rightOutputId)
+                            tags$div(style = "max-height: 60px; overflow-y: auto",
+                            shiny::uiOutput(outputId = rightOutputId))
                           )
                         )))
   )

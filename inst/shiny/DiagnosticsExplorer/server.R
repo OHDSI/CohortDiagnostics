@@ -406,13 +406,14 @@ shiny::shinyServer(function(input, output, session) {
                                           )),
                   shiny::conditionalPanel(
                     condition = "output.isTargetCohortDefinitionConceptSetsTableRowSelected == true &
-                                                      input.targetConceptSetsType != 'Resolved' &
-                                                      input.targetConceptSetsType != 'Excluded' &
-                                                      input.targetConceptSetsType != 'Concept Set Json' &
-                                                      input.targetConceptSetsType != 'Orphan concepts' &
-                                                      input.targetConceptSetsType != 'Concept Set Sql'",
+                                                      input.targetConceptSetsType == 'Concept Set Expression'",
                     tags$table(width = "100%",
                                tags$tr(
+                                 tags$td(
+                                   shiny::conditionalPanel(
+                                     condition = "!output.canTargetConceptSetExpressionBeOptimized",
+                                         shiny::actionButton(inputId = "optimizeConceptSetButton",
+                                                             label = "Optimize"))),
                                  tags$td(
                                    align = "right",
                                    shiny::downloadButton(
@@ -2254,6 +2255,7 @@ shiny::shinyServer(function(input, output, session) {
                        activeSelected()$cohortId),
       value = 0
     )
+    
     data <-
       getConceptMetadata(
         dataSource = dataSource,
@@ -2656,6 +2658,95 @@ shiny::shinyServer(function(input, output, session) {
     })
   shiny::outputOptions(x = output,
                        name = "isTargetCohortDefinitionConceptSetsTableRowSelected",
+                       suspendWhenHidden = FALSE)
+  
+  showOptimizedConceptSetExpressionTable <- reactiveVal(FALSE)
+  shiny::observeEvent(eventExpr = input$optimizeConceptSetButton,
+                      handlerExpr = {
+                        showOptimizedConceptSetExpressionTable(TRUE)
+                      })
+  
+  #reactive: getOptimizedTargetConceptSetsExpressionTable----
+  getOptimizedTargetConceptSetsExpressionTable <-
+    shiny::reactive(x = {
+      if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(consolidatedConceptSetIdTarget())) {
+        return(NULL)
+      }
+      result <- getOptimizedConceptSet(
+        dataSource = dataSource,
+        databaseIds = consolidatedDatabaseIdTarget(),
+        cohortIds = consolidatedCohortIdTarget(),
+        conceptSetIds = consolidatedConceptSetIdTarget()
+      )
+      return(result)
+    })
+  
+  output$canTargetConceptSetExpressionBeOptimized <-
+    shiny::reactive(x = {
+      if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(consolidatedConceptSetIdTarget())) {
+        return(NULL)
+      }
+      optimizedConceptSetExpression <-
+        getOptimizedTargetConceptSetsExpressionTable()
+      if (!doesObjectHaveData(optimizedConceptSetExpression)) {
+        return(FALSE)
+      }
+      originalConceptSetExpression <-
+        getResultsConceptSetExpression(
+          dataSource = dataSource,
+          cohortId = consolidatedCohortIdTarget(),
+          conceptSetId = consolidatedConceptSetIdTarget()
+        )
+      originalConceptSetExpression <-
+        getConceptSetDataFrameFromConceptSetExpression(originalConceptSetExpression)
+      originalConceptSetExpression <-
+        tidyr::crossing(
+          dplyr::tibble(databaseId = consolidatedDatabaseIdTarget()),
+          originalConceptSetExpression
+        )
+      
+      removed <-
+        originalConceptSetExpression %>%
+        dplyr::select(.data$databaseId,
+                      .data$conceptId,
+                      .data$isExcluded,
+                      .data$includeDescendants,
+                      .data$includeMapped) %>% 
+        dplyr::anti_join(
+          optimizedConceptSetExpression %>%
+            dplyr::select(.data$databaseId,
+                          .data$conceptId,
+                          .data$isExcluded,
+                          .data$includeDescendants,
+                          .data$includeMapped),
+          by = c(
+            "databaseId",
+            "conceptId",
+            "isExcluded",
+            "includeDescendants",
+            "includeMapped"
+          )
+        ) %>% dplyr::distinct()
+      
+      if (!doesObjectHaveData(removed)) {
+        return(FALSE)
+      }
+      return(nrow(removed) == 0)
+    })
+  shiny::outputOptions(x = output,
+                       name = "canTargetConceptSetExpressionBeOptimized",
                        suspendWhenHidden = FALSE)
   
   #output: saveTargetConceptSetsExpressionTable----
@@ -3241,6 +3332,7 @@ shiny::shinyServer(function(input, output, session) {
   shiny::outputOptions(x = output,
                        name = "isComparatorCohortDefinitionConceptSetRowSelected",
                        suspendWhenHidden = FALSE)
+  
   
   ##output: comparatorCohortDefinitionConceptSetsExpressionTable----
   output$comparatorCohortDefinitionConceptSetsExpressionTable <-
@@ -4263,13 +4355,17 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(idx)) {
       return(NULL)
     } else {
-      subset <- getCohortCountDataForSelectedDatabaseIdsCohortIds() %>%
-        dplyr::distinct(.data$cohortId)
-      
-      if (!is.null(subset)) {
-        return(subset[idx, ])
-      } else {
+      if (!doesObjectHaveData(getCohortCountDataForSelectedDatabaseIdsCohortIds)) {
         return(NULL)
+      } else {
+        subset <- getCohortCountDataForSelectedDatabaseIdsCohortIds() %>%
+          dplyr::distinct(.data$cohortId)
+        
+        if (!is.null(subset)) {
+          return(subset[idx, ])
+        } else {
+          return(NULL)
+        }
       }
     }
   })
@@ -4448,7 +4544,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::distinct(.data$calendarYear) %>%
       dplyr::arrange(.data$calendarYear)
     
-    minValue <- min(calendarFilter$calendarYear)
+    minValue <- max(1980, min(calendarFilter$calendarYear))
     maxValue <- max(calendarFilter$calendarYear)
     
     shiny::updateSliderInput(
@@ -4456,7 +4552,7 @@ shiny::shinyServer(function(input, output, session) {
       inputId = "incidenceRateCalendarFilter",
       min = minValue,
       max = maxValue,
-      value = c(2010, maxValue)
+      value = c(max(2010,minValue), maxValue)
     )
     
     minIncidenceRateValue <-
@@ -5027,6 +5123,17 @@ shiny::shinyServer(function(input, output, session) {
       "No timeseries data for the cohort of this series type"
     ))
     
+    if (nrow(data) > 20) {
+      scrollHeight <- "40vh"
+    } else {
+      scrollHeight <- TRUE
+    }
+   
+    if (input$timeSeriesTypeFilter == "Percent of Subjects among persons in period") {
+      columnDef <- list(minCellPercentDef(4:13))
+    } else {
+      columnDef <- list(minCellCountDef(4:13))
+    }
     options = list(
       pageLength = 100,
       lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -5034,9 +5141,10 @@ shiny::shinyServer(function(input, output, session) {
       ordering = TRUE,
       paging = TRUE,
       scrollX = TRUE,
+      scrollY = scrollHeight,
       info = TRUE,
       searchHighlight = TRUE,
-      columnDefs = list(minCellCountDef(3:10))
+      columnDefs = columnDef
     )
     dataTable <- DT::datatable(
       data,
@@ -5061,6 +5169,11 @@ shiny::shinyServer(function(input, output, session) {
       "No timeseries data for the cohort of this series type"
     ))
     
+    data <- data %>% 
+      dplyr::mutate(
+        dplyr::across(dplyr::everything(), ~tidyr::replace_na(.x, 0))
+      )
+    
     longNames <- getTimeSeriesColumnNameCrosswalk() %>% 
       dplyr::filter(.data$longName %in% c(input$timeSeriesPlotFilters)) %>% 
       dplyr::pull(.data$longName) %>% 
@@ -5075,6 +5188,7 @@ shiny::shinyServer(function(input, output, session) {
     renameDf <- getTimeSeriesColumnNameCrosswalk() %>% 
       dplyr::mutate(longName = titleCaseToCamelCase(.data$longName)) %>% 
       dplyr::select(.data$shortName, .data$longName)
+    
     
     for (i in (1:nrow(renameDf))) {
       if (renameDf[i,]$shortName %in% colnames(data)) {
@@ -6293,116 +6407,34 @@ shiny::shinyServer(function(input, output, session) {
       }
     })
   
-  ###getCharacterizationDomainNameOptions----
-  getCharacterizationDomainNameOptions <- shiny::reactive({
-    return(input$characterizationDomainNameOptions)
+  ###getDomainOptionsForCharacterization----
+  getDomainOptionsForCharacterization <- shiny::reactive({
+    multipleCharacterizationData <- getMultipleCharacterizationData()
+    if (!doesObjectHaveData(multipleCharacterizationData)) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(multipleCharacterizationData$analysisRef)) {
+      return(NULL)
+    }
+    domainIdOptions <- multipleCharacterizationData$analysisRef$domainId %>% 
+      unique() %>% 
+      sort()
+    return(domainIdOptions)
   })
   
-  ###getCharacterizationAnalysisNameOptions----
-  getCharacterizationAnalysisNameOptions <- shiny::reactive({
-    return(input$characterizationAnalysisNameOptions)
-  })
-  
-  ###Update: characterizationDomainNameOptions----
-  shiny::observe({
-    characterizationData <- getCharacterizationTableData()
-    if (!doesObjectHaveData(characterizationData)) {
+  ###getAnalysisNameOptionsForCharacterization----
+  getAnalysisNameOptionsForCharacterization <- shiny::reactive({
+    multipleCharacterizationData <- getMultipleCharacterizationData()
+    if (!doesObjectHaveData(multipleCharacterizationData)) {
       return(NULL)
     }
-    if (!doesObjectHaveData(characterizationData$domainId)) {
+    if (!doesObjectHaveData(multipleCharacterizationData$analysisRef)) {
       return(NULL)
     }
-    subset <-
-      characterizationData$domainId %>% unique() %>% sort()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "characterizationDomainNameOptions",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
-  
-  ###Update: characterizationAnalysisNameOptions----
-  shiny::observe({
-    characterizationData <- getCharacterizationTableData()
-    if (!doesObjectHaveData(characterizationData)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(characterizationData$analysisName)) {
-      return(NULL)
-    }
-    characterizationData <- characterizationData %>% 
-      dplyr::filter(.data$domainId %in% getCharacterizationDomainNameOptions())
-    if (!doesObjectHaveData(characterizationData)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(characterizationData$analysisName)) {
-      return(NULL)
-    }
-    subset <-
-      characterizationData$analysisName %>% unique() %>% sort()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "characterizationAnalysisNameOptions",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
-  
-  ### getTemporalCharacterizationAnalysisNameOptions----
-  getTemporalCharacterizationAnalysisNameOptions <-
-    shiny::reactive(x = {
-      return(input$temporalCharacterizationAnalysisNameOptions)
-    })
-  
-  ### getTemporalCharacterizationDomainNameOptions----
-  getTemporalCharacterizationDomainNameOptions <-
-    shiny::reactive(x = {
-      return(input$temporalCharacterizationDomainNameOptions)
-    })
-  
-  ###Update: temporalCharacterizationDomainNameOptions----
-  shiny::observe({
-    temporalCharacterizationData <- getTemporalCharacterizationData()
-    if (!doesObjectHaveData(temporalCharacterizationData)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(temporalCharacterizationData$domainId)) {
-      return(NULL)
-    }
-    subset <-
-      temporalCharacterizationData$domainId %>% unique() %>% sort()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "temporalCharacterizationDomainNameOptions",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
-  
-  ###Update: temporalCharacterizationAnalysisNameOptions----
-  shiny::observe({
-    temporalCharacterizationData <- getTemporalCharacterizationData()
-    if (!doesObjectHaveData(temporalCharacterizationData)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(temporalCharacterizationData$domainId)) {
-      return(NULL)
-    }
-    subset <- temporalCharacterizationData %>% 
-      dplyr::filter(.data$domainId %in% getTemporalCharacterizationDomainNameOptions()) %>% 
-      dplyr::pull(.data$analysisName) %>% unique() %>% sort()
-      
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "temporalCharacterizationAnalysisNameOptions",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
+    anlaysisNameOptions <- multipleCharacterizationData$analysisRef$analysisName %>% 
+      unique() %>% 
+      sort()
+    return(anlaysisNameOptions)
   })
   
   ###getMultipleCharacterizationData----
@@ -6442,6 +6474,56 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  
+  
+  ###Update: characterizationDomainNameOptions----
+  shiny::observe({
+    subset <- getDomainOptionsForCharacterization()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "characterizationDomainNameOptions",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  ###Update: characterizationAnalysisNameOptions----
+  shiny::observe({
+    subset <- getAnalysisNameOptionsForCharacterization()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "characterizationAnalysisNameOptions",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  ###Update: temporalCharacterizationDomainNameOptions----
+  shiny::observe({
+    subset <- getDomainOptionsForCharacterization()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "temporalCharacterizationDomainNameOptions",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  ###Update: temporalCharacterizationAnalysisNameOptions----
+  shiny::observe({
+    subset <- getAnalysisNameOptionsForCharacterization()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "temporalCharacterizationAnalysisNameOptions",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
   ##Characterization----
   ### getCharacterizationDataFiltered ----
   getCharacterizationDataFiltered <- shiny::reactive(x = {
@@ -6465,16 +6547,12 @@ shiny::shinyServer(function(input, output, session) {
     covariatesTofilter <-
       getMultipleCharacterizationData()$covariateRef
     if (!doesObjectHaveData(covariatesTofilter)) {
-      return(NULl)
-    }
-    if (!doesObjectHaveData(getResolvedConceptsTarget())) {
       return(NULL)
     }
-    if (!doesObjectHaveData(input$conceptSetsSelectedCohortLeft)) {
-      return(NULL)
-    }
-    if (all(doesObjectHaveData(input$conceptSetsSelectedCohortLeft),
-            doesObjectHaveData(getResolvedConceptsTarget()))) {
+    if (all(
+      doesObjectHaveData(input$conceptSetsSelectedCohortLeft),
+      doesObjectHaveData(getResolvedConceptsTarget())
+    )) {
       covariatesTofilter <- covariatesTofilter  %>%
         dplyr::inner_join(
           getResolvedConceptsTarget() %>%
@@ -6493,7 +6571,7 @@ shiny::shinyServer(function(input, output, session) {
     characterizationDataValue <-
       getMultipleCharacterizationData()$covariateValue %>%
       dplyr::filter(.data$characterizationSource %in% c('C', 'F')) %>% #C - cohort, F is Feature
-      dplyr::select(-.data$timeId, -.data$startDay, -.data$endDay) %>% # remove temporal characterization data
+      dplyr::select(-.data$timeId,-.data$startDay,-.data$endDay) %>% # remove temporal characterization data
       dplyr::inner_join(covariatesTofilter,
                         by = c('covariateId', 'characterizationSource')) %>%
       dplyr::inner_join(
@@ -6503,21 +6581,20 @@ shiny::shinyServer(function(input, output, session) {
     
     #enhancement
     characterizationDataValue <- characterizationDataValue %>%
-      dplyr::mutate(covariateNameShort = gsub(".*: ", "", .data$covariateName)) %>%
-      dplyr::mutate(
-        covariateNameShortCovariateId = paste0(.data$covariateNameShort,
-                                               " (",
-                                               .data$covariateId, ")")
-      )
+      dplyr::mutate(covariateNameShortCovariateId = .data$covariateName)
+      # dplyr::mutate(covariateNameShort = gsub(".*: ", "", .data$covariateName)) %>%
+      # dplyr::mutate(
+      #   covariateNameShortCovariateId = paste0(.data$covariateNameShort,
+      #                                          " (",
+      #                                          .data$covariateId, ")")
+      # )
     
-    if (any(is.null(characterizationDataValue),
-            nrow(characterizationDataValue) == 0)) {
+    if (!doesObjectHaveData(characterizationDataValue)) {
       return(NULL)
     }
     
     if (all(input$charType == "Raw",
             input$charProportionOrContinuous == "Proportion")) {
-      #!!!! show numbers as percentage in data table
       characterizationDataValue <- characterizationDataValue %>%
         dplyr::filter(.data$isBinary == 'Y')
     } else
@@ -6658,9 +6735,8 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
-      dplyr::filter(.data$analysisName %in% getCharacterizationAnalysisNameOptions())  %>%
-      dplyr::filter(.data$domainId %in% getCharacterizationDomainNameOptions())
-    
+      dplyr::filter(.data$analysisName %in% input$characterizationAnalysisNameOptions)  %>%
+      dplyr::filter(.data$domainId %in% input$characterizationDomainNameOptions)
     
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -6713,12 +6789,11 @@ shiny::shinyServer(function(input, output, session) {
     if (input$tabs != "cohortCharacterization") {
       return(NULL)
     }
-    data <- getCharacterizationTableData()
     validate(need(all(
       !is.null(consolidatedCohortIdTarget()),
       length(consolidatedCohortIdTarget()) > 0
-    ),
-    "No data for the combination"))
+    ), "No data for the combination"))
+    data <- getCharacterizationTableData()
     validate(need(!is.null(data), "No data for the combination"))
     
     databaseIds <- sort(unique(data$databaseId))
@@ -6936,10 +7011,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!exists("temporalCovariateChoices")) {
       return(NULL)
     }
-    if (any(
-      is.null(getMultipleCharacterizationData()),
-      length(getMultipleCharacterizationData()) == 0
-    )) {
+    if (!doesObjectHaveData(getMultipleCharacterizationData())) {
       return(NULL)
     }
     if (is.null(getMultipleCharacterizationData()$covariateRef)) {
@@ -6967,13 +7039,15 @@ shiny::shinyServer(function(input, output, session) {
       ) %>%
       dplyr::distinct() %>%
       dplyr::inner_join(temporalCovariateChoices, by = "timeId") %>%
-      dplyr::arrange(.data$timeId) %>%
-      dplyr::mutate(covariateNameShort = gsub(".*: ", "", .data$covariateName)) %>%
-      dplyr::mutate(
-        covariateNameShortCovariateId = paste0(.data$covariateNameShort,
-                                               " (",
-                                               .data$covariateId, ")")
-      )
+      dplyr::arrange(.data$timeId) %>% 
+      dplyr::mutate(covariateNameShortCovariateId = .data$covariateName)
+    # %>%
+    #   dplyr::mutate(covariateNameShort = gsub(".*: ", "", .data$covariateName)) %>%
+    #   dplyr::mutate(
+    #     covariateNameShortCovariateId = paste0(.data$covariateNameShort,
+    #                                            " (",
+    #                                            .data$covariateId, ")")
+      # )
     return(data)
   })
   
@@ -6983,14 +7057,19 @@ shiny::shinyServer(function(input, output, session) {
       if (input$tabs != "temporalCharacterization") {
         return(NULL)
       }
+      if (any(!doesObjectHaveData(input$temporalCharacterizationDomainNameOptions),
+              input$temporalCharacterizationDomainNameOptions == "")) {
+        return(NULL)
+      }
+      if (any(!doesObjectHaveData(input$temporalCharacterizationAnalysisNameOptions),
+              input$temporalCharacterizationAnalysisNameOptions == "")) {
+        return(NULL)
+      }
       data <- getTemporalCharacterizationData()
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
-      if (all(
-        !is.null(input$conceptSetsSelectedCohortLeft),
-        length(input$conceptSetsSelectedCohortLeft) > 0
-      )) {
+      if (doesObjectHaveData(input$conceptSetsSelectedCohortLeft)) {
         data <- data  %>%
           dplyr::inner_join(
             getResolvedConceptsTarget() %>%
@@ -7000,8 +7079,8 @@ shiny::shinyServer(function(input, output, session) {
           )
       }
       data <- data %>%
-          dplyr::filter(.data$analysisName %in% getTemporalCharacterizationAnalysisNameOptions()) %>%
-          dplyr::filter(.data$domainId %in% getTemporalCharacterizationDomainNameOptions()) %>%
+          dplyr::filter(.data$analysisName %in% input$temporalCharacterizationAnalysisNameOptions) %>%
+          dplyr::filter(.data$domainId %in% input$temporalCharacterizationDomainNameOptions) %>%
           dplyr::filter(.data$timeId %in% getTimeIdsFromSelectedTemporalCovariateChoices())
       
       if (input$temporalCharacterizationOutputTypeProportionOrContinuous == "Proportion") {
@@ -7011,7 +7090,6 @@ shiny::shinyServer(function(input, output, session) {
           data <- data %>%
             dplyr::filter(.data$isBinary == 'N')
         }
-      
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
@@ -7070,6 +7148,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- getTemporalCharacterizationTableData()
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
+
       temporalCovariateChoicesSelected <-
         temporalCovariateChoices %>%
         dplyr::filter(.data$timeId %in% c(getTimeIdsFromSelectedTemporalCovariateChoices())) %>%
@@ -7130,25 +7209,41 @@ shiny::shinyServer(function(input, output, session) {
   #______________----
   ## Compare Characterization/Temporal Characterization ------
   ## Shared----
-  ###getCompareCharacterizationAnalysisNameFilter----
   
-  getCompareCharacterizationDomainNameFilter <-
-    shiny::reactive(x = {
-      return(input$compareCharacterizationDomainNameFilter)
-    })
+  ###getDomainOptionsForCompareCharacterization----
+  getDomainOptionsForCompareCharacterization <- shiny::reactive({
+    multipleCharacterizationData <- getMultipleCompareCharacterizationData()
+    if (!doesObjectHaveData(multipleCharacterizationData)) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(multipleCharacterizationData$analysisRef)) {
+      return(NULL)
+    }
+    domainIdOptions <- multipleCharacterizationData$analysisRef$domainId %>% 
+      unique() %>% 
+      sort()
+    return(domainIdOptions)
+  })
   
-  getCompareCharacterizationAnalysisNameFilter <-
-    shiny::reactive(x = {
-      return(input$compareCharacterizationAnalysisNameFilter)
-    })
+  ###getAnalysisNameOptionsForCompareCharacterization----
+  getAnalysisNameOptionsForCompareCharacterization <- shiny::reactive({
+    multipleCharacterizationData <- getMultipleCompareCharacterizationData()
+    if (!doesObjectHaveData(multipleCharacterizationData)) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(multipleCharacterizationData$analysisRef)) {
+      return(NULL)
+    }
+    anlaysisNameOptions <- multipleCharacterizationData$analysisRef$analysisName %>% 
+      unique() %>% 
+      sort()
+    return(anlaysisNameOptions)
+  })
+  
   
   ###Update: compareCharacterizationDomainNameFilter----
   shiny::observe({
-    data <- getCompareCharacterizationData()
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    subset <- data$domainId %>% unique() %>% sort()
+    subset <- getDomainOptionsForCompareCharacterization()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "compareCharacterizationDomainNameFilter",
@@ -7160,13 +7255,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ###Update: compareCharacterizationAnalysisNameFilter----
   shiny::observe({
-    data <- getCompareCharacterizationData()
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    subset <- data %>%
-      dplyr::filter(.data$domainId %in% getCompareCharacterizationDomainNameFilter()) %>%
-      dplyr::pull(.data$analysisName) %>% unique() %>% sort()
+    subset <- getAnalysisNameOptionsForCompareCharacterization()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "compareCharacterizationAnalysisNameFilter",
@@ -7175,20 +7264,10 @@ shiny::shinyServer(function(input, output, session) {
       selected = subset
     )
   })
-  
-  ###getCompareTemporalCharacterizationDomainNameFilter----
-  getCompareTemporalCharacterizationDomainNameFilter <-
-    shiny::reactive(x = {
-      return(input$compareTemporalCharacterizationDomainNameFilter)
-    })
-  
+
   ###Update: compareTemporalCharacterizationDomainNameFilter----
   shiny::observe({
-    subset <-
-      getCompareTemporalCharcterizationData()$domainId %>% unique() %>% sort()
-    if (!doesObjectHaveData(subset)) {
-      return(NULL)
-    }
+    subset <- getDomainOptionsForCompareCharacterization()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "compareTemporalCharacterizationDomainNameFilter",
@@ -7197,22 +7276,10 @@ shiny::shinyServer(function(input, output, session) {
       selected = subset
     )
   })
-  
-  ###getCompareTemporalCharacterizationAnalysisNameFilter----
-  getCompareTemporalCharacterizationAnalysisNameFilter <-
-    shiny::reactive(x = {
-      return(input$compareTemporalCharacterizationAnalysisNameFilter)
-    })
-  
+
   ###Update: compareTemporalCharacterizationAnalysisNameFilter----
   shiny::observe({
-    if (!doesObjectHaveData(getCompareTemporalCharcterizationData())) {
-      return(NULL)
-    }
-    subset <-
-      getCompareTemporalCharcterizationData() %>% 
-      dplyr::filter(.data$domainId %in% getCompareTemporalCharacterizationDomainNameFilter()) %>% 
-      dplyr::pull(.data$analysisName) %>% unique() %>% sort()
+    subset <- getAnalysisNameOptionsForCompareCharacterization()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "compareTemporalCharacterizationAnalysisNameFilter",
@@ -7231,18 +7298,20 @@ shiny::shinyServer(function(input, output, session) {
       )) {
         return(NULL)
       }
-      
-      if (all(is(dataSource, "environment"), !any(
-        exists('covariateValue'),
-        exists('temporalCovariateValue')
-      ))) {
+      if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
         return(NULL)
       }
-      
+      if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
+        return(NULL)
+      }
+      if (all(is(dataSource, "environment"),
+              !any(exists('covariateValue'),
+                   exists('temporalCovariateValue')))) {
+        return(NULL)
+      }
       if (any(
         length(consolidatedCohortIdTarget()) != 1,
-        # length(getComparatorCohortIdFromSelectedCompoundCohortName()) != 1,
-        length(consolidatedDatabaseIdTarget()) == 0
+        length(consolidatedCohortIdComparator()) != 1
       )) {
         return(NULL)
       }
@@ -7259,6 +7328,7 @@ shiny::shinyServer(function(input, output, session) {
         ),
         value = 0
       )
+      browser()
       
       data <- getMultipleCharacterizationResults(
         dataSource = dataSource,
@@ -7956,8 +8026,8 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       data <- data %>%
-        dplyr::filter(.data$domainId %in% getCompareTemporalCharacterizationDomainNameFilter()) %>% 
-        dplyr::filter(.data$analysisName %in% getCompareTemporalCharacterizationAnalysisNameFilter())
+        dplyr::filter(.data$domainId %in% input$compareTemporalCharacterizationDomainNameFilter) %>% 
+        dplyr::filter(.data$analysisName %in% input$compareTemporalCharacterizationAnalysisNameFilter)
       
       
       if (all(
@@ -8491,7 +8561,8 @@ shiny::shinyServer(function(input, output, session) {
       lengthChange = TRUE,
       ordering = TRUE,
       paging = TRUE,
-      searchHighlight = TRUE
+      searchHighlight = TRUE,
+      columnDefs = list(minCellCountDef(10:14))
     )
   
     table <- DT::datatable(
@@ -8824,6 +8895,18 @@ shiny::shinyServer(function(input, output, session) {
       tags$tr(lapply(x, tags$td))))
   })
   
+  renderedSelectedDatabaseIds <- shiny::reactive({
+    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+      return(NULL)
+    }
+    selectedDatabaseIds <- database %>% 
+      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
+      dplyr::select(.data$compoundName)
+    
+    return(apply(selectedDatabaseIds, 1, function(x)
+      tags$tr(lapply(x, tags$td))))
+  })
+  
   selectedCohort <- shiny::reactive({
     return(input$selectedCompoundCohortName)
   })
@@ -9148,5 +9231,10 @@ shiny::shinyServer(function(input, output, session) {
   output$temporalCharCompareSelectedDatabase <-
     shiny::renderUI({
       return(input$selectedDatabaseId)
+    })
+  
+  output$timeDistSelectedDatabase <-
+    shiny::renderUI({
+      return(renderedSelectedDatabaseIds())
     })
 })
