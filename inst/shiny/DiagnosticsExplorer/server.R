@@ -8896,7 +8896,6 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   renderedSelectedDatabaseIds <- shiny::reactive({
-    targetSelectedCohort <- selectedCohorts()
     if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
