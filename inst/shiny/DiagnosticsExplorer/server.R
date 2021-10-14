@@ -4544,7 +4544,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::distinct(.data$calendarYear) %>%
       dplyr::arrange(.data$calendarYear)
     
-    minValue <- min(calendarFilter$calendarYear)
+    minValue <- max(1980, min(calendarFilter$calendarYear))
     maxValue <- max(calendarFilter$calendarYear)
     
     shiny::updateSliderInput(
@@ -4552,7 +4552,7 @@ shiny::shinyServer(function(input, output, session) {
       inputId = "incidenceRateCalendarFilter",
       min = minValue,
       max = maxValue,
-      value = c(2010, maxValue)
+      value = c(max(2010,minValue), maxValue)
     )
     
     minIncidenceRateValue <-
@@ -5169,6 +5169,11 @@ shiny::shinyServer(function(input, output, session) {
       "No timeseries data for the cohort of this series type"
     ))
     
+    data <- data %>% 
+      dplyr::mutate(
+        dplyr::across(dplyr::everything(), ~tidyr::replace_na(.x, 0))
+      )
+    
     longNames <- getTimeSeriesColumnNameCrosswalk() %>% 
       dplyr::filter(.data$longName %in% c(input$timeSeriesPlotFilters)) %>% 
       dplyr::pull(.data$longName) %>% 
@@ -5183,6 +5188,7 @@ shiny::shinyServer(function(input, output, session) {
     renameDf <- getTimeSeriesColumnNameCrosswalk() %>% 
       dplyr::mutate(longName = titleCaseToCamelCase(.data$longName)) %>% 
       dplyr::select(.data$shortName, .data$longName)
+    
     
     for (i in (1:nrow(renameDf))) {
       if (renameDf[i,]$shortName %in% colnames(data)) {

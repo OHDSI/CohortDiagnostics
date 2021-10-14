@@ -16,12 +16,24 @@ plotTimeSeriesFromTsibble <-
       distinctCohortShortName <-
         union(distinctCohortShortName, data)
     }
+    distinctCohortCompoundName <- cohort %>% 
+      dplyr::filter(.data$shortName %in% distinctCohortShortName) %>% 
+      dplyr::pull(.data$compoundName) %>% 
+      paste(collapse = ";")
     
-    distinctDatabaseId <- c()
+    distinctDatabaseShortName <- c()
     for (i in 1:length(tsibbleData)) {
-      data  <- tsibbleData[[i]]$databaseId %>% unique()
-      distinctDatabaseId <- union(distinctDatabaseId, data)
+      tsibbleData[[i]] <- tsibbleData[[i]] %>% 
+        addDatabaseShortName(shortNameRef = database) 
+      data <- tsibbleData[[i]] %>% 
+        dplyr::pull(.data$databaseShortName) %>% 
+        unique()
+      distinctDatabaseShortName <- union(distinctDatabaseShortName, data)
     }
+    distinctDatabaseCompoundName <- database %>% 
+      dplyr::filter(.data$shortName %in% distinctDatabaseShortName) %>% 
+      dplyr::pull(.data$compoundName) %>% 
+      paste(collapse = ";")
     
     cohortPlots <- list()
     noOfPlotRows <-
@@ -32,10 +44,10 @@ plotTimeSeriesFromTsibble <-
         data <-
           tsibbleData[[j]] %>% dplyr::filter(.data$cohortShortName == distinctCohortShortName[i])
         databasePlots <- list()
-        for (k in 1:length(distinctDatabaseId)) {
+        for (k in 1:length(distinctDatabaseShortName)) {
             
           databasePlots[[k]] <- plotTs(
-            data = data %>% dplyr::filter(.data$databaseId == distinctDatabaseId[k]),
+            data = data %>% dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[k]),
             plotHeight =  200 * noOfPlotRows,
             xAxisMin = as.Date(paste0(timeSeriesPeriodRangeFilter[1], "-01-01")),
             xAxisMax = as.Date(paste0(timeSeriesPeriodRangeFilter[2], "-12-31")),
@@ -47,10 +59,12 @@ plotTimeSeriesFromTsibble <-
                 annotations = list(
                   x = 0.5 ,
                   y = 1.2,
-                  text = distinctDatabaseId[[k]],
+                  text = distinctDatabaseShortName[[k]],
                   showarrow = F,
                   xref = 'paper',
-                  yref = 'paper'
+                  yref = 'paper',
+                  xanchor = 'center',
+                  yanchor = 'middle'
                 )
               )
           }
@@ -137,6 +151,8 @@ plotTimeSeriesFromTsibble <-
               showarrow = FALSE,
               xref = "paper",
               yref = "paper",
+              xanchor = 'center',
+              yanchor = 'middle',
               textangle = -90
             )
           )
@@ -152,6 +168,8 @@ plotTimeSeriesFromTsibble <-
             showarrow = FALSE,
             xref = "paper",
             yref = "paper",
+            xanchor = 'center',
+            yanchor = 'middle',
             textangle = -90
           )
         )
@@ -159,13 +177,24 @@ plotTimeSeriesFromTsibble <-
     m <- list(
       l = 150,
       r = 0,
-      b = 0,
+      b = 100,
       t = 50,
       pad = 4
     )
     finalPlot <-
       plotly::subplot(cohortPlots, nrows = length(cohortPlots)) %>%
-      plotly::layout(autosize = T, margin = m)
+      plotly::layout(autosize = T, 
+                     margin = m,
+                     annotations = list(
+                       x = 0.5 ,
+                       y = -0.05,
+                       text = paste0(distinctCohortCompoundName,"\n",distinctDatabaseCompoundName),
+                       showarrow = F,
+                       xref = 'paper',
+                       yref = 'paper',
+                       xanchor = 'center',
+                       yanchor = 'middle'
+                     ))
     
     # # Using Plotly
     
@@ -339,16 +368,14 @@ plotTs <- function(data,
                       size = I(20),
                       color = I("grey"),
                       name = "Total",
-                      text = ~ paste("Statistics = TOTAL",
-                                     "\nDatabase ID = ",.data$databaseId,
+                      text = ~ paste("Database ID = ",.data$databaseId,
                                      "\nvalueType = ",valueType )) %>%
     plotly::add_trace(x = ~ periodDate,
                       y = ~ trend,
                       mode = "line",
                       type = "scatter",
                       name = "Trends",
-                      text = ~ paste("Statistics = TREND",
-                                     "\nDatabase ID = ",.data$databaseId,
+                      text = ~ paste("Database ID = ",.data$databaseId,
                                      "\nvalueType = ",valueType )) %>%
     plotly::layout(showlegend = FALSE,
                    xaxis = list(range = c(xAxisMin, xAxisMax)))
