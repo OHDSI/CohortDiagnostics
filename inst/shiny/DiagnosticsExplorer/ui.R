@@ -639,7 +639,11 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "timeDistribution",
-    createShinyBoxFromOutputId("timeDistSelectedCohorts"),
+    createShinyBoxWithSplitForTwoOutputIds(leftOutputId = "timeDistSelectedCohorts", 
+                                           leftOutputLabel = "Cohort",
+                                           rightOutputId = "timeDistSelectedDatabase",
+                                           rightOutputLabel = "Datasource",
+                                           leftUnits = 70),
     shinydashboard::box(
       width = NULL,
       status = "primary",

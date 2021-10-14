@@ -8895,6 +8895,19 @@ shiny::shinyServer(function(input, output, session) {
       tags$tr(lapply(x, tags$td))))
   })
   
+  renderedSelectedDatabaseIds <- shiny::reactive({
+    targetSelectedCohort <- selectedCohorts()
+    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+      return(NULL)
+    }
+    selectedDatabaseIds <- database %>% 
+      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
+      dplyr::select(.data$compoundName)
+    
+    return(apply(selectedDatabaseIds, 1, function(x)
+      tags$tr(lapply(x, tags$td))))
+  })
+  
   selectedCohort <- shiny::reactive({
     return(input$selectedCompoundCohortName)
   })
@@ -9219,5 +9232,10 @@ shiny::shinyServer(function(input, output, session) {
   output$temporalCharCompareSelectedDatabase <-
     shiny::renderUI({
       return(input$selectedDatabaseId)
+    })
+  
+  output$timeDistSelectedDatabase <-
+    shiny::renderUI({
+      return(renderedSelectedDatabaseIds())
     })
 })
