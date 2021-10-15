@@ -7,7 +7,11 @@
 getMultipleCharacterizationResults(
   dataSource = .GlobalEnv,
   cohortIds = NULL,
-  databaseIds = NULL
+  databaseIds = NULL,
+  featureExtractionCharacterization = TRUE,
+  featureExtractionTemporalCharacterization = TRUE,
+  cohortRelationshipCharacterizationResults = TRUE,
+  cohortRelationshipTemporalCharacterizationResults = TRUE
 )
 }
 \arguments{
@@ -23,6 +27,12 @@ and uploaded using \code{uploadResults}}
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
+
+\item{featureExtractionCharacterization}{Do you want to get feature extraction characterization results?}
+
+\item{featureExtractionTemporalCharacterization}{Do you want to get feature extraction temporal characterization results?}
+
+\item{cohortRelationshipCharacterizationResults}{Do you want to get cohort relationship characterization results?}
 }
 \value{
 Returns multiple characterization output
