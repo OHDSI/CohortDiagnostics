@@ -499,7 +499,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
         }
       }
     } else {
-      databaseRecordAndPersonColumnName <- c("Meet", "Gain", "Remain", "Total")
+      databaseRecordAndPersonColumnName <- c(fieldsInData)
     }
     
     
