@@ -7411,7 +7411,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
     
     covs2 <- data %>%
-      dplyr::filter(.data$cohortId == getComparatorCohortIdFromSelectedCompoundCohortName()) %>%
+      dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>%
       dplyr::mutate(
         analysisNameLong = paste0(
           .data$analysisName,
@@ -7509,8 +7509,8 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     data <- data %>% 
-      dplyr::filter(.data$domainId  %in% getDomainOptionsForCompareCharacterization()) %>% 
-      dplyr::filter(.data$analysisName  %in% getAnalysisNameOptionsForCompareCharacterization())
+      dplyr::filter(.data$domainId  %in% input$compareCharacterizationDomainNameFilter) %>% 
+      dplyr::filter(.data$analysisName  %in% input$compareCharacterizationAnalysisNameFilter )
     return(data)
   })
   
@@ -7686,7 +7686,7 @@ shiny::shinyServer(function(input, output, session) {
                                             ),
                                             tr(
                                               lapply(rep(
-                                                c("Target", "Comarator", "StdDiff"),
+                                                c("Target", "Comparator", "StdDiff"),
                                                 length(databaseIds)
                                               ),
                                               th,
