@@ -6332,7 +6332,7 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  
+  ##output: cohortOverlapTable ----
   output$cohortOverlapTable <- DT::renderDataTable(expr = {
     data <- cohortOverlapData()
     validate(need(
@@ -6348,20 +6348,24 @@ shiny::shinyServer(function(input, output, session) {
       pageLength = 1000,
       searching = TRUE,
       scrollX = TRUE,
-      scrollY = "100vh",
+      scrollY = "50vh",
       lengthChange = TRUE,
       ordering = FALSE,
-      paging = TRUE
+      paging = TRUE,
+      columnDefs = list(minCellCountDef(3:10))
     )
     
     table <- DT::datatable(
       data,
       options = options,
       rownames = FALSE,
+      colnames = colnames(data) %>%
+        camelCaseToTitleCase(),
       escape = FALSE,
       filter = "top",
       class = "stripe nowrap compact"
     )
+   
   })
   
   ##output: saveCohortOverlapTable----

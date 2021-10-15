@@ -1642,7 +1642,7 @@ plotCohortOverlap <- function(data,
                         dplyr::select(.data$targetCohortId,.data$compoundName),
                       by = "targetCohortId") %>% 
     dplyr::pull(.data$compoundName) %>% unique()
-  targetCohortCompoundName <- paste("Target Cohorts :",paste(targetCohortCompoundName,collapse = ","))
+  targetCohortCompoundName <- paste("<b>Target Cohorts</b> :",paste(targetCohortCompoundName,collapse = ","))
   
   comparatorCohortCompoundName <- data  %>% 
     dplyr::inner_join(cohort %>% 
@@ -1650,7 +1650,7 @@ plotCohortOverlap <- function(data,
                         dplyr::select(.data$comparatorCohortId,.data$compoundName),
                       by = "comparatorCohortId") %>% 
     dplyr::pull(.data$compoundName) %>% unique()
-  comparatorCohortCompoundName <- paste("Comparator Cohorts :",paste(comparatorCohortCompoundName,collapse = ","))                    
+  comparatorCohortCompoundName <- paste("<b>Comparator Cohorts</b> :",paste(comparatorCohortCompoundName,collapse = ","))                    
   
   plotData <- data %>%
     dplyr::mutate(
