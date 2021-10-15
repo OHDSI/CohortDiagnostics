@@ -360,6 +360,13 @@ bodyTabItems <- shinydashboard::tabItems(
       condition = "output.doesSelectedRowInCohortCountTableHaveCohortId == true",
       tags$br(),
       tags$h3("Inclusion Rules"),
+      shiny::radioButtons(
+        inputId = "cohortCountInclusionRules",
+        label = "Filter by",
+        choices = c("All", "Meet", "Gain", "Remain", "Totals"),
+        selected = "All",
+        inline = TRUE
+      ),
       DT::dataTableOutput("inclusionRuleStatisticsForCohortSeletedTable")
     )
   ),

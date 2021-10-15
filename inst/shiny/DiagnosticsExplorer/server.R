@@ -4405,68 +4405,14 @@ shiny::shinyServer(function(input, output, session) {
       validate(need((nrow(table) > 0),
                     "There is no inclusion rule data for this cohort."))
       
-      databaseIds <- unique(table$databaseId)
-      #!!!! move to seperate reactive function - to do the pivot step. reuse that for download button and here.
-      table <- table %>%
-        tidyr::pivot_longer(
-          cols = c(
-            .data$meetSubjects,
-            .data$gainSubjects,
-            .data$totalSubjects,
-            .data$remainSubjects
-          )
-        ) %>%
-        dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>%
-        tidyr::pivot_wider(
-          id_cols = c(.data$cohortId, .data$ruleSequenceId, .data$ruleName),
-          names_from = .data$name,
-          values_from = .data$value
-        ) %>%
-        dplyr::select(-.data$cohortId)
+      data <- table %>% 
+        dplyr::select(-.data$cohortId, -.data$ruleSequenceId)
       
-      sketch <- htmltools::withTags(table(class = "display",
-                                          thead(tr(
-                                            th(rowspan = 2, "Rule Sequence ID"),
-                                            th(rowspan = 2, "Rule Name"),
-                                            lapply(
-                                              databaseIds,
-                                              th,
-                                              colspan = 4,
-                                              class = "dt-center",
-                                              style = "border-right:1px solid silver;border-bottom:1px solid silver"
-                                            )
-                                          ),
-                                          tr(
-                                            lapply(rep(
-                                              c("Meet", "Gain", "Remain", "Total"), length(databaseIds)
-                                            ),
-                                            th,
-                                            style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                          ))))
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        columnDefs = list(truncateStringDef(1, 100),
-                          minCellCountDef(1 + (1:(
-                            length(databaseIds) * 4
-                          ))))
-      )
-      table <- DT::datatable(
-        table,
-        options = options,
-        colnames = colnames(table) %>% camelCaseToTitleCase(),
-        rownames = FALSE,
-        container = sketch,
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
+      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
+                                                             databaseCount = NULL,
+                                                             columnFilters = input$cohortCountInclusionRules,
+                                                             numberOfColums = 0,
+                                                             numberOfSubstitutableColums = 4)
       return(table)
     }, server = TRUE)
   
