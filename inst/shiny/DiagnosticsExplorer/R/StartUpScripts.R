@@ -260,6 +260,16 @@ consolidationOfSelectedFieldValues <- function(input,
         dplyr::pull(.data$cohortId) %>%
         unique()
     }
+    
+    if (all(!is.null(input$selectedComparatorCompoundCohortName),
+            !is.null(cohort))) {
+      data$cohortIdComparator <- cohort %>%
+        dplyr::filter(.data$compoundName %in% input$selectedComparatorCompoundCohortName) %>%
+        dplyr::arrange(.data$cohortId) %>%
+        dplyr::pull(.data$cohortId) %>%
+        unique()
+    }
+    
     #mutli select databaseId/ single select databaseId
     if (input$tabs == 'temporalCharacterization' ||
         input$tabs == 'compareTemporalCharacterization') {

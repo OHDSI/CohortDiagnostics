@@ -126,12 +126,17 @@ shiny::shinyServer(function(input, output, session) {
   ##pickerInput: selectedComparatorCompoundCohortName----
   shiny::observe({
     subset <- getCohortSortedByCohortId()$compoundName
-    
+    if (input$tabs == "cohortDefinition") {
+      selected <-  NULL
+    } else {
+      selected <- subset[2]
+    }
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "selectedComparatorCompoundCohortName",
       choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset
+      choices = subset,
+      selected = selected
     )
   })
   
@@ -7326,19 +7331,18 @@ shiny::shinyServer(function(input, output, session) {
           "Extracting temporal characterization data for target cohort:",
           consolidatedCohortIdTarget(),
           " and comparator cohort:",
-          getComparatorCohortIdFromSelectedCompoundCohortName(),
+          consolidatedCohortIdComparator(),
           ' for ',
           input$selectedDatabaseId
         ),
         value = 0
       )
-      browser()
       
       data <- getMultipleCharacterizationResults(
         dataSource = dataSource,
         cohortId = c(
           consolidatedCohortIdTarget(),
-          getComparatorCohortIdFromSelectedCompoundCohortName()
+          consolidatedCohortIdComparator()
         ) %>% unique(),
         databaseId = consolidatedDatabaseIdTarget()
       )
@@ -7499,8 +7503,8 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     data <- data %>% 
-      dplyr::filter(.data$domainId  %in% getCompareCharacterizationDomainNameFilter()) %>% 
-      dplyr::filter(.data$analysisName  %in% getCompareCharacterizationAnalysisNameFilter())
+      dplyr::filter(.data$domainId  %in% getDomainOptionsForCompareCharacterization()) %>% 
+      dplyr::filter(.data$analysisName  %in% getAnalysisNameOptionsForCompareCharacterization())
     return(data)
   })
   
@@ -7568,6 +7572,7 @@ shiny::shinyServer(function(input, output, session) {
       if (input$tabs != "compareCohortCharacterization") {
         return(NULL)
       }
+      
       balance <- getCompareCharacterizationDataFiltered()
       validate(need(
         all(!is.null(balance), nrow(balance) > 0),
