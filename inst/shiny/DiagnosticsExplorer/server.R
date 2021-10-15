@@ -6321,6 +6321,7 @@ shiny::shinyServer(function(input, output, session) {
     progress$set(message = paste0("Plotting cohort overlap."),
                  value = 0)
     data <- cohortOverlapData()
+    
     validate(need(
       !is.null(data),
       paste0("No cohort overlap data for this combination")
@@ -6348,12 +6349,17 @@ shiny::shinyServer(function(input, output, session) {
       nrow(data) > 0,
       paste0("No cohort overlap data for this combination.")
     ))
+    if (nrow(data) > 25) {
+      scrollY <- '50vh'
+    } else {
+      scrollY <- TRUE
+    }
     
     options = list(
       pageLength = 1000,
       searching = TRUE,
       scrollX = TRUE,
-      scrollY = "50vh",
+      scrollY = scrollY,
       lengthChange = TRUE,
       ordering = FALSE,
       paging = TRUE,
@@ -8904,7 +8910,7 @@ shiny::shinyServer(function(input, output, session) {
       tags$tr(lapply(x, tags$td))))
   })
   
-  renderedSelectedDatabaseIds <- shiny::reactive({
+  selectedDatabaseIds <- shiny::reactive({
     if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
@@ -9243,10 +9249,15 @@ shiny::shinyServer(function(input, output, session) {
     })
   output$timeSeriesSelectedDatabase <-
     shiny::renderUI({
-      return(renderedSelectedDatabaseIds())
+      return(selectedDatabaseIds())
     })
   output$timeDistSelectedDatabase <-
     shiny::renderUI({
-      return(renderedSelectedDatabaseIds())
+      return(selectedDatabaseIds())
+    })
+  
+  output$cohortOverlapSelectedDatabaseId <-
+    shiny::renderUI({
+      return(selectedDatabaseIds())
     })
 })
