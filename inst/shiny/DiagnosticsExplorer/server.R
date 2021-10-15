@@ -9232,7 +9232,10 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       return(input$selectedDatabaseId)
     })
-  
+  output$timeSeriesSelectedDatabase <-
+    shiny::renderUI({
+      return(renderedSelectedDatabaseIds())
+    })
   output$timeDistSelectedDatabase <-
     shiny::renderUI({
       return(renderedSelectedDatabaseIds())

@@ -544,8 +544,18 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   
   distinctDatabaseShortName <- plotData$databaseShortName %>% unique()
   distinctTimeMetric <- c("observation time (days) prior to index", "time (days) between cohort start and end","observation time (days) after index")
-   
- plotHeight <- length(distinctDatabaseShortName) * length(sortShortName$shortName) * 100
+  
+  distinctCohortCompoundName <- cohort %>% 
+    dplyr::filter(.data$shortName %in% sortShortName$shortName) %>% 
+    dplyr::pull(.data$compoundName) %>% 
+    paste(collapse = ";")
+  
+  distinctDatabaseCompoundName <- database %>% 
+    dplyr::filter(.data$shortName %in% distinctDatabaseShortName) %>% 
+    dplyr::pull(.data$compoundName) %>% 
+    paste(collapse = ";")
+  
+ plotHeight <- 200 + length(distinctDatabaseShortName) * length(sortShortName$shortName) * 100
   databasePlots <- list()
   for (i in 1:length(distinctDatabaseShortName)) {
     filteredDataByDatabase <- plotData %>%
@@ -636,15 +646,26 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
         )
       )
   }
+  
   m <- list(
     l = 50,
     r = 50,
-    b = 0,
-    t = 50
+    b = 100,
+    t = 70
   )
   finalPlot <-
     plotly::subplot(databasePlots, nrows = length(databasePlots), margin = 0.008) %>% 
-    plotly::layout(margin = m)
+    plotly::layout(margin = m,
+                   annotations = list(
+                     x = 0.5 ,
+                     y = -0.2 + length(distinctDatabaseShortName) * length(sortShortName$shortName) * 0.0125,
+                     text = paste0(distinctCohortCompoundName,"\n",distinctDatabaseCompoundName),
+                     showarrow = F,
+                     xref = 'paper',
+                     yref = 'paper',
+                     xanchor = 'center',
+                     yanchor = 'middle'
+                   ))
   
   return(finalPlot)
 }
