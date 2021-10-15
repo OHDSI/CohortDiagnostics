@@ -522,7 +522,12 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "timeSeries",
-    createShinyBoxFromOutputId("timeSeriesSelectedCohorts"),
+    # createShinyBoxFromOutputId("timeSeriesSelectedCohorts"),
+    createShinyBoxWithSplitForTwoOutputIds(leftOutputId = "timeSeriesSelectedCohorts", 
+                                           leftOutputLabel = "Cohort",
+                                           rightOutputId = "timeSeriesSelectedDatabase",
+                                           rightOutputLabel = "Datasource",
+                                           leftUnits = 70),
     tags$table(
       tags$tr(
         tags$td(
@@ -792,7 +797,12 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
-    createShinyBoxFromOutputId("cohortOverlapSelectedCohort"),
+    # createShinyBoxFromOutputId("cohortOverlapSelectedCohort"),
+    createShinyBoxWithSplitForTwoOutputIds(leftOutputId = "cohortOverlapSelectedCohort", 
+                                           leftOutputLabel = "Cohort",
+                                           rightOutputId = "cohortOverlapSelectedDatabaseId",
+                                           rightOutputLabel = "Datasource",
+                                           leftUnits = 70),
     shinydashboard::box(
       title = "Cohort Overlap (Subjects)",
       width = NULL,

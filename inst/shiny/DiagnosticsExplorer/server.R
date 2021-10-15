@@ -126,12 +126,17 @@ shiny::shinyServer(function(input, output, session) {
   ##pickerInput: selectedComparatorCompoundCohortName----
   shiny::observe({
     subset <- getCohortSortedByCohortId()$compoundName
-    
+    if (input$tabs == "cohortDefinition") {
+      selected <-  NULL
+    } else {
+      selected <- subset[2]
+    }
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "selectedComparatorCompoundCohortName",
       choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset
+      choices = subset,
+      selected = selected
     )
   })
   
@@ -6316,6 +6321,7 @@ shiny::shinyServer(function(input, output, session) {
     progress$set(message = paste0("Plotting cohort overlap."),
                  value = 0)
     data <- cohortOverlapData()
+    
     validate(need(
       !is.null(data),
       paste0("No cohort overlap data for this combination")
@@ -6332,7 +6338,7 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  
+  ##output: cohortOverlapTable ----
   output$cohortOverlapTable <- DT::renderDataTable(expr = {
     data <- cohortOverlapData()
     validate(need(
@@ -6343,25 +6349,34 @@ shiny::shinyServer(function(input, output, session) {
       nrow(data) > 0,
       paste0("No cohort overlap data for this combination.")
     ))
+    if (nrow(data) > 25) {
+      scrollY <- '50vh'
+    } else {
+      scrollY <- TRUE
+    }
     
     options = list(
       pageLength = 1000,
       searching = TRUE,
       scrollX = TRUE,
-      scrollY = "100vh",
+      scrollY = scrollY,
       lengthChange = TRUE,
       ordering = FALSE,
-      paging = TRUE
+      paging = TRUE,
+      columnDefs = list(minCellCountDef(3:10))
     )
     
     table <- DT::datatable(
       data,
       options = options,
       rownames = FALSE,
+      colnames = colnames(data) %>%
+        camelCaseToTitleCase(),
       escape = FALSE,
       filter = "top",
       class = "stripe nowrap compact"
     )
+   
   })
   
   ##output: saveCohortOverlapTable----
@@ -7322,19 +7337,18 @@ shiny::shinyServer(function(input, output, session) {
           "Extracting temporal characterization data for target cohort:",
           consolidatedCohortIdTarget(),
           " and comparator cohort:",
-          getComparatorCohortIdFromSelectedCompoundCohortName(),
+          consolidatedCohortIdComparator(),
           ' for ',
           input$selectedDatabaseId
         ),
         value = 0
       )
-      browser()
       
       data <- getMultipleCharacterizationResults(
         dataSource = dataSource,
         cohortId = c(
           consolidatedCohortIdTarget(),
-          getComparatorCohortIdFromSelectedCompoundCohortName()
+          consolidatedCohortIdComparator()
         ) %>% unique(),
         databaseId = consolidatedDatabaseIdTarget()
       )
@@ -7397,7 +7411,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
     
     covs2 <- data %>%
-      dplyr::filter(.data$cohortId == getComparatorCohortIdFromSelectedCompoundCohortName()) %>%
+      dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>%
       dplyr::mutate(
         analysisNameLong = paste0(
           .data$analysisName,
@@ -7495,8 +7509,8 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     data <- data %>% 
-      dplyr::filter(.data$domainId  %in% getCompareCharacterizationDomainNameFilter()) %>% 
-      dplyr::filter(.data$analysisName  %in% getCompareCharacterizationAnalysisNameFilter())
+      dplyr::filter(.data$domainId  %in% input$compareCharacterizationDomainNameFilter) %>% 
+      dplyr::filter(.data$analysisName  %in% input$compareCharacterizationAnalysisNameFilter )
     return(data)
   })
   
@@ -7564,6 +7578,7 @@ shiny::shinyServer(function(input, output, session) {
       if (input$tabs != "compareCohortCharacterization") {
         return(NULL)
       }
+      
       balance <- getCompareCharacterizationDataFiltered()
       validate(need(
         all(!is.null(balance), nrow(balance) > 0),
@@ -7671,7 +7686,7 @@ shiny::shinyServer(function(input, output, session) {
                                             ),
                                             tr(
                                               lapply(rep(
-                                                c("Target", "Comarator", "StdDiff"),
+                                                c("Target", "Comparator", "StdDiff"),
                                                 length(databaseIds)
                                               ),
                                               th,
@@ -8895,7 +8910,7 @@ shiny::shinyServer(function(input, output, session) {
       tags$tr(lapply(x, tags$td))))
   })
   
-  renderedSelectedDatabaseIds <- shiny::reactive({
+  selectedDatabaseIds <- shiny::reactive({
     if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
@@ -9232,9 +9247,17 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       return(input$selectedDatabaseId)
     })
-  
+  output$timeSeriesSelectedDatabase <-
+    shiny::renderUI({
+      return(selectedDatabaseIds())
+    })
   output$timeDistSelectedDatabase <-
     shiny::renderUI({
-      return(renderedSelectedDatabaseIds())
+      return(selectedDatabaseIds())
+    })
+  
+  output$cohortOverlapSelectedDatabaseId <-
+    shiny::renderUI({
+      return(selectedDatabaseIds())
     })
 })
