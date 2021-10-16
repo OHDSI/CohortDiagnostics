@@ -1644,14 +1644,14 @@ getResultsConceptSetExpression <- function(dataSource,
                                            conceptSetId) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
-    dataTableName = "conceptSet",
+    dataTableName = "conceptSets",
     cohortId = cohortId,
     conceptSetId = conceptSetId
   )
-  if (length(cohortId) > 0) {
-    stop("Please only provide one integer value for cohortId")
+  if (length(cohortId) == 0) {
+    stop("cohortId is not specified")
   }
-  if (length(cohortId) > 0) {
+  if (length(cohortId) > 1) {
     stop("Please only provide one integer value for conceptSetId")
   }
   if (is.null(data)) {
@@ -1669,7 +1669,7 @@ getResultsConceptSetExpression <- function(dataSource,
   }
   
   expression <- data %>%
-    dplyr::pull(.data$concept_set_expression) %>%
+    dplyr::pull(.data$conceptSetExpression) %>%
     RJSONIO::fromJSON(digits = 23)
   
   return(expression)
@@ -1709,7 +1709,47 @@ getOptimizedConceptSet <- function(dataSource,
     cohortId = cohortIds,
     conceptSetId = conceptSetIds
   )
-  return(data)
+  if (is.null(data)) {
+    return(NULL)
+  }
+  if (nrow(data %>% 
+           dplyr::filter(.data$removed == 1)) == 0) {
+    return(NULL)
+  }
+  originalConceptSetExpression <- getResultsConceptSetExpression(dataSource = dataSource,
+                                                                 cohortId = cohortIds,
+                                                                 conceptSetId = conceptSetIds)
+  originalConceptSetExpressionTable <- getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression = 
+                                                                                        originalConceptSetExpression)
+  
+  excluded <- tidyr::crossing(data %>% 
+                                dplyr::select(.data$databaseId) %>% 
+                                dplyr::distinct(),
+                              originalConceptSetExpressionTable %>% 
+                                dplyr::filter(.data$isExcluded == TRUE)) %>% 
+    dplyr::inner_join(data %>% 
+                        dplyr::filter(.data$excluded == 1) %>% 
+                        dplyr::filter(.data$removed == 0),
+                      by = c("databaseId", "conceptId")) %>% 
+    dplyr::select(-.data$excluded, -.data$removed)
+  
+  notExcluded <- tidyr::crossing(data %>% 
+                                   dplyr::select(.data$databaseId) %>% 
+                                   dplyr::distinct(),
+                                 originalConceptSetExpressionTable %>% 
+                                   dplyr::filter(.data$isExcluded == FALSE)) %>% 
+    dplyr::inner_join(data %>% 
+                        dplyr::filter(.data$excluded == 0) %>% 
+                        dplyr::filter(.data$removed == 0),
+                      by = c("databaseId", "conceptId")) %>% 
+    dplyr::select(-.data$excluded, -.data$removed)
+  
+  final <- dplyr::bind_rows(excluded,
+                            notExcluded) %>% 
+    dplyr::arrange(.data$conceptId) %>% 
+    dplyr::select(-.data$cohortId,
+                  -.data$conceptSetId)
+  return(final)
 }
 
 
@@ -1884,16 +1924,16 @@ getResultsFixedTimeSeries <- function(dataSource,
                   "recordsStart", "subjectsStart", 
                   "recordsEnd", "subjectsEnd"
     ),
-    longName = c("Records Found Per Period",
-                 "Subjects Found Per Period",
-                 "Person Days Per Period", 
-                 "Incidence Subjects Per Period",
-                 "Incidence Person days Per Period",
-                 "Incident Subjects Ending Per Period",
-                 "Records Starting Per Period", 
-                 "Subjects Starting Per Period",
-                 "Records Ending Per Period", 
-                 "Subjects Ending Per Period"),
+    longName = c("Records Overlapping",
+                 "Subjects Overlapping",
+                 "Days Overlapping", 
+                 "Subjects Incident",
+                 "Person days Incident",
+                 "Subjects Incident Ending",
+                 "Records Starting", 
+                 "Subjects Starting",
+                 "Records Ending", 
+                 "Subjects Ending"),
     sequence = c(1,2,3,4,5,6,7,8,9,10)
   ) %>% 
     dplyr::arrange(.data$sequence)
@@ -1962,9 +2002,9 @@ getResultsFixedTimeSeries <- function(dataSource,
     seriesType = c('T1', 'T2', 'T3',# 'T4', 'T5', 'T6',
                    'R1'),
     seriesTypeShort = c(
-      'Subjects in data source limited to cohort period',
-      'Subjects in data source not limited to cohort period',
-      'Persons in data source',
+      'Subjects in cohort period',
+      'Subjects in obs period',
+      'Persons in obs period',
       # ,
       # 'Subjects cohort embedded in period',
       # 'Subjects observation embedded in period',
