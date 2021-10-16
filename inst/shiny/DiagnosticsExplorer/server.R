@@ -2746,8 +2746,8 @@ shiny::shinyServer(function(input, output, session) {
       return(table)
     }, server = TRUE)
   
-  #output: saveExcludedConceptsTableLeft----
-  output$saveExcludedConceptsTableLeft <-  downloadHandler(
+  #output: saveTargetCohortDefinitionExcludedConceptTable----
+  output$saveTargetCohortDefinitionExcludedConceptTable <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "excludedConcepts")
     },
@@ -3172,16 +3172,13 @@ shiny::shinyServer(function(input, output, session) {
       return(table)
     }, server = TRUE)
   
-  #output: saveExcludedConceptsTableComparator----
-  output$saveExcludedConceptsTableComparator <-  downloadHandler(
-    filename = function()
-    {
+  #output: saveComparatorCohortDefinitionExcludedConceptTable----
+  output$saveComparatorCohortDefinitionExcludedConceptTable <-  downloadHandler(
+    filename = function() {
       getCsvFileNameWithDateTime(string = "excludedConcepts")
     },
-    content = function(file)
-    {
-      data <- getExcludedConceptsComparator()
-      downloadCsv(x = data, fileName = file)
+    content = function(file) {
+      downloadCsv(x = getExcludedConceptsComparator(), fileName = file)
     }
   )
   
