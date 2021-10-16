@@ -6030,7 +6030,129 @@ shiny::shinyServer(function(input, output, session) {
   
   #______________----
   # Characterization/Temporal Characterization ------
-  ## Shared----
+  ##Shared----
+  ###getMultipleCharacterizationDataTarget----
+  getMultipleCharacterizationDataTarget <-
+    shiny::reactive(x = {
+      if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+        return(NULL)
+      }
+      if (all(is(dataSource, "environment"), !any(
+        exists('covariateValue'),
+        exists('temporalCovariateValue')
+      ))) {
+        return(NULL)
+      }
+      if (any(length(consolidatedCohortIdTarget()) != 1)) {
+        return(NULL)
+      }
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = paste0(
+          "Extracting characterization data for target cohort:",
+          consolidatedCohortIdTarget()
+        ),
+        value = 0
+      )
+      data <- getMultipleCharacterizationResults(
+        dataSource = dataSource,
+        cohortId = c(consolidatedCohortIdTarget()) %>% unique()
+      )
+      return(data)
+    })
+  
+  ###getMultipleCharacterizationDataComparator----
+  getMultipleCharacterizationDataComparator <-
+    shiny::reactive(x = {
+      if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
+        return(NULL)
+      }
+      if (all(is(dataSource, "environment"), !any(
+        exists('covariateValue'),
+        exists('temporalCovariateValue')
+      ))) {
+        return(NULL)
+      }
+      if (any(length(consolidatedCohortIdComparator()) != 1)) {
+        return(NULL)
+      }
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = paste0(
+          "Extracting characterization data for comparator cohort:",
+          consolidatedCohortIdComparator()
+        ),
+        value = 0
+      )
+      data <- getMultipleCharacterizationResults(
+        dataSource = dataSource,
+        cohortId = c(consolidatedCohortIdComparator()) %>% unique()
+      )
+      return(data)
+    })
+  
+  ###getMultipleCharacterizationData----
+  getMultipleCharacterizationData <- shiny::reactive(x = {
+    if (!any(
+      input$tabs == "cohortCharacterization",
+      input$tabs == "temporalCharacterization",
+      input$tabs == "compareCohortCharacterization",
+      input$tabs == "compareTemporalCharacterization"
+    )) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(getMultipleCharacterizationDataTarget())) {
+      return(NULL)
+    }
+    if (any(
+      input$tabs == "cohortCharacterization",
+      input$tabs == "temporalCharacterization"
+    )) {
+      data <- getMultipleCharacterizationDataTarget()
+      data$covariateValue <- data$covariateValue %>% 
+        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget())
+      data$covariateValueDist <- data$covariateValueDist %>% 
+        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget())
+    }
+    if (any(
+      input$tabs == "compareCohortCharacterization",
+      input$tabs == "compareTemporalCharacterization"
+    )) {
+      dataTarget <- getMultipleCharacterizationDataTarget()
+      if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
+        return(NULL)
+      }
+      validate(need(consolidatedCohortIdTarget() != consolidatedCohortIdComparator(), 
+                    "Target and comparator cohorts are the same. Please change comparator selection."))
+      dataComparator <- getMultipleCharacterizationDataComparator()
+      data <- list()
+      data$analysisRef <- dplyr::bind_rows(dataTarget$analysisRef,
+                                           dataComparator$analysisRef) %>% 
+        dplyr::distinct()
+      data$covariateRef <- dplyr::bind_rows(dataTarget$covariateRef,
+                                           dataComparator$covariateRef) %>% 
+        dplyr::distinct()
+      data$covariateValue <- dplyr::bind_rows(dataTarget$covariateValue,
+                                            dataComparator$covariateValue)%>% 
+        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
+        dplyr::distinct()
+      data$covariateValueDist <- dplyr::bind_rows(dataTarget$covariateValueDist,
+                                              dataComparator$covariateValueDist) %>% 
+        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
+        dplyr::distinct()
+      data$concept <- dplyr::bind_rows(dataTarget$concept,
+                                                  dataComparator$concept) %>% 
+        dplyr::distinct()
+      data$temporalTimeRef <- dplyr::bind_rows(dataTarget$temporalTimeRef,
+                                       dataComparator$temporalTimeRef) %>% 
+        dplyr::distinct()
+    }
+    return(data)
+  })
+  
+
   ###getConceptSetNamesFromOneCohort----
   getConceptSetNamesFromOneCohort <-
     shiny::reactive(x = {
@@ -6062,10 +6184,10 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getDomainOptionsForCharacterization----
   getDomainOptionsForCharacterization <- shiny::reactive({
-    multipleCharacterizationData <- getMultipleCharacterizationData()
-    if (!doesObjectHaveData(multipleCharacterizationData)) {
+    if (!doesObjectHaveData(getMultipleCharacterizationData())) {
       return(NULL)
     }
+    multipleCharacterizationData <- getMultipleCharacterizationData()
     if (!doesObjectHaveData(multipleCharacterizationData$analysisRef)) {
       return(NULL)
     }
@@ -6077,10 +6199,10 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getAnalysisNameOptionsForCharacterization----
   getAnalysisNameOptionsForCharacterization <- shiny::reactive({
-    multipleCharacterizationData <- getMultipleCharacterizationData()
-    if (!doesObjectHaveData(multipleCharacterizationData)) {
+    if (!doesObjectHaveData(getMultipleCharacterizationData())) {
       return(NULL)
     }
+    multipleCharacterizationData <- getMultipleCharacterizationData()
     if (!doesObjectHaveData(multipleCharacterizationData$analysisRef)) {
       return(NULL)
     }
@@ -6089,45 +6211,6 @@ shiny::shinyServer(function(input, output, session) {
       sort()
     return(anlaysisNameOptions)
   })
-  
-  ###getMultipleCharacterizationData----
-  getMultipleCharacterizationData <- shiny::reactive(x = {
-    if (all(is(dataSource, "environment"), !any(
-      exists('covariateValue'),
-      exists('temporalCovariateValue')
-    ))) {
-      return(NULL)
-    }
-    if (!any(
-      input$tabs == "temporalCharacterization",
-      input$tabs == "cohortCharacterization"
-    )) {
-      return(NULL)
-    }
-    if (any(
-      !doesObjectHaveData(consolidatedCohortIdTarget()),
-      !doesObjectHaveData(consolidatedDatabaseIdTarget())
-    )) {
-      return(NULL)
-    }
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(
-      message = paste0(
-        "Extracting characterization data for target cohort:",
-        consolidatedCohortIdTarget()
-      ),
-      value = 0
-    )
-    data <- getMultipleCharacterizationResults(
-      dataSource = dataSource,
-      cohortId = consolidatedCohortIdTarget(),
-      databaseId = consolidatedDatabaseIdTarget()
-    )
-    return(data)
-  })
-  
-  
   
   ###Update: characterizationDomainNameOptions----
   shiny::observe({
@@ -6194,7 +6277,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     if (is.null(getMultipleCharacterizationData()$analysisRef)) {
-      warning("No analysis ref dta found")
+      warning("No analysis ref data found")
       return(NULL)
     }
     covariatesTofilter <-
@@ -6864,39 +6947,39 @@ shiny::shinyServer(function(input, output, session) {
   ## Shared----
   
   ###getDomainOptionsForCompareCharacterization----
-  getDomainOptionsForCompareCharacterization <- shiny::reactive({
-    multipleCharacterizationData <- getMultipleCompareCharacterizationData()
-    if (!doesObjectHaveData(multipleCharacterizationData)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(multipleCharacterizationData$analysisRef)) {
-      return(NULL)
-    }
-    domainIdOptions <- multipleCharacterizationData$analysisRef$domainId %>% 
-      unique() %>% 
-      sort()
-    return(domainIdOptions)
-  })
+  # getDomainOptionsForCompareCharacterization <- shiny::reactive({
+  #   multipleCharacterizationData <- getMultipleCharacterizationData()
+  #   if (!doesObjectHaveData(multipleCharacterizationData)) {
+  #     return(NULL)
+  #   }
+  #   if (!doesObjectHaveData(multipleCharacterizationData$analysisRef)) {
+  #     return(NULL)
+  #   }
+  #   domainIdOptions <- multipleCharacterizationData$analysisRef$domainId %>% 
+  #     unique() %>% 
+  #     sort()
+  #   return(domainIdOptions)
+  # })
   
   ###getAnalysisNameOptionsForCompareCharacterization----
-  getAnalysisNameOptionsForCompareCharacterization <- shiny::reactive({
-    multipleCharacterizationData <- getMultipleCompareCharacterizationData()
-    if (!doesObjectHaveData(multipleCharacterizationData)) {
-      return(NULL)
-    }
-    if (!doesObjectHaveData(multipleCharacterizationData$analysisRef)) {
-      return(NULL)
-    }
-    anlaysisNameOptions <- multipleCharacterizationData$analysisRef$analysisName %>% 
-      unique() %>% 
-      sort()
-    return(anlaysisNameOptions)
-  })
+  # getAnalysisNameOptionsForCompareCharacterization <- shiny::reactive({
+  #   multipleCharacterizationData <- getMultipleCharacterizationData()
+  #   if (!doesObjectHaveData(multipleCharacterizationData)) {
+  #     return(NULL)
+  #   }
+  #   if (!doesObjectHaveData(multipleCharacterizationData$analysisRef)) {
+  #     return(NULL)
+  #   }
+  #   anlaysisNameOptions <- multipleCharacterizationData$analysisRef$analysisName %>% 
+  #     unique() %>% 
+  #     sort()
+  #   return(anlaysisNameOptions)
+  # })
   
   
   ###Update: compareCharacterizationDomainNameFilter----
   shiny::observe({
-    subset <- getDomainOptionsForCompareCharacterization()
+    subset <- getDomainOptionsForCharacterization()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "compareCharacterizationDomainNameFilter",
@@ -6908,7 +6991,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ###Update: compareCharacterizationAnalysisNameFilter----
   shiny::observe({
-    subset <- getAnalysisNameOptionsForCompareCharacterization()
+    subset <- getAnalysisNameOptionsForCharacterization()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "compareCharacterizationAnalysisNameFilter",
@@ -6920,7 +7003,7 @@ shiny::shinyServer(function(input, output, session) {
 
   ###Update: compareTemporalCharacterizationDomainNameFilter----
   shiny::observe({
-    subset <- getDomainOptionsForCompareCharacterization()
+    subset <- getDomainOptionsForCharacterization()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "compareTemporalCharacterizationDomainNameFilter",
@@ -6932,7 +7015,7 @@ shiny::shinyServer(function(input, output, session) {
 
   ###Update: compareTemporalCharacterizationAnalysisNameFilter----
   shiny::observe({
-    subset <- getAnalysisNameOptionsForCompareCharacterization()
+    subset <- getAnalysisNameOptionsForCharacterization()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "compareTemporalCharacterizationAnalysisNameFilter",
@@ -6942,56 +7025,6 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  ###getMultipleCompareCharacterizationData----
-  getMultipleCompareCharacterizationData <-
-    shiny::reactive(x = {
-      if (!any(
-        input$tabs == "compareCohortCharacterization",
-        input$tabs == "compareTemporalCharacterization"
-      )) {
-        return(NULL)
-      }
-      if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
-        return(NULL)
-      }
-      if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
-        return(NULL)
-      }
-      if (all(is(dataSource, "environment"),!any(
-        exists('covariateValue'),
-        exists('temporalCovariateValue')
-      ))) {
-        return(NULL)
-      }
-      if (any(
-        length(consolidatedCohortIdTarget()) != 1,
-        length(consolidatedCohortIdComparator()) != 1
-      )) {
-        return(NULL)
-      }
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(
-        message = paste0(
-          "Extracting temporal characterization data for target cohort:",
-          consolidatedCohortIdTarget(),
-          " and comparator cohort:",
-          consolidatedCohortIdComparator(),
-          ' for ',
-          input$selectedDatabaseId
-        ),
-        value = 0
-      )
-      data <- getMultipleCharacterizationResults(
-        dataSource = dataSource,
-        cohortId = c(
-          consolidatedCohortIdTarget(),
-          consolidatedCohortIdComparator()
-        ) %>% unique(),
-        databaseId = consolidatedDatabaseIdTarget()
-      )
-      return(data)
-    })
   
 
   ### parseMultipleCompareCharacterizationData ------
@@ -7000,17 +7033,17 @@ shiny::shinyServer(function(input, output, session) {
                            "compareTemporalCharacterization")) {
       return(NULL)
     }
-    if (!doesObjectHaveData(getMultipleCompareCharacterizationData())) {
+    if (!doesObjectHaveData(getMultipleCharacterizationData())) {
       return(NULL)
     }
-    if (!doesObjectHaveData(getMultipleCompareCharacterizationData()$covariateRef)) {
+    if (!doesObjectHaveData(getMultipleCharacterizationData()$covariateRef)) {
       warning("No covariate reference data found")
       return(NULL)
     }
-    if (!doesObjectHaveData(getMultipleCompareCharacterizationData()$covariateValue)) {
+    if (!doesObjectHaveData(getMultipleCharacterizationData()$covariateValue)) {
       return(NULL)
     }
-    if (!doesObjectHaveData(getMultipleCompareCharacterizationData()$analysisRef)) {
+    if (!doesObjectHaveData(getMultipleCharacterizationData()$analysisRef)) {
       warning("No analysis reference data found")
       return(NULL)
     }
@@ -7018,7 +7051,7 @@ shiny::shinyServer(function(input, output, session) {
     on.exit(progress$close())
     progress$set(message = "Parsing extracted characterization data",
                  value = 0)
-    data <- getMultipleCompareCharacterizationData()$covariateValue
+    data <- getMultipleCharacterizationData()$covariateValue
     if (input$tabs %in% c("compareCohortCharacterization")) {
       data <- data %>%
         dplyr::filter(.data$characterizationSource %in% c('C', 'F')) %>%
@@ -7032,18 +7065,18 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>%
       dplyr::inner_join(
-        getMultipleCompareCharacterizationData()$covariateRef,
+        getMultipleCharacterizationData()$covariateRef,
         by = c("covariateId", "characterizationSource")
       ) %>%
       dplyr::inner_join(
-        getMultipleCompareCharacterizationData()$analysisRef ,
+        getMultipleCharacterizationData()$analysisRef ,
         by = c("analysisId", "characterizationSource")
       )
     if (input$tabs %in% c("compareTemporalCharacterization")) {
       data <- data %>%
         dplyr::select(-.data$startDay, -.data$endDay) %>%
         dplyr::distinct() %>%
-        dplyr::inner_join(getMultipleCompareCharacterizationData()$temporalTimeRef,
+        dplyr::inner_join(getMultipleCharacterizationData()$temporalTimeRef,
                           by = 'timeId') %>%
         dplyr::inner_join(temporalCovariateChoices, by = 'timeId') %>%
         dplyr::select(-.data$missingMeansZero)
@@ -7607,22 +7640,22 @@ shiny::shinyServer(function(input, output, session) {
   #     return(NULL)
   #   }
   #   if (any(
-  #     is.null(getMultipleCompareCharacterizationData()),
-  #     length(getMultipleCompareCharacterizationData()) == 0
+  #     is.null(getMultipleCharacterizationData()),
+  #     length(getMultipleCharacterizationData()) == 0
   #   )) {
   #     return(NULL)
   #   }
   #   
-  #   if (is.null(getMultipleCompareCharacterizationData()$covariateRef)) {
+  #   if (is.null(getMultipleCharacterizationData()$covariateRef)) {
   #     warning("No covariate reference data found")
   #     return(NULL)
   #   }
   #   
-  #   if (is.null(getMultipleCompareCharacterizationData()$covariateValue)) {
+  #   if (is.null(getMultipleCharacterizationData()$covariateValue)) {
   #     return(NULL)
   #   }
   #   
-  #   if (is.null(getMultipleCompareCharacterizationData()$analysisRef)) {
+  #   if (is.null(getMultipleCharacterizationData()$analysisRef)) {
   #     warning("No analysis reference data found")
   #     return(NULL)
   #   }
@@ -7633,21 +7666,21 @@ shiny::shinyServer(function(input, output, session) {
   #     value = 0
   #   )
   #   data <-
-  #     getMultipleCompareCharacterizationData()$covariateValue %>%
+  #     getMultipleCharacterizationData()$covariateValue %>%
   #     dplyr::filter(.data$characterizationSource %in% c('CT', 'FT')) %>%
   #     dplyr::filter(.data$timeId %in% getTimeIdsFromSelectedTemporalCovariateChoices()) %>%
   #     dplyr::select(-.data$startDay,-.data$endDay) %>%
   #     dplyr::inner_join(
-  #       getMultipleCompareCharacterizationData()$covariateRef,
+  #       getMultipleCharacterizationData()$covariateRef,
   #       by = c("covariateId", "characterizationSource")
   #     ) %>%
   #     dplyr::inner_join(
-  #       getMultipleCompareCharacterizationData()$analysisRef,
+  #       getMultipleCharacterizationData()$analysisRef,
   #       by = c("analysisId", "characterizationSource")
   #     ) %>%
   #     dplyr::select(-.data$startDay,-.data$endDay) %>%
   #     dplyr::distinct() %>%
-  #     dplyr::inner_join(getMultipleCompareCharacterizationData()$temporalTimeRef,
+  #     dplyr::inner_join(getMultipleCharacterizationData()$temporalTimeRef,
   #                       by = 'timeId') %>%
   #     dplyr::inner_join(temporalCovariateChoices, by = 'timeId') %>%
   #     dplyr::select(-.data$missingMeansZero)
