@@ -3099,13 +3099,11 @@ shiny::shinyServer(function(input, output, session) {
   ##output: saveComparatorConceptSetsExpressionTable----
   output$saveComparatorConceptSetsExpressionTable <-
     downloadHandler(
-      filename = function()
-      {
+      filename = function() {
         getCsvFileNameWithDateTime(string = "conceptset")
       },
-      content = function(file)
-      {
-        downloadCsv(x = getConceptSetsExpressionDetailsRight(),
+      content = function(file) {
+        downloadCsv(x = getConceptSetExpressionComparator(),
                     fileName = file)
       }
     )
