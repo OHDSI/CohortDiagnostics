@@ -1873,172 +1873,21 @@ shiny::shinyServer(function(input, output, session) {
       validate(need((nrow(table) > 0),
                     "There is no inclusion rule data for this cohort."))
       
-      databaseIds <- unique(table$databaseId)
-      cohortCounts <- table %>%
-        dplyr::inner_join(cohortCount,
-                          by = c("cohortId", "databaseId")) %>%
-        dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
-        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
-        dplyr::select(.data$cohortEntries) %>%
-        dplyr::pull(.data$cohortEntries) %>% unique()
+      data <- table %>% 
+        dplyr::relocate(.data$totalSubjects,
+                        .data$remainSubjects,
+                        .data$meetSubjects,
+                        .data$gainSubjects) %>% 
+        dplyr::inner_join(cohortCount, by = c("cohortId", "databaseId")) %>%
+        dplyr::mutate(databaseId = paste0(.data$databaseId, "(n = ", .data$cohortSubjects,")")) %>%
+        dplyr::select(-.data$cohortId, -.data$cohortEntries, -.data$cohortSubjects)
       
-      databaseIdsWithCount <-
-        paste(databaseIds,
-              "(n = ",
-              format(cohortCounts, big.mark = ","),
-              ")")
       
-      table <- table %>%
-        dplyr::inner_join(
-          cohortCount %>%
-            dplyr::select(.data$databaseId, .data$cohortId, .data$cohortEntries),
-          by = c('databaseId', 'cohortId')
-        ) %>%
-        tidyr::pivot_longer(
-          cols = c(
-            .data$meetSubjects,
-            .data$gainSubjects,
-            .data$totalSubjects,
-            .data$remainSubjects
-          )
-        ) %>%
-        dplyr::mutate(name = paste0(
-          .data$databaseId,
-          "<br>(n = ",
-          scales::comma(x = .data$cohortEntries, accuracy = 1),
-          ")_",
-          .data$name
-        )) %>%
-        tidyr::pivot_wider(
-          id_cols = c(.data$cohortId, .data$ruleSequenceId, .data$ruleName),
-          names_from = .data$name,
-          values_from = .data$value
-        ) %>%
-        dplyr::select(-.data$cohortId)
-      
-      if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "Meet") {
-        table <- table %>%
-          dplyr::select(
-            -dplyr::contains("Total"),
-            -dplyr::contains("Gain"),
-            -dplyr::contains("Remain")
-          )
-        colnames(table) <-
-          stringr::str_replace(
-            string = colnames(table),
-            pattern = '_meetSubjects',
-            replacement = ''
-          )
-        
-        columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
-        
-      } else if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "Totals") {
-        table <- table %>%
-          dplyr::select(
-            -dplyr::contains("Meet"),
-            -dplyr::contains("Gain"),
-            -dplyr::contains("Remain")
-          )
-        colnames(table) <-
-          stringr::str_replace(
-            string = colnames(table),
-            pattern = '_totalSubjects',
-            replacement = ''
-          )
-        
-        columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
-        
-      } else if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "Gain") {
-        table <- table %>%
-          dplyr::select(
-            -dplyr::contains("Total"),
-            -dplyr::contains("Meet"),
-            -dplyr::contains("Remain")
-          )
-        colnames(table) <-
-          stringr::str_replace(
-            string = colnames(table),
-            pattern = '_gainSubjects',
-            replacement = ''
-          )
-        
-        columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
-        
-      } else if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "Remain") {
-        table <- table %>%
-          dplyr::select(
-            -dplyr::contains("Total"),
-            -dplyr::contains("Meet"),
-            -dplyr::contains("Gain")
-          )
-        colnames(table) <-
-          stringr::str_replace(
-            string = colnames(table),
-            pattern = '_remainSubjects',
-            replacement = ''
-          )
-        
-        columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
-        
-      }  else {
-        sketch <- htmltools::withTags(table(class = "display",
-                                            thead(tr(
-                                              th(rowspan = 2, "Rule Sequence ID"),
-                                              th(rowspan = 2, "Rule Name"),
-                                              lapply(
-                                                databaseIdsWithCount,
-                                                th,
-                                                colspan = 4,
-                                                class = "dt-center",
-                                                style = "border-right:1px solid silver;border-bottom:1px solid silver"
-                                              )
-                                            ),
-                                            tr(
-                                              lapply(rep(
-                                                c("Meet", "Gain", "Remain", "Total"),
-                                                length(databaseIds)
-                                              ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                            ))))
-        
-        columnDefs <-
-          minCellCountDef(1 + (1:(length(databaseIds) * 4)))
-      }
-      
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        columnDefs = list(truncateStringDef(1, 100),
-                          columnDefs)
-      )
-      
-      if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "All") {
-        table <- DT::datatable(
-          table,
-          options = options,
-          colnames = colnames(table) %>% camelCaseToTitleCase(),
-          rownames = FALSE,
-          container = sketch,
-          escape = FALSE,
-          filter = "top",
-          class = "stripe nowrap compact"
-        )
-      } else {
-        table <- DT::datatable(
-          table,
-          options = options,
-          colnames = colnames(table) %>% camelCaseToTitleCase(),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = "top",
-          class = "stripe nowrap compact"
-        )
-      }
+      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
+                                                             databaseCount = NULL,
+                                                             columnFilters = input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters,
+                                                             numberOfColums = 1,
+                                                             numberOfSubstitutableColums = 4)
       return(table)
     }, server = TRUE)
   
@@ -3059,165 +2908,21 @@ shiny::shinyServer(function(input, output, session) {
       validate(need((nrow(table) > 0),
                     "There is no inclusion rule data for this cohort."))
       
-      databaseIds <- unique(table$databaseId)
-      cohortCounts <- table %>%
-        dplyr::inner_join(cohortCount,
-                          by = c("cohortId", "databaseId")) %>%
-        dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>%
-        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
-        dplyr::select(.data$cohortEntries) %>%
-        dplyr::pull(.data$cohortEntries) %>%
-        unique()
+      data <- table %>% 
+        dplyr::relocate(.data$totalSubjects,
+                        .data$remainSubjects,
+                        .data$meetSubjects,
+                        .data$gainSubjects) %>% 
+        dplyr::inner_join(cohortCount, by = c("cohortId", "databaseId")) %>%
+        dplyr::mutate(databaseId = paste0(.data$databaseId, "(n = ", .data$cohortSubjects,")")) %>%
+        dplyr::select(-.data$cohortId, -.data$cohortEntries, -.data$cohortSubjects)
       
-      databaseIdsWithCount <-
-        paste(databaseIds,
-              "(n = ",
-              format(cohortCounts, big.mark = ","),
-              ")")
       
-      table <- table %>%
-        dplyr::inner_join(
-          cohortCount %>%
-            dplyr::select(.data$databaseId, .data$cohortId, .data$cohortEntries),
-          by = c('databaseId', 'cohortId')
-        ) %>%
-        tidyr::pivot_longer(
-          cols = c(
-            .data$meetSubjects,
-            .data$gainSubjects,
-            .data$totalSubjects,
-            .data$remainSubjects
-          )
-        ) %>%
-        dplyr::mutate(name = paste0(
-          .data$databaseId,
-          "<br>(n = ",
-          scales::comma(x = .data$cohortEntries, accuracy = 1),
-          ")_",
-          .data$name
-        )) %>%
-        tidyr::pivot_wider(
-          id_cols = c(.data$cohortId, .data$ruleSequenceId, .data$ruleName),
-          names_from = .data$name,
-          values_from = .data$value
-        ) %>%
-        dplyr::select(-.data$cohortId)
-      
-      if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "Meet") {
-        table <- table %>%
-          dplyr::select(
-            -dplyr::contains("Total"),-dplyr::contains("Gain"),-dplyr::contains("Remain")
-          )
-        colnames(table) <-
-          stringr::str_replace(
-            string = colnames(table),
-            pattern = '_meetSubjects',
-            replacement = ''
-          )
-        
-        columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
-        
-      } else if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "Totals") {
-        table <- table %>%
-          dplyr::select(
-            -dplyr::contains("Meet"),-dplyr::contains("Gain"),-dplyr::contains("Remain")
-          )
-        colnames(table) <-
-          stringr::str_replace(
-            string = colnames(table),
-            pattern = '_totalSubjects',
-            replacement = ''
-          )
-        
-        columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
-        
-      } else if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "Gain") {
-        table <- table %>%
-          dplyr::select(
-            -dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Remain")
-          )
-        colnames(table) <-
-          stringr::str_replace(
-            string = colnames(table),
-            pattern = '_gainSubjects',
-            replacement = ''
-          )
-        
-        columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
-        
-      } else if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "Remain") {
-        table <- table %>%
-          dplyr::select(
-            -dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Gain")
-          )
-        colnames(table) <-
-          stringr::str_replace(
-            string = colnames(table),
-            pattern = '_remainSubjects',
-            replacement = ''
-          )
-        
-        columnDefs <- minCellCountDef(1 + (1:(length(databaseIds))))
-        
-      }  else {
-        sketch <- htmltools::withTags(table(class = "display",
-                                            thead(tr(
-                                              th(rowspan = 2, "Rule Sequence ID"),
-                                              th(rowspan = 2, "Rule Name"),
-                                              lapply(
-                                                databaseIdsWithCount,
-                                                th,
-                                                colspan = 4,
-                                                class = "dt-center",
-                                                style = "border-right:1px solid silver;border-bottom:1px solid silver"
-                                              )
-                                            ),
-                                            tr(
-                                              lapply(rep(
-                                                c("Meet", "Gain", "Remain", "Total"),
-                                                length(databaseIds)
-                                              ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                            ))))
-        
-        columnDefs <-
-          minCellCountDef(1 + (1:(length(databaseIds) * 4)))
-      }
-      
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        columnDefs = list(truncateStringDef(1, 100),
-                          columnDefs)
-      )
-      
-      if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "All") {
-        table <- DT::datatable(
-          table,
-          options = options,
-          colnames = colnames(table) %>% camelCaseToTitleCase(),
-          rownames = FALSE,
-          container = sketch,
-          escape = FALSE,
-          filter = "top",
-          class = "stripe nowrap compact"
-        )
-      } else {
-        table <- DT::datatable(
-          table,
-          options = options,
-          colnames = colnames(table) %>% camelCaseToTitleCase(),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = "top",
-          class = "stripe nowrap compact"
-        )
-      }
+      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
+                                                             databaseCount = NULL,
+                                                             columnFilters = input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters,
+                                                             numberOfColums = 1,
+                                                             numberOfSubstitutableColums = 4)
       return(table)
     }, server = TRUE)
   
