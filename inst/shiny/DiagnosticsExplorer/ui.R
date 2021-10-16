@@ -250,7 +250,7 @@ sidebarMenu <-
       input.tabs == 'indexEventBreakdown' |
       input.tabs == 'compareTemporalCharacterization'",
       shinyWidgets::pickerInput(
-        inputId = "conceptSetsSelectedCohortLeft",
+        inputId = "conceptSetsSelectedTargetCohort",
         label = "Concept sets",
         choices = c(""),
         selected = c(""),

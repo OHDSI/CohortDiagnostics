@@ -286,10 +286,10 @@ consolidationOfSelectedFieldValues <- function(input,
     }
    
     #mutli select concept set id for one cohort
-    if (doesObjectHaveData(input$conceptSetsSelectedCohortLeft)) {
+    if (doesObjectHaveData(input$conceptSetsSelectedTargetCohort)) {
       data$conceptSetIdTarget <- conceptSets %>% 
         dplyr::filter(.data$cohortId %in% data$cohortIdTarget) %>% 
-        dplyr::filter(.data$compoundName %in% input$conceptSetsSelectedCohortLeft) %>% 
+        dplyr::filter(.data$compoundName %in% input$conceptSetsSelectedTargetCohort) %>% 
         dplyr::pull(.data$conceptSetId)
     }
     if (all(doesObjectHaveData(indexEventBreakdownDataTable),

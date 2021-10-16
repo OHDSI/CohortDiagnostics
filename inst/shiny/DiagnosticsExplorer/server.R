@@ -21,7 +21,7 @@ shiny::shinyServer(function(input, output, session) {
   
   #______________----
   #Selections----
-  ##pickerInput: conceptSetsSelectedCohortLeft----
+  ##pickerInput: conceptSetsSelectedTargetCohort----
   #defined in UI
   shiny::observe({
     if (exists("conceptSets")) {
@@ -39,7 +39,7 @@ shiny::shinyServer(function(input, output, session) {
     if (input$tabs == "indexEventBreakdown") {
       shinyWidgets::updatePickerInput(
         session = session,
-        inputId = "conceptSetsSelectedCohortLeft",
+        inputId = "conceptSetsSelectedTargetCohort",
         choicesOpt = list(style = rep_len("color: black;", 999)),
         choices = data,
         selected = data
@@ -47,28 +47,14 @@ shiny::shinyServer(function(input, output, session) {
     } else {
       shinyWidgets::updatePickerInput(
         session = session,
-        inputId = "conceptSetsSelectedCohortLeft",
+        inputId = "conceptSetsSelectedTargetCohort",
         choicesOpt = list(style = rep_len("color: black;", 999)),
         choices = data
       )
     }
   })
   
-  ##getComparatorCohortIdFromSelectedCompoundCohortName----
-  getComparatorCohortIdFromSelectedCompoundCohortName <-
-    shiny::reactive({
-      data <- cohort %>%
-        dplyr::filter(.data$compoundName %in% input$selectedComparatorCompoundCohortName) %>%
-        dplyr::arrange(.data$cohortId) %>%
-        dplyr::pull(.data$cohortId) %>%
-        unique()
-      if (!doesObjectHaveData(data)) {
-        return(NULL)
-      }
-      return(data)
-    })
-  
-  ##getComparatorCohortIdFromSelectedCompoundCohortName----
+  ##getComparatorCohortIdFromSelectedCompoundCohortNames----
   getComparatorCohortIdFromSelectedCompoundCohortNames <-
     shiny::reactive({
       data <- cohort %>%
@@ -171,7 +157,7 @@ shiny::shinyServer(function(input, output, session) {
       input$selectedComparatorCompoundCohortName,
       input$selectedCompoundCohortNames,
       input$selectedCompoundCohortNames_open,
-      input$conceptSetsSelectedCohortLeft,
+      input$conceptSetsSelectedTargetCohort,
       input$indexEventBreakdownTable_rows_selected,
       input$targetVocabularyChoiceForConceptSetDetails,
       input$selectedComparatorCompoundCohortNames,
@@ -6217,7 +6203,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     if (all(
-      doesObjectHaveData(input$conceptSetsSelectedCohortLeft),
+      doesObjectHaveData(input$conceptSetsSelectedTargetCohort),
       doesObjectHaveData(getResolvedConceptsTarget())
     )) {
       covariatesTofilter <- covariatesTofilter  %>%
@@ -6736,7 +6722,7 @@ shiny::shinyServer(function(input, output, session) {
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
-      if (doesObjectHaveData(input$conceptSetsSelectedCohortLeft)) {
+      if (doesObjectHaveData(input$conceptSetsSelectedTargetCohort)) {
         data <- data  %>%
           dplyr::inner_join(
             getResolvedConceptsTarget() %>%
@@ -7144,8 +7130,8 @@ shiny::shinyServer(function(input, output, session) {
       }
     
     if (all(
-      !is.null(input$conceptSetsSelectedCohortLeft),
-      length(input$conceptSetsSelectedCohortLeft) > 0
+      !is.null(input$conceptSetsSelectedTargetCohort),
+      length(input$conceptSetsSelectedTargetCohort) > 0
     )) {
       data <- data  %>%
         dplyr::inner_join(
@@ -7202,9 +7188,9 @@ shiny::shinyServer(function(input, output, session) {
     }
    
     # if (all(
-    #   !is.null(input$conceptSetsSelectedCohortLeft),
-    #   input$conceptSetsSelectedCohortLeft != "",
-    #   length(input$conceptSetsSelectedCohortLeft) > 0
+    #   !is.null(input$conceptSetsSelectedTargetCohort),
+    #   input$conceptSetsSelectedTargetCohort != "",
+    #   length(input$conceptSetsSelectedTargetCohort) > 0
     # )) {
     #   data <-
     #     data %>% #!!! there is a bug here getResoledAndMappedConceptIdsForFilters
@@ -7637,7 +7623,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     covs2 <- data %>%
-      dplyr::filter(.data$cohortId == getComparatorCohortIdFromSelectedCompoundCohortName()) %>%
+      dplyr::filter(.data$cohortId == consolidatedCohortIdComparator()) %>%
       dplyr::mutate(
         analysisNameLong = paste0(
           .data$analysisName,
@@ -7698,8 +7684,8 @@ shiny::shinyServer(function(input, output, session) {
       
       
       if (all(
-        !is.null(input$conceptSetsSelectedCohortLeft),
-        length(input$conceptSetsSelectedCohortLeft) > 0
+        !is.null(input$conceptSetsSelectedTargetCohort),
+        length(input$conceptSetsSelectedTargetCohort) > 0
       )) {
         data <- data  %>%
           dplyr::inner_join(
