@@ -1284,36 +1284,36 @@ bodyTabItems <- shinydashboard::tabItems(
                               title = "Data source",
                               tags$br(),
                               DT::dataTableOutput("databaseInformationTable")
-                            ),
-                            shiny::tabPanel(
-                              title = "Meta data information",
-                              tags$br(),
-                              shinydashboard::box(
-                                title = shiny::htmlOutput(outputId = "metadataInfoTitle"),
-                                collapsible = TRUE,
-                                width = NULL,
-                                collapsed = FALSE,
-                                shiny::htmlOutput(outputId = "metadataInfoDetailsText"),
-                                shinydashboard::box(
-                                  title = NULL,
-                                  collapsible = TRUE,
-                                  width = NULL,
-                                  collapsed = FALSE,
-                                  DT::dataTableOutput("packageDependencySnapShotTable")
-                                ),
-                                shinydashboard::box(
-                                  title = NULL,
-                                  collapsible = TRUE,
-                                  width = NULL,
-                                  collapsed = FALSE,
-                                  shiny::verbatimTextOutput(outputId = "argumentsAtDiagnosticsInitiationJson"),
-                                  tags$head(
-                                    tags$style("#argumentsAtDiagnosticsInitiationJson { max-height:400px};")
-                                  )
-                                  # DT::dataTableOutput("argumentsAtDiagnosticsInitiationJson")
-                                )
-                              ) 
                             )
+                            # shiny::tabPanel(
+                            #   title = "Meta data information",
+                            #   tags$br(),
+                            #   shinydashboard::box(
+                            #     title = shiny::htmlOutput(outputId = "metadataInfoTitle"),
+                            #     collapsible = TRUE,
+                            #     width = NULL,
+                            #     collapsed = FALSE,
+                            #     shiny::htmlOutput(outputId = "metadataInfoDetailsText"),
+                            #     shinydashboard::box(
+                            #       title = NULL,
+                            #       collapsible = TRUE,
+                            #       width = NULL,
+                            #       collapsed = FALSE,
+                            #       DT::dataTableOutput("packageDependencySnapShotTable")
+                            #     ),
+                            #     shinydashboard::box(
+                            #       title = NULL,
+                            #       collapsible = TRUE,
+                            #       width = NULL,
+                            #       collapsed = FALSE,
+                            #       shiny::verbatimTextOutput(outputId = "argumentsAtDiagnosticsInitiationJson"),
+                            #       tags$head(
+                            #         tags$style("#argumentsAtDiagnosticsInitiationJson { max-height:400px};")
+                            #       )
+                            #       # DT::dataTableOutput("argumentsAtDiagnosticsInitiationJson")
+                            #     )
+                            #   ) 
+                            # )
                           )
                      )
 )
