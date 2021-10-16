@@ -361,14 +361,9 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
     maxSubject <- max(data$persons, na.rm = TRUE)
   }
   
-  if (all('gainSubjects' %in% colnames(data))) {
-    fieldsInData <- c(fieldsInData, "gainSubjects")
-    maxSubject <- max(data$gainSubjects, na.rm = TRUE)
-  }
-  
-  if (all('meetSubjects' %in% colnames(data))) {
-    fieldsInData <- c(fieldsInData, "meetSubjects")
-    maxSubject <- max(data$meetSubjects, na.rm = TRUE)
+  if (all('totalSubjects' %in% colnames(data))) {
+    fieldsInData <- c(fieldsInData, "totalSubjects")
+    maxSubject <- max(data$totalSubjects, na.rm = TRUE)
   }
   
   if (all('remainSubjects' %in% colnames(data))) {
@@ -376,9 +371,14 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
     maxSubject <- max(data$remainSubjects, na.rm = TRUE)
   }
   
-  if (all('totalSubjects' %in% colnames(data))) {
-    fieldsInData <- c(fieldsInData, "totalSubjects")
-    maxSubject <- max(data$totalSubjects, na.rm = TRUE)
+  if (all('meetSubjects' %in% colnames(data))) {
+    fieldsInData <- c(fieldsInData, "meetSubjects")
+    maxSubject <- max(data$meetSubjects, na.rm = TRUE)
+  }
+  
+  if (all('gainSubjects' %in% colnames(data))) {
+    fieldsInData <- c(fieldsInData, "gainSubjects")
+    maxSubject <- max(data$gainSubjects, na.rm = TRUE)
   }
   
   uniqueDatabases <- data %>% 
@@ -499,7 +499,8 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
         }
       }
     } else {
-      databaseRecordAndPersonColumnName <- c(fieldsInData)
+      databaseRecordAndPersonColumnName <- c(fieldsInData) %>% 
+        camelCaseToTitleCase()
     }
     
     

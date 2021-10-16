@@ -4404,14 +4404,20 @@ shiny::shinyServer(function(input, output, session) {
       
       validate(need((nrow(table) > 0),
                     "There is no inclusion rule data for this cohort."))
-      
       data <- table %>% 
-        dplyr::select(-.data$cohortId, -.data$ruleSequenceId)
+        dplyr::relocate(.data$totalSubjects,
+                        .data$remainSubjects,
+                        .data$meetSubjects,
+                        .data$gainSubjects) %>% 
+        dplyr::inner_join(cohortCount, by = c("cohortId", "databaseId")) %>%
+        dplyr::mutate(databaseId = paste0(.data$databaseId, "(n = ", .data$cohortSubjects,")")) %>%
+        dplyr::select(-.data$cohortId, -.data$cohortEntries, -.data$cohortSubjects)
+        
       
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = NULL,
                                                              columnFilters = input$cohortCountInclusionRules,
-                                                             numberOfColums = 0,
+                                                             numberOfColums = 1,
                                                              numberOfSubstitutableColums = 4)
       return(table)
     }, server = TRUE)
