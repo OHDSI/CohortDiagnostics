@@ -6154,33 +6154,33 @@ shiny::shinyServer(function(input, output, session) {
   
 
   ###getConceptSetNamesFromOneCohort----
-  getConceptSetNamesFromOneCohort <-
-    shiny::reactive(x = {
-      if (any(
-        !doesObjectHaveData(consolidatedCohortIdTarget()),
-        !doesObjectHaveData(consolidatedDatabaseIdTarget())
-      )) {
-        return(NULL)
-      }
-      jsonExpression <- getCohortSortedByCohortId() %>%
-        dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
-        dplyr::select(.data$json)
-      
-      jsonExpression <-
-        RJSONIO::fromJSON(jsonExpression$json, digits = 23)
-      expression <-
-        getConceptSetDetailsFromCohortDefinition(cohortDefinitionExpression = jsonExpression)
-      
-      if (!is.null(expression)) {
-        expression <- expression$conceptSetExpression %>%
-          dplyr::select(.data$name) %>%
-          dplyr::distinct() %>%
-          dplyr::arrange(.data$name)
-        return(expression)
-      } else {
-        return(NULL)
-      }
-    })
+  # getConceptSetNamesFromOneCohort <-
+  #   shiny::reactive(x = {
+  #     if (any(
+  #       !doesObjectHaveData(consolidatedCohortIdTarget()),
+  #       !doesObjectHaveData(consolidatedDatabaseIdTarget())
+  #     )) {
+  #       return(NULL)
+  #     }
+  #     jsonExpression <- getCohortSortedByCohortId() %>%
+  #       dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
+  #       dplyr::select(.data$json)
+  #     
+  #     jsonExpression <-
+  #       RJSONIO::fromJSON(jsonExpression$json, digits = 23)
+  #     expression <-
+  #       getConceptSetDetailsFromCohortDefinition(cohortDefinitionExpression = jsonExpression)
+  #     
+  #     if (!is.null(expression)) {
+  #       expression <- expression$conceptSetExpression %>%
+  #         dplyr::select(.data$name) %>%
+  #         dplyr::distinct() %>%
+  #         dplyr::arrange(.data$name)
+  #       return(expression)
+  #     } else {
+  #       return(NULL)
+  #     }
+  #   })
   
   ###getDomainOptionsForCharacterization----
   getDomainOptionsForCharacterization <- shiny::reactive({
@@ -7295,6 +7295,7 @@ shiny::shinyServer(function(input, output, session) {
           message = paste0("Rendering pretty table for compare characterization."),
           value = 0
         )
+        browser()
         data <- getCompareCharacterizationTablePretty()
         validate(need(nrow(data) > 0,
                       "No data available for selected combination."))
@@ -7318,11 +7319,12 @@ shiny::shinyServer(function(input, output, session) {
                            .data$type,
                            .data$values) %>%
           dplyr::mutate(names = paste0(.data$type, "", .data$databaseId)) %>%
+          dplyr::arrange(.data$databaseId, dplyr::desc(.data$names)) %>% 
           dplyr::ungroup() %>%
           tidyr::pivot_wider(id_cols = "characteristic",
                              names_from = "names",
                              values_from = "values") %>%
-          dplyr::select(-.data$MeanCNA,-.data$MeanTNA,-.data$StdDiffNA)
+          dplyr::select(-dplyr::contains("NA"))
         
         sketch <- htmltools::withTags(table(class = "display",
                                             thead(tr(
