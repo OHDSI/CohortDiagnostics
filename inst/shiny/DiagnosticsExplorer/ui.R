@@ -250,7 +250,7 @@ sidebarMenu <-
       input.tabs == 'indexEventBreakdown' |
       input.tabs == 'compareTemporalCharacterization'",
       shinyWidgets::pickerInput(
-        inputId = "conceptSetsSelectedCohortLeft",
+        inputId = "conceptSetsSelectedTargetCohort",
         label = "Concept sets",
         choices = c(""),
         selected = c(""),
@@ -360,6 +360,13 @@ bodyTabItems <- shinydashboard::tabItems(
       condition = "output.doesSelectedRowInCohortCountTableHaveCohortId == true",
       tags$br(),
       tags$h3("Inclusion Rules"),
+      shiny::radioButtons(
+        inputId = "cohortCountInclusionRules",
+        label = "Filter by",
+        choices = c("All", "Meet", "Gain", "Remain", "Totals"),
+        selected = "All",
+        inline = TRUE
+      ),
       DT::dataTableOutput("inclusionRuleStatisticsForCohortSeletedTable")
     )
   ),
@@ -1277,36 +1284,36 @@ bodyTabItems <- shinydashboard::tabItems(
                               title = "Data source",
                               tags$br(),
                               DT::dataTableOutput("databaseInformationTable")
-                            ),
-                            shiny::tabPanel(
-                              title = "Meta data information",
-                              tags$br(),
-                              shinydashboard::box(
-                                title = shiny::htmlOutput(outputId = "metadataInfoTitle"),
-                                collapsible = TRUE,
-                                width = NULL,
-                                collapsed = FALSE,
-                                shiny::htmlOutput(outputId = "metadataInfoDetailsText"),
-                                shinydashboard::box(
-                                  title = NULL,
-                                  collapsible = TRUE,
-                                  width = NULL,
-                                  collapsed = FALSE,
-                                  DT::dataTableOutput("packageDependencySnapShotTable")
-                                ),
-                                shinydashboard::box(
-                                  title = NULL,
-                                  collapsible = TRUE,
-                                  width = NULL,
-                                  collapsed = FALSE,
-                                  shiny::verbatimTextOutput(outputId = "argumentsAtDiagnosticsInitiationJson"),
-                                  tags$head(
-                                    tags$style("#argumentsAtDiagnosticsInitiationJson { max-height:400px};")
-                                  )
-                                  # DT::dataTableOutput("argumentsAtDiagnosticsInitiationJson")
-                                )
-                              ) 
                             )
+                            # shiny::tabPanel(
+                            #   title = "Meta data information",
+                            #   tags$br(),
+                            #   shinydashboard::box(
+                            #     title = shiny::htmlOutput(outputId = "metadataInfoTitle"),
+                            #     collapsible = TRUE,
+                            #     width = NULL,
+                            #     collapsed = FALSE,
+                            #     shiny::htmlOutput(outputId = "metadataInfoDetailsText"),
+                            #     shinydashboard::box(
+                            #       title = NULL,
+                            #       collapsible = TRUE,
+                            #       width = NULL,
+                            #       collapsed = FALSE,
+                            #       DT::dataTableOutput("packageDependencySnapShotTable")
+                            #     ),
+                            #     shinydashboard::box(
+                            #       title = NULL,
+                            #       collapsible = TRUE,
+                            #       width = NULL,
+                            #       collapsed = FALSE,
+                            #       shiny::verbatimTextOutput(outputId = "argumentsAtDiagnosticsInitiationJson"),
+                            #       tags$head(
+                            #         tags$style("#argumentsAtDiagnosticsInitiationJson { max-height:400px};")
+                            #       )
+                            #       # DT::dataTableOutput("argumentsAtDiagnosticsInitiationJson")
+                            #     )
+                            #   ) 
+                            # )
                           )
                      )
 )

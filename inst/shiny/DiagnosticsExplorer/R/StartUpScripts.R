@@ -286,10 +286,10 @@ consolidationOfSelectedFieldValues <- function(input,
     }
    
     #mutli select concept set id for one cohort
-    if (doesObjectHaveData(input$conceptSetsSelectedCohortLeft)) {
+    if (doesObjectHaveData(input$conceptSetsSelectedTargetCohort)) {
       data$conceptSetIdTarget <- conceptSets %>% 
         dplyr::filter(.data$cohortId %in% data$cohortIdTarget) %>% 
-        dplyr::filter(.data$compoundName %in% input$conceptSetsSelectedCohortLeft) %>% 
+        dplyr::filter(.data$compoundName %in% input$conceptSetsSelectedTargetCohort) %>% 
         dplyr::pull(.data$conceptSetId)
     }
     if (all(doesObjectHaveData(indexEventBreakdownDataTable),
@@ -337,11 +337,16 @@ consolidationOfSelectedFieldValues <- function(input,
 getSketchDesignForTablesInCohortDefinitionTab <- function(data, 
                                                           databaseCount,
                                                           numberOfColums = 4,
+                                                          numberOfSubstitutableColums = 2,
                                                           columnFilters = "Both") {
   colnamesInData <- colnames(data)
   colnamesInData <- colnamesInData[!colnamesInData %in% "databaseId"]
   colnamesInData <- colnamesInData[!colnamesInData %in% "persons"]
   colnamesInData <- colnamesInData[!colnamesInData %in% "records"]
+  colnamesInData <- colnamesInData[!colnamesInData %in% "gainSubjects"]
+  colnamesInData <- colnamesInData[!colnamesInData %in% "meetSubjects"]
+  colnamesInData <- colnamesInData[!colnamesInData %in% "remainSubjects"]
+  colnamesInData <- colnamesInData[!colnamesInData %in% "totalSubjects"]
   databaseIds <- sort(unique(data$databaseId))
   
   fieldsInData <- c()
@@ -356,27 +361,51 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
     maxSubject <- max(data$persons, na.rm = TRUE)
   }
   
+  if (all('totalSubjects' %in% colnames(data))) {
+    fieldsInData <- c(fieldsInData, "totalSubjects")
+    maxSubject <- max(data$totalSubjects, na.rm = TRUE)
+  }
+  
+  if (all('remainSubjects' %in% colnames(data))) {
+    fieldsInData <- c(fieldsInData, "remainSubjects")
+    maxSubject <- max(data$remainSubjects, na.rm = TRUE)
+  }
+  
+  if (all('meetSubjects' %in% colnames(data))) {
+    fieldsInData <- c(fieldsInData, "meetSubjects")
+    maxSubject <- max(data$meetSubjects, na.rm = TRUE)
+  }
+  
+  if (all('gainSubjects' %in% colnames(data))) {
+    fieldsInData <- c(fieldsInData, "gainSubjects")
+    maxSubject <- max(data$gainSubjects, na.rm = TRUE)
+  }
+  
   uniqueDatabases <- data %>% 
     dplyr::select(.data$databaseId) %>% 
     dplyr::distinct()
-  databasePersonAndRecordCount <- uniqueDatabases %>%
-    dplyr::inner_join(databaseCount,
-                      by = c("databaseId")) %>% 
-    dplyr::select(.data$databaseId, dplyr::all_of(fieldsInData)) %>% 
-    dplyr::distinct()
   
-  if ('persons' %in% colnames(databasePersonAndRecordCount)) {
+  if (doesObjectHaveData(databaseCount)) {
+    databasePersonAndRecordCount <- uniqueDatabases %>%
+      dplyr::inner_join(databaseCount,
+                        by = c("databaseId")) %>% 
+      dplyr::select(.data$databaseId, dplyr::all_of(fieldsInData)) %>% 
+      dplyr::distinct()
+    
+    if ('persons' %in% colnames(databasePersonAndRecordCount)) {
+      databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
+        dplyr::mutate(persons = scales::comma(.data$persons,
+                                              accuracy = 1))
+    }
+    if ('records' %in% colnames(databasePersonAndRecordCount)) {
+      databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
+        dplyr::mutate(records = scales::comma(.data$records,
+                                              accuracy = 1))
+    }
+    
     databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
-      dplyr::mutate(persons = scales::comma(.data$persons,
-                                            accuracy = 1))
+      dplyr::arrange(.data$databaseId)
   }
-  if ('records' %in% colnames(databasePersonAndRecordCount)) {
-    databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
-      dplyr::mutate(records = scales::comma(.data$records,
-                                            accuracy = 1))
-  }
-  databasePersonAndRecordCount <- databasePersonAndRecordCount %>% 
-    dplyr::arrange(.data$databaseId)
   
   dataTransformed <- data %>%
     dplyr::arrange(.data$databaseId) %>% 
@@ -387,7 +416,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
     )  #descending to ensure records before persons
     
     minimumCellCountDefs <- minCellCountDef(numberOfColums + (1:(
-      2 * length(databaseIds)
+      numberOfSubstitutableColums * length(databaseIds)
     )))
     
     if (columnFilters == "Person Only") {
@@ -400,7 +429,28 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
         dplyr::filter(.data$type == "records")
       
       minimumCellCountDefs <- minCellCountDef(numberOfColums + (1:(length(databaseIds))))
-    }
+    } else if (columnFilters == "Meet") {
+      dataTransformed <- dataTransformed %>% 
+        dplyr::filter(.data$type == "meetSubjects")
+      
+      minimumCellCountDefs <- minCellCountDef(numberOfColums + (1:(length(databaseIds))))
+    } else if (columnFilters == "Gain") {
+      dataTransformed <- dataTransformed %>% 
+        dplyr::filter(.data$type == "gainSubjects")
+      
+      minimumCellCountDefs <- minCellCountDef(numberOfColums + (1:(length(databaseIds))))
+    } else if (columnFilters == "Remain") {
+      dataTransformed <- dataTransformed %>% 
+        dplyr::filter(.data$type == "remainSubjects")
+      
+      minimumCellCountDefs <- minCellCountDef(numberOfColums + (1:(length(databaseIds))))
+    } else if (columnFilters == "Totals") {
+      dataTransformed <- dataTransformed %>% 
+        dplyr::filter(.data$type == "totalSubjects")
+      
+      minimumCellCountDefs <- minCellCountDef(numberOfColums + (1:(length(databaseIds))))
+    } 
+    
   dataTransformed <- dataTransformed %>%
     dplyr::mutate(type = paste0( .data$databaseId,
                                 " ",
@@ -431,22 +481,28 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
     columnDefs = list(truncateStringDef(1, 50),
                       minimumCellCountDefs)
   )
-  if (columnFilters == "Both") {
+  if (columnFilters == "Both" || columnFilters == "All") {
     databaseRecordAndPersonColumnName <- c()
-    for (i in 1:nrow(databasePersonAndRecordCount)) {
-      if ('records' %in% colnames(databasePersonAndRecordCount)) {
-        databaseRecordAndPersonColumnName <-
-          c(
-            databaseRecordAndPersonColumnName,
-            paste0("Records (", databasePersonAndRecordCount[i,]$records, ")"))
+    if (columnFilters == "Both") {
+      for (i in 1:nrow(databasePersonAndRecordCount)) {
+        if ('records' %in% colnames(databasePersonAndRecordCount)) {
+          databaseRecordAndPersonColumnName <-
+            c(
+              databaseRecordAndPersonColumnName,
+              paste0("Records (", databasePersonAndRecordCount[i,]$records, ")"))
+        }
+        if ('persons' %in% colnames(databasePersonAndRecordCount)) {
+          databaseRecordAndPersonColumnName <-
+            c(
+              databaseRecordAndPersonColumnName,
+              paste0("Persons (", databasePersonAndRecordCount[i,]$persons, ")"))
+        }
       }
-      if ('persons' %in% colnames(databasePersonAndRecordCount)) {
-        databaseRecordAndPersonColumnName <-
-          c(
-            databaseRecordAndPersonColumnName,
-            paste0("Persons (", databasePersonAndRecordCount[i,]$persons, ")"))
-      }
+    } else {
+      databaseRecordAndPersonColumnName <- c(fieldsInData) %>% 
+        camelCaseToTitleCase()
     }
+    
     
     #!!!!!!! dynamically generate rowspan from colnamesInData
     sketch <- htmltools::withTags(table(class = "display",
@@ -458,7 +514,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
                                             lapply(
                                               databaseIds,
                                               th,
-                                              colspan = 2,
+                                              colspan = numberOfSubstitutableColums,
                                               class = "dt-center",
                                               style = "border-right:1px solid silver;border-bottom:1px solid silver"
                                             )
@@ -496,7 +552,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
   if (!is.null(maxSubject)) {
     dataTable <- DT::formatStyle(
       table = dataTable,
-      columns =  (numberOfColums + 1) + 1:(length(databaseIds) * 2),
+      columns =  (numberOfColums + 1) + 1:(length(databaseIds) * numberOfSubstitutableColums),
       background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
       backgroundSize = "98% 88%",
       backgroundRepeat = "no-repeat",
@@ -506,7 +562,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
   if (!is.null(maxCount)) {
     dataTable <- DT::formatStyle(
       table = dataTable,
-      columns =  (numberOfColums + 1) + 1:(length(databaseIds) * 2),
+      columns =  (numberOfColums + 1) + 1:(length(databaseIds) * numberOfSubstitutableColums),
       background = DT::styleColorBar(c(0, maxCount), "lightblue"),
       backgroundSize = "98% 88%",
       backgroundRepeat = "no-repeat",
