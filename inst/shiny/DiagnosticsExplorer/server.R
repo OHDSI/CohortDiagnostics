@@ -7336,15 +7336,12 @@ shiny::shinyServer(function(input, output, session) {
                              values_from = "values") %>%
           dplyr::select(-dplyr::contains("NA"))
         
-        columsDefs <- minCellPercentDef(1:(
-          length(databaseIds) * 3
-        ))
-        
-        colorBarColumns <- (1 + 1:(length(databaseIds) * 3))
-        
         sketchColumns <- c("Target", "Comparator", "StdDiff")
+        sketchColspan <- 3
         
-        sketchCOlspan <- 5
+        columsDefs <- list(truncateStringDef(0, 80),
+                           minCellRealDef(1:(length(databaseIds) * 3), digits = 2))
+        colorBarColumns <- (1 + 1:(length(databaseIds) * 3))
         
         # table <- DT::formatRound(table, 4, digits = 2)
       } else {
@@ -7377,7 +7374,7 @@ shiny::shinyServer(function(input, output, session) {
               "Mean Comarator",
               "Sd Comparator",
               "StdDiff")
-          sketchCOlspan <- 5
+          sketchColspan <- 5
           
           columsDefs <- list(truncateStringDef(0, 80),
                              minCellRealDef(1:(length(databaseIds) * 5), digits = 2))
@@ -7394,7 +7391,7 @@ shiny::shinyServer(function(input, output, session) {
             )
           
           sketchColumns <- c("Target", "Comparator", "StdDiff")
-          sketchCOlspan <- 3
+          sketchColspan <- 3
           
           columsDefs <- list(truncateStringDef(0, 80),
                              minCellRealDef(1:(length(databaseIds) * 3), digits = 2))
@@ -7413,7 +7410,6 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::mutate(covariateName = paste0(.data$covariateName, "(", .data$covariateId, ")")) %>% 
           dplyr::select(-.data$covariateId)
         
-        
         # table <- DT::formatStyle(
         #   table = table,
         #   columns = standardDifferenceColumn,
@@ -7430,7 +7426,7 @@ shiny::shinyServer(function(input, output, session) {
                                             lapply(
                                               databaseIds,
                                               th,
-                                              colspan = sketchCOlspan,
+                                              colspan = sketchColspan,
                                               class = "dt-center",
                                               style = "border-right:1px solid silver;border-bottom:1px solid silver"
                                             )
