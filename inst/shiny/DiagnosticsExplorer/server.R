@@ -2659,7 +2659,7 @@ shiny::shinyServer(function(input, output, session) {
         colnames = colnames(data) %>% camelCaseToTitleCase(),
         rownames = FALSE,
         escape = FALSE,
-        selection = 'single',
+        selection = 'none',
         filter = "top",
         class = "stripe nowrap compact"
       )
@@ -3089,7 +3089,7 @@ shiny::shinyServer(function(input, output, session) {
         colnames = colnames(data) %>% camelCaseToTitleCase(),
         rownames = FALSE,
         escape = FALSE,
-        selection = 'single',
+        selection = 'none',
         filter = "top",
         class = "stripe nowrap compact"
       )
