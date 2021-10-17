@@ -1,5 +1,5 @@
 header <-
-  shinydashboard::dashboardHeader(title = "Cohort Diagnostics")
+  shinydashboard::dashboardHeader(title = appTitleHeader)
 
 sidebarMenu <-
   shinydashboard::sidebarMenu(
