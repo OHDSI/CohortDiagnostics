@@ -525,7 +525,7 @@ shiny::shinyServer(function(input, output, session) {
         shiny::conditionalPanel(
           condition = "output.isComparatorSelected == true &
                      output.isCohortDefinitionRowSelected == true",
-          shiny::htmlOutput(outputId = "nameOfComparatorSelectedCohortInCohortDefinitionTable"),
+          shiny::htmlOutput(outputId = "comparatorCohortSelectedInCohortDefinitionTable"),
           shiny::tabsetPanel(
             id = "comparatorCohortDefinitionTabSetPanel",
             type = "tab",
@@ -1089,15 +1089,20 @@ shiny::shinyServer(function(input, output, session) {
       }
       tags$table(height = '60',
                  style = "overflow : auto",
-                 tags$tr(tags$td(tags$h4(
-                   "Target cohort: "
-                 )),
-                 tags$td(tags$h4(cohortName))))
+                 tags$tr(
+                   tags$td(
+                     tags$h4(style = "font-weight: bold","Target cohort: ")
+                   ),
+                   tags$td(
+                     tags$h4(style = "font-weight: bold", cohortName)
+                   )
+                 )
+      )
     })
   
   
-  ###output: nameOfComparatorSelectedCohortInCohortDefinitionTable----
-  output$nameOfComparatorSelectedCohortInCohortDefinitionTable <-
+  ###output: comparatorCohortSelectedInCohortDefinitionTable----
+  output$comparatorCohortSelectedInCohortDefinitionTable <-
     shiny::renderUI(expr = {
       if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
         return(NULL)
@@ -1111,11 +1116,12 @@ shiny::shinyServer(function(input, output, session) {
       }
       tags$table(height = '60',
                  style = "overflow : auto",
-                 tags$tr(tags$td(tags$h4(
-                   "Comparator cohort:"
-                 )),
-                 tags$td(tags$h4(cohortName))))
-      
+                 tags$tr(tags$td(
+                   tags$h4(style = "font-weight: bold","Comparator cohort:")
+                 ),
+                 tags$td(
+                   tags$h4(style = "font-weight: bold",cohortName))
+                 ))
     })
   
   #output: targetCohortDetailsText----
