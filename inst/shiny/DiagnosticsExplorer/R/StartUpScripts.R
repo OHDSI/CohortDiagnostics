@@ -339,6 +339,7 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
                                                           numberOfColums = 4,
                                                           numberOfSubstitutableColums = 2,
                                                           columnFilters = "Both") {
+  
   colnamesInData <- colnames(data)
   colnamesInData <- colnamesInData[!colnamesInData %in% "databaseId"]
   colnamesInData <- colnamesInData[!colnamesInData %in% "persons"]
@@ -571,6 +572,196 @@ getSketchDesignForTablesInCohortDefinitionTab <- function(data,
   }
   return(dataTable)
 }
+
+
+
+
+#takes data as input and returns data table with sketch design
+#used in resolved, excluded and orphan concepts in cohort definition tab
+getDtWithColumnsGroupedByDatabaseId <- function(data, 
+                                     headerCount,
+                                     keyColumns,
+                                     dataColumns,
+                                     sketchBy = "databaseId",
+                                     maxCount,
+                                     showResultsAsPercent = FALSE) {
+
+  missingColumns <-
+    setdiff(x = c(keyColumns, dataColumns) %>% unique(),
+            y = colnames(data))
+  if (length(missingColumns) > 0)  {
+    stop(
+      paste0(
+        "Improper specification for sketch, following fields are missing in data ",
+        paste0(missingColumns, collapse = ", ")
+      )
+    )
+  }
+  data <- data %>% 
+    dplyr::select(c(keyColumns,"databaseId", dataColumns) %>% unique())
+  
+  #get all unique databsaeIds - and sort data by it
+  uniqueDatabases <- data %>%
+    dplyr::select(.data$databaseId) %>%
+    dplyr::distinct()
+  
+  # get the main header - sketch header
+  if (doesObjectHaveData(headerCount)) {
+    # add counts to databaseId
+    headersForDt <- uniqueDatabases %>%
+      dplyr::inner_join(headerCount,
+                        by = "databaseId") %>%
+      dplyr::mutate(newDatabaseId = paste0(.data$databaseId,
+                                           " (n = ",
+                                           scales::comma(.data$count),
+                                           ")")) %>%
+      dplyr::select(.data$databaseId, .data$newDatabaseId, .data$count) %>%
+      dplyr::rename(headerCount = .data$count) %>% 
+      dplyr::distinct() %>%
+      dplyr::arrange(.data$databaseId)
+  } else {
+    # no counts to databaseId
+    headersForDt <- uniqueDatabases %>%
+      dplyr::inner_join(headerCount,
+                        by = "databaseId") %>%
+      dplyr::mutate(newDatabaseId = .data$databaseId) %>%
+      dplyr::select(.data$databaseId, .data$newDatabaseId) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(.data$databaseId)
+  }
+
+  ############# long form
+  dataTransformedLongForm <- data %>%
+    dplyr::arrange(.data$databaseId) %>%
+    tidyr::pivot_longer(
+      names_to = "type",
+      cols = dplyr::all_of(dataColumns),
+      values_to = "count", 
+    )
+  if (showResultsAsPercent) {
+    dataTransformedLongForm <- dataTransformedLongForm %>% 
+      dplyr::inner_join(headersForDt,
+                      by = ("databaseId")) %>% 
+      dplyr::select(-.data$databaseId) %>% 
+      dplyr::rename(databaseId = .data$newDatabaseId) %>% 
+      dplyr::mutate(count = dplyr::case_when(all(!is.na(.data$headerCount),
+                                                 .data$headerCount > 0) ~ .data$count/.data$headerCount,
+                                             TRUE ~ as.double(NA))) %>% 
+      dplyr::select(-.data$headerCount)
+  } else {
+    dataTransformedLongForm <- dataTransformedLongForm %>% 
+      dplyr::inner_join(headersForDt,
+                        by = ("databaseId")) %>% 
+      dplyr::select(-.data$databaseId) %>% 
+      dplyr::rename(databaseId = .data$newDatabaseId) %>% 
+      dplyr::select(-.data$headerCount)
+  }
+  # ensure there is value with data for all combis
+  dataTransformedLongForm <-
+    tidyr::crossing(
+      dataTransformedLongForm %>%
+        dplyr::select(dplyr::all_of(keyColumns), .data$databaseId) %>%
+        dplyr::distinct(),
+      dplyr::tibble(type = !!dataColumns),
+    ) %>%
+    dplyr::left_join(dataTransformedLongForm,
+                     by = c(keyColumns, "databaseId", "type")) %>%
+    tidyr::replace_na(replace = list(count = 0)) %>%
+    dplyr::distinct() %>% 
+    dplyr::arrange(.data$databaseId, .data$type) 
+  
+  # headers for sketch
+  databaseIdsForUseAsHeader <- sort(unique(dataTransformedLongForm$databaseId))
+  # wide form
+  dataTransformedWideForm <- dataTransformedLongForm %>%
+    dplyr::arrange(.data$databaseId, .data$type) %>%
+    dplyr::mutate(dplyr::across(.cols = .data$databaseId, 
+                                .fns = ~ paste0(.x,
+                                                " (n = ",
+                                                scales::comma(.data$count),
+                                                ")",
+                                                "<br> ",
+                                                camelCaseToTitleCase(.data$type)
+                                                ))) %>%
+    dplyr::select(-.data$type) %>% 
+    dplyr::distinct() %>%
+    tidyr::pivot_wider(
+      id_cols = dplyr::all_of(keyColumns),
+      names_from = "databaseId",
+      values_from = count,
+      values_fill = 0
+    ) %>%
+    dplyr::arrange(dplyr::desc(abs(dplyr::across(dplyr::contains(camelCaseToTitleCase(dataColumns))))))
+  
+  
+  ### format
+  numberOfColumns <- length(keyColumns) - 1
+  numberOfSubstitutableColums <- length(dataColumns)
+  #!!!!!!! we need a different minimumCellCountDefs for PERCENTAGES!!
+  minimumCellCountDefs <- minCellCountDef(numberOfColumns + (1:(
+    numberOfSubstitutableColums * length(databaseIdsForUseAsHeader)
+  )))
+  
+  options = list(
+    pageLength = 1000,
+    lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+    searching = TRUE,
+    lengthChange = TRUE,
+    ordering = TRUE,
+    paging = TRUE,
+    info = TRUE,
+    searchHighlight = TRUE,
+    scrollX = TRUE,
+    scrollY = "20vh",
+    columnDefs = list(truncateStringDef(1, 50),
+                      minimumCellCountDefs) #!!!!!!!!!!! note in percent form, this may cause error because of -ve number
+  )
+
+  sketch <- htmltools::withTags(table(class = "display",
+                                      thead(tr(
+                                        lapply(camelCaseToTitleCase(keyColumns) %>% sort(),
+                                               th,
+                                               rowspan = 2),
+                                        lapply(
+                                          databaseIdsForUseAsHeader %>% sort(),
+                                          th,
+                                          colspan = numberOfSubstitutableColums,
+                                          class = "dt-center",
+                                          style = "border-right:1px solid silver;border-bottom:1px solid silver"
+                                        )
+                                      ),
+                                      tr(
+                                        lapply(camelCaseToTitleCase(dataColumns %>% sort()), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                      ))))
+
+    dataTable <- DT::datatable(
+      dataTransformedWideForm,
+      options = options,
+      rownames = FALSE,
+      container = sketch,
+      colnames = colnames(dataTransformedWideForm) %>% camelCaseToTitleCase(),
+      escape = FALSE,
+      selection = 'single',
+      filter = "top",
+      class = "stripe nowrap compact"
+    )
+  if (!is.null(maxCount)) {
+    dataTable <- DT::formatStyle(
+      table = dataTable,
+      columns =  (numberOfColumns + 1) + 1:(length(databaseIdsForUseAsHeader) * numberOfSubstitutableColums),
+      background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+      backgroundSize = "98% 88%",
+      backgroundRepeat = "no-repeat",
+      backgroundPosition = "center"
+    )
+  }
+  return(dataTable)
+}
+
+
+
+
+
 
 getStlModelOutputForTsibbleDataValueFields <- function(tsibbleData, valueFields = "value") {
   if (!doesObjectHaveData(tsibbleData)) {

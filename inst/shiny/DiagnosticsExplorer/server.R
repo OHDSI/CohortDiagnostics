@@ -1861,25 +1861,54 @@ shiny::shinyServer(function(input, output, session) {
       if (any(is.null(consolidatedCohortIdTarget()))) {
         return(NULL)
       }
-      table <- getSimplifiedInclusionRuleResultsTarget()
-      validate(need((nrow(table) > 0),
+      data <- getSimplifiedInclusionRuleResultsTarget()
+      validate(need((nrow(data) > 0),
                     "There is no inclusion rule data for this cohort."))
+      # count that will be appended to the main header in sketch
+      cohortCountsForHeader <-
+        getResultsCohortCount(
+          dataSource = dataSource,
+          cohortIds = consolidatedCohortIdTarget(),
+          databaseIds = consolidatedDatabaseIdTarget()
+        )
+      if (input$targetCohortDefinitionInclusionRuleType == "Events") {
+        cohortCountsForHeader <- cohortCountsForHeader %>%
+          dplyr::select(-.data$cohortSubjects) %>%
+          dplyr::rename(count = .data$cohortEntries)
+      } else if (input$targetCohortDefinitionInclusionRuleType == "Persons") {
+        cohortCountsForHeader <- cohortCountsForHeader %>%
+          dplyr::select(-.data$cohortEntries) %>%
+          dplyr::rename(count = .data$cohortSubjects)
+      }
       
-      data <- table %>% 
-        dplyr::relocate(.data$totalSubjects,
-                        .data$remainSubjects,
-                        .data$meetSubjects,
-                        .data$gainSubjects) %>% 
-        dplyr::inner_join(cohortCount, by = c("cohortId", "databaseId")) %>%
-        dplyr::mutate(databaseId = paste0(.data$databaseId, "(n = ", .data$cohortSubjects,")")) %>%
-        dplyr::select(-.data$cohortId, -.data$cohortEntries, -.data$cohortSubjects)
-      
-      
-      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
-                                                             databaseCount = NULL,
-                                                             columnFilters = input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters,
-                                                             numberOfColums = 1,
-                                                             numberOfSubstitutableColums = 4)
+      dataColumnFieldsAll <-
+        c("totalSubjects",
+          "remainSubjects",
+          "meetSubjects",
+          "gainSubjects")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "All") {
+        dataColumnFields <- dataColumnFieldsAll
+      } else {
+        dataColumnFields <-
+          dataColumnFieldsAll[stringr::str_detect(
+            string = tolower(dataColumnFieldsAll),
+            pattern = tolower(
+              input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters
+            )
+          )]
+      }
+      maxCountValue <-
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                      string = dataColumnFields)
+      table <- getDtWithColumnsGroupedByDatabaseId(
+        data = data,
+        headerCount = cohortCountsForHeader,
+        keyColumns = c("ruleSequenceId", "ruleName"),
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
+        showResultsAsPercent = FALSE #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+      )
       return(table)
     }, server = TRUE)
   
@@ -2693,6 +2722,7 @@ shiny::shinyServer(function(input, output, session) {
                                          "cohortSubjects" = 0)) %>%
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
+      browser()
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount,
                                                              columnFilters = input$targetCohortConceptSetColumnFilter,
