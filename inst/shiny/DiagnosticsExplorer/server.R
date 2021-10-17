@@ -6449,45 +6449,33 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    covariateNames <- data %>%
-      dplyr::select(.data$covariateId,
-                    .data$covariateName,
-                    .data$conceptId) %>%
-      dplyr::distinct()
+    data <- data %>% 
+      dplyr::arrange(.data$databaseId,
+                     .data$cohortId) %>% 
+      tidyr::pivot_longer(cols = c(.data$mean,
+                                   .data$sd),
+                          names_to = 'type',
+                          values_to = 'values') 
+      
+      
     
-    if (input$characterizationColumnFilters == "Mean and Standard Deviation") {
-      data <- data %>%
-        dplyr::arrange(.data$databaseId,
-                       .data$cohortId) %>%
-        tidyr::pivot_longer(cols = c(.data$mean,
-                                     .data$sd),
-                            names_to = 'names') %>%
-        dplyr::mutate(names = paste0(.data$databaseId, " ", .data$names)) %>%
-        dplyr::arrange(.data$databaseId, .data$names, .data$covariateId) %>%
-        tidyr::pivot_wider(
-          id_cols = c(.data$cohortId, .data$covariateId),
-          names_from = .data$names,
-          values_from = .data$value,
-          values_fill = 0
-        )
-    } else {
-      data <- data %>%
-        dplyr::arrange(.data$databaseId, .data$cohortId) %>%
-        dplyr::select(-.data$sd) %>%
-        tidyr::pivot_wider(
-          id_cols = c(.data$cohortId, .data$covariateId),
-          names_from = .data$databaseId,
-          values_from = .data$mean,
-          values_fill = 0
-        )
-    }
+    if (input$characterizationColumnFilters == "Mean only") {
+      data <- data %>% 
+        dplyr::filter(.data$type == 'mean')
+    } 
     
-    data <-  data %>%
-      dplyr::inner_join(covariateNames,
-                        by = "covariateId") %>%
-      dplyr::select(-.data$covariateId, -.data$cohortId, -.data$conceptId) %>%
-      dplyr::relocate(.data$covariateName)
-    data <- data[order(-data[2]), ]
+    data <- data %>% 
+      dplyr::mutate(type = paste0(.data$databaseId, " ", .data$type)) %>% 
+      tidyr::pivot_wider(
+        id_cols = c("covariateName", "covariateId"),
+        names_from = "type",
+        values_from = "values",
+        values_fill = 0
+      ) %>% 
+      dplyr::mutate(covariateName = paste0(.data$covariateName,"(", .data$covariateId, ")")) %>% 
+      dplyr::select(-.data$covariateId)
+    
+    data <- data[order(-xtfrm(data[2])), ]
     return(data)
   })
   
@@ -6572,6 +6560,7 @@ shiny::shinyServer(function(input, output, session) {
         message = paste0("Rendering raw table for cohort characterization."),
         value = 0
       )
+      
       data <- getCharacterizationRawData()
       validate(need(
         nrow(data) > 0,
@@ -6579,23 +6568,9 @@ shiny::shinyServer(function(input, output, session) {
       ))
       
       if (input$characterizationColumnFilters == "Mean and Standard Deviation") {
-        options = list(
-          pageLength = 1000,
-          lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-          searching = TRUE,
-          searchHighlight = TRUE,
-          scrollX = TRUE,
-          scrollY = "60vh",
-          lengthChange = TRUE,
-          ordering = TRUE,
-          paging = TRUE,
-          columnDefs = list(
-            truncateStringDef(0, 80),
-            minCellPercentDef(1:(length(
-              databaseIds
-            ) * 2))
-          )
-        )
+        columDefs <- minCellPercentDef(1:(length(databaseIds) * 2))
+        histogramColumns <- (1 + 1:(length(databaseIds) * 2))
+        
         sketch <- htmltools::withTags(table(class = "display",
                                             thead(tr(
                                               th(rowspan = 2, "Covariate Name"),
@@ -6615,6 +6590,45 @@ shiny::shinyServer(function(input, output, session) {
                                               style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                             ))))
         
+      } else {
+        columDefs <- minCellPercentDef(1:(length(databaseIds)))
+        histogramColumns <- (1 + 1:(length(databaseIds)))
+        
+        table <- DT::datatable(
+          data,
+          options = options,
+          rownames = FALSE,
+          escape = FALSE,
+          filter = "top",
+          class = "stripe nowrap compact"
+        )
+      }
+      
+      options = list(
+        pageLength = 1000,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        scrollY = "60vh",
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        columnDefs = list(
+          truncateStringDef(0, 80),
+          columDefs
+        )
+      )
+      if (input$characterizationColumnFilters == "Mean only") {
+        table <- DT::datatable(
+          data,
+          options = options,
+          rownames = FALSE,
+          escape = FALSE,
+          filter = "top",
+          class = "stripe nowrap compact"
+        )
+      } else {
         table <- DT::datatable(
           data,
           options = options,
@@ -6624,68 +6638,16 @@ shiny::shinyServer(function(input, output, session) {
           filter = "top",
           class = "stripe nowrap compact"
         )
-        
-        table <- DT::formatStyle(
-          table = table,
-          columns = (1 + 1:(length(
-            databaseIds
-          ) * 2)),
-          background = DT::styleColorBar(c(0, 1), "lightblue"),
-          backgroundSize = "98% 88%",
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center"
-        )
-      } else {
-        options = list(
-          pageLength = 1000,
-          lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-          searching = TRUE,
-          searchHighlight = TRUE,
-          scrollX = TRUE,
-          scrollY = "60vh",
-          lengthChange = TRUE,
-          ordering = TRUE,
-          paging = TRUE,
-          columnDefs = list(
-            truncateStringDef(0, 80),
-            minCellPercentDef(1:(length(
-              databaseIds
-            )))
-          )
-        )
-        
-        colnames <- cohortCount %>%
-          dplyr::filter(.data$databaseId %in% colnames(data)) %>%
-          dplyr::filter(.data$cohortId == getCharacterizationDataFiltered()$cohortId %>% unique()) %>%
-          dplyr::mutate(colnames = paste0(
-            .data$databaseId,
-            "<br>(n = ",
-            scales::comma(.data$cohortSubjects, accuracy = 1),
-            ")"
-          )) %>%
-          dplyr::arrange(.data$databaseId) %>%
-          dplyr::pull(colnames)
-        
-        table <- DT::datatable(
-          data,
-          options = options,
-          rownames = FALSE,
-          colnames = colnames,
-          escape = FALSE,
-          filter = "top",
-          class = "stripe nowrap compact"
-        )
-        table <- DT::formatStyle(
-          table = table,
-          columns = (1 + 1:(length(
-            databaseIds
-          ))),
-          background = DT::styleColorBar(c(0, 1), "lightblue"),
-          backgroundSize = "98% 88%",
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center"
-        )
       }
+      
+      table <- DT::formatStyle(
+        table = table,
+        columns = histogramColumns,
+        background = DT::styleColorBar(c(0, 1), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
     }
     return(table)
   }, server = TRUE)
