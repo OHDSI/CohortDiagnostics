@@ -2925,26 +2925,54 @@ shiny::shinyServer(function(input, output, session) {
       if (any(is.null(consolidatedCohortIdComparator()))) {
         return(NULL)
       }
-      
-      table <- getSimplifiedInclusionRuleResultsComparator()
-      validate(need((nrow(table) > 0),
+      data <- getSimplifiedInclusionRuleResultsComparator()
+      validate(need((nrow(data) > 0),
                     "There is no inclusion rule data for this cohort."))
+      # count that will be appended to the main header in sketch
+      cohortCountsForHeader <-
+        getResultsCohortCount(
+          dataSource = dataSource,
+          cohortIds = consolidatedCohortIdComparator(),
+          databaseIds = consolidatedDatabaseIdTarget()
+        )
+      if (input$comparatorCohortDefinitionInclusionRuleType == "Events") {
+        cohortCountsForHeader <- cohortCountsForHeader %>%
+          dplyr::select(-.data$cohortSubjects) %>%
+          dplyr::rename(count = .data$cohortEntries)
+      } else if (input$comparatorCohortDefinitionInclusionRuleType == "Persons") {
+        cohortCountsForHeader <- cohortCountsForHeader %>%
+          dplyr::select(-.data$cohortEntries) %>%
+          dplyr::rename(count = .data$cohortSubjects)
+      }
       
-      data <- table %>% 
-        dplyr::relocate(.data$totalSubjects,
-                        .data$remainSubjects,
-                        .data$meetSubjects,
-                        .data$gainSubjects) %>% 
-        dplyr::inner_join(cohortCount, by = c("cohortId", "databaseId")) %>%
-        dplyr::mutate(databaseId = paste0(.data$databaseId, "(n = ", .data$cohortSubjects,")")) %>%
-        dplyr::select(-.data$cohortId, -.data$cohortEntries, -.data$cohortSubjects)
-      
-      
-      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
-                                                             databaseCount = NULL,
-                                                             columnFilters = input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters,
-                                                             numberOfColums = 1,
-                                                             numberOfSubstitutableColums = 4)
+      dataColumnFieldsAll <-
+        c("totalSubjects",
+          "remainSubjects",
+          "meetSubjects",
+          "gainSubjects")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "All") {
+        dataColumnFields <- dataColumnFieldsAll
+      } else {
+        dataColumnFields <-
+          dataColumnFieldsAll[stringr::str_detect(
+            string = tolower(dataColumnFieldsAll),
+            pattern = tolower(
+              input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters
+            )
+          )]
+      }
+      maxCountValue <-
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                      string = dataColumnFields)
+      table <- getDtWithColumnsGroupedByDatabaseId(
+        data = data,
+        headerCount = cohortCountsForHeader,
+        keyColumns = c("ruleSequenceId", "ruleName"),
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
+        showResultsAsPercent = FALSE #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+      )
       return(table)
     }, server = TRUE)
   
