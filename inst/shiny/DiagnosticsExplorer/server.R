@@ -4210,7 +4210,8 @@ shiny::shinyServer(function(input, output, session) {
   # Incidence rate -------
   ##reactive: getIncidenceRateData----
   getIncidenceRateData <- reactive({
-    if (any(is.null(input$tabs), !input$tabs == "incidenceRate")) {
+    if (any(is.null(input$tabs), 
+            !input$tabs == "incidenceRate")) {
       return(NULL)
     }
     if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
@@ -4281,13 +4282,15 @@ shiny::shinyServer(function(input, output, session) {
     }
     calendarFilter <- getIncidenceRateData() %>%
       dplyr::select(.data$calendarYear) %>%
-      dplyr::filter(.data$calendarYear != "NA",!is.na(.data$calendarYear)) %>%
+      dplyr::filter(.data$calendarYear != "NA") %>% 
+      dplyr::filter(!is.na(.data$calendarYear)) %>%
+      dplyr::filter(.data$calendarYear != "") %>%
       dplyr::distinct(.data$calendarYear) %>%
-      dplyr::arrange(.data$calendarYear)
+      dplyr::arrange(.data$calendarYear) %>% 
+      dplyr::mutate(calendarYear = as.double(.data$calendarYear))
     
     minValue <- max(1980, min(calendarFilter$calendarYear))
     maxValue <- max(calendarFilter$calendarYear)
-    
     shiny::updateSliderInput(
       session = session,
       inputId = "incidenceRateCalendarFilter",
@@ -4347,14 +4350,19 @@ shiny::shinyServer(function(input, output, session) {
       }
       calendarFilter <- getIncidenceRateData() %>%
         dplyr::select(.data$calendarYear) %>%
-        dplyr::filter(.data$calendarYear != "NA", 
-                      !is.na(.data$calendarYear)) %>%
+        dplyr::filter(.data$calendarYear != "NA") %>%
+        dplyr::filter(!is.na(.data$calendarYear)) %>%
+        dplyr::filter(.data$calendarYear != "") %>%
         dplyr::distinct(.data$calendarYear) %>%
-        dplyr::arrange(.data$calendarYear)
-      calendarFilter <-
-        calendarFilter[calendarFilter$calendarYear >= input$incidenceRateCalendarFilter[1] &
-                         calendarFilter$calendarYear <= input$incidenceRateCalendarFilter[2], , drop = FALSE] %>%
+        dplyr::arrange(.data$calendarYear) %>%
         dplyr::pull(.data$calendarYear)
+      if (input$incidenceRateCalendarFilter[2] >
+          input$incidenceRateCalendarFilter[1]) {
+        calendarFilter <-
+          calendarFilter[calendarFilter$calendarYear >= input$incidenceRateCalendarFilter[1] &
+                           calendarFilter$calendarYear <= input$incidenceRateCalendarFilter[2], , drop = FALSE] %>%
+          dplyr::pull(.data$calendarYear)
+      }
       return(calendarFilter)
     })
   
@@ -4374,10 +4382,10 @@ shiny::shinyServer(function(input, output, session) {
       return(incidenceRateFilter)
     })
   
-  ##reactive: getIncidentRatePlot ----
-  getIncidentRatePlot <- reactiveVal(NULL)
+  ##reactive: getIncidentRatePlotData ----
+  getIncidentRatePlotData <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
-    list(!is.null(input$tabs), input$renderIncidentRatePlot, 
+    list(!is.null(input$tabs),
          doesObjectHaveData(getIncidenceRateCalendarYears()))
   },
   handlerExpr = {
@@ -4387,13 +4395,17 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       return(NULL)
     }
-    
+    browser()
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <-
       "Calendar Year" %in% input$irStratification
     
-    data <- getIncidenceRateData()
+    if (input$tabs == "incidenceRate") {
+      data <- getIncidenceRateData()
+    } else {
+      data <- NULL
+    }
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -4406,16 +4418,25 @@ shiny::shinyServer(function(input, output, session) {
     if (stratifyByGender) {
       data <- data %>%
         dplyr::filter(.data$gender != '')
+    } else {
+      data <- data %>%
+        dplyr::filter(.data$gender == '')
     }
     
     if (stratifyByAge) {
       data <- data %>%
         dplyr::filter(.data$ageGroup != '')
+    } else {
+      data <- data %>%
+        dplyr::filter(.data$ageGroup == '')
     }
     
     if (stratifyByCalendarYear) {
       data <- data %>%
         dplyr::filter(.data$calendarYear != '')
+    } else {
+      data <- data %>%
+        dplyr::filter(.data$calendarYear == '')
     }
     
     if (!is.na(input$minPersonYear) &&
@@ -4447,8 +4468,10 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     if (stratifyByCalendarYear) {
-      data <- data %>%
-        dplyr::filter(.data$calendarYear %in% getIncidenceRateCalendarYears())
+      if (doesObjectHaveData(getIncidenceRateCalendarYears())) {
+        data <- data %>%
+          dplyr::filter(.data$calendarYear %in% getIncidenceRateCalendarYears())
+      }
     }
     
     if (input$irYscaleFixed) {
@@ -4456,23 +4479,46 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$incidenceRate %in% getIncidenceRateFilteredOnYScale())
     }
     
-    validate(need(
-      all(!is.null(data), nrow(data) > 0),
-      paste0("No data for this combination")
-    ))
-    
-    if (all(!is.null(data), nrow(data) > 0)) {
-      plot <- plotIncidenceRate(
-        data = data,
-        cohortCount = cohortCount,
-        shortNameRef = cohort,
-        stratifyByAgeGroup = stratifyByAge,
-        stratifyByGender = stratifyByGender,
-        stratifyByCalendarYear = stratifyByCalendarYear,
-        yscaleFixed = input$irYscaleFixed
-      )
+    return(data)
+
+  })
+  
+  
+  ##reactive: getIncidentRatePlot ----
+  getIncidentRatePlot <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(
+      !is.null(input$tabs),
+      input$renderIncidentRatePlot,
+      doesObjectHaveData(getIncidenceRateCalendarYears())
+    )
+  },
+  handlerExpr = {
+    if (any(
+      length(consolidatedDatabaseIdTarget()) == 0,
+      length(consolidatedCohortIdTarget()) == 0
+    )) {
+      return(NULL)
     }
+    browser()
+    data <- getIncidentRatePlotData()
+    validate(need(doesObjectHaveData(data),
+                  "No data for this combination"))
     
+    stratifyByAge <- "Age" %in% input$irStratification
+    stratifyByGender <- "Gender" %in% input$irStratification
+    stratifyByCalendarYear <-
+      "Calendar Year" %in% input$irStratification
+    
+    plot <- plotIncidenceRate(
+      data = data,
+      cohortCount = cohortCount,
+      shortNameRef = cohort,
+      stratifyByAgeGroup = stratifyByAge,
+      stratifyByGender = stratifyByGender,
+      stratifyByCalendarYear = stratifyByCalendarYear,
+      yscaleFixed = input$irYscaleFixed
+    )
     getIncidentRatePlot(plot)
   })
   
