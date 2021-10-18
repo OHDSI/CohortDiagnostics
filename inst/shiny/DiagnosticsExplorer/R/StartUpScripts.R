@@ -742,10 +742,16 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
   ### format
   numberOfColumns <- length(keyColumns) - 1
   numberOfSubstitutableColums <- length(dataColumns)
-  #!!!!!!! we need a different minimumCellCountDefs for PERCENTAGES!!
-  minimumCellCountDefs <- minCellCountDef(numberOfColumns + (1:(
-    numberOfSubstitutableColums * length(databaseIdsForUseAsHeader)
-  )))
+  
+  if (!showResultsAsPercent) {
+    minimumCellCountDefs <- minCellCountDef(numberOfColumns + (1:(
+      numberOfSubstitutableColums * length(databaseIdsForUseAsHeader)
+    )))  
+  } else if (showResultsAsPercent) {
+    minimumCellCountDefs <- minCellPercentDef(numberOfColumns + (1:(
+      numberOfSubstitutableColums * length(databaseIdsForUseAsHeader)
+    )))  
+  }
   
   options = list(
     pageLength = 1000,
@@ -906,7 +912,6 @@ getConceptCountForCohortAndDatabase <- function(dataSource,
       return(NULL)
     }
     data <- data %>%
-      dplyr::mutate(cohortId = 0) %>%
       dplyr::select(.data$databaseId,
                     .data$conceptId,
                     .data$subjectCount,
@@ -934,7 +939,7 @@ getConceptCountForCohortAndDatabase <- function(dataSource,
         .data$conceptCount
       ) %>%
       dplyr::rename("records" = .data$conceptCount,
-                    "subjects" = .data$subjectCount)
+                    "persons" = .data$subjectCount)
   }
   return(data)
 }

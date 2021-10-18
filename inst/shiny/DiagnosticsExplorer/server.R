@@ -2705,19 +2705,50 @@ shiny::shinyServer(function(input, output, session) {
       ))
       data <- getResolvedConceptsTarget()
       validate(need(doesObjectHaveData(data), "No resolved concept ids"))
-      countsForHeader <- getCountsForHeaderForUseInDataTable(dataSource = dataSource,
-                                                     data = data,
-                                                     databaseIds = consolidatedDatabaseIdTarget(),
-                                                     cohortIds = consolidatedCohortIdTarget(),
-                                                     source = input$targetConceptIdCountSource,
-                                                     fields = input$targetCohortConceptSetColumnFilter)
+      keyColumnFields <- c("conceptId", "conceptName")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      dataColumnFields <-
+        c("persons",
+          "records")
+      if (input$targetCohortConceptSetColumnFilter == "Both") {
+        dataColumnFields <- dataColumnFields
+        sketchLevel <- 2
+      } else if (input$targetCohortConceptSetColumnFilter == "Person Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("person")
+          )]
+        sketchLevel <- 1
+      } else if (input$targetCohortConceptSetColumnFilter == "Record Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("record")
+          )]
+        sketchLevel <- 1
+      }
+      
+      countsForHeader <-
+        getCountsForHeaderForUseInDataTable(
+          dataSource = dataSource,
+          databaseIds = consolidatedDatabaseIdTarget(),
+          cohortIds = consolidatedCohortIdTarget(),
+          source = input$targetConceptIdCountSource,
+          fields = input$targetCohortConceptSetColumnFilter
+        )
+      
+      maxCountValue <-
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                      string = dataColumnFields)
+
       table <- getDtWithColumnsGroupedByDatabaseId(
         data = data,
-        headerCount = countsForHeader$countsForHeader,
-        keyColumns = c("conceptId", "conceptName"),
-        dataColumns = countsForHeader$dataColumnFields,
-        maxCount = countsForHeader$maxCountValue,
-        sketchLevel = 2,
+        headerCount = countsForHeader,
+        keyColumns = keyColumnFields,
+        sketchLevel = sketchLevel,
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
         showResultsAsPercent = FALSE #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
       )
       return(table)
