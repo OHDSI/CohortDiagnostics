@@ -2786,22 +2786,55 @@ shiny::shinyServer(function(input, output, session) {
       ))
       data <- getExcludedConceptsTarget()
       validate(need(doesObjectHaveData(data), "No excluded concept ids"))
-      databaseCount <-
-        dplyr::tibble(databaseId = consolidatedDatabaseIdTarget(),
-                      cohortId = consolidatedCohortIdTarget()) %>%
-        dplyr::left_join(cohortCount,
-                         by = c("databaseId",
-                                "cohortId")) %>%
-        tidyr::replace_na(replace = list("cohortEntries" = 0,
-                                         "cohortSubjects" = 0)) %>%
-        dplyr::rename("records" = .data$cohortEntries,
-                      "persons" = .data$cohortSubjects)
+      
       browser()
       
-      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
-                                                             databaseCount = databaseCount,
-                                                             columnFilters = input$targetCohortConceptSetColumnFilter,
-                                                             numberOfColums = 2)
+      keyColumnFields <- c("conceptId", "conceptName")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      dataColumnFields <-
+        c("persons",
+          "records")
+      if (input$targetCohortConceptSetColumnFilter == "Both") {
+        dataColumnFields <- dataColumnFields
+        sketchLevel <- 2
+      } else if (input$targetCohortConceptSetColumnFilter == "Person Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("person")
+          )]
+        sketchLevel <- 1
+      } else if (input$targetCohortConceptSetColumnFilter == "Record Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("record")
+          )]
+        sketchLevel <- 1
+      }
+      
+      countsForHeader <-
+        getCountsForHeaderForUseInDataTable(
+          dataSource = dataSource,
+          databaseIds = consolidatedDatabaseIdTarget(),
+          cohortIds = consolidatedCohortIdTarget(),
+          source = input$targetConceptIdCountSource,
+          fields = input$targetCohortConceptSetColumnFilter
+        )
+      
+      maxCountValue <-
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                      string = dataColumnFields)
+      
+      table <- getDtWithColumnsGroupedByDatabaseId(
+        data = data,
+        headerCount = countsForHeader,
+        keyColumns = keyColumnFields,
+        sketchLevel = sketchLevel,
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
+        showResultsAsPercent = input$showAsPercentageColumnTarget #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+      )
       return(table)
     }, server = TRUE)
   
@@ -2823,22 +2856,53 @@ shiny::shinyServer(function(input, output, session) {
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
                     "No orphan concepts"))
-      databaseCount <-
-        dplyr::tibble(databaseId = consolidatedDatabaseIdTarget(),
-                      cohortId = consolidatedCohortIdTarget()) %>%
-        dplyr::left_join(cohortCount,
-                         by = c("databaseId",
-                                "cohortId")) %>%
-        tidyr::replace_na(replace = list("cohortEntries" = 0,
-                                         "cohortSubjects" = 0)) %>%
-        dplyr::rename("records" = .data$cohortEntries,
-                      "persons" = .data$cohortSubjects)
-      browser()
-
-      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
-                                                             databaseCount = databaseCount,
-                                                             columnFilters = input$targetCohortConceptSetColumnFilter,
-                                                             numberOfColums = 2)
+      
+      keyColumnFields <- c("conceptId", "conceptName")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      dataColumnFields <-
+        c("persons",
+          "records")
+      if (input$targetCohortConceptSetColumnFilter == "Both") {
+        dataColumnFields <- dataColumnFields
+        sketchLevel <- 2
+      } else if (input$targetCohortConceptSetColumnFilter == "Person Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("person")
+          )]
+        sketchLevel <- 1
+      } else if (input$targetCohortConceptSetColumnFilter == "Record Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("record")
+          )]
+        sketchLevel <- 1
+      }
+      
+      countsForHeader <-
+        getCountsForHeaderForUseInDataTable(
+          dataSource = dataSource,
+          databaseIds = consolidatedDatabaseIdTarget(),
+          cohortIds = consolidatedCohortIdTarget(),
+          source = input$targetConceptIdCountSource,
+          fields = input$targetCohortConceptSetColumnFilter
+        )
+      
+      maxCountValue <-
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                      string = dataColumnFields)
+      
+      table <- getDtWithColumnsGroupedByDatabaseId(
+        data = data,
+        headerCount = countsForHeader,
+        keyColumns = keyColumnFields,
+        sketchLevel = sketchLevel,
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
+        showResultsAsPercent = input$showAsPercentageColumnTarget #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+      )
       return(table)
     }, server = TRUE)
   
