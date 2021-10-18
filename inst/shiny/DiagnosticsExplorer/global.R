@@ -182,6 +182,13 @@ if (databaseMode) {
       required = TRUE
     )
   }
+  
+  #enhance cohortCount table to have all cohortId and databaseId combinations
+  cohortCount <- tidyr::crossing(database %>% dplyr::select(.data$databaseId) %>% dplyr::distinct(),
+                                 cohort %>% dplyr::select(.data$cohortId) %>% dplyr::distinct()) %>% 
+    dplyr::left_join(cohortCount, by = c("databaseId", "cohortId")) %>% 
+    dplyr::arrange(.data$databaseId, .data$cohortId)
+  
   for (i in (1:length(tablesToLoad))) {
     loadResultsTable(
       tableName = tablesToLoad[[i]],
