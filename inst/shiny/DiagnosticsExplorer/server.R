@@ -688,6 +688,18 @@ shiny::shinyServer(function(input, output, session) {
                                                           inline = TRUE
                                                         )
                                                       )
+                                              ),
+                                              tags$td(
+                                                
+                                                shiny::conditionalPanel(
+                                                  condition = "input.targetConceptSetsType != 'Concept Set Json' &
+                                                                   input.targetConceptSetsType != 'Concept Set Sql' &
+                                                                   input.targetConceptSetsType != 'Concept Set Expression'",
+                                                  shiny::checkboxInput(
+                                                    inputId = "showAsPercentageColumnComparator",
+                                                    label = "Show As Percent"
+                                                  )
+                                                )
                                               )
                                             )
                                           )),
@@ -2761,7 +2773,7 @@ shiny::shinyServer(function(input, output, session) {
         sketchLevel = sketchLevel,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$showAsPercentageColumnTarget #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+        showResultsAsPercent = input$showAsPercentageColumnTarget 
       )
       return(table)
     }, server = TRUE)
@@ -2786,8 +2798,6 @@ shiny::shinyServer(function(input, output, session) {
       ))
       data <- getExcludedConceptsTarget()
       validate(need(doesObjectHaveData(data), "No excluded concept ids"))
-      
-      browser()
       
       keyColumnFields <- c("conceptId", "conceptName")
       #depending on user selection - what data Column Fields Will Be Presented?
@@ -2833,7 +2843,7 @@ shiny::shinyServer(function(input, output, session) {
         sketchLevel = sketchLevel,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$showAsPercentageColumnTarget #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+        showResultsAsPercent = input$showAsPercentageColumnTarget
       )
       return(table)
     }, server = TRUE)
@@ -2901,7 +2911,7 @@ shiny::shinyServer(function(input, output, session) {
         sketchLevel = sketchLevel,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$showAsPercentageColumnTarget #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+        showResultsAsPercent = input$showAsPercentageColumnTarget 
       )
       return(table)
     }, server = TRUE)
@@ -3258,22 +3268,52 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No resolved concept ids"))
-      databaseCount <-
-        dplyr::tibble(databaseId = consolidatedDatabaseIdTarget(),
-                      cohortId = consolidatedCohortIdComparator()) %>%
-        dplyr::left_join(cohortCount,
-                         by = c("databaseId",
-                                "cohortId")) %>%
-        tidyr::replace_na(replace = list("cohortEntries" = 0,
-                                         "cohortSubjects" = 0)) %>%
-        dplyr::rename("records" = .data$cohortEntries,
-                      "persons" = .data$cohortSubjects)
-      browser()
+      keyColumnFields <- c("conceptId", "conceptName")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      dataColumnFields <-
+        c("persons",
+          "records")
+      if (input$comparatorCohortConceptSetColumnFilter == "Both") {
+        dataColumnFields <- dataColumnFields
+        sketchLevel <- 2
+      } else if (input$comparatorCohortConceptSetColumnFilter == "Person Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("person")
+          )]
+        sketchLevel <- 1
+      } else if (input$comparatorCohortConceptSetColumnFilter == "Record Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("record")
+          )]
+        sketchLevel <- 1
+      }
       
-      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
-                                                             databaseCount = databaseCount,
-                                                             columnFilters = input$comparatorCohortConceptSetColumnFilter,
-                                                             numberOfColums = 2)
+      countsForHeader <-
+        getCountsForHeaderForUseInDataTable(
+          dataSource = dataSource,
+          databaseIds = consolidatedDatabaseIdTarget(),
+          cohortIds = consolidatedCohortIdTarget(),
+          source = input$comparatorConceptIdCountSource,
+          fields = input$comparatorCohortConceptSetColumnFilter
+        )
+      
+      maxCountValue <-
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                      string = dataColumnFields)
+      
+      table <- getDtWithColumnsGroupedByDatabaseId(
+        data = data,
+        headerCount = countsForHeader,
+        keyColumns = keyColumnFields,
+        sketchLevel = sketchLevel,
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
+        showResultsAsPercent = input$showAsPercentageColumnComparator
+      )
       return(table)
     }, server = TRUE)
   
@@ -3297,22 +3337,52 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No excluded concept ids"))
-      databaseCount <-
-        dplyr::tibble(databaseId = consolidatedDatabaseIdTarget(),
-                      cohortId = consolidatedCohortIdComparator()) %>%
-        dplyr::left_join(cohortCount,
-                         by = c("databaseId",
-                                "cohortId")) %>%
-        tidyr::replace_na(replace = list("cohortEntries" = 0,
-                                         "cohortSubjects" = 0)) %>%
-        dplyr::rename("records" = .data$cohortEntries,
-                      "persons" = .data$cohortSubjects)
-      browser()
-  
-      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
-                                                             databaseCount = databaseCount,
-                                                             columnFilters = input$comparatorCohortConceptSetColumnFilter,
-                                                             numberOfColums = 2)
+      keyColumnFields <- c("conceptId", "conceptName")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      dataColumnFields <-
+        c("persons",
+          "records")
+      if (input$comparatorCohortConceptSetColumnFilter == "Both") {
+        dataColumnFields <- dataColumnFields
+        sketchLevel <- 2
+      } else if (input$comparatorCohortConceptSetColumnFilter == "Person Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("person")
+          )]
+        sketchLevel <- 1
+      } else if (input$comparatorCohortConceptSetColumnFilter == "Record Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("record")
+          )]
+        sketchLevel <- 1
+      }
+      
+      countsForHeader <-
+        getCountsForHeaderForUseInDataTable(
+          dataSource = dataSource,
+          databaseIds = consolidatedDatabaseIdTarget(),
+          cohortIds = consolidatedCohortIdTarget(),
+          source = input$comparatorConceptIdCountSource,
+          fields = input$comparatorCohortConceptSetColumnFilter
+        )
+      
+      maxCountValue <-
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                      string = dataColumnFields)
+      
+      table <- getDtWithColumnsGroupedByDatabaseId(
+        data = data,
+        headerCount = countsForHeader,
+        keyColumns = keyColumnFields,
+        sketchLevel = sketchLevel,
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
+        showResultsAsPercent = input$showAsPercentageColumnComparator
+      )
       return(table)
     }, server = TRUE)
   
@@ -3332,22 +3402,53 @@ shiny::shinyServer(function(input, output, session) {
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
                     "No orphan concepts"))
-      databaseCount <-
-        dplyr::tibble(databaseId = consolidatedDatabaseIdTarget(),
-                      cohortId = consolidatedCohortIdComparator()) %>%
-        dplyr::left_join(cohortCount,
-                         by = c("databaseId",
-                                "cohortId")) %>%
-        tidyr::replace_na(replace = list("cohortEntries" = 0,
-                                         "cohortSubjects" = 0)) %>%
-        dplyr::rename("records" = .data$cohortEntries,
-                      "persons" = .data$cohortSubjects)
-      browser()
-
-      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
-                                                             databaseCount = databaseCount,
-                                                             columnFilters = input$comparatorCohortConceptSetColumnFilter,
-                                                             numberOfColums = 2)
+      keyColumnFields <- c("conceptId", "conceptName")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      dataColumnFields <-
+        c("persons",
+          "records")
+      if (input$comparatorCohortConceptSetColumnFilter == "Both") {
+        dataColumnFields <- dataColumnFields
+        sketchLevel <- 2
+      } else if (input$comparatorCohortConceptSetColumnFilter == "Person Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("person")
+          )]
+        sketchLevel <- 1
+      } else if (input$comparatorCohortConceptSetColumnFilter == "Record Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("record")
+          )]
+        sketchLevel <- 1
+      }
+      
+      countsForHeader <-
+        getCountsForHeaderForUseInDataTable(
+          dataSource = dataSource,
+          databaseIds = consolidatedDatabaseIdTarget(),
+          cohortIds = consolidatedCohortIdTarget(),
+          source = input$comparatorConceptIdCountSource,
+          fields = input$comparatorCohortConceptSetColumnFilter
+        )
+      
+      maxCountValue <-
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                      string = dataColumnFields)
+      
+      table <- getDtWithColumnsGroupedByDatabaseId(
+        data = data,
+        headerCount = countsForHeader,
+        keyColumns = keyColumnFields,
+        sketchLevel = sketchLevel,
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
+        showResultsAsPercent = input$showAsPercentageColumnComparator
+      )
+      return(table)
     }, server = TRUE)
   
   ##output: saveComparatorCohortDefinitionOrphanConceptTable----
@@ -3541,7 +3642,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$databaseId %in% activeSelected()$databaseId) %>%
       dplyr::rename("persons" = .data$subjectCount,
                     "records" = .data$conceptCount)
-    browser()
+    
     table <-
       getSketchDesignForTablesInCohortDefinitionTab(conceptRelationshipTable,
                                                     databaseCount = databaseCount,
@@ -3580,7 +3681,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>%
       dplyr::rename("persons" = .data$subjectCount,
                     "records" = .data$conceptCount)
-    browser()
+    
     table <-
       getSketchDesignForTablesInCohortDefinitionTab(conceptMapping,
                                                     databaseCount = databaseCount,
@@ -3634,7 +3735,6 @@ shiny::shinyServer(function(input, output, session) {
     databaseCount <- data %>%  dplyr::group_by(.data$conceptId,.data$databaseId) %>% 
       dplyr::summarise("persons" = sum(subjectCount),
                        "records" = sum(conceptCount))
-    browser()
     
     table <-
       getSketchDesignForTablesInCohortDefinitionTab(conceptMapping,
@@ -4259,7 +4359,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::inner_join(cohortCount, by = c("cohortId", "databaseId")) %>%
         dplyr::mutate(databaseId = paste0(.data$databaseId, "(n = ", .data$cohortSubjects,")")) %>%
         dplyr::select(-.data$cohortId, -.data$cohortEntries, -.data$cohortSubjects)
-      browser()
         
       
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
