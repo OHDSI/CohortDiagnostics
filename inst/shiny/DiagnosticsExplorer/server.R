@@ -1335,16 +1335,17 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
+      dplyr::rename(standard = .data$standardConcept) %>% 
       dplyr::select(
         .data$conceptId,
-        .data$conceptCode,
         .data$conceptName,
-        .data$domainId,
-        .data$standardConcept,
-        .data$invalidReason,
         .data$isExcluded,
         .data$includeDescendants,
-        .data$includeMapped
+        .data$includeMapped,
+        .data$domainId,
+        .data$standard,
+        .data$conceptCode,
+        .data$invalidReason
       )
     return(data)
   })
@@ -1371,16 +1372,17 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
+      dplyr::rename(standard = .data$standardConcept) %>% 
       dplyr::select(
         .data$conceptId,
-        .data$conceptCode,
         .data$conceptName,
-        .data$domainId,
-        .data$standardConcept,
-        .data$invalidReason,
         .data$isExcluded,
         .data$includeDescendants,
-        .data$includeMapped
+        .data$includeMapped,
+        .data$domainId,
+        .data$standard,
+        .data$conceptCode,
+        .data$invalidReason
       )
     return(data)
   })
@@ -2666,8 +2668,6 @@ shiny::shinyServer(function(input, output, session) {
         ifelse(data$includeDescendants, as.character(icon("check")), "")
       data$includeMapped <-
         ifelse(data$includeMapped, as.character(icon("check")), "")
-      data$invalidReason <-
-        ifelse(data$invalidReason != 'V', as.character(icon("check")), "")
       
       data <- data %>%
         dplyr::rename(
@@ -3210,8 +3210,6 @@ shiny::shinyServer(function(input, output, session) {
         ifelse(data$includeDescendants, as.character(icon("check")), "")
       data$includeMapped <-
         ifelse(data$includeMapped, as.character(icon("check")), "")
-      data$invalidReason <-
-        ifelse(data$invalidReason != 'V', as.character(icon("check")), "")
       
       data <- data %>%
         dplyr::rename(
