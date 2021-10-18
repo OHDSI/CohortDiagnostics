@@ -544,6 +544,46 @@ getExecutionMetadata <- function(dataSource) {
 }
 
 
+
+# Database database level counts ----
+#' Returns database level counts
+#'
+#' @description
+#' Returns database level counts
+#'
+#' @template DataSource
+#' 
+#' @template DatabaseId
+#'
+#' @return
+#' Returns a data frame (tibble)
+#'
+#' @export
+getDatabaseCounts <- function(dataSource,
+                              databaseIds = NULL) {
+  databaseExecutionData <- getExecutionMetadata(dataSource = dataSource)
+  if (!is.null(databaseIds)) {
+    databaseExecutionData <- databaseExecutionData %>% 
+      dplyr::filter(.data$databaseId %in% databaseIds)
+  }
+  databaseExecutionData <- databaseExecutionData %>% 
+    dplyr::group_by(.data$databaseId) %>% 
+    dplyr::arrange(.data$databaseId, dplyr::desc(.data$startTime)) %>% 
+    dplyr::mutate(rn = dplyr::row_number()) %>% 
+    dplyr::filter(.data$rn == 1) %>% 
+    dplyr::ungroup() %>% 
+    dplyr::mutate(records = as.double(.data$recordsInDatasource),
+                  persons = as.double(.data$personsInDatasource)) %>% 
+    dplyr::select(.data$databaseId,
+                  .data$records,
+                  .data$persons)
+  return(databaseExecutionData)
+}
+
+
+
+
+
 # Concept ----
 #' Returns conceptIds details from concept table
 #'

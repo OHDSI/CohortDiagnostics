@@ -10,6 +10,8 @@ source("R/Plots.R")
 #Set values to NULL
 connectionPool <- NULL
 
+appTitleHeader <- "Cohort Diagnostics"
+
 #Load default environment variables----
 defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
@@ -258,7 +260,7 @@ if (exists("conceptSets") && doesObjectHaveData(conceptSets)) {
   conceptSets <- list()
   k <- 0
   for (i in (1:nrow(cohort))) {
-     conceptSetDetails <-
+    conceptSetDetails <-
       getConceptSetDetailsFromCohortDefinition(cohortDefinitionExpression = cohort[i,]$json %>%
                                                  RJSONIO::fromJSON(digits = 23))
     for (j in (1:nrow(conceptSetDetails$conceptSetExpression))) {
