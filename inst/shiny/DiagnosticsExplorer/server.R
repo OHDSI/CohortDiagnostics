@@ -392,6 +392,18 @@ shiny::shinyServer(function(input, output, session) {
                                                           inline = TRUE
                                                         )
                                                       )
+                                              ),
+                                              tags$td(align = "right",
+                                                      shiny::conditionalPanel(
+                                                        condition = "input.targetConceptSetsType != 'Concept Set Json' &
+                                                                   input.targetConceptSetsType != 'Concept Set Sql' &
+                                                                   input.targetConceptSetsType != 'Concept Set Expression'",
+                                                        shiny::checkboxInput(
+                                                          inputId = "showAsPercentageColumnTarget",
+                                                          label = "Show As Percent",
+                                                          value = FALSE
+                                                        )
+                                                      )
                                               )
                                             )
                                           )),
@@ -2749,7 +2761,7 @@ shiny::shinyServer(function(input, output, session) {
         sketchLevel = sketchLevel,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = FALSE #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+        showResultsAsPercent = input$showAsPercentageColumnTarget #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
       )
       return(table)
     }, server = TRUE)
