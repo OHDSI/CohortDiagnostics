@@ -4380,6 +4380,9 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
       return(NULL)
     }
+    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+      return(NULL)
+    }
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(message = paste0("Getting incidence rate data."),
@@ -4511,6 +4514,13 @@ shiny::shinyServer(function(input, output, session) {
       if (!doesObjectHaveData(getIncidenceRateData())) {
         return(NULL)
       }
+      if (!doesObjectHaveData(input$incidenceRateCalendarFilter)) {
+        return(NULL)
+      }
+      if (input$incidenceRateCalendarFilter[2] <=
+          input$incidenceRateCalendarFilter[1]) {
+        return(NULL)
+      }
       calendarFilter <- getIncidenceRateData() %>%
         dplyr::select(.data$calendarYear) %>%
         dplyr::filter(.data$calendarYear != "NA") %>%
@@ -4522,9 +4532,8 @@ shiny::shinyServer(function(input, output, session) {
       if (input$incidenceRateCalendarFilter[2] >
           input$incidenceRateCalendarFilter[1]) {
         calendarFilter <-
-          calendarFilter[calendarFilter$calendarYear >= input$incidenceRateCalendarFilter[1] &
-                           calendarFilter$calendarYear <= input$incidenceRateCalendarFilter[2], , drop = FALSE] %>%
-          dplyr::pull(.data$calendarYear)
+          calendarFilter[calendarFilter >= input$incidenceRateCalendarFilter[1] &
+                           calendarFilter <= input$incidenceRateCalendarFilter[2]]
       }
       return(calendarFilter)
     })
@@ -4546,38 +4555,41 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   ##reactive: getIncidentRatePlotData ----
-  getIncidentRatePlotData <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(!is.null(input$tabs),
-         doesObjectHaveData(getIncidenceRateCalendarYears()))
-  },
-  handlerExpr = {
-    if (any(
-      length(consolidatedDatabaseIdTarget()) == 0,
-      length(consolidatedCohortIdTarget()) == 0
-    )) {
+  getIncidentRatePlotData <- shiny::reactive({
+    if (input$tabs != "incidenceRate") {
       return(NULL)
     }
-    browser()
+    if (!doesObjectHaveData(input$irStratification)) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(getIncidenceRateCalendarYears())) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(input$minPersonYear)) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(input$minSubjetCount)) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(incidenceRateAgeFilterValues())) {
+      return(NULL)
+    }
+    
+    data <- getIncidenceRateData()
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <-
       "Calendar Year" %in% input$irStratification
     
-    if (input$tabs == "incidenceRate") {
-      data <- getIncidenceRateData()
-    } else {
-      data <- NULL
-    }
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
     data <- data %>%
       dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget())
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    
     if (stratifyByGender) {
       data <- data %>%
         dplyr::filter(.data$gender != '')
@@ -4648,31 +4660,14 @@ shiny::shinyServer(function(input, output, session) {
   
   
   ##reactive: getIncidentRatePlot ----
-  getIncidentRatePlot <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(
-      !is.null(input$tabs),
-      input$renderIncidentRatePlot,
-      doesObjectHaveData(getIncidenceRateCalendarYears())
-    )
-  },
-  handlerExpr = {
-    if (any(
-      length(consolidatedDatabaseIdTarget()) == 0,
-      length(consolidatedCohortIdTarget()) == 0
-    )) {
-      return(NULL)
-    }
-    browser()
+  getIncidentRatePlot <- shiny::reactive({
     data <- getIncidentRatePlotData()
     validate(need(doesObjectHaveData(data),
                   "No data for this combination"))
-    
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <-
       "Calendar Year" %in% input$irStratification
-    
     plot <- plotIncidenceRate(
       data = data,
       cohortCount = cohortCount,
@@ -4682,7 +4677,7 @@ shiny::shinyServer(function(input, output, session) {
       stratifyByCalendarYear = stratifyByCalendarYear,
       yscaleFixed = input$irYscaleFixed
     )
-    getIncidentRatePlot(plot)
+    return(plot)
   })
   
   ##output: saveIncidenceRateData----
@@ -4702,10 +4697,8 @@ shiny::shinyServer(function(input, output, session) {
       length(consolidatedDatabaseIdTarget()) > 0,
       "No data sources chosen"
     ))
-    validate(need(
-      length(consolidatedCohortIdTarget()) > 0,
-      "No cohorts chosen"
-    ))
+    validate(need(length(consolidatedCohortIdTarget()) > 0,
+                  "No cohorts chosen"))
     
     progress <- shiny::Progress$new()
     on.exit(progress$close())
@@ -4720,7 +4713,7 @@ shiny::shinyServer(function(input, output, session) {
         length(consolidatedDatabaseIdTarget()),
         " databases"
       ), {
-        return(getIncidentRatePlot())
+        getIncidentRatePlot()
       },
       detail = "Please Wait"
     )

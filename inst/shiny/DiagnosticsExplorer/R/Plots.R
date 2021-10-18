@@ -741,16 +741,16 @@ plotIncidenceRate <- function(data,
     dplyr::left_join(cohortCount, by = c('cohortId', 'databaseId')) %>%
     addShortName(shortNameRef) %>%
     dplyr::mutate(incidenceRate = round(.data$incidenceRate, digits = 3)) %>%
-    dplyr::mutate(
-      strataGender = !is.na(.data$gender),
-      strataAgeGroup = !is.na(.data$ageGroup),
-      strataCalendarYear = !is.na(.data$calendarYear)
-    ) %>%
-    dplyr::filter(
-      .data$strataGender %in% !!stratifyByGender &
-        .data$strataAgeGroup %in% !!stratifyByAgeGroup &
-        .data$strataCalendarYear %in% !!stratifyByCalendarYear
-    ) %>%
+    # dplyr::mutate(
+    #   strataGender = !is.na(.data$gender),
+    #   strataAgeGroup = !is.na(.data$ageGroup),
+    #   strataCalendarYear = !is.na(.data$calendarYear)
+    # ) %>%
+    # dplyr::filter(
+    #   .data$strataGender %in% !!stratifyByGender &
+    #     .data$strataAgeGroup %in% !!stratifyByAgeGroup &
+    #     .data$strataCalendarYear %in% !!stratifyByCalendarYear
+    # ) %>%
     dplyr::select(-dplyr::starts_with("strata"))
   
   if (stratifyByCalendarYear) {

@@ -495,7 +495,8 @@ bodyTabItems <- shinydashboard::tabItems(
             shiny::numericInput(
               inputId = "minSubjetCount",
               label = "Minimum subject count",
-              value = NULL
+              value = 0,
+              min = 0
             )
           ),
           tags$td(tags$table(width = "100%",
@@ -510,15 +511,16 @@ bodyTabItems <- shinydashboard::tabItems(
                                  )
                                )
                              )),)
-        ),
-        tags$tr(
-          tags$td(colspan = 6, align = 'right',
-            shiny::actionButton(
-              inputId = "renderIncidentRatePlot",
-              label = "Render Plot"
-            )
-          )
         )
+        # ,
+        # tags$tr(
+        #   tags$td(colspan = 6, align = 'right',
+        #     shiny::actionButton(
+        #       inputId = "renderIncidentRatePlot",
+        #       label = "Render Plot"
+        #     )
+        #   )
+        # )
       ),
       ggiraph::ggiraphOutput(
         outputId = "incidenceRatePlot",
