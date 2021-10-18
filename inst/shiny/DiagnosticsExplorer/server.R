@@ -373,8 +373,8 @@ shiny::shinyServer(function(input, output, session) {
                                                         shiny::radioButtons(
                                                           inputId = "targetConceptIdCountSource",
                                                           label = "",
-                                                          choices = c("Datasource level", "Cohort Level"),
-                                                          selected = "Datasource level",
+                                                          choices = c("Datasource Level", "Cohort Level"),
+                                                          selected = "Datasource Level",
                                                           inline = TRUE
                                                         )
                                                       )
@@ -657,8 +657,8 @@ shiny::shinyServer(function(input, output, session) {
                                                         shiny::radioButtons(
                                                           inputId = "comparatorConceptIdCountSource",
                                                           label = "",
-                                                          choices = c("Datasource level", "Cohort Level"),
-                                                          selected = "Datasource level",
+                                                          choices = c("Datasource Level", "Cohort Level"),
+                                                          selected = "Datasource Level",
                                                           inline = TRUE
                                                         )
                                                       )
@@ -1412,7 +1412,7 @@ shiny::shinyServer(function(input, output, session) {
         databaseIds = consolidatedDatabaseIdTarget(),
         conceptIds = data$conceptId %>% unique(),
         cohortIds = consolidatedCohortIdTarget(),
-        databaseCount = (input$targetConceptIdCountSource == "Datasource level")
+        databaseCount = (input$targetConceptIdCountSource == "Datasource Level")
       )
     if (!doesObjectHaveData(count)) {
       return(data %>% 
@@ -1478,7 +1478,7 @@ shiny::shinyServer(function(input, output, session) {
         databaseIds = consolidatedDatabaseIdTarget(),
         conceptIds = data$conceptId %>% unique(),
         cohortIds = consolidatedCohortIdComparator(),
-        databaseCount = (input$comparatorConceptIdCountSource == "Datasource level")
+        databaseCount = (input$comparatorConceptIdCountSource == "Datasource Level")
       )
     if (!doesObjectHaveData(count)) {
       return(data %>% 
@@ -1543,7 +1543,7 @@ shiny::shinyServer(function(input, output, session) {
         databaseIds = consolidatedDatabaseIdTarget(),
         conceptIds = data$conceptId %>% unique(),
         cohortIds = consolidatedCohortIdTarget(),
-        databaseCount = (input$targetConceptIdCountSource == "Datasource level")
+        databaseCount = (input$targetConceptIdCountSource == "DatasourceLevel")
       )
     if (!doesObjectHaveData(count)) {
       return(data %>% 
@@ -1608,7 +1608,7 @@ shiny::shinyServer(function(input, output, session) {
         databaseIds = consolidatedDatabaseIdTarget(),
         conceptIds = data$conceptId %>% unique(),
         cohortIds = consolidatedCohortIdComparator(),
-        databaseCount = (input$comparatorConceptIdCountSource == "Datasource level")
+        databaseCount = (input$comparatorConceptIdCountSource == "Datasource Level")
       )
     if (!doesObjectHaveData(count)) {
       return(data %>% 
@@ -1673,7 +1673,7 @@ shiny::shinyServer(function(input, output, session) {
         databaseIds = consolidatedDatabaseIdTarget(),
         conceptIds = data$conceptId %>% unique(),
         cohortIds = consolidatedCohortIdTarget(),
-        databaseCount = (input$targetConceptIdCountSource == "Datasource level")
+        databaseCount = (input$targetConceptIdCountSource == "Datasource Level")
       )
     if (!doesObjectHaveData(count)) {
       return(data %>% 
@@ -1738,7 +1738,7 @@ shiny::shinyServer(function(input, output, session) {
         databaseIds = consolidatedDatabaseIdTarget(),
         conceptIds = data$conceptId %>% unique(),
         cohortIds = consolidatedCohortIdComparator(),
-        databaseCount = (input$comparatorConceptIdCountSource == "Datasource level")
+        databaseCount = (input$comparatorConceptIdCountSource == "Datasource Level")
       )
     if (!doesObjectHaveData(count)) {
       return(data %>% 
@@ -1864,47 +1864,39 @@ shiny::shinyServer(function(input, output, session) {
       data <- getSimplifiedInclusionRuleResultsTarget()
       validate(need((nrow(data) > 0),
                     "There is no inclusion rule data for this cohort."))
-      cohortCountsForHeader <-
-        getResultsCohortCount(
-          dataSource = dataSource,
-          cohortIds = consolidatedCohortIdTarget(),
-          databaseIds = consolidatedDatabaseIdTarget()
-        ) %>% 
-        dplyr::select(-.data$cohortId)
-      if (input$targetCohortDefinitionInclusionRuleType == "Events") {
-        cohortCountsForHeader <- cohortCountsForHeader %>%
-          dplyr::select(-.data$cohortSubjects) %>%
-          dplyr::rename(count = .data$cohortEntries)
-      } else if (input$targetCohortDefinitionInclusionRuleType == "Persons") {
-        cohortCountsForHeader <- cohortCountsForHeader %>%
-          dplyr::select(-.data$cohortEntries) %>%
-          dplyr::rename(count = .data$cohortSubjects)
-      }
-      
-      dataColumnFieldsAll <-
+      keyColumnFields <- c("ruleSequenceId", "ruleName")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      dataColumnFields <-
         c("totalSubjects",
           "remainSubjects",
           "meetSubjects",
           "gainSubjects")
-      #depending on user selection - what data Column Fields Will Be Presented?
-      if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters == "All") {
-        dataColumnFields <- dataColumnFieldsAll
-      } else {
+      if (input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters != "All") {
         dataColumnFields <-
-          dataColumnFieldsAll[stringr::str_detect(
-            string = tolower(dataColumnFieldsAll),
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
             pattern = tolower(
               input$targetCohortDefinitionSimplifiedInclusionRuleTableFilters
             )
           )]
       }
+      countsForHeader <-
+        getCountsForHeaderForUseInDataTable(
+          dataSource = dataSource,
+          databaseIds = consolidatedDatabaseIdTarget(),
+          cohortIds = consolidatedCohortIdTarget(),
+          source = "Cohort Level",
+          fields = input$targetCohortDefinitionInclusionRuleType
+        )
+      
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
+      
       table <- getDtWithColumnsGroupedByDatabaseId(
         data = data,
-        headerCount = cohortCountsForHeader,
-        keyColumns = c("ruleSequenceId", "ruleName"),
+        headerCount = countsForHeader,
+        keyColumns = keyColumnFields,
         sketchLevel = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
@@ -2713,56 +2705,18 @@ shiny::shinyServer(function(input, output, session) {
       ))
       data <- getResolvedConceptsTarget()
       validate(need(doesObjectHaveData(data), "No resolved concept ids"))
-      if (input$targetConceptIdCountSource == "Datasource level") {
-        countsForHeader <- getDatabaseCounts(dataSource = dataSource,
-                                             databaseIds = consolidatedDatabaseIdTarget())
-      } else if (input$targetConceptIdCountSource == "Cohort Level") {
-        countsForHeader <- getResultsCohortCount(
-          dataSource = dataSource,
-          cohortIds = consolidatedCohortIdTarget(),
-          databaseIds = consolidatedDatabaseIdTarget()
-        ) %>%
-          dplyr::rename(records = .data$cohortEntries,
-                        persons = .data$cohortSubjects)
-      }
-      
-      if (input$targetCohortConceptSetColumnFilter  == "Both") {
-        dataColumnFields <- c("records", "persons")
-        countsForHeader <- countsForHeader
-        maxCountValue <-
-          getMaxValueForStringMatchedColumnsInDataFrame(data = data,
-                                                        string = dataColumnFields)
-      } else if (input$targetCohortConceptSetColumnFilter  == "Person Only") {
-        countsForHeader <- countsForHeader %>%
-          dplyr::select(-.data$records) %>%
-          dplyr::rename(count = .data$persons)
-        data <- data %>%
-          dplyr::select(-.data$records) %>%
-          dplyr::rename(count = .data$persons)
-        maxCountValue <-
-          getMaxValueForStringMatchedColumnsInDataFrame(data = data,
-                                                        string = c("count"))
-        dataColumnFields <- c("count")
-      } else if (input$targetCohortDefinitionInclusionRuleType == "Record Only") {
-        countsForHeader <- countsForHeader %>%
-          dplyr::select(-.data$persons) %>%
-          dplyr::rename(count = .data$records)
-        data <- data %>%
-          dplyr::select(-.data$persons) %>%
-          dplyr::rename(count = .data$records)
-        maxCountValue <-
-          getMaxValueForStringMatchedColumnsInDataFrame(data = data,
-                                                        string = c("count"))
-        dataColumnFields <- c("count")
-      }
-      debug(getDtWithColumnsGroupedByDatabaseId)
-
+      countsForHeader <- getCountsForHeaderForUseInDataTable(dataSource = dataSource,
+                                                     data = data,
+                                                     databaseIds = consolidatedDatabaseIdTarget(),
+                                                     cohortIds = consolidatedCohortIdTarget(),
+                                                     source = input$targetConceptIdCountSource,
+                                                     fields = input$targetCohortConceptSetColumnFilter)
       table <- getDtWithColumnsGroupedByDatabaseId(
         data = data,
-        headerCount = countsForHeader,
+        headerCount = countsForHeader$countsForHeader,
         keyColumns = c("conceptId", "conceptName"),
-        dataColumns = dataColumnFields,
-        maxCount = maxCountValue,
+        dataColumns = countsForHeader$dataColumnFields,
+        maxCount = countsForHeader$maxCountValue,
         sketchLevel = 2,
         showResultsAsPercent = FALSE #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
       )
@@ -2963,54 +2917,43 @@ shiny::shinyServer(function(input, output, session) {
   ##output: comparatorCohortDefinitionSimplifiedInclusionRuleTable----
   output$comparatorCohortDefinitionSimplifiedInclusionRuleTable <-
     DT::renderDataTable(expr = {
-      if (any(is.null(consolidatedCohortIdComparator()))) {
-        return(NULL)
-      }
       data <- getSimplifiedInclusionRuleResultsComparator()
       validate(need((nrow(data) > 0),
                     "There is no inclusion rule data for this cohort."))
-      # count that will be appended to the main header in sketch
-      cohortCountsForHeader <-
-        getResultsCohortCount(
-          dataSource = dataSource,
-          cohortIds = consolidatedCohortIdComparator(),
-          databaseIds = consolidatedDatabaseIdTarget()
-        ) %>% 
-        dplyr::select(-.data$cohortId)
-      if (input$comparatorCohortDefinitionInclusionRuleType == "Events") {
-        cohortCountsForHeader <- cohortCountsForHeader %>%
-          dplyr::select(-.data$cohortSubjects) %>%
-          dplyr::rename(count = .data$cohortEntries)
-      } else if (input$comparatorCohortDefinitionInclusionRuleType == "Persons") {
-        cohortCountsForHeader <- cohortCountsForHeader %>%
-          dplyr::select(-.data$cohortEntries) %>%
-          dplyr::rename(count = .data$cohortSubjects)
-      }
-      
-      dataColumnFieldsAll <-
+      keyColumnFields <- c("ruleSequenceId", "ruleName")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      dataColumnFields <-
         c("totalSubjects",
           "remainSubjects",
           "meetSubjects",
           "gainSubjects")
-      #depending on user selection - what data Column Fields Will Be Presented?
-      if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters == "All") {
-        dataColumnFields <- dataColumnFieldsAll
-      } else {
+      if (input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters != "All") {
         dataColumnFields <-
-          dataColumnFieldsAll[stringr::str_detect(
-            string = tolower(dataColumnFieldsAll),
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
             pattern = tolower(
               input$comparatorCohortDefinitionSimplifiedInclusionRuleTableFilters
             )
           )]
       }
+      countsForHeader <-
+        getCountsForHeaderForUseInDataTable(
+          dataSource = dataSource,
+          databaseIds = consolidatedDatabaseIdComparator(),
+          cohortIds = consolidatedCohortIdComparator(),
+          source = "Cohort Level",
+          fields = input$comparatorCohortDefinitionInclusionRuleType
+        )
+      
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
+      
       table <- getDtWithColumnsGroupedByDatabaseId(
         data = data,
-        headerCount = cohortCountsForHeader,
-        keyColumns = c("ruleSequenceId", "ruleName"),
+        headerCount = countsForHeader,
+        keyColumns = keyColumnFields,
+        sketchLevel = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = FALSE #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
@@ -3636,10 +3579,10 @@ shiny::shinyServer(function(input, output, session) {
       }
     
       if (!is.null(input$targetConceptIdCountSource)) {
-        if (input$targetConceptIdCountSource == "Datasource level") {
+        if (input$targetConceptIdCountSource == "Datasource Level") {
           updateRadioButtons(session = session,
                              inputId = "comparatorConceptIdCountSource",
-                             selected = "Datasource level")
+                             selected = "Datasource Level")
         } else {
           updateRadioButtons(session = session,
                              inputId = "comparatorConceptIdCountSource",
@@ -3801,10 +3744,10 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       if (!is.null(input$comparatorConceptIdCountSource)) {
-        if (input$comparatorConceptIdCountSource == "Datasource level") {
+        if (input$comparatorConceptIdCountSource == "Datasource Level") {
           updateRadioButtons(session = session,
                              inputId = "targetConceptIdCountSource",
-                             selected = "Datasource level")
+                             selected = "Datasource Level")
         } else {
           updateRadioButtons(session = session,
                              inputId = "targetConceptIdCountSource",

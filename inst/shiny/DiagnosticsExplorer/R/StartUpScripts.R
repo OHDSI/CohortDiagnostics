@@ -586,9 +586,9 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
                                      maxCount,
                                      showResultsAsPercent = FALSE) {
   
+  # ensure the data has required fields
   keyColumns <- sort(keyColumns %>% unique())
   dataColumns <- sort(dataColumns %>% unique())
-  
   missingColumns <-
     setdiff(x = c(keyColumns, dataColumns) %>% unique(),
             y = colnames(data))
@@ -602,6 +602,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
   }
   data <- data %>% 
     dplyr::select(c(keyColumns,"databaseId", dataColumns) %>% unique())
+  
   
   #get all unique databsaeIds - and sort data by it
   uniqueDatabases <- data %>%
@@ -667,7 +668,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
       dataColumnsLevel2 <- colnames(data)
       dataColumnsLevel2 <-
         dataColumnsLevel2[stringr::str_detect(string = dataColumnsLevel2,
-                                              pattern = keyColumns,
+                                              pattern = paste0(keyColumns, collapse = "|"),
                                               negate = TRUE)] %>%
         stringr::word(start = -1)
       
@@ -803,6 +804,45 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
 }
 
 
+getCountsForHeaderForUseInDataTable <- function(dataSource,
+                                                databaseIds = NULL,
+                                                cohortIds = NULL,
+                                                source = "Datasource Level",
+                                                fields = "Both") {
+  if (all(!doesObjectHaveData(databaseIds),
+          !doesObjectHaveData(cohortIds))) {
+    stop("Please provide either databaseIds or cohortids")
+  }
+  if (source == "Datasource Level") {
+    countsForHeader <- getDatabaseCounts(dataSource = dataSource,
+                                         databaseIds = databaseIds)
+  } else if (source == "Cohort Level") {
+    if (length(cohortIds) > 1) {
+      stop("Only one cohort id is supported")
+    }
+    countsForHeader <-
+      getResultsCohortCount(
+        dataSource = dataSource,
+        cohortIds = cohortIds,
+        databaseIds = databaseIds
+      ) %>%
+      dplyr::rename(records = .data$cohortEntries,
+                    persons = .data$cohortSubjects) %>%
+      dplyr::select(-.data$cohortId) #only one cohort id is supported
+  }
+  
+  if (fields  == "Person Only") {
+    countsForHeader <- countsForHeader %>%
+      dplyr::select(-.data$records) %>%
+      dplyr::rename(count = .data$persons)
+  } else if (fields %in% c("Events", "Record Only")) {
+    countsForHeader <- countsForHeader %>%
+      dplyr::select(-.data$persons) %>%
+      dplyr::rename(count = .data$records)
+  }
+  
+  return(countsForHeader)
+}
 
 
 
