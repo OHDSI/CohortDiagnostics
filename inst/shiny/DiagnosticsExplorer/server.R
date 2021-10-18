@@ -3056,7 +3056,7 @@ shiny::shinyServer(function(input, output, session) {
       countsForHeader <-
         getCountsForHeaderForUseInDataTable(
           dataSource = dataSource,
-          databaseIds = consolidatedDatabaseIdComparator(),
+          databaseIds = consolidatedDatabaseIdTarget(),
           cohortIds = consolidatedCohortIdComparator(),
           source = "Cohort Level",
           fields = input$comparatorCohortDefinitionInclusionRuleType
