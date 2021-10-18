@@ -1864,13 +1864,13 @@ shiny::shinyServer(function(input, output, session) {
       data <- getSimplifiedInclusionRuleResultsTarget()
       validate(need((nrow(data) > 0),
                     "There is no inclusion rule data for this cohort."))
-      # count that will be appended to the main header in sketch
       cohortCountsForHeader <-
         getResultsCohortCount(
           dataSource = dataSource,
           cohortIds = consolidatedCohortIdTarget(),
           databaseIds = consolidatedDatabaseIdTarget()
-        )
+        ) %>% 
+        dplyr::select(-.data$cohortId)
       if (input$targetCohortDefinitionInclusionRuleType == "Events") {
         cohortCountsForHeader <- cohortCountsForHeader %>%
           dplyr::select(-.data$cohortSubjects) %>%
@@ -1905,6 +1905,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = cohortCountsForHeader,
         keyColumns = c("ruleSequenceId", "ruleName"),
+        sketchLevel = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = FALSE #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
@@ -1960,22 +1961,22 @@ shiny::shinyServer(function(input, output, session) {
     target <- NULL
     comparator <- NULL
     if (input$targetConceptSetsType == "Resolved" &
-        input$comparatorConceptSetsType == 'Resolved') {
+        input$comparatorConceptSetsType == "Resolved") {
       target <- getResolvedConceptsTarget()
       comparator <- getResolvedConceptsComparator()
     } else if (input$targetConceptSetsType == "Excluded" &
-               input$comparatorConceptSetsType == 'Excluded') {
+               input$comparatorConceptSetsType == "Excluded") {
       target <- getExcludedConceptsTarget()
       comparator <- getExcludedConceptsComparator()
     }  else if (input$targetConceptSetsType == "Orphan concepts" &
-                input$comparatorConceptSetsType == 'Orphan concepts') {
+                input$comparatorConceptSetsType == "Orphan concepts") {
       target <- getOrphanConceptsTarget()
       comparator <- getOrphanConceptsComparator()
     }
-    if (any(!doesObjectHaveData(target),!doesObjectHaveData(comparator))) {
+    if (any(!doesObjectHaveData(target),
+            !doesObjectHaveData(comparator))) {
       return(NULL)
     }
-    
     combinedResult <-
       target %>%
       dplyr::union(comparator) %>%
@@ -2706,27 +2707,65 @@ shiny::shinyServer(function(input, output, session) {
         length(consolidatedCohortIdTarget()) > 0,
         "Please select concept set"
       ))
+      validate(need(
+        length(consolidatedDatabaseIdTarget()) > 0,
+        "Please select database id"
+      ))
+      data <- getResolvedConceptsTarget()
+      validate(need(doesObjectHaveData(data), "No resolved concept ids"))
+      if (input$targetConceptIdCountSource == "Datasource level") {
+        countsForHeader <- getDatabaseCounts(dataSource = dataSource,
+                                             databaseIds = consolidatedDatabaseIdTarget())
+      } else if (input$targetConceptIdCountSource == "Cohort Level") {
+        countsForHeader <- getResultsCohortCount(
+          dataSource = dataSource,
+          cohortIds = consolidatedCohortIdTarget(),
+          databaseIds = consolidatedDatabaseIdTarget()
+        ) %>%
+          dplyr::rename(records = .data$cohortEntries,
+                        persons = .data$cohortSubjects)
+      }
       
-      data <- getResolvedConceptsTarget() 
-      validate(need((all(
-        !is.null(data), nrow(data) > 0
-      )),
-      "No resolved concept ids"))
-      databaseCount <-
-        dplyr::tibble(databaseId = consolidatedDatabaseIdTarget(),
-                      cohortId = consolidatedCohortIdTarget()) %>%
-        dplyr::left_join(cohortCount,
-                         by = c("databaseId",
-                                "cohortId")) %>%
-        tidyr::replace_na(replace = list("cohortEntries" = 0,
-                                         "cohortSubjects" = 0)) %>%
-        dplyr::rename("records" = .data$cohortEntries,
-                      "persons" = .data$cohortSubjects)
-      browser()
-      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
-                                                             databaseCount = databaseCount,
-                                                             columnFilters = input$targetCohortConceptSetColumnFilter,
-                                                             numberOfColums = 2)
+      if (input$targetCohortConceptSetColumnFilter  == "Both") {
+        dataColumnFields <- c("records", "persons")
+        countsForHeader <- countsForHeader
+        maxCountValue <-
+          getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                        string = dataColumnFields)
+      } else if (input$targetCohortConceptSetColumnFilter  == "Person Only") {
+        countsForHeader <- countsForHeader %>%
+          dplyr::select(-.data$records) %>%
+          dplyr::rename(count = .data$persons)
+        data <- data %>%
+          dplyr::select(-.data$records) %>%
+          dplyr::rename(count = .data$persons)
+        maxCountValue <-
+          getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                        string = c("count"))
+        dataColumnFields <- c("count")
+      } else if (input$targetCohortDefinitionInclusionRuleType == "Record Only") {
+        countsForHeader <- countsForHeader %>%
+          dplyr::select(-.data$persons) %>%
+          dplyr::rename(count = .data$records)
+        data <- data %>%
+          dplyr::select(-.data$persons) %>%
+          dplyr::rename(count = .data$records)
+        maxCountValue <-
+          getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                        string = c("count"))
+        dataColumnFields <- c("count")
+      }
+      debug(getDtWithColumnsGroupedByDatabaseId)
+
+      table <- getDtWithColumnsGroupedByDatabaseId(
+        data = data,
+        headerCount = countsForHeader,
+        keyColumns = c("conceptId", "conceptName"),
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
+        sketchLevel = 2,
+        showResultsAsPercent = FALSE #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+      )
       return(table)
     }, server = TRUE)
   
@@ -2760,6 +2799,7 @@ shiny::shinyServer(function(input, output, session) {
                                          "cohortSubjects" = 0)) %>%
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
+      browser()
       
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount,
@@ -2796,6 +2836,7 @@ shiny::shinyServer(function(input, output, session) {
                                          "cohortSubjects" = 0)) %>%
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
+      browser()
 
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount,
@@ -2934,7 +2975,8 @@ shiny::shinyServer(function(input, output, session) {
           dataSource = dataSource,
           cohortIds = consolidatedCohortIdComparator(),
           databaseIds = consolidatedDatabaseIdTarget()
-        )
+        ) %>% 
+        dplyr::select(-.data$cohortId)
       if (input$comparatorCohortDefinitionInclusionRuleType == "Events") {
         cohortCountsForHeader <- cohortCountsForHeader %>%
           dplyr::select(-.data$cohortSubjects) %>%
@@ -3176,6 +3218,7 @@ shiny::shinyServer(function(input, output, session) {
                                          "cohortSubjects" = 0)) %>%
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
+      browser()
       
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount,
@@ -3214,6 +3257,7 @@ shiny::shinyServer(function(input, output, session) {
                                          "cohortSubjects" = 0)) %>%
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
+      browser()
   
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount,
@@ -3248,6 +3292,7 @@ shiny::shinyServer(function(input, output, session) {
                                          "cohortSubjects" = 0)) %>%
         dplyr::rename("records" = .data$cohortEntries,
                       "persons" = .data$cohortSubjects)
+      browser()
 
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
                                                              databaseCount = databaseCount,
@@ -3446,6 +3491,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$databaseId %in% activeSelected()$databaseId) %>%
       dplyr::rename("persons" = .data$subjectCount,
                     "records" = .data$conceptCount)
+    browser()
     table <-
       getSketchDesignForTablesInCohortDefinitionTab(conceptRelationshipTable,
                                                     databaseCount = databaseCount,
@@ -3484,6 +3530,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>%
       dplyr::rename("persons" = .data$subjectCount,
                     "records" = .data$conceptCount)
+    browser()
     table <-
       getSketchDesignForTablesInCohortDefinitionTab(conceptMapping,
                                                     databaseCount = databaseCount,
@@ -3537,6 +3584,7 @@ shiny::shinyServer(function(input, output, session) {
     databaseCount <- data %>%  dplyr::group_by(.data$conceptId,.data$databaseId) %>% 
       dplyr::summarise("persons" = sum(subjectCount),
                        "records" = sum(conceptCount))
+    browser()
     
     table <-
       getSketchDesignForTablesInCohortDefinitionTab(conceptMapping,
@@ -4082,8 +4130,7 @@ shiny::shinyServer(function(input, output, session) {
     {
       getCsvFileNameWithDateTime(string = "cohortCount")
     },
-    content = function(file)
-    {
+    content = function(file) {
       if (input$cohortCountsTableColumnFilter == "Both")
       {
         table <- getCohortCountDataSubjectRecord()
@@ -4162,6 +4209,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::inner_join(cohortCount, by = c("cohortId", "databaseId")) %>%
         dplyr::mutate(databaseId = paste0(.data$databaseId, "(n = ", .data$cohortSubjects,")")) %>%
         dplyr::select(-.data$cohortId, -.data$cohortEntries, -.data$cohortSubjects)
+      browser()
         
       
       table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
