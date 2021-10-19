@@ -410,24 +410,35 @@ shiny::shinyServer(function(input, output, session) {
                   shiny::conditionalPanel(
                     condition = "output.isTargetCohortDefinitionConceptSetsTableRowSelected == true &
                                                       input.targetConceptSetsType == 'Concept Set Expression'",
-                    tags$table(width = "100%",
-                               tags$tr(
-                                 tags$td(
-                                   shiny::conditionalPanel(
-                                     condition = "!output.canTargetConceptSetExpressionBeOptimized",
-                                         shiny::actionButton(inputId = "optimizeConceptSetButton",
-                                                             label = "Optimize"))),
-                                 tags$td(
-                                   align = "right",
-                                   shiny::downloadButton(
-                                     "saveTargetConceptSetsExpressionTable",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                                 )
-                               )),
-                    DT::dataTableOutput(outputId = "targetConceptSetsExpressionTable")
+                    # tags$table(width = "100%",
+                    #            tags$tr(
+                    #              tags$td(
+                    #                shiny::conditionalPanel(
+                    #                  condition = "!output.canTargetConceptSetExpressionBeOptimized",
+                    #                      shiny::actionButton(inputId = "optimizeConceptSetButton",
+                    #                                          label = "Optimize"))),
+                    #              tags$td(
+                    #                align = "right",
+                    #                shiny::downloadButton(
+                    #                  "saveTargetConceptSetsExpressionTable",
+                    #                  label = "",
+                    #                  icon = shiny::icon("download"),
+                    #                  style = "margin-top: 5px; margin-bottom: 5px;"
+                    #                )
+                    #              )
+                    #            )),
+                    DT::dataTableOutput(outputId = "targetConceptSetsExpressionTable"),
+                    shiny::conditionalPanel(
+                      condition = "!output.canTargetConceptSetExpressionBeOptimized",
+                      shinydashboard::box(
+                        title = "Optimized Concept set expressions",
+                        width = NULL,
+                        solidHeader = FALSE,
+                        collapsible = TRUE,
+                        collapsed = TRUE,
+                        DT::dataTableOutput(outputId = "targetConceptSetsExpressionOptimizedTable"),
+                      )
+                      )
                   ),
                   shiny::conditionalPanel(
                     condition = "input.targetConceptSetsType == 'Resolved'",
@@ -2639,6 +2650,7 @@ shiny::shinyServer(function(input, output, session) {
       }
       return(nrow(removed) == 0)
     })
+  
   shiny::outputOptions(x = output,
                        name = "canTargetConceptSetExpressionBeOptimized",
                        suspendWhenHidden = FALSE)
@@ -6860,7 +6872,11 @@ shiny::shinyServer(function(input, output, session) {
       ))
       
       if (input$characterizationColumnFilters == "Mean and Standard Deviation") {
-        columDefs <- minCellPercentDef(1:(length(databaseIds) * 2))
+        columnDefs <- minCellPercentDef(1:(length(databaseIds) * 2))
+        
+        if (input$charProportionOrContinuous == "Continuous") {
+          columnDefs <- minCellCountDef(1:(length(databaseIds)))
+        }
         histogramColumns <- (1 + 1:(length(databaseIds) * 2))
         
         sketch <- htmltools::withTags(table(class = "display",
@@ -6883,7 +6899,11 @@ shiny::shinyServer(function(input, output, session) {
                                             ))))
         
       } else {
-        columDefs <- minCellPercentDef(1:(length(databaseIds)))
+          
+        columnDefs <- minCellPercentDef(1:(length(databaseIds)))
+        if (input$charProportionOrContinuous == "Continuous") {
+          columnDefs <- minCellCountDef(1:(length(databaseIds)))
+        }
         histogramColumns <- (1 + 1:(length(databaseIds)))
         
         table <- DT::datatable(
@@ -6908,7 +6928,7 @@ shiny::shinyServer(function(input, output, session) {
         paging = TRUE,
         columnDefs = list(
           truncateStringDef(0, 80),
-          columDefs
+          columnDefs
         )
       )
       if (input$characterizationColumnFilters == "Mean only") {
@@ -6918,6 +6938,7 @@ shiny::shinyServer(function(input, output, session) {
           rownames = FALSE,
           escape = FALSE,
           filter = "top",
+          selection = list(mode = "single", target = "row"),
           class = "stripe nowrap compact"
         )
       } else {
@@ -6928,6 +6949,7 @@ shiny::shinyServer(function(input, output, session) {
           container = sketch,
           escape = FALSE,
           filter = "top",
+          selection = list(mode = "single", target = "row"),
           class = "stripe nowrap compact"
         )
       }
@@ -7596,7 +7618,9 @@ shiny::shinyServer(function(input, output, session) {
                              values_from = "values") %>%
           dplyr::select(-dplyr::contains("NA"))
         
-        sketchColumns <- c("Target", "Comparator", "StdDiff")
+        sketchColumns <- c(paste0("target - ",targetCohortHeader), 
+                           paste0("Comparator - ",comparatorCohortHeader), 
+                           "StdDiff")
         sketchColspan <- 3
         
         columsDefs <- list(truncateStringDef(0, 80),
@@ -7650,7 +7674,10 @@ shiny::shinyServer(function(input, output, session) {
                 .data$type == "StdDiff"
             )
           
-          sketchColumns <- c("Target", "Comparator", "StdDiff")
+          sketchColumns <- c(paste0("target - ",targetCohortHeader), 
+                             paste0("Comparator - ",comparatorCohortHeader), 
+                             "StdDiff")
+          # sketchColumns <- c("Target", "Comparator", "StdDiff")
           sketchColspan <- 3
           
           columsDefs <- list(truncateStringDef(0, 80),
