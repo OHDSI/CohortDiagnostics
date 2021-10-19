@@ -384,14 +384,41 @@ bodyTabItems <- shinydashboard::tabItems(
       condition = "output.doesSelectedRowInCohortCountTableHaveCohortId == true",
       tags$br(),
       tags$h3("Inclusion Rules"),
-      shiny::radioButtons(
-        inputId = "cohortCountInclusionRules",
-        label = "Filter by",
-        choices = c("All", "Meet", "Gain", "Remain", "Totals"),
-        selected = "All",
-        inline = TRUE
+      tags$table(style = 'width: 100%',
+        tags$tr(
+          tags$td(
+            shiny::radioButtons(
+              inputId = "cohortCountInclusionRuleType",
+              label = "Select: ",
+              choices = c("Events", "Persons"),
+              selected = "Events",
+              inline = TRUE
+            )
+          ),
+          tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
+          tags$td(
+            shiny::conditionalPanel(
+              condition = "input.cohortCountInclusionRuleType == 'Events'",
+               shiny::radioButtons(
+              inputId = "cohortCountInclusionRules",
+              label = "Filter by",
+              choices = c("All", "Meet", "Gain", "Remain", "Totals"),
+              selected = "All",
+              inline = TRUE
+            ))
+          ),
+          tags$td(align = 'right',
+            shiny::checkboxInput(
+              inputId = "inclusionRuleShowAsPercentInCohortCount",
+              label = "Show As Percent"
+            )
+          )
+        )
       ),
-      DT::dataTableOutput("inclusionRuleStatisticsForCohortSeletedTable")
+      shiny::conditionalPanel(
+        condition = "input.cohortCountInclusionRuleType == 'Events'",
+        DT::dataTableOutput("inclusionRuleStatisticsForCohortSeletedTable")
+      )
     )
   ),
   shinydashboard::tabItem(

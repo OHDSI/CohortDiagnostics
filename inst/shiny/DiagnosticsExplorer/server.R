@@ -1926,6 +1926,7 @@ shiny::shinyServer(function(input, output, session) {
       if (any(is.null(consolidatedCohortIdTarget()))) {
         return(NULL)
       }
+      
       data <- getSimplifiedInclusionRuleResultsTarget()
       validate(need((nrow(data) > 0),
                     "There is no inclusion rule data for this cohort."))
@@ -4591,7 +4592,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(idx)) {
       return(NULL)
     } else {
-      if (!doesObjectHaveData(getCohortCountDataForSelectedDatabaseIdsCohortIds)) {
+      if (!doesObjectHaveData(getCohortCountDataForSelectedDatabaseIdsCohortIds())) {
         return(NULL)
       } else {
         subset <- getCohortCountDataForSelectedDatabaseIdsCohortIds() %>%
@@ -4627,29 +4628,51 @@ shiny::shinyServer(function(input, output, session) {
         "No cohorts chosen"
       ))
       
-      table <- getResultsInclusionRuleStatistics(
+      data <- getResultsInclusionRuleStatistics(
         dataSource = dataSource,
         cohortId = getCohortIdFromSelectedRowInCohortCountTable()$cohortId,
         databaseId = consolidatedDatabaseIdTarget()
       )
       
-      validate(need((nrow(table) > 0),
+      validate(need((nrow(data) > 0),
                     "There is no inclusion rule data for this cohort."))
-      data <- table %>% 
-        dplyr::relocate(.data$totalSubjects,
-                        .data$remainSubjects,
-                        .data$meetSubjects,
-                        .data$gainSubjects) %>% 
-        dplyr::inner_join(cohortCount, by = c("cohortId", "databaseId")) %>%
-        dplyr::mutate(databaseId = paste0(.data$databaseId, "(n = ", .data$cohortSubjects,")")) %>%
-        dplyr::select(-.data$cohortId, -.data$cohortEntries, -.data$cohortSubjects)
-        
+      keyColumnFields <- c("ruleSequenceId", "ruleName")
+      dataColumnFields <-
+        c("totalSubjects",
+          "remainSubjects",
+          "meetSubjects",
+          "gainSubjects")
+      if (input$cohortCountInclusionRules != "All") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower(
+              input$cohortCountInclusionRules
+            )
+          )]
+      }
+      countsForHeader <-
+        getCountsForHeaderForUseInDataTable(
+          dataSource = dataSource,
+          databaseIds = consolidatedDatabaseIdTarget(),
+          cohortIds =  getCohortIdFromSelectedRowInCohortCountTable()$cohortId,
+          source = "Cohort Level",
+          fields = input$cohortCountInclusionRuleType
+        )
       
-      table <- getSketchDesignForTablesInCohortDefinitionTab(data = data, 
-                                                             databaseCount = NULL,
-                                                             columnFilters = input$cohortCountInclusionRules,
-                                                             numberOfColums = 1,
-                                                             numberOfSubstitutableColums = 4)
+      maxCountValue <-
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                      string = dataColumnFields)
+      
+      table <- getDtWithColumnsGroupedByDatabaseId(
+        data = data,
+        headerCount = countsForHeader,
+        keyColumns = keyColumnFields,
+        sketchLevel = 1,
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
+        showResultsAsPercent = input$inclusionRuleShowAsPercentInCohortCount #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+      )
       return(table)
     }, server = TRUE)
   
