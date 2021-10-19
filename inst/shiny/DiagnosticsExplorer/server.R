@@ -2703,7 +2703,6 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       
-      
       optimizedConceptSetExpression$isExcluded <-
         ifelse(optimizedConceptSetExpression$isExcluded, as.character(icon("check")), "")
       optimizedConceptSetExpression$includeDescendants <-
@@ -2719,7 +2718,9 @@ shiny::shinyServer(function(input, output, session) {
           invalid = .data$invalidReason,
           standard = .data$standardConcept
         ) %>% 
-        dplyr::select(.data$conceptId,
+        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
+        dplyr::select(.data$databaseId,
+                      .data$conceptId,
                       .data$conceptName,
                       .data$exclude,
                       .data$descendants,
@@ -2727,7 +2728,8 @@ shiny::shinyServer(function(input, output, session) {
                       .data$domainId,
                       .data$standard,
                       .data$conceptCode,
-                      .data$invalid)
+                      .data$invalid) %>% 
+        dplyr::arrange(.data$databaseId)
       
       options = list(
         pageLength = 100,
@@ -3430,7 +3432,9 @@ shiny::shinyServer(function(input, output, session) {
           invalid = .data$invalidReason,
           standard = .data$standardConcept
         ) %>% 
-        dplyr::select(.data$conceptId,
+        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
+        dplyr::select(.data$databaseId,
+                      .data$conceptId,
                       .data$conceptName,
                       .data$exclude,
                       .data$descendants,
@@ -3438,7 +3442,8 @@ shiny::shinyServer(function(input, output, session) {
                       .data$domainId,
                       .data$standard,
                       .data$conceptCode,
-                      .data$invalid)
+                      .data$invalid) %>% 
+        dplyr::arrange(.data$databaseId)
       
       options = list(
         pageLength = 100,
