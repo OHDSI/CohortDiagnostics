@@ -323,12 +323,24 @@ bodyTabItems <- shinydashboard::tabItems(
                        output.isComparatorSelected &
                        !output.isConceptIdFromTargetOrComparatorConceptTableSelected",
           shinydashboard::box(
-            title = "Concept Set Comparision",
-            status = NULL,
+            title = "Concept Set Comparison",
+            status = "primary",
             width = NULL,
-            solidHeader = FALSE,
+            solidHeader = TRUE,
             collapsible = TRUE,
             collapsed = TRUE,
+            tags$table(width = "100%",
+                       tags$tr(
+                         tags$td(
+                           align = "right",
+                           shiny::downloadButton(
+                             outputId = "saveConceptSetComparisonTable",
+                             label = NULL,
+                             icon = shiny::icon("download"),
+                             style = "margin-top: 5px; margin-bottom: 5px;"
+                           )
+                         )
+                       )),
             DT::dataTableOutput(outputId = "conceptSetComparisonTable")
           )
         )
