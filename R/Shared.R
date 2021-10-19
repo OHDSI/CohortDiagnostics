@@ -33,11 +33,14 @@ doesObjectHaveData <- function(data) {
     if (length(data) == 0) {
       return(FALSE)
     }
-    # if (length(data) == 1) {
-    #   if (data == "") {
-    #     return(FALSE)
-    #   }
-    # }
+    if (length(data) == 1) {
+      if (is.na(data)) {
+        return(FALSE)
+      }
+      if (data == "") {
+        return(FALSE)
+      }
+    }
   }
   return(TRUE)
 }

@@ -741,16 +741,16 @@ plotIncidenceRate <- function(data,
     dplyr::left_join(cohortCount, by = c('cohortId', 'databaseId')) %>%
     addShortName(shortNameRef) %>%
     dplyr::mutate(incidenceRate = round(.data$incidenceRate, digits = 3)) %>%
-    dplyr::mutate(
-      strataGender = !is.na(.data$gender),
-      strataAgeGroup = !is.na(.data$ageGroup),
-      strataCalendarYear = !is.na(.data$calendarYear)
-    ) %>%
-    dplyr::filter(
-      .data$strataGender %in% !!stratifyByGender &
-        .data$strataAgeGroup %in% !!stratifyByAgeGroup &
-        .data$strataCalendarYear %in% !!stratifyByCalendarYear
-    ) %>%
+    # dplyr::mutate(
+    #   strataGender = !is.na(.data$gender),
+    #   strataAgeGroup = !is.na(.data$ageGroup),
+    #   strataCalendarYear = !is.na(.data$calendarYear)
+    # ) %>%
+    # dplyr::filter(
+    #   .data$strataGender %in% !!stratifyByGender &
+    #     .data$strataAgeGroup %in% !!stratifyByAgeGroup &
+    #     .data$strataCalendarYear %in% !!stratifyByCalendarYear
+    # ) %>%
     dplyr::select(-dplyr::starts_with("strata"))
   
   if (stratifyByCalendarYear) {
@@ -1134,12 +1134,17 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     )
   
   
+  balance$comparatorCohort
+  
   xCohort <- balance %>%
     dplyr::distinct(balance$targetCohort) %>%
     dplyr::pull()
+  xCohort <- paste0("Target (", xCohort, ")")
+  
   yCohort <- balance %>%
     dplyr::distinct(balance$comparatorCohort) %>%
     dplyr::pull()
+  yCohort <- paste0("Comparator (", yCohort,")")
   
   targetName <- balance %>% 
     dplyr::select(.data$cohortId1) %>% 
@@ -1212,7 +1217,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
                    annotations = list(
                      x = 0.5,
                      y = -0.2,
-                     text = paste("Target - ", xCohort, " : ", targetName,", Comparator - ", yCohort, " : ", comparatorName,"\n",
+                     text = paste(xCohort, " : ", targetName,", ", yCohort, " : ", comparatorName,"\n",
                                   "Database - ", databaseString),
                      showarrow = FALSE,
                      xref = "paper",
@@ -1224,7 +1229,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   return(plot)
 }
 
-plotTemporalCompareStandardizedDifference <- function(balance,
+plotTemporalStandardizedDifference <- function(balance,
                                                       shortNameRef = NULL,
                                                       domain = "all") {
   domains <-
@@ -1850,7 +1855,7 @@ plotCohortOverlap <- function(data,
                                               x = ~xAxisValues, y = ~targetShortName, type = 'bar',
                                               name = ~subjectsIn, text = ~tooltip, hoverinfo = 'text',
                                               color = ~subjectsIn, colors = c( rgb(0.4, 0.4, 0.9), rgb(0.3, 0.2, 0.4),rgb(0.8, 0.2, 0.2)),
-                                              showlegend = showLegend, height = max(400, 250 * length(distinctComparatorShortName))) %>%
+                                              showlegend = showLegend, height = max(400, 70 * length(distinctComparatorShortName) * length(distinctTargetShortName))) %>%
         plotly::layout(barmode = 'stack',
                        legend = list(orientation = "h",x = 0.4),
                        xaxis = list(range = c(0, xAxisMax),

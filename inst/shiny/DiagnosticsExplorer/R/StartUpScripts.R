@@ -611,7 +611,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
     dplyr::distinct()
   #long form
   data <- data %>% 
-    tidyr::pivot_longer(cols = dataColumns, 
+    tidyr::pivot_longer(cols = dplyr::all_of(dataColumns), 
                         names_to = "type", 
                         values_to = "valuesData")
   
@@ -630,8 +630,12 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
         dplyr::mutate(dataColumnsLevel2 = .data$type) %>%
         dplyr::arrange(.data$databaseId, .data$type)
       if (showResultsAsPercent) {
+        if (!is.null(maxCount)) {
+          maxCount <- suppressWarnings(ceiling(maxCount / (max(data$count))))
+        }
         data <- data %>%
           dplyr::mutate(valuesData = .data$valuesData / .data$count)
+        
       }
       data <- data %>%
         dplyr::select(-.data$count)
@@ -667,9 +671,11 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
       
       dataColumnsLevel2 <- colnames(data)
       dataColumnsLevel2 <-
-        dataColumnsLevel2[stringr::str_detect(string = dataColumnsLevel2,
-                                              pattern = paste0(keyColumns, collapse = "|"),
-                                              negate = TRUE)] %>%
+        dataColumnsLevel2[stringr::str_detect(
+          string = dataColumnsLevel2,
+          pattern = paste0(keyColumns, collapse = "|"),
+          negate = TRUE
+        )] %>%
         stringr::word(start = -1)
       
     } else if (sketchLevel == 2) {
@@ -700,6 +706,9 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
                                                  scales::comma(.data$valuesHeader),
                                                  ")"))
       if (showResultsAsPercent) {
+        if (!is.null(maxCount)) {
+          maxCount <- suppressWarnings(ceiling(maxCount / (max(data$valuesHeader))))
+        }
         data <- data %>%
           dplyr::mutate(valuesData = .data$valuesData / .data$valuesHeader)
       }
@@ -738,14 +747,20 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
         stringr::str_trim()
     }
   }
-
+  
   ### format
   numberOfColumns <- length(keyColumns) - 1
   numberOfSubstitutableColums <- length(dataColumns)
-  #!!!!!!! we need a different minimumCellCountDefs for PERCENTAGES!!
-  minimumCellCountDefs <- minCellCountDef(numberOfColumns + (1:(
-    numberOfSubstitutableColums * length(databaseIdsForUseAsHeader)
-  )))
+  
+  if (!showResultsAsPercent) {
+    minimumCellCountDefs <- minCellCountDef(numberOfColumns + (1:(
+      numberOfSubstitutableColums * length(databaseIdsForUseAsHeader)
+    )))  
+  } else if (showResultsAsPercent) {
+    minimumCellCountDefs <- minCellPercentDef(numberOfColumns + (1:(
+      numberOfSubstitutableColums * length(databaseIdsForUseAsHeader)
+    )))  
+  }
   
   options = list(
     pageLength = 1000,
@@ -906,7 +921,6 @@ getConceptCountForCohortAndDatabase <- function(dataSource,
       return(NULL)
     }
     data <- data %>%
-      dplyr::mutate(cohortId = 0) %>%
       dplyr::select(.data$databaseId,
                     .data$conceptId,
                     .data$subjectCount,
@@ -934,7 +948,7 @@ getConceptCountForCohortAndDatabase <- function(dataSource,
         .data$conceptCount
       ) %>%
       dplyr::rename("records" = .data$conceptCount,
-                    "subjects" = .data$subjectCount)
+                    "persons" = .data$subjectCount)
   }
   return(data)
 }

@@ -33,11 +33,14 @@ doesObjectHaveData <- function(data) {
     if (length(data) == 0) {
       return(FALSE)
     }
-    # if (length(data) == 1) {
-    #   if (data == "") {
-    #     return(FALSE)
-    #   }
-    # }
+    if (length(data) == 1) {
+      if (is.na(data)) {
+        return(FALSE)
+      }
+      if (data == "") {
+        return(FALSE)
+      }
+    }
   }
   return(TRUE)
 }
@@ -1449,14 +1452,14 @@ getResultsOrphanConcept <- function(dataSource,
     return(NULL)
   }
   
-  
   resolved <- getResultsResolvedConcepts(
     dataSource = dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
     conceptSetIds = conceptSetIds
   )
-  if (nrow(resolved) > 0) {
+  if (all(!is.null(resolved), 
+          nrow(resolved) > 0)) {
     relationship1 <- getConceptRelationship(
       dataSource = dataSource,
       conceptIds = resolved$conceptId %>% unique(),
