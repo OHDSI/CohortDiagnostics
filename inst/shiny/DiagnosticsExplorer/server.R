@@ -432,6 +432,18 @@ shiny::shinyServer(function(input, output, session) {
                         solidHeader = FALSE,
                         collapsible = TRUE,
                         collapsed = TRUE,
+                        tags$table(width = "100%",
+                                   tags$tr(
+                                     tags$td(
+                                       align = "right",
+                                       shiny::downloadButton(
+                                         "saveTargetConceptSetsExpressionOptimizedTable",
+                                         label = "",
+                                         icon = shiny::icon("download"),
+                                         style = "margin-top: 5px; margin-bottom: 5px;"
+                                       )
+                                     )
+                                   )),
                         DT::dataTableOutput(outputId = "targetConceptSetsExpressionOptimizedTable"),
                       )
                       )
@@ -735,6 +747,18 @@ shiny::shinyServer(function(input, output, session) {
                         solidHeader = FALSE,
                         collapsible = TRUE,
                         collapsed = TRUE,
+                        tags$table(width = "100%",
+                                   tags$tr(
+                                     tags$td(
+                                       align = "right",
+                                       shiny::downloadButton(
+                                         "saveComparatorConceptSetsExpressionOptimizedTable",
+                                         label = "",
+                                         icon = shiny::icon("download"),
+                                         style = "margin-top: 5px; margin-bottom: 5px;"
+                                       )
+                                     )
+                                   )),
                         DT::dataTableOutput(outputId = "comparatorConceptSetsExpressionOptimizedTable"),
                       )
                     )
@@ -2659,6 +2683,17 @@ shiny::shinyServer(function(input, output, session) {
                        name = "canTargetConceptSetExpressionBeOptimized",
                        suspendWhenHidden = FALSE)
   
+  #output: saveTargetConceptSetsExpressionOptimizedTable----
+  output$saveTargetConceptSetsExpressionOptimizedTable <-  downloadHandler(
+    filename = function() {
+      getCsvFileNameWithDateTime(string = "ConceptSetsExpressionOptimized")
+    },
+    content = function(file) {
+      downloadCsv(x = getOptimizedTargetConceptSetsExpressionTable(), fileName = file)
+      #!!!! this may need downloadExcel() with formatted and multiple tabs
+    }
+  )
+  
   #output: targetConceptSetsExpressionOptimizedTable----
   output$targetConceptSetsExpressionOptimizedTable <-
     DT::renderDataTable(expr = {
@@ -3357,6 +3392,18 @@ shiny::shinyServer(function(input, output, session) {
   shiny::outputOptions(x = output,
                        name = "canComparatorConceptSetExpressionBeOptimized",
                        suspendWhenHidden = FALSE)
+  
+  ##output: saveComparatorConceptSetsExpressionOptimizedTable----
+  output$saveComparatorConceptSetsExpressionOptimizedTable <-
+    downloadHandler(
+      filename = function() {
+        getCsvFileNameWithDateTime(string = "conceptsetOptimized")
+      },
+      content = function(file) {
+        downloadCsv(x = getOptimizedComparatorConceptSetsExpressionTable(),
+                    fileName = file)
+      }
+    )
   
   #output: comparatorConceptSetsExpressionOptimizedTable----
   output$comparatorConceptSetsExpressionOptimizedTable <-
