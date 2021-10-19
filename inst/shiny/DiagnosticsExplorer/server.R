@@ -428,8 +428,9 @@ shiny::shinyServer(function(input, output, session) {
                     #              )
                     #            )),
                     DT::dataTableOutput(outputId = "targetConceptSetsExpressionTable"),
+                    tags$br(),
                     shiny::conditionalPanel(
-                      condition = "!output.canTargetConceptSetExpressionBeOptimized",
+                      condition = "output.canTargetConceptSetExpressionBeOptimized",
                       shinydashboard::box(
                         title = "Optimized Concept set expressions",
                         width = NULL,
@@ -2648,12 +2649,74 @@ shiny::shinyServer(function(input, output, session) {
       if (!doesObjectHaveData(removed)) {
         return(FALSE)
       }
-      return(nrow(removed) == 0)
+      return(nrow(removed) != 0)
     })
   
   shiny::outputOptions(x = output,
                        name = "canTargetConceptSetExpressionBeOptimized",
                        suspendWhenHidden = FALSE)
+  
+  #output: targetConceptSetsExpressionOptimizedTable----
+  output$targetConceptSetsExpressionOptimizedTable <-
+    DT::renderDataTable(expr = {
+      optimizedConceptSetExpression <-
+        getOptimizedTargetConceptSetsExpressionTable()
+      if (!doesObjectHaveData(optimizedConceptSetExpression)) {
+        return(NULL)
+      }
+      
+      
+      optimizedConceptSetExpression$isExcluded <-
+        ifelse(optimizedConceptSetExpression$isExcluded, as.character(icon("check")), "")
+      optimizedConceptSetExpression$includeDescendants <-
+        ifelse(optimizedConceptSetExpression$includeDescendants, as.character(icon("check")), "")
+      optimizedConceptSetExpression$includeMapped <-
+        ifelse(optimizedConceptSetExpression$includeMapped, as.character(icon("check")), "")
+      
+      optimizedConceptSetExpression <- optimizedConceptSetExpression %>%
+        dplyr::rename(
+          exclude = .data$isExcluded,
+          descendants = .data$includeDescendants,
+          mapped = .data$includeMapped,
+          invalid = .data$invalidReason,
+          standard = .data$standardConcept
+        ) %>% 
+        dplyr::select(.data$conceptId,
+                      .data$conceptName,
+                      .data$exclude,
+                      .data$descendants,
+                      .data$mapped,
+                      .data$domainId,
+                      .data$standard,
+                      .data$conceptCode,
+                      .data$invalid)
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        info = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        scrollY = "20vh",
+        columnDefs = list(truncateStringDef(1, 80))
+      )
+      
+      dataTable <- DT::datatable(
+        optimizedConceptSetExpression,
+        options = options,
+        colnames = colnames(optimizedConceptSetExpression) %>% camelCaseToTitleCase(),
+        rownames = FALSE,
+        escape = FALSE,
+        selection = 'none',
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      return(dataTable)
+    }, server = TRUE)
   
   #output: saveTargetConceptSetsExpressionTable----
   output$saveTargetConceptSetsExpressionTable <-  downloadHandler(

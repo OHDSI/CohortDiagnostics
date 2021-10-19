@@ -100,6 +100,7 @@ sidebarMenu <-
       input.tabs == 'indexEventBreakdown' |
       input.tabs == 'visitContext' |
       input.tabs == 'cohortOverlap' |
+      input.targetConceptSetsType == 'Concept Set Expression' |
       input.targetConceptSetsType == 'Resolved' |
       input.targetConceptSetsType == 'Excluded' |
       input.targetConceptSetsType == 'Orphan concepts' |
