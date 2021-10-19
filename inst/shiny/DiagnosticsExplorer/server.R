@@ -292,6 +292,13 @@ shiny::shinyServer(function(input, output, session) {
                              )
                            ),
                            tags$td(
+                             shiny::checkboxInput(
+                               inputId = "targetCohortInclusionRulesAsPercent",
+                               label = "Show As Percent",
+                               value = FALSE
+                             )
+                           ),
+                           tags$td(
                              align = "right",
                              shiny::downloadButton(
                                "saveTargetCohortDefinitionSimplifiedInclusionRuleTable",
@@ -606,6 +613,13 @@ shiny::shinyServer(function(input, output, session) {
                                  selected = "All",
                                  inline = TRUE
                                )
+                             )
+                           ),
+                           tags$td(
+                             shiny::checkboxInput(
+                               inputId = "comparatorCohortInclusionRulesAsPercent",
+                               label = "Show As Percent",
+                               value = FALSE
                              )
                            ),
                            tags$td(
@@ -1968,7 +1982,7 @@ shiny::shinyServer(function(input, output, session) {
         sketchLevel = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = FALSE #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+        showResultsAsPercent = input$targetCohortInclusionRulesAsPercent
       )
       return(table)
     }, server = TRUE)
@@ -3215,7 +3229,7 @@ shiny::shinyServer(function(input, output, session) {
         sketchLevel = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = FALSE #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+        showResultsAsPercent = input$comparatorCohortInclusionRulesAsPercent
       )
       return(table)
     }, server = TRUE)
