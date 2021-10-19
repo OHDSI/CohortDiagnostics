@@ -167,12 +167,12 @@ if (databaseMode) {
       "analysis_ref",
       "concept_sets",
       "concept_class",
-      "covariate_ref",
+      # "covariate_ref",
       "domain",
       "relationship",
       "temporal_time_ref",
       "temporal_analysis_ref",
-      "temporal_covariate_ref",
+      # "temporal_covariate_ref",
       "vocabulary"
     )
   for (i in (1:length(tablesToLoadRequired))) {

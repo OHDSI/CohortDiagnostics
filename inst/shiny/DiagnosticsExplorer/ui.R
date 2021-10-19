@@ -312,6 +312,29 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedTarget"),
       shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedComparator"),
       tags$br(),
+      shiny::column(
+        12,
+        shiny::conditionalPanel(
+          condition = "input.targetConceptSetsType != 'Concept Set Expression' &
+                       input.targetConceptSetsType != 'Concept Set Json' &
+                       input.targetConceptSetsType != 'Concept Set Sql' &
+                       input.targetCohortDefinitionTabSetPanel == 'targetCohortDefinitionConceptSetTabPanel' &
+                       output.isTargetSelected &
+                       output.isComparatorSelected &
+                       !output.isConceptIdFromTargetOrComparatorConceptTableSelected",
+          shinydashboard::box(
+            title = "Concept Set Comparision",
+            status = NULL,
+            width = NULL,
+            solidHeader = FALSE,
+            collapsible = TRUE,
+            collapsed = TRUE,
+            DT::dataTableOutput(outputId = "conceptSetComparisonTable")
+          )
+        )
+        
+      ),
+      tags$br(),
       shiny::column(12,
                     shiny::conditionalPanel(
                       condition = "input.targetConceptSetsType != 'Concept Set Expression' &

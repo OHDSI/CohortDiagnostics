@@ -2005,6 +2005,14 @@ shiny::shinyServer(function(input, output, session) {
     return(json)
   })
   
+  #output: isTargetSelected----
+  output$isTargetSelected <- shiny::reactive({
+    return(!is.null(consolidatedCohortIdTarget()))
+  })
+  shiny::outputOptions(x = output,
+                       name = "isTargetSelected",
+                       suspendWhenHidden = FALSE)
+  
   #output: isComparatorSelected----
   output$isComparatorSelected <- shiny::reactive({
     return(!is.null(consolidatedCohortIdComparator()))
@@ -2374,16 +2382,16 @@ shiny::shinyServer(function(input, output, session) {
         inc = inc + 1
       }
       
-      if (all(
-        !is.null(getConceptSetExpressionTarget()),
-        !is.null(getConceptSetExpressionComparator())
-      )) {
-        panels[[inc]] <- shiny::tabPanel(
-          title = "Concept Set Comparison",
-          value = "conceptSetComparison",
-          DT::dataTableOutput(outputId = "conceptSetComparisonTable")
-        )
-      }
+      # if (all(
+      #   !is.null(getConceptSetExpressionTarget()),
+      #   !is.null(getConceptSetExpressionComparator())
+      # )) {
+      #   panels[[inc]] <- shiny::tabPanel(
+      #     title = "Concept Set Comparison",
+      #     value = "conceptSetComparison",
+      #     DT::dataTableOutput(outputId = "conceptSetComparisonTable")
+      #   )
+      # }
       shiny::conditionalPanel(
         condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
         shinydashboard::box(
