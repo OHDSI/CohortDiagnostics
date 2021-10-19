@@ -319,9 +319,9 @@ bodyTabItems <- shinydashboard::tabItems(
                        input.targetConceptSetsType != 'Concept Set Json' &
                        input.targetConceptSetsType != 'Concept Set Sql' &
                        input.targetCohortDefinitionTabSetPanel == 'targetCohortDefinitionConceptSetTabPanel' &
-                       output.isTargetSelected &
-                       output.isComparatorSelected &
-                       !output.isConceptIdFromTargetOrComparatorConceptTableSelected",
+                       output.isTargetSelected == true &
+                       output.isComparatorSelected == true &
+                       output.isConceptIdFromTargetOrComparatorConceptTableSelected == false",
           shinydashboard::box(
             title = "Concept Set Comparison",
             status = "primary",
@@ -344,7 +344,6 @@ bodyTabItems <- shinydashboard::tabItems(
             DT::dataTableOutput(outputId = "conceptSetComparisonTable")
           )
         )
-        
       ),
       tags$br(),
       shiny::column(12,
