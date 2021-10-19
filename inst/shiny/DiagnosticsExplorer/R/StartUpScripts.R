@@ -611,7 +611,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
     dplyr::distinct()
   #long form
   data <- data %>% 
-    tidyr::pivot_longer(cols = dataColumns, 
+    tidyr::pivot_longer(cols = dplyr::all_of(dataColumns), 
                         names_to = "type", 
                         values_to = "valuesData")
   

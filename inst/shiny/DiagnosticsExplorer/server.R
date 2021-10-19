@@ -4981,10 +4981,11 @@ shiny::shinyServer(function(input, output, session) {
         by = "seriesType"
       ) %>%
       dplyr::select(-.data$seriesType) %>%
-      dplyr::mutate(periodBegin = .data$periodBeginRaw) %>%
+      dplyr::mutate("periodBegin" = .data$periodBeginRaw) %>% 
+      dplyr::select(-.data$periodBeginRaw) %>% 
       dplyr::relocate(.data$periodBegin, .data$periodEnd) %>%
-      dplyr::arrange(.data$periodBegin) %>%
-      dplyr::select(-.data$periodBeginRaw)
+      dplyr::arrange(.data$periodBegin) %>% 
+      dplyr::filter(!is.na(.data$periodEnd))
     return(data)
   })
   
@@ -5058,9 +5059,7 @@ shiny::shinyServer(function(input, output, session) {
     ))
     
     data <- getFixedTimeSeriesDataForTable()
-    validate(need(
-      all(!is.null(data),
-          nrow(data) > 0),
+    validate(need(doesObjectHaveData(data),
       "No timeseries data for the cohort of this series type"
     ))
     
