@@ -2109,7 +2109,7 @@ shiny::shinyServer(function(input, output, session) {
                                         ),
                                         tr(
                                           lapply(rep(
-                                            c("From Target", "From Comparator"),
+                                            c("Target", "Comparator"),
                                             length(databaseIds)
                                           ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                         ))))
