@@ -4981,6 +4981,7 @@ shiny::shinyServer(function(input, output, session) {
         by = "seriesType"
       ) %>%
       dplyr::select(-.data$seriesType) %>%
+      dplyr::tibble() %>% 
       dplyr::mutate("periodBegin" = .data$periodBeginRaw) %>% 
       dplyr::select(-.data$periodBeginRaw) %>% 
       dplyr::relocate(.data$periodBegin, .data$periodEnd) %>%
