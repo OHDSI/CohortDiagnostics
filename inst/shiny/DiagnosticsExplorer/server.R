@@ -3755,6 +3755,9 @@ shiny::shinyServer(function(input, output, session) {
   
   output$conceptSetTimeSeriesPlot <-  plotly::renderPlotly({
     data <- getMetadataForConceptId()
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
     # working on the plot
     if (input$timeSeriesAggregationForCohortDefinition == "Monthly") {
       data <- data$databaseConceptIdYearMonthLevelTsibble %>% 
@@ -3800,8 +3803,8 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  ##output:: conceptSetBowserConceptSynonymNameInHtmlString
-  output$conceptSetBowserConceptSynonymNameInHtmlString <- shiny::renderUI(expr = {
+  ##output:: conceptSetBrowserConceptSynonymNameInHtmlString
+  output$conceptSetBrowserConceptSynonymNameInHtmlString <- shiny::renderUI(expr = {
      data <- getConceptSetSynonymsHtmlTextString()
      if (!doesObjectHaveData(data)) {
        return(NULL)
@@ -5901,7 +5904,7 @@ shiny::shinyServer(function(input, output, session) {
       return(table)
     }, server = TRUE)
   
-  output$dynamicUIForRelationshipAndTemeSeriesForIndexEvent <-
+  output$dynamicUIForRelationshipAndTimeSeriesForIndexEvent <-
     shiny::renderUI({
       inc <-  1
       panels <- list()
@@ -6061,9 +6064,10 @@ shiny::shinyServer(function(input, output, session) {
   output$conceptSetTimeSeriesPlotForIndexEvent <-
     plotly::renderPlotly({
       data <- getMetadataForConceptId()
-      if (!doesObjectHaveData(data)) {
-        return(NULL)
-      }
+      validate(need(
+        doesObjectHaveData(data),
+        "No timeseries data for the cohort of this series type"
+      ))
       # working on the plot
       if (input$timeSeriesAggregationPeriodSelection == "Monthly") {
         data <- data$databaseConceptIdYearMonthLevelTsibble %>% 
