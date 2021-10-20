@@ -116,7 +116,7 @@ CREATE INDEX idx_database_id_15  ON covariate_value_dist  (database_id ASC);
 CREATE INDEX idx_covariate_id_15  ON covariate_value_dist  (covariate_id ASC);
 
 CREATE INDEX idx_database_id_16  ON database  (database_id ASC);
-CLUSTER database  USING idx_covariate_id_16 ;
+CLUSTER database  USING idx_database_id_16 ;
 CREATE INDEX idx_database_name_16  ON database  (database_name ASC);
 
 CREATE INDEX idx_cohort_id_17  ON incidence_rate  (cohort_id ASC);
