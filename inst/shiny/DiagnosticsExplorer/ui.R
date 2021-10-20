@@ -337,8 +337,8 @@ bodyTabItems <- shinydashboard::tabItems(
                            shiny::radioButtons(
                              inputId = "conceptSetComparisonChoices",
                              label = "Show :",
-                             choices = c("Target Only", "Comparator Only", "Both"),
-                             selected = "Both",
+                             choices = c("Either", "Target Only", "Comparator Only", "Both"),
+                             selected = "Either",
                              inline = TRUE
                            )
                          ),

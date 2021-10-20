@@ -2041,21 +2041,20 @@ shiny::shinyServer(function(input, output, session) {
                        name = "isComparatorSelected",
                        suspendWhenHidden = FALSE)
   
-  combinedConceptSetComparisonValues <- shiny::reactiveVal()
-  
-  #output: saveTargetConceptSetsExpressionOptimizedTable----
-  output$saveConceptSetComparisonTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "ConceptSetsExpressionComparison")
-    },
-    content = function(file) {
-      downloadCsv(x = combinedConceptSetComparisonValues(), fileName = file)
-      #!!!! this may need downloadExcel() with formatted and multiple tabs
+  ###getConceptSetComparisonTableData----
+  getConceptSetComparisonTableData <- shiny::reactive({
+    if (!doesObjectHaveData(input$targetConceptSetsType)) {
+      return(NULL)
     }
-  )
-  
-  
-  output$conceptSetComparisonTable <- DT::renderDT(expr = {
+    if (!doesObjectHaveData(input$comparatorConceptSetsType)) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
+      return(NULL)
+    }
     #Setting Initial values
     target <- NULL
     comparator <- NULL
@@ -2077,86 +2076,125 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
+    conceptIdSortOrder <- dplyr::bind_rows(target, comparator) %>% 
+      dplyr::select(.data$conceptId, .data$persons) %>% 
+      dplyr::filter(!is.na(.data$persons)) %>% 
+      dplyr::arrange(dplyr::desc(.data$persons)) %>% 
+      dplyr::select(.data$conceptId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::mutate(rn = dplyr::row_number())
+    
     targetCohortShortName <- cohort %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
-      dplyr::pull(.data$shortName)
-    
+      dplyr::mutate(type = "target") %>% 
+      dplyr::select(.data$type, .data$shortName)
     comparatorCohortShortName <- cohort %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator()) %>%
-      dplyr::pull(.data$shortName)
-    
-    pivotColumns <- c("left", "right")
-    columnNames <- c(paste0("Found in Target (",targetCohortShortName, ")"), 
-                     paste0("Found in Comparator (",comparatorCohortShortName,")"))
-    if (input$conceptSetComparisonChoices == "Target Only") {
-      comparator <- comparator[0,]
-      pivotColumns <- c("left")
-      columnNames <- c(paste0("Found in Target (",targetCohortShortName, ")"))
-    } else if (input$conceptSetComparisonChoices == "Comparator Only") {
-      target <- target[0,]
-      pivotColumns <- c("right")
-      columnNames <- c(paste0("Found in Comparator (",comparatorCohortShortName,")"))
-    }
+      dplyr::mutate(type = "comparator") %>% 
+      dplyr::select(.data$type, .data$shortName)
+    cohortShortName <- dplyr::bind_rows(targetCohortShortName, comparatorCohortShortName) %>% 
+      dplyr::distinct()
     
     combinedResult <-
       target %>%
       dplyr::union(comparator) %>%
-      dplyr::arrange(.data$conceptId) %>%
       dplyr::select(.data$conceptId, .data$conceptName, .data$databaseId) %>%
-      dplyr::distinct() %>% 
-      dplyr::mutate(left = "", right = "")
-    
-    databaseIds <- unique(combinedResult$databaseId)
-    
-    conceptIdsPresentInTarget <- target %>%
-      dplyr::pull(.data$conceptId) %>%
-      unique()
-    
-    conceptIdsPresentInComparator <- comparator %>%
-      dplyr::pull(.data$conceptId) %>%
-      unique()
-    
-    
-    
-    
+      dplyr::arrange(.data$conceptId, .data$conceptName, .data$databaseId) %>%
+      dplyr::distinct() %>%
+      dplyr::left_join(y = target %>% 
+                         dplyr::select(.data$conceptId, .data$conceptName, .data$databaseId) %>% 
+                         dplyr::mutate(target = TRUE), 
+                       by = c("conceptId", "conceptName", "databaseId")) %>%
+      dplyr::left_join(y = comparator %>% 
+                         dplyr::select(.data$conceptId, .data$conceptName, .data$databaseId) %>% 
+                         dplyr::mutate(comparator = TRUE), 
+                       by = c("conceptId", "conceptName", "databaseId")) %>% 
+      tidyr::replace_na(replace = list(target = FALSE, comparator = FALSE))
    
-    
-    for (i in 1:nrow(combinedResult)) {
-      combinedResult$left[i] <-
-        ifelse(
-          combinedResult$conceptId[i] %in% conceptIdsPresentInTarget,
-          as.character(icon("check")),
-          ""
-        )
-      combinedResult$right[i] <-
-        ifelse(
-          combinedResult$conceptId[i] %in% conceptIdsPresentInComparator,
-          as.character(icon("check")),
-          ""
-        )
+    if (input$conceptSetComparisonChoices == "Target Only") {
+      combinedResult <- combinedResult %>% 
+        dplyr::filter(.data$comparator == FALSE) %>% 
+        dplyr::filter(.data$target == TRUE)
+    } else if (input$conceptSetComparisonChoices == "Comparator Only") {
+      combinedResult <- combinedResult %>% 
+        dplyr::filter(.data$target == FALSE) %>% 
+        dplyr::filter(.data$comparator == TRUE)
+    } else if (input$conceptSetComparisonChoices == "Both") {
+      combinedResult <- combinedResult %>% 
+        dplyr::filter(.data$target == TRUE) %>% 
+        dplyr::filter(.data$comparator == TRUE)
+    } else if (input$conceptSetComparisonChoices == "Either") {
+      combinedResult <- combinedResult
     }
     
-    combinedResult <- combinedResult %>% 
-      dplyr::mutate(left = as.character(.data$left)) %>% 
-      dplyr::mutate(right = as.character(.data$right)) %>% 
+    combinedResult <- combinedResult  %>% 
       tidyr::pivot_longer(
         names_to = "type",
-        cols = pivotColumns,
-        values_to = "count"
+        cols = c("target", "comparator"),
+        values_to = "value"
       ) %>% 
-      dplyr::mutate(type = paste0(.data$type,
-                                  " ",
-                                  .data$databaseId)) %>% 
+      dplyr::inner_join(cohortShortName,
+                        by = "type") %>% 
+      dplyr::mutate(type = paste0(.data$type, " (", .data$shortName, ")")) %>% 
+      dplyr::select(-.data$shortName) %>% 
+      dplyr::left_join(conceptIdSortOrder, by = "conceptId") %>% 
+      dplyr::arrange(.data$rn, .data$databaseId, .data$conceptId)
+    return(combinedResult)
+  })
+  
+  #output: saveConceptSetComparisonTable----
+  output$saveConceptSetComparisonTable <-  downloadHandler(
+    filename = function() {
+      getCsvFileNameWithDateTime(string = "ConceptSetsExpressionComparison")
+    },
+    content = function(file) {
+      data <- getConceptSetComparisonTableData()
+      if (!doesObjectHaveData(data)) {
+        return(NULL)
+      }
+      data <- data %>% 
+        dplyr::mutate(type = paste0(type, " ", .data$databaseId)) %>% 
+        dplyr::select(-.data$databaseId, -.data$rn) %>% 
+        tidyr::pivot_wider(
+          id_cols = c(
+            "conceptId",
+            "conceptName"
+          ),
+          names_from = type,
+          values_from = value
+        )
+      downloadCsv(x = data, fileName = file)
+      #!!!! this may need downloadExcel() with formatted and multiple tabs
+    }
+  )
+  
+  
+  output$conceptSetComparisonTable <- DT::renderDT(expr = {
+    data <- getConceptSetComparisonTableData()
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    data <- data %>% 
+      dplyr::arrange(.data$databaseId, dplyr::desc(.data$type))
+    databaseIds <- unique(data$databaseId) %>% sort()
+    
+    data <- data %>% 
+      dplyr::mutate(type = paste0(type, " ", .data$databaseId)) %>% 
+      dplyr::select(-.data$databaseId) %>% 
+      dplyr::mutate(value = dplyr::case_when(.data$value == TRUE ~ as.character(icon("check")),
+                                             FALSE ~ as.character(NA))) %>% 
       tidyr::pivot_wider(
         id_cols = c(
           "conceptId",
-          "conceptName"
+          "conceptName",
+          "rn"
         ),
         names_from = type,
-        values_from = count
-      )
-    combinedConceptSetComparisonValues(combinedResult)
-   
+        values_from = value
+      ) %>% 
+      dplyr::arrange(.data$rn) %>% 
+      dplyr::select(-.data$rn)
+    columnNames <- c("Target", "Comparator")
     
     sketch <- htmltools::withTags(table(class = "display",
                                         thead(tr(
@@ -2191,10 +2229,10 @@ shiny::shinyServer(function(input, output, session) {
     )
     
     dataTable <- DT::datatable(
-      combinedResult,
+      data,
       options = options,
       container = sketch,
-      colnames = colnames(combinedResult) %>% camelCaseToTitleCase(),
+      colnames = colnames(data) %>% camelCaseToTitleCase(),
       rownames = FALSE,
       escape = FALSE,
       selection = 'single',
