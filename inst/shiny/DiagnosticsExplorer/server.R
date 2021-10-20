@@ -273,7 +273,7 @@ shiny::shinyServer(function(input, output, session) {
                              shiny::radioButtons(
                                inputId = "targetCohortDefinitionInclusionRuleType",
                                label = "Select: ",
-                               choices = c("Events", "Persons"),
+                               choices = c("Events"), #, "Persons"
                                selected = "Events",
                                inline = TRUE
                              )
@@ -597,7 +597,7 @@ shiny::shinyServer(function(input, output, session) {
                              shiny::radioButtons(
                                inputId = "comparatorCohortDefinitionInclusionRuleType",
                                label = "Filter by",
-                               choices = c("Events", "Persons"),
+                               choices = c("Events"), #, "Persons"
                                selected = "Events",
                                inline = TRUE
                              )
