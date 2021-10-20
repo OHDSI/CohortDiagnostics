@@ -2076,6 +2076,28 @@ shiny::shinyServer(function(input, output, session) {
             !doesObjectHaveData(comparator))) {
       return(NULL)
     }
+    
+    targetCohortShortName <- cohort %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
+      dplyr::pull(.data$shortName)
+    
+    comparatorCohortShortName <- cohort %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator()) %>%
+      dplyr::pull(.data$shortName)
+    
+    pivotColumns <- c("left", "right")
+    columnNames <- c(paste0("Found in Target (",targetCohortShortName, ")"), 
+                     paste0("Found in Comparator (",comparatorCohortShortName,")"))
+    if (input$conceptSetComparisonChoices == "Target Only") {
+      comparator <- comparator[0,]
+      pivotColumns <- c("left")
+      columnNames <- c(paste0("Found in Target (",targetCohortShortName, ")"))
+    } else if (input$conceptSetComparisonChoices == "Comparator Only") {
+      target <- target[0,]
+      pivotColumns <- c("right")
+      columnNames <- c(paste0("Found in Comparator (",comparatorCohortShortName,")"))
+    }
+    
     combinedResult <-
       target %>%
       dplyr::union(comparator) %>%
@@ -2093,6 +2115,11 @@ shiny::shinyServer(function(input, output, session) {
     conceptIdsPresentInComparator <- comparator %>%
       dplyr::pull(.data$conceptId) %>%
       unique()
+    
+    
+    
+    
+   
     
     for (i in 1:nrow(combinedResult)) {
       combinedResult$left[i] <-
@@ -2114,7 +2141,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(right = as.character(.data$right)) %>% 
       tidyr::pivot_longer(
         names_to = "type",
-        cols = c("left", "right"),
+        cols = pivotColumns,
         values_to = "count"
       ) %>% 
       dplyr::mutate(type = paste0(.data$type,
@@ -2129,13 +2156,7 @@ shiny::shinyServer(function(input, output, session) {
         values_from = count
       )
     combinedConceptSetComparisonValues(combinedResult)
-    targetCohortShortName <- cohort %>%
-      dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
-      dplyr::pull(.data$shortName)
-    
-    comparatorCohortShortName <- cohort %>%
-      dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator()) %>%
-      dplyr::pull(.data$shortName)
+   
     
     sketch <- htmltools::withTags(table(class = "display",
                                         thead(tr(
@@ -2144,15 +2165,14 @@ shiny::shinyServer(function(input, output, session) {
                                           lapply(
                                             databaseIds,
                                             th,
-                                            colspan = 2,
+                                            colspan = length(columnNames),
                                             class = "dt-center",
                                             style = "border-right:1px solid silver;border-bottom:1px solid silver"
                                           )
                                         ),
                                         tr(
                                           lapply(rep(
-                                            c(paste0("Found in Target (",targetCohortShortName, ")"), 
-                                              paste0("Found in Comparator (",comparatorCohortShortName,")")),
+                                            columnNames,
                                             length(databaseIds)
                                           ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                         ))))

@@ -332,6 +332,16 @@ bodyTabItems <- shinydashboard::tabItems(
             collapsed = TRUE,
             tags$table(width = "100%",
                        tags$tr(
+                         tags$td
+                         (
+                           shiny::radioButtons(
+                             inputId = "conceptSetComparisonChoices",
+                             label = "Show :",
+                             choices = c("Target Only", "Comparator Only", "Both"),
+                             selected = "Both",
+                             inline = TRUE
+                           )
+                         ),
                          tags$td(
                            align = "right",
                            shiny::downloadButton(
