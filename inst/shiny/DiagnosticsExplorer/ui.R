@@ -940,7 +940,7 @@ bodyTabItems <- shinydashboard::tabItems(
     shiny::column(12,
                   shiny::conditionalPanel(
                     condition = "true",
-                    shiny::uiOutput(outputId = "dynamicUIForRelationshipAndTemeSeriesForIndexEvent")
+                    shiny::uiOutput(outputId = "dynamicUIForRelationshipAndTimeSeriesForIndexEvent")
                   )
     )
   ),
