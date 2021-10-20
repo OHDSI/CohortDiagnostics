@@ -5904,99 +5904,99 @@ shiny::shinyServer(function(input, output, session) {
       return(table)
     }, server = TRUE)
   
-  output$dynamicUIForRelationshipAndTimeSeriesForIndexEvent <-
-    shiny::renderUI({
-      inc <-  1
-      panels <- list()
-      # Modifying rendered UI after load
-      if (any(doesObjectHaveData(consolidatedConceptIdTarget()),doesObjectHaveData(consolidatedConceptIdComparator()))) {
-        data <- getMetadataForConceptId()
-        panels[[inc]] <- shiny::tabPanel(
-          title = "Concept Set Browser",
-          value = "conceptSetBrowser",
-          shiny::conditionalPanel(
-            condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-            tags$table(width = "100%",
-                       tags$tr(
-                         tags$td(
-                           shinyWidgets::pickerInput(
-                             inputId = "choicesForRelationshipNameForIndexEvent",
-                             label = "Relationship Category:",
-                             choices = c('Not applicable',
-                                         data$relationshipName),
-                             selected = c('Not applicable',
-                                          data$relationshipName),
-                             multiple = TRUE,
-                             width = 200,
-                             inline = TRUE,
-                             choicesOpt = list(style = rep_len("color: black;", 999)),
-                             options = shinyWidgets::pickerOptions(
-                               actionsBox = TRUE,
-                               liveSearch = TRUE,
-                               size = 10,
-                               liveSearchStyle = "contains",
-                               liveSearchPlaceholder = "Type here to search",
-                               virtualScroll = 50
-                             )
-                           )
-                         ),
-                         tags$td(
-                           shinyWidgets::pickerInput(
-                             inputId = "choicesForRelationshipDistanceForIndexEvent",
-                             label = "Distance:",
-                             choices = data$conceptAncestorDistance,
-                             selected = data$conceptAncestorDistance,
-                             multiple = TRUE,
-                             width = 200,
-                             inline = TRUE,
-                             choicesOpt = list(style = rep_len("color: black;", 999)),
-                             options = shinyWidgets::pickerOptions(
-                               actionsBox = TRUE,
-                               liveSearch = TRUE,
-                               size = 10,
-                               liveSearchStyle = "contains",
-                               liveSearchPlaceholder = "Type here to search",
-                               virtualScroll = 50
-                             )
-                           )
-                         ),
-                         tags$td(
-                           align = "right",
-                           shiny::downloadButton(
-                             "saveDetailsOfSelectedConceptIdForIndexEvent",
-                             label = "",
-                             icon = shiny::icon("download"),
-                             style = "margin-top: 5px; margin-bottom: 5px;"
-                           )
-                         )
-                       )),
-            DT::dataTableOutput(outputId = "conceptBrowserTableForIndexEvent")
-          )
-        )
-        inc = inc + 1
-        panels[[inc]] <- shiny::tabPanel(
-          title = "Time Series Plot",
-          value = "conceptSetTimeSeriesForIndexEvent",
-          plotly::plotlyOutput(
-            outputId = "conceptSetTimeSeriesPlotForIndexEvent",
-            width = "100%",
-            height = "100%"
-          )
-        )
-        inc = inc + 1
-      }
-      shiny::conditionalPanel(
-        condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-        shinydashboard::box(
-          title = shiny::htmlOutput(outputId = "conceptSetSynonymsForIndexEventBreakdown"),
-          width = NULL,
-          status = NULL,
-          collapsible = TRUE,
-          collapsed = TRUE,
-          do.call(tabsetPanel, panels)
-        )
-      )
-    })
+  # output$dynamicUIForRelationshipAndTimeSeriesForIndexEvent <-
+    # shiny::renderUI({
+    #   inc <-  1
+    #   panels <- list()
+    #   # Modifying rendered UI after load
+    #   if (any(doesObjectHaveData(consolidatedConceptIdTarget()),doesObjectHaveData(consolidatedConceptIdComparator()))) {
+    #     data <- getMetadataForConceptId()
+    #     panels[[inc]] <- shiny::tabPanel(
+    #       title = "Concept Set Browser",
+    #       value = "conceptSetBrowser",
+    #       shiny::conditionalPanel(
+    #         condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
+    #         tags$table(width = "100%",
+    #                    tags$tr(
+    #                      tags$td(
+    #                        shinyWidgets::pickerInput(
+    #                          inputId = "choicesForRelationshipNameForIndexEvent",
+    #                          label = "Relationship Category:",
+    #                          choices = c('Not applicable',
+    #                                      data$relationshipName),
+    #                          selected = c('Not applicable',
+    #                                       data$relationshipName),
+    #                          multiple = TRUE,
+    #                          width = 200,
+    #                          inline = TRUE,
+    #                          choicesOpt = list(style = rep_len("color: black;", 999)),
+    #                          options = shinyWidgets::pickerOptions(
+    #                            actionsBox = TRUE,
+    #                            liveSearch = TRUE,
+    #                            size = 10,
+    #                            liveSearchStyle = "contains",
+    #                            liveSearchPlaceholder = "Type here to search",
+    #                            virtualScroll = 50
+    #                          )
+    #                        )
+    #                      ),
+    #                      tags$td(
+    #                        shinyWidgets::pickerInput(
+    #                          inputId = "choicesForRelationshipDistanceForIndexEvent",
+    #                          label = "Distance:",
+    #                          choices = data$conceptAncestorDistance,
+    #                          selected = data$conceptAncestorDistance,
+    #                          multiple = TRUE,
+    #                          width = 200,
+    #                          inline = TRUE,
+    #                          choicesOpt = list(style = rep_len("color: black;", 999)),
+    #                          options = shinyWidgets::pickerOptions(
+    #                            actionsBox = TRUE,
+    #                            liveSearch = TRUE,
+    #                            size = 10,
+    #                            liveSearchStyle = "contains",
+    #                            liveSearchPlaceholder = "Type here to search",
+    #                            virtualScroll = 50
+    #                          )
+    #                        )
+    #                      ),
+    #                      tags$td(
+    #                        align = "right",
+    #                        shiny::downloadButton(
+    #                          "saveDetailsOfSelectedConceptIdForIndexEvent",
+    #                          label = "",
+    #                          icon = shiny::icon("download"),
+    #                          style = "margin-top: 5px; margin-bottom: 5px;"
+    #                        )
+    #                      )
+    #                    )),
+    #         DT::dataTableOutput(outputId = "conceptBrowserTableForIndexEvent")
+    #       )
+    #     )
+    #     inc = inc + 1
+    #     panels[[inc]] <- shiny::tabPanel(
+    #       title = "Time Series Plot",
+    #       value = "conceptSetTimeSeriesForIndexEvent",
+    #       plotly::plotlyOutput(
+    #         outputId = "conceptSetTimeSeriesPlotForIndexEvent",
+    #         width = "100%",
+    #         height = "100%"
+    #       )
+    #     )
+    #     inc = inc + 1
+    #   }
+    #   shiny::conditionalPanel(
+    #     condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
+    #     shinydashboard::box(
+    #       title = shiny::htmlOutput(outputId = "conceptSetSynonymsForIndexEventBreakdown"),
+    #       width = NULL,
+    #       status = NULL,
+    #       collapsible = TRUE,
+    #       collapsed = TRUE,
+    #       do.call(tabsetPanel, panels)
+    #     )
+    #   )
+    # })
   
   ##output: conceptSetSynonymsForIndexEventBreakdown----
   output$conceptSetSynonymsForIndexEventBreakdown <- shiny::renderUI(expr = {
