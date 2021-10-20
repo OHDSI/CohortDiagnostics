@@ -1836,6 +1836,10 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(activeSelected()$conceptId)) {#currently expecting to be vector of 1 (single select)
       return(NULL)
     }
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Retrieving synonyms for concept id: ", activeSelected()$conceptId),
+                 value = 0)
     data <- list()
     data$concept <- getConcept(dataSource = dataSource,
                                conceptId = activeSelected()$conceptId)
@@ -1844,13 +1848,12 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###getConceptSetSynonyms-----
-  getConceptSetSynonyms <- shiny::reactive(x = {
+  ###getConceptSetSynonymsHtmlTextString-----
+  getConceptSetSynonymsHtmlTextString <- shiny::reactive(x = {
     data <- getNameAndSynonymForActiveSelectedConceptId()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    
     tags$table(
       tags$tr(
         tags$td(
@@ -1866,7 +1869,7 @@ shiny::shinyServer(function(input, output, session) {
       ),
       tags$tr(
         tags$td(
-          # tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", "))
+          tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", "))
         )
       )
     )
@@ -2219,6 +2222,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(activeSelected()$databaseId)) {#currently expecting to be vector of 1 or more (multiselect)
       return(NULL)
     }
+    #!!!!!!!!! Conditional on opening the box
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(
@@ -2228,6 +2232,7 @@ shiny::shinyServer(function(input, output, session) {
                        activeSelected()$cohortId),
       value = 0
     )
+    
     
     data <-
       getConceptMetadata(
@@ -2427,7 +2432,7 @@ shiny::shinyServer(function(input, output, session) {
       shiny::conditionalPanel(
         condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
         shinydashboard::box(
-          title = shiny::htmlOutput(outputId = "conceptSetBowserConceptSynonymName"),
+          title = shiny::htmlOutput(outputId = "conceptSetBowserConceptSynonymNameInHtmlString"),
           width =  NULL,
           status = NULL,
           collapsible = TRUE,
@@ -3862,9 +3867,9 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  ##output:: conceptSetBowserConceptSynonymName
-  output$conceptSetBowserConceptSynonymName <- shiny::renderUI(expr = {
-     data <- getConceptSetSynonyms()
+  ##output:: conceptSetBowserConceptSynonymNameInHtmlString
+  output$conceptSetBowserConceptSynonymNameInHtmlString <- shiny::renderUI(expr = {
+     data <- getConceptSetSynonymsHtmlTextString()
      if (!doesObjectHaveData(data)) {
        return(NULL)
      }
@@ -6059,7 +6064,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: conceptSetSynonymsForIndexEventBreakdown----
   output$conceptSetSynonymsForIndexEventBreakdown <- shiny::renderUI(expr = {
-    data <- getConceptSetSynonyms()
+    data <- getConceptSetSynonymsHtmlTextString()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
