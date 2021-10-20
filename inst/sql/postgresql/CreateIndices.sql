@@ -156,8 +156,7 @@ CREATE INDEX idx_analysis_name_22  ON temporal_analysis_ref  (analysis_name ASC)
 CREATE INDEX idx_domain_id_22  ON temporal_analysis_ref  (domain_id ASC);
 
 CREATE INDEX idx_covariate_id_23  ON temporal_covariate_ref  (covariate_id ASC);
-CLUSTER temporal_covariate_ref  USING idx_analysis_id_23 ;
-CREATE INDEX idx_analysis_name_23  ON temporal_covariate_ref  (analysis_name ASC);
+CLUSTER temporal_covariate_ref  USING idx_covariate_id_23 ;
 CREATE INDEX idx_covariate_name_23  ON temporal_covariate_ref  (covariate_name ASC);
 CREATE INDEX idx_concept_id_23  ON temporal_covariate_ref  (concept_id ASC);
 
@@ -190,9 +189,9 @@ CREATE INDEX idx_period_begin_28  ON time_series  (period_begin ASC);
 CREATE INDEX idx_calendar_interval_28  ON time_series  (calendar_interval ASC);
 CREATE INDEX idx_series_type_28  ON time_series  (series_type ASC);
 
-CREATE INDEX idx_cohort_id_28  ON visit_context  (cohort_id ASC);
-CLUSTER visit_context  USING idx_cohort_id_28 ;
-CREATE INDEX idx_database_id_28  ON visit_context  (database_id ASC);
-CREATE INDEX idx_visit_concept_id_28  ON visit_context  (visit_concept_id ASC);
-CREATE INDEX idx_visit_concept_name_28  ON visit_context  (visit_concept_name ASC);
-CREATE INDEX idx_visit_context_28  ON visit_context  (visit_context ASC);
+CREATE INDEX idx_cohort_id_29  ON visit_context  (cohort_id ASC);
+CLUSTER visit_context  USING idx_cohort_id_29 ;
+CREATE INDEX idx_database_id_29  ON visit_context  (database_id ASC);
+CREATE INDEX idx_visit_concept_id_29  ON visit_context  (visit_concept_id ASC);
+CREATE INDEX idx_visit_concept_name_29  ON visit_context  (visit_concept_name ASC);
+CREATE INDEX idx_visit_context_29  ON visit_context  (visit_context ASC);
