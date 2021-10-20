@@ -2298,8 +2298,6 @@ shiny::shinyServer(function(input, output, session) {
                        activeSelected()$cohortId),
       value = 0
     )
-    
-    
     data <-
       getConceptMetadata(
         dataSource = dataSource,
@@ -3758,6 +3756,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    browser()
     # working on the plot
     if (input$timeSeriesAggregationForCohortDefinition == "Monthly") {
       data <- data$databaseConceptIdYearMonthLevelTsibble %>% 
@@ -3833,6 +3832,7 @@ shiny::shinyServer(function(input, output, session) {
       doesObjectHaveData(data),
       "No information for selected concept id."
     ))
+    browser()
     conceptRelationshipTable <- data$conceptRelationshipTable %>% 
       dplyr::filter(.data$conceptId != activeSelected()$conceptId)
     if (any(
@@ -5903,7 +5903,7 @@ shiny::shinyServer(function(input, output, session) {
       )
       return(table)
     }, server = TRUE)
-  
+  #!!!!!!!! should be same as cohort - code duplication
   # output$dynamicUIForRelationshipAndTimeSeriesForIndexEvent <-
     # shiny::renderUI({
     #   inc <-  1
@@ -6007,111 +6007,112 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ##output: conceptBrowserTableForIndexEvent----
-  output$conceptBrowserTableForIndexEvent <- DT::renderDT(expr = {
-    if (doesObjectHaveData(consolidateCohortDefinitionActiveSideTarget())) {
-      conceptId <- consolidatedConceptIdTarget()
-    }
-    data <- getMetadataForConceptId()
-    validate(need(
-      doesObjectHaveData(data),
-      "No information for selected concept id."
-    ))
-    data <- data$conceptRelationshipTable
-    
-    if (doesObjectHaveData(input$choicesForRelationshipNameForIndexEvent)) {
-      data <- data %>%
-        dplyr::inner_join(
-          relationship %>%
-            dplyr::filter(
-              .data$relationshipName %in% input$choicesForRelationshipNameForIndexEvent
-            ) %>%
-            dplyr::select(.data$relationshipId) %>%
-            dplyr::distinct(),
-          by = "relationshipId"
-        )
-    }
-    if (doesObjectHaveData(input$choicesForRelationshipDistanceForIndexEvent)) {
-      data <- data %>%
-        dplyr::filter(
-          .data$levelsOfSeparation %in%
-            input$choicesForRelationshipDistanceForIndexEvent
-        )
-    }
-    
-    options = list(
-      pageLength = 10,
-      searching = TRUE,
-      scrollX = TRUE,
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE
-    )
-    
-    table <- DT::datatable(
-      data,
-      options = options,
-      colnames = colnames(data) %>% camelCaseToTitleCase(),
-      rownames = FALSE,
-      escape = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
-    return(table)
-  })
-  
-  ##output: conceptSetTimeSeriesPlotForIndexEvent----
-  output$conceptSetTimeSeriesPlotForIndexEvent <-
-    plotly::renderPlotly({
-      data <- getMetadataForConceptId()
-      validate(need(
-        doesObjectHaveData(data),
-        "No timeseries data for the cohort of this series type"
-      ))
-      # working on the plot
-      if (input$timeSeriesAggregationPeriodSelection == "Monthly") {
-        data <- data$databaseConceptIdYearMonthLevelTsibble %>% 
-          dplyr::filter(.data$conceptId == consolidatedConceptIdTarget())
-      } else {
-        data <- data$databaseConceptIdYearLevelTsibble %>% 
-          dplyr::filter(.data$conceptId == consolidatedConceptIdTarget())
-      }
-      validate(need(
-        all(!is.null(data),
-            nrow(data) > 0),
-        "No timeseries data for the cohort of this series type"
-      ))
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(
-        message = paste0("Computing Time series plot for:",
-                         activeSelected()$conceptId),
-        value = 0
-      )
-      data <- data %>% 
-        dplyr::filter(.data$databaseId %in% input$selectedDatabaseIds) %>% 
-        dplyr::rename("records" = .data$conceptCount,
-                      "persons" = .data$subjectCount)
-      tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
-                                                                            valueFields = c("records", "persons"))
-      
-      conceptName <- getMetadataForConceptId()$concept %>% 
-        dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
-        dplyr::pull(.data$conceptName)
-      
-      conceptSynonym <- getMetadataForConceptId()$conceptSynonym$conceptSynonymName %>% 
-        unique() %>%
-        sort() %>% 
-        paste0(collapse = ", ")
-      
-      plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
-        stlModeledTsibbleData = tsibbleDataFromSTLModel,
-        conceptId = activeSelected()$conceptId,
-        conceptName = conceptName,
-        conceptSynonym = conceptSynonym
-      )
-      return(plot)
-    })
+  #!!!!!!!! should be same as cohort - code duplication
+  # ##output: conceptBrowserTableForIndexEvent----
+  # output$conceptBrowserTableForIndexEvent <- DT::renderDT(expr = {
+  #   if (doesObjectHaveData(consolidateCohortDefinitionActiveSideTarget())) {
+  #     conceptId <- consolidatedConceptIdTarget()
+  #   }
+  #   data <- getMetadataForConceptId()
+  #   validate(need(
+  #     doesObjectHaveData(data),
+  #     "No information for selected concept id."
+  #   ))
+  #   data <- data$conceptRelationshipTable
+  #   
+  #   if (doesObjectHaveData(input$choicesForRelationshipNameForIndexEvent)) {
+  #     data <- data %>%
+  #       dplyr::inner_join(
+  #         relationship %>%
+  #           dplyr::filter(
+  #             .data$relationshipName %in% input$choicesForRelationshipNameForIndexEvent
+  #           ) %>%
+  #           dplyr::select(.data$relationshipId) %>%
+  #           dplyr::distinct(),
+  #         by = "relationshipId"
+  #       )
+  #   }
+  #   if (doesObjectHaveData(input$choicesForRelationshipDistanceForIndexEvent)) {
+  #     data <- data %>%
+  #       dplyr::filter(
+  #         .data$levelsOfSeparation %in%
+  #           input$choicesForRelationshipDistanceForIndexEvent
+  #       )
+  #   }
+  #   
+  #   options = list(
+  #     pageLength = 10,
+  #     searching = TRUE,
+  #     scrollX = TRUE,
+  #     lengthChange = TRUE,
+  #     ordering = TRUE,
+  #     paging = TRUE
+  #   )
+  #   
+  #   table <- DT::datatable(
+  #     data,
+  #     options = options,
+  #     colnames = colnames(data) %>% camelCaseToTitleCase(),
+  #     rownames = FALSE,
+  #     escape = FALSE,
+  #     filter = "top",
+  #     class = "stripe nowrap compact"
+  #   )
+  #   return(table)
+  # })
+  #!!!!!!!! should be same as cohort - code duplication
+  # ##output: conceptSetTimeSeriesPlotForIndexEvent----
+  # output$conceptSetTimeSeriesPlotForIndexEvent <-
+  #   plotly::renderPlotly({
+  #     data <- getMetadataForConceptId()
+  #     validate(need(
+  #       doesObjectHaveData(data),
+  #       "No timeseries data for the cohort of this series type"
+  #     ))
+  #     # working on the plot
+  #     if (input$timeSeriesAggregationPeriodSelection == "Monthly") {
+  #       data <- data$databaseConceptIdYearMonthLevelTsibble %>% 
+  #         dplyr::filter(.data$conceptId == consolidatedConceptIdTarget())
+  #     } else {
+  #       data <- data$databaseConceptIdYearLevelTsibble %>% 
+  #         dplyr::filter(.data$conceptId == consolidatedConceptIdTarget())
+  #     }
+  #     validate(need(
+  #       all(!is.null(data),
+  #           nrow(data) > 0),
+  #       "No timeseries data for the cohort of this series type"
+  #     ))
+  #     progress <- shiny::Progress$new()
+  #     on.exit(progress$close())
+  #     progress$set(
+  #       message = paste0("Computing Time series plot for:",
+  #                        activeSelected()$conceptId),
+  #       value = 0
+  #     )
+  #     data <- data %>% 
+  #       dplyr::filter(.data$databaseId %in% input$selectedDatabaseIds) %>% 
+  #       dplyr::rename("records" = .data$conceptCount,
+  #                     "persons" = .data$subjectCount)
+  #     tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
+  #                                                                           valueFields = c("records", "persons"))
+  #     
+  #     conceptName <- getMetadataForConceptId()$concept %>% 
+  #       dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
+  #       dplyr::pull(.data$conceptName)
+  #     
+  #     conceptSynonym <- getMetadataForConceptId()$conceptSynonym$conceptSynonymName %>% 
+  #       unique() %>%
+  #       sort() %>% 
+  #       paste0(collapse = ", ")
+  #     
+  #     plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
+  #       stlModeledTsibbleData = tsibbleDataFromSTLModel,
+  #       conceptId = activeSelected()$conceptId,
+  #       conceptName = conceptName,
+  #       conceptSynonym = conceptSynonym
+  #     )
+  #     return(plot)
+  #   })
   
   #______________----
   # Visit Context -----
