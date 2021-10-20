@@ -100,10 +100,11 @@ sidebarMenu <-
       input.tabs == 'indexEventBreakdown' |
       input.tabs == 'visitContext' |
       input.tabs == 'cohortOverlap' |
-      input.targetConceptSetsType == 'Concept Set Expression' |
+      (input.targetCohortDefinitionTabSetPanel == 'targetCohortDefinitionConceptSetTabPanel' & 
+      (input.targetConceptSetsType == 'Concept Set Expression' |
       input.targetConceptSetsType == 'Resolved' |
       input.targetConceptSetsType == 'Excluded' |
-      input.targetConceptSetsType == 'Orphan concepts' |
+      input.targetConceptSetsType == 'Orphan concepts')) |
       input.targetCohortDefinitionTabSetPanel == 'targetCohortdefinitionInclusionRuleTabPanel' |
       input.tabs == 'compareCohortCharacterization'",
       shinyWidgets::pickerInput(

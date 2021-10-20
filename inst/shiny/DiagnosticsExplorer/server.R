@@ -2129,6 +2129,13 @@ shiny::shinyServer(function(input, output, session) {
         values_from = count
       )
     combinedConceptSetComparisonValues(combinedResult)
+    targetCohortShortName <- cohort %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
+      dplyr::pull(.data$shortName)
+    
+    comparatorCohortShortName <- cohort %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator()) %>%
+      dplyr::pull(.data$shortName)
     
     sketch <- htmltools::withTags(table(class = "display",
                                         thead(tr(
@@ -2144,7 +2151,8 @@ shiny::shinyServer(function(input, output, session) {
                                         ),
                                         tr(
                                           lapply(rep(
-                                            c("Target", "Comparator"),
+                                            c(paste0("Found in Target (",targetCohortShortName, ")"), 
+                                              paste0("Found in Comparator (",comparatorCohortShortName,")")),
                                             length(databaseIds)
                                           ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                         ))))
