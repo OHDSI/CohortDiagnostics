@@ -2885,7 +2885,7 @@ shiny::shinyServer(function(input, output, session) {
       ))
       data <- getResolvedConceptsTarget()
       validate(need(doesObjectHaveData(data), "No resolved concept ids"))
-      keyColumnFields <- c("conceptId", "conceptName")
+      keyColumnFields <- c("conceptId", "conceptName", "vocabularyId")
       #depending on user selection - what data Column Fields Will Be Presented?
       dataColumnFields <-
         c("persons",
@@ -2955,7 +2955,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- getExcludedConceptsTarget()
       validate(need(doesObjectHaveData(data), "No excluded concept ids"))
       
-      keyColumnFields <- c("conceptId", "conceptName")
+      keyColumnFields <- c("conceptId", "conceptName", "vocabularyId")
       #depending on user selection - what data Column Fields Will Be Presented?
       dataColumnFields <-
         c("persons",
@@ -3023,7 +3023,7 @@ shiny::shinyServer(function(input, output, session) {
                         nrow(data) > 0),
                     "No orphan concepts"))
       
-      keyColumnFields <- c("conceptId", "conceptName")
+      keyColumnFields <- c("conceptId", "conceptName", "vocabularyId")
       #depending on user selection - what data Column Fields Will Be Presented?
       dataColumnFields <-
         c("persons",
@@ -3584,7 +3584,7 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No resolved concept ids"))
-      keyColumnFields <- c("conceptId", "conceptName")
+      keyColumnFields <- c("conceptId", "conceptName", "vocabularyId")
       #depending on user selection - what data Column Fields Will Be Presented?
       dataColumnFields <-
         c("persons",
@@ -3653,7 +3653,7 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(data), nrow(data) > 0
       )),
       "No excluded concept ids"))
-      keyColumnFields <- c("conceptId", "conceptName")
+      keyColumnFields <- c("conceptId", "conceptName", "vocabularyId")
       #depending on user selection - what data Column Fields Will Be Presented?
       dataColumnFields <-
         c("persons",
@@ -3718,7 +3718,7 @@ shiny::shinyServer(function(input, output, session) {
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
                     "No orphan concepts"))
-      keyColumnFields <- c("conceptId", "conceptName")
+      keyColumnFields <- c("conceptId", "conceptName", "vocabularyId")
       #depending on user selection - what data Column Fields Will Be Presented?
       dataColumnFields <-
         c("persons",
