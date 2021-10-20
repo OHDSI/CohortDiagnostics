@@ -2314,161 +2314,28 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  #Dynamic UI rendering for relationship table -----
-  output$dynamicUIForRelationshipAndComparisonTable <-
-    shiny::renderUI({
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(
-        message = "Rendering the UI for concept browser",
-        value = 0
-      )
-      inc <-  1
-      panels <- list()
-      #Modifying rendered UI after load
-      if (!is.null(activeSelected()$conceptId)) {
-        data <- getMetadataForConceptId()
-        validate(need(doesObjectHaveData(data), "No data for selected combination"))
-        
-        panels[[inc]] <- shiny::tabPanel(
-          title = "Concept Set Browser",
-          value = "conceptSetBrowser",
-          shiny::conditionalPanel(
-            condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-            tags$table(width = "100%",
-                       tags$tr(
-                         tags$td(
-                           shinyWidgets::pickerInput(
-                             inputId = "choicesForRelationshipName",
-                             label = "Relationship Category:",
-                             choices = c(data$relationshipName),
-                             selected = c(data$relationshipName),
-                             multiple = TRUE,
-                             width = 200,
-                             inline = TRUE,
-                             choicesOpt = list(style = rep_len("color: black;", 999)),
-                             options = shinyWidgets::pickerOptions(
-                               actionsBox = TRUE,
-                               liveSearch = TRUE,
-                               size = 10,
-                               liveSearchStyle = "contains",
-                               liveSearchPlaceholder = "Type here to search",
-                               virtualScroll = 50
-                             )
-                           )
-                         ),
-                         tags$td(
-                           shinyWidgets::pickerInput(
-                             inputId = "choicesForRelationshipDistance",
-                             label = "Distance:",
-                             choices = data$conceptAncestorDistance,
-                             selected = data$conceptAncestorDistance,
-                             multiple = TRUE,
-                             width = 200,
-                             inline = TRUE,
-                             choicesOpt = list(style = rep_len("color: black;", 999)),
-                             options = shinyWidgets::pickerOptions(
-                               actionsBox = TRUE,
-                               liveSearch = TRUE,
-                               size = 10,
-                               liveSearchStyle = "contains",
-                               liveSearchPlaceholder = "Type here to search",
-                               virtualScroll = 50
-                             )
-                           )
-                         ),
-                         tags$td(
-                           align = "right",
-                           shiny::downloadButton(
-                             "saveDetailsOfSelectedConceptId",
-                             label = "",
-                             icon = shiny::icon("download"),
-                             style = "margin-top: 5px; margin-bottom: 5px;"
-                           )
-                         )
-                       )),
-            DT::dataTableOutput(outputId = "conceptBrowserTable")
-          )
-        )
-        inc = inc + 1
-        if (doesObjectHaveData(data$mappedNonStandard)) {
-          panels[[inc]] <- shiny::tabPanel(
-            title = "Non standard counts",
-            value = "nonStandardCount",
-            shiny::conditionalPanel(
-              condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-              DT::dataTableOutput(outputId = "nonStandardCount")
-            )
-          )
-          inc = inc + 1
-        }
-        panels[[inc]] <- shiny::tabPanel(
-          title = "Time Series Plot",
-          value = "conceptSetTimeSeries",
-          shiny::column(
-            width = 12,
-            shiny::radioButtons(
-              inputId = "timeSeriesAggregationForCohortDefinition",
-              label = "Aggregation period:",
-              choices = c("Monthly", "Yearly"),
-              selected = "Monthly",
-              inline = TRUE
-            )
-          ),
-          shiny::column(
-            width = 12,
-            plotly::plotlyOutput(
-              outputId = "conceptSetTimeSeriesPlot",
-              width = "100%",
-              height = "100%"
-            )
-          )
-        )
-        inc = inc + 1
-        
-        panels[[inc]] <- shiny::tabPanel(
-          title = "Standard to Non standard mapping",
-          value = "conceptSetStandardToNonStandard",
-          # shiny::column(
-          #   width = 12,
-          #   shiny::radioButtons(
-          #     inputId = "timeSeriesAggregationForCohortDefinition",
-          #     label = "Aggregation period:",
-          #     choices = c("Monthly", "Yearly"),
-          #     selected = "Monthly",
-          #     inline = TRUE
-          #   )
-          # ),
-          shiny::conditionalPanel(
-            condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-            DT::dataTableOutput(outputId = "conceptSetStandardToNonStandardTable")
-          )
-        )
-        inc = inc + 1
-      }
-      
-      # if (all(
-      #   !is.null(getConceptSetExpressionTarget()),
-      #   !is.null(getConceptSetExpressionComparator())
-      # )) {
-      #   panels[[inc]] <- shiny::tabPanel(
-      #     title = "Concept Set Comparisoparison",
-      #     value = "conceptSetComparison",
-      #     DT::dataTableOutput(outputId = "conceptSetComparisonTable")
-      #   )
-      # }
-      shiny::conditionalPanel(
-        condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-        shinydashboard::box(
-          title = shiny::htmlOutput(outputId = "conceptSetBowserConceptSynonymNameInHtmlString"),
-          width =  NULL,
-          status = NULL,
-          collapsible = TRUE,
-          collapsed = TRUE,
-          do.call(tabsetPanel, panels)
-        )
-      )
-    })
+  #conceptset relationship name
+  shiny::observe({
+    subset <- getMetadataForConceptId()$relationshipName
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "choicesForRelationshipName",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+
+  shiny::observe({
+    subset <- getMetadataForConceptId()$conceptAncestorDistance
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "choicesForRelationshipDistance",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
   
   ##output: isConceptIdFromTargetOrComparatorConceptTableSelected----
   output$isConceptIdFromTargetOrComparatorConceptTableSelected <-
