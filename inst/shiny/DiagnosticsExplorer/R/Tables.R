@@ -265,7 +265,9 @@ compareCohortCharacteristics <-
         sd = sqrt(.data$sd1 ^ 2 + .data$sd2 ^ 2),
         stdDiff = (.data$mean2 - .data$mean1) / .data$sd
       ) %>%
-      dplyr::arrange(-abs(.data$stdDiff))
+      dplyr::arrange(-abs(.data$stdDiff)) %>% 
+      dplyr::filter(!is.na(.data$cohortId1)) %>% 
+      dplyr::filter(!is.na(.data$cohortId2))
     return(m)
   }
 
@@ -296,6 +298,9 @@ compareTemporalCohortCharacteristics <-
         sd = sqrt(.data$sd1 ^ 2 + .data$sd2 ^ 2),
         stdDiff = (.data$mean2 - .data$mean1) / .data$sd
       ) %>%
-      dplyr::arrange(-abs(.data$stdDiff))
+      dplyr::arrange(-abs(.data$stdDiff)) %>% 
+      dplyr::filter(!is.na(.data$cohortId1)) %>% 
+      dplyr::filter(!is.na(.data$cohortId2)) %>% 
+      dplyr::filter(!is.na(.data$timeId))
     return(m)
   }

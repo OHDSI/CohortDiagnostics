@@ -1170,17 +1170,33 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   for (i in 1:length(distinctDatabaseShortName)) {
     data <- balance %>% 
       dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i])
-    databasePlots[[i]] <- plotly::plot_ly(balance, x = ~mean1, y = ~mean2, text = ~tooltip, type = 'scatter',height = 650,hoverinfo = 'text',
-                            mode = "markers", color = ~domain, colors = ~colors, opacity = 0.4,showlegend = ifelse(i == 1, T, F), 
-                            marker = list(size = 12, line = list(color = 'rgb(255,255,255)', width = 1))) %>% 
+    databasePlots[[i]] <-
+      plotly::plot_ly(
+        balance,
+        x = ~ mean1,
+        y = ~ mean2,
+        text = ~ tooltip,
+        type = 'scatter',
+        height = 650,
+        hoverinfo = 'text',
+        mode = "markers",
+        color = ~ domain,
+        colors = ~ colors,
+        opacity = 0.4,
+        showlegend = ifelse(i == 1, T, F),
+        marker = list(
+          size = 12,
+          line = list(color = 'rgb(255,255,255)', width = 1)
+        )
+      ) %>%
       plotly::layout(
         xaxis = list(range = c(0, 1)),
         yaxis = list(range = c(0, 1)),
         annotations = list(
           x = c(-0.06, 0.5, 0.5),
-          y = c(0.5, -0.06, 1.02),
+          y = c(0.5,-0.06, 1.02),
           text = c(
-            ifelse(i == 1, xCohort, ""), 
+            ifelse(i == 1, xCohort, ""),
             yCohort,
             camelCaseToTitleCase(distinctDatabaseShortName[i])
           ),
@@ -1192,9 +1208,19 @@ plotCohortComparisonStandardizedDifference <- function(balance,
           textangle = c(-90, 0, 0),
           font = list(size = 18)
         )
-      ) %>% 
-      plotly::add_segments(x = 0, y = 0, xend = 1, yend = 1,showlegend = F,
-                           line = list(width = 0.5, color = "rgb(160,160,160)", dash = "dash"))
+      ) %>%
+      plotly::add_segments(
+        x = 0,
+        y = 0,
+        xend = 1,
+        yend = 1,
+        showlegend = F,
+        line = list(
+          width = 0.5,
+          color = "rgb(160,160,160)",
+          dash = "dash"
+        )
+      )
   }
   
   
