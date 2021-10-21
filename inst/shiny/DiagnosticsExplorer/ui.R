@@ -1024,7 +1024,7 @@ bodyTabItems <- shinydashboard::tabItems(
                          inputId = "overlapPlotType",
                          label = "Plot type",
                          choices = c("Percentages", "Counts"),
-                         selected = "Percentages",
+                         selected = "Counts",
                          inline = TRUE
                        )
                      )
@@ -1228,7 +1228,7 @@ bodyTabItems <- shinydashboard::tabItems(
             inputId = "characterizationCompareMethod",
             label = "",
             choices = c("Pretty table", "Raw table", "Plot"),
-            selected = "Plot",
+            selected = "Raw table",
             inline = TRUE
           ),
         ),
