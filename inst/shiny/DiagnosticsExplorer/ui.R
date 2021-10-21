@@ -358,7 +358,7 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       tags$br(),
       shiny::column(12,
-                    if (showConceptSetBrowser) {
+                    if (showConceptBrowser) {
                       shiny::conditionalPanel(
                         condition = "input.targetConceptSetsType != 'Concept Set Expression' &
                        input.targetConceptSetsType != 'Concept Set Json' &
