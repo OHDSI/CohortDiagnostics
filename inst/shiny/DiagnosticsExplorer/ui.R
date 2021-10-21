@@ -364,7 +364,7 @@ bodyTabItems <- shinydashboard::tabItems(
                        input.targetConceptSetsType != 'Concept Set Json' &
                        output.isConceptIdFromTargetOrComparatorConceptTableSelected == true",
                         shinydashboard::box(
-                          title = shiny::htmlOutput(outputId = "conceptSetBrowserConceptSynonymNameInHtmlString"),
+                          title = shiny::htmlOutput(outputId = "conceptBrowserConceptSynonymNameInHtmlString"),
                           width = NULL,
                           collapsible = TRUE,
                           collapsed = TRUE,
@@ -372,8 +372,8 @@ bodyTabItems <- shinydashboard::tabItems(
                           shiny::tabsetPanel(
                             id = "cohortDdefinitionConceptsetBowserTabSetPanel",
                             shiny::tabPanel(
-                              title = "Concept Set Browser",
-                              value = "conceptSetBrowser",
+                              title = "Concept Browser",
+                              value = "conceptBrowser",
                               tags$table(width = "100%",
                                          tags$tr(
                                            tags$td(
@@ -400,8 +400,8 @@ bodyTabItems <- shinydashboard::tabItems(
                                              shinyWidgets::pickerInput(
                                                inputId = "choicesForRelationshipDistance",
                                                label = "Distance:",
-                                               choices = c("-3","-2","-1","0","1","2","3"),
-                                               selected = c("-3","-2","-1","0","1","2","3"),
+                                               choices = c("-3","-2","-1","0","1","2","3", "Not applicable"),
+                                               selected = c("-3","-2","-1","0","1","2","3", "Not applicable"),
                                                multiple = TRUE,
                                                width = 200,
                                                inline = TRUE,

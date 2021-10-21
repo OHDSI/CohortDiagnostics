@@ -734,7 +734,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
       dataColumnsLevel2 <- colnames(data)
       dataColumnsLevel2 <-
         dataColumnsLevel2[stringr::str_detect(string = dataColumnsLevel2,
-                                              pattern = keyColumns,
+                                              pattern = paste0(keyColumns, collapse = "|"),
                                               negate = TRUE)]
       dataColumnsLevel2 <-
         stringr::str_remove_all(
@@ -758,6 +758,15 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
     minimumCellCountDefs <- minCellPercentDef(numberOfColumns + (1:(
       numberOfSubstitutableColums * length(databaseIdsForUseAsHeader)
     )))  
+  }
+  
+  sortByColumns <- colnames(data)
+  sortByColumns <- sortByColumns[stringr::str_detect(string = sortByColumns,
+                                                     pattern = paste(dataColumns, collapse = "|"))]
+  if (length(sortByColumns) > 0) {
+    sortByColumns <- sortByColumns[[1]]
+    data <- data %>% 
+      dplyr::arrange(dplyr::desc(dplyr::across(sortByColumns)))
   }
   
   options = list(

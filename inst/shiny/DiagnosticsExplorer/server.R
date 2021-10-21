@@ -3791,8 +3791,8 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  ##output:: conceptSetBrowserConceptSynonymNameInHtmlString
-  output$conceptSetBrowserConceptSynonymNameInHtmlString <- shiny::renderUI(expr = {
+  ##output:: conceptBrowserConceptSynonymNameInHtmlString
+  output$conceptBrowserConceptSynonymNameInHtmlString <- shiny::renderUI(expr = {
      data <- getConceptSetSynonymsHtmlTextString()
      if (!doesObjectHaveData(data)) {
        return(NULL)
@@ -3873,7 +3873,6 @@ shiny::shinyServer(function(input, output, session) {
       ) %>% 
       dplyr::arrange(.data$databaseId, .data$conceptId, dplyr::desc(.data$records))
     
-    
     keyColumnFields <- c("conceptId", 
                          "conceptName",
                          "vocabularyId",
@@ -3916,7 +3915,6 @@ shiny::shinyServer(function(input, output, session) {
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
-    
     table <- getDtWithColumnsGroupedByDatabaseId(
       data = data,
       headerCount = countsForHeader,
@@ -3953,7 +3951,6 @@ shiny::shinyServer(function(input, output, session) {
       doesObjectHaveData(data),
       "No information for selected concept id."
     ))
-    browser()
     data <- data %>%
       dplyr::rename("persons" = .data$subjectCount,
                     "records" = .data$conceptCount)
