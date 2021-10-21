@@ -2316,7 +2316,8 @@ shiny::shinyServer(function(input, output, session) {
         dataSource = dataSource,
         databaseIds = consolidatedDatabaseIdTarget(),
         cohortIds = activeSelected()$cohortId,
-        conceptIds = activeSelected()$conceptId
+        conceptIds = activeSelected()$conceptId,
+        getConceptSynonym = FALSE
       )
     if (!doesObjectHaveData(data)) {
       return(NULL)
