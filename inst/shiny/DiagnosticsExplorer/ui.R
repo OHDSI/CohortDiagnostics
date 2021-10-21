@@ -379,8 +379,8 @@ bodyTabItems <- shinydashboard::tabItems(
                                            shinyWidgets::pickerInput(
                                              inputId = "choicesForRelationshipName",
                                              label = "Relationship Category:",
-                                             choices = c(""),
-                                             selected = c(""),
+                                             choices = c("Not applicable", conceptSetRelationshipName),
+                                             selected = c("Not applicable", conceptSetRelationshipName),
                                              multiple = TRUE,
                                              width = 200,
                                              inline = TRUE,
@@ -399,8 +399,8 @@ bodyTabItems <- shinydashboard::tabItems(
                                            shinyWidgets::pickerInput(
                                              inputId = "choicesForRelationshipDistance",
                                              label = "Distance:",
-                                             choices = c(""),
-                                             selected = c(""),
+                                             choices = c("-3","-2","-1","0","1","2","3"),
+                                             selected = c("-3","-2","-1","0","1","2","3"),
                                              multiple = TRUE,
                                              width = 200,
                                              inline = TRUE,

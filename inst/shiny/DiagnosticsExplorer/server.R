@@ -2363,29 +2363,6 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  #conceptset relationship name
-  shiny::observe({
-    subset <- getMetadataForConceptId()$relationshipName
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "choicesForRelationshipName",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
-
-  shiny::observe({
-    subset <- getMetadataForConceptId()$conceptAncestorDistance
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "choicesForRelationshipDistance",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
-  
   ##output: isConceptIdFromTargetOrComparatorConceptTableSelected----
   output$isConceptIdFromTargetOrComparatorConceptTableSelected <-
     shiny::reactive(x = {
@@ -3839,6 +3816,7 @@ shiny::shinyServer(function(input, output, session) {
                        conceptId),
       value = 0
     )
+    
     data <- getMetadataForConceptId()
     validate(need(
       doesObjectHaveData(data),
