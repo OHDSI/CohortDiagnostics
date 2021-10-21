@@ -510,7 +510,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
     dplyr::select(.data$databaseId) %>% 
     unique()
 
-  lightColors <- colorRampPalette(c(initialColor, "#000000"))(ceiling(nrow(colorReference)/2) + 1) %>% 
+  lightColors <- colorRampPalette(c(initialColor, "#FFFFFF"))(ceiling(nrow(colorReference)/2) + 1) %>% 
     head(-1) %>% 
     tail(-1)
   
@@ -1896,7 +1896,7 @@ plotCohortOverlap <- function(data,
   plot <- plotly::subplot(databasePlots) %>% 
     plotly::layout(annotations = list(
       x = 0.5 ,
-      y = -0.4 + (0.055 * length(distinctComparatorShortName)),
+      y = -0.5 + (0.025 * length(distinctTargetShortName) * length(distinctComparatorShortName)),
       text = paste(targetCohortCompoundName,"\n",comparatorCohortCompoundName),
       showarrow = F,
       xanchor = "center",
@@ -2012,10 +2012,24 @@ plotCohortOverlapPie <- function(data,
   distinctDatabaseShortName <- plotData$databaseShortName %>%  unique()
   databaseString <- paste(plotData$database %>% unique(),collapse = ", ")
   
+  lightColors <- colorRampPalette(c( rgb(0.3,0.2,0.4), rgb(1,1,1)))(4) %>% 
+    head(-1) %>% 
+    tail(-1)
+  
+  darkColors <- colorRampPalette(c( rgb(0.3,0.2,0.4), rgb(0,0,0)))(4) %>% 
+    head(-1) 
+  colors <- c(rev(lightColors),darkColors)
+  subjects <- c("Started before",
+                "Started on",
+                "Started during",
+                "Started at the end of",
+                "Started after")
+  
   plot <- plotly::plot_ly()
   for (i in 1:length(distinctDatabaseShortName)) {
     filteredData <- plotData %>% 
-      dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i])
+      dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i]) %>% 
+      dplyr::arrange(dplyr::desc(.data$value))
     
     plot <- plot %>% 
       plotly::add_pie(data = filteredData, 
@@ -2023,14 +2037,15 @@ plotCohortOverlapPie <- function(data,
                       values = ~value,
                       title = distinctDatabaseShortName[i],  
                       name = distinctDatabaseShortName[i],
-                      domain = list(row = 0, column = i-1),
+                      domain = list(row = 0, column = i - 1),
+                      marker = list(colors = colors),
                       showlegend = ifelse(i == length(distinctDatabaseShortName),T,F)) 
   }
   m <- list(
     l = 0,
     r = 0,
     b = 100,
-    t = 20
+    t = 50
   )
   plot <- plot %>% 
     plotly::layout(
