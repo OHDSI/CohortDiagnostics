@@ -6692,8 +6692,20 @@ shiny::shinyServer(function(input, output, session) {
       input$tabs == "temporalCharacterization"
     )) {
       data <- getMultipleCharacterizationDataTarget()
+      if (!doesObjectHaveData(data)) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(data$covariateValue)) {
+        return(NULL)
+      }
       data$covariateValue <- data$covariateValue %>% 
         dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget())
+      if (!doesObjectHaveData(data$covariateValue)) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(data$covariateValueDist)) {
+        return(NULL)
+      }
       data$covariateValueDist <- data$covariateValueDist %>% 
         dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget())
     }
@@ -6702,29 +6714,59 @@ shiny::shinyServer(function(input, output, session) {
       input$tabs == "compareTemporalCharacterization"
     )) {
       dataTarget <- getMultipleCharacterizationDataTarget()
+      if (!doesObjectHaveData(dataTarget)) {
+        return(NULL)
+      }
       if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
         return(NULL)
       }
       validate(need(consolidatedCohortIdTarget() != consolidatedCohortIdComparator(), 
                     "Target and comparator cohorts are the same. Please change comparator selection."))
       dataComparator <- getMultipleCharacterizationDataComparator()
+      if (!doesObjectHaveData(dataComparator)) {
+        return(NULL)
+      }
       data <- list()
+      if (!doesObjectHaveData(dataTarget$analysisRef)) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(dataComparator$analysisRef)) {
+        return(NULL)
+      }
       data$analysisRef <- dplyr::bind_rows(dataTarget$analysisRef,
                                            dataComparator$analysisRef) %>% 
         dplyr::distinct()
+      if (!doesObjectHaveData(dataTarget$covariateRef)) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(dataComparator$covariateRef)) {
+        return(NULL)
+      }
       data$covariateRef <- dplyr::bind_rows(dataTarget$covariateRef,
                                            dataComparator$covariateRef) %>% 
         dplyr::distinct()
+      if (!doesObjectHaveData(dataTarget$covariateValue)) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(dataComparator$covariateValue)) {
+        return(NULL)
+      }
       data$covariateValue <- dplyr::bind_rows(dataTarget$covariateValue,
                                             dataComparator$covariateValue)%>% 
         dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
         dplyr::distinct()
+      if (!doesObjectHaveData(dataTarget$covariateValueDist)) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(dataComparator$covariateValueDist)) {
+        return(NULL)
+      }
       data$covariateValueDist <- dplyr::bind_rows(dataTarget$covariateValueDist,
                                               dataComparator$covariateValueDist) %>% 
         dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
         dplyr::distinct()
       data$concept <- dplyr::bind_rows(dataTarget$concept,
-                                                  dataComparator$concept) %>% 
+                                       dataComparator$concept) %>% 
         dplyr::distinct()
       data$temporalTimeRef <- dplyr::bind_rows(dataTarget$temporalTimeRef,
                                        dataComparator$temporalTimeRef) %>% 
