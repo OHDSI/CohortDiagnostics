@@ -37,7 +37,7 @@ alternateVocabularySchema <- c('vocabulary')
 # alternateVocabularySchema <- c('vocabulary')
 
 #Mode
-defaultDatabaseMode <- TRUE # Use file system if FALSE
+defaultDatabaseMode <- FALSE # Use file system if FALSE
 
 #Configuration variables ----
 showIncidenceRate <- TRUE
@@ -45,12 +45,11 @@ showTimeSeries <- TRUE
 showTimeDistribution <- TRUE
 showIndexEventBreakdown <- TRUE
 showVisitContext <- TRUE
-#Since Characterization and CompareCharacterization uses the same table
-showCharacterizationAndCompareCharacterization <- TRUE
-#Since TemporalCharacterization and CompareTemporalCharacterization uses the same table
-showTemporalCharacterizationAndCompareTemporalCharacterization <- TRUE
-#show all time id choices or only the primary time id choices
-filterTemporalChoicesToPrimaryOptions <- FALSE
+showCharacterization <- FALSE
+showTemporalCharacterization <- FALSE
+filterTemporalChoicesToPrimaryOptions <- TRUE
+
+showConceptBrowser <- TRUE
 
 # Foot note ----
 appInformationText <- "V 2.2"
@@ -183,12 +182,6 @@ if (databaseMode) {
     )
   }
   
-  #enhance cohortCount table to have all cohortId and databaseId combinations
-  cohortCount <- tidyr::crossing(database %>% dplyr::select(.data$databaseId) %>% dplyr::distinct(),
-                                 cohort %>% dplyr::select(.data$cohortId) %>% dplyr::distinct()) %>% 
-    dplyr::left_join(cohortCount, by = c("databaseId", "cohortId")) %>% 
-    dplyr::arrange(.data$databaseId, .data$cohortId)
-  
   for (i in (1:length(tablesToLoad))) {
     loadResultsTable(
       tableName = tablesToLoad[[i]],
@@ -223,6 +216,7 @@ if (databaseMode) {
     createFileDataSource(localDataPath, envir = .GlobalEnv)
 }
 
+
 #Adding enhancements to the objects, which are already loaded in R memory----
 if (exists("database") &&  doesObjectHaveData(database)) {
   if (nrow(database) > 0 &&
@@ -234,7 +228,15 @@ if (exists("database") &&  doesObjectHaveData(database)) {
   }
 }
 
-if (exists("cohort")  &&  doesObjectHaveData(cohort)) {
+if (all(exists("cohort"),
+        doesObjectHaveData(cohort))) {
+  
+  #enhance cohortCount table to have all cohortId and databaseId combinations
+  cohortCount <- tidyr::crossing(database %>% dplyr::select(.data$databaseId) %>% dplyr::distinct(),
+                                 cohort %>% dplyr::select(.data$cohortId) %>% dplyr::distinct()) %>% 
+    dplyr::left_join(cohortCount, by = c("databaseId", "cohortId")) %>% 
+    dplyr::arrange(.data$databaseId, .data$cohortId)
+  
   # cohort is required and is always loaded into R memory
   cohort <- cohort %>%
     dplyr::arrange(.data$cohortId) %>%
@@ -249,7 +251,8 @@ if (exists("cohort")  &&  doesObjectHaveData(cohort)) {
     ))
 }
 
-if (exists("conceptSets") && doesObjectHaveData(conceptSets)) {
+if (all(exists("conceptSets"),
+        doesObjectHaveData(conceptSets))) {
   # cohort is required and is always loaded into R memory
   conceptSets <- conceptSets %>%
     dplyr::arrange(.data$conceptSetId) %>%
@@ -262,8 +265,8 @@ if (exists("conceptSets") && doesObjectHaveData(conceptSets)) {
       .data$conceptSetId,
       ")"
     ))
-} else if (exists("cohort") &&
-           doesObjectHaveData(cohort$json)) {
+} else if (all(exists("cohort"),
+           doesObjectHaveData(cohort$json))) {
   conceptSets <- list()
   k <- 0
   for (i in (1:nrow(cohort))) {
@@ -295,7 +298,8 @@ if (exists("conceptSets") && doesObjectHaveData(conceptSets)) {
       ")"))
 }
 
-if (exists("database") && doesObjectHaveData(database)) {
+if (all(exists("database"),
+        doesObjectHaveData(database))) {
   # cohort is required and is always loaded into R memory
   database <- database %>%
     dplyr::arrange(.data$databaseId) %>%
@@ -310,12 +314,11 @@ if (exists("database") && doesObjectHaveData(database)) {
     ))
 }
 
-#enhancement and removing the objects based on the control variable
+#enhancement 
 if (all(exists("temporalTimeRef"),
         doesObjectHaveData(temporalTimeRef))) {
   if (all(
-    nrow(temporalTimeRef) > 0,
-    showTemporalCharacterizationAndCompareTemporalCharacterization
+    nrow(temporalTimeRef) > 0
   )) {
     temporalCovariateChoices <- temporalTimeRef %>%
       dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
@@ -329,38 +332,31 @@ if (all(exists("temporalTimeRef"),
                               pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')
         )
     }
-  } else {
-    rm("temporalTimeRef")
-    rm("temporalAnalysisRef")
-    rm("temporalCovariateRef")
-    rm("temporalCovariateValue")
-    filterTemporalCovariateChoicesToPrimaryOptions <- FALSE
   }
-} else {
-  rm("temporalTimeRef")
-  rm("temporalAnalysisRef")
-  rm("temporalCovariateRef")
-  rm("temporalCovariateValue")
-  filterTemporalCovariateChoicesToPrimaryOptions <- FALSE
 }
 
-#enhancement and removing the objects based on the control variable
+#enhancement objects based on the control variable
 if (exists("covariateRef") && doesObjectHaveData(covariateRef)) {
-  if (all(nrow(covariateRef) > 0,
-          showCharacterizationAndCompareCharacterization)) {
     specifications <- readr::read_csv(
       file = "Table1Specs.csv",
       col_types = readr::cols(),
       guess_max = min(1e7)
     )
     prettyAnalysisIds <- specifications$analysisId
-  } else {
-    rm("covariateValue")
-    rm("covariateRef")
-    rm("covariateValueDist")
-  }
 }
 
+if (!showCharacterization) {
+  if (exists("covariateValue")) {rm("covariateValue")}
+  if (exists("covariateValueDist")) {rm("covariateValueDist")}
+  if (exists("analysisRef")) {rm("analysisRef")}
+  if (exists("covariateRef")) {rm("covariateRef")}
+}
+if (!showTemporalCharacterization) {
+  if (exists("covariateValue")) {rm("temporalCovariateValue")}
+  if (exists("covariateValueDist")) {rm("temporalCovariateValueDist")}
+  if (exists("analysisRef")) {rm("temporalAnalysisRef")}
+  if (exists("covariateRef")) {rm("temporalCovariateRef")}
+}
 
 #!!!!!!!!!!!!reduce code lines here
 # disable tabs based on user preference or control variable ----
