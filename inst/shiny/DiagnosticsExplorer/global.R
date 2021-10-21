@@ -54,7 +54,6 @@ showConceptBrowser <- TRUE  #on selected conceptId (activeSelectd) - show concep
 showConceptSetComparison <- TRUE #given two concept set - show difference in resolved concepts
 allCohortsToBeCompared <- TRUE # in cohort tab, allow comparator cohort selection, and comparator cohort
 showNotes <- TRUE # in cohort count tab, show notes for count
-showConceptSetBrowser <- FALSE
 
 
 # Foot note ----
