@@ -45,11 +45,16 @@ showTimeSeries <- TRUE
 showTimeDistribution <- TRUE
 showIndexEventBreakdown <- TRUE
 showVisitContext <- TRUE
-showCharacterization <- FALSE
-showTemporalCharacterization <- FALSE
+showCharacterization <- TRUE
+showTemporalCharacterization <- TRUE
 filterTemporalChoicesToPrimaryOptions <- TRUE
 
-showConceptBrowser <- TRUE
+showConceptBrowser <- TRUE  #on selected conceptId (activeSelectd) - show concept browser 
+# (applies to cohort, indexEventBreakdown, characterization, temporalCharacterization, compareCharacterization, temporalCompareCharacterization)
+showConceptSetComparison <- TRUE #given two concept set - show difference in resolved concepts
+allCohortsToBeCompared <- TRUE # in cohort tab, allow comparator cohort selection, and comparator cohort
+showNotes <- TRUE # in cohort count tab, show notes for count
+
 
 # Foot note ----
 appInformationText <- "V 2.2"
@@ -362,7 +367,7 @@ if (!showTemporalCharacterization) {
 # disable tabs based on user preference or control variable ----
 if (!showIncidenceRate) {
   if (exists("showIncidenceRate")) {
-    rm("showIncidenceRate")
+    rm("incidenceRate")
   }
 }
 
