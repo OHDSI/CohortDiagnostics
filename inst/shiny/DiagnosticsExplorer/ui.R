@@ -361,7 +361,6 @@ bodyTabItems <- shinydashboard::tabItems(
                     shiny::conditionalPanel(
                       condition = "input.targetConceptSetsType != 'Concept Set Expression' &
                        input.targetConceptSetsType != 'Concept Set Json' &
-                       input.targetCohortDefinitionTabSetPanel == 'targetCohortDefinitionConceptSetTabPanel' &
                        output.isConceptIdFromTargetOrComparatorConceptTableSelected == true",
                       shinydashboard::box(
                         title = NULL,
@@ -437,12 +436,12 @@ bodyTabItems <- shinydashboard::tabItems(
                             )
                           ),
                           shiny::tabPanel(
-                            title = "Time Series Plot",
+                            title = "Trend",
                             value = "conceptSetTimeSeries",
                             shiny::column(
                               width = 12,
                               shiny::radioButtons(
-                                inputId = "timeSeriesAggregationForCohortDefinition",
+                                inputId = "timeSeriesAggregationForConceptId",
                                 label = "Aggregation period:",
                                 choices = c("Monthly", "Yearly"),
                                 selected = "Monthly",
@@ -935,14 +934,15 @@ bodyTabItems <- shinydashboard::tabItems(
         )
       )
     )),
-    DT::dataTableOutput(outputId = "indexEventBreakdownTable"),
-    tags$br(),
-    shiny::column(12,
-                  shiny::conditionalPanel(
-                    condition = "true",
-                    shiny::uiOutput(outputId = "dynamicUIForRelationshipAndTemeSeriesForIndexEvent")
-                  )
-    )
+    DT::dataTableOutput(outputId = "indexEventBreakdownTable")
+    # ,
+    # tags$br(),
+    # shiny::column(12,
+    #               shiny::conditionalPanel(
+    #                 condition = "true",
+    #                 shiny::uiOutput(outputId = "dynamicUIForRelationshipAndTimeSeriesForIndexEvent")
+    #               )
+    # )
   ),
   shinydashboard::tabItem(
     tabName = "visitContext",
@@ -1023,7 +1023,7 @@ bodyTabItems <- shinydashboard::tabItems(
                          inputId = "overlapPlotType",
                          label = "Plot type",
                          choices = c("Percentages", "Counts"),
-                         selected = "Percentages",
+                         selected = "Counts",
                          inline = TRUE
                        )
                      )
@@ -1227,7 +1227,7 @@ bodyTabItems <- shinydashboard::tabItems(
             inputId = "characterizationCompareMethod",
             label = "",
             choices = c("Pretty table", "Raw table", "Plot"),
-            selected = "Plot",
+            selected = "Raw table",
             inline = TRUE
           ),
         ),
