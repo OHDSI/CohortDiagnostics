@@ -3756,7 +3756,6 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    browser()
     # working on the plot
     if (input$timeSeriesAggregationForCohortDefinition == "Monthly") {
       data <- data$databaseConceptIdYearMonthLevelTsibble %>% 
@@ -3832,7 +3831,6 @@ shiny::shinyServer(function(input, output, session) {
       doesObjectHaveData(data),
       "No information for selected concept id."
     ))
-    browser()
     conceptRelationshipTable <- data$conceptRelationshipTable %>% 
       dplyr::filter(.data$conceptId != activeSelected()$conceptId)
     if (any(
