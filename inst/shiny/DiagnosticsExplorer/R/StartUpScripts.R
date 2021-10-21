@@ -217,6 +217,7 @@ consolidationOfSelectedFieldValues <- function(input,
         data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
     }
     #selection on concept id
+
     if (doesObjectHaveData(input$targetCohortDefinitionResolvedConceptTable_rows_selected)) {
       data$selectedConceptIdTarget <- resolvedConceptSetDataTarget[input$targetCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
       data$leftSideActive <- TRUE
@@ -728,10 +729,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
           names_from = "type",
           values_from = "valuesData",
           values_fill = 0
-        ) %>%
-        dplyr::arrange(dplyr::desc(abs(dplyr::across(
-          dplyr::contains(dataColumns)
-        ))))
+        ) 
       
       dataColumnsLevel2 <- colnames(data)
       dataColumnsLevel2 <-

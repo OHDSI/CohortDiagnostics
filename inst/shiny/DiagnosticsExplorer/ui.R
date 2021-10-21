@@ -363,7 +363,7 @@ bodyTabItems <- shinydashboard::tabItems(
                        input.targetConceptSetsType != 'Concept Set Json' &
                        output.isConceptIdFromTargetOrComparatorConceptTableSelected == true",
                       shinydashboard::box(
-                        title = NULL,
+                        title = shiny::htmlOutput(outputId = "conceptSetBrowserConceptSynonymNameInHtmlString"),
                         width = NULL,
                         collapsible = TRUE,
                         collapsed = TRUE,

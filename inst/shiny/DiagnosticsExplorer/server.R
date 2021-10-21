@@ -1501,7 +1501,8 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>% 
       dplyr::left_join(count, 
-                       by = c('databaseId', 'conceptId'))
+                       by = c('databaseId', 'conceptId')) %>% 
+      dplyr::arrange(dplyr::desc(abs(dplyr::across(c("persons","records")))))
     return(data)
   })
   
@@ -1869,7 +1870,11 @@ shiny::shinyServer(function(input, output, session) {
       ),
       tags$tr(
         tags$td(
-          tags$h6(data$conceptSynonym$conceptSynonymName %>% unique() %>% sort() %>% paste0(collapse = ", "))
+          tags$h6(data$conceptSynonym$conceptSynonymName %>% 
+                    unique() %>% 
+                    sort() %>% 
+                    paste0(collapse = ", ") %>% 
+                    stringr::str_trunc(1000, "right"))
         )
       )
     )
@@ -2245,31 +2250,34 @@ shiny::shinyServer(function(input, output, session) {
   #activeSelected----
   activeSelected <- reactiveVal(list())
   observe({
-    if (any(!is.null(consolidatedCohortIdTarget()),
-            !is.null(consolidatedConceptSetIdTarget()),
-            !is.null(consolidatedDatabaseIdTarget()),
-            !is.null(consolidatedConceptIdTarget()))) {
+    # if (any(!is.null(consolidatedCohortIdTarget()),
+    #         !is.null(consolidatedConceptSetIdTarget()),
+    #         !is.null(consolidatedDatabaseIdTarget()),
+    #         !is.null(consolidatedConceptIdTarget()))) {
     tempList <- list()
     tempList$cohortId <- consolidatedCohortIdTarget()
     tempList$conceptSetId <-
       consolidatedConceptSetIdTarget()
-    tempList$databaseId <-
-      consolidatedDatabaseIdTarget()
+    # tempList$databaseId <-
+    #   consolidatedDatabaseIdTarget()
     tempList$conceptId <- consolidatedConceptIdTarget()
+    activeSelected(tempList)
+    })
     
-    if (any(!is.null(consolidatedCohortIdComparator()),
-            !is.null(consolidatedConceptSetIdComparator()),
-            !is.null(consolidatedConceptIdComparator()))) {
+  observe({
+    tempList <- list()
+    # if (any(!is.null(consolidatedCohortIdComparator()),
+    #         !is.null(consolidatedConceptSetIdComparator()),
+    #         !is.null(consolidatedConceptIdComparator()))) {
       #there is no databaseId for comparator.
       tempList$cohortId <-
         consolidatedCohortIdComparator()
       tempList$conceptSetId <-
         consolidatedConceptSetIdComparator()
-      tempList$conceptSetId <-
+      tempList$conceptId <-
         consolidatedConceptIdComparator()
-    }
     activeSelected(tempList)
-  }})
+  })
   
   ##getMetadataForConceptId----
   getMetadataForConceptId <- shiny::reactive(x = {
@@ -2285,7 +2293,7 @@ shiny::shinyServer(function(input, output, session) {
     if (length(activeSelected()$cohortId) != 1) {
       stop("Only single select is supported for cohortId")
     }
-    if (is.null(activeSelected()$databaseId)) {#currently expecting to be vector of 1 or more (multiselect)
+    if (is.null(consolidatedDatabaseIdTarget())) {#currently expecting to be vector of 1 or more (multiselect)
       return(NULL)
     }
     #!!!!!!!!! Conditional on opening the box
@@ -2301,7 +2309,7 @@ shiny::shinyServer(function(input, output, session) {
     data <-
       getConceptMetadata(
         dataSource = dataSource,
-        databaseIds = activeSelected()$databaseId,
+        databaseIds = consolidatedDatabaseIdTarget(),
         cohortIds = activeSelected()$cohortId,
         conceptIds = activeSelected()$conceptId
       )
@@ -3775,7 +3783,7 @@ shiny::shinyServer(function(input, output, session) {
       "No timeseries data for the cohort of this series type"
     ))
     data <- data %>% 
-      dplyr::filter(.data$databaseId %in% activeSelected()$databaseId) %>% 
+      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
       dplyr::rename("records" = .data$conceptCount,
                     "persons" = .data$subjectCount)
     
@@ -3816,7 +3824,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
     cohortId <- activeSelected()$cohortId
     validate(need(doesObjectHaveData(conceptId), "No cohort id selected."))
-    databaseId <- activeSelected()$databaseId
+    databaseId <- consolidatedDatabaseIdTarget()
     validate(need(doesObjectHaveData(databaseId), "No database id selected."))
     
     progress <- shiny::Progress$new()
@@ -3946,7 +3954,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
     cohortId <- activeSelected()$cohortId
     validate(need(doesObjectHaveData(conceptId), "No cohort id selected."))
-    databaseId <- activeSelected()$databaseId
+    databaseId <- consolidatedDatabaseIdTarget()
     validate(need(doesObjectHaveData(databaseId), "No database id selected."))
     
     progress <- shiny::Progress$new()
@@ -4024,7 +4032,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
     cohortId <- activeSelected()$cohortId
     validate(need(doesObjectHaveData(conceptId), "No cohort id selected."))
-    databaseId <- activeSelected()$databaseId
+    databaseId <- consolidatedDatabaseIdTarget()
     validate(need(doesObjectHaveData(databaseId), "No database id selected."))
     
     progress <- shiny::Progress$new()
