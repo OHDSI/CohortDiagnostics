@@ -361,7 +361,6 @@ bodyTabItems <- shinydashboard::tabItems(
                     shiny::conditionalPanel(
                       condition = "input.targetConceptSetsType != 'Concept Set Expression' &
                        input.targetConceptSetsType != 'Concept Set Json' &
-                       input.targetCohortDefinitionTabSetPanel == 'targetCohortDefinitionConceptSetTabPanel' &
                        output.isConceptIdFromTargetOrComparatorConceptTableSelected == true",
                       shinydashboard::box(
                         title = NULL,

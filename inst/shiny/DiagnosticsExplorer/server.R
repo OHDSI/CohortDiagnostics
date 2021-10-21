@@ -3863,7 +3863,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    conceptRelationshipTable <- conceptRelationshipTable %>%
+    data <- conceptRelationshipTable %>%
       dplyr::left_join(data$databaseConceptCount,
                        by = c("databaseId", "conceptId")) %>%
       dplyr::rename("records" = .data$conceptCount,
@@ -3923,11 +3923,11 @@ shiny::shinyServer(function(input, output, session) {
       )
     
     maxCountValue <-
-      getMaxValueForStringMatchedColumnsInDataFrame(data = conceptRelationshipTable,
+      getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
     
     table <- getDtWithColumnsGroupedByDatabaseId(
-      data = conceptRelationshipTable,
+      data = data,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
       sketchLevel = sketchLevel,
@@ -3957,23 +3957,64 @@ shiny::shinyServer(function(input, output, session) {
       value = 0
     )
     
-    data <- getMetadataForConceptId()
+    data <- getMetadataForConceptId()$mappedNonStandard
     validate(need(
       doesObjectHaveData(data),
       "No information for selected concept id."
     ))
-    conceptMapping <- data$mappedNonStandard %>%
+    browser()
+    data <- data %>%
       dplyr::rename("persons" = .data$subjectCount,
                     "records" = .data$conceptCount)
-    databaseCount <- data$databaseConceptCount %>% 
-      dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>%
-      dplyr::rename("persons" = .data$subjectCount,
-                    "records" = .data$conceptCount)
+    keyColumnFields <- c("conceptId", 
+                         "conceptName",
+                         "vocabularyId",
+                         "domainTable")
+    #depending on user selection - what data Column Fields Will Be Presented?
+    dataColumnFields <-
+      c("persons",
+        "records")
+    if (input$targetCohortConceptSetColumnFilter == "Both") {
+      dataColumnFields <- dataColumnFields
+      sketchLevel <- 2
+    } else if (input$targetCohortConceptSetColumnFilter == "Person Only") {
+      dataColumnFields <-
+        dataColumnFields[stringr::str_detect(
+          string = tolower(dataColumnFields),
+          pattern = tolower("person")
+        )]
+      sketchLevel <- 1
+    } else if (input$targetCohortConceptSetColumnFilter == "Record Only") {
+      dataColumnFields <-
+        dataColumnFields[stringr::str_detect(
+          string = tolower(dataColumnFields),
+          pattern = tolower("record")
+        )]
+      sketchLevel <- 1
+    }
     
-    table <-
-      getSketchDesignForTablesInCohortDefinitionTab(conceptMapping,
-                                                    databaseCount = databaseCount,
-                                                    numberOfColums = 3)
+    countsForHeader <-
+      getCountsForHeaderForUseInDataTable(
+        dataSource = dataSource,
+        databaseIds = consolidatedDatabaseIdTarget(),
+        cohortIds = consolidatedCohortIdTarget(),
+        source = input$targetConceptIdCountSource,
+        fields = input$targetCohortConceptSetColumnFilter
+      )
+    
+    maxCountValue <-
+      getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                    string = dataColumnFields)
+    
+    table <- getDtWithColumnsGroupedByDatabaseId(
+      data = data,
+      headerCount = countsForHeader,
+      keyColumns = keyColumnFields,
+      sketchLevel = sketchLevel,
+      dataColumns = dataColumnFields,
+      maxCount = maxCountValue,
+      showResultsAsPercent = input$showAsPercentageColumnTarget 
+    )
     return(table)
   })
   
