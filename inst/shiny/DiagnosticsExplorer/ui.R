@@ -437,12 +437,12 @@ bodyTabItems <- shinydashboard::tabItems(
                             )
                           ),
                           shiny::tabPanel(
-                            title = "Time Series Plot",
+                            title = "Trend",
                             value = "conceptSetTimeSeries",
                             shiny::column(
                               width = 12,
                               shiny::radioButtons(
-                                inputId = "timeSeriesAggregationForCohortDefinition",
+                                inputId = "timeSeriesAggregationForConceptId",
                                 label = "Aggregation period:",
                                 choices = c("Monthly", "Yearly"),
                                 selected = "Monthly",

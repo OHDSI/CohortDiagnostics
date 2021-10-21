@@ -3757,7 +3757,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     # working on the plot
-    if (input$timeSeriesAggregationForCohortDefinition == "Monthly") {
+    if (input$timeSeriesAggregationForConceptId == "Monthly") {
       data <- data$databaseConceptIdYearMonthLevelTsibble %>% 
         dplyr::filter(.data$conceptId == activeSelected()$conceptId)
     } else {
