@@ -371,10 +371,10 @@ bodyTabItems <- shinydashboard::tabItems(
                           collapsed = TRUE,
                           solidHeader = FALSE,
                           shiny::tabsetPanel(
-                            id = "cohortDdefinitionConceptsetBowserTabSetPanel",
+                            id = "conceptBrowserTabSetPanel",
                             shiny::tabPanel(
-                              title = "Concept Browser",
-                              value = "conceptBrowser",
+                              title = "Related concepts",
+                              value = "relatedConcepts",
                               tags$table(width = "100%",
                                          tags$tr(
                                            tags$td(
