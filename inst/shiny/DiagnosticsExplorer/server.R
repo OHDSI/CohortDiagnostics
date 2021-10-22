@@ -1968,7 +1968,6 @@ shiny::shinyServer(function(input, output, session) {
     data <- list()
     data$concept <- getConcept(dataSource = dataSource,
                                conceptId = activeSelected()$conceptId)
-    debug(getConceptSynonym)
     data$conceptSynonym <- getConceptSynonym(dataSource = dataSource,
                                               conceptId = activeSelected()$conceptId)
     return(data)
