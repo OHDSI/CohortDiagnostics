@@ -1068,6 +1068,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
       "Observation",
       "Procedure",
       "Cohort")
+  
   balance$domain <- balance$domainId
   balance$domain[!balance$domain %in% domains] <- "Other"
 
@@ -1123,7 +1124,6 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   
   # Code used to generate palette:
   # writeLines(paste(RColorBrewer::brewer.pal(n = length(domains), name = "Dark2"), collapse = "\", \""))
-  
   balance <- balance %>% 
     dplyr::inner_join(
       read.csv('colorReference.csv') %>% 
@@ -1133,6 +1133,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
       by = "domain"
     )
   
+  colors <- balance$colors %>% unique()
   xCohort <- balance %>%
     dplyr::distinct(balance$targetCohort) %>%
     dplyr::pull()
@@ -1160,8 +1161,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     addDatabaseShortName(shortNameRef = database)
   
   distinctDatabaseShortName <- balance$databaseShortName %>% unique() %>%  sort()
-  
-  
+ 
   databasePlots <- list()
   for (i in 1:length(distinctDatabaseShortName)) {
     data <- balance %>% 
@@ -1177,7 +1177,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
         hoverinfo = 'text',
         mode = "markers",
         color = ~ domain,
-        colors = ~ colors,
+        colors = colors,
         opacity = 0.4,
         showlegend = ifelse(i == 1, T, F),
         marker = list(
