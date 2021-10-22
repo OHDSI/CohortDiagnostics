@@ -104,7 +104,8 @@ sidebarMenu <-
       (input.targetConceptSetsType == 'Concept Set Expression' |
       input.targetConceptSetsType == 'Resolved' |
       input.targetConceptSetsType == 'Excluded' |
-      input.targetConceptSetsType == 'Orphan concepts')) |
+      input.targetConceptSetsType == 'Recommended' |
+      input.targetConceptSetsType == 'Mapped')) |
       input.targetCohortDefinitionTabSetPanel == 'targetCohortdefinitionInclusionRuleTabPanel' |
       input.tabs == 'compareCohortCharacterization'",
       shinyWidgets::pickerInput(
