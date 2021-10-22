@@ -1133,9 +1133,6 @@ plotCohortComparisonStandardizedDifference <- function(balance,
       by = "domain"
     )
   
-  
-  balance$comparatorCohort
-  
   xCohort <- balance %>%
     dplyr::distinct(balance$targetCohort) %>%
     dplyr::pull()
@@ -1162,9 +1159,8 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   balance <- balance %>% 
     addDatabaseShortName(shortNameRef = database)
   
-  distinctDatabaseShortName <- balance$databaseShortName %>% unique()
+  distinctDatabaseShortName <- balance$databaseShortName %>% unique() %>%  sort()
   
- 
   
   databasePlots <- list()
   for (i in 1:length(distinctDatabaseShortName)) {
@@ -1172,7 +1168,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
       dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i])
     databasePlots[[i]] <-
       plotly::plot_ly(
-        balance,
+        data,
         x = ~ mean1,
         y = ~ mean2,
         text = ~ tooltip,
