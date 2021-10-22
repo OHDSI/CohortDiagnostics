@@ -19,6 +19,14 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  ##getDataSourceTimeSeries ----
+  getDataSourceTimeSeries <- shiny::reactive({
+    data <- getResultsFixedTimeSeries(dataSource = dataSource, 
+                                      seriesType = "T3", 
+                                      cohortIds = 0)
+    return(data)
+  })
+  
   #______________----
   #Selections----
   ##pickerInput: conceptSetsSelectedTargetCohort----
@@ -996,6 +1004,9 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getCohortMetadataLeft----
   getCohortMetadataLeft <- shiny::reactive(x = {
+    if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+      return(NULL)
+    }
     data <- cohort %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget())
     if (!doesObjectHaveData(data)) {
@@ -1013,6 +1024,9 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getCohortMetadataRight----
   getCohortMetadataRight <- shiny::reactive(x = {
+    if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
+      return(NULL)
+    }
     data <- cohort %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator())
     if (!doesObjectHaveData(data)) {
@@ -1940,7 +1954,11 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getNameAndSynonymForActiveSelectedConceptId----
   getNameAndSynonymForActiveSelectedConceptId <- shiny::reactive(x = {
-    if (is.null(activeSelected()$conceptId)) {#currently expecting to be vector of 1 (single select)
+    if (!doesObjectHaveData(activeSelected()$conceptId)) {
+      return(NULL)
+    }
+    if (length(activeSelected()$conceptId) != 1) {#currently expecting to be vector of 1 (single select)
+      warning("Only one concept id may be selected to get concept synonym")
       return(NULL)
     }
     progress <- shiny::Progress$new()
@@ -1950,6 +1968,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- list()
     data$concept <- getConcept(dataSource = dataSource,
                                conceptId = activeSelected()$conceptId)
+    debug(getConceptSynonym)
     data$conceptSynonym <- getConceptSynonym(dataSource = dataSource,
                                               conceptId = activeSelected()$conceptId)
     return(data)
@@ -2406,7 +2425,6 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(consolidatedDatabaseIdTarget())) {#currently expecting to be vector of 1 or more (multiselect)
       return(NULL)
     }
-    #!!!!!!!!! Conditional on opening the box
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(
@@ -2416,13 +2434,23 @@ shiny::shinyServer(function(input, output, session) {
                        activeSelected()$cohortId),
       value = 0
     )
+    browser()
     data <-
       getConceptMetadata(
         dataSource = dataSource,
         databaseIds = consolidatedDatabaseIdTarget(),
         cohortIds = activeSelected()$cohortId,
         conceptIds = activeSelected()$conceptId,
-        getConceptSynonym = FALSE
+        getDatabaseMetadata = FALSE,
+        getConceptRelationship = TRUE,
+        getConceptAncestor = TRUE,
+        getConceptSynonym = TRUE,
+        getConceptCount = TRUE,
+        getConceptCooccurrence = FALSE,
+        getIndexEventCount = FALSE,
+        getConceptMappingCount = FALSE,
+        getFixedTimeSeries = TRUE,
+        getRelativeTimeSeries = FALSE
       )
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -3920,10 +3948,18 @@ shiny::shinyServer(function(input, output, session) {
     }
     # working on the plot
     if (input$timeSeriesAggregationForConceptId == "Monthly") {
-      data <- data$databaseConceptIdYearMonthLevelTsibble %>% 
+      data <- data$databaseConceptIdYearMonthLevelTsibble
+      if (!doesObjectHaveData(data)) {
+        return(NULL)
+      }
+      data <- data %>% 
         dplyr::filter(.data$conceptId == activeSelected()$conceptId)
     } else {
-      data <- data$databaseConceptIdYearLevelTsibble %>% 
+      data <- data$databaseConceptIdYearLevelTsibble
+      if (!doesObjectHaveData(data)) {
+        return(NULL)
+      }
+      data <- data %>% 
         dplyr::filter(.data$conceptId == activeSelected()$conceptId)
     }
     progress <- shiny::Progress$new()
@@ -3939,7 +3975,9 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>% 
       dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
       dplyr::rename("records" = .data$conceptCount,
-                    "persons" = .data$subjectCount)
+                    "persons" = .data$subjectCount) %>% 
+      dplyr::mutate(records = abs(.data$records),
+                    persons = abs(.data$persons))
     
     tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
                                                                           valueFields = c("records", "persons"))
@@ -8329,7 +8367,6 @@ shiny::shinyServer(function(input, output, session) {
         message = paste0("Rendering plot for compare characterization."),
         value = 0
       )
-      browser()
       plot <-
         plotCohortComparisonStandardizedDifference(balance = data,
                                                    shortNameRef = cohort)
