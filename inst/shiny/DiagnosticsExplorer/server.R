@@ -2433,7 +2433,6 @@ shiny::shinyServer(function(input, output, session) {
                        activeSelected()$cohortId),
       value = 0
     )
-    browser()
     data <-
       getConceptMetadata(
         dataSource = dataSource,
@@ -3945,6 +3944,10 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    databaseCount <- getDataSourceTimeSeries()
+    if (!doesObjectHaveData(databaseCount)) {
+      return(NULL)
+    }
     # working on the plot
     if (input$timeSeriesAggregationForConceptId == "Monthly") {
       data <- data$databaseConceptIdYearMonthLevelTsibble
@@ -3953,6 +3956,14 @@ shiny::shinyServer(function(input, output, session) {
       }
       data <- data %>% 
         dplyr::filter(.data$conceptId == activeSelected()$conceptId)
+      if (!doesObjectHaveData(databaseCount$m)) {
+        return(NULL)
+      }
+      databaseCount <- databaseCount$m %>% 
+        dplyr::select(.data$databaseId,
+                      .data$periodBegin,
+                      .data$records,
+                      .data$subjects)
     } else {
       data <- data$databaseConceptIdYearLevelTsibble
       if (!doesObjectHaveData(data)) {
@@ -3960,6 +3971,14 @@ shiny::shinyServer(function(input, output, session) {
       }
       data <- data %>% 
         dplyr::filter(.data$conceptId == activeSelected()$conceptId)
+      if (!doesObjectHaveData(databaseCount$y)) {
+        return(NULL)
+      }
+      databaseCount <- databaseCount$y %>% 
+        dplyr::select(.data$databaseId,
+                      .data$periodBegin,
+                      .data$records,
+                      .data$subjects)
     }
     progress <- shiny::Progress$new()
     on.exit(progress$close())
@@ -3978,8 +3997,19 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(records = abs(.data$records),
                     persons = abs(.data$persons))
     
+    data <- data %>% 
+      dplyr::inner_join(databaseCount %>% 
+                          dplyr::rename(recordsDatasource = .data$records,
+                                        personsDatasource = .data$subjects),
+                        by = c("databaseId", "periodBegin")) %>% 
+      dplyr::mutate(recordsProportion = .data$records/.data$recordsDatasource,
+                    personsProportion = .data$persons/.data$personsDatasource) %>% 
+      dplyr::select(-.data$recordsDatasource, -.data$personsDatasource)
+    
+    
+
     tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
-                                                                          valueFields = c("records", "persons"))
+                                                                          valueFields = c("records", "persons", "recordsProportion", "personsProportion"))
 
     conceptName <- getMetadataForConceptId()$concept %>% 
       dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>% 
