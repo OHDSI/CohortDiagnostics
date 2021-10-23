@@ -912,8 +912,8 @@ bodyTabItems <- shinydashboard::tabItems(
           shiny::radioButtons(
             inputId = "indexEventBreakdownTableFilter",
             label = "Display",
-            choices = c("Both", "Records", "Persons"), 
-            selected = "Persons",
+            choices = c("Both", "Record Only", "Person Only"), 
+            selected = "Person Only",
             inline = TRUE
           )
         ),
@@ -937,15 +937,85 @@ bodyTabItems <- shinydashboard::tabItems(
         )
       )
     )),
-    DT::dataTableOutput(outputId = "indexEventBreakdownTable")
-    # ,
-    # tags$br(),
-    # shiny::column(12,
-    #               shiny::conditionalPanel(
-    #                 condition = "true",
-    #                 shiny::uiOutput(outputId = "dynamicUIForRelationshipAndTimeSeriesForIndexEvent")
-    #               )
-    # )
+    DT::dataTableOutput(outputId = "indexEventBreakdownTable"),
+    shiny::conditionalPanel(
+      condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
+      shinydashboard::box(
+        title = shiny::htmlOutput(outputId = "conceptSetSynonymsForIndexEventBreakdown"),
+        width = NULL,
+        status = NULL,
+        collapsible = TRUE,
+        collapsed = TRUE,
+        shiny::tabsetPanel(
+          shiny::tabPanel(
+            title = "Concept Set Browser",
+            value = "conceptSetBrowser",
+            tags$table(width = "100%",
+                       tags$tr(
+                         tags$td(
+                           shinyWidgets::pickerInput(
+                             inputId = "choicesForRelationshipNameForIndexEvent",
+                             label = "Relationship Category:",
+                             choices = c("Not applicable", conceptSetRelationshipName),
+                             selected = c("Not applicable", conceptSetRelationshipName),
+                             multiple = TRUE,
+                             width = 200,
+                             inline = TRUE,
+                             choicesOpt = list(style = rep_len("color: black;", 999)),
+                             options = shinyWidgets::pickerOptions(
+                               actionsBox = TRUE,
+                               liveSearch = TRUE,
+                               size = 10,
+                               liveSearchStyle = "contains",
+                               liveSearchPlaceholder = "Type here to search",
+                               virtualScroll = 50
+                             )
+                           )
+                         ),
+                         tags$td(
+                           shinyWidgets::pickerInput(
+                             inputId = "choicesForRelationshipDistanceForIndexEvent",
+                             label = "Distance:",
+                             choices = c("-3","-2","-1","0","1","2","3", "Not applicable"),
+                             selected = c("-3","-2","-1","0","1","2","3", "Not applicable"),
+                             multiple = TRUE,
+                             width = 200,
+                             inline = TRUE,
+                             choicesOpt = list(style = rep_len("color: black;", 999)),
+                             options = shinyWidgets::pickerOptions(
+                               actionsBox = TRUE,
+                               liveSearch = TRUE,
+                               size = 10,
+                               liveSearchStyle = "contains",
+                               liveSearchPlaceholder = "Type here to search",
+                               virtualScroll = 50
+                             )
+                           )
+                         ),
+                         tags$td(
+                           align = "right",
+                           shiny::downloadButton(
+                             "saveDetailsOfSelectedConceptIdForIndexEvent",
+                             label = "",
+                             icon = shiny::icon("download"),
+                             style = "margin-top: 5px; margin-bottom: 5px;"
+                           )
+                         )
+                       )),
+            DT::dataTableOutput(outputId = "conceptBrowserTableForIndexEvent")
+          ),
+          shiny::tabPanel(
+            title = "Time Series Plot",
+            value = "conceptSetTimeSeriesForIndexEvent",
+            plotly::plotlyOutput(
+              outputId = "conceptSetTimeSeriesPlotForIndexEvent",
+              width = "100%",
+              height = "100%"
+            )
+          )
+        )
+      )
+    )
   ),
   shinydashboard::tabItem(
     tabName = "visitContext",
