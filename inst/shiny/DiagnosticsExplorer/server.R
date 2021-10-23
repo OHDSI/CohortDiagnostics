@@ -6352,6 +6352,16 @@ shiny::shinyServer(function(input, output, session) {
       return(plot)
     })
   
+  output$saveDetailsOfSelectedConceptIdForIndexEvent <-  downloadHandler(
+    filename = function() {
+      getCsvFileNameWithDateTime(string = "indexEventBreakdownConceptSetBrowser")
+    },
+    content = function(file) {
+      downloadCsv(x = conceptSetBrowserData(),
+                  fileName = file)
+    }
+  )
+  
   #______________----
   # Visit Context -----
   ##getVisitContextData----
