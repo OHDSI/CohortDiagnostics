@@ -5920,32 +5920,22 @@ shiny::shinyServer(function(input, output, session) {
   
   ##getIndexEventBreakdownDataFiltered----
   getIndexEventBreakdownDataFiltered <- shiny::reactive(x = {
-    indexEventBreakdown <- getIndexEventBreakdownData()
-    if (!doesObjectHaveData(indexEventBreakdown)) {
-      return(NULL)
-    }
-    indexEventBreakdown <- indexEventBreakdown %>% 
-      dplyr::filter(.data$domainId %in% input$indexEventDomainNameFilter)
-    
-    if (input$indexEventBreakdownTableRadioButton == 'All') {
-      return(indexEventBreakdown)
-    } else if (input$indexEventBreakdownTableRadioButton == "Standard concepts") {
-      return(indexEventBreakdown %>% dplyr::filter(.data$standardConcept == 'S'))
-    } else {
-      #!!!! check why indexEventBreakdown is not returning data for non standard concept
-      # why are there no non standard concepts in index event breakdown.
-      return(indexEventBreakdown %>% dplyr::filter(is.na(.data$standardConcept) |
-                                                     .data$standardConcept != "S"))
-    }
-    return(NULL)
-  })
-  
-  ##getIndexEventBreakdownDataLong----
-  getIndexEventBreakdownTableData <- shiny::reactive(x = {
-    data <- getIndexEventBreakdownDataFiltered()
+    data <- getIndexEventBreakdownData()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    data <- data %>% 
+      dplyr::filter(.data$domainId %in% input$indexEventDomainNameFilter)
+    
+    if (input$indexEventBreakdownTableRadioButton == "Standard concepts") {
+      data <- data %>% 
+        dplyr::filter(.data$standardConcept == 'S')
+    } else if (input$indexEventBreakdownTableRadioButton == "Non Standard Concepts") {
+      data <- data %>% 
+        dplyr::filter(is.na(.data$standardConcept) |
+                       .data$standardConcept != "S")
+    }
+    
     if (input$indexEventBreakdownValueFilter == "Percentage") {
       data <- data %>%
         dplyr::mutate(conceptValue = .data$conceptPercent) %>%
@@ -5955,9 +5945,16 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::mutate(conceptValue = .data$conceptCount) %>%
         dplyr::mutate(subjectValue = .data$subjectCount)
     }
+    
     data <- data %>%
       dplyr::filter(.data$conceptId > 0) %>%
       dplyr::arrange(.data$databaseId) 
+    
+    data <- data %>% 
+      dplyr::rename("persons" = .data$subjectValue,
+                    "records" = .data$conceptValue) %>% 
+      dplyr::arrange(dplyr::desc(dplyr::across(c("persons", "records"))))
+    
     return(data)
   })
   
@@ -5967,7 +5964,7 @@ shiny::shinyServer(function(input, output, session) {
       getCsvFileNameWithDateTime(string = "indexEventBreakdown")
     },
     content = function(file) {
-      downloadCsv(x = getIndexEventBreakdownTableData(),
+      downloadCsv(x = getIndexEventBreakdownDataFiltered(),
                   fileName = file)
     }
   )
@@ -5986,17 +5983,14 @@ shiny::shinyServer(function(input, output, session) {
         value = 0
       )
       
-      data <- getIndexEventBreakdownTableData()
+      data <- getIndexEventBreakdownDataFiltered()
       validate(
         need(
           doesObjectHaveData(data),
           "No index event breakdown data for the chosen combination."
         )
       )
-      
-      data <- data %>% 
-        dplyr::rename("persons" = .data$subjectValue,
-                      "records" = .data$conceptValue)
+        
       
       keyColumnFields <- c("conceptId", "conceptName", "vocabularyId")
       #depending on user selection - what data Column Fields Will Be Presented?
