@@ -104,7 +104,8 @@ sidebarMenu <-
       (input.targetConceptSetsType == 'Concept Set Expression' |
       input.targetConceptSetsType == 'Resolved' |
       input.targetConceptSetsType == 'Excluded' |
-      input.targetConceptSetsType == 'Orphan concepts')) |
+      input.targetConceptSetsType == 'Recommended' |
+      input.targetConceptSetsType == 'Mapped')) |
       input.targetCohortDefinitionTabSetPanel == 'targetCohortdefinitionInclusionRuleTabPanel' |
       input.tabs == 'compareCohortCharacterization'",
       shinyWidgets::pickerInput(
@@ -358,126 +359,128 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       tags$br(),
       shiny::column(12,
-                    shiny::conditionalPanel(
-                      condition = "input.targetConceptSetsType != 'Concept Set Expression' &
+                    if (showConceptBrowser) {
+                      shiny::conditionalPanel(
+                        condition = "input.targetConceptSetsType != 'Concept Set Expression' &
                        input.targetConceptSetsType != 'Concept Set Json' &
                        output.isConceptIdFromTargetOrComparatorConceptTableSelected == true",
-                      shinydashboard::box(
-                        title = NULL,
-                        width = NULL,
-                        collapsible = TRUE,
-                        collapsed = TRUE,
-                        solidHeader = FALSE,
-                        shiny::tabsetPanel(
-                          id = "cohortDdefinitionConceptsetBowserTabSetPanel",
-                          shiny::tabPanel(
-                            title = "Concept Set Browser",
-                            value = "conceptSetBrowser",
-                            tags$table(width = "100%",
-                                       tags$tr(
-                                         tags$td(
-                                           shinyWidgets::pickerInput(
-                                             inputId = "choicesForRelationshipName",
-                                             label = "Relationship Category:",
-                                             choices = c(""),
-                                             selected = c(""),
-                                             multiple = TRUE,
-                                             width = 200,
-                                             inline = TRUE,
-                                             choicesOpt = list(style = rep_len("color: black;", 999)),
-                                             options = shinyWidgets::pickerOptions(
-                                               actionsBox = TRUE,
-                                               liveSearch = TRUE,
-                                               size = 10,
-                                               liveSearchStyle = "contains",
-                                               liveSearchPlaceholder = "Type here to search",
-                                               virtualScroll = 50
+                        shinydashboard::box(
+                          title = shiny::htmlOutput(outputId = "conceptBrowserConceptSynonymNameInHtmlString"),
+                          width = NULL,
+                          collapsible = TRUE,
+                          collapsed = TRUE,
+                          solidHeader = FALSE,
+                          shiny::tabsetPanel(
+                            id = "conceptBrowserTabSetPanel",
+                            shiny::tabPanel(
+                              title = "Related concepts",
+                              value = "relatedConcepts",
+                              tags$table(width = "100%",
+                                         tags$tr(
+                                           tags$td(
+                                             shinyWidgets::pickerInput(
+                                               inputId = "choicesForRelationshipName",
+                                               label = "Relationship Category:",
+                                               choices = c("Not applicable", conceptSetRelationshipName),
+                                               selected = c("Not applicable", conceptSetRelationshipName),
+                                               multiple = TRUE,
+                                               width = 200,
+                                               inline = TRUE,
+                                               choicesOpt = list(style = rep_len("color: black;", 999)),
+                                               options = shinyWidgets::pickerOptions(
+                                                 actionsBox = TRUE,
+                                                 liveSearch = TRUE,
+                                                 size = 10,
+                                                 liveSearchStyle = "contains",
+                                                 liveSearchPlaceholder = "Type here to search",
+                                                 virtualScroll = 50
+                                               )
+                                             )
+                                           ),
+                                           tags$td(
+                                             shinyWidgets::pickerInput(
+                                               inputId = "choicesForRelationshipDistance",
+                                               label = "Distance:",
+                                               choices = c("-3","-2","-1","0","1","2","3", "Not applicable"),
+                                               selected = c("-3","-2","-1","0","1","2","3", "Not applicable"),
+                                               multiple = TRUE,
+                                               width = 200,
+                                               inline = TRUE,
+                                               choicesOpt = list(style = rep_len("color: black;", 999)),
+                                               options = shinyWidgets::pickerOptions(
+                                                 actionsBox = TRUE,
+                                                 liveSearch = TRUE,
+                                                 size = 10,
+                                                 liveSearchStyle = "contains",
+                                                 liveSearchPlaceholder = "Type here to search",
+                                                 virtualScroll = 50
+                                               )
+                                             )
+                                           ),
+                                           tags$td(
+                                             align = "right",
+                                             shiny::downloadButton(
+                                               "saveDetailsOfSelectedConceptId",
+                                               label = "",
+                                               icon = shiny::icon("download"),
+                                               style = "margin-top: 5px; margin-bottom: 5px;"
                                              )
                                            )
-                                         ),
-                                         tags$td(
-                                           shinyWidgets::pickerInput(
-                                             inputId = "choicesForRelationshipDistance",
-                                             label = "Distance:",
-                                             choices = c(""),
-                                             selected = c(""),
-                                             multiple = TRUE,
-                                             width = 200,
-                                             inline = TRUE,
-                                             choicesOpt = list(style = rep_len("color: black;", 999)),
-                                             options = shinyWidgets::pickerOptions(
-                                               actionsBox = TRUE,
-                                               liveSearch = TRUE,
-                                               size = 10,
-                                               liveSearchStyle = "contains",
-                                               liveSearchPlaceholder = "Type here to search",
-                                               virtualScroll = 50
-                                             )
-                                           )
-                                         ),
-                                         tags$td(
-                                           align = "right",
-                                           shiny::downloadButton(
-                                             "saveDetailsOfSelectedConceptId",
-                                             label = "",
-                                             icon = shiny::icon("download"),
-                                             style = "margin-top: 5px; margin-bottom: 5px;"
-                                           )
-                                         )
-                                       )),
-                            DT::dataTableOutput(outputId = "conceptBrowserTable")
-                          ),
-                          shiny::tabPanel(
-                            title = "Non standard counts",
-                            value = "nonStandardCount",
-                            shiny::conditionalPanel(
-                              condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-                              DT::dataTableOutput(outputId = "nonStandardCount")
-                            )
-                          ),
-                          shiny::tabPanel(
-                            title = "Trend",
-                            value = "conceptSetTimeSeries",
-                            shiny::column(
-                              width = 12,
-                              shiny::radioButtons(
-                                inputId = "timeSeriesAggregationForConceptId",
-                                label = "Aggregation period:",
-                                choices = c("Monthly", "Yearly"),
-                                selected = "Monthly",
-                                inline = TRUE
+                                         )),
+                              DT::dataTableOutput(outputId = "conceptBrowserTable")
+                            ),
+                            shiny::tabPanel(
+                              title = "Non standard counts",
+                              value = "nonStandardCount",
+                              shiny::conditionalPanel(
+                                condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
+                                DT::dataTableOutput(outputId = "nonStandardCount")
                               )
                             ),
-                            shiny::column(
-                              width = 12,
-                              plotly::plotlyOutput(
-                                outputId = "conceptSetTimeSeriesPlot",
-                                width = "100%",
-                                height = "100%"
+                            shiny::tabPanel(
+                              title = "Trend",
+                              value = "conceptSetTimeSeries",
+                              shiny::column(
+                                width = 12,
+                                shiny::radioButtons(
+                                  inputId = "timeSeriesAggregationForConceptId",
+                                  label = "Aggregation period:",
+                                  choices = c("Monthly", "Yearly"),
+                                  selected = "Monthly",
+                                  inline = TRUE
+                                )
+                              ),
+                              shiny::column(
+                                width = 12,
+                                plotly::plotlyOutput(
+                                  outputId = "conceptSetTimeSeriesPlot",
+                                  width = "100%",
+                                  height = "100%"
+                                )
                               )
-                            )
-                          ),
-                          shiny::tabPanel(
-                            title = "Standard to Non standard mapping",
-                            value = "conceptSetStandardToNonStandard",
-                            # shiny::column(
-                            #   width = 12,
-                            #   shiny::radioButtons(
-                            #     inputId = "timeSeriesAggregationForCohortDefinition",
-                            #     label = "Aggregation period:",
-                            #     choices = c("Monthly", "Yearly"),
-                            #     selected = "Monthly",
-                            #     inline = TRUE
-                            #   )
-                            # ),
-                            shiny::conditionalPanel(
-                              condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-                              DT::dataTableOutput(outputId = "conceptSetStandardToNonStandardTable")
+                            ),
+                            shiny::tabPanel(
+                              title = "Standard to Non standard mapping",
+                              value = "conceptSetStandardToNonStandard",
+                              # shiny::column(
+                              #   width = 12,
+                              #   shiny::radioButtons(
+                              #     inputId = "timeSeriesAggregationForCohortDefinition",
+                              #     label = "Aggregation period:",
+                              #     choices = c("Monthly", "Yearly"),
+                              #     selected = "Monthly",
+                              #     inline = TRUE
+                              #   )
+                              # ),
+                              shiny::conditionalPanel(
+                                condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
+                                DT::dataTableOutput(outputId = "conceptSetStandardToNonStandardTable")
+                              )
                             )
                           )
                         )
                       )
-                    )
+                    }
       )
     )
   ),
@@ -909,8 +912,8 @@ bodyTabItems <- shinydashboard::tabItems(
           shiny::radioButtons(
             inputId = "indexEventBreakdownTableFilter",
             label = "Display",
-            choices = c("Both", "Records", "Persons"), 
-            selected = "Persons",
+            choices = c("Both", "Record Only", "Person Only"), 
+            selected = "Person Only",
             inline = TRUE
           )
         ),
@@ -934,15 +937,85 @@ bodyTabItems <- shinydashboard::tabItems(
         )
       )
     )),
-    DT::dataTableOutput(outputId = "indexEventBreakdownTable")
-    # ,
-    # tags$br(),
-    # shiny::column(12,
-    #               shiny::conditionalPanel(
-    #                 condition = "true",
-    #                 shiny::uiOutput(outputId = "dynamicUIForRelationshipAndTimeSeriesForIndexEvent")
-    #               )
-    # )
+    DT::dataTableOutput(outputId = "indexEventBreakdownTable"),
+    shiny::conditionalPanel(
+      condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
+      shinydashboard::box(
+        title = shiny::htmlOutput(outputId = "conceptSetSynonymsForIndexEventBreakdown"),
+        width = NULL,
+        status = NULL,
+        collapsible = TRUE,
+        collapsed = TRUE,
+        shiny::tabsetPanel(
+          shiny::tabPanel(
+            title = "Concept Set Browser",
+            value = "conceptSetBrowser",
+            tags$table(width = "100%",
+                       tags$tr(
+                         tags$td(
+                           shinyWidgets::pickerInput(
+                             inputId = "choicesForRelationshipNameForIndexEvent",
+                             label = "Relationship Category:",
+                             choices = c("Not applicable", conceptSetRelationshipName),
+                             selected = c("Not applicable", conceptSetRelationshipName),
+                             multiple = TRUE,
+                             width = 200,
+                             inline = TRUE,
+                             choicesOpt = list(style = rep_len("color: black;", 999)),
+                             options = shinyWidgets::pickerOptions(
+                               actionsBox = TRUE,
+                               liveSearch = TRUE,
+                               size = 10,
+                               liveSearchStyle = "contains",
+                               liveSearchPlaceholder = "Type here to search",
+                               virtualScroll = 50
+                             )
+                           )
+                         ),
+                         tags$td(
+                           shinyWidgets::pickerInput(
+                             inputId = "choicesForRelationshipDistanceForIndexEvent",
+                             label = "Distance:",
+                             choices = c("-3","-2","-1","0","1","2","3", "Not applicable"),
+                             selected = c("-3","-2","-1","0","1","2","3", "Not applicable"),
+                             multiple = TRUE,
+                             width = 200,
+                             inline = TRUE,
+                             choicesOpt = list(style = rep_len("color: black;", 999)),
+                             options = shinyWidgets::pickerOptions(
+                               actionsBox = TRUE,
+                               liveSearch = TRUE,
+                               size = 10,
+                               liveSearchStyle = "contains",
+                               liveSearchPlaceholder = "Type here to search",
+                               virtualScroll = 50
+                             )
+                           )
+                         ),
+                         tags$td(
+                           align = "right",
+                           shiny::downloadButton(
+                             "saveDetailsOfSelectedConceptIdForIndexEvent",
+                             label = "",
+                             icon = shiny::icon("download"),
+                             style = "margin-top: 5px; margin-bottom: 5px;"
+                           )
+                         )
+                       )),
+            DT::dataTableOutput(outputId = "conceptBrowserTableForIndexEvent")
+          ),
+          shiny::tabPanel(
+            title = "Time Series Plot",
+            value = "conceptSetTimeSeriesForIndexEvent",
+            plotly::plotlyOutput(
+              outputId = "conceptSetTimeSeriesPlotForIndexEvent",
+              width = "100%",
+              height = "100%"
+            )
+          )
+        )
+      )
+    )
   ),
   shinydashboard::tabItem(
     tabName = "visitContext",

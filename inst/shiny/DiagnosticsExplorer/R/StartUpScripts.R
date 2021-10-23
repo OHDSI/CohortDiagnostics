@@ -217,6 +217,7 @@ consolidationOfSelectedFieldValues <- function(input,
         data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
     }
     #selection on concept id
+
     if (doesObjectHaveData(input$targetCohortDefinitionResolvedConceptTable_rows_selected)) {
       data$selectedConceptIdTarget <- resolvedConceptSetDataTarget[input$targetCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
       data$leftSideActive <- TRUE
@@ -728,15 +729,12 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
           names_from = "type",
           values_from = "valuesData",
           values_fill = 0
-        ) %>%
-        dplyr::arrange(dplyr::desc(abs(dplyr::across(
-          dplyr::contains(dataColumns)
-        ))))
+        ) 
       
       dataColumnsLevel2 <- colnames(data)
       dataColumnsLevel2 <-
         dataColumnsLevel2[stringr::str_detect(string = dataColumnsLevel2,
-                                              pattern = keyColumns,
+                                              pattern = paste0(keyColumns, collapse = "|"),
                                               negate = TRUE)]
       dataColumnsLevel2 <-
         stringr::str_remove_all(
@@ -760,6 +758,15 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
     minimumCellCountDefs <- minCellPercentDef(numberOfColumns + (1:(
       numberOfSubstitutableColums * length(databaseIdsForUseAsHeader)
     )))  
+  }
+  
+  sortByColumns <- colnames(data)
+  sortByColumns <- sortByColumns[stringr::str_detect(string = sortByColumns,
+                                                     pattern = paste(dataColumns, collapse = "|"))]
+  if (length(sortByColumns) > 0) {
+    sortByColumns <- sortByColumns[[1]]
+    data <- data %>% 
+      dplyr::arrange(dplyr::desc(dplyr::across(sortByColumns)))
   }
   
   options = list(

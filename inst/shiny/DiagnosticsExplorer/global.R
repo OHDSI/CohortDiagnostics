@@ -36,6 +36,7 @@ alternateVocabularySchema <- c('vocabulary')
 # defaultVocabularySchema <- Sys.getenv("phenotypeLibrarydbVocabSchema")
 # alternateVocabularySchema <- c('vocabulary')
 
+
 #Mode
 defaultDatabaseMode <- FALSE # Use file system if FALSE
 
@@ -49,7 +50,7 @@ showCharacterization <- TRUE
 showTemporalCharacterization <- TRUE
 filterTemporalChoicesToPrimaryOptions <- TRUE
 
-showConceptBrowser <- TRUE  #on selected conceptId (activeSelectd) - show concept browser 
+showConceptBrowser <- TRUE  #on selected conceptId - show concept browser  (applied for cohort, index event breakdown, characterization tab)
 # (applies to cohort, indexEventBreakdown, characterization, temporalCharacterization, compareCharacterization, temporalCompareCharacterization)
 showConceptSetComparison <- TRUE #given two concept set - show difference in resolved concepts
 allCohortsToBeCompared <- TRUE # in cohort tab, allow comparator cohort selection, and comparator cohort
@@ -271,7 +272,7 @@ if (all(exists("conceptSets"),
       ")"
     ))
 } else if (all(exists("cohort"),
-           doesObjectHaveData(cohort$json))) {
+               doesObjectHaveData(cohort$json))) {
   conceptSets <- list()
   k <- 0
   for (i in (1:nrow(cohort))) {
@@ -340,15 +341,19 @@ if (all(exists("temporalTimeRef"),
   }
 }
 
+conceptSetRelationshipName <- relationship %>% 
+  dplyr::arrange(.data$relationshipName) %>% 
+  dplyr::pull(.data$relationshipName) %>% unique()
+
+
 #enhancement objects based on the control variable
-if (exists("covariateRef") && doesObjectHaveData(covariateRef)) {
-    specifications <- readr::read_csv(
-      file = "Table1Specs.csv",
-      col_types = readr::cols(),
-      guess_max = min(1e7)
-    )
-    prettyAnalysisIds <- specifications$analysisId
-}
+table1Specs <- readr::read_csv(
+  file = "Table1Specs.csv",
+  col_types = readr::cols(),
+  guess_max = min(1e7)
+)
+prettyAnalysisIds <- table1Specs$analysisId
+
 
 if (!showCharacterization) {
   if (exists("covariateValue")) {rm("covariateValue")}

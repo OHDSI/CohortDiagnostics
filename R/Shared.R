@@ -1033,8 +1033,7 @@ getConceptMetadata <- function(dataSource,
         )
     ) %>%
       dplyr::distinct() %>%
-      dplyr::arrange(.data$conceptId) %>% 
-      dplyr::group_by(.data$referenceConceptId, .data$conceptId)
+      dplyr::arrange(.data$conceptId)
     
     #!!!!!!!!! need to collapse relationshipId - to avoid duplication. need to make them come with line break
     # %>% 
@@ -1452,14 +1451,14 @@ getResultsOrphanConcept <- function(dataSource,
     return(NULL)
   }
   
-  
   resolved <- getResultsResolvedConcepts(
     dataSource = dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
     conceptSetIds = conceptSetIds
   )
-  if (nrow(resolved) > 0) {
+  if (all(!is.null(resolved),
+          nrow(resolved) > 0)) {
     relationship1 <- getConceptRelationship(
       dataSource = dataSource,
       conceptIds = resolved$conceptId %>% unique(),
@@ -1479,14 +1478,28 @@ getResultsOrphanConcept <- function(dataSource,
       dplyr::distinct()
     
     toExcludeFromOrphan <- c(relationship$conceptId2,
-                             resolved$conceptId) %>% 
+                             resolved$conceptId) %>%
       unique()
     
-    data <- data %>% 
+    data <- data %>%
       dplyr::filter(!.data$conceptId %in% !!toExcludeFromOrphan)
   }
   
-  data <- data %>% 
+  # removed excluded conceptIds.
+  excludedConceptIds <-
+    getResultsExcludedConcepts(
+      dataSource = dataSource,
+      cohortId = cohortIds,
+      databaseIds = databaseIds,
+      conceptSetId = conceptSetIds
+    )
+  if (all(!is.null(excludedConceptIds),
+          nrow(excludedConceptIds) > 0)) {
+    data <- data %>%
+      dplyr::anti_join(excludedConceptIds,
+                       by = c("databaseId", "cohortId", "conceptId", "conceptSetId"))
+  }
+  data <- data %>%
     dplyr::distinct()
   return(data)
 }

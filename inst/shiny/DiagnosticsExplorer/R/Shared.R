@@ -773,7 +773,7 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
       return(NULL)
     }
     data <- get(table, envir = dataSource) %>%
-      dplyr::filter(.data$conceptId %in% conceptId)
+      dplyr::filter(.data$conceptId %in% !!conceptId)
     
   } else {
     sql <-
@@ -1457,7 +1457,7 @@ getResultsOrphanConcept <- function(dataSource,
     databaseIds = databaseIds,
     conceptSetIds = conceptSetIds
   )
-  if (all(!is.null(resolved), 
+  if (all(!is.null(resolved),
           nrow(resolved) > 0)) {
     relationship1 <- getConceptRelationship(
       dataSource = dataSource,
@@ -1478,14 +1478,28 @@ getResultsOrphanConcept <- function(dataSource,
       dplyr::distinct()
     
     toExcludeFromOrphan <- c(relationship$conceptId2,
-                             resolved$conceptId) %>% 
+                             resolved$conceptId) %>%
       unique()
     
-    data <- data %>% 
+    data <- data %>%
       dplyr::filter(!.data$conceptId %in% !!toExcludeFromOrphan)
   }
   
-  data <- data %>% 
+  # removed excluded conceptIds.
+  excludedConceptIds <-
+    getResultsExcludedConcepts(
+      dataSource = dataSource,
+      cohortId = cohortIds,
+      databaseIds = databaseIds,
+      conceptSetId = conceptSetIds
+    )
+  if (all(!is.null(excludedConceptIds),
+          nrow(excludedConceptIds) > 0)) {
+    data <- data %>%
+      dplyr::anti_join(excludedConceptIds,
+                       by = c("databaseId", "cohortId", "conceptId", "conceptSetId"))
+  }
+  data <- data %>%
     dplyr::distinct()
   return(data)
 }
