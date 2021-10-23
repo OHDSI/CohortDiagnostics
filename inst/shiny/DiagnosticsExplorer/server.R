@@ -202,7 +202,7 @@ shiny::shinyServer(function(input, output, session) {
                    orphanConceptSetDataComparator = getOrphanConceptsComparator(),
                    excludedConceptSetDataTarget = getExcludedConceptsTarget(),
                    excludedConceptSetDataComparator = getExcludedConceptsComparator(),
-                   indexEventBreakdownDataTable = getIndexEventBreakdownDataTable()
+                   indexEventBreakdownDataTable = getIndexEventBreakdownDataFiltered()
                  ) 
                  
                  if ((isFALSE(input$selectedCompoundCohortNames_open) ||
@@ -5941,7 +5941,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##getIndexEventBreakdownDataLong----
-  getIndexEventBreakdownDataLong <- shiny::reactive(x = {
+  getIndexEventBreakdownTableData <- shiny::reactive(x = {
     data <- getIndexEventBreakdownDataFiltered()
     if (!doesObjectHaveData(data)) {
       return(NULL)
@@ -5958,89 +5958,6 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>%
       dplyr::filter(.data$conceptId > 0) %>%
       dplyr::arrange(.data$databaseId) 
-    
-    if (input$indexEventBreakdownTableFilter == "Records") {
-      data <- data %>%
-        dplyr::mutate(databaseId = paste0(.data$databaseId, " (n = ",
-                                          scales::comma(.data$cohortEntries),
-                                          ")"))
-    } else if (input$indexEventBreakdownTableFilter == "Persons") {
-      data <- data %>%
-        dplyr::mutate(databaseId = paste0(.data$databaseId, " (n = ",
-                                          scales::comma(.data$cohortSubjects),
-                                          ")"))
-    }
-    data <- data %>% 
-      dplyr::select(
-        .data$databaseId,
-        .data$cohortId,
-        .data$conceptId,
-        .data$conceptName,
-        .data$vocabularyId,
-        .data$conceptValue,
-        .data$subjectValue
-      ) %>%
-      dplyr::group_by(
-        .data$databaseId,
-        .data$cohortId,
-        .data$conceptId,
-        .data$conceptName,
-        .data$vocabularyId
-      ) %>%
-      dplyr::summarise(
-        conceptValue = sum(.data$conceptValue),
-        subjectValue = max(.data$subjectValue),
-        .groups = 'keep'
-      ) %>%
-      dplyr::ungroup() %>%
-      dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id
-      # may have the same value leading to duplication of row records
-      tidyr::pivot_longer(
-        names_to = "type",
-        cols = c("conceptValue", "subjectValue"),
-        values_to = "count"
-      ) %>%
-      dplyr::arrange(.data$databaseId, .data$cohortId, .data$type)
-    return(data)
-  })
-  
-  ##getIndexEventBreakdownDataWide----
-  getIndexEventBreakdownDataWide <- shiny::reactive(x = {
-    data <- getIndexEventBreakdownDataLong()
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    data <- data %>%
-      dplyr::mutate(type = paste0(.data$databaseId,
-                                  " ",
-                                  .data$type)) %>%
-      dplyr::group_by(
-        .data$databaseId,
-        .data$cohortId,
-        .data$conceptId,
-        .data$conceptName,
-        .data$vocabularyId,
-        .data$type
-      ) %>%
-      dplyr::summarise(
-        count = sum(.data$count),
-        .groups = 'keep'
-      ) %>%
-      dplyr::ungroup() %>%
-      dplyr::distinct() %>%
-      tidyr::pivot_wider(
-        id_cols = c(
-          "cohortId",
-          "conceptId",
-          "conceptName",
-          "vocabularyId"
-        ),
-        names_from = type,
-        values_from = count,
-        values_fill = 0
-      ) %>%
-      dplyr::distinct() %>% 
-      dplyr::arrange(dplyr::desc(abs(dplyr::across(.cols = dplyr::contains("Value")))))
     return(data)
   })
   
@@ -6050,32 +5967,10 @@ shiny::shinyServer(function(input, output, session) {
       getCsvFileNameWithDateTime(string = "indexEventBreakdown")
     },
     content = function(file) {
-      downloadCsv(x = getIndexEventBreakdownDataWide(),
+      downloadCsv(x = getIndexEventBreakdownTableData(),
                   fileName = file)
     }
   )
-  
-  ##getIndexEventBreakdownDataTable----
-  getIndexEventBreakdownDataTable <- shiny::reactive(x = {
-    data <- getIndexEventBreakdownDataWide()
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    if (input$indexEventBreakdownTableFilter == "Records") {
-      data <- data %>%
-        dplyr::select(-dplyr::contains("subjectValue"))
-    }
-    if (input$indexEventBreakdownTableFilter == "Persons") {
-      data <- data %>%
-        dplyr::select(-dplyr::contains("conceptValue"))
-    }
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    data <- data %>% 
-      dplyr::arrange(dplyr::desc(abs(dplyr::across(.cols = dplyr::contains("Value")))))
-    return(data)
-  })
   
   ##output: indexEventBreakdownTable----
   output$indexEventBreakdownTable <-
@@ -6090,136 +5985,66 @@ shiny::shinyServer(function(input, output, session) {
         ),
         value = 0
       )
-      data <-
-        getIndexEventBreakdownDataTable()
+      
+      data <- getIndexEventBreakdownTableData()
       validate(
         need(
           doesObjectHaveData(data),
           "No index event breakdown data for the chosen combination."
         )
       )
-      maxCount <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "value")
-      databaseIds <- input$selectedDatabaseIds
       
-      personCount <- cohortCount %>% 
-        dplyr::filter(.data$cohortId %in% c(data$cohortId %>% unique())) %>% 
-        dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
-        dplyr::pull(.data$cohortSubjects)
+      data <- data %>% 
+        dplyr::rename("persons" = .data$subjectValue,
+                      "records" = .data$conceptValue)
       
-      recordCount <- cohortCount %>% 
-        dplyr::filter(.data$cohortId %in% c(data$cohortId %>% unique())) %>% 
-        dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
-        dplyr::pull(.data$cohortEntries)
-      
-      data <- data %>%
-        dplyr::select(-.data$cohortId)
-      
-      noOfMergeColumns <- 1
-      if (input$indexEventBreakdownTableFilter == "Records") {
-        data <- data %>%
-          dplyr::select(-dplyr::contains("subjectValue"))
-        colnames(data) <-
-          stringr::str_replace(
-            string = colnames(data),
-            pattern = 'conceptValue',
-            replacement = ''
-          )
-        columnColor <- 3 + 1:(length(databaseIds))
-      } else if (input$indexEventBreakdownTableFilter == "Persons") {
-          data <- data %>%
-            dplyr::select(-dplyr::contains("conceptValue"))
-          colnames(data) <-
-            stringr::str_replace(
-              string = colnames(data),
-              pattern = 'subjectValue',
-              replacement = ''
-            )
-          columnColor <- 3 + 1:(length(databaseIds))
-        } else {
-          recordAndPersonColumnName <- c()
-          for (i in 1:length(consolidatedDatabaseIdTarget())) {
-            recordAndPersonColumnName <-
-              c(
-                recordAndPersonColumnName,
-                paste0("Records (", recordCount[i], ")"),
-                paste0("Person (", personCount[i], ")")
-              )
-          }
-          sketch <- htmltools::withTags(table(class = "display",
-                                              thead(
-                                                tr(
-                                                  th(rowspan = 2, "Concept Id"),
-                                                  th(rowspan = 2, "Concept Name"),
-                                                  th(rowspan = 2, "Vocabulary Id"),
-                                                  lapply(
-                                                    databaseIds,
-                                                    th,
-                                                    colspan = 2,
-                                                    class = "dt-center",
-                                                    style = "border-right:1px solid silver;border-bottom:1px solid silver"
-                                                  )
-                                                ),
-                                                tr(
-                                                  lapply(recordAndPersonColumnName, th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                                )
-                                              )))
-          columnColor <- 3 + 1:(length(databaseIds) * 2)
-          noOfMergeColumns <- 2
-        }
-      
-      if (input$indexEventBreakdownValueFilter == "Percentage") {
-        minimumCellPercent <-
-          minCellPercentDef(2 + 1:(length(databaseIds) * noOfMergeColumns))
-      } else {
-        minimumCellPercent <-
-          minCellCountDef(2 + 1:(length(databaseIds) * noOfMergeColumns))
-      }
-      options = list(
-        pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = "50vh",
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        columnDefs = list(minimumCellPercent)
-      )
-      
+      keyColumnFields <- c("conceptId", "conceptName", "vocabularyId")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      dataColumnFields <-
+        c("persons",
+          "records")
       if (input$indexEventBreakdownTableFilter == "Both") {
-        table <- DT::datatable(
-          data,
-          options = options,
-          colnames = colnames(table) %>%
-            camelCaseToTitleCase(),
-          rownames = FALSE,
-          container = sketch,
-          escape = FALSE,
-          filter = "top"
-        )
-      } else {
-        table <- DT::datatable(
-          data,
-          options = options,
-          rownames = FALSE,
-          selection = "single",
-          colnames = colnames(data) %>%
-            camelCaseToTitleCase(),
-          escape = FALSE,
-          filter = "top",
-          class = "stripe nowrap compact"
-        )
+        dataColumnFields <- dataColumnFields
+        sketchLevel <- 2
+      } else if (input$indexEventBreakdownTableFilter == "Person Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("person")
+          )]
+        sketchLevel <- 1
+      } else if (input$indexEventBreakdownTableFilter == "Record Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("record")
+          )]
+        sketchLevel <- 1
       }
       
-      table <- DT::formatStyle(
-        table = table,
-        columns = columnColor,
-        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
+      countsForHeader <-
+        getCountsForHeaderForUseInDataTable(
+          dataSource = dataSource,
+          databaseIds = consolidatedDatabaseIdTarget(),
+          cohortIds = consolidatedCohortIdTarget(),
+          source = "Cohort Level",
+          fields = input$indexEventBreakdownTableFilter
+        )
+      
+      maxCountValue <-
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                      string = dataColumnFields)
+      
+      table <- getDtWithColumnsGroupedByDatabaseId(
+        data = data,
+        headerCount = countsForHeader,
+        keyColumns = keyColumnFields,
+        sketchLevel = sketchLevel,
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
+        showResultsAsPercent = input$indexEventBreakdownValueFilter == "Percentage" 
       )
+      
       return(table)
     }, server = TRUE)
   
