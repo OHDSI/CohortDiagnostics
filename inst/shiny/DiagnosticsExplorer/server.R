@@ -8306,7 +8306,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$timeId %in% c(getTimeIdsFromSelectedTemporalCovariateChoices())) %>%
         dplyr::arrange(.data$timeId) %>%
         dplyr::pull(.data$choices)
-      browser()
+      
       if (input$temporalCharacterizationTypeColumnFilter == "Mean and Standard Deviation") {
         table <- data %>%
           dplyr::arrange(desc(abs(.data$stdDiff)))
