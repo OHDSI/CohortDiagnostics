@@ -55,7 +55,7 @@ showConceptBrowser <- TRUE  #on selected conceptId - show concept browser  (appl
 showConceptSetComparison <- TRUE #given two concept set - show difference in resolved concepts
 allCohortsToBeCompared <- TRUE # in cohort tab, allow comparator cohort selection, and comparator cohort
 showNotes <- TRUE # in cohort count tab, show notes for count
-
+show3DTempolarCharecterizationPlot <- FALSE
 
 # Foot note ----
 appInformationText <- "V 2.2"

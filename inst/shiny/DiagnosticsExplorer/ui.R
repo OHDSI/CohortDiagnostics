@@ -1523,16 +1523,18 @@ bodyTabItems <- shinydashboard::tabItems(
               height = "auto"
             ),
           ),
-          shiny::tabPanel(
-            title = "3D Plot",
-            value = "compareTemporalCharacterization3DPlotPanel",
-            tags$br(),
-            plotly::plotlyOutput(
-              outputId = "compareTemporalCharacterizationPlot3D",
-              width = "100%",
-              height = 800
-            ),
-          )
+          if (show3DTempolarCharecterizationPlot) {
+            shiny::tabPanel(
+              title = "3D Plot",
+              value = "compareTemporalCharacterization3DPlotPanel",
+              tags$br(),
+              plotly::plotlyOutput(
+                outputId = "compareTemporalCharacterizationPlot3D",
+                width = "100%",
+                height = 800
+              ),
+            )
+          }
         ),
         tags$head(
           tags$style("#compareTemporalCharacterizationPlot2D,#compareTemporalCharacterizationPlot3D { width: '90vw' !important};")

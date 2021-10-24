@@ -1131,7 +1131,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
         dplyr::mutate(domain = .data$name, colors = .data$value) %>% 
         dplyr::select(.data$domain,.data$colors),
       by = "domain"
-    )
+    ) %>% dplyr::arrange(.data$domain)
   
   colors <- balance$colors %>% unique()
   xCohort <- balance %>%
@@ -1178,7 +1178,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
         mode = "markers",
         color = ~ domain,
         colors = colors,
-        opacity = 0.4,
+        opacity = 0.8,
         showlegend = ifelse(i == 1, T, F),
         marker = list(
           size = 12,
