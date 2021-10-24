@@ -171,6 +171,7 @@ if (databaseMode) {
       "analysis_ref",
       "concept_sets",
       "concept_class",
+      "concept_resolved",
       # "covariate_ref",
       "domain",
       "relationship",

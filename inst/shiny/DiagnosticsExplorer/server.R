@@ -1489,6 +1489,40 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  ###getResolvedConceptsAllData----
+  getResolvedConceptsAllData <- shiny::reactive({
+    data <- conceptResolved
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    return(data)
+  })
+  
+  
+  ###getResolvedConceptsAllDataConceptIdDetails----
+  getResolvedConceptsAllDataConceptIdDetails <- shiny::reactive({ 
+  resolvedConcepts <- getResolvedConceptsAllData()
+  if (!doesObjectHaveData(resolvedConcepts)) {
+    return(NULL)
+  }
+  progress <- shiny::Progress$new()
+  on.exit(progress$close())
+  progress$set(message = "Caching concept count for resolved concepts",
+               value = 0)
+  conceptDetails <- getConcept(dataSource = dataSource,
+                               conceptIds = resolvedConcepts$conceptId %>% unique())
+  if (!doesObjectHaveData(conceptDetails)) {
+    return(NULL)
+  }
+  conceptDetails <- conceptDetails %>%
+    dplyr::select(.data$conceptId,
+                  .data$conceptName,
+                  .data$vocabularyId,
+                  .data$domainId,
+                  .data$standardConcept)
+  return(conceptDetails)
+  })
+  
   ###getResolvedConceptsTargetData----
   getResolvedConceptsTargetData <- shiny::reactive({
     if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
@@ -1500,18 +1534,28 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedConceptSetIdTarget())) {
       return(NULL)
     }
+    if (!doesObjectHaveData(getResolvedConceptsAllData())) {
+      return(NULL)
+    }
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(message = "Retrieving resolved concepts for target",
                  value = 0)
-    data <- getResultsResolvedConcepts(
-      dataSource = dataSource,
-      cohortId = consolidatedCohortIdTarget(),
-      databaseId = consolidatedDatabaseIdTarget(),
-      conceptSetId = consolidatedConceptSetIdTarget()
-    )
-    conceptDetails <- getConcept(dataSource = dataSource,
-                                 conceptIds = data$conceptId %>% unique())
+    data <- getResolvedConceptsAllData()
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    data <- data %>% 
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>% 
+      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
+      dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdTarget())
+    
+    conceptDetails <- getResolvedConceptsAllDataConceptIdDetails()
+    if (!doesObjectHaveData(conceptDetails)) {
+      return(NULL)
+    }
+    conceptDetails <- conceptDetails %>% 
+      dplyr::filter(.data$conceptId %in% (data$conceptId %>% unique()))
     if (is.null(conceptDetails)) {
       return(NULL)
     }
@@ -1526,8 +1570,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-.data$conceptSetId, -.data$cohortId)
     return(data)
   })
-    
-    
+  
+  
   ###getResolvedConceptsTarget----
   getResolvedConceptsTarget <- shiny::reactive({
     data <- getResolvedConceptsTargetData()
@@ -1632,21 +1676,28 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedConceptSetIdComparator())) {
       return(NULL)
     }
+    if (!doesObjectHaveData(getResolvedConceptsAllData())) {
+      return(NULL)
+    }
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(message = "Retrieving resolved concepts for comparator",
                  value = 0)
-    data <- getResultsResolvedConcepts(
-      dataSource = dataSource,
-      cohortId = consolidatedCohortIdComparator(),
-      databaseId = consolidatedDatabaseIdTarget(),
-      conceptSetId = consolidatedConceptSetIdComparator()
-    )
+    data <- getResolvedConceptsAllData()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    conceptDetails <- getConcept(dataSource = dataSource,
-                                 conceptIds = data$conceptId %>% unique())
+    data <- data %>% 
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator()) %>% 
+      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
+      dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdComparator())
+    
+    conceptDetails <- getResolvedConceptsAllDataConceptIdDetails()
+    if (!doesObjectHaveData(conceptDetails)) {
+      return(NULL)
+    }
+    conceptDetails <- conceptDetails %>% 
+      dplyr::filter(.data$conceptId %in% c(data$conceptId %>% unique()))
     if (is.null(conceptDetails)) {
       return(NULL)
     }
@@ -6841,36 +6892,6 @@ shiny::shinyServer(function(input, output, session) {
     }
     return(data)
   })
-  
-
-  ###getConceptSetNamesFromOneCohort----
-  # getConceptSetNamesFromOneCohort <-
-  #   shiny::reactive(x = {
-  #     if (any(
-  #       !doesObjectHaveData(consolidatedCohortIdTarget()),
-  #       !doesObjectHaveData(consolidatedDatabaseIdTarget())
-  #     )) {
-  #       return(NULL)
-  #     }
-  #     jsonExpression <- getCohortSortedByCohortId() %>%
-  #       dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
-  #       dplyr::select(.data$json)
-  #     
-  #     jsonExpression <-
-  #       RJSONIO::fromJSON(jsonExpression$json, digits = 23)
-  #     expression <-
-  #       getConceptSetDetailsFromCohortDefinition(cohortDefinitionExpression = jsonExpression)
-  #     
-  #     if (!is.null(expression)) {
-  #       expression <- expression$conceptSetExpression %>%
-  #         dplyr::select(.data$name) %>%
-  #         dplyr::distinct() %>%
-  #         dplyr::arrange(.data$name)
-  #       return(expression)
-  #     } else {
-  #       return(NULL)
-  #     }
-  #   })
   
   ###getDomainOptionsForCharacterization----
   getDomainOptionsForCharacterization <- shiny::reactive({
