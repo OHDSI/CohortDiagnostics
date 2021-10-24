@@ -582,11 +582,11 @@ getDatabaseCounts <- function(dataSource,
                   .data$persons)
   return(databaseExecutionData)
 }
-  
-  
-  
-  
-  
+
+
+
+
+
 # Concept ----
 #' Returns conceptIds details from concept table
 #'
@@ -773,7 +773,7 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
       return(NULL)
     }
     data <- get(table, envir = dataSource) %>%
-      dplyr::filter(.data$conceptId %in% !!conceptId)
+      dplyr::filter(.data$conceptId %in% conceptId)
     
   } else {
     sql <-
