@@ -5987,7 +5987,7 @@ shiny::shinyServer(function(input, output, session) {
                        .data$standardConcept != "S")
     }
     
-    if (input$indexEventBreakdownValueFilter == "Percentage") {
+    if (input$indexEventBreakdownShowAsPercent) {
       data <- data %>%
         dplyr::mutate(conceptValue = .data$conceptPercent) %>%
         dplyr::mutate(subjectValue = .data$subjectPercent)
@@ -6087,7 +6087,7 @@ shiny::shinyServer(function(input, output, session) {
         sketchLevel = sketchLevel,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$indexEventBreakdownValueFilter == "Percentage" 
+        showResultsAsPercent = input$indexEventBreakdownShowAsPercent
       )
       
       return(table)
@@ -6163,7 +6163,7 @@ shiny::shinyServer(function(input, output, session) {
       sketchLevel = sketchLevel,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
-      showResultsAsPercent = input$indexEventBreakdownValueFilter == "Percentage" 
+      showResultsAsPercent = input$indexEventBreakdownShowAsPercent
     )
     
     return(table)

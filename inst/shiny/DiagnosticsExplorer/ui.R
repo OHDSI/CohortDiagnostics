@@ -919,12 +919,9 @@ bodyTabItems <- shinydashboard::tabItems(
         ),
         tags$td(HTML("&nbsp;")),
         tags$td(
-          shiny::radioButtons(
-            inputId = "indexEventBreakdownValueFilter",
-            label = "Display Value Type",
-            choices = c("Absolute", "Percentage"), 
-            selected = "Absolute",
-            inline = TRUE
+          shiny::checkboxInput(
+            inputId = "indexEventBreakdownShowAsPercent",
+            label = "Show As Percent"
           )
         ),
         tags$td(
