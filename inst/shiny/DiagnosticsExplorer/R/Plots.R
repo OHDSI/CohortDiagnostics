@@ -396,13 +396,20 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
       return(NULL)
     }
     yAxisValues <- names(stlModeledTsibbleData)
-    distinctDatabaseId <- c()
+    distinctDatabaseShortName <- c()
+    distinctDatabaseCompoundName <- c()
     for (i in 1:length(yAxisValues)) {
       if ("dcmp_ts" %in% class(stlModeledTsibbleData[[i]])) {
-        distinctDatabaseId <- c(distinctDatabaseId,
-                                stlModeledTsibbleData[[i]]$databaseId) %>% unique()
+        stlModeledTsibbleData[[i]] <- stlModeledTsibbleData[[i]] %>% 
+          addDatabaseShortName(shortNameRef = database) %>% 
+          dplyr::mutate(databaseCompoundName = paste(.data$databaseShortName," - ",.data$databaseId))
+        distinctDatabaseCompoundName <- c(distinctDatabaseCompoundName,
+                                       stlModeledTsibbleData[[i]]$databaseCompoundName) %>% unique()
+        distinctDatabaseShortName <- c(distinctDatabaseShortName,
+                                stlModeledTsibbleData[[i]]$databaseShortName) %>% unique()
       }
     }
+    distinctDatabaseCompoundNameString = paste(distinctDatabaseCompoundName,collapse = ";")
     
     cohortPlot <- list()
     noOfPlotRows <- length(yAxisValues)
@@ -410,10 +417,10 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
     for (j in 1:length(yAxisValues)) {
       data <- stlModeledTsibbleData[[j]]
       databasePlots <- list()
-      for (l in (1:length(distinctDatabaseId))) {
+      for (l in (1:length(distinctDatabaseShortName))) {
         databasePlots[[l]] <- plotTs(
           data = data %>%
-            dplyr::filter(.data$databaseId %in% distinctDatabaseId[[l]]),
+            dplyr::filter(.data$databaseShortName %in% distinctDatabaseShortName[[l]]),
           plotHeight =  200 * noOfPlotRows,
           xAxisMin = as.Date(paste0(timeSeriesPeriodRangeFilter[1], "-01-01")),
           xAxisMax = as.Date(paste0(timeSeriesPeriodRangeFilter[2], "-12-31")),
@@ -426,10 +433,12 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
               annotations = list(
                 x = 0.5 ,
                 y = 1.2,
-                text = distinctDatabaseId[[l]],
+                text = distinctDatabaseShortName[[l]],
                 showarrow = F,
                 xref = 'paper',
-                yref = 'paper'
+                yref = 'paper',
+                xanchor = 'center',
+                yanchor = 'middle'
               )
             )
         }
@@ -448,6 +457,8 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
             showarrow = FALSE,
             xref = "paper",
             yref = "paper",
+            xanchor = 'center',
+            yanchor = 'middle',
             textangle = -90
           )
         )
@@ -465,8 +476,8 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
                      margin = m,
                      annotations = list(
                        x = 0.5 ,
-                       y = -0.25,
-                       text = paste0(conceptName," (",conceptId,")","\n",conceptSynonym),
+                       y = -0.1,
+                       text = paste0(conceptName," (",conceptId,")","\n",conceptSynonym,"\n",distinctDatabaseCompoundNameString),
                        showarrow = F,
                        xref = 'paper',
                        yref = 'paper'
