@@ -9214,7 +9214,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$cohortCharCompareSelectedDatabase <-
     shiny::renderUI({
-      return(input$selectedDatabaseId)
+      return(selectedDatabaseIds())
     })
   
   output$temporalCharCompareSelectedCohort <-
