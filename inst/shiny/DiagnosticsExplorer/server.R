@@ -38,9 +38,16 @@ shiny::shinyServer(function(input, output, session) {
       }
     }
     
-    data <- conceptSets %>%
+    data <- conceptSets
+    dataFiltered <- data %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
-      dplyr::pull(.data$compoundName)
+      dplyr::pull(.data$compoundName) %>% 
+      unique() %>% 
+      sort()
+    data <- data %>%
+      dplyr::pull(.data$compoundName) %>% 
+      sort()
+    
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -50,7 +57,7 @@ shiny::shinyServer(function(input, output, session) {
         inputId = "conceptSetsSelectedTargetCohort",
         choicesOpt = list(style = rep_len("color: black;", 999)),
         choices = data,
-        selected = data
+        selected = dataFiltered
       )
     } else {
       shinyWidgets::updatePickerInput(
@@ -6998,11 +7005,18 @@ shiny::shinyServer(function(input, output, session) {
     }
     if (all(
       doesObjectHaveData(input$conceptSetsSelectedTargetCohort),
-      doesObjectHaveData(getResolvedConceptsTarget())
+      doesObjectHaveData(getResolvedConceptsAllData())
     )) {
       covariatesTofilter <- covariatesTofilter  %>%
         dplyr::inner_join(
-          getResolvedConceptsTarget() %>%
+          conceptSets %>% 
+            dplyr::filter(.data$compoundName %in% c(input$conceptSetsSelectedTargetCohort)) %>% 
+            dplyr::select(.data$cohortId, .data$conceptSetId) %>% 
+            dplyr::inner_join(getResolvedConceptsAllData() %>% 
+                                dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
+                                dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId) %>% 
+                                dplyr::distinct(),
+                              by = c("cohortId", "conceptSetId")) %>%
             dplyr::select(.data$conceptId) %>%
             dplyr::distinct(),
           by = c("conceptId")
@@ -7453,15 +7467,27 @@ shiny::shinyServer(function(input, output, session) {
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
-      if (doesObjectHaveData(input$conceptSetsSelectedTargetCohort)) {
+      
+      if (all(
+        doesObjectHaveData(input$conceptSetsSelectedTargetCohort),
+        doesObjectHaveData(getResolvedConceptsAllData())
+      )) {
         data <- data  %>%
           dplyr::inner_join(
-            getResolvedConceptsTarget() %>%
-              dplyr::select(.data$conceptId, .data$cohortId) %>%
+            conceptSets %>% 
+              dplyr::filter(.data$compoundName %in% c(input$conceptSetsSelectedTargetCohort)) %>% 
+              dplyr::select(.data$cohortId, .data$conceptSetId) %>% 
+              dplyr::inner_join(getResolvedConceptsAllData() %>% 
+                                  dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
+                                  dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId) %>% 
+                                  dplyr::distinct(),
+                                by = c("cohortId", "conceptSetId")) %>%
+              dplyr::select(.data$conceptId) %>%
               dplyr::distinct(),
-            by = c("conceptId", "cohortId")
+            by = c("conceptId")
           )
       }
+      
       data <- data %>%
           dplyr::filter(.data$analysisName %in% input$temporalCharacterizationAnalysisNameOptions) %>%
           dplyr::filter(.data$domainId %in% input$temporalCharacterizationDomainNameOptions) %>%
@@ -7840,6 +7866,7 @@ shiny::shinyServer(function(input, output, session) {
       !is.null(input$conceptSetsSelectedTargetCohort),
       length(input$conceptSetsSelectedTargetCohort) > 0
     )) {
+      browser()
       data <- data  %>%
         dplyr::inner_join(
           getResolvedConceptsTarget() %>%
