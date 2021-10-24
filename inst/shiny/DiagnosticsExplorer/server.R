@@ -8185,84 +8185,35 @@ shiny::shinyServer(function(input, output, session) {
         table <- data %>%
           dplyr::arrange(desc(abs(.data$stdDiff)))
         
-        if (length(getTimeIdsFromSelectedTemporalCovariateChoices()) == 1) {
           table <- table %>%
             dplyr::arrange(.data$choices) %>%
-            tidyr::pivot_wider(
-              id_cols = c("databaseId", "covariateId", "covariateName"),
-              names_from = "choices",
-              values_from = c("mean1",
-                              "sd1",
-                              "mean2",
-                              "sd2",
-                              "stdDiff"),
-              values_fill = 0
-            )
-        } else {
-          table <- table %>%
-            dplyr::arrange(.data$choices) %>%
-            dplyr::rename(
-              aMeanTarget = "mean1",
-              bSdTarget = "sd1",
-              cMeanComparator = "mean2",
-              dSdComparator = "sd2"
-            ) %>%
             tidyr::pivot_longer(
               cols = c(
-                "aMeanTarget",
-                "bSdTarget",
-                "cMeanComparator",
-                "dSdComparator"
+                "mean1",
+                "sd1",
+                "mean2",
+                "sd2"
               ),
               names_to = "type",
               values_to = "values"
-            ) %>%
-            dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>%
-            dplyr::arrange(.data$databaseId,
-                           .data$startDay,
-                           .data$endDay,
-                           .data$type) %>%
-            tidyr::pivot_wider(
-              id_cols = c("covariateName"),
-              names_from = "names",
-              values_from = c("values"),
-              values_fill = 0
             )
-        }
+        
       } else {
         # only Mean
         table <- data %>%
           dplyr::arrange(desc(abs(.data$stdDiff)))
         
-        if (length(getTimeIdsFromSelectedTemporalCovariateChoices()) == 1) {
-          table <- data %>%
-            tidyr::pivot_wider(
-              id_cols = c("covariateName"),
-              names_from = "choices",
-              values_from = c("mean1",
-                              "mean2",
-                              "stdDiff"),
-              values_fill = 0
-            )
-        } else {
           table <- data %>%
             tidyr::pivot_longer(
               cols = c("mean1",
                        "mean2"),
               names_to = "type",
               values_to = "values"
-            ) %>%
-            dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>%
-            dplyr::arrange(.data$startDay, .data$endDay) %>%
-            tidyr::pivot_wider(
-              id_cols = c("covariateName"),
-              names_from = "names",
-              values_from = "values",
-              values_fill = 0
-            )
-        }
+            ) 
+          
+        
       }
-      return(data)
+      return(table)
     })
   
   ### Output: compareTemporalCharacterizationTable ------
@@ -8334,71 +8285,26 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$timeId %in% c(getTimeIdsFromSelectedTemporalCovariateChoices())) %>%
         dplyr::arrange(.data$timeId) %>%
         dplyr::pull(.data$choices)
-      
+      browser()
       if (input$temporalCharacterizationTypeColumnFilter == "Mean and Standard Deviation") {
         table <- data %>%
           dplyr::arrange(desc(abs(.data$stdDiff)))
         
-        if (length(temporalCovariateChoicesSelected) == 1) {
+       
           table <- table %>%
             dplyr::arrange(.data$choices) %>%
-            tidyr::pivot_wider(
-              id_cols = c("covariateName"),
-              names_from = "choices",
-              values_from = c("mean1",
-                              "sd1",
-                              "mean2",
-                              "sd2",
-                              "stdDiff"),
-              values_fill = 0
-            )
-          
-          columnDefs <- list(truncateStringDef(0, 80),
-                             minCellRealDef(1:(
-                               length(temporalCovariateChoicesSelected) * 5
-                             ),
-                             digits = 2))
-          colorBarColumns <-
-            1 + 1:(length(temporalCovariateChoicesSelected) * 5)
-          colspan <- 5
-          containerColumns <-
-            c(
-              paste0("Mean ", targetCohortShortName),
-              paste0("SD ", targetCohortShortName),
-              paste0("Mean ", comparatorCohortShortName),
-              paste0("SD ", comparatorCohortShortName),
-              "Std. Diff"
-            )
-        } else {
-          table <- table %>%
-            dplyr::arrange(.data$choices) %>%
-            dplyr::rename(
-              aMeanTarget = "mean1",
-              bSdTarget = "sd1",
-              cMeanComparator = "mean2",
-              dSdComparator = "sd2"
-            ) %>%
-            tidyr::pivot_longer(
-              cols = c(
-                "aMeanTarget",
-                "bSdTarget",
-                "cMeanComparator",
-                "dSdComparator"
-              ),
-              names_to = "type",
-              values_to = "values"
-            ) %>%
             dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>%
             dplyr::arrange(.data$databaseId,
                            .data$startDay,
                            .data$endDay,
                            .data$type) %>%
             tidyr::pivot_wider(
-              id_cols = c("covariateName"),
+              id_cols = c("covariateName", "covariateId"),
               names_from = "names",
               values_from = c("values"),
               values_fill = 0
-            )
+            ) %>% 
+            dplyr::select(-.data$covariateId)
           
           columnDefs <- list(truncateStringDef(0, 80),
                              minCellRealDef(1:(
@@ -8415,51 +8321,22 @@ shiny::shinyServer(function(input, output, session) {
               paste0("Mean ", comparatorCohortShortName),
               paste0("SD ", comparatorCohortShortName)
             )
-        }
+        
       } else {
         # only Mean
         table <- data %>%
           dplyr::arrange(desc(abs(.data$stdDiff)))
         
-        if (length(temporalCovariateChoicesSelected) == 1) {
           table <- table %>%
-            tidyr::pivot_wider(
-              id_cols = c("covariateName"),
-              names_from = "choices",
-              values_from = c("mean1",
-                              "mean1",
-                              "stdDiff"),
-              values_fill = 0
-            )
-          
-          containerColumns <-
-            c(targetCohortShortName,
-              comparatorCohortShortName,
-              "Std. Diff")
-          columnDefs <- list(truncateStringDef(0, 80),
-                             minCellRealDef(1:(
-                               length(temporalCovariateChoicesSelected) * 3
-                             ),
-                             digits = 2))
-          colorBarColumns <-
-            1 + 1:(length(temporalCovariateChoicesSelected) * 3)
-          colspan <- 3
-        } else {
-          table <- table %>%
-            tidyr::pivot_longer(
-              cols = c("mean1",
-                       "mean2"),
-              names_to = "type",
-              values_to = "values"
-            ) %>%
             dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>%
             dplyr::arrange(.data$startDay, .data$endDay) %>%
             tidyr::pivot_wider(
-              id_cols = c("covariateName"),
+              id_cols = c("covariateName", "covariateId"),
               names_from = "names",
               values_from = "values",
               values_fill = 0
-            )
+            ) %>% 
+            dplyr::select(-.data$covariateId)
           
           containerColumns <-
             c(targetCohortShortName, comparatorCohortShortName)
@@ -8471,7 +8348,7 @@ shiny::shinyServer(function(input, output, session) {
           colorBarColumns <-
             1 + 1:(length(temporalCovariateChoicesSelected) * 2)
           colspan <- 2
-        }
+        
       }
       
       sketch <- htmltools::withTags(table(class = "display",
