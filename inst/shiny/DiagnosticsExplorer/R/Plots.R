@@ -476,7 +476,7 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
                      margin = m,
                      annotations = list(
                        x = 0.5 ,
-                       y = -0.1,
+                       y = -0.11,
                        text = paste0(conceptName," (",conceptId,")","\n",conceptSynonym,"\n",distinctDatabaseCompoundNameString),
                        showarrow = F,
                        xref = 'paper',
@@ -2091,15 +2091,18 @@ plotCohortOverlap <- function(data,
     dplyr::arrange(
       comparatorShortName = factor(.data$comparatorShortName, levels = sortComparatorShortName$comparatorShortName),
       .data$comparatorShortName
-    )
+    ) %>% 
+    addDatabaseShortName(shortNameRef = database) %>% 
+    dplyr::mutate(databaseCompoundName = paste(.data$databaseShortName,": ",.data$databaseId))
   
   distinctComparatorShortName <- plotData$comparatorShortName %>% unique()
   # distinctTargetShortName <- plotData$targetShortName %>% unique()
-  distinctDatabaseIds <- plotData$databaseId %>% unique()
+  distinctDatabaseShortName <- plotData$databaseShortName %>% unique()
+  distinctDatabaseCompoundNameString <- paste("<b>Datasource :</b>", paste(plotData$databaseCompoundName %>% unique(),collapse = ","))
   databasePlots <- list()
-  for (i in 1:length(distinctDatabaseIds)) {
+  for (i in 1:length(distinctDatabaseShortName)) {
     plotDataFilteredByDatabaseId <- plotData %>% 
-      dplyr::filter(.data$databaseId == distinctDatabaseIds[i])
+      dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i])
     comparatorPlots <- list()
     for (j in 1:length(distinctComparatorShortName)) {
       plotDataFilteredByComparator <- plotDataFilteredByDatabaseId %>% 
@@ -2146,9 +2149,9 @@ plotCohortOverlap <- function(data,
                                     tickformat = xAxisTickFormat),
                        yaxis = list(showticklabels = yAxisTickLabels),
                        annotations = list(
-                         x = rep(1 + length(distinctDatabaseIds) * 0.01,length(distinctTargetShortName)) ,
+                         x = rep(1 + length(distinctDatabaseShortName) * 0.01,length(distinctTargetShortName)) ,
                          y = seq(annotationStartValue, annotationEndValue, annotationInterval),
-                         text = rep(ifelse(i == length(distinctDatabaseIds),distinctComparatorShortName[j],""),length(distinctTargetShortName)),
+                         text = rep(ifelse(i == length(distinctDatabaseShortName),distinctComparatorShortName[j],""),length(distinctTargetShortName)),
                          showarrow = F,
                          xanchor = "center",
                          yanchor = "middle",
@@ -2161,7 +2164,7 @@ plotCohortOverlap <- function(data,
       plotly::layout(annotations = list(
                        x = 0.5 ,
                        y = 1.05,
-                       text = distinctDatabaseIds[i],
+                       text = distinctDatabaseShortName[i],
                        showarrow = F,
                        xanchor = "center",
                        yanchor = "middle",
@@ -2180,7 +2183,7 @@ plotCohortOverlap <- function(data,
     plotly::layout(annotations = list(
       x = 0.5 ,
       y = -0.5 + (0.025 * length(distinctTargetShortName) * length(distinctComparatorShortName)),
-      text = paste(targetCohortCompoundName,"\n",comparatorCohortCompoundName),
+      text = paste(targetCohortCompoundName,"\n",comparatorCohortCompoundName,"\n",distinctDatabaseCompoundNameString),
       showarrow = F,
       xanchor = "center",
       yanchor = "middle",
