@@ -246,14 +246,11 @@ if (all(exists("cohort"),
   # cohort is required and is always loaded into R memory
   cohort <- cohort %>%
     dplyr::arrange(.data$cohortId) %>%
-    dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>%
+    dplyr::mutate(shortName = paste0("C", .data$cohortId)) %>%
     dplyr::mutate(compoundName = paste0(
       .data$shortName,
       ": ",
-      .data$cohortName,
-      "(",
-      .data$cohortId,
-      ")"
+      .data$cohortName
     ))
 }
 
