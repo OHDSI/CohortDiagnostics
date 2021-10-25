@@ -5935,11 +5935,11 @@ shiny::shinyServer(function(input, output, session) {
       getResultsIndexEventBreakdown(dataSource = dataSource,
                                     cohortIds = consolidatedCohortIdTarget(),
                                     databaseIds = consolidatedDatabaseIdTarget(),
+                                    coConceptIds = NULL,
                                     daysRelativeIndex = 0) #!! in new design, we have multiple daysRelativeIndex
     if (!doesObjectHaveData(indexEventBreakdown)) {
       return(NULL)
     }
-    
     conceptIdDetails <- getConcept(dataSource = dataSource,
                                    conceptId = indexEventBreakdown$conceptId %>%
                                      unique())
@@ -7861,15 +7861,20 @@ shiny::shinyServer(function(input, output, session) {
         data <- data %>%
           dplyr::filter(.data$isBinary == 'N')
       }
-    
     if (all(
-      !is.null(input$conceptSetsSelectedTargetCohort),
-      length(input$conceptSetsSelectedTargetCohort) > 0
+      doesObjectHaveData(input$conceptSetsSelectedTargetCohort),
+      doesObjectHaveData(getResolvedConceptsAllData())
     )) {
-      browser()
       data <- data  %>%
         dplyr::inner_join(
-          getResolvedConceptsTarget() %>%
+          conceptSets %>% 
+            dplyr::filter(.data$compoundName %in% c(input$conceptSetsSelectedTargetCohort)) %>% 
+            dplyr::select(.data$cohortId, .data$conceptSetId) %>% 
+            dplyr::inner_join(getResolvedConceptsAllData() %>% 
+                                dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
+                                dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId) %>% 
+                                dplyr::distinct(),
+                              by = c("cohortId", "conceptSetId")) %>%
             dplyr::select(.data$conceptId) %>%
             dplyr::distinct(),
           by = c("conceptId")
