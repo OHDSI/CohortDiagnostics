@@ -14,6 +14,8 @@ runConceptSetDiagnostics(
   cohortIds = NULL,
   cohortDatabaseSchema = NULL,
   keepCustomConceptId = FALSE,
+  incremental,
+  incrementalFolder,
   minCellCount = 5,
   cohortTable = NULL
 )
@@ -54,6 +56,11 @@ this should include both the database and schema name, for example
 \item{keepCustomConceptId}{(Optional) Default FALSE. Do you want to keep concept id above 2 billion.
 Per OMOP conventions any conceptId >= 2 billion are considered site specific
 custom value that are not shipped as part of default OMOP vocabulary tables.}
+
+\item{incremental}{Create only cohort diagnostics that haven't been created before?}
+
+\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
+of which cohort diagnostics has been executed.}
 
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
 

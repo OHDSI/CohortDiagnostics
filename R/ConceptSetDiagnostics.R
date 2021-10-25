@@ -34,6 +34,11 @@
 #' @param    cohorts                 A dataframe object with required fields cohortId, sql, json, cohortName
 #'
 #' @template CohortTable
+#' 
+#' @param incremental                 Create only cohort diagnostics that haven't been created before?
+#' 
+#' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
+#'                                    of which cohort diagnostics has been executed.
 #'
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #'
@@ -53,6 +58,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      cohortIds = NULL,
                                      cohortDatabaseSchema = NULL,
                                      keepCustomConceptId = FALSE,
+                                     incremental,
+                                     incrementalFolder,
                                      minCellCount = 5,
                                      cohortTable = NULL) {
   ParallelLogger::logTrace(" - Running concept set diagnostics")
@@ -93,6 +100,27 @@ runConceptSetDiagnostics <- function(connection = NULL,
     reportOverallTime = FALSE
   )
   
+  if (incremental) {
+    ParallelLogger::logInfo("  - Starting Concept Set diagnostics in incremental mode")
+    incrementalFile <-
+      file.path(incrementalFolder, "conceptSetDiagnosticsIncremental")
+    ParallelLogger::logTrace("   - Running in Incremental mode.")
+    if (file.exists(incrementalFile)) {
+      ParallelLogger::logTrace("     - Found temporary files from previous execution.")
+      conceptSetDiagnosticsIncremental <-
+        Andromeda::loadAndromeda(fileName = incrementalFile)
+    } else {
+      ParallelLogger::logTrace("     - Did not find temporary files from previous execution. Setting up")
+      conceptSetDiagnosticsIncremental <- Andromeda::andromeda()
+      Andromeda::saveAndromeda(
+        andromeda = conceptSetDiagnosticsIncremental,
+        fileName = incrementalFile,
+        maintainConnection = TRUE,
+        overwrite = TRUE
+      )
+    }
+  }
+  
   # Cohorts to run the concept set diagnostics----
   if (!is.null(cohortIds)) {
     subset <- cohorts %>%
@@ -108,7 +136,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   
   # Get concept sets metadata----
   conceptSetDiagnosticsResults$conceptSets <-
-    combineConceptSetsFromCohorts(subset)
+    combineConceptSetsFromCohorts(subset, incrementalFile = NULL)
   if (is.null(conceptSetDiagnosticsResults$conceptSets)) {
     ParallelLogger::logInfo(
       "  - Cohorts being diagnosed does not have concept ids. Exiting concept set diagnostics."
@@ -134,6 +162,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   )
   
   # Optimize unique concept set----
+  # no incremental - because this is fast anyways
   ParallelLogger::logInfo("  - Optimizing concept sets found in cohorts.")
   optimizedConceptSet <- list()
   for (i in (1:nrow(uniqueConceptSets))) {
@@ -177,6 +206,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   rm("conceptSets")
   
   # Instantiate (resolve) unique concept sets----
+  # no incremental - because this is fast anyways and loading to db will take longer
   ParallelLogger::logInfo("  - Resolving concept sets found in cohorts.")
   conceptSetDiagnosticsResults$conceptResolved <-
     resolveConceptSets(
@@ -206,6 +236,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   }
   
   # Excluded concepts ----
+  # no incremental - because this is fast anyways and loading to db will take longer
   ParallelLogger::logInfo("  - Collecting excluded concepts.")
   conceptSetDiagnosticsResults$conceptExcluded <-
     getExcludedConceptSets(
@@ -234,22 +265,85 @@ runConceptSetDiagnostics <- function(connection = NULL,
   # Index event breakdown ----
   startBreakdownEvents <- Sys.time()
   ParallelLogger::logInfo("  - Learning about the breakdown in index events.")
+  
+  if (incremental) {
+    previousIndexEventBreakdownData <-
+      conceptSetDiagnosticsIncremental$previousIndexEventBreakdownData
+    if (!is.null(previousIndexEventBreakdownData)) {
+      previousIndexEventBreakdownDataCohortIds <-
+        c(previousIndexEventBreakdownData$cohortIds %>% unique(), 0)
+      ParallelLogger::logInfo(
+        paste0(
+          "  -  Skipping over ",
+          scales::comma(length(
+            previousIndexEventBreakdownDataCohortIds
+          )),
+          " cohorts for index event breakdown as previous execution results were found"
+        )
+      )
+      subsetIndexEventBreakdown <- subset %>%
+        dplyr::filter(!.data$cohortId %in% previousIndexEventBreakdownDataCohortIds)
+      previousConceptTrackingIndexEventBreakdown <-
+        conceptSetDiagnosticsIncremental$concept_tracking
+      if (!is.null(previousConceptTrackingIndexEventBreakdown)) {
+        DatabaseConnector::insertTable(
+          connection = connection,
+          tableName = "#concept_tracking",
+          createTable = FALSE,
+          dropTableIfExists = FALSE,
+          tempTable = TRUE,
+          tempEmulationSchema = tempEmulationSchema,
+          progressBar = FALSE,
+          camelCaseToSnakeCase = FALSE,
+          data = previousConceptTrackingIndexEventBreakdown
+        )
+      }
+    } else {
+      previousIndexEventBreakdownData <- dplyr::tibble()
+    }
+  } else {
+    subsetIndexEventBreakdown <- subset
+    previousIndexEventBreakdownData <- dplyr::tibble()
+  }
+  
   conceptSetDiagnosticsResults$indexEventBreakdown <-
-    getConceptOccurrenceRelativeToIndexDay(
-      cohortIds = subset$cohortId,
-      connection = connection,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      minCellCount = minCellCount,
-      tempEmulationSchema = tempEmulationSchema,
-      conceptIdUniverse = "#concept_tracking"
+    dplyr::bind_rows(
+      getConceptOccurrenceRelativeToIndexDay(
+        cohortIds = subsetIndexEventBreakdown$cohortId,
+        connection = connection,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        minCellCount = minCellCount,
+        tempEmulationSchema = tempEmulationSchema,
+        conceptIdUniverse = "#concept_tracking"
+      ),
+      previousIndexEventBreakdownData
     )
+  
   if (!keepCustomConceptId) {
     conceptSetDiagnosticsResults$indexEventBreakdown <-
       conceptSetDiagnosticsResults$indexEventBreakdown %>%
       dplyr::filter(.data$conceptId < 200000000)
   }
+  
+  conceptSetDiagnosticsIncremental$indexEventBreakdown <- 
+    conceptSetDiagnosticsResults$indexEventBreakdown
+  
+  DatabaseConnector::renderTranslateQuerySqlToAndromeda(
+    connection = connection,
+    sql = "select DISTINCT * from #concept_tracking;",
+    andromeda = conceptSetDiagnosticsIncremental,
+    andromedaTableName = "concept_tracking",
+    snakeCaseToCamelCase = FALSE
+  )
+  
+  Andromeda::saveAndromeda(
+    andromeda = conceptSetDiagnosticsIncremental,
+    fileName = incrementalFile,
+    maintainConnection = TRUE,
+    overwrite = TRUE
+  )
   
   delta <- Sys.time() - startBreakdownEvents
   ParallelLogger::logTrace("  - Index event breakdown took ",
@@ -295,6 +389,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            signif(delta, 3),
                            " ",
                            attr(delta, "units"))
+  
   # get concept mapping----
   ParallelLogger::logInfo("  - Mapping concepts.")
   conceptSetDiagnosticsResults$conceptMapping <-
@@ -552,7 +647,7 @@ extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
   return(dplyr::bind_rows(conceptSetExpression))
 }
 
-combineConceptSetsFromCohorts <- function(cohorts) {
+combineConceptSetsFromCohorts <- function(cohorts, incrementalFile = NULL) {
   #cohorts should be a dataframe with at least cohortId, sql and json
   
   errorMessage <- checkmate::makeAssertCollection()
@@ -614,8 +709,27 @@ combineConceptSetsFromCohorts <- function(cohorts) {
   
   uniqueConceptSets <- conceptSets %>%
     dplyr::select(.data$conceptSetExpression) %>%
-    dplyr::distinct() %>%
-    dplyr::mutate(uniqueConceptSetId = dplyr::row_number())
+    dplyr::distinct()
+  
+  if (!is.null(incrementalFile)) {
+    uniqueConceptSets <- uniqueConceptSets %>%
+      dplyr::left_join(
+        incrementalFile %>%
+          dplyr::select(.data$conceptSetExpression, .data$uniqueConceptSetId)
+      )
+    maxRowNumber <- max(uniqueConceptSets$uniqueConceptSetId)
+    uniqueConceptSetsIncremental <- uniqueConceptSets %>%
+      dplyr::filter(!is.na(.data$uniqueConceptSetId))
+    uniqueConceptSets <- uniqueConceptSets %>%
+      dplyr::filter(is.na(.data$uniqueConceptSetId))
+  } else {
+    maxRowNumber <- 0
+    uniqueConceptSetsIncremental <- dplyr::tibble()
+  }
+  uniqueConceptSets <- uniqueConceptSets  %>%
+    dplyr::mutate(uniqueConceptSetId = maxRowNumber + dplyr::row_number())
+  uniqueConceptSets <-
+    dplyr::bind_rows(uniqueConceptSets, uniqueConceptSetsIncremental)
   
   conceptSets <- conceptSets %>%
     dplyr::inner_join(uniqueConceptSets, by = "conceptSetExpression") %>%
