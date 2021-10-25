@@ -38,9 +38,16 @@ shiny::shinyServer(function(input, output, session) {
       }
     }
     
-    data <- conceptSets %>%
+    data <- conceptSets
+    dataFiltered <- data %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
-      dplyr::pull(.data$compoundName)
+      dplyr::pull(.data$compoundName) %>% 
+      unique() %>% 
+      sort()
+    data <- data %>%
+      dplyr::pull(.data$compoundName) %>% 
+      sort()
+    
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -50,7 +57,7 @@ shiny::shinyServer(function(input, output, session) {
         inputId = "conceptSetsSelectedTargetCohort",
         choicesOpt = list(style = rep_len("color: black;", 999)),
         choices = data,
-        selected = data
+        selected = dataFiltered
       )
     } else {
       shinyWidgets::updatePickerInput(
@@ -1489,6 +1496,40 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  ###getResolvedConceptsAllData----
+  getResolvedConceptsAllData <- shiny::reactive({
+    data <- conceptResolved
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    return(data)
+  })
+  
+  
+  ###getResolvedConceptsAllDataConceptIdDetails----
+  getResolvedConceptsAllDataConceptIdDetails <- shiny::reactive({ 
+  resolvedConcepts <- getResolvedConceptsAllData()
+  if (!doesObjectHaveData(resolvedConcepts)) {
+    return(NULL)
+  }
+  progress <- shiny::Progress$new()
+  on.exit(progress$close())
+  progress$set(message = "Caching concept count for resolved concepts",
+               value = 0)
+  conceptDetails <- getConcept(dataSource = dataSource,
+                               conceptIds = resolvedConcepts$conceptId %>% unique())
+  if (!doesObjectHaveData(conceptDetails)) {
+    return(NULL)
+  }
+  conceptDetails <- conceptDetails %>%
+    dplyr::select(.data$conceptId,
+                  .data$conceptName,
+                  .data$vocabularyId,
+                  .data$domainId,
+                  .data$standardConcept)
+  return(conceptDetails)
+  })
+  
   ###getResolvedConceptsTargetData----
   getResolvedConceptsTargetData <- shiny::reactive({
     if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
@@ -1500,18 +1541,28 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedConceptSetIdTarget())) {
       return(NULL)
     }
+    if (!doesObjectHaveData(getResolvedConceptsAllData())) {
+      return(NULL)
+    }
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(message = "Retrieving resolved concepts for target",
                  value = 0)
-    data <- getResultsResolvedConcepts(
-      dataSource = dataSource,
-      cohortId = consolidatedCohortIdTarget(),
-      databaseId = consolidatedDatabaseIdTarget(),
-      conceptSetId = consolidatedConceptSetIdTarget()
-    )
-    conceptDetails <- getConcept(dataSource = dataSource,
-                                 conceptIds = data$conceptId %>% unique())
+    data <- getResolvedConceptsAllData()
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    data <- data %>% 
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>% 
+      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
+      dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdTarget())
+    
+    conceptDetails <- getResolvedConceptsAllDataConceptIdDetails()
+    if (!doesObjectHaveData(conceptDetails)) {
+      return(NULL)
+    }
+    conceptDetails <- conceptDetails %>% 
+      dplyr::filter(.data$conceptId %in% (data$conceptId %>% unique()))
     if (is.null(conceptDetails)) {
       return(NULL)
     }
@@ -1526,8 +1577,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-.data$conceptSetId, -.data$cohortId)
     return(data)
   })
-    
-    
+  
+  
   ###getResolvedConceptsTarget----
   getResolvedConceptsTarget <- shiny::reactive({
     data <- getResolvedConceptsTargetData()
@@ -1632,21 +1683,28 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedConceptSetIdComparator())) {
       return(NULL)
     }
+    if (!doesObjectHaveData(getResolvedConceptsAllData())) {
+      return(NULL)
+    }
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(message = "Retrieving resolved concepts for comparator",
                  value = 0)
-    data <- getResultsResolvedConcepts(
-      dataSource = dataSource,
-      cohortId = consolidatedCohortIdComparator(),
-      databaseId = consolidatedDatabaseIdTarget(),
-      conceptSetId = consolidatedConceptSetIdComparator()
-    )
+    data <- getResolvedConceptsAllData()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    conceptDetails <- getConcept(dataSource = dataSource,
-                                 conceptIds = data$conceptId %>% unique())
+    data <- data %>% 
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator()) %>% 
+      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
+      dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdComparator())
+    
+    conceptDetails <- getResolvedConceptsAllDataConceptIdDetails()
+    if (!doesObjectHaveData(conceptDetails)) {
+      return(NULL)
+    }
+    conceptDetails <- conceptDetails %>% 
+      dplyr::filter(.data$conceptId %in% c(data$conceptId %>% unique()))
     if (is.null(conceptDetails)) {
       return(NULL)
     }
@@ -5936,7 +5994,7 @@ shiny::shinyServer(function(input, output, session) {
                        .data$standardConcept != "S")
     }
     
-    if (input$indexEventBreakdownValueFilter == "Percentage") {
+    if (input$indexEventBreakdownShowAsPercent) {
       data <- data %>%
         dplyr::mutate(conceptValue = .data$conceptPercent) %>%
         dplyr::mutate(subjectValue = .data$subjectPercent)
@@ -6036,7 +6094,7 @@ shiny::shinyServer(function(input, output, session) {
         sketchLevel = sketchLevel,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$indexEventBreakdownValueFilter == "Percentage" 
+        showResultsAsPercent = input$indexEventBreakdownShowAsPercent
       )
       
       return(table)
@@ -6112,7 +6170,7 @@ shiny::shinyServer(function(input, output, session) {
       sketchLevel = sketchLevel,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
-      showResultsAsPercent = input$indexEventBreakdownValueFilter == "Percentage" 
+      showResultsAsPercent = input$indexEventBreakdownShowAsPercent
     )
     
     return(table)
@@ -6842,36 +6900,6 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-
-  ###getConceptSetNamesFromOneCohort----
-  # getConceptSetNamesFromOneCohort <-
-  #   shiny::reactive(x = {
-  #     if (any(
-  #       !doesObjectHaveData(consolidatedCohortIdTarget()),
-  #       !doesObjectHaveData(consolidatedDatabaseIdTarget())
-  #     )) {
-  #       return(NULL)
-  #     }
-  #     jsonExpression <- getCohortSortedByCohortId() %>%
-  #       dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
-  #       dplyr::select(.data$json)
-  #     
-  #     jsonExpression <-
-  #       RJSONIO::fromJSON(jsonExpression$json, digits = 23)
-  #     expression <-
-  #       getConceptSetDetailsFromCohortDefinition(cohortDefinitionExpression = jsonExpression)
-  #     
-  #     if (!is.null(expression)) {
-  #       expression <- expression$conceptSetExpression %>%
-  #         dplyr::select(.data$name) %>%
-  #         dplyr::distinct() %>%
-  #         dplyr::arrange(.data$name)
-  #       return(expression)
-  #     } else {
-  #       return(NULL)
-  #     }
-  #   })
-  
   ###getDomainOptionsForCharacterization----
   getDomainOptionsForCharacterization <- shiny::reactive({
     if (!doesObjectHaveData(getMultipleCharacterizationData())) {
@@ -6977,11 +7005,18 @@ shiny::shinyServer(function(input, output, session) {
     }
     if (all(
       doesObjectHaveData(input$conceptSetsSelectedTargetCohort),
-      doesObjectHaveData(getResolvedConceptsTarget())
+      doesObjectHaveData(getResolvedConceptsAllData())
     )) {
       covariatesTofilter <- covariatesTofilter  %>%
         dplyr::inner_join(
-          getResolvedConceptsTarget() %>%
+          conceptSets %>% 
+            dplyr::filter(.data$compoundName %in% c(input$conceptSetsSelectedTargetCohort)) %>% 
+            dplyr::select(.data$cohortId, .data$conceptSetId) %>% 
+            dplyr::inner_join(getResolvedConceptsAllData() %>% 
+                                dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
+                                dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId) %>% 
+                                dplyr::distinct(),
+                              by = c("cohortId", "conceptSetId")) %>%
             dplyr::select(.data$conceptId) %>%
             dplyr::distinct(),
           by = c("conceptId")
@@ -7432,15 +7467,27 @@ shiny::shinyServer(function(input, output, session) {
       if (!doesObjectHaveData(data)) {
         return(NULL)
       }
-      if (doesObjectHaveData(input$conceptSetsSelectedTargetCohort)) {
+      
+      if (all(
+        doesObjectHaveData(input$conceptSetsSelectedTargetCohort),
+        doesObjectHaveData(getResolvedConceptsAllData())
+      )) {
         data <- data  %>%
           dplyr::inner_join(
-            getResolvedConceptsTarget() %>%
-              dplyr::select(.data$conceptId, .data$cohortId) %>%
+            conceptSets %>% 
+              dplyr::filter(.data$compoundName %in% c(input$conceptSetsSelectedTargetCohort)) %>% 
+              dplyr::select(.data$cohortId, .data$conceptSetId) %>% 
+              dplyr::inner_join(getResolvedConceptsAllData() %>% 
+                                  dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
+                                  dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId) %>% 
+                                  dplyr::distinct(),
+                                by = c("cohortId", "conceptSetId")) %>%
+              dplyr::select(.data$conceptId) %>%
               dplyr::distinct(),
-            by = c("conceptId", "cohortId")
+            by = c("conceptId")
           )
       }
+      
       data <- data %>%
           dplyr::filter(.data$analysisName %in% input$temporalCharacterizationAnalysisNameOptions) %>%
           dplyr::filter(.data$domainId %in% input$temporalCharacterizationDomainNameOptions) %>%
@@ -7819,6 +7866,7 @@ shiny::shinyServer(function(input, output, session) {
       !is.null(input$conceptSetsSelectedTargetCohort),
       length(input$conceptSetsSelectedTargetCohort) > 0
     )) {
+      browser()
       data <- data  %>%
         dplyr::inner_join(
           getResolvedConceptsTarget() %>%
@@ -8185,84 +8233,35 @@ shiny::shinyServer(function(input, output, session) {
         table <- data %>%
           dplyr::arrange(desc(abs(.data$stdDiff)))
         
-        if (length(getTimeIdsFromSelectedTemporalCovariateChoices()) == 1) {
           table <- table %>%
             dplyr::arrange(.data$choices) %>%
-            tidyr::pivot_wider(
-              id_cols = c("databaseId", "covariateId", "covariateName"),
-              names_from = "choices",
-              values_from = c("mean1",
-                              "sd1",
-                              "mean2",
-                              "sd2",
-                              "stdDiff"),
-              values_fill = 0
-            )
-        } else {
-          table <- table %>%
-            dplyr::arrange(.data$choices) %>%
-            dplyr::rename(
-              aMeanTarget = "mean1",
-              bSdTarget = "sd1",
-              cMeanComparator = "mean2",
-              dSdComparator = "sd2"
-            ) %>%
             tidyr::pivot_longer(
               cols = c(
-                "aMeanTarget",
-                "bSdTarget",
-                "cMeanComparator",
-                "dSdComparator"
+                "mean1",
+                "sd1",
+                "mean2",
+                "sd2"
               ),
               names_to = "type",
               values_to = "values"
-            ) %>%
-            dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>%
-            dplyr::arrange(.data$databaseId,
-                           .data$startDay,
-                           .data$endDay,
-                           .data$type) %>%
-            tidyr::pivot_wider(
-              id_cols = c("covariateName"),
-              names_from = "names",
-              values_from = c("values"),
-              values_fill = 0
             )
-        }
+        
       } else {
         # only Mean
         table <- data %>%
           dplyr::arrange(desc(abs(.data$stdDiff)))
         
-        if (length(getTimeIdsFromSelectedTemporalCovariateChoices()) == 1) {
-          table <- data %>%
-            tidyr::pivot_wider(
-              id_cols = c("covariateName"),
-              names_from = "choices",
-              values_from = c("mean1",
-                              "mean2",
-                              "stdDiff"),
-              values_fill = 0
-            )
-        } else {
           table <- data %>%
             tidyr::pivot_longer(
               cols = c("mean1",
                        "mean2"),
               names_to = "type",
               values_to = "values"
-            ) %>%
-            dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>%
-            dplyr::arrange(.data$startDay, .data$endDay) %>%
-            tidyr::pivot_wider(
-              id_cols = c("covariateName"),
-              names_from = "names",
-              values_from = "values",
-              values_fill = 0
-            )
-        }
+            ) 
+          
+        
       }
-      return(data)
+      return(table)
     })
   
   ### Output: compareTemporalCharacterizationTable ------
@@ -8339,66 +8338,21 @@ shiny::shinyServer(function(input, output, session) {
         table <- data %>%
           dplyr::arrange(desc(abs(.data$stdDiff)))
         
-        if (length(temporalCovariateChoicesSelected) == 1) {
+       
           table <- table %>%
             dplyr::arrange(.data$choices) %>%
-            tidyr::pivot_wider(
-              id_cols = c("covariateName"),
-              names_from = "choices",
-              values_from = c("mean1",
-                              "sd1",
-                              "mean2",
-                              "sd2",
-                              "stdDiff"),
-              values_fill = 0
-            )
-          
-          columnDefs <- list(truncateStringDef(0, 80),
-                             minCellRealDef(1:(
-                               length(temporalCovariateChoicesSelected) * 5
-                             ),
-                             digits = 2))
-          colorBarColumns <-
-            1 + 1:(length(temporalCovariateChoicesSelected) * 5)
-          colspan <- 5
-          containerColumns <-
-            c(
-              paste0("Mean ", targetCohortShortName),
-              paste0("SD ", targetCohortShortName),
-              paste0("Mean ", comparatorCohortShortName),
-              paste0("SD ", comparatorCohortShortName),
-              "Std. Diff"
-            )
-        } else {
-          table <- table %>%
-            dplyr::arrange(.data$choices) %>%
-            dplyr::rename(
-              aMeanTarget = "mean1",
-              bSdTarget = "sd1",
-              cMeanComparator = "mean2",
-              dSdComparator = "sd2"
-            ) %>%
-            tidyr::pivot_longer(
-              cols = c(
-                "aMeanTarget",
-                "bSdTarget",
-                "cMeanComparator",
-                "dSdComparator"
-              ),
-              names_to = "type",
-              values_to = "values"
-            ) %>%
             dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>%
             dplyr::arrange(.data$databaseId,
                            .data$startDay,
                            .data$endDay,
                            .data$type) %>%
             tidyr::pivot_wider(
-              id_cols = c("covariateName"),
+              id_cols = c("covariateName", "covariateId"),
               names_from = "names",
               values_from = c("values"),
               values_fill = 0
-            )
+            ) %>% 
+            dplyr::select(-.data$covariateId)
           
           columnDefs <- list(truncateStringDef(0, 80),
                              minCellRealDef(1:(
@@ -8415,51 +8369,22 @@ shiny::shinyServer(function(input, output, session) {
               paste0("Mean ", comparatorCohortShortName),
               paste0("SD ", comparatorCohortShortName)
             )
-        }
+        
       } else {
         # only Mean
         table <- data %>%
           dplyr::arrange(desc(abs(.data$stdDiff)))
         
-        if (length(temporalCovariateChoicesSelected) == 1) {
           table <- table %>%
-            tidyr::pivot_wider(
-              id_cols = c("covariateName"),
-              names_from = "choices",
-              values_from = c("mean1",
-                              "mean1",
-                              "stdDiff"),
-              values_fill = 0
-            )
-          
-          containerColumns <-
-            c(targetCohortShortName,
-              comparatorCohortShortName,
-              "Std. Diff")
-          columnDefs <- list(truncateStringDef(0, 80),
-                             minCellRealDef(1:(
-                               length(temporalCovariateChoicesSelected) * 3
-                             ),
-                             digits = 2))
-          colorBarColumns <-
-            1 + 1:(length(temporalCovariateChoicesSelected) * 3)
-          colspan <- 3
-        } else {
-          table <- table %>%
-            tidyr::pivot_longer(
-              cols = c("mean1",
-                       "mean2"),
-              names_to = "type",
-              values_to = "values"
-            ) %>%
             dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>%
             dplyr::arrange(.data$startDay, .data$endDay) %>%
             tidyr::pivot_wider(
-              id_cols = c("covariateName"),
+              id_cols = c("covariateName", "covariateId"),
               names_from = "names",
               values_from = "values",
               values_fill = 0
-            )
+            ) %>% 
+            dplyr::select(-.data$covariateId)
           
           containerColumns <-
             c(targetCohortShortName, comparatorCohortShortName)
@@ -8471,7 +8396,7 @@ shiny::shinyServer(function(input, output, session) {
           colorBarColumns <-
             1 + 1:(length(temporalCovariateChoicesSelected) * 2)
           colspan <- 2
-        }
+        
       }
       
       sketch <- htmltools::withTags(table(class = "display",
@@ -9337,7 +9262,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$cohortCharCompareSelectedDatabase <-
     shiny::renderUI({
-      return(input$selectedDatabaseId)
+      return(selectedDatabaseIds())
     })
   
   output$temporalCharCompareSelectedCohort <-

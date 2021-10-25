@@ -36,7 +36,6 @@ alternateVocabularySchema <- c('vocabulary')
 # defaultVocabularySchema <- Sys.getenv("phenotypeLibrarydbVocabSchema")
 # alternateVocabularySchema <- c('vocabulary')
 
-
 #Mode
 defaultDatabaseMode <- FALSE # Use file system if FALSE
 
@@ -172,6 +171,7 @@ if (databaseMode) {
       "analysis_ref",
       "concept_sets",
       "concept_class",
+      "concept_resolved",
       # "covariate_ref",
       "domain",
       "relationship",
@@ -246,14 +246,11 @@ if (all(exists("cohort"),
   # cohort is required and is always loaded into R memory
   cohort <- cohort %>%
     dplyr::arrange(.data$cohortId) %>%
-    dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>%
+    dplyr::mutate(shortName = paste0("C", .data$cohortId)) %>%
     dplyr::mutate(compoundName = paste0(
       .data$shortName,
       ": ",
-      .data$cohortName,
-      "(",
-      .data$cohortId,
-      ")"
+      .data$cohortName
     ))
 }
 
@@ -261,16 +258,18 @@ if (all(exists("conceptSets"),
         doesObjectHaveData(conceptSets))) {
   # cohort is required and is always loaded into R memory
   conceptSets <- conceptSets %>%
-    dplyr::arrange(.data$conceptSetId) %>%
-    dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>%
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId,
+                                      .data$shortName)) %>%
     dplyr::mutate(compoundName = paste0(
       .data$shortName,
-      ": ",
-      .data$conceptSetName,
-      "(",
+      "-",
       .data$conceptSetId,
-      ")"
-    ))
+      ": ",
+      .data$conceptSetName
+    )) %>% 
+    dplyr::select(-.data$shortName) %>% 
+    dplyr::arrange(.data$cohortId, .data$conceptSetId)
 } else if (all(exists("cohort"),
                doesObjectHaveData(cohort$json))) {
   conceptSets <- list()
@@ -293,15 +292,18 @@ if (all(exists("conceptSets"),
     }
   }
   conceptSets <- dplyr::bind_rows(conceptSets) %>%
-    dplyr::arrange(.data$conceptSetId) %>%
-    dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>%
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId,
+                                      .data$shortName)) %>%
     dplyr::mutate(compoundName = paste0(
       .data$shortName,
-      ": ",
-      .data$conceptSetName,
-      "(",
+      "-",
       .data$conceptSetId,
-      ")"))
+      ": ",
+      .data$conceptSetName
+    )) %>% 
+    dplyr::select(-.data$shortName) %>% 
+    dplyr::arrange(.data$cohortId, .data$conceptSetId)
 }
 
 if (all(exists("database"),

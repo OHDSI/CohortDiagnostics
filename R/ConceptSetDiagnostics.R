@@ -1179,19 +1179,19 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                         	concept_count
                         FROM (
                         	SELECT cohort_definition_id cohort_id,
-                        		datediff(dd, d1.@domain_start_date, c.cohort_start_date) days_relative_index,
+                        		datediff(dd, c.cohort_start_date, d1.@domain_start_date) days_relative_index,
                         		d1.@domain_concept_id concept_id,
                         		COUNT(DISTINCT c.subject_id) subject_count,
                         		COUNT(*) concept_count
                         	FROM @cohort_database_schema.@cohort_table c
                         	INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
-                        		AND datediff(dd, d1.@domain_start_date, c.cohort_start_date) > @rangeMin
-                        		AND datediff(dd, d1.@domain_start_date, c.cohort_start_date) < @rangeMax
+                        		AND datediff(dd, c.cohort_start_date, d1.@domain_start_date) > @rangeMin
+                        		AND datediff(dd, c.cohort_start_date, d1.@domain_start_date) < @rangeMax
                         	WHERE c.cohort_definition_id IN (@cohortIds)
                         		AND d1.@domain_concept_id != 0
                         		AND d1.@domain_concept_id IS NOT NULL
                         	GROUP BY cohort_definition_id,
-                        		datediff(dd, d1.@domain_start_date, c.cohort_start_date),
+                        		datediff(dd, c.cohort_start_date, d1.@domain_start_date),
                         		d1.@domain_concept_id
                         	) f
                         LEFT JOIN (
@@ -1209,7 +1209,9 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
   #-- there is probably no value in vary rare code, especially if it is not part of conceptIdUniverse
   #-- note concept_id that are part of the conceptIdUniverse are not filtered out if count <= minCount
   
-  
+  #conceptId is from _concept_id field of domain table and coConceptId is also from _concept_id field of same domain table
+  # i.e. same day co-occurrence of two standard concept ids relative to index date
+  # the inner join to conceptIdUnivese to _concep_id limits to standard concepts in conceptIdUniverse - because only standard concept should be in _concept_id
   sqlConceptIdCoConceptIdSameCount <- " INSERT INTO #indx_breakdown
                                         SELECT cohort_id,
                                         	days_relative_index,
@@ -1219,43 +1221,44 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                         	concept_count
                                         FROM (
                                         	SELECT cohort_definition_id cohort_id,
-                                        		datediff(dd, d1.@domain_start_date, c.cohort_start_date) days_relative_index,
+                                        		datediff(dd, c.cohort_start_date, d1.@domain_start_date) days_relative_index,
                                         		d1.@domain_concept_id concept_id,
                                         		d2.@domain_concept_id co_concept_id,
                                         		COUNT(DISTINCT c.subject_id) subject_count,
                                         		COUNT(DISTINCT CONCAT (
                                         				cast(d1.@domain_concept_id AS VARCHAR(30)),
                                         				'_',
-                                        				cast(d2.@domain_concept_id AS VARCHAR(30))
+                                        				cast(d2.@domain_concept_id AS VARCHAR(30)),
+                                        				'_',
+                                        				cast(c.subject_id AS VARCHAR(30))
                                         				)) concept_count
                                         	FROM @cohort_database_schema.@cohort_table c
                                         	INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
-                                        		AND datediff(dd, d1.@domain_start_date, c.cohort_start_date) > @rangeMin
-                                        		AND datediff(dd, d1.@domain_start_date, c.cohort_start_date) < @rangeMax
+                                        		AND datediff(dd, c.cohort_start_date, d1.@domain_start_date) > @rangeMin
+                                        		AND datediff(dd, c.cohort_start_date, d1.@domain_start_date) < @rangeMax
                                         	INNER JOIN @cdm_database_schema.@domain_table d2 ON c.subject_id = d2.person_id
-                                        		AND datediff(dd, d2.@domain_start_date, c.cohort_start_date) > @rangeMin
-                                        		AND datediff(dd, d2.@domain_start_date, c.cohort_start_date) < @rangeMax
+                                        		AND datediff(dd, c.cohort_start_date, d2.@domain_start_date) > @rangeMin
+                                        		AND datediff(dd, c.cohort_start_date, d2.@domain_start_date) < @rangeMax
                                         		AND d1.@domain_start_date = d2.@domain_start_date
                                         		AND d1.person_id = d2.person_id
                                           INNER JOIN (
                                           	SELECT DISTINCT concept_id
                                           	FROM @conceptIdUniverse
                                           	) cu ON d1.@domain_concept_id = cu.concept_id
-                                          AND d2.@domain_concept_id = cu.concept_id
                                         	WHERE c.cohort_definition_id IN (@cohortIds)
-                                        		AND d1.@domain_concept_id != 0
-                                        		AND d1.@domain_concept_id IS NOT NULL
-                                        		AND d2.@domain_concept_id != 0
-                                        		AND d2.@domain_concept_id IS NOT NULL
+                                        		AND d2.@domain_concept_id > 0
                                         		AND d1.@domain_concept_id != d2.@domain_concept_id
                                         	GROUP BY cohort_definition_id,
-                                        		datediff(dd, d1.@domain_start_date, c.cohort_start_date),
+                                        		datediff(dd, c.cohort_start_date, d1.@domain_start_date),
                                         		d1.@domain_concept_id,
                                         		d2.@domain_concept_id
                                         	) f
-                                        WHERE subject_count > @minCount;"
+                                        WHERE subject_count > @minCount AND
+                                              concept_count > @minCount;"
   
-  
+  #conceptId is from _concept_id field of domain table and coConceptId is also from _source_concept_id field of same domain table
+  # i.e. same day co-occurrence of concept ids where second (coConceptId) maybe non-standard relative to index date
+  # the inner join to conceptIdUnivese to _concep_id limits to standard concepts in conceptIdUniverse - because only standard concept should be in _concept_id
   sqlConceptIdCoConceptIdOppositeCount <- " INSERT INTO #indx_breakdown
                                             SELECT cohort_id,
                                             	days_relative_index,
@@ -1265,42 +1268,40 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                             	concept_count
                                             FROM (
                                             	SELECT cohort_definition_id cohort_id,
-                                            		datediff(dd, d1.@domain_start_date, c.cohort_start_date) days_relative_index,
+                                            		datediff(dd, c.cohort_start_date, d1.@domain_start_date) days_relative_index,
                                             		d1.@domain_concept_id concept_id,
                                             		d2.@domain_source_concept_id co_concept_id,
                                             		COUNT(DISTINCT c.subject_id) subject_count,
                                             		COUNT(DISTINCT CONCAT (
                                             				cast(d1.@domain_concept_id AS VARCHAR(30)),
                                             				'_',
-                                            				cast(d2.@domain_source_concept_id AS VARCHAR(30))
+                                            				cast(d2.@domain_source_concept_id AS VARCHAR(30)),
+                                            				'_',
+                                            				cast(c.subject_id AS VARCHAR(30))
                                             				)) concept_count
                                             	FROM @cohort_database_schema.@cohort_table c
                                             	INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
-                                            		AND datediff(dd, d1.@domain_start_date, c.cohort_start_date) > @rangeMin
-                                            		AND datediff(dd, d1.@domain_start_date, c.cohort_start_date) < @rangeMax
+                                            		AND datediff(dd, c.cohort_start_date, d1.@domain_start_date) > @rangeMin
+                                            		AND datediff(dd, c.cohort_start_date, d1.@domain_start_date) < @rangeMax
                                             	INNER JOIN @cdm_database_schema.@domain_table d2 ON c.subject_id = d2.person_id
-                                            		AND datediff(dd, d2.@domain_start_date, c.cohort_start_date) > @rangeMin
-                                            		AND datediff(dd, d2.@domain_start_date, c.cohort_start_date) < @rangeMax
+                                            		AND datediff(dd, c.cohort_start_date, d2.@domain_start_date) > @rangeMin
+                                            		AND datediff(dd, c.cohort_start_date, d2.@domain_start_date) < @rangeMax
                                             		AND d1.@domain_start_date = d2.@domain_start_date
                                             		AND d1.person_id = d2.person_id
                                               INNER JOIN (
                                               	SELECT DISTINCT concept_id
                                               	FROM @conceptIdUniverse
                                               	) cu ON d1.@domain_concept_id = cu.concept_id
-                                              	AND d2.@domain_source_concept_id = cu.concept_id
-                                              AND d2.@domain_concept_id = cu.concept_id
                                             	WHERE c.cohort_definition_id IN (@cohortIds)
-                                            		AND d1.@domain_concept_id != 0
-                                            		AND d1.@domain_concept_id IS NOT NULL
-                                            		AND d2.@domain_source_concept_id != 0
-                                            		AND d2.@domain_source_concept_id IS NOT NULL
+                                            		AND d2.@domain_source_concept_id > 0
                                             		AND d1.@domain_concept_id != d2.@domain_source_concept_id
                                             	GROUP BY cohort_definition_id,
-                                            		datediff(dd, d1.@domain_start_date, c.cohort_start_date),
+                                            		datediff(dd, c.cohort_start_date, d1.@domain_start_date),
                                             		d1.@domain_concept_id,
                                             		d2.@domain_source_concept_id
                                             	) f
-                                            WHERE subject_count > @minCount;"
+                                            WHERE subject_count > @minCount AND
+                                              concept_count > @minCount;"
   
   for (i in (1:nrow(domains))) {
     rowData <- domains[i,]
@@ -1315,7 +1316,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
         " subject count if concept id not related to cohort definition.)"
       )
     )
-    ParallelLogger::logTrace(paste0("   - Performing concept count"))
+    ParallelLogger::logTrace(paste0("   - Performing concept count - _concept_id field of domain table"))
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sqlConceptIdCount,
@@ -1335,33 +1336,13 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
       progressBar = FALSE
     )
     
-    ParallelLogger::logTrace(paste0("   - Performing co concept id count - same"))
+    ParallelLogger::logTrace(paste0("   - Performing co concept id count - standard fields only"))
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sqlConceptIdCoConceptIdSameCount,
       tempEmulationSchema = tempEmulationSchema,
       domain_table = rowData$domainTable,
       domain_concept_id = rowData$domainConceptId,
-      cdm_database_schema = cdmDatabaseSchema,
-      cohort_database_schema = cohortDatabaseSchema,
-      domain_start_date = rowData$domainStartDate,
-      cohortIds = cohortIds,
-      cohort_table = cohortTable,
-      rangeMin = rangeMin,
-      rangeMax = rangeMax,
-      conceptIdUniverse = conceptIdUniverse,
-      minCount = minCount,
-      reportOverallTime = FALSE,
-      progressBar = FALSE
-    )
-    ParallelLogger::logTrace(paste0("   - Performing co concept id count - different"))
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = sqlConceptIdCoConceptIdOppositeCount,
-      tempEmulationSchema = tempEmulationSchema,
-      domain_table = rowData$domainTable,
-      domain_concept_id = rowData$domainConceptId,
-      domain_source_concept_id = rowData$domainSourceConceptId,
       cdm_database_schema = cdmDatabaseSchema,
       cohort_database_schema = cohortDatabaseSchema,
       domain_start_date = rowData$domainStartDate,
@@ -1382,18 +1363,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
       !is.na(rowData$domainSourceConceptId),
       nchar(rowData$domainSourceConceptId) > 4
     )) {
-      ParallelLogger::logTrace(
-        paste0(
-          "  - Working on ",
-          rowData$domainTable,
-          ".",
-          rowData$domainSourceConceptId,
-          " (filtered to min ",
-          minCount,
-          " subject count if concept id not related to cohort definition.)"
-        )
-      )
-      ParallelLogger::logTrace(paste0("   - Performing concept id count"))
+      ParallelLogger::logTrace(paste0("   - Performing concept id count - _source_concept_id field of domain table"))
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sqlConceptIdCount,
@@ -1412,7 +1382,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
         reportOverallTime = FALSE,
         progressBar = FALSE
       )
-      ParallelLogger::logTrace(paste0("   - Performing co concept id count - same"))
+      ParallelLogger::logTrace(paste0("   - Performing co concept id count - source and source field"))
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sqlConceptIdCoConceptIdSameCount,
@@ -1431,7 +1401,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
         reportOverallTime = FALSE,
         progressBar = FALSE
       )
-      ParallelLogger::logTrace(paste0("   - Performing co concept id count - different"))
+      
+      ParallelLogger::logTrace(paste0("   - Performing co concept id count - standard and source field"))
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sqlConceptIdCoConceptIdOppositeCount,
@@ -1465,6 +1436,9 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
     reportOverallTime = FALSE
   )
   
+  #avoid any potential duplication
+  #removes domain table - counts are retained from the domain table that has the most prevalence concept id - 
+  #assumption here is that a conceptId should not be in more than one domain table
   data <-
     DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
