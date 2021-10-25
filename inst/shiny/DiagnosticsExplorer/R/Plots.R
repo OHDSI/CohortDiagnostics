@@ -1247,8 +1247,9 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     b = 200,
     t = 50
   )
-  plot <- plotly::subplot(databasePlots) %>% 
+  plot <- plotly::subplot(databasePlots, nrows = ceiling(length(databasePlots)/5)) %>% 
     plotly::layout(margin = m,
+                   scene = list(aspectration = list(x = 1,y = 1)),
                    annotations = list(
                      x = 0.5,
                      y = -0.2,
