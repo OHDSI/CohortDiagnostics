@@ -272,7 +272,7 @@ runCohortRelationshipDiagnostics <-
     if (incremental) {
       ParallelLogger::logTrace("  - Running in Incremental mode.")
       ParallelLogger::logTrace(
-        "    - Looking for results from previous run in incremental mode for time periods that have already executed."
+        "    - Looking for results from previous run in incremental mode for time periods (partial run to resume)."
       )
       if (file.exists(file.path(
         incrementalFolder,
