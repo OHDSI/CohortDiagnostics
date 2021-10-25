@@ -555,8 +555,6 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohortIds = subset$cohortId,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
-        incremental = incremental,
-        incrementalFolder = incrementalFolder,
         minCellCount = minCellCount
       )
       writeToAllOutputToCsv(
