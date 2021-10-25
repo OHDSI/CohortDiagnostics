@@ -1081,26 +1081,7 @@ plotCalendarIncidence <- function(data,
   return(plot)
 }
 
-plotCohortComparisonStandardizedDifference <- function(balance,
-                                                       shortNameRef = NULL,
-                                                       domain = "all") {
-  domains <-
-    c("Condition",
-      "Device",
-      "Drug",
-      "Measurement",
-      "Observation",
-      "Procedure",
-      "Cohort")
-  
-  balance$domain <- balance$domainId
-  balance$domain[!balance$domain %in% domains] <- "Other"
-
-  
-  if (domain != "all") {
-    balance <- balance %>%
-      dplyr::filter(.data$domain == !!domain)
-  }
+plotCompareCohortCharacterization <- function(balance) {
   
   # Can't make sense of plot with > 1000 dots anyway, so remove
   # anything with small mean in both target and comparator:
@@ -1108,94 +1089,119 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     balance <- balance %>%
       dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
   }
+  if (nrow(balance) > 5000) {
+    balance <- balance %>%
+      dplyr::filter(.data$mean1 > 0.02 | .data$mean2 > 0.02)
+  }
+  if (nrow(balance) > 10000) {
+    balance <- balance %>%
+      dplyr::filter(.data$mean1 > 0.03 | .data$mean2 > 0.03)
+  }
   
+  #enhance data
   balance <- balance %>%
-    dplyr::inner_join(cohort %>% 
-                        dplyr::select(.data$cohortId, .data$shortName),
-                      by = c("cohortId1" = "cohortId")) %>% 
-    dplyr::rename("targetCohort" = .data$shortName) %>% 
-    dplyr::inner_join(cohort %>% 
-                        dplyr::select(.data$cohortId, .data$shortName),
-                      by = c("cohortId2" = "cohortId")) %>% 
-    dplyr::rename("comparatorCohort" = .data$shortName)
-    
-  
-  # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
-  balance$tooltip <-
-    c(
-      paste0(
-        "Covariate Name: ",
-        balance$covariateName,
-        "\nDomain: ",
-        balance$domainId,
-        "\nAnalysis: ",
-        balance$analysisNameLong,
-        "\nY ",
-        balance$comparatorCohort,
-        ": ",
-        scales::comma(balance$mean2, accuracy = 0.01),
-        "\nX ",
-        balance$targetCohort,
-        ": ",
-        scales::comma(balance$mean1, accuracy = 0.01),
-        "\nStd diff.: ",
-        scales::comma(balance$stdDiff, accuracy = 0.01),
-        "\nTime: ",
-        paste0("Start ", balance$startDay, " to end ", balance$endDay)
-      )
+    dplyr::mutate(domain = dplyr::case_when(
+      !.data$domainId %in% c(
+        "Condition",
+        "Device",
+        "Drug",
+        "Measurement",
+        "Observation",
+        "Procedure",
+        "Cohort"
+      ) ~ 'Other',
+      TRUE ~ .data$domainId
+    )) %>%
+    dplyr::inner_join(
+      cohort %>%
+        dplyr::select(.data$cohortId, .data$shortName),
+      by = c("cohortId1" = "cohortId")
+    ) %>%
+    dplyr::rename("targetCohort" = .data$shortName) %>%
+    dplyr::inner_join(
+      cohort %>%
+        dplyr::select(.data$cohortId, .data$shortName),
+      by = c("cohortId2" = "cohortId")
+    ) %>%
+    dplyr::rename("comparatorCohort" = .data$shortName) %>%
+    dplyr::mutate(
+      tooltip =
+        paste0(
+          "Covariate Name: ",
+          .data$covariateName,
+          "\nDomain: ",
+          .data$domainId,
+          "\nAnalysis: ",
+          .data$analysisNameLong,
+          "\nY ",
+          .data$targetCohort,
+          ": ",
+          scales::percent(.data$mean1, accuracy = 0.1),
+          "\nX ",
+          .data$comparatorCohort,
+          ": ",
+          scales::percent(.data$mean2, accuracy = 0.1),
+          "\nStd diff.: ",
+          scales::percent(.data$stdDiff, accuracy = 0.1),
+          "\nTime: ",
+          paste0("Start ", .data$startDay, " to end ", .data$endDay)
+        )
+    ) %>%
+    dplyr::inner_join(
+      database %>%
+        dplyr::select(.data$databaseId, .data$shortName) %>%
+        dplyr::rename("databaseShortName" = .data$shortName),
+      by = "databaseId"
     )
   
-  # Code used to generate palette:
-  # writeLines(paste(RColorBrewer::brewer.pal(n = length(domains), name = "Dark2"), collapse = "\", \""))
-  # balance <- balance %>% 
-    
+  #plot headers
   xCohort <- balance %>%
-    dplyr::distinct(balance$targetCohort) %>%
-    dplyr::pull()
-  xCohort <- paste0("Target (", xCohort, ")")
-  
+    dplyr::distinct(.data$comparatorCohort) %>%
+    dplyr::mutate(comparatorCohort = paste0("Comparator (", .data$comparatorCohort, ")")) %>%
+    dplyr::pull(.data$comparatorCohort)
   yCohort <- balance %>%
-    dplyr::distinct(balance$comparatorCohort) %>%
-    dplyr::pull()
-  yCohort <- paste0("Comparator (", yCohort,")")
+    dplyr::distinct(.data$targetCohort) %>%
+    dplyr::mutate(targetCohort = paste0("Target (", .data$targetCohort, ")")) %>%
+    dplyr::pull(.data$targetCohort)
   
-  targetName <- balance %>% 
-    dplyr::select(.data$cohortId1) %>% 
-    dplyr::mutate(cohortId = .data$cohortId1) %>% 
-    dplyr::inner_join(cohort, by = "cohortId") %>% 
+  targetName <- balance %>%
+    dplyr::select(.data$cohortId1) %>%
+    dplyr::mutate(cohortId = .data$cohortId1) %>%
+    dplyr::inner_join(cohort, by = "cohortId") %>%
     dplyr::pull(.data$cohortName) %>% unique()
   
-  comparatorName <- balance %>% 
-    dplyr::select(.data$cohortId2) %>% 
-    dplyr::mutate(cohortId = .data$cohortId2) %>% 
-    dplyr::inner_join(cohort, by = "cohortId") %>% 
+  comparatorName <- balance %>%
+    dplyr::select(.data$cohortId2) %>%
+    dplyr::mutate(cohortId = .data$cohortId2) %>%
+    dplyr::inner_join(cohort, by = "cohortId") %>%
     dplyr::pull(.data$cohortName) %>% unique()
   
+  distinctDatabaseShortName <- balance$databaseShortName %>%
+    unique() %>%
+    sort()
+  #to sort the loop by database short name
+  distinctDatabaseShortName <- database %>%
+    dplyr::arrange(.data$id) %>%
+    dplyr::filter(.data$shortName %in% distinctDatabaseShortName) %>%
+    dplyr::pull(.data$shortName)
   
-  balance <- balance %>% 
-        dplyr::inner_join(database %>% 
-                          dplyr::select(.data$databaseId, .data$shortName) %>% 
-                            dplyr::rename("databaseShortName" = .data$shortName), by = "databaseId") 
-  
-  distinctDatabaseShortName <- balance$databaseShortName %>% unique() %>%  sort()
- 
   databasePlots <- list()
   for (i in 1:length(distinctDatabaseShortName)) {
-    data <- balance %>% 
-      dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i]) %>% 
+    data <- balance %>%
+      dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i]) %>%
       dplyr::inner_join(
-        colorReference %>% 
-          dplyr::filter(.data$type == "domain") %>% 
-          dplyr::mutate(domain = .data$name, colors = .data$value) %>% 
-          dplyr::select(.data$domain,.data$colors),
+        colorReference %>%
+          dplyr::filter(.data$type == "domain") %>%
+          dplyr::mutate(domain = .data$name, colors = .data$value) %>%
+          dplyr::select(.data$domain, .data$colors),
         by = "domain"
       ) %>% dplyr::arrange(.data$domain)
     
-    colors <- balance$colors %>% unique()
+    colors <- data$colors %>% unique()
     
     databasePlots[[i]] <-
       plotly::plot_ly(
-        data,
+        data = data,
         x = ~ mean1,
         y = ~ mean2,
         text = ~ tooltip,
@@ -1208,13 +1214,13 @@ plotCohortComparisonStandardizedDifference <- function(balance,
         opacity = 0.8,
         showlegend = ifelse(i == 1, T, F),
         marker = list(
-          size = 12,
+          size = 6,
           line = list(color = 'rgb(255,255,255)', width = 1)
         )
       ) %>%
       plotly::layout(
-        xaxis = list(title = '',range = c(0, 1)),
-        yaxis = list(title = '',ange = c(0, 1)),
+        xaxis = list(title = '', range = c(0, 1)),
+        yaxis = list(title = '', ange = c(0, 1)),
         annotations = list(
           x = 0.5,
           y = 1.02,
@@ -1241,42 +1247,59 @@ plotCohortComparisonStandardizedDifference <- function(balance,
       )
   }
   
-  
   databaseArray <- c()
-  for (i in 1:length(distinctDatabaseShortName)){
-    databaseId <- balance %>%  dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i]) %>% 
-      dplyr::pull(.data$databaseId) %>% unique()
-    databaseArray <- c(databaseArray, paste(distinctDatabaseShortName[i]," : ", databaseId))
+  for (i in 1:length(distinctDatabaseShortName)) {
+    databaseArray <- database %>%
+      dplyr::filter(.data$shortName == distinctDatabaseShortName[i]) %>%
+      dplyr::pull(.data$compoundName)
   }
-  databaseString  <- paste(databaseArray, collapse = ", ")
+  databaseString  <- paste0(databaseArray, collapse = ", ")
   
-  m <- list(
-    l = 100,
-    r = 0,
-    b = 200,
-    t = 50
-  )
-  plot <- plotly::subplot(databasePlots, nrows = ceiling(length(databasePlots)/5),shareX = TRUE,shareY = TRUE) %>% 
-    plotly::layout(margin = m,
-                   scene = list(aspectration = list(x = 1,y = 1)),
-                   annotations = list(
-                     x = c(-0.05,0.5,0.5),
-                     y = c(0.5,-0.1,-0.2),
-                     text = c(
-                       xCohort,
-                       yCohort,
-                       paste(xCohort, " : ", targetName,", ", yCohort, " : ", comparatorName,"\n",
-                                  "Database - ", databaseString)),
-                     showarrow = FALSE,
-                     xref = "paper",
-                     yref = "paper",
-                     xanchor = "center",
-                     yanchor = "middle",
-                     font = list(size = 18),
-                     textangle = c(-90, 0, 0)
-                   ))
+  marginValues <- list(l = 100,
+                       r = 0,
+                       b = 200,
+                       t = 50)
+  plot <- plotly::subplot(
+    databasePlots,
+    nrows = ceiling(length(databasePlots) / 5),
+    shareX = TRUE,
+    shareY = TRUE
+  ) %>%
+    plotly::layout(
+      margin = marginValues,
+      scene = list(aspectration = list(x = 1, y = 1)),
+      annotations = list(
+        x = c(-0.05, 0.5, 0.5),
+        y = c(0.5, -0.1, -0.2),
+        text = c(
+          xCohort,
+          yCohort,
+          paste(
+            xCohort,
+            " : ",
+            targetName,
+            ", ",
+            yCohort,
+            " : ",
+            comparatorName,
+            "\n",
+            "Database - ",
+            databaseString
+          )
+        ),
+        showarrow = FALSE,
+        xref = "paper",
+        yref = "paper",
+        xanchor = "center",
+        yanchor = "middle",
+        font = list(size = 18),
+        textangle = c(-90, 0, 0)
+      )
+    )
   return(plot)
 }
+
+
 
 plotTemporalStandardizedDifference <- function(balance,
                                                       shortNameRef = NULL,
@@ -1289,6 +1312,7 @@ plotTemporalStandardizedDifference <- function(balance,
       "Observation",
       "Procedure",
       "Cohort")
+  browser()
   balance$domain <- balance$domainId
   balance$domain[!balance$domain %in% domains] <- "other"
   if (domain != "all") {
@@ -1538,6 +1562,7 @@ plotTemporalCompareStandardizedDifference <- function(balance,
       "Observation",
       "Procedure",
       "Cohort")
+  browser()
   balance$domain <- balance$domainId
   balance$domain[!balance$domain %in% domains] <- "other"
   if (domain != "all") {

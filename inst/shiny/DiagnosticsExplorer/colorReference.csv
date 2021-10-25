@@ -15,6 +15,6 @@ domain,Drug,#091B80
 domain,Measurement,#D8567B
 domain,Observation,#4C9A2A
 domain,Procedure,"#FFE800"
-domain,Cohort,"#1111EE"
+domain,Cohort,"#0F0F0F"
 domain,Other,"#AAAAAA"
 database,database,#0000FF

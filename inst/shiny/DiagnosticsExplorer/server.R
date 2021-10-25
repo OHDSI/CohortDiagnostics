@@ -8075,8 +8075,7 @@ shiny::shinyServer(function(input, output, session) {
         value = 0
       )
       plot <-
-        plotCohortComparisonStandardizedDifference(balance = data,
-                                                   shortNameRef = cohort)
+        plotCompareCohortCharacterization(balance = data)
       return(plot)
     })
   
