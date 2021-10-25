@@ -260,7 +260,8 @@ if (all(exists("conceptSets"),
   conceptSets <- conceptSets %>%
     dplyr::inner_join(cohort %>% 
                         dplyr::select(.data$cohortId,
-                                      .data$shortName)) %>%
+                                      .data$shortName),
+                      by = "cohortId") %>%
     dplyr::mutate(compoundName = paste0(
       .data$shortName,
       "-",
@@ -294,7 +295,8 @@ if (all(exists("conceptSets"),
   conceptSets <- dplyr::bind_rows(conceptSets) %>%
     dplyr::inner_join(cohort %>% 
                         dplyr::select(.data$cohortId,
-                                      .data$shortName)) %>%
+                                      .data$shortName),
+                      by = "cohortId") %>%
     dplyr::mutate(compoundName = paste0(
       .data$shortName,
       "-",
