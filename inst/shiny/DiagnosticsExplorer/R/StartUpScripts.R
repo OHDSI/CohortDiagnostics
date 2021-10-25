@@ -1,36 +1,36 @@
 
 # used to get the short name in plots
-addShortName <- function(data, shortNameRef = NULL, cohortIdColumn = "cohortId", shortNameColumn = "shortName") {
-  if (is.null(shortNameRef)) {
-    shortNameRef <- data %>%
-      dplyr::distinct(.data$cohortId) %>%
-      dplyr::arrange(.data$cohortId) %>%
-      dplyr::mutate(shortName = paste0("C", dplyr::row_number()))
-  } 
-  
-  shortNameRef <- shortNameRef %>%
-    dplyr::distinct(.data$cohortId, .data$shortName) 
-  colnames(shortNameRef) <- c(cohortIdColumn, shortNameColumn)
-  data <- data %>%
-    dplyr::inner_join(shortNameRef, by = cohortIdColumn)
-  return(data)
-}
-
-addDatabaseShortName <- function(data, shortNameRef = NULL, databaseIdColumn = "databaseId", shortNameColumn = "databaseShortName") {
-  if (is.null(shortNameRef)) {
-    shortNameRef <- data %>%
-      dplyr::distinct(.data$databaseId) %>%
-      dplyr::arrange(.data$databaseId) %>%
-      dplyr::mutate(databaseShortName = paste0("C", dplyr::row_number()))
-  } 
-  
-  shortNameRef <- shortNameRef %>%
-    dplyr::distinct(.data$databaseId, .data$shortName) 
-  colnames(shortNameRef) <- c(databaseIdColumn, shortNameColumn)
-  data <- data %>%
-    dplyr::inner_join(shortNameRef, by = databaseIdColumn)
-  return(data)
-}
+# addShortName <- function(data, shortNameRef = NULL, cohortIdColumn = "cohortId", shortNameColumn = "shortName") {
+#   if (is.null(shortNameRef)) {
+#     shortNameRef <- data %>%
+#       dplyr::distinct(.data$cohortId) %>%
+#       dplyr::arrange(.data$cohortId) %>%
+#       dplyr::mutate(shortName = paste0("C", dplyr::row_number()))
+#   } 
+#   
+#   shortNameRef <- shortNameRef %>%
+#     dplyr::distinct(.data$cohortId, .data$shortName) 
+#   colnames(shortNameRef) <- c(cohortIdColumn, shortNameColumn)
+#   data <- data %>%
+#     dplyr::inner_join(shortNameRef, by = cohortIdColumn)
+#   return(data)
+# }
+# 
+# addDatabaseShortName <- function(data, shortNameRef = NULL, databaseIdColumn = "databaseId", shortNameColumn = "databaseShortName") {
+#   if (is.null(shortNameRef)) {
+#     shortNameRef <- data %>%
+#       dplyr::distinct(.data$databaseId) %>%
+#       dplyr::arrange(.data$databaseId) %>%
+#       dplyr::mutate(databaseShortName = paste0("C", dplyr::row_number()))
+#   } 
+#   
+#   shortNameRef <- shortNameRef %>%
+#     dplyr::distinct(.data$databaseId, .data$shortName) 
+#   colnames(shortNameRef) <- c(databaseIdColumn, shortNameColumn)
+#   data <- data %>%
+#     dplyr::inner_join(shortNameRef, by = databaseIdColumn)
+#   return(data)
+# }
 
 
 getSubjectCountsByDatabasae <-

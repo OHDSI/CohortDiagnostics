@@ -24,7 +24,9 @@ plotTimeSeriesFromTsibble <-
     distinctDatabaseShortName <- c()
     for (i in 1:length(tsibbleData)) {
       tsibbleData[[i]] <- tsibbleData[[i]] %>% 
-        addDatabaseShortName(shortNameRef = database) 
+        dplyr::inner_join(database %>% 
+                            dplyr::select(.data$databaseId, .data$shortName) %>% 
+                            dplyr::rename("databaseShortName" = .data$shortName), by = "databaseId")
       data <- tsibbleData[[i]] %>% 
         dplyr::pull(.data$databaseShortName) %>% 
         unique()
@@ -330,7 +332,7 @@ plotTimeSeriesFromTsibble <-
     #   )
     #
     # spacing <- data %>%
-    #   dplyr::distinct(.data$databaseId, .data$cohortShortName) %>%
+    #   dplyr::distinct(.data$databaseId, .data$shortName) %>%
     #   dplyr::arrange(.data$databaseId) %>%
     #   dplyr::group_by(.data$databaseId) %>%
     #   dplyr::summarise(count = dplyr::n()) %>%
@@ -401,7 +403,9 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
     for (i in 1:length(yAxisValues)) {
       if ("dcmp_ts" %in% class(stlModeledTsibbleData[[i]])) {
         stlModeledTsibbleData[[i]] <- stlModeledTsibbleData[[i]] %>% 
-          addDatabaseShortName(shortNameRef = database) %>% 
+          dplyr::inner_join(database %>% 
+                              dplyr::select(.data$databaseId, .data$shortName) %>% 
+                              dplyr::rename("databaseShortName" = .data$shortName), by = "databaseId") %>% 
           dplyr::mutate(databaseCompoundName = paste(.data$databaseShortName," - ",.data$databaseId))
         distinctDatabaseCompoundName <- c(distinctDatabaseCompoundName,
                                        stlModeledTsibbleData[[i]]$databaseCompoundName) %>% unique()
@@ -533,10 +537,11 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   colorReference <- colorReference %>% 
     dplyr::mutate(color = c(lightColors,darkColors))
  
-  plotData <-
-    addShortName(data = data, shortNameRef = shortNameRef)  %>% 
-    addDatabaseShortName(shortNameRef = database) %>% 
-    dplyr::inner_join(colorReference, by = "databaseId")
+  plotData <- plotData %>% 
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName),
+                      by = .data$cohortId) %>% 
+    dplyr::rename("shortName" = .data$shortName)
     
   
   sortShortName <- plotData %>%
@@ -752,7 +757,10 @@ plotIncidenceRate <- function(data,
   
   plotData <- data %>%
     dplyr::left_join(cohortCount, by = c('cohortId', 'databaseId')) %>%
-    addShortName(shortNameRef) %>%
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName),
+                      by = .data$cohortId) %>% 
+    dplyr::rename("shortName" = .data$shortName) %>%
     dplyr::mutate(incidenceRate = round(.data$incidenceRate, digits = 3)) %>%
     # dplyr::mutate(
     #   strataGender = !is.na(.data$gender),
@@ -984,7 +992,10 @@ plotCalendarIncidence <- function(data,
                                   yscaleFixed = FALSE) {
   plotData <- data %>%
     dplyr::left_join(cohortCount, by = c('cohortId', 'databaseId')) %>%
-    addShortName(shortNameRef)
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName),
+                      by = .data$cohortId) %>% 
+    dplyr::rename("shortName" = .data$shortName)
   aesthetics <- list(x = "calendarMonth", y = "countValue")
   plotType <- "line"
   sortShortName <- plotData %>%
@@ -1099,16 +1110,15 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   }
   
   balance <- balance %>%
-    addShortName(
-      shortNameRef = shortNameRef,
-      cohortIdColumn = "cohortId1",
-      shortNameColumn = "targetCohort"
-    ) %>%
-    addShortName(
-      shortNameRef = shortNameRef,
-      cohortIdColumn = "cohortId2",
-      shortNameColumn = "comparatorCohort"
-    )
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName),
+                      by = c("cohortId1" = "cohortId")) %>% 
+    dplyr::rename("targetCohort" = .data$shortName) %>% 
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName),
+                      by = c("cohortId2" = "cohortId")) %>% 
+    dplyr::rename("comparatorCohort" = .data$shortName)
+    
   
   # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
   balance$tooltip <-
@@ -1137,16 +1147,8 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   
   # Code used to generate palette:
   # writeLines(paste(RColorBrewer::brewer.pal(n = length(domains), name = "Dark2"), collapse = "\", \""))
-  balance <- balance %>% 
-    dplyr::inner_join(
-      read.csv('colorReference.csv') %>% 
-        dplyr::filter(.data$type == "domain") %>% 
-        dplyr::mutate(domain = .data$name, colors = .data$value) %>% 
-        dplyr::select(.data$domain,.data$colors),
-      by = "domain"
-    ) %>% dplyr::arrange(.data$domain)
-  
-  colors <- balance$colors %>% unique()
+  # balance <- balance %>% 
+    
   xCohort <- balance %>%
     dplyr::distinct(balance$targetCohort) %>%
     dplyr::pull()
@@ -1171,14 +1173,26 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   
   
   balance <- balance %>% 
-    addDatabaseShortName(shortNameRef = database)
+        dplyr::inner_join(database %>% 
+                          dplyr::select(.data$databaseId, .data$shortName) %>% 
+                            dplyr::rename("databaseShortName" = .data$shortName), by = "databaseId") 
   
   distinctDatabaseShortName <- balance$databaseShortName %>% unique() %>%  sort()
  
   databasePlots <- list()
   for (i in 1:length(distinctDatabaseShortName)) {
     data <- balance %>% 
-      dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i])
+      dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i]) %>% 
+      dplyr::inner_join(
+        colorReference %>% 
+          dplyr::filter(.data$type == "domain") %>% 
+          dplyr::mutate(domain = .data$name, colors = .data$value) %>% 
+          dplyr::select(.data$domain,.data$colors),
+        by = "domain"
+      ) %>% dplyr::arrange(.data$domain)
+    
+    colors <- balance$colors %>% unique()
+    
     databasePlots[[i]] <-
       plotly::plot_ly(
         data,
@@ -1199,22 +1213,17 @@ plotCohortComparisonStandardizedDifference <- function(balance,
         )
       ) %>%
       plotly::layout(
-        xaxis = list(range = c(0, 1)),
-        yaxis = list(range = c(0, 1)),
+        xaxis = list(title = '',range = c(0, 1)),
+        yaxis = list(title = '',ange = c(0, 1)),
         annotations = list(
-          x = c(-0.06, 0.5, 0.5),
-          y = c(0.5,-0.06, 1.02),
-          text = c(
-            ifelse(i == 1, xCohort, ""),
-            yCohort,
-            camelCaseToTitleCase(distinctDatabaseShortName[i])
-          ),
+          x = 0.5,
+          y = 1.02,
+          text = camelCaseToTitleCase(distinctDatabaseShortName[i]),
           showarrow = FALSE,
           xref = "paper",
           yref = "paper",
           xanchor = "center",
           yanchor = "middle",
-          textangle = c(-90, 0, 0),
           font = list(size = 18)
         )
       ) %>%
@@ -1247,20 +1256,24 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     b = 200,
     t = 50
   )
-  plot <- plotly::subplot(databasePlots, nrows = ceiling(length(databasePlots)/5)) %>% 
+  plot <- plotly::subplot(databasePlots, nrows = ceiling(length(databasePlots)/5),shareX = TRUE,shareY = TRUE) %>% 
     plotly::layout(margin = m,
                    scene = list(aspectration = list(x = 1,y = 1)),
                    annotations = list(
-                     x = 0.5,
-                     y = -0.2,
-                     text = paste(xCohort, " : ", targetName,", ", yCohort, " : ", comparatorName,"\n",
-                                  "Database - ", databaseString),
+                     x = c(-0.05,0.5,0.5),
+                     y = c(0.5,-0.1,-0.2),
+                     text = c(
+                       xCohort,
+                       yCohort,
+                       paste(xCohort, " : ", targetName,", ", yCohort, " : ", comparatorName,"\n",
+                                  "Database - ", databaseString)),
                      showarrow = FALSE,
                      xref = "paper",
                      yref = "paper",
                      xanchor = "center",
                      yanchor = "middle",
-                     font = list(size = 18)
+                     font = list(size = 18),
+                     textangle = c(-90, 0, 0)
                    ))
   return(plot)
 }
@@ -1293,17 +1306,16 @@ plotTemporalStandardizedDifference <- function(balance,
   }
   
   balance <- balance %>%
-    addShortName(
-      shortNameRef = shortNameRef,
-      cohortIdColumn = "cohortId1",
-      shortNameColumn = "targetCohort"
-    ) %>%
-    addShortName(
-      shortNameRef = shortNameRef,
-      cohortIdColumn = "cohortId2",
-      shortNameColumn = "comparatorCohort"
-    )
-  
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName),
+                      by = c("cohortId1" = "cohortId")) %>% 
+    dplyr::rename("targetCohort" = .data$shortName) %>% 
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName),
+                      by = c("cohortId2" = "cohortId")) %>% 
+    dplyr::rename("comparatorCohort" = .data$shortName)
+    
+    
   # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
   balance$tooltip <-
     c(
@@ -1543,16 +1555,15 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   }
   
   balance <- balance %>%
-    addShortName(
-      shortNameRef = shortNameRef,
-      cohortIdColumn = "cohortId1",
-      shortNameColumn = "targetCohort"
-    ) %>%
-    addShortName(
-      shortNameRef = shortNameRef,
-      cohortIdColumn = "cohortId2",
-      shortNameColumn = "comparatorCohort"
-    )
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName),
+                      by = c("cohortId1" = "cohortId")) %>% 
+    dplyr::rename("targetCohort" = .data$shortName) %>% 
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName),
+                      by = c("cohortId2" = "cohortId")) %>% 
+    dplyr::rename("comparatorCohort" = .data$shortName)
+  
   
   # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
   balance$tooltip <-
@@ -1793,16 +1804,16 @@ plotTemporalCompareStandardizedDifference3D <- function(balance,
       dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
   }
   balance <- balance %>%
-    addShortName(
-      shortNameRef = shortNameRef,
-      cohortIdColumn = "cohortId1",
-      shortNameColumn = "targetCohort"
-    ) %>%
-    addShortName(
-      shortNameRef = shortNameRef,
-      cohortIdColumn = "cohortId2",
-      shortNameColumn = "comparatorCohort"
-    )
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName),
+                      by = c("targetCohortId" = "cohortId")) %>% 
+    dplyr::rename("targetCohort" = .data$shortName) %>% 
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName),
+                      by = c("comparatorCohortId" = "cohortId")) %>% 
+    dplyr::rename("comparatorCohort" = .data$shortName)
+  
+  
   
   # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
   balance$tooltip <-
@@ -1917,16 +1928,15 @@ plotCohortOverlap <- function(data,
 
   
   data <- data %>%
-    addShortName(
-      shortNameRef = shortNameRef,
-      cohortIdColumn = "targetCohortId",
-      shortNameColumn = "targetShortName"
-    ) %>%
-    addShortName(
-      shortNameRef = shortNameRef,
-      cohortIdColumn = "comparatorCohortId",
-      shortNameColumn = "comparatorShortName"
-    )
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName),
+                      by = c("targetCohortId" = "cohortId")) %>% 
+    dplyr::rename("targetShortName" = .data$shortName) %>% 
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName),
+                      by = c("comparatorCohortId" = "cohortId")) %>% 
+    dplyr::rename("comparatorShortName" = .data$shortName)
+   
   targetCohortCompoundName <- data  %>% 
     dplyr::inner_join(cohort %>% 
                         dplyr::mutate(targetCohortId = .data$cohortId) %>% 
@@ -2095,7 +2105,9 @@ plotCohortOverlap <- function(data,
       comparatorShortName = factor(.data$comparatorShortName, levels = sortComparatorShortName$comparatorShortName),
       .data$comparatorShortName
     ) %>% 
-    addDatabaseShortName(shortNameRef = database) %>% 
+    dplyr::inner_join(database %>% 
+                        dplyr::select(.data$databaseId, .data$shortName) %>% 
+                        dplyr::rename("databaseShortName" = .data$shortName), by = "databaseId") %>% 
     dplyr::mutate(databaseCompoundName = paste(.data$databaseShortName,": ",.data$databaseId))
   
   distinctComparatorShortName <- plotData$comparatorShortName %>% unique()
@@ -2250,19 +2262,18 @@ plotCohortOverlap <- function(data,
 plotCohortOverlapPie <- function(data,
                               shortNameRef = NULL) {
   data <- data %>%
-    addShortName(
-      shortNameRef = shortNameRef,
-      cohortIdColumn = "targetCohortId",
-      shortNameColumn = "targetShortName"
-    ) %>%
-    addShortName(
-      shortNameRef = shortNameRef,
-      cohortIdColumn = "comparatorCohortId",
-      shortNameColumn = "comparatorShortName"
-    )
-  data <- data %>% addDatabaseShortName(
-      shortNameRef = database
-    )
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName),
+                      by = c("targetCohortId" = "cohortId")) %>% 
+    dplyr::rename("targetShortName" = .data$shortName) %>% 
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName),
+                      by = c("comparatorCohortId" = "cohortId")) %>% 
+    dplyr::rename("comparatorShortName" = .data$shortName)
+   
+  data <- data %>% dplyr::inner_join(database %>% 
+                                       dplyr::select(.data$databaseId, .data$shortName) %>% 
+                                       dplyr::rename("databaseShortName" = .data$shortName), by = "databaseId") 
   
   targetCohortCompoundName <- data  %>%
     dplyr::inner_join(cohort %>%

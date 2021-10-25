@@ -411,6 +411,7 @@ if (!showVisitContext) {
 #   }
 # }
 
+colorReference <- readr::read_csv(file = 'colorReference.csv',col_types = readr::cols(),guess_max = 1000)
 
 #Extras -----
 # other objects in memory ----
