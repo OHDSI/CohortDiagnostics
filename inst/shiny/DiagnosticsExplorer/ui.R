@@ -1043,8 +1043,8 @@ bodyTabItems <- shinydashboard::tabItems(
             shiny::radioButtons(
               inputId = "visitContextPersonOrRecords",
               label = "Display",
-              choices = c("Both", "Person Only", "Record Only"),
-              selected = "Both",
+              choices = c("Person Only", "Record Only"),
+              selected = "Person Only",
               inline = TRUE
             )
           ),

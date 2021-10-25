@@ -6378,7 +6378,6 @@ shiny::shinyServer(function(input, output, session) {
         "subjects_After",
         "records_After"
       )
-    
     if (input$visitContextTableFilters == "Before") {
       dataColumnFields <- dataColumnFields[stringr::str_detect(string = dataColumnFields, 
                                                                pattern = c("Before"))]
@@ -6392,8 +6391,27 @@ shiny::shinyServer(function(input, output, session) {
       dataColumnFields <- dataColumnFields[stringr::str_detect(string = dataColumnFields, 
                                                                pattern = c("After"))]
     }
+    keyColumnFields <- "visitConceptName"
     
-    keyColumnFields <- c("cohortId", "visitConceptName")
+    if (input$visitContextPersonOrRecords == "Person Only") {
+      dataColumnFields <- dataColumnFields[stringr::str_detect(string = dataColumnFields,
+                                                               pattern = "subjects")]
+      data <- data %>% 
+        dplyr::select(dplyr::all_of(keyColumnFields), "databaseId", dplyr::all_of(dataColumnFields))
+      colnames(data) <- colnames(data) %>% 
+        stringr::str_replace_all(pattern = stringr::fixed("subjects_"), replacement = "") 
+      dataColumnFields <- dataColumnFields %>% 
+        stringr::str_replace_all(pattern = stringr::fixed("subjects_"), replacement = "")
+    } else if (input$visitContextPersonOrRecords == "Record Only") {
+      dataColumnFields <- dataColumnFields[stringr::str_detect(string = dataColumnFields,
+                                                               pattern = "records")]
+      data <- data %>% 
+        dplyr::select(dplyr::all_of(keyColumnFields), "databaseId", dplyr::all_of(dataColumnFields))
+      colnames(data) <- colnames(data) %>% 
+        stringr::str_replace_all(pattern = stringr::fixed("records_"), replacement = "")
+      dataColumnFields <- dataColumnFields %>% 
+        stringr::str_replace_all(pattern = stringr::fixed("records_"), replacement = "")
+    }
     
     countsForHeader <-
       getCountsForHeaderForUseInDataTable(
@@ -6408,7 +6426,6 @@ shiny::shinyServer(function(input, output, session) {
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
     
-    browser()
     table <- getDtWithColumnsGroupedByDatabaseId(
       data = data,
       headerCount = countsForHeader,
