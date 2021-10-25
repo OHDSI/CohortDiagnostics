@@ -6314,16 +6314,19 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$visitContext == "Before")
     } else if (input$visitContextTableFilters == "During") {
       visitContextData <- visitContextData %>%
-        dplyr::filter(.data$visitContext == "During visit")
+        dplyr::filter(.data$visitContext == "During")
     } else if (input$visitContextTableFilters == "Simultaneous") {
       visitContextData <- visitContextData %>%
-        dplyr::filter(.data$visitContext == "On visit start")
+        dplyr::filter(.data$visitContext == "Simultaneous")
     } else if (input$visitContextTableFilters == "After") {
       visitContextData <- visitContextData %>%
         dplyr::filter(.data$visitContext == "After")
     }
+    if (!doesObjectHaveData(visitContextData)) {
+      return(NULL)
+    }
     visitContextData <- visitContextData %>% 
-      tidyr::pivot_wider(id_cols = c("databaseId", "cohortId", "visitConceptName"), 
+      tidyr::pivot_wider(id_cols = c("databaseId", "visitConceptName"), 
                          names_from = "visitContext", 
                          values_from = c("subjects", "records"))
     return(visitContextData)
