@@ -47,6 +47,7 @@ showIndexEventBreakdown <- TRUE
 showVisitContext <- TRUE
 showCharacterization <- TRUE
 showTemporalCharacterization <- TRUE
+showCohortOverlap <- TRUE
 filterTemporalChoicesToPrimaryOptions <- TRUE
 
 showConceptBrowser <- TRUE  #on selected conceptId - show concept browser  (applied for cohort, index event breakdown, characterization tab)
@@ -404,12 +405,6 @@ if (!showVisitContext) {
   }
 }
 
-#!!!!!! incomplete logic
-# if (!showOverlap) {
-#   if (exists("visitContext")) {
-#     rm("visitContext")
-#   }
-# }
 
 colorReference <- readr::read_csv(file = 'colorReference.csv',col_types = readr::cols(),guess_max = 1000)
 
