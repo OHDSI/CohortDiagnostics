@@ -477,10 +477,12 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
                      annotations = list(
                        x = 0.5 ,
                        y = -0.11,
-                       text = paste0(conceptName," (",conceptId,")","\n",conceptSynonym,"\n",distinctDatabaseCompoundNameString),
+                       text = paste0(conceptName," (",conceptId,")","\n",distinctDatabaseCompoundNameString),
                        showarrow = F,
                        xref = 'paper',
-                       yref = 'paper'
+                       yref = 'paper',
+                       xanchor = 'center',
+                       yanchor = 'middle'
                      ))
     
     #!!! add database Id to x-axis 
