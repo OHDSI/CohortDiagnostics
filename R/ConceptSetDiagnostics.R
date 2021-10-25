@@ -137,6 +137,15 @@ runConceptSetDiagnostics <- function(connection = NULL,
   ParallelLogger::logInfo("  - Optimizing concept sets found in cohorts.")
   optimizedConceptSet <- list()
   for (i in (1:nrow(uniqueConceptSets))) {
+    ParallelLogger::logTrace(
+      paste0(
+        "Optimizing concept sets: ",
+        scales::comma(i),
+        " of ",
+        scales::comma(nrow(uniqueConceptSets)),
+        " unique concept sets."
+      )
+    )
     uniqueConceptSet <- uniqueConceptSets[i, ]
     conceptSetExpression <-
       RJSONIO::fromJSON(uniqueConceptSet$conceptSetExpression)
