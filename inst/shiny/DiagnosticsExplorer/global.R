@@ -37,7 +37,7 @@ alternateVocabularySchema <- c('vocabulary')
 # alternateVocabularySchema <- c('vocabulary')
 
 #Mode
-defaultDatabaseMode <- FALSE # Use file system if FALSE
+defaultDatabaseMode <- TRUE # Use file system if FALSE
 
 #Configuration variables ----
 showIncidenceRate <- TRUE
@@ -314,7 +314,8 @@ if (all(exists("database"),
   # cohort is required and is always loaded into R memory
   database <- database %>%
     dplyr::arrange(.data$databaseId) %>%
-    dplyr::mutate(shortName = paste0("D", dplyr::row_number())) %>%
+    dplyr::mutate(id = dplyr::row_number()) %>% 
+    dplyr::mutate(shortName = paste0("D", .data$id)) %>%
     dplyr::mutate(compoundName = paste0(
       .data$shortName,
       ": ",
@@ -322,7 +323,8 @@ if (all(exists("database"),
       "(",
       .data$databaseId,
       ")"
-    ))
+    )) %>% 
+    dplyr::arrange(.data$id)
 }
 
 #enhancement 
