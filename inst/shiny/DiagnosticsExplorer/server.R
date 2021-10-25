@@ -6275,32 +6275,14 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(visitContextData)) {
       return(NULL)
     }
-    visitContextData <- visitContextData %>%
-      dplyr::inner_join(cohortCount,
-                        by = c('databaseId', 'cohortId'))
-    if (input$visitContextValueFilter == "Percentage") {
-      visitContextData <- visitContextData %>%
-        dplyr::mutate(subjectsValue = .data$subjects / .data$cohortSubjects) %>%
-        dplyr::mutate(recordsValue = .data$records / .data$cohortEntries)
-    } else {
-      visitContextData <- visitContextData %>%
-        dplyr::mutate(subjectsValue = .data$subjects) %>%
-        dplyr::mutate(recordsValue = .data$records)
-    }
-    visitContextData <- visitContextData %>%
-      dplyr::select(-.data$subjects,-.data$records,-.data$cohortSubjects,-.data$cohortEntries) %>%
-      dplyr::rename(subjects = .data$subjectsValue,
-                    records = .data$recordsValue)
-    visitContextReference <-
+    visitContextData <-
       expand.grid(
         visitContext = c("Before", "During visit", "On visit start", "After"),
         visitConceptName = unique(visitContextData$visitConceptName),
         databaseId = unique(visitContextData$databaseId),
         cohortId = unique(visitContextData$cohortId)
       ) %>%
-      dplyr::tibble()
-    
-    visitContextReference <- visitContextReference %>%
+      dplyr::tibble() %>%
       dplyr::left_join(
         visitContextData,
         by = c(
@@ -6317,117 +6299,50 @@ shiny::shinyServer(function(input, output, session) {
         .data$visitContext,
         .data$subjects,
         .data$records
-      )
-    return(visitContextReference)
-  })
-  
-  ##getVisitContexDataFiltered----
-  getVisitContexDataFiltered <- shiny::reactive(x = {
-    if (input$tabs != "visitContext") {
-      return(NULL)
-    }
-    if (any(
-      !doesObjectHaveData(input$visitContextTableFilters),
-      !doesObjectHaveData(input$visitContextPersonOrRecords),
-      !doesObjectHaveData(consolidatedCohortIdTarget())
-    )) {
-      return(NULL)
-    }
-    data <- getVisitContexDataEnhanced()
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
+      ) %>%
+      dplyr::mutate(
+        visitContext = dplyr::case_when(
+          .data$visitContext == "During visit" ~ "During",
+          .data$visitContext == "On visit start" ~ "Simultaneous",
+          TRUE ~ .data$visitContext
+        )
+      ) %>% 
+      tidyr::replace_na(replace = list(subjects = 0, records = 0))
+    
     if (input$visitContextTableFilters == "Before") {
-      data <- data %>%
+      visitContextData <- visitContextData %>%
         dplyr::filter(.data$visitContext == "Before")
     } else if (input$visitContextTableFilters == "During") {
-      data <- data %>%
+      visitContextData <- visitContextData %>%
         dplyr::filter(.data$visitContext == "During visit")
     } else if (input$visitContextTableFilters == "Simultaneous") {
-      data <- data %>%
+      visitContextData <- visitContextData %>%
         dplyr::filter(.data$visitContext == "On visit start")
     } else if (input$visitContextTableFilters == "After") {
-      data <- data %>%
+      visitContextData <- visitContextData %>%
         dplyr::filter(.data$visitContext == "After")
     }
-    isPerson <- input$visitContextPersonOrRecords == 'Person'
-    if (isPerson) {
-      data <- data %>%
-        dplyr::select(-.data$records)
-    } else {
-      data <- data %>%
-        dplyr::select(-.data$subjects)
-    }
-    return(data)
+    visitContextData <- visitContextData %>% 
+      tidyr::pivot_wider(id_cols = c("databaseId", "cohortId", "visitConceptName"), 
+                         names_from = "visitContext", 
+                         values_from = c("subjects", "records"))
+    return(visitContextData)
   })
-  
-  ##getVisitContextTableData----
-  getVisitContextTableData <- shiny::reactive(x = {
-    if (all(doesObjectHaveData(input$tab),
-            input$tab != "visitContext")) {
-      return(NULL)
-    }
-    data <- getVisitContexDataFiltered()
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    
-    # Apply Pivot Longer
-    pivotColumns <- c()
-    if (input$visitContextPersonOrRecords == 'Person') {
-      data <- data %>% 
-        dplyr::inner_join(cohortCount) %>% 
-        dplyr::mutate(databaseId = paste0(.data$databaseId, " (n = ",
-                                    scales::comma(.data$cohortSubjects),
-                                    ")"))
-      pivotColumns <- c("subjects")
-    } else {
-      data <- data %>% 
-        dplyr::inner_join(cohortCount) %>% 
-        dplyr::mutate(databaseId = paste0(.data$databaseId, " (n = ",
-                                          scales::comma(.data$cohortEntries),
-                                          ")"))
-      pivotColumns <- c("records")
-    }
-    data <- data %>%
-      tidyr::pivot_longer(names_to = "type",
-                          cols = dplyr::all_of(pivotColumns),
-                          values_to = "count") %>% 
-      tidyr::replace_na(replace = list("count" = 0)) %>% 
-      dplyr::arrange(.data$databaseId,
-                     .data$visitContext,
-                     .data$type) %>%
-      dplyr::mutate(type = paste0(.data$databaseId,
-                                  " ",
-                                  .data$visitContext,
-                                  " ",
-                                  .data$type)) %>%
-      tidyr::pivot_wider(
-        id_cols = c("cohortId",
-                    "visitConceptName"),
-        names_from = type,
-        values_from = count,
-        values_fill = 0
-      ) %>%
-      dplyr::distinct()
-    data <- data[order(-data[3]),]
-    return(data)
-  })
-  
+
   ##saveVisitContextTable----
   output$saveVisitContextTable <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "visitContext")
     },
     content = function(file) {
-      downloadCsv(x = getVisitContextTableData(),
+      downloadCsv(x = getVisitContexDataEnhanced(),
                   fileName = file)
     }
   )
   
   ##doesVisitContextContainData----
   output$doesVisitContextContainData <- shiny::reactive({
-    visitContextData <- getVisitContextTableData()
+    visitContextData <- getVisitContexDataEnhanced()
     if (!doesObjectHaveData(visitContextData)) {
       return(NULL)
     }
@@ -6447,141 +6362,63 @@ shiny::shinyServer(function(input, output, session) {
       length(consolidatedCohortIdTarget()) > 0,
       "No cohorts chosen"
     ))
-    data <- getVisitContextTableData()
+    data <- getVisitContexDataEnhanced()
     validate(need(
       doesObjectHaveData(data),
       "No data available for selected combination."
     ))
-    table <- data %>%
-      dplyr::select(-.data$cohortId)
-    isPerson <- input$visitContextPersonOrRecords == 'Person'
-    if (isPerson) {
-      databaseIdsWithCount <- cohortCount %>%
-        dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>% 
-        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
-        dplyr::mutate(databaseIdWithCount = paste0(
-          .data$databaseId,
-          " (n = ",
-          scales::comma(.data$cohortSubjects),
-          ")"
-        )) %>%
-        dplyr::pull(.data$databaseIdWithCount)
-      maxSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = getVisitContexDataFiltered(), 
-                                                                string = "ubjects")
-    } else {
-      databaseIdsWithCount <- cohortCount %>%
-        dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
-        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
-        dplyr::mutate(databaseIdWithCount = paste0(
-          .data$databaseId,
-          " (n = ",
-          scales::comma(.data$cohortEntries),
-          ")"
-        )) %>%
-        dplyr::pull(.data$databaseIdWithCount)
-      maxSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = getVisitContexDataFiltered(), 
-                                                                   string = "ecords")
-    }
-    
-    visitContextSequence <-
-      getVisitContexDataFiltered()$visitContext %>%
-      unique()
-    #ensure columns names are aligned
-    for (i in 1:(length(visitContextSequence))) {
-      table <- table %>%
-        dplyr::relocate(.data$visitConceptName,
-                        dplyr::contains(visitContextSequence[[i]]))
-    }
-    visitContextSequence <- visitContextSequence %>%
-      stringr::str_replace(pattern = "Before",
-                           replacement = "Visits Before") %>%
-      stringr::str_replace(pattern = "During visit",
-                           replacement = "Visits Ongoing") %>%
-      stringr::str_replace(pattern = "On visit start",
-                           replacement = "Starting Simultaneous") %>%
-      stringr::str_replace(pattern = "After",
-                           replacement = "Visits After")
-    
-    totalColumns <- 1
-     #broken somewhere here
-    if (input$visitContextTableFilters == "All") {
-      sketch <- htmltools::withTags(table(class = "display",
-                                          thead(tr(
-                                            th(rowspan = 2, "Visit"),
-                                            lapply(
-                                              databaseIdsWithCount,
-                                              th,
-                                              colspan = 4,
-                                              class = "dt-center",
-                                              style = "border-right:1px solid silver;border-bottom:1px solid silver"
-                                            )
-                                          ),
-                                          tr(
-                                            lapply(rep(
-                                              c(visitContextSequence), #avoid hard coding sequence
-                                              length(databaseIdsWithCount)
-                                            ),
-                                            th,
-                                            style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                          ))))
-      totalColumns <- 4
-    }
-    columnDefs <-
-      minCellCountDef(1:(length(databaseIdsWithCount) * totalColumns))
-    
-    if (input$visitContextValueFilter == "Percentage") {
-      columnDefs <-
-        minCellPercentDef(1:(length(databaseIdsWithCount) * totalColumns))
-    }
-    
-    options = list(
-      pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      searchHighlight = TRUE,
-      scrollX = TRUE,
-      scrollY = "60vh",
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      columnDefs = list(
-        truncateStringDef(0, 60),
-        list(width = "40%", targets = 0),
-        columnDefs
+    dataColumnFields <-
+      c(
+        "subjects_Before",
+        "records_Before",
+        "subjects_Simultaneous",
+        "records_Simultaneous",
+        "subjects_During",
+        "records_During",
+        "subjects_After",
+        "records_After"
       )
+    
+    if (input$visitContextTableFilters == "Before") {
+      dataColumnFields <- dataColumnFields[stringr::str_detect(string = dataColumnFields, 
+                                                               pattern = c("Before"))]
+    } else if (input$visitContextTableFilters == "During") {
+      dataColumnFields <- dataColumnFields[stringr::str_detect(string = dataColumnFields, 
+                                                               pattern = c("During"))]
+    } else if (input$visitContextTableFilters == "Simultaneous") {
+      dataColumnFields <- dataColumnFields[stringr::str_detect(string = dataColumnFields, 
+                                                               pattern = c("Simultaneous"))]
+    } else if (input$visitContextTableFilters == "After") {
+      dataColumnFields <- dataColumnFields[stringr::str_detect(string = dataColumnFields, 
+                                                               pattern = c("After"))]
+    }
+    
+    keyColumnFields <- c("cohortId", "visitConceptName")
+    
+    countsForHeader <-
+      getCountsForHeaderForUseInDataTable(
+        dataSource = dataSource,
+        databaseIds = consolidatedDatabaseIdTarget(),
+        cohortIds = consolidatedCohortIdTarget(),
+        source = "Cohort Level",
+        fields = input$visitContextPersonOrRecords
+      )
+    
+    maxCountValue <-
+      getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                    string = dataColumnFields)
+    
+    browser()
+    table <- getDtWithColumnsGroupedByDatabaseId(
+      data = data,
+      headerCount = countsForHeader,
+      keyColumns = keyColumnFields,
+      sketchLevel = 1,
+      dataColumns = dataColumnFields,
+      maxCount = maxCountValue,
+      showResultsAsPercent = (input$visitContextValueFilter == "Percentage")
     )
-    
-    if (input$visitContextTableFilters == "All") {
-      table <- DT::datatable(
-        table,
-        options = options,
-        colnames = colnames(table) %>%
-          camelCaseToTitleCase(),
-        rownames = FALSE,
-        container = sketch,
-        escape = FALSE,
-        filter = "top"
-      )
-    } else {
-      table <- DT::datatable(
-        table,
-        options = options,
-        colnames = colnames(table) %>%
-          camelCaseToTitleCase(),
-        rownames = FALSE,
-        escape = FALSE,
-        filter = "top"
-      )
-    }
-    
-    table <- DT::formatStyle(
-      table = table,
-      columns = 1 + 1:(length(databaseIdsWithCount) * 4),
-      background = DT::styleColorBar(c(0, maxSubjects), "lightblue"),
-      backgroundSize = "98% 88%",
-      backgroundRepeat = "no-repeat",
-      backgroundPosition = "center"
-    )
+    return(table)
   }, server = TRUE)
   
   
