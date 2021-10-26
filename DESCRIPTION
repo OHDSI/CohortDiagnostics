@@ -26,6 +26,7 @@ Imports:
   methods,
   ParallelLogger (>= 2.0.2),
   readr (>= 2.0.1),
+  R.utils,
   RJSONIO,
   rlang,
   ROhdsiWebApi (>= 1.2.0),
