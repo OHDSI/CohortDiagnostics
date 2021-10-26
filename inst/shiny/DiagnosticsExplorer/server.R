@@ -4398,9 +4398,17 @@ shiny::shinyServer(function(input, output, session) {
       showResultsAsPercent = input$showAsPercentageColumnTarget 
     )
     return(table)
-  })
+  }) 
   
-  
+  output$saveDetailsOfSelectedConceptId <-  downloadHandler(
+    filename = function() {
+      getCsvFileNameWithDateTime(string = "ConceptSetBrowser")
+    },
+    content = function(file) {
+      downloadCsv(x = conceptSetBrowserData(),
+                  fileName = file)
+    }
+  )
   
   ##output: nonStandardCount----
   output$nonStandardCount <- DT::renderDT(expr = {
