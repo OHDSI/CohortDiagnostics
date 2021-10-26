@@ -174,7 +174,9 @@ consolidationOfSelectedFieldValues <- function(input,
                                                orphanConceptSetDataComparator = NULL,
                                                excludedConceptSetDataTarget = NULL,
                                                excludedConceptSetDataComparator = NULL,
-                                               indexEventBreakdownDataTable = NULL) {
+                                               indexEventBreakdownDataTable = NULL,
+                                               mappedConceptSetTarget = NULL,
+                                               mappedConceptSetComparator = NULL) {
   data <- list()
   ##########################Cohort Definition tab ##########################
   if (input$tabs == 'cohortDefinition') {
@@ -222,27 +224,37 @@ consolidationOfSelectedFieldValues <- function(input,
 
     if (doesObjectHaveData(input$targetCohortDefinitionResolvedConceptTable_rows_selected)) {
       data$selectedConceptIdTarget <- resolvedConceptSetDataTarget[input$targetCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
-      data$leftSideActive <- TRUE
+      data$TargetActive <- TRUE
     }
     if (doesObjectHaveData(input$comparatorCohortDefinitionResolvedConceptTable_rows_selected)) {
       data$selectedConceptIdComparator <- resolvedConceptSetDataComparator[input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
-      data$rightSideActive <- TRUE
+      data$comparatorActive <- TRUE
     }
     if (doesObjectHaveData(input$targetCohortDefinitionExcludedConceptTable_rows_selected)) {
       data$selectedConceptIdTarget <- excludedConceptSetDataTarget[input$targetCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
-      data$leftSideActive <- TRUE
+      data$TargetActive <- TRUE
     }
     if (doesObjectHaveData(input$comparatorCohortDefinitionExcludedConceptTable_rows_selected)) {
       data$selectedConceptIdComparator <- excludedConceptSetDataComparator[input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
-      data$rightSideActive <- TRUE
+      data$comparatorActive <- TRUE
     }
     if (doesObjectHaveData(input$targetCohortDefinitionOrphanConceptTable_rows_selected)) {
       data$selectedConceptIdTarget <- orphanConceptSetDataTarget[input$targetCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
-      data$leftSideActive <- TRUE
+      data$TargetActive <- TRUE
     }
     if (doesObjectHaveData(input$comparatorCohortDefinitionOrphanConceptTable_rows_selected)) {
       data$selectedConceptIdComparator <- orphanConceptSetDataComparator[input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
-      data$rightSideActive <- TRUE
+      data$comparatorActive <- TRUE
+    }
+    
+    if (doesObjectHaveData(input$targetCohortDefinitionMappedConceptTable_rows_selected)) {
+      data$selectedConceptIdTarget <- mappedConceptSetTarget[input$targetCohortDefinitionMappedConceptTable_rows_selected,]$conceptId
+      data$TargetActive <- TRUE
+    }
+    
+    if (doesObjectHaveData(input$comparatorCohortDefinitionMappedConceptTable_rows_selected)) {
+      data$selectedConceptIdComparator <- mappedConceptSetComparator[input$comparatorCohortDefinitionMappedConceptTable_rows_selected,]$conceptId
+      data$comparatorActive <- TRUE
     }
   }
   ####################################################
@@ -304,7 +316,7 @@ consolidationOfSelectedFieldValues <- function(input,
             doesObjectHaveData(input$indexEventBreakdownTable_rows_selected))) {
       lastRowsSelected <- input$indexEventBreakdownTable_rows_selected[length(input$indexEventBreakdownTable_rows_selected)]
       data$selectedConceptIdTarget <- indexEventBreakdownDataTable[lastRowsSelected, ]$conceptId
-      data$leftSideActive <- TRUE
+      data$TargetActive <- TRUE
     }
   }
   

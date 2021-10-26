@@ -165,6 +165,8 @@ shiny::shinyServer(function(input, output, session) {
       input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,
       input$targetCohortDefinitionOrphanConceptTable_rows_selected,
       input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,
+      input$targetCohortDefinitionMappedConceptTable_rows_selected,
+      input$comparatorCohortDefinitionMappedConceptTable_rows_selected,
       input$selectedDatabaseId,
       input$selectedDatabaseIds,
       input$selectedDatabaseIds_open,
@@ -209,7 +211,9 @@ shiny::shinyServer(function(input, output, session) {
                    orphanConceptSetDataComparator = getOrphanConceptsComparator(),
                    excludedConceptSetDataTarget = getExcludedConceptsTarget(),
                    excludedConceptSetDataComparator = getExcludedConceptsComparator(),
-                   indexEventBreakdownDataTable = getIndexEventBreakdownDataFiltered()
+                   indexEventBreakdownDataTable = getIndexEventBreakdownDataFiltered(),
+                   mappedConceptSetTarget = getMappedConceptsTarget(),
+                   mappedConceptSetComparator = getMappedConceptsComparator()
                  ) 
                  
                  if ((isFALSE(input$selectedCompoundCohortNames_open) ||
@@ -235,8 +239,8 @@ shiny::shinyServer(function(input, output, session) {
                  
                  consolidatedConceptIdTarget(data$selectedConceptIdTarget)
                  consolidatedConceptIdComparator(data$selectedConceptIdComparator)
-                 consolidateCohortDefinitionActiveSideTarget(data$leftSideActive)
-                 consolidateCohortDefinitionActiveSideComparator(data$rightSideActive)
+                 consolidateCohortDefinitionActiveSideTarget(data$TargetActive)
+                 consolidateCohortDefinitionActiveSideComparator(data$comparatorActive)
                })
   
   #______________----
