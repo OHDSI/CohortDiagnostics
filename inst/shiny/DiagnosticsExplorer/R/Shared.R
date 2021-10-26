@@ -371,7 +371,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     if (!DatabaseConnector::dbIsValid(dataSource$connection)) {
       stop("Connection to database seems to be closed.")
     }
-    browser()
+    
     if (dataTableName %in% c('covariateValue', 'covariateValueDist')) {
       if (doesObjectHaveData(minThreshold)) {
         covariate_mean_filter <- minThreshold
