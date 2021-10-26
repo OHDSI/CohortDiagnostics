@@ -373,7 +373,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     ))
   
   # insert into server concept ids in cohort
-  ParallelLogger::logTrace(paste0("    - Uploading using bulk load to ", randomStringTableName))
+  ParallelLogger::logTrace(paste0("    - Uploading to ", randomStringTableName))
   DatabaseConnector::insertTable(
     connection = connection,
     tableName = paste0(cohortDatabaseSchema,".",randomStringTableName),
@@ -382,7 +382,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     tempTable = FALSE,
     tempEmulationSchema = tempEmulationSchema,
     progressBar = FALSE,
-    bulkLoad = TRUE,
+    bulkLoad = if (Sys.getenv("bulkLoad") != TRUE) {FALSE},
     camelCaseToSnakeCase = TRUE,
     data = conceptsCohort
   )
