@@ -77,8 +77,8 @@ sidebarMenu <-
       shinyWidgets::pickerInput(
         inputId = "selectedDatabaseId",
         label = "Datasource",
-        choices = database$databaseId,
-        selected = database$databaseId[1],
+        choices = database$compoundName,
+        selected = database$compoundName[1],
         multiple = FALSE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
@@ -111,8 +111,8 @@ sidebarMenu <-
       shinyWidgets::pickerInput(
         inputId = "selectedDatabaseIds",
         label = "Datasource",
-        choices = database$databaseId,
-        selected = database$databaseId[1],
+        choices = database$compoundName,
+        selected = database$compoundName[1],
         multiple = TRUE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
@@ -1043,8 +1043,8 @@ bodyTabItems <- shinydashboard::tabItems(
             shiny::radioButtons(
               inputId = "visitContextPersonOrRecords",
               label = "Display",
-              choices = c("Person", "Record"),
-              selected = "Person",
+              choices = c("Person Only", "Record Only"),
+              selected = "Person Only",
               inline = TRUE
             )
           ),
@@ -1384,9 +1384,12 @@ bodyTabItems <- shinydashboard::tabItems(
         )
       )
     ),
-    shiny::conditionalPanel(condition = "input.characterizationCompareMethod=='Pretty table' | 
+    shiny::conditionalPanel(
+      condition = "input.characterizationCompareMethod=='Pretty table' |
                             input.characterizationCompareMethod=='Raw table'",
-                            DT::dataTableOutput("compareCharacterizationTable")),
+      shinycssloaders::withSpinner(DT::dataTableOutput("compareCharacterizationTable"),
+                                   type = spinnerType)
+    ), 
     shiny::conditionalPanel(
       condition = "input.characterizationCompareMethod=='Plot'",
       shinydashboard::box(
@@ -1394,7 +1397,10 @@ bodyTabItems <- shinydashboard::tabItems(
         width = NULL,
         status = "primary",
         shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
-        plotly::plotlyOutput(outputId = "compareCharacterizationPlot", height = "auto")
+        shinycssloaders::withSpinner(
+          plotly::plotlyOutput(outputId = "compareCharacterizationPlot", height = "auto"),
+          type = spinnerType
+        )
       )
     )
   ),

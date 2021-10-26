@@ -248,7 +248,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     null.ok = FALSE,
     add = errorMessage
   )
-  minCellCount <- utils::type.convert(minCellCount)
+  minCellCount <- utils::type.convert(minCellCount, as.is = TRUE)
   checkmate::assertInteger(x = minCellCount, lower = 0, add = errorMessage)
   checkmate::assertLogical(incremental, add = errorMessage)
   

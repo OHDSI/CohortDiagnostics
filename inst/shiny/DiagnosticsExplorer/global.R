@@ -37,7 +37,7 @@ alternateVocabularySchema <- c('vocabulary')
 # alternateVocabularySchema <- c('vocabulary')
 
 #Mode
-defaultDatabaseMode <- FALSE # Use file system if FALSE
+defaultDatabaseMode <- TRUE # Use file system if FALSE
 
 #Configuration variables ----
 showIncidenceRate <- TRUE
@@ -47,7 +47,9 @@ showIndexEventBreakdown <- TRUE
 showVisitContext <- TRUE
 showCharacterization <- TRUE
 showTemporalCharacterization <- TRUE
+showCohortOverlap <- TRUE
 filterTemporalChoicesToPrimaryOptions <- TRUE
+spinnerType = 8
 
 showConceptBrowser <- TRUE  #on selected conceptId - show concept browser  (applied for cohort, index event breakdown, characterization tab)
 # (applies to cohort, indexEventBreakdown, characterization, temporalCharacterization, compareCharacterization, temporalCompareCharacterization)
@@ -260,7 +262,8 @@ if (all(exists("conceptSets"),
   conceptSets <- conceptSets %>%
     dplyr::inner_join(cohort %>% 
                         dplyr::select(.data$cohortId,
-                                      .data$shortName)) %>%
+                                      .data$shortName),
+                      by = "cohortId") %>%
     dplyr::mutate(compoundName = paste0(
       .data$shortName,
       "-",
@@ -294,7 +297,8 @@ if (all(exists("conceptSets"),
   conceptSets <- dplyr::bind_rows(conceptSets) %>%
     dplyr::inner_join(cohort %>% 
                         dplyr::select(.data$cohortId,
-                                      .data$shortName)) %>%
+                                      .data$shortName),
+                      by = "cohortId") %>%
     dplyr::mutate(compoundName = paste0(
       .data$shortName,
       "-",
@@ -311,7 +315,8 @@ if (all(exists("database"),
   # cohort is required and is always loaded into R memory
   database <- database %>%
     dplyr::arrange(.data$databaseId) %>%
-    dplyr::mutate(shortName = paste0("D", dplyr::row_number())) %>%
+    dplyr::mutate(id = dplyr::row_number()) %>% 
+    dplyr::mutate(shortName = paste0("D", .data$id)) %>%
     dplyr::mutate(compoundName = paste0(
       .data$shortName,
       ": ",
@@ -319,7 +324,8 @@ if (all(exists("database"),
       "(",
       .data$databaseId,
       ")"
-    ))
+    )) %>% 
+    dplyr::arrange(.data$id)
 }
 
 #enhancement 
@@ -402,13 +408,8 @@ if (!showVisitContext) {
   }
 }
 
-#!!!!!! incomplete logic
-# if (!showOverlap) {
-#   if (exists("visitContext")) {
-#     rm("visitContext")
-#   }
-# }
 
+colorReference <- readr::read_csv(file = 'colorReference.csv',col_types = readr::cols(),guess_max = 1000)
 
 #Extras -----
 # other objects in memory ----
