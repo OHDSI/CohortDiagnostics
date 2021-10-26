@@ -95,7 +95,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     reportOverallTime = FALSE
   )
   
-  ## create andromeda object ----
+  ## Create andromeda object ----
   conceptSetDiagnosticsResults <- Andromeda::andromeda()
   
   ## Cohorts to run----
@@ -660,7 +660,7 @@ extractConceptSetsSqlFromCohortSql <- function(cohortSql) {
         ),
         replacement = "\\1"
       ) %>%
-        utils::type.convert()
+        utils::type.convert(as.is = TRUE)
       temp[[i]] <- tidyr::tibble(conceptSetId = conceptSetIds[i],
                                  conceptSetSql = conceptsetSqls[i])
     }
