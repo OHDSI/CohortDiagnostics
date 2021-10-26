@@ -1083,20 +1083,45 @@ plotCalendarIncidence <- function(data,
 
 plotCompareCohortCharacterization <- function(balance,
                                               isTemporal = FALSE) {
+  # Can't make sense of plot with > 1000 dots anyway, so remove
+  # anything with small mean in both target and comparator:
+  # removing covariates where the value of mean1 and mean2 are similar
   if (!isTemporal) {
-    # Can't make sense of plot with > 1000 dots anyway, so remove
-    # anything with small mean in both target and comparator:
-    if (nrow(balance) > 1000) {
-      balance <- balance %>%
-        dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
-    }
-    if (nrow(balance) > 5000) {
-      balance <- balance %>%
-        dplyr::filter(.data$mean1 > 0.02 | .data$mean2 > 0.02)
-    }
-    if (nrow(balance) > 10000) {
-      balance <- balance %>%
-        dplyr::filter(.data$mean1 > 0.03 | .data$mean2 > 0.03)
+    numberOfDatabaseId <- balance$databaseId %>% unique() %>% sort()
+    dataAll <- list()
+    for (i in (1:length(numberOfDatabaseId))) {
+      dataAll[[i]] <- balance %>% 
+        dplyr::filter(.data$databaseId %in% c(numberOfDatabaseId[[i]]))
+      if (nrow(dataAll[[i]]) > 1000) {
+        dataAll[[i]] <- dataAll[[i]] %>%
+          dplyr::filter((.data$mean1 > 0.01 | .data$mean2 > 0.01) &
+                          (.data$mean1/.data$mean2 > 0.9 |
+                          .data$mean1/.data$mean2 < 1.1))
+      }
+      if (nrow(dataAll[[i]]) > 1000) {
+        dataAll[[i]] <- dataAll[[i]] %>%
+          dplyr::filter((.data$mean1 > 0.02 | .data$mean2 > 0.02) &
+                          (.data$mean1/.data$mean2 > 0.9 |
+                             .data$mean1/.data$mean2 < 1.1))
+      }
+      if (nrow(dataAll[[i]]) > 1000) {
+        dataAll[[i]] <- dataAll[[i]] %>%
+          dplyr::filter((.data$mean1 > 0.03 | .data$mean2 > 0.03) &
+                          (.data$mean1/.data$mean2 > 0.9 |
+                             .data$mean1/.data$mean2 < 1.1))
+      }
+      if (nrow(dataAll[[i]]) > 1000) {
+        dataAll[[i]] <- dataAll[[i]] %>%
+          dplyr::filter((.data$mean1 > 0.04 | .data$mean2 > 0.04) &
+                          (.data$mean1/.data$mean2 > 0.9 |
+                             .data$mean1/.data$mean2 < 1.1))
+      }
+      if (nrow(dataAll[[i]]) > 1000) {
+        dataAll[[i]] <- dataAll[[i]] %>%
+          dplyr::filter((.data$mean1 > 0.05 | .data$mean2 > 0.05) &
+                          (.data$mean1/.data$mean2 > 0.9 |
+                             .data$mean1/.data$mean2 < 1.1))
+      }
     }
   } else if (isTemporal) {
     numberOfTimeId <- balance$timeId %>% unique() %>% sort()
@@ -1104,17 +1129,35 @@ plotCompareCohortCharacterization <- function(balance,
     for (i in (1:length(numberOfTimeId))) {
       dataAll[[i]] <- balance %>% 
         dplyr::filter(.data$timeId %in% c(numberOfTimeId[[i]]))
-      if (nrow(balance) > 1000) {
+      if (nrow(dataAll[[i]]) > 1000) {
         dataAll[[i]] <- dataAll[[i]] %>%
-          dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+          dplyr::filter((.data$mean1 > 0.01 | .data$mean2 > 0.01) &
+                          (.data$mean1/.data$mean2 > 0.9 |
+                             .data$mean1/.data$mean2 < 1.1))
       }
-      if (nrow(balance) > 5000) {
+      if (nrow(dataAll[[i]]) > 1000) {
         dataAll[[i]] <- dataAll[[i]] %>%
-          dplyr::filter(.data$mean1 > 0.02 | .data$mean2 > 0.02)
+          dplyr::filter((.data$mean1 > 0.02 | .data$mean2 > 0.02) &
+                          (.data$mean1/.data$mean2 > 0.9 |
+                             .data$mean1/.data$mean2 < 1.1))
       }
-      if (nrow(balance) > 10000) {
+      if (nrow(dataAll[[i]]) > 1000) {
         dataAll[[i]] <- dataAll[[i]] %>%
-          dplyr::filter(.data$mean1 > 0.03 | .data$mean2 > 0.03)
+          dplyr::filter((.data$mean1 > 0.03 | .data$mean2 > 0.03) &
+                          (.data$mean1/.data$mean2 > 0.9 |
+                             .data$mean1/.data$mean2 < 1.1))
+      }
+      if (nrow(dataAll[[i]]) > 1000) {
+        dataAll[[i]] <- dataAll[[i]] %>%
+          dplyr::filter((.data$mean1 > 0.04 | .data$mean2 > 0.04) &
+                          (.data$mean1/.data$mean2 > 0.9 |
+                             .data$mean1/.data$mean2 < 1.1))
+      }
+      if (nrow(dataAll[[i]]) > 1000) {
+        dataAll[[i]] <- dataAll[[i]] %>%
+          dplyr::filter((.data$mean1 > 0.05 | .data$mean2 > 0.05) &
+                          (.data$mean1/.data$mean2 > 0.9 |
+                             .data$mean1/.data$mean2 < 1.1))
       }
     }
     balance <- dplyr::bind_rows(dataAll)
@@ -1336,7 +1379,7 @@ plotCompareCohortCharacterization <- function(balance,
         yref = "paper",
         xanchor = "center",
         yanchor = "bottom",
-        font = list(size = 10),
+        font = list(size = 12),
         textangle = c(-90, 0, 0)
       )
     )
