@@ -8075,7 +8075,7 @@ shiny::shinyServer(function(input, output, session) {
         value = 0
       )
       plot <-
-        plotCompareCohortCharacterization(balance = data)
+        plotCompareCohortCharacterization(balance = data, isTemporal = FALSE)
       return(plot)
     })
   
@@ -8348,9 +8348,8 @@ shiny::shinyServer(function(input, output, session) {
         paste0("No data for the selected combination.")
       ))
       plot <-
-        plotTemporalCompareStandardizedDifference(
-          balance = data,
-          shortNameRef = cohort)
+        plotCompareCohortCharacterization(balance = data,
+                                          isTemporal = TRUE)
       return(plot)
     })
   
