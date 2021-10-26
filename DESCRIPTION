@@ -51,6 +51,7 @@ Suggests:
   RSQLite (>= 2.2.1),
   scales,
   shiny,
+  shinycssloaders,
   shinydashboard,
   shinyWidgets,
   testthat,
