@@ -1394,7 +1394,10 @@ bodyTabItems <- shinydashboard::tabItems(
         width = NULL,
         status = "primary",
         shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
-        plotly::plotlyOutput(outputId = "compareCharacterizationPlot", height = "auto")
+        shinycssloaders::withSpinner(
+          plotly::plotlyOutput(outputId = "compareCharacterizationPlot", height = "auto"),
+          type = spinnerType
+        )
       )
     )
   ),

@@ -49,6 +49,7 @@ showCharacterization <- TRUE
 showTemporalCharacterization <- TRUE
 showCohortOverlap <- TRUE
 filterTemporalChoicesToPrimaryOptions <- TRUE
+spinnerType = 8
 
 showConceptBrowser <- TRUE  #on selected conceptId - show concept browser  (applied for cohort, index event breakdown, characterization tab)
 # (applies to cohort, indexEventBreakdown, characterization, temporalCharacterization, compareCharacterization, temporalCompareCharacterization)
