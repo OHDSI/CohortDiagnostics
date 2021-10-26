@@ -1239,10 +1239,10 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                                    minCellCount,
                                                    conceptIdUniverse) {
   if (is.null(minCellCount)) {
-    minCount <- 0
+    minCellCount <- 0
   }
   if (minCellCount < 0) {
-    minCount <- 0
+    minCellCount <- 0
   }
   
   sqlVocabulary <- "IF OBJECT_ID('tempdb..#indx_concepts', 'U') IS NOT NULL
@@ -1428,7 +1428,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
         ".",
         rowData$domainConceptId,
         " (filtered to min ",
-        minCount,
+        minCellCount,
         " subject count if concept id not related to cohort definition.)"
       )
     )
