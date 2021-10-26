@@ -303,6 +303,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              seriesType = NULL,
                                              eventMonth = NULL,
                                              eventYear = NULL,
+                                             minThreshold = NULL,
                                              dataTableName) {
   if (is(dataSource, "environment")) {
     object <- c(
@@ -356,6 +357,12 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                  dplyr::filter(.data$conceptId2 %in% !!conceptId1)) %>% 
         dplyr::distinct()
     }
+    if (dataTableName %in% c('covariateValue', 'covariateValueDist')) {
+      if (doesObjectHaveData(minThreshold)) {
+        data <- data %>% 
+          dplyr::filter(.data$mean > minThreshold)
+      }
+    }
   } else {
     if (is.null(dataSource$connection)) {
       stop("No connection provided. Unable to query database.")
@@ -363,6 +370,14 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     
     if (!DatabaseConnector::dbIsValid(dataSource$connection)) {
       stop("Connection to database seems to be closed.")
+    }
+    browser()
+    if (dataTableName %in% c('covariateValue', 'covariateValueDist')) {
+      if (doesObjectHaveData(minThreshold)) {
+        covariate_mean_filter <- minThreshold
+      }
+    } else {
+      covariate_mean_filter <- NULL
     }
     
     sql <- "SELECT * \n
@@ -383,6 +398,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
               {@event_month !=''} ? {AND event_month IN (@event_month) \n}
               {@event_year !=''} ? {AND event_year IN (@event_year) \n}
               {@days_relative_index !=''} ? {AND days_relative_index IN (@days_relative_index) \n}
+              {@covariate_mean_filter !=''} ? {AND mean > @covariate_mean_filter \n}
             ;"
     if (!is.null(vocabularyDatabaseSchema)) {
       resultsDatabaseSchema <- vocabularyDatabaseSchema
@@ -412,6 +428,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         event_month = eventMonth,
         event_year = eventYear,
         days_relative_index = daysRelativeIndex,
+        covariate_mean_filter = minThreshold,
         snakeCaseToCamelCase = TRUE
       )
   }
@@ -2610,6 +2627,8 @@ getResultsCohortOverlap <- function(dataSource,
 #'
 #' @template DatabaseIds
 #'
+#' @param minThreshold Do you want to set the minimum threshold for db extraction
+#'
 #' @return
 #' Returns a list object with covariateValue, covariateValueDist,
 #' covariateRef, analysisRef output of feature extraction along with
@@ -2619,7 +2638,8 @@ getResultsCohortOverlap <- function(dataSource,
 getFeatureExtractionCharacterization <-
   function(dataSource = .GlobalEnv,
            cohortIds = NULL,
-           databaseIds = NULL) {
+           databaseIds = NULL,
+           minThreshold = 0.01) {
     analysisRef <- getResultsAnalysisRef(dataSource = dataSource)
     covariateRef <- getResultsCovariateRef(dataSource = dataSource)
     concept <- getConcept(dataSource = dataSource,
@@ -2627,11 +2647,13 @@ getFeatureExtractionCharacterization <-
     covariateValue <-
       getResultsCovariateValue(dataSource = dataSource,
                                cohortIds = cohortIds,
-                               databaseIds = databaseIds)
+                               databaseIds = databaseIds,
+                               minThreshold = minThreshold)
     covariateValueDist <-
       getResultsCovariateValueDist(dataSource = dataSource,
                                    cohortIds = cohortIds,
-                                   databaseIds = databaseIds)
+                                   databaseIds = databaseIds,
+                                   minThreshold = minThreshold)
     return(
       list(
         analysisRef = analysisRef,
@@ -2658,6 +2680,8 @@ getFeatureExtractionCharacterization <-
 #'
 #' @template DatabaseIds
 #'
+#' @param minThreshold Do you want to set the minimum threshold for db extraction
+#' 
 #' @return
 #' Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
 #' temporalCovariateRef, temporalAnalysisRef, temporalTimeRef, Concept output of feature extraction.
@@ -2666,7 +2690,8 @@ getFeatureExtractionCharacterization <-
 getFeatureExtractionTemporalCharacterization <-
   function(dataSource = .GlobalEnv,
            cohortIds = NULL,
-           databaseIds = NULL) {
+           databaseIds = NUL,
+           minThreshold = 0.01) {
     temporalAnalysisRef <-
       getResultsTemporalAnalysisRef(dataSource = dataSource)
     temporalCovariateRef <-
@@ -3394,12 +3419,14 @@ getMultipleCharacterizationResults <-
 # not exported
 getResultsCovariateValue <- function(dataSource,
                                      cohortIds,
-                                     databaseIds) {
+                                     databaseIds,
+                                     minThreshold = 0.01) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortId = cohortIds,
     databaseId = databaseIds,
-    dataTableName = "covariateValue"
+    dataTableName = "covariateValue",
+    minThreshold = minThreshold
   )
   return(data)
 }
@@ -3407,12 +3434,14 @@ getResultsCovariateValue <- function(dataSource,
 # not exported
 getResultsCovariateValueDist <- function(dataSource,
                                          cohortIds,
-                                         databaseIds) {
+                                         databaseIds,
+                                         minThreshold) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortId = cohortIds,
     databaseId = databaseIds,
-    dataTableName = "covariateValueDist"
+    dataTableName = "covariateValueDist",
+    minThreshold = minThreshold
   )
   return(data)
 }
