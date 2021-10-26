@@ -8328,7 +8328,6 @@ shiny::shinyServer(function(input, output, session) {
       }
     )
   
-  ##!!!!!!!!!!!!! address https://github.com/OHDSI/CohortDiagnostics/issues/444
   ###compareTemporalCharacterizationPlot----
   output$compareTemporalCharacterizationPlot2D <-
     plotly::renderPlotly(expr = {

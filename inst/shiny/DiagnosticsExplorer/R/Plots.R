@@ -1178,28 +1178,6 @@ plotCompareCohortCharacterization <- function(balance,
       by = "databaseId"
     )
   
-  #plot headers
-  xLabelMain <- balance %>%
-    dplyr::distinct(.data$comparatorCohort) %>%
-    dplyr::mutate(comparatorCohort = paste0("Comparator (", .data$comparatorCohort, ")")) %>%
-    dplyr::pull(.data$comparatorCohort)
-  yLabelMain <- balance %>%
-    dplyr::distinct(.data$targetCohort) %>%
-    dplyr::mutate(targetCohort = paste0("Target (", .data$targetCohort, ")")) %>%
-    dplyr::pull(.data$targetCohort)
-  
-  targetName <- balance %>%
-    dplyr::select(.data$cohortId1) %>%
-    dplyr::mutate(cohortId = .data$cohortId1) %>%
-    dplyr::inner_join(cohort, by = "cohortId") %>%
-    dplyr::pull(.data$cohortName) %>% unique()
-  
-  comparatorName <- balance %>%
-    dplyr::select(.data$cohortId2) %>%
-    dplyr::mutate(cohortId = .data$cohortId2) %>%
-    dplyr::inner_join(cohort, by = "cohortId") %>%
-    dplyr::pull(.data$cohortName) %>% unique()
-  
   #to sort the loop by database short name
   distinctDatabaseShortName <- database %>%
     dplyr::arrange(.data$id) %>%
@@ -1288,15 +1266,39 @@ plotCompareCohortCharacterization <- function(balance,
   
   databaseArray  <- c()
   for (i in 1:length(distinctDatabaseShortName)) {
-    databaseArray  <- database %>%
-      dplyr::filter(.data$shortName == distinctDatabaseShortName[i]) %>%
-      dplyr::pull(.data$compoundName)
+    databaseArray  <- paste0("    ",
+                             database %>%
+                               dplyr::filter(.data$shortName == 
+                                               distinctDatabaseShortName[i]) %>%
+                               dplyr::pull(.data$compoundName))
   }
-  databaseString  <- paste0(databaseArray , collapse = ", ")
   marginValues <- list(l = 100,
                        r = 0,
                        b = 200,
                        t = 50)
+  
+  targetName <- balance %>%
+    dplyr::select(.data$cohortId1) %>%
+    dplyr::mutate(cohortId = .data$cohortId1) %>%
+    dplyr::inner_join(cohort, by = "cohortId") %>%
+    dplyr::pull(.data$cohortName) %>% unique()
+  
+  comparatorName <- balance %>%
+    dplyr::select(.data$cohortId2) %>%
+    dplyr::mutate(cohortId = .data$cohortId2) %>%
+    dplyr::inner_join(cohort, by = "cohortId") %>%
+    dplyr::pull(.data$cohortName) %>% unique()
+  
+  #plot headers
+  xLabelMain <- balance %>%
+    dplyr::distinct(.data$comparatorCohort) %>%
+    dplyr::mutate(comparatorCohort = paste0("Comparator (", .data$comparatorCohort, ")")) %>%
+    dplyr::pull(.data$comparatorCohort)
+  yLabelMain <- balance %>%
+    dplyr::distinct(.data$targetCohort) %>%
+    dplyr::mutate(targetCohort = paste0("Target (", .data$targetCohort, ")")) %>%
+    dplyr::pull(.data$targetCohort)
+  
   plot <- plotly::subplot(
     plotsArrary,
     nrows = ceiling(length(plotsArrary) / 5),
@@ -1312,17 +1314,22 @@ plotCompareCohortCharacterization <- function(balance,
         text = c(
           yLabelMain,
           xLabelMain,
-          paste(
-            xLabelMain,
-            " : ",
-            comparatorName,
-            ", ",
-            yLabelMain,
-            " : ",
+          paste0(
+            paste0("Comparator Cohort-",
+                   balance %>%
+                     dplyr::distinct(.data$comparatorCohort), ": ", 
+                   comparatorName),
+            "\n",
+            "\n",
+            "\n",
+            "Target Cohort-",
+            balance %>%
+              dplyr::distinct(.data$targetCohort), ": ", 
             targetName,
             "\n",
-            "Database - ",
-            databaseString
+            "\n",
+            "\n",
+            paste0("Databases: \n", paste0(databaseArray , collapse = "\n"))
           )
         ),
         showarrow = FALSE,
