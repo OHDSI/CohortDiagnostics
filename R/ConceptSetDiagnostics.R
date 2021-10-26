@@ -372,7 +372,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       sample(x = LETTERS, size = 1, replace = TRUE),
       paste0(sample(
         x = c(LETTERS, 0:9),
-        size = 12,
+        size = 15,
         replace = TRUE
       ), collapse = "")
     ))
