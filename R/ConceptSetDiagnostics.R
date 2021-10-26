@@ -248,8 +248,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
                     .data$conceptId) %>%
       dplyr::distinct()
   }
-  # insert into server concept ids in cohort - for cohort level tracking - excluded concepts
-  ParallelLogger::logTrace("   - Uploading to #concepts_cohort - excluded concepts.")
   delta <- Sys.time() - excludedConceptsStart
   ParallelLogger::logTrace("  - Collecting excluded concepts took ",
                            signif(delta, 3),
@@ -288,8 +286,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
                   .data$conceptSetId,
                   .data$conceptId) %>%
     dplyr::arrange(.data$cohortId, .data$conceptSetId, .data$conceptId)
-  # insert into server concept ids in cohort - for cohort level tracking - orphan concepts
-  ParallelLogger::logTrace("   - Uploading to #concepts_cohort - orphan concepts.")
   delta <- Sys.time() - startOrphanCodes
   ParallelLogger::logTrace("  - Finding orphan concepts took ",
                            signif(delta, 3),
