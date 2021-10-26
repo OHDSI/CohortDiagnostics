@@ -3135,6 +3135,8 @@ getCohortAsFeatureTemporalCharacterizationResults <-
 #' 
 #' @param cohortRelationshipCharacterizationResults Do you want to get cohort relationship characterization results?
 #'
+#' @param minThreshold Do you want to set the minimum threshold for db extraction
+#'
 #' @return
 #' Returns multiple characterization output
 #'
@@ -3146,7 +3148,8 @@ getMultipleCharacterizationResults <-
            featureExtractionCharacterization = TRUE,
            featureExtractionTemporalCharacterization = TRUE,
            cohortRelationshipCharacterizationResults = TRUE,
-           cohortRelationshipTemporalCharacterizationResults = TRUE) {
+           cohortRelationshipTemporalCharacterizationResults = TRUE,
+           minThreshold = 0.01) {
     
     addCharacterizationSource <-
       function(x, characterizationSourceValue) {
@@ -3184,7 +3187,8 @@ getMultipleCharacterizationResults <-
       featureExtractioncharacterization <-
         getFeatureExtractionCharacterization(dataSource = dataSource,
                                              cohortIds = cohortIds,
-                                             databaseIds = databaseIds)
+                                             databaseIds = databaseIds,
+                                             minThreshold = minThreshold)
       
       featureExtractioncharacterization <-
         addCharacterizationSource(x = featureExtractioncharacterization,
@@ -3221,7 +3225,8 @@ getMultipleCharacterizationResults <-
       featureExtractionTemporalcharacterization <-
         getFeatureExtractionTemporalCharacterization(dataSource = dataSource,
                                                      cohortIds = cohortIds,
-                                                     databaseIds = databaseIds)
+                                                     databaseIds = databaseIds,
+                                                     minThreshold = minThreshold)
       featureExtractionTemporalcharacterization <-
         addCharacterizationSource(x = featureExtractionTemporalcharacterization,
                                   characterizationSourceValue = 'FT')
