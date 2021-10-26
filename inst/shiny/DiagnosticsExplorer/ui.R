@@ -1384,9 +1384,12 @@ bodyTabItems <- shinydashboard::tabItems(
         )
       )
     ),
-    shiny::conditionalPanel(condition = "input.characterizationCompareMethod=='Pretty table' | 
+    shiny::conditionalPanel(
+      condition = "input.characterizationCompareMethod=='Pretty table' |
                             input.characterizationCompareMethod=='Raw table'",
-                            DT::dataTableOutput("compareCharacterizationTable")),
+      shinycssloaders::withSpinner(DT::dataTableOutput("compareCharacterizationTable"),
+                                   type = spinnerType)
+    ), 
     shiny::conditionalPanel(
       condition = "input.characterizationCompareMethod=='Plot'",
       shinydashboard::box(

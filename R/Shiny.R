@@ -86,6 +86,7 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   ensure_installed("shiny")
   ensure_installed("shinydashboard")
   ensure_installed("shinyWidgets")
+  ensure_installed("shinycssloaders")
   ensure_installed("stringr")
   ensure_installed("SqlRender")
   ensure_installed("tidyr")
