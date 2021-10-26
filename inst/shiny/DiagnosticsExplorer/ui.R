@@ -77,8 +77,8 @@ sidebarMenu <-
       shinyWidgets::pickerInput(
         inputId = "selectedDatabaseId",
         label = "Datasource",
-        choices = database$databaseId,
-        selected = database$databaseId[1],
+        choices = database$compoundName,
+        selected = database$compoundName[1],
         multiple = FALSE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
@@ -111,8 +111,8 @@ sidebarMenu <-
       shinyWidgets::pickerInput(
         inputId = "selectedDatabaseIds",
         label = "Datasource",
-        choices = database$databaseId,
-        selected = database$databaseId[1],
+        choices = database$compoundName,
+        selected = database$compoundName[1],
         multiple = TRUE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(

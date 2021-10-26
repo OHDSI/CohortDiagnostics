@@ -214,7 +214,9 @@ consolidationOfSelectedFieldValues <- function(input,
     }
     #selection on database id
     if (doesObjectHaveData(input$selectedDatabaseIds)) {
-        data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
+        data$selectedDatabaseIdTarget <-   database %>% 
+          dplyr::filter(.data$compoundName == input$selectedDatabaseIds) %>% 
+          dplyr::pull(.data$databaseId) 
     }
     #selection on concept id
 
@@ -276,13 +278,17 @@ consolidationOfSelectedFieldValues <- function(input,
         input$tabs == 'compareTemporalCharacterization') {
       
       if (doesObjectHaveData(input$selectedDatabaseId)) {
-        data$selectedDatabaseIdTarget <- input$selectedDatabaseId
+        data$selectedDatabaseIdTarget <- database %>% 
+          dplyr::filter(.data$compoundName == input$selectedDatabaseId) %>% 
+          dplyr::pull(.data$databaseId)  
       } else {
         data$selectedDatabaseIdTarget <- NULL
       }
     } else {
       if (doesObjectHaveData(input$selectedDatabaseIds)) {
-        data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
+        data$selectedDatabaseIdTarget <- database %>% 
+          dplyr::filter(.data$compoundName == input$selectedDatabaseIds) %>% 
+          dplyr::pull(.data$databaseId)
       }
     }
    
@@ -327,7 +333,9 @@ consolidationOfSelectedFieldValues <- function(input,
     
     #mutli select databaseId
     if (doesObjectHaveData(input$selectedDatabaseIds)) {
-      data$selectedDatabaseIdTarget <- input$selectedDatabaseIds
+      data$selectedDatabaseIdTarget <- database %>% 
+        dplyr::filter(.data$compoundName == input$selectedDatabaseIds) %>% 
+        dplyr::pull(.data$databaseId) 
     }
     
   }
