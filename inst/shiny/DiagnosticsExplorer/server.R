@@ -528,7 +528,7 @@ shiny::shinyServer(function(input, output, session) {
                                  tags$td(
                                    align = "right",
                                    shiny::downloadButton(
-                                     "saveMappedConceptsTableTarget",
+                                     "saveTargetCohortDefinitionMappedConceptTable",
                                      label = "",
                                      icon = shiny::icon("download"),
                                      style = "margin-top: 5px; margin-bottom: 5px;"
@@ -720,6 +720,7 @@ shiny::shinyServer(function(input, output, session) {
                                                   "Resolved",
                                                   "Excluded",
                                                   "Recommended",
+                                                  "Mapped",
                                                   "Concept Set Json",
                                                   "Concept Set Sql"
                                                 ),
@@ -1670,7 +1671,6 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange(dplyr::desc(abs(dplyr::across(c("persons","records")))))
     return(data)
   })
-    
   
   ###getResolvedConceptsComparatorData----
   getResolvedConceptsComparatorData <- shiny::reactive({
@@ -1866,6 +1866,72 @@ shiny::shinyServer(function(input, output, session) {
         conceptIds = data$conceptId %>% unique(),
         cohortIds = consolidatedCohortIdComparator(),
         databaseCount = (input$comparatorConceptIdCountSource == "Datasource Level")
+      )
+    if (!doesObjectHaveData(count)) {
+      return(data %>% 
+               dplyr::mutate("records" = NA, "persons" = NA))
+    }
+    data <- data %>% 
+      dplyr::left_join(count, 
+                       by = c('databaseId', 'conceptId')) %>% 
+      dplyr::arrange(dplyr::desc(abs(dplyr::across(c("persons","records")))))
+    return(data)
+  })
+  
+  ###getMappedConceptsTargetData----
+  getMappedConceptsComparatorData <- shiny::reactive({
+    data <- getResolvedConceptsComparatorData()
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    resolvedConceptIds <- data$conceptId %>% unique()
+    
+    mappedConcepts <- getConceptRelationship(
+      dataSource = dataSource,
+      conceptIds = resolvedConceptIds, 
+      relationshipIds = "Mapped from"
+    )
+    if (!doesObjectHaveData(mappedConcepts)) {
+      return(NULL)
+    }
+    mappedConcepts <- mappedConcepts %>% 
+      dplyr::rename("conceptId" = .data$conceptId1)
+    mappedconceptIds <- mappedConcepts$conceptId2 %>% unique()
+    
+    conceptIdDetails <- getConcept(dataSource = dataSource,
+                                   conceptIds = c(resolvedConceptIds, mappedconceptIds) %>% unique())
+    
+    outputData <- data %>% 
+      dplyr::select(.data$databaseId,
+                    .data$conceptId,
+                    .data$conceptName) %>% 
+      dplyr::distinct() %>% 
+      dplyr::mutate(resolvedConcept = paste0(.data$conceptId, " (", .data$conceptName, ")")) %>% 
+      dplyr::select(-.data$conceptName) %>% 
+      dplyr::relocate(.data$resolvedConcept) %>% 
+      dplyr::inner_join(mappedConcepts, by = "conceptId") %>% 
+      dplyr::filter(.data$conceptId != .data$conceptId2) %>% 
+      dplyr::select(-.data$conceptId) %>% 
+      dplyr::rename(conceptId = .data$conceptId2) %>% 
+      dplyr::select(.data$databaseId, .data$resolvedConcept, .data$conceptId) %>% 
+      dplyr::inner_join(conceptIdDetails, by = "conceptId")
+    
+    return(outputData)
+  })
+  
+  ###getMappedConceptsComparator----
+  getMappedConceptsComparator <- shiny::reactive({
+    data <- getMappedConceptsComparatorData()
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    count <-
+      getConceptCountForCohortAndDatabase(
+        dataSource = dataSource,
+        databaseIds = consolidatedDatabaseIdTarget(),
+        conceptIds = data$conceptId %>% unique(),
+        cohortIds = consolidatedCohortIdComparator(),
+        databaseCount = (input$targetConceptIdCountSource == "Datasource Level")
       )
     if (!doesObjectHaveData(count)) {
       return(data %>% 
@@ -3188,9 +3254,6 @@ shiny::shinyServer(function(input, output, session) {
       return(table)
     }, server = TRUE)
   
-  
-  
-  
   #output: targetCohortDefinitionMappedConceptTable----
   output$targetCohortDefinitionMappedConceptTable <-
     DT::renderDataTable(expr = {
@@ -3253,6 +3316,19 @@ shiny::shinyServer(function(input, output, session) {
       return(table)
     }, server = TRUE)
   
+  ##saveTargetCohortDefinitionMappedConceptTable
+  output$saveTargetCohortDefinitionMappedConceptTable <-
+    downloadHandler(
+      filename = function()
+      {
+        getCsvFileNameWithDateTime(string = "orphanconcepts")
+      },
+      content = function(file)
+      {
+        downloadCsv(x = getMappedConceptsTarget(),
+                    fileName = file)
+      }
+    )
   
   #output: targetConceptsetExpressionJson----
   output$targetConceptsetExpressionJson <- shiny::renderText({
@@ -3963,6 +4039,82 @@ shiny::shinyServer(function(input, output, session) {
       }
     )
   
+  #output: comparatorCohortDefinitionMappedConceptTable----
+  output$comparatorCohortDefinitionMappedConceptTable <-
+    DT::renderDataTable(expr = {
+      validate(need(
+        length(consolidatedCohortIdComparator()) > 0,
+        "Please select concept set"
+      ))
+      validate(need(
+        length(consolidatedDatabaseIdTarget()) > 0,
+        "Please select database id"
+      ))
+      data <- getMappedConceptsComparator()
+      validate(need(doesObjectHaveData(data), "No resolved concept ids"))
+      keyColumnFields <- c("resolvedConcept", "conceptId", "conceptName", "vocabularyId")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      dataColumnFields <-
+        c("persons",
+          "records")
+      if (input$targetCohortConceptSetColumnFilter == "Both") {
+        dataColumnFields <- dataColumnFields
+        sketchLevel <- 2
+      } else if (input$targetCohortConceptSetColumnFilter == "Person Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("person")
+          )]
+        sketchLevel <- 1
+      } else if (input$targetCohortConceptSetColumnFilter == "Record Only") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(
+            string = tolower(dataColumnFields),
+            pattern = tolower("record")
+          )]
+        sketchLevel <- 1
+      }
+      
+      countsForHeader <-
+        getCountsForHeaderForUseInDataTable(
+          dataSource = dataSource,
+          databaseIds = consolidatedDatabaseIdTarget(),
+          cohortIds = consolidatedCohortIdTarget(),
+          source = input$targetConceptIdCountSource,
+          fields = input$targetCohortConceptSetColumnFilter
+        )
+      
+      maxCountValue <-
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                      string = dataColumnFields)
+      
+      table <- getDtWithColumnsGroupedByDatabaseId(
+        data = data,
+        headerCount = countsForHeader,
+        keyColumns = keyColumnFields,
+        sketchLevel = sketchLevel,
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
+        showResultsAsPercent = input$showAsPercentageColumnTarget 
+      )
+      return(table)
+    }, server = TRUE)
+  
+  ##output: saveComparatorCohortDefinitionMappedConceptTable----
+  output$saveComparatorCohortDefinitionMappedConceptTable <-
+    downloadHandler(
+      filename = function()
+      {
+        getCsvFileNameWithDateTime(string = "orphanconcepts")
+      },
+      content = function(file)
+      {
+        downloadCsv(x = getMappedConceptsComparator(),
+                    fileName = file)
+      }
+    )
+  
   ##output: comparatorCohortDefinitionConceptsetExpressionJson----
   output$comparatorCohortDefinitionConceptsetExpressionJson <-
     shiny::renderText({
@@ -4399,11 +4551,14 @@ shiny::shinyServer(function(input, output, session) {
           updateRadioButtons(session = session,
                              inputId = "comparatorConceptSetsType",
                              selected = "Resolved")
-        }
-        else if (input$targetConceptSetsType == "Excluded") {
+        } else if (input$targetConceptSetsType == "Excluded") {
           updateRadioButtons(session = session,
                              inputId = "comparatorConceptSetsType",
                              selected = "Excluded")
+        } else if (input$targetConceptSetsType == "Mapped") {
+          updateRadioButtons(session = session,
+                             inputId = "comparatorConceptSetsType",
+                             selected = "Mapped")
         } else if (input$targetConceptSetsType == "Recommended") {
           updateRadioButtons(session = session,
                              inputId = "comparatorConceptSetsType",
@@ -4537,6 +4692,10 @@ shiny::shinyServer(function(input, output, session) {
           updateRadioButtons(session = session,
                              inputId = "targetConceptSetsType",
                              selected = "Excluded")
+        } else if (input$comparatorConceptSetsType == "Mapped") {
+          updateRadioButtons(session = session,
+                             inputId = "targetConceptSetsType",
+                             selected = "Mapped")
         } else if (input$comparatorConceptSetsType == "Recommended") {
           updateRadioButtons(session = session,
                              inputId = "targetConceptSetsType",
