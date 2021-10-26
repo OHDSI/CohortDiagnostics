@@ -1420,7 +1420,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                                   datediff(dd, c.cohort_start_date, d1.@domain_start_date) = 0;"
   
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i,]
+    rowData <- domains[i, ]
     ParallelLogger::logTrace(
       paste0(
         "  - Working on ",
@@ -1469,15 +1469,12 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
       reportOverallTime = FALSE,
       progressBar = FALSE
     )
-  }
-  
-  for (i in (1:nrow(domains))) {
-    rowData <- domains[i,]
-    if (all(
-      !is.na(rowData$domainSourceConceptId),
-      nchar(rowData$domainSourceConceptId) > 4
-    )) {
-      ParallelLogger::logTrace(paste0("   - Performing concept id count - _source_concept_id field of domain table"))
+    
+    if (all(!is.na(rowData$domainSourceConceptId),
+            nchar(rowData$domainSourceConceptId) > 4)) {
+      ParallelLogger::logTrace(paste0(
+        "   - Performing concept id count - _source_concept_id field of domain table"
+      ))
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sqlConceptIdCount,
