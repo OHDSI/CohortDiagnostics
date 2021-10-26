@@ -367,36 +367,33 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      conceptsCohortMapped2) %>%
     dplyr::distinct()
   
-  ## create table to track concept id in a cohort
-  ParallelLogger::logTrace("    - Creating index_concept_id table")
-  sql <-
-    "IF OBJECT_ID('tempdb..#concepts_cohort', 'U') IS NOT NULL
-                      	DROP TABLE #index_concept_id;
-                      CREATE TABLE #index_concept_id (cohort_id BIGINT, concept_id INT);
-  "
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = connection,
-    sql = sql,
-    tempEmulationSchema = tempEmulationSchema,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
+  randomStringTableName <-
+    tolower(paste0(
+      sample(x = LETTERS, size = 1, replace = TRUE),
+      paste0(sample(
+        x = c(LETTERS, 0:9),
+        size = 12,
+        replace = TRUE
+      ), collapse = "")
+    ))
+  
   # insert into server concept ids in cohort
   ParallelLogger::logTrace("    - Uploading to #index_concept_id")
   DatabaseConnector::insertTable(
     connection = connection,
-    tableName = "#index_concept_id",
+    tableName = randomStringTableName,
     createTable = TRUE,
     dropTableIfExists = TRUE,
-    tempTable = TRUE,
+    tempTable = FALSE,
     tempEmulationSchema = tempEmulationSchema,
     progressBar = FALSE,
+    bulkLoad = TRUE,
     camelCaseToSnakeCase = TRUE,
     data = conceptsCohort
   )
   delta <- Sys.time() - startCohortConceptTrack
   ParallelLogger::logTrace(
-    "    - Creating and loading concept_id's to index_concept_id took ",
+    "    - Creating and loading concept_id's for use in index event breakdown took ",
     signif(delta, 3),
     " ",
     attr(delta, "units")
@@ -414,7 +411,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       cohortTable = cohortTable,
       minCellCount = minCellCount,
       tempEmulationSchema = tempEmulationSchema,
-      conceptIdUniverse = "#concepts_cohort"
+      conceptIdUniverse = randomStringTableName
     )
   if (!keepCustomConceptId) {
     conceptSetDiagnosticsResults$indexEventBreakdown <-
@@ -426,6 +423,17 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            signif(delta, 3),
                            " ",
                            attr(delta, "units"))
+  
+  
+  ParallelLogger::logInfo(paste0("  - Dropping table ", randomStringTableName))
+  sqlDrop <- paste0("DROP TABLE ",
+                    randomStringTableName,
+                    ";")
+  DatabaseConnector::renderTranslateExecuteSql(connection = connection, 
+                                               sql = sqlDrop, 
+                                               progressBar = FALSE, 
+                                               reportOverallTime = FALSE)
+  ParallelLogger::logInfo("    - Success")
   
   ## Concept count----
   ParallelLogger::logInfo("  - Counting concepts in data source.")
