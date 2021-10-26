@@ -393,6 +393,9 @@ runConceptSetDiagnostics <- function(connection = NULL,
     " ",
     attr(delta, "units")
   )
+  if (Sys.getenv("bulkLoad") != TRUE) {
+    ParallelLogger::logTrace("      - Bulkload was used.")
+  }
   
   ## Index event breakdown ----
   ParallelLogger::logInfo("  - Learning about the breakdown in index events.")
