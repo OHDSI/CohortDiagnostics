@@ -1310,24 +1310,23 @@ plotCompareCohortCharacterization <- function(balance,
       scene = list(aspectration = list(x = 1, y = 1)),
       annotations = list(
         x = c(-0.05, 0.5, 0.5),
-        y = c(0.5, -0.1, -0.2),
+        y = c(0.5, -0.1, -0.4),
         text = c(
           yLabelMain,
           xLabelMain,
           paste0(
+            "\n",
+            "\n",
+            "\n",
             paste0("Comparator Cohort-",
                    balance %>%
                      dplyr::distinct(.data$comparatorCohort), ": ", 
                    comparatorName),
             "\n",
-            "\n",
-            "\n",
             "Target Cohort-",
             balance %>%
               dplyr::distinct(.data$targetCohort), ": ", 
             targetName,
-            "\n",
-            "\n",
             "\n",
             paste0("Databases: \n", paste0(databaseArray , collapse = "\n"))
           )
@@ -1336,8 +1335,8 @@ plotCompareCohortCharacterization <- function(balance,
         xref = "paper",
         yref = "paper",
         xanchor = "center",
-        yanchor = "middle",
-        font = list(size = 18),
+        yanchor = "bottom",
+        font = list(size = 10),
         textangle = c(-90, 0, 0)
       )
     )
