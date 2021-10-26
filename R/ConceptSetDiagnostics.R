@@ -1428,7 +1428,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
         " subject count if concept id not related to cohort definition.)"
       )
     )
-    ParallelLogger::logTrace(paste0("   - Performing concept count - _concept_id field of domain table"))
+    ParallelLogger::logTrace(paste0("   - Performing concept count - ", rowData$domainConceptId, " field of ", rowData$domainTable, " table"))
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sqlConceptIdCount,
@@ -1447,7 +1447,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
       progressBar = FALSE
     )
     
-    ParallelLogger::logTrace(paste0("   - Performing co concept id count - standard fields only"))
+    ParallelLogger::logTrace(paste0("   - Performing co-concept count - ", rowData$domainConceptId, " field of ", rowData$domainTable, " table"))
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sqlConceptIdCoConceptIdSameCount,
@@ -1468,9 +1468,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
     
     if (all(!is.na(rowData$domainSourceConceptId),
             nchar(rowData$domainSourceConceptId) > 4)) {
-      ParallelLogger::logTrace(paste0(
-        "   - Performing concept id count - _source_concept_id field of domain table"
-      ))
+      ParallelLogger::logTrace(paste0("   - Performing concept count - ", rowData$domainSourceConceptId, " field of ", rowData$domainTable, " table"))
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sqlConceptIdCount,
@@ -1488,7 +1486,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
         reportOverallTime = FALSE,
         progressBar = FALSE
       )
-      ParallelLogger::logTrace(paste0("   - Performing co concept id count - source and source field"))
+      ParallelLogger::logTrace(paste0("   - Performing co-concept count - ",rowData$domainSourceConceptId, " field of ", rowData$domainTable, " table"))
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sqlConceptIdCoConceptIdSameCount,
@@ -1507,7 +1505,13 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
         progressBar = FALSE
       )
       
-      ParallelLogger::logTrace(paste0("   - Performing co concept id count - standard and source field"))
+      ParallelLogger::logTrace(paste0("   - Performing co-concept count - ", 
+                                      rowData$domainConceptId, 
+                                      " field and ", 
+                                      rowData$domainSourceConceptId, 
+                                      " of ", 
+                                      rowData$domainTable, 
+                                      " table"))
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sqlConceptIdCoConceptIdOppositeCount,
