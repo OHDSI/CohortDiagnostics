@@ -393,6 +393,9 @@ runConceptSetDiagnostics <- function(connection = NULL,
     " ",
     attr(delta, "units")
   )
+  if (Sys.getenv("bulkLoad") != TRUE) {
+    ParallelLogger::logTrace("      - Bulkload was used.")
+  }
   
   ## Index event breakdown ----
   ParallelLogger::logInfo("  - Learning about the breakdown in index events.")
@@ -406,7 +409,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
       cohortTable = cohortTable,
       minCellCount = minCellCount,
       tempEmulationSchema = tempEmulationSchema,
-      conceptIdUniverse = paste0(cohortDatabaseSchema,".",randomStringTableName)
+      conceptIdUniverse = "#concept_tracking",
+      conceptIdToFilterIndexEvent = paste0(cohortDatabaseSchema,".",randomStringTableName)
     )
   if (!keepCustomConceptId) {
     conceptSetDiagnosticsResults$indexEventBreakdown <-
@@ -1233,7 +1237,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                                    rangeMin = -30,
                                                    rangeMax = 30,
                                                    minCellCount,
-                                                   conceptIdUniverse) {
+                                                   conceptIdUniverse,
+                                                   conceptIdToFilterIndexEvent) {
   if (is.null(minCellCount)) {
     minCellCount <- 0
   }
@@ -1273,10 +1278,25 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                                sql = sqlVocabulary, 
                                                progressBar = FALSE, 
                                                reportOverallTime = FALSE,
-                                               concept_id_universe = conceptIdUniverse,
+                                               concept_id_universe = conceptIdToFilterIndexEvent,
                                                cdm_database_schema = cdmDatabaseSchema,
                                                tempEmulationSchema = tempEmulationSchema)
   
+  if (!is.null(conceptTrackingTable)) {
+    # keeping track
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql =  "INSERT INTO @concept_tracking_table
+            SELECT DISTINCT concept_id
+            FROM #indx_concepts
+            WHERE concept_id != 0;",
+      tempEmulationSchema = tempEmulationSchema,
+      concept_tracking_table = conceptTrackingTable,
+      concept_sets_table = conceptSetsTable,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+  }
   
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide
