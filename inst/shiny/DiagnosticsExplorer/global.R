@@ -36,8 +36,11 @@ alternateVocabularySchema <- c('vocabulary')
 # defaultVocabularySchema <- Sys.getenv("phenotypeLibrarydbVocabSchema")
 # alternateVocabularySchema <- c('vocabulary')
 
+# Other Phenotype DB
+
 #Mode
 defaultDatabaseMode <- FALSE # Use file system if FALSE
+
 
 #Configuration variables ----
 showIncidenceRate <- TRUE
