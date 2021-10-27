@@ -1018,6 +1018,12 @@ getConceptMetadata <- function(dataSource,
   if (getConceptRelationship) {
     data$relationship <-
       getVocabularyRelationship(dataSource = dataSource)
+    if (!doesObjectHaveData(data$relationship)) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(data$conceptRelationship)) {
+      return(NULL)
+    }
     data$conceptRelationship <-
       getConceptRelationship(
         dataSource = dataSource,
