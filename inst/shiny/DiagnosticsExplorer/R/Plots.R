@@ -381,7 +381,7 @@ plotTs <- function(data,
                                      "\nvalueType = ",valueType )) %>%
     plotly::layout(showlegend = FALSE,
                    xaxis = list(range = c(xAxisMin, xAxisMax)),
-                   yaxis = list(tickformat = ifelse((valueType == "records" || valueType == "persons"),",d",".2%")))
+                   yaxis = list(tickformat = ifelse((valueType == "recordsProportion" || valueType == "personsProportion"),".2%",",d")))
   
   
   
