@@ -2094,7 +2094,6 @@ shiny::shinyServer(function(input, output, session) {
     progress$set(message = paste0("Retrieving synonyms for concept id: ", activeSelected()$conceptId),
                  value = 0)
     data <- list()
-    browser()
     data$concept <- getConcept(dataSource = dataSource,
                                conceptId = activeSelected()$conceptId)
     data$conceptSynonym <- getConceptSynonym(dataSource = dataSource,

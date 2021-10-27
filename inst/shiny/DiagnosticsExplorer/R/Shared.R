@@ -790,7 +790,7 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
       return(NULL)
     }
     data <- get(table, envir = dataSource) %>%
-      dplyr::filter(.data$conceptId %in% conceptId)
+      dplyr::filter(.data$conceptId %in% !!conceptId)
     
   } else {
     sql <-
