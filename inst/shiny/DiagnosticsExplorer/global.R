@@ -41,7 +41,6 @@ alternateVocabularySchema <- c('vocabulary')
 #Mode
 defaultDatabaseMode <- FALSE # Use file system if FALSE
 
-
 #Configuration variables ----
 showIncidenceRate <- TRUE
 showTimeSeries <- TRUE
@@ -323,10 +322,7 @@ if (all(exists("database"),
     dplyr::mutate(compoundName = paste0(
       .data$shortName,
       ": ",
-      .data$databaseName,
-      "(",
-      .data$databaseId,
-      ")"
+      .data$databaseId
     )) %>% 
     dplyr::arrange(.data$id)
 }
