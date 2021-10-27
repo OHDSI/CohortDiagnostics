@@ -2537,28 +2537,33 @@ shiny::shinyServer(function(input, output, session) {
   
   ##getMetadataForConceptId----
   getMetadataForConceptId <- shiny::reactive(x = {
-    if (is.null(activeSelected()$conceptId)) {#currently expecting to be vector of 1 (single select)
+    if (!doesObjectHaveData(activeSelected()$conceptId)) {
+      #currently expecting to be vector of 1 (single select)
       return(NULL)
     }
     if (length(activeSelected()$conceptId) != 1) {
       stop("Only single select is supported for conceptId")
     }
-    if (is.null(activeSelected()$cohortId)) {#currently expecting to be vector of 1 (single select)
+    if (!doesObjectHaveData(activeSelected()$cohortId)) {
+      #currently expecting to be vector of 1 (single select)
       return(NULL)
     }
     if (length(activeSelected()$cohortId) != 1) {
       stop("Only single select is supported for cohortId")
     }
-    if (is.null(consolidatedDatabaseIdTarget())) {#currently expecting to be vector of 1 or more (multiselect)
+    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+      #currently expecting to be vector of 1 or more (multiselect)
       return(NULL)
     }
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(
-      message = paste0("Getting metadata for concept id:",
-                       activeSelected()$conceptId,
-                       " in cohort: ",
-                       activeSelected()$cohortId),
+      message = paste0(
+        "Getting metadata for concept id:",
+        activeSelected()$conceptId,
+        " in cohort: ",
+        activeSelected()$cohortId
+      ),
       value = 0
     )
     data <-
@@ -2589,7 +2594,7 @@ shiny::shinyServer(function(input, output, session) {
         data$conceptCooccurrence %>%
         dplyr::filter(.data$referenceConceptId == activeSelected()$conceptId) %>%
         dplyr::filter(.data$cohortId == activeSelected()$cohortId) %>%
-        dplyr::select(-.data$referenceConceptId, -.data$cohortId) %>% 
+        dplyr::select(-.data$referenceConceptId,-.data$cohortId) %>%
         dplyr::arrange(.data$databaseId, dplyr::desc(.data$subjectCount))
     }
     if (!is.null(data$conceptRelationshipTable)) {
@@ -2600,24 +2605,28 @@ shiny::shinyServer(function(input, output, session) {
     }
     if (!is.null(data$conceptMapping)) {
       data$mappedNonStandard <-
-        data$concept %>% 
+        data$concept %>%
         dplyr::filter(is.na(.data$standardConcept) |
-                        !.data$standardConcept == 'S') %>% 
-        dplyr::select(.data$conceptId, 
+                        !.data$standardConcept == 'S') %>%
+        dplyr::select(.data$conceptId,
                       .data$conceptName,
-                      .data$vocabularyId) %>% 
-        dplyr::inner_join(data$conceptMapping %>%
-                            dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>%
-                            dplyr::select(-.data$conceptId) %>% 
-                            dplyr::rename("conceptId" = .data$sourceConceptId) %>% 
-                            dplyr::select(.data$databaseId,
-                                          .data$domainTable,
-                                          .data$conceptId,
-                                          .data$conceptCount,
-                                          .data$subjectCount) %>% 
-                            dplyr::distinct() %>% 
-                            dplyr::arrange(dplyr::desc(.data$subjectCount)),
-                          by = "conceptId") %>% 
+                      .data$vocabularyId) %>%
+        dplyr::inner_join(
+          data$conceptMapping %>%
+            dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>%
+            dplyr::select(-.data$conceptId) %>%
+            dplyr::rename("conceptId" = .data$sourceConceptId) %>%
+            dplyr::select(
+              .data$databaseId,
+              .data$domainTable,
+              .data$conceptId,
+              .data$conceptCount,
+              .data$subjectCount
+            ) %>%
+            dplyr::distinct() %>%
+            dplyr::arrange(dplyr::desc(.data$subjectCount)),
+          by = "conceptId"
+        ) %>%
         dplyr::distinct()
     }
     return(data)
@@ -4274,16 +4283,18 @@ shiny::shinyServer(function(input, output, session) {
       doesObjectHaveData(data),
       "No information for selected concept id."
     ))
-    
     if (input$tabs == "indexEventBreakdown") {
-      relationshipNameFilter <- input$choicesForRelationshipNameForIndexEvent
-      relationshipDistanceFilter <- input$choicesForRelationshipDistanceForIndexEvent
+      relationshipNameFilter <-
+        input$choicesForRelationshipNameForIndexEvent
+      relationshipDistanceFilter <-
+        input$choicesForRelationshipDistanceForIndexEvent
     } else {
       relationshipNameFilter <- input$choicesForRelationshipName
-      relationshipDistanceFilter <- input$choicesForRelationshipDistance
+      relationshipDistanceFilter <-
+        input$choicesForRelationshipDistance
     }
     
-    conceptRelationshipTable <- data$conceptRelationshipTable %>% 
+    conceptRelationshipTable <- data$conceptRelationshipTable %>%
       dplyr::filter(.data$conceptId != activeSelected()$conceptId)
     if (any(
       doesObjectHaveData(relationshipNameFilter),
@@ -4293,9 +4304,7 @@ shiny::shinyServer(function(input, output, session) {
         conceptRelationshipTable <- conceptRelationshipTable %>%
           dplyr::inner_join(
             relationship %>%
-              dplyr::filter(
-                .data$relationshipName %in% c(relationshipNameFilter)
-              ) %>%
+              dplyr::filter(.data$relationshipName %in% c(relationshipNameFilter)) %>%
               dplyr::select(.data$relationshipId) %>%
               dplyr::distinct(),
             by = "relationshipId"
@@ -4331,8 +4340,10 @@ shiny::shinyServer(function(input, output, session) {
         .data$relationshipId,
         .data$records,
         .data$persons
-      ) %>% 
-      dplyr::arrange(.data$databaseId, .data$conceptId, dplyr::desc(.data$records))
+      ) %>%
+      dplyr::arrange(.data$databaseId,
+                     .data$conceptId,
+                     dplyr::desc(.data$records))
     
     return(data)
   })
@@ -4341,11 +4352,9 @@ shiny::shinyServer(function(input, output, session) {
   output$conceptBrowserTable <- DT::renderDT(expr = {
     
     data <- conceptSetBrowserData()
-    
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    
     keyColumnFields <- c("conceptId", 
                          "conceptName",
                          "vocabularyId",

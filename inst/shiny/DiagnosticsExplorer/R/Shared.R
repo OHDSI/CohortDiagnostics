@@ -1021,15 +1021,15 @@ getConceptMetadata <- function(dataSource,
     if (!doesObjectHaveData(data$relationship)) {
       return(NULL)
     }
-    if (!doesObjectHaveData(data$conceptRelationship)) {
-      return(NULL)
-    }
     data$conceptRelationship <-
       getConceptRelationship(
         dataSource = dataSource,
         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
         conceptIds = conceptIds
       )
+    if (!doesObjectHaveData(data$conceptRelationship)) {
+      return(NULL)
+    }
     #output for concept relationship table in shiny app
     conceptRelationship <- dplyr::bind_rows(
       data$conceptRelationship %>%
