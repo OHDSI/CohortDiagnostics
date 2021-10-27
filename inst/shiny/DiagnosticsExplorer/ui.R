@@ -452,10 +452,13 @@ bodyTabItems <- shinydashboard::tabItems(
                               ),
                               shiny::column(
                                 width = 12,
-                                plotly::plotlyOutput(
-                                  outputId = "conceptSetTimeSeriesPlot",
-                                  width = "100%",
-                                  height = "100%"
+                                shinycssloaders::withSpinner(
+                                  plotly::plotlyOutput(
+                                    outputId = "conceptSetTimeSeriesPlot",
+                                    width = "100%",
+                                    height = "100%"
+                                  ),
+                                  type = spinnerType
                                 )
                               )
                             ),
@@ -832,12 +835,11 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       shiny::conditionalPanel(
         condition = "input.timeSeriesType=='Plot'",
-       shiny::column(12,
-          plotly::plotlyOutput("fixedTimeSeriesPlot",height = "auto"),
-          tags$head(
-            tags$style("#fixedTimeSeriesPlot { width: '90vw' !important};")
-          )
-        )
+        shiny::column(12,
+                      shinycssloaders::withSpinner(plotly::plotlyOutput("fixedTimeSeriesPlot", height = "auto"),type = spinnerType),
+                      tags$head(
+                        tags$style("#fixedTimeSeriesPlot { width: '90vw' !important};")
+                      ))
       )
     )
   ),
@@ -853,22 +855,22 @@ bodyTabItems <- shinydashboard::tabItems(
       status = "primary",
       tags$br(),
       tags$h4("Time distribution"),
-      plotly::plotlyOutput("timeDistributionPlot", height = "auto"),
+      shinycssloaders::withSpinner(plotly::plotlyOutput("timeDistributionPlot", height = "auto"), type = spinnerType),
       tags$head(
         tags$style("#timeDistributionPlot { width: '90vw' !important};")
       ),
-      tags$table(width = "100%", 
+      tags$table(width = "100%",
                  tags$tr(
-                   tags$td(align = "right",
-                           shiny::downloadButton(
-                             "saveTimeDistributionTable",
-                             label = "",
-                             icon = shiny::icon("download"),
-                             style = "margin-top: 5px; margin-bottom: 5px;"
-                           )
+                   tags$td(
+                     align = "right",
+                     shiny::downloadButton(
+                       "saveTimeDistributionTable",
+                       label = "",
+                       icon = shiny::icon("download"),
+                       style = "margin-top: 5px; margin-bottom: 5px;"
+                     )
                    )
-                 )
-      ),
+                 )),
       DT::dataTableOutput("timeDistributionTable")
     )
   ),
@@ -1004,10 +1006,13 @@ bodyTabItems <- shinydashboard::tabItems(
           shiny::tabPanel(
             title = "Time Series Plot",
             value = "conceptSetTimeSeriesForIndexEvent",
-            plotly::plotlyOutput(
-              outputId = "conceptSetTimeSeriesPlotForIndexEvent",
-              width = "100%",
-              height = "100%"
+            shinycssloaders::withSpinner(
+              plotly::plotlyOutput(
+                outputId = "conceptSetTimeSeriesPlotForIndexEvent",
+                width = "100%",
+                height = "100%"
+              ),
+              type = spinnerType
             )
           )
         )
@@ -1113,9 +1118,9 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       shiny::conditionalPanel(
         condition = "input.overlapPlotFilter == 'Plot'",
-        plotly::plotlyOutput("overlapPlot", height = "auto"),
+        shinycssloaders::withSpinner(plotly::plotlyOutput("overlapPlot", height = "auto"), type = spinnerType),
         shiny::conditionalPanel(condition = "output.doesCohortAndComparatorsAreSingleSelected",
-                                plotly::plotlyOutput("overlapPiePlot", height = 400)
+                                shinycssloaders::withSpinner(plotly::plotlyOutput("overlapPiePlot", height = 400), type = spinnerType)
         )
       ),
       shiny::conditionalPanel(
@@ -1520,22 +1525,28 @@ bodyTabItems <- shinydashboard::tabItems(
             title = "2D Plot",
             value = "compareTemporalCharacterization2DPlotPanel",
             tags$br(),
-            plotly::plotlyOutput(
-              outputId = "compareTemporalCharacterizationPlot2D",
-              width = "100%",
-              height = "auto"
-            ),
+            shinycssloaders::withSpinner(
+              plotly::plotlyOutput(
+                outputId = "compareTemporalCharacterizationPlot2D",
+                width = "100%",
+                height = "auto"
+              ),
+              type = spinnerType
+            )
           ),
           if (show3DTempolarCharecterizationPlot) {
             shiny::tabPanel(
               title = "3D Plot",
               value = "compareTemporalCharacterization3DPlotPanel",
               tags$br(),
-              plotly::plotlyOutput(
-                outputId = "compareTemporalCharacterizationPlot3D",
-                width = "100%",
-                height = 800
-              ),
+              shinycssloaders::withSpinner(
+                plotly::plotlyOutput(
+                  outputId = "compareTemporalCharacterizationPlot3D",
+                  width = "100%",
+                  height = 800
+                ),
+                type = spinnerType
+              )
             )
           }
         ),
