@@ -186,6 +186,12 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", startDateTime, '. Initiating...')
+  ParallelLogger::logInfo("")
+  ParallelLogger::logInfo(" - Database id: ", databaseId)
+  ParallelLogger::logInfo(" - Database Name: ", databaseName)
+  ParallelLogger::logInfo(" - Database Description: ", databaseDescription)
+  ParallelLogger::logInfo("")
+  ParallelLogger::logInfo(" - Cohort table: ", cohortTable)
   
   # collect arguments that were passed to cohort diagnostics at initiation
   argumentsAtDiagnosticsInitiation <- formals(runCohortDiagnostics)
