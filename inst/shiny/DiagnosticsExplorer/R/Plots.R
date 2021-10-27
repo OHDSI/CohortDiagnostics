@@ -537,11 +537,17 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   colorReference <- colorReference %>% 
     dplyr::mutate(color = c(lightColors,darkColors))
  
-  plotData <- plotData %>% 
+  plotData <- data %>% 
     dplyr::inner_join(cohort %>% 
                         dplyr::select(.data$cohortId, .data$shortName),
-                      by = .data$cohortId) %>% 
-    dplyr::rename("shortName" = .data$shortName)
+                      by = "cohortId") %>% 
+    dplyr::rename("shortName" = .data$shortName) %>% 
+    dplyr::inner_join(
+      database %>%
+        dplyr::select(.data$databaseId, .data$shortName) %>%
+        dplyr::rename("databaseShortName" = .data$shortName),
+      by = "databaseId"
+    )
     
   
   sortShortName <- plotData %>%
