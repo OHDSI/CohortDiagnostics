@@ -37,7 +37,7 @@ alternateVocabularySchema <- c('vocabulary')
 # alternateVocabularySchema <- c('vocabulary')
 
 #Mode
-defaultDatabaseMode <- TRUE # Use file system if FALSE
+defaultDatabaseMode <- FALSE # Use file system if FALSE
 
 #Configuration variables ----
 showIncidenceRate <- TRUE
