@@ -1963,6 +1963,7 @@ plotCohortOverlapPie <- function(data,
                       values = ~value,
                       title = distinctDatabaseShortName[i],  
                       name = distinctDatabaseShortName[i],
+                      hovertemplate = ~paste(databaseId,'<br>',subjectsIn,': ',value,'<br>'),
                       domain = list(row = 0, column = i - 1),
                       marker = list(colors = colors),
                       showlegend = ifelse(i == length(distinctDatabaseShortName),T,F)) 
