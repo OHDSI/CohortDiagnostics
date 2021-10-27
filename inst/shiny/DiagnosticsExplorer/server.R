@@ -6720,12 +6720,8 @@ shiny::shinyServer(function(input, output, session) {
                  value = 0)
     data <- cohortOverlapData()
     validate(need(
-      !is.null(data),
+      doesObjectHaveData(data),
       paste0("No cohort overlap data for this combination")
-    ))
-    validate(need(
-      nrow(data) > 0,
-      paste0("No cohort overlap data for this combination.")
     ))
     
     plot <- plotCohortOverlap(

@@ -520,7 +520,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   )
   checkmate::reportAssertions(collection = errorMessage)
   
-  initialColor <- read.csv(paste0(getwd(),"/colorReference.csv")) %>% 
+  initialColor <- colorReference %>% 
     dplyr::filter(.data$type == "database",.data$name == "database") %>% 
     dplyr::pull(.data$value)
   
@@ -542,12 +542,14 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
     dplyr::inner_join(cohort %>% 
                         dplyr::select(.data$cohortId, .data$shortName),
                       by = "cohortId") %>% 
-    dplyr::rename("shortName" = .data$shortName) %>% 
     dplyr::inner_join(
       database %>%
         dplyr::select(.data$databaseId, .data$shortName) %>%
         dplyr::rename("databaseShortName" = .data$shortName),
       by = "databaseId"
+    ) %>% 
+    dplyr::inner_join(
+      colorReference, by = "databaseId"
     )
     
   
@@ -573,14 +575,15 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   distinctCohortCompoundName <- cohort %>% 
     dplyr::filter(.data$shortName %in% sortShortName$shortName) %>% 
     dplyr::pull(.data$compoundName) %>% 
-    paste(collapse = ";")
+    paste(collapse = "\n")
   
   distinctDatabaseCompoundName <- database %>% 
     dplyr::filter(.data$shortName %in% distinctDatabaseShortName) %>% 
     dplyr::pull(.data$compoundName) %>% 
-    paste(collapse = ";")
+    paste(collapse = "\n")
   
- plotHeight <- 200 + length(distinctDatabaseShortName) * length(sortShortName$shortName) * 100
+ # plotHeight <- 200 + length(distinctDatabaseShortName) * length(sortShortName$shortName) * 100
+  plotHeight <- 800
   databasePlots <- list()
   for (i in 1:length(distinctDatabaseShortName)) {
     filteredDataByDatabase <- plotData %>%
@@ -675,19 +678,20 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   m <- list(
     l = 50,
     r = 50,
-    b = 100,
+    b = 200,
     t = 70
   )
   finalPlot <-
     plotly::subplot(databasePlots, nrows = length(databasePlots), margin = 0.008) %>% 
     plotly::layout(margin = m,
                    annotations = list(
-                     x = 0.5 ,
-                     y = -0.2 + length(distinctDatabaseShortName) * length(sortShortName$shortName) * 0.0125,
-                     text = paste0(distinctCohortCompoundName,"\n",distinctDatabaseCompoundName),
+                     x = 0.3 ,
+                     y = -0.2,
+                     text = paste0("<b>Cohorts :</b>\n",distinctCohortCompoundName,"\n\n","<b>DataSource :</b>\n",distinctDatabaseCompoundName),
                      showarrow = F,
                      xref = 'paper',
                      yref = 'paper',
+                     align = 'left',
                      xanchor = 'center',
                      yanchor = 'middle'
                    ))
