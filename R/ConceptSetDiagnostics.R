@@ -381,7 +381,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     tempTable = FALSE,
     tempEmulationSchema = tempEmulationSchema,
     progressBar = FALSE,
-    bulkLoad = if (Sys.getenv("bulkLoad") != TRUE) {FALSE},
+    bulkLoad = (Sys.getenv("bulkLoad") == TRUE),
     camelCaseToSnakeCase = TRUE,
     data = conceptsCohort
   )
