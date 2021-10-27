@@ -36,8 +36,10 @@ alternateVocabularySchema <- c('vocabulary')
 # defaultVocabularySchema <- Sys.getenv("phenotypeLibrarydbVocabSchema")
 # alternateVocabularySchema <- c('vocabulary')
 
+# Other Phenotype DB
+
 #Mode
-defaultDatabaseMode <- TRUE # Use file system if FALSE
+defaultDatabaseMode <- FALSE # Use file system if FALSE
 
 #Configuration variables ----
 showIncidenceRate <- TRUE
@@ -320,10 +322,7 @@ if (all(exists("database"),
     dplyr::mutate(compoundName = paste0(
       .data$shortName,
       ": ",
-      .data$databaseName,
-      "(",
-      .data$databaseId,
-      ")"
+      .data$databaseId
     )) %>% 
     dplyr::arrange(.data$id)
 }

@@ -790,7 +790,7 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
       return(NULL)
     }
     data <- get(table, envir = dataSource) %>%
-      dplyr::filter(.data$conceptId %in% conceptId)
+      dplyr::filter(.data$conceptId %in% !!conceptId)
     
   } else {
     sql <-
@@ -1018,12 +1018,18 @@ getConceptMetadata <- function(dataSource,
   if (getConceptRelationship) {
     data$relationship <-
       getVocabularyRelationship(dataSource = dataSource)
+    if (!doesObjectHaveData(data$relationship)) {
+      return(NULL)
+    }
     data$conceptRelationship <-
       getConceptRelationship(
         dataSource = dataSource,
         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
         conceptIds = conceptIds
       )
+    if (!doesObjectHaveData(data$conceptRelationship)) {
+      return(NULL)
+    }
     #output for concept relationship table in shiny app
     conceptRelationship <- dplyr::bind_rows(
       data$conceptRelationship %>%

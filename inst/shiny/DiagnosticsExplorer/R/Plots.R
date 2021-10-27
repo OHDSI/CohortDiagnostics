@@ -358,7 +358,7 @@ plotTs <- function(data,
                    plotHeight,
                    xAxisMin,
                    xAxisMax,
-                   valueType = "Records") {
+                   valueType = "records") {
   plot <-
     plotly::plot_ly(
       data = data,
@@ -380,7 +380,8 @@ plotTs <- function(data,
                       text = ~ paste("Database ID = ",.data$databaseId,
                                      "\nvalueType = ",valueType )) %>%
     plotly::layout(showlegend = FALSE,
-                   xaxis = list(range = c(xAxisMin, xAxisMax)))
+                   xaxis = list(range = c(xAxisMin, xAxisMax)),
+                   yaxis = list(tickformat = ifelse((valueType == "recordsProportion" || valueType == "personsProportion"),".2%",",d")))
   
   
   
@@ -519,29 +520,31 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   )
   checkmate::reportAssertions(collection = errorMessage)
   
-  initialColor <- read.csv(paste0(getwd(),"/colorReference.csv")) %>% 
+  initialColor <- colorReference %>% 
     dplyr::filter(.data$type == "database",.data$name == "database") %>% 
     dplyr::pull(.data$value)
   
-  colorReference <- data %>% 
-    dplyr::select(.data$databaseId) %>% 
-    unique()
-
-  lightColors <- colorRampPalette(c(initialColor, "#FFFFFF"))(ceiling(nrow(colorReference)/2) + 1) %>% 
+  selectedColors <- colorRampPalette(c("#000000",initialColor, "#FFFFFF"))(length(data$databaseId %>% unique()) + 2) %>% 
     head(-1) %>% 
     tail(-1)
   
-  darkColors <- colorRampPalette(c(initialColor, "#000000"))(floor(nrow(colorReference)/2) + 2) %>% 
-    head(-1) 
-  
-  colorReference <- colorReference %>% 
-    dplyr::mutate(color = c(lightColors,darkColors))
- 
-  plotData <- plotData %>% 
+
+  plotData <- data %>% 
     dplyr::inner_join(cohort %>% 
                         dplyr::select(.data$cohortId, .data$shortName),
-                      by = .data$cohortId) %>% 
-    dplyr::rename("shortName" = .data$shortName)
+                      by = "cohortId") %>% 
+    dplyr::inner_join(
+      database %>%
+        dplyr::select(.data$databaseId, .data$shortName) %>%
+        dplyr::rename("databaseShortName" = .data$shortName),
+      by = "databaseId"
+    ) %>% 
+    dplyr::inner_join(
+      data %>% 
+        dplyr::select(.data$databaseId) %>% 
+        unique() %>% 
+        dplyr::mutate(color = selectedColors), by = "databaseId"
+    )
     
   
   sortShortName <- plotData %>%
@@ -566,14 +569,15 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   distinctCohortCompoundName <- cohort %>% 
     dplyr::filter(.data$shortName %in% sortShortName$shortName) %>% 
     dplyr::pull(.data$compoundName) %>% 
-    paste(collapse = ";")
+    paste(collapse = "\n")
   
   distinctDatabaseCompoundName <- database %>% 
     dplyr::filter(.data$shortName %in% distinctDatabaseShortName) %>% 
     dplyr::pull(.data$compoundName) %>% 
-    paste(collapse = ";")
+    paste(collapse = "\n")
   
- plotHeight <- 200 + length(distinctDatabaseShortName) * length(sortShortName$shortName) * 100
+ # plotHeight <- 200 + length(distinctDatabaseShortName) * length(sortShortName$shortName) * 100
+  plotHeight <- 800
   databasePlots <- list()
   for (i in 1:length(distinctDatabaseShortName)) {
     filteredDataByDatabase <- plotData %>%
@@ -668,19 +672,20 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   m <- list(
     l = 50,
     r = 50,
-    b = 100,
+    b = 200,
     t = 70
   )
   finalPlot <-
     plotly::subplot(databasePlots, nrows = length(databasePlots), margin = 0.008) %>% 
     plotly::layout(margin = m,
                    annotations = list(
-                     x = 0.5 ,
-                     y = -0.2 + length(distinctDatabaseShortName) * length(sortShortName$shortName) * 0.0125,
-                     text = paste0(distinctCohortCompoundName,"\n",distinctDatabaseCompoundName),
+                     x = 0.3 ,
+                     y = -0.2,
+                     text = paste0("<b>Cohorts :</b>\n",distinctCohortCompoundName,"\n\n","<b>DataSource :</b>\n",distinctDatabaseCompoundName),
                      showarrow = F,
                      xref = 'paper',
                      yref = 'paper',
+                     align = 'left',
                      xanchor = 'center',
                      yanchor = 'middle'
                    ))
@@ -1956,6 +1961,7 @@ plotCohortOverlapPie <- function(data,
                       values = ~value,
                       title = distinctDatabaseShortName[i],  
                       name = distinctDatabaseShortName[i],
+                      hovertemplate = ~paste(databaseId,'<br>',subjectsIn,': ',value,'<br>'),
                       domain = list(row = 0, column = i - 1),
                       marker = list(colors = colors),
                       showlegend = ifelse(i == length(distinctDatabaseShortName),T,F)) 
