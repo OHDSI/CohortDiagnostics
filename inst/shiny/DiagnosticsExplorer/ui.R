@@ -724,12 +724,8 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "timeSeries",
-    # createShinyBoxFromOutputId("timeSeriesSelectedCohorts"),
-    createShinyBoxWithSplitForTwoOutputIds(leftOutputId = "timeSeriesSelectedCohorts", 
-                                           leftOutputLabel = "Cohort",
-                                           rightOutputId = "timeSeriesSelectedDatabase",
-                                           rightOutputLabel = "Datasource",
-                                           leftUnits = 70),
+    createShinyBoxWithSplitForTwoOutputIds(outputIdCohort = "timeSeriesSelectedCohorts",
+                                           outputIdDatasource = "timeSeriesSelectedDatabase"),
     tags$table(
       tags$tr(
         tags$td(
@@ -845,11 +841,8 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "timeDistribution",
-    createShinyBoxWithSplitForTwoOutputIds(leftOutputId = "timeDistSelectedCohorts", 
-                                           leftOutputLabel = "Cohort",
-                                           rightOutputId = "timeDistSelectedDatabase",
-                                           rightOutputLabel = "Datasource",
-                                           leftUnits = 70),
+    createShinyBoxWithSplitForTwoOutputIds(outputIdCohort = "timeDistSelectedCohorts",
+                                           outputIdDatasource = "timeDistSelectedDatabase"),
     shinydashboard::box(
       width = NULL,
       status = "primary",
@@ -1070,11 +1063,8 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
     # createShinyBoxFromOutputId("cohortOverlapSelectedCohort"),
-    createShinyBoxWithSplitForTwoOutputIds(leftOutputId = "cohortOverlapSelectedCohort", 
-                                           leftOutputLabel = "Cohort",
-                                           rightOutputId = "cohortOverlapSelectedDatabaseId",
-                                           rightOutputLabel = "Datasource",
-                                           leftUnits = 70),
+    createShinyBoxWithSplitForTwoOutputIds(outputIdCohort = "cohortOverlapSelectedCohort",
+                                           outputIdDatasource = "cohortOverlapSelectedDatabaseId"),
     shinydashboard::box(
       title = "Cohort Overlap (Subjects)",
       width = NULL,
@@ -1222,11 +1212,8 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "temporalCharacterization",
-    createShinyBoxWithSplitForTwoOutputIds(leftOutputId = "temporalCharacterizationSelectedCohort",
-                                           leftOutputLabel = "Cohort",
-                                           rightOutputId = "temporalCharacterizationSelectedDatabase",
-                                           rightOutputLabel = "Datasource",
-                                           leftUnits = 70),
+    createShinyBoxWithSplitForTwoOutputIds(outputIdCohort = "temporalCharacterizationSelectedCohort",
+                                           outputIdDatasource = "temporalCharacterizationSelectedDatabase"),
     tags$table(tags$tr(
       tags$td(
         shinyWidgets::pickerInput(
@@ -1290,11 +1277,8 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "compareCohortCharacterization",
-    createShinyBoxWithSplitForTwoOutputIds(leftOutputId = "cohortCharCompareSelectedCohort", 
-                                           leftOutputLabel = "Cohort",
-                                           rightOutputId = "cohortCharCompareSelectedDatabase",
-                                           rightOutputLabel = "Datasource",
-                                           leftUnits = 70),
+    createShinyBoxWithSplitForTwoOutputIds(outputIdCohort = "cohortCharCompareSelectedCohort", 
+                                           outputIdDatasource = "cohortCharCompareSelectedDatabase"),
     tags$table(
       tags$tr(
         tags$td(
@@ -1411,11 +1395,8 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "compareTemporalCharacterization",
-    createShinyBoxWithSplitForTwoOutputIds(leftOutputId = "temporalCharCompareSelectedCohort", 
-                                           leftOutputLabel = "Cohort",
-                                           rightOutputId = "temporalCharCompareSelectedDatabase",
-                                           rightOutputLabel = "Datasource",
-                                           leftUnits = 70),
+    createShinyBoxWithSplitForTwoOutputIds(outputIdCohort = "temporalCharCompareSelectedCohort",
+                                           outputIdDatasource = "temporalCharCompareSelectedDatabase"),
     tags$table(width = '100%',
       tags$tr(
         tags$td(
