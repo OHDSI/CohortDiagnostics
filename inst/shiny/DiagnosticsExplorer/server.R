@@ -4496,6 +4496,49 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   })
   
+  ##getSourceCodesObservedForConceptIdInDatasource----
+  getSourceCodesObservedForConceptIdInDatasource <- shiny::reactive(x = {
+    conceptId <- activeSelected()$conceptId
+    cohortId <- activeSelected()$cohortId
+    databaseId <- consolidatedDatabaseIdTarget()
+    if (!all(
+      doesObjectHaveData(conceptId),
+      doesObjectHaveData(cohortId),
+      doesObjectHaveData(databaseId)
+    )){
+      return(NULL)
+    }
+    
+    data <- getResultsConceptMapping(
+      dataSource,
+      databaseIds = databaseId,
+      conceptIds = conceptId,
+      domainTables = 'All'
+    )
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    conceptMapping <- data %>%
+      dplyr::inner_join(
+        getConcept(dataSource, conceptIds = data$sourceConceptId),
+        by = c("sourceConceptId" = "conceptId")
+      ) %>%
+      dplyr::select(
+        .data$sourceConceptId,
+        .data$conceptName,
+        .data$vocabularyId,
+        .data$databaseId,
+        .data$conceptCount,
+        .data$subjectCount
+      ) %>%
+      dplyr::rename(
+        "conceptId" = .data$sourceConceptId,
+        "persons" = .data$subjectCount,
+        "records" = .data$conceptCount
+      )
+  })
+  
+  
   ##output: conceptSetStandardToNonStandardTable----
   output$conceptSetStandardToNonStandardTable <- DT::renderDT(expr = {
     conceptId <- activeSelected()$conceptId
@@ -4512,41 +4555,43 @@ shiny::shinyServer(function(input, output, session) {
                        conceptId),
       value = 0
     )
-    data <- getResultsConceptMapping(dataSource, 
-                             databaseIds = databaseId,#active selected databaseid
-                             conceptIds = conceptId, # active  selected conceptId
-                             domainTables = 'All' #default
-    )
+    data <- getSourceCodesObservedForConceptIdInDatasource()
+
     validate(need(
       doesObjectHaveData(data),
       "No information for selected concept id."
     ))
     
-    conceptMapping <- data %>% 
-      dplyr::inner_join(getConcept(dataSource,conceptIds = data$sourceConceptId), by = c("sourceConceptId" = "conceptId")) %>% 
-      dplyr::select(
-        .data$sourceConceptId,
-        .data$conceptName,
-        .data$vocabularyId,
-        .data$databaseId,
-        .data$domainTable,
-        .data$conceptCount,
-        .data$subjectCount
-      ) %>% 
-      dplyr::rename(
-        "conceptId" = .data$sourceConceptId,
-        "persons" = .data$subjectCount,
-        "records" = .data$conceptCount
+    keyColumnFields <- c("conceptId", 
+                         "conceptName",
+                         "vocabularyId")
+    #depending on user selection - what data Column Fields Will Be Presented?
+    dataColumnFields <-
+      c("persons",
+        "records")
+    
+    countsForHeader <-
+      getCountsForHeaderForUseInDataTable(
+        dataSource = dataSource,
+        databaseIds = consolidatedDatabaseIdTarget(),
+        cohortIds =  getCohortIdFromSelectedRowInCohortCountTable()$cohortId,
+        source = "Cohort Level",
+        fields = input$cohortCountInclusionRuleType
       )
     
-    databaseCount <- data %>%  dplyr::group_by(.data$conceptId,.data$databaseId) %>% 
-      dplyr::summarise("persons" = sum(subjectCount),
-                       "records" = sum(conceptCount))
+    maxCountValue <-
+      getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                    string = dataColumnFields)
     
-    table <-
-      getSketchDesignForTablesInCohortDefinitionTab(conceptMapping,
-                                                    databaseCount = databaseCount,
-                                                    numberOfColums = 3)
+    table <- getDtWithColumnsGroupedByDatabaseId(
+      data = data,
+      headerCount = countsForHeader,
+      keyColumns = keyColumnFields,
+      sketchLevel = 1,
+      dataColumns = dataColumnFields,
+      maxCount = maxCountValue,
+      showResultsAsPercent = input$inclusionRuleShowAsPercentInCohortCount #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+    )
     return(table)
   })
   
