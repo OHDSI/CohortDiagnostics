@@ -358,7 +358,7 @@ plotTs <- function(data,
                    plotHeight,
                    xAxisMin,
                    xAxisMax,
-                   valueType = "Records") {
+                   valueType = "records") {
   plot <-
     plotly::plot_ly(
       data = data,
@@ -380,7 +380,8 @@ plotTs <- function(data,
                       text = ~ paste("Database ID = ",.data$databaseId,
                                      "\nvalueType = ",valueType )) %>%
     plotly::layout(showlegend = FALSE,
-                   xaxis = list(range = c(xAxisMin, xAxisMax)))
+                   xaxis = list(range = c(xAxisMin, xAxisMax)),
+                   yaxis = list(tickformat = ifelse((valueType == "records" || valueType == "persons"),",d",".2%")))
   
   
   
