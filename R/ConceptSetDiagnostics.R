@@ -363,11 +363,10 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      conceptsCohortMapped2) %>%
     dplyr::distinct()
   randomStringTableName <-
-    tolower(paste0(
-      sample(x = LETTERS, size = 1, replace = TRUE),
+    tolower(paste0("tmp_",
       paste0(sample(
         x = c(LETTERS, 0:9),
-        size = 15,
+        size = 12,
         replace = TRUE
       ), collapse = "")
     ))
@@ -382,7 +381,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     tempTable = FALSE,
     tempEmulationSchema = tempEmulationSchema,
     progressBar = FALSE,
-    bulkLoad = if (Sys.getenv("bulkLoad") != TRUE) {FALSE},
+    bulkLoad = (Sys.getenv("bulkLoad") == TRUE),
     camelCaseToSnakeCase = TRUE,
     data = conceptsCohort
   )
