@@ -524,20 +524,11 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
     dplyr::filter(.data$type == "database",.data$name == "database") %>% 
     dplyr::pull(.data$value)
   
-  colorReference <- data %>% 
-    dplyr::select(.data$databaseId) %>% 
-    unique()
-
-  lightColors <- colorRampPalette(c(initialColor, "#FFFFFF"))(ceiling(nrow(colorReference)/2) + 1) %>% 
+  selectedColors <- colorRampPalette(c("#000000",initialColor, "#FFFFFF"))(length(data$databaseId %>% unique()) + 2) %>% 
     head(-1) %>% 
     tail(-1)
   
-  darkColors <- colorRampPalette(c(initialColor, "#000000"))(floor(nrow(colorReference)/2) + 2) %>% 
-    head(-1) 
-  
-  colorReference <- colorReference %>% 
-    dplyr::mutate(color = c(lightColors,darkColors))
- 
+
   plotData <- data %>% 
     dplyr::inner_join(cohort %>% 
                         dplyr::select(.data$cohortId, .data$shortName),
@@ -549,7 +540,10 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
       by = "databaseId"
     ) %>% 
     dplyr::inner_join(
-      colorReference, by = "databaseId"
+      data %>% 
+        dplyr::select(.data$databaseId) %>% 
+        unique() %>% 
+        dplyr::mutate(color = selectedColors), by = "databaseId"
     )
     
   
