@@ -392,10 +392,10 @@ runConceptSetDiagnostics <- function(connection = NULL,
     " ",
     attr(delta, "units")
   )
-  if (Sys.getenv("bulkLoad") != TRUE) {
+  if (Sys.getenv("bulkLoad") == TRUE) {
     ParallelLogger::logTrace("      - Bulkload was used.")
   }
-  
+  browser()
   ## Index event breakdown ----
   ParallelLogger::logInfo("  - Learning about the breakdown in index events.")
   startBreakdownEvents <- Sys.time()
@@ -1281,7 +1281,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                                cdm_database_schema = cdmDatabaseSchema,
                                                tempEmulationSchema = tempEmulationSchema)
   
-  if (!is.null(conceptTrackingTable)) {
+  if (!is.null(conceptIdUniverse)) {
     # keeping track
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
@@ -1290,8 +1290,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
             FROM #indx_concepts
             WHERE concept_id != 0;",
       tempEmulationSchema = tempEmulationSchema,
-      concept_tracking_table = conceptTrackingTable,
-      concept_sets_table = conceptSetsTable,
+      concept_tracking_table = conceptIdUniverse,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )

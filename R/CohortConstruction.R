@@ -614,6 +614,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   
   instantiatedCohortIds <- c()
   ParallelLogger::logInfo(" - Instantiating:")
+  ParallelLogger::logInfo("  - Cohort table: ", cohortTable)
   for (i in 1:nrow(cohorts)) {
     if (!incremental || isTaskRequired(
       cohortId = cohorts$cohortId[i],
