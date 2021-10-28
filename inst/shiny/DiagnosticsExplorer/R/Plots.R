@@ -420,7 +420,6 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
     }
     distinctDatabaseCompoundNameString = paste(distinctDatabaseCompoundName,collapse = ";")
     
-    cohortPlot <- list()
     noOfPlotRows <- length(yAxisValues)
     yAxisValuesPlots <- list()
     for (j in 1:length(yAxisValues)) {
@@ -486,7 +485,7 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
                      annotations = list(
                        x = 0.5 ,
                        y = -0.11,
-                       text = paste0(conceptName," (",conceptId,")","\n",distinctDatabaseCompoundNameString),
+                       text = paste0("<b>Concept: </b>",conceptName," (",conceptId,")","\n<b>Datasource: </b>",distinctDatabaseCompoundNameString),
                        showarrow = F,
                        xref = 'paper',
                        yref = 'paper',
