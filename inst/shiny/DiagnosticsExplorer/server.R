@@ -6334,7 +6334,7 @@ shiny::shinyServer(function(input, output, session) {
         "No timeseries data for the cohort of this series type"
       ))
       # working on the plot
-      if (input$timeSeriesAggregationPeriodSelection == "Monthly") {
+      if (input$timeSeriesAggregationPeriodSelectionForIndexEventBreakdown == "Monthly") {
         data <- data$databaseConceptIdYearMonthLevelTsibble %>%
           dplyr::filter(.data$conceptId == consolidatedConceptIdTarget())
       } else {
@@ -6354,7 +6354,7 @@ shiny::shinyServer(function(input, output, session) {
         value = 0
       )
       data <- data %>%
-        dplyr::filter(.data$databaseId %in% input$selectedDatabaseIds) %>%
+        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
         dplyr::rename("records" = .data$conceptCount,
                       "persons" = .data$subjectCount)
       tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,

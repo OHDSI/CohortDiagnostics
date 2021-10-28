@@ -979,8 +979,15 @@ bodyTabItems <- shinydashboard::tabItems(
             DT::dataTableOutput(outputId = "conceptBrowserTableForIndexEvent")
           ),
           shiny::tabPanel(
-            title = "Time Series Plot",
+            title = "Trend",
             value = "conceptSetTimeSeriesForIndexEvent",
+            shiny::radioButtons(
+              inputId = "timeSeriesAggregationPeriodSelectionForIndexEventBreakdown",
+              label = "Aggregation period:",
+              choices = c("Monthly","Yearly"),
+              selected = "Monthly",
+              inline = TRUE
+            ),
             shinycssloaders::withSpinner(
               plotly::plotlyOutput(
                 outputId = "conceptSetTimeSeriesPlotForIndexEvent",
