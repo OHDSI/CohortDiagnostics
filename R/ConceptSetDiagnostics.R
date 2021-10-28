@@ -34,6 +34,8 @@
 #' @param    cohorts                 A dataframe object with required fields cohortId, sql, json, cohortName
 #'
 #' @template CohortTable
+#' 
+#' @template ConceptSetDiagnosticsSettings
 #'
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #'
@@ -53,6 +55,10 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      cohortIds = NULL,
                                      cohortDatabaseSchema = NULL,
                                      keepCustomConceptId = FALSE,
+                                     conceptSetDiagnosticsSettings = list(
+                                       daysRelativeIndexMin = -30,
+                                       daysRelativeIndexMax = 30
+                                     ),
                                      minCellCount = 5,
                                      cohortTable = NULL) {
   ParallelLogger::logTrace(" - Running concept set diagnostics")
@@ -1233,8 +1239,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                                    cohortDatabaseSchema,
                                                    cohortTable,
                                                    tempEmulationSchema,
-                                                   rangeMin = -30,
-                                                   rangeMax = 30,
+                                                   conceptSetDiagnosticsSettings,
                                                    minCellCount,
                                                    conceptIdUniverse,
                                                    conceptIdToFilterIndexEvent) {
@@ -1244,8 +1249,10 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
   if (minCellCount < 0) {
     minCellCount <- 0
   }
+  daysRelativeIndexMin <- conceptSetDiagnosticsSettings$daysRelativeIndexMin
+  daysRelativeIndexMax <- conceptSetDiagnosticsSettings$daysRelativeIndexMax
   
-  dayRanges <- c(0, rangeMin:rangeMax) %>% sort() %>% unique()
+  dayRanges <- c(0, daysRelativeIndexMin:daysRelativeIndexMax) %>% sort() %>% unique()
   
   sqlVocabulary <- "IF OBJECT_ID('tempdb..#indx_concepts', 'U') IS NOT NULL
                 	      DROP TABLE #indx_concepts;
