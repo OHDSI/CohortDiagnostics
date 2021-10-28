@@ -311,6 +311,13 @@ runCohortRelationshipDiagnostics <-
           Please check CreatedDiagnosticsCohortRelationship.csv in your incremental\n
           folder. Ignoring the file and continuing diagnostic. File may be overwritten."
           )
+          unlink(
+            file.path(
+              incrementalFolder,
+              "CreatedDiagnosticsCohortRelationship.csv"
+            ),
+            force = TRUE
+          )
         } else {
           timePeriodsPreviouslyExecuted <- previousRunResults %>%
             dplyr::select("startDay",
