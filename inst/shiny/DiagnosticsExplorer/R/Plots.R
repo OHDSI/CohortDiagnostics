@@ -704,6 +704,10 @@ plotIncidenceRate <- function(data,
                               stratifyByCalendarYear = TRUE,
                               yscaleFixed = FALSE) {
   errorMessage <- checkmate::makeAssertCollection()
+  
+  if (!doesObjectHaveData(data)) {
+    return(NULL)
+  }
   checkmate::assertTibble(
     x = data,
     any.missing = TRUE,
@@ -767,7 +771,7 @@ plotIncidenceRate <- function(data,
     dplyr::left_join(cohortCount, by = c('cohortId', 'databaseId')) %>%
     dplyr::inner_join(cohort %>% 
                         dplyr::select(.data$cohortId, .data$shortName),
-                      by = .data$cohortId) %>% 
+                      by = "cohortId") %>% 
     dplyr::rename("shortName" = .data$shortName) %>%
     dplyr::mutate(incidenceRate = round(.data$incidenceRate, digits = 3)) %>%
     # dplyr::mutate(

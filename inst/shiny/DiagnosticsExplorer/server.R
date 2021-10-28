@@ -4479,7 +4479,6 @@ shiny::shinyServer(function(input, output, session) {
       value = 0
     )
     data <- getSourceCodesObservedForConceptIdInDatasource()
-    
     validate(need(
       doesObjectHaveData(data),
       "No information for selected concept id."
@@ -5466,8 +5465,10 @@ shiny::shinyServer(function(input, output, session) {
   ##reactive: getIncidentRatePlot ----
   getIncidentRatePlot <- shiny::reactive({
     data <- getIncidentRatePlotData()
-    validate(need(doesObjectHaveData(data),
-                  "No data for this combination"))
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    browser()
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <-
@@ -5508,7 +5509,9 @@ shiny::shinyServer(function(input, output, session) {
     on.exit(progress$close())
     progress$set(message = paste0("Rendering incidence rate plot."),
                  value = 0)
-    
+    data <- getIncidentRatePlot()
+    validate(need(doesObjectHaveData(data),
+                  "No incidence rate data"))
     shiny::withProgress(
       message = paste(
         "Building incidence rate plot data for ",
