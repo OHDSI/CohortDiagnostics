@@ -430,14 +430,6 @@ bodyTabItems <- shinydashboard::tabItems(
                               DT::dataTableOutput(outputId = "conceptBrowserTable")
                             ),
                             shiny::tabPanel(
-                              title = "Non standard counts",
-                              value = "nonStandardCount",
-                              shiny::conditionalPanel(
-                                condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-                                DT::dataTableOutput(outputId = "nonStandardCount")
-                              )
-                            ),
-                            shiny::tabPanel(
                               title = "Trend",
                               value = "conceptSetTimeSeries",
                               shiny::column(
@@ -463,21 +455,11 @@ bodyTabItems <- shinydashboard::tabItems(
                               )
                             ),
                             shiny::tabPanel(
-                              title = "Standard to Non standard mapping",
-                              value = "conceptSetStandardToNonStandard",
-                              # shiny::column(
-                              #   width = 12,
-                              #   shiny::radioButtons(
-                              #     inputId = "timeSeriesAggregationForCohortDefinition",
-                              #     label = "Aggregation period:",
-                              #     choices = c("Monthly", "Yearly"),
-                              #     selected = "Monthly",
-                              #     inline = TRUE
-                              #   )
-                              # ),
+                              title = "Mapped (observed)",
+                              value = "observedSourceCodes",
                               shiny::conditionalPanel(
                                 condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-                                DT::dataTableOutput(outputId = "conceptSetStandardToNonStandardTable")
+                                DT::dataTableOutput(outputId = "observedSourceCodesTable")
                               )
                             )
                           )

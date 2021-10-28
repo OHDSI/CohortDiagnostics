@@ -4419,83 +4419,6 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
-  ##output: nonStandardCount----
-  output$nonStandardCount <- DT::renderDT(expr = {
-    conceptId <- activeSelected()$conceptId
-    validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
-    cohortId <- activeSelected()$cohortId
-    validate(need(doesObjectHaveData(conceptId), "No cohort id selected."))
-    databaseId <- consolidatedDatabaseIdTarget()
-    validate(need(doesObjectHaveData(databaseId), "No database id selected."))
-    
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(
-      message = paste0("Computing concept relationship for concept id:",
-                       conceptId),
-      value = 0
-    )
-    
-    data <- getMetadataForConceptId()$mappedNonStandard
-    validate(need(
-      doesObjectHaveData(data),
-      "No information for selected concept id."
-    ))
-    data <- data %>%
-      dplyr::rename("persons" = .data$subjectCount,
-                    "records" = .data$conceptCount)
-    keyColumnFields <- c("conceptId", 
-                         "conceptName",
-                         "vocabularyId",
-                         "domainTable")
-    #depending on user selection - what data Column Fields Will Be Presented?
-    dataColumnFields <-
-      c("persons",
-        "records")
-    if (input$targetCohortConceptSetColumnFilter == "Both") {
-      dataColumnFields <- dataColumnFields
-      sketchLevel <- 2
-    } else if (input$targetCohortConceptSetColumnFilter == "Person Only") {
-      dataColumnFields <-
-        dataColumnFields[stringr::str_detect(
-          string = tolower(dataColumnFields),
-          pattern = tolower("person")
-        )]
-      sketchLevel <- 1
-    } else if (input$targetCohortConceptSetColumnFilter == "Record Only") {
-      dataColumnFields <-
-        dataColumnFields[stringr::str_detect(
-          string = tolower(dataColumnFields),
-          pattern = tolower("record")
-        )]
-      sketchLevel <- 1
-    }
-    
-    countsForHeader <-
-      getCountsForHeaderForUseInDataTable(
-        dataSource = dataSource,
-        databaseIds = consolidatedDatabaseIdTarget(),
-        cohortIds = consolidatedCohortIdTarget(),
-        source = input$targetConceptIdCountSource,
-        fields = input$targetCohortConceptSetColumnFilter
-      )
-    
-    maxCountValue <-
-      getMaxValueForStringMatchedColumnsInDataFrame(data = data,
-                                                    string = dataColumnFields)
-    
-    table <- getDtWithColumnsGroupedByDatabaseId(
-      data = data,
-      headerCount = countsForHeader,
-      keyColumns = keyColumnFields,
-      sketchLevel = sketchLevel,
-      dataColumns = dataColumnFields,
-      maxCount = maxCountValue,
-      showResultsAsPercent = input$showAsPercentageColumnTarget 
-    )
-    return(table)
-  })
-  
   ##getSourceCodesObservedForConceptIdInDatasource----
   getSourceCodesObservedForConceptIdInDatasource <- shiny::reactive(x = {
     conceptId <- activeSelected()$conceptId
@@ -4508,7 +4431,6 @@ shiny::shinyServer(function(input, output, session) {
     )){
       return(NULL)
     }
-    
     data <- getResultsConceptMapping(
       dataSource,
       databaseIds = databaseId,
@@ -4536,11 +4458,12 @@ shiny::shinyServer(function(input, output, session) {
         "persons" = .data$subjectCount,
         "records" = .data$conceptCount
       )
+    return(conceptMapping)
   })
   
   
-  ##output: conceptSetStandardToNonStandardTable----
-  output$conceptSetStandardToNonStandardTable <- DT::renderDT(expr = {
+  ##output: observedSourceCodesTable----
+  output$observedSourceCodesTable <- DT::renderDT(expr = {
     conceptId <- activeSelected()$conceptId
     validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
     cohortId <- activeSelected()$cohortId
@@ -4556,7 +4479,7 @@ shiny::shinyServer(function(input, output, session) {
       value = 0
     )
     data <- getSourceCodesObservedForConceptIdInDatasource()
-
+    
     validate(need(
       doesObjectHaveData(data),
       "No information for selected concept id."
@@ -4574,7 +4497,7 @@ shiny::shinyServer(function(input, output, session) {
       getCountsForHeaderForUseInDataTable(
         dataSource = dataSource,
         databaseIds = consolidatedDatabaseIdTarget(),
-        cohortIds =  getCohortIdFromSelectedRowInCohortCountTable()$cohortId,
+        cohortIds =  activeSelected()$cohortId,
         source = "Cohort Level",
         fields = input$cohortCountInclusionRuleType
       )
@@ -4590,7 +4513,7 @@ shiny::shinyServer(function(input, output, session) {
       sketchLevel = 1,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
-      showResultsAsPercent = input$inclusionRuleShowAsPercentInCohortCount #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+      showResultsAsPercent = FALSE
     )
     return(table)
   })
