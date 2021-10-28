@@ -53,7 +53,7 @@
 #'                                    index event breakdown, concept cooccurrence, excluded concepts,
 #'                                    resolved concepts. This function call now supersedes runIncludedSourceConcepts,
 #'                                    runOrphanConcepts, runBreakdownIndexEvents.
-#' @template ConceptSetDiagnosticsSettings
+#' @template IndexDateDiagnosticsRelativeDays
 #' @param runIncludedSourceConcepts   (Deprecated) Generate and export the source concepts included in the cohorts?
 #' @param runOrphanConcepts           (Deprecated) Generate and export potential orphan concepts?
 #' @param runVisitContext             Generate and export index-date visit context?
@@ -100,10 +100,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  cdmVersion = 5,
                                  runInclusionStatistics = TRUE,
                                  runConceptSetDiagnostics = TRUE,
-                                 conceptSetDiagnosticsSettings = list(
-                                   daysRelativeIndexMin = -30,
-                                   daysRelativeIndexMax = 30
-                                 ),
+                                 indexDateDiagnosticsRelativeDays = c(-30:30),
                                  runIncludedSourceConcepts = FALSE,
                                  runOrphanConcepts = FALSE,
                                  runVisitContext = TRUE,
@@ -205,6 +202,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     list(
       runInclusionStatistics = argumentsAtDiagnosticsInitiation$runInclusionStatistics,
       runConceptSetDiagnostics = argumentsAtDiagnosticsInitiation$runConceptSetDiagnostics,
+      indexDateDiagnosticsRelativeDays = argumentsAtDiagnosticsInitiation$indexDateDiagnosticsRelativeDays,
       runVisitContext = argumentsAtDiagnosticsInitiation$runVisitContext,
       runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,
       runCohortTimeSeries = argumentsAtDiagnosticsInitiation$runCohortTimeSeries,
@@ -566,7 +564,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohorts = cohorts,
         cohortIds = subset$cohortId,
         cohortDatabaseSchema = cohortDatabaseSchema,
-        conceptSetDiagnosticsSettings = conceptSetDiagnosticsSettings,
+        indexDateDiagnosticsRelativeDays = indexDateDiagnosticsRelativeDays,
         cohortTable = cohortTable,
         minCellCount = minCellCount
       )

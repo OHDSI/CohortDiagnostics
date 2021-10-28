@@ -35,7 +35,7 @@
 #'
 #' @template CohortTable
 #' 
-#' @template ConceptSetDiagnosticsSettings
+#' @template IndexDateDiagnosticsRelativeDays
 #'
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #'
@@ -55,10 +55,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      cohortIds = NULL,
                                      cohortDatabaseSchema = NULL,
                                      keepCustomConceptId = FALSE,
-                                     conceptSetDiagnosticsSettings = list(
-                                       daysRelativeIndexMin = -30,
-                                       daysRelativeIndexMax = 30
-                                     ),
+                                     indexDateDiagnosticsRelativeDays = c(0),
                                      minCellCount = 5,
                                      cohortTable = NULL) {
   ParallelLogger::logTrace(" - Running concept set diagnostics")
@@ -415,6 +412,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       minCellCount = minCellCount,
       tempEmulationSchema = tempEmulationSchema,
       conceptIdUniverse = "#concept_tracking",
+      indexDateDiagnosticsRelativeDays = indexDateDiagnosticsRelativeDays,
       conceptIdToFilterIndexEvent = paste0(cohortDatabaseSchema,".",randomStringTableName)
     )
   if (!keepCustomConceptId) {
@@ -1239,7 +1237,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                                    cohortDatabaseSchema,
                                                    cohortTable,
                                                    tempEmulationSchema,
-                                                   conceptSetDiagnosticsSettings,
+                                                   indexDateDiagnosticsRelativeDays,
                                                    minCellCount,
                                                    conceptIdUniverse,
                                                    conceptIdToFilterIndexEvent) {
@@ -1249,10 +1247,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
   if (minCellCount < 0) {
     minCellCount <- 0
   }
-  daysRelativeIndexMin <- conceptSetDiagnosticsSettings$daysRelativeIndexMin
-  daysRelativeIndexMax <- conceptSetDiagnosticsSettings$daysRelativeIndexMax
   
-  dayRanges <- c(0, daysRelativeIndexMin:daysRelativeIndexMax) %>% sort() %>% unique()
+  IndexDateDiagnosticsRelativeDays <- indexDateDiagnosticsRelativeDays %>% sort() %>% unique()
   
   sqlVocabulary <- "IF OBJECT_ID('tempdb..#indx_concepts', 'U') IS NOT NULL
                 	      DROP TABLE #indx_concepts;
@@ -1358,7 +1354,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                         	AND d1.@domain_concept_id != 0
                         	AND d1.@domain_concept_id IS NOT NULL
                         GROUP BY cohort_definition_id,
-                        	d1.@domain_concept_id;"
+                        	d1.@domain_concept_id
+                        HAVING count(DISTINCT c.subject_id) > @min_subject_count;"
   
   #conceptId is from _concept_id field of domain table and coConceptId is also from _concept_id field of same domain table
   # i.e. same day co-occurrence of two standard concept ids relative to index date
@@ -1393,6 +1390,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                         GROUP BY cohort_definition_id,
                                         	d1.@domain_concept_id,
                                         	d2.@domain_concept_id
+                                        HAVING count(DISTINCT c.subject_id) > @min_subject_count
                                         	;"
   
   #conceptId is from _concept_id field of domain table and coConceptId is also from _source_concept_id field of same domain table
@@ -1427,15 +1425,16 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                             	AND d1.@domain_concept_id != d2.@domain_source_concept_id
                                             GROUP BY cohort_definition_id,
                                             	d1.@domain_concept_id,
-                                            	d2.@domain_source_concept_id;"
+                                            	d2.@domain_source_concept_id
+                                            HAVING count(DISTINCT c.subject_id) > @min_subject_count;"
   
-  for (j in (1:length(dayRanges))) {
+  for (j in (1:length(IndexDateDiagnosticsRelativeDays))) {
     ParallelLogger::logTrace(paste0("  - Working on ", 
-                                    scales::comma(x = dayRanges[[j]]),
+                                    scales::comma(x = IndexDateDiagnosticsRelativeDays[[j]]),
                                     " days relative to index date. ",
                                     scales::comma(j),
                                     " of ",
-                                    scales::comma(length(dayRanges)),
+                                    scales::comma(length(IndexDateDiagnosticsRelativeDays)),
                                     "."
                                     ))
     for (i in (1:nrow(domains))) {
@@ -1471,7 +1470,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
         domain_start_date = rowData$domainStartDate,
         cohortIds = cohortIds,
         cohort_table = cohortTable,
-        days_relative_index = dayRanges[[j]],
+        days_relative_index = IndexDateDiagnosticsRelativeDays[[j]],
+        min_subject_count = minCellCount,
         reportOverallTime = FALSE,
         progressBar = FALSE
       )
@@ -1496,7 +1496,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
         domain_start_date = rowData$domainStartDate,
         cohortIds = cohortIds,
         cohort_table = cohortTable,
-        days_relative_index = dayRanges[[j]],
+        days_relative_index = IndexDateDiagnosticsRelativeDays[[j]],
+        min_subject_count = minCellCount,
         reportOverallTime = FALSE,
         progressBar = FALSE
       )
@@ -1523,7 +1524,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
           domain_start_date = rowData$domainStartDate,
           cohortIds = cohortIds,
           cohort_table = cohortTable,
-          days_relative_index = dayRanges[[j]],
+          days_relative_index = IndexDateDiagnosticsRelativeDays[[j]],
+          min_subject_count = minCellCount,
           reportOverallTime = FALSE,
           progressBar = FALSE
         )
@@ -1547,7 +1549,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
           domain_start_date = rowData$domainStartDate,
           cohortIds = cohortIds,
           cohort_table = cohortTable,
-          days_relative_index = dayRanges[[j]],
+          days_relative_index = IndexDateDiagnosticsRelativeDays[[j]],
+          min_subject_count = minCellCount,
           reportOverallTime = FALSE,
           progressBar = FALSE
         )
@@ -1575,7 +1578,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
           domain_start_date = rowData$domainStartDate,
           cohortIds = cohortIds,
           cohort_table = cohortTable,
-          days_relative_index = dayRanges[[j]],
+          days_relative_index = IndexDateDiagnosticsRelativeDays[[j]],
+          min_subject_count = minCellCount,
           reportOverallTime = FALSE,
           progressBar = FALSE
         )
