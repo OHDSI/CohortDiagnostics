@@ -1573,16 +1573,22 @@ plotCohortOverlap <- function(data,
                         dplyr::mutate(targetCohortId = .data$cohortId) %>% 
                         dplyr::select(.data$targetCohortId,.data$compoundName),
                       by = "targetCohortId") %>% 
-    dplyr::pull(.data$compoundName) %>% unique()
-  targetCohortCompoundName <- paste("<b>Target Cohorts</b> :",paste(targetCohortCompoundName,collapse = ","))
+    dplyr::mutate(compoundName = ifelse(stringr::str_length(.data$compoundName) > 40, 
+                                        paste0(substr(.data$compoundName,0,40),"\n",substr(.data$compoundName,40,stringr::str_length(.data$compoundName))),
+                                        .data$compoundName)) %>% 
+    dplyr::pull(.data$compoundName) %>% unique() %>% paste(collapse = "\n")
+  # targetCohortCompoundName <- paste("<b>Target Cohorts</b> :",paste(targetCohortCompoundName,collapse = ","))
   
   comparatorCohortCompoundName <- data  %>% 
     dplyr::inner_join(cohort %>% 
                         dplyr::mutate(comparatorCohortId = .data$cohortId) %>% 
                         dplyr::select(.data$comparatorCohortId,.data$compoundName),
                       by = "comparatorCohortId") %>% 
-    dplyr::pull(.data$compoundName) %>% unique()
-  comparatorCohortCompoundName <- paste("<b>Comparator Cohorts</b> :",paste(comparatorCohortCompoundName,collapse = ","))                    
+    dplyr::mutate(compoundName = ifelse(stringr::str_length(.data$compoundName) > 40, 
+                                        paste0(substr(.data$compoundName,0,40),"\n",substr(.data$compoundName,40,stringr::str_length(.data$compoundName))),
+                                        .data$compoundName)) %>% 
+    dplyr::pull(.data$compoundName) %>% unique() %>% paste(collapse = "\n")
+  # comparatorCohortCompoundName <- paste("<b>Comparator Cohorts</b> :",paste(comparatorCohortCompoundName,collapse = ","))                    
   
   plotData <- data %>%
     dplyr::mutate(
@@ -1744,7 +1750,7 @@ plotCohortOverlap <- function(data,
   distinctComparatorShortName <- plotData$comparatorShortName %>% unique()
   # distinctTargetShortName <- plotData$targetShortName %>% unique()
   distinctDatabaseShortName <- plotData$databaseShortName %>% unique()
-  distinctDatabaseCompoundNameString <- paste("<b>Datasource :</b>", paste(plotData$databaseCompoundName %>% unique(),collapse = ","))
+  distinctDatabaseCompoundName <- paste(plotData$databaseCompoundName %>% unique(),collapse = ",")
   databasePlots <- list()
   for (i in 1:length(distinctDatabaseShortName)) {
     plotDataFilteredByDatabaseId <- plotData %>% 
@@ -1785,11 +1791,11 @@ plotCohortOverlap <- function(data,
      
       comparatorPlots[[j]] <- plotly::plot_ly(plotDataFilteredByComparator,
                                               x = ~xAxisValues, y = ~targetShortName, type = 'bar',
-                                              name = ~subjectsIn, text = ~tooltip, hoverinfo = 'text',
+                                              name = ~subjectsIn, text = ~tooltip,
                                               color = ~subjectsIn, colors = c( rgb(0.4, 0.4, 0.9), rgb(0.3, 0.2, 0.4),rgb(0.8, 0.2, 0.2)),
-                                              showlegend = showLegend, height = max(400, 70 * length(distinctComparatorShortName) * length(distinctTargetShortName))) %>%
+                                              showlegend = showLegend, height = 800) %>%
         plotly::layout(barmode = 'stack',
-                       legend = list(orientation = "h",x = 0.4),
+                       legend = list(orientation = "h",x = 0.4,y = -0.1),
                        xaxis = list(range = c(0, xAxisMax),
                                     showticklabels = xAxisTickLabels,
                                     tickformat = xAxisTickFormat),
@@ -1822,68 +1828,23 @@ plotCohortOverlap <- function(data,
   m <- list(
     l = 50,
     r = 50,
-    b = 200,
+    b = 250,
     t = 50
   )
   plot <- plotly::subplot(databasePlots) %>% 
     plotly::layout(annotations = list(
-      x = 0.5 ,
-      y = -0.5 + (0.025 * length(distinctTargetShortName) * length(distinctComparatorShortName)),
-      text = paste(targetCohortCompoundName,"\n",comparatorCohortCompoundName,"\n",distinctDatabaseCompoundNameString),
+      x = c(0.2,0.5,0.8) ,
+      y = c(-0.3,-0.3,-0.3),
+      text = c(paste0("<b>Cohort : </b>\n",targetCohortCompoundName),paste0("<b>Comparator :</b>\n",comparatorCohortCompoundName),paste0("<b>Datasource :</b>\n",distinctDatabaseCompoundName)),
       showarrow = F,
       xanchor = "center",
       yanchor = "middle",
       xref = 'paper',
       yref = 'paper',
-      font = list(size = 14)
+      align = 'left'
+      # font = list(size = 14)
     ),margin = m)
   
-  # plotData$targetShortName <- factor(plotData$targetShortName,
-  #                                    levels = sortTargetShortName$targetShortName)
-  # 
-  # plotData$comparatorShortName <-
-  #   factor(plotData$comparatorShortName,
-  #          levels = sortComparatorShortName$comparatorShortName)
-  
-  # plot <- ggplot2::ggplot(data = plotData) +
-  #   ggplot2::aes(
-  #     fill = .data$subjectsIn,
-  #     y = .data$targetShortName,
-  #     x = .data$value,
-  #     tooltip = .data$tooltip,
-  #     group = .data$subjectsIn
-  #   ) +
-  #   ggplot2::ylab(label = "") +
-  #   ggplot2::xlab(label = "") +
-  #   ggplot2::scale_fill_manual("Subjects in", values = c(rgb(0.8, 0.2, 0.2), rgb(0.3, 0.2, 0.4), rgb(0.4, 0.4, 0.9))) +
-  #   ggplot2::facet_grid(comparatorShortName ~ databaseId) +
-  #   ggplot2::theme(
-  #     panel.background = ggplot2::element_blank(),
-  #     strip.background = ggplot2::element_blank(),
-  #     panel.grid.major.x = ggplot2::element_line(color = "gray"),
-  #     axis.ticks.y = ggplot2::element_blank(),
-  #     panel.spacing = ggplot2::unit(2, "lines")
-  #   ) +
-  #   ggiraph::geom_bar_interactive(position = position,
-  #                                 alpha = 0.6,
-  #                                 stat = "identity")
-  # if (yAxis == "Percentages") {
-  #   plot <- plot + ggplot2::scale_x_continuous(labels = scales::percent)
-  # } else {
-  #   plot <-
-  #     plot + ggplot2::scale_x_continuous(labels = scales::comma, n.breaks = 3)
-  # }
-  # width <- length(unique(plotData$databaseId))
-  # height <-
-  #   nrow(
-  #     plotData %>% dplyr::select(.data$targetShortName, .data$comparatorShortName) %>% dplyr::distinct()
-  #   )
-  # plot <- ggiraph::girafe(
-  #   ggobj = plot,
-  #   options = list(ggiraph::opts_sizing(rescale = TRUE)),
-  #   width_svg = max(12, 2 * width),
-  #   height_svg = max(2, 0.5 * height)
-  # )
   return(plot)
 }
 
