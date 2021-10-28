@@ -18,8 +18,11 @@ plotTimeSeriesFromTsibble <-
     }
     distinctCohortCompoundName <- cohort %>% 
       dplyr::filter(.data$shortName %in% distinctCohortShortName) %>% 
+      dplyr::mutate(compoundName = ifelse(stringr::str_length(.data$compoundName) > 40, 
+                                          paste0(substr(.data$compoundName,0,40),"\n",substr(.data$compoundName,40,stringr::str_length(.data$compoundName))),
+                                          .data$compoundName)) %>% 
       dplyr::pull(.data$compoundName) %>% 
-      paste(collapse = ";")
+      paste(collapse = "\n")
     
     distinctDatabaseShortName <- c()
     for (i in 1:length(tsibbleData)) {
@@ -35,7 +38,7 @@ plotTimeSeriesFromTsibble <-
     distinctDatabaseCompoundName <- database %>% 
       dplyr::filter(.data$shortName %in% distinctDatabaseShortName) %>% 
       dplyr::pull(.data$compoundName) %>% 
-      paste(collapse = ";")
+      paste(collapse = "\n")
     
     cohortPlots <- list()
     noOfPlotRows <-
@@ -178,8 +181,8 @@ plotTimeSeriesFromTsibble <-
     }
     m <- list(
       l = 150,
-      r = 0,
-      b = 100,
+      r = 250,
+      b = 0,
       t = 50,
       pad = 4
     )
@@ -188,9 +191,10 @@ plotTimeSeriesFromTsibble <-
       plotly::layout(autosize = T, 
                      margin = m,
                      annotations = list(
-                       x = 0.5 ,
-                       y = -0.05,
-                       text = paste0(distinctCohortCompoundName,"\n",distinctDatabaseCompoundName),
+                       x = 1.1 ,
+                       y = 0.98,
+                       align = "left",
+                       text = c(paste0("<b>Cohorts :</b>\n",distinctCohortCompoundName,"\n\n<b>Datasouce :</b>\n",distinctDatabaseCompoundName)),
                        showarrow = F,
                        xref = 'paper',
                        yref = 'paper',
@@ -679,9 +683,9 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
     plotly::subplot(databasePlots, nrows = length(databasePlots), margin = 0.008) %>% 
     plotly::layout(margin = m,
                    annotations = list(
-                     x = 0.3 ,
-                     y = -0.2,
-                     text = paste0("<b>Cohorts :</b>\n",distinctCohortCompoundName,"\n\n","<b>DataSource :</b>\n",distinctDatabaseCompoundName),
+                     x = c(0.3,0.7) ,
+                     y = c(-0.2,-0.2),
+                     text = c(paste0("<b>Cohorts :</b>\n",distinctCohortCompoundName),paste0("<b>DataSource :</b>\n",distinctDatabaseCompoundName)),
                      showarrow = F,
                      xref = 'paper',
                      yref = 'paper',
