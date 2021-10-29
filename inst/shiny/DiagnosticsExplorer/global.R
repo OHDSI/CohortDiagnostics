@@ -415,3 +415,81 @@ colorReference <- readr::read_csv(file = 'colorReference.csv',col_types = readr:
 sourcesOfVocabularyTables <-
   getSourcesOfVocabularyTables(dataSource = dataSource,
                                database = database)
+
+
+
+# 
+# 
+# temporalCovariateChoices <- dplyr::tibble()
+# newTimeId <- dplyr::bind_rows(
+#   startDay = c(-365, -30, 0, 1, 31),
+#   endDay = c(-31, -1, 0, 30, 365)
+# ) %>% 
+#   dplyr::mutate(timeId2 = (dplyr::row_number()) - 6)
+# #enhancement
+# if (all(exists("analysisRef"),
+#         doesObjectHaveData(analysisRef))) {
+#   if (all(nrow(analysisRef) > 0)) {
+#     temporalCovariateChoices <- dplyr::bind_rows(
+#       temporalCovariateChoices,
+#       analysisRef %>%
+#         dplyr::filter(!is.na(.data$startDay),!is.na(.data$endDay)) %>%
+#         dplyr::select(.data$startDay, .data$endDay) %>%
+#         dplyr::distinct() %>%
+#         dplyr::mutate(choices = paste0(
+#           "Start ", .data$startDay, " to end ", .data$endDay
+#         ))
+#     ) %>%
+#       dplyr::select(.data$startDay, .data$endDay, .data$choices) %>%
+#       dplyr::mutate(timeId = dplyr::row_number()) %>% 
+#       dplyr::left_join(newTimeId, 
+#                        by = c("startDay", "endDay")) %>%
+#       dplyr::mutate(timeId = dplyr::case_when(!is.na(.data$timeId2) ~ .data$timeId2,
+#                                               TRUE ~ as.double(.data$timeId))) %>% 
+#       dplyr::select(-.data$timeId2) %>% 
+#       dplyr::arrange(.data$timeId)
+#     
+#     if (filterTemporalChoicesToPrimaryOptions) {
+#       temporalCovariateChoices <- temporalCovariateChoices %>%
+#         dplyr::filter(
+#           stringr::str_detect(string = .data$choices,
+#                               pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')
+#         )
+#     }
+#   }
+# }
+# 
+# if (all(exists("temporalTimeRef"),
+#         doesObjectHaveData(temporalTimeRef))) {
+#   if (all(nrow(temporalTimeRef) > 0)) {
+#     temporalCovariateChoices <-
+#       dplyr::bind_rows(temporalCovariateChoices,
+#                        temporalTimeRef %>%
+#                          dplyr::mutate(choices = paste0(
+#                            "Start ", .data$startDay, " to end ", .data$endDay
+#                          ))) %>%
+#       dplyr::distinct() %>%
+#       dplyr::select(-.data$timeId) %>%
+#       dplyr::select(.data$startDay, .data$endDay) %>%
+#       dplyr::mutate(timeId = dplyr::row_number()) %>%
+#       dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
+#       dplyr::select(.data$startDay, .data$endDay, .data$choices) %>%
+#       dplyr::mutate(timeId = dplyr::row_number()) %>% 
+#       dplyr::left_join(newTimeId, 
+#                        by = c("startDay", "endDay")) %>%
+#       dplyr::mutate(timeId = dplyr::case_when(!is.na(.data$timeId2) ~ .data$timeId2,
+#                                               TRUE ~ as.double(.data$timeId))) %>% 
+#       dplyr::select(-.data$timeId2) %>% 
+#       dplyr::arrange(.data$timeId)
+#     
+#     if (filterTemporalChoicesToPrimaryOptions) {
+#       temporalCovariateChoices <- temporalCovariateChoices %>%
+#         dplyr::filter(
+#           stringr::str_detect(string = .data$choices,
+#                               pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')
+#         )
+#     }
+#   }
+# }
+# 
+
