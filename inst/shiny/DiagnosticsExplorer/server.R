@@ -6144,24 +6144,14 @@ shiny::shinyServer(function(input, output, session) {
                        .data$standardConcept != "S")
     }
     
-    if (input$indexEventBreakdownShowAsPercent) {
-      data <- data %>%
-        dplyr::mutate(conceptValue = .data$conceptPercent) %>%
-        dplyr::mutate(subjectValue = .data$subjectPercent)
-    } else {
       data <- data %>%
         dplyr::mutate(conceptValue = .data$conceptCount) %>%
-        dplyr::mutate(subjectValue = .data$subjectCount)
-    }
-    
-    data <- data %>%
-      dplyr::filter(.data$conceptId > 0) %>%
-      dplyr::arrange(.data$databaseId) 
-    
-    data <- data %>% 
-      dplyr::rename("persons" = .data$subjectValue,
+        dplyr::mutate(subjectValue = .data$subjectCount) %>%
+        dplyr::filter(.data$conceptId > 0) %>%
+        dplyr::arrange(.data$databaseId)  %>% 
+        dplyr::rename("persons" = .data$subjectValue,
                     "records" = .data$conceptValue) %>% 
-      dplyr::arrange(dplyr::desc(dplyr::across(c("persons", "records"))))
+        dplyr::arrange(dplyr::desc(dplyr::across(c("persons", "records"))))
     
     return(data)
   })
@@ -7268,6 +7258,56 @@ shiny::shinyServer(function(input, output, session) {
         nrow(table) > 0,
         "No data available for selected combination."
       ))
+      browser()
+      keyColumnFields <- c("characteristic")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      dataColumnFields <-
+        c("Mean")
+      # if (input$indexEventBreakdownTableFilter == "Both") {
+      #   dataColumnFields <- dataColumnFields
+      #   sketchLevel <- 2
+      # } else if (input$indexEventBreakdownTableFilter == "Person Only") {
+      #   dataColumnFields <-
+      #     dataColumnFields[stringr::str_detect(
+      #       string = tolower(dataColumnFields),
+      #       pattern = tolower("person")
+      #     )]
+      #   sketchLevel <- 1
+      # } else if (input$indexEventBreakdownTableFilter == "Record Only") {
+      #   dataColumnFields <-
+      #     dataColumnFields[stringr::str_detect(
+      #       string = tolower(dataColumnFields),
+      #       pattern = tolower("record")
+      #     )]
+      #   sketchLevel <- 1
+      # }
+      
+      countsForHeader <-
+        getCountsForHeaderForUseInDataTable(
+          dataSource = dataSource,
+          databaseIds = consolidatedDatabaseIdTarget(),
+          cohortIds = consolidatedCohortIdTarget(),
+          source = "Cohort Level",
+          fields = "Person Only"
+        )
+      
+      maxCountValue <-
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                      string = dataColumnFields)
+      
+      table <- getDtWithColumnsGroupedByDatabaseId(
+        data = data,
+        headerCount = countsForHeader,
+        keyColumns = keyColumnFields,
+        sketchLevel = sketchLevel,
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
+        showResultsAsPercent = input$indexEventBreakdownShowAsPercent
+      )
+      
+      return(table)
+      
+      
       
       options = list(
         pageLength = 1000,
