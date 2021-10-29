@@ -299,6 +299,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              domainTable = NULL,
                                              vocabularyDatabaseSchema = NULL,
                                              startDay = NULL,
+                                             relationshipDays = NULL,
                                              endDay = NULL,
                                              seriesType = NULL,
                                              eventMonth = NULL,
@@ -363,6 +364,12 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
           dplyr::filter(.data$mean > minThreshold)
       }
     }
+    if (all(dataTableName %in% c('cohortRelationships'),
+            !is.null(relationshipDays))) {
+      data <- data %>% 
+        dplyr::filter(.data$startDay == .data$endDay) %>% 
+        dplyr::filter(.data$startDay %in% c(relationshipDays))
+    }
   } else {
     if (is.null(dataSource$connection)) {
       stop("No connection provided. Unable to query database.")
@@ -391,6 +398,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
               {@concept_set_id !=''} ? {AND concept_set_id in (@concept_set_id) \n}
               {@concept_id_1 !=''} ? {AND (concept_id_1 IN (@concept_id_1) OR concept_id_2 IN (@concept_id_1)) \n}
               {@start_day !=''} ? {AND start_day IN (@start_day) \n}
+              {@cohort_relationship_days !=''} ? {AND start_day = end_day AND start_day IN (@cohort_relationship_days) \n}
               {@end_day !=''} ? {AND end_day IN (@end_day) \n}
               {@relationship_id !=''} ? {AND relationship_id IN (@relationship_id) \n}
               {@series_type !=''} ? {AND series_type IN (@series_type) \n}
@@ -421,6 +429,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         # for concept relationship only
         relationship_id = quoteLiterals(relationshipId),
         start_day = startDay,
+        cohort_relationship_days = relationshipDays,
         end_day = endDay,
         domain_table = quoteLiterals(domainTable),
         days_relative_index = daysRelativeIndex,
@@ -1675,7 +1684,6 @@ getCohortTemporalRelationshipMatrix <- function(dataSource,
                                                 cohortIds = NULL,
                                                 comparatorCohortIds = NULL,
                                                 relationshipDays = c(-3:3)) {
-  debug(getDataFromResultsDatabaseSchema)
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortId = cohortIds,
@@ -1688,6 +1696,16 @@ getCohortTemporalRelationshipMatrix <- function(dataSource,
           nrow(data) == 0)) {
     return(NULL)
   }
+  data <- data %>% 
+    dplyr::select(.data$databaseId, .data$cohortId, .data$comparatorCohortId, .data$startDay, .data$subCsWindowT) %>%
+    dplyr::mutate(day = dplyr::case_when(.data$startDay < 0 ~ paste0("dm", abs(.data$startDay)),
+                                         .data$startDay > 0 ~ paste0("dp", abs(.data$startDay)),
+                                         .data$startDay == 0 ~ paste0("d", abs(.data$startDay)))) %>% 
+    dplyr::arrange(.data$databaseId, .data$cohortId, .data$comparatorCohortId, .data$startDay) %>% 
+    tidyr::pivot_wider(id_cols = c("databaseId", "cohortId", "comparatorCohortId"), 
+                       names_from = "day", 
+                       values_from = "subCsWindowT")
+  
   return(data)
 }
 
