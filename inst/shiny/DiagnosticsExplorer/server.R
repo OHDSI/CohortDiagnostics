@@ -6606,6 +6606,23 @@ shiny::shinyServer(function(input, output, session) {
             !exists('cohortRelationships'))) {
       return(NULL)
     }
+    
+    validate(need(
+      length(consolidatedCohortIdTarget()) > 0,
+      paste0("Please select Target cohort")
+    ))
+    validate(need(
+      length(consolidatedCohortIdTarget()) == 1,
+      paste0("Please only select one target cohort")
+    ))
+    validate(need(
+      length(getComparatorCohortIdFromSelectedCompoundCohortNames()) > 0,
+      paste0("Please select Comparator Cohort(s)")
+    ))
+    validate(need(
+      consolidatedCohortIdTarget() != getComparatorCohortIdFromSelectedCompoundCohortNames(),
+      paste0("Comparator cohort cannot be same as target cohort")
+    ))
     targetCohortIds <- consolidatedCohortIdTarget()
     comparatorCohortIds <- setdiff(x = getComparatorCohortIdFromSelectedCompoundCohortNames(),
                                    y = consolidatedCohortIdTarget())
@@ -6617,6 +6634,16 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     return(data)
+  })
+  
+  #______________----
+  # Cohort Overlap filtered ------
+  ##cohortOverlapDataFiltered----
+  cohortOverlapDataFiltered <- reactive({
+    if (!doesObjectHaveData(cohortOverlapData())) {
+      return(NULL)
+    }
+    return(cohortOverlapData())
   })
 
   ###output: isCohortDefinitionRowSelected----
@@ -6638,15 +6665,11 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: overlapPlot----
   output$overlapPlot <- plotly::renderPlotly(expr = {
-    validate(need(
-      length(consolidatedCohortIdTarget()) > 0,
-      paste0("Please select Target Cohort(s)")
-    ))
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(message = paste0("Plotting cohort overlap."),
                  value = 0)
-    data <- cohortOverlapData()
+    data <- cohortOverlapDataFiltered()
     validate(need(
       doesObjectHaveData(data),
       paste0("No cohort overlap data for this combination")
@@ -6670,7 +6693,7 @@ shiny::shinyServer(function(input, output, session) {
     on.exit(progress$close())
     progress$set(message = paste0("Plotting cohort overlap."),
                  value = 0)
-    data <- cohortOverlapData()
+    data <- cohortOverlapDataFiltered()
     
     validate(need(
       !is.null(data),
@@ -6690,7 +6713,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: cohortOverlapTable ----
   output$cohortOverlapTable <- DT::renderDataTable(expr = {
-    data <- cohortOverlapData()
+    data <- cohortOverlapDataFiltered()
     validate(need(
       !is.null(data),
       paste0("No cohort overlap data for this combination")
