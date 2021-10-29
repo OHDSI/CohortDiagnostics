@@ -6596,8 +6596,9 @@ shiny::shinyServer(function(input, output, session) {
   ##cohortOverlapData----
   cohortOverlapData <- reactive({
     if (any(
-      length(consolidatedDatabaseIdTarget()) == 0,
-      length(consolidatedCohortIdTarget()) == 0
+      !doesObjectHaveData(consolidatedDatabaseIdTarget()),
+      !doesObjectHaveData(consolidatedCohortIdTarget()),
+      !doesObjectHaveData(getComparatorCohortIdFromSelectedCompoundCohortNames())
     )) {
       return(NULL)
     }
@@ -6605,10 +6606,13 @@ shiny::shinyServer(function(input, output, session) {
             !exists('cohortRelationships'))) {
       return(NULL)
     }
+    targetCohortIds <- consolidatedCohortIdTarget()
+    comparatorCohortIds <- setdiff(x = getComparatorCohortIdFromSelectedCompoundCohortNames(),
+                                   y = consolidatedCohortIdTarget())
     data <- getResultsCohortOverlap(dataSource = dataSource,
-                                    targetCohortIds = consolidatedCohortIdTarget(),
+                                    targetCohortIds = targetCohortIds,
                                     databaseIds = consolidatedDatabaseIdTarget(),
-                                    comparatorCohortIds = getComparatorCohortIdFromSelectedCompoundCohortNames())
+                                    comparatorCohortIds = comparatorCohortIds)
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }

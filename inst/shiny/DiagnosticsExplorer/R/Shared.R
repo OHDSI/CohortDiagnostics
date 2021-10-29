@@ -1650,6 +1650,50 @@ getResultsCohort <- function(dataSource, cohortIds = NULL) {
 }
 
 
+
+#' Returns matrix of relationship between target and comparator cohortIds
+#'
+#' @description
+#' Given a list of target and comparator cohortIds gets temporal relationship.
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template ComparatorCohortIds
+#'
+#' @template DatabaseIds
+#' 
+#' @param    relationshipDays A vector of integer representing days comparator cohort start to target cohort start
+#'
+#' @return
+#' Returns a data frame (tibble)
+#'
+#' @export
+getCohortTemporalRelationshipMatrix <- function(dataSource,
+                                                databaseIds = NULL,
+                                                cohortIds = NULL,
+                                                comparatorCohortIds = NULL,
+                                                relationshipDays = c(-3:3)) {
+  debug(getDataFromResultsDatabaseSchema)
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    cohortId = cohortIds,
+    comparatorCohortId = comparatorCohortIds,
+    databaseId = databaseIds,
+    relationshipDays = relationshipDays,
+    dataTableName = "cohortRelationships"
+  )
+  if (any((is.null(data)),
+          nrow(data) == 0)) {
+    return(NULL)
+  }
+  return(data)
+}
+
+
+
+
 # Database ----
 #' Returns data from Database table of Cohort Diagnostics results data model
 #'
@@ -3842,7 +3886,6 @@ getDomainInformation <- function(packageName = NULL) {
     dplyr::mutate(dplyr::across(tidyselect:::where(is.logical), ~ tidyr::replace_na(.x, as.character('')))) %>%
     dplyr::mutate(dplyr::across(tidyselect:::where(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
 }
-
 
 
 #' Extract results from cohort diagnostics
