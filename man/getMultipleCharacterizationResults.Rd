@@ -11,7 +11,8 @@ getMultipleCharacterizationResults(
   featureExtractionCharacterization = TRUE,
   featureExtractionTemporalCharacterization = TRUE,
   cohortRelationshipCharacterizationResults = TRUE,
-  cohortRelationshipTemporalCharacterizationResults = TRUE
+  cohortRelationshipTemporalCharacterizationResults = TRUE,
+  minThreshold = 0.01
 )
 }
 \arguments{
@@ -33,6 +34,8 @@ of the results data model.}
 \item{featureExtractionTemporalCharacterization}{Do you want to get feature extraction temporal characterization results?}
 
 \item{cohortRelationshipCharacterizationResults}{Do you want to get cohort relationship characterization results?}
+
+\item{minThreshold}{Do you want to set the minimum threshold for db extraction}
 }
 \value{
 Returns multiple characterization output
