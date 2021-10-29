@@ -53,7 +53,7 @@ plotTimeSeriesFromTsibble <-
             
           databasePlots[[k]] <- plotTs(
             data = data %>% dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[k]),
-            plotHeight =  200 * noOfPlotRows,
+            plotHeight =  1000,
             xAxisMin = as.Date(paste0(timeSeriesPeriodRangeFilter[1], "-01-01")),
             xAxisMax = as.Date(paste0(timeSeriesPeriodRangeFilter[2], "-12-31")),
             valueType = plotFilters[[j]]
@@ -150,15 +150,14 @@ plotTimeSeriesFromTsibble <-
           plotly::subplot(databasePlots,shareY = TRUE) %>%
           plotly::layout(
             annotations = list(
-              x = -0.07,
-              y = 0.5,
+              x = 0.1,
+              y = 1.0,
               text = camelCaseToTitleCase(plotFilters[j]),
               showarrow = FALSE,
               xref = "paper",
               yref = "paper",
               xanchor = 'center',
-              yanchor = 'middle',
-              textangle = -90
+              yanchor = 'middle'
             )
           )
         
@@ -167,7 +166,7 @@ plotTimeSeriesFromTsibble <-
         plotly::subplot(filterPlots, nrows = length(filterPlots)) %>%
         plotly::layout(
           annotations = list(
-            x = -0.09,
+            x = -0.07,
             y = 0.5,
             text = camelCaseToTitleCase(distinctCohortShortName[i]),
             showarrow = FALSE,
@@ -180,9 +179,9 @@ plotTimeSeriesFromTsibble <-
         )
     }
     m <- list(
-      l = 150,
-      r = 250,
-      b = 0,
+      l = 50,
+      r = 0,
+      b = 200,
       t = 50,
       pad = 4
     )
@@ -191,10 +190,10 @@ plotTimeSeriesFromTsibble <-
       plotly::layout(autosize = T, 
                      margin = m,
                      annotations = list(
-                       x = 1.1 ,
-                       y = 0.98,
+                       x = c(0.3,0.7) ,
+                       y = c(-0.15,-0.15),
                        align = "left",
-                       text = c(paste0("<b>Cohorts :</b>\n",distinctCohortCompoundName,"\n\n<b>Datasouce :</b>\n",distinctDatabaseCompoundName)),
+                       text = c(paste0("<b>Cohorts :</b>\n",distinctCohortCompoundName),paste0("<b>Datasouce :</b>\n",distinctDatabaseCompoundName)),
                        showarrow = F,
                        xref = 'paper',
                        yref = 'paper',
