@@ -50,6 +50,7 @@ showVisitContext <- TRUE
 showCharacterization <- TRUE
 showTemporalCharacterization <- TRUE
 showCohortOverlap <- TRUE
+showPlotSpikes <- TRUE
 filterTemporalChoicesToPrimaryOptions <- TRUE
 spinnerType = 8
 
