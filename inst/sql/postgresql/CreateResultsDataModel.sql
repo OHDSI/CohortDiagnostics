@@ -309,11 +309,12 @@ CREATE TABLE concept_resolved (
 CREATE TABLE covariate_value (
 			cohort_id BIGINT NOT NULL,
 			covariate_id BIGINT NOT NULL,
+			is_temporal INT NOT NULL,
 			sum_value FLOAT NOT NULL,
 			mean FLOAT NOT NULL,
 			sd FLOAT,
 			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, covariate_id, database_id)
+			PRIMARY KEY(cohort_id, covariate_id, is_temporal, database_id)
 );
 
 --Table covariate_value_dist
@@ -321,6 +322,7 @@ CREATE TABLE covariate_value (
 CREATE TABLE covariate_value_dist (
 			cohort_id BIGINT NOT NULL,
 			covariate_id BIGINT NOT NULL,
+			is_temporal INT NOT NULL,
 			count_value FLOAT NOT NULL,
 			min_value FLOAT NOT NULL,
 			max_value FLOAT NOT NULL,
@@ -332,7 +334,7 @@ CREATE TABLE covariate_value_dist (
 			p_75_value FLOAT NOT NULL,
 			p_90_value FLOAT NOT NULL,
 			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, covariate_id, database_id)
+			PRIMARY KEY(cohort_id, covariate_id, is_temporal, database_id)
 );
 
 --Table database
