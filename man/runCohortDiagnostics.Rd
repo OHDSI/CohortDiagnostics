@@ -35,20 +35,30 @@ runCohortDiagnostics(
   runCohortTimeSeries = TRUE,
   runDataSourceTimeSeries = TRUE,
   runCohortRelationship = TRUE,
-  runCohortCharacterization = TRUE,
+  runCohortCharacterization = FALSE,
   covariateSettings = list(FeatureExtraction::createDefaultCovariateSettings(),
     FeatureExtraction::createCovariateSettings(useDemographicsAge = TRUE,
     useVisitCountLongTerm = TRUE, useVisitCountShortTerm = TRUE,
     useVisitConceptCountLongTerm = TRUE, useVisitConceptCountShortTerm = TRUE,
     useDemographicsPriorObservationTime = TRUE, useDemographicsPostObservationTime =
     TRUE, useDemographicsTimeInCohort = TRUE, useDemographicsIndexYearMonth = TRUE, )),
-  runTemporalCohortCharacterization = TRUE,
+  runTemporalCohortCharacterization = FALSE,
  
-    temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence
-    = TRUE, useDrugEraStart = TRUE, useProcedureOccurrence = TRUE, useMeasurement = TRUE,
-    temporalStartDays = c(-365, -30, 0, 1, 31, seq(from = -421, to = -31, by = 30),
-    seq(from = 0, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, seq(from
-    = -391, to = -1, by = 30), seq(from = 30, to = 420, by = 30))),
+    temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useDemographicsGender
+    = TRUE, useDemographicsAge = FALSE, useDemographicsAgeGroup = TRUE,
+    useDemographicsRace = TRUE, useDemographicsEthnicity = TRUE, useDemographicsIndexYear
+    = TRUE, useDemographicsIndexMonth = TRUE, useDemographicsIndexYearMonth = TRUE,
+    useDemographicsPriorObservationTime = TRUE, useDemographicsPostObservationTime =
+    TRUE, useDemographicsTimeInCohort = TRUE, useConditionOccurrence = TRUE,
+    useProcedureOccurrence = TRUE, useDrugEraStart = TRUE,      useMeasurement = TRUE,
+    useConditionEraStart = TRUE, useConditionEraOverlap = TRUE, useConditionEraGroupStart
+    = TRUE, useConditionEraGroupOverlap = TRUE, useDrugExposure = FALSE,
+    useDrugEraOverlap = TRUE, useDrugEraGroupStart = TRUE, useDrugEraGroupOverlap = TRUE,
+    useObservation = TRUE, useDeviceExposure = TRUE, useCharlsonIndex = FALSE, useDcsi =
+    FALSE, useChads2 = FALSE, useChads2Vasc = FALSE, useHfrs = FALSE, temporalStartDays =
+    c(-365, -30, 0, 1, 31, -9999, -365, -180, -30, seq(from = -421,          to = -31, by
+    = 30), seq(from = 0, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, 0,
+    0, 0, 0, seq(from = -391, to = -1, by = 30), seq(from = 30, to = 420, by = 30))),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental")

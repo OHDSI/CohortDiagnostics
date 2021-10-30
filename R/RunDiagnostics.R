@@ -100,16 +100,16 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  cdmVersion = 5,
                                  runInclusionStatistics = TRUE,
                                  runConceptSetDiagnostics = TRUE,
-                                 indexDateDiagnosticsRelativeDays = c(-30:30),
-                                 runIncludedSourceConcepts = FALSE,
-                                 runOrphanConcepts = FALSE,
+                                 indexDateDiagnosticsRelativeDays = c(-30:30),  #part of index event breakdown
+                                 runIncludedSourceConcepts = FALSE, #deprecated
+                                 runOrphanConcepts = FALSE, #deprecated
                                  runVisitContext = TRUE,
-                                 runBreakdownIndexEvents = FALSE,
+                                 runBreakdownIndexEvents = FALSE, #deprecated
                                  runIncidenceRate = TRUE,
                                  runCohortTimeSeries = TRUE,
                                  runDataSourceTimeSeries = TRUE,
                                  runCohortRelationship = TRUE,
-                                 runCohortCharacterization = TRUE,
+                                 runCohortCharacterization = FALSE, #deprecated
                                  covariateSettings = list(
                                    FeatureExtraction::createDefaultCovariateSettings(),
                                    FeatureExtraction::createCovariateSettings(
@@ -124,17 +124,47 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      useDemographicsIndexYearMonth = TRUE,
                                    )
                                  ),
-                                 runTemporalCohortCharacterization = TRUE,
+                                 runTemporalCohortCharacterization = FALSE,
                                  temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(
+                                   useDemographicsGender = TRUE,
+                                   useDemographicsAge = FALSE,
+                                   useDemographicsAgeGroup = TRUE,
+                                   useDemographicsRace = TRUE,
+                                   useDemographicsEthnicity = TRUE,
+                                   useDemographicsIndexYear = TRUE,
+                                   useDemographicsIndexMonth = TRUE,
+                                   useDemographicsIndexYearMonth = TRUE,
+                                   useDemographicsPriorObservationTime = TRUE,
+                                   useDemographicsPostObservationTime = TRUE,
+                                   useDemographicsTimeInCohort = TRUE,
                                    useConditionOccurrence = TRUE,
-                                   useDrugEraStart = TRUE,
                                    useProcedureOccurrence = TRUE,
+                                   useDrugEraStart = TRUE,
                                    useMeasurement = TRUE,
+                                   useConditionEraStart = TRUE,
+                                   useConditionEraOverlap = TRUE,
+                                   useConditionEraGroupStart = TRUE,
+                                   useConditionEraGroupOverlap = TRUE,
+                                   useDrugExposure = FALSE, #leads to too many concept id
+                                   useDrugEraOverlap = TRUE,
+                                   useDrugEraGroupStart = TRUE,
+                                   useDrugEraGroupOverlap = TRUE,
+                                   useObservation = TRUE,
+                                   useDeviceExposure = TRUE,
+                                   useCharlsonIndex = FALSE,
+                                   useDcsi = FALSE,
+                                   useChads2 = FALSE,
+                                   useChads2Vasc = FALSE,
+                                   useHfrs = FALSE,
                                    temporalStartDays = c(
                                      -365,-30,
                                      0,
                                      1,
                                      31,
+                                     -9999,
+                                     -365,
+                                     -180,
+                                     -30,
                                      seq(from = -421, to = -31, by = 30),
                                      seq(from = 0, to = 390, by = 30)
                                    ),
@@ -143,6 +173,10 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      0,
                                      30,
                                      365,
+                                     0,
+                                     0,
+                                     0,
+                                     0,
                                      seq(from = -391, to = -1, by = 30),
                                      seq(from = 30, to = 420, by = 30)
                                    )
@@ -208,7 +242,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       runCohortTimeSeries = argumentsAtDiagnosticsInitiation$runCohortTimeSeries,
       runDataSourceTimeSeries = argumentsAtDiagnosticsInitiation$runDataSourceTimeSeries,
       runCohortRelationship = argumentsAtDiagnosticsInitiation$runCohortRelationship,
-      runCohortCharacterization = argumentsAtDiagnosticsInitiation$runCohortCharacterization,
+      # runCohortCharacterization = argumentsAtDiagnosticsInitiation$runCohortCharacterization,
       runTemporalCohortCharacterization = argumentsAtDiagnosticsInitiation$runTemporalCohortCharacterization,
       minCellCount = argumentsAtDiagnosticsInitiation$minCellCount,
       incremental = argumentsAtDiagnosticsInitiation$incremental,
@@ -249,7 +283,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
   checkmate::assertLogical(runConceptSetDiagnostics, add = errorMessage)
   checkmate::assertLogical(runIncidenceRate, add = errorMessage)
-  checkmate::assertLogical(runCohortCharacterization, add = errorMessage)
+  # checkmate::assertLogical(runCohortCharacterization, add = errorMessage)
   checkmate::assertInt(
     x = cdmVersion,
     na.ok = FALSE,
@@ -267,8 +301,9 @@ runCohortDiagnostics <- function(packageName = NULL,
     runConceptSetDiagnostics,
     runIncidenceRate,
     runCohortTimeSeries,
-    runCohortRelationship,
-    runCohortCharacterization
+    runCohortRelationship
+    # ,
+    # runCohortCharacterization
   )) {
     checkmate::assertCharacter(x = cdmDatabaseSchema,
                                min.len = 1,
@@ -849,67 +884,67 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   # Characterization----
   ## Cohort characterization----
-  if (runCohortCharacterization) {
-    ParallelLogger::logInfo("Characterizing cohorts")
-    startCohortCharacterization <- Sys.time()
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohorts %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runCohortCharacterization",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    )
-    
-    if (nrow(subset) > 0) {
-      if (incremental &&
-          (length(instantiatedCohorts) - nrow(subset)) > 0) {
-        ParallelLogger::logInfo(sprintf(
-          " - Skipping %s cohorts in incremental mode.",
-          length(instantiatedCohorts) - nrow(subset)
-        ))
-      }
-      output <-
-        runCohortCharacterizationDiagnostics(
-          connection = connection,
-          cdmDatabaseSchema = cdmDatabaseSchema,
-          tempEmulationSchema = tempEmulationSchema,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
-          cutOff = 0.0001,
-          cohortIds = subset$cohortId,
-          covariateSettings = covariateSettings,
-          cdmVersion = cdmVersion
-        )
-      exportFeatureExtractionOutput(
-        featureExtractionDbCovariateData = output,
-        databaseId = databaseId,
-        incremental = incremental,
-        covariateValueFileName = file.path(exportFolder, "covariate_value.csv"),
-        covariateValueContFileName = file.path(exportFolder, "covariate_value_dist.csv"),
-        covariateRefFileName = file.path(exportFolder, "covariate_ref.csv"),
-        analysisRefFileName = file.path(exportFolder, "analysis_ref.csv"),
-        timeDistributionFileName = file.path(exportFolder, "time_distribution.csv"),
-        cohortCounts = cohortCounts,
-        minCellCount = minCellCount
-      )
-      Andromeda::close(output)
-      rm("output")
-    } else {
-      ParallelLogger::logInfo("  - Skipping in incremental mode.")
-    }
-    recordTasksDone(
-      cohortId = subset$cohortId,
-      task = "runCohortCharacterization",
-      checksum = subset$checksum,
-      recordKeepingFile = recordKeepingFile,
-      incremental = incremental
-    )
-    delta <- Sys.time() - startCohortCharacterization
-    ParallelLogger::logInfo(" - Running Characterization took ",
-                            signif(delta, 3),
-                            " ",
-                            attr(delta, "units"))
-  }
+  # if (runCohortCharacterization) {
+  #   ParallelLogger::logInfo("Characterizing cohorts")
+  #   startCohortCharacterization <- Sys.time()
+  #   subset <- subsetToRequiredCohorts(
+  #     cohorts = cohorts %>%
+  #       dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+  #     task = "runCohortCharacterization",
+  #     incremental = incremental,
+  #     recordKeepingFile = recordKeepingFile
+  #   )
+  #   
+  #   if (nrow(subset) > 0) {
+  #     if (incremental &&
+  #         (length(instantiatedCohorts) - nrow(subset)) > 0) {
+  #       ParallelLogger::logInfo(sprintf(
+  #         " - Skipping %s cohorts in incremental mode.",
+  #         length(instantiatedCohorts) - nrow(subset)
+  #       ))
+  #     }
+  #     output <-
+  #       runCohortCharacterizationDiagnostics(
+  #         connection = connection,
+  #         cdmDatabaseSchema = cdmDatabaseSchema,
+  #         tempEmulationSchema = tempEmulationSchema,
+  #         cohortDatabaseSchema = cohortDatabaseSchema,
+  #         cohortTable = cohortTable,
+  #         cutOff = 0.0001,
+  #         cohortIds = subset$cohortId,
+  #         covariateSettings = covariateSettings,
+  #         cdmVersion = cdmVersion
+  #       )
+  #     exportFeatureExtractionOutput(
+  #       featureExtractionDbCovariateData = output,
+  #       databaseId = databaseId,
+  #       incremental = incremental,
+  #       covariateValueFileName = file.path(exportFolder, "covariate_value.csv"),
+  #       covariateValueContFileName = file.path(exportFolder, "covariate_value_dist.csv"),
+  #       covariateRefFileName = file.path(exportFolder, "covariate_ref.csv"),
+  #       analysisRefFileName = file.path(exportFolder, "analysis_ref.csv"),
+  #       timeDistributionFileName = file.path(exportFolder, "time_distribution.csv"),
+  #       cohortCounts = cohortCounts,
+  #       minCellCount = minCellCount
+  #     )
+  #     Andromeda::close(output)
+  #     rm("output")
+  #   } else {
+  #     ParallelLogger::logInfo("  - Skipping in incremental mode.")
+  #   }
+  #   recordTasksDone(
+  #     cohortId = subset$cohortId,
+  #     task = "runCohortCharacterization",
+  #     checksum = subset$checksum,
+  #     recordKeepingFile = recordKeepingFile,
+  #     incremental = incremental
+  #   )
+  #   delta <- Sys.time() - startCohortCharacterization
+  #   ParallelLogger::logInfo(" - Running Characterization took ",
+  #                           signif(delta, 3),
+  #                           " ",
+  #                           attr(delta, "units"))
+  # }
   
   ## Temporal Cohort characterization----
   if (runTemporalCohortCharacterization) {
@@ -942,14 +977,15 @@ runCohortDiagnostics <- function(packageName = NULL,
           covariateSettings = temporalCovariateSettings,
           cdmVersion = cdmVersion
         )
+      browser()
       exportFeatureExtractionOutput(
         featureExtractionDbCovariateData = output,
         databaseId = databaseId,
         incremental = incremental,
-        covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
-        covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
-        analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
-        timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
+        covariateValueFileName = file.path(exportFolder, "covariate_value.csv"),
+        covariateRefFileName = file.path(exportFolder, "covariate_ref.csv"),
+        analysisRefFileName = file.path(exportFolder, "analysis_ref.csv"),
+        # timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
         # add temporal_covariate_value_dist.csv, but timeId does not seem to be correctly returned
         cohortCounts = cohortCounts,
         minCellCount = minCellCount
