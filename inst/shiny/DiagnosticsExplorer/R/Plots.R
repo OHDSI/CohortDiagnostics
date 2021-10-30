@@ -383,8 +383,8 @@ plotTs <- function(data,
                       text = ~ paste("Database ID = ",.data$databaseId,
                                      "\nvalueType = ",valueType )) %>%
     plotly::layout(showlegend = FALSE,
-                   xaxis = list(range = c(xAxisMin, xAxisMax)),
-                   yaxis = list(tickformat = ifelse((valueType == "recordsProportion" || valueType == "personsProportion"),".2%",",d")))
+                   xaxis = list(range = c(xAxisMin, xAxisMax), showspikes = showPlotSpikes),
+                   yaxis = list(tickformat = ifelse((valueType == "recordsProportion" || valueType == "personsProportion"),".2%",",d"), showspikes = showPlotSpikes))
   
   
   
@@ -458,15 +458,14 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
       yAxisValuesPlots[[yAxisValues[[j]]]] <- plotly::subplot(databasePlots, shareY = TRUE, titleX = FALSE) %>% 
         plotly::layout(
           annotations = list(
-            x = -0.04,
-            y = 0.5,
+            x = 0.1,
+            y = 1.0,
             text = camelCaseToTitleCase(yAxisValues[[j]]),
             showarrow = FALSE,
             xref = "paper",
             yref = "paper",
             xanchor = 'center',
-            yanchor = 'middle',
-            textangle = -90
+            yanchor = 'middle'
           )
         )
     }
@@ -628,7 +627,8 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
       cohortPlots <- cohortPlots %>%
         plotly::layout(
         showlegend = FALSE,
-        xaxis = list(range = c(xAxisMin, xAxisMax), tickformat = ",d")
+        xaxis = list(range = c(xAxisMin, xAxisMax), tickformat = ",d", showspikes = showPlotSpikes),
+        yaxis = list(showspikes = showPlotSpikes)
       )
       
       if (i != length(distinctDatabaseShortName) && length(distinctDatabaseShortName) < 3) {
@@ -1290,8 +1290,8 @@ plotCompareCohortCharacterization <- function(balance,
         )
       ) %>%
       plotly::layout(
-        xaxis = list(title = '', range = c(0, 1)),
-        yaxis = list(title = '', ange = c(0, 1)),
+        xaxis = list(title = '', range = c(0, 1), showspikes = showPlotSpikes),
+        yaxis = list(title = '', ange = c(0, 1), showspikes = showPlotSpikes),
         annotations = list(
           x = 0.5,
           y = 1.02,
@@ -1797,8 +1797,9 @@ plotCohortOverlap <- function(data,
                        legend = list(orientation = "h",x = 0.4,y = -0.1),
                        xaxis = list(range = c(0, xAxisMax),
                                     showticklabels = xAxisTickLabels,
-                                    tickformat = xAxisTickFormat),
-                       yaxis = list(showticklabels = yAxisTickLabels),
+                                    tickformat = xAxisTickFormat,
+                                    showspikes = showPlotSpikes),
+                       yaxis = list(showticklabels = yAxisTickLabels, showspikes = showPlotSpikes),
                        annotations = list(
                          x = rep(1 + length(distinctDatabaseShortName) * 0.01,length(distinctTargetShortName)) ,
                          y = seq(annotationStartValue, annotationEndValue, annotationInterval),
