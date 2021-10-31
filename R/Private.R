@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+
 createIfNotExist <-
   function(type,
            name,
@@ -116,10 +118,13 @@ nullToEmpty <- function(x) {
   return(x)
 }
 
+
 .convertDateToString <- function(data) {
+  #https://github.com/r-lib/tidyselect/issues/201
+  #https://stackoverflow.com/questions/40251801/how-to-use-utilsglobalvariables
   data %>%
     dplyr::collect() %>%
-    dplyr::mutate(dplyr::across(where(is.date),
+    dplyr::mutate(dplyr::across(tidyselect:::where(is.date),
                                 as.character))
 }
 
@@ -162,6 +167,39 @@ writeToAllOutputToCsv <- function(object,
       "subjectsEndIn",
       "subjectsStart",
       "subjectsStartIn",
+      "subCsBeforeTs",
+      "recCsBeforeTs",
+      "subCsOnTs",
+      "recCsOnTs",
+      "subCsAfterTs",
+      "recCsAfterTs",
+      "subCsBeforeTe",
+      "recCsBeforeTe",
+      "subCsOnTe",
+      "recCsOnTe",
+      "subCsAfterTe",
+      "recCsAfterTe",
+      "subCsWindowT",
+      "recCsWindowT",
+      "subCeWindowT",
+      "recCeWindowT",
+      "subCsWindowTs",
+      "recCsWindowTs",
+      "subCsWindowTe",
+      "recCsWindowTe",
+      "subCeWindowTs",
+      "recCeWindowTs",
+      "subCeWindowTe",
+      "recCeWindowTe",
+      "subC_withinT",
+      "recC_withinT",
+      "cDaysBeforeTs",
+      "cDaysBeforeTe",
+      "cDays_withinTDays",
+      "cDaysAfterTs",
+      "cDaysAfterTe",
+      "tDays",
+      "cDays",
       "totalSubjects"
     )
   vocabularyTables <- c(
@@ -192,7 +230,7 @@ writeToAllOutputToCsv <- function(object,
     )
   }
   
-  # write vocabulary tables
+ 
   for (i in (1:length(tablesOfInterest))) {
     if (tablesOfInterest[[i]] %in% camelCaseToSnakeCase(names(object))) {
       ParallelLogger::logTrace(paste0(" - Writing data to file: ", tablesOfInterest[[i]], ".csv"))

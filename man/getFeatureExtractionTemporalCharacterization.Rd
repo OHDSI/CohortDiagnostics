@@ -7,7 +7,8 @@
 getFeatureExtractionTemporalCharacterization(
   dataSource = .GlobalEnv,
   cohortIds = NULL,
-  databaseIds = NULL
+  databaseIds = NUL,
+  minThreshold = 0.01
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ and uploaded using \code{uploadResults}}
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
+
+\item{minThreshold}{Do you want to set the minimum threshold for db extraction}
 }
 \value{
 Returns a list object with temporalCovariateValue, temporalCovariateValueDist,

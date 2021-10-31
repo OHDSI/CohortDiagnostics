@@ -7,7 +7,8 @@
 getConceptRelationship(
   dataSource = .GlobalEnv,
   vocabularyDatabaseSchema = NULL,
-  conceptIds = NULL
+  conceptIds = NULL,
+  relationshipIds = NULL
 )
 }
 \arguments{

@@ -311,6 +311,13 @@ runCohortRelationshipDiagnostics <-
           Please check CreatedDiagnosticsCohortRelationship.csv in your incremental\n
           folder. Ignoring the file and continuing diagnostic. File may be overwritten."
           )
+          unlink(
+            file.path(
+              incrementalFolder,
+              "CreatedDiagnosticsCohortRelationship.csv"
+            ),
+            force = TRUE
+          )
         } else {
           timePeriodsPreviouslyExecuted <- previousRunResults %>%
             dplyr::select("startDay",
@@ -337,6 +344,14 @@ runCohortRelationshipDiagnostics <-
             dplyr::anti_join(timePeriodsPreviouslyExecuted,
                              by = c("timeId"))
           
+          ParallelLogger::logTrace(
+            paste0(
+              "    - Executing over ",
+              scales::comma(nrow(timePeriods)),
+              " time_periods."
+            )
+          )
+          
           resultsInAndromeda$cohortRelationships <- previousRunResults %>% 
             dplyr::select(-.data$startDay, -.data$endDay)
         }
@@ -347,12 +362,15 @@ runCohortRelationshipDiagnostics <-
     for (i in (1:nrow(timePeriods))) {
       ParallelLogger::logTrace(
         paste0(
-          "    - Working on Time id:",
-          timePeriods[i,]$timeId,
-          " start day: ",
-          scales::comma(timePeriods[i,]$startDay),
-          " to end day:",
-          scales::comma(timePeriods[i,]$endDay)
+          "    - Working on ",
+          scales::comma(timePeriods[i, ]$startDay),
+          " to ",
+          scales::comma(timePeriods[i, ]$endDay),
+          " days (",
+          scales::comma(i),
+          " of ",
+          scales::comma(nrow(timePeriods)),
+          ")"
         )
       )
       sql <- SqlRender::loadRenderTranslateSql(

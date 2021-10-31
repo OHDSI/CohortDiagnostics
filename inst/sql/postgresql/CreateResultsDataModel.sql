@@ -258,9 +258,10 @@ CREATE TABLE concept_sets_optimized (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
+			concept_id INT NOT NULL,
 			excluded INT NOT NULL,
 			removed INT NOT NULL,
-			PRIMARY KEY(database_id, cohort_id, concept_set_id, excluded, removed)
+			PRIMARY KEY(database_id, cohort_id, concept_set_id, concept_id, excluded, removed)
 );
 
 

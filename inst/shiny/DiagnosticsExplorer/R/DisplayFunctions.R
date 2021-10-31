@@ -173,40 +173,22 @@ createShinyBoxFromOutputId <- function(outputId) {
 }
 
 
-createShinyBoxWithSplitForTwoOutputIds <- function(leftOutputId,
-                                                   leftOutputLabel,
-                                                   rightOutputId,
-                                                   rightOutputLabel,
-                                                   leftUnits = 70) {
-  leftUnits <- as.integer(leftUnits)
-  if (any(is.null(leftUnits),
-          leftUnits <= 0,
-          leftUnits >= 100)) {
-    leftUnits <- 70
-  }
-  rightUnits <- 100 - leftUnits
-  leftPercent <- paste0("'", leftUnits, "%'")
-  rightPercent <- paste0("'", rightUnits, "%'")
-  leftOutputLabel <- paste0(leftOutputLabel, " :")
-  rightOutputLabel <- paste0(rightOutputLabel, " :")
-  
+createShinyBoxWithSplitForTwoOutputIds <- function(outputIdCohort,
+                                                   outputIdDatasource) {
   shinydashboard::box(
     # title = "Reference",
     status = "warning",
     width = "100%",
     tags$div(style = "max-height: 60px; overflow-y: auto",
-             tags$table(width = "100%",
+             tags$table(style = "width: 100% !important",
                         tags$tr(
-                          tags$td(
-                            width = leftPercent,
-                            tags$b(leftOutputLabel),
-                            shiny::uiOutput(outputId = leftOutputId)
+                          tags$td(style = "width: 60% !important", valign = "top",
+                            tags$b("Cohort: "),
+                            shiny::uiOutput(outputId = outputIdCohort)
                           ),
-                          tags$td(
-                            style = "align: right !important;",
-                            width = rightPercent,
-                            tags$b(rightOutputLabel),
-                            shiny::uiOutput(outputId = rightOutputId)
+                          tags$td(style = "width: 40% !important", valign = "top",
+                            tags$b("Data source: "),
+                            shiny::uiOutput(outputId = outputIdDatasource)
                           )
                         )))
   )
