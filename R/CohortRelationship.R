@@ -119,7 +119,14 @@ runCohortRelationshipDiagnostics <-
       	SELECT *
       	INTO #comparator_subset
       	FROM @cohort_database_schema.@cohort_table
-      	WHERE cohort_definition_id IN (@cohort_ids);"
+      	WHERE cohort_definition_id IN (@cohort_ids);
+      
+      INSERT INTO #target_subset
+      SELECT -1 cohort_definition_id,
+            person_id subject_id,
+            observation_period_start_date cohort_start_date,
+            observation_period_end_date cohort_end_date,
+      FROM @cohort_database_schema.observation_period;"
     
     
     ParallelLogger::logTrace("   - Target subset")
