@@ -26,6 +26,8 @@
 #'
 #' @template CohortDatabaseSchema
 #'
+#' @template CdmDatabaseSchema
+#'
 #' @template TempEmulationSchema
 #'
 #' @template CohortTable
@@ -44,6 +46,7 @@ runCohortRelationshipDiagnostics <-
   function(connectionDetails = NULL,
            connection = NULL,
            cohortDatabaseSchema,
+           cdmDatabaseSchema,
            tempEmulationSchema = NULL,
            cohortTable = "cohort",
            targetCohortIds,
@@ -127,7 +130,7 @@ runCohortRelationshipDiagnostics <-
             person_id subject_id,
             observation_period_start_date cohort_start_date,
             observation_period_end_date cohort_end_date
-      FROM @cohort_database_schema.observation_period;"
+      FROM @cdm_database_schema.observation_period;"
     
     
     ParallelLogger::logTrace("   - Target subset")
@@ -165,6 +168,7 @@ runCohortRelationshipDiagnostics <-
       connection = connection,
       sql = cohortSubsetSqlComparator,
       cohort_database_schema = cohortDatabaseSchema,
+      cdm_database_schema = cdmDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       cohort_table = cohortTable,
       cohort_ids = comparatorCohortIds,
