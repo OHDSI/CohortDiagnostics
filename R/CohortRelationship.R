@@ -125,7 +125,7 @@ runCohortRelationshipDiagnostics <-
       SELECT -1 cohort_definition_id,
             person_id subject_id,
             observation_period_start_date cohort_start_date,
-            observation_period_end_date cohort_end_date,
+            observation_period_end_date cohort_end_date
       FROM @cohort_database_schema.observation_period;"
     
     
