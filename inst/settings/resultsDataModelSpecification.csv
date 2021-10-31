@@ -136,7 +136,6 @@ covariate_ref,covariate_name,varchar,Yes,No,No,Yes,2.2
 covariate_ref,analysis_id,int,Yes,No,No,Yes,2.2
 covariate_ref,concept_id,int,Yes,No,No,Yes,2.2
 covariate_value,cohort_id,bigint,Yes,Yes,No,Yes,2.2
-covariate_value,isTemporal,int,Yes,Yes,No,Yes,2.2
 covariate_value,start_day,int,No,Yes,No,Yes,2.2
 covariate_value,end_day,int,No,Yes,No,Yes,2.2
 covariate_value,covariate_id,bigint,Yes,Yes,No,Yes,2.2
@@ -145,7 +144,6 @@ covariate_value,mean,float,Yes,No,No,Yes,2.2
 covariate_value,sd,float,No,No,No,Yes,2.2
 covariate_value,database_id,varchar,Yes,Yes,No,Yes,2.2
 covariate_value_dist,cohort_id,bigint,Yes,Yes,No,Yes,2.2
-covariate_value_dist,isTemporal,int,Yes,Yes,No,Yes,2.2
 covariate_value_dist,start_day,int,No,Yes,No,Yes,2.2
 covariate_value_dist,end_day,int,No,Yes,No,Yes,2.2
 covariate_value_dist,covariate_id,bigint,Yes,Yes,No,Yes,2.2

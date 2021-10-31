@@ -35,17 +35,10 @@ runCohortDiagnostics(
   runCohortTimeSeries = TRUE,
   runDataSourceTimeSeries = TRUE,
   runCohortRelationship = TRUE,
-  runCohortCharacterization = FALSE,
-  covariateSettings = list(FeatureExtraction::createDefaultCovariateSettings(),
-    FeatureExtraction::createCovariateSettings(useDemographicsAge = TRUE,
-    useVisitCountLongTerm = TRUE, useVisitCountShortTerm = TRUE,
-    useVisitConceptCountLongTerm = TRUE, useVisitConceptCountShortTerm = TRUE,
-    useDemographicsPriorObservationTime = TRUE, useDemographicsPostObservationTime =
-    TRUE, useDemographicsTimeInCohort = TRUE, useDemographicsIndexYearMonth = TRUE, )),
-  runTemporalCohortCharacterization = FALSE,
+  runCohortCharacterization = TRUE,
  
     temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useDemographicsGender
-    = TRUE, useDemographicsAge = FALSE, useDemographicsAgeGroup = TRUE,
+    = TRUE, useDemographicsAge = TRUE, useDemographicsAgeGroup = TRUE,
     useDemographicsRace = TRUE, useDemographicsEthnicity = TRUE, useDemographicsIndexYear
     = TRUE, useDemographicsIndexMonth = TRUE, useDemographicsIndexYearMonth = TRUE,
     useDemographicsPriorObservationTime = TRUE, useDemographicsPostObservationTime =
@@ -54,13 +47,13 @@ runCohortDiagnostics(
     useConditionEraStart = TRUE, useConditionEraOverlap = TRUE, useConditionEraGroupStart
     = TRUE, useConditionEraGroupOverlap = TRUE, useDrugExposure = FALSE,
     useDrugEraOverlap = TRUE, useDrugEraGroupStart = TRUE, useDrugEraGroupOverlap = TRUE,
-    useObservation = TRUE, useDeviceExposure = TRUE, useCharlsonIndex = FALSE, useDcsi =
-    FALSE, useChads2 = FALSE, useChads2Vasc = FALSE, useHfrs = FALSE, temporalStartDays =
-    c(-365, -30, 0, 1, 31, -9999, -365, -180, -30, seq(from = -421,          to = -31, by
+    useObservation = TRUE, useDeviceExposure = TRUE, useCharlsonIndex = TRUE, useDcsi =
+    TRUE, useChads2 = TRUE, useChads2Vasc = TRUE, useHfrs = FALSE, temporalStartDays =
+    c(-365, -30, 0, 1, 31, -9999, -365, -180, -30, seq(from = -421, to = -31,          by
     = 30), seq(from = 0, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, 0,
     0, 0, 0, seq(from = -391, to = -1, by = 30), seq(from = 30, to = 420, by = 30))),
   minCellCount = 5,
-  incremental = FALSE,
+  incremental = TRUE,
   incrementalFolder = file.path(exportFolder, "incremental")
 )
 }
@@ -154,15 +147,10 @@ using all persons found in observation period table.}
 \item{runCohortRelationship}{Do you want to compute temporal relationship between the cohorts being diagnosed. This
 diagnostics is needed for cohort as feature characterization.}
 
-\item{runCohortCharacterization}{Generate and export the cohort characterization?
-Only records with values greater than 0.0001 are returned.}
-
-\item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of
-the createCovariateSettings function in the FeatureExtraction package, or a list
-of such objects.}
-
-\item{runTemporalCohortCharacterization}{Generate and export the temporal cohort characterization?
-Only records with values greater than 0.001 are returned.}
+\item{runCohortCharacterization}{Generate and export the temporal cohort characterization?
+Only records with values greater than 0.001 are returned.
+We use FeatureExtraction createTemporalCovariateSettings function to specificy
+covariate settings - because the results are computed over multiple time windows.}
 
 \item{temporalCovariateSettings}{Either an object of type \code{covariateSettings} as created using one of
 the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
@@ -181,7 +169,7 @@ checks if the specified cohorts are instantiated, and only runs diagnostics on t
 cohorts (i.e. > 0 rows in cohort table).
 
 Characterization:
-If runTemporalCohortCharacterization argument is TRUE, then \code{RFeatureExtraction::createTemporalCovariateSettings}
+If runCohortCharacterization argument is TRUE, then \code{RFeatureExtraction::createTemporalCovariateSettings}
 is used as default.
 }
 \details{
