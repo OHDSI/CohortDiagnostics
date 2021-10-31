@@ -375,7 +375,6 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
                                      sketchLevel,
                                      maxCount,
                                      showResultsAsPercent = FALSE) {
-  browser()
   # ensure the data has required fields
   keyColumns <- keyColumns %>% unique()
   dataColumns <- dataColumns %>% unique()
