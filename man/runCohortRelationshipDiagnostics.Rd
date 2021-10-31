@@ -8,6 +8,7 @@ runCohortRelationshipDiagnostics(
   connectionDetails = NULL,
   connection = NULL,
   cohortDatabaseSchema,
+  cdmDatabaseSchema,
   tempEmulationSchema = NULL,
   cohortTable = "cohort",
   targetCohortIds,
@@ -31,6 +32,10 @@ of the function, and closed when the function finishes.}
 \item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example
 'scratch.dbo'.}
+
+\item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.}
 
 \item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
 tables, provide a schema with write privileges where temp tables can be created.}
