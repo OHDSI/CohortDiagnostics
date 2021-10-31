@@ -115,12 +115,11 @@ exportFeatureExtractionOutput <-
         )
         if (!is.null(timeRefFileName)) {
           timeRef <-
-            dplyr::collect(featureExtractionDbCovariateData$timeRef)
+            dplyr::collect(featureExtractionDbCovariateData$temporalTimeRef)
           writeToCsv(
             data = timeRef,
             fileName = timeRefFileName,
-            incremental = incremental,
-            analysisId = timeRef$timeId
+            incremental = incremental
           )
         }
         writeCovariateDataAndromedaToCsv(

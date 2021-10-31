@@ -49,8 +49,6 @@ CREATE TABLE analysis_ref (
 			analysis_id BIGINT NOT NULL,
 			analysis_name VARCHAR NOT NULL,
 			domain_id VARCHAR(20),
-			start_day FLOAT,
-			end_day FLOAT,
 			is_binary VARCHAR(1) NOT NULL,
 			missing_means_zero VARCHAR(1),
 			PRIMARY KEY(analysis_id)
@@ -309,11 +307,13 @@ CREATE TABLE concept_resolved (
 CREATE TABLE covariate_value (
 			cohort_id BIGINT NOT NULL,
 			covariate_id BIGINT NOT NULL,
+			start_day FLOAT,
+			end_day FLOAT,
 			sum_value FLOAT NOT NULL,
 			mean FLOAT NOT NULL,
 			sd FLOAT,
 			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, covariate_id, database_id)
+			PRIMARY KEY(cohort_id, covariate_id, start_day, end_day, database_id)
 );
 
 --Table covariate_value_dist
@@ -321,6 +321,8 @@ CREATE TABLE covariate_value (
 CREATE TABLE covariate_value_dist (
 			cohort_id BIGINT NOT NULL,
 			covariate_id BIGINT NOT NULL,
+			start_day FLOAT,
+			end_day FLOAT,
 			count_value FLOAT NOT NULL,
 			min_value FLOAT NOT NULL,
 			max_value FLOAT NOT NULL,
@@ -332,7 +334,7 @@ CREATE TABLE covariate_value_dist (
 			p_75_value FLOAT NOT NULL,
 			p_90_value FLOAT NOT NULL,
 			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, covariate_id, database_id)
+			PRIMARY KEY(cohort_id, covariate_id, start_day, end_day, database_id)
 );
 
 --Table database
@@ -456,13 +458,14 @@ CREATE TABLE temporal_covariate_ref (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE temporal_covariate_value (
 			cohort_id BIGINT NOT NULL,
-			time_id INT NOT NULL,
+			start_day FLOAT,
+			end_day FLOAT,
 			covariate_id BIGINT NOT NULL,
 			sum_value FLOAT NOT NULL,
 			mean FLOAT NOT NULL,
 			sd FLOAT,
 			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, time_id, covariate_id, database_id)
+			PRIMARY KEY(cohort_id, covariate_id, start_day, end_day, database_id)
 );
 
 --Table temporal_covariate_value_dist
@@ -482,16 +485,16 @@ CREATE TABLE temporal_covariate_value_dist (
 			p_75_value FLOAT NOT NULL,
 			p_90_value FLOAT NOT NULL,
 			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, covariate_id, database_id)
+			PRIMARY KEY(cohort_id, covariate_id, start_day, end_day, database_id)
 );
 
 --Table temporal_time_ref
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE temporal_time_ref (
-			time_id INT NOT NULL,
 			start_day FLOAT NOT NULL,
 			end_day FLOAT NOT NULL,
-			PRIMARY KEY(time_id)
+			temporal_name VARCHAR NOT NULL,
+			PRIMARY KEY(start_day, end_day)
 );
 
 --Table time_distribution
