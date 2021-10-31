@@ -2632,6 +2632,13 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  observeEvent(eventExpr = input$targetConceptSetsType,handlerExpr = {
+    consolidateCohortDefinitionActiveSideTarget(c())
+  })
+  observeEvent(eventExpr = input$comparatorConceptSetsType,handlerExpr = {
+    consolidateCohortDefinitionActiveSideComparator(c())
+  })
+  
   ##output: isConceptIdFromTargetOrComparatorConceptTableSelected----
   output$isConceptIdFromTargetOrComparatorConceptTableSelected <-
     shiny::reactive(x = {
