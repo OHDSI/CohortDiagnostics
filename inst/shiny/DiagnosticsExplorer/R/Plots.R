@@ -1844,7 +1844,7 @@ plotCohortOverlapPie <- function(data,
                         dplyr::select(.data$targetCohortId,.data$compoundName),
                       by = "targetCohortId") %>%
     dplyr::pull(.data$compoundName) %>% unique()
-  targetCohortCompoundName <- paste("Target Cohort -",paste(targetCohortCompoundName,collapse = ","))
+  targetCohortCompoundName <- paste("<b>Target Cohort :</b>",paste(targetCohortCompoundName,collapse = ","))
 
   comparatorCohortCompoundName <- data  %>%
     dplyr::inner_join(cohort %>%
@@ -1852,7 +1852,7 @@ plotCohortOverlapPie <- function(data,
                         dplyr::select(.data$comparatorCohortId,.data$compoundName),
                       by = "comparatorCohortId") %>%
     dplyr::pull(.data$compoundName) %>% unique()
-  comparatorCohortCompoundName <- paste("Comparator Cohort -",paste(comparatorCohortCompoundName,collapse = ","))
+  comparatorCohortCompoundName <- paste("<b>Comparator Cohort :</b>",paste(comparatorCohortCompoundName,collapse = ","))
   
   plotData <- data %>% 
     dplyr::mutate("Started_During" = abs(.data$cInTSubjects - .data$cStartOnTStart - .data$cStartOnTEnd)) %>% 
@@ -1892,23 +1892,25 @@ plotCohortOverlapPie <- function(data,
   for (i in 1:length(distinctDatabaseShortName)) {
     filteredData <- plotData %>% 
       dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[i]) %>% 
-      dplyr::arrange(dplyr::desc(.data$value))
+      dplyr::arrange(dplyr::desc(.data$value)) %>% 
+      dplyr::mutate(percentage = scales::label_percent()(.data$value/sum(.data$value))) %>% 
+      dplyr::mutate(ValuesWithComma = scales::label_comma()(.data$value))
     
     plot <- plot %>% 
       plotly::add_pie(data = filteredData, 
                       labels = ~subjectsIn, 
                       values = ~value,
-                      title = distinctDatabaseShortName[i],  
+                      title = paste0(distinctDatabaseShortName[i],"\nn = ",scales::label_comma()(sum(filteredData$value))),  
                       name = distinctDatabaseShortName[i],
-                      hovertemplate = ~paste(databaseId,'<br>',subjectsIn,': ',value,'<br>'),
+                      hovertemplate = ~paste(distinctDatabaseShortName[i],": ",databaseId,'<br>',subjectsIn,': ',ValuesWithComma,"(",percentage,")"),
                       domain = list(row = 0, column = i - 1),
                       marker = list(colors = colors),
-                      showlegend = ifelse(i == length(distinctDatabaseShortName),T,F)) 
+                      showlegend = ifelse(i == length(distinctDatabaseShortName),T,F))
   }
   m <- list(
     l = 0,
     r = 0,
-    b = 100,
+    b = 150,
     t = 50
   )
   plot <- plot %>% 
@@ -1918,17 +1920,18 @@ plotCohortOverlapPie <- function(data,
       legend = list(orientation = "h",   # show entries horizontally
                     xanchor = "center",  # use center of legend as anchor
                     x = 0.5,
-                    y = -0.25),
+                    y = -0.15),
       annotations = list(
-      x = 0.5 ,
-      y = -0.2,
-      text = paste(targetCohortCompoundName,"\n",comparatorCohortCompoundName,"\n",databaseString),
+      x = c(0.3,0.7) ,
+      y = c(-0.5,-0.5),
+      text = c(paste0(targetCohortCompoundName,"\n",comparatorCohortCompoundName), paste0("<b>Datasource :</b>\n",databaseString)),
       showarrow = F,
       xanchor = "center",
       yanchor = "bottom",
       xref = 'paper',
       yref = 'paper',
-      font = list(size = 10)
+      align = 'left',
+      font = list(size = 11)
     ),margin = m)
   return(plot)
 }
