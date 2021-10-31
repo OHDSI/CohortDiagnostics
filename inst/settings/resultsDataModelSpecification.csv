@@ -237,6 +237,9 @@ temporal_covariate_value_dist,p_10_value,float,Yes,No,No,Yes,2.2
 temporal_covariate_value_dist,p_25_value,float,Yes,No,No,Yes,2.2
 temporal_covariate_value_dist,p_75_value,float,Yes,No,No,Yes,2.2
 temporal_covariate_value_dist,p_90_value,float,Yes,No,No,Yes,2.2
+temporal_time_ref,start_day,bigint,No,Yes,No,Yes,2.2
+temporal_time_ref,start_day,bigint,No,Yes,No,Yes,2.2
+temporal_time_ref,temporal_name,varchar,Yes,No,No,Yes,2.2
 time_distribution,cohort_id,bigint,Yes,Yes,No,Yes,2.2
 time_distribution,count_value,float,Yes,No,No,Yes,2.2
 time_distribution,min_value,float,Yes,No,No,Yes,2.2

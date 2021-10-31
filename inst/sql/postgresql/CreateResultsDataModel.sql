@@ -491,10 +491,10 @@ CREATE TABLE temporal_covariate_value_dist (
 --Table temporal_time_ref
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE temporal_time_ref (
-			time_id INT NOT NULL,
 			start_day FLOAT NOT NULL,
 			end_day FLOAT NOT NULL,
-			PRIMARY KEY(time_id)
+			temporal_name VARCHAR NOT NULL,
+			PRIMARY KEY(start_day, end_day)
 );
 
 --Table time_distribution

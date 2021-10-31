@@ -66,8 +66,18 @@ runCohortCharacterizationDiagnostics <-
            cohortIds = NULL,
            cdmVersion = 5,
            cutOff = 0.0001,
-           covariateSettings = createDefaultCovariateSettings(),
+           covariateSettings,
            batchSize = 50) {
+    if (any(!"temporal" %in% names(covariateSettings),
+            covariateSettings$temporal != TRUE)) {
+      warning(
+        paste0(
+          "    covariateSettings specification should be of temporalCovariateSetting object \n",
+          "    as described in FeatureExtraction - exiting runCohortCharacterization."
+        )
+      )
+      return(NULL)
+    }
     startTime <- Sys.time()
     if (is.null(connection)) {
       connection <- DatabaseConnector::connect(connectionDetails)
@@ -108,22 +118,24 @@ runCohortCharacterizationDiagnostics <-
       ParallelLogger::logInfo(paste0("   - Starting Characterization."))
     }
     
+    browser()
     results <- Andromeda::andromeda()
-    if (all(!is.null(covariateSettings$temporal),
-            isTRUE(covariateSettings$temporal))) {
-      batchSize <-
-        max(1, round(batchSize / length(covariateSettings$temporalStartDays)))
-    } else {
-      stop("only temporal characterization is supported")
-    }
+    batchSize <-
+      max(1, round(batchSize / length(covariateSettings$temporalStartDays)))
+    ParallelLogger::logInfo("    - Starting batch charactetrization, ", scales::comma(batchSize), " cohorts at a time.")
     
     for (start in seq(1, length(cohortIdsNew), by = batchSize)) {
       end <- min(start + batchSize - 1, length(cohortIdsNew))
       if (length(cohortIdsNew) > batchSize) {
-        ParallelLogger::logTrace(sprintf(
-          "    - Batch characterization. Processing cohorts %s through %s",
-          start,
-          end
+        ParallelLogger::logTrace(paste0(
+          "    - Batch characterization. Processing ",
+          scales::comma(start),
+          " through ",
+          scales::comma(end),
+          " of ",
+          scales::comma(length(cohortIdsNew)),
+          " provided. In current batch the following cohorts are being characterized: ",
+          paste0(cohortIdsNew[start:end], collapse = ", ")
         ))
       }
       featureExtractionOutput <-
@@ -142,8 +154,10 @@ runCohortCharacterizationDiagnostics <-
       populationSize <-
         attr(x = featureExtractionOutput, which = "metaData")$populationSize
       populationSize <-
-        dplyr::tibble(cohortId = names(populationSize) %>% as.numeric(),
-                      populationSize = populationSize)
+        dplyr::tibble(
+          cohortId = names(populationSize) %>% as.numeric(),
+          populationSize = populationSize
+        )
       
       if ("covariates" %in% names(featureExtractionOutput) &&
           dplyr::pull(dplyr::count(featureExtractionOutput$covariates)) > 0) {
@@ -249,6 +263,52 @@ runCohortCharacterizationDiagnostics <-
           results$covariatesContinuous <- covariatesContinuous
         }
       }
+      
+      if ("analysisRef" %in% names(results)) {
+        analysisId <- featureExtractionOutput$analysisRef %>%
+          dplyr::select(.data$analysisId) %>%
+          dplyr:arrange(.data$analysisId)
+        Andromeda::appendToTable(
+          results$analysisRef,
+          featureExtractionOutput$analysisRef %>%
+            dplyr::anti_join(analysisId, by = "analysisId", copy = TRUE)
+        ) %>%
+          dplyr::arrange(.data$analysisId)
+      } else {
+        results$analysisRef <- featureExtractionOutput$analysisRef %>%
+          dplyr:arrange(.data$analysisId)
+      }
+      
+      if ("covariateRef" %in% names(results)) {
+        covariateId <- results$covariateRef %>%
+          dplyr::select(.data$covariateId) %>%
+          dplyr::distinct()
+        Andromeda::appendToTable(
+          results$covariateRef,
+          featureExtractionOutput$covariateRef %>%
+            dplyr::anti_join(covariateId, by = "covariateId", copy = TRUE)
+        ) %>%
+          dplyr::arrange(.data$covariateId)
+      } else {
+        results$covariateRef <- featureExtractionOutput$covariateRef
+      }
+      
+      if ("timeRef" %in% names(results)) {
+        browser()
+        timeId <- results$covariateRef %>%
+          dplyr::select(.data$covariateId) %>%
+          dplyr::distinct()
+        Andromeda::appendToTable(
+          results$covariateRef,
+          featureExtractionOutput$covariateRef %>%
+            dplyr::anti_join(covariateId, by = "covariateId", copy = TRUE)
+        ) %>%
+          dplyr::arrange(.data$covariateId)
+      } else  {
+        results$timeRef <- featureExtractionOutput$timeRef
+      }
+      
+      
     }
     
     delta <- Sys.time() - startTime
