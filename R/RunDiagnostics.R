@@ -53,6 +53,7 @@
 #'                                    index event breakdown, concept cooccurrence, excluded concepts,
 #'                                    resolved concepts. This function call now supersedes runIncludedSourceConcepts,
 #'                                    runOrphanConcepts, runBreakdownIndexEvents.
+#' @template IndexDateDiagnosticsRelativeDays
 #' @param runIncludedSourceConcepts   (Deprecated) Generate and export the source concepts included in the cohorts?
 #' @param runOrphanConcepts           (Deprecated) Generate and export potential orphan concepts?
 #' @param runVisitContext             Generate and export index-date visit context?
@@ -99,6 +100,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  cdmVersion = 5,
                                  runInclusionStatistics = TRUE,
                                  runConceptSetDiagnostics = TRUE,
+                                 indexDateDiagnosticsRelativeDays = c(-30:30),
                                  runIncludedSourceConcepts = FALSE,
                                  runOrphanConcepts = FALSE,
                                  runVisitContext = TRUE,
@@ -160,6 +162,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       on.exit(DatabaseConnector::disconnect(connection))
     }
   }
+  
   tables <-
     DatabaseConnector::getTableNames(connection, cohortDatabaseSchema)
   if (!toupper(cohortTable) %in% toupper(tables)) {
@@ -199,6 +202,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     list(
       runInclusionStatistics = argumentsAtDiagnosticsInitiation$runInclusionStatistics,
       runConceptSetDiagnostics = argumentsAtDiagnosticsInitiation$runConceptSetDiagnostics,
+      indexDateDiagnosticsRelativeDays = argumentsAtDiagnosticsInitiation$indexDateDiagnosticsRelativeDays,
       runVisitContext = argumentsAtDiagnosticsInitiation$runVisitContext,
       runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,
       runCohortTimeSeries = argumentsAtDiagnosticsInitiation$runCohortTimeSeries,
@@ -560,6 +564,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohorts = cohorts,
         cohortIds = subset$cohortId,
         cohortDatabaseSchema = cohortDatabaseSchema,
+        indexDateDiagnosticsRelativeDays = indexDateDiagnosticsRelativeDays,
         cohortTable = cohortTable,
         minCellCount = minCellCount
       )

@@ -162,7 +162,6 @@ sidebarMenu <-
       condition = "input.tabs != 'databaseInformation' &
       input.tabs != 'timeSeries' &
       input.tabs != 'cohortCounts' &
-      input.tabs != 'cohortOverlap'&
       input.tabs != 'incidenceRate' &
       input.tabs != 'timeDistribution'",
       shinyWidgets::pickerInput(
@@ -184,7 +183,6 @@ sidebarMenu <-
     shiny::conditionalPanel(
       condition = "input.tabs == 'cohortCounts' |
       input.tabs == 'timeSeries' |
-      input.tabs == 'cohortOverlap' |
       input.tabs == 'incidenceRate' |
       input.tabs == 'timeDistribution'",
       shinyWidgets::pickerInput(
@@ -430,14 +428,6 @@ bodyTabItems <- shinydashboard::tabItems(
                               DT::dataTableOutput(outputId = "conceptBrowserTable")
                             ),
                             shiny::tabPanel(
-                              title = "Non standard counts",
-                              value = "nonStandardCount",
-                              shiny::conditionalPanel(
-                                condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-                                DT::dataTableOutput(outputId = "nonStandardCount")
-                              )
-                            ),
-                            shiny::tabPanel(
                               title = "Trend",
                               value = "conceptSetTimeSeries",
                               shiny::column(
@@ -463,21 +453,11 @@ bodyTabItems <- shinydashboard::tabItems(
                               )
                             ),
                             shiny::tabPanel(
-                              title = "Standard to Non standard mapping",
-                              value = "conceptSetStandardToNonStandard",
-                              # shiny::column(
-                              #   width = 12,
-                              #   shiny::radioButtons(
-                              #     inputId = "timeSeriesAggregationForCohortDefinition",
-                              #     label = "Aggregation period:",
-                              #     choices = c("Monthly", "Yearly"),
-                              #     selected = "Monthly",
-                              #     inline = TRUE
-                              #   )
-                              # ),
+                              title = "Mapped (observed)",
+                              value = "observedSourceCodes",
                               shiny::conditionalPanel(
                                 condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-                                DT::dataTableOutput(outputId = "conceptSetStandardToNonStandardTable")
+                                DT::dataTableOutput(outputId = "observedSourceCodesTable")
                               )
                             )
                           )
@@ -997,8 +977,15 @@ bodyTabItems <- shinydashboard::tabItems(
             DT::dataTableOutput(outputId = "conceptBrowserTableForIndexEvent")
           ),
           shiny::tabPanel(
-            title = "Time Series Plot",
+            title = "Trend",
             value = "conceptSetTimeSeriesForIndexEvent",
+            shiny::radioButtons(
+              inputId = "timeSeriesAggregationPeriodSelectionForIndexEventBreakdown",
+              label = "Aggregation period:",
+              choices = c("Monthly","Yearly"),
+              selected = "Monthly",
+              inline = TRUE
+            ),
             shinycssloaders::withSpinner(
               plotly::plotlyOutput(
                 outputId = "conceptSetTimeSeriesPlotForIndexEvent",

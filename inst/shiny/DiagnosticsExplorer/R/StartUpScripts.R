@@ -329,11 +329,23 @@ consolidationOfSelectedFieldValues <- function(input,
     data <- list()
     #multi select cohortId
     if (doesObjectHaveData(input$selectedCompoundCohortNames)) {
+      if(input$tabs != 'cohortOverlap') {
         data$cohortIdTarget <- cohort %>%
           dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortNames) %>%
           dplyr::arrange(.data$cohortId) %>%
           dplyr::pull(.data$cohortId) %>%
           unique()
+      }
+    }
+    #Single select cohortId only for cohort overlap
+    if (doesObjectHaveData(input$selectedCompoundCohortName)) {
+     if (input$tabs == 'cohortOverlap') {
+        data$cohortIdTarget <- cohort %>%
+          dplyr::filter(.data$compoundName == input$selectedCompoundCohortName) %>%
+          dplyr::arrange(.data$cohortId) %>%
+          dplyr::pull(.data$cohortId) %>%
+          unique()
+      }
     }
     if (doesObjectHaveData(input$selectedComparatorCompoundCohortNames) && input$tabs == 'cohortOverlap') {
       data$cohortIdComparator <- cohort %>%
@@ -363,10 +375,9 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
                                      sketchLevel,
                                      maxCount,
                                      showResultsAsPercent = FALSE) {
-  
   # ensure the data has required fields
-  keyColumns <- sort(keyColumns %>% unique())
-  dataColumns <- sort(dataColumns %>% unique())
+  keyColumns <- keyColumns %>% unique()
+  dataColumns <- dataColumns %>% unique()
   missingColumns <-
     setdiff(x = c(keyColumns, dataColumns) %>% unique(),
             y = colnames(data))
@@ -405,8 +416,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
                                           " (",
                                           scales::comma(.data$count),
                                           ")")) %>%
-        dplyr::mutate(dataColumnsLevel2 = .data$type) %>%
-        dplyr::arrange(.data$databaseId, .data$type)
+        dplyr::mutate(dataColumnsLevel2 = .data$type) 
       if (showResultsAsPercent) {
         if (!is.null(maxCount)) {
           maxCount <- suppressWarnings(ceiling(maxCount / (max(data$count))))

@@ -2632,6 +2632,13 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  observeEvent(eventExpr = input$targetConceptSetsType,handlerExpr = {
+    consolidateCohortDefinitionActiveSideTarget(c())
+  })
+  observeEvent(eventExpr = input$comparatorConceptSetsType,handlerExpr = {
+    consolidateCohortDefinitionActiveSideComparator(c())
+  })
+  
   ##output: isConceptIdFromTargetOrComparatorConceptTableSelected----
   output$isConceptIdFromTargetOrComparatorConceptTableSelected <-
     shiny::reactive(x = {
@@ -4419,83 +4426,6 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
-  ##output: nonStandardCount----
-  output$nonStandardCount <- DT::renderDT(expr = {
-    conceptId <- activeSelected()$conceptId
-    validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
-    cohortId <- activeSelected()$cohortId
-    validate(need(doesObjectHaveData(conceptId), "No cohort id selected."))
-    databaseId <- consolidatedDatabaseIdTarget()
-    validate(need(doesObjectHaveData(databaseId), "No database id selected."))
-    
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(
-      message = paste0("Computing concept relationship for concept id:",
-                       conceptId),
-      value = 0
-    )
-    
-    data <- getMetadataForConceptId()$mappedNonStandard
-    validate(need(
-      doesObjectHaveData(data),
-      "No information for selected concept id."
-    ))
-    data <- data %>%
-      dplyr::rename("persons" = .data$subjectCount,
-                    "records" = .data$conceptCount)
-    keyColumnFields <- c("conceptId", 
-                         "conceptName",
-                         "vocabularyId",
-                         "domainTable")
-    #depending on user selection - what data Column Fields Will Be Presented?
-    dataColumnFields <-
-      c("persons",
-        "records")
-    if (input$targetCohortConceptSetColumnFilter == "Both") {
-      dataColumnFields <- dataColumnFields
-      sketchLevel <- 2
-    } else if (input$targetCohortConceptSetColumnFilter == "Person Only") {
-      dataColumnFields <-
-        dataColumnFields[stringr::str_detect(
-          string = tolower(dataColumnFields),
-          pattern = tolower("person")
-        )]
-      sketchLevel <- 1
-    } else if (input$targetCohortConceptSetColumnFilter == "Record Only") {
-      dataColumnFields <-
-        dataColumnFields[stringr::str_detect(
-          string = tolower(dataColumnFields),
-          pattern = tolower("record")
-        )]
-      sketchLevel <- 1
-    }
-    
-    countsForHeader <-
-      getCountsForHeaderForUseInDataTable(
-        dataSource = dataSource,
-        databaseIds = consolidatedDatabaseIdTarget(),
-        cohortIds = consolidatedCohortIdTarget(),
-        source = input$targetConceptIdCountSource,
-        fields = input$targetCohortConceptSetColumnFilter
-      )
-    
-    maxCountValue <-
-      getMaxValueForStringMatchedColumnsInDataFrame(data = data,
-                                                    string = dataColumnFields)
-    
-    table <- getDtWithColumnsGroupedByDatabaseId(
-      data = data,
-      headerCount = countsForHeader,
-      keyColumns = keyColumnFields,
-      sketchLevel = sketchLevel,
-      dataColumns = dataColumnFields,
-      maxCount = maxCountValue,
-      showResultsAsPercent = input$showAsPercentageColumnTarget 
-    )
-    return(table)
-  })
-  
   ##getSourceCodesObservedForConceptIdInDatasource----
   getSourceCodesObservedForConceptIdInDatasource <- shiny::reactive(x = {
     conceptId <- activeSelected()$conceptId
@@ -4508,7 +4438,6 @@ shiny::shinyServer(function(input, output, session) {
     )){
       return(NULL)
     }
-    
     data <- getResultsConceptMapping(
       dataSource,
       databaseIds = databaseId,
@@ -4536,11 +4465,12 @@ shiny::shinyServer(function(input, output, session) {
         "persons" = .data$subjectCount,
         "records" = .data$conceptCount
       )
+    return(conceptMapping)
   })
   
   
-  ##output: conceptSetStandardToNonStandardTable----
-  output$conceptSetStandardToNonStandardTable <- DT::renderDT(expr = {
+  ##output: observedSourceCodesTable----
+  output$observedSourceCodesTable <- DT::renderDT(expr = {
     conceptId <- activeSelected()$conceptId
     validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
     cohortId <- activeSelected()$cohortId
@@ -4556,7 +4486,6 @@ shiny::shinyServer(function(input, output, session) {
       value = 0
     )
     data <- getSourceCodesObservedForConceptIdInDatasource()
-
     validate(need(
       doesObjectHaveData(data),
       "No information for selected concept id."
@@ -4574,7 +4503,7 @@ shiny::shinyServer(function(input, output, session) {
       getCountsForHeaderForUseInDataTable(
         dataSource = dataSource,
         databaseIds = consolidatedDatabaseIdTarget(),
-        cohortIds =  getCohortIdFromSelectedRowInCohortCountTable()$cohortId,
+        cohortIds =  activeSelected()$cohortId,
         source = "Cohort Level",
         fields = input$cohortCountInclusionRuleType
       )
@@ -4590,7 +4519,7 @@ shiny::shinyServer(function(input, output, session) {
       sketchLevel = 1,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
-      showResultsAsPercent = input$inclusionRuleShowAsPercentInCohortCount #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+      showResultsAsPercent = FALSE
     )
     return(table)
   })
@@ -5543,8 +5472,9 @@ shiny::shinyServer(function(input, output, session) {
   ##reactive: getIncidentRatePlot ----
   getIncidentRatePlot <- shiny::reactive({
     data <- getIncidentRatePlotData()
-    validate(need(doesObjectHaveData(data),
-                  "No data for this combination"))
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <-
@@ -5585,7 +5515,9 @@ shiny::shinyServer(function(input, output, session) {
     on.exit(progress$close())
     progress$set(message = paste0("Rendering incidence rate plot."),
                  value = 0)
-    
+    data <- getIncidentRatePlot()
+    validate(need(doesObjectHaveData(data),
+                  "No incidence rate data"))
     shiny::withProgress(
       message = paste(
         "Building incidence rate plot data for ",
@@ -6160,7 +6092,7 @@ shiny::shinyServer(function(input, output, session) {
       getResultsIndexEventBreakdown(dataSource = dataSource,
                                     cohortIds = consolidatedCohortIdTarget(),
                                     databaseIds = consolidatedDatabaseIdTarget(),
-                                    coConceptIds = NULL,
+                                    coConceptIds = 0,
                                     daysRelativeIndex = 0) #!! in new design, we have multiple daysRelativeIndex
     if (!doesObjectHaveData(indexEventBreakdown)) {
       return(NULL)
@@ -6219,24 +6151,14 @@ shiny::shinyServer(function(input, output, session) {
                        .data$standardConcept != "S")
     }
     
-    if (input$indexEventBreakdownShowAsPercent) {
-      data <- data %>%
-        dplyr::mutate(conceptValue = .data$conceptPercent) %>%
-        dplyr::mutate(subjectValue = .data$subjectPercent)
-    } else {
       data <- data %>%
         dplyr::mutate(conceptValue = .data$conceptCount) %>%
-        dplyr::mutate(subjectValue = .data$subjectCount)
-    }
-    
-    data <- data %>%
-      dplyr::filter(.data$conceptId > 0) %>%
-      dplyr::arrange(.data$databaseId) 
-    
-    data <- data %>% 
-      dplyr::rename("persons" = .data$subjectValue,
+        dplyr::mutate(subjectValue = .data$subjectCount) %>%
+        dplyr::filter(.data$conceptId > 0) %>%
+        dplyr::arrange(.data$databaseId)  %>% 
+        dplyr::rename("persons" = .data$subjectValue,
                     "records" = .data$conceptValue) %>% 
-      dplyr::arrange(dplyr::desc(dplyr::across(c("persons", "records"))))
+        dplyr::arrange(dplyr::desc(dplyr::across(c("persons", "records"))))
     
     return(data)
   })
@@ -6273,7 +6195,6 @@ shiny::shinyServer(function(input, output, session) {
           "No index event breakdown data for the chosen combination."
         )
       )
-        
       
       keyColumnFields <- c("conceptId", "conceptName", "vocabularyId")
       #depending on user selection - what data Column Fields Will Be Presented?
@@ -6410,7 +6331,7 @@ shiny::shinyServer(function(input, output, session) {
         "No timeseries data for the cohort of this series type"
       ))
       # working on the plot
-      if (input$timeSeriesAggregationPeriodSelection == "Monthly") {
+      if (input$timeSeriesAggregationPeriodSelectionForIndexEventBreakdown == "Monthly") {
         data <- data$databaseConceptIdYearMonthLevelTsibble %>%
           dplyr::filter(.data$conceptId == consolidatedConceptIdTarget())
       } else {
@@ -6430,7 +6351,7 @@ shiny::shinyServer(function(input, output, session) {
         value = 0
       )
       data <- data %>%
-        dplyr::filter(.data$databaseId %in% input$selectedDatabaseIds) %>%
+        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
         dplyr::rename("records" = .data$conceptCount,
                       "persons" = .data$subjectCount)
       tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
@@ -6672,8 +6593,9 @@ shiny::shinyServer(function(input, output, session) {
   ##cohortOverlapData----
   cohortOverlapData <- reactive({
     if (any(
-      length(consolidatedDatabaseIdTarget()) == 0,
-      length(consolidatedCohortIdTarget()) == 0
+      !doesObjectHaveData(consolidatedDatabaseIdTarget()),
+      !doesObjectHaveData(consolidatedCohortIdTarget()),
+      !doesObjectHaveData(getComparatorCohortIdFromSelectedCompoundCohortNames())
     )) {
       return(NULL)
     }
@@ -6681,14 +6603,44 @@ shiny::shinyServer(function(input, output, session) {
             !exists('cohortRelationships'))) {
       return(NULL)
     }
+    
+    validate(need(
+      length(consolidatedCohortIdTarget()) > 0,
+      paste0("Please select Target cohort")
+    ))
+    validate(need(
+      length(consolidatedCohortIdTarget()) == 1,
+      paste0("Please only select one target cohort")
+    ))
+    validate(need(
+      length(getComparatorCohortIdFromSelectedCompoundCohortNames()) > 0,
+      paste0("Please select Comparator Cohort(s)")
+    ))
+    validate(need(
+      consolidatedCohortIdTarget() != getComparatorCohortIdFromSelectedCompoundCohortNames(),
+      paste0("Comparator cohort cannot be same as target cohort")
+    ))
+    targetCohortIds <- consolidatedCohortIdTarget()
+    comparatorCohortIds <- setdiff(x = getComparatorCohortIdFromSelectedCompoundCohortNames(),
+                                   y = consolidatedCohortIdTarget())
     data <- getResultsCohortOverlap(dataSource = dataSource,
-                                    targetCohortIds = consolidatedCohortIdTarget(),
+                                    targetCohortIds = targetCohortIds,
                                     databaseIds = consolidatedDatabaseIdTarget(),
-                                    comparatorCohortIds = getComparatorCohortIdFromSelectedCompoundCohortNames())
+                                    comparatorCohortIds = comparatorCohortIds)
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
     return(data)
+  })
+  
+  #______________----
+  # Cohort Overlap filtered ------
+  ##cohortOverlapDataFiltered----
+  cohortOverlapDataFiltered <- reactive({
+    if (!doesObjectHaveData(cohortOverlapData())) {
+      return(NULL)
+    }
+    return(cohortOverlapData())
   })
 
   ###output: isCohortDefinitionRowSelected----
@@ -6710,15 +6662,11 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: overlapPlot----
   output$overlapPlot <- plotly::renderPlotly(expr = {
-    validate(need(
-      length(consolidatedCohortIdTarget()) > 0,
-      paste0("Please select Target Cohort(s)")
-    ))
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(message = paste0("Plotting cohort overlap."),
                  value = 0)
-    data <- cohortOverlapData()
+    data <- cohortOverlapDataFiltered()
     validate(need(
       doesObjectHaveData(data),
       paste0("No cohort overlap data for this combination")
@@ -6742,7 +6690,7 @@ shiny::shinyServer(function(input, output, session) {
     on.exit(progress$close())
     progress$set(message = paste0("Plotting cohort overlap."),
                  value = 0)
-    data <- cohortOverlapData()
+    data <- cohortOverlapDataFiltered()
     
     validate(need(
       !is.null(data),
@@ -6762,7 +6710,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: cohortOverlapTable ----
   output$cohortOverlapTable <- DT::renderDataTable(expr = {
-    data <- cohortOverlapData()
+    data <- cohortOverlapDataFiltered()
     validate(need(
       !is.null(data),
       paste0("No cohort overlap data for this combination")
@@ -7317,6 +7265,56 @@ shiny::shinyServer(function(input, output, session) {
         nrow(table) > 0,
         "No data available for selected combination."
       ))
+      browser()
+      keyColumnFields <- c("characteristic")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      dataColumnFields <-
+        c("Mean")
+      # if (input$indexEventBreakdownTableFilter == "Both") {
+      #   dataColumnFields <- dataColumnFields
+      #   sketchLevel <- 2
+      # } else if (input$indexEventBreakdownTableFilter == "Person Only") {
+      #   dataColumnFields <-
+      #     dataColumnFields[stringr::str_detect(
+      #       string = tolower(dataColumnFields),
+      #       pattern = tolower("person")
+      #     )]
+      #   sketchLevel <- 1
+      # } else if (input$indexEventBreakdownTableFilter == "Record Only") {
+      #   dataColumnFields <-
+      #     dataColumnFields[stringr::str_detect(
+      #       string = tolower(dataColumnFields),
+      #       pattern = tolower("record")
+      #     )]
+      #   sketchLevel <- 1
+      # }
+      
+      countsForHeader <-
+        getCountsForHeaderForUseInDataTable(
+          dataSource = dataSource,
+          databaseIds = consolidatedDatabaseIdTarget(),
+          cohortIds = consolidatedCohortIdTarget(),
+          source = "Cohort Level",
+          fields = "Person Only"
+        )
+      
+      maxCountValue <-
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                      string = dataColumnFields)
+      
+      table <- getDtWithColumnsGroupedByDatabaseId(
+        data = data,
+        headerCount = countsForHeader,
+        keyColumns = keyColumnFields,
+        sketchLevel = sketchLevel,
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
+        showResultsAsPercent = input$indexEventBreakdownShowAsPercent
+      )
+      
+      return(table)
+      
+      
       
       options = list(
         pageLength = 1000,
