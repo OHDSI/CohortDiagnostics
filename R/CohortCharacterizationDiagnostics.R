@@ -138,7 +138,7 @@ runCohortCharacterizationDiagnostics <-
             scales::comma(end),
             " of total ",
             scales::comma(length(cohortIdsNew)),
-            " . Cohorts (",
+            ". Cohorts (",
             paste0(cohortIdsNew[start:end], collapse = ", "),
             ")"
           )
