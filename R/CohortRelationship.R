@@ -54,7 +54,6 @@ runCohortRelationshipDiagnostics <-
            incremental = FALSE,
            incrementalFolder = NULL) {
     startTime <- Sys.time()
-    return(NULL)
     
     if (length(targetCohortIds) == 0) {
       warning("No target cohort ids specified")
