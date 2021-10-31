@@ -156,9 +156,10 @@
     <pre class="usage"><span class='fu'>getResultsCohortRelationships</span><span class='op'>(</span>
   <span class='va'>dataSource</span>,
   cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  comparatorCohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
   databaseIds <span class='op'>=</span> <span class='cn'>NULL</span>,
-  startDay <span class='op'>=</span> <span class='cn'>NULL</span>,
-  endDay <span class='op'>=</span> <span class='cn'>NULL</span>
+  startDays <span class='op'>=</span> <span class='cn'>NULL</span>,
+  endDays <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -184,12 +185,16 @@ character field values from the `databaseId` field of the `database` table
 of the results data model.</p></td>
     </tr>
     <tr>
-      <th>startDay</th>
+      <th>startDays</th>
       <td><p>A vector of days in relation to cohort_start_date of target</p></td>
     </tr>
     <tr>
-      <th>endDay</th>
+      <th>endDays</th>
       <td><p>A vector of days in relation to cohort_end_date of target</p></td>
+    </tr>
+    <tr>
+      <th>ComparatorCohortIds</th>
+      <td><p>A vector of one or more Cohort Ids.</p></td>
     </tr>
     </table>
 

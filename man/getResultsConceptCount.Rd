@@ -4,7 +4,13 @@
 \alias{getResultsConceptCount}
 \title{Returns data from concept_count table of Cohort Diagnostics results data model}
 \usage{
-getResultsConceptCount(dataSource, databaseIds = NULL, conceptIds = NULL)
+getResultsConceptCount(
+  dataSource,
+  databaseIds = NULL,
+  conceptIds = NULL,
+  calendarMonths = NULL,
+  calendarYears = NULL
+)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 
@@ -18,7 +24,13 @@ and uploaded using \code{uploadResults}}
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
 
-\item{conceptIds}{A list of concept ids to get counts for}
+\item{conceptIds}{A vector of one or more Concept Ids.}
+
+\item{calendarYears}{A vector of one more more calendar years (valid values 1980 to current year or 0). Where 0 represents
+aggregation across all available years.}
+
+\item{calendarMonth}{A vector of one more more calendar month (valid values 0 to 12) where 1 to 12 represents calendar month, and 0 represents
+aggregation across all months.}
 }
 \value{
 Returns a data frame (tibble)

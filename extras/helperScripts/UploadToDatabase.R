@@ -14,36 +14,36 @@ portNumber <- 5432
 #   user = Sys.getenv("shinydbUser"),
 #   password = Sys.getenv("shinydbPW")
 # )
-# resultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
+resultsSchema <- 'phenotype_library'
 
 
 # OHDSI's Phenotype library server:
-connectionDetails <- createConnectionDetails(
-  dbms = "postgresql",
-  server = paste(
-    Sys.getenv("phenotypeLibraryServer"),
-    Sys.getenv("phenotypeLibrarydb"),
-    sep = "/"
-  ),
-  port = portNumber,
-  user = Sys.getenv("phenotypeLibrarydbUser"),
-  password = Sys.getenv("phenotypeLibrarydbPw")
-)
-resultsSchema <- Sys.getenv("phenotypeLibrarydbTargetSchema")
-# 
-
-# other
 # connectionDetails <- createConnectionDetails(
 #   dbms = "postgresql",
 #   server = paste(
-#     keyring::key_get("shinydbServer"),
-#     keyring::key_get("shinydbDatabase"),
+#     Sys.getenv("phenotypeLibraryServer"),
+#     Sys.getenv("phenotypeLibrarydb"),
 #     sep = "/"
 #   ),
 #   port = portNumber,
-#   user = keyring::key_get("shinydbUser"),
-#   password = keyring::key_get("shinydbPW")
+#   user = Sys.getenv("phenotypeLibrarydbUser"),
+#   password = Sys.getenv("phenotypeLibrarydbPw")
 # )
+# resultsSchema <- Sys.getenv("phenotypeLibrarydbTargetSchema")
+# 
+
+# other
+connectionDetails <- createConnectionDetails(
+  dbms = "postgresql",
+  server = paste(
+    keyring::key_get("shinydbServer"),
+    keyring::key_get("shinydbDatabase"),
+    sep = "/"
+  ),
+  port = portNumber,
+  user = keyring::key_get("shinydbUser"),
+  password = keyring::key_get("shinydbPW")
+)
 
 
 
@@ -57,7 +57,7 @@ resultsSchema <- Sys.getenv("phenotypeLibrarydbTargetSchema")
 
 Sys.setenv("POSTGRES_PATH" = Sys.getenv('POSTGRES_PATH'))
 
-folderWithZipFilesToUpload <- "D:\\studyResults\\SkeletonCohortDiagnosticsStudyP"
+folderWithZipFilesToUpload <- "D:\\studyResults\\ohdaPhenotypeLibraryP\\tempUpload"
 listOfZipFilesToUpload <-
   list.files(
     path = folderWithZipFilesToUpload,

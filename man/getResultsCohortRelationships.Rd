@@ -7,9 +7,10 @@
 getResultsCohortRelationships(
   dataSource,
   cohortIds = NULL,
+  comparatorCohortIds = NULL,
   databaseIds = NULL,
-  startDay = NULL,
-  endDay = NULL
+  startDays = NULL,
+  endDays = NULL
 )
 }
 \arguments{
@@ -26,9 +27,11 @@ and uploaded using \code{uploadResults}}
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
 
-\item{startDay}{A vector of days in relation to cohort_start_date of target}
+\item{startDays}{A vector of days in relation to cohort_start_date of target}
 
-\item{endDay}{A vector of days in relation to cohort_end_date of target}
+\item{endDays}{A vector of days in relation to cohort_end_date of target}
+
+\item{ComparatorCohortIds}{A vector of one or more Cohort Ids.}
 }
 \value{
 Returns a data frame (tibble) with results that conform to cohort_relationships

@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r connect, echo=TRUE}
+library(magrittr)
 # dataSource <-
 #   CohortDiagnostics::createFileDataSource(premergedDataFile = "D:\\git\\github\\gowthamrao\\CohortDiagnostics\\CohortDiagnostics\\inst\\shiny\\DiagnosticsExplorer\\data\\PreMerged.RData",
 #                                           envir = .GlobalEnv)

@@ -26,6 +26,7 @@ runCohortDiagnostics(
   cdmVersion = 5,
   runInclusionStatistics = TRUE,
   runConceptSetDiagnostics = TRUE,
+  indexDateDiagnosticsRelativeDays = c(-30:30),
   runIncludedSourceConcepts = FALSE,
   runOrphanConcepts = FALSE,
   runVisitContext = TRUE,
@@ -122,6 +123,8 @@ does not exist it will be created.}
 index event breakdown, concept cooccurrence, excluded concepts,
 resolved concepts. This function call now supersedes runIncludedSourceConcepts,
 runOrphanConcepts, runBreakdownIndexEvents.}
+
+\item{indexDateDiagnosticsRelativeDays}{An array of days relative to index date to perform diagnositcs on. Default 0 - i.e. same days an index.}
 
 \item{runIncludedSourceConcepts}{(Deprecated) Generate and export the source concepts included in the cohorts?}
 
