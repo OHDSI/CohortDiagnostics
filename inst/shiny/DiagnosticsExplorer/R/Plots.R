@@ -383,7 +383,7 @@ plotTs <- function(data,
                       text = ~ paste("Database ID = ",.data$databaseId,
                                      "\nvalueType = ",valueType )) %>%
     plotly::layout(showlegend = FALSE,
-                   xaxis = list(range = c(xAxisMin, xAxisMax), showspikes = showPlotSpikes),
+                   xaxis = list(tickangle = -90, range = c(xAxisMin, xAxisMax), showspikes = showPlotSpikes),
                    yaxis = list(tickformat = ifelse((valueType == "recordsProportion" || valueType == "personsProportion"),".2%",",d"), showspikes = showPlotSpikes))
   
   
@@ -1527,32 +1527,6 @@ plotCompareCohortCharacterization <- function(balance,
 plotCohortOverlap <- function(data,
                               shortNameRef = NULL,
                               yAxis = "Percentages") {
-  # Perform error checks for input variables
-  # errorMessage <- checkmate::makeAssertCollection()
-  # checkmate::assertTibble(
-  #   x = data,
-  #   any.missing = FALSE,
-  #   min.rows = 1,
-  #   min.cols = 6,
-  #   null.ok = FALSE,
-  #   add = errorMessage
-  # )
-  # checkmate::reportAssertions(collection = errorMessage)
-  # checkmate::assertNames(
-  #   x = colnames(data),
-  #   must.include = c(
-  #     "databaseId",
-  #     "targetCohortId",
-  #     "comparatorCohortId",
-  #     "tOnlySubjects",
-  #     "cOnlySubjects",
-  #     "bothSubjects"
-  #   ),
-  #   add = errorMessage
-  # )
-  # checkmate::reportAssertions(collection = errorMessage)
- 
-
   
   data <- data %>%
     dplyr::inner_join(cohort %>% 

@@ -329,11 +329,23 @@ consolidationOfSelectedFieldValues <- function(input,
     data <- list()
     #multi select cohortId
     if (doesObjectHaveData(input$selectedCompoundCohortNames)) {
+      if(input$tabs != 'cohortOverlap') {
         data$cohortIdTarget <- cohort %>%
           dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortNames) %>%
           dplyr::arrange(.data$cohortId) %>%
           dplyr::pull(.data$cohortId) %>%
           unique()
+      }
+    }
+    #Single select cohortId only for cohort overlap
+    if (doesObjectHaveData(input$selectedCompoundCohortName)) {
+     if (input$tabs == 'cohortOverlap') {
+        data$cohortIdTarget <- cohort %>%
+          dplyr::filter(.data$compoundName == input$selectedCompoundCohortName) %>%
+          dplyr::arrange(.data$cohortId) %>%
+          dplyr::pull(.data$cohortId) %>%
+          unique()
+      }
     }
     if (doesObjectHaveData(input$selectedComparatorCompoundCohortNames) && input$tabs == 'cohortOverlap') {
       data$cohortIdComparator <- cohort %>%

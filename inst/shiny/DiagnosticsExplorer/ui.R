@@ -162,7 +162,6 @@ sidebarMenu <-
       condition = "input.tabs != 'databaseInformation' &
       input.tabs != 'timeSeries' &
       input.tabs != 'cohortCounts' &
-      input.tabs != 'cohortOverlap'&
       input.tabs != 'incidenceRate' &
       input.tabs != 'timeDistribution'",
       shinyWidgets::pickerInput(
@@ -184,7 +183,6 @@ sidebarMenu <-
     shiny::conditionalPanel(
       condition = "input.tabs == 'cohortCounts' |
       input.tabs == 'timeSeries' |
-      input.tabs == 'cohortOverlap' |
       input.tabs == 'incidenceRate' |
       input.tabs == 'timeDistribution'",
       shinyWidgets::pickerInput(
