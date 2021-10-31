@@ -890,16 +890,15 @@ runCohortDiagnostics <- function(packageName = NULL,
           covariateSettings = temporalCovariateSettings,
           cdmVersion = cdmVersion
         )
-      browser()
       exportFeatureExtractionOutput(
         featureExtractionDbCovariateData = output,
         databaseId = databaseId,
         incremental = incremental,
         covariateValueFileName = file.path(exportFolder, "covariate_value.csv"),
-        covariateValueDistFileName = file.path(exportFolder, "covariate_value_dist.csv"),
+        covariateValueContFileName = file.path(exportFolder, "covariate_value_dist.csv"),
         covariateRefFileName = file.path(exportFolder, "covariate_ref.csv"),
         analysisRefFileName = file.path(exportFolder, "analysis_ref.csv"),
-        temporalRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
+        timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
         cohortCounts = cohortCounts,
         minCellCount = minCellCount
       )
