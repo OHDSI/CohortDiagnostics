@@ -288,23 +288,24 @@ runCohortCharacterizationDiagnostics <-
       }
       
       if ("analysisRef" %in% names(results)) {
-        Andromeda::appendToTable(results$analysisRef, analysisRef)
+        Andromeda::appendToTable(results$analysisRef, featureExtractionOutput$analysisRef)
       } else {
         results$analysisRef <- featureExtractionOutput$analysisRef
       }
       
       if ("covariateRef" %in% names(results)) {
-        Andromeda::appendToTable(results$covariateRef, covariateRef)
+        Andromeda::appendToTable(results$covariateRef, featureExtractionOutput$covariateRef)
       } else {
         results$covariateRef <- featureExtractionOutput$covariateRef
       }
       
       if ("temporalTimeRef" %in% names(results)) {
-        Andromeda::appendToTable(results$covariateRef, covariateRef)
+        Andromeda::appendToTable(results$temporalTimeRef, 
+                                 featureExtractionOutput$timeRef %>%
+                                   dplyr::select(.data$startDay, .data$endDay))
       } else  {
         results$temporalTimeRef <- featureExtractionOutput$timeRef %>%
-          dplyr::select(.data$startDay, .data$endDay) %>%
-          dplyr::distinct()
+          dplyr::select(.data$startDay, .data$endDay)
       }
     }
     
