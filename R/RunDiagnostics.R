@@ -899,7 +899,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         covariateValueDistFileName = file.path(exportFolder, "covariate_value_dist.csv"),
         covariateRefFileName = file.path(exportFolder, "covariate_ref.csv"),
         analysisRefFileName = file.path(exportFolder, "analysis_ref.csv"),
-        temporalRefFileName = file.path(exportFolder, "temporal_ref.csv"),
+        temporalRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
         cohortCounts = cohortCounts,
         minCellCount = minCellCount
       )

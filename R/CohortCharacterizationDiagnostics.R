@@ -118,25 +118,31 @@ runCohortCharacterizationDiagnostics <-
       ParallelLogger::logInfo(paste0("   - Starting Characterization."))
     }
     
-    browser()
     results <- Andromeda::andromeda()
     batchSize <-
       max(1, round(batchSize / length(covariateSettings$temporalStartDays)))
-    ParallelLogger::logInfo("    - Starting batch charactetrization, ", scales::comma(batchSize), " cohorts at a time.")
+    ParallelLogger::logInfo(
+      "    - Starting batch charactetrization, ",
+      scales::comma(batchSize),
+      " cohorts at a time."
+    )
     
     for (start in seq(1, length(cohortIdsNew), by = batchSize)) {
       end <- min(start + batchSize - 1, length(cohortIdsNew))
       if (length(cohortIdsNew) > batchSize) {
-        ParallelLogger::logTrace(paste0(
-          "    - Batch characterization. Processing ",
-          scales::comma(start),
-          " through ",
-          scales::comma(end),
-          " of ",
-          scales::comma(length(cohortIdsNew)),
-          " provided. In current batch the following cohorts are being characterized: ",
-          paste0(cohortIdsNew[start:end], collapse = ", ")
-        ))
+        ParallelLogger::logInfo(
+          paste0(
+            "     - Processing ",
+            scales::comma(start),
+            " through ",
+            scales::comma(end),
+            " of total ",
+            scales::comma(length(cohortIdsNew)),
+            " . Cohorts (",
+            paste0(cohortIdsNew[start:end], collapse = ", "),
+            ")"
+          )
+        )
       }
       featureExtractionOutput <-
         FeatureExtraction::getDbCovariateData(
@@ -161,6 +167,7 @@ runCohortCharacterizationDiagnostics <-
       
       if ("covariates" %in% names(featureExtractionOutput) &&
           dplyr::pull(dplyr::count(featureExtractionOutput$covariates)) > 0) {
+        ParallelLogger::logTrace("      - appending covariates")
         covariates <- featureExtractionOutput$covariates  %>%
           dplyr::filter(.data$averageValue >= !!cutOff) %>%
           dplyr::rename(cohortId = .data$cohortDefinitionId) %>%
@@ -200,7 +207,8 @@ runCohortCharacterizationDiagnostics <-
             .data$sumValue,
             .data$mean,
             .data$sd
-          )
+          ) %>%
+          dplyr::distinct()
         
         if ("covariates" %in% names(results)) {
           Andromeda::appendToTable(results$covariates, covariates)
@@ -210,6 +218,20 @@ runCohortCharacterizationDiagnostics <-
       }
       if ("covariatesContinuous" %in% names(featureExtractionOutput) &&
           dplyr::pull(dplyr::count(featureExtractionOutput$covariatesContinuous)) > 0) {
+        ParallelLogger::logTrace("      - appending covariate continouous")
+        
+        if (!(
+          featureExtractionOutput$covariatesContinuous %>%
+          dplyr::select(.data$timeId) %>%
+          dplyr::collect() %>%
+          dplyr::distinct() %>%
+          dplyr::pull() %>% is.na()
+        )) {
+          stop(
+            "Expecting timeId to be NA/NULL for covariateContinous but value found. This suggests a change in OHDSI/FeatureExtraction package. Please contact developer."
+          )
+        }
+        
         # covariatesContinous in feature extraction does not return results
         # by time window. So time id is NA i.e. startDay and endDay are NA
         covariatesContinuous <-
@@ -250,7 +272,8 @@ runCohortCharacterizationDiagnostics <-
             .data$p25Value,
             .data$p75Value,
             .data$p90Value
-          )
+          ) %>%
+          dplyr::distinct()
         
         if ("covariates" %in% names(results)) {
           Andromeda::appendToTable(results$covariates, covariates)
@@ -265,50 +288,52 @@ runCohortCharacterizationDiagnostics <-
       }
       
       if ("analysisRef" %in% names(results)) {
-        analysisId <- featureExtractionOutput$analysisRef %>%
-          dplyr::select(.data$analysisId) %>%
-          dplyr:arrange(.data$analysisId)
-        Andromeda::appendToTable(
-          results$analysisRef,
-          featureExtractionOutput$analysisRef %>%
-            dplyr::anti_join(analysisId, by = "analysisId", copy = TRUE)
-        ) %>%
-          dplyr::arrange(.data$analysisId)
+        Andromeda::appendToTable(results$analysisRef, analysisRef)
       } else {
-        results$analysisRef <- featureExtractionOutput$analysisRef %>%
-          dplyr:arrange(.data$analysisId)
+        results$analysisRef <- featureExtractionOutput$analysisRef
       }
       
       if ("covariateRef" %in% names(results)) {
-        covariateId <- results$covariateRef %>%
-          dplyr::select(.data$covariateId) %>%
-          dplyr::distinct()
-        Andromeda::appendToTable(
-          results$covariateRef,
-          featureExtractionOutput$covariateRef %>%
-            dplyr::anti_join(covariateId, by = "covariateId", copy = TRUE)
-        ) %>%
-          dplyr::arrange(.data$covariateId)
+        Andromeda::appendToTable(results$covariateRef, covariateRef)
       } else {
         results$covariateRef <- featureExtractionOutput$covariateRef
       }
       
-      if ("timeRef" %in% names(results)) {
-        browser()
-        timeId <- results$covariateRef %>%
-          dplyr::select(.data$covariateId) %>%
-          dplyr::distinct()
-        Andromeda::appendToTable(
-          results$covariateRef,
-          featureExtractionOutput$covariateRef %>%
-            dplyr::anti_join(covariateId, by = "covariateId", copy = TRUE)
-        ) %>%
-          dplyr::arrange(.data$covariateId)
+      if ("temporalTimeRef" %in% names(results)) {
+        Andromeda::appendToTable(results$covariateRef, covariateRef)
       } else  {
-        results$timeRef <- featureExtractionOutput$timeRef
+        results$temporalTimeRef <- featureExtractionOutput$timeRef %>%
+          dplyr::select(.data$startDay, .data$endDay) %>%
+          dplyr::distinct()
       }
-      
-      
+    }
+    
+    if ("analysisRef" %in% names(results)) {
+      results$analysisRef <- results$analysisRef %>%
+        dplyr::distinct()
+    }
+    
+    if ("covariateRef" %in% names(results)) {
+      results$covariateRef <- results$covariateRef %>%
+        dplyr::distinct()
+    }
+    
+    if ("temporalTimeRef" %in% names(results)) {
+      results$temporalTimeRef <- results$temporalTimeRef %>%
+        dplyr::distinct() %>% 
+        dplyr::mutate(temporalName = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
+        dplyr::mutate(
+          temporalName = dplyr::case_when(
+            .data$endDay == 0 & .data$startDay == -9999 ~ "Any Time Prior",
+            .data$endDay == 0 &
+              .data$startDay == -365 ~ "Long Term",
+            .data$endDay == 0 &
+              .data$startDay == -180 ~ "Medium Term",
+            .data$endDay == 0 &
+              .data$startDay == -9999 ~ "Short Term",
+            TRUE ~ .data$temporalName
+          )
+        )
     }
     
     delta <- Sys.time() - startTime
