@@ -263,7 +263,8 @@ consolidationOfSelectedFieldValues <- function(input,
       input$tabs == 'cohortCharacterization' ||
       input$tabs == 'temporalCharacterization' ||
       input$tabs == 'compareCohortCharacterization' ||
-      input$tabs == 'compareTemporalCharacterization') {
+      input$tabs == 'compareTemporalCharacterization' ||
+      input$tabs == 'databaseInformation') {
     data <- list()
     
     #single select cohortId
@@ -287,7 +288,8 @@ consolidationOfSelectedFieldValues <- function(input,
     
     #mutli select databaseId/ single select databaseId
     if (input$tabs == 'temporalCharacterization' ||
-        input$tabs == 'compareTemporalCharacterization') {
+        input$tabs == 'compareTemporalCharacterization' ||
+        input$tabs == 'databaseInformation') {
       
       if (doesObjectHaveData(input$selectedDatabaseId)) {
         data$selectedDatabaseIdTarget <- database %>% 
