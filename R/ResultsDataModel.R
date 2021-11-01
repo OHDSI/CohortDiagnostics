@@ -20,7 +20,7 @@ checkFixColumnNames <-
            tableName,
            zipFileName,
            specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
-    ParallelLogger::logInfo("    - Checking and fixing column names")
+    ParallelLogger::logTrace("    - Checking and fixing column names")
     observeredNames <- colnames(table)[order(colnames(table))] %>%
       sort()
     
@@ -67,7 +67,7 @@ checkAndFixDataTypes <-
            tableName,
            zipFileName,
            specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
-    ParallelLogger::logInfo("    - checking and fixing column data types")
+    ParallelLogger::logTrace("    - checking and fixing column data types")
     tableSpecs <- specifications %>%
       filter(.data$tableName == !!tableName)
     
@@ -142,7 +142,7 @@ checkAndFixDuplicateRows <-
            tableName,
            zipFileName,
            specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
-    ParallelLogger::logInfo("    - Checking and fixing duplicate row")
+    ParallelLogger::logTrace("    - Checking and fixing duplicate row")
     primaryKeys <- specifications %>%
       dplyr::filter(.data$tableName == !!tableName &
                       .data$primaryKey == "Yes") %>%
@@ -271,7 +271,7 @@ uploadResults <- function(connectionDetails = NULL,
   dir.create(path = unzipFolder, recursive = TRUE)
   on.exit(unlink(unzipFolder, recursive = TRUE), add = TRUE)
   
-  ParallelLogger::logInfo(" - Unzipping ", zipFileName)
+  ParallelLogger::logTrace(" - Unzipping ", zipFileName)
   zip::unzip(zipFileName, exdir = unzipFolder)
   
   specifications <-
