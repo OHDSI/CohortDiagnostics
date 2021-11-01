@@ -8643,7 +8643,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
-      dplyr::filter(.data$databaseId == input$selectedDatabaseId)
+      dplyr::filter(.data$databaseId == consolidatedDatabaseIdTarget())
     if (!'vocabularyVersionCdm' %in% colnames(data)) {
       data$vocabularyVersionCdm <- "NA"
     }
