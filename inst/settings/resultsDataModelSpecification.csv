@@ -135,14 +135,14 @@ covariate_ref,covariate_id,bigint,Yes,Yes,No,Yes,2.2
 covariate_ref,covariate_name,varchar,Yes,No,No,Yes,2.2
 covariate_ref,analysis_id,int,Yes,No,No,Yes,2.2
 covariate_ref,concept_id,int,Yes,No,No,Yes,2.2
+covariate_value,database_id,varchar,Yes,Yes,No,Yes,2.2
 covariate_value,cohort_id,bigint,Yes,Yes,No,Yes,2.2
+covariate_value,covariate_id,bigint,Yes,Yes,No,Yes,2.2
 covariate_value,start_day,int,No,Yes,No,Yes,2.2
 covariate_value,end_day,int,No,Yes,No,Yes,2.2
-covariate_value,covariate_id,bigint,Yes,Yes,No,Yes,2.2
 covariate_value,sum_value,float,Yes,No,No,Yes,2.2
 covariate_value,mean,float,Yes,No,No,Yes,2.2
 covariate_value,sd,float,No,No,No,Yes,2.2
-covariate_value,database_id,varchar,Yes,Yes,No,Yes,2.2
 covariate_value_dist,cohort_id,bigint,Yes,Yes,No,Yes,2.2
 covariate_value_dist,start_day,int,No,Yes,No,Yes,2.2
 covariate_value_dist,end_day,int,No,Yes,No,Yes,2.2
@@ -205,7 +205,7 @@ relationship,defines_ancestry,varchar(1),Yes,No,No,Yes,2.2
 relationship,reverse_relationship_id,varchar(20),Yes,Yes,No,Yes,2.2
 relationship,relationship_concept_id,int,Yes,Yes,No,Yes,2.2
 temporal_time_ref,start_day,bigint,No,Yes,No,Yes,2.2
-temporal_time_ref,start_day,bigint,No,Yes,No,Yes,2.2
+temporal_time_ref,end_day,bigint,No,Yes,No,Yes,2.2
 temporal_time_ref,temporal_name,varchar,Yes,No,No,Yes,2.2
 time_distribution,cohort_id,bigint,Yes,Yes,No,Yes,2.2
 time_distribution,count_value,float,Yes,No,No,Yes,2.2
