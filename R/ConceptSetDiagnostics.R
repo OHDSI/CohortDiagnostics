@@ -371,7 +371,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                                                snakeCaseToCamelCase = TRUE) %>% 
     dplyr::distinct() %>% 
     tidyr::crossing(dplyr::tibble(cohortId = cohorts$cohortId %>% unique())) %>% 
-    dplyr::select(.data$cohortid, .data$conceptId) %>% 
+    dplyr::select(.data$cohortId, .data$conceptId) %>% 
     dplyr::distinct()
   conceptsCohort <- dplyr::bind_rows(conceptsCohort,
                                      conceptsCohortMapped1,
