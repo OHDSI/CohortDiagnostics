@@ -367,6 +367,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                       WHERE domain_id IN ('Visit', 'Place of Service');"
   conceptIdVisit <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                                sql = sqlVisitPlaceOfService,
+                                                               vocabulary_database_schema = vocabularyDatabaseSchema,
                                                                snakeCaseToCamelCase = TRUE) %>% 
     dplyr::distinct() %>% 
     tidyr::crossing(dplyr::tibble(cohortId = cohorts$cohortId %>% unique())) %>% 
