@@ -266,6 +266,8 @@ runCohortCharacterizationDiagnostics <-
             .data$countValue,
             .data$mean,
             .data$sd,
+            .data$minValue,
+            .data$maxValue,
             .data$medianValue,
             .data$p10Value,
             .data$p25Value,

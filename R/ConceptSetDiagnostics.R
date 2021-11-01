@@ -1457,10 +1457,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
           "   - Working on ",
           rowData$domainTable,
           ".",
-          rowData$domainConceptId,
-          " (filtered to min ",
-          minCellCount,
-          " subject count if concept id not related to cohort definition.)"
+          rowData$domainConceptId
         )
       )
       ParallelLogger::logTrace(

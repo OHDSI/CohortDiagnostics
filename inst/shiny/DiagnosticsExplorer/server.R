@@ -8633,6 +8633,10 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(data)
     }
+    
+    data <- data %>%
+      dplyr::filter(.data$databaseId == consolidatedDatabaseIdTarget())
+    
     return(data)
   })
   
@@ -8642,8 +8646,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    data <- data %>%
-      dplyr::filter(.data$databaseId == input$selectedDatabaseId)
+    
     if (!'vocabularyVersionCdm' %in% colnames(data)) {
       data$vocabularyVersionCdm <- "NA"
     }
@@ -8700,88 +8703,24 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  # Construct texts:
-  #   Drop down for databaseId
-  #   Check number of startTime per databaseId - for each runTime create collapsible box
-  #   Title of collapsible box:  Run on <databaseId> on <startTime> <timeZone>
-  #    - Ran for <runTime> <runTimeUnits> on <CurrentPackage> (<CurrentPackageVersion>) <RVersion>
-  #    - scrollable: packageDependencySnapShotJson (show pretty json with scroll bar vertical)
-  #    - scrollable: argumentsAtDiagnosticsInitiation (show pretty json with scroll bar vertical)
-  
-  ##getAllStartTimeFromMetadata----
-  getAllStartTimeFromMetadata <- shiny::reactive(x = {
-    metadataInformation <- getMetadataInformation()
-    #startTime is a list object and can be more than 1
-    # this should have a dependency on databaseId
-    startTimes <- metadataInformation$startTime %>%
-      #filter by selected databaseId
-      unique() %>%
-      sort()
-    return(startTimes)
-  })
-  #!!!!!!!! should be part of picker input getAllStartTimeFromMetadata()
-  
-  ##getMetadataParsed----
-  getMetadataParsed <- shiny::reactive(x = {
-    data <- list()
-    metadataInformation <- getMetadataInformation()
-    if (any(is.null(metadataInformation),
-            nrow(metadataInformation) == 0))
-    {
-      return(NULL)
-    }
-    #get start time from picker input
-    # temporary solution till picker input is coded
-    startTime <- getAllStartTimeFromMetadata()[[1]]
-    metadataInformation <- metadataInformation %>%
-      #filter by selected databaseId and then filter by selected startTime
-      dplyr::filter(.data$startTime == startTime)
-    
-    data$timeZone <- metadataInformation %>%
-      dplyr::filter(.data$variableField == "timeZone") %>%
-      dplyr::pull(.data$valueField)
-    data$runTime <- metadataInformation %>%
-      dplyr::filter(.data$variableField == "runTime")  %>%
-      dplyr::pull(.data$valueField) %>%
-      as.numeric() %>%
-      scales::comma(accuracy = 0.1)
-    data$runTimeUnits <- metadataInformation %>%
-      dplyr::filter(.data$variableField == "runTimeUnits") %>%
-      dplyr::pull(.data$valueField)
-    data$currentPackage <- metadataInformation %>%
-      dplyr::filter(.data$variableField == "CurrentPackage") %>%
-      dplyr::pull(.data$valueField)
-    data$currentPackageVersion <- metadataInformation %>%
-      dplyr::filter(.data$variableField == "CurrentPackageVersion") %>%
-      dplyr::pull(.data$valueField)
-    data$databaseId <- metadataInformation %>%
-      dplyr::filter(.data$variableField == "databaseId") %>%
-      dplyr::pull(.data$valueField)
-    return(data)
-  })
-  
   ##output: metadataInfoTitle----
   output$metadataInfoTitle <- shiny::renderUI(expr = {
-    data <- getMetadataParsed()
-    if (any(is.null(data),
-            length(data) == 0)) {
+    data <- getMetadataInformation()
+    
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    tags$table(tags$tr(tags$td(
-      paste(
-        "Run on ",
-        data$databaseId,
-        "on ",
-        getAllStartTimeFromMetadata()[[1]],
-        ##!!! replace with picker input
-        data$runTimeUnits
-      )
-    )))
+    tags$p(paste(
+          "Run on ",
+          data$databaseId,
+          "on ",
+          data$startTime,
+          data$runTimeUnits
+        ))
   })
-  #!!!! whats the difference between metadataInfoDetailsText and metadataInfoTitle
-  ##output: metadataInfoDetailsText----
+  
   output$metadataInfoDetailsText <- shiny::renderUI(expr = {
-    data <- getMetadataParsed()
+    data <- getMetadataInformation()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
@@ -8807,14 +8746,9 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       data <- data %>%
-        dplyr::filter(.data$variableField == "packageDependencySnapShotJson") %>%
-        dplyr::pull(.data$valueField)
-      if (any(is.null(data),
-              length(data) == 0)) {
-        return(NULL)
-      }
-      result <-
-        dplyr::as_tibble(RJSONIO::fromJSON(content = data,
+        dplyr::pull(.data$packageDependencySnapShotJson)
+      
+      data <- dplyr::as_tibble(RJSONIO::fromJSON(content = data,
                                            digits = 23))
       options = list(
         pageLength = 100,
@@ -8829,10 +8763,10 @@ shiny::shinyServer(function(input, output, session) {
       )
       
       table <- DT::datatable(
-        result,
+        data,
         options = options,
         rownames = FALSE,
-        colnames = colnames(result) %>%
+        colnames = colnames(data) %>%
           camelCaseToTitleCase(),
         escape = FALSE,
         filter = "top",
@@ -8849,8 +8783,7 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       data <- data %>%
-        dplyr::filter(.data$variableField == "argumentsAtDiagnosticsInitiationJson") %>%
-        dplyr::pull(.data$valueField) %>%
+        dplyr::pull(.data$argumentsAtDiagnosticsInitiationJson) %>%
         RJSONIO::fromJSON(digits = 23) %>%
         RJSONIO::toJSON(digits = 23,
                         pretty = TRUE)
