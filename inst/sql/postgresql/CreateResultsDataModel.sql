@@ -32,10 +32,6 @@ DROP TABLE IF EXISTS metadata;
 DROP TABLE IF EXISTS orphan_concept;
 DROP TABLE IF EXISTS time_series;
 DROP TABLE IF EXISTS relationship;
-DROP TABLE IF EXISTS temporal_analysis_ref;
-DROP TABLE IF EXISTS temporal_covariate_ref;
-DROP TABLE IF EXISTS temporal_covariate_value;
-DROP TABLE IF EXISTS temporal_covariate_value_dist;
 DROP TABLE IF EXISTS temporal_time_ref;
 DROP TABLE IF EXISTS time_distribution;
 DROP TABLE IF EXISTS visit_context;
@@ -432,61 +428,6 @@ CREATE TABLE relationship (
 			PRIMARY KEY(relationship_id, reverse_relationship_id, relationship_concept_id)
 );
 
-
---Table temporal_analysis_ref
---HINT DISTRIBUTE ON RANDOM
-CREATE TABLE temporal_analysis_ref (
-			analysis_id INT NOT NULL,
-			analysis_name VARCHAR NOT NULL,
-			domain_id VARCHAR(20) NOT NULL,
-			is_binary VARCHAR(1) NOT NULL,
-			missing_means_zero VARCHAR(1),
-			PRIMARY KEY(analysis_id, domain_id)
-);
-
---Table temporal_covariate_ref
---HINT DISTRIBUTE ON RANDOM
-CREATE TABLE temporal_covariate_ref (
-			covariate_id BIGINT NOT NULL,
-			covariate_name VARCHAR NOT NULL,
-			analysis_id INT NOT NULL,
-			concept_id INT NOT NULL,
-			PRIMARY KEY(covariate_id)
-);
-
---Table temporal_covariate_value
---HINT DISTRIBUTE ON RANDOM
-CREATE TABLE temporal_covariate_value (
-			cohort_id BIGINT NOT NULL,
-			start_day FLOAT,
-			end_day FLOAT,
-			covariate_id BIGINT NOT NULL,
-			sum_value FLOAT NOT NULL,
-			mean FLOAT NOT NULL,
-			sd FLOAT,
-			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, covariate_id, start_day, end_day, database_id)
-);
-
---Table temporal_covariate_value_dist
---HINT DISTRIBUTE ON RANDOM
-CREATE TABLE temporal_covariate_value_dist (
-			cohort_id BIGINT NOT NULL,
-			time_id INT NOT NULL,
-			covariate_id BIGINT NOT NULL,
-			count_value FLOAT NOT NULL,
-			min_value FLOAT NOT NULL,
-			max_value FLOAT NOT NULL,
-			mean FLOAT NOT NULL,
-			sd FLOAT NOT NULL,
-			median_value FLOAT NOT NULL,
-			p_10_value FLOAT NOT NULL,
-			p_25_value FLOAT NOT NULL,
-			p_75_value FLOAT NOT NULL,
-			p_90_value FLOAT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, covariate_id, start_day, end_day, database_id)
-);
 
 --Table temporal_time_ref
 --HINT DISTRIBUTE ON RANDOM
