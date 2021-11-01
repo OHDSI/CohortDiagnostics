@@ -258,13 +258,12 @@ runCohortCharacterizationDiagnostics <-
           )
         
         covariatesContinuous <- covariatesContinuous %>%
-          dplyr::mutate(sumValue = -1) %>%
           dplyr::select(
             .data$cohortId,
             .data$covariateId,
             .data$startDay,
             .data$endDay,
-            .data$sumValue,
+            .data$countValue,
             .data$mean,
             .data$sd,
             .data$medianValue,

@@ -148,8 +148,6 @@ covariate_value_dist,start_day,int,No,Yes,No,Yes,2.2
 covariate_value_dist,end_day,int,No,Yes,No,Yes,2.2
 covariate_value_dist,covariate_id,bigint,Yes,Yes,No,Yes,2.2
 covariate_value_dist,count_value,float,Yes,No,No,Yes,2.2
-covariate_value_dist,start_day,bigint,No,Yes,No,Yes,2.2
-covariate_value_dist,end_day,bigint,No,Yes,No,Yes,2.2
 covariate_value_dist,min_value,float,Yes,No,No,Yes,2.2
 covariate_value_dist,max_value,float,Yes,No,No,Yes,2.2
 covariate_value_dist,mean,float,Yes,No,No,Yes,2.2

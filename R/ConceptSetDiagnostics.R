@@ -361,9 +361,21 @@ runConceptSetDiagnostics <- function(connection = NULL,
     ) %>%
     dplyr::select(-.data$conceptId) %>%
     dplyr::rename("conceptId" = .data$sourceConceptId)
+  #getConceptId from 'Visit' and 'Place of Service' domains
+  sqlVisitPlaceOfService <- "SELECT DISTINCT CONCEPT_ID
+                      FROM @vocabulary_database_schema.concept
+                      WHERE domain_id IN ('Visit', 'Place of Service');"
+  conceptIdVisit <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                               sql = sqlVisitPlaceOfService,
+                                                               snakeCaseToCamelCase = TRUE) %>% 
+    dplyr::distinct() %>% 
+    tidyr::crossing(dplyr::tibble(cohortId = cohorts$cohortId %>% unique())) %>% 
+    dplyr::select(.data$cohortid, .data$conceptId) %>% 
+    dplyr::distinct()
   conceptsCohort <- dplyr::bind_rows(conceptsCohort,
                                      conceptsCohortMapped1,
-                                     conceptsCohortMapped2) %>%
+                                     conceptsCohortMapped2,
+                                     conceptIdVisit) %>%
     dplyr::distinct()
   randomStringTableName <-
     tolower(paste0("tmp_",
