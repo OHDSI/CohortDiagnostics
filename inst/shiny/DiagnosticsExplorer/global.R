@@ -51,7 +51,7 @@ showCharacterization <- TRUE
 showTemporalCharacterization <- TRUE
 showCohortOverlap <- TRUE
 showPlotSpikes <- TRUE
-filterTemporalChoicesToPrimaryOptions <- TRUE
+# filterTemporalChoicesToPrimaryOptions <- TRUE
 spinnerType = 8
 
 showConceptBrowser <- TRUE  #on selected conceptId - show concept browser  (applied for cohort, index event breakdown, characterization tab)
@@ -335,17 +335,46 @@ if (all(exists("temporalTimeRef"),
     nrow(temporalTimeRef) > 0
   )) {
     temporalCovariateChoices <- temporalTimeRef %>%
-      dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
-      dplyr::select(.data$timeId, .data$choices) %>%
-      dplyr::arrange(.data$timeId)
-    
-    if (filterTemporalChoicesToPrimaryOptions) {
-      temporalCovariateChoices <- temporalCovariateChoices %>%
-        dplyr::filter(
-          stringr::str_detect(string = .data$choices,
-                              pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')
+      dplyr::arrange(.data$startDay, .data$endDay) %>%
+      dplyr::filter(!(abs(.data$endDay - .data$startDay) == 30) |
+                      .data$endDay == 0) %>%
+      dplyr::mutate(
+        temporalName = dplyr::case_when(
+          .data$endDay == 0 & .data$startDay == -30 ~ "Baseline (Short Term)",
+          .data$endDay == 0 & .data$startDay == -180 ~ "Baseline (Medium Term)",
+          .data$endDay == 0 & .data$startDay == -365 ~ "Baseline (Long Term)",
+          .data$endDay == 0 & .data$startDay == -9999 ~ "Baseline (Any-time prior)",
+          .data$endDay == -31 & .data$startDay == -365 ~ "Temporal (-31d to -365d)",
+          .data$endDay == -1 & .data$startDay == -30 ~ "Temporal (-1d to -30d)",
+          .data$endDay == 0 & .data$startDay == 0 ~ "Temporal (0d to 0d)",
+          .data$endDay == 30 & .data$startDay == 1 ~ "Temporal (1d to 30d)",
+          .data$endDay == 365 & .data$startDay == 31 ~ "Temporal (31d to 365d)"
         )
-    }
+      ) %>%
+      dplyr::mutate(
+        sequence = dplyr::case_when(
+          .data$endDay == 0 & .data$startDay == -30 ~ 2,
+          .data$endDay == 0 & .data$startDay == -180 ~ 3,
+          .data$endDay == 0 & .data$startDay == -365 ~ 4,
+          .data$endDay == 0 & .data$startDay == -9999 ~ 1,
+          .data$endDay == -31 & .data$startDay == -365 ~ 5,
+          .data$endDay == -1 & .data$startDay == -30 ~ 6,
+          .data$endDay == 0 & .data$startDay == 0 ~ 7,
+          .data$endDay == 30 & .data$startDay == 1 ~ 8,
+          .data$endDay == 365 & .data$startDay == 31 ~ 9
+        )
+      ) %>%
+      dplyr::arrange(.data$sequence) %>% 
+      dplyr::mutate(choices = .data$temporalName) %>%
+      dplyr::select(.data$startDay, .data$endDay, .data$choices)
+    
+    # if (filterTemporalChoicesToPrimaryOptions) {
+    #   temporalCovariateChoices <- temporalCovariateChoices %>%
+    #     dplyr::filter(
+    #       stringr::str_detect(string = .data$choices,
+    #                           pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')
+    #     )
+    # }
   }
 }
 
