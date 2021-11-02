@@ -124,7 +124,7 @@ runCohortRelationshipDiagnostics <-
       	FROM @cohort_database_schema.@cohort_table
       	WHERE cohort_definition_id IN (@cohort_ids);
       
-      INSERT INTO #target_subset
+      INSERT INTO #comparator_subset
       SELECT -1 cohort_definition_id,
             person_id subject_id,
             observation_period_start_date cohort_start_date,
