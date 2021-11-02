@@ -44,6 +44,13 @@ exportCharacterization <- function(characteristics,
           TRUE ~ .data$mean
         )
       ) %>%
+      dplyr::mutate(
+        sum = dplyr::case_when(
+          .data$sum != 0 &
+            .data$sum < !!minCellCount ~ -!!minCellCount,
+          TRUE ~ .data$sum
+        )
+      ) %>%
       dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>%
       dplyr::mutate(mean = round(.data$mean, digits = 4),
                     sd = round(.data$sd, digits = 4)) %>%
