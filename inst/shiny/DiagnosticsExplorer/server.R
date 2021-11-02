@@ -7049,24 +7049,35 @@ shiny::shinyServer(function(input, output, session) {
           by = c("conceptId")
         )
     }
-    
     #Pretty analysis
     if (input$charType == "Pretty") {
       covariatesTofilter <- covariatesTofilter %>%
         dplyr::filter(.data$analysisId %in% prettyAnalysisIds)
+      characterizationDataValue <-
+        getMultipleCharacterizationData()$covariateValue %>%
+        dplyr::inner_join(covariatesTofilter,
+                          by = c('covariateId', 'characterizationSource')) %>%
+        dplyr::filter(is.na(.data$startDay) |
+                        (.data$startDay == -365 & .data$endDay == 0)) %>% 
+        dplyr::inner_join(
+          getMultipleCharacterizationData()$analysisRef,
+          by = c('analysisId', 'characterizationSource')
+        )
       #prettyAnalysisIds this is global variable
+    } else {
+      browser()
+      characterizationDataValue <-
+        getMultipleCharacterizationData()$covariateValue %>%
+        dplyr::inner_join(covariatesTofilter,
+                          by = c('covariateId', 'characterizationSource')) %>%
+        dplyr::inner_join(temporalCovariateChoices, 
+                          by = c("startDay", "endDay")) %>% 
+        dplyr::inner_join(
+          getMultipleCharacterizationData()$analysisRef,
+          by = c('analysisId', 'characterizationSource')
+        )     
     }
-    browser()
-    characterizationDataValue <-
-      getMultipleCharacterizationData()$covariateValue %>%
-      dplyr::inner_join(covariatesTofilter,
-                        by = c('covariateId', 'characterizationSource')) %>%
-      dplyr::inner_join(temporalCovariateChoices, 
-                        by = c("startDay", "endDay")) %>% 
-      dplyr::inner_join(
-        getMultipleCharacterizationData()$analysisRef,
-        by = c('analysisId', 'characterizationSource')
-      )
+
     
     #enhancement
     characterizationDataValue <- characterizationDataValue %>%
@@ -7110,6 +7121,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(table)) {
       return(NULL)
     }
+
     characteristics <- table %>%
       dplyr::select(.data$characteristic,
                     .data$position,
@@ -7123,7 +7135,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange(.data$position, desc(.data$header)) %>%
       dplyr::mutate(sortOrder = dplyr::row_number()) %>%
       dplyr::distinct()
-    
+
     characteristics <- dplyr::bind_rows(
       characteristics %>%
         dplyr::filter(.data$header == 1) %>%
@@ -7141,7 +7153,7 @@ shiny::shinyServer(function(input, output, session) {
         )
     ) %>%
       dplyr::arrange(.data$sortOrder, .data$databaseId, .data$cohortId)
-    
+
     table <- characteristics %>%
       dplyr::left_join(
         table %>%
@@ -7153,77 +7165,62 @@ shiny::shinyServer(function(input, output, session) {
           "databaseId",
           "cohortId"
         )
-      )  %>%
-      dplyr::inner_join(
-        cohortCount %>%
-          dplyr::select(-.data$cohortEntries),
-        by = c("databaseId", "cohortId")
-      ) %>%
-      dplyr::mutate(databaseId = paste0(
-        .data$databaseId,
-        "<br>(n = ",
-        scales::comma(.data$cohortSubjects, accuracy = 1),
-        ")"
-      )) %>%
-      dplyr::arrange(.data$sortOrder) %>%
-      tidyr::pivot_wider(
-        id_cols = c("cohortId", "characteristic"),
-        names_from = "databaseId",
-        values_from = "value" ,
-        names_sep = "_"
-      )
-    table <- table %>%
-      dplyr::relocate(.data$characteristic) %>%
-      dplyr::select(-.data$cohortId)
+      ) %>% 
+      dplyr::select(.data$cohortId, 
+                    .data$databaseId,
+                    .data$sortOrder,
+                    .data$characteristic,
+                    .data$value) %>% 
+      dplyr::rename("mean" = .data$value)
     return(table)
   })
   
   
   ###getCharacterizationRawData----
-  getCharacterizationRawData <- shiny::reactive(x = {
-    if (input$tabs != "cohortCharacterization") {
-      return(NULL)
-    }
-    data <- getCharacterizationDataFiltered()
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    browser()
-    data <- data %>%
-      dplyr::filter(.data$analysisName %in% input$characterizationAnalysisNameOptions)  %>%
-      dplyr::filter(.data$domainId %in% input$characterizationDomainNameOptions)
-    
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    
-    data <- data %>% 
-      dplyr::arrange(.data$databaseId,
-                     .data$cohortId) %>% 
-      tidyr::pivot_longer(cols = c(.data$mean,
-                                   .data$sd),
-                          names_to = 'type',
-                          values_to = 'values') 
-    
-    if (input$characterizationColumnFilters == "Mean only") {
-      data <- data %>% 
-        dplyr::filter(.data$type == 'mean')
-    } 
-    
-    data <- data %>% 
-      dplyr::mutate(type = paste0(.data$databaseId, " ", .data$type)) %>% 
-      tidyr::pivot_wider(
-        id_cols = c("covariateName", "covariateId"),
-        names_from = "type",
-        values_from = "values",
-        values_fill = 0
-      ) %>% 
-      dplyr::mutate(covariateName = paste0(.data$covariateName,"(", .data$covariateId, ")")) %>% 
-      dplyr::select(-.data$covariateId)
-    
-    data <- data[order(-xtfrm(data[2])), ]
-    return(data)
-  })
+  # getCharacterizationRawData <- shiny::reactive(x = {
+  #   if (input$tabs != "cohortCharacterization") {
+  #     return(NULL)
+  #   }
+  #   data <- getCharacterizationDataFiltered()
+  #   if (!doesObjectHaveData(data)) {
+  #     return(NULL)
+  #   }
+  #   browser()
+  #   data <- data %>%
+  #     dplyr::filter(.data$analysisName %in% input$characterizationAnalysisNameOptions)  %>%
+  #     dplyr::filter(.data$domainId %in% input$characterizationDomainNameOptions)
+  #   
+  #   if (!doesObjectHaveData(data)) {
+  #     return(NULL)
+  #   }
+  #   
+  #   data <- data %>% 
+  #     dplyr::arrange(.data$databaseId,
+  #                    .data$cohortId) %>% 
+  #     tidyr::pivot_longer(cols = c(.data$mean,
+  #                                  .data$sd),
+  #                         names_to = 'type',
+  #                         values_to = 'values') 
+  #   
+  #   if (input$characterizationColumnFilters == "Mean only") {
+  #     data <- data %>% 
+  #       dplyr::filter(.data$type == 'mean')
+  #   } 
+  #   
+  #   data <- data %>% 
+  #     dplyr::mutate(type = paste0(.data$databaseId, " ", .data$type)) %>% 
+  #     tidyr::pivot_wider(
+  #       id_cols = c("covariateName", "covariateId"),
+  #       names_from = "type",
+  #       values_from = "values",
+  #       values_fill = 0
+  #     ) %>% 
+  #     dplyr::mutate(covariateName = paste0(.data$covariateName,"(", .data$covariateId, ")")) %>% 
+  #     dplyr::select(-.data$covariateId)
+  #   
+  #   data <- data[order(-xtfrm(data[2])), ]
+  #   return(data)
+  # })
   
   ### Output: characterizationTable ------
   output$characterizationTable <- DT::renderDataTable(expr = {
@@ -7234,6 +7231,7 @@ shiny::shinyServer(function(input, output, session) {
       !is.null(consolidatedCohortIdTarget()),
       length(consolidatedCohortIdTarget()) > 0
     ), "No data for the combination"))
+    
     data <- getCharacterizationDataFiltered()
     validate(need(!is.null(data), "No data for the combination"))
     
@@ -7260,36 +7258,14 @@ shiny::shinyServer(function(input, output, session) {
         message = paste0("Rendering pretty table for cohort characterization."),
         value = 0
       )
-      
-      table <- getCharacterizationTableDataPretty()
+      data <- getCharacterizationTableDataPretty()
       validate(need(
-        nrow(table) > 0,
+        nrow(data) > 0,
         "No data available for selected combination."
       ))
-      browser()
       keyColumnFields <- c("characteristic")
-      #depending on user selection - what data Column Fields Will Be Presented?
-      dataColumnFields <-
-        c("Mean")
-      # if (input$indexEventBreakdownTableFilter == "Both") {
-      #   dataColumnFields <- dataColumnFields
-      #   sketchLevel <- 2
-      # } else if (input$indexEventBreakdownTableFilter == "Person Only") {
-      #   dataColumnFields <-
-      #     dataColumnFields[stringr::str_detect(
-      #       string = tolower(dataColumnFields),
-      #       pattern = tolower("person")
-      #     )]
-      #   sketchLevel <- 1
-      # } else if (input$indexEventBreakdownTableFilter == "Record Only") {
-      #   dataColumnFields <-
-      #     dataColumnFields[stringr::str_detect(
-      #       string = tolower(dataColumnFields),
-      #       pattern = tolower("record")
-      #     )]
-      #   sketchLevel <- 1
-      # }
-      
+      dataColumnFields <- c("mean")
+      sketchLevel <- 1
       countsForHeader <-
         getCountsForHeaderForUseInDataTable(
           dataSource = dataSource,
@@ -7298,11 +7274,9 @@ shiny::shinyServer(function(input, output, session) {
           source = "Cohort Level",
           fields = "Person Only"
         )
-      
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
-      
       table <- getDtWithColumnsGroupedByDatabaseId(
         data = data,
         headerCount = countsForHeader,
@@ -7310,45 +7284,10 @@ shiny::shinyServer(function(input, output, session) {
         sketchLevel = sketchLevel,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$indexEventBreakdownShowAsPercent
+        sort = FALSE,
+        showResultsAsPercent = FALSE
       )
-      
       return(table)
-      
-      
-      
-      options = list(
-        pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        scrollX = TRUE,
-        scrollY = "100vh",
-        lengthChange = TRUE,
-        ordering = FALSE,
-        paging = TRUE,
-        columnDefs = list(
-          truncateStringDef(0, 150),
-          minCellPercentDef(1:length(databaseIds))
-        )
-      )
-      
-      table <- DT::datatable(
-        table,
-        options = options,
-        rownames = FALSE,
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      
-      table <- DT::formatStyle(
-        table = table,
-        columns = 1 + 1:length(databaseIds),
-        background = DT::styleColorBar(c(0, 1), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
     } else {
       progress <- shiny::Progress$new()
       on.exit(progress$close())

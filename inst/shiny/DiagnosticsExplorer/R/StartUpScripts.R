@@ -376,6 +376,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
                                      dataColumns,
                                      sketchLevel,
                                      maxCount,
+                                     sort = TRUE,
                                      showResultsAsPercent = FALSE) {
   # ensure the data has required fields
   keyColumns <- keyColumns %>% unique()
@@ -454,10 +455,13 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
           names_from = "type",
           values_from = valuesData,
           values_fill = 0
-        ) %>%
-        dplyr::arrange(dplyr::desc(abs(dplyr::across(
-          dplyr::contains(dataColumns)
-        ))))
+        ) 
+      if (sort) {
+        data <- data %>% 
+          dplyr::arrange(dplyr::desc(abs(dplyr::across(
+            dplyr::contains(dataColumns)
+          ))))
+      }
       
       dataColumnsLevel2 <- colnames(data)
       dataColumnsLevel2 <-
@@ -549,13 +553,16 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
     )))  
   }
   
-  sortByColumns <- colnames(data)
-  sortByColumns <- sortByColumns[stringr::str_detect(string = sortByColumns,
-                                                     pattern = paste(dataColumns, collapse = "|"))]
-  if (length(sortByColumns) > 0) {
-    sortByColumns <- sortByColumns[[1]]
-    data <- data %>% 
-      dplyr::arrange(dplyr::desc(dplyr::across(sortByColumns)))
+  if (sort) {
+    sortByColumns <- colnames(data)
+    sortByColumns <-
+      sortByColumns[stringr::str_detect(string = sortByColumns,
+                                        pattern = paste(dataColumns, collapse = "|"))]
+    if (length(sortByColumns) > 0) {
+      sortByColumns <- sortByColumns[[1]]
+      data <- data %>%
+        dplyr::arrange(dplyr::desc(dplyr::across(sortByColumns)))
+    }
   }
   
   options = list(
