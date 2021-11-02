@@ -83,23 +83,24 @@ shiny::shinyServer(function(input, output, session) {
       return(data)
     })
   
-  ##reactiveVal: getTimeIdsFromSelectedTemporalCovariateChoices----
-  getTimeIdsFromSelectedTemporalCovariateChoices <-
-    reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(input$timeIdChoices_open,
-         input$tabs)
-  }, handlerExpr = {
-    if (exists('temporalCovariateChoices') &&
-        (any(
-          isFALSE(input$timeIdChoices_open),!is.null(input$tabs)
-        ))) {
-      selectedTimeIds <- temporalCovariateChoices %>%
-        dplyr::filter(.data$choices %in% input$timeIdChoices) %>%
-        dplyr::pull(.data$timeId)
-      getTimeIdsFromSelectedTemporalCovariateChoices(selectedTimeIds)
-    }
-  })
+  # ##reactiveVal: getTimeIdsFromSelectedTemporalCovariateChoices----
+  # getTimeIdsFromSelectedTemporalCovariateChoices <-
+  #   reactiveVal(NULL)
+  # shiny::observeEvent(eventExpr = {
+  #   list(input$timeIdChoices_open,
+  #        input$tabs)
+  # }, handlerExpr = {
+  #   if (exists('temporalCovariateChoices') &&
+  #       (any(
+  #         isFALSE(input$timeIdChoices_open),
+  #         !is.null(input$tabs)
+  #       ))) {
+  #     browser()
+  #     selectedTemporalCovariateChoices <- temporalCovariateChoices %>%
+  #       dplyr::filter(.data$choices %in% input$timeIdChoices)
+  #     getTimeIdsFromSelectedTemporalCovariateChoices(selectedTemporalCovariateChoices)
+  #   }
+  # })
   
   ##pickerInput: selectedCompoundCohortName----
   shiny::observe({
@@ -7055,12 +7056,13 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$analysisId %in% prettyAnalysisIds)
       #prettyAnalysisIds this is global variable
     }
+    browser()
     characterizationDataValue <-
       getMultipleCharacterizationData()$covariateValue %>%
-      dplyr::filter(.data$characterizationSource %in% c('C', 'F')) %>% #C - cohort, F is Feature
-      dplyr::select(-.data$timeId,-.data$startDay,-.data$endDay) %>% # remove temporal characterization data
       dplyr::inner_join(covariatesTofilter,
                         by = c('covariateId', 'characterizationSource')) %>%
+      dplyr::inner_join(temporalCovariateChoices, 
+                        by = c("startDay", "endDay")) %>% 
       dplyr::inner_join(
         getMultipleCharacterizationData()$analysisRef,
         by = c('analysisId', 'characterizationSource')
@@ -7186,6 +7188,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
+    browser()
     data <- data %>%
       dplyr::filter(.data$analysisName %in% input$characterizationAnalysisNameOptions)  %>%
       dplyr::filter(.data$domainId %in% input$characterizationDomainNameOptions)
@@ -7201,8 +7204,6 @@ shiny::shinyServer(function(input, output, session) {
                                    .data$sd),
                           names_to = 'type',
                           values_to = 'values') 
-      
-      
     
     if (input$characterizationColumnFilters == "Mean only") {
       data <- data %>% 
@@ -7499,6 +7500,7 @@ shiny::shinyServer(function(input, output, session) {
       warning("No analysis ref data found")
       return(NULL)
     }
+    browser()
     data <-
       getMultipleCharacterizationData()$covariateValue %>%
       dplyr::filter(.data$characterizationSource %in% c('CT', 'FT')) %>%
@@ -7563,7 +7565,7 @@ shiny::shinyServer(function(input, output, session) {
             by = c("conceptId")
           )
       }
-      
+      browser()
       data <- data %>%
           dplyr::filter(.data$analysisName %in% input$temporalCharacterizationAnalysisNameOptions) %>%
           dplyr::filter(.data$domainId %in% input$temporalCharacterizationDomainNameOptions) %>%
@@ -7634,7 +7636,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- getTemporalCharacterizationTableData()
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
-
+      browser()
       temporalCovariateChoicesSelected <-
         temporalCovariateChoices %>%
         dplyr::filter(.data$timeId %in% c(getTimeIdsFromSelectedTemporalCovariateChoices())) %>%
@@ -7770,11 +7772,13 @@ shiny::shinyServer(function(input, output, session) {
                  value = 0)
     data <- getMultipleCharacterizationData()$covariateValue
     if (input$tabs %in% c("compareCohortCharacterization")) {
+      browser()
       data <- data %>%
         dplyr::filter(.data$characterizationSource %in% c('C', 'F')) %>%
         dplyr::select(-.data$timeId, -.data$startDay, -.data$endDay)
     }
     if (input$tabs %in% c("compareTemporalCharacterization")) {
+      browser()
       data <- data %>%
         dplyr::filter(.data$characterizationSource %in% c('CT', 'FT')) %>%
         dplyr::filter(.data$timeId %in% getTimeIdsFromSelectedTemporalCovariateChoices()) %>%
@@ -7790,6 +7794,7 @@ shiny::shinyServer(function(input, output, session) {
         by = c("analysisId", "characterizationSource")
       )
     if (input$tabs %in% c("compareTemporalCharacterization")) {
+      browser()
       data <- data %>%
         dplyr::select(-.data$startDay, -.data$endDay) %>%
         dplyr::distinct() %>%
@@ -8408,6 +8413,7 @@ shiny::shinyServer(function(input, output, session) {
                       accuracy = 1),
         ")"
       )
+      browser()
       temporalCovariateChoicesSelected <-
         temporalCovariateChoices %>%
         dplyr::filter(.data$timeId %in% c(getTimeIdsFromSelectedTemporalCovariateChoices())) %>%
@@ -8572,58 +8578,59 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   ###compareTemporalCharacterizationPlot3D----
-  output$compareTemporalCharacterizationPlot3D <-
-    plotly::renderPlotly(expr = {
-      if (input$tabs != "compareTemporalCharacterization") {
-        return(NULL)
-      }
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(
-        message = paste0("Rendering plot for compare temporal characterization."),
-        value = 0
-      )
-      data <- parseMultipleCompareCharacterizationDataFiltered()
-      validate(need(
-        all(!is.null(data),
-            nrow(data) > 0),
-        paste0("No data for the selected combination.")
-      ))
-      plot <-
-        plotTemporalCompareStandardizedDifference3D(
-          balance = data,
-          shortNameRef = cohort)
-      return(plot)
-    })
+  # output$compareTemporalCharacterizationPlot3D <-
+  #   plotly::renderPlotly(expr = {
+  #     if (input$tabs != "compareTemporalCharacterization") {
+  #       return(NULL)
+  #     }
+  #     progress <- shiny::Progress$new()
+  #     on.exit(progress$close())
+  #     progress$set(
+  #       message = paste0("Rendering plot for compare temporal characterization."),
+  #       value = 0
+  #     )
+  #     data <- parseMultipleCompareCharacterizationDataFiltered()
+  #     validate(need(
+  #       all(!is.null(data),
+  #           nrow(data) > 0),
+  #       paste0("No data for the selected combination.")
+  #     ))
+  #     plot <-
+  #       plotTemporalCompareStandardizedDifference3D(
+  #         balance = data,
+  #         shortNameRef = cohort)
+  #     return(plot)
+  #   })
   
-  observeEvent (
-    eventExpr = list(input$timeIdChoices_open,
-                     input$tabs),
-    handlerExpr = {
-      if (!doesObjectHaveData(input$timeIdChoices_open)) {
-        return(NULL)
-      }
-      if (any(isFALSE(input$timeIdChoices_open)||!is.null(input$tabs))) {
-        for (i in 1:length(input$timeIdChoices)) {
-          if (!(
-            input$timeIdChoices[i] %in% c(
-              "Start -365 to end -31",
-              "Start -30 to end -1",
-              "Start 0 to end 0",
-              "Start 1 to end 30",
-              "Start 31 to end 365"
-            )
-          ))
-          {
-            updateTabsetPanel(session,
-                              "comparatorTemporalCharPlotTabSetPanel",
-                              selected = "compareTemporalCharacterization3DPlotPanel")
-            break
-          }
-        }
-      }
-    }
-  )
+  # observeEvent (
+  #   eventExpr = list(input$timeIdChoices_open,
+  #                    input$tabs),
+  #   handlerExpr = {
+  #     if (!doesObjectHaveData(input$timeIdChoices_open)) {
+  #       return(NULL)
+  #     }
+  #     browser()
+  #     if (any(isFALSE(input$timeIdChoices_open)||!is.null(input$tabs))) {
+  #       for (i in 1:nrow(temporalCovariateChoices)) {
+  #         if (!(
+  #           input$timeIdChoices[i] %in% c(
+  #             "Start -365 to end -31",
+  #             "Start -30 to end -1",
+  #             "Start 0 to end 0",
+  #             "Start 1 to end 30",
+  #             "Start 31 to end 365"
+  #           )
+  #         ))
+  #         {
+  #           updateTabsetPanel(session,
+  #                             "comparatorTemporalCharPlotTabSetPanel",
+  #                             selected = "compareTemporalCharacterization3DPlotPanel")
+  #           break
+  #         }
+  #       }
+  #     }
+  #   }
+  # )
   
   #______________----
   #Metadata----
