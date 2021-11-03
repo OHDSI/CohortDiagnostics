@@ -576,7 +576,6 @@ shiny::shinyServer(function(input, output, session) {
               title = "Cohort SQL",
               value = "targetCohortDefinitionSqlTabPanel",
               copyToClipboardButton("targetCohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::htmlOutput("circeRVersionInTargetcohortDefinitionSql"),
               shiny::verbatimTextOutput("targetCohortDefinitionSql"),
               tags$head(
                 tags$style("#targetCohortDefinitionSql { max-height:400px};")
@@ -918,7 +917,6 @@ shiny::shinyServer(function(input, output, session) {
               title = "Cohort SQL",
               value = "comparatorCohortDefinitionSqlTabPanel",
               copyToClipboardButton("comparatorCohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::htmlOutput("circeRVersionInComparatorCohortDefinitionSql"),
               shiny::verbatimTextOutput("comparatorCohortDefinitionSql"),
               tags$head(
                 tags$style("#comparatorCohortDefinitionSql { max-height:400px};")
@@ -1103,52 +1101,6 @@ shiny::shinyServer(function(input, output, session) {
       shiny::HTML()
   })
   
-  ###output: circeRVersionInTargetcohortDefinitionSql----
-  output$circeRVersionInTargetcohortDefinitionSql <-
-    shiny::renderUI(expr = {
-      if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
-        return(NULL)
-      }
-      if (!doesObjectHaveData(getCirceRPackageVersionInformation())) {
-        return(NULL)
-      }
-      version <- tags$table(tags$tr(tags$td(
-        paste(
-          "rendered for target cohort id:",
-          consolidatedCohortIdTarget(),
-          "using CirceR version: ",
-          getCirceRPackageVersionInformation()
-        )
-      )))
-      if (!doesObjectHaveData(version)) {
-        return(NULL)
-      }
-      return(version)
-    })
-  
-  ###output: circeRVersionInComparatorCohortDefinitionSql----
-  output$circeRVersionInComparatorCohortDefinitionSql <-
-    shiny::renderUI(expr = {
-      if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
-        return(NULL)
-      }
-      if (!doesObjectHaveData(getCirceRPackageVersionInformation())) {
-        return(NULL)
-      }
-      version <- tags$table(tags$tr(tags$td(
-        paste(
-          "rendered for comparator cohort id:",
-          consolidatedCohortIdComparator(),
-          "using CirceR version: ",
-          getCirceRPackageVersionInformation()
-        )
-      )))
-      if (!doesObjectHaveData(version)) {
-        return(NULL)
-      }
-      return(version)
-    })
-  
   ###output: targetCohortSelectedInCohortDefinitionTable----
   #Show cohort names in UI
   output$targetCohortSelectedInCohortDefinitionTable <-
@@ -1218,7 +1170,16 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(expression)) {
       return(NULL)
     }
-    return(CirceR::buildCohortQuery(expression = expression, options = options))
+    sql <- CirceR::buildCohortQuery(expression = expression, options = options)
+    
+    sql <- paste0(
+      "Rendered for target cohort id:",
+      consolidatedCohortIdTarget(),
+      "using CirceR version: ",
+      getCirceRPackageVersionInformation(), "\n\n",
+      sql
+    )
+    return(sql)
   })
   
   ###output: comparatorCohortDefinitionSql----
@@ -1239,7 +1200,15 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(expression)) {
       return(NULL)
     }
-    return(CirceR::buildCohortQuery(expression = expression, options = options))
+    sql <- CirceR::buildCohortQuery(expression = expression, options = options)
+    
+    sql <- paste0(
+      "Rendered for comparator cohort id:",
+      consolidatedCohortIdComparator(),
+      "using CirceR version: ",
+      getCirceRPackageVersionInformation(), "\n\n",
+      sql)
+    return(sql)
   })
   
   ##Cohort count in cohort definition tab----
