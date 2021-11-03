@@ -1036,9 +1036,9 @@ shiny::shinyServer(function(input, output, session) {
       RJSONIO::fromJSON(selectionsInCohortTable$json,
                         digits = 23)
     embedCohortDetailsText <- paste(
-      "Rendered for target cohort id:",
+      "--Rendered for target cohort id:",
       consolidatedCohortIdTarget(),
-      "using CirceR version: ",
+      " using CirceR version: ",
       getCirceRPackageVersionInformation()
     )
     
@@ -1158,25 +1158,22 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
       return(NULL)
     }
-    json <- cohort %>%
+    cohortDefinition <- cohort %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>%
-      dplyr::pull(.data$json)
-    if (!doesObjectHaveData(json)) {
+      dplyr::pull(.data$json) %>%
+      RJSONIO::fromJSON(digits = 23)
+    if (!doesObjectHaveData(cohortDefinition)) {
       return(NULL)
     }
-    options <- CirceR::createGenerateOptions(generateStats = TRUE)
-    expression <-
-      CirceR::cohortExpressionFromJson(expressionJson = json)
-    if (is.null(expression)) {
-      return(NULL)
-    }
-    sql <- CirceR::buildCohortQuery(expression = expression, options = options)
+    sql <-
+      getOhdsiSqlFromCohortDefinitionExpression(cohortDefinitionExpression = cohortDefinition)
     
     sql <- paste0(
-      "Rendered for target cohort id:",
+      "-- Rendered for target cohort id:",
       consolidatedCohortIdTarget(),
-      "using CirceR version: ",
-      getCirceRPackageVersionInformation(), "\n\n",
+      " using CirceR version: ",
+      getCirceRPackageVersionInformation(),
+      "\n\n",
       sql
     )
     return(sql)
@@ -1189,19 +1186,13 @@ shiny::shinyServer(function(input, output, session) {
     }
     json <- cohort %>%
       dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator()) %>%
-      dplyr::pull(.data$json)
-    if (!doesObjectHaveData(json)) {
+      dplyr::pull(.data$json) %>%
+      RJSONIO::fromJSON(digits = 23)
+    if (!doesObjectHaveData(cohortDefinition)) {
       return(NULL)
     }
-    options <-
-      CirceR::createGenerateOptions(generateStats = TRUE)
-    expression <-
-      CirceR::cohortExpressionFromJson(expressionJson = json)
-    if (is.null(expression)) {
-      return(NULL)
-    }
-    sql <- CirceR::buildCohortQuery(expression = expression, options = options)
-    
+    sql <-
+      getOhdsiSqlFromCohortDefinitionExpression(cohortDefinitionExpression = cohortDefinition)
     sql <- paste0(
       "Rendered for comparator cohort id:",
       consolidatedCohortIdComparator(),

@@ -45,9 +45,9 @@ runCohortDiagnostics(
     TRUE, useDemographicsTimeInCohort = TRUE, useConditionOccurrence = TRUE,
     useProcedureOccurrence = TRUE, useDrugEraStart = TRUE,      useMeasurement = TRUE,
     useConditionEraStart = TRUE, useConditionEraOverlap = TRUE, useConditionEraGroupStart
-    = TRUE, useConditionEraGroupOverlap = FALSE, useDrugExposure = FALSE,
-    useDrugEraOverlap = TRUE, useDrugEraGroupStart = TRUE, useDrugEraGroupOverlap =
-    FALSE, useObservation = TRUE, useDeviceExposure = TRUE, useCharlsonIndex = TRUE,
+    = FALSE, useConditionEraGroupOverlap = TRUE, useDrugExposure = FALSE,
+    useDrugEraOverlap = TRUE, useDrugEraGroupStart = FALSE, useDrugEraGroupOverlap =
+    TRUE, useObservation = TRUE, useDeviceExposure = TRUE, useCharlsonIndex = TRUE,
     useDcsi = TRUE, useChads2 = TRUE, useChads2Vasc = TRUE, useHfrs = FALSE,
     temporalStartDays = c(-365, -30, 0, 1, 31, -9999, -365, -180, -30, seq(from = -421,  
            to = -31, by = 30), seq(from = 0, to = 390, by = 30)), temporalEndDays =

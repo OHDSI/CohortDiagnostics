@@ -4,7 +4,11 @@
 \alias{getCirceRenderedExpression}
 \title{Returns list with circe generated documentation}
 \usage{
-getCirceRenderedExpression(cohortDefinition)
+getCirceRenderedExpression(
+  cohortDefinition,
+  embedCohortDetails = FALSE,
+  embedCohortDetailsText = NULL
+)
 }
 \arguments{
 \item{cohortDefinition}{An object with a list representation of the cohort definition expression.}
