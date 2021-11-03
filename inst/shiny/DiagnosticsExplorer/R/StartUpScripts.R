@@ -565,6 +565,12 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
     }
   }
   
+  if (nrow(data) > 20) {
+    datableHeight <- '65vh'
+  } else {
+    datableHeight <- TRUE
+  }
+  
   options = list(
     pageLength = 1000,
     lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -575,7 +581,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
     info = TRUE,
     searchHighlight = TRUE,
     scrollX = TRUE,
-    scrollY = "20vh",
+    scrollY = datableHeight,
     columnDefs = list(truncateStringDef(1, 50),
                       minimumCellCountDefs) #!!!!!!!!!!! note in percent form, this may cause error because of -ve number
   )
