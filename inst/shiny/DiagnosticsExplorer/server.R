@@ -6792,6 +6792,12 @@ shiny::shinyServer(function(input, output, session) {
         dataSource = dataSource,
         cohortId = c(consolidatedCohortIdTarget()) %>% unique()
       )
+      if (!doesObjectHaveData(data$analysisRef)) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(data$covariateValue)) {
+        return(NULL)
+      }
       return(data)
     })
   
@@ -6801,6 +6807,8 @@ shiny::shinyServer(function(input, output, session) {
       if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
         return(NULL)
       }
+      validate(need(consolidatedCohortIdTarget() != consolidatedCohortIdComparator(), 
+                    "Target and comparator cohorts are the same. Please change comparator selection."))
       if (all(is(dataSource, "environment"), !any(
         exists('covariateValue'),
         exists('temporalCovariateValue')
@@ -6823,136 +6831,84 @@ shiny::shinyServer(function(input, output, session) {
         dataSource = dataSource,
         cohortId = c(consolidatedCohortIdComparator()) %>% unique()
       )
+      if (!doesObjectHaveData(data$analysisRef)) {
+        return(NULL)
+      }
+      if (!doesObjectHaveData(data$covariateValue)) {
+        return(NULL)
+      }
       return(data)
     })
   
-  ###getMultipleCharacterizationData----
+  ##getMultipleCharacterizationData----
   getMultipleCharacterizationData <- shiny::reactive(x = {
-    if (!any(
-      input$tabs == "cohortCharacterization"
-    )) {
+    if (!input$tabs == "cohortCharacterization") {
       return(NULL)
     }
     if (!doesObjectHaveData(getMultipleCharacterizationDataTarget())) {
       return(NULL)
     }
-    if (any(
-      input$tabs == "cohortCharacterization",
-      input$tabs == "temporalCharacterization"
-    )) {
-      data <- getMultipleCharacterizationDataTarget()
-      if (!doesObjectHaveData(data)) {
-        return(NULL)
-      }
-      if (!doesObjectHaveData(data$covariateValue)) {
-        return(NULL)
-      }
-      data$covariateValue <- data$covariateValue %>% 
-        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget())
-      if (!doesObjectHaveData(data$covariateValue)) {
-        return(NULL)
-      }
-      if (!doesObjectHaveData(data$covariateValueDist)) {
-        return(NULL)
-      }
-      data$covariateValueDist <- data$covariateValueDist %>% 
-        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget())
+    dataTarget <- getMultipleCharacterizationDataTarget()
+    if (!doesObjectHaveData(dataTarget)) {
+      return(NULL)
     }
-    if (any(
-      input$tabs == "compareCohortCharacterization",
-      input$tabs == "compareTemporalCharacterization"
-    )) {
-      dataTarget <- getMultipleCharacterizationDataTarget()
-      if (!doesObjectHaveData(dataTarget)) {
-        return(NULL)
-      }
-      if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
-        return(NULL)
-      }
-      validate(need(consolidatedCohortIdTarget() != consolidatedCohortIdComparator(), 
-                    "Target and comparator cohorts are the same. Please change comparator selection."))
-      dataComparator <- getMultipleCharacterizationDataComparator()
-      if (!doesObjectHaveData(dataComparator)) {
-        return(NULL)
-      }
-      data <- list()
-      if (!doesObjectHaveData(dataTarget$analysisRef)) {
-        return(NULL)
-      }
-      if (!doesObjectHaveData(dataComparator$analysisRef)) {
-        return(NULL)
-      }
-      data$analysisRef <- dplyr::bind_rows(dataTarget$analysisRef,
-                                           dataComparator$analysisRef) %>% 
-        dplyr::distinct()
-      if (!doesObjectHaveData(dataTarget$covariateRef)) {
-        return(NULL)
-      }
-      if (!doesObjectHaveData(dataComparator$covariateRef)) {
-        return(NULL)
-      }
-      data$covariateRef <- dplyr::bind_rows(dataTarget$covariateRef,
-                                           dataComparator$covariateRef) %>% 
-        dplyr::distinct()
-      if (!doesObjectHaveData(dataTarget$covariateValue)) {
-        return(NULL)
-      }
-      if (!doesObjectHaveData(dataComparator$covariateValue)) {
-        return(NULL)
-      }
-      data$covariateValue <- dplyr::bind_rows(dataTarget$covariateValue,
-                                            dataComparator$covariateValue)%>% 
-        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
-        dplyr::distinct()
-      if (!doesObjectHaveData(dataTarget$covariateValueDist)) {
-        return(NULL)
-      }
-      if (!doesObjectHaveData(dataComparator$covariateValueDist)) {
-        return(NULL)
-      }
-      data$covariateValueDist <- dplyr::bind_rows(dataTarget$covariateValueDist,
-                                              dataComparator$covariateValueDist) %>% 
-        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
-        dplyr::distinct()
-      data$concept <- dplyr::bind_rows(dataTarget$concept,
-                                       dataComparator$concept) %>% 
-        dplyr::distinct()
-      data$temporalTimeRef <- dplyr::bind_rows(dataTarget$temporalTimeRef,
-                                       dataComparator$temporalTimeRef) %>% 
-        dplyr::distinct()
+    dataComparator <- getMultipleCharacterizationDataComparator()
+    if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
+      return(NULL)
     }
+    data <- list()
+    data$analysisRef <- dplyr::bind_rows(dataTarget$analysisRef,
+                                         dataComparator$analysisRef) %>%
+      dplyr::distinct()
+    data$covariateRef <- dplyr::bind_rows(dataTarget$covariateRef,
+                                          dataComparator$covariateRef) %>%
+      dplyr::distinct()
+    data$covariateValue <-
+      dplyr::bind_rows(dataTarget$covariateValue,
+                       dataComparator$covariateValue) %>%
+      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
+      dplyr::distinct()
+    data$covariateValueDist <-
+      dplyr::bind_rows(dataTarget$covariateValueDist,
+                       dataComparator$covariateValueDist) %>%
+      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
+      dplyr::distinct()
+    data$concept <- dplyr::bind_rows(dataTarget$concept,
+                                     dataComparator$concept) %>%
+      dplyr::distinct()
+    data$temporalTimeRef <-
+      dplyr::bind_rows(dataTarget$temporalTimeRef,
+                       dataComparator$temporalTimeRef) %>%
+      dplyr::distinct()
     return(data)
   })
   
   ###getDomainOptionsForCharacterization----
   getDomainOptionsForCharacterization <- shiny::reactive({
-    if (!doesObjectHaveData(getMultipleCharacterizationData())) {
+    if (!exists("analysisRef")) {
       return(NULL)
     }
-    multipleCharacterizationData <- getMultipleCharacterizationData()
-    if (!doesObjectHaveData(multipleCharacterizationData$analysisRef)) {
+    if (!doesObjectHaveData(analysisRef)) {
       return(NULL)
     }
-    domainIdOptions <- multipleCharacterizationData$analysisRef$domainId %>% 
-      unique() %>% 
-      sort()
-    return(domainIdOptions)
+    data <- c(analysisRef$domainId %>% 
+      unique(), "Cohort") %>% sort()
+    return(data)
   })
   
-  ###getAnalysisNameOptionsForCharacterization----
-  getAnalysisNameOptionsForCharacterization <- shiny::reactive({
-    if (!doesObjectHaveData(getMultipleCharacterizationData())) {
-      return(NULL)
-    }
-    multipleCharacterizationData <- getMultipleCharacterizationData()
-    if (!doesObjectHaveData(multipleCharacterizationData$analysisRef)) {
-      return(NULL)
-    }
-    anlaysisNameOptions <- multipleCharacterizationData$analysisRef$analysisName %>% 
-      unique() %>% 
-      sort()
-    return(anlaysisNameOptions)
-  })
+  # ###getAnalysisNameOptionsForCharacterization----
+  # getAnalysisNameOptionsForCharacterization <- shiny::reactive({
+  #   if (!exists("analysisRef")) {
+  #     return(NULL)
+  #   }
+  #   if (!doesObjectHaveData(analysisRef)) {
+  #     return(NULL)
+  #   }
+  #   data <- analysisRef$analysisName %>% 
+  #     unique() %>% 
+  #     sort()
+  #   return(data)
+  # })
   
   ###Update: characterizationDomainNameOptions----
   shiny::observe({
@@ -6966,41 +6922,17 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  ###Update: characterizationAnalysisNameOptions----
-  shiny::observe({
-    subset <- getAnalysisNameOptionsForCharacterization()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "characterizationAnalysisNameOptions",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
-  
-  ###Update: temporalCharacterizationDomainNameOptions----
-  shiny::observe({
-    subset <- getDomainOptionsForCharacterization()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "temporalCharacterizationDomainNameOptions",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
-  
-  ###Update: temporalCharacterizationAnalysisNameOptions----
-  shiny::observe({
-    subset <- getAnalysisNameOptionsForCharacterization()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "temporalCharacterizationAnalysisNameOptions",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
+  # ###Update: characterizationAnalysisNameOptions----
+  # shiny::observe({
+  #   subset <- getAnalysisNameOptionsForCharacterization()
+  #   shinyWidgets::updatePickerInput(
+  #     session = session,
+  #     inputId = "characterizationAnalysisNameOptions",
+  #     choicesOpt = list(style = rep_len("color: black;", 999)),
+  #     choices = subset,
+  #     selected = subset
+  #   )
+  # })
   
   ##Characterization----
   ### getCharacterizationDataFiltered ----
@@ -7022,8 +6954,13 @@ shiny::shinyServer(function(input, output, session) {
       warning("No analysis ref data found")
       return(NULL)
     }
+    analysisIdToFilter <- getMultipleCharacterizationData()$analysisRef %>% 
+      dplyr::filter(.data$domainId %in% c(input$characterizationDomainNameOptions)) %>% 
+      dplyr::pull(.data$analysisId) %>% 
+      unique()
     covariatesTofilter <-
-      getMultipleCharacterizationData()$covariateRef
+      getMultipleCharacterizationData()$covariateRef %>% 
+      dplyr::filter(.data$analysisId %in% c(analysisIdToFilter))
     if (!doesObjectHaveData(covariatesTofilter)) {
       return(NULL)
     }
