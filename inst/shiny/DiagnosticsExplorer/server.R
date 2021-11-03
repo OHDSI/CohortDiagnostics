@@ -7170,8 +7170,10 @@ shiny::shinyServer(function(input, output, session) {
                     .data$databaseId,
                     .data$sortOrder,
                     .data$characteristic,
-                    .data$value) %>% 
-      dplyr::rename("mean" = .data$value)
+                    .data$valueMean,
+                    .data$valueCount) %>% 
+      dplyr::rename("mean" = .data$valueMean) %>% 
+      dplyr::rename("count" = .data$valueCount)
     return(table)
   })
   
@@ -7231,25 +7233,25 @@ shiny::shinyServer(function(input, output, session) {
       !is.null(consolidatedCohortIdTarget()),
       length(consolidatedCohortIdTarget()) > 0
     ), "No data for the combination"))
-    
-    data <- getCharacterizationDataFiltered()
-    validate(need(!is.null(data), "No data for the combination"))
-    
-    databaseIds <- sort(unique(data$databaseId))
-    
-    cohortCounts <- data %>%
-      dplyr::inner_join(cohortCount,
-                        by = c("cohortId", "databaseId")) %>%
-      dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
-      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
-      dplyr::select(.data$cohortSubjects) %>%
-      dplyr::pull(.data$cohortSubjects) %>%
-      unique()
-    databaseIdsWithCount <-
-      paste(databaseIds,
-            "(n = ",
-            format(cohortCounts, big.mark = ","),
-            ")")
+    # 
+    # data <- getCharacterizationDataFiltered()
+    # validate(need(!is.null(data), "No data for the combination"))
+    # 
+    # databaseIds <- sort(unique(data$databaseId))
+    # 
+    # cohortCounts <- data %>%
+    #   dplyr::inner_join(cohortCount,
+    #                     by = c("cohortId", "databaseId")) %>%
+    #   dplyr::filter(.data$cohortId == consolidatedCohortIdTarget()) %>%
+    #   dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
+    #   dplyr::select(.data$cohortSubjects) %>%
+    #   dplyr::pull(.data$cohortSubjects) %>%
+    #   unique()
+    # databaseIdsWithCount <-
+    #   paste(databaseIds,
+    #         "(n = ",
+    #         format(cohortCounts, big.mark = ","),
+    #         ")")
     
     if (input$charType == "Pretty") {
       progress <- shiny::Progress$new()
@@ -7263,6 +7265,10 @@ shiny::shinyServer(function(input, output, session) {
         nrow(data) > 0,
         "No data available for selected combination."
       ))
+      #!!!! if user selects proportion then mean, else count. Also support option for both as 34,342 (33.3%)
+      data <- data %>% 
+        dplyr::select(-.data$mean) %>% 
+        dplyr::rename("mean" = .data$count)
       keyColumnFields <- c("characteristic")
       dataColumnFields <- c("mean")
       sketchLevel <- 1
@@ -7272,7 +7278,7 @@ shiny::shinyServer(function(input, output, session) {
           databaseIds = consolidatedDatabaseIdTarget(),
           cohortIds = consolidatedCohortIdTarget(),
           source = "Cohort Level",
-          fields = "Person Only"
+          fields = "Events"
         )
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
@@ -7285,7 +7291,7 @@ shiny::shinyServer(function(input, output, session) {
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         sort = FALSE,
-        showResultsAsPercent = FALSE
+        showResultsAsPercent = TRUE
       )
       return(table)
     } else {
@@ -7296,7 +7302,7 @@ shiny::shinyServer(function(input, output, session) {
         value = 0
       )
       
-      data <- getCharacterizationRawData()
+      data <- getCharacterizationDataFiltered()
       validate(need(
         nrow(data) > 0,
         "No data available for selected combination."

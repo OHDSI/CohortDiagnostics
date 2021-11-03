@@ -425,7 +425,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
           maxCount <- suppressWarnings(ceiling(maxCount / (max(data$count))))
         }
         data <- data %>%
-          dplyr::mutate(valuesData = .data$valuesData / .data$count)
+          dplyr::mutate(valuesData = round(x = .data$valuesData / .data$count, digits = 4))
         
       }
       data <- data %>%
