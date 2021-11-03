@@ -346,7 +346,6 @@ shiny::shinyServer(function(input, output, session) {
                 solidHeader = FALSE,
                 copyToClipboardButton(toCopyId = "targetCohortDefinitionText",
                                       style = "margin-top: 5px; margin-bottom: 5px;"),
-                shiny::htmlOutput("targetCohortDefinitioncirceRVersion"),
                 shiny::htmlOutput("targetCohortDefinitionText")
               ),
               shinydashboard::box(
@@ -687,7 +686,6 @@ shiny::shinyServer(function(input, output, session) {
                 solidHeader = FALSE,
                 copyToClipboardButton(toCopyId = "comparatorCohortDefinitionText",
                                       style = "margin-top: 5px; margin-bottom: 5px;"),
-                shiny::htmlOutput("circeRVersionInComparatorCohortDefinition"),
                 shiny::htmlOutput("comparatorCohortDefinitionText")
               ),
               shinydashboard::box(
@@ -1079,8 +1077,17 @@ shiny::shinyServer(function(input, output, session) {
     cohortDefinition <-
       RJSONIO::fromJSON(selectionsInCohortTable$json,
                         digits = 23)
+    embedCohortDetailsText <- paste(
+      "Rendered for target cohort id:",
+      consolidatedCohortIdTarget(),
+      "using CirceR version: ",
+      getCirceRPackageVersionInformation()
+    )
+    
     details <-
-      getCirceRenderedExpression(cohortDefinition = cohortDefinition)
+      getCirceRenderedExpression(cohortDefinition = cohortDefinition,
+                                 embedCohortDetails = TRUE,
+                                 embedCohortDetailsText = embedCohortDetailsText)
     return(details)
   })
   
@@ -1109,8 +1116,18 @@ shiny::shinyServer(function(input, output, session) {
       cohortDefinition <-
         RJSONIO::fromJSON(selectionsInCohortTable$json,
                           digits = 23)
+      
+      embedCohortDetailsText <- paste(
+        "Rendered for comparator cohort id:",
+        consolidatedCohortIdComparator(),
+        "using CirceR version: ",
+        getCirceRPackageVersionInformation()
+      )
+      
       details <-
-        getCirceRenderedExpression(cohortDefinition = cohortDefinition)
+        getCirceRenderedExpression(cohortDefinition = cohortDefinition, 
+                                   embedCohortDetails = TRUE,
+                                   embedCohortDetailsText = embedCohortDetailsText)
       return(details)
     })
   
@@ -1125,46 +1142,6 @@ shiny::shinyServer(function(input, output, session) {
     getCirceRenderedExpressionDetailsTarget()$cohortHtmlExpression %>%
       shiny::HTML()
   })
-  
-  ###output: targetCohortDefinitioncirceRVersion----
-  output$targetCohortDefinitioncirceRVersion <-
-    shiny::renderUI(expr = {
-      if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
-        return(NULL)
-      }
-      if (!doesObjectHaveData(getCirceRPackageVersionInformation())) {
-        return(NULL)
-      }
-      version <- tags$table(tags$tr(tags$td(
-        paste(
-          "rendered for target cohort id:",
-          consolidatedCohortIdTarget(),
-          "using CirceR version: ",
-          getCirceRPackageVersionInformation()
-        )
-      )))
-      return(version)
-    })
-  
-  ###output: circeRVersionInComparatorCohortDefinition----
-  output$circeRVersionInComparatorCohortDefinition <-
-    shiny::renderUI(expr = {
-      if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
-        return(NULL)
-      }
-      if (!doesObjectHaveData(getCirceRPackageVersionInformation())) {
-        return(NULL)
-      }
-      version <- tags$table(tags$tr(tags$td(
-        paste(
-          "rendered for comparator cohort id:",
-          consolidatedCohortIdComparator(),
-          "using CirceR version: ",
-          getCirceRPackageVersionInformation()
-        )
-      )))
-      return(version)
-    })
   
   ###output: circeRVersionInTargetcohortDefinitionSql----
   output$circeRVersionInTargetcohortDefinitionSql <-
