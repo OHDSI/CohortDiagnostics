@@ -3600,13 +3600,19 @@ getResultsTemporalAnalysisRef <- function(dataSource) {
 #'
 #' @param cohortDefinition An R object (list) with a list representation of the cohort definition expression.
 #'
-#' @param embedText Any additional text to embed in the top of circe generated content
+#' @param cohortName Name for the cohort definition
+#'
+#' @param embedText Any additional text to embed in the top of circe generated content.
+#'
+#' @param includeConceptSets Do you want to inclued concept set in the documentation
 #' 
 #' @return list object
 #'
 #' @export
 getCirceRenderedExpression <- function(cohortDefinition,
-                                       embedText = NULL) {
+                                       cohortName = NULL,
+                                       embedText = NULL,
+                                       includeConceptSets = FALSE) {
   cohortJson <-
     RJSONIO::toJSON(x = cohortDefinition,
                     digits = 23,
@@ -3620,9 +3626,24 @@ getCirceRenderedExpression <- function(cohortDefinition,
   
   if (doesObjectHaveData(embedText)) {
     circeExpressionMarkdown <-
-      paste0(embedText,
+      paste0("##### ",
+             embedText,
+             "\r\n\r\n",
+             "# Cohort Definition:",
+             "\r\n\r\n",
+             "### ",
+             cohortName,
              "\r\n\r\n",
              circeExpressionMarkdown)
+  }
+  if (includeConceptSets) {
+    circeExpressionMarkdown <-
+      paste0(circeExpressionMarkdown,
+             "\r\n\r\n",
+             "\r\n\r\n",
+             "## Concept Sets:",
+             "\r\n\r\n",
+             circeConceptSetListmarkdown)
   }
   
   htmlExpressionCohort <-
