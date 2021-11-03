@@ -66,7 +66,7 @@ prepareTable1 <- function(covariates,
                           dplyr::pull(.data$covariateIds)),
               pattern = ";"
             )[[1]] %>%
-              utils::type.convert()
+              utils::type.convert(as.is = TRUE)
           )
         ) %>%
         dplyr::arrange(.data$covariateId)
@@ -80,7 +80,8 @@ prepareTable1 <- function(covariates,
             specification %>% dplyr::pull(.data$label),
             '</strong>'
           ),
-          value = NA,
+          valueMean = NA,
+          valueCount = NA,
           header = 1,
           position = i
         ),
@@ -92,7 +93,8 @@ prepareTable1 <- function(covariates,
             space,
             covariatesSubset$covariateName
           ),
-          value = covariatesSubset$mean,
+          valueMean = covariatesSubset$mean,
+          valueCount = covariatesSubset$sumValue,
           header = 0,
           position = i,
           cohortId = covariatesSubset$cohortId,
@@ -163,7 +165,7 @@ prepareTable1Comp <- function(balance,
                           dplyr::pull(.data$covariateIds)),
               pattern = ";"
             )[[1]] %>%
-              utils::type.convert()
+              utils::type.convert(as.is = TRUE)
           )
         ) %>%
         dplyr::arrange(.data$covariateId)

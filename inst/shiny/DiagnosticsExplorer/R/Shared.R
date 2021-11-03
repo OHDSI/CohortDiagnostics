@@ -3567,7 +3567,9 @@ getResultsTemporalAnalysisRef <- function(dataSource) {
 #' @return list object
 #'
 #' @export
-getCirceRenderedExpression <- function(cohortDefinition) {
+getCirceRenderedExpression <- function(cohortDefinition,
+                                       embedCohortDetails = FALSE,
+                                       embedCohortDetailsText = NULL) {
   cohortJson <- RJSONIO::toJSON(x = cohortDefinition, digits = 23, pretty = TRUE)
   circeExpression <-
     CirceR::cohortExpressionFromJson(expressionJson = cohortJson)
@@ -3575,6 +3577,11 @@ getCirceRenderedExpression <- function(cohortDefinition) {
     CirceR::cohortPrintFriendly(circeExpression)
   circeConceptSetListmarkdown <-
     CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
+  
+  if (embedCohortDetails && doesObjectHaveData(embedCohortDetailsText)) {
+    circeExpressionMarkdown <- paste0(embedCohortDetailsText, "\r\n\r\n", circeExpressionMarkdown)
+  }
+  
   htmlExpressionCohort <-
     convertMdToHtml(circeExpressionMarkdown)
   htmlExpressionConceptSetExpression <-
