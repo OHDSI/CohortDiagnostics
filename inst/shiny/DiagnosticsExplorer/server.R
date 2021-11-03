@@ -353,9 +353,9 @@ shiny::shinyServer(function(input, output, session) {
                 width = NULL,
                 status = NULL,
                 collapsible = TRUE,
-                collapsed = FALSE,
+                collapsed = TRUE,
                 solidHeader = FALSE,
-                shiny::htmlOutput("targetCohortDetailsText")
+                tags$p("To do")
               )
             ),
             shiny::tabPanel(
@@ -693,9 +693,9 @@ shiny::shinyServer(function(input, output, session) {
                 width = NULL,
                 status = NULL,
                 collapsible = TRUE,
-                collapsed = FALSE,
+                collapsed = TRUE,
                 solidHeader = FALSE,
-                shiny::htmlOutput("comparatorCohortDefinitioncohortDetailsText")
+                tags$p("To do")
               )
             ),
             shiny::tabPanel(
@@ -1013,46 +1013,6 @@ shiny::shinyServer(function(input, output, session) {
     return(packageVersion)
   })
   
-  ###getCohortMetadataLeft----
-  getCohortMetadataLeft <- shiny::reactive(x = {
-    if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
-      return(NULL)
-    }
-    data <- cohort %>%
-      dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget())
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    details <-  tags$table(style = "margin-top: 5px;",
-                           tags$tr(
-                             tags$td(tags$strong("Metadata: ")),
-                             tags$td(HTML("&nbsp;&nbsp;")),
-                             tags$td(data$metadata)
-                           ))
-    
-    return(details)
-  })
-  
-  ###getCohortMetadataRight----
-  getCohortMetadataRight <- shiny::reactive(x = {
-    if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
-      return(NULL)
-    }
-    data <- cohort %>%
-      dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator())
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    details <-  tags$table(style = "margin-top: 5px;",
-                           tags$tr(
-                             tags$td(tags$strong("Metadata: ")),
-                             tags$td(HTML("&nbsp;&nbsp;")),
-                             tags$td(data$metadata)
-                           ))
-    
-    return(details)
-  })
-  
   ###getCirceRenderedExpressionDetailsTarget----
   getCirceRenderedExpressionDetailsTarget <- shiny::reactive(x = {
     if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
@@ -1238,27 +1198,6 @@ shiny::shinyServer(function(input, output, session) {
                  tags$td(
                    tags$h4(style = "font-weight: bold",cohortName))
                  ))
-    })
-  
-  #output: targetCohortDetailsText----
-  output$targetCohortDetailsText <- shiny::renderUI({
-    row <- getCohortMetadataLeft()
-    if (doesObjectHaveData(row)) {
-      return(NULL)
-    }
-    return(row)
-  })
-  #output: comparatorCohortDefinitioncohortDetailsText----
-  output$comparatorCohortDefinitioncohortDetailsText <-
-    shiny::renderUI({
-      row <- getCohortMetadataRight()
-      if (doesObjectHaveData(row)) {
-        return(NULL)
-      }
-      if (length(row) == 2) {
-        row <- row[[2]]
-      }
-      return(row)
     })
   
   ##Cohort SQL----
