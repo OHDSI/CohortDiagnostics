@@ -1027,25 +1027,24 @@ shiny::shinyServer(function(input, output, session) {
       ),
       value = 0
     )
-    selectionsInCohortTable <- cohort %>%
-      dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget())
-    if (!doesObjectHaveData(selectionsInCohortTable)) {
+    cohortExpression <- cohort %>%
+      dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>% 
+      dplyr::pull(.data$json) %>% 
+      RJSONIO::fromJSON(digits = 23)
+    if (!doesObjectHaveData(cohortExpression)) {
       return(NULL)
     }
-    cohortDefinition <-
-      RJSONIO::fromJSON(selectionsInCohortTable$json,
-                        digits = 23)
+      
     embedCohortDetailsText <- paste(
-      "--Rendered for target cohort id:",
+      "-- Rendered for cohort id:",
       consolidatedCohortIdTarget(),
       " using CirceR version: ",
       getCirceRPackageVersionInformation()
     )
     
     details <-
-      getCirceRenderedExpression(cohortDefinition = cohortDefinition,
-                                 embedCohortDetails = TRUE,
-                                 embedCohortDetailsText = embedCohortDetailsText)
+      getCirceRenderedExpression(cohortDefinition = cohortExpression,
+                                 embedText = embedCohortDetailsText)
     return(details)
   })
   
@@ -1066,26 +1065,24 @@ shiny::shinyServer(function(input, output, session) {
         ),
         value = 0
       )
-      selectionsInCohortTable <- cohort %>%
-        dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator())
-      if (!doesObjectHaveData(selectionsInCohortTable)) {
+      cohortExpression <- cohort %>%
+        dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator()) %>% 
+        dplyr::pull(.data$json) %>% 
+        RJSONIO::fromJSON(digits = 23)
+      if (!doesObjectHaveData(cohortExpression)) {
         return(NULL)
       }
-      cohortDefinition <-
-        RJSONIO::fromJSON(selectionsInCohortTable$json,
-                          digits = 23)
       
       embedCohortDetailsText <- paste(
-        "Rendered for comparator cohort id:",
-        consolidatedCohortIdComparator(),
-        "using CirceR version: ",
+        "-- Rendered for cohort id:",
+        consolidatedCohortIdTarget(),
+        " using CirceR version: ",
         getCirceRPackageVersionInformation()
       )
       
       details <-
-        getCirceRenderedExpression(cohortDefinition = cohortDefinition, 
-                                   embedCohortDetails = TRUE,
-                                   embedCohortDetailsText = embedCohortDetailsText)
+        getCirceRenderedExpression(cohortDefinition = cohortExpression,
+                                   embedText = embedCohortDetailsText)
       return(details)
     })
   
@@ -1169,7 +1166,7 @@ shiny::shinyServer(function(input, output, session) {
       getOhdsiSqlFromCohortDefinitionExpression(cohortDefinitionExpression = cohortDefinition)
     
     sql <- paste0(
-      "-- Rendered for target cohort id:",
+      "-- Rendered for cohort id:",
       consolidatedCohortIdTarget(),
       " using CirceR version: ",
       getCirceRPackageVersionInformation(),
