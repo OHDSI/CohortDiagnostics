@@ -994,6 +994,11 @@ bodyTabItems <- shinydashboard::tabItems(
               ),
               type = spinnerType
             )
+          ),
+          shiny::tabPanel(
+            title = " Co Concept",
+            value = "indexEvenCoCOnceptValueTabPanel",
+            DT::dataTableOutput(outputId = "coConceptTableForIndexEvent")
           )
         )
       )

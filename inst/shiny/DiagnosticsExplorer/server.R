@@ -6263,6 +6263,100 @@ shiny::shinyServer(function(input, output, session) {
       return(plot)
     })
   
+  getCoCOnceptForIndexEvent <- shiny::reactive(x = {
+    data <- getResultsIndexEventBreakdown(
+      dataSource = dataSource,
+      cohortIds = consolidatedCohortIdTarget(),
+      databaseIds = consolidatedDatabaseIdTarget(),
+      conceptIds = activeSelected()$conceptId,
+      coConceptIds = NULL,
+      daysRelativeIndex = 0
+    )
+    
+    if (doesObjectHaveData(data)) {
+      data <- getConcept(
+        dataSource = dataSource,
+        conceptIds = data$coConceptId %>% unique()
+      ) %>% 
+        dplyr::inner_join(data, by = c("conceptId" = "coConceptId")) %>% 
+        dplyr::select(.data$conceptId,
+                      .data$conceptName,
+                      .data$vocabularyId,
+                      .data$conceptCount,
+                      .data$subjectCount,
+                      .data$databaseId) %>% 
+        dplyr::rename("persons" = .data$subjectCount,
+                      "records" = .data$conceptCount)
+      
+      if (doesObjectHaveData(data)) {
+        return(data)
+      } else {
+        return(NULL)
+      }
+    } else {
+      return(NULL)
+    }
+  })
+  
+  output$coConceptTableForIndexEvent <- DT::renderDataTable(expr = {
+    data <- getCoCOnceptForIndexEvent()
+    
+    validate(need(
+      doesObjectHaveData(data),
+      "No information for selected concept id."
+    ))
+    
+    keyColumnFields <- c("conceptId", 
+                         "conceptName",
+                         "vocabularyId")
+    #depending on user selection - what data Column Fields Will Be Presented?
+    dataColumnFields <-
+      c("persons",
+        "records")
+    if (input$indexEventBreakdownTableFilter == "Both") {
+      dataColumnFields <- dataColumnFields
+      sketchLevel <- 2
+    } else if (input$indexEventBreakdownTableFilter == "Person Only") {
+      dataColumnFields <-
+        dataColumnFields[stringr::str_detect(
+          string = tolower(dataColumnFields),
+          pattern = tolower("person")
+        )]
+      sketchLevel <- 1
+    } else if (input$indexEventBreakdownTableFilter == "Record Only") {
+      dataColumnFields <-
+        dataColumnFields[stringr::str_detect(
+          string = tolower(dataColumnFields),
+          pattern = tolower("record")
+        )]
+      sketchLevel <- 1
+    }
+    
+    countsForHeader <-
+      getCountsForHeaderForUseInDataTable(
+        dataSource = dataSource,
+        databaseIds = consolidatedDatabaseIdTarget(),
+        cohortIds = consolidatedCohortIdTarget(),
+        source = "Cohort Level",
+        fields = input$indexEventBreakdownTableFilter
+      )
+    
+    maxCountValue <-
+      getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                    string = dataColumnFields)
+    table <- getDtWithColumnsGroupedByDatabaseId(
+      data = data,
+      headerCount = countsForHeader,
+      keyColumns = keyColumnFields,
+      sketchLevel = sketchLevel,
+      dataColumns = dataColumnFields,
+      maxCount = maxCountValue,
+      showResultsAsPercent = input$indexEventBreakdownShowAsPercent
+    )
+    
+    return(table)
+  }, server = TRUE)
+  
   output$saveDetailsOfSelectedConceptIdForIndexEvent <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "indexEventBreakdownConceptSetBrowser")
