@@ -1,16 +1,44 @@
 #Prepare table 1 ----
 prepareTable1 <- function(covariates,
-                          pathToCsv = "Table1Specs.csv") {
-  covariates <- covariates %>%
+                          pathToCsv = "Table1SpecsLong.csv") {
+  covariates2 <- covariates
+  
+  specifications <- readr::read_csv(
+    file = pathToCsv,
+    col_types = readr::cols(),
+    guess_max = min(1e7)
+  )
+  if (nrow(specifications) == 0) {
+    return(NULL)
+  }
+  keyColumns <- specifications %>% 
+    dplyr::select(.data$labelOrder,
+                  .data$label,
+                  .data$covariateId,
+                  .data$analysisId) %>% 
+    dplyr::distinct() %>% 
+    dplyr::left_join(covariates2 %>% 
+                        dplyr::select(.data$covariateId,
+                                      .data$covariateName) %>% 
+                        dplyr::distinct(),
+                     by = c("covariateId")) %>% 
+    dplyr::filter(!is.na(.data$covariateName)) %>% 
+    tidyr::crossing(covariates2 %>% 
+                      dplyr::select(.data$cohortId,
+                                    .data$databaseId) %>% 
+                      dplyr::distinct()) %>%
+    dplyr::arrange(.data$cohortId,
+                   .data$databaseId,
+                   .data$analysisId,
+                   .data$covariateId) %>%
+    dplyr::mutate(sortOrder = dplyr::row_number()) %>%
     dplyr::mutate(covariateName = stringr::str_to_sentence(
       stringr::str_replace_all(
         string = .data$covariateName,
         pattern = "^.*: ",
         replacement = ""
       )
-    ))
-  
-  covariates <- covariates %>%
+    )) %>%
     dplyr::mutate(
       covariateName = stringr::str_replace(
         string = .data$covariateName,
@@ -33,89 +61,94 @@ prepareTable1 <- function(covariates,
       )
     )
   
-  space <- "&nbsp;"
-  specifications <- readr::read_csv(
-    file = pathToCsv,
-    col_types = readr::cols(),
-    guess_max = min(1e7)
-  ) %>%
-    dplyr::mutate(dplyr::across(
-      tidyr::everything(),
-      ~ tidyr::replace_na(data = .x, replace = '')
-    ))
+  covariates2 <- keyColumns %>%
+    dplyr::left_join(covariates2 %>% 
+                       dplyr::select(-.data$covariateName),
+                     by = c("cohortId",
+                            "databaseId",
+                            "covariateId",
+                            "analysisId")) %>%
+    dplyr::filter(!is.na(.data$covariateName))
   
+  space <- "&nbsp;"
   resultsTable <- tidyr::tibble()
   
-  if (nrow(specifications) == 0) {
-    return(resultsTable)
-  }
+  # labels
+  tableHeaders <-
+    covariates2 %>%
+    dplyr::select(
+      .data$cohortId,
+      .data$databaseId,
+      .data$label,
+      .data$labelOrder,
+      .data$sortOrder
+    ) %>%
+    dplyr::distinct() %>%
+    dplyr::group_by(
+      .data$cohortId,
+      .data$databaseId,
+      .data$label,
+      .data$labelOrder
+    ) %>%
+    dplyr::summarise(sortOrder = min(.data$sortOrder),
+                     .groups = 'keep') %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(
+      characteristic = paste0('<strong>',
+                              .data$label,
+                              '</strong>'),
+      header = 1
+    ) %>%
+    dplyr::select(
+      .data$cohortId,
+      .data$databaseId,
+      .data$sortOrder,
+      .data$header,
+      .data$labelOrder,
+      .data$characteristic
+    ) %>%
+    dplyr::distinct()
   
-  for (i in 1:nrow(specifications)) {
-    specification <- specifications[i, ]
-    if (specification %>% dplyr::pull(.data$covariateIds) == "") {
-      covariatesSubset <- covariates %>%
-        dplyr::filter(.data$analysisId %in% specification$analysisId) %>%
-        dplyr::arrange(.data$covariateId)
-    } else {
-      covariatesSubset <- covariates %>%
-        dplyr::filter(
-          .data$analysisId %in% specification$analysisId,
-          .data$covariateId %in% (
-            stringr::str_split(
-              string = (specification %>%
-                          dplyr::pull(.data$covariateIds)),
-              pattern = ";"
-            )[[1]] %>%
-              utils::type.convert(as.is = TRUE)
-          )
-        ) %>%
-        dplyr::arrange(.data$covariateId)
-    }
-    if (nrow(covariatesSubset) > 0) {
-      resultsTable <- dplyr::bind_rows(
-        resultsTable,
-        tidyr::tibble(
-          characteristic = paste0(
-            '<strong>',
-            specification %>% dplyr::pull(.data$label),
-            '</strong>'
-          ),
-          valueMean = NA,
-          valueCount = NA,
-          header = 1,
-          position = i
-        ),
-        tidyr::tibble(
-          characteristic = paste0(
-            space,
-            space,
-            space,
-            space,
-            covariatesSubset$covariateName
-          ),
-          valueMean = covariatesSubset$mean,
-          valueCount = covariatesSubset$sumValue,
-          header = 0,
-          position = i,
-          cohortId = covariatesSubset$cohortId,
-          databaseId = covariatesSubset$databaseId
-        )
-      ) %>%
-        dplyr::distinct() %>%
-        dplyr::mutate(sortOrder = dplyr::row_number())
-    }
+  tableValues <-
+    covariates2 %>%
+    dplyr::mutate(
+      characteristic = paste0(space,
+                              space,
+                              space,
+                              space,
+                              .data$covariateName),
+      header = 0,
+      valueMean = .data$mean,
+      valueCount = .data$sumValue
+    ) %>%
+    dplyr::select(
+      .data$cohortId,
+      .data$databaseId,
+      .data$covariateId,
+      .data$analysisId,
+      .data$sortOrder,
+      .data$header,
+      .data$labelOrder,
+      .data$characteristic,
+      .data$valueCount,
+      .data$valueMean
+    )
+  
+  table <- dplyr::bind_rows(tableHeaders, tableValues) %>%
+    dplyr::arrange(.data$sortOrder, dplyr::desc(.data$header)) %>%
+    dplyr::mutate(sortOrder = dplyr::row_number()) %>%
+    dplyr::select(
+      .data$cohortId,
+      .data$databaseId,
+      .data$sortOrder,
+      .data$characteristic,
+      .data$valueCount,
+      .data$valueMean
+    )
+  if (nrow(table) == 0) {
+    return(NULL)
   }
-  if (nrow(resultsTable) > 0) {
-    resultsTable <- resultsTable %>%
-      dplyr::arrange(
-        .data$databaseId,
-        .data$cohortId,
-        .data$position,
-        dplyr::desc(.data$header),
-        .data$sortOrder
-      )
-  }
-  return(resultsTable)
+  return(table)
 }
 
 

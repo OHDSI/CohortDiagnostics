@@ -6964,12 +6964,15 @@ shiny::shinyServer(function(input, output, session) {
           by = c("conceptId")
         )
     }
+    characterizationDataValue <-
+      getMultipleCharacterizationData()$covariateValue %>% 
+      dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget()))
     #Pretty analysis
     if (input$charType == "Pretty") {
       covariatesTofilter <- covariatesTofilter %>%
-        dplyr::filter(.data$analysisId %in% prettyAnalysisIds)
+        dplyr::filter(.data$analysisId %in% c(prettyAnalysisIds))
       characterizationDataValue <-
-        getMultipleCharacterizationData()$covariateValue %>%
+        characterizationDataValue %>%
         dplyr::inner_join(covariatesTofilter,
                           by = c('covariateId', 'characterizationSource')) %>%
         dplyr::filter(is.na(.data$startDay) |
@@ -6981,7 +6984,7 @@ shiny::shinyServer(function(input, output, session) {
       #prettyAnalysisIds this is global variable
     } else {
       characterizationDataValue <-
-        getMultipleCharacterizationData()$covariateValue %>%
+        characterizationDataValue %>%
         dplyr::inner_join(covariatesTofilter,
                           by = c('covariateId', 'characterizationSource'))
       characterizationDataValueTimeVarying <- characterizationDataValue %>% 
@@ -7049,55 +7052,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(table)) {
       return(NULL)
     }
-    
-    characteristics <- table %>%
-      dplyr::select(.data$characteristic,
-                    .data$position,
-                    .data$header,
-                    .data$sortOrder) %>%
-      dplyr::distinct() %>%
-      dplyr::group_by(.data$characteristic, .data$position, .data$header) %>%
-      dplyr::summarise(sortOrder = max(.data$sortOrder),
-                       .groups = 'keep') %>%
-      dplyr::ungroup() %>%
-      dplyr::arrange(.data$position, desc(.data$header)) %>%
-      dplyr::mutate(sortOrder = dplyr::row_number()) %>%
-      dplyr::distinct()
-    
-    characteristics <- dplyr::bind_rows(
-      characteristics %>%
-        dplyr::filter(.data$header == 1) %>%
-        dplyr::mutate(
-          cohortId = sort(consolidatedCohortIdTarget())[[1]],
-          databaseId = sort(consolidatedDatabaseIdTarget()[[1]])
-        ),
-      characteristics %>%
-        dplyr::filter(.data$header == 0) %>%
-        tidyr::crossing(dplyr::tibble(databaseId = consolidatedDatabaseIdTarget())) %>%
-        tidyr::crossing(dplyr::tibble(cohortId = consolidatedCohortIdTarget()))
-    ) %>%
-      dplyr::arrange(.data$sortOrder, .data$databaseId, .data$cohortId)
-    
-    table <- characteristics %>%
-      dplyr::left_join(
-        table %>%
-          dplyr::select(-.data$sortOrder),
-        by = c(
-          "characteristic",
-          "position",
-          "header",
-          "databaseId",
-          "cohortId"
-        )
-      ) %>%
-      dplyr::select(
-        .data$cohortId,
-        .data$databaseId,
-        .data$sortOrder,
-        .data$characteristic,
-        .data$valueMean,
-        .data$valueCount
-      ) %>%
+    table <- table %>%
       dplyr::rename("mean" = .data$valueMean) %>%
       dplyr::rename("count" = .data$valueCount)
     return(table)
@@ -7123,11 +7078,13 @@ shiny::shinyServer(function(input, output, session) {
       data <- getCharacterizationTableDataPretty()
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
+      browser()
       #!!!! if user selects proportion then mean, else count. Also support option for both as 34,342 (33.3%)
       data <- data %>%
+        dplyr::rename(s = .data$sortOrder) %>% 
         dplyr::select(-.data$mean) %>%
         dplyr::rename("mean" = .data$count)
-      keyColumnFields <- c("characteristic")
+      keyColumnFields <- c("characteristic", "s")
       dataColumnFields <- c("mean")
       sketchLevel <- 1
       countsForHeader <-
