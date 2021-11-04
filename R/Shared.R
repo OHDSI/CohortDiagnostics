@@ -3598,15 +3598,25 @@ getResultsTemporalAnalysisRef <- function(dataSource) {
 #' @description
 #' Returns list with circe generated documentation
 #'
-#' @param cohortDefinition An object with a list representation of the cohort definition expression.
+#' @param cohortDefinition An R object (list) with a list representation of the cohort definition expression.
 #'
+#' @param cohortName Name for the cohort definition
+#'
+#' @param embedText Any additional text to embed in the top of circe generated content.
+#'
+#' @param includeConceptSets Do you want to inclued concept set in the documentation
+#' 
 #' @return list object
 #'
 #' @export
 getCirceRenderedExpression <- function(cohortDefinition,
-                                       embedCohortDetails = FALSE,
-                                       embedCohortDetailsText = NULL) {
-  cohortJson <- RJSONIO::toJSON(x = cohortDefinition, digits = 23, pretty = TRUE)
+                                       cohortName = NULL,
+                                       embedText = NULL,
+                                       includeConceptSets = FALSE) {
+  cohortJson <-
+    RJSONIO::toJSON(x = cohortDefinition,
+                    digits = 23,
+                    pretty = TRUE)
   circeExpression <-
     CirceR::cohortExpressionFromJson(expressionJson = cohortJson)
   circeExpressionMarkdown <-
@@ -3614,8 +3624,26 @@ getCirceRenderedExpression <- function(cohortDefinition,
   circeConceptSetListmarkdown <-
     CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
   
-  if (embedCohortDetails && doesObjectHaveData(embedCohortDetailsText)) {
-    circeExpressionMarkdown <- paste0(embedCohortDetailsText, "\r\n\r\n", circeExpressionMarkdown)
+  if (doesObjectHaveData(embedText)) {
+    circeExpressionMarkdown <-
+      paste0("##### ",
+             embedText,
+             "\r\n\r\n",
+             "# Cohort Definition:",
+             "\r\n\r\n",
+             "### ",
+             cohortName,
+             "\r\n\r\n",
+             circeExpressionMarkdown)
+  }
+  if (includeConceptSets) {
+    circeExpressionMarkdown <-
+      paste0(circeExpressionMarkdown,
+             "\r\n\r\n",
+             "\r\n\r\n",
+             "## Concept Sets:",
+             "\r\n\r\n",
+             circeConceptSetListmarkdown)
   }
   
   htmlExpressionCohort <-
@@ -3623,7 +3651,7 @@ getCirceRenderedExpression <- function(cohortDefinition,
   htmlExpressionConceptSetExpression <-
     convertMdToHtml(circeConceptSetListmarkdown)
   return(
-    dplyr::tibble(
+    list(
       cohortJson = cohortJson,
       cohortMarkdown = circeExpressionMarkdown,
       conceptSetMarkdown = circeConceptSetListmarkdown,
