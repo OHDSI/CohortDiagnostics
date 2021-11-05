@@ -7048,13 +7048,11 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     table <- data %>%
-      prepareTable1(prettyTable1Specifications = prettyTable1Specifications)
+      prepareTable1(prettyTable1Specifications = prettyTable1Specifications,
+                    cohort = cohort)
     if (!doesObjectHaveData(table)) {
       return(NULL)
     }
-    table <- table %>%
-      dplyr::rename("mean" = .data$valueMean) %>%
-      dplyr::rename("count" = .data$valueCount)
     return(table)
   })
   
@@ -7079,11 +7077,9 @@ shiny::shinyServer(function(input, output, session) {
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
       #!!!! if user selects proportion then mean, else count. Also support option for both as 34,342 (33.3%)
-      data <- data %>%
-        dplyr::select(-.data$mean) %>%
-        dplyr::rename("mean" = .data$count)
       keyColumnFields <- c("characteristic")
-      dataColumnFields <- c("mean")
+      dataColumnFields <- intersect(x = colnames(data),
+                                    y = cohort$shortName)
       sketchLevel <- 1
       countsForHeader <-
         getCountsForHeaderForUseInDataTable(

@@ -1,28 +1,33 @@
 #Prepare table 1 ----
 prepareTable1 <- function(covariates,
-                          prettyTable1Specifications) {
+                          prettyTable1Specifications,
+                          cohort) {
   covariates2 <- covariates
   if (!all(is.data.frame(prettyTable1Specifications),
            nrow(prettyTable1Specifications) > 0)) {
     return(NULL)
   }
-  keyColumns <- prettyTable1Specifications %>% 
+  keyColumns <- prettyTable1Specifications %>%
     dplyr::select(.data$labelOrder,
                   .data$label,
                   .data$covariateId,
                   .data$analysisId,
-                  .data$sequence) %>% 
-    dplyr::distinct() %>% 
-    dplyr::left_join(covariates2 %>% 
-                        dplyr::select(.data$covariateId,
-                                      .data$covariateName) %>% 
-                        dplyr::distinct(),
-                     by = c("covariateId")) %>% 
-    dplyr::filter(!is.na(.data$covariateName)) %>% 
-    tidyr::crossing(covariates2 %>% 
-                      dplyr::select(.data$cohortId,
-                                    .data$databaseId) %>% 
-                      dplyr::distinct()) %>%
+                  .data$sequence) %>%
+    dplyr::distinct() %>%
+    dplyr::left_join(
+      covariates2 %>%
+        dplyr::select(.data$covariateId,
+                      .data$covariateName) %>%
+        dplyr::distinct(),
+      by = c("covariateId")
+    ) %>%
+    dplyr::filter(!is.na(.data$covariateName)) %>%
+    tidyr::crossing(
+      covariates2 %>%
+        dplyr::select(.data$cohortId,
+                      .data$databaseId) %>%
+        dplyr::distinct()
+    ) %>%
     dplyr::arrange(.data$cohortId,
                    .data$databaseId,
                    .data$analysisId,
@@ -57,12 +62,14 @@ prepareTable1 <- function(covariates,
     )
   
   covariates2 <- keyColumns %>%
-    dplyr::left_join(covariates2 %>% 
-                       dplyr::select(-.data$covariateName),
-                     by = c("cohortId",
-                            "databaseId",
-                            "covariateId",
-                            "analysisId")) %>%
+    dplyr::left_join(
+      covariates2 %>%
+        dplyr::select(-.data$covariateName),
+      by = c("cohortId",
+             "databaseId",
+             "covariateId",
+             "analysisId")
+    ) %>%
     dplyr::filter(!is.na(.data$covariateName))
   
   space <- "&nbsp;"
@@ -71,20 +78,16 @@ prepareTable1 <- function(covariates,
   # labels
   tableHeaders <-
     covariates2 %>%
-    dplyr::select(
-      .data$cohortId,
-      .data$databaseId,
-      .data$label,
-      .data$labelOrder,
-      .data$sequence
-    ) %>%
+    dplyr::select(.data$cohortId,
+                  .data$databaseId,
+                  .data$label,
+                  .data$labelOrder,
+                  .data$sequence) %>%
     dplyr::distinct() %>%
-    dplyr::group_by(
-      .data$cohortId,
-      .data$databaseId,
-      .data$label,
-      .data$labelOrder
-    ) %>%
+    dplyr::group_by(.data$cohortId,
+                    .data$databaseId,
+                    .data$label,
+                    .data$labelOrder) %>%
     dplyr::summarise(sequence = min(.data$sequence),
                      .groups = 'keep') %>%
     dplyr::ungroup() %>%
@@ -130,15 +133,27 @@ prepareTable1 <- function(covariates,
     )
   table <- dplyr::bind_rows(tableHeaders, tableValues) %>%
     dplyr::mutate(sequence = .data$sequence - .data$header) %>%
-    dplyr::arrange(.data$sequence, dplyr::desc(.data$header)) %>%
+    dplyr::arrange(.data$sequence) %>%
     dplyr::select(
       .data$cohortId,
       .data$databaseId,
       .data$sequence,
       .data$characteristic,
-      .data$valueCount,
-      .data$valueMean
-    )
+      .data$valueCount
+    ) %>%
+    dplyr::rename(count = .data$valueCount) %>%
+    dplyr::inner_join(cohort %>%
+                        dplyr::select(.data$cohortId,
+                                      .data$shortName)) %>%
+    tidyr::pivot_wider(
+      id_cols = c(.data$databaseId,
+                  .data$characteristic,
+                  .data$sequence),
+      values_from = .data$count,
+      names_from = .data$shortName
+    ) %>%
+    dplyr::arrange(.data$sequence)
+  
   if (nrow(table) == 0) {
     return(NULL)
   }
