@@ -2343,6 +2343,12 @@ getResultsIndexEventBreakdown <- function(dataSource,
     coConceptId = coConceptIds,
     daysRelativeIndex = daysRelativeIndex
   )
+  #!!!!!!!!!!!!!!!!!!!TEMPORARY FIX ###!!!!!!!!!!to be removed - index event breakdown daysRelativeIndex fix
+  if (!is.null(data)) {
+    data <- data %>% 
+      dplyr::mutate(daysRelativeIndex = .data$daysRelativeIndex * -1)
+    warning("temporary fix = please remove")
+  }
   return(data)
 }
 
