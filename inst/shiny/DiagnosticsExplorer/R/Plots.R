@@ -695,6 +695,154 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   return(finalPlot)
 }
 
+
+
+
+plotIndexEventBreakdown <- function(data, yAxis = "conceptCount") {
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertTibble(
+    x = data,
+    any.missing = FALSE,
+    min.rows = 1,
+    min.cols = 5,
+    null.ok = FALSE,
+    add = errorMessage
+  )
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  # initialColor <- colorReference %>% 
+  #   dplyr::filter(.data$type == "database",.data$name == "database") %>% 
+  #   dplyr::pull(.data$value)
+  # 
+  # selectedColors <- colorRampPalette(c("#000000",initialColor, "#FFFFFF"))(length(data$databaseId %>% unique()) + 2) %>% 
+  #   head(-1) %>% 
+  #   tail(-1)
+  
+  data <- data %>% 
+    dplyr::mutate(count = .data[[yAxis]]) %>% 
+    dplyr::select(-.data$conceptCount,-.data$subjectCount)
+  
+  
+  plotData <- data %>% 
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId, .data$shortName, .data$compoundName),
+                      by = "cohortId") %>% 
+    dplyr::inner_join(
+      database %>%
+        dplyr::select(.data$databaseId, .data$shortName, .data$compoundName) %>%
+        dplyr::rename("databaseShortName" = .data$shortName, "databaseCompoundName" = .data$compoundName),
+      by = "databaseId"
+    ) 
+  
+  distinctCohortShortName <- plotData$shortName %>% unique()
+  distinctDatabaseShortName <- plotData$databaseShortName %>%  unique()
+  disctinctConceptIds <- plotData$conceptId %>%  unique()
+  distinctCohortCompoundName <- plotData$compoundName %>% unique()
+  distinctDatabaseCompoundName <- plotData$databaseCompoundName %>%  unique()
+  
+  # plotHeight <- 200 + length(distinctDatabaseShortName) * length(sortShortName$shortName) * 100
+  plotHeight <- 800
+
+  cohortPlots  <- list()
+  for (i in 1:length(distinctCohortShortName)) {
+    filteredDataByCohort <- plotData %>%
+      dplyr::filter(.data$shortName == distinctCohortShortName[i])
+      
+    databasePlots <- list()
+    for (j in 1:length(distinctDatabaseShortName)) {
+      filteredDataByDatabase <- filteredDataByCohort %>%
+        dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[j])
+      
+      databasePlot <-  
+          plotly::plot_ly(
+            filteredDataByDatabase,
+            x = ~daysRelativeIndex,
+            y = ~count,
+            name = ~conceptId,
+            type = 'scatter',
+            mode = 'lines',
+            text = ~paste0(
+              "Cohort =",
+              compoundName,
+              "\nDatabase = ",
+              databaseId,
+              "\nDays Relative Index = ",
+              daysRelativeIndex,
+              "\nCount = ",
+              count
+            ),
+            showlegend = FALSE,
+            height = plotHeight
+          ) %>% 
+          plotly::layout(
+            legend = list(orientation = "h",   # show entries horizontally
+                          xanchor = "center",  # use center of legend as anchor
+                          x = 0.5),
+            xaxis = list(range = c(-30, 30), tickformat = ",d", showspikes = showPlotSpikes),
+            yaxis = list(showspikes = showPlotSpikes, type = "log")
+          )
+        
+      
+      if (i == 1) {
+        databasePlot <- databasePlot %>%
+          plotly::layout(
+            annotations = list(
+              x = 0.5,
+              y = 1.05,
+              text = camelCaseToTitleCase(distinctDatabaseShortName[[j]]),
+              showarrow = FALSE,
+              xref = "paper",
+              yref = "paper",
+              xanchor = "center",
+              yanchor = "middle"
+            )
+          )
+      }
+      databasePlots[[j]] <- databasePlot
+    }
+    cohortPlots[[i]] <-
+      plotly::subplot(databasePlots) %>%
+      plotly::layout(
+        annotations = list(
+          x = -0.02,
+          y = 0.5,
+          text = camelCaseToTitleCase(distinctCohortShortName[i]),
+          showarrow = FALSE,
+          xref = "paper",
+          yref = "paper",
+          xanchor = "right",
+          yanchor = "middle",
+          textangle = -90
+        )
+      )
+  }
+  
+  m <- list(
+    l = 100,
+    r = 50,
+    b = 200,
+    t = 70
+  )
+  finalPlot <-
+    plotly::subplot(cohortPlots,nrows = length(cohortPlots), margin = m) %>% 
+    plotly::layout(margin = m,
+                   annotations = list(
+                     x = c(0.3,0.7) ,
+                     y = c(-0.1,-0.1),
+                     text = c(paste0("<b>Cohorts :</b>\n",paste(distinctCohortCompoundName,collapse = "\n")),paste0("<b>DataSource :</b>\n",paste(distinctDatabaseCompoundName,collapse = "\n"))),
+                     showarrow = F,
+                     xref = 'paper',
+                     yref = 'paper',
+                     align = 'left',
+                     xanchor = 'center',
+                     yanchor = 'middle'
+                   ))
+  
+  return(finalPlot)
+}
+
+
+
 plotIncidenceRate <- function(data,
                               cohortCount,
                               shortNameRef = NULL,

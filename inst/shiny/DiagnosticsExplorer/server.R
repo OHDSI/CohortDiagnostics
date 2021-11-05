@@ -6140,6 +6140,35 @@ shiny::shinyServer(function(input, output, session) {
       return(table)
     }, server = TRUE)
   
+  ##outputPlot: indexEventBreakdownTable----
+  output$indexEventBreakdownPlot <-
+    plotly::renderPlotly({
+      
+      filteredConceptIds <- getIndexEventBreakdownDataFiltered()$conceptId %>% unique()
+      validate(
+        need(
+          doesObjectHaveData(filteredConceptIds),
+          "No index event breakdown data for the chosen combination."
+        )
+      )
+      data <- getResultsIndexEventBreakdown (dataSource,
+                                             cohortIds = consolidatedCohortIdTarget(),
+                                             databaseIds = consolidatedDatabaseIdTarget(),
+                                             conceptIds = filteredConceptIds,
+                                             coConceptIds = 0,
+                                             daysRelativeIndex = NULL) 
+      validate(
+        need(
+          doesObjectHaveData(data),
+          "No index event breakdown data for the chosen combination."
+        )
+      )
+      
+      plot <- plotIndexEventBreakdown(data = data, 
+                                      yAxis = input$indexEventBreakdownPlotRadioButton)
+      return(plot)
+    })
+  
   ##output: conceptSetSynonymsForIndexEventBreakdown----
   output$conceptSetSynonymsForIndexEventBreakdown <- shiny::renderUI(expr = {
     data <- getConceptSetSynonymsHtmlTextString()
