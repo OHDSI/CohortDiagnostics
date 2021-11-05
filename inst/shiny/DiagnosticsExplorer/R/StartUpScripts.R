@@ -378,6 +378,8 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
                                      maxCount,
                                      sort = TRUE,
                                      showResultsAsPercent = FALSE) {
+  
+  browser()
   # ensure the data has required fields
   keyColumns <- keyColumns %>% unique()
   dataColumns <- dataColumns %>% unique()
@@ -399,8 +401,8 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
   #get all unique databsaeIds - and sort data by it
   uniqueDatabases <- data %>%
     dplyr::select(.data$databaseId) %>%
-    dplyr::arrange(.data$databaseId) %>%
-    dplyr::distinct()
+    dplyr::distinct() %>%
+    dplyr::arrange(.data$databaseId)
   #long form
   data <- data %>% 
     tidyr::pivot_longer(cols = dplyr::all_of(dataColumns), 
@@ -429,6 +431,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
         
       }
       data <- data %>%
+        dplyr::mutate(valuesData = round(x = .data$valuesData, digits = 2)) %>%
         dplyr::select(-.data$count)
       
       databaseIdHeaders <- uniqueDatabases %>%
