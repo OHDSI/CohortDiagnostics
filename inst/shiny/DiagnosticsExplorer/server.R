@@ -145,12 +145,18 @@ shiny::shinyServer(function(input, output, session) {
   ##pickerInput: selectedComparatorCompoundCohortNames----
   shiny::observe({
     subset <- getCohortSortedByCohortId()$compoundName
+    
+    if (input$tabs == "cohortCharacterization") {
+      selected <- NULL
+    } else {
+      selected <- c(subset[3], subset[4])
+    }
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "selectedComparatorCompoundCohortNames",
       choicesOpt = list(style = rep_len("color: black;", 999)),
       choices = subset,
-      selected = c(subset[3], subset[4])
+      selected = selected
     )
   })
   

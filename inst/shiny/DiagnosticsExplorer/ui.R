@@ -204,7 +204,8 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs == 'cohortOverlap'",
+      condition = "input.tabs == 'cohortOverlap' ||
+      input.tabs == 'cohortCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "selectedComparatorCompoundCohortNames",
         label = "Comparators",
