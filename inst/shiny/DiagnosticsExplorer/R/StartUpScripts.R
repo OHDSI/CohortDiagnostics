@@ -378,8 +378,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
                                      maxCount,
                                      sort = TRUE,
                                      showResultsAsPercent = FALSE) {
-  
-  browser()
+
   # ensure the data has required fields
   keyColumns <- keyColumns %>% unique()
   dataColumns <- dataColumns %>% unique()
