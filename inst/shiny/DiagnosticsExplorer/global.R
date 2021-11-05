@@ -452,6 +452,8 @@ colorReference <-
     guess_max = min(1e7)
   )
 
+domainOptionsInDomainTable <- c("Condition", "Device", "Drug", "Observation", "Procedure", "Visit", "Other") %>% sort()
+
 #Extras -----
 # other objects in memory ----
 sourcesOfVocabularyTables <-

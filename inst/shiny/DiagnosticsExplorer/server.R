@@ -5969,35 +5969,88 @@ shiny::shinyServer(function(input, output, session) {
   
   #______________----
   # Index event breakdown ------
-  ##getIndexEventBreakdownData----
-  getIndexEventBreakdownData <- shiny::reactive(x = {
+  ##getIndexEventBreakdownRawData----
+  getIndexEventBreakdownRawData <- shiny::reactive(x = {
     if (any(is.null(input$tabs),
             !input$tabs == "indexEventBreakdown",
-            length(consolidatedCohortIdTarget()) == 0,
-            !doesObjectHaveData(consolidatedDatabaseIdTarget()),
-            !doesObjectHaveData(getResolvedConceptsTarget()))) {
+            length(consolidatedCohortIdTarget()) == 0)) {
       return(NULL)
     }
     if (all(is(dataSource, "environment"),
             !exists('indexEventBreakdown'))) {
       return(NULL)
     }
+    
     indexEventBreakdown <-
       getResultsIndexEventBreakdown(dataSource = dataSource,
                                     cohortIds = consolidatedCohortIdTarget(),
-                                    databaseIds = consolidatedDatabaseIdTarget(),
-                                    coConceptIds = 0,
-                                    daysRelativeIndex = 0) #!! in new design, we have multiple daysRelativeIndex
+                                    databaseIds = NULL,
+                                    coConceptIds = NULL,
+                                    daysRelativeIndex = NULL) #!! in new design, we have multiple daysRelativeIndex
     if (!doesObjectHaveData(indexEventBreakdown)) {
       return(NULL)
     }
-    conceptIdDetails <- getConcept(dataSource = dataSource,
-                                   conceptId = indexEventBreakdown$conceptId %>%
-                                     unique())
-    if (is.null(conceptIdDetails)) {
+
+    return(indexEventBreakdown)
+  })
+  
+  
+  
+  ##getIndexEventMappedConcepts----
+  getIndexEventMappedConcepts <- shiny::reactive(x = {
+    if (any(is.null(input$tabs),
+            !input$tabs == "indexEventBreakdown",
+            !doesObjectHaveData(getIndexEventBreakdownRawData()))) {
       return(NULL)
     }
-    
+    data <- getIndexEventBreakdownRawData()
+    mappedConcepts <- getConceptRelationship(
+      dataSource = dataSource,
+      conceptIds = data$conceptId %>%
+        unique(), 
+      relationshipIds = "Mapped from"
+    )
+    if (!doesObjectHaveData(mappedConcepts)) {
+      return(NULL)
+    }
+    return(mappedConcepts)
+  })
+  
+  
+  ##getIndexEventBreakdownConceptIdDetails----
+  getIndexEventBreakdownConceptIdDetails <- shiny::reactive(x = {
+    if (any(
+      is.null(input$tabs),!input$tabs == "indexEventBreakdown",!doesObjectHaveData(getIndexEventBreakdownRawData()),!doesObjectHaveData(getIndexEventMappedConcepts())
+    )) {
+      return(NULL)
+    }
+    conceptIds <- c(
+      getIndexEventMappedConcepts()$conceptId1,
+      getIndexEventMappedConcepts()$conceptId2,
+      getIndexEventBreakdownRawData()$conceptId %>% unique()
+    )
+    if (!doesObjectHaveData(conceptIds)) {
+      return(NULL)
+    }
+    conceptIdDetails <- getConcept(dataSource = dataSource,
+                                   conceptIds = conceptIds)
+    if (!doesObjectHaveData(conceptIdDetails)) {
+      return(NULL)
+    }
+    return(conceptIdDetails)
+  })
+  
+  ##getIndexEventBreakdownData----
+  getIndexEventBreakdownData <- shiny::reactive(x = {
+    if (any(
+      is.null(input$tabs),!input$tabs == "indexEventBreakdown",!doesObjectHaveData(getIndexEventBreakdownRawData())
+    )) {
+      return(NULL)
+    }
+    indexEventBreakdown <- getIndexEventBreakdownRawData() %>%
+      dplyr::filter(.data$daysRelativeIndex == 0) %>%
+      dplyr::filter(.data$coConceptId == 0)
+    conceptIdDetails <- getIndexEventBreakdownConceptIdDetails()
     indexEventBreakdown <- indexEventBreakdown %>%
       dplyr::inner_join(
         conceptIdDetails %>%
@@ -6007,53 +6060,46 @@ shiny::shinyServer(function(input, output, session) {
             .data$domainId,
             .data$vocabularyId,
             .data$standardConcept
-          ),
-        by = c("conceptId")
+          )
       ) %>%
-      dplyr::inner_join(cohortCount,
-                        by = c('databaseId', 'cohortId')) %>%
       dplyr::mutate(
-        subjectPercent = .data$subjectCount / .data$cohortSubjects,
-        conceptPercent = .data$conceptCount / .data$cohortEntries
-      ) %>%
-      dplyr::inner_join(
-        getResolvedConceptsTarget() %>%
-          dplyr::select(.data$conceptId,
-                        .data$databaseId) %>%
-          dplyr::distinct(),
-        by = c("conceptId", "databaseId")
+        domainId = dplyr::case_when(
+          !.data$domainId %in%
+            domainOptionsInDomainTable[stringr::str_detect(string = domainOptionsInDomainTable,
+                                                           pattern = c('Other'),
+                                                           negate = TRUE)] ~ 'Other',
+          TRUE ~ .data$domainId
+        )
       )
-    
     return(indexEventBreakdown)
   })
-  
+                                    
+                                    
   ##getIndexEventBreakdownDataFiltered----
   getIndexEventBreakdownDataFiltered <- shiny::reactive(x = {
     data <- getIndexEventBreakdownData()
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    data <- data %>% 
+    data <- data %>%
       dplyr::filter(.data$domainId %in% input$indexEventDomainNameFilter)
     
     if (input$indexEventBreakdownTableRadioButton == "Standard concepts") {
-      data <- data %>% 
+      data <- data %>%
         dplyr::filter(.data$standardConcept == 'S')
     } else if (input$indexEventBreakdownTableRadioButton == "Non Standard Concepts") {
-      data <- data %>% 
+      data <- data %>%
         dplyr::filter(is.na(.data$standardConcept) |
-                       .data$standardConcept != "S")
+                        .data$standardConcept != "S")
     }
     
-      data <- data %>%
-        dplyr::mutate(conceptValue = .data$conceptCount) %>%
-        dplyr::mutate(subjectValue = .data$subjectCount) %>%
-        dplyr::filter(.data$conceptId > 0) %>%
-        dplyr::arrange(.data$databaseId)  %>% 
-        dplyr::rename("persons" = .data$subjectValue,
-                    "records" = .data$conceptValue) %>% 
-        dplyr::arrange(dplyr::desc(dplyr::across(c("persons", "records"))))
-    
+    if (doesObjectHaveData(getResolvedConceptsTarget())) {
+      data <- data %>% 
+        dplyr::filter(.data$conceptId %in% c(getResolvedConceptsTarget()$conceptId %>% unique()))
+    }
+    data <- data %>% 
+      dplyr::rename("persons" = .data$subjectCount,
+                    "records" = .data$conceptCount)
     return(data)
   })
   
@@ -6089,8 +6135,8 @@ shiny::shinyServer(function(input, output, session) {
           "No index event breakdown data for the chosen combination."
         )
       )
-      
-      keyColumnFields <- c("conceptId", "conceptName", "vocabularyId")
+      keyColumnFields <-
+        c("conceptId", "conceptName", "vocabularyId")
       #depending on user selection - what data Column Fields Will Be Presented?
       dataColumnFields <-
         c("persons",
@@ -6100,17 +6146,13 @@ shiny::shinyServer(function(input, output, session) {
         sketchLevel <- 2
       } else if (input$indexEventBreakdownTableFilter == "Person Only") {
         dataColumnFields <-
-          dataColumnFields[stringr::str_detect(
-            string = tolower(dataColumnFields),
-            pattern = tolower("person")
-          )]
+          dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
+                                               pattern = tolower("person"))]
         sketchLevel <- 1
       } else if (input$indexEventBreakdownTableFilter == "Record Only") {
         dataColumnFields <-
-          dataColumnFields[stringr::str_detect(
-            string = tolower(dataColumnFields),
-            pattern = tolower("record")
-          )]
+          dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
+                                               pattern = tolower("record"))]
         sketchLevel <- 1
       }
       
@@ -6140,31 +6182,36 @@ shiny::shinyServer(function(input, output, session) {
       return(table)
     }, server = TRUE)
   
-  ##outputPlot: indexEventBreakdownTable----
+  ##indexEventBreakdownPlot----
   output$indexEventBreakdownPlot <-
     plotly::renderPlotly({
-      
-      filteredConceptIds <- getIndexEventBreakdownDataFiltered()$conceptId %>% unique()
+      validate(need(
+        doesObjectHaveData(getIndexEventBreakdownRawData()),
+        "No index event breakdown data for the chosen combination."
+      ))
       validate(
         need(
-          doesObjectHaveData(filteredConceptIds),
-          "No index event breakdown data for the chosen combination."
-        )
-      )
-      data <- getResultsIndexEventBreakdown (dataSource,
-                                             cohortIds = consolidatedCohortIdTarget(),
-                                             databaseIds = consolidatedDatabaseIdTarget(),
-                                             conceptIds = filteredConceptIds,
-                                             coConceptIds = 0,
-                                             daysRelativeIndex = NULL) 
-      validate(
-        need(
-          doesObjectHaveData(data),
-          "No index event breakdown data for the chosen combination."
+          doesObjectHaveData(getIndexEventBreakdownDataFiltered()),
+          "No index event breakdown data for the chosen combination. Maybe the concept id in the selected concept id is too restrictive?"
         )
       )
       
-      plot <- plotIndexEventBreakdown(data = data, 
+      filteredConceptIds <-
+        getIndexEventBreakdownDataFiltered()$conceptId %>% unique()
+      validate(need(
+        doesObjectHaveData(filteredConceptIds),
+        "No index event breakdown data for the chosen combination."
+      ))
+      
+      data <- getIndexEventBreakdownRawData() %>%
+        dplyr::filter(.data$coConceptId == 0) %>%
+        dplyr::filter(.data$conceptId %in% c(filteredConceptIds))
+      validate(need(
+        doesObjectHaveData(data),
+        "No index event breakdown data for the chosen combination."
+      ))
+      
+      plot <- plotIndexEventBreakdown(data = data,
                                       yAxis = input$indexEventBreakdownPlotRadioButton)
       return(plot)
     })

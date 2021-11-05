@@ -871,24 +871,8 @@ bodyTabItems <- shinydashboard::tabItems(
                        shinyWidgets::pickerInput(
                          inputId = "indexEventDomainNameFilter",
                          label = "Domain name",
-                         choices = c(
-                           "Visit",
-                           "Condition",
-                           "Procedure",
-                           "Observation",
-                           "Device",
-                           "Measurement",
-                           "Other"
-                         ),
-                         selected = c(
-                           "Visit",
-                           "Condition",
-                           "Procedure",
-                           "Observation",
-                           "Device",
-                           "Measurement",
-                           "Other"
-                         ),
+                         choices = domainOptionsInDomainTable,
+                         selected = domainOptionsInDomainTable,
                          inline = TRUE,
                          multiple = TRUE,
                          width = 300,
