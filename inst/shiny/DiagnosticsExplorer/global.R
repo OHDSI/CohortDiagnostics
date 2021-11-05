@@ -438,8 +438,19 @@ if (!showVisitContext) {
   }
 }
 
+prettyTable1Specifications <- readr::read_csv(
+  file = "Table1SpecsLong.csv",
+  col_types = readr::cols(),
+  guess_max = min(1e7),
+  lazy = FALSE
+)
 
-colorReference <- readr::read_csv(file = 'colorReference.csv',col_types = readr::cols(),guess_max = 1000)
+colorReference <-
+  readr::read_csv(
+    file = 'colorReference.csv',
+    col_types = readr::cols(),
+    guess_max = min(1e7)
+  )
 
 #Extras -----
 # other objects in memory ----

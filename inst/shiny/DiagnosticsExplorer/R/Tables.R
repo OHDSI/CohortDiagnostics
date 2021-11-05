@@ -1,21 +1,17 @@
 #Prepare table 1 ----
 prepareTable1 <- function(covariates,
-                          pathToCsv = "Table1SpecsLong.csv") {
+                          prettyTable1Specifications) {
   covariates2 <- covariates
-  
-  specifications <- readr::read_csv(
-    file = pathToCsv,
-    col_types = readr::cols(),
-    guess_max = min(1e7)
-  )
-  if (nrow(specifications) == 0) {
+  if (!all(is.data.frame(prettyTable1Specifications),
+           nrow(prettyTable1Specifications) > 0)) {
     return(NULL)
   }
-  keyColumns <- specifications %>% 
+  keyColumns <- prettyTable1Specifications %>% 
     dplyr::select(.data$labelOrder,
                   .data$label,
                   .data$covariateId,
-                  .data$analysisId) %>% 
+                  .data$analysisId,
+                  .data$sequence) %>% 
     dplyr::distinct() %>% 
     dplyr::left_join(covariates2 %>% 
                         dplyr::select(.data$covariateId,
@@ -31,7 +27,6 @@ prepareTable1 <- function(covariates,
                    .data$databaseId,
                    .data$analysisId,
                    .data$covariateId) %>%
-    dplyr::mutate(sortOrder = dplyr::row_number()) %>%
     dplyr::mutate(covariateName = stringr::str_to_sentence(
       stringr::str_replace_all(
         string = .data$covariateName,
@@ -81,7 +76,7 @@ prepareTable1 <- function(covariates,
       .data$databaseId,
       .data$label,
       .data$labelOrder,
-      .data$sortOrder
+      .data$sequence
     ) %>%
     dplyr::distinct() %>%
     dplyr::group_by(
@@ -90,7 +85,7 @@ prepareTable1 <- function(covariates,
       .data$label,
       .data$labelOrder
     ) %>%
-    dplyr::summarise(sortOrder = min(.data$sortOrder),
+    dplyr::summarise(sequence = min(.data$sequence),
                      .groups = 'keep') %>%
     dplyr::ungroup() %>%
     dplyr::mutate(
@@ -102,7 +97,7 @@ prepareTable1 <- function(covariates,
     dplyr::select(
       .data$cohortId,
       .data$databaseId,
-      .data$sortOrder,
+      .data$sequence,
       .data$header,
       .data$labelOrder,
       .data$characteristic
@@ -126,21 +121,20 @@ prepareTable1 <- function(covariates,
       .data$databaseId,
       .data$covariateId,
       .data$analysisId,
-      .data$sortOrder,
+      .data$sequence,
       .data$header,
       .data$labelOrder,
       .data$characteristic,
       .data$valueCount,
       .data$valueMean
     )
-  
   table <- dplyr::bind_rows(tableHeaders, tableValues) %>%
-    dplyr::arrange(.data$sortOrder, dplyr::desc(.data$header)) %>%
-    dplyr::mutate(sortOrder = dplyr::row_number()) %>%
+    dplyr::mutate(sequence = .data$sequence - .data$header) %>%
+    dplyr::arrange(.data$sequence, dplyr::desc(.data$header)) %>%
     dplyr::select(
       .data$cohortId,
       .data$databaseId,
-      .data$sortOrder,
+      .data$sequence,
       .data$characteristic,
       .data$valueCount,
       .data$valueMean

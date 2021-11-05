@@ -1,68 +1,89 @@
-labelOrder,label,covariateId,analysisId,conceptId
-1,Age group,NA,3,NA
-2,Gender,8532001,1,8532
-3,Race,NA,4,NA
-4,Ethnicity,NA,5,NA
-5,Medical history: General,4006969203,203,4006969
-5,Medical history: General,438409203,203,438409
-5,Medical history: General,4212540203,203,4212540
-5,Medical history: General,255573203,203,255573
-5,Medical history: General,201606203,203,201606
-5,Medical history: General,4182210203,203,4182210
-5,Medical history: General,440383203,203,440383
-5,Medical history: General,201820203,203,201820
-5,Medical history: General,318800203,203,318800
-5,Medical history: General,192671203,203,192671
-5,Medical history: General,439727203,203,439727
-5,Medical history: General,432867203,203,432867
-5,Medical history: General,316866203,203,316866
-5,Medical history: General,4104000203,203,4104000
-5,Medical history: General,433736203,203,433736
-5,Medical history: General,80180203,203,80180
-5,Medical history: General,255848203,203,255848
-5,Medical history: General,140168203,203,140168
-5,Medical history: General,4030518203,203,4030518
-5,Medical history: General,80809203,203,80809
-5,Medical history: General,435783203,203,435783
-5,Medical history: General,4279309203,203,4279309
-5,Medical history: General,81893203,203,81893
-5,Medical history: General,81902203,203,81902
-5,Medical history: General,197494203,203,197494
-5,Medical history: General,4134440203,203,4134440
-6,Medical history: Cardiovascular disease,313217203,203,313217
-6,Medical history: Cardiovascular disease,381591203,203,381591
-6,Medical history: Cardiovascular disease,317576203,203,317576
-6,Medical history: Cardiovascular disease,321588203,203,321588
-6,Medical history: Cardiovascular disease,316139203,203,316139
-6,Medical history: Cardiovascular disease,4185932203,203,4185932
-6,Medical history: Cardiovascular disease,321052203,203,321052
-6,Medical history: Cardiovascular disease,440417203,203,440417
-6,Medical history: Cardiovascular disease,444247203,203,444247
-7,Medical history: Neoplasms,4044013203,203,4044013
-7,Medical history: Neoplasms,432571203,203,432571
-7,Medical history: Neoplasms,40481902203,203,40481902
-7,Medical history: Neoplasms,443392203,203,443392
-7,Medical history: Neoplasms,4112853203,203,4112853
-7,Medical history: Neoplasms,4180790203,203,4180790
-7,Medical history: Neoplasms,443388203,203,443388
-7,Medical history: Neoplasms,197508203,203,197508
-7,Medical history: Neoplasms,200962203,203,200962
-8,Medication use,21601782402,402,21601782
-8,Medication use,21602796402,402,21602796
-8,Medication use,21604686402,402,21604686
-8,Medication use,21604389402,402,21604389
-8,Medication use,21603932402,402,21603932
-8,Medication use,21601387402,402,21601387
-8,Medication use,21602028402,402,21602028
-8,Medication use,21600960402,402,21600960
-8,Medication use,21601664402,402,21601664
-8,Medication use,21601744402,402,21601744
-8,Medication use,21601461402,402,21601461
-8,Medication use,21600046402,402,21600046
-8,Medication use,21603248402,402,21603248
-8,Medication use,21600712402,402,21600712
-8,Medication use,21603890402,402,21603890
-8,Medication use,21601853402,402,21601853
-8,Medication use,21604254402,402,21604254
-8,Medication use,21604489402,402,21604489
-8,Medication use,21604752402,402,21604752
+labelOrder,label,sequence,covariateId,analysisId
+1,Age group,1,3,3
+1,Age group,2,1003,3
+1,Age group,3,2003,3
+1,Age group,4,3003,3
+1,Age group,5,4003,3
+1,Age group,6,5003,3
+1,Age group,7,6003,3
+1,Age group,8,7003,3
+1,Age group,9,8003,3
+1,Age group,10,9003,3
+1,Age group,11,10003,3
+1,Age group,12,11003,3
+1,Age group,13,12003,3
+1,Age group,14,13003,3
+1,Age group,15,14003,3
+1,Age group,16,15003,3
+1,Age group,17,16003,3
+1,Age group,18,17003,3
+1,Age group,19,18003,3
+1,Age group,20,19003,3
+2,Gender,101,8532001,1
+2,Gender,102,8507001,1
+3,Race,201,8515004,4
+3,Race,202,8516004,4
+3,Race,203,8527004,4
+5,Medical history: General,301,4006969203,203
+5,Medical history: General,302,438409203,203
+5,Medical history: General,303,4212540203,203
+5,Medical history: General,304,255573203,203
+5,Medical history: General,305,201606203,203
+5,Medical history: General,306,4182210203,203
+5,Medical history: General,307,440383203,203
+5,Medical history: General,308,201820203,203
+5,Medical history: General,309,318800203,203
+5,Medical history: General,310,192671203,203
+5,Medical history: General,311,439727203,203
+5,Medical history: General,312,432867203,203
+5,Medical history: General,313,316866203,203
+5,Medical history: General,314,4104000203,203
+5,Medical history: General,315,433736203,203
+5,Medical history: General,316,80180203,203
+5,Medical history: General,317,255848203,203
+5,Medical history: General,318,140168203,203
+5,Medical history: General,319,4030518203,203
+5,Medical history: General,320,80809203,203
+5,Medical history: General,321,435783203,203
+5,Medical history: General,322,4279309203,203
+5,Medical history: General,323,81893203,203
+5,Medical history: General,324,81902203,203
+5,Medical history: General,325,197494203,203
+5,Medical history: General,326,4134440203,203
+6,Medical history: Cardiovascular disease,401,313217203,203
+6,Medical history: Cardiovascular disease,402,381591203,203
+6,Medical history: Cardiovascular disease,403,317576203,203
+6,Medical history: Cardiovascular disease,404,321588203,203
+6,Medical history: Cardiovascular disease,405,316139203,203
+6,Medical history: Cardiovascular disease,406,4185932203,203
+6,Medical history: Cardiovascular disease,407,321052203,203
+6,Medical history: Cardiovascular disease,408,440417203,203
+6,Medical history: Cardiovascular disease,409,444247203,203
+7,Medical history: Neoplasms,501,4044013203,203
+7,Medical history: Neoplasms,502,432571203,203
+7,Medical history: Neoplasms,503,40481902203,203
+7,Medical history: Neoplasms,504,443392203,203
+7,Medical history: Neoplasms,505,4112853203,203
+7,Medical history: Neoplasms,506,4180790203,203
+7,Medical history: Neoplasms,507,443388203,203
+7,Medical history: Neoplasms,508,197508203,203
+7,Medical history: Neoplasms,509,200962203,203
+8,Medication use,601,21601782402,402
+8,Medication use,602,21602796402,402
+8,Medication use,603,21604686402,402
+8,Medication use,604,21604389402,402
+8,Medication use,605,21603932402,402
+8,Medication use,606,21601387402,402
+8,Medication use,607,21602028402,402
+8,Medication use,608,21600960402,402
+8,Medication use,609,21601664402,402
+8,Medication use,610,21601744402,402
+8,Medication use,611,21601461402,402
+8,Medication use,612,21600046402,402
+8,Medication use,613,21603248402,402
+8,Medication use,614,21600712402,402
+8,Medication use,615,21603890402,402
+8,Medication use,616,21601853402,402
+8,Medication use,617,21604254402,402
+8,Medication use,618,21604489402,402
+8,Medication use,619,21604752402,402
