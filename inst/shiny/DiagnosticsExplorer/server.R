@@ -5990,11 +5990,8 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(indexEventBreakdown)) {
       return(NULL)
     }
-
     return(indexEventBreakdown)
   })
-  
-  
   
   ##getIndexEventMappedConcepts----
   getIndexEventMappedConcepts <- shiny::reactive(x = {
@@ -6060,7 +6057,8 @@ shiny::shinyServer(function(input, output, session) {
             .data$domainId,
             .data$vocabularyId,
             .data$standardConcept
-          )
+          ),
+        by = "conceptId"
       ) %>%
       dplyr::mutate(
         domainId = dplyr::case_when(
@@ -6345,37 +6343,27 @@ shiny::shinyServer(function(input, output, session) {
       return(plot)
     })
   
+  ##getCoCOnceptForIndexEvent----
   getCoCOnceptForIndexEvent <- shiny::reactive(x = {
-    data <- getResultsIndexEventBreakdown(
-      dataSource = dataSource,
-      cohortIds = consolidatedCohortIdTarget(),
-      databaseIds = consolidatedDatabaseIdTarget(),
-      conceptIds = activeSelected()$conceptId,
-      coConceptIds = NULL,
-      daysRelativeIndex = 0
-    )
-    
-    if (doesObjectHaveData(data)) {
-      data <- getConcept(
-        dataSource = dataSource,
-        conceptIds = data$coConceptId %>% unique()
-      ) %>% 
-        dplyr::inner_join(data, by = c("conceptId" = "coConceptId")) %>% 
-        dplyr::select(.data$conceptId,
-                      .data$conceptName,
-                      .data$vocabularyId,
-                      .data$conceptCount,
-                      .data$subjectCount,
-                      .data$databaseId) %>% 
-        dplyr::rename("persons" = .data$subjectCount,
-                      "records" = .data$conceptCount)
-      
-      if (doesObjectHaveData(data)) {
-        return(data)
-      } else {
-        return(NULL)
-      }
-    } else {
+    if (!doesObjectHaveData(getIndexEventBreakdownRawData())) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(getIndexEventBreakdownConceptIdDetails())) {
+      return(NULL)
+    }
+    data <- getIndexEventBreakdownRawData() %>% 
+      dplyr::filter(.data$daysRelativeIndex == 0) %>% 
+      dplyr::filter(.data$conceptId %in% c(activeSelected()$conceptId)) %>% 
+      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
+      dplyr::inner_join(getIndexEventBreakdownConceptIdDetails() %>% 
+                          dplyr::select(.data$conceptId,
+                                        .data$conceptName,
+                                        .data$vocabularyId,
+                                        .data$standardConcept), 
+                        by = c("coConceptId" = "conceptId")) %>% 
+      dplyr::rename("persons" = .data$subjectCount,
+                    "records" = .data$conceptCount)
+    if (!doesObjectHaveData(data)) {
       return(NULL)
     }
   })
@@ -6388,9 +6376,10 @@ shiny::shinyServer(function(input, output, session) {
       "No information for selected concept id."
     ))
     
-    keyColumnFields <- c("conceptId", 
+    keyColumnFields <- c("conceptId",
                          "conceptName",
-                         "vocabularyId")
+                         "vocabularyId",
+                         "standardConcept")
     #depending on user selection - what data Column Fields Will Be Presented?
     dataColumnFields <-
       c("persons",
@@ -6400,17 +6389,13 @@ shiny::shinyServer(function(input, output, session) {
       sketchLevel <- 2
     } else if (input$indexEventBreakdownTableFilter == "Person Only") {
       dataColumnFields <-
-        dataColumnFields[stringr::str_detect(
-          string = tolower(dataColumnFields),
-          pattern = tolower("person")
-        )]
+        dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
+                                             pattern = tolower("person"))]
       sketchLevel <- 1
     } else if (input$indexEventBreakdownTableFilter == "Record Only") {
       dataColumnFields <-
-        dataColumnFields[stringr::str_detect(
-          string = tolower(dataColumnFields),
-          pattern = tolower("record")
-        )]
+        dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
+                                             pattern = tolower("record"))]
       sketchLevel <- 1
     }
     
