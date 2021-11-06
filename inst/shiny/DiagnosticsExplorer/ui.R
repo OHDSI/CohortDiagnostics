@@ -854,11 +854,11 @@ bodyTabItems <- shinydashboard::tabItems(
     tags$table(width = '100%',
                tags$tr(
                  tags$td(
-                   shiny::radioButtons(
+                   shiny::checkboxGroupInput(
                      inputId = "indexEventBreakdownTableRadioButton",
                      label = "",
-                     choices = c("All", "Standard concepts", "Non Standard Concepts"),
-                     selected = "All",
+                     choices = c("Resolved", "Mapped", "Recommended", "Excluded"),
+                     selected = c("Resolved", "Mapped", "Recommended", "Excluded"),
                      inline = TRUE
                    )
                  ),

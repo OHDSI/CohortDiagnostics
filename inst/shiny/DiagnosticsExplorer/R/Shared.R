@@ -179,7 +179,7 @@ getResultsDataModelSpecifications <- function(versionNumber = NULL,
 #' Return a database data source object
 #'
 #' @description
-#' Collects a list of objects needed to connect to a database datsource. This includes one of
+#' Collects a list of objects needed to connect to a database dataSource. This includes one of
 #' \code{DatabaseConnector::createConnectionDetails} object, or a DBI database connection created
 #' using either \code{DatabaseConnector::connection} or \code{pool::dbPool}, and a names of
 #' resultsDatabaseSchema and vocabularyDatabaseSchema
@@ -1843,6 +1843,7 @@ getResultsConceptSetExpression <- function(dataSource,
     )
   }
   if (nrow(data) > 1) {
+    browser()
     stop("More than one expression returned. Please check the integerity of your results.")
   }
   
@@ -2343,6 +2344,12 @@ getResultsIndexEventBreakdown <- function(dataSource,
     coConceptId = coConceptIds,
     daysRelativeIndex = daysRelativeIndex
   )
+  #!!!!!!!!!!!!!!!!!!!TEMPORARY FIX ###!!!!!!!!!!to be removed - index event breakdown daysRelativeIndex fix
+  if (!is.null(data)) {
+    data <- data %>% 
+      dplyr::mutate(daysRelativeIndex = .data$daysRelativeIndex * -1)
+    warning("temporary fix = please remove")
+  }
   return(data)
 }
 
@@ -2816,7 +2823,6 @@ getFeatureExtractionTemporalCharacterization <-
                                            databaseIds = databaseIds)
     if (all(!is.null(temporalCovariateValueDist),
             nrow(temporalCovariateValueDist) > 0)) {
-      browser()
       temporalCovariateValueDist <- temporalCovariateValueDist %>%
         dplyr::filter(!is.na(.data$timeId))
     }

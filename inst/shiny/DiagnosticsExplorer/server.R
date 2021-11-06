@@ -218,7 +218,7 @@ shiny::shinyServer(function(input, output, session) {
                    orphanConceptSetDataComparator = getOrphanConceptsComparator(),
                    excludedConceptSetDataTarget = getExcludedConceptsTarget(),
                    excludedConceptSetDataComparator = getExcludedConceptsComparator(),
-                   indexEventBreakdownDataTable = getIndexEventBreakdownDataFiltered(),
+                   indexEventBreakdownDataTable = getIndexEventBreakdownTargetDataFiltered(),
                    mappedConceptSetTarget = getMappedConceptsTarget(),
                    mappedConceptSetComparator = getMappedConceptsComparator()
                  ) 
@@ -1395,39 +1395,39 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###getResolvedConceptsAllData----
-  getResolvedConceptsAllData <- shiny::reactive({
-    data <- conceptResolved
-    if (!doesObjectHaveData(data)) {
-      return(NULL)
-    }
-    return(data)
-  })
+  # ###getResolvedConceptsAllData----
+  # getResolvedConceptsAllData <- shiny::reactive({
+  #   data <- conceptResolved
+  #   if (!doesObjectHaveData(data)) {
+  #     return(NULL)
+  #   }
+  #   return(data)
+  # })
   
   
-  ###getResolvedConceptsAllDataConceptIdDetails----
-  getResolvedConceptsAllDataConceptIdDetails <- shiny::reactive({ 
-  resolvedConcepts <- getResolvedConceptsAllData()
-  if (!doesObjectHaveData(resolvedConcepts)) {
-    return(NULL)
-  }
-  progress <- shiny::Progress$new()
-  on.exit(progress$close())
-  progress$set(message = "Caching concept count for resolved concepts",
-               value = 0)
-  conceptDetails <- getConcept(dataSource = dataSource,
-                               conceptIds = resolvedConcepts$conceptId %>% unique())
-  if (!doesObjectHaveData(conceptDetails)) {
-    return(NULL)
-  }
-  conceptDetails <- conceptDetails %>%
-    dplyr::select(.data$conceptId,
-                  .data$conceptName,
-                  .data$vocabularyId,
-                  .data$domainId,
-                  .data$standardConcept)
-  return(conceptDetails)
-  })
+  # ###getResolvedConceptsAllDataConceptIdDetails----
+  # getResolvedConceptsAllDataConceptIdDetails <- shiny::reactive({ 
+  # resolvedConcepts <- getResolvedConceptsAllData()
+  # if (!doesObjectHaveData(resolvedConcepts)) {
+  #   return(NULL)
+  # }
+  # progress <- shiny::Progress$new()
+  # on.exit(progress$close())
+  # progress$set(message = "Caching concept count for resolved concepts",
+  #              value = 0)
+  # conceptDetails <- getConcept(dataSource = dataSource,
+  #                              conceptIds = resolvedConcepts$conceptId %>% unique())
+  # if (!doesObjectHaveData(conceptDetails)) {
+  #   return(NULL)
+  # }
+  # conceptDetails <- conceptDetails %>%
+  #   dplyr::select(.data$conceptId,
+  #                 .data$conceptName,
+  #                 .data$vocabularyId,
+  #                 .data$domainId,
+  #                 .data$standardConcept)
+  # return(conceptDetails)
+  # })
   
   ###getResolvedConceptsTargetData----
   getResolvedConceptsTargetData <- shiny::reactive({
@@ -1440,31 +1440,25 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedConceptSetIdTarget())) {
       return(NULL)
     }
-    if (!doesObjectHaveData(getResolvedConceptsAllData())) {
-      return(NULL)
-    }
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(message = "Retrieving resolved concepts for target",
                  value = 0)
-    data <- getResolvedConceptsAllData()
+    
+    data <- getResultsResolvedConcepts(dataSource = dataSource,
+                                       databaseIds = consolidatedDatabaseIdTarget(), 
+                                       cohortIds = consolidatedCohortIdTarget(), 
+                                       conceptSetIds = consolidatedConceptSetIdTarget())
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    data <- data %>% 
-      dplyr::filter(.data$cohortId %in% consolidatedCohortIdTarget()) %>% 
-      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
-      dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdTarget())
     
-    conceptDetails <- getResolvedConceptsAllDataConceptIdDetails()
+    conceptDetails <- getConcept(dataSource = dataSource, 
+                                 conceptIds = c(data$conceptId %>% unique()))
     if (!doesObjectHaveData(conceptDetails)) {
       return(NULL)
     }
-    conceptDetails <- conceptDetails %>% 
-      dplyr::filter(.data$conceptId %in% (data$conceptId %>% unique()))
-    if (is.null(conceptDetails)) {
-      return(NULL)
-    }
+    
     conceptDetails <- conceptDetails %>%
       dplyr::select(.data$conceptId,
                     .data$conceptName,
@@ -1494,12 +1488,12 @@ shiny::shinyServer(function(input, output, session) {
       )
     if (!doesObjectHaveData(count)) {
       return(data %>% 
-               dplyr::mutate("records" = NA, "persons" = NA))
+               dplyr::mutate("records" = NA, 
+                             "persons" = NA))
     }
     data <- data %>% 
       dplyr::left_join(count, 
-                       by = c('databaseId', 'conceptId')) %>% 
-      dplyr::arrange(dplyr::desc(abs(dplyr::across(c("persons","records")))))
+                       by = c('databaseId', 'conceptId'))
     return(data)
   })
   
@@ -1524,7 +1518,7 @@ shiny::shinyServer(function(input, output, session) {
     mappedconceptIds <- mappedConcepts$conceptId2 %>% unique()
     
     conceptIdDetails <- getConcept(dataSource = dataSource,
-                                   conceptIds = c(resolvedConceptIds, mappedconceptIds) %>% unique())
+                                   conceptIds = c(mappedconceptIds) %>% unique())
     
     outputData <- data %>% 
       dplyr::select(.data$databaseId,
@@ -1565,8 +1559,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>% 
       dplyr::left_join(count, 
-                       by = c('databaseId', 'conceptId')) %>% 
-      dplyr::arrange(dplyr::desc(abs(dplyr::across(c("persons","records")))))
+                       by = c('databaseId', 'conceptId'))
     return(data)
   })
   
@@ -1581,31 +1574,25 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedConceptSetIdComparator())) {
       return(NULL)
     }
-    if (!doesObjectHaveData(getResolvedConceptsAllData())) {
-      return(NULL)
-    }
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(message = "Retrieving resolved concepts for comparator",
                  value = 0)
-    data <- getResolvedConceptsAllData()
+    
+    data <- getResultsResolvedConcepts(dataSource = dataSource,
+                                       databaseIds = consolidatedDatabaseIdTarget(), 
+                                       cohortIds = consolidatedCohortIdComparator(), 
+                                       conceptSetIds = consolidatedConceptSetIdComparator())
     if (!doesObjectHaveData(data)) {
       return(NULL)
     }
-    data <- data %>% 
-      dplyr::filter(.data$cohortId %in% consolidatedCohortIdComparator()) %>% 
-      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
-      dplyr::filter(.data$conceptSetId %in% consolidatedConceptSetIdComparator())
     
-    conceptDetails <- getResolvedConceptsAllDataConceptIdDetails()
+    conceptDetails <- getConcept(dataSource = dataSource, 
+                                 conceptIds = c(data$conceptId %>% unique()))
     if (!doesObjectHaveData(conceptDetails)) {
       return(NULL)
     }
-    conceptDetails <- conceptDetails %>% 
-      dplyr::filter(.data$conceptId %in% c(data$conceptId %>% unique()))
-    if (is.null(conceptDetails)) {
-      return(NULL)
-    }
+    
     conceptDetails <- conceptDetails %>%
       dplyr::select(.data$conceptId,
                     .data$conceptName,
@@ -1631,18 +1618,19 @@ shiny::shinyServer(function(input, output, session) {
         databaseIds = consolidatedDatabaseIdTarget(),
         conceptIds = data$conceptId %>% unique(),
         cohortIds = consolidatedCohortIdComparator(),
-        databaseCount = (input$comparatorConceptIdCountSource == "Datasource Level")
+        databaseCount = (input$targetConceptIdCountSource == "Datasource Level")
       )
     if (!doesObjectHaveData(count)) {
       return(data %>% 
-               dplyr::mutate("records" = NA, "persons" = NA))
+               dplyr::mutate("records" = NA, 
+                             "persons" = NA))
     }
     data <- data %>% 
       dplyr::left_join(count, 
-                       by = c('databaseId', 'conceptId')) %>% 
-      dplyr::arrange(dplyr::desc(abs(dplyr::across(c("persons","records")))))
+                       by = c('databaseId', 'conceptId'))
     return(data)
   })
+  
   
   #getExcludedConceptsTargetData
   getExcludedConceptsTargetData <- shiny::reactive(x = {
@@ -1677,7 +1665,6 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(.data$conceptId,
                     .data$conceptName,
                     .data$vocabularyId)
-    
     data <- data %>%
       dplyr::left_join(conceptDetails,
                        by = "conceptId") %>% 
@@ -1705,8 +1692,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>% 
       dplyr::left_join(count, 
-                       by = c('databaseId', 'conceptId')) %>% 
-    dplyr::arrange(dplyr::desc(abs(dplyr::across(c("persons","records")))))
+                       by = c('databaseId', 'conceptId'))
     return(data)
    })
   
@@ -1771,12 +1757,11 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>% 
       dplyr::left_join(count, 
-                       by = c('databaseId', 'conceptId')) %>% 
-      dplyr::arrange(dplyr::desc(abs(dplyr::across(c("persons","records")))))
+                       by = c('databaseId', 'conceptId'))
     return(data)
   })
   
-  ###getMappedConceptsTargetData----
+  ###getMappedConceptsComparatorData----
   getMappedConceptsComparatorData <- shiny::reactive({
     data <- getResolvedConceptsComparatorData()
     if (!doesObjectHaveData(data)) {
@@ -1875,7 +1860,6 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(.data$conceptId,
                     .data$conceptName,
                     .data$vocabularyId)
-    
     data <- data %>%
       dplyr::left_join(conceptDetails,
                        by = "conceptId") %>% 
@@ -5969,8 +5953,8 @@ shiny::shinyServer(function(input, output, session) {
   
   #______________----
   # Index event breakdown ------
-  ##getIndexEventBreakdownRawData----
-  getIndexEventBreakdownRawData <- shiny::reactive(x = {
+  ##getIndexEventBreakdownRawTarget----
+  getIndexEventBreakdownRawTarget <- shiny::reactive(x = {
     if (any(is.null(input$tabs),
             !input$tabs == "indexEventBreakdown",
             length(consolidatedCohortIdTarget()) == 0)) {
@@ -5993,60 +5977,38 @@ shiny::shinyServer(function(input, output, session) {
     return(indexEventBreakdown)
   })
   
-  ##getIndexEventMappedConcepts----
-  getIndexEventMappedConcepts <- shiny::reactive(x = {
-    if (any(is.null(input$tabs),
-            !input$tabs == "indexEventBreakdown",
-            !doesObjectHaveData(getIndexEventBreakdownRawData()))) {
-      return(NULL)
-    }
-    data <- getIndexEventBreakdownRawData()
-    mappedConcepts <- getConceptRelationship(
-      dataSource = dataSource,
-      conceptIds = data$conceptId %>%
-        unique(), 
-      relationshipIds = "Mapped from"
-    )
-    if (!doesObjectHaveData(mappedConcepts)) {
-      return(NULL)
-    }
-    return(mappedConcepts)
-  })
-  
   
   ##getIndexEventBreakdownConceptIdDetails----
   getIndexEventBreakdownConceptIdDetails <- shiny::reactive(x = {
     if (any(
-      is.null(input$tabs),!input$tabs == "indexEventBreakdown",!doesObjectHaveData(getIndexEventBreakdownRawData()),!doesObjectHaveData(getIndexEventMappedConcepts())
+      is.null(input$tabs),
+      !input$tabs == "indexEventBreakdown",
+      !doesObjectHaveData(getIndexEventBreakdownRawTarget())
     )) {
       return(NULL)
     }
-    conceptIds <- c(
-      getIndexEventMappedConcepts()$conceptId1,
-      getIndexEventMappedConcepts()$conceptId2,
-      getIndexEventBreakdownRawData()$conceptId %>% unique()
-    )
-    if (!doesObjectHaveData(conceptIds)) {
-      return(NULL)
-    }
     conceptIdDetails <- getConcept(dataSource = dataSource,
-                                   conceptIds = conceptIds)
+                                   conceptIds = c(getIndexEventBreakdownRawTarget()$conceptId,
+                                                  getIndexEventBreakdownRawTarget()$coConceptId) %>% unique())
     if (!doesObjectHaveData(conceptIdDetails)) {
       return(NULL)
     }
     return(conceptIdDetails)
   })
   
-  ##getIndexEventBreakdownData----
-  getIndexEventBreakdownData <- shiny::reactive(x = {
+  ##getIndexEventBreakdownTargetData----
+  getIndexEventBreakdownTargetData <- shiny::reactive(x = {
     if (any(
-      is.null(input$tabs),!input$tabs == "indexEventBreakdown",!doesObjectHaveData(getIndexEventBreakdownRawData())
+      is.null(input$tabs),
+      !input$tabs == "indexEventBreakdown",
+      !doesObjectHaveData(getIndexEventBreakdownRawTarget())
     )) {
       return(NULL)
     }
-    indexEventBreakdown <- getIndexEventBreakdownRawData() %>%
+    indexEventBreakdown <- getIndexEventBreakdownRawTarget() %>%
       dplyr::filter(.data$daysRelativeIndex == 0) %>%
       dplyr::filter(.data$coConceptId == 0)
+    
     conceptIdDetails <- getIndexEventBreakdownConceptIdDetails()
     indexEventBreakdown <- indexEventBreakdown %>%
       dplyr::inner_join(
@@ -6073,27 +6035,55 @@ shiny::shinyServer(function(input, output, session) {
   })
                                     
                                     
-  ##getIndexEventBreakdownDataFiltered----
-  getIndexEventBreakdownDataFiltered <- shiny::reactive(x = {
-    data <- getIndexEventBreakdownData()
+  ##getIndexEventBreakdownTargetDataFiltered----
+  getIndexEventBreakdownTargetDataFiltered <- shiny::reactive(x = {
+    data <- getIndexEventBreakdownTargetData()
     if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(consolidatedConceptSetIdTarget())) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(input$indexEventDomainNameFilter)) {
       return(NULL)
     }
     data <- data %>%
       dplyr::filter(.data$domainId %in% input$indexEventDomainNameFilter)
-    
-    if (input$indexEventBreakdownTableRadioButton == "Standard concepts") {
-      data <- data %>%
-        dplyr::filter(.data$standardConcept == 'S')
-    } else if (input$indexEventBreakdownTableRadioButton == "Non Standard Concepts") {
-      data <- data %>%
-        dplyr::filter(is.na(.data$standardConcept) |
-                        .data$standardConcept != "S")
-    }
-    
-    if (doesObjectHaveData(getResolvedConceptsTarget())) {
-      data <- data %>% 
-        dplyr::filter(.data$conceptId %in% c(getResolvedConceptsTarget()$conceptId %>% unique()))
+    if (length(input$indexEventBreakdownTableRadioButton) > 0) {
+      conceptIdsToFilter <- c()
+      if ("Resolved" %in% c(input$indexEventBreakdownTableRadioButton)) {
+        if (doesObjectHaveData(getResolvedConceptsTarget())) {
+          conceptIdsToFilter <- c(conceptIdsToFilter,
+                                  getResolvedConceptsTarget()$conceptId) %>%
+            unique()
+        }
+      }
+      if ("Mapped" %in% c(input$indexEventBreakdownTableRadioButton)) {
+        if (doesObjectHaveData(getMappedConceptsTarget())) {
+          conceptIdsToFilter <- c(conceptIdsToFilter,
+                                  getMappedConceptsTarget()$conceptId) %>%
+            unique()
+        }
+      }
+      if ("Excluded" %in% c(input$indexEventBreakdownTableRadioButton)) {
+        if (doesObjectHaveData(getExcludedConceptsTarget())) {
+          browser()
+          conceptIdsToFilter <- c(conceptIdsToFilter,
+                                  getExcludedConceptsTarget()$conceptId) %>%
+            unique()
+        }
+      }
+      if ("Recommended" %in% c(input$indexEventBreakdownTableRadioButton)) {
+        if (doesObjectHaveData(getOrphanConceptsTarget())) {
+          conceptIdsToFilter <- c(conceptIdsToFilter,
+                                  getOrphanConceptsTarget()$conceptId) %>%
+            unique()
+        }
+      }
+      if (doesObjectHaveData(conceptIdsToFilter)) {
+        data <- data %>% 
+          dplyr::filter(.data$conceptId %in% c(conceptIdsToFilter))
+      }
     }
     data <- data %>% 
       dplyr::rename("persons" = .data$subjectCount,
@@ -6107,7 +6097,7 @@ shiny::shinyServer(function(input, output, session) {
       getCsvFileNameWithDateTime(string = "indexEventBreakdown")
     },
     content = function(file) {
-      downloadCsv(x = getIndexEventBreakdownDataFiltered(),
+      downloadCsv(x = getIndexEventBreakdownTargetDataFiltered(),
                   fileName = file)
     }
   )
@@ -6126,7 +6116,7 @@ shiny::shinyServer(function(input, output, session) {
         value = 0
       )
       
-      data <- getIndexEventBreakdownDataFiltered()
+      data <- getIndexEventBreakdownTargetDataFiltered()
       validate(
         need(
           doesObjectHaveData(data),
@@ -6134,7 +6124,7 @@ shiny::shinyServer(function(input, output, session) {
         )
       )
       keyColumnFields <-
-        c("conceptId", "conceptName", "vocabularyId")
+        c("conceptId", "conceptName", "vocabularyId", "standardConcept")
       #depending on user selection - what data Column Fields Will Be Presented?
       dataColumnFields <-
         c("persons",
@@ -6184,24 +6174,24 @@ shiny::shinyServer(function(input, output, session) {
   output$indexEventBreakdownPlot <-
     plotly::renderPlotly({
       validate(need(
-        doesObjectHaveData(getIndexEventBreakdownRawData()),
+        doesObjectHaveData(getIndexEventBreakdownRawTarget()),
         "No index event breakdown data for the chosen combination."
       ))
       validate(
         need(
-          doesObjectHaveData(getIndexEventBreakdownDataFiltered()),
+          doesObjectHaveData(getIndexEventBreakdownTargetDataFiltered()),
           "No index event breakdown data for the chosen combination. Maybe the concept id in the selected concept id is too restrictive?"
         )
       )
       
       filteredConceptIds <-
-        getIndexEventBreakdownDataFiltered()$conceptId %>% unique()
+        getIndexEventBreakdownTargetDataFiltered()$conceptId %>% unique()
       validate(need(
         doesObjectHaveData(filteredConceptIds),
         "No index event breakdown data for the chosen combination."
       ))
       
-      data <- getIndexEventBreakdownRawData() %>%
+      data <- getIndexEventBreakdownRawTarget() %>%
         dplyr::filter(.data$coConceptId == 0) %>%
         dplyr::filter(.data$conceptId %in% c(filteredConceptIds)) %>% 
         dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget())
@@ -6357,13 +6347,13 @@ shiny::shinyServer(function(input, output, session) {
   
   ##getCoCOnceptForIndexEvent----
   getCoCOnceptForIndexEvent <- shiny::reactive(x = {
-    if (!doesObjectHaveData(getIndexEventBreakdownRawData())) {
+    if (!doesObjectHaveData(getIndexEventBreakdownRawTarget())) {
       return(NULL)
     }
     if (!doesObjectHaveData(getIndexEventBreakdownConceptIdDetails())) {
       return(NULL)
     }
-    data <- getIndexEventBreakdownRawData() %>% 
+    data <- getIndexEventBreakdownRawTarget() %>% 
       dplyr::filter(.data$daysRelativeIndex == 0) %>% 
       dplyr::filter(.data$conceptId %in% c(activeSelected()$conceptId)) %>% 
       dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
