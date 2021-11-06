@@ -698,7 +698,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
 
 
 
-plotIndexEventBreakdown <- function(data, yAxis = "conceptCount") {
+plotIndexEventBreakdown <- function(data, yAxisColumns = c("conceptCount")) {
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertTibble(
     x = data,
@@ -718,9 +718,6 @@ plotIndexEventBreakdown <- function(data, yAxis = "conceptCount") {
   #   head(-1) %>%
   #   tail(-1)
   
-  data <- data %>%
-    dplyr::mutate(count = .data[[yAxis]]) %>%
-    dplyr::select(-.data$conceptCount, -.data$subjectCount)
   
   plotData <- data %>%
     dplyr::inner_join(cohort %>%
@@ -748,6 +745,17 @@ plotIndexEventBreakdown <- function(data, yAxis = "conceptCount") {
   distinctDatabaseCompoundName <-
     plotData$databaseCompoundName %>%  unique()
   
+  
+  conceptYAxisrange <- c(0,0)
+  subjectYAxisrange <- c(0,0)
+  for (i in 1:length(yAxisColumns)) {
+    if (yAxisColumns[i] == "conceptCount") {
+      conceptYAxisrange <- c(min(plotData[[yAxisColumns[i]]]),max(plotData[[yAxisColumns[i]]]))
+    } else if (yAxisColumns == "subjectCount") {
+      subjectYAxisrange <- c(min(plotData[[yAxisColumns[i]]]),max(plotData[[yAxisColumns[i]]]))
+    }
+  }
+  
   # plotHeight <- 200 + length(distinctDatabaseShortName) * length(sortShortName$shortName) * 100
   plotHeight <- 800
   
@@ -755,50 +763,73 @@ plotIndexEventBreakdown <- function(data, yAxis = "conceptCount") {
   for (i in (1:length(distinctCohortShortName))) {
     filteredDataByCohort <- plotData %>%
       dplyr::filter(.data$shortName == distinctCohortShortName[i])
-    
     databasePlots <- list()
     for (j in (1:length(distinctDatabaseShortName))) {
       filteredDataByDatabase <- filteredDataByCohort %>%
         dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[j])
-      databasePlot <-
-        plotly::plot_ly(
-          filteredDataByDatabase,
-          x = ~ daysRelativeIndex,
-          y = ~ count,
-          name = ~ conceptId,
-          type = 'scatter',
-          mode = 'lines',
-          text = ~ paste0(
-            "Cohort =",
-            compoundName,
-            "\nDatabase = ",
-            databaseId,
-            "\nDays Relative Index = ",
-            daysRelativeIndex,
-            "\nCount = ",
-            count
-          ),
-          showlegend = FALSE,
-          height = plotHeight
-        ) %>%
-        plotly::layout(
-          legend = list(
-            orientation = "h",
-            # show entries horizontally
-            xanchor = "center",
-            # use center of legend as anchor
-            x = 0.5
-          ),
-          xaxis = list(
-            range = c(-30, 30),
-            tickformat = ",d",
-            showspikes = showPlotSpikes
-          ),
-          yaxis = list(showspikes = showPlotSpikes, type = "log")
-        )
+      conceptOrSubjectPlots <- list()
+      for (k in 1:length(yAxisColumns))  {
+        filteredDataByDatabase <- filteredDataByDatabase %>%
+          dplyr::mutate(count = .data[[yAxisColumns[k]]])
+        conceptOrSubjectPlot <-
+          plotly::plot_ly(
+            filteredDataByDatabase,
+            x = ~ daysRelativeIndex,
+            y = ~ count,
+            name = ~ conceptId,
+            type = 'scatter',
+            mode = 'lines',
+            text = ~ paste0(
+              "Cohort =",
+              compoundName,
+              "\nDatabase = ",
+              databaseId,
+              "\nDays Relative Index = ",
+              daysRelativeIndex,
+              "\nCount = ",
+              count
+            ),
+            showlegend = FALSE,
+            height = plotHeight
+          ) %>%
+          plotly::layout(
+            legend = list(
+              orientation = "h",
+              xanchor = "center",
+              x = 0.5
+            ),
+            xaxis = list(
+              range = c(-30, 30),
+              tickformat = ",d",
+              showspikes = showPlotSpikes
+            ),
+            yaxis = list(
+              range = ifelse(yAxisColumns[k] == "conceptCount",conceptYAxisrange,subjectYAxisrange),
+              showspikes = showPlotSpikes,
+              type = "log"
+            )
+          )
       
+        if (j == 1) {
+          conceptOrSubjectPlot <- conceptOrSubjectPlot %>%
+            plotly::layout(
+              annotations = list(
+                x = 0.08,
+                y = 1.02,
+                text = camelCaseToTitleCase(yAxisColumns[k]),
+                showarrow = FALSE,
+                xref = "paper",
+                yref = "paper",
+                xanchor = "center",
+                yanchor = "middle"
+              )
+            )
+        }
+        conceptOrSubjectPlots[[k]] <- conceptOrSubjectPlot
+      }
+      databasePlots[[j]] <- plotly::subplot(conceptOrSubjectPlots, nrows = length(conceptOrSubjectPlots))
       if (i == 1) {
-        databasePlot <- databasePlot %>%
+        databasePlots[[j]] <- databasePlots[[j]] %>%
           plotly::layout(
             annotations = list(
               x = 0.5,
@@ -812,13 +843,12 @@ plotIndexEventBreakdown <- function(data, yAxis = "conceptCount") {
             )
           )
       }
-      databasePlots[[j]] <- databasePlot
     }
     cohortPlots[[i]] <-
       plotly::subplot(databasePlots) %>%
       plotly::layout(
         annotations = list(
-          x = -0.02,
+          x = -0.04,
           y = 0.5,
           text = camelCaseToTitleCase(distinctCohortShortName[i]),
           showarrow = FALSE,

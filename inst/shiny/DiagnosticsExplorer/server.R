@@ -6203,14 +6203,24 @@ shiny::shinyServer(function(input, output, session) {
       
       data <- getIndexEventBreakdownRawData() %>%
         dplyr::filter(.data$coConceptId == 0) %>%
-        dplyr::filter(.data$conceptId %in% c(filteredConceptIds))
+        dplyr::filter(.data$conceptId %in% c(filteredConceptIds)) %>% 
+        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget())
+      
       validate(need(
         doesObjectHaveData(data),
         "No index event breakdown data for the chosen combination."
       ))
       
+      if (input$indexEventBreakdownTableFilter == "Both") {
+        dataColumnFields <- c('conceptCount','subjectCount')
+      } else if (input$indexEventBreakdownTableFilter == "Person Only") {
+        dataColumnFields <- c('subjectCount')
+      } else if (input$indexEventBreakdownTableFilter == "Record Only") {
+        dataColumnFields <- c('conceptCount')
+      }
+      
       plot <- plotIndexEventBreakdown(data = data,
-                                      yAxis = input$indexEventBreakdownPlotRadioButton)
+                                      yAxisColumns = dataColumnFields)
       return(plot)
     })
   
