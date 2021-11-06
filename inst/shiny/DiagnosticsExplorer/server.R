@@ -6047,6 +6047,9 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(input$indexEventDomainNameFilter)) {
       return(NULL)
     }
+    if (!doesObjectHaveData(input$indexEventBreakdownTableRadioButton)) {
+      return(NULL)
+    }
     data <- data %>%
       dplyr::filter(.data$domainId %in% input$indexEventDomainNameFilter)
     if (length(input$indexEventBreakdownTableRadioButton) > 0) {
@@ -6079,12 +6082,26 @@ shiny::shinyServer(function(input, output, session) {
             unique()
         }
       }
-      validate(
-        need(
-          doesObjectHaveData(conceptIdsToFilter),
-          "No index event breakdown data for the chosen combination."
-        )
-      )
+      if ("Other" %in% c(input$indexEventBreakdownTableRadioButton)) {
+        notPartOfOther <- c(
+          getResolvedConceptsTarget()$conceptId,
+          getMappedConceptsTarget()$conceptId,
+          getExcludedConceptsTarget()$conceptId,
+          getOrphanConceptsTarget()$conceptId
+        ) %>% unique()
+        notPartOfOther <- setdiff(data$conceptId %>% unique(),
+                                  notPartOfOther)
+        conceptIdsToFilter <- c(conceptIdsToFilter,
+                                notPartOfOther) %>%
+          unique()
+        
+      }
+      validate(need(
+        doesObjectHaveData(conceptIdsToFilter),
+        "No index event breakdown data for the chosen combination."
+      ))
+      data <- data %>%
+        dplyr::filter(.data$conceptId %in% c(conceptIdsToFilter))
     }
     data <- data %>% 
       dplyr::rename("persons" = .data$subjectCount,
