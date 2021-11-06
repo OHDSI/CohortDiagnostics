@@ -6220,7 +6220,9 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       plot <- plotIndexEventBreakdown(data = data,
-                                      yAxisColumns = dataColumnFields)
+                                      yAxisColumns = dataColumnFields,
+                                      showAsPercentage = input$indexEventBreakdownShowAsPercent,
+                                      logTransform = input$indexEventBreakdownShowLogTransform)
       return(plot)
     })
   

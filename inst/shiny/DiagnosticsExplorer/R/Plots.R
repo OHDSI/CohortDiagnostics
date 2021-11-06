@@ -698,7 +698,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
 
 
 
-plotIndexEventBreakdown <- function(data, yAxisColumns = c("conceptCount")) {
+plotIndexEventBreakdown <- function(data, yAxisColumns = c("conceptCount"), showAsPercentage = FALSE, logTransform = FALSE) {
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertTibble(
     x = data,
@@ -755,6 +755,10 @@ plotIndexEventBreakdown <- function(data, yAxisColumns = c("conceptCount")) {
       subjectYAxisrange <- c(min(plotData[[yAxisColumns[i]]]),max(plotData[[yAxisColumns[i]]]))
     }
   }
+  if(showAsPercentage) {
+    conceptYAxisrange <- c(0,100)
+    subjectYAxisrange <- c(0,100)
+  }
   
   # plotHeight <- 200 + length(distinctDatabaseShortName) * length(sortShortName$shortName) * 100
   plotHeight <- 800
@@ -771,6 +775,12 @@ plotIndexEventBreakdown <- function(data, yAxisColumns = c("conceptCount")) {
       for (k in 1:length(yAxisColumns))  {
         filteredDataByDatabase <- filteredDataByDatabase %>%
           dplyr::mutate(count = .data[[yAxisColumns[k]]])
+        if(showAsPercentage) {
+          filteredDataByDatabase <- filteredDataByDatabase %>%
+            dplyr::mutate(percentage = round(.data$count/sum(.data$count),digits = 2)) %>%
+            dplyr::mutate("count" = .data$percentage) %>%
+            dplyr::select(-.data$percentage)
+        }
         conceptOrSubjectPlot <-
           plotly::plot_ly(
             filteredDataByDatabase,
@@ -806,7 +816,8 @@ plotIndexEventBreakdown <- function(data, yAxisColumns = c("conceptCount")) {
             yaxis = list(
               range = ifelse(yAxisColumns[k] == "conceptCount",conceptYAxisrange,subjectYAxisrange),
               showspikes = showPlotSpikes,
-              type = "log"
+              tickformat = ifelse(showAsPercentage,"%",""),
+              type = ifelse(logTransform,"log","")
             )
           )
       

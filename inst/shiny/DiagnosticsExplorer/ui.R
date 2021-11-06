@@ -919,6 +919,8 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::tabPanel(
         title = "Plot",
         value = "PanelIndexEventBreakdownPlot",
+        shiny::checkboxInput(inputId = "indexEventBreakdownShowLogTransform",
+                             label = "Log Transform"),
         shinycssloaders::withSpinner(
           plotly::plotlyOutput("indexEventBreakdownPlot",height = 1000),
           type = spinnerType
