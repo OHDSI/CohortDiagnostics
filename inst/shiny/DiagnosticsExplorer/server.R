@@ -1684,7 +1684,7 @@ shiny::shinyServer(function(input, output, session) {
         databaseIds = consolidatedDatabaseIdTarget(),
         conceptIds = data$conceptId %>% unique(),
         cohortIds = consolidatedCohortIdTarget(),
-        databaseCount = (input$targetConceptIdCountSource == "DatasourceLevel")
+        databaseCount = (input$targetConceptIdCountSource == "Datasource Level")
       )
     if (!doesObjectHaveData(count)) {
       return(data %>% 
@@ -6067,7 +6067,6 @@ shiny::shinyServer(function(input, output, session) {
       }
       if ("Excluded" %in% c(input$indexEventBreakdownTableRadioButton)) {
         if (doesObjectHaveData(getExcludedConceptsTarget())) {
-          browser()
           conceptIdsToFilter <- c(conceptIdsToFilter,
                                   getExcludedConceptsTarget()$conceptId) %>%
             unique()
@@ -6080,10 +6079,12 @@ shiny::shinyServer(function(input, output, session) {
             unique()
         }
       }
-      if (doesObjectHaveData(conceptIdsToFilter)) {
-        data <- data %>% 
-          dplyr::filter(.data$conceptId %in% c(conceptIdsToFilter))
-      }
+      validate(
+        need(
+          doesObjectHaveData(conceptIdsToFilter),
+          "No index event breakdown data for the chosen combination."
+        )
+      )
     }
     data <- data %>% 
       dplyr::rename("persons" = .data$subjectCount,
