@@ -574,7 +574,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
     if (length(sortByColumns) > 0) {
       sortByColumns <- sortByColumns[[1]]
       data <- data %>%
-        dplyr::arrange(dplyr::desc(dplyr::across(sortByColumns)))
+        dplyr::arrange(dplyr::desc(dplyr::across(dplyr::all_of(sortByColumns))))
     }
   }
   
