@@ -723,7 +723,19 @@ plotIndexEventBreakdown <-
     #   head(-1) %>%
     #   tail(-1)
     
+    # check if a conceptId belongs to more than one domain
+    moreThanOneDomain <- conceptIdDetails %>% 
+      dplyr::select(.data$conceptId, .data$domainId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::group_by(.data$conceptId, .data$domainId) %>% 
+      dplyr::summarise(n = dplyr::n(), .groups = "keep") %>% 
+      dplyr::filter(.data$n > 1)
     
+    if (nrow(moreThanOneDomain) > 0) {
+      stop(paste0("Please check the concept details table provided. \n",
+                  "The following concept id's were found to belong to more than domain.: \n",
+                  paste0(moreThanOneDomain$conceptId, collapse = ";")))
+    }
     plotData <- data %>%
       dplyr::inner_join(
         conceptIdDetails %>%
@@ -887,7 +899,7 @@ plotIndexEventBreakdown <-
                 )
             }
             domainPlots[[l]] <-
-              plotly::subplot(conceptIdPlots, nrows = 49)
+              plotly::subplot(conceptIdPlots, nrows = min(49, length(conceptIdPlots)))
           }
           
           databasePlot <-
