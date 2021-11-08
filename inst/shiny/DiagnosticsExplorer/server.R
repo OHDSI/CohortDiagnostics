@@ -6106,6 +6106,11 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>% 
       dplyr::rename("persons" = .data$subjectCount,
                     "records" = .data$conceptCount)
+    
+    data <- data %>% 
+      dplyr::arrange(dplyr::desc(abs(dplyr::across(
+        dplyr::contains(c("persons", "records"))
+      ))))
     return(data)
   })
   
@@ -6135,6 +6140,7 @@ shiny::shinyServer(function(input, output, session) {
       )
       
       data <- getIndexEventBreakdownTargetDataFiltered()
+      
       validate(
         need(
           doesObjectHaveData(data),
@@ -6174,7 +6180,6 @@ shiny::shinyServer(function(input, output, session) {
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
-      
       table <- getDtWithColumnsGroupedByDatabaseId(
         data = data,
         headerCount = countsForHeader,
