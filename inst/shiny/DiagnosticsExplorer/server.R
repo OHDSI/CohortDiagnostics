@@ -2722,6 +2722,9 @@ shiny::shinyServer(function(input, output, session) {
   #reactive: getOptimizedTargetConceptSetsExpressionTable----
   getOptimizedTargetConceptSetsExpressionTable <-
     shiny::reactive(x = {
+      if (!input$tabs == "cohortDefinition") {
+        return(NULL)
+      }
       if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
         return(NULL)
       }
@@ -3510,6 +3513,9 @@ shiny::shinyServer(function(input, output, session) {
   #reactive: getOptimizedComparatorConceptSetsExpressionTable----
   getOptimizedComparatorConceptSetsExpressionTable <-
     shiny::reactive(x = {
+      if (!input$tabs == "cohortDefinition") {
+        return(NULL)
+      }
       if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
         return(NULL)
       }
