@@ -418,7 +418,6 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
     tidyr::pivot_longer(cols = dplyr::all_of(dataColumns), 
                         names_to = "type", 
                         values_to = "valuesData")
-  
   if (doesObjectHaveData(headerCount)) {
     if (sketchLevel == 1) {
       if (length(setdiff(c("databaseId", "count"), colnames(headerCount))) != 0) {
@@ -668,11 +667,11 @@ getCountsForHeaderForUseInDataTable <- function(dataSource,
       dplyr::select(-.data$cohortId) #only one cohort id is supported
   }
   
-  if (fields  == "Person Only") {
+  if (fields  == "Persons") {
     countsForHeader <- countsForHeader %>%
       dplyr::select(-.data$records) %>%
       dplyr::rename(count = .data$persons)
-  } else if (fields %in% c("Events", "Record Only")) {
+  } else if (fields %in% c("Events", "Records")) {
     countsForHeader <- countsForHeader %>%
       dplyr::select(-.data$persons) %>%
       dplyr::rename(count = .data$records)
