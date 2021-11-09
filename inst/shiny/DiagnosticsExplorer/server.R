@@ -6268,6 +6268,22 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  observeEvent(eventExpr = getIndexEventBreakdownPlotData(),handlerExpr = {
+    data <- getIndexEventBreakdownPlotData()
+    if (doesObjectHaveData(data)) {
+      maxValue <- data %>% 
+        dplyr::pull(.data$rank) %>% 
+        max() 
+      
+      shiny::updateSliderInput(
+        session = session,
+        inputId = "indexEventBreakdownConceptIdsRangeFilter",
+        min = 0,
+        max = min(49, maxValue),
+        value = c(0, 10)
+      )
+    }
+  })
   
   ##indexEventBreakdownPlot----
   output$indexEventBreakdownPlot <-
@@ -6297,15 +6313,10 @@ shiny::shinyServer(function(input, output, session) {
         dataColumnFields <- c('conceptCount')
       }
       
-      
-      
-      
       #!!!put a UI for user to select concept id's between minValue and maxValue -- by default minValue = 0 to maxValue = 10
-      minValue <- 0
-      maxValue <- 10
       data <- data %>% 
-        dplyr::filter(.data$rank >= !!minValue) %>% 
-        dplyr::filter(.data$rank <= !!maxValue)
+        dplyr::filter(.data$rank >= !!input$indexEventBreakdownConceptIdsRangeFilter[1]) %>% 
+        dplyr::filter(.data$rank <= !!input$indexEventBreakdownConceptIdsRangeFilter[2])
         
       plot <- plotIndexEventBreakdown(data = data,
                                       yAxisColumns = dataColumnFields,

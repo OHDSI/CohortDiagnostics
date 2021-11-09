@@ -925,10 +925,28 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::tabPanel(
         title = "Plot",
         value = "PanelIndexEventBreakdownPlot",
-        shiny::checkboxInput(
-          inputId = "indexEventBreakdownShowLogTransform",
-          label = "Log Transform",
-          value = TRUE
+        tags$table(
+          tags$tr(
+            tags$td(
+              shiny::checkboxInput(
+                inputId = "indexEventBreakdownShowLogTransform",
+                label = "Log Transform",
+                value = TRUE
+              )
+            ),
+            tags$td(
+              shiny::sliderInput(
+                inputId = "indexEventBreakdownConceptIdsRangeFilter",
+                label = "Display Concept Ids Between :",
+                min = 0,
+                max = 0,
+                value = c(0, 0),
+                dragRange = TRUE,
+                step = 1,
+                sep = ""
+              )
+            )
+          )
         ),
         shinycssloaders::withSpinner(
           plotly::plotlyOutput("indexEventBreakdownPlot", height = 1000),
