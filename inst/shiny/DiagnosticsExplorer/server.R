@@ -420,7 +420,7 @@ shiny::shinyServer(function(input, output, session) {
                                                         shiny::radioButtons(
                                                           inputId = "targetCohortConceptSetColumnFilter",
                                                           label = "",
-                                                          choices = c("Both", "Person Only", "Record Only"),
+                                                          choices = c("Both", "Persons", "Records"),
                                                           selected = "Both",
                                                           inline = TRUE
                                                         )
@@ -759,7 +759,7 @@ shiny::shinyServer(function(input, output, session) {
                                                         shiny::radioButtons(
                                                           inputId = "comparatorCohortConceptSetColumnFilter",
                                                           label = "",
-                                                          choices = c("Both", "Person Only", "Record Only"),
+                                                          choices = c("Both", "Persons", "Records"),
                                                           selected = "Both",
                                                           inline = TRUE
                                                         )
@@ -2976,14 +2976,14 @@ shiny::shinyServer(function(input, output, session) {
       if (input$targetCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
         sketchLevel <- 2
-      } else if (input$targetCohortConceptSetColumnFilter == "Person Only") {
+      } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
         sketchLevel <- 1
-      } else if (input$targetCohortConceptSetColumnFilter == "Record Only") {
+      } else if (input$targetCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
@@ -3046,14 +3046,14 @@ shiny::shinyServer(function(input, output, session) {
       if (input$targetCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
         sketchLevel <- 2
-      } else if (input$targetCohortConceptSetColumnFilter == "Person Only") {
+      } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
         sketchLevel <- 1
-      } else if (input$targetCohortConceptSetColumnFilter == "Record Only") {
+      } else if (input$targetCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
@@ -3114,14 +3114,14 @@ shiny::shinyServer(function(input, output, session) {
       if (input$targetCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
         sketchLevel <- 2
-      } else if (input$targetCohortConceptSetColumnFilter == "Person Only") {
+      } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
         sketchLevel <- 1
-      } else if (input$targetCohortConceptSetColumnFilter == "Record Only") {
+      } else if (input$targetCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
@@ -3176,14 +3176,14 @@ shiny::shinyServer(function(input, output, session) {
       if (input$targetCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
         sketchLevel <- 2
-      } else if (input$targetCohortConceptSetColumnFilter == "Person Only") {
+      } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
         sketchLevel <- 1
-      } else if (input$targetCohortConceptSetColumnFilter == "Record Only") {
+      } else if (input$targetCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
@@ -3754,14 +3754,14 @@ shiny::shinyServer(function(input, output, session) {
       if (input$comparatorCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
         sketchLevel <- 2
-      } else if (input$comparatorCohortConceptSetColumnFilter == "Person Only") {
+      } else if (input$comparatorCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
         sketchLevel <- 1
-      } else if (input$comparatorCohortConceptSetColumnFilter == "Record Only") {
+      } else if (input$comparatorCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
@@ -3823,14 +3823,14 @@ shiny::shinyServer(function(input, output, session) {
       if (input$comparatorCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
         sketchLevel <- 2
-      } else if (input$comparatorCohortConceptSetColumnFilter == "Person Only") {
+      } else if (input$comparatorCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
         sketchLevel <- 1
-      } else if (input$comparatorCohortConceptSetColumnFilter == "Record Only") {
+      } else if (input$comparatorCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
@@ -3888,14 +3888,14 @@ shiny::shinyServer(function(input, output, session) {
       if (input$comparatorCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
         sketchLevel <- 2
-      } else if (input$comparatorCohortConceptSetColumnFilter == "Person Only") {
+      } else if (input$comparatorCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
         sketchLevel <- 1
-      } else if (input$comparatorCohortConceptSetColumnFilter == "Record Only") {
+      } else if (input$comparatorCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
@@ -3964,14 +3964,14 @@ shiny::shinyServer(function(input, output, session) {
       if (input$targetCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
         sketchLevel <- 2
-      } else if (input$targetCohortConceptSetColumnFilter == "Person Only") {
+      } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
         sketchLevel <- 1
-      } else if (input$targetCohortConceptSetColumnFilter == "Record Only") {
+      } else if (input$targetCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
@@ -4260,14 +4260,14 @@ shiny::shinyServer(function(input, output, session) {
     if (input$targetCohortConceptSetColumnFilter == "Both") {
       dataColumnFields <- dataColumnFields
       sketchLevel <- 2
-    } else if (input$targetCohortConceptSetColumnFilter == "Person Only") {
+    } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(
           string = tolower(dataColumnFields),
           pattern = tolower("person")
         )]
       sketchLevel <- 1
-    } else if (input$targetCohortConceptSetColumnFilter == "Record Only") {
+    } else if (input$targetCohortConceptSetColumnFilter == "Records") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(
           string = tolower(dataColumnFields),
@@ -4556,14 +4556,14 @@ shiny::shinyServer(function(input, output, session) {
           updateRadioButtons(session = session,
                              inputId = "comparatorCohortConceptSetColumnFilter",
                              selected = "Both")
-        } else if (input$targetCohortConceptSetColumnFilter == "Person Only") {
+        } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
           updateRadioButtons(session = session,
                              inputId = "comparatorCohortConceptSetColumnFilter",
-                             selected = "Person Only")
+                             selected = "Persons")
         } else {
           updateRadioButtons(session = session,
                              inputId = "comparatorCohortConceptSetColumnFilter",
-                             selected = "Record Only")
+                             selected = "Records")
         }
       }
     }
@@ -4697,14 +4697,14 @@ shiny::shinyServer(function(input, output, session) {
           updateRadioButtons(session = session,
                              inputId = "targetCohortConceptSetColumnFilter",
                              selected = "Both")
-        } else if (input$comparatorCohortConceptSetColumnFilter == "Person Only") {
+        } else if (input$comparatorCohortConceptSetColumnFilter == "Persons") {
           updateRadioButtons(session = session,
                              inputId = "targetCohortConceptSetColumnFilter",
-                             selected = "Person Only")
+                             selected = "Persons")
         } else {
           updateRadioButtons(session = session,
                              inputId = "targetCohortConceptSetColumnFilter",
-                             selected = "Record Only")
+                             selected = "Records")
         }
       }
     }
@@ -6184,12 +6184,12 @@ shiny::shinyServer(function(input, output, session) {
       if (input$indexEventBreakdownTableFilter == "Both") {
         dataColumnFields <- dataColumnFields
         sketchLevel <- 2
-      } else if (input$indexEventBreakdownTableFilter == "Person Only") {
+      } else if (input$indexEventBreakdownTableFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
                                                pattern = tolower("person"))]
         sketchLevel <- 1
-      } else if (input$indexEventBreakdownTableFilter == "Record Only") {
+      } else if (input$indexEventBreakdownTableFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
                                                pattern = tolower("record"))]
@@ -6291,9 +6291,9 @@ shiny::shinyServer(function(input, output, session) {
       
       if (input$indexEventBreakdownTableFilter == "Both") {
         dataColumnFields <- c('conceptCount','subjectCount')
-      } else if (input$indexEventBreakdownTableFilter == "Person Only") {
+      } else if (input$indexEventBreakdownTableFilter == "Persons") {
         dataColumnFields <- c('subjectCount')
-      } else if (input$indexEventBreakdownTableFilter == "Record Only") {
+      } else if (input$indexEventBreakdownTableFilter == "Records") {
         dataColumnFields <- c('conceptCount')
       }
       
@@ -6353,14 +6353,14 @@ shiny::shinyServer(function(input, output, session) {
     if (input$indexEventBreakdownTableFilter == "Both") {
       dataColumnFields <- dataColumnFields
       sketchLevel <- 2
-    } else if (input$indexEventBreakdownTableFilter == "Person Only") {
+    } else if (input$indexEventBreakdownTableFilter == "Persons") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(
           string = tolower(dataColumnFields),
           pattern = tolower("person")
         )]
       sketchLevel <- 1
-    } else if (input$indexEventBreakdownTableFilter == "Record Only") {
+    } else if (input$indexEventBreakdownTableFilter == "Records") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(
           string = tolower(dataColumnFields),
@@ -6491,12 +6491,12 @@ shiny::shinyServer(function(input, output, session) {
     if (input$indexEventBreakdownTableFilter == "Both") {
       dataColumnFields <- dataColumnFields
       sketchLevel <- 2
-    } else if (input$indexEventBreakdownTableFilter == "Person Only") {
+    } else if (input$indexEventBreakdownTableFilter == "Persons") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
                                              pattern = tolower("person"))]
       sketchLevel <- 1
-    } else if (input$indexEventBreakdownTableFilter == "Record Only") {
+    } else if (input$indexEventBreakdownTableFilter == "Records") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
                                              pattern = tolower("record"))]
@@ -6695,7 +6695,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     keyColumnFields <- "visitConceptName"
     
-    if (input$visitContextPersonOrRecords == "Person Only") {
+    if (input$visitContextPersonOrRecords == "Persons") {
       dataColumnFields <- dataColumnFields[stringr::str_detect(string = dataColumnFields,
                                                                pattern = "subjects")]
       data <- data %>% 
@@ -6704,7 +6704,7 @@ shiny::shinyServer(function(input, output, session) {
         stringr::str_replace_all(pattern = stringr::fixed("subjects_"), replacement = "") 
       dataColumnFields <- dataColumnFields %>% 
         stringr::str_replace_all(pattern = stringr::fixed("subjects_"), replacement = "")
-    } else if (input$visitContextPersonOrRecords == "Record Only") {
+    } else if (input$visitContextPersonOrRecords == "Records") {
       dataColumnFields <- dataColumnFields[stringr::str_detect(string = dataColumnFields,
                                                                pattern = "records")]
       data <- data %>% 

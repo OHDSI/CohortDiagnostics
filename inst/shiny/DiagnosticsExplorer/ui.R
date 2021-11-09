@@ -895,8 +895,8 @@ bodyTabItems <- shinydashboard::tabItems(
                      shiny::radioButtons(
                        inputId = "indexEventBreakdownTableFilter",
                        label = "Display",
-                       choices = c("Both", "Record Only", "Person Only"),
-                       selected = "Person Only",
+                       choices = c("Both", "Records", "Persons"),
+                       selected = "Persons",
                        inline = TRUE
                      )
                    ),
@@ -916,7 +916,6 @@ bodyTabItems <- shinydashboard::tabItems(
                  )
                )),
     shiny::tabsetPanel(
-      
       id = "conceptBrowserTabSetPanel",
       shiny::tabPanel(
         title = "Table",
@@ -1060,8 +1059,8 @@ bodyTabItems <- shinydashboard::tabItems(
             shiny::radioButtons(
               inputId = "visitContextPersonOrRecords",
               label = "Display",
-              choices = c("Person Only", "Record Only"),
-              selected = "Person Only",
+              choices = c("Persons", "Records"),
+              selected = "Persons",
               inline = TRUE
             )
           ),
