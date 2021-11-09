@@ -1307,74 +1307,75 @@ getConceptMetadata <- function(dataSource,
   }
   
   if (getRelativeTimeSeries) {
-    relativeTimeSeries <-
-      getFeatureExtractionTemporalCharacterization(dataSource = dataSource,
-                                                   cohortIds = cohortIds,
-                                                   databaseIds = databaseIds)
-    if (!is.null(relativeTimeSeries)) {
-      if (!is.null(relativeTimeSeries$temporalCovariateRef)) {
-        relativeTimeSeries$temporalCovariateRef <-
-          relativeTimeSeries$temporalCovariateRef %>%
-          dplyr::filter(.data$conceptId %in% conceptIds)
-      }
-      if (!is.null(relativeTimeSeries$temporalCovariateValue)) {
-        browser()
-        data$cohortConceptIdYearMonthLevelTsibble <-
-          relativeTimeSeries$temporalCovariateValue %>%
-          dplyr::filter(
-            .data$covariateId %in% c(
-              relativeTimeSeries$temporalCovariateRef$covariateId %>% unique()
-            )
-          ) %>%
-          dplyr::inner_join(relativeTimeSeries$temporalCovariateRef,
-                            by = "covariateId") %>%
-          dplyr::select(-.data$covariateId, -.data$covariateName) %>%
-          dplyr::inner_join(relativeTimeSeries$temporalAnalysisRef,
-                            by = "analysisId") %>%
-          dplyr::filter(.data$isBinary == 'Y') %>%
-          dplyr::select(-.data$isBinary,-.data$missingMeansZero,-.data$analysisId) %>%
-          dplyr::inner_join(
-            relativeTimeSeries$temporalTimeRef %>%
-              dplyr::filter(.data$endDay - .data$startDay == 30) %>%
-              dplyr::mutate(periodBegin = .data$endDay %/% 30),
-            by = c("timeId")
-          ) %>%
-          dplyr::select(-.data$timeId) %>%
-          dplyr::select(
-            .data$conceptId,
-            .data$cohortId,
-            .data$databaseId,
-            .data$domainId,
-            .data$analysisName,
-            .data$periodBegin,
-            .data$startDay,
-            .data$endDay,
-            .data$mean,
-            .data$sumValue,
-            .data$sd
-          ) %>%
-          dplyr::arrange(
-            .data$conceptId,
-            .data$cohortId,
-            .data$databaseId,
-            .data$domainId,
-            .data$analysisName,
-            .data$periodBegin,
-            .data$startDay,
-            .data$endDay
-          ) %>%
-          tsibble::as_tsibble(
-            key = c(
-              .data$conceptId,
-              .data$cohortId,
-              .data$databaseId,
-              .data$domainId,
-              .data$analysisName
-            ),
-            index = .data$periodBegin  #x-axis
-          )
-      }
-    }
+    browser()
+  #   relativeTimeSeries <-
+  #     getFeatureExtractionTemporalCharacterization(dataSource = dataSource,
+  #                                                  cohortIds = cohortIds,
+  #                                                  databaseIds = databaseIds)
+  #   if (!is.null(relativeTimeSeries)) {
+  #     if (!is.null(relativeTimeSeries$temporalCovariateRef)) {
+  #       relativeTimeSeries$temporalCovariateRef <-
+  #         relativeTimeSeries$temporalCovariateRef %>%
+  #         dplyr::filter(.data$conceptId %in% conceptIds)
+  #     }
+  #     if (!is.null(relativeTimeSeries$temporalCovariateValue)) {
+  #       browser()
+  #       data$cohortConceptIdYearMonthLevelTsibble <-
+  #         relativeTimeSeries$temporalCovariateValue %>%
+  #         dplyr::filter(
+  #           .data$covariateId %in% c(
+  #             relativeTimeSeries$temporalCovariateRef$covariateId %>% unique()
+  #           )
+  #         ) %>%
+  #         dplyr::inner_join(relativeTimeSeries$temporalCovariateRef,
+  #                           by = "covariateId") %>%
+  #         dplyr::select(-.data$covariateId, -.data$covariateName) %>%
+  #         dplyr::inner_join(relativeTimeSeries$temporalAnalysisRef,
+  #                           by = "analysisId") %>%
+  #         dplyr::filter(.data$isBinary == 'Y') %>%
+  #         dplyr::select(-.data$isBinary,-.data$missingMeansZero,-.data$analysisId) %>%
+  #         dplyr::inner_join(
+  #           relativeTimeSeries$temporalTimeRef %>%
+  #             dplyr::filter(.data$endDay - .data$startDay == 30) %>%
+  #             dplyr::mutate(periodBegin = .data$endDay %/% 30),
+  #           by = c("timeId")
+  #         ) %>%
+  #         dplyr::select(-.data$timeId) %>%
+  #         dplyr::select(
+  #           .data$conceptId,
+  #           .data$cohortId,
+  #           .data$databaseId,
+  #           .data$domainId,
+  #           .data$analysisName,
+  #           .data$periodBegin,
+  #           .data$startDay,
+  #           .data$endDay,
+  #           .data$mean,
+  #           .data$sumValue,
+  #           .data$sd
+  #         ) %>%
+  #         dplyr::arrange(
+  #           .data$conceptId,
+  #           .data$cohortId,
+  #           .data$databaseId,
+  #           .data$domainId,
+  #           .data$analysisName,
+  #           .data$periodBegin,
+  #           .data$startDay,
+  #           .data$endDay
+  #         ) %>%
+  #         tsibble::as_tsibble(
+  #           key = c(
+  #             .data$conceptId,
+  #             .data$cohortId,
+  #             .data$databaseId,
+  #             .data$domainId,
+  #             .data$analysisName
+  #           ),
+  #           index = .data$periodBegin  #x-axis
+  #         )
+  #     }
+  #   }
   }
   return(data)
 }
@@ -2777,67 +2778,67 @@ getFeatureExtractionCharacterization <-
     )
   }
 
-
-
-#' Returns temporal cohort characterization output of feature extraction
-#'
-#' @description
-#' Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
-#' temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature
-#' extraction along with concept information.
-#'
-#' @template DataSource
-#'
-#' @template CohortIds
-#'
-#' @template DatabaseIds
-#'
-#' @param minThreshold Do you want to set the minimum threshold for db extraction
 #' 
-#' @return
-#' Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
-#' temporalCovariateRef, temporalAnalysisRef, temporalTimeRef, Concept output of feature extraction.
-#'
-#' @export
-getFeatureExtractionTemporalCharacterization <-
-  function(dataSource = .GlobalEnv,
-           cohortIds = NULL,
-           databaseIds = NUL,
-           minThreshold = 0.01) {
-    temporalAnalysisRef <-
-      getResultsTemporalAnalysisRef(dataSource = dataSource)
-    temporalCovariateRef <-
-      getResultsTemporalCovariateRef(dataSource = dataSource)
-    temporalTimeRef <-
-      getResultsTemporalTimeRef(dataSource = dataSource)
-    concept <- getConcept(dataSource = dataSource,
-                          conceptIds = temporalCovariateRef$conceptId %>% unique())
-    temporalCovariateValue <-
-      getResultsTemporalCovariateValue(dataSource = dataSource,
-                                       cohortIds = cohortIds,
-                                       databaseIds = databaseIds)
-    # temporary till https://github.com/OHDSI/FeatureExtraction/issues/127
-    temporalCovariateValueDist <-
-      getResultsTemporalCovariateValueDist(dataSource = dataSource,
-                                           cohortIds = cohortIds,
-                                           databaseIds = databaseIds)
-    if (all(!is.null(temporalCovariateValueDist),
-            nrow(temporalCovariateValueDist) > 0)) {
-      temporalCovariateValueDist <- temporalCovariateValueDist %>%
-        dplyr::filter(!is.na(.data$timeId))
-    }
-    
-    return(
-      list(
-        temporalAnalysisRef = temporalAnalysisRef,
-        temporalCovariateRef = temporalCovariateRef,
-        temporalTimeRef = temporalTimeRef,
-        temporalCovariateValue = temporalCovariateValue,
-        temporalCovariateValueDist = temporalCovariateValueDist,
-        concept = concept
-      )
-    )
-  }
+#' 
+#' #' Returns temporal cohort characterization output of feature extraction
+#' #'
+#' #' @description
+#' #' Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
+#' #' temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature
+#' #' extraction along with concept information.
+#' #'
+#' #' @template DataSource
+#' #'
+#' #' @template CohortIds
+#' #'
+#' #' @template DatabaseIds
+#' #'
+#' #' @param minThreshold Do you want to set the minimum threshold for db extraction
+#' #' 
+#' #' @return
+#' #' Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
+#' #' temporalCovariateRef, temporalAnalysisRef, temporalTimeRef, Concept output of feature extraction.
+#' #'
+#' #' @export
+#' getFeatureExtractionTemporalCharacterization <-
+#'   function(dataSource = .GlobalEnv,
+#'            cohortIds = NULL,
+#'            databaseIds = NUL,
+#'            minThreshold = 0.01) {
+#'     temporalAnalysisRef <-
+#'       getResultsTemporalAnalysisRef(dataSource = dataSource)
+#'     temporalCovariateRef <-
+#'       getResultsTemporalCovariateRef(dataSource = dataSource)
+#'     temporalTimeRef <-
+#'       getResultsTemporalTimeRef(dataSource = dataSource)
+#'     concept <- getConcept(dataSource = dataSource,
+#'                           conceptIds = temporalCovariateRef$conceptId %>% unique())
+#'     temporalCovariateValue <-
+#'       getResultsTemporalCovariateValue(dataSource = dataSource,
+#'                                        cohortIds = cohortIds,
+#'                                        databaseIds = databaseIds)
+#'     # temporary till https://github.com/OHDSI/FeatureExtraction/issues/127
+#'     temporalCovariateValueDist <-
+#'       getResultsTemporalCovariateValueDist(dataSource = dataSource,
+#'                                            cohortIds = cohortIds,
+#'                                            databaseIds = databaseIds)
+#'     if (all(!is.null(temporalCovariateValueDist),
+#'             nrow(temporalCovariateValueDist) > 0)) {
+#'       temporalCovariateValueDist <- temporalCovariateValueDist %>%
+#'         dplyr::filter(!is.na(.data$timeId))
+#'     }
+#'     
+#'     return(
+#'       list(
+#'         temporalAnalysisRef = temporalAnalysisRef,
+#'         temporalCovariateRef = temporalCovariateRef,
+#'         temporalTimeRef = temporalTimeRef,
+#'         temporalCovariateValue = temporalCovariateValue,
+#'         temporalCovariateValueDist = temporalCovariateValueDist,
+#'         concept = concept
+#'       )
+#'     )
+#'   }
 
 
 #' Returns cohort as feature characterization
@@ -2852,8 +2853,6 @@ getFeatureExtractionTemporalCharacterization <-
 #'
 #' @template DatabaseIds
 #'
-#' @param temporalTimeRef   A dataframe (tibble) object with three columns timeId (integer), startDay (integer), endDay (integer)
-#'
 #' @return
 #' Returns a list object with covariateValue,
 #' covariateRef, analysisRef output of cohort as features. To avoid clash
@@ -2863,7 +2862,6 @@ getFeatureExtractionTemporalCharacterization <-
 #' @export
 getCohortRelationshipCharacterizationResults <-
   function(dataSource = .GlobalEnv,
-           temporalTimeRef = getResultsTemporalTimeRef(dataSource = dataSource),
            cohortIds = NULL,
            databaseIds = NULL) {
     
@@ -2885,6 +2883,14 @@ getCohortRelationshipCharacterizationResults <-
       getResultsCohortRelationships(dataSource = dataSource,
                                     cohortIds = cohortIds,
                                     databaseIds = databaseIds)
+    
+    temporalTimeRef <- cohortRelationships %>% 
+      dplyr::select(.data$startDay,
+                    .data$endDay) %>% 
+      dplyr::distinct() %>% 
+      dplyr::inner_join(getResultsTemporalTimeRef(dataSource = dataSource),
+                        by = c("startDay",
+                               "endDay"))
     
     analysisRef <-
       dplyr::tibble(analysisId = c(-101,-201,-301), 
@@ -3214,8 +3220,6 @@ getCohortRelationshipCharacterizationResults <-
 #'
 #' @template DatabaseIds
 #' 
-#' @param temporalTimeRef A tibble object with two columns startDay and endDay with integer values.
-#' 
 #' @param featureExtractionCharacterization Do you want to get feature extraction characterization results?
 #' 
 #' @param featureExtractionTemporalCharacterization Do you want to get feature extraction temporal characterization results?
@@ -3234,14 +3238,8 @@ getMultipleCharacterizationResults <-
            databaseIds = NULL,
            featureExtractionCharacterization = TRUE,
            cohortRelationshipCharacterizationResults = TRUE,
-           temporalTimeRef = getResultsTemporalTimeRef(dataSource = dataSource),
            minThreshold = 0.01) {
     browser()
-    if (!all(dplyr::is.tbl(temporalTimeRef),
-            'startDay' %in% colnames(temporalTimeRef),
-            'endDay' %in% colnames(temporalTimeRef))) {
-      stop("Please check temporalTimeRef object.")
-    }
     addCharacterizationSource <-
       function(x, characterizationSourceValue) {
         exepectedDataTables <-
@@ -3309,6 +3307,7 @@ getMultipleCharacterizationResults <-
         getCohortRelationshipCharacterizationResults(
           dataSource = dataSource,
           cohortIds = cohortIds,
+          temporalTimeRef = temporalTimeRef,
           databaseIds = databaseIds
         )
       cohortRelationshipCharacterizationResults <-
