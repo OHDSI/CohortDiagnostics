@@ -6766,6 +6766,23 @@ shiny::shinyServer(function(input, output, session) {
     on.exit(progress$close())
     progress$set(message = paste0("Plotting cohort overlap."),
                  value = 0)
+    
+    validate(need(
+      length(consolidatedCohortIdTarget()) > 0,
+      paste0("Please select Target cohort")
+    ))
+    validate(need(
+      length(consolidatedCohortIdTarget()) == 1,
+      paste0("Please only select one target cohort")
+    ))
+    validate(need(
+      length(getComparatorCohortIdFromSelectedCompoundCohortNames()) > 0,
+      paste0("Please select Comparator Cohort(s)")
+    ))
+    validate(need(
+      consolidatedCohortIdTarget() != getComparatorCohortIdFromSelectedCompoundCohortNames(),
+      paste0("Comparator cohort cannot be same as target cohort")
+    ))
     data <- cohortOverlapDataFiltered()
     validate(need(
       doesObjectHaveData(data),
