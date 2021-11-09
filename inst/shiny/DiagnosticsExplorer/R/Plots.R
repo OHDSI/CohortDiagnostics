@@ -738,17 +738,47 @@ plotIndexEventBreakdown <-
                   "The following concept id's were found to belong to more than domain.: \n",
                   paste0(moreThanOneDomain$conceptId, collapse = ";")))
     }
-    
     if (!doesObjectHaveData(cohort)) {
       return(NULL)
     }
-    cohort <- cohort %>% 
+    
+    data <- dplyr::bind_rows(
+      data,
+      data %>%
+        dplyr::select(
+          .data$databaseId,
+          .data$cohortId,
+          .data$daysRelativeIndex,
+          .data$conceptCount
+        ) %>%
+        dplyr::group_by(.data$databaseId,
+                        .data$cohortId,
+                        .data$daysRelativeIndex) %>%
+        dplyr::summarise(
+          "conceptCount" = sum(.data$conceptCount),
+          .groups = "keep"
+        ) %>%
+        dplyr::mutate(conceptId = 0)
+    )
+    
+    cohort <- cohort %>%
       dplyr::filter(.data$cohortId %in% c(data$cohortId %>% unique()))
     if (!doesObjectHaveData(conceptIdDetails)) {
       return(NULL)
     }
-    conceptIdDetails <- conceptIdDetails %>% 
-      dplyr::filter(.data$conceptId %in% c(data$conceptId %>% unique()))
+    conceptIdDetails <- dplyr::bind_rows(
+      conceptIdDetails %>%
+        dplyr::filter(.data$conceptId %in% c(data$conceptId %>% unique())) %>%
+        dplyr::filter(.data$conceptId > 0),
+      dplyr::tibble(
+        "conceptId" = 0,
+        "conceptName" = "Overall",
+        "domainId" = "Other",
+        "conceptClassId" = "Other",
+        "conceptCode" = "Other"
+      )
+    )
+    
     if (!doesObjectHaveData(database)) {
       return(NULL)
     }
@@ -793,7 +823,8 @@ plotIndexEventBreakdown <-
       for (j in (1:length(yAxisColumns))) {
         filteredDataByCohort <- filteredDataByCohort %>%
           dplyr::mutate(count = .data[[yAxisColumns[j]]]) %>% 
-          dplyr::select(-.data[[yAxisColumns[j]]])
+          dplyr::select(-.data[[yAxisColumns[j]]]) %>% 
+          dplyr::filter(!is.na(.data$count))
         databasePlots <- list()
         for (k in (1:nrow(database)))  {
           filteredDataByDatabase <- filteredDataByCohort %>%
@@ -808,11 +839,12 @@ plotIndexEventBreakdown <-
           domainPlots <- list()
           for (l in (1:length(distinctDomainIds))) {
             conceptIdPlots <- list()
-            for (m in (1:nrow(conceptIdDetails))) {
+            conceptIdDetailsDomain <- conceptIdDetails %>% 
+              dplyr::filter(.data$domainId %in% c(distinctDomainIds[l]))
+            for (m in (1:nrow(conceptIdDetailsDomain))) {
               filterByConceptId <- filteredDataByDatabase %>%
-                dplyr::filter(.data$conceptId == conceptIdDetails$conceptId[m]) %>%
-                dplyr::inner_join(conceptIdDetails %>%
-                                    dplyr::filter(.data$domainId %in% c(distinctDomainIds[l])) %>% 
+                dplyr::filter(.data$conceptId == conceptIdDetailsDomain$conceptId[m]) %>%
+                dplyr::inner_join(conceptIdDetailsDomain %>%
                                     dplyr::select(.data$conceptId, .data$conceptName, .data$domainId),
                                   by = "conceptId") %>% 
                 dplyr::arrange(.data$domainId, .data$conceptId) %>% 
@@ -850,7 +882,7 @@ plotIndexEventBreakdown <-
                   ),
                   color = ~ domainId,
                   colors = colors,
-                  line = list(shape = "hv"),
+                  line = list(shape = "hvh"),
                   showlegend = FALSE,
                   height = plotHeight
                 ) %>%
