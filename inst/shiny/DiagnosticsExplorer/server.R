@@ -7146,14 +7146,14 @@ shiny::shinyServer(function(input, output, session) {
     }
     if (all(
       hasData(input$conceptSetsSelectedTargetCohort),
-      hasData(getResolvedConceptsAllData())
+      hasData(getResolvedConceptsTarget())
     )) {
       covariatesTofilter <- covariatesTofilter  %>%
         dplyr::inner_join(
           conceptSets %>% 
             dplyr::filter(.data$compoundName %in% c(input$conceptSetsSelectedTargetCohort)) %>% 
             dplyr::select(.data$cohortId, .data$conceptSetId) %>% 
-            dplyr::inner_join(getResolvedConceptsAllData() %>% 
+            dplyr::inner_join(getResolvedConceptsTarget() %>% 
                                 dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
                                 dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId) %>% 
                                 dplyr::distinct(),
