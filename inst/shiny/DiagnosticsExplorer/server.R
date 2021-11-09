@@ -4024,7 +4024,7 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderText({
       if (any(
         !doesObjectHaveData(consolidatedCohortIdComparator()),
-        !doesObjectHaveData(consolidatedConceptSetIdComparator())
+        !hasData(consolidatedConceptSetIdComparator())
       )) {
         return(NULL)
       }
@@ -4041,8 +4041,8 @@ shiny::shinyServer(function(input, output, session) {
   output$comparatorCohortDefinitionConceptsetExpressionSql <-
     shiny::renderText({
       if (any(
-        !doesObjectHaveData(consolidatedCohortIdComparator()),
-        !doesObjectHaveData(consolidatedConceptSetIdComparator())
+        !hasData(consolidatedCohortIdComparator()),
+        !hasData(consolidatedConceptSetIdComparator())
       )) {
         return(NULL)
       }
@@ -4055,22 +4055,22 @@ shiny::shinyServer(function(input, output, session) {
   
   output$conceptSetTimeSeriesPlot <-  plotly::renderPlotly({
     data <- getMetadataForConceptId()
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     databaseCount <- getDataSourceTimeSeries()
-    if (!doesObjectHaveData(databaseCount)) {
+    if (!hasData(databaseCount)) {
       return(NULL)
     }
     # working on the plot
     if (input$timeSeriesAggregationForConceptId == "Monthly") {
       data <- data$databaseConceptIdYearMonthLevelTsibble
-      if (!doesObjectHaveData(data)) {
+      if (!hasData(data)) {
         return(NULL)
       }
       data <- data %>% 
         dplyr::filter(.data$conceptId == activeSelected()$conceptId)
-      if (!doesObjectHaveData(databaseCount$m)) {
+      if (!hasData(databaseCount$m)) {
         return(NULL)
       }
       databaseCount <- databaseCount$m %>% 
@@ -4080,12 +4080,12 @@ shiny::shinyServer(function(input, output, session) {
                       .data$subjects)
     } else {
       data <- data$databaseConceptIdYearLevelTsibble
-      if (!doesObjectHaveData(data)) {
+      if (!hasData(data)) {
         return(NULL)
       }
       data <- data %>% 
         dplyr::filter(.data$conceptId == activeSelected()$conceptId)
-      if (!doesObjectHaveData(databaseCount$y)) {
+      if (!hasData(databaseCount$y)) {
         return(NULL)
       }
       databaseCount <- databaseCount$y %>% 
@@ -4101,7 +4101,7 @@ shiny::shinyServer(function(input, output, session) {
                        activeSelected()$conceptId),
       value = 0
     )
-    validate(need(doesObjectHaveData(data),
+    validate(need(hasData(data),
       "No timeseries data for the cohort of this series type"
     ))
     data <- data %>% 
@@ -4147,7 +4147,7 @@ shiny::shinyServer(function(input, output, session) {
   ##output:: conceptBrowserConceptSynonymNameInHtmlString
   output$conceptBrowserConceptSynonymNameInHtmlString <- shiny::renderUI(expr = {
      data <- getConceptSetSynonymsHtmlTextString()
-     if (!doesObjectHaveData(data)) {
+     if (!hasData(data)) {
        return(NULL)
      }
      return(data)
@@ -4155,11 +4155,11 @@ shiny::shinyServer(function(input, output, session) {
   
   conceptSetBrowserData <- shiny::reactive(x = {
     conceptId <- activeSelected()$conceptId
-    validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
+    validate(need(hasData(conceptId), "No concept id selected."))
     cohortId <- activeSelected()$cohortId
-    validate(need(doesObjectHaveData(conceptId), "No cohort id selected."))
+    validate(need(hasData(conceptId), "No cohort id selected."))
     databaseId <- consolidatedDatabaseIdTarget()
-    validate(need(doesObjectHaveData(databaseId), "No database id selected."))
+    validate(need(hasData(databaseId), "No database id selected."))
     
     progress <- shiny::Progress$new()
     on.exit(progress$close())
@@ -4171,7 +4171,7 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- getMetadataForConceptId()
     validate(need(
-      doesObjectHaveData(data),
+      hasData(data),
       "No information for selected concept id."
     ))
     if (input$tabs == "indexEventBreakdown") {
@@ -4188,10 +4188,10 @@ shiny::shinyServer(function(input, output, session) {
     conceptRelationshipTable <- data$conceptRelationshipTable %>%
       dplyr::filter(.data$conceptId != activeSelected()$conceptId)
     if (any(
-      doesObjectHaveData(relationshipNameFilter),
-      doesObjectHaveData(relationshipDistanceFilter)
+      hasData(relationshipNameFilter),
+      hasData(relationshipDistanceFilter)
     )) {
-      if (doesObjectHaveData(relationshipNameFilter)) {
+      if (hasData(relationshipNameFilter)) {
         conceptRelationshipTable <- conceptRelationshipTable %>%
           dplyr::inner_join(
             relationship %>%
@@ -4201,7 +4201,7 @@ shiny::shinyServer(function(input, output, session) {
             by = "relationshipId"
           )
       }
-      if (doesObjectHaveData(relationshipDistanceFilter)) {
+      if (hasData(relationshipDistanceFilter)) {
         conceptRelationshipTable <- conceptRelationshipTable %>%
           dplyr::filter(.data$levelsOfSeparation %in%
                           relationshipDistanceFilter)
@@ -4211,7 +4211,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::inner_join(data$concept,
                         by = "conceptId") %>%
       tidyr::crossing(dplyr::tibble(databaseId = !!databaseId))
-    if (!doesObjectHaveData(conceptRelationshipTable)) {
+    if (!hasData(conceptRelationshipTable)) {
       return(NULL)
     }
     
@@ -4243,7 +4243,7 @@ shiny::shinyServer(function(input, output, session) {
   output$conceptBrowserTable <- DT::renderDT(expr = {
     
     data <- conceptSetBrowserData()
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     keyColumnFields <- c("conceptId", 
@@ -4316,9 +4316,9 @@ shiny::shinyServer(function(input, output, session) {
     cohortId <- activeSelected()$cohortId
     databaseId <- consolidatedDatabaseIdTarget()
     if (!all(
-      doesObjectHaveData(conceptId),
-      doesObjectHaveData(cohortId),
-      doesObjectHaveData(databaseId)
+      hasData(conceptId),
+      hasData(cohortId),
+      hasData(databaseId)
     )){
       return(NULL)
     }
@@ -4328,7 +4328,7 @@ shiny::shinyServer(function(input, output, session) {
       conceptIds = conceptId,
       domainTables = 'All'
     )
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     conceptMapping <- data %>%
@@ -4356,11 +4356,11 @@ shiny::shinyServer(function(input, output, session) {
   ##output: observedSourceCodesTable----
   output$observedSourceCodesTable <- DT::renderDT(expr = {
     conceptId <- activeSelected()$conceptId
-    validate(need(doesObjectHaveData(conceptId), "No concept id selected."))
+    validate(need(hasData(conceptId), "No concept id selected."))
     cohortId <- activeSelected()$cohortId
-    validate(need(doesObjectHaveData(conceptId), "No cohort id selected."))
+    validate(need(hasData(conceptId), "No cohort id selected."))
     databaseId <- consolidatedDatabaseIdTarget()
-    validate(need(doesObjectHaveData(databaseId), "No database id selected."))
+    validate(need(hasData(databaseId), "No database id selected."))
     
     progress <- shiny::Progress$new()
     on.exit(progress$close())
@@ -4371,7 +4371,7 @@ shiny::shinyServer(function(input, output, session) {
     )
     data <- getSourceCodesObservedForConceptIdInDatasource()
     validate(need(
-      doesObjectHaveData(data),
+      hasData(data),
       "No information for selected concept id."
     ))
     
@@ -4719,10 +4719,10 @@ shiny::shinyServer(function(input, output, session) {
               !exists('cohortCount'))) {
         return(NULL)
       }
-      if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+      if (!hasData(consolidatedDatabaseIdTarget())) {
         return(NULL)
       }
-      if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+      if (!hasData(consolidatedCohortIdTarget())) {
         return(NULL)
       }
       data <- cohortCount %>%
@@ -4732,7 +4732,7 @@ shiny::shinyServer(function(input, output, session) {
                             dplyr::select(.data$cohortId, .data$shortName),
                           by = "cohortId") %>%
         dplyr::arrange(.data$shortName, .data$databaseId)
-      if (!doesObjectHaveData(data)) {
+      if (!hasData(data)) {
         return(NULL)
       }
       return(data)
@@ -4741,7 +4741,7 @@ shiny::shinyServer(function(input, output, session) {
   ##getCohortCountDataSubjectRecord----
   getCohortCountDataSubjectRecord <- shiny::reactive(x = {
     data <- getCohortCountDataForSelectedDatabaseIdsCohortIds()
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -4789,7 +4789,7 @@ shiny::shinyServer(function(input, output, session) {
   ##getCohortCountDataSubject----
   getCohortCountDataSubject <- shiny::reactive(x = {
     data <- getCohortCountDataForSelectedDatabaseIdsCohortIds()
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -4810,7 +4810,7 @@ shiny::shinyServer(function(input, output, session) {
   ##getCohortCountDataRecord----
   getCohortCountDataRecord <- shiny::reactive(x = {
     data <- getCohortCountDataForSelectedDatabaseIdsCohortIds()
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -4842,7 +4842,7 @@ shiny::shinyServer(function(input, output, session) {
       "No cohorts chosen"
     ))
     data <- getCohortCountDataForSelectedDatabaseIdsCohortIds()
-    validate(need(all(doesObjectHaveData(data)),
+    validate(need(all(hasData(data)),
       "No data for the combination"
     ))
     
@@ -5001,7 +5001,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(idx)) {
       return(NULL)
     } else {
-      if (!doesObjectHaveData(getCohortCountDataForSelectedDatabaseIdsCohortIds())) {
+      if (!hasData(getCohortCountDataForSelectedDatabaseIdsCohortIds())) {
         return(NULL)
       } else {
         subset <- getCohortCountDataForSelectedDatabaseIdsCohortIds() %>%
@@ -5093,10 +5093,10 @@ shiny::shinyServer(function(input, output, session) {
             !input$tabs == "incidenceRate")) {
       return(NULL)
     }
-    if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+    if (!hasData(consolidatedCohortIdTarget())) {
       return(NULL)
     }
-    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+    if (!hasData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
     progress <- shiny::Progress$new()
@@ -5106,7 +5106,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getResultsIncidenceRate(dataSource = dataSource,
                                     cohortId =  consolidatedCohortIdTarget(), 
                                     databaseId = consolidatedDatabaseIdTarget())
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     data <- data %>%
@@ -5117,7 +5117,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##pickerInput - incidenceRateAgeFilter----
   shiny::observe({
-    if (!doesObjectHaveData(getIncidenceRateData())) {
+    if (!hasData(getIncidenceRateData())) {
       return(NULL)
     }
     ageFilter <- getIncidenceRateData() %>%
@@ -5139,7 +5139,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##pickerInput - incidenceRateGenderFilter----
   shiny::observe({
-    if (!doesObjectHaveData(getIncidenceRateData())) {
+    if (!hasData(getIncidenceRateData())) {
       return(NULL)
     }
     genderFilter <- getIncidenceRateData() %>%
@@ -5159,7 +5159,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##pickerInput - incidenceRateCalendarFilter & YscaleMinAndMax----
   shiny::observe({
-    if (!doesObjectHaveData(getIncidenceRateData())) {
+    if (!hasData(getIncidenceRateData())) {
       return(NULL)
     }
     calendarFilter <- getIncidenceRateData() %>%
@@ -5227,10 +5227,10 @@ shiny::shinyServer(function(input, output, session) {
   ##reactive: getIncidenceRateCalendarYears----
   getIncidenceRateCalendarYears <-
     shiny::reactive({
-      if (!doesObjectHaveData(getIncidenceRateData())) {
+      if (!hasData(getIncidenceRateData())) {
         return(NULL)
       }
-      if (!doesObjectHaveData(input$incidenceRateCalendarFilter)) {
+      if (!hasData(input$incidenceRateCalendarFilter)) {
         return(NULL)
       }
       if (input$incidenceRateCalendarFilter[2] <=
@@ -5275,24 +5275,24 @@ shiny::shinyServer(function(input, output, session) {
     if (input$tabs != "incidenceRate") {
       return(NULL)
     }
-    if (!doesObjectHaveData(input$irStratification)) {
+    if (!hasData(input$irStratification)) {
       return(NULL)
     }
-    if (!doesObjectHaveData(getIncidenceRateCalendarYears())) {
+    if (!hasData(getIncidenceRateCalendarYears())) {
       return(NULL)
     }
-    if (!doesObjectHaveData(input$minPersonYear)) {
+    if (!hasData(input$minPersonYear)) {
       return(NULL)
     }
-    if (!doesObjectHaveData(input$minSubjetCount)) {
+    if (!hasData(input$minSubjetCount)) {
       return(NULL)
     }
-    if (!doesObjectHaveData(incidenceRateAgeFilterValues())) {
+    if (!hasData(incidenceRateAgeFilterValues())) {
       return(NULL)
     }
     
     data <- getIncidenceRateData()
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     
@@ -5303,7 +5303,7 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- data %>%
       dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget())
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     if (stratifyByGender) {
@@ -5342,7 +5342,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$cohortCount >= input$minSubjetCount)
     }
     
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     
@@ -5359,7 +5359,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     if (stratifyByCalendarYear) {
-      if (doesObjectHaveData(getIncidenceRateCalendarYears())) {
+      if (hasData(getIncidenceRateCalendarYears())) {
         data <- data %>%
           dplyr::filter(.data$calendarYear %in% getIncidenceRateCalendarYears())
       }
@@ -5715,18 +5715,18 @@ shiny::shinyServer(function(input, output, session) {
   
   ##reactive: getFixedTimeSeriesDataForPlot----
   getFixedTimeSeriesDataForPlot <- shiny::reactive({
-    if (!doesObjectHaveData(input$timeSeriesTypeFilter)) {
+    if (!hasData(input$timeSeriesTypeFilter)) {
       return(NULL)
     }
     timeSeriesColumnNameCrosswalk <- getTimeSeriesColumnNameCrosswalk()
-    if (!doesObjectHaveData(timeSeriesColumnNameCrosswalk)) {
+    if (!hasData(timeSeriesColumnNameCrosswalk)) {
       return(NULL)
     }
     timeSeriesDescription <- getTimeSeriesDescription()
-    if (!doesObjectHaveData(timeSeriesDescription)) {
+    if (!hasData(timeSeriesDescription)) {
       return(NULL)
     }
-    if (!doesObjectHaveData(input$timeSeriesPlotFilters)) {
+    if (!hasData(input$timeSeriesPlotFilters)) {
       return(NULL)
     }
     data <- getFixedTimeSeriesTsibbleFiltered()
@@ -5776,12 +5776,12 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: fixedTimeSeriesTable----
   output$fixedTimeSeriesTable <- DT::renderDataTable({
-    validate(need(doesObjectHaveData(input$timeSeriesTypeFilter),
+    validate(need(hasData(input$timeSeriesTypeFilter),
                   "Please select time series type."
     ))
     
     data <- getFixedTimeSeriesDataForTable()
-    validate(need(doesObjectHaveData(data),
+    validate(need(hasData(data),
       "No timeseries data for the cohort of this series type"
     ))
     
@@ -5823,11 +5823,11 @@ shiny::shinyServer(function(input, output, session) {
 
   ##output: fixedTimeSeriesPlot----
   output$fixedTimeSeriesPlot <- plotly::renderPlotly ({
-    validate(need(doesObjectHaveData(input$timeSeriesTypeFilter),
+    validate(need(hasData(input$timeSeriesTypeFilter),
       "Please select time series type."
     ))
     data <- getFixedTimeSeriesDataForPlot()
-    validate(need(doesObjectHaveData(data),
+    validate(need(hasData(data),
       "No timeseries data for the cohort of this series type"
     ))
     
@@ -5876,7 +5876,7 @@ shiny::shinyServer(function(input, output, session) {
     if (any(is.null(input$tabs),!input$tabs == "timeDistribution")) {
       return(NULL)
     }
-    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+    if (!hasData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
     if (all(is(dataSource, "environment"),
@@ -5888,7 +5888,7 @@ shiny::shinyServer(function(input, output, session) {
       cohortId =  consolidatedCohortIdTarget(),
       databaseId = consolidatedDatabaseIdTarget()
     )
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     return(data)
@@ -5896,7 +5896,7 @@ shiny::shinyServer(function(input, output, session) {
   
   getTimeDistributionTableData <- reactive({
     data <- getTimeDistributionData()
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     
@@ -5938,7 +5938,7 @@ shiny::shinyServer(function(input, output, session) {
   ##output: timeDistributionTable----
   output$timeDistributionTable <- DT::renderDataTable(expr = {
     data <- getTimeDistributionTableData()
-    validate(need(doesObjectHaveData(data), 
+    validate(need(hasData(data), 
              "No data available for selected combination."))
     options = list(
       pageLength = 100,
@@ -5970,10 +5970,10 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: timeDistributionPlot----
   output$timeDistributionPlot <- plotly::renderPlotly(expr = {
-    validate(need(doesObjectHaveData(consolidatedDatabaseIdTarget()),
+    validate(need(hasData(consolidatedDatabaseIdTarget()),
       "No data sources chosen"))
     data <- getTimeDistributionData()
-    validate(need(doesObjectHaveData(data), 
+    validate(need(hasData(data), 
                   "No data for this combination"))
     plot <- plotTimeDistribution(data = data, shortNameRef = cohort)
     return(plot)
@@ -5999,7 +5999,7 @@ shiny::shinyServer(function(input, output, session) {
                                     databaseIds = NULL,
                                     coConceptIds = NULL,
                                     daysRelativeIndex = NULL) #!! in new design, we have multiple daysRelativeIndex
-    if (!doesObjectHaveData(indexEventBreakdown)) {
+    if (!hasData(indexEventBreakdown)) {
       return(NULL)
     }
     return(indexEventBreakdown)
@@ -6011,14 +6011,14 @@ shiny::shinyServer(function(input, output, session) {
     if (any(
       is.null(input$tabs),
       !input$tabs == "indexEventBreakdown",
-      !doesObjectHaveData(getIndexEventBreakdownRawTarget())
+      !hasData(getIndexEventBreakdownRawTarget())
     )) {
       return(NULL)
     }
     conceptIdDetails <- getConcept(dataSource = dataSource,
                                    conceptIds = c(getIndexEventBreakdownRawTarget()$conceptId,
                                                   getIndexEventBreakdownRawTarget()$coConceptId) %>% unique())
-    if (!doesObjectHaveData(conceptIdDetails)) {
+    if (!hasData(conceptIdDetails)) {
       return(NULL)
     }
     return(conceptIdDetails)
@@ -6029,7 +6029,7 @@ shiny::shinyServer(function(input, output, session) {
     if (any(
       is.null(input$tabs),
       !input$tabs == "indexEventBreakdown",
-      !doesObjectHaveData(getIndexEventBreakdownRawTarget())
+      !hasData(getIndexEventBreakdownRawTarget())
     )) {
       return(NULL)
     }
@@ -6066,16 +6066,16 @@ shiny::shinyServer(function(input, output, session) {
   ##getIndexEventBreakdownTargetDataFiltered----
   getIndexEventBreakdownTargetDataFiltered <- shiny::reactive(x = {
     data <- getIndexEventBreakdownTargetData()
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
-    if (!doesObjectHaveData(consolidatedConceptSetIdTarget())) {
+    if (!hasData(consolidatedConceptSetIdTarget())) {
       return(NULL)
     }
-    if (!doesObjectHaveData(input$indexEventDomainNameFilter)) {
+    if (!hasData(input$indexEventDomainNameFilter)) {
       return(NULL)
     }
-    if (!doesObjectHaveData(input$indexEventBreakdownTableRadioButton)) {
+    if (!hasData(input$indexEventBreakdownTableRadioButton)) {
       return(NULL)
     }
     data <- data %>%
@@ -6083,28 +6083,28 @@ shiny::shinyServer(function(input, output, session) {
     if (length(input$indexEventBreakdownTableRadioButton) > 0) {
       conceptIdsToFilter <- c()
       if ("Resolved" %in% c(input$indexEventBreakdownTableRadioButton)) {
-        if (doesObjectHaveData(getResolvedConceptsTarget())) {
+        if (hasData(getResolvedConceptsTarget())) {
           conceptIdsToFilter <- c(conceptIdsToFilter,
                                   getResolvedConceptsTarget()$conceptId) %>%
             unique()
         }
       }
       if ("Mapped" %in% c(input$indexEventBreakdownTableRadioButton)) {
-        if (doesObjectHaveData(getMappedConceptsTarget())) {
+        if (hasData(getMappedConceptsTarget())) {
           conceptIdsToFilter <- c(conceptIdsToFilter,
                                   getMappedConceptsTarget()$conceptId) %>%
             unique()
         }
       }
       if ("Excluded" %in% c(input$indexEventBreakdownTableRadioButton)) {
-        if (doesObjectHaveData(getExcludedConceptsTarget())) {
+        if (hasData(getExcludedConceptsTarget())) {
           conceptIdsToFilter <- c(conceptIdsToFilter,
                                   getExcludedConceptsTarget()$conceptId) %>%
             unique()
         }
       }
       if ("Recommended" %in% c(input$indexEventBreakdownTableRadioButton)) {
-        if (doesObjectHaveData(getOrphanConceptsTarget())) {
+        if (hasData(getOrphanConceptsTarget())) {
           conceptIdsToFilter <- c(conceptIdsToFilter,
                                   getOrphanConceptsTarget()$conceptId) %>%
             unique()
@@ -6125,7 +6125,7 @@ shiny::shinyServer(function(input, output, session) {
         
       }
       validate(need(
-        doesObjectHaveData(conceptIdsToFilter),
+        hasData(conceptIdsToFilter),
         "No index event breakdown data for the chosen combination."
       ))
       data <- data %>%
@@ -6171,7 +6171,7 @@ shiny::shinyServer(function(input, output, session) {
       
       validate(
         need(
-          doesObjectHaveData(data),
+          hasData(data),
           "No index event breakdown data for the chosen combination."
         )
       )
@@ -6224,16 +6224,16 @@ shiny::shinyServer(function(input, output, session) {
   
   ##getIndexEventBreakdownPlotData----
   getIndexEventBreakdownPlotData <- shiny::reactive(x = {
-    if (!doesObjectHaveData(getIndexEventBreakdownRawTarget())) {
+    if (!hasData(getIndexEventBreakdownRawTarget())) {
       return(NULL)
     }
-    if (!doesObjectHaveData(getIndexEventBreakdownTargetDataFiltered())) {
+    if (!hasData(getIndexEventBreakdownTargetDataFiltered())) {
       return(NULL)
     }
     
     filteredConceptIds <-
       getIndexEventBreakdownTargetDataFiltered()$conceptId %>% unique()
-    if (!doesObjectHaveData(filteredConceptIds)) {
+    if (!hasData(filteredConceptIds)) {
       return(NULL)
     }
     
@@ -6247,7 +6247,7 @@ shiny::shinyServer(function(input, output, session) {
                     .data$daysRelativeIndex,
                     .data$conceptCount,
                     .data$subjectCount)
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     ## creating order
@@ -6270,7 +6270,7 @@ shiny::shinyServer(function(input, output, session) {
   
   observeEvent(eventExpr = getIndexEventBreakdownPlotData(),handlerExpr = {
     data <- getIndexEventBreakdownPlotData()
-    if (doesObjectHaveData(data)) {
+    if (hasData(data)) {
       maxValue <- data %>% 
         dplyr::pull(.data$rank) %>% 
         max() 
@@ -6289,19 +6289,19 @@ shiny::shinyServer(function(input, output, session) {
   output$indexEventBreakdownPlot <-
     plotly::renderPlotly({
       validate(need(
-        doesObjectHaveData(getIndexEventBreakdownRawTarget()),
+        hasData(getIndexEventBreakdownRawTarget()),
         "No index event breakdown data for the chosen combination."
       ))
       validate(
         need(
-          doesObjectHaveData(getIndexEventBreakdownTargetDataFiltered()),
+          hasData(getIndexEventBreakdownTargetDataFiltered()),
           "No index event breakdown data for the chosen combination. Maybe the concept id in the selected concept id is too restrictive?"
         )
       )
       
       data <- getIndexEventBreakdownPlotData()
       validate(need(
-        doesObjectHaveData(data),
+        hasData(data),
         "No index event breakdown data for the chosen combination."
       ))
       
@@ -6332,7 +6332,7 @@ shiny::shinyServer(function(input, output, session) {
   ##output: conceptSetSynonymsForIndexEventBreakdown----
   output$conceptSetSynonymsForIndexEventBreakdown <- shiny::renderUI(expr = {
     data <- getConceptSetSynonymsHtmlTextString()
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     return(data)
@@ -6341,12 +6341,12 @@ shiny::shinyServer(function(input, output, session) {
   #!!!!!!!! should be same as cohort - code duplication
   ##output: conceptBrowserTableForIndexEvent----
   output$conceptBrowserTableForIndexEvent <- DT::renderDT(expr = {
-    if (doesObjectHaveData(consolidateCohortDefinitionActiveSideTarget())) {
+    if (hasData(consolidateCohortDefinitionActiveSideTarget())) {
       conceptId <- consolidatedConceptIdTarget()
     }
     data <- conceptSetBrowserData()
     validate(need(
-      doesObjectHaveData(data),
+      hasData(data),
       "No information for selected concept id."
     ))
 
@@ -6410,7 +6410,7 @@ shiny::shinyServer(function(input, output, session) {
     plotly::renderPlotly({
       data <- getMetadataForConceptId()
       validate(need(
-        doesObjectHaveData(data),
+        hasData(data),
         "No timeseries data for the cohort of this series type"
       ))
       # working on the plot
@@ -6460,10 +6460,10 @@ shiny::shinyServer(function(input, output, session) {
   
   ##getCoCOnceptForIndexEvent----
   getCoCOnceptForIndexEvent <- shiny::reactive(x = {
-    if (!doesObjectHaveData(getIndexEventBreakdownRawTarget())) {
+    if (!hasData(getIndexEventBreakdownRawTarget())) {
       return(NULL)
     }
-    if (!doesObjectHaveData(getIndexEventBreakdownConceptIdDetails())) {
+    if (!hasData(getIndexEventBreakdownConceptIdDetails())) {
       return(NULL)
     }
     data <- getIndexEventBreakdownRawTarget() %>% 
@@ -6478,7 +6478,7 @@ shiny::shinyServer(function(input, output, session) {
                         by = c("coConceptId" = "conceptId")) %>% 
       dplyr::rename("persons" = .data$subjectCount,
                     "records" = .data$conceptCount)
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
   })
@@ -6487,7 +6487,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getCoCOnceptForIndexEvent()
     
     validate(need(
-      doesObjectHaveData(data),
+      hasData(data),
       "No information for selected concept id."
     ))
     
@@ -6553,11 +6553,11 @@ shiny::shinyServer(function(input, output, session) {
   # Visit Context -----
   ##getVisitContextData----
   getVisitContextData <- shiny::reactive(x = {
-    if (all(doesObjectHaveData(input$tab),
+    if (all(hasData(input$tab),
             input$tab != "visitContext")) {
       return(NULL)
     }
-    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+    if (!hasData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
     if (all(is(dataSource, "environment"), !exists('visitContext'))) {
@@ -6567,7 +6567,7 @@ shiny::shinyServer(function(input, output, session) {
       getResultsVisitContext(dataSource = dataSource,
                              cohortId = consolidatedCohortIdTarget(),
                              consolidatedDatabaseIdTarget())
-    if (!doesObjectHaveData(visitContext)) {
+    if (!hasData(visitContext)) {
       return(NULL)
     }
     return(visitContext)
@@ -6575,14 +6575,14 @@ shiny::shinyServer(function(input, output, session) {
   
   ##getVisitContexDataEnhanced----
   getVisitContexDataEnhanced <- shiny::reactive(x = {
-    if (!doesObjectHaveData(cohortCount)) {
+    if (!hasData(cohortCount)) {
       return(NULL)
     }
     if (input$tabs != "visitContext") {
       return(NULL)
     }
     visitContextData <- getVisitContextData()
-    if (!doesObjectHaveData(visitContextData)) {
+    if (!hasData(visitContextData)) {
       return(NULL)
     }
     visitContextData <-
@@ -6632,7 +6632,7 @@ shiny::shinyServer(function(input, output, session) {
       visitContextData <- visitContextData %>%
         dplyr::filter(.data$visitContext == "After")
     }
-    if (!doesObjectHaveData(visitContextData)) {
+    if (!hasData(visitContextData)) {
       return(NULL)
     }
     visitContextData <- visitContextData %>% 
@@ -6656,7 +6656,7 @@ shiny::shinyServer(function(input, output, session) {
   ##doesVisitContextContainData----
   output$doesVisitContextContainData <- shiny::reactive({
     visitContextData <- getVisitContexDataEnhanced()
-    if (!doesObjectHaveData(visitContextData)) {
+    if (!hasData(visitContextData)) {
       return(NULL)
     }
     return(nrow(visitContextData) > 0)
@@ -6677,7 +6677,7 @@ shiny::shinyServer(function(input, output, session) {
     ))
     data <- getVisitContexDataEnhanced()
     validate(need(
-      doesObjectHaveData(data),
+      hasData(data),
       "No data available for selected combination."
     ))
     dataColumnFields <-
@@ -6757,9 +6757,9 @@ shiny::shinyServer(function(input, output, session) {
   ##cohortOverlapData----
   cohortOverlapData <- reactive({
     if (any(
-      !doesObjectHaveData(consolidatedDatabaseIdTarget()),
-      !doesObjectHaveData(consolidatedCohortIdTarget()),
-      !doesObjectHaveData(getComparatorCohortIdFromSelectedCompoundCohortNames())
+      !hasData(consolidatedDatabaseIdTarget()),
+      !hasData(consolidatedCohortIdTarget()),
+      !hasData(getComparatorCohortIdFromSelectedCompoundCohortNames())
     )) {
       return(NULL)
     }

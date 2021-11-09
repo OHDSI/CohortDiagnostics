@@ -2010,16 +2010,16 @@ getOptimizationRecommendationForConceptSetExpression <-
       dplyr::filter(.data$includeDescendants == TRUE) %>%
       dplyr::pull(.data$conceptId)
     
-    if (!doesObjectHaveData(conceptSetConceptIdsExcluded)) {
+    if (!hasData(conceptSetConceptIdsExcluded)) {
       conceptSetConceptIdsExcluded <- 0
     }
-    if (!doesObjectHaveData(conceptSetConceptIdsDescendantsExcluded)) {
+    if (!hasData(conceptSetConceptIdsDescendantsExcluded)) {
       conceptSetConceptIdsDescendantsExcluded <- 0
     }
-    if (!doesObjectHaveData(conceptSetConceptIdsNotExcluded)) {
+    if (!hasData(conceptSetConceptIdsNotExcluded)) {
       conceptSetConceptIdsNotExcluded <- 0
     }
-    if (!doesObjectHaveData(conceptSetConceptIdsDescendantsNotExcluded)) {
+    if (!hasData(conceptSetConceptIdsDescendantsNotExcluded)) {
       conceptSetConceptIdsDescendantsNotExcluded <- 0
     }
     
