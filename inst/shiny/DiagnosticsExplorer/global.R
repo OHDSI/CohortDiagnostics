@@ -229,7 +229,7 @@ if (databaseMode) {
 
 
 #Adding enhancements to the objects, which are already loaded in R memory----
-if (exists("database") &&  doesObjectHaveData(database)) {
+if (exists("database") &&  hasData(database)) {
   if (nrow(database) > 0 &&
       "vocabularyVersion" %in% colnames(database)) {
     database <- database %>%
@@ -240,7 +240,7 @@ if (exists("database") &&  doesObjectHaveData(database)) {
 }
 
 if (all(exists("cohort"),
-        doesObjectHaveData(cohort))) {
+        hasData(cohort))) {
   
   #enhance cohortCount table to have all cohortId and databaseId combinations
   cohortCount <- tidyr::crossing(database %>% dplyr::select(.data$databaseId) %>% dplyr::distinct(),
@@ -260,7 +260,7 @@ if (all(exists("cohort"),
 }
 
 if (all(exists("conceptSets"),
-        doesObjectHaveData(conceptSets))) {
+        hasData(conceptSets))) {
   # cohort is required and is always loaded into R memory
   conceptSets <- conceptSets %>%
     dplyr::inner_join(cohort %>% 
@@ -277,7 +277,7 @@ if (all(exists("conceptSets"),
     dplyr::select(-.data$shortName) %>% 
     dplyr::arrange(.data$cohortId, .data$conceptSetId)
 } else if (all(exists("cohort"),
-               doesObjectHaveData(cohort$json))) {
+               hasData(cohort$json))) {
   conceptSets <- list()
   k <- 0
   for (i in (1:nrow(cohort))) {
@@ -314,7 +314,7 @@ if (all(exists("conceptSets"),
 }
 
 if (all(exists("database"),
-        doesObjectHaveData(database))) {
+        hasData(database))) {
   # cohort is required and is always loaded into R memory
   database <- database %>%
     dplyr::arrange(.data$databaseId) %>%
@@ -330,7 +330,7 @@ if (all(exists("database"),
 
 #enhancement 
 if (all(exists("temporalTimeRef"),
-        doesObjectHaveData(temporalTimeRef))) {
+        hasData(temporalTimeRef))) {
   if (all(
     nrow(temporalTimeRef) > 0
   )) {
@@ -472,7 +472,7 @@ sourcesOfVocabularyTables <-
 #   dplyr::mutate(timeId2 = (dplyr::row_number()) - 6)
 # #enhancement
 # if (all(exists("analysisRef"),
-#         doesObjectHaveData(analysisRef))) {
+#         hasData(analysisRef))) {
 #   if (all(nrow(analysisRef) > 0)) {
 #     temporalCovariateChoices <- dplyr::bind_rows(
 #       temporalCovariateChoices,
@@ -504,7 +504,7 @@ sourcesOfVocabularyTables <-
 # }
 # 
 # if (all(exists("temporalTimeRef"),
-#         doesObjectHaveData(temporalTimeRef))) {
+#         hasData(temporalTimeRef))) {
 #   if (all(nrow(temporalTimeRef) > 0)) {
 #     temporalCovariateChoices <-
 #       dplyr::bind_rows(temporalCovariateChoices,

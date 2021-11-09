@@ -20,7 +20,7 @@
 
 
 # private function - not exported
-doesObjectHaveData <- function(data) {
+hasData <- function(data) {
   if (is.null(data)) {
     return(FALSE)
   }
@@ -350,7 +350,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
           dplyr::filter(!!as.name(object[[i]]) %in% !!get(object[[i]]))
       }
     }
-    if (doesObjectHaveData(conceptId1)) {
+    if (hasData(conceptId1)) {
       #for concept relationship only
       data <- dplyr::bind_rows(data %>%
                                  dplyr::filter(.data$conceptId1 %in% !!conceptId1),
@@ -359,7 +359,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         dplyr::distinct()
     }
     if (dataTableName %in% c('covariateValue', 'covariateValueDist')) {
-      if (doesObjectHaveData(minThreshold)) {
+      if (hasData(minThreshold)) {
         data <- data %>% 
           dplyr::filter(.data$mean > minThreshold)
       }
@@ -380,7 +380,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     }
     
     if (dataTableName %in% c('covariateValue', 'covariateValueDist')) {
-      if (doesObjectHaveData(minThreshold)) {
+      if (hasData(minThreshold)) {
         covariate_mean_filter <- minThreshold
       }
     } else {
@@ -1027,7 +1027,7 @@ getConceptMetadata <- function(dataSource,
   if (getConceptRelationship) {
     data$relationship <-
       getVocabularyRelationship(dataSource = dataSource)
-    if (!doesObjectHaveData(data$relationship)) {
+    if (!hasData(data$relationship)) {
       return(NULL)
     }
     data$conceptRelationship <-
@@ -1036,7 +1036,7 @@ getConceptMetadata <- function(dataSource,
         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
         conceptIds = conceptIds
       )
-    if (!doesObjectHaveData(data$conceptRelationship)) {
+    if (!hasData(data$conceptRelationship)) {
       return(NULL)
     }
     #output for concept relationship table in shiny app
@@ -3630,7 +3630,7 @@ getCirceRenderedExpression <- function(cohortDefinition,
   circeConceptSetListmarkdown <-
     CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
   
-  if (doesObjectHaveData(embedText)) {
+  if (hasData(embedText)) {
     circeExpressionMarkdown <-
       paste0("##### ",
              embedText,

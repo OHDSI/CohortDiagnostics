@@ -6801,7 +6801,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
       return(NULL)
     }
-    if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+    if (!hasData(consolidatedCohortIdTarget())) {
       return(NULL)
     }
     return(all(
@@ -6838,7 +6838,7 @@ shiny::shinyServer(function(input, output, session) {
     ))
     data <- cohortOverlapDataFiltered()
     validate(need(
-      doesObjectHaveData(data),
+      hasData(data),
       paste0("No cohort overlap data for this combination")
     ))
     
@@ -6936,7 +6936,7 @@ shiny::shinyServer(function(input, output, session) {
   ###getMultipleCharacterizationDataTarget----
   getMultipleCharacterizationDataTarget <-
     shiny::reactive(x = {
-      if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+      if (!hasData(consolidatedCohortIdTarget())) {
         return(NULL)
       }
       if (all(is(dataSource, "environment"), !any(
@@ -6961,10 +6961,10 @@ shiny::shinyServer(function(input, output, session) {
         dataSource = dataSource,
         cohortId = c(consolidatedCohortIdTarget()) %>% unique()
       )
-      if (!doesObjectHaveData(data$analysisRef)) {
+      if (!hasData(data$analysisRef)) {
         return(NULL)
       }
-      if (!doesObjectHaveData(data$covariateValue)) {
+      if (!hasData(data$covariateValue)) {
         return(NULL)
       }
       return(data)
@@ -6973,7 +6973,7 @@ shiny::shinyServer(function(input, output, session) {
   ###getMultipleCharacterizationDataComparator----
   getMultipleCharacterizationDataComparator <-
     shiny::reactive(x = {
-      if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
+      if (!hasData(consolidatedCohortIdComparator())) {
         return(NULL)
       }
       validate(need(consolidatedCohortIdTarget() != consolidatedCohortIdComparator(), 
@@ -7000,10 +7000,10 @@ shiny::shinyServer(function(input, output, session) {
         dataSource = dataSource,
         cohortId = c(consolidatedCohortIdComparator()) %>% unique()
       )
-      if (!doesObjectHaveData(data$analysisRef)) {
+      if (!hasData(data$analysisRef)) {
         return(NULL)
       }
-      if (!doesObjectHaveData(data$covariateValue)) {
+      if (!hasData(data$covariateValue)) {
         return(NULL)
       }
       return(data)
@@ -7014,15 +7014,15 @@ shiny::shinyServer(function(input, output, session) {
     if (!input$tabs == "cohortCharacterization") {
       return(NULL)
     }
-    if (!doesObjectHaveData(getMultipleCharacterizationDataTarget())) {
+    if (!hasData(getMultipleCharacterizationDataTarget())) {
       return(NULL)
     }
     dataTarget <- getMultipleCharacterizationDataTarget()
-    if (!doesObjectHaveData(dataTarget)) {
+    if (!hasData(dataTarget)) {
       return(NULL)
     }
     dataComparator <- getMultipleCharacterizationDataComparator()
-    if (!doesObjectHaveData(consolidatedCohortIdComparator())) {
+    if (!hasData(consolidatedCohortIdComparator())) {
       return(NULL)
     }
     data <- list()
@@ -7057,7 +7057,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!exists("analysisRef")) {
       return(NULL)
     }
-    if (!doesObjectHaveData(analysisRef)) {
+    if (!hasData(analysisRef)) {
       return(NULL)
     }
     data <- c(analysisRef$domainId %>% 
@@ -7070,7 +7070,7 @@ shiny::shinyServer(function(input, output, session) {
   #   if (!exists("analysisRef")) {
   #     return(NULL)
   #   }
-  #   if (!doesObjectHaveData(analysisRef)) {
+  #   if (!hasData(analysisRef)) {
   #     return(NULL)
   #   }
   #   data <- analysisRef$analysisName %>% 
@@ -7109,7 +7109,7 @@ shiny::shinyServer(function(input, output, session) {
     if (input$tabs != "cohortCharacterization") {
       return(NULL)
     }
-    if (!doesObjectHaveData(getMultipleCharacterizationData())) {
+    if (!hasData(getMultipleCharacterizationData())) {
       return(NULL)
     }
     if (is.null(getMultipleCharacterizationData()$covariateRef)) {
@@ -7130,12 +7130,12 @@ shiny::shinyServer(function(input, output, session) {
     covariatesTofilter <-
       getMultipleCharacterizationData()$covariateRef %>% 
       dplyr::filter(.data$analysisId %in% c(analysisIdToFilter))
-    if (!doesObjectHaveData(covariatesTofilter)) {
+    if (!hasData(covariatesTofilter)) {
       return(NULL)
     }
     if (all(
-      doesObjectHaveData(input$conceptSetsSelectedTargetCohort),
-      doesObjectHaveData(getResolvedConceptsAllData())
+      hasData(input$conceptSetsSelectedTargetCohort),
+      hasData(getResolvedConceptsAllData())
     )) {
       covariatesTofilter <- covariatesTofilter  %>%
         dplyr::inner_join(
@@ -7208,7 +7208,7 @@ shiny::shinyServer(function(input, output, session) {
       #                                          .data$covariateId, ")")
       # )
     
-    if (!doesObjectHaveData(characterizationDataValue)) {
+    if (!hasData(characterizationDataValue)) {
       return(NULL)
     }
     
@@ -7232,13 +7232,13 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- getCharacterizationDataFiltered()
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     table <- data %>%
       prepareTable1(prettyTable1Specifications = prettyTable1Specifications,
                     cohort = cohort)
-    if (!doesObjectHaveData(table)) {
+    if (!hasData(table)) {
       return(NULL)
     }
     return(table)
@@ -7385,7 +7385,7 @@ shiny::shinyServer(function(input, output, session) {
   #   if (!exists("temporalCovariateChoices")) {
   #     return(NULL)
   #   }
-  #   if (!doesObjectHaveData(getMultipleCharacterizationData())) {
+  #   if (!hasData(getMultipleCharacterizationData())) {
   #     return(NULL)
   #   }
   #   if (is.null(getMultipleCharacterizationData()$covariateRef)) {
@@ -7432,22 +7432,22 @@ shiny::shinyServer(function(input, output, session) {
     #   if (input$tabs != "temporalCharacterization") {
     #     return(NULL)
     #   }
-    #   if (any(!doesObjectHaveData(input$temporalCharacterizationDomainNameOptions),
+    #   if (any(!hasData(input$temporalCharacterizationDomainNameOptions),
     #           input$temporalCharacterizationDomainNameOptions == "")) {
     #     return(NULL)
     #   }
-    #   if (any(!doesObjectHaveData(input$temporalCharacterizationAnalysisNameOptions),
+    #   if (any(!hasData(input$temporalCharacterizationAnalysisNameOptions),
     #           input$temporalCharacterizationAnalysisNameOptions == "")) {
     #     return(NULL)
     #   }
     #   data <- getTemporalCharacterizationData()
-    #   if (!doesObjectHaveData(data)) {
+    #   if (!hasData(data)) {
     #     return(NULL)
     #   }
     #   
     #   if (all(
-    #     doesObjectHaveData(input$conceptSetsSelectedTargetCohort),
-    #     doesObjectHaveData(getResolvedConceptsAllData())
+    #     hasData(input$conceptSetsSelectedTargetCohort),
+    #     hasData(getResolvedConceptsAllData())
     #   )) {
     #     data <- data  %>%
     #       dplyr::inner_join(
@@ -7477,7 +7477,7 @@ shiny::shinyServer(function(input, output, session) {
     #       data <- data %>%
     #         dplyr::filter(.data$isBinary == 'N')
     #     }
-    #   if (!doesObjectHaveData(data)) {
+    #   if (!hasData(data)) {
     #     return(NULL)
     #   }
     #   return(data)
@@ -7497,7 +7497,7 @@ shiny::shinyServer(function(input, output, session) {
   #     return(NULL)
   #   }
   #   data <- getTemporalCharacterizationDataFiltered()
-  #   if (!doesObjectHaveData(data)) {
+  #   if (!hasData(data)) {
   #     return(NULL)
   #   }
   #   data <- data %>%
@@ -7514,7 +7514,7 @@ shiny::shinyServer(function(input, output, session) {
   #                     .data$covariateName) %>%
   #     dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with('Start'))))
   #   
-  #   if (!doesObjectHaveData(data)) {
+  #   if (!hasData(data)) {
   #     return(NULL)
   #   }
   #   return(data)
@@ -7651,17 +7651,17 @@ shiny::shinyServer(function(input, output, session) {
 #                            "compareTemporalCharacterization")) {
 #       return(NULL)
 #     }
-#     if (!doesObjectHaveData(getMultipleCharacterizationData())) {
+#     if (!hasData(getMultipleCharacterizationData())) {
 #       return(NULL)
 #     }
-#     if (!doesObjectHaveData(getMultipleCharacterizationData()$covariateRef)) {
+#     if (!hasData(getMultipleCharacterizationData()$covariateRef)) {
 #       warning("No covariate reference data found")
 #       return(NULL)
 #     }
-#     if (!doesObjectHaveData(getMultipleCharacterizationData()$covariateValue)) {
+#     if (!hasData(getMultipleCharacterizationData()$covariateValue)) {
 #       return(NULL)
 #     }
-#     if (!doesObjectHaveData(getMultipleCharacterizationData()$analysisRef)) {
+#     if (!hasData(getMultipleCharacterizationData()$analysisRef)) {
 #       warning("No analysis reference data found")
 #       return(NULL)
 #     }
@@ -7724,7 +7724,7 @@ shiny::shinyServer(function(input, output, session) {
 #         .data$isBinary
 #       ) %>%
 #       dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
-#     if (!doesObjectHaveData(covs1)) {
+#     if (!hasData(covs1)) {
 #       return(NULL)
 #     }
 #     
@@ -7749,7 +7749,7 @@ shiny::shinyServer(function(input, output, session) {
 #         .data$isBinary
 #       ) %>%
 #       dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
-#     if (!doesObjectHaveData(covs2)) {
+#     if (!hasData(covs2)) {
 #       return(NULL)
 #     }
 #     
@@ -7759,7 +7759,7 @@ shiny::shinyServer(function(input, output, session) {
 #     if (input$tabs %in% c("compareTemporalCharacterization")) {
 #       balance <- compareTemporalCohortCharacteristics(covs1, covs2)
 #     }
-#     if (!doesObjectHaveData(balance)) {
+#     if (!hasData(balance)) {
 #       return(NULL)
 #     }
 #     balance <- balance %>%
@@ -7797,13 +7797,13 @@ shiny::shinyServer(function(input, output, session) {
 #     }
 #     if (input$tabs %in% c("compareCohortCharacterization")) {
 #       if (any(
-#         !doesObjectHaveData(input$compareCharacterizationDomainNameFilter),
+#         !hasData(input$compareCharacterizationDomainNameFilter),
 #         input$compareCharacterizationDomainNameFilter == ""
 #       )) {
 #         return(NULL)
 #       }
 #       if (any(
-#         !doesObjectHaveData(input$compareCharacterizationAnalysisNameFilter),
+#         !hasData(input$compareCharacterizationAnalysisNameFilter),
 #         input$compareCharacterizationAnalysisNameFilter == ""
 #       )) {
 #         return(NULL)
@@ -7811,13 +7811,13 @@ shiny::shinyServer(function(input, output, session) {
 #     }
 #     if (input$tabs %in% c("compareTemporalCharacterization")) {
 #       if (any(
-#         !doesObjectHaveData(input$compareTemporalCharacterizationDomainNameFilter),
+#         !hasData(input$compareTemporalCharacterizationDomainNameFilter),
 #         input$compareTemporalCharacterizationDomainNameFilter == ""
 #       )) {
 #         return(NULL)
 #       }
 #       if (any(
-#         !doesObjectHaveData(
+#         !hasData(
 #           input$compareTemporalCharacterizationAnalysisNameFilter
 #         ),
 #         input$compareTemporalCharacterizationAnalysisNameFilter == ""
@@ -7826,7 +7826,7 @@ shiny::shinyServer(function(input, output, session) {
 #       }
 #     }
 #     data <- parseMultipleCompareCharacterizationData()
-#     if (!doesObjectHaveData(data)) {
+#     if (!hasData(data)) {
 #       return(NULL)
 #     }
 #     progress <- shiny::Progress$new()
@@ -7842,8 +7842,8 @@ shiny::shinyServer(function(input, output, session) {
 #           dplyr::filter(.data$isBinary == 'N')
 #       }
 #     if (all(
-#       doesObjectHaveData(input$conceptSetsSelectedTargetCohort),
-#       doesObjectHaveData(getResolvedConceptsAllData())
+#       hasData(input$conceptSetsSelectedTargetCohort),
+#       hasData(getResolvedConceptsAllData())
 #     )) {
 #       data <- data  %>%
 #         dplyr::inner_join(
@@ -7860,7 +7860,7 @@ shiny::shinyServer(function(input, output, session) {
 #           by = c("conceptId")
 #         )
 #     }
-#     if (!doesObjectHaveData(data)) {
+#     if (!hasData(data)) {
 #       return(NULL)
 #     }
 #     
@@ -7886,7 +7886,7 @@ shiny::shinyServer(function(input, output, session) {
 #       return(NULL)
 #     }
 #     data <- parseMultipleCompareCharacterizationDataFiltered()
-#     if (!doesObjectHaveData(data)) {
+#     if (!hasData(data)) {
 #       return(NULL)
 #     }
 #     progress <- shiny::Progress$new()
@@ -7894,7 +7894,7 @@ shiny::shinyServer(function(input, output, session) {
 #     progress$set(message = "Rendering pretty table",
 #                  value = 0)
 #     data <- prepareTable1Comp(balance = data)
-#     if (!doesObjectHaveData(data)) {
+#     if (!hasData(data)) {
 #       return(NULL)
 #     }
 #     data <- data %>%
@@ -7912,7 +7912,7 @@ shiny::shinyServer(function(input, output, session) {
 #     }
 #     
 #     data <- parseMultipleCompareCharacterizationDataFiltered()
-#     if (!doesObjectHaveData(data)) {
+#     if (!hasData(data)) {
 #       return(NULL)
 #     }
 #     # enhancement
@@ -8187,7 +8187,7 @@ shiny::shinyServer(function(input, output, session) {
       if (input$tabs != "compareCohortCharacterization") {
         return(NULL)
       }
-      if (!doesObjectHaveData(parseMultipleCompareCharacterizationDataFiltered())) {
+      if (!hasData(parseMultipleCompareCharacterizationDataFiltered())) {
         return(NULL)
       }
       data <- parseMultipleCompareCharacterizationDataFiltered()
@@ -8209,7 +8209,7 @@ shiny::shinyServer(function(input, output, session) {
   #       return(NULL)
   #     }
   #     data <- parseMultipleCompareCharacterizationDataFiltered()
-  #     if (!doesObjectHaveData(data)) {
+  #     if (!hasData(data)) {
   #       return(NULL)
   #     }
   #     
@@ -8505,7 +8505,7 @@ shiny::shinyServer(function(input, output, session) {
   #   eventExpr = list(input$timeIdChoices_open,
   #                    input$tabs),
   #   handlerExpr = {
-  #     if (!doesObjectHaveData(input$timeIdChoices_open)) {
+  #     if (!hasData(input$timeIdChoices_open)) {
   #       return(NULL)
   #     }
   #     browser()
@@ -8536,7 +8536,7 @@ shiny::shinyServer(function(input, output, session) {
   #getMetadataInformation----
   getMetadataInformation <- shiny::reactive(x = {
     data <- getExecutionMetadata(dataSource = dataSource)
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(data)
     }
     
@@ -8549,7 +8549,7 @@ shiny::shinyServer(function(input, output, session) {
   #getMetadataInformationFilteredToDatabaseId----
   getMetadataInformationFilteredToDatabaseId <- shiny::reactive(x = {
     data <- getMetadataInformation() 
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     
@@ -8613,7 +8613,7 @@ shiny::shinyServer(function(input, output, session) {
   output$metadataInfoTitle <- shiny::renderUI(expr = {
     data <- getMetadataInformation()
     
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     tags$p(paste(
@@ -8627,7 +8627,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$metadataInfoDetailsText <- shiny::renderUI(expr = {
     data <- getMetadataInformation()
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     tags$table(tags$tr(tags$td(
@@ -8648,7 +8648,7 @@ shiny::shinyServer(function(input, output, session) {
   output$packageDependencySnapShotTable <-
     DT::renderDataTable(expr = {
       data <- getMetadataInformation()
-      if (!doesObjectHaveData(data)) {
+      if (!hasData(data)) {
         return(NULL)
       }
       data <- data %>%

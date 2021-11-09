@@ -738,7 +738,7 @@ plotIndexEventBreakdown <-
                   "The following concept id's were found to belong to more than domain.: \n",
                   paste0(moreThanOneDomain$conceptId, collapse = ";")))
     }
-    if (!doesObjectHaveData(cohort)) {
+    if (!hasData(cohort)) {
       return(NULL)
     }
     
@@ -763,7 +763,7 @@ plotIndexEventBreakdown <-
     
     cohort <- cohort %>%
       dplyr::filter(.data$cohortId %in% c(data$cohortId %>% unique()))
-    if (!doesObjectHaveData(conceptIdDetails)) {
+    if (!hasData(conceptIdDetails)) {
       return(NULL)
     }
     conceptIdDetails <- dplyr::bind_rows(
@@ -779,7 +779,7 @@ plotIndexEventBreakdown <-
       )
     )
     
-    if (!doesObjectHaveData(database)) {
+    if (!hasData(database)) {
       return(NULL)
     }
     database <- database %>% 
@@ -1028,7 +1028,7 @@ plotIncidenceRate <- function(data,
                               yscaleFixed = FALSE) {
   errorMessage <- checkmate::makeAssertCollection()
   
-  if (!doesObjectHaveData(data)) {
+  if (!hasData(data)) {
     return(NULL)
   }
   checkmate::assertTibble(
