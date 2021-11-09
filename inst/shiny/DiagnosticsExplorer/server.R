@@ -6215,6 +6215,54 @@ shiny::shinyServer(function(input, output, session) {
       return(table)
     }, server = TRUE)
   
+  
+  ##getIndexEventBreakdownPlotData----
+  getIndexEventBreakdownPlotData <- shiny::reactive(x = {
+    if (!doesObjectHaveData(getIndexEventBreakdownRawTarget())) {
+      return(NULL)
+    }
+    if (!doesObjectHaveData(getIndexEventBreakdownTargetDataFiltered())) {
+      return(NULL)
+    }
+    
+    filteredConceptIds <-
+      getIndexEventBreakdownTargetDataFiltered()$conceptId %>% unique()
+    if (!doesObjectHaveData(filteredConceptIds)) {
+      return(NULL)
+    }
+    
+    data <- getIndexEventBreakdownRawTarget() %>%
+      dplyr::filter(.data$coConceptId == 0) %>%
+      dplyr::filter(.data$conceptId %in% c(filteredConceptIds)) %>% 
+      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
+      dplyr::select(.data$databaseId,
+                    .data$cohortId,
+                    .data$conceptId,
+                    .data$daysRelativeIndex,
+                    .data$conceptCount,
+                    .data$subjectCount)
+    if (!doesObjectHaveData(data)) {
+      return(NULL)
+    }
+    ## creating order
+    data <- data %>% 
+      dplyr::inner_join(data %>% 
+                          dplyr::filter(.data$daysRelativeIndex == 0) %>% 
+                          dplyr::arrange(.data$databaseId,
+                                         .data$cohortId,
+                                         .data$conceptId,
+                                         dplyr::desc(.data$subjectCount),
+                                         dplyr::desc(.data$conceptCount)) %>% 
+                          dplyr::mutate(rank = dplyr::row_number()) %>% 
+                          dplyr::select(.data$databaseId,
+                                        .data$cohortId,
+                                        .data$conceptId,
+                                        .data$rank),
+                        by = c("databaseId", "cohortId", "conceptId"))
+    return(data)
+  })
+  
+  
   ##indexEventBreakdownPlot----
   output$indexEventBreakdownPlot <-
     plotly::renderPlotly({
@@ -6229,18 +6277,7 @@ shiny::shinyServer(function(input, output, session) {
         )
       )
       
-      filteredConceptIds <-
-        getIndexEventBreakdownTargetDataFiltered()$conceptId %>% unique()
-      validate(need(
-        doesObjectHaveData(filteredConceptIds),
-        "No index event breakdown data for the chosen combination."
-      ))
-      
-      data <- getIndexEventBreakdownRawTarget() %>%
-        dplyr::filter(.data$coConceptId == 0) %>%
-        dplyr::filter(.data$conceptId %in% c(filteredConceptIds)) %>% 
-        dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget())
-      
+      data <- getIndexEventBreakdownPlotData()
       validate(need(
         doesObjectHaveData(data),
         "No index event breakdown data for the chosen combination."
@@ -6254,6 +6291,16 @@ shiny::shinyServer(function(input, output, session) {
         dataColumnFields <- c('conceptCount')
       }
       
+      
+      
+      
+      #!!!put a UI for user to select concept id's between minValue and maxValue -- by default minValue = 0 to maxValue = 10
+      minValue <- 0
+      maxValue <- 10
+      data <- data %>% 
+        dplyr::filter(.data$rank >= !!minValue) %>% 
+        dplyr::filter(.data$rank <= !!maxValue)
+        
       plot <- plotIndexEventBreakdown(data = data,
                                       yAxisColumns = dataColumnFields,
                                       showAsPercentage = input$indexEventBreakdownShowAsPercent,
