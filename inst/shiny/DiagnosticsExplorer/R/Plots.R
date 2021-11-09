@@ -703,7 +703,10 @@ plotIndexEventBreakdown <-
            yAxisColumns = c("conceptCount"),
            showAsPercentage = FALSE,
            logTransform = FALSE,
-           conceptIdDetails) {
+           conceptIdDetails,
+           cohort,
+           database,
+           colorReference) {
     errorMessage <- checkmate::makeAssertCollection()
     checkmate::assertTibble(
       x = data,
@@ -714,7 +717,6 @@ plotIndexEventBreakdown <-
       add = errorMessage
     )
     checkmate::reportAssertions(collection = errorMessage)
-    
     # colors <- colorReference %>%
     #   dplyr::filter(.data$type == "domain") %>%
     #   dplyr::pull(.data$value)
@@ -736,39 +738,25 @@ plotIndexEventBreakdown <-
                   "The following concept id's were found to belong to more than domain.: \n",
                   paste0(moreThanOneDomain$conceptId, collapse = ";")))
     }
-    plotData <- data %>%
-      dplyr::inner_join(
-        conceptIdDetails %>%
-          dplyr::select(.data$conceptId, .data$conceptName, .data$domainId),
-        by = "conceptId"
-      ) %>%
-      dplyr::inner_join(
-        cohort %>%
-          dplyr::select(.data$cohortId,
-                        .data$shortName,
-                        .data$compoundName),
-        by = "cohortId"
-      ) %>%
-      dplyr::inner_join(
-        database %>%
-          dplyr::select(.data$databaseId,
-                        .data$shortName,
-                        .data$compoundName) %>%
-          dplyr::rename(
-            "databaseShortName" = .data$shortName,
-            "databaseCompoundName" = .data$compoundName
-          ),
-        by = "databaseId"
-      )
     
-    distinctCohortShortName <- plotData$shortName %>% unique()
-    distinctDatabaseShortName <-
-      plotData$databaseShortName %>%  unique()
-    disctinctConceptIds <- plotData$conceptId %>%  unique()
-    distinctCohortCompoundName <- plotData$compoundName %>% unique()
-    distinctDatabaseCompoundName <-
-      plotData$databaseCompoundName %>%  unique()
-    distinctDomainIds <- plotData$domainId %>% unique()
+    if (!doesObjectHaveData(cohort)) {
+      return(NULL)
+    }
+    cohort <- cohort %>% 
+      dplyr::filter(.data$cohortId %in% c(data$cohortId %>% unique()))
+    if (!doesObjectHaveData(conceptIdDetails)) {
+      return(NULL)
+    }
+    conceptIdDetails <- conceptIdDetails %>% 
+      dplyr::filter(.data$conceptId %in% c(data$conceptId %>% unique()))
+    if (!doesObjectHaveData(database)) {
+      return(NULL)
+    }
+    database <- database %>% 
+      dplyr::filter(.data$databaseId %in% c(data$databaseId %>% unique()))
+    
+    distinctConceptIds <- data$conceptId %>%  unique()
+    distinctDomainIds <- conceptIdDetails$domainId %>% unique()
     
     
     conceptYAxisrange <- c(0, 0)
@@ -776,10 +764,10 @@ plotIndexEventBreakdown <-
     for (i in 1:length(yAxisColumns)) {
       if (yAxisColumns[i] == "conceptCount") {
         conceptYAxisrange <-
-          c(min(plotData[[yAxisColumns[i]]]), max(plotData[[yAxisColumns[i]]]))
+          c(min(data[[yAxisColumns[i]]]), max(data[[yAxisColumns[i]]]))
       } else if (yAxisColumns == "subjectCount") {
         subjectYAxisrange <-
-          c(min(plotData[[yAxisColumns[i]]]), max(plotData[[yAxisColumns[i]]]))
+          c(min(data[[yAxisColumns[i]]]), max(data[[yAxisColumns[i]]]))
       }
     }
     if (showAsPercentage) {
@@ -791,17 +779,25 @@ plotIndexEventBreakdown <-
     plotHeight <- 800
     
     cohortPlots  <- list()
-    for (i in (1:length(distinctCohortShortName))) {
-      filteredDataByCohort <- plotData %>%
-        dplyr::filter(.data$shortName == distinctCohortShortName[i])
+    for (i in (1:nrow(cohort))) {
+      filteredDataByCohort <- data %>%
+        dplyr::filter(.data$cohortId == cohort$cohortId[i]) %>% 
+        dplyr::select(.data$databaseId,
+                      .data$cohortId,
+                      .data$conceptId,
+                      .data$daysRelativeIndex,
+                      .data$conceptCount,
+                      .data$subjectCount)
       conceptOrSubjectPlots <- list()
+      
       for (j in (1:length(yAxisColumns))) {
         filteredDataByCohort <- filteredDataByCohort %>%
-          dplyr::mutate(count = .data[[yAxisColumns[j]]])
+          dplyr::mutate(count = .data[[yAxisColumns[j]]]) %>% 
+          dplyr::select(-.data[[yAxisColumns[j]]])
         databasePlots <- list()
-        for (k in 1:length(distinctDatabaseShortName))  {
+        for (k in (1:nrow(database)))  {
           filteredDataByDatabase <- filteredDataByCohort %>%
-            dplyr::filter(.data$databaseShortName == distinctDatabaseShortName[k])
+            dplyr::filter(.data$databaseId == database$databaseId[k])
           
           if (showAsPercentage) {
             filteredDataByDatabase <- filteredDataByDatabase %>%
@@ -810,24 +806,25 @@ plotIndexEventBreakdown <-
               dplyr::select(-.data$percentage)
           }
           domainPlots <- list()
-          for (l in 1:length(distinctDomainIds)) {
+          for (l in (1:length(distinctDomainIds))) {
             conceptIdPlots <- list()
-            for (m in 1:length(disctinctConceptIds)) {
+            for (m in (1:nrow(conceptIdDetails))) {
               filterByConceptId <- filteredDataByDatabase %>%
-                dplyr::filter(.data$domainId == distinctDomainIds[l]) %>%
-                dplyr::filter(.data$conceptId == disctinctConceptIds[m]) %>%
-                dplyr::inner_join(
-                  colorReference %>%
-                    dplyr::filter(.data$type == "domain") %>%
-                    dplyr::mutate(
-                      domainId = .data$name,
-                      colors = .data$value
-                    ) %>%
-                    dplyr::select(.data$domainId, .data$colors),
-                  by = "domainId"
-                ) %>% dplyr::arrange(.data$domainId, .data$conceptId)
+                dplyr::filter(.data$conceptId == conceptIdDetails$conceptId[m]) %>%
+                dplyr::inner_join(conceptIdDetails %>%
+                                    dplyr::filter(.data$domainId %in% c(distinctDomainIds[l])) %>% 
+                                    dplyr::select(.data$conceptId, .data$conceptName, .data$domainId),
+                                  by = "conceptId") %>% 
+                dplyr::arrange(.data$domainId, .data$conceptId) %>% 
+                dplyr::inner_join(cohort %>% 
+                                    dplyr::select(.data$cohortId,
+                                                  .data$compoundName),
+                                  by = "cohortId")
               
-              colors <- filterByConceptId$colors %>% unique()
+              colors <- colorReference %>%
+                dplyr::filter(.data$type == "domain") %>% 
+                dplyr::filter(.data$name %in% c(distinctDomainIds[l])) %>% 
+                dplyr::pull(.data$value)
               
               conceptIdPlots[[m]] <-
                 plotly::plot_ly(
@@ -849,7 +846,7 @@ plotIndexEventBreakdown <-
                     "\nDays Relative Index = ",
                     daysRelativeIndex,
                     "\nCount = ",
-                    count
+                    scales::comma(count, accuracy = 1)
                   ),
                   color = ~ domainId,
                   colors = colors,
@@ -858,15 +855,15 @@ plotIndexEventBreakdown <-
                   height = plotHeight
                 ) %>%
                 plotly::layout(
-                  # legend = list(
-                  #   orientation = "h",
-                  #   xanchor = "center",
-                  #   x = 0.5
-                  # ),
+                  legend = list(
+                    orientation = "h",
+                    xanchor = "center",
+                    x = 0.5
+                  ),
                   annotations = list(
                     x = 0.0,
                     y = 0.5,
-                    text = disctinctConceptIds[m],
+                    text = distinctConceptIds[m],
                     showarrow = FALSE,
                     xref = "paper",
                     yref = "paper",
@@ -881,7 +878,6 @@ plotIndexEventBreakdown <-
                     zerolinecolor = '#ffff',
                     showspikes = showPlotSpikes
                   ),
-                  
                   yaxis = list(
                     range = ifelse(
                       yAxisColumns[k] == "conceptCount",
@@ -901,16 +897,17 @@ plotIndexEventBreakdown <-
             domainPlots[[l]] <-
               plotly::subplot(conceptIdPlots, nrows = min(49, length(conceptIdPlots)))
           }
-          
           databasePlot <-
-            plotly::subplot(domainPlots, nrows = length(domainPlots))
-          if (j == 1) {
+            plotly::subplot(domainPlots, 
+                            nrows = length(domainPlots))
+          
+          if (length(yAxisColumns) == 1) {
             databasePlot <- databasePlot %>%
               plotly::layout(
                 annotations = list(
                   x = 0.08,
                   y = 1.02,
-                  text = camelCaseToTitleCase(yAxisColumns[k]),
+                  text = camelCaseToTitleCase(yAxisColumns[1]),
                   showarrow = FALSE,
                   xref = "paper",
                   yref = "paper",
@@ -922,13 +919,13 @@ plotIndexEventBreakdown <-
           databasePlots[[k]] <- databasePlot
         }
         conceptOrSubjectPlots[[j]] <- plotly::subplot(databasePlots)
-        if (i == 1) {
+        if (nrow(cohort) == 1) {
           conceptOrSubjectPlots[[j]] <- conceptOrSubjectPlots[[j]] %>%
             plotly::layout(
               annotations = list(
                 x = 0.5,
                 y = 1.03,
-                text = camelCaseToTitleCase(distinctDatabaseShortName[j]),
+                text = camelCaseToTitleCase(cohort$compoundName[1]),
                 showarrow = FALSE,
                 xref = "paper",
                 yref = "paper",
@@ -944,7 +941,7 @@ plotIndexEventBreakdown <-
           annotations = list(
             x = -0.04,
             y = 0.5,
-            text = camelCaseToTitleCase(distinctCohortShortName[i]),
+            text = cohort$shortName[i],
             showarrow = FALSE,
             xref = "paper",
             yref = "paper",
@@ -954,7 +951,6 @@ plotIndexEventBreakdown <-
           )
         )
     }
-    
     m <- list(l = 100,
               r = 50,
               b = 200,
@@ -971,11 +967,11 @@ plotIndexEventBreakdown <-
           text = c(
             paste0(
               "<b>Cohorts :</b>\n",
-              paste(distinctCohortCompoundName, collapse = "\n")
+              paste(cohort$compoundName, collapse = "\n")
             ),
             paste0(
               "<b>DataSource :</b>\n",
-              paste(distinctDatabaseCompoundName, collapse = "\n")
+              paste(database$compoundName, collapse = "\n")
             )
           ),
           showarrow = F,
@@ -986,7 +982,6 @@ plotIndexEventBreakdown <-
           yanchor = 'middle'
         )
       )
-    
     return(finalPlot)
   }
 

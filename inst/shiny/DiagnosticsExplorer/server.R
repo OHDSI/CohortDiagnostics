@@ -6236,6 +6236,9 @@ shiny::shinyServer(function(input, output, session) {
                                       yAxisColumns = dataColumnFields,
                                       showAsPercentage = input$indexEventBreakdownShowAsPercent,
                                       logTransform = input$indexEventBreakdownShowLogTransform,
+                                      cohort = cohort,
+                                      database = database,
+                                      colorReference = colorReference,
                                       conceptIdDetails = getIndexEventBreakdownConceptIdDetails())
       return(plot)
     })
