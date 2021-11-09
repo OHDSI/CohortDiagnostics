@@ -4402,7 +4402,29 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   })
   
-  
+  shiny::observeEvent(eventExpr = input$exportAllCohortDetails,
+                      handlerExpr = {
+                        outputFolder <- "E:\\CohortDetails"
+                        
+                        for (i in (1:nrow(cohort))) {
+                          cohortId <- cohort[i,]$cohortId
+                          cohortName <- cohort[i,]$cohortName
+                          dir.create(path = file.path(outputFolder, cohortName), recursive = TRUE, showWarnings = FALSE)
+                          cohortExpression <- cohort[i,]$json %>% 
+                            RJSONIO::fromJSON(digits = 23)
+                          
+                          details <-
+                           getCirceRenderedExpression(cohortDefinition =  cohortExpression)
+                          SqlRender::writeSql(sql = details$cohortJson,
+                                              targetFile = file.path(outputFolder, cohortName, paste0('cohortDefinitionJson_', cohortId, '.json')))
+                          SqlRender::writeSql(sql = details$cohortMarkdown,
+                                              targetFile = file.path(outputFolder, cohortName, paste0('cohortDefinitionMarkdown_', cohortId, '.md')))
+                          SqlRender::writeSql(sql = details$conceptSetMarkdown,
+                                              targetFile = file.path(outputFolder, cohortName, paste0('conceptSetMarkdown_', cohortId, '.md')))
+                          SqlRender::writeSql(sql = details$cohortHtmlExpression,
+                                              targetFile = file.path(outputFolder, cohortName, paste0('cohortDefinitionHtml_', cohortId, '.html')))
+                        }
+                      })
   
   #Radio button synchronization----
   shiny::observeEvent(eventExpr = {
