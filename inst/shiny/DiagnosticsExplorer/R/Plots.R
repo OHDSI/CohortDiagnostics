@@ -821,21 +821,16 @@ plotIndexEventBreakdown <-
       conceptOrSubjectPlots <- list()
       
       for (j in (1:length(yAxisColumns))) {
-        filteredDataByCohort <- filteredDataByCohort %>%
+        filteredDataByYAxisColumns <- filteredDataByCohort %>%
           dplyr::mutate(count = .data[[yAxisColumns[j]]]) %>% 
           dplyr::select(-.data[[yAxisColumns[j]]]) %>% 
           dplyr::filter(!is.na(.data$count))
         databasePlots <- list()
         for (k in (1:nrow(database)))  {
-          filteredDataByDatabase <- filteredDataByCohort %>%
+          filteredDataByDatabase <- filteredDataByYAxisColumns %>%
             dplyr::filter(.data$databaseId == database$databaseId[k])
           
-          if (showAsPercentage) {
-            filteredDataByDatabase <- filteredDataByDatabase %>%
-              dplyr::mutate(percentage = round(.data$count / sum(.data$count), digits = 2)) %>%
-              dplyr::mutate("count" = .data$percentage) %>%
-              dplyr::select(-.data$percentage)
-          }
+          
           domainPlots <- list()
           for (l in (1:length(distinctDomainIds))) {
             conceptIdPlots <- list()
@@ -852,6 +847,10 @@ plotIndexEventBreakdown <-
                                     dplyr::select(.data$cohortId,
                                                   .data$compoundName),
                                   by = "cohortId")
+             
+                filterByConceptId <- filterByConceptId %>%
+                  dplyr::mutate(percentage = round(.data$count / sum(.data$count), digits = 5))
+              
               
               colors <- colorReference %>%
                 dplyr::filter(.data$type == "domain") %>% 
@@ -862,7 +861,7 @@ plotIndexEventBreakdown <-
                 plotly::plot_ly(
                   filterByConceptId,
                   x = ~ daysRelativeIndex,
-                  y = ~ count,
+                  y = ~ percentage,
                   # name = ~ conceptId,
                   type = 'scatter',
                   mode = 'lines',
@@ -895,7 +894,7 @@ plotIndexEventBreakdown <-
                   annotations = list(
                     x = 0.0,
                     y = 0.5,
-                    text = distinctConceptIds[m],
+                    text = conceptIdDetailsDomain$conceptId[m],
                     showarrow = FALSE,
                     xref = "paper",
                     yref = "paper",
