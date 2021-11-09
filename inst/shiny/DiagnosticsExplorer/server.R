@@ -33,7 +33,7 @@ shiny::shinyServer(function(input, output, session) {
   #defined in UI
   shiny::observe({
     if (exists("conceptSets")) {
-      if (!doesObjectHaveData(conceptSets)) {
+      if (!hasData(conceptSets)) {
         return(NULL)
       }
     }
@@ -1686,7 +1686,7 @@ shiny::shinyServer(function(input, output, session) {
         cohortIds = consolidatedCohortIdTarget(),
         databaseCount = (input$targetConceptIdCountSource == "Datasource Level")
       )
-    if (!doesObjectHaveData(count)) {
+    if (!hasData(count)) {
       return(data %>% 
                dplyr::mutate("records" = NA, "persons" = NA))
     }
@@ -5683,11 +5683,11 @@ shiny::shinyServer(function(input, output, session) {
   
   ##reactive: getFixedTimeSeriesDataForTable----
   getFixedTimeSeriesDataForTable <- shiny::reactive({
-    if (!doesObjectHaveData(input$timeSeriesTypeFilter)) {
+    if (!hasData(input$timeSeriesTypeFilter)) {
       return(NULL)
     }
     timeSeriesDescription <- getTimeSeriesDescription()
-    if (!doesObjectHaveData(timeSeriesDescription)) {
+    if (!hasData(timeSeriesDescription)) {
       return(NULL)
     }
     data <- getFixedTimeSeriesTsibbleFiltered()
@@ -6791,7 +6791,7 @@ shiny::shinyServer(function(input, output, session) {
                                     targetCohortIds = targetCohortIds,
                                     databaseIds = consolidatedDatabaseIdTarget(),
                                     comparatorCohortIds = comparatorCohortIds)
-    if (!doesObjectHaveData(data)) {
+    if (!hasData(data)) {
       return(NULL)
     }
     return(data)
@@ -6801,7 +6801,7 @@ shiny::shinyServer(function(input, output, session) {
   # Cohort Overlap filtered ------
   ##cohortOverlapDataFiltered----
   cohortOverlapDataFiltered <- reactive({
-    if (!doesObjectHaveData(cohortOverlapData())) {
+    if (!hasData(cohortOverlapData())) {
       return(NULL)
     }
     return(cohortOverlapData())
@@ -6809,7 +6809,7 @@ shiny::shinyServer(function(input, output, session) {
 
   ###output: isCohortDefinitionRowSelected----
   output$doesCohortAndComparatorsAreSingleSelected <- reactive({
-    if (!doesObjectHaveData(consolidatedCohortIdTarget())) {
+    if (!hasData(consolidatedCohortIdTarget())) {
       return(NULL)
     }
     if (!hasData(consolidatedCohortIdTarget())) {
@@ -8696,7 +8696,7 @@ shiny::shinyServer(function(input, output, session) {
   output$argumentsAtDiagnosticsInitiationJson <-
     shiny::renderText(expr = {
       data <- getMetadataInformation()
-      if (!doesObjectHaveData(data)) {
+      if (!hasData(data)) {
         return(NULL)
       }
       data <- data %>%
@@ -8858,7 +8858,7 @@ shiny::shinyServer(function(input, output, session) {
     selectedCohortIds <- targetSelectedCohort$cohortId
    
     
-    if(doesObjectHaveData(consolidatedCohortIdComparator())) {
+    if(hasData(consolidatedCohortIdComparator())) {
       selectedCohortIds <- c(selectedCohortIds,consolidatedCohortIdComparator())
     }
     selecteCohortCompondName <- cohort %>% 
@@ -8870,7 +8870,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   selectedDatabaseIds <- shiny::reactive({
-    if (!doesObjectHaveData(consolidatedDatabaseIdTarget())) {
+    if (!hasData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
     selectedDatabaseIds <- database %>% 

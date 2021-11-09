@@ -2863,7 +2863,14 @@ getCohortRelationshipCharacterizationResults <-
   function(dataSource = .GlobalEnv,
            cohortIds = NULL,
            databaseIds = NULL) {
-    # meta information
+    
+    browser()
+    # need to add standardized difference
+    # 1. for each time window get its corresponding denominator population size
+    # 2. compute proportion dplyr::mutate(p = .data$sumValue / .data$populationSize)
+    # 3. put a check "During characterization, population size (denominator) was found to be smaller than features Value (numerator).",
+    #"- this may have happened because of an error in Feature generation process. Please contact the package developer."
+    # 4. compute sd as dplyr::mutate(sd = sqrt(.data$p * (1 - .data$p)))
     cohortCounts <-
       getResultsCohortCount(dataSource = dataSource,
                             cohortIds = cohortIds,
@@ -3190,8 +3197,6 @@ getCohortAsFeatureTemporalCharacterizationResults <-
 #' @template DatabaseIds
 #' 
 #' @param featureExtractionCharacterization Do you want to get feature extraction characterization results?
-#' 
-#' @param featureExtractionTemporalCharacterization Do you want to get feature extraction temporal characterization results?
 #' 
 #' @param cohortRelationshipCharacterizationResults Do you want to get cohort relationship characterization results?
 #'
