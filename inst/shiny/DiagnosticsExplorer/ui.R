@@ -896,7 +896,7 @@ bodyTabItems <- shinydashboard::tabItems(
                        inputId = "indexEventBreakdownTableFilter",
                        label = "Display",
                        choices = c("Both", "Records", "Persons"),
-                       selected = "Persons",
+                       selected = "Records",
                        inline = TRUE
                      )
                    ),
