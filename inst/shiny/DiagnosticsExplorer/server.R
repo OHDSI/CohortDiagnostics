@@ -6279,8 +6279,28 @@ shiny::shinyServer(function(input, output, session) {
         session = session,
         inputId = "indexEventBreakdownConceptIdsRangeFilter",
         min = 0,
-        max = min(49, maxValue),
+        max = maxValue,
         value = c(0, 10)
+      )
+    }
+  })
+  
+  observeEvent(eventExpr = input$indexEventBreakdownConceptIdsRangeFilter[1],handlerExpr = {
+    if (input$indexEventBreakdownConceptIdsRangeFilter[1] != 0 || input$indexEventBreakdownConceptIdsRangeFilter[2] != 10) {
+      shiny::updateSliderInput(
+        session = session,
+        inputId = "indexEventBreakdownConceptIdsRangeFilter",
+        value = c(input$indexEventBreakdownConceptIdsRangeFilter[1], input$indexEventBreakdownConceptIdsRangeFilter[1] + 10)
+      )
+    }
+  })
+  
+  observeEvent(eventExpr = input$indexEventBreakdownConceptIdsRangeFilter[2],handlerExpr = {
+    if (input$indexEventBreakdownConceptIdsRangeFilter[1] != 0 || input$indexEventBreakdownConceptIdsRangeFilter[2] > 10) {
+      shiny::updateSliderInput(
+        session = session,
+        inputId = "indexEventBreakdownConceptIdsRangeFilter",
+        value = c(input$indexEventBreakdownConceptIdsRangeFilter[2] - 10, input$indexEventBreakdownConceptIdsRangeFilter[2])
       )
     }
   })

@@ -769,7 +769,9 @@ plotIndexEventBreakdown <-
     conceptIdDetails <- dplyr::bind_rows(
       conceptIdDetails %>%
         dplyr::filter(.data$conceptId %in% c(data$conceptId %>% unique())) %>%
-        dplyr::filter(.data$conceptId > 0),
+        dplyr::filter(.data$conceptId > 0) %>% 
+        dplyr::arrange(.data$domainId, .data$conceptId) 
+        ,
       dplyr::tibble(
         "conceptId" = 0,
         "conceptName" = "Overall",
@@ -831,18 +833,17 @@ plotIndexEventBreakdown <-
             dplyr::filter(.data$databaseId == database$databaseId[k])
           
           
-          domainPlots <- list()
-          for (l in (1:length(distinctDomainIds))) {
+          # domainPlots <- list()
+          # for (l in (1:length(distinctDomainIds))) {
             conceptIdPlots <- list()
-            conceptIdDetailsDomain <- conceptIdDetails %>% 
-              dplyr::filter(.data$domainId %in% c(distinctDomainIds[l]))
-            for (m in (1:nrow(conceptIdDetailsDomain))) {
+          #   conceptIdDetailsDomain <- conceptIdDetails %>% 
+          #     dplyr::filter(.data$domainId %in% c(distinctDomainIds[l]))
+            for (m in (1:length(conceptIdDetails$conceptId))) {
               filterByConceptId <- filteredDataByDatabase %>%
-                dplyr::filter(.data$conceptId == conceptIdDetailsDomain$conceptId[m]) %>%
-                dplyr::inner_join(conceptIdDetailsDomain %>%
+                dplyr::filter(.data$conceptId == conceptIdDetails$conceptId[m]) %>%
+                dplyr::inner_join(conceptIdDetails %>%
                                     dplyr::select(.data$conceptId, .data$conceptName, .data$domainId),
-                                  by = "conceptId") %>% 
-                dplyr::arrange(.data$domainId, .data$conceptId) %>% 
+                                  by = "conceptId") %>%  
                 dplyr::inner_join(cohort %>% 
                                     dplyr::select(.data$cohortId,
                                                   .data$compoundName),
@@ -854,7 +855,7 @@ plotIndexEventBreakdown <-
               
               colors <- colorReference %>%
                 dplyr::filter(.data$type == "domain") %>% 
-                dplyr::filter(.data$name %in% c(distinctDomainIds[l])) %>% 
+                dplyr::filter(.data$name %in% c(filterByConceptId$domainId %>% unique())) %>% 
                 dplyr::pull(.data$value)
               
               conceptIdPlots[[m]] <-
@@ -882,19 +883,13 @@ plotIndexEventBreakdown <-
                   color = ~ domainId,
                   colors = colors,
                   line = list(shape = "hvh"),
-                  showlegend = FALSE,
-                  height = plotHeight
+                  showlegend = FALSE
                 ) %>%
                 plotly::layout(
-                  legend = list(
-                    orientation = "h",
-                    xanchor = "center",
-                    x = 0.5
-                  ),
                   annotations = list(
                     x = 0.0,
                     y = 0.5,
-                    text = conceptIdDetailsDomain$conceptId[m],
+                    text = conceptIdDetails$conceptId[m],
                     showarrow = FALSE,
                     xref = "paper",
                     yref = "paper",
@@ -906,31 +901,26 @@ plotIndexEventBreakdown <-
                     tickformat = ",d",
                     showticklabels = FALSE,
                     showgrid = FALSE,
-                    zerolinecolor = '#ffff',
                     showspikes = showPlotSpikes
                   ),
                   yaxis = list(
-                    range = ifelse(
-                      yAxisColumns[k] == "conceptCount",
-                      conceptYAxisrange,
-                      subjectYAxisrange
-                    ),
+                    range = c(0.0,1.0),
                     showspikes = showPlotSpikes,
                     showticklabels = FALSE,
                     showgrid = FALSE,
                     zerolinecolor = '#ffff',
-                    title =  "",
+                    title =  ""
                     # tickformat = ifelse(showAsPercentage,"%",""),
-                    type = ifelse(logTransform, "log", "")
+                    # type = ifelse(logTransform, "log", "")
                   )
                 )
             }
-            domainPlots[[l]] <-
-              plotly::subplot(conceptIdPlots, nrows = min(49, length(conceptIdPlots)))
-          }
+          #   domainPlots[[l]] <-
+          #     plotly::subplot(conceptIdPlots, nrows = min(49, length(conceptIdPlots)))
+          # }
           databasePlot <-
-            plotly::subplot(domainPlots, 
-                            nrows = length(domainPlots))
+            plotly::subplot(conceptIdPlots, 
+                            nrows = length(conceptIdPlots))
           
           if (length(yAxisColumns) == 1) {
             databasePlot <- databasePlot %>%
