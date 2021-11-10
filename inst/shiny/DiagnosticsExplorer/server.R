@@ -4444,27 +4444,32 @@ shiny::shinyServer(function(input, output, session) {
       paste("ExportDetails", "zip", sep = ".")
     },
     content = function(file) {
-      outputFolder <- tempdir()
+      rootFolder <-  stringr::str_replace_all(string = Sys.time(), pattern = "-",replacement = "") 
+      rootFolder <- stringr::str_replace_all(string = rootFolder, pattern = ":",replacement = "")
+      tempdir <- file.path(tempdir(), rootFolder) 
+      
       for (i in (1:nrow(cohort))) {
         cohortId <- cohort[i,]$cohortId
         cohortName <- cohort[i,]$cohortName
-        dir.create(path = file.path(outputFolder, cohortName), recursive = TRUE, showWarnings = FALSE)
+          
+        dir.create(path = file.path(tempdir, cohortName), recursive = TRUE, showWarnings = FALSE)
         cohortExpression <- cohort[i,]$json %>% 
           RJSONIO::fromJSON(digits = 23)
         
         details <-
           getCirceRenderedExpression(cohortDefinition =  cohortExpression)
         SqlRender::writeSql(sql = details$cohortJson,
-                            targetFile = file.path(outputFolder, cohortName, paste0('cohortDefinitionJson_', cohortId, '.json')))
+                            targetFile = file.path(tempdir, cohortName, paste0('cohortDefinitionJson_', cohortId, '.json')))
         SqlRender::writeSql(sql = details$cohortMarkdown,
-                            targetFile = file.path(outputFolder, cohortName, paste0('cohortDefinitionMarkdown_', cohortId, '.md')))
+                            targetFile = file.path(tempdir, cohortName, paste0('cohortDefinitionMarkdown_', cohortId, '.md')))
         SqlRender::writeSql(sql = details$conceptSetMarkdown,
-                            targetFile = file.path(outputFolder, cohortName, paste0('conceptSetMarkdown_', cohortId, '.md')))
+                            targetFile = file.path(tempdir, cohortName, paste0('conceptSetMarkdown_', cohortId, '.md')))
         SqlRender::writeSql(sql = details$cohortHtmlExpression,
-                            targetFile = file.path(outputFolder, cohortName, paste0('cohortDefinitionHtml_', cohortId, '.html')))
+                            targetFile = file.path(tempdir, cohortName, paste0('cohortDefinitionHtml_', cohortId, '.html')))
       }
-      createZipFile(zipFile = file,
-                    files = outputFolder)
+      DatabaseConnector::createZipFile(zipFile = file,
+                    files = tempdir,
+                    rootFolder = tempdir)
     },
     contentType = "application/zip"
   )
