@@ -37,21 +37,21 @@ exportCharacterization <- function(characteristics,
       dplyr::left_join(counts,
                        by = c("cohortId", "databaseId"),
                        copy = TRUE) %>%
+      dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>%
       dplyr::mutate(
         mean = dplyr::case_when(
           .data$mean != 0 &
-            .data$mean < !!minCellCount / .data$cohortEntries ~ -!!minCellCount / .data$cohortEntries,
+            .data$mean < !!minCellCount / as.double(.data$cohortEntries)  ~ -!!minCellCount / as.double(.data$cohortEntries),
           TRUE ~ .data$mean
         )
       ) %>%
       dplyr::mutate(
-        sum = dplyr::case_when(
-          .data$sum != 0 &
-            .data$sum < !!minCellCount ~ -!!minCellCount,
-          TRUE ~ .data$sum
+        sumValue = dplyr::case_when(
+          .data$sumValue != 0 &
+            .data$sumValue < !!minCellCount ~ -!!minCellCount,
+          TRUE ~ .data$sumValue
         )
       ) %>%
-      dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>%
       dplyr::mutate(mean = round(.data$mean, digits = 4),
                     sd = round(.data$sd, digits = 4)) %>%
       dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)

@@ -108,4 +108,45 @@ test_that("Cohort diagnostics in incremental mode", {
   testthat::expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
 })
 
+test_that("Truncation of covariate sums", {
+  instantiateCohortSet(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTable = cohortTable,
+    cohortIds = c(17492, 17692),
+    packageName = "CohortDiagnostics",
+    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+    generateInclusionStats = TRUE,
+    createCohortTable = TRUE,
+    inclusionStatisticsFolder = file.path(folder, "incStats")
+  )
+  
+  runCohortDiagnostics(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTable = cohortTable,
+    cohortIds = c(17492, 17692),
+    packageName = "CohortDiagnostics",
+    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+    inclusionStatisticsFolder = file.path(folder, "incStats"),
+    exportFolder = file.path(folder, "export"),
+    databaseId = "cdmv5",
+    runInclusionStatistics = FALSE,
+    runBreakdownIndexEvents = FALSE,
+    runCohortCharacterization = TRUE,
+    runTemporalCohortCharacterization = TRUE,
+    runCohortOverlap = FALSE,
+    runIncidenceRate = FALSE,
+    runIncludedSourceConcepts = FALSE,
+    runOrphanConcepts = FALSE,
+    runTimeDistributions = FALSE,
+    incremental = FALSE
+  )
+})
+  
+
 unlink(folder, recursive = TRUE)
