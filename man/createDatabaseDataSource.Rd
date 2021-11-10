@@ -36,7 +36,7 @@ schema name, for example 'vocabulary.dbo'.}
 Returns a list with information on database data source
 }
 \description{
-Collects a list of objects needed to connect to a database datsource. This includes one of
+Collects a list of objects needed to connect to a database dataSource. This includes one of
 \code{DatabaseConnector::createConnectionDetails} object, or a DBI database connection created
 using either \code{DatabaseConnector::connection} or \code{pool::dbPool}, and a names of
 resultsDatabaseSchema and vocabularyDatabaseSchema

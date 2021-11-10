@@ -2,7 +2,7 @@
 % Please edit documentation in R/Shared.R
 \name{getMultipleCharacterizationResults}
 \alias{getMultipleCharacterizationResults}
-\title{Returns multiple characterization output}
+\title{}
 \usage{
 getMultipleCharacterizationResults(
   dataSource = .GlobalEnv,
@@ -40,4 +40,7 @@ Returns multiple characterization output
 }
 \description{
 Returns multiple characterization output
+}
+\details{
+
 }

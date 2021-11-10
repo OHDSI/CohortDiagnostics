@@ -13,6 +13,7 @@ runCohortRelationshipDiagnostics(
   cohortTable = "cohort",
   targetCohortIds,
   comparatorCohortIds,
+  relationshipDays,
   incremental = FALSE,
   incrementalFolder = NULL
 )
@@ -45,6 +46,8 @@ tables, provide a schema with write privileges where temp tables can be created.
 \item{targetCohortIds}{A vector of one or more Cohort Ids for use as target cohorts.}
 
 \item{comparatorCohortIds}{A vector of one or more Cohort Ids for use as feature/comparator cohorts.}
+
+\item{relationshipDays}{A dataframe with two columns startDay and endDay representing periods of time to compute relationship}
 
 \item{incremental}{Create only cohort diagnostics that haven't been created before?}
 
