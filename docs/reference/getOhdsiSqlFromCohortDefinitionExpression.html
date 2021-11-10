@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Return a database data source object — createDatabaseDataSource • CohortDiagnostics</title>
+<title>Generates and return cohort SQL — getOhdsiSqlFromCohortDefinitionExpression • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,11 +39,10 @@
 
 
 
-<meta property="og:title" content="Return a database data source object — createDatabaseDataSource" />
-<meta property="og:description" content="Collects a list of objects needed to connect to a database dataSource. This includes one of
-DatabaseConnector::createConnectionDetails object, or a DBI database connection created
-using either DatabaseConnector::connection or pool::dbPool, and a names of
-resultsDatabaseSchema and vocabularyDatabaseSchema" />
+<meta property="og:title" content="Generates and return cohort SQL — getOhdsiSqlFromCohortDefinitionExpression" />
+<meta property="og:description" content="Given a cohort definition expression, the function generates and return cohort SQL
+in OHDSI SQL form. This maybe be rendered and translated using
+OHDSI R packages like SqlRender::render" />
 
 
 
@@ -147,61 +146,41 @@ resultsDatabaseSchema and vocabularyDatabaseSchema" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Return a database data source object</h1>
+    <h1>Generates and return cohort SQL</h1>
     <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/Shared.R'><code>R/Shared.R</code></a></small>
-    <div class="hidden name"><code>createDatabaseDataSource.Rd</code></div>
+    <div class="hidden name"><code>getOhdsiSqlFromCohortDefinitionExpression.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Collects a list of objects needed to connect to a database dataSource. This includes one of
-<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html'>DatabaseConnector::createConnectionDetails</a></code> object, or a DBI database connection created
-using either <code>DatabaseConnector::connection</code> or <code><a href='https://rdrr.io/pkg/pool/man/dbPool.html'>pool::dbPool</a></code>, and a names of
-resultsDatabaseSchema and vocabularyDatabaseSchema</p>
+    <p>Given a cohort definition expression, the function generates and return cohort SQL
+in OHDSI SQL form. This maybe be rendered and translated using
+OHDSI R packages like <code><a href='https://ohdsi.github.io/SqlRender/reference/render.html'>SqlRender::render</a></code></p>
     </div>
 
-    <pre class="usage"><span class='fu'>createDatabaseDataSource</span><span class='op'>(</span>
-  connection <span class='op'>=</span> <span class='cn'>NULL</span>,
-  connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
-  <span class='va'>resultsDatabaseSchema</span>,
-  vocabularyDatabaseSchema <span class='op'>=</span> <span class='va'>resultsDatabaseSchema</span>
+    <pre class="usage"><span class='fu'>getOhdsiSqlFromCohortDefinitionExpression</span><span class='op'>(</span>
+  <span class='va'>cohortDefinitionExpression</span>,
+  generateStats <span class='op'>=</span> <span class='cn'>TRUE</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>connection</th>
-      <td><p>An object of type <code>connection</code> as created using the
-<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/connect.html'>connect</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
-is provided, in which case a new connection will be opened at the start
-of the function, and closed when the function finishes.</p></td>
+      <th>generateStats</th>
+      <td><p>Do you want generate intermediary inclusion rules tables?</p></td>
     </tr>
     <tr>
-      <th>connectionDetails</th>
-      <td><p>An object of type <code>connectionDetails</code> as created using the
-<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connection</code> is
-provided.</p></td>
-    </tr>
-    <tr>
-      <th>resultsDatabaseSchema</th>
-      <td><p>Schema name where the output of your Cohort Diagnostics result set it uploaded. This 
-is commonly uploaded using <code><a href='uploadResults.html'>CohortDiagnostics::uploadResults</a></code> function. The
-schema may be initiated using <code>CohortDiagnostics::resultsDatabaseSchema</code>.</p></td>
-    </tr>
-    <tr>
-      <th>vocabularyDatabaseSchema</th>
-      <td><p>Schema name where your OMOP vocabulary data resides. This is 
-commonly the same as cdmDatabaseSchema. Note that for 
-SQL Server, this should include both the database and
-schema name, for example 'vocabulary.dbo'.</p></td>
+      <th>cohortExpression</th>
+      <td><p>A cohort definition expression as a list object. This is commonly generated by
+by reading in a cohort definition json and converting it into a R-object
+using for example RJSONIO::fromJSON(digits = 23). Please use minimum digits = 23,
+to ensure that big numbers don't loose precision.'</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Returns a list with information on database data source</p>
+    <p>Returns text (OHDSI SQL)</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

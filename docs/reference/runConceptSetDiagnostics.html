@@ -165,6 +165,7 @@ the cohorts need to be instantiated.</p>
   cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
   cohortDatabaseSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
   keepCustomConceptId <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  indexDateDiagnosticsRelativeDays <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0</span><span class='op'>)</span>,
   minCellCount <span class='op'>=</span> <span class='fl'>5</span>,
   cohortTable <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
@@ -225,6 +226,10 @@ this should include both the database and schema name, for example
       <td><p>(Optional) Default FALSE. Do you want to keep concept id above 2 billion.
 Per OMOP conventions any conceptId &gt;= 2 billion are considered site specific
 custom value that are not shipped as part of default OMOP vocabulary tables.</p></td>
+    </tr>
+    <tr>
+      <th>indexDateDiagnosticsRelativeDays</th>
+      <td><p>An array of days relative to index date to perform diagnositcs on. Default 0 - i.e. same days an index.</p></td>
     </tr>
     <tr>
       <th>minCellCount</th>
