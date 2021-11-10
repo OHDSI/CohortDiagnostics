@@ -242,6 +242,20 @@ runCohortRelationshipDiagnostics <-
     seqStartCustom7 <- c(-31:31)
     seqEndCustom7 <- seqStartCustom7
     
+    # custom sequence 8
+    seqStartCustom8 <- c(-365, -30,
+                         0,
+                         1,
+                         31, -9999, -365, -180, -30, -9999, -365, -180, -30)
+    seqEndCustom8 <- c(-31,-1,
+                       0,
+                       30,
+                       365,
+                       0,
+                       0,
+                       0,
+                       0,-1,-1,-1,-1)
+    
     seqStart <-
       c(
         seqStartCustom1,
@@ -251,6 +265,7 @@ runCohortRelationshipDiagnostics <-
         seqStartCustom5,
         seqStartCustom6,
         seqStartCustom7,
+        seqStartCustom8,
         seqStart30,
         seqStart180,
         seqStart365
@@ -264,6 +279,7 @@ runCohortRelationshipDiagnostics <-
         seqEndCustom5,
         seqEndCustom6,
         seqEndCustom7,
+        seqEndCustom8,
         seqEnd30,
         seqEnd180,
         seqEnd365
