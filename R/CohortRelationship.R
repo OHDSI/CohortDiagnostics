@@ -62,8 +62,10 @@ runCohortRelationshipDiagnostics <-
             !is.data.frame(relationshipDays))) {
       stop("relationshipDays is not specified")
     }
-    if (all("startDay" %in% colnames(relationshipDays),
-            "endDay" %in% colnames(relationshipDays))) {
+    if (!all(
+      "startDay" %in% colnames(relationshipDays),
+      "endDay" %in% colnames(relationshipDays)
+    )) {
       difference <- setdiff(x = c("startDay", "endDay"),
                             y = colnames(relationshipDays))
       stop(paste0("Required fields not found in relationship table: ", difference))

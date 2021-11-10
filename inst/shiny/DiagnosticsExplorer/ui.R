@@ -306,8 +306,8 @@ bodyTabItems <- shinydashboard::tabItems(
                                 icon = shiny::icon("download"),
                                 style = "margin-top: 5px; margin-bottom: 5px;"
                               ),
-                              shiny::actionButton(
-                                inputId  = "exportAllCohortDetails",
+                              shiny::downloadButton(
+                                outputId = "exportAllCohortDetails",
                                 label = NULL,
                                 icon = shiny::icon("file-export"),
                                 style = "margin-top: 5px; margin-bottom: 5px;"
