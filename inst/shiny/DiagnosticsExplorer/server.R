@@ -3000,11 +3000,13 @@ shiny::shinyServer(function(input, output, session) {
           source = input$targetConceptIdCountSource,
           fields = input$targetCohortConceptSetColumnFilter
         )
+      if (!hasData(countsForHeader)) {
+        return(NULL)
+      }
       
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
-
       table <- getDtWithColumnsGroupedByDatabaseId(
         data = data,
         headerCount = countsForHeader,
@@ -3070,6 +3072,9 @@ shiny::shinyServer(function(input, output, session) {
           source = input$targetConceptIdCountSource,
           fields = input$targetCohortConceptSetColumnFilter
         )
+      if (!hasData(countsForHeader)) {
+        return(NULL)
+      }
       
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
@@ -3138,11 +3143,13 @@ shiny::shinyServer(function(input, output, session) {
           source = input$targetConceptIdCountSource,
           fields = input$targetCohortConceptSetColumnFilter
         )
+      if (!hasData(countsForHeader)) {
+        return(NULL)
+      }
       
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
-      
       table <- getDtWithColumnsGroupedByDatabaseId(
         data = data,
         headerCount = countsForHeader,
@@ -3200,6 +3207,9 @@ shiny::shinyServer(function(input, output, session) {
           source = input$targetConceptIdCountSource,
           fields = input$targetCohortConceptSetColumnFilter
         )
+      if (!hasData(countsForHeader)) {
+        return(NULL)
+      }
       
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
@@ -3376,6 +3386,9 @@ shiny::shinyServer(function(input, output, session) {
           source = "Cohort Level",
           fields = input$comparatorCohortDefinitionInclusionRuleType
         )
+      if (!hasData(countsForHeader)) {
+        return(NULL)
+      }
       
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
@@ -3778,6 +3791,9 @@ shiny::shinyServer(function(input, output, session) {
           source = input$comparatorConceptIdCountSource,
           fields = input$comparatorCohortConceptSetColumnFilter
         )
+      if (!hasData(countsForHeader)) {
+        return(NULL)
+      }
       
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
@@ -3847,6 +3863,9 @@ shiny::shinyServer(function(input, output, session) {
           source = input$comparatorConceptIdCountSource,
           fields = input$comparatorCohortConceptSetColumnFilter
         )
+      if (!hasData(countsForHeader)) {
+        return(NULL)
+      }
       
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
@@ -3912,6 +3931,9 @@ shiny::shinyServer(function(input, output, session) {
           source = input$comparatorConceptIdCountSource,
           fields = input$comparatorCohortConceptSetColumnFilter
         )
+      if (!hasData(countsForHeader)) {
+        return(NULL)
+      }
       
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
@@ -3988,6 +4010,9 @@ shiny::shinyServer(function(input, output, session) {
           source = input$targetConceptIdCountSource,
           fields = input$targetCohortConceptSetColumnFilter
         )
+      if (!hasData(countsForHeader)) {
+        return(NULL)
+      }
       
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
@@ -4284,6 +4309,9 @@ shiny::shinyServer(function(input, output, session) {
         source = input$targetConceptIdCountSource,
         fields = input$targetCohortConceptSetColumnFilter
       )
+    if (!hasData(countsForHeader)) {
+      return(NULL)
+    }
     
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
@@ -4391,6 +4419,9 @@ shiny::shinyServer(function(input, output, session) {
         source = "Cohort Level",
         fields = input$cohortCountInclusionRuleType
       )
+    if (!hasData(countsForHeader)) {
+      return(NULL)
+    }
     
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
@@ -5074,6 +5105,9 @@ shiny::shinyServer(function(input, output, session) {
           source = "Cohort Level",
           fields = input$cohortCountInclusionRuleType
         )
+      if (!hasData(countsForHeader)) {
+        return(NULL)
+      }
       
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
@@ -5998,7 +6032,6 @@ shiny::shinyServer(function(input, output, session) {
             !exists('indexEventBreakdown'))) {
       return(NULL)
     }
-    
     indexEventBreakdown <-
       getResultsIndexEventBreakdown(dataSource = dataSource,
                                     cohortIds = consolidatedCohortIdTarget(),
@@ -6210,6 +6243,9 @@ shiny::shinyServer(function(input, output, session) {
           source = "Cohort Level",
           fields = input$indexEventBreakdownTableFilter
         )
+      if (!hasData(countsForHeader)) {
+        return(NULL)
+      }
       
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
@@ -6236,7 +6272,6 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(getIndexEventBreakdownTargetDataFiltered())) {
       return(NULL)
     }
-    
     filteredConceptIds <-
       getIndexEventBreakdownTargetDataFiltered()$conceptId %>% unique()
     if (!hasData(filteredConceptIds)) {
@@ -6457,6 +6492,9 @@ shiny::shinyServer(function(input, output, session) {
         source = "Cohort Level",
         fields = input$indexEventBreakdownTableFilter
       )
+    if (!hasData(countsForHeader)) {
+      return(NULL)
+    }
     
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
@@ -6591,6 +6629,9 @@ shiny::shinyServer(function(input, output, session) {
         source = "Cohort Level",
         fields = input$indexEventBreakdownTableFilter
       )
+    if (!hasData(countsForHeader)) {
+      return(NULL)
+    }
     
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
@@ -6803,6 +6844,9 @@ shiny::shinyServer(function(input, output, session) {
         source = "Cohort Level",
         fields = input$visitContextPersonOrRecords
       )
+    if (!hasData(countsForHeader)) {
+      return(NULL)
+    }
     
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
@@ -7357,6 +7401,10 @@ shiny::shinyServer(function(input, output, session) {
           source = "Cohort Level",
           fields = "Events"
         )
+      if (!hasData(countsForHeader)) {
+        return(NULL)
+      }
+      
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
