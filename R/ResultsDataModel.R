@@ -271,7 +271,7 @@ uploadResults <- function(connectionDetails = NULL,
   dir.create(path = unzipFolder, recursive = TRUE)
   on.exit(unlink(unzipFolder, recursive = TRUE), add = TRUE)
   
-  ParallelLogger::logTrace(" - Unzipping ", zipFileName)
+  ParallelLogger::logInfo(" - Unzipping ", zipFileName)
   zip::unzip(zipFileName, exdir = unzipFolder)
   
   specifications <-
@@ -449,7 +449,7 @@ uploadResults <- function(connectionDetails = NULL,
       # guess_max = 1e6)
       
     } else {
-      ParallelLogger::logInfo(paste0("   - ", csvFileName, " no in zip file, skipping."))
+      ParallelLogger::logInfo(paste0("   - ", csvFileName, " not in zip file, skipping for ", zipFileName, "."))
     }
   }
   invisible(lapply(unique(specifications$tableName), uploadTable))

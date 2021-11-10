@@ -405,7 +405,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
     )
   }
   data <- data %>% 
-    dplyr::select(c(keyColumns,"databaseId", dataColumns) %>% unique())
+    dplyr::select(c(dplyr::all_of(keyColumns),"databaseId", dplyr::all_of(dataColumns)) %>% unique())
   
   
   #get all unique databsaeIds - and sort data by it
@@ -471,7 +471,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
       if (sort) {
         data <- data %>% 
           dplyr::arrange(dplyr::desc(abs(dplyr::across(
-            dplyr::contains(dataColumns)
+            dplyr::contains(dplyr::all_of(dataColumns))
           ))))
       }
       
