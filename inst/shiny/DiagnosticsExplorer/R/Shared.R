@@ -2345,12 +2345,12 @@ getResultsIndexEventBreakdown <- function(dataSource,
     coConceptId = coConceptIds,
     daysRelativeIndex = daysRelativeIndex
   )
-  #!!!!!!!!!!!!!!!!!!!TEMPORARY FIX ###!!!!!!!!!!to be removed - index event breakdown daysRelativeIndex fix
-  if (!is.null(data)) {
-    data <- data %>% 
-      dplyr::mutate(daysRelativeIndex = .data$daysRelativeIndex * -1)
-    warning("temporary fix = please remove")
-  }
+  # #!!!!!!!!!!!!!!!!!!!TEMPORARY FIX ###!!!!!!!!!!to be removed - index event breakdown daysRelativeIndex fix
+  # if (!is.null(data)) {
+  #   data <- data %>% 
+  #     dplyr::mutate(daysRelativeIndex = .data$daysRelativeIndex * -1)
+  #   warning("temporary fix = please remove")
+  # }
   return(data)
 }
 
@@ -3239,7 +3239,6 @@ getMultipleCharacterizationResults <-
            featureExtractionCharacterization = TRUE,
            cohortRelationshipCharacterizationResults = TRUE,
            minThreshold = 0.01) {
-    browser()
     addCharacterizationSource <-
       function(x, characterizationSourceValue) {
         exepectedDataTables <-
@@ -3307,7 +3306,6 @@ getMultipleCharacterizationResults <-
         getCohortRelationshipCharacterizationResults(
           dataSource = dataSource,
           cohortIds = cohortIds,
-          temporalTimeRef = temporalTimeRef,
           databaseIds = databaseIds
         )
       cohortRelationshipCharacterizationResults <-
@@ -3615,12 +3613,12 @@ getResultsTemporalTimeRef <- function(dataSource) {
                                      .data$endDay),
                      by = c("startDay", "endDay")) %>% 
     dplyr::mutate(sequence = 999,
-                  choices = .data$temporalName)
+                  choices = .data$temporalName) %>% 
+    dplyr::mutate(primaryChoices = FALSE)
   
   data <- dplyr::bind_rows(data1, data2) %>%
     dplyr::arrange(.data$sequence, .data$startDay, .data$endDay) %>% 
-    dplyr::select(.data$startDay, .data$endDay, .data$choices) %>% 
-    dplyr::mutate(primaryChoices = FALSE)
+    dplyr::select(.data$startDay, .data$endDay, .data$choices, .data$primaryChoices)
   return(data)
 }
 

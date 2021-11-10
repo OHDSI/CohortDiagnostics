@@ -652,6 +652,9 @@ getCountsForHeaderForUseInDataTable <- function(dataSource,
   if (source == "Datasource Level") {
     countsForHeader <- getDatabaseCounts(dataSource = dataSource,
                                          databaseIds = databaseIds)
+    if (!hasData(countsForHeader)) {
+      warning("Did not get counts for table header in metadata file. Please check the output from Cohort Diagnostics (metadata file is generated in the last step, is it in the zip file?), is it corrupted?")
+    }
   } else if (source == "Cohort Level") {
     if (length(cohortIds) > 1) {
       stop("Only one cohort id is supported")
@@ -665,6 +668,9 @@ getCountsForHeaderForUseInDataTable <- function(dataSource,
       dplyr::rename(records = .data$cohortEntries,
                     persons = .data$cohortSubjects) %>%
       dplyr::select(-.data$cohortId) #only one cohort id is supported
+    if (!hasData(countsForHeader)) {
+      warning("Did not get counts for table header in cohort table. Please check the output from Cohort Diagnostics, is it corrupted?")
+    }
   }
   
   if (fields  == "Persons") {
