@@ -36,6 +36,8 @@
 #'
 #' @param comparatorCohortIds          A vector of one or more Cohort Ids for use as feature/comparator cohorts.
 #' 
+#' @param relationshipDays             A dataframe with two columns startDay and endDay representing periods of time to compute relationship
+#' 
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' 
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
@@ -51,9 +53,21 @@ runCohortRelationshipDiagnostics <-
            cohortTable = "cohort",
            targetCohortIds,
            comparatorCohortIds,
+           relationshipDays,
            incremental = FALSE,
            incrementalFolder = NULL) {
     startTime <- Sys.time()
+    
+    if (any(is.null(relationshipDays),
+            !is.data.frame(relationshipDays))) {
+      stop("relationshipDays is not specified")
+    }
+    if (all("startDay" %in% colnames(relationshipDays),
+            "endDay" %in% colnames(relationshipDays))) {
+      difference <- setdiff(x = c("startDay", "endDay"),
+                            y = colnames(relationshipDays))
+      stop(paste0("Required fields not found in relationship table: ", difference))
+    }
     
     if (length(targetCohortIds) == 0) {
       warning("No target cohort ids specified")
@@ -174,103 +188,8 @@ runCohortRelationshipDiagnostics <-
       progressBar = FALSE,
       reportOverallTime = FALSE
     )
-    
-    ParallelLogger::logTrace("  - Computing date range in target cohorts")
-    dateRangeSql <-
-      "SELECT DATEDIFF(day, min_date, max_date) days_diff,
-                            min_date,
-                            max_date
-                    FROM
-                    (SELECT min(cohort_start_date) min_date,
-	                           max(cohort_end_date) max_date
-                     FROM #target_subset) f;"
-    dateRange <-
-      DatabaseConnector::renderTranslateQuerySql(
-        connection = connection,
-        sql = dateRangeSql,
-        snakeCaseToCamelCase = TRUE
-      )
-    if (is.na(dateRange$daysDiff)) {
-      warning("Please check if the cohorts are instantiated. Exiting Cohort relationship.")
-    }
-    dateRange$daysDiff <- min(421, dateRange$daysDiff)
-    
-    # every 30 days
-    daysDiff30 <- dateRange$daysDiff +
-      (30 - (dateRange$daysDiff %% 30))
-    
-    seqStart30 <- seq(daysDiff30 * -1, daysDiff30, by = 30)
-    seqEnd30 <- seqStart30 + 30
-    
-    # every 180 days
-    daysDiff180 <- dateRange$daysDiff +
-      (180 - (dateRange$daysDiff %% 180))
-    seqStart180 <- seq(daysDiff180 * -1, daysDiff180, by = 180)
-    seqEnd180 <- seqStart180 + 180
-    
-    # every 365 days
-    daysDiff365 <- dateRange$daysDiff +
-      (365 - (dateRange$daysDiff %% 365))
-    seqStart365 <- seq(daysDiff365 * -1, daysDiff365, by = 365)
-    seqEnd365 <- seqStart365 + 365
-    
-    # custom sequence 1 - for temporal characterization
-    seqStartCustom1 <- c(-365,-30, 0, 1, 31)
-    seqEndCustom1 <- c(-31, -1, 0, 30, 365)
-    
-    # custom sequence 2 - all time prior to day before index (not including index date)
-    seqStartCustom2 <- c(-99999)
-    seqEndCustom2 <- c(-1)
-    
-    # custom sequence 3 - all time prior to index (including index date)
-    seqStartCustom3 <- c(-99999)
-    seqEndCustom3 <- c(0)
-    
-    # custom sequence 4 - index date to all time into future
-    seqStartCustom4 <- c(0)
-    seqEndCustom4 <- c(99999)
-    
-    # custom sequence 5 - day 1 to all time into future
-    seqStartCustom5 <- c(1)
-    seqEndCustom5 <- c(99999)
-    
-    # custom sequence 6 - all time prior to all time future
-    seqStartCustom6 <- c(-99999)
-    seqEndCustom6 <- c(99999)
-    
-    # custom sequence 7 - every day from -31 to + 31
-    seqStartCustom7 <- c(-31:31)
-    seqEndCustom7 <- seqStartCustom7
-    
-    seqStart <-
-      c(
-        seqStartCustom1,
-        seqStartCustom2,
-        seqStartCustom3,
-        seqStartCustom4,
-        seqStartCustom5,
-        seqStartCustom6,
-        seqStartCustom7,
-        seqStart30,
-        seqStart180,
-        seqStart365
-      )
-    seqEnd <-
-      c(
-        seqEndCustom1,
-        seqEndCustom2,
-        seqEndCustom3,
-        seqEndCustom4,
-        seqEndCustom5,
-        seqEndCustom6,
-        seqEndCustom7,
-        seqEnd30,
-        seqEnd180,
-        seqEnd365
-      )
-    
-    timePeriods <- dplyr::tibble(startDay = seqStart,
-                                 endDay = seqEnd) %>%
+
+    timePeriods <- relationshipDays %>%
       dplyr::distinct() %>%
       dplyr::arrange(.data$startDay, .data$endDay) %>%
       dplyr::mutate(timeId = dplyr::row_number())

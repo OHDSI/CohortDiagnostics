@@ -204,7 +204,8 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs == 'cohortOverlap'",
+      condition = "input.tabs == 'cohortOverlap' ||
+      input.tabs == 'cohortCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "selectedComparatorCompoundCohortNames",
         label = "Comparators",
@@ -303,6 +304,12 @@ bodyTabItems <- shinydashboard::tabItems(
                                 outputId = "downloadAllCohortDetails",
                                 label = NULL,
                                 icon = shiny::icon("download"),
+                                style = "margin-top: 5px; margin-bottom: 5px;"
+                              ),
+                              shiny::actionButton(
+                                inputId  = "exportAllCohortDetails",
+                                label = NULL,
+                                icon = shiny::icon("file-export"),
                                 style = "margin-top: 5px; margin-bottom: 5px;"
                               )
                             )
@@ -851,65 +858,102 @@ bodyTabItems <- shinydashboard::tabItems(
     tabName = "indexEventBreakdown",
     createShinyBoxFromOutputId("indexEventBreakdownSelectedCohort"),
     tags$table(width = '100%',
-      tags$tr(
-        tags$td(
-          shiny::radioButtons(
-            inputId = "indexEventBreakdownTableRadioButton",
-            label = "",
-            choices = c("All", "Standard concepts", "Non Standard Concepts"),
-            selected = "All",
-            inline = TRUE
-          )
-        ),
-        tags$td(
-          shinyWidgets::pickerInput(
-            inputId = "indexEventDomainNameFilter",
-            label = "Domain name",
-            choices = c("Visit", "Condition", "Procedure", "Observation", "Device", "Measurement", "Other"),
-            selected = c("Visit", "Condition", "Procedure", "Observation", "Device", "Measurement", "Other"),
-            inline = TRUE,
-            multiple = TRUE,
-            width = 300,
-            choicesOpt = list(style = rep_len("color: black;", 999)),
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              liveSearch = TRUE,
-              size = 10,
-              liveSearchStyle = "contains",
-              liveSearchPlaceholder = "Type here to search",
-              virtualScroll = 50
+               tags$tr(
+                 tags$td(
+                   shiny::checkboxGroupInput(
+                     inputId = "indexEventBreakdownTableRadioButton",
+                     label = "",
+                     choices = c("Resolved", "Mapped", "Recommended", "Excluded", "Other"),
+                     selected = c("Resolved", "Mapped", "Recommended", "Excluded"),
+                     inline = TRUE
+                   )
+                 ),
+                 tags$td(
+                   shinyWidgets::pickerInput(
+                     inputId = "indexEventDomainNameFilter",
+                     label = "Domain name",
+                     choices = domainOptionsInDomainTable,
+                     selected = domainOptionsInDomainTable,
+                     inline = TRUE,
+                     multiple = TRUE,
+                     width = 300,
+                     choicesOpt = list(style = rep_len("color: black;", 999)),
+                     options = shinyWidgets::pickerOptions(
+                       actionsBox = TRUE,
+                       liveSearch = TRUE,
+                       size = 10,
+                       liveSearchStyle = "contains",
+                       liveSearchPlaceholder = "Type here to search",
+                       virtualScroll = 50
+                     )
+                   )
+                 ),
+                 tags$td(HTML("&nbsp;")),
+                 tags$td(
+                   HTML("&nbsp;"),
+                   tags$td(
+                     shiny::radioButtons(
+                       inputId = "indexEventBreakdownTableFilter",
+                       label = "Display",
+                       choices = c("Both", "Records", "Persons"),
+                       selected = "Records",
+                       inline = TRUE
+                     )
+                   ),
+                   tags$td(HTML("&nbsp;")),
+                   tags$td(
+                     shiny::checkboxInput(inputId = "indexEventBreakdownShowAsPercent",
+                                          label = "Show As Percent")
+                   ),
+                   tags$td(
+                     shiny::downloadButton(
+                       "saveBreakdownTable",
+                       label = "",
+                       icon = shiny::icon("download"),
+                       style = "margin-top: 5px; margin-bottom: 5px;"
+                     )
+                   )
+                 )
+               )),
+    shiny::tabsetPanel(
+      id = "conceptBrowserTabSetPanel",
+      shiny::tabPanel(
+        title = "Table",
+        value = "PanelIndexEventBreakdownTable",
+        DT::dataTableOutput(outputId = "indexEventBreakdownTable")
+      ),
+      shiny::tabPanel(
+        title = "Plot",
+        value = "PanelIndexEventBreakdownPlot",
+        tags$table(
+          tags$tr(
+            tags$td(
+              shiny::checkboxInput(
+                inputId = "indexEventBreakdownShowLogTransform",
+                label = "Log Transform",
+                value = TRUE
+              )
+            ),
+            tags$td(
+              shiny::sliderInput(
+                inputId = "indexEventBreakdownConceptIdsRangeFilter",
+                label = "Display Concept Ids Between :",
+                min = 0,
+                max = 0,
+                value = c(0, 0),
+                dragRange = TRUE,
+                step = 1,
+                sep = ""
+              )
             )
           )
         ),
-        tags$td(HTML("&nbsp;")),
-        tags$td(HTML("&nbsp;"),
-        tags$td(
-          shiny::radioButtons(
-            inputId = "indexEventBreakdownTableFilter",
-            label = "Display",
-            choices = c("Both", "Record Only", "Person Only"), 
-            selected = "Person Only",
-            inline = TRUE
-          )
-        ),
-        tags$td(HTML("&nbsp;")),
-        tags$td(
-          shiny::checkboxInput(
-            inputId = "indexEventBreakdownShowAsPercent",
-            label = "Show As Percent"
-          )
-        ),
-        tags$td(
-          shiny::downloadButton(
-            "saveBreakdownTable",
-            label = "",
-            icon = shiny::icon("download"),
-            style = "margin-top: 5px; margin-bottom: 5px;"
-          )
+        shinycssloaders::withSpinner(
+          plotly::plotlyOutput("indexEventBreakdownPlot", height = 1000),
+          type = spinnerType
         )
       )
-    )),
-    DT::dataTableOutput(outputId = "indexEventBreakdownTable"),
+    ),
     shiny::conditionalPanel(
       condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
       shinydashboard::box(
@@ -994,6 +1038,11 @@ bodyTabItems <- shinydashboard::tabItems(
               ),
               type = spinnerType
             )
+          ),
+          shiny::tabPanel(
+            title = " Co Concept",
+            value = "indexEvenCoCOnceptValueTabPanel",
+            DT::dataTableOutput(outputId = "coConceptTableForIndexEvent")
           )
         )
       )
@@ -1028,8 +1077,8 @@ bodyTabItems <- shinydashboard::tabItems(
             shiny::radioButtons(
               inputId = "visitContextPersonOrRecords",
               label = "Display",
-              choices = c("Person Only", "Record Only"),
-              selected = "Person Only",
+              choices = c("Persons", "Records"),
+              selected = "Persons",
               inline = TRUE
             )
           ),

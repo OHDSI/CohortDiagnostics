@@ -97,7 +97,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  cdmVersion = 5,
                                  runInclusionStatistics = TRUE,
                                  runConceptSetDiagnostics = TRUE,
-                                 indexDateDiagnosticsRelativeDays = c(-30:30),  #part of index event breakdown
+                                 indexDateDiagnosticsRelativeDays = c(-5:5),  #part of index event breakdown
                                  runIncludedSourceConcepts = FALSE, #deprecated
                                  runOrphanConcepts = FALSE, #deprecated
                                  runVisitContext = TRUE,
@@ -128,7 +128,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                    useConditionEraGroupStart = FALSE,
                                    useConditionEraGroupOverlap = TRUE,
                                    useDrugExposure = FALSE, #leads to too many concept id
-                                   useDrugEraOverlap = TRUE,
+                                   useDrugEraOverlap = FALSE,
                                    useDrugEraGroupStart = FALSE,
                                    useDrugEraGroupOverlap = TRUE,
                                    useObservation = TRUE,
@@ -139,7 +139,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                    useChads2Vasc = TRUE,
                                    useHfrs = FALSE,
                                    temporalStartDays = c(
-                                     -365,-30,
+                                     -365,
+                                     -30,
                                      0,
                                      1,
                                      31,
@@ -147,11 +148,17 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      -365,
                                      -180,
                                      -30,
+                                     -9999,
+                                     -365,
+                                     -180,
+                                     -30,
                                      seq(from = -421, to = -31, by = 30),
-                                     seq(from = 0, to = 390, by = 30)
+                                     seq(from = 0, to = 390, by = 30),
+                                     seq(from = -5, to = 5, by = 1)
                                    ),
                                    temporalEndDays = c(
-                                     -31,-1,
+                                     -31,
+                                     -1,
                                      0,
                                      30,
                                      365,
@@ -159,8 +166,13 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      0,
                                      0,
                                      0,
+                                     -1,
+                                     -1,
+                                     -1,
+                                     -1,
                                      seq(from = -391, to = -1, by = 30),
-                                     seq(from = 30, to = 420, by = 30)
+                                     seq(from = 30, to = 420, by = 30),
+                                     seq(from = -5, to = 5, by = 1)
                                    )
                                  ),
                                  minCellCount = 5,
@@ -823,6 +835,48 @@ runCohortDiagnostics <- function(packageName = NULL,
         ))
       }
       ParallelLogger::logTrace(" - Beginning Cohort Relationship SQL")
+      if (all(exists("temporalCovariateSettings"),
+              !is.null(temporalCovariateSettings))) {
+        temporalStartDays <- temporalCovariateSettings$temporalStartDays
+        temporalEndDays <- temporalCovariateSettings$temporalEndDays
+      } else {
+        temporalStartDays = c(
+          -365,
+          -30,
+          0,
+          1,
+          31,
+          -9999,
+          -365,
+          -180,
+          -30,
+          -9999,
+          -365,
+          -180,
+          -30,
+          seq(from = -421, to = -31, by = 30),
+          seq(from = 0, to = 390, by = 30),
+          seq(from = -5, to = 5, by = 1)
+        )
+        temporalEndDays = c(
+          -31,
+          -1,
+          0,
+          30,
+          365,
+          0,
+          0,
+          0,
+          0,
+          -1,
+          -1,
+          -1,
+          -1,
+          seq(from = -391, to = -1, by = 30),
+          seq(from = 30, to = 420, by = 30),
+          seq(from = -5, to = 5, by = 1)
+        )
+      }
       output <-
         runCohortRelationshipDiagnostics(
           connection = connection,
@@ -832,6 +886,8 @@ runCohortDiagnostics <- function(packageName = NULL,
           cohortTable = cohortTable,
           targetCohortIds = subset$cohortId,
           comparatorCohortIds = cohorts$cohortId,
+          relationshipDays = dplyr::tibble(startDay = temporalEndDays,
+                                           endDay = temporalEndDays),
           incremental = incremental,
           incrementalFolder = incrementalFolder
         )

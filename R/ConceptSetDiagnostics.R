@@ -1360,7 +1360,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                         	COUNT(*) concept_count
                         FROM @cohort_database_schema.@cohort_table c
                         INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
-                        	AND c.cohort_start_date = DATEADD('d', @days_relative_index, d1.@domain_start_date)
+                        	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
                         INNER JOIN #indx_concepts cu ON d1.@domain_concept_id = cu.concept_id
                         	AND c.cohort_definition_id = cu.cohort_id
                         WHERE c.cohort_definition_id IN (@cohortIds)
@@ -1388,9 +1388,9 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                         			)) concept_count
                                         FROM @cohort_database_schema.@cohort_table c
                                         INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
-                                        	AND c.cohort_start_date = DATEADD('d', @days_relative_index, d1.@domain_start_date)
+                                        	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
                                         INNER JOIN @cdm_database_schema.@domain_table d2 ON c.subject_id = d2.person_id
-                                        	AND c.cohort_start_date = DATEADD('d', @days_relative_index, d2.@domain_start_date)
+                                        	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d2.@domain_start_date
                                         	AND d1.@domain_start_date = d2.@domain_start_date
                                         	AND d1.person_id = d2.person_id
                                         INNER JOIN #indx_concepts cu1 ON d1.@domain_concept_id = cu1.concept_id
@@ -1424,9 +1424,9 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                             			)) concept_count
                                             FROM @cohort_database_schema.@cohort_table c
                                             INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
-                                            	AND c.cohort_start_date = DATEADD('d', @days_relative_index, d1.@domain_start_date)
+                                            	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
                                             INNER JOIN @cdm_database_schema.@domain_table d2 ON c.subject_id = d2.person_id
-                                            	AND c.cohort_start_date = DATEADD('d', @days_relative_index, d2.@domain_start_date)
+                                            	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d2.@domain_start_date
                                             	AND d1.@domain_start_date = d2.@domain_start_date
                                             	AND d1.person_id = d2.person_id
                                             INNER JOIN #indx_concepts cu1 ON d1.@domain_concept_id = cu1.concept_id
@@ -2010,16 +2010,16 @@ getOptimizationRecommendationForConceptSetExpression <-
       dplyr::filter(.data$includeDescendants == TRUE) %>%
       dplyr::pull(.data$conceptId)
     
-    if (!doesObjectHaveData(conceptSetConceptIdsExcluded)) {
+    if (!hasData(conceptSetConceptIdsExcluded)) {
       conceptSetConceptIdsExcluded <- 0
     }
-    if (!doesObjectHaveData(conceptSetConceptIdsDescendantsExcluded)) {
+    if (!hasData(conceptSetConceptIdsDescendantsExcluded)) {
       conceptSetConceptIdsDescendantsExcluded <- 0
     }
-    if (!doesObjectHaveData(conceptSetConceptIdsNotExcluded)) {
+    if (!hasData(conceptSetConceptIdsNotExcluded)) {
       conceptSetConceptIdsNotExcluded <- 0
     }
-    if (!doesObjectHaveData(conceptSetConceptIdsDescendantsNotExcluded)) {
+    if (!hasData(conceptSetConceptIdsDescendantsNotExcluded)) {
       conceptSetConceptIdsDescendantsNotExcluded <- 0
     }
     

@@ -181,15 +181,15 @@ consolidationOfSelectedFieldValues <- function(input,
   ##########################Cohort Definition tab ##########################
   if (input$tabs == 'cohortDefinition') {
     #selection of cohort
-    if (doesObjectHaveData(input$selectedCompoundCohortName) ||
-        doesObjectHaveData(input$selectedComparatorCompoundCohortName)) {
+    if (hasData(input$selectedCompoundCohortName) ||
+        hasData(input$selectedComparatorCompoundCohortName)) {
       # get the last two rows selected - this is only for cohort table to enable LEFT/RIGHT comparison
       if (input$selectedCompoundCohortName != "") {
         data$cohortIdTarget <- cohort %>% 
           dplyr::filter(.data$compoundName == input$selectedCompoundCohortName) %>% 
           dplyr::pull(.data$cohortId)
       }
-      if (doesObjectHaveData(input$selectedComparatorCompoundCohortName)) {
+      if (hasData(input$selectedComparatorCompoundCohortName)) {
         data$cohortIdComparator <- cohort %>% 
           dplyr::filter(.data$compoundName == input$selectedComparatorCompoundCohortName) %>% 
           dplyr::pull(.data$cohortId)
@@ -198,16 +198,16 @@ consolidationOfSelectedFieldValues <- function(input,
     
     #selection on concept set id
     if (all(
-      doesObjectHaveData(input$targetCohortDefinitionConceptSetsTable_rows_selected),
-      doesObjectHaveData(data$cohortIdTarget)
+      hasData(input$targetCohortDefinitionConceptSetsTable_rows_selected),
+      hasData(data$cohortIdTarget)
     )) {
       selectedConceptSet <-
         conceptSetExpressionTarget[input$targetCohortDefinitionConceptSetsTable_rows_selected,]
       data$conceptSetIdTarget <- selectedConceptSet$conceptSetId
       
       if (all(
-        doesObjectHaveData(input$comparatorCohortDefinitionConceptSets_rows_selected),
-        doesObjectHaveData(data$cohortIdComparator)
+        hasData(input$comparatorCohortDefinitionConceptSets_rows_selected),
+        hasData(data$cohortIdComparator)
       )) {
         selectedConceptSet <-
           conceptSetExpressionComparator[input$comparatorCohortDefinitionConceptSets_rows_selected,]
@@ -215,44 +215,44 @@ consolidationOfSelectedFieldValues <- function(input,
       }
     }
     #selection on database id
-    if (doesObjectHaveData(input$selectedDatabaseIds)) {
+    if (hasData(input$selectedDatabaseIds)) {
         data$selectedDatabaseIdTarget <-   database %>% 
           dplyr::filter(.data$compoundName == input$selectedDatabaseIds) %>% 
           dplyr::pull(.data$databaseId) 
     }
     #selection on concept id
 
-    if (doesObjectHaveData(input$targetCohortDefinitionResolvedConceptTable_rows_selected)) {
+    if (hasData(input$targetCohortDefinitionResolvedConceptTable_rows_selected)) {
       data$selectedConceptIdTarget <- resolvedConceptSetDataTarget[input$targetCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
       data$TargetActive <- TRUE
     }
-    if (doesObjectHaveData(input$comparatorCohortDefinitionResolvedConceptTable_rows_selected)) {
+    if (hasData(input$comparatorCohortDefinitionResolvedConceptTable_rows_selected)) {
       data$selectedConceptIdComparator <- resolvedConceptSetDataComparator[input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
       data$comparatorActive <- TRUE
     }
-    if (doesObjectHaveData(input$targetCohortDefinitionExcludedConceptTable_rows_selected)) {
+    if (hasData(input$targetCohortDefinitionExcludedConceptTable_rows_selected)) {
       data$selectedConceptIdTarget <- excludedConceptSetDataTarget[input$targetCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
       data$TargetActive <- TRUE
     }
-    if (doesObjectHaveData(input$comparatorCohortDefinitionExcludedConceptTable_rows_selected)) {
+    if (hasData(input$comparatorCohortDefinitionExcludedConceptTable_rows_selected)) {
       data$selectedConceptIdComparator <- excludedConceptSetDataComparator[input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
       data$comparatorActive <- TRUE
     }
-    if (doesObjectHaveData(input$targetCohortDefinitionOrphanConceptTable_rows_selected)) {
+    if (hasData(input$targetCohortDefinitionOrphanConceptTable_rows_selected)) {
       data$selectedConceptIdTarget <- orphanConceptSetDataTarget[input$targetCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
       data$TargetActive <- TRUE
     }
-    if (doesObjectHaveData(input$comparatorCohortDefinitionOrphanConceptTable_rows_selected)) {
+    if (hasData(input$comparatorCohortDefinitionOrphanConceptTable_rows_selected)) {
       data$selectedConceptIdComparator <- orphanConceptSetDataComparator[input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
       data$comparatorActive <- TRUE
     }
     
-    if (doesObjectHaveData(input$targetCohortDefinitionMappedConceptTable_rows_selected)) {
+    if (hasData(input$targetCohortDefinitionMappedConceptTable_rows_selected)) {
       data$selectedConceptIdTarget <- mappedConceptSetTarget[input$targetCohortDefinitionMappedConceptTable_rows_selected,]$conceptId
       data$TargetActive <- TRUE
     }
     
-    if (doesObjectHaveData(input$comparatorCohortDefinitionMappedConceptTable_rows_selected)) {
+    if (hasData(input$comparatorCohortDefinitionMappedConceptTable_rows_selected)) {
       data$selectedConceptIdComparator <- mappedConceptSetComparator[input$comparatorCohortDefinitionMappedConceptTable_rows_selected,]$conceptId
       data$comparatorActive <- TRUE
     }
@@ -277,13 +277,24 @@ consolidationOfSelectedFieldValues <- function(input,
         unique()
     }
     
-    if (all(!is.null(input$selectedComparatorCompoundCohortName),
-            !is.null(cohort))) {
-      data$cohortIdComparator <- cohort %>%
-        dplyr::filter(.data$compoundName %in% input$selectedComparatorCompoundCohortName) %>%
-        dplyr::arrange(.data$cohortId) %>%
-        dplyr::pull(.data$cohortId) %>%
-        unique()
+    if (input$tabs == 'cohortCharacterization') {
+      if (all(!is.null(input$selectedComparatorCompoundCohortNames),
+              !is.null(cohort))) {
+        data$cohortIdComparator <- cohort %>%
+          dplyr::filter(.data$compoundName %in% input$selectedComparatorCompoundCohortNames) %>%
+          dplyr::arrange(.data$cohortId) %>%
+          dplyr::pull(.data$cohortId) %>%
+          unique()
+      }
+    } else {
+      if (all(!is.null(input$selectedComparatorCompoundCohortName),
+              !is.null(cohort))) {
+        data$cohortIdComparator <- cohort %>%
+          dplyr::filter(.data$compoundName %in% input$selectedComparatorCompoundCohortName) %>%
+          dplyr::arrange(.data$cohortId) %>%
+          dplyr::pull(.data$cohortId) %>%
+          unique()
+      }
     }
     
     #mutli select databaseId/ single select databaseId
@@ -291,7 +302,7 @@ consolidationOfSelectedFieldValues <- function(input,
         input$tabs == 'compareTemporalCharacterization' ||
         input$tabs == 'databaseInformation') {
       
-      if (doesObjectHaveData(input$selectedDatabaseId)) {
+      if (hasData(input$selectedDatabaseId)) {
         data$selectedDatabaseIdTarget <- database %>% 
           dplyr::filter(.data$compoundName == input$selectedDatabaseId) %>% 
           dplyr::pull(.data$databaseId)  
@@ -299,7 +310,7 @@ consolidationOfSelectedFieldValues <- function(input,
         data$selectedDatabaseIdTarget <- NULL
       }
     } else {
-      if (doesObjectHaveData(input$selectedDatabaseIds)) {
+      if (hasData(input$selectedDatabaseIds)) {
         data$selectedDatabaseIdTarget <- database %>% 
           dplyr::filter(.data$compoundName == input$selectedDatabaseIds) %>% 
           dplyr::pull(.data$databaseId)
@@ -307,15 +318,15 @@ consolidationOfSelectedFieldValues <- function(input,
     }
    
     #mutli select concept set id for one cohort
-    if (doesObjectHaveData(input$conceptSetsSelectedTargetCohort)) {
+    if (hasData(input$conceptSetsSelectedTargetCohort)) {
       data$conceptSetIdTarget <- conceptSets %>% 
         dplyr::filter(.data$cohortId %in% data$cohortIdTarget) %>% 
         dplyr::filter(.data$compoundName %in% input$conceptSetsSelectedTargetCohort) %>% 
         dplyr::pull(.data$conceptSetId)
     }
     
-    if (all(doesObjectHaveData(indexEventBreakdownDataTable),
-            doesObjectHaveData(input$indexEventBreakdownTable_rows_selected))) {
+    if (all(hasData(indexEventBreakdownDataTable),
+            hasData(input$indexEventBreakdownTable_rows_selected))) {
       lastRowsSelected <- input$indexEventBreakdownTable_rows_selected[length(input$indexEventBreakdownTable_rows_selected)]
       data$selectedConceptIdTarget <- indexEventBreakdownDataTable[lastRowsSelected, ]$conceptId
       data$TargetActive <- TRUE
@@ -330,7 +341,7 @@ consolidationOfSelectedFieldValues <- function(input,
       input$tabs == 'cohortOverlap') {
     data <- list()
     #multi select cohortId
-    if (doesObjectHaveData(input$selectedCompoundCohortNames)) {
+    if (hasData(input$selectedCompoundCohortNames)) {
       if(input$tabs != 'cohortOverlap') {
         data$cohortIdTarget <- cohort %>%
           dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortNames) %>%
@@ -340,7 +351,7 @@ consolidationOfSelectedFieldValues <- function(input,
       }
     }
     #Single select cohortId only for cohort overlap
-    if (doesObjectHaveData(input$selectedCompoundCohortName)) {
+    if (hasData(input$selectedCompoundCohortName)) {
      if (input$tabs == 'cohortOverlap') {
         data$cohortIdTarget <- cohort %>%
           dplyr::filter(.data$compoundName == input$selectedCompoundCohortName) %>%
@@ -349,7 +360,7 @@ consolidationOfSelectedFieldValues <- function(input,
           unique()
       }
     }
-    if (doesObjectHaveData(input$selectedComparatorCompoundCohortNames) && input$tabs == 'cohortOverlap') {
+    if (hasData(input$selectedComparatorCompoundCohortNames) && input$tabs == 'cohortOverlap') {
       data$cohortIdComparator <- cohort %>%
         dplyr::filter(.data$compoundName %in% input$selectedComparatorCompoundCohortNames) %>%
         dplyr::arrange(.data$cohortId) %>%
@@ -358,7 +369,7 @@ consolidationOfSelectedFieldValues <- function(input,
     }
     
     #mutli select databaseId
-    if (doesObjectHaveData(input$selectedDatabaseIds)) {
+    if (hasData(input$selectedDatabaseIds)) {
       data$selectedDatabaseIdTarget <- database %>% 
         dplyr::filter(.data$compoundName == input$selectedDatabaseIds) %>% 
         dplyr::pull(.data$databaseId) 
@@ -378,6 +389,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
                                      maxCount,
                                      sort = TRUE,
                                      showResultsAsPercent = FALSE) {
+
   # ensure the data has required fields
   keyColumns <- keyColumns %>% unique()
   dataColumns <- dataColumns %>% unique()
@@ -399,15 +411,14 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
   #get all unique databsaeIds - and sort data by it
   uniqueDatabases <- data %>%
     dplyr::select(.data$databaseId) %>%
-    dplyr::arrange(.data$databaseId) %>%
-    dplyr::distinct()
+    dplyr::distinct() %>%
+    dplyr::arrange(.data$databaseId)
   #long form
   data <- data %>% 
     tidyr::pivot_longer(cols = dplyr::all_of(dataColumns), 
                         names_to = "type", 
                         values_to = "valuesData")
-  
-  if (doesObjectHaveData(headerCount)) {
+  if (hasData(headerCount)) {
     if (sketchLevel == 1) {
       if (length(setdiff(c("databaseId", "count"), colnames(headerCount))) != 0) {
         warning("missing required fields to draw formatted datatable.")
@@ -429,6 +440,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
         
       }
       data <- data %>%
+        dplyr::mutate(valuesData = round(x = .data$valuesData, digits = 2)) %>%
         dplyr::select(-.data$count)
       
       databaseIdHeaders <- uniqueDatabases %>%
@@ -561,7 +573,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
     if (length(sortByColumns) > 0) {
       sortByColumns <- sortByColumns[[1]]
       data <- data %>%
-        dplyr::arrange(dplyr::desc(dplyr::across(sortByColumns)))
+        dplyr::arrange(dplyr::desc(dplyr::across(dplyr::all_of(sortByColumns))))
     }
   }
   
@@ -633,8 +645,8 @@ getCountsForHeaderForUseInDataTable <- function(dataSource,
                                                 cohortIds = NULL,
                                                 source = "Datasource Level",
                                                 fields = "Both") {
-  if (all(!doesObjectHaveData(databaseIds),
-          !doesObjectHaveData(cohortIds))) {
+  if (all(!hasData(databaseIds),
+          !hasData(cohortIds))) {
     stop("Please provide either databaseIds or cohortids")
   }
   if (source == "Datasource Level") {
@@ -655,11 +667,11 @@ getCountsForHeaderForUseInDataTable <- function(dataSource,
       dplyr::select(-.data$cohortId) #only one cohort id is supported
   }
   
-  if (fields  == "Person Only") {
+  if (fields  == "Persons") {
     countsForHeader <- countsForHeader %>%
       dplyr::select(-.data$records) %>%
       dplyr::rename(count = .data$persons)
-  } else if (fields %in% c("Events", "Record Only")) {
+  } else if (fields %in% c("Events", "Records")) {
     countsForHeader <- countsForHeader %>%
       dplyr::select(-.data$persons) %>%
       dplyr::rename(count = .data$records)
@@ -672,7 +684,7 @@ getCountsForHeaderForUseInDataTable <- function(dataSource,
 
 
 getStlModelOutputForTsibbleDataValueFields <- function(tsibbleData, valueFields = "value") {
-  if (!doesObjectHaveData(tsibbleData)) {
+  if (!hasData(tsibbleData)) {
     return(NULL)
   }
   if (!"tbl_ts" %in% class(tsibbleData)) {
