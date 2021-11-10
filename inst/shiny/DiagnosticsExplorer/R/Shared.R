@@ -1,6 +1,6 @@
 # Copyright 2021 Observational Health Data Sciences and Informatics
 #
-# This file is part of ConceptSetDiagnostics
+# This file is part of CohortDiagnostics
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
 # general functions ----
 # this script is shared between Cohort Diagnostics and Diagnostics Explorer
@@ -352,23 +351,25 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     }
     if (hasData(conceptId1)) {
       #for concept relationship only
-      data <- dplyr::bind_rows(data %>%
-                                 dplyr::filter(.data$conceptId1 %in% !!conceptId1),
-                               data %>%
-                                 dplyr::filter(.data$conceptId2 %in% !!conceptId1)) %>% 
+      data <- dplyr::bind_rows(
+        data %>%
+          dplyr::filter(.data$conceptId1 %in% !!conceptId1),
+        data %>%
+          dplyr::filter(.data$conceptId2 %in% !!conceptId1)
+      ) %>%
         dplyr::distinct()
     }
     if (dataTableName %in% c('covariateValue', 'covariateValueDist')) {
       if (hasData(minThreshold)) {
-        data <- data %>% 
+        data <- data %>%
           dplyr::filter(.data$mean > minThreshold)
       }
     }
     if (all(dataTableName %in% c('cohortRelationships'),
             !is.null(relationshipDays))) {
-        data <- data %>% 
-          dplyr::filter(.data$startDay == .data$endDay) %>% 
-          dplyr::filter(.data$startDay %in% c(relationshipDays))
+      data <- data %>%
+        dplyr::filter(.data$startDay == .data$endDay) %>%
+        dplyr::filter(.data$startDay %in% c(relationshipDays))
     }
   } else {
     if (is.null(dataSource$connection)) {
@@ -472,13 +473,17 @@ getExecutionMetadata <- function(dataSource) {
   columnNames <-
     databaseMetadata$variableField %>% unique() %>% sort()
   columnNamesNoJson <-
-    columnNames[stringr::str_detect(string = tolower(columnNames),
-                                    pattern = "json",
-                                    negate = TRUE)]
+    columnNames[stringr::str_detect(
+      string = tolower(columnNames),
+      pattern = "json",
+      negate = TRUE
+    )]
   columnNamesJson <-
-    columnNames[stringr::str_detect(string = tolower(columnNames),
-                                    pattern = "json",
-                                    negate = FALSE)]
+    columnNames[stringr::str_detect(
+      string = tolower(columnNames),
+      pattern = "json",
+      negate = FALSE
+    )]
   transposeNonJsons <- databaseMetadata %>%
     dplyr::filter(.data$variableField %in% c(columnNamesNoJson)) %>%
     dplyr::rename(name = "variableField") %>%
@@ -581,7 +586,7 @@ getExecutionMetadata <- function(dataSource) {
 #' Returns database level counts
 #'
 #' @template DataSource
-#' 
+#'
 #' @template DatabaseId
 #'
 #' @return
@@ -590,19 +595,22 @@ getExecutionMetadata <- function(dataSource) {
 #' @export
 getDatabaseCounts <- function(dataSource,
                               databaseIds = NULL) {
-  databaseExecutionData <- getExecutionMetadata(dataSource = dataSource)
+  databaseExecutionData <-
+    getExecutionMetadata(dataSource = dataSource)
   if (!is.null(databaseIds)) {
-    databaseExecutionData <- databaseExecutionData %>% 
+    databaseExecutionData <- databaseExecutionData %>%
       dplyr::filter(.data$databaseId %in% databaseIds)
   }
-  databaseExecutionData <- databaseExecutionData %>% 
-    dplyr::group_by(.data$databaseId) %>% 
-    dplyr::arrange(.data$databaseId, dplyr::desc(.data$startTime)) %>% 
-    dplyr::mutate(rn = dplyr::row_number()) %>% 
-    dplyr::filter(.data$rn == 1) %>% 
-    dplyr::ungroup() %>% 
-    dplyr::mutate(records = as.double(.data$recordsInDatasource),
-                  persons = as.double(.data$personsInDatasource)) %>% 
+  databaseExecutionData <- databaseExecutionData %>%
+    dplyr::group_by(.data$databaseId) %>%
+    dplyr::arrange(.data$databaseId, dplyr::desc(.data$startTime)) %>%
+    dplyr::mutate(rn = dplyr::row_number()) %>%
+    dplyr::filter(.data$rn == 1) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(
+      records = as.double(.data$recordsInDatasource),
+      persons = as.double(.data$personsInDatasource)
+    ) %>%
     dplyr::select(.data$databaseId,
                   .data$records,
                   .data$persons)
@@ -658,10 +666,8 @@ getConcept <- function(dataSource = .GlobalEnv,
 #'
 #' @export
 getRelationship <- function(dataSource = .GlobalEnv) {
-  data <- getDataFromResultsDatabaseSchema(
-    dataSource = dataSource,
-    dataTableName = "relationship"
-  )
+  data <- getDataFromResultsDatabaseSchema(dataSource = dataSource,
+                                           dataTableName = "relationship")
   return(data)
 }
 
@@ -701,7 +707,7 @@ getConceptRelationship <- function(dataSource = .GlobalEnv,
 #'
 #' @description
 #' Returns data from concept ancestor table for vector of concept ids
-#' 
+#'
 #' @template ConceptIds
 #'
 #' @template DataSource
@@ -843,9 +849,9 @@ getConceptSynonym <- function(dataSource = .GlobalEnv,
 #' @template DatabaseIds
 #'
 #' @template ConceptIds
-#' 
+#'
 #' @template CalendarMonths
-#' 
+#'
 #' @template CalendarYears
 #'
 #' @return
@@ -898,18 +904,24 @@ getResultsConceptMapping <- function(dataSource,
   if (!is.null(domainTables)) {
     domainTable <- getDomainInformation()$long
     intersectOfTwo <- intersect(x = domainTables,
-                                y = c("All", domainTable$domainTable)) %>% 
+                                y = c("All", domainTable$domainTable)) %>%
       unique()
     setdiffOfTwo <- setdiff(x = domainTables,
-                            y = c("All", domainTable$domainTable)) %>% 
+                            y = c("All", domainTable$domainTable)) %>%
       unique()
     if (length(setdiffOfTwo) > 1) {
-      warning(paste0("Cant match the following in domainTables parameter: ", paste(setdiffOfTwo, collapse = ", ")))
+      warning(paste0(
+        "Cant match the following in domainTables parameter: ",
+        paste(setdiffOfTwo, collapse = ", ")
+      ))
       if (length(intersectOfTwo) == 0) {
         stop("Cannot match given domainTables")
       }
       if (length(intersectOfTwo) > 1) {
-        warning(paste0("Returning results for following domain tables: ", paste(intersectOfTwo, collapse = ", ")))
+        warning(paste0(
+          "Returning results for following domain tables: ",
+          paste(intersectOfTwo, collapse = ", ")
+        ))
       }
     }
   }
@@ -965,27 +977,27 @@ getResultsConceptSubjects <- function(dataSource,
 #' @template CohortIds
 #'
 #' @template ConceptIds
-#' 
+#'
 #' @template VocabularyDatabaseSchema
-#' 
+#'
 #' @param getDatabaseMetadata Do you want to get database metadata i.e. person/records/person days in observation table
-#' 
+#'
 #' @param getConceptRelationship  Do you want conceptRelationship?
-#' 
+#'
 #' @param getConceptAncestor  Do you want conceptAncestor?
-#' 
+#'
 #' @param getConceptSynonym  Do you want conceptSynonym?
-#' 
+#'
 #' @param getConceptCount  Do you want conceptCount?
-#' 
+#'
 #' @param getConceptCooccurrence  Do you want concept cooccurrence?
-#' 
+#'
 #' @param getIndexEventCount  Do you want index event concept count?
-#' 
+#'
 #' @param getConceptMappingCount  Do you want concept mapping count?
-#' 
+#'
 #' @param getFixedTimeSeries Do you want a conceptIds datasource level time series data reported on actual dates?
-#' 
+#'
 #' @param getRelativeTimeSeries Do you want cohort level time series data reported relative to cohort start date?
 #'
 #' @return
@@ -1068,8 +1080,8 @@ getConceptMetadata <- function(dataSource,
       dplyr::arrange(.data$conceptId)
     
     #!!!!!!!!! need to collapse relationshipId - to avoid duplication. need to make them come with line break
-    # %>% 
-    #   dplyr::mutate(relationshipId = paste(.data$relationshipId, sep = "<br>", collapse = ";")) %>% 
+    # %>%
+    #   dplyr::mutate(relationshipId = paste(.data$relationshipId, sep = "<br>", collapse = ";")) %>%
     #   dplyr::ungroup()
   }
   
@@ -1128,9 +1140,11 @@ getConceptMetadata <- function(dataSource,
   
   if (getConceptMappingCount) {
     data$conceptMapping <-
-      getResultsConceptMapping(dataSource = dataSource,
-                               databaseIds = databaseIds,
-                               conceptIds = conceptIds)
+      getResultsConceptMapping(
+        dataSource = dataSource,
+        databaseIds = databaseIds,
+        conceptIds = conceptIds
+      )
   }
   
   conceptIdList <- c(
@@ -1164,8 +1178,10 @@ getConceptMetadata <- function(dataSource,
       dplyr::left_join(conceptAncestor,
                        by = c('referenceConceptId', 'conceptId')) %>%
       dplyr::mutate(levelsOfSeparation = as.character(.data$levelsOfSeparation)) %>%
-      tidyr::replace_na(list(relationshipId = "Not applicable",
-                             levelsOfSeparation = "Not applicable"))
+      tidyr::replace_na(list(
+        relationshipId = "Not applicable",
+        levelsOfSeparation = "Not applicable"
+      ))
     
     relationship <- getRelationship(dataSource = dataSource)
     #drop down for concept relationship table in shiny app
@@ -1193,9 +1209,11 @@ getConceptMetadata <- function(dataSource,
   if (all(getConceptCount,!is.null(databaseIds))) {
     data$cdmTables <- getDomainInformation()$long
     data$databaseConceptCountDetails <-
-      getResultsConceptCount(dataSource = dataSource,
-                             databaseIds = databaseIds,
-                             conceptIds = conceptIdList)
+      getResultsConceptCount(
+        dataSource = dataSource,
+        databaseIds = databaseIds,
+        conceptIds = conceptIdList
+      )
     if (!is.null(data$databaseConceptCountDetails)) {
       data$databaseConceptCount <-
         data$databaseConceptCountDetails %>%
@@ -1225,10 +1243,8 @@ getConceptMetadata <- function(dataSource,
           ) %>%
           dplyr::mutate(periodBegin = tsibble::yearmonth(.data$periodBegin)) %>%
           tsibble::as_tsibble(
-            key = c(
-              .data$conceptId,
-              .data$databaseId
-            ),
+            key = c(.data$conceptId,
+                    .data$databaseId),
             index = .data$periodBegin
           ) %>%
           dplyr::arrange(
@@ -1253,10 +1269,8 @@ getConceptMetadata <- function(dataSource,
           ) %>%
           dplyr::mutate(periodBegin = clock::get_year(.data$periodBegin)) %>%
           tsibble::as_tsibble(
-            key = c(
-              .data$conceptId,
-              .data$databaseId
-            ),
+            key = c(.data$conceptId,
+                    .data$databaseId),
             index = .data$periodBegin
           ) %>%
           dplyr::arrange(
@@ -1308,74 +1322,74 @@ getConceptMetadata <- function(dataSource,
   
   if (getRelativeTimeSeries) {
     browser()
-  #   relativeTimeSeries <-
-  #     getFeatureExtractionTemporalCharacterization(dataSource = dataSource,
-  #                                                  cohortIds = cohortIds,
-  #                                                  databaseIds = databaseIds)
-  #   if (!is.null(relativeTimeSeries)) {
-  #     if (!is.null(relativeTimeSeries$temporalCovariateRef)) {
-  #       relativeTimeSeries$temporalCovariateRef <-
-  #         relativeTimeSeries$temporalCovariateRef %>%
-  #         dplyr::filter(.data$conceptId %in% conceptIds)
-  #     }
-  #     if (!is.null(relativeTimeSeries$temporalCovariateValue)) {
-  #       browser()
-  #       data$cohortConceptIdYearMonthLevelTsibble <-
-  #         relativeTimeSeries$temporalCovariateValue %>%
-  #         dplyr::filter(
-  #           .data$covariateId %in% c(
-  #             relativeTimeSeries$temporalCovariateRef$covariateId %>% unique()
-  #           )
-  #         ) %>%
-  #         dplyr::inner_join(relativeTimeSeries$temporalCovariateRef,
-  #                           by = "covariateId") %>%
-  #         dplyr::select(-.data$covariateId, -.data$covariateName) %>%
-  #         dplyr::inner_join(relativeTimeSeries$temporalAnalysisRef,
-  #                           by = "analysisId") %>%
-  #         dplyr::filter(.data$isBinary == 'Y') %>%
-  #         dplyr::select(-.data$isBinary,-.data$missingMeansZero,-.data$analysisId) %>%
-  #         dplyr::inner_join(
-  #           relativeTimeSeries$temporalTimeRef %>%
-  #             dplyr::filter(.data$endDay - .data$startDay == 30) %>%
-  #             dplyr::mutate(periodBegin = .data$endDay %/% 30),
-  #           by = c("timeId")
-  #         ) %>%
-  #         dplyr::select(-.data$timeId) %>%
-  #         dplyr::select(
-  #           .data$conceptId,
-  #           .data$cohortId,
-  #           .data$databaseId,
-  #           .data$domainId,
-  #           .data$analysisName,
-  #           .data$periodBegin,
-  #           .data$startDay,
-  #           .data$endDay,
-  #           .data$mean,
-  #           .data$sumValue,
-  #           .data$sd
-  #         ) %>%
-  #         dplyr::arrange(
-  #           .data$conceptId,
-  #           .data$cohortId,
-  #           .data$databaseId,
-  #           .data$domainId,
-  #           .data$analysisName,
-  #           .data$periodBegin,
-  #           .data$startDay,
-  #           .data$endDay
-  #         ) %>%
-  #         tsibble::as_tsibble(
-  #           key = c(
-  #             .data$conceptId,
-  #             .data$cohortId,
-  #             .data$databaseId,
-  #             .data$domainId,
-  #             .data$analysisName
-  #           ),
-  #           index = .data$periodBegin  #x-axis
-  #         )
-  #     }
-  #   }
+    #   relativeTimeSeries <-
+    #     getFeatureExtractionTemporalCharacterization(dataSource = dataSource,
+    #                                                  cohortIds = cohortIds,
+    #                                                  databaseIds = databaseIds)
+    #   if (!is.null(relativeTimeSeries)) {
+    #     if (!is.null(relativeTimeSeries$temporalCovariateRef)) {
+    #       relativeTimeSeries$temporalCovariateRef <-
+    #         relativeTimeSeries$temporalCovariateRef %>%
+    #         dplyr::filter(.data$conceptId %in% conceptIds)
+    #     }
+    #     if (!is.null(relativeTimeSeries$temporalCovariateValue)) {
+    #       browser()
+    #       data$cohortConceptIdYearMonthLevelTsibble <-
+    #         relativeTimeSeries$temporalCovariateValue %>%
+    #         dplyr::filter(
+    #           .data$covariateId %in% c(
+    #             relativeTimeSeries$temporalCovariateRef$covariateId %>% unique()
+    #           )
+    #         ) %>%
+    #         dplyr::inner_join(relativeTimeSeries$temporalCovariateRef,
+    #                           by = "covariateId") %>%
+    #         dplyr::select(-.data$covariateId, -.data$covariateName) %>%
+    #         dplyr::inner_join(relativeTimeSeries$temporalAnalysisRef,
+    #                           by = "analysisId") %>%
+    #         dplyr::filter(.data$isBinary == 'Y') %>%
+    #         dplyr::select(-.data$isBinary,-.data$missingMeansZero,-.data$analysisId) %>%
+    #         dplyr::inner_join(
+    #           relativeTimeSeries$temporalTimeRef %>%
+    #             dplyr::filter(.data$endDay - .data$startDay == 30) %>%
+    #             dplyr::mutate(periodBegin = .data$endDay %/% 30),
+    #           by = c("timeId")
+    #         ) %>%
+    #         dplyr::select(-.data$timeId) %>%
+    #         dplyr::select(
+    #           .data$conceptId,
+    #           .data$cohortId,
+    #           .data$databaseId,
+    #           .data$domainId,
+    #           .data$analysisName,
+    #           .data$periodBegin,
+    #           .data$startDay,
+    #           .data$endDay,
+    #           .data$mean,
+    #           .data$sumValue,
+    #           .data$sd
+    #         ) %>%
+    #         dplyr::arrange(
+    #           .data$conceptId,
+    #           .data$cohortId,
+    #           .data$databaseId,
+    #           .data$domainId,
+    #           .data$analysisName,
+    #           .data$periodBegin,
+    #           .data$startDay,
+    #           .data$endDay
+    #         ) %>%
+    #         tsibble::as_tsibble(
+    #           key = c(
+    #             .data$conceptId,
+    #             .data$cohortId,
+    #             .data$databaseId,
+    #             .data$domainId,
+    #             .data$analysisName
+    #           ),
+    #           index = .data$periodBegin  #x-axis
+    #         )
+    #     }
+    #   }
   }
   return(data)
 }
@@ -1460,7 +1474,7 @@ getResultsExcludedConcepts <- function(dataSource,
 #' @template DataSource
 #'
 #' @template CohortIds
-#' 
+#'
 #' @template ConceptSetIds
 #'
 #' @template DatabaseIds
@@ -1646,7 +1660,7 @@ getVocabularyRelationship <- function(dataSource) {
 #' Returns data from cohort table of Cohort Diagnostics results data model
 #'
 #' @template DataSource
-#' 
+#'
 #' @template CohortIds
 #'
 #' @return
@@ -1655,7 +1669,7 @@ getVocabularyRelationship <- function(dataSource) {
 #' @export
 getResultsCohort <- function(dataSource, cohortIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(dataSource,
-                                           dataTableName = "cohort", 
+                                           dataTableName = "cohort",
                                            cohortId = cohortIds)
   return(data)
 }
@@ -1674,7 +1688,7 @@ getResultsCohort <- function(dataSource, cohortIds = NULL) {
 #' @template ComparatorCohortIds
 #'
 #' @template DatabaseIds
-#' 
+#'
 #' @param    relationshipDays A vector of integer representing days comparator cohort start to target cohort start
 #'
 #' @return
@@ -1698,15 +1712,30 @@ getCohortTemporalRelationshipMatrix <- function(dataSource,
           nrow(data) == 0)) {
     return(NULL)
   }
-  data <- data %>% 
-    dplyr::select(.data$databaseId, .data$cohortId, .data$comparatorCohortId, .data$startDay, .data$subCsWindowT) %>%
-    dplyr::mutate(day = dplyr::case_when(.data$startDay < 0 ~ paste0("dm", abs(.data$startDay)),
-                                         .data$startDay > 0 ~ paste0("dp", abs(.data$startDay)),
-                                         .data$startDay == 0 ~ paste0("d", abs(.data$startDay)))) %>% 
-    dplyr::arrange(.data$databaseId, .data$cohortId, .data$comparatorCohortId, .data$startDay) %>% 
-    tidyr::pivot_wider(id_cols = c("databaseId", "cohortId", "comparatorCohortId"), 
-                       names_from = "day", 
-                       values_from = "subCsWindowT")
+  data <- data %>%
+    dplyr::select(
+      .data$databaseId,
+      .data$cohortId,
+      .data$comparatorCohortId,
+      .data$startDay,
+      .data$subCsWindowT
+    ) %>%
+    dplyr::mutate(
+      day = dplyr::case_when(
+        .data$startDay < 0 ~ paste0("dm", abs(.data$startDay)),
+        .data$startDay > 0 ~ paste0("dp", abs(.data$startDay)),
+        .data$startDay == 0 ~ paste0("d", abs(.data$startDay))
+      )
+    ) %>%
+    dplyr::arrange(.data$databaseId,
+                   .data$cohortId,
+                   .data$comparatorCohortId,
+                   .data$startDay) %>%
+    tidyr::pivot_wider(
+      id_cols = c("databaseId", "cohortId", "comparatorCohortId"),
+      names_from = "day",
+      values_from = "subCsWindowT"
+    )
   
   return(data)
 }
@@ -1715,15 +1744,15 @@ getCohortTemporalRelationshipMatrix <- function(dataSource,
 #' Generates and return cohort SQL
 #'
 #' @description
-#' Given a cohort definition expression, the function generates and return cohort SQL 
-#' in OHDSI SQL form. This maybe be rendered and translated using 
-#' OHDSI R packages like \code{SqlRender::render} 
+#' Given a cohort definition expression, the function generates and return cohort SQL
+#' in OHDSI SQL form. This maybe be rendered and translated using
+#' OHDSI R packages like \code{SqlRender::render}
 #'
 #' @param cohortExpression  A cohort definition expression as a list object. This is commonly generated by
 #'                          by reading in a cohort definition json and converting it into a R-object
 #'                          using for example RJSONIO::fromJSON(digits = 23). Please use minimum digits = 23,
-#'                          to ensure that big numbers don't loose precision.'                          
-#' 
+#'                          to ensure that big numbers don't loose precision.'
+#'
 #' @param generateStats     Do you want generate intermediary inclusion rules tables?
 #'
 #' @return
@@ -1737,14 +1766,15 @@ getOhdsiSqlFromCohortDefinitionExpression <-
       stop("Provided cohortDefinitionExpression is not a list object.")
     }
     options <- CirceR::createGenerateOptions(generateStats = TRUE)
-    json <- RJSONIO::toJSON(x = cohortDefinitionExpression, digits = 23)
+    json <-
+      RJSONIO::toJSON(x = cohortDefinitionExpression, digits = 23)
     expression <-
       CirceR::cohortExpressionFromJson(expressionJson = json)
     if (is.null(expression)) {
       return(NULL)
     }
     sql <-
-      CirceR::buildCohortQuery(expression = expression, 
+      CirceR::buildCohortQuery(expression = expression,
                                options = options)
     return(sql)
   }
@@ -1757,17 +1787,17 @@ getOhdsiSqlFromCohortDefinitionExpression <-
 #' Returns data from Database table of Cohort Diagnostics results data model
 #'
 #' @template DataSource
-#' 
+#'
 #' @template DatabaseIds
 #'
 #' @return
 #' Returns a data frame (tibble)
 #'
 #' @export
-getResultsDatabase <- function(dataSource, 
+getResultsDatabase <- function(dataSource,
                                databaseIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(dataSource,
-                                           dataTableName = "database", 
+                                           dataTableName = "database",
                                            databaseId = databaseIds)
   return(data)
 }
@@ -1780,9 +1810,9 @@ getResultsDatabase <- function(dataSource,
 #' Returns data from Concept sets table of Cohort Diagnostics results data model
 #'
 #' @template DataSource
-#' 
+#'
 #' @template CohortIds
-#' 
+#'
 #' @template ConceptSetIds
 #'
 #' @return
@@ -1892,43 +1922,52 @@ getOptimizedConceptSet <- function(dataSource,
   if (is.null(data)) {
     return(NULL)
   }
-  if (nrow(data %>% 
+  if (nrow(data %>%
            dplyr::filter(.data$removed == 1)) == 0) {
     return(NULL)
   }
-  originalConceptSetExpression <- getResultsConceptSetExpression(dataSource = dataSource,
-                                                                 cohortId = cohortIds,
-                                                                 conceptSetId = conceptSetIds)
-  originalConceptSetExpressionTable <- getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression = 
-                                                                                        originalConceptSetExpression)
+  originalConceptSetExpression <-
+    getResultsConceptSetExpression(dataSource = dataSource,
+                                   cohortId = cohortIds,
+                                   conceptSetId = conceptSetIds)
+  originalConceptSetExpressionTable <-
+    getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
+                                                     originalConceptSetExpression)
   
-  excluded <- tidyr::crossing(data %>% 
-                                dplyr::select(.data$databaseId) %>% 
-                                dplyr::distinct(),
-                              originalConceptSetExpressionTable %>% 
-                                dplyr::filter(.data$isExcluded == TRUE)) %>% 
-    dplyr::inner_join(data %>% 
-                        dplyr::filter(.data$excluded == 1) %>% 
-                        dplyr::filter(.data$removed == 0),
-                      by = c("databaseId", "conceptId")) %>% 
+  excluded <- tidyr::crossing(
+    data %>%
+      dplyr::select(.data$databaseId) %>%
+      dplyr::distinct(),
+    originalConceptSetExpressionTable %>%
+      dplyr::filter(.data$isExcluded == TRUE)
+  ) %>%
+    dplyr::inner_join(
+      data %>%
+        dplyr::filter(.data$excluded == 1) %>%
+        dplyr::filter(.data$removed == 0),
+      by = c("databaseId", "conceptId")
+    ) %>%
     dplyr::select(-.data$excluded, -.data$removed)
   
-  notExcluded <- tidyr::crossing(data %>% 
-                                   dplyr::select(.data$databaseId) %>% 
-                                   dplyr::distinct(),
-                                 originalConceptSetExpressionTable %>% 
-                                   dplyr::filter(.data$isExcluded == FALSE)) %>% 
-    dplyr::inner_join(data %>% 
-                        dplyr::filter(.data$excluded == 0) %>% 
-                        dplyr::filter(.data$removed == 0),
-                      by = c("databaseId", "conceptId")) %>% 
+  notExcluded <- tidyr::crossing(
+    data %>%
+      dplyr::select(.data$databaseId) %>%
+      dplyr::distinct(),
+    originalConceptSetExpressionTable %>%
+      dplyr::filter(.data$isExcluded == FALSE)
+  ) %>%
+    dplyr::inner_join(
+      data %>%
+        dplyr::filter(.data$excluded == 0) %>%
+        dplyr::filter(.data$removed == 0),
+      by = c("databaseId", "conceptId")
+    ) %>%
     dplyr::select(-.data$excluded, -.data$removed)
   
   final <- dplyr::bind_rows(excluded,
-                            notExcluded) %>% 
-    dplyr::arrange(.data$conceptId) %>% 
-    dplyr::select(-.data$cohortId,
-                  -.data$conceptSetId)
+                            notExcluded) %>%
+    dplyr::arrange(.data$conceptId) %>%
+    dplyr::select(-.data$cohortId, -.data$conceptSetId)
   return(final)
 }
 
@@ -2099,23 +2138,32 @@ getResultsFixedTimeSeries <- function(dataSource,
                                       databaseIds = NULL,
                                       seriesType = c('T1', 'T2', 'T3')) {
   fixedTimeSeriesColumnNameLong <- dplyr::tibble(
-    shortName = c("records", "subjects", "personDays", 
-                  "subjectsStartIn", "personDaysIn", "subjectsEndIn", 
-                  "recordsStart", "subjectsStart", 
-                  "recordsEnd", "subjectsEnd"
+    shortName = c(
+      "records",
+      "subjects",
+      "personDays",
+      "subjectsStartIn",
+      "personDaysIn",
+      "subjectsEndIn",
+      "recordsStart",
+      "subjectsStart",
+      "recordsEnd",
+      "subjectsEnd"
     ),
-    longName = c("Records Overlapping",
-                 "Subjects Overlapping",
-                 "Days Overlapping", 
-                 "Subjects Incident",
-                 "Person days Incident",
-                 "Subjects Incident Ending",
-                 "Records Starting", 
-                 "Subjects Starting",
-                 "Records Ending", 
-                 "Subjects Ending"),
-    sequence = c(1,2,3,4,5,6,7,8,9,10)
-  ) %>% 
+    longName = c(
+      "Records Overlapping",
+      "Subjects Overlapping",
+      "Days Overlapping",
+      "Subjects Incident",
+      "Person days Incident",
+      "Subjects Incident Ending",
+      "Records Starting",
+      "Subjects Starting",
+      "Records Ending",
+      "Subjects Ending"
+    ),
+    sequence = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+  ) %>%
     dplyr::arrange(.data$sequence)
   # cohortId = 0, represent all persons in observation_period
   data <- getDataFromResultsDatabaseSchema(
@@ -2126,7 +2174,7 @@ getResultsFixedTimeSeries <- function(dataSource,
     dataTableName = "timeSeries"
   )
   if (any(is.null(data),
-          nrow(data) ==0)) {
+          nrow(data) == 0)) {
     return(NULL)
   }
   dataCohort0 <- data %>%
@@ -2176,10 +2224,10 @@ getResultsFixedTimeSeries <- function(dataSource,
     data <- dplyr::bind_rows(data, r1)
   }
   
-  # commenting out time series segments that have persons/subject embedded within observation period, as it 
+  # commenting out time series segments that have persons/subject embedded within observation period, as it
   # does not seem to have value
   timeSeriesDescription <- dplyr::tibble(
-    seriesType = c('T1', 'T2', 'T3',# 'T4', 'T5', 'T6',
+    seriesType = c('T1', 'T2', 'T3', # 'T4', 'T5', 'T6',
                    'R1'),
     seriesTypeShort = c(
       'Subjects in cohort period',
@@ -2244,7 +2292,8 @@ getResultsFixedTimeSeries <- function(dataSource,
     attr(x = dataList[[intervals[[i]]]],
          which = 'timeSeriesDescription') <- timeSeriesDescription
     attr(x = dataList[[intervals[[i]]]],
-         which = 'timeSeriesColumnNameCrosswalk') <- fixedTimeSeriesColumnNameLong
+         which = 'timeSeriesColumnNameCrosswalk') <-
+      fixedTimeSeriesColumnNameLong
   }
   return(dataList)
 }
@@ -2317,9 +2366,9 @@ getResultsIncidenceRate <- function(dataSource,
 #' @template DataSource
 #'
 #' @template CohortIds
-#' 
+#'
 #' @template ConceptIds
-#' 
+#'
 #' @param CoConceptIds A vector of integers representing co-concept ids
 #'
 #' @template DatabaseIds
@@ -2347,7 +2396,7 @@ getResultsIndexEventBreakdown <- function(dataSource,
   )
   # #!!!!!!!!!!!!!!!!!!!TEMPORARY FIX ###!!!!!!!!!!to be removed - index event breakdown daysRelativeIndex fix
   # if (!is.null(data)) {
-  #   data <- data %>% 
+  #   data <- data %>%
   #     dplyr::mutate(daysRelativeIndex = .data$daysRelativeIndex * -1)
   #   warning("temporary fix = please remove")
   # }
@@ -2399,10 +2448,10 @@ getResultsVisitContext <- function(dataSource,
 #' @template ComparatorCohortIds
 #'
 #' @template DatabaseIds
-#' 
-#' @param startDays A vector of days in relation to cohort_start_date of target 
-#' 
-#' @param endDays A vector of days in relation to cohort_end_date of target 
+#'
+#' @param startDays A vector of days in relation to cohort_start_date of target
+#'
+#' @param endDays A vector of days in relation to cohort_end_date of target
 #'
 #' @return
 #' Returns a data frame (tibble) with results that conform to cohort_relationships
@@ -2433,21 +2482,21 @@ getResultsCohortRelationships <- function(dataSource,
 #'
 #' @description
 #' Returns a a data frame (tibble) that shows the percent (optionally number) of subjects
-#' in target cohort that are also in comparator cohort at certain days relative to 
+#' in target cohort that are also in comparator cohort at certain days relative to
 #' first start date of a subject in target cohort.
 #'
 #' @template DataSource
 #'
 #' @template TargetCohortIds
-#' 
+#'
 #' @template ComparatorCohortIds
 #'
 #' @template DatabaseIds
-#' 
+#'
 #' @template StartDays
-#' 
+#'
 #' @template endDays
-#' 
+#'
 #' @param showPercent Return percent instead of raw numbers
 #'
 #' @return
@@ -2614,7 +2663,7 @@ getResultsCohortCoOccurrenceMatrix <- function(dataSource,
 #' @template DataSource
 #'
 #' @param targetCohortIds A vector of cohort ids representing target cohorts
-#' 
+#'
 #' @param comparatorCohortIds A vector of cohort ids representing comparator cohorts
 #'
 #' @template DatabaseIds
@@ -2639,12 +2688,14 @@ getResultsCohortOverlap <- function(dataSource,
   }
   
   cohortRelationship <-
-    getResultsCohortRelationships(dataSource = dataSource,
-                                  cohortIds = cohortIds,
-                                  comparatorCohortIds = comparatorCohortIds,
-                                  databaseIds = databaseIds, 
-                                  startDays = c(-99999,0),
-                                  endDays = c(99999,0))
+    getResultsCohortRelationships(
+      dataSource = dataSource,
+      cohortIds = cohortIds,
+      comparatorCohortIds = comparatorCohortIds,
+      databaseIds = databaseIds,
+      startDays = c(-99999, 0),
+      endDays = c(99999, 0)
+    )
   
   if (any(is.null(cohortRelationship),
           nrow(cohortRelationship) == 0)) {
@@ -2707,16 +2758,18 @@ getResultsCohortOverlap <- function(dataSource,
       .data$subCsBeforeTe,
       .data$subCsOnTs,
       .data$subCsOnTe
-    ) %>% 
-    dplyr::rename(cBeforeTSubjects = .data$subCsBeforeTs,
-                  targetCohortId = .data$cohortId,
-                  cInTSubjects = .data$subCWithinT,
-                  cStartAfterTStart = .data$subCsAfterTs,
-                  cStartAfterTEnd = .data$subCsAfterTe,
-                  cStartBeforeTStart = .data$subCsBeforeTs,
-                  cStartBeforeTEnd = .data$subCsBeforeTe,
-                  cStartOnTStart = .data$subCsOnTs,
-                  cStartOnTEnd = .data$subCsOnTe)
+    ) %>%
+    dplyr::rename(
+      cBeforeTSubjects = .data$subCsBeforeTs,
+      targetCohortId = .data$cohortId,
+      cInTSubjects = .data$subCWithinT,
+      cStartAfterTStart = .data$subCsAfterTs,
+      cStartAfterTEnd = .data$subCsAfterTe,
+      cStartBeforeTStart = .data$subCsBeforeTs,
+      cStartBeforeTEnd = .data$subCsBeforeTe,
+      cStartOnTStart = .data$subCsOnTs,
+      cStartOnTEnd = .data$subCsOnTe
+    )
   
   result <- fullOffSet %>%
     dplyr::left_join(noOffset,
@@ -2728,26 +2781,26 @@ getResultsCohortOverlap <- function(dataSource,
 
 
 ## Characterization ----
-#' Returns cohort characterization output of feature extraction
-#'
-#' @description
-#' Returns a list object with covariateValue, covariateValueDist,
-#' covariateRef, analysisRef output of feature extraction.
-#'
-#' @template DataSource
-#'
-#' @template CohortIds
-#'
-#' @template DatabaseIds
-#'
-#' @param minThreshold Do you want to set the minimum threshold for db extraction
-#'
-#' @return
-#' Returns a list object with covariateValue, covariateValueDist,
-#' covariateRef, analysisRef output of feature extraction along with
-#' concept information.
-#'
-#' @export
+# Returns cohort characterization output of feature extraction
+#
+# @description
+# Returns a list object with covariateValue, covariateValueDist,
+# covariateRef, analysisRef output of feature extraction.
+#
+# @template DataSource
+#
+# @template CohortIds
+#
+# @template DatabaseIds
+#
+# @param minThreshold Do you want to set the minimum threshold for db extraction
+#
+# @return
+# Returns a list object with covariateValue, covariateValueDist,
+# covariateRef, analysisRef output of feature extraction along with
+# concept information.
+#
+# @export
 getFeatureExtractionCharacterization <-
   function(dataSource = .GlobalEnv,
            cohortIds = NULL,
@@ -2758,15 +2811,19 @@ getFeatureExtractionCharacterization <-
     concept <- getConcept(dataSource = dataSource,
                           conceptIds = covariateRef$conceptId %>% unique())
     covariateValue <-
-      getResultsCovariateValue(dataSource = dataSource,
-                               cohortIds = cohortIds,
-                               databaseIds = databaseIds,
-                               minThreshold = minThreshold)
+      getResultsCovariateValue(
+        dataSource = dataSource,
+        cohortIds = cohortIds,
+        databaseIds = databaseIds,
+        minThreshold = minThreshold
+      )
     covariateValueDist <-
-      getResultsCovariateValueDist(dataSource = dataSource,
-                                   cohortIds = cohortIds,
-                                   databaseIds = databaseIds,
-                                   minThreshold = minThreshold)
+      getResultsCovariateValueDist(
+        dataSource = dataSource,
+        cohortIds = cohortIds,
+        databaseIds = databaseIds,
+        minThreshold = minThreshold
+      )
     return(
       list(
         analysisRef = analysisRef,
@@ -2778,67 +2835,67 @@ getFeatureExtractionCharacterization <-
     )
   }
 
-#' 
-#' 
-#' #' Returns temporal cohort characterization output of feature extraction
-#' #'
-#' #' @description
-#' #' Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
-#' #' temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature
-#' #' extraction along with concept information.
-#' #'
-#' #' @template DataSource
-#' #'
-#' #' @template CohortIds
-#' #'
-#' #' @template DatabaseIds
-#' #'
-#' #' @param minThreshold Do you want to set the minimum threshold for db extraction
-#' #' 
-#' #' @return
-#' #' Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
-#' #' temporalCovariateRef, temporalAnalysisRef, temporalTimeRef, Concept output of feature extraction.
-#' #'
-#' #' @export
-#' getFeatureExtractionTemporalCharacterization <-
-#'   function(dataSource = .GlobalEnv,
-#'            cohortIds = NULL,
-#'            databaseIds = NUL,
-#'            minThreshold = 0.01) {
-#'     temporalAnalysisRef <-
-#'       getResultsTemporalAnalysisRef(dataSource = dataSource)
-#'     temporalCovariateRef <-
-#'       getResultsTemporalCovariateRef(dataSource = dataSource)
-#'     temporalTimeRef <-
-#'       getResultsTemporalTimeRef(dataSource = dataSource)
-#'     concept <- getConcept(dataSource = dataSource,
-#'                           conceptIds = temporalCovariateRef$conceptId %>% unique())
-#'     temporalCovariateValue <-
-#'       getResultsTemporalCovariateValue(dataSource = dataSource,
-#'                                        cohortIds = cohortIds,
-#'                                        databaseIds = databaseIds)
-#'     # temporary till https://github.com/OHDSI/FeatureExtraction/issues/127
-#'     temporalCovariateValueDist <-
-#'       getResultsTemporalCovariateValueDist(dataSource = dataSource,
-#'                                            cohortIds = cohortIds,
-#'                                            databaseIds = databaseIds)
-#'     if (all(!is.null(temporalCovariateValueDist),
-#'             nrow(temporalCovariateValueDist) > 0)) {
-#'       temporalCovariateValueDist <- temporalCovariateValueDist %>%
-#'         dplyr::filter(!is.na(.data$timeId))
-#'     }
-#'     
-#'     return(
-#'       list(
-#'         temporalAnalysisRef = temporalAnalysisRef,
-#'         temporalCovariateRef = temporalCovariateRef,
-#'         temporalTimeRef = temporalTimeRef,
-#'         temporalCovariateValue = temporalCovariateValue,
-#'         temporalCovariateValueDist = temporalCovariateValueDist,
-#'         concept = concept
-#'       )
-#'     )
-#'   }
+#
+#
+# #' Returns temporal cohort characterization output of feature extraction
+# #'
+# #' @description
+# #' Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
+# #' temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature
+# #' extraction along with concept information.
+# #'
+# #' @template DataSource
+# #'
+# #' @template CohortIds
+# #'
+# #' @template DatabaseIds
+# #'
+# #' @param minThreshold Do you want to set the minimum threshold for db extraction
+# #'
+# #' @return
+# #' Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
+# #' temporalCovariateRef, temporalAnalysisRef, temporalTimeRef, Concept output of feature extraction.
+# #'
+# #' @export
+# getFeatureExtractionTemporalCharacterization <-
+#   function(dataSource = .GlobalEnv,
+#            cohortIds = NULL,
+#            databaseIds = NUL,
+#            minThreshold = 0.01) {
+#     temporalAnalysisRef <-
+#       getResultsTemporalAnalysisRef(dataSource = dataSource)
+#     temporalCovariateRef <-
+#       getResultsTemporalCovariateRef(dataSource = dataSource)
+#     temporalTimeRef <-
+#       getResultsTemporalTimeRef(dataSource = dataSource)
+#     concept <- getConcept(dataSource = dataSource,
+#                           conceptIds = temporalCovariateRef$conceptId %>% unique())
+#     temporalCovariateValue <-
+#       getResultsTemporalCovariateValue(dataSource = dataSource,
+#                                        cohortIds = cohortIds,
+#                                        databaseIds = databaseIds)
+#     # temporary till https://github.com/OHDSI/FeatureExtraction/issues/127
+#     temporalCovariateValueDist <-
+#       getResultsTemporalCovariateValueDist(dataSource = dataSource,
+#                                            cohortIds = cohortIds,
+#                                            databaseIds = databaseIds)
+#     if (all(!is.null(temporalCovariateValueDist),
+#             nrow(temporalCovariateValueDist) > 0)) {
+#       temporalCovariateValueDist <- temporalCovariateValueDist %>%
+#         dplyr::filter(!is.na(.data$timeId))
+#     }
+#
+#     return(
+#       list(
+#         temporalAnalysisRef = temporalAnalysisRef,
+#         temporalCovariateRef = temporalCovariateRef,
+#         temporalTimeRef = temporalTimeRef,
+#         temporalCovariateValue = temporalCovariateValue,
+#         temporalCovariateValueDist = temporalCovariateValueDist,
+#         concept = concept
+#       )
+#     )
+#   }
 
 
 #' Returns cohort as feature characterization
@@ -2864,8 +2921,6 @@ getCohortRelationshipCharacterizationResults <-
   function(dataSource = .GlobalEnv,
            cohortIds = NULL,
            databaseIds = NULL) {
-    
-    
     # need to add standardized difference
     # 1. for each time window get its corresponding denominator population size
     # 2. compute proportion dplyr::mutate(p = .data$sumValue / .data$populationSize)
@@ -2884,20 +2939,22 @@ getCohortRelationshipCharacterizationResults <-
                                     cohortIds = cohortIds,
                                     databaseIds = databaseIds)
     
-    temporalTimeRef <- cohortRelationships %>% 
+    temporalTimeRef <- cohortRelationships %>%
       dplyr::select(.data$startDay,
-                    .data$endDay) %>% 
-      dplyr::distinct() %>% 
+                    .data$endDay) %>%
+      dplyr::distinct() %>%
       dplyr::inner_join(getResultsTemporalTimeRef(dataSource = dataSource),
                         by = c("startDay",
                                "endDay"))
     
     analysisRef <-
-      dplyr::tibble(analysisId = c(-101,-201,-301), 
-                    analysisName = c("cohortOccurrence", "cohortEraStart", "cohortEraOverlap"), 
-                    domainId = "Cohort",
-                    isBinary = "Y",
-                    missingMeansZero = "Y")
+      dplyr::tibble(
+        analysisId = c(-101,-201,-301),
+        analysisName = c("cohortOccurrence", "cohortEraStart", "cohortEraOverlap"),
+        domainId = "Cohort",
+        isBinary = "Y",
+        missingMeansZero = "Y"
+      )
     
     covariateRef <- tidyr::crossing(cohort,
                                     analysisRef %>%
@@ -2909,8 +2966,7 @@ getCohortRelationshipCharacterizationResults <-
       dplyr::select(.data$analysisId,
                     .data$conceptId,
                     .data$covariateId,
-                    .data$covariateName
-                    )
+                    .data$covariateName)
     
     concept <- cohort %>%
       dplyr::filter(.data$cohortId %in% abs(covariateRef$conceptId) %>% unique()) %>%
@@ -2940,63 +2996,96 @@ getCohortRelationshipCharacterizationResults <-
       dplyr::arrange(.data$conceptId)
     
     covariateValue1 <- cohortRelationships %>%
-      dplyr::left_join(cohortCount %>% 
-                         dplyr::select(.data$cohortId, 
-                                       .data$databaseId,
-                                       .data$cohortSubjects),
-                       by = c("cohortId", "databaseId")) %>% 
-      dplyr::mutate(cohortOccurrence = .data$subCsBeforeTs/.data$cohortSubjects) %>% 
-      dplyr::mutate(cohortEraStart = .data$subCsWindowTs/.data$cohortSubjects) %>% 
-      dplyr::mutate(cohortEraOverlap = (.data$subCeWindowT + .data$subCsWindowT - .data$subCWithinT)/
-                      .data$cohortSubjects) %>% 
-      dplyr::select(.data$databaseId,
-                    .data$cohortId,
-                    .data$comparatorCohortId,
-                    .data$startDay,
-                    .data$endDay,
-                    .data$cohortOccurrence,
-                    .data$cohortEraStart,
-                    .data$cohortEraOverlap) %>% 
-      tidyr::pivot_longer(cols = dplyr::all_of(c("cohortOccurrence", "cohortEraStart", "cohortEraOverlap")), 
-                          names_to = "analysisName", 
-                          values_to = "mean")
+      dplyr::left_join(
+        cohortCounts %>%
+          dplyr::select(.data$cohortId,
+                        .data$databaseId,
+                        .data$cohortSubjects),
+        by = c("cohortId", "databaseId")
+      ) %>%
+      dplyr::mutate(cohortOccurrence = .data$subCsBeforeTs / .data$cohortSubjects) %>%
+      dplyr::mutate(cohortEraStart = .data$subCsWindowTs / .data$cohortSubjects) %>%
+      dplyr::mutate(
+        cohortEraOverlap = (.data$subCeWindowT + .data$subCsWindowT - .data$subCWithinT) /
+          .data$cohortSubjects
+      ) %>%
+      dplyr::select(
+        .data$databaseId,
+        .data$cohortId,
+        .data$comparatorCohortId,
+        .data$startDay,
+        .data$endDay,
+        .data$cohortOccurrence,
+        .data$cohortEraStart,
+        .data$cohortEraOverlap
+      ) %>%
+      tidyr::pivot_longer(
+        cols = dplyr::all_of(
+          c("cohortOccurrence", "cohortEraStart", "cohortEraOverlap")
+        ),
+        names_to = "analysisName",
+        values_to = "mean"
+      )
     
     if (max(covariateValue1$mean) > 1) {
-      stop("During cohort characterization, population of the target cohort (denominator) was found to be smaller than features cohort (numerator).",
-           "- this may have happened because of an error in Feature generation process. Please contact the package developer."
-           )
+      stop(
+        "During cohort characterization, population of the target cohort (denominator) was found to be smaller than features cohort (numerator).",
+        "- this may have happened because of an error in Feature generation process. Please contact the package developer."
+      )
     }
     
     covariateValue2 <- cohortRelationships %>%
-      dplyr::mutate(cohortOccurrence = .data$subCsBeforeTs) %>% 
-      dplyr::mutate(cohortEraStart = .data$subCsWindowTs) %>% 
-      dplyr::mutate(cohortEraOverlap = (.data$subCeWindowT + .data$subCsWindowT - .data$subCWithinT)) %>% 
-      dplyr::select(.data$databaseId,
-                    .data$cohortId,
-                    .data$comparatorCohortId,
-                    .data$startDay,
-                    .data$endDay,
-                    .data$cohortOccurrence,
-                    .data$cohortEraStart,
-                    .data$cohortEraOverlap) %>% 
-      tidyr::pivot_longer(cols = dplyr::all_of(c("cohortOccurrence", "cohortEraStart", "cohortEraOverlap")), 
-                          names_to = "analysisName", 
-                          values_to = "sumValue")
+      dplyr::mutate(cohortOccurrence = .data$subCsBeforeTs) %>%
+      dplyr::mutate(cohortEraStart = .data$subCsWindowTs) %>%
+      dplyr::mutate(cohortEraOverlap = (.data$subCeWindowT + .data$subCsWindowT - .data$subCWithinT)) %>%
+      dplyr::select(
+        .data$databaseId,
+        .data$cohortId,
+        .data$comparatorCohortId,
+        .data$startDay,
+        .data$endDay,
+        .data$cohortOccurrence,
+        .data$cohortEraStart,
+        .data$cohortEraOverlap
+      ) %>%
+      tidyr::pivot_longer(
+        cols = dplyr::all_of(
+          c("cohortOccurrence", "cohortEraStart", "cohortEraOverlap")
+        ),
+        names_to = "analysisName",
+        values_to = "sumValue"
+      )
     
     
-    covariateValue <- covariateValue1 %>% 
-      dplyr::inner_join(covariateValue2,
-                        by = c("databaseId", "cohortId", "comparatorCohortId", "startDay", "endDay", "analysisName")) %>% 
-      dplyr::inner_join(analysisRef %>% 
-                          dplyr::select(.data$analysisId, .data$analysisName), 
-                        by = "analysisName") %>% 
+    covariateValue <- covariateValue1 %>%
+      dplyr::inner_join(
+        covariateValue2,
+        by = c(
+          "databaseId",
+          "cohortId",
+          "comparatorCohortId",
+          "startDay",
+          "endDay",
+          "analysisName"
+        )
+      ) %>%
+      dplyr::inner_join(analysisRef %>%
+                          dplyr::select(.data$analysisId, .data$analysisName),
+                        by = "analysisName") %>%
       dplyr::select(-.data$analysisName) %>%
-      dplyr::mutate(covariateId = (.data$comparatorCohortId * -1000) + .data$analysisId) %>% 
-      dplyr::mutate(sd = as.double(NA)) %>% 
-      dplyr::select(-.data$analysisId) %>% 
-      dplyr::select(.data$cohortId, .data$covariateId, .data$databaseId,
-                    .data$startDay, .data$endDay, .data$mean,
-                    .data$sd, .data$sumValue)
+      dplyr::mutate(covariateId = (.data$comparatorCohortId * -1000) + .data$analysisId) %>%
+      dplyr::mutate(sd = as.double(NA)) %>%
+      dplyr::select(-.data$analysisId) %>%
+      dplyr::select(
+        .data$cohortId,
+        .data$covariateId,
+        .data$databaseId,
+        .data$startDay,
+        .data$endDay,
+        .data$mean,
+        .data$sd,
+        .data$sumValue
+      )
     
     data <- list(
       covariateRef = covariateRef,
@@ -3007,206 +3096,206 @@ getCohortRelationshipCharacterizationResults <-
     )
     return(data)
   }
-#' 
-#' #' Returns cohort temporal feature characterization
-#' #'
-#' #' @description
-#' #' Returns a list object with temporalCovariateValue,
-#' #' temporalCovariateRef, temporalAnalysisRef, temporalRef output of cohort as features.
-#' #'
-#' #' @template DataSource
-#' #'
-#' #' @template CohortIds
-#' #'
-#' #' @template DatabaseIds
-#' #'
-#' #' @param temporalTimeRef   A dataframe object with three columns timeId (integer), startDay (integer), endDay (integer)
-#' #'
-#' #' @return
-#' #' Returns a list object with temporalCovariateValue,
-#' #' temporalCovariateRef, temporalAnalysisRef, temporalRef output of cohort as features.
-#' #'
-#' #' @export
-#' getCohortAsFeatureTemporalCharacterizationResults <-
-#'   function(dataSource = .GlobalEnv,
-#'            cohortIds = NULL,
-#'            databaseIds = NULL,
-#'            temporalTimeRef = getResultsTemporalTimeRef(dataSource = dataSource)) {
-#'     if (is.null(temporalTimeRef)) {
-#'       return(NULL)
-#'     }
-#'     # meta information
-#'     cohortCounts <-
-#'       getResultsCohortCount(dataSource = dataSource,
-#'                             cohortIds = cohortIds,
-#'                             databaseIds = databaseIds)
-#'     cohort <- getResultsCohort(dataSource = dataSource)
-#'     
-#'     browser()
-#'     # need to add standardized difference
-#'     # 1. for each time window get its corresponding denominator population size
-#'     # 2. compute proportion dplyr::mutate(p = .data$sumValue / .data$populationSize)
-#'     # 3. put a check "During characterization, population size (denominator) was found to be smaller than features Value (numerator).",
-#'     #"- this may have happened because of an error in Feature generation process. Please contact the package developer."
-#'     # 4. compute sd as dplyr::mutate(sd = sqrt(.data$p * (1 - .data$p)))
-#'     
-#'     seqStart30 <- seq(-420, +420, by = 30)
-#'     seqEnd30 <- seqStart30 + 30
-#'     cohortRelationships <-
-#'       getResultsCohortRelationships(dataSource = dataSource,
-#'                                     cohortIds = cohortIds,
-#'                                     startDays = c(seqStart30),
-#'                                     endDays = c(seqEnd30),
-#'                                     databaseIds = databaseIds)
-#'     
-#'     if (is.null(cohortRelationships) ||
-#'         nrow(cohortRelationships) == 0) {
-#'       return(NULL)
-#'     }
-#'     
-#'     # comparator cohort was on or after target cohort
-#'     summarizeCohortRelationship <- function(data,
-#'                                             valueField = 'records',
-#'                                             analysisId,
-#'                                             temporalTimeRef,
-#'                                             cohortCounts) {
-#'       browser()
-#'       if (is.null(data) || nrow(data) == 0) {
-#'         return(NULL)
-#'       }
-#'       data$sumValue <- data[[valueField]]
-#'       data <- data  %>%
-#'         dplyr::inner_join(temporalTimeRef,
-#'                           by = c("startDay", "endDay")) %>%
-#'         dplyr::select(
-#'           .data$databaseId,
-#'           .data$cohortId,
-#'           .data$comparatorCohortId,
-#'           .data$timeId,
-#'           .data$startDay,
-#'           .data$endDay,
-#'           .data$sumValue
-#'         )
-#'       
-#'       denominator <- cohortCounts  %>%
-#'         dplyr::rename(denominator = .data$cohortSubjects) %>%
-#'         dplyr::select(.data$cohortId,
-#'                       .data$databaseId,
-#'                       .data$denominator)
-#'       
-#'       data <- data %>%
-#'         dplyr::inner_join(denominator, by = c('databaseId', 'cohortId')) %>%
-#'         dplyr::mutate(mean = .data$sumValue / .data$denominator) %>%
-#'         dplyr::mutate(sd = NA) %>%
-#'         # dplyr::mutate(sd = sqrt(.data$mean * (1 - .data$mean)))
-#'         dplyr::mutate(analysisId = !!analysisId) %>%
-#'         dplyr::mutate(covariateId = (.data$comparatorCohortId * -1000)+!!analysisId) %>%
-#'         dplyr::select(
-#'           .data$cohortId,
-#'           .data$covariateId,
-#'           .data$timeId,
-#'           .data$startDay,
-#'           .data$endDay,
-#'           .data$sumValue,
-#'           .data$mean,
-#'           .data$sd,
-#'           .data$databaseId
-#'         )
-#'       return(data)
-#'     }
-#'     
-#'     analysisId <- c(-101,-201)
-#'     analysisName <- c("CohortEraStart", "CohortEraOverlap")
-#'     valueField <- c("subCsAfterTs",
-#'                     "subjects")
-#'     analysisRef <-
-#'       dplyr::tibble(analysisId, analysisName, valueField) %>%
-#'       dplyr::mutate(isBinary = 'Y',
-#'                     missingMeansZero = 'Y') %>%
-#'       dplyr::arrange(.data$analysisId) %>%
-#'       dplyr::mutate(domainId = 'Cohort') %>%
-#'       dplyr::select(
-#'         .data$analysisId,
-#'         .data$analysisName,
-#'         .data$valueField,
-#'         .data$domainId,
-#'         .data$isBinary,
-#'         .data$missingMeansZero
-#'       ) %>%
-#'       dplyr::distinct()
-#'     
-#'     result <- list()
-#'     for (j in (1:nrow(analysisRef))) {
-#'       result[[j]] <-
-#'         summarizeCohortRelationship(
-#'           data = cohortRelationships,
-#'           valueField = analysisRef[j,]$valueField,
-#'           analysisId = analysisRef[j,]$analysisId,
-#'           temporalTimeRef = temporalTimeRef,
-#'           cohortCounts = cohortCounts
-#'         )
-#'     }
-#'     result <- dplyr::bind_rows(result)
-#'     
-#'     if (nrow(result) == 0) {
-#'       result <- NULL
-#'     }
-#'     
-#'     covariateRef <- tidyr::crossing(cohort,
-#'                                     analysisRef %>%
-#'                                       dplyr::select(.data$analysisId) %>%
-#'                                       dplyr::distinct()) %>%
-#'       dplyr::mutate(covariateId = (.data$cohortId * -1000) + .data$analysisId) %>%
-#'       dplyr::mutate(covariateName = paste0(.data$cohortName)) %>% #, "(", .data$covariateId, ")")) %>%
-#'       dplyr::mutate(conceptId = .data$cohortId * -1) %>%
-#'       dplyr::arrange(.data$covariateId) %>%
-#'       dplyr::select(.data$covariateId,
-#'                     .data$covariateName,
-#'                     .data$analysisId,
-#'                     .data$conceptId) %>%
-#'       dplyr::distinct()
-#'     
-#'     concept <- cohort %>%
-#'       dplyr::filter(.data$cohortId %in% abs(covariateRef$conceptId) %>% unique()) %>%
-#'       dplyr::mutate(
-#'         conceptId = .data$cohortId * -1,
-#'         conceptName = .data$cohortName,
-#'         domainId = 'Cohort',
-#'         vocabularyId = 'Cohort',
-#'         conceptClassId = 'Cohort',
-#'         standardConcept = 'S',
-#'         conceptCode = as.character(.data$cohortId),
-#'         validStartDate = as.Date('2002-01-31'),
-#'         validEndDate = as.Date('2099-12-31'),
-#'         invalidReason = as.character(NA)
-#'       ) %>%
-#'       dplyr::select(
-#'         .data$conceptId,
-#'         .data$conceptName,
-#'         .data$domainId,
-#'         .data$vocabularyId,
-#'         .data$conceptClassId,
-#'         .data$standardConcept,
-#'         .data$conceptCode,
-#'         .data$validStartDate,
-#'         .data$validEndDate
-#'       ) %>%
-#'       dplyr::arrange(.data$conceptId)
-#'     
-#'     if ('valueField' %in% colnames(analysisRef)) {
-#'       analysisRef$valueField <- NULL
-#'     }
-#'     return(
-#'       list(
-#'         temporalCovariateRef = covariateRef,
-#'         temporalCovariateValue = result,
-#'         temporalCovariateValueDist = NULL,
-#'         temporalAnalysisRef = analysisRef,
-#'         temporalTimeRef = temporalTimeRef,
-#'         concept = concept
-#'       )
-#'     )
-#'   }
+#
+# #' Returns cohort temporal feature characterization
+# #'
+# #' @description
+# #' Returns a list object with temporalCovariateValue,
+# #' temporalCovariateRef, temporalAnalysisRef, temporalRef output of cohort as features.
+# #'
+# #' @template DataSource
+# #'
+# #' @template CohortIds
+# #'
+# #' @template DatabaseIds
+# #'
+# #' @param temporalTimeRef   A dataframe object with three columns timeId (integer), startDay (integer), endDay (integer)
+# #'
+# #' @return
+# #' Returns a list object with temporalCovariateValue,
+# #' temporalCovariateRef, temporalAnalysisRef, temporalRef output of cohort as features.
+# #'
+# #' @export
+# getCohortAsFeatureTemporalCharacterizationResults <-
+#   function(dataSource = .GlobalEnv,
+#            cohortIds = NULL,
+#            databaseIds = NULL,
+#            temporalTimeRef = getResultsTemporalTimeRef(dataSource = dataSource)) {
+#     if (is.null(temporalTimeRef)) {
+#       return(NULL)
+#     }
+#     # meta information
+#     cohortCounts <-
+#       getResultsCohortCount(dataSource = dataSource,
+#                             cohortIds = cohortIds,
+#                             databaseIds = databaseIds)
+#     cohort <- getResultsCohort(dataSource = dataSource)
+#
+#     browser()
+#     # need to add standardized difference
+#     # 1. for each time window get its corresponding denominator population size
+#     # 2. compute proportion dplyr::mutate(p = .data$sumValue / .data$populationSize)
+#     # 3. put a check "During characterization, population size (denominator) was found to be smaller than features Value (numerator).",
+#     #"- this may have happened because of an error in Feature generation process. Please contact the package developer."
+#     # 4. compute sd as dplyr::mutate(sd = sqrt(.data$p * (1 - .data$p)))
+#
+#     seqStart30 <- seq(-420, +420, by = 30)
+#     seqEnd30 <- seqStart30 + 30
+#     cohortRelationships <-
+#       getResultsCohortRelationships(dataSource = dataSource,
+#                                     cohortIds = cohortIds,
+#                                     startDays = c(seqStart30),
+#                                     endDays = c(seqEnd30),
+#                                     databaseIds = databaseIds)
+#
+#     if (is.null(cohortRelationships) ||
+#         nrow(cohortRelationships) == 0) {
+#       return(NULL)
+#     }
+#
+#     # comparator cohort was on or after target cohort
+#     summarizeCohortRelationship <- function(data,
+#                                             valueField = 'records',
+#                                             analysisId,
+#                                             temporalTimeRef,
+#                                             cohortCounts) {
+#       browser()
+#       if (is.null(data) || nrow(data) == 0) {
+#         return(NULL)
+#       }
+#       data$sumValue <- data[[valueField]]
+#       data <- data  %>%
+#         dplyr::inner_join(temporalTimeRef,
+#                           by = c("startDay", "endDay")) %>%
+#         dplyr::select(
+#           .data$databaseId,
+#           .data$cohortId,
+#           .data$comparatorCohortId,
+#           .data$timeId,
+#           .data$startDay,
+#           .data$endDay,
+#           .data$sumValue
+#         )
+#
+#       denominator <- cohortCounts  %>%
+#         dplyr::rename(denominator = .data$cohortSubjects) %>%
+#         dplyr::select(.data$cohortId,
+#                       .data$databaseId,
+#                       .data$denominator)
+#
+#       data <- data %>%
+#         dplyr::inner_join(denominator, by = c('databaseId', 'cohortId')) %>%
+#         dplyr::mutate(mean = .data$sumValue / .data$denominator) %>%
+#         dplyr::mutate(sd = NA) %>%
+#         # dplyr::mutate(sd = sqrt(.data$mean * (1 - .data$mean)))
+#         dplyr::mutate(analysisId = !!analysisId) %>%
+#         dplyr::mutate(covariateId = (.data$comparatorCohortId * -1000)+!!analysisId) %>%
+#         dplyr::select(
+#           .data$cohortId,
+#           .data$covariateId,
+#           .data$timeId,
+#           .data$startDay,
+#           .data$endDay,
+#           .data$sumValue,
+#           .data$mean,
+#           .data$sd,
+#           .data$databaseId
+#         )
+#       return(data)
+#     }
+#
+#     analysisId <- c(-101,-201)
+#     analysisName <- c("CohortEraStart", "CohortEraOverlap")
+#     valueField <- c("subCsAfterTs",
+#                     "subjects")
+#     analysisRef <-
+#       dplyr::tibble(analysisId, analysisName, valueField) %>%
+#       dplyr::mutate(isBinary = 'Y',
+#                     missingMeansZero = 'Y') %>%
+#       dplyr::arrange(.data$analysisId) %>%
+#       dplyr::mutate(domainId = 'Cohort') %>%
+#       dplyr::select(
+#         .data$analysisId,
+#         .data$analysisName,
+#         .data$valueField,
+#         .data$domainId,
+#         .data$isBinary,
+#         .data$missingMeansZero
+#       ) %>%
+#       dplyr::distinct()
+#
+#     result <- list()
+#     for (j in (1:nrow(analysisRef))) {
+#       result[[j]] <-
+#         summarizeCohortRelationship(
+#           data = cohortRelationships,
+#           valueField = analysisRef[j,]$valueField,
+#           analysisId = analysisRef[j,]$analysisId,
+#           temporalTimeRef = temporalTimeRef,
+#           cohortCounts = cohortCounts
+#         )
+#     }
+#     result <- dplyr::bind_rows(result)
+#
+#     if (nrow(result) == 0) {
+#       result <- NULL
+#     }
+#
+#     covariateRef <- tidyr::crossing(cohort,
+#                                     analysisRef %>%
+#                                       dplyr::select(.data$analysisId) %>%
+#                                       dplyr::distinct()) %>%
+#       dplyr::mutate(covariateId = (.data$cohortId * -1000) + .data$analysisId) %>%
+#       dplyr::mutate(covariateName = paste0(.data$cohortName)) %>% #, "(", .data$covariateId, ")")) %>%
+#       dplyr::mutate(conceptId = .data$cohortId * -1) %>%
+#       dplyr::arrange(.data$covariateId) %>%
+#       dplyr::select(.data$covariateId,
+#                     .data$covariateName,
+#                     .data$analysisId,
+#                     .data$conceptId) %>%
+#       dplyr::distinct()
+#
+#     concept <- cohort %>%
+#       dplyr::filter(.data$cohortId %in% abs(covariateRef$conceptId) %>% unique()) %>%
+#       dplyr::mutate(
+#         conceptId = .data$cohortId * -1,
+#         conceptName = .data$cohortName,
+#         domainId = 'Cohort',
+#         vocabularyId = 'Cohort',
+#         conceptClassId = 'Cohort',
+#         standardConcept = 'S',
+#         conceptCode = as.character(.data$cohortId),
+#         validStartDate = as.Date('2002-01-31'),
+#         validEndDate = as.Date('2099-12-31'),
+#         invalidReason = as.character(NA)
+#       ) %>%
+#       dplyr::select(
+#         .data$conceptId,
+#         .data$conceptName,
+#         .data$domainId,
+#         .data$vocabularyId,
+#         .data$conceptClassId,
+#         .data$standardConcept,
+#         .data$conceptCode,
+#         .data$validStartDate,
+#         .data$validEndDate
+#       ) %>%
+#       dplyr::arrange(.data$conceptId)
+#
+#     if ('valueField' %in% colnames(analysisRef)) {
+#       analysisRef$valueField <- NULL
+#     }
+#     return(
+#       list(
+#         temporalCovariateRef = covariateRef,
+#         temporalCovariateValue = result,
+#         temporalCovariateValueDist = NULL,
+#         temporalAnalysisRef = analysisRef,
+#         temporalTimeRef = temporalTimeRef,
+#         concept = concept
+#       )
+#     )
+#   }
 
 
 #' Returns multiple characterization output
@@ -3219,11 +3308,9 @@ getCohortRelationshipCharacterizationResults <-
 #' @template CohortIds
 #'
 #' @template DatabaseIds
-#' 
+#'
 #' @param featureExtractionCharacterization Do you want to get feature extraction characterization results?
-#' 
-#' @param featureExtractionTemporalCharacterization Do you want to get feature extraction temporal characterization results?
-#' 
+#'
 #' @param cohortRelationshipCharacterizationResults Do you want to get cohort relationship characterization results?
 #'
 #' @param minThreshold Do you want to set the minimum threshold for db extraction
@@ -3569,19 +3656,32 @@ getResultsTemporalTimeRef <- function(dataSource) {
                     .data$endDay == 0) %>%
     dplyr::mutate(
       temporalName = dplyr::case_when(
-        .data$endDay == 0 & .data$startDay == -30 ~ "Baseline1 (Short Term)",
-        .data$endDay == 0 & .data$startDay == -180 ~ "Baseline1 (Medium Term)",
-        .data$endDay == 0 & .data$startDay == -365 ~ "Baseline1 (Long Term)",
-        .data$endDay == 0 & .data$startDay == -9999 ~ "Baseline1 (Any Time Prior)",
-        .data$endDay == -1 & .data$startDay == -30 ~ "Baseline2 (Short Term, no index date)",
-        .data$endDay == -1 & .data$startDay == -180 ~ "Baseline2 (Medium Term, no index date)",
-        .data$endDay == -1 & .data$startDay == -365 ~ "Baseline2 (Long Term, no index date)",
-        .data$endDay == -1 & .data$startDay == -9999 ~ "Baseline2 (Any Time Prior, no index date)",
-        .data$endDay == -31 & .data$startDay == -365 ~ "Temporal (-31d to -365d)",
-        .data$endDay == -1 & .data$startDay == -30 ~ "Temporal (-1d to -30d)",
-        .data$endDay == 0 & .data$startDay == 0 ~ "Temporal (0d to 0d)",
-        .data$endDay == 30 & .data$startDay == 1 ~ "Temporal (1d to 30d)",
-        .data$endDay == 365 & .data$startDay == 31 ~ "Temporal (31d to 365d)"
+        .data$endDay == 0 &
+          .data$startDay == -30 ~ "Baseline1 (Short Term)",
+        .data$endDay == 0 &
+          .data$startDay == -180 ~ "Baseline1 (Medium Term)",
+        .data$endDay == 0 &
+          .data$startDay == -365 ~ "Baseline1 (Long Term)",
+        .data$endDay == 0 &
+          .data$startDay == -9999 ~ "Baseline1 (Any Time Prior)",
+        .data$endDay == -1 &
+          .data$startDay == -30 ~ "Baseline2 (Short Term, no index date)",
+        .data$endDay == -1 &
+          .data$startDay == -180 ~ "Baseline2 (Medium Term, no index date)",
+        .data$endDay == -1 &
+          .data$startDay == -365 ~ "Baseline2 (Long Term, no index date)",
+        .data$endDay == -1 &
+          .data$startDay == -9999 ~ "Baseline2 (Any Time Prior, no index date)",
+        .data$endDay == -31 &
+          .data$startDay == -365 ~ "Temporal (-31d to -365d)",
+        .data$endDay == -1 &
+          .data$startDay == -30 ~ "Temporal (-1d to -30d)",
+        .data$endDay == 0 &
+          .data$startDay == 0 ~ "Temporal (0d to 0d)",
+        .data$endDay == 30 &
+          .data$startDay == 1 ~ "Temporal (1d to 30d)",
+        .data$endDay == 365 &
+          .data$startDay == 31 ~ "Temporal (31d to 365d)"
       )
     ) %>%
     dplyr::mutate(
@@ -3604,21 +3704,24 @@ getResultsTemporalTimeRef <- function(dataSource) {
       )
     ) %>%
     dplyr::mutate(choices = .data$temporalName) %>%
-    dplyr::select(.data$startDay, .data$endDay, .data$choices) %>% 
+    dplyr::select(.data$startDay, .data$endDay, .data$choices) %>%
     dplyr::mutate(primaryChoices = TRUE)
   
-  data2 <- data %>% 
-    dplyr::anti_join(data1 %>% 
+  data2 <- data %>%
+    dplyr::anti_join(data1 %>%
                        dplyr::select(.data$startDay,
                                      .data$endDay),
-                     by = c("startDay", "endDay")) %>% 
+                     by = c("startDay", "endDay")) %>%
     dplyr::mutate(sequence = 999,
-                  choices = .data$temporalName) %>% 
+                  choices = .data$temporalName) %>%
     dplyr::mutate(primaryChoices = FALSE)
   
   data <- dplyr::bind_rows(data1, data2) %>%
-    dplyr::arrange(.data$sequence, .data$startDay, .data$endDay) %>% 
-    dplyr::select(.data$startDay, .data$endDay, .data$choices, .data$primaryChoices)
+    dplyr::arrange(.data$sequence, .data$startDay, .data$endDay) %>%
+    dplyr::select(.data$startDay,
+                  .data$endDay,
+                  .data$choices,
+                  .data$primaryChoices)
   return(data)
 }
 
@@ -3701,7 +3804,7 @@ getResultsTemporalAnalysisRef <- function(dataSource) {
 #' @param embedText Any additional text to embed in the top of circe generated content.
 #'
 #' @param includeConceptSets Do you want to inclued concept set in the documentation
-#' 
+#'
 #' @return list object
 #'
 #' @export
@@ -3722,24 +3825,28 @@ getCirceRenderedExpression <- function(cohortDefinition,
   
   if (hasData(embedText)) {
     circeExpressionMarkdown <-
-      paste0("##### ",
-             embedText,
-             "\r\n\r\n",
-             "# Cohort Definition:",
-             "\r\n\r\n",
-             "### ",
-             cohortName,
-             "\r\n\r\n",
-             circeExpressionMarkdown)
+      paste0(
+        "##### ",
+        embedText,
+        "\r\n\r\n",
+        "# Cohort Definition:",
+        "\r\n\r\n",
+        "### ",
+        cohortName,
+        "\r\n\r\n",
+        circeExpressionMarkdown
+      )
   }
   if (includeConceptSets) {
     circeExpressionMarkdown <-
-      paste0(circeExpressionMarkdown,
-             "\r\n\r\n",
-             "\r\n\r\n",
-             "## Concept Sets:",
-             "\r\n\r\n",
-             circeConceptSetListmarkdown)
+      paste0(
+        circeExpressionMarkdown,
+        "\r\n\r\n",
+        "\r\n\r\n",
+        "## Concept Sets:",
+        "\r\n\r\n",
+        circeConceptSetListmarkdown
+      )
   }
   
   htmlExpressionCohort <-
@@ -3903,9 +4010,18 @@ getDomainInformation <- function(packageName = NULL) {
   #https://github.com/r-lib/tidyselect/issues/201
   data %>%
     dplyr::collect() %>%
-    dplyr::mutate(dplyr::across(tidyselect:::where(is.character), ~ tidyr::replace_na(.x, as.character('')))) %>%
-    dplyr::mutate(dplyr::across(tidyselect:::where(is.logical), ~ tidyr::replace_na(.x, as.character('')))) %>%
-    dplyr::mutate(dplyr::across(tidyselect:::where(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
+    dplyr::mutate(dplyr::across(
+      tidyselect:::where(is.character),
+      ~ tidyr::replace_na(.x, as.character(''))
+    )) %>%
+    dplyr::mutate(dplyr::across(
+      tidyselect:::where(is.logical),
+      ~ tidyr::replace_na(.x, as.character(''))
+    )) %>%
+    dplyr::mutate(dplyr::across(
+      tidyselect:::where(is.numeric),
+      ~ tidyr::replace_na(.x, as.numeric(''))
+    ))
 }
 
 

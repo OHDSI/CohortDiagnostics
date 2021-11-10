@@ -159,10 +159,12 @@ cohort_start_date of the cohorts.</p>
   connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
   connection <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>cohortDatabaseSchema</span>,
+  <span class='va'>cdmDatabaseSchema</span>,
   tempEmulationSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
   cohortTable <span class='op'>=</span> <span class='st'>"cohort"</span>,
   <span class='va'>targetCohortIds</span>,
   <span class='va'>comparatorCohortIds</span>,
+  <span class='va'>relationshipDays</span>,
   incremental <span class='op'>=</span> <span class='cn'>FALSE</span>,
   incrementalFolder <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
@@ -192,6 +194,12 @@ this should include both the database and schema name, for example
 'scratch.dbo'.</p></td>
     </tr>
     <tr>
+      <th>cdmDatabaseSchema</th>
+      <td><p>Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.</p></td>
+    </tr>
+    <tr>
       <th>tempEmulationSchema</th>
       <td><p>Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
 tables, provide a schema with write privileges where temp tables can be created.</p></td>
@@ -207,6 +215,10 @@ tables, provide a schema with write privileges where temp tables can be created.
     <tr>
       <th>comparatorCohortIds</th>
       <td><p>A vector of one or more Cohort Ids for use as feature/comparator cohorts.</p></td>
+    </tr>
+    <tr>
+      <th>relationshipDays</th>
+      <td><p>A dataframe with two columns startDay and endDay representing periods of time to compute relationship</p></td>
     </tr>
     <tr>
       <th>incremental</th>

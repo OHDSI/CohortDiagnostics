@@ -21,7 +21,7 @@ to ensure that big numbers don't loose precision.'}
 Returns text (OHDSI SQL)
 }
 \description{
-Given a cohort definition expression, the function generates and return cohort SQL 
-in OHDSI SQL form. This maybe be rendered and translated using 
+Given a cohort definition expression, the function generates and return cohort SQL
+in OHDSI SQL form. This maybe be rendered and translated using
 OHDSI R packages like \code{SqlRender::render}
 }

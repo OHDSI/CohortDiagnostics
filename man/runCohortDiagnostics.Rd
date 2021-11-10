@@ -26,7 +26,7 @@ runCohortDiagnostics(
   cdmVersion = 5,
   runInclusionStatistics = TRUE,
   runConceptSetDiagnostics = TRUE,
-  indexDateDiagnosticsRelativeDays = c(-30:30),
+  indexDateDiagnosticsRelativeDays = c(-5:5),
   runIncludedSourceConcepts = FALSE,
   runOrphanConcepts = FALSE,
   runVisitContext = TRUE,
@@ -46,13 +46,14 @@ runCohortDiagnostics(
     useProcedureOccurrence = TRUE, useDrugEraStart = TRUE,      useMeasurement = TRUE,
     useConditionEraStart = TRUE, useConditionEraOverlap = TRUE, useConditionEraGroupStart
     = FALSE, useConditionEraGroupOverlap = TRUE, useDrugExposure = FALSE,
-    useDrugEraOverlap = TRUE, useDrugEraGroupStart = FALSE, useDrugEraGroupOverlap =
+    useDrugEraOverlap = FALSE, useDrugEraGroupStart = FALSE, useDrugEraGroupOverlap =
     TRUE, useObservation = TRUE, useDeviceExposure = TRUE, useCharlsonIndex = TRUE,
     useDcsi = TRUE, useChads2 = TRUE, useChads2Vasc = TRUE, useHfrs = FALSE,
-    temporalStartDays = c(-365, -30, 0, 1, 31, -9999, -365, -180, -30, seq(from = -421,  
-           to = -31, by = 30), seq(from = 0, to = 390, by = 30)), temporalEndDays =
-    c(-31, -1, 0, 30, 365, 0, 0, 0, 0, seq(from = -391, to = -1, by = 30), seq(from = 30,
-    to = 420, by = 30))),
+    temporalStartDays = c(-365, -30, 0, 1, 31, -9999, -365, -180, -30, -9999, -365, -180,
+             -30, seq(from = -421, to = -31, by = 30), seq(from = 0, to = 390, by = 30),
+    seq(from = -5, to = 5, by = 1)), temporalEndDays = c(-31, -1, 0, 30, 365, 0, 0, 0, 0,
+    -1, -1, -1, -1, seq(from = -391, to = -1, by = 30), seq(from = 30, to = 420, by =
+    30), seq(from = -5, to = 5, by = 1))),
   minCellCount = 5,
   incremental = TRUE,
   incrementalFolder = file.path(exportFolder, "incremental")

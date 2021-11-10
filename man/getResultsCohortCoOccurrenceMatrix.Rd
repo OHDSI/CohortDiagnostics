@@ -42,6 +42,6 @@ to first start of target cohort only.
 }
 \description{
 Returns a a data frame (tibble) that shows the percent (optionally number) of subjects
-in target cohort that are also in comparator cohort at certain days relative to 
+in target cohort that are also in comparator cohort at certain days relative to
 first start date of a subject in target cohort.
 }
