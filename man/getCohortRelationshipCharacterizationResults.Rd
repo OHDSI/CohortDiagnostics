@@ -2,7 +2,7 @@
 % Please edit documentation in R/Shared.R
 \name{getCohortRelationshipCharacterizationResults}
 \alias{getCohortRelationshipCharacterizationResults}
-\title{}
+\title{Returns cohort as feature characterization}
 \usage{
 getCohortRelationshipCharacterizationResults(
   dataSource = .GlobalEnv,
@@ -33,7 +33,4 @@ the output is a negative integer.
 \description{
 Returns a list object with covariateValue,
 covariateRef, analysisRef output of cohort as features.
-}
-\details{
-
 }
