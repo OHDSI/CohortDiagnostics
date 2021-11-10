@@ -886,7 +886,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           cohortTable = cohortTable,
           targetCohortIds = subset$cohortId,
           comparatorCohortIds = cohorts$cohortId,
-          relationshipDays = dplyr::tibble(startDay = temporalEndDays,
+          relationshipDays = dplyr::tibble(startDay = temporalStartDays,
                                            endDay = temporalEndDays),
           incremental = incremental,
           incrementalFolder = incrementalFolder
