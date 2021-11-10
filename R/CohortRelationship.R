@@ -219,24 +219,24 @@ runCohortRelationshipDiagnostics <-
     seqEndCustom1 <- c(-31, -1, 0, 30, 365)
     
     # custom sequence 2 - all time prior to day before index (not including index date)
-    seqStartCustom2 <- c(-99999)
+    seqStartCustom2 <- c(-9999)
     seqEndCustom2 <- c(-1)
     
     # custom sequence 3 - all time prior to index (including index date)
-    seqStartCustom3 <- c(-99999)
+    seqStartCustom3 <- c(-9999)
     seqEndCustom3 <- c(0)
     
     # custom sequence 4 - index date to all time into future
     seqStartCustom4 <- c(0)
-    seqEndCustom4 <- c(99999)
+    seqEndCustom4 <- c(9999)
     
     # custom sequence 5 - day 1 to all time into future
     seqStartCustom5 <- c(1)
-    seqEndCustom5 <- c(99999)
+    seqEndCustom5 <- c(9999)
     
     # custom sequence 6 - all time prior to all time future
-    seqStartCustom6 <- c(-99999)
-    seqEndCustom6 <- c(99999)
+    seqStartCustom6 <- c(-9999)
+    seqEndCustom6 <- c(9999)
     
     # custom sequence 7 - every day from -31 to + 31
     seqStartCustom7 <- c(-31:31)
