@@ -6274,7 +6274,7 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  observeEvent(eventExpr = getIndexEventBreakdownPlotData(),handlerExpr = {
+  observe({
     data <- getIndexEventBreakdownPlotData()
     if (hasData(data)) {
       maxValue <- data %>% 
@@ -6286,30 +6286,73 @@ shiny::shinyServer(function(input, output, session) {
         inputId = "indexEventBreakdownConceptIdsRangeFilter",
         min = 0,
         max = maxValue,
-        value = c(0, 10)
+        value = c(0, 45)
       )
     }
   })
   
-  observeEvent(eventExpr = input$indexEventBreakdownConceptIdsRangeFilter[1],handlerExpr = {
-    if (input$indexEventBreakdownConceptIdsRangeFilter[1] != 0 || input$indexEventBreakdownConceptIdsRangeFilter[2] != 10) {
-      shiny::updateSliderInput(
-        session = session,
-        inputId = "indexEventBreakdownConceptIdsRangeFilter",
-        value = c(input$indexEventBreakdownConceptIdsRangeFilter[1], input$indexEventBreakdownConceptIdsRangeFilter[1] + 10)
-      )
+  # When Left slider is moved
+  oldMinRangeValue <- reactiveVal(0)
+  oldMaxRangeValue <- reactiveVal(45)
+  observeEvent(eventExpr = input$indexEventBreakdownConceptIdsRangeFilter,{
+    data <- getIndexEventBreakdownPlotData()
+    if (hasData(data) &&
+        hasData(input$indexEventBreakdownConceptIdsRangeFilter[1]) &&
+        hasData(input$indexEventBreakdownConceptIdsRangeFilter[2])) {
+      if (input$indexEventBreakdownConceptIdsRangeFilter[1] != oldMinRangeValue()) {
+        maxValue <- data %>%
+          dplyr::pull(.data$rank) %>%
+          max()
+        if (input$indexEventBreakdownConceptIdsRangeFilter[1] < as.integer(maxValue) - 45) {
+          minRangeValue <- input$indexEventBreakdownConceptIdsRangeFilter[1]
+          maxRangeValue <-
+            input$indexEventBreakdownConceptIdsRangeFilter[1] + 45
+          oldMinRangeValue(minRangeValue)
+          oldMaxRangeValue(maxRangeValue)
+          shiny::updateSliderInput(
+            session = session,
+            inputId = "indexEventBreakdownConceptIdsRangeFilter",
+            value = c(minRangeValue, maxRangeValue)
+          )
+        }
+      } else if (input$indexEventBreakdownConceptIdsRangeFilter[2] != oldMaxRangeValue()) {
+        if (input$indexEventBreakdownConceptIdsRangeFilter[2] > 45) {
+          minRangeValue <-
+            input$indexEventBreakdownConceptIdsRangeFilter[2] - 45
+          maxRangeValue <-
+            input$indexEventBreakdownConceptIdsRangeFilter[2]
+          oldMinRangeValue(minRangeValue)
+          oldMaxRangeValue(maxRangeValue)
+          shiny::updateSliderInput(
+            session = session,
+            inputId = "indexEventBreakdownConceptIdsRangeFilter",
+            value = c(minRangeValue, maxRangeValue)
+          )
+        }
+      }
     }
+    
   })
   
-  observeEvent(eventExpr = input$indexEventBreakdownConceptIdsRangeFilter[2],handlerExpr = {
-    if (input$indexEventBreakdownConceptIdsRangeFilter[1] != 0 || input$indexEventBreakdownConceptIdsRangeFilter[2] > 10) {
-      shiny::updateSliderInput(
-        session = session,
-        inputId = "indexEventBreakdownConceptIdsRangeFilter",
-        value = c(input$indexEventBreakdownConceptIdsRangeFilter[2] - 10, input$indexEventBreakdownConceptIdsRangeFilter[2])
-      )
-    }
-  })
+  # # When Right slider is moved
+  # observe({
+  #   if (hasData(input$indexEventBreakdownConceptIdsRangeFilter[2])) {
+  #     if (input$indexEventBreakdownConceptIdsRangeFilter[2] < 45) {
+  #       minRangeValue <- 0
+  #       maxRangeValue <- 45
+  #     } else {
+  #       minRangeValue <-
+  #         input$indexEventBreakdownConceptIdsRangeFilter[2] - 45
+  #       maxRangeValue <-
+  #         input$indexEventBreakdownConceptIdsRangeFilter[2]
+  #     }
+  #     shiny::updateSliderInput(
+  #       session = session,
+  #       inputId = "indexEventBreakdownConceptIdsRangeFilter",
+  #       value = c(minRangeValue, maxRangeValue)
+  #     )
+  #   }
+  # })
   
   ##indexEventBreakdownPlot----
   output$indexEventBreakdownPlot <-
