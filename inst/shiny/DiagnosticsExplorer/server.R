@@ -6257,7 +6257,8 @@ shiny::shinyServer(function(input, output, session) {
         sketchLevel = sketchLevel,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$indexEventBreakdownShowAsPercent
+        showResultsAsPercent = input$indexEventBreakdownShowAsPercent, 
+        sort = FALSE
       )
       
       return(table)
@@ -6273,101 +6274,92 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     filteredConceptIds <-
-      getIndexEventBreakdownTargetDataFiltered()$conceptId %>% unique()
+      getIndexEventBreakdownTargetDataFiltered() %>% 
+      dplyr::distinct() %>% 
+      dplyr::select(.data$conceptId) %>% 
+      dplyr::mutate(sortOrder = dplyr::row_number())
+    
     if (!hasData(filteredConceptIds)) {
       return(NULL)
     }
     
     data <- getIndexEventBreakdownRawTarget() %>%
       dplyr::filter(.data$coConceptId == 0) %>%
-      dplyr::filter(.data$conceptId %in% c(filteredConceptIds)) %>% 
       dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
+      dplyr::inner_join(filteredConceptIds, by = "conceptId") %>% 
+      dplyr::arrange(.data$sortOrder) %>% 
       dplyr::select(.data$databaseId,
                     .data$cohortId,
                     .data$conceptId,
+                    .data$sortOrder,
                     .data$daysRelativeIndex,
                     .data$conceptCount,
                     .data$subjectCount)
     if (!hasData(data)) {
       return(NULL)
     }
-    ## creating order
-    data <- data %>% 
-      dplyr::inner_join(data %>% 
-                          dplyr::filter(.data$daysRelativeIndex == 0) %>% 
-                          dplyr::arrange(.data$databaseId,
-                                         .data$cohortId,
-                                         .data$conceptId,
-                                         dplyr::desc(.data$subjectCount),
-                                         dplyr::desc(.data$conceptCount)) %>% 
-                          dplyr::mutate(rank = dplyr::row_number()) %>% 
-                          dplyr::select(.data$databaseId,
-                                        .data$cohortId,
-                                        .data$conceptId,
-                                        .data$rank),
-                        by = c("databaseId", "cohortId", "conceptId"))
     return(data)
   })
-  
-  observe({
-    data <- getIndexEventBreakdownPlotData()
-    if (hasData(data)) {
-      maxValue <- data %>% 
-        dplyr::pull(.data$rank) %>% 
-        max() 
-      
-      shiny::updateSliderInput(
-        session = session,
-        inputId = "indexEventBreakdownConceptIdsRangeFilter",
-        min = 0,
-        max = maxValue,
-        value = c(0, 45)
-      )
-    }
-  })
-  
-  # When Left slider is moved
-  oldMinRangeValue <- reactiveVal(0)
-  oldMaxRangeValue <- reactiveVal(45)
-  observeEvent(eventExpr = input$indexEventBreakdownConceptIdsRangeFilter,{
-    data <- getIndexEventBreakdownPlotData()
-    if (hasData(data) &&
-        hasData(input$indexEventBreakdownConceptIdsRangeFilter[1]) &&
-        hasData(input$indexEventBreakdownConceptIdsRangeFilter[2])) {
-      if (input$indexEventBreakdownConceptIdsRangeFilter[1] != oldMinRangeValue()) {
-        maxValue <- data %>%
-          dplyr::pull(.data$rank) %>%
-          max()
-        if (input$indexEventBreakdownConceptIdsRangeFilter[1] < as.integer(maxValue) - 45) {
-          minRangeValue <- input$indexEventBreakdownConceptIdsRangeFilter[1]
-          maxRangeValue <-
-            input$indexEventBreakdownConceptIdsRangeFilter[1] + 45
-          oldMinRangeValue(minRangeValue)
-          oldMaxRangeValue(maxRangeValue)
-          shiny::updateSliderInput(
-            session = session,
-            inputId = "indexEventBreakdownConceptIdsRangeFilter",
-            value = c(minRangeValue, maxRangeValue)
-          )
-        }
-      } else if (input$indexEventBreakdownConceptIdsRangeFilter[2] != oldMaxRangeValue()) {
-        if (input$indexEventBreakdownConceptIdsRangeFilter[2] > 45) {
-          minRangeValue <-
-            input$indexEventBreakdownConceptIdsRangeFilter[2] - 45
-          maxRangeValue <-
-            input$indexEventBreakdownConceptIdsRangeFilter[2]
-          oldMinRangeValue(minRangeValue)
-          oldMaxRangeValue(maxRangeValue)
-          shiny::updateSliderInput(
-            session = session,
-            inputId = "indexEventBreakdownConceptIdsRangeFilter",
-            value = c(minRangeValue, maxRangeValue)
-          )
-        }
-      }
-    }
-    
-  })
+  # 
+  # observe({
+  #   data <- getIndexEventBreakdownPlotData()
+  #   if (hasData(data)) {
+  #     maxValue <- data %>% 
+  #       dplyr::pull(.data$rank) %>% 
+  #       max() 
+  #     
+  #     shiny::updateSliderInput(
+  #       session = session,
+  #       inputId = "indexEventBreakdownConceptIdsRangeFilter",
+  #       min = 0,
+  #       max = maxValue,
+  #       value = c(0, 45)
+  #     )
+  #   }
+  # })
+  # 
+  # # When Left slider is moved
+  # oldMinRangeValue <- reactiveVal(0)
+  # oldMaxRangeValue <- reactiveVal(45)
+  # observeEvent(eventExpr = input$indexEventBreakdownConceptIdsRangeFilter,{
+  #   data <- getIndexEventBreakdownPlotData()
+  #   if (hasData(data) &&
+  #       hasData(input$indexEventBreakdownConceptIdsRangeFilter[1]) &&
+  #       hasData(input$indexEventBreakdownConceptIdsRangeFilter[2])) {
+  #     if (input$indexEventBreakdownConceptIdsRangeFilter[1] != oldMinRangeValue()) {
+  #       maxValue <- data %>%
+  #         dplyr::pull(.data$rank) %>%
+  #         max()
+  #       if (input$indexEventBreakdownConceptIdsRangeFilter[1] < as.integer(maxValue) - 45) {
+  #         minRangeValue <- input$indexEventBreakdownConceptIdsRangeFilter[1]
+  #         maxRangeValue <-
+  #           input$indexEventBreakdownConceptIdsRangeFilter[1] + 45
+  #         oldMinRangeValue(minRangeValue)
+  #         oldMaxRangeValue(maxRangeValue)
+  #         shiny::updateSliderInput(
+  #           session = session,
+  #           inputId = "indexEventBreakdownConceptIdsRangeFilter",
+  #           value = c(minRangeValue, maxRangeValue)
+  #         )
+  #       }
+  #     } else if (input$indexEventBreakdownConceptIdsRangeFilter[2] != oldMaxRangeValue()) {
+  #       if (input$indexEventBreakdownConceptIdsRangeFilter[2] > 45) {
+  #         minRangeValue <-
+  #           input$indexEventBreakdownConceptIdsRangeFilter[2] - 45
+  #         maxRangeValue <-
+  #           input$indexEventBreakdownConceptIdsRangeFilter[2]
+  #         oldMinRangeValue(minRangeValue)
+  #         oldMaxRangeValue(maxRangeValue)
+  #         shiny::updateSliderInput(
+  #           session = session,
+  #           inputId = "indexEventBreakdownConceptIdsRangeFilter",
+  #           value = c(minRangeValue, maxRangeValue)
+  #         )
+  #       }
+  #     }
+  #   }
+  #   
+  # })
   
   # # When Right slider is moved
   # observe({
@@ -6419,8 +6411,8 @@ shiny::shinyServer(function(input, output, session) {
       
       #!!!put a UI for user to select concept id's between minValue and maxValue -- by default minValue = 0 to maxValue = 10
       data <- data %>% 
-        dplyr::filter(.data$rank >= !!input$indexEventBreakdownConceptIdsRangeFilter[1]) %>% 
-        dplyr::filter(.data$rank <= !!input$indexEventBreakdownConceptIdsRangeFilter[2])
+        dplyr::filter(.data$sortOrder >= 0) %>% 
+        dplyr::filter(.data$sortOrder <= 25)
         
       plot <- plotIndexEventBreakdown(data = data,
                                       yAxisColumns = dataColumnFields,
