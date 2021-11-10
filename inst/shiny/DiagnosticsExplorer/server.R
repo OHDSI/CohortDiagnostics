@@ -4444,32 +4444,8 @@ shiny::shinyServer(function(input, output, session) {
       paste("ExportDetails", "zip", sep = ".")
     },
     content = function(file) {
-      rootFolder <-  stringr::str_replace_all(string = Sys.time(), pattern = "-",replacement = "") 
-      rootFolder <- stringr::str_replace_all(string = rootFolder, pattern = ":",replacement = "")
-      tempdir <- file.path(tempdir(), rootFolder) 
-      
-      for (i in (1:nrow(cohort))) {
-        cohortId <- cohort[i,]$cohortId
-        cohortName <- cohort[i,]$cohortName
-          
-        dir.create(path = file.path(tempdir, cohortName), recursive = TRUE, showWarnings = FALSE)
-        cohortExpression <- cohort[i,]$json %>% 
-          RJSONIO::fromJSON(digits = 23)
-        
-        details <-
-          getCirceRenderedExpression(cohortDefinition =  cohortExpression)
-        SqlRender::writeSql(sql = details$cohortJson,
-                            targetFile = file.path(tempdir, cohortName, paste0('cohortDefinitionJson_', cohortId, '.json')))
-        SqlRender::writeSql(sql = details$cohortMarkdown,
-                            targetFile = file.path(tempdir, cohortName, paste0('cohortDefinitionMarkdown_', cohortId, '.md')))
-        SqlRender::writeSql(sql = details$conceptSetMarkdown,
-                            targetFile = file.path(tempdir, cohortName, paste0('conceptSetMarkdown_', cohortId, '.md')))
-        SqlRender::writeSql(sql = details$cohortHtmlExpression,
-                            targetFile = file.path(tempdir, cohortName, paste0('cohortDefinitionHtml_', cohortId, '.html')))
-      }
-      DatabaseConnector::createZipFile(zipFile = file,
-                    files = tempdir,
-                    rootFolder = tempdir)
+      exportCohortDetailsAsZip(dataSource = dataSource,
+                               zipFile = file)
     },
     contentType = "application/zip"
   )
