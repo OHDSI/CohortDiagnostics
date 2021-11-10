@@ -146,6 +146,10 @@ test_that("Truncation of covariate sums", {
     runTimeDistributions = FALSE,
     incremental = FALSE
   )
+  
+  output <- read.csv(file.path(folder, "export", "covariate_value.csv"))
+  expect_equal(output$sum_value[2], -5)
+  expect_lt(output$mean[2], 0)
 })
   
 
