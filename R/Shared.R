@@ -2693,8 +2693,8 @@ getResultsCohortOverlap <- function(dataSource,
       cohortIds = cohortIds,
       comparatorCohortIds = comparatorCohortIds,
       databaseIds = databaseIds,
-      startDays = c(-99999, 0),
-      endDays = c(99999, 0)
+      startDays = c(-9999, 0),
+      endDays = c(9999, 0)
     )
   
   if (any(is.null(cohortRelationship),
@@ -2703,10 +2703,10 @@ getResultsCohortOverlap <- function(dataSource,
   }
   
   fullOffSet <-  cohortRelationship %>%
-    dplyr::filter(.data$startDay == -99999) %>%
-    dplyr::filter(.data$endDay == 99999) %>%
-    dplyr::filter(.data$cohortId %in% targetCohortIds) %>%
-    dplyr::filter(.data$comparatorCohortId %in% comparatorCohortIds) %>%
+    dplyr::filter(.data$startDay == -9999) %>%
+    dplyr::filter(.data$endDay == 9999) %>%
+    dplyr::filter(.data$cohortId %in% c(targetCohortIds)) %>%
+    dplyr::filter(.data$comparatorCohortId %in% c(comparatorCohortIds)) %>%
     dplyr::select(.data$databaseId,
                   .data$cohortId,
                   .data$comparatorCohortId,

@@ -789,13 +789,45 @@ getMaxValueForStringMatchedColumnsInDataFrame <- function(data, string) {
     max(na.rm = TRUE)
 }
 
-createZipFile <- function(zipFile, files, rootFolder = getwd(), compressionLevel = 9) {
-  files <- sapply(as.character(files), normalizePath)
-  suppressWarnings(zipFile <- normalizePath(as.character(zipFile), mustWork = FALSE))
-  rootFolder <- normalizePath(as.character(rootFolder))
-  compressionLevel <- as.integer(compressionLevel)
-  rJava::J("org.ohdsi.databaseConnector.Compression")$createZipFile(files,  
-                                                                    rootFolder, 
-                                                                    zipFile, 
-                                                                    compressionLevel)
+exportCohortDetailsAsZip <- function(dataSource,
+                                     cohortIds = NULL,
+                                     zipFile = NULL) {
+  cohort <- getResultsCohort(dataSource = dataSource)
+  
+  rootFolder <-  stringr::str_replace_all(string = Sys.time(), pattern = "-",replacement = "") 
+  rootFolder <- stringr::str_replace_all(string = rootFolder, pattern = ":",replacement = "")
+  tempdir <- file.path(tempdir(), rootFolder) 
+  
+  for (i in (1:nrow(cohort))) {
+    cohortId <- cohort[i,]$cohortId
+    cohortName <- cohort[i,]$cohortName
+    
+    dir.create(path = file.path(tempdir, cohortName), recursive = TRUE, showWarnings = FALSE)
+    cohortExpression <- cohort[i,]$json %>% 
+      RJSONIO::fromJSON(digits = 23)
+    
+    details <-
+      getCirceRenderedExpression(cohortDefinition =  cohortExpression)
+    
+    SqlRender::writeSql(sql = details$cohortJson,
+                        targetFile = file.path(tempdir, 
+                                               cohortName, 
+                                               paste0(cohortId,'_cohortDefinitionJson.json')))
+    SqlRender::writeSql(sql = details$cohortMarkdown,
+                        targetFile = file.path(tempdir, 
+                                               cohortName, 
+                                               paste0(cohortId, '_cohortDefinitionMarkdown.md')))
+    SqlRender::writeSql(sql = details$conceptSetMarkdown,
+                        targetFile = file.path(tempdir, 
+                                               cohortName, 
+                                               paste0(cohortId,'_conceptSetMarkdown.md')))
+    SqlRender::writeSql(sql = details$cohortHtmlExpression,
+                        targetFile = file.path(tempdir, 
+                                               cohortName, 
+                                               paste0(cohortId, '_cohortDefinitionHtml.html')))
+  }
+   
+  return(DatabaseConnector::createZipFile(zipFile = zipFile,
+                                          files = tempdir,
+                                          rootFolder = tempdir))
 }
