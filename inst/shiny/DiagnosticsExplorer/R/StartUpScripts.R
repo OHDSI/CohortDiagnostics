@@ -782,3 +782,14 @@ getMaxValueForStringMatchedColumnsInDataFrame <- function(data, string) {
     dplyr::pull() %>% 
     max(na.rm = TRUE)
 }
+
+createZipFile <- function(zipFile, files, rootFolder = getwd(), compressionLevel = 9) {
+  files <- sapply(as.character(files), normalizePath)
+  suppressWarnings(zipFile <- normalizePath(as.character(zipFile), mustWork = FALSE))
+  rootFolder <- normalizePath(as.character(rootFolder))
+  compressionLevel <- as.integer(compressionLevel)
+  rJava::J("org.ohdsi.databaseConnector.Compression")$createZipFile(files,  
+                                                                    rootFolder, 
+                                                                    zipFile, 
+                                                                    compressionLevel)
+}
