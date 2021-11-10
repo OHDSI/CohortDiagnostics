@@ -6275,14 +6275,12 @@ shiny::shinyServer(function(input, output, session) {
     }
     filteredConceptIds <-
       getIndexEventBreakdownTargetDataFiltered() %>% 
-      dplyr::distinct() %>% 
       dplyr::select(.data$conceptId) %>% 
+      dplyr::distinct() %>% 
       dplyr::mutate(sortOrder = dplyr::row_number())
-    
     if (!hasData(filteredConceptIds)) {
       return(NULL)
     }
-    
     data <- getIndexEventBreakdownRawTarget() %>%
       dplyr::filter(.data$coConceptId == 0) %>%
       dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
@@ -6401,6 +6399,59 @@ shiny::shinyServer(function(input, output, session) {
         "No index event breakdown data for the chosen combination."
       ))
       
+      # sum of all counts, irrespective of filter
+      data <- dplyr::bind_rows(
+        data,
+        data %>%
+          dplyr::filter(.data$conceptId > 0) %>% 
+          dplyr::select(
+            .data$databaseId,
+            .data$cohortId,
+            .data$daysRelativeIndex,
+            .data$conceptCount
+          ) %>%
+          dplyr::group_by(.data$databaseId,
+                          .data$cohortId,
+                          .data$daysRelativeIndex) %>%
+          dplyr::summarise(
+            "conceptCount" = sum(.data$conceptCount),
+            "sortOrder" = -2,
+            .groups = "keep"
+          ) %>%
+          dplyr::mutate(conceptId = -2)
+      )
+      #!!!put a UI drop to select pagination
+      data <- dplyr::bind_rows(
+          data %>% 
+            dplyr::filter(.data$sortOrder >= 0 & .data$sortOrder <= 25),
+          data %>% 
+            dplyr::filter(.data$sortOrder < 0)
+      )
+      
+      # sum of all counts, after filter
+      data <- dplyr::bind_rows(
+        data,
+        data %>%
+          dplyr::filter(.data$conceptId > 0) %>% 
+          dplyr::select(
+            .data$databaseId,
+            .data$cohortId,
+            .data$daysRelativeIndex,
+            .data$conceptCount
+          ) %>%
+          dplyr::group_by(.data$databaseId,
+                          .data$cohortId,
+                          .data$daysRelativeIndex) %>%
+          dplyr::summarise(
+            "conceptCount" = sum(.data$conceptCount),
+            "sortOrder" = -1,
+            .groups = "keep"
+          ) %>%
+          dplyr::mutate(conceptId = -1)
+      ) %>% 
+        dplyr::arrange(.data$sortOrder)
+      
+      
       if (input$indexEventBreakdownTableFilter == "Both") {
         dataColumnFields <- c('conceptCount','subjectCount')
       } else if (input$indexEventBreakdownTableFilter == "Persons") {
@@ -6409,11 +6460,6 @@ shiny::shinyServer(function(input, output, session) {
         dataColumnFields <- c('conceptCount')
       }
       
-      #!!!put a UI for user to select concept id's between minValue and maxValue -- by default minValue = 0 to maxValue = 10
-      data <- data %>% 
-        dplyr::filter(.data$sortOrder >= 0) %>% 
-        dplyr::filter(.data$sortOrder <= 25)
-        
       plot <- plotIndexEventBreakdown(data = data,
                                       yAxisColumns = dataColumnFields,
                                       showAsPercentage = input$indexEventBreakdownShowAsPercent,

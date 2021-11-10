@@ -742,25 +742,6 @@ plotIndexEventBreakdown <-
       return(NULL)
     }
     
-    data <- dplyr::bind_rows(
-      data,
-      data %>%
-        dplyr::select(
-          .data$databaseId,
-          .data$cohortId,
-          .data$daysRelativeIndex,
-          .data$conceptCount
-        ) %>%
-        dplyr::group_by(.data$databaseId,
-                        .data$cohortId,
-                        .data$daysRelativeIndex) %>%
-        dplyr::summarise(
-          "conceptCount" = sum(.data$conceptCount),
-          .groups = "keep"
-        ) %>%
-        dplyr::mutate(conceptId = 0)
-    )
-    
     cohort <- cohort %>%
       dplyr::filter(.data$cohortId %in% c(data$cohortId %>% unique()))
     if (!hasData(conceptIdDetails)) {
