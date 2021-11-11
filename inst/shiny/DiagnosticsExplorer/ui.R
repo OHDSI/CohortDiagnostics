@@ -125,28 +125,20 @@ sidebarMenu <-
         )
       )
     ),
-    if (exists("temporalCovariateValue")) {
       shiny::conditionalPanel(
-        condition = "input.tabs=='temporalCharacterization' | input.tabs =='compareTemporalCharacterization'",
+        condition = "input.tabs =='cohortCharacterization' &
+        input.charType == 'Raw'",
         shinyWidgets::pickerInput(
           inputId = "timeIdChoices",
           label = "Temporal Choice",
           choices = temporalCovariateChoices$choices,
           multiple = TRUE,
           choicesOpt = list(style = rep_len("color: black;", 999)),
-          selected = temporalCovariateChoices %>%
-            dplyr::filter(stringr::str_detect(string = .data$choices,
-                                              pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')) %>% 
-            dplyr::filter(.data$timeId %in% (
-              c(
-                min(temporalCovariateChoices$timeId),
-                temporalCovariateChoices %>%
-                  dplyr::pull(.data$timeId)
-              ) %>%
-                unique() %>%
-                sort()
-            )) %>%
-            dplyr::pull(.data$choices),
+          selected = c(temporalCovariateChoices$choices[1],
+                       temporalCovariateChoices$choices[2],
+                       temporalCovariateChoices$choices[3],
+                       temporalCovariateChoices$choices[4],
+                       temporalCovariateChoices$choices[5]),
           options = shinyWidgets::pickerOptions(
             actionsBox = TRUE,
             liveSearch = TRUE,
@@ -156,8 +148,7 @@ sidebarMenu <-
             virtualScroll = 50
           )
         )
-      )
-    },
+      ),
     shiny::conditionalPanel(
       condition = "input.tabs != 'databaseInformation' &
       input.tabs != 'timeSeries' &
