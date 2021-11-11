@@ -335,7 +335,9 @@ if (all(exists("temporalTimeRef"),
     nrow(temporalTimeRef) > 0
   )) {
     temporalCovariateChoices <- getResultsTemporalTimeRef(dataSource = dataSource) %>% 
-      dplyr::filter(.data$primaryChoices == TRUE)
+      dplyr::filter(.data$primaryChoices == TRUE) %>% 
+      dplyr::arrange(.data$choices) %>% 
+      dplyr::select(-.data$primaryChoices)
   }
 }
 
@@ -359,13 +361,19 @@ if (!showCharacterization) {
   if (exists("covariateValueDist")) {rm("covariateValueDist")}
   if (exists("analysisRef")) {rm("analysisRef")}
   if (exists("covariateRef")) {rm("covariateRef")}
+} else {
+  if (exists("analysisRef")) {
+    analysisRef <- dplyr::bind_rows(analysisRef,
+                                    dplyr::tibble(
+                                      analysisId = c(-201,-301),
+                                      analysisName = c("CohortEraStart", "CohortEraOverlap"),
+                                      domainId = "Cohort",
+                                      isBinary = "Y",
+                                      missingMeansZero = "Y"
+                                    ))
+  }
 }
-if (!showTemporalCharacterization) {
-  if (exists("covariateValue")) {rm("temporalCovariateValue")}
-  if (exists("covariateValueDist")) {rm("temporalCovariateValueDist")}
-  if (exists("analysisRef")) {rm("temporalAnalysisRef")}
-  if (exists("covariateRef")) {rm("temporalCovariateRef")}
-}
+
 
 #!!!!!!!!!!!!reduce code lines here
 # disable tabs based on user preference or control variable ----

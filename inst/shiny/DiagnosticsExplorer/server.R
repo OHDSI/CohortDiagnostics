@@ -5894,14 +5894,13 @@ shiny::shinyServer(function(input, output, session) {
   #Time Distribution----
   ##output: getTimeDistributionData----
   getTimeDistributionData <- reactive({
-    if (any(is.null(input$tabs),!input$tabs == "timeDistribution")) {
+    if (any(is.null(input$tabs), !input$tabs == "timeDistribution")) {
       return(NULL)
     }
     if (!hasData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
-    if (all(is(dataSource, "environment"),
-            !exists('timeDistribution'))) {
+    if (all(is(dataSource, "environment"), !exists('timeDistribution'))) {
       return(NULL)
     }
     data <- getResultsTimeDistribution(
@@ -5912,29 +5911,32 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(data)) {
       return(NULL)
     }
+    data <- data %>%
+      dplyr::inner_join(covariateRef %>%
+                          dplyr::select(.data$covariateName,
+                                        .data$covariateId),
+                        by = "covariateId")
     return(data)
   })
   
+  ##getTimeDistributionTableData----
   getTimeDistributionTableData <- reactive({
     data <- getTimeDistributionData()
     if (!hasData(data)) {
       return(NULL)
     }
-    
     data <- data %>%
       dplyr::inner_join(cohort %>%
                           dplyr::select(.data$cohortId,
                                         .data$shortName),
                         by = "cohortId") %>%
       dplyr::arrange(.data$databaseId, .data$cohortId) %>%
-      dplyr::mutate(# shortName = as.factor(.data$shortName),
-        databaseId = as.factor(.data$databaseId)) %>%
       dplyr::select(
         Database = .data$databaseId,
         Cohort = .data$shortName,
-        TimeMeasure = .data$timeMetric,
-        Average = .data$averageValue,
-        SD = .data$standardDeviation,
+        TimeMeasure = .data$covariateName,
+        Average = .data$mean,
+        SD = .data$sd,
         Min = .data$minValue,
         P10 = .data$p10Value,
         P25 = .data$p25Value,
@@ -5959,8 +5961,8 @@ shiny::shinyServer(function(input, output, session) {
   ##output: timeDistributionTable----
   output$timeDistributionTable <- DT::renderDataTable(expr = {
     data <- getTimeDistributionTableData()
-    validate(need(hasData(data), 
-             "No data available for selected combination."))
+    validate(need(hasData(data),
+                  "No data available for selected combination."))
     options = list(
       pageLength = 100,
       lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -5991,12 +5993,17 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: timeDistributionPlot----
   output$timeDistributionPlot <- plotly::renderPlotly(expr = {
-    validate(need(hasData(consolidatedDatabaseIdTarget()),
-      "No data sources chosen"))
+    validate(need(
+      hasData(consolidatedDatabaseIdTarget()),
+      "No data sources chosen"
+    ))
     data <- getTimeDistributionData()
-    validate(need(hasData(data), 
+    validate(need(hasData(data),
                   "No data for this combination"))
-    plot <- plotTimeDistribution(data = data, shortNameRef = cohort)
+    plot <- plotTimeDistribution(data = data, 
+                                 database = database,
+                                 colorReference = colorReference,
+                                 cohort = cohort)
     return(plot)
   })
   
@@ -6360,6 +6367,28 @@ shiny::shinyServer(function(input, output, session) {
   #   }
   # })
   
+  ##UpdatePicker : indexEventConceptIdRangeFilter----
+  shiny::observe({
+    if(input$indexEventBreakbownTabset == "indexEventBreakbownPlotTab") {
+      data <- getIndexEventBreakdownPlotData()
+      maxSortOrder <- max(data$sortOrder %>% unique())
+      conceptIdRange <-
+        paste0((1:floor(maxSortOrder / 25) * 25) - 24, "-", 1:floor(maxSortOrder / 25) * 25)
+      if (maxSortOrder %% 25 != 0) {
+        conceptIdRange <- c(conceptIdRange,
+                            paste0(floor(maxSortOrder / 25) * 25, "-", maxSortOrder))
+      }
+      shinyWidgets::updatePickerInput(
+        session = session,
+        inputId = "indexEventConceptIdRangeFilter",
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        choices = conceptIdRange,
+        selected = conceptIdRange[1]
+      )
+    }
+    
+  })
+  
   ##indexEventBreakdownPlot----
   output$indexEventBreakdownPlot <-
     plotly::renderPlotly({
@@ -6373,6 +6402,10 @@ shiny::shinyServer(function(input, output, session) {
           "No index event breakdown data for the chosen combination. Maybe the concept id in the selected concept id is too restrictive?"
         )
       )
+      
+      if (!hasData(input$indexEventConceptIdRangeFilter)) {
+        return(NULL)
+      }
       
       data <- getIndexEventBreakdownPlotData()
       validate(need(
@@ -6399,12 +6432,16 @@ shiny::shinyServer(function(input, output, session) {
             "sortOrder" = -2,
             .groups = "keep"
           ) %>%
-          dplyr::mutate(conceptId = -2)
+          dplyr::mutate(conceptId = -2,
+                        subjectCount = 0)
       )
       #!!!put a UI drop to select pagination
+      
+      conceptidRangeFilter <- stringr::str_split(input$indexEventConceptIdRangeFilter,"-")[[1]]
       data <- dplyr::bind_rows(
-          data %>% 
-            dplyr::filter(.data$sortOrder >= 0 & .data$sortOrder <= 25),
+        data %>% 
+            dplyr::filter(.data$sortOrder >= as.integer(conceptidRangeFilter[1])) %>% 
+            dplyr::filter(.data$sortOrder < as.integer(conceptidRangeFilter[2])),
           data %>% 
             dplyr::filter(.data$sortOrder < 0)
       )
@@ -6428,7 +6465,8 @@ shiny::shinyServer(function(input, output, session) {
             "sortOrder" = -1,
             .groups = "keep"
           ) %>%
-          dplyr::mutate(conceptId = -1)
+          dplyr::mutate(conceptId = -1,
+                        subjectCount = 0)
       ) %>% 
         dplyr::arrange(.data$sortOrder)
       
@@ -7194,37 +7232,41 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::distinct()
     return(data)
   })
+
   
-  ###getDomainOptionsForCharacterization----
-  getDomainOptionsForCharacterization <- shiny::reactive({
+  # ###getAnalysisNameOptionsForCharacterization----
+  getAnalysisNameOptionsForCharacterization <- shiny::reactive({
     if (!exists("analysisRef")) {
       return(NULL)
     }
     if (!hasData(analysisRef)) {
       return(NULL)
     }
-    data <- c(analysisRef$domainId %>% 
-      unique(), "Cohort") %>% sort()
+    data <- analysisRef$analysisName %>%
+      unique() %>%
+      sort()
     return(data)
   })
   
-  # ###getAnalysisNameOptionsForCharacterization----
-  # getAnalysisNameOptionsForCharacterization <- shiny::reactive({
-  #   if (!exists("analysisRef")) {
-  #     return(NULL)
-  #   }
-  #   if (!hasData(analysisRef)) {
-  #     return(NULL)
-  #   }
-  #   data <- analysisRef$analysisName %>% 
-  #     unique() %>% 
-  #     sort()
-  #   return(data)
-  # })
-  
   ###Update: characterizationDomainNameOptions----
   shiny::observe({
-    subset <- getDomainOptionsForCharacterization()
+    if (!exists("analysisRef")) {
+      return(NULL)
+    }
+    if (!hasData(analysisRef)) {
+      return(NULL)
+    }
+    if (!hasData(getMultipleCharacterizationData())) {
+      return(NULL)
+    }
+    data <- analysisRef$domainId %>% unique() %>% sort()
+    characterizatoinDataAnalysisRef <- getMultipleCharacterizationData()
+    if (!hasData(characterizatoinDataAnalysisRef)) {
+      return(NULL)
+    }
+    subset <- intersect(data,
+                        characterizatoinDataAnalysisRef$analysisRef$domainId %>% unique()) %>% 
+      sort()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "characterizationDomainNameOptions",
@@ -7235,16 +7277,34 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   # ###Update: characterizationAnalysisNameOptions----
-  # shiny::observe({
-  #   subset <- getAnalysisNameOptionsForCharacterization()
-  #   shinyWidgets::updatePickerInput(
-  #     session = session,
-  #     inputId = "characterizationAnalysisNameOptions",
-  #     choicesOpt = list(style = rep_len("color: black;", 999)),
-  #     choices = subset,
-  #     selected = subset
-  #   )
-  # })
+  shiny::observe({
+    if (!exists("analysisRef")) {
+      return(NULL)
+    }
+    if (!hasData(analysisRef)) {
+      return(NULL)
+    }
+    if (!hasData(getMultipleCharacterizationData())) {
+      return(NULL)
+    }
+    data <- analysisRef$analysisName %>% 
+      unique() %>% 
+      sort()
+    characterizatoinDataAnalysisRef <- getMultipleCharacterizationData()
+    if (!hasData(characterizatoinDataAnalysisRef)) {
+      return(NULL)
+    }
+    subset <- intersect(data,
+                        characterizatoinDataAnalysisRef$analysisRef$analysisName %>% unique()) %>% 
+      sort()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "characterizationAnalysisNameOptions",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
   
   ##Characterization----
   ### getCharacterizationDataFiltered ----
@@ -7255,27 +7315,33 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(getMultipleCharacterizationData())) {
       return(NULL)
     }
-    if (is.null(getMultipleCharacterizationData()$covariateRef)) {
+    if (!hasData(getMultipleCharacterizationData()$covariateRef)) {
       warning("No covariate reference data found")
       return(NULL)
     }
-    if (is.null(getMultipleCharacterizationData()$covariateValue)) {
+    if (!hasData(getMultipleCharacterizationData()$covariateValue)) {
       return(NULL)
     }
-    if (is.null(getMultipleCharacterizationData()$analysisRef)) {
+    if (!hasData(getMultipleCharacterizationData()$analysisRef)) {
       warning("No analysis ref data found")
       return(NULL)
     }
+    
     analysisIdToFilter <- getMultipleCharacterizationData()$analysisRef %>% 
       dplyr::filter(.data$domainId %in% c(input$characterizationDomainNameOptions)) %>% 
+      dplyr::filter(.data$analysisName %in% c(input$characterizationAnalysisNameOptions)) %>% 
       dplyr::pull(.data$analysisId) %>% 
       unique()
+    if (!hasData(analysisIdToFilter)) {
+      return(NULL)
+    }
     covariatesTofilter <-
       getMultipleCharacterizationData()$covariateRef %>% 
       dplyr::filter(.data$analysisId %in% c(analysisIdToFilter))
     if (!hasData(covariatesTofilter)) {
       return(NULL)
     }
+    
     if (all(
       hasData(input$conceptSetsSelectedTargetCohort),
       hasData(getResolvedConceptsTarget())
@@ -7404,6 +7470,7 @@ shiny::shinyServer(function(input, output, session) {
         message = paste0("Rendering pretty table for cohort characterization."),
         value = 0
       )
+      
       data <- getCharacterizationTableDataPretty()
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
