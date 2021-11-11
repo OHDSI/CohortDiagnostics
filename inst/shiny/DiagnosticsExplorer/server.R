@@ -7233,21 +7233,6 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::distinct()
     return(data)
   })
-
-  
-  # ###getAnalysisNameOptionsForCharacterization----
-  getAnalysisNameOptionsForCharacterization <- shiny::reactive({
-    if (!exists("analysisRef")) {
-      return(NULL)
-    }
-    if (!hasData(analysisRef)) {
-      return(NULL)
-    }
-    data <- analysisRef$analysisName %>%
-      unique() %>%
-      sort()
-    return(data)
-  })
   
   ###Update: characterizationDomainNameOptions----
   shiny::observe({
@@ -7277,7 +7262,7 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  # ###Update: characterizationAnalysisNameOptions----
+  ####Update: characterizationAnalysisNameOptions----
   shiny::observe({
     if (!exists("analysisRef")) {
       return(NULL)
