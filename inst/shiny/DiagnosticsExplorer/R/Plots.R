@@ -769,8 +769,15 @@ plotIndexEventBreakdown <-
         dplyr::arrange(.data$domainId, .data$conceptId) 
         ,
       dplyr::tibble(
-        "conceptId" = 0,
+        "conceptId" = -2,
         "conceptName" = "Overall",
+        "domainId" = "Other",
+        "conceptClassId" = "Other",
+        "conceptCode" = "Other"
+      ),
+      dplyr::tibble(
+        "conceptId" = -1,
+        "conceptName" = "Overall Filtered",
         "domainId" = "Other",
         "conceptClassId" = "Other",
         "conceptCode" = "Other"
@@ -787,21 +794,21 @@ plotIndexEventBreakdown <-
     distinctDomainIds <- conceptIdDetails$domainId %>% unique()
     
     
-    conceptYAxisrange <- c(0, 0)
-    subjectYAxisrange <- c(0, 0)
-    for (i in 1:length(yAxisColumns)) {
-      if (yAxisColumns[i] == "conceptCount") {
-        conceptYAxisrange <-
-          c(min(data[[yAxisColumns[i]]]), max(data[[yAxisColumns[i]]]))
-      } else if (yAxisColumns == "subjectCount") {
-        subjectYAxisrange <-
-          c(min(data[[yAxisColumns[i]]]), max(data[[yAxisColumns[i]]]))
-      }
-    }
-    if (showAsPercentage) {
-      conceptYAxisrange <- c(0, 100)
-      subjectYAxisrange <- c(0, 100)
-    }
+    # conceptYAxisrange <- c(0, 0)
+    # subjectYAxisrange <- c(0, 0)
+    # for (i in 1:length(yAxisColumns)) {
+    #   if (yAxisColumns[i] == "conceptCount") {
+    #     conceptYAxisrange <-
+    #       c(min(data[[yAxisColumns[i]]]), max(data[[yAxisColumns[i]]]))
+    #   } else if (yAxisColumns == "subjectCount") {
+    #     subjectYAxisrange <-
+    #       c(min(data[[yAxisColumns[i]]]), max(data[[yAxisColumns[i]]]))
+    #   }
+    # }
+    # if (showAsPercentage) {
+    #   conceptYAxisrange <- c(0, 100)
+    #   subjectYAxisrange <- c(0, 100)
+    # }
     
     # plotHeight <- 200 + length(distinctDatabaseShortName) * length(sortShortName$shortName) * 100
     plotHeight <- 800

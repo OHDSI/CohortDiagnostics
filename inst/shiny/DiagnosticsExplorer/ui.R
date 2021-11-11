@@ -916,36 +916,31 @@ bodyTabItems <- shinydashboard::tabItems(
                  )
                )),
     shiny::tabsetPanel(
-      id = "conceptBrowserTabSetPanel",
+      id = "indexEventBreakbownTabset",
       shiny::tabPanel(
         title = "Table",
-        value = "PanelIndexEventBreakdownTable",
+        value = "indexEventBreakbownTableTab",
         DT::dataTableOutput(outputId = "indexEventBreakdownTable")
       ),
       shiny::tabPanel(
         title = "Plot",
-        value = "PanelIndexEventBreakdownPlot",
-        tags$table(
-          tags$tr(
-            tags$td(
-              shiny::checkboxInput(
-                inputId = "indexEventBreakdownShowLogTransform",
-                label = "Log Transform",
-                value = TRUE
-              )
-            ),
-            tags$td(
-              shiny::sliderInput(
-                inputId = "indexEventBreakdownConceptIdsRangeFilter",
-                label = "Display Concept Ids Between :",
-                min = 0,
-                max = 0,
-                value = c(0, 0),
-                dragRange = TRUE,
-                step = 1,
-                sep = ""
-              )
-            )
+        value = "indexEventBreakbownPlotTab",
+        shinyWidgets::pickerInput(
+          inputId = "indexEventConceptIdRangeFilter",
+          label = "Concept Id Range :",
+          choices = c(),
+          selected = c(),
+          inline = TRUE,
+          multiple = FALSE,
+          width = 300,
+          choicesOpt = list(style = rep_len("color: black;", 999)),
+          options = shinyWidgets::pickerOptions(
+            actionsBox = TRUE,
+            liveSearch = TRUE,
+            size = 10,
+            liveSearchStyle = "contains",
+            liveSearchPlaceholder = "Type here to search",
+            virtualScroll = 50
           )
         ),
         shinycssloaders::withSpinner(

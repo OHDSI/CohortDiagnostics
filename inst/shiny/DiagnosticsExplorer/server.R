@@ -6367,6 +6367,28 @@ shiny::shinyServer(function(input, output, session) {
   #   }
   # })
   
+  ##UpdatePicker : indexEventConceptIdRangeFilter----
+  shiny::observe({
+    if(input$indexEventBreakbownTabset == "indexEventBreakbownPlotTab") {
+      data <- getIndexEventBreakdownPlotData()
+      maxSortOrder <- max(data$sortOrder %>% unique())
+      conceptIdRange <-
+        paste0((1:floor(maxSortOrder / 25) * 25) - 24, "-", 1:floor(maxSortOrder / 25) * 25)
+      if (maxSortOrder %% 25 != 0) {
+        conceptIdRange <- c(conceptIdRange,
+                            paste0(floor(maxSortOrder / 25) * 25, "-", maxSortOrder))
+      }
+      shinyWidgets::updatePickerInput(
+        session = session,
+        inputId = "indexEventConceptIdRangeFilter",
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        choices = conceptIdRange,
+        selected = conceptIdRange[1]
+      )
+    }
+    
+  })
+  
   ##indexEventBreakdownPlot----
   output$indexEventBreakdownPlot <-
     plotly::renderPlotly({
@@ -6380,6 +6402,10 @@ shiny::shinyServer(function(input, output, session) {
           "No index event breakdown data for the chosen combination. Maybe the concept id in the selected concept id is too restrictive?"
         )
       )
+      
+      if (!hasData(input$indexEventConceptIdRangeFilter)) {
+        return(NULL)
+      }
       
       data <- getIndexEventBreakdownPlotData()
       validate(need(
@@ -6406,12 +6432,16 @@ shiny::shinyServer(function(input, output, session) {
             "sortOrder" = -2,
             .groups = "keep"
           ) %>%
-          dplyr::mutate(conceptId = -2)
+          dplyr::mutate(conceptId = -2,
+                        subjectCount = 0)
       )
       #!!!put a UI drop to select pagination
+      
+      conceptidRangeFilter <- stringr::str_split(input$indexEventConceptIdRangeFilter,"-")[[1]]
       data <- dplyr::bind_rows(
-          data %>% 
-            dplyr::filter(.data$sortOrder >= 0 & .data$sortOrder <= 25),
+        data %>% 
+            dplyr::filter(.data$sortOrder >= as.integer(conceptidRangeFilter[1])) %>% 
+            dplyr::filter(.data$sortOrder < as.integer(conceptidRangeFilter[2])),
           data %>% 
             dplyr::filter(.data$sortOrder < 0)
       )
@@ -6435,7 +6465,8 @@ shiny::shinyServer(function(input, output, session) {
             "sortOrder" = -1,
             .groups = "keep"
           ) %>%
-          dplyr::mutate(conceptId = -1)
+          dplyr::mutate(conceptId = -1,
+                        subjectCount = 0)
       ) %>% 
         dplyr::arrange(.data$sortOrder)
       
