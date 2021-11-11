@@ -1,8 +1,8 @@
 Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Cohorts
-Version: 2.1.0
-Date: 2021-05-24
+Version: 2.1.3
+Date: 2021-10-09
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
     person("Martijn", "Schuemie", email = "schuemie@ohdsi.org", role = c("aut")),
@@ -20,14 +20,12 @@ Depends:
 Imports:
   Andromeda,
   checkmate,
-  CirceR,
   clock,
   digest,
   dplyr (>= 1.0.0),
   methods,
   ParallelLogger (>= 2.0.0),
-  pool,
-  readr (>= 1.4.0),
+	readr (>= 2.0.1),
   RJSONIO,
   rlang,
   ROhdsiWebApi (>= 1.2.0),
@@ -35,6 +33,7 @@ Imports:
   stringr,
   tidyr (>= 1.0.0)
 Suggests:
+  CirceR,
   DT,
   Eunomia,
   ggiraph,
@@ -42,9 +41,11 @@ Suggests:
   htmltools,
   knitr,
   lubridate,
+  pool,
   plotly,
   purrr,
   RColorBrewer,
+  remotes,
   rmarkdown,
   RSQLite (>= 2.2.1),
   scales,
@@ -63,6 +64,6 @@ License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics
 BugReports: https://github.com/OHDSI/CohortDiagnostics/issues
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Encoding: UTF-8
 Language: en-US

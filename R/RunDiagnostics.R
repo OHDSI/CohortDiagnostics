@@ -100,7 +100,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runVisitContext = TRUE,
                                  runBreakdownIndexEvents = TRUE,
                                  runIncidenceRate = TRUE,
-                                 runTimeSeries = TRUE,
+                                 runTimeSeries = FALSE,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
                                  covariateSettings = createDefaultCovariateSettings(),
@@ -312,6 +312,12 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
+  if (all(runTimeSeries,
+          connection@dbms %in% c('bigquery'))) {
+    warning('TimeSeries is not supported for bigquery at this time. TimeSeries will not run.')
+    runTimeSeries <- FALSE
+  }
+  
   tryCatch({
     vocabularyVersionCdm <-
       DatabaseConnector::renderTranslateQuerySql(
@@ -332,9 +338,13 @@ runCohortDiagnostics <- function(packageName = NULL,
           !is.null(vocabularyVersionCdm), 
           nrow(vocabularyVersionCdm) > 0,
           'vocabularyVersion' %in% colnames(vocabularyVersionCdm))) {
+    if (nrow(vocabularyVersionCdm) > 1) {
+      warning('Please check ETL convention for OMOP cdm_source table. It appears that there is more than one row while only one is expected.')
+    }
     vocabularyVersionCdm <- vocabularyVersionCdm %>% 
       dplyr::rename(vocabularyVersionCdm = .data$vocabularyVersion) %>%
       dplyr::pull(vocabularyVersionCdm) %>%
+      max() %>% 
       unique()
   } else {
     warning("Problem getting vocabulary version. cdm_source table either does not have data, or does not have the field vocabulary_version.")

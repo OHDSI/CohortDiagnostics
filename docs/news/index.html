@@ -71,7 +71,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.3</span>
       </span>
     </div>
 
@@ -144,6 +144,39 @@
       <small>Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
+    <div id="cohortdiagnostics-213" class="section level1">
+<h1 class="page-header" data-toc-text="2.1.3">
+<a href="#cohortdiagnostics-213" class="anchor"></a>CohortDiagnostics 2.1.3</h1>
+<p>Changes:</p>
+<ol>
+<li>On starting diagnostics explorer using launchDiagnosticsExplorer - checks were added for remotes and CirceR <a href="https://github.com/OHDSI/CohortDiagnostics/issues/595" class="uri">https://github.com/OHDSI/CohortDiagnostics/issues/595</a>
+</li>
+</ol>
+<p>Bug Fixes:</p>
+<ol>
+<li>Diagnostics explorer - characterization plot would show a warning message when one of the cohorts selected has no data. Added check for this issue.</li>
+</ol>
+</div>
+    <div id="cohortdiagnostics-212" class="section level1">
+<h1 class="page-header" data-toc-text="2.1.2">
+<a href="#cohortdiagnostics-212" class="anchor"></a>CohortDiagnostics 2.1.2</h1>
+<p>Bug fixes:</p>
+<ol>
+<li>DiagnosticsExplorer fixes a bug of app failure when runIndexEventBreakdown, runOrphanConcepts, includedSourceConcept is set to FALSE</li>
+</ol>
+</div>
+    <div id="cohortdiagnostics-211" class="section level1">
+<h1 class="page-header" data-toc-text="2.1.1">
+<a href="#cohortdiagnostics-211" class="anchor"></a>CohortDiagnostics 2.1.1</h1>
+<p>Bug fixes:</p>
+<ol>
+<li>DiagnosticsExplorer shiny app bug fixes: inclusion rule display.</li>
+<li>Handle situation where cdm_source may have more than one row record. warning + use max value for vocabularyVersion.</li>
+<li>Switch off runTimeSeries for BigQuery because of SQL translation issue, to be addressed in version 2.3. <a href="https://github.com/OHDSI/CohortDiagnostics/issues/503" class="uri">https://github.com/OHDSI/CohortDiagnostics/issues/503</a> Also runTimeSeries is set to FALSE by default.</li>
+<li>Fixed a bug in DDL - temporal_covariate_value_dist <a href="https://github.com/OHDSI/CohortDiagnostics/issues/490" class="uri">https://github.com/OHDSI/CohortDiagnostics/issues/490</a> See issue <a href="https://github.com/OHDSI/CohortDiagnostics/issues/497" class="uri">https://github.com/OHDSI/CohortDiagnostics/issues/497</a>
+</li>
+</ol>
+</div>
     <div id="cohortdiagnostics-210" class="section level1">
 <h1 class="page-header" data-toc-text="2.1.0">
 <a href="#cohortdiagnostics-210" class="anchor"></a>CohortDiagnostics 2.1.0</h1>

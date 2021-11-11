@@ -621,7 +621,8 @@ shiny::shinyServer(function(input, output, session) {
       ) %>% 
         dplyr::group_by(.data$conceptId) %>% 
         dplyr::summarise(conceptSubjects = max(conceptSubjects),
-                         conceptCount = max(conceptCount)) %>% 
+                         conceptCount = max(conceptCount), 
+                         .groups = "keep") %>% 
         dplyr::distinct() %>% 
         dplyr::ungroup() %>% 
         dplyr::arrange(dplyr::desc(.data$conceptCount))
@@ -920,7 +921,11 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- getOrphanConceptResult(dataSource = dataSource,
                                    cohortId = row$cohortId,
-                                   databaseIds = getDatabaseIdInCohortConceptSet()) %>% 
+                                   databaseIds = getDatabaseIdInCohortConceptSet())
+    if (is.null(data)) {
+      return(NULL)
+    }
+    data <- data %>% 
       dplyr::filter(.data$conceptSetName == cohortDefinitionConceptSetExpressionRow()$name)
   })
   
@@ -952,7 +957,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::group_by(.data$databaseId, 
                       .data$conceptId) %>%
       dplyr::summarise(conceptSubjects = sum(.data$conceptSubjects),
-                       conceptCount = sum(.data$conceptCount)) %>%
+                       conceptCount = sum(.data$conceptCount), 
+                       .groups = "keep") %>%
       dplyr::ungroup() %>%
       dplyr::arrange(.data$databaseId) %>% 
       tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
@@ -1272,7 +1278,11 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(idx)) {
       return(NULL)
     } else {
-      subset <- getCohortCountResultReactive()[idx,]
+      subset <- getCohortCountResultReactive() %>% 
+        dplyr::select(.data$cohortId, 
+                      .data$shortName) %>% 
+        dplyr::distinct()
+      subset <- subset[idx,]
       return(subset)
     }
     
@@ -1300,7 +1310,9 @@ shiny::shinyServer(function(input, output, session) {
     
     validate(need((nrow(table) > 0),
                   "There is no data for the selected combination."))
-    
+    table <- table %>% 
+      dplyr::mutate(shortName = getCohortIdOnCohortCountRowSelect()$shortName) %>% 
+      dplyr::relocate(.data$shortName)
     databaseIds <- unique(table$databaseId)
     
     table <- table %>%
@@ -1314,17 +1326,16 @@ shiny::shinyServer(function(input, output, session) {
       ) %>%
       dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>%
       tidyr::pivot_wider(
-        id_cols = c(.data$cohortId, .data$ruleSequenceId, .data$ruleName),
+        id_cols = c(.data$shortName, .data$cohortId, .data$ruleSequenceId, .data$ruleName),
         names_from = .data$name,
         values_from = .data$value
-      ) %>%
-      dplyr::select(-.data$cohortId)
-    
-    
+      )
     
     sketch <- htmltools::withTags(table(class = "display",
                                         thead(tr(
-                                          th(rowspan = 2, "Rule Sequence ID"),
+                                          th(rowspan = 2, "Short Name"),
+                                          th(rowspan = 2, "Cohort Id"),
+                                          th(rowspan = 2, "Rule Sequence Id"),
                                           th(rowspan = 2, "Rule Name"),
                                           lapply(
                                             databaseIds,
@@ -2162,7 +2173,6 @@ shiny::shinyServer(function(input, output, session) {
              "There is no data for the selected combination."))
     
     databaseIds <- unique(table$databaseId)
-    
     table <- table %>%
       dplyr::inner_join(cohortCount %>% 
                           dplyr::select(.data$databaseId, .data$cohortId, .data$cohortSubjects), 
@@ -2232,7 +2242,7 @@ shiny::shinyServer(function(input, output, session) {
                                           ),
                                           tr(
                                             lapply(rep(
-                                              c("Meet", "Gain", "Remain", "Total"), length(databaseIds)
+                                              c("Meet", "Gain", "Total", "Remain"), length(databaseIds)
                                             ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                           ))))
       
@@ -2289,6 +2299,10 @@ shiny::shinyServer(function(input, output, session) {
         cohortIds = cohortId(),
         databaseIds = databaseIds()
       )
+      if (any(is.null(data),
+              nrow(data) == 0)) {
+        return(NULL)
+      }
       if (!is.null(data)) {
         if (!'domainTable' %in% colnames(data)) {
           data$domainTable <- "Not in data"
@@ -2908,7 +2922,7 @@ shiny::shinyServer(function(input, output, session) {
                       .data$sortOrder) %>%
         dplyr::distinct() %>%
         dplyr::group_by(.data$characteristic, .data$position, .data$header) %>%
-        dplyr::summarise(sortOrder = max(.data$sortOrder)) %>%
+        dplyr::summarise(sortOrder = max(.data$sortOrder), .groups = "keep") %>%
         dplyr::ungroup() %>%
         dplyr::arrange(.data$position, desc(.data$header)) %>%
         dplyr::mutate(sortOrder = dplyr::row_number()) %>%
@@ -3680,13 +3694,9 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::filter(.data$isBinary == 'N')
     }
-    
     validate(need(nrow(data) > 0,
              "No data available for selected combination."))
-    
-    # if (nrow(data) == 0) {
-    #   return(dplyr::tibble(Note = "No data for the selected combination."))
-    # }
+
     plot <-
       plotCohortComparisonStandardizedDifference(
         balance = data,
@@ -3696,6 +3706,8 @@ shiny::shinyServer(function(input, output, session) {
         yLimitMin = 0,
         yLimitMax = 1
       )
+    validate(need(!is.null(plot),
+                  "No data available for selected combination."))
     return(plot)
   })
   
