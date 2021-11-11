@@ -7533,7 +7533,7 @@ shiny::shinyServer(function(input, output, session) {
         keyColumnFields <-
           c(
             "covariateId",
-            "covariateName",
+            "conceptName",
             "analysisName",
             "domainId",
             "choices"
