@@ -7203,9 +7203,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     dataComparator <- getMultipleCharacterizationDataComparator()
-    if (!hasData(consolidatedCohortIdComparator())) {
-      return(NULL)
-    }
+    
     data <- list()
     data$analysisRef <- dplyr::bind_rows(dataTarget$analysisRef,
                                          dataComparator$analysisRef) %>%
@@ -7327,6 +7325,12 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
+    if (!hasData(input$characterizationDomainNameOptions)) {
+      return(NULL)
+    }
+    if (!hasData(input$characterizationAnalysisNameOptions)) {
+      return(NULL)
+    }
     analysisIdToFilter <- getMultipleCharacterizationData()$analysisRef %>% 
       dplyr::filter(.data$domainId %in% c(input$characterizationDomainNameOptions)) %>% 
       dplyr::filter(.data$analysisName %in% c(input$characterizationAnalysisNameOptions)) %>% 
@@ -7371,32 +7375,32 @@ shiny::shinyServer(function(input, output, session) {
       characterizationDataValue <-
         characterizationDataValue %>%
         dplyr::inner_join(covariatesTofilter,
-                          by = c('covariateId', 'characterizationSource')) %>%
+                          by = c('covariateId')) %>%
         dplyr::filter(is.na(.data$startDay) |
                         (.data$startDay == -365 & .data$endDay == 0)) %>% 
         dplyr::inner_join(
           getMultipleCharacterizationData()$analysisRef,
-          by = c('analysisId', 'characterizationSource')
+          by = c('analysisId')
         )
       #prettyAnalysisIds this is global variable
     } else {
       characterizationDataValue <-
         characterizationDataValue %>%
         dplyr::inner_join(covariatesTofilter,
-                          by = c('covariateId', 'characterizationSource'))
+                          by = c('covariateId'))
       characterizationDataValueTimeVarying <- characterizationDataValue %>% 
         dplyr::filter(!is.na(.data$startDay)) %>% 
         dplyr::inner_join(temporalCovariateChoices, 
                           by = c("startDay", "endDay")) %>% 
         dplyr::inner_join(
           getMultipleCharacterizationData()$analysisRef,
-          by = c('analysisId', 'characterizationSource')
+          by = c('analysisId')
         ) 
       characterizationDataValueNonTimeVarying <- characterizationDataValue %>% 
         dplyr::filter(is.na(.data$startDay)) %>% 
         dplyr::inner_join(
           getMultipleCharacterizationData()$analysisRef,
-          by = c('analysisId', 'characterizationSource')
+          by = c('analysisId')
         ) %>% 
         tidyr::crossing(characterizationDataValueTimeVarying %>% dplyr::select(.data$choices))
       characterizationDataValue <- dplyr::bind_rows(characterizationDataValueNonTimeVarying,
@@ -7525,8 +7529,7 @@ shiny::shinyServer(function(input, output, session) {
             "covariateName",
             "analysisName",
             "domainId",
-            "choices",
-            "characterizationSource"
+            "choices"
           )
         dataColumnFields <- c("mean")
         showPercent <- TRUE
@@ -7537,8 +7540,7 @@ shiny::shinyServer(function(input, output, session) {
             "covariateName",
             "analysisName",
             "domainId",
-            "choices",
-            "characterizationSource"
+            "choices"
           )
         dataColumnFields <- c("mean", "sd")
         showPercent <- FALSE
