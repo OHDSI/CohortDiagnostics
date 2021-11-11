@@ -174,7 +174,7 @@ SELECT t.cohort_definition_id cohort_id,
 	SUM((
 			CASE -- comparator cohort start date before target start date (offset)
 				WHEN c.cohort_start_date < DATEADD(day, @start_day_offset, t.cohort_start_date)
-					THEN datediff(dd, 
+					THEN datediff(dd,
 					              c.cohort_start_date, 
 					              CASE --min of comparator end date/target start dates (offset)
           								WHEN c.cohort_end_date < DATEADD(day, @start_day_offset, t.cohort_start_date)
@@ -204,14 +204,14 @@ SELECT t.cohort_definition_id cohort_id,
 				WHEN  c.cohort_end_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
 					    AND c.cohort_start_date <= DATEADD(day, @end_day_offset, t.cohort_end_date)
 					THEN datediff(dd, 
-					              CASE --max of comparator start date/target start dates (offset)
+					              CASE --min of comparator start date/target start dates (offset)
 								            WHEN c.cohort_start_date < DATEADD(day, @start_day_offset, t.cohort_start_date)
 									          THEN DATEADD(day, @start_day_offset, t.cohort_start_date)
 								          ELSE c.cohort_start_date
 								          END, 
-								        CASE --max of comparator end date/target end dates (offset)
-								            WHEN c.cohort_end_date < DATEADD(day, @end_day_offset, t.cohort_start_date)
-									          THEN DATEADD(day, @end_day_offset, t.cohort_start_date)
+								        CASE --min of comparator end date/target end dates (offset)
+								            WHEN c.cohort_end_date > DATEADD(day, @end_day_offset, t.cohort_end_date)
+									          THEN DATEADD(day, @end_day_offset, t.cohort_end_date)
 								          ELSE c.cohort_end_date
 								          END)
 				ELSE 0
@@ -247,7 +247,7 @@ SELECT t.cohort_definition_id cohort_id,
 			) + 1) c_days_after_te,
 	-- comparator cohort days after target end date (offset)
 	SUM(datediff(dd, DATEADD(day, @start_day_offset, t.cohort_start_date), DATEADD(day, @end_day_offset, t.cohort_end_date)) + 1) t_days,
-	-- target cohort days (offset)
+	-- target cohort days (no offset)
 	SUM(datediff(dd, c.cohort_start_date, c.cohort_end_date) + 1) c_days
 -- comparator cohort days (offset)
 FROM #target_subset t
