@@ -7319,16 +7319,17 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(input$characterizationAnalysisNameOptions)) {
       return(NULL)
     }
-    analysisIdToFilter <- getMultipleCharacterizationData()$analysisRef %>% 
-      dplyr::filter(.data$domainId %in% c(input$characterizationDomainNameOptions)) %>% 
-      dplyr::filter(.data$analysisName %in% c(input$characterizationAnalysisNameOptions)) %>% 
-      dplyr::pull(.data$analysisId) %>% 
+    analysisIdToFilter <-
+      getMultipleCharacterizationData()$analysisRef %>%
+      dplyr::filter(.data$domainId %in% c(input$characterizationDomainNameOptions)) %>%
+      dplyr::filter(.data$analysisName %in% c(input$characterizationAnalysisNameOptions)) %>%
+      dplyr::pull(.data$analysisId) %>%
       unique()
     if (!hasData(analysisIdToFilter)) {
       return(NULL)
     }
     covariatesTofilter <-
-      getMultipleCharacterizationData()$covariateRef %>% 
+      getMultipleCharacterizationData()$covariateRef %>%
       dplyr::filter(.data$analysisId %in% c(analysisIdToFilter))
     if (!hasData(covariatesTofilter)) {
       return(NULL)
@@ -7340,81 +7341,84 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       covariatesTofilter <- covariatesTofilter  %>%
         dplyr::inner_join(
-          conceptSets %>% 
-            dplyr::filter(.data$compoundName %in% c(input$conceptSetsSelectedTargetCohort)) %>% 
-            dplyr::select(.data$cohortId, .data$conceptSetId) %>% 
-            dplyr::inner_join(getResolvedConceptsTarget() %>% 
-                                dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
-                                dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId) %>% 
-                                dplyr::distinct(),
-                              by = c("cohortId", "conceptSetId")) %>%
+          conceptSets %>%
+            dplyr::filter(
+              .data$compoundName %in% c(input$conceptSetsSelectedTargetCohort)
+            ) %>%
+            dplyr::select(.data$cohortId, .data$conceptSetId) %>%
+            dplyr::inner_join(
+              getResolvedConceptsTarget() %>%
+                dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>%
+                dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId) %>%
+                dplyr::distinct(),
+              by = c("cohortId", "conceptSetId")
+            ) %>%
             dplyr::select(.data$conceptId) %>%
             dplyr::distinct(),
           by = c("conceptId")
         )
     }
     characterizationDataValue <-
-      getMultipleCharacterizationData()$covariateValue %>% 
+      getMultipleCharacterizationData()$covariateValue %>%
       dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget()))
     #Pretty analysis
     if (input$charType == "Pretty") {
       covariatesTofilter <- covariatesTofilter %>%
-        dplyr::filter(.data$analysisId %in% c(prettyAnalysisIds))
+        dplyr::filter(.data$analysisId %in% c(prettyAnalysisIds))  #prettyAnalysisIds this is global variable
       characterizationDataValue <-
         characterizationDataValue %>%
         dplyr::inner_join(covariatesTofilter,
                           by = c('covariateId')) %>%
         dplyr::filter(is.na(.data$startDay) |
-                        (.data$startDay == -365 & .data$endDay == 0)) %>% 
-        dplyr::inner_join(
-          getMultipleCharacterizationData()$analysisRef,
-          by = c('analysisId')
-        )
-      #prettyAnalysisIds this is global variable
+                        (.data$startDay == -365 &
+                           .data$endDay == 0)) %>%
+        dplyr::inner_join(getMultipleCharacterizationData()$analysisRef,
+                          by = c('analysisId'))
     } else {
+      if (!hasData(input$timeIdChoices)) {
+        return(NULL)
+      }
       characterizationDataValue <-
         characterizationDataValue %>%
         dplyr::inner_join(covariatesTofilter,
-                          by = c('covariateId')) %>% 
-        dplyr::left_join(getMultipleCharacterizationData()$concept %>% 
-                           dplyr::select(.data$conceptId,
-                                         .data$conceptName),
-                         by = "conceptId") %>% 
-        dplyr::mutate(conceptName = dplyr::case_when(!is.na(.data$conceptName) ~ .data$conceptName,
-                                                     TRUE ~ gsub(".*: ", "", .data$covariateName)))
+                          by = c('covariateId')) %>%
+        dplyr::left_join(
+          getMultipleCharacterizationData()$concept %>%
+            dplyr::select(.data$conceptId,
+                          .data$conceptName),
+          by = "conceptId"
+        ) %>%
+        dplyr::mutate(conceptName = dplyr::case_when(
+          !is.na(.data$conceptName) ~ .data$conceptName,
+          TRUE ~ gsub(".*: ", "", .data$covariateName)
+        ))
       
-      characterizationDataValueTimeVarying <- characterizationDataValue %>% 
-        dplyr::filter(!is.na(.data$startDay)) %>% 
-        dplyr::inner_join(temporalCovariateChoices, 
-                          by = c("startDay", "endDay")) %>% 
+      characterizationDataValueTimeVarying <-
+        characterizationDataValue %>%
+        dplyr::filter(!is.na(.data$startDay)) %>%
         dplyr::inner_join(
-          getMultipleCharacterizationData()$analysisRef,
-          by = c('analysisId')
-        ) 
-      characterizationDataValueNonTimeVarying <- characterizationDataValue %>% 
-        dplyr::filter(is.na(.data$startDay)) %>% 
-        dplyr::inner_join(
-          getMultipleCharacterizationData()$analysisRef,
-          by = c('analysisId')
-        ) %>% 
+          temporalCovariateChoices %>%
+            dplyr::filter(.data$choices %in% c(input$timeIdChoices)),
+          by = c("endDay", "startDay")
+        ) %>%
+        dplyr::inner_join(getMultipleCharacterizationData()$analysisRef,
+                          by = c('analysisId'))
+      characterizationDataValueNonTimeVarying <-
+        characterizationDataValue %>%
+        dplyr::filter(is.na(.data$startDay)) %>%
+        dplyr::inner_join(getMultipleCharacterizationData()$analysisRef,
+                          by = c('analysisId')) %>%
         tidyr::crossing(characterizationDataValueTimeVarying %>% dplyr::select(.data$choices))
-      characterizationDataValue <- dplyr::bind_rows(characterizationDataValueNonTimeVarying,
-                                                    characterizationDataValueTimeVarying) %>% 
+      characterizationDataValue <-
+        dplyr::bind_rows(
+          characterizationDataValueNonTimeVarying,
+          characterizationDataValueTimeVarying
+        ) %>%
         dplyr::arrange(.data$databaseId,
-                       .data$cohortId, 
+                       .data$cohortId,
                        .data$covariateId,
                        .data$choices)
     }
-    
-    #enhancement
-    characterizationDataValue <- characterizationDataValue %>%
-      dplyr::mutate(covariateNameShortCovariateId = .data$covariateName)
-      # dplyr::mutate(covariateNameShort = gsub(".*: ", "", .data$covariateName)) %>%
-      # dplyr::mutate(
-      #   covariateNameShortCovariateId = paste0(.data$covariateNameShort,
-      #                                          " (",
-      #                                          .data$covariateId, ")")
-      # )
     
     if (!hasData(characterizationDataValue)) {
       return(NULL)
@@ -7451,6 +7455,21 @@ shiny::shinyServer(function(input, output, session) {
     }
     return(table)
   })
+  
+  
+  ###getCharacterizationTableDataRaw----
+  getCharacterizationTableDataRaw <- shiny::reactive(x = {
+    if (input$tabs != "cohortCharacterization") {
+      return(NULL)
+    }
+    data <- getCharacterizationDataFiltered()
+    if (!hasData(data)) {
+      return(NULL)
+    }
+    browser()
+    return(data)
+  })
+  
   
   ### Output: characterizationTable ------
   output$characterizationTable <- DT::renderDataTable(expr = {
@@ -7510,8 +7529,7 @@ shiny::shinyServer(function(input, output, session) {
         message = paste0("Rendering raw table for cohort characterization."),
         value = 0
       )
-      
-      data <- getCharacterizationDataFiltered()
+      data <- getCharacterizationTableDataRaw()
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
       if (input$characterizationColumnFilters == "Mean only") {
