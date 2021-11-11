@@ -1170,58 +1170,58 @@ bodyTabItems <- shinydashboard::tabItems(
           )
         ),
         tags$td(
-          shiny::conditionalPanel(condition = "input.charType == 'Raw'",
-                                  tags$table(tags$tr(
-                                    tags$td(
-                                      shinyWidgets::pickerInput(
-                                        inputId = "characterizationDomainNameOptions",
-                                        label = "Domain name",
-                                        choices = c(""),
-                                        selected = c(""),
-                                        inline = TRUE,
-                                        multiple = TRUE,
-                                        width = 300,
-                                        choicesOpt = list(style = rep_len("color: black;", 999)),
-                                        options = shinyWidgets::pickerOptions(
-                                          actionsBox = TRUE,
-                                          liveSearch = TRUE,
-                                          size = 10,
-                                          liveSearchStyle = "contains",
-                                          liveSearchPlaceholder = "Type here to search",
-                                          virtualScroll = 50
-                                        )
-                                      )
-                                    ),
-                                    tags$td(
-                                      shinyWidgets::pickerInput(
-                                        inputId = "characterizationAnalysisNameOptions",
-                                        label = "Analysis name",
-                                        choices = c(""),
-                                        selected = c(""),
-                                        inline = TRUE,
-                                        multiple = TRUE,
-                                        width = 300,
-                                        choicesOpt = list(style = rep_len("color: black;", 999)),
-                                        options = shinyWidgets::pickerOptions(
-                                          actionsBox = TRUE,
-                                          liveSearch = TRUE,
-                                          size = 10,
-                                          liveSearchStyle = "contains",
-                                          liveSearchPlaceholder = "Type here to search",
-                                          virtualScroll = 50
-                                        )
-                                      )
-                                    ),
-                                    tags$td(
+          tags$table(tags$tr(
+            tags$td(
+              shinyWidgets::pickerInput(
+                inputId = "characterizationDomainNameOptions",
+                label = "Domain name",
+                choices = c(""),
+                selected = c(""),
+                inline = TRUE,
+                multiple = TRUE,
+                width = 300,
+                choicesOpt = list(style = rep_len("color: black;", 999)),
+                options = shinyWidgets::pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  size = 10,
+                  liveSearchStyle = "contains",
+                  liveSearchPlaceholder = "Type here to search",
+                  virtualScroll = 50
+                )
+              )
+            ),
+            tags$td(
+              shinyWidgets::pickerInput(
+                inputId = "characterizationAnalysisNameOptions",
+                label = "Analysis name",
+                choices = c(""),
+                selected = c(""),
+                inline = TRUE,
+                multiple = TRUE,
+                width = 300,
+                choicesOpt = list(style = rep_len("color: black;", 999)),
+                options = shinyWidgets::pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  size = 10,
+                  liveSearchStyle = "contains",
+                  liveSearchPlaceholder = "Type here to search",
+                  virtualScroll = 50
+                )
+              )
+            ),
+            tags$td(
+              shiny::conditionalPanel(condition = "input.charType == 'Raw'",
                                       shiny::radioButtons(
                                         inputId = "charProportionOrContinuous",
                                         label = "",
                                         choices = c("All", "Proportion", "Continuous"),
                                         selected = "Proportion",
                                         inline = TRUE
-                                      )
-                                    )
-                                  )))
+                                      ))
+            )
+          ))
         ),
         tags$td(
           shiny::conditionalPanel(
