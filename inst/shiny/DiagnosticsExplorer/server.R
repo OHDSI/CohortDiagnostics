@@ -6369,7 +6369,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##UpdatePicker : indexEventConceptIdRangeFilter----
   shiny::observe({
-    if(input$indexEventBreakbownTabset == "indexEventBreakbownPlotTab") {
+    if (input$indexEventBreakbownTabset == "indexEventBreakbownPlotTab") {
       data <- getIndexEventBreakdownPlotData()
       if (!hasData(data)) {
         return(NULL)
@@ -6377,9 +6377,9 @@ shiny::shinyServer(function(input, output, session) {
       maxSortOrder <- max(data$sortOrder %>% unique())
       if (maxSortOrder == 0) {
         return(NULL)
-      } 
+      }
       lowValue <- seq(from = 1,
-                      to = (floor(maxSortOrder/25)*25) + 1, 
+                      to = (floor(maxSortOrder / 25) * 25) + 1,
                       by = 25)
       maxValue <- lowValue + 24
       conceptIdRange <-  paste0(lowValue, "-", maxValue)
@@ -6503,25 +6503,24 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  #!!!!!!!! should be same as cohort - code duplication
   ##output: conceptBrowserTableForIndexEvent----
   output$conceptBrowserTableForIndexEvent <- DT::renderDT(expr = {
     if (hasData(consolidateCohortDefinitionActiveSideTarget())) {
       conceptId <- consolidatedConceptIdTarget()
     }
     data <- conceptSetBrowserData()
-    validate(need(
-      hasData(data),
-      "No information for selected concept id."
-    ))
-
-    keyColumnFields <- c("conceptId", 
-                         "conceptName",
-                         "vocabularyId",
-                         "domainId",
-                         "standardConcept",
-                         "levelsOfSeparation",
-                         "relationshipId")
+    validate(need(hasData(data),
+                  "No information for selected concept id."))
+    
+    keyColumnFields <- c(
+      "conceptId",
+      "conceptName",
+      "vocabularyId",
+      "domainId",
+      "standardConcept",
+      "levelsOfSeparation",
+      "relationshipId"
+    )
     #depending on user selection - what data Column Fields Will Be Presented?
     dataColumnFields <-
       c("persons",
@@ -6531,17 +6530,13 @@ shiny::shinyServer(function(input, output, session) {
       sketchLevel <- 2
     } else if (input$indexEventBreakdownTableFilter == "Persons") {
       dataColumnFields <-
-        dataColumnFields[stringr::str_detect(
-          string = tolower(dataColumnFields),
-          pattern = tolower("person")
-        )]
+        dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
+                                             pattern = tolower("person"))]
       sketchLevel <- 1
     } else if (input$indexEventBreakdownTableFilter == "Records") {
       dataColumnFields <-
-        dataColumnFields[stringr::str_detect(
-          string = tolower(dataColumnFields),
-          pattern = tolower("record")
-        )]
+        dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
+                                             pattern = tolower("record"))]
       sketchLevel <- 1
     }
     
@@ -6605,18 +6600,20 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
         dplyr::rename("records" = .data$conceptCount,
                       "persons" = .data$subjectCount)
-      tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
-                                                                            valueFields = c("records", "persons"))
-
+      tsibbleDataFromSTLModel <-
+        getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
+                                                   valueFields = c("records", "persons"))
+      
       conceptName <- getMetadataForConceptId()$concept %>%
         dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>%
         dplyr::pull(.data$conceptName)
-
-      conceptSynonym <- getMetadataForConceptId()$conceptSynonym$conceptSynonymName %>%
+      
+      conceptSynonym <-
+        getMetadataForConceptId()$conceptSynonym$conceptSynonymName %>%
         unique() %>%
         sort() %>%
         paste0(collapse = ", ")
-
+      
       plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
         stlModeledTsibbleData = tsibbleDataFromSTLModel,
         conceptId = activeSelected()$conceptId,
