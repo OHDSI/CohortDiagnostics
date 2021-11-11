@@ -7194,37 +7194,41 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::distinct()
     return(data)
   })
+
   
-  ###getDomainOptionsForCharacterization----
-  getDomainOptionsForCharacterization <- shiny::reactive({
+  # ###getAnalysisNameOptionsForCharacterization----
+  getAnalysisNameOptionsForCharacterization <- shiny::reactive({
     if (!exists("analysisRef")) {
       return(NULL)
     }
     if (!hasData(analysisRef)) {
       return(NULL)
     }
-    data <- c(analysisRef$domainId %>% 
-      unique(), "Cohort") %>% sort()
+    data <- analysisRef$analysisName %>%
+      unique() %>%
+      sort()
     return(data)
   })
   
-  # ###getAnalysisNameOptionsForCharacterization----
-  # getAnalysisNameOptionsForCharacterization <- shiny::reactive({
-  #   if (!exists("analysisRef")) {
-  #     return(NULL)
-  #   }
-  #   if (!hasData(analysisRef)) {
-  #     return(NULL)
-  #   }
-  #   data <- analysisRef$analysisName %>% 
-  #     unique() %>% 
-  #     sort()
-  #   return(data)
-  # })
-  
   ###Update: characterizationDomainNameOptions----
   shiny::observe({
-    subset <- getDomainOptionsForCharacterization()
+    if (!exists("analysisRef")) {
+      return(NULL)
+    }
+    if (!hasData(analysisRef)) {
+      return(NULL)
+    }
+    if (!hasData(getMultipleCharacterizationData())) {
+      return(NULL)
+    }
+    data <- analysisRef$domainId %>% unique() %>% sort()
+    characterizatoinDataAnalysisRef <- getMultipleCharacterizationData()
+    if (!hasData(characterizatoinDataAnalysisRef)) {
+      return(NULL)
+    }
+    subset <- intersect(data,
+                        characterizatoinDataAnalysisRef$analysisRef$domainId %>% unique()) %>% 
+      sort()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "characterizationDomainNameOptions",
@@ -7235,16 +7239,34 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   # ###Update: characterizationAnalysisNameOptions----
-  # shiny::observe({
-  #   subset <- getAnalysisNameOptionsForCharacterization()
-  #   shinyWidgets::updatePickerInput(
-  #     session = session,
-  #     inputId = "characterizationAnalysisNameOptions",
-  #     choicesOpt = list(style = rep_len("color: black;", 999)),
-  #     choices = subset,
-  #     selected = subset
-  #   )
-  # })
+  shiny::observe({
+    if (!exists("analysisRef")) {
+      return(NULL)
+    }
+    if (!hasData(analysisRef)) {
+      return(NULL)
+    }
+    if (!hasData(getMultipleCharacterizationData())) {
+      return(NULL)
+    }
+    data <- analysisRef$analysisName %>% 
+      unique() %>% 
+      sort()
+    characterizatoinDataAnalysisRef <- getMultipleCharacterizationData()
+    if (!hasData(characterizatoinDataAnalysisRef)) {
+      return(NULL)
+    }
+    subset <- intersect(data,
+                        characterizatoinDataAnalysisRef$analysisRef$analysisName %>% unique()) %>% 
+      sort()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "characterizationAnalysisNameOptions",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
   
   ##Characterization----
   ### getCharacterizationDataFiltered ----
@@ -7255,27 +7277,40 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(getMultipleCharacterizationData())) {
       return(NULL)
     }
-    if (is.null(getMultipleCharacterizationData()$covariateRef)) {
+    if (!hasData(getMultipleCharacterizationData()$covariateRef)) {
       warning("No covariate reference data found")
       return(NULL)
     }
-    if (is.null(getMultipleCharacterizationData()$covariateValue)) {
+    if (!hasData(getMultipleCharacterizationData()$covariateValue)) {
       return(NULL)
     }
-    if (is.null(getMultipleCharacterizationData()$analysisRef)) {
+    if (!hasData(getMultipleCharacterizationData()$analysisRef)) {
       warning("No analysis ref data found")
+      return(NULL)
+    }
+    if (!hasData(input$characterizationDomainNameOptions)) {
+      browser()
+      return(NULL)
+    }
+    if (!hasData(input$characterizationAnalysisNameOptions)) {
+      browser()
       return(NULL)
     }
     analysisIdToFilter <- getMultipleCharacterizationData()$analysisRef %>% 
       dplyr::filter(.data$domainId %in% c(input$characterizationDomainNameOptions)) %>% 
+      dplyr::filter(.data$domainId %in% c(input$characterizationAnalysisNameOptions)) %>% 
       dplyr::pull(.data$analysisId) %>% 
       unique()
+    if (!hasData(analysisIdToFilter)) {
+      return(NULL)
+    }
     covariatesTofilter <-
       getMultipleCharacterizationData()$covariateRef %>% 
       dplyr::filter(.data$analysisId %in% c(analysisIdToFilter))
     if (!hasData(covariatesTofilter)) {
       return(NULL)
     }
+    
     if (all(
       hasData(input$conceptSetsSelectedTargetCohort),
       hasData(getResolvedConceptsTarget())

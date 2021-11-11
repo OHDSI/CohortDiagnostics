@@ -1192,26 +1192,26 @@ bodyTabItems <- shinydashboard::tabItems(
                                         )
                                       )
                                     ),
-                                    # tags$td(
-                                    #   shinyWidgets::pickerInput(
-                                    #     inputId = "characterizationAnalysisNameOptions",
-                                    #     label = "Analysis name",
-                                    #     choices = c(""),
-                                    #     selected = c(""),
-                                    #     inline = TRUE,
-                                    #     multiple = TRUE,
-                                    #     width = 300,
-                                    #     choicesOpt = list(style = rep_len("color: black;", 999)),
-                                    #     options = shinyWidgets::pickerOptions(
-                                    #       actionsBox = TRUE,
-                                    #       liveSearch = TRUE,
-                                    #       size = 10,
-                                    #       liveSearchStyle = "contains",
-                                    #       liveSearchPlaceholder = "Type here to search",
-                                    #       virtualScroll = 50
-                                    #     )
-                                    #   )
-                                    # ),
+                                    tags$td(
+                                      shinyWidgets::pickerInput(
+                                        inputId = "characterizationAnalysisNameOptions",
+                                        label = "Analysis name",
+                                        choices = c(""),
+                                        selected = c(""),
+                                        inline = TRUE,
+                                        multiple = TRUE,
+                                        width = 300,
+                                        choicesOpt = list(style = rep_len("color: black;", 999)),
+                                        options = shinyWidgets::pickerOptions(
+                                          actionsBox = TRUE,
+                                          liveSearch = TRUE,
+                                          size = 10,
+                                          liveSearchStyle = "contains",
+                                          liveSearchPlaceholder = "Type here to search",
+                                          virtualScroll = 50
+                                        )
+                                      )
+                                    ),
                                     tags$td(
                                       shiny::radioButtons(
                                         inputId = "charProportionOrContinuous",
