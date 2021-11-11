@@ -7295,17 +7295,10 @@ shiny::shinyServer(function(input, output, session) {
       warning("No analysis ref data found")
       return(NULL)
     }
-    if (!hasData(input$characterizationDomainNameOptions)) {
-      browser()
-      return(NULL)
-    }
-    if (!hasData(input$characterizationAnalysisNameOptions)) {
-      browser()
-      return(NULL)
-    }
+    
     analysisIdToFilter <- getMultipleCharacterizationData()$analysisRef %>% 
       dplyr::filter(.data$domainId %in% c(input$characterizationDomainNameOptions)) %>% 
-      dplyr::filter(.data$domainId %in% c(input$characterizationAnalysisNameOptions)) %>% 
+      dplyr::filter(.data$analysisName %in% c(input$characterizationAnalysisNameOptions)) %>% 
       dplyr::pull(.data$analysisId) %>% 
       unique()
     if (!hasData(analysisIdToFilter)) {
@@ -7446,6 +7439,7 @@ shiny::shinyServer(function(input, output, session) {
         message = paste0("Rendering pretty table for cohort characterization."),
         value = 0
       )
+      
       data <- getCharacterizationTableDataPretty()
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
