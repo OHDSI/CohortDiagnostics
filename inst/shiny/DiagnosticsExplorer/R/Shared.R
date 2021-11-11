@@ -291,6 +291,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              conceptId = NULL,
                                              coConceptId = NULL,
                                              conceptId1 = NULL,
+                                             covariateId = NULL,
                                              relationshipId = NULL,
                                              conceptSetId = NULL,
                                              daysRelativeIndex = NULL,
@@ -312,6 +313,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
       "conceptId",
       "relationshipId",
       "coConceptId",
+      "covariateId",
       "databaseId",
       "conceptSetId",
       "startDay",
@@ -395,6 +397,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
               {@cohort_id !=''} ? {AND cohort_id in (@cohort_id) \n}
               {@comparator_cohort_id !=''} ? {AND comparator_cohort_id in (@comparator_cohort_id) \n}
               {@concept_id !=''} ? {AND concept_id in (@concept_id) \n}
+              {@covariate_id !=''} ? {AND covariate_id in (@covariate_id) \n}
               {@co_concept_id !=''} ? {AND co_concept_id in (@co_concept_id) \n}
               {@concept_set_id !=''} ? {AND concept_set_id in (@concept_set_id) \n}
               {@concept_id_1 !=''} ? {AND (concept_id_1 IN (@concept_id_1) OR concept_id_2 IN (@concept_id_1)) \n}
@@ -425,6 +428,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         database_id = quoteLiterals(databaseId),
         concept_id = conceptId,
         co_concept_id = coConceptId,
+        covariate_id = covariateId,
         concept_set_id = conceptSetId,
         concept_id_1 = conceptId1,
         # for concept relationship only
@@ -2323,8 +2327,17 @@ getResultsTimeDistribution <- function(dataSource,
     dataSource,
     cohortId = cohortIds,
     databaseId = databaseIds,
-    dataTableName = "timeDistribution"
+    covariateId = c(1008,1009,1010),
+    dataTableName = "covariateValueDist"
   )
+  if ('startDay' %in% colnames(data)) {
+    data <- data %>% 
+      dplyr::select(-.data$startDay)
+  }
+  if ('endDay' %in% colnames(data)) {
+    data <- data %>% 
+      dplyr::select(-.data$endDay)
+  }
   return(data)
 }
 

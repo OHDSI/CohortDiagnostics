@@ -5894,14 +5894,13 @@ shiny::shinyServer(function(input, output, session) {
   #Time Distribution----
   ##output: getTimeDistributionData----
   getTimeDistributionData <- reactive({
-    if (any(is.null(input$tabs),!input$tabs == "timeDistribution")) {
+    if (any(is.null(input$tabs), !input$tabs == "timeDistribution")) {
       return(NULL)
     }
     if (!hasData(consolidatedDatabaseIdTarget())) {
       return(NULL)
     }
-    if (all(is(dataSource, "environment"),
-            !exists('timeDistribution'))) {
+    if (all(is(dataSource, "environment"), !exists('timeDistribution'))) {
       return(NULL)
     }
     data <- getResultsTimeDistribution(
@@ -5912,29 +5911,32 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(data)) {
       return(NULL)
     }
+    data <- data %>%
+      dplyr::inner_join(covariateRef %>%
+                          dplyr::select(.data$covariateName,
+                                        .data$covariateId),
+                        by = "covariateId")
     return(data)
   })
   
+  ##getTimeDistributionTableData----
   getTimeDistributionTableData <- reactive({
     data <- getTimeDistributionData()
     if (!hasData(data)) {
       return(NULL)
     }
-    
     data <- data %>%
       dplyr::inner_join(cohort %>%
                           dplyr::select(.data$cohortId,
                                         .data$shortName),
                         by = "cohortId") %>%
       dplyr::arrange(.data$databaseId, .data$cohortId) %>%
-      dplyr::mutate(# shortName = as.factor(.data$shortName),
-        databaseId = as.factor(.data$databaseId)) %>%
       dplyr::select(
         Database = .data$databaseId,
         Cohort = .data$shortName,
-        TimeMeasure = .data$timeMetric,
-        Average = .data$averageValue,
-        SD = .data$standardDeviation,
+        TimeMeasure = .data$covariateName,
+        Average = .data$mean,
+        SD = .data$sd,
         Min = .data$minValue,
         P10 = .data$p10Value,
         P25 = .data$p25Value,
@@ -5959,8 +5961,8 @@ shiny::shinyServer(function(input, output, session) {
   ##output: timeDistributionTable----
   output$timeDistributionTable <- DT::renderDataTable(expr = {
     data <- getTimeDistributionTableData()
-    validate(need(hasData(data), 
-             "No data available for selected combination."))
+    validate(need(hasData(data),
+                  "No data available for selected combination."))
     options = list(
       pageLength = 100,
       lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -5991,12 +5993,17 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: timeDistributionPlot----
   output$timeDistributionPlot <- plotly::renderPlotly(expr = {
-    validate(need(hasData(consolidatedDatabaseIdTarget()),
-      "No data sources chosen"))
+    validate(need(
+      hasData(consolidatedDatabaseIdTarget()),
+      "No data sources chosen"
+    ))
     data <- getTimeDistributionData()
-    validate(need(hasData(data), 
+    validate(need(hasData(data),
                   "No data for this combination"))
-    plot <- plotTimeDistribution(data = data, shortNameRef = cohort)
+    plot <- plotTimeDistribution(data = data, 
+                                 database = database,
+                                 colorReference = colorReference,
+                                 cohort = cohort)
     return(plot)
   })
   

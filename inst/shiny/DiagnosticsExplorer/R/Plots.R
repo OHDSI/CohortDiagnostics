@@ -498,7 +498,10 @@ plotTimeSeriesForCohortDefinitionFromTsibble <-
   }
 
 
-plotTimeDistribution <- function(data, shortNameRef = NULL) {
+plotTimeDistribution <- function(data, 
+                                 database,
+                                 colorReference = colorReference,
+                                 cohort) {
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertTibble(
     x = data,
@@ -510,43 +513,36 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   )
   checkmate::assertNames(
     x = colnames(data),
-    must.include = c(
-      "minValue",
-      "p25Value",
-      "medianValue",
-      "p75Value",
-      "maxValue"
-    ),
+    must.include = c("minValue",
+                     "p25Value",
+                     "medianValue",
+                     "p75Value",
+                     "maxValue"),
     add = errorMessage
   )
   checkmate::reportAssertions(collection = errorMessage)
   
-  initialColor <- colorReference %>% 
-    dplyr::filter(.data$type == "database",.data$name == "database") %>% 
+  initialColor <- colorReference %>%
+    dplyr::filter(.data$type == "database", 
+                  .data$name == "database") %>%
     dplyr::pull(.data$value)
   
-  selectedColors <- colorRampPalette(c("#000000",initialColor, "#FFFFFF"))(length(data$databaseId %>% unique()) + 2) %>% 
-    head(-1) %>% 
-    tail(-1)
+  selectedColors <-
+    colorRampPalette(c("#000000", initialColor, "#FFFFFF"))(length(data$databaseId %>% unique()) + 2) %>%
+    utils::head(-1) %>%
+    utils::tail(-1)
+  database$color <- selectedColors
   
-
-  plotData <- data %>% 
-    dplyr::inner_join(cohort %>% 
+  plotData <- data %>%
+    dplyr::inner_join(cohort %>%
                         dplyr::select(.data$cohortId, .data$shortName),
-                      by = "cohortId") %>% 
+                      by = "cohortId") %>%
     dplyr::inner_join(
       database %>%
-        dplyr::select(.data$databaseId, .data$shortName) %>%
+        dplyr::select(.data$databaseId, .data$shortName, .data$color) %>%
         dplyr::rename("databaseShortName" = .data$shortName),
       by = "databaseId"
-    ) %>% 
-    dplyr::inner_join(
-      data %>% 
-        dplyr::select(.data$databaseId) %>% 
-        unique() %>% 
-        dplyr::mutate(color = selectedColors), by = "databaseId"
     )
-    
   
   sortShortName <- plotData %>%
     dplyr::select(.data$shortName) %>%
@@ -556,7 +552,8 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
     )))
   
   plotData <- plotData %>%
-    dplyr::arrange(shortName = factor(.data$shortName, levels = sortShortName$shortName),
+    dplyr::arrange(shortName = factor(.data$shortName, 
+                                      levels = sortShortName$shortName),
                    .data$shortName)
   xAxisMin <- plotData$minValue %>% min()
   xAxisMax <- plotData$maxValue %>% max()
@@ -564,20 +561,26 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   plotData$shortName <- factor(plotData$shortName,
                                levels = sortShortName$shortName)
   
-  distinctDatabaseShortName <- plotData$databaseShortName %>% unique()
-  distinctTimeMetric <- c("observation time (days) prior to index", "time (days) between cohort start and end","observation time (days) after index")
+  distinctDatabaseShortName <-
+    plotData$databaseShortName %>% unique()
+  distinctTimeMetric <-
+    c(
+      "observation time (days) prior to index",
+      "time (days) between cohort start and end",
+      "observation time (days) after index"
+    )
   
-  distinctCohortCompoundName <- cohort %>% 
-    dplyr::filter(.data$shortName %in% sortShortName$shortName) %>% 
-    dplyr::pull(.data$compoundName) %>% 
+  distinctCohortCompoundName <- cohort %>%
+    dplyr::filter(.data$shortName %in% c(sortShortName$shortName)) %>%
+    dplyr::pull(.data$compoundName) %>%
     paste(collapse = "\n")
   
-  distinctDatabaseCompoundName <- database %>% 
-    dplyr::filter(.data$shortName %in% distinctDatabaseShortName) %>% 
-    dplyr::pull(.data$compoundName) %>% 
+  distinctDatabaseCompoundName <- database %>%
+    dplyr::filter(.data$shortName %in% c(distinctDatabaseShortName)) %>%
+    dplyr::pull(.data$compoundName) %>%
     paste(collapse = "\n")
   
- # plotHeight <- 200 + length(distinctDatabaseShortName) * length(sortShortName$shortName) * 100
+  # plotHeight <- 200 + length(distinctDatabaseShortName) * length(sortShortName$shortName) * 100
   plotHeight <- 800
   databasePlots <- list()
   for (i in 1:length(distinctDatabaseShortName)) {
@@ -586,56 +589,63 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
     timeMetricPlots  <- list()
     for (j in 1:length(distinctTimeMetric)) {
       filteredDataByTimeMetric <- filteredDataByDatabase %>%
-        dplyr::filter(.data$timeMetric == distinctTimeMetric[j])
+        dplyr::filter(.data$covariateName == distinctTimeMetric[j])
       cohortPlots <- plotly::plot_ly(height = plotHeight)
       for (k in 1:length(sortShortName$shortName)) {
         rowData <-  filteredDataByTimeMetric %>%
           dplyr::filter((.data$shortName == sortShortName$shortName[k]))
         selectedRowdata <- c(
-            ifelse(length(rowData$minValue) > 0,rowData$minValue,''),
-            ifelse(length(rowData$p25Value) > 0,rowData$p25Value,''),
-            ifelse(length(rowData$medianValue) > 0,rowData$medianValue,''),
-            ifelse(length(rowData$p75Value) > 0,rowData$p75Value,''),
-            ifelse(length(rowData$maxValue) > 0,rowData$maxValue,'')
+          ifelse(length(rowData$minValue) > 0, rowData$minValue, ''),
+          ifelse(length(rowData$p25Value) > 0, rowData$p25Value, ''),
+          ifelse(length(rowData$medianValue) > 0, rowData$medianValue, ''),
+          ifelse(length(rowData$p75Value) > 0, rowData$p75Value, ''),
+          ifelse(length(rowData$maxValue) > 0, rowData$maxValue, '')
+        )
+        cohortPlots <- cohortPlots %>%
+          plotly::add_boxplot(
+            x = selectedRowdata,
+            name = sortShortName$shortName[k],
+            color = I(rowData$color),
+            boxpoints = FALSE,
+            text = ~ paste0(
+              rowData$shortName,
+              "\nDatabase = ",
+              rowData$databaseId,
+              "\nMin = ",
+              scales::comma(rowData$minValue, accuracy = 1),
+              "\nP25 = ",
+              scales::comma(rowData$p25Value, accuracy = 1),
+              "\nMedian = ",
+              scales::comma(rowData$medianValue, accuracy = 1),
+              "\nP75 = ",
+              scales::comma(rowData$p75Value, accuracy = 1),
+              "\nMax = ",
+              scales::comma(rowData$maxValue, accuracy = 1),
+              "\nTime Measure = ",
+              rowData$covariateName,
+              "\nAverage = ",
+              scales::comma(x = rowData$mean, accuracy = 0.01)
+            )
           )
-        cohortPlots <- cohortPlots %>% 
-          plotly::add_boxplot(x = selectedRowdata,
-                              name = sortShortName$shortName[k],
-                              color = I(rowData$color),
-                              boxpoints = FALSE,
-                              text = ~paste0(
-                                rowData$shortName,
-                                "\nDatabase = ",
-                                rowData$databaseId,
-                                "\nMin = ",
-                                scales::comma(rowData$minValue, accuracy = 1),
-                                "\nP25 = ",
-                                scales::comma(rowData$p25Value, accuracy = 1),
-                                "\nMedian = ",
-                                scales::comma(rowData$medianValue, accuracy = 1),
-                                "\nP75 = ",
-                                scales::comma(rowData$p75Value, accuracy = 1),
-                                "\nMax = ",
-                                scales::comma(rowData$maxValue, accuracy = 1),
-                                "\nTime Measure = ",
-                                rowData$timeMetric,
-                                "\nAverage = ",
-                                scales::comma(x = rowData$averageValue, accuracy = 0.01)
-                              ))
       }
       
       cohortPlots <- cohortPlots %>%
         plotly::layout(
-        showlegend = FALSE,
-        xaxis = list(range = c(xAxisMin, xAxisMax), tickformat = ",d", showspikes = showPlotSpikes),
-        yaxis = list(showspikes = showPlotSpikes)
-      )
+          showlegend = FALSE,
+          xaxis = list(
+            range = c(xAxisMin, xAxisMax),
+            tickformat = ",d",
+            showspikes = showPlotSpikes
+          ),
+          yaxis = list(showspikes = showPlotSpikes)
+        )
       
-      if (i != length(distinctDatabaseShortName) && length(distinctDatabaseShortName) < 3) {
+      if (i != length(distinctDatabaseShortName) &&
+          length(distinctDatabaseShortName) < 3) {
         cohortPlots <-
           cohortPlots %>% plotly::layout(xaxis = list(showticklabels = FALSE))
       }
-     
+      
       if (i == 1) {
         cohortPlots <- cohortPlots %>%
           plotly::layout(
@@ -671,26 +681,31 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
       )
   }
   
-  m <- list(
-    l = 50,
-    r = 50,
-    b = 200,
-    t = 70
-  )
+  m <- list(l = 50,
+            r = 50,
+            b = 200,
+            t = 70)
   finalPlot <-
-    plotly::subplot(databasePlots, nrows = length(databasePlots), margin = 0.008) %>% 
-    plotly::layout(margin = m,
-                   annotations = list(
-                     x = c(0.3,0.7) ,
-                     y = c(-0.2,-0.2),
-                     text = c(paste0("<b>Cohorts :</b>\n",distinctCohortCompoundName),paste0("<b>DataSource :</b>\n",distinctDatabaseCompoundName)),
-                     showarrow = F,
-                     xref = 'paper',
-                     yref = 'paper',
-                     align = 'left',
-                     xanchor = 'center',
-                     yanchor = 'middle'
-                   ))
+    plotly::subplot(databasePlots,
+                    nrows = length(databasePlots),
+                    margin = 0.008) %>%
+    plotly::layout(
+      margin = m,
+      annotations = list(
+        x = c(0.3, 0.7) ,
+        y = c(-0.2, -0.2),
+        text = c(
+          paste0("<b>Cohorts :</b>\n", distinctCohortCompoundName),
+          paste0("<b>DataSource :</b>\n", distinctDatabaseCompoundName)
+        ),
+        showarrow = F,
+        xref = 'paper',
+        yref = 'paper',
+        align = 'left',
+        xanchor = 'center',
+        yanchor = 'middle'
+      )
+    )
   
   return(finalPlot)
 }
