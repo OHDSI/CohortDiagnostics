@@ -7387,7 +7387,14 @@ shiny::shinyServer(function(input, output, session) {
       characterizationDataValue <-
         characterizationDataValue %>%
         dplyr::inner_join(covariatesTofilter,
-                          by = c('covariateId'))
+                          by = c('covariateId')) %>% 
+        dplyr::left_join(getMultipleCharacterizationData()$concept %>% 
+                           dplyr::select(.data$conceptId,
+                                         .data$conceptName),
+                         by = "conceptId") %>% 
+        dplyr::mutate(conceptName = dplyr::case_when(!is.na(.data$conceptName) ~ .data$conceptName,
+                                                     TRUE ~ gsub(".*: ", "", .data$covariateName)))
+      
       characterizationDataValueTimeVarying <- characterizationDataValue %>% 
         dplyr::filter(!is.na(.data$startDay)) %>% 
         dplyr::inner_join(temporalCovariateChoices, 
