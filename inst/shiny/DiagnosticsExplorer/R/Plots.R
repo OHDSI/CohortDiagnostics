@@ -861,6 +861,13 @@ plotIndexEventBreakdown <-
                 dplyr::filter(.data$name %in% c(filterByConceptId$domainId %>% unique())) %>% 
                 dplyr::pull(.data$value)
               
+            
+              yAxisConceptId <- ""
+              yAxisConceptName <- ""
+              if(k == 1) {
+                yAxisConceptId <- conceptIdDetails$conceptId[m]
+                yAxisConceptName <- conceptIdDetails$conceptName[m]
+              }
               conceptIdPlots[[m]] <-
                 plotly::plot_ly(
                   filterByConceptId,
@@ -890,14 +897,15 @@ plotIndexEventBreakdown <-
                 ) %>%
                 plotly::layout(
                   annotations = list(
-                    x = 0.0,
-                    y = 0.5,
-                    text = conceptIdDetails$conceptId[m],
+                    x = c(-0.49*k, -0.43*k),
+                    y = c(0.5,0.5),
+                    text = c(yAxisConceptId,yAxisConceptName),
                     showarrow = FALSE,
                     xref = "paper",
                     yref = "paper",
-                    xanchor = "center",
-                    yanchor = "middle"
+                    xanchor = "left",
+                    yanchor = "middle",
+                    font = list(size = 10)
                   ),
                   xaxis = list(
                     range = c(-30, 30),
@@ -929,9 +937,9 @@ plotIndexEventBreakdown <-
             databasePlot <- databasePlot %>%
               plotly::layout(
                 annotations = list(
-                  x = 0.08,
+                  x = 0.5,
                   y = 1.02,
-                  text = camelCaseToTitleCase(yAxisColumns[1]),
+                  text = database$databaseId[k],
                   showarrow = FALSE,
                   xref = "paper",
                   yref = "paper",
@@ -947,9 +955,9 @@ plotIndexEventBreakdown <-
           conceptOrSubjectPlots[[j]] <- conceptOrSubjectPlots[[j]] %>%
             plotly::layout(
               annotations = list(
-                x = 0.5,
+                x = 0.08,
                 y = 1.03,
-                text = camelCaseToTitleCase(cohort$compoundName[1]),
+                text = camelCaseToTitleCase(yAxisColumns[j]),
                 showarrow = FALSE,
                 xref = "paper",
                 yref = "paper",
@@ -963,7 +971,7 @@ plotIndexEventBreakdown <-
         plotly::subplot(conceptOrSubjectPlots, nrows = length(conceptOrSubjectPlots)) %>%
         plotly::layout(
           annotations = list(
-            x = -0.04,
+            x = -0.51,
             y = 0.5,
             text = cohort$shortName[i],
             showarrow = FALSE,
@@ -975,7 +983,7 @@ plotIndexEventBreakdown <-
           )
         )
     }
-    m <- list(l = 100,
+    m <- list(l = 550,
               r = 50,
               b = 200,
               t = 70)
