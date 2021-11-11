@@ -6631,16 +6631,20 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(getIndexEventBreakdownConceptIdDetails())) {
       return(NULL)
     }
-    data <- getIndexEventBreakdownRawTarget() %>% 
-      dplyr::filter(.data$daysRelativeIndex == 0) %>% 
-      dplyr::filter(.data$conceptId %in% c(activeSelected()$conceptId)) %>% 
-      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
-      dplyr::inner_join(getIndexEventBreakdownConceptIdDetails() %>% 
-                          dplyr::select(.data$conceptId,
-                                        .data$conceptName,
-                                        .data$vocabularyId,
-                                        .data$standardConcept), 
-                        by = c("coConceptId" = "conceptId")) %>% 
+    data <- getIndexEventBreakdownRawTarget() %>%
+      dplyr::filter(.data$daysRelativeIndex == 0) %>%
+      dplyr::filter(.data$conceptId %in% c(activeSelected()$conceptId)) %>%
+      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
+      dplyr::inner_join(
+        getIndexEventBreakdownConceptIdDetails() %>%
+          dplyr::select(
+            .data$conceptId,
+            .data$conceptName,
+            .data$vocabularyId,
+            .data$standardConcept
+          ),
+        by = c("coConceptId" = "conceptId")
+      ) %>%
       dplyr::rename("persons" = .data$subjectCount,
                     "records" = .data$conceptCount)
     if (!hasData(data)) {
@@ -6651,10 +6655,8 @@ shiny::shinyServer(function(input, output, session) {
   output$coConceptTableForIndexEvent <- DT::renderDataTable(expr = {
     data <- getCoCOnceptForIndexEvent()
     
-    validate(need(
-      hasData(data),
-      "No information for selected concept id."
-    ))
+    validate(need(hasData(data),
+                  "No information for selected concept id."))
     
     keyColumnFields <- c("conceptId",
                          "conceptName",
