@@ -492,7 +492,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
         dplyr::inner_join(
           headerCount %>%
             tidyr::pivot_longer(
-              cols = dataColumns,
+              cols = dplyr::all_of(dataColumns),
               names_to = "type",
               values_to = "valuesHeader"
             ),
