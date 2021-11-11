@@ -6371,13 +6371,18 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observe({
     if(input$indexEventBreakbownTabset == "indexEventBreakbownPlotTab") {
       data <- getIndexEventBreakdownPlotData()
-      maxSortOrder <- max(data$sortOrder %>% unique())
-      conceptIdRange <-
-        paste0((1:floor(maxSortOrder / 25) * 25) - 24, "-", 1:floor(maxSortOrder / 25) * 25)
-      if (maxSortOrder %% 25 != 0) {
-        conceptIdRange <- c(conceptIdRange,
-                            paste0(floor(maxSortOrder / 25) * 25, "-", maxSortOrder))
+      if (!hasData(data)) {
+        return(NULL)
       }
+      maxSortOrder <- max(data$sortOrder %>% unique())
+      if (maxSortOrder == 0) {
+        return(NULL)
+      } 
+      lowValue <- seq(from = 1,
+                      to = (floor(maxSortOrder/25)*25) + 1, 
+                      by = 25)
+      maxValue <- lowValue + 24
+      conceptIdRange <-  paste0(lowValue, "-", maxValue)
       shinyWidgets::updatePickerInput(
         session = session,
         inputId = "indexEventConceptIdRangeFilter",
@@ -6386,7 +6391,6 @@ shiny::shinyServer(function(input, output, session) {
         selected = conceptIdRange[1]
       )
     }
-    
   })
   
   ##indexEventBreakdownPlot----
