@@ -7568,9 +7568,9 @@ shiny::shinyServer(function(input, output, session) {
       keyColumnFields <-
         c("cohortId",
           "covariateId",
-          "conceptName",
           "analysisName",
-          "domainId")
+          "domainId",
+          "conceptName")
       if (input$characterizationColumnFilters == "Mean only") {
         dataColumnFields <- setdiff(colnames(data),
                                     c("databaseId", keyColumnFields))
@@ -7593,6 +7593,13 @@ shiny::shinyServer(function(input, output, session) {
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
+      data <- data %>% 
+        dplyr::mutate(conceptName = stringr::str_wrap(string = .data$conceptName,
+                                                          width = 80,
+                                                          exdent = 1)) %>% 
+        dplyr::mutate(conceptName = stringr::str_replace_all(string = .data$conceptName,
+                                                             pattern = stringr::fixed(pattern = "\n"), 
+                                                             replacement = "<br/>"))
       table <- getDtWithColumnsGroupedByDatabaseId(
         data = data,
         headerCount = countsForHeader,
