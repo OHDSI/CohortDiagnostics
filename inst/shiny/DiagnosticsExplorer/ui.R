@@ -134,11 +134,10 @@ sidebarMenu <-
           choices = temporalCovariateChoices$choices,
           multiple = TRUE,
           choicesOpt = list(style = rep_len("color: black;", 999)),
-          selected = c(temporalCovariateChoices$choices[1],
-                       temporalCovariateChoices$choices[2],
-                       temporalCovariateChoices$choices[3],
-                       temporalCovariateChoices$choices[4],
-                       temporalCovariateChoices$choices[5]),
+          selected = temporalCovariateChoices %>% 
+            dplyr::filter(stringr::str_detect(string = .data$choices,
+                                              pattern = "Baseline1")) %>% 
+            dplyr::pull(.data$choices),
           options = shinyWidgets::pickerOptions(
             actionsBox = TRUE,
             liveSearch = TRUE,
