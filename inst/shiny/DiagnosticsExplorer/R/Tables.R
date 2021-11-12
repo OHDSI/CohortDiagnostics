@@ -144,7 +144,8 @@ prepareTable1 <- function(covariates,
     dplyr::rename(count = .data$valueCount) %>%
     dplyr::inner_join(cohort %>%
                         dplyr::select(.data$cohortId,
-                                      .data$shortName)) %>%
+                                      .data$shortName),
+                      by = "cohortId") %>%
     tidyr::pivot_wider(
       id_cols = c(.data$databaseId,
                   .data$characteristic,
