@@ -3393,31 +3393,31 @@ getResultsTemporalTimeRef <- function(dataSource) {
     dplyr::mutate(
       temporalNameShort = dplyr::case_when(
         .data$endDay == 0 &
-          .data$startDay == -30 ~ "Short0-Term Prior",
+          .data$startDay == -30 ~ "short0TermPrior",
         .data$endDay == 0 &
-          .data$startDay == -180 ~ "Medium0-Term Prior",
+          .data$startDay == -180 ~ "medium0TermPrior",
         .data$endDay == 0 &
-          .data$startDay == -365 ~ "Long0-Term Prior",
+          .data$startDay == -365 ~ "long0TermPrior",
         .data$endDay == 0 &
-          .data$startDay == -9999 ~ "Any-Time0 Prior",
+          .data$startDay == -9999 ~ "anyTime0Prior",
         .data$endDay == -1 &
-          .data$startDay == -30 ~ "Short-Term",
+          .data$startDay == -30 ~ "shortTerm",
         .data$endDay == -1 &
-          .data$startDay == -180 ~ "Medium-Term",
+          .data$startDay == -180 ~ "mediumTerm",
         .data$endDay == -1 &
-          .data$startDay == -365 ~ "Long-Term",
+          .data$startDay == -365 ~ "longTerm",
         .data$endDay == -1 &
-          .data$startDay == -9999 ~ "Any-Time Prior",
+          .data$startDay == -9999 ~ "anyTimePrior",
         .data$endDay == -31 &
-          .data$startDay == -365 ~ "T-31d to -365d",
+          .data$startDay == -365 ~ "t-31dTo-365d",
         .data$endDay == -1 &
-          .data$startDay == -30 ~ "T-1d to -30d",
+          .data$startDay == -30 ~ "t-1dTo-30d",
         .data$endDay == 0 &
           .data$startDay == 0 ~ "T0d",
         .data$endDay == 30 &
-          .data$startDay == 1 ~ "T1d to 30d",
+          .data$startDay == 1 ~ "T1dTo30d",
         .data$endDay == 365 &
-          .data$startDay == 31 ~ "T31d to 365d"
+          .data$startDay == 31 ~ "T31dTo365d"
       )
     ) %>%
     dplyr::mutate(

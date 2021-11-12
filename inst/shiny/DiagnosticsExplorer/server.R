@@ -7408,7 +7408,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(is.na(.data$startDay)) %>%
         dplyr::inner_join(getMultipleCharacterizationData()$analysisRef,
                           by = c('analysisId')) %>%
-        tidyr::crossing(characterizationDataValueTimeVarying %>% dplyr::select(.data$choices))
+        tidyr::crossing(characterizationDataValueTimeVarying %>% dplyr::select(.data$choices, .data$choicesShort))
       characterizationDataValue <-
         dplyr::bind_rows(
           characterizationDataValueNonTimeVarying,
@@ -7466,7 +7466,34 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(data)) {
       return(NULL)
     }
-    browser()
+    #!!!! if user selects proportion then mean, else count. Also support option for both as 34,342 (33.3%)
+    if (input$characterizationColumnFilters == "Mean only") {
+      data <- data %>%
+        dplyr::select(-.data$mean) %>%
+        dplyr::rename("mean" = .data$sumValue)
+      keyColumnFields <-
+        c("cohortId",
+          "databaseId",
+          "covariateId",
+          "conceptName",
+          "analysisName",
+          "domainId")
+      dataColumnFields <- c("mean")
+      data <- tidyr::pivot_wider(
+        data = data,
+        id_cols = dplyr::all_of(keyColumnFields),
+        names_from = .data$choicesShort,
+        values_from = dplyr::all_of(dataColumnFields)
+      )
+    } else {
+      browser()
+      keyColumnFields <-
+        c("covariateId",
+          "covariateName",
+          "analysisName",
+          "domainId")
+      dataColumnFields <- c("mean", "sd")
+    }
     return(data)
   })
   
@@ -7492,7 +7519,6 @@ shiny::shinyServer(function(input, output, session) {
       data <- getCharacterizationTableDataPretty()
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
-      #!!!! if user selects proportion then mean, else count. Also support option for both as 34,342 (33.3%)
       keyColumnFields <- c("characteristic")
       dataColumnFields <- intersect(x = colnames(data),
                                     y = cohort$shortName)
@@ -7532,30 +7558,19 @@ shiny::shinyServer(function(input, output, session) {
       data <- getCharacterizationTableDataRaw()
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
+      keyColumnFields <-
+        c("cohortId",
+          "covariateId",
+          "conceptName",
+          "analysisName",
+          "domainId")
       if (input$characterizationColumnFilters == "Mean only") {
-        data <- data %>%
-          dplyr::select(-.data$mean) %>%
-          dplyr::rename("mean" = .data$sumValue)
-        keyColumnFields <-
-          c(
-            "covariateId",
-            "conceptName",
-            "analysisName",
-            "domainId",
-            "choices"
-          )
-        dataColumnFields <- c("mean")
+        dataColumnFields <- setdiff(colnames(data),
+                                    c("databaseId", keyColumnFields))
         showPercent <- TRUE
       } else {
-        keyColumnFields <-
-          c(
-            "covariateId",
-            "covariateName",
-            "analysisName",
-            "domainId",
-            "choices"
-          )
-        dataColumnFields <- c("mean", "sd")
+        dataColumnFields <- setdiff(colnames(data),
+                                    c("databaseId", keyColumnFields))
         showPercent <- FALSE
       }
       
@@ -7569,8 +7584,7 @@ shiny::shinyServer(function(input, output, session) {
           fields = "Events"
         )
       maxCountValue <-
-        getMaxValueForStringMatchedColumnsInDataFrame(data = data %>%
-                                                        dplyr::select(-.data$missingMeansZero),
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
       table <- getDtWithColumnsGroupedByDatabaseId(
         data = data,

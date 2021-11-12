@@ -474,7 +474,6 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
             dplyr::contains(dplyr::all_of(dataColumns))
           ))))
       }
-      
       dataColumnsLevel2 <- colnames(data)
       dataColumnsLevel2 <-
         dataColumnsLevel2[stringr::str_detect(
