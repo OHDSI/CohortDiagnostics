@@ -814,6 +814,7 @@ plotIndexEventBreakdown <-
     plotHeight <- 800
     
     cohortPlots  <- list()
+    
     for (i in (1:nrow(cohort))) {
       filteredDataByCohort <- data %>%
         dplyr::filter(.data$cohortId == cohort$cohortId[i]) %>% 
@@ -831,7 +832,9 @@ plotIndexEventBreakdown <-
           dplyr::select(-.data[[yAxisColumns[j]]]) %>% 
           dplyr::filter(!is.na(.data$count))
         databasePlots <- list()
+        rightMargin <- 0
         for (k in (1:nrow(database)))  {
+          rightMargin <- rightMargin + 330/k
           filteredDataByDatabase <- filteredDataByYAxisColumns %>%
             dplyr::filter(.data$databaseId == database$databaseId[k])
           
@@ -865,9 +868,10 @@ plotIndexEventBreakdown <-
               yAxisConceptId <- ""
               yAxisConceptName <- ""
               if(k == 1) {
-                yAxisConceptId <- conceptIdDetails$conceptId[m]
+                yAxisConceptId <- paste(conceptIdDetails$conceptId[m],": ")
                 yAxisConceptName <- conceptIdDetails$conceptName[m]
               }
+              
               conceptIdPlots[[m]] <-
                 plotly::plot_ly(
                   filterByConceptId,
@@ -896,10 +900,11 @@ plotIndexEventBreakdown <-
                   showlegend = FALSE
                 ) %>%
                 plotly::layout(
+                  margin = list(l = 400),
                   annotations = list(
-                    x = c(-0.49*k, -0.43*k),
-                    y = c(0.5,0.5),
-                    text = c(yAxisConceptId,yAxisConceptName),
+                    x = -0.49,
+                    y = 0.5,
+                    text = paste(yAxisConceptId,yAxisConceptName),
                     showarrow = FALSE,
                     xref = "paper",
                     yref = "paper",
@@ -983,7 +988,8 @@ plotIndexEventBreakdown <-
           )
         )
     }
-    m <- list(l = 550,
+    
+    m <- list(l = 850 - rightMargin,
               r = 50,
               b = 200,
               t = 70)
