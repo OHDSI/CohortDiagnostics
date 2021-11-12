@@ -3391,6 +3391,36 @@ getResultsTemporalTimeRef <- function(dataSource) {
       )
     ) %>%
     dplyr::mutate(
+      temporalNameShort = dplyr::case_when(
+        .data$endDay == 0 &
+          .data$startDay == -30 ~ "Short0-Term Prior",
+        .data$endDay == 0 &
+          .data$startDay == -180 ~ "Medium0-Term Prior",
+        .data$endDay == 0 &
+          .data$startDay == -365 ~ "Long0-Term Prior",
+        .data$endDay == 0 &
+          .data$startDay == -9999 ~ "Any-Time0 Prior",
+        .data$endDay == -1 &
+          .data$startDay == -30 ~ "Short-Term",
+        .data$endDay == -1 &
+          .data$startDay == -180 ~ "Medium-Term",
+        .data$endDay == -1 &
+          .data$startDay == -365 ~ "Long-Term",
+        .data$endDay == -1 &
+          .data$startDay == -9999 ~ "Any-Time Prior",
+        .data$endDay == -31 &
+          .data$startDay == -365 ~ "T-31d to -365d",
+        .data$endDay == -1 &
+          .data$startDay == -30 ~ "T-1d to -30d",
+        .data$endDay == 0 &
+          .data$startDay == 0 ~ "T0d",
+        .data$endDay == 30 &
+          .data$startDay == 1 ~ "T1d to 30d",
+        .data$endDay == 365 &
+          .data$startDay == 31 ~ "T31d to 365d"
+      )
+    ) %>%
+    dplyr::mutate(
       sequence = dplyr::case_when(
         .data$endDay == 0 & .data$startDay == -30 ~ 2,
         .data$endDay == 0 & .data$startDay == -180 ~ 3,
@@ -3410,7 +3440,8 @@ getResultsTemporalTimeRef <- function(dataSource) {
       )
     ) %>%
     dplyr::mutate(choices = .data$temporalName) %>%
-    dplyr::select(.data$startDay, .data$endDay, .data$choices) %>%
+    dplyr::mutate(choicesShort = .data$temporalNameShort) %>%
+    dplyr::select(.data$startDay, .data$endDay, .data$choices, .data$choicesShort) %>%
     dplyr::mutate(primaryChoices = TRUE) %>% 
     dplyr::filter(!is.na(.data$choices))
   
@@ -3420,7 +3451,8 @@ getResultsTemporalTimeRef <- function(dataSource) {
                                      .data$endDay),
                      by = c("startDay", "endDay")) %>%
     dplyr::mutate(sequence = 999,
-                  choices = .data$temporalName) %>%
+                  choices = .data$temporalName,
+                  choicesShort = .data$temporalName) %>%
     dplyr::mutate(primaryChoices = FALSE)
   
   data <- dplyr::bind_rows(data1, data2) %>%
@@ -3428,6 +3460,7 @@ getResultsTemporalTimeRef <- function(dataSource) {
     dplyr::select(.data$startDay,
                   .data$endDay,
                   .data$choices,
+                  .data$choicesShort,
                   .data$primaryChoices)
   return(data)
 }
