@@ -2039,6 +2039,19 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(data)) {
       return(NULL)
     }
+    data <- data %>%
+      dplyr::mutate(ruleName = stringr::str_wrap(
+        string = .data$ruleName,
+        width = 80,
+        exdent = 1
+      )) %>%
+      dplyr::mutate(
+        ruleName = stringr::str_replace_all(
+          string = .data$ruleName,
+          pattern = stringr::fixed(pattern = "\n"),
+          replacement = "<br/>"
+        )
+      )
     return(data)
   })
   
@@ -2060,6 +2073,19 @@ shiny::shinyServer(function(input, output, session) {
       if (!hasData(data)) {
         return(NULL)
       }
+      data <- data %>%
+        dplyr::mutate(ruleName = stringr::str_wrap(
+          string = .data$ruleName,
+          width = 80,
+          exdent = 1
+        )) %>%
+        dplyr::mutate(
+          ruleName = stringr::str_replace_all(
+            string = .data$ruleName,
+            pattern = stringr::fixed(pattern = "\n"),
+            replacement = "<br/>"
+          )
+        )
       return(data)
     })
   
