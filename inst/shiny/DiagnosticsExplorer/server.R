@@ -7335,6 +7335,9 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
+    characterizationDataValue <- getMultipleCharacterizationData()$covariateValue %>% 
+      dplyr::filter(.data$covariateId %in% c(covariatesTofilter$covariateId %>% unique()))
+    
     if (all(
       hasData(input$conceptSetsSelectedTargetCohort),
       hasData(getResolvedConceptsTarget())
@@ -7358,9 +7361,11 @@ shiny::shinyServer(function(input, output, session) {
           by = c("conceptId")
         )
     }
+    
     characterizationDataValue <-
       getMultipleCharacterizationData()$covariateValue %>%
       dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget()))
+    
     #Pretty analysis
     if (input$charType == "Pretty") {
       covariatesTofilter <- covariatesTofilter %>%
@@ -7408,7 +7413,9 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(is.na(.data$startDay)) %>%
         dplyr::inner_join(getMultipleCharacterizationData()$analysisRef,
                           by = c('analysisId')) %>%
-        tidyr::crossing(characterizationDataValueTimeVarying %>% dplyr::select(.data$choices, .data$choicesShort))
+        tidyr::crossing(temporalCovariateChoices %>% 
+                          dplyr::select(.data$choices, .data$choicesShort) %>% 
+                          dplyr::filter(.data$choices %in% c(input$timeIdChoices)))
       characterizationDataValue <-
         dplyr::bind_rows(
           characterizationDataValueNonTimeVarying,
@@ -7609,7 +7616,7 @@ shiny::shinyServer(function(input, output, session) {
       if (input$charType == "Pretty") {
         data <- getCharacterizationTableDataPretty()
       } else {
-        data <- getCharacterizationRawData()
+        data <- getCharacterizationTableDataRaw()
       }
       downloadCsv(x = data,
                   fileName = file)
