@@ -7505,13 +7505,21 @@ shiny::shinyServer(function(input, output, session) {
         values_from = dplyr::all_of(dataColumnFields)
       )
     } else {
-      browser()
       keyColumnFields <-
-        c("covariateId",
-          "covariateName",
+        c("cohortId",
+          "databaseId",
+          "covariateId",
+          "conceptName",
           "analysisName",
           "domainId")
       dataColumnFields <- c("mean", "sd")
+      
+      data <- tidyr::pivot_wider(
+        data = data,
+        id_cols = dplyr::all_of(keyColumnFields),
+        names_from = .data$choicesShort,
+        values_from = dplyr::all_of(dataColumnFields)
+      )
     }
     return(data)
   })
