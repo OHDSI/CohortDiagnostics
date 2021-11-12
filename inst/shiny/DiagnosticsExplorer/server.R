@@ -938,7 +938,19 @@ shiny::shinyServer(function(input, output, session) {
     data <-  getCohortSortedByCohortId() %>%
       dplyr::select(cohort = .data$shortName,
                     .data$cohortId,
-                    .data$cohortName)
+                    .data$cohortName) %>%
+      dplyr::mutate(cohortName = stringr::str_wrap(
+        string = .data$cohortName,
+        width = 80,
+        exdent = 1
+      )) %>%
+      dplyr::mutate(
+        cohortName = stringr::str_replace_all(
+          string = .data$cohortName,
+          pattern = stringr::fixed(pattern = "\n"),
+          replacement = "<br/>"
+        )
+      )
     return(data)
   })
   ###output: cohortDefinitionTable----
