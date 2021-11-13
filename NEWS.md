@@ -1,3 +1,14 @@
+CohortDiagnostics 2.1.4
+=======================
+
+Changes:
+1. Minor cosmetic changes to diagnostics explorer shiny app. Typo fix
+2. Fix for warning from type-convert https://github.com/OHDSI/CohortDiagnostics/issues/661
+3. Use Sex instead of Gender in Diagnostics Explorer https://github.com/OHDSI/CohortDiagnostics/issues/676
+
+Bug Fixes:
+1. Privacy protecting feature bug fix. In prior version covariate_value and covariate_value_dist failed privacy protection. Thank you @msuchard for reporting the issue and @schuemie for fixing https://github.com/OHDSI/CohortDiagnostics/issues/658 
+
 CohortDiagnostics 2.1.3
 =======================
 

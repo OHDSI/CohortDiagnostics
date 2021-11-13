@@ -22,7 +22,7 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(
 
 cdmDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
 vocabularyDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
-cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
+cohortDiagnosticsSchema <- "cohort_diagnostics"
 resultsDatabaseSchema <- paste0("r", 
                                 as.character(gsub("[: -]", "" , Sys.time(), perl=TRUE)),
                                 as.character(sample(1:100, 1)))

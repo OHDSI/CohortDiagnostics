@@ -11,6 +11,7 @@ cohortTable <- "cohort"
 tempEmulationSchema <- NULL
 folder <- tempfile()
 dir.create(folder, recursive = TRUE)
+minCellCountValue <- 5
 
 test_that("Cohort instantiation", {
   CohortDiagnostics::instantiateCohortSet(
@@ -68,6 +69,7 @@ test_that("Cohort diagnostics in incremental mode", {
       runIncludedSourceConcepts = TRUE,
       runOrphanConcepts = TRUE,
       runTimeDistributions = TRUE,
+      minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental")
     )
@@ -97,6 +99,7 @@ test_that("Cohort diagnostics in incremental mode", {
       runIncludedSourceConcepts = TRUE,
       runOrphanConcepts = TRUE,
       runTimeDistributions = TRUE,
+      minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental")
     )
@@ -106,6 +109,10 @@ test_that("Cohort diagnostics in incremental mode", {
   # generate premerged file
   CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
   testthat::expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
+  
+  output <- read.csv(file.path(folder, "export", "covariate_value.csv"))
+  expect_equal(output$sum_value[2], -minCellCountValue)
+  expect_lt(output$mean[2], 0)
 })
 
 unlink(folder, recursive = TRUE)
