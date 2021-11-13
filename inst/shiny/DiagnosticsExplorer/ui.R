@@ -551,8 +551,8 @@ bodyTabItems <- shinydashboard::tabItems(
                      shiny::checkboxGroupInput(
                        inputId = "irStratification",
                        label = "Stratify by",
-                       choices = c("Age", "Gender", "Calendar Year"),
-                       selected = c("Age", "Gender", "Calendar Year"),
+                       choices = c("Age", "Sex", "Calendar Year"),
+                       selected = c("Age", "Sex", "Calendar Year"),
                        inline = TRUE
                      )
                    ),
@@ -607,10 +607,10 @@ bodyTabItems <- shinydashboard::tabItems(
         ),
         tags$td(
           shiny::conditionalPanel(
-            condition = "input.irStratification.indexOf('Gender') > -1",
+            condition = "input.irStratification.indexOf('Sex') > -1",
             shinyWidgets::pickerInput(
               inputId = "incidenceRateGenderFilter",
-              label = "Filter By Gender",
+              label = "Filter By Sex",
               width = 200,
               choices = c("All"),
               selected = c("All"),

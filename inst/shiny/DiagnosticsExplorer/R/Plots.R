@@ -285,7 +285,7 @@ plotIncidenceRate <- function(data,
   
   if (stratifyByGender) {
     plotData$tooltip <-
-      c(paste0(plotData$tooltip, "\nGender = ", plotData$gender))
+      c(paste0(plotData$tooltip, "\nSex = ", plotData$gender))
   }
   
   if (stratifyByCalendarYear) {
