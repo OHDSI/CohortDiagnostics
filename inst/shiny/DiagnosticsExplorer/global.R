@@ -144,8 +144,6 @@ appInformationText <- paste0(
 #Expected tables based on data model specifications
 dataModelSpecifications <-
   getResultsDataModelSpecifications()
-dataModelSpecifications21 <-
-  getResultsDataModelSpecifications(versionNumber = 2.1)
 
 #Clean up shadows ----
 suppressWarnings(rm(
