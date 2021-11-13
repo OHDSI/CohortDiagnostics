@@ -50,10 +50,10 @@ runCohortDiagnostics(
     TRUE, useObservation = TRUE, useDeviceExposure = TRUE, useCharlsonIndex = TRUE,
     useDcsi = TRUE, useChads2 = TRUE, useChads2Vasc = TRUE, useHfrs = FALSE,
     temporalStartDays = c(-365, -30, 0, 1, 31, -9999, -365, -180, -30, -9999, -365, -180,
-             -30, seq(from = -421, to = -31, by = 30), seq(from = 0, to = 390, by = 30),
-    seq(from = -5, to = 5, by = 1)), temporalEndDays = c(-31, -1, 0, 30, 365, 0, 0, 0, 0,
-    -1, -1, -1, -1, seq(from = -391, to = -1, by = 30), seq(from = 30, to = 420, by =
-    30), seq(from = -5, to = 5, by = 1))),
+             -30, -9999, seq(from = -421, to = -31, by = 30), seq(from = 0, to = 390, by
+    = 30), seq(from = -5, to = 5, by = 1)), temporalEndDays = c(-31, -1, 0, 30, 365, 0,
+    0, 0, 0, -1, -1, -1, -1, 9999, seq(from = -391, to = -1, by = 30), seq(from = 30, to
+    = 420, by = 30), seq(from = -5, to = 5, by = 1))),
   minCellCount = 5,
   incremental = TRUE,
   incrementalFolder = file.path(exportFolder, "incremental")
