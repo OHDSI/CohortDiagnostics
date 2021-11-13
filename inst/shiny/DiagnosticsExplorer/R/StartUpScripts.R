@@ -385,10 +385,11 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
                                      headerCount = NULL,
                                      keyColumns,
                                      dataColumns,
-                                     sketchLevel,
+                                     countLocation,
                                      maxCount,
                                      sort = TRUE,
-                                     showResultsAsPercent = FALSE) {
+                                     showResultsAsPercent = FALSE,
+                                     rowSpan = 2) {
 
   # ensure the data has required fields
   keyColumns <- keyColumns %>% unique()
@@ -419,7 +420,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
                         names_to = "type", 
                         values_to = "valuesData")
   if (hasData(headerCount)) {
-    if (sketchLevel == 1) {
+    if (countLocation == 1) {
       if (length(setdiff(c("databaseId", "count"), colnames(headerCount))) != 0) {
         warning("missing required fields to draw formatted datatable.")
       }
@@ -483,7 +484,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
         )] %>%
         stringr::word(start = -1)
       
-    } else if (sketchLevel == 2) {
+    } else if (countLocation == 2) {
       if (length(setdiff(c("databaseId", dataColumns), colnames(headerCount))) != 0) {
         warning("missing required fields to draw formatted datatable.")
       }
@@ -601,7 +602,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
                                       thead(tr(
                                         lapply(camelCaseToTitleCase(keyColumns),
                                                th,
-                                               rowspan = 2),
+                                               rowspan = rowSpan),
                                         lapply(
                                           databaseIdsForUseAsHeader %>% sort(),
                                           th,
@@ -619,7 +620,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
       options = options,
       rownames = FALSE,
       container = sketch,
-      colnames = colnames(data) %>% camelCaseToTitleCase(),
+      # colnames = colnames(data) %>% camelCaseToTitleCase(),
       escape = FALSE,
       selection = 'single',
       filter = "top",

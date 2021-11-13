@@ -2129,7 +2129,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = 1,
+        countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$targetCohortInclusionRulesAsPercent
@@ -2987,21 +2987,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$targetCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$targetCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -3023,7 +3023,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnTarget 
@@ -3059,21 +3059,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$targetCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$targetCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -3096,7 +3096,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnTarget
@@ -3130,21 +3130,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$targetCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$targetCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -3166,7 +3166,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnTarget 
@@ -3194,21 +3194,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$targetCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$targetCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -3231,7 +3231,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnTarget 
@@ -3410,7 +3410,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = 1,
+        countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$comparatorCohortInclusionRulesAsPercent
@@ -3778,21 +3778,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$comparatorCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$comparatorCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$comparatorCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -3815,7 +3815,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnComparator
@@ -3850,21 +3850,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$comparatorCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$comparatorCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$comparatorCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -3887,7 +3887,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnComparator
@@ -3918,21 +3918,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$comparatorCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$comparatorCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$comparatorCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -3955,7 +3955,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnComparator
@@ -3997,21 +3997,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$targetCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$targetCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -4034,7 +4034,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnTarget 
@@ -4296,21 +4296,21 @@ shiny::shinyServer(function(input, output, session) {
         "records")
     if (input$targetCohortConceptSetColumnFilter == "Both") {
       dataColumnFields <- dataColumnFields
-      sketchLevel <- 2
+      countLocation <- 2
     } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(
           string = tolower(dataColumnFields),
           pattern = tolower("person")
         )]
-      sketchLevel <- 1
+      countLocation <- 1
     } else if (input$targetCohortConceptSetColumnFilter == "Records") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(
           string = tolower(dataColumnFields),
           pattern = tolower("record")
         )]
-      sketchLevel <- 1
+      countLocation <- 1
     }
     
     countsForHeader <-
@@ -4332,7 +4332,7 @@ shiny::shinyServer(function(input, output, session) {
       data = data,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
-      sketchLevel = sketchLevel,
+      countLocation = countLocation,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
       showResultsAsPercent = input$showAsPercentageColumnTarget 
@@ -4443,7 +4443,7 @@ shiny::shinyServer(function(input, output, session) {
       data = data,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
-      sketchLevel = 1,
+      countLocation = 1,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
       showResultsAsPercent = FALSE
@@ -5110,7 +5110,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = 1,
+        countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$inclusionRuleShowAsPercentInCohortCount #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
@@ -6222,17 +6222,17 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$indexEventBreakdownTableFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$indexEventBreakdownTableFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
                                                pattern = tolower("person"))]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$indexEventBreakdownTableFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
                                                pattern = tolower("record"))]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -6254,7 +6254,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$indexEventBreakdownShowAsPercent, 
@@ -6539,17 +6539,17 @@ shiny::shinyServer(function(input, output, session) {
         "records")
     if (input$indexEventBreakdownTableFilter == "Both") {
       dataColumnFields <- dataColumnFields
-      sketchLevel <- 2
+      countLocation <- 2
     } else if (input$indexEventBreakdownTableFilter == "Persons") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
                                              pattern = tolower("person"))]
-      sketchLevel <- 1
+      countLocation <- 1
     } else if (input$indexEventBreakdownTableFilter == "Records") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
                                              pattern = tolower("record"))]
-      sketchLevel <- 1
+      countLocation <- 1
     }
     
     countsForHeader <-
@@ -6571,7 +6571,7 @@ shiny::shinyServer(function(input, output, session) {
       data = data,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
-      sketchLevel = sketchLevel,
+      countLocation = countLocation,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
       showResultsAsPercent = input$indexEventBreakdownShowAsPercent
@@ -6680,17 +6680,17 @@ shiny::shinyServer(function(input, output, session) {
         "records")
     if (input$indexEventBreakdownTableFilter == "Both") {
       dataColumnFields <- dataColumnFields
-      sketchLevel <- 2
+      countLocation <- 2
     } else if (input$indexEventBreakdownTableFilter == "Persons") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
                                              pattern = tolower("person"))]
-      sketchLevel <- 1
+      countLocation <- 1
     } else if (input$indexEventBreakdownTableFilter == "Records") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
                                              pattern = tolower("record"))]
-      sketchLevel <- 1
+      countLocation <- 1
     }
     
     countsForHeader <-
@@ -6712,7 +6712,7 @@ shiny::shinyServer(function(input, output, session) {
       data = data,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
-      sketchLevel = sketchLevel,
+      countLocation = countLocation,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
       showResultsAsPercent = input$indexEventBreakdownShowAsPercent
@@ -6928,7 +6928,7 @@ shiny::shinyServer(function(input, output, session) {
       data = data,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
-      sketchLevel = 1,
+      countLocation = 1,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
       showResultsAsPercent = (input$visitContextValueFilter == "Percentage")
@@ -7560,7 +7560,7 @@ shiny::shinyServer(function(input, output, session) {
       keyColumnFields <- c("characteristic")
       dataColumnFields <- intersect(x = colnames(data),
                                     y = cohort$shortName)
-      sketchLevel <- 1
+      countLocation <- 1
       countsForHeader <-
         getCountsForHeaderForUseInDataTable(
           dataSource = dataSource,
@@ -7580,7 +7580,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         sort = FALSE,
@@ -7612,7 +7612,7 @@ shiny::shinyServer(function(input, output, session) {
         showPercent <- FALSE
       }
       
-      sketchLevel <- 1
+      countLocation <- 1
       countsForHeader <-
         getCountsForHeaderForUseInDataTable(
           dataSource = dataSource,
@@ -7635,7 +7635,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         sort = TRUE,
