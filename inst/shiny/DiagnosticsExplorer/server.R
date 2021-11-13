@@ -7514,12 +7514,23 @@ shiny::shinyServer(function(input, output, session) {
           "domainId")
       dataColumnFields <- c("mean", "sd")
       
-      data <- tidyr::pivot_wider(
-        data = data,
-        id_cols = dplyr::all_of(keyColumnFields),
-        names_from = .data$choicesShort,
-        values_from = dplyr::all_of(dataColumnFields)
-      )
+      if (!all(intersect(x = colnames(data) %>% sort(),
+                    y = dataColumnFields) %>% sort() == dataColumnFields)) {
+        return(NULL)
+      }
+      data <- data %>%
+        tidyr::pivot_longer(
+          cols = dplyr::all_of(dataColumnFields),
+          names_to = "type",
+          values_to = "value"
+        ) %>%
+        dplyr::mutate(choicesShort = paste0(.data$choicesShort, "_", .data$type)) %>%
+        dplyr::select(-.data$type) %>%
+        tidyr::pivot_wider(
+          id_cols = dplyr::all_of(keyColumnFields),
+          names_from = .data$choicesShort,
+          values_from = "value"
+        )
     }
     return(data)
   })
