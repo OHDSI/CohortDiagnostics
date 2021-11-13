@@ -96,16 +96,13 @@ quoteLiterals <- function(x) {
 
 #' Get specifications for Cohort Diagnostics results data model
 #'
-#' @param versionNumber Which version of Cohort Diagnostics. Default will be the most recent version.
-#'
 #' @param packageName e.g. 'CohortDiagnostics'
 #'
 #' @return
 #' A tibble data frame object with specifications
 #'
 #' @export
-getResultsDataModelSpecifications <- function(versionNumber = NULL,
-                                              packageName = NULL) {
+getResultsDataModelSpecifications <- function(packageName = NULL) {
   if (is.null(packageName)) {
     if (file.exists("resultsDataModelSpecification.csv")) {
       resultsDataModelSpecifications <-
@@ -136,39 +133,6 @@ getResultsDataModelSpecifications <- function(versionNumber = NULL,
         )
       )
     }
-  }
-  
-  #get various version options in csv file
-  versions <- resultsDataModelSpecifications$version %>% unique()
-  if (!is.null(versionNumber)) {
-    if (versionNumber %in% versions) {
-      ParallelLogger::logTrace(paste0(
-        "  - Retrieving data model specifications for version ",
-        version
-      ))
-      resultsDataModelSpecifications <-
-        resultsDataModelSpecifications %>%
-        dplyr::filter(.data$version == !!versionNumber)
-    } else {
-      stop(
-        paste0(
-          "version requested",
-          versionNumber,
-          " not found. The available option are ",
-          paste0(versions, collapse = ", ")
-        )
-      )
-    }
-  } else {
-    #max version/recent version if no version provided
-    versions <- max(as.numeric(versions))
-    ParallelLogger::logTrace(paste0(
-      "  - Retrieving data model specifications for version ",
-      versions
-    ))
-    resultsDataModelSpecifications <-
-      resultsDataModelSpecifications %>%
-      dplyr::filter(.data$version == !!versions)
   }
   return(resultsDataModelSpecifications)
 }
@@ -2978,7 +2942,7 @@ getCohortRelationshipCharacterizationResults <-
                     .data$endDay,
                     .data$mean,
                     .data$sumValue
-                    ) %>% 
+      ) %>% 
       dplyr::mutate(analysisId = -301)
     
     # subjects start
@@ -3023,7 +2987,7 @@ getCohortRelationshipCharacterizationResults <-
     
     data <- dplyr::bind_rows(subjectsOverlap,
                              subjectsStart
-                             ) %>%
+    ) %>%
       dplyr::filter(.data$comparatorCohortId > 0) %>% 
       dplyr::mutate(covariateId = (.data$comparatorCohortId * -1000) + .data$analysisId)
     
