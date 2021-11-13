@@ -9,9 +9,7 @@ getMultipleCharacterizationResults(
   cohortIds = NULL,
   databaseIds = NULL,
   featureExtractionCharacterization = TRUE,
-  featureExtractionTemporalCharacterization = TRUE,
   cohortRelationshipCharacterizationResults = TRUE,
-  cohortRelationshipTemporalCharacterizationResults = TRUE,
   minThreshold = 0.01
 )
 }
@@ -30,8 +28,6 @@ character field values from the `databaseId` field of the `database` table
 of the results data model.}
 
 \item{featureExtractionCharacterization}{Do you want to get feature extraction characterization results?}
-
-\item{featureExtractionTemporalCharacterization}{Do you want to get feature extraction temporal characterization results?}
 
 \item{cohortRelationshipCharacterizationResults}{Do you want to get cohort relationship characterization results?}
 

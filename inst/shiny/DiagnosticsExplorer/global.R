@@ -51,7 +51,7 @@ showCharacterization <- TRUE
 showTemporalCharacterization <- TRUE
 showCohortOverlap <- TRUE
 showPlotSpikes <- TRUE
-filterTemporalChoicesToPrimaryOptions <- TRUE
+# filterTemporalChoicesToPrimaryOptions <- TRUE
 spinnerType = 8
 
 showConceptBrowser <- TRUE  #on selected conceptId - show concept browser  (applied for cohort, index event breakdown, characterization tab)
@@ -176,7 +176,7 @@ if (databaseMode) {
       "analysis_ref",
       "concept_sets",
       "concept_class",
-      "concept_resolved",
+      # "concept_resolved",
       # "covariate_ref",
       "domain",
       "relationship",
@@ -229,7 +229,7 @@ if (databaseMode) {
 
 
 #Adding enhancements to the objects, which are already loaded in R memory----
-if (exists("database") &&  doesObjectHaveData(database)) {
+if (exists("database") &&  hasData(database)) {
   if (nrow(database) > 0 &&
       "vocabularyVersion" %in% colnames(database)) {
     database <- database %>%
@@ -240,7 +240,7 @@ if (exists("database") &&  doesObjectHaveData(database)) {
 }
 
 if (all(exists("cohort"),
-        doesObjectHaveData(cohort))) {
+        hasData(cohort))) {
   
   #enhance cohortCount table to have all cohortId and databaseId combinations
   cohortCount <- tidyr::crossing(database %>% dplyr::select(.data$databaseId) %>% dplyr::distinct(),
@@ -260,7 +260,7 @@ if (all(exists("cohort"),
 }
 
 if (all(exists("conceptSets"),
-        doesObjectHaveData(conceptSets))) {
+        hasData(conceptSets))) {
   # cohort is required and is always loaded into R memory
   conceptSets <- conceptSets %>%
     dplyr::inner_join(cohort %>% 
@@ -277,7 +277,7 @@ if (all(exists("conceptSets"),
     dplyr::select(-.data$shortName) %>% 
     dplyr::arrange(.data$cohortId, .data$conceptSetId)
 } else if (all(exists("cohort"),
-               doesObjectHaveData(cohort$json))) {
+               hasData(cohort$json))) {
   conceptSets <- list()
   k <- 0
   for (i in (1:nrow(cohort))) {
@@ -314,7 +314,7 @@ if (all(exists("conceptSets"),
 }
 
 if (all(exists("database"),
-        doesObjectHaveData(database))) {
+        hasData(database))) {
   # cohort is required and is always loaded into R memory
   database <- database %>%
     dplyr::arrange(.data$databaseId) %>%
@@ -330,22 +330,14 @@ if (all(exists("database"),
 
 #enhancement 
 if (all(exists("temporalTimeRef"),
-        doesObjectHaveData(temporalTimeRef))) {
+        hasData(temporalTimeRef))) {
   if (all(
     nrow(temporalTimeRef) > 0
   )) {
-    temporalCovariateChoices <- temporalTimeRef %>%
-      dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
-      dplyr::select(.data$timeId, .data$choices) %>%
-      dplyr::arrange(.data$timeId)
-    
-    if (filterTemporalChoicesToPrimaryOptions) {
-      temporalCovariateChoices <- temporalCovariateChoices %>%
-        dplyr::filter(
-          stringr::str_detect(string = .data$choices,
-                              pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')
-        )
-    }
+    temporalCovariateChoices <- getResultsTemporalTimeRef(dataSource = dataSource) %>% 
+      dplyr::filter(.data$primaryChoices == TRUE) %>% 
+      dplyr::arrange(.data$choices) %>% 
+      dplyr::select(-.data$primaryChoices)
   }
 }
 
@@ -361,6 +353,7 @@ table1Specs <- readr::read_csv(
   guess_max = min(1e7)
 )
 prettyAnalysisIds <- table1Specs$analysisId
+#!!!!!!!!!!! need to update prettyAnalysisId
 
 
 if (!showCharacterization) {
@@ -368,13 +361,19 @@ if (!showCharacterization) {
   if (exists("covariateValueDist")) {rm("covariateValueDist")}
   if (exists("analysisRef")) {rm("analysisRef")}
   if (exists("covariateRef")) {rm("covariateRef")}
+} else {
+  if (exists("analysisRef")) {
+    analysisRef <- dplyr::bind_rows(analysisRef,
+                                    dplyr::tibble(
+                                      analysisId = c(-201,-301),
+                                      analysisName = c("CohortEraStart", "CohortEraOverlap"),
+                                      domainId = "Cohort",
+                                      isBinary = "Y",
+                                      missingMeansZero = "Y"
+                                    ))
+  }
 }
-if (!showTemporalCharacterization) {
-  if (exists("covariateValue")) {rm("temporalCovariateValue")}
-  if (exists("covariateValueDist")) {rm("temporalCovariateValueDist")}
-  if (exists("analysisRef")) {rm("temporalAnalysisRef")}
-  if (exists("covariateRef")) {rm("temporalCovariateRef")}
-}
+
 
 #!!!!!!!!!!!!reduce code lines here
 # disable tabs based on user preference or control variable ----
@@ -408,8 +407,21 @@ if (!showVisitContext) {
   }
 }
 
+prettyTable1Specifications <- readr::read_csv(
+  file = "Table1SpecsLong.csv",
+  col_types = readr::cols(),
+  guess_max = min(1e7),
+  lazy = FALSE
+)
 
-colorReference <- readr::read_csv(file = 'colorReference.csv',col_types = readr::cols(),guess_max = 1000)
+colorReference <-
+  readr::read_csv(
+    file = 'colorReference.csv',
+    col_types = readr::cols(),
+    guess_max = min(1e7)
+  )
+
+domainOptionsInDomainTable <- c("Condition", "Device", "Drug", "Observation", "Procedure", "Visit", "Other") %>% sort()
 
 #Extras -----
 # other objects in memory ----
@@ -429,7 +441,7 @@ sourcesOfVocabularyTables <-
 #   dplyr::mutate(timeId2 = (dplyr::row_number()) - 6)
 # #enhancement
 # if (all(exists("analysisRef"),
-#         doesObjectHaveData(analysisRef))) {
+#         hasData(analysisRef))) {
 #   if (all(nrow(analysisRef) > 0)) {
 #     temporalCovariateChoices <- dplyr::bind_rows(
 #       temporalCovariateChoices,
@@ -461,7 +473,7 @@ sourcesOfVocabularyTables <-
 # }
 # 
 # if (all(exists("temporalTimeRef"),
-#         doesObjectHaveData(temporalTimeRef))) {
+#         hasData(temporalTimeRef))) {
 #   if (all(nrow(temporalTimeRef) > 0)) {
 #     temporalCovariateChoices <-
 #       dplyr::bind_rows(temporalCovariateChoices,

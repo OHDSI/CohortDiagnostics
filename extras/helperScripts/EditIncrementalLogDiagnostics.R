@@ -3,7 +3,7 @@
 
 library(magrittr)
 logFolder <-
-  "D:\\studyResults\\phenotypeLibraryP"
+  "D:\\studyResults\\SkeletonCohortDiagnosticsStudyP"
 diagnosticsFileName <- "CreatedDiagnostics.csv"
 
 listFiles <-
@@ -34,3 +34,16 @@ for (i in (1:length(listFiles))) {
     dplyr::filter(!.data$task %in% tasksToRemove) %>%
     readr::write_excel_csv(file = listFiles[[i]])
 }
+
+# 
+# filesToDelete <- "cohort_relationships.csv"
+# listFilesDelete <-
+#   list.files(
+#     path = logFolder,
+#     pattern = filesToDelete,
+#     full.names = TRUE,
+#     recursive = TRUE
+#   )
+# for (i in (1:length(listFilesDelete))) {
+#   unlink(listFilesDelete[[i]], recursive = TRUE, force = TRUE)
+# }

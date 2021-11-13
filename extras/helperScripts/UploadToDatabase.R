@@ -14,7 +14,7 @@ portNumber <- 5432
 #   user = Sys.getenv("shinydbUser"),
 #   password = Sys.getenv("shinydbPW")
 # )
-resultsSchema <- 'phenotype_library'
+resultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
 
 
 # OHDSI's Phenotype library server:
@@ -30,7 +30,7 @@ resultsSchema <- 'phenotype_library'
 #   password = Sys.getenv("phenotypeLibrarydbPw")
 # )
 # resultsSchema <- Sys.getenv("phenotypeLibrarydbTargetSchema")
-# 
+# resultsSchema <- 'phenotype_library'
 
 # other
 connectionDetails <- createConnectionDetails(
@@ -57,7 +57,7 @@ connectionDetails <- createConnectionDetails(
 
 Sys.setenv("POSTGRES_PATH" = Sys.getenv('POSTGRES_PATH'))
 
-folderWithZipFilesToUpload <- "D:\\studyResults\\ohdaPhenotypeLibraryP\\tempUpload"
+folderWithZipFilesToUpload <- "D:\\studyResults\\SkeletonCohortDiagnosticsStudyP"
 listOfZipFilesToUpload <-
   list.files(
     path = folderWithZipFilesToUpload,

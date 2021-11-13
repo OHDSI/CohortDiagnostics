@@ -44,7 +44,7 @@
 checks if the specified cohorts are instantiated, and only runs diagnostics on the instantiated
 cohorts (i.e. &amp;gt; 0 rows in cohort table).
 Characterization:
-If runTemporalCohortCharacterization argument is TRUE, then RFeatureExtraction::createTemporalCovariateSettings
+If runCohortCharacterization argument is TRUE, then RFeatureExtraction::createTemporalCovariateSettings
 is used as default." />
 
 
@@ -159,7 +159,7 @@ is used as default." />
 checks if the specified cohorts are instantiated, and only runs diagnostics on the instantiated
 cohorts (i.e. &gt; 0 rows in cohort table).</p>
 <p>Characterization:
-If runTemporalCohortCharacterization argument is TRUE, then <code>RFeatureExtraction::createTemporalCovariateSettings</code>
+If runCohortCharacterization argument is TRUE, then <code>RFeatureExtraction::createTemporalCovariateSettings</code>
 is used as default.</p>
     </div>
 
@@ -185,6 +185,7 @@ is used as default.</p>
   cdmVersion <span class='op'>=</span> <span class='fl'>5</span>,
   runInclusionStatistics <span class='op'>=</span> <span class='cn'>TRUE</span>,
   runConceptSetDiagnostics <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  indexDateDiagnosticsRelativeDays <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='op'>-</span><span class='fl'>5</span><span class='op'>:</span><span class='fl'>5</span><span class='op'>)</span>,
   runIncludedSourceConcepts <span class='op'>=</span> <span class='cn'>FALSE</span>,
   runOrphanConcepts <span class='op'>=</span> <span class='cn'>FALSE</span>,
   runVisitContext <span class='op'>=</span> <span class='cn'>TRUE</span>,
@@ -194,21 +195,26 @@ is used as default.</p>
   runDataSourceTimeSeries <span class='op'>=</span> <span class='cn'>TRUE</span>,
   runCohortRelationship <span class='op'>=</span> <span class='cn'>TRUE</span>,
   runCohortCharacterization <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  covariateSettings <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='fu'>FeatureExtraction</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createDefaultCovariateSettings.html'>createDefaultCovariateSettings</a></span><span class='op'>(</span><span class='op'>)</span>,
-    <span class='fu'>FeatureExtraction</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createCovariateSettings.html'>createCovariateSettings</a></span><span class='op'>(</span>useDemographicsAge <span class='op'>=</span> <span class='cn'>TRUE</span>,
-    useVisitCountLongTerm <span class='op'>=</span> <span class='cn'>TRUE</span>, useVisitCountShortTerm <span class='op'>=</span> <span class='cn'>TRUE</span>,
-    useVisitConceptCountLongTerm <span class='op'>=</span> <span class='cn'>TRUE</span>, useVisitConceptCountShortTerm <span class='op'>=</span> <span class='cn'>TRUE</span>,
-    useDemographicsPriorObservationTime <span class='op'>=</span> <span class='cn'>TRUE</span>, useDemographicsPostObservationTime <span class='op'>=</span>
-    <span class='cn'>TRUE</span>, useDemographicsTimeInCohort <span class='op'>=</span> <span class='cn'>TRUE</span>, useDemographicsIndexYearMonth <span class='op'>=</span> <span class='cn'>TRUE</span>, <span class='op'>)</span><span class='op'>)</span>,
-  runTemporalCohortCharacterization <span class='op'>=</span> <span class='cn'>TRUE</span>,
  
-    temporalCovariateSettings <span class='op'>=</span> <span class='fu'>FeatureExtraction</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createTemporalCovariateSettings.html'>createTemporalCovariateSettings</a></span><span class='op'>(</span>useConditionOccurrence
-    <span class='op'>=</span> <span class='cn'>TRUE</span>, useDrugEraStart <span class='op'>=</span> <span class='cn'>TRUE</span>, useProcedureOccurrence <span class='op'>=</span> <span class='cn'>TRUE</span>, useMeasurement <span class='op'>=</span> <span class='cn'>TRUE</span>,
-    temporalStartDays <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='op'>-</span><span class='fl'>365</span>, <span class='op'>-</span><span class='fl'>30</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>31</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span>from <span class='op'>=</span> <span class='op'>-</span><span class='fl'>421</span>, to <span class='op'>=</span> <span class='op'>-</span><span class='fl'>31</span>, by <span class='op'>=</span> <span class='fl'>30</span><span class='op'>)</span>,
-    <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span>from <span class='op'>=</span> <span class='fl'>0</span>, to <span class='op'>=</span> <span class='fl'>390</span>, by <span class='op'>=</span> <span class='fl'>30</span><span class='op'>)</span><span class='op'>)</span>, temporalEndDays <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='op'>-</span><span class='fl'>31</span>, <span class='op'>-</span><span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>30</span>, <span class='fl'>365</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span>from
-    <span class='op'>=</span> <span class='op'>-</span><span class='fl'>391</span>, to <span class='op'>=</span> <span class='op'>-</span><span class='fl'>1</span>, by <span class='op'>=</span> <span class='fl'>30</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span>from <span class='op'>=</span> <span class='fl'>30</span>, to <span class='op'>=</span> <span class='fl'>420</span>, by <span class='op'>=</span> <span class='fl'>30</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>,
+    temporalCovariateSettings <span class='op'>=</span> <span class='fu'>FeatureExtraction</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createTemporalCovariateSettings.html'>createTemporalCovariateSettings</a></span><span class='op'>(</span>useDemographicsGender
+    <span class='op'>=</span> <span class='cn'>TRUE</span>, useDemographicsAge <span class='op'>=</span> <span class='cn'>TRUE</span>, useDemographicsAgeGroup <span class='op'>=</span> <span class='cn'>TRUE</span>,
+    useDemographicsRace <span class='op'>=</span> <span class='cn'>TRUE</span>, useDemographicsEthnicity <span class='op'>=</span> <span class='cn'>TRUE</span>, useDemographicsIndexYear
+    <span class='op'>=</span> <span class='cn'>TRUE</span>, useDemographicsIndexMonth <span class='op'>=</span> <span class='cn'>TRUE</span>, useDemographicsIndexYearMonth <span class='op'>=</span> <span class='cn'>TRUE</span>,
+    useDemographicsPriorObservationTime <span class='op'>=</span> <span class='cn'>TRUE</span>, useDemographicsPostObservationTime <span class='op'>=</span>
+    <span class='cn'>TRUE</span>, useDemographicsTimeInCohort <span class='op'>=</span> <span class='cn'>TRUE</span>, useConditionOccurrence <span class='op'>=</span> <span class='cn'>TRUE</span>,
+    useProcedureOccurrence <span class='op'>=</span> <span class='cn'>TRUE</span>, useDrugEraStart <span class='op'>=</span> <span class='cn'>TRUE</span>,      useMeasurement <span class='op'>=</span> <span class='cn'>TRUE</span>,
+    useConditionEraStart <span class='op'>=</span> <span class='cn'>TRUE</span>, useConditionEraOverlap <span class='op'>=</span> <span class='cn'>TRUE</span>, useConditionEraGroupStart
+    <span class='op'>=</span> <span class='cn'>FALSE</span>, useConditionEraGroupOverlap <span class='op'>=</span> <span class='cn'>TRUE</span>, useDrugExposure <span class='op'>=</span> <span class='cn'>FALSE</span>,
+    useDrugEraOverlap <span class='op'>=</span> <span class='cn'>FALSE</span>, useDrugEraGroupStart <span class='op'>=</span> <span class='cn'>FALSE</span>, useDrugEraGroupOverlap <span class='op'>=</span>
+    <span class='cn'>TRUE</span>, useObservation <span class='op'>=</span> <span class='cn'>TRUE</span>, useDeviceExposure <span class='op'>=</span> <span class='cn'>TRUE</span>, useCharlsonIndex <span class='op'>=</span> <span class='cn'>TRUE</span>,
+    useDcsi <span class='op'>=</span> <span class='cn'>TRUE</span>, useChads2 <span class='op'>=</span> <span class='cn'>TRUE</span>, useChads2Vasc <span class='op'>=</span> <span class='cn'>TRUE</span>, useHfrs <span class='op'>=</span> <span class='cn'>FALSE</span>,
+    temporalStartDays <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='op'>-</span><span class='fl'>365</span>, <span class='op'>-</span><span class='fl'>30</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>31</span>, <span class='op'>-</span><span class='fl'>9999</span>, <span class='op'>-</span><span class='fl'>365</span>, <span class='op'>-</span><span class='fl'>180</span>, <span class='op'>-</span><span class='fl'>30</span>, <span class='op'>-</span><span class='fl'>9999</span>, <span class='op'>-</span><span class='fl'>365</span>, <span class='op'>-</span><span class='fl'>180</span>,
+             <span class='op'>-</span><span class='fl'>30</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span>from <span class='op'>=</span> <span class='op'>-</span><span class='fl'>421</span>, to <span class='op'>=</span> <span class='op'>-</span><span class='fl'>31</span>, by <span class='op'>=</span> <span class='fl'>30</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span>from <span class='op'>=</span> <span class='fl'>0</span>, to <span class='op'>=</span> <span class='fl'>390</span>, by <span class='op'>=</span> <span class='fl'>30</span><span class='op'>)</span>,
+    <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span>from <span class='op'>=</span> <span class='op'>-</span><span class='fl'>5</span>, to <span class='op'>=</span> <span class='fl'>5</span>, by <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span>, temporalEndDays <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='op'>-</span><span class='fl'>31</span>, <span class='op'>-</span><span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>30</span>, <span class='fl'>365</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, <span class='fl'>0</span>,
+    <span class='op'>-</span><span class='fl'>1</span>, <span class='op'>-</span><span class='fl'>1</span>, <span class='op'>-</span><span class='fl'>1</span>, <span class='op'>-</span><span class='fl'>1</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span>from <span class='op'>=</span> <span class='op'>-</span><span class='fl'>391</span>, to <span class='op'>=</span> <span class='op'>-</span><span class='fl'>1</span>, by <span class='op'>=</span> <span class='fl'>30</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span>from <span class='op'>=</span> <span class='fl'>30</span>, to <span class='op'>=</span> <span class='fl'>420</span>, by <span class='op'>=</span>
+    <span class='fl'>30</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span>from <span class='op'>=</span> <span class='op'>-</span><span class='fl'>5</span>, to <span class='op'>=</span> <span class='fl'>5</span>, by <span class='op'>=</span> <span class='fl'>1</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>,
   minCellCount <span class='op'>=</span> <span class='fl'>5</span>,
-  incremental <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  incremental <span class='op'>=</span> <span class='cn'>TRUE</span>,
   incrementalFolder <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>exportFolder</span>, <span class='st'>"incremental"</span><span class='op'>)</span>
 <span class='op'>)</span></pre>
 
@@ -327,6 +333,10 @@ resolved concepts. This function call now supersedes runIncludedSourceConcepts,
 runOrphanConcepts, runBreakdownIndexEvents.</p></td>
     </tr>
     <tr>
+      <th>indexDateDiagnosticsRelativeDays</th>
+      <td><p>An array of days relative to index date to perform diagnositcs on. Default 0 - i.e. same days an index.</p></td>
+    </tr>
+    <tr>
       <th>runIncludedSourceConcepts</th>
       <td><p>(Deprecated) Generate and export the source concepts included in the cohorts?</p></td>
     </tr>
@@ -362,19 +372,10 @@ diagnostics is needed for cohort as feature characterization.</p></td>
     </tr>
     <tr>
       <th>runCohortCharacterization</th>
-      <td><p>Generate and export the cohort characterization?
-Only records with values greater than 0.0001 are returned.</p></td>
-    </tr>
-    <tr>
-      <th>covariateSettings</th>
-      <td><p>Either an object of type <code>covariateSettings</code> as created using one of
-the createCovariateSettings function in the FeatureExtraction package, or a list
-of such objects.</p></td>
-    </tr>
-    <tr>
-      <th>runTemporalCohortCharacterization</th>
       <td><p>Generate and export the temporal cohort characterization?
-Only records with values greater than 0.001 are returned.</p></td>
+Only records with values greater than 0.001 are returned.
+We use FeatureExtraction createTemporalCovariateSettings function to specificy
+covariate settings - because the results are computed over multiple time windows.</p></td>
     </tr>
     <tr>
       <th>temporalCovariateSettings</th>

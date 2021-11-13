@@ -20,7 +20,7 @@ checkFixColumnNames <-
            tableName,
            zipFileName,
            specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
-    ParallelLogger::logInfo("    - Checking and fixing column names")
+    ParallelLogger::logTrace("    - Checking and fixing column names")
     observeredNames <- colnames(table)[order(colnames(table))] %>%
       sort()
     
@@ -67,7 +67,7 @@ checkAndFixDataTypes <-
            tableName,
            zipFileName,
            specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
-    ParallelLogger::logInfo("    - checking and fixing column data types")
+    ParallelLogger::logTrace("    - checking and fixing column data types")
     tableSpecs <- specifications %>%
       filter(.data$tableName == !!tableName)
     
@@ -142,7 +142,7 @@ checkAndFixDuplicateRows <-
            tableName,
            zipFileName,
            specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
-    ParallelLogger::logInfo("    - Checking and fixing duplicate row")
+    ParallelLogger::logTrace("    - Checking and fixing duplicate row")
     primaryKeys <- specifications %>%
       dplyr::filter(.data$tableName == !!tableName &
                       .data$primaryKey == "Yes") %>%
@@ -449,7 +449,7 @@ uploadResults <- function(connectionDetails = NULL,
       # guess_max = 1e6)
       
     } else {
-      ParallelLogger::logInfo(paste0("   - ", csvFileName, " no in zip file, skipping."))
+      ParallelLogger::logInfo(paste0("   - ", csvFileName, " not in zip file, skipping for ", zipFileName, "."))
     }
   }
   invisible(lapply(unique(specifications$tableName), uploadTable))

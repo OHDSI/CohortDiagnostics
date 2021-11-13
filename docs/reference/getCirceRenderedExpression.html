@@ -153,14 +153,31 @@
     <p>Returns list with circe generated documentation</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getCirceRenderedExpression</span><span class='op'>(</span><span class='va'>cohortDefinition</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>getCirceRenderedExpression</span><span class='op'>(</span>
+  <span class='va'>cohortDefinition</span>,
+  cohortName <span class='op'>=</span> <span class='cn'>NULL</span>,
+  embedText <span class='op'>=</span> <span class='cn'>NULL</span>,
+  includeConceptSets <span class='op'>=</span> <span class='cn'>FALSE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>cohortDefinition</th>
-      <td><p>An object with a list representation of the cohort definition expression.</p></td>
+      <td><p>An R object (list) with a list representation of the cohort definition expression.</p></td>
+    </tr>
+    <tr>
+      <th>cohortName</th>
+      <td><p>Name for the cohort definition</p></td>
+    </tr>
+    <tr>
+      <th>embedText</th>
+      <td><p>Any additional text to embed in the top of circe generated content.</p></td>
+    </tr>
+    <tr>
+      <th>includeConceptSets</th>
+      <td><p>Do you want to inclued concept set in the documentation</p></td>
     </tr>
     </table>
 

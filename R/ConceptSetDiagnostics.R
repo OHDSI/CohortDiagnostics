@@ -361,9 +361,22 @@ runConceptSetDiagnostics <- function(connection = NULL,
     ) %>%
     dplyr::select(-.data$conceptId) %>%
     dplyr::rename("conceptId" = .data$sourceConceptId)
+  #getConceptId from 'Visit' and 'Place of Service' domains
+  sqlVisitPlaceOfService <- "SELECT DISTINCT CONCEPT_ID
+                      FROM @vocabulary_database_schema.concept
+                      WHERE domain_id IN ('Visit', 'Place of Service');"
+  conceptIdVisit <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                               sql = sqlVisitPlaceOfService,
+                                                               vocabulary_database_schema = vocabularyDatabaseSchema,
+                                                               snakeCaseToCamelCase = TRUE) %>% 
+    dplyr::distinct() %>% 
+    tidyr::crossing(dplyr::tibble(cohortId = cohorts$cohortId %>% unique())) %>% 
+    dplyr::select(.data$cohortId, .data$conceptId) %>% 
+    dplyr::distinct()
   conceptsCohort <- dplyr::bind_rows(conceptsCohort,
                                      conceptsCohortMapped1,
-                                     conceptsCohortMapped2) %>%
+                                     conceptsCohortMapped2,
+                                     conceptIdVisit) %>%
     dplyr::distinct()
   randomStringTableName <-
     tolower(paste0("tmp_",
@@ -1347,7 +1360,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                         	COUNT(*) concept_count
                         FROM @cohort_database_schema.@cohort_table c
                         INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
-                        	AND c.cohort_start_date = DATEADD('d', @days_relative_index, d1.@domain_start_date)
+                        	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
                         INNER JOIN #indx_concepts cu ON d1.@domain_concept_id = cu.concept_id
                         	AND c.cohort_definition_id = cu.cohort_id
                         WHERE c.cohort_definition_id IN (@cohortIds)
@@ -1375,9 +1388,9 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                         			)) concept_count
                                         FROM @cohort_database_schema.@cohort_table c
                                         INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
-                                        	AND c.cohort_start_date = DATEADD('d', @days_relative_index, d1.@domain_start_date)
+                                        	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
                                         INNER JOIN @cdm_database_schema.@domain_table d2 ON c.subject_id = d2.person_id
-                                        	AND c.cohort_start_date = DATEADD('d', @days_relative_index, d2.@domain_start_date)
+                                        	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d2.@domain_start_date
                                         	AND d1.@domain_start_date = d2.@domain_start_date
                                         	AND d1.person_id = d2.person_id
                                         INNER JOIN #indx_concepts cu1 ON d1.@domain_concept_id = cu1.concept_id
@@ -1411,9 +1424,9 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                             			)) concept_count
                                             FROM @cohort_database_schema.@cohort_table c
                                             INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
-                                            	AND c.cohort_start_date = DATEADD('d', @days_relative_index, d1.@domain_start_date)
+                                            	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
                                             INNER JOIN @cdm_database_schema.@domain_table d2 ON c.subject_id = d2.person_id
-                                            	AND c.cohort_start_date = DATEADD('d', @days_relative_index, d2.@domain_start_date)
+                                            	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d2.@domain_start_date
                                             	AND d1.@domain_start_date = d2.@domain_start_date
                                             	AND d1.person_id = d2.person_id
                                             INNER JOIN #indx_concepts cu1 ON d1.@domain_concept_id = cu1.concept_id
@@ -1444,10 +1457,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
           "   - Working on ",
           rowData$domainTable,
           ".",
-          rowData$domainConceptId,
-          " (filtered to min ",
-          minCellCount,
-          " subject count if concept id not related to cohort definition.)"
+          rowData$domainConceptId
         )
       )
       ParallelLogger::logTrace(
@@ -2000,16 +2010,16 @@ getOptimizationRecommendationForConceptSetExpression <-
       dplyr::filter(.data$includeDescendants == TRUE) %>%
       dplyr::pull(.data$conceptId)
     
-    if (!doesObjectHaveData(conceptSetConceptIdsExcluded)) {
+    if (!hasData(conceptSetConceptIdsExcluded)) {
       conceptSetConceptIdsExcluded <- 0
     }
-    if (!doesObjectHaveData(conceptSetConceptIdsDescendantsExcluded)) {
+    if (!hasData(conceptSetConceptIdsDescendantsExcluded)) {
       conceptSetConceptIdsDescendantsExcluded <- 0
     }
-    if (!doesObjectHaveData(conceptSetConceptIdsNotExcluded)) {
+    if (!hasData(conceptSetConceptIdsNotExcluded)) {
       conceptSetConceptIdsNotExcluded <- 0
     }
-    if (!doesObjectHaveData(conceptSetConceptIdsDescendantsNotExcluded)) {
+    if (!hasData(conceptSetConceptIdsDescendantsNotExcluded)) {
       conceptSetConceptIdsDescendantsNotExcluded <- 0
     }
     

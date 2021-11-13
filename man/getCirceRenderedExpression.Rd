@@ -4,10 +4,21 @@
 \alias{getCirceRenderedExpression}
 \title{Returns list with circe generated documentation}
 \usage{
-getCirceRenderedExpression(cohortDefinition)
+getCirceRenderedExpression(
+  cohortDefinition,
+  cohortName = NULL,
+  embedText = NULL,
+  includeConceptSets = FALSE
+)
 }
 \arguments{
-\item{cohortDefinition}{An object with a list representation of the cohort definition expression.}
+\item{cohortDefinition}{An R object (list) with a list representation of the cohort definition expression.}
+
+\item{cohortName}{Name for the cohort definition}
+
+\item{embedText}{Any additional text to embed in the top of circe generated content.}
+
+\item{includeConceptSets}{Do you want to inclued concept set in the documentation}
 }
 \value{
 list object

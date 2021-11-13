@@ -14,7 +14,7 @@ runCohortCharacterizationDiagnostics(
   cohortIds = NULL,
   cdmVersion = 5,
   cutOff = 1e-04,
-  covariateSettings = createDefaultCovariateSettings(),
+  covariateSettings,
   batchSize = 50
 )
 }

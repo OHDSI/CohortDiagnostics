@@ -125,27 +125,18 @@ sidebarMenu <-
         )
       )
     ),
-    if (exists("temporalCovariateValue")) {
       shiny::conditionalPanel(
-        condition = "input.tabs=='temporalCharacterization' | input.tabs =='compareTemporalCharacterization'",
+        condition = "input.tabs =='cohortCharacterization' &
+        input.charType == 'Raw'",
         shinyWidgets::pickerInput(
           inputId = "timeIdChoices",
           label = "Temporal Choice",
           choices = temporalCovariateChoices$choices,
           multiple = TRUE,
           choicesOpt = list(style = rep_len("color: black;", 999)),
-          selected = temporalCovariateChoices %>%
+          selected = temporalCovariateChoices %>% 
             dplyr::filter(stringr::str_detect(string = .data$choices,
-                                              pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')) %>% 
-            dplyr::filter(.data$timeId %in% (
-              c(
-                min(temporalCovariateChoices$timeId),
-                temporalCovariateChoices %>%
-                  dplyr::pull(.data$timeId)
-              ) %>%
-                unique() %>%
-                sort()
-            )) %>%
+                                              pattern = "Baseline1")) %>% 
             dplyr::pull(.data$choices),
           options = shinyWidgets::pickerOptions(
             actionsBox = TRUE,
@@ -156,8 +147,7 @@ sidebarMenu <-
             virtualScroll = 50
           )
         )
-      )
-    },
+      ),
     shiny::conditionalPanel(
       condition = "input.tabs != 'databaseInformation' &
       input.tabs != 'timeSeries' &
@@ -204,7 +194,8 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs == 'cohortOverlap'",
+      condition = "input.tabs == 'cohortOverlap' ||
+      input.tabs == 'cohortCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "selectedComparatorCompoundCohortNames",
         label = "Comparators",
@@ -303,6 +294,12 @@ bodyTabItems <- shinydashboard::tabItems(
                                 outputId = "downloadAllCohortDetails",
                                 label = NULL,
                                 icon = shiny::icon("download"),
+                                style = "margin-top: 5px; margin-bottom: 5px;"
+                              ),
+                              shiny::downloadButton(
+                                outputId = "exportAllCohortDetails",
+                                label = NULL,
+                                icon = shiny::icon("file-export"),
                                 style = "margin-top: 5px; margin-bottom: 5px;"
                               )
                             )
@@ -851,65 +848,97 @@ bodyTabItems <- shinydashboard::tabItems(
     tabName = "indexEventBreakdown",
     createShinyBoxFromOutputId("indexEventBreakdownSelectedCohort"),
     tags$table(width = '100%',
-      tags$tr(
-        tags$td(
-          shiny::radioButtons(
-            inputId = "indexEventBreakdownTableRadioButton",
-            label = "",
-            choices = c("All", "Standard concepts", "Non Standard Concepts"),
-            selected = "All",
-            inline = TRUE
-          )
-        ),
-        tags$td(
-          shinyWidgets::pickerInput(
-            inputId = "indexEventDomainNameFilter",
-            label = "Domain name",
-            choices = c("Visit", "Condition", "Procedure", "Observation", "Device", "Measurement", "Other"),
-            selected = c("Visit", "Condition", "Procedure", "Observation", "Device", "Measurement", "Other"),
-            inline = TRUE,
-            multiple = TRUE,
-            width = 300,
-            choicesOpt = list(style = rep_len("color: black;", 999)),
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              liveSearch = TRUE,
-              size = 10,
-              liveSearchStyle = "contains",
-              liveSearchPlaceholder = "Type here to search",
-              virtualScroll = 50
-            )
-          )
-        ),
-        tags$td(HTML("&nbsp;")),
-        tags$td(HTML("&nbsp;"),
-        tags$td(
-          shiny::radioButtons(
-            inputId = "indexEventBreakdownTableFilter",
-            label = "Display",
-            choices = c("Both", "Record Only", "Person Only"), 
-            selected = "Person Only",
-            inline = TRUE
-          )
-        ),
-        tags$td(HTML("&nbsp;")),
-        tags$td(
-          shiny::checkboxInput(
-            inputId = "indexEventBreakdownShowAsPercent",
-            label = "Show As Percent"
-          )
-        ),
-        tags$td(
-          shiny::downloadButton(
-            "saveBreakdownTable",
-            label = "",
-            icon = shiny::icon("download"),
-            style = "margin-top: 5px; margin-bottom: 5px;"
-          )
-        )
+               tags$tr(
+                 tags$td(
+                   shiny::checkboxGroupInput(
+                     inputId = "indexEventBreakdownTableRadioButton",
+                     label = "",
+                     choices = c("Resolved", "Mapped", "Recommended", "Excluded", "Other"),
+                     selected = c("Resolved", "Mapped", "Recommended", "Excluded"),
+                     inline = TRUE
+                   )
+                 ),
+                 tags$td(
+                   shinyWidgets::pickerInput(
+                     inputId = "indexEventDomainNameFilter",
+                     label = "Domain name",
+                     choices = domainOptionsInDomainTable,
+                     selected = domainOptionsInDomainTable,
+                     inline = TRUE,
+                     multiple = TRUE,
+                     width = 300,
+                     choicesOpt = list(style = rep_len("color: black;", 999)),
+                     options = shinyWidgets::pickerOptions(
+                       actionsBox = TRUE,
+                       liveSearch = TRUE,
+                       size = 10,
+                       liveSearchStyle = "contains",
+                       liveSearchPlaceholder = "Type here to search",
+                       virtualScroll = 50
+                     )
+                   )
+                 ),
+                 tags$td(HTML("&nbsp;")),
+                 tags$td(
+                   HTML("&nbsp;"),
+                   tags$td(
+                     shiny::radioButtons(
+                       inputId = "indexEventBreakdownTableFilter",
+                       label = "Display",
+                       choices = c("Both", "Records", "Persons"),
+                       selected = "Records",
+                       inline = TRUE
+                     )
+                   ),
+                   tags$td(HTML("&nbsp;")),
+                   tags$td(
+                     shiny::checkboxInput(inputId = "indexEventBreakdownShowAsPercent",
+                                          label = "Show As Percent")
+                   ),
+                   tags$td(
+                     shiny::downloadButton(
+                       "saveBreakdownTable",
+                       label = "",
+                       icon = shiny::icon("download"),
+                       style = "margin-top: 5px; margin-bottom: 5px;"
+                     )
+                   )
+                 )
+               )),
+    shiny::tabsetPanel(
+      id = "indexEventBreakbownTabset",
+      shiny::tabPanel(
+        title = "Table",
+        value = "indexEventBreakbownTableTab",
+        DT::dataTableOutput(outputId = "indexEventBreakdownTable")
       )
-    )),
-    DT::dataTableOutput(outputId = "indexEventBreakdownTable"),
+      # shiny::tabPanel(
+      #   title = "Plot",
+      #   value = "indexEventBreakbownPlotTab",
+      #   shinyWidgets::pickerInput(
+      #     inputId = "indexEventConceptIdRangeFilter",
+      #     label = "Concept Id Range :",
+      #     choices = c(),
+      #     selected = c(),
+      #     inline = TRUE,
+      #     multiple = FALSE,
+      #     width = 300,
+      #     choicesOpt = list(style = rep_len("color: black;", 999)),
+      #     options = shinyWidgets::pickerOptions(
+      #       actionsBox = TRUE,
+      #       liveSearch = TRUE,
+      #       size = 10,
+      #       liveSearchStyle = "contains",
+      #       liveSearchPlaceholder = "Type here to search",
+      #       virtualScroll = 50
+      #     )
+      #   ),
+      #   shinycssloaders::withSpinner(
+      #     plotly::plotlyOutput("indexEventBreakdownPlot", height = 1000),
+      #     type = spinnerType
+      #   )
+      # )
+    ),
     shiny::conditionalPanel(
       condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
       shinydashboard::box(
@@ -994,6 +1023,11 @@ bodyTabItems <- shinydashboard::tabItems(
               ),
               type = spinnerType
             )
+          ),
+          shiny::tabPanel(
+            title = " Co Concept",
+            value = "indexEvenCoCOnceptValueTabPanel",
+            DT::dataTableOutput(outputId = "coConceptTableForIndexEvent")
           )
         )
       )
@@ -1028,8 +1062,8 @@ bodyTabItems <- shinydashboard::tabItems(
             shiny::radioButtons(
               inputId = "visitContextPersonOrRecords",
               label = "Display",
-              choices = c("Person Only", "Record Only"),
-              selected = "Person Only",
+              choices = c("Persons", "Records"),
+              selected = "Persons",
               inline = TRUE
             )
           ),
@@ -1121,58 +1155,58 @@ bodyTabItems <- shinydashboard::tabItems(
           )
         ),
         tags$td(
-          shiny::conditionalPanel(condition = "input.charType == 'Raw'",
-                                  tags$table(tags$tr(
-                                    tags$td(
-                                      shinyWidgets::pickerInput(
-                                        inputId = "characterizationDomainNameOptions",
-                                        label = "Domain name",
-                                        choices = c(""),
-                                        selected = c(""),
-                                        inline = TRUE,
-                                        multiple = TRUE,
-                                        width = 300,
-                                        choicesOpt = list(style = rep_len("color: black;", 999)),
-                                        options = shinyWidgets::pickerOptions(
-                                          actionsBox = TRUE,
-                                          liveSearch = TRUE,
-                                          size = 10,
-                                          liveSearchStyle = "contains",
-                                          liveSearchPlaceholder = "Type here to search",
-                                          virtualScroll = 50
-                                        )
-                                      )
-                                    ),
-                                    tags$td(
-                                      shinyWidgets::pickerInput(
-                                        inputId = "characterizationAnalysisNameOptions",
-                                        label = "Analysis name",
-                                        choices = c(""),
-                                        selected = c(""),
-                                        inline = TRUE,
-                                        multiple = TRUE,
-                                        width = 300,
-                                        choicesOpt = list(style = rep_len("color: black;", 999)),
-                                        options = shinyWidgets::pickerOptions(
-                                          actionsBox = TRUE,
-                                          liveSearch = TRUE,
-                                          size = 10,
-                                          liveSearchStyle = "contains",
-                                          liveSearchPlaceholder = "Type here to search",
-                                          virtualScroll = 50
-                                        )
-                                      )
-                                    ),
-                                    tags$td(
+          tags$table(tags$tr(
+            tags$td(
+              shinyWidgets::pickerInput(
+                inputId = "characterizationDomainNameOptions",
+                label = "Domain name",
+                choices = c(""),
+                selected = c(""),
+                inline = TRUE,
+                multiple = TRUE,
+                width = 300,
+                choicesOpt = list(style = rep_len("color: black;", 999)),
+                options = shinyWidgets::pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  size = 10,
+                  liveSearchStyle = "contains",
+                  liveSearchPlaceholder = "Type here to search",
+                  virtualScroll = 50
+                )
+              )
+            ),
+            tags$td(
+              shinyWidgets::pickerInput(
+                inputId = "characterizationAnalysisNameOptions",
+                label = "Analysis name",
+                choices = c(""),
+                selected = c(""),
+                inline = TRUE,
+                multiple = TRUE,
+                width = 300,
+                choicesOpt = list(style = rep_len("color: black;", 999)),
+                options = shinyWidgets::pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  size = 10,
+                  liveSearchStyle = "contains",
+                  liveSearchPlaceholder = "Type here to search",
+                  virtualScroll = 50
+                )
+              )
+            ),
+            tags$td(
+              shiny::conditionalPanel(condition = "input.charType == 'Raw'",
                                       shiny::radioButtons(
                                         inputId = "charProportionOrContinuous",
                                         label = "",
                                         choices = c("All", "Proportion", "Continuous"),
                                         selected = "Proportion",
                                         inline = TRUE
-                                      )
-                                    )
-                                  )))
+                                      ))
+            )
+          ))
         ),
         tags$td(
           shiny::conditionalPanel(
@@ -1531,36 +1565,36 @@ bodyTabItems <- shinydashboard::tabItems(
                               title = "Data source",
                               tags$br(),
                               DT::dataTableOutput("databaseInformationTable")
+                            ),
+                            shiny::tabPanel(
+                              title = "Meta data information",
+                              tags$br(),
+                              shinydashboard::box(
+                                title = shiny::htmlOutput(outputId = "metadataInfoTitle"),
+                                collapsible = TRUE,
+                                width = NULL,
+                                collapsed = FALSE,
+                                shiny::htmlOutput(outputId = "metadataInfoDetailsText"),
+                                shinydashboard::box(
+                                  title = NULL,
+                                  collapsible = TRUE,
+                                  width = NULL,
+                                  collapsed = FALSE,
+                                  DT::dataTableOutput("packageDependencySnapShotTable")
+                                ),
+                                shinydashboard::box(
+                                  title = NULL,
+                                  collapsible = TRUE,
+                                  width = NULL,
+                                  collapsed = FALSE,
+                                  shiny::verbatimTextOutput(outputId = "argumentsAtDiagnosticsInitiationJson"),
+                                  tags$head(
+                                    tags$style("#argumentsAtDiagnosticsInitiationJson { max-height:400px};")
+                                  )
+                                  # DT::dataTableOutput("argumentsAtDiagnosticsInitiationJson")
+                                )
+                              )
                             )
-                            # shiny::tabPanel(
-                            #   title = "Meta data information",
-                            #   tags$br(),
-                            #   shinydashboard::box(
-                            #     title = shiny::htmlOutput(outputId = "metadataInfoTitle"),
-                            #     collapsible = TRUE,
-                            #     width = NULL,
-                            #     collapsed = FALSE,
-                            #     shiny::htmlOutput(outputId = "metadataInfoDetailsText"),
-                            #     shinydashboard::box(
-                            #       title = NULL,
-                            #       collapsible = TRUE,
-                            #       width = NULL,
-                            #       collapsed = FALSE,
-                            #       DT::dataTableOutput("packageDependencySnapShotTable")
-                            #     ),
-                            #     shinydashboard::box(
-                            #       title = NULL,
-                            #       collapsible = TRUE,
-                            #       width = NULL,
-                            #       collapsed = FALSE,
-                            #       shiny::verbatimTextOutput(outputId = "argumentsAtDiagnosticsInitiationJson"),
-                            #       tags$head(
-                            #         tags$style("#argumentsAtDiagnosticsInitiationJson { max-height:400px};")
-                            #       )
-                            #       # DT::dataTableOutput("argumentsAtDiagnosticsInitiationJson")
-                            #     )
-                            #   ) 
-                            # )
                           )
                      )
 )
