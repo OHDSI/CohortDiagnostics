@@ -557,7 +557,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           incremental = incremental
         )
       } else {
-        warning("Cohort Inclusion statistics file not found. Inclusion Statistis not run.")
+        warning("Cohort Inclusion statistics file not found. Inclusion Statistics not run.")
       }
     }
   }
