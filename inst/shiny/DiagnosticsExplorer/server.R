@@ -6265,40 +6265,40 @@ shiny::shinyServer(function(input, output, session) {
     }, server = TRUE)
   
   
-  ##getIndexEventBreakdownPlotData----
-  getIndexEventBreakdownPlotData <- shiny::reactive(x = {
-    if (!hasData(getIndexEventBreakdownRawTarget())) {
-      return(NULL)
-    }
-    if (!hasData(getIndexEventBreakdownTargetDataFiltered())) {
-      return(NULL)
-    }
-    filteredConceptIds <-
-      getIndexEventBreakdownTargetDataFiltered() %>% 
-      dplyr::select(.data$conceptId) %>% 
-      dplyr::distinct() %>% 
-      dplyr::mutate(sortOrder = dplyr::row_number())
-    if (!hasData(filteredConceptIds)) {
-      return(NULL)
-    }
-    data <- getIndexEventBreakdownRawTarget() %>%
-      dplyr::filter(.data$coConceptId == 0) %>%
-      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
-      dplyr::inner_join(filteredConceptIds, by = "conceptId") %>% 
-      dplyr::arrange(.data$sortOrder) %>% 
-      dplyr::select(.data$databaseId,
-                    .data$cohortId,
-                    .data$conceptId,
-                    .data$sortOrder,
-                    .data$daysRelativeIndex,
-                    .data$conceptCount,
-                    .data$subjectCount)
-    if (!hasData(data)) {
-      return(NULL)
-    }
-    return(data)
-  })
-  # 
+  # ##getIndexEventBreakdownPlotData----
+  # getIndexEventBreakdownPlotData <- shiny::reactive(x = {
+  #   if (!hasData(getIndexEventBreakdownRawTarget())) {
+  #     return(NULL)
+  #   }
+  #   if (!hasData(getIndexEventBreakdownTargetDataFiltered())) {
+  #     return(NULL)
+  #   }
+  #   filteredConceptIds <-
+  #     getIndexEventBreakdownTargetDataFiltered() %>% 
+  #     dplyr::select(.data$conceptId) %>% 
+  #     dplyr::distinct() %>% 
+  #     dplyr::mutate(sortOrder = dplyr::row_number())
+  #   if (!hasData(filteredConceptIds)) {
+  #     return(NULL)
+  #   }
+  #   data <- getIndexEventBreakdownRawTarget() %>%
+  #     dplyr::filter(.data$coConceptId == 0) %>%
+  #     dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
+  #     dplyr::inner_join(filteredConceptIds, by = "conceptId") %>% 
+  #     dplyr::arrange(.data$sortOrder) %>% 
+  #     dplyr::select(.data$databaseId,
+  #                   .data$cohortId,
+  #                   .data$conceptId,
+  #                   .data$sortOrder,
+  #                   .data$daysRelativeIndex,
+  #                   .data$conceptCount,
+  #                   .data$subjectCount)
+  #   if (!hasData(data)) {
+  #     return(NULL)
+  #   }
+  #   return(data)
+  # })
+  
   # observe({
   #   data <- getIndexEventBreakdownPlotData()
   #   if (hasData(data)) {
@@ -6359,6 +6359,7 @@ shiny::shinyServer(function(input, output, session) {
   #   
   # })
   
+  
   # # When Right slider is moved
   # observe({
   #   if (hasData(input$indexEventBreakdownConceptIdsRangeFilter[2])) {
@@ -6379,132 +6380,132 @@ shiny::shinyServer(function(input, output, session) {
   #   }
   # })
   
-  ##UpdatePicker : indexEventConceptIdRangeFilter----
-  shiny::observe({
-    if (input$indexEventBreakbownTabset == "indexEventBreakbownPlotTab") {
-      data <- getIndexEventBreakdownPlotData()
-      if (!hasData(data)) {
-        return(NULL)
-      }
-      maxSortOrder <- max(data$sortOrder %>% unique())
-      if (maxSortOrder == 0) {
-        return(NULL)
-      }
-      lowValue <- seq(from = 1,
-                      to = (floor(maxSortOrder / 25) * 25) + 1,
-                      by = 25)
-      maxValue <- lowValue + 24
-      conceptIdRange <-  paste0(lowValue, "-", maxValue)
-      shinyWidgets::updatePickerInput(
-        session = session,
-        inputId = "indexEventConceptIdRangeFilter",
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = conceptIdRange,
-        selected = conceptIdRange[1]
-      )
-    }
-  })
-  
-  ##indexEventBreakdownPlot----
-  output$indexEventBreakdownPlot <-
-    plotly::renderPlotly({
-      validate(need(
-        hasData(getIndexEventBreakdownRawTarget()),
-        "No index event breakdown data for the chosen combination."
-      ))
-      validate(
-        need(
-          hasData(getIndexEventBreakdownTargetDataFiltered()),
-          "No index event breakdown data for the chosen combination. Maybe the concept id in the selected concept id is too restrictive?"
-        )
-      )
-      
-      if (!hasData(input$indexEventConceptIdRangeFilter)) {
-        return(NULL)
-      }
-      
-      data <- getIndexEventBreakdownPlotData()
-      validate(need(
-        hasData(data),
-        "No index event breakdown data for the chosen combination."
-      ))
-      
-      # sum of all counts, irrespective of filter
-      data <- dplyr::bind_rows(
-        data,
-        data %>%
-          dplyr::filter(.data$conceptId > 0) %>% 
-          dplyr::select(
-            .data$databaseId,
-            .data$cohortId,
-            .data$daysRelativeIndex,
-            .data$conceptCount
-          ) %>%
-          dplyr::group_by(.data$databaseId,
-                          .data$cohortId,
-                          .data$daysRelativeIndex) %>%
-          dplyr::summarise(
-            "conceptCount" = sum(.data$conceptCount),
-            "sortOrder" = -2,
-            .groups = "keep"
-          ) %>%
-          dplyr::mutate(conceptId = -2,
-                        subjectCount = 0)
-      )
-      #!!!put a UI drop to select pagination
-      
-      conceptidRangeFilter <- stringr::str_split(input$indexEventConceptIdRangeFilter,"-")[[1]]
-      data <- dplyr::bind_rows(
-        data %>% 
-            dplyr::filter(.data$sortOrder >= as.integer(conceptidRangeFilter[1])) %>% 
-            dplyr::filter(.data$sortOrder < as.integer(conceptidRangeFilter[2])),
-          data %>% 
-            dplyr::filter(.data$sortOrder < 0)
-      )
-      
-      # sum of all counts, after filter
-      data <- dplyr::bind_rows(
-        data,
-        data %>%
-          dplyr::filter(.data$conceptId > 0) %>% 
-          dplyr::select(
-            .data$databaseId,
-            .data$cohortId,
-            .data$daysRelativeIndex,
-            .data$conceptCount
-          ) %>%
-          dplyr::group_by(.data$databaseId,
-                          .data$cohortId,
-                          .data$daysRelativeIndex) %>%
-          dplyr::summarise(
-            "conceptCount" = sum(.data$conceptCount),
-            "sortOrder" = -1,
-            .groups = "keep"
-          ) %>%
-          dplyr::mutate(conceptId = -1,
-                        subjectCount = 0)
-      ) %>% 
-        dplyr::arrange(.data$sortOrder)
-      
-      
-      if (input$indexEventBreakdownTableFilter == "Both") {
-        dataColumnFields <- c('conceptCount','subjectCount')
-      } else if (input$indexEventBreakdownTableFilter == "Persons") {
-        dataColumnFields <- c('subjectCount')
-      } else if (input$indexEventBreakdownTableFilter == "Records") {
-        dataColumnFields <- c('conceptCount')
-      }
-      
-      plot <- plotIndexEventBreakdown(data = data,
-                                      yAxisColumns = dataColumnFields,
-                                      showAsPercentage = input$indexEventBreakdownShowAsPercent,
-                                      logTransform = input$indexEventBreakdownShowLogTransform,
-                                      cohort = cohort,
-                                      database = database,
-                                      colorReference = colorReference,
-                                      conceptIdDetails = getIndexEventBreakdownConceptIdDetails())
-      return(plot)
-    })
+  # ##UpdatePicker : indexEventConceptIdRangeFilter----
+  # shiny::observe({
+  #   if (input$indexEventBreakbownTabset == "indexEventBreakbownPlotTab") {
+  #     data <- getIndexEventBreakdownPlotData()
+  #     if (!hasData(data)) {
+  #       return(NULL)
+  #     }
+  #     maxSortOrder <- max(data$sortOrder %>% unique())
+  #     if (maxSortOrder == 0) {
+  #       return(NULL)
+  #     }
+  #     lowValue <- seq(from = 1,
+  #                     to = (floor(maxSortOrder / 25) * 25) + 1,
+  #                     by = 25)
+  #     maxValue <- lowValue + 24
+  #     conceptIdRange <-  paste0(lowValue, "-", maxValue)
+  #     shinyWidgets::updatePickerInput(
+  #       session = session,
+  #       inputId = "indexEventConceptIdRangeFilter",
+  #       choicesOpt = list(style = rep_len("color: black;", 999)),
+  #       choices = conceptIdRange,
+  #       selected = conceptIdRange[1]
+  #     )
+  #   }
+  # })
+  # 
+  # ##indexEventBreakdownPlot----
+  # output$indexEventBreakdownPlot <-
+  #   plotly::renderPlotly({
+  #     validate(need(
+  #       hasData(getIndexEventBreakdownRawTarget()),
+  #       "No index event breakdown data for the chosen combination."
+  #     ))
+  #     validate(
+  #       need(
+  #         hasData(getIndexEventBreakdownTargetDataFiltered()),
+  #         "No index event breakdown data for the chosen combination. Maybe the concept id in the selected concept id is too restrictive?"
+  #       )
+  #     )
+  #     
+  #     if (!hasData(input$indexEventConceptIdRangeFilter)) {
+  #       return(NULL)
+  #     }
+  #     
+  #     data <- getIndexEventBreakdownPlotData()
+  #     validate(need(
+  #       hasData(data),
+  #       "No index event breakdown data for the chosen combination."
+  #     ))
+  #     
+  #     # sum of all counts, irrespective of filter
+  #     data <- dplyr::bind_rows(
+  #       data,
+  #       data %>%
+  #         dplyr::filter(.data$conceptId > 0) %>% 
+  #         dplyr::select(
+  #           .data$databaseId,
+  #           .data$cohortId,
+  #           .data$daysRelativeIndex,
+  #           .data$conceptCount
+  #         ) %>%
+  #         dplyr::group_by(.data$databaseId,
+  #                         .data$cohortId,
+  #                         .data$daysRelativeIndex) %>%
+  #         dplyr::summarise(
+  #           "conceptCount" = sum(.data$conceptCount),
+  #           "sortOrder" = -2,
+  #           .groups = "keep"
+  #         ) %>%
+  #         dplyr::mutate(conceptId = -2,
+  #                       subjectCount = 0)
+  #     )
+  #     #!!!put a UI drop to select pagination
+  #     
+  #     conceptidRangeFilter <- stringr::str_split(input$indexEventConceptIdRangeFilter,"-")[[1]]
+  #     data <- dplyr::bind_rows(
+  #       data %>% 
+  #           dplyr::filter(.data$sortOrder >= as.integer(conceptidRangeFilter[1])) %>% 
+  #           dplyr::filter(.data$sortOrder < as.integer(conceptidRangeFilter[2])),
+  #         data %>% 
+  #           dplyr::filter(.data$sortOrder < 0)
+  #     )
+  #     
+  #     # sum of all counts, after filter
+  #     data <- dplyr::bind_rows(
+  #       data,
+  #       data %>%
+  #         dplyr::filter(.data$conceptId > 0) %>% 
+  #         dplyr::select(
+  #           .data$databaseId,
+  #           .data$cohortId,
+  #           .data$daysRelativeIndex,
+  #           .data$conceptCount
+  #         ) %>%
+  #         dplyr::group_by(.data$databaseId,
+  #                         .data$cohortId,
+  #                         .data$daysRelativeIndex) %>%
+  #         dplyr::summarise(
+  #           "conceptCount" = sum(.data$conceptCount),
+  #           "sortOrder" = -1,
+  #           .groups = "keep"
+  #         ) %>%
+  #         dplyr::mutate(conceptId = -1,
+  #                       subjectCount = 0)
+  #     ) %>% 
+  #       dplyr::arrange(.data$sortOrder)
+  #     
+  #     
+  #     if (input$indexEventBreakdownTableFilter == "Both") {
+  #       dataColumnFields <- c('conceptCount','subjectCount')
+  #     } else if (input$indexEventBreakdownTableFilter == "Persons") {
+  #       dataColumnFields <- c('subjectCount')
+  #     } else if (input$indexEventBreakdownTableFilter == "Records") {
+  #       dataColumnFields <- c('conceptCount')
+  #     }
+  #     
+  #     plot <- plotIndexEventBreakdown(data = data,
+  #                                     yAxisColumns = dataColumnFields,
+  #                                     showAsPercentage = input$indexEventBreakdownShowAsPercent,
+  #                                     logTransform = input$indexEventBreakdownShowLogTransform,
+  #                                     cohort = cohort,
+  #                                     database = database,
+  #                                     colorReference = colorReference,
+  #                                     conceptIdDetails = getIndexEventBreakdownConceptIdDetails())
+  #     return(plot)
+  #   })
   
   ##output: conceptSetSynonymsForIndexEventBreakdown----
   output$conceptSetSynonymsForIndexEventBreakdown <- shiny::renderUI(expr = {

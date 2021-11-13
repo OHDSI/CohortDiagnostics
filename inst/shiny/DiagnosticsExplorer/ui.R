@@ -911,33 +911,33 @@ bodyTabItems <- shinydashboard::tabItems(
         title = "Table",
         value = "indexEventBreakbownTableTab",
         DT::dataTableOutput(outputId = "indexEventBreakdownTable")
-      ),
-      shiny::tabPanel(
-        title = "Plot",
-        value = "indexEventBreakbownPlotTab",
-        shinyWidgets::pickerInput(
-          inputId = "indexEventConceptIdRangeFilter",
-          label = "Concept Id Range :",
-          choices = c(),
-          selected = c(),
-          inline = TRUE,
-          multiple = FALSE,
-          width = 300,
-          choicesOpt = list(style = rep_len("color: black;", 999)),
-          options = shinyWidgets::pickerOptions(
-            actionsBox = TRUE,
-            liveSearch = TRUE,
-            size = 10,
-            liveSearchStyle = "contains",
-            liveSearchPlaceholder = "Type here to search",
-            virtualScroll = 50
-          )
-        ),
-        shinycssloaders::withSpinner(
-          plotly::plotlyOutput("indexEventBreakdownPlot", height = 1000),
-          type = spinnerType
-        )
       )
+      # shiny::tabPanel(
+      #   title = "Plot",
+      #   value = "indexEventBreakbownPlotTab",
+      #   shinyWidgets::pickerInput(
+      #     inputId = "indexEventConceptIdRangeFilter",
+      #     label = "Concept Id Range :",
+      #     choices = c(),
+      #     selected = c(),
+      #     inline = TRUE,
+      #     multiple = FALSE,
+      #     width = 300,
+      #     choicesOpt = list(style = rep_len("color: black;", 999)),
+      #     options = shinyWidgets::pickerOptions(
+      #       actionsBox = TRUE,
+      #       liveSearch = TRUE,
+      #       size = 10,
+      #       liveSearchStyle = "contains",
+      #       liveSearchPlaceholder = "Type here to search",
+      #       virtualScroll = 50
+      #     )
+      #   ),
+      #   shinycssloaders::withSpinner(
+      #     plotly::plotlyOutput("indexEventBreakdownPlot", height = 1000),
+      #     type = spinnerType
+      #   )
+      # )
     ),
     shiny::conditionalPanel(
       condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
