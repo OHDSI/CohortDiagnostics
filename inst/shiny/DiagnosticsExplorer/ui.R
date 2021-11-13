@@ -125,27 +125,18 @@ sidebarMenu <-
         )
       )
     ),
-    if (exists("temporalCovariateValue")) {
       shiny::conditionalPanel(
-        condition = "input.tabs=='temporalCharacterization' | input.tabs =='compareTemporalCharacterization'",
+        condition = "input.tabs =='cohortCharacterization' &
+        input.charType == 'Raw'",
         shinyWidgets::pickerInput(
           inputId = "timeIdChoices",
           label = "Temporal Choice",
           choices = temporalCovariateChoices$choices,
           multiple = TRUE,
           choicesOpt = list(style = rep_len("color: black;", 999)),
-          selected = temporalCovariateChoices %>%
+          selected = temporalCovariateChoices %>% 
             dplyr::filter(stringr::str_detect(string = .data$choices,
-                                              pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')) %>% 
-            dplyr::filter(.data$timeId %in% (
-              c(
-                min(temporalCovariateChoices$timeId),
-                temporalCovariateChoices %>%
-                  dplyr::pull(.data$timeId)
-              ) %>%
-                unique() %>%
-                sort()
-            )) %>%
+                                              pattern = "Baseline1")) %>% 
             dplyr::pull(.data$choices),
           options = shinyWidgets::pickerOptions(
             actionsBox = TRUE,
@@ -156,8 +147,7 @@ sidebarMenu <-
             virtualScroll = 50
           )
         )
-      )
-    },
+      ),
     shiny::conditionalPanel(
       condition = "input.tabs != 'databaseInformation' &
       input.tabs != 'timeSeries' &
@@ -921,33 +911,33 @@ bodyTabItems <- shinydashboard::tabItems(
         title = "Table",
         value = "indexEventBreakbownTableTab",
         DT::dataTableOutput(outputId = "indexEventBreakdownTable")
-      ),
-      shiny::tabPanel(
-        title = "Plot",
-        value = "indexEventBreakbownPlotTab",
-        shinyWidgets::pickerInput(
-          inputId = "indexEventConceptIdRangeFilter",
-          label = "Concept Id Range :",
-          choices = c(),
-          selected = c(),
-          inline = TRUE,
-          multiple = FALSE,
-          width = 300,
-          choicesOpt = list(style = rep_len("color: black;", 999)),
-          options = shinyWidgets::pickerOptions(
-            actionsBox = TRUE,
-            liveSearch = TRUE,
-            size = 10,
-            liveSearchStyle = "contains",
-            liveSearchPlaceholder = "Type here to search",
-            virtualScroll = 50
-          )
-        ),
-        shinycssloaders::withSpinner(
-          plotly::plotlyOutput("indexEventBreakdownPlot", height = 1000),
-          type = spinnerType
-        )
       )
+      # shiny::tabPanel(
+      #   title = "Plot",
+      #   value = "indexEventBreakbownPlotTab",
+      #   shinyWidgets::pickerInput(
+      #     inputId = "indexEventConceptIdRangeFilter",
+      #     label = "Concept Id Range :",
+      #     choices = c(),
+      #     selected = c(),
+      #     inline = TRUE,
+      #     multiple = FALSE,
+      #     width = 300,
+      #     choicesOpt = list(style = rep_len("color: black;", 999)),
+      #     options = shinyWidgets::pickerOptions(
+      #       actionsBox = TRUE,
+      #       liveSearch = TRUE,
+      #       size = 10,
+      #       liveSearchStyle = "contains",
+      #       liveSearchPlaceholder = "Type here to search",
+      #       virtualScroll = 50
+      #     )
+      #   ),
+      #   shinycssloaders::withSpinner(
+      #     plotly::plotlyOutput("indexEventBreakdownPlot", height = 1000),
+      #     type = spinnerType
+      #   )
+      # )
     ),
     shiny::conditionalPanel(
       condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",

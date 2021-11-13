@@ -938,7 +938,19 @@ shiny::shinyServer(function(input, output, session) {
     data <-  getCohortSortedByCohortId() %>%
       dplyr::select(cohort = .data$shortName,
                     .data$cohortId,
-                    .data$cohortName)
+                    .data$cohortName) %>%
+      dplyr::mutate(cohortName = stringr::str_wrap(
+        string = .data$cohortName,
+        width = 80,
+        exdent = 1
+      )) %>%
+      dplyr::mutate(
+        cohortName = stringr::str_replace_all(
+          string = .data$cohortName,
+          pattern = stringr::fixed(pattern = "\n"),
+          replacement = "<br/>"
+        )
+      )
     return(data)
   })
   ###output: cohortDefinitionTable----
@@ -2117,7 +2129,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = 1,
+        countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$targetCohortInclusionRulesAsPercent
@@ -2975,21 +2987,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$targetCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$targetCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -3011,7 +3023,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnTarget 
@@ -3047,21 +3059,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$targetCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$targetCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -3084,7 +3096,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnTarget
@@ -3118,21 +3130,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$targetCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$targetCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -3154,7 +3166,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnTarget 
@@ -3182,21 +3194,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$targetCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$targetCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -3219,7 +3231,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnTarget 
@@ -3398,7 +3410,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = 1,
+        countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$comparatorCohortInclusionRulesAsPercent
@@ -3766,21 +3778,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$comparatorCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$comparatorCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$comparatorCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -3803,7 +3815,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnComparator
@@ -3838,21 +3850,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$comparatorCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$comparatorCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$comparatorCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -3875,7 +3887,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnComparator
@@ -3906,21 +3918,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$comparatorCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$comparatorCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$comparatorCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -3943,7 +3955,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnComparator
@@ -3985,21 +3997,21 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$targetCohortConceptSetColumnFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("person")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$targetCohortConceptSetColumnFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(
             string = tolower(dataColumnFields),
             pattern = tolower("record")
           )]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -4022,7 +4034,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$showAsPercentageColumnTarget 
@@ -4284,21 +4296,21 @@ shiny::shinyServer(function(input, output, session) {
         "records")
     if (input$targetCohortConceptSetColumnFilter == "Both") {
       dataColumnFields <- dataColumnFields
-      sketchLevel <- 2
+      countLocation <- 2
     } else if (input$targetCohortConceptSetColumnFilter == "Persons") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(
           string = tolower(dataColumnFields),
           pattern = tolower("person")
         )]
-      sketchLevel <- 1
+      countLocation <- 1
     } else if (input$targetCohortConceptSetColumnFilter == "Records") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(
           string = tolower(dataColumnFields),
           pattern = tolower("record")
         )]
-      sketchLevel <- 1
+      countLocation <- 1
     }
     
     countsForHeader <-
@@ -4320,7 +4332,7 @@ shiny::shinyServer(function(input, output, session) {
       data = data,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
-      sketchLevel = sketchLevel,
+      countLocation = countLocation,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
       showResultsAsPercent = input$showAsPercentageColumnTarget 
@@ -4431,7 +4443,7 @@ shiny::shinyServer(function(input, output, session) {
       data = data,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
-      sketchLevel = 1,
+      countLocation = 1,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
       showResultsAsPercent = FALSE
@@ -5098,7 +5110,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = 1,
+        countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$inclusionRuleShowAsPercentInCohortCount #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
@@ -6210,17 +6222,17 @@ shiny::shinyServer(function(input, output, session) {
           "records")
       if (input$indexEventBreakdownTableFilter == "Both") {
         dataColumnFields <- dataColumnFields
-        sketchLevel <- 2
+        countLocation <- 2
       } else if (input$indexEventBreakdownTableFilter == "Persons") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
                                                pattern = tolower("person"))]
-        sketchLevel <- 1
+        countLocation <- 1
       } else if (input$indexEventBreakdownTableFilter == "Records") {
         dataColumnFields <-
           dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
                                                pattern = tolower("record"))]
-        sketchLevel <- 1
+        countLocation <- 1
       }
       
       countsForHeader <-
@@ -6242,7 +6254,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showResultsAsPercent = input$indexEventBreakdownShowAsPercent, 
@@ -6253,40 +6265,40 @@ shiny::shinyServer(function(input, output, session) {
     }, server = TRUE)
   
   
-  ##getIndexEventBreakdownPlotData----
-  getIndexEventBreakdownPlotData <- shiny::reactive(x = {
-    if (!hasData(getIndexEventBreakdownRawTarget())) {
-      return(NULL)
-    }
-    if (!hasData(getIndexEventBreakdownTargetDataFiltered())) {
-      return(NULL)
-    }
-    filteredConceptIds <-
-      getIndexEventBreakdownTargetDataFiltered() %>% 
-      dplyr::select(.data$conceptId) %>% 
-      dplyr::distinct() %>% 
-      dplyr::mutate(sortOrder = dplyr::row_number())
-    if (!hasData(filteredConceptIds)) {
-      return(NULL)
-    }
-    data <- getIndexEventBreakdownRawTarget() %>%
-      dplyr::filter(.data$coConceptId == 0) %>%
-      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
-      dplyr::inner_join(filteredConceptIds, by = "conceptId") %>% 
-      dplyr::arrange(.data$sortOrder) %>% 
-      dplyr::select(.data$databaseId,
-                    .data$cohortId,
-                    .data$conceptId,
-                    .data$sortOrder,
-                    .data$daysRelativeIndex,
-                    .data$conceptCount,
-                    .data$subjectCount)
-    if (!hasData(data)) {
-      return(NULL)
-    }
-    return(data)
-  })
-  # 
+  # ##getIndexEventBreakdownPlotData----
+  # getIndexEventBreakdownPlotData <- shiny::reactive(x = {
+  #   if (!hasData(getIndexEventBreakdownRawTarget())) {
+  #     return(NULL)
+  #   }
+  #   if (!hasData(getIndexEventBreakdownTargetDataFiltered())) {
+  #     return(NULL)
+  #   }
+  #   filteredConceptIds <-
+  #     getIndexEventBreakdownTargetDataFiltered() %>% 
+  #     dplyr::select(.data$conceptId) %>% 
+  #     dplyr::distinct() %>% 
+  #     dplyr::mutate(sortOrder = dplyr::row_number())
+  #   if (!hasData(filteredConceptIds)) {
+  #     return(NULL)
+  #   }
+  #   data <- getIndexEventBreakdownRawTarget() %>%
+  #     dplyr::filter(.data$coConceptId == 0) %>%
+  #     dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
+  #     dplyr::inner_join(filteredConceptIds, by = "conceptId") %>% 
+  #     dplyr::arrange(.data$sortOrder) %>% 
+  #     dplyr::select(.data$databaseId,
+  #                   .data$cohortId,
+  #                   .data$conceptId,
+  #                   .data$sortOrder,
+  #                   .data$daysRelativeIndex,
+  #                   .data$conceptCount,
+  #                   .data$subjectCount)
+  #   if (!hasData(data)) {
+  #     return(NULL)
+  #   }
+  #   return(data)
+  # })
+  
   # observe({
   #   data <- getIndexEventBreakdownPlotData()
   #   if (hasData(data)) {
@@ -6347,6 +6359,7 @@ shiny::shinyServer(function(input, output, session) {
   #   
   # })
   
+  
   # # When Right slider is moved
   # observe({
   #   if (hasData(input$indexEventBreakdownConceptIdsRangeFilter[2])) {
@@ -6367,128 +6380,132 @@ shiny::shinyServer(function(input, output, session) {
   #   }
   # })
   
-  ##UpdatePicker : indexEventConceptIdRangeFilter----
-  shiny::observe({
-    if(input$indexEventBreakbownTabset == "indexEventBreakbownPlotTab") {
-      data <- getIndexEventBreakdownPlotData()
-      maxSortOrder <- max(data$sortOrder %>% unique())
-      conceptIdRange <-
-        paste0((1:floor(maxSortOrder / 25) * 25) - 24, "-", 1:floor(maxSortOrder / 25) * 25)
-      if (maxSortOrder %% 25 != 0) {
-        conceptIdRange <- c(conceptIdRange,
-                            paste0(floor(maxSortOrder / 25) * 25, "-", maxSortOrder))
-      }
-      shinyWidgets::updatePickerInput(
-        session = session,
-        inputId = "indexEventConceptIdRangeFilter",
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = conceptIdRange,
-        selected = conceptIdRange[1]
-      )
-    }
-    
-  })
-  
-  ##indexEventBreakdownPlot----
-  output$indexEventBreakdownPlot <-
-    plotly::renderPlotly({
-      validate(need(
-        hasData(getIndexEventBreakdownRawTarget()),
-        "No index event breakdown data for the chosen combination."
-      ))
-      validate(
-        need(
-          hasData(getIndexEventBreakdownTargetDataFiltered()),
-          "No index event breakdown data for the chosen combination. Maybe the concept id in the selected concept id is too restrictive?"
-        )
-      )
-      
-      if (!hasData(input$indexEventConceptIdRangeFilter)) {
-        return(NULL)
-      }
-      
-      data <- getIndexEventBreakdownPlotData()
-      validate(need(
-        hasData(data),
-        "No index event breakdown data for the chosen combination."
-      ))
-      
-      # sum of all counts, irrespective of filter
-      data <- dplyr::bind_rows(
-        data,
-        data %>%
-          dplyr::filter(.data$conceptId > 0) %>% 
-          dplyr::select(
-            .data$databaseId,
-            .data$cohortId,
-            .data$daysRelativeIndex,
-            .data$conceptCount
-          ) %>%
-          dplyr::group_by(.data$databaseId,
-                          .data$cohortId,
-                          .data$daysRelativeIndex) %>%
-          dplyr::summarise(
-            "conceptCount" = sum(.data$conceptCount),
-            "sortOrder" = -2,
-            .groups = "keep"
-          ) %>%
-          dplyr::mutate(conceptId = -2,
-                        subjectCount = 0)
-      )
-      #!!!put a UI drop to select pagination
-      
-      conceptidRangeFilter <- stringr::str_split(input$indexEventConceptIdRangeFilter,"-")[[1]]
-      data <- dplyr::bind_rows(
-        data %>% 
-            dplyr::filter(.data$sortOrder >= as.integer(conceptidRangeFilter[1])) %>% 
-            dplyr::filter(.data$sortOrder < as.integer(conceptidRangeFilter[2])),
-          data %>% 
-            dplyr::filter(.data$sortOrder < 0)
-      )
-      
-      # sum of all counts, after filter
-      data <- dplyr::bind_rows(
-        data,
-        data %>%
-          dplyr::filter(.data$conceptId > 0) %>% 
-          dplyr::select(
-            .data$databaseId,
-            .data$cohortId,
-            .data$daysRelativeIndex,
-            .data$conceptCount
-          ) %>%
-          dplyr::group_by(.data$databaseId,
-                          .data$cohortId,
-                          .data$daysRelativeIndex) %>%
-          dplyr::summarise(
-            "conceptCount" = sum(.data$conceptCount),
-            "sortOrder" = -1,
-            .groups = "keep"
-          ) %>%
-          dplyr::mutate(conceptId = -1,
-                        subjectCount = 0)
-      ) %>% 
-        dplyr::arrange(.data$sortOrder)
-      
-      
-      if (input$indexEventBreakdownTableFilter == "Both") {
-        dataColumnFields <- c('conceptCount','subjectCount')
-      } else if (input$indexEventBreakdownTableFilter == "Persons") {
-        dataColumnFields <- c('subjectCount')
-      } else if (input$indexEventBreakdownTableFilter == "Records") {
-        dataColumnFields <- c('conceptCount')
-      }
-      
-      plot <- plotIndexEventBreakdown(data = data,
-                                      yAxisColumns = dataColumnFields,
-                                      showAsPercentage = input$indexEventBreakdownShowAsPercent,
-                                      logTransform = input$indexEventBreakdownShowLogTransform,
-                                      cohort = cohort,
-                                      database = database,
-                                      colorReference = colorReference,
-                                      conceptIdDetails = getIndexEventBreakdownConceptIdDetails())
-      return(plot)
-    })
+  # ##UpdatePicker : indexEventConceptIdRangeFilter----
+  # shiny::observe({
+  #   if (input$indexEventBreakbownTabset == "indexEventBreakbownPlotTab") {
+  #     data <- getIndexEventBreakdownPlotData()
+  #     if (!hasData(data)) {
+  #       return(NULL)
+  #     }
+  #     maxSortOrder <- max(data$sortOrder %>% unique())
+  #     if (maxSortOrder == 0) {
+  #       return(NULL)
+  #     }
+  #     lowValue <- seq(from = 1,
+  #                     to = (floor(maxSortOrder / 25) * 25) + 1,
+  #                     by = 25)
+  #     maxValue <- lowValue + 24
+  #     conceptIdRange <-  paste0(lowValue, "-", maxValue)
+  #     shinyWidgets::updatePickerInput(
+  #       session = session,
+  #       inputId = "indexEventConceptIdRangeFilter",
+  #       choicesOpt = list(style = rep_len("color: black;", 999)),
+  #       choices = conceptIdRange,
+  #       selected = conceptIdRange[1]
+  #     )
+  #   }
+  # })
+  # 
+  # ##indexEventBreakdownPlot----
+  # output$indexEventBreakdownPlot <-
+  #   plotly::renderPlotly({
+  #     validate(need(
+  #       hasData(getIndexEventBreakdownRawTarget()),
+  #       "No index event breakdown data for the chosen combination."
+  #     ))
+  #     validate(
+  #       need(
+  #         hasData(getIndexEventBreakdownTargetDataFiltered()),
+  #         "No index event breakdown data for the chosen combination. Maybe the concept id in the selected concept id is too restrictive?"
+  #       )
+  #     )
+  #     
+  #     if (!hasData(input$indexEventConceptIdRangeFilter)) {
+  #       return(NULL)
+  #     }
+  #     
+  #     data <- getIndexEventBreakdownPlotData()
+  #     validate(need(
+  #       hasData(data),
+  #       "No index event breakdown data for the chosen combination."
+  #     ))
+  #     
+  #     # sum of all counts, irrespective of filter
+  #     data <- dplyr::bind_rows(
+  #       data,
+  #       data %>%
+  #         dplyr::filter(.data$conceptId > 0) %>% 
+  #         dplyr::select(
+  #           .data$databaseId,
+  #           .data$cohortId,
+  #           .data$daysRelativeIndex,
+  #           .data$conceptCount
+  #         ) %>%
+  #         dplyr::group_by(.data$databaseId,
+  #                         .data$cohortId,
+  #                         .data$daysRelativeIndex) %>%
+  #         dplyr::summarise(
+  #           "conceptCount" = sum(.data$conceptCount),
+  #           "sortOrder" = -2,
+  #           .groups = "keep"
+  #         ) %>%
+  #         dplyr::mutate(conceptId = -2,
+  #                       subjectCount = 0)
+  #     )
+  #     #!!!put a UI drop to select pagination
+  #     
+  #     conceptidRangeFilter <- stringr::str_split(input$indexEventConceptIdRangeFilter,"-")[[1]]
+  #     data <- dplyr::bind_rows(
+  #       data %>% 
+  #           dplyr::filter(.data$sortOrder >= as.integer(conceptidRangeFilter[1])) %>% 
+  #           dplyr::filter(.data$sortOrder < as.integer(conceptidRangeFilter[2])),
+  #         data %>% 
+  #           dplyr::filter(.data$sortOrder < 0)
+  #     )
+  #     
+  #     # sum of all counts, after filter
+  #     data <- dplyr::bind_rows(
+  #       data,
+  #       data %>%
+  #         dplyr::filter(.data$conceptId > 0) %>% 
+  #         dplyr::select(
+  #           .data$databaseId,
+  #           .data$cohortId,
+  #           .data$daysRelativeIndex,
+  #           .data$conceptCount
+  #         ) %>%
+  #         dplyr::group_by(.data$databaseId,
+  #                         .data$cohortId,
+  #                         .data$daysRelativeIndex) %>%
+  #         dplyr::summarise(
+  #           "conceptCount" = sum(.data$conceptCount),
+  #           "sortOrder" = -1,
+  #           .groups = "keep"
+  #         ) %>%
+  #         dplyr::mutate(conceptId = -1,
+  #                       subjectCount = 0)
+  #     ) %>% 
+  #       dplyr::arrange(.data$sortOrder)
+  #     
+  #     
+  #     if (input$indexEventBreakdownTableFilter == "Both") {
+  #       dataColumnFields <- c('conceptCount','subjectCount')
+  #     } else if (input$indexEventBreakdownTableFilter == "Persons") {
+  #       dataColumnFields <- c('subjectCount')
+  #     } else if (input$indexEventBreakdownTableFilter == "Records") {
+  #       dataColumnFields <- c('conceptCount')
+  #     }
+  #     
+  #     plot <- plotIndexEventBreakdown(data = data,
+  #                                     yAxisColumns = dataColumnFields,
+  #                                     showAsPercentage = input$indexEventBreakdownShowAsPercent,
+  #                                     logTransform = input$indexEventBreakdownShowLogTransform,
+  #                                     cohort = cohort,
+  #                                     database = database,
+  #                                     colorReference = colorReference,
+  #                                     conceptIdDetails = getIndexEventBreakdownConceptIdDetails())
+  #     return(plot)
+  #   })
   
   ##output: conceptSetSynonymsForIndexEventBreakdown----
   output$conceptSetSynonymsForIndexEventBreakdown <- shiny::renderUI(expr = {
@@ -6499,46 +6516,41 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  #!!!!!!!! should be same as cohort - code duplication
   ##output: conceptBrowserTableForIndexEvent----
   output$conceptBrowserTableForIndexEvent <- DT::renderDT(expr = {
     if (hasData(consolidateCohortDefinitionActiveSideTarget())) {
       conceptId <- consolidatedConceptIdTarget()
     }
     data <- conceptSetBrowserData()
-    validate(need(
-      hasData(data),
-      "No information for selected concept id."
-    ))
-
-    keyColumnFields <- c("conceptId", 
-                         "conceptName",
-                         "vocabularyId",
-                         "domainId",
-                         "standardConcept",
-                         "levelsOfSeparation",
-                         "relationshipId")
+    validate(need(hasData(data),
+                  "No information for selected concept id."))
+    
+    keyColumnFields <- c(
+      "conceptId",
+      "conceptName",
+      "vocabularyId",
+      "domainId",
+      "standardConcept",
+      "levelsOfSeparation",
+      "relationshipId"
+    )
     #depending on user selection - what data Column Fields Will Be Presented?
     dataColumnFields <-
       c("persons",
         "records")
     if (input$indexEventBreakdownTableFilter == "Both") {
       dataColumnFields <- dataColumnFields
-      sketchLevel <- 2
+      countLocation <- 2
     } else if (input$indexEventBreakdownTableFilter == "Persons") {
       dataColumnFields <-
-        dataColumnFields[stringr::str_detect(
-          string = tolower(dataColumnFields),
-          pattern = tolower("person")
-        )]
-      sketchLevel <- 1
+        dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
+                                             pattern = tolower("person"))]
+      countLocation <- 1
     } else if (input$indexEventBreakdownTableFilter == "Records") {
       dataColumnFields <-
-        dataColumnFields[stringr::str_detect(
-          string = tolower(dataColumnFields),
-          pattern = tolower("record")
-        )]
-      sketchLevel <- 1
+        dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
+                                             pattern = tolower("record"))]
+      countLocation <- 1
     }
     
     countsForHeader <-
@@ -6560,7 +6572,7 @@ shiny::shinyServer(function(input, output, session) {
       data = data,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
-      sketchLevel = sketchLevel,
+      countLocation = countLocation,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
       showResultsAsPercent = input$indexEventBreakdownShowAsPercent
@@ -6601,18 +6613,20 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
         dplyr::rename("records" = .data$conceptCount,
                       "persons" = .data$subjectCount)
-      tsibbleDataFromSTLModel <- getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
-                                                                            valueFields = c("records", "persons"))
-
+      tsibbleDataFromSTLModel <-
+        getStlModelOutputForTsibbleDataValueFields(tsibbleData = data,
+                                                   valueFields = c("records", "persons"))
+      
       conceptName <- getMetadataForConceptId()$concept %>%
         dplyr::filter(.data$conceptId == activeSelected()$conceptId) %>%
         dplyr::pull(.data$conceptName)
-
-      conceptSynonym <- getMetadataForConceptId()$conceptSynonym$conceptSynonymName %>%
+      
+      conceptSynonym <-
+        getMetadataForConceptId()$conceptSynonym$conceptSynonymName %>%
         unique() %>%
         sort() %>%
         paste0(collapse = ", ")
-
+      
       plot <- plotTimeSeriesForCohortDefinitionFromTsibble(
         stlModeledTsibbleData = tsibbleDataFromSTLModel,
         conceptId = activeSelected()$conceptId,
@@ -6630,16 +6644,20 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(getIndexEventBreakdownConceptIdDetails())) {
       return(NULL)
     }
-    data <- getIndexEventBreakdownRawTarget() %>% 
-      dplyr::filter(.data$daysRelativeIndex == 0) %>% 
-      dplyr::filter(.data$conceptId %in% c(activeSelected()$conceptId)) %>% 
-      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>% 
-      dplyr::inner_join(getIndexEventBreakdownConceptIdDetails() %>% 
-                          dplyr::select(.data$conceptId,
-                                        .data$conceptName,
-                                        .data$vocabularyId,
-                                        .data$standardConcept), 
-                        by = c("coConceptId" = "conceptId")) %>% 
+    data <- getIndexEventBreakdownRawTarget() %>%
+      dplyr::filter(.data$daysRelativeIndex == 0) %>%
+      dplyr::filter(.data$conceptId %in% c(activeSelected()$conceptId)) %>%
+      dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
+      dplyr::inner_join(
+        getIndexEventBreakdownConceptIdDetails() %>%
+          dplyr::select(
+            .data$conceptId,
+            .data$conceptName,
+            .data$vocabularyId,
+            .data$standardConcept
+          ),
+        by = c("coConceptId" = "conceptId")
+      ) %>%
       dplyr::rename("persons" = .data$subjectCount,
                     "records" = .data$conceptCount)
     if (!hasData(data)) {
@@ -6650,10 +6668,8 @@ shiny::shinyServer(function(input, output, session) {
   output$coConceptTableForIndexEvent <- DT::renderDataTable(expr = {
     data <- getCoCOnceptForIndexEvent()
     
-    validate(need(
-      hasData(data),
-      "No information for selected concept id."
-    ))
+    validate(need(hasData(data),
+                  "No information for selected concept id."))
     
     keyColumnFields <- c("conceptId",
                          "conceptName",
@@ -6665,17 +6681,17 @@ shiny::shinyServer(function(input, output, session) {
         "records")
     if (input$indexEventBreakdownTableFilter == "Both") {
       dataColumnFields <- dataColumnFields
-      sketchLevel <- 2
+      countLocation <- 2
     } else if (input$indexEventBreakdownTableFilter == "Persons") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
                                              pattern = tolower("person"))]
-      sketchLevel <- 1
+      countLocation <- 1
     } else if (input$indexEventBreakdownTableFilter == "Records") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
                                              pattern = tolower("record"))]
-      sketchLevel <- 1
+      countLocation <- 1
     }
     
     countsForHeader <-
@@ -6697,7 +6713,7 @@ shiny::shinyServer(function(input, output, session) {
       data = data,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
-      sketchLevel = sketchLevel,
+      countLocation = countLocation,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
       showResultsAsPercent = input$indexEventBreakdownShowAsPercent
@@ -6913,7 +6929,7 @@ shiny::shinyServer(function(input, output, session) {
       data = data,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
-      sketchLevel = 1,
+      countLocation = 1,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
       showResultsAsPercent = (input$visitContextValueFilter == "Percentage")
@@ -7203,9 +7219,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     dataComparator <- getMultipleCharacterizationDataComparator()
-    if (!hasData(consolidatedCohortIdComparator())) {
-      return(NULL)
-    }
+    
     data <- list()
     data$analysisRef <- dplyr::bind_rows(dataTarget$analysisRef,
                                          dataComparator$analysisRef) %>%
@@ -7230,21 +7244,6 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::bind_rows(dataTarget$temporalTimeRef,
                        dataComparator$temporalTimeRef) %>%
       dplyr::distinct()
-    return(data)
-  })
-
-  
-  # ###getAnalysisNameOptionsForCharacterization----
-  getAnalysisNameOptionsForCharacterization <- shiny::reactive({
-    if (!exists("analysisRef")) {
-      return(NULL)
-    }
-    if (!hasData(analysisRef)) {
-      return(NULL)
-    }
-    data <- analysisRef$analysisName %>%
-      unique() %>%
-      sort()
     return(data)
   })
   
@@ -7276,7 +7275,7 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  # ###Update: characterizationAnalysisNameOptions----
+  ####Update: characterizationAnalysisNameOptions----
   shiny::observe({
     if (!exists("analysisRef")) {
       return(NULL)
@@ -7327,20 +7326,30 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    analysisIdToFilter <- getMultipleCharacterizationData()$analysisRef %>% 
-      dplyr::filter(.data$domainId %in% c(input$characterizationDomainNameOptions)) %>% 
-      dplyr::filter(.data$analysisName %in% c(input$characterizationAnalysisNameOptions)) %>% 
-      dplyr::pull(.data$analysisId) %>% 
+    if (!hasData(input$characterizationDomainNameOptions)) {
+      return(NULL)
+    }
+    if (!hasData(input$characterizationAnalysisNameOptions)) {
+      return(NULL)
+    }
+    analysisIdToFilter <-
+      getMultipleCharacterizationData()$analysisRef %>%
+      dplyr::filter(.data$domainId %in% c(input$characterizationDomainNameOptions)) %>%
+      dplyr::filter(.data$analysisName %in% c(input$characterizationAnalysisNameOptions)) %>%
+      dplyr::pull(.data$analysisId) %>%
       unique()
     if (!hasData(analysisIdToFilter)) {
       return(NULL)
     }
     covariatesTofilter <-
-      getMultipleCharacterizationData()$covariateRef %>% 
+      getMultipleCharacterizationData()$covariateRef %>%
       dplyr::filter(.data$analysisId %in% c(analysisIdToFilter))
     if (!hasData(covariatesTofilter)) {
       return(NULL)
     }
+    
+    characterizationDataValue <- getMultipleCharacterizationData()$covariateValue %>% 
+      dplyr::filter(.data$covariateId %in% c(covariatesTofilter$covariateId %>% unique()))
     
     if (all(
       hasData(input$conceptSetsSelectedTargetCohort),
@@ -7348,74 +7357,88 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       covariatesTofilter <- covariatesTofilter  %>%
         dplyr::inner_join(
-          conceptSets %>% 
-            dplyr::filter(.data$compoundName %in% c(input$conceptSetsSelectedTargetCohort)) %>% 
-            dplyr::select(.data$cohortId, .data$conceptSetId) %>% 
-            dplyr::inner_join(getResolvedConceptsTarget() %>% 
-                                dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>% 
-                                dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId) %>% 
-                                dplyr::distinct(),
-                              by = c("cohortId", "conceptSetId")) %>%
+          conceptSets %>%
+            dplyr::filter(
+              .data$compoundName %in% c(input$conceptSetsSelectedTargetCohort)
+            ) %>%
+            dplyr::select(.data$cohortId, .data$conceptSetId) %>%
+            dplyr::inner_join(
+              getResolvedConceptsTarget() %>%
+                dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget())) %>%
+                dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId) %>%
+                dplyr::distinct(),
+              by = c("cohortId", "conceptSetId")
+            ) %>%
             dplyr::select(.data$conceptId) %>%
             dplyr::distinct(),
           by = c("conceptId")
         )
     }
+    
     characterizationDataValue <-
-      getMultipleCharacterizationData()$covariateValue %>% 
+      getMultipleCharacterizationData()$covariateValue %>%
       dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget()))
+    
     #Pretty analysis
     if (input$charType == "Pretty") {
       covariatesTofilter <- covariatesTofilter %>%
-        dplyr::filter(.data$analysisId %in% c(prettyAnalysisIds))
+        dplyr::filter(.data$analysisId %in% c(prettyAnalysisIds))  #prettyAnalysisIds this is global variable
       characterizationDataValue <-
         characterizationDataValue %>%
         dplyr::inner_join(covariatesTofilter,
-                          by = c('covariateId', 'characterizationSource')) %>%
+                          by = c('covariateId')) %>%
         dplyr::filter(is.na(.data$startDay) |
-                        (.data$startDay == -365 & .data$endDay == 0)) %>% 
-        dplyr::inner_join(
-          getMultipleCharacterizationData()$analysisRef,
-          by = c('analysisId', 'characterizationSource')
-        )
-      #prettyAnalysisIds this is global variable
+                        (.data$startDay == -365 &
+                           .data$endDay == 0)) %>%
+        dplyr::inner_join(getMultipleCharacterizationData()$analysisRef,
+                          by = c('analysisId'))
     } else {
+      if (!hasData(input$timeIdChoices)) {
+        return(NULL)
+      }
       characterizationDataValue <-
         characterizationDataValue %>%
         dplyr::inner_join(covariatesTofilter,
-                          by = c('covariateId', 'characterizationSource'))
-      characterizationDataValueTimeVarying <- characterizationDataValue %>% 
-        dplyr::filter(!is.na(.data$startDay)) %>% 
-        dplyr::inner_join(temporalCovariateChoices, 
-                          by = c("startDay", "endDay")) %>% 
+                          by = c('covariateId')) %>%
+        dplyr::left_join(
+          getMultipleCharacterizationData()$concept %>%
+            dplyr::select(.data$conceptId,
+                          .data$conceptName),
+          by = "conceptId"
+        ) %>%
+        dplyr::mutate(conceptName = dplyr::case_when(
+          !is.na(.data$conceptName) ~ .data$conceptName,
+          TRUE ~ gsub(".*: ", "", .data$covariateName)
+        ))
+      
+      characterizationDataValueTimeVarying <-
+        characterizationDataValue %>%
+        dplyr::filter(!is.na(.data$startDay)) %>%
         dplyr::inner_join(
-          getMultipleCharacterizationData()$analysisRef,
-          by = c('analysisId', 'characterizationSource')
-        ) 
-      characterizationDataValueNonTimeVarying <- characterizationDataValue %>% 
-        dplyr::filter(is.na(.data$startDay)) %>% 
-        dplyr::inner_join(
-          getMultipleCharacterizationData()$analysisRef,
-          by = c('analysisId', 'characterizationSource')
-        ) %>% 
-        tidyr::crossing(characterizationDataValueTimeVarying %>% dplyr::select(.data$choices))
-      characterizationDataValue <- dplyr::bind_rows(characterizationDataValueNonTimeVarying,
-                                                    characterizationDataValueTimeVarying) %>% 
+          temporalCovariateChoices %>%
+            dplyr::filter(.data$choices %in% c(input$timeIdChoices)),
+          by = c("endDay", "startDay")
+        ) %>%
+        dplyr::inner_join(getMultipleCharacterizationData()$analysisRef,
+                          by = c('analysisId'))
+      characterizationDataValueNonTimeVarying <-
+        characterizationDataValue %>%
+        dplyr::filter(is.na(.data$startDay)) %>%
+        dplyr::inner_join(getMultipleCharacterizationData()$analysisRef,
+                          by = c('analysisId')) %>%
+        tidyr::crossing(temporalCovariateChoices %>% 
+                          dplyr::select(.data$choices, .data$choicesShort) %>% 
+                          dplyr::filter(.data$choices %in% c(input$timeIdChoices)))
+      characterizationDataValue <-
+        dplyr::bind_rows(
+          characterizationDataValueNonTimeVarying,
+          characterizationDataValueTimeVarying
+        ) %>%
         dplyr::arrange(.data$databaseId,
-                       .data$cohortId, 
+                       .data$cohortId,
                        .data$covariateId,
                        .data$choices)
     }
-    
-    #enhancement
-    characterizationDataValue <- characterizationDataValue %>%
-      dplyr::mutate(covariateNameShortCovariateId = .data$covariateName)
-      # dplyr::mutate(covariateNameShort = gsub(".*: ", "", .data$covariateName)) %>%
-      # dplyr::mutate(
-      #   covariateNameShortCovariateId = paste0(.data$covariateNameShort,
-      #                                          " (",
-      #                                          .data$covariateId, ")")
-      # )
     
     if (!hasData(characterizationDataValue)) {
       return(NULL)
@@ -7453,6 +7476,67 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   })
   
+  
+  ###getCharacterizationTableDataRaw----
+  getCharacterizationTableDataRaw <- shiny::reactive(x = {
+    if (input$tabs != "cohortCharacterization") {
+      return(NULL)
+    }
+    data <- getCharacterizationDataFiltered()
+    if (!hasData(data)) {
+      return(NULL)
+    }
+    #!!!! if user selects proportion then mean, else count. Also support option for both as 34,342 (33.3%)
+    if (input$characterizationColumnFilters == "Mean only") {
+      data <- data %>%
+        dplyr::select(-.data$mean) %>%
+        dplyr::rename("mean" = .data$sumValue)
+      keyColumnFields <-
+        c("cohortId",
+          "databaseId",
+          "covariateId",
+          "conceptName",
+          "analysisName",
+          "domainId")
+      dataColumnFields <- c("mean")
+      data <- tidyr::pivot_wider(
+        data = data,
+        id_cols = dplyr::all_of(keyColumnFields),
+        names_from = .data$choicesShort,
+        values_from = dplyr::all_of(dataColumnFields)
+      )
+    } else {
+      keyColumnFields <-
+        c("cohortId",
+          "databaseId",
+          "covariateId",
+          "conceptName",
+          "analysisName",
+          "domainId")
+      dataColumnFields <- c("mean", "sd")
+      
+      if (!all(intersect(x = colnames(data) %>% sort(),
+                    y = dataColumnFields) %>% sort() == dataColumnFields)) {
+        return(NULL)
+      }
+      data <- data %>%
+        tidyr::pivot_longer(
+          cols = dplyr::all_of(dataColumnFields),
+          names_to = "type",
+          values_to = "value"
+        ) %>%
+        dplyr::mutate(choicesShort = paste0(.data$choicesShort, "_", .data$type)) %>%
+        dplyr::select(-.data$type) %>%
+        tidyr::pivot_wider(
+          id_cols = dplyr::all_of(keyColumnFields),
+          names_from = .data$choicesShort,
+          values_from = "value"
+        )
+    }
+    return(data)
+  })
+  
+  
   ### Output: characterizationTable ------
   output$characterizationTable <- DT::renderDataTable(expr = {
     if (input$tabs != "cohortCharacterization") {
@@ -7474,11 +7558,10 @@ shiny::shinyServer(function(input, output, session) {
       data <- getCharacterizationTableDataPretty()
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
-      #!!!! if user selects proportion then mean, else count. Also support option for both as 34,342 (33.3%)
       keyColumnFields <- c("characteristic")
       dataColumnFields <- intersect(x = colnames(data),
                                     y = cohort$shortName)
-      sketchLevel <- 1
+      countLocation <- 1
       countsForHeader <-
         getCountsForHeaderForUseInDataTable(
           dataSource = dataSource,
@@ -7498,7 +7581,7 @@ shiny::shinyServer(function(input, output, session) {
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         sort = FALSE,
@@ -7511,40 +7594,26 @@ shiny::shinyServer(function(input, output, session) {
         message = paste0("Rendering raw table for cohort characterization."),
         value = 0
       )
-      
-      data <- getCharacterizationDataFiltered()
+      data <- getCharacterizationTableDataRaw()
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
+      keyColumnFields <-
+        c("cohortId",
+          "covariateId",
+          "analysisName",
+          "domainId",
+          "conceptName")
       if (input$characterizationColumnFilters == "Mean only") {
-        data <- data %>%
-          dplyr::select(-.data$mean) %>%
-          dplyr::rename("mean" = .data$sumValue)
-        keyColumnFields <-
-          c(
-            "covariateId",
-            "covariateName",
-            "analysisName",
-            "domainId",
-            "choices",
-            "characterizationSource"
-          )
-        dataColumnFields <- c("mean")
+        dataColumnFields <- setdiff(colnames(data),
+                                    c("databaseId", keyColumnFields))
         showPercent <- TRUE
       } else {
-        keyColumnFields <-
-          c(
-            "covariateId",
-            "covariateName",
-            "analysisName",
-            "domainId",
-            "choices",
-            "characterizationSource"
-          )
-        dataColumnFields <- c("mean", "sd")
+        dataColumnFields <- setdiff(colnames(data),
+                                    c("databaseId", keyColumnFields))
         showPercent <- FALSE
       }
       
-      sketchLevel <- 1
+      countLocation <- 1
       countsForHeader <-
         getCountsForHeaderForUseInDataTable(
           dataSource = dataSource,
@@ -7554,14 +7623,20 @@ shiny::shinyServer(function(input, output, session) {
           fields = "Events"
         )
       maxCountValue <-
-        getMaxValueForStringMatchedColumnsInDataFrame(data = data %>%
-                                                        dplyr::select(-.data$missingMeansZero),
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
+      data <- data %>% 
+        dplyr::mutate(conceptName = stringr::str_wrap(string = .data$conceptName,
+                                                          width = 80,
+                                                          exdent = 1)) %>% 
+        dplyr::mutate(conceptName = stringr::str_replace_all(string = .data$conceptName,
+                                                             pattern = stringr::fixed(pattern = "\n"), 
+                                                             replacement = "<br/>"))
       table <- getDtWithColumnsGroupedByDatabaseId(
         data = data,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        sketchLevel = sketchLevel,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         sort = TRUE,
@@ -7580,7 +7655,7 @@ shiny::shinyServer(function(input, output, session) {
       if (input$charType == "Pretty") {
         data <- getCharacterizationTableDataPretty()
       } else {
-        data <- getCharacterizationRawData()
+        data <- getCharacterizationTableDataRaw()
       }
       downloadCsv(x = data,
                   fileName = file)
