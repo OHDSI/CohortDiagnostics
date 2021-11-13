@@ -5923,11 +5923,6 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(data)) {
       return(NULL)
     }
-    data <- data %>%
-      dplyr::inner_join(covariateRef %>%
-                          dplyr::select(.data$covariateName,
-                                        .data$covariateId),
-                        by = "covariateId")
     return(data)
   })
   

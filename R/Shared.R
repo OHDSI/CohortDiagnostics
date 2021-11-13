@@ -2302,6 +2302,32 @@ getResultsTimeDistribution <- function(dataSource,
     data <- data %>% 
       dplyr::select(-.data$endDay)
   }
+  covariateRef <- getResultsCovariateRef(
+    dataSource = dataSource,
+    covariateIds = data$covariateId %>% unique()
+  )
+  data <- data %>%
+    dplyr::inner_join(covariateRef %>%
+                        dplyr::select(.data$covariateName,
+                                      .data$covariateId),
+                      by = "covariateId")
+  
+  # timeInDaysInRelationToEndDays <- getResultsCohortRelationships(
+  #   dataSource = dataSource,
+  #   cohortIds = cohortIds,
+  #   comparatorCohortIds = -1,
+  #   databaseIds = databaseIds,
+  #   startDays = 0,
+  #   endDays = 0
+  # ) %>%
+  #   dplyr::select(
+  #     .data$cohortId,
+  #     .data$comparatorCohortId,
+  #     .data$databaseId,
+  #     .data$cDaysWithinTDays,
+  #     .data$cDaysAfterTs,
+  #     .data$cDaysAfterTe
+  #   )
   return(data)
 }
 
