@@ -598,21 +598,13 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
                       minimumCellCountDefs) #!!!!!!!!!!! note in percent form, this may cause error because of -ve number
   )
 
-  databaseColumnNamesInRightOrder <-
-    colnames(data)[stringr::str_detect(
-      string = colnames(data),
-      pattern = paste0(keyColumns, collapse = "|"),
-      negate = TRUE
-    )] %>%
-    stringr::word(start = 1)
-  
   sketch <- htmltools::withTags(table(class = "display",
                                       thead(tr(
                                         lapply(camelCaseToTitleCase(keyColumns),
                                                th,
                                                rowspan = rowSpan),
                                         lapply(
-                                          databaseColumnNamesInRightOrder,
+                                          databaseIdsForUseAsHeader %>% sort(),
                                           th,
                                           colspan = numberOfSubstitutableColums,
                                           class = "dt-center",
