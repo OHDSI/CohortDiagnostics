@@ -637,7 +637,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
   if (!is.null(maxCount)) {
     dataTable <- DT::formatStyle(
       table = dataTable,
-      columns =  (numberOfColumns + 1) + 1:(length(databaseIdsForUseAsHeader) * numberOfSubstitutableColums),
+      columns =  (numberOfColumns + 1) + 1:(length(databaseColumnNamesInRightOrder) * numberOfSubstitutableColums),
       background = DT::styleColorBar(c(0, maxCount), "lightblue"),
       backgroundSize = "98% 88%",
       backgroundRepeat = "no-repeat",
