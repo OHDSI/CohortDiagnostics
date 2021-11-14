@@ -641,6 +641,8 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
 
 
 getReactTableWithColumnsGroupedByDatabaseId <- function(data, 
+                                                        cohort = NULL,
+                                                        database = NULL,
                                                 headerCount = NULL,
                                                 keyColumns,
                                                 dataColumns,
@@ -649,6 +651,35 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                                 sort = TRUE,
                                                 showResultsAsPercent = FALSE,
                                                 rowSpan = 2) {
+  
+  if (is.null(cohort)) {
+    warning("cohort table is missing")
+    cohort <- data %>% 
+      dplyr::select(.data$cohortId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::mutate(shortName = paste0("C", .data$cohortId))
+  }
+  if (!'shortName' %in% colnames(cohort)) {
+    warning("Assigning short name to cohort as C + cohortId")
+    cohort <- cohort %>% 
+      dplyr::mutate(shortName = paste0("C", .data$cohortId))
+  }
+  
+  if (is.null(database)) {
+    warning("database table is missing")
+    database <- data %>% 
+      dplyr::select(.data$databaseId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::mutate(id = dplyr::row_number()) %>% 
+      dplyr::mutate(shortName = paste0("D", .data$id))
+  }
+  if (!'shortName' %in% colnames(database)) {
+    warning("Assigning short name to cohort as D + rowNumber")
+    database <- database %>% 
+      dplyr::distinct() %>% 
+      dplyr::mutate(id = dplyr::row_number()) %>% 
+      dplyr::mutate(shortName = paste0("D", .data$id))
+  }
   
   # ensure the data has required fields
   keyColumns <- keyColumns %>% unique()
@@ -665,7 +696,33 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
     )
   }
   data <- data %>% 
-    dplyr::select(c(dplyr::all_of(keyColumns),"databaseId", dplyr::all_of(dataColumns)) %>% unique())
+    dplyr::inner_join(cohort %>% 
+                        dplyr::select(.data$cohortId,
+                                      .data$shortName) %>% 
+                        dplyr::distinct() %>% 
+                        dplyr::rename("shortNameCohort" = .data$shortName),
+                      by = "cohortId") %>%
+    dplyr::inner_join(database %>% 
+                        dplyr::select(.data$databaseId,
+                                      .data$shortName) %>% 
+                        dplyr::distinct() %>% 
+                        dplyr::rename("shortNameDatabase" = .data$shortName),
+                      by = "databaseId") %>%  
+    dplyr::select(c(dplyr::all_of(keyColumns),
+                    "databaseId", "shortNameCohort", "shortNameDatabase", 
+                    dplyr::all_of(dataColumns)) %>% 
+                    unique())
+  
+  #long form
+  data <- data %>% 
+    tidyr::pivot_longer(cols = dplyr::all_of(dataColumns), 
+                        names_to = "type", 
+                        values_to = "valuesData") %>% 
+    dplyr::mutate(typeLong = paste0(.data$type,"|",
+                                .data$shortNameDatabase,
+                                .data$shortNameCohort)) %>% 
+    dplyr::select(-.data$shortNameDatabase,
+                  -.data$shortNameCohort)
   
   
   #get all unique databsaeIds - and sort data by it
@@ -673,11 +730,6 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
     dplyr::select(.data$databaseId) %>%
     dplyr::distinct() %>%
     dplyr::arrange(.data$databaseId)
-  #long form
-  data <- data %>% 
-    tidyr::pivot_longer(cols = dplyr::all_of(dataColumns), 
-                        names_to = "type", 
-                        values_to = "valuesData")
   if (hasData(headerCount)) {
     if (countLocation == 1) {
       if (length(setdiff(c("databaseId", "count"), colnames(headerCount))) != 0) {
@@ -690,7 +742,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                           " (",
                                           scales::comma(.data$count),
                                           ")")) %>%
-        dplyr::mutate(dataColumnsLevel2 = .data$type) 
+        dplyr::mutate(dataColumnsLevel2 = .data$type)
       if (showResultsAsPercent) {
         if (!is.null(maxCount)) {
           maxCount <- suppressWarnings(ceiling(maxCount / (max(data$count))))
@@ -727,9 +779,9 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
           names_from = "type",
           values_from = valuesData,
           values_fill = 0
-        ) 
+        )
       if (sort) {
-        data <- data %>% 
+        data <- data %>%
           dplyr::arrange(dplyr::desc(abs(dplyr::across(
             dplyr::contains(dplyr::all_of(dataColumns))
           ))))
@@ -740,8 +792,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
           string = dataColumnsLevel2,
           pattern = paste0(keyColumns, collapse = "|"),
           negate = TRUE
-        )] %>%
-        stringr::word(start = -1)
+        )]
       
     } else if (countLocation == 2) {
       if (length(setdiff(c("databaseId", dataColumns), colnames(headerCount))) != 0) {
@@ -772,7 +823,10 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                                  ")"))
       if (showResultsAsPercent) {
         if (!is.null(maxCount)) {
-          maxCount <- suppressWarnings(ceiling(maxCount / (max(data$valuesHeader))))
+          maxCount <-
+            suppressWarnings(ceiling(maxCount / (max(
+              data$valuesHeader
+            ))))
         }
         data <- data %>%
           dplyr::mutate(valuesData = .data$valuesData / .data$valuesHeader)
@@ -793,13 +847,15 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
           names_from = "type",
           values_from = "valuesData",
           values_fill = 0
-        ) 
+        )
       
       dataColumnsLevel2 <- colnames(data)
       dataColumnsLevel2 <-
-        dataColumnsLevel2[stringr::str_detect(string = dataColumnsLevel2,
-                                              pattern = paste0(keyColumns, collapse = "|"),
-                                              negate = TRUE)]
+        dataColumnsLevel2[stringr::str_detect(
+          string = dataColumnsLevel2,
+          pattern = paste0(keyColumns, collapse = "|"),
+          negate = TRUE
+        )]
       dataColumnsLevel2 <-
         stringr::str_remove_all(
           string = dataColumnsLevel2,
@@ -895,10 +951,12 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   #     backgroundPosition = "center"
   #   )
   # }
-  browser()
   dataTable <- reactable::reactable(
     data = data,
-  )
+    columnGroups = list(
+      reactable::colGroup(uniqueDatabases %>% dplyr::pull(), 
+               columns = dataColumnsLevel2)
+  ))
   return(dataTable)
 }
 

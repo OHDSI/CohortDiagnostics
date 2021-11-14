@@ -6112,8 +6112,13 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(input$indexEventBreakdownTableRadioButton)) {
       return(NULL)
     }
+    if (!hasData(consolidatedDatabaseIdTarget())) {
+      return(NULL)
+    }
     data <- data %>%
-      dplyr::filter(.data$domainId %in% input$indexEventDomainNameFilter)
+      dplyr::filter(.data$domainId %in% input$indexEventDomainNameFilter) %>% 
+      dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget()))
+    
     if (length(input$indexEventBreakdownTableRadioButton) > 0) {
       conceptIdsToFilter <- c()
       if ("Resolved" %in% c(input$indexEventBreakdownTableRadioButton)) {
@@ -6318,6 +6323,8 @@ shiny::shinyServer(function(input, output, session) {
                                                       string = dataColumnFields)
       table <- getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        cohort = cohort, 
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
