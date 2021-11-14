@@ -6259,6 +6259,75 @@ shiny::shinyServer(function(input, output, session) {
       return(table)
     }, server = TRUE)
   
+  output$indexEventBreakdownReactTable <-
+    reactable::renderReactable(expr = {
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = paste0(
+          "Get index event breakdown data ",
+          " for cohort id: ",
+          consolidatedCohortIdTarget()
+        ),
+        value = 0
+      )
+      
+      data <- getIndexEventBreakdownTargetDataFiltered()
+      
+      validate(
+        need(
+          hasData(data),
+          "No index event breakdown data for the chosen combination."
+        )
+      )
+      keyColumnFields <-
+        c("conceptId", "conceptName", "vocabularyId", "standardConcept")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      dataColumnFields <-
+        c("persons",
+          "records")
+      if (input$indexEventBreakdownTableFilter == "Both") {
+        dataColumnFields <- dataColumnFields
+        countLocation <- 2
+      } else if (input$indexEventBreakdownTableFilter == "Persons") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
+                                               pattern = tolower("person"))]
+        countLocation <- 1
+      } else if (input$indexEventBreakdownTableFilter == "Records") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
+                                               pattern = tolower("record"))]
+        countLocation <- 1
+      }
+      
+      countsForHeader <-
+        getCountsForHeaderForUseInDataTable(
+          dataSource = dataSource,
+          databaseIds = consolidatedDatabaseIdTarget(),
+          cohortIds = consolidatedCohortIdTarget(),
+          source = "Cohort Level",
+          fields = input$indexEventBreakdownTableFilter
+        )
+      if (!hasData(countsForHeader)) {
+        return(NULL)
+      }
+      
+      maxCountValue <-
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                      string = dataColumnFields)
+      table <- getReactTableWithColumnsGroupedByDatabaseId(
+        data = data,
+        headerCount = countsForHeader,
+        keyColumns = keyColumnFields,
+        countLocation = countLocation,
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
+        showResultsAsPercent = input$indexEventBreakdownShowAsPercent, 
+        sort = FALSE
+      )
+    })
+  
   
   # ##getIndexEventBreakdownPlotData----
   # getIndexEventBreakdownPlotData <- shiny::reactive(x = {

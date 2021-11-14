@@ -910,7 +910,8 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::tabPanel(
         title = "Table",
         value = "indexEventBreakbownTableTab",
-        DT::dataTableOutput(outputId = "indexEventBreakdownTable")
+        DT::dataTableOutput(outputId = "indexEventBreakdownTable"),
+        reactable::reactableOutput(outputId = "indexEventBreakdownReactTable")
       )
       # shiny::tabPanel(
       #   title = "Plot",
