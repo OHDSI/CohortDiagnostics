@@ -604,8 +604,8 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
       pattern = paste0(keyColumns, collapse = "|"),
       negate = TRUE
     )] %>%
-    stringr::word(start = 1)
-  
+    stringr::word(start = 1) %>% 
+    unique()
   sketch <- htmltools::withTags(table(class = "display",
                                       thead(tr(
                                         lapply(camelCaseToTitleCase(keyColumns),
@@ -628,7 +628,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
       options = options,
       rownames = FALSE,
       container = sketch,
-      # colnames = colnames(data) %>% camelCaseToTitleCase(),
+      colnames = colnames(data) %>% camelCaseToTitleCase(),
       escape = FALSE,
       selection = 'single',
       filter = "top",
