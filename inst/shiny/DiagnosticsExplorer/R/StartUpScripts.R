@@ -640,44 +640,43 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
 }
 
 
-getReactTableWithColumnsGroupedByDatabaseId <- function(data, 
+getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                                         cohort = NULL,
                                                         database = NULL,
-                                                headerCount = NULL,
-                                                keyColumns,
-                                                dataColumns,
-                                                countLocation,
-                                                maxCount,
-                                                sort = TRUE,
-                                                showResultsAsPercent = FALSE,
-                                                rowSpan = 2) {
-  
+                                                        headerCount = NULL,
+                                                        keyColumns,
+                                                        dataColumns,
+                                                        countLocation,
+                                                        maxCount,
+                                                        sort = TRUE,
+                                                        showResultsAsPercent = FALSE,
+                                                        rowSpan = 2) {
   if (is.null(cohort)) {
     warning("cohort table is missing")
-    cohort <- data %>% 
-      dplyr::select(.data$cohortId) %>% 
-      dplyr::distinct() %>% 
+    cohort <- data %>%
+      dplyr::select(.data$cohortId) %>%
+      dplyr::distinct() %>%
       dplyr::mutate(shortName = paste0("C", .data$cohortId))
   }
   if (!'shortName' %in% colnames(cohort)) {
     warning("Assigning short name to cohort as C + cohortId")
-    cohort <- cohort %>% 
+    cohort <- cohort %>%
       dplyr::mutate(shortName = paste0("C", .data$cohortId))
   }
   
   if (is.null(database)) {
     warning("database table is missing")
-    database <- data %>% 
-      dplyr::select(.data$databaseId) %>% 
-      dplyr::distinct() %>% 
-      dplyr::mutate(id = dplyr::row_number()) %>% 
+    database <- data %>%
+      dplyr::select(.data$databaseId) %>%
+      dplyr::distinct() %>%
+      dplyr::mutate(id = dplyr::row_number()) %>%
       dplyr::mutate(shortName = paste0("D", .data$id))
   }
   if (!'shortName' %in% colnames(database)) {
     warning("Assigning short name to cohort as D + rowNumber")
-    database <- database %>% 
-      dplyr::distinct() %>% 
-      dplyr::mutate(id = dplyr::row_number()) %>% 
+    database <- database %>%
+      dplyr::distinct() %>%
+      dplyr::mutate(id = dplyr::row_number()) %>%
       dplyr::mutate(shortName = paste0("D", .data$id))
   }
   
@@ -695,209 +694,236 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       )
     )
   }
-  data <- data %>% 
-    dplyr::inner_join(cohort %>% 
-                        dplyr::select(.data$cohortId,
-                                      .data$shortName) %>% 
-                        dplyr::distinct() %>% 
-                        dplyr::rename("shortNameCohort" = .data$shortName),
-                      by = "cohortId") %>%
-    dplyr::inner_join(database %>% 
-                        dplyr::select(.data$databaseId,
-                                      .data$shortName) %>% 
-                        dplyr::distinct() %>% 
-                        dplyr::rename("shortNameDatabase" = .data$shortName),
-                      by = "databaseId") %>%  
-    dplyr::select(c(dplyr::all_of(keyColumns),
-                    "databaseId", "shortNameCohort", "shortNameDatabase", 
-                    dplyr::all_of(dataColumns)) %>% 
-                    unique())
+  data <- data %>%
+    dplyr::inner_join(
+      cohort %>%
+        dplyr::select(.data$cohortId,
+                      .data$shortName) %>%
+        dplyr::distinct() %>%
+        dplyr::rename("shortNameCohort" = .data$shortName),
+      by = "cohortId"
+    ) %>%
+    dplyr::inner_join(
+      database %>%
+        dplyr::select(.data$databaseId,
+                      .data$shortName) %>%
+        dplyr::distinct() %>%
+        dplyr::rename("shortNameDatabase" = .data$shortName),
+      by = "databaseId"
+    ) %>%
+    dplyr::select(
+      c(
+        dplyr::all_of(keyColumns),
+        "databaseId",
+        "shortNameCohort",
+        "shortNameDatabase",
+        dplyr::all_of(dataColumns)
+      ) %>%
+        unique()
+    )
   
   #long form
-  data <- data %>% 
-    tidyr::pivot_longer(cols = dplyr::all_of(dataColumns), 
-                        names_to = "type", 
-                        values_to = "valuesData") %>% 
-    dplyr::mutate(typeLong = paste0(.data$type,"|",
-                                .data$shortNameDatabase,
-                                .data$shortNameCohort)) %>% 
-    dplyr::select(-.data$shortNameDatabase,
-                  -.data$shortNameCohort)
+  data <- data %>%
+    tidyr::pivot_longer(
+      cols = dplyr::all_of(dataColumns),
+      names_to = "type",
+      values_to = "valuesData"
+    ) %>%
+    dplyr::mutate(typeLong = paste0(
+      .data$shortNameDatabase,
+      "\n",
+      .data$type,
+      "\n",
+      .data$shortNameCohort
+    )) %>%
+    # dplyr::mutate(typeLong = paste0(.data$type,"|",
+    #                             .data$shortNameDatabase,
+    #                             .data$shortNameCohort)) %>%
+    dplyr::select(-.data$shortNameDatabase,-.data$shortNameCohort)
   
+  #wide form
+  data <- data %>%
+    tidyr::pivot_wider(
+      id_cols = dplyr::all_of(keyColumns),
+      names_from = "typeLong",
+      values_from = valuesData,
+      values_fill = 0
+    )
   
-  #get all unique databsaeIds - and sort data by it
-  uniqueDatabases <- data %>%
-    dplyr::select(.data$databaseId) %>%
-    dplyr::distinct() %>%
-    dplyr::arrange(.data$databaseId)
-  if (hasData(headerCount)) {
-    if (countLocation == 1) {
-      if (length(setdiff(c("databaseId", "count"), colnames(headerCount))) != 0) {
-        warning("missing required fields to draw formatted datatable.")
-      }
-      data <- data %>%
-        dplyr::inner_join(headerCount,
-                          by = c("databaseId")) %>%
-        dplyr::mutate(databaseId = paste0(.data$databaseId,
-                                          " (",
-                                          scales::comma(.data$count),
-                                          ")")) %>%
-        dplyr::mutate(dataColumnsLevel2 = .data$type)
-      if (showResultsAsPercent) {
-        if (!is.null(maxCount)) {
-          maxCount <- suppressWarnings(ceiling(maxCount / (max(data$count))))
-        }
-        data <- data %>%
-          dplyr::mutate(valuesData = round(x = .data$valuesData / .data$count, digits = 4))
-        
-      }
-      data <- data %>%
-        dplyr::mutate(valuesData = round(x = .data$valuesData, digits = 2)) %>%
-        dplyr::select(-.data$count)
-      
-      databaseIdHeaders <- uniqueDatabases %>%
-        dplyr::inner_join(headerCount,
-                          by = "databaseId") %>%
-        dplyr::mutate(newDatabaseId = paste0(.data$databaseId,
-                                             " (",
-                                             scales::comma(.data$count),
-                                             ")")) %>%
-        dplyr::select(.data$databaseId, .data$newDatabaseId, .data$count) %>%
-        dplyr::rename(headerCount = .data$count) %>%
-        dplyr::distinct() %>%
-        dplyr::select(-.data$headerCount) %>%
-        dplyr::arrange(.data$databaseId)
-      
-      # headers for sketch
-      databaseIdsForUseAsHeader <- databaseIdHeaders$newDatabaseId
-      
-      # wide form
-      data <- data %>%
-        dplyr::mutate(type = paste0(.data$databaseId, " ", .data$type)) %>%
-        tidyr::pivot_wider(
-          id_cols = dplyr::all_of(keyColumns),
-          names_from = "type",
-          values_from = valuesData,
-          values_fill = 0
-        )
-      if (sort) {
-        data <- data %>%
-          dplyr::arrange(dplyr::desc(abs(dplyr::across(
-            dplyr::contains(dplyr::all_of(dataColumns))
-          ))))
-      }
-      dataColumnsLevel2 <- colnames(data)
-      dataColumnsLevel2 <-
-        dataColumnsLevel2[stringr::str_detect(
-          string = dataColumnsLevel2,
-          pattern = paste0(keyColumns, collapse = "|"),
-          negate = TRUE
-        )]
-      
-    } else if (countLocation == 2) {
-      if (length(setdiff(c("databaseId", dataColumns), colnames(headerCount))) != 0) {
-        warning("missing required fields to draw formatted datatable.")
-      }
-      data <- data %>%
-        dplyr::inner_join(
-          headerCount %>%
-            tidyr::pivot_longer(
-              cols = dplyr::all_of(dataColumns),
-              names_to = "type",
-              values_to = "valuesHeader"
-            ),
-          by = c("databaseId", "type")
-        )  %>%
-        dplyr::arrange(.data$databaseId, .data$type) %>%
-        dplyr::mutate(type = paste0(
-          .data$databaseId,
-          " ",
-          .data$type,
-          " (",
-          scales::comma(.data$valuesHeader),
-          ")"
-        )) %>%
-        dplyr::mutate(dataColumnsLevel2 = paste0(.data$type,
-                                                 " (",
-                                                 scales::comma(.data$valuesHeader),
-                                                 ")"))
-      if (showResultsAsPercent) {
-        if (!is.null(maxCount)) {
-          maxCount <-
-            suppressWarnings(ceiling(maxCount / (max(
-              data$valuesHeader
-            ))))
-        }
-        data <- data %>%
-          dplyr::mutate(valuesData = .data$valuesData / .data$valuesHeader)
-      }
-      
-      databaseIdHeaders <- uniqueDatabases %>%
-        dplyr::mutate(newDatabaseId = .data$databaseId) %>%
-        dplyr::distinct() %>%
-        dplyr::arrange(.data$databaseId)
-      # headers for sketch
-      databaseIdsForUseAsHeader <- databaseIdHeaders %>%
-        dplyr::pull(.data$newDatabaseId)
-      # wide form
-      data <- data %>%
-        dplyr::select(-.data$valuesHeader) %>%
-        tidyr::pivot_wider(
-          id_cols = dplyr::all_of(keyColumns),
-          names_from = "type",
-          values_from = "valuesData",
-          values_fill = 0
-        )
-      
-      dataColumnsLevel2 <- colnames(data)
-      dataColumnsLevel2 <-
-        dataColumnsLevel2[stringr::str_detect(
-          string = dataColumnsLevel2,
-          pattern = paste0(keyColumns, collapse = "|"),
-          negate = TRUE
-        )]
-      dataColumnsLevel2 <-
-        stringr::str_remove_all(
-          string = dataColumnsLevel2,
-          pattern = paste0(uniqueDatabases$databaseId, collapse = "|")
-        ) %>%
-        stringr::str_squish() %>%
-        stringr::str_trim()
-    }
-  }
+  # browser()
+  # #get all unique databsaeIds - and sort data by it
+  # uniqueDatabases <- data %>%
+  #   dplyr::select(.data$databaseId) %>%
+  #   dplyr::distinct() %>%
+  #   dplyr::arrange(.data$databaseId)
+  # if (hasData(headerCount)) {
+  #   if (countLocation == 1) {
+  #     if (length(setdiff(c("databaseId", "count"), colnames(headerCount))) != 0) {
+  #       warning("missing required fields to draw formatted datatable.")
+  #     }
+  #     data <- data %>%
+  #       dplyr::inner_join(headerCount,
+  #                         by = c("databaseId")) %>%
+  #       dplyr::mutate(databaseId = paste0(.data$databaseId,
+  #                                         " (",
+  #                                         scales::comma(.data$count),
+  #                                         ")")) %>%
+  #       dplyr::mutate(dataColumnsLevel2 = .data$typeLong)
+  #     if (showResultsAsPercent) {
+  #       if (!is.null(maxCount)) {
+  #         maxCount <- suppressWarnings(ceiling(maxCount / (max(data$count))))
+  #       }
+  #       data <- data %>%
+  #         dplyr::mutate(valuesData = round(x = .data$valuesData / .data$count, digits = 4))
+  #
+  #     }
+  #     data <- data %>%
+  #       dplyr::mutate(valuesData = round(x = .data$valuesData, digits = 2)) %>%
+  #       dplyr::select(-.data$count)
+  #
+  #     databaseIdHeaders <- uniqueDatabases %>%
+  #       dplyr::inner_join(headerCount,
+  #                         by = "databaseId") %>%
+  #       dplyr::mutate(newDatabaseId = paste0(.data$databaseId,
+  #                                            " (",
+  #                                            scales::comma(.data$count),
+  #                                            ")")) %>%
+  #       dplyr::select(.data$databaseId, .data$newDatabaseId, .data$count) %>%
+  #       dplyr::rename(headerCount = .data$count) %>%
+  #       dplyr::distinct() %>%
+  #       dplyr::select(-.data$headerCount) %>%
+  #       dplyr::arrange(.data$databaseId)
+  #
+  #     # headers for sketch
+  #     databaseIdsForUseAsHeader <- databaseIdHeaders$newDatabaseId
+  #
+  #     # wide form
+  #     data <- data %>%
+  #       dplyr::mutate(type = paste0(.data$databaseId, " ", .data$type)) %>%
+  #       tidyr::pivot_wider(
+  #         id_cols = dplyr::all_of(keyColumns),
+  #         names_from = "type",
+  #         values_from = valuesData,
+  #         values_fill = 0
+  #       )
+  #     if (sort) {
+  #       data <- data %>%
+  #         dplyr::arrange(dplyr::desc(abs(dplyr::across(
+  #           dplyr::contains(dplyr::all_of(dataColumns))
+  #         ))))
+  #     }
+  #     dataColumnsLevel2 <- colnames(data)
+  #     dataColumnsLevel2 <-
+  #       dataColumnsLevel2[stringr::str_detect(
+  #         string = dataColumnsLevel2,
+  #         pattern = paste0(keyColumns, collapse = "|"),
+  #         negate = TRUE
+  #       )]
+  #
+  #   } else if (countLocation == 2) {
+  #     if (length(setdiff(c("databaseId", dataColumns), colnames(headerCount))) != 0) {
+  #       warning("missing required fields to draw formatted datatable.")
+  #     }
+  #     data <- data %>%
+  #       dplyr::inner_join(
+  #         headerCount %>%
+  #           tidyr::pivot_longer(
+  #             cols = dplyr::all_of(dataColumns),
+  #             names_to = "type",
+  #             values_to = "valuesHeader"
+  #           ),
+  #         by = c("databaseId", "type")
+  #       )  %>%
+  #       dplyr::arrange(.data$databaseId, .data$type) %>%
+  #       dplyr::mutate(type = paste0(
+  #         .data$databaseId,
+  #         " ",
+  #         .data$type,
+  #         " (",
+  #         scales::comma(.data$valuesHeader),
+  #         ")"
+  #       )) %>%
+  #       dplyr::mutate(dataColumnsLevel2 = paste0(.data$type,
+  #                                                " (",
+  #                                                scales::comma(.data$valuesHeader),
+  #                                                ")"))
+  #     if (showResultsAsPercent) {
+  #       if (!is.null(maxCount)) {
+  #         maxCount <-
+  #           suppressWarnings(ceiling(maxCount / (max(
+  #             data$valuesHeader
+  #           ))))
+  #       }
+  #       data <- data %>%
+  #         dplyr::mutate(valuesData = .data$valuesData / .data$valuesHeader)
+  #     }
+  #
+  #     databaseIdHeaders <- uniqueDatabases %>%
+  #       dplyr::mutate(newDatabaseId = .data$databaseId) %>%
+  #       dplyr::distinct() %>%
+  #       dplyr::arrange(.data$databaseId)
+  #     # headers for sketch
+  #     databaseIdsForUseAsHeader <- databaseIdHeaders %>%
+  #       dplyr::pull(.data$newDatabaseId)
+  #     # wide form
+  #     data <- data %>%
+  #       dplyr::select(-.data$valuesHeader) %>%
+  #       tidyr::pivot_wider(
+  #         id_cols = dplyr::all_of(keyColumns),
+  #         names_from = "type",
+  #         values_from = "valuesData",
+  #         values_fill = 0
+  #       )
+  #
+  #     dataColumnsLevel2 <- colnames(data)
+  #     dataColumnsLevel2 <-
+  #       dataColumnsLevel2[stringr::str_detect(
+  #         string = dataColumnsLevel2,
+  #         pattern = paste0(keyColumns, collapse = "|"),
+  #         negate = TRUE
+  #       )]
+  #     dataColumnsLevel2 <-
+  #       stringr::str_remove_all(
+  #         string = dataColumnsLevel2,
+  #         pattern = paste0(uniqueDatabases$databaseId, collapse = "|")
+  #       ) %>%
+  #       stringr::str_squish() %>%
+  #       stringr::str_trim()
+  #   }
+  # }
   
   ### format
-  numberOfColumns <- length(keyColumns) - 1
-  numberOfSubstitutableColums <- length(dataColumns)
+  # numberOfColumns <- length(keyColumns) - 1
+  # numberOfSubstitutableColums <- length(dataColumns)
+  #
+  # if (!showResultsAsPercent) {
+  #   minimumCellCountDefs <- minCellCountDef(numberOfColumns + (1:(
+  #     numberOfSubstitutableColums * length(databaseIdsForUseAsHeader)
+  #   )))
+  # } else if (showResultsAsPercent) {
+  #   minimumCellCountDefs <- minCellPercentDef(numberOfColumns + (1:(
+  #     numberOfSubstitutableColums * length(databaseIdsForUseAsHeader)
+  #   )))
+  # }
   
-  if (!showResultsAsPercent) {
-    minimumCellCountDefs <- minCellCountDef(numberOfColumns + (1:(
-      numberOfSubstitutableColums * length(databaseIdsForUseAsHeader)
-    )))  
-  } else if (showResultsAsPercent) {
-    minimumCellCountDefs <- minCellPercentDef(numberOfColumns + (1:(
-      numberOfSubstitutableColums * length(databaseIdsForUseAsHeader)
-    )))  
-  }
-  
-  if (sort) {
-    sortByColumns <- colnames(data)
-    sortByColumns <-
-      sortByColumns[stringr::str_detect(string = sortByColumns,
-                                        pattern = paste(dataColumns, collapse = "|"))]
-    if (length(sortByColumns) > 0) {
-      sortByColumns <- sortByColumns[[1]]
-      data <- data %>%
-        dplyr::arrange(dplyr::desc(dplyr::across(dplyr::all_of(sortByColumns))))
-    }
-  }
+  # if (sort) {
+  #   sortByColumns <- colnames(data)
+  #   sortByColumns <-
+  #     sortByColumns[stringr::str_detect(string = sortByColumns,
+  #                                       pattern = paste(dataColumns, collapse = "|"))]
+  #   if (length(sortByColumns) > 0) {
+  #     sortByColumns <- sortByColumns[[1]]
+  #     data <- data %>%
+  #       dplyr::arrange(dplyr::desc(dplyr::across(dplyr::all_of(sortByColumns))))
+  #   }
+  # }
   
   # if (nrow(data) > 20) {
   #   datableHeight <- '65vh'
   # } else {
   #   datableHeight <- TRUE
   # }
-  # 
+  #
   # options = list(
   #   pageLength = 1000,
   #   lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -912,7 +938,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   #   columnDefs = list(truncateStringDef(1, 50),
   #                     minimumCellCountDefs) #!!!!!!!!!!! note in percent form, this may cause error because of -ve number
   # )
-  # 
+  #
   # sketch <- htmltools::withTags(table(class = "display",
   #                                     thead(tr(
   #                                       lapply(camelCaseToTitleCase(keyColumns),
@@ -929,7 +955,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   #                                     tr(
   #                                       lapply(camelCaseToTitleCase(dataColumnsLevel2), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
   #                                     ))))
-  # 
+  #
   # dataTable <- DT::datatable(
   #   data,
   #   options = options,
@@ -951,12 +977,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   #     backgroundPosition = "center"
   #   )
   # }
-  dataTable <- reactable::reactable(
-    data = data,
-    columnGroups = list(
-      reactable::colGroup(uniqueDatabases %>% dplyr::pull(), 
-               columns = dataColumnsLevel2)
-  ))
+  dataTable <- reactable::reactable(data = data)
   return(dataTable)
 }
 
