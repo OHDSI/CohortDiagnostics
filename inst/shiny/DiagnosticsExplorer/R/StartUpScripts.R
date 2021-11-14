@@ -737,17 +737,19 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       names_to = "type",
       values_to = "valuesData"
     ) %>%
+    # dplyr::mutate(typeLong = paste0(
+    #   .data$shortNameDatabase,
+    #   "\n",
+    #   .data$shortNameCohort,
+    #   "\n",
+    #   .data$type
+    # )) %>%
     dplyr::mutate(typeLong = paste0(
-      .data$shortNameDatabase,
-      "\n",
       .data$type,
-      "\n",
+      .data$shortNameDatabase,
       .data$shortNameCohort
     )) %>%
-    # dplyr::mutate(typeLong = paste0(.data$type,"|",
-    #                             .data$shortNameDatabase,
-    #                             .data$shortNameCohort)) %>%
-    dplyr::select(-.data$shortNameDatabase,-.data$shortNameCohort)
+    dplyr::select(-.data$shortNameDatabase, -.data$shortNameCohort)
   
   #wide form
   data <- data %>%
@@ -758,234 +760,63 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       values_fill = 0
     )
   
-  # browser()
-  # #get all unique databsaeIds - and sort data by it
-  # uniqueDatabases <- data %>%
-  #   dplyr::select(.data$databaseId) %>%
-  #   dplyr::distinct() %>%
-  #   dplyr::arrange(.data$databaseId)
-  # if (hasData(headerCount)) {
-  #   if (countLocation == 1) {
-  #     if (length(setdiff(c("databaseId", "count"), colnames(headerCount))) != 0) {
-  #       warning("missing required fields to draw formatted datatable.")
-  #     }
-  #     data <- data %>%
-  #       dplyr::inner_join(headerCount,
-  #                         by = c("databaseId")) %>%
-  #       dplyr::mutate(databaseId = paste0(.data$databaseId,
-  #                                         " (",
-  #                                         scales::comma(.data$count),
-  #                                         ")")) %>%
-  #       dplyr::mutate(dataColumnsLevel2 = .data$typeLong)
-  #     if (showResultsAsPercent) {
-  #       if (!is.null(maxCount)) {
-  #         maxCount <- suppressWarnings(ceiling(maxCount / (max(data$count))))
-  #       }
-  #       data <- data %>%
-  #         dplyr::mutate(valuesData = round(x = .data$valuesData / .data$count, digits = 4))
-  #
-  #     }
-  #     data <- data %>%
-  #       dplyr::mutate(valuesData = round(x = .data$valuesData, digits = 2)) %>%
-  #       dplyr::select(-.data$count)
-  #
-  #     databaseIdHeaders <- uniqueDatabases %>%
-  #       dplyr::inner_join(headerCount,
-  #                         by = "databaseId") %>%
-  #       dplyr::mutate(newDatabaseId = paste0(.data$databaseId,
-  #                                            " (",
-  #                                            scales::comma(.data$count),
-  #                                            ")")) %>%
-  #       dplyr::select(.data$databaseId, .data$newDatabaseId, .data$count) %>%
-  #       dplyr::rename(headerCount = .data$count) %>%
-  #       dplyr::distinct() %>%
-  #       dplyr::select(-.data$headerCount) %>%
-  #       dplyr::arrange(.data$databaseId)
-  #
-  #     # headers for sketch
-  #     databaseIdsForUseAsHeader <- databaseIdHeaders$newDatabaseId
-  #
-  #     # wide form
-  #     data <- data %>%
-  #       dplyr::mutate(type = paste0(.data$databaseId, " ", .data$type)) %>%
-  #       tidyr::pivot_wider(
-  #         id_cols = dplyr::all_of(keyColumns),
-  #         names_from = "type",
-  #         values_from = valuesData,
-  #         values_fill = 0
-  #       )
-  #     if (sort) {
-  #       data <- data %>%
-  #         dplyr::arrange(dplyr::desc(abs(dplyr::across(
-  #           dplyr::contains(dplyr::all_of(dataColumns))
-  #         ))))
-  #     }
-  #     dataColumnsLevel2 <- colnames(data)
-  #     dataColumnsLevel2 <-
-  #       dataColumnsLevel2[stringr::str_detect(
-  #         string = dataColumnsLevel2,
-  #         pattern = paste0(keyColumns, collapse = "|"),
-  #         negate = TRUE
-  #       )]
-  #
-  #   } else if (countLocation == 2) {
-  #     if (length(setdiff(c("databaseId", dataColumns), colnames(headerCount))) != 0) {
-  #       warning("missing required fields to draw formatted datatable.")
-  #     }
-  #     data <- data %>%
-  #       dplyr::inner_join(
-  #         headerCount %>%
-  #           tidyr::pivot_longer(
-  #             cols = dplyr::all_of(dataColumns),
-  #             names_to = "type",
-  #             values_to = "valuesHeader"
-  #           ),
-  #         by = c("databaseId", "type")
-  #       )  %>%
-  #       dplyr::arrange(.data$databaseId, .data$type) %>%
-  #       dplyr::mutate(type = paste0(
-  #         .data$databaseId,
-  #         " ",
-  #         .data$type,
-  #         " (",
-  #         scales::comma(.data$valuesHeader),
-  #         ")"
-  #       )) %>%
-  #       dplyr::mutate(dataColumnsLevel2 = paste0(.data$type,
-  #                                                " (",
-  #                                                scales::comma(.data$valuesHeader),
-  #                                                ")"))
-  #     if (showResultsAsPercent) {
-  #       if (!is.null(maxCount)) {
-  #         maxCount <-
-  #           suppressWarnings(ceiling(maxCount / (max(
-  #             data$valuesHeader
-  #           ))))
-  #       }
-  #       data <- data %>%
-  #         dplyr::mutate(valuesData = .data$valuesData / .data$valuesHeader)
-  #     }
-  #
-  #     databaseIdHeaders <- uniqueDatabases %>%
-  #       dplyr::mutate(newDatabaseId = .data$databaseId) %>%
-  #       dplyr::distinct() %>%
-  #       dplyr::arrange(.data$databaseId)
-  #     # headers for sketch
-  #     databaseIdsForUseAsHeader <- databaseIdHeaders %>%
-  #       dplyr::pull(.data$newDatabaseId)
-  #     # wide form
-  #     data <- data %>%
-  #       dplyr::select(-.data$valuesHeader) %>%
-  #       tidyr::pivot_wider(
-  #         id_cols = dplyr::all_of(keyColumns),
-  #         names_from = "type",
-  #         values_from = "valuesData",
-  #         values_fill = 0
-  #       )
-  #
-  #     dataColumnsLevel2 <- colnames(data)
-  #     dataColumnsLevel2 <-
-  #       dataColumnsLevel2[stringr::str_detect(
-  #         string = dataColumnsLevel2,
-  #         pattern = paste0(keyColumns, collapse = "|"),
-  #         negate = TRUE
-  #       )]
-  #     dataColumnsLevel2 <-
-  #       stringr::str_remove_all(
-  #         string = dataColumnsLevel2,
-  #         pattern = paste0(uniqueDatabases$databaseId, collapse = "|")
-  #       ) %>%
-  #       stringr::str_squish() %>%
-  #       stringr::str_trim()
-  #   }
-  # }
+  #!!! need to add tool tip - hover over the data columns -- show tool tip for short names
+  withTooltip <- function(value, tooltip) {
+    tags$abbr(style = "text-decoration: underline; text-decoration-style: dotted; cursor: help",
+              title = tooltip, value)
+  }
   
-  ### format
-  # numberOfColumns <- length(keyColumns) - 1
-  # numberOfSubstitutableColums <- length(dataColumns)
-  #
-  # if (!showResultsAsPercent) {
-  #   minimumCellCountDefs <- minCellCountDef(numberOfColumns + (1:(
-  #     numberOfSubstitutableColums * length(databaseIdsForUseAsHeader)
-  #   )))
-  # } else if (showResultsAsPercent) {
-  #   minimumCellCountDefs <- minCellPercentDef(numberOfColumns + (1:(
-  #     numberOfSubstitutableColums * length(databaseIdsForUseAsHeader)
-  #   )))
-  # }
+  # convert camel case to title case -- input data should be in camelCase
+  colnames(data) <- camelCaseToTitleCase(colnames(data))
+  keyColumnsTitleCase <- camelCaseToTitleCase(keyColumns)
+  dataColumnsTitleCase <- 
+    colnames(data)[stringr::str_detect(
+      string = colnames(data),
+      pattern = paste0(keyColumnsTitleCase, collapse = "|"),
+      negate = TRUE
+    )]
   
-  # if (sort) {
-  #   sortByColumns <- colnames(data)
-  #   sortByColumns <-
-  #     sortByColumns[stringr::str_detect(string = sortByColumns,
-  #                                       pattern = paste(dataColumns, collapse = "|"))]
-  #   if (length(sortByColumns) > 0) {
-  #     sortByColumns <- sortByColumns[[1]]
-  #     data <- data %>%
-  #       dplyr::arrange(dplyr::desc(dplyr::across(dplyr::all_of(sortByColumns))))
-  #   }
-  # }
+  browser()
+  columnDefinitions <- list()
   
-  # if (nrow(data) > 20) {
-  #   datableHeight <- '65vh'
-  # } else {
-  #   datableHeight <- TRUE
-  # }
-  #
-  # options = list(
-  #   pageLength = 1000,
-  #   lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-  #   searching = TRUE,
-  #   lengthChange = TRUE,
-  #   ordering = TRUE,
-  #   paging = TRUE,
-  #   info = TRUE,
-  #   searchHighlight = TRUE,
-  #   scrollX = TRUE,
-  #   scrollY = datableHeight,
-  #   columnDefs = list(truncateStringDef(1, 50),
-  #                     minimumCellCountDefs) #!!!!!!!!!!! note in percent form, this may cause error because of -ve number
-  # )
-  #
-  # sketch <- htmltools::withTags(table(class = "display",
-  #                                     thead(tr(
-  #                                       lapply(camelCaseToTitleCase(keyColumns),
-  #                                              th,
-  #                                              rowspan = rowSpan),
-  #                                       lapply(
-  #                                         databaseIdsForUseAsHeader %>% sort(),
-  #                                         th,
-  #                                         colspan = numberOfSubstitutableColums,
-  #                                         class = "dt-center",
-  #                                         style = "border-right:1px solid silver;border-bottom:1px solid silver"
-  #                                       )
-  #                                     ),
-  #                                     tr(
-  #                                       lapply(camelCaseToTitleCase(dataColumnsLevel2), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
-  #                                     ))))
-  #
-  # dataTable <- DT::datatable(
-  #   data,
-  #   options = options,
-  #   rownames = FALSE,
-  #   container = sketch,
-  #   # colnames = colnames(data) %>% camelCaseToTitleCase(),
-  #   escape = FALSE,
-  #   selection = 'single',
-  #   filter = "top",
-  #   class = "stripe nowrap compact"
-  # )
-  # if (!is.null(maxCount)) {
-  #   dataTable <- DT::formatStyle(
-  #     table = dataTable,
-  #     columns =  (numberOfColumns + 1) + 1:(length(databaseIdsForUseAsHeader) * numberOfSubstitutableColums),
-  #     background = DT::styleColorBar(c(0, maxCount), "lightblue"),
-  #     backgroundSize = "98% 88%",
-  #     backgroundRepeat = "no-repeat",
-  #     backgroundPosition = "center"
-  #   )
-  # }
-  dataTable <- reactable::reactable(data = data)
+  for (i in (1:length(keyColumnsTitleCase))) {
+    columnDefinitions[[keyColumnsTitleCase[[i]]]] <-
+      reactable::colDef(
+        name = keyColumnsTitleCase[[i]],
+        sortable = TRUE,
+        resizable = TRUE,
+        filterable = TRUE,
+        show = TRUE,
+        html = TRUE,
+        na = "",
+        minWidth = 70,
+        maxWidth = 150,
+        align = "left",
+        vAlign = "center",
+        sticky = "left"
+      )
+  }
+  dataTable <- reactable::reactable(data = data,
+                                    columns = columnDefinitions,
+                                    sortable = TRUE,
+                                    resizable = TRUE, 
+                                    filterable = TRUE,
+                                    searchable = TRUE, 
+                                    pagination = TRUE, 
+                                    showPagination = TRUE, 
+                                    showPageInfo = TRUE,
+                                    minRows = 100, # to change based on number of rows in data
+                                    # selection = "single",
+                                    highlight = TRUE,
+                                    striped = TRUE, 
+                                    compact = TRUE, 
+                                    wrap = TRUE,
+                                    showSortIcon = TRUE, 
+                                    showSortable = TRUE, 
+                                    fullWidth = TRUE, 
+                                    theme = reactable::reactableTheme(),
+                                    height = "auto" # to change based on dynamic height
+                                    )
   return(dataTable)
 }
 
