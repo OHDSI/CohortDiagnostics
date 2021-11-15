@@ -847,9 +847,13 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                     showSortable = TRUE, 
                                     fullWidth = TRUE,
                                     bordered = TRUE,
-                                    theme = reactable::reactableTheme(),
-                                    height = "auto" # to change based on dynamic height
+                                    height = "auto", # to change based on dynamic height
+                                    selection = 'single',
+                                    onClick = "select",
+                                    theme = reactable::reactableTheme(
+                                      rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
                                     )
+  )
   return(dataTable)
 }
 
