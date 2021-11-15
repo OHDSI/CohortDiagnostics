@@ -702,33 +702,33 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       )
     )
   }
-  data <- data %>%
-    dplyr::inner_join(
-      cohort %>%
-        dplyr::select(.data$cohortId,
-                      .data$shortName) %>%
-        dplyr::distinct() %>%
-        dplyr::rename("shortNameCohort" = .data$shortName),
-      by = "cohortId"
-    ) %>%
-    dplyr::inner_join(
-      database %>%
-        dplyr::select(.data$databaseId,
-                      .data$shortName) %>%
-        dplyr::distinct() %>%
-        dplyr::rename("shortNameDatabase" = .data$shortName),
-      by = "databaseId"
-    ) %>%
-    dplyr::select(
-      c(
-        dplyr::all_of(keyColumns),
-        "databaseId",
-        "shortNameCohort",
-        "shortNameDatabase",
-        dplyr::all_of(dataColumns)
-      ) %>%
-        unique()
-    )
+  # data <- data %>%
+  #   dplyr::inner_join(
+  #     cohort %>%
+  #       dplyr::select(.data$cohortId,
+  #                     .data$shortName) %>%
+  #       dplyr::distinct() %>%
+  #       dplyr::rename("shortNameCohort" = .data$shortName),
+  #     by = "cohortId"
+  #   ) %>%
+  #   dplyr::inner_join(
+  #     database %>%
+  #       dplyr::select(.data$databaseId,
+  #                     .data$shortName) %>%
+  #       dplyr::distinct() %>%
+  #       dplyr::rename("shortNameDatabase" = .data$shortName),
+  #     by = "databaseId"
+  #   ) %>%
+  #   dplyr::select(
+  #     c(
+  #       dplyr::all_of(keyColumns),
+  #       "databaseId",
+  #       "shortNameCohort",
+  #       "shortNameDatabase",
+  #       dplyr::all_of(dataColumns)
+  #     ) %>%
+  #       unique()
+  #   )
   
   #long form
   data <- data %>%
@@ -736,7 +736,10 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       cols = dplyr::all_of(dataColumns),
       names_to = "type",
       values_to = "valuesData"
-    ) %>%
+    ) %>% 
+    dplyr::mutate(databaseIdCombined = paste0(.data$databaseId,"-",.data$type))
+ 
+    
     # dplyr::mutate(typeLong = paste0(
     #   .data$shortNameDatabase,
     #   "\n",
@@ -744,18 +747,19 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
     #   "\n",
     #   .data$type
     # )) %>%
-    dplyr::mutate(typeLong = paste0(
-      .data$type,
-      .data$shortNameDatabase,
-      .data$shortNameCohort
-    )) %>%
-    dplyr::select(-.data$shortNameDatabase, -.data$shortNameCohort)
+    # dplyr::mutate(typeLong = paste0(
+    #   .data$type,
+    #   .data$shortNameDatabase,
+    #   .data$shortNameCohort
+    # )) %>%
+    # dplyr::select(-.data$shortNameDatabase, -.data$shortNameCohort)
   
+  distinctDatabaseId <- data$databaseId %>%  unique()
   #wide form
   data <- data %>%
     tidyr::pivot_wider(
       id_cols = dplyr::all_of(keyColumns),
-      names_from = "typeLong",
+      names_from = "databaseIdCombined",
       values_from = valuesData,
       values_fill = 0
     )
@@ -767,37 +771,62 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   }
   
   # convert camel case to title case -- input data should be in camelCase
-  colnames(data) <- camelCaseToTitleCase(colnames(data))
-  keyColumnsTitleCase <- camelCaseToTitleCase(keyColumns)
-  dataColumnsTitleCase <- 
+  # colnames(data) <- camelCaseToTitleCase(colnames(data))
+  # keyColumnsTitleCase <- camelCaseToTitleCase(keyColumns)
+  dataColumns <-
     colnames(data)[stringr::str_detect(
       string = colnames(data),
-      pattern = paste0(keyColumnsTitleCase, collapse = "|"),
+      pattern = paste0(keyColumns, collapse = "|"),
       negate = TRUE
     )]
   
-  browser()
   columnDefinitions <- list()
   
-  for (i in (1:length(keyColumnsTitleCase))) {
-    columnDefinitions[[keyColumnsTitleCase[[i]]]] <-
+  for (i in (1:length(keyColumns))) {
+    columnDefinitions[[keyColumns[[i]]]] <-
       reactable::colDef(
-        name = keyColumnsTitleCase[[i]],
+        name = keyColumns[[i]],
         sortable = TRUE,
         resizable = TRUE,
         filterable = TRUE,
         show = TRUE,
         html = TRUE,
         na = "",
-        minWidth = 70,
-        maxWidth = 150,
-        align = "left",
-        vAlign = "center",
-        sticky = "left"
+        align = "left"
       )
+  }
+  
+ 
+  for (i in (1:length(dataColumns))) {
+    columnDefinitions[[dataColumns[i]]] <-
+      reactable::colDef(
+        name = ifelse(stringr::str_detect(
+          string = dataColumns[i],
+          pattern = paste0("persons")
+        ),"Subject","Records"),
+        sortable = TRUE,
+        resizable = TRUE,
+        filterable = TRUE,
+        show = TRUE,
+        html = TRUE,
+        na = "",
+        align = "left"
+      )
+
+  }
+  columnGroups <- list()
+  for (i in 1:length(distinctDatabaseId)) {
+    extractedDataColumns <- dataColumns[stringr::str_detect(
+      string = dataColumns,
+      pattern = distinctDatabaseId[i]
+    )]
+    columnGroups[[i]] <- 
+      reactable::colGroup(name = distinctDatabaseId[i], 
+                          columns = extractedDataColumns)
   }
   dataTable <- reactable::reactable(data = data,
                                     columns = columnDefinitions,
+                                    columnGroups = columnGroups,
                                     sortable = TRUE,
                                     resizable = TRUE, 
                                     filterable = TRUE,
@@ -805,7 +834,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                     pagination = TRUE, 
                                     showPagination = TRUE, 
                                     showPageInfo = TRUE,
-                                    minRows = 100, # to change based on number of rows in data
+                                    # minRows = 100, # to change based on number of rows in data
                                     # selection = "single",
                                     highlight = TRUE,
                                     striped = TRUE, 
