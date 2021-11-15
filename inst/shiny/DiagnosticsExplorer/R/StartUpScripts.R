@@ -782,10 +782,13 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   
   columnDefinitions <- list()
   
+  
   for (i in (1:length(keyColumns))) {
-    columnDefinitions[[keyColumns[[i]]]] <-
+    columnName <- camelCaseToTitleCase(colnames(data)[i])
+    colnames(data)[i] <- columnName
+    columnDefinitions[[columnName]] <-
       reactable::colDef(
-        name = keyColumns[[i]],
+        name = columnName,
         sortable = TRUE,
         resizable = TRUE,
         filterable = TRUE,
