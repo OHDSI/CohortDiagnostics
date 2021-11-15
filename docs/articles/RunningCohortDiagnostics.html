@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.4</span>
       </span>
     </div>
 
@@ -103,7 +103,7 @@
       <h1 data-toc-skip>Running cohort diagnostics</h1>
                         <h4 class="author">Gowtham Rao</h4>
             
-            <h4 class="date">2021-10-09</h4>
+            <h4 class="date">2021-11-13</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/master/vignettes/RunningCohortDiagnostics.Rmd"><code>vignettes/RunningCohortDiagnostics.Rmd</code></a></small>
       <div class="hidden name"><code>RunningCohortDiagnostics.Rmd</code></div>
@@ -115,9 +115,9 @@
 <div id="configuring-the-connection-to-the-server" class="section level1">
 <h1 class="hasAnchor">
 <a href="#configuring-the-connection-to-the-server" class="anchor"></a>Configuring the connection to the server</h1>
-<p>We need to tell R how to connect to the server where the data are. <code>CohortDiagnostics</code> uses the <code>DatabaseConnector</code> package, which provides the <code>createConnectionDetails</code> function. Type <code>?createConnectionDetails</code> for the specific settings required for the various database management systems (DBMS). For example, one might connect to a PostgreSQL database using this code:</p>
+<p>We need to tell R how to connect to the server where the data are. <code>CohortDiagnostics</code> uses the <code>DatabaseConnector</code> package, which provides the <code>createConnectionDetails</code> function. Type <code><a href="https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html">?createConnectionDetails</a></code> for the specific settings required for the various database management systems (DBMS). For example, one might connect to a PostgreSQL database using this code:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu">createConnectionDetails</span><span class="op">(</span>dbms <span class="op">=</span> <span class="st">"postgresql"</span>,
+<code class="sourceCode R"><span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html">createConnectionDetails</a></span><span class="op">(</span>dbms <span class="op">=</span> <span class="st">"postgresql"</span>,
                                              server <span class="op">=</span> <span class="st">"localhost/ohdsi"</span>,
                                              user <span class="op">=</span> <span class="st">"joe"</span>,
                                              password <span class="op">=</span> <span class="st">"supersecret"</span><span class="op">)</span>

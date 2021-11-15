@@ -1386,7 +1386,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     stratifyByAge <- "Age" %in% input$irStratification
-    stratifyByGender <- "Gender" %in% input$irStratification
+    stratifyByGender <- "Sex" %in% input$irStratification
     stratifyByCalendarYear <-
       "Calendar Year" %in% input$irStratification
     if (length(cohortIds()) > 0) {
@@ -1555,7 +1555,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     stratifyByAge <- "Age" %in% input$irStratification
-    stratifyByGender <- "Gender" %in% input$irStratification
+    stratifyByGender <- "Sex" %in% input$irStratification
     stratifyByCalendarYear <-
       "Calendar Year" %in% input$irStratification
     shiny::withProgress(

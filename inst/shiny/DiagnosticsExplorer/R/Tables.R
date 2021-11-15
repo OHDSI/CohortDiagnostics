@@ -51,7 +51,7 @@ prepareTable1 <- function(covariates,
                           dplyr::pull(.data$covariateIds)),
               pattern = ";"
             )[[1]] %>%
-              utils::type.convert()
+              utils::type.convert(as.is = TRUE)
           )
         ) %>%
         dplyr::arrange(.data$covariateId)
@@ -147,7 +147,7 @@ prepareTable1Comp <- function(balance,
                           dplyr::pull(.data$covariateIds)),
               pattern = ";"
             )[[1]] %>%
-              utils::type.convert()
+              utils::type.convert(as.is = TRUE)
           )
         ) %>%
         dplyr::arrange(.data$covariateId)

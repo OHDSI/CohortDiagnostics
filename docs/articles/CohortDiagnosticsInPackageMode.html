@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.4</span>
       </span>
     </div>
 
@@ -103,7 +103,7 @@
       <h1 data-toc-skip>Runing Cohort Diagnostics in an OHDSI Package mode</h1>
                         <h4 class="author">Gowtham A. Rao</h4>
             
-            <h4 class="date">2021-10-09</h4>
+            <h4 class="date">2021-11-13</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/master/vignettes/CohortDiagnosticsInPackageMode.Rmd"><code>vignettes/CohortDiagnosticsInPackageMode.Rmd</code></a></small>
       <div class="hidden name"><code>CohortDiagnosticsInPackageMode.Rmd</code></div>
@@ -116,8 +116,6 @@
 <h1 class="hasAnchor">
 <a href="#introduction" class="anchor"></a>Introduction</h1>
 <p>There are currently two approaches to run Cohort Diagnostics. - Embed in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or - WebAPi mode - where cohort diagnostics dynamically pulls the cohort definition from a webapi instance. WebAPI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS.</p>
-<p>This vignette describes the former approach (package): how to run CohortDiagnostics using the WebAPI.</p>
-<p>There are currently two approaches one can take to step 1: The cohort diagnostics can be embedded in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or the cohort diagnostics can be used as a stand-alone solution, relying on a WebAPI instance to provide the cohort definitions. WebAPI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS. This vignette describes the latter approach: how to run CohortDiagnostics using the WebAPI.</p>
 <p>This vignette describes how to create a self contained shareable study package that can execute cohort diagnostics on a given set of cohort definitions. This is the recommended mode to run CohortDiagnostics for a study.</p>
 <p>In this vignette, you will learn how to - use the Cohort Diagnostics template package - Hydrate the template package with the cohort definitions you want to diagnose. - Execute the diagnostics on one or more data sources. - Review the result set using the Diagnostics Explorer R shiny app of Cohort Diagnostics - (optional) Submit the results of your cohort diagnostics to the OHDSI Phenotype library.</p>
 <div id="assumptions" class="section level2">
@@ -157,84 +155,140 @@
 <div id="option-a-using-hydra-and-rohdsiwebapi" class="section level2">
 <h2 class="hasAnchor">
 <a href="#option-a-using-hydra-and-rohdsiwebapi" class="anchor"></a>option A: Using Hydra and ROhdsiWebApi</h2>
-<p>Note: this option is expected to be available starting version 2.2 of CohortDiagnostics. It is currently possible to do the steps described below, but is not fully tested.</p>
+<p>Note: this option is required Hydra 0.3, as of writing this document that version of Hydra is in develop branch.</p>
 <p>The skeleton cohort diagnostics study package is <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics">here</a>. A skeleton package is a special package that is designed to be used with <a href="https://github.com/OHDSI/Hydra">Hydra</a>. The input for Hydra is study a specifications file (in json format). Example is <a href="https://github.com/OHDSI/Hydra/blob/master/extras/ExampleCohortDiagnosticsSpecs.json">here</a>.</p>
-<p>We can create this json using the shiny app ‘Diagnostics Editor’ available here(XX– to do –XXXX). A version is deployed at data.ohdsi.org/XXXXXXXXXXXXX. The user interface of this shiny app allows you to make selections that are then used to create the specifications json file. The application also allows you to hydrate a package using Hydra, and download a .zip that contains your study package.</p>
-<p>Alternatively, you can take the example specification-json file and edit it in notepad. You can then use to create the study package as follows</p>
-<p>XXX—to do—XXXXXXx</p>
-<p>Now you may install your package and execute the study.</p>
-</div>
-<div id="option-b-using-only-rohdsiwebapi" class="section level2">
-<h2 class="hasAnchor">
-<a href="#option-b-using-only-rohdsiwebapi" class="anchor"></a>option B: using only ROhdsiWebApi</h2>
-<p>Start with the skeleton cohort diagnostics study package is <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics">here</a>. See Vignette from ROhdsiWebApi <a href="https://ohdsi.github.io/ROhdsiWebApi/articles/InsertCohortDefinitionsIntoPackage.html">here</a>. Create the ‘CohortsToCreate.csv’ file by extracting the cohorts from your atlas as described. Now, open your study package and run</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/insertCohortDefinitionSetInPackage.html">insertCohortDefinitionSetInPackage</a></span><span class="op">(</span>fileName <span class="op">=</span> <span class="st">"CohortsToCreate.csv"</span>,
-                                                 baseUrl <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv</a></span><span class="op">(</span><span class="st">"baseUrl"</span><span class="op">)</span>,
-                                                 insertTableSql <span class="op">=</span> <span class="cn">TRUE</span>,
-                                                 insertCohortCreationR <span class="op">=</span> <span class="cn">TRUE</span>,
-                                                 generateStats <span class="op">=</span> <span class="cn">TRUE</span>,
-                                                 packageName <span class="op">=</span> <span class="st">"SkeletonCohortDiagnosticsStudy"</span><span class="op">)</span></code></pre></div>
-<p>This will create the relevant files in your package.</p>
-<p>The next step is to rename the generic name of the package ‘SkeletonCohortDiagnosticsStudy’ into something more meaningful to identify your study such as ‘CandidateHypertensionCohorts’. One way of doing this is to use Notepad ++ find and replace ‘SkeletonCohortDiagnosticsStudy’ with a name for your study. Also change the ‘SkeletonCohortDiagnosticsStudy.Rproj’ to your study name ‘CandidateHypertensionCohorts.Rproj’.</p>
-<p>Now you may install your package and execute the study.</p>
+<code class="sourceCode R"><span class="co"># please ensure you have the latest version of Hydra. As of 08/13/2021 - CohortDiagnostics support for Hydra is still in develop branch.</span>
+<span class="co"># please check hydra release notes and update hydra</span>
+<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"OHDSI/Hydra"</span>, ref <span class="op">=</span> <span class="st">"develop"</span><span class="op">)</span>
+<span class="va">outputFolder</span> <span class="op">&lt;-</span> <span class="st">"d:/temp/output"</span>  <span class="co"># location where you study package will be created</span>
+
+
+<span class="co">########## Please populate the information below #####################</span>
+<span class="va">version</span> <span class="op">&lt;-</span> <span class="st">"v0.1.0"</span>
+<span class="va">name</span> <span class="op">&lt;-</span> <span class="st">"Thrombosis With Thrombocytopenia Syndrome cohorts - an OHDSI network study"</span>
+<span class="va">packageName</span> <span class="op">&lt;-</span> <span class="st">"ThrombosisWithThrombocytopeniaSyndrome"</span>
+<span class="va">skeletonVersion</span> <span class="op">&lt;-</span> <span class="st">"v0.0.1"</span>
+<span class="va">createdBy</span> <span class="op">&lt;-</span> <span class="st">"rao@ohdsi.org"</span>
+<span class="va">createdDate</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html">Sys.Date</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># default</span>
+<span class="va">modifiedBy</span> <span class="op">&lt;-</span> <span class="st">"rao@ohdsi.org"</span>
+<span class="va">modifiedDate</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html">Sys.Date</a></span><span class="op">(</span><span class="op">)</span>
+<span class="va">skeletonType</span> <span class="op">&lt;-</span> <span class="st">"CohortDiagnosticsStudy"</span>
+<span class="va">organizationName</span> <span class="op">&lt;-</span> <span class="st">"OHDSI"</span>
+<span class="va">description</span> <span class="op">&lt;-</span> <span class="st">"Cohort diagnostics on Thrombosis With Thrombocytopenia Syndrome cohorts."</span>
+
+
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org">magrittr</a></span><span class="op">)</span>
+<span class="co"># Set up</span>
+<span class="va">baseUrl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv</a></span><span class="op">(</span><span class="st">"baseUrl"</span><span class="op">)</span>
+<span class="co"># if you have security enabled, please authorize the use - example below</span>
+<span class="co"># ROhdsiWebApi::authorizeWebApi(baseUrl, 'windows')</span>
+<span class="va">cohortIds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">22040</span>,
+               <span class="fl">22042</span>,
+               <span class="fl">22041</span>,
+               <span class="fl">22039</span>,
+               <span class="fl">22038</span>,
+               <span class="fl">22037</span>,
+               <span class="fl">22036</span>,
+               <span class="fl">22035</span>,
+               <span class="fl">22034</span>,
+               <span class="fl">22033</span>,
+               <span class="fl">22031</span>,
+               <span class="fl">22032</span>,
+               <span class="fl">22030</span>,
+               <span class="fl">22028</span>,
+               <span class="fl">22029</span><span class="op">)</span>
+
+
+
+<span class="co">################# end of user input ##############</span>
+<span class="va">webApiCohorts</span> <span class="op">&lt;-</span> <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/getCohortDefinitionsMetaData.html">getCohortDefinitionsMetaData</a></span><span class="op">(</span>baseUrl <span class="op">=</span> <span class="va">baseUrl</span><span class="op">)</span>
+<span class="va">studyCohorts</span> <span class="op">&lt;-</span>  <span class="va">webApiCohorts</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span>
+        <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">.data</span><span class="op">$</span><span class="va">id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html">%in%</a></span> <span class="va">cohortIds</span><span class="op">)</span>
+
+<span class="co"># compile them into a data table</span>
+<span class="va">cohortDefinitionsArray</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="op">)</span>
+<span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">studyCohorts</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
+        <span class="va">cohortDefinition</span> <span class="op">&lt;-</span>
+                <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/getCohortDefinition.html">getCohortDefinition</a></span><span class="op">(</span>cohortId <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">id</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,
+                                                  baseUrl <span class="op">=</span> <span class="va">baseUrl</span><span class="op">)</span>
+        <span class="va">cohortDefinitionsArray</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
+                id <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">id</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,
+                createdDate <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">createdDate</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,
+                modifiedDate <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">createdDate</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,
+                logicDescription <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">description</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,
+                name <span class="op">=</span> <span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_trim.html">str_trim</a></span><span class="op">(</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_trim.html">str_squish</a></span><span class="op">(</span><span class="va">cohortDefinition</span><span class="op">$</span><span class="va">name</span><span class="op">)</span><span class="op">)</span>,
+                expression <span class="op">=</span> <span class="va">cohortDefinition</span><span class="op">$</span><span class="va">expression</span>
+        <span class="op">)</span>
+<span class="op">}</span>
+
+<span class="va">tempFolder</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempdir</a></span><span class="op">(</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/unlink.html">unlink</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">tempFolder</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.create</a></span><span class="op">(</span>path <span class="op">=</span> <span class="va">tempFolder</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+
+<span class="va">specifications</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fl">1</span>,
+                       version <span class="op">=</span> <span class="va">version</span>,
+                       name <span class="op">=</span> <span class="va">name</span>,
+                       packageName <span class="op">=</span> <span class="va">packageName</span>,
+                       skeletonVersion <span class="op">=</span> <span class="va">skeletonVersion</span>,
+                       createdBy <span class="op">=</span> <span class="va">createdBy</span>,
+                       createdDate <span class="op">=</span> <span class="va">createdDate</span>,
+                       modifiedBy <span class="op">=</span> <span class="va">modifiedBy</span>,
+                       modifiedDate <span class="op">=</span> <span class="va">modifiedDate</span>,
+                       skeletonType <span class="op">=</span> <span class="va">skeletonType</span>,
+                       organizationName <span class="op">=</span> <span class="va">organizationName</span>,
+                       description <span class="op">=</span> <span class="va">description</span>,
+                       cohortDefinitions <span class="op">=</span> <span class="va">cohortDefinitionsArray</span><span class="op">)</span>
+
+<span class="va">jsonFileName</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">tempFolder</span>, <span class="st">"CohortDiagnosticsSpecs.json"</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/write.html">write</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">specifications</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span> <span class="fu">RJSONIO</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/RJSONIO/man/toJSON.html">toJSON</a></span><span class="op">(</span>pretty <span class="op">=</span> <span class="cn">TRUE</span>, digits <span class="op">=</span> <span class="fl">23</span><span class="op">)</span>, file <span class="op">=</span> <span class="va">jsonFileName</span><span class="op">)</span>
+
+
+<span class="co">##############################################################</span>
+<span class="co">##############################################################</span>
+<span class="co">#######       Get skeleton from github            ############</span>
+<span class="co">#######       Uncomment if you want to use latest ############</span>
+<span class="co">#######       skeleton only - for advanced user   ############</span>
+<span class="co">##############################################################</span>
+<span class="co">##############################################################</span>
+<span class="co">##############################################################</span>
+<span class="co">#### get the skeleton from github</span>
+<span class="co"># download.file(url = "https://github.com/OHDSI/SkeletonCohortDiagnosticsStudy/archive/refs/heads/main.zip",</span>
+<span class="co">#                          destfile = file.path(tempFolder, 'skeleton.zip'))</span>
+<span class="co"># unzip(zipfile =  file.path(tempFolder, 'skeleton.zip'), </span>
+<span class="co">#       overwrite = TRUE,</span>
+<span class="co">#       exdir = file.path(tempFolder, "skeleton")</span>
+<span class="co">#         )</span>
+<span class="co"># fileList &lt;- list.files(path = file.path(tempFolder, "skeleton"), full.names = TRUE, recursive = TRUE, all.files = TRUE)</span>
+<span class="co"># DatabaseConnector::createZipFile(zipFile = file.path(tempFolder, 'skeleton.zip'), </span>
+<span class="co">#                                  files = fileList, </span>
+<span class="co">#                                  rootFolder = list.dirs(file.path(tempFolder, 'skeleton'), recursive = FALSE))</span>
+
+<span class="co">##############################################################</span>
+<span class="co">##############################################################</span>
+<span class="co">#######               Build package              #############</span>
+<span class="co">##############################################################</span>
+<span class="co">##############################################################</span>
+<span class="co">##############################################################</span>
+
+
+<span class="co">#### Code that uses the ExampleCohortDiagnosticsSpecs in Hydra to build package</span>
+<span class="va">hydraSpecificationFromFile</span> <span class="op">&lt;-</span> <span class="fu">Hydra</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/Hydra/reference/loadSpecifications.html">loadSpecifications</a></span><span class="op">(</span>fileName <span class="op">=</span> <span class="va">jsonFileName</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/unlink.html">unlink</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">outputFolder</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.create</a></span><span class="op">(</span>path <span class="op">=</span> <span class="va">outputFolder</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="fu">Hydra</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/Hydra/reference/hydrate.html">hydrate</a></span><span class="op">(</span>specifications <span class="op">=</span> <span class="va">hydraSpecificationFromFile</span>,
+               outputFolder <span class="op">=</span> <span class="va">outputFolder</span>
+<span class="op">)</span>
+
+<span class="co"># for advanced user using skeletons outside of Hydra</span>
+<span class="co"># Hydra::hydrate(specifications = hydraSpecificationFromFile,</span>
+<span class="co">#                outputFolder = outputFolder, </span>
+<span class="co">#                skeletonFileName = file.path(tempFolder, 'skeleton.zip')</span>
+<span class="co"># )</span>
+
+
+<span class="fu"><a href="https://rdrr.io/r/base/unlink.html">unlink</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">tempFolder</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="option-c-manual-advanced-users" class="section level2">
-<h2 class="hasAnchor">
-<a href="#option-c-manual-advanced-users" class="anchor"></a>Option C: Manual (advanced users)</h2>
-<p>Start with the skeleton cohort diagnostics study package is <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics">here</a>. Manually populate the <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics/blob/main/inst/settings/CohortsToCreate.csv">CohortToCreate.csv file</a> with the atlasId, cohortId and cohortName. In most cases atlasId = cohortId and should be an integer. cohortName is a meaningful name to identify your cohorts.</p>
-<p>Next - create a new folder called ‘sql’ in the ‘inst’ folder and put all your SQLs. The sql file should be named to match the cohortId e.g. if the cohortId is 1232 then the sql file should be 1232.sql. Optionally, you can also add the cohort json in another folder in ‘inst’ folder of your package called ‘cohorts’. The names of the cohorts should be the same as the sql files, except they will end with .json instead of .sql.</p>
-<p>If your cohorts have inclusion-rules, then you will have to create a file called ‘InclusionRules.csv’ and populate it as shown in this example:</p>
-<table class="table">
-<thead><tr class="header">
-<th>cohortName</th>
-<th>ruleSequence</th>
-<th>ruleName</th>
-<th>cohortId</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>14907</td>
-<td>0</td>
-<td>With no history of gastrointestinal hemorrhage</td>
-<td>14907</td>
-</tr>
-<tr class="even">
-<td>18349</td>
-<td>0</td>
-<td>Gender is male</td>
-<td>18349</td>
-</tr>
-<tr class="odd">
-<td>18350</td>
-<td>0</td>
-<td>Gender is male</td>
-<td>18350</td>
-</tr>
-<tr class="even">
-<td>18350</td>
-<td>1</td>
-<td>Metabolic disease at any time</td>
-<td>18350</td>
-</tr>
-<tr class="odd">
-<td>18352</td>
-<td>0</td>
-<td>With gastrointestinal hemorrhage at some point</td>
-<td>18352</td>
-</tr>
-</tbody>
-</table>
-<p>Now you may install your package and execute the study.</p>
-</div>
-</div>
-<div id="running-cohort-diagnostics" class="section level1">
-<h1 class="hasAnchor">
-<a href="#running-cohort-diagnostics" class="anchor"></a>Running Cohort Diagnostics</h1>
-<p>The Cohort Diagnostics package has an examplePackage that may be used to understand the structure of a study package.</p>
-<p>See Vignette on ‘Running Cohort Diagnostics’ on how to connect cohort diagnostics to CDM and creating cohort table.</p>
-<p>In the extras folder of your study package will be a CodeToRun.R file. Please update the conectionDetails object as described in the vignette on ‘Running Cohort Diagnostics’. Also the page based on your local configuration information.</p>
-<p>Run the entire script.</p>
 </div>
   </div>
 

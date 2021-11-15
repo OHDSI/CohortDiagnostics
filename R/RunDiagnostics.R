@@ -153,7 +153,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     null.ok = FALSE,
     add = errorMessage
   )
-  minCellCount <- utils::type.convert(minCellCount)
+  minCellCount <- utils::type.convert(minCellCount, as.is = TRUE)
   checkmate::assertInteger(x = minCellCount, lower = 0, add = errorMessage)
   checkmate::assertLogical(incremental, add = errorMessage)
   
@@ -557,7 +557,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           incremental = incremental
         )
       } else {
-        warning("Cohort Inclusion statistics file not found. Inclusion Statistis not run.")
+        warning("Cohort Inclusion statistics file not found. Inclusion Statistics not run.")
       }
     }
   }

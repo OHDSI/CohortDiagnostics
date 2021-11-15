@@ -26,7 +26,6 @@ exportCharacterization <- function(characteristics,
                                    counts,
                                    cutOff = 0.0001,
                                    minCellCount) {
-  minCellCount <- minCellCount # to avoid warning on OhdsiRTools::checkUsagePackage("CohortDiagnostics")
   if (!"covariates" %in% names(characteristics)) {
     warning("No characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
@@ -38,13 +37,18 @@ exportCharacterization <- function(characteristics,
                        by = c("cohortId", "databaseId"),
                        copy = TRUE) %>%
       dplyr::mutate(
-        mean = dplyr::case_when(
-          .data$mean != 0 &
-            .data$mean < !!minCellCount / .data$cohortEntries ~ -!!minCellCount / .data$cohortEntries,
-          TRUE ~ .data$mean
+        mean = dplyr::if_else(
+          .data$mean != 0 & .data$mean < minCellCount / as.numeric(.data$cohortEntries),
+          -minCellCount /  as.numeric(.data$cohortEntries),
+          .data$mean
+        ),
+        sumValue  = dplyr::if_else(
+          .data$sumValue  != 0 & .data$sumValue  < minCellCount,
+          -minCellCount,
+          .data$sumValue
         )
       ) %>%
-      dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>%
+      dplyr::mutate(sd = dplyr::if_else(.data$mean >= 0, .data$sd, 0)) %>%
       dplyr::mutate(mean = round(.data$mean, digits = 4),
                     sd = round(.data$sd, digits = 4)) %>%
       dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
@@ -86,22 +90,8 @@ exportCharacterization <- function(characteristics,
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
     characteristics$filteredCovariatesContinous <-
       characteristics$covariatesContinuous %>%
-      # dplyr::filter(mean >= cutOff) %>%
-      dplyr::mutate(databaseId = !!databaseId) %>%
-      dplyr::left_join(counts,
-                       by = c("cohortId", "databaseId"),
-                       copy = TRUE) %>%
-      dplyr::mutate(
-        mean = dplyr::case_when(
-          .data$mean != 0 &
-            .data$mean < !!minCellCount / .data$cohortEntries ~ -!!minCellCount / .data$cohortEntries,
-          TRUE ~ .data$mean
-        )
-      ) %>%
-      dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>%
-      # dplyr::mutate(mean = round(.data$mean, digits = 4),
-      #               sd = round(.data$sd, digits = 4)) %>%
-      dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
+      dplyr::filter(.data$countValue >= minCellCount) %>%
+      dplyr::mutate(databaseId = !!databaseId)
     
     if (dplyr::pull(dplyr::count(characteristics$filteredCovariatesContinous)) > 0) {
       writeCovariateDataAndromedaToCsv(
