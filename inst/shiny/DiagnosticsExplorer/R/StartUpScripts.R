@@ -845,7 +845,8 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                     wrap = TRUE,
                                     showSortIcon = TRUE, 
                                     showSortable = TRUE, 
-                                    fullWidth = TRUE, 
+                                    fullWidth = TRUE,
+                                    bordered = TRUE,
                                     theme = reactable::reactableTheme(),
                                     height = "auto" # to change based on dynamic height
                                     )
