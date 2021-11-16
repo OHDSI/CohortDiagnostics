@@ -814,7 +814,16 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
         format = reactable::colFormat(separators = TRUE),
         html = TRUE,
         na = "",
-        align = "left"
+        align = "left",
+        style = function(value) {
+          list(
+          backgroundImage = sprintf("linear-gradient(90deg, %1$s %2$s, transparent %2$s)", "#9ccee7", paste0((value / max(data[dataColumns[i]])) * 100, "%")),
+          backgroundSize = paste("100%", "100%"),
+          backgroundRepeat = "no-repeat",
+          backgroundPosition = "center",
+          color = "#000"
+          )
+        }
       )
 
   }
