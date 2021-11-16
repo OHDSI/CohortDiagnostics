@@ -811,6 +811,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
         resizable = TRUE,
         filterable = TRUE,
         show = TRUE,
+        format = reactable::colFormat(separators = TRUE),
         html = TRUE,
         na = "",
         align = "left"
@@ -827,6 +828,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       reactable::colGroup(name = distinctDatabaseId[i], 
                           columns = extractedDataColumns)
   }
+  
   dataTable <- reactable::reactable(data = data,
                                     columns = columnDefinitions,
                                     columnGroups = columnGroups,
