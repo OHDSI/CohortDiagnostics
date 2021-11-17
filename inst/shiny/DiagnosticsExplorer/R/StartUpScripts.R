@@ -798,15 +798,20 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
         align = "left"
       )
   }
-  
+ 
+  maxValue <- 0
+  for (i in (1:length(dataColumns))) {
+    maxValue <- max(maxValue,max(data[dataColumns[i]]))
+  } 
  
   for (i in (1:length(dataColumns))) {
     columnDefinitions[[dataColumns[i]]] <-
       reactable::colDef(
         name = ifelse(stringr::str_detect(
-          string = dataColumns[i],
+          string = dataColumns[i], #optimun_dod-records or optimun_dod-persons
           pattern = paste0("persons")
         ),"Subject","Records"),
+        cell = minCellCountDefReactable(),
         sortable = TRUE,
         resizable = TRUE,
         filterable = TRUE,
@@ -817,7 +822,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
         align = "left",
         style = function(value) {
           list(
-          backgroundImage = sprintf("linear-gradient(90deg, %1$s %2$s, transparent %2$s)", "#9ccee7", paste0((value / max(data[dataColumns[i]])) * 100, "%")),
+          backgroundImage = sprintf("linear-gradient(90deg, %1$s %2$s, transparent %2$s)", "#9ccee7", paste0((value / maxValue) * 100, "%")),
           backgroundSize = paste("100%", "100%"),
           backgroundRepeat = "no-repeat",
           backgroundPosition = "center",
@@ -830,8 +835,8 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   columnGroups <- list()
   for (i in 1:length(distinctDatabaseId)) {
     extractedDataColumns <- dataColumns[stringr::str_detect(
-      string = dataColumns,
-      pattern = distinctDatabaseId[i]
+      string = dataColumns, #optimun_dod-Subject
+      pattern = distinctDatabaseId[i] #optimun_dod
     )]
     columnGroups[[i]] <- 
       reactable::colGroup(name = distinctDatabaseId[i], 
