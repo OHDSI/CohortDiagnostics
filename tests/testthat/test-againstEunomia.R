@@ -47,16 +47,20 @@ test_that("Cohort instantiation", {
 })
 
 test_that("Cohort diagnostics in incremental mode", {
+
+  cohorts <- loadCohortsFromPackage(
+    packageName = "CohortDiagnostics",
+    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv"
+  )
   firstTime <- system.time(
-    CohortDiagnostics::runCohortDiagnostics(
+    CohortDiagnostics::executeDiagnostics(
+      cohorts = cohorts,
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = cdmDatabaseSchema,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
-      packageName = "CohortDiagnostics",
-      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
       inclusionStatisticsFolder = file.path(folder, "incStats"),
       exportFolder =  file.path(folder, "export"),
       databaseId = "Eunomia",

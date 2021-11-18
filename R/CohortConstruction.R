@@ -78,75 +78,91 @@ makeBackwardsCompatible <- function(cohorts) {
   return(cohorts)
 }
 
-getCohortsJsonAndSqlFromPackage <-
-  function(packageName = packageName,
-           cohortToCreateFile = cohortToCreateFile,
-           cohortIds = NULL,
-           errorMessage = NULL) {
-    ParallelLogger::logDebug("Executing on cohorts specified in package - ", packageName)
-    
-    if (is.null(errorMessage) |
-        !class(errorMessage) == 'AssertColection') {
-      errorMessage <- checkmate::makeAssertCollection()
-    }
-    checkmate::assertCharacter(
-      x = packageName,
-      min.len = 1,
-      max.len = 1,
-      add = errorMessage
-    )
-    pathToCsv <-
-      system.file(cohortToCreateFile, package = packageName)
-    checkmate::assertFileExists(
-      x = system.file(cohortToCreateFile, package = packageName),
-      access = "r",
-      extension = "csv",
-      add = errorMessage
-    )
-    
-    checkInputFileEncoding(pathToCsv)
-    
-    cohorts <- readr::read_csv(pathToCsv,
-                               col_types = readr::cols(),
-                               guess_max = min(1e7))
-    
-    cohorts <- makeBackwardsCompatible(cohorts)
-    if (!is.null(cohortIds)) {
-      cohorts <- cohorts %>%
-        dplyr::filter(.data$cohortId %in% cohortIds)
-    }
-    
-    checkCohortReference(cohortReference = cohorts, errorMessage = errorMessage)
-    checkmate::reportAssertions(collection = errorMessage)
-    
-    getSql <- function(name) {
-      pathToSql <-
-        system.file("sql", "sql_server", paste0(name, ".sql"), package = packageName)
-      checkmate::assertFile(
-        x = pathToSql,
-        access = "r",
-        extension = ".sql",
-        add = errorMessage
-      )
-      sql <- readChar(pathToSql, file.info(pathToSql)$size)
-      return(sql)
-    }
-    cohorts$sql <- sapply(cohorts$name, getSql)
-    getJson <- function(name) {
-      pathToJson <-
-        system.file("cohorts", paste0(name, ".json"), package = packageName)
-      checkmate::assertFile(
-        x = pathToJson,
-        access = "r",
-        extension = ".sql",
-        add = errorMessage
-      )
-      json <- readChar(pathToJson, file.info(pathToJson)$size)
-      return(json)
-    }
-    cohorts$json <- sapply(cohorts$name, getJson)
-    return(selectColumnAccordingToResultsModel(cohorts))
+#' Load Cohort Definitions From Package
+#' @description
+#' Load cohort references for usage in executeDiagnostics
+#' @inheritParams runCohortDiagnostics
+#' @export
+loadCohortsFromPackage <- function(packageName,
+                                  cohortToCreateFile = "settings/cohortsToCreate.csv",
+                                  cohortIds = NULL) {
+
+  getCohortsJsonAndSqlFromPackage(packageName = packageName,
+                                  cohortToCreateFile = cohortToCreateFile,
+                                  cohortIds = cohortIds)
+}
+
+getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
+                                            cohortToCreateFile = cohortToCreateFile,
+                                            cohortIds = NULL,
+                                            errorMessage = NULL) {
+  ParallelLogger::logDebug("Executing on cohorts specified in package - ", packageName)
+
+  if (is.null(errorMessage) |
+    !class(errorMessage) == 'AssertColection') {
+    errorMessage <- checkmate::makeAssertCollection()
   }
+  checkmate::assertCharacter(
+    x = packageName,
+    min.len = 1,
+    max.len = 1,
+    add = errorMessage
+  )
+  pathToCsv <-
+    system.file(cohortToCreateFile, package = packageName)
+  checkmate::assertFileExists(
+    x = system.file(cohortToCreateFile, package = packageName),
+    access = "r",
+    extension = "csv",
+    add = errorMessage
+  )
+
+  checkInputFileEncoding(pathToCsv)
+
+  cohorts <- readr::read_csv(pathToCsv,
+                             col_types = readr::cols(),
+                             guess_max = min(1e7))
+
+  cohorts <- makeBackwardsCompatible(cohorts)
+  if (!is.null(cohortIds)) {
+    cohorts <- cohorts %>%
+      dplyr::filter(.data$cohortId %in% cohortIds)
+  }
+
+  checkCohortReference(cohortReference = cohorts, errorMessage = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+
+  getSql <- function(name) {
+    pathToSql <-
+      system.file("sql", "sql_server", paste0(name, ".sql"), package = packageName)
+    checkmate::assertFile(
+      x = pathToSql,
+      access = "r",
+      extension = ".sql",
+      add = errorMessage
+    )
+    sql <- readChar(pathToSql, file.info(pathToSql)$size)
+    return(sql)
+  }
+
+  cohorts$sql <- sapply(cohorts$name, getSql)
+
+  getJson <- function(name) {
+    pathToJson <-
+      system.file("cohorts", paste0(name, ".json"), package = packageName)
+    checkmate::assertFile(
+      x = pathToJson,
+      access = "r",
+      extension = ".sql",
+      add = errorMessage
+    )
+    json <- readChar(pathToJson, file.info(pathToJson)$size)
+    return(json)
+  }
+
+  cohorts$json <- sapply(cohorts$name, getJson)
+  return(selectColumnAccordingToResultsModel(cohorts))
+}
 
 
 getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
@@ -248,6 +264,7 @@ getCohortsJsonAndSql <- function(packageName = NULL,
       )
     }
   } else {
+    warning("Use of WebApi mode is to be removed in a future version")
     cohorts <- getCohortsJsonAndSqlFromWebApi(
       baseUrl = baseUrl,
       cohortSetReference = cohortSetReference,

@@ -7,13 +7,14 @@
 runCohortDiagnostics(
   packageName = NULL,
   cohortToCreateFile = "settings/CohortsToCreate.csv",
+  cohorts = NULL,
   baseUrl = NULL,
   cohortSetReference = NULL,
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
   oracleTempSchema = NULL,
-  tempEmulationSchema = NULL,
+  tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   cohortDatabaseSchema,
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
@@ -54,6 +55,8 @@ cohortToCreateFile must be .csv file that is expected to be read into
 a dataframe object identical to requirements for \code{cohortSetReference} argument. 
 This csv file is expected to be encoded in either ASCII or UTF-8, if not, an 
 error message will be displayed and process stopped.}
+
+\item{cohorts}{Optional data.frame of cohorts must include columns cohortId, cohortName, json, sql}
 
 \item{baseUrl}{The base URL for the WebApi instance, for example:
 "http://server.org:80/WebAPI". Can be left NULL if 
