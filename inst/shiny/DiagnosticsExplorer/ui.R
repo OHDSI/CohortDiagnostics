@@ -911,6 +911,7 @@ bodyTabItems <- shinydashboard::tabItems(
         title = "Table",
         value = "indexEventBreakbownTableTab",
         DT::dataTableOutput(outputId = "indexEventBreakdownTable"),
+        tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('indexEventBreakdownReactTable')"),
         reactable::reactableOutput(outputId = "indexEventBreakdownReactTable")
       )
       # shiny::tabPanel(
