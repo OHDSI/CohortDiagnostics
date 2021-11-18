@@ -912,7 +912,13 @@ bodyTabItems <- shinydashboard::tabItems(
         value = "indexEventBreakbownTableTab",
         DT::dataTableOutput(outputId = "indexEventBreakdownTable"),
         tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('indexEventBreakdownReactTable')"),
-        reactable::reactableOutput(outputId = "indexEventBreakdownReactTable")
+        reactable::reactableOutput(outputId = "indexEventBreakdownReactTable"),
+        tags$script('document.getElementById("indexEventBreakdownReactTable").addEventListener("click", function(event){
+                             setTimeout(function(){
+                              HTMLWidgets.staticRender()
+                             }, 10);
+                          })
+                           ')
       )
       # shiny::tabPanel(
       #   title = "Plot",

@@ -6286,7 +6286,7 @@ shiny::shinyServer(function(input, output, session) {
         )
       )
       keyColumnFields <-
-        c("conceptId", "conceptName", "vocabularyId", "standardConcept")
+        c("conceptId", "conceptName","cohortId", "vocabularyId", "standardConcept")
       #depending on user selection - what data Column Fields Will Be Presented?
       dataColumnFields <-
         c("persons",
@@ -6321,8 +6321,29 @@ shiny::shinyServer(function(input, output, session) {
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
-      table <- getReactTableWithColumnsGroupedByDatabaseId(
+      
+        filteredConceptIds <-
+          data %>%
+          dplyr::select(.data$conceptId) %>%
+          dplyr::distinct() %>%
+          dplyr::mutate(sortOrder = dplyr::row_number())
+       
+        rawDataFiltered <- getIndexEventBreakdownRawTarget() %>%
+          dplyr::filter(.data$coConceptId == 0) %>%
+          dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
+          dplyr::inner_join(filteredConceptIds, by = "conceptId") %>%
+          dplyr::arrange(.data$sortOrder) %>%
+          dplyr::select(.data$databaseId,
+                        .data$cohortId,
+                        .data$conceptId,
+                        .data$sortOrder,
+                        .data$daysRelativeIndex,
+                        .data$conceptCount,
+                        .data$subjectCount)
+      table <-  
+       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = rawDataFiltered,
         cohort = cohort, 
         database = database,
         headerCount = countsForHeader,
@@ -6333,6 +6354,7 @@ shiny::shinyServer(function(input, output, session) {
         showResultsAsPercent = input$indexEventBreakdownShowAsPercent, 
         sort = FALSE
       )
+        
     })
   
   

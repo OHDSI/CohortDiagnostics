@@ -649,6 +649,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
 
 
 getReactTableWithColumnsGroupedByDatabaseId <- function(data,
+                                                        rawData,
                                                         cohort = NULL,
                                                         database = NULL,
                                                         headerCount = NULL,
@@ -729,7 +730,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   #     ) %>%
   #       unique()
   #   )
-  
+ data3 <- data
   #long form
   data <- data %>%
     tidyr::pivot_longer(
@@ -737,7 +738,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       names_to = "type",
       values_to = "valuesData"
     ) %>% 
-    dplyr::mutate(databaseIdCombined = paste0(.data$databaseId,"-",.data$type))
+    dplyr::mutate(databaseIdCombined = paste0(.data$databaseId,"-",.data$type)) 
  
     
     # dplyr::mutate(typeLong = paste0(
@@ -780,6 +781,34 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       negate = TRUE
     )]
   
+  for (i in 1:length(dataColumns)) {
+    sparkColumn <- paste0(dataColumns[i],"-","sparkline")
+    databaseIdAndType <- stringr::str_split(dataColumns[i],"-")[[1]]
+    databaseIdSelected <- databaseIdAndType[1]
+    type <- databaseIdAndType[2]
+    columnNameSelected <- ifelse(type == "records","conceptCount","subjectCount")
+  
+    part1 <- '<span id="htmlwidget-spark-' # + ID
+    part2 <- '" class="sparkline html-widget"></span><script type="application/json" data-for="htmlwidget-spark-' # + ID
+    part3 <- '">{"x":{"values":[' # + values
+    part4 <- '],"options":{"height":20,"width":60},"width":60,"height":20},"evals":[],"jsHooks":[]}</script>'
+    
+    out <- list(length = nrow(data))
+    for (i in 1:nrow(data)) {
+      conceptIdSelected <- data$conceptId[i]
+      cohortIdSelected <- data$cohortId[i]
+      rawDataFiltered <- rawData %>% 
+        dplyr::filter(.data$databaseId == databaseIdSelected,
+                      .data$cohortId == cohortIdSelected,
+                      .data$conceptId == conceptIdSelected)
+      sparklineData <- rawDataFiltered[[columnNameSelected]]
+      
+      vals <- paste(sparklineData,collapse = ",")
+      out[[i]] <- paste0(part1, i, part2, i, part3, vals, part4)
+    }
+    data[[sparkColumn]] <- out
+  }
+  
   columnDefinitions <- list()
   
   
@@ -805,32 +834,46 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   } 
  
   for (i in (1:length(dataColumns))) {
-    columnDefinitions[[dataColumns[i]]] <-
-      reactable::colDef(
-        name = ifelse(stringr::str_detect(
-          string = dataColumns[i], #optimun_dod-records or optimun_dod-persons
-          pattern = paste0("persons")
-        ),"Subject","Records"),
-        cell = minCellCountDefReactable(),
-        sortable = TRUE,
-        resizable = TRUE,
-        filterable = TRUE,
-        show = TRUE,
-        # format = reactable::colFormat(separators = TRUE),
-        html = TRUE,
-        na = "",
-        align = "left",
-        style = function(value) {
-          list(
-          backgroundImage = sprintf("linear-gradient(90deg, %1$s %2$s, transparent %2$s)", "#9ccee7", paste0((value / maxValue) * 100, "%")),
-          backgroundSize = paste("100%", "100%"),
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center",
-          color = "#000"
-          )
-        }
-      )
-
+    if (stringr::str_detect(string = dataColumns[i],
+                            pattern = "persons$")) {
+      columnName <- "Subjects"
+    } else if (stringr::str_detect(string = dataColumns[i],
+                                   pattern = "records$")) {
+      columnName <- "Records"
+    }
+    
+      columnDefinitions[[dataColumns[i]]] <-
+        reactable::colDef(
+          name = columnName,
+          cell = minCellCountDefReactable(),
+          sortable = TRUE,
+          resizable = TRUE,
+          filterable = TRUE,
+          show = TRUE,
+          # format = reactable::colFormat(separators = TRUE),
+          html = TRUE,
+          na = "",
+          align = "left",
+          style = function(value) {
+            list(
+              backgroundImage = sprintf("linear-gradient(90deg, %1$s %2$s, transparent %2$s)", "#9ccee7", paste0((value / maxValue) * 100, "%")),
+              backgroundSize = paste("100%", "100%"),
+              backgroundRepeat = "no-repeat",
+              backgroundPosition = "center",
+              color = "#000"
+            )
+          }
+        )
+   
+      sparkColumn <- paste0(dataColumns[i],"-","sparkline")
+      columnDefinitions[[sparkColumn]] <-
+        reactable::colDef(
+          name = "Spark Line",
+          html = TRUE,
+          cell = function(value, index) {
+            return(htmltools::HTML(value))
+          }
+        )
   }
   columnGroups <- list()
   for (i in 1:length(distinctDatabaseId)) {
@@ -838,12 +881,14 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       string = dataColumns, #optimun_dod-Subject
       pattern = distinctDatabaseId[i] #optimun_dod
     )]
+    extractedDataColumns <- sort(c(extractedDataColumns,paste0(extractedDataColumns,"-sparkline")))
     columnGroups[[i]] <- 
       reactable::colGroup(name = distinctDatabaseId[i], 
                           columns = extractedDataColumns)
   }
   
-  dataTable <- reactable::reactable(data = data,
+  dataTable <- 
+      reactable::reactable(data = data,
                                     columns = columnDefinitions,
                                     columnGroups = columnGroups,
                                     sortable = TRUE,
@@ -869,7 +914,14 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                     theme = reactable::reactableTheme(
                                       rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
                                     )
-  )
+  ) %>% 
+    sparkline::spk_add_deps() %>% 
+    htmlwidgets::onRender(jsCode = "
+                      function(el, x) {
+                      HTMLWidgets.staticRender();
+                      }")
+      
+    
   return(dataTable)
 }
 
