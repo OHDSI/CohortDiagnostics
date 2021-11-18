@@ -412,6 +412,84 @@ processInclusionStats <- function(inclusion,
   return(result)
 }
 
+# TODO: use inclusion stats table instead of file path
+getInclusionStats <- function(exportFolder,
+                              databaseId,
+                              cohorts,
+                              incremental,
+                              instantiatedCohorts,
+                              inclusionStatisticsFolder,
+                              minCellCount,
+                              recordKeepingFile) {
+  ParallelLogger::logInfo("Fetching inclusion statistics from files")
+  subset <- subsetToRequiredCohorts(
+    cohorts = cohorts %>%
+      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+    task = "runInclusionStatistics",
+    incremental = incremental,
+    recordKeepingFile = recordKeepingFile
+  )
+
+  if (incremental &&
+    (length(instantiatedCohorts) - nrow(subset)) > 0) {
+    ParallelLogger::logInfo(sprintf(
+      "Skipping %s cohorts in incremental mode.",
+      length(instantiatedCohorts) - nrow(subset)
+    ))
+  }
+  if (nrow(subset) > 0) {
+    stats <-
+      getInclusionStatisticsFromFiles(
+        cohortIds = subset$cohortId,
+        folder = inclusionStatisticsFolder,
+        simplify = TRUE
+      )
+    if (!is.null(stats)) {
+      if (nrow(stats) > 0) {
+        stats <- stats %>%
+          dplyr::mutate(databaseId = !!databaseId)
+        stats <-
+          enforceMinCellValue(data = stats,
+                              fieldName = "meetSubjects",
+                              minValues = minCellCount)
+        stats <-
+          enforceMinCellValue(data = stats,
+                              fieldName = "gainSubjects",
+                              minValues = minCellCount)
+        stats <-
+          enforceMinCellValue(data = stats,
+                              fieldName = "totalSubjects",
+                              minValues = minCellCount)
+        stats <-
+          enforceMinCellValue(data = stats,
+                              fieldName = "remainSubjects",
+                              minValues = minCellCount)
+      }
+      if ("cohortDefinitionId" %in% (colnames(stats))) {
+        stats <- stats %>%
+          dplyr::rename(cohortId = .data$cohortDefinitionId)
+      }
+      colnames(stats) <-
+        SqlRender::camelCaseToSnakeCase(colnames(stats))
+      writeToCsv(
+        data = stats,
+        fileName = file.path(exportFolder, "inclusion_rule_stats.csv"),
+        incremental = incremental,
+        cohortId = subset$cohortId
+      )
+      recordTasksDone(
+        cohortId = subset$cohortId,
+        task = "runInclusionStatistics",
+        checksum = subset$checksum,
+        recordKeepingFile = recordKeepingFile,
+        incremental = incremental
+      )
+    } else {
+      warning("Cohort Inclusion statistics file not found. Inclusion Statistics not run.")
+    }
+  }
+}
+
 #' Instantiate a set of cohort
 #'
 #' @description

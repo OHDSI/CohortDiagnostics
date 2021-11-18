@@ -82,7 +82,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  connection = NULL,
                                  cdmDatabaseSchema,
                                  oracleTempSchema = NULL,
-                                 tempEmulationSchema = NULL,
+                                 tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                                  cohortDatabaseSchema,
                                  vocabularyDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
@@ -116,6 +116,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
+
   if (!is.null(cohortSetReference)) {
     ParallelLogger::logInfo("Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
     cohortToCreateFile <- NULL
@@ -202,7 +203,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                        errorMessage = errorMessage)
   }
   checkmate::reportAssertions(collection = errorMessage)
-  
+
+  ### --- COHORT LOADING --- ###
   cohorts <- getCohortsJsonAndSql(
     packageName = packageName,
     cohortToCreateFile = cohortToCreateFile,
@@ -318,50 +320,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     runTimeSeries <- FALSE
   }
   
-  tryCatch({
-    vocabularyVersionCdm <-
-      DatabaseConnector::renderTranslateQuerySql(
-        connection = connection,
-        sql = "select * from @cdm_database_schema.cdm_source;",
-        cdm_database_schema = cdmDatabaseSchema,
-        snakeCaseToCamelCase = TRUE
-      ) %>%
-      dplyr::tibble()
-  }, error = function(...) {
-    warning("Problem getting vocabulary version. cdm_source table not found in the database.")
-    if (connection@dbms == "postgresql") { #this is for test that automated testing purpose
-      DatabaseConnector::dbExecute(connection, "ABORT;")
-    }
-  })
-  
-  if (all(exists('vocabularyVersionCdm'),
-          !is.null(vocabularyVersionCdm), 
-          nrow(vocabularyVersionCdm) > 0,
-          'vocabularyVersion' %in% colnames(vocabularyVersionCdm))) {
-    if (nrow(vocabularyVersionCdm) > 1) {
-      warning('Please check ETL convention for OMOP cdm_source table. It appears that there is more than one row while only one is expected.')
-    }
-    vocabularyVersionCdm <- vocabularyVersionCdm %>% 
-      dplyr::rename(vocabularyVersionCdm = .data$vocabularyVersion) %>%
-      dplyr::pull(vocabularyVersionCdm) %>%
-      max() %>% 
-      unique()
-  } else {
-    warning("Problem getting vocabulary version. cdm_source table either does not have data, or does not have the field vocabulary_version.")
-    vocabularyVersionCdm <- NULL
-  }
-  
-  vocabularyVersion <-
-    DatabaseConnector::renderTranslateQuerySql(
-      connection = connection,
-      sql = "select * from @vocabulary_database_schema.vocabulary where vocabulary_id = 'None';",
-      vocabulary_database_schema = vocabularyDatabaseSchema,
-      snakeCaseToCamelCase = TRUE
-    ) %>%
-    dplyr::tibble() %>%
-    dplyr::rename(vocabularyVersion = .data$vocabularyVersion) %>%
-    dplyr::pull(.data$vocabularyVersion) %>%
-    unique()
+  vocabularyVersionCdm <- getCdmVocabularyVersion(connection, cdmDatabaseSchema)
+  vocabularyVersion <- getVocabularyVersion(connection, vocabularyDatabaseSchema)
   
   if (incremental) {
     ParallelLogger::logDebug("Working in incremental mode.")
@@ -376,190 +336,50 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   # Database metadata ---------------------------------------------
-  ParallelLogger::logInfo("Saving database metadata")
-  startMetaData <- Sys.time()
-  database <- dplyr::tibble(
-    databaseId = databaseId,
-    databaseName = dplyr::coalesce(databaseName, databaseId),
-    description = dplyr::coalesce(databaseDescription, databaseId),
-    vocabularyVersionCdm = !!vocabularyVersionCdm,
-    vocabularyVersion = !!vocabularyVersion,
-    isMetaAnalysis = 0
-  )
-  writeToCsv(data = database,
-             fileName = file.path(exportFolder, "database.csv"))
-  delta <- Sys.time() - startMetaData
-  writeLines(paste(
-    "Saving database metadata took",
-    signif(delta, 3),
-    attr(delta, "units")
-  ))
-  
+  saveDatabaseMetaData(databaseId,
+                       databaseName,
+                       databaseDescription,
+                       exportFolder,
+                       vocabularyVersionCdm,
+                       vocabularyVersion)
   # Create concept table ------------------------------------------
-  ParallelLogger::logTrace("Creating concept ID table for tracking concepts used in diagnostics")
-  sql <-
-    SqlRender::loadRenderTranslateSql(
-      "CreateConceptIdTable.sql",
-      packageName = "CohortDiagnostics",
-      dbms = connection@dbms,
-      tempEmulationSchema = tempEmulationSchema,
-      table_name = "#concept_ids"
-    )
-  DatabaseConnector::executeSql(
-    connection = connection,
-    sql = sql,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-  
-  referentConceptIdToInsert <- dplyr::tibble()
-  if ('referentConceptId' %in% colnames(cohorts)) {
-    referentConceptIdToInsert <-
-      dplyr::bind_rows(referentConceptIdToInsert,
-                       cohorts %>%
-                         dplyr::transmute(conceptId = as.double(.data$referentConceptId))) %>%
-      dplyr::distinct()
-  }
-  if (nrow(referentConceptIdToInsert) > 0) {
-    ParallelLogger::logInfo(
-      sprintf(
-        "Inserting %s referent concept IDs into the concept ID table. This may take a while.",
-        nrow(referentConceptIdToInsert)
-      )
-    )
-    DatabaseConnector::insertTable(
-      connection = connection,
-      tableName = "#concept_ids",
-      data = referentConceptIdToInsert,
-      dropTableIfExists = FALSE,
-      createTable = FALSE,
-      progressBar = TRUE,
-      tempTable = TRUE,
-      tempEmulationSchema = tempEmulationSchema,
-      camelCaseToSnakeCase = TRUE
-    )
-    ParallelLogger::logTrace("Done inserting")
-  }
+  createConceptTable(connection, tempEmulationSchema, cohorts)
   
   # Counting cohorts -----------------------------------------------------------------------
-  ParallelLogger::logInfo("Counting cohort records and subjects")
-  cohortCounts <- getCohortCounts(
-    connection = connection,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    cohortIds = cohorts$cohortId
-  )
-  if (!is.null(cohortCounts)) {
-    cohortCounts <- cohortCounts %>%
-      dplyr::mutate(databaseId = !!databaseId)
-    if (nrow(cohortCounts) > 0) {
-      cohortCounts <-
-        enforceMinCellValue(data = cohortCounts,
-                            fieldName = "cohortEntries",
-                            minValues = minCellCount)
-      cohortCounts <-
-        enforceMinCellValue(data = cohortCounts,
-                            fieldName = "cohortSubjects",
-                            minValues = minCellCount)
-    }
-    writeToCsv(
-      data = cohortCounts,
-      fileName = file.path(exportFolder, "cohort_count.csv"),
-      incremental = FALSE,
-      cohortId = subset$cohortId
+  cohortCounts <- computeCohortCounts(connection,
+                                      cohortDatabaseSchema,
+                                      cohortTable,
+                                      cohorts,
+                                      exportFolder,
+                                      minCellCount,
+                                      databaseId)
+
+  if (nrow(cohortCounts) > 0) {
+    instantiatedCohorts <- cohortCounts %>%
+      dplyr::pull(.data$cohortId)
+    ParallelLogger::logInfo(
+      sprintf(
+        "Found %s of %s (%1.2f%%) submitted cohorts instantiated. ",
+        length(instantiatedCohorts),
+        nrow(cohorts),
+        100 * (length(instantiatedCohorts) / nrow(cohorts))
+      ),
+      "Beginning cohort diagnostics for instantiated cohorts. "
     )
-    
-    if (nrow(cohortCounts) > 0) {
-      instantiatedCohorts <- cohortCounts %>%
-        dplyr::pull(.data$cohortId)
-      ParallelLogger::logInfo(
-        sprintf(
-          "Found %s of %s (%1.2f%%) submitted cohorts instantiated. ",
-          length(instantiatedCohorts),
-          nrow(cohorts),
-          100 * (length(instantiatedCohorts) /
-                   nrow(cohorts))
-        ),
-        "Beginning cohort diagnostics for instantiated cohorts. "
-      )
-    } else {
-      stop("All cohorts were either not instantiated or all have 0 records.")
-    }
   } else {
-    stop(
-      "Cohort table should be instantiated. If there is no cohort table, there are no cohorts to diagnose."
-    )
+    stop("All cohorts were either not instantiated or all have 0 records.")
   }
-  
+
   # Inclusion statistics -----------------------------------------------------------------------
   if (runInclusionStatistics) {
-    ParallelLogger::logInfo("Fetching inclusion statistics from files")
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohorts %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runInclusionStatistics",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    )
-    
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
-    if (nrow(subset) > 0) {
-      stats <-
-        getInclusionStatisticsFromFiles(
-          cohortIds = subset$cohortId,
-          folder = inclusionStatisticsFolder,
-          simplify = TRUE
-        )
-      if (!is.null(stats)) {
-        if (nrow(stats) > 0) {
-          stats <- stats %>%
-            dplyr::mutate(databaseId = !!databaseId)
-          stats <-
-            enforceMinCellValue(data = stats,
-                                fieldName = "meetSubjects",
-                                minValues = minCellCount)
-          stats <-
-            enforceMinCellValue(data = stats,
-                                fieldName = "gainSubjects",
-                                minValues = minCellCount)
-          stats <-
-            enforceMinCellValue(data = stats,
-                                fieldName = "totalSubjects",
-                                minValues = minCellCount)
-          stats <-
-            enforceMinCellValue(data = stats,
-                                fieldName = "remainSubjects",
-                                minValues = minCellCount)
-        }
-        if ("cohortDefinitionId" %in% (colnames(stats))) {
-          stats <- stats %>%
-            dplyr::rename(cohortId = .data$cohortDefinitionId)
-        }
-        colnames(stats) <-
-          SqlRender::camelCaseToSnakeCase(colnames(stats))
-        writeToCsv(
-          data = stats,
-          fileName = file.path(exportFolder, "inclusion_rule_stats.csv"),
-          incremental = incremental,
-          cohortId = subset$cohortId
-        )
-        recordTasksDone(
-          cohortId = subset$cohortId,
-          task = "runInclusionStatistics",
-          checksum = subset$checksum,
-          recordKeepingFile = recordKeepingFile,
-          incremental = incremental
-        )
-      } else {
-        warning("Cohort Inclusion statistics file not found. Inclusion Statistics not run.")
-      }
-    }
+    getInclusionStats(exportFolder,
+                      databaseId,
+                      cohorts,
+                      incremental,
+                      instantiatedCohorts,
+                      inclusionStatisticsFolder,
+                      minCellCount,
+                      recordKeepingFile)
   }
   
   # Concept set diagnostics -----------------------------------------------
@@ -591,596 +411,131 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   # Time distributions ----------------------------------------------------------------------
   if (runTimeDistributions) {
-    ParallelLogger::logInfo("Creating time distributions")
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohorts %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runTimeDistributions",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    )
-    
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
-    if (nrow(subset) > 0) {
-      data <- getTimeDistributions(
-        connection = connection,
-        tempEmulationSchema = tempEmulationSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable,
-        cdmVersion = cdmVersion,
-        cohortIds = subset$cohortId
-      )
-      if (nrow(data) > 0) {
-        data <- data %>%
-          dplyr::mutate(databaseId = !!databaseId)
-        writeToCsv(
-          data = data,
-          fileName = file.path(exportFolder, "time_distribution.csv"),
-          incremental = incremental,
-          cohortId = subset$cohortId
-        )
-      }
-      recordTasksDone(
-        cohortId = subset$cohortId,
-        task = "runTimeDistributions",
-        checksum = subset$checksum,
-        recordKeepingFile = recordKeepingFile,
-        incremental = incremental
-      )
-    }
+    executeTimeDistributionDiagnostics(connection,
+                                       tempEmulationSchema,
+                                       cdmDatabaseSchema,
+                                       cohortDatabaseSchema,
+                                       cohortTable,
+                                       cdmVersion,
+                                       databaseId,
+                                       exportFolder,
+                                       cohorts,
+                                       instantiatedCohorts,
+                                       incremental,
+                                       recordKeepingFile)
   }
   
   # Visit context ----------------------------------------------------------------------------
   if (runVisitContext) {
-    ParallelLogger::logInfo("Retrieving visit context for index dates")
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohorts %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runVisitContext",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
+    executeVisitContextDiagnostics(
+      connection,
+      tempEmulationSchema,
+      cdmDatabaseSchema,
+      cohortDatabaseSchema,
+      cohortTable,
+      cdmVersion,
+      databaseId,
+      exportFolder,
+      minCellCount,
+      cohorts,
+      instantiatedCohorts,
+      recordKeepingFile,
+      incremental
     )
-    
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
-    if (nrow(subset) > 0) {
-      data <- getVisitContext(
-        connection = connection,
-        tempEmulationSchema = tempEmulationSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable,
-        cdmVersion = cdmVersion,
-        cohortIds = subset$cohortId,
-        conceptIdTable = "#concept_ids"
-      )
-      if (nrow(data) > 0) {
-        data <- data %>%
-          dplyr::mutate(databaseId = !!databaseId)
-        data <- enforceMinCellValue(data, "subjects", minCellCount)
-        writeToCsv(
-          data = data,
-          fileName = file.path(exportFolder, "visit_context.csv"),
-          incremental = incremental,
-          cohortId = subset$cohortId
-        )
-      }
-      recordTasksDone(
-        cohortId = subset$cohortId,
-        task = "runVisitContext",
-        checksum = subset$checksum,
-        recordKeepingFile = recordKeepingFile,
-        incremental = incremental
-      )
-    }
   }
   
   # Incidence rates --------------------------------------------------------------------------------------
   if (runIncidenceRate) {
-    ParallelLogger::logInfo("Computing incidence rates")
-    startIncidenceRate <- Sys.time()
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohorts %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runIncidenceRate",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
+    computeIncidenceRates(
+      connection,
+      tempEmulationSchema,
+      cdmDatabaseSchema,
+      cohortDatabaseSchema,
+      cohortTable,
+      databaseId,
+      exportFolder,
+      minCellCount,
+      cohorts,
+      instantiatedCohorts,
+      recordKeepingFile,
+      incremental
     )
-    
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
-    if (nrow(subset) > 0) {
-      runIncidenceRate <- function(row) {
-        ParallelLogger::logInfo("  Computing incidence rate for cohort '",
-                                row$cohortName,
-                                "'")
-        cohortExpression <- RJSONIO::fromJSON(row$json, digits = 23)
-        washoutPeriod <- tryCatch({
-          cohortExpression$PrimaryCriteria$ObservationWindow$PriorDays
-        }, error = function(e) {
-          0
-        })
-        data <- getIncidenceRate(
-          connection = connection,
-          cdmDatabaseSchema = cdmDatabaseSchema,
-          tempEmulationSchema = tempEmulationSchema,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
-          cohortId = row$cohortId,
-          firstOccurrenceOnly = TRUE,
-          washoutPeriod = washoutPeriod
-        )
-        if (nrow(data) > 0) {
-          data <- data %>% dplyr::mutate(cohortId = row$cohortId)
-        }
-        return(data)
-      }
-      data <-
-        lapply(split(subset, subset$cohortId), runIncidenceRate)
-      data <- dplyr::bind_rows(data)
-      if (nrow(data) > 0) {
-        data <- data %>% dplyr::mutate(databaseId = !!databaseId)
-        data <-
-          enforceMinCellValue(data, "cohortCount", minCellCount)
-        data <-
-          enforceMinCellValue(data,
-                              "incidenceRate",
-                              1000 * minCellCount / data$personYears)
-      }
-      writeToCsv(
-        data = data,
-        fileName = file.path(exportFolder, "incidence_rate.csv"),
-        incremental = incremental,
-        cohortId = subset$cohortId
-      )
-    }
-    recordTasksDone(
-      cohortId = subset$cohortId,
-      task = "runIncidenceRate",
-      checksum = subset$checksum,
-      recordKeepingFile = recordKeepingFile,
-      incremental = incremental
-    )
-    delta <- Sys.time() - startIncidenceRate
-    ParallelLogger::logInfo("Running Incidence Rate took ",
-                            signif(delta, 3),
-                            " ",
-                            attr(delta, "units"))
   }
 
   # Cohort time series -----------------------------------------------------------------------
   if (runTimeSeries) {
-    ParallelLogger::logInfo("Calculating time series of subjects and records.")
-    startPrevalenceRate <- Sys.time()
-    
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohorts %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runTimeSeries",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
+    executeTimeSeriesDiagnostics(
+      connection,
+      cohortDatabaseSchema,
+      tempEmulationSchema,
+      cohortTable,
+      cohorts,
+      exportFolder,
+      incremental,
+      recordKeepingFile,
+      instantiatedCohorts,
+      minCellCount
     )
-    
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
-    if (nrow(subset) > 0) {
-      cohortDateRange <- DatabaseConnector::renderTranslateQuerySql(
-        connection = connection,
-        sql = "SELECT MIN(year(cohort_start_date)) MIN_YEAR, 
-             MAX(year(cohort_end_date)) MAX_YEAR 
-             FROM @cohort_database_schema.@cohort_table;",
-        cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable, 
-        snakeCaseToCamelCase = TRUE,
-        tempEmulationSchema = tempEmulationSchema
-      )
-      
-      calendarQuarter <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = max(2000,
-                                                                                                         cohortDateRange$minYear %>% as.integer())), 
-                                                                     to = clock::date_build(year = min(clock::get_year(clock::date_today("")),
-                                                                                                       (cohortDateRange$maxYear %>% as.integer())) 
-                                                                                            + 1), 
-                                                                     by = clock::duration_months(3))) %>% 
-        dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 3) - 1) %>% 
-        dplyr::mutate(calendarInterval = 'q')
-      
-      calendarMonth <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = max(2000,
-                                                                                                       cohortDateRange$minYear %>% as.integer())), 
-                                                                   to = clock::date_build(year = min(clock::get_year(clock::date_today("")),
-                                                                                                     (cohortDateRange$maxYear %>% as.integer())) 
-                                                                                          + 1), 
-                                                                   by = clock::duration_months(1))) %>% 
-        dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1) %>% 
-        dplyr::mutate(calendarInterval = 'm')
-      
-      calendarYear <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = cohortDateRange$minYear %>% as.integer()), 
-                                                                  to = clock::date_build(year = (cohortDateRange$maxYear %>% as.integer()) + 1), 
-                                                                  by = clock::duration_years(1))) %>% 
-        dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1) %>% 
-        dplyr::mutate(calendarInterval = 'y')
-      
-      # calendarWeek <- dplyr::tibble(periodBegin = clock::date_seq(from = (clock::year_month_weekday(year = cohortDateRange$minYear %>% as.integer(),
-      #                                                                                               month = clock::clock_months$january,
-      #                                                                                               day = clock::clock_weekdays$monday,
-      #                                                                                               index = 1) %>% 
-      #                                                                       clock::as_date() %>% 
-      #                                                                       clock::add_weeks(n = -1)),
-      #                                                             to = (clock::year_month_weekday(year = (cohortDateRange$maxYear  %>% as.integer()) + 1,
-      #                                                                                             month = clock::clock_months$january,
-      #                                                                                             day = clock::clock_weekdays$sunday,
-      #                                                                                             index = 1) %>% 
-      #                                                                     clock::as_date()), 
-      #                                                             by = clock::duration_weeks(n = 1))) %>% 
-      #   dplyr::mutate(periodEnd = clock::add_days(x = .data$periodBegin, n = 6))
-      
-      calendarPeriods <- dplyr::bind_rows(calendarMonth, calendarQuarter, calendarYear) %>%  #calendarWeek
-        dplyr::filter(.data$periodBegin >= as.Date('1999-12-25')) %>% 
-        dplyr::filter(.data$periodEnd <= clock::date_today("")) %>% 
-        dplyr::distinct()
-      
-      ParallelLogger::logTrace("Inserting calendar periods into temporay table. This might take time.")
-      DatabaseConnector::insertTable(
-        connection = connection,
-        tableName = "#calendar_periods",
-        data = calendarPeriods,
-        dropTableIfExists = TRUE,
-        createTable = TRUE,
-        progressBar = TRUE,
-        tempTable = TRUE,
-        tempEmulationSchema = tempEmulationSchema,
-        camelCaseToSnakeCase = TRUE
-      )
-      ParallelLogger::logTrace("Done inserting calendar periods")
-      
-      sql <-
-        SqlRender::loadRenderTranslateSql(
-          "ComputeTimeSeries.sql",
-          packageName = "CohortDiagnostics",
-          dbms = connection@dbms
-        )
-      
-      data <- DatabaseConnector::renderTranslateQuerySql(
-        connection = connection,
-        sql = sql,
-        cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable, 
-        snakeCaseToCamelCase = TRUE,
-        tempEmulationSchema = tempEmulationSchema,
-        cohort_ids = subset$cohortId
-      ) %>% 
-        dplyr::tibble() %>% 
-        dplyr::mutate(databaseId = !!databaseId) %>% 
-        dplyr::select(.data$cohortId, .data$databaseId, 
-                      .data$periodBegin, .data$calendarInterval,
-                      .data$records, .data$subjects,
-                      .data$personDays, .data$recordsIncidence,
-                      .data$subjectsIncidence)
-      
-      DatabaseConnector::renderTranslateExecuteSql(
-        connection = connection,
-        sql = "IF OBJECT_ID('tempdb..#calendar_periods', 'U') IS NOT NULL DROP TABLE #calendar_periods;",
-        progressBar = TRUE, 
-        tempEmulationSchema = tempEmulationSchema
-      )
-      data <-
-        enforceMinCellValue(data, "records", minCellCount)
-      data <-
-        enforceMinCellValue(data, "subjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "personDays", minCellCount)
-      data <-
-        enforceMinCellValue(data, "recordsIncidence", minCellCount)
-      data <-
-        enforceMinCellValue(data, "subjectsIncidence", minCellCount)
-      
-      if (nrow(data) > 0) {
-        writeToCsv(
-          data = data,
-          fileName = file.path(exportFolder, "time_series.csv"),
-          incremental = incremental,
-          cohortId = subset$cohortId
-        )
-      }
-      
-      recordTasksDone(
-        cohortId = subset$cohortId,
-        task = "runTimeSeries",
-        checksum = subset$checksum,
-        recordKeepingFile = recordKeepingFile,
-        incremental = incremental
-      )
-      delta <- Sys.time() - startPrevalenceRate
-      ParallelLogger::logInfo("Running Prevalence Rate took ",
-                              signif(delta, 3),
-                              " ",
-                              attr(delta, "units"))
-    }
   }
   
   # Cohort overlap ---------------------------------------------------------------------------------
   if (runCohortOverlap) {
-    ParallelLogger::logInfo("Computing cohort overlap")
-    startCohortOverlap <- Sys.time()
-    
-    combis <- cohorts %>%
-      dplyr::select(.data$phenotypeId, .data$cohortId) %>%
-      dplyr::distinct()
-    
-    combis <- combis %>%
-      dplyr::rename(targetCohortId = .data$cohortId) %>%
-      dplyr::inner_join(combis %>%
-                          dplyr::rename(comparatorCohortId = .data$cohortId),
-                        by = "phenotypeId") %>%
-      dplyr::filter(.data$targetCohortId < .data$comparatorCohortId) %>%
-      dplyr::select(.data$targetCohortId, .data$comparatorCohortId) %>%
-      dplyr::distinct()
-    
-    if (incremental) {
-      combis <- combis %>%
-        dplyr::inner_join(
-          dplyr::tibble(
-            targetCohortId = cohorts$cohortId,
-            targetChecksum = cohorts$checksum
-          ),
-          by = "targetCohortId"
-        ) %>%
-        dplyr::inner_join(
-          dplyr::tibble(
-            comparatorCohortId = cohorts$cohortId,
-            comparatorChecksum = cohorts$checksum
-          ),
-          by = "comparatorCohortId"
-        ) %>%
-        dplyr::mutate(checksum = paste(.data$targetChecksum, .data$comparatorChecksum))
-    }
-    subset <- subsetToRequiredCombis(
-      combis = combis,
-      task = "runCohortOverlap",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
+    executeCohortComparisonDiagnostics(
+      connection,
+      databaseId,
+      exportFolder,
+      cohortDatabaseSchema,
+      cohortTable,
+      cohorts,
+      minCellCount,
+      recordKeepingFile,
+      incremental
     )
-    
-    if (incremental && (nrow(combis) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "Skipping %s cohort combinations in incremental mode.",
-        nrow(combis) - nrow(subset)
-      ))
-    }
-    if (nrow(subset) > 0) {
-      runCohortOverlap <- function(row) {
-        ParallelLogger::logInfo(
-          "- Computing overlap for cohorts ",
-          row$targetCohortId,
-          " and ",
-          row$comparatorCohortId
-        )
-        data <- computeCohortOverlap(
-          connection = connection,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
-          targetCohortId = row$targetCohortId,
-          comparatorCohortId = row$comparatorCohortId
-        )
-        if (nrow(data) > 0) {
-          data <- data %>%
-            dplyr::mutate(
-              targetCohortId = row$targetCohortId,
-              comparatorCohortId = row$comparatorCohortId
-            )
-        }
-        return(data)
-      }
-      data <-
-        lapply(split(subset, 1:nrow(subset)), runCohortOverlap)
-      data <- dplyr::bind_rows(data)
-      if (nrow(data) > 0) {
-        revData <- data
-        revData <-
-          swapColumnContents(revData, "targetCohortId", "comparatorCohortId")
-        revData <-
-          swapColumnContents(revData, "tOnlySubjects", "cOnlySubjects")
-        revData <-
-          swapColumnContents(revData, "tBeforeCSubjects", "cBeforeTSubjects")
-        revData <-
-          swapColumnContents(revData, "tInCSubjects", "cInTSubjects")
-        data <- dplyr::bind_rows(data, revData) %>%
-          dplyr::mutate(databaseId = !!databaseId)
-        data <-
-          enforceMinCellValue(data, "eitherSubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "bothSubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "tOnlySubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "cOnlySubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "tBeforeCSubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "cBeforeTSubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "sameDaySubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "tInCSubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "cInTSubjects", minCellCount)
-        data <- data %>%
-          dplyr::mutate(dplyr::across(.cols = everything(), ~ tidyr::replace_na(
-            data = ., replace = 0
-          )))
-        
-        writeToCsv(
-          data = data,
-          fileName = file.path(exportFolder, "cohort_overlap.csv"),
-          incremental = incremental,
-          targetCohortId = subset$targetCohortId,
-          comparatorCohortId = subset$comparatorCohortId
-        )
-      }
-      recordTasksDone(
-        cohortId = subset$targetCohortId,
-        comparatorId = subset$comparatorCohortId,
-        task = "runCohortOverlap",
-        checksum = subset$checksum,
-        recordKeepingFile = recordKeepingFile,
-        incremental = incremental
-      )
-    }
-    
-    delta <- Sys.time() - startCohortOverlap
-    ParallelLogger::logInfo("Running Cohort Overlap took ",
-                            signif(delta, 3),
-                            " ",
-                            attr(delta, "units"))
   }
   
   # Cohort characterization ---------------------------------------------------------------
   if (runCohortCharacterization) {
-    ParallelLogger::logInfo("Characterizing cohorts")
-    startCohortCharacterization <- Sys.time()
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohorts %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runCohortCharacterization",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
+    executeCohortCharacterization(
+      connection,
+      databaseId,
+      exportFolder,
+      cdmDatabaseSchema,
+      cohortDatabaseSchema,
+      cohortTable,
+      covariateSettings,
+      tempEmulationSchema,
+      cdmVersion,
+      cohorts,
+      cohortCounts,
+      minCellCount,
+      instantiatedCohorts,
+      incremental,
+      recordKeepingFile
     )
-    
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
-    if (nrow(subset) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "Starting large scale characterization of %s cohort(s)",
-        nrow(subset)
-      ))
-      characteristics <-
-        getCohortCharacteristics(
-          connection = connection,
-          cdmDatabaseSchema = cdmDatabaseSchema,
-          tempEmulationSchema = tempEmulationSchema,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
-          cohortIds = subset$cohortId,
-          covariateSettings = covariateSettings,
-          cdmVersion = cdmVersion
-        )
-      exportCharacterization(
-        characteristics = characteristics,
-        databaseId = databaseId,
-        incremental = incremental,
-        covariateValueFileName = file.path(exportFolder, "covariate_value.csv"),
-        covariateValueContFileName = file.path(exportFolder, "covariate_value_dist.csv"),
-        covariateRefFileName = file.path(exportFolder, "covariate_ref.csv"),
-        analysisRefFileName = file.path(exportFolder, "analysis_ref.csv"),
-        counts = cohortCounts,
-        minCellCount = minCellCount
-      )
-    }
-    recordTasksDone(
-      cohortId = subset$cohortId,
-      task = "runCohortCharacterization",
-      checksum = subset$checksum,
-      recordKeepingFile = recordKeepingFile,
-      incremental = incremental
-    )
-    delta <- Sys.time() - startCohortCharacterization
-    ParallelLogger::logInfo("Running Characterization took ",
-                            signif(delta, 3),
-                            " ",
-                            attr(delta, "units"))
   }
   
   # Temporal Cohort characterization ---------------------------------------------------------------
   if (runTemporalCohortCharacterization) {
-    ParallelLogger::logInfo("Temporal Cohort characterization")
-    startTemporalCohortCharacterization <- Sys.time()
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohorts %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runTemporalCohortCharacterization",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    )
-    
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
-    if (nrow(subset) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "Starting large scale temporal characterization of %s cohort(s)",
-        nrow(subset)
-      ))
-      characteristics <-
-        getCohortCharacteristics(
-          connection = connection,
-          cdmDatabaseSchema = cdmDatabaseSchema,
-          tempEmulationSchema = tempEmulationSchema,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
-          cohortIds = subset$cohortId,
-          covariateSettings = temporalCovariateSettings,
-          cdmVersion = cdmVersion
-        )
-      exportCharacterization(
-        characteristics = characteristics,
-        databaseId = databaseId,
-        incremental = incremental,
-        covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
-        covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
-        analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
-        timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
-        counts = cohortCounts,
-        minCellCount = minCellCount
-      )
-    }
-    recordTasksDone(
-      cohortId = subset$cohortId,
-      task = "runTemporalCohortCharacterization",
-      checksum = subset$checksum,
-      recordKeepingFile = recordKeepingFile,
-      incremental = incremental
-    )
-    delta <- Sys.time() - startTemporalCohortCharacterization
-    ParallelLogger::logInfo(
-      "Running Temporal Characterization took ",
-      signif(delta, 3),
-      " ",
-      attr(delta, "units")
+    executeTemporalCharacterization(
+      connection,
+      databaseId,
+      exportFolder,
+      cdmDatabaseSchema,
+      cohortDatabaseSchema,
+      cohortTable,
+      temporalCovariateSettings,
+      tempEmulationSchema,
+      cdmVersion,
+      cohorts,
+      cohortCounts,
+      minCellCount,
+      instantiatedCohorts,
+      incremental,
+      recordKeepingFile
     )
   }
   
   # Store information from the vocabulary on the concepts used -------------------------
-  ParallelLogger::logInfo("Retrieving concept information")
   exportConceptInformation(
     connection = connection,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -1203,16 +558,22 @@ runCohortDiagnostics <- function(packageName = NULL,
   )
   
   # Add all to zip file -------------------------------------------------------------------------------
-  ParallelLogger::logInfo("Adding results to zip file")
-  zipName <-
-    file.path(exportFolder, paste0("Results_", databaseId, ".zip"))
-  files <- list.files(exportFolder, pattern = ".*\\.csv$")
-  oldWd <- setwd(exportFolder)
-  on.exit(setwd(oldWd), add = TRUE)
-  DatabaseConnector::createZipFile(zipFile = zipName, files = files)
-  ParallelLogger::logInfo("Results are ready for sharing at: ", zipName)
-  
+  writeResultsZip(exportFolder, databaseId)
   delta <- Sys.time() - start
+  ParallelLogger::logInfo("Computing all diagnostics took ",
+                          signif(delta, 3),
+                          " ",
+                          attr(delta, "units"))
+}
+
+
+writeResultsZip <- function(exportFolder, databaseId) {
+  ParallelLogger::logInfo("Adding results to zip file")
+  zipName <- file.path(exportFolder, paste0("Results_", databaseId, ".zip"))
+  files <- list.files(exportFolder, pattern = ".*\\.csv$")
+  DatabaseConnector::createZipFile(zipFile = zipName, files = files, rootFolder = exportFolder)
+  ParallelLogger::logInfo("Results are ready for sharing at: ", zipName)
+
   metaData <- dplyr::tibble(
     databaseId = databaseId,
     variableField = c('vocabularyVersionCdm', 'vocabularyVersion'),
@@ -1220,9 +581,5 @@ runCohortDiagnostics <- function(packageName = NULL,
   )
   writeToCsv(data = metaData,
              fileName = "metaData.csv")
-  
-  ParallelLogger::logInfo("Computing all diagnostics took ",
-                          signif(delta, 3),
-                          " ",
-                          attr(delta, "units"))
+
 }

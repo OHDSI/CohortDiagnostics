@@ -173,3 +173,154 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                           attr(delta, "units"))
   return(results)
 }
+
+# TODO: merge with temporal charachterization. These two functions are practically the same.
+executeCohortCharacterization <- function(connection,
+                                          databaseId,
+                                          exportFolder,
+                                          cdmDatabaseSchema,
+                                          cohortDatabaseSchema,
+                                          cohortTable,
+                                          covariateSettings,
+                                          tempEmulationSchema,
+                                          cdmVersion,
+                                          cohorts,
+                                          cohortCounts,
+                                          minCellCount,
+                                          instantiatedCohorts,
+                                          incremental,
+                                          recordKeepingFile) {
+  ParallelLogger::logInfo("Characterizing cohorts")
+    startCohortCharacterization <- Sys.time()
+    subset <- subsetToRequiredCohorts(
+      cohorts = cohorts %>%
+        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+      task = "runCohortCharacterization",
+      incremental = incremental,
+      recordKeepingFile = recordKeepingFile
+    )
+
+    if (incremental &&
+        (length(instantiatedCohorts) - nrow(subset)) > 0) {
+      ParallelLogger::logInfo(sprintf(
+        "Skipping %s cohorts in incremental mode.",
+        length(instantiatedCohorts) - nrow(subset)
+      ))
+    }
+    if (nrow(subset) > 0) {
+      ParallelLogger::logInfo(sprintf(
+        "Starting large scale characterization of %s cohort(s)",
+        nrow(subset)
+      ))
+      characteristics <-
+        getCohortCharacteristics(
+          connection = connection,
+          cdmDatabaseSchema = cdmDatabaseSchema,
+          tempEmulationSchema = tempEmulationSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cohortTable = cohortTable,
+          cohortIds = subset$cohortId,
+          covariateSettings = covariateSettings,
+          cdmVersion = cdmVersion
+        )
+      exportCharacterization(
+        characteristics = characteristics,
+        databaseId = databaseId,
+        incremental = incremental,
+        covariateValueFileName = file.path(exportFolder, "covariate_value.csv"),
+        covariateValueContFileName = file.path(exportFolder, "covariate_value_dist.csv"),
+        covariateRefFileName = file.path(exportFolder, "covariate_ref.csv"),
+        analysisRefFileName = file.path(exportFolder, "analysis_ref.csv"),
+        counts = cohortCounts,
+        minCellCount = minCellCount
+      )
+    }
+    recordTasksDone(
+      cohortId = subset$cohortId,
+      task = "runCohortCharacterization",
+      checksum = subset$checksum,
+      recordKeepingFile = recordKeepingFile,
+      incremental = incremental
+    )
+    delta <- Sys.time() - startCohortCharacterization
+    ParallelLogger::logInfo("Running Characterization took ",
+                            signif(delta, 3),
+                            " ",
+                            attr(delta, "units"))
+}
+
+executeTemporalCharacterization <- function(connection,
+                                            databaseId,
+                                            exportFolder,
+                                            cdmDatabaseSchema,
+                                            cohortDatabaseSchema,
+                                            cohortTable,
+                                            temporalCovariateSettings,
+                                            tempEmulationSchema,
+                                            cdmVersion,
+                                            cohorts,
+                                            cohortCounts,
+                                            minCellCount,
+                                            instantiatedCohorts,
+                                            incremental,
+                                            recordKeepingFile) {
+  ParallelLogger::logInfo("Temporal Cohort characterization")
+  startTemporalCohortCharacterization <- Sys.time()
+  subset <- subsetToRequiredCohorts(
+    cohorts = cohorts %>%
+      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+    task = "runTemporalCohortCharacterization",
+    incremental = incremental,
+    recordKeepingFile = recordKeepingFile
+  )
+
+  if (incremental &&
+    (length(instantiatedCohorts) - nrow(subset)) > 0) {
+    ParallelLogger::logInfo(sprintf(
+      "Skipping %s cohorts in incremental mode.",
+      length(instantiatedCohorts) - nrow(subset)
+    ))
+  }
+  if (nrow(subset) > 0) {
+    ParallelLogger::logInfo(sprintf(
+      "Starting large scale temporal characterization of %s cohort(s)",
+      nrow(subset)
+    ))
+    characteristics <-
+      getCohortCharacteristics(
+        connection = connection,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        cohortIds = subset$cohortId,
+        covariateSettings = temporalCovariateSettings,
+        cdmVersion = cdmVersion
+      )
+    exportCharacterization(
+      characteristics = characteristics,
+      databaseId = databaseId,
+      incremental = incremental,
+      covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
+      covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
+      analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
+      timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
+      counts = cohortCounts,
+      minCellCount = minCellCount
+    )
+  }
+  recordTasksDone(
+    cohortId = subset$cohortId,
+    task = "runTemporalCohortCharacterization",
+    checksum = subset$checksum,
+    recordKeepingFile = recordKeepingFile,
+    incremental = incremental
+  )
+  delta <- Sys.time() - startTemporalCohortCharacterization
+  ParallelLogger::logInfo(
+    "Running Temporal Characterization took ",
+    signif(delta, 3),
+    " ",
+    attr(delta, "units")
+  )
+}
