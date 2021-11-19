@@ -791,7 +791,29 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
     part1 <- '<span id="htmlwidget-spark-' # + ID
     part2 <- '" class="sparkline html-widget"></span><script type="application/json" data-for="htmlwidget-spark-' # + ID
     part3 <- '">{"x":{"values":[' # + values
-    part4 <- '],"options":{"height":20,"width":60},"width":60,"height":20},"evals":[],"jsHooks":[]}</script>'
+    part4 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},"evals":[],"jsHooks":[]}</script>'
+    # part3 <- '">{"values":[' # + y-values
+    # part3 <- '">{"x":{"values":[' # + x-values
+    # part4 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},evals":[],"jsHooks":[]}</script>' # + y-values
+    # part5 <- '","y":{"values":[' # + values
+    # part5 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},evals":[],"jsHooks":[]}</script>';
+    
+    daysRelativeIndexRange <- max(abs(rawData$daysRelativeIndex))
+    daysRelativeIndexRange <- dplyr::tibble(daysRelativeIndex = c((daysRelativeIndexRange * -1):daysRelativeIndexRange))
+    rawData <- rawData %>% 
+      dplyr::select(.data$databaseId,
+                    .data$cohortId,
+                    .data$conceptId,
+                    .data$sortOrder) %>% 
+      dplyr::distinct() %>% 
+      tidyr::crossing(daysRelativeIndexRange) %>% 
+      dplyr::left_join(rawData,by = c("databaseId",
+                                      "cohortId",
+                                      "conceptId",
+                                      "sortOrder",
+                                      "daysRelativeIndex")) %>%  
+      tidyr::replace_na(replace = list("conceptCount" = 0, "subjectCount" = 0)) %>% 
+      dplyr::arrange(.data$sortOrder, .data$daysRelativeIndex)
     
     out <- list(length = nrow(data))
     for (i in 1:nrow(data)) {
@@ -801,10 +823,13 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
         dplyr::filter(.data$databaseId == databaseIdSelected,
                       .data$cohortId == cohortIdSelected,
                       .data$conceptId == conceptIdSelected)
-      sparklineData <- rawDataFiltered[[columnNameSelected]]
       
-      vals <- paste(sparklineData,collapse = ",")
-      out[[i]] <- paste0(part1, i, part2, i, part3, vals, part4)
+      sparklineDataDayIndex <- rawDataFiltered$daysRelativeIndex
+      sparklineDataCountValue <- rawDataFiltered[[columnNameSelected]]
+      
+      xAxisVals <- paste(sparklineDataDayIndex,collapse = ",")
+      yAxisVals <- paste(sparklineDataCountValue,collapse = ",")
+      out[[i]] <- paste0(part1, i, part2, i, part3, yAxisVals, part4)
     }
     data[[sparkColumn]] <- out
   }
