@@ -1,6 +1,6 @@
 ---
 title: "Running cohort diagnostics"
-author: "Gowtham Rao"
+author: "Gowtham Rao and James P. Gilbert"
 date: "`r Sys.Date()`"
 output:
   pdf_document: 
@@ -39,7 +39,7 @@ connectionDetails <- createConnectionDetails(dbms = "postgresql",
                                              password = "supersecret")
 ```
 For the purposes of this example, we will use the Eunomia test CDM package that is in an Sqlite database stored locally.
-```{r}
+```{r eval=FALSE}
 connectionDetails <- Eunomia::getEunomiaConnectionDetails()
 
 cdmDatabaseSchema <- "main"
@@ -63,7 +63,7 @@ However, a study package can be seen as a snapshot, frozen at the time of creati
 
 For example, the cohort diagnostics package includes a set of cohort sql and json to run on the Eunomia data set.
 
-```{r}
+```{r eval=FALSE}
 library(CohortDiagnostics)
 cohorts <- loadCohortsFromPackage(packageName = "CohortDiagnostics",
                                   cohortToCreateFile = "settings/CohortsToCreateForTesting.csv")
@@ -104,13 +104,13 @@ This can be done using the `CohortDiagnostics` function `instantiateCohortSet` o
 We have the option to also generate inclusion rule statistics while the cohorts are instantiated (recommended).
 If we want to do this, we need to provide a folder where the inclusion rule statistics will be stored for later use.
 
-```{r}
+```{r eval=FALSE}
 inclusionStatisticsFolder <- "inclusionStats"
 ```
 
 ### Using CohortDiagnostics to instantiate cohorts
 For example,
-```{r tidy=FALSE}
+```{r tidy=FALSE,eval=FALSE}
 instantiateCohortSet(connectionDetails = connectionDetails,
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      inclusionStatisticsFolder = inclusionStatisticsFolder,
@@ -133,11 +133,11 @@ Once cohort definitions are loaded and cohort tables have been populated cohort 
 
 First we set an export folder, this is where the results will be stored.
 
-```{r}
+```{r eval=FALSE}
 exportFolder <- "export"
 ```
 Then we execute the function (using the default settings) as follows:
-```{r}
+```{r eval=FALSE}
 executeDiagnostics(cohorts,
                    connectionDetails = connectionDetails,
                    cohortTable = cohortTable,
@@ -163,7 +163,7 @@ Make sure to place all zip files in a single folder.
 
 Optionally, we can pre-merge the zip files, so we can view results in the Shiny app:
 
-```{r tidy=FALSE}
+```{r tidy=FALSE,eval=FALSE}
 preMergeDiagnosticsFiles(exportFolder)
 ```
 
