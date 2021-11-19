@@ -69,6 +69,11 @@ test_that("Create schema", {
 
 
 test_that("Results upload", {
+  cohorts <- loadCohortsFromPackage(
+    packageName = "CohortDiagnostics",
+    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv"
+  )
+
   instantiateCohortSet(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -77,14 +82,13 @@ test_that("Results upload", {
     cohortDatabaseSchema = cohortDiagnosticsSchema,
     cohortTable = cohortTable,
     cohortIds = c(17492, 17692),
-    packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+    cohorts = cohorts,
     generateInclusionStats = TRUE,
     createCohortTable = TRUE,
     inclusionStatisticsFolder = file.path(folder, "incStats")
   )
   
-  runCohortDiagnostics(
+  executeDiagnostics(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
@@ -92,8 +96,7 @@ test_that("Results upload", {
     cohortDatabaseSchema = cohortDiagnosticsSchema,
     cohortTable = cohortTable,
     cohortIds = c(17492, 17692),
-    packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+    cohorts = cohorts,
     inclusionStatisticsFolder = file.path(folder, "incStats"),
     exportFolder = file.path(folder, "export"),
     databaseId = "cdmv5",

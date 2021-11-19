@@ -19,7 +19,7 @@ instantiateCohortSet(
   cohortToCreateFile = "settings/CohortsToCreate.csv",
   baseUrl = NULL,
   cohortSetReference = NULL,
-  generateInclusionStats = FALSE,
+  generateInclusionStats = TRUE,
   inclusionStatisticsFolder = NULL,
   createCohortTable = TRUE,
   incremental = FALSE,

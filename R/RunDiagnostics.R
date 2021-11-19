@@ -119,6 +119,10 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  incremental = FALSE,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
 
+  exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
+  incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
+  inclusionStatisticsFolder <- normalizePath(inclusionStatisticsFolder, mustWork = FALSE)
+
   if (!is.null(cohortSetReference)) {
     ParallelLogger::logInfo("Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
     cohortToCreateFile <- NULL
@@ -579,7 +583,10 @@ writeResultsZip <- function(exportFolder, databaseId, vocabularyVersion, vocabul
   ParallelLogger::logInfo("Adding results to zip file")
   zipName <- file.path(exportFolder, paste0("Results_", databaseId, ".zip"))
   files <- list.files(exportFolder, pattern = ".*\\.csv$")
-  DatabaseConnector::createZipFile(zipFile = zipName, files = files, rootFolder = exportFolder)
+  wd <- getwd()
+  on.exit(setwd(wd), add = TRUE)
+  setwd(exportFolder)
+  DatabaseConnector::createZipFile(zipFile = zipName, files = files)
   ParallelLogger::logInfo("Results are ready for sharing at: ", zipName)
 
   metaData <- dplyr::tibble(
