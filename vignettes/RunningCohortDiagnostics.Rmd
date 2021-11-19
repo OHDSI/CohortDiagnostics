@@ -21,6 +21,11 @@ knitr::opts_chunk$set(
   comment = "#>",
   error = FALSE,
   tidy = FALSE)
+
+# Temp folders used to run the example
+exportFolder <- tempfile("CohortDiagnosticsTestExport")
+inclusionStatisticsFolder <- tempfile("inclusionStats")
+
 ```
 
 # Configuring the connection to the server
@@ -32,42 +37,137 @@ connectionDetails <- createConnectionDetails(dbms = "postgresql",
                                              server = "localhost/ohdsi",
                                              user = "joe",
                                              password = "supersecret")
+```
+For the purposes of this example, we will use the Eunomia test CDM package that is in an Sqlite database stored locally.
+```{r}
+connectionDetails <- Eunomia::getEunomiaConnectionDetails()
 
-cdmDatabaseSchema <- "my_cdm_data"
+cdmDatabaseSchema <- "main"
 tempEmulationSchema <- NULL
-cohortDatabaseSchema <- "my_schema"
-cohortTable <- "my_cohort_table"
+cohortDatabaseSchema <- "main"
+cohortTable <- "cohort"
 ```
 
-The last four lines define the `cdmDatabaseSchema`, `tempEmulationSchema`, `cohortDatabaseSchema`, and `cohortTable` variables. We'll use the `cdmDatabaseSchema` later to tell R where the data in CDM format live. The `tempEmulationSchema` is needed only for Oracle users, since Oracle does not support temporary tables. The `cohortDatabaseSchema`, and `cohortTable` specify where we want to instantiate our cohorts. Note that for Microsoft SQL Server, databaseschemas need to specify both the database and the schema, so for example `cdmDatabaseSchema <- "my_cdm_data.dbo"`.
+The last four lines define the `cdmDatabaseSchema`, `tempEmulationSchema`, `cohortDatabaseSchema`, and `cohortTable` variables.
+We'll use the `cdmDatabaseSchema` later to tell R where the data in CDM format live. The `tempEmulationSchema` is needed only for Oracle users, since Oracle does not support temporary tables.
+The `cohortDatabaseSchema`, and `cohortTable` specify where we want to instantiate our cohorts.
+Note that for Microsoft SQL Server, database schemas need to specify both the database and the schema, so for example `cdmDatabaseSchema <- "my_cdm_data.dbo"`.
 
-## Creating a new cohort table
+# Running cohort diagnostics
 
-In order to run most of the cohort diagnostics, we need to instantiate the cohorts. The best way is to instantiate the cohorts in a new cohort table. We can use the `createCohortTable` to create an empty cohort table:
+## Loading cohort references from a package
+The prefered usage of cohort diagnostics is through the use of a study package.
+This is a dedicated R package that can be installed on a system and run.
+The primary reason for this is due to reproducibility, cohort definitions and resources frequently change.
+However, a study package can be seen as a snapshot, frozen at the time of creation and incrementally updated.
 
+For example, the cohort diagnostics package includes a set of cohort sql and json to run on the Eunomia data set.
+
+```{r}
+library(CohortDiagnostics)
+cohorts <- loadCohortsFromPackage(packageName = "CohortDiagnostics",
+                                  cohortToCreateFile = "settings/CohortsToCreateForTesting.csv")
+```
+
+## Loading cohort references from WebApi
+It is often desirable to perform cohort diagnostics on definitions stored in an ATLAS instance.
+Though this is not the preferred way of running studies (and this is certainly not the preferred method for an OHDSI
+network study involving multiple sites) it is possible to load references in to a data frame used by cohort diagnostics.
+
+The following code demonstrates how to create a set of cohort references from ATLAS that can be used by cohort diagnostics:
 ```{r tidy=FALSE,eval=FALSE}
-createCohortTable(connectionDetails = connectionDetails,
-                  cohortDatabaseSchema = cohortDatabaseSchema,
-                  cohortTable = cohortTable)
+library(magrittr)
+# Set up
+baseUrl <- "https://atlas.hosting.com/WebAPI"
+# list of cohort ids
+cohortIds <- c(18345,18346)
+
+cohorts <- data.frame()
+for (cohortId in cohortIds) {
+  cohortDefinition <- ROhdsiWebApi::getCohortDefinition(cohortId = cohortId, baseUrl = baseUrl)
+  sqlDefinition <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition, baseUrl = baseUrl, generateStats = TRUE)
+  cohorts <- rbind(cohorts,
+                   data.frame(
+                           cohortId = cohortId,
+                           cohortName = cohortDefinition$name,
+                           json = jsonlite::toJSON(cohortDefinition),
+                           sql = sqlDefinition))
+}
 ```
 
-Note this this function will **delete the table if it already exists** before creating it.
+## Generating cohorts
+Cohorts must be generated before cohort diagnostics can be run.
+This can be done using the `CohortDiagnostics` function `instantiateCohortSet` or independently
+(for example, as part of a larger study package).
 
-## Inclusion rules
-We have the option to also generate inclusion rule statistics while the cohorts are instantiated (recommended). If we want to do this, we need to provide a folder where the inclusion rule statistics will be stored for later use. 
+### Inclusion rules
+We have the option to also generate inclusion rule statistics while the cohorts are instantiated (recommended).
+If we want to do this, we need to provide a folder where the inclusion rule statistics will be stored for later use.
+
+```{r}
+inclusionStatisticsFolder <- "inclusionStats"
+```
+
+### Using CohortDiagnostics to instantiate cohorts
+For example,
+```{r tidy=FALSE}
+instantiateCohortSet(connectionDetails = connectionDetails,
+                     cohortDatabaseSchema = cohortDatabaseSchema,
+                     inclusionStatisticsFolder = inclusionStatisticsFolder,
+                     cohortTable = cohortTable,
+                     cohorts = cohorts,
+                     cdmDatabaseSchema = cdmDatabaseSchema)
+```
+**Note, that the above code will delete an existing table**.
+However, incremental mode can be used when setting the parameter `incremental = TRUE`.
+
+
+The resulting cohort table should include the columns:
+
+`cohort_definition_id`, `subject_id`, `cohort_start_date`, `cohort_end_date`
+
+
+
+## Executing cohort diagnostics
+Once cohort definitions are loaded and cohort tables have been populated cohort diagnostics is ready to be executed.
+
+First we set an export folder, this is where the results will be stored.
+
+```{r}
+exportFolder <- "export"
+```
+Then we execute the function (using the default settings) as follows:
+```{r}
+executeDiagnostics(cohorts,
+                   connectionDetails = connectionDetails,
+                   cohortTable = cohortTable,
+                   cohortDatabaseSchema = cohortDatabaseSchema,
+                   cdmDatabaseSchema = cdmDatabaseSchema,
+                   exportFolder = exportFolder,
+                   inclusionStatisticsFolder = inclusionStatisticsFolder,
+                   databaseId = "MyCdm",
+                   minCellCount = 5)
+```
 
 # Cohort Diagnostics Output
 
-Once diagnostics is completed, a zip file will have been created in the specified export folder. This zip file can be shared between sites, as it does not contain patient-identifiable information. When unzipped, the zip file will contain several .csv files that maybe easily audited. Note that cell counts smaller than 5 have been removed, as specified using the `minCellCount` argument, to ensure non-identifiability.
+Once diagnostics is completed, a zip file will have been created in the specified export folder.
+This zip file can be shared between sites, as it does not contain patient-identifiable information.
+When unzipped, the zip file will contain several .csv files that maybe easily audited.
+Note that cell counts smaller than 5 have been removed, as specified using the `minCellCount` argument, to ensure non-identifiability.
 
 ## Creating a pre merged file
 
-Assuming you completed the steps described above for one or more databases, you should now have a set of zip files, one per database. Make sure to place all zip files in a single folder, for example `c:/temp/allZipFiles`. 
+Assuming you completed the steps described above for one or more databases, you should now have a set of zip files, one per database.
+Make sure to place all zip files in a single folder.
 
 Optionally, we can pre-merge the zip files, so we can view results in the Shiny app:
 
-```{r tidy=FALSE,eval=FALSE}
-preMergeDiagnosticsFiles("C:/temp/allZipFiles")
+```{r tidy=FALSE}
+preMergeDiagnosticsFiles(exportFolder)
 ```
+
+This file can be used in the shiny app to explore results.
+See the vignette "Viewing results using Diagnostics Explorer" for more details.
 
 

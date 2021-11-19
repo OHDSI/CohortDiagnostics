@@ -529,16 +529,9 @@ getInclusionStats <- function(exportFolder,
 #'
 #' @template CohortSetReference
 #'
-#' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
-#'                                    construction to.
+#' @inheritParams runCohortDiagnostics
 #' @param generateInclusionStats      Compute and store inclusion rule statistics?
-#' @param inclusionStatisticsFolder   The folder where the inclusion rule statistics are stored. Can be
-#'                                    left NULL if \code{generateInclusionStats = FALSE}.
-#' @param createCohortTable           Create the cohort table? If \code{incremental = TRUE} and the table
-#'                                    already exists this will be skipped.
-#' @param incremental                 Create only cohorts that haven't been created before?
-#' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
-#'                                    of which definition has been executed.
+
 #' @return
 #' A data frame with cohort counts
 #'
@@ -547,20 +540,22 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                  connection = NULL,
                                  cdmDatabaseSchema,
                                  vocabularyDatabaseSchema = cdmDatabaseSchema,
-                                 tempEmulationSchema = NULL,
+                                 tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                                  oracleTempSchema = NULL,
                                  cohortDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
                                  cohortIds = NULL,
+                                 cohorts = NULL,
                                  packageName = NULL,
                                  cohortToCreateFile = "settings/CohortsToCreate.csv",
                                  baseUrl = NULL,
                                  cohortSetReference = NULL,
-                                 generateInclusionStats = FALSE,
+                                 generateInclusionStats = TRUE,
                                  inclusionStatisticsFolder = NULL,
                                  createCohortTable = TRUE,
                                  incremental = FALSE,
                                  incrementalFolder = NULL) {
+
   if (!is.null(cohortSetReference)) {
     ParallelLogger::logInfo("Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
     cohortToCreateFile <- NULL
@@ -611,16 +606,27 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       )
     }
   }
-  
-  cohorts <- getCohortsJsonAndSql(
-    packageName = packageName,
-    cohortToCreateFile = cohortToCreateFile,
-    baseUrl = baseUrl,
-    cohortSetReference = cohortSetReference,
-    cohortIds = cohortIds,
-    generateStats = generateInclusionStats
-  )
-  
+
+
+  if (is.null(cohorts)) {
+    cohorts <- getCohortsJsonAndSql(
+      packageName = packageName,
+      cohortToCreateFile = cohortToCreateFile,
+      baseUrl = baseUrl,
+      cohortSetReference = cohortSetReference,
+      cohortIds = cohortIds,
+      generateStats = generateInclusionStats
+    )
+  } else {
+    checkmate::assertDataFrame(cohorts, min.rows = 1, col.names = "named")
+    checkmate::assertNames(colnames(cohorts),
+                           must.include = c("cohortId",
+                                            "cohortName",
+                                            "logicDescription",
+                                            "json",
+                                            "sql"))
+  }
+
   if (incremental) {
     cohorts$checksum <- computeChecksum(cohorts$sql)
     recordKeepingFile <-

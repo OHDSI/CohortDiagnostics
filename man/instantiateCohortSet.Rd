@@ -9,11 +9,12 @@ instantiateCohortSet(
   connection = NULL,
   cdmDatabaseSchema,
   vocabularyDatabaseSchema = cdmDatabaseSchema,
-  tempEmulationSchema = NULL,
+  tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   oracleTempSchema = NULL,
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
   cohortIds = NULL,
+  cohorts = NULL,
   packageName = NULL,
   cohortToCreateFile = "settings/CohortsToCreate.csv",
   baseUrl = NULL,
@@ -58,7 +59,9 @@ this should include both the database and schema name, for example
 \item{cohortTable}{Name of the cohort table.}
 
 \item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
-construction to.}
+diagnostics to.}
+
+\item{cohorts}{Optional data.frame of cohorts must include columns cohortId, cohortName, json, sql}
 
 \item{packageName}{The name of the package containing the cohort definitions. Can be left NULL if 
 \code{baseUrl} and \code{cohortSetReference} have been specified.}
@@ -80,15 +83,12 @@ error message will be displayed and process stopped.}
 \item{generateInclusionStats}{Compute and store inclusion rule statistics?}
 
 \item{inclusionStatisticsFolder}{The folder where the inclusion rule statistics are stored. Can be
-left NULL if \code{generateInclusionStats = FALSE}.}
+left NULL if \code{runInclusionStatistics = FALSE}.}
 
-\item{createCohortTable}{Create the cohort table? If \code{incremental = TRUE} and the table
-already exists this will be skipped.}
-
-\item{incremental}{Create only cohorts that haven't been created before?}
+\item{incremental}{Create only cohort diagnostics that haven't been created before?}
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
-of which definition has been executed.}
+of which cohort diagnostics has been executed.}
 }
 \value{
 A data frame with cohort counts

@@ -28,11 +28,6 @@ unlink("extras/CohortDiagnostics.pdf")
 shell("R CMD Rd2pdf ./ --output=extras/CohortDiagnostics.pdf")
 
 dir.create(path = "./inst/doc/", showWarnings = FALSE)
-rmarkdown::render("vignettes/CohortDiagnosticsUsingWebApi.Rmd",
-                  output_file = "../inst/doc/CohortDiagnosticsUsingWebApi.pdf",
-                  rmarkdown::pdf_document(latex_engine = "pdflatex",
-                                          toc = TRUE,
-                                          number_sections = TRUE))
 
 rmarkdown::render("vignettes/CohortDiagnosticsInPackageMode.Rmd",
                   output_file = "../inst/doc/CohortDiagnosticsInPackageMode.pdf",
@@ -46,11 +41,6 @@ rmarkdown::render("vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd",
                                           toc = TRUE,
                                           number_sections = TRUE))
 
-rmarkdown::render("vignettes/DatabaseModeInDiagnosticsExplorer.Rmd",
-                  output_file = "../inst/doc/DatabaseModeInDiagnosticsExplorer.pdf",
-                  rmarkdown::pdf_document(latex_engine = "pdflatex",
-                                          toc = TRUE,
-                                          number_sections = TRUE))
 
 rmarkdown::render("vignettes/WhatIsCohortDiagnostics.Rmd",
                   output_file = "../inst/doc/WhatIsCohortDiagnostics.pdf",
