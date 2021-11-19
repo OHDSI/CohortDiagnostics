@@ -625,7 +625,7 @@ writeResultsZip <- function(exportFolder, databaseId, vocabularyVersion, vocabul
 #'                    connectionDetails = connectionDetails)
 #'
 #' # Use a custom set of cohorts defined in a data.frame
-#' 'cohorts <- data.frame(
+#' cohorts <- data.frame(
 #'   cohortId = c(100),
 #'   cohortName = c("Cohort Name"),
 #'   logicDescription = c("My Cohort"),

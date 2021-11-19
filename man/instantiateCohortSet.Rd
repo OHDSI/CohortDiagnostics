@@ -85,6 +85,8 @@ error message will be displayed and process stopped.}
 \item{inclusionStatisticsFolder}{The folder where the inclusion rule statistics are stored. Can be
 left NULL if \code{runInclusionStatistics = FALSE}.}
 
+\item{createCohortTable}{Create/Overwrite a cohort table?}
+
 \item{incremental}{Create only cohort diagnostics that haven't been created before?}
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept

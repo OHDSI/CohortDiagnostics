@@ -39,7 +39,7 @@ connectionDetails <- createConnectionDetails(dbms = "postgresql",
                                              password = "supersecret")
 ```
 For the purposes of this example, we will use the Eunomia test CDM package that is in an Sqlite database stored locally.
-```{r eval=FALSE}
+```{r results = FALSE,message = FALSE,warning=FALSE, message = FALSE}
 connectionDetails <- Eunomia::getEunomiaConnectionDetails()
 
 cdmDatabaseSchema <- "main"
@@ -63,7 +63,7 @@ However, a study package can be seen as a snapshot, frozen at the time of creati
 
 For example, the cohort diagnostics package includes a set of cohort sql and json to run on the Eunomia data set.
 
-```{r eval=FALSE}
+```{r results = FALSE,message = FALSE,warning=FALSE}
 library(CohortDiagnostics)
 cohorts <- loadCohortsFromPackage(packageName = "CohortDiagnostics",
                                   cohortToCreateFile = "settings/CohortsToCreateForTesting.csv")
@@ -104,13 +104,13 @@ This can be done using the `CohortDiagnostics` function `instantiateCohortSet` o
 We have the option to also generate inclusion rule statistics while the cohorts are instantiated (recommended).
 If we want to do this, we need to provide a folder where the inclusion rule statistics will be stored for later use.
 
-```{r eval=FALSE}
+```{r}
 inclusionStatisticsFolder <- "inclusionStats"
 ```
 
 ### Using CohortDiagnostics to instantiate cohorts
 For example,
-```{r tidy=FALSE,eval=FALSE}
+```{r results = FALSE,message = FALSE,warning=FALSE}
 instantiateCohortSet(connectionDetails = connectionDetails,
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      inclusionStatisticsFolder = inclusionStatisticsFolder,
@@ -133,11 +133,11 @@ Once cohort definitions are loaded and cohort tables have been populated cohort 
 
 First we set an export folder, this is where the results will be stored.
 
-```{r eval=FALSE}
+```{r results = FALSE,message = FALSE,warning=FALSE}
 exportFolder <- "export"
 ```
 Then we execute the function (using the default settings) as follows:
-```{r eval=FALSE}
+```{r results = FALSE,message = FALSE,warning=FALSE}
 executeDiagnostics(cohorts,
                    connectionDetails = connectionDetails,
                    cohortTable = cohortTable,
@@ -151,7 +151,7 @@ executeDiagnostics(cohorts,
 
 # Cohort Diagnostics Output
 
-Once diagnostics is completed, a zip file will have been created in the specified export folder.
+Once the diagnostics have completed, a zip file will have been created in the specified export folder.
 This zip file can be shared between sites, as it does not contain patient-identifiable information.
 When unzipped, the zip file will contain several .csv files that maybe easily audited.
 Note that cell counts smaller than 5 have been removed, as specified using the `minCellCount` argument, to ensure non-identifiability.

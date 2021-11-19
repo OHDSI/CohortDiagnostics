@@ -531,7 +531,7 @@ getInclusionStats <- function(exportFolder,
 #'
 #' @inheritParams runCohortDiagnostics
 #' @param generateInclusionStats      Compute and store inclusion rule statistics?
-
+#' @param createCohortTable           Create/Overwrite a cohort table?
 #' @return
 #' A data frame with cohort counts
 #'
