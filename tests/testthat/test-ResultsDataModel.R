@@ -26,7 +26,7 @@ cohortDiagnosticsSchema <- "cohort_diagnostics"
 resultsDatabaseSchema <- paste0("r", 
                                 as.character(gsub("[: -]", "" , Sys.time(), perl=TRUE)),
                                 as.character(sample(1:100, 1)))
-oracleTempSchema <- NULL
+tempEmulationSchema <- NULL
 cohortTable <- "cohort"
 connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
 folder <- tempfile("cohortDiagnosticsTest")
@@ -78,7 +78,7 @@ test_that("Results upload", {
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    oracleTempSchema = oracleTempSchema,
+    tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDiagnosticsSchema,
     cohortTable = cohortTable,
     cohortIds = c(17492, 17692),
@@ -92,7 +92,7 @@ test_that("Results upload", {
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    oracleTempSchema = oracleTempSchema,
+    tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDiagnosticsSchema,
     cohortTable = cohortTable,
     cohortIds = c(17492, 17692),
