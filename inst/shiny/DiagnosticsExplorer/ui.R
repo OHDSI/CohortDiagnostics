@@ -284,18 +284,11 @@ bodyTabItems <- shinydashboard::tabItems(
         solidHeader = FALSE,
         collapsible = TRUE,
         collapsed = TRUE,
-        # column(6,tags$h4("Cohort Definition")),
         column(12,
                tags$table(width = "100%",
                           tags$tr(
                             tags$td(
                               align = "right",
-                              shiny::downloadButton(
-                                outputId = "downloadAllCohortDetails",
-                                label = NULL,
-                                icon = shiny::icon("download"),
-                                style = "margin-top: 5px; margin-bottom: 5px;"
-                              ),
                               shiny::downloadButton(
                                 outputId = "exportAllCohortDetails",
                                 label = NULL,
@@ -304,7 +297,8 @@ bodyTabItems <- shinydashboard::tabItems(
                               )
                             )
                           ))),
-        DT::dataTableOutput(outputId = "cohortDefinitionTable")
+        tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionTable')"),
+        reactable::reactableOutput(outputId = "cohortDefinitionTable")
       ),
       shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedTarget"),
       shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedComparator"),

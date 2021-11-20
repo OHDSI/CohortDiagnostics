@@ -954,38 +954,15 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   ###output: cohortDefinitionTable----
-  output$cohortDefinitionTable <- DT::renderDataTable(expr = {
+  output$cohortDefinitionTable <- reactable::renderReactable(expr = {
     data <- cohortDefinitionTableData()
     
-    if (nrow(data) < 20) {
-      scrollYHeight <- '15vh'
-    } else {
-      scrollYHeight <- '25vh'
+    if (!hasData(data)) {
+      return(NULL)
     }
-    options = list(
-      pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      scrollX = TRUE,
-      scrollY = scrollYHeight,
-      info = TRUE,
-      searchHighlight = TRUE
-    )
     
-    dataTable <- DT::datatable(
-      data,
-      options = options,
-      rownames = FALSE,
-      colnames = colnames(data) %>% camelCaseToTitleCase(),
-      escape = FALSE,
-      filter = "top",
-      selection = "none",
-      class = "stripe compact"
-    )
-    return(dataTable)
-  }, server = TRUE)
+    dataTable <- getSimpleReactable(data = data)
+  })
   
   
   ###output: isCohortDefinitionRowSelected----
@@ -1010,17 +987,6 @@ shiny::shinyServer(function(input, output, session) {
         return(12)
       }
     })
-  
-  ###output: downloadAllCohortDetails----
-  output$downloadAllCohortDetails <- downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "CohortDefinition")
-    },
-    content = function(file) {
-      data <- getCohortSortedByCohortId()
-      downloadCsv(x = data, fileName = file)
-    }
-  )
   
   ##Human readable text----
   ###getCirceRPackageVersionInformation----

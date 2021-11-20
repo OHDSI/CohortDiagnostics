@@ -950,6 +950,43 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   return(dataTable)
 }
 
+getSimpleReactable <- function(data) {
+  
+  if (nrow(data) > 20) {
+    height <- '300px'
+  } else {
+    height <- 'auto'
+  }
+  dataTable <- reactable::reactable(data = data,
+                                    sortable = TRUE,
+                                    resizable = TRUE, 
+                                    filterable = TRUE,
+                                    searchable = TRUE, 
+                                    pagination = TRUE, 
+                                    showPagination = TRUE, 
+                                    showPageInfo = TRUE,
+                                    # minRows = 100, # to change based on number of rows in data
+                                    highlight = TRUE,
+                                    striped = TRUE, 
+                                    compact = TRUE, 
+                                    wrap = TRUE,
+                                    showSortIcon = TRUE, 
+                                    showSortable = TRUE, 
+                                    fullWidth = TRUE,
+                                    bordered = TRUE,
+                                    height = height,
+                                    onClick = "select",
+                                    showPageSizeOptions = TRUE, 
+                                    pageSizeOptions = c(10, 20, 50, 100, 1000), 
+                                    defaultPageSize = 100,
+                                    theme = reactable::reactableTheme(
+                                      rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
+                                    )
+  )
+  
+  return(dataTable)
+}
+
 getCountsForHeaderForUseInDataTable <- function(dataSource,
                                                 databaseIds = NULL,
                                                 cohortIds = NULL,
