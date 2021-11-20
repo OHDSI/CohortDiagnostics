@@ -275,19 +275,8 @@ shiny::shinyServer(function(input, output, session) {
               title = "Cohort Count",
               value = "targetCohortDefinitionCohortCountTabPanel",
               tags$br(),
-              tags$table(width = "100%",
-                         tags$tr(
-                           tags$td(
-                             align = "right",
-                             shiny::downloadButton(
-                               outputId = "downloadTargetCohortDefinitionCohortCount",
-                               label = NULL,
-                               icon = shiny::icon("download"),
-                               style = "margin-top: 5px; margin-bottom: 5px;"
-                             )
-                           )
-                         )),
-              DT::dataTableOutput(outputId = "targetCohortDefinitionCohortCountTable")
+              tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('targetCohortDefinitionCohortCountTable')"),
+              reactable::reactableOutput(outputId = "targetCohortDefinitionCohortCountTable")
             ),
             shiny::tabPanel(
               title = "Inclusion rules",
@@ -1231,70 +1220,16 @@ shiny::shinyServer(function(input, output, session) {
   
   ###output: targetCohortDefinitionCohortCountTable----
   output$targetCohortDefinitionCohortCountTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getCountsForSelectedCohortsTarget()
       validate(need(
         all(!is.null(data),
             nrow(data) > 0),
         "There is no inclusion rule data for this cohort."
       ))
-      maxCohortSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ubjects")
-      maxCohortEntries <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ntries")
-      
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        columnDefs = list(minCellCountDef(1:2))
-      )
-      
-      dataTable <- DT::datatable(
-        data,
-        options = options,
-        colnames = colnames(data) %>% camelCaseToTitleCase(),
-        rownames = FALSE,
-        escape = FALSE,
-        filter = "top",
-        selection = "none",
-        class = "stripe nowrap compact"
-      )
-      
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns = 2,
-        background = DT::styleColorBar(c(0, maxCohortSubjects), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
-      
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns = 3,
-        background = DT::styleColorBar(c(0, maxCohortEntries), "#ffd699"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
-      return(dataTable)
-    }, server = TRUE)
-  
-  ###output: downloadTargetCohortDefinitionCohortCount----
-  output$downloadTargetCohortDefinitionCohortCount <- downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "CohortCount")
-    },
-    content = function(file) {
-      data <- getCountsForSelectedCohortsTarget()
-      downloadCsv(x = data, fileName = file)
-    }
-  )
+      table <- getSimpleReactable(data = data)
+      return(table)
+    })
   
   ##Concept set ----
   ###getConceptSetExpressionTarget----
