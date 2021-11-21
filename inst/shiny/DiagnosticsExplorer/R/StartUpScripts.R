@@ -222,8 +222,8 @@ consolidationOfSelectedFieldValues <- function(input,
     }
     #selection on concept id
 
-    if (hasData(input$targetCohortDefinitionResolvedConceptTable_rows_selected)) {
-      data$selectedConceptIdTarget <- resolvedConceptSetDataTarget[input$targetCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
+    if (hasData(reactable::getReactableState("targetCohortDefinitionResolvedConceptTable", "selected"))) {
+      data$selectedConceptIdTarget <- resolvedConceptSetDataTarget[reactable::getReactableState("targetCohortDefinitionResolvedConceptTable", "selected"),]$conceptId
       data$TargetActive <- TRUE
     }
     if (hasData(input$comparatorCohortDefinitionResolvedConceptTable_rows_selected)) {
@@ -766,6 +766,12 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       values_fill = 0
     )
   
+  if (nrow(data) > 20) {
+    reactableHeight <- '65vh'
+  } else {
+    reactableHeight <- 'auto'
+  }
+  
   #!!! need to add tool tip - hover over the data columns -- show tool tip for short names
   withTooltip <- function(value, tooltip) {
     tags$abbr(style = "text-decoration: underline; text-decoration-style: dotted; cursor: help",
@@ -932,7 +938,10 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                     showSortable = TRUE, 
                                     fullWidth = TRUE,
                                     bordered = TRUE,
-                                    height = "auto", # to change based on dynamic height
+                                    height = reactableHeight,
+                                    showPageSizeOptions = TRUE, 
+                                    pageSizeOptions = c(10, 20, 50, 100, 1000), 
+                                    defaultPageSize = 100,
                                     selection = 'single',
                                     onClick = "select",
                                     theme = reactable::reactableTheme(
@@ -953,9 +962,9 @@ getSimpleReactable <- function(data,
                                selection = NULL) {
   
   if (nrow(data) > 20) {
-    height <- '300px'
+    reactableHeight <- '300px'
   } else {
-    height <- 'auto'
+    reactableHeight <- 'auto'
   }
   
   columnDefinitions <- list()
@@ -995,7 +1004,7 @@ getSimpleReactable <- function(data,
                                     fullWidth = TRUE,
                                     bordered = TRUE,
                                     selection = selection,
-                                    height = height,
+                                    height = reactableHeight,
                                     onClick = "select",
                                     showPageSizeOptions = TRUE, 
                                     pageSizeOptions = c(10, 20, 50, 100, 1000), 
