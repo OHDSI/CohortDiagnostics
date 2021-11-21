@@ -198,11 +198,11 @@ consolidationOfSelectedFieldValues <- function(input,
     
     #selection on concept set id
     if (all(
-      hasData(input$targetCohortDefinitionConceptSetsTable_rows_selected),
+      hasData(reactable::getReactableState("targetCohortDefinitionConceptSetsTable", "selected")),
       hasData(data$cohortIdTarget)
     )) {
       selectedConceptSet <-
-        conceptSetExpressionTarget[input$targetCohortDefinitionConceptSetsTable_rows_selected,]
+        conceptSetExpressionTarget[reactable::getReactableState("targetCohortDefinitionConceptSetsTable", "selected"),]
       data$conceptSetIdTarget <- selectedConceptSet$conceptSetId
       
       if (all(
@@ -949,7 +949,8 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   return(dataTable)
 }
 
-getSimpleReactable <- function(data) {
+getSimpleReactable <- function(data,
+                               selection = NULL) {
   
   if (nrow(data) > 20) {
     height <- '300px'
@@ -968,11 +969,12 @@ getSimpleReactable <- function(data) {
                                     highlight = TRUE,
                                     striped = TRUE, 
                                     compact = TRUE, 
-                                    wrap = TRUE,
+                                    wrap = FALSE,
                                     showSortIcon = TRUE, 
                                     showSortable = TRUE, 
                                     fullWidth = TRUE,
                                     bordered = TRUE,
+                                    selection = selection,
                                     height = height,
                                     onClick = "select",
                                     showPageSizeOptions = TRUE, 

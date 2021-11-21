@@ -164,7 +164,7 @@ shiny::shinyServer(function(input, output, session) {
   getUserSelection <- shiny::reactive(x = {
     list(
       input$tabs,
-      input$targetCohortDefinitionConceptSetsTable_rows_selected,
+      reactable::getReactableState("targetCohortDefinitionConceptSetsTable", "selected"),
       input$comparatorCohortDefinitionConceptSets_rows_selected,
       input$targetCohortDefinitionResolvedConceptTable_rows_selected,
       input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,
@@ -312,15 +312,6 @@ shiny::shinyServer(function(input, output, session) {
                                label = "Show As Percent",
                                value = FALSE
                              )
-                           ),
-                           tags$td(
-                             align = "right",
-                             shiny::downloadButton(
-                               "saveTargetCohortDefinitionSimplifiedInclusionRuleTable",
-                               label = "",
-                               icon = shiny::icon("download"),
-                               style = "margin-top: 5px; margin-bottom: 5px;"
-                             )
                            )
                          )),
               shiny::conditionalPanel(
@@ -357,7 +348,9 @@ shiny::shinyServer(function(input, output, session) {
             shiny::tabPanel(
               title = "Concept Sets",
               value = "targetCohortDefinitionConceptSetTabPanel",
-              DT::dataTableOutput(outputId = "targetCohortDefinitionConceptSetsTable"),
+              tags$br(),
+              tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('targetCohortDefinitionConceptSetsTable')"),
+              reactable::reactableOutput(outputId = "targetCohortDefinitionConceptSetsTable"),
               tags$br(),
               shiny::conditionalPanel(
                 condition = "output.isTargetCohortDefinitionConceptSetsTableRowSelected == true",
@@ -2042,17 +2035,6 @@ shiny::shinyServer(function(input, output, session) {
       )
     })
   
-  #output: saveTargetCohortDefinitionSimplifiedInclusionRuleTable----
-  output$saveTargetCohortDefinitionSimplifiedInclusionRuleTable <-
-    downloadHandler(
-      filename = function() {
-        getCsvFileNameWithDateTime(string = "InclusionRule")
-      },
-      content = function(file) {
-        downloadCsv(x = getSimplifiedInclusionRuleResultsTarget(), fileName = file)
-      }
-    )
-  
   ##output: getSimplifiedInclusionRuleResultsTargetHasData----
   output$getSimplifiedInclusionRuleResultsTargetHasData <-
     shiny::reactive(x = {
@@ -2492,38 +2474,16 @@ shiny::shinyServer(function(input, output, session) {
   
   #output: targetCohortDefinitionConceptSetsTable----
   output$targetCohortDefinitionConceptSetsTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getConceptSetsInCohortDataTarget()
       validate(need(all(!is.null(data),
                         nrow(data) > 0),
         "Concept set details not available for this cohort"
       ))
       
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = '15vh'
-      )
-      
-      dataTable <- DT::datatable(
-        data,
-        options = options,
-        colnames = colnames(data) %>% camelCaseToTitleCase(),
-        rownames = FALSE,
-        selection = list(mode = 'single', selected = 1),
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      return(dataTable)
-    }, server = TRUE)
+      getSimpleReactable(data = data,
+                         selection = 'single')
+    })
   
   getConceptSetsInCohortDataComparator <- reactive({
     if (!hasData(consolidatedCohortIdComparator())) {
@@ -2623,7 +2583,7 @@ shiny::shinyServer(function(input, output, session) {
   #output: isTargetCohortDefinitionConceptSetsTableRowSelected----
   output$isTargetCohortDefinitionConceptSetsTableRowSelected <-
     shiny::reactive(x = {
-      data <- input$targetCohortDefinitionConceptSetsTable_rows_selected
+      data <- reactable::getReactableState("targetCohortDefinitionConceptSetsTable", "selected")
       return(hasData(data))
     })
   shiny::outputOptions(x = output,
