@@ -957,7 +957,27 @@ getSimpleReactable <- function(data,
   } else {
     height <- 'auto'
   }
+  
+  columnDefinitions <- list()
+  
+  for (i in (1:length(colnames(data)))) {
+    columnName <- camelCaseToTitleCase(colnames(data)[i])
+    colnames(data)[i] <- columnName
+    columnDefinitions[[columnName]] <-
+      reactable::colDef(
+        name = columnName,
+        sortable = TRUE,
+        resizable = TRUE,
+        filterable = TRUE,
+        show = TRUE,
+        html = TRUE,
+        na = "",
+        align = "left"
+      )
+  }
+  
   dataTable <- reactable::reactable(data = data,
+                                    columns = columnDefinitions,
                                     sortable = TRUE,
                                     resizable = TRUE, 
                                     filterable = TRUE,
