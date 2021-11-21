@@ -247,8 +247,8 @@ consolidationOfSelectedFieldValues <- function(input,
       data$comparatorActive <- TRUE
     }
     
-    if (hasData(input$targetCohortDefinitionMappedConceptTable_rows_selected)) {
-      data$selectedConceptIdTarget <- mappedConceptSetTarget[input$targetCohortDefinitionMappedConceptTable_rows_selected,]$conceptId
+    if (hasData(reactable::getReactableState("targetCohortDefinitionMappedConceptTable", "selected"))) {
+      data$selectedConceptIdTarget <- mappedConceptSetTarget[reactable::getReactableState("targetCohortDefinitionMappedConceptTable", "selected"),]$conceptId
       data$TargetActive <- TRUE
     }
     
