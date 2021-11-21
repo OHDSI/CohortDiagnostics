@@ -6756,7 +6756,7 @@ shiny::shinyServer(function(input, output, session) {
                        suspendWhenHidden = FALSE)
   
   ##visitContextTable----
-  output$visitContextTable <- DT::renderDataTable(expr = {
+  output$visitContextTable <- reactable::renderReactable(expr = {
     validate(need(
       length(consolidatedDatabaseIdTarget()) > 0,
       "No data sources chosen"
@@ -6832,17 +6832,31 @@ shiny::shinyServer(function(input, output, session) {
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
     
-    table <- getDtWithColumnsGroupedByDatabaseId(
+    # table <- getDtWithColumnsGroupedByDatabaseId(
+    #   data = data,
+    #   headerCount = countsForHeader,
+    #   keyColumns = keyColumnFields,
+    #   countLocation = 1,
+    #   dataColumns = dataColumnFields,
+    #   maxCount = maxCountValue,
+    #   showResultsAsPercent = (input$visitContextValueFilter == "Percentage")
+    # )
+    
+    table <- getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
+      rawData = NULL,
+      cohort = cohort, 
+      database = database,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
       countLocation = 1,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
-      showResultsAsPercent = (input$visitContextValueFilter == "Percentage")
+      showResultsAsPercent =  (input$visitContextValueFilter == "Percentage"), 
+      sort = FALSE
     )
     return(table)
-  }, server = TRUE)
+  })
   
   
   #______________----

@@ -731,6 +731,13 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   #     ) %>%
   #       unique()
   #   )
+  if (showResultsAsPercent) {
+    for (i in (1:length(dataColumns))) {
+      data[[dataColumns[i]]] = round(data[[dataColumns[i]]] / sum(data[[dataColumns[i]]]),2)
+    }
+  }
+  
+  
  data3 <- data
   #long form
   data <- data %>%
@@ -891,7 +898,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       columnDefinitions[[dataColumns[i]]] <-
         reactable::colDef(
           name = columnName,
-          cell = minCellCountDefReactable(),
+          cell = minCellDefReactable(showResultsAsPercent),
           sortable = TRUE,
           resizable = TRUE,
           filterable = TRUE,

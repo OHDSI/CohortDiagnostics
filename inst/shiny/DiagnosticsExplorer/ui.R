@@ -1081,7 +1081,7 @@ bodyTabItems <- shinydashboard::tabItems(
         )
       )
     ),
-    DT::dataTableOutput(outputId = "visitContextTable")
+    reactable::reactableOutput(outputId = "visitContextTable")
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
