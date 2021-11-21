@@ -168,7 +168,7 @@ shiny::shinyServer(function(input, output, session) {
       input$comparatorCohortDefinitionConceptSets_rows_selected,
       reactable::getReactableState("targetCohortDefinitionResolvedConceptTable", "selected"),
       input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,
-      input$targetCohortDefinitionExcludedConceptTable_rows_selected,
+      reactable::getReactableState("targetCohortDefinitionExcludedConceptTable", "selected"),
       input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,
       input$targetCohortDefinitionOrphanConceptTable_rows_selected,
       input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,
@@ -462,19 +462,8 @@ shiny::shinyServer(function(input, output, session) {
                   ),
                   shiny::conditionalPanel(
                     condition = "input.targetConceptSetsType == 'Excluded'",
-                    tags$table(width = "100%",
-                               tags$tr(
-                                 tags$td(
-                                   align = "right",
-                                   shiny::downloadButton(
-                                     "saveTargetCohortDefinitionExcludedConceptTable",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                                 )
-                               )),
-                    DT::dataTableOutput(outputId = "targetCohortDefinitionExcludedConceptTable")
+                    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('targetCohortDefinitionExcludedConceptTable')"),
+                    reactable::reactableOutput(outputId = "targetCohortDefinitionExcludedConceptTable")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.targetConceptSetsType == 'Recommended'",
@@ -1580,7 +1569,9 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>% 
       dplyr::left_join(count, 
-                       by = c('databaseId', 'conceptId'))
+                       by = c('databaseId', 'conceptId')) %>% 
+      dplyr::arrange(dplyr::desc(abs(dplyr::across(c("records", "persons")))))
+    
     return(data)
    })
   
@@ -2858,7 +2849,7 @@ shiny::shinyServer(function(input, output, session) {
   
   #output: targetCohortDefinitionExcludedConceptTable----
   output$targetCohortDefinitionExcludedConceptTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       validate(need(
         length(consolidatedCohortIdTarget()) > 0,
         "Please select concept set"
@@ -2906,28 +2897,20 @@ shiny::shinyServer(function(input, output, session) {
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
       
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort, 
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$showAsPercentageColumnTarget
+        showResultsAsPercent = input$showAsPercentageColumnTarget, 
+        sort = FALSE
       )
-      return(table)
-    }, server = TRUE)
-  
-  #output: saveTargetCohortDefinitionExcludedConceptTable----
-  output$saveTargetCohortDefinitionExcludedConceptTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "excludedConcepts")
-    },
-    content = function(file) {
-      data <- getExcludedConceptsTarget()
-      downloadCsv(x = data, fileName = file)
-    }
-  )
+    })
   
   #output: targetCohortDefinitionOrphanConceptTable----
   output$targetCohortDefinitionOrphanConceptTable <-

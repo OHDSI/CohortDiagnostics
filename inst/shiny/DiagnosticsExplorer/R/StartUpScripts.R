@@ -230,8 +230,8 @@ consolidationOfSelectedFieldValues <- function(input,
       data$selectedConceptIdComparator <- resolvedConceptSetDataComparator[input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
       data$comparatorActive <- TRUE
     }
-    if (hasData(input$targetCohortDefinitionExcludedConceptTable_rows_selected)) {
-      data$selectedConceptIdTarget <- excludedConceptSetDataTarget[input$targetCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
+    if (hasData(reactable::getReactableState("targetCohortDefinitionExcludedConceptTable", "selected"))) {
+      data$selectedConceptIdTarget <- excludedConceptSetDataTarget[reactable::getReactableState("targetCohortDefinitionExcludedConceptTable", "selected"),]$conceptId
       data$TargetActive <- TRUE
     }
     if (hasData(input$comparatorCohortDefinitionExcludedConceptTable_rows_selected)) {
