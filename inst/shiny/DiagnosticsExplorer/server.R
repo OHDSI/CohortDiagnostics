@@ -166,7 +166,7 @@ shiny::shinyServer(function(input, output, session) {
       input$tabs,
       reactable::getReactableState("targetCohortDefinitionConceptSetsTable", "selected"),
       input$comparatorCohortDefinitionConceptSets_rows_selected,
-      reactable::getReactableState("targetCohortDefinitionResolvedConceptTable", "selected")
+      reactable::getReactableState("targetCohortDefinitionResolvedConceptTable", "selected"),
       input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,
       input$targetCohortDefinitionExcludedConceptTable_rows_selected,
       input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,
