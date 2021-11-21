@@ -424,6 +424,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
       if (length(setdiff(c("databaseId", "count"), colnames(headerCount))) != 0) {
         warning("missing required fields to draw formatted datatable.")
       }
+      
       data <- data %>%
         dplyr::inner_join(headerCount,
                           by = c("databaseId")) %>%
@@ -737,8 +738,24 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       cols = dplyr::all_of(dataColumns),
       names_to = "type",
       values_to = "valuesData"
+    ) %>%
+    dplyr::inner_join(
+      headerCount %>%
+        tidyr::pivot_longer(
+          cols = dplyr::all_of(dataColumns),
+          names_to = "type",
+          values_to = "valuesHeader"
+        ),
+      by = c("databaseId", "type")
     ) %>% 
-    dplyr::mutate(databaseIdCombined = paste0(.data$databaseId,"-",.data$type)) 
+    dplyr::mutate(type = paste0(
+      .data$databaseId,
+      "-",
+      .data$type,
+      " (",
+      scales::comma(.data$valuesHeader),
+      ")"
+    ))  
  
     
     # dplyr::mutate(typeLong = paste0(
@@ -761,7 +778,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   data <- data %>%
     tidyr::pivot_wider(
       id_cols = dplyr::all_of(keyColumns),
-      names_from = "databaseIdCombined",
+      names_from = "type",
       values_from = valuesData,
       values_fill = 0
     )
