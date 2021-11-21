@@ -170,7 +170,7 @@ shiny::shinyServer(function(input, output, session) {
       input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,
       reactable::getReactableState("targetCohortDefinitionExcludedConceptTable", "selected"),
       input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,
-      input$targetCohortDefinitionOrphanConceptTable_rows_selected,
+      reactable::getReactableState("targetCohortDefinitionOrphanConceptTable", "selected"),
       input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,
       input$targetCohortDefinitionMappedConceptTable_rows_selected,
       input$comparatorCohortDefinitionMappedConceptTable_rows_selected,
@@ -467,19 +467,8 @@ shiny::shinyServer(function(input, output, session) {
                   ),
                   shiny::conditionalPanel(
                     condition = "input.targetConceptSetsType == 'Recommended'",
-                    tags$table(width = "100%",
-                               tags$tr(
-                                 tags$td(
-                                   align = "right",
-                                   shiny::downloadButton(
-                                     "saveOrphanConceptsTableTarget",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                                 )
-                               )),
-                    DT::dataTableOutput(outputId = "targetCohortDefinitionOrphanConceptTable")
+                    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('targetCohortDefinitionOrphanConceptTable')"),
+                    reactable::reactableOutput(outputId = "targetCohortDefinitionOrphanConceptTable")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.targetConceptSetsType == 'Mapped'",
@@ -2836,17 +2825,6 @@ shiny::shinyServer(function(input, output, session) {
       )
     })
   
-  #output: saveOrphanConceptsTableTarget----
-  output$saveOrphanConceptsTableTarget <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "orphanConcepts")
-    },
-    content = function(file) {
-      data <- getOrphanConceptsTarget()
-      downloadCsv(x = data, fileName = file)
-    }
-  )
-  
   #output: targetCohortDefinitionExcludedConceptTable----
   output$targetCohortDefinitionExcludedConceptTable <-
     reactable::renderReactable(expr = {
@@ -2914,7 +2892,7 @@ shiny::shinyServer(function(input, output, session) {
   
   #output: targetCohortDefinitionOrphanConceptTable----
   output$targetCohortDefinitionOrphanConceptTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getOrphanConceptsTarget()
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
@@ -2959,17 +2937,20 @@ shiny::shinyServer(function(input, output, session) {
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort, 
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$showAsPercentageColumnTarget 
+        showResultsAsPercent = input$showAsPercentageColumnTarget, 
+        sort = FALSE
       )
-      return(table)
-    }, server = TRUE)
+    })
   
   #output: targetCohortDefinitionMappedConceptTable----
   output$targetCohortDefinitionMappedConceptTable <-
