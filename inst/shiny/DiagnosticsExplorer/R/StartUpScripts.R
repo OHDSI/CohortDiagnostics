@@ -781,58 +781,61 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       negate = TRUE
     )]
   
-  for (i in 1:length(dataColumns)) {
-    sparkColumn <- paste0(dataColumns[i],"-","sparkline")
-    databaseIdAndType <- stringr::str_split(dataColumns[i],"-")[[1]]
-    databaseIdSelected <- databaseIdAndType[1]
-    type <- databaseIdAndType[2]
-    columnNameSelected <- ifelse(type == "records","conceptCount","subjectCount")
-  
-    part1 <- '<span id="htmlwidget-spark-' # + ID
-    part2 <- '" class="sparkline html-widget"></span><script type="application/json" data-for="htmlwidget-spark-' # + ID
-    part3 <- '">{"x":{"values":[' # + values
-    part4 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},"evals":[],"jsHooks":[]}</script>'
-    # part3 <- '">{"values":[' # + y-values
-    # part3 <- '">{"x":{"values":[' # + x-values
-    # part4 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},evals":[],"jsHooks":[]}</script>' # + y-values
-    # part5 <- '","y":{"values":[' # + values
-    # part5 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},evals":[],"jsHooks":[]}</script>';
-    
-    daysRelativeIndexRange <- max(abs(rawData$daysRelativeIndex))
-    daysRelativeIndexRange <- dplyr::tibble(daysRelativeIndex = c((daysRelativeIndexRange * -1):daysRelativeIndexRange))
-    rawData <- rawData %>% 
-      dplyr::select(.data$databaseId,
-                    .data$cohortId,
-                    .data$conceptId,
-                    .data$sortOrder) %>% 
-      dplyr::distinct() %>% 
-      tidyr::crossing(daysRelativeIndexRange) %>% 
-      dplyr::left_join(rawData,by = c("databaseId",
-                                      "cohortId",
-                                      "conceptId",
-                                      "sortOrder",
-                                      "daysRelativeIndex")) %>%  
-      tidyr::replace_na(replace = list("conceptCount" = 0, "subjectCount" = 0)) %>% 
-      dplyr::arrange(.data$sortOrder, .data$daysRelativeIndex)
-    
-    out <- list(length = nrow(data))
-    for (i in 1:nrow(data)) {
-      conceptIdSelected <- data$conceptId[i]
-      cohortIdSelected <- data$cohortId[i]
-      rawDataFiltered <- rawData %>% 
-        dplyr::filter(.data$databaseId == databaseIdSelected,
-                      .data$cohortId == cohortIdSelected,
-                      .data$conceptId == conceptIdSelected)
+  if (hasData(rawData)) {
+    for (i in 1:length(dataColumns)) {
+      sparkColumn <- paste0(dataColumns[i],"-","sparkline")
+      databaseIdAndType <- stringr::str_split(dataColumns[i],"-")[[1]]
+      databaseIdSelected <- databaseIdAndType[1]
+      type <- databaseIdAndType[2]
+      columnNameSelected <- ifelse(type == "records","conceptCount","subjectCount")
       
-      sparklineDataDayIndex <- rawDataFiltered$daysRelativeIndex
-      sparklineDataCountValue <- rawDataFiltered[[columnNameSelected]]
+      part1 <- '<span id="htmlwidget-spark-' # + ID
+      part2 <- '" class="sparkline html-widget"></span><script type="application/json" data-for="htmlwidget-spark-' # + ID
+      part3 <- '">{"x":{"values":[' # + values
+      part4 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},"evals":[],"jsHooks":[]}</script>'
+      # part3 <- '">{"values":[' # + y-values
+      # part3 <- '">{"x":{"values":[' # + x-values
+      # part4 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},evals":[],"jsHooks":[]}</script>' # + y-values
+      # part5 <- '","y":{"values":[' # + values
+      # part5 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},evals":[],"jsHooks":[]}</script>';
       
-      xAxisVals <- paste(sparklineDataDayIndex,collapse = ",")
-      yAxisVals <- paste(sparklineDataCountValue,collapse = ",")
-      out[[i]] <- paste0(part1, i, part2, i, part3, yAxisVals, part4)
+      daysRelativeIndexRange <- max(abs(rawData$daysRelativeIndex))
+      daysRelativeIndexRange <- dplyr::tibble(daysRelativeIndex = c((daysRelativeIndexRange * -1):daysRelativeIndexRange))
+      rawData <- rawData %>% 
+        dplyr::select(.data$databaseId,
+                      .data$cohortId,
+                      .data$conceptId,
+                      .data$sortOrder) %>% 
+        dplyr::distinct() %>% 
+        tidyr::crossing(daysRelativeIndexRange) %>% 
+        dplyr::left_join(rawData,by = c("databaseId",
+                                        "cohortId",
+                                        "conceptId",
+                                        "sortOrder",
+                                        "daysRelativeIndex")) %>%  
+        tidyr::replace_na(replace = list("conceptCount" = 0, "subjectCount" = 0)) %>% 
+        dplyr::arrange(.data$sortOrder, .data$daysRelativeIndex)
+      
+      out <- list(length = nrow(data))
+      for (i in 1:nrow(data)) {
+        conceptIdSelected <- data$conceptId[i]
+        cohortIdSelected <- data$cohortId[i]
+        rawDataFiltered <- rawData %>% 
+          dplyr::filter(.data$databaseId == databaseIdSelected,
+                        .data$cohortId == cohortIdSelected,
+                        .data$conceptId == conceptIdSelected)
+        
+        sparklineDataDayIndex <- rawDataFiltered$daysRelativeIndex
+        sparklineDataCountValue <- rawDataFiltered[[columnNameSelected]]
+        
+        xAxisVals <- paste(sparklineDataDayIndex,collapse = ",")
+        yAxisVals <- paste(sparklineDataCountValue,collapse = ",")
+        out[[i]] <- paste0(part1, i, part2, i, part3, yAxisVals, part4)
+      }
+      data[[sparkColumn]] <- out
     }
-    data[[sparkColumn]] <- out
   }
+  
   
   columnDefinitions <- list()
   
@@ -861,7 +864,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   for (i in (1:length(dataColumns))) {
     if (stringr::str_detect(string = dataColumns[i],
                             pattern = "persons$")) {
-      columnName <- "Subjects"
+      columnName <- "Persons"
     } else if (stringr::str_detect(string = dataColumns[i],
                                    pattern = "records$")) {
       columnName <- "Records"
@@ -890,23 +893,24 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
           }
         )
    
-      sparkColumn <- paste0(dataColumns[i],"-","sparkline")
-      columnDefinitions[[sparkColumn]] <-
-        reactable::colDef(
-          name = "Spark Line",
-          html = TRUE,
-          cell = function(value, index) {
-            return(htmltools::HTML(value))
-          }
-        )
+      # sparkColumn <- paste0(dataColumns[i],"-","sparkline")
+      # columnDefinitions[[sparkColumn]] <-
+      #   reactable::colDef(
+      #     name = "Spark Line",
+      #     html = TRUE,
+      #     cell = function(value, index) {
+      #       return(htmltools::HTML(value))
+      #     }
+      #   )
   }
+  
   columnGroups <- list()
   for (i in 1:length(distinctDatabaseId)) {
     extractedDataColumns <- dataColumns[stringr::str_detect(
       string = dataColumns, #optimun_dod-Subject
       pattern = distinctDatabaseId[i] #optimun_dod
     )]
-    extractedDataColumns <- sort(c(extractedDataColumns,paste0(extractedDataColumns,"-sparkline")))
+    # extractedDataColumns <- sort(c(extractedDataColumns,paste0(extractedDataColumns,"-sparkline")))
     columnGroups[[i]] <- 
       reactable::colGroup(name = distinctDatabaseId[i], 
                           columns = extractedDataColumns)

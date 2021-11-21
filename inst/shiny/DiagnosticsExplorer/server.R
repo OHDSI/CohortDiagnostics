@@ -325,7 +325,8 @@ shiny::shinyServer(function(input, output, session) {
                          )),
               shiny::conditionalPanel(
                 condition = "input.targetCohortDefinitionInclusionRuleType == 'Events'",
-                DT::dataTableOutput(outputId = "targetCohortDefinitionSimplifiedInclusionRuleTable")
+                tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('targetCohortDefinitionSimplifiedInclusionRuleTable')"),
+                reactable::reactableOutput(outputId = "targetCohortDefinitionSimplifiedInclusionRuleTable")
               )
             ),
             shiny::tabPanel(
@@ -1989,7 +1990,7 @@ shiny::shinyServer(function(input, output, session) {
   #!!!!!! inclusion rule needs simple and detailed tabs. detailed will replicate Atlas UI
   #output: targetCohortDefinitionSimplifiedInclusionRuleTable----
   output$targetCohortDefinitionSimplifiedInclusionRuleTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       if (any(is.null(consolidatedCohortIdTarget()))) {
         return(NULL)
       }
@@ -2026,17 +2027,20 @@ shiny::shinyServer(function(input, output, session) {
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
       
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort, 
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        countLocation = 1,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$targetCohortInclusionRulesAsPercent
+        showResultsAsPercent =  input$targetCohortInclusionRulesAsPercent, 
+        sort = FALSE
       )
-      return(table)
-    }, server = TRUE)
+    })
   
   #output: saveTargetCohortDefinitionSimplifiedInclusionRuleTable----
   output$saveTargetCohortDefinitionSimplifiedInclusionRuleTable <-
