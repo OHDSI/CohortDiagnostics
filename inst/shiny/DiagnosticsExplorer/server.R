@@ -1379,6 +1379,9 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>% 
       dplyr::left_join(count, 
                        by = c('databaseId', 'conceptId'))
+    
+    data <- data %>% 
+      dplyr::arrange(dplyr::desc(abs(dplyr::across(c("records", "persons")))))
     return(data)
   })
   
