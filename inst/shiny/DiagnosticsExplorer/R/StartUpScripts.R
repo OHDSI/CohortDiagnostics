@@ -756,6 +756,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
     # dplyr::select(-.data$shortNameDatabase, -.data$shortNameCohort)
   
   distinctDatabaseId <- data$databaseId %>%  unique()
+  
   #wide form
   data <- data %>%
     tidyr::pivot_wider(
@@ -862,14 +863,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   }
   
   for (i in (1:length(dataColumns))) {
-    columnName <-  stringr::str_replace(string = dataColumns[i],
-                           pattern = distinctDatabaseId,
-                           replacement = "")
-    
-    columnName <- stringr::str_replace(string = columnName,
-                                       pattern = "-",
-                                       replacement = "")
-    columnName <- camelCaseToTitleCase(columnName)
+    columnName <-   camelCaseToTitleCase(sub(".*-", "", dataColumns[i]))
     
       columnDefinitions[[dataColumns[i]]] <-
         reactable::colDef(
@@ -933,7 +927,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                     highlight = TRUE,
                                     striped = TRUE, 
                                     compact = TRUE, 
-                                    wrap = TRUE,
+                                    wrap = FALSE,
                                     showSortIcon = TRUE, 
                                     showSortable = TRUE, 
                                     fullWidth = TRUE,
