@@ -859,16 +859,17 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   maxValue <- 0
   for (i in (1:length(dataColumns))) {
     maxValue <- max(maxValue,max(data[dataColumns[i]]))
-  } 
- 
+  }
+  
   for (i in (1:length(dataColumns))) {
-    if (stringr::str_detect(string = dataColumns[i],
-                            pattern = "persons$")) {
-      columnName <- "Persons"
-    } else if (stringr::str_detect(string = dataColumns[i],
-                                   pattern = "records$")) {
-      columnName <- "Records"
-    }
+    columnName <-  stringr::str_replace(string = dataColumns[i],
+                           pattern = distinctDatabaseId,
+                           replacement = "")
+    
+    columnName <- stringr::str_replace(string = columnName,
+                                       pattern = "-",
+                                       replacement = "")
+    columnName <- camelCaseToTitleCase(columnName)
     
       columnDefinitions[[dataColumns[i]]] <-
         reactable::colDef(
