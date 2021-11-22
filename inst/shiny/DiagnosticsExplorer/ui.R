@@ -523,7 +523,8 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       shiny::conditionalPanel(
         condition = "input.cohortCountInclusionRuleType == 'Events'",
-        DT::dataTableOutput("inclusionRuleStatisticsForCohortSeletedTable")
+        tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('inclusionRuleStatisticsForCohortSeletedTable')"),
+        reactable::reactableOutput(outputId = "inclusionRuleStatisticsForCohortSeletedTable")
       )
     )
   ),

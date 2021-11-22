@@ -4576,7 +4576,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: inclusionRuleStatisticsForCohortSeletedTable----
   output$inclusionRuleStatisticsForCohortSeletedTable <-
-    DT::renderDataTable(expr = {
+   reactable::renderReactable(expr = {
       validate(need(
         length(consolidatedDatabaseIdTarget()) > 0,
         "No data sources chosen"
@@ -4625,17 +4625,20 @@ shiny::shinyServer(function(input, output, session) {
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
       
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort,
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$inclusionRuleShowAsPercentInCohortCount #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+        showResultsAsPercent =  input$inclusionRuleShowAsPercentInCohortCount, 
+        sort = TRUE
       )
-      return(table)
-    }, server = TRUE)
+    })
   
   #______________----
   # Incidence rate -------
