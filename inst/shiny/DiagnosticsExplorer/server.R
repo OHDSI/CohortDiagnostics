@@ -579,20 +579,12 @@ shiny::shinyServer(function(input, output, session) {
                                label = "Show As Percent",
                                value = FALSE
                              )
-                           ),
-                           tags$td(
-                             align = "right",
-                             shiny::downloadButton(
-                               "saveComparatorCohortDefinitionSimplifiedInclusionRuleTable",
-                               label = "",
-                               icon = shiny::icon("download"),
-                               style = "margin-top: 5px; margin-bottom: 5px;"
-                             )
                            )
                          )),
               shiny::conditionalPanel(
                 condition = "input.comparatorCohortDefinitionInclusionRuleType == 'Events'",
-                DT::dataTableOutput(outputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTable")
+                tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('comparatorCohortDefinitionSimplifiedInclusionRuleTable')"),
+                reactable::reactableOutput(outputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTable")
               )
             ),
             shiny::tabPanel(
@@ -3062,7 +3054,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: comparatorCohortDefinitionSimplifiedInclusionRuleTable----
   output$comparatorCohortDefinitionSimplifiedInclusionRuleTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getSimplifiedInclusionRuleResultsComparator()
       validate(need((nrow(data) > 0),
                     "There is no inclusion rule data for this cohort."))
@@ -3098,30 +3090,20 @@ shiny::shinyServer(function(input, output, session) {
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
       
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort,
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$comparatorCohortInclusionRulesAsPercent
+        showResultsAsPercent =  input$comparatorCohortInclusionRulesAsPercent, 
+        sort = FALSE
       )
-      return(table)
-    }, server = TRUE)
-  
-  ##output: saveComparatorCohortDefinitionSimplifiedInclusionRuleTable----
-  output$saveComparatorCohortDefinitionSimplifiedInclusionRuleTable <-
-    downloadHandler(
-      filename = function()
-      {
-        getCsvFileNameWithDateTime(string = "InclusionRule")
-      },
-      content = function(file)
-      {
-        downloadCsv(x = getSimplifiedInclusionRuleResultsComparator(), fileName = file)
-      }
-    )
+    })
   
   ##output: getComparatorSimplifiedInclusionRuleResultsHasData----
   output$getComparatorSimplifiedInclusionRuleResultsHasData <-
