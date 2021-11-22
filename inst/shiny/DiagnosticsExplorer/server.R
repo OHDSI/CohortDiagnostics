@@ -6940,7 +6940,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##output: cohortOverlapTable ----
-  output$cohortOverlapTable <- DT::renderDataTable(expr = {
+  output$cohortOverlapTable <- reactable::renderReactable(expr = {
     data <- cohortOverlapDataFiltered()
     validate(need(
       !is.null(data),
@@ -6956,27 +6956,30 @@ shiny::shinyServer(function(input, output, session) {
       scrollY <- TRUE
     }
     
-    options = list(
-      pageLength = 1000,
-      searching = TRUE,
-      scrollX = TRUE,
-      scrollY = scrollY,
-      lengthChange = TRUE,
-      ordering = FALSE,
-      paging = TRUE,
-      columnDefs = list(minCellCountDef(3:10))
-    )
+    table <- getSimpleReactable(data = data)
+    return(table)
     
-    table <- DT::datatable(
-      data,
-      options = options,
-      rownames = FALSE,
-      colnames = colnames(data) %>%
-        camelCaseToTitleCase(),
-      escape = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
+    # options = list(
+    #   pageLength = 1000,
+    #   searching = TRUE,
+    #   scrollX = TRUE,
+    #   scrollY = scrollY,
+    #   lengthChange = TRUE,
+    #   ordering = FALSE,
+    #   paging = TRUE,
+    #   columnDefs = list(minCellCountDef(3:10))
+    # )
+    # 
+    # table <- DT::datatable(
+    #   data,
+    #   options = options,
+    #   rownames = FALSE,
+    #   colnames = colnames(data) %>%
+    #     camelCaseToTitleCase(),
+    #   escape = FALSE,
+    #   filter = "top",
+    #   class = "stripe nowrap compact"
+    # )
    
   })
   

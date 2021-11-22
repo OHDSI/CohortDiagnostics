@@ -1138,7 +1138,7 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       shiny::conditionalPanel(
         condition = "input.overlapPlotFilter == 'Table'",
-        DT::dataTableOutput(outputId = "cohortOverlapTable")
+        reactable::reactableOutput(outputId = "cohortOverlapTable")
       )
     )
   ),
