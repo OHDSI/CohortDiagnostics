@@ -704,33 +704,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       )
     )
   }
-  # data <- data %>%
-  #   dplyr::inner_join(
-  #     cohort %>%
-  #       dplyr::select(.data$cohortId,
-  #                     .data$shortName) %>%
-  #       dplyr::distinct() %>%
-  #       dplyr::rename("shortNameCohort" = .data$shortName),
-  #     by = "cohortId"
-  #   ) %>%
-  #   dplyr::inner_join(
-  #     database %>%
-  #       dplyr::select(.data$databaseId,
-  #                     .data$shortName) %>%
-  #       dplyr::distinct() %>%
-  #       dplyr::rename("shortNameDatabase" = .data$shortName),
-  #     by = "databaseId"
-  #   ) %>%
-  #   dplyr::select(
-  #     c(
-  #       dplyr::all_of(keyColumns),
-  #       "databaseId",
-  #       "shortNameCohort",
-  #       "shortNameDatabase",
-  #       dplyr::all_of(dataColumns)
-  #     ) %>%
-  #       unique()
-  #   )
+  
   if (showResultsAsPercent) {
     for (i in (1:length(dataColumns))) {
       data[[dataColumns[i]]] = round(data[[dataColumns[i]]] / sum(data[[dataColumns[i]]]),2)
@@ -835,7 +809,6 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   
   columnDefinitions <- list()
   
-  
   for (i in (1:length(keyColumns))) {
     columnName <- camelCaseToTitleCase(colnames(data)[i])
     colnames(data)[i] <- columnName
@@ -910,7 +883,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
     if (countLocation == 1) {
       columnName <- headerCount %>% 
         dplyr::filter(.data$databaseId ==  distinctDatabaseId[i]) %>% 
-        dplyr::mutate(count = paste0(.data$databaseId," (",.data$count,")")) %>% 
+        dplyr::mutate(count = paste0(.data$databaseId," (",scales::comma(.data$count),")")) %>% 
         dplyr::pull(.data$count)
     }
     columnGroups[[i]] <- 
@@ -939,7 +912,6 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                     showSortable = TRUE,
                                     fullWidth = TRUE,
                                     bordered = TRUE,
-                                    # height = reactableHeight,
                                     showPageSizeOptions = TRUE,
                                     pageSizeOptions = c(10, 20, 50, 100, 1000),
                                     defaultPageSize = 20,
@@ -961,13 +933,6 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
 
 getSimpleReactable <- function(data,
                                selection = NULL) {
-  
-  # if (nrow(data) > 20) {
-  #   reactableHeight <- '300px'
-  # } else {
-  #   reactableHeight <- 'auto'
-  # }
-  
   columnDefinitions <- list()
   
   for (i in (1:length(colnames(data)))) {
