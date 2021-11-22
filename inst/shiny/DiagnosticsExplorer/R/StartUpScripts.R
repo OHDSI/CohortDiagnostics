@@ -226,24 +226,24 @@ consolidationOfSelectedFieldValues <- function(input,
       data$selectedConceptIdTarget <- resolvedConceptSetDataTarget[reactable::getReactableState("targetCohortDefinitionResolvedConceptTable", "selected"),]$conceptId
       data$TargetActive <- TRUE
     }
-    if (hasData(input$comparatorCohortDefinitionResolvedConceptTable_rows_selected)) {
-      data$selectedConceptIdComparator <- resolvedConceptSetDataComparator[input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
+    if (hasData(reactable::getReactableState("comparatorCohortDefinitionResolvedConceptTable", "selected"))) {
+      data$selectedConceptIdComparator <- resolvedConceptSetDataComparator[reactable::getReactableState("comparatorCohortDefinitionResolvedConceptTable", "selected"),]$conceptId
       data$comparatorActive <- TRUE
     }
     if (hasData(reactable::getReactableState("targetCohortDefinitionExcludedConceptTable", "selected"))) {
       data$selectedConceptIdTarget <- excludedConceptSetDataTarget[reactable::getReactableState("targetCohortDefinitionExcludedConceptTable", "selected"),]$conceptId
       data$TargetActive <- TRUE
     }
-    if (hasData(input$comparatorCohortDefinitionExcludedConceptTable_rows_selected)) {
-      data$selectedConceptIdComparator <- excludedConceptSetDataComparator[input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
+    if (hasData(reactable::getReactableState("comparatorCohortDefinitionExcludedConceptTable", "selected"))) {
+      data$selectedConceptIdComparator <- excludedConceptSetDataComparator[reactable::getReactableState("comparatorCohortDefinitionExcludedConceptTable", "selected"),]$conceptId
       data$comparatorActive <- TRUE
     }
     if (hasData(reactable::getReactableState("targetCohortDefinitionOrphanConceptTable", "selected"))) {
       data$selectedConceptIdTarget <- orphanConceptSetDataTarget[reactable::getReactableState("targetCohortDefinitionOrphanConceptTable", "selected"),]$conceptId
       data$TargetActive <- TRUE
     }
-    if (hasData(input$comparatorCohortDefinitionOrphanConceptTable_rows_selected)) {
-      data$selectedConceptIdComparator <- orphanConceptSetDataComparator[input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
+    if (hasData(reactable::getReactableState("comparatorCohortDefinitionOrphanConceptTable", "selected"))) {
+      data$selectedConceptIdComparator <- orphanConceptSetDataComparator[reactable::getReactableState("comparatorCohortDefinitionOrphanConceptTable", "selected"),]$conceptId
       data$comparatorActive <- TRUE
     }
     
@@ -252,8 +252,8 @@ consolidationOfSelectedFieldValues <- function(input,
       data$TargetActive <- TRUE
     }
     
-    if (hasData(input$comparatorCohortDefinitionMappedConceptTable_rows_selected)) {
-      data$selectedConceptIdComparator <- mappedConceptSetComparator[input$comparatorCohortDefinitionMappedConceptTable_rows_selected,]$conceptId
+    if (hasData(reactable::getReactableState("comparatorCohortDefinitionMappedConceptTable", "selected"))) {
+      data$selectedConceptIdComparator <- mappedConceptSetComparator[reactable::getReactableState("comparatorCohortDefinitionMappedConceptTable", "selected"),]$conceptId
       data$comparatorActive <- TRUE
     }
   }
