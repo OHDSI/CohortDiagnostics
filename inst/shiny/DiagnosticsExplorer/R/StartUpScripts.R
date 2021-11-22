@@ -710,9 +710,6 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       data[[dataColumns[i]]] = round(data[[dataColumns[i]]] / sum(data[[dataColumns[i]]]),2)
     }
   }
-  
-  
- # data3 <- data
 
   distinctDatabaseId <- data$databaseId %>%  unique()
   data <- data %>%
@@ -733,8 +730,18 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       values_fill = 0
     )
   
+  if (sort) {
+    sortByColumns <- colnames(data)
+    sortByColumns <-
+      sortByColumns[stringr::str_detect(string = sortByColumns,
+                                        pattern = paste(dataColumns, collapse = "|"))]
+    if (length(sortByColumns) > 0) {
+      sortByColumns <- sortByColumns[[1]]
+      data <- data %>%
+        dplyr::arrange(dplyr::desc(dplyr::across(dplyr::all_of(sortByColumns))))
+    }
+  }
   
- 
   #!!! need to add tool tip - hover over the data columns -- show tool tip for short names
   # withTooltip <- function(value, tooltip) {
   #   tags$abbr(style = "text-decoration: underline; text-decoration-style: dotted; cursor: help",
@@ -805,7 +812,6 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       data[[sparkColumn]] <- out
     }
   }
-  
   
   columnDefinitions <- list()
   

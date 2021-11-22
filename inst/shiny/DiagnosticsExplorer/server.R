@@ -3800,7 +3800,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##output: conceptBrowserTable----
-  output$conceptBrowserTable <- DT::renderDT(expr = {
+  output$conceptBrowserTable <- reactable::renderReactable(expr = {
     
     data <- conceptSetBrowserData()
     if (!hasData(data)) {
@@ -3851,27 +3851,20 @@ shiny::shinyServer(function(input, output, session) {
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
-    table <- getDtWithColumnsGroupedByDatabaseId(
+    getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
+      rawData = NULL,
+      cohort = cohort,
+      database = database,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
       countLocation = countLocation,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
-      showResultsAsPercent = input$showAsPercentageColumnTarget 
+      showResultsAsPercent =  input$showAsPercentageColumnTarget, 
+      sort = TRUE
     )
-    return(table)
-  }) 
-  
-  output$saveDetailsOfSelectedConceptId <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "ConceptSetBrowser")
-    },
-    content = function(file) {
-      downloadCsv(x = conceptSetBrowserData(),
-                  fileName = file)
-    }
-  )
+  })
   
   ##getSourceCodesObservedForConceptIdInDatasource----
   getSourceCodesObservedForConceptIdInDatasource <- shiny::reactive(x = {
@@ -3917,7 +3910,7 @@ shiny::shinyServer(function(input, output, session) {
   
   
   ##output: observedSourceCodesTable----
-  output$observedSourceCodesTable <- DT::renderDT(expr = {
+  output$observedSourceCodesTable <- reactable::renderReactable(expr = {
     conceptId <- activeSelected()$conceptId
     validate(need(hasData(conceptId), "No concept id selected."))
     cohortId <- activeSelected()$cohortId
@@ -3962,16 +3955,19 @@ shiny::shinyServer(function(input, output, session) {
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
     
-    table <- getDtWithColumnsGroupedByDatabaseId(
+    getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
+      rawData = NULL,
+      cohort = cohort,
+      database = database,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
       countLocation = 1,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
-      showResultsAsPercent = FALSE
+      showResultsAsPercent =  input$targetCohortInclusionRulesAsPercent, 
+      sort = TRUE
     )
-    return(table)
   })
   
   output$exportAllCohortDetails <- downloadHandler(
@@ -6133,7 +6129,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##output: conceptBrowserTableForIndexEvent----
-  output$conceptBrowserTableForIndexEvent <- DT::renderDT(expr = {
+  output$conceptBrowserTableForIndexEvent <- reactable::renderReactable(expr = {
     if (hasData(consolidateCohortDefinitionActiveSideTarget())) {
       conceptId <- consolidatedConceptIdTarget()
     }
@@ -6184,17 +6180,19 @@ shiny::shinyServer(function(input, output, session) {
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
-    table <- getDtWithColumnsGroupedByDatabaseId(
+    getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
+      rawData = NULL,
+      cohort = cohort,
+      database = database,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
       countLocation = countLocation,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
-      showResultsAsPercent = input$indexEventBreakdownShowAsPercent
+      showResultsAsPercent =  input$targetCohortInclusionRulesAsPercent, 
+      sort = TRUE
     )
-    
-    return(table)
   })
   
   ##output: conceptSetTimeSeriesPlotForIndexEvent----
@@ -6281,7 +6279,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$coConceptTableForIndexEvent <- DT::renderDataTable(expr = {
+  output$coConceptTableForIndexEvent <- reactable::renderReactable(expr = {
     data <- getCoCOnceptForIndexEvent()
     
     validate(need(hasData(data),
@@ -6325,18 +6323,20 @@ shiny::shinyServer(function(input, output, session) {
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
-    table <- getDtWithColumnsGroupedByDatabaseId(
+    getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
+      rawData = NULL,
+      cohort = cohort,
+      database = database,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
       countLocation = countLocation,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
-      showResultsAsPercent = input$indexEventBreakdownShowAsPercent
+      showResultsAsPercent =  input$indexEventBreakdownShowAsPercent, 
+      sort = TRUE
     )
-    
-    return(table)
-  }, server = TRUE)
+  })
   
   output$saveDetailsOfSelectedConceptIdForIndexEvent <-  downloadHandler(
     filename = function() {

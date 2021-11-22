@@ -405,18 +405,10 @@ bodyTabItems <- shinydashboard::tabItems(
                                                  virtualScroll = 50
                                                )
                                              )
-                                           ),
-                                           tags$td(
-                                             align = "right",
-                                             shiny::downloadButton(
-                                               "saveDetailsOfSelectedConceptId",
-                                               label = "",
-                                               icon = shiny::icon("download"),
-                                               style = "margin-top: 5px; margin-bottom: 5px;"
-                                             )
                                            )
                                          )),
-                              DT::dataTableOutput(outputId = "conceptBrowserTable")
+                              tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('conceptBrowserTable')"),
+                              reactable::reactableOutput(outputId = "conceptBrowserTable")
                             ),
                             shiny::tabPanel(
                               title = "Trend",
@@ -448,7 +440,8 @@ bodyTabItems <- shinydashboard::tabItems(
                               value = "observedSourceCodes",
                               shiny::conditionalPanel(
                                 condition = "output.isConceptIdFromTargetOrComparatorConceptTableSelected==true",
-                                DT::dataTableOutput(outputId = "observedSourceCodesTable")
+                                tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('observedSourceCodesTable')"),
+                                reactable::reactableOutput(outputId = "observedSourceCodesTable")
                               )
                             )
                           )
@@ -676,15 +669,6 @@ bodyTabItems <- shinydashboard::tabItems(
                                )
                              )),)
         )
-        # ,
-        # tags$tr(
-        #   tags$td(colspan = 6, align = 'right',
-        #     shiny::actionButton(
-        #       inputId = "renderIncidentRatePlot",
-        #       label = "Render Plot"
-        #     )
-        #   )
-        # )
       ),
       ggiraph::ggiraphOutput(
         outputId = "incidenceRatePlot",
@@ -1005,7 +989,8 @@ bodyTabItems <- shinydashboard::tabItems(
                            )
                          )
                        )),
-            DT::dataTableOutput(outputId = "conceptBrowserTableForIndexEvent")
+            tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('conceptBrowserTableForIndexEvent')"),
+            reactable::reactableOutput(outputId = "conceptBrowserTableForIndexEvent")
           ),
           shiny::tabPanel(
             title = "Trend",
@@ -1029,7 +1014,8 @@ bodyTabItems <- shinydashboard::tabItems(
           shiny::tabPanel(
             title = " Co Concept",
             value = "indexEvenCoCOnceptValueTabPanel",
-            DT::dataTableOutput(outputId = "coConceptTableForIndexEvent")
+            tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('coConceptTableForIndexEvent')"),
+            reactable::reactableOutput(outputId = "coConceptTableForIndexEvent")
           )
         )
       )
