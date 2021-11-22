@@ -72,9 +72,6 @@ exportFeatureExtractionOutput <-
       )
     }
     
-    minCellCount <-
-      minCellCount # to avoid warning on OhdsiRTools::checkUsagePackage("CohortDiagnostics")
-    
     if (!"covariates" %in% names(featureExtractionDbCovariateData)) {
       warning("No characterization output for submitted cohorts")
     } else if (dplyr::pull(dplyr::count(featureExtractionDbCovariateData$covariateRef)) > 0) {
@@ -85,13 +82,19 @@ exportFeatureExtractionOutput <-
                          by = c("cohortId", "databaseId"),
                          copy = TRUE) %>%
         dplyr::mutate(
-          mean = dplyr::case_when(
+          mean = dplyr::if_else(
             .data$mean != 0 &
-              .data$mean < !!minCellCount / .data$cohortEntries ~ -!!minCellCount / .data$cohortEntries,
-            TRUE ~ .data$mean
+              .data$mean < minCellCount / as.numeric(.data$cohortEntries),
+            -minCellCount /  as.numeric(.data$cohortEntries),
+            .data$mean
+          ),
+          sumValue  = dplyr::if_else(
+            .data$sumValue  != 0 & .data$sumValue  < minCellCount,
+            -minCellCount,
+            .data$sumValue
           )
         ) %>%
-        dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>%
+        dplyr::mutate(sd = dplyr::if_else(.data$mean >= 0, .data$sd, 0)) %>%
         dplyr::mutate(mean = round(.data$mean, digits = 4),
                       sd = round(.data$sd, digits = 4)) %>%
         dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
@@ -135,19 +138,8 @@ exportFeatureExtractionOutput <-
     } else if (dplyr::pull(dplyr::count(featureExtractionDbCovariateData$covariateRef)) > 0) {
       featureExtractionDbCovariateData$filteredCovariatesContinous <-
         featureExtractionDbCovariateData$covariatesContinuous %>%
-        dplyr::mutate(databaseId = !!databaseId) %>%
-        dplyr::left_join(cohortCounts,
-                         by = c("cohortId", "databaseId"),
-                         copy = TRUE) %>%
-        dplyr::mutate(
-          mean = dplyr::case_when(
-            .data$mean != 0 &
-              .data$mean < !!minCellCount / .data$cohortEntries ~ -!!minCellCount / .data$cohortEntries,
-            TRUE ~ .data$mean
-          )
-        ) %>%
-        dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>%
-        dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
+        dplyr::filter(.data$countValue >= minCellCount) %>%
+        dplyr::mutate(databaseId = !!databaseId)
       
       if (dplyr::pull(dplyr::count(
         featureExtractionDbCovariateData$filteredCovariatesContinous

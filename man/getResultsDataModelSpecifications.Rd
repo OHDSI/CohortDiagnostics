@@ -4,11 +4,9 @@
 \alias{getResultsDataModelSpecifications}
 \title{Get specifications for Cohort Diagnostics results data model}
 \usage{
-getResultsDataModelSpecifications(versionNumber = NULL, packageName = NULL)
+getResultsDataModelSpecifications(packageName = NULL)
 }
 \arguments{
-\item{versionNumber}{Which version of Cohort Diagnostics. Default will be the most recent version.}
-
 \item{packageName}{e.g. 'CohortDiagnostics'}
 }
 \value{

@@ -62,7 +62,7 @@ showNotes <- TRUE # in cohort count tab, show notes for count
 show3DTempolarCharecterizationPlot <- FALSE
 
 # Foot note ----
-appInformationText <- "V 2.2"
+appInformationText <- "V 3.0"
 appInformationText <-
   paste0(
     "Powered by OHDSI Cohort Diagnostics application - ",
@@ -144,8 +144,6 @@ appInformationText <- paste0(
 #Expected tables based on data model specifications
 dataModelSpecifications <-
   getResultsDataModelSpecifications()
-dataModelSpecifications21 <-
-  getResultsDataModelSpecifications(versionNumber = 2.1)
 
 #Clean up shadows ----
 suppressWarnings(rm(

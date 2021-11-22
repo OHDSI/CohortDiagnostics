@@ -598,13 +598,21 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
                       minimumCellCountDefs) #!!!!!!!!!!! note in percent form, this may cause error because of -ve number
   )
 
+  databaseColumnNamesInRightOrder <-
+    colnames(data)[stringr::str_detect(
+      string = colnames(data),
+      pattern = paste0(keyColumns, collapse = "|"),
+      negate = TRUE
+    )] %>%
+    stringr::word(start = 1) %>% 
+    unique()
   sketch <- htmltools::withTags(table(class = "display",
                                       thead(tr(
                                         lapply(camelCaseToTitleCase(keyColumns),
                                                th,
                                                rowspan = rowSpan),
                                         lapply(
-                                          databaseIdsForUseAsHeader %>% sort(),
+                                          databaseColumnNamesInRightOrder,
                                           th,
                                           colspan = numberOfSubstitutableColums,
                                           class = "dt-center",
@@ -620,7 +628,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
       options = options,
       rownames = FALSE,
       container = sketch,
-      # colnames = colnames(data) %>% camelCaseToTitleCase(),
+      colnames = colnames(data) %>% camelCaseToTitleCase(),
       escape = FALSE,
       selection = 'single',
       filter = "top",
@@ -629,7 +637,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
   if (!is.null(maxCount)) {
     dataTable <- DT::formatStyle(
       table = dataTable,
-      columns =  (numberOfColumns + 1) + 1:(length(databaseIdsForUseAsHeader) * numberOfSubstitutableColums),
+      columns =  (numberOfColumns + 1) + 1:(length(databaseColumnNamesInRightOrder) * numberOfSubstitutableColums),
       background = DT::styleColorBar(c(0, maxCount), "lightblue"),
       backgroundSize = "98% 88%",
       backgroundRepeat = "no-repeat",
