@@ -164,16 +164,16 @@ shiny::shinyServer(function(input, output, session) {
   getUserSelection <- shiny::reactive(x = {
     list(
       input$tabs,
-      input$targetCohortDefinitionConceptSetsTable_rows_selected,
-      input$comparatorCohortDefinitionConceptSets_rows_selected,
-      input$targetCohortDefinitionResolvedConceptTable_rows_selected,
-      input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,
-      input$targetCohortDefinitionExcludedConceptTable_rows_selected,
-      input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,
-      input$targetCohortDefinitionOrphanConceptTable_rows_selected,
-      input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,
-      input$targetCohortDefinitionMappedConceptTable_rows_selected,
-      input$comparatorCohortDefinitionMappedConceptTable_rows_selected,
+      reactable::getReactableState("targetCohortDefinitionConceptSetsTable", "selected"),
+      reactable::getReactableState("comparatorCohortDefinitionConceptSets", "selected"),
+      reactable::getReactableState("targetCohortDefinitionResolvedConceptTable", "selected"),
+      reactable::getReactableState("comparatorCohortDefinitionResolvedConceptTable", "selected"),
+      reactable::getReactableState("targetCohortDefinitionExcludedConceptTable", "selected"),
+      reactable::getReactableState("comparatorCohortDefinitionExcludedConceptTable", "selected"),
+      reactable::getReactableState("targetCohortDefinitionOrphanConceptTable", "selected"),
+      reactable::getReactableState("comparatorCohortDefinitionOrphanConceptTable", "selected"),
+      reactable::getReactableState("targetCohortDefinitionMappedConceptTable", "selected"),
+      reactable::getReactableState("comparatorCohortDefinitionMappedConceptTable", "selected"),
       input$selectedDatabaseId,
       input$selectedDatabaseIds,
       input$selectedDatabaseIds_open,
@@ -275,19 +275,8 @@ shiny::shinyServer(function(input, output, session) {
               title = "Cohort Count",
               value = "targetCohortDefinitionCohortCountTabPanel",
               tags$br(),
-              tags$table(width = "100%",
-                         tags$tr(
-                           tags$td(
-                             align = "right",
-                             shiny::downloadButton(
-                               outputId = "downloadTargetCohortDefinitionCohortCount",
-                               label = NULL,
-                               icon = shiny::icon("download"),
-                               style = "margin-top: 5px; margin-bottom: 5px;"
-                             )
-                           )
-                         )),
-              DT::dataTableOutput(outputId = "targetCohortDefinitionCohortCountTable")
+              tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('targetCohortDefinitionCohortCountTable')"),
+              reactable::reactableOutput(outputId = "targetCohortDefinitionCohortCountTable")
             ),
             shiny::tabPanel(
               title = "Inclusion rules",
@@ -323,20 +312,12 @@ shiny::shinyServer(function(input, output, session) {
                                label = "Show As Percent",
                                value = FALSE
                              )
-                           ),
-                           tags$td(
-                             align = "right",
-                             shiny::downloadButton(
-                               "saveTargetCohortDefinitionSimplifiedInclusionRuleTable",
-                               label = "",
-                               icon = shiny::icon("download"),
-                               style = "margin-top: 5px; margin-bottom: 5px;"
-                             )
                            )
                          )),
               shiny::conditionalPanel(
                 condition = "input.targetCohortDefinitionInclusionRuleType == 'Events'",
-                DT::dataTableOutput(outputId = "targetCohortDefinitionSimplifiedInclusionRuleTable")
+                tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('targetCohortDefinitionSimplifiedInclusionRuleTable')"),
+                reactable::reactableOutput(outputId = "targetCohortDefinitionSimplifiedInclusionRuleTable")
               )
             ),
             shiny::tabPanel(
@@ -367,7 +348,9 @@ shiny::shinyServer(function(input, output, session) {
             shiny::tabPanel(
               title = "Concept Sets",
               value = "targetCohortDefinitionConceptSetTabPanel",
-              DT::dataTableOutput(outputId = "targetCohortDefinitionConceptSetsTable"),
+              tags$br(),
+              tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('targetCohortDefinitionConceptSetsTable')"),
+              reactable::reactableOutput(outputId = "targetCohortDefinitionConceptSetsTable"),
               tags$br(),
               shiny::conditionalPanel(
                 condition = "output.isTargetCohortDefinitionConceptSetsTableRowSelected == true",
@@ -443,19 +426,8 @@ shiny::shinyServer(function(input, output, session) {
                   shiny::conditionalPanel(
                     condition = "output.isTargetCohortDefinitionConceptSetsTableRowSelected == true &
                                                       input.targetConceptSetsType == 'Concept Set Expression'",
-                    tags$table(width = "100%",
-                               tags$tr(
-                                 tags$td(
-                                   align = "right",
-                                   shiny::downloadButton(
-                                     "saveTargetConceptSetsExpressionTable",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                                 )
-                               )),
-                    DT::dataTableOutput(outputId = "targetConceptSetsExpressionTable"),
+                    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('targetConceptSetsExpressionTable')"),
+                    reactable::reactableOutput(outputId = "targetConceptSetsExpressionTable"),
                     tags$br(),
                     shiny::conditionalPanel(
                       condition = "output.canTargetConceptSetExpressionBeOptimized &
@@ -485,67 +457,23 @@ shiny::shinyServer(function(input, output, session) {
                   ),
                   shiny::conditionalPanel(
                     condition = "input.targetConceptSetsType == 'Resolved'",
-                    tags$table(width = "100%",
-                               tags$tr(
-                                 tags$td(
-                                   align = "right",
-                                   shiny::downloadButton(
-                                     "saveTargetCohortDefinitionResolvedConceptTable",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                                 )
-                               )),
-                    DT::dataTableOutput(outputId = "targetCohortDefinitionResolvedConceptTable")
+                    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('targetCohortDefinitionResolvedConceptTable')"),
+                    reactable::reactableOutput(outputId = "targetCohortDefinitionResolvedConceptTable")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.targetConceptSetsType == 'Excluded'",
-                    tags$table(width = "100%",
-                               tags$tr(
-                                 tags$td(
-                                   align = "right",
-                                   shiny::downloadButton(
-                                     "saveTargetCohortDefinitionExcludedConceptTable",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                                 )
-                               )),
-                    DT::dataTableOutput(outputId = "targetCohortDefinitionExcludedConceptTable")
+                    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('targetCohortDefinitionExcludedConceptTable')"),
+                    reactable::reactableOutput(outputId = "targetCohortDefinitionExcludedConceptTable")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.targetConceptSetsType == 'Recommended'",
-                    tags$table(width = "100%",
-                               tags$tr(
-                                 tags$td(
-                                   align = "right",
-                                   shiny::downloadButton(
-                                     "saveOrphanConceptsTableTarget",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                                 )
-                               )),
-                    DT::dataTableOutput(outputId = "targetCohortDefinitionOrphanConceptTable")
+                    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('targetCohortDefinitionOrphanConceptTable')"),
+                    reactable::reactableOutput(outputId = "targetCohortDefinitionOrphanConceptTable")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.targetConceptSetsType == 'Mapped'",
-                    tags$table(width = "100%",
-                               tags$tr(
-                                 tags$td(
-                                   align = "right",
-                                   shiny::downloadButton(
-                                     "saveTargetCohortDefinitionMappedConceptTable",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                                 )
-                               )),
-                    DT::dataTableOutput(outputId = "targetCohortDefinitionMappedConceptTable")
+                    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('targetCohortDefinitionMappedConceptTable')"),
+                    reactable::reactableOutput(outputId = "targetCohortDefinitionMappedConceptTable")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.targetConceptSetsType == 'Concept Set Json'",
@@ -614,19 +542,8 @@ shiny::shinyServer(function(input, output, session) {
               title = "Cohort Count",
               value = "comparatorCohortDefinitionCohortCountTabPanel",
               tags$br(),
-              tags$table(width = "100%",
-                         tags$tr(
-                           tags$td(
-                             align = "right",
-                             shiny::downloadButton(
-                               outputId = "downloadComparatorCohortDefinitionCohortCount",
-                               label = NULL,
-                               icon = shiny::icon("download"),
-                               style = "margin-top: 5px; margin-bottom: 5px;"
-                             )
-                           )
-                         )),
-              DT::dataTableOutput(outputId = "comparatorCohortDefinitionCohortCountsTable")
+              tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('comparatorCohortDefinitionCohortCountsTable')"),
+              reactable::reactableOutput(outputId = "comparatorCohortDefinitionCohortCountsTable")
             ),
             shiny::tabPanel(
               title = "Inclusion rules",
@@ -662,20 +579,12 @@ shiny::shinyServer(function(input, output, session) {
                                label = "Show As Percent",
                                value = FALSE
                              )
-                           ),
-                           tags$td(
-                             align = "right",
-                             shiny::downloadButton(
-                               "saveComparatorCohortDefinitionSimplifiedInclusionRuleTable",
-                               label = "",
-                               icon = shiny::icon("download"),
-                               style = "margin-top: 5px; margin-bottom: 5px;"
-                             )
                            )
                          )),
               shiny::conditionalPanel(
                 condition = "input.comparatorCohortDefinitionInclusionRuleType == 'Events'",
-                DT::dataTableOutput(outputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTable")
+                tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('comparatorCohortDefinitionSimplifiedInclusionRuleTable')"),
+                reactable::reactableOutput(outputId = "comparatorCohortDefinitionSimplifiedInclusionRuleTable")
               )
             ),
             shiny::tabPanel(
@@ -706,7 +615,8 @@ shiny::shinyServer(function(input, output, session) {
             shiny::tabPanel(
               title = "Concept Sets",
               value = "comparatorCohortDefinitionConceptSetTabPanel",
-              DT::dataTableOutput(outputId = "comparatorCohortDefinitionConceptSets"),
+              tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('comparatorCohortDefinitionConceptSets')"),
+              reactable::reactableOutput(outputId = "comparatorCohortDefinitionConceptSets"),
               tags$br(),
               shiny::conditionalPanel(
                 condition = "output.isComparatorCohortDefinitionConceptSetRowSelected == true",
@@ -782,19 +692,8 @@ shiny::shinyServer(function(input, output, session) {
                   shiny::conditionalPanel(
                     condition = "output.isComparatorCohortDefinitionConceptSetRowSelected == true &
                                                       input.comparatorConceptSetsType == 'Concept Set Expression'",
-                    tags$table(width = "100%",
-                               tags$tr(
-                                 tags$td(
-                                   align = "right",
-                                   shiny::downloadButton(
-                                     "saveComparatorConceptSetsExpressionTable",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                                 )
-                               )),
-                    DT::dataTableOutput(outputId = "comparatorConceptSetsExpressionTable"),
+                    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('comparatorConceptSetsExpressionTable')"),
+                    reactable::reactableOutput(outputId = "comparatorConceptSetsExpressionTable")
                     # tags$br(),
                     # shiny::conditionalPanel(
                     #   condition = "output.canComparatorConceptSetExpressionBeOptimized",
@@ -822,67 +721,23 @@ shiny::shinyServer(function(input, output, session) {
                   ),
                   shiny::conditionalPanel(
                     condition = "input.comparatorConceptSetsType == 'Resolved'",
-                    tags$table(width = "100%",
-                               tags$tr(
-                                 tags$td(
-                                   align = "right",
-                                   shiny::downloadButton(
-                                     "saveComparatorCohortDefinitionResolvedConceptTable",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                                 )
-                               )),
-                    DT::dataTableOutput(outputId = "comparatorCohortDefinitionResolvedConceptTable")
+                    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('comparatorCohortDefinitionResolvedConceptTable')"),
+                    reactable::reactableOutput(outputId = "comparatorCohortDefinitionResolvedConceptTable")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.comparatorConceptSetsType == 'Excluded'",
-                    tags$table(width = "100%",
-                               tags$tr(
-                                 tags$td(
-                                   align = "right",
-                                   shiny::downloadButton(
-                                     "saveComparatorCohortDefinitionExcludedConceptTable",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                                 )
-                               )),
-                    DT::dataTableOutput(outputId = "comparatorCohortDefinitionExcludedConceptTable")
+                    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('comparatorCohortDefinitionExcludedConceptTable')"),
+                    reactable::reactableOutput(outputId = "comparatorCohortDefinitionExcludedConceptTable")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.comparatorConceptSetsType == 'Recommended'",
-                    tags$table(width = "100%",
-                               tags$tr(
-                                 tags$td(
-                                   align = "right",
-                                   shiny::downloadButton(
-                                     "saveComparatorCohortDefinitionOrphanConceptTable",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                                 )
-                               )),
-                    DT::dataTableOutput(outputId = "comparatorCohortDefinitionOrphanConceptTable")
+                    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('comparatorCohortDefinitionOrphanConceptTable')"),
+                    reactable::reactableOutput(outputId = "comparatorCohortDefinitionOrphanConceptTable")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.comparatorConceptSetsType == 'Mapped'",
-                    tags$table(width = "100%",
-                               tags$tr(
-                                 tags$td(
-                                   align = "right",
-                                   shiny::downloadButton(
-                                     "saveComparatorCohortDefinitionMappedConceptTable",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                                 )
-                               )),
-                    DT::dataTableOutput(outputId = "comparatorCohortDefinitionMappedConceptTable")
+                    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('comparatorCohortDefinitionMappedConceptTable')"),
+                    reactable::reactableOutput(outputId = "comparatorCohortDefinitionMappedConceptTable")
                   ),
                   shiny::conditionalPanel(
                     condition = "input.comparatorConceptSetsType == 'Concept Set Json'",
@@ -954,38 +809,15 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   ###output: cohortDefinitionTable----
-  output$cohortDefinitionTable <- DT::renderDataTable(expr = {
+  output$cohortDefinitionTable <- reactable::renderReactable(expr = {
     data <- cohortDefinitionTableData()
     
-    if (nrow(data) < 20) {
-      scrollYHeight <- '15vh'
-    } else {
-      scrollYHeight <- '25vh'
+    if (!hasData(data)) {
+      return(NULL)
     }
-    options = list(
-      pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      scrollX = TRUE,
-      scrollY = scrollYHeight,
-      info = TRUE,
-      searchHighlight = TRUE
-    )
     
-    dataTable <- DT::datatable(
-      data,
-      options = options,
-      rownames = FALSE,
-      colnames = colnames(data) %>% camelCaseToTitleCase(),
-      escape = FALSE,
-      filter = "top",
-      selection = "none",
-      class = "stripe compact"
-    )
-    return(dataTable)
-  }, server = TRUE)
+    dataTable <- getSimpleReactable(data = data)
+  })
   
   
   ###output: isCohortDefinitionRowSelected----
@@ -1010,17 +842,6 @@ shiny::shinyServer(function(input, output, session) {
         return(12)
       }
     })
-  
-  ###output: downloadAllCohortDetails----
-  output$downloadAllCohortDetails <- downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "CohortDefinition")
-    },
-    content = function(file) {
-      data <- getCohortSortedByCohortId()
-      downloadCsv(x = data, fileName = file)
-    }
-  )
   
   ##Human readable text----
   ###getCirceRPackageVersionInformation----
@@ -1265,70 +1086,16 @@ shiny::shinyServer(function(input, output, session) {
   
   ###output: targetCohortDefinitionCohortCountTable----
   output$targetCohortDefinitionCohortCountTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getCountsForSelectedCohortsTarget()
       validate(need(
         all(!is.null(data),
             nrow(data) > 0),
         "There is no inclusion rule data for this cohort."
       ))
-      maxCohortSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ubjects")
-      maxCohortEntries <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ntries")
-      
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        columnDefs = list(minCellCountDef(1:2))
-      )
-      
-      dataTable <- DT::datatable(
-        data,
-        options = options,
-        colnames = colnames(data) %>% camelCaseToTitleCase(),
-        rownames = FALSE,
-        escape = FALSE,
-        filter = "top",
-        selection = "none",
-        class = "stripe nowrap compact"
-      )
-      
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns = 2,
-        background = DT::styleColorBar(c(0, maxCohortSubjects), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
-      
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns = 3,
-        background = DT::styleColorBar(c(0, maxCohortEntries), "#ffd699"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
-      return(dataTable)
-    }, server = TRUE)
-  
-  ###output: downloadTargetCohortDefinitionCohortCount----
-  output$downloadTargetCohortDefinitionCohortCount <- downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "CohortCount")
-    },
-    content = function(file) {
-      data <- getCountsForSelectedCohortsTarget()
-      downloadCsv(x = data, fileName = file)
-    }
-  )
+      table <- getSimpleReactable(data = data)
+      return(table)
+    })
   
   ##Concept set ----
   ###getConceptSetExpressionTarget----
@@ -1506,6 +1273,9 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>% 
       dplyr::left_join(count, 
                        by = c('databaseId', 'conceptId'))
+    
+    data <- data %>% 
+      dplyr::arrange(dplyr::desc(abs(dplyr::across(c("records", "persons")))))
     return(data)
   })
   
@@ -1571,7 +1341,8 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>% 
       dplyr::left_join(count, 
-                       by = c('databaseId', 'conceptId'))
+                       by = c('databaseId', 'conceptId')) %>% 
+      dplyr::arrange(dplyr::desc(abs(dplyr::across(c("records", "persons")))))
     return(data)
   })
   
@@ -1704,7 +1475,9 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>% 
       dplyr::left_join(count, 
-                       by = c('databaseId', 'conceptId'))
+                       by = c('databaseId', 'conceptId')) %>% 
+      dplyr::arrange(dplyr::desc(abs(dplyr::across(c("records", "persons")))))
+    
     return(data)
    })
   
@@ -2088,7 +1861,7 @@ shiny::shinyServer(function(input, output, session) {
   #!!!!!! inclusion rule needs simple and detailed tabs. detailed will replicate Atlas UI
   #output: targetCohortDefinitionSimplifiedInclusionRuleTable----
   output$targetCohortDefinitionSimplifiedInclusionRuleTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       if (any(is.null(consolidatedCohortIdTarget()))) {
         return(NULL)
       }
@@ -2125,28 +1898,20 @@ shiny::shinyServer(function(input, output, session) {
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
       
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort,
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$targetCohortInclusionRulesAsPercent
+        showResultsAsPercent =  input$targetCohortInclusionRulesAsPercent, 
+        sort = FALSE
       )
-      return(table)
-    }, server = TRUE)
-  
-  #output: saveTargetCohortDefinitionSimplifiedInclusionRuleTable----
-  output$saveTargetCohortDefinitionSimplifiedInclusionRuleTable <-
-    downloadHandler(
-      filename = function() {
-        getCsvFileNameWithDateTime(string = "InclusionRule")
-      },
-      content = function(file) {
-        downloadCsv(x = getSimplifiedInclusionRuleResultsTarget(), fileName = file)
-      }
-    )
+    })
   
   ##output: getSimplifiedInclusionRuleResultsTargetHasData----
   output$getSimplifiedInclusionRuleResultsTargetHasData <-
@@ -2587,38 +2352,16 @@ shiny::shinyServer(function(input, output, session) {
   
   #output: targetCohortDefinitionConceptSetsTable----
   output$targetCohortDefinitionConceptSetsTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getConceptSetsInCohortDataTarget()
       validate(need(all(!is.null(data),
                         nrow(data) > 0),
         "Concept set details not available for this cohort"
       ))
       
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = '15vh'
-      )
-      
-      dataTable <- DT::datatable(
-        data,
-        options = options,
-        colnames = colnames(data) %>% camelCaseToTitleCase(),
-        rownames = FALSE,
-        selection = list(mode = 'single', selected = 1),
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      return(dataTable)
-    }, server = TRUE)
+      getSimpleReactable(data = data,
+                         selection = 'single')
+    })
   
   getConceptSetsInCohortDataComparator <- reactive({
     if (!hasData(consolidatedCohortIdComparator())) {
@@ -2633,7 +2376,7 @@ shiny::shinyServer(function(input, output, session) {
   
   #output: comparatorCohortDefinitionConceptSets----
   output$comparatorCohortDefinitionConceptSets <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getConceptSetsInCohortDataComparator()
       validate(need(all(!is.null(data),
                         nrow(data) > 0),
@@ -2643,31 +2386,10 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = '15vh'
-      )
-      
-      dataTable <- DT::datatable(
-        data,
-        options = options,
-        colnames = colnames(data) %>% camelCaseToTitleCase(),
-        rownames = FALSE,
-        selection = list(mode = 'single', selected = 1),
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      return(dataTable)
-    }, server = TRUE)
+      getSimpleReactable(data = data,
+                         selection = 'single')
+     
+    })
   
   #output: conceptsetExpressionTableTarget----
   output$conceptsetExpressionTableTarget <-
@@ -2718,7 +2440,7 @@ shiny::shinyServer(function(input, output, session) {
   #output: isTargetCohortDefinitionConceptSetsTableRowSelected----
   output$isTargetCohortDefinitionConceptSetsTableRowSelected <-
     shiny::reactive(x = {
-      data <- input$targetCohortDefinitionConceptSetsTable_rows_selected
+      data <- reactable::getReactableState("targetCohortDefinitionConceptSetsTable", "selected")
       return(hasData(data))
     })
   shiny::outputOptions(x = output,
@@ -2907,7 +2629,7 @@ shiny::shinyServer(function(input, output, session) {
   
   #output: targetConceptSetsExpressionTable----
   output$targetConceptSetsExpressionTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getConceptSetExpressionTarget()
       if (!hasData(data)) {
         return(NULL)
@@ -2928,48 +2650,12 @@ shiny::shinyServer(function(input, output, session) {
           invalid = .data$invalidReason
         )
       
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = "20vh",
-        columnDefs = list(truncateStringDef(1, 80))
-      )
-      
-      dataTable <- DT::datatable(
-        data,
-        options = options,
-        colnames = colnames(data) %>% camelCaseToTitleCase(),
-        rownames = FALSE,
-        escape = FALSE,
-        selection = 'none',
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      return(dataTable)
-    }, server = TRUE)
-  
-  #output: saveTargetCohortDefinitionResolvedConceptTable----
-  output$saveTargetCohortDefinitionResolvedConceptTable <-
-    downloadHandler(
-      filename = function() {
-        getCsvFileNameWithDateTime(string = "ResolvedConcepts")
-      },
-      content = function(file) {
-        data <- getResolvedConceptsTarget()
-        downloadCsv(x = data, fileName = file)
-      }
-    )
+      getSimpleReactable(data = data)
+    })
   
   #output: targetCohortDefinitionResolvedConceptTable----
   output$targetCohortDefinitionResolvedConceptTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       validate(need(
         length(consolidatedCohortIdTarget()) > 0,
         "Please select concept set"
@@ -3019,32 +2705,25 @@ shiny::shinyServer(function(input, output, session) {
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
-      table <- getDtWithColumnsGroupedByDatabaseId(
+
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort, 
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$showAsPercentageColumnTarget 
+        showResultsAsPercent = input$showAsPercentageColumnTarget, 
+        sort = FALSE
       )
-      return(table)
-    }, server = TRUE)
-  
-  #output: saveOrphanConceptsTableTarget----
-  output$saveOrphanConceptsTableTarget <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "orphanConcepts")
-    },
-    content = function(file) {
-      data <- getOrphanConceptsTarget()
-      downloadCsv(x = data, fileName = file)
-    }
-  )
+    })
   
   #output: targetCohortDefinitionExcludedConceptTable----
   output$targetCohortDefinitionExcludedConceptTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       validate(need(
         length(consolidatedCohortIdTarget()) > 0,
         "Please select concept set"
@@ -3092,32 +2771,24 @@ shiny::shinyServer(function(input, output, session) {
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
       
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort, 
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$showAsPercentageColumnTarget
+        showResultsAsPercent = input$showAsPercentageColumnTarget, 
+        sort = FALSE
       )
-      return(table)
-    }, server = TRUE)
-  
-  #output: saveTargetCohortDefinitionExcludedConceptTable----
-  output$saveTargetCohortDefinitionExcludedConceptTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "excludedConcepts")
-    },
-    content = function(file) {
-      data <- getExcludedConceptsTarget()
-      downloadCsv(x = data, fileName = file)
-    }
-  )
+    })
   
   #output: targetCohortDefinitionOrphanConceptTable----
   output$targetCohortDefinitionOrphanConceptTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getOrphanConceptsTarget()
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
@@ -3162,21 +2833,24 @@ shiny::shinyServer(function(input, output, session) {
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort, 
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$showAsPercentageColumnTarget 
+        showResultsAsPercent = input$showAsPercentageColumnTarget, 
+        sort = FALSE
       )
-      return(table)
-    }, server = TRUE)
+    })
   
   #output: targetCohortDefinitionMappedConceptTable----
   output$targetCohortDefinitionMappedConceptTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       validate(need(
         length(consolidatedCohortIdTarget()) > 0,
         "Please select concept set"
@@ -3227,31 +2901,20 @@ shiny::shinyServer(function(input, output, session) {
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
       
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort, 
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$showAsPercentageColumnTarget 
+        showResultsAsPercent = input$showAsPercentageColumnTarget, 
+        sort = FALSE
       )
-      return(table)
-    }, server = TRUE)
-  
-  ##saveTargetCohortDefinitionMappedConceptTable
-  output$saveTargetCohortDefinitionMappedConceptTable <-
-    downloadHandler(
-      filename = function()
-      {
-        getCsvFileNameWithDateTime(string = "orphanconcepts")
-      },
-      content = function(file)
-      {
-        downloadCsv(x = getMappedConceptsTarget(),
-                    fileName = file)
-      }
-    )
+    })
   
   #output: targetConceptsetExpressionJson----
   output$targetConceptsetExpressionJson <- shiny::renderText({
@@ -3294,70 +2957,16 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: comparatorCohortDefinitionCohortCountsTable----
   output$comparatorCohortDefinitionCohortCountsTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getCountsForSelectedCohortsComparator()
       validate(need(
         all(!is.null(data),
             nrow(data) > 0),
         "There is no inclusion rule data for this cohort."
       ))
-      maxCohortSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ubjects")
-      maxCohortEntries <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ntries")
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        columnDefs = list(minCellCountDef(1:2))
-      )
+      getSimpleReactable(data = data)
       
-      dataTable <- DT::datatable(
-        data,
-        options = options,
-        colnames = colnames(data) %>% camelCaseToTitleCase(),
-        rownames = FALSE,
-        escape = FALSE,
-        selection = "none",
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns = 2,
-        background = DT::styleColorBar(c(0, maxCohortSubjects), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
-      
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns = 3,
-        background = DT::styleColorBar(c(0, maxCohortEntries), "#ffd699"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
-      return(dataTable)
-      
-    }, server = TRUE)
-  
-  ###output: downloadComparatorCohortDefinitionCohortCount----
-  output$downloadComparatorCohortDefinitionCohortCount <- downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "CohortCount")
-    },
-    content = function(file) {
-      data <- getCountsForSelectedCohortsComparator()
-      downloadCsv(x = data, fileName = file)
-    }
-  )
+    })
   
   ##reactive: isDatabaseIdFoundForSelectedComparatorCohortCount----
   output$isDatabaseIdFoundForSelectedComparatorCohortCount <-
@@ -3370,7 +2979,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: comparatorCohortDefinitionSimplifiedInclusionRuleTable----
   output$comparatorCohortDefinitionSimplifiedInclusionRuleTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getSimplifiedInclusionRuleResultsComparator()
       validate(need((nrow(data) > 0),
                     "There is no inclusion rule data for this cohort."))
@@ -3406,30 +3015,20 @@ shiny::shinyServer(function(input, output, session) {
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
       
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort,
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$comparatorCohortInclusionRulesAsPercent
+        showResultsAsPercent =  input$comparatorCohortInclusionRulesAsPercent, 
+        sort = FALSE
       )
-      return(table)
-    }, server = TRUE)
-  
-  ##output: saveComparatorCohortDefinitionSimplifiedInclusionRuleTable----
-  output$saveComparatorCohortDefinitionSimplifiedInclusionRuleTable <-
-    downloadHandler(
-      filename = function()
-      {
-        getCsvFileNameWithDateTime(string = "InclusionRule")
-      },
-      content = function(file)
-      {
-        downloadCsv(x = getSimplifiedInclusionRuleResultsComparator(), fileName = file)
-      }
-    )
+    })
   
   ##output: getComparatorSimplifiedInclusionRuleResultsHasData----
   output$getComparatorSimplifiedInclusionRuleResultsHasData <-
@@ -3529,7 +3128,7 @@ shiny::shinyServer(function(input, output, session) {
   ##output: isComparatorCohortDefinitionConceptSetRowSelected----
   output$isComparatorCohortDefinitionConceptSetRowSelected <-
     shiny::reactive(x = {
-      return(!is.null(input$comparatorCohortDefinitionConceptSets_rows_selected))
+      return(!is.null(reactable::getReactableState("comparatorCohortDefinitionConceptSets", "selected")))
     })
   shiny::outputOptions(x = output,
                        name = "isComparatorCohortDefinitionConceptSetRowSelected",
@@ -3703,7 +3302,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: comparatorConceptSetsExpressionTable----
   output$comparatorConceptSetsExpressionTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getConceptSetExpressionComparator()
       if (!hasData(data)) {
         return(NULL)
@@ -3724,48 +3323,12 @@ shiny::shinyServer(function(input, output, session) {
           invalid = .data$invalidReason
         )
       
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = "20vh",
-        columnDefs = list(truncateStringDef(2, 80))
-      )
-      
-      dataTable <- DT::datatable(
-        data,
-        options = options,
-        colnames = colnames(data) %>% camelCaseToTitleCase(),
-        rownames = FALSE,
-        escape = FALSE,
-        selection = 'none',
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      return(dataTable)
-    }, server = TRUE)
-  
-  ##output: saveComparatorConceptSetsExpressionTable----
-  output$saveComparatorConceptSetsExpressionTable <-
-    downloadHandler(
-      filename = function() {
-        getCsvFileNameWithDateTime(string = "conceptset")
-      },
-      content = function(file) {
-        downloadCsv(x = getConceptSetExpressionComparator(),
-                    fileName = file)
-      }
-    )
+      getSimpleReactable(data = data)
+    })
   
   ##output: comparatorCohortDefinitionResolvedConceptTable----
   output$comparatorCohortDefinitionResolvedConceptTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getResolvedConceptsComparator()
       validate(need((all(
         !is.null(data), nrow(data) > 0
@@ -3810,34 +3373,24 @@ shiny::shinyServer(function(input, output, session) {
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
-      
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort,
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$showAsPercentageColumnComparator
+        showResultsAsPercent =  input$showAsPercentageColumnComparator, 
+        sort = FALSE
       )
-      return(table)
-    }, server = TRUE)
-  
-  ##output: saveComparatorCohortDefinitionResolvedConceptTable----
-  output$saveComparatorCohortDefinitionResolvedConceptTable <-
-    downloadHandler(
-      filename = function() {
-        getCsvFileNameWithDateTime(string = "resolvedConceptSet")
-      },
-      content = function(file) {
-        data <- getResolvedConceptsComparator()
-        downloadCsv(x = data, fileName = file)
-      }
-    )
+    })
   
   #output: comparatorCohortDefinitionExcludedConceptTable----
   output$comparatorCohortDefinitionExcludedConceptTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getExcludedConceptsComparator()
       validate(need((all(
         !is.null(data), nrow(data) > 0
@@ -3883,30 +3436,23 @@ shiny::shinyServer(function(input, output, session) {
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
       
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort,
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$showAsPercentageColumnComparator
+        showResultsAsPercent =  input$showAsPercentageColumnComparator, 
+        sort = FALSE
       )
-      return(table)
-    }, server = TRUE)
-  
-  #output: saveComparatorCohortDefinitionExcludedConceptTable----
-  output$saveComparatorCohortDefinitionExcludedConceptTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "excludedConcepts")
-    },
-    content = function(file) {
-      downloadCsv(x = getExcludedConceptsComparator(), fileName = file)
-    }
-  )
+    })
   
   output$comparatorCohortDefinitionOrphanConceptTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getOrphanConceptsComparator()
       validate(need(any(!is.null(data),
                         nrow(data) > 0),
@@ -3951,35 +3497,24 @@ shiny::shinyServer(function(input, output, session) {
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
       
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort,
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$showAsPercentageColumnComparator
+        showResultsAsPercent =  input$showAsPercentageColumnComparator, 
+        sort = FALSE
       )
-      return(table)
-    }, server = TRUE)
-  
-  ##output: saveComparatorCohortDefinitionOrphanConceptTable----
-  output$saveComparatorCohortDefinitionOrphanConceptTable <-
-    downloadHandler(
-      filename = function()
-      {
-        getCsvFileNameWithDateTime(string = "orphanconcepts")
-      },
-      content = function(file)
-      {
-        downloadCsv(x = getOrphanConceptsComparator(),
-                    fileName = file)
-      }
-    )
+    })
   
   #output: comparatorCohortDefinitionMappedConceptTable----
   output$comparatorCohortDefinitionMappedConceptTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       validate(need(
         length(consolidatedCohortIdComparator()) > 0,
         "Please select concept set"
@@ -4029,32 +3564,20 @@ shiny::shinyServer(function(input, output, session) {
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
-      
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort,
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$showAsPercentageColumnTarget 
+        showResultsAsPercent =  input$showAsPercentageColumnTarget , 
+        sort = FALSE
       )
-      return(table)
-    }, server = TRUE)
-  
-  ##output: saveComparatorCohortDefinitionMappedConceptTable----
-  output$saveComparatorCohortDefinitionMappedConceptTable <-
-    downloadHandler(
-      filename = function()
-      {
-        getCsvFileNameWithDateTime(string = "orphanconcepts")
-      },
-      content = function(file)
-      {
-        downloadCsv(x = getMappedConceptsComparator(),
-                    fileName = file)
-      }
-    )
+    })
   
   ##output: comparatorCohortDefinitionConceptsetExpressionJson----
   output$comparatorCohortDefinitionConceptsetExpressionJson <-
@@ -5923,11 +5446,6 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(data)) {
       return(NULL)
     }
-    data <- data %>%
-      dplyr::inner_join(covariateRef %>%
-                          dplyr::select(.data$covariateName,
-                                        .data$covariateId),
-                        by = "covariateId")
     return(data)
   })
   
@@ -6117,8 +5635,13 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(input$indexEventBreakdownTableRadioButton)) {
       return(NULL)
     }
+    if (!hasData(consolidatedDatabaseIdTarget())) {
+      return(NULL)
+    }
     data <- data %>%
-      dplyr::filter(.data$domainId %in% input$indexEventDomainNameFilter)
+      dplyr::filter(.data$domainId %in% input$indexEventDomainNameFilter) %>% 
+      dplyr::filter(.data$databaseId %in% c(consolidatedDatabaseIdTarget()))
+    
     if (length(input$indexEventBreakdownTableRadioButton) > 0) {
       conceptIdsToFilter <- c()
       if ("Resolved" %in% c(input$indexEventBreakdownTableRadioButton)) {
@@ -6263,6 +5786,99 @@ shiny::shinyServer(function(input, output, session) {
       
       return(table)
     }, server = TRUE)
+  
+  output$indexEventBreakdownReactTable <-
+    reactable::renderReactable(expr = {
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = paste0(
+          "Get index event breakdown data ",
+          " for cohort id: ",
+          consolidatedCohortIdTarget()
+        ),
+        value = 0
+      )
+      
+      data <- getIndexEventBreakdownTargetDataFiltered()
+      
+      validate(
+        need(
+          hasData(data),
+          "No index event breakdown data for the chosen combination."
+        )
+      )
+      keyColumnFields <-
+        c("conceptId", "conceptName","cohortId", "vocabularyId", "standardConcept")
+      #depending on user selection - what data Column Fields Will Be Presented?
+      dataColumnFields <-
+        c("persons",
+          "records")
+      if (input$indexEventBreakdownTableFilter == "Both") {
+        dataColumnFields <- dataColumnFields
+        countLocation <- 2
+      } else if (input$indexEventBreakdownTableFilter == "Persons") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
+                                               pattern = tolower("person"))]
+        countLocation <- 1
+      } else if (input$indexEventBreakdownTableFilter == "Records") {
+        dataColumnFields <-
+          dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
+                                               pattern = tolower("record"))]
+        countLocation <- 1
+      }
+      
+      countsForHeader <-
+        getCountsForHeaderForUseInDataTable(
+          dataSource = dataSource,
+          databaseIds = consolidatedDatabaseIdTarget(),
+          cohortIds = consolidatedCohortIdTarget(),
+          source = "Cohort Level",
+          fields = input$indexEventBreakdownTableFilter
+        )
+      if (!hasData(countsForHeader)) {
+        return(NULL)
+      }
+      
+      maxCountValue <-
+        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                      string = dataColumnFields)
+      
+        filteredConceptIds <-
+          data %>%
+          dplyr::select(.data$conceptId) %>%
+          dplyr::distinct() %>%
+          dplyr::mutate(sortOrder = dplyr::row_number())
+       
+        rawDataFiltered <- getIndexEventBreakdownRawTarget() %>%
+          dplyr::filter(.data$coConceptId == 0) %>%
+          dplyr::filter(.data$databaseId %in% consolidatedDatabaseIdTarget()) %>%
+          dplyr::inner_join(filteredConceptIds, by = "conceptId") %>%
+          dplyr::arrange(.data$sortOrder) %>%
+          dplyr::select(.data$databaseId,
+                        .data$cohortId,
+                        .data$conceptId,
+                        .data$sortOrder,
+                        .data$daysRelativeIndex,
+                        .data$conceptCount,
+                        .data$subjectCount)
+       
+       getReactTableWithColumnsGroupedByDatabaseId(
+        data = data,
+        rawData = rawDataFiltered,
+        cohort = cohort, 
+        database = database,
+        headerCount = countsForHeader,
+        keyColumns = keyColumnFields,
+        countLocation = countLocation,
+        dataColumns = dataColumnFields,
+        maxCount = maxCountValue,
+        showResultsAsPercent = input$indexEventBreakdownShowAsPercent, 
+        sort = FALSE
+      )
+        
+    })
   
   
   # ##getIndexEventBreakdownPlotData----
@@ -6849,7 +6465,7 @@ shiny::shinyServer(function(input, output, session) {
                        suspendWhenHidden = FALSE)
   
   ##visitContextTable----
-  output$visitContextTable <- DT::renderDataTable(expr = {
+  output$visitContextTable <- reactable::renderReactable(expr = {
     validate(need(
       length(consolidatedDatabaseIdTarget()) > 0,
       "No data sources chosen"
@@ -6925,17 +6541,31 @@ shiny::shinyServer(function(input, output, session) {
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
     
-    table <- getDtWithColumnsGroupedByDatabaseId(
+    # table <- getDtWithColumnsGroupedByDatabaseId(
+    #   data = data,
+    #   headerCount = countsForHeader,
+    #   keyColumns = keyColumnFields,
+    #   countLocation = 1,
+    #   dataColumns = dataColumnFields,
+    #   maxCount = maxCountValue,
+    #   showResultsAsPercent = (input$visitContextValueFilter == "Percentage")
+    # )
+    
+    table <- getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
+      rawData = NULL,
+      cohort = cohort, 
+      database = database,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
       countLocation = 1,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
-      showResultsAsPercent = (input$visitContextValueFilter == "Percentage")
+      showResultsAsPercent =  (input$visitContextValueFilter == "Percentage"), 
+      sort = FALSE
     )
     return(table)
-  }, server = TRUE)
+  })
   
   
   #______________----
@@ -7076,7 +6706,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##output: cohortOverlapTable ----
-  output$cohortOverlapTable <- DT::renderDataTable(expr = {
+  output$cohortOverlapTable <- reactable::renderReactable(expr = {
     data <- cohortOverlapDataFiltered()
     validate(need(
       !is.null(data),
@@ -7092,27 +6722,30 @@ shiny::shinyServer(function(input, output, session) {
       scrollY <- TRUE
     }
     
-    options = list(
-      pageLength = 1000,
-      searching = TRUE,
-      scrollX = TRUE,
-      scrollY = scrollY,
-      lengthChange = TRUE,
-      ordering = FALSE,
-      paging = TRUE,
-      columnDefs = list(minCellCountDef(3:10))
-    )
+    table <- getSimpleReactable(data = data)
+    return(table)
     
-    table <- DT::datatable(
-      data,
-      options = options,
-      rownames = FALSE,
-      colnames = colnames(data) %>%
-        camelCaseToTitleCase(),
-      escape = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
+    # options = list(
+    #   pageLength = 1000,
+    #   searching = TRUE,
+    #   scrollX = TRUE,
+    #   scrollY = scrollY,
+    #   lengthChange = TRUE,
+    #   ordering = FALSE,
+    #   paging = TRUE,
+    #   columnDefs = list(minCellCountDef(3:10))
+    # )
+    # 
+    # table <- DT::datatable(
+    #   data,
+    #   options = options,
+    #   rownames = FALSE,
+    #   colnames = colnames(data) %>%
+    #     camelCaseToTitleCase(),
+    #   escape = FALSE,
+    #   filter = "top",
+    #   class = "stripe nowrap compact"
+    # )
    
   })
   

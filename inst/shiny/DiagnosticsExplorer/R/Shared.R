@@ -2302,6 +2302,32 @@ getResultsTimeDistribution <- function(dataSource,
     data <- data %>% 
       dplyr::select(-.data$endDay)
   }
+  covariateRef <- getResultsCovariateRef(
+    dataSource = dataSource,
+    covariateIds = data$covariateId %>% unique()
+  )
+  data <- data %>%
+    dplyr::inner_join(covariateRef %>%
+                        dplyr::select(.data$covariateName,
+                                      .data$covariateId),
+                      by = "covariateId")
+  
+  # timeInDaysInRelationToEndDays <- getResultsCohortRelationships(
+  #   dataSource = dataSource,
+  #   cohortIds = cohortIds,
+  #   comparatorCohortIds = -1,
+  #   databaseIds = databaseIds,
+  #   startDays = 0,
+  #   endDays = 0
+  # ) %>%
+  #   dplyr::select(
+  #     .data$cohortId,
+  #     .data$comparatorCohortId,
+  #     .data$databaseId,
+  #     .data$cDaysWithinTDays,
+  #     .data$cDaysAfterTs,
+  #     .data$cDaysAfterTe
+  #   )
   return(data)
 }
 
@@ -2754,13 +2780,13 @@ getResultsCohortOverlap <- function(dataSource,
     dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) %>%
     dplyr::select(
       .data$databaseId,
-      .data$cohortId,
+      # .data$cohortId,
       .data$comparatorCohortId,
       .data$eitherSubjects,
       .data$tOnlySubjects,
       .data$cOnlySubjects,
       .data$bothSubjects,
-      .data$cBeforeTSubjects,
+      # .data$cBeforeTSubjects,
       .data$targetCohortId,
       .data$cInTSubjects,
       .data$cStartAfterTStart,
