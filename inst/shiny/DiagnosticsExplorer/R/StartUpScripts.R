@@ -738,51 +738,20 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   }
   
   
- data3 <- data
-  #long form
+ # data3 <- data
+
+  distinctDatabaseId <- data$databaseId %>%  unique()
   data <- data %>%
     tidyr::pivot_longer(
       cols = dplyr::all_of(dataColumns),
       names_to = "type",
       values_to = "valuesData"
     ) %>%
-    dplyr::inner_join(
-      headerCount %>%
-        tidyr::pivot_longer(
-          cols = dplyr::all_of(dataColumns),
-          names_to = "type",
-          values_to = "valuesHeader"
-        ),
-      by = c("databaseId", "type")
-    ) %>% 
     dplyr::mutate(type = paste0(
       .data$databaseId,
       "-",
-      .data$type,
-      " (",
-      scales::comma(.data$valuesHeader),
-      ")"
-    ))  
- 
-    
-    # dplyr::mutate(typeLong = paste0(
-    #   .data$shortNameDatabase,
-    #   "\n",
-    #   .data$shortNameCohort,
-    #   "\n",
-    #   .data$type
-    # )) %>%
-    # dplyr::mutate(typeLong = paste0(
-    #   .data$type,
-    #   .data$shortNameDatabase,
-    #   .data$shortNameCohort
-    # )) %>%
-    # dplyr::select(-.data$shortNameDatabase, -.data$shortNameCohort)
-  
-  distinctDatabaseId <- data$databaseId %>%  unique()
-  
-  #wide form
-  data <- data %>%
+      .data$type
+    )) %>% 
     tidyr::pivot_wider(
       id_cols = dplyr::all_of(keyColumns),
       names_from = "type",
@@ -790,17 +759,13 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       values_fill = 0
     )
   
-  if (nrow(data) > 20) {
-    reactableHeight <- '65vh'
-  } else {
-    reactableHeight <- 'auto'
-  }
   
+ 
   #!!! need to add tool tip - hover over the data columns -- show tool tip for short names
-  withTooltip <- function(value, tooltip) {
-    tags$abbr(style = "text-decoration: underline; text-decoration-style: dotted; cursor: help",
-              title = tooltip, value)
-  }
+  # withTooltip <- function(value, tooltip) {
+  #   tags$abbr(style = "text-decoration: underline; text-decoration-style: dotted; cursor: help",
+  #             title = tooltip, value)
+  # }
   
   # convert camel case to title case -- input data should be in camelCase
   # colnames(data) <- camelCaseToTitleCase(colnames(data))
@@ -893,8 +858,13 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   }
   
   for (i in (1:length(dataColumns))) {
-    columnName <-   camelCaseToTitleCase(sub(".*-", "", dataColumns[i]))
-    
+    columnNameWithDatabaseAndCount <-   stringr::str_split(dataColumns[i],"-")[[1]]
+    columnName <- columnNameWithDatabaseAndCount[2]
+    if (countLocation == 2) {
+      filteredHeaderCount <- headerCount %>% 
+        dplyr::filter(.data$databaseId ==  columnNameWithDatabaseAndCount[1])
+      columnName <- camelCaseToTitleCase(paste0(columnName," (",scales::comma(filteredHeaderCount[[columnName]]), ")"))
+    }
       columnDefinitions[[dataColumns[i]]] <-
         reactable::colDef(
           name = columnName,
@@ -935,9 +905,16 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       string = dataColumns, #optimun_dod-Subject
       pattern = distinctDatabaseId[i] #optimun_dod
     )]
+    columnName <- distinctDatabaseId[i]
     # extractedDataColumns <- sort(c(extractedDataColumns,paste0(extractedDataColumns,"-sparkline")))
+    if (countLocation == 1) {
+      columnName <- headerCount %>% 
+        dplyr::filter(.data$databaseId ==  distinctDatabaseId[i]) %>% 
+        dplyr::mutate(count = paste0(.data$databaseId," (",.data$count,")")) %>% 
+        dplyr::pull(.data$count)
+    }
     columnGroups[[i]] <- 
-      reactable::colGroup(name = distinctDatabaseId[i], 
+      reactable::colGroup(name = columnName, 
                           columns = extractedDataColumns)
   }
   
@@ -946,26 +923,26 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                     columns = columnDefinitions,
                                     columnGroups = columnGroups,
                                     sortable = TRUE,
-                                    resizable = TRUE, 
+                                    resizable = TRUE,
                                     filterable = TRUE,
-                                    searchable = TRUE, 
-                                    pagination = TRUE, 
-                                    showPagination = TRUE, 
+                                    searchable = TRUE,
+                                    pagination = TRUE,
+                                    showPagination = TRUE,
                                     showPageInfo = TRUE,
-                                    # minRows = 100, # to change based on number of rows in data
-                                    # selection = "single",
+                                    # # minRows = 100, # to change based on number of rows in data
+                                    # # selection = "single",
                                     highlight = TRUE,
-                                    striped = TRUE, 
-                                    compact = TRUE, 
+                                    striped = TRUE,
+                                    compact = TRUE,
                                     wrap = FALSE,
-                                    showSortIcon = TRUE, 
-                                    showSortable = TRUE, 
+                                    showSortIcon = TRUE,
+                                    showSortable = TRUE,
                                     fullWidth = TRUE,
                                     bordered = TRUE,
-                                    height = reactableHeight,
-                                    showPageSizeOptions = TRUE, 
-                                    pageSizeOptions = c(10, 20, 50, 100, 1000), 
-                                    defaultPageSize = 100,
+                                    # height = reactableHeight,
+                                    showPageSizeOptions = TRUE,
+                                    pageSizeOptions = c(10, 20, 50, 100, 1000),
+                                    defaultPageSize = 20,
                                     selection = 'single',
                                     onClick = "select",
                                     theme = reactable::reactableTheme(
@@ -1021,16 +998,16 @@ getSimpleReactable <- function(data,
                                     # minRows = 100, # to change based on number of rows in data
                                     highlight = TRUE,
                                     striped = TRUE, 
-                                    compact = TRUE, 
+                                    compact = TRUE,
                                     wrap = FALSE,
-                                    showSortIcon = TRUE, 
-                                    showSortable = TRUE, 
+                                    showSortIcon = TRUE,
+                                    showSortable = TRUE,
                                     fullWidth = TRUE,
                                     bordered = TRUE,
                                     selection = selection,
                                     height = reactableHeight,
                                     onClick = "select",
-                                    showPageSizeOptions = TRUE, 
+                                    showPageSizeOptions = TRUE,
                                     pageSizeOptions = c(10, 20, 50, 100, 1000), 
                                     defaultPageSize = 100,
                                     theme = reactable::reactableTheme(
