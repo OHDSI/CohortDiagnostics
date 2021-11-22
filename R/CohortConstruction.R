@@ -78,28 +78,21 @@ makeBackwardsCompatible <- function(cohorts) {
   return(cohorts)
 }
 
-#' Load Cohort Definitions From Package
+#' Load Cohort Definitions From A Study Package
 #' @description
-#' Load cohort references for usage in executeDiagnostics
+#' Load cohort references for usage in executeDiagnostics.
 #' @inheritParams runCohortDiagnostics
 #' @export
 loadCohortsFromPackage <- function(packageName,
-                                  cohortToCreateFile = "settings/cohortsToCreate.csv",
-                                  cohortIds = NULL) {
-
-  getCohortsJsonAndSqlFromPackage(packageName = packageName,
-                                  cohortToCreateFile = cohortToCreateFile,
-                                  cohortIds = cohortIds)
-}
-
-getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
-                                            cohortToCreateFile = cohortToCreateFile,
-                                            cohortIds = NULL,
-                                            errorMessage = NULL) {
+                                   cohortToCreateFile = "settings/cohortsToCreate.csv",
+                                   cohortIds = NULL,
+                                   errorMessage = NULL) {
   ParallelLogger::logDebug("Executing on cohorts specified in package - ", packageName)
 
+  displayErrors <- FALSE
   if (is.null(errorMessage) |
     !class(errorMessage) == 'AssertColection') {
+    displayErrors <- TRUE
     errorMessage <- checkmate::makeAssertCollection()
   }
   checkmate::assertCharacter(
@@ -130,7 +123,6 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
   }
 
   checkCohortReference(cohortReference = cohorts, errorMessage = errorMessage)
-  checkmate::reportAssertions(collection = errorMessage)
 
   getSql <- function(name) {
     pathToSql <-
@@ -138,7 +130,7 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
     checkmate::assertFile(
       x = pathToSql,
       access = "r",
-      extension = ".sql",
+      extension = "sql",
       add = errorMessage
     )
     sql <- readChar(pathToSql, file.info(pathToSql)$size)
@@ -153,7 +145,7 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
     checkmate::assertFile(
       x = pathToJson,
       access = "r",
-      extension = ".sql",
+      extension = "json",
       add = errorMessage
     )
     json <- readChar(pathToJson, file.info(pathToJson)$size)
@@ -161,6 +153,9 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
   }
 
   cohorts$json <- sapply(cohorts$name, getJson)
+  if (displayErrors) {
+    checkmate::reportAssertions(collection = errorMessage)
+  }
   return(selectColumnAccordingToResultsModel(cohorts))
 }
 
@@ -246,7 +241,7 @@ getCohortsJsonAndSql <- function(packageName = NULL,
                                  generateStats = TRUE) {
   if (!is.null(packageName)) {
     cohorts <-
-      getCohortsJsonAndSqlFromPackage(
+      loadCohortsFromPackage(
         packageName = packageName,
         cohortToCreateFile = cohortToCreateFile,
         cohortIds = cohortIds
