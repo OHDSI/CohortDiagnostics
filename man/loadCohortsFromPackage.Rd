@@ -2,12 +2,13 @@
 % Please edit documentation in R/CohortConstruction.R
 \name{loadCohortsFromPackage}
 \alias{loadCohortsFromPackage}
-\title{Load Cohort Definitions From Package}
+\title{Load Cohort Definitions From A Study Package}
 \usage{
 loadCohortsFromPackage(
   packageName,
   cohortToCreateFile = "settings/cohortsToCreate.csv",
-  cohortIds = NULL
+  cohortIds = NULL,
+  errorMessage = NULL
 )
 }
 \arguments{
@@ -25,5 +26,5 @@ error message will be displayed and process stopped.}
 diagnostics to.}
 }
 \description{
-Load cohort references for usage in executeDiagnostics
+Load cohort references for usage in executeDiagnostics.
 }
