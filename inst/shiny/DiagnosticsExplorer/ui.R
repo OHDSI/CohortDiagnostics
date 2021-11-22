@@ -284,18 +284,11 @@ bodyTabItems <- shinydashboard::tabItems(
         solidHeader = FALSE,
         collapsible = TRUE,
         collapsed = TRUE,
-        # column(6,tags$h4("Cohort Definition")),
         column(12,
                tags$table(width = "100%",
                           tags$tr(
                             tags$td(
                               align = "right",
-                              shiny::downloadButton(
-                                outputId = "downloadAllCohortDetails",
-                                label = NULL,
-                                icon = shiny::icon("download"),
-                                style = "margin-top: 5px; margin-bottom: 5px;"
-                              ),
                               shiny::downloadButton(
                                 outputId = "exportAllCohortDetails",
                                 label = NULL,
@@ -304,7 +297,8 @@ bodyTabItems <- shinydashboard::tabItems(
                               )
                             )
                           ))),
-        DT::dataTableOutput(outputId = "cohortDefinitionTable")
+        tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionTable')"),
+        reactable::reactableOutput(outputId = "cohortDefinitionTable")
       ),
       shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedTarget"),
       shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedComparator"),
@@ -910,7 +904,15 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::tabPanel(
         title = "Table",
         value = "indexEventBreakbownTableTab",
-        DT::dataTableOutput(outputId = "indexEventBreakdownTable")
+        DT::dataTableOutput(outputId = "indexEventBreakdownTable"),
+        tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('indexEventBreakdownReactTable')"),
+        reactable::reactableOutput(outputId = "indexEventBreakdownReactTable"),
+        tags$script('document.getElementById("indexEventBreakdownReactTable").addEventListener("click", function(event){
+                             setTimeout(function(){
+                              HTMLWidgets.staticRender()
+                             }, 10);
+                          })
+                           ')
       )
       # shiny::tabPanel(
       #   title = "Plot",
@@ -1079,7 +1081,7 @@ bodyTabItems <- shinydashboard::tabItems(
         )
       )
     ),
-    DT::dataTableOutput(outputId = "visitContextTable")
+    reactable::reactableOutput(outputId = "visitContextTable")
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
@@ -1136,7 +1138,7 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       shiny::conditionalPanel(
         condition = "input.overlapPlotFilter == 'Table'",
-        DT::dataTableOutput(outputId = "cohortOverlapTable")
+        reactable::reactableOutput(outputId = "cohortOverlapTable")
       )
     )
   ),

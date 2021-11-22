@@ -198,19 +198,19 @@ consolidationOfSelectedFieldValues <- function(input,
     
     #selection on concept set id
     if (all(
-      hasData(input$targetCohortDefinitionConceptSetsTable_rows_selected),
+      hasData(reactable::getReactableState("targetCohortDefinitionConceptSetsTable", "selected")),
       hasData(data$cohortIdTarget)
     )) {
       selectedConceptSet <-
-        conceptSetExpressionTarget[input$targetCohortDefinitionConceptSetsTable_rows_selected,]
+        conceptSetExpressionTarget[reactable::getReactableState("targetCohortDefinitionConceptSetsTable", "selected"),]
       data$conceptSetIdTarget <- selectedConceptSet$conceptSetId
       
       if (all(
-        hasData(input$comparatorCohortDefinitionConceptSets_rows_selected),
+        hasData(reactable::getReactableState("comparatorCohortDefinitionConceptSets", "selected")),
         hasData(data$cohortIdComparator)
       )) {
         selectedConceptSet <-
-          conceptSetExpressionComparator[input$comparatorCohortDefinitionConceptSets_rows_selected,]
+          conceptSetExpressionComparator[reactable::getReactableState("comparatorCohortDefinitionConceptSets", "selected"),]
         data$conceptSetIdComparator <- selectedConceptSet$conceptSetId
       }
     }
@@ -222,38 +222,38 @@ consolidationOfSelectedFieldValues <- function(input,
     }
     #selection on concept id
 
-    if (hasData(input$targetCohortDefinitionResolvedConceptTable_rows_selected)) {
-      data$selectedConceptIdTarget <- resolvedConceptSetDataTarget[input$targetCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
+    if (hasData(reactable::getReactableState("targetCohortDefinitionResolvedConceptTable", "selected"))) {
+      data$selectedConceptIdTarget <- resolvedConceptSetDataTarget[reactable::getReactableState("targetCohortDefinitionResolvedConceptTable", "selected"),]$conceptId
       data$TargetActive <- TRUE
     }
-    if (hasData(input$comparatorCohortDefinitionResolvedConceptTable_rows_selected)) {
-      data$selectedConceptIdComparator <- resolvedConceptSetDataComparator[input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,]$conceptId
+    if (hasData(reactable::getReactableState("comparatorCohortDefinitionResolvedConceptTable", "selected"))) {
+      data$selectedConceptIdComparator <- resolvedConceptSetDataComparator[reactable::getReactableState("comparatorCohortDefinitionResolvedConceptTable", "selected"),]$conceptId
       data$comparatorActive <- TRUE
     }
-    if (hasData(input$targetCohortDefinitionExcludedConceptTable_rows_selected)) {
-      data$selectedConceptIdTarget <- excludedConceptSetDataTarget[input$targetCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
+    if (hasData(reactable::getReactableState("targetCohortDefinitionExcludedConceptTable", "selected"))) {
+      data$selectedConceptIdTarget <- excludedConceptSetDataTarget[reactable::getReactableState("targetCohortDefinitionExcludedConceptTable", "selected"),]$conceptId
       data$TargetActive <- TRUE
     }
-    if (hasData(input$comparatorCohortDefinitionExcludedConceptTable_rows_selected)) {
-      data$selectedConceptIdComparator <- excludedConceptSetDataComparator[input$comparatorCohortDefinitionExcludedConceptTable_rows_selected,]$conceptId
+    if (hasData(reactable::getReactableState("comparatorCohortDefinitionExcludedConceptTable", "selected"))) {
+      data$selectedConceptIdComparator <- excludedConceptSetDataComparator[reactable::getReactableState("comparatorCohortDefinitionExcludedConceptTable", "selected"),]$conceptId
       data$comparatorActive <- TRUE
     }
-    if (hasData(input$targetCohortDefinitionOrphanConceptTable_rows_selected)) {
-      data$selectedConceptIdTarget <- orphanConceptSetDataTarget[input$targetCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
+    if (hasData(reactable::getReactableState("targetCohortDefinitionOrphanConceptTable", "selected"))) {
+      data$selectedConceptIdTarget <- orphanConceptSetDataTarget[reactable::getReactableState("targetCohortDefinitionOrphanConceptTable", "selected"),]$conceptId
       data$TargetActive <- TRUE
     }
-    if (hasData(input$comparatorCohortDefinitionOrphanConceptTable_rows_selected)) {
-      data$selectedConceptIdComparator <- orphanConceptSetDataComparator[input$comparatorCohortDefinitionOrphanConceptTable_rows_selected,]$conceptId
+    if (hasData(reactable::getReactableState("comparatorCohortDefinitionOrphanConceptTable", "selected"))) {
+      data$selectedConceptIdComparator <- orphanConceptSetDataComparator[reactable::getReactableState("comparatorCohortDefinitionOrphanConceptTable", "selected"),]$conceptId
       data$comparatorActive <- TRUE
     }
     
-    if (hasData(input$targetCohortDefinitionMappedConceptTable_rows_selected)) {
-      data$selectedConceptIdTarget <- mappedConceptSetTarget[input$targetCohortDefinitionMappedConceptTable_rows_selected,]$conceptId
+    if (hasData(reactable::getReactableState("targetCohortDefinitionMappedConceptTable", "selected"))) {
+      data$selectedConceptIdTarget <- mappedConceptSetTarget[reactable::getReactableState("targetCohortDefinitionMappedConceptTable", "selected"),]$conceptId
       data$TargetActive <- TRUE
     }
     
-    if (hasData(input$comparatorCohortDefinitionMappedConceptTable_rows_selected)) {
-      data$selectedConceptIdComparator <- mappedConceptSetComparator[input$comparatorCohortDefinitionMappedConceptTable_rows_selected,]$conceptId
+    if (hasData(reactable::getReactableState("comparatorCohortDefinitionMappedConceptTable", "selected"))) {
+      data$selectedConceptIdComparator <- mappedConceptSetComparator[reactable::getReactableState("comparatorCohortDefinitionMappedConceptTable", "selected"),]$conceptId
       data$comparatorActive <- TRUE
     }
   }
@@ -424,6 +424,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
       if (length(setdiff(c("databaseId", "count"), colnames(headerCount))) != 0) {
         warning("missing required fields to draw formatted datatable.")
       }
+      
       data <- data %>%
         dplyr::inner_join(headerCount,
                           by = c("databaseId")) %>%
@@ -647,6 +648,340 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
   return(dataTable)
 }
 
+
+getReactTableWithColumnsGroupedByDatabaseId <- function(data,
+                                                        rawData,
+                                                        cohort = NULL,
+                                                        database = NULL,
+                                                        headerCount = NULL,
+                                                        keyColumns,
+                                                        dataColumns,
+                                                        countLocation,
+                                                        maxCount,
+                                                        sort = TRUE,
+                                                        showResultsAsPercent = FALSE,
+                                                        rowSpan = 2) {
+  if (is.null(cohort)) {
+    warning("cohort table is missing")
+    cohort <- data %>%
+      dplyr::select(.data$cohortId) %>%
+      dplyr::distinct() %>%
+      dplyr::mutate(shortName = paste0("C", .data$cohortId))
+  }
+  if (!'shortName' %in% colnames(cohort)) {
+    warning("Assigning short name to cohort as C + cohortId")
+    cohort <- cohort %>%
+      dplyr::mutate(shortName = paste0("C", .data$cohortId))
+  }
+  
+  if (is.null(database)) {
+    warning("database table is missing")
+    database <- data %>%
+      dplyr::select(.data$databaseId) %>%
+      dplyr::distinct() %>%
+      dplyr::mutate(id = dplyr::row_number()) %>%
+      dplyr::mutate(shortName = paste0("D", .data$id))
+  }
+  if (!'shortName' %in% colnames(database)) {
+    warning("Assigning short name to cohort as D + rowNumber")
+    database <- database %>%
+      dplyr::distinct() %>%
+      dplyr::mutate(id = dplyr::row_number()) %>%
+      dplyr::mutate(shortName = paste0("D", .data$id))
+  }
+  
+  # ensure the data has required fields
+  keyColumns <- keyColumns %>% unique()
+  dataColumns <- dataColumns %>% unique()
+  missingColumns <-
+    setdiff(x = c(keyColumns, dataColumns) %>% unique(),
+            y = colnames(data))
+  if (length(missingColumns) > 0)  {
+    stop(
+      paste0(
+        "Improper specification for sketch, following fields are missing in data ",
+        paste0(missingColumns, collapse = ", ")
+      )
+    )
+  }
+  
+  if (showResultsAsPercent) {
+    for (i in (1:length(dataColumns))) {
+      data[[dataColumns[i]]] = round(data[[dataColumns[i]]] / sum(data[[dataColumns[i]]]),2)
+    }
+  }
+  
+  
+ # data3 <- data
+
+  distinctDatabaseId <- data$databaseId %>%  unique()
+  data <- data %>%
+    tidyr::pivot_longer(
+      cols = dplyr::all_of(dataColumns),
+      names_to = "type",
+      values_to = "valuesData"
+    ) %>%
+    dplyr::mutate(type = paste0(
+      .data$databaseId,
+      "-",
+      .data$type
+    )) %>% 
+    tidyr::pivot_wider(
+      id_cols = dplyr::all_of(keyColumns),
+      names_from = "type",
+      values_from = valuesData,
+      values_fill = 0
+    )
+  
+  
+ 
+  #!!! need to add tool tip - hover over the data columns -- show tool tip for short names
+  # withTooltip <- function(value, tooltip) {
+  #   tags$abbr(style = "text-decoration: underline; text-decoration-style: dotted; cursor: help",
+  #             title = tooltip, value)
+  # }
+  
+  # convert camel case to title case -- input data should be in camelCase
+  # colnames(data) <- camelCaseToTitleCase(colnames(data))
+  # keyColumnsTitleCase <- camelCaseToTitleCase(keyColumns)
+  dataColumns <-
+    colnames(data)[stringr::str_detect(
+      string = colnames(data),
+      pattern = paste0(keyColumns, collapse = "|"),
+      negate = TRUE
+    )]
+  
+  if (hasData(rawData)) {
+    for (i in 1:length(dataColumns)) {
+      sparkColumn <- paste0(dataColumns[i],"-","sparkline")
+      databaseIdAndType <- stringr::str_split(dataColumns[i],"-")[[1]]
+      databaseIdSelected <- databaseIdAndType[1]
+      type <- databaseIdAndType[2]
+      columnNameSelected <- ifelse(type == "records","conceptCount","subjectCount")
+      
+      part1 <- '<span id="htmlwidget-spark-' # + ID
+      part2 <- '" class="sparkline html-widget"></span><script type="application/json" data-for="htmlwidget-spark-' # + ID
+      part3 <- '">{"x":{"values":[' # + values
+      part4 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},"evals":[],"jsHooks":[]}</script>'
+      # part3 <- '">{"values":[' # + y-values
+      # part3 <- '">{"x":{"values":[' # + x-values
+      # part4 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},evals":[],"jsHooks":[]}</script>' # + y-values
+      # part5 <- '","y":{"values":[' # + values
+      # part5 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},evals":[],"jsHooks":[]}</script>';
+      
+      daysRelativeIndexRange <- max(abs(rawData$daysRelativeIndex))
+      daysRelativeIndexRange <- dplyr::tibble(daysRelativeIndex = c((daysRelativeIndexRange * -1):daysRelativeIndexRange))
+      rawData <- rawData %>% 
+        dplyr::select(.data$databaseId,
+                      .data$cohortId,
+                      .data$conceptId,
+                      .data$sortOrder) %>% 
+        dplyr::distinct() %>% 
+        tidyr::crossing(daysRelativeIndexRange) %>% 
+        dplyr::left_join(rawData,by = c("databaseId",
+                                        "cohortId",
+                                        "conceptId",
+                                        "sortOrder",
+                                        "daysRelativeIndex")) %>%  
+        tidyr::replace_na(replace = list("conceptCount" = 0, "subjectCount" = 0)) %>% 
+        dplyr::arrange(.data$sortOrder, .data$daysRelativeIndex)
+      
+      out <- list(length = nrow(data))
+      for (i in 1:nrow(data)) {
+        conceptIdSelected <- data$conceptId[i]
+        cohortIdSelected <- data$cohortId[i]
+        rawDataFiltered <- rawData %>% 
+          dplyr::filter(.data$databaseId == databaseIdSelected,
+                        .data$cohortId == cohortIdSelected,
+                        .data$conceptId == conceptIdSelected)
+        
+        sparklineDataDayIndex <- rawDataFiltered$daysRelativeIndex
+        sparklineDataCountValue <- rawDataFiltered[[columnNameSelected]]
+        
+        xAxisVals <- paste(sparklineDataDayIndex,collapse = ",")
+        yAxisVals <- paste(sparklineDataCountValue,collapse = ",")
+        out[[i]] <- paste0(part1, i, part2, i, part3, yAxisVals, part4)
+      }
+      data[[sparkColumn]] <- out
+    }
+  }
+  
+  
+  columnDefinitions <- list()
+  
+  for (i in (1:length(keyColumns))) {
+    columnName <- camelCaseToTitleCase(colnames(data)[i])
+    colnames(data)[i] <- columnName
+    columnDefinitions[[columnName]] <-
+      reactable::colDef(
+        name = columnName,
+        sortable = TRUE,
+        resizable = TRUE,
+        filterable = TRUE,
+        show = TRUE,
+        html = TRUE,
+        na = "",
+        align = "left"
+      )
+  }
+ 
+  maxValue <- 0
+  for (i in (1:length(dataColumns))) {
+    maxValue <- max(maxValue,max(data[dataColumns[i]], na.rm = TRUE))
+  }
+  
+  for (i in (1:length(dataColumns))) {
+    columnNameWithDatabaseAndCount <-   stringr::str_split(dataColumns[i],"-")[[1]]
+    columnName <- columnNameWithDatabaseAndCount[2]
+    if (countLocation == 2) {
+      filteredHeaderCount <- headerCount %>% 
+        dplyr::filter(.data$databaseId ==  columnNameWithDatabaseAndCount[1])
+      columnName <- camelCaseToTitleCase(paste0(columnName," (",scales::comma(filteredHeaderCount[[columnName]]), ")"))
+    }
+      columnDefinitions[[dataColumns[i]]] <-
+        reactable::colDef(
+          name = columnName,
+          cell = minCellDefReactable(showResultsAsPercent),
+          sortable = TRUE,
+          resizable = TRUE,
+          filterable = TRUE,
+          show = TRUE,
+          # format = reactable::colFormat(separators = TRUE),
+          html = TRUE,
+          na = "",
+          align = "left",
+          style = function(value) {
+            list(
+              backgroundImage = sprintf("linear-gradient(90deg, %1$s %2$s, transparent %2$s)", "#9ccee7", paste0((value / maxValue) * 100, "%")),
+              backgroundSize = paste("100%", "100%"),
+              backgroundRepeat = "no-repeat",
+              backgroundPosition = "center",
+              color = "#000"
+            )
+          }
+        )
+   
+      # sparkColumn <- paste0(dataColumns[i],"-","sparkline")
+      # columnDefinitions[[sparkColumn]] <-
+      #   reactable::colDef(
+      #     name = "Spark Line",
+      #     html = TRUE,
+      #     cell = function(value, index) {
+      #       return(htmltools::HTML(value))
+      #     }
+      #   )
+  }
+  
+  columnGroups <- list()
+  for (i in 1:length(distinctDatabaseId)) {
+    extractedDataColumns <- dataColumns[stringr::str_detect(
+      string = dataColumns, #optimun_dod-Subject
+      pattern = distinctDatabaseId[i] #optimun_dod
+    )]
+    columnName <- distinctDatabaseId[i]
+    # extractedDataColumns <- sort(c(extractedDataColumns,paste0(extractedDataColumns,"-sparkline")))
+    if (countLocation == 1) {
+      columnName <- headerCount %>% 
+        dplyr::filter(.data$databaseId ==  distinctDatabaseId[i]) %>% 
+        dplyr::mutate(count = paste0(.data$databaseId," (",scales::comma(.data$count),")")) %>% 
+        dplyr::pull(.data$count)
+    }
+    columnGroups[[i]] <- 
+      reactable::colGroup(name = columnName, 
+                          columns = extractedDataColumns)
+  }
+  
+  dataTable <- 
+      reactable::reactable(data = data,
+                                    columns = columnDefinitions,
+                                    columnGroups = columnGroups,
+                                    sortable = TRUE,
+                                    resizable = TRUE,
+                                    filterable = TRUE,
+                                    searchable = TRUE,
+                                    pagination = TRUE,
+                                    showPagination = TRUE,
+                                    showPageInfo = TRUE,
+                                    # # minRows = 100, # to change based on number of rows in data
+                                    # # selection = "single",
+                                    highlight = TRUE,
+                                    striped = TRUE,
+                                    compact = TRUE,
+                                    wrap = FALSE,
+                                    showSortIcon = TRUE,
+                                    showSortable = TRUE,
+                                    fullWidth = TRUE,
+                                    bordered = TRUE,
+                                    showPageSizeOptions = TRUE,
+                                    pageSizeOptions = c(10, 20, 50, 100, 1000),
+                                    defaultPageSize = 20,
+                                    selection = 'single',
+                                    onClick = "select",
+                                    theme = reactable::reactableTheme(
+                                      rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
+                                    )
+  ) %>% 
+    sparkline::spk_add_deps() %>% 
+    htmlwidgets::onRender(jsCode = "
+                      function(el, x) {
+                      HTMLWidgets.staticRender();
+                      }")
+      
+    
+  return(dataTable)
+}
+
+getSimpleReactable <- function(data,
+                               selection = NULL) {
+  columnDefinitions <- list()
+  
+  for (i in (1:length(colnames(data)))) {
+    columnName <- camelCaseToTitleCase(colnames(data)[i])
+    colnames(data)[i] <- columnName
+    columnDefinitions[[columnName]] <-
+      reactable::colDef(
+        name = columnName,
+        sortable = TRUE,
+        resizable = TRUE,
+        filterable = TRUE,
+        show = TRUE,
+        html = TRUE,
+        na = "",
+        align = "left"
+      )
+  }
+  
+  dataTable <- reactable::reactable(data = data,
+                                    columns = columnDefinitions,
+                                    sortable = TRUE,
+                                    resizable = TRUE, 
+                                    filterable = TRUE,
+                                    searchable = TRUE, 
+                                    pagination = TRUE, 
+                                    showPagination = TRUE, 
+                                    showPageInfo = TRUE,
+                                    # minRows = 100, # to change based on number of rows in data
+                                    highlight = TRUE,
+                                    striped = TRUE, 
+                                    compact = TRUE,
+                                    wrap = FALSE,
+                                    showSortIcon = TRUE,
+                                    showSortable = TRUE,
+                                    fullWidth = TRUE,
+                                    bordered = TRUE,
+                                    selection = selection,
+                                    # height = reactableHeight,
+                                    onClick = "select",
+                                    showPageSizeOptions = TRUE,
+                                    pageSizeOptions = c(10, 20, 50, 100, 1000), 
+                                    defaultPageSize = 20,
+                                    theme = reactable::reactableTheme(
+                                      rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
+                                    )
+  )
+  
+  return(dataTable)
+}
 
 getCountsForHeaderForUseInDataTable <- function(dataSource,
                                                 databaseIds = NULL,
