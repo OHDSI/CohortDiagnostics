@@ -704,7 +704,8 @@ shiny::shinyServer(function(input, output, session) {
                                    )
                                  )
                                )),
-                    DT::dataTableOutput(outputId = "comparatorConceptSetsExpressionTable"),
+                    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('comparatorConceptSetsExpressionTable')"),
+                    reactable::reactableOutput(outputId = "comparatorConceptSetsExpressionTable")
                     # tags$br(),
                     # shiny::conditionalPanel(
                     #   condition = "output.canComparatorConceptSetExpressionBeOptimized",
@@ -3357,7 +3358,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: comparatorConceptSetsExpressionTable----
   output$comparatorConceptSetsExpressionTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getConceptSetExpressionComparator()
       if (!hasData(data)) {
         return(NULL)
@@ -3378,32 +3379,8 @@ shiny::shinyServer(function(input, output, session) {
           invalid = .data$invalidReason
         )
       
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = "20vh",
-        columnDefs = list(truncateStringDef(2, 80))
-      )
-      
-      dataTable <- DT::datatable(
-        data,
-        options = options,
-        colnames = colnames(data) %>% camelCaseToTitleCase(),
-        rownames = FALSE,
-        escape = FALSE,
-        selection = 'none',
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      return(dataTable)
-    }, server = TRUE)
+      getSimpleReactable(data = data)
+    })
   
   ##output: saveComparatorConceptSetsExpressionTable----
   output$saveComparatorConceptSetsExpressionTable <-
