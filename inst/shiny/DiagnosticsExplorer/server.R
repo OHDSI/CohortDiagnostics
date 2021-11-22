@@ -182,7 +182,7 @@ shiny::shinyServer(function(input, output, session) {
       input$selectedCompoundCohortNames,
       input$selectedCompoundCohortNames_open,
       input$conceptSetsSelectedTargetCohort,
-      input$indexEventBreakdownTable_rows_selected,
+      reactable::getReactableState("indexEventBreakdownTable", "selected"),
       input$targetVocabularyChoiceForConceptSetDetails,
       input$selectedComparatorCompoundCohortNames,
       input$selectedComparatorCompoundCohortNames_open
