@@ -854,7 +854,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
  
   maxValue <- 0
   for (i in (1:length(dataColumns))) {
-    maxValue <- max(maxValue,max(data[dataColumns[i]]))
+    maxValue <- max(maxValue,max(data[dataColumns[i]], na.rm = TRUE))
   }
   
   for (i in (1:length(dataColumns))) {
@@ -962,11 +962,11 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
 getSimpleReactable <- function(data,
                                selection = NULL) {
   
-  if (nrow(data) > 20) {
-    reactableHeight <- '300px'
-  } else {
-    reactableHeight <- 'auto'
-  }
+  # if (nrow(data) > 20) {
+  #   reactableHeight <- '300px'
+  # } else {
+  #   reactableHeight <- 'auto'
+  # }
   
   columnDefinitions <- list()
   
@@ -1005,11 +1005,11 @@ getSimpleReactable <- function(data,
                                     fullWidth = TRUE,
                                     bordered = TRUE,
                                     selection = selection,
-                                    height = reactableHeight,
+                                    # height = reactableHeight,
                                     onClick = "select",
                                     showPageSizeOptions = TRUE,
                                     pageSizeOptions = c(10, 20, 50, 100, 1000), 
-                                    defaultPageSize = 100,
+                                    defaultPageSize = 20,
                                     theme = reactable::reactableTheme(
                                       rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
                                     )
