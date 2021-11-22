@@ -165,7 +165,7 @@ shiny::shinyServer(function(input, output, session) {
     list(
       input$tabs,
       reactable::getReactableState("targetCohortDefinitionConceptSetsTable", "selected"),
-      input$comparatorCohortDefinitionConceptSets_rows_selected,
+      reactable::getReactableState("comparatorCohortDefinitionConceptSets", "selected"),
       reactable::getReactableState("targetCohortDefinitionResolvedConceptTable", "selected"),
       input$comparatorCohortDefinitionResolvedConceptTable_rows_selected,
       reactable::getReactableState("targetCohortDefinitionExcludedConceptTable", "selected"),
@@ -615,7 +615,8 @@ shiny::shinyServer(function(input, output, session) {
             shiny::tabPanel(
               title = "Concept Sets",
               value = "comparatorCohortDefinitionConceptSetTabPanel",
-              DT::dataTableOutput(outputId = "comparatorCohortDefinitionConceptSets"),
+              tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('comparatorCohortDefinitionConceptSets')"),
+              reactable::reactableOutput(outputId = "comparatorCohortDefinitionConceptSets"),
               tags$br(),
               shiny::conditionalPanel(
                 condition = "output.isComparatorCohortDefinitionConceptSetRowSelected == true",
@@ -2430,7 +2431,7 @@ shiny::shinyServer(function(input, output, session) {
   
   #output: comparatorCohortDefinitionConceptSets----
   output$comparatorCohortDefinitionConceptSets <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getConceptSetsInCohortDataComparator()
       validate(need(all(!is.null(data),
                         nrow(data) > 0),
@@ -2440,31 +2441,10 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = '15vh'
-      )
-      
-      dataTable <- DT::datatable(
-        data,
-        options = options,
-        colnames = colnames(data) %>% camelCaseToTitleCase(),
-        rownames = FALSE,
-        selection = list(mode = 'single', selected = 1),
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      return(dataTable)
-    }, server = TRUE)
+      getSimpleReactable(data = data,
+                         selection = 'single')
+     
+    })
   
   #output: conceptsetExpressionTableTarget----
   output$conceptsetExpressionTableTarget <-
@@ -3203,7 +3183,7 @@ shiny::shinyServer(function(input, output, session) {
   ##output: isComparatorCohortDefinitionConceptSetRowSelected----
   output$isComparatorCohortDefinitionConceptSetRowSelected <-
     shiny::reactive(x = {
-      return(!is.null(input$comparatorCohortDefinitionConceptSets_rows_selected))
+      return(!is.null(reactable::getReactableState("comparatorCohortDefinitionConceptSets", "selected")))
     })
   shiny::outputOptions(x = output,
                        name = "isComparatorCohortDefinitionConceptSetRowSelected",

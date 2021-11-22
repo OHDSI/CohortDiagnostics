@@ -206,11 +206,11 @@ consolidationOfSelectedFieldValues <- function(input,
       data$conceptSetIdTarget <- selectedConceptSet$conceptSetId
       
       if (all(
-        hasData(input$comparatorCohortDefinitionConceptSets_rows_selected),
+        hasData(reactable::getReactableState("comparatorCohortDefinitionConceptSets", "selected")),
         hasData(data$cohortIdComparator)
       )) {
         selectedConceptSet <-
-          conceptSetExpressionComparator[input$comparatorCohortDefinitionConceptSets_rows_selected,]
+          conceptSetExpressionComparator[reactable::getReactableState("comparatorCohortDefinitionConceptSets", "selected"),]
         data$conceptSetIdComparator <- selectedConceptSet$conceptSetId
       }
     }
