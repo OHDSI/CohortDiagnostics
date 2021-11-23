@@ -820,7 +820,7 @@ bodyTabItems <- shinydashboard::tabItems(
                      )
                    )
                  )),
-      DT::dataTableOutput("timeDistributionTable")
+      reactable::reactableOutput("timeDistributionTable")
     )
   ),
   shinydashboard::tabItem(

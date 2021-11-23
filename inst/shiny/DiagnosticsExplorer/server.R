@@ -5340,40 +5340,7 @@ shiny::shinyServer(function(input, output, session) {
       "No timeseries data for the cohort of this series type"
     ))
     
-    # if (nrow(data) > 20) {
-    #   scrollHeight <- "40vh"
-    # } else {
-    #   scrollHeight <- TRUE
-    # }
    dataTable <- getSimpleReactable(data = data)
-    
-    # if (input$timeSeriesTypeFilter == "Percent of Subjects among persons in period") {
-    #   columnDef <- list(minCellPercentDef(4:13))
-    # } else {
-    #   columnDef <- list(minCellCountDef(4:13))
-    # }
-    # options = list(
-    #   pageLength = 100,
-    #   lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-    #   searching = TRUE,
-    #   ordering = TRUE,
-    #   paging = TRUE,
-    #   scrollX = TRUE,
-    #   scrollY = scrollHeight,
-    #   info = TRUE,
-    #   searchHighlight = TRUE,
-    #   columnDefs = columnDef
-    # )
-    # dataTable <- DT::datatable(
-    #   data,
-    #   options = options,
-    #   rownames = FALSE,
-    #   colnames = colnames(data) %>% camelCaseToTitleCase(),
-    #   escape = FALSE,
-    #   filter = "top",
-    #   selection = list(mode = "multiple", target = "row"),
-    #   class = "stripe compact"
-    # )
     return(dataTable)
   })
 
@@ -5489,37 +5456,38 @@ shiny::shinyServer(function(input, output, session) {
   )
   
   ##output: timeDistributionTable----
-  output$timeDistributionTable <- DT::renderDataTable(expr = {
+  output$timeDistributionTable <- reactable::renderReactable(expr = {
     data <- getTimeDistributionTableData()
     validate(need(hasData(data),
                   "No data available for selected combination."))
-    options = list(
-      pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      searchHighlight = TRUE,
-      scrollX = TRUE,
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      info = TRUE,
-      columnDefs = list(minCellCountDef(3))
-    )
-    table <- DT::datatable(
-      data,
-      options = options,
-      rownames = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
-    table <-
-      DT::formatRound(table, c("Average", "SD"), digits = 2)
-    table <-
-      DT::formatRound(table,
-                      c("Min", "P10", "P25", "Median", "P75", "P90", "Max"),
-                      digits = 0)
+    table <- getSimpleReactable(data)
+    # options = list(
+    #   pageLength = 100,
+    #   lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+    #   searching = TRUE,
+    #   searchHighlight = TRUE,
+    #   scrollX = TRUE,
+    #   lengthChange = TRUE,
+    #   ordering = TRUE,
+    #   paging = TRUE,
+    #   info = TRUE,
+    #   columnDefs = list(minCellCountDef(3))
+    # )
+    # table <- DT::datatable(
+    #   data,
+    #   options = options,
+    #   rownames = FALSE,
+    #   filter = "top",
+    #   class = "stripe nowrap compact"
+    # )
+    # table <-
+    #   DT::formatRound(table, c("Average", "SD"), digits = 2)
+    # table <-
+    #   DT::formatRound(table,
+    #                   c("Min", "P10", "P25", "Median", "P75", "P90", "Max"),
+    #                   digits = 0)
     return(table)
-  }, server = TRUE)
+  })
   
   ##output: timeDistributionPlot----
   output$timeDistributionPlot <- plotly::renderPlotly(expr = {
