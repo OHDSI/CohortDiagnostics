@@ -96,7 +96,7 @@ test_that("Results upload", {
     cohortDatabaseSchema = cohortDiagnosticsSchema,
     cohortTable = cohortTable,
     cohortIds = c(17492, 17692),
-    cohorts = cohorts,
+    cohortSet = cohorts,
     inclusionStatisticsFolder = file.path(folder, "incStats"),
     exportFolder = file.path(folder, "export"),
     databaseId = "cdmv5",

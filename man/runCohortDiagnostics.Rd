@@ -7,7 +7,7 @@
 runCohortDiagnostics(
   packageName = NULL,
   cohortToCreateFile = "settings/CohortsToCreate.csv",
-  cohorts = NULL,
+  cohortSet = NULL,
   baseUrl = NULL,
   cohortSetReference = NULL,
   connectionDetails = NULL,
@@ -56,7 +56,7 @@ a dataframe object identical to requirements for \code{cohortSetReference} argum
 This csv file is expected to be encoded in either ASCII or UTF-8, if not, an 
 error message will be displayed and process stopped.}
 
-\item{cohorts}{Optional data.frame of cohorts must include columns cohortId, cohortName, json, sql}
+\item{cohortSet}{Optional data.frame of cohorts must include columns cohortId, cohortName, json, sql}
 
 \item{baseUrl}{The base URL for the WebApi instance, for example:
 "http://server.org:80/WebAPI". Can be left NULL if 

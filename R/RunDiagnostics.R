@@ -44,7 +44,7 @@
 #'                                    does not exist it will be created.
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
 #'                                    diagnostics to.
-#' @param cohorts                     Optional data.frame of cohorts must include columns cohortId, cohortName, json, sql
+#' @param cohortSet                     Optional data.frame of cohorts must include columns cohortId, cohortName, json, sql
 #' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf').
 #' @param databaseName                The full name of the database. If NULL, defaults to databaseId.
 #' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to databaseId.
@@ -77,7 +77,7 @@
 #' @export
 runCohortDiagnostics <- function(packageName = NULL,
                                  cohortToCreateFile = "settings/CohortsToCreate.csv",
-                                 cohorts = NULL,
+                                 cohortSet = NULL,
                                  baseUrl = NULL,
                                  cohortSetReference = NULL,
                                  connectionDetails = NULL,
@@ -210,9 +210,9 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   checkmate::reportAssertions(collection = errorMessage)
 
-  if (is.null(cohorts)) {
+  if (is.null(cohortSet)) {
     warning("Loading cohorts directly in runCohortDiagnostics will be removed in a future version. See executeDiagnostics")
-    cohorts <- getCohortsJsonAndSql(
+    cohortSet <- getCohortsJsonAndSql(
       packageName = packageName,
       cohortToCreateFile = cohortToCreateFile,
       baseUrl = baseUrl,
@@ -220,17 +220,17 @@ runCohortDiagnostics <- function(packageName = NULL,
       cohortIds = cohortIds
     )
   } else if (!is.null(cohortIds)) {
-    cohorts <- cohorts %>% dplyr::filter(cohortId %in% cohortIds)
+    cohortSet <- cohortSet %>% dplyr::filter(cohortId %in% cohortIds)
   }
 
-  if (nrow(cohorts) == 0) {
+  if (nrow(cohortSet) == 0) {
     stop("No cohorts specified")
   }
-  if ('name' %in% colnames(cohorts)) {
-    cohorts <- cohorts %>%
+  if ('name' %in% colnames(cohortSet)) {
+    cohortSet <- cohortSet %>%
       dplyr::select(-.data$name)
   }
-  cohortTableColumnNamesObserved <- colnames(cohorts) %>%
+  cohortTableColumnNamesObserved <- colnames(cohortSet) %>%
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
@@ -263,10 +263,10 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   if ('logicDescription' %in% expectedButNotObsevered) {
-    cohorts$logicDescription <- cohorts$cohortName
+    cohortSet$logicDescription <- cohortSet$cohortName
   }
   if ('phenotypeId' %in% expectedButNotObsevered) {
-    cohorts$phenotypeId <-
+    cohortSet$phenotypeId <-
       0  # phenotypeId is assigned = 0 when no phenotypeId is provided.
     # This is required for cohort overlap
   }
@@ -286,7 +286,7 @@ runCohortDiagnostics <- function(packageName = NULL,
               y = c('json', 'sql')) %>%
       unique() %>%
       sort()
-    cohorts <- cohorts %>%
+    cohortSet <- cohortSet %>%
       dplyr::mutate(metadata = as.list(columnsToAddToJson) %>% RJSONIO::toJSON(digits = 23))
   } else {
     if (length(obseveredButNotExpected) > 0) {
@@ -305,13 +305,13 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
-  cohorts <- cohorts %>%
+  cohortSet <- cohortSet %>%
     dplyr::select(cohortTableColumnNamesExpected)
-  writeToCsv(data = cohorts,
+  writeToCsv(data = cohortSet,
              fileName = file.path(exportFolder, "cohort.csv"))
   
-  if (!"phenotypeId" %in% colnames(cohorts)) {
-    cohorts$phenotypeId <- NA
+  if (!"phenotypeId" %in% colnames(cohortSet)) {
+    cohortSet$phenotypeId <- NA
   }
   
   # Set up connection to server ----------------------------------------------------
@@ -335,7 +335,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   if (incremental) {
     ParallelLogger::logDebug("Working in incremental mode.")
-    cohorts$checksum <- computeChecksum(cohorts$sql)
+    cohortSet$checksum <- computeChecksum(cohortSet$sql)
     recordKeepingFile <-
       file.path(incrementalFolder, "CreatedDiagnostics.csv")
     if (file.exists(path = recordKeepingFile)) {
@@ -353,13 +353,13 @@ runCohortDiagnostics <- function(packageName = NULL,
                        vocabularyVersionCdm,
                        vocabularyVersion)
   # Create concept table ------------------------------------------
-  createConceptTable(connection, tempEmulationSchema, cohorts)
+  createConceptTable(connection, tempEmulationSchema, cohortSet)
   
   # Counting cohorts -----------------------------------------------------------------------
   cohortCounts <- computeCohortCounts(connection,
                                       cohortDatabaseSchema,
                                       cohortTable,
-                                      cohorts,
+                                      cohortSet,
                                       exportFolder,
                                       minCellCount,
                                       databaseId)
@@ -371,8 +371,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       sprintf(
         "Found %s of %s (%1.2f%%) submitted cohorts instantiated. ",
         length(instantiatedCohorts),
-        nrow(cohorts),
-        100 * (length(instantiatedCohorts) / nrow(cohorts))
+        nrow(cohortSet),
+        100 * (length(instantiatedCohorts) / nrow(cohortSet))
       ),
       "Beginning cohort diagnostics for instantiated cohorts. "
     )
@@ -384,7 +384,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (runInclusionStatistics) {
     getInclusionStats(exportFolder,
                       databaseId,
-                      cohorts,
+                      cohortSet,
                       incremental,
                       instantiatedCohorts,
                       inclusionStatisticsFolder,
@@ -401,7 +401,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       cdmDatabaseSchema = cdmDatabaseSchema,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       databaseId = databaseId,
-      cohorts = cohorts,
+      cohorts = cohortSet,
       runIncludedSourceConcepts = runIncludedSourceConcepts,
       runOrphanConcepts = runOrphanConcepts,
       runBreakdownIndexEvents = runBreakdownIndexEvents,
@@ -430,7 +430,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       cdmVersion,
       databaseId,
       exportFolder,
-      cohorts,
+      cohortSet,
       instantiatedCohorts,
       incremental,
       recordKeepingFile
@@ -449,7 +449,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       databaseId,
       exportFolder,
       minCellCount,
-      cohorts,
+      cohortSet,
       instantiatedCohorts,
       recordKeepingFile,
       incremental
@@ -467,7 +467,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       databaseId,
       exportFolder,
       minCellCount,
-      cohorts,
+      cohortSet,
       instantiatedCohorts,
       recordKeepingFile,
       incremental
@@ -481,7 +481,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       cohortDatabaseSchema,
       tempEmulationSchema,
       cohortTable,
-      cohorts,
+      cohortSet,
       exportFolder,
       incremental,
       recordKeepingFile,
@@ -498,7 +498,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       exportFolder,
       cohortDatabaseSchema,
       cohortTable,
-      cohorts,
+      cohortSet,
       minCellCount,
       recordKeepingFile,
       incremental
@@ -517,7 +517,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       covariateSettings,
       tempEmulationSchema,
       cdmVersion,
-      cohorts,
+      cohortSet,
       cohortCounts,
       minCellCount,
       instantiatedCohorts,
@@ -538,7 +538,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       temporalCovariateSettings,
       tempEmulationSchema,
       cdmVersion,
-      cohorts,
+      cohortSet,
       cohortCounts,
       minCellCount,
       instantiatedCohorts,
@@ -641,7 +641,7 @@ writeResultsZip <- function(exportFolder, databaseId, vocabularyVersion, vocabul
 #'                    connectionDetails = connectionDetails)
 #' }
 #' @export
-executeDiagnostics <- function(cohorts,
+executeDiagnostics <- function(cohortSet,
                                exportFolder,
                                databaseId,
                                connectionDetails = NULL,
@@ -679,9 +679,9 @@ executeDiagnostics <- function(cohorts,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental")) {
 
-  checkCohortReference(cohortReference = cohorts)
+  checkCohortReference(cohortReference = cohortSet)
 
-  runCohortDiagnostics(cohorts = cohorts,
+  runCohortDiagnostics(cohortSet = cohortSet,
                        exportFolder = exportFolder,
                        databaseId = databaseId,
                        connectionDetails = connectionDetails,
