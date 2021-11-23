@@ -7132,6 +7132,8 @@ shiny::shinyServer(function(input, output, session) {
       table <- getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
         rawData = NULL,
+        cohort = cohort,
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
