@@ -641,7 +641,7 @@ writeResultsZip <- function(exportFolder, databaseId, vocabularyVersion, vocabul
 #'                    connectionDetails = connectionDetails)
 #' }
 #' @export
-executeDiagnostics <- function(cohortSet,
+executeDiagnostics <- function(cohortDefinitionSet,
                                exportFolder,
                                databaseId,
                                connectionDetails = NULL,
@@ -679,9 +679,9 @@ executeDiagnostics <- function(cohortSet,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental")) {
 
-  checkCohortReference(cohortReference = cohortSet)
+  checkCohortReference(cohortReference = cohortDefinitionSet)
 
-  runCohortDiagnostics(cohortDefinitionSet = cohortSet,
+  runCohortDiagnostics(cohortDefinitionSet = cohortDefinitionSet,
                        exportFolder = exportFolder,
                        databaseId = databaseId,
                        connectionDetails = connectionDetails,

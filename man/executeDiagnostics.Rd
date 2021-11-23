@@ -5,7 +5,7 @@
 \title{Execute cohort diagnostics functions}
 \usage{
 executeDiagnostics(
-  cohortSet,
+  cohortDefinitionSet,
   exportFolder,
   databaseId,
   connectionDetails = NULL,
@@ -40,6 +40,8 @@ executeDiagnostics(
 )
 }
 \arguments{
+\item{cohortDefinitionSet}{Optional data.frame of cohorts must include columns cohortId, cohortName, json, sql}
+
 \item{exportFolder}{The folder where the output will be exported to. If this folder
 does not exist it will be created.}
 
