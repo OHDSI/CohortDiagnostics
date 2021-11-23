@@ -5330,7 +5330,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##output: fixedTimeSeriesTable----
-  output$fixedTimeSeriesTable <- DT::renderDataTable({
+  output$fixedTimeSeriesTable <- reactable::renderReactable({
     validate(need(hasData(input$timeSeriesTypeFilter),
                   "Please select time series type."
     ))
@@ -5340,39 +5340,40 @@ shiny::shinyServer(function(input, output, session) {
       "No timeseries data for the cohort of this series type"
     ))
     
-    if (nrow(data) > 20) {
-      scrollHeight <- "40vh"
-    } else {
-      scrollHeight <- TRUE
-    }
-   
-    if (input$timeSeriesTypeFilter == "Percent of Subjects among persons in period") {
-      columnDef <- list(minCellPercentDef(4:13))
-    } else {
-      columnDef <- list(minCellCountDef(4:13))
-    }
-    options = list(
-      pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      scrollX = TRUE,
-      scrollY = scrollHeight,
-      info = TRUE,
-      searchHighlight = TRUE,
-      columnDefs = columnDef
-    )
-    dataTable <- DT::datatable(
-      data,
-      options = options,
-      rownames = FALSE,
-      colnames = colnames(data) %>% camelCaseToTitleCase(),
-      escape = FALSE,
-      filter = "top",
-      selection = list(mode = "multiple", target = "row"),
-      class = "stripe compact"
-    )
+    # if (nrow(data) > 20) {
+    #   scrollHeight <- "40vh"
+    # } else {
+    #   scrollHeight <- TRUE
+    # }
+   dataTable <- getSimpleReactable(data = data)
+    
+    # if (input$timeSeriesTypeFilter == "Percent of Subjects among persons in period") {
+    #   columnDef <- list(minCellPercentDef(4:13))
+    # } else {
+    #   columnDef <- list(minCellCountDef(4:13))
+    # }
+    # options = list(
+    #   pageLength = 100,
+    #   lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+    #   searching = TRUE,
+    #   ordering = TRUE,
+    #   paging = TRUE,
+    #   scrollX = TRUE,
+    #   scrollY = scrollHeight,
+    #   info = TRUE,
+    #   searchHighlight = TRUE,
+    #   columnDefs = columnDef
+    # )
+    # dataTable <- DT::datatable(
+    #   data,
+    #   options = options,
+    #   rownames = FALSE,
+    #   colnames = colnames(data) %>% camelCaseToTitleCase(),
+    #   escape = FALSE,
+    #   filter = "top",
+    #   selection = list(mode = "multiple", target = "row"),
+    #   class = "stripe compact"
+    # )
     return(dataTable)
   })
 

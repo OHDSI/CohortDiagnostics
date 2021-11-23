@@ -783,7 +783,7 @@ bodyTabItems <- shinydashboard::tabItems(
                        )
                      )
                    )),
-        DT::dataTableOutput("fixedTimeSeriesTable")
+        reactable::reactableOutput("fixedTimeSeriesTable")
       ),
       shiny::conditionalPanel(
         condition = "input.timeSeriesType=='Plot'",
