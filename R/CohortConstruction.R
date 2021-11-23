@@ -14,68 +14,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-checkCohortReference <-
-  function(cohortReference, errorMessage = NULL) {
-    if (is.null(errorMessage) |
-        !class(errorMessage) == 'AssertColection') {
-      errorMessage <- checkmate::makeAssertCollection()
-    }
-    checkmate::assertDataFrame(
-      x = cohortReference,
-      types = c("integer", "character", "numeric"),
-      min.rows = 1,
-      min.cols = 4,
+checkCohortReference <- function(cohortReference, errorMessage = NULL) {
+  if (is.null(errorMessage) | !class(errorMessage) == 'AssertColection') {
+    errorMessage <- checkmate::makeAssertCollection()
+  }
+  checkmate::assertDataFrame(
+    x = cohortReference,
+    types = c("integer", "character", "numeric"),
+    min.rows = 1,
+    min.cols = 5,
+    null.ok = FALSE,
+    col.names = "named",
+    add = errorMessage
+  )
+  if ("referentConceptId" %in% names(cohortReference)) {
+    checkmate::assertIntegerish(
+      x = cohortReference$referentConceptId,
+      lower = 0,
+      any.missing = FALSE,
+      unique = FALSE,
       null.ok = FALSE,
-      col.names = "named",
       add = errorMessage
     )
-    if ("referentConceptId" %in% names(cohortReference)) {
-      checkmate::assertIntegerish(
-        x = cohortReference$referentConceptId,
-        lower = 0,
-        any.missing = FALSE,
-        unique = FALSE,
-        null.ok = FALSE,
-        add = errorMessage
-      )
-    }
-    checkmate::assertNames(
-      x = names(cohortReference),
-      subset.of =  c(
-        "referentConceptId",
-        "cohortId",
-        "webApiCohortId",
-        "cohortName",
-        "logicDescription",
-        "clinicalRationale"
-      ),
-      add = errorMessage
-    )
-    invisible(errorMessage)
   }
-
-makeBackwardsCompatible <- function(cohorts) {
-  if (!"name" %in% colnames(cohorts)) {
-    if ('cohortId' %in% colnames(cohorts)) {
-      cohorts <- cohorts %>%
-        dplyr::mutate(name = as.character(.data$cohortId))
-    } else if ('id' %in% colnames(cohorts)) {
-      cohorts <- cohorts %>%
-        dplyr::mutate(name = as.character(.data$id)) %>%
-        dplyr::mutate(cohortId = .data$id)
-    }
-  }
-  if (!"webApiCohortId" %in% colnames(cohorts) &&
-      "atlasId" %in% colnames(cohorts)) {
-    cohorts <- cohorts %>%
-      dplyr::mutate(webApiCohortId = .data$atlasId)
-  }
-  if (!"cohortName" %in% colnames(cohorts) &&
-      "atlasName" %in% colnames(cohorts)) {
-    cohorts <- cohorts %>%
-      dplyr::mutate(cohortName = .data$atlasName)
-  }
-  return(cohorts)
+  checkmate::assertNames(
+    x = names(cohortReference),
+    must.include = c(
+      "cohortId",
+      "cohortName",
+      "logicDescription",
+      "sql",
+      "json"
+    ),
+    add = errorMessage
+  )
+  invisible(errorMessage)
 }
 
 #' Load Cohort Definitions From A Study Package
@@ -101,8 +74,7 @@ loadCohortsFromPackage <- function(packageName,
     max.len = 1,
     add = errorMessage
   )
-  pathToCsv <-
-    system.file(cohortToCreateFile, package = packageName)
+  pathToCsv <- system.file(cohortToCreateFile, package = packageName)
   checkmate::assertFileExists(
     x = system.file(cohortToCreateFile, package = packageName),
     access = "r",
@@ -116,7 +88,6 @@ loadCohortsFromPackage <- function(packageName,
                              col_types = readr::cols(),
                              guess_max = min(1e7))
 
-  cohorts <- makeBackwardsCompatible(cohorts)
   if (!is.null(cohortIds)) {
     cohorts <- cohorts %>%
       dplyr::filter(.data$cohortId %in% cohortIds)
@@ -190,7 +161,17 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
     cohortSetReference <-
       dplyr::rename(cohortSetReference, cohortName = "name")
   }
-  cohortSetReference <- makeBackwardsCompatible(cohortSetReference)
+
+  if ("webApiCohortId" %in% names(cohortSetReference)) {
+    cohortSetReference <-
+      dplyr::rename(cohortSetReference, atlasId = webApiCohortId)
+  }
+
+  if (!"atlasId" %in% names(cohortSetReference)) {
+    cohortSetReference <-
+      dplyr::mutate(cohortSetReference, atlasId = cohortId)
+  }
+
   cohortSetReference$json <- ""
   cohortSetReference$sql <- ""
   
@@ -199,7 +180,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
     ParallelLogger::logInfo("- Retrieving definitions for cohort ",
                             cohortSetReference$cohortName[i])
     cohortDefinition <-
-      ROhdsiWebApi::getCohortDefinition(cohortId = cohortSetReference$webApiCohortId[i],
+      ROhdsiWebApi::getCohortDefinition(cohortId = cohortSetReference$atlasId[i],
                                         baseUrl = baseUrl)
     cohortSetReference$json[i] <-
       RJSONIO::toJSON(x = cohortDefinition$expression, digits = 23)
@@ -228,8 +209,11 @@ selectColumnAccordingToResultsModel <- function(data) {
   if ("cohortType" %in% colnames(data)) {
     columsToInclude <- c(columsToInclude, "cohortType")
   }
+  if ("atlasId" %in% colnames(data)) {
+    columsToInclude <- c(columsToInclude, "atlasId")
+  }
   columsToInclude <-
-    c(columsToInclude, "json" , "sql", "webApiCohortId")
+    c(columsToInclude, "json" , "sql")
   return(data[, columsToInclude])
 }
 
@@ -424,7 +408,6 @@ processInclusionStats <- function(inclusion,
   return(result)
 }
 
-# TODO: use inclusion stats table instead of file path
 getInclusionStats <- function(exportFolder,
                               databaseId,
                               cohorts,

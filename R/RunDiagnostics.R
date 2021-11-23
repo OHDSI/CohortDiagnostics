@@ -679,13 +679,7 @@ executeDiagnostics <- function(cohorts,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental")) {
 
-  checkmate::assertDataFrame(cohorts, min.rows = 1, col.names = "named")
-  checkmate::assertNames(colnames(cohorts),
-                         must.include = c("cohortId",
-                                          "cohortName",
-                                          "logicDescription",
-                                          "json",
-                                          "sql"))
+  checkCohortReference(cohortReference = cohorts)
 
   runCohortDiagnostics(cohorts = cohorts,
                        exportFolder = exportFolder,
