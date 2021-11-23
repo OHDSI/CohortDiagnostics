@@ -660,7 +660,8 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                                         maxCount,
                                                         sort = TRUE,
                                                         showResultsAsPercent = FALSE,
-                                                        rowSpan = 2) {
+                                                        rowSpan = 2,
+                                                        showAllRows = FALSE) {
   if (is.null(cohort)) {
     warning("cohort table is missing")
     cohort <- data %>%
@@ -707,7 +708,17 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   
   if (showResultsAsPercent) {
     for (i in (1:length(dataColumns))) {
-      data[[dataColumns[i]]] = round(data[[dataColumns[i]]] / sum(data[[dataColumns[i]]]),2)
+      if ("sequence" %in% colnames(data)) {
+        for (j in 1:ceiling(max(data$sequence) / 100))
+          data[data$sequence > (j - 1) * 100 &
+                 data$sequence < j * 100,][[dataColumns[i]]] <-
+            round(data[data$sequence > (j - 1) * 100 &
+                         data$sequence < j * 100,][[dataColumns[i]]] /
+                    sum(data[data$sequence > (j - 1) * 100 &
+                               data$sequence < j * 100,][[dataColumns[i]]], na.rm = TRUE), 2)
+      } else {
+        data[[dataColumns[i]]] <- round(data[[dataColumns[i]]] / sum(data[[dataColumns[i]]], na.rm = TRUE), 2)
+      }
     }
   }
 
@@ -920,7 +931,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                     bordered = TRUE,
                                     showPageSizeOptions = TRUE,
                                     pageSizeOptions = c(10, 20, 50, 100, 1000),
-                                    defaultPageSize = 20,
+                                    defaultPageSize = ifelse(showAllRows, nrow(data),20) ,
                                     selection = 'single',
                                     onClick = "select",
                                     theme = reactable::reactableTheme(

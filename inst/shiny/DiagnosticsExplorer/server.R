@@ -7174,7 +7174,7 @@ shiny::shinyServer(function(input, output, session) {
   
   
   ### Output: characterizationTable ------
-  output$characterizationTable <- DT::renderDataTable(expr = {
+  output$characterizationTable <- reactable::renderReactable(expr = {
     if (input$tabs != "cohortCharacterization") {
       return(NULL)
     }
@@ -7213,15 +7213,19 @@ shiny::shinyServer(function(input, output, session) {
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      table <- getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
+        cohort = cohort,
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         sort = FALSE,
-        showResultsAsPercent = TRUE
+        showResultsAsPercent = TRUE,
+        showAllRows = TRUE
       )
     } else {
       progress <- shiny::Progress$new()
@@ -7268,8 +7272,9 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::mutate(conceptName = stringr::str_replace_all(string = .data$conceptName,
                                                              pattern = stringr::fixed(pattern = "\n"), 
                                                              replacement = "<br/>"))
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      table <- getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        rawData = NULL,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
@@ -7280,7 +7285,7 @@ shiny::shinyServer(function(input, output, session) {
       )
     }
     return(table)
-  }, server = TRUE)
+  })
   
   ###saveCohortCharacterizationTable----
   output$saveCohortCharacterizationTable <-  downloadHandler(

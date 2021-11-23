@@ -1218,7 +1218,7 @@ bodyTabItems <- shinydashboard::tabItems(
           )
         )
       )),
-    DT::dataTableOutput(outputId = "characterizationTable")
+    reactable::reactableOutput(outputId = "characterizationTable")
   ),
   shinydashboard::tabItem(
     tabName = "temporalCharacterization",
