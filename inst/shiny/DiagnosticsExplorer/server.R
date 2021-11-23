@@ -4381,7 +4381,7 @@ shiny::shinyServer(function(input, output, session) {
   #!!!!!!!!! no down load button
   #!!!!!!!!! no radio button for records/subjects
   ##output: cohortCountsTable----
-  output$cohortCountsTable <- DT::renderDataTable(expr = {
+  output$cohortCountsTable <- reactable::renderReactable(expr = {
     validate(need(
       length(consolidatedDatabaseIdTarget()) > 0,
       "No data sources chosen"
@@ -4390,132 +4390,45 @@ shiny::shinyServer(function(input, output, session) {
       length(consolidatedCohortIdTarget()) > 0,
       "No cohorts chosen"
     ))
-    data <- getCohortCountDataForSelectedDatabaseIdsCohortIds()
+    data <- getCohortCountDataForSelectedDatabaseIdsCohortIds() %>% 
+      dplyr::rename("records" = .data$cohortEntries,
+                    "subjects" = .data$cohortSubjects,
+                    "cohort" = .data$shortName)
     validate(need(all(hasData(data)),
       "No data for the combination"
     ))
     
-    maxValueSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ubjects")
-    maxValueEntries <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ntries")
-    databaseIds <- sort(unique(data$databaseId))
+    keyColumnFields <- c("cohort")
+    dataColumnFields <- c("records","subjects")
+    if (input$cohortCountsTableColumnFilter != "both") {
+      dataColumnFields <-
+        dataColumnFields[stringr::str_detect(
+          string = tolower(dataColumnFields),
+          pattern = tolower(
+            input$cohortCountsTableColumnFilter
+          )
+        )]
+    }
+   
+    maxCountValue <-
+      getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                    string = dataColumnFields)
     
-    if (input$cohortCountsTableColumnFilter == "Both") {
-      table <- getCohortCountDataSubjectRecord()
-      sketch <- htmltools::withTags(table(class = "display",
-                                          thead(tr(
-                                            th(rowspan = 2, "Cohort"),
-                                            lapply(
-                                              databaseIds,
-                                              th,
-                                              colspan = 2,
-                                              class = "dt-center",
-                                              style = "border-right:1px solid silver;border-bottom:1px solid silver"
-                                            )
-                                          ),
-                                          tr(
-                                            lapply(rep(
-                                              c("Records", "Subjects"), length(databaseIds)
-                                            ),
-                                            th,
-                                            style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                          ))))
-      options = list(
-        pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = "30vh",
-        columnDefs = list(minCellCountDef(1:(
-          2 * length(databaseIds)
-        )))
-      )
-      
-      dataTable <- DT::datatable(
-        table,
-        options = options,
-        selection = "single",
-        rownames = FALSE,
-        container = sketch,
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      for (i in 1:length(databaseIds)) {
-        dataTable <- DT::formatStyle(
-          table = dataTable,
-          columns = i * 2,
-          background = DT::styleColorBar(c(0, max(
-            table[, i * 2], na.rm = TRUE
-          )), "lightblue"),
-          backgroundSize = "98% 88%",
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center"
-        )
-        dataTable <- DT::formatStyle(
-          table = dataTable,
-          columns = i * 2 + 1,
-          background = DT::styleColorBar(c(0, max(
-            table[, i * 2 + 1], na.rm = TRUE
-          )), "#ffd699"),
-          backgroundSize = "98% 88%",
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center"
-        )
-      }
-    } else if (input$cohortCountsTableColumnFilter == "Subjects Only" ||
-          input$cohortCountsTableColumnFilter == "Records Only") {
-        if (input$cohortCountsTableColumnFilter == "Subjects Only") {
-          maxValue <- maxValueSubjects
-          table <- getCohortCountDataSubject()
-        } else {
-          maxValue <- maxValueEntries
-          table <- getCohortCountDataRecord()
-        }
-        
-        options = list(
-          pageLength = 1000,
-          lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-          searching = TRUE,
-          lengthChange = TRUE,
-          ordering = TRUE,
-          paging = TRUE,
-          info = TRUE,
-          searchHighlight = TRUE,
-          scrollX = TRUE,
-          scrollY = "30vh",
-          columnDefs = list(minCellCountDef(1:(
-            length(databaseIds)
-          )))
-        )
-        
-        dataTable <- DT::datatable(
-          table,
-          options = options,
-          selection = "single",
-          colnames = colnames(table) %>%
-            camelCaseToTitleCase(),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = "top",
-          class = "stripe nowrap compact"
-        )
-        
-        dataTable <- DT::formatStyle(
-          table = dataTable,
-          columns = 1 + 1:(length(databaseIds)),
-          background = DT::styleColorBar(c(0, maxValue), "lightblue"),
-          backgroundSize = "98% 88%",
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center"
-        )
-      }
+    dataTable <- getReactTableWithColumnsGroupedByDatabaseId(
+      data = data,
+      rawData = NULL,
+      cohort = cohort,
+      database = database,
+      headerCount = NULL,
+      keyColumns = keyColumnFields,
+      countLocation = 0,
+      dataColumns = dataColumnFields,
+      maxCount = maxCountValue,
+      showResultsAsPercent =  FALSE, 
+      sort = TRUE
+    )
     return(dataTable)
-  }, server = TRUE)
+  })
   
   ##output: saveCohortCountsTable----
   output$saveCohortCountsTable <-  downloadHandler(
@@ -5461,31 +5374,6 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(hasData(data),
                   "No data available for selected combination."))
     table <- getSimpleReactable(data)
-    # options = list(
-    #   pageLength = 100,
-    #   lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-    #   searching = TRUE,
-    #   searchHighlight = TRUE,
-    #   scrollX = TRUE,
-    #   lengthChange = TRUE,
-    #   ordering = TRUE,
-    #   paging = TRUE,
-    #   info = TRUE,
-    #   columnDefs = list(minCellCountDef(3))
-    # )
-    # table <- DT::datatable(
-    #   data,
-    #   options = options,
-    #   rownames = FALSE,
-    #   filter = "top",
-    #   class = "stripe nowrap compact"
-    # )
-    # table <-
-    #   DT::formatRound(table, c("Average", "SD"), digits = 2)
-    # table <-
-    #   DT::formatRound(table,
-    #                   c("Min", "P10", "P25", "Median", "P75", "P90", "Max"),
-    #                   digits = 0)
     return(table)
   })
   
