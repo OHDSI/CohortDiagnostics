@@ -14,7 +14,7 @@ dir.create(folder, recursive = TRUE)
 minCellCountValue <- 5
 
 test_that("Cohort instantiation", {
-  CohortDiagnostics::instantiateCohortSet(
+  instantiateCohortSet(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
@@ -48,13 +48,13 @@ test_that("Cohort instantiation", {
 
 test_that("Cohort diagnostics in incremental mode", {
 
-  cohorts <- loadCohortsFromPackage(
+  cohortDefinitionSet <- loadCohortsFromPackage(
     packageName = "CohortDiagnostics",
     cohortToCreateFile = "settings/CohortsToCreateForTesting.csv"
   )
   firstTime <- system.time(
-    CohortDiagnostics::executeDiagnostics(
-      cohorts = cohorts,
+    executeDiagnostics(
+      cohortDefinitionSet = cohortDefinitionSet,
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = cdmDatabaseSchema,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
@@ -84,7 +84,7 @@ test_that("Cohort diagnostics in incremental mode", {
   )))
   
   secondTime <- system.time(
-    CohortDiagnostics::runCohortDiagnostics(
+    runCohortDiagnostics(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = cdmDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
@@ -111,7 +111,7 @@ test_that("Cohort diagnostics in incremental mode", {
   testthat::expect_lt(secondTime[1], firstTime[1])
   
   # generate premerged file
-  CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
+  preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
   testthat::expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
   
   output <- read.csv(file.path(folder, "export", "covariate_value.csv"))
