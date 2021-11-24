@@ -14,7 +14,7 @@ instantiateCohortSet(
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
   cohortIds = NULL,
-  cohorts = NULL,
+  cohortDefinitionSet = NULL,
   packageName = NULL,
   cohortToCreateFile = "settings/CohortsToCreate.csv",
   baseUrl = NULL,
@@ -60,6 +60,8 @@ this should include both the database and schema name, for example
 
 \item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
 diagnostics to.}
+
+\item{cohortDefinitionSet}{Optional data.frame of cohorts must include columns cohortId, cohortName, json, sql}
 
 \item{packageName}{The name of the package containing the cohort definitions. Can be left NULL if 
 \code{baseUrl} and \code{cohortSetReference} have been specified.}

@@ -82,7 +82,7 @@ test_that("Results upload", {
     cohortDatabaseSchema = cohortDiagnosticsSchema,
     cohortTable = cohortTable,
     cohortIds = c(17492, 17692),
-    cohorts = cohorts,
+    cohortDefinitionSet = cohorts,
     generateInclusionStats = TRUE,
     createCohortTable = TRUE,
     inclusionStatisticsFolder = file.path(folder, "incStats")

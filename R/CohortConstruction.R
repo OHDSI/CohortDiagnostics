@@ -523,7 +523,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                  cohortDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
                                  cohortIds = NULL,
-                                 cohorts = NULL,
+                                 cohortDefinitionSet = NULL,
                                  packageName = NULL,
                                  cohortToCreateFile = "settings/CohortsToCreate.csv",
                                  baseUrl = NULL,
@@ -586,8 +586,8 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
 
 
-  if (is.null(cohorts)) {
-    cohorts <- getCohortsJsonAndSql(
+  if (is.null(cohortDefinitionSet)) {
+    cohortDefinitionSet <- getCohortsJsonAndSql(
       packageName = packageName,
       cohortToCreateFile = cohortToCreateFile,
       baseUrl = baseUrl,
@@ -596,8 +596,8 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       generateStats = generateInclusionStats
     )
   } else {
-    checkmate::assertDataFrame(cohorts, min.rows = 1, col.names = "named")
-    checkmate::assertNames(colnames(cohorts),
+    checkmate::assertDataFrame(cohortDefinitionSet, min.rows = 1, col.names = "named")
+    checkmate::assertNames(colnames(cohortDefinitionSet),
                            must.include = c("cohortId",
                                             "cohortName",
                                             "logicDescription",
@@ -606,48 +606,48 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
 
   if (incremental) {
-    cohorts$checksum <- computeChecksum(cohorts$sql)
+    cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)
     recordKeepingFile <-
       file.path(incrementalFolder, "InstantiatedCohorts.csv")
   }
   
   if (generateInclusionStats) {
-    createTempInclusionStatsTables(connection, tempEmulationSchema, cohorts)
+    createTempInclusionStatsTables(connection, tempEmulationSchema, cohortDefinitionSet)
   }
   
   instantiatedCohortIds <- c()
-  for (i in 1:nrow(cohorts)) {
+  for (i in 1:nrow(cohortDefinitionSet)) {
     if (!incremental || isTaskRequired(
-      cohortId = cohorts$cohortId[i],
-      checksum = cohorts$checksum[i],
+      cohortId = cohortDefinitionSet$cohortId[i],
+      checksum = cohortDefinitionSet$checksum[i],
       recordKeepingFile = recordKeepingFile
     )) {
       ParallelLogger::logInfo(
         "Instantiation cohort ",
-        cohorts$cohortName[i],
+        cohortDefinitionSet$cohortName[i],
         " (Cohort id: ",
-        cohorts$cohortId[i],
+        cohortDefinitionSet$cohortId[i],
         ")"
       )
-      sql <- cohorts$sql[i]
+      sql <- cohortDefinitionSet$sql[i]
       .warnMismatchSqlInclusionStats(sql, generateInclusionStats = generateInclusionStats)
       sql <- SqlRender::render(
         sql,
         cdm_database_schema = cdmDatabaseSchema,
         target_database_schema = cohortDatabaseSchema,
         target_cohort_table = cohortTable,
-        target_cohort_id = cohorts$cohortId[i]
+        target_cohort_id = cohortDefinitionSet$cohortId[i]
       )
       if (stringr::str_detect(string = sql,
                               pattern = 'vocabulary_database_schema')) {
         sql <- SqlRender::render(sql,
                                  vocabulary_database_schema = vocabularyDatabaseSchema)
       } else {
-        ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL does not have vocabularyDatabaseSchema.")
+        ParallelLogger::logDebug('Cohort id ', cohortDefinitionSet$cohortId[i], " SQL does not have vocabularyDatabaseSchema.")
       }
       if (stringr::str_detect(string = sql,
                               pattern = 'results_database_schema')) {
-        ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL has inclusion rule statistics tables.")
+        ParallelLogger::logDebug('Cohort id ', cohortDefinitionSet$cohortId[i], " SQL has inclusion rule statistics tables.")
       }
       if (generateInclusionStats) {
         if (stringr::str_detect(string = sql,
@@ -660,7 +660,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
             results_database_schema.cohort_summary_stats = "#cohort_summary_stats"
           )
         } else {
-          ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL does not have inclusion rule statistics tables.")
+          ParallelLogger::logDebug('Cohort id ', cohortDefinitionSet$cohortId[i], " SQL does not have inclusion rule statistics tables.")
         }
         # added for compatibility for 2.8.1
         # https://github.com/OHDSI/CohortDiagnostics/issues/387
@@ -672,16 +672,16 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                    )
         }
       } else {
-        ParallelLogger::logDebug("Skipping inclusion rules for cohort id ", 
-                                cohorts$cohortId[i], 
-                                " because this diagnostics is set to FALSE.")
+        ParallelLogger::logDebug("Skipping inclusion rules for cohort id ",
+                                 cohortDefinitionSet$cohortId[i],
+                                 " because this diagnostics is set to FALSE.")
       }
       sql <- SqlRender::translate(sql,
                                   targetDialect = connection@dbms,
                                   tempEmulationSchema = tempEmulationSchema)
       DatabaseConnector::executeSql(connection, sql)
       instantiatedCohortIds <-
-        c(instantiatedCohortIds, cohorts$cohortId[i])
+        c(instantiatedCohortIds, cohortDefinitionSet$cohortId[i])
     }
   }
   
@@ -696,8 +696,8 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
   if (incremental) {
     recordTasksDone(
-      cohortId = cohorts$cohortId,
-      checksum = cohorts$checksum,
+      cohortId = cohortDefinitionSet$cohortId,
+      checksum = cohortDefinitionSet$checksum,
       recordKeepingFile = recordKeepingFile
     )
   }
