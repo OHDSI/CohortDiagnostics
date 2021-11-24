@@ -1059,12 +1059,7 @@ bodyTabItems <- shinydashboard::tabItems(
           ),
           tags$td(
             align = "right",
-            shiny::downloadButton(
-              "saveVisitContextTable",
-              label = "",
-              icon = shiny::icon("download"),
-              style = "margin-top: 5px; margin-bottom: 5px;"
-            )
+            tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('characterizationTable')")
           )
         )
       )
@@ -1107,12 +1102,7 @@ bodyTabItems <- shinydashboard::tabItems(
                    tags$td(align = 'right',
                            shiny::conditionalPanel(
                              condition = "input.overlapPlotFilter == 'Table'",
-                             shiny::downloadButton(
-                               "saveCohortOverlapTable",
-                               label = "",
-                               icon = shiny::icon("download"),
-                               style = "margin-top: 5px; margin-bottom: 5px;"
-                             )
+                             tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortOverlapTable')")
                            )
                    )
                  )
@@ -1211,14 +1201,10 @@ bodyTabItems <- shinydashboard::tabItems(
           )
         ),
         tags$td(align = "right",
-          shiny::downloadButton(
-            outputId = "saveCohortCharacterizationTable",
-            label = "",
-            icon = shiny::icon("download"),
-            style = "margin-top: 5px; margin-bottom: 5px;"
-          )
+                tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('characterizationTable')")
         )
       )),
+    
     reactable::reactableOutput(outputId = "characterizationTable")
   ),
   shinydashboard::tabItem(
@@ -1554,7 +1540,8 @@ bodyTabItems <- shinydashboard::tabItems(
                             shiny::tabPanel(
                               title = "Data source",
                               tags$br(),
-                              DT::dataTableOutput("databaseInformationTable")
+                              tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('characterizationTable')"),
+                              reactable::reactableOutput(outputId = "databaseInformationTable")
                             ),
                             shiny::tabPanel(
                               title = "Meta data information",
@@ -1570,7 +1557,8 @@ bodyTabItems <- shinydashboard::tabItems(
                                   collapsible = TRUE,
                                   width = NULL,
                                   collapsed = FALSE,
-                                  DT::dataTableOutput("packageDependencySnapShotTable")
+                                  tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('packageDependencySnapShotTable')"),
+                                  reactable::reactableOutput(outputId = "packageDependencySnapShotTable")
                                 ),
                                 shinydashboard::box(
                                   title = NULL,

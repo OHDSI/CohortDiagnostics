@@ -6300,17 +6300,6 @@ shiny::shinyServer(function(input, output, session) {
                          values_from = c("subjects", "records"))
     return(visitContextData)
   })
-
-  ##saveVisitContextTable----
-  output$saveVisitContextTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "visitContext")
-    },
-    content = function(file) {
-      downloadCsv(x = getVisitContexDataEnhanced(),
-                  fileName = file)
-    }
-  )
   
   ##doesVisitContextContainData----
   output$doesVisitContextContainData <- shiny::reactive({
@@ -6608,17 +6597,6 @@ shiny::shinyServer(function(input, output, session) {
     # )
    
   })
-  
-  ##output: saveCohortOverlapTable----
-  output$saveCohortOverlapTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "cohortOverlap")
-    },
-    content = function(file) {
-      downloadCsv(x = cohortOverlapData(),
-                  fileName = file)
-    }
-  )
   
   #______________----
   # Characterization/Temporal Characterization ------
@@ -7145,22 +7123,6 @@ shiny::shinyServer(function(input, output, session) {
     }
     return(table)
   })
-  
-  ###saveCohortCharacterizationTable----
-  output$saveCohortCharacterizationTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "cohortCharacterization")
-    },
-    content = function(file) {
-      if (input$charType == "Pretty") {
-        data <- getCharacterizationTableDataPretty()
-      } else {
-        data <- getCharacterizationTableDataRaw()
-      }
-      downloadCsv(x = data,
-                  fileName = file)
-    }
-  )
   
   ## Temporal Characterization ------
   ### getTemporalCharacterizationData ------
@@ -8371,32 +8333,13 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##output: databaseInformationTable----
-  output$databaseInformationTable <- DT::renderDataTable(expr = {
+  output$databaseInformationTable <- reactable::renderReactable(expr = {
     data <- getMetadataInformationFilteredToDatabaseId()
     validate(need(all(!is.null(data),
                       nrow(data) > 0),
                   "Not available."))
-    options = list(
-      pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      searchHighlight = TRUE,
-      columnDefs = list(minCellCountDef(10:14))
-    )
-  
-    table <- DT::datatable(
-      data ,
-      options = options,
-      colnames = colnames(data) %>%
-        camelCaseToTitleCase(),
-      rownames = FALSE,
-      class = "stripe compact"
-    )
-    return(table)
-  }, server = TRUE)
+    getSimpleReactable(data = data)
+  })
   
   ##output: metadataInfoTitle----
   output$metadataInfoTitle <- shiny::renderUI(expr = {
@@ -8435,7 +8378,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: packageDependencySnapShotTable----
   output$packageDependencySnapShotTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getMetadataInformation()
       if (!hasData(data)) {
         return(NULL)
@@ -8445,29 +8388,7 @@ shiny::shinyServer(function(input, output, session) {
       
       data <- dplyr::as_tibble(RJSONIO::fromJSON(content = data,
                                            digits = 23))
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = "40vh",
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE
-      )
-      
-      table <- DT::datatable(
-        data,
-        options = options,
-        rownames = FALSE,
-        colnames = colnames(data) %>%
-          camelCaseToTitleCase(),
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      return(table)
+     getSimpleReactable(data = data)
     })
   
   ##output: argumentsAtDiagnosticsInitiationJson----
