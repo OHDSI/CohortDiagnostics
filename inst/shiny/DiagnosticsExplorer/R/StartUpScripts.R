@@ -753,76 +753,12 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
     }
   }
   
-  #!!! need to add tool tip - hover over the data columns -- show tool tip for short names
-  # withTooltip <- function(value, tooltip) {
-  #   tags$abbr(style = "text-decoration: underline; text-decoration-style: dotted; cursor: help",
-  #             title = tooltip, value)
-  # }
-  
-  # convert camel case to title case -- input data should be in camelCase
-  # colnames(data) <- camelCaseToTitleCase(colnames(data))
-  # keyColumnsTitleCase <- camelCaseToTitleCase(keyColumns)
   dataColumns <-
     colnames(data)[stringr::str_detect(
       string = colnames(data),
       pattern = paste0(keyColumns, collapse = "|"),
       negate = TRUE
     )]
-  
-  if (hasData(rawData)) {
-    for (i in 1:length(dataColumns)) {
-      sparkColumn <- paste0(dataColumns[i],"-","sparkline")
-      databaseIdAndType <- stringr::str_split(dataColumns[i],"-")[[1]]
-      databaseIdSelected <- databaseIdAndType[1]
-      type <- databaseIdAndType[2]
-      columnNameSelected <- ifelse(type == "records","conceptCount","subjectCount")
-      
-      part1 <- '<span id="htmlwidget-spark-' # + ID
-      part2 <- '" class="sparkline html-widget"></span><script type="application/json" data-for="htmlwidget-spark-' # + ID
-      part3 <- '">{"x":{"values":[' # + values
-      part4 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},"evals":[],"jsHooks":[]}</script>'
-      # part3 <- '">{"values":[' # + y-values
-      # part3 <- '">{"x":{"values":[' # + x-values
-      # part4 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},evals":[],"jsHooks":[]}</script>' # + y-values
-      # part5 <- '","y":{"values":[' # + values
-      # part5 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},evals":[],"jsHooks":[]}</script>';
-      
-      daysRelativeIndexRange <- max(abs(rawData$daysRelativeIndex))
-      daysRelativeIndexRange <- dplyr::tibble(daysRelativeIndex = c((daysRelativeIndexRange * -1):daysRelativeIndexRange))
-      rawData <- rawData %>% 
-        dplyr::select(.data$databaseId,
-                      .data$cohortId,
-                      .data$conceptId,
-                      .data$sortOrder) %>% 
-        dplyr::distinct() %>% 
-        tidyr::crossing(daysRelativeIndexRange) %>% 
-        dplyr::left_join(rawData,by = c("databaseId",
-                                        "cohortId",
-                                        "conceptId",
-                                        "sortOrder",
-                                        "daysRelativeIndex")) %>%  
-        tidyr::replace_na(replace = list("conceptCount" = 0, "subjectCount" = 0)) %>% 
-        dplyr::arrange(.data$sortOrder, .data$daysRelativeIndex)
-      
-      out <- list(length = nrow(data))
-      for (i in 1:nrow(data)) {
-        conceptIdSelected <- data$conceptId[i]
-        cohortIdSelected <- data$cohortId[i]
-        rawDataFiltered <- rawData %>% 
-          dplyr::filter(.data$databaseId == databaseIdSelected,
-                        .data$cohortId == cohortIdSelected,
-                        .data$conceptId == conceptIdSelected)
-        
-        sparklineDataDayIndex <- rawDataFiltered$daysRelativeIndex
-        sparklineDataCountValue <- rawDataFiltered[[columnNameSelected]]
-        
-        xAxisVals <- paste(sparklineDataDayIndex,collapse = ",")
-        yAxisVals <- paste(sparklineDataCountValue,collapse = ",")
-        out[[i]] <- paste0(part1, i, part2, i, part3, yAxisVals, part4)
-      }
-      data[[sparkColumn]] <- out
-    }
-  }
   
   columnDefinitions <- list()
   
@@ -863,40 +799,20 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
           resizable = TRUE,
           filterable = TRUE,
           show = TRUE,
-          # format = reactable::colFormat(separators = TRUE),
           html = TRUE,
           na = "",
-          align = "left",
-          style = function(value) {
-            list(
-              backgroundImage = sprintf("linear-gradient(90deg, %1$s %2$s, transparent %2$s)", "#9ccee7", paste0((value / maxValue) * 100, "%")),
-              backgroundSize = paste("100%", "100%"),
-              backgroundRepeat = "no-repeat",
-              backgroundPosition = "center",
-              color = "#000"
-            )
-          }
+          align = "left"
         )
-   
-      # sparkColumn <- paste0(dataColumns[i],"-","sparkline")
-      # columnDefinitions[[sparkColumn]] <-
-      #   reactable::colDef(
-      #     name = "Spark Line",
-      #     html = TRUE,
-      #     cell = function(value, index) {
-      #       return(htmltools::HTML(value))
-      #     }
-      #   )
   }
   
   columnGroups <- list()
   for (i in 1:length(distinctDatabaseId)) {
     extractedDataColumns <- dataColumns[stringr::str_detect(
-      string = dataColumns, #optimun_dod-Subject
-      pattern = distinctDatabaseId[i] #optimun_dod
+      string = dataColumns, 
+      pattern = distinctDatabaseId[i] 
     )]
     columnName <- distinctDatabaseId[i]
-    # extractedDataColumns <- sort(c(extractedDataColumns,paste0(extractedDataColumns,"-sparkline")))
+    
     if (countLocation == 1) {
       columnName <- headerCount %>% 
         dplyr::filter(.data$databaseId ==  distinctDatabaseId[i]) %>% 
@@ -920,7 +836,6 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                     showPagination = TRUE,
                                     showPageInfo = TRUE,
                                     # # minRows = 100, # to change based on number of rows in data
-                                    # # selection = "single",
                                     highlight = TRUE,
                                     striped = TRUE,
                                     compact = TRUE,
@@ -937,14 +852,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                     theme = reactable::reactableTheme(
                                       rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
                                     )
-  ) %>% 
-    sparkline::spk_add_deps() %>% 
-    htmlwidgets::onRender(jsCode = "
-                      function(el, x) {
-                      HTMLWidgets.staticRender();
-                      }")
-      
-    
+  ) 
   return(dataTable)
 }
 
