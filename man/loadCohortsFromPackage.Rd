@@ -24,6 +24,8 @@ error message will be displayed and process stopped.}
 
 \item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
 diagnostics to.}
+
+\item{errorMessage}{checkmate assert collection, used internally for error checks}
 }
 \description{
 Load cohort references for usage in executeDiagnostics.

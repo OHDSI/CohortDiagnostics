@@ -55,6 +55,7 @@ checkCohortReference <- function(cohortReference, errorMessage = NULL) {
 #' @description
 #' Load cohort references for usage in executeDiagnostics.
 #' @inheritParams runCohortDiagnostics
+#' @param errorMessage      checkmate assert collection, used internally for error checks
 #' @export
 loadCohortsFromPackage <- function(packageName,
                                    cohortToCreateFile = "settings/cohortsToCreate.csv",
