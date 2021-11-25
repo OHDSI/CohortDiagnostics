@@ -650,7 +650,7 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
 
 
 getReactTableWithColumnsGroupedByDatabaseId <- function(data,
-                                                        rawData,
+                                                        sparkLineData=NULL,
                                                         cohort = NULL,
                                                         database = NULL,
                                                         headerCount = NULL,
@@ -760,8 +760,57 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       negate = TRUE
     )]
   
-  columnDefinitions <- list()
+  if (hasData(sparkLineData)) {
+    for (i in 1:length(dataColumns)) {
+      sparkColumn <- paste0(dataColumns[i],"-","sparkline")
+      databaseIdAndType <- stringr::str_split(dataColumns[i],"-")[[1]]
+      databaseIdSelected <- databaseIdAndType[1]
+      type <- databaseIdAndType[2]
+      columnNameSelected <- ifelse(type == "records","conceptCount","subjectCount")
+      
+      part1 <- '<span id="htmlwidget-spark-' # + ID
+      part2 <- '" class="sparkline html-widget"></span><script type="application/json" data-for="htmlwidget-spark-' # + ID
+      part3 <- '">{"x":{"values":[' # + values
+      part4 <- '],"options":{"type":"bar","height":20,"width":60},"width":60,"height":20},"evals":[],"jsHooks":[]}</script>'
+      
+      daysRelativeIndexRange <- max(abs(sparkLineData$daysRelativeIndex))
+      daysRelativeIndexRange <- dplyr::tibble(daysRelativeIndex = c((daysRelativeIndexRange * -1):daysRelativeIndexRange))
+      sparkLineData <- sparkLineData %>% 
+        dplyr::select(.data$databaseId,
+                      .data$cohortId,
+                      .data$conceptId,
+                      .data$sortOrder) %>% 
+        dplyr::distinct() %>% 
+        tidyr::crossing(daysRelativeIndexRange) %>% 
+        dplyr::left_join(sparkLineData,by = c("databaseId",
+                                        "cohortId",
+                                        "conceptId",
+                                        "sortOrder",
+                                        "daysRelativeIndex")) %>%  
+        tidyr::replace_na(replace = list("conceptCount" = 0, "subjectCount" = 0)) %>% 
+        dplyr::arrange(.data$sortOrder, .data$daysRelativeIndex)
+      
+      out <- list(length = nrow(data))
+      for (j in 1:nrow(data)) {
+        conceptIdSelected <- data$conceptId[j]
+        cohortIdSelected <- data$cohortId[j]
+        sparkLineDataFiltered <- sparkLineData %>% 
+          dplyr::filter(.data$databaseId == databaseIdSelected,
+                        .data$cohortId == cohortIdSelected,
+                        .data$conceptId == conceptIdSelected)
+        
+        sparklineDataDayIndex <- sparkLineDataFiltered$daysRelativeIndex
+        sparklineDataCountValue <- sparkLineDataFiltered[[columnNameSelected]]
+        
+        xAxisVals <- paste(sparklineDataDayIndex,collapse = ",")
+        yAxisVals <- paste(sparklineDataCountValue,collapse = ",")
+        out[[j]] <- paste0(part1, i, part2, i, part3, yAxisVals, part4)
+      }
+      data[[sparkColumn]] <- out
+    }
+  }
   
+  columnDefinitions <- list()
   for (i in (1:length(keyColumns))) {
     columnName <- camelCaseToTitleCase(colnames(data)[i])
     colnames(data)[i] <- columnName
@@ -801,8 +850,29 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
           show = TRUE,
           html = TRUE,
           na = "",
-          align = "left"
+          align = "left",
+          style = function(value) {
+            list(
+              backgroundImage = sprintf("linear-gradient(90deg, %1$s %2$s, transparent %2$s)", "#9ccee7", paste0((value / maxValue) * 100, "%")),
+              backgroundSize = paste("100%", "100%"),
+              backgroundRepeat = "no-repeat",
+              backgroundPosition = "center",
+              color = "#000"
+            )
+          }
         )
+      if (hasData(sparkLineData)) {
+        sparkColumn <- paste0(dataColumns[i],"-","sparkline")
+        columnDefinitions[[sparkColumn]] <-
+          reactable::colDef(
+            name = "Spark Line",
+            html = TRUE,
+            cell = function(value, index) {
+              return(htmltools::HTML(value))
+            }
+          )
+      }
+      
   }
   
   columnGroups <- list()
@@ -811,6 +881,11 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       string = dataColumns, 
       pattern = distinctDatabaseId[i] 
     )]
+    if (hasData(sparkLineData)) {
+      extractedDataColumns <- sort(c(extractedDataColumns,paste0(extractedDataColumns,"-sparkline")))
+    }
+   
+    
     columnName <- distinctDatabaseId[i]
     
     if (countLocation == 1) {
@@ -853,6 +928,15 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                       rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
                                     )
   ) 
+  
+  if (hasData(sparkLineData)) {
+    dataTable <- dataTable %>% 
+      sparkline::spk_add_deps() %>% 
+      htmlwidgets::onRender(jsCode = "
+                      function(el, x) {
+                      HTMLWidgets.staticRender();
+                      }")
+  }
   return(dataTable)
 }
 

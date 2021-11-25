@@ -1900,7 +1900,6 @@ shiny::shinyServer(function(input, output, session) {
       
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort,
         database = database,
         headerCount = countsForHeader,
@@ -2708,7 +2707,6 @@ shiny::shinyServer(function(input, output, session) {
 
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort, 
         database = database,
         headerCount = countsForHeader,
@@ -2773,7 +2771,6 @@ shiny::shinyServer(function(input, output, session) {
       
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort, 
         database = database,
         headerCount = countsForHeader,
@@ -2835,7 +2832,6 @@ shiny::shinyServer(function(input, output, session) {
                                                       string = dataColumnFields)
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort, 
         database = database,
         headerCount = countsForHeader,
@@ -2903,7 +2899,6 @@ shiny::shinyServer(function(input, output, session) {
       
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort, 
         database = database,
         headerCount = countsForHeader,
@@ -3017,7 +3012,6 @@ shiny::shinyServer(function(input, output, session) {
       
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort,
         database = database,
         headerCount = countsForHeader,
@@ -3375,7 +3369,6 @@ shiny::shinyServer(function(input, output, session) {
                                                       string = dataColumnFields)
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort,
         database = database,
         headerCount = countsForHeader,
@@ -3438,7 +3431,6 @@ shiny::shinyServer(function(input, output, session) {
       
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort,
         database = database,
         headerCount = countsForHeader,
@@ -3499,7 +3491,6 @@ shiny::shinyServer(function(input, output, session) {
       
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort,
         database = database,
         headerCount = countsForHeader,
@@ -3566,7 +3557,6 @@ shiny::shinyServer(function(input, output, session) {
                                                       string = dataColumnFields)
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort,
         database = database,
         headerCount = countsForHeader,
@@ -3853,7 +3843,6 @@ shiny::shinyServer(function(input, output, session) {
                                                     string = dataColumnFields)
     getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
-      rawData = NULL,
       cohort = cohort,
       database = database,
       headerCount = countsForHeader,
@@ -3957,7 +3946,6 @@ shiny::shinyServer(function(input, output, session) {
     
     getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
-      rawData = NULL,
       cohort = cohort,
       database = database,
       headerCount = countsForHeader,
@@ -4416,7 +4404,6 @@ shiny::shinyServer(function(input, output, session) {
     
     dataTable <- getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
-      rawData = NULL,
       cohort = cohort,
       database = database,
       headerCount = NULL,
@@ -4540,7 +4527,6 @@ shiny::shinyServer(function(input, output, session) {
       
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort,
         database = database,
         headerCount = countsForHeader,
@@ -5643,6 +5629,7 @@ shiny::shinyServer(function(input, output, session) {
       return(table)
     }, server = TRUE)
   
+  ##output: indexEventBreakdownTableReactable----
   output$indexEventBreakdownReactTable <-
     reactable::renderReactable(expr = {
       progress <- shiny::Progress$new()
@@ -5722,7 +5709,7 @@ shiny::shinyServer(function(input, output, session) {
        
        getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = rawDataFiltered,
+        sparkLineData = rawDataFiltered,
         cohort = cohort, 
         database = database,
         headerCount = countsForHeader,
@@ -6042,7 +6029,6 @@ shiny::shinyServer(function(input, output, session) {
                                                     string = dataColumnFields)
     getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
-      rawData = NULL,
       cohort = cohort,
       database = database,
       headerCount = countsForHeader,
@@ -6185,7 +6171,6 @@ shiny::shinyServer(function(input, output, session) {
                                                     string = dataColumnFields)
     getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
-      rawData = NULL,
       cohort = cohort,
       database = database,
       headerCount = countsForHeader,
@@ -6402,7 +6387,6 @@ shiny::shinyServer(function(input, output, session) {
     
     table <- getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
-      rawData = NULL,
       cohort = cohort, 
       database = database,
       headerCount = countsForHeader,
@@ -7050,7 +7034,6 @@ shiny::shinyServer(function(input, output, session) {
                                                       string = dataColumnFields)
       table <- getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort,
         database = database,
         headerCount = countsForHeader,
@@ -7109,7 +7092,6 @@ shiny::shinyServer(function(input, output, session) {
                                                              replacement = "<br/>"))
       table <- getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort,
         database = database,
         headerCount = countsForHeader,
