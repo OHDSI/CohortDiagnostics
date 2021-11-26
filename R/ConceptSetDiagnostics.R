@@ -1386,25 +1386,26 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                         			'_',
                                         			cast(c.subject_id AS VARCHAR(30))
                                         			)) concept_count
-                                        FROM @cohort_database_schema.@cohort_table c
+                                        FROM (
+                                        	SELECT *
+                                        	FROM @cohort_database_schema.@cohort_table cohort_definition_id IN (@cohortIds)
+                                        	) c
                                         INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
                                         	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
                                         INNER JOIN @cdm_database_schema.@domain_table d2 ON c.subject_id = d2.person_id
                                         	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d2.@domain_start_date
-                                        	AND d1.@domain_start_date = d2.@domain_start_date
-                                        	AND d1.person_id = d2.person_id
+                                        -- AND d1.@domain_start_date = d2.@domain_start_date
+                                        -- AND d1.person_id = d2.person_id
                                         INNER JOIN #indx_concepts cu1 ON d1.@domain_concept_id = cu1.concept_id
                                         	AND c.cohort_definition_id = cu1.cohort_id
                                         INNER JOIN #indx_concepts cu2 ON d2.@domain_concept_id = cu2.concept_id
                                         	AND c.cohort_definition_id = cu2.cohort_id
-                                        WHERE c.cohort_definition_id IN (@cohortIds)
-                                        	AND d2.@domain_concept_id > 0
-                                        	AND d1.@domain_concept_id != d2.@domain_concept_id
+                                        WHERE d1.@domain_concept_id != d2.@domain_concept_id
                                         GROUP BY cohort_definition_id,
                                         	d1.@domain_concept_id,
                                         	d2.@domain_concept_id
                                         HAVING count(DISTINCT c.subject_id) > @min_subject_count
-                                        	;"
+                                    ;"
   
   #conceptId is from _concept_id field of domain table and coConceptId is also from _source_concept_id field of same domain table
   # i.e. same day co-occurrence of concept ids where second (coConceptId) maybe non-standard relative to index date
@@ -1422,20 +1423,21 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                             			'_',
                                             			cast(c.subject_id AS VARCHAR(30))
                                             			)) concept_count
-                                            FROM @cohort_database_schema.@cohort_table c
+                                            FROM (
+                                            	SELECT *
+                                            	FROM @cohort_database_schema.@cohort_table cohort_definition_id IN (@cohortIds)
+                                            	) c
                                             INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
                                             	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
                                             INNER JOIN @cdm_database_schema.@domain_table d2 ON c.subject_id = d2.person_id
                                             	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d2.@domain_start_date
-                                            	AND d1.@domain_start_date = d2.@domain_start_date
-                                            	AND d1.person_id = d2.person_id
+                                            	-- AND d1.@domain_start_date = d2.@domain_start_date
+                                            	-- AND d1.person_id = d2.person_id
                                             INNER JOIN #indx_concepts cu1 ON d1.@domain_concept_id = cu1.concept_id
                                             	AND c.cohort_definition_id = cu1.cohort_id
                                             INNER JOIN #indx_concepts cu2 ON d2.@domain_source_concept_id = cu2.concept_id
                                             	AND c.cohort_definition_id = cu2.cohort_id
-                                            WHERE c.cohort_definition_id IN (@cohortIds)
-                                            	AND d2.@domain_source_concept_id > 0
-                                            	AND d1.@domain_concept_id != d2.@domain_source_concept_id
+                                            WHERE d1.@domain_concept_id != d2.@domain_source_concept_id
                                             GROUP BY cohort_definition_id,
                                             	d1.@domain_concept_id,
                                             	d2.@domain_source_concept_id
