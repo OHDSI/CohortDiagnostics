@@ -1362,7 +1362,6 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                         INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
                         	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
                         INNER JOIN (SELECT DISTINCT concept_id FROM #indx_concepts) cu ON d1.@domain_concept_id = cu.concept_id
-                        	AND c.cohort_definition_id = cu.cohort_id
                         WHERE c.cohort_definition_id IN (@cohortIds)
                         	AND d1.@domain_concept_id != 0
                         	AND d1.@domain_concept_id IS NOT NULL
