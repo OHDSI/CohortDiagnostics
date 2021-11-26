@@ -1361,7 +1361,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                         FROM @cohort_database_schema.@cohort_table c
                         INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
                         	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
-                        INNER JOIN #indx_concepts cu ON d1.@domain_concept_id = cu.concept_id
+                        INNER JOIN (SELECT DISTINCT concept_id FROM #indx_concepts) cu ON d1.@domain_concept_id = cu.concept_id
                         	AND c.cohort_definition_id = cu.cohort_id
                         WHERE c.cohort_definition_id IN (@cohortIds)
                         	AND d1.@domain_concept_id != 0
@@ -1397,10 +1397,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                         	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d2.@domain_start_date
                                         -- AND d1.@domain_start_date = d2.@domain_start_date
                                         -- AND d1.person_id = d2.person_id
-                                        INNER JOIN #indx_concepts cu1 ON d1.@domain_concept_id = cu1.concept_id
-                                        	AND c.cohort_definition_id = cu1.cohort_id
-                                        INNER JOIN #indx_concepts cu2 ON d2.@domain_concept_id = cu2.concept_id
-                                        	AND c.cohort_definition_id = cu2.cohort_id
+                                        INNER JOIN (SELECT DISTINCT concept_id FROM #indx_concepts) cu1 
+                                        ON d1.@domain_concept_id = cu1.concept_id
                                         WHERE d1.@domain_concept_id != d2.@domain_concept_id
                                         GROUP BY cohort_definition_id,
                                         	d1.@domain_concept_id,
@@ -1435,10 +1433,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                             	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d2.@domain_start_date
                                             	-- AND d1.@domain_start_date = d2.@domain_start_date
                                             	-- AND d1.person_id = d2.person_id
-                                            INNER JOIN #indx_concepts cu1 ON d1.@domain_concept_id = cu1.concept_id
-                                            	AND c.cohort_definition_id = cu1.cohort_id
-                                            INNER JOIN #indx_concepts cu2 ON d2.@domain_source_concept_id = cu2.concept_id
-                                            	AND c.cohort_definition_id = cu2.cohort_id
+                                            INNER JOIN (SELECT DISTINCT concept_id FROM #indx_concepts) cu1 
+                                            ON d1.@domain_concept_id = cu1.concept_id
                                             WHERE d1.@domain_concept_id != d2.@domain_source_concept_id
                                             GROUP BY cohort_definition_id,
                                             	d1.@domain_concept_id,
