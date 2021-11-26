@@ -182,7 +182,7 @@ shiny::shinyServer(function(input, output, session) {
       input$selectedCompoundCohortNames,
       input$selectedCompoundCohortNames_open,
       input$conceptSetsSelectedTargetCohort,
-      input$indexEventBreakdownTable_rows_selected,
+      reactable::getReactableState("indexEventBreakdownTable", "selected"),
       input$targetVocabularyChoiceForConceptSetDetails,
       input$selectedComparatorCompoundCohortNames,
       input$selectedComparatorCompoundCohortNames_open
@@ -1900,7 +1900,6 @@ shiny::shinyServer(function(input, output, session) {
       
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort,
         database = database,
         headerCount = countsForHeader,
@@ -2708,7 +2707,6 @@ shiny::shinyServer(function(input, output, session) {
 
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort, 
         database = database,
         headerCount = countsForHeader,
@@ -2773,7 +2771,6 @@ shiny::shinyServer(function(input, output, session) {
       
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort, 
         database = database,
         headerCount = countsForHeader,
@@ -2835,7 +2832,6 @@ shiny::shinyServer(function(input, output, session) {
                                                       string = dataColumnFields)
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort, 
         database = database,
         headerCount = countsForHeader,
@@ -2903,7 +2899,6 @@ shiny::shinyServer(function(input, output, session) {
       
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort, 
         database = database,
         headerCount = countsForHeader,
@@ -3017,7 +3012,6 @@ shiny::shinyServer(function(input, output, session) {
       
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort,
         database = database,
         headerCount = countsForHeader,
@@ -3375,7 +3369,6 @@ shiny::shinyServer(function(input, output, session) {
                                                       string = dataColumnFields)
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort,
         database = database,
         headerCount = countsForHeader,
@@ -3438,7 +3431,6 @@ shiny::shinyServer(function(input, output, session) {
       
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort,
         database = database,
         headerCount = countsForHeader,
@@ -3499,7 +3491,6 @@ shiny::shinyServer(function(input, output, session) {
       
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort,
         database = database,
         headerCount = countsForHeader,
@@ -3566,7 +3557,6 @@ shiny::shinyServer(function(input, output, session) {
                                                       string = dataColumnFields)
       getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = NULL,
         cohort = cohort,
         database = database,
         headerCount = countsForHeader,
@@ -3800,7 +3790,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##output: conceptBrowserTable----
-  output$conceptBrowserTable <- DT::renderDT(expr = {
+  output$conceptBrowserTable <- reactable::renderReactable(expr = {
     
     data <- conceptSetBrowserData()
     if (!hasData(data)) {
@@ -3851,27 +3841,19 @@ shiny::shinyServer(function(input, output, session) {
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
-    table <- getDtWithColumnsGroupedByDatabaseId(
+    getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
+      cohort = cohort,
+      database = database,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
       countLocation = countLocation,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
-      showResultsAsPercent = input$showAsPercentageColumnTarget 
+      showResultsAsPercent =  input$showAsPercentageColumnTarget, 
+      sort = TRUE
     )
-    return(table)
-  }) 
-  
-  output$saveDetailsOfSelectedConceptId <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "ConceptSetBrowser")
-    },
-    content = function(file) {
-      downloadCsv(x = conceptSetBrowserData(),
-                  fileName = file)
-    }
-  )
+  })
   
   ##getSourceCodesObservedForConceptIdInDatasource----
   getSourceCodesObservedForConceptIdInDatasource <- shiny::reactive(x = {
@@ -3917,7 +3899,7 @@ shiny::shinyServer(function(input, output, session) {
   
   
   ##output: observedSourceCodesTable----
-  output$observedSourceCodesTable <- DT::renderDT(expr = {
+  output$observedSourceCodesTable <- reactable::renderReactable(expr = {
     conceptId <- activeSelected()$conceptId
     validate(need(hasData(conceptId), "No concept id selected."))
     cohortId <- activeSelected()$cohortId
@@ -3962,16 +3944,18 @@ shiny::shinyServer(function(input, output, session) {
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
     
-    table <- getDtWithColumnsGroupedByDatabaseId(
+    getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
+      cohort = cohort,
+      database = database,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
       countLocation = 1,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
-      showResultsAsPercent = FALSE
+      showResultsAsPercent =  input$targetCohortInclusionRulesAsPercent, 
+      sort = TRUE
     )
-    return(table)
   })
   
   output$exportAllCohortDetails <- downloadHandler(
@@ -4385,7 +4369,7 @@ shiny::shinyServer(function(input, output, session) {
   #!!!!!!!!! no down load button
   #!!!!!!!!! no radio button for records/subjects
   ##output: cohortCountsTable----
-  output$cohortCountsTable <- DT::renderDataTable(expr = {
+  output$cohortCountsTable <- reactable::renderReactable(expr = {
     validate(need(
       length(consolidatedDatabaseIdTarget()) > 0,
       "No data sources chosen"
@@ -4394,132 +4378,44 @@ shiny::shinyServer(function(input, output, session) {
       length(consolidatedCohortIdTarget()) > 0,
       "No cohorts chosen"
     ))
-    data <- getCohortCountDataForSelectedDatabaseIdsCohortIds()
+    data <- getCohortCountDataForSelectedDatabaseIdsCohortIds() %>% 
+      dplyr::rename("records" = .data$cohortEntries,
+                    "subjects" = .data$cohortSubjects,
+                    "cohort" = .data$shortName)
     validate(need(all(hasData(data)),
       "No data for the combination"
     ))
     
-    maxValueSubjects <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ubjects")
-    maxValueEntries <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = "ntries")
-    databaseIds <- sort(unique(data$databaseId))
+    keyColumnFields <- c("cohort")
+    dataColumnFields <- c("records","subjects")
+    if (input$cohortCountsTableColumnFilter != "both") {
+      dataColumnFields <-
+        dataColumnFields[stringr::str_detect(
+          string = tolower(dataColumnFields),
+          pattern = tolower(
+            input$cohortCountsTableColumnFilter
+          )
+        )]
+    }
+   
+    maxCountValue <-
+      getMaxValueForStringMatchedColumnsInDataFrame(data = data,
+                                                    string = dataColumnFields)
     
-    if (input$cohortCountsTableColumnFilter == "Both") {
-      table <- getCohortCountDataSubjectRecord()
-      sketch <- htmltools::withTags(table(class = "display",
-                                          thead(tr(
-                                            th(rowspan = 2, "Cohort"),
-                                            lapply(
-                                              databaseIds,
-                                              th,
-                                              colspan = 2,
-                                              class = "dt-center",
-                                              style = "border-right:1px solid silver;border-bottom:1px solid silver"
-                                            )
-                                          ),
-                                          tr(
-                                            lapply(rep(
-                                              c("Records", "Subjects"), length(databaseIds)
-                                            ),
-                                            th,
-                                            style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                          ))))
-      options = list(
-        pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = "30vh",
-        columnDefs = list(minCellCountDef(1:(
-          2 * length(databaseIds)
-        )))
-      )
-      
-      dataTable <- DT::datatable(
-        table,
-        options = options,
-        selection = "single",
-        rownames = FALSE,
-        container = sketch,
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      for (i in 1:length(databaseIds)) {
-        dataTable <- DT::formatStyle(
-          table = dataTable,
-          columns = i * 2,
-          background = DT::styleColorBar(c(0, max(
-            table[, i * 2], na.rm = TRUE
-          )), "lightblue"),
-          backgroundSize = "98% 88%",
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center"
-        )
-        dataTable <- DT::formatStyle(
-          table = dataTable,
-          columns = i * 2 + 1,
-          background = DT::styleColorBar(c(0, max(
-            table[, i * 2 + 1], na.rm = TRUE
-          )), "#ffd699"),
-          backgroundSize = "98% 88%",
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center"
-        )
-      }
-    } else if (input$cohortCountsTableColumnFilter == "Subjects Only" ||
-          input$cohortCountsTableColumnFilter == "Records Only") {
-        if (input$cohortCountsTableColumnFilter == "Subjects Only") {
-          maxValue <- maxValueSubjects
-          table <- getCohortCountDataSubject()
-        } else {
-          maxValue <- maxValueEntries
-          table <- getCohortCountDataRecord()
-        }
-        
-        options = list(
-          pageLength = 1000,
-          lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-          searching = TRUE,
-          lengthChange = TRUE,
-          ordering = TRUE,
-          paging = TRUE,
-          info = TRUE,
-          searchHighlight = TRUE,
-          scrollX = TRUE,
-          scrollY = "30vh",
-          columnDefs = list(minCellCountDef(1:(
-            length(databaseIds)
-          )))
-        )
-        
-        dataTable <- DT::datatable(
-          table,
-          options = options,
-          selection = "single",
-          colnames = colnames(table) %>%
-            camelCaseToTitleCase(),
-          rownames = FALSE,
-          escape = FALSE,
-          filter = "top",
-          class = "stripe nowrap compact"
-        )
-        
-        dataTable <- DT::formatStyle(
-          table = dataTable,
-          columns = 1 + 1:(length(databaseIds)),
-          background = DT::styleColorBar(c(0, maxValue), "lightblue"),
-          backgroundSize = "98% 88%",
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center"
-        )
-      }
+    dataTable <- getReactTableWithColumnsGroupedByDatabaseId(
+      data = data,
+      cohort = cohort,
+      database = database,
+      headerCount = NULL,
+      keyColumns = keyColumnFields,
+      countLocation = 0,
+      dataColumns = dataColumnFields,
+      maxCount = maxCountValue,
+      showResultsAsPercent =  FALSE, 
+      sort = TRUE
+    )
     return(dataTable)
-  }, server = TRUE)
+  })
   
   ##output: saveCohortCountsTable----
   output$saveCohortCountsTable <-  downloadHandler(
@@ -4580,7 +4476,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: inclusionRuleStatisticsForCohortSeletedTable----
   output$inclusionRuleStatisticsForCohortSeletedTable <-
-    DT::renderDataTable(expr = {
+   reactable::renderReactable(expr = {
       validate(need(
         length(consolidatedDatabaseIdTarget()) > 0,
         "No data sources chosen"
@@ -4629,17 +4525,19 @@ shiny::shinyServer(function(input, output, session) {
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
       
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        cohort = cohort,
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showResultsAsPercent = input$inclusionRuleShowAsPercentInCohortCount #!!!!!!!! will need changes to minimumCellCountDefs function to support percentage
+        showResultsAsPercent =  input$inclusionRuleShowAsPercentInCohortCount, 
+        sort = TRUE
       )
-      return(table)
-    }, server = TRUE)
+    })
   
   #______________----
   # Incidence rate -------
@@ -5331,7 +5229,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##output: fixedTimeSeriesTable----
-  output$fixedTimeSeriesTable <- DT::renderDataTable({
+  output$fixedTimeSeriesTable <- reactable::renderReactable({
     validate(need(hasData(input$timeSeriesTypeFilter),
                   "Please select time series type."
     ))
@@ -5341,39 +5239,7 @@ shiny::shinyServer(function(input, output, session) {
       "No timeseries data for the cohort of this series type"
     ))
     
-    if (nrow(data) > 20) {
-      scrollHeight <- "40vh"
-    } else {
-      scrollHeight <- TRUE
-    }
-   
-    if (input$timeSeriesTypeFilter == "Percent of Subjects among persons in period") {
-      columnDef <- list(minCellPercentDef(4:13))
-    } else {
-      columnDef <- list(minCellCountDef(4:13))
-    }
-    options = list(
-      pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      scrollX = TRUE,
-      scrollY = scrollHeight,
-      info = TRUE,
-      searchHighlight = TRUE,
-      columnDefs = columnDef
-    )
-    dataTable <- DT::datatable(
-      data,
-      options = options,
-      rownames = FALSE,
-      colnames = colnames(data) %>% camelCaseToTitleCase(),
-      escape = FALSE,
-      filter = "top",
-      selection = list(mode = "multiple", target = "row"),
-      class = "stripe compact"
-    )
+   dataTable <- getSimpleReactable(data = data)
     return(dataTable)
   })
 
@@ -5489,37 +5355,13 @@ shiny::shinyServer(function(input, output, session) {
   )
   
   ##output: timeDistributionTable----
-  output$timeDistributionTable <- DT::renderDataTable(expr = {
+  output$timeDistributionTable <- reactable::renderReactable(expr = {
     data <- getTimeDistributionTableData()
     validate(need(hasData(data),
                   "No data available for selected combination."))
-    options = list(
-      pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      searchHighlight = TRUE,
-      scrollX = TRUE,
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      info = TRUE,
-      columnDefs = list(minCellCountDef(3))
-    )
-    table <- DT::datatable(
-      data,
-      options = options,
-      rownames = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
-    table <-
-      DT::formatRound(table, c("Average", "SD"), digits = 2)
-    table <-
-      DT::formatRound(table,
-                      c("Min", "P10", "P25", "Median", "P75", "P90", "Max"),
-                      digits = 0)
+    table <- getSimpleReactable(data)
     return(table)
-  }, server = TRUE)
+  })
   
   ##output: timeDistributionPlot----
   output$timeDistributionPlot <- plotly::renderPlotly(expr = {
@@ -5787,6 +5629,7 @@ shiny::shinyServer(function(input, output, session) {
       return(table)
     }, server = TRUE)
   
+  ##output: indexEventBreakdownTableReactable----
   output$indexEventBreakdownReactTable <-
     reactable::renderReactable(expr = {
       progress <- shiny::Progress$new()
@@ -5866,7 +5709,7 @@ shiny::shinyServer(function(input, output, session) {
        
        getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
-        rawData = rawDataFiltered,
+        sparkLineData = rawDataFiltered,
         cohort = cohort, 
         database = database,
         headerCount = countsForHeader,
@@ -6133,7 +5976,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##output: conceptBrowserTableForIndexEvent----
-  output$conceptBrowserTableForIndexEvent <- DT::renderDT(expr = {
+  output$conceptBrowserTableForIndexEvent <- reactable::renderReactable(expr = {
     if (hasData(consolidateCohortDefinitionActiveSideTarget())) {
       conceptId <- consolidatedConceptIdTarget()
     }
@@ -6184,17 +6027,18 @@ shiny::shinyServer(function(input, output, session) {
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
-    table <- getDtWithColumnsGroupedByDatabaseId(
+    getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
+      cohort = cohort,
+      database = database,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
       countLocation = countLocation,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
-      showResultsAsPercent = input$indexEventBreakdownShowAsPercent
+      showResultsAsPercent =  input$targetCohortInclusionRulesAsPercent, 
+      sort = TRUE
     )
-    
-    return(table)
   })
   
   ##output: conceptSetTimeSeriesPlotForIndexEvent----
@@ -6281,7 +6125,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$coConceptTableForIndexEvent <- DT::renderDataTable(expr = {
+  output$coConceptTableForIndexEvent <- reactable::renderReactable(expr = {
     data <- getCoCOnceptForIndexEvent()
     
     validate(need(hasData(data),
@@ -6325,18 +6169,19 @@ shiny::shinyServer(function(input, output, session) {
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
-    table <- getDtWithColumnsGroupedByDatabaseId(
+    getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
+      cohort = cohort,
+      database = database,
       headerCount = countsForHeader,
       keyColumns = keyColumnFields,
       countLocation = countLocation,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
-      showResultsAsPercent = input$indexEventBreakdownShowAsPercent
+      showResultsAsPercent =  input$indexEventBreakdownShowAsPercent, 
+      sort = TRUE
     )
-    
-    return(table)
-  }, server = TRUE)
+  })
   
   output$saveDetailsOfSelectedConceptIdForIndexEvent <-  downloadHandler(
     filename = function() {
@@ -6440,17 +6285,6 @@ shiny::shinyServer(function(input, output, session) {
                          values_from = c("subjects", "records"))
     return(visitContextData)
   })
-
-  ##saveVisitContextTable----
-  output$saveVisitContextTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "visitContext")
-    },
-    content = function(file) {
-      downloadCsv(x = getVisitContexDataEnhanced(),
-                  fileName = file)
-    }
-  )
   
   ##doesVisitContextContainData----
   output$doesVisitContextContainData <- shiny::reactive({
@@ -6553,7 +6387,6 @@ shiny::shinyServer(function(input, output, session) {
     
     table <- getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
-      rawData = NULL,
       cohort = cohort, 
       database = database,
       headerCount = countsForHeader,
@@ -6748,17 +6581,6 @@ shiny::shinyServer(function(input, output, session) {
     # )
    
   })
-  
-  ##output: saveCohortOverlapTable----
-  output$saveCohortOverlapTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "cohortOverlap")
-    },
-    content = function(file) {
-      downloadCsv(x = cohortOverlapData(),
-                  fileName = file)
-    }
-  )
   
   #______________----
   # Characterization/Temporal Characterization ------
@@ -7171,7 +6993,7 @@ shiny::shinyServer(function(input, output, session) {
   
   
   ### Output: characterizationTable ------
-  output$characterizationTable <- DT::renderDataTable(expr = {
+  output$characterizationTable <- reactable::renderReactable(expr = {
     if (input$tabs != "cohortCharacterization") {
       return(NULL)
     }
@@ -7210,15 +7032,18 @@ shiny::shinyServer(function(input, output, session) {
       maxCountValue <-
         getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                       string = dataColumnFields)
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      table <- getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        cohort = cohort,
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         sort = FALSE,
-        showResultsAsPercent = TRUE
+        showResultsAsPercent = TRUE,
+        showAllRows = TRUE
       )
     } else {
       progress <- shiny::Progress$new()
@@ -7265,8 +7090,10 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::mutate(conceptName = stringr::str_replace_all(string = .data$conceptName,
                                                              pattern = stringr::fixed(pattern = "\n"), 
                                                              replacement = "<br/>"))
-      table <- getDtWithColumnsGroupedByDatabaseId(
+      table <- getReactTableWithColumnsGroupedByDatabaseId(
         data = data,
+        cohort = cohort,
+        database = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
@@ -7277,23 +7104,7 @@ shiny::shinyServer(function(input, output, session) {
       )
     }
     return(table)
-  }, server = TRUE)
-  
-  ###saveCohortCharacterizationTable----
-  output$saveCohortCharacterizationTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "cohortCharacterization")
-    },
-    content = function(file) {
-      if (input$charType == "Pretty") {
-        data <- getCharacterizationTableDataPretty()
-      } else {
-        data <- getCharacterizationTableDataRaw()
-      }
-      downloadCsv(x = data,
-                  fileName = file)
-    }
-  )
+  })
   
   ## Temporal Characterization ------
   ### getTemporalCharacterizationData ------
@@ -8504,32 +8315,13 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ##output: databaseInformationTable----
-  output$databaseInformationTable <- DT::renderDataTable(expr = {
+  output$databaseInformationTable <- reactable::renderReactable(expr = {
     data <- getMetadataInformationFilteredToDatabaseId()
     validate(need(all(!is.null(data),
                       nrow(data) > 0),
                   "Not available."))
-    options = list(
-      pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      searchHighlight = TRUE,
-      columnDefs = list(minCellCountDef(10:14))
-    )
-  
-    table <- DT::datatable(
-      data ,
-      options = options,
-      colnames = colnames(data) %>%
-        camelCaseToTitleCase(),
-      rownames = FALSE,
-      class = "stripe compact"
-    )
-    return(table)
-  }, server = TRUE)
+    getSimpleReactable(data = data)
+  })
   
   ##output: metadataInfoTitle----
   output$metadataInfoTitle <- shiny::renderUI(expr = {
@@ -8568,7 +8360,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: packageDependencySnapShotTable----
   output$packageDependencySnapShotTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       data <- getMetadataInformation()
       if (!hasData(data)) {
         return(NULL)
@@ -8578,29 +8370,7 @@ shiny::shinyServer(function(input, output, session) {
       
       data <- dplyr::as_tibble(RJSONIO::fromJSON(content = data,
                                            digits = 23))
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = "40vh",
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE
-      )
-      
-      table <- DT::datatable(
-        data,
-        options = options,
-        rownames = FALSE,
-        colnames = colnames(data) %>%
-          camelCaseToTitleCase(),
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      return(table)
+     getSimpleReactable(data = data)
     })
   
   ##output: argumentsAtDiagnosticsInitiationJson----
