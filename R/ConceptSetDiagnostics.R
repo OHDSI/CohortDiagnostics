@@ -1388,7 +1388,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                         			)) concept_count
                                         FROM (
                                         	SELECT *
-                                        	FROM @cohort_database_schema.@cohort_table cohort_definition_id IN (@cohortIds)
+                                        	FROM @cohort_database_schema.@cohort_table 
+                                        	WHERE cohort_definition_id IN (@cohortIds)
                                         	) c
                                         INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
                                         	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
@@ -1425,7 +1426,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                             			)) concept_count
                                             FROM (
                                             	SELECT *
-                                            	FROM @cohort_database_schema.@cohort_table cohort_definition_id IN (@cohortIds)
+                                            	FROM @cohort_database_schema.@cohort_table
+                                            	WHERE cohort_definition_id IN (@cohortIds)
                                             	) c
                                             INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
                                             	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
