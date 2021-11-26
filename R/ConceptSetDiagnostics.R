@@ -1268,25 +1268,25 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                 	      
                 	  WITH c_ancestor
                     AS (
-                    	SELECT DISTINCT cohort_id,
+                    	SELECT DISTINCT -- cohort_id,
                     		descendant_concept_id concept_id
                     	FROM @cdm_database_schema.concept_ancestor ca
                     	INNER JOIN @concept_id_universe cu ON ancestor_concept_id = cu.concept_id
                     	),
                     all_concepts
                     AS (
-                    	SELECT cohort_id,
+                    	SELECT -- cohort_id,
                     		concept_id_2 concept_id
                     	FROM @cdm_database_schema.concept_relationship cr
                     	INNER JOIN c_ancestor ca ON concept_id_1 = ca.concept_id
                     	
                     	UNION
                     	
-                    	SELECT cohort_id,
+                    	SELECT -- cohort_id,
                     		concept_id
                     	FROM c_ancestor
                     	)
-                    SELECT DISTINCT cohort_id,
+                    SELECT DISTINCT -- cohort_id,
                     	concept_id
                     INTO #indx_concepts
                     FROM all_concepts;"
@@ -1361,7 +1361,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                         FROM @cohort_database_schema.@cohort_table c
                         INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
                         	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
-                        INNER JOIN (SELECT DISTINCT concept_id FROM #indx_concepts) cu ON d1.@domain_concept_id = cu.concept_id
+                        INNER JOIN #indx_concepts cu ON d1.@domain_concept_id = cu.concept_id
                         WHERE c.cohort_definition_id IN (@cohortIds)
                         	AND d1.@domain_concept_id != 0
                         	AND d1.@domain_concept_id IS NOT NULL
@@ -1396,8 +1396,10 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                         	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d2.@domain_start_date
                                         -- AND d1.@domain_start_date = d2.@domain_start_date
                                         -- AND d1.person_id = d2.person_id
-                                        INNER JOIN (SELECT DISTINCT concept_id FROM #indx_concepts) cu1 
+                                        INNER JOIN #indx_concepts cu1 
                                         ON d1.@domain_concept_id = cu1.concept_id
+                                        INNER JOIN #indx_concepts cu2
+                                        ON d2.@domain_concept_id = cu2.concept_id
                                         WHERE d1.@domain_concept_id != d2.@domain_concept_id
                                         GROUP BY cohort_definition_id,
                                         	d1.@domain_concept_id,
@@ -1432,8 +1434,10 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                             	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d2.@domain_start_date
                                             	-- AND d1.@domain_start_date = d2.@domain_start_date
                                             	-- AND d1.person_id = d2.person_id
-                                            INNER JOIN (SELECT DISTINCT concept_id FROM #indx_concepts) cu1 
+                                            INNER JOIN #indx_concepts cu1 
                                             ON d1.@domain_concept_id = cu1.concept_id
+                                            INNER JOIN #indx_concepts cu2
+                                            ON d1.@domain_source_concept_id = cu2.concept_id
                                             WHERE d1.@domain_concept_id != d2.@domain_source_concept_id
                                             GROUP BY cohort_definition_id,
                                             	d1.@domain_concept_id,
