@@ -900,34 +900,34 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   }
   
   dataTable <- 
-      reactable::reactable(data = data,
-                                    columns = columnDefinitions,
-                                    columnGroups = columnGroups,
-                                    sortable = TRUE,
-                                    resizable = TRUE,
-                                    filterable = TRUE,
-                                    searchable = TRUE,
-                                    pagination = TRUE,
-                                    showPagination = TRUE,
-                                    showPageInfo = TRUE,
-                                    # # minRows = 100, # to change based on number of rows in data
-                                    highlight = TRUE,
-                                    striped = TRUE,
-                                    compact = TRUE,
-                                    wrap = FALSE,
-                                    showSortIcon = TRUE,
-                                    showSortable = TRUE,
-                                    fullWidth = TRUE,
-                                    bordered = TRUE,
-                                    showPageSizeOptions = TRUE,
-                                    pageSizeOptions = c(10, 20, 50, 100, 1000),
-                                    defaultPageSize = ifelse(showAllRows, nrow(data),20) ,
-                                    selection = 'single',
-                                    onClick = "select",
-                                    theme = reactable::reactableTheme(
-                                      rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
-                                    )
-  ) 
+    reactable::reactable(data = data,
+                         columns = columnDefinitions,
+                         columnGroups = columnGroups,
+                         sortable = TRUE,
+                         resizable = TRUE,
+                         filterable = TRUE,
+                         searchable = TRUE,
+                         pagination = TRUE,
+                         showPagination = TRUE,
+                         showPageInfo = TRUE,
+                         # # minRows = 100, # to change based on number of rows in data
+                         highlight = TRUE,
+                         striped = TRUE,
+                         compact = TRUE,
+                         wrap = FALSE,
+                         showSortIcon = TRUE,
+                         showSortable = TRUE,
+                         fullWidth = TRUE,
+                         bordered = TRUE,
+                         showPageSizeOptions = TRUE,
+                         pageSizeOptions = c(10, 20, 50, 100, 1000),
+                         defaultPageSize = ifelse(showAllRows, nrow(data),20) ,
+                         selection = 'single',
+                         onClick = "select",
+                         theme = reactable::reactableTheme(
+                           rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
+                         )
+    ) 
   
   if (hasData(sparkLineData)) {
     dataTable <- dataTable %>% 
@@ -941,11 +941,13 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
 }
 
 getSimpleReactable <- function(data,
+                               keyColumns,
+                               dataColumns,
                                selection = NULL) {
   columnDefinitions <- list()
   
-  for (i in (1:length(colnames(data)))) {
-    columnName <- camelCaseToTitleCase(colnames(data)[i])
+  for (i in (1:length(keyColumns))) {
+    columnName <- camelCaseToTitleCase(keyColumns[i])
     colnames(data)[i] <- columnName
     columnDefinitions[[columnName]] <-
       reactable::colDef(
@@ -962,6 +964,37 @@ getSimpleReactable <- function(data,
         na = "",
         align = "left"
       )
+  }
+  
+  if (hasData(dataColumns)) {
+    for (i in (1:length(dataColumns))) {
+      maxValue <- max(data[dataColumns[i]], na.rm = TRUE)
+    }
+    
+    for (i in (1:length(dataColumns))) {
+      columnName <- camelCaseToTitleCase(dataColumns[i])
+      colnames(data)[which(names(data) == dataColumns[i])]  <- columnName
+      columnDefinitions[[columnName]] <-
+        reactable::colDef(
+          name = columnName,
+          sortable = TRUE,
+          resizable = TRUE,
+          filterable = TRUE,
+          show = TRUE,
+          html = TRUE,
+          na = "",
+          align = "left",
+          style = function(value) {
+            list(
+              backgroundImage = sprintf("linear-gradient(90deg, %1$s %2$s, transparent %2$s)", "#9ccee7", paste0((value / maxValue) * 100, "%")),
+              backgroundSize = paste("100%", "100%"),
+              backgroundRepeat = "no-repeat",
+              backgroundPosition = "center",
+              color = "#000"
+            )
+          }
+        )
+    }
   }
   
   dataTable <- reactable::reactable(data = data,

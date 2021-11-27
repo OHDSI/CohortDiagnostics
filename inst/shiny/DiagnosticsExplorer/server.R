@@ -816,7 +816,10 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    dataTable <- getSimpleReactable(data = data)
+    keyColumns <- colnames(data)
+    getSimpleReactable(data = data,
+                       dataColumns = c(),
+                       keyColumns = keyColumns)
   })
   
   
@@ -1093,8 +1096,13 @@ shiny::shinyServer(function(input, output, session) {
             nrow(data) > 0),
         "There is no inclusion rule data for this cohort."
       ))
-      table <- getSimpleReactable(data = data)
-      return(table)
+      
+      keyColumns <- c("databaseId")
+      dataColumns <- c("cohortSubjects", "cohortEntries")
+      
+      getSimpleReactable(data = data,
+                         keyColumns = keyColumns,
+                         dataColumns = dataColumns)
     })
   
   ##Concept set ----
