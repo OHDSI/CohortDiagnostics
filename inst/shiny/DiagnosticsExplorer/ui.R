@@ -978,15 +978,9 @@ bodyTabItems <- shinydashboard::tabItems(
                          ),
                          tags$td(
                            align = "right",
-                           shiny::downloadButton(
-                             "saveDetailsOfSelectedConceptIdForIndexEvent",
-                             label = "",
-                             icon = shiny::icon("download"),
-                             style = "margin-top: 5px; margin-bottom: 5px;"
-                           )
+                           tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('conceptBrowserTableForIndexEvent')")
                          )
                        )),
-            tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('conceptBrowserTableForIndexEvent')"),
             reactable::reactableOutput(outputId = "conceptBrowserTableForIndexEvent")
           ),
           shiny::tabPanel(

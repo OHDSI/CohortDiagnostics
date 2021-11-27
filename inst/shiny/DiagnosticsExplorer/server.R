@@ -6175,16 +6175,6 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  output$saveDetailsOfSelectedConceptIdForIndexEvent <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "indexEventBreakdownConceptSetBrowser")
-    },
-    content = function(file) {
-      downloadCsv(x = conceptSetBrowserData(),
-                  fileName = file)
-    }
-  )
-  
   #______________----
   # Visit Context -----
   ##getVisitContextData----
@@ -6367,16 +6357,6 @@ shiny::shinyServer(function(input, output, session) {
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
     
-    # table <- getDtWithColumnsGroupedByDatabaseId(
-    #   data = data,
-    #   headerCount = countsForHeader,
-    #   keyColumns = keyColumnFields,
-    #   countLocation = 1,
-    #   dataColumns = dataColumnFields,
-    #   maxCount = maxCountValue,
-    #   showResultsAsPercent = (input$visitContextValueFilter == "Percentage")
-    # )
-    
     table <- getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
       cohort = cohort, 
@@ -6387,7 +6367,7 @@ shiny::shinyServer(function(input, output, session) {
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
       showResultsAsPercent =  (input$visitContextValueFilter == "Percentage"), 
-      sort = FALSE
+      sort = TRUE
     )
     return(table)
   })
