@@ -950,11 +950,15 @@ getSimpleReactable <- function(data,
     columnDefinitions[[columnName]] <-
       reactable::colDef(
         name = columnName,
+        minWidth = 250,
         sortable = TRUE,
         resizable = TRUE,
         filterable = TRUE,
         show = TRUE,
         html = TRUE,
+        cell =  function(value) {
+          tags$span(title = value, value)
+        },
         na = "",
         align = "left"
       )
