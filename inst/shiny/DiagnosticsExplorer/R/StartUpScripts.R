@@ -813,7 +813,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   columnDefinitions <- list()
   for (i in (1:length(keyColumns))) {
     columnName <- camelCaseToTitleCase(colnames(data)[i])
-    colnames(data)[i] <- columnName
+    colnames(data)[which(names(data) == keyColumns[i])]  <- columnName
     columnDefinitions[[columnName]] <-
       reactable::colDef(
         name = columnName,
@@ -946,12 +946,13 @@ getSimpleReactable <- function(data,
                                keyColumns,
                                dataColumns,
                                selection = NULL,
-                               showResultsAsPercent = FALSE) {
+                               showResultsAsPercent = FALSE,
+                               defaultSelected = NULL) {
   columnDefinitions <- list()
   
   for (i in (1:length(keyColumns))) {
     columnName <- camelCaseToTitleCase(keyColumns[i])
-    colnames(data)[i] <- columnName
+    colnames(data)[which(names(data) == keyColumns[i])]  <- columnName
     columnDefinitions[[columnName]] <-
       reactable::colDef(
         name = columnName,
@@ -1020,7 +1021,7 @@ getSimpleReactable <- function(data,
                                     fullWidth = TRUE,
                                     bordered = TRUE,
                                     selection = selection,
-                                    # height = reactableHeight,
+                                    defaultSelected = defaultSelected,
                                     onClick = "select",
                                     showPageSizeOptions = TRUE,
                                     pageSizeOptions = c(10, 20, 50, 100, 1000), 

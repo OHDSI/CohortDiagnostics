@@ -2369,7 +2369,8 @@ shiny::shinyServer(function(input, output, session) {
       getSimpleReactable(data = data,
                          keyColumns = keyColumns,
                          dataColumns = c(),
-                         selection = 'single')
+                         selection = 'single',
+                         defaultSelected = 1)
     })
   
   getConceptSetsInCohortDataComparator <- reactive({
@@ -2398,7 +2399,8 @@ shiny::shinyServer(function(input, output, session) {
       getSimpleReactable(data = data,
                          keyColumns = keyColumns,
                          dataColumns = c(),
-                         selection = 'single')
+                         selection = 'single',
+                         defaultSelected = 1)
      
     })
   
@@ -2625,18 +2627,6 @@ shiny::shinyServer(function(input, output, session) {
       )
       return(dataTable)
     }, server = TRUE)
-  
-  
-  #output: saveTargetConceptSetsExpressionTable----
-  output$saveTargetConceptSetsExpressionTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "ConceptSetsExpression")
-    },
-    content = function(file) {
-      downloadCsv(x = getConceptSetExpressionTarget(), fileName = file)
-      #!!!! this may need downloadExcel() with formatted and multiple tabs
-    }
-  )
   
   #output: targetConceptSetsExpressionTable----
   output$targetConceptSetsExpressionTable <-
