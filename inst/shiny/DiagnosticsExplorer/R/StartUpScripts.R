@@ -943,7 +943,8 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
 getSimpleReactable <- function(data,
                                keyColumns,
                                dataColumns,
-                               selection = NULL) {
+                               selection = NULL,
+                               showResultsAsPercent = FALSE) {
   columnDefinitions <- list()
   
   for (i in (1:length(keyColumns))) {
@@ -958,9 +959,9 @@ getSimpleReactable <- function(data,
         filterable = TRUE,
         show = TRUE,
         html = TRUE,
-        cell =  function(value) {
-          tags$span(title = value, value)
-        },
+        # cell =  function(value) {
+        #   tags$span(title = value, value)
+        # },
         na = "",
         align = "left"
       )
@@ -977,6 +978,7 @@ getSimpleReactable <- function(data,
       columnDefinitions[[columnName]] <-
         reactable::colDef(
           name = columnName,
+          cell = minCellDefReactable(showResultsAsPercent),
           sortable = TRUE,
           resizable = TRUE,
           filterable = TRUE,
