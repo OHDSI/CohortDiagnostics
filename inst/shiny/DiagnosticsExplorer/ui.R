@@ -460,9 +460,8 @@ bodyTabItems <- shinydashboard::tabItems(
                    shiny::radioButtons(
                      inputId = "cohortCountsTableColumnFilter",
                      label = "Display",
-                     choiceNames = c("Both", "Subjects Only", "Records Only"),
-                     choiceValues = c("both", "subjects", "records"), 
-                     selected = "both",
+                     choices = c("Both", "Persons", "Records"),
+                     selected = "Both",
                      inline = TRUE
                    )
                  ),

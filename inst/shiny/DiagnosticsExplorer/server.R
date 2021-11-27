@@ -4397,35 +4397,54 @@ shiny::shinyServer(function(input, output, session) {
     ))
     data <- getCohortCountDataForSelectedDatabaseIdsCohortIds() %>% 
       dplyr::rename("records" = .data$cohortEntries,
-                    "subjects" = .data$cohortSubjects,
+                    "persons" = .data$cohortSubjects,
                     "cohort" = .data$shortName)
     validate(need(all(hasData(data)),
                   "No data for the combination"
     ))
     
     keyColumnFields <- c("cohort")
-    dataColumnFields <- c("records","subjects")
-    if (input$cohortCountsTableColumnFilter != "both") {
+    dataColumnFields <- c("persons", "records")
+    
+    if (input$cohortCountsTableColumnFilter == "Both") {
+      dataColumnFields <- dataColumnFields
+      countLocation <- 2
+    } else if (input$cohortCountsTableColumnFilter == "Persons") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(
           string = tolower(dataColumnFields),
-          pattern = tolower(
-            input$cohortCountsTableColumnFilter
-          )
+          pattern = tolower("person")
         )]
+      countLocation <- 1
+    } else if (input$cohortCountsTableColumnFilter == "Records") {
+      dataColumnFields <-
+        dataColumnFields[stringr::str_detect(
+          string = tolower(dataColumnFields),
+          pattern = tolower("record")
+        )]
+      countLocation <- 1
     }
     
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
     
+    countsForHeader <-
+      getCountsForHeaderForUseInDataTable(
+        dataSource = dataSource,
+        databaseIds = consolidatedDatabaseIdTarget(),
+        cohortIds =  activeSelected()$cohortId,
+        source = "Datasource Level",
+        fields = input$cohortCountsTableColumnFilter
+      )
+    
     getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
       cohort = cohort,
       database = database,
-      headerCount = NULL,
+      headerCount = countsForHeader,
       keyColumns = keyColumnFields,
-      countLocation = 0,
+      countLocation = countLocation,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
       showResultsAsPercent =  FALSE, 
