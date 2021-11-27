@@ -2365,8 +2365,10 @@ shiny::shinyServer(function(input, output, session) {
                         nrow(data) > 0),
         "Concept set details not available for this cohort"
       ))
-      
+      keyColumns <- colnames(data)
       getSimpleReactable(data = data,
+                         keyColumns = keyColumns,
+                         dataColumns = c(),
                          selection = 'single')
     })
   
@@ -2392,8 +2394,10 @@ shiny::shinyServer(function(input, output, session) {
       if (!hasData(data)) {
         return(NULL)
       }
-      
+      keyColumns <- colnames(data)
       getSimpleReactable(data = data,
+                         keyColumns = keyColumns,
+                         dataColumns = c(),
                          selection = 'single')
      
     })
@@ -2656,8 +2660,10 @@ shiny::shinyServer(function(input, output, session) {
           mapped = .data$includeMapped,
           invalid = .data$invalidReason
         )
-      
-      getSimpleReactable(data = data)
+      keyColumns <- colnames(data)
+      getSimpleReactable(data = data,
+                         keyColumns = keyColumns,
+                         dataColumns = c())
     })
   
   #output: targetCohortDefinitionResolvedConceptTable----
@@ -2967,7 +2973,11 @@ shiny::shinyServer(function(input, output, session) {
             nrow(data) > 0),
         "There is no inclusion rule data for this cohort."
       ))
-      getSimpleReactable(data = data)
+      keyColumns <- c("databaseId")
+      dataColumns <- c("cohortSubjects", "cohortEntries")
+      getSimpleReactable(data = data,
+                         keyColumns = keyColumns,
+                         dataColumns = dataColumns)
       
     })
   
@@ -3324,8 +3334,10 @@ shiny::shinyServer(function(input, output, session) {
           mapped = .data$includeMapped,
           invalid = .data$invalidReason
         )
-      
-      getSimpleReactable(data = data)
+      keyColumns <- colnames(data)
+      getSimpleReactable(data = data,
+                         keyColumns = keyColumns,
+                         dataColumns = c())
     })
   
   ##output: comparatorCohortDefinitionResolvedConceptTable----
@@ -5246,9 +5258,10 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(hasData(data),
       "No timeseries data for the cohort of this series type"
     ))
-    
-   dataTable <- getSimpleReactable(data = data)
-    return(dataTable)
+    keyColumns <- colnames(data)
+    getSimpleReactable(data = data,
+                       keyColumns = keyColumns,
+                       dataColumns = c())
   })
 
   ##output: fixedTimeSeriesPlot----
@@ -5367,8 +5380,10 @@ shiny::shinyServer(function(input, output, session) {
     data <- getTimeDistributionTableData()
     validate(need(hasData(data),
                   "No data available for selected combination."))
-    table <- getSimpleReactable(data)
-    return(table)
+    keyColumns <- colnames(data)
+    getSimpleReactable(data = data,
+                       keyColumns = keyColumns,
+                       dataColumns = c())
   })
   
   ##output: timeDistributionPlot----
@@ -6557,37 +6572,10 @@ shiny::shinyServer(function(input, output, session) {
       nrow(data) > 0,
       paste0("No cohort overlap data for this combination.")
     ))
-    if (nrow(data) > 25) {
-      scrollY <- '50vh'
-    } else {
-      scrollY <- TRUE
-    }
-    
-    table <- getSimpleReactable(data = data)
-    return(table)
-    
-    # options = list(
-    #   pageLength = 1000,
-    #   searching = TRUE,
-    #   scrollX = TRUE,
-    #   scrollY = scrollY,
-    #   lengthChange = TRUE,
-    #   ordering = FALSE,
-    #   paging = TRUE,
-    #   columnDefs = list(minCellCountDef(3:10))
-    # )
-    # 
-    # table <- DT::datatable(
-    #   data,
-    #   options = options,
-    #   rownames = FALSE,
-    #   colnames = colnames(data) %>%
-    #     camelCaseToTitleCase(),
-    #   escape = FALSE,
-    #   filter = "top",
-    #   class = "stripe nowrap compact"
-    # )
-   
+    keyColumns <- colnames(data)
+    getSimpleReactable(data = data,
+                       keyColumns = keyColumns,
+                       dataColumns = c())
   })
   
   #______________----
@@ -8328,7 +8316,10 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(all(!is.null(data),
                       nrow(data) > 0),
                   "Not available."))
-    getSimpleReactable(data = data)
+    keyColumns <- colnames(data)
+    getSimpleReactable(data = data,
+                       keyColumns = keyColumns,
+                       dataColumns = c())
   })
   
   ##output: metadataInfoTitle----
@@ -8378,7 +8369,10 @@ shiny::shinyServer(function(input, output, session) {
       
       data <- dplyr::as_tibble(RJSONIO::fromJSON(content = data,
                                            digits = 23))
-     getSimpleReactable(data = data)
+      keyColumns <- colnames(data)
+      getSimpleReactable(data = data,
+                        keyColumns = keyColumns,
+                        dataColumns = c())
     })
   
   ##output: argumentsAtDiagnosticsInitiationJson----
