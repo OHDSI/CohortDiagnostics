@@ -467,12 +467,7 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  ),
                  tags$td(align = "right",
-                         shiny::downloadButton(
-                           "saveCohortCountsTable",
-                           label = "",
-                           icon = shiny::icon("download"),
-                           style = "margin-top: 5px; margin-bottom: 5px;"
-                         )
+                         tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortCountsTable')"),
                  )
                )
     ),

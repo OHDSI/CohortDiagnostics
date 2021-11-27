@@ -4385,9 +4385,6 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  #!!!!!!!!!! bug inclusion rule is not workin\
-  #!!!!!!!!! no down load button
-  #!!!!!!!!! no radio button for records/subjects
   ##output: cohortCountsTable----
   output$cohortCountsTable <- reactable::renderReactable(expr = {
     validate(need(
@@ -4403,7 +4400,7 @@ shiny::shinyServer(function(input, output, session) {
                     "subjects" = .data$cohortSubjects,
                     "cohort" = .data$shortName)
     validate(need(all(hasData(data)),
-      "No data for the combination"
+                  "No data for the combination"
     ))
     
     keyColumnFields <- c("cohort")
@@ -4417,12 +4414,12 @@ shiny::shinyServer(function(input, output, session) {
           )
         )]
     }
-   
+    
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
     
-    dataTable <- getReactTableWithColumnsGroupedByDatabaseId(
+    getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
       cohort = cohort,
       database = database,
@@ -4434,39 +4431,11 @@ shiny::shinyServer(function(input, output, session) {
       showResultsAsPercent =  FALSE, 
       sort = TRUE
     )
-    return(dataTable)
   })
-  
-  ##output: saveCohortCountsTable----
-  output$saveCohortCountsTable <-  downloadHandler(
-    filename = function()
-    {
-      getCsvFileNameWithDateTime(string = "cohortCount")
-    },
-    content = function(file) {
-      if (input$cohortCountsTableColumnFilter == "Both")
-      {
-        table <- getCohortCountDataSubjectRecord()
-      }
-      if (input$cohortCountsTableColumnFilter == "Subjects Only" ||
-          input$cohortCountsTableColumnFilter == "Records Only")
-      {
-        if (input$cohortCountsTableColumnFilter == "Subjects Only")
-        {
-          table <- getCohortCountDataSubject()
-        } else
-        {
-          table <- getCohortCountDataRecord()
-        }
-      }
-      downloadCsv(x = table,
-                  fileName = file)
-    }
-  )
   
   ###getCohortIdFromSelectedRowInCohortCountTable----
   getCohortIdFromSelectedRowInCohortCountTable <- reactive({
-    idx <- input$cohortCountsTable_rows_selected
+    idx <- reactable::getReactableState("cohortCountsTable", "selected")
     if (is.null(idx)) {
       return(NULL)
     } else {
