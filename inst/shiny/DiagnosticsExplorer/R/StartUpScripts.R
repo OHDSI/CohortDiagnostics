@@ -838,11 +838,11 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
     if (countLocation == 2) {
       filteredHeaderCount <- headerCount %>% 
         dplyr::filter(.data$databaseId ==  columnNameWithDatabaseAndCount[1])
-      columnName <- camelCaseToTitleCase(paste0(columnName," (",scales::comma(filteredHeaderCount[[columnName]]), ")"))
+      columnName <- paste0(columnName," (",scales::comma(filteredHeaderCount[[columnName]]), ")")
     }
       columnDefinitions[[dataColumns[i]]] <-
         reactable::colDef(
-          name = columnName,
+          name =  camelCaseToTitleCase(columnName),
           cell = minCellDefReactable(showResultsAsPercent),
           sortable = TRUE,
           resizable = TRUE,
