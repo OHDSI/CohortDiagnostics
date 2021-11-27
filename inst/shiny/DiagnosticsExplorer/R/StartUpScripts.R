@@ -326,8 +326,8 @@ consolidationOfSelectedFieldValues <- function(input,
     }
     
     if (all(hasData(indexEventBreakdownDataTable),
-            hasData(reactable::getReactableState("indexEventBreakdownTable", "selected")))) {
-      lastRowsSelected <- input$indexEventBreakdownTable_rows_selected[length(reactable::getReactableState("indexEventBreakdownTable", "selected"))]
+            hasData(reactable::getReactableState("indexEventBreakdownReactTable", "selected")))) {
+      lastRowsSelected <- reactable::getReactableState("indexEventBreakdownReactTable", "selected")
       data$selectedConceptIdTarget <- indexEventBreakdownDataTable[lastRowsSelected, ]$conceptId
       data$TargetActive <- TRUE
     }
