@@ -443,15 +443,11 @@ shiny::shinyServer(function(input, output, session) {
                                    tags$tr(
                                      tags$td(
                                        align = "right",
-                                       shiny::downloadButton(
-                                         "saveTargetConceptSetsExpressionOptimizedTable",
-                                         label = "",
-                                         icon = shiny::icon("download"),
-                                         style = "margin-top: 5px; margin-bottom: 5px;"
-                                       )
+                                       
+                                       tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('targetConceptSetsExpressionOptimizedTable')")
                                      )
                                    )),
-                        DT::dataTableOutput(outputId = "targetConceptSetsExpressionOptimizedTable"),
+                        reactable::reactableOutput(outputId = "targetConceptSetsExpressionOptimizedTable")
                       )
                       )
                   ),
@@ -2485,20 +2481,9 @@ shiny::shinyServer(function(input, output, session) {
                        name = "canTargetConceptSetExpressionBeOptimized",
                        suspendWhenHidden = FALSE)
   
-  #output: saveTargetConceptSetsExpressionOptimizedTable----
-  output$saveTargetConceptSetsExpressionOptimizedTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "ConceptSetsExpressionOptimized")
-    },
-    content = function(file) {
-      downloadCsv(x = getOptimizedTargetConceptSetsExpressionTable(), fileName = file)
-      #!!!! this may need downloadExcel() with formatted and multiple tabs
-    }
-  )
-  
   #output: targetConceptSetsExpressionOptimizedTable----
   output$targetConceptSetsExpressionOptimizedTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       optimizedConceptSetExpression <-
         getOptimizedTargetConceptSetsExpressionTable()
       if (!hasData(optimizedConceptSetExpression)) {
@@ -2533,32 +2518,11 @@ shiny::shinyServer(function(input, output, session) {
                       .data$invalid) %>% 
         dplyr::arrange(.data$databaseId)
       
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = "20vh",
-        columnDefs = list(truncateStringDef(1, 80))
-      )
-      
-      dataTable <- DT::datatable(
-        optimizedConceptSetExpression,
-        options = options,
-        colnames = colnames(optimizedConceptSetExpression) %>% camelCaseToTitleCase(),
-        rownames = FALSE,
-        escape = FALSE,
-        selection = 'none',
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      return(dataTable)
-    }, server = TRUE)
+      keyColumns <- colnames(optimizedConceptSetExpression)
+      getSimpleReactable(data = optimizedConceptSetExpression,
+                         dataColumns = c(),
+                         keyColumns = keyColumns)
+    })
   
   #output: targetConceptSetsExpressionTable----
   output$targetConceptSetsExpressionTable <-
