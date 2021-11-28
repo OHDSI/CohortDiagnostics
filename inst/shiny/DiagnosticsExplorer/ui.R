@@ -334,15 +334,10 @@ bodyTabItems <- shinydashboard::tabItems(
                          ),
                          tags$td(
                            align = "right",
-                           shiny::downloadButton(
-                             outputId = "saveConceptSetComparisonTable",
-                             label = NULL,
-                             icon = shiny::icon("download"),
-                             style = "margin-top: 5px; margin-bottom: 5px;"
-                           )
+                           tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('conceptSetComparisonTable')")
                          )
                        )),
-            DT::dataTableOutput(outputId = "conceptSetComparisonTable")
+            reactable::reactableOutput(outputId = "conceptSetComparisonTable")
           )
         )
       ),

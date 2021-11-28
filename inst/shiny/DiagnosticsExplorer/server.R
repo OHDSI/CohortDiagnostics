@@ -2050,18 +2050,6 @@ shiny::shinyServer(function(input, output, session) {
       combinedResult <- combinedResult
     }
     
-    combinedResult <- combinedResult  %>% 
-      tidyr::pivot_longer(
-        names_to = "type",
-        cols = c("target", "comparator"),
-        values_to = "value"
-      ) %>% 
-      dplyr::inner_join(cohortShortName,
-                        by = "type") %>% 
-      dplyr::mutate(type = paste0(.data$type, " (", .data$shortName, ")")) %>% 
-      dplyr::select(-.data$shortName) %>% 
-      dplyr::left_join(conceptIdSortOrder, by = "conceptId") %>% 
-      dplyr::arrange(.data$rn, .data$databaseId, .data$conceptId)
     return(combinedResult)
   })
   
@@ -2092,77 +2080,51 @@ shiny::shinyServer(function(input, output, session) {
   )
   
   
-  output$conceptSetComparisonTable <- DT::renderDT(expr = {
+  output$conceptSetComparisonTable <- reactable::renderReactable(expr = {
     data <- getConceptSetComparisonTableData()
     if (!hasData(data)) {
       return(NULL)
     }
-    data <- data %>% 
-      dplyr::arrange(.data$databaseId, dplyr::desc(.data$type))
-    databaseIds <- unique(data$databaseId) %>% sort()
+    # data <- data %>% 
+    #   dplyr::arrange(.data$databaseId, dplyr::desc(.data$type))
+    # databaseIds <- unique(data$databaseId) %>% sort()
     
-    data <- data %>% 
-      dplyr::mutate(type = paste0(type, " ", .data$databaseId)) %>% 
-      dplyr::select(-.data$databaseId) %>% 
-      dplyr::mutate(value = dplyr::case_when(.data$value == TRUE ~ as.character(icon("check")),
-                                             FALSE ~ as.character(NA))) %>% 
-      tidyr::pivot_wider(
-        id_cols = c(
-          "conceptId",
-          "conceptName",
-          "rn"
-        ),
-        names_from = type,
-        values_from = value
-      ) %>% 
-      dplyr::arrange(.data$rn) %>% 
-      dplyr::select(-.data$rn)
-    columnNames <- c("Target", "Comparator")
+    data <- data %>%
+      dplyr::mutate(target = dplyr::case_when(.data$target == TRUE ~ as.character(icon("check")),
+                                              .data$target == FALSE ~ as.character(''))) %>% 
+      dplyr::mutate(comparator = dplyr::case_when(.data$comparator == TRUE ~ as.character(icon("check")),
+                                                  .data$comparator == FALSE ~ as.character('')))
+    keyColumnFields <- c("conceptId", "conceptName")
+    #depending on user selection - what data Column Fields Will Be Presented?
+    dataColumnFields <-
+      c("target",
+        "comparator")
     
-    sketch <- htmltools::withTags(table(class = "display",
-                                        thead(tr(
-                                          th(rowspan = 2, "Concept ID"),
-                                          th(rowspan = 2, "Concept Name"),
-                                          lapply(
-                                            databaseIds,
-                                            th,
-                                            colspan = length(columnNames),
-                                            class = "dt-center",
-                                            style = "border-right:1px solid silver;border-bottom:1px solid silver"
-                                          )
-                                        ),
-                                        tr(
-                                          lapply(rep(
-                                            columnNames,
-                                            length(databaseIds)
-                                          ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                        ))))
+    countsForHeader <-
+      getCountsForHeaderForUseInDataTable(
+        dataSource = dataSource,
+        databaseIds = consolidatedDatabaseIdTarget(),
+        cohortIds = consolidatedCohortIdTarget(),
+        source = "Cohort Level",
+        fields = "Persons Only"
+      )
+    if (!hasData(countsForHeader)) {
+      return(NULL)
+    }
     
-    options = list(
-      pageLength = 20,
-      searching = TRUE,
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      info = TRUE,
-      searchHighlight = TRUE,
-      scrollX = TRUE,
-      scrollY = "20vh",
-      columnDefs = list(truncateStringDef(1, 30))
+    getReactTableWithColumnsGroupedByDatabaseId(
+      data = data,
+      cohort = cohort, 
+      database = database,
+      headerCount = countsForHeader,
+      keyColumns = keyColumnFields,
+      countLocation = 0,
+      dataColumns = dataColumnFields,
+      maxCount = NULL,
+      showResultsAsPercent = FALSE, 
+      sort = FALSE,
+      valueFill = ''
     )
-    
-    dataTable <- DT::datatable(
-      data,
-      options = options,
-      container = sketch,
-      colnames = colnames(data) %>% camelCaseToTitleCase(),
-      rownames = FALSE,
-      escape = FALSE,
-      selection = 'single',
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
-    return(dataTable)
   })
   
   #activeSelected----

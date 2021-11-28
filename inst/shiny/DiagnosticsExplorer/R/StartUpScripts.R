@@ -661,7 +661,8 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                                         sort = TRUE,
                                                         showResultsAsPercent = FALSE,
                                                         rowSpan = 2,
-                                                        showAllRows = FALSE) {
+                                                        showAllRows = FALSE,
+                                                        valueFill = 0) {
   if (is.null(cohort)) {
     warning("cohort table is missing")
     cohort <- data %>%
@@ -738,7 +739,7 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
       id_cols = dplyr::all_of(keyColumns),
       names_from = "type",
       values_from = valuesData,
-      values_fill = 0
+      values_fill = valueFill
     )
   
   if (sort) {
@@ -829,8 +830,10 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
   }
  
   maxValue <- 0
-  for (i in (1:length(dataColumns))) {
-    maxValue <- max(maxValue,max(data[dataColumns[i]], na.rm = TRUE))
+  if (valueFill == 0) {
+    for (i in (1:length(dataColumns))) {
+      maxValue <- max(maxValue,max(data[dataColumns[i]], na.rm = TRUE))
+    }
   }
   
   for (i in (1:length(dataColumns))) {
@@ -854,13 +857,17 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
           na = "",
           align = "left",
           style = function(value) {
-            list(
-              backgroundImage = sprintf("linear-gradient(90deg, %1$s %2$s, transparent %2$s)", "#9ccee7", paste0((value / maxValue) * 100, "%")),
-              backgroundSize = paste("100%", "100%"),
-              backgroundRepeat = "no-repeat",
-              backgroundPosition = "center",
-              color = "#000"
-            )
+            if (class(value) != "character") {
+              list(
+                backgroundImage = sprintf("linear-gradient(90deg, %1$s %2$s, transparent %2$s)", "#9ccee7", paste0((value / maxValue) * 100, "%")),
+                backgroundSize = paste("100%", "100%"),
+                backgroundRepeat = "no-repeat",
+                backgroundPosition = "center",
+                color = "#000"
+              )
+            } else {
+              list()
+            }
           }
         )
       if (hasData(sparkLineData)) {
