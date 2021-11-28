@@ -2053,41 +2053,11 @@ shiny::shinyServer(function(input, output, session) {
     return(combinedResult)
   })
   
-  #output: saveConceptSetComparisonTable----
-  output$saveConceptSetComparisonTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "ConceptSetsExpressionComparison")
-    },
-    content = function(file) {
-      data <- getConceptSetComparisonTableData()
-      if (!hasData(data)) {
-        return(NULL)
-      }
-      data <- data %>% 
-        dplyr::mutate(type = paste0(type, " ", .data$databaseId)) %>% 
-        dplyr::select(-.data$databaseId, -.data$rn) %>% 
-        tidyr::pivot_wider(
-          id_cols = c(
-            "conceptId",
-            "conceptName"
-          ),
-          names_from = type,
-          values_from = value
-        )
-      downloadCsv(x = data, fileName = file)
-      #!!!! this may need downloadExcel() with formatted and multiple tabs
-    }
-  )
-  
-  
   output$conceptSetComparisonTable <- reactable::renderReactable(expr = {
     data <- getConceptSetComparisonTableData()
     if (!hasData(data)) {
       return(NULL)
     }
-    # data <- data %>% 
-    #   dplyr::arrange(.data$databaseId, dplyr::desc(.data$type))
-    # databaseIds <- unique(data$databaseId) %>% sort()
     
     data <- data %>%
       dplyr::mutate(target = dplyr::case_when(.data$target == TRUE ~ as.character(icon("check")),
