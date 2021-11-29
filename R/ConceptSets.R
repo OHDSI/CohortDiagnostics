@@ -642,7 +642,7 @@ runConceptSetDiagnostics <- function(connection,
           lapply(split(primaryCodesetIds, primaryCodesetIds$domain),
                  pasteIds)
         primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
-        
+
         getCounts <- function(row) {
           domain <- domains[domains$domain == row$domain,]
           sql <-
@@ -660,7 +660,7 @@ runConceptSetDiagnostics <- function(connection,
               domain_start_date = domain$domainStartDate,
               domain_concept_id = domain$domainConceptId,
               domain_source_concept_id = domain$domainSourceConceptId,
-              use_source_concept_id = !is.null(domain$domainSourceConceptId),
+              use_source_concept_id = !(is.na(domain$domainSourceConceptId) | is.null(domain$domainSourceConceptId)),
               primary_codeset_ids = row$uniqueConceptSetId,
               concept_set_table = "#inst_concept_sets",
               store = TRUE,
