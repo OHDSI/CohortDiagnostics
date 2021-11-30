@@ -1,5 +1,5 @@
 ---
-title: "Running cohort diagnostics"
+title: "Running Cohort Diagnostics"
 author: "Gowtham Rao and James P. Gilbert"
 date: "`r Sys.Date()`"
 output:
@@ -9,7 +9,7 @@ output:
     number_sections: yes
     toc: yes
 vignette: >
-  %\VignetteIndexEntry{Running cohort diagnostics}
+  %\VignetteIndexEntry{Running Cohort Diagnostics}
   %\VignetteEncoding{UTF-8}    
   %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -39,7 +39,7 @@ connectionDetails <- createConnectionDetails(dbms = "postgresql",
                                              password = "supersecret")
 ```
 For the purposes of this example, we will use the Eunomia test CDM package that is in an Sqlite database stored locally.
-```{r results = FALSE,message = FALSE,warning=FALSE, message = FALSE}
+```{r results = FALSE,message = FALSE,warning=FALSE, message = FALSE,eval=FALSE}
 connectionDetails <- Eunomia::getEunomiaConnectionDetails()
 
 cdmDatabaseSchema <- "main"
@@ -63,7 +63,7 @@ However, a study package can be seen as a snapshot, frozen at the time of creati
 
 For example, the cohort diagnostics package includes a set of cohort sql and json to run on the Eunomia data set.
 
-```{r results = FALSE,message = FALSE,warning=FALSE}
+```{r results = FALSE,message = FALSE,warning=FALSE,eval=FALSE}
 library(CohortDiagnostics)
 cohortDefinitionSet <- loadCohortsFromPackage(packageName = "CohortDiagnostics",
                                               cohortToCreateFile = "settings/CohortsToCreateForTesting.csv")
@@ -110,7 +110,7 @@ inclusionStatisticsFolder <- "inclusionStats"
 
 ### Using CohortDiagnostics to instantiate cohorts
 For example,
-```{r results = FALSE,message = FALSE,warning=FALSE}
+```{r results = FALSE,message = FALSE,warning=FALSE,eval=FALSE}
 instantiateCohortSet(connectionDetails = connectionDetails,
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      inclusionStatisticsFolder = inclusionStatisticsFolder,
@@ -133,11 +133,11 @@ Once cohort definitions are loaded and cohort tables have been populated cohort 
 
 First we set an export folder, this is where the results will be stored.
 
-```{r results = FALSE,message = FALSE,warning=FALSE}
+```{r results = FALSE,message = FALSE,warning=FALSE,eval=FALSE}
 exportFolder <- "export"
 ```
 Then we execute the function (using the default settings) as follows:
-```{r results = FALSE,message = FALSE,warning=FALSE}
+```{r results = FALSE,message = FALSE,warning=FALSE,eval=FALSE}
 executeDiagnostics(cohortDefinitionSet,
                    connectionDetails = connectionDetails,
                    cohortTable = cohortTable,
