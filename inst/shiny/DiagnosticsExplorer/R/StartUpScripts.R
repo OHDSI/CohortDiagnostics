@@ -651,6 +651,222 @@ getDtWithColumnsGroupedByDatabaseId <- function(data,
   return(dataTable)
 }
 
+getNestedReactTable <- function(data,
+                                sparkLineData = NULL,
+                                cohort = NULL,
+                                database = NULL,
+                                headerCount = NULL,
+                                keyColumns,
+                                dataColumns,
+                                countLocation,
+                                maxCount,
+                                sort = TRUE,
+                                showResultsAsPercent = FALSE,
+                                rowSpan = 2,
+                                showAllRows = FALSE,
+                                valueFill = 0) {
+  if (is.null(cohort)) {
+    warning("cohort table is missing")
+    cohort <- data %>%
+      dplyr::select(.data$cohortId) %>%
+      dplyr::distinct() %>%
+      dplyr::mutate(shortName = paste0("C", .data$cohortId))
+  }
+  if (!'shortName' %in% colnames(cohort)) {
+    warning("Assigning short name to cohort as C + cohortId")
+    cohort <- cohort %>%
+      dplyr::mutate(shortName = paste0("C", .data$cohortId))
+  }
+  
+  if (is.null(database)) {
+    warning("database table is missing")
+    database <- data %>%
+      dplyr::select(.data$databaseId) %>%
+      dplyr::distinct() %>%
+      dplyr::mutate(id = dplyr::row_number()) %>%
+      dplyr::mutate(shortName = paste0("D", .data$id))
+  }
+  if (!'shortName' %in% colnames(database)) {
+    warning("Assigning short name to cohort as D + rowNumber")
+    database <- database %>%
+      dplyr::distinct() %>%
+      dplyr::mutate(id = dplyr::row_number()) %>%
+      dplyr::mutate(shortName = paste0("D", .data$id))
+  }
+  
+  data3 <- data
+  
+  # ensure the data has required fields
+  keyColumns <- keyColumns %>% unique()
+  dataColumns <- dataColumns %>% unique()
+  missingColumns <-
+    setdiff(x = c(keyColumns, dataColumns) %>% unique(),
+            y = colnames(data))
+  if (length(missingColumns) > 0)  {
+    stop(
+      paste0(
+        "Improper specification for sketch, following fields are missing in data ",
+        paste0(missingColumns, collapse = ", ")
+      )
+    )
+  }
+  
+  if (showResultsAsPercent) {
+    for (i in (1:length(dataColumns))) {
+      if ("sequence" %in% colnames(data)) {
+        for (j in 1:ceiling(max(data$sequence) / 100))
+          data[data$sequence > (j - 1) * 100 &
+                 data$sequence < j * 100,][[dataColumns[i]]] <-
+            round(data[data$sequence > (j - 1) * 100 &
+                         data$sequence < j * 100,][[dataColumns[i]]] /
+                    sum(data[data$sequence > (j - 1) * 100 &
+                               data$sequence < j * 100,][[dataColumns[i]]], na.rm = TRUE), 2)
+      } else {
+        data[[dataColumns[i]]] <- round(data[[dataColumns[i]]] / sum(data[[dataColumns[i]]], na.rm = TRUE), 2)
+      }
+    }
+  }
+  
+  distinctDatabaseId <- data %>% 
+    dplyr::select(.data$databaseId) %>% 
+    dplyr::distinct()
+  
+  distinctCohortId <- data %>% 
+    dplyr::select(.data$cohortId) %>% 
+    dplyr::distinct()
+  
+  data <- data %>%
+    tidyr::pivot_longer(
+      cols = dplyr::all_of(dataColumns),
+      names_to = "type",
+      values_to = "valuesData"
+    ) %>%
+    dplyr::mutate(type = paste0(
+      .data$cohortId,
+      "-",
+      .data$type
+    )) %>% 
+    tidyr::pivot_wider(
+      id_cols = dplyr::all_of(c(keyColumns,"databaseId")),
+      names_from = "type",
+      values_from = valuesData,
+      values_fill = valueFill
+    )
+  
+  dataColumns <-
+    colnames(data)[stringr::str_detect(
+      string = colnames(data),
+      pattern = paste0(c(keyColumns,"databaseId"), collapse = "|"),
+      negate = TRUE
+    )]
+  
+  dataTable <- reactable::reactable(
+    distinctDatabaseId ,
+    details = function(index) {
+      extractedData <-
+        data[data$databaseId == distinctDatabaseId$databaseId[index], ]
+      columnDefinitions <- list()
+      
+      for (i in (1:length(keyColumns))) {
+        columnName <- camelCaseToTitleCase(colnames(extractedData)[i])
+        colnames(extractedData)[which(names(extractedData) == keyColumns[i])]  <-
+          columnName
+        columnDefinitions[[columnName]] <-
+          reactable::colDef(
+            name = columnName,
+            sortable = TRUE,
+            resizable = TRUE,
+            filterable = TRUE,
+            show = TRUE,
+            minWidth = 200,
+            html = TRUE,
+            na = "",
+            align = "left"
+          )
+      }
+      
+      maxValue <- 0
+      if (valueFill == 0) {
+        for (i in (1:length(dataColumns))) {
+          maxValue <- max(maxValue, max(data[dataColumns[i]], na.rm = TRUE))
+        }
+      }
+      
+      for (i in (1:length(dataColumns))) {
+        columnNameWithCohortAndTimeId <-
+          stringr::str_split(dataColumns[i], "-")[[1]]
+        columnName <- columnNameWithCohortAndTimeId[2]
+        columnDefinitions[[dataColumns[i]]] <-
+          reactable::colDef(
+            name =  camelCaseToTitleCase(columnName),
+            cell = minCellDefReactable(showResultsAsPercent),
+            sortable = TRUE,
+            resizable = TRUE,
+            filterable = TRUE,
+            show = TRUE,
+            minWidth = 200,
+            html = TRUE,
+            na = "",
+            align = "left",
+            style = function(value) {
+              if (class(value) != "character") {
+                list(
+                  backgroundImage = sprintf(
+                    "linear-gradient(90deg, %1$s %2$s, transparent %2$s)",
+                    "#9ccee7",
+                    paste0((value / maxValue) * 100, "%")
+                  ),
+                  backgroundSize = paste("100%", "100%"),
+                  backgroundRepeat = "no-repeat",
+                  backgroundPosition = "center",
+                  color = "#000"
+                )
+              } else {
+                list()
+              }
+            }
+          )
+        
+      }
+      
+      columnGroups <- list()
+      for (i in 1:nrow(distinctCohortId)) {
+        extractedDataColumn <- dataColumns[stringr::str_detect(string = dataColumns,
+                                                               pattern = paste(distinctCohortId$cohortId[i]))]
+        
+        columnName <- paste(distinctCohortId$cohortId[i])
+        
+        
+        columnGroups[[i]] <-
+          reactable::colGroup(name = columnName,
+                              columns = extractedDataColumn)
+      }
+      reactable::reactable(
+        extractedData,
+        columns = columnDefinitions,
+        columnGroups = columnGroups,
+        sortable = TRUE,
+        resizable = TRUE,
+        filterable = TRUE,
+        searchable = TRUE,
+        pagination = TRUE,
+        showPagination = TRUE,
+        showPageInfo = TRUE,
+        # # minRows = 100, # to change based on number of rows in data
+        highlight = TRUE,
+        striped = TRUE,
+        compact = TRUE,
+        wrap = FALSE,
+        showSortIcon = TRUE,
+        showSortable = TRUE,
+        fullWidth = TRUE,
+        bordered = TRUE
+      )
+    }
+  )
+  return(dataTable)
+}
+
 
 getReactTableWithColumnsGroupedByDatabaseId <- function(data,
                                                         sparkLineData=NULL,

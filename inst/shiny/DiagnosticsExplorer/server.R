@@ -6853,7 +6853,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::mutate(conceptName = stringr::str_replace_all(string = .data$conceptName,
                                                              pattern = stringr::fixed(pattern = "\n"), 
                                                              replacement = "<br/>"))
-      table <- getReactTableWithColumnsGroupedByDatabaseId(
+      table <- getNestedReactTable(
         data = data,
         cohort = cohort,
         database = database,
