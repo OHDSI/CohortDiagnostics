@@ -6403,9 +6403,7 @@ shiny::shinyServer(function(input, output, session) {
       ))) {
         return(NULL)
       }
-      if (length(consolidatedCohortIdComparator()) > 0) {
-        return(NULL)
-      }
+     
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(
@@ -6431,9 +6429,6 @@ shiny::shinyServer(function(input, output, session) {
   ##getMultipleCharacterizationData----
   getMultipleCharacterizationData <- shiny::reactive(x = {
     if (!input$tabs == "cohortCharacterization") {
-      return(NULL)
-    }
-    if (!hasData(getMultipleCharacterizationDataTarget())) {
       return(NULL)
     }
     dataTarget <- getMultipleCharacterizationDataTarget()
@@ -6823,18 +6818,17 @@ shiny::shinyServer(function(input, output, session) {
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
       keyColumnFields <-
-        c("cohortId",
-          "covariateId",
+        c("covariateId",
           "analysisName",
           "domainId",
           "conceptName")
       if (input$characterizationColumnFilters == "Mean only") {
         dataColumnFields <- setdiff(colnames(data),
-                                    c("databaseId", keyColumnFields))
+                                    c("databaseId","cohortId", keyColumnFields))
         showPercent <- TRUE
       } else {
         dataColumnFields <- setdiff(colnames(data),
-                                    c("databaseId", keyColumnFields))
+                                    c("databaseId","cohortId", keyColumnFields))
         showPercent <- FALSE
       }
       
@@ -6867,7 +6861,7 @@ shiny::shinyServer(function(input, output, session) {
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         sort = TRUE,
-        showResultsAsPercent = showPercent
+        showResultsAsPercent = FALSE
       )
     }
     return(table)
