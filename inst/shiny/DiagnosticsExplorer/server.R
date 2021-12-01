@@ -6364,9 +6364,9 @@ shiny::shinyServer(function(input, output, session) {
       ))) {
         return(NULL)
       }
-      if (any(length(consolidatedCohortIdTarget()) != 1)) {
-        return(NULL)
-      }
+      # if (any(length(consolidatedCohortIdTarget()) != 1)) {
+      #   return(NULL)
+      # }
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(
@@ -6378,7 +6378,7 @@ shiny::shinyServer(function(input, output, session) {
       )
       data <- getMultipleCharacterizationResults(
         dataSource = dataSource,
-        cohortId = c(consolidatedCohortIdTarget()) %>% unique()
+        cohortIds = c(consolidatedCohortIdTarget()) %>% unique()
       )
       if (!hasData(data$analysisRef)) {
         return(NULL)
@@ -6415,7 +6415,7 @@ shiny::shinyServer(function(input, output, session) {
       )
       data <- getMultipleCharacterizationResults(
         dataSource = dataSource,
-        cohortId = c(consolidatedCohortIdComparator()) %>% unique()
+        cohortIds = c(consolidatedCohortIdComparator()) %>% unique()
       )
       if (!hasData(data$analysisRef)) {
         return(NULL)
@@ -6699,15 +6699,17 @@ shiny::shinyServer(function(input, output, session) {
     if (input$tabs != "cohortCharacterization") {
       return(NULL)
     }
-    data <- getCharacterizationDataFiltered()
+    data <- getCharacterizationDataFiltered() %>% 
+      dplyr::mutate(mean = round(.data$mean,3),
+                    sd = round(.data$sd,3))
     if (!hasData(data)) {
       return(NULL)
     }
     #!!!! if user selects proportion then mean, else count. Also support option for both as 34,342 (33.3%)
     if (input$characterizationColumnFilters == "Mean only") {
-      data <- data %>%
-        dplyr::select(-.data$mean) %>%
-        dplyr::rename("mean" = .data$sumValue)
+      # data <- data %>%
+      #   dplyr::select(-.data$mean) %>%
+      #   dplyr::rename("mean" = .data$sumValue)
       keyColumnFields <-
         c("cohortId",
           "databaseId",
@@ -6778,7 +6780,7 @@ shiny::shinyServer(function(input, output, session) {
       keyColumnFields <- c("characteristic")
       dataColumnFields <- intersect(x = colnames(data),
                                     y = cohort$shortName)
-      countLocation <- 1
+      countLocation <- 2
       countsForHeader <-
         getCountsForHeaderForUseInDataTable(
           dataSource = dataSource,

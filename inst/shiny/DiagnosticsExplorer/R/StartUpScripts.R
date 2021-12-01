@@ -267,26 +267,29 @@ consolidationOfSelectedFieldValues <- function(input,
       input$tabs == 'databaseInformation') {
     data <- list()
     
-    #single select cohortId
-    if (all(!is.null(input$selectedCompoundCohortName),
-            !is.null(cohort))) {
-      data$cohortIdTarget <- cohort %>%
-        dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortName) %>%
-        dplyr::arrange(.data$cohortId) %>%
-        dplyr::pull(.data$cohortId) %>%
-        unique()
-    }
-    
-    if (input$tabs == 'cohortCharacterization') {
-      if (all(!is.null(input$selectedComparatorCompoundCohortNames),
+    #single select cohortId - except cohortCharacterization
+    if(input$tabs == 'cohortCharacterization') {
+      if (all(!is.null(input$selectedCompoundCohortNames),
               !is.null(cohort))) {
-        data$cohortIdComparator <- cohort %>%
-          dplyr::filter(.data$compoundName %in% input$selectedComparatorCompoundCohortNames) %>%
+        data$cohortIdTarget <- cohort %>%
+          dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortNames) %>%
           dplyr::arrange(.data$cohortId) %>%
           dplyr::pull(.data$cohortId) %>%
           unique()
       }
     } else {
+      if (all(!is.null(input$selectedCompoundCohortName),
+              !is.null(cohort))) {
+        data$cohortIdTarget <- cohort %>%
+          dplyr::filter(.data$compoundName %in% input$selectedCompoundCohortName) %>%
+          dplyr::arrange(.data$cohortId) %>%
+          dplyr::pull(.data$cohortId) %>%
+          unique()
+      }
+    }
+    
+    
+    if (input$tabs != 'cohortCharacterization') {
       if (all(!is.null(input$selectedComparatorCompoundCohortName),
               !is.null(cohort))) {
         data$cohortIdComparator <- cohort %>%
@@ -842,7 +845,16 @@ getReactTableWithColumnsGroupedByDatabaseId <- function(data,
     if (countLocation == 2) {
       filteredHeaderCount <- headerCount %>% 
         dplyr::filter(.data$databaseId ==  columnNameWithDatabaseAndCount[1])
-      columnName <- paste0(columnName," (",scales::comma(filteredHeaderCount[[columnName]]), ")")
+      if ("cohortId" %in% colnames(headerCount)) {
+        filteredHeaderCount <- filteredHeaderCount %>% 
+          dplyr::filter(.data$cohortId ==  cohort %>% 
+                          dplyr::filter(.data$shortName == columnName) %>% 
+                          dplyr::pull(.data$cohortId))
+        columnCount <- filteredHeaderCount$count
+      } else {
+        columnCount <- filteredHeaderCount[[columnName]]
+      }
+      columnName <- paste0(columnName," (", scales::comma(columnCount), ")")
     }
       columnDefinitions[[dataColumns[i]]] <-
         reactable::colDef(
@@ -1057,9 +1069,9 @@ getCountsForHeaderForUseInDataTable <- function(dataSource,
       warning("Did not get counts for table header in metadata file. Please check the output from Cohort Diagnostics (metadata file is generated in the last step, is it in the zip file?), is it corrupted?")
     }
   } else if (source == "Cohort Level") {
-    if (length(cohortIds) > 1) {
-      stop("Only one cohort id is supported")
-    }
+    # if (length(cohortIds) > 1) {
+    #   stop("Only one cohort id is supported")
+    # }
     countsForHeader <-
       getResultsCohortCount(
         dataSource = dataSource,
@@ -1067,8 +1079,8 @@ getCountsForHeaderForUseInDataTable <- function(dataSource,
         databaseIds = databaseIds
       ) %>%
       dplyr::rename(records = .data$cohortEntries,
-                    persons = .data$cohortSubjects) %>%
-      dplyr::select(-.data$cohortId) #only one cohort id is supported
+                    persons = .data$cohortSubjects)
+      # dplyr::select(-.data$cohortId) #only one cohort id is supported
     if (!hasData(countsForHeader)) {
       warning("Did not get counts for table header in cohort table. Please check the output from Cohort Diagnostics, is it corrupted?")
     }

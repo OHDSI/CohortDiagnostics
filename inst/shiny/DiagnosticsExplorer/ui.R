@@ -153,7 +153,8 @@ sidebarMenu <-
       input.tabs != 'timeSeries' &
       input.tabs != 'cohortCounts' &
       input.tabs != 'incidenceRate' &
-      input.tabs != 'timeDistribution'",
+      input.tabs != 'timeDistribution' &
+      input.tabs !='cohortCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "selectedCompoundCohortName",
         label = "cohort",
@@ -174,7 +175,8 @@ sidebarMenu <-
       condition = "input.tabs == 'cohortCounts' |
       input.tabs == 'timeSeries' |
       input.tabs == 'incidenceRate' |
-      input.tabs == 'timeDistribution'",
+      input.tabs == 'timeDistribution'|
+      input.tabs == 'cohortCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "selectedCompoundCohortNames",
         label = "Cohorts",
@@ -194,8 +196,7 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs == 'cohortOverlap' ||
-      input.tabs == 'cohortCharacterization'",
+      condition = "input.tabs == 'cohortOverlap'",
       shinyWidgets::pickerInput(
         inputId = "selectedComparatorCompoundCohortNames",
         label = "Comparators",
