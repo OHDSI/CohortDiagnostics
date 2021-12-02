@@ -72,51 +72,43 @@ cohortDefinitionSet <- loadCohortsFromPackage(packageName = "CohortDiagnostics",
 ## Loading cohort references from WebApi
 It is often desirable to perform cohort diagnostics on definitions stored in an ATLAS instance.
 Though this is not the preferred way of running studies (and this is certainly not the preferred method for an OHDSI
-network study involving multiple sites) it is possible to load references in to a data frame used by cohort diagnostics.
+network study involving multiple sites) it is possible to load references into a data frame used by cohort diagnostics.
 
 The following code demonstrates how to create a set of cohort references from ATLAS that can be used by cohort diagnostics:
 ```{r tidy=FALSE,eval=FALSE}
-library(magrittr)
-# Set up
+# Set up url
 baseUrl <- "https://atlas.hosting.com/WebAPI"
 # list of cohort ids
 cohortIds <- c(18345,18346)
 
-cohortDefinitionSet <- data.frame()
-for (cohortId in cohortIds) {
-  cohortDefinition <- ROhdsiWebApi::getCohortDefinition(cohortId = cohortId, baseUrl = baseUrl)
-  sqlDefinition <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition, baseUrl = baseUrl, generateStats = TRUE)
-  cohortDefinitionSet <- rbind(cohortDefinitionSet,
-                               data.frame(
-                           cohortId = cohortId,
-                           cohortName = cohortDefinition$name,
-                           json = jsonlite::toJSON(cohortDefinition),
-                           sql = sqlDefinition))
-}
+cohortDefinitionSet <- ROhdsiWebApi::exportCohortDefinitionSet(baseUrl = baseUrl,
+                                                               cohortIds = cohortIds,
+                                                               generateStats = TRUE)
 ```
+Consult the ROhdsiWebApi documentation for details on authentication to your atlas instance.
 
 ## Generating cohorts
 Cohorts must be generated before cohort diagnostics can be run.
-This can be done using the `CohortDiagnostics` function `instantiateCohortSet` or independently
-(for example, as part of a larger study package).
 
-### Inclusion rules
-We have the option to also generate inclusion rule statistics while the cohorts are instantiated (recommended).
-If we want to do this, we need to provide a folder where the inclusion rule statistics will be stored for later use.
 
-```{r}
-inclusionStatisticsFolder <- "inclusionStats"
-```
-
-### Using CohortDiagnostics to instantiate cohorts
+### Using CohortGenerator to instantiate cohorts
 For example,
 ```{r results = FALSE,message = FALSE,warning=FALSE,eval=FALSE}
-instantiateCohortSet(connectionDetails = connectionDetails,
-                     cohortDatabaseSchema = cohortDatabaseSchema,
-                     inclusionStatisticsFolder = inclusionStatisticsFolder,
-                     cohortTable = cohortTable,
-                     cohortDefinitionSet = cohortDefinitionSet,
-                     cdmDatabaseSchema = cdmDatabaseSchema)
+cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
+
+# Next create the tables on the database
+CohortGenerator::createCohortTables(connectionDetails = connectionDetails,
+                                    cohortTableNames = cohortTableNames,
+                                    cohortDatabaseSchema = "main",
+                                    incremental = FALSE)
+
+# Generate the cohort set
+CohortGenerator::generateCohortSet(connectionDetails= connectionDetails,
+                                   cdmDatabaseSchema = cdmDatabaseSchema,
+                                   cohortDatabaseSchema = cdmDatabaseSchema,
+                                   cohortTableNames = cohortTableNames,
+                                   cohortDefinitionSet = cohortDefinitionSet,
+                                   incremental = FALSE)
 ```
 **Note, that the above code will delete an existing table**.
 However, incremental mode can be used when setting the parameter `incremental = TRUE`.
@@ -126,7 +118,36 @@ The resulting cohort table should include the columns:
 
 `cohort_definition_id`, `subject_id`, `cohort_start_date`, `cohort_end_date`
 
+### Inclusion rules
+We have the option to also generate inclusion rule statistics while the cohorts are instantiated (recommended).
+If we want to do this, we need to provide a folder where the inclusion rule statistics will be stored for later use.
 
+```{r}
+inclusionStatisticsFolder <- "inclusionStats"
+```
+We can then use the cohort generator package to create the inclusion rule statistics for our cohorts.
+```{r eval = FALSE}
+inclusionRuleNames <- CohortGenerator::insertInclusionRuleNames(connectionDetails = connectionDetails,
+                                                                cohortDefinitionSet = cohortDefinitionSet,
+                                                                cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                cohortInclusionTable = cohortTableNames$cohortInclusionTable)
+
+CohortGenerator::exportCohortStatsTables(connectionDetails = connectionDetails,
+                                         cohortDatabaseSchema = cdmDatabaseSchema,
+                                         cohortTableNames = cohortTableNames,
+                                         cohortStatisticsFolder = inclusionStatisticsFolder,
+                                         incremental = FALSE)
+
+CohortGenerator::dropCohortStatsTables(connectionDetails = connectionDetails,
+                                       cohortDatabaseSchema = cohortDatabaseSchema,
+                                       cohortTableNames = cohortTableNames)
+
+CohortGenerator::dropCohortStatsTables(connectionDetails = connectionDetails,
+                                       cohortDatabaseSchema = cohortDatabaseSchema,
+                                       cohortTableNames = cohortTableNames)
+```
+This will calculate basic inclusion rule statistics and export the results to `inclusionStatisticsFolder`
+for later use in cohort diagnostics.
 
 ## Executing cohort diagnostics
 Once cohort definitions are loaded and cohort tables have been populated cohort diagnostics is ready to be executed.
