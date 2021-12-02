@@ -7,7 +7,7 @@ as the main interface to the package.
 3. Removed vignettes on usage that are no longer required
 
 Bug Fixes:
-1. User code removed from CohortExplorer to fixe issue #618
+1. User code removed from CohortExplorer to fix issue #618
 2. Fixed bug with `runBreakdownIndexEvents = TRUE` failed for drug_era table with SQL error - Issue #695
 
 CohortDiagnostics 2.1.4
