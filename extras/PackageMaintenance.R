@@ -25,7 +25,7 @@ spelling::spell_check_files(list.files(path = "inst/shiny", pattern = "*.html", 
 
 # Create manual and vignettes:
 unlink("extras/CohortDiagnostics.pdf")
-shell("R CMD Rd2pdf ./ --output=extras/CohortDiagnostics.pdf")
+system("R CMD Rd2pdf ./ --output=extras/CohortDiagnostics.pdf")
 
 dir.create(path = "./inst/doc/", showWarnings = FALSE)
 
