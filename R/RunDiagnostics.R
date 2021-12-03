@@ -528,7 +528,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   # Temporal Cohort characterization ---------------------------------------------------------------
   if (runTemporalCohortCharacterization) {
-    executeTemporalCharacterization(
+    executeCohortCharacterization(
       connection,
       databaseId,
       exportFolder,
@@ -543,7 +543,13 @@ runCohortDiagnostics <- function(packageName = NULL,
       minCellCount,
       instantiatedCohorts,
       incremental,
-      recordKeepingFile
+      recordKeepingFile,
+      jobName = "Temporal Cohort characterization",
+      task = "runTemporalCohortCharacterization",
+      covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
+      covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
+      analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
+      timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv")
     )
   }
   
