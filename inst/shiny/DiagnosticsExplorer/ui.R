@@ -153,7 +153,8 @@ sidebarMenu <-
       input.tabs != 'timeSeries' &
       input.tabs != 'cohortCounts' &
       input.tabs != 'incidenceRate' &
-      input.tabs != 'timeDistribution'",
+      input.tabs != 'timeDistribution' &
+      input.tabs !='cohortCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "selectedCompoundCohortName",
         label = "cohort",
@@ -174,7 +175,8 @@ sidebarMenu <-
       condition = "input.tabs == 'cohortCounts' |
       input.tabs == 'timeSeries' |
       input.tabs == 'incidenceRate' |
-      input.tabs == 'timeDistribution'",
+      input.tabs == 'timeDistribution'|
+      input.tabs == 'cohortCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "selectedCompoundCohortNames",
         label = "Cohorts",
@@ -194,8 +196,7 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs == 'cohortOverlap' ||
-      input.tabs == 'cohortCharacterization'",
+      condition = "input.tabs == 'cohortOverlap'",
       shinyWidgets::pickerInput(
         inputId = "selectedComparatorCompoundCohortNames",
         label = "Comparators",
@@ -334,15 +335,10 @@ bodyTabItems <- shinydashboard::tabItems(
                          ),
                          tags$td(
                            align = "right",
-                           shiny::downloadButton(
-                             outputId = "saveConceptSetComparisonTable",
-                             label = NULL,
-                             icon = shiny::icon("download"),
-                             style = "margin-top: 5px; margin-bottom: 5px;"
-                           )
+                           tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('conceptSetComparisonTable')")
                          )
                        )),
-            DT::dataTableOutput(outputId = "conceptSetComparisonTable")
+            reactable::reactableOutput(outputId = "conceptSetComparisonTable")
           )
         )
       ),
@@ -460,19 +456,13 @@ bodyTabItems <- shinydashboard::tabItems(
                    shiny::radioButtons(
                      inputId = "cohortCountsTableColumnFilter",
                      label = "Display",
-                     choiceNames = c("Both", "Subjects Only", "Records Only"),
-                     choiceValues = c("both", "subjects", "records"), 
-                     selected = "both",
+                     choices = c("Both", "Persons", "Records"),
+                     selected = "Both",
                      inline = TRUE
                    )
                  ),
                  tags$td(align = "right",
-                         shiny::downloadButton(
-                           "saveCohortCountsTable",
-                           label = "",
-                           icon = shiny::icon("download"),
-                           style = "margin-top: 5px; margin-bottom: 5px;"
-                         )
+                         tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortCountsTable')"),
                  )
                )
     ),
@@ -876,12 +866,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                           label = "Show As Percent")
                    ),
                    tags$td(
-                     shiny::downloadButton(
-                       "saveBreakdownTable",
-                       label = "",
-                       icon = shiny::icon("download"),
-                       style = "margin-top: 5px; margin-bottom: 5px;"
-                     )
+                     tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('indexEventBreakdownReactTable')")
                    )
                  )
                )),
@@ -890,8 +875,6 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::tabPanel(
         title = "Table",
         value = "indexEventBreakbownTableTab",
-        # DT::dataTableOutput(outputId = "indexEventBreakdownReactTable"),
-        tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('indexEventBreakdownReactTable')"),
         reactable::reactableOutput(outputId = "indexEventBreakdownReactTable"),
         tags$script('document.getElementById("indexEventBreakdownReactTable").addEventListener("click", function(event){
                              setTimeout(function(){
@@ -983,15 +966,9 @@ bodyTabItems <- shinydashboard::tabItems(
                          ),
                          tags$td(
                            align = "right",
-                           shiny::downloadButton(
-                             "saveDetailsOfSelectedConceptIdForIndexEvent",
-                             label = "",
-                             icon = shiny::icon("download"),
-                             style = "margin-top: 5px; margin-bottom: 5px;"
-                           )
+                           tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('conceptBrowserTableForIndexEvent')")
                          )
                        )),
-            tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('conceptBrowserTableForIndexEvent')"),
             reactable::reactableOutput(outputId = "conceptBrowserTableForIndexEvent")
           ),
           shiny::tabPanel(
