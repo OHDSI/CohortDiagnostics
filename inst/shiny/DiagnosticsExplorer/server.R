@@ -182,7 +182,7 @@ shiny::shinyServer(function(input, output, session) {
       input$selectedCompoundCohortNames,
       input$selectedCompoundCohortNames_open,
       input$conceptSetsSelectedTargetCohort,
-      reactable::getReactableState("indexEventBreakdownTable", "selected"),
+      reactable::getReactableState("indexEventBreakdownReactTable", "selected"),
       input$targetVocabularyChoiceForConceptSetDetails,
       input$selectedComparatorCompoundCohortNames,
       input$selectedComparatorCompoundCohortNames_open
@@ -443,15 +443,11 @@ shiny::shinyServer(function(input, output, session) {
                                    tags$tr(
                                      tags$td(
                                        align = "right",
-                                       shiny::downloadButton(
-                                         "saveTargetConceptSetsExpressionOptimizedTable",
-                                         label = "",
-                                         icon = shiny::icon("download"),
-                                         style = "margin-top: 5px; margin-bottom: 5px;"
-                                       )
+                                       
+                                       tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('targetConceptSetsExpressionOptimizedTable')")
                                      )
                                    )),
-                        DT::dataTableOutput(outputId = "targetConceptSetsExpressionOptimizedTable"),
+                        reactable::reactableOutput(outputId = "targetConceptSetsExpressionOptimizedTable")
                       )
                       )
                   ),
@@ -816,7 +812,10 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    dataTable <- getSimpleReactable(data = data)
+    keyColumns <- colnames(data)
+    getSimpleReactable(data = data,
+                       dataColumns = c(),
+                       keyColumns = keyColumns)
   })
   
   
@@ -1093,8 +1092,13 @@ shiny::shinyServer(function(input, output, session) {
             nrow(data) > 0),
         "There is no inclusion rule data for this cohort."
       ))
-      table <- getSimpleReactable(data = data)
-      return(table)
+      
+      keyColumns <- c("databaseId")
+      dataColumns <- c("cohortSubjects", "cohortEntries")
+      
+      getSimpleReactable(data = data,
+                         keyColumns = keyColumns,
+                         dataColumns = dataColumns)
     })
   
   ##Concept set ----
@@ -2042,119 +2046,51 @@ shiny::shinyServer(function(input, output, session) {
       combinedResult <- combinedResult
     }
     
-    combinedResult <- combinedResult  %>% 
-      tidyr::pivot_longer(
-        names_to = "type",
-        cols = c("target", "comparator"),
-        values_to = "value"
-      ) %>% 
-      dplyr::inner_join(cohortShortName,
-                        by = "type") %>% 
-      dplyr::mutate(type = paste0(.data$type, " (", .data$shortName, ")")) %>% 
-      dplyr::select(-.data$shortName) %>% 
-      dplyr::left_join(conceptIdSortOrder, by = "conceptId") %>% 
-      dplyr::arrange(.data$rn, .data$databaseId, .data$conceptId)
     return(combinedResult)
   })
   
-  #output: saveConceptSetComparisonTable----
-  output$saveConceptSetComparisonTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "ConceptSetsExpressionComparison")
-    },
-    content = function(file) {
-      data <- getConceptSetComparisonTableData()
-      if (!hasData(data)) {
-        return(NULL)
-      }
-      data <- data %>% 
-        dplyr::mutate(type = paste0(type, " ", .data$databaseId)) %>% 
-        dplyr::select(-.data$databaseId, -.data$rn) %>% 
-        tidyr::pivot_wider(
-          id_cols = c(
-            "conceptId",
-            "conceptName"
-          ),
-          names_from = type,
-          values_from = value
-        )
-      downloadCsv(x = data, fileName = file)
-      #!!!! this may need downloadExcel() with formatted and multiple tabs
-    }
-  )
-  
-  
-  output$conceptSetComparisonTable <- DT::renderDT(expr = {
+  output$conceptSetComparisonTable <- reactable::renderReactable(expr = {
     data <- getConceptSetComparisonTableData()
     if (!hasData(data)) {
       return(NULL)
     }
-    data <- data %>% 
-      dplyr::arrange(.data$databaseId, dplyr::desc(.data$type))
-    databaseIds <- unique(data$databaseId) %>% sort()
     
-    data <- data %>% 
-      dplyr::mutate(type = paste0(type, " ", .data$databaseId)) %>% 
-      dplyr::select(-.data$databaseId) %>% 
-      dplyr::mutate(value = dplyr::case_when(.data$value == TRUE ~ as.character(icon("check")),
-                                             FALSE ~ as.character(NA))) %>% 
-      tidyr::pivot_wider(
-        id_cols = c(
-          "conceptId",
-          "conceptName",
-          "rn"
-        ),
-        names_from = type,
-        values_from = value
-      ) %>% 
-      dplyr::arrange(.data$rn) %>% 
-      dplyr::select(-.data$rn)
-    columnNames <- c("Target", "Comparator")
+    data <- data %>%
+      dplyr::mutate(target = dplyr::case_when(.data$target == TRUE ~ as.character(icon("check")),
+                                              .data$target == FALSE ~ as.character(''))) %>% 
+      dplyr::mutate(comparator = dplyr::case_when(.data$comparator == TRUE ~ as.character(icon("check")),
+                                                  .data$comparator == FALSE ~ as.character('')))
+    keyColumnFields <- c("conceptId", "conceptName")
+    #depending on user selection - what data Column Fields Will Be Presented?
+    dataColumnFields <-
+      c("target",
+        "comparator")
     
-    sketch <- htmltools::withTags(table(class = "display",
-                                        thead(tr(
-                                          th(rowspan = 2, "Concept ID"),
-                                          th(rowspan = 2, "Concept Name"),
-                                          lapply(
-                                            databaseIds,
-                                            th,
-                                            colspan = length(columnNames),
-                                            class = "dt-center",
-                                            style = "border-right:1px solid silver;border-bottom:1px solid silver"
-                                          )
-                                        ),
-                                        tr(
-                                          lapply(rep(
-                                            columnNames,
-                                            length(databaseIds)
-                                          ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                        ))))
+    countsForHeader <-
+      getCountsForHeaderForUseInDataTable(
+        dataSource = dataSource,
+        databaseIds = consolidatedDatabaseIdTarget(),
+        cohortIds = consolidatedCohortIdTarget(),
+        source = "Cohort Level",
+        fields = "Persons Only"
+      )
+    if (!hasData(countsForHeader)) {
+      return(NULL)
+    }
     
-    options = list(
-      pageLength = 20,
-      searching = TRUE,
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      info = TRUE,
-      searchHighlight = TRUE,
-      scrollX = TRUE,
-      scrollY = "20vh",
-      columnDefs = list(truncateStringDef(1, 30))
+    getReactTableWithColumnsGroupedByDatabaseId(
+      data = data,
+      cohort = cohort, 
+      database = database,
+      headerCount = countsForHeader,
+      keyColumns = keyColumnFields,
+      countLocation = 0,
+      dataColumns = dataColumnFields,
+      maxCount = NULL,
+      showResultsAsPercent = FALSE, 
+      sort = FALSE,
+      valueFill = ''
     )
-    
-    dataTable <- DT::datatable(
-      data,
-      options = options,
-      container = sketch,
-      colnames = colnames(data) %>% camelCaseToTitleCase(),
-      rownames = FALSE,
-      escape = FALSE,
-      selection = 'single',
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
-    return(dataTable)
   })
   
   #activeSelected----
@@ -2357,9 +2293,12 @@ shiny::shinyServer(function(input, output, session) {
                         nrow(data) > 0),
         "Concept set details not available for this cohort"
       ))
-      
+      keyColumns <- colnames(data)
       getSimpleReactable(data = data,
-                         selection = 'single')
+                         keyColumns = keyColumns,
+                         dataColumns = c(),
+                         selection = 'single',
+                         defaultSelected = 1)
     })
   
   getConceptSetsInCohortDataComparator <- reactive({
@@ -2384,9 +2323,12 @@ shiny::shinyServer(function(input, output, session) {
       if (!hasData(data)) {
         return(NULL)
       }
-      
+      keyColumns <- colnames(data)
       getSimpleReactable(data = data,
-                         selection = 'single')
+                         keyColumns = keyColumns,
+                         dataColumns = c(),
+                         selection = 'single',
+                         defaultSelected = 1)
      
     })
   
@@ -2539,20 +2481,9 @@ shiny::shinyServer(function(input, output, session) {
                        name = "canTargetConceptSetExpressionBeOptimized",
                        suspendWhenHidden = FALSE)
   
-  #output: saveTargetConceptSetsExpressionOptimizedTable----
-  output$saveTargetConceptSetsExpressionOptimizedTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "ConceptSetsExpressionOptimized")
-    },
-    content = function(file) {
-      downloadCsv(x = getOptimizedTargetConceptSetsExpressionTable(), fileName = file)
-      #!!!! this may need downloadExcel() with formatted and multiple tabs
-    }
-  )
-  
   #output: targetConceptSetsExpressionOptimizedTable----
   output$targetConceptSetsExpressionOptimizedTable <-
-    DT::renderDataTable(expr = {
+    reactable::renderReactable(expr = {
       optimizedConceptSetExpression <-
         getOptimizedTargetConceptSetsExpressionTable()
       if (!hasData(optimizedConceptSetExpression)) {
@@ -2587,44 +2518,11 @@ shiny::shinyServer(function(input, output, session) {
                       .data$invalid) %>% 
         dplyr::arrange(.data$databaseId)
       
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = "20vh",
-        columnDefs = list(truncateStringDef(1, 80))
-      )
-      
-      dataTable <- DT::datatable(
-        optimizedConceptSetExpression,
-        options = options,
-        colnames = colnames(optimizedConceptSetExpression) %>% camelCaseToTitleCase(),
-        rownames = FALSE,
-        escape = FALSE,
-        selection = 'none',
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      return(dataTable)
-    }, server = TRUE)
-  
-  
-  #output: saveTargetConceptSetsExpressionTable----
-  output$saveTargetConceptSetsExpressionTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "ConceptSetsExpression")
-    },
-    content = function(file) {
-      downloadCsv(x = getConceptSetExpressionTarget(), fileName = file)
-      #!!!! this may need downloadExcel() with formatted and multiple tabs
-    }
-  )
+      keyColumns <- colnames(optimizedConceptSetExpression)
+      getSimpleReactable(data = optimizedConceptSetExpression,
+                         dataColumns = c(),
+                         keyColumns = keyColumns)
+    })
   
   #output: targetConceptSetsExpressionTable----
   output$targetConceptSetsExpressionTable <-
@@ -2648,8 +2546,10 @@ shiny::shinyServer(function(input, output, session) {
           mapped = .data$includeMapped,
           invalid = .data$invalidReason
         )
-      
-      getSimpleReactable(data = data)
+      keyColumns <- colnames(data)
+      getSimpleReactable(data = data,
+                         keyColumns = keyColumns,
+                         dataColumns = c())
     })
   
   #output: targetCohortDefinitionResolvedConceptTable----
@@ -2959,7 +2859,11 @@ shiny::shinyServer(function(input, output, session) {
             nrow(data) > 0),
         "There is no inclusion rule data for this cohort."
       ))
-      getSimpleReactable(data = data)
+      keyColumns <- c("databaseId")
+      dataColumns <- c("cohortSubjects", "cohortEntries")
+      getSimpleReactable(data = data,
+                         keyColumns = keyColumns,
+                         dataColumns = dataColumns)
       
     })
   
@@ -3316,8 +3220,10 @@ shiny::shinyServer(function(input, output, session) {
           mapped = .data$includeMapped,
           invalid = .data$invalidReason
         )
-      
-      getSimpleReactable(data = data)
+      keyColumns <- colnames(data)
+      getSimpleReactable(data = data,
+                         keyColumns = keyColumns,
+                         dataColumns = c())
     })
   
   ##output: comparatorCohortDefinitionResolvedConceptTable----
@@ -4365,9 +4271,6 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  #!!!!!!!!!! bug inclusion rule is not workin\
-  #!!!!!!!!! no down load button
-  #!!!!!!!!! no radio button for records/subjects
   ##output: cohortCountsTable----
   output$cohortCountsTable <- reactable::renderReactable(expr = {
     validate(need(
@@ -4380,73 +4283,64 @@ shiny::shinyServer(function(input, output, session) {
     ))
     data <- getCohortCountDataForSelectedDatabaseIdsCohortIds() %>% 
       dplyr::rename("records" = .data$cohortEntries,
-                    "subjects" = .data$cohortSubjects,
+                    "persons" = .data$cohortSubjects,
                     "cohort" = .data$shortName)
     validate(need(all(hasData(data)),
-      "No data for the combination"
+                  "No data for the combination"
     ))
     
     keyColumnFields <- c("cohort")
-    dataColumnFields <- c("records","subjects")
-    if (input$cohortCountsTableColumnFilter != "both") {
+    dataColumnFields <- c("persons", "records")
+    
+    if (input$cohortCountsTableColumnFilter == "Both") {
+      dataColumnFields <- dataColumnFields
+      countLocation <- 2
+    } else if (input$cohortCountsTableColumnFilter == "Persons") {
       dataColumnFields <-
         dataColumnFields[stringr::str_detect(
           string = tolower(dataColumnFields),
-          pattern = tolower(
-            input$cohortCountsTableColumnFilter
-          )
+          pattern = tolower("person")
         )]
+      countLocation <- 1
+    } else if (input$cohortCountsTableColumnFilter == "Records") {
+      dataColumnFields <-
+        dataColumnFields[stringr::str_detect(
+          string = tolower(dataColumnFields),
+          pattern = tolower("record")
+        )]
+      countLocation <- 1
     }
-   
+    
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
     
-    dataTable <- getReactTableWithColumnsGroupedByDatabaseId(
+    countsForHeader <-
+      getCountsForHeaderForUseInDataTable(
+        dataSource = dataSource,
+        databaseIds = consolidatedDatabaseIdTarget(),
+        cohortIds =  activeSelected()$cohortId,
+        source = "Datasource Level",
+        fields = input$cohortCountsTableColumnFilter
+      )
+    
+    getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
       cohort = cohort,
       database = database,
-      headerCount = NULL,
+      headerCount = countsForHeader,
       keyColumns = keyColumnFields,
-      countLocation = 0,
+      countLocation = countLocation,
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
       showResultsAsPercent =  FALSE, 
       sort = TRUE
     )
-    return(dataTable)
   })
-  
-  ##output: saveCohortCountsTable----
-  output$saveCohortCountsTable <-  downloadHandler(
-    filename = function()
-    {
-      getCsvFileNameWithDateTime(string = "cohortCount")
-    },
-    content = function(file) {
-      if (input$cohortCountsTableColumnFilter == "Both")
-      {
-        table <- getCohortCountDataSubjectRecord()
-      }
-      if (input$cohortCountsTableColumnFilter == "Subjects Only" ||
-          input$cohortCountsTableColumnFilter == "Records Only")
-      {
-        if (input$cohortCountsTableColumnFilter == "Subjects Only")
-        {
-          table <- getCohortCountDataSubject()
-        } else
-        {
-          table <- getCohortCountDataRecord()
-        }
-      }
-      downloadCsv(x = table,
-                  fileName = file)
-    }
-  )
   
   ###getCohortIdFromSelectedRowInCohortCountTable----
   getCohortIdFromSelectedRowInCohortCountTable <- reactive({
-    idx <- input$cohortCountsTable_rows_selected
+    idx <- reactable::getReactableState("cohortCountsTable", "selected")
     if (is.null(idx)) {
       return(NULL)
     } else {
@@ -5238,9 +5132,10 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(hasData(data),
       "No timeseries data for the cohort of this series type"
     ))
-    
-   dataTable <- getSimpleReactable(data = data)
-    return(dataTable)
+    keyColumns <- colnames(data)
+    getSimpleReactable(data = data,
+                       keyColumns = keyColumns,
+                       dataColumns = c())
   })
 
   ##output: fixedTimeSeriesPlot----
@@ -5359,8 +5254,10 @@ shiny::shinyServer(function(input, output, session) {
     data <- getTimeDistributionTableData()
     validate(need(hasData(data),
                   "No data available for selected combination."))
-    table <- getSimpleReactable(data)
-    return(table)
+    keyColumns <- colnames(data)
+    getSimpleReactable(data = data,
+                       keyColumns = keyColumns,
+                       dataColumns = c())
   })
   
   ##output: timeDistributionPlot----
@@ -5545,89 +5442,6 @@ shiny::shinyServer(function(input, output, session) {
       ))))
     return(data)
   })
-  
-  ##output: saveBreakdownTable----
-  output$saveBreakdownTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "indexEventBreakdown")
-    },
-    content = function(file) {
-      downloadCsv(x = getIndexEventBreakdownTargetDataFiltered(),
-                  fileName = file)
-    }
-  )
-  
-  ##output: indexEventBreakdownTable----
-  output$indexEventBreakdownTable <-
-    DT::renderDataTable(expr = {
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(
-        message = paste0(
-          "Get index event breakdown data ",
-          " for cohort id: ",
-          consolidatedCohortIdTarget()
-        ),
-        value = 0
-      )
-      
-      data <- getIndexEventBreakdownTargetDataFiltered()
-      
-      validate(
-        need(
-          hasData(data),
-          "No index event breakdown data for the chosen combination."
-        )
-      )
-      keyColumnFields <-
-        c("conceptId", "conceptName", "vocabularyId", "standardConcept")
-      #depending on user selection - what data Column Fields Will Be Presented?
-      dataColumnFields <-
-        c("persons",
-          "records")
-      if (input$indexEventBreakdownTableFilter == "Both") {
-        dataColumnFields <- dataColumnFields
-        countLocation <- 2
-      } else if (input$indexEventBreakdownTableFilter == "Persons") {
-        dataColumnFields <-
-          dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
-                                               pattern = tolower("person"))]
-        countLocation <- 1
-      } else if (input$indexEventBreakdownTableFilter == "Records") {
-        dataColumnFields <-
-          dataColumnFields[stringr::str_detect(string = tolower(dataColumnFields),
-                                               pattern = tolower("record"))]
-        countLocation <- 1
-      }
-      
-      countsForHeader <-
-        getCountsForHeaderForUseInDataTable(
-          dataSource = dataSource,
-          databaseIds = consolidatedDatabaseIdTarget(),
-          cohortIds = consolidatedCohortIdTarget(),
-          source = "Cohort Level",
-          fields = input$indexEventBreakdownTableFilter
-        )
-      if (!hasData(countsForHeader)) {
-        return(NULL)
-      }
-      
-      maxCountValue <-
-        getMaxValueForStringMatchedColumnsInDataFrame(data = data,
-                                                      string = dataColumnFields)
-      table <- getDtWithColumnsGroupedByDatabaseId(
-        data = data,
-        headerCount = countsForHeader,
-        keyColumns = keyColumnFields,
-        countLocation = countLocation,
-        dataColumns = dataColumnFields,
-        maxCount = maxCountValue,
-        showResultsAsPercent = input$indexEventBreakdownShowAsPercent, 
-        sort = FALSE
-      )
-      
-      return(table)
-    }, server = TRUE)
   
   ##output: indexEventBreakdownTableReactable----
   output$indexEventBreakdownReactTable <-
@@ -6183,16 +5997,6 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  output$saveDetailsOfSelectedConceptIdForIndexEvent <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "indexEventBreakdownConceptSetBrowser")
-    },
-    content = function(file) {
-      downloadCsv(x = conceptSetBrowserData(),
-                  fileName = file)
-    }
-  )
-  
   #______________----
   # Visit Context -----
   ##getVisitContextData----
@@ -6375,16 +6179,6 @@ shiny::shinyServer(function(input, output, session) {
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
     
-    # table <- getDtWithColumnsGroupedByDatabaseId(
-    #   data = data,
-    #   headerCount = countsForHeader,
-    #   keyColumns = keyColumnFields,
-    #   countLocation = 1,
-    #   dataColumns = dataColumnFields,
-    #   maxCount = maxCountValue,
-    #   showResultsAsPercent = (input$visitContextValueFilter == "Percentage")
-    # )
-    
     table <- getReactTableWithColumnsGroupedByDatabaseId(
       data = data,
       cohort = cohort, 
@@ -6395,7 +6189,7 @@ shiny::shinyServer(function(input, output, session) {
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
       showResultsAsPercent =  (input$visitContextValueFilter == "Percentage"), 
-      sort = FALSE
+      sort = TRUE
     )
     return(table)
   })
@@ -6549,37 +6343,10 @@ shiny::shinyServer(function(input, output, session) {
       nrow(data) > 0,
       paste0("No cohort overlap data for this combination.")
     ))
-    if (nrow(data) > 25) {
-      scrollY <- '50vh'
-    } else {
-      scrollY <- TRUE
-    }
-    
-    table <- getSimpleReactable(data = data)
-    return(table)
-    
-    # options = list(
-    #   pageLength = 1000,
-    #   searching = TRUE,
-    #   scrollX = TRUE,
-    #   scrollY = scrollY,
-    #   lengthChange = TRUE,
-    #   ordering = FALSE,
-    #   paging = TRUE,
-    #   columnDefs = list(minCellCountDef(3:10))
-    # )
-    # 
-    # table <- DT::datatable(
-    #   data,
-    #   options = options,
-    #   rownames = FALSE,
-    #   colnames = colnames(data) %>%
-    #     camelCaseToTitleCase(),
-    #   escape = FALSE,
-    #   filter = "top",
-    #   class = "stripe nowrap compact"
-    # )
-   
+    keyColumns <- colnames(data)
+    getSimpleReactable(data = data,
+                       keyColumns = keyColumns,
+                       dataColumns = c())
   })
   
   #______________----
@@ -6597,9 +6364,9 @@ shiny::shinyServer(function(input, output, session) {
       ))) {
         return(NULL)
       }
-      if (any(length(consolidatedCohortIdTarget()) != 1)) {
-        return(NULL)
-      }
+      # if (any(length(consolidatedCohortIdTarget()) != 1)) {
+      #   return(NULL)
+      # }
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(
@@ -6611,7 +6378,7 @@ shiny::shinyServer(function(input, output, session) {
       )
       data <- getMultipleCharacterizationResults(
         dataSource = dataSource,
-        cohortId = c(consolidatedCohortIdTarget()) %>% unique()
+        cohortIds = c(consolidatedCohortIdTarget()) %>% unique()
       )
       if (!hasData(data$analysisRef)) {
         return(NULL)
@@ -6636,9 +6403,7 @@ shiny::shinyServer(function(input, output, session) {
       ))) {
         return(NULL)
       }
-      if (length(consolidatedCohortIdComparator()) > 0) {
-        return(NULL)
-      }
+     
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(
@@ -6650,7 +6415,7 @@ shiny::shinyServer(function(input, output, session) {
       )
       data <- getMultipleCharacterizationResults(
         dataSource = dataSource,
-        cohortId = c(consolidatedCohortIdComparator()) %>% unique()
+        cohortIds = c(consolidatedCohortIdComparator()) %>% unique()
       )
       if (!hasData(data$analysisRef)) {
         return(NULL)
@@ -6664,9 +6429,6 @@ shiny::shinyServer(function(input, output, session) {
   ##getMultipleCharacterizationData----
   getMultipleCharacterizationData <- shiny::reactive(x = {
     if (!input$tabs == "cohortCharacterization") {
-      return(NULL)
-    }
-    if (!hasData(getMultipleCharacterizationDataTarget())) {
       return(NULL)
     }
     dataTarget <- getMultipleCharacterizationDataTarget()
@@ -6937,15 +6699,17 @@ shiny::shinyServer(function(input, output, session) {
     if (input$tabs != "cohortCharacterization") {
       return(NULL)
     }
-    data <- getCharacterizationDataFiltered()
+    data <- getCharacterizationDataFiltered() %>% 
+      dplyr::mutate(mean = round(.data$mean,3),
+                    sd = round(.data$sd,3))
     if (!hasData(data)) {
       return(NULL)
     }
     #!!!! if user selects proportion then mean, else count. Also support option for both as 34,342 (33.3%)
     if (input$characterizationColumnFilters == "Mean only") {
-      data <- data %>%
-        dplyr::select(-.data$mean) %>%
-        dplyr::rename("mean" = .data$sumValue)
+      # data <- data %>%
+      #   dplyr::select(-.data$mean) %>%
+      #   dplyr::rename("mean" = .data$sumValue)
       keyColumnFields <-
         c("cohortId",
           "databaseId",
@@ -7016,7 +6780,7 @@ shiny::shinyServer(function(input, output, session) {
       keyColumnFields <- c("characteristic")
       dataColumnFields <- intersect(x = colnames(data),
                                     y = cohort$shortName)
-      countLocation <- 1
+      countLocation <- 2
       countsForHeader <-
         getCountsForHeaderForUseInDataTable(
           dataSource = dataSource,
@@ -7056,18 +6820,17 @@ shiny::shinyServer(function(input, output, session) {
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
       keyColumnFields <-
-        c("cohortId",
-          "covariateId",
+        c("covariateId",
           "analysisName",
           "domainId",
           "conceptName")
       if (input$characterizationColumnFilters == "Mean only") {
         dataColumnFields <- setdiff(colnames(data),
-                                    c("databaseId", keyColumnFields))
+                                    c("databaseId","cohortId", keyColumnFields))
         showPercent <- TRUE
       } else {
         dataColumnFields <- setdiff(colnames(data),
-                                    c("databaseId", keyColumnFields))
+                                    c("databaseId","cohortId", keyColumnFields))
         showPercent <- FALSE
       }
       
@@ -7090,7 +6853,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::mutate(conceptName = stringr::str_replace_all(string = .data$conceptName,
                                                              pattern = stringr::fixed(pattern = "\n"), 
                                                              replacement = "<br/>"))
-      table <- getReactTableWithColumnsGroupedByDatabaseId(
+      table <- getNestedReactTable(
         data = data,
         cohort = cohort,
         database = database,
@@ -7100,7 +6863,7 @@ shiny::shinyServer(function(input, output, session) {
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         sort = TRUE,
-        showResultsAsPercent = showPercent
+        showResultsAsPercent = FALSE
       )
     }
     return(table)
@@ -8320,7 +8083,10 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(all(!is.null(data),
                       nrow(data) > 0),
                   "Not available."))
-    getSimpleReactable(data = data)
+    keyColumns <- colnames(data)
+    getSimpleReactable(data = data,
+                       keyColumns = keyColumns,
+                       dataColumns = c())
   })
   
   ##output: metadataInfoTitle----
@@ -8370,7 +8136,10 @@ shiny::shinyServer(function(input, output, session) {
       
       data <- dplyr::as_tibble(RJSONIO::fromJSON(content = data,
                                            digits = 23))
-     getSimpleReactable(data = data)
+      keyColumns <- colnames(data)
+      getSimpleReactable(data = data,
+                        keyColumns = keyColumns,
+                        dataColumns = c())
     })
   
   ##output: argumentsAtDiagnosticsInitiationJson----
