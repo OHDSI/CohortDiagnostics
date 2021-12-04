@@ -266,7 +266,6 @@ consolidationOfSelectedFieldValues <- function(input,
       input$tabs == 'compareTemporalCharacterization' ||
       input$tabs == 'databaseInformation') {
     data <- list()
-    
     #single select cohortId - except cohortCharacterization
     if(input$tabs == 'cohortCharacterization') {
       if (all(!is.null(input$selectedCompoundCohortNames),
@@ -289,11 +288,11 @@ consolidationOfSelectedFieldValues <- function(input,
     }
     
     
-    if (input$tabs != 'cohortCharacterization') {
-      if (all(!is.null(input$selectedComparatorCompoundCohortName),
+    if (input$tabs == 'compareCohortCharacterization') {
+      if (all(!is.null(input$selectedComparatorCompoundCohortNames),
               !is.null(cohort))) {
         data$cohortIdComparator <- cohort %>%
-          dplyr::filter(.data$compoundName %in% input$selectedComparatorCompoundCohortName) %>%
+          dplyr::filter(.data$compoundName %in% input$selectedComparatorCompoundCohortNames) %>%
           dplyr::arrange(.data$cohortId) %>%
           dplyr::pull(.data$cohortId) %>%
           unique()
