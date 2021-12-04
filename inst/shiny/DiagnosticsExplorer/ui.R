@@ -126,8 +126,8 @@ sidebarMenu <-
       )
     ),
       shiny::conditionalPanel(
-        condition = "input.tabs =='cohortCharacterization' &
-        input.charType == 'Raw'",
+        condition = "(input.tabs =='cohortCharacterization' & input.charType == 'Raw') |
+        (input.tabs =='compareCohortCharacterization' & input.characterizationCompareMethod == 'Raw Table')",
         shinyWidgets::pickerInput(
           inputId = "timeIdChoices",
           label = "Temporal Choice",
@@ -196,7 +196,8 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs == 'cohortOverlap'",
+      condition = "input.tabs == 'cohortOverlap' |
+      input.tabs == 'compareCohortCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "selectedComparatorCompoundCohortNames",
         label = "Comparators",
@@ -216,8 +217,7 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs == 'compareCohortCharacterization' |
-        input.tabs == 'compareTemporalCharacterization' |
+      condition = "input.tabs == 'compareTemporalCharacterization' |
         input.tabs == 'cohortDefinition'",
       shinyWidgets::pickerInput(
         inputId = "selectedComparatorCompoundCohortName",
