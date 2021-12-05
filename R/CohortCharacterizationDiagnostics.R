@@ -54,6 +54,11 @@
 #' @param batchSize                   {Optional, default set to 100} If running characterization on larget set
 #'                                    of cohorts, this function allows you to batch them into chunks that run
 #'                                    as a batch.
+#' 
+#' @param incremental                 Create only cohort diagnostics that haven't been created before?
+#' 
+#' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
+#'                                    of which cohort diagnostics has been executed.
 #'
 #' @export
 runCohortCharacterizationDiagnostics <-
@@ -66,6 +71,8 @@ runCohortCharacterizationDiagnostics <-
            cohortIds = NULL,
            cdmVersion = 5,
            cutOff = 0.0001,
+           incremental = FALSE,
+           incrementalFolder = NULL,
            covariateSettings,
            batchSize = 50) {
     if (any(!"temporal" %in% names(covariateSettings),
@@ -118,7 +125,40 @@ runCohortCharacterizationDiagnostics <-
       ParallelLogger::logInfo(paste0("   - Starting Characterization."))
     }
     
-    results <- Andromeda::andromeda()
+    if (incremental) {
+      if (file.exists(file.path(
+        incrementalFolder,
+        "andromedaObjectWithFeatureExtractionResult"
+      ))) {
+        results <- Andromeda::loadAndromeda(file.path(
+          incrementalFolder,
+          "andromedaObjectWithFeatureExtractionResult"
+        ))
+        cohortIdsPreviouslyExecuted <- results$covariates %>%
+          dplyr::select(.data$cohortId) %>%
+          dplyr::distinct() %>%
+          dplyr::collect() %>%
+          dplyr::pull() %>%
+          unique()
+        ParallelLogger::logInfo(
+          "     - Skipping cohorts with characterization results from previous execution: ",
+          paste0(cohortIdsPreviouslyExecuted, collapse = ", ")
+        )
+        cohortIdsNew <-
+          intersect(cohortIdsNew, cohortIdsPreviouslyExecuted)
+        Andromeda::close(results)
+      } else {
+        results <- Andromeda::andromeda()
+        Andromeda::saveAndromeda(andromeda = results, 
+                                 fileName = file.path(
+                                   incrementalFolder,
+                                   "andromedaObjectWithFeatureExtractionResult"
+                                 ), 
+                                 maintainConnection = FALSE, 
+                                 overwrite = TRUE)
+      }
+    }
+    
     batchSize <-
       max(1, round(batchSize / length(covariateSettings$temporalStartDays)))
     ParallelLogger::logInfo(
@@ -144,6 +184,7 @@ runCohortCharacterizationDiagnostics <-
           )
         )
       }
+      
       featureExtractionOutput <-
         FeatureExtraction::getDbCovariateData(
           connection = connection,
@@ -209,6 +250,11 @@ runCohortCharacterizationDiagnostics <-
             .data$sd
           ) %>%
           dplyr::distinct()
+        
+        results <- Andromeda::loadAndromeda(file.path(
+          incrementalFolder,
+          "andromedaObjectWithFeatureExtractionResult"
+        ))
         
         if ("covariates" %in% names(results)) {
           Andromeda::appendToTable(results$covariates, covariates)
@@ -308,6 +354,13 @@ runCohortCharacterizationDiagnostics <-
         results$temporalTimeRef <- featureExtractionOutput$timeRef %>%
           dplyr::select(.data$startDay, .data$endDay)
       }
+      Andromeda::saveAndromeda(andromeda = results, 
+                               fileName = file.path(
+                                 incrementalFolder,
+                                 "andromedaObjectWithFeatureExtractionResult"
+                               ), 
+                               maintainConnection = FALSE, 
+                               overwrite = TRUE)
     }
     
     if ("analysisRef" %in% names(results)) {
