@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,23 +33,14 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="../reference/index.html">Reference</a>
-</li>
-<li>
-  <a href="../news/index.html">Changelog</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -79,13 +72,16 @@
     </li>
   </ul>
 </li>
+<li>
+  <a href="../news/index.html">Changelog</a>
+</li>
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://ohdsi.github.io/Hades"><img src='https://ohdsi.github.io/Hades/images/hadesMini.png' width=80 height=17 style='vertical-align: top;'></a>
+  <a href="https://ohdsi.github.io/Hades" class="external-link"><img src='https://ohdsi.github.io/Hades/images/hadesMini.png' width=80 height=17 style='vertical-align: top;'></a>
 </li>
 <li>
-  <a href="https://github.com/OHDSI/CohortDiagnostics/">
+  <a href="https://github.com/OHDSI/CohortDiagnostics/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -100,41 +96,41 @@
 
       
 
-      </header><script src="CohortDiagnosticsInPackageMode_files/header-attrs-2.11/header-attrs.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Runing Cohort Diagnostics in an OHDSI Package mode</h1>
-                        <h4 class="author">Gowtham A. Rao</h4>
+                        <h4 data-toc-skip class="author">Gowtham A. Rao</h4>
             
-            <h4 class="date">2021-11-13</h4>
+            <h4 data-toc-skip class="date">2021-12-05</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/master/vignettes/CohortDiagnosticsInPackageMode.Rmd"><code>vignettes/CohortDiagnosticsInPackageMode.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/CohortDiagnosticsInPackageMode.Rmd" class="external-link"><code>vignettes/CohortDiagnosticsInPackageMode.Rmd</code></a></small>
       <div class="hidden name"><code>CohortDiagnosticsInPackageMode.Rmd</code></div>
 
     </div>
 
     
     
-<div id="introduction" class="section level1">
-<h1 class="hasAnchor">
-<a href="#introduction" class="anchor"></a>Introduction</h1>
+<div class="section level1">
+<h1 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h1>
 <p>There are currently two approaches to run Cohort Diagnostics. - Embed in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or - WebApi mode - where cohort diagnostics dynamically pulls the cohort definition from a webapi instance. WebApI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS.</p>
 <p>This vignette describes the former approach (package): how to run CohortDiagnostics using the WebApI.</p>
 <p>There are currently two approaches one can take to step 1: The cohort diagnostics can be embedded in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or the cohort diagnostics can be used as a stand-alone solution, relying on a WebApI instance to provide the cohort definitions. WebApI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS. This vignette describes the latter approach: how to run CohortDiagnostics using the WebApI.</p>
 <p>This vignette describes how to create a self contained shareable study package that can execute cohort diagnostics on a given set of cohort definitions. This is the recommended mode to run CohortDiagnostics for a study.</p>
 <p>In this vignette, you will learn how to - use the Cohort Diagnostics template package - Hydrate the template package with the cohort definitions you want to diagnose. - Execute the diagnostics on one or more data sources. - Review the result set using the Diagnostics Explorer R shiny app of Cohort Diagnostics - (optional) Submit the results of your cohort diagnostics to the OHDSI Phenotype library.</p>
-<div id="assumptions" class="section level2">
-<h2 class="hasAnchor">
-<a href="#assumptions" class="anchor"></a>Assumptions:</h2>
+<div class="section level2">
+<h2 id="assumptions">Assumptions:<a class="anchor" aria-label="anchor" href="#assumptions"></a>
+</h2>
 <ul>
-<li>You have a set of valid cohort definition sql files (in parameterized OHDSI Sql format) that you want to run diagnostics on, or you are able to export cohort definitions that you want to diagnose from Atlas by using the export tab within cohort definition module of Atlas or using ROhdsiWebApi as described <a href="https://ohdsi.github.io/ROhdsiWebApi/articles/InsertCohortDefinitionsIntoPackage.html">here</a>.</li>
+<li>You have a set of valid cohort definition sql files (in parameterized OHDSI Sql format) that you want to run diagnostics on, or you are able to export cohort definitions that you want to diagnose from Atlas by using the export tab within cohort definition module of Atlas or using ROhdsiWebApi as described <a href="https://ohdsi.github.io/ROhdsiWebApi/articles/InsertCohortDefinitionsIntoPackage.html" class="external-link">here</a>.</li>
 <li>You have access to person level data in OMOP CDM V5.x + format on a database, are able to execute and instantiate cohorts in cohort tables (i.e. you have access to a schema in the same database with Create, Read, Update, Delete privileges.)</li>
 </ul>
 </div>
 </div>
-<div id="creating-the-study-package" class="section level1">
-<h1 class="hasAnchor">
-<a href="#creating-the-study-package" class="anchor"></a>Creating the study package</h1>
+<div class="section level1">
+<h1 id="creating-the-study-package">Creating the study package<a class="anchor" aria-label="anchor" href="#creating-the-study-package"></a>
+</h1>
 <p>The cohorts to diagnose should have two attributes to them.</p>
 <ul>
 <li>
@@ -157,23 +153,23 @@
 <td align="left">[PL 4112853001] Malignant tumor of breast referent concept incident cohort: First occurrence of referent concept + descendants with &gt;=365d prior observation</td>
 </tr></tbody>
 </table>
-<div id="option-a-using-hydra-and-rohdsiwebapi" class="section level2">
-<h2 class="hasAnchor">
-<a href="#option-a-using-hydra-and-rohdsiwebapi" class="anchor"></a>option A: Using Hydra and ROhdsiWebApi</h2>
+<div class="section level2">
+<h2 id="option-a-using-hydra-and-rohdsiwebapi">option A: Using Hydra and ROhdsiWebApi<a class="anchor" aria-label="anchor" href="#option-a-using-hydra-and-rohdsiwebapi"></a>
+</h2>
 <p>Note: this option is expected to be available starting version 2.2 of CohortDiagnostics. It is currently possible to do the steps described below, but is not fully tested.</p>
-<p>The skeleton cohort diagnostics study package is <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics">here</a>. A skeleton package is a special package that is designed to be used with <a href="https://github.com/OHDSI/Hydra">Hydra</a>. The input for Hydra is study a specifications file (in json format). Example is <a href="https://github.com/OHDSI/Hydra/blob/master/extras/ExampleCohortDiagnosticsSpecs.json">here</a>.</p>
+<p>The skeleton cohort diagnostics study package is <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics" class="external-link">here</a>. A skeleton package is a special package that is designed to be used with <a href="https://github.com/OHDSI/Hydra" class="external-link">Hydra</a>. The input for Hydra is study a specifications file (in json format). Example is <a href="https://github.com/OHDSI/Hydra/blob/master/extras/ExampleCohortDiagnosticsSpecs.json" class="external-link">here</a>.</p>
 <p>We can create this json using the shiny app ‘Diagnostics Editor’ available here(XX– to do –XXXX). A version is deployed at data.ohdsi.org/XXXXXXXXXXXXX. The user interface of this shiny app allows you to make selections that are then used to create the specifications json file. The application also allows you to hydrate a package using Hydra, and download a .zip that contains your study package.</p>
 <p>Alternatively, you can take the example specification-json file and edit it in notepad. You can then use to create the study package as follows</p>
 <p>XXX—to do—XXXXXXx</p>
 <p>Now you may install your package and execute the study.</p>
 </div>
-<div id="option-b-using-only-rohdsiwebapi" class="section level2">
-<h2 class="hasAnchor">
-<a href="#option-b-using-only-rohdsiwebapi" class="anchor"></a>option B: using only ROhdsiWebApi</h2>
-<p>Start with the skeleton cohort diagnostics study package is <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics">here</a>. See Vignette from ROhdsiWebApi <a href="https://ohdsi.github.io/ROhdsiWebApi/articles/InsertCohortDefinitionsIntoPackage.html">here</a>. Create the ‘CohortsToCreate.csv’ file by extracting the cohorts from your atlas as described. Now, open your study package and run</p>
+<div class="section level2">
+<h2 id="option-b-using-only-rohdsiwebapi">option B: using only ROhdsiWebApi<a class="anchor" aria-label="anchor" href="#option-b-using-only-rohdsiwebapi"></a>
+</h2>
+<p>Start with the skeleton cohort diagnostics study package is <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics" class="external-link">here</a>. See Vignette from ROhdsiWebApi <a href="https://ohdsi.github.io/ROhdsiWebApi/articles/InsertCohortDefinitionsIntoPackage.html" class="external-link">here</a>. Create the ‘CohortsToCreate.csv’ file by extracting the cohorts from your atlas as described. Now, open your study package and run</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/insertCohortDefinitionSetInPackage.html">insertCohortDefinitionSetInPackage</a></span><span class="op">(</span>fileName <span class="op">=</span> <span class="st">"CohortsToCreate.csv"</span>,
-                                                 baseUrl <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv</a></span><span class="op">(</span><span class="st">"baseUrl"</span><span class="op">)</span>,
+<code class="sourceCode R"><span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/insertCohortDefinitionSetInPackage.html" class="external-link">insertCohortDefinitionSetInPackage</a></span><span class="op">(</span>fileName <span class="op">=</span> <span class="st">"CohortsToCreate.csv"</span>,
+                                                 baseUrl <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"baseUrl"</span><span class="op">)</span>,
                                                  insertTableSql <span class="op">=</span> <span class="cn">TRUE</span>,
                                                  insertCohortCreationR <span class="op">=</span> <span class="cn">TRUE</span>,
                                                  generateStats <span class="op">=</span> <span class="cn">TRUE</span>,
@@ -182,10 +178,10 @@
 <p>The next step is to rename the generic name of the package ‘SkeletonCohortDiagnosticsStudy’ into something more meaningful to identify your study such as ‘CandidateHypertensionCohorts’. One way of doing this is to use Notepad ++ find and replace ‘SkeletonCohortDiagnosticsStudy’ with a name for your study. Also change the ‘SkeletonCohortDiagnosticsStudy.Rproj’ to your study name ‘CandidateHypertensionCohorts.Rproj’.</p>
 <p>Now you may install your package and execute the study.</p>
 </div>
-<div id="option-c-manual-advanced-users" class="section level2">
-<h2 class="hasAnchor">
-<a href="#option-c-manual-advanced-users" class="anchor"></a>Option C: Manual (advanced users)</h2>
-<p>Start with the skeleton cohort diagnostics study package is <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics">here</a>. Manually populate the <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics/blob/main/inst/settings/CohortsToCreate.csv">CohortToCreate.csv file</a> with the atlasId, cohortId and cohortName. In most cases atlasId = cohortId and should be an integer. cohortName is a meaningful name to identify your cohorts.</p>
+<div class="section level2">
+<h2 id="option-c-manual-advanced-users">Option C: Manual (advanced users)<a class="anchor" aria-label="anchor" href="#option-c-manual-advanced-users"></a>
+</h2>
+<p>Start with the skeleton cohort diagnostics study package is <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics" class="external-link">here</a>. Manually populate the <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics/blob/main/inst/settings/CohortsToCreate.csv" class="external-link">CohortToCreate.csv file</a> with the atlasId, cohortId and cohortName. In most cases atlasId = cohortId and should be an integer. cohortName is a meaningful name to identify your cohorts.</p>
 <p>Next - create a new folder called ‘sql’ in the ‘inst’ folder and put all your SQLs. The sql file should be named to match the cohortId e.g. if the cohortId is 1232 then the sql file should be 1232.sql. Optionally, you can also add the cohort json in another folder in ‘inst’ folder of your package called ‘cohorts’. The names of the cohorts should be the same as the sql files, except they will end with .json instead of .sql.</p>
 <p>If your cohorts have inclusion-rules, then you will have to create a file called ‘InclusionRules.csv’ and populate it as shown in this example:</p>
 <table class="table">
@@ -231,9 +227,9 @@
 <p>Now you may install your package and execute the study.</p>
 </div>
 </div>
-<div id="running-cohort-diagnostics" class="section level1">
-<h1 class="hasAnchor">
-<a href="#running-cohort-diagnostics" class="anchor"></a>Running Cohort Diagnostics</h1>
+<div class="section level1">
+<h1 id="running-cohort-diagnostics">Running Cohort Diagnostics<a class="anchor" aria-label="anchor" href="#running-cohort-diagnostics"></a>
+</h1>
 <p>The Cohort Diagnostics package has an examplePackage that may be used to understand the structure of a study package.</p>
 <p>See Vignette on ‘Running Cohort Diagnostics’ on how to connect cohort diagnostics to CDM and creating cohort table.</p>
 <p>In the extras folder of your study package will be a CodeToRun.R file. Please update the conectionDetails object as described in the vignette on ‘Running Cohort Diagnostics’. Also the page based on your local configuration information.</p>
@@ -252,11 +248,13 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
+  <p></p>
+<p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -264,6 +262,8 @@
 
   
 
+
+  
 
   </body>
 </html>
