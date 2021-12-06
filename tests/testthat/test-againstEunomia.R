@@ -84,14 +84,13 @@ test_that("Cohort diagnostics in incremental mode", {
   )))
   
   secondTime <- system.time(
-    runCohortDiagnostics(
+    executeDiagnostics(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = cdmDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
-      packageName = "CohortDiagnostics",
-      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+      cohortDefinitionSet = cohortDefinitionSet,
       inclusionStatisticsFolder = file.path(folder, "incStats"),
       exportFolder =  file.path(folder, "export"),
       databaseId = "Eunomia",
