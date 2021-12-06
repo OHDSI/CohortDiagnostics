@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,23 +33,14 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">3.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="../reference/index.html">Reference</a>
-</li>
-<li>
-  <a href="../news/index.html">Changelog</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -79,13 +72,16 @@
     </li>
   </ul>
 </li>
+<li>
+  <a href="../news/index.html">Changelog</a>
+</li>
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://ohdsi.github.io/Hades"><img src='https://ohdsi.github.io/Hades/images/hadesMini.png' width=80 height=17 style='vertical-align: top;'></a>
+  <a href="https://ohdsi.github.io/Hades" class="external-link"><img src='https://ohdsi.github.io/Hades/images/hadesMini.png' width=80 height=17 style='vertical-align: top;'></a>
 </li>
 <li>
-  <a href="https://github.com/OHDSI/CohortDiagnostics/">
+  <a href="https://github.com/OHDSI/CohortDiagnostics/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -100,33 +96,33 @@
 
       
 
-      </header><script src="CohortDiagnosticsUsingWebApi_files/header-attrs-2.11/header-attrs.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Running cohort diagnostics using WebAPI</h1>
-                        <h4 class="author">Gowtham Rao</h4>
+                        <h4 data-toc-skip class="author">Gowtham Rao</h4>
             
-            <h4 class="date">2021-11-13</h4>
+            <h4 data-toc-skip class="date">2021-12-05</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/master/vignettes/CohortDiagnosticsUsingWebApi.Rmd"><code>vignettes/CohortDiagnosticsUsingWebApi.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/CohortDiagnosticsUsingWebApi.Rmd" class="external-link"><code>vignettes/CohortDiagnosticsUsingWebApi.Rmd</code></a></small>
       <div class="hidden name"><code>CohortDiagnosticsUsingWebApi.Rmd</code></div>
 
     </div>
 
     
     
-<div id="introduction" class="section level1">
-<h1 class="hasAnchor">
-<a href="#introduction" class="anchor"></a>Introduction</h1>
+<div class="section level1">
+<h1 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h1>
 <p>There are currently two approaches to run Cohort Diagnostics. - Embed in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or - WebApi mode - where cohort diagnostics dynamically pulls the cohort definition from a webapi instance. WebAPI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS.</p>
 <p>This vignette describes the latter approach (webapi): how to run CohortDiagnostics using the WebAPI.</p>
 </div>
-<div id="running-the-cohort-diagnostics" class="section level1">
-<h1 class="hasAnchor">
-<a href="#running-the-cohort-diagnostics" class="anchor"></a>Running the cohort diagnostics</h1>
-<div id="defining-the-set-of-cohorts-to-diagnose" class="section level2">
-<h2 class="hasAnchor">
-<a href="#defining-the-set-of-cohorts-to-diagnose" class="anchor"></a>Defining the set of cohorts to diagnose</h2>
+<div class="section level1">
+<h1 id="running-the-cohort-diagnostics">Running the cohort diagnostics<a class="anchor" aria-label="anchor" href="#running-the-cohort-diagnostics"></a>
+</h1>
+<div class="section level2">
+<h2 id="defining-the-set-of-cohorts-to-diagnose">Defining the set of cohorts to diagnose<a class="anchor" aria-label="anchor" href="#defining-the-set-of-cohorts-to-diagnose"></a>
+</h2>
 <p>The first step is to define the set of cohorts we wish to create diagnostics for. We do this by creating a data frame with four columns:</p>
 <ul>
 <li>
@@ -181,46 +177,46 @@
 </table>
 <p>We can read the table using</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ohdsi.github.io/CohortDiagnostics">CohortDiagnostics</a></span><span class="op">)</span>
-<span class="va">cohortSetReference</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span><span class="op">(</span><span class="st">"cohortsToDiagnose.csv"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ohdsi.github.io/CohortDiagnostics" class="external-link">CohortDiagnostics</a></span><span class="op">)</span>
+<span class="va">cohortSetReference</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="st">"cohortsToDiagnose.csv"</span><span class="op">)</span></code></pre></div>
 <p>An easy way to create this csv file is to use ROhdsiWebApi</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org">magrittr</a></span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org" class="external-link">magrittr</a></span><span class="op">)</span>
 <span class="co"># Set up</span>
-<span class="va">baseUrl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv</a></span><span class="op">(</span><span class="st">"BaseUrl"</span><span class="op">)</span>
+<span class="va">baseUrl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"BaseUrl"</span><span class="op">)</span>
 <span class="co"># list of cohort ids</span>
-<span class="va">cohortIds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">18345</span>,<span class="fl">18346</span><span class="op">)</span>
+<span class="va">cohortIds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">18345</span>,<span class="fl">18346</span><span class="op">)</span>
 
 <span class="co"># get specifications for the cohortIds above</span>
 <span class="va">webApiCohorts</span> <span class="op">&lt;-</span>
-        <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/getCohortDefinitionsMetaData.html">getCohortDefinitionsMetaData</a></span><span class="op">(</span>baseUrl <span class="op">=</span> <span class="va">baseUrl</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html">%&gt;%</a></span>
-        <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">.data</span><span class="op">$</span><span class="va">id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html">%in%</a></span> <span class="va">cohortIds</span><span class="op">)</span>
+        <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/getCohortDefinitionsMetaData.html" class="external-link">getCohortDefinitionsMetaData</a></span><span class="op">(</span>baseUrl <span class="op">=</span> <span class="va">baseUrl</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
+        <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">.data</span><span class="op">$</span><span class="va">id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">cohortIds</span><span class="op">)</span>
 
-<span class="va">cohortsToCreate</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span><span class="op">)</span>
-<span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html">nrow</a></span><span class="op">(</span><span class="va">webApiCohorts</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
+<span class="va">cohortsToCreate</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>
+<span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">webApiCohorts</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">cohortId</span> <span class="op">&lt;-</span> <span class="va">webApiCohorts</span><span class="op">$</span><span class="va">id</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>
   <span class="va">cohortDefinition</span> <span class="op">&lt;-</span>
-    <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/getCohortDefinition.html">getCohortDefinition</a></span><span class="op">(</span>cohortId <span class="op">=</span> <span class="va">cohortId</span>, 
+    <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/getCohortDefinition.html" class="external-link">getCohortDefinition</a></span><span class="op">(</span>cohortId <span class="op">=</span> <span class="va">cohortId</span>, 
                                       baseUrl <span class="op">=</span> <span class="va">baseUrl</span><span class="op">)</span>
-  <span class="va">cohortsToCreate</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>
+  <span class="va">cohortsToCreate</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>
     atlasId <span class="op">=</span> <span class="va">webApiCohorts</span><span class="op">$</span><span class="va">id</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,
-    atlasName <span class="op">=</span> <span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_trim.html">str_trim</a></span><span class="op">(</span>string <span class="op">=</span> <span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_trim.html">str_squish</a></span><span class="op">(</span><span class="va">cohortDefinition</span><span class="op">$</span><span class="va">name</span><span class="op">)</span><span class="op">)</span>,
+    atlasName <span class="op">=</span> <span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_trim.html" class="external-link">str_trim</a></span><span class="op">(</span>string <span class="op">=</span> <span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_trim.html" class="external-link">str_squish</a></span><span class="op">(</span><span class="va">cohortDefinition</span><span class="op">$</span><span class="va">name</span><span class="op">)</span><span class="op">)</span>,
     cohortId <span class="op">=</span> <span class="va">webApiCohorts</span><span class="op">$</span><span class="va">id</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,
-    name <span class="op">=</span> <span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_trim.html">str_trim</a></span><span class="op">(</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_trim.html">str_squish</a></span><span class="op">(</span><span class="va">cohortDefinition</span><span class="op">$</span><span class="va">name</span><span class="op">)</span><span class="op">)</span>
+    name <span class="op">=</span> <span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_trim.html" class="external-link">str_trim</a></span><span class="op">(</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_trim.html" class="external-link">str_squish</a></span><span class="op">(</span><span class="va">cohortDefinition</span><span class="op">$</span><span class="va">name</span><span class="op">)</span><span class="op">)</span>
     <span class="op">)</span>
 <span class="op">}</span>
-<span class="va">cohortsToCreate</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind.html">bind_rows</a></span><span class="op">(</span><span class="va">cohortsToCreate</span><span class="op">)</span>
+<span class="va">cohortsToCreate</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">cohortsToCreate</span><span class="op">)</span>
 
-<span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/write_delim.html">write_excel_csv</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">cohortsToCreate</span>, na <span class="op">=</span> <span class="st">""</span>, 
+<span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/write_delim.html" class="external-link">write_excel_csv</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">cohortsToCreate</span>, na <span class="op">=</span> <span class="st">""</span>, 
                        file <span class="op">=</span> <span class="st">"D:/temp/CohortsToCreate.csv"</span>, 
                        append <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
 <p>See Vignette on ‘Running Cohort Diagnostics’ on how to connect cohort diagnostics to CDM and creating cohort table.</p>
 </div>
-<div id="instantiating-the-cohorts" class="section level2">
-<h2 class="hasAnchor">
-<a href="#instantiating-the-cohorts" class="anchor"></a>Instantiating the cohorts</h2>
+<div class="section level2">
+<h2 id="instantiating-the-cohorts">Instantiating the cohorts<a class="anchor" aria-label="anchor" href="#instantiating-the-cohorts"></a>
+</h2>
 <p>To instantiate the cohorts we specified in the <code>cohortSetReference</code> we need to communicate with the WebAPI instance, as well as the database server.</p>
-<p>To connect to the WebAPI, we need to provide the base URL. This is a URL that looks something like “<a href="http://server.org:80/WebAPI" class="uri">http://server.org:80/WebAPI</a>”. If you do not know the WebAPI’s base URL, contact the ATLAS administrator. Note: there is no trailing ‘/’.</p>
+<p>To connect to the WebAPI, we need to provide the base URL. This is a URL that looks something like “<a href="http://server.org:80/WebAPI" class="external-link uri">http://server.org:80/WebAPI</a>”. If you do not know the WebAPI’s base URL, contact the ATLAS administrator. Note: there is no trailing ‘/’.</p>
 <p>To instantiate the cohorts:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">baseUrl</span> <span class="op">&lt;-</span> <span class="st">"http://server.org:80/WebAPI"</span>
@@ -237,9 +233,9 @@
                      inclusionStatisticsFolder <span class="op">=</span> <span class="va">inclusionStatisticsFolder</span><span class="op">)</span></code></pre></div>
 <p>This command will contact the WebApi to obtain the cohort definitions, instantiate them in the cohort table, and write the inclusion rule statistics to the specified folder.</p>
 </div>
-<div id="generating-the-diagnostics-in-webapi-mode" class="section level2">
-<h2 class="hasAnchor">
-<a href="#generating-the-diagnostics-in-webapi-mode" class="anchor"></a>Generating the diagnostics in WebApi mode</h2>
+<div class="section level2">
+<h2 id="generating-the-diagnostics-in-webapi-mode">Generating the diagnostics in WebApi mode<a class="anchor" aria-label="anchor" href="#generating-the-diagnostics-in-webapi-mode"></a>
+</h2>
 <p>Next we generate the cohort diagnostics:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">databaseId</span> <span class="op">&lt;-</span> <span class="st">"MyData"</span>
@@ -265,9 +261,9 @@
                      minCellCount <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></code></pre></div>
 <p>The databaseId is a short string that will be used to identify the data from this database in the Shiny app. Make sure to give it a name you can easily recognize.</p>
 </div>
-<div id="incremental-mode" class="section level2">
-<h2 class="hasAnchor">
-<a href="#incremental-mode" class="anchor"></a>Incremental mode</h2>
+<div class="section level2">
+<h2 id="incremental-mode">Incremental mode<a class="anchor" aria-label="anchor" href="#incremental-mode"></a>
+</h2>
 <p>Although possible, we don’t recommend using incremental mode in WebApi mode, as the cohort definitions may change in the target webapi instance.</p>
 </div>
 </div>
@@ -284,11 +280,13 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
+  <p></p>
+<p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -296,6 +294,8 @@
 
   
 
+
+  
 
   </body>
 </html>

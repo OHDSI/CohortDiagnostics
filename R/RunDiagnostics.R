@@ -940,17 +940,19 @@ runCohortDiagnostics <- function(packageName = NULL,
           length(instantiatedCohorts) - nrow(subset)
         ))
       }
-      output <-
-        runCohortCharacterizationDiagnostics(
-          connection = connection,
-          cdmDatabaseSchema = cdmDatabaseSchema,
-          tempEmulationSchema = tempEmulationSchema,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
-          cohortIds = subset$cohortId,
-          covariateSettings = temporalCovariateSettings,
-          cdmVersion = cdmVersion
-        )
+      output <- runCohortCharacterizationDiagnostics(
+        connection = connection,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        cohortIds = subset$cohortId,
+        covariateSettings = temporalCovariateSettings,
+        cdmVersion = cdmVersion,
+        incremental = incremental,
+        outputFolder = incrementalFolder,
+        outputAndromedaObjectName = "characterizationOutput.andromeda"
+      )
       exportFeatureExtractionOutput(
         featureExtractionDbCovariateData = output,
         databaseId = databaseId,
@@ -965,6 +967,12 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
       Andromeda::close(output)
       rm("output")
+      # if (file.exists(file.path(incrementalFolder,
+      #                           outputAndromedaObjectName))) {
+      #   unlink(x = file.path(incrementalFolder,
+      #                        outputAndromedaObjectName),
+      #          force = TRUE)
+      # }
     } else {
       ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
