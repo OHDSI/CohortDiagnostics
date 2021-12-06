@@ -15,7 +15,8 @@ runCohortCharacterizationDiagnostics(
   cdmVersion = 5,
   cutOff = 1e-04,
   incremental = FALSE,
-  incrementalFolder = NULL,
+  outputFolder = NULL,
+  outputAndromedaObjectName = "characterizationOutput.andromeda",
   covariateSettings,
   batchSize = 50
 )
@@ -54,8 +55,10 @@ diagnostics to.}
 
 \item{incremental}{Create only cohort diagnostics that haven't been created before?}
 
-\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
-of which cohort diagnostics has been executed.}
+\item{outputFolder}{Specify a folder where results of Cohort Characterization are stored. Note, this is
+an Andromeda object.}
+
+\item{outputAndromedaObjectName}{Name of the Andromeda object that will contain the output of cohort characterization.}
 
 \item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of
 the createCovariateSettings (createTemporalCovariateSettings if temporal

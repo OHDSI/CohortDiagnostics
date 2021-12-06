@@ -159,7 +159,8 @@ recordTasksDone <-
       file = recordKeepingFile,
       na = "",
       append = FALSE,
-      delim = ","
+      delim = ",", 
+      progress = FALSE
     )
   }
 
@@ -187,7 +188,8 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
       file = fileName,
       na = "",
       append = FALSE,
-      delim = ","
+      delim = ",", 
+      progress = FALSE
     )
   }
 }
@@ -211,7 +213,8 @@ writeCovariateDataAndromedaToCsv <-
           x = chunk,
           file = tempName,
           append = (pos != 1),
-          na = ""
+          na = "", 
+          progress = FALSE
         )
       }
       
@@ -232,7 +235,8 @@ writeCovariateDataAndromedaToCsv <-
           fil = tempName,
           append = TRUE,
           na = "",
-          delim = ","
+          delim = ",", 
+          progress = FALSE
         )
       }
       Andromeda::batchApply(data, addChunk)
@@ -257,7 +261,8 @@ writeCovariateDataAndromedaToCsv <-
           file = fileName,
           append = !first,
           na = "",
-          delim = ","
+          delim = ",", 
+          progress = FALSE
         )
       }
       Andromeda::batchApply(data, writeToFile)
@@ -317,7 +322,8 @@ saveIncremental <- function(data, fileName, ...) {
     file = fileName,
     na = "",
     append = FALSE,
-    delim = ","
+    delim = ",", 
+    progress = FALSE
   )
 }
 
