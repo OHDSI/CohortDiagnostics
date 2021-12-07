@@ -486,6 +486,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental,
       recordKeepingFile,
       instantiatedCohorts,
+      databaseId,
       minCellCount
     )
   }

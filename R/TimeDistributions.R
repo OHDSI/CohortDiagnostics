@@ -140,6 +140,7 @@ executeTimeSeriesDiagnostics <- function(connection,
                                          incremental,
                                          recordKeepingFile,
                                          instantiatedCohorts,
+                                         databaseId,
                                          minCellCount) {
   ParallelLogger::logInfo("Calculating time series of subjects and records.")
   startPrevalenceRate <- Sys.time()
@@ -221,7 +222,7 @@ executeTimeSeriesDiagnostics <- function(connection,
         packageName = "CohortDiagnostics",
         dbms = connection@dbms
       )
-
+    
     data <- DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
       sql = sql,
@@ -230,7 +231,9 @@ executeTimeSeriesDiagnostics <- function(connection,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema,
       cohort_ids = subset$cohortId
-    ) %>%
+    ) 
+    
+    data <- data %>%
       dplyr::tibble() %>%
       dplyr::mutate(databaseId = !!databaseId) %>%
       dplyr::select(.data$cohortId, .data$databaseId,

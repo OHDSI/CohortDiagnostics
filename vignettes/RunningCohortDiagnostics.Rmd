@@ -27,12 +27,26 @@ exportFolder <- tempfile("CohortDiagnosticsTestExport")
 inclusionStatisticsFolder <- tempfile("inclusionStats")
 
 ```
+# Introduction
+This vignette discusses the process of generating a results set with `CohortDiagnostics` starting with cohort generation.
+Please see the [HADES library](https://ohdsi.github.io/hades) for more information on the background for this.
+
+## pre-requisites
+Ensure that `CohortDiagnostics` is installed on your system.
+In addition we will require the `CohortGenerator` and, optionally, the `ROhdsiWebApi` packages:
+
+```{r}
+remotes::install_github('OHDSI/CohortGenerator')
+remotes::install_github('OHDSI/ROhdsiWebApi')
+```
 
 # Configuring the connection to the server
 
 We need to tell R how to connect to the server where the data are. `CohortDiagnostics` uses the `DatabaseConnector` package, which provides the `createConnectionDetails` function. Type `?createConnectionDetails` for the specific settings required for the various database management systems (DBMS). For example, one might connect to a PostgreSQL database using this code:
 
 ```{r tidy=FALSE,eval=FALSE}
+library(CohortDiagnostics)
+
 connectionDetails <- createConnectionDetails(dbms = "postgresql",
                                              server = "localhost/ohdsi",
                                              user = "joe",

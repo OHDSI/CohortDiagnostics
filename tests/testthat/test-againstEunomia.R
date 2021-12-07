@@ -75,6 +75,7 @@ test_that("Cohort diagnostics in incremental mode", {
       runIncludedSourceConcepts = TRUE,
       runOrphanConcepts = TRUE,
       runTimeDistributions = TRUE,
+      runTimeSeries = TRUE,
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental")
@@ -105,6 +106,7 @@ test_that("Cohort diagnostics in incremental mode", {
       runIncludedSourceConcepts = TRUE,
       runOrphanConcepts = TRUE,
       runTimeDistributions = TRUE,
+      runTimeSeries = TRUE,
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental")
