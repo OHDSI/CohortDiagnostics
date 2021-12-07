@@ -5,6 +5,7 @@ if (dir.exists(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))) {
   jdbcDriverFolder <- Sys.getenv("DATABASECONNECTOR_JAR_FOLDER")
 } else {
   jdbcDriverFolder <- tempfile("jdbcDrivers")
+  dir.create(jdbcDriverFolder, showWarnings = FALSE)
   DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = jdbcDriverFolder)
   
   withr::defer({

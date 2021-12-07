@@ -27,7 +27,7 @@ test_that("Cohort instantiation", {
     createCohortTable = TRUE,
     inclusionStatisticsFolder = file.path(folder, "incStats")
   )
-  
+
   
   connection <- DatabaseConnector::connect(connectionDetails)
   sql <-
@@ -52,6 +52,7 @@ test_that("Cohort diagnostics in incremental mode", {
     packageName = "CohortDiagnostics",
     cohortToCreateFile = "settings/CohortsToCreateForTesting.csv"
   )
+
   firstTime <- system.time(
     executeDiagnostics(
       cohortDefinitionSet = cohortDefinitionSet,
@@ -61,6 +62,7 @@ test_that("Cohort diagnostics in incremental mode", {
       tempEmulationSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
+      cohortIds = c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906),
       inclusionStatisticsFolder = file.path(folder, "incStats"),
       exportFolder =  file.path(folder, "export"),
       databaseId = "Eunomia",
@@ -82,7 +84,8 @@ test_that("Cohort diagnostics in incremental mode", {
   testthat::expect_true(file.exists(file.path(
     folder, "export", "Results_Eunomia.zip"
   )))
-  
+
+  # We now run it with all cohorts without specifying ids - testing incremental mode
   secondTime <- system.time(
     executeDiagnostics(
       connectionDetails = connectionDetails,
