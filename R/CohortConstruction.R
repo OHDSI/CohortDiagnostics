@@ -604,6 +604,11 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                             "logicDescription",
                                             "json",
                                             "sql"))
+    # Filter to cohort subset
+    if (!is.null(cohortIds)) {
+      cohortDefinitionSet <- cohortDefinitionSet %>%
+        dplyr::filter(.data$cohortId %in% cohortIds)
+    }
   }
 
   if (incremental) {
