@@ -35,7 +35,7 @@ Please see the [HADES library](https://ohdsi.github.io/hades) for more informati
 Ensure that `CohortDiagnostics` is installed on your system.
 In addition we will require the `CohortGenerator` and, optionally, the `ROhdsiWebApi` packages:
 
-```{r}
+```{r eval=FALSE}
 remotes::install_github('OHDSI/CohortGenerator')
 remotes::install_github('OHDSI/ROhdsiWebApi')
 ```
@@ -114,6 +114,7 @@ cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTab
 CohortGenerator::createCohortTables(connectionDetails = connectionDetails,
                                     cohortTableNames = cohortTableNames,
                                     cohortDatabaseSchema = "main",
+                                    createCohortStatsTables = TRUE,
                                     incremental = FALSE)
 
 # Generate the cohort set
@@ -156,9 +157,6 @@ CohortGenerator::dropCohortStatsTables(connectionDetails = connectionDetails,
                                        cohortDatabaseSchema = cohortDatabaseSchema,
                                        cohortTableNames = cohortTableNames)
 
-CohortGenerator::dropCohortStatsTables(connectionDetails = connectionDetails,
-                                       cohortDatabaseSchema = cohortDatabaseSchema,
-                                       cohortTableNames = cohortTableNames)
 ```
 This will calculate basic inclusion rule statistics and export the results to `inclusionStatisticsFolder`
 for later use in cohort diagnostics.
