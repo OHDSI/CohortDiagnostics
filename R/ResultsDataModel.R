@@ -84,7 +84,7 @@ checkFixColumnNames <-
       dplyr::arrange(.data$fieldName) %>%
       dplyr::pull()
     
-    if (!isTRUE(all.equal(expectedNames, observeredNames))) {
+    if (!checkmate::testNames(observeredNames, must.include = expectedNames)) {
       stop(
         sprintf(
           "Column names of table %s in zip file %s do not match specifications.\n- Observed columns: %s\n- Expected columns: %s",

@@ -1,15 +1,24 @@
 library(CohortDiagnostics)
 library(testthat)
 
-if (Sys.getenv("DONT_DOWNLOAD_JDBC_DRIVERS", "") == "TRUE") {
+if (dir.exists(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))) {
   jdbcDriverFolder <- Sys.getenv("DATABASECONNECTOR_JAR_FOLDER")
 } else {
   jdbcDriverFolder <- tempfile("jdbcDrivers")
+  dir.create(jdbcDriverFolder, showWarnings = FALSE)
   DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = jdbcDriverFolder)
   
   withr::defer({
     unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
   }, testthat::teardown_env())
+}
+
+#' utility function to make sure connection is closed after usage
+with_dbc_connection <- function(connection, code) {
+  on.exit({
+    DatabaseConnector::disconnect(connection)
+  })
+  eval(substitute(code), envir = connection, enclos = parent.frame())
 }
 
 connectionDetails <- DatabaseConnector::createConnectionDetails(
@@ -26,12 +35,16 @@ cohortDiagnosticsSchema <- "cohort_diagnostics"
 resultsDatabaseSchema <- paste0("r", 
                                 as.character(gsub("[: -]", "" , Sys.time(), perl=TRUE)),
                                 as.character(sample(1:100, 1)))
-oracleTempSchema <- NULL
+tempEmulationSchema <- NULL
 cohortTable <- "cohort"
-connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
 folder <- tempfile("cohortDiagnosticsTest")
 
 withr::defer({
+  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+  dropSchemaIfExists <- paste0("DROP SCHEMA IF EXISTS ", resultsDatabaseSchema, " CASCADE;")
+  DatabaseConnector::renderTranslateExecuteSql(sql = dropSchemaIfExists,
+                                               connection = connection)
+
   DatabaseConnector::disconnect(connection)
   unlink(folder, recursive = TRUE, force = TRUE)
 }, testthat::teardown_env())
@@ -51,50 +64,58 @@ withr::defer({
 
 
 test_that("Create schema", {
-  dropSchemaIfExists <- paste0("DROP SCHEMA IF EXISTS ", resultsDatabaseSchema, " CASCADE; CREATE SCHEMA ", resultsDatabaseSchema,";")
-  DatabaseConnector::renderTranslateExecuteSql(sql = dropSchemaIfExists,
-                                               connection = DatabaseConnector::connect(connectionDetails = connectionDetails))
-  createResultsDataModel(connectionDetails = connectionDetails,
-                         schema = resultsDatabaseSchema)
-  
-  specifications <- getResultsDataModelSpecifications()
-  
-  for (tableName in unique(specifications$tableName)) {
-    expect_true(.tableExists(connection, resultsDatabaseSchema, tableName))
-  }
-  # Bad schema name
-  expect_error(createResultsDataModel(connection = connection,
-                                      schema = "non_existant_schema"))
+  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+  with_dbc_connection(connection, {
+    dropSchemaIfExists <- paste0("DROP SCHEMA IF EXISTS ", resultsDatabaseSchema, " CASCADE; CREATE SCHEMA ", resultsDatabaseSchema,";")
+    DatabaseConnector::renderTranslateExecuteSql(sql = dropSchemaIfExists,
+                                                 connection = connection)
+    createResultsDataModel(connectionDetails = connectionDetails,
+                           schema = resultsDatabaseSchema)
+
+    specifications <- getResultsDataModelSpecifications()
+
+    for (tableName in unique(specifications$tableName)) {
+      expect_true(.tableExists(connection, resultsDatabaseSchema, tableName))
+    }
+    # Bad schema name
+    expect_error(createResultsDataModel(connection = connection,
+                                        schema = "non_existant_schema"))
+  })
 })
 
 
 test_that("Results upload", {
+
+  cohortDefinitionSet <- loadCohortsFromPackage(
+    packageName = "CohortDiagnostics",
+    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+    cohortIds = c(17492, 17692)
+  )
+  inclusionStatsFolder <- file.path(folder, "incStats")
   instantiateCohortSet(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    oracleTempSchema = oracleTempSchema,
+    tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDiagnosticsSchema,
     cohortTable = cohortTable,
     cohortIds = c(17492, 17692),
-    packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+    cohortDefinitionSet = cohortDefinitionSet,
     generateInclusionStats = TRUE,
     createCohortTable = TRUE,
-    inclusionStatisticsFolder = file.path(folder, "incStats")
+    inclusionStatisticsFolder = inclusionStatsFolder
   )
   
-  runCohortDiagnostics(
+  executeDiagnostics(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    oracleTempSchema = oracleTempSchema,
+    tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDiagnosticsSchema,
     cohortTable = cohortTable,
     cohortIds = c(17492, 17692),
-    packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-    inclusionStatisticsFolder = file.path(folder, "incStats"),
+    cohortDefinitionSet = cohortDefinitionSet,
+    inclusionStatisticsFolder = inclusionStatsFolder,
     exportFolder = file.path(folder, "export"),
     databaseId = "cdmv5",
     runInclusionStatistics = TRUE,
@@ -127,62 +148,64 @@ test_that("Results upload", {
   }
   
   specifications <- getResultsDataModelSpecifications()
-  
-  # for (tableName in unique(specifications$tableName)) {
-  #   primaryKey <- specifications %>%
-  #     dplyr::filter(.data$tableName == !!tableName &
-  #                     .data$primaryKey == "Yes") %>%
-  #     dplyr::select(.data$fieldName) %>%
-  #     dplyr::pull()
-  #   
-  #   if ("database_id" %in% primaryKey) {
-  #     sql <-
-  #       "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
-  #     sql <- SqlRender::render(
-  #       sql = sql,
-  #       schema = resultsDatabaseSchema,
-  #       table_name = tableName,
-  #       database_id = "cdmv5"
-  #     )
-  #     databaseIdCount <- DatabaseConnector::querySql(connection, sql)[, 1]
-  #     expect_true(databaseIdCount >= 0)
-  #   }
-  # }
+  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+  with_dbc_connection(connection, {
+    for (tableName in unique(specifications$tableName)) {
+      primaryKey <- specifications %>%
+        dplyr::filter(.data$tableName == !!tableName &
+                        .data$primaryKey == "Yes") %>%
+        dplyr::select(.data$fieldName) %>%
+        dplyr::pull()
+
+      if ("database_id" %in% primaryKey) {
+        sql <-
+          "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
+        sql <- SqlRender::render(
+          sql = sql,
+          schema = resultsDatabaseSchema,
+          table_name = tableName,
+          database_id = "cdmv5"
+        )
+        databaseIdCount <- DatabaseConnector::querySql(connection, sql)[, 1]
+        expect_true(databaseIdCount >= 0)
+      }
+    }
+  })
 })
 
 test_that("Data removal works", {
   specifications <- getResultsDataModelSpecifications()
-  
-  if (DBI::dbIsValid(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
-  }
-  for (tableName in unique(specifications$tableName)) {
-    primaryKey <- specifications %>%
-      dplyr::filter(.data$tableName == !!tableName &
-                      .data$primaryKey == "Yes") %>%
-      dplyr::select(.data$fieldName) %>%
-      dplyr::pull()
-    
-    if ("database_id" %in% primaryKey) {
-      CohortDiagnostics:::deleteAllRecordsForDatabaseId(
-        connection = connection,
-        schema = resultsDatabaseSchema,
-        tableName = tableName,
-        databaseId = "cdmv5"
-      )
-      
-      sql <- "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
-      sql <- SqlRender::render(
-        sql = sql,
-        schema = resultsDatabaseSchema,
-        table_name = tableName,
-        database_id = "cdmv5"
-      )
-      databaseIdCount <-
-        DatabaseConnector::querySql(connection, sql)[, 1]
-      expect_true(databaseIdCount == 0)
+
+  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+  with_dbc_connection(connection, {
+    for (tableName in unique(specifications$tableName)) {
+      primaryKey <- specifications %>%
+        dplyr::filter(.data$tableName == !!tableName &
+                        .data$primaryKey == "Yes") %>%
+        dplyr::select(.data$fieldName) %>%
+        dplyr::pull()
+
+      if ("database_id" %in% primaryKey) {
+        CohortDiagnostics:::deleteAllRecordsForDatabaseId(
+          connection = connection,
+          schema = resultsDatabaseSchema,
+          tableName = tableName,
+          databaseId = "cdmv5"
+        )
+
+        sql <- "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
+        sql <- SqlRender::render(
+          sql = sql,
+          schema = resultsDatabaseSchema,
+          table_name = tableName,
+          database_id = "cdmv5"
+        )
+        databaseIdCount <-
+          DatabaseConnector::querySql(connection, sql)[, 1]
+        expect_true(databaseIdCount == 0)
+      }
     }
-  }
+  })
 })
 
 test_that("util functions", {
@@ -190,8 +213,3 @@ test_that("util functions", {
   expect_true(naToZero(NA) == 0)
 })
 
-test_that("Drop schema", {
-  dropSchemaIfExists <- paste0("DROP SCHEMA IF EXISTS ", resultsDatabaseSchema, " CASCADE;")
-  DatabaseConnector::renderTranslateExecuteSql(sql = dropSchemaIfExists,
-                                               connection = DatabaseConnector::connect(connectionDetails = connectionDetails))
-})

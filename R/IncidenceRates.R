@@ -194,3 +194,99 @@ aggregateIr <- function(ratesSummary, aggregateList) {
     return(tidyr::tibble())
   }
 }
+
+computeIncidenceRates <- function(connection,
+                                  tempEmulationSchema,
+                                  cdmDatabaseSchema,
+                                  cohortDatabaseSchema,
+                                  cohortTable,
+                                  databaseId,
+                                  exportFolder,
+                                  minCellCount,
+                                  cohorts,
+                                  instantiatedCohorts,
+                                  recordKeepingFile,
+                                  incremental) {
+  ParallelLogger::logInfo("Computing incidence rates")
+  startIncidenceRate <- Sys.time()
+  subset <- subsetToRequiredCohorts(
+    cohorts = cohorts %>%
+      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+    task = "runIncidenceRate",
+    incremental = incremental,
+    recordKeepingFile = recordKeepingFile
+  )
+
+  if (incremental &&
+    (length(instantiatedCohorts) - nrow(subset)) > 0) {
+    ParallelLogger::logInfo(sprintf(
+      "Skipping %s cohorts in incremental mode.",
+      length(instantiatedCohorts) - nrow(subset)
+    ))
+  }
+  if (nrow(subset) > 0) {
+
+    runIncidenceRate <- function(row) {
+      ParallelLogger::logInfo("  Computing incidence rate for cohort '",
+                              row$cohortName,
+                              "'")
+
+      # TODO: do we really want to get this from the cohort definition?
+      cohortExpression <- RJSONIO::fromJSON(row$json, digits = 23)
+      washoutPeriod <- tryCatch({
+        cohortExpression$
+          PrimaryCriteria$
+          ObservationWindow$
+          PriorDays
+      }, error = function(e) {
+        0
+      })
+      data <- getIncidenceRate(
+        connection = connection,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        cohortId = row$cohortId,
+        firstOccurrenceOnly = TRUE,
+        washoutPeriod = washoutPeriod
+      )
+      if (nrow(data) > 0) {
+        data <- data %>% dplyr::mutate(cohortId = row$cohortId)
+      }
+      return(data)
+    }
+
+    data <-
+      lapply(split(subset, subset$cohortId), runIncidenceRate)
+    data <- dplyr::bind_rows(data)
+    if (nrow(data) > 0) {
+      data <- data %>% dplyr::mutate(databaseId = !!databaseId)
+      data <-
+        enforceMinCellValue(data, "cohortCount", minCellCount)
+      data <-
+        enforceMinCellValue(data,
+                            "incidenceRate",
+                            1000 * minCellCount / data$personYears)
+    }
+    writeToCsv(
+      data = data,
+      fileName = file.path(exportFolder, "incidence_rate.csv"),
+      incremental = incremental,
+      cohortId = subset$cohortId
+    )
+  }
+  recordTasksDone(
+    cohortId = subset$cohortId,
+    task = "runIncidenceRate",
+    checksum = subset$checksum,
+    recordKeepingFile = recordKeepingFile,
+    incremental = incremental
+  )
+  delta <- Sys.time() - startIncidenceRate
+  ParallelLogger::logInfo("Running Incidence Rate took ",
+                          signif(delta, 3),
+                          " ",
+                          attr(delta, "units"))
+
+}
