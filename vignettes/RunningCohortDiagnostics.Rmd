@@ -114,7 +114,6 @@ cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTab
 CohortGenerator::createCohortTables(connectionDetails = connectionDetails,
                                     cohortTableNames = cohortTableNames,
                                     cohortDatabaseSchema = "main",
-                                    createCohortStatsTables = TRUE,
                                     incremental = FALSE)
 
 # Generate the cohort set
