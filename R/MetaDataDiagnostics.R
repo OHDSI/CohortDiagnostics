@@ -178,6 +178,7 @@ getCdmVocabularyVersion <- function(connection, cdmDatabaseSchema) {
       unique()
   } else {
     warning("Problem getting vocabulary version. cdm_source table either does not have data, or does not have the field vocabulary_version.")
+    vocabularyVersionCdm <- "Unknown"
   }
 
   return(vocabularyVersionCdm)
