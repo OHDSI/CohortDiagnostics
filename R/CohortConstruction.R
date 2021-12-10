@@ -51,6 +51,30 @@ checkCohortReference <- function(cohortReference, errorMessage = NULL) {
   invisible(errorMessage)
 }
 
+makeBackwardsCompatible <- function(cohorts) {
+  if (!"name" %in% colnames(cohorts)) {
+    if ('cohortId' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(name = as.character(.data$cohortId))
+    } else if ('id' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(name = as.character(.data$id)) %>%
+        dplyr::mutate(cohortId = .data$id)
+    }
+  }
+  if (!"webApiCohortId" %in% colnames(cohorts) &&
+      "atlasId" %in% colnames(cohorts)) {
+    cohorts <- cohorts %>%
+      dplyr::mutate(webApiCohortId = .data$atlasId)
+  }
+  if (!"cohortName" %in% colnames(cohorts) &&
+      "atlasName" %in% colnames(cohorts)) {
+    cohorts <- cohorts %>%
+      dplyr::mutate(cohortName = .data$atlasName)
+  }
+  return(cohorts)
+}
+
 #' Load Cohort Definitions From A Study Package
 #' @description
 #' Load cohort references for usage in executeDiagnostics.
@@ -88,7 +112,7 @@ loadCohortsFromPackage <- function(packageName,
   cohorts <- readr::read_csv(pathToCsv,
                              col_types = readr::cols(),
                              guess_max = min(1e7))
-
+  cohorts <- makeBackwardsCompatible(cohorts)
   if (!is.null(cohortIds)) {
     cohorts <- cohorts %>%
       dplyr::filter(.data$cohortId %in% cohortIds)
