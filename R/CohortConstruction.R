@@ -784,6 +784,8 @@ createTempInclusionStatsTables <-
                           by = "cohortId") %>%
         dplyr::rename(name = .data$ruleName,
                       cohortDefinitionId = .data$cohortId) %>%
+        dplyr::mutate(cohortDefinitionId = as.integer(.data$cohortDefinitionId),
+                      ruleSequence = as.integer(.data$ruleSequence)) %>%
         dplyr::select(.data$cohortDefinitionId, .data$ruleSequence, .data$name)
       
       DatabaseConnector::insertTable(

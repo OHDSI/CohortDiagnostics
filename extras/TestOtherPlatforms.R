@@ -17,11 +17,7 @@ folder <- "s:/temp"
 
 # Drop temp tables not cleaned up:
 # connection = connect(connectionDetails)
-# tables <- getTableNames(connection, cohortDatabaseSchema)
-# tables <- tables[grepl("YEA7", tables)]
-# tables <- tolower(paste(cohortDatabaseSchema, tables, sep = "."))
-# sql <- paste(sprintf("TRUNCATE TABLE %s; DROP TABLE %s;", tables, tables), collapse = "\n")
-# executeSql(connection, sql)
+# dropEmulatedTempTables(connection = connection, tempEmulationSchema = cohortDatabaseSchema)
 # disconnect(connection)
 
 # RedShift 
@@ -34,6 +30,41 @@ cdmDatabaseSchema <- "cdm_truven_mdcd_v1734"
 cohortDatabaseSchema <- "scratch_mschuemi"
 cohortTable <- "cohortdiagnostics_test"
 folder <- "s:/temp/RS"
+
+
+# Cohort generation using CohortDiagnostics' instantiateCohortSet function -------------------------------
+
+test_that("Cohort instantiation", {
+  instantiateCohortSet(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    tempEmulationSchema = cohortDatabaseSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTable = cohortTable,
+    packageName = "CohortDiagnostics",
+    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+    generateInclusionStats = TRUE,
+    createCohortTable = TRUE,
+    inclusionStatisticsFolder = file.path(folder, "incStats")
+  )
+  
+  
+  connection <- DatabaseConnector::connect(connectionDetails)
+  sql <-
+    "SELECT COUNT(*) AS cohort_count, cohort_definition_id
+  FROM @cohort_database_schema.@cohort_table
+  GROUP BY cohort_definition_id;"
+  counts <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection,
+      sql,
+      cohort_database_schema = cohortDatabaseSchema,
+      cohort_table = cohortTable,
+      snakeCaseToCamelCase = TRUE
+    )
+  testthat::expect_gt(nrow(counts), 2)
+  DatabaseConnector::disconnect(connection)
+})
 
 
 # Cohort instantiation using CohortGenerator -----------------------------------------------------------
@@ -55,6 +86,25 @@ CohortGenerator::generateCohortSet(connectionDetails = connectionDetails,
 test_that("Cohort diagnostics", {
   
   cohortDefinitionSet$atlasId <- cohortDefinitionSet$cohortId
+  
+  
+  runCohortDiagnostics(packageName = "CohortDiagnostics",
+                       cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+                       connectionDetails = connectionDetails,
+                       cdmDatabaseSchema = cdmDatabaseSchema,
+                       cohortDatabaseSchema = cohortDatabaseSchema,
+                       cohortTable = cohortTable,
+                       databaseId = "Synpuf",
+                       exportFolder =  file.path(folder, "export"),
+                       runBreakdownIndexEvents = TRUE,
+                       runCohortCharacterization = TRUE,
+                       runTemporalCohortCharacterization = TRUE,
+                       runCohortOverlap = TRUE,
+                       runIncidenceRate = TRUE,
+                       runIncludedSourceConcepts = TRUE,
+                       runOrphanConcepts = TRUE,
+                       runTimeDistributions = TRUE)
+  
   
   executeDiagnostics(
     cohortDefinitionSet = cohortDefinitionSet,
