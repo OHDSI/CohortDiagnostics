@@ -91,31 +91,30 @@ test_that("Results upload", {
     cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
     cohortIds = c(17492, 17692)
   )
-  inclusionStatsFolder <- file.path(folder, "incStats")
-  instantiateCohortSet(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    cohortDatabaseSchema = cohortDiagnosticsSchema,
-    cohortTable = cohortTable,
-    cohortIds = c(17492, 17692),
-    cohortDefinitionSet = cohortDefinitionSet,
-    generateInclusionStats = TRUE,
-    createCohortTable = TRUE,
-    inclusionStatisticsFolder = inclusionStatsFolder
-  )
-  
+  cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
+  # Next create the tables on the database
+  CohortGenerator::createCohortTables(connectionDetails = connectionDetails,
+                                      cohortTableNames = cohortTableNames,
+                                      cohortDatabaseSchema = cohortDiagnosticsSchema,
+                                      incremental = FALSE)
+
+  # Generate the cohort set
+  CohortGenerator::generateCohortSet(connectionDetails = connectionDetails,
+                                     cdmDatabaseSchema = cdmDatabaseSchema,
+                                     cohortDatabaseSchema = cohortDiagnosticsSchema,
+                                     cohortTableNames = cohortTableNames,
+                                     cohortDefinitionSet = cohortDefinitionSet,
+                                     incremental = FALSE)
+
   executeDiagnostics(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDiagnosticsSchema,
-    cohortTable = cohortTable,
+    cohortTableNames = cohortTableNames,
     cohortIds = c(17492, 17692),
     cohortDefinitionSet = cohortDefinitionSet,
-    inclusionStatisticsFolder = inclusionStatsFolder,
     exportFolder = file.path(folder, "export"),
     databaseId = "cdmv5",
     runInclusionStatistics = TRUE,

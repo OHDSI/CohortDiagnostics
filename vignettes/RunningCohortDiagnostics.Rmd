@@ -100,6 +100,8 @@ cohortDefinitionSet <- ROhdsiWebApi::exportCohortDefinitionSet(baseUrl = baseUrl
                                                                generateStats = TRUE)
 ```
 Consult the ROhdsiWebApi documentation for details on authentication to your atlas instance.
+Please note that in order to generate inclusion rules statistics (a useful diagnostic tool) the parameter `generateStats`
+should be set to `TRUE`.
 
 ## Generating cohorts
 Cohorts must be generated before cohort diagnostics can be run.
@@ -132,34 +134,6 @@ The resulting cohort table should include the columns:
 
 `cohort_definition_id`, `subject_id`, `cohort_start_date`, `cohort_end_date`
 
-### Inclusion rules
-We have the option to also generate inclusion rule statistics while the cohorts are instantiated (recommended).
-If we want to do this, we need to provide a folder where the inclusion rule statistics will be stored for later use.
-
-```{r}
-inclusionStatisticsFolder <- "inclusionStats"
-```
-We can then use the cohort generator package to create the inclusion rule statistics for our cohorts.
-```{r eval = FALSE}
-inclusionRuleNames <- CohortGenerator::insertInclusionRuleNames(connectionDetails = connectionDetails,
-                                                                cohortDefinitionSet = cohortDefinitionSet,
-                                                                cohortDatabaseSchema = cohortDatabaseSchema,
-                                                                cohortInclusionTable = cohortTableNames$cohortInclusionTable)
-
-CohortGenerator::exportCohortStatsTables(connectionDetails = connectionDetails,
-                                         cohortDatabaseSchema = cdmDatabaseSchema,
-                                         cohortTableNames = cohortTableNames,
-                                         cohortStatisticsFolder = inclusionStatisticsFolder,
-                                         incremental = FALSE)
-
-CohortGenerator::dropCohortStatsTables(connectionDetails = connectionDetails,
-                                       cohortDatabaseSchema = cohortDatabaseSchema,
-                                       cohortTableNames = cohortTableNames)
-
-```
-This will calculate basic inclusion rule statistics and export the results to `inclusionStatisticsFolder`
-for later use in cohort diagnostics.
-
 ## Executing cohort diagnostics
 Once cohort definitions are loaded and cohort tables have been populated cohort diagnostics is ready to be executed.
 
@@ -180,6 +154,16 @@ executeDiagnostics(cohortDefinitionSet,
                    databaseId = "MyCdm",
                    minCellCount = 5)
 ```
+## Cohort Statistics Table Clean up
+The above cohort generation process will create a number of residual tables.
+As the process is complete, these are no longer required and can be removed.
+
+```{r eval=FALSE}
+CohortGenerator::dropCohortStatsTables(connectionDetails = connectionDetails,
+                                       cohortDatabaseSchema = cohortDatabaseSchema,
+                                       cohortTableNames = cohortTableNames)
+```
+
 
 # Cohort Diagnostics Output
 
@@ -187,6 +171,7 @@ Once the diagnostics have completed, a zip file will have been created in the sp
 This zip file can be shared between sites, as it does not contain patient-identifiable information.
 When unzipped, the zip file will contain several .csv files that maybe easily audited.
 Note that cell counts smaller than 5 have been removed, as specified using the `minCellCount` argument, to ensure non-identifiability.
+
 
 ## Creating a pre merged file
 
