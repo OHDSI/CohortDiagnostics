@@ -36,11 +36,6 @@ if (dbms == "sqlite") {
 
   covariateSettings <- FeatureExtraction::createDefaultCovariateSettings()
   temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence = TRUE,
-                                                                                  useDrugEraStart = TRUE,
-                                                                                  useProcedureOccurrence = TRUE,
-                                                                                  useMeasurement = TRUE,
-                                                                                  temporalStartDays = c(-365, -30, 0, 1, 31),
-                                                                                  temporalEndDays = c(-31, -1, 0, 30, 365))
 
 } else {
   # only test all cohorts in sqlite
@@ -78,7 +73,7 @@ if (dbms == "sqlite") {
     vocabularyDatabaseSchema <- Sys.getenv("CDM5_ORACLE_CDM_SCHEMA")
     tempEmulationSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
     cohortDatabaseSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
-
+    options(sqlRenderTempEmulationSchema = tempEmulationSchema)
   } else if (dbms == "redshift") {
     connectionDetails <- DatabaseConnector::createConnectionDetails(
       dbms = "redshift",
