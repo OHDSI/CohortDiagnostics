@@ -1,0 +1,100 @@
+library(testthat)
+library(CohortDiagnostics)
+library(Eunomia)
+
+dbms <- getOption("dbms", default = "sqlite")
+
+if (dir.exists(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))) {
+  jdbcDriverFolder <- Sys.getenv("DATABASECONNECTOR_JAR_FOLDER")
+} else {
+  jdbcDriverFolder <- tempfile("jdbcDrivers")
+  dir.create(jdbcDriverFolder, showWarnings = FALSE)
+  DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = jdbcDriverFolder)
+
+  if (!dbms %in% c("postgresql", "sqlite")) {
+    DatabaseConnector::downloadJdbcDrivers(dbms, pathToDriver = jdbcDriverFolder)
+  }
+
+  withr::defer({
+    unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
+  }, testthat::teardown_env())
+}
+
+folder <- tempfile()
+dir.create(folder, recursive = TRUE)
+minCellCountValue <- 5
+
+if (dbms == "sqlite") {
+  connectionDetails <- Eunomia::getEunomiaConnectionDetails()
+  cdmDatabaseSchema <- "main"
+  cohortDatabaseSchema <- "main"
+  vocabularyDatabaseSchema <- cohortDatabaseSchema
+  cohortTable <- "cohort"
+  tempEmulationSchema <- NULL
+  cohortIds <- c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906)
+} else {
+  # only test all cohorts in sqlite
+  cohortIds <- c(17492, 17493)
+
+  if (dbms == "postgresql") {
+    cohortDatabaseSchema <- paste0("cd_", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
+    connectionDetails <- DatabaseConnector::createConnectionDetails(
+      dbms = "postgresql",
+      user = Sys.getenv("CDM5_POSTGRESQL_USER"),
+      password = URLdecode(Sys.getenv("CDM5_POSTGRESQL_PASSWORD")),
+      server = Sys.getenv("CDM5_POSTGRESQL_SERVER"),
+      pathToDriver = jdbcDriverFolder
+    )
+
+    cdmDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
+    vocabularyDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
+    tempEmulationSchema <- NULL
+    cohortTable <- "cohort"
+
+    # Create schema
+    connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+    with_dbc_connection(connection, {
+      sql <- "CREATE SCHEMA @cohort_database_schema;"
+      DatabaseConnector::renderTranslateExecuteSql(sql = sql,
+                                                   cohort_database_schema = cohortDatabaseSchema,
+                                                   connection = connection)
+    })
+
+    # Clean up
+    withr::defer({
+      connection <- DatabaseConnector::connect(connectionDetails)
+      sql <- "DROP SCHEMA IF EXISTS @cohort_database_schema;"
+      DatabaseConnector::renderTranslateExecuteSql(sql = sql,
+                                                   cohort_database_schema = cohortDatabaseSchema,
+                                                   connection = connection)
+      DatabaseConnector::disconnect(connection)
+    }, testthat::teardown_env())
+
+  } else if (dbms == "oracle") {
+    connectionDetails <- DatabaseConnector::createConnectionDetails(
+      dbms = "oracle",
+      user = Sys.getenv("CDM5_ORACLE_USER"),
+      password = URLdecode(Sys.getenv("CDM5_ORACLE_PASSWORD")),
+      server = Sys.getenv("CDM5_ORACLE_SERVER"),
+      pathToDriver = jdbcDriverFolder
+    )
+    cdmDatabaseSchema <- Sys.getenv("CDM5_ORACLE_CDM_SCHEMA")
+    vocabularyDatabaseSchema <- Sys.getenv("CDM5_ORACLE_CDM_SCHEMA")
+    tempEmulationSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
+    cohortDatabaseSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
+
+    # Oracle user can't create schema, use table instead
+    cohortTable <- paste0("ct_", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
+
+    withr::defer({
+      connection <- DatabaseConnector::connect(connectionDetails)
+      DatabaseConnector::renderTranslateExecuteSql(connection, "DROP TABLE IF EXISTS @cohort_table", cohortTable)
+      DatabaseConnector::disconnect(connection)
+    }, testthat::teardown_env())
+  }
+
+}
+skipCdmTests <- FALSE
+if (cdmDatabaseSchema == "") {
+  skipCdmTests <- TRUE
+}
