@@ -64,8 +64,8 @@ if (dbms == "sqlite") {
 
     cdmDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
     vocabularyDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
-    cdmDatabaseSchema <- Sys.getenv("CDM5_OSTGRESQL_OHDSI_SCHEMA")
     tempEmulationSchema <- NULL
+    cohortDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_OHDSI_SCHEMA")
   } else if (dbms == "oracle") {
     connectionDetails <- DatabaseConnector::createConnectionDetails(
       dbms = "oracle",
