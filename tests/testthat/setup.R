@@ -3,6 +3,7 @@ library(CohortDiagnostics)
 library(Eunomia)
 
 dbms <- getOption("dbms", default = "sqlite")
+message("************* Testing on ", dbms, " *************")
 
 if (dir.exists(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))) {
   jdbcDriverFolder <- Sys.getenv("DATABASECONNECTOR_JAR_FOLDER")
@@ -32,9 +33,24 @@ if (dbms == "sqlite") {
   cohortTable <- "cohort"
   tempEmulationSchema <- NULL
   cohortIds <- c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906)
+
+  covariateSettings <- FeatureExtraction::createDefaultCovariateSettings()
+  temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence = TRUE,
+                                                                                  useDrugEraStart = TRUE,
+                                                                                  useProcedureOccurrence = TRUE,
+                                                                                  useMeasurement = TRUE,
+                                                                                  temporalStartDays = c(-365, -30, 0, 1, 31),
+                                                                                  temporalEndDays = c(-31, -1, 0, 30, 365))
+
 } else {
   # only test all cohorts in sqlite
   cohortIds <- c(17492, 17493)
+  cohortTable <- paste0("ct_", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
+
+  covariateSettings <- FeatureExtraction::createCovariateSettings(useDemographicsAge = TRUE, useDemographicsAgeGroup = TRUE)
+  temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence = TRUE,
+                                                                                  temporalStartDays = c(-1, 0, 1),
+                                                                                  temporalEndDays = c(-1, 0, 1))
 
   if (dbms == "postgresql") {
     cohortDatabaseSchema <- paste0("cd_", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
@@ -48,28 +64,8 @@ if (dbms == "sqlite") {
 
     cdmDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
     vocabularyDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
+    cdmDatabaseSchema <- Sys.getenv("CDM5_OSTGRESQL_OHDSI_SCHEMA")
     tempEmulationSchema <- NULL
-    cohortTable <- "cohort"
-
-    # Create schema
-    connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
-    with_dbc_connection(connection, {
-      sql <- "CREATE SCHEMA @cohort_database_schema;"
-      DatabaseConnector::renderTranslateExecuteSql(sql = sql,
-                                                   cohort_database_schema = cohortDatabaseSchema,
-                                                   connection = connection)
-    })
-
-    # Clean up
-    withr::defer({
-      connection <- DatabaseConnector::connect(connectionDetails)
-      sql <- "DROP SCHEMA IF EXISTS @cohort_database_schema;"
-      DatabaseConnector::renderTranslateExecuteSql(sql = sql,
-                                                   cohort_database_schema = cohortDatabaseSchema,
-                                                   connection = connection)
-      DatabaseConnector::disconnect(connection)
-    }, testthat::teardown_env())
-
   } else if (dbms == "oracle") {
     connectionDetails <- DatabaseConnector::createConnectionDetails(
       dbms = "oracle",
@@ -83,17 +79,47 @@ if (dbms == "sqlite") {
     tempEmulationSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
     cohortDatabaseSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
 
-    # Oracle user can't create schema, use table instead
-    cohortTable <- paste0("ct_", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
+  } else if (dbms == "redshift") {
+    connectionDetails <- DatabaseConnector::createConnectionDetails(
+      dbms = "redshift",
+      user = Sys.getenv("CDM5_REDSHIFT_USER"),
+      password = URLdecode(Sys.getenv("CDM5_REDSHIFT_PASSWORD")),
+      server = Sys.getenv("CDM5_REDSHIFT_SERVER"),
+      pathToDriver = jdbcDriverFolder
+    )
+    cdmDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA")
+    vocabularyDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA")
+    tempEmulationSchema <- NULL
+    cohortDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_OHDSI_SCHEMA")
 
-    withr::defer({
-      connection <- DatabaseConnector::connect(connectionDetails)
-      DatabaseConnector::renderTranslateExecuteSql(connection, "DROP TABLE IF EXISTS @cohort_table", cohortTable)
-      DatabaseConnector::disconnect(connection)
-    }, testthat::teardown_env())
+  } else if (dbms == "sql server") {
+    connectionDetails <- DatabaseConnector::createConnectionDetails(
+      dbms = "sql server",
+      user = Sys.getenv("CDM5_SQL_SERVER_USER"),
+      password = URLdecode(Sys.getenv("CDM5_SQL_SERVER_PASSWORD")),
+      server = Sys.getenv("CDM5_SQL_SERVER_SERVER"),
+      pathToDriver = jdbcDriverFolder
+    )
+    cdmDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA")
+    vocabularyDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA")
+    tempEmulationSchema <- NULL
+    cohortDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_OHDSI_SCHEMA")
   }
 
+  # Cleanup
+  sql <- "IF OBJECT_ID('@cohort_database_schema.@cohort_table', 'U') IS NOT NULL
+              DROP TABLE @cohort_table; @cohort_database_schema.@cohort_table;"
+
+  withr::defer({
+    connection <- DatabaseConnector::connect(connectionDetails)
+    DatabaseConnector::renderTranslateExecuteSql(connection,
+                                                 sql,
+                                                 cohort_database_schema = cohortDatabaseSchema,
+                                                 cohort_table = cohortTable)
+    DatabaseConnector::disconnect(connection)
+  }, testthat::teardown_env())
 }
+
 skipCdmTests <- FALSE
 if (cdmDatabaseSchema == "") {
   skipCdmTests <- TRUE

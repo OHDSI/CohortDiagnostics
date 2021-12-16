@@ -67,7 +67,9 @@ test_that("Cohort diagnostics in incremental mode", {
       runTimeSeries = TRUE,
       minCellCount = minCellCountValue,
       incremental = TRUE,
-      incrementalFolder = file.path(folder, "incremental")
+      incrementalFolder = file.path(folder, "incremental"),
+      covariateSettings = covariateSettings,
+      temporalCovariateSettings = temporalCovariateSettings
     )
   )
 
@@ -98,7 +100,9 @@ test_that("Cohort diagnostics in incremental mode", {
       runTimeSeries = TRUE,
       minCellCount = minCellCountValue,
       incremental = TRUE,
-      incrementalFolder = file.path(folder, "incremental")
+      incrementalFolder = file.path(folder, "incremental"),
+      covariateSettings = covariateSettings,
+      temporalCovariateSettings = temporalCovariateSettings
     )
   )
   testthat::expect_lt(secondTime[1], firstTime[1])

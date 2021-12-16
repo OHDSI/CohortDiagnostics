@@ -92,7 +92,9 @@ test_that("Results upload", {
     runOrphanConcepts = TRUE,
     runTimeDistributions = TRUE,
     incremental = TRUE,
-    incrementalFolder = file.path(folder, "incremental")
+    incrementalFolder = file.path(folder, "incremental"),
+    covariateSettings = covariateSettings,
+    temporalCovariateSettings = temporalCovariateSettings
   )
 
   listOfZipFilesToUpload <-
