@@ -30,7 +30,7 @@ test_that("Cohort instantiation", {
         cohort_table = cohortTable,
         snakeCaseToCamelCase = TRUE
       )
-    testthat::expect_gt(nrow(counts), 2)
+    testthat::expect_gt(nrow(counts), 1)
   })
 })
 

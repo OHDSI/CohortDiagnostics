@@ -131,7 +131,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   start <- Sys.time()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
   
-  if (all(!is.null(oracleTempSchema), is.null(tempEmulationSchema))) {
+  if (!is.null(oracleTempSchema) & is.null(tempEmulationSchema)) {
     tempEmulationSchema <- oracleTempSchema
     warning('OracleTempSchema has been deprecated by DatabaseConnector')
   }

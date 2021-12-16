@@ -44,7 +44,7 @@ if (dbms == "sqlite") {
 
 } else {
   # only test all cohorts in sqlite
-  cohortIds <- c(17492, 17493)
+  cohortIds <- c(18345, 17720) # Celecoxib, Type 2 diabetes
   cohortTable <- paste0("ct_", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
 
   covariateSettings <- FeatureExtraction::createCovariateSettings(useDemographicsAge = TRUE, useDemographicsAgeGroup = TRUE)
@@ -108,7 +108,7 @@ if (dbms == "sqlite") {
 
   # Cleanup
   sql <- "IF OBJECT_ID('@cohort_database_schema.@cohort_table', 'U') IS NOT NULL
-              DROP TABLE @cohort_table; @cohort_database_schema.@cohort_table;"
+              DROP TABLE @cohort_database_schema.@cohort_table;"
 
   withr::defer({
     connection <- DatabaseConnector::connect(connectionDetails)

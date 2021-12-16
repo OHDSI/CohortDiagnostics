@@ -15,8 +15,8 @@ if (Sys.getenv("CDM5_POSTGRESQL_SERVER") == "") {
   # Always clean up
   withr::defer({
     pgConnection <- DatabaseConnector::connect(connectionDetails = postgresConnectionDetails)
-    dropSchemaIfExists <- "DROP SCHEMA IF EXISTS @resultsDatabaseSchema CASCADE;"
-    DatabaseConnector::renderTranslateExecuteSql(sql = dropSchemaIfExists,
+    sql <- "DROP SCHEMA IF EXISTS @resultsDatabaseSchema CASCADE;"
+    DatabaseConnector::renderTranslateExecuteSql(sql = sql,
                                                  resultsDatabaseSchema = resultsDatabaseSchema,
                                                  connection = pgConnection)
 
@@ -53,7 +53,7 @@ test_that("Results upload", {
   cohortDefinitionSet <- loadCohortsFromPackage(
     packageName = "CohortDiagnostics",
     cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-    cohortIds = c(17492, 17692)
+    cohortIds = cohortIds
   )
   inclusionStatsFolder <- file.path(folder, "incStats")
   instantiateCohortSet(
@@ -63,7 +63,7 @@ test_that("Results upload", {
     tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cohortTable = cohortTable,
-    cohortIds = c(17492, 17692),
+    cohortIds = cohortIds,
     cohortDefinitionSet = cohortDefinitionSet,
     generateInclusionStats = TRUE,
     createCohortTable = TRUE,
@@ -77,7 +77,7 @@ test_that("Results upload", {
     tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cohortTable = cohortTable,
-    cohortIds = c(17492, 17692),
+    cohortIds = cohortIds,
     cohortDefinitionSet = cohortDefinitionSet,
     inclusionStatisticsFolder = inclusionStatsFolder,
     exportFolder = file.path(folder, "export"),
