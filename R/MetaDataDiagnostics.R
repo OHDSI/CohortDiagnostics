@@ -33,7 +33,7 @@
   }
   sql <- SqlRender::loadRenderTranslateSql(
     "OrphanCodes.sql",
-    packageName = packageName(),
+    packageName= utils::packageName(),
     dbms = connection@dbms,
     tempEmulationSchema = tempEmulationSchema,
     vocabulary_database_schema = vocabularyDatabaseSchema,
@@ -82,7 +82,7 @@
   sql <-
     SqlRender::loadRenderTranslateSql(
       "DropOrphanConceptTempTables.sql",
-      packageName = packageName(),
+      packageName= utils::packageName(),
       dbms = connection@dbms,
       tempEmulationSchema = tempEmulationSchema
     )
@@ -110,7 +110,7 @@ createConceptCountsTable <- function(connectionDetails = NULL,
   sql <-
     SqlRender::loadRenderTranslateSql(
       "CreateConceptCountTable.sql",
-      packageName = packageName(),
+      packageName= utils::packageName(),
       dbms = connection@dbms,
       tempEmulationSchema = tempEmulationSchema,
       cdm_database_schema = cdmDatabaseSchema,
