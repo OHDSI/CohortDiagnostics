@@ -436,7 +436,7 @@ processInclusionStats <- function(inclusion,
 getInclusionStats <- function(connection,
                               exportFolder,
                               databaseId,
-                              cohorts,
+                              cohortDefinitionSet,
                               cohortDatabaseSchema,
                               cohortTableNames,
                               incremental,
@@ -446,7 +446,7 @@ getInclusionStats <- function(connection,
                               recordKeepingFile) {
   ParallelLogger::logInfo("Fetching inclusion statistics from files")
   subset <- subsetToRequiredCohorts(
-    cohorts = cohorts %>%
+    cohorts = cohortDefinitionSet %>%
       dplyr::filter(.data$cohortId %in% instantiatedCohorts),
     task = "runInclusionStatistics",
     incremental = incremental,
@@ -461,12 +461,10 @@ getInclusionStats <- function(connection,
     ))
   }
   if (nrow(subset) > 0) {
-    if (!is.null(inclusionStatisticsFolder)) {
-      warning("Use of inclusionStatisticsFolder will be removed in a future version. Please see vignette 'Running Cohort Diagnostics' for new usage of Cohort generator package")
-    } else {
+    if (is.null(inclusionStatisticsFolder)) {
       ParallelLogger::logInfo("Exporting inclusion rules with CohortGenerator")
       CohortGenerator::insertInclusionRuleNames(connection = connection,
-                                                cohortDefinitionSet = cohorts,
+                                                cohortDefinitionSet = cohortDefinitionSet,
                                                 cohortDatabaseSchema = cohortDatabaseSchema,
                                                 cohortInclusionTable = cohortTableNames$cohortInclusionTable)
 
@@ -478,7 +476,7 @@ getInclusionStats <- function(connection,
                                                cohortDatabaseSchema = cohortDatabaseSchema,
                                                cohortTableNames = cohortTableNames,
                                                cohortStatisticsFolder = inclusionStatisticsFolder,
-                                               incremental = incremental)
+                                               incremental = FALSE) # Note use of FALSE to always genrate stats here
     }
 
     stats <-

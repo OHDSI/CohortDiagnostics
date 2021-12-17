@@ -389,6 +389,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   # Inclusion statistics -----------------------------------------------------------------------
   if (runInclusionStatistics) {
     getInclusionStats(connection,
+                      exportFolder,
                       databaseId,
                       cohortDefinitionSet,
                       cohortDatabaseSchema,

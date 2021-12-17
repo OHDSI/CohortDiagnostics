@@ -59,13 +59,13 @@ test_that("Results upload", {
   # Next create the tables on the database
   CohortGenerator::createCohortTables(connectionDetails = connectionDetails,
                                       cohortTableNames = cohortTableNames,
-                                      cohortDatabaseSchema = cohortDiagnosticsSchema,
+                                      cohortDatabaseSchema = cohortDatabaseSchema,
                                       incremental = FALSE)
 
   # Generate the cohort set
   CohortGenerator::generateCohortSet(connectionDetails = connectionDetails,
                                      cdmDatabaseSchema = cdmDatabaseSchema,
-                                     cohortDatabaseSchema = cohortDiagnosticsSchema,
+                                     cohortDatabaseSchema = cohortDatabaseSchema,
                                      cohortTableNames = cohortTableNames,
                                      cohortDefinitionSet = cohortDefinitionSet,
                                      incremental = FALSE)
