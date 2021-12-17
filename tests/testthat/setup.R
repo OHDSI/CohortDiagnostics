@@ -104,11 +104,14 @@ if (dbms == "sqlite") {
               DROP TABLE @cohort_database_schema.@cohort_table;"
 
   withr::defer({
-    connection <- DatabaseConnector::connect(connectionDetails)
-    DatabaseConnector::renderTranslateExecuteSql(connection,
-                                                 sql,
-                                                 cohort_database_schema = cohortDatabaseSchema,
-                                                 cohort_table = cohortTable)
-    DatabaseConnector::disconnect(connection)
+
+    if (!skipCdmTests) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      DatabaseConnector::renderTranslateExecuteSql(connection,
+                                                   sql,
+                                                   cohort_database_schema = cohortDatabaseSchema,
+                                                   cohort_table = cohortTable)
+      DatabaseConnector::disconnect(connection)
+    }
   }, testthat::teardown_env())
 }

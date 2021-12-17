@@ -301,7 +301,7 @@ createCohortTable <- function(connectionDetails = NULL,
   }
   sql <- SqlRender::loadRenderTranslateSql(
     "CreateCohortTable.sql",
-    packageName = packageName(),
+    packageName= utils::packageName(),
     dbms = connection@dbms,
     cohort_database_schema = cohortDatabaseSchema,
     cohort_table = cohortTable
@@ -771,7 +771,7 @@ createTempInclusionStatsTables <-
     sql <-
       SqlRender::loadRenderTranslateSql(
         "inclusionStatsTables.sql",
-        packageName = packageName(),
+        packageName= utils::packageName(),
         dbms = connection@dbms,
         tempEmulationSchema = tempEmulationSchema
       )

@@ -26,7 +26,7 @@ if (Sys.getenv("CDM5_POSTGRESQL_SERVER") == "") {
 }
 
 test_that("Create schema", {
-  skip_if(skipResultsDm, 'results data model test server not set')
+  skip_if(skipResultsDm | skipCdmTests, 'results data model test server not set')
   pgConnection <- DatabaseConnector::connect(connectionDetails = postgresConnectionDetails)
   with_dbc_connection(pgConnection, {
     sql <- "CREATE SCHEMA @resultsDatabaseSchema;"
@@ -49,7 +49,7 @@ test_that("Create schema", {
 
 
 test_that("Results upload", {
-  skip_if(skipResultsDm, 'results data model test server not set')
+  skip_if(skipResultsDm | skipCdmTests, 'results data model test server not set')
   cohortDefinitionSet <- loadCohortsFromPackage(
     packageName = "CohortDiagnostics",
     cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
@@ -139,7 +139,7 @@ test_that("Results upload", {
 })
 
 test_that("Data removal works", {
-  skip_if(skipResultsDm, 'results data model test server not set')
+  skip_if(skipResultsDm | skipCdmTests, 'results data model test server not set')
   specifications <- getResultsDataModelSpecifications()
 
   pgConnection <- DatabaseConnector::connect(connectionDetails = postgresConnectionDetails)

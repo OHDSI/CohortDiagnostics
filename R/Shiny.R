@@ -93,7 +93,7 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   ensure_installed("rmarkdown")
   
   appDir <-
-    system.file("shiny", "DiagnosticsExplorer", package = packageName())
+    system.file("shiny", "DiagnosticsExplorer", package= utils::packageName())
   
   if (launch.browser) {
     options(shiny.launch.browser = TRUE)
@@ -277,7 +277,7 @@ launchCohortExplorer <- function(connectionDetails,
     )
   on.exit(rm("shinySettings", envir = .GlobalEnv))
   appDir <-
-    system.file("shiny", "CohortExplorer", package = packageName())
+    system.file("shiny", "CohortExplorer", package= utils::packageName())
   shiny::runApp(appDir)
 }
 
