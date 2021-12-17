@@ -9,6 +9,9 @@ as the main interface to the package.
 Bug Fixes:
 1. User code removed from CohortExplorer to fix issue #618
 2. Fixed bug with `runBreakdownIndexEvents = TRUE` failed for drug_era table with SQL error - Issue #695
+3. Fixed error when computing incidence rates on BigQuery.
+4. Fixed error when `cdm_source` table is empty (warning remains).
+5. Fixed error when instantiating cohorts on BigQuery.
 
 CohortDiagnostics 2.1.4
 =======================
