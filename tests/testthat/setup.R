@@ -24,6 +24,7 @@ if (dir.exists(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))) {
 folder <- tempfile()
 dir.create(folder, recursive = TRUE)
 minCellCountValue <- 5
+skipCdmTests <- FALSE
 
 if (dbms == "sqlite") {
   connectionDetails <- Eunomia::getEunomiaConnectionDetails()
@@ -51,59 +52,51 @@ if (dbms == "sqlite") {
   temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence = TRUE,
                                                                                   temporalStartDays = c(-1, 0, 1),
                                                                                   temporalEndDays = c(-1, 0, 1))
-
   if (dbms == "postgresql") {
-    cohortDatabaseSchema <- paste0("cd_", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
-    connectionDetails <- DatabaseConnector::createConnectionDetails(
-      dbms = "postgresql",
-      user = Sys.getenv("CDM5_POSTGRESQL_USER"),
-      password = URLdecode(Sys.getenv("CDM5_POSTGRESQL_PASSWORD")),
-      server = Sys.getenv("CDM5_POSTGRESQL_SERVER"),
-      pathToDriver = jdbcDriverFolder
-    )
-
+    dbUser <- Sys.getenv("CDM5_POSTGRESQL_USER")
+    dbPassword <- Sys.getenv("CDM5_POSTGRESQL_PASSWORD")
+    dbServer <- Sys.getenv("CDM5_POSTGRESQL_SERVER")
     cdmDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
     vocabularyDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
     tempEmulationSchema <- NULL
     cohortDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_OHDSI_SCHEMA")
   } else if (dbms == "oracle") {
-    connectionDetails <- DatabaseConnector::createConnectionDetails(
-      dbms = "oracle",
-      user = Sys.getenv("CDM5_ORACLE_USER"),
-      password = URLdecode(Sys.getenv("CDM5_ORACLE_PASSWORD")),
-      server = Sys.getenv("CDM5_ORACLE_SERVER"),
-      pathToDriver = jdbcDriverFolder
-    )
+    dbUser <- Sys.getenv("CDM5_ORACLE_USER")
+    dbPassword <- Sys.getenv("CDM5_ORACLE_PASSWORD")
+    dbServer <- Sys.getenv("CDM5_ORACLE_SERVER")
     cdmDatabaseSchema <- Sys.getenv("CDM5_ORACLE_CDM_SCHEMA")
     vocabularyDatabaseSchema <- Sys.getenv("CDM5_ORACLE_CDM_SCHEMA")
     tempEmulationSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
     cohortDatabaseSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
     options(sqlRenderTempEmulationSchema = tempEmulationSchema)
   } else if (dbms == "redshift") {
-    connectionDetails <- DatabaseConnector::createConnectionDetails(
-      dbms = "redshift",
-      user = Sys.getenv("CDM5_REDSHIFT_USER"),
-      password = URLdecode(Sys.getenv("CDM5_REDSHIFT_PASSWORD")),
-      server = Sys.getenv("CDM5_REDSHIFT_SERVER"),
-      pathToDriver = jdbcDriverFolder
-    )
+    dbUser <- Sys.getenv("CDM5_REDSHIFT_USER")
+    dbPassword <- Sys.getenv("CDM5_REDSHIFT_PASSWORD")
+    dbServer <- Sys.getenv("CDM5_REDSHIFT_SERVER")
     cdmDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA")
     vocabularyDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA")
     tempEmulationSchema <- NULL
     cohortDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_OHDSI_SCHEMA")
-
   } else if (dbms == "sql server") {
-    connectionDetails <- DatabaseConnector::createConnectionDetails(
-      dbms = "sql server",
-      user = Sys.getenv("CDM5_SQL_SERVER_USER"),
-      password = URLdecode(Sys.getenv("CDM5_SQL_SERVER_PASSWORD")),
-      server = Sys.getenv("CDM5_SQL_SERVER_SERVER"),
-      pathToDriver = jdbcDriverFolder
-    )
+    dbUser <- Sys.getenv("CDM5_SQL_SERVER_USER")
+    dbPassword <- Sys.getenv("CDM5_SQL_SERVER_PASSWORD")
+    dbServer <- Sys.getenv("CDM5_SQL_SERVER_SERVER")
     cdmDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA")
     vocabularyDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA")
     tempEmulationSchema <- NULL
     cohortDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_OHDSI_SCHEMA")
+  }
+
+  connectionDetails <- DatabaseConnector::createConnectionDetails(
+    dbms = dbms,
+    user = dbUser,
+    password = URLdecode(dbPassword),
+    server = dbServer,
+    pathToDriver = jdbcDriverFolder
+  )
+
+  if (cdmDatabaseSchema == "" || dbServer == "") {
+    skipCdmTests <- TRUE
   }
 
   # Cleanup
@@ -118,9 +111,4 @@ if (dbms == "sqlite") {
                                                  cohort_table = cohortTable)
     DatabaseConnector::disconnect(connection)
   }, testthat::teardown_env())
-}
-
-skipCdmTests <- FALSE
-if (cdmDatabaseSchema == "") {
-  skipCdmTests <- TRUE
 }
