@@ -102,9 +102,13 @@ exportConceptInformation <- function(connection = NULL,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema
     )[, 1]
-
+ 
   if (length(uniqueConceptIds) == 0) {
-    warning("No concept IDs in cohorts. No concept information exported.")
+    if (!incremental) {
+      warning("No concept IDs in cohorts. No concept information exported.")
+    } else {
+      ParallelLogger::logInfo("Incremental mode, no additional concept information to export.")
+    }
     return(NULL)
   }
   

@@ -184,7 +184,7 @@ checkAndFixDuplicateRows <-
       dplyr::pull()
     duplicatedRows <- duplicated(table[, primaryKeys])
     if (any(duplicatedRows)) {
-      warning(
+      ParallelLogger::logInfo(
         sprintf(
           "Table %s in zip file %s has duplicate rows. Removing %s records.",
           tableName,

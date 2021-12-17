@@ -5,6 +5,8 @@ Changes:
 as the main interface to the package.
 2. Updated vignette on "Running Cohort Diagnostics" to give clearer instructions
 3. Removed vignettes on usage that are no longer required
+4. Improved testing across database platforms
+5. Moved some not particularly useful warnings to `logInfo`
 
 Bug Fixes:
 1. User code removed from CohortExplorer to fix issue #618
