@@ -23,7 +23,7 @@
 #' @export
 getResultsDataModelSpecifications <- function() {
   pathToCsv <-
-    system.file("settings", "resultsDataModelSpecification.csv", package = "CohortDiagnostics")
+    system.file("settings", "resultsDataModelSpecification.csv", package = packageName())
   resultsDataModelSpecifications <-
     readr::read_csv(file = pathToCsv, col_types = readr::cols())
   return(resultsDataModelSpecifications)
@@ -259,7 +259,7 @@ createResultsDataModel <- function(connection = NULL,
     reportOverallTime = FALSE
   )
   pathToSql <-
-    system.file("sql", "postgresql", "CreateResultsDataModel.sql", package = "CohortDiagnostics")
+    system.file("sql", "postgresql", "CreateResultsDataModel.sql", package = packageName())
   sql <- SqlRender::readSql(pathToSql)
   DatabaseConnector::executeSql(connection, sql)
 }
