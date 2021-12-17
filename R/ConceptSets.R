@@ -432,7 +432,7 @@ runConceptSetDiagnostics <- function(connection,
         # sql <-
         #   SqlRender::loadRenderTranslateSql(
         #     "CohortSourceConceptsFromCcTable.sql",
-        #     packageName = "CohortDiagnostics",
+        #     packageName = packageName(),
         #     dbms = connection@dbms,
         #     tempEmulationSchema = tempEmulationSchema,
         #     cdm_database_schema = cdmDatabaseSchema,
@@ -447,7 +447,7 @@ runConceptSetDiagnostics <- function(connection,
         # sql <-
         #   SqlRender::loadRenderTranslateSql(
         #     "CohortStandardConceptsFromCcTable.sql",
-        #     packageName = "CohortDiagnostics",
+        #     packageName = packageName(),
         #     dbms = connection@dbms,
         #     tempEmulationSchema = tempEmulationSchema,
         #     cdm_database_schema = cdmDatabaseSchema,
@@ -486,7 +486,7 @@ runConceptSetDiagnostics <- function(connection,
       } else {
         sql <- SqlRender::loadRenderTranslateSql(
           "CohortSourceCodes.sql",
-          packageName = "CohortDiagnostics",
+          packageName = packageName(),
           dbms = connection@dbms,
           tempEmulationSchema = tempEmulationSchema,
           cdm_database_schema = cdmDatabaseSchema,
@@ -597,7 +597,7 @@ runConceptSetDiagnostics <- function(connection,
       start <- Sys.time()
       domains <-
         readr::read_csv(
-          system.file("csv", "domains.csv", package = "CohortDiagnostics"),
+          system.file("csv", "domains.csv", package = packageName()),
           col_types = readr::cols(),
           guess_max = min(1e7)
         )
@@ -648,7 +648,7 @@ runConceptSetDiagnostics <- function(connection,
           sql <-
             SqlRender::loadRenderTranslateSql(
               "CohortEntryBreakdown.sql",
-              packageName = "CohortDiagnostics",
+              packageName = packageName(),
               dbms = connection@dbms,
               tempEmulationSchema = tempEmulationSchema,
               cdm_database_schema = cdmDatabaseSchema,

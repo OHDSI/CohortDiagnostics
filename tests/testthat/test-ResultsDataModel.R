@@ -1,95 +1,59 @@
-library(CohortDiagnostics)
-library(testthat)
-
-if (dir.exists(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))) {
-  jdbcDriverFolder <- Sys.getenv("DATABASECONNECTOR_JAR_FOLDER")
+skipResultsDm <- FALSE
+if (Sys.getenv("CDM5_POSTGRESQL_SERVER") == "") {
+  skipResultsDm <- TRUE
 } else {
-  jdbcDriverFolder <- tempfile("jdbcDrivers")
-  dir.create(jdbcDriverFolder, showWarnings = FALSE)
-  DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = jdbcDriverFolder)
-  
+  postgresConnectionDetails <- DatabaseConnector::createConnectionDetails(
+    dbms = "postgresql",
+    user = Sys.getenv("CDM5_POSTGRESQL_USER"),
+    password = URLdecode(Sys.getenv("CDM5_POSTGRESQL_PASSWORD")),
+    server = Sys.getenv("CDM5_POSTGRESQL_SERVER"),
+    pathToDriver = jdbcDriverFolder
+  )
+
+  resultsDatabaseSchema <- paste0("r", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
+
+  # Always clean up
   withr::defer({
-    unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
+    pgConnection <- DatabaseConnector::connect(connectionDetails = postgresConnectionDetails)
+    sql <- "DROP SCHEMA IF EXISTS @resultsDatabaseSchema CASCADE;"
+    DatabaseConnector::renderTranslateExecuteSql(sql = sql,
+                                                 resultsDatabaseSchema = resultsDatabaseSchema,
+                                                 connection = pgConnection)
+
+    DatabaseConnector::disconnect(pgConnection)
+    unlink(folder, recursive = TRUE, force = TRUE)
   }, testthat::teardown_env())
 }
 
-#' utility function to make sure connection is closed after usage
-with_dbc_connection <- function(connection, code) {
-  on.exit({
-    DatabaseConnector::disconnect(connection)
-  })
-  eval(substitute(code), envir = connection, enclos = parent.frame())
-}
-
-connectionDetails <- DatabaseConnector::createConnectionDetails(
-  dbms = "postgresql",
-  user = Sys.getenv("CDM5_POSTGRESQL_USER"),
-  password = URLdecode(Sys.getenv("CDM5_POSTGRESQL_PASSWORD")),
-  server = Sys.getenv("CDM5_POSTGRESQL_SERVER"),
-  pathToDriver = jdbcDriverFolder
-)
-
-cdmDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
-vocabularyDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
-cohortDiagnosticsSchema <- "cohort_diagnostics"
-resultsDatabaseSchema <- paste0("r", 
-                                as.character(gsub("[: -]", "" , Sys.time(), perl=TRUE)),
-                                as.character(sample(1:100, 1)))
-tempEmulationSchema <- NULL
-cohortTable <- "cohort"
-folder <- tempfile("cohortDiagnosticsTest")
-
-withr::defer({
-  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
-  dropSchemaIfExists <- paste0("DROP SCHEMA IF EXISTS ", resultsDatabaseSchema, " CASCADE;")
-  DatabaseConnector::renderTranslateExecuteSql(sql = dropSchemaIfExists,
-                                               connection = connection)
-
-  DatabaseConnector::disconnect(connection)
-  unlink(folder, recursive = TRUE, force = TRUE)
-}, testthat::teardown_env())
-
-
-#' Only works with postgres > 9.4
-.tableExists <- function(connection, schema, tableName) {
-  return(!is.na(
-    DatabaseConnector::renderTranslateQuerySql(
-      connection,
-      "SELECT to_regclass('@schema.@table');",
-      table = tableName,
-      schema = schema
-    )
-  )[[1]])
-}
-
-
 test_that("Create schema", {
-  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
-  with_dbc_connection(connection, {
-    dropSchemaIfExists <- paste0("DROP SCHEMA IF EXISTS ", resultsDatabaseSchema, " CASCADE; CREATE SCHEMA ", resultsDatabaseSchema,";")
-    DatabaseConnector::renderTranslateExecuteSql(sql = dropSchemaIfExists,
-                                                 connection = connection)
-    createResultsDataModel(connectionDetails = connectionDetails,
+  skip_if(skipResultsDm, 'results data model test server not set')
+  pgConnection <- DatabaseConnector::connect(connectionDetails = postgresConnectionDetails)
+  with_dbc_connection(pgConnection, {
+    sql <- "CREATE SCHEMA @resultsDatabaseSchema;"
+    DatabaseConnector::renderTranslateExecuteSql(sql = sql,
+                                                 resultsDatabaseSchema = resultsDatabaseSchema,
+                                                 connection = pgConnection)
+    createResultsDataModel(connectionDetails = postgresConnectionDetails,
                            schema = resultsDatabaseSchema)
 
     specifications <- getResultsDataModelSpecifications()
 
     for (tableName in unique(specifications$tableName)) {
-      expect_true(.tableExists(connection, resultsDatabaseSchema, tableName))
+      expect_true(.pgTableExists(pgConnection, resultsDatabaseSchema, tableName))
     }
     # Bad schema name
-    expect_error(createResultsDataModel(connection = connection,
+    expect_error(createResultsDataModel(connection = pgConnection,
                                         schema = "non_existant_schema"))
   })
 })
 
 
 test_that("Results upload", {
-
+  skip_if(skipResultsDm, 'results data model test server not set')
   cohortDefinitionSet <- loadCohortsFromPackage(
     packageName = "CohortDiagnostics",
     cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-    cohortIds = c(17492, 17692)
+    cohortIds = cohortIds
   )
   cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
   # Next create the tables on the database
@@ -111,12 +75,12 @@ test_that("Results upload", {
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
-    cohortDatabaseSchema = cohortDiagnosticsSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
     cohortTableNames = cohortTableNames,
-    cohortIds = c(17492, 17692),
+    cohortIds = cohortIds,
     cohortDefinitionSet = cohortDefinitionSet,
     exportFolder = file.path(folder, "export"),
-    databaseId = "cdmv5",
+    databaseId = dbms,
     runInclusionStatistics = TRUE,
     runBreakdownIndexEvents = TRUE,
     runCohortCharacterization = TRUE,
@@ -127,9 +91,11 @@ test_that("Results upload", {
     runOrphanConcepts = TRUE,
     runTimeDistributions = TRUE,
     incremental = TRUE,
-    incrementalFolder = file.path(folder, "incremental")
+    incrementalFolder = file.path(folder, "incremental"),
+    covariateSettings = covariateSettings,
+    temporalCovariateSettings = temporalCovariateSettings
   )
-  
+
   listOfZipFilesToUpload <-
     list.files(
       path = file.path(folder, "export"),
@@ -137,18 +103,18 @@ test_that("Results upload", {
       full.names = TRUE,
       recursive = TRUE
     )
-  
+
   for (i in (1:length(listOfZipFilesToUpload))) {
     uploadResults(
-      connectionDetails = connectionDetails,
+      connectionDetails = postgresConnectionDetails,
       schema = resultsDatabaseSchema,
       zipFileName = listOfZipFilesToUpload[[i]]
     )
   }
-  
+
   specifications <- getResultsDataModelSpecifications()
-  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
-  with_dbc_connection(connection, {
+  pgConnection <- DatabaseConnector::connect(connectionDetails = postgresConnectionDetails)
+  with_dbc_connection(pgConnection, {
     for (tableName in unique(specifications$tableName)) {
       primaryKey <- specifications %>%
         dplyr::filter(.data$tableName == !!tableName &
@@ -165,7 +131,7 @@ test_that("Results upload", {
           table_name = tableName,
           database_id = "cdmv5"
         )
-        databaseIdCount <- DatabaseConnector::querySql(connection, sql)[, 1]
+        databaseIdCount <- DatabaseConnector::querySql(pgConnection, sql)[, 1]
         expect_true(databaseIdCount >= 0)
       }
     }
@@ -173,10 +139,11 @@ test_that("Results upload", {
 })
 
 test_that("Data removal works", {
+  skip_if(skipResultsDm, 'results data model test server not set')
   specifications <- getResultsDataModelSpecifications()
 
-  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
-  with_dbc_connection(connection, {
+  pgConnection <- DatabaseConnector::connect(connectionDetails = postgresConnectionDetails)
+  with_dbc_connection(pgConnection, {
     for (tableName in unique(specifications$tableName)) {
       primaryKey <- specifications %>%
         dplyr::filter(.data$tableName == !!tableName &
@@ -186,7 +153,7 @@ test_that("Data removal works", {
 
       if ("database_id" %in% primaryKey) {
         CohortDiagnostics:::deleteAllRecordsForDatabaseId(
-          connection = connection,
+          connection = pgConnection,
           schema = resultsDatabaseSchema,
           tableName = tableName,
           databaseId = "cdmv5"
@@ -200,7 +167,7 @@ test_that("Data removal works", {
           database_id = "cdmv5"
         )
         databaseIdCount <-
-          DatabaseConnector::querySql(connection, sql)[, 1]
+          DatabaseConnector::querySql(pgConnection, sql)[, 1]
         expect_true(databaseIdCount == 0)
       }
     }

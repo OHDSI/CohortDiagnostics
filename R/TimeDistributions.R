@@ -219,7 +219,7 @@ executeTimeSeriesDiagnostics <- function(connection,
     sql <-
       SqlRender::loadRenderTranslateSql(
         "ComputeTimeSeries.sql",
-        packageName = "CohortDiagnostics",
+        packageName = packageName(),
         dbms = connection@dbms
       )
     
