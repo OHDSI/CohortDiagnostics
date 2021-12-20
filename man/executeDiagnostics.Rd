@@ -17,7 +17,7 @@ executeDiagnostics(
   cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortIds = NULL,
-  inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
+  inclusionStatisticsFolder = NULL,
   databaseName = databaseId,
   databaseDescription = databaseId,
   cdmVersion = 5,

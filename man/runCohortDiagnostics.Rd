@@ -20,7 +20,7 @@ runCohortDiagnostics(
   cohortTable = "cohort",
   cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
   cohortIds = NULL,
-  inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
+  inclusionStatisticsFolder = NULL,
   exportFolder,
   databaseId,
   databaseName = databaseId,
