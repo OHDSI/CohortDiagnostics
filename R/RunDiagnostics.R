@@ -149,6 +149,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     databaseDescription <- databaseId
   }
   
+  cohortTable <- cohortTableNames$cohortTable
+
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
   checkmate::assertLogical(runIncludedSourceConcepts, add = errorMessage)

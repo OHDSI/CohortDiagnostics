@@ -464,10 +464,9 @@ getInclusionStats <- function(connection,
     if (is.null(inclusionStatisticsFolder)) {
       ParallelLogger::logInfo("Exporting inclusion rules with CohortGenerator")
       CohortGenerator::insertInclusionRuleNames(connection = connection,
-                                                cohortDefinitionSet = cohortDefinitionSet,
+                                                cohortDefinitionSet = subset,
                                                 cohortDatabaseSchema = cohortDatabaseSchema,
                                                 cohortInclusionTable = cohortTableNames$cohortInclusionTable)
-
       # This part will change in future version, with a patch to CohortGenerator that
       # supports the usage of exporting tables without writing to disk
       inclusionStatisticsFolder <- tempfile("CdCohortStatisticsFolder")

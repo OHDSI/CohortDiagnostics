@@ -49,7 +49,7 @@ test_that("Cohort diagnostics in incremental mode", {
   CohortGenerator::createCohortTables(connectionDetails = connectionDetails,
                                       cohortTableNames = cohortTableNames,
                                       cohortDatabaseSchema = cohortDatabaseSchema,
-                                      incremental = TRUE)
+                                      incremental = FALSE)
 
   incrementalFolder <- file.path(folder, "incremental")
   # Generate the cohort set
@@ -60,7 +60,6 @@ test_that("Cohort diagnostics in incremental mode", {
                                      cohortDefinitionSet = cohortDefinitionSet,
                                      incrementalFolder = incrementalFolder,
                                      incremental = TRUE)
-  
   firstTime <- system.time(
     executeDiagnostics(
       cohortDefinitionSet = cohortDefinitionSet,
@@ -69,7 +68,7 @@ test_that("Cohort diagnostics in incremental mode", {
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
+      cohortTableNames = cohortTableNames,
       cohortIds = cohortIds,
       exportFolder = file.path(folder, "export"),
       databaseId = dbms,
