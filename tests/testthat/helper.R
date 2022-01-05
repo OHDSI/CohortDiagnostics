@@ -6,7 +6,14 @@ with_dbc_connection <- function(connection, code) {
   eval(substitute(code), envir = connection, enclos = parent.frame())
 }
 
-tableExists <- function(connection, schema, tableName) {
-  tableNames <- DatabaseConnector::getTableNames(connection, schema)
-  return(tableName %in% tableNames)
+#' Only works with postgres > 9.4
+.pgTableExists <- function(connection, schema, tableName) {
+  return(!is.na(
+    DatabaseConnector::renderTranslateQuerySql(
+      connection,
+      "SELECT to_regclass('@schema.@table');",
+      table = tableName,
+      schema = schema
+    )
+  )[[1]])
 }
