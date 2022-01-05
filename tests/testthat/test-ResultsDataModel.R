@@ -33,13 +33,13 @@ test_that("Create schema", {
     DatabaseConnector::renderTranslateExecuteSql(sql = sql,
                                                  resultsDatabaseSchema = resultsDatabaseSchema,
                                                  connection = pgConnection)
-    createResultsDataModel(connectionDetails = postgresConnectionDetails,
+    createResultsDataModel(connection = pgConnection,
                            schema = resultsDatabaseSchema)
 
     specifications <- getResultsDataModelSpecifications()
 
     for (tableName in unique(specifications$tableName)) {
-      expect_true(.pgTableExists(pgConnection, resultsDatabaseSchema, tableName))
+      expect_true(tableExists(pgConnection, resultsDatabaseSchema, tableName))
     }
     # Bad schema name
     expect_error(createResultsDataModel(connection = pgConnection,
