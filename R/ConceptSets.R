@@ -432,7 +432,7 @@ runConceptSetDiagnostics <- function(connection,
         # sql <-
         #   SqlRender::loadRenderTranslateSql(
         #     "CohortSourceConceptsFromCcTable.sql",
-        #     packageName= utils::packageName(),
+        #     packageName = utils::packageName(),
         #     dbms = connection@dbms,
         #     tempEmulationSchema = tempEmulationSchema,
         #     cdm_database_schema = cdmDatabaseSchema,
@@ -447,7 +447,7 @@ runConceptSetDiagnostics <- function(connection,
         # sql <-
         #   SqlRender::loadRenderTranslateSql(
         #     "CohortStandardConceptsFromCcTable.sql",
-        #     packageName= utils::packageName(),
+        #     packageName = utils::packageName(),
         #     dbms = connection@dbms,
         #     tempEmulationSchema = tempEmulationSchema,
         #     cdm_database_schema = cdmDatabaseSchema,
@@ -486,7 +486,7 @@ runConceptSetDiagnostics <- function(connection,
       } else {
         sql <- SqlRender::loadRenderTranslateSql(
           "CohortSourceCodes.sql",
-          packageName= utils::packageName(),
+          packageName = utils::packageName(),
           dbms = connection@dbms,
           tempEmulationSchema = tempEmulationSchema,
           cdm_database_schema = cdmDatabaseSchema,
@@ -648,7 +648,7 @@ runConceptSetDiagnostics <- function(connection,
           sql <-
             SqlRender::loadRenderTranslateSql(
               "CohortEntryBreakdown.sql",
-              packageName= utils::packageName(),
+              packageName = utils::packageName(),
               dbms = connection@dbms,
               tempEmulationSchema = tempEmulationSchema,
               cdm_database_schema = cdmDatabaseSchema,

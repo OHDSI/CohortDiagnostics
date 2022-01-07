@@ -45,7 +45,7 @@ getCohortCounts <- function(connectionDetails = NULL,
   sql <-
     SqlRender::loadRenderTranslateSql(
       sqlFilename = "CohortCounts.sql",
-      packageName= utils::packageName(),
+      packageName = utils::packageName(),
       dbms = connection@dbms,
       cohort_database_schema = cohortDatabaseSchema,
       cohort_table = cohortTable,
