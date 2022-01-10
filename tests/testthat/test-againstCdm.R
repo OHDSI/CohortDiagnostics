@@ -1,21 +1,23 @@
 
 test_that("Cohort instantiation", {
   skip_if(skipCdmTests, 'cdm settings not configured')
-  instantiateCohortSet(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-    cohortIds = cohortIds,
-    generateInclusionStats = TRUE,
-    createCohortTable = TRUE,
-    inclusionStatisticsFolder = file.path(folder, "incStats")
-  )
 
+  expect_warning(
+    instantiateCohortSet(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      packageName = "CohortDiagnostics",
+      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+      cohortIds = cohortIds,
+      generateInclusionStats = TRUE,
+      createCohortTable = TRUE,
+      inclusionStatisticsFolder = file.path(folder, "incStats")
+    )
+  )
   connection <- DatabaseConnector::connect(connectionDetails)
   with_dbc_connection(connection, {
     sql <-
@@ -30,7 +32,7 @@ test_that("Cohort instantiation", {
         cohort_table = cohortTable,
         snakeCaseToCamelCase = TRUE
       )
-    testthat::expect_gt(nrow(counts), 1)
+    testthat::expect_gt(nrow(counts), 0)
   })
 })
 
@@ -41,6 +43,22 @@ test_that("Cohort diagnostics in incremental mode", {
     cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
     cohortIds = cohortIds
   )
+
+  cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
+  # Next create the tables on the database
+  CohortGenerator::createCohortTables(connectionDetails = connectionDetails,
+                                      cohortTableNames = cohortTableNames,
+                                      cohortDatabaseSchema = cohortDatabaseSchema,
+                                      incremental = FALSE)
+
+  # Generate the cohort set
+  CohortGenerator::generateCohortSet(connectionDetails = connectionDetails,
+                                     cdmDatabaseSchema = cdmDatabaseSchema,
+                                     cohortDatabaseSchema = cohortDatabaseSchema,
+                                     cohortTableNames = cohortTableNames,
+                                     cohortDefinitionSet = cohortDefinitionSet,
+                                     incremental = FALSE)
+
 
   firstTime <- system.time(
     executeDiagnostics(
@@ -84,9 +102,8 @@ test_that("Cohort diagnostics in incremental mode", {
       cdmDatabaseSchema = cdmDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
+      cohortTableNames = cohortTableNames,
       cohortDefinitionSet = cohortDefinitionSet,
-      inclusionStatisticsFolder = file.path(folder, "incStats"),
       exportFolder = file.path(folder, "export"),
       databaseId = dbms,
       runInclusionStatistics = TRUE,
@@ -116,4 +133,3 @@ test_that("Cohort diagnostics in incremental mode", {
   expect_true(is.numeric(output$sum_value[2]))
   expect_true(is.numeric(output$mean[2]))
 })
-
