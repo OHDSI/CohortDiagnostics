@@ -69,7 +69,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
   
   sql <- SqlRender::loadRenderTranslateSql(
     "CohortOverlap.sql",
-    packageName = "CohortDiagnostics",
+    packageName = utils::packageName(),
     dbms = connection@dbms,
     cohort_database_schema = cohortDatabaseSchema,
     cohort_table = cohortTable,

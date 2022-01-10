@@ -23,7 +23,7 @@
 #' @export
 getResultsDataModelSpecifications <- function() {
   pathToCsv <-
-    system.file("settings", "resultsDataModelSpecification.csv", package = "CohortDiagnostics")
+    system.file("settings", "resultsDataModelSpecification.csv", package= utils::packageName())
   resultsDataModelSpecifications <-
     readr::read_csv(file = pathToCsv, col_types = readr::cols())
   return(resultsDataModelSpecifications)
@@ -184,7 +184,7 @@ checkAndFixDuplicateRows <-
       dplyr::pull()
     duplicatedRows <- duplicated(table[, primaryKeys])
     if (any(duplicatedRows)) {
-      warning(
+      ParallelLogger::logInfo(
         sprintf(
           "Table %s in zip file %s has duplicate rows. Removing %s records.",
           tableName,
@@ -259,7 +259,7 @@ createResultsDataModel <- function(connection = NULL,
     reportOverallTime = FALSE
   )
   pathToSql <-
-    system.file("sql", "postgresql", "CreateResultsDataModel.sql", package = "CohortDiagnostics")
+    system.file("sql", "postgresql", "CreateResultsDataModel.sql", package= utils::packageName())
   sql <- SqlRender::readSql(pathToSql)
   DatabaseConnector::executeSql(connection, sql)
 }

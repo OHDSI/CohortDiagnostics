@@ -1,19 +1,6 @@
 
-library(testthat)
-library(CohortDiagnostics)
-library(Eunomia)
-
-connectionDetails <- Eunomia::getEunomiaConnectionDetails()
-cdmDatabaseSchema <- "main"
-cohortDatabaseSchema <- "main"
-vocabularyDatabaseSchema <- cohortDatabaseSchema
-cohortTable <- "cohort"
-tempEmulationSchema <- NULL
-folder <- tempfile()
-dir.create(folder, recursive = TRUE)
-minCellCountValue <- 5
-
 test_that("Cohort instantiation", {
+  skip_if(skipCdmTests, 'cdm settings not configured')
   instantiateCohortSet(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -23,34 +10,36 @@ test_that("Cohort instantiation", {
     cohortTable = cohortTable,
     packageName = "CohortDiagnostics",
     cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+    cohortIds = cohortIds,
     generateInclusionStats = TRUE,
     createCohortTable = TRUE,
     inclusionStatisticsFolder = file.path(folder, "incStats")
   )
 
-  
   connection <- DatabaseConnector::connect(connectionDetails)
-  sql <-
-    "SELECT COUNT(*) AS cohort_count, cohort_definition_id
-  FROM @cohort_database_schema.@cohort_table
-  GROUP BY cohort_definition_id;"
-  counts <-
-    DatabaseConnector::renderTranslateQuerySql(
-      connection,
-      sql,
-      cohort_database_schema = cohortDatabaseSchema,
-      cohort_table = cohortTable,
-      snakeCaseToCamelCase = TRUE
-    )
-  testthat::expect_gt(nrow(counts), 2)
-  DatabaseConnector::disconnect(connection)
+  with_dbc_connection(connection, {
+    sql <-
+      "SELECT COUNT(*) AS cohort_count, cohort_definition_id
+    FROM @cohort_database_schema.@cohort_table
+    GROUP BY cohort_definition_id;"
+    counts <-
+      DatabaseConnector::renderTranslateQuerySql(
+        connection,
+        sql,
+        cohort_database_schema = cohortDatabaseSchema,
+        cohort_table = cohortTable,
+        snakeCaseToCamelCase = TRUE
+      )
+    testthat::expect_gt(nrow(counts), 1)
+  })
 })
 
 test_that("Cohort diagnostics in incremental mode", {
-
+  skip_if(skipCdmTests, 'cdm settings not configured')
   cohortDefinitionSet <- loadCohortsFromPackage(
     packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv"
+    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+    cohortIds = cohortIds
   )
 
   firstTime <- system.time(
@@ -62,10 +51,10 @@ test_that("Cohort diagnostics in incremental mode", {
       tempEmulationSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
-      cohortIds = c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906),
+      cohortIds = cohortIds,
       inclusionStatisticsFolder = file.path(folder, "incStats"),
-      exportFolder =  file.path(folder, "export"),
-      databaseId = "Eunomia",
+      exportFolder = file.path(folder, "export"),
+      databaseId = dbms,
       runInclusionStatistics = TRUE,
       runBreakdownIndexEvents = TRUE,
       runCohortCharacterization = TRUE,
@@ -78,12 +67,14 @@ test_that("Cohort diagnostics in incremental mode", {
       runTimeSeries = TRUE,
       minCellCount = minCellCountValue,
       incremental = TRUE,
-      incrementalFolder = file.path(folder, "incremental")
+      incrementalFolder = file.path(folder, "incremental"),
+      covariateSettings = covariateSettings,
+      temporalCovariateSettings = temporalCovariateSettings
     )
   )
-  
-  testthat::expect_true(file.exists(file.path(
-    folder, "export", "Results_Eunomia.zip"
+
+  expect_true(file.exists(file.path(
+    folder, "export", paste0("Results_", dbms ,".zip")
   )))
 
   # We now run it with all cohorts without specifying ids - testing incremental mode
@@ -96,8 +87,8 @@ test_that("Cohort diagnostics in incremental mode", {
       cohortTable = cohortTable,
       cohortDefinitionSet = cohortDefinitionSet,
       inclusionStatisticsFolder = file.path(folder, "incStats"),
-      exportFolder =  file.path(folder, "export"),
-      databaseId = "Eunomia",
+      exportFolder = file.path(folder, "export"),
+      databaseId = dbms,
       runInclusionStatistics = TRUE,
       runBreakdownIndexEvents = TRUE,
       runCohortCharacterization = TRUE,
@@ -109,18 +100,20 @@ test_that("Cohort diagnostics in incremental mode", {
       runTimeSeries = TRUE,
       minCellCount = minCellCountValue,
       incremental = TRUE,
-      incrementalFolder = file.path(folder, "incremental")
+      incrementalFolder = file.path(folder, "incremental"),
+      covariateSettings = covariateSettings,
+      temporalCovariateSettings = temporalCovariateSettings
     )
   )
-  testthat::expect_lt(secondTime[1], firstTime[1])
-  
+  expect_lt(secondTime[1], firstTime[1])
+
   # generate premerged file
   preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
-  testthat::expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
-  
+  expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
+
   output <- read.csv(file.path(folder, "export", "covariate_value.csv"))
-  expect_equal(output$sum_value[2], -minCellCountValue)
-  expect_lt(output$mean[2], 0)
+
+  expect_true(is.numeric(output$sum_value[2]))
+  expect_true(is.numeric(output$mean[2]))
 })
 
-unlink(folder, recursive = TRUE)
