@@ -1,23 +1,21 @@
 
 test_that("Cohort instantiation", {
   skip_if(skipCdmTests, 'cdm settings not configured')
-
-  expect_warning(
-    instantiateCohortSet(
-      connectionDetails = connectionDetails,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      tempEmulationSchema = tempEmulationSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      packageName = "CohortDiagnostics",
-      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-      cohortIds = cohortIds,
-      generateInclusionStats = TRUE,
-      createCohortTable = TRUE,
-      inclusionStatisticsFolder = file.path(folder, "incStats")
-    )
+  instantiateCohortSet(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTable = cohortTable,
+    packageName = "CohortDiagnostics",
+    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+    cohortIds = cohortIds,
+    generateInclusionStats = TRUE,
+    createCohortTable = TRUE,
+    inclusionStatisticsFolder = file.path(folder, "incStats")
   )
+
   connection <- DatabaseConnector::connect(connectionDetails)
   with_dbc_connection(connection, {
     sql <-
@@ -32,7 +30,7 @@ test_that("Cohort instantiation", {
         cohort_table = cohortTable,
         snakeCaseToCamelCase = TRUE
       )
-    testthat::expect_gt(nrow(counts), 0)
+    testthat::expect_gt(nrow(counts), 1)
   })
 })
 
@@ -44,22 +42,6 @@ test_that("Cohort diagnostics in incremental mode", {
     cohortIds = cohortIds
   )
 
-  cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
-  # Next create the tables on the database
-  CohortGenerator::createCohortTables(connectionDetails = connectionDetails,
-                                      cohortTableNames = cohortTableNames,
-                                      cohortDatabaseSchema = cohortDatabaseSchema,
-                                      incremental = FALSE)
-
-  incrementalFolder <- file.path(folder, "incremental")
-  # Generate the cohort set
-  CohortGenerator::generateCohortSet(connectionDetails = connectionDetails,
-                                     cdmDatabaseSchema = cdmDatabaseSchema,
-                                     cohortDatabaseSchema = cohortDatabaseSchema,
-                                     cohortTableNames = cohortTableNames,
-                                     cohortDefinitionSet = cohortDefinitionSet,
-                                     incrementalFolder = incrementalFolder,
-                                     incremental = TRUE)
   firstTime <- system.time(
     executeDiagnostics(
       cohortDefinitionSet = cohortDefinitionSet,
@@ -68,8 +50,9 @@ test_that("Cohort diagnostics in incremental mode", {
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTableNames = cohortTableNames,
+      cohortTable = cohortTable,
       cohortIds = cohortIds,
+      inclusionStatisticsFolder = file.path(folder, "incStats"),
       exportFolder = file.path(folder, "export"),
       databaseId = dbms,
       runInclusionStatistics = TRUE,
@@ -84,7 +67,7 @@ test_that("Cohort diagnostics in incremental mode", {
       runTimeSeries = TRUE,
       minCellCount = minCellCountValue,
       incremental = TRUE,
-      incrementalFolder = incrementalFolder,
+      incrementalFolder = file.path(folder, "incremental"),
       covariateSettings = covariateSettings,
       temporalCovariateSettings = temporalCovariateSettings
     )
@@ -101,8 +84,9 @@ test_that("Cohort diagnostics in incremental mode", {
       cdmDatabaseSchema = cdmDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTableNames = cohortTableNames,
+      cohortTable = cohortTable,
       cohortDefinitionSet = cohortDefinitionSet,
+      inclusionStatisticsFolder = file.path(folder, "incStats"),
       exportFolder = file.path(folder, "export"),
       databaseId = dbms,
       runInclusionStatistics = TRUE,
