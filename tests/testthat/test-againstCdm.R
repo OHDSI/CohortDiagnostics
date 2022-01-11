@@ -70,7 +70,6 @@ test_that("Cohort diagnostics in incremental mode", {
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
       cohortIds = cohortIds,
-      inclusionStatisticsFolder = file.path(folder, "incStats"),
       exportFolder = file.path(folder, "export"),
       databaseId = dbms,
       runInclusionStatistics = TRUE,
@@ -133,3 +132,4 @@ test_that("Cohort diagnostics in incremental mode", {
   expect_true(is.numeric(output$sum_value[2]))
   expect_true(is.numeric(output$mean[2]))
 })
+
