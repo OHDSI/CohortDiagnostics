@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,23 +33,14 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.2.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="reference/index.html">Reference</a>
-</li>
-<li>
-  <a href="news/index.html">Changelog</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -57,16 +50,13 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="articles/CohortDiagnosticsInPackageMode.html">Runing Cohort Diagnostics in an OHDSI Package mode</a>
-    </li>
-    <li>
-      <a href="articles/CohortDiagnosticsUsingWebApi.html">Running cohort diagnostics using WebAPI</a>
+      <a href="articles/CreatingAStudyPackage.html">Creating a study package</a>
     </li>
     <li>
       <a href="articles/DatabaseModeInDiagnosticsExplorer.html">Database mode in Diagnostics Explorer</a>
     </li>
     <li>
-      <a href="articles/RunningCohortDiagnostics.html">Running cohort diagnostics</a>
+      <a href="articles/RunningCohortDiagnostics.html">Running Cohort Diagnostics</a>
     </li>
     <li>
       <a href="articles/ViewingResultsUsingDiagnosticsExplorer.html">Viewing results using Diagnostics Explorer</a>
@@ -76,13 +66,16 @@
     </li>
   </ul>
 </li>
+<li>
+  <a href="news/index.html">Changelog</a>
+</li>
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://ohdsi.github.io/Hades"><img src='https://ohdsi.github.io/Hades/images/hadesMini.png' width=80 height=17 style='vertical-align: top;'></a>
+  <a href="https://ohdsi.github.io/Hades" class="external-link"><img src='https://ohdsi.github.io/Hades/images/hadesMini.png' width=80 height=17 style='vertical-align: top;'></a>
 </li>
 <li>
-  <a href="https://github.com/OHDSI/CohortDiagnostics/">
+  <a href="https://github.com/OHDSI/CohortDiagnostics/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -100,20 +93,20 @@
       </header><div class="row">
   <div class="contents col-md-9">
 
-<div id="cohortdiagnostics" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#cohortdiagnostics" class="anchor"></a>CohortDiagnostics</h1></div>
+<div class="section level1">
+<div class="page-header"><h1 id="cohortdiagnostics">CohortDiagnostics<a class="anchor" aria-label="anchor" href="#cohortdiagnostics"></a>
+</h1></div>
 
-<p>CohortDiagnostics is part of <a href="https://ohdsi.github.io/Hades">HADES</a>.</p>
+<p>CohortDiagnostics is part of <a href="https://ohdsi.github.io/Hades" class="external-link">HADES</a>.</p>
 </div>
-<div id="introduction" class="section level1">
-<h1 class="hasAnchor">
-<a href="#introduction" class="anchor"></a>Introduction</h1>
+<div class="section level1">
+<h1 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h1>
 <p>This is an R package for performing various study diagnostics, many of which are not specific to any particular study design.</p>
 </div>
-<div id="features" class="section level1">
-<h1 class="hasAnchor">
-<a href="#features" class="anchor"></a>Features</h1>
+<div class="section level1">
+<h1 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
+</h1>
 <ul>
 <li>Show cohort inclusion rule attrition.</li>
 <li>List all source codes used when running a cohort definition on a specific database.</li>
@@ -125,79 +118,65 @@
 <li>Explore patient profiles of a random sample of subjects in a cohort.</li>
 </ul>
 </div>
-<div id="screenshot" class="section level1">
-<h1 class="hasAnchor">
-<a href="#screenshot" class="anchor"></a>Screenshot</h1>
-<p><img src="articles/shiny.png" alt="The Diagnostics Explorer Shiny app"></p>
+<div class="section level1">
+<h1 id="screenshot">Screenshot<a class="anchor" aria-label="anchor" href="#screenshot"></a>
+</h1>
+<div class="figure">
+<img src="articles/shiny.png" alt=""><p class="caption">The Diagnostics Explorer Shiny app</p>
 </div>
-<div id="technology" class="section level1">
-<h1 class="hasAnchor">
-<a href="#technology" class="anchor"></a>Technology</h1>
+</div>
+<div class="section level1">
+<h1 id="technology">Technology<a class="anchor" aria-label="anchor" href="#technology"></a>
+</h1>
 <p>The CohortDiagnostics package is an R package.</p>
 </div>
-<div id="system-requirements" class="section level1">
-<h1 class="hasAnchor">
-<a href="#system-requirements" class="anchor"></a>System Requirements</h1>
+<div class="section level1">
+<h1 id="system-requirements">System Requirements<a class="anchor" aria-label="anchor" href="#system-requirements"></a>
+</h1>
 <p>Requires R. Some of the packages used by CohortDiagnostics require Java.</p>
 </div>
-<div id="installation" class="section level1">
-<h1 class="hasAnchor">
-<a href="#installation" class="anchor"></a>Installation</h1>
-<ol>
-<li><p>See the instructions <a href="https://ohdsi.github.io/Hades/rSetup.html">here</a> for configuring your R environment, including Java.</p></li>
+<div class="section level1">
+<h1 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h1>
+<ol style="list-style-type: decimal">
+<li><p>See the instructions <a href="https://ohdsi.github.io/Hades/rSetup.html" class="external-link">here</a> for configuring your R environment, including Java.</p></li>
 <li><p>In R, use the following commands to download and install CohortDiagnostics:</p></li>
 </ol>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"OHDSI/CohortDiagnostics"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"OHDSI/CohortDiagnostics"</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="user-documentation" class="section level1">
-<h1 class="hasAnchor">
-<a href="#user-documentation" class="anchor"></a>User Documentation</h1>
-<p>Documentation can be found on the <a href="https://ohdsi.github.io/CohortDiagnostics">package website</a>.</p>
-<p>PDF versions of the documentation are also available:</p>
+<div class="section level1">
+<h1 id="user-documentation">User Documentation<a class="anchor" aria-label="anchor" href="#user-documentation"></a>
+</h1>
+<p>Documentation can be found on the <a href="https://ohdsi.github.io/CohortDiagnostics" class="external-link">package website</a>.</p>
+<p>PDF versions of the documentation are also available: * Package manual: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/extras/CohortDiagnostics.pdf" class="external-link">CohortDiagnostics manual</a> * Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/WhatIsCohortDiagnostics.pdf" class="external-link">What is Cohort Diagnostics</a> * Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/RunningCohortDiagnostics.pdf" class="external-link">Running Cohort Diagnostics</a> * Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/CohortDiagnosticsUsingWebApi.pdf" class="external-link">Running cohort diagnostics using WebAPI</a> * Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/CohortDiagnosticsInPackageMode.pdf" class="external-link">Running cohort diagnostics in OHDSI Package mode WebAPI</a> * Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/CohortDiagnosticsUsingWebApi.pdf" class="external-link">Running cohort diagnostics using WebApi WebAPI</a> * Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/DatabaseModeInDiagnosticsExplorer.pdf" class="external-link">Database Mode in Diagnostics Explorer</a></p>
+</div>
+<div class="section level1">
+<h1 id="support">Support<a class="anchor" aria-label="anchor" href="#support"></a>
+</h1>
 <ul>
-<li>Package manual: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/extras/CohortDiagnostics.pdf">CohortDiagnostics manual</a>
+<li>Developer questions/comments/feedback: <a href="http://forums.ohdsi.org/c/developers" class="external-link">OHDSI Forum</a>
 </li>
-<li>Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/WhatIsCohortDiagnostics.pdf">What is Cohort Diagnostics</a>
-</li>
-<li>Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/RunningCohortDiagnostics.pdf">Running Cohort Diagnostics</a>
-</li>
-<li>Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/CohortDiagnosticsUsingWebApi.pdf">Running cohort diagnostics using WebAPI</a>
-</li>
-<li>Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/CohortDiagnosticsInPackageMode.pdf">Running cohort diagnostics in OHDSI Package mode WebAPI</a>
-</li>
-<li>Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/CohortDiagnosticsUsingWebApi.pdf">Running cohort diagnostics using WebApi WebAPI</a>
-</li>
-<li>Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/DatabaseModeInDiagnosticsExplorer.pdf">Database Mode in Diagnostics Explorer</a>
-</li>
+<li>We use the <a href="https://github.com/OHDSI/CohortDiagnostics/issues" class="external-link">GitHub issue tracker</a> for all bugs/issues/enhancements</li>
 </ul>
 </div>
-<div id="support" class="section level1">
-<h1 class="hasAnchor">
-<a href="#support" class="anchor"></a>Support</h1>
-<ul>
-<li>Developer questions/comments/feedback: <a href="http://forums.ohdsi.org/c/developers">OHDSI Forum</a>
-</li>
-<li>We use the <a href="https://github.com/OHDSI/CohortDiagnostics/issues">GitHub issue tracker</a> for all bugs/issues/enhancements</li>
-</ul>
+<div class="section level1">
+<h1 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>
+</h1>
+<p>Read <a href="https://ohdsi.github.io/Hades/contribute.html" class="external-link">here</a> how you can contribute to this package.</p>
 </div>
-<div id="contributing" class="section level1">
-<h1 class="hasAnchor">
-<a href="#contributing" class="anchor"></a>Contributing</h1>
-<p>Read <a href="https://ohdsi.github.io/Hades/contribute.html">here</a> how you can contribute to this package.</p>
-</div>
-<div id="license" class="section level1">
-<h1 class="hasAnchor">
-<a href="#license" class="anchor"></a>License</h1>
+<div class="section level1">
+<h1 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
+</h1>
 <p>CohortDiagnostics is licensed under Apache License 2.0</p>
 </div>
-<div id="development" class="section level1">
-<h1 class="hasAnchor">
-<a href="#development" class="anchor"></a>Development</h1>
+<div class="section level1">
+<h1 id="development">Development<a class="anchor" aria-label="anchor" href="#development"></a>
+</h1>
 <p>CohortDiagnostics is being developed in R Studio.</p>
-<div id="development-status" class="section level3">
-<h3 class="hasAnchor">
-<a href="#development-status" class="anchor"></a>Development status</h3>
+<div class="section level3">
+<h3 id="development-status">Development status<a class="anchor" aria-label="anchor" href="#development-status"></a>
+</h3>
 <p>Stable</p>
 </div>
 </div>
@@ -206,51 +185,61 @@
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="links">
-<h2>Links</h2>
+<h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li>Browse source code at <br><a href="https://github.com/OHDSI/CohortDiagnostics/">https://​github.com/​OHDSI/​CohortDiagnostics/​</a>
-</li>
-<li>Report a bug at <br><a href="https://github.com/OHDSI/CohortDiagnostics/issues">https://​github.com/​OHDSI/​CohortDiagnostics/​issues</a>
-</li>
-<li>Ask a question at <br><a href="http://forums.ohdsi.org">http://​forums.ohdsi.org</a>
-</li>
+<li><a href="https://github.com/OHDSI/CohortDiagnostics/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/OHDSI/CohortDiagnostics/issues" class="external-link">Report a bug</a></li>
+<li><a href="http://forums.ohdsi.org" class="external-link">Ask a question</a></li>
 </ul>
 </div>
+
 <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li>Apache License</li>
 </ul>
 </div>
+
+
+<div class="citation">
+<h2 data-toc-skip>Citation</h2>
+<ul class="list-unstyled">
+<li><a href="authors.html#citation">Citing CohortDiagnostics</a></li>
+</ul>
+</div>
+
 <div class="developers">
-<h2>Developers</h2>
+<h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Gowtham Rao <br><small class="roles"> Author, maintainer </small>  </li>
 <li>Martijn Schuemie <br><small class="roles"> Author </small>  </li>
 <li>Patrick Ryan <br><small class="roles"> Author </small>  </li>
 <li>James Weaver <br><small class="roles"> Author </small>  </li>
 <li>Jamie Gilbert <br><small class="roles"> Author </small>  </li>
-<li><a href="authors.html">All authors...</a></li>
+<li><a href="authors.html">More about authors...</a></li>
 </ul>
 </div>
 
-  <div class="dev-status">
-<h2>Dev status</h2>
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/OHDSI/CohortDiagnostics/actions?query=workflow%3AR-CMD-check"><img src="https://github.com/OHDSI/CohortDiagnostics/workflows/R-CMD-check/badge.svg" alt="Build Status"></a></li>
-<li><a href="https://codecov.io/github/OHDSI/CohortDiagnostics?branch=master"><img src="https://codecov.io/github/OHDSI/CohortDiagnostics/coverage.svg?branch=master" alt="codecov.io"></a></li>
+<li><a href="https://github.com/OHDSI/CohortDiagnostics/actions?query=workflow%3AR-CMD-check" class="external-link"><img src="https://github.com/OHDSI/CohortDiagnostics/workflows/R-CMD-check/badge.svg" alt="Build Status"></a></li>
+<li><a href="https://codecov.io/github/OHDSI/CohortDiagnostics?branch=master" class="external-link"><img src="https://codecov.io/github/OHDSI/CohortDiagnostics/coverage.svg?branch=master" alt="codecov.io"></a></li>
 </ul>
 </div>
-</div>
+
+  </div>
 </div>
 
 
       <footer><div class="copyright">
-  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
+  <p></p>
+<p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -258,6 +247,8 @@
 
   
 
+
+  
 
   </body>
 </html>
