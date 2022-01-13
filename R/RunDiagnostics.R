@@ -148,10 +148,17 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (any(is.null(databaseDescription), is.na(databaseDescription))) {
     databaseDescription <- databaseId
   }
-  
-  cohortTable <- cohortTableNames$cohortTable
 
   errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertList(cohortTableNames, null.ok = FALSE, types = "character", add = errorMessage, names = "named")
+  checkmate::assertNames(names(cohortTableNames),
+                         must.include = c("cohortTable",
+                                          "cohortInclusionTable",
+                                          "cohortInclusionResultTable",
+                                          "cohortInclusionStatsTable",
+                                          "cohortSummaryStatsTable",
+                                          "cohortCensorStatsTable"))
+  cohortTable <- cohortTableNames$cohortTable
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
   checkmate::assertLogical(runIncludedSourceConcepts, add = errorMessage)
   checkmate::assertLogical(runOrphanConcepts, add = errorMessage)

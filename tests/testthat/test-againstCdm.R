@@ -2,7 +2,7 @@
 test_that("Cohort instantiation", {
   skip_if(skipCdmTests, 'cdm settings not configured')
 
-  expect_warning(
+  expect_message(
     instantiateCohortSet(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -16,7 +16,7 @@ test_that("Cohort instantiation", {
       generateInclusionStats = TRUE,
       createCohortTable = TRUE,
       inclusionStatisticsFolder = file.path(folder, "incStats")
-    )
+    ), "This function will be removed in a future version"
   )
   connection <- DatabaseConnector::connect(connectionDetails)
   with_dbc_connection(connection, {

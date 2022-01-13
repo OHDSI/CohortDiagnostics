@@ -579,7 +579,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                  createCohortTable = TRUE,
                                  incremental = FALSE,
                                  incrementalFolder = NULL) {
-  warning("This function will be removed in a future version. Please see https://github.com/ohdsi/CohortGenerator for future generation of cohorts")
+  message("***** This function will be removed in a future version. Please see https://github.com/ohdsi/CohortGenerator for future generation of cohorts ****")
 
   if (!is.null(cohortSetReference)) {
     ParallelLogger::logInfo("Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
