@@ -14,3 +14,4 @@ errorReportR.txt
 tests/testthat/testthat-problems.rds
 *.RData
 /check/
+/.idea

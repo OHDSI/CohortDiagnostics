@@ -1,4 +1,4 @@
-# Copyright 2021 Observational Health Data Sciences and Informatics
+# Copyright 2022 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -44,7 +44,8 @@
 #'                                    does not exist it will be created.
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
 #'                                    diagnostics to.
-#' @param cohortDefinitionSet                     Optional data.frame of cohorts must include columns cohortId, cohortName, json, sql
+#' @param cohortDefinitionSet         Data.frame of cohorts must include columns cohortId, cohortName, json, sql
+#' @param cohortTableNames            Cohort Table names used by CohortGenerator package
 #' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf').
 #' @param databaseName                The full name of the database. If NULL, defaults to databaseId.
 #' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to databaseId.
@@ -74,6 +75,8 @@
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
+#'
+#' @importFrom CohortGenerator getCohortTableNames
 #' @export
 runCohortDiagnostics <- function(packageName = NULL,
                                  cohortToCreateFile = "settings/CohortsToCreate.csv",
@@ -88,8 +91,9 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  cohortDatabaseSchema,
                                  vocabularyDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
+                                 cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
                                  cohortIds = NULL,
-                                 inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
+                                 inclusionStatisticsFolder = NULL,
                                  exportFolder,
                                  databaseId,
                                  databaseName = databaseId,
@@ -121,7 +125,9 @@ runCohortDiagnostics <- function(packageName = NULL,
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
-  inclusionStatisticsFolder <- normalizePath(inclusionStatisticsFolder, mustWork = FALSE)
+
+  if (!is.null(inclusionStatisticsFolder))
+    inclusionStatisticsFolder <- normalizePath(inclusionStatisticsFolder, mustWork = FALSE)
 
   if (!is.null(cohortSetReference)) {
     ParallelLogger::logInfo("Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
@@ -142,8 +148,17 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (any(is.null(databaseDescription), is.na(databaseDescription))) {
     databaseDescription <- databaseId
   }
-  
+
   errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertList(cohortTableNames, null.ok = FALSE, types = "character", add = errorMessage, names = "named")
+  checkmate::assertNames(names(cohortTableNames),
+                         must.include = c("cohortTable",
+                                          "cohortInclusionTable",
+                                          "cohortInclusionResultTable",
+                                          "cohortInclusionStatsTable",
+                                          "cohortSummaryStatsTable",
+                                          "cohortCensorStatsTable"))
+  cohortTable <- cohortTableNames$cohortTable
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
   checkmate::assertLogical(runIncludedSourceConcepts, add = errorMessage)
   checkmate::assertLogical(runOrphanConcepts, add = errorMessage)
@@ -202,7 +217,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                        name = incrementalFolder,
                        errorMessage = errorMessage)
   }
-  if (isTRUE(runInclusionStatistics)) {
+  if (isTRUE(runInclusionStatistics) & !is.null(inclusionStatisticsFolder)) {
     errorMessage <-
       createIfNotExist(type = "folder",
                        name = inclusionStatisticsFolder,
@@ -382,9 +397,12 @@ runCohortDiagnostics <- function(packageName = NULL,
 
   # Inclusion statistics -----------------------------------------------------------------------
   if (runInclusionStatistics) {
-    getInclusionStats(exportFolder,
+    getInclusionStats(connection,
+                      exportFolder,
                       databaseId,
                       cohortDefinitionSet,
+                      cohortDatabaseSchema,
+                      cohortTableNames,
                       incremental,
                       instantiatedCohorts,
                       inclusionStatisticsFolder,
@@ -617,15 +635,17 @@ writeResultsZip <- function(exportFolder, databaseId, vocabularyVersion, vocabul
 #'
 #' \dontrun{
 #' # Load cohorts (assumes that they have already been instantiated)
+#' cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort")
 #' cohorts <- loadCohortsFromPackage(packageName = "MyGreatPackage")
 #' connectionDetails <- createConnectionDetails(dbms = "postgresql",
 #'                                              server = "ohdsi.com",
 #'                                              port = 5432,
 #'                                              user = "me",
 #'                                              password = "secure")
+#'
 #' executeDiagnostics(cohorts = cohorts,
 #'                    exportFolder = "export",
-#'                    cohortTable = "cohort",
+#'                    cohortTableNames = cohortTableNames,
 #'                    cohortDatabaseSchema = "results",
 #'                    cdmDatabaseSchema = "cdm",
 #'                    databaseId = "mySpecialCdm",
@@ -647,18 +667,22 @@ writeResultsZip <- function(exportFolder, databaseId, vocabularyVersion, vocabul
 #'                    databaseId = "mySpecialCdm",
 #'                    connectionDetails = connectionDetails)
 #' }
+#'
+#' @importFrom CohortGenerator getCohortTableNames
 #' @export
 executeDiagnostics <- function(cohortDefinitionSet,
                                exportFolder,
                                databaseId,
                                connectionDetails = NULL,
+                               connection = NULL,
                                cdmDatabaseSchema,
                                tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                                cohortDatabaseSchema,
-                               vocabularyDatabaseSchema = cdmDatabaseSchema,
                                cohortTable = "cohort",
+                               cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
+                               vocabularyDatabaseSchema = cdmDatabaseSchema,
                                cohortIds = NULL,
-                               inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
+                               inclusionStatisticsFolder = NULL,
                                databaseName = databaseId,
                                databaseDescription = databaseId,
                                cdmVersion = 5,
@@ -692,11 +716,12 @@ executeDiagnostics <- function(cohortDefinitionSet,
                        exportFolder = exportFolder,
                        databaseId = databaseId,
                        connectionDetails = connectionDetails,
+                       connection = connection,
                        cdmDatabaseSchema = cdmDatabaseSchema,
                        tempEmulationSchema = tempEmulationSchema,
                        cohortDatabaseSchema = cohortDatabaseSchema,
                        vocabularyDatabaseSchema = cdmDatabaseSchema,
-                       cohortTable = cohortTable,
+                       cohortTableNames = cohortTableNames,
                        cohortIds = cohortIds,
                        inclusionStatisticsFolder = inclusionStatisticsFolder,
                        databaseName = databaseName,

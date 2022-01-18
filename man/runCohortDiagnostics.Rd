@@ -18,8 +18,9 @@ runCohortDiagnostics(
   cohortDatabaseSchema,
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
+  cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
   cohortIds = NULL,
-  inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
+  inclusionStatisticsFolder = NULL,
   exportFolder,
   databaseId,
   databaseName = databaseId,
@@ -56,7 +57,7 @@ a dataframe object identical to requirements for \code{cohortSetReference} argum
 This csv file is expected to be encoded in either ASCII or UTF-8, if not, an 
 error message will be displayed and process stopped.}
 
-\item{cohortDefinitionSet}{Optional data.frame of cohorts must include columns cohortId, cohortName, json, sql}
+\item{cohortDefinitionSet}{Data.frame of cohorts must include columns cohortId, cohortName, json, sql}
 
 \item{baseUrl}{The base URL for the WebApi instance, for example:
 "http://server.org:80/WebAPI". Can be left NULL if 
@@ -95,6 +96,8 @@ SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
 
 \item{cohortTable}{Name of the cohort table.}
+
+\item{cohortTableNames}{Cohort Table names used by CohortGenerator package}
 
 \item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
 diagnostics to.}

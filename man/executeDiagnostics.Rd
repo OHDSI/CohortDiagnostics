@@ -9,13 +9,15 @@ executeDiagnostics(
   exportFolder,
   databaseId,
   connectionDetails = NULL,
+  connection = NULL,
   cdmDatabaseSchema,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   cohortDatabaseSchema,
-  vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
+  cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
+  vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortIds = NULL,
-  inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
+  inclusionStatisticsFolder = NULL,
   databaseName = databaseId,
   databaseDescription = databaseId,
   cdmVersion = 5,
@@ -40,7 +42,7 @@ executeDiagnostics(
 )
 }
 \arguments{
-\item{cohortDefinitionSet}{Optional data.frame of cohorts must include columns cohortId, cohortName, json, sql}
+\item{cohortDefinitionSet}{Data.frame of cohorts must include columns cohortId, cohortName, json, sql}
 
 \item{exportFolder}{The folder where the output will be exported to. If this folder
 does not exist it will be created.}
@@ -51,6 +53,12 @@ does not exist it will be created.}
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 DatabaseConnector package. Can be left NULL if \code{connection} is
 provided.}
+
+\item{connection}{An object of type \code{connection} as created using the
+\code{\link[DatabaseConnector]{connect}} function in the
+DatabaseConnector package. Can be left NULL if \code{connectionDetails}
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
@@ -63,12 +71,14 @@ tables, provide a schema with write privileges where temp tables can be created.
 this should include both the database and schema name, for example
 'scratch.dbo'.}
 
+\item{cohortTable}{Name of the cohort table.}
+
+\item{cohortTableNames}{Cohort Table names used by CohortGenerator package}
+
 \item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
 commonly the same as cdmDatabaseSchema. Note that for 
 SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
-
-\item{cohortTable}{Name of the cohort table.}
 
 \item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
 diagnostics to.}
@@ -133,15 +143,17 @@ Note that none of the references passed to this function are used, they are requ
 
 \dontrun{
 # Load cohorts (assumes that they have already been instantiated)
+cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort")
 cohorts <- loadCohortsFromPackage(packageName = "MyGreatPackage")
 connectionDetails <- createConnectionDetails(dbms = "postgresql",
                                              server = "ohdsi.com",
                                              port = 5432,
                                              user = "me",
                                              password = "secure")
+
 executeDiagnostics(cohorts = cohorts,
                    exportFolder = "export",
-                   cohortTable = "cohort",
+                   cohortTableNames = cohortTableNames,
                    cohortDatabaseSchema = "results",
                    cdmDatabaseSchema = "cdm",
                    databaseId = "mySpecialCdm",
@@ -163,4 +175,5 @@ executeDiagnostics(cohorts = cohorts,
                    databaseId = "mySpecialCdm",
                    connectionDetails = connectionDetails)
 }
+
 }

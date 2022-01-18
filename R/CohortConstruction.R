@@ -1,4 +1,4 @@
-# Copyright 2021 Observational Health Data Sciences and Informatics
+# Copyright 2022 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -433,9 +433,12 @@ processInclusionStats <- function(inclusion,
   return(result)
 }
 
-getInclusionStats <- function(exportFolder,
+getInclusionStats <- function(connection,
+                              exportFolder,
                               databaseId,
-                              cohorts,
+                              cohortDefinitionSet,
+                              cohortDatabaseSchema,
+                              cohortTableNames,
                               incremental,
                               instantiatedCohorts,
                               inclusionStatisticsFolder,
@@ -443,7 +446,7 @@ getInclusionStats <- function(exportFolder,
                               recordKeepingFile) {
   ParallelLogger::logInfo("Fetching inclusion statistics from files")
   subset <- subsetToRequiredCohorts(
-    cohorts = cohorts %>%
+    cohorts = cohortDefinitionSet %>%
       dplyr::filter(.data$cohortId %in% instantiatedCohorts),
     task = "runInclusionStatistics",
     incremental = incremental,
@@ -458,12 +461,30 @@ getInclusionStats <- function(exportFolder,
     ))
   }
   if (nrow(subset) > 0) {
+    if (is.null(inclusionStatisticsFolder)) {
+      ParallelLogger::logInfo("Exporting inclusion rules with CohortGenerator")
+      CohortGenerator::insertInclusionRuleNames(connection = connection,
+                                                cohortDefinitionSet = subset,
+                                                cohortDatabaseSchema = cohortDatabaseSchema,
+                                                cohortInclusionTable = cohortTableNames$cohortInclusionTable)
+      # This part will change in future version, with a patch to CohortGenerator that
+      # supports the usage of exporting tables without writing to disk
+      inclusionStatisticsFolder <- tempfile("CdCohortStatisticsFolder")
+      on.exit(unlink(inclusionStatisticsFolder), add = TRUE)
+      CohortGenerator::exportCohortStatsTables(connection = connection,
+                                               cohortDatabaseSchema = cohortDatabaseSchema,
+                                               cohortTableNames = cohortTableNames,
+                                               cohortStatisticsFolder = inclusionStatisticsFolder,
+                                               incremental = FALSE) # Note use of FALSE to always genrate stats here
+    }
+
     stats <-
-      getInclusionStatisticsFromFiles(
-        cohortIds = subset$cohortId,
-        folder = inclusionStatisticsFolder,
-        simplify = TRUE
-      )
+        getInclusionStatisticsFromFiles(
+          cohortIds = subset$cohortId,
+          folder = inclusionStatisticsFolder,
+          simplify = TRUE
+        )
+
     if (!is.null(stats)) {
       if (nrow(stats) > 0) {
         stats <- stats %>%
@@ -558,6 +579,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                  createCohortTable = TRUE,
                                  incremental = FALSE,
                                  incrementalFolder = NULL) {
+  message("***** This function will be removed in a future version. Please see https://github.com/ohdsi/CohortGenerator for future generation of cohorts ****")
 
   if (!is.null(cohortSetReference)) {
     ParallelLogger::logInfo("Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")

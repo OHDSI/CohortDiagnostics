@@ -25,13 +25,14 @@ Imports:
   dplyr (>= 1.0.0),
   methods,
   ParallelLogger (>= 2.0.0),
-	readr (>= 2.0.1),
+  readr (>= 2.0.1),
   RJSONIO,
   rlang,
   ROhdsiWebApi (>= 1.2.0),
   SqlRender (>= 1.7.0),
   stringr,
-  tidyr (>= 1.0.0)
+  tidyr (>= 1.0.0),
+  CohortGenerator (>= 0.2.0)
 Suggests:
   CirceR,
   DT,
@@ -59,7 +60,8 @@ Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
   ohdsi/ROhdsiWebApi,
-  ohdsi/CirceR
+  ohdsi/CirceR,
+  ohdsi/CohortGenerator
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics

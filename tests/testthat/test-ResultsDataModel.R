@@ -55,20 +55,20 @@ test_that("Results upload", {
     cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
     cohortIds = cohortIds
   )
-  inclusionStatsFolder <- file.path(folder, "incStats")
-  instantiateCohortSet(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    cohortIds = cohortIds,
-    cohortDefinitionSet = cohortDefinitionSet,
-    generateInclusionStats = TRUE,
-    createCohortTable = TRUE,
-    inclusionStatisticsFolder = inclusionStatsFolder
-  )
+  cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
+  # Next create the tables on the database
+  CohortGenerator::createCohortTables(connectionDetails = connectionDetails,
+                                      cohortTableNames = cohortTableNames,
+                                      cohortDatabaseSchema = cohortDatabaseSchema,
+                                      incremental = FALSE)
+
+  # Generate the cohort set
+  CohortGenerator::generateCohortSet(connectionDetails = connectionDetails,
+                                     cdmDatabaseSchema = cdmDatabaseSchema,
+                                     cohortDatabaseSchema = cohortDatabaseSchema,
+                                     cohortTableNames = cohortTableNames,
+                                     cohortDefinitionSet = cohortDefinitionSet,
+                                     incremental = FALSE)
 
   executeDiagnostics(
     connectionDetails = connectionDetails,
@@ -76,10 +76,9 @@ test_that("Results upload", {
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
+    cohortTableNames = cohortTableNames,
     cohortIds = cohortIds,
     cohortDefinitionSet = cohortDefinitionSet,
-    inclusionStatisticsFolder = inclusionStatsFolder,
     exportFolder = file.path(folder, "export"),
     databaseId = dbms,
     runInclusionStatistics = TRUE,
