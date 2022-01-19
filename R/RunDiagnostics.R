@@ -381,6 +381,7 @@ runCohortDiagnostics <- function(packageName = NULL,
 
   if (nrow(cohortCounts) > 0) {
     instantiatedCohorts <- cohortCounts %>%
+      dplyr::filter(cohortEntries > 0) %>%
       dplyr::pull(.data$cohortId)
     ParallelLogger::logInfo(
       sprintf(
