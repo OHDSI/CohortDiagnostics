@@ -1,44 +1,136 @@
--- Drop old tables if exist
+{DEFAULT @analysis_ref = analysis_ref}
+{DEFAULT @cohort = cohort}
+{DEFAULT @cohort_count = cohort_count}
+{DEFAULT @cohort_overlap = cohort_overlap}
+{DEFAULT @concept = concept}
+{DEFAULT @concept_ancestor = concept_ancestor}
+{DEFAULT @concept_relationship = concept_relationship}
+{DEFAULT @concept_sets = concept_sets}
+{DEFAULT @concept_synonym = concept_synonym}
+{DEFAULT @covariate_ref = covariate_ref}
+{DEFAULT @covariate_value = covariate_value}
+{DEFAULT @covariate_value_dist = covariate_value_dist}
+{DEFAULT @database = database}
+{DEFAULT @domain = domain}
+{DEFAULT @incidence_rate = incidence_rate}
+{DEFAULT @included_source_concept = included_source_concept}
+{DEFAULT @inclusion_rule_stats = inclusion_rule_stats}
+{DEFAULT @index_event_breakdown = index_event_breakdown}
+{DEFAULT @metadata = metadata}
+{DEFAULT @orphan_concept = orphan_concept}
+{DEFAULT @phenotype_description = phenotype_description}
+{DEFAULT @time_series = time_series}
+{DEFAULT @relationship = relationship}
+{DEFAULT @resolved_concepts = resolved_concepts}
+{DEFAULT @temporal_analysis_ref = temporal_analysis_ref}
+{DEFAULT @temporal_covariate_ref = temporal_covariate_ref}
+{DEFAULT @temporal_covariate_value = temporal_covariate_value}
+{DEFAULT @temporal_covariate_value_dist = temporal_covariate_value_dist}
+{DEFAULT @temporal_time_ref = temporal_time_ref}
+{DEFAULT @time_distribution = time_distribution}
+{DEFAULT @visit_context = visit_context}
+{DEFAULT @vocabulary = vocabulary}
 
-DROP TABLE IF EXISTS analysis_ref;
-DROP TABLE IF EXISTS cohort;
-DROP TABLE IF EXISTS cohort_count;
-DROP TABLE IF EXISTS cohort_overlap;
-DROP TABLE IF EXISTS concept;
-DROP TABLE IF EXISTS concept_ancestor;
-DROP TABLE IF EXISTS concept_relationship;
-DROP TABLE IF EXISTS concept_sets;
-DROP TABLE IF EXISTS concept_synonym;
-DROP TABLE IF EXISTS covariate_ref;
-DROP TABLE IF EXISTS covariate_value;
-DROP TABLE IF EXISTS covariate_value_dist;
-DROP TABLE IF EXISTS database;
-DROP TABLE IF EXISTS domain;
-DROP TABLE IF EXISTS incidence_rate;
-DROP TABLE IF EXISTS included_source_concept;
-DROP TABLE IF EXISTS inclusion_rule_stats;
-DROP TABLE IF EXISTS index_event_breakdown;
-DROP TABLE IF EXISTS metadata;
-DROP TABLE IF EXISTS orphan_concept;
-DROP TABLE IF EXISTS phenotype_description;
-DROP TABLE IF EXISTS time_series;
-DROP TABLE IF EXISTS relationship;
-DROP TABLE IF EXISTS resolved_concepts;
-DROP TABLE IF EXISTS temporal_analysis_ref;
-DROP TABLE IF EXISTS temporal_covariate_ref;
-DROP TABLE IF EXISTS temporal_covariate_value;
-DROP TABLE IF EXISTS temporal_covariate_value_dist;
-DROP TABLE IF EXISTS temporal_time_ref;
-DROP TABLE IF EXISTS time_distribution;
-DROP TABLE IF EXISTS visit_context;
-DROP TABLE IF EXISTS vocabulary;
+-- Drop old tables if exist
+IF OBJECT_ID('@results_schema.@cohort', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@cohort;
+
+IF OBJECT_ID('@results_schema.@cohort_count', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@cohort_count;
+
+IF OBJECT_ID('@results_schema.@cohort_overlap', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@cohort_overlap;
+
+IF OBJECT_ID('@results_schema.@concept', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@concept;
+
+IF OBJECT_ID('@results_schema.@concept_ancestor', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@concept_ancestor;
+
+IF OBJECT_ID('@results_schema.@concept_relationship', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@concept_relationship;
+
+IF OBJECT_ID('@results_schema.@concept_sets', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@concept_sets;
+
+IF OBJECT_ID('@results_schema.@concept_synonym', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@concept_synonym;
+
+IF OBJECT_ID('@results_schema.@covariate_ref', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@covariate_ref;
+
+IF OBJECT_ID('@results_schema.@covariate_value', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@covariate_value;
+
+IF OBJECT_ID('@results_schema.@covariate_value_dist', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@covariate_value_dist;
+
+IF OBJECT_ID('@results_schema.@database', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@database;
+
+IF OBJECT_ID('@results_schema.@domain', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@domain;
+
+IF OBJECT_ID('@results_schema.@incidence_rate', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@incidence_rate;
+
+IF OBJECT_ID('@results_schema.@included_source_concept', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@included_source_concept;
+
+IF OBJECT_ID('@results_schema.@inclusion_rule_stats', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@inclusion_rule_stats;
+
+IF OBJECT_ID('@results_schema.@index_event_breakdown', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@index_event_breakdown;
+
+IF OBJECT_ID('@results_schema.@metadata', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@metadata;
+
+IF OBJECT_ID('@results_schema.@orphan_concept', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@orphan_concept;
+
+IF OBJECT_ID('@results_schema.@phenotype_description', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@phenotype_description;
+
+IF OBJECT_ID('@results_schema.@time_series', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@time_series;
+
+IF OBJECT_ID('@results_schema.@relationship', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@relationship;
+
+IF OBJECT_ID('@results_schema.@resolved_concepts', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@resolved_concepts;
+
+IF OBJECT_ID('@results_schema.@temporal_analysis_ref', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@temporal_analysis_ref;
+
+IF OBJECT_ID('@results_schema.@temporal_covariate_ref', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@temporal_covariate_ref;
+
+IF OBJECT_ID('@results_schema.@temporal_covariate_value', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@temporal_covariate_value;
+
+IF OBJECT_ID('@results_schema.@temporal_covariate_value_dist', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@temporal_covariate_value_dist;
+
+IF OBJECT_ID('@results_schema.@temporal_time_ref', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@temporal_time_ref;
+
+IF OBJECT_ID('@results_schema.@time_distribution', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@time_distribution;
+
+IF OBJECT_ID('@results_schema.@visit_context', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@visit_context;
+
+IF OBJECT_ID('@results_schema.@vocabulary', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@vocabulary;
 
 
 -- Create tables
 
 --Table analysis_ref
 
-CREATE TABLE analysis_ref (
+CREATE TABLE @results_schema.@analysis_ref (
 			analysis_id BIGINT NOT NULL,
 			analysis_name VARCHAR NOT NULL,
 			domain_id VARCHAR(20),
@@ -51,7 +143,7 @@ CREATE TABLE analysis_ref (
 
 --Table cohort
 
-CREATE TABLE cohort (
+CREATE TABLE @results_schema.@cohort (
 			phenotype_id BIGINT,
 			cohort_id BIGINT NOT NULL,
 			atlas_id BIGINT NOT NULL,
@@ -66,7 +158,7 @@ CREATE TABLE cohort (
 
 --Table cohort_count
 
-CREATE TABLE cohort_count (
+CREATE TABLE @results_schema.@cohort_count (
 			cohort_id BIGINT NOT NULL,
 			cohort_entries FLOAT NOT NULL,
 			cohort_subjects FLOAT NOT NULL,
@@ -76,7 +168,7 @@ CREATE TABLE cohort_count (
 
 --Table cohort_overlap
 
-CREATE TABLE cohort_overlap (
+CREATE TABLE @results_schema.@cohort_overlap (
 			either_subjects FLOAT NOT NULL,
 			both_subjects FLOAT NOT NULL,
 			t_only_subjects FLOAT NOT NULL,
@@ -94,8 +186,8 @@ CREATE TABLE cohort_overlap (
 
 --Table concept
 
-CREATE TABLE concept (
-			concept_id INT NOT NULL,
+CREATE TABLE @results_schema.@concept (
+			concept_id BIGINT NOT NULL,
 			concept_name VARCHAR(255) NOT NULL,
 			domain_id VARCHAR(20) NOT NULL,
 			vocabulary_id VARCHAR NOT NULL,
@@ -110,7 +202,7 @@ CREATE TABLE concept (
 
 --Table concept_ancestor
 
-CREATE TABLE concept_ancestor (
+CREATE TABLE @results_schema.@concept_ancestor (
 			ancestor_concept_id BIGINT NOT NULL,
 			descendant_concept_id BIGINT NOT NULL,
 			min_levels_of_separation INT NOT NULL,
@@ -120,9 +212,9 @@ CREATE TABLE concept_ancestor (
 
 --Table concept_relationship
 
-CREATE TABLE concept_relationship (
-			concept_id_1 INT NOT NULL,
-			concept_id_2 INT NOT NULL,
+CREATE TABLE @results_schema.@concept_relationship (
+			concept_id_1 BIGINT NOT NULL,
+			concept_id_2 BIGINT NOT NULL,
 			relationship_id VARCHAR(20) NOT NULL,
 			valid_start_date DATE NOT NULL,
 			valid_end_date DATE NOT NULL,
@@ -132,7 +224,7 @@ CREATE TABLE concept_relationship (
 
 --Table concept_sets
 
-CREATE TABLE concept_sets (
+CREATE TABLE @results_schema.@concept_sets (
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
 			concept_set_sql VARCHAR NOT NULL,
@@ -143,26 +235,26 @@ CREATE TABLE concept_sets (
 
 --Table concept_synonym
 
-CREATE TABLE concept_synonym (
-			concept_id INT NOT NULL,
+CREATE TABLE @results_schema.@concept_synonym (
+			concept_id BIGINT NOT NULL,
 			concept_synonym_name VARCHAR NOT NULL,
-			language_concept_id INT NOT NULL,
+			language_concept_id BIGINT NOT NULL,
 			PRIMARY KEY(concept_id, concept_synonym_name, language_concept_id)
 );
 
 --Table covariate_ref
 
-CREATE TABLE covariate_ref (
+CREATE TABLE @results_schema.@covariate_ref (
 			covariate_id BIGINT NOT NULL,
 			covariate_name VARCHAR NOT NULL,
 			analysis_id INT NOT NULL,
-			concept_id INT NOT NULL,
+			concept_id BIGINT NOT NULL,
 			PRIMARY KEY(covariate_id)
 );
 
 --Table covariate_value
 
-CREATE TABLE covariate_value (
+CREATE TABLE @results_schema.@covariate_value (
 			cohort_id BIGINT NOT NULL,
 			covariate_id BIGINT NOT NULL,
 			sum_value FLOAT NOT NULL,
@@ -174,7 +266,7 @@ CREATE TABLE covariate_value (
 
 --Table covariate_value_dist
 
-CREATE TABLE covariate_value_dist (
+CREATE TABLE @results_schema.@covariate_value_dist (
 			cohort_id BIGINT NOT NULL,
 			covariate_id BIGINT NOT NULL,
 			count_value FLOAT NOT NULL,
@@ -193,7 +285,7 @@ CREATE TABLE covariate_value_dist (
 
 --Table database
 
-CREATE TABLE database (
+CREATE TABLE @results_schema.@database (
 			database_id VARCHAR NOT NULL,
 			database_name VARCHAR,
 			description VARCHAR,
@@ -205,16 +297,16 @@ CREATE TABLE database (
 
 --Table domain
 
-CREATE TABLE domain (
+CREATE TABLE @results_schema.@domain (
 			domain_id VARCHAR(20) NOT NULL,
 			domain_name VARCHAR(255) NOT NULL,
-			domain_concept_id INT NOT NULL,
+			domain_concept_id BIGINT NOT NULL,
 			PRIMARY KEY(domain_id)
 );
 
 --Table incidence_rate
 
-CREATE TABLE incidence_rate (
+CREATE TABLE @results_schema.@incidence_rate (
 			cohort_count FLOAT NOT NULL,
 			person_years FLOAT NOT NULL,
 			gender VARCHAR,
@@ -228,12 +320,12 @@ CREATE TABLE incidence_rate (
 
 --Table included_source_concept
 
-CREATE TABLE included_source_concept (
+CREATE TABLE @results_schema.@included_source_concept (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
-			concept_id INT NOT NULL,
-			source_concept_id INT NOT NULL,
+			concept_id BIGINT NOT NULL,
+			source_concept_id BIGINT NOT NULL,
 			concept_subjects FLOAT NOT NULL,
 			concept_count FLOAT NOT NULL,
 			PRIMARY KEY(database_id, cohort_id, concept_set_id, concept_id, source_concept_id)
@@ -241,7 +333,7 @@ CREATE TABLE included_source_concept (
 
 --Table inclusion_rule_stats
 
-CREATE TABLE inclusion_rule_stats (
+CREATE TABLE @results_schema.@inclusion_rule_stats (
 			rule_sequence_id INT NOT NULL,
 			rule_name VARCHAR NOT NULL,
 			meet_subjects FLOAT NOT NULL,
@@ -255,8 +347,8 @@ CREATE TABLE inclusion_rule_stats (
 
 --Table index_event_breakdown
 
-CREATE TABLE index_event_breakdown (
-			concept_id INT NOT NULL,
+CREATE TABLE @results_schema.@index_event_breakdown (
+			concept_id BIGINT NOT NULL,
 			concept_count FLOAT NOT NULL,
 			subject_count FLOAT NOT NULL,
 			cohort_id BIGINT NOT NULL,
@@ -268,7 +360,7 @@ CREATE TABLE index_event_breakdown (
 
 --Table metadata
 
-CREATE TABLE metadata (
+CREATE TABLE @results_schema.@metadata (
 			database_id VARCHAR NOT NULL,
 			variable_field VARCHAR NOT NULL,
 			value_field VARCHAR,
@@ -277,11 +369,11 @@ CREATE TABLE metadata (
 
 --Table orphan_concept
 
-CREATE TABLE orphan_concept (
+CREATE TABLE @results_schema.@orphan_concept (
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
 			database_id VARCHAR NOT NULL,
-			concept_id INT NOT NULL,
+			concept_id BIGINT NOT NULL,
 			concept_count FLOAT NOT NULL,
 			concept_subjects FLOAT NOT NULL,
 			PRIMARY KEY(cohort_id, concept_set_id, database_id, concept_id)
@@ -289,7 +381,7 @@ CREATE TABLE orphan_concept (
 
 --Table phenotype_description
 
-CREATE TABLE phenotype_description (
+CREATE TABLE @results_schema.@phenotype_description (
 			phenotype_id BIGINT NOT NULL,
 			phenotype_name VARCHAR NOT NULL,
 			clinical_description VARCHAR,
@@ -299,29 +391,29 @@ CREATE TABLE phenotype_description (
 
 --Table relationship
 
-CREATE TABLE relationship (
+CREATE TABLE @results_schema.@relationship (
 			relationship_id VARCHAR(20) NOT NULL,
 			relationship_name VARCHAR(255) NOT NULL,
 			is_hierarchical VARCHAR(1) NOT NULL,
 			defines_ancestry VARCHAR(1) NOT NULL,
 			reverse_relationship_id VARCHAR(20) NOT NULL,
-			relationship_concept_id INT NOT NULL,
+			relationship_concept_id BIGINT NOT NULL,
 			PRIMARY KEY(relationship_id, reverse_relationship_id, relationship_concept_id)
 );
 
 --Table resolved_concepts
 
-CREATE TABLE resolved_concepts (
+CREATE TABLE @results_schema.@resolved_concepts (
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
-			concept_id INT NOT NULL,
+			concept_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, concept_set_id, concept_id, database_id)
 );
 
 --Table temporal_analysis_ref
 
-CREATE TABLE temporal_analysis_ref (
+CREATE TABLE @results_schema.@temporal_analysis_ref (
 			analysis_id INT NOT NULL,
 			analysis_name VARCHAR NOT NULL,
 			domain_id VARCHAR(20) NOT NULL,
@@ -332,17 +424,17 @@ CREATE TABLE temporal_analysis_ref (
 
 --Table temporal_covariate_ref
 
-CREATE TABLE temporal_covariate_ref (
+CREATE TABLE @results_schema.@temporal_covariate_ref (
 			covariate_id BIGINT NOT NULL,
 			covariate_name VARCHAR NOT NULL,
 			analysis_id INT NOT NULL,
-			concept_id INT NOT NULL,
+			concept_id BIGINT NOT NULL,
 			PRIMARY KEY(covariate_id)
 );
 
 --Table temporal_covariate_value
 
-CREATE TABLE temporal_covariate_value (
+CREATE TABLE @results_schema.@temporal_covariate_value (
 			cohort_id BIGINT NOT NULL,
 			time_id INT NOT NULL,
 			covariate_id BIGINT NOT NULL,
@@ -355,7 +447,7 @@ CREATE TABLE temporal_covariate_value (
 
 --Table temporal_covariate_value_dist
 
-CREATE TABLE temporal_covariate_value_dist (
+CREATE TABLE @results_schema.@temporal_covariate_value_dist (
 			cohort_id BIGINT NOT NULL,
 			time_id INT NOT NULL,
 			covariate_id BIGINT NOT NULL,
@@ -375,7 +467,7 @@ CREATE TABLE temporal_covariate_value_dist (
 
 --Table temporal_time_ref
 
-CREATE TABLE temporal_time_ref (
+CREATE TABLE @results_schema.@temporal_time_ref (
 			time_id INT NOT NULL,
 			start_day FLOAT NOT NULL,
 			end_day FLOAT NOT NULL,
@@ -384,7 +476,7 @@ CREATE TABLE temporal_time_ref (
 
 --Table time_distribution
 
-CREATE TABLE time_distribution (
+CREATE TABLE @results_schema.@time_distribution (
 			cohort_id BIGINT NOT NULL,
 			count_value FLOAT NOT NULL,
 			min_value FLOAT NOT NULL,
@@ -403,7 +495,7 @@ CREATE TABLE time_distribution (
 
 --Table time_series
 
-CREATE TABLE time_series (
+CREATE TABLE @results_schema.@time_series (
 			cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			period_begin DATE NOT NULL,
@@ -418,9 +510,9 @@ CREATE TABLE time_series (
 
 --Table visit_context
 
-CREATE TABLE visit_context (
+CREATE TABLE @results_schema.@visit_context (
 			cohort_id BIGINT NOT NULL,
-			visit_concept_id INT NOT NULL,
+			visit_concept_id BIGINT NOT NULL,
 			visit_context VARCHAR NOT NULL,
 			subjects FLOAT NOT NULL,
 			database_id VARCHAR NOT NULL,
@@ -429,11 +521,11 @@ CREATE TABLE visit_context (
 
 --Table vocabulary
 
-CREATE TABLE vocabulary (
+CREATE TABLE @results_schema.@vocabulary (
 			vocabulary_id VARCHAR NOT NULL,
 			vocabulary_name VARCHAR(255) NOT NULL,
 			vocabulary_reference VARCHAR,
 			vocabulary_version VARCHAR,
-			vocabulary_concept_id INT NOT NULL,
+			vocabulary_concept_id BIGINT NOT NULL,
 			PRIMARY KEY(vocabulary_id)
 );

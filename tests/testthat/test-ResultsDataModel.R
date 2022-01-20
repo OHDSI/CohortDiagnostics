@@ -47,7 +47,6 @@ test_that("Create schema", {
   })
 })
 
-
 test_that("Results upload", {
   skip_if(skipResultsDm | skipCdmTests, 'results data model test server not set')
   cohortDefinitionSet <- loadCohortsFromPackage(
@@ -137,6 +136,65 @@ test_that("Results upload", {
     }
   })
 })
+
+test_that("Sqlite results data model", {
+  dbFile <- tempfile(fileext = ".sqlite")
+  connectionDetailsSqlite <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = dbFile)
+  connectionSqlite <- DatabaseConnector::connect(connectionDetails = connectionDetailsSqlite)
+  with_dbc_connection(connectionSqlite, {
+     # Bad schema name
+    expect_error(createResultsDataModel(connection = connectionSqlite,
+                                        schema = "non_existant_schema"))
+
+    createResultsDataModel(connection = connectionSqlite,
+                           schema = "main")
+
+    specifications <- getResultsDataModelSpecifications()
+    for (tableName in unique(specifications$tableName)) {
+      expect_true(DatabaseConnector::dbExistsTable(connectionSqlite, tableName))
+    }
+
+    listOfZipFilesToUpload <-
+      list.files(
+        path = file.path(folder, "export"),
+        pattern = ".zip",
+        full.names = TRUE,
+        recursive = TRUE
+      )
+
+    for (i in (1:length(listOfZipFilesToUpload))) {
+      uploadResults(
+        connectionDetails = connectionDetailsSqlite,
+        schema = "main",
+        zipFileName = listOfZipFilesToUpload[[i]]
+      )
+    }
+
+    for (tableName in unique(specifications$tableName)) {
+      primaryKey <- specifications %>%
+        dplyr::filter(.data$tableName == !!tableName &
+                        .data$primaryKey == "Yes") %>%
+        dplyr::select(.data$fieldName) %>%
+        dplyr::pull()
+
+      if ("database_id" %in% primaryKey) {
+        sql <-
+          "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
+        sql <- SqlRender::render(
+          sql = sql,
+          schema = "main",
+          table_name = tableName,
+          database_id = "cdmv5"
+        )
+        databaseIdCount <- DatabaseConnector::querySql(connectionSqlite, sql)[, 1]
+        expect_true(databaseIdCount >= 0)
+      }
+    }
+  })
+})
+
+
+
 
 test_that("Data removal works", {
   skip_if(skipResultsDm | skipCdmTests, 'results data model test server not set')
