@@ -10,7 +10,7 @@
 {DEFAULT @covariate_ref = covariate_ref}
 {DEFAULT @covariate_value = covariate_value}
 {DEFAULT @covariate_value_dist = covariate_value_dist}
-{DEFAULT @database = database}
+{DEFAULT @database_info = database_info}
 {DEFAULT @domain = domain}
 {DEFAULT @incidence_rate = incidence_rate}
 {DEFAULT @included_source_concept = included_source_concept}
@@ -65,8 +65,8 @@ IF OBJECT_ID('@results_schema.@covariate_value', 'U') IS NOT NULL
 IF OBJECT_ID('@results_schema.@covariate_value_dist', 'U') IS NOT NULL
     DROP TABLE @results_schema.@covariate_value_dist;
 
-IF OBJECT_ID('@results_schema.@database', 'U') IS NOT NULL
-    DROP TABLE @results_schema.@database;
+IF OBJECT_ID('@results_schema.@database_info', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@database_info;
 
 IF OBJECT_ID('@results_schema.@domain', 'U') IS NOT NULL
     DROP TABLE @results_schema.@domain;
@@ -285,7 +285,7 @@ CREATE TABLE @results_schema.@covariate_value_dist (
 
 --Table database
 
-CREATE TABLE @results_schema.@database (
+CREATE TABLE @results_schema.@database_info (
 			database_id VARCHAR NOT NULL,
 			database_name VARCHAR,
 			description VARCHAR,

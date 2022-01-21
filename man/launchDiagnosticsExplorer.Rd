@@ -5,8 +5,7 @@
 \title{Launch the Diagnostics Explorer Shiny app}
 \usage{
 launchDiagnosticsExplorer(
-  dataFolder = "data",
-  dataFile = "PreMerged.RData",
+  sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
   connectionDetails = NULL,
   resultsDatabaseSchema = NULL,
   vocabularyDatabaseSchema = NULL,
@@ -18,11 +17,7 @@ launchDiagnosticsExplorer(
 )
 }
 \arguments{
-\item{dataFolder}{A folder where the premerged file is stored. Use
-the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.}
-
-\item{dataFile}{(Optional) The name of the .RData file with results. It is commonly known as the
-Premerged file.}
+\item{sqliteDbPath}{Path to merged sqlite file. See \code{\link{createMergedResultsFile}} to create file.}
 
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
@@ -38,7 +33,7 @@ have been uploaded.}
 \item{vocabularyDatabaseSchemas}{(optional) A list of one or more schemas on the database server where the vocabulary tables are located.
 The default value is the value of the resultsDatabaseSchema. We can provide a list of vocabulary schema
 that might represent different versions of the OMOP vocabulary tables. It allows us to compare the impact
-of vocabulary changes on Diagnostics.}
+of vocabulary changes on Diagnostics. Not supported with an sqlite database.}
 
 \item{aboutText}{Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 If not provided, no About tab will be shown.}

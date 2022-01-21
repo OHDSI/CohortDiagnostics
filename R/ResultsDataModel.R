@@ -308,7 +308,7 @@ uploadResults <- function(connectionDetails = NULL,
   
   if (purgeSiteDataBeforeUploading) {
     database <-
-      readr::read_csv(file = file.path(unzipFolder, "database.csv"),
+      readr::read_csv(file = file.path(unzipFolder, "database_info.csv"),
                       col_types = readr::cols())
     colnames(database) <-
       SqlRender::snakeCaseToCamelCase(colnames(database))
@@ -451,7 +451,8 @@ uploadResults <- function(connectionDetails = NULL,
         } else {
           DatabaseConnector::insertTable(
             connection = connection,
-            tableName = paste(env$schema, env$tableName, sep = "."),
+            tableName = env$tableName,
+            databaseSchema = env$schema,
             data = chunk,
             dropTableIfExists = FALSE,
             createTable = FALSE,
@@ -524,7 +525,7 @@ deleteAllRecordsForDatabaseId <- function(connection,
     database_id = databaseId
   )
   databaseIdCount <-
-    DatabaseConnector::querySql(connection, sql)[, 1]
+    DatabaseConnector::renderTranslateQuerySql(connection, sql)[, 1]
   if (databaseIdCount != 0) {
     ParallelLogger::logInfo(
       sprintf(
@@ -541,9 +542,9 @@ deleteAllRecordsForDatabaseId <- function(connection,
       table_name = tableName,
       database_id = databaseId
     )
-    DatabaseConnector::executeSql(connection,
-                                  sql,
-                                  progressBar = FALSE,
-                                  reportOverallTime = FALSE)
+    DatabaseConnector::renderTranslateExecuteSql(connection,
+                                                 sql,
+                                                 progressBar = FALSE,
+                                                 reportOverallTime = FALSE)
   }
 }

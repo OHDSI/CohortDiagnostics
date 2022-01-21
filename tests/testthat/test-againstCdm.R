@@ -123,9 +123,12 @@ test_that("Cohort diagnostics in incremental mode", {
   )
   expect_lt(secondTime[1], firstTime[1])
 
-  # generate premerged file
-  preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
-  expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
+  # generate sqlite file
+  sqliteDbPath <- tempfile(fileext = ".sqlite")
+  createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = sqliteDbPath)
+  expect_true(file.exists(sqliteDbPath))
+  # File exists
+  expect_error(createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = sqliteDbPath))
 
   output <- read.csv(file.path(folder, "export", "covariate_value.csv"))
 

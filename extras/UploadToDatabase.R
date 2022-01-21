@@ -3,7 +3,7 @@ library(CohortDiagnostics)
 
 # OHDSI's server:
 connectionDetails <- createConnectionDetails(
-  dbms = "postgresql",
+  dbms = Sys.getenv("shinydbDbms", unset = "postgresql"),
   server = paste(
     Sys.getenv("shinydbServer"),
     Sys.getenv("shinydbDatabase"),

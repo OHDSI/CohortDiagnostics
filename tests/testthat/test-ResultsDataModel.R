@@ -142,32 +142,14 @@ test_that("Sqlite results data model", {
   connectionDetailsSqlite <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = dbFile)
   connectionSqlite <- DatabaseConnector::connect(connectionDetails = connectionDetailsSqlite)
   with_dbc_connection(connectionSqlite, {
-     # Bad schema name
+    # Bad schema name
     expect_error(createResultsDataModel(connection = connectionSqlite,
                                         schema = "non_existant_schema"))
-
-    createResultsDataModel(connection = connectionSqlite,
-                           schema = "main")
+    createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = dbFile, overwrite = TRUE)
 
     specifications <- getResultsDataModelSpecifications()
     for (tableName in unique(specifications$tableName)) {
       expect_true(DatabaseConnector::dbExistsTable(connectionSqlite, tableName))
-    }
-
-    listOfZipFilesToUpload <-
-      list.files(
-        path = file.path(folder, "export"),
-        pattern = ".zip",
-        full.names = TRUE,
-        recursive = TRUE
-      )
-
-    for (i in (1:length(listOfZipFilesToUpload))) {
-      uploadResults(
-        connectionDetails = connectionDetailsSqlite,
-        schema = "main",
-        zipFileName = listOfZipFilesToUpload[[i]]
-      )
     }
 
     for (tableName in unique(specifications$tableName)) {
@@ -210,7 +192,7 @@ test_that("Data removal works", {
         dplyr::pull()
 
       if ("database_id" %in% primaryKey) {
-        CohortDiagnostics:::deleteAllRecordsForDatabaseId(
+        deleteAllRecordsForDatabaseId(
           connection = pgConnection,
           schema = resultsDatabaseSchema,
           tableName = tableName,
