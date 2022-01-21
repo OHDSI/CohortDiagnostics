@@ -117,7 +117,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
   shiny::runApp(appDir = appDir)
 }
 
-#' Merge Shiny diagnostics files into sqlite db
+#' Merge Shiny diagnostics files into sqlite database
 #'
 #' @description
 #' This function combines diagnostics results from one or more databases into a single file. The result is an
@@ -129,8 +129,8 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
 #'                         the \code{\link{runCohortDiagnostics}} function to generate these zip files.
 #'                         Zip files containing results from multiple databases may be placed in the same
 #'                         folder.
-#'
-#' @param overwrite         (Optional) overwrite existing sqlite lite db if it exists.
+#' @param sqliteDbPath     Output path where sqlite database is placed
+#' @param overwrite        (Optional) overwrite existing sqlite lite db if it exists.
 #' @export
 createMergedResultsFile <-
   function(dataFolder,
