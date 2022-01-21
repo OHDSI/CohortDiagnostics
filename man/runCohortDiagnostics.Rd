@@ -7,18 +7,20 @@
 runCohortDiagnostics(
   packageName = NULL,
   cohortToCreateFile = "settings/CohortsToCreate.csv",
+  cohortDefinitionSet = NULL,
   baseUrl = NULL,
   cohortSetReference = NULL,
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
   oracleTempSchema = NULL,
-  tempEmulationSchema = NULL,
+  tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   cohortDatabaseSchema,
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
+  cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
   cohortIds = NULL,
-  inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
+  inclusionStatisticsFolder = NULL,
   exportFolder,
   databaseId,
   databaseName = databaseId,
@@ -54,6 +56,8 @@ cohortToCreateFile must be .csv file that is expected to be read into
 a dataframe object identical to requirements for \code{cohortSetReference} argument. 
 This csv file is expected to be encoded in either ASCII or UTF-8, if not, an 
 error message will be displayed and process stopped.}
+
+\item{cohortDefinitionSet}{Data.frame of cohorts must include columns cohortId, cohortName, json, sql}
 
 \item{baseUrl}{The base URL for the WebApi instance, for example:
 "http://server.org:80/WebAPI". Can be left NULL if 
@@ -92,6 +96,8 @@ SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
 
 \item{cohortTable}{Name of the cohort table.}
+
+\item{cohortTableNames}{Cohort Table names used by CohortGenerator package}
 
 \item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
 diagnostics to.}
@@ -175,12 +181,12 @@ Note: if the parameters for both Package Mode and WebApi Mode are provided, then
 
 The \code{cohortSetReference} argument must be a data frame with  the following columns:
 \describe{
-\item{referentConceptId}{A standard omop concept id that serves as the referent phenotype definition for the cohort Id.}
 \item{cohortId}{The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999}
-\item{webApiCohortId}{Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.}
+\item{atlasId}{Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.}
 \item{cohortName}{The full name of the cohort. This will be shown in the Shiny app.}
 \item{logicDescription}{A human understandable brief description of the cohort definition. This logic does not have to a 
 fully specified description of the cohort definition, but should provide enough context to help user understand the
 meaning of the cohort definition}
+\item{referentConceptId}{A standard omop concept id that serves as the referent phenotype definition for the cohort Id (optional)}
 }
 }

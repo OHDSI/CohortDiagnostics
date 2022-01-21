@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,23 +33,14 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.2.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="../reference/index.html">Reference</a>
-</li>
-<li>
-  <a href="../news/index.html">Changelog</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -57,16 +50,13 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/CohortDiagnosticsInPackageMode.html">Runing Cohort Diagnostics in an OHDSI Package mode</a>
-    </li>
-    <li>
-      <a href="../articles/CohortDiagnosticsUsingWebApi.html">Running cohort diagnostics using WebAPI</a>
+      <a href="../articles/CreatingAStudyPackage.html">Creating a study package</a>
     </li>
     <li>
       <a href="../articles/DatabaseModeInDiagnosticsExplorer.html">Database mode in Diagnostics Explorer</a>
     </li>
     <li>
-      <a href="../articles/RunningCohortDiagnostics.html">Running cohort diagnostics</a>
+      <a href="../articles/RunningCohortDiagnostics.html">Running Cohort Diagnostics</a>
     </li>
     <li>
       <a href="../articles/ViewingResultsUsingDiagnosticsExplorer.html">Viewing results using Diagnostics Explorer</a>
@@ -76,13 +66,16 @@
     </li>
   </ul>
 </li>
+<li>
+  <a href="../news/index.html">Changelog</a>
+</li>
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://ohdsi.github.io/Hades"><img src='https://ohdsi.github.io/Hades/images/hadesMini.png' width=80 height=17 style='vertical-align: top;'></a>
+  <a href="https://ohdsi.github.io/Hades" class="external-link"><img src='https://ohdsi.github.io/Hades/images/hadesMini.png' width=80 height=17 style='vertical-align: top;'></a>
 </li>
 <li>
-  <a href="https://github.com/OHDSI/CohortDiagnostics/">
+  <a href="https://github.com/OHDSI/CohortDiagnostics/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -97,41 +90,41 @@
 
       
 
-      </header><script src="ViewingResultsUsingDiagnosticsExplorer_files/header-attrs-2.11/header-attrs.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Viewing results using Diagnostics Explorer</h1>
-                        <h4 class="author">Gowtham Rao</h4>
+                        <h4 data-toc-skip class="author">Gowtham Rao</h4>
             
-            <h4 class="date">2021-11-13</h4>
+            <h4 data-toc-skip class="date">2022-01-11</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/master/vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd"><code>vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd" class="external-link"><code>vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd</code></a></small>
       <div class="hidden name"><code>ViewingResultsUsingDiagnosticsExplorer.Rmd</code></div>
 
     </div>
 
     
     
-<div id="viewing-the-diagnostics" class="section level1">
-<h1 class="hasAnchor">
-<a href="#viewing-the-diagnostics" class="anchor"></a>Viewing the diagnostics</h1>
-<p>The Diagnostics Explorer shiny application is able to present the results output of Cohort Diagnostics in either local mode (i.e. using premerged file) or database mode (connected to postgres database server). The Shiny app can be found <a href="https://github.com/OHDSI/CohortDiagnostics/tree/master/inst/shiny/DiagnosticsExplorer">here</a>. Make sure to copy all files in the <code>DiagnosticsExplorer</code> folder. When launching the application. You maybe asked to install additional packages required by the app, such as shiny, shinydashboard, shinyWidgets, DT, htmltools, scales, plotly, dplyr, purrr, tidyr, ggiraph.</p>
+<div class="section level1">
+<h1 id="viewing-the-diagnostics">Viewing the diagnostics<a class="anchor" aria-label="anchor" href="#viewing-the-diagnostics"></a>
+</h1>
+<p>The Diagnostics Explorer shiny application is able to present the results output of Cohort Diagnostics in either local mode (i.e. using premerged file) or database mode (connected to postgres database server). The Shiny app can be found <a href="https://github.com/OHDSI/CohortDiagnostics/tree/master/inst/shiny/DiagnosticsExplorer" class="external-link">here</a>. Make sure to copy all files in the <code>DiagnosticsExplorer</code> folder. When launching the application. You maybe asked to install additional packages required by the app, such as shiny, shinydashboard, shinyWidgets, DT, htmltools, scales, plotly, dplyr, purrr, tidyr, ggiraph.</p>
 <div class="figure">
 <img src="shiny.png" alt=""><p class="caption">The Diagnostics Explorer Shiny app</p>
 </div>
 <p>Note that each of the tabs on the left has an information icon. Clicking on these icons will show additional information on each diagnostic, how they were computed, and how they may be interpreted.</p>
 </div>
-<div id="launching-diagnostics-explorer" class="section level1">
-<h1 class="hasAnchor">
-<a href="#launching-diagnostics-explorer" class="anchor"></a>Launching Diagnostics Explorer</h1>
+<div class="section level1">
+<h1 id="launching-diagnostics-explorer">Launching Diagnostics Explorer<a class="anchor" aria-label="anchor" href="#launching-diagnostics-explorer"></a>
+</h1>
 <ul>
 <li>From R, launch the DiagnosticExplorer shiny application by calling the ‘launchDiagnosticsExplorer()’ function of CohortDiagnostics.</li>
 <li>From R-studio, you may start the project by clicking on the ‘DiagnosticsExplorer.Rproj’ in the shiny folder, then open the global.R and press the ‘RunApp’ button. From R-server (shiny server), you will need to copy all the files in the DiagnosticsExplorer shiny app into a folder on the server. The server should automatically launch the application (please talk to the shiny server administrator for your site specific rules.)</li>
 </ul>
 </div>
-<div id="running-the-app-using-local-file-mode-premerged-file-" class="section level1">
-<h1 class="hasAnchor">
-<a href="#running-the-app-using-local-file-mode-premerged-file-" class="anchor"></a>Running the app using local file mode (Premerged file).</h1>
+<div class="section level1">
+<h1 id="running-the-app-using-local-file-mode-premerged-file-">Running the app using local file mode (Premerged file).<a class="anchor" aria-label="anchor" href="#running-the-app-using-local-file-mode-premerged-file-"></a>
+</h1>
 <p>Local mode is the most common mode to run the Shiny application. We recommend that you convert all the csv files that are the precomputed output of Cohort Diagnostics into a .RData file as follows</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/preMergeDiagnosticsFiles.html">preMergeDiagnosticsFiles</a></span><span class="op">(</span><span class="st">"C:/temp/allZipFiles"</span><span class="op">)</span></code></pre></div>
@@ -140,14 +133,14 @@
 <code class="sourceCode R"><span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span><span class="op">(</span>dataFolder <span class="op">=</span> <span class="st">"C:/temp"</span>, dataFile <span class="op">=</span> <span class="st">"Premerged.RData"</span><span class="op">)</span></code></pre></div>
 <p>If running the application from a R-studio environment, please make sure the ‘Premerged.RData’ is in a folder called ‘data’. Go to global.R and to the line that <code>defaultDatabaseMode &lt;- FALSE</code>. Ensure defaultDatabaseMode is FALSE. This will prevent the application from attempting to connect to a remote database system, and only look for local premerged.RData file.</p>
 </div>
-<div id="running-the-app-using-database-mode" class="section level1">
-<h1 class="hasAnchor">
-<a href="#running-the-app-using-database-mode" class="anchor"></a>Running the app using Database mode</h1>
+<div class="section level1">
+<h1 id="running-the-app-using-database-mode">Running the app using Database mode<a class="anchor" aria-label="anchor" href="#running-the-app-using-database-mode"></a>
+</h1>
 <p>We recommend the use of a database system, when file size of the cohort diagnostics output becomes large e.g. &gt; 100mb, as using the premerged.RData may leading sluggish performance. Currently only postgres server is supported. See Vignette on Database mode on how to load data into remote database.</p>
 </div>
-<div id="running-over-the-network" class="section level1">
-<h1 class="hasAnchor">
-<a href="#running-over-the-network" class="anchor"></a>Running over the network</h1>
+<div class="section level1">
+<h1 id="running-over-the-network">Running over the network<a class="anchor" aria-label="anchor" href="#running-over-the-network"></a>
+</h1>
 <p>If you want to run the application over the network then set <code>runOverNetwork = TRUE</code> while launching the application using ‘launchDiagnosticsExplorer()’. This will make the shiny application available over your network (i.e. within your networks firewall).</p>
 </div>
   </div>
@@ -163,11 +156,13 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
+  <p></p>
+<p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -175,6 +170,8 @@
 
   
 
+
+  
 
   </body>
 </html>

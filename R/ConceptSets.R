@@ -1,4 +1,4 @@
-# Copyright 2021 Observational Health Data Sciences and Informatics
+# Copyright 2022 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -432,7 +432,7 @@ runConceptSetDiagnostics <- function(connection,
         # sql <-
         #   SqlRender::loadRenderTranslateSql(
         #     "CohortSourceConceptsFromCcTable.sql",
-        #     packageName = "CohortDiagnostics",
+        #     packageName = utils::packageName(),
         #     dbms = connection@dbms,
         #     tempEmulationSchema = tempEmulationSchema,
         #     cdm_database_schema = cdmDatabaseSchema,
@@ -447,7 +447,7 @@ runConceptSetDiagnostics <- function(connection,
         # sql <-
         #   SqlRender::loadRenderTranslateSql(
         #     "CohortStandardConceptsFromCcTable.sql",
-        #     packageName = "CohortDiagnostics",
+        #     packageName = utils::packageName(),
         #     dbms = connection@dbms,
         #     tempEmulationSchema = tempEmulationSchema,
         #     cdm_database_schema = cdmDatabaseSchema,
@@ -486,7 +486,7 @@ runConceptSetDiagnostics <- function(connection,
       } else {
         sql <- SqlRender::loadRenderTranslateSql(
           "CohortSourceCodes.sql",
-          packageName = "CohortDiagnostics",
+          packageName = utils::packageName(),
           dbms = connection@dbms,
           tempEmulationSchema = tempEmulationSchema,
           cdm_database_schema = cdmDatabaseSchema,
@@ -597,7 +597,7 @@ runConceptSetDiagnostics <- function(connection,
       start <- Sys.time()
       domains <-
         readr::read_csv(
-          system.file("csv", "domains.csv", package = "CohortDiagnostics"),
+          system.file("csv", "domains.csv", package= utils::packageName()),
           col_types = readr::cols(),
           guess_max = min(1e7)
         )
@@ -642,13 +642,13 @@ runConceptSetDiagnostics <- function(connection,
           lapply(split(primaryCodesetIds, primaryCodesetIds$domain),
                  pasteIds)
         primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
-        
+
         getCounts <- function(row) {
           domain <- domains[domains$domain == row$domain,]
           sql <-
             SqlRender::loadRenderTranslateSql(
               "CohortEntryBreakdown.sql",
-              packageName = "CohortDiagnostics",
+              packageName = utils::packageName(),
               dbms = connection@dbms,
               tempEmulationSchema = tempEmulationSchema,
               cdm_database_schema = cdmDatabaseSchema,
@@ -660,7 +660,7 @@ runConceptSetDiagnostics <- function(connection,
               domain_start_date = domain$domainStartDate,
               domain_concept_id = domain$domainConceptId,
               domain_source_concept_id = domain$domainSourceConceptId,
-              use_source_concept_id = !is.null(domain$domainSourceConceptId),
+              use_source_concept_id = !(is.na(domain$domainSourceConceptId) | is.null(domain$domainSourceConceptId)),
               primary_codeset_ids = row$uniqueConceptSetId,
               concept_set_table = "#inst_concept_sets",
               store = TRUE,

@@ -8,7 +8,7 @@ analysis_ref,is_binary,varchar(1),Yes,No,No,Yes
 analysis_ref,missing_means_zero,varchar(1),No,No,No,Yes
 cohort,phenotype_id,bigint,No,No,Yes,Yes
 cohort,cohort_id,bigint,Yes,Yes,No,Yes
-cohort,web_api_cohort_id,bigint,Yes,No,Yes,Yes
+cohort,atlas_id,bigint,No,No,Yes,Yes
 cohort,cohort_name,varchar,Yes,No,No,Yes
 cohort,logic_description,varchar,No,No,Yes,Yes
 cohort,metadata,varchar,No,No,Yes,Yes

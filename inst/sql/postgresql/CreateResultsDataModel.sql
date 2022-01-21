@@ -54,7 +54,7 @@ CREATE TABLE analysis_ref (
 CREATE TABLE cohort (
 			phenotype_id BIGINT,
 			cohort_id BIGINT NOT NULL,
-			web_api_cohort_id BIGINT NOT NULL,
+			atlas_id BIGINT NOT NULL,
 			cohort_name VARCHAR(255) NOT NULL,
 			logic_description VARCHAR,
 			metadata VARCHAR,

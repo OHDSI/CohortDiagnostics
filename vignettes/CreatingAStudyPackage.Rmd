@@ -1,5 +1,5 @@
 ---
-title: "Runing Cohort Diagnostics in an OHDSI Package mode"
+title: "Creating a study package"
 author: "Gowtham A. Rao"
 date: "`r Sys.Date()`"
 output:
@@ -9,7 +9,7 @@ output:
     number_sections: yes
     toc: yes  
 vignette: >
-  %\VignetteIndexEntry{Runing Cohort Diagnostics in an OHDSI Package mode}
+  %\VignetteIndexEntry{Creating a study package}
   %\VignetteEncoding{UTF-8}    
   %\VignetteEngine{knitr::rmarkdown}
 ---

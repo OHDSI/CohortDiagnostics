@@ -1,3 +1,20 @@
+CohortDiagnostics 2.2.0
+=======================
+Changes:
+1. Added `executeDiagnostics` function which aims to replace `runCohortDiagnostics`
+as the main interface to the package.
+2. Updated vignette on "Running Cohort Diagnostics" to give clearer instructions
+3. Removed vignettes on usage that are no longer required
+4. Improved testing across database platforms
+5. Moved some not particularly useful warnings to `logInfo`
+
+Bug Fixes:
+1. User code removed from CohortExplorer to fix issue #618
+2. Fixed bug with `runBreakdownIndexEvents = TRUE` failed for drug_era table with SQL error - Issue #695
+3. Fixed error when computing incidence rates on BigQuery.
+4. Fixed error when `cdm_source` table is empty (warning remains).
+5. Fixed error when instantiating cohorts on BigQuery.
+
 CohortDiagnostics 2.1.4
 =======================
 

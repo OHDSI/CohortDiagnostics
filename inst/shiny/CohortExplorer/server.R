@@ -21,8 +21,7 @@ shinyServer(function(input, output, session) {
         visit = "Visit" %in% input$domains,
         observation_period = "Observation period" %in% input$domains,
         vocabulary_database_schema = vocabularyDatabaseSchema, 
-        snakeCaseToCamelCase = TRUE, 
-        tempEmulationSchema = tempEmulationSchema
+        snakeCaseToCamelCase = TRUE
       ) %>% 
         dplyr::tibble()
       colnames(events)[colnames(events) == "domainName"] <- "domain"

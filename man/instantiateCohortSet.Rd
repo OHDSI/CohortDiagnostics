@@ -9,16 +9,17 @@ instantiateCohortSet(
   connection = NULL,
   cdmDatabaseSchema,
   vocabularyDatabaseSchema = cdmDatabaseSchema,
-  tempEmulationSchema = NULL,
+  tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   oracleTempSchema = NULL,
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
   cohortIds = NULL,
+  cohortDefinitionSet = NULL,
   packageName = NULL,
   cohortToCreateFile = "settings/CohortsToCreate.csv",
   baseUrl = NULL,
   cohortSetReference = NULL,
-  generateInclusionStats = FALSE,
+  generateInclusionStats = TRUE,
   inclusionStatisticsFolder = NULL,
   createCohortTable = TRUE,
   incremental = FALSE,
@@ -58,7 +59,9 @@ this should include both the database and schema name, for example
 \item{cohortTable}{Name of the cohort table.}
 
 \item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
-construction to.}
+diagnostics to.}
+
+\item{cohortDefinitionSet}{Data.frame of cohorts must include columns cohortId, cohortName, json, sql}
 
 \item{packageName}{The name of the package containing the cohort definitions. Can be left NULL if 
 \code{baseUrl} and \code{cohortSetReference} have been specified.}
@@ -80,15 +83,14 @@ error message will be displayed and process stopped.}
 \item{generateInclusionStats}{Compute and store inclusion rule statistics?}
 
 \item{inclusionStatisticsFolder}{The folder where the inclusion rule statistics are stored. Can be
-left NULL if \code{generateInclusionStats = FALSE}.}
+left NULL if \code{runInclusionStatistics = FALSE}.}
 
-\item{createCohortTable}{Create the cohort table? If \code{incremental = TRUE} and the table
-already exists this will be skipped.}
+\item{createCohortTable}{Create/Overwrite a cohort table?}
 
-\item{incremental}{Create only cohorts that haven't been created before?}
+\item{incremental}{Create only cohort diagnostics that haven't been created before?}
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
-of which definition has been executed.}
+of which cohort diagnostics has been executed.}
 }
 \value{
 A data frame with cohort counts
@@ -112,12 +114,12 @@ Note: if the parameters for both Package Mode and WebApi Mode are provided, then
 
 The \code{cohortSetReference} argument must be a data frame with  the following columns:
 \describe{
-\item{referentConceptId}{A standard omop concept id that serves as the referent phenotype definition for the cohort Id.}
 \item{cohortId}{The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999}
-\item{webApiCohortId}{Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.}
+\item{atlasId}{Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.}
 \item{cohortName}{The full name of the cohort. This will be shown in the Shiny app.}
 \item{logicDescription}{A human understandable brief description of the cohort definition. This logic does not have to a 
 fully specified description of the cohort definition, but should provide enough context to help user understand the
 meaning of the cohort definition}
+\item{referentConceptId}{A standard omop concept id that serves as the referent phenotype definition for the cohort Id (optional)}
 }
 }
