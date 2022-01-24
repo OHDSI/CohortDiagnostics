@@ -121,7 +121,7 @@ CohortGenerator::createCohortTables(connectionDetails = connectionDetails,
 # Generate the cohort set
 CohortGenerator::generateCohortSet(connectionDetails= connectionDetails,
                                    cdmDatabaseSchema = cdmDatabaseSchema,
-                                   cohortDatabaseSchema = cdmDatabaseSchema,
+                                   cohortDatabaseSchema = cohortDatabaseSchema,
                                    cohortTableNames = cohortTableNames,
                                    cohortDefinitionSet = cohortDefinitionSet,
                                    incremental = FALSE)
@@ -150,7 +150,6 @@ executeDiagnostics(cohortDefinitionSet,
                    cohortDatabaseSchema = cohortDatabaseSchema,
                    cdmDatabaseSchema = cdmDatabaseSchema,
                    exportFolder = exportFolder,
-                   inclusionStatisticsFolder = inclusionStatisticsFolder,
                    databaseId = "MyCdm",
                    minCellCount = 5)
 ```
