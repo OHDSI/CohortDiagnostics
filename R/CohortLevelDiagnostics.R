@@ -62,8 +62,7 @@ getCohortCounts <- function(connectionDetails = NULL,
       cohortIdDf <- tidyr::tibble(cohortId = cohortIds)
       counts <- cohortIdDf %>%
         dplyr::left_join(counts, by = "cohortId") %>%
-        dplyr::mutate(cohortEntries = ifelse(is.na(cohortEntries), 0, cohortEntries),
-                      cohortSubjects = ifelse(is.na(cohortSubjects), 0, cohortSubjects))
+        tidyr::replace_na(list(cohortEntries = 0, cohortSubjects = 0))
     }
 
     delta <- Sys.time() - start
