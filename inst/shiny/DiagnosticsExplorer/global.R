@@ -9,8 +9,8 @@ source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 
-appInformationText <- "V 2.2.0"
-appInformationText <- "Powered by OHDSI Cohort Diagnostics application - Version 2.2.0"
+appVersionNum <- "Version: 2.2.1"
+appInformationText <- paste("Powered by OHDSI Cohort Diagnostics application", paste0(appVersionNum, "."))
 appInformationText <- paste0(appInformationText, 
                              "Application was last initated on ",
                              lubridate::now(tzone = "EST"),
