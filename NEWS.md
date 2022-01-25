@@ -7,6 +7,8 @@ Bug fixes:
 
 2. Updated vignette to fix minor issues
 
+3. Cohorts with zero counts are now stored in results and display in shiny app
+
 CohortDiagnostics 2.2.0
 =======================
 Changes:
