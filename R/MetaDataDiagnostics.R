@@ -138,7 +138,7 @@ saveDatabaseMetaData <- function(databaseId,
     isMetaAnalysis = 0
   )
   writeToCsv(data = database,
-             fileName = file.path(exportFolder, "database_info.csv"))
+             fileName = file.path(exportFolder, "database.csv"))
   delta <- Sys.time() - startMetaData
   writeLines(paste(
     "Saving database metadata took",

@@ -81,12 +81,12 @@ covariate_value_dist,p_25_value,float,Yes,No,No,Yes
 covariate_value_dist,p_75_value,float,Yes,No,No,Yes
 covariate_value_dist,p_90_value,float,Yes,No,No,Yes
 covariate_value_dist,database_id,varchar,Yes,Yes,No,Yes
-database_info,database_id,varchar,Yes,Yes,No,Yes
-database_info,database_name,varchar,No,No,No,Yes
-database_info,description,varchar,No,No,No,Yes
-database_info,is_meta_analysis,varchar(1),Yes,No,No,Yes
-database_info, vocabulary_version, varchar, No, No, Yes, Yes
-database_info, vocabulary_version_cdm, varchar, No, No, Yes, Yes
+database,database_id,varchar,Yes,Yes,No,Yes
+database,database_name,varchar,No,No,No,Yes
+database,description,varchar,No,No,No,Yes
+database,is_meta_analysis,varchar(1),Yes,No,No,Yes
+database, vocabulary_version, varchar, No, No, Yes, Yes
+database, vocabulary_version_cdm, varchar, No, No, Yes, Yes
 domain,domain_id,varchar(20),Yes,Yes,No,Yes
 domain,domain_name,varchar(255),Yes,No,No,Yes
 domain,domain_concept_id,int,Yes,No,No,Yes

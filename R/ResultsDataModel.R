@@ -308,7 +308,7 @@ uploadResults <- function(connectionDetails = NULL,
   
   if (purgeSiteDataBeforeUploading) {
     database <-
-      readr::read_csv(file = file.path(unzipFolder, "database_info.csv"),
+      readr::read_csv(file = file.path(unzipFolder, "database.csv"),
                       col_types = readr::cols())
     colnames(database) <-
       SqlRender::snakeCaseToCamelCase(colnames(database))
@@ -333,7 +333,7 @@ uploadResults <- function(connectionDetails = NULL,
         databaseId = databaseId
       )
     }
-    
+
     csvFileName <- paste0(tableName, ".csv")
     if (csvFileName %in% list.files(unzipFolder)) {
       env <- new.env()

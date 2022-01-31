@@ -95,7 +95,7 @@ onStop(function() {
 resultsTablesOnServer <-
   tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
 
-loadResultsTable("database_info", required = TRUE)
+loadResultsTable("database", required = TRUE)
 loadResultsTable("cohort", required = TRUE)
 loadResultsTable("temporal_time_ref")
 loadResultsTable("concept_sets")
@@ -120,15 +120,13 @@ dataSource <-
   )
 
 
-if (exists("databaseInfo")) {
-  databaseInfo <- get("databaseInfo")
-  if (nrow(databaseInfo) > 0 &&
-      "vocabularyVersion" %in% colnames(databaseInfo)) {
-    databaseInfo <- databaseInfo %>%
+if (exists("database")) {
+  if (nrow(database) > 0 &&
+      "vocabularyVersion" %in% colnames(database)) {
+    database <- database %>%
       dplyr::mutate(
         databaseIdWithVocabularyVersion = paste0(databaseId, " (", .data$vocabularyVersion, ")")
       )
-    database <- databaseInfo
   }
 }
 
