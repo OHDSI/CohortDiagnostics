@@ -149,10 +149,6 @@ test_that("Sqlite results data model", {
 
     specifications <- getResultsDataModelSpecifications()
     for (tableName in unique(specifications$tableName)) {
-      expect_true(DatabaseConnector::dbExistsTable(connectionSqlite, tableName))
-    }
-
-    for (tableName in unique(specifications$tableName)) {
       primaryKey <- specifications %>%
         dplyr::filter(.data$tableName == !!tableName &
                         .data$primaryKey == "Yes") %>%
