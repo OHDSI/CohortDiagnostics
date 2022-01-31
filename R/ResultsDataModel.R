@@ -236,31 +236,15 @@ createResultsDataModel <- function(connection = NULL,
       stop("No connection or connectionDetails provided.")
     }
   }
-  schemas <- unlist(
-    DatabaseConnector::querySql(
-      connection,
-      "SELECT schema_name FROM information_schema.schemata;",
-      snakeCaseToCamelCase = TRUE
-    )[, 1]
-  )
-  if (!tolower(schema) %in% tolower(schemas)) {
-    stop(
-      "Schema '",
-      schema,
-      "' not found on database. Only found these schemas: '",
-      paste(schemas, collapse = "', '"),
-      "'"
-    )
+
+  if (connection@dbms == "sqlite" & schema != "main") {
+    stop("Invalid schema for sqlite, use schema = 'main'")
   }
-  DatabaseConnector::executeSql(
-    connection,
-    sprintf("SET search_path TO %s;", schema),
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-  pathToSql <-
-    system.file("sql", "postgresql", "CreateResultsDataModel.sql", package= utils::packageName())
-  sql <- SqlRender::readSql(pathToSql)
+
+  sql <- SqlRender::loadRenderTranslateSql(sqlFilename = "CreateResultsDataModel.sql",
+                                           packageName = utils::packageName(),
+                                           dbms = connection@dbms,
+                                           results_schema = schema)
   DatabaseConnector::executeSql(connection, sql)
 }
 
@@ -304,6 +288,11 @@ uploadResults <- function(connectionDetails = NULL,
                           forceOverWriteOfSpecifications = FALSE,
                           purgeSiteDataBeforeUploading = TRUE,
                           tempFolder = tempdir()) {
+
+  if (connectionDetails$dbms == "sqlite" & schema != "main") {
+    stop("Invalid schema for sqlite, use schema = 'main'")
+  }
+
   start <- Sys.time()
   connection <- DatabaseConnector::connect(connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
@@ -344,7 +333,7 @@ uploadResults <- function(connectionDetails = NULL,
         databaseId = databaseId
       )
     }
-    
+
     csvFileName <- paste0(tableName, ".csv")
     if (csvFileName %in% list.files(unzipFolder)) {
       env <- new.env()
@@ -462,7 +451,8 @@ uploadResults <- function(connectionDetails = NULL,
         } else {
           DatabaseConnector::insertTable(
             connection = connection,
-            tableName = paste(env$schema, env$tableName, sep = "."),
+            tableName = env$tableName,
+            databaseSchema = env$schema,
             data = chunk,
             dropTableIfExists = FALSE,
             createTable = FALSE,
@@ -535,7 +525,7 @@ deleteAllRecordsForDatabaseId <- function(connection,
     database_id = databaseId
   )
   databaseIdCount <-
-    DatabaseConnector::querySql(connection, sql)[, 1]
+    DatabaseConnector::renderTranslateQuerySql(connection, sql)[, 1]
   if (databaseIdCount != 0) {
     ParallelLogger::logInfo(
       sprintf(
@@ -552,9 +542,9 @@ deleteAllRecordsForDatabaseId <- function(connection,
       table_name = tableName,
       database_id = databaseId
     )
-    DatabaseConnector::executeSql(connection,
-                                  sql,
-                                  progressBar = FALSE,
-                                  reportOverallTime = FALSE)
+    DatabaseConnector::renderTranslateExecuteSql(connection,
+                                                 sql,
+                                                 progressBar = FALSE,
+                                                 reportOverallTime = FALSE)
   }
 }
