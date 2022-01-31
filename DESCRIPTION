@@ -1,7 +1,7 @@
 Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Cohorts
-Version: 2.2.0
+Version: 3.0.0
 Date: 2021-11-13
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
