@@ -27,7 +27,7 @@ execute(
   databaseDescription = "This is a test data base called Eunomia"
 )
 
-CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
+CohortDiagnostics::createResultsDataModel(dataFolder = outputFolder)
 
 
 

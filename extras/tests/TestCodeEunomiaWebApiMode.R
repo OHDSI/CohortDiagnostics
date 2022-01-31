@@ -76,7 +76,7 @@ CohortDiagnostics::runCohortDiagnostics(baseUrl = baseUrl,
                                         databaseId = databaseId,
                                         minCellCount = 0)
 
-CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
+CohortDiagnostics::createMergedResultsFile(dataFolder = outputFolder)
 
 CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 
