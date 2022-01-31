@@ -139,13 +139,13 @@ test_that("Results upload", {
 
 test_that("Sqlite results data model", {
   dbFile <- tempfile(fileext = ".sqlite")
+  createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = dbFile, overwrite = TRUE)
   connectionDetailsSqlite <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = dbFile)
   connectionSqlite <- DatabaseConnector::connect(connectionDetails = connectionDetailsSqlite)
   with_dbc_connection(connectionSqlite, {
     # Bad schema name
     expect_error(createResultsDataModel(connection = connectionSqlite,
                                         schema = "non_existant_schema"))
-    createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = dbFile, overwrite = TRUE)
 
     specifications <- getResultsDataModelSpecifications()
     for (tableName in unique(specifications$tableName)) {
