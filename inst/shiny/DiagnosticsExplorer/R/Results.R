@@ -490,57 +490,55 @@ getConceptDetails <- function(dataSource,
 resolveMappedConceptSetFromVocabularyDatabaseSchema <- function(dataSource,
                                                                 conceptSets,
                                                                 vocabularyDatabaseSchema = 'vocabulary') {
-  if (dbms == "sqlite") {
-    stop("Cannot resolve concept sets without a full vocabulary")
-  } else {
-    sqlBase <- paste("SELECT DISTINCT codeset_id AS concept_set_id, concept.*",
-                     "FROM (",
-                     paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
-                     ") concept_sets",
-                     sep = "\n")
-    sqlResolved <- paste(sqlBase,
-                         "INNER JOIN @vocabulary_database_schema.concept",
-                         "  ON concept_sets.concept_id = concept.concept_id;",
-                         sep = "\n")
 
-    sqlBaseMapped <- paste("SELECT DISTINCT codeset_id AS concept_set_id, 
-                           concept_sets.concept_id AS resolved_concept_id,
-                           concept.*",
-                           "FROM (",
-                           paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
-                           ") concept_sets",
-                           sep = "\n")
-    sqlMapped <- paste(sqlBaseMapped,
-                       "INNER JOIN @vocabulary_database_schema.concept_relationship",
-                       "  ON concept_sets.concept_id = concept_relationship.concept_id_2",
+  sqlBase <- paste("SELECT DISTINCT codeset_id AS concept_set_id, concept.*",
+                   "FROM (",
+                   paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
+                   ") concept_sets",
+                   sep = "\n")
+  sqlResolved <- paste(sqlBase,
                        "INNER JOIN @vocabulary_database_schema.concept",
-                       "  ON concept_relationship.concept_id_1 = concept.concept_id",
-                       "WHERE relationship_id = 'Maps to'",
-                       "  AND standard_concept IS NULL;",
+                       "  ON concept_sets.concept_id = concept.concept_id;",
                        sep = "\n")
 
-    resolved <- renderTranslateQuerySql(connection = dataSource$connection,
-                                        sql = sqlResolved,
-                                        vocabulary_database_schema = vocabularyDatabaseSchema,
-                                        snakeCaseToCamelCase = TRUE) %>%
-      tidyr::tibble() %>%
-      dplyr::select(.data$conceptSetId, .data$conceptId, .data$conceptName,
-                    .data$domainId, .data$vocabularyId, .data$conceptClassId,
-                    .data$standardConcept, .data$conceptCode, .data$invalidReason) %>%
-      dplyr::arrange(.data$conceptId)
-    mapped <- renderTranslateQuerySql(connection = dataSource$connection,
-                                      sql = sqlMapped,
+  sqlBaseMapped <- paste("SELECT DISTINCT codeset_id AS concept_set_id,
+                           concept_sets.concept_id AS resolved_concept_id,
+                           concept.*",
+                         "FROM (",
+                         paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
+                         ") concept_sets",
+                         sep = "\n")
+  sqlMapped <- paste(sqlBaseMapped,
+                     "INNER JOIN @vocabulary_database_schema.concept_relationship",
+                     "  ON concept_sets.concept_id = concept_relationship.concept_id_2",
+                     "INNER JOIN @vocabulary_database_schema.concept",
+                     "  ON concept_relationship.concept_id_1 = concept.concept_id",
+                     "WHERE relationship_id = 'Maps to'",
+                     "  AND standard_concept IS NULL;",
+                     sep = "\n")
+
+  resolved <- renderTranslateQuerySql(connection = dataSource$connection,
+                                      sql = sqlResolved,
                                       vocabulary_database_schema = vocabularyDatabaseSchema,
                                       snakeCaseToCamelCase = TRUE) %>%
-      tidyr::tibble() %>%
-      dplyr::select(.data$resolvedConceptId, .data$conceptId,
-                    .data$conceptName, .data$domainId,
-                    .data$vocabularyId, .data$conceptClassId,
-                    .data$standardConcept, .data$conceptCode,
-                    .data$conceptSetId) %>%
-      dplyr::distinct() %>%
-      dplyr::arrange(.data$resolvedConceptId, .data$conceptId)
-  }
+    tidyr::tibble() %>%
+    dplyr::select(.data$conceptSetId, .data$conceptId, .data$conceptName,
+                  .data$domainId, .data$vocabularyId, .data$conceptClassId,
+                  .data$standardConcept, .data$conceptCode, .data$invalidReason) %>%
+    dplyr::arrange(.data$conceptId)
+  mapped <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sqlMapped,
+                                    vocabulary_database_schema = vocabularyDatabaseSchema,
+                                    snakeCaseToCamelCase = TRUE) %>%
+    tidyr::tibble() %>%
+    dplyr::select(.data$resolvedConceptId, .data$conceptId,
+                  .data$conceptName, .data$domainId,
+                  .data$vocabularyId, .data$conceptClassId,
+                  .data$standardConcept, .data$conceptCode,
+                  .data$conceptSetId) %>%
+    dplyr::distinct() %>%
+    dplyr::arrange(.data$resolvedConceptId, .data$conceptId)
+
   data <- list(resolved = resolved, mapped = mapped)
   return(data)
 }
