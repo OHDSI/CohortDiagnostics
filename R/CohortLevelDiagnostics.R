@@ -41,7 +41,7 @@ getCohortCounts <- function(connectionDetails = NULL,
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
+
   sql <-
     SqlRender::loadRenderTranslateSql(
       sqlFilename = "CohortCounts.sql",
@@ -57,6 +57,14 @@ getCohortCounts <- function(connectionDetails = NULL,
     counts <-
       DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>%
       tidyr::tibble()
+
+    if (length(cohortIds) > 0) {
+      cohortIdDf <- tidyr::tibble(cohortId = cohortIds)
+      counts <- cohortIdDf %>%
+        dplyr::left_join(counts, by = "cohortId") %>%
+        tidyr::replace_na(list(cohortEntries = 0, cohortSubjects = 0))
+    }
+
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste(
       "Counting cohorts took",
