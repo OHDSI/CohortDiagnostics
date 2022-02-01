@@ -163,7 +163,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
                                            generateStats = TRUE) {
   ParallelLogger::logDebug("Running Cohort Diagnostics on cohort specified in WebApi - ",
                            baseUrl)
-
+  
   if (is.null(errorMessage) |
       !class(errorMessage) == 'AssertColection') {
     errorMessage <- checkmate::makeAssertCollection()
@@ -181,7 +181,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
     cohortSetReference <- cohortSetReference %>%
       dplyr::filter(.data$cohortId %in% cohortIds)
   }
-
+  
   if ("name" %in% names(cohortSetReference)) {
     cohortSetReference <-
       dplyr::rename(cohortSetReference, cohortName = "name")
@@ -199,7 +199,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
 
   cohortSetReference$json <- ""
   cohortSetReference$sql <- ""
-
+  
   ParallelLogger::logInfo("Retrieving cohort definitions from WebAPI")
   for (i in 1:nrow(cohortSetReference)) {
     ParallelLogger::logInfo("- Retrieving definitions for cohort ",
@@ -311,7 +311,7 @@ createCohortTable <- function(connectionDetails = NULL,
                                 progressBar = FALSE,
                                 reportOverallTime = FALSE)
   ParallelLogger::logDebug("Created table ", cohortDatabaseSchema, ".", cohortTable)
-
+  
   delta <- Sys.time() - start
   writeLines(paste(
     "Creating cohort table took",
@@ -332,11 +332,11 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
                                                                                "cohortSummaryStats.csv"),
                                             simplify = TRUE) {
   start <- Sys.time()
-
+  
   if (!file.exists(cohortInclusionFile)) {
     return(NULL)
   }
-
+  
   fetchStats <- function(file) {
     ParallelLogger::logDebug("- Fetching data from ", file)
     stats <- readr::read_csv(file,
@@ -384,7 +384,7 @@ processInclusionStats <- function(inclusion,
     if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {
       return(tidyr::tibble())
     }
-
+    
     result <- inclusion %>%
       dplyr::select(.data$ruleSequence, .data$name) %>%
       dplyr::distinct() %>%
@@ -400,7 +400,7 @@ processInclusionStats <- function(inclusion,
         by = "ruleSequence"
       ) %>%
       dplyr::mutate(remain = 0)
-
+    
     inclusionResults <- inclusionResults %>%
       dplyr::filter(.data$modeId == 0)
     mask <- 0
@@ -585,12 +585,12 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     ParallelLogger::logInfo("Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
     cohortToCreateFile <- NULL
   }
-
+  
   if (!is.null(oracleTempSchema) && is.null(tempEmulationSchema)) {
     tempEmulationSchema <- oracleTempSchema
     warning('OracleTempSchema has been deprecated by DatabaseConnector')
   }
-
+  
   if (generateInclusionStats) {
     if (is.null(inclusionStatisticsFolder)) {
       stop("Must specify inclusionStatisticsFolder when generateInclusionStats = TRUE")
@@ -607,7 +607,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       dir.create(incrementalFolder, recursive = TRUE)
     }
   }
-
+  
   start <- Sys.time()
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
@@ -631,6 +631,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       )
     }
   }
+
 
   if (is.null(cohortDefinitionSet)) {
     cohortDefinitionSet <- getCohortsJsonAndSql(
@@ -661,11 +662,11 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     recordKeepingFile <-
       file.path(incrementalFolder, "InstantiatedCohorts.csv")
   }
-
+  
   if (generateInclusionStats) {
     createTempInclusionStatsTables(connection, tempEmulationSchema, cohortDefinitionSet)
   }
-
+  
   instantiatedCohortIds <- c()
   for (i in 1:nrow(cohortDefinitionSet)) {
     if (!incremental || isTaskRequired(
@@ -735,7 +736,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
         c(instantiatedCohortIds, cohortDefinitionSet$cohortId[i])
     }
   }
-
+  
   if (generateInclusionStats) {
     saveAndDropTempInclusionStatsTables(
       connection = connection,
@@ -752,7 +753,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       recordKeepingFile = recordKeepingFile
     )
   }
-
+  
   delta <- Sys.time() - start
   writeLines(paste(
     "Instantiating cohort set took",
@@ -772,7 +773,7 @@ createTempInclusionStatsTables <-
         tempEmulationSchema = tempEmulationSchema
       )
     DatabaseConnector::executeSql(connection, sql)
-
+    
     inclusionRules <- tidyr::tibble()
     for (i in 1:nrow(cohorts)) {
       cohortDefinition <-
@@ -798,7 +799,7 @@ createTempInclusionStatsTables <-
         }
       }
     }
-
+    
     if (nrow(inclusionRules) > 0) {
       inclusionRules <- inclusionRules %>%
         dplyr::inner_join(cohorts %>% dplyr::select(.data$cohortId, .data$cohortName),
@@ -808,7 +809,7 @@ createTempInclusionStatsTables <-
         dplyr::mutate(cohortDefinitionId = as.integer(.data$cohortDefinitionId),
                       ruleSequence = as.integer(.data$ruleSequence)) %>%
         dplyr::select(.data$cohortDefinitionId, .data$ruleSequence, .data$name)
-
+      
       DatabaseConnector::insertTable(
         connection = connection,
         tableName = "#cohort_inclusion",
@@ -865,7 +866,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
   fetchStats("#cohort_inc_result", "cohortIncResult.csv")
   fetchStats("#cohort_inc_stats", "cohortIncStats.csv")
   fetchStats("#cohort_summary_stats", "cohortSummaryStats.csv")
-
+  
   sql <- "TRUNCATE TABLE #cohort_inclusion;
     DROP TABLE #cohort_inclusion;
 

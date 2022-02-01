@@ -52,7 +52,7 @@ exportCharacterization <- function(characteristics,
       dplyr::mutate(mean = round(.data$mean, digits = 4),
                     sd = round(.data$sd, digits = 4)) %>%
       dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
-
+    
     if (dplyr::pull(dplyr::count(characteristics$filteredCovariates)) > 0) {
       covariateRef <- dplyr::collect(characteristics$covariateRef)
       writeToCsv(
@@ -84,7 +84,7 @@ exportCharacterization <- function(characteristics,
       )
     }
   }
-
+  
   if (!"covariatesContinuous" %in% names(characteristics)) {
     ParallelLogger::logInfo("No continuous characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
@@ -92,7 +92,7 @@ exportCharacterization <- function(characteristics,
       characteristics$covariatesContinuous %>%
       dplyr::filter(.data$countValue >= minCellCount) %>%
       dplyr::mutate(databaseId = !!databaseId)
-
+    
     if (dplyr::pull(dplyr::count(characteristics$filteredCovariatesContinous)) > 0) {
       writeCovariateDataAndromedaToCsv(
         data = characteristics$filteredCovariatesContinous,

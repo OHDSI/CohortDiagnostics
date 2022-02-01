@@ -34,7 +34,6 @@
 #'                         Note: copying to clipboard will not work in a Shiny window.
 #' @param aboutText        Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 #'                         If not provided, no About tab will be shown.
-#' @param appDir           Top directory of Shiny app
 #'
 #' @details
 #' Launches a Shiny app that allows the user to explore the diagnostics
@@ -71,7 +70,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
       'vocabularyDatabaseSchema option is deprecated. Please use vocabularyDatabaseSchemas.'
     )
   }
-
+  
   ensure_installed("checkmate")
   ensure_installed("DatabaseConnector")
   ensure_installed("dplyr")
@@ -92,14 +91,14 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
   ensure_installed("tidyr")
   ensure_installed("CirceR")
   ensure_installed("rmarkdown")
-
+  
   appDir <-
     system.file("shiny", "DiagnosticsExplorer", package= utils::packageName())
-
+  
   if (launch.browser) {
     options(shiny.launch.browser = TRUE)
   }
-
+  
   if (runOverNetwork) {
     myIpAddress <- system("ipconfig", intern = TRUE)
     myIpAddress <- myIpAddress[grep("IPv4", myIpAddress)]
@@ -196,7 +195,7 @@ launchCohortExplorer <- function(connectionDetails,
   ensure_installed("RColorBrewer")
   ensure_installed("ggplot2")
   ensure_installed("magrittr")
-
+  
   .GlobalEnv$shinySettings <-
     list(
       connectionDetails = connectionDetails,
