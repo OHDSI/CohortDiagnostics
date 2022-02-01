@@ -85,8 +85,8 @@ database,database_id,varchar,Yes,Yes,No,Yes
 database,database_name,varchar,No,No,No,Yes
 database,description,varchar,No,No,No,Yes
 database,is_meta_analysis,varchar(1),Yes,No,No,Yes
-database, vocabulary_version, varchar, No, No, Yes, Yes
-database, vocabulary_version_cdm, varchar, No, No, Yes, Yes
+database,vocabulary_version, varchar, No, No, Yes, Yes
+database,vocabulary_version_cdm, varchar, No, No, Yes, Yes
 domain,domain_id,varchar(20),Yes,Yes,No,Yes
 domain,domain_name,varchar(255),Yes,No,No,Yes
 domain,domain_concept_id,int,Yes,No,No,Yes

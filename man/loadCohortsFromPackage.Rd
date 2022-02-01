@@ -29,4 +29,14 @@ diagnostics to.}
 }
 \description{
 Load cohort references for usage in executeDiagnostics.
+
+Expects a csv file (e.g one placed in "inst/settings/cohortsToCreate.csv" for the pacakge) with headers:
+atlasId, referentConceptId, webApiCohortId, cohortId, name,
+cohortName, logicDescription
+
+For example
+```
+atlasId,referentConceptId,webApiCohortId,cohortId,name,cohortName,logicDescription,phenotypeId
+17492,192671,17492,17492,17492,GI bleed,GI bleed,192671000
+```
 }

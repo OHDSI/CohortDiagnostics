@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.0</span>
       </span>
     </div>
 
@@ -79,8 +79,7 @@
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">launchDiagnosticsExplorer</span><span class="op">(</span>
-  dataFolder <span class="op">=</span> <span class="st">"data"</span>,
-  dataFile <span class="op">=</span> <span class="st">"PreMerged.RData"</span>,
+  sqliteDbPath <span class="op">=</span> <span class="st">"MergedCohortDiagnosticsData.sqlite"</span>,
   connectionDetails <span class="op">=</span> <span class="cn">NULL</span>,
   resultsDatabaseSchema <span class="op">=</span> <span class="cn">NULL</span>,
   vocabularyDatabaseSchema <span class="op">=</span> <span class="cn">NULL</span>,
@@ -94,12 +93,8 @@
 
     <div id="arguments">
     <h2>Arguments</h2>
-    <dl><dt>dataFolder</dt>
-<dd><p>A folder where the premerged file is stored. Use
-the <code><a href="preMergeDiagnosticsFiles.html">preMergeDiagnosticsFiles</a></code> function to generate this file.</p></dd>
-<dt>dataFile</dt>
-<dd><p>(Optional) The name of the .RData file with results. It is commonly known as the
-Premerged file.</p></dd>
+    <dl><dt>sqliteDbPath</dt>
+<dd><p>Path to merged sqlite file. See <code><a href="createMergedResultsFile.html">createMergedResultsFile</a></code> to create file.</p></dd>
 <dt>connectionDetails</dt>
 <dd><p>An object of type <code>connectionDetails</code> as created using the
 <code><a href="https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html" class="external-link">createConnectionDetails</a></code> function in the
@@ -115,7 +110,7 @@ have been uploaded.</p></dd>
 <dd><p>(optional) A list of one or more schemas on the database server where the vocabulary tables are located.
 The default value is the value of the resultsDatabaseSchema. We can provide a list of vocabulary schema
 that might represent different versions of the OMOP vocabulary tables. It allows us to compare the impact
-of vocabulary changes on Diagnostics.</p></dd>
+of vocabulary changes on Diagnostics. Not supported with an sqlite database.</p></dd>
 <dt>aboutText</dt>
 <dd><p>Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 If not provided, no About tab will be shown.</p></dd>

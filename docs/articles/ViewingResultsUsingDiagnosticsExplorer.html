@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.0</span>
       </span>
     </div>
 
@@ -96,7 +96,7 @@
       <h1 data-toc-skip>Viewing results using Diagnostics Explorer</h1>
                         <h4 data-toc-skip class="author">Gowtham Rao</h4>
             
-            <h4 data-toc-skip class="date">2022-01-24</h4>
+            <h4 data-toc-skip class="date">2022-02-01</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd" class="external-link"><code>vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd</code></a></small>
       <div class="hidden name"><code>ViewingResultsUsingDiagnosticsExplorer.Rmd</code></div>
@@ -123,20 +123,20 @@
 </ul>
 </div>
 <div class="section level1">
-<h1 id="running-the-app-using-local-file-mode-premerged-file-">Running the app using local file mode (Premerged file).<a class="anchor" aria-label="anchor" href="#running-the-app-using-local-file-mode-premerged-file-"></a>
+<h1 id="running-the-app-using-local-file-mode-sqlite-db-">Running the app using local file mode (Sqlite db).<a class="anchor" aria-label="anchor" href="#running-the-app-using-local-file-mode-sqlite-db-"></a>
 </h1>
-<p>Local mode is the most common mode to run the Shiny application. We recommend that you convert all the csv files that are the precomputed output of Cohort Diagnostics into a .RData file as follows</p>
+<p>Local mode is the most common mode to run the Shiny application. We recommend that you convert all the csv files that are the precomputed output of Cohort Diagnostics into an sqlite database file as follows</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/preMergeDiagnosticsFiles.html">preMergeDiagnosticsFiles</a></span><span class="op">(</span><span class="st">"C:/temp/allZipFiles"</span><span class="op">)</span></code></pre></div>
-<p>.RData files enables faster load of the Shiny application. Once you have converted your results data into a premerged file, you may launch the Diagnostics Explorer app as follows:</p>
+<code class="sourceCode R"><span class="fu"><a href="../reference/createMergedResultsFile.html">createMergedResultsFile</a></span><span class="op">(</span><span class="st">"C:/temp/allZipFiles"</span>, sqliteDbPath <span class="op">=</span> <span class="st">"MyCohortDiagnosticsResulst.sqlite"</span><span class="op">)</span></code></pre></div>
+<p>.RData files enables faster load of the Shiny application. Once you have converted your results data into an sqlite database file, you may launch the Diagnostics Explorer app as follows:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span><span class="op">(</span>dataFolder <span class="op">=</span> <span class="st">"C:/temp"</span>, dataFile <span class="op">=</span> <span class="st">"Premerged.RData"</span><span class="op">)</span></code></pre></div>
-<p>If running the application from a R-studio environment, please make sure the ‘Premerged.RData’ is in a folder called ‘data’. Go to global.R and to the line that <code>defaultDatabaseMode &lt;- FALSE</code>. Ensure defaultDatabaseMode is FALSE. This will prevent the application from attempting to connect to a remote database system, and only look for local premerged.RData file.</p>
+<code class="sourceCode R"><span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span><span class="op">(</span>sqliteDbPath <span class="op">=</span> <span class="st">"MyCohortDiagnosticsResulst.sqlite"</span><span class="op">)</span></code></pre></div>
+<p>If running the application from a R-studio environment, please make sure the sqlite file is in a folder called ‘data’.</p>
 </div>
 <div class="section level1">
 <h1 id="running-the-app-using-database-mode">Running the app using Database mode<a class="anchor" aria-label="anchor" href="#running-the-app-using-database-mode"></a>
 </h1>
-<p>We recommend the use of a database system, when file size of the cohort diagnostics output becomes large e.g. &gt; 100mb, as using the premerged.RData may leading sluggish performance. Currently only postgres server is supported. See Vignette on Database mode on how to load data into remote database.</p>
+<p>We recommend the use of a database system, when file size of the cohort diagnostics output becomes large e.g. &gt; 100mb, as using the sqlite database may leading sluggish performance. Currently, only postgres server is fully supported, though platforms with DatabaseConnector support may work (currently experimental). See Vignette on Database mode on how to load data into remote database.</p>
 </div>
 <div class="section level1">
 <h1 id="running-over-the-network">Running over the network<a class="anchor" aria-label="anchor" href="#running-over-the-network"></a>
