@@ -1,4 +1,4 @@
-# Copyright 2021 Observational Health Data Sciences and Informatics
+# Copyright 2022 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -13,6 +13,53 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+createConceptTable <- function(connection, tempEmulationSchema, cohorts) {
+  ParallelLogger::logTrace("Creating concept ID table for tracking concepts used in diagnostics")
+  sql <-
+    SqlRender::loadRenderTranslateSql(
+      "CreateConceptIdTable.sql",
+      packageName = utils::packageName(),
+      dbms = connection@dbms,
+      tempEmulationSchema = tempEmulationSchema,
+      table_name = "#concept_ids"
+    )
+  DatabaseConnector::executeSql(
+    connection = connection,
+    sql = sql,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+
+  referentConceptIdToInsert <- dplyr::tibble()
+  if ('referentConceptId' %in% colnames(cohorts)) {
+    referentConceptIdToInsert <-
+      dplyr::bind_rows(referentConceptIdToInsert,
+                       cohorts %>%
+                         dplyr::transmute(conceptId = as.double(.data$referentConceptId))) %>%
+        dplyr::distinct()
+  }
+  if (nrow(referentConceptIdToInsert) > 0) {
+    ParallelLogger::logInfo(
+      sprintf(
+        "Inserting %s referent concept IDs into the concept ID table. This may take a while.",
+        nrow(referentConceptIdToInsert)
+      )
+    )
+    DatabaseConnector::insertTable(
+      connection = connection,
+      tableName = "#concept_ids",
+      data = referentConceptIdToInsert,
+      dropTableIfExists = FALSE,
+      createTable = FALSE,
+      progressBar = TRUE,
+      tempTable = TRUE,
+      tempEmulationSchema = tempEmulationSchema,
+      camelCaseToSnakeCase = TRUE
+    )
+    ParallelLogger::logTrace("Done inserting")
+  }
+}
 
 exportConceptInformation <- function(connection = NULL,
                                      cdmDatabaseSchema,
@@ -30,6 +77,7 @@ exportConceptInformation <- function(connection = NULL,
                                      ),
                                      incremental,
                                      exportFolder) {
+  ParallelLogger::logInfo("Retrieving concept information")
   start <- Sys.time()
   if (is.null(connection)) {
     warning('No connection provided')
@@ -54,8 +102,13 @@ exportConceptInformation <- function(connection = NULL,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema
     )[, 1]
+ 
   if (length(uniqueConceptIds) == 0) {
-    warning("No concept IDs in cohorts. No concept information exported.")
+    if (!incremental) {
+      warning("No concept IDs in cohorts. No concept information exported.")
+    } else {
+      ParallelLogger::logInfo("Incremental mode, no additional concept information to export.")
+    }
     return(NULL)
   }
   

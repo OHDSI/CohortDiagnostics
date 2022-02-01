@@ -8,7 +8,7 @@ analysis_ref,is_binary,varchar(1),Yes,No,No,Yes
 analysis_ref,missing_means_zero,varchar(1),No,No,No,Yes
 cohort,phenotype_id,bigint,No,No,Yes,Yes
 cohort,cohort_id,bigint,Yes,Yes,No,Yes
-cohort,web_api_cohort_id,bigint,Yes,No,Yes,Yes
+cohort,atlas_id,bigint,No,No,Yes,Yes
 cohort,cohort_name,varchar,Yes,No,No,Yes
 cohort,logic_description,varchar,No,No,Yes,Yes
 cohort,metadata,varchar,No,No,Yes,Yes
@@ -85,8 +85,8 @@ database,database_id,varchar,Yes,Yes,No,Yes
 database,database_name,varchar,No,No,No,Yes
 database,description,varchar,No,No,No,Yes
 database,is_meta_analysis,varchar(1),Yes,No,No,Yes
-database, vocabulary_version, varchar, No, No, Yes, Yes
-database, vocabulary_version_cdm, varchar, No, No, Yes, Yes
+database,vocabulary_version, varchar, No, No, Yes, Yes
+database,vocabulary_version_cdm, varchar, No, No, Yes, Yes
 domain,domain_id,varchar(20),Yes,Yes,No,Yes
 domain,domain_name,varchar(255),Yes,No,No,Yes
 domain,domain_concept_id,int,Yes,No,No,Yes

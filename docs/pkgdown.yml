@@ -1,12 +1,11 @@
-pandoc: 2.11.4
-pkgdown: 1.6.1
+pandoc: 2.14.0.3
+pkgdown: 2.0.1
 pkgdown_sha: ~
 articles:
-  CohortDiagnosticsInPackageMode: CohortDiagnosticsInPackageMode.html
-  CohortDiagnosticsUsingWebApi: CohortDiagnosticsUsingWebApi.html
+  CreatingAStudyPackage: CreatingAStudyPackage.html
   DatabaseModeInDiagnosticsExplorer: DatabaseModeInDiagnosticsExplorer.html
   RunningCohortDiagnostics: RunningCohortDiagnostics.html
   ViewingResultsUsingDiagnosticsExplorer: ViewingResultsUsingDiagnosticsExplorer.html
   WhatIsCohortDiagnostics: WhatIsCohortDiagnostics.html
-last_built: 2021-10-09T08:50Z
+last_built: 2022-01-24T18:34Z
 

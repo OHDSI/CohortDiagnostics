@@ -1,4 +1,4 @@
-# Copyright 2021 Observational Health Data Sciences and Informatics
+# Copyright 2022 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -14,45 +14,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-checkCohortReference <-
-  function(cohortReference, errorMessage = NULL) {
-    if (is.null(errorMessage) |
-        !class(errorMessage) == 'AssertColection') {
-      errorMessage <- checkmate::makeAssertCollection()
-    }
-    checkmate::assertDataFrame(
-      x = cohortReference,
-      types = c("integer", "character", "numeric"),
-      min.rows = 1,
-      min.cols = 4,
-      null.ok = FALSE,
-      col.names = "named",
-      add = errorMessage
-    )
-    if ("referentConceptId" %in% names(cohortReference)) {
-      checkmate::assertIntegerish(
-        x = cohortReference$referentConceptId,
-        lower = 0,
-        any.missing = FALSE,
-        unique = FALSE,
-        null.ok = FALSE,
-        add = errorMessage
-      )
-    }
-    checkmate::assertNames(
-      x = names(cohortReference),
-      subset.of =  c(
-        "referentConceptId",
-        "cohortId",
-        "webApiCohortId",
-        "cohortName",
-        "logicDescription",
-        "clinicalRationale"
-      ),
-      add = errorMessage
-    )
-    invisible(errorMessage)
+checkCohortReference <- function(cohortReference, errorMessage = NULL) {
+  if (is.null(errorMessage) | !class(errorMessage) == 'AssertColection') {
+    errorMessage <- checkmate::makeAssertCollection()
   }
+  checkmate::assertDataFrame(
+    x = cohortReference,
+    types = c("integer", "character", "numeric"),
+    min.rows = 1,
+    min.cols = 5,
+    null.ok = FALSE,
+    col.names = "named",
+    add = errorMessage
+  )
+  if ("referentConceptId" %in% names(cohortReference)) {
+    checkmate::assertIntegerish(
+      x = cohortReference$referentConceptId,
+      lower = 0,
+      any.missing = FALSE,
+      unique = FALSE,
+      null.ok = FALSE,
+      add = errorMessage
+    )
+  }
+  checkmate::assertNames(
+    x = names(cohortReference),
+    must.include = c(
+      "cohortId",
+      "cohortName",
+      "logicDescription",
+      "sql",
+      "json"
+    ),
+    add = errorMessage
+  )
+  invisible(errorMessage)
+}
 
 makeBackwardsCompatible <- function(cohorts) {
   if (!"name" %in% colnames(cohorts)) {
@@ -78,75 +75,85 @@ makeBackwardsCompatible <- function(cohorts) {
   return(cohorts)
 }
 
-getCohortsJsonAndSqlFromPackage <-
-  function(packageName = packageName,
-           cohortToCreateFile = cohortToCreateFile,
-           cohortIds = NULL,
-           errorMessage = NULL) {
-    ParallelLogger::logDebug("Executing on cohorts specified in package - ", packageName)
+#' Load Cohort Definitions From A Study Package
+#' @description
+#' Load cohort references for usage in executeDiagnostics.
+#' @inheritParams runCohortDiagnostics
+#' @param errorMessage      checkmate assert collection, used internally for error checks
+#' @export
+loadCohortsFromPackage <- function(packageName,
+                                   cohortToCreateFile = "settings/cohortsToCreate.csv",
+                                   cohortIds = NULL,
+                                   errorMessage = NULL) {
+  ParallelLogger::logDebug("Executing on cohorts specified in package - ", packageName)
 
-    if (is.null(errorMessage) |
-        !class(errorMessage) == 'AssertColection') {
-      errorMessage <- checkmate::makeAssertCollection()
-    }
-    checkmate::assertCharacter(
-      x = packageName,
-      min.len = 1,
-      max.len = 1,
-      add = errorMessage
-    )
-    pathToCsv <-
-      system.file(cohortToCreateFile, package = packageName)
-    checkmate::assertFileExists(
-      x = system.file(cohortToCreateFile, package = packageName),
-      access = "r",
-      extension = "csv",
-      add = errorMessage
-    )
-
-    checkInputFileEncoding(pathToCsv)
-
-    cohorts <- readr::read_csv(pathToCsv,
-                               col_types = readr::cols(),
-                               guess_max = min(1e7))
-
-    cohorts <- makeBackwardsCompatible(cohorts)
-    if (!is.null(cohortIds)) {
-      cohorts <- cohorts %>%
-        dplyr::filter(.data$cohortId %in% cohortIds)
-    }
-
-    checkCohortReference(cohortReference = cohorts, errorMessage = errorMessage)
-    checkmate::reportAssertions(collection = errorMessage)
-
-    getSql <- function(name) {
-      pathToSql <-
-        system.file("sql", "sql_server", paste0(name, ".sql"), package = packageName)
-      checkmate::assertFile(
-        x = pathToSql,
-        access = "r",
-        extension = ".sql",
-        add = errorMessage
-      )
-      sql <- readChar(pathToSql, file.info(pathToSql)$size)
-      return(sql)
-    }
-    cohorts$sql <- sapply(cohorts$name, getSql)
-    getJson <- function(name) {
-      pathToJson <-
-        system.file("cohorts", paste0(name, ".json"), package = packageName)
-      checkmate::assertFile(
-        x = pathToJson,
-        access = "r",
-        extension = ".sql",
-        add = errorMessage
-      )
-      json <- readChar(pathToJson, file.info(pathToJson)$size)
-      return(json)
-    }
-    cohorts$json <- sapply(cohorts$name, getJson)
-    return(selectColumnAccordingToResultsModel(cohorts))
+  displayErrors <- FALSE
+  if (is.null(errorMessage) |
+    !class(errorMessage) == 'AssertColection') {
+    displayErrors <- TRUE
+    errorMessage <- checkmate::makeAssertCollection()
   }
+  checkmate::assertCharacter(
+    x = packageName,
+    min.len = 1,
+    max.len = 1,
+    add = errorMessage
+  )
+  pathToCsv <- system.file(cohortToCreateFile, package = packageName)
+  checkmate::assertFileExists(
+    x = system.file(cohortToCreateFile, package = packageName),
+    access = "r",
+    extension = "csv",
+    add = errorMessage
+  )
+
+  checkInputFileEncoding(pathToCsv)
+
+  cohorts <- readr::read_csv(pathToCsv,
+                             col_types = readr::cols(),
+                             guess_max = min(1e7))
+  cohorts <- makeBackwardsCompatible(cohorts)
+  if (!is.null(cohortIds)) {
+    cohorts <- cohorts %>%
+      dplyr::filter(.data$cohortId %in% cohortIds)
+  }
+
+  checkCohortReference(cohortReference = cohorts, errorMessage = errorMessage)
+
+  getSql <- function(name) {
+    pathToSql <-
+      system.file("sql", "sql_server", paste0(name, ".sql"), package = packageName)
+    checkmate::assertFile(
+      x = pathToSql,
+      access = "r",
+      extension = "sql",
+      add = errorMessage
+    )
+    sql <- readChar(pathToSql, file.info(pathToSql)$size)
+    return(sql)
+  }
+
+  cohorts$sql <- sapply(cohorts$name, getSql)
+
+  getJson <- function(name) {
+    pathToJson <-
+      system.file("cohorts", paste0(name, ".json"), package = packageName)
+    checkmate::assertFile(
+      x = pathToJson,
+      access = "r",
+      extension = "json",
+      add = errorMessage
+    )
+    json <- readChar(pathToJson, file.info(pathToJson)$size)
+    return(json)
+  }
+
+  cohorts$json <- sapply(cohorts$name, getJson)
+  if (displayErrors) {
+    checkmate::reportAssertions(collection = errorMessage)
+  }
+  return(selectColumnAccordingToResultsModel(cohorts))
+}
 
 
 getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
@@ -179,7 +186,17 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
     cohortSetReference <-
       dplyr::rename(cohortSetReference, cohortName = "name")
   }
-  cohortSetReference <- makeBackwardsCompatible(cohortSetReference)
+
+  if ("webApiCohortId" %in% names(cohortSetReference)) {
+    cohortSetReference <-
+      dplyr::rename(cohortSetReference, atlasId = webApiCohortId)
+  }
+
+  if (!"atlasId" %in% names(cohortSetReference)) {
+    cohortSetReference <-
+      dplyr::mutate(cohortSetReference, atlasId = cohortId)
+  }
+
   cohortSetReference$json <- ""
   cohortSetReference$sql <- ""
 
@@ -188,7 +205,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
     ParallelLogger::logInfo("- Retrieving definitions for cohort ",
                             cohortSetReference$cohortName[i])
     cohortDefinition <-
-      ROhdsiWebApi::getCohortDefinition(cohortId = cohortSetReference$webApiCohortId[i],
+      ROhdsiWebApi::getCohortDefinition(cohortId = cohortSetReference$atlasId[i],
                                         baseUrl = baseUrl)
     cohortSetReference$json[i] <-
       RJSONIO::toJSON(x = cohortDefinition$expression, digits = 23)
@@ -217,8 +234,11 @@ selectColumnAccordingToResultsModel <- function(data) {
   if ("cohortType" %in% colnames(data)) {
     columsToInclude <- c(columsToInclude, "cohortType")
   }
+  if ("atlasId" %in% colnames(data)) {
+    columsToInclude <- c(columsToInclude, "atlasId")
+  }
   columsToInclude <-
-    c(columsToInclude, "json" , "sql", "webApiCohortId")
+    c(columsToInclude, "json" , "sql")
   return(data[, columsToInclude])
 }
 
@@ -230,7 +250,7 @@ getCohortsJsonAndSql <- function(packageName = NULL,
                                  generateStats = TRUE) {
   if (!is.null(packageName)) {
     cohorts <-
-      getCohortsJsonAndSqlFromPackage(
+      loadCohortsFromPackage(
         packageName = packageName,
         cohortToCreateFile = cohortToCreateFile,
         cohortIds = cohortIds
@@ -248,6 +268,7 @@ getCohortsJsonAndSql <- function(packageName = NULL,
       )
     }
   } else {
+    warning("Use of WebApi mode is to be removed in a future version")
     cohorts <- getCohortsJsonAndSqlFromWebApi(
       baseUrl = baseUrl,
       cohortSetReference = cohortSetReference,
@@ -280,7 +301,7 @@ createCohortTable <- function(connectionDetails = NULL,
   }
   sql <- SqlRender::loadRenderTranslateSql(
     "CreateCohortTable.sql",
-    packageName = "CohortDiagnostics",
+    packageName = utils::packageName(),
     dbms = connection@dbms,
     cohort_database_schema = cohortDatabaseSchema,
     cohort_table = cohortTable
@@ -412,6 +433,104 @@ processInclusionStats <- function(inclusion,
   return(result)
 }
 
+getInclusionStats <- function(connection,
+                              exportFolder,
+                              databaseId,
+                              cohortDefinitionSet,
+                              cohortDatabaseSchema,
+                              cohortTableNames,
+                              incremental,
+                              instantiatedCohorts,
+                              inclusionStatisticsFolder,
+                              minCellCount,
+                              recordKeepingFile) {
+  ParallelLogger::logInfo("Fetching inclusion statistics from files")
+  subset <- subsetToRequiredCohorts(
+    cohorts = cohortDefinitionSet %>%
+      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+    task = "runInclusionStatistics",
+    incremental = incremental,
+    recordKeepingFile = recordKeepingFile
+  )
+
+  if (incremental &&
+    (length(instantiatedCohorts) - nrow(subset)) > 0) {
+    ParallelLogger::logInfo(sprintf(
+      "Skipping %s cohorts in incremental mode.",
+      length(instantiatedCohorts) - nrow(subset)
+    ))
+  }
+  if (nrow(subset) > 0) {
+    if (is.null(inclusionStatisticsFolder)) {
+      ParallelLogger::logInfo("Exporting inclusion rules with CohortGenerator")
+      CohortGenerator::insertInclusionRuleNames(connection = connection,
+                                                cohortDefinitionSet = subset,
+                                                cohortDatabaseSchema = cohortDatabaseSchema,
+                                                cohortInclusionTable = cohortTableNames$cohortInclusionTable)
+      # This part will change in future version, with a patch to CohortGenerator that
+      # supports the usage of exporting tables without writing to disk
+      inclusionStatisticsFolder <- tempfile("CdCohortStatisticsFolder")
+      on.exit(unlink(inclusionStatisticsFolder), add = TRUE)
+      CohortGenerator::exportCohortStatsTables(connection = connection,
+                                               cohortDatabaseSchema = cohortDatabaseSchema,
+                                               cohortTableNames = cohortTableNames,
+                                               cohortStatisticsFolder = inclusionStatisticsFolder,
+                                               incremental = FALSE) # Note use of FALSE to always genrate stats here
+    }
+
+    stats <-
+        getInclusionStatisticsFromFiles(
+          cohortIds = subset$cohortId,
+          folder = inclusionStatisticsFolder,
+          simplify = TRUE
+        )
+
+    if (!is.null(stats)) {
+      if (nrow(stats) > 0) {
+        stats <- stats %>%
+          dplyr::mutate(databaseId = !!databaseId)
+        stats <-
+          enforceMinCellValue(data = stats,
+                              fieldName = "meetSubjects",
+                              minValues = minCellCount)
+        stats <-
+          enforceMinCellValue(data = stats,
+                              fieldName = "gainSubjects",
+                              minValues = minCellCount)
+        stats <-
+          enforceMinCellValue(data = stats,
+                              fieldName = "totalSubjects",
+                              minValues = minCellCount)
+        stats <-
+          enforceMinCellValue(data = stats,
+                              fieldName = "remainSubjects",
+                              minValues = minCellCount)
+      }
+      if ("cohortDefinitionId" %in% (colnames(stats))) {
+        stats <- stats %>%
+          dplyr::rename(cohortId = .data$cohortDefinitionId)
+      }
+      colnames(stats) <-
+        SqlRender::camelCaseToSnakeCase(colnames(stats))
+      writeToCsv(
+        data = stats,
+        fileName = file.path(exportFolder, "inclusion_rule_stats.csv"),
+        incremental = incremental,
+        cohortId = subset$cohortId
+      )
+      recordTasksDone(
+        cohortId = subset$cohortId,
+        task = "runInclusionStatistics",
+        checksum = subset$checksum,
+        recordKeepingFile = recordKeepingFile,
+        incremental = incremental
+      )
+    } else {
+      warning("Cohort Inclusion statistics file not found. Inclusion Statistics not run.")
+    }
+  }
+}
+
 #' Instantiate a set of cohort
 #'
 #' @description
@@ -434,16 +553,9 @@ processInclusionStats <- function(inclusion,
 #'
 #' @template CohortSetReference
 #'
-#' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
-#'                                    construction to.
+#' @inheritParams runCohortDiagnostics
 #' @param generateInclusionStats      Compute and store inclusion rule statistics?
-#' @param inclusionStatisticsFolder   The folder where the inclusion rule statistics are stored. Can be
-#'                                    left NULL if \code{generateInclusionStats = FALSE}.
-#' @param createCohortTable           Create the cohort table? If \code{incremental = TRUE} and the table
-#'                                    already exists this will be skipped.
-#' @param incremental                 Create only cohorts that haven't been created before?
-#' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
-#'                                    of which definition has been executed.
+#' @param createCohortTable           Create/Overwrite a cohort table?
 #' @return
 #' A data frame with cohort counts
 #'
@@ -452,20 +564,23 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                  connection = NULL,
                                  cdmDatabaseSchema,
                                  vocabularyDatabaseSchema = cdmDatabaseSchema,
-                                 tempEmulationSchema = NULL,
+                                 tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                                  oracleTempSchema = NULL,
                                  cohortDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
                                  cohortIds = NULL,
+                                 cohortDefinitionSet = NULL,
                                  packageName = NULL,
                                  cohortToCreateFile = "settings/CohortsToCreate.csv",
                                  baseUrl = NULL,
                                  cohortSetReference = NULL,
-                                 generateInclusionStats = FALSE,
+                                 generateInclusionStats = TRUE,
                                  inclusionStatisticsFolder = NULL,
                                  createCohortTable = TRUE,
                                  incremental = FALSE,
                                  incrementalFolder = NULL) {
+  message("***** This function will be removed in a future version. Please see https://github.com/ohdsi/CohortGenerator for future generation of cohorts ****")
+
   if (!is.null(cohortSetReference)) {
     ParallelLogger::logInfo("Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
     cohortToCreateFile <- NULL
@@ -517,58 +632,73 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     }
   }
 
-  cohorts <- getCohortsJsonAndSql(
-    packageName = packageName,
-    cohortToCreateFile = cohortToCreateFile,
-    baseUrl = baseUrl,
-    cohortSetReference = cohortSetReference,
-    cohortIds = cohortIds,
-    generateStats = generateInclusionStats
-  )
+  if (is.null(cohortDefinitionSet)) {
+    cohortDefinitionSet <- getCohortsJsonAndSql(
+      packageName = packageName,
+      cohortToCreateFile = cohortToCreateFile,
+      baseUrl = baseUrl,
+      cohortSetReference = cohortSetReference,
+      cohortIds = cohortIds,
+      generateStats = generateInclusionStats
+    )
+  } else {
+    checkmate::assertDataFrame(cohortDefinitionSet, min.rows = 1, col.names = "named")
+    checkmate::assertNames(colnames(cohortDefinitionSet),
+                           must.include = c("cohortId",
+                                            "cohortName",
+                                            "logicDescription",
+                                            "json",
+                                            "sql"))
+    # Filter to cohort subset
+    if (!is.null(cohortIds)) {
+      cohortDefinitionSet <- cohortDefinitionSet %>%
+        dplyr::filter(.data$cohortId %in% cohortIds)
+    }
+  }
 
   if (incremental) {
-    cohorts$checksum <- computeChecksum(cohorts$sql)
+    cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)
     recordKeepingFile <-
       file.path(incrementalFolder, "InstantiatedCohorts.csv")
   }
 
   if (generateInclusionStats) {
-    createTempInclusionStatsTables(connection, tempEmulationSchema, cohorts)
+    createTempInclusionStatsTables(connection, tempEmulationSchema, cohortDefinitionSet)
   }
 
   instantiatedCohortIds <- c()
-  for (i in 1:nrow(cohorts)) {
+  for (i in 1:nrow(cohortDefinitionSet)) {
     if (!incremental || isTaskRequired(
-      cohortId = cohorts$cohortId[i],
-      checksum = cohorts$checksum[i],
+      cohortId = cohortDefinitionSet$cohortId[i],
+      checksum = cohortDefinitionSet$checksum[i],
       recordKeepingFile = recordKeepingFile
     )) {
       ParallelLogger::logInfo(
         "Instantiation cohort ",
-        cohorts$cohortName[i],
+        cohortDefinitionSet$cohortName[i],
         " (Cohort id: ",
-        cohorts$cohortId[i],
+        cohortDefinitionSet$cohortId[i],
         ")"
       )
-      sql <- cohorts$sql[i]
+      sql <- cohortDefinitionSet$sql[i]
       .warnMismatchSqlInclusionStats(sql, generateInclusionStats = generateInclusionStats)
       sql <- SqlRender::render(
         sql,
         cdm_database_schema = cdmDatabaseSchema,
         target_database_schema = cohortDatabaseSchema,
         target_cohort_table = cohortTable,
-        target_cohort_id = cohorts$cohortId[i]
+        target_cohort_id = cohortDefinitionSet$cohortId[i]
       )
       if (stringr::str_detect(string = sql,
                               pattern = 'vocabulary_database_schema')) {
         sql <- SqlRender::render(sql,
                                  vocabulary_database_schema = vocabularyDatabaseSchema)
       } else {
-        ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL does not have vocabularyDatabaseSchema.")
+        ParallelLogger::logDebug('Cohort id ', cohortDefinitionSet$cohortId[i], " SQL does not have vocabularyDatabaseSchema.")
       }
       if (stringr::str_detect(string = sql,
                               pattern = 'results_database_schema')) {
-        ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL has inclusion rule statistics tables.")
+        ParallelLogger::logDebug('Cohort id ', cohortDefinitionSet$cohortId[i], " SQL has inclusion rule statistics tables.")
       }
       if (generateInclusionStats) {
         if (stringr::str_detect(string = sql,
@@ -581,7 +711,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
             results_database_schema.cohort_summary_stats = "#cohort_summary_stats"
           )
         } else {
-          ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL does not have inclusion rule statistics tables.")
+          ParallelLogger::logDebug('Cohort id ', cohortDefinitionSet$cohortId[i], " SQL does not have inclusion rule statistics tables.")
         }
         # added for compatibility for 2.8.1
         # https://github.com/OHDSI/CohortDiagnostics/issues/387
@@ -594,15 +724,15 @@ instantiateCohortSet <- function(connectionDetails = NULL,
         }
       } else {
         ParallelLogger::logDebug("Skipping inclusion rules for cohort id ",
-                                cohorts$cohortId[i],
-                                " because this diagnostics is set to FALSE.")
+                                 cohortDefinitionSet$cohortId[i],
+                                 " because this diagnostics is set to FALSE.")
       }
       sql <- SqlRender::translate(sql,
                                   targetDialect = connection@dbms,
                                   tempEmulationSchema = tempEmulationSchema)
       DatabaseConnector::executeSql(connection, sql)
       instantiatedCohortIds <-
-        c(instantiatedCohortIds, cohorts$cohortId[i])
+        c(instantiatedCohortIds, cohortDefinitionSet$cohortId[i])
     }
   }
 
@@ -617,8 +747,8 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
   if (incremental) {
     recordTasksDone(
-      cohortId = cohorts$cohortId,
-      checksum = cohorts$checksum,
+      cohortId = cohortDefinitionSet$cohortId,
+      checksum = cohortDefinitionSet$checksum,
       recordKeepingFile = recordKeepingFile
     )
   }
@@ -637,7 +767,7 @@ createTempInclusionStatsTables <-
     sql <-
       SqlRender::loadRenderTranslateSql(
         "inclusionStatsTables.sql",
-        packageName = "CohortDiagnostics",
+        packageName = utils::packageName(),
         dbms = connection@dbms,
         tempEmulationSchema = tempEmulationSchema
       )
@@ -676,7 +806,7 @@ createTempInclusionStatsTables <-
         dplyr::rename(name = .data$ruleName,
                       cohortDefinitionId = .data$cohortId) %>%
         dplyr::mutate(cohortDefinitionId = as.integer(.data$cohortDefinitionId),
-                       ruleSequence = as.integer(.data$ruleSequence)) %>%
+                      ruleSequence = as.integer(.data$ruleSequence)) %>%
         dplyr::select(.data$cohortDefinitionId, .data$ruleSequence, .data$name)
 
       DatabaseConnector::insertTable(

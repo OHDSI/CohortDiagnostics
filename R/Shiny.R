@@ -1,4 +1,4 @@
-# Copyright 2021 Observational Health Data Sciences and Informatics
+# Copyright 2022 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -26,11 +26,8 @@
 #' @param vocabularyDatabaseSchemas  (optional) A list of one or more schemas on the database server where the vocabulary tables are located.
 #'                                   The default value is the value of the resultsDatabaseSchema. We can provide a list of vocabulary schema
 #'                                   that might represent different versions of the OMOP vocabulary tables. It allows us to compare the impact
-#'                                   of vocabulary changes on Diagnostics.
-#' @param dataFolder       A folder where the premerged file is stored. Use
-#'                         the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.
-#' @param dataFile         (Optional) The name of the .RData file with results. It is commonly known as the
-#'                         Premerged file.
+#'                                   of vocabulary changes on Diagnostics. Not supported with an sqlite database.
+#' @param sqliteDbPath     Path to merged sqlite file. See \code{\link{createMergedResultsFile}} to create file.
 #' @param runOverNetwork   (optional) Do you want the app to run over your network?
 #' @param port             (optional) Only used if \code{runOverNetwork} = TRUE.
 #' @param launch.browser   Should the app be launched in your default browser, or in a Shiny window.
@@ -43,8 +40,7 @@
 #' Launches a Shiny app that allows the user to explore the diagnostics
 #'
 #' @export
-launchDiagnosticsExplorer <- function(dataFolder = "data",
-                                      dataFile = "PreMerged.RData",
+launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
                                       connectionDetails = NULL,
                                       resultsDatabaseSchema = NULL,
                                       vocabularyDatabaseSchema = NULL,
@@ -52,29 +48,30 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
                                       aboutText = NULL,
                                       runOverNetwork = FALSE,
                                       port = 80,
-                                      launch.browser = FALSE,
-                                      appDir = system.file("shiny", 
-                                                           "DiagnosticsExplorer", 
-                                                           package = "CohortDiagnostics")) {
-  if (!is.null(connectionDetails) &&
-      connectionDetails$dbms != "postgresql") {
-    stop("Shiny application can only run against a Postgres database")
-  }
-  if (!is.null(connectionDetails)) {
-    dataFolder <- NULL
-    dataFile <- NULL
-    if (is.null(resultsDatabaseSchema)) {
-      stop("resultsDatabaseSchema is required to connect to the database.")
+                                      launch.browser = FALSE) {
+
+  sqliteDbPath <- normalizePath(sqliteDbPath)
+  if (is.null(connectionDetails)) {
+    if (!file.exists(sqliteDbPath)) {
+      stop("Sqlite database", sqliteDbPath, "not found. Please see createMergedSqliteResults")
     }
-    if (!is.null(vocabularyDatabaseSchema) &
-        is.null(vocabularyDatabaseSchemas)) {
-      vocabularyDatabaseSchemas <- vocabularyDatabaseSchema
-      warning(
-        'vocabularyDatabaseSchema option is deprecated. Please use vocabularyDatabaseSchema.'
-      )
-    }
+
+    resultsDatabaseSchema <- "main"
+    vocabularyDatabaseSchemas <- "main"
+    connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
   }
-  
+
+  if (is.null(resultsDatabaseSchema)) {
+    stop("resultsDatabaseSchema is required to connect to the database.")
+  }
+  if (!is.null(vocabularyDatabaseSchema) &
+      is.null(vocabularyDatabaseSchemas)) {
+    vocabularyDatabaseSchemas <- vocabularyDatabaseSchema
+    warning(
+      'vocabularyDatabaseSchema option is deprecated. Please use vocabularyDatabaseSchemas.'
+    )
+  }
+
   ensure_installed("checkmate")
   ensure_installed("DatabaseConnector")
   ensure_installed("dplyr")
@@ -95,11 +92,14 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   ensure_installed("tidyr")
   ensure_installed("CirceR")
   ensure_installed("rmarkdown")
-  
+
+  appDir <-
+    system.file("shiny", "DiagnosticsExplorer", package= utils::packageName())
+
   if (launch.browser) {
     options(shiny.launch.browser = TRUE)
   }
-  
+
   if (runOverNetwork) {
     myIpAddress <- system("ipconfig", intern = TRUE)
     myIpAddress <- myIpAddress[grep("IPv4", myIpAddress)]
@@ -111,8 +111,6 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
     connectionDetails = connectionDetails,
     resultsDatabaseSchema = resultsDatabaseSchema,
     vocabularyDatabaseSchemas = vocabularyDatabaseSchemas,
-    dataFolder = dataFolder,
-    dataFile = dataFile,
     aboutText = aboutText
   )
   .GlobalEnv$shinySettings <- shinySettings
@@ -120,11 +118,11 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   shiny::runApp(appDir = appDir)
 }
 
-#' Premerge Shiny diagnostics files
+#' Merge Shiny diagnostics files into sqlite database
 #'
 #' @description
-#' This function combines diagnostics results from one or more databases into a single file. The result is a
-#' single file that can be used as input for the Diagnostics Explorer Shiny app.
+#' This function combines diagnostics results from one or more databases into a single file. The result is an
+#' sqlite database that can be used as input for the Diagnostics Explorer Shiny app.
 #'
 #' It also checks whether the results conform to the results data model specifications.
 #'
@@ -132,107 +130,40 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
 #'                         the \code{\link{runCohortDiagnostics}} function to generate these zip files.
 #'                         Zip files containing results from multiple databases may be placed in the same
 #'                         folder.
-#' @param tempFolder       A folder on the local file system where the zip files are extracted to. Will be cleaned
-#'                         up when the function is finished. Can be used to specify a temp folder on a drive that
-#'                         has sufficient space if the default system temp space is too limited.
-#'
+#' @param sqliteDbPath     Output path where sqlite database is placed
+#' @param overwrite        (Optional) overwrite existing sqlite lite db if it exists.
 #' @export
-preMergeDiagnosticsFiles <-
-  function(dataFolder, tempFolder = tempdir()) {
-    zipFiles <-
-      dplyr::tibble(
-        zipFile = list.files(
-          dataFolder,
-          pattern = ".zip",
-          full.names = TRUE,
-          recursive = TRUE
-        ),
-        unzipFolder = ""
+createMergedResultsFile <-
+  function(dataFolder,
+           sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
+           overwrite = FALSE) {
+
+    if (file.exists(sqliteDbPath) & !overwrite) {
+      stop("File ", sqliteDbPath, " already exists. Set overwrite = TRUE to replace")
+    } else if (file.exists(sqliteDbPath)){
+      unlink(sqliteDbPath)
+    }
+
+    connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
+    connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+    on.exit(DatabaseConnector::disconnect(connection))
+    createResultsDataModel(connection = connection,
+                           schema = "main")
+    listOfZipFilesToUpload <-
+      list.files(
+        path = dataFolder,
+        pattern = ".zip",
+        full.names = TRUE,
+        recursive = TRUE
       )
-    ParallelLogger::logInfo("Merging ", nrow(zipFiles), " zip files.")
-    
-    unzipMainFolder <-
-      tempfile("unzipTempFolder", tmpdir = tempFolder)
-    dir.create(path = unzipMainFolder, recursive = TRUE)
-    on.exit(unlink(unzipMainFolder, recursive = TRUE))
-    
-    for (i in 1:nrow(zipFiles)) {
-      ParallelLogger::logInfo("- Unzipping ", basename(zipFiles$zipFile[i]))
-      unzipFolder <-
-        file.path(unzipMainFolder, sub(".zip", "", basename(zipFiles$zipFile[i])))
-      dir.create(unzipFolder)
-      zip::unzip(zipFiles$zipFile[i], exdir = unzipFolder)
-      zipFiles$unzipFolder[i] <- unzipFolder
+
+    for (zipFileName in listOfZipFilesToUpload) {
+      uploadResults(
+        connectionDetails = connectionDetails,
+        schema = "main",
+        zipFileName = zipFileName
+      )
     }
-    
-    specifications <- getResultsDataModelSpecifications()
-    
-    # Storing output in an environment for now. If things get too big, we may want to write
-    # directly to CSV files for insertion into database:
-    newEnvironment <- new.env()
-    
-    processTable <- function(tableName, env) {
-      ParallelLogger::logInfo("Processing table ", tableName)
-      csvFileName <- paste0(tableName, ".csv")
-      data <- dplyr::tibble()
-      for (i in 1:nrow(zipFiles)) {
-        if (csvFileName %in% list.files(zipFiles$unzipFolder[i])) {
-          newData <-
-            readr::read_csv(
-              file.path(zipFiles$unzipFolder[i], csvFileName),
-              col_types = readr::cols(),
-              guess_max = min(1e6)
-            )
-          if (nrow(newData) > 0) {
-            newData <- checkFixColumnNames(
-              table = newData,
-              tableName = tableName,
-              zipFileName = zipFiles$zipFile[i],
-              specifications = specifications
-            )
-            newData <- checkAndFixDataTypes(
-              table = newData,
-              tableName = tableName,
-              zipFileName = zipFiles$zipFile[i],
-              specifications = specifications
-            )
-            newData <- checkAndFixDuplicateRows(
-              table = newData,
-              tableName = tableName,
-              zipFileName = zipFiles$zipFile[i],
-              specifications = specifications
-            )
-            data <- appendNewRows(
-              data = data,
-              newData = newData,
-              tableName = tableName,
-              specifications = specifications
-            )
-            
-          }
-        }
-      }
-      if (nrow(data) == 0) {
-        ParallelLogger::logInfo("- No data found for table ", tableName)
-      } else {
-        colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
-        assign(SqlRender::snakeCaseToCamelCase(tableName),
-               data,
-               envir = env)
-      }
-    }
-    invisible(lapply(unique(specifications$tableName), processTable, env = newEnvironment))
-    ParallelLogger::logInfo("Creating PreMerged.Rdata file. This might take some time.")
-    save(
-      list = ls(newEnvironment),
-      envir = newEnvironment,
-      compress = TRUE,
-      compression_level = 2,
-      file = file.path(dataFolder, "PreMerged.RData")
-    )
-    rm(list = ls(newEnvironment), envir = newEnvironment)
-    ParallelLogger::logInfo("Merged data saved in ",
-                            file.path(dataFolder, "PreMerged.RData"))
   }
 
 #' Launch the CohortExplorer Shiny app
@@ -265,7 +196,7 @@ launchCohortExplorer <- function(connectionDetails,
   ensure_installed("RColorBrewer")
   ensure_installed("ggplot2")
   ensure_installed("magrittr")
-  
+
   .GlobalEnv$shinySettings <-
     list(
       connectionDetails = connectionDetails,
@@ -278,7 +209,7 @@ launchCohortExplorer <- function(connectionDetails,
     )
   on.exit(rm("shinySettings", envir = .GlobalEnv))
   appDir <-
-    system.file("shiny", "CohortExplorer", package = "CohortDiagnostics")
+    system.file("shiny", "CohortExplorer", package= utils::packageName())
   shiny::runApp(appDir)
 }
 

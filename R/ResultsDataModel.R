@@ -1,4 +1,4 @@
-# Copyright 2021 Observational Health Data Sciences and Informatics
+# Copyright 2022 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -23,7 +23,7 @@
 #' @export
 getResultsDataModelSpecifications <- function() {
   pathToCsv <-
-    system.file("settings", "resultsDataModelSpecification.csv", package = "CohortDiagnostics")
+    system.file("settings", "resultsDataModelSpecification.csv", package= utils::packageName())
   resultsDataModelSpecifications <-
     readr::read_csv(file = pathToCsv, col_types = readr::cols())
   return(resultsDataModelSpecifications)
@@ -63,28 +63,28 @@ checkFixColumnNames <-
            tableName,
            zipFileName,
            specifications = getResultsDataModelSpecifications()) {
-    if (tableName %in% c('cohort', 'phenotype_description', 
+    if (tableName %in% c('cohort', 'phenotype_description',
                          'covariate_value', 'temporal_covariate_value')) {
       table <- fixTableMetadataForBackwardCompatibility(table = table,
                                                         tableName = tableName)
     }
     observeredNames <- colnames(table)[order(colnames(table))]
-    
+
     tableSpecs <- specifications %>%
       dplyr::filter(.data$tableName == !!tableName)
-    
+
     optionalNames <- tableSpecs %>%
       dplyr::filter(.data$optional == "Yes") %>%
       dplyr::select(.data$fieldName)
-    
+
     expectedNames <- tableSpecs %>%
       dplyr::select(.data$fieldName) %>%
       dplyr::anti_join(dplyr::filter(optionalNames, !.data$fieldName %in% observeredNames),
                        by = "fieldName") %>%
       dplyr::arrange(.data$fieldName) %>%
       dplyr::pull()
-    
-    if (!(all(expectedNames %in% observeredNames))) {
+
+    if (!checkmate::testNames(observeredNames, must.include = expectedNames)) {
       stop(
         sprintf(
           "Column names of table %s in zip file %s do not match specifications.\n- Observed columns: %s\n- Expected columns: %s",
@@ -105,7 +105,7 @@ checkAndFixDataTypes <-
            specifications = getResultsDataModelSpecifications()) {
     tableSpecs <- specifications %>%
       filter(.data$tableName == !!tableName)
-    
+
     observedTypes <- sapply(table, class)
     for (i in 1:length(observedTypes)) {
       fieldName <- names(observedTypes)[i]
@@ -184,7 +184,7 @@ checkAndFixDuplicateRows <-
       dplyr::pull()
     duplicatedRows <- duplicated(table[, primaryKeys])
     if (any(duplicatedRows)) {
-      warning(
+      ParallelLogger::logInfo(
         sprintf(
           "Table %s in zip file %s has duplicate rows. Removing %s records.",
           tableName,
@@ -236,31 +236,15 @@ createResultsDataModel <- function(connection = NULL,
       stop("No connection or connectionDetails provided.")
     }
   }
-  schemas <- unlist(
-    DatabaseConnector::querySql(
-      connection,
-      "SELECT schema_name FROM information_schema.schemata;",
-      snakeCaseToCamelCase = TRUE
-    )[, 1]
-  )
-  if (!tolower(schema) %in% tolower(schemas)) {
-    stop(
-      "Schema '",
-      schema,
-      "' not found on database. Only found these schemas: '",
-      paste(schemas, collapse = "', '"),
-      "'"
-    )
+
+  if (connection@dbms == "sqlite" & schema != "main") {
+    stop("Invalid schema for sqlite, use schema = 'main'")
   }
-  DatabaseConnector::executeSql(
-    connection,
-    sprintf("SET search_path TO %s;", schema),
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-  pathToSql <-
-    system.file("sql", "postgresql", "CreateResultsDataModel.sql", package = "CohortDiagnostics")
-  sql <- SqlRender::readSql(pathToSql)
+
+  sql <- SqlRender::loadRenderTranslateSql(sqlFilename = "CreateResultsDataModel.sql",
+                                           packageName = utils::packageName(),
+                                           dbms = connection@dbms,
+                                           results_schema = schema)
   DatabaseConnector::executeSql(connection, sql)
 }
 
@@ -304,19 +288,24 @@ uploadResults <- function(connectionDetails = NULL,
                           forceOverWriteOfSpecifications = FALSE,
                           purgeSiteDataBeforeUploading = TRUE,
                           tempFolder = tempdir()) {
+
+  if (connectionDetails$dbms == "sqlite" & schema != "main") {
+    stop("Invalid schema for sqlite, use schema = 'main'")
+  }
+
   start <- Sys.time()
   connection <- DatabaseConnector::connect(connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
-  
+
   unzipFolder <- tempfile("unzipTempFolder", tmpdir = tempFolder)
   dir.create(path = unzipFolder, recursive = TRUE)
   on.exit(unlink(unzipFolder, recursive = TRUE), add = TRUE)
-  
+
   ParallelLogger::logInfo("Unzipping ", zipFileName)
   zip::unzip(zipFileName, exdir = unzipFolder)
-  
+
   specifications <- getResultsDataModelSpecifications()
-  
+
   if (purgeSiteDataBeforeUploading) {
     database <-
       readr::read_csv(file = file.path(unzipFolder, "database.csv"),
@@ -325,16 +314,16 @@ uploadResults <- function(connectionDetails = NULL,
       SqlRender::snakeCaseToCamelCase(colnames(database))
     databaseId <- database$databaseId
   }
-  
+
   uploadTable <- function(tableName) {
     ParallelLogger::logInfo("Uploading table ", tableName)
-    
+
     primaryKey <- specifications %>%
       filter(.data$tableName == !!tableName &
                .data$primaryKey == "Yes") %>%
       select(.data$fieldName) %>%
       pull()
-    
+
     if (purgeSiteDataBeforeUploading &&
         "database_id" %in% primaryKey) {
       deleteAllRecordsForDatabaseId(
@@ -344,7 +333,7 @@ uploadResults <- function(connectionDetails = NULL,
         databaseId = databaseId
       )
     }
-    
+
     csvFileName <- paste0(tableName, ".csv")
     if (csvFileName %in% list.files(unzipFolder)) {
       env <- new.env()
@@ -368,13 +357,13 @@ uploadResults <- function(connectionDetails = NULL,
           tolower(colnames(primaryKeyValuesInDb))
         env$primaryKeyValuesInDb <- primaryKeyValuesInDb
       }
-      
+
       uploadChunk <- function(chunk, pos) {
         ParallelLogger::logInfo("- Preparing to upload rows ",
                                 pos,
                                 " through ",
                                 pos + nrow(chunk) - 1)
-        
+
         chunk <- checkFixColumnNames(
           table = chunk,
           tableName = env$tableName,
@@ -393,7 +382,7 @@ uploadResults <- function(connectionDetails = NULL,
           zipFileName = zipFileName,
           specifications = specifications
         )
-        
+
         # Primary key fields cannot be NULL, so for some tables convert NAs to empty or zero:
         toEmpty <- specifications %>%
           filter(
@@ -406,7 +395,7 @@ uploadResults <- function(connectionDetails = NULL,
           chunk <- chunk %>%
             dplyr::mutate_at(toEmpty, naToEmpty)
         }
-        
+
         tozero <- specifications %>%
           filter(
             .data$tableName == env$tableName &
@@ -419,7 +408,7 @@ uploadResults <- function(connectionDetails = NULL,
           chunk <- chunk %>%
             dplyr::mutate_at(tozero, naToZero)
         }
-        
+
         # Check if inserting data would violate primary key constraints:
         if (!is.null(env$primaryKeyValuesInDb)) {
           primaryKeyValuesInChunk <- unique(chunk[env$primaryKey])
@@ -441,7 +430,7 @@ uploadResults <- function(connectionDetails = NULL,
                 tableName = env$tableName,
                 keyValues = duplicates
               )
-              
+
             } else {
               ParallelLogger::logInfo(
                 "- Found ",
@@ -462,7 +451,8 @@ uploadResults <- function(connectionDetails = NULL,
         } else {
           DatabaseConnector::insertTable(
             connection = connection,
-            tableName = paste(env$schema, env$tableName, sep = "."),
+            tableName = env$tableName,
+            databaseSchema = env$schema,
             data = chunk,
             dropTableIfExists = FALSE,
             createTable = FALSE,
@@ -479,11 +469,11 @@ uploadResults <- function(connectionDetails = NULL,
         guess_max = 1e6,
         progress = FALSE
       )
-      
+
       # chunk <- readr::read_csv(file = file.path(unzipFolder, csvFileName),
       # col_types = readr::cols(),
       # guess_max = 1e6)
-      
+
     }
   }
   invisible(lapply(unique(specifications$tableName), uploadTable))
@@ -535,7 +525,7 @@ deleteAllRecordsForDatabaseId <- function(connection,
     database_id = databaseId
   )
   databaseIdCount <-
-    DatabaseConnector::querySql(connection, sql)[, 1]
+    DatabaseConnector::renderTranslateQuerySql(connection, sql)[, 1]
   if (databaseIdCount != 0) {
     ParallelLogger::logInfo(
       sprintf(
@@ -552,9 +542,9 @@ deleteAllRecordsForDatabaseId <- function(connection,
       table_name = tableName,
       database_id = databaseId
     )
-    DatabaseConnector::executeSql(connection,
-                                  sql,
-                                  progressBar = FALSE,
-                                  reportOverallTime = FALSE)
+    DatabaseConnector::renderTranslateExecuteSql(connection,
+                                                 sql,
+                                                 progressBar = FALSE,
+                                                 reportOverallTime = FALSE)
   }
 }

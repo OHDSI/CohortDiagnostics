@@ -1,4 +1,4 @@
-# Copyright 2021 Observational Health Data Sciences and Informatics
+# Copyright 2022 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -36,7 +36,7 @@ getVisitContext <- function(connectionDetails = NULL,
   
   sql <- SqlRender::loadRenderTranslateSql(
     "VisitContext.sql",
-    packageName = "CohortDiagnostics",
+    packageName = utils::packageName(),
     dbms = connection@dbms,
     tempEmulationSchema = tempEmulationSchema,
     visit_context_table = "#visit_context",
@@ -87,4 +87,65 @@ getVisitContext <- function(connectionDetails = NULL,
                           " ",
                           attr(delta, "units"))
   return(visitContext)
+}
+
+executeVisitContextDiagnostics <- function(connection,
+                                           tempEmulationSchema,
+                                           cdmDatabaseSchema,
+                                           cohortDatabaseSchema,
+                                           cohortTable,
+                                           cdmVersion,
+                                           databaseId,
+                                           exportFolder,
+                                           minCellCount,
+                                           cohorts,
+                                           instantiatedCohorts,
+                                           recordKeepingFile,
+                                           incremental) {
+  ParallelLogger::logInfo("Retrieving visit context for index dates")
+    subset <- subsetToRequiredCohorts(
+      cohorts = cohorts %>%
+        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+      task = "runVisitContext",
+      incremental = incremental,
+      recordKeepingFile = recordKeepingFile
+    )
+
+    if (incremental &&
+        (length(instantiatedCohorts) - nrow(subset)) > 0) {
+      ParallelLogger::logInfo(sprintf(
+        "Skipping %s cohorts in incremental mode.",
+        length(instantiatedCohorts) - nrow(subset)
+      ))
+    }
+    if (nrow(subset) > 0) {
+      data <- getVisitContext(
+        connection = connection,
+        tempEmulationSchema = tempEmulationSchema,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        cdmVersion = cdmVersion,
+        cohortIds = subset$cohortId,
+        conceptIdTable = "#concept_ids"
+      )
+      if (nrow(data) > 0) {
+        data <- data %>%
+          dplyr::mutate(databaseId = !!databaseId)
+        data <- enforceMinCellValue(data, "subjects", minCellCount)
+        writeToCsv(
+          data = data,
+          fileName = file.path(exportFolder, "visit_context.csv"),
+          incremental = incremental,
+          cohortId = subset$cohortId
+        )
+      }
+      recordTasksDone(
+        cohortId = subset$cohortId,
+        task = "runVisitContext",
+        checksum = subset$checksum,
+        recordKeepingFile = recordKeepingFile,
+        incremental = incremental
+      )
+    }
 }

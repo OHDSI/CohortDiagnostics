@@ -1,95 +1,80 @@
 library(magrittr)
 
+### Change this lane if deploying shiny files directly with sqlite database
+sqliteDbPath <- file.path("data", "MergedCohortDiagnosticsData.sqlite")
+
 source("R/StartUpScripts.R")
 source("R/DisplayFunctions.R")
 source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 
-# Settings when running on server:
-defaultLocalDataFolder <- "data"
-defaultLocalDataFile <- "PreMerged.RData"
-
-connectionPool <- NULL
-defaultServer <- Sys.getenv("shinydbServer")
-defaultDatabase <- Sys.getenv("shinydbDatabase")
-defaultPort <- 5432
-defaultUser <- Sys.getenv("shinydbUser")
-defaultPassword <- Sys.getenv("shinydbPw")
-defaultResultsSchema <- 'thrombosisthrombocytopenia'
-defaultVocabularySchema <- defaultResultsSchema
-alternateVocabularySchema <- c('vocabulary')
-
-defaultDatabaseMode <- FALSE # Use file system if FALSE
-
-appInformationText <- "V 2.1.1"
-appInformationText <- "Powered by OHDSI Cohort Diagnostics application - Version 2.1.1 This app is working in"
-if (defaultDatabaseMode) {
-  appInformationText <- paste0(appInformationText, " database")
-} else {
-  appInformationText <- paste0(appInformationText, " local file")
-}
+appVersionNum <- "Version: 2.2.1"
+appInformationText <- paste("Powered by OHDSI Cohort Diagnostics application", paste0(appVersionNum, "."))
 appInformationText <- paste0(appInformationText, 
-                             " mode. Application was last initated on ", 
+                             "Application was last initated on ",
                              lubridate::now(tzone = "EST"),
                              " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/")
 
-if (!exists("shinySettings")) {
-  writeLines("Using default settings")
-  databaseMode <- defaultDatabaseMode & defaultServer != ""
-  if (databaseMode) {
-    connectionPool <- pool::dbPool(
-      drv = DatabaseConnector::DatabaseConnectorDriver(),
-      dbms = "postgresql",
-      server = paste(defaultServer, defaultDatabase, sep = "/"),
-      port = defaultPort,
-      user = defaultUser,
-      password = defaultPassword
-    )
-    resultsDatabaseSchema <- defaultResultsSchema
-  } else {
-    dataFolder <- defaultLocalDataFolder
-  }
+
+if (exists("shinySettings")) {
+  writeLines("Using settings provided by user")
+  connectionDetails <- shinySettings$connectionDetails
+  dbms <- connectionDetails$dbms
+  resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
+  vocabularyDatabaseSchemas <- shinySettings$vocabularyDatabaseSchemas
+} else if (file.exists(sqliteDbPath)){
+  writeLines("Using data directory")
+  sqliteDbPath <- normalizePath(sqliteDbPath)
+  resultsDatabaseSchema <- "main"
+  vocabularyDatabaseSchemas <- "main"
+  dbms <- "sqlite"
+  connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
+} else {
+  writeLines("Connecting to remote database")
+  dbms <- Sys.getenv("shinydbDatabase", unset = "postgresql")
+  connectionDetails <- DatabaseConnector::createConnectionDetails(
+    dbms = dbms,
+    server = Sys.getenv("shinydbServer"),
+    port = Sys.getenv("shinydbPort", unset = 5432),
+    user = Sys.getenv("shinydbUser"),
+    password = Sys.getenv("shinydbPw")
+  )
+
+  resultsDatabaseSchema <- Sys.getenv("shinydbResultsSchema", unset = "thrombosisthrombocytopenia")
+  vocabularyDatabaseSchemas <- resultsDatabaseSchema
+  alternateVocabularySchema <-  Sys.getenv("shinydbVocabularySchema", unset = c("vocabulary"))
+
   vocabularyDatabaseSchemas <-
-    setdiff(x = c(defaultVocabularySchema, alternateVocabularySchema),
-            y = defaultResultsSchema) %>%
+    setdiff(x = c(vocabularyDatabaseSchemas, alternateVocabularySchema),
+            y = resultsDatabaseSchema) %>%
     unique() %>%
     sort()
+}
+
+if (is(connectionDetails$server, "function")) {
+  connectionPool <-
+    pool::dbPool(
+      drv = DatabaseConnector::DatabaseConnectorDriver(),
+      dbms = connectionDetails$dbms,
+      server = connectionDetails$server(),
+      port = connectionDetails$port(),
+      user = connectionDetails$user(),
+      password = connectionDetails$password(),
+      connectionString = connectionDetails$connectionString()
+    )
 } else {
-  writeLines("Using settings provided by user")
-  databaseMode <- !is.null(shinySettings$connectionDetails)
-  if (databaseMode) {
-    connectionDetails <- shinySettings$connectionDetails
-    if (is(connectionDetails$server, "function")) {
-      connectionPool <-
-        pool::dbPool(
-          drv = DatabaseConnector::DatabaseConnectorDriver(),
-          dbms = "postgresql",
-          server = connectionDetails$server(),
-          port = connectionDetails$port(),
-          user = connectionDetails$user(),
-          password = connectionDetails$password(),
-          connectionString = connectionDetails$connectionString()
-        )
-    } else {
-      # For backwards compatibility with older versions of DatabaseConnector:
-      connectionPool <-
-        pool::dbPool(
-          drv = DatabaseConnector::DatabaseConnectorDriver(),
-          dbms = "postgresql",
-          server = connectionDetails$server,
-          port = connectionDetails$port,
-          user = connectionDetails$user,
-          password = connectionDetails$password,
-          connectionString = connectionDetails$connectionString
-        )
-    }
-    resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
-    vocabularyDatabaseSchemas <-
-      shinySettings$vocabularyDatabaseSchemas
-  } else {
-    dataFolder <- shinySettings$dataFolder
-  }
+  # For backwards compatibility with older versions of DatabaseConnector:
+  connectionPool <-
+    pool::dbPool(
+      drv = DatabaseConnector::DatabaseConnectorDriver(),
+      dbms = connectionDetails$dbms,
+      server = connectionDetails$server,
+      port = connectionDetails$port,
+      user = connectionDetails$user,
+      password = connectionDetails$password,
+      connectionString = connectionDetails$connectionString
+    )
 }
 
 dataModelSpecifications <-
@@ -99,58 +84,41 @@ suppressWarnings(rm(
   list = SqlRender::snakeCaseToCamelCase(dataModelSpecifications$tableName)
 ))
 
-if (databaseMode) {
-  onStop(function() {
-    if (DBI::dbIsValid(connectionPool)) {
-      writeLines("Closing database pool")
-      pool::poolClose(connectionPool)
-    }
-  })
-  
-  resultsTablesOnServer <-
-    tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
-  
-  # vocabularyTablesOnServer <- list()
-  # vocabularyTablesInOmopCdm <- c('concept', 'concept_relationship', 'concept_ancestor',
-  #                                'concept_class', 'concept_synonym',
-  #                                'vocabulary', 'domain', 'relationship')
-  
-  # for (i in length(vocabularyDatabaseSchemas)) {
-  #
-  #     tolower(DatabaseConnector::dbListTables(connectionPool, schema = vocabularyDatabaseSchemas[[i]]))
-  # vocabularyTablesOnServer[[i]] <- intersect(x = )
-  # }
-  loadResultsTable("database", required = TRUE)
-  loadResultsTable("cohort", required = TRUE)
-  loadResultsTable("temporal_time_ref")
-  loadResultsTable("concept_sets")
-  loadResultsTable("cohort_count", required = TRUE)
-  
-  for (table in c(dataModelSpecifications$tableName)) {
-    #, "recommender_set"
-    if (table %in% resultsTablesOnServer &&
-        !exists(SqlRender::snakeCaseToCamelCase(table)) &&
-        !isEmpty(table)) {
-      #if table is empty, nothing is returned because type instability concerns.
-      assign(SqlRender::snakeCaseToCamelCase(table),
-             dplyr::tibble())
-    }
+
+onStop(function() {
+  if (DBI::dbIsValid(connectionPool)) {
+    writeLines("Closing database pool")
+    pool::poolClose(connectionPool)
   }
-  
-  dataSource <-
-    createDatabaseDataSource(
-      connection = connectionPool,
-      resultsDatabaseSchema = resultsDatabaseSchema,
-      vocabularyDatabaseSchema = resultsDatabaseSchema
-    )
-} else {
-  localDataPath <- file.path(dataFolder, defaultLocalDataFile)
-  if (!file.exists(localDataPath)) {
-    stop(sprintf("Local data file %s does not exist.", localDataPath))
+})
+
+resultsTablesOnServer <-
+  tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
+
+loadResultsTable("database", required = TRUE)
+loadResultsTable("cohort", required = TRUE)
+loadResultsTable("temporal_time_ref")
+loadResultsTable("concept_sets")
+loadResultsTable("cohort_count", required = TRUE)
+
+for (table in c(dataModelSpecifications$tableName)) {
+  #, "recommender_set"
+  if (table %in% resultsTablesOnServer &&
+      !exists(SqlRender::snakeCaseToCamelCase(table)) &&
+      !isEmpty(table)) {
+    #if table is empty, nothing is returned because type instability concerns.
+    assign(SqlRender::snakeCaseToCamelCase(table),
+           dplyr::tibble())
   }
-  dataSource <-
-    createFileDataSource(localDataPath, envir = .GlobalEnv)
 }
+
+dataSource <-
+  createDatabaseDataSource(
+    connection = connectionPool,
+    resultsDatabaseSchema = resultsDatabaseSchema,
+    vocabularyDatabaseSchema = resultsDatabaseSchema
+  )
+
 
 if (exists("database")) {
   if (nrow(database) > 0 &&

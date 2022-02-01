@@ -115,7 +115,7 @@ CohortDiagnostics::runCohortDiagnostics(
   minCellCount = 5
 )
 
-CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
+CohortDiagnostics::createMergedResultsFile(dataFolder = outputFolder)
 
 CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 

@@ -1,4 +1,4 @@
-# Copyright 2021 Observational Health Data Sciences and Informatics
+# Copyright 2022 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -41,11 +41,11 @@ getCohortCounts <- function(connectionDetails = NULL,
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
+
   sql <-
     SqlRender::loadRenderTranslateSql(
       sqlFilename = "CohortCounts.sql",
-      packageName = "CohortDiagnostics",
+      packageName = utils::packageName(),
       dbms = connection@dbms,
       cohort_database_schema = cohortDatabaseSchema,
       cohort_table = cohortTable,
@@ -57,6 +57,14 @@ getCohortCounts <- function(connectionDetails = NULL,
     counts <-
       DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>%
       tidyr::tibble()
+
+    if (length(cohortIds) > 0) {
+      cohortIdDf <- tidyr::tibble(cohortId = cohortIds)
+      counts <- cohortIdDf %>%
+        dplyr::left_join(counts, by = "cohortId") %>%
+        tidyr::replace_na(list(cohortEntries = 0, cohortSubjects = 0))
+    }
+
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste(
       "Counting cohorts took",
@@ -70,21 +78,60 @@ getCohortCounts <- function(connectionDetails = NULL,
   }
 }
 
-checkIfCohortInstantiated <-
-  function(connection,
-           cohortDatabaseSchema,
-           cohortTable,
-           cohortId) {
-    sql <-
-      "SELECT COUNT(*) COUNT FROM @cohort_database_schema.@cohort_table WHERE cohort_definition_id = @cohort_id;"
-    count <-
-      DatabaseConnector::renderTranslateQuerySql(
-        connection = connection,
-        sql,
-        cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable,
-        cohort_id = cohortId
-      )
-    count <- count %>% dplyr::pull(1)
-    return(count > 0)
+checkIfCohortInstantiated <- function(connection,
+                                      cohortDatabaseSchema,
+                                      cohortTable,
+                                      cohortId) {
+  sql <-
+    "SELECT COUNT(*) COUNT FROM @cohort_database_schema.@cohort_table WHERE cohort_definition_id = @cohort_id;"
+  count <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql,
+      cohort_database_schema = cohortDatabaseSchema,
+      cohort_table = cohortTable,
+      cohort_id = cohortId
+    )
+  count <- count %>% dplyr::pull(1)
+  return(count > 0)
+}
+
+computeCohortCounts <- function(connection,
+                                cohortDatabaseSchema,
+                                cohortTable,
+                                cohorts,
+                                exportFolder,
+                                minCellCount,
+                                databaseId) {
+  ParallelLogger::logInfo("Counting cohort records and subjects")
+  cohortCounts <- getCohortCounts(
+    connection = connection,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTable = cohortTable,
+    cohortIds = cohorts$cohortId
+  )
+
+  if (is.null(cohortCounts)) {
+    stop("Cohort table is empty")
   }
+
+  cohortCounts <- cohortCounts %>%
+    dplyr::mutate(databaseId = !!databaseId)
+  if (nrow(cohortCounts) > 0) {
+    cohortCounts <-
+      enforceMinCellValue(data = cohortCounts,
+                          fieldName = "cohortEntries",
+                          minValues = minCellCount)
+    cohortCounts <-
+      enforceMinCellValue(data = cohortCounts,
+                          fieldName = "cohortSubjects",
+                          minValues = minCellCount)
+  }
+  writeToCsv(
+    data = cohortCounts,
+    fileName = file.path(exportFolder, "cohort_count.csv"),
+    incremental = FALSE,
+    cohortId = cohorts$cohortId
+  )
+  return(cohortCounts)
+}
