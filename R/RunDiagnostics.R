@@ -171,11 +171,14 @@ runCohortDiagnostics <- function(packageName = NULL,
     warning('OracleTempSchema has been deprecated by DatabaseConnector')
   }
   
+  databaseId <- as.character(databaseId)
   if (any(is.null(databaseName), is.na(databaseName))) {
     databaseName <- databaseId
+    ParallelLogger::logTrace(' - Databasename was not provided.')
   }
   if (any(is.null(databaseDescription), is.na(databaseDescription))) {
     databaseDescription <- databaseId
+    ParallelLogger::logTrace(' - Databasedescription was not provided.')
   }
 
   errorMessage <- checkmate::makeAssertCollection()
