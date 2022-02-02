@@ -74,27 +74,47 @@
 
     <div class="section level2">
 <h2 class="page-header" data-toc-text="2.2.1" id="cohortdiagnostics-221">CohortDiagnostics 2.2.1<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-221"></a></h2>
-<p>Bug Fixes: 1. Fixed issue with time distributions breaking newer versions of R/dplyr</p>
-</div>
+<p>Bug fixes:</p>
+<ol style="list-style-type: decimal"><li><p>Added new lines in NEWS.md to fix package site.</p></li>
+<li><p>Updated vignette to fix minor issues</p></li>
+<li><p>Fixed issue with time distributions breaking newer versions of R/dplyr</p></li>
+</ol></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="2.2.0" id="cohortdiagnostics-220">CohortDiagnostics 2.2.0<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-220"></a></h2>
-<p>Changes: 1. Added <code>executeDiagnostics</code> function which aims to replace <code>runCohortDiagnostics</code> as the main interface to the package. 2. Updated vignette on “Running Cohort Diagnostics” to give clearer instructions 3. Removed vignettes on usage that are no longer required 4. Improved testing across database platforms 5. Moved some not particularly useful warnings to <code>logInfo</code></p>
-<p>Bug Fixes: 1. User code removed from CohortExplorer to fix issue <a href="https://github.com/OHDSI/CohortDiagnostics/issues/618" class="external-link">#618</a> 2. Fixed bug with <code>runBreakdownIndexEvents = TRUE</code> failed for drug_era table with SQL error - Issue <a href="https://github.com/OHDSI/CohortDiagnostics/issues/695" class="external-link">#695</a> 3. Fixed error when computing incidence rates on BigQuery. 4. Fixed error when <code>cdm_source</code> table is empty (warning remains). 5. Fixed error when instantiating cohorts on BigQuery.</p>
-</div>
+<p>Changes: 1. Added <code>executeDiagnostics</code> function which aims to replace <code>runCohortDiagnostics</code>as the main interface to the package.</p>
+<ol start="2" style="list-style-type: decimal"><li><p>Updated vignette on “Running Cohort Diagnostics” to give clearer instructions</p></li>
+<li><p>Removed vignettes on usage that are no longer required</p></li>
+<li><p>Improved testing across database platforms</p></li>
+<li><p>Moved some not particularly useful warnings to <code>logInfo</code></p></li>
+</ol><p>Bug Fixes: 1. User code removed from CohortExplorer to fix issue <a href="https://github.com/OHDSI/CohortDiagnostics/issues/618" class="external-link">#618</a></p>
+<ol start="2" style="list-style-type: decimal"><li><p>Fixed bug with <code>runBreakdownIndexEvents = TRUE</code> failed for drug_era table with SQL error - Issue <a href="https://github.com/OHDSI/CohortDiagnostics/issues/695" class="external-link">#695</a></p></li>
+<li><p>Fixed error when computing incidence rates on BigQuery.</p></li>
+<li><p>Fixed error when <code>cdm_source</code> table is empty (warning remains).</p></li>
+<li><p>Fixed error when instantiating cohorts on BigQuery.</p></li>
+</ol></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="2.1.4" id="cohortdiagnostics-214">CohortDiagnostics 2.1.4<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-214"></a></h2>
-<p>Changes: 1. Minor cosmetic changes to diagnostics explorer shiny app. Typo fix 2. Fix for warning from type-convert <a href="https://github.com/OHDSI/CohortDiagnostics/issues/661" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/661</a> 3. Use Sex instead of Gender in Diagnostics Explorer <a href="https://github.com/OHDSI/CohortDiagnostics/issues/676" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/676</a></p>
-<p>Bug Fixes: 1. Privacy protecting feature bug fix. In prior version covariate_value and covariate_value_dist failed privacy protection. Thank you <a href="https://github.com/msuchard" class="external-link">@msuchard</a> for reporting the issue and <a href="https://github.com/schuemie" class="external-link">@schuemie</a> for fixing <a href="https://github.com/OHDSI/CohortDiagnostics/issues/658" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/658</a></p>
-</div>
+<p>Changes:</p>
+<ol style="list-style-type: decimal"><li><p>Minor cosmetic changes to diagnostics explorer shiny app. Typo fix</p></li>
+<li><p>Fix for warning from type-convert <a href="https://github.com/OHDSI/CohortDiagnostics/issues/661" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/661</a></p></li>
+<li><p>Use Sex instead of Gender in Diagnostics Explorer <a href="https://github.com/OHDSI/CohortDiagnostics/issues/676" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/676</a></p></li>
+</ol><p>Bug Fixes:</p>
+<ol style="list-style-type: decimal"><li>Privacy protecting feature bug fix. In prior version covariate_value and covariate_value_dist failed privacy protection. Thank you <a href="https://github.com/msuchard" class="external-link">@msuchard</a> for reporting the issue and <a href="https://github.com/schuemie" class="external-link">@schuemie</a> for fixing <a href="https://github.com/OHDSI/CohortDiagnostics/issues/658" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/658</a>
+</li>
+</ol></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="2.1.3" id="cohortdiagnostics-213">CohortDiagnostics 2.1.3<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-213"></a></h2>
-<p>Changes: 1. On starting diagnostics explorer using launchDiagnosticsExplorer - checks were added for remotes and CirceR <a href="https://github.com/OHDSI/CohortDiagnostics/issues/595" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/595</a></p>
-<p>Bug Fixes: 1. Diagnostics explorer - characterization plot would show a warning message when one of the cohorts selected has no data. Added check for this issue.</p>
-</div>
+<p>Changes:</p>
+<ol style="list-style-type: decimal"><li>On starting diagnostics explorer using launchDiagnosticsExplorer - checks were added for remotes and CirceR <a href="https://github.com/OHDSI/CohortDiagnostics/issues/595" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/595</a>
+</li>
+</ol><p>Bug Fixes:</p>
+<ol style="list-style-type: decimal"><li>Diagnostics explorer - characterization plot would show a warning message when one of the cohorts selected has no data. Added check for this issue.</li>
+</ol></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="2.1.2" id="cohortdiagnostics-212">CohortDiagnostics 2.1.2<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-212"></a></h2>
-<p>Bug fixes: 1. DiagnosticsExplorer fixes a bug of app failure when runIndexEventBreakdown, runOrphanConcepts, includedSourceConcept is set to FALSE</p>
-</div>
+<p>Bug fixes:</p>
+<ol style="list-style-type: decimal"><li>DiagnosticsExplorer fixes a bug of app failure when runIndexEventBreakdown, runOrphanConcepts, includedSourceConcept is set to FALSE</li>
+</ol></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="2.1.1" id="cohortdiagnostics-211">CohortDiagnostics 2.1.1<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-211"></a></h2>
 <p>Bug fixes:</p>
@@ -108,12 +128,12 @@
 <h2 class="page-header" data-toc-text="2.1.0" id="cohortdiagnostics-210">CohortDiagnostics 2.1.0<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-210"></a></h2>
 <p>Changes:</p>
 <ol style="list-style-type: decimal"><li>Diagnostics explorer Shiny app enhancements:</li>
-</ol><ul><li>Improved tool tip</li>
-<li>Various improvements to plots for consistent color, axis labels and labels</li>
-<li>Visit context table addition</li>
-<li>Diagnostic explorer is now a distinct shiny application from phenotype library. PhenotypeExplorer is a stand alone shiny app in package PhenotypeLibrarian.</li>
-<li>Lot of UX changes. Reactivity deferred on drop down menus.</li>
-<li>Changes to improve app stability.</li>
+</ol><ul><li><p>Improved tool tip</p></li>
+<li><p>Various improvements to plots for consistent color, axis labels and labels</p></li>
+<li><p>Visit context table addition</p></li>
+<li><p>Diagnostic explorer is now a distinct shiny application from phenotype library. PhenotypeExplorer is a stand alone shiny app in package PhenotypeLibrarian.</p></li>
+<li><p>Lot of UX changes. Reactivity deferred on drop down menus.</p></li>
+<li><p>Changes to improve app stability.</p></li>
 </ul><ol start="2" style="list-style-type: decimal"><li><p>Index event breakdown now has subject count</p></li>
 <li><p>Index event breakdown calculates _source_concept_id from source fields in CDM tables.</p></li>
 <li><p>Vocabulary database schema is now supported.</p></li>
@@ -128,8 +148,9 @@
 <li><p>Support for cohort_censor_stats table in webapi 2.8.1 <a href="https://github.com/OHDSI/CohortDiagnostics/issues/387" class="external-link">#387</a></p></li>
 <li><p>Add time series diagnostics computation. Output is not in Diagnostics explorer in this version.</p></li>
 <li><p>Any improvements to help with usability and stability. Informative messages to help with debugbing as needed.</p></li>
-<li><p>phenotypeDescription is no longer supported as input for cohort diagnostics. Bug fixes:</p></li>
-<li><p>databaseName and databaseDescription should be non NULL</p></li>
+<li><p>phenotypeDescription is no longer supported as input for cohort diagnostics.</p></li>
+</ol><p>Bug fixes:</p>
+<ol start="18" style="list-style-type: decimal"><li><p>databaseName and databaseDescription should be non NULL</p></li>
 <li><p>Fixed computation of standard deviation and standard difference of mean for binary covariates.</p></li>
 </ol></div>
     <div class="section level2">
@@ -163,38 +184,53 @@
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.2.3" id="cohortdiagnostics-123">CohortDiagnostics 1.2.3<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-123"></a></h2>
 <p>Bug fixes:</p>
-<ol style="list-style-type: decimal"><li>Fixed error when many concept sets have to be instantiated.</li>
-<li>Removed ohdsi/SqlRender from Remotes <a href="https://github.com/OHDSI/CohortDiagnostics/issues/189" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/189</a>
-</li>
-<li>Fixed Digit precision for RJSONIO::toJson and fromJSON <a href="https://github.com/OHDSI/CohortDiagnostics/issues/161" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/161</a> This is an important fix. If digit precision is not explicitly specified in RJSONIO, then scientific notation is used. This issue seems to only happen when an integer id (conceptId, conceptSetId, cohortId etc) &gt;= 10,000,000 (which is rare). Please use this update if you have id’s &gt; 10,000,000.</li>
+<ol style="list-style-type: decimal"><li><p>Fixed error when many concept sets have to be instantiated.</p></li>
+<li><p>Removed ohdsi/SqlRender from Remotes <a href="https://github.com/OHDSI/CohortDiagnostics/issues/189" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/189</a></p></li>
+<li><p>Fixed Digit precision for RJSONIO::toJson and fromJSON <a href="https://github.com/OHDSI/CohortDiagnostics/issues/161" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/161</a> This is an important fix. If digit precision is not explicitly specified in RJSONIO, then scientific notation is used. This issue seems to only happen when an integer id (conceptId, conceptSetId, cohortId etc) &gt;= 10,000,000 (which is rare). Please use this update if you have id’s &gt; 10,000,000.</p></li>
 </ol></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.2.2" id="cohortdiagnostics-122">CohortDiagnostics 1.2.2<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-122"></a></h2>
-<p>New features: 1. Minor UI changes to Diagnostics explorer. Added missing sort. 2. Added better labels for plots. 3. Download plots.</p>
-<p>Bug fixes: 1. Changes dependency to ROhdsiWebApi (&gt;= 1.1.0) 2. DiagnosticsExplorer display bug fixes</p>
-</div>
+<p>New features: 1. Minor UI changes to Diagnostics explorer. Added missing sort.</p>
+<ol start="2" style="list-style-type: decimal"><li><p>Added better labels for plots.</p></li>
+<li><p>Download plots.</p></li>
+</ol><p>Bug fixes: 1. Changes dependency to ROhdsiWebApi (&gt;= 1.1.0)</p>
+<ol start="2" style="list-style-type: decimal"><li>DiagnosticsExplorer display bug fixes</li>
+</ol></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.2.1" id="cohortdiagnostics-121">CohortDiagnostics 1.2.1<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-121"></a></h2>
-<p>New features: 1. All objects in DiagnosticsExplorer are sorted by default <a href="https://github.com/OHDSI/CohortDiagnostics/issues/173" class="external-link">#173</a> 2. Multi select for concepts <a href="https://github.com/OHDSI/CohortDiagnostics/issues/199" class="external-link">#199</a></p>
-<p>Bug fixes: 1. Ensure concept sets across cohort definitions are unique <a href="https://github.com/OHDSI/CohortDiagnostics/issues/174" class="external-link">#174</a> (changes dependency to ROhdsiWebApi (&gt;= 1.1.0))</p>
+<p>New features: 1. All objects in DiagnosticsExplorer are sorted by default <a href="https://github.com/OHDSI/CohortDiagnostics/issues/173" class="external-link">#173</a></p>
+<ol start="2" style="list-style-type: decimal"><li>Multi select for concepts <a href="https://github.com/OHDSI/CohortDiagnostics/issues/199" class="external-link">#199</a></li>
+</ol><p>Bug fixes: 1. Ensure concept sets across cohort definitions are unique <a href="https://github.com/OHDSI/CohortDiagnostics/issues/174" class="external-link">#174</a> (changes dependency to ROhdsiWebApi (&gt;= 1.1.0))</p>
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.2.0" id="cohortdiagnostics-120">CohortDiagnostics 1.2.0<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-120"></a></h2>
-<p>Changes: 1. New function to retrieve concept set json from cohort json  2. New function to retrieve concept set sql from cohort sql  3. DiagnosticsExplorer shiny app - DataTable now rendered using server side processing. Bug fixes and UI improvements. 4. DiagnosticsExplorer shiny app - Phenotype library mode (released) 5. DiagnosticsExplorer shiny app - Combine included source concepts and orphan concepts into one submenu <a href="https://github.com/OHDSI/CohortDiagnostics/issues/129" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/129</a></p>
-<p>Bug fixes: 1. <a href="https://github.com/OHDSI/CohortDiagnostics/issues/167" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/167</a> 2. <a href="https://github.com/OHDSI/CohortDiagnostics/issues/165" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/165</a></p>
-</div>
+<p>Changes: 1. New function to retrieve concept set json from cohort json </p>
+<ol start="2" style="list-style-type: decimal"><li><p>New function to retrieve concept set sql from cohort sql </p></li>
+<li><p>DiagnosticsExplorer shiny app - DataTable now rendered using server side processing. Bug fixes and UI improvements.</p></li>
+<li><p>DiagnosticsExplorer shiny app - Phenotype library mode (released)</p></li>
+<li><p>DiagnosticsExplorer shiny app - Combine included source concepts and orphan concepts into one submenu <a href="https://github.com/OHDSI/CohortDiagnostics/issues/129" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/129</a></p></li>
+</ol><p>Bug fixes: 1. <a href="https://github.com/OHDSI/CohortDiagnostics/issues/167" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/167</a></p>
+<ol start="2" style="list-style-type: decimal"><li><a href="https://github.com/OHDSI/CohortDiagnostics/issues/165" class="external-link uri">https://github.com/OHDSI/CohortDiagnostics/issues/165</a></li>
+</ol></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.1.1" id="cohortdiagnostics-111">CohortDiagnostics 1.1.1<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-111"></a></h2>
-<p>Changes: 1. Shiny app UI improvements 2. Link out to Atlas and Athena from cohortId. Supports baseUrl. 3. (beta - unreleased) support for Phenotype library. Shiny app will look for two additional csv files phenotypeDescription and cohortDescription that put the DiagnosticExplorer in Phenotype Library Mode. Plan to release in future version &gt;= 1.2 4. Changed default selections for temporal characterization 5. Added minimum threshold value to covariate_value and temporal_covariate_value with default value = 0 (future release, we plan to make this 0.005 i.e. 0.5%)</p>
-<p>Bug fixes: 1. Minor bug fixes.</p>
-</div>
+<p>Changes: 1. Shiny app UI improvements</p>
+<ol start="2" style="list-style-type: decimal"><li><p>Link out to Atlas and Athena from cohortId. Supports baseUrl.</p></li>
+<li><p>(beta - unreleased) support for Phenotype library. Shiny app will look for two additional csv files phenotypeDescription and cohortDescription that put the DiagnosticExplorer in Phenotype Library Mode. Plan to release in future version &gt;= 1.2</p></li>
+<li><p>Changed default selections for temporal characterization</p></li>
+<li><p>Added minimum threshold value to covariate_value and temporal_covariate_value with default value = 0 (future release, we plan to make this 0.005 i.e. 0.5%)</p></li>
+</ol><p>Bug fixes:</p>
+<ol style="list-style-type: decimal"><li>Minor bug fixes.</li>
+</ol></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.1.0" id="cohortdiagnostics-110">CohortDiagnostics 1.1.0<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-110"></a></h2>
-<p>Changes: 1. Added temporal characterization 2. UI changes to Shiny app diagnostic explorer</p>
-<p>Bug fixes: 1. Circe-be update introduced bug in parsing concept sets in cohort definition. 2. Handling of empty cohorts</p>
-<p>Changes:</p>
-<ol style="list-style-type: decimal"><li>Error handling: Use <a href="https://CRAN.R-project.org/package=checkmate" class="external-link">checkmate</a> R-package to provide more informative error messages.</li>
-<li>Refactor runCohortDiagnostics: added new function by refactoring existing private functions. This new function get the JSON and parameterized OHDSI SQL for the cohorts for which diagnostics has been requested </li>
+<p>Changes: 1. Added temporal characterization</p>
+<ol start="2" style="list-style-type: decimal"><li>UI changes to Shiny app diagnostic explorer</li>
+</ol><p>Bug fixes: 1. Circe-be update introduced bug in parsing concept sets in cohort definition.</p>
+<ol start="2" style="list-style-type: decimal"><li>Handling of empty cohorts</li>
+</ol><p>Changes:</p>
+<ol style="list-style-type: decimal"><li><p>Error handling: Use <a href="https://CRAN.R-project.org/package=checkmate" class="external-link">checkmate</a> R-package to provide more informative error messages.</p></li>
+<li><p>Refactor runCohortDiagnostics: added new function by refactoring existing private functions. This new function get the JSON and parameterized OHDSI SQL for the cohorts for which diagnostics has been requested </p></li>
 </ol><p>Note: The code has been partially refactored to depend on tidyverse.</p>
 </div>
     <div class="section level2">
