@@ -19,3 +19,6 @@ tests/testthat/testthat-problems.rds
 /Meta/
 /renv/.gitignore
 /sql/
+.Rprofile
+/renv/
+renv.lock
