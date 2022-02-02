@@ -759,7 +759,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   )
   metadata <- dplyr::tibble(
     databaseId = as.character(!!databaseId),
-    startTime = paste0("TM_", as.character(startDateTime)),
+    startTime = paste0("TM_", as.character(start)),
     variableField = variableField,
     valueField = valueField
   )
@@ -767,7 +767,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     data = metadata,
     fileName = file.path(exportFolder, "metadata.csv"),
     incremental = TRUE,
-    start_time = as.character(startDateTime)
+    start_time = as.character(start)
   )
   
   # Add all to zip file -------------------------------------------------------------------------------

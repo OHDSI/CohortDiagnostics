@@ -48,13 +48,6 @@ dir.create(path = outputFolder,
            showWarnings = FALSE,
            recursive = TRUE)
 
-dataSouceInformation <-
-  getDataSourceInformation(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabDatabaseSchema = vocabDatabaseSchema
-  )
-
 execute(
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = cdmDatabaseSchema,
@@ -63,8 +56,8 @@ execute(
   cohortTable = cohortTable,
   outputFolder = outputFolder,
   databaseId = databaseId,
-  databaseName = dataSouceInformation$cdmSourceName,
-  databaseDescription = dataSouceInformation$sourceDescription
+  verifyDependencies = FALSE, 
+  incrementalFolder = file.path(outputFolder, "incremental")
 )
 
 CohortDiagnostics::createMergedResultsFile(dataFolder = outputFolder)
