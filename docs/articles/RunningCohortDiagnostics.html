@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.2.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.2.1</span>
       </span>
     </div>
 
@@ -96,7 +96,7 @@
       <h1 data-toc-skip>Running Cohort Diagnostics</h1>
                         <h4 data-toc-skip class="author">Gowtham Rao and James P. Gilbert</h4>
             
-            <h4 data-toc-skip class="date">2022-01-11</h4>
+            <h4 data-toc-skip class="date">2022-02-02</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/RunningCohortDiagnostics.Rmd" class="external-link"><code>vignettes/RunningCohortDiagnostics.Rmd</code></a></small>
       <div class="hidden name"><code>RunningCohortDiagnostics.Rmd</code></div>
@@ -188,7 +188,7 @@
 <span class="co"># Generate the cohort set</span>
 <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/generateCohortSet.html" class="external-link">generateCohortSet</a></span><span class="op">(</span>connectionDetails<span class="op">=</span> <span class="va">connectionDetails</span>,
                                    cdmDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,
-                                   cohortDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,
+                                   cohortDatabaseSchema <span class="op">=</span> <span class="va">cohortDatabaseSchema</span>,
                                    cohortTableNames <span class="op">=</span> <span class="va">cohortTableNames</span>,
                                    cohortDefinitionSet <span class="op">=</span> <span class="va">cohortDefinitionSet</span>,
                                    incremental <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
@@ -212,7 +212,6 @@
                    cohortDatabaseSchema <span class="op">=</span> <span class="va">cohortDatabaseSchema</span>,
                    cdmDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,
                    exportFolder <span class="op">=</span> <span class="va">exportFolder</span>,
-                   inclusionStatisticsFolder <span class="op">=</span> <span class="va">inclusionStatisticsFolder</span>,
                    databaseId <span class="op">=</span> <span class="st">"MyCdm"</span>,
                    minCellCount <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></code></pre></div>
 </div>

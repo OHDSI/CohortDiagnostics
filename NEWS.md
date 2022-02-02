@@ -1,44 +1,69 @@
+CohortDiagnostics 2.2.1
+=======================
+
+Bug fixes:
+
+1. Added new lines in NEWS.md to fix package site.
+
+2. Updated vignette to fix minor issues
+
+3. Fixed issue with time distributions breaking newer versions of R/dplyr
+
 CohortDiagnostics 2.2.0
 =======================
 Changes:
-1. Added `executeDiagnostics` function which aims to replace `runCohortDiagnostics`
-as the main interface to the package.
+1. Added `executeDiagnostics` function which aims to replace `runCohortDiagnostics`as the main interface to the package.
+
 2. Updated vignette on "Running Cohort Diagnostics" to give clearer instructions
+
 3. Removed vignettes on usage that are no longer required
+
 4. Improved testing across database platforms
+
 5. Moved some not particularly useful warnings to `logInfo`
 
 Bug Fixes:
 1. User code removed from CohortExplorer to fix issue #618
+
 2. Fixed bug with `runBreakdownIndexEvents = TRUE` failed for drug_era table with SQL error - Issue #695
+
 3. Fixed error when computing incidence rates on BigQuery.
+
 4. Fixed error when `cdm_source` table is empty (warning remains).
+
 5. Fixed error when instantiating cohorts on BigQuery.
 
 CohortDiagnostics 2.1.4
 =======================
 
 Changes:
+
 1. Minor cosmetic changes to diagnostics explorer shiny app. Typo fix
+
 2. Fix for warning from type-convert https://github.com/OHDSI/CohortDiagnostics/issues/661
+
 3. Use Sex instead of Gender in Diagnostics Explorer https://github.com/OHDSI/CohortDiagnostics/issues/676
 
 Bug Fixes:
+
 1. Privacy protecting feature bug fix. In prior version covariate_value and covariate_value_dist failed privacy protection. Thank you @msuchard for reporting the issue and @schuemie for fixing https://github.com/OHDSI/CohortDiagnostics/issues/658 
 
 CohortDiagnostics 2.1.3
 =======================
 
 Changes:
+
 1. On starting diagnostics explorer using launchDiagnosticsExplorer - checks were added for remotes and CirceR https://github.com/OHDSI/CohortDiagnostics/issues/595
 
 Bug Fixes:
+
 1. Diagnostics explorer - characterization plot would show a warning message when one of the cohorts selected has no data. Added check for this issue.
 
 CohortDiagnostics 2.1.2
 =======================
 
 Bug fixes:
+
 1. DiagnosticsExplorer fixes a bug of app failure when runIndexEventBreakdown, runOrphanConcepts, includedSourceConcept is set to FALSE
 
 
@@ -59,32 +84,55 @@ CohortDiagnostics 2.1.0
 
 Changes:
 
-1. Diagnostics explorer Shiny app enhancements: 
+1. Diagnostics explorer Shiny app enhancements:
+
 - Improved tool tip
+
 - Various improvements to plots for consistent color, axis labels and labels
+
 - Visit context table addition
+
 - Diagnostic explorer is now a distinct shiny application from phenotype library. PhenotypeExplorer is a stand alone shiny app in package PhenotypeLibrarian.
+
 - Lot of UX changes. Reactivity deferred on drop down menus.
+
 - Changes to improve app stability.
+
 2. Index event breakdown now has subject count
+
 3. Index event breakdown calculates _source_concept_id from source fields in CDM tables.
+
 4. Vocabulary database schema is now supported.
+
 5. Metadata (vocabulary version information from data source) is now collected.
+
 6. OracleTempSchema use deprecated in favor of tempEmulationSchema.
+
 7. Run against external concept count has been removed, as concept counts data is not available. Function 'runCohortDiagnosticsUsingExternalCounts' is removed.
+
 8. Removed code related to referentConceptId = phenotypeId/1000 as it does not always hold true.
+
 9. Create cohort table function is now private. Please use instantiate cohort.
+
 10. checkInputFileEncoding is not exported as a public function (as not the scope of CohortDiagnostics).
+
 11. Updated results data model to include new tables (resolved_concepts).
+
 12. Cohort Diagnostics results data model now compliant with standard characterization output.
+
 13. Support for cohort_censor_stats table in webapi 2.8.1 #387
+
 14. Add time series diagnostics computation. Output is not in Diagnostics explorer in this version.
+
 15. Any improvements to help with usability and stability. Informative messages to help with debugbing as needed.
+
 16. phenotypeDescription is no longer supported as input for cohort diagnostics.
+
 Bug fixes:
 
-1. databaseName and databaseDescription should be non NULL
-2. Fixed computation of standard deviation and standard difference of mean for binary covariates.
+18. databaseName and databaseDescription should be non NULL
+
+19. Fixed computation of standard deviation and standard difference of mean for binary covariates.
 
 
 CohortDiagnostics 2.0.0
@@ -142,7 +190,9 @@ CohortDiagnostics 1.2.3
 Bug fixes:
 
 1. Fixed error when many concept sets have to be instantiated.
+
 2. Removed ohdsi/SqlRender from Remotes https://github.com/OHDSI/CohortDiagnostics/issues/189
+
 3. Fixed Digit precision for RJSONIO::toJson and fromJSON https://github.com/OHDSI/CohortDiagnostics/issues/161 This is an important fix. If digit precision is not explicitly specified in RJSONIO, then scientific notation is used. This issue seems to only happen when an integer id (conceptId, conceptSetId, cohortId etc) >= 10,000,000 (which is rare). Please use this update if you have id's > 10,000,000.
 
 
@@ -150,17 +200,21 @@ CohortDiagnostics 1.2.2
 =======================
 New features:
 1. Minor UI changes to Diagnostics explorer. Added missing sort.
+
 2. Added better labels for plots.
+
 3. Download plots.
 
 Bug fixes:
 1. Changes dependency to ROhdsiWebApi (>= 1.1.0)
+
 2. DiagnosticsExplorer display bug fixes
 
 CohortDiagnostics 1.2.1
 =======================
 New features:
 1. All objects in DiagnosticsExplorer are sorted by default #173
+
 2. Multi select for concepts #199
 
 Bug fixes:
@@ -170,13 +224,18 @@ CohortDiagnostics 1.2.0
 =======================
 Changes:
 1. New function to retrieve concept set json from cohort json \code{extractConceptSetsJsonFromCohortJson}
+
 2. New function to retrieve concept set sql from cohort sql \code{extractConceptSetsSqlFromCohortSql}
+
 3. DiagnosticsExplorer shiny app - DataTable now rendered using server side processing. Bug fixes and UI improvements.
+
 4. DiagnosticsExplorer shiny app - Phenotype library mode (released)
+
 5. DiagnosticsExplorer shiny app - Combine included source concepts and orphan concepts into one submenu https://github.com/OHDSI/CohortDiagnostics/issues/129
 
 Bug fixes:
 1. https://github.com/OHDSI/CohortDiagnostics/issues/167
+
 2. https://github.com/OHDSI/CohortDiagnostics/issues/165
 
 
@@ -184,12 +243,17 @@ CohortDiagnostics 1.1.1
 =======================
 Changes:
 1. Shiny app UI improvements
+
 2. Link out to Atlas and Athena from cohortId. Supports baseUrl.
+
 3. (beta - unreleased) support for Phenotype library. Shiny app will look for two additional csv files phenotypeDescription and cohortDescription that put the DiagnosticExplorer in Phenotype Library Mode. Plan to release in future version >= 1.2
+
 4. Changed default selections for temporal characterization
+
 5. Added minimum threshold value to covariate_value and temporal_covariate_value with default value = 0 (future release, we plan to make this 0.005 i.e. 0.5%)
 
 Bug fixes:
+
 1. Minor bug fixes.
 
 CohortDiagnostics 1.1.0
@@ -197,15 +261,18 @@ CohortDiagnostics 1.1.0
 
 Changes: 
 1. Added temporal characterization
+
 2. UI changes to Shiny app diagnostic explorer
 
 Bug fixes:
 1. Circe-be update introduced bug in parsing concept sets in cohort definition. 
+
 2. Handling of empty cohorts
 
 Changes:
 
 1. Error handling: Use [checkmate](https://CRAN.R-project.org/package=checkmate) R-package to provide more informative error messages.
+
 2. Refactor runCohortDiagnostics: added new function by refactoring existing private functions. This new function
 get the JSON and parameterized OHDSI SQL for the cohorts for which diagnostics has been requested \code{getCohortsJsonAndSql} 
 
