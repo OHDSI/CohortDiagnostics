@@ -218,9 +218,7 @@ of such objects.</p></dd>
 <dd><p>Create only cohort diagnostics that haven't been created before?</p></dd>
 <dt>incrementalFolder</dt>
 <dd><p>If <code>incremental = TRUE</code>, specify a folder where records are kept
-                                   of which cohort diagnostics has been executed.</p>
-<p>#' @examples</p>
-<p></p></dd>
+of which cohort diagnostics has been executed.</p></dd>
 </dl></div>
     <div id="details">
     <h2>Details</h2>
@@ -244,6 +242,45 @@ meaning of the cohort definition</p></dd>
 
 </dl></div>
 
+    <div id="ref-examples">
+    <h2>Examples</h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
+<span class="r-in"><span class="co"># Load cohorts (assumes that they have already been instantiated)</span></span>
+<span class="r-in"><span class="va">cohortTableNames</span> <span class="op">&lt;-</span> <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortTableNames.html" class="external-link">getCohortTableNames</a></span><span class="op">(</span>cohortTable <span class="op">=</span> <span class="st">"cohort"</span><span class="op">)</span></span>
+<span class="r-in"><span class="va">cohorts</span> <span class="op">&lt;-</span> <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortDefinitionSet.html" class="external-link">getCohortDefinitionSet</a></span><span class="op">(</span>packageName <span class="op">=</span> <span class="st">"MyGreatPackage"</span><span class="op">)</span></span>
+<span class="r-in"><span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu">createConnectionDetails</span><span class="op">(</span>dbms <span class="op">=</span> <span class="st">"postgresql"</span>,</span>
+<span class="r-in">                                             server <span class="op">=</span> <span class="st">"ohdsi.com"</span>,</span>
+<span class="r-in">                                             port <span class="op">=</span> <span class="fl">5432</span>,</span>
+<span class="r-in">                                             user <span class="op">=</span> <span class="st">"me"</span>,</span>
+<span class="r-in">                                             password <span class="op">=</span> <span class="st">"secure"</span><span class="op">)</span></span>
+<span class="r-in"></span>
+<span class="r-in"><span class="fu">executeDiagnostics</span><span class="op">(</span>cohorts <span class="op">=</span> <span class="va">cohorts</span>,</span>
+<span class="r-in">                   exportFolder <span class="op">=</span> <span class="st">"export"</span>,</span>
+<span class="r-in">                   cohortTableNames <span class="op">=</span> <span class="va">cohortTableNames</span>,</span>
+<span class="r-in">                   cohortDatabaseSchema <span class="op">=</span> <span class="st">"results"</span>,</span>
+<span class="r-in">                   cdmDatabaseSchema <span class="op">=</span> <span class="st">"cdm"</span>,</span>
+<span class="r-in">                   databaseId <span class="op">=</span> <span class="st">"mySpecialCdm"</span>,</span>
+<span class="r-in">                   connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span><span class="op">)</span></span>
+<span class="r-in"></span>
+<span class="r-in"><span class="co"># Use a custom set of cohorts defined in a data.frame</span></span>
+<span class="r-in"><span class="va">cohorts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span class="r-in">  cohortId <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>,</span>
+<span class="r-in">  cohortName <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Cohort Name"</span><span class="op">)</span>,</span>
+<span class="r-in">  logicDescription <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"My Cohort"</span><span class="op">)</span>,</span>
+<span class="r-in">  sql <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="st">"path_to.sql"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span class="r-in">  json <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="st">"path_to.json"</span><span class="op">)</span><span class="op">)</span></span>
+<span class="r-in"><span class="op">)</span></span>
+<span class="r-in"><span class="fu">executeDiagnostics</span><span class="op">(</span>cohorts <span class="op">=</span> <span class="va">cohorts</span>,</span>
+<span class="r-in">                   exportFolder <span class="op">=</span> <span class="st">"export"</span>,</span>
+<span class="r-in">                   cohortTable <span class="op">=</span> <span class="st">"cohort"</span>,</span>
+<span class="r-in">                   cohortDatabaseSchema <span class="op">=</span> <span class="st">"results"</span>,</span>
+<span class="r-in">                   cdmDatabaseSchema <span class="op">=</span> <span class="st">"cdm"</span>,</span>
+<span class="r-in">                   databaseId <span class="op">=</span> <span class="st">"mySpecialCdm"</span>,</span>
+<span class="r-in">                   connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span><span class="op">)</span></span>
+<span class="r-in"><span class="op">}</span></span>
+<span class="r-in"></span>
+</code></pre></div>
+    </div>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top"><h2 data-toc-skip>Contents</h2>

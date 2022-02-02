@@ -74,12 +74,11 @@
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
 #'
-#' #' @examples
-#'
+#' @examples
 #' \dontrun{
 #' # Load cohorts (assumes that they have already been instantiated)
 #' cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort")
-#' cohorts <- loadCohortsFromPackage(packageName = "MyGreatPackage")
+#' cohorts <- CohortGenerator::getCohortDefinitionSet(packageName = "MyGreatPackage")
 #' connectionDetails <- createConnectionDetails(dbms = "postgresql",
 #'                                              server = "ohdsi.com",
 #'                                              port = 5432,
