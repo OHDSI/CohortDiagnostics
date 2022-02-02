@@ -362,7 +362,7 @@ CREATE TABLE @results_schema.@index_event_breakdown (
 
 CREATE TABLE @results_schema.@metadata (
 			database_id VARCHAR NOT NULL,
-			start_time VARCHAR NOT NULL,
+			start_time VARCHAR NULL,
 			variable_field VARCHAR NOT NULL,
 			value_field VARCHAR,
 			PRIMARY KEY(database_id, start_time, variable_field)
