@@ -28,7 +28,6 @@ Imports:
   readr (>= 2.0.1),
   RJSONIO,
   rlang,
-  ROhdsiWebApi (>= 1.2.0),
   SqlRender (>= 1.7.0),
   stringr,
   tidyr (>= 1.0.0),
@@ -55,7 +54,8 @@ Suggests:
   shinyWidgets,
   testthat,
   withr,
-  zip
+  zip,
+  ROhdsiWebApi (>= 1.2.0)
 Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,

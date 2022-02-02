@@ -2,7 +2,7 @@
 % Please edit documentation in R/RunDiagnostics.R
 \name{executeDiagnostics}
 \alias{executeDiagnostics}
-\title{Execute cohort diagnostics functions}
+\title{Execute cohort diagnostics}
 \usage{
 executeDiagnostics(
   cohortDefinitionSet,
@@ -131,15 +131,9 @@ of such objects.}
 \item{incremental}{Create only cohort diagnostics that haven't been created before?}
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
-of which cohort diagnostics has been executed.}
-}
-\description{
-Execute cohort diagnostics on a set of cohorts.
-Assumes that cohorts have already been instantiated in advance.
+                                   of which cohort diagnostics has been executed.
 
-Note that none of the references passed to this function are used, they are required for results.
-}
-\examples{
+#' @examples
 
 \dontrun{
 # Load cohorts (assumes that they have already been instantiated)
@@ -174,6 +168,28 @@ executeDiagnostics(cohorts = cohorts,
                    cdmDatabaseSchema = "cdm",
                    databaseId = "mySpecialCdm",
                    connectionDetails = connectionDetails)
-}
+}}
 
+\item{oracleTempSchema}{DEPRECATED by DatabaseConnector: use \code{tempEmulationSchema} instead.}
+}
+\description{
+Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
+Assumes the cohorts have already been instantiated. with the CohortGenerator package
+
+Characterization:
+If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
+using \code{RFeatureExtraction::createTemporalCovariateSettings}
+Alternatively, a covariate setting object may be created using the above as an example.
+}
+\details{
+The \code{cohortSetReference} argument must be a data frame with  the following columns:
+\describe{
+\item{cohortId}{The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999}
+\item{atlasId}{Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.}
+\item{cohortName}{The full name of the cohort. This will be shown in the Shiny app.}
+\item{logicDescription}{A human understandable brief description of the cohort definition. This logic does not have to a 
+fully specified description of the cohort definition, but should provide enough context to help user understand the
+meaning of the cohort definition}
+\item{referentConceptId}{A standard omop concept id that serves as the referent phenotype definition for the cohort Id (optional)}
+}
 }

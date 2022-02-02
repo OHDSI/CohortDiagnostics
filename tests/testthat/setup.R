@@ -1,6 +1,7 @@
 library(testthat)
 library(CohortDiagnostics)
 library(Eunomia)
+library(dplyr)
 
 dbms <- getOption("dbms", default = "sqlite")
 message("************* Testing on ", dbms, " *************")
