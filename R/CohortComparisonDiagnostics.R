@@ -206,10 +206,20 @@ executeCohortComparisonDiagnostics <- function(connection,
         enforceMinCellValue(data, "tInCSubjects", minCellCount)
       data <-
         enforceMinCellValue(data, "cInTSubjects", minCellCount)
+
       data <- data %>%
-        dplyr::mutate(dplyr::across(.cols = everything(), ~tidyr::replace_na(
-          data = ., replace = 0
-        )))
+        tidyr::replace_na(replace =
+                            list(
+                              eitherSubjects = 0,
+                              bothSubjects = 0,
+                              tOnlySubjects = 0,
+                              cOnlySubjects = 0,
+                              tBeforeCSubjects = 0,
+                              cBeforeTSubjects = 0,
+                              sameDaySubjects = 0,
+                              tInCSubjects = 0,
+                              cInTSubjects = 0
+                            ))
 
       writeToCsv(
         data = data,
