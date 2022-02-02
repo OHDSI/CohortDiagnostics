@@ -1,3 +1,8 @@
+CohortDiagnostics 2.2.1
+=======================
+Bug Fixes:
+1. Fixed issue with time distributions breaking newer versions of R/dplyr
+
 CohortDiagnostics 2.2.0
 =======================
 Changes:
