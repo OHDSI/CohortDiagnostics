@@ -169,8 +169,6 @@ executeDiagnostics(cohorts = cohorts,
                    databaseId = "mySpecialCdm",
                    connectionDetails = connectionDetails)
 }}
-
-\item{oracleTempSchema}{DEPRECATED by DatabaseConnector: use \code{tempEmulationSchema} instead.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the

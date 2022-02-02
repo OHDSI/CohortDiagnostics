@@ -17,3 +17,5 @@ tests/testthat/testthat-problems.rds
 /.idea
 /doc/
 /Meta/
+/renv/.gitignore
+/sql/
