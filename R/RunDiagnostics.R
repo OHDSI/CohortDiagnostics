@@ -153,7 +153,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                incrementalFolder = file.path(exportFolder, "incremental")) {
 
     # collect arguments that were passed to cohort diagnostics at initiation
-  argumentsAtDiagnosticsInitiation <- formals(runCohortDiagnostics)
+  argumentsAtDiagnosticsInitiation <- formals(executeDiagnostics)
   argumentsAtDiagnosticsInitiationJson <-
     list(
       runInclusionStatistics = argumentsAtDiagnosticsInitiation$runInclusionStatistics,
