@@ -57,7 +57,6 @@
 #' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
-#' @param runTimeSeries               Generate and export the cohort prevalence  rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap? Overlaps are checked within cohortIds
 #'                                    that have the same phenotype ID sourced from the CohortSetReference or
 #'                                    cohortToCreateFile.
@@ -106,7 +105,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runVisitContext = TRUE,
                                  runBreakdownIndexEvents = TRUE,
                                  runIncidenceRate = TRUE,
-                                 runTimeSeries = FALSE,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
                                  covariateSettings = createDefaultCovariateSettings(),
@@ -122,10 +120,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
-  
-  if (runTimeSeries) {
-    warning("Note time series is deprecated in this version.")
-  }
   
   # collect arguments that were passed to cohort diagnostics at initiation
   argumentsAtDiagnosticsInitiation <- formals(runCohortDiagnostics)
@@ -842,7 +836,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runVisitContext = TRUE,
                                runBreakdownIndexEvents = TRUE,
                                runIncidenceRate = TRUE,
-                               runTimeSeries = FALSE,
                                runCohortOverlap = TRUE,
                                runCohortCharacterization = TRUE,
                                covariateSettings = createDefaultCovariateSettings(),
@@ -883,7 +876,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
                        runVisitContext = runTimeDistributions,
                        runBreakdownIndexEvents = runBreakdownIndexEvents,
                        runIncidenceRate = runIncidenceRate,
-                       runTimeSeries = runTimeSeries,
                        runCohortOverlap = runCohortOverlap,
                        runCohortCharacterization = runCohortCharacterization,
                        covariateSettings = covariateSettings,

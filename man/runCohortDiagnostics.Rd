@@ -33,7 +33,6 @@ runCohortDiagnostics(
   runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
-  runTimeSeries = FALSE,
   runCohortOverlap = TRUE,
   runCohortCharacterization = TRUE,
   covariateSettings = createDefaultCovariateSettings(),
@@ -129,8 +128,6 @@ does not exist it will be created.}
 \item{runBreakdownIndexEvents}{Generate and export the breakdown of index events?}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
-
-\item{runTimeSeries}{Generate and export the cohort prevalence  rates?}
 
 \item{runCohortOverlap}{Generate and export the cohort overlap? Overlaps are checked within cohortIds
 that have the same phenotype ID sourced from the CohortSetReference or
