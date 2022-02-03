@@ -32,6 +32,9 @@
 {DEFAULT @vocabulary = vocabulary}
 
 -- Drop old tables if exist
+IF OBJECT_ID('@results_schema.@annotation', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@annotation;
+    
 IF OBJECT_ID('@results_schema.@cohort', 'U') IS NOT NULL
     DROP TABLE @results_schema.@cohort;
 
@@ -139,6 +142,21 @@ CREATE TABLE @results_schema.@analysis_ref (
 			is_binary VARCHAR(1) NOT NULL,
 			missing_means_zero VARCHAR(1),
 			PRIMARY KEY(analysis_id)
+);
+
+--Table annotation
+
+CREATE TABLE @results_schema.@annotation (
+			annotation_id BIGINT NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			diagnostics_id VARCHAR NOT NULL,
+			comment VARCHAR NOT NULL,
+			attributes VARCHAR,
+			created_by VARCHAR NOT NULL,
+			created_on DATE NOT NULL,
+			modified_last_on DATE,
+			deleted_on DATE,
+			PRIMARY KEY(annotation_id)
 );
 
 --Table cohort
