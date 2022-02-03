@@ -1,3 +1,11 @@
+CohortDiagnostics 2.2.2
+=======================
+
+Bug fixes:
+
+1. Legacy time series is not working, is not used - should be removed.
+
+
 CohortDiagnostics 2.2.1
 =======================
 
