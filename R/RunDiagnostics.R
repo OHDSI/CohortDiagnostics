@@ -123,6 +123,10 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  incremental = FALSE,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
   
+  if (runTimeSeries) {
+    warning("Note time series is deprecated in this version.")
+  }
+  
   # collect arguments that were passed to cohort diagnostics at initiation
   argumentsAtDiagnosticsInitiation <- formals(runCohortDiagnostics)
   argumentsAtDiagnosticsInitiationJson <-
@@ -134,7 +138,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       runVisitContext = argumentsAtDiagnosticsInitiation$runVisitContext,
       runBreakdownIndexEvents = argumentsAtDiagnosticsInitiation$runBreakdownIndexEvents,
       runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,
-      runTimeSeries = argumentsAtDiagnosticsInitiation$runTimeSeries,
       runCohortOverlap = argumentsAtDiagnosticsInitiation$runCohortOverlap,
       runCohortCharacterization = argumentsAtDiagnosticsInitiation$runCohortCharacterization,
       runTemporalCohortCharacterization = argumentsAtDiagnosticsInitiation$runTemporalCohortCharacterization,
@@ -371,13 +374,6 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
-  if (all(runTimeSeries,
-          connection@dbms %in% c('bigquery'))) {
-    warning('TimeSeries is not supported for bigquery at this time. TimeSeries will not run.')
-    runTimeSeries <- FALSE
-  }
-  
-  
   ## CDM source information----
   cdmSourceInformation <-
     getCdmDataSourceInformation(connection = connection,
@@ -542,23 +538,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       instantiatedCohorts,
       recordKeepingFile,
       incremental
-    )
-  }
-
-  # Cohort time series -----------------------------------------------------------------------
-  if (runTimeSeries) {
-    executeTimeSeriesDiagnostics(
-      connection,
-      cohortDatabaseSchema,
-      tempEmulationSchema,
-      cohortTable,
-      cohortDefinitionSet,
-      exportFolder,
-      incremental,
-      recordKeepingFile,
-      instantiatedCohorts,
-      databaseId,
-      minCellCount
     )
   }
   
