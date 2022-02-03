@@ -362,9 +362,10 @@ CREATE TABLE @results_schema.@index_event_breakdown (
 
 CREATE TABLE @results_schema.@metadata (
 			database_id VARCHAR NOT NULL,
+			start_time VARCHAR DEFAULT '0:0:0',
 			variable_field VARCHAR NOT NULL,
 			value_field VARCHAR,
-			PRIMARY KEY(database_id, variable_field)
+			PRIMARY KEY(database_id, start_time, variable_field)
 );
 
 --Table orphan_concept
