@@ -147,16 +147,14 @@ CREATE TABLE @results_schema.@analysis_ref (
 --Table annotation
 
 CREATE TABLE @results_schema.@annotation (
-			annotation_id BIGINT NOT NULL,
 			cohort_id BIGINT NOT NULL,
-			diagnostics_id VARCHAR NOT NULL,
 			comment VARCHAR NOT NULL,
 			attributes VARCHAR,
 			created_by VARCHAR NOT NULL,
-			created_on DATE NOT NULL,
-			modified_last_on DATE,
-			deleted_on DATE,
-			PRIMARY KEY(annotation_id)
+			created_on VARCHAR NOT NULL,
+			modified_last_on VARCHAR,
+			deleted_on VARCHAR,
+			PRIMARY KEY(cohort_id, diagnostics_id, created_by)
 );
 
 --Table cohort
