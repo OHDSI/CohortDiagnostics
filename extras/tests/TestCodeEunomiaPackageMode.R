@@ -24,7 +24,8 @@ execute(
   outputFolder = outputFolder,
   databaseId = "Eunomia",
   databaseName = "Eunomia Test",
-  databaseDescription = "This is a test data base called Eunomia"
+  databaseDescription = "This is a test data base called Eunomia", 
+  verifyDependencies = FALSE
 )
 
 CohortDiagnostics::createResultsDataModel(dataFolder = outputFolder)
