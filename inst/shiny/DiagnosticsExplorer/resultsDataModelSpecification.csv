@@ -7,6 +7,7 @@ analysis_ref,end_day,float,No,No,No,Yes
 analysis_ref,is_binary,varchar(1),Yes,No,No,Yes
 analysis_ref,missing_means_zero,varchar(1),No,No,No,Yes
 annotation,cohort_id,bigint,Yes,No,No,Yes
+annotation,session_info,varchar,Yes,No,No,Yes
 annotation,comment,varchar,Yes,No,No,Yes
 annotation,attributes,varchar,No,No,Yes,Yes
 annotation,created_by,varchar,Yes,No,No,Yes
