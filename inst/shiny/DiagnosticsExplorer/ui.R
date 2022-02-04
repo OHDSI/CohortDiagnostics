@@ -768,17 +768,50 @@ bodyTabItems <- shinydashboard::tabItems(
                         tags$p("Anonymous @ 05/03/2022, 2:12 AM: Comment2"),
                         tags$p("Anonymous @ 22/12/2022, 11:10 AM: Comment3"))),
         column(12,
-               tags$style('.rating-symbol-foreground {color:#FFD700}'),
-               tags$style('.rating-symbol-background {color:#331700}'),
-               shiny::bootstrapPage(
-                 ShinyRatingInput::ratingInput(
-                   "ratingConceptInDataSource",
-                   label = "Rating : ",
-                   dataStop = 5,
-                   dataFractions = 1
-                 ),
-                 shiny::htmlOutput("ratingOutputConceptInDataSource",inline = TRUE)
-               )),
+               column(
+                 3,
+                 shinyWidgets::pickerInput(
+                   inputId = "databasesConceptInDataSource",
+                   label = "Related Database:",
+                   width = 300,
+                   choices = database$databaseId,
+                   selected = database$databaseId[1],
+                   multiple = TRUE,
+                   inline = TRUE,
+                   choicesOpt = list(style = rep_len("color: black;", 999)),
+                   options = shinyWidgets::pickerOptions(
+                     actionsBox = TRUE,
+                     liveSearch = TRUE,
+                     size = 10,
+                     liveSearchStyle = "contains",
+                     liveSearchPlaceholder = "Type here to search",
+                     virtualScroll = 50
+                   )
+                 )
+               ),
+               column(
+                 3,
+                 shinyWidgets::pickerInput(
+                   inputId = "cohortsConceptInDataSource",
+                   label = "Related Cohorts",
+                   choices = c(""),
+                   width = 300,
+                   selected = c(""),
+                   multiple = TRUE,
+                   inline = TRUE,
+                   choicesOpt = list(style = rep_len("color: black;", 999)),
+                   options = shinyWidgets::pickerOptions(
+                     actionsBox = TRUE,
+                     liveSearch = TRUE,
+                     liveSearchStyle = "contains",
+                     size = 10,
+                     dropupAuto = TRUE,
+                     liveSearchPlaceholder = "Type here to search",
+                     virtualScroll = 50
+                   )
+                 )
+               )
+               ),
         column(
           11,
           shiny::textAreaInput(

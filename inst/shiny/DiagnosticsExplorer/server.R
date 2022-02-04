@@ -73,6 +73,13 @@ shiny::shinyServer(function(input, output, session) {
       choices = subset,
       selected = c(subset[1], subset[2])
     )
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "cohortsConceptInDataSource",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = c(subset[1], subset[2])
+    )
   })
   
   shiny::observe({
