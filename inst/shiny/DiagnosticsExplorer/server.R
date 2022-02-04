@@ -1714,6 +1714,15 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
+  output$ratingOutputConceptInDataSource <- shiny::renderText({
+    if (is.null(input$ratingConceptInDataSource) || input$ratingConceptInDataSource=="") {
+      ratingValue <- 0;
+    } else {
+      ratingValue <- input$ratingConceptInDataSource
+    }
+    paste0("(",ratingValue, "/5)");
+  })
+  
   output$includedConceptsTable <- DT::renderDataTable(expr = {
     validate(need(all(!is.null(databaseIds()), length(databaseIds()) > 0), 
                   "No data sources chosen"))

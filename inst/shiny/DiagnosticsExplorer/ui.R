@@ -756,19 +756,26 @@ bodyTabItems <- shinydashboard::tabItems(
                           )
                         ))),
       DT::dataTableOutput("includedConceptsTable"),
+      tags$br(),
       shinydashboard::box(
         title = "Comment Section",
         width = NULL,
         collapsible = TRUE,
         collapsed = FALSE,
         column(12,
+               tags$div(style = 'overflow:scroll;height:100px',
+                        tags$p("Anonymous @ 02/02/2022, 12:30 AM: Comment1"),
+                        tags$p("Anonymous @ 05/03/2022, 2:12 AM: Comment2"),
+                        tags$p("Anonymous @ 22/12/2022, 11:10 AM: Comment3"))),
+        column(12,
                shiny::bootstrapPage(
                  ShinyRatingInput::ratingInput(
-                   "RatingConceptInDataSource",
+                   "ratingConceptInDataSource",
                    label = "Rating : ",
                    dataStop = 5,
                    dataFractions = 1
-                 )
+                 ),
+                 shiny::htmlOutput("ratingOutputConceptInDataSource",inline = TRUE)
                )),
         column(
           11,
