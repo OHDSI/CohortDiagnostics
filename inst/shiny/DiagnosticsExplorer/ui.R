@@ -768,6 +768,8 @@ bodyTabItems <- shinydashboard::tabItems(
                         tags$p("Anonymous @ 05/03/2022, 2:12 AM: Comment2"),
                         tags$p("Anonymous @ 22/12/2022, 11:10 AM: Comment3"))),
         column(12,
+               tags$style('.rating-symbol-foreground {color:#FFD700}'),
+               tags$style('.rating-symbol-background {color:#331700}'),
                shiny::bootstrapPage(
                  ShinyRatingInput::ratingInput(
                    "ratingConceptInDataSource",
