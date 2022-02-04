@@ -1,3 +1,11 @@
+CohortDiagnostics 2.2.2
+=======================
+
+Bug fixes:
+
+1. Fixed syntax error causing empty description field in inclusion rule stats
+
+
 CohortDiagnostics 2.2.1
 =======================
 
