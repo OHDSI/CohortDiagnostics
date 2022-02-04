@@ -736,7 +736,8 @@ bodyTabItems <- shinydashboard::tabItems(
         shiny::radioButtons(
           inputId = "includedConceptsTableColumnFilter",
           label = "",
-          choices = c("Both", "Subjects only", "Records only"), # 
+          choices = c("Both", "Subjects only", "Records only"),
+          #
           selected = "Subjects only",
           inline = TRUE
         )
@@ -754,7 +755,38 @@ bodyTabItems <- shinydashboard::tabItems(
                             )
                           )
                         ))),
-    DT::dataTableOutput("includedConceptsTable")
+      DT::dataTableOutput("includedConceptsTable"),
+      shinydashboard::box(
+        title = "Comment Section",
+        width = NULL,
+        collapsible = TRUE,
+        collapsed = FALSE,
+        column(12,
+               shiny::bootstrapPage(
+                 ShinyRatingInput::ratingInput(
+                   "RatingConceptInDataSource",
+                   label = "Rating : ",
+                   dataStop = 5,
+                   dataFractions = 1
+                 )
+               )),
+        column(
+          11,
+          shiny::textAreaInput(
+            inputId = "commentConceptInDataSource",
+            label = "Comment : ",
+            width = NULL
+          )
+        ),
+        column(
+          1,
+          tags$br(),
+          shiny::actionButton(inputId = "postCommentConceptInDataSource",
+                              label = "POST",
+                              width = NULL,
+                              style = "margin-top: 15px; margin-bottom: 15px;")
+        )
+      )
     )
   ),
   shinydashboard::tabItem(
