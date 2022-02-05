@@ -762,71 +762,78 @@ bodyTabItems <- shinydashboard::tabItems(
         width = NULL,
         collapsible = TRUE,
         collapsed = FALSE,
-        column(12,
-               tags$div(style = 'overflow:scroll;height:100px',
-                        tags$p("Anonymous @ 02/02/2022, 12:30 AM: Comment1"),
-                        tags$p("Anonymous @ 05/03/2022, 2:12 AM: Comment2"),
-                        tags$p("Anonymous @ 22/12/2022, 11:10 AM: Comment3"))),
-        column(12,
-               column(
-                 3,
-                 shinyWidgets::pickerInput(
-                   inputId = "databasesConceptInDataSource",
-                   label = "Related Database:",
-                   width = 300,
-                   choices = database$databaseId,
-                   selected = database$databaseId[1],
-                   multiple = TRUE,
-                   inline = TRUE,
-                   choicesOpt = list(style = rep_len("color: black;", 999)),
-                   options = shinyWidgets::pickerOptions(
-                     actionsBox = TRUE,
-                     liveSearch = TRUE,
-                     size = 10,
-                     liveSearchStyle = "contains",
-                     liveSearchPlaceholder = "Type here to search",
-                     virtualScroll = 50
-                   )
-                 )
-               ),
-               column(
-                 3,
-                 shinyWidgets::pickerInput(
-                   inputId = "cohortsConceptInDataSource",
-                   label = "Related Cohorts",
-                   choices = c(""),
-                   width = 300,
-                   selected = c(""),
-                   multiple = TRUE,
-                   inline = TRUE,
-                   choicesOpt = list(style = rep_len("color: black;", 999)),
-                   options = shinyWidgets::pickerOptions(
-                     actionsBox = TRUE,
-                     liveSearch = TRUE,
-                     liveSearchStyle = "contains",
-                     size = 10,
-                     dropupAuto = TRUE,
-                     liveSearchPlaceholder = "Type here to search",
-                     virtualScroll = 50
-                   )
-                 )
-               )
-               ),
-        column(
-          11,
-          shiny::textAreaInput(
-            inputId = "commentConceptInDataSource",
-            label = "Comment : ",
-            width = NULL
-          )
+        
+        tags$div(
+          style = 'overflow:scroll;height:100px',
+          tags$p("Anonymous @ 02/02/2022, 12:30 AM: Comment1"),
+          tags$p("Anonymous @ 05/03/2022, 2:12 AM: Comment2"),
+          tags$p("Anonymous @ 22/12/2022, 11:10 AM: Comment3")
         ),
-        column(
-          1,
-          tags$br(),
-          shiny::actionButton(inputId = "postCommentConceptInDataSource",
-                              label = "POST",
-                              width = NULL,
-                              style = "margin-top: 15px; margin-bottom: 15px;")
+        
+        shinydashboard::box(
+          title = "Post Your Comment",
+          width = NULL,
+          collapsible = TRUE,
+          collapsed = TRUE,
+          column(
+            3,
+            shinyWidgets::pickerInput(
+              inputId = "databasesConceptInDataSource",
+              label = "Related Database:",
+              width = 300,
+              choices = database$databaseId,
+              selected = database$databaseId,
+              multiple = TRUE,
+              inline = TRUE,
+              choicesOpt = list(style = rep_len("color: black;", 999)),
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                size = 10,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
+              )
+            )
+          ),
+          column(
+            3,
+            shinyWidgets::pickerInput(
+              inputId = "cohortsConceptInDataSource",
+              label = "Related Cohorts",
+              choices = c(""),
+              width = 300,
+              selected = c(""),
+              multiple = TRUE,
+              inline = TRUE,
+              choicesOpt = list(style = rep_len("color: black;", 999)),
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                liveSearchStyle = "contains",
+                size = 10,
+                dropupAuto = TRUE,
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
+              )
+            )
+          ),
+          column(
+            11,
+            shiny::textAreaInput(
+              inputId = "commentConceptInDataSource",
+              label = "Comment : ",
+              width = NULL
+            )
+          ),
+          column(
+            1,
+            tags$br(),
+            shiny::actionButton(inputId = "postCommentConceptInDataSource",
+                                label = "POST",
+                                width = NULL,
+                                style = "margin-top: 15px; margin-bottom: 15px;")
+          )
         )
       )
     )

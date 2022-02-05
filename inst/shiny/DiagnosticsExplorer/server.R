@@ -78,7 +78,7 @@ shiny::shinyServer(function(input, output, session) {
       inputId = "cohortsConceptInDataSource",
       choicesOpt = list(style = rep_len("color: black;", 999)),
       choices = subset,
-      selected = c(subset[1], subset[2])
+      selected = subset
     )
   })
   
@@ -1721,14 +1721,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
-  output$ratingOutputConceptInDataSource <- shiny::renderText({
-    if (is.null(input$ratingConceptInDataSource) || input$ratingConceptInDataSource=="") {
-      ratingValue <- 0;
-    } else {
-      ratingValue <- input$ratingConceptInDataSource
-    }
-    paste0("(",ratingValue, "/5)");
-  })
+
   
   output$includedConceptsTable <- DT::renderDataTable(expr = {
     validate(need(all(!is.null(databaseIds()), length(databaseIds()) > 0), 
@@ -1912,6 +1905,21 @@ shiny::shinyServer(function(input, output, session) {
       )
     return(dataTable)
   }, server = TRUE)
+  
+  observeEvent(eventExpr = input$postCommentConceptInDataSource,handlerExpr = {
+    selectedDaignosticsId <- input$tabs
+    if (!is.null(input$cohortsConceptInDataSource)) {
+      selectedCohortIds <-
+        cohort$cohortId[cohort$compoundName  %in% input$cohortsConceptInDataSource]
+    } else {
+      selectedCohortIds <- cohort$cohortId
+    }
+    if (!is.null(input$databasesConceptInDataSource)) {
+      selectedDatabaseIds <- input$databasesConceptInDataSource
+    } else {
+      selectedDatabaseIds <- database$databaseId
+    }
+  })
   
   # orphan concepts table -------------------------------------------------------------------------
   
