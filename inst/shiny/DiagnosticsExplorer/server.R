@@ -1926,7 +1926,7 @@ shiny::shinyServer(function(input, output, session) {
     createdOn <- Sys.time()
     
     inserAnnotationResults(
-      dataSource = dataSource$connection,
+      dataSource = dataSource,
       resultsDatabaseSchema = resultsDatabaseSchema,
       daignosticsId = selectedDaignosticsId,
       cohortIds = selectedCohortIds,

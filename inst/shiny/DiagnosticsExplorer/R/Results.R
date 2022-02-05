@@ -46,28 +46,24 @@ inserAnnotationResults <- function(dataSource,
                                    createdOn,
                                    modifiedOn = NULL,
                                    deletedOn = NULL) {
+  browser()
 
-  # sql <- "INSERT INTO @resultsDatabaseSchema.annotation (cohort_id ,database_id,comment,attributes,created_by, created_on, modified_last_on, deleted_on) 
-  #         VALUES (@cohortIds,@databaseIds,@comment,@attributes, @createdBy, @createdOn, @modifiedOn, @deletedOn)"
+  sql <- "INSERT INTO @results_database_schema.annotation (cohort_id ,database_id,comment,attributes,created_by, created_on, modified_last_on, deleted_on)
+          VALUES (@cohort_ids, @database_ids,@comment,@attributes, @created_by, @created_on, @modified_last_on, @deleted_on)"
   
-  data <- data.frame(diagnostics_id = daignosticsId,
-                cohort_id = cohortIds,
-                database_id = databaseIds,
-                comment = comment,
-                attributes = "",
-                created_by = createdBy,
-                created_on = createdOn,
-                modified_last_on = "",
-                deleted_on = "")
+  
 
-  DatabaseConnector::insertTable(
-    connection = dataSource,
-    databaseSchema = resultsDatabaseSchema,
-    tableName = "annotation",
-    data = data,
-    dropTableIfExists = FALSE,
-    createTable = FALSE
-  )
+  DatabaseConnector::renderTranslateExecuteSql(connection = dataSource$connection,
+                                               sql = sql,
+                                               results_database_schema = dataSource$resultsDatabaseSchema,
+                                               cohort_ids = cohortIds,
+                                               database_ids = databaseIds,
+                                               comment = comment,
+                                               attributes = attributes,
+                                               created_by = createdBy,
+                                               created_on = createdOn,
+                                               modified_last_on = modifiedOn,
+                                               deleted_on = deletedOn)
 }
 
 getCohortCountResult <- function(dataSource,
