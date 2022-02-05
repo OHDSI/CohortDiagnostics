@@ -1914,11 +1914,28 @@ shiny::shinyServer(function(input, output, session) {
     } else {
       selectedCohortIds <- cohort$cohortId
     }
+    selectedCohortIds <- paste0(";",paste(selectedCohortIds,collapse = ";"),";")
     if (!is.null(input$databasesConceptInDataSource)) {
       selectedDatabaseIds <- input$databasesConceptInDataSource
     } else {
       selectedDatabaseIds <- database$databaseId
     }
+    selectedDatabaseIds <- paste0(";",paste(selectedDatabaseIds,collapse = ";"),";")
+    comment <- input$commentConceptInDataSource
+    createdBy <- Sys.info()[['effective_user']]
+    createdOn <- Sys.time()
+    
+    inserAnnotationResults(
+      dataSource = dataSource$connection,
+      resultsDatabaseSchema = resultsDatabaseSchema,
+      daignosticsId = selectedDaignosticsId,
+      cohortIds = selectedCohortIds,
+      databaseIds = selectedDatabaseIds,
+      comment = comment,
+      createdBy = createdBy,
+      createdOn = createdOn
+    )
+    
   })
   
   # orphan concepts table -------------------------------------------------------------------------

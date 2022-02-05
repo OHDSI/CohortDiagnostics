@@ -35,6 +35,41 @@ quoteLiterals <- function(x) {
   }
 }
 
+inserAnnotationResults <- function(dataSource,
+                                   resultsDatabaseSchema,
+                                   daignosticsId,
+                                   cohortIds,
+                                   databaseIds,
+                                   comment,
+                                   attributes = NULL,
+                                   createdBy,
+                                   createdOn,
+                                   modifiedOn = NULL,
+                                   deletedOn = NULL) {
+
+  # sql <- "INSERT INTO @resultsDatabaseSchema.annotation (cohort_id ,database_id,comment,attributes,created_by, created_on, modified_last_on, deleted_on) 
+  #         VALUES (@cohortIds,@databaseIds,@comment,@attributes, @createdBy, @createdOn, @modifiedOn, @deletedOn)"
+  
+  data <- data.frame(diagnostics_id = daignosticsId,
+                cohort_id = cohortIds,
+                database_id = databaseIds,
+                comment = comment,
+                attributes = "",
+                created_by = createdBy,
+                created_on = createdOn,
+                modified_last_on = "",
+                deleted_on = "")
+
+  DatabaseConnector::insertTable(
+    connection = dataSource,
+    databaseSchema = resultsDatabaseSchema,
+    tableName = "annotation",
+    data = data,
+    dropTableIfExists = FALSE,
+    createTable = FALSE
+  )
+}
+
 getCohortCountResult <- function(dataSource,
                                  cohortIds = NULL,
                                  databaseIds) {
