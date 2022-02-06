@@ -107,6 +107,7 @@ test_that("Cohort diagnostics in incremental mode", {
       runInclusionStatistics = TRUE,
       runBreakdownIndexEvents = TRUE,
       runCohortCharacterization = TRUE,
+      runTemporalCohortCharacterization = TRUE,
       runCohortOverlap = TRUE,
       runIncidenceRate = TRUE,
       runIncludedSourceConcepts = TRUE,
