@@ -100,6 +100,7 @@ loadResultsTable("cohort", required = TRUE)
 loadResultsTable("temporal_time_ref")
 loadResultsTable("concept_sets")
 loadResultsTable("cohort_count", required = TRUE)
+loadResultsTable("annotation", required = TRUE)
 
 for (table in c(dataModelSpecifications$tableName)) {
   #, "recommender_set"

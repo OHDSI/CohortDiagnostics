@@ -1925,16 +1925,32 @@ shiny::shinyServer(function(input, output, session) {
     createdBy <- Sys.info()[['effective_user']]
     createdOn <- Sys.time()
     
-    inserAnnotationResults(
+    result <- inserAnnotationResults(
       dataSource = dataSource,
       resultsDatabaseSchema = resultsDatabaseSchema,
-      daignosticsId = selectedDaignosticsId,
+      diagnosticsId = selectedDaignosticsId,
       cohortIds = selectedCohortIds,
       databaseIds = selectedDatabaseIds,
       comment = comment,
       createdBy = createdBy,
       createdOn = createdOn
     )
+    
+    if (result == 1) {
+      shiny::showModal(shiny::modalDialog(
+        title = "Comment Posted Successfull.",
+        paste0("Comment Posted by",createdBy,', @',createdOn),
+        easyClose = TRUE,
+        footer = shiny::modalButton("Cancel")
+      ))
+    } else {
+      shiny::showModal(shiny::modalDialog(
+        title = "Error",
+        "Error while posting",
+        easyClose = TRUE,
+        footer = shiny::modalButton("Cancel")
+      ))
+    }
     
   })
   

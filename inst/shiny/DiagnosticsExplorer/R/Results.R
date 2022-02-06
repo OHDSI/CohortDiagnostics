@@ -27,6 +27,25 @@ renderTranslateQuerySql <- function(connection, sql, ..., snakeCaseToCamelCase =
   }
 }
 
+renderTranslateInsertQuerySql <- function(connection, sql, ...) {
+  if (is(connection, "Pool")) {
+    sql <- SqlRender::render(sql, ...)
+    sql <- SqlRender::translate(sql, targetDialect = dbms)
+    
+    tryCatch({
+      data <- DatabaseConnector::dbExecute(connection, sql)
+    }, error = function(err) {
+      writeLines(sql)
+      stop(err)
+    })
+    return(data)
+  } else {
+    return(DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                      sql = sql,
+                                                      ...))
+  }
+}
+
 quoteLiterals <- function(x) {
   if (is.null(x)) {
     return("")
@@ -37,7 +56,7 @@ quoteLiterals <- function(x) {
 
 inserAnnotationResults <- function(dataSource,
                                    resultsDatabaseSchema,
-                                   daignosticsId,
+                                   diagnosticsId,
                                    cohortIds,
                                    databaseIds,
                                    comment,
@@ -46,24 +65,26 @@ inserAnnotationResults <- function(dataSource,
                                    createdOn,
                                    modifiedOn = NULL,
                                    deletedOn = NULL) {
-  browser()
-
-  sql <- "INSERT INTO @results_database_schema.annotation (cohort_id ,database_id,comment,attributes,created_by, created_on, modified_last_on, deleted_on)
-          VALUES (@cohort_ids, @database_ids,@comment,@attributes, @created_by, @created_on, @modified_last_on, @deleted_on)"
+  sql <- "INSERT 
+          INTO @results_database_schema.annotation 
+          (diagnostics_id, cohort_id ,database_id,comment,attributes,created_by, created_on, modified_last_on, deleted_on)
+          VALUES (@diagnostics_id,@cohort_ids, @database_ids, @comment, '@attributes', @created_by, @created_on, '@modified_last_on', '@deleted_on');"
   
-  
-
-  DatabaseConnector::renderTranslateExecuteSql(connection = dataSource$connection,
-                                               sql = sql,
-                                               results_database_schema = dataSource$resultsDatabaseSchema,
-                                               cohort_ids = cohortIds,
-                                               database_ids = databaseIds,
-                                               comment = comment,
-                                               attributes = attributes,
-                                               created_by = createdBy,
-                                               created_on = createdOn,
-                                               modified_last_on = modifiedOn,
-                                               deleted_on = deletedOn)
+  data <- renderTranslateInsertQuerySql(
+    connection = dataSource$connection,
+    sql = sql,
+    results_database_schema = dataSource$resultsDatabaseSchema,
+    diagnostics_id = quoteLiterals(diagnosticsId),
+    cohort_ids = quoteLiterals(cohortIds),
+    database_ids = quoteLiterals(databaseIds),
+    comment = quoteLiterals(comment),
+    attributes = attributes,
+    created_by = quoteLiterals(createdBy),
+    created_on = quoteLiterals(createdOn),
+    modified_last_on = modifiedOn,
+    deleted_on = deletedOn
+  )
+  return(data)
 }
 
 getCohortCountResult <- function(dataSource,
