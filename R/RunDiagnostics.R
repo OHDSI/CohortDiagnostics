@@ -327,11 +327,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if ('logicDescription' %in% expectedButNotObsevered) {
     cohortDefinitionSet$logicDescription <- cohortDefinitionSet$cohortName
   }
-  if ('phenotypeId' %in% expectedButNotObsevered) {
-    cohortDefinitionSet$phenotypeId <-
-      0  # phenotypeId is assigned = 0 when no phenotypeId is provided.
-    # This is required for cohort overlap
-  }
   if ('metadata' %in% expectedButNotObsevered) {
     if (length(obseveredButNotExpected) > 0) {
       writeLines(
@@ -371,10 +366,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
     dplyr::select(cohortTableColumnNamesExpected)
   writeToCsv(data = cohortDefinitionSet,
              fileName = file.path(exportFolder, "cohort.csv"))
-
-  if (!"phenotypeId" %in% colnames(cohortDefinitionSet)) {
-    cohortDefinitionSet$phenotypeId <- NA
-  }
 
   # Set up connection to server ----------------------------------------------------
   if (is.null(connection)) {

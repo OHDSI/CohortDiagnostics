@@ -78,9 +78,6 @@ makeBackwardsCompatible <- function(cohorts) {
 
 selectColumnAccordingToResultsModel <- function(data) {
   columsToInclude <- c()
-  if ("phenotypeId" %in% colnames(data)) {
-    columsToInclude <- c(columsToInclude, "phenotypeId")
-  }
   columsToInclude <- c(columsToInclude, "cohortId", "cohortName")
   if ("logicDescription" %in% colnames(data)) {
     columsToInclude <- c(columsToInclude, "logicDescription")

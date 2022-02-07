@@ -104,14 +104,14 @@ executeCohortComparisonDiagnostics <- function(connection,
   startCohortOverlap <- Sys.time()
 
   combis <- cohorts %>%
-    dplyr::select(.data$phenotypeId, .data$cohortId) %>%
+    dplyr::select(.data$cohortId) %>%
     dplyr::distinct()
 
   combis <- combis %>%
     dplyr::rename(targetCohortId = .data$cohortId) %>%
     dplyr::inner_join(combis %>%
                         dplyr::rename(comparatorCohortId = .data$cohortId),
-                      by = "phenotypeId") %>%
+                      by = "cohortId") %>%
     dplyr::filter(.data$targetCohortId < .data$comparatorCohortId) %>%
     dplyr::select(.data$targetCohortId, .data$comparatorCohortId) %>%
     dplyr::distinct()
