@@ -120,7 +120,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
-  
+
   # collect arguments that were passed to cohort diagnostics at initiation
   argumentsAtDiagnosticsInitiation <- formals(runCohortDiagnostics)
   argumentsAtDiagnosticsInitiationJson <-
@@ -141,12 +141,12 @@ runCohortDiagnostics <- function(packageName = NULL,
       temporalCovariateSettings = argumentsAtDiagnosticsInitiation$temporalCovariateSettings
     ) %>%
     RJSONIO::toJSON(digits = 23, pretty = TRUE)
-  
+
   # take package dependency snapshot
   packageDependencySnapShotJson <-
     takepackageDependencySnapshot() %>%
     RJSONIO::toJSON(digits = 23, pretty = TRUE)
-  
+
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
@@ -372,7 +372,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   cdmSourceInformation <-
     getCdmDataSourceInformation(connection = connection,
                                 cdmDatabaseSchema = cdmDatabaseSchema)
-  
+
   vocabularyVersion <- getVocabularyVersion(connection, vocabularyDatabaseSchema)
   
   if (incremental) {
@@ -401,7 +401,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     snakeCaseToCamelCase = TRUE,
     tempEmulationSchema = tempEmulationSchema
   )
-  
+
   # Database metadata ---------------------------------------------
   saveDatabaseMetaData(databaseId,
                        databaseName,
@@ -620,10 +620,10 @@ runCohortDiagnostics <- function(packageName = NULL,
     reportOverallTime = FALSE
   )
   
-  
+
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
-  
+
   packageName <- utils::packageName()
   packageVersion <- if (!methods::getPackageName() == ".GlobalEnv") {
     as.character(utils::packageVersion(packageName))
@@ -745,7 +745,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     incremental = TRUE,
     start_time = as.character(start)
   )
-  
+
   # Add all to zip file -------------------------------------------------------------------------------
   writeResultsZip(exportFolder, databaseId, vocabularyVersion, vocabularyVersionCdm)
   ParallelLogger::logInfo("Computing all diagnostics took ",
