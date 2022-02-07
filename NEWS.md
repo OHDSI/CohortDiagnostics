@@ -1,3 +1,11 @@
+CohortDiagnostics 3.0.0
+=======================
+
+Changes:
+
+1. Legacy time series has been removed. It was not working, and not used..
+
+
 CohortDiagnostics 2.2.1
 =======================
 

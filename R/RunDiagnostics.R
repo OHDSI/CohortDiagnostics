@@ -57,7 +57,6 @@
 #' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
-#' @param runTimeSeries               Generate and export the cohort prevalence  rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap? Overlaps are checked within cohortIds
 #'                                    that have the same phenotype ID sourced from the CohortSetReference or
 #'                                    cohortToCreateFile.
@@ -106,7 +105,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runVisitContext = TRUE,
                                  runBreakdownIndexEvents = TRUE,
                                  runIncidenceRate = TRUE,
-                                 runTimeSeries = FALSE,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
                                  covariateSettings = createDefaultCovariateSettings(),
@@ -134,7 +132,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       runVisitContext = argumentsAtDiagnosticsInitiation$runVisitContext,
       runBreakdownIndexEvents = argumentsAtDiagnosticsInitiation$runBreakdownIndexEvents,
       runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,
-      runTimeSeries = argumentsAtDiagnosticsInitiation$runTimeSeries,
       runCohortOverlap = argumentsAtDiagnosticsInitiation$runCohortOverlap,
       runCohortCharacterization = argumentsAtDiagnosticsInitiation$runCohortCharacterization,
       runTemporalCohortCharacterization = argumentsAtDiagnosticsInitiation$runTemporalCohortCharacterization,
@@ -371,13 +368,6 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
-  if (all(runTimeSeries,
-          connection@dbms %in% c('bigquery'))) {
-    warning('TimeSeries is not supported for bigquery at this time. TimeSeries will not run.')
-    runTimeSeries <- FALSE
-  }
-  
-  
   ## CDM source information----
   cdmSourceInformation <-
     getCdmDataSourceInformation(connection = connection,
@@ -542,23 +532,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       instantiatedCohorts,
       recordKeepingFile,
       incremental
-    )
-  }
-
-  # Cohort time series -----------------------------------------------------------------------
-  if (runTimeSeries) {
-    executeTimeSeriesDiagnostics(
-      connection,
-      cohortDatabaseSchema,
-      tempEmulationSchema,
-      cohortTable,
-      cohortDefinitionSet,
-      exportFolder,
-      incremental,
-      recordKeepingFile,
-      instantiatedCohorts,
-      databaseId,
-      minCellCount
     )
   }
   
@@ -863,7 +836,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runVisitContext = TRUE,
                                runBreakdownIndexEvents = TRUE,
                                runIncidenceRate = TRUE,
-                               runTimeSeries = FALSE,
                                runCohortOverlap = TRUE,
                                runCohortCharacterization = TRUE,
                                covariateSettings = createDefaultCovariateSettings(),
@@ -904,7 +876,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
                        runVisitContext = runTimeDistributions,
                        runBreakdownIndexEvents = runBreakdownIndexEvents,
                        runIncidenceRate = runIncidenceRate,
-                       runTimeSeries = runTimeSeries,
                        runCohortOverlap = runCohortOverlap,
                        runCohortCharacterization = runCohortCharacterization,
                        covariateSettings = covariateSettings,
