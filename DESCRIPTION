@@ -2,7 +2,7 @@ Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Cohorts
 Version: 3.0.0
-Date: 2021-11-13
+Date: 2022-02-03
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
     person("Martijn", "Schuemie", email = "schuemie@ohdsi.org", role = c("aut")),
@@ -20,7 +20,6 @@ Depends:
 Imports:
   Andromeda,
   checkmate,
-  clock,
   digest,
   dplyr (>= 1.0.0),
   methods,

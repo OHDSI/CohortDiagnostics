@@ -129,8 +129,12 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
   }
 
   inclusion <- fetchStats(cohortInclusionFile)
-  inclusion$description <- as.character(inclusion$description)
-  inclusion$description <- inclusion$description[is.na(inclusion$description)] <- ""
+  if ('description' %in% names(inclusion)) {
+    inclusion$description <- as.character(inclusion$description)
+    inclusion$description[is.na(inclusion$description)] <- ""
+  } else {
+    inclusion$description <- ""
+  }
 
   summaryStats <- fetchStats(cohortSummaryStatsFile)
   inclusionStats <- fetchStats(cohortInclusionStatsFile)

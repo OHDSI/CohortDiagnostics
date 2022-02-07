@@ -2,21 +2,23 @@ CohortDiagnostics 3.0.0
 =======================
 Changes:
 
-1. Removed runCohortDiagnostics function - this has now been completely replaced with executeDiagnostics
+1. Time series diagnostics removed
 
-2. Removed `loadCohortsFromPackage` function as this is now replaced with
+3. Removed runCohortDiagnostics function - this has now been completely replaced with executeDiagnostics
+
+4. Removed `loadCohortsFromPackage` function as this is now replaced with
 `CohortGenerator::getCohortDefinitionSet`
 
-3. Removed instantiate cohort functionality, `instantiateCohortSet` should now be used with the `CohortGenerator` package
+5. Removed instantiate cohort functionality, `instantiateCohortSet` should now be used with the `CohortGenerator` package
 
-4. Removed usage of Rdata files in DiagnosticsExplorer shiny app and function to create them `preMergeDiagnosticsFiles`
+6. Removed usage of Rdata files in DiagnosticsExplorer shiny app and function to create them `preMergeDiagnosticsFiles`
 
-5. Added function `createMergedResultsFile` which outputs a shiny app
+7. Added function `createMergedResultsFile` which outputs a shiny app
 
-6. Added support for any `SqlRender/DatabaseConnector` compatible database (note, 
+8. Added support for any `SqlRender/DatabaseConnector` compatible database (note, 
 this is experimental. Postgres and sqlite are the only backends recommended for use in production environments)
 
-7. Improved metadata collection and storage from runs of cohort diagnostics.
+9. Improved metadata collection and storage from runs of cohort diagnostics.
 
 CohortDiagnostics 2.2.1
 =======================
