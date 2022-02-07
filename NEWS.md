@@ -20,6 +20,14 @@ this is experimental. Postgres and sqlite are the only backends recommended for 
 
 9. Improved metadata collection and storage from runs of cohort diagnostics.
 
+CohortDiagnostics 2.2.2
+=======================
+
+Bug fixes:
+
+1. Fixed syntax error causing empty description field in inclusion rule stats
+
+
 CohortDiagnostics 2.2.1
 =======================
 

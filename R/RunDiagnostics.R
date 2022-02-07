@@ -640,7 +640,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
   )
 
 
-
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
 
