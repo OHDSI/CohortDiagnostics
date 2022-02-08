@@ -497,6 +497,8 @@ getInclusionStats <- function(connection,
         stats <- stats %>%
           dplyr::rename(cohortId = .data$cohortDefinitionId)
       }
+      colnames(stats) <-
+        SqlRender::camelCaseToSnakeCase(colnames(stats))
 
       stats <- makeDataExportable(
         x = stats,
