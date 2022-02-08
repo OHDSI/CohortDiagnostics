@@ -77,8 +77,6 @@ test_that("Cohort diagnostics in incremental mode", {
       temporalCovariateSettings = temporalCovariateSettings
     )
   )
-  expect_lt(secondTime[1], firstTime[1])
-
   # generate sqlite file
   sqliteDbPath <- tempfile(fileext = ".sqlite")
   createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = sqliteDbPath)
