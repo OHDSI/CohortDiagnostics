@@ -116,3 +116,5 @@ if (dbms == "sqlite") {
     }
   }, testthat::teardown_env())
 }
+
+cohortDefinitionSet <- loadTestCohorts(cohortIds)

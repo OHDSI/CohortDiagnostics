@@ -1,10 +1,5 @@
 test_that("Cohort diagnostics in incremental mode", {
   skip_if(skipCdmTests, 'cdm settings not configured')
-  cohortDefinitionSet <- CohortGenerator::getCohortDefinitionSet(
-    packageName = "CohortDiagnostics",
-    settingsFileName = "settings/CohortsToCreateForTesting.csv",
-    cohortFileNameValue = c("cohortId")
-  ) %>% dplyr::filter(cohortId %in% cohortIds)
 
   cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
   # Next create the tables on the database

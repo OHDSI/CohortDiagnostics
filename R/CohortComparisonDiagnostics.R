@@ -33,7 +33,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
     cohortTable = cohortTable,
     cohortId = targetCohortId
   )) {
-    warning(
+    ParallelLogger::logInfo(
       "- Target cohort with ID ",
       targetCohortId,
       " appears to be empty. Was it instantiated? Skipping overlap computation."
@@ -107,11 +107,13 @@ executeCohortComparisonDiagnostics <- function(connection,
     dplyr::select(.data$cohortId) %>%
     dplyr::distinct()
 
+  # Select cross product of all ids
+  combis$dummyId <- 1
   combis <- combis %>%
     dplyr::rename(targetCohortId = .data$cohortId) %>%
     dplyr::inner_join(combis %>%
                         dplyr::rename(comparatorCohortId = .data$cohortId),
-                      by = "cohortId") %>%
+                      by = c("dummyId")) %>%
     dplyr::filter(.data$targetCohortId < .data$comparatorCohortId) %>%
     dplyr::select(.data$targetCohortId, .data$comparatorCohortId) %>%
     dplyr::distinct()
