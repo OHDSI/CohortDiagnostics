@@ -849,8 +849,19 @@ runConceptSetDiagnostics <- function(connection,
             ),
           by = "uniqueConceptSetId"
         ) %>%
-        dplyr::select(-.data$uniqueConceptSetId)
-      
+        dplyr::select(-.data$uniqueConceptSetId) %>% 
+        dplyr::select(.data$cohortId,
+                      .data$conceptSetId,
+                      .data$conceptId,
+                      .data$conceptCount,
+                      .data$conceptSubjects
+                      ) %>% 
+        dplyr::group_by(.data$cohortId,
+                        .data$conceptSetId,
+                        .data$conceptId) %>% 
+        dplyr::summarise(conceptCount = max(.data$conceptCount),
+                         conceptSubjects = max(.data$conceptSubjects)) %>% 
+        dplyr::ungroup()
       data <- makeDataExportable(
         x = data,
         tableName = "orphan_concept",
