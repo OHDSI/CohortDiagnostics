@@ -150,6 +150,13 @@ exportConceptInformation <- function(connection = NULL,
           snakeCaseToCamelCase = TRUE
         )
       if (nrow(data) > 0) {
+        data <- makeDataExportable(
+          x = data,
+          tableName = vocabularyTable,
+          minCellCount = minCellCount,
+          databaseId = databaseId
+        )
+        
         writeToCsv(
           data = data,
           fileName = file.path(exportFolder, paste(vocabularyTable, "csv", sep = ".")),
@@ -172,6 +179,14 @@ exportConceptInformation <- function(connection = NULL,
           snakeCaseToCamelCase = TRUE
         )
       if (nrow(data) > 0) {
+        
+        data <- makeDataExportable(
+          x = data,
+          tableName = vocabularyTable,
+          minCellCount = minCellCount,
+          databaseId = databaseId
+        )
+        
         writeToCsv(
           data = data,
           fileName = file.path(exportFolder, paste(vocabularyTable, "csv", sep = ".")),
