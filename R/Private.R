@@ -123,7 +123,7 @@ makeDataExportable <- function(x,
                                minCellCount = 5,
                                databaseId = NULL) {
   ParallelLogger::logTrace(paste0(" - Ensuring data is exportable: ", tableName))
-  if (nrow(x) == 0) {
+  if (is.null(x) || nrow(x) == 0) {
     ParallelLogger::logTrace("  - Object has no data.")
   }
   
