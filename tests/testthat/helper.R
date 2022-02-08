@@ -19,23 +19,15 @@ with_dbc_connection <- function(connection, code) {
 }
 
 # Create a cohort definition set from test cohorts
-loadTestCohorts <- function(cohortIds = NULL) {
+loadTestCohortDefinitionSet <- function(cohortIds = NULL) {
   creationFile <- file.path("cohorts", "CohortsToCreate.csv")
-  cohortDefinitionSet <- read.csv(creationFile)
-
+  cohortDefinitionSet <- CohortGenerator::getCohortDefinitionSet(settingsFileName = creationFile,
+                                                                 sqlFolder = "cohorts",
+                                                                 jsonFolder = "cohorts",
+                                                                 cohortFileNameValue = c("cohortId"))
   if (!is.null(cohortIds)) {
     cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
-
-  cohortDefinitionSet$sql <- mapply(function(cohortId) {
-    fp <- file.path("cohorts", paste0(cohortId, ".sql"))
-    SqlRender::readSql(fp)
-  }, cohortDefinitionSet$cohortId)
-
-  cohortDefinitionSet$json <- mapply(function(cohortId) {
-    fp <- file.path("cohorts", paste0(cohortId, ".json"))
-    SqlRender::readSql(fp)
-  }, cohortDefinitionSet$cohortId)
 
   cohortDefinitionSet
 }
