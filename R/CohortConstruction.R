@@ -62,12 +62,12 @@ makeBackwardsCompatible <- function(cohorts) {
         dplyr::mutate(cohortId = .data$id)
     }
   }
-  if (!"webApiCohortId" %in% colnames(cohorts) &&
-      "atlasId" %in% colnames(cohorts)) {
+  if (!"atlasId" %in% colnames(cohorts) &
+    "webApiCohortId" %in% colnames(cohorts)) {
     cohorts <- cohorts %>%
-      dplyr::mutate(webApiCohortId = .data$atlasId)
+      dplyr::mutate(atlasId = .data$webApiCohortId)
   }
-  if (!"cohortName" %in% colnames(cohorts) &&
+  if (!"cohortName" %in% colnames(cohorts) &
       "atlasName" %in% colnames(cohorts)) {
     cohorts <- cohorts %>%
       dplyr::mutate(cohortName = .data$atlasName)
