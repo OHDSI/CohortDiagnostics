@@ -372,6 +372,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
       )
     cohortResult$cohortDefinitionId <- cohortId
     result <- dplyr::bind_rows(result, cohortResult)
+    names(result) <- camelCaseToSnakeCase(names(result))
   }
   delta <- Sys.time() - start
   writeLines(paste(
