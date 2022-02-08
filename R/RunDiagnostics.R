@@ -349,8 +349,12 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
-  cohortDefinitionSet <- cohortDefinitionSet %>%
-    dplyr::select(cohortTableColumnNamesExpected)
+  cohortDefinitionSet <- makeDataExportable(
+    x = cohortDefinitionSet,
+    tableName = "cohort",
+    minCellCount = minCellCount,
+    databaseId = databaseId
+  )
   writeToCsv(data = cohortDefinitionSet,
              fileName = file.path(exportFolder, "cohort.csv"))
   
@@ -738,6 +742,12 @@ runCohortDiagnostics <- function(packageName = NULL,
     startTime = paste0("TM_", as.character(start)),
     variableField = variableField,
     valueField = valueField
+  )
+  metadata <- makeDataExportable(
+    x = metadata,
+    tableName = "metadata",
+    minCellCount = minCellCount,
+    databaseId = databaseId
   )
   writeToCsv(
     data = metadata,

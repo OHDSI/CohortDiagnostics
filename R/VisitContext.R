@@ -129,17 +129,18 @@ executeVisitContextDiagnostics <- function(connection,
         cohortIds = subset$cohortId,
         conceptIdTable = "#concept_ids"
       )
-      if (nrow(data) > 0) {
-        data <- data %>%
-          dplyr::mutate(databaseId = !!databaseId)
-        data <- enforceMinCellValue(data, "subjects", minCellCount)
-        writeToCsv(
-          data = data,
-          fileName = file.path(exportFolder, "visit_context.csv"),
-          incremental = incremental,
-          cohortId = subset$cohortId
-        )
-      }
+      data <- makeDataExportable(
+        x = data,
+        tableName = "visit_context",
+        minCellCount = minCellCount,
+        databaseId = databaseId
+      )
+      writeToCsv(
+        data = data,
+        fileName = file.path(exportFolder, "visit_context.csv"),
+        incremental = incremental,
+        cohortId = subset$cohortId
+      )
       recordTasksDone(
         cohortId = subset$cohortId,
         task = "runVisitContext",

@@ -110,23 +110,18 @@ computeCohortCounts <- function(connection,
     cohortTable = cohortTable,
     cohortIds = cohorts$cohortId
   )
-
+  
   if (is.null(cohortCounts)) {
     stop("Cohort table is empty")
   }
-
-  cohortCounts <- cohortCounts %>%
-    dplyr::mutate(databaseId = !!databaseId)
-  if (nrow(cohortCounts) > 0) {
-    cohortCounts <-
-      enforceMinCellValue(data = cohortCounts,
-                          fieldName = "cohortEntries",
-                          minValues = minCellCount)
-    cohortCounts <-
-      enforceMinCellValue(data = cohortCounts,
-                          fieldName = "cohortSubjects",
-                          minValues = minCellCount)
-  }
+  
+  cohortCounts <- makeDataExportable(
+    x = cohortCounts,
+    tableName = "cohort_count",
+    minCellCount = minCellCount,
+    databaseId = databaseId
+  )
+  
   writeToCsv(
     data = cohortCounts,
     fileName = file.path(exportFolder, "cohort_count.csv"),

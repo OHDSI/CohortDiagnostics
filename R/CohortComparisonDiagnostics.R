@@ -186,26 +186,7 @@ executeCohortComparisonDiagnostics <- function(connection,
         swapColumnContents(revData, "tBeforeCSubjects", "cBeforeTSubjects")
       revData <-
         swapColumnContents(revData, "tInCSubjects", "cInTSubjects")
-      data <- dplyr::bind_rows(data, revData) %>%
-        dplyr::mutate(databaseId = !!databaseId)
-      data <-
-        enforceMinCellValue(data, "eitherSubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "bothSubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "tOnlySubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "cOnlySubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "tBeforeCSubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "cBeforeTSubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "sameDaySubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "tInCSubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "cInTSubjects", minCellCount)
+      data <- dplyr::bind_rows(data, revData)
 
       data <- data %>%
         tidyr::replace_na(replace =
@@ -220,6 +201,13 @@ executeCohortComparisonDiagnostics <- function(connection,
                               tInCSubjects = 0,
                               cInTSubjects = 0
                             ))
+      
+      data <- makeDataExportable(
+        x = data,
+        tableName = "cohort_overlap",
+        minCellCount = minCellCount,
+        databaseId = databaseId
+      )
 
       writeToCsv(
         data = data,

@@ -110,16 +110,18 @@ executeTimeDistributionDiagnostics <- function(connection,
         cdmVersion = cdmVersion,
         cohortIds = subset$cohortId
       )
-      if (nrow(data) > 0) {
-        data <- data %>%
-          dplyr::mutate(databaseId = !!databaseId)
-        writeToCsv(
-          data = data,
-          fileName = file.path(exportFolder, "time_distribution.csv"),
-          incremental = incremental,
-          cohortId = subset$cohortId
-        )
-      }
+      data <- makeDataExportable(
+        x = data,
+        tableName = "time_distribution",
+        minCellCount = minCellCount,
+        databaseId = databaseId
+      )
+      writeToCsv(
+        data = data,
+        fileName = file.path(exportFolder, "time_distribution.csv"),
+        incremental = incremental,
+        cohortId = subset$cohortId
+      )
       recordTasksDone(
         cohortId = subset$cohortId,
         task = "runTimeDistributions",
