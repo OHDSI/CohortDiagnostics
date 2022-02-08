@@ -370,8 +370,10 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
         summaryStats = filter(summaryStats, .data$cohortDefinitionId == cohortId),
         simplify = simplify
       )
-    cohortResult$cohortDefinitionId <- cohortId
-    result <- dplyr::bind_rows(result, cohortResult)
+    if (!is.null(cohortResult)) {
+      cohortResult$cohortDefinitionId <- cohortId
+      result <- dplyr::bind_rows(result, cohortResult)
+    }
   }
   delta <- Sys.time() - start
   writeLines(paste(
@@ -379,7 +381,11 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     signif(delta, 3),
     attr(delta, "units")
   ))
-  return(result)
+  if (nrow(result) > 0) {
+    return(result)
+  } else {
+    return(NULL)
+  }
 }
 
 processInclusionStats <- function(inclusion,
@@ -389,7 +395,7 @@ processInclusionStats <- function(inclusion,
                                   summaryStats) {
   if (simplify) {
     if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {
-      return(tidyr::tibble())
+      return(NULL)
     }
     
     result <- inclusion %>%
