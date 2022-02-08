@@ -670,7 +670,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     #16
     "vocabularyVersionCdm",
     #17
-    "vocabularyVersion",
+    # "vocabularyVersion",
     #18
     "observationPeriodMinDate",
     #19
@@ -725,7 +725,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     #16
     as.character(nullToEmpty(cdmSourceInformation$vocabularyVersion)),
     #17
-    as.character(vocabularyVersion),
+    # as.character(vocabularyVersion),
     #18
     as.character(observationPeriodDateRange$observationPeriodMinDate),
     #19
@@ -737,6 +737,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     #22
     as.character(observationPeriodDateRange$personDays) #24
   )
+  browser()
   metadata <- dplyr::tibble(
     databaseId = as.character(!!databaseId),
     startTime = paste0("TM_", as.character(start)),
