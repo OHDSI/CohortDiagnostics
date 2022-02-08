@@ -737,7 +737,6 @@ runCohortDiagnostics <- function(packageName = NULL,
     #22
     as.character(observationPeriodDateRange$personDays) #24
   )
-  browser()
   metadata <- dplyr::tibble(
     databaseId = as.character(!!databaseId),
     startTime = paste0("TM_", as.character(start)),
