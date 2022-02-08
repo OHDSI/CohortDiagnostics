@@ -108,6 +108,7 @@
 #' }
 #'
 #' @importFrom CohortGenerator getCohortTableNames
+#' @importFrom tidyr any_of
 #' @export
 executeDiagnostics <- function(cohortDefinitionSet,
                                exportFolder,
@@ -351,7 +352,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
 
   cohortDefinitionSet <- cohortDefinitionSet %>%
-    dplyr::select(cohortTableColumnNamesExpected)
+    dplyr::select(tidyr::any_of(cohortTableColumnNamesExpected))
   writeToCsv(data = cohortDefinitionSet,
              fileName = file.path(exportFolder, "cohort.csv"))
 
