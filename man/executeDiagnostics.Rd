@@ -17,7 +17,6 @@ executeDiagnostics(
   cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortIds = NULL,
-  inclusionStatisticsFolder = NULL,
   databaseName = databaseId,
   databaseDescription = databaseId,
   cdmVersion = 5,
@@ -81,9 +80,6 @@ schema name, for example 'vocabulary.dbo'.}
 
 \item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
 diagnostics to.}
-
-\item{inclusionStatisticsFolder}{The folder where the inclusion rule statistics are stored. Can be
-left NULL if \code{runInclusionStatistics = FALSE}.}
 
 \item{databaseName}{The full name of the database. If NULL, defaults to databaseId.}
 

@@ -224,7 +224,6 @@ getInclusionStats <- function(connection,
                               cohortTableNames,
                               incremental,
                               instantiatedCohorts,
-                              inclusionStatisticsFolder,
                               minCellCount,
                               recordKeepingFile) {
   ParallelLogger::logInfo("Fetching inclusion statistics from files")
@@ -244,23 +243,20 @@ getInclusionStats <- function(connection,
     ))
   }
   if (nrow(subset) > 0) {
-    if (is.null(inclusionStatisticsFolder)) {
-      ParallelLogger::logInfo("Exporting inclusion rules with CohortGenerator")
-      CohortGenerator::insertInclusionRuleNames(connection = connection,
-                                                cohortDefinitionSet = subset,
-                                                cohortDatabaseSchema = cohortDatabaseSchema,
-                                                cohortInclusionTable = cohortTableNames$cohortInclusionTable)
-      # This part will change in future version, with a patch to CohortGenerator that
-      # supports the usage of exporting tables without writing to disk
-      inclusionStatisticsFolder <- tempfile("CdCohortStatisticsFolder")
-      on.exit(unlink(inclusionStatisticsFolder), add = TRUE)
-      CohortGenerator::exportCohortStatsTables(connection = connection,
-                                               cohortDatabaseSchema = cohortDatabaseSchema,
-                                               cohortTableNames = cohortTableNames,
-                                               cohortStatisticsFolder = inclusionStatisticsFolder,
-                                               incremental = FALSE) # Note use of FALSE to always genrate stats here
-    }
-
+    ParallelLogger::logInfo("Exporting inclusion rules with CohortGenerator")
+    CohortGenerator::insertInclusionRuleNames(connection = connection,
+                                              cohortDefinitionSet = subset,
+                                              cohortDatabaseSchema = cohortDatabaseSchema,
+                                              cohortInclusionTable = cohortTableNames$cohortInclusionTable)
+    # This part will change in future version, with a patch to CohortGenerator that
+    # supports the usage of exporting tables without writing to disk
+    inclusionStatisticsFolder <- tempfile("CdCohortStatisticsFolder")
+    on.exit(unlink(inclusionStatisticsFolder), add = TRUE)
+    CohortGenerator::exportCohortStatsTables(connection = connection,
+                                             cohortDatabaseSchema = cohortDatabaseSchema,
+                                             cohortTableNames = cohortTableNames,
+                                             cohortStatisticsFolder = inclusionStatisticsFolder,
+                                             incremental = FALSE) # Note use of FALSE to always genrate stats here
     stats <-
         getInclusionStatisticsFromFiles(
           cohortIds = subset$cohortId,

@@ -53,7 +53,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
     cohortTable = cohortTable,
     cohortId = comparatorCohortId
   )) {
-    warning(
+    ParallelLogger::logInfo(
       "- Comparator cohort with ID ",
       comparatorCohortId,
       " appears to be empty. Was it instantiated? Skipping overlap computation."

@@ -36,8 +36,6 @@
 #'
 #'
 #' @template CohortSetReference
-#' @param inclusionStatisticsFolder   The folder where the inclusion rule statistics are stored. Can be
-#'                                    left NULL if \code{runInclusionStatistics = FALSE}.
 #' @param exportFolder                The folder where the output will be exported to. If this folder
 #'                                    does not exist it will be created.
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
@@ -123,7 +121,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
                                vocabularyDatabaseSchema = cdmDatabaseSchema,
                                cohortIds = NULL,
-                               inclusionStatisticsFolder = NULL,
                                databaseName = databaseId,
                                databaseDescription = databaseId,
                                cdmVersion = 5,
@@ -178,10 +175,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
-
-  if (!is.null(inclusionStatisticsFolder)) {
-    inclusionStatisticsFolder <- normalizePath(inclusionStatisticsFolder, mustWork = FALSE)
-  }
 
   start <- Sys.time()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
@@ -273,12 +266,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                        name = incrementalFolder,
                        errorMessage = errorMessage)
   }
-  if (isTRUE(runInclusionStatistics) & !is.null(inclusionStatisticsFolder)) {
-    errorMessage <-
-      createIfNotExist(type = "folder",
-                       name = inclusionStatisticsFolder,
-                       errorMessage = errorMessage)
-  }
+
   checkmate::reportAssertions(collection = errorMessage)
 
   if (!is.null(cohortIds)) {
@@ -457,7 +445,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
                       cohortTableNames,
                       incremental,
                       instantiatedCohorts,
-                      inclusionStatisticsFolder,
                       minCellCount,
                       recordKeepingFile)
   }
