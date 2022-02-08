@@ -262,7 +262,7 @@ computeIncidenceRates <- function(connection,
     data <- dplyr::bind_rows(data)
     cohortDefinitionSet <- makeDataExportable(
       x = cohortDefinitionSet,
-      tableName = "cohort",
+      tableName = "incidence_rate",
       minCellCount = minCellCount,
       databaseId = databaseId
     )
@@ -273,12 +273,6 @@ computeIncidenceRates <- function(connection,
                             "incidenceRate",
                             1000 * minCellCount / data$personYears)
     }
-    data <- makeDataExportable(
-      x = data,
-      tableName = "incidence_rate",
-      minCellCount = minCellCount,
-      databaseId = databaseId
-    )
     
     writeToCsv(
       data = data,
