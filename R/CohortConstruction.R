@@ -283,8 +283,6 @@ getInclusionStats <- function(connection,
         recordKeepingFile = recordKeepingFile,
         incremental = incremental
       )
-    } else {
-      warning("Cohort Inclusion statistics file not found. Inclusion Statistics not run.")
     }
   }
 }
