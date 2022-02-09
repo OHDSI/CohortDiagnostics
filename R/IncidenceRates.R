@@ -260,7 +260,7 @@ computeIncidenceRates <- function(connection,
     data <-
       lapply(split(subset, subset$cohortId), runIncidenceRate)
     data <- dplyr::bind_rows(data)
-    cohortDefinitionSet <- makeDataExportable(
+    data <- makeDataExportable(
       x = data,
       tableName = "incidence_rate",
       minCellCount = minCellCount,
