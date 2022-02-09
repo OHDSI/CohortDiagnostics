@@ -30,35 +30,6 @@ createConceptTable <- function(connection, tempEmulationSchema, cohorts) {
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-
-  referentConceptIdToInsert <- dplyr::tibble()
-  if ('referentConceptId' %in% colnames(cohorts)) {
-    referentConceptIdToInsert <-
-      dplyr::bind_rows(referentConceptIdToInsert,
-                       cohorts %>%
-                         dplyr::transmute(conceptId = as.double(.data$referentConceptId))) %>%
-        dplyr::distinct()
-  }
-  if (nrow(referentConceptIdToInsert) > 0) {
-    ParallelLogger::logInfo(
-      sprintf(
-        "Inserting %s referent concept IDs into the concept ID table. This may take a while.",
-        nrow(referentConceptIdToInsert)
-      )
-    )
-    DatabaseConnector::insertTable(
-      connection = connection,
-      tableName = "#concept_ids",
-      data = referentConceptIdToInsert,
-      dropTableIfExists = FALSE,
-      createTable = FALSE,
-      progressBar = TRUE,
-      tempTable = TRUE,
-      tempEmulationSchema = tempEmulationSchema,
-      camelCaseToSnakeCase = TRUE
-    )
-    ParallelLogger::logTrace("Done inserting")
-  }
 }
 
 exportConceptInformation <- function(connection = NULL,

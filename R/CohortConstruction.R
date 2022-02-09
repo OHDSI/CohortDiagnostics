@@ -27,16 +27,6 @@ checkCohortReference <- function(cohortReference, errorMessage = NULL) {
     col.names = "named",
     add = errorMessage
   )
-  if ("referentConceptId" %in% names(cohortReference)) {
-    checkmate::assertIntegerish(
-      x = cohortReference$referentConceptId,
-      lower = 0,
-      any.missing = FALSE,
-      unique = FALSE,
-      null.ok = FALSE,
-      add = errorMessage
-    )
-  }
   checkmate::assertNames(
     x = names(cohortReference),
     must.include = c(
@@ -227,9 +217,6 @@ selectColumnAccordingToResultsModel <- function(data) {
   columsToInclude <- c(columsToInclude, "cohortId", "cohortName")
   if ("logicDescription" %in% colnames(data)) {
     columsToInclude <- c(columsToInclude, "logicDescription")
-  }
-  if ("referentConceptId" %in% colnames(data)) {
-    columsToInclude <- c(columsToInclude, "referentConceptId")
   }
   if ("cohortType" %in% colnames(data)) {
     columsToInclude <- c(columsToInclude, "cohortType")
