@@ -530,6 +530,20 @@ runConceptSetDiagnostics <- function(connection,
                           .data$conceptId) %>%
           dplyr::distinct()
         
+        counts <- counts %>%
+          dplyr::group_by(
+            .data$database_id,
+            .data$cohort_id,
+            .data$concept_set_id,
+            .data$concept_id,
+            .data$source_concept_id
+          ) %>%
+          dplyr::summarise(
+            conceptCount = max(.data$conceptCount),
+            conceptSubjects = max(.data$conceptSubjects)
+          ) %>%
+          dplyr::ungroup()
+        
         counts <- makeDataExportable(
           x = counts,
           tableName = "included_source_concept",
