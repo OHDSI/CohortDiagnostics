@@ -36,11 +36,7 @@ exportConceptInformation <- function(connection = NULL,
                                      cdmDatabaseSchema,
                                      tempEmulationSchema,
                                      conceptIdTable,
-                                     vocabularyTableNames = getResultsDataModelSpecifications() %>% 
-                                       dplyr::filter(.data$isVocabularyTable == "Yes") %>% 
-                                       dplyr::pull(.data$tableName) %>% 
-                                       unique() %>% 
-                                       snakeCaseToCamelCase(),
+                                     vocabularyTableNames = getDefaultVocabularyTableNames(),
                                      incremental,
                                      exportFolder) {
   ParallelLogger::logInfo("Retrieving concept information")
