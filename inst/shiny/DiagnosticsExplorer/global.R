@@ -30,7 +30,7 @@ if (defaultDatabaseMode) {
   appInformationText <- paste0(appInformationText, " local file")
 }
 appInformationText <- paste0(appInformationText, 
-                             " mode. Application was last initated on ", 
+                             " mode. Application was last initiated on ", 
                              lubridate::now(tzone = "EST"),
                              " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/")
 
