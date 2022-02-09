@@ -511,7 +511,7 @@ runConceptSetDiagnostics <- function(connection,
             snakeCaseToCamelCase = TRUE
           ) %>%
           tidyr::tibble()
-        
+        browser()
         counts <- counts  %>%
           dplyr::rename(uniqueConceptSetId = .data$conceptSetId) %>%
           dplyr::inner_join(
@@ -532,11 +532,11 @@ runConceptSetDiagnostics <- function(connection,
         
         counts <- counts %>%
           dplyr::group_by(
-            .data$database_id,
-            .data$cohort_id,
-            .data$concept_set_id,
-            .data$concept_id,
-            .data$source_concept_id
+            .data$databaseId,
+            .data$cohortId,
+            .data$conceptSetId,
+            .data$conceptId,
+            .data$sourceConceptId
           ) %>%
           dplyr::summarise(
             conceptCount = max(.data$conceptCount),
