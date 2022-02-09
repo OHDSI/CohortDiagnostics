@@ -148,7 +148,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental")) {
 
-    # collect arguments that were passed to cohort diagnostics at initiation
+  # collect arguments that were passed to cohort diagnostics at initiation
   argumentsAtDiagnosticsInitiation <- formals(executeDiagnostics)
   argumentsAtDiagnosticsInitiationJson <-
     list(
@@ -352,9 +352,14 @@ executeDiagnostics <- function(cohortDefinitionSet,
       ))
     }
   }
+  
+  cohortDefinitionSet <- makeDataExportable(
+    x = cohortDefinitionSet,
+    tableName = "cohort",
+    minCellCount = minCellCount,
+    databaseId = NULL
+  )
 
-  cohortDefinitionSet <- cohortDefinitionSet %>%
-    dplyr::select(tidyr::any_of(cohortTableColumnNamesExpected))
   writeToCsv(data = cohortDefinitionSet,
              fileName = file.path(exportFolder, "cohort.csv"))
 
@@ -666,17 +671,15 @@ executeDiagnostics <- function(cohortDefinitionSet,
     #16
     "vocabularyVersionCdm",
     #17
-    "vocabularyVersion",
-    #18
     "observationPeriodMinDate",
-    #19
+    #18
     "observationPeriodMaxDate",
-    #20
+    #19
     "personsInDatasource",
-    #21
+    #20
     "recordsInDatasource",
-    #22
-    "personDaysInDatasource" #24
+    #21
+    "personDaysInDatasource" #22
   )
   valueField <-   c(
     as.character(Sys.timezone()),
@@ -721,23 +724,27 @@ executeDiagnostics <- function(cohortDefinitionSet,
     #16
     as.character(nullToEmpty(cdmSourceInformation$vocabularyVersion)),
     #17
-    as.character(vocabularyVersion),
-    #18
     as.character(observationPeriodDateRange$observationPeriodMinDate),
-    #19
+    #18
     as.character(observationPeriodDateRange$observationPeriodMaxDate),
-    #20
+    #19
     as.character(observationPeriodDateRange$persons),
-    #21
+    #20
     as.character(observationPeriodDateRange$records),
-    #22
-    as.character(observationPeriodDateRange$personDays) #24
+    #21
+    as.character(observationPeriodDateRange$personDays) #22
   )
   metadata <- dplyr::tibble(
     databaseId = as.character(!!databaseId),
     startTime = paste0("TM_", as.character(start)),
     variableField = variableField,
     valueField = valueField
+  )
+  metadata <- makeDataExportable(
+    x = metadata,
+    tableName = "metadata",
+    minCellCount = minCellCount,
+    databaseId = databaseId
   )
   writeToCsv(
     data = metadata,

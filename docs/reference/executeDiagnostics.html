@@ -92,18 +92,17 @@ Alternatively, a covariate setting object may be created using the above as an e
   <span class="va">cohortDefinitionSet</span>,
   <span class="va">exportFolder</span>,
   <span class="va">databaseId</span>,
+  <span class="va">cohortDatabaseSchema</span>,
+  databaseName <span class="op">=</span> <span class="va">databaseId</span>,
+  databaseDescription <span class="op">=</span> <span class="va">databaseId</span>,
   connectionDetails <span class="op">=</span> <span class="cn">NULL</span>,
   connection <span class="op">=</span> <span class="cn">NULL</span>,
   <span class="va">cdmDatabaseSchema</span>,
   tempEmulationSchema <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"sqlRenderTempEmulationSchema"</span><span class="op">)</span>,
-  <span class="va">cohortDatabaseSchema</span>,
   cohortTable <span class="op">=</span> <span class="st">"cohort"</span>,
   cohortTableNames <span class="op">=</span> <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortTableNames.html" class="external-link">getCohortTableNames</a></span><span class="op">(</span>cohortTable <span class="op">=</span> <span class="va">cohortTable</span><span class="op">)</span>,
   vocabularyDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,
   cohortIds <span class="op">=</span> <span class="cn">NULL</span>,
-  inclusionStatisticsFolder <span class="op">=</span> <span class="cn">NULL</span>,
-  databaseName <span class="op">=</span> <span class="va">databaseId</span>,
-  databaseDescription <span class="op">=</span> <span class="va">databaseId</span>,
   cdmVersion <span class="op">=</span> <span class="fl">5</span>,
   runInclusionStatistics <span class="op">=</span> <span class="cn">TRUE</span>,
   runIncludedSourceConcepts <span class="op">=</span> <span class="cn">TRUE</span>,
@@ -112,7 +111,6 @@ Alternatively, a covariate setting object may be created using the above as an e
   runVisitContext <span class="op">=</span> <span class="cn">TRUE</span>,
   runBreakdownIndexEvents <span class="op">=</span> <span class="cn">TRUE</span>,
   runIncidenceRate <span class="op">=</span> <span class="cn">TRUE</span>,
-  runTimeSeries <span class="op">=</span> <span class="cn">FALSE</span>,
   runCohortOverlap <span class="op">=</span> <span class="cn">TRUE</span>,
   runCohortCharacterization <span class="op">=</span> <span class="cn">TRUE</span>,
   covariateSettings <span class="op">=</span> <span class="fu">createDefaultCovariateSettings</span><span class="op">(</span><span class="op">)</span>,
@@ -135,6 +133,14 @@ Alternatively, a covariate setting object may be created using the above as an e
 does not exist it will be created.</p></dd>
 <dt>databaseId</dt>
 <dd><p>A short string for identifying the database (e.g. 'Synpuf').</p></dd>
+<dt>cohortDatabaseSchema</dt>
+<dd><p>Schema name where your cohort table resides. Note that for SQL Server,
+this should include both the database and schema name, for example
+'scratch.dbo'.</p></dd>
+<dt>databaseName</dt>
+<dd><p>The full name of the database. If NULL, defaults to databaseId.</p></dd>
+<dt>databaseDescription</dt>
+<dd><p>A short description (several sentences) of the database. If NULL, defaults to databaseId.</p></dd>
 <dt>connectionDetails</dt>
 <dd><p>An object of type <code>connectionDetails</code> as created using the
 <code><a href="https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html" class="external-link">createConnectionDetails</a></code> function in the
@@ -153,10 +159,6 @@ schema name, for example 'cdm_data.dbo'.</p></dd>
 <dt>tempEmulationSchema</dt>
 <dd><p>Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
 tables, provide a schema with write privileges where temp tables can be created.</p></dd>
-<dt>cohortDatabaseSchema</dt>
-<dd><p>Schema name where your cohort table resides. Note that for SQL Server,
-this should include both the database and schema name, for example
-'scratch.dbo'.</p></dd>
 <dt>cohortTable</dt>
 <dd><p>Name of the cohort table.</p></dd>
 <dt>cohortTableNames</dt>
@@ -169,13 +171,6 @@ schema name, for example 'vocabulary.dbo'.</p></dd>
 <dt>cohortIds</dt>
 <dd><p>Optionally, provide a subset of cohort IDs to restrict the
 diagnostics to.</p></dd>
-<dt>inclusionStatisticsFolder</dt>
-<dd><p>The folder where the inclusion rule statistics are stored. Can be
-left NULL if <code>runInclusionStatistics = FALSE</code>.</p></dd>
-<dt>databaseName</dt>
-<dd><p>The full name of the database. If NULL, defaults to databaseId.</p></dd>
-<dt>databaseDescription</dt>
-<dd><p>A short description (several sentences) of the database. If NULL, defaults to databaseId.</p></dd>
 <dt>cdmVersion</dt>
 <dd><p>The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)</p></dd>
 <dt>runInclusionStatistics</dt>
@@ -192,8 +187,6 @@ left NULL if <code>runInclusionStatistics = FALSE</code>.</p></dd>
 <dd><p>Generate and export the breakdown of index events?</p></dd>
 <dt>runIncidenceRate</dt>
 <dd><p>Generate and export the cohort incidence  rates?</p></dd>
-<dt>runTimeSeries</dt>
-<dd><p>Generate and export the cohort prevalence  rates?</p></dd>
 <dt>runCohortOverlap</dt>
 <dd><p>Generate and export the cohort overlap? Overlaps are checked within cohortIds
 that have the same phenotype ID sourced from the CohortSetReference or
@@ -293,7 +286,7 @@ meaning of the cohort definition</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
       </footer></div>

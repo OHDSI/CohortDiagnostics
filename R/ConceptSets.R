@@ -343,14 +343,21 @@ runConceptSetDiagnostics <- function(connection,
     )
     return(NULL)
   }
-  
   # Save concept set metadata ---------------------------------------
+  conceptSetsExport <- makeDataExportable(
+    x = conceptSets %>%
+      dplyr::select(-.data$uniqueConceptSetId) %>% 
+      dplyr::distinct(),
+    tableName = "concept_sets",
+    minCellCount = minCellCount,
+    databaseId = databaseId
+  )
+  
   writeToCsv(
-    data = conceptSets %>%
-      dplyr::select(-.data$uniqueConceptSetId),
+    data = conceptSetsExport,
     fileName = file.path(exportFolder, "concept_sets.csv"),
     incremental = incremental,
-    cohortId = conceptSets$cohortId
+    cohortId = conceptSetsExport$cohortId
   )
   
   uniqueConceptSets <-
@@ -523,19 +530,34 @@ runConceptSetDiagnostics <- function(connection,
                           .data$conceptId) %>%
           dplyr::distinct()
         
-        if (nrow(counts) > 0) {
-          counts$databaseId <- databaseId
-          counts <-
-            enforceMinCellValue(counts, "conceptSubjects", minCellCount)
-          counts <-
-            enforceMinCellValue(counts, "conceptCount", minCellCount)
-        }
+        counts <- counts %>%
+          dplyr::group_by(
+            .data$databaseId,
+            .data$cohortId,
+            .data$conceptSetId,
+            .data$conceptId,
+            .data$sourceConceptId
+          ) %>%
+          dplyr::summarise(
+            conceptCount = max(.data$conceptCount),
+            conceptSubjects = max(.data$conceptSubjects)
+          ) %>%
+          dplyr::ungroup()
+        
+        counts <- makeDataExportable(
+          x = counts,
+          tableName = "included_source_concept",
+          minCellCount = minCellCount,
+          databaseId = databaseId
+        )
+
         writeToCsv(
           counts,
           file.path(exportFolder, "included_source_concept.csv"),
           incremental = incremental,
           cohortId = subsetIncluded$cohortId
         )
+        
         recordTasksDone(
           cohortId = subsetIncluded$cohortId,
           task = "runIncludedSourceConcepts",
@@ -737,6 +759,14 @@ runConceptSetDiagnostics <- function(connection,
             enforceMinCellValue(data, "subjectCount", minCellCount)
         }
       }
+      
+      data <- makeDataExportable(
+        x = data,
+        tableName = "index_event_breakdown",
+        minCellCount = minCellCount,
+        databaseId = databaseId
+      )
+      
       writeToCsv(
         data = data,
         fileName = file.path(exportFolder, "index_event_breakdown.csv"),
@@ -833,15 +863,25 @@ runConceptSetDiagnostics <- function(connection,
             ),
           by = "uniqueConceptSetId"
         ) %>%
-        dplyr::select(-.data$uniqueConceptSetId) %>%
-        dplyr::mutate(databaseId = !!databaseId) %>%
-        dplyr::relocate(.data$cohortId, .data$conceptSetId, .data$databaseId)
-      
-      if (nrow(data) > 0) {
-        data <- enforceMinCellValue(data, "conceptCount", minCellCount)
-        data <-
-          enforceMinCellValue(data, "conceptSubjects", minCellCount)
-      }
+        dplyr::select(-.data$uniqueConceptSetId) %>% 
+        dplyr::select(.data$cohortId,
+                      .data$conceptSetId,
+                      .data$conceptId,
+                      .data$conceptCount,
+                      .data$conceptSubjects
+                      ) %>% 
+        dplyr::group_by(.data$cohortId,
+                        .data$conceptSetId,
+                        .data$conceptId) %>% 
+        dplyr::summarise(conceptCount = max(.data$conceptCount),
+                         conceptSubjects = max(.data$conceptSubjects)) %>% 
+        dplyr::ungroup()
+      data <- makeDataExportable(
+        x = data,
+        tableName = "orphan_concept",
+        minCellCount = minCellCount,
+        databaseId = databaseId
+      )
       
       writeToCsv(
         data,
@@ -894,9 +934,14 @@ runConceptSetDiagnostics <- function(connection,
                       by = "uniqueConceptSetId") %>%
     dplyr::select(.data$cohortId,
                   .data$conceptSetId,
-                  .data$conceptId) %>%
-    dplyr::mutate(databaseId = !!databaseId) %>%
-    dplyr::distinct()
+                  .data$conceptId)
+  
+  resolvedConceptIds <- makeDataExportable(
+    x = resolvedConceptIds,
+    tableName = "resolved_concepts",
+    minCellCount = minCellCount,
+    databaseId = databaseId
+  )
   
   writeToCsv(
     resolvedConceptIds,

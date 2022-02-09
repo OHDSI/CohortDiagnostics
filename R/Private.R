@@ -115,3 +115,157 @@ nullToEmpty <- function(x) {
   x[is.null(x)] <- ""
   return(x)
 }
+
+
+
+makeDataExportable <- function(x,
+                               tableName,
+                               minCellCount = 5,
+                               databaseId = NULL) {
+  ParallelLogger::logTrace(paste0(" - Ensuring data is exportable: ", tableName))
+  if (is.null(x) || nrow(x) == 0) {
+    ParallelLogger::logTrace("  - Object has no data.")
+  }
+  
+  resultsDataModel <- getResultsDataModelSpecifications()
+  
+  if (!is.null(databaseId)) {
+    x <- x %>%
+      dplyr::mutate(databaseId = !!databaseId)
+  }
+  
+  fieldsInDataModel <- resultsDataModel %>%
+    dplyr::filter(.data$tableName == !!tableName) %>%
+    dplyr::pull(.data$fieldName) %>%
+    snakeCaseToCamelCase() %>%
+    unique()
+  
+  requiredFieldsInDataModel <- resultsDataModel %>%
+    dplyr::filter(.data$tableName == !!tableName) %>%
+    dplyr::filter(.data$isRequired == "Yes") %>%
+    dplyr::pull(.data$fieldName) %>%
+    snakeCaseToCamelCase() %>%
+    unique()
+  
+  primaryKeyInDataModel <- resultsDataModel %>%
+    dplyr::filter(.data$tableName == !!tableName) %>%
+    dplyr::filter(.data$primaryKey == "Yes") %>%
+    dplyr::pull(.data$fieldName) %>%
+    snakeCaseToCamelCase() %>%
+    unique()
+  
+  columnsToApplyMinCellValue <- resultsDataModel %>%
+    dplyr::filter(.data$tableName == !!tableName) %>%
+    dplyr::filter(.data$minCellCount == 'Yes') %>%
+    dplyr::pull(.data$fieldName) %>%
+    snakeCaseToCamelCase() %>%
+    unique()
+  
+  ParallelLogger::logTrace(paste0(
+    "  - Found in table ",
+    tableName,
+    " the following fields: ",
+    paste0(names(x), collapse = ", ")
+  ))
+  
+  presentInBoth <-
+    intersect(fieldsInDataModel, names(x))
+  presentInDataOnly <-
+    setdiff(names(x), fieldsInDataModel)
+  missingRequiredFields <-
+    setdiff(requiredFieldsInDataModel, presentInBoth)
+  
+  if (length(presentInDataOnly) > 0) {
+    ParallelLogger::logInfo(
+      " - Unexpected fields found in table ",
+      tableName,
+      " - ",
+      paste(presentInDataOnly, collapse = ", "),
+      ". These fields will be ignored."
+    )
+  }
+  
+  if (length(missingRequiredFields) > 0) {
+    stop(
+      " - Cannot find required field ",
+      tableName,
+      " - ",
+      paste(missingRequiredFields, collapse = ", "),
+      "."
+    )
+  }
+  
+  if (nrow(x) >  nrow(x %>% dplyr::select(dplyr::all_of(primaryKeyInDataModel)) %>% dplyr::distinct())) {
+    stop(
+      " - duplicates found in primary key for table ",
+      tableName,
+      ". The primary keys are: ",
+      paste0(primaryKeyInDataModel, collapse = ", ")
+    )
+  }
+  ## because Andromeda is not handling date consistently -
+  # https://github.com/OHDSI/Andromeda/issues/28
+  ## temporary solution is to collect data into R memory using dplyr::collect()
+  
+  x <- x %>%
+    dplyr::collect()
+  
+  #limit to fields in data model
+  x <- x %>%
+    dplyr::select(dplyr::all_of(presentInBoth))
+  
+  # enforce minimum cell count value
+  x <- x %>%
+    enforceMinCellValueInDataframe(columnNames = columnsToApplyMinCellValue,
+                                   minCellCount = minCellCount)
+  return(x)
+}
+
+enforceMinCellValueInDataframe <- function(data,
+                                           columnNames,
+                                           minCellCount = 5) {
+  if (is.null(columnNames)) {
+    return(data)
+  }
+  presentInBoth <- intersect(columnNames, colnames(data))
+  if (length(presentInBoth) == 0) {
+    return(data)
+  }
+  for (i in (1:length(presentInBoth))) {
+    if (presentInBoth[[i]] %in% colnames(data)) {
+      data <-
+        enforceMinCellValue(data = data,
+                            fieldName = presentInBoth[[i]],
+                            minValues = minCellCount)
+    }
+  }
+  return(data)
+}
+
+# private function - not exported
+snakeCaseToCamelCase <- function(string) {
+  string <- tolower(string)
+  for (letter in letters) {
+    string <-
+      gsub(paste("_", letter, sep = ""), toupper(letter), string)
+  }
+  string <- gsub("_([0-9])", "\\1", string)
+  return(string)
+}
+
+# private function - not exported
+camelCaseToSnakeCase <- function(string) {
+  string <- gsub("([A-Z])", "_\\1", string)
+  string <- tolower(string)
+  string <- gsub("([a-z])([0-9])", "\\1_\\2", string)
+  return(string)
+}
+
+# private function - not exported
+titleCaseToCamelCase <- function(string) {
+  string <- stringr::str_replace_all(string = string,
+                                     pattern = ' ',
+                                     replacement = '')
+  substr(string, 1, 1) <- tolower(substr(string, 1, 1))
+  return(string)
+}

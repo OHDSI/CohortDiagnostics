@@ -1,4 +1,4 @@
-# remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy')
+remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy', ref = "develop")
 
 library(CohortDiagnostics)
 library('SkeletonCohortDiagnosticsStudy')
@@ -8,7 +8,7 @@ outputLocation <- "D:\\temp"
 
 connectionSpecifications <- cdmSources %>%
   dplyr::filter(sequence == 1) %>%
-  dplyr::filter(database == 'jmdc')
+  dplyr::filter(database == 'truven_mdcd')
 
 dbms <- connectionSpecifications$dbms # example: 'redshift'
 port <- connectionSpecifications$port # example: 2234
@@ -47,7 +47,6 @@ outputFolder <-
 dir.create(path = outputFolder,
            showWarnings = FALSE,
            recursive = TRUE)
-
 execute(
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = cdmDatabaseSchema,

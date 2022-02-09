@@ -1,5 +1,5 @@
-pandoc: 2.14.0.3
-pkgdown: 2.0.1
+pandoc: 2.11.4
+pkgdown: 2.0.2
 pkgdown_sha: ~
 articles:
   CreatingAStudyPackage: CreatingAStudyPackage.html
@@ -7,5 +7,5 @@ articles:
   RunningCohortDiagnostics: RunningCohortDiagnostics.html
   ViewingResultsUsingDiagnosticsExplorer: ViewingResultsUsingDiagnosticsExplorer.html
   WhatIsCohortDiagnostics: WhatIsCohortDiagnostics.html
-last_built: 2022-02-02T22:54Z
+last_built: 2022-02-09T20:47Z
 

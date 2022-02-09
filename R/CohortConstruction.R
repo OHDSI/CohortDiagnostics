@@ -27,16 +27,6 @@ checkCohortReference <- function(cohortReference, errorMessage = NULL) {
     col.names = "named",
     add = errorMessage
   )
-  if ("referentConceptId" %in% names(cohortReference)) {
-    checkmate::assertIntegerish(
-      x = cohortReference$referentConceptId,
-      lower = 0,
-      any.missing = FALSE,
-      unique = FALSE,
-      null.ok = FALSE,
-      add = errorMessage
-    )
-  }
   checkmate::assertNames(
     x = names(cohortReference),
     must.include = c(
@@ -80,9 +70,6 @@ selectColumnAccordingToResultsModel <- function(data) {
   columsToInclude <- c("cohortId", "cohortName")
   if ("logicDescription" %in% colnames(data)) {
     columsToInclude <- c(columsToInclude, "logicDescription")
-  }
-  if ("referentConceptId" %in% colnames(data)) {
-    columsToInclude <- c(columsToInclude, "referentConceptId")
   }
   if ("cohortType" %in% colnames(data)) {
     columsToInclude <- c(columsToInclude, "cohortType")
@@ -145,8 +132,10 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
         summaryStats = filter(summaryStats, .data$cohortDefinitionId == cohortId),
         simplify = simplify
       )
-    cohortResult$cohortDefinitionId <- cohortId
-    result <- dplyr::bind_rows(result, cohortResult)
+    if (!is.null(cohortResult)) {
+      cohortResult$cohortDefinitionId <- cohortId
+      result <- dplyr::bind_rows(result, cohortResult)
+    }
   }
   delta <- Sys.time() - start
   writeLines(paste(
@@ -154,7 +143,11 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     signif(delta, 3),
     attr(delta, "units")
   ))
-  return(result)
+  if (nrow(result) > 0) {
+    return(result)
+  } else {
+    return(NULL)
+  }
 }
 
 processInclusionStats <- function(inclusion,
@@ -164,7 +157,7 @@ processInclusionStats <- function(inclusion,
                                   summaryStats) {
   if (simplify) {
     if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {
-      return(tidyr::tibble())
+      return(NULL)
     }
     
     result <- inclusion %>%
@@ -257,45 +250,32 @@ getInclusionStats <- function(connection,
                                              cohortStatisticsFolder = inclusionStatisticsFolder,
                                              incremental = FALSE) # Note use of FALSE to always genrate stats here
     stats <-
-        getInclusionStatisticsFromFiles(
-          cohortIds = subset$cohortId,
-          folder = inclusionStatisticsFolder,
-          simplify = TRUE
-        )
+      getInclusionStatisticsFromFiles(
+        cohortIds = subset$cohortId,
+        folder = inclusionStatisticsFolder,
+        simplify = TRUE
+      )
 
     if (!is.null(stats)) {
-      if (nrow(stats) > 0) {
-        stats <- stats %>%
-          dplyr::mutate(databaseId = !!databaseId)
-        stats <-
-          enforceMinCellValue(data = stats,
-                              fieldName = "meetSubjects",
-                              minValues = minCellCount)
-        stats <-
-          enforceMinCellValue(data = stats,
-                              fieldName = "gainSubjects",
-                              minValues = minCellCount)
-        stats <-
-          enforceMinCellValue(data = stats,
-                              fieldName = "totalSubjects",
-                              minValues = minCellCount)
-        stats <-
-          enforceMinCellValue(data = stats,
-                              fieldName = "remainSubjects",
-                              minValues = minCellCount)
-      }
       if ("cohortDefinitionId" %in% (colnames(stats))) {
         stats <- stats %>%
           dplyr::rename(cohortId = .data$cohortDefinitionId)
       }
-      colnames(stats) <-
-        SqlRender::camelCaseToSnakeCase(colnames(stats))
+
+      stats <- makeDataExportable(
+        x = stats,
+        tableName = "inclusion_rule_stats",
+        databaseId = databaseId,
+        minCellCount = minCellCount
+      )
+
       writeToCsv(
         data = stats,
         fileName = file.path(exportFolder, "inclusion_rule_stats.csv"),
         incremental = incremental,
         cohortId = subset$cohortId
       )
+
       recordTasksDone(
         cohortId = subset$cohortId,
         task = "runInclusionStatistics",
@@ -303,8 +283,6 @@ getInclusionStats <- function(connection,
         recordKeepingFile = recordKeepingFile,
         incremental = incremental
       )
-    } else {
-      warning("Cohort Inclusion statistics file not found. Inclusion Statistics not run.")
     }
   }
 }
