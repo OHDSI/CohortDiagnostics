@@ -1,4 +1,4 @@
-remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy', ref = "develop")
+remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy')
 
 library(CohortDiagnostics)
 library('SkeletonCohortDiagnosticsStudy')
@@ -47,11 +47,6 @@ outputFolder <-
 dir.create(path = outputFolder,
            showWarnings = FALSE,
            recursive = TRUE)
-undebug(CohortDiagnostics::runCohortDiagnostics)
-undebug(execute)
-undebug(CohortDiagnostics:::makeDataExportable)
-undebug(CohortDiagnostics:::writeToCsv)
-undebug(CohortDiagnostics:::saveIncremental)
 execute(
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = cdmDatabaseSchema,
