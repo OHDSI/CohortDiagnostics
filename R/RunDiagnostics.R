@@ -671,17 +671,15 @@ executeDiagnostics <- function(cohortDefinitionSet,
     #16
     "vocabularyVersionCdm",
     #17
-    # "vocabularyVersion",
-    #18
     "observationPeriodMinDate",
-    #19
+    #18
     "observationPeriodMaxDate",
-    #20
+    #19
     "personsInDatasource",
-    #21
+    #20
     "recordsInDatasource",
-    #22
-    "personDaysInDatasource" #24
+    #21
+    "personDaysInDatasource" #22
   )
   valueField <-   c(
     as.character(Sys.timezone()),
@@ -726,17 +724,15 @@ executeDiagnostics <- function(cohortDefinitionSet,
     #16
     as.character(nullToEmpty(cdmSourceInformation$vocabularyVersion)),
     #17
-    # as.character(vocabularyVersion),
-    #18
     as.character(observationPeriodDateRange$observationPeriodMinDate),
-    #19
+    #18
     as.character(observationPeriodDateRange$observationPeriodMaxDate),
-    #20
+    #19
     as.character(observationPeriodDateRange$persons),
-    #21
+    #20
     as.character(observationPeriodDateRange$records),
-    #22
-    as.character(observationPeriodDateRange$personDays) #24
+    #21
+    as.character(observationPeriodDateRange$personDays) #22
   )
   metadata <- dplyr::tibble(
     databaseId = as.character(!!databaseId),
