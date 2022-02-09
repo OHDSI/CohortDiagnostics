@@ -359,6 +359,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     minCellCount = minCellCount,
     databaseId = NULL
   )
+
   writeToCsv(data = cohortDefinitionSet,
              fileName = file.path(exportFolder, "cohort.csv"))
 
