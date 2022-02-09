@@ -49,11 +49,7 @@ test_that("Create schema", {
 
 test_that("Results upload", {
   skip_if(skipResultsDm | skipCdmTests, 'results data model test server not set')
-  cohortDefinitionSet <- loadCohortsFromPackage(
-    packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-    cohortIds = cohortIds
-  )
+
   cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
   # Next create the tables on the database
   CohortGenerator::createCohortTables(connectionDetails = connectionDetails,
