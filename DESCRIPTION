@@ -46,6 +46,7 @@ Suggests:
   RColorBrewer,
   remotes,
   rmarkdown,
+  ROhdsiWebApi (>= 1.2.0),
   RSQLite (>= 2.2.1),
   scales,
   shiny,
@@ -53,8 +54,7 @@ Suggests:
   shinyWidgets,
   testthat,
   withr,
-  zip,
-  ROhdsiWebApi (>= 1.2.0)
+  zip
 Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,

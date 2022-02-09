@@ -113,17 +113,17 @@
 executeDiagnostics <- function(cohortDefinitionSet,
                                exportFolder,
                                databaseId,
+                               cohortDatabaseSchema,
+                               databaseName = databaseId,
+                               databaseDescription = databaseId,
                                connectionDetails = NULL,
                                connection = NULL,
                                cdmDatabaseSchema,
                                tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-                               cohortDatabaseSchema,
                                cohortTable = "cohort",
                                cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
                                vocabularyDatabaseSchema = cdmDatabaseSchema,
                                cohortIds = NULL,
-                               databaseName = databaseId,
-                               databaseDescription = databaseId,
                                cdmVersion = 5,
                                runInclusionStatistics = TRUE,
                                runIncludedSourceConcepts = TRUE,
@@ -179,6 +179,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   start <- Sys.time()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
+
+  databaseId <- as.character(databaseId)
 
   if (any(is.null(databaseName), is.na(databaseName))) {
     databaseName <- databaseId

@@ -107,16 +107,10 @@ executeCohortComparisonDiagnostics <- function(connection,
     dplyr::select(.data$cohortId) %>%
     dplyr::distinct()
 
-  # Select cross product of all ids
-  combis$dummyId <- 1
+  # Select cross product of all cohort ids
   combis <- combis %>%
     dplyr::rename(targetCohortId = .data$cohortId) %>%
-    dplyr::inner_join(combis %>%
-                        dplyr::rename(comparatorCohortId = .data$cohortId),
-                      by = c("dummyId")) %>%
-    dplyr::filter(.data$targetCohortId < .data$comparatorCohortId) %>%
-    dplyr::select(.data$targetCohortId, .data$comparatorCohortId) %>%
-    dplyr::distinct()
+    tidyr::crossing(dplyr::rename(combis, comparatorCohortId = .data$cohortId))
 
   if (incremental) {
     combis <- combis %>%
