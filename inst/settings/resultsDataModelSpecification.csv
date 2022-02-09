@@ -6,7 +6,6 @@ analysis_ref,start_day,float,No,No,No,Yes
 analysis_ref,end_day,float,No,No,No,Yes
 analysis_ref,is_binary,varchar(1),Yes,No,No,Yes
 analysis_ref,missing_means_zero,varchar(1),No,No,No,Yes
-cohort,phenotype_id,bigint,No,No,Yes,Yes
 cohort,cohort_id,bigint,Yes,Yes,No,Yes
 cohort,atlas_id,bigint,No,No,Yes,Yes
 cohort,cohort_name,varchar,Yes,No,No,Yes
@@ -130,10 +129,6 @@ orphan_concept,database_id,varchar,Yes,Yes,No,Yes
 orphan_concept,concept_id,int,Yes,Yes,No,Yes
 orphan_concept,concept_count,float,Yes,No,No,Yes
 orphan_concept,concept_subjects,float,Yes,No,No,Yes
-phenotype_description,phenotype_id,bigint,Yes,Yes,No,Yes
-phenotype_description,phenotype_name,varchar,Yes,No,No,Yes
-phenotype_description,clinical_description,varchar,No,No,No,Yes
-phenotype_description,metadata,varchar,No,No,No,Yes
 relationship,relationship_id,varchar(20),Yes,Yes,No,Yes
 relationship,relationship_name,varchar(255),Yes,No,No,Yes
 relationship,is_hierarchical,varchar(1),Yes,No,No,Yes

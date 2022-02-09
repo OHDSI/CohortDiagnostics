@@ -30,7 +30,7 @@ getResultsDataModelSpecifications <- function() {
 }
 
 fixTableMetadataForBackwardCompatibility <- function(table, tableName) {
-  if (tableName %in% c("cohort", "phenotype_description")) {
+  if (tableName %in% c("cohort")) {
     if (!'metadata' %in% colnames(table)) {
       data <- list()
       for (i in (1:nrow(table))) {

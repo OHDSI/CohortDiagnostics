@@ -9,7 +9,7 @@ source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 
-appVersionNum <- "Version: 2.2.1"
+appVersionNum <- "Version: 3.0.0"
 appInformationText <- paste("Powered by OHDSI Cohort Diagnostics application", paste0(appVersionNum, "."))
 appInformationText <- paste0(appInformationText, 
                              "Application was last initated on ",

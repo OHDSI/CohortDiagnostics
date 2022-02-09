@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.0</span>
       </span>
     </div>
 
@@ -73,10 +73,20 @@
     </div>
 
     <div class="section level2">
+<h2 class="page-header" data-toc-text="3.0.0" id="cohortdiagnostics-300">CohortDiagnostics 3.0.0<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-300"></a></h2>
+<p>Changes:</p>
+<ol style="list-style-type: decimal"><li><p>Removed runCohortDiagnostics function - this has now been completely replaced with executeDiagnostics</p></li>
+<li><p>Removed <code>loadCohortsFromPackage</code> function as this is now replaced with <code><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortDefinitionSet.html" class="external-link">CohortGenerator::getCohortDefinitionSet</a></code></p></li>
+<li><p>Removed usage of Rdata files in DiagnosticsExplorer shiny app and function to create them <code>preMergeDiagnosticsFiles</code></p></li>
+<li><p>Added function <code>createMergedResultsFile</code> which outputs a shiny app</p></li>
+<li><p>Added support for any <code>SqlRender/DatabaseConnector</code> compatible database (note, this is experimental. Postgres and sqlite are the only backends recommended for use in production environments)</p></li>
+</ol></div>
+    <div class="section level2">
 <h2 class="page-header" data-toc-text="2.2.1" id="cohortdiagnostics-221">CohortDiagnostics 2.2.1<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-221"></a></h2>
 <p>Bug fixes:</p>
 <ol style="list-style-type: decimal"><li><p>Added new lines in NEWS.md to fix package site.</p></li>
 <li><p>Updated vignette to fix minor issues</p></li>
+<li><p>Cohorts with zero counts are now stored in results and display in shiny app</p></li>
 </ol></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="2.2.0" id="cohortdiagnostics-220">CohortDiagnostics 2.2.0<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-220"></a></h2>

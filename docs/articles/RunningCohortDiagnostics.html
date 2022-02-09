@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.0</span>
       </span>
     </div>
 
@@ -96,7 +96,7 @@
       <h1 data-toc-skip>Running Cohort Diagnostics</h1>
                         <h4 data-toc-skip class="author">Gowtham Rao and James P. Gilbert</h4>
             
-            <h4 data-toc-skip class="date">2022-01-24</h4>
+            <h4 data-toc-skip class="date">2022-02-02</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/RunningCohortDiagnostics.Rmd" class="external-link"><code>vignettes/RunningCohortDiagnostics.Rmd</code></a></small>
       <div class="hidden name"><code>RunningCohortDiagnostics.Rmd</code></div>
@@ -149,7 +149,7 @@
 <p>For example, the cohort diagnostics package includes a set of cohort sql and json to run on the Eunomia data set.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ohdsi.github.io/CohortDiagnostics" class="external-link">CohortDiagnostics</a></span><span class="op">)</span>
-<span class="va">cohortDefinitionSet</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/loadCohortsFromPackage.html">loadCohortsFromPackage</a></span><span class="op">(</span>packageName <span class="op">=</span> <span class="st">"CohortDiagnostics"</span>,
+<span class="va">cohortDefinitionSet</span> <span class="op">&lt;-</span> <span class="fu">loadCohortsFromPackage</span><span class="op">(</span>packageName <span class="op">=</span> <span class="st">"CohortDiagnostics"</span>,
                                               cohortToCreateFile <span class="op">=</span> <span class="st">"settings/CohortsToCreateForTesting.csv"</span><span class="op">)</span></code></pre></div>
 </div>
 <div class="section level2">
@@ -230,12 +230,12 @@
 </h1>
 <p>Once the diagnostics have completed, a zip file will have been created in the specified export folder. This zip file can be shared between sites, as it does not contain patient-identifiable information. When unzipped, the zip file will contain several .csv files that maybe easily audited. Note that cell counts smaller than 5 have been removed, as specified using the <code>minCellCount</code> argument, to ensure non-identifiability.</p>
 <div class="section level2">
-<h2 id="creating-a-pre-merged-file">Creating a pre merged file<a class="anchor" aria-label="anchor" href="#creating-a-pre-merged-file"></a>
+<h2 id="creating-an-sqlite-db-file">Creating an sqlite db file<a class="anchor" aria-label="anchor" href="#creating-an-sqlite-db-file"></a>
 </h2>
 <p>Assuming you completed the steps described above for one or more databases, you should now have a set of zip files, one per database. Make sure to place all zip files in a single folder.</p>
-<p>Optionally, we can pre-merge the zip files, so we can view results in the Shiny app:</p>
+<p>Optionally, we can pre-merge the zip files into an sqlite database so we can view results in the Shiny app:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/preMergeDiagnosticsFiles.html">preMergeDiagnosticsFiles</a></span><span class="op">(</span><span class="va">exportFolder</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="../reference/createMergedResultsFile.html">createMergedResultsFile</a></span><span class="op">(</span><span class="va">exportFolder</span><span class="op">)</span></code></pre></div>
 <p>This file can be used in the shiny app to explore results. See the vignette “Viewing results using Diagnostics Explorer” for more details.</p>
 </div>
 </div>

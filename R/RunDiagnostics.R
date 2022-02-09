@@ -14,11 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Run cohort diagnostics
+#' Execute cohort diagnostics
 #'
 #' @description
 #' Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
-#' \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function. Assumes the cohorts have already been instantiated.
+#' Assumes the cohorts have already been instantiated. with the CohortGenerator package
 #'
 #' Characterization:
 #' If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
@@ -31,15 +31,11 @@
 #' @template VocabularyDatabaseSchema
 #' @template CohortDatabaseSchema
 #' @template TempEmulationSchema
-#' @template OracleTempSchema
 #'
 #' @template CohortTable
 #'
-#' @template CohortSetSpecs
 #'
 #' @template CohortSetReference
-#' @param inclusionStatisticsFolder   The folder where the inclusion rule statistics are stored. Can be
-#'                                    left NULL if \code{runInclusionStatistics = FALSE}.
 #' @param exportFolder                The folder where the output will be exported to. If this folder
 #'                                    does not exist it will be created.
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
@@ -75,54 +71,85 @@
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
 #'
+#' @examples
+#' \dontrun{
+#' # Load cohorts (assumes that they have already been instantiated)
+#' cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort")
+#' cohorts <- CohortGenerator::getCohortDefinitionSet(packageName = "MyGreatPackage")
+#' connectionDetails <- createConnectionDetails(dbms = "postgresql",
+#'                                              server = "ohdsi.com",
+#'                                              port = 5432,
+#'                                              user = "me",
+#'                                              password = "secure")
+#'
+#' executeDiagnostics(cohorts = cohorts,
+#'                    exportFolder = "export",
+#'                    cohortTableNames = cohortTableNames,
+#'                    cohortDatabaseSchema = "results",
+#'                    cdmDatabaseSchema = "cdm",
+#'                    databaseId = "mySpecialCdm",
+#'                    connectionDetails = connectionDetails)
+#'
+#' # Use a custom set of cohorts defined in a data.frame
+#' cohorts <- data.frame(
+#'   cohortId = c(100),
+#'   cohortName = c("Cohort Name"),
+#'   logicDescription = c("My Cohort"),
+#'   sql = c(readLines("path_to.sql")),
+#'   json = c(readLines("path_to.json"))
+#' )
+#' executeDiagnostics(cohorts = cohorts,
+#'                    exportFolder = "export",
+#'                    cohortTable = "cohort",
+#'                    cohortDatabaseSchema = "results",
+#'                    cdmDatabaseSchema = "cdm",
+#'                    databaseId = "mySpecialCdm",
+#'                    connectionDetails = connectionDetails)
+#' }
+#'
 #' @importFrom CohortGenerator getCohortTableNames
+#' @importFrom tidyr any_of
 #' @export
-runCohortDiagnostics <- function(packageName = NULL,
-                                 cohortToCreateFile = "settings/CohortsToCreate.csv",
-                                 cohortDefinitionSet = NULL,
-                                 baseUrl = NULL,
-                                 cohortSetReference = NULL,
-                                 connectionDetails = NULL,
-                                 connection = NULL,
-                                 cdmDatabaseSchema,
-                                 oracleTempSchema = NULL,
-                                 tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-                                 cohortDatabaseSchema,
-                                 vocabularyDatabaseSchema = cdmDatabaseSchema,
-                                 cohortTable = "cohort",
-                                 cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
-                                 cohortIds = NULL,
-                                 inclusionStatisticsFolder = NULL,
-                                 exportFolder,
-                                 databaseId,
-                                 databaseName = databaseId,
-                                 databaseDescription = databaseId,
-                                 cdmVersion = 5,
-                                 runInclusionStatistics = TRUE,
-                                 runIncludedSourceConcepts = TRUE,
-                                 runOrphanConcepts = TRUE,
-                                 runTimeDistributions = TRUE,
-                                 runVisitContext = TRUE,
-                                 runBreakdownIndexEvents = TRUE,
-                                 runIncidenceRate = TRUE,
-                                 runCohortOverlap = TRUE,
-                                 runCohortCharacterization = TRUE,
-                                 covariateSettings = createDefaultCovariateSettings(),
-                                 runTemporalCohortCharacterization = TRUE,
-                                 temporalCovariateSettings = createTemporalCovariateSettings(
-                                   useConditionOccurrence = TRUE,
-                                   useDrugEraStart = TRUE,
-                                   useProcedureOccurrence = TRUE,
-                                   useMeasurement = TRUE,
-                                   temporalStartDays = c(-365, -30, 0, 1, 31),
-                                   temporalEndDays = c(-31, -1, 0, 30, 365)
-                                 ),
-                                 minCellCount = 5,
-                                 incremental = FALSE,
-                                 incrementalFolder = file.path(exportFolder, "incremental")) {
+executeDiagnostics <- function(cohortDefinitionSet,
+                               exportFolder,
+                               databaseId,
+                               cohortDatabaseSchema,
+                               databaseName = databaseId,
+                               databaseDescription = databaseId,
+                               connectionDetails = NULL,
+                               connection = NULL,
+                               cdmDatabaseSchema,
+                               tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
+                               cohortTable = "cohort",
+                               cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
+                               vocabularyDatabaseSchema = cdmDatabaseSchema,
+                               cohortIds = NULL,
+                               cdmVersion = 5,
+                               runInclusionStatistics = TRUE,
+                               runIncludedSourceConcepts = TRUE,
+                               runOrphanConcepts = TRUE,
+                               runTimeDistributions = TRUE,
+                               runVisitContext = TRUE,
+                               runBreakdownIndexEvents = TRUE,
+                               runIncidenceRate = TRUE,
+                               runCohortOverlap = TRUE,
+                               runCohortCharacterization = TRUE,
+                               covariateSettings = createDefaultCovariateSettings(),
+                               runTemporalCohortCharacterization = TRUE,
+                               temporalCovariateSettings = createTemporalCovariateSettings(
+                                 useConditionOccurrence = TRUE,
+                                 useDrugEraStart = TRUE,
+                                 useProcedureOccurrence = TRUE,
+                                 useMeasurement = TRUE,
+                                 temporalStartDays = c(-365, -30, 0, 1, 31),
+                                 temporalEndDays = c(-31, -1, 0, 30, 365)
+                               ),
+                               minCellCount = 5,
+                               incremental = FALSE,
+                               incrementalFolder = file.path(exportFolder, "incremental")) {
 
-  # collect arguments that were passed to cohort diagnostics at initiation
-  argumentsAtDiagnosticsInitiation <- formals(runCohortDiagnostics)
+    # collect arguments that were passed to cohort diagnostics at initiation
+  argumentsAtDiagnosticsInitiation <- formals(executeDiagnostics)
   argumentsAtDiagnosticsInitiationJson <-
     list(
       runInclusionStatistics = argumentsAtDiagnosticsInitiation$runInclusionStatistics,
@@ -147,28 +174,14 @@ runCohortDiagnostics <- function(packageName = NULL,
     takepackageDependencySnapshot() %>%
     RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
-
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
 
-  if (!is.null(inclusionStatisticsFolder)) {
-    inclusionStatisticsFolder <- normalizePath(inclusionStatisticsFolder, mustWork = FALSE)
-  }
-
-  if (!is.null(cohortSetReference)) {
-    ParallelLogger::logInfo("Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
-    cohortToCreateFile <- NULL
-  }
-  
   start <- Sys.time()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
-  
-  if (!is.null(oracleTempSchema) & is.null(tempEmulationSchema)) {
-    tempEmulationSchema <- oracleTempSchema
-    warning('OracleTempSchema has been deprecated by DatabaseConnector')
-  }
-  
+
   databaseId <- as.character(databaseId)
+
   if (any(is.null(databaseName), is.na(databaseName))) {
     databaseName <- databaseId
     ParallelLogger::logTrace(' - Databasename was not provided.')
@@ -186,7 +199,17 @@ runCohortDiagnostics <- function(packageName = NULL,
                                           "cohortInclusionResultTable",
                                           "cohortInclusionStatsTable",
                                           "cohortSummaryStatsTable",
-                                          "cohortCensorStatsTable"))
+                                          "cohortCensorStatsTable"),
+                         add = errorMessage)
+  checkmate::assertDataFrame(cohortDefinitionSet, add = errorMessage)
+  checkmate::assertNames(names(cohortDefinitionSet),
+                         must.include = c("json",
+                                          "cohortId",
+                                          "cohortName",
+                                          "logicDescription",
+                                          "sql"),
+                         add = errorMessage)
+
   cohortTable <- cohortTableNames$cohortTable
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
   checkmate::assertLogical(runIncludedSourceConcepts, add = errorMessage)
@@ -235,7 +258,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                add = errorMessage)
   }
   checkmate::reportAssertions(collection = errorMessage)
-  
+
   errorMessage <-
     createIfNotExist(type = "folder",
                      name = exportFolder,
@@ -246,24 +269,10 @@ runCohortDiagnostics <- function(packageName = NULL,
                        name = incrementalFolder,
                        errorMessage = errorMessage)
   }
-  if (isTRUE(runInclusionStatistics) & !is.null(inclusionStatisticsFolder)) {
-    errorMessage <-
-      createIfNotExist(type = "folder",
-                       name = inclusionStatisticsFolder,
-                       errorMessage = errorMessage)
-  }
+
   checkmate::reportAssertions(collection = errorMessage)
 
-  if (is.null(cohortDefinitionSet)) {
-    warning("Loading cohorts directly in runCohortDiagnostics will be removed in a future version. See executeDiagnostics")
-    cohortDefinitionSet <- getCohortsJsonAndSql(
-      packageName = packageName,
-      cohortToCreateFile = cohortToCreateFile,
-      baseUrl = baseUrl,
-      cohortSetReference = cohortSetReference,
-      cohortIds = cohortIds
-    )
-  } else if (!is.null(cohortIds)) {
+  if (!is.null(cohortIds)) {
     cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(cohortId %in% cohortIds)
   }
 
@@ -278,18 +287,18 @@ runCohortDiagnostics <- function(packageName = NULL,
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(.data$tableName == 'cohort') %>%
-    dplyr::pull(.data$fieldName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    sort()
+      dplyr::filter(.data$tableName == 'cohort') %>%
+      dplyr::pull(.data$fieldName) %>%
+      SqlRender::snakeCaseToCamelCase() %>%
+      sort()
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(.data$tableName == 'cohort') %>%
-    dplyr::filter(.data$isRequired == 'Yes') %>%
-    dplyr::pull(.data$fieldName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    sort()
-  
+      dplyr::filter(.data$tableName == 'cohort') %>%
+      dplyr::filter(.data$isRequired == 'Yes') %>%
+      dplyr::pull(.data$fieldName) %>%
+      SqlRender::snakeCaseToCamelCase() %>%
+      sort()
+
   expectedButNotObsevered <-
     setdiff(x = cohortTableColumnNamesExpected, y = cohortTableColumnNamesObserved)
   if (length(expectedButNotObsevered) > 0) {
@@ -298,21 +307,16 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   obseveredButNotExpected <-
     setdiff(x = cohortTableColumnNamesObserved, y = cohortTableColumnNamesExpected)
-  
+
   if (length(requiredButNotObsevered) > 0) {
     stop(paste(
       "The following required fields not found in cohort table:",
       paste0(requiredButNotObsevered, collapse = ", ")
     ))
   }
-  
+
   if ('logicDescription' %in% expectedButNotObsevered) {
     cohortDefinitionSet$logicDescription <- cohortDefinitionSet$cohortName
-  }
-  if ('phenotypeId' %in% expectedButNotObsevered) {
-    cohortDefinitionSet$phenotypeId <-
-      0  # phenotypeId is assigned = 0 when no phenotypeId is provided.
-    # This is required for cohort overlap
   }
   if ('metadata' %in% expectedButNotObsevered) {
     if (length(obseveredButNotExpected) > 0) {
@@ -328,8 +332,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     columnsToAddToJson <-
       setdiff(x = cohortTableColumnNamesObserved,
               y = c('json', 'sql')) %>%
-      unique() %>%
-      sort()
+        unique() %>%
+        sort()
     cohortDefinitionSet <- cohortDefinitionSet %>%
       dplyr::mutate(metadata = as.list(columnsToAddToJson) %>% RJSONIO::toJSON(digits = 23))
   } else {
@@ -348,16 +352,12 @@ runCohortDiagnostics <- function(packageName = NULL,
       ))
     }
   }
-  
+
   cohortDefinitionSet <- cohortDefinitionSet %>%
-    dplyr::select(cohortTableColumnNamesExpected)
+    dplyr::select(tidyr::any_of(cohortTableColumnNamesExpected))
   writeToCsv(data = cohortDefinitionSet,
              fileName = file.path(exportFolder, "cohort.csv"))
-  
-  if (!"phenotypeId" %in% colnames(cohortDefinitionSet)) {
-    cohortDefinitionSet$phenotypeId <- NA
-  }
-  
+
   # Set up connection to server ----------------------------------------------------
   if (is.null(connection)) {
     if (!is.null(connectionDetails)) {
@@ -367,14 +367,14 @@ runCohortDiagnostics <- function(packageName = NULL,
       stop("No connection or connectionDetails provided.")
     }
   }
-  
+
   ## CDM source information----
   cdmSourceInformation <-
     getCdmDataSourceInformation(connection = connection,
                                 cdmDatabaseSchema = cdmDatabaseSchema)
 
   vocabularyVersion <- getVocabularyVersion(connection, vocabularyDatabaseSchema)
-  
+
   if (incremental) {
     ParallelLogger::logDebug("Working in incremental mode.")
     cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)
@@ -386,7 +386,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
     }
   }
-  
+
   ## Observation period----
   ParallelLogger::logTrace(" - Collecting date range from Observational period table.")
   observationPeriodDateRange <- renderTranslateQuerySql(
@@ -411,7 +411,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                        vocabularyVersion)
   # Create concept table ------------------------------------------
   createConceptTable(connection, tempEmulationSchema, cohortDefinitionSet)
-  
+
   # Counting cohorts -----------------------------------------------------------------------
   cohortCounts <- computeCohortCounts(connection,
                                       cohortDatabaseSchema,
@@ -448,14 +448,14 @@ runCohortDiagnostics <- function(packageName = NULL,
                       cohortTableNames,
                       incremental,
                       instantiatedCohorts,
-                      inclusionStatisticsFolder,
                       minCellCount,
                       recordKeepingFile)
   }
-  
+
   # Concept set diagnostics -----------------------------------------------
   if (runIncludedSourceConcepts ||
-      runOrphanConcepts || runBreakdownIndexEvents) {
+    runOrphanConcepts ||
+    runBreakdownIndexEvents) {
     runConceptSetDiagnostics(
       connection = connection,
       tempEmulationSchema = tempEmulationSchema,
@@ -479,7 +479,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       recordKeepingFile = recordKeepingFile
     )
   }
-  
+
   # Time distributions ----------------------------------------------------------------------
   if (runTimeDistributions) {
     executeTimeDistributionDiagnostics(
@@ -497,7 +497,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       recordKeepingFile
     )
   }
-  
+
   # Visit context ----------------------------------------------------------------------------
   if (runVisitContext) {
     executeVisitContextDiagnostics(
@@ -516,7 +516,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental
     )
   }
-  
+
   # Incidence rates --------------------------------------------------------------------------------------
   if (runIncidenceRate) {
     computeIncidenceRates(
@@ -534,7 +534,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental
     )
   }
-  
+
   # Cohort overlap ---------------------------------------------------------------------------------
   if (runCohortOverlap) {
     executeCohortComparisonDiagnostics(
@@ -549,7 +549,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental
     )
   }
-  
+
   # Cohort characterization ---------------------------------------------------------------
   if (runCohortCharacterization) {
     executeCohortCharacterization(
@@ -570,7 +570,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       recordKeepingFile
     )
   }
-  
+
   # Temporal Cohort characterization ---------------------------------------------------------------
   if (runTemporalCohortCharacterization) {
     executeCohortCharacterization(
@@ -597,7 +597,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv")
     )
   }
-  
+
   # Store information from the vocabulary on the concepts used -------------------------
   exportConceptInformation(
     connection = connection,
@@ -607,7 +607,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     incremental = incremental,
     exportFolder = exportFolder
   )
-  
+
   # Delete unique concept ID table ---------------------------------
   ParallelLogger::logTrace("Deleting concept ID table")
   sql <- "TRUNCATE TABLE @table;\nDROP TABLE @table;"
@@ -619,7 +619,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  
+
 
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
@@ -747,7 +747,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   )
 
   # Add all to zip file -------------------------------------------------------------------------------
-  writeResultsZip(exportFolder, databaseId, vocabularyVersion, vocabularyVersionCdm)
+  writeResultsZip(exportFolder, databaseId)
   ParallelLogger::logInfo("Computing all diagnostics took ",
                           signif(delta, 3),
                           " ",
@@ -755,7 +755,7 @@ runCohortDiagnostics <- function(packageName = NULL,
 }
 
 
-writeResultsZip <- function(exportFolder, databaseId, vocabularyVersion, vocabularyVersionCdm) {
+writeResultsZip <- function(exportFolder, databaseId) {
   ParallelLogger::logInfo("Adding results to zip file")
   zipName <- file.path(exportFolder, paste0("Results_", databaseId, ".zip"))
   files <- list.files(exportFolder, pattern = ".*\\.csv$")
@@ -764,124 +764,4 @@ writeResultsZip <- function(exportFolder, databaseId, vocabularyVersion, vocabul
   setwd(exportFolder)
   DatabaseConnector::createZipFile(zipFile = zipName, files = files)
   ParallelLogger::logInfo("Results are ready for sharing at: ", zipName)
-
-}
-
-#' Execute cohort diagnostics functions
-#' @description
-#' Execute cohort diagnostics on a set of cohorts.
-#' Assumes that cohorts have already been instantiated in advance.
-#'
-#' Note that none of the references passed to this function are used, they are required for results.
-#' @inheritParams runCohortDiagnostics
-#' @examples
-#'
-#' \dontrun{
-#' # Load cohorts (assumes that they have already been instantiated)
-#' cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort")
-#' cohorts <- loadCohortsFromPackage(packageName = "MyGreatPackage")
-#' connectionDetails <- createConnectionDetails(dbms = "postgresql",
-#'                                              server = "ohdsi.com",
-#'                                              port = 5432,
-#'                                              user = "me",
-#'                                              password = "secure")
-#'
-#' executeDiagnostics(cohorts = cohorts,
-#'                    exportFolder = "export",
-#'                    cohortTableNames = cohortTableNames,
-#'                    cohortDatabaseSchema = "results",
-#'                    cdmDatabaseSchema = "cdm",
-#'                    databaseId = "mySpecialCdm",
-#'                    connectionDetails = connectionDetails)
-#'
-#' # Use a custom set of cohorts defined in a data.frame
-#' cohorts <- data.frame(
-#'   cohortId = c(100),
-#'   cohortName = c("Cohort Name"),
-#'   logicDescription = c("My Cohort"),
-#'   sql = c(readLines("path_to.sql")),
-#'   json = c(readLines("path_to.json"))
-#' )
-#' executeDiagnostics(cohorts = cohorts,
-#'                    exportFolder = "export",
-#'                    cohortTable = "cohort",
-#'                    cohortDatabaseSchema = "results",
-#'                    cdmDatabaseSchema = "cdm",
-#'                    databaseId = "mySpecialCdm",
-#'                    connectionDetails = connectionDetails)
-#' }
-#'
-#' @importFrom CohortGenerator getCohortTableNames
-#' @export
-executeDiagnostics <- function(cohortDefinitionSet,
-                               exportFolder,
-                               databaseId,
-                               connectionDetails = NULL,
-                               connection = NULL,
-                               cdmDatabaseSchema,
-                               tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-                               cohortDatabaseSchema,
-                               cohortTable = "cohort",
-                               cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
-                               vocabularyDatabaseSchema = cdmDatabaseSchema,
-                               cohortIds = NULL,
-                               inclusionStatisticsFolder = NULL,
-                               databaseName = databaseId,
-                               databaseDescription = databaseId,
-                               cdmVersion = 5,
-                               runInclusionStatistics = TRUE,
-                               runIncludedSourceConcepts = TRUE,
-                               runOrphanConcepts = TRUE,
-                               runTimeDistributions = TRUE,
-                               runVisitContext = TRUE,
-                               runBreakdownIndexEvents = TRUE,
-                               runIncidenceRate = TRUE,
-                               runCohortOverlap = TRUE,
-                               runCohortCharacterization = TRUE,
-                               covariateSettings = createDefaultCovariateSettings(),
-                               runTemporalCohortCharacterization = TRUE,
-                               temporalCovariateSettings = createTemporalCovariateSettings(
-                                 useConditionOccurrence = TRUE,
-                                 useDrugEraStart = TRUE,
-                                 useProcedureOccurrence = TRUE,
-                                 useMeasurement = TRUE,
-                                 temporalStartDays = c(-365, -30, 0, 1, 31),
-                                 temporalEndDays = c(-31, -1, 0, 30, 365)
-                               ),
-                               minCellCount = 5,
-                               incremental = FALSE,
-                               incrementalFolder = file.path(exportFolder, "incremental")) {
-
-  checkCohortReference(cohortReference = cohortDefinitionSet)
-
-  runCohortDiagnostics(cohortDefinitionSet = cohortDefinitionSet,
-                       exportFolder = exportFolder,
-                       databaseId = databaseId,
-                       connectionDetails = connectionDetails,
-                       connection = connection,
-                       cdmDatabaseSchema = cdmDatabaseSchema,
-                       tempEmulationSchema = tempEmulationSchema,
-                       cohortDatabaseSchema = cohortDatabaseSchema,
-                       vocabularyDatabaseSchema = cdmDatabaseSchema,
-                       cohortTableNames = cohortTableNames,
-                       cohortIds = cohortIds,
-                       inclusionStatisticsFolder = inclusionStatisticsFolder,
-                       databaseName = databaseName,
-                       databaseDescription = databaseDescription,
-                       cdmVersion = cdmVersion,
-                       runInclusionStatistics = runInclusionStatistics,
-                       runIncludedSourceConcepts = runIncludedSourceConcepts,
-                       runOrphanConcepts = runOrphanConcepts,
-                       runTimeDistributions = runTimeDistributions,
-                       runVisitContext = runTimeDistributions,
-                       runBreakdownIndexEvents = runBreakdownIndexEvents,
-                       runIncidenceRate = runIncidenceRate,
-                       runCohortOverlap = runCohortOverlap,
-                       runCohortCharacterization = runCohortCharacterization,
-                       covariateSettings = covariateSettings,
-                       runTemporalCohortCharacterization = runTemporalCohortCharacterization,
-                       temporalCovariateSettings = temporalCovariateSettings,
-                       minCellCount = minCellCount,
-                       incremental = incremental,
-                       incrementalFolder = incrementalFolder)
 }
