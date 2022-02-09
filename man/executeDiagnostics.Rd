@@ -8,17 +8,17 @@ executeDiagnostics(
   cohortDefinitionSet,
   exportFolder,
   databaseId,
+  cohortDatabaseSchema,
+  databaseName = databaseId,
+  databaseDescription = databaseId,
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-  cohortDatabaseSchema,
   cohortTable = "cohort",
   cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortIds = NULL,
-  databaseName = databaseId,
-  databaseDescription = databaseId,
   cdmVersion = 5,
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
@@ -47,6 +47,14 @@ does not exist it will be created.}
 
 \item{databaseId}{A short string for identifying the database (e.g. 'Synpuf').}
 
+\item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
+this should include both the database and schema name, for example
+'scratch.dbo'.}
+
+\item{databaseName}{The full name of the database. If NULL, defaults to databaseId.}
+
+\item{databaseDescription}{A short description (several sentences) of the database. If NULL, defaults to databaseId.}
+
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 DatabaseConnector package. Can be left NULL if \code{connection} is
@@ -65,10 +73,6 @@ schema name, for example 'cdm_data.dbo'.}
 \item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
 tables, provide a schema with write privileges where temp tables can be created.}
 
-\item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
-this should include both the database and schema name, for example
-'scratch.dbo'.}
-
 \item{cohortTable}{Name of the cohort table.}
 
 \item{cohortTableNames}{Cohort Table names used by CohortGenerator package}
@@ -80,10 +84,6 @@ schema name, for example 'vocabulary.dbo'.}
 
 \item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
 diagnostics to.}
-
-\item{databaseName}{The full name of the database. If NULL, defaults to databaseId.}
-
-\item{databaseDescription}{A short description (several sentences) of the database. If NULL, defaults to databaseId.}
 
 \item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
 
