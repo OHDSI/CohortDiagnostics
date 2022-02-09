@@ -255,7 +255,7 @@ getInclusionStats <- function(connection,
         folder = inclusionStatisticsFolder,
         simplify = TRUE
       )
-    
+
     if (!is.null(stats)) {
       if ("cohortDefinitionId" %in% (colnames(stats))) {
         stats <- stats %>%
@@ -268,14 +268,14 @@ getInclusionStats <- function(connection,
         databaseId = databaseId,
         minCellCount = minCellCount
       )
-      
+
       writeToCsv(
         data = stats,
         fileName = file.path(exportFolder, "inclusion_rule_stats.csv"),
         incremental = incremental,
         cohortId = subset$cohortId
       )
-      
+
       recordTasksDone(
         cohortId = subset$cohortId,
         task = "runInclusionStatistics",
