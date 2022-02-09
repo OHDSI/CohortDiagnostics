@@ -745,7 +745,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   )
 
   # Add all to zip file -------------------------------------------------------------------------------
-  writeResultsZip(exportFolder, databaseId, vocabularyVersion, vocabularyVersion)
+  writeResultsZip(exportFolder, databaseId)
   ParallelLogger::logInfo("Computing all diagnostics took ",
                           signif(delta, 3),
                           " ",
@@ -753,7 +753,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
 }
 
 
-writeResultsZip <- function(exportFolder, databaseId, vocabularyVersion, vocabularyVersionCdm) {
+writeResultsZip <- function(exportFolder, databaseId) {
   ParallelLogger::logInfo("Adding results to zip file")
   zipName <- file.path(exportFolder, paste0("Results_", databaseId, ".zip"))
   files <- list.files(exportFolder, pattern = ".*\\.csv$")
@@ -762,5 +762,4 @@ writeResultsZip <- function(exportFolder, databaseId, vocabularyVersion, vocabul
   setwd(exportFolder)
   DatabaseConnector::createZipFile(zipFile = zipName, files = files)
   ParallelLogger::logInfo("Results are ready for sharing at: ", zipName)
-
 }
