@@ -37,4 +37,12 @@ test_that("Check function makeDataExportable", {
     CohortDiagnostics:::makeDataExportable(x = cohortCountTableInCorrect,
                                            tableName = "cohort_count")
   )
+  
+  cohortCountTableCorrectDuplicated <-
+    dplyr::bind_rows(cohortCountTableCorrect,
+                     cohortCountTableCorrect)
+  expect_error(
+    CohortDiagnostics:::makeDataExportable(x = cohortCountTableCorrectDuplicated,
+                                           tableName = "cohort_count")
+  )
 })
