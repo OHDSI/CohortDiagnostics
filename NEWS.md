@@ -25,6 +25,8 @@ this is experimental. Postgres and sqlite are the only backends recommended for 
 
 10. Removed phenotype_id field from data ddl
 
+11. Additional checks to the output of cohort diagnostics to ensure it conforms to its own resutls data model. The new function (internal) is makeDataExportable. Results data model csv file has been enhanced with new fields, including a field to specifiy if the value is to be subjected to privacy protection (i.e. min cell count, eg. person count).
+
 CohortDiagnostics 2.2.2
 =======================
 
