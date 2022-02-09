@@ -36,16 +36,11 @@ exportConceptInformation <- function(connection = NULL,
                                      cdmDatabaseSchema,
                                      tempEmulationSchema,
                                      conceptIdTable,
-                                     vocabularyTableNames = c(
-                                       "concept",
-                                       "conceptAncestor",
-                                       "conceptClass",
-                                       "conceptRelationship",
-                                       "conceptSynonym",
-                                       "domain",
-                                       "relationship",
-                                       "vocabulary"
-                                     ),
+                                     vocabularyTableNames = getResultsDataModelSpecifications() %>% 
+                                       dplyr::filter(.data$isVocabularyTable == "Yes") %>% 
+                                       dplyr::pull(.data$tableName) %>% 
+                                       unique() %>% 
+                                       snakeCaseToCamelCase(),
                                      incremental,
                                      exportFolder) {
   ParallelLogger::logInfo("Retrieving concept information")
@@ -123,9 +118,7 @@ exportConceptInformation <- function(connection = NULL,
       if (nrow(data) > 0) {
         data <- makeDataExportable(
           x = data,
-          tableName = vocabularyTable,
-          minCellCount = minCellCount,
-          databaseId = databaseId
+          tableName = vocabularyTable
         )
         
         writeToCsv(
