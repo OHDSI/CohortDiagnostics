@@ -176,7 +176,7 @@ makeDataExportable <- function(x,
     setdiff(requiredFieldsInDataModel, presentInBoth)
   
   if (length(presentInDataOnly) > 0) {
-    warning(
+    ParallelLogger::logInfo(
       " - Unexpected fields found in table ",
       tableName,
       " - ",
