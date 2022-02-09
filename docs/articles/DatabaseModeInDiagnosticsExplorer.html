@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.2.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.2.3</span>
       </span>
     </div>
 
@@ -96,7 +96,7 @@
       <h1 data-toc-skip>Database mode in Diagnostics Explorer</h1>
                         <h4 data-toc-skip class="author">Gowtham Rao</h4>
             
-            <h4 data-toc-skip class="date">2022-02-04</h4>
+            <h4 data-toc-skip class="date">2022-02-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/DatabaseModeInDiagnosticsExplorer.Rmd" class="external-link"><code>vignettes/DatabaseModeInDiagnosticsExplorer.Rmd</code></a></small>
       <div class="hidden name"><code>DatabaseModeInDiagnosticsExplorer.Rmd</code></div>
@@ -105,9 +105,10 @@
 
     
     
-<div class="section level1">
-<h1 id="database-mode">Database mode<a class="anchor" aria-label="anchor" href="#database-mode"></a>
-</h1>
+<pre><code><span class="co">## Warning: package 'SqlRender' was built under R version 4.1.2</span></code></pre>
+<div class="section level2">
+<h2 id="database-mode">Database mode<a class="anchor" aria-label="anchor" href="#database-mode"></a>
+</h2>
 <p>We recommend the use of a database system, when file size of the cohort diagnostics output becomes large e.g. &gt; 100mb, as using the premerged.RData may leading sluggish performance. Currently only postgres server is supported.</p>
 <p>We use DatabaseConnector and DbPool to manage connections between the shiny application and postgres. The recommended method to launch a Shiny application is to provide the connection details to the ‘launchDiagnosticsExplorer()’ shiny application. Please review the documentation of ‘DatabaseConnector::createConnectionDetails()’ function in the DatabaseConnector package on how to connect to the server.</p>
 <p>We have an example script on how to upload data to remote postgres server <a href="https://github.com/OHDSI/CohortDiagnostics/blob/master/extras/UploadToDatabase.R" class="external-link">here</a>. The ‘createResultsDataModel()’ function will execute a series of SQL statements to create empty target schema to hold the results of the Cohort Diagnostics.</p>
@@ -133,7 +134,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
       </footer>
