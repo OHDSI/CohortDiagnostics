@@ -1,3 +1,11 @@
+CohortDiagnostics 2.2.3
+=======================
+
+Bug fixes:
+
+1. Replace use dplyr across() for bug introduced by tidyr v1.2.0
+
+
 CohortDiagnostics 2.2.2
 =======================
 
