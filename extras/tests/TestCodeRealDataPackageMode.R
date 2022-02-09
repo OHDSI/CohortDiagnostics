@@ -1,4 +1,4 @@
-remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy')
+remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy', ref = "develop")
 
 library(CohortDiagnostics)
 library('SkeletonCohortDiagnosticsStudy')
