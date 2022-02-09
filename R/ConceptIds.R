@@ -48,7 +48,6 @@ exportConceptInformation <- function(connection = NULL,
   if (is.null(connection)) {
     warning('No connection provided')
   }
-  
   vocabularyTableNames <-
     tolower(SqlRender::camelCaseToSnakeCase(vocabularyTableNames))
   tablesInCdmDatabaseSchema <-
@@ -146,9 +145,7 @@ exportConceptInformation <- function(connection = NULL,
         
         data <- makeDataExportable(
           x = data,
-          tableName = vocabularyTable,
-          minCellCount = minCellCount,
-          databaseId = databaseId
+          tableName = vocabularyTable
         )
         
         writeToCsv(
