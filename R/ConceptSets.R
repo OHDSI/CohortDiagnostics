@@ -511,7 +511,7 @@ runConceptSetDiagnostics <- function(connection,
             snakeCaseToCamelCase = TRUE
           ) %>%
           tidyr::tibble()
-        browser()
+        
         counts <- counts  %>%
           dplyr::rename(uniqueConceptSetId = .data$conceptSetId) %>%
           dplyr::inner_join(
