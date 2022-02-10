@@ -174,7 +174,8 @@ getInclusionRuleStats <- function(dataSource,
 
 getIndexEventBreakdown <- function(dataSource,
                                    cohortIds,
-                                   databaseIds) {
+                                   databaseIds,
+                                   daysRelativeIndex = 0) {
   errorMessage <- checkmate::makeAssertCollection()
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
                                                  databaseIds = databaseIds,
@@ -190,13 +191,15 @@ getIndexEventBreakdown <- function(dataSource,
             INNER JOIN  @vocabulary_database_schema.concept
               ON index_event_breakdown.concept_id = concept.concept_id
             WHERE database_id in (@database_id)
-              AND cohort_id in (@cohort_ids);"
+              AND cohort_id in (@cohort_ids)
+              AND days_relative_index in (@days_relative_index);"
   data <- renderTranslateQuerySql(connection = dataSource$connection,
                                   sql = sql,
                                   results_database_schema = dataSource$resultsDatabaseSchema,
                                   vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
                                   cohort_ids = cohortIds,
                                   database_id = quoteLiterals(databaseIds),
+                                  days_relative_index = daysRelativeIndex,
                                   snakeCaseToCamelCase = TRUE) %>%
     tidyr::tibble()
 
