@@ -932,7 +932,7 @@ getOrphanConcepts <- function(connectionDetails = NULL,
                               tempEmulationSchema = NULL,
                               instantiatedCodeSets = "#resolved_concept_set",
                               conceptTrackingTable = NULL,
-                              use_codesets_table = FALSE,
+                              useDirectConceptsOnly = FALSE,
                               concept_counts_table_is_temp = TRUE
                               ) {
   if (is.null(connection)) {
@@ -946,8 +946,7 @@ getOrphanConcepts <- function(connectionDetails = NULL,
     tempEmulationSchema = tempEmulationSchema,
     vocabulary_database_schema = vocabularyDatabaseSchema,
     instantiated_code_sets = instantiatedCodeSets,
-    concept_tracking_table = conceptTrackingTable,
-    use_codesets_table = FALSE,
+    use_direct_concepts_only = useDirectConceptsOnly,
     concept_counts_table_is_temp = TRUE
   )
   DatabaseConnector::executeSql(
