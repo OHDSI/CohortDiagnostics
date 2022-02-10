@@ -102,7 +102,11 @@ diagnostics to.}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
-\item{runCohortOverlap}{Generate and export the cohort relationship? Cohort relationship checks the temporal
+\item{runCohortOverlap}{Generate and export the cohort overlap? Overlaps are checked within cohortIds
+that have the same phenotype ID sourced from the CohortSetReference or
+cohortToCreateFile.}
+
+\item{runCohortRelationship}{Generate and export the cohort relationship? Cohort relationship checks the temporal
 relationship between two or more cohorts.}
 
 \item{runCohortCharacterization}{Generate and export the cohort characterization?
