@@ -4,6 +4,7 @@
 {DEFAULT @cohort_overlap = cohort_overlap}
 {DEFAULT @concept = concept}
 {DEFAULT @concept_ancestor = concept_ancestor}
+{DEFAULT @concept_optimized = concept_optimized}
 {DEFAULT @concept_relationship = concept_relationship}
 {DEFAULT @concept_sets = concept_sets}
 {DEFAULT @concept_synonym = concept_synonym}
@@ -45,6 +46,9 @@ IF OBJECT_ID('@results_schema.@concept', 'U') IS NOT NULL
 
 IF OBJECT_ID('@results_schema.@concept_ancestor', 'U') IS NOT NULL
     DROP TABLE @results_schema.@concept_ancestor;
+
+IF OBJECT_ID('@results_schema.@concept_optimized', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@concept_optimized;
 
 IF OBJECT_ID('@results_schema.@concept_relationship', 'U') IS NOT NULL
     DROP TABLE @results_schema.@concept_relationship;
@@ -204,6 +208,17 @@ CREATE TABLE @results_schema.@concept_ancestor (
 			min_levels_of_separation INT NOT NULL,
 			max_levels_of_separation INT NOT NULL,
 			PRIMARY KEY(ancestor_concept_id, descendant_concept_id)
+);
+
+--Table @results_schema.@concept_sets_optimized
+CREATE TABLE concept_sets_optimized (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			concept_set_id INT NOT NULL,
+			concept_id INT NOT NULL,
+			excluded INT NOT NULL,
+			removed INT NOT NULL,
+			PRIMARY KEY(database_id, cohort_id, concept_set_id, concept_id, excluded, removed)
 );
 
 --Table concept_relationship

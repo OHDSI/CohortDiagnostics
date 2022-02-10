@@ -269,3 +269,29 @@ titleCaseToCamelCase <- function(string) {
   substr(string, 1, 1) <- tolower(substr(string, 1, 1))
   return(string)
 }
+
+# private function - not exported
+hasData <- function(data) {
+  if (is.null(data)) {
+    return(FALSE)
+  }
+  if (is.data.frame(data)) {
+    if (nrow(data) == 0) {
+      return(FALSE)
+    }
+  }
+  if (!is.data.frame(data)) {
+    if (length(data) == 0) {
+      return(FALSE)
+    }
+    if (length(data) == 1) {
+      if (is.na(data)) {
+        return(FALSE)
+      }
+      if (data == "") {
+        return(FALSE)
+      }
+    }
+  }
+  return(TRUE)
+}

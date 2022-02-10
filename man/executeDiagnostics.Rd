@@ -26,6 +26,7 @@ executeDiagnostics(
   runTimeDistributions = TRUE,
   runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,
+  indexDateDiagnosticsRelativeDays = c(-5:5),
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
   runCohortCharacterization = TRUE,
@@ -98,6 +99,8 @@ diagnostics to.}
 \item{runVisitContext}{Generate and export index-date visit context?}
 
 \item{runBreakdownIndexEvents}{Generate and export the breakdown of index events?}
+
+\item{indexDateDiagnosticsRelativeDays}{An array of days relative to index date to perform diagnositcs on. Default 0 - i.e. same days an index.}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
