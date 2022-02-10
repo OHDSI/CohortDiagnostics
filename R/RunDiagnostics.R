@@ -463,8 +463,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runIncludedSourceConcepts ||
     runOrphanConcepts ||
     runBreakdownIndexEvents) {
-    browser()
-    debug(executeConceptSetDiagnostics)
     executeConceptSetDiagnostics(
       connection = connection,
       tempEmulationSchema = tempEmulationSchema,

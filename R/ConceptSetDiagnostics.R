@@ -60,7 +60,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      cohortTable = NULL) {
   ParallelLogger::logTrace(" - Running concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
-  browser()
   if (length(cohortIds) == 0) {
     return(NULL)
   }
@@ -257,6 +256,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            signif(delta, 3),
                            " ",
                            attr(delta, "units"))
+  browser()
   
   ## Orphan concepts ----
   ParallelLogger::logInfo("  - Searching for concepts that may have been orphaned.")
@@ -266,8 +266,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
-    instantiatedCodeSets = "#resolved_concept_set",
-    conceptIdUniverse = '#concept_tracking'
+    instantiatedCodeSets = "#resolved_concept_set"
   )
   if (!keepCustomConceptId) {
     conceptSetDiagnosticsResults$orphanConcept <-
@@ -932,7 +931,10 @@ getOrphanConcepts <- function(connectionDetails = NULL,
                               vocabularyDatabaseSchema = cdmDatabaseSchema,
                               tempEmulationSchema = NULL,
                               instantiatedCodeSets = "#resolved_concept_set",
-                              conceptIdUniverse = NULL) {
+                              conceptTrackingTable = NULL,
+                              use_codesets_table = FALSE,
+                              concept_counts_table_is_temp = TRUE
+                              ) {
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -944,7 +946,9 @@ getOrphanConcepts <- function(connectionDetails = NULL,
     tempEmulationSchema = tempEmulationSchema,
     vocabulary_database_schema = vocabularyDatabaseSchema,
     instantiated_code_sets = instantiatedCodeSets,
-    concept_id_universe = conceptIdUniverse
+    concept_tracking_table = conceptTrackingTable,
+    use_codesets_table = FALSE,
+    concept_counts_table_is_temp = TRUE
   )
   DatabaseConnector::executeSql(
     connection = connection,
@@ -953,6 +957,21 @@ getOrphanConcepts <- function(connectionDetails = NULL,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
+  if (!is.null(conceptTrackingTable)) {
+    # tracking table
+    sql <- "INSERT INTO @concept_tracking_table (concept_id)
+                SELECT DISTINCT concept_id
+                FROM @orphan_concept_table;"
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = sql,
+      tempEmulationSchema = tempEmulationSchema,
+      concept_tracking_table = conceptTrackingTable,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+  }
+    
   sql <- "SELECT * FROM #orphan_concept_table;"
   orphanCodes <- renderTranslateQuerySql(
     sql = sql,

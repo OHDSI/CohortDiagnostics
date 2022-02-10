@@ -1,3 +1,5 @@
+{DEFAULT @use_direct_concepts_only = FALSE}
+
 IF OBJECT_ID('tempdb..#starting_concepts', 'U') IS NOT NULL
   DROP TABLE #starting_concepts;
   
@@ -17,9 +19,9 @@ IF OBJECT_ID('tempdb..@orphan_concept_table', 'U') IS NOT NULL
   DROP TABLE @orphan_concept_table;
 
 -- Find directly included concept and source concepts that map to those
-{@use_codesets_table} ? {
+{@use_direct_concepts_only} ? {
 
-SELECT concept.concept_id,
+SELECT DISTINCT concept.concept_id,
 	concept_name
 INTO #starting_concepts
 FROM (
@@ -42,7 +44,7 @@ INNER JOIN @vocabulary_database_schema.concept
 	
 } : {
 
-SELECT concept_id,
+SELECT DISTINCT concept_id,
 	concept_name
 INTO #starting_concepts
 FROM (
