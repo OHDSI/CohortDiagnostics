@@ -358,15 +358,15 @@ CREATE TABLE @results_schema.@inclusion_rule_stats (
 
 --Table index_event_breakdown
 
-CREATE TABLE @results_schema.@index_event_breakdown (
-			concept_id BIGINT NOT NULL,
+CREATE TABLE index_event_breakdown (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			days_relative_index BIGINT NOT NULL DEFAULT 0,
+			concept_id INT NOT NULL,
+			co_concept_id INT NOT NULL,
 			concept_count FLOAT NOT NULL,
 			subject_count FLOAT NOT NULL,
-			cohort_id BIGINT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			domain_field VARCHAR NOT NULL,
-			domain_table VARCHAR NOT NULL,
-			PRIMARY KEY(concept_id, cohort_id, database_id, domain_field, domain_table)
+			PRIMARY KEY(database_id, cohort_id, days_relative_index, concept_id, co_concept_id)
 );
 
 --Table metadata

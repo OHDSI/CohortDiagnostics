@@ -118,13 +118,13 @@ inclusion_rule_stats,total_subjects,float,Yes,No,No,Yes,Yes,No,No
 inclusion_rule_stats,remain_subjects,float,Yes,No,No,Yes,Yes,No,No
 inclusion_rule_stats,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
 inclusion_rule_stats,database_id,varchar,Yes,Yes,No,Yes,No,No,No
+index_event_breakdown,database_id,varchar,Yes,Yes,No,Yes,No,No,No
+index_event_breakdown,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
+index_event_breakdown,days_relative_index,bigint,Yes,Yes,No,Yes,No,No,No
 index_event_breakdown,concept_id,int,Yes,Yes,No,Yes,No,No,No
+index_event_breakdown,co_concept_id,int,Yes,Yes,No,Yes,No,No,No
 index_event_breakdown,concept_count,float,Yes,No,No,Yes,Yes,No,No
 index_event_breakdown,subject_count,float,Yes,No,No,Yes,Yes,No,No
-index_event_breakdown,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-index_event_breakdown,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-index_event_breakdown,domain_field,varchar,Yes,Yes,No,Yes,No,No,No
-index_event_breakdown,domain_table,varchar,Yes,Yes,No,Yes,No,No,No
 metadata,database_id,varchar,Yes,Yes,No,Yes,No,No,No
 metadata,start_time,varchar,No,Yes,No,Yes,No,No,No
 metadata,variable_field,varchar,Yes,Yes,No,Yes,No,No,No
