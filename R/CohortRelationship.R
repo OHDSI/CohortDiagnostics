@@ -94,7 +94,8 @@ runCohortRelationshipDiagnostics <-
         sql = sqlCount,
         cohort_database_schema = cohortDatabaseSchema,
         cohort_table = cohortTable,
-        cohort_ids = targetCohortIds
+        cohort_ids = targetCohortIds, 
+        snakeCaseToCamelCase = TRUE
       )
     if (targetCohortCount$count == 0) {
       warning("Please check if target cohorts are instantiated. Exiting cohort relationship.")
@@ -106,7 +107,8 @@ runCohortRelationshipDiagnostics <-
         sql = sqlCount,
         cohort_database_schema = cohortDatabaseSchema,
         cohort_table = cohortTable,
-        cohort_ids = comparatorCohortIds
+        cohort_ids = comparatorCohortIds, 
+        snakeCaseToCamelCase = TRUE
       )
     if (comparatorCohortCount$count == 0) {
       warning("Please check if comparator cohorts are instantiated. Exiting cohort relationship.")
