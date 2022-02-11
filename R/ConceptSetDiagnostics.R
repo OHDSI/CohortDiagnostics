@@ -256,7 +256,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            signif(delta, 3),
                            " ",
                            attr(delta, "units"))
-  browser()
   
   ## Orphan concepts ----
   ParallelLogger::logInfo("  - Searching for concepts that may have been orphaned.")
@@ -294,6 +293,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            signif(delta, 3),
                            " ",
                            attr(delta, "units"))
+  
   ## Concept Source to Standard mapping----
   ParallelLogger::logInfo("  - Mapping concepts.")
   startConceptMapping <- Sys.time()
@@ -381,24 +381,14 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      conceptsCohortMapped2,
                                      conceptIdVisit) %>%
     dplyr::distinct()
-  randomStringTableName <-
-    tolower(paste0("tmp_",
-                   paste0(
-                     sample(
-                       x = c(LETTERS, 0:9),
-                       size = 12,
-                       replace = TRUE
-                     ), collapse = ""
-                   )))
   
   # insert into server concept ids in cohort
-  ParallelLogger::logTrace(paste0("    - Uploading to ", randomStringTableName))
   DatabaseConnector::insertTable(
     connection = connection,
-    tableName = paste0(cohortDatabaseSchema, ".", randomStringTableName),
+    tableName = "#concepts_in_cohort",
     createTable = TRUE,
     dropTableIfExists = TRUE,
-    tempTable = FALSE,
+    tempTable = TRUE,
     tempEmulationSchema = tempEmulationSchema,
     progressBar = FALSE,
     bulkLoad = (Sys.getenv("bulkLoad") == TRUE),
@@ -412,9 +402,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
     " ",
     attr(delta, "units")
   )
-  if (Sys.getenv("bulkLoad") == TRUE) {
-    ParallelLogger::logTrace("      - Bulkload was used.")
-  }
   
   ## Index event breakdown ----
   ParallelLogger::logInfo("  - Learning about the breakdown in index events.")
@@ -430,7 +417,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       tempEmulationSchema = tempEmulationSchema,
       conceptIdUniverse = "#concept_tracking",
       indexDateDiagnosticsRelativeDays = indexDateDiagnosticsRelativeDays,
-      conceptIdToFilterIndexEvent = paste0(cohortDatabaseSchema, ".", randomStringTableName)
+      conceptsInCohort = "#concepts_in_cohort"
     )
   if (!keepCustomConceptId) {
     conceptSetDiagnosticsResults$indexEventBreakdown <-
@@ -443,14 +430,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            " ",
                            attr(delta, "units"))
   
-  
-  ParallelLogger::logInfo(paste0(
-    "  - Dropping table ",
-    paste0(cohortDatabaseSchema, ".", randomStringTableName)
-  ))
-  sqlDrop <- paste0("DROP TABLE ",
-                    paste0(cohortDatabaseSchema, ".", randomStringTableName),
-                    ";")
+  sqlDrop <- paste0("DROP TABLE #concepts_in_cohort;")
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sqlDrop,
@@ -946,8 +926,7 @@ getOrphanConcepts <- function(connectionDetails = NULL,
     tempEmulationSchema = tempEmulationSchema,
     vocabulary_database_schema = vocabularyDatabaseSchema,
     instantiated_code_sets = instantiatedCodeSets,
-    use_direct_concepts_only = useDirectConceptsOnly,
-    concept_counts_table_is_temp = TRUE
+    use_direct_concepts_only = useDirectConceptsOnly
   )
   DatabaseConnector::executeSql(
     connection = connection,
@@ -960,7 +939,7 @@ getOrphanConcepts <- function(connectionDetails = NULL,
     # tracking table
     sql <- "INSERT INTO @concept_tracking_table (concept_id)
                 SELECT DISTINCT concept_id
-                FROM @orphan_concept_table;"
+                FROM #orphan_concept_table;"
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sql,
@@ -1088,7 +1067,7 @@ getConceptRecordCount <- function(connection,
           	INNER JOIN (
           		SELECT DISTINCT concept_id
           		FROM @concept_id_universe
-          		) c ON @domain_concept_id = concept_id
+          		) c ON @domain_concept_id = c.concept_id
           	LEFT JOIN (
           	  SELECT DISTINCT concept_id
           	  FROM #concept_count_temp
@@ -1112,7 +1091,7 @@ getConceptRecordCount <- function(connection,
             INNER JOIN (
             	SELECT DISTINCT concept_id
             	FROM @concept_id_universe
-            	) c ON @domain_concept_id = concept_id
+            	) c ON @domain_concept_id = c.concept_id
             LEFT JOIN (
             	SELECT DISTINCT concept_id
             	FROM #concept_count_temp
@@ -1134,7 +1113,7 @@ getConceptRecordCount <- function(connection,
             INNER JOIN (
             	SELECT DISTINCT concept_id
             	FROM @concept_id_universe
-            	) c ON @domain_concept_id = concept_id
+            	) c ON @domain_concept_id = c.concept_id
             LEFT JOIN (
             	SELECT DISTINCT concept_id
             	FROM #concept_count_temp
@@ -1258,7 +1237,7 @@ getConceptRecordCount <- function(connection,
     snakeCaseToCamelCase = TRUE
   ) %>%
     dplyr::tibble()
-  # i was thinking of keeping counts at the table level - but the file size became too big
+  # i was thinking of keeping counts at the omop table level - but the file size became too big
   # so i decided to not include them
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
@@ -1281,7 +1260,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                                    indexDateDiagnosticsRelativeDays,
                                                    minCellCount,
                                                    conceptIdUniverse,
-                                                   conceptIdToFilterIndexEvent) {
+                                                   conceptsInCohort) {
   if (is.null(minCellCount)) {
     minCellCount <- 0
   }
@@ -1298,25 +1277,25 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
 
                 	  WITH c_ancestor
                     AS (
-                    	SELECT DISTINCT -- cohort_id,
+                    	SELECT DISTINCT cohort_id,
                     		descendant_concept_id concept_id
                     	FROM @cdm_database_schema.concept_ancestor ca
-                    	INNER JOIN @concept_id_universe cu ON ancestor_concept_id = cu.concept_id
+                    	INNER JOIN @concepts_in_cohort cu ON ancestor_concept_id = cu.concept_id
                     	),
                     all_concepts
                     AS (
-                    	SELECT -- cohort_id,
+                    	SELECT cohort_id,
                     		concept_id_2 concept_id
                     	FROM @cdm_database_schema.concept_relationship cr
                     	INNER JOIN c_ancestor ca ON concept_id_1 = ca.concept_id
 
                     	UNION
 
-                    	SELECT -- cohort_id,
+                    	SELECT cohort_id,
                     		concept_id
                     	FROM c_ancestor
                     	)
-                    SELECT DISTINCT -- cohort_id,
+                    SELECT DISTINCT cohort_id,
                     	concept_id
                     INTO #indx_concepts
                     FROM all_concepts;"
@@ -1326,7 +1305,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
     sql = sqlVocabulary,
     progressBar = FALSE,
     reportOverallTime = FALSE,
-    concept_id_universe = conceptIdToFilterIndexEvent,
+    concepts_in_cohort = conceptsInCohort,
     cdm_database_schema = cdmDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema
   )
@@ -1382,7 +1361,6 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  
   sqlConceptIdCount <- "INSERT INTO #indx_breakdown
                         SELECT cohort_definition_id cohort_id,
                         	@days_relative_index days_relative_index,
@@ -1392,7 +1370,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                         	COUNT(*) concept_count
                         FROM @cohort_database_schema.@cohort_table c
                         INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
-                        	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
+                        	AND DATEADD(dd, @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
                         INNER JOIN #indx_concepts cu ON d1.@domain_concept_id = cu.concept_id
                         WHERE c.cohort_definition_id IN (@cohortIds)
                         	AND d1.@domain_concept_id != 0
@@ -1423,9 +1401,9 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                         	WHERE cohort_definition_id IN (@cohortIds)
                                         	) c
                                         INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
-                                        	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
+                                        	AND DATEADD(dd, @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
                                         INNER JOIN @cdm_database_schema.@domain_table d2 ON c.subject_id = d2.person_id
-                                        	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d2.@domain_start_date
+                                        	AND DATEADD(dd, @days_relative_index, c.cohort_start_date) = d2.@domain_start_date
                                         -- AND d1.@domain_start_date = d2.@domain_start_date
                                         -- AND d1.person_id = d2.person_id
                                         INNER JOIN #indx_concepts cu1
@@ -1462,9 +1440,9 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                             	WHERE cohort_definition_id IN (@cohortIds)
                                             	) c
                                             INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
-                                            	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
+                                            	AND DATEADD(dd, @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
                                             INNER JOIN @cdm_database_schema.@domain_table d2 ON c.subject_id = d2.person_id
-                                            	AND DATEADD('d', @days_relative_index, c.cohort_start_date) = d2.@domain_start_date
+                                            	AND DATEADD(dd, @days_relative_index, c.cohort_start_date) = d2.@domain_start_date
                                             	-- AND d1.@domain_start_date = d2.@domain_start_date
                                             	-- AND d1.person_id = d2.person_id
                                             INNER JOIN #indx_concepts cu1
@@ -2148,7 +2126,7 @@ executeConceptSetDiagnostics <- function(connection,
         nrow(cohorts) - nrow(subset)
       ))
     }
-    output <- runConceptSetDiagnostics(
+    outputAndromeda <- runConceptSetDiagnostics(
       connection = connection,
       tempEmulationSchema = tempEmulationSchema,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -2160,14 +2138,51 @@ executeConceptSetDiagnostics <- function(connection,
       cohortTable = cohortTable,
       minCellCount = minCellCount
     )
-    writeToAllOutputToCsv(
-      object = output,
-      exportFolder = exportFolder,
-      databaseId = databaseId,
-      incremental = incremental,
-      minCellCount = minCellCount
-    )
-    Andromeda::close(output)
+    browser()
+    outputConceptTable <-
+      function(andromedObject,
+               tableNameCamelCase,
+               minCellCount,
+               databaseId,
+               exportFolder,
+               incremental) {
+
+        data <- makeDataExportable(
+          x = outputAndromeda[[tableNameCamelCase]] %>% dplyr::collect(),
+          tableName = camelCaseToSnakeCase(tableNameCamelCase),
+          minCellCount = minCellCount,
+          databaseId = databaseId
+        )
+        ParallelLogger::logInfo("  - writing ",
+                                paste0(camelCaseToSnakeCase(tableNameCamelCase),
+                                       ".csv"))
+        writeToCsv(
+          data = data,
+          fileName = file.path(exportFolder, paste0(camelCaseToSnakeCase(tableNameCamelCase),
+                                                    ".csv")),
+          incremental = incremental
+        )
+      }
+    
+    vectorOfTablesToOutput <- c("concept", "conceptAncestor", "conceptClass", "conceptCount",
+                                "conceptExcluded", "conceptMapping", "conceptRelationship",
+                                "conceptResolved", "conceptSets", "conceptSetsOptimized",
+                                "conceptSynonym", "domain", "indexEventBreakdown",
+                                "orphanConcept", "relationship", "vocabulary"
+                                )
+    
+    for (i in (1:length(vectorOfTablesToOutput))) {
+      outputConceptTable(
+        andromedObject = outputAndromeda,
+        tableNameCamelCase = vectorOfTablesToOutput[[i]],
+        minCellCount = minCellCount,
+        databaseId = databaseId,
+        exportFolder = exportFolder,
+        incremental = incremental
+      )
+    }
+    
+    Andromeda::close(outputAndromeda)
     rm("output")
     recordTasksDone(
       cohortId = subset$cohortId,

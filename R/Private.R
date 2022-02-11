@@ -175,7 +175,7 @@ makeDataExportable <- function(x,
   missingRequiredFields <-
     setdiff(requiredFieldsInDataModel, presentInBoth)
   
-  if (length(presentInDataOnly) > 0) {
+  if (length(presentInDataOnly) > 0 && presentInDataOnly != "databaseId") {
     ParallelLogger::logInfo(
       " - Unexpected fields found in table ",
       tableName,
@@ -240,58 +240,4 @@ enforceMinCellValueInDataframe <- function(data,
     }
   }
   return(data)
-}
-
-# private function - not exported
-snakeCaseToCamelCase <- function(string) {
-  string <- tolower(string)
-  for (letter in letters) {
-    string <-
-      gsub(paste("_", letter, sep = ""), toupper(letter), string)
-  }
-  string <- gsub("_([0-9])", "\\1", string)
-  return(string)
-}
-
-# private function - not exported
-camelCaseToSnakeCase <- function(string) {
-  string <- gsub("([A-Z])", "_\\1", string)
-  string <- tolower(string)
-  string <- gsub("([a-z])([0-9])", "\\1_\\2", string)
-  return(string)
-}
-
-# private function - not exported
-titleCaseToCamelCase <- function(string) {
-  string <- stringr::str_replace_all(string = string,
-                                     pattern = ' ',
-                                     replacement = '')
-  substr(string, 1, 1) <- tolower(substr(string, 1, 1))
-  return(string)
-}
-
-# private function - not exported
-hasData <- function(data) {
-  if (is.null(data)) {
-    return(FALSE)
-  }
-  if (is.data.frame(data)) {
-    if (nrow(data) == 0) {
-      return(FALSE)
-    }
-  }
-  if (!is.data.frame(data)) {
-    if (length(data) == 0) {
-      return(FALSE)
-    }
-    if (length(data) == 1) {
-      if (is.na(data)) {
-        return(FALSE)
-      }
-      if (data == "") {
-        return(FALSE)
-      }
-    }
-  }
-  return(TRUE)
 }
