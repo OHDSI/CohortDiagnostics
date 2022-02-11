@@ -4,7 +4,6 @@
 \alias{executeDiagnostics}
 \title{Execute cohort diagnostics}
 \usage{
-<<<<<<<< HEAD:man/executeDiagnostics.Rd
 executeDiagnostics(
   cohortDefinitionSet,
   exportFolder,
@@ -20,29 +19,6 @@ executeDiagnostics(
   cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortIds = NULL,
-========
-runCohortDiagnostics(
-  packageName = NULL,
-  cohortToCreateFile = "settings/CohortsToCreate.csv",
-  cohortDefinitionSet = NULL,
-  baseUrl = NULL,
-  cohortSetReference = NULL,
-  connectionDetails = NULL,
-  connection = NULL,
-  cdmDatabaseSchema,
-  oracleTempSchema = NULL,
-  tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-  cohortDatabaseSchema,
-  vocabularyDatabaseSchema = cdmDatabaseSchema,
-  cohortTable = "cohort",
-  cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
-  cohortIds = NULL,
-  inclusionStatisticsFolder = NULL,
-  exportFolder,
-  databaseId,
-  databaseName = databaseId,
-  databaseDescription = databaseId,
->>>>>>>> master:man/runCohortDiagnostics.Rd
   cdmVersion = 5,
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
@@ -75,15 +51,7 @@ does not exist it will be created.}
 this should include both the database and schema name, for example
 'scratch.dbo'.}
 
-<<<<<<<< HEAD:man/executeDiagnostics.Rd
 \item{databaseName}{The full name of the database. If NULL, defaults to databaseId.}
-========
-\item{cohortDefinitionSet}{Data.frame of cohorts must include columns cohortId, cohortName, json, sql}
-
-\item{baseUrl}{The base URL for the WebApi instance, for example:
-"http://server.org:80/WebAPI". Can be left NULL if 
-\code{packageName} and \code{cohortToCreateFile} have been specified.}
->>>>>>>> master:man/runCohortDiagnostics.Rd
 
 \item{databaseDescription}{A short description (several sentences) of the database. If NULL, defaults to databaseId.}
 
@@ -114,13 +82,6 @@ commonly the same as cdmDatabaseSchema. Note that for
 SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
 
-<<<<<<<< HEAD:man/executeDiagnostics.Rd
-========
-\item{cohortTable}{Name of the cohort table.}
-
-\item{cohortTableNames}{Cohort Table names used by CohortGenerator package}
-
->>>>>>>> master:man/runCohortDiagnostics.Rd
 \item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
 diagnostics to.}
 
@@ -184,10 +145,7 @@ The \code{cohortSetReference} argument must be a data frame with  the following 
 fully specified description of the cohort definition, but should provide enough context to help user understand the
 meaning of the cohort definition}
 \item{referentConceptId}{A standard omop concept id that serves as the referent phenotype definition for the cohort Id (optional)}
-<<<<<<<< HEAD:man/executeDiagnostics.Rd
 }
-========
->>>>>>>> master:man/runCohortDiagnostics.Rd
 }
 \examples{
 \dontrun{
