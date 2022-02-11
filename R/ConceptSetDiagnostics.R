@@ -2088,7 +2088,6 @@ getOptimizationRecommendationForConceptSetExpression <-
 
 
 
-
 executeConceptSetDiagnostics <- function(connection,
                                          tempEmulationSchema,
                                          cdmDatabaseSchema,
@@ -2138,7 +2137,6 @@ executeConceptSetDiagnostics <- function(connection,
       cohortTable = cohortTable,
       minCellCount = minCellCount
     )
-    browser()
     outputConceptTable <-
       function(andromedObject,
                tableNameCamelCase,
@@ -2146,7 +2144,6 @@ executeConceptSetDiagnostics <- function(connection,
                databaseId,
                exportFolder,
                incremental) {
-
         data <- makeDataExportable(
           x = outputAndromeda[[tableNameCamelCase]] %>% dplyr::collect(),
           tableName = camelCaseToSnakeCase(tableNameCamelCase),
@@ -2158,18 +2155,33 @@ executeConceptSetDiagnostics <- function(connection,
                                        ".csv"))
         writeToCsv(
           data = data,
-          fileName = file.path(exportFolder, paste0(camelCaseToSnakeCase(tableNameCamelCase),
-                                                    ".csv")),
+          fileName = file.path(exportFolder, paste0(
+            camelCaseToSnakeCase(tableNameCamelCase),
+            ".csv"
+          )),
           incremental = incremental
         )
       }
     
-    vectorOfTablesToOutput <- c("concept", "conceptAncestor", "conceptClass", "conceptCount",
-                                "conceptExcluded", "conceptMapping", "conceptRelationship",
-                                "conceptResolved", "conceptSets", "conceptSetsOptimized",
-                                "conceptSynonym", "domain", "indexEventBreakdown",
-                                "orphanConcept", "relationship", "vocabulary"
-                                )
+    vectorOfTablesToOutput <-
+      c(
+        "concept",
+        "conceptAncestor",
+        "conceptClass",
+        "conceptCount",
+        "conceptExcluded",
+        "conceptMapping",
+        "conceptRelationship",
+        "conceptResolved",
+        "conceptSets",
+        "conceptSetsOptimized",
+        "conceptSynonym",
+        "domain",
+        "indexEventBreakdown",
+        "orphanConcept",
+        "relationship",
+        "vocabulary"
+      )
     
     for (i in (1:length(vectorOfTablesToOutput))) {
       outputConceptTable(
@@ -2205,8 +2217,6 @@ executeConceptSetDiagnostics <- function(connection,
 
 
 
-
-
 getConceptSetDetailsFromCohortDefinition <-
   function(cohortDefinitionExpression) {
     if ("expression" %in% names(cohortDefinitionExpression)) {
@@ -2230,8 +2240,8 @@ getConceptSetDetailsFromCohortDefinition <-
       i <- i + 1
       conceptSetExpressionDetails[[i]] <-
         getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
-                                                         conceptSetExpression[i, ]$expression$items) %>%
-        dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
+                                                         conceptSetExpression[i,]$expression$items) %>%
+        dplyr::mutate(id = conceptSetExpression[i, ]$id) %>%
         dplyr::relocate(.data$id) %>%
         dplyr::arrange(.data$id)
     }
