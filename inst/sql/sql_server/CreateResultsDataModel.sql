@@ -459,8 +459,6 @@ CREATE TABLE @results_schema.@orphan_concept (
 			concept_set_id INT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			concept_id BIGINT NOT NULL,
-			concept_count FLOAT NOT NULL,
-			concept_subjects FLOAT NOT NULL,
 			PRIMARY KEY(cohort_id, concept_set_id, database_id, concept_id)
 );
 
