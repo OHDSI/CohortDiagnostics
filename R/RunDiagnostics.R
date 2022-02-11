@@ -52,6 +52,7 @@
 #' @param runTimeDistributions        Generate and export cohort time distributions?
 #' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
+#' @template IndexDateDiagnosticsRelativeDays
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap? Overlaps are checked within cohortIds
 #'                                    that have the same phenotype ID sourced from the CohortSetReference or
@@ -131,6 +132,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runTimeDistributions = TRUE,
                                runVisitContext = TRUE,
                                runBreakdownIndexEvents = TRUE,
+                               indexDateDiagnosticsRelativeDays = c(-5:5),  #part of index event breakdown
                                runIncidenceRate = TRUE,
                                runCohortOverlap = TRUE,
                                runCohortCharacterization = TRUE,
@@ -461,7 +463,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runIncludedSourceConcepts ||
     runOrphanConcepts ||
     runBreakdownIndexEvents) {
-    runConceptSetDiagnostics(
+    executeConceptSetDiagnostics(
       connection = connection,
       tempEmulationSchema = tempEmulationSchema,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -471,8 +473,10 @@ executeDiagnostics <- function(cohortDefinitionSet,
       runIncludedSourceConcepts = runIncludedSourceConcepts,
       runOrphanConcepts = runOrphanConcepts,
       runBreakdownIndexEvents = runBreakdownIndexEvents,
+      indexDateDiagnosticsRelativeDays = indexDateDiagnosticsRelativeDays,
       exportFolder = exportFolder,
       minCellCount = minCellCount,
+      keepCustomConceptId = FALSE,
       conceptCountsDatabaseSchema = NULL,
       conceptCountsTable = "#concept_counts",
       conceptCountsTableIsTemp = TRUE,
