@@ -102,7 +102,7 @@ executeCohortComparisonDiagnostics <- function(connection,
                                                incremental) {
   ParallelLogger::logInfo("Computing cohort overlap")
   startCohortOverlap <- Sys.time()
-  
+
   combis <- cohorts %>%
     dplyr::select(.data$cohortId) %>%
     dplyr::distinct()
@@ -110,7 +110,7 @@ executeCohortComparisonDiagnostics <- function(connection,
   # Select cross product of all cohort ids
   combis <- combis %>%
     dplyr::rename(targetCohortId = .data$cohortId) %>%
-    tidyr::crossing(dplyr::rename(combis, comparatorCohortId = .data$cohortId)) %>% 
+    tidyr::crossing(dplyr::rename(combis, comparatorCohortId = .data$cohortId)) %>%
     dplyr::filter(.data$targetCohortId < .data$comparatorCohortId)
 
   if (incremental) {
@@ -198,7 +198,7 @@ executeCohortComparisonDiagnostics <- function(connection,
                               tInCSubjects = 0,
                               cInTSubjects = 0
                             ))
-      
+
       data <- makeDataExportable(
         x = data,
         tableName = "cohort_overlap",

@@ -29,14 +29,12 @@ if (!is.null(shinySettings$sampleSize)) {
   sampleSize <- shinySettings$sampleSize
 }
 
-
 connection <- DatabaseConnector::connect(connectionDetails)
 onStop(function() {
   if (DBI::dbIsValid(connection)) {
     DatabaseConnector::disconnect(connection = connection)
   }
 })
-
 
 # take a random sample
 if (is.null(subjectIds)) {
@@ -47,10 +45,10 @@ if (is.null(subjectIds)) {
           	WHERE cohort_definition_id = @cohort_definition_id
           	) all_ids
           ORDER BY NEWID();"
-  
+
   writeLines("Attempting to find subjects in cohort table.")
-  subjectIds <- DatabaseConnector::renderTranslateQuerySql(connection = connection, 
-                                                           sql = sql, 
+  subjectIds <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                           sql = sql,
                                                            sample_size = sampleSize,
                                                            cohort_database_schema = cohortDatabaseSchema,
                                                            cohort_table = cohortTable,
@@ -70,12 +68,13 @@ cohort <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                      cdm_database_schema = cdmDatabaseSchema,
                                                      cohort_definition_id = cohortDefinitionId,
                                                      subject_ids = subjectIds,
-                                                     snakeCaseToCamelCase = TRUE) %>% 
-  dplyr::tibble() %>% 
+                                                     snakeCaseToCamelCase = TRUE) %>%
+  dplyr::tibble() %>%
   dplyr::arrange(.data$subjectId, .data$cohortStartDate)
 subjectIds <- unique(cohort$subjectId)
 
 if (nrow(cohort) == 0) {
   stop("Cohort is empty")
 }
+
 eventSql <- SqlRender::readSql("sql/GetEvents.sql")

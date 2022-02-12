@@ -29,6 +29,15 @@ this is experimental. Postgres and sqlite are the only backends recommended for 
 
 12. New diagnostics computes temporal relationship between any two cohorts. Temporal relationship are the same as temporalCovariateSettings. This diagnostics will be integerated into the temporal characterization output of diagnostics explorer, where cohorts will be covariates.
 
+
+CohortDiagnostics 2.2.3
+=======================
+
+Bug fixes:
+
+1. Replace use dplyr across() for bug introduced by tidyr v1.2.0
+
+
 CohortDiagnostics 2.2.2
 =======================
 

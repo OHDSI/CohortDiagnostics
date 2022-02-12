@@ -24,10 +24,10 @@ prepareTable1 <- function(covariates,
     col_types = readr::cols(),
     guess_max = min(1e7)
   ) %>%
-    dplyr::mutate(dplyr::across(
-      tidyr::everything(),
-      ~ tidyr::replace_na(data = .x, replace = '')
-    ))
+    tidyr::replace_na(replace =
+                        list(
+                          covariateIds = ''
+                        ))
   
   resultsTable <- tidyr::tibble()
   
@@ -113,15 +113,16 @@ prepareTable1Comp <- function(balance,
       )
     ))
   space <- "&nbsp;"
+  
   specifications <- readr::read_csv(
     file = pathToCsv,
     col_types = readr::cols(),
     guess_max = min(1e7)
   ) %>%
-    dplyr::mutate(dplyr::across(
-      tidyr::everything(),
-      ~ tidyr::replace_na(data = .x, replace = '')
-    ))
+    tidyr::replace_na(replace =
+                        list(
+                          covariateIds = ''
+                        ))
   
   resultsTable <- tidyr::tibble()
   
