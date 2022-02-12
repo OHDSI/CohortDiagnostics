@@ -77,25 +77,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
       on.exit(DatabaseConnector::disconnect(connection))
     }
   }
-  ## Create concept tracking table----
-  #For some domains (e.g. Visit download all vocabulary - as it is used in visit context etc)
-  ParallelLogger::logTrace(" - Creating concept ID table for tracking concepts used in diagnostics")
-  sql <-
-    "IF OBJECT_ID('tempdb..#concept_tracking', 'U') IS NOT NULL
-                      	DROP TABLE #concept_tracking;
-                      CREATE TABLE #concept_tracking (concept_id INT);
-                      SELECT DISTINCT CONCEPT_ID
-                      FROM @vocabulary_database_schema.concept
-                      WHERE domain_id IN ('Visit', 'Ethnicity', 'Race', 'Gender', 'Place of Service', 'Type Concept');
-  "
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = connection,
-    sql = sql,
-    tempEmulationSchema = tempEmulationSchema,
-    vocabulary_database_schema = vocabularyDatabaseSchema,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
   
   ## Create andromeda object ----
   conceptSetDiagnosticsResults <- Andromeda::andromeda()
@@ -119,13 +100,29 @@ runConceptSetDiagnostics <- function(connection = NULL,
     )
     return(NULL)
   }
-  conceptSets <-
-    conceptSetDiagnosticsResults$conceptSets %>% dplyr::collect()
+  #upload crosswalk of unique concept set and cohort concept
+  conceptSetsXWalk <-
+    conceptSetDiagnosticsResults$conceptSets %>% 
+    dplyr::collect() %>% 
+    dplyr::select(.data$uniqueConceptSetId,
+                  .data$cohortId,
+                  .data$conceptSetId)
+  DatabaseConnector::insertTable(connection = connection,
+                                 tableName = "#concept_sets_x_walk", 
+                                 data = conceptSetsXWalk,
+                                 dropTableIfExists = TRUE,
+                                 createTable = TRUE,
+                                 tempTable = TRUE,
+                                 tempEmulationSchema = tempEmulationSchema, 
+                                 camelCaseToSnakeCase = TRUE)
   
   ## Unique concept sets----
+  conceptSetsT <- conceptSetDiagnosticsResults$conceptSets %>% 
+    dplyr::collect()
   uniqueConceptSets <-
-    conceptSets[!duplicated(conceptSets$uniqueConceptSetId),] %>%
+    conceptSetsT[!duplicated(conceptSetsT$uniqueConceptSetId),] %>%
     dplyr::select(-.data$cohortId,-.data$conceptSetId)
+  rm("conceptSetsT")
   ParallelLogger::logTrace(
     paste0(
       " - Note: There are ",
@@ -165,7 +162,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       optimizationRecommendation <- optimizationRecommendation %>%
         dplyr::mutate(uniqueConceptSetId = uniqueConceptSet$uniqueConceptSetId) %>%
         dplyr::inner_join(
-          conceptSets %>%
+          conceptSetsXWalk %>%
             dplyr::select(
               .data$uniqueConceptSetId,
               .data$cohortId,
@@ -188,8 +185,41 @@ runConceptSetDiagnostics <- function(connection = NULL,
     dplyr::bind_rows(optimizedConceptSet) %>%
     dplyr::distinct() %>%
     dplyr::tibble()
-  rm("conceptSets")
   
+  ## Create concept tracking table----
+  ParallelLogger::logTrace(" - Creating concept ID table for tracking concepts used in diagnostics")
+  sql <-
+    "IF OBJECT_ID('tempdb..#concept_tracking', 'U') IS NOT NULL
+                      	DROP TABLE #concept_tracking;
+                      CREATE TABLE #concept_tracking (unique_concept_set_id INT, concept_id INT);
+  "
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sql,
+    tempEmulationSchema = tempEmulationSchema,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  
+  #For some domains (e.g. Visit download all vocabulary - as it is used in visit context etc)
+  #Track those concept_id as -1 codeset_id
+  ParallelLogger::logTrace(" - Creating concept ID table for tracking concepts used in diagnostics")
+  sql <-
+    "INSERT INTO #concept_tracking
+    SELECT DISTINCT -1 unique_concept_set_id, CONCEPT_ID
+    FROM @vocabulary_database_schema.concept
+    WHERE domain_id IN ('Visit', 'Ethnicity', 'Race', 'Gender', 'Place of Service', 'Type Concept');
+  "
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sql,
+    tempEmulationSchema = tempEmulationSchema,
+    vocabulary_database_schema = vocabularyDatabaseSchema,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  browser()
+  debug(resolveConceptSets)
   ## Instantiate (resolve) unique concept sets----
   ParallelLogger::logInfo("  - Resolving concept sets found in cohorts.")
   startInstantiateConceptSet <- Sys.time()
@@ -202,23 +232,10 @@ runConceptSetDiagnostics <- function(connection = NULL,
       tempEmulationSchema = tempEmulationSchema,
       conceptSetsTable = "#resolved_concept_set",
       conceptTrackingTable = "#concept_tracking",
-      dropConceptSetsTable = FALSE
+      conceptSetsXWalk = "#concept_sets_x_walk",
+      dropConceptSetsTable = FALSE,
+      keepCustomConceptId = keepCustomConceptId
     )
-  if (!is.null(conceptSetDiagnosticsResults$conceptResolved)) {
-    if (!keepCustomConceptId) {
-      conceptSetDiagnosticsResults$conceptResolved <-
-        conceptSetDiagnosticsResults$conceptResolved %>%
-        dplyr::filter(.data$conceptId < 200000000)
-    }
-    conceptSetDiagnosticsResults$conceptResolved <-
-      conceptSetDiagnosticsResults$conceptResolved %>%
-      dplyr::inner_join(conceptSetDiagnosticsResults$conceptSets %>% dplyr::distinct(),
-                        by = "uniqueConceptSetId") %>%
-      dplyr::select(.data$cohortId,
-                    .data$conceptSetId,
-                    .data$conceptId) %>%
-      dplyr::distinct()
-  }
   delta <- Sys.time() - startInstantiateConceptSet
   ParallelLogger::logTrace("  - Instantiating concept sets took ",
                            signif(delta, 3),
@@ -234,7 +251,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
       uniqueConceptSets = uniqueConceptSets,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
-      conceptTrackingTable = "#concept_tracking"
+      conceptTrackingTable = "#concept_tracking",
+      keepCustomConceptId = keepCustomConceptId
     )
   if (!is.null(conceptSetDiagnosticsResults$conceptExcluded)) {
     if (!keepCustomConceptId) {
@@ -265,6 +283,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
+    conceptTrackingTable = "#concept_tracking",
     instantiatedCodeSets = "#resolved_concept_set"
   )
   if (!keepCustomConceptId) {
@@ -294,118 +313,34 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            " ",
                            attr(delta, "units"))
   
-  ## Concept Source to Standard mapping----
-  ParallelLogger::logInfo("  - Mapping concepts.")
-  startConceptMapping <- Sys.time()
-  conceptSetDiagnosticsResults$conceptMapping <-
-    getConceptSourceStandardMapping(
+  ## Counting standard to source concept mapping----
+  ParallelLogger::logInfo("  - Counting standard to source concept mapping.")
+  startconceptStdSrcCnt <- Sys.time()
+  conceptSetDiagnosticsResults$conceptStdSrcCnt <-
+    getConceptStandardSourceMappingCount(
       connection = connection,
       cdmDatabaseSchema = cdmDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
-      conceptIdUniverse = "#concept_tracking"
+      conceptTrackingTable = "#concept_tracking"
     )
   if (!keepCustomConceptId) {
-    conceptSetDiagnosticsResults$conceptMapping <-
-      conceptSetDiagnosticsResults$conceptMapping %>%
+    conceptSetDiagnosticsResults$conceptStdSrcCnt <-
+      conceptSetDiagnosticsResults$conceptStdSrcCnt %>%
       dplyr::filter(.data$conceptId < 200000000) %>%
       dplyr::filter(is.na(.data$sourceConceptId) ||
                       .data$sourceConceptId < 200000000)
   }
-  delta <- Sys.time() - startConceptMapping
-  ParallelLogger::logTrace("  - Counting concept mapping took ",
+  delta <- Sys.time() - startconceptStdSrcCnt
+  ParallelLogger::logTrace("  - Counting standard to source concept mapping mapping took ",
                            signif(delta, 3),
                            " ",
                            attr(delta, "units"))
   
-  ## Get all the conceptIds of interest, per cohort
-  ParallelLogger::logInfo("  - Tracking cohort level concepts.")
-  startCohortConceptTrack <- Sys.time()
-  conceptsCohort <- dplyr::bind_rows(
-    conceptSetDiagnosticsResults$conceptResolved %>%
-      dplyr::select(.data$cohortId,
-                    .data$conceptId) %>%
-      dplyr::collect(),
-    conceptSetDiagnosticsResults$conceptExcluded %>%
-      dplyr::select(.data$cohortId,
-                    .data$conceptId) %>%
-      dplyr::collect(),
-    conceptSetDiagnosticsResults$orphanConcept %>%
-      dplyr::select(.data$cohortId,
-                    .data$conceptId) %>%
-      dplyr::collect(),
-    conceptSetDiagnosticsResults$conceptSetsOptimized %>%
-      dplyr::select(.data$cohortId,
-                    .data$conceptId) %>%
-      dplyr::collect()
-  ) %>%
-    dplyr::distinct()
-  conceptsCohortMapped1 <- conceptsCohort %>%
-    dplyr::inner_join(
-      conceptSetDiagnosticsResults$conceptMapping %>%
-        dplyr::select(.data$conceptId, .data$sourceConceptId) %>%
-        dplyr::collect(),
-      by = c("conceptId")
-    ) %>%
-    dplyr::select(-.data$conceptId) %>%
-    dplyr::rename("conceptId" = .data$sourceConceptId)
-  conceptsCohortMapped2 <- conceptsCohort %>%
-    dplyr::inner_join(
-      conceptSetDiagnosticsResults$conceptMapping %>%
-        dplyr::select(.data$conceptId, .data$sourceConceptId) %>%
-        dplyr::rename(
-          "sourceConceptId" = .data$conceptId,
-          "conceptId" = .data$sourceConceptId
-        ) %>%
-        dplyr::collect(),
-      by = c("conceptId")
-    ) %>%
-    dplyr::select(-.data$conceptId) %>%
-    dplyr::rename("conceptId" = .data$sourceConceptId)
-  #getConceptId from 'Visit' and 'Place of Service' domains
-  sqlVisitPlaceOfService <- "SELECT DISTINCT CONCEPT_ID
-                      FROM @vocabulary_database_schema.concept
-                      WHERE domain_id IN ('Visit', 'Place of Service');"
-  conceptIdVisit <-
-    DatabaseConnector::renderTranslateQuerySql(
-      connection = connection,
-      sql = sqlVisitPlaceOfService,
-      vocabulary_database_schema = vocabularyDatabaseSchema,
-      snakeCaseToCamelCase = TRUE
-    ) %>%
-    dplyr::distinct() %>%
-    tidyr::crossing(dplyr::tibble(cohortId = cohorts$cohortId %>% unique())) %>%
-    dplyr::select(.data$cohortId, .data$conceptId) %>%
-    dplyr::distinct()
-  conceptsCohort <- dplyr::bind_rows(conceptsCohort,
-                                     conceptsCohortMapped1,
-                                     conceptsCohortMapped2,
-                                     conceptIdVisit) %>%
-    dplyr::distinct()
-  
-  # insert into server concept ids in cohort
-  DatabaseConnector::insertTable(
-    connection = connection,
-    tableName = "#concepts_in_cohort",
-    createTable = TRUE,
-    dropTableIfExists = TRUE,
-    tempTable = TRUE,
-    tempEmulationSchema = tempEmulationSchema,
-    progressBar = FALSE,
-    bulkLoad = (Sys.getenv("bulkLoad") == TRUE),
-    camelCaseToSnakeCase = TRUE,
-    data = conceptsCohort
-  )
-  delta <- Sys.time() - startCohortConceptTrack
-  ParallelLogger::logTrace(
-    "    - Creating and loading concept_id's for use in index event breakdown took ",
-    signif(delta, 3),
-    " ",
-    attr(delta, "units")
-  )
-  
+  browser()
   ## Index event breakdown ----
   ParallelLogger::logInfo("  - Learning about the breakdown in index events.")
   startBreakdownEvents <- Sys.time()
+  browser()
   conceptSetDiagnosticsResults$indexEventBreakdown <-
     getConceptOccurrenceRelativeToIndexDay(
       cohortIds = subset$cohortId,
@@ -415,9 +350,9 @@ runConceptSetDiagnostics <- function(connection = NULL,
       cohortTable = cohortTable,
       minCellCount = minCellCount,
       tempEmulationSchema = tempEmulationSchema,
-      conceptIdUniverse = "#concept_tracking",
-      indexDateDiagnosticsRelativeDays = indexDateDiagnosticsRelativeDays,
-      conceptsInCohort = "#concepts_in_cohort"
+      unique_concept_sets = "#concept_sets_x_walk",
+      conceptTrackingTable = "#concept_tracking",
+      indexDateDiagnosticsRelativeDays = indexDateDiagnosticsRelativeDays
     )
   if (!keepCustomConceptId) {
     conceptSetDiagnosticsResults$indexEventBreakdown <-
@@ -446,7 +381,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       connection = connection,
       cdmDatabaseSchema = cdmDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
-      conceptIdUniverse = "#concept_tracking"
+      conceptTrackingTable = "#concept_tracking"
     )
   if (!keepCustomConceptId) {
     conceptSetDiagnosticsResults$conceptCount <-
@@ -800,8 +735,10 @@ resolveConceptSets <- function(uniqueConceptSets,
                                vocabularyDatabaseSchema = cdmDatabaseSchema,
                                tempEmulationSchema,
                                conceptSetsTable = "#resolved_concept_set",
+                               conceptSetsXWalk = "#concept_sets_x_walk",
                                conceptTrackingTable = NULL,
-                               dropConceptSetsTable = TRUE) {
+                               dropConceptSetsTable = TRUE,
+                               keepCustomConceptId = FALSE) {
   sql <- sapply(split(uniqueConceptSets, 1:nrow(uniqueConceptSets)),
                 function(x) {
                   sub(
@@ -846,7 +783,7 @@ resolveConceptSets <- function(uniqueConceptSets,
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql =  "INSERT INTO @concept_tracking_table
-            SELECT DISTINCT concept_id
+            SELECT DISTINCT codeset_id unique_concept_set_id, concept_id
             FROM @concept_sets_table
             WHERE concept_id != 0;",
       tempEmulationSchema = tempEmulationSchema,
@@ -858,13 +795,18 @@ resolveConceptSets <- function(uniqueConceptSets,
   }
   resolvedConcepts <-
     renderTranslateQuerySql(
-      sql = "Select * from @concept_sets_table;",
+      sql = " Select DISTINCT unq.cohort_id, unq.concept_set_id codeset_id, cs.concept_id
+              FROM @concept_sets_table cs
+              INNER JOIN @concept_sets_x_walk unq
+              ON cs.codeset_id = unq.unique_concept_set_id
+              {@keep_custom_concept_id} ? {WHERE cs.concept_id < 200000000};",
       connection = connection,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema,
-      concept_sets_table = conceptSetsTable
-    ) %>%
-    dplyr::rename(uniqueConceptSetId = .data$codesetId)
+      concept_sets_table = conceptSetsTable,
+      concept_sets_x_walk = conceptSetsXWalk,
+      keep_custom_concept_id = keepCustomConceptId
+    )
   
   if (dropConceptSetsTable) {
     # Drop temporary tables
@@ -937,9 +879,9 @@ getOrphanConcepts <- function(connectionDetails = NULL,
   )
   if (!is.null(conceptTrackingTable)) {
     # tracking table
-    sql <- "INSERT INTO @concept_tracking_table (concept_id)
-                SELECT DISTINCT concept_id
-                FROM #orphan_concept_table;"
+    sql <- "INSERT INTO @concept_tracking_table (unique_concept_set_id, concept_id)
+            SELECT DISTINCT codeset_id unique_concept_set_id, concept_id
+            FROM #orphan_concept_table;"
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sql,
@@ -973,7 +915,7 @@ getOrphanConcepts <- function(connectionDetails = NULL,
 getConceptRecordCount <- function(connection,
                                   cdmDatabaseSchema,
                                   tempEmulationSchema,
-                                  conceptIdUniverse = "#concept_tracking") {
+                                  conceptTrackingTable = "#concept_tracking") {
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide %>%
     dplyr::filter(.data$isEraTable == FALSE)
@@ -1015,7 +957,7 @@ getConceptRecordCount <- function(connection,
           	FROM @cdm_database_schema.@domain_table
           	INNER JOIN (
           		SELECT DISTINCT concept_id
-          		FROM @concept_id_universe
+          		FROM @concept_tracking_table
           		) c ON @domain_concept_id = concept_id
           	WHERE YEAR(@domain_start_date) > 0
           		AND @domain_concept_id > 0
@@ -1032,7 +974,7 @@ getConceptRecordCount <- function(connection,
             FROM @cdm_database_schema.@domain_table
             INNER JOIN (
             	SELECT DISTINCT concept_id
-            	FROM @concept_id_universe
+            	FROM @concept_tracking_table
             	) c ON @domain_concept_id = concept_id
             WHERE YEAR(@domain_start_date) > 0
             	AND @domain_concept_id > 0
@@ -1048,7 +990,7 @@ getConceptRecordCount <- function(connection,
             FROM @cdm_database_schema.@domain_table
             INNER JOIN (
             	SELECT DISTINCT concept_id
-            	FROM @concept_id_universe
+            	FROM @concept_tracking_table
             	) c
             	ON @domain_concept_id = concept_id
             WHERE YEAR(@domain_start_date) > 0
@@ -1066,7 +1008,7 @@ getConceptRecordCount <- function(connection,
           	FROM @cdm_database_schema.@domain_table dt
           	INNER JOIN (
           		SELECT DISTINCT concept_id
-          		FROM @concept_id_universe
+          		FROM @concept_tracking_table
           		) c ON @domain_concept_id = c.concept_id
           	LEFT JOIN (
           	  SELECT DISTINCT concept_id
@@ -1090,7 +1032,7 @@ getConceptRecordCount <- function(connection,
             FROM @cdm_database_schema.@domain_table
             INNER JOIN (
             	SELECT DISTINCT concept_id
-            	FROM @concept_id_universe
+            	FROM @concept_tracking_table
             	) c ON @domain_concept_id = c.concept_id
             LEFT JOIN (
             	SELECT DISTINCT concept_id
@@ -1112,7 +1054,7 @@ getConceptRecordCount <- function(connection,
             FROM @cdm_database_schema.@domain_table
             INNER JOIN (
             	SELECT DISTINCT concept_id
-            	FROM @concept_id_universe
+            	FROM @concept_tracking_table
             	) c ON @domain_concept_id = c.concept_id
             LEFT JOIN (
             	SELECT DISTINCT concept_id
@@ -1141,7 +1083,7 @@ getConceptRecordCount <- function(connection,
       domain_concept_id = rowData$domainConceptId,
       cdm_database_schema = cdmDatabaseSchema,
       domain_start_date = rowData$domainStartDate,
-      concept_id_universe = conceptIdUniverse,
+      concept_tracking_table = conceptTrackingTable,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )
@@ -1154,7 +1096,7 @@ getConceptRecordCount <- function(connection,
       domain_concept_id = rowData$domainConceptId,
       cdm_database_schema = cdmDatabaseSchema,
       domain_start_date = rowData$domainStartDate,
-      concept_id_universe = conceptIdUniverse,
+      concept_tracking_table = conceptTrackingTable,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )
@@ -1167,7 +1109,7 @@ getConceptRecordCount <- function(connection,
       domain_concept_id = rowData$domainConceptId,
       cdm_database_schema = cdmDatabaseSchema,
       domain_start_date = rowData$domainStartDate,
-      concept_id_universe = conceptIdUniverse,
+      concept_tracking_table = conceptTrackingTable,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )
@@ -1193,7 +1135,7 @@ getConceptRecordCount <- function(connection,
         domain_concept_id = rowData$domainSourceConceptId,
         cdm_database_schema = cdmDatabaseSchema,
         domain_start_date = rowData$domainStartDate,
-        concept_id_universe = conceptIdUniverse,
+        concept_tracking_table = conceptTrackingTable,
         progressBar = FALSE,
         reportOverallTime = FALSE
       )
@@ -1206,7 +1148,7 @@ getConceptRecordCount <- function(connection,
         domain_concept_id = rowData$domainSourceConceptId,
         cdm_database_schema = cdmDatabaseSchema,
         domain_start_date = rowData$domainStartDate,
-        concept_id_universe = conceptIdUniverse,
+        concept_tracking_table = conceptTrackingTable,
         progressBar = FALSE,
         reportOverallTime = FALSE
       )
@@ -1219,7 +1161,7 @@ getConceptRecordCount <- function(connection,
         domain_concept_id = rowData$domainSourceConceptId,
         cdm_database_schema = cdmDatabaseSchema,
         domain_start_date = rowData$domainStartDate,
-        concept_id_universe = conceptIdUniverse,
+        concept_tracking_table = conceptTrackingTable,
         progressBar = FALSE,
         reportOverallTime = FALSE
       )
@@ -1257,10 +1199,10 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                                    cohortDatabaseSchema,
                                                    cohortTable,
                                                    tempEmulationSchema,
+                                                   conceptSetsXWalk = "#concept_sets_x_walk",
+                                                   conceptTrackingTable = "#concept_tracking",
                                                    indexDateDiagnosticsRelativeDays,
-                                                   minCellCount,
-                                                   conceptIdUniverse,
-                                                   conceptsInCohort) {
+                                                   minCellCountd) {
   if (is.null(minCellCount)) {
     minCellCount <- 0
   }
@@ -1277,10 +1219,11 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
 
                 	  WITH c_ancestor
                     AS (
-                    	SELECT DISTINCT cohort_id,
-                    		descendant_concept_id concept_id
+                    	SELECT DISTINCT unq.cohort_id,
+                    		ca.descendant_concept_id concept_id
                     	FROM @cdm_database_schema.concept_ancestor ca
-                    	INNER JOIN @concepts_in_cohort cu ON ancestor_concept_id = cu.concept_id
+                    	INNER JOIN @concept_tracking_table cu ON ancestor_concept_id = cu.concept_id
+                    	INNER JOIN @unique_concept_sets unq ON cu.codeset_id = unq.codeset_id
                     	),
                     all_concepts
                     AS (
@@ -1310,7 +1253,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
     tempEmulationSchema = tempEmulationSchema
   )
   
-  if (!is.null(conceptIdUniverse)) {
+  if (!is.null(conceptTrackingTable)) {
     # keeping track
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
@@ -1319,7 +1262,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
             FROM #indx_concepts
             WHERE concept_id != 0;",
       tempEmulationSchema = tempEmulationSchema,
-      concept_tracking_table = conceptIdUniverse,
+      concept_tracking_table = conceptTrackingTable,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )
@@ -1419,7 +1362,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
   
   #conceptId is from _concept_id field of domain table and coConceptId is also from _source_concept_id field of same domain table
   # i.e. same day co-occurrence of concept ids where second (coConceptId) maybe non-standard relative to index date
-  # the inner join to conceptIdUnivese to _concep_id limits to standard concepts in conceptIdUniverse - because only standard concept should be in _concept_id
+  # the inner join to conceptIdUnivese to _concep_id limits to standard concepts in conceptTrackingTable - because only standard concept should be in _concept_id
   sqlConceptIdCoConceptIdOppositeCount <-
     " INSERT INTO #indx_breakdown
                                             SELECT cohort_definition_id cohort_id,
@@ -1663,44 +1606,44 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
 }
 
 
-# function: getConceptSourceStandardMapping ----
-getConceptSourceStandardMapping <- function(connection,
-                                            cdmDatabaseSchema,
-                                            tempEmulationSchema,
-                                            conceptIdUniverse = "#concept_tracking") {
+# function: getConceptStandardSourceMappingCount ----
+getConceptStandardSourceMappingCount <- function(connection,
+                                                 cdmDatabaseSchema,
+                                                 tempEmulationSchema,
+                                                 conceptTrackingTable = "#concept_tracking") {
   domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   domains <- domains$wide %>%
     dplyr::filter(nchar(.data$domainSourceConceptId) > 1)
   
-  sqlConceptMapping <-
-    "IF OBJECT_ID('tempdb..#concept_mapping', 'U') IS NOT NULL
-                      	DROP TABLE #concept_mapping;
-                      CREATE TABLE #concept_mapping (concept_id INT,
-                                                    source_concept_id INT,
-                                                    domain_table VARCHAR(20),
-                                                    concept_count BIGINT,
-                                                    subject_count BIGINT);"
+  sqlconceptStdSrcCnt <-
+    "IF OBJECT_ID('tempdb..#concept_std_src_cnt', 'U') IS NOT NULL
+                      	DROP TABLE #concept_std_src_cnt;
+                      CREATE TABLE #concept_std_src_cnt ( concept_id INT,
+                                                          source_concept_id INT,
+                                                          domain_table VARCHAR(20),
+                                                          concept_count BIGINT,
+                                                          subject_count BIGINT);"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
-    sql = sqlConceptMapping,
+    sql = sqlconceptStdSrcCnt,
     tempEmulationSchema = tempEmulationSchema,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
   
-  sqlMapping <- "WITH concept_id_universe
+  sqlMapping <- "WITH concept_tracking_table
           AS (
           	SELECT DISTINCT concept_id
-          	FROM @concept_id_universe
+          	FROM @concept_tracking_table
           	)
-          INSERT INTO #concept_mapping
+          INSERT INTO #concept_std_src_cnt
           SELECT @domain_concept_id concept_id,
           	@domain_source_concept_id source_concept_id,
           	'@domainTableShort' domain_table,
           	COUNT(*) AS concept_count,
           	COUNT(DISTINCT person_id) AS subject_count
           FROM @cdm_database_schema.@domain_table
-          INNER JOIN concept_id_universe a ON @domain_concept_id = a.concept_id
+          INNER JOIN concept_tracking_table a ON @domain_concept_id = a.concept_id
           WHERE (
           		@domain_source_concept_id IS NOT NULL
           		AND @domain_source_concept_id > 0
@@ -1710,9 +1653,9 @@ getConceptSourceStandardMapping <- function(connection,
           ORDER BY @domain_concept_id,
           	@domain_source_concept_id;"
   
-  conceptMapping <- list()
+  conceptStdSrcCnt <- list()
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i,]
+    rowData <- domains[i, ]
     ParallelLogger::logTrace(paste0(
       "  - Working on ",
       rowData$domainTable,
@@ -1727,14 +1670,14 @@ getConceptSourceStandardMapping <- function(connection,
       domain_concept_id = rowData$domainConceptId,
       domain_source_concept_id = rowData$domainSourceConceptId,
       cdm_database_schema = cdmDatabaseSchema,
-      concept_id_universe = conceptIdUniverse,
+      concept_tracking_table = conceptTrackingTable,
       domainTableShort = rowData$domainTableShort,
       reportOverallTime = FALSE,
       progressBar = FALSE
     )
   }
-  sql <- "SELECT * FROM #concept_mapping;"
-  conceptMapping <-
+  sql <- "SELECT * FROM #concept_std_src_cnt;"
+  conceptStdSrcCnt <-
     DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
       sql = sql,
@@ -1749,9 +1692,9 @@ getConceptSourceStandardMapping <- function(connection,
       .data$conceptCount,
       .data$subjectCount
     )
-  conceptMapping <- dplyr::bind_rows(
-    conceptMapping,
-    conceptMapping %>%
+  conceptStdSrcCnt <- dplyr::bind_rows(
+    conceptStdSrcCnt,
+    conceptStdSrcCnt %>%
       dplyr::group_by(.data$conceptId,
                       .data$sourceConceptId) %>%
       dplyr::summarise(
@@ -1763,9 +1706,12 @@ getConceptSourceStandardMapping <- function(connection,
   ) %>%
     dplyr::distinct()
   
-  sql <- "INSERT INTO @concept_id_table (concept_id)
-                  SELECT DISTINCT source_concept_id concept_id
-                  FROM #concept_mapping;"
+  sql <-
+    " INSERT INTO @concept_id_table (unique_concept_set_id, concept_id)
+      SELECT DISTINCT unique_concept_set_id, source_concept_id concept_id
+      FROM #concept_std_src_cnt cm
+      INNER JOIN #concept_tracking ct
+      ON cm.concept_id = ct.concept_id;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
@@ -1775,8 +1721,8 @@ getConceptSourceStandardMapping <- function(connection,
     reportOverallTime = FALSE
   )
   sqlDdlDrop <-
-    "IF OBJECT_ID('tempdb..#concept_mapping', 'U') IS NOT NULL
-                	      DROP TABLE #concept_mapping;"
+    "IF OBJECT_ID('tempdb..#concept_std_src_cnt', 'U') IS NOT NULL
+                	      DROP TABLE #concept_std_src_cnt;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sqlDdlDrop,
@@ -1784,7 +1730,7 @@ getConceptSourceStandardMapping <- function(connection,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  return(conceptMapping)
+  return(conceptStdSrcCnt)
 }
 
 
@@ -1810,68 +1756,62 @@ getExcludedConceptSets <- function(connection,
                       .data$includeDescendants) %>%
         dplyr::distinct()
     } else {
-      conceptSetWithExclude[[i]] <- conceptSetWithExclude[[i]][0, ]
+      conceptSetWithExclude[[i]] <- conceptSetWithExclude[[i]][0,]
     }
   }
   conceptSetWithExclude <-
     dplyr::bind_rows(conceptSetWithExclude)
   
-  # with descendants = FALSE
-  conceptIdsWithOutDescendantsInExclude <-
-    conceptSetWithExclude %>%
-    dplyr::filter(.data$includeDescendants != TRUE) %>%
-    dplyr::select(.data$conceptId) %>%
-    dplyr::distinct() %>%
-    dplyr::pull()
-  # with descendants = TRUE
-  conceptIdsWithDescendantsInExclude <-
-    conceptSetWithExclude %>%
-    dplyr::filter(.data$includeDescendants == TRUE) %>%
-    dplyr::select(.data$conceptId) %>%
-    dplyr::distinct() %>%
-    dplyr::pull()
-  
-  if (length(c(
-    conceptIdsWithOutDescendantsInExclude,
-    conceptIdsWithDescendantsInExclude
-  )) == 0) {
-    ParallelLogger::logTrace(
-      "   - None of the concept sets had excluded concepts. Exiting excluded concept diagnostics."
-    )
+  if (nrow(conceptSetWithExclude) == 0) {
     return(NULL)
   }
   
+  DatabaseConnector::insertTable(
+    connection = connection,
+    tableName = "#excluded_concepts_ex",
+    data = conceptSetWithExclude,
+    dropTableIfExists = TRUE,
+    createTable = TRUE,
+    tempTable = TRUE,
+    progressBar = FALSE,
+    camelCaseToSnakeCase = TRUE
+  )
+  
+  sql <- "IF OBJECT_ID('tempdb..#excluded_concepts', 'U') IS NOT NULL
+      	  DROP TABLE #excluded_concepts;
+      	
+      	  SELECT DISTINCT unique_concept_set_id,
+          	concept_id
+          INTO #excluded_concepts
+          FROM (
+          	SELECT DISTINCT ex.unique_concept_set_id,
+          		ex.concept_id
+          	FROM #excluded_concepts_ex ex
+          	
+          	UNION
+          	
+          	SELECT DISTINCT ex.unique_concept_set_id,
+          		anc.descendant_concept_id concept_id
+          	FROM @vocabulary_database_schema.concept_ancestor anc
+          	INNER JOIN #excluded_concepts_ex ex ON anc.ancestor_concept_id = ex.concept_id
+          	WHERE ex.include_descendants = TRUE
+          	) f;"
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sql,
+    vocabulary_database_schema = vocabularyDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  
   if (!is.null(conceptTrackingTable)) {
-    # tracking table
     sql <- "INSERT INTO @concept_tracking_table
-            SELECT DISTINCT concept_id
-            FROM @vocabulary_database_schema.concept
-            WHERE concept_id IN (@noDescendants)
-            and concept_id != 0
-
-            UNION
-
-            SELECT DISTINCT descendant_concept_id concept_id
-            FROM @vocabulary_database_schema.concept_ancestor
-            WHERE ancestor_concept_id IN (@descendants)
-            and ancestor_concept_id != 0
-    ;"
-    if (length(conceptIdsWithOutDescendantsInExclude) == 0) {
-      noDescendants <- -1
-    } else {
-      noDescendants <- conceptIdsWithOutDescendantsInExclude
-    }
-    if (length(conceptIdsWithDescendantsInExclude) == 0) {
-      descendants <- -1
-    } else {
-      descendants <- conceptIdsWithDescendantsInExclude
-    }
+            SELECT DISTINCT unique_concept_set_id, concept_id
+            FROM #excluded_concepts;"
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sql,
-      noDescendants = noDescendants,
-      descendants = descendants,
-      vocabulary_database_schema = vocabularyDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       concept_tracking_table = conceptTrackingTable,
       progressBar = FALSE,
@@ -1879,75 +1819,20 @@ getExcludedConceptSets <- function(connection,
     )
   }
   
-  DatabaseConnector::insertTable(
-    connection = connection,
-    tableName = "#exclude_no_des",
-    createTable = TRUE,
-    dropTableIfExists = TRUE,
-    tempTable = TRUE,
-    tempEmulationSchema = tempEmulationSchema,
-    progressBar = FALSE,
-    camelCaseToSnakeCase = TRUE,
-    data = conceptSetWithExclude %>%
-      dplyr::filter(.data$includeDescendants != TRUE) %>%
-      dplyr::select(.data$uniqueConceptSetId,
-                    .data$conceptId)
-  )
+  excludedConcepts <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT * FROM #excluded_concepts;",
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = tempEmulationSchema
+    )
   
-  DatabaseConnector::insertTable(
-    connection = connection,
-    tableName = "#exclude_des",
-    createTable = TRUE,
-    dropTableIfExists = TRUE,
-    tempTable = TRUE,
-    tempEmulationSchema = tempEmulationSchema,
-    progressBar = FALSE,
-    camelCaseToSnakeCase = TRUE,
-    data = conceptSetWithExclude %>%
-      dplyr::filter(.data$includeDescendants == TRUE) %>%
-      dplyr::select(.data$uniqueConceptSetId,
-                    .data$conceptId)
-  )
-  
-  # resolve excluded concepts
   sql <-
-    "SELECT DISTINCT unique_concept_set_id,
-    	concept_id
-    FROM (
-    	SELECT DISTINCT unique_concept_set_id,
-    		descendant_concept_id concept_id
-    	FROM @vocabulary_database_schema.concept_ancestor
-    	INNER JOIN #exclude_des
-    		ON ancestor_concept_id = concept_id
-
-    	UNION
-
-    	SELECT DISTINCT e.unique_concept_set_id,
-    		c.concept_id
-    	FROM @vocabulary_database_schema.concept c
-    	INNER JOIN #exclude_no_des e
-    		ON c.concept_id = e.concept_id
-    	) f;"
-  excludedConcepts <- renderTranslateQuerySql(
-    connection = connection,
-    sql = sql,
-    vocabulary_database_schema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    snakeCaseToCamelCase = TRUE
-  )
-  sql <-
-    "IF OBJECT_ID('tempdb..#exclude_no_des', 'U') IS NOT NULL
-                      	DROP TABLE #exclude_no_des;"
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = connection,
-    sql = sql,
-    tempEmulationSchema = tempEmulationSchema,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-  sql <-
-    "IF OBJECT_ID('tempdb..#exclude_des', 'U') IS NOT NULL
-                      	DROP TABLE #exclude_des;"
+    "IF OBJECT_ID('tempdb..#excluded_concepts', 'U') IS NOT NULL
+      	DROP TABLE #excluded_concepts;
+      
+      IF OBJECT_ID('tempdb..#excluded_concepts_ex', 'U') IS NOT NULL
+      	DROP TABLE #excluded_concepts_ex;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
@@ -2170,7 +2055,7 @@ executeConceptSetDiagnostics <- function(connection,
         "conceptClass",
         "conceptCount",
         "conceptExcluded",
-        "conceptMapping",
+        "conceptStdSrcCnt",
         "conceptRelationship",
         "conceptResolved",
         "conceptSets",

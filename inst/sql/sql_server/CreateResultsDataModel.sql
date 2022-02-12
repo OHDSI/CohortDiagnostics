@@ -7,7 +7,7 @@
 {DEFAULT @concept_class = concept_class}
 {DEFAULT @concept_count = concept_count}
 {DEFAULT @concept_excluded = concept_excluded}
-{DEFAULT @concept_mapping = concept_mapping}
+{DEFAULT @concept_std_src_cnt = concept_std_src_cnt}
 {DEFAULT @concept_optimized = concept_optimized}
 {DEFAULT @concept_relationship = concept_relationship}
 {DEFAULT @concept_resolved = concept_resolved}
@@ -61,8 +61,8 @@ IF OBJECT_ID('@results_schema.@concept_count', 'U') IS NOT NULL
 IF OBJECT_ID('@results_schema.@concept_excluded', 'U') IS NOT NULL
     DROP TABLE @results_schema.@concept_excluded;
 
-IF OBJECT_ID('@results_schema.@concept_mapping', 'U') IS NOT NULL
-    DROP TABLE @results_schema.@concept_mapping;
+IF OBJECT_ID('@results_schema.@concept_std_src_cnt', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@concept_std_src_cnt;
 
 IF OBJECT_ID('@results_schema.@concept_optimized', 'U') IS NOT NULL
     DROP TABLE @results_schema.@concept_optimized;
@@ -272,9 +272,9 @@ CREATE TABLE @results_schema.@concept_sets_optimized (
 			PRIMARY KEY(database_id, cohort_id, concept_set_id, concept_id, excluded, removed)
 );
 
---Table concept_mapping
+--Table concept_std_src_cnt
 
-CREATE TABLE @results_schema.@concept_mapping (
+CREATE TABLE @results_schema.@concept_std_src_cnt (
 			database_id VARCHAR NOT NULL,
 			domain_table VARCHAR NOT NULL,
 			concept_id INT NOT NULL,
