@@ -266,14 +266,14 @@ computeIncidenceRates <- function(connection,
       minCellCount = minCellCount,
       databaseId = databaseId
     )
-    
+
     if (nrow(data) > 0) {
       data <-
         enforceMinCellValue(data,
                             "incidenceRate",
                             1000 * minCellCount / data$personYears)
     }
-    
+
     writeToCsv(
       data = data,
       fileName = file.path(exportFolder, "incidence_rate.csv"),
