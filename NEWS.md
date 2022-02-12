@@ -29,6 +29,15 @@ this is experimental. Postgres and sqlite are the only backends recommended for 
 
 13. Concept Set Diagnostics has been refactored. New functionality to a) provide optimization recommendations for concept set expressions, b) added option to not included (default) custom concept ids i.e. concept id >= 2 billion, c) new diagnostics that reveals concept id explicitly excluded by a concept set expression,  
 
+
+CohortDiagnostics 2.2.3
+=======================
+
+Bug fixes:
+
+1. Replace use dplyr across() for bug introduced by tidyr v1.2.0
+
+
 CohortDiagnostics 2.2.2
 =======================
 

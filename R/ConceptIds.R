@@ -63,7 +63,7 @@ exportConceptInformation <- function(connection = NULL,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema
     )[, 1]
- 
+
   if (length(uniqueConceptIds) == 0) {
     if (!incremental) {
       warning("No concept IDs in cohorts. No concept information exported.")
@@ -115,7 +115,7 @@ exportConceptInformation <- function(connection = NULL,
           x = data,
           tableName = vocabularyTable
         )
-        
+
         writeToCsv(
           data = data,
           fileName = file.path(exportFolder, paste(vocabularyTable, "csv", sep = ".")),
@@ -138,12 +138,12 @@ exportConceptInformation <- function(connection = NULL,
           snakeCaseToCamelCase = TRUE
         )
       if (nrow(data) > 0) {
-        
+
         data <- makeDataExportable(
           x = data,
           tableName = vocabularyTable
         )
-        
+
         writeToCsv(
           data = data,
           fileName = file.path(exportFolder, paste(vocabularyTable, "csv", sep = ".")),
