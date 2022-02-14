@@ -110,16 +110,14 @@ runCohortRelationshipDiagnostics <-
         snakeCaseToCamelCase = TRUE
       )
     
-    if (targetCohortCount$count == 0) {
-      ParallelLogger::logInfo("Please check if target cohorts are instantiated. Exiting cohort relationship.")
+    if (length(targetCohortIds) == 0) {
+      ParallelLogger::logInfo("No instantiated target cohorts found. Atleast one instantiated target cohort is necessary to compute cohort relatonship.")
       return(NULL)
     }
-    
-    if (cohortTableIsTemp == TRUE) {
-    } else {
-      
+    if (length(comparatorCohortIds) == 0) {
+      ParallelLogger::logInfo("No instantiated comparator cohorts found. Atleast one instantiated comparator cohort is necessary to compute cohort relatonship.")
+      return(NULL)
     }
-
     
     ParallelLogger::logTrace("  - Creating cohort table subsets")
     cohortSubsetSqlTargetDrop <-
