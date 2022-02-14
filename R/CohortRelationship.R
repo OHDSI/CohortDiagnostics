@@ -98,7 +98,7 @@ runCohortRelationshipDiagnostics <-
         snakeCaseToCamelCase = TRUE
       )
     if (targetCohortCount$count == 0) {
-      warning("Please check if target cohorts are instantiated. Exiting cohort relationship.")
+      ParallelLogger::logInfo("Please check if target cohorts are instantiated. Exiting cohort relationship.")
       return(NULL)
     }
     comparatorCohortCount <-
