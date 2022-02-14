@@ -93,20 +93,29 @@ runCohortRelationshipDiagnostics <-
       on.exit(DatabaseConnector::disconnect(connection))
     }
     
+    sqlCount <-
+      "SELECT COUNT(*) count FROM @cohort_database_schema_table where cohort_definition_id IN (@cohort_ids);"
+    
     if (is.null(cohortDatabaseSchema)) {
-      sqlCount <-
-        "SELECT COUNT(*) count FROM @cohort_table where cohort_definition_id IN (@cohort_ids);"
+      cohortDatabaseSchemaTable <- cohortTable
     } else {
-      sqlCount <-
-        "SELECT COUNT(*) count FROM @cohort_database_schema.@cohort_table where cohort_definition_id IN (@cohort_ids);"
+      cohortDatabaseSchemaTable <- paste0(cohortDatabaseSchema, ".", cohortTable)
     }
     
     targetCohortCount <-
       renderTranslateQuerySql(
         connection = connection,
         sql = sqlCount,
-        cohort_table = cohortTable,
+        cohort_database_schema_table = cohortDatabaseSchemaTable,
         cohort_ids = targetCohortIds, 
+        snakeCaseToCamelCase = TRUE
+      )
+    comparatorCohortIds <-
+      renderTranslateQuerySql(
+        connection = connection,
+        sql = sqlCount,
+        cohort_database_schema_table = cohortDatabaseSchemaTable,
+        cohort_ids = comparatorCohortIds, 
         snakeCaseToCamelCase = TRUE
       )
     
@@ -132,7 +141,7 @@ runCohortRelationshipDiagnostics <-
       	min(cohort_start_date) cohort_start_date,
       	min(cohort_end_date) cohort_end_date
       INTO #target_subset
-      FROM @cohort_database_schema.@cohort_table
+      FROM @cohort_database_schema_table
       WHERE cohort_definition_id IN (@cohort_ids)
       GROUP BY cohort_definition_id,
       	subject_id;"
@@ -145,7 +154,7 @@ runCohortRelationshipDiagnostics <-
       "--HINT DISTRIBUTE_ON_KEY(subject_id)
       	SELECT *
       	INTO #comparator_subset
-      	FROM @cohort_database_schema.@cohort_table
+      	FROM @cohort_database_schema_table
       	WHERE cohort_definition_id IN (@cohort_ids);
 
       INSERT INTO #comparator_subset
@@ -169,9 +178,8 @@ runCohortRelationshipDiagnostics <-
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = cohortSubsetSqlTarget,
-      cohort_database_schema = cohortDatabaseSchema,
+      cohort_database_schema_table = cohortDatabaseSchemaTable,
       tempEmulationSchema = tempEmulationSchema,
-      cohort_table = cohortTable,
       cohort_ids = targetCohortIds,
       progressBar = FALSE,
       reportOverallTime = FALSE
@@ -190,10 +198,9 @@ runCohortRelationshipDiagnostics <-
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = cohortSubsetSqlComparator,
-      cohort_database_schema = cohortDatabaseSchema,
+      cohort_database_schema_table = cohortDatabaseSchemaTable,
       cdm_database_schema = cdmDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
-      cohort_table = cohortTable,
       cohort_ids = comparatorCohortIds,
       progressBar = FALSE,
       reportOverallTime = FALSE

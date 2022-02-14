@@ -7,7 +7,7 @@
 runCohortRelationshipDiagnostics(
   connectionDetails = NULL,
   connection = NULL,
-  cohortDatabaseSchema,
+  cohortDatabaseSchema = NULL,
   cdmDatabaseSchema,
   tempEmulationSchema = NULL,
   cohortTable = "cohort",
