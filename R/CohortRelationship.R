@@ -47,7 +47,7 @@
 runCohortRelationshipDiagnostics <-
   function(connectionDetails = NULL,
            connection = NULL,
-           cohortDatabaseSchema,
+           cohortDatabaseSchema = NULL,
            cdmDatabaseSchema,
            tempEmulationSchema = NULL,
            cohortTable = "cohort",
@@ -58,62 +58,68 @@ runCohortRelationshipDiagnostics <-
            incrementalFolder = NULL) {
     startTime <- Sys.time()
     
-    if (any(is.null(relationshipDays),!is.data.frame(relationshipDays))) {
-      stop("relationshipDays is not specified")
-    }
-    if (!all(
-      "startDay" %in% colnames(relationshipDays),
-      "endDay" %in% colnames(relationshipDays)
-    )) {
-      difference <- setdiff(x = c("startDay", "endDay"),
-                            y = colnames(relationshipDays))
-      stop(paste0(
-        "Required fields not found in relationship table: ",
-        difference
-      ))
-    }
+    # Assert checks
+    errorMessage <- checkmate::makeAssertCollection()
+    checkmate::assertDataFrame(relationshipDays, add = errorMessage)
+    checkmate::assertNames(
+      names(relationshipDays),
+      must.include = c("startDay",
+                       "endDay"),
+      add = errorMessage
+    )
+    checkmate::assertIntegerish(
+      x = targetCohortIds,
+      lower = 0,
+      any.missing = FALSE,
+      min.len = 1,
+      unique = TRUE,
+      add = errorMessage
+    )
+    checkmate::assertIntegerish(
+      x = comparatorCohortIds,
+      lower = 0,
+      any.missing = FALSE,
+      min.len = 1,
+      unique = TRUE,
+      add = errorMessage
+    )
+    checkmate::assertLogical(x = incremental,
+                             add = errorMessage)
+    checkmate::reportAssertions(collection = errorMessage)
     
-    if (length(targetCohortIds) == 0) {
-      warning("No target cohort ids specified")
-      return(NULL)
-    }
-    if (length(comparatorCohortIds) == 0) {
-      warning("No comparator cohort ids specified")
-      return(NULL)
-    }
+
     if (is.null(connection)) {
       connection <- DatabaseConnector::connect(connectionDetails)
       on.exit(DatabaseConnector::disconnect(connection))
     }
     
-    sqlCount <-
-      "SELECT COUNT(*) count FROM @cohort_database_schema.@cohort_table where cohort_definition_id IN (@cohort_ids);"
+    if (is.null(cohortDatabaseSchema)) {
+      sqlCount <-
+        "SELECT COUNT(*) count FROM @cohort_table where cohort_definition_id IN (@cohort_ids);"
+    } else {
+      sqlCount <-
+        "SELECT COUNT(*) count FROM @cohort_database_schema.@cohort_table where cohort_definition_id IN (@cohort_ids);"
+    }
+    
     targetCohortCount <-
       renderTranslateQuerySql(
         connection = connection,
         sql = sqlCount,
-        cohort_database_schema = cohortDatabaseSchema,
         cohort_table = cohortTable,
         cohort_ids = targetCohortIds, 
         snakeCaseToCamelCase = TRUE
       )
+    
     if (targetCohortCount$count == 0) {
       ParallelLogger::logInfo("Please check if target cohorts are instantiated. Exiting cohort relationship.")
       return(NULL)
     }
-    comparatorCohortCount <-
-      renderTranslateQuerySql(
-        connection = connection,
-        sql = sqlCount,
-        cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable,
-        cohort_ids = comparatorCohortIds, 
-        snakeCaseToCamelCase = TRUE
-      )
-    if (comparatorCohortCount$count == 0) {
-      ParallelLogger::logInfo("Please check if comparator cohorts are instantiated. Exiting cohort relationship.")
-      return(NULL)
+    
+    if (cohortTableIsTemp == TRUE) {
+    } else {
+      
     }
+
     
     ParallelLogger::logTrace("  - Creating cohort table subsets")
     cohortSubsetSqlTargetDrop <-
