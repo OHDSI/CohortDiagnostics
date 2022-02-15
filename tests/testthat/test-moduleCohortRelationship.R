@@ -28,7 +28,9 @@ test_that("Testing cohort relationship logic", {
   
   cohort <- dplyr::bind_rows(targetCohort, comparatorCohort)
   
-  DatabaseConnector::insertTable(connection = connection, 
+  connectionCohortRelationship <- DatabaseConnector::connect(connectionDetails)
+  
+  DatabaseConnector::insertTable(connection = connectionCohortRelationship, 
                                  tableName = "#cohort_relationship", 
                                  data = cohort,
                                  dropTableIfExists = TRUE, 
@@ -38,7 +40,7 @@ test_that("Testing cohort relationship logic", {
                                  progressBar = FALSE)
   debug(CohortDiagnostics::runCohortRelationshipDiagnostics)
   runCohortRelationshipDiagnostics(
-    connection = connection,
+    connection = connectionCohortRelationship,
     cohortDatabaseSchema = NULL,
     cdmDatabaseSchema = cdmDatabaseSchema,
     cohortTable = "#cohort_relationship",
@@ -47,6 +49,6 @@ test_that("Testing cohort relationship logic", {
     relationshipDays = dplyr::tibble(startDay = temporalStartDays,
                                      endDay = temporalEndDays)
   )
-  
+  DatabaseConnector::disconnect(connectionCohortRelationship)
   
 })
