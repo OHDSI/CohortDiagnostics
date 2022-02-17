@@ -309,9 +309,9 @@ runCohortRelationshipDiagnostics <-
       ParallelLogger::logTrace(
         paste0(
           "    - Working on ",
-          scales::comma(timePeriods[i,]$startDay),
+          scales::comma(timePeriods[i, ]$startDay),
           " to ",
-          scales::comma(timePeriods[i,]$endDay),
+          scales::comma(timePeriods[i, ]$endDay),
           " days (",
           scales::comma(i),
           " of ",
@@ -323,9 +323,9 @@ runCohortRelationshipDiagnostics <-
         "CohortRelationship.sql",
         packageName = "CohortDiagnostics",
         dbms = connection@dbms,
-        time_id = timePeriods[i, ]$timeId,
-        start_day_offset = timePeriods[i, ]$startDay,
-        end_day_offset = timePeriods[i, ]$endDay
+        time_id = timePeriods[i,]$timeId,
+        start_day_offset = timePeriods[i,]$startDay,
+        end_day_offset = timePeriods[i,]$endDay
       )
       DatabaseConnector::querySqlToAndromeda(
         connection = connection,
@@ -341,20 +341,22 @@ runCohortRelationshipDiagnostics <-
         Andromeda::appendToTable(resultsInAndromeda$cohortRelationships,
                                  resultsInAndromeda$temp)
       }
-      readr::write_excel_csv(
-        x = resultsInAndromeda$cohortRelationships %>%
-          dplyr::collect() %>%
-          dplyr::inner_join(timePeriods,
-                            by = "timeId") %>%
-          dplyr::select(-.data$timeId),
-        file = file.path(
-          incrementalFolder,
-          "CreatedDiagnosticsCohortRelationship.csv"
-        ),
-        na = "",
-        append = FALSE,
-        delim = ","
-      )
+      if (incremental) {
+        readr::write_excel_csv(
+          x = resultsInAndromeda$cohortRelationships %>%
+            dplyr::collect() %>%
+            dplyr::inner_join(timePeriods,
+                              by = "timeId") %>%
+            dplyr::select(-.data$timeId),
+          file = file.path(
+            incrementalFolder,
+            "CreatedDiagnosticsCohortRelationship.csv"
+          ),
+          na = "",
+          append = FALSE,
+          delim = ","
+        )
+      }
     }
     
     resultsInAndromeda$timePeriods <- timePeriods
