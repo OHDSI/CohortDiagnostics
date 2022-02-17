@@ -12,7 +12,7 @@ createMergedResultsFile(
 }
 \arguments{
 \item{dataFolder}{folder where the exported zip files for the diagnostics are stored. Use
-the \code{\link{runCohortDiagnostics}} function to generate these zip files.
+the \code{\link{executeDiagnostics}} function to generate these zip files.
 Zip files containing results from multiple databases may be placed in the same
 folder.}
 

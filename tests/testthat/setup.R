@@ -1,6 +1,7 @@
 library(testthat)
 library(CohortDiagnostics)
 library(Eunomia)
+library(dplyr)
 
 dbms <- getOption("dbms", default = "sqlite")
 message("************* Testing on ", dbms, " *************")
@@ -115,3 +116,5 @@ if (dbms == "sqlite") {
     }
   }, testthat::teardown_env())
 }
+
+cohortDefinitionSet <- loadTestCohortDefinitionSet(cohortIds)

@@ -30,51 +30,13 @@ createConceptTable <- function(connection, tempEmulationSchema, cohorts) {
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-
-  referentConceptIdToInsert <- dplyr::tibble()
-  if ('referentConceptId' %in% colnames(cohorts)) {
-    referentConceptIdToInsert <-
-      dplyr::bind_rows(referentConceptIdToInsert,
-                       cohorts %>%
-                         dplyr::transmute(conceptId = as.double(.data$referentConceptId))) %>%
-        dplyr::distinct()
-  }
-  if (nrow(referentConceptIdToInsert) > 0) {
-    ParallelLogger::logInfo(
-      sprintf(
-        "Inserting %s referent concept IDs into the concept ID table. This may take a while.",
-        nrow(referentConceptIdToInsert)
-      )
-    )
-    DatabaseConnector::insertTable(
-      connection = connection,
-      tableName = "#concept_ids",
-      data = referentConceptIdToInsert,
-      dropTableIfExists = FALSE,
-      createTable = FALSE,
-      progressBar = TRUE,
-      tempTable = TRUE,
-      tempEmulationSchema = tempEmulationSchema,
-      camelCaseToSnakeCase = TRUE
-    )
-    ParallelLogger::logTrace("Done inserting")
-  }
 }
 
 exportConceptInformation <- function(connection = NULL,
                                      cdmDatabaseSchema,
                                      tempEmulationSchema,
                                      conceptIdTable,
-                                     vocabularyTableNames = c(
-                                       "concept",
-                                       "conceptAncestor",
-                                       "conceptClass",
-                                       "conceptRelationship",
-                                       "conceptSynonym",
-                                       "domain",
-                                       "relationship",
-                                       "vocabulary"
-                                     ),
+                                     vocabularyTableNames = getDefaultVocabularyTableNames(),
                                      incremental,
                                      exportFolder) {
   ParallelLogger::logInfo("Retrieving concept information")
@@ -82,7 +44,6 @@ exportConceptInformation <- function(connection = NULL,
   if (is.null(connection)) {
     warning('No connection provided')
   }
-  
   vocabularyTableNames <-
     tolower(SqlRender::camelCaseToSnakeCase(vocabularyTableNames))
   tablesInCdmDatabaseSchema <-
@@ -102,7 +63,7 @@ exportConceptInformation <- function(connection = NULL,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema
     )[, 1]
- 
+
   if (length(uniqueConceptIds) == 0) {
     if (!incremental) {
       warning("No concept IDs in cohorts. No concept information exported.")
@@ -150,6 +111,11 @@ exportConceptInformation <- function(connection = NULL,
           snakeCaseToCamelCase = TRUE
         )
       if (nrow(data) > 0) {
+        data <- makeDataExportable(
+          x = data,
+          tableName = vocabularyTable
+        )
+
         writeToCsv(
           data = data,
           fileName = file.path(exportFolder, paste(vocabularyTable, "csv", sep = ".")),
@@ -172,6 +138,12 @@ exportConceptInformation <- function(connection = NULL,
           snakeCaseToCamelCase = TRUE
         )
       if (nrow(data) > 0) {
+
+        data <- makeDataExportable(
+          x = data,
+          tableName = vocabularyTable
+        )
+
         writeToCsv(
           data = data,
           fileName = file.path(exportFolder, paste(vocabularyTable, "csv", sep = ".")),

@@ -29,8 +29,23 @@ getResultsDataModelSpecifications <- function() {
   return(resultsDataModelSpecifications)
 }
 
+#' Get a list of vocabulary table names
+#'
+#' @return
+#' Get a list of vocabulary table names in results data model
+#'
+#' @export
+getDefaultVocabularyTableNames <- function() {
+  getResultsDataModelSpecifications() %>%
+    dplyr::filter(.data$isVocabularyTable == "Yes") %>%
+    dplyr::pull(.data$tableName) %>%
+    unique() %>%
+    sort() %>%
+    SqlRender::snakeCaseToCamelCase()
+}
+
 fixTableMetadataForBackwardCompatibility <- function(table, tableName) {
-  if (tableName %in% c("cohort", "phenotype_description")) {
+  if (tableName %in% c("cohort")) {
     if (!'metadata' %in% colnames(table)) {
       data <- list()
       for (i in (1:nrow(table))) {

@@ -19,7 +19,6 @@
 {DEFAULT @metadata = metadata}
 {DEFAULT @orphan_concept = orphan_concept}
 {DEFAULT @phenotype_description = phenotype_description}
-{DEFAULT @time_series = time_series}
 {DEFAULT @relationship = relationship}
 {DEFAULT @resolved_concepts = resolved_concepts}
 {DEFAULT @temporal_analysis_ref = temporal_analysis_ref}
@@ -91,9 +90,6 @@ IF OBJECT_ID('@results_schema.@orphan_concept', 'U') IS NOT NULL
 
 IF OBJECT_ID('@results_schema.@phenotype_description', 'U') IS NOT NULL
     DROP TABLE @results_schema.@phenotype_description;
-
-IF OBJECT_ID('@results_schema.@time_series', 'U') IS NOT NULL
-    DROP TABLE @results_schema.@time_series;
 
 IF OBJECT_ID('@results_schema.@relationship', 'U') IS NOT NULL
     DROP TABLE @results_schema.@relationship;
@@ -362,9 +358,10 @@ CREATE TABLE @results_schema.@index_event_breakdown (
 
 CREATE TABLE @results_schema.@metadata (
 			database_id VARCHAR NOT NULL,
+			start_time VARCHAR DEFAULT '0:0:0',
 			variable_field VARCHAR NOT NULL,
 			value_field VARCHAR,
-			PRIMARY KEY(database_id, variable_field)
+			PRIMARY KEY(database_id, start_time, variable_field)
 );
 
 --Table orphan_concept
@@ -491,21 +488,6 @@ CREATE TABLE @results_schema.@time_distribution (
 			time_metric VARCHAR NOT NULL,
 			database_id VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, time_metric, database_id)
-);
-
---Table time_series
-
-CREATE TABLE @results_schema.@time_series (
-			cohort_id BIGINT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			period_begin DATE NOT NULL,
-			calendar_interval VARCHAR(1) NOT NULL,
-			records BIGINT NOT NULL,
-			subjects BIGINT NOT NULL,
-			person_days BIGINT NOT NULL,
-			records_incidence BIGINT,
-			subjects_incidence BIGINT,
-			PRIMARY KEY(cohort_id, database_id, period_begin, calendar_interval)
 );
 
 --Table visit_context

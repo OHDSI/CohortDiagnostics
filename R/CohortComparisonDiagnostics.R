@@ -33,7 +33,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
     cohortTable = cohortTable,
     cohortId = targetCohortId
   )) {
-    warning(
+    ParallelLogger::logInfo(
       "- Target cohort with ID ",
       targetCohortId,
       " appears to be empty. Was it instantiated? Skipping overlap computation."
@@ -53,7 +53,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
     cohortTable = cohortTable,
     cohortId = comparatorCohortId
   )) {
-    warning(
+    ParallelLogger::logInfo(
       "- Comparator cohort with ID ",
       comparatorCohortId,
       " appears to be empty. Was it instantiated? Skipping overlap computation."
@@ -104,17 +104,14 @@ executeCohortComparisonDiagnostics <- function(connection,
   startCohortOverlap <- Sys.time()
 
   combis <- cohorts %>%
-    dplyr::select(.data$phenotypeId, .data$cohortId) %>%
+    dplyr::select(.data$cohortId) %>%
     dplyr::distinct()
 
+  # Select cross product of all cohort ids
   combis <- combis %>%
     dplyr::rename(targetCohortId = .data$cohortId) %>%
-    dplyr::inner_join(combis %>%
-                        dplyr::rename(comparatorCohortId = .data$cohortId),
-                      by = "phenotypeId") %>%
-    dplyr::filter(.data$targetCohortId < .data$comparatorCohortId) %>%
-    dplyr::select(.data$targetCohortId, .data$comparatorCohortId) %>%
-    dplyr::distinct()
+    tidyr::crossing(dplyr::rename(combis, comparatorCohortId = .data$cohortId)) %>%
+    dplyr::filter(.data$targetCohortId < .data$comparatorCohortId)
 
   if (incremental) {
     combis <- combis %>%
@@ -186,30 +183,28 @@ executeCohortComparisonDiagnostics <- function(connection,
         swapColumnContents(revData, "tBeforeCSubjects", "cBeforeTSubjects")
       revData <-
         swapColumnContents(revData, "tInCSubjects", "cInTSubjects")
-      data <- dplyr::bind_rows(data, revData) %>%
-        dplyr::mutate(databaseId = !!databaseId)
-      data <-
-        enforceMinCellValue(data, "eitherSubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "bothSubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "tOnlySubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "cOnlySubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "tBeforeCSubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "cBeforeTSubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "sameDaySubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "tInCSubjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "cInTSubjects", minCellCount)
+      data <- dplyr::bind_rows(data, revData)
+
       data <- data %>%
-        dplyr::mutate(dplyr::across(.cols = everything(), ~tidyr::replace_na(
-          data = ., replace = 0
-        )))
+        tidyr::replace_na(replace =
+                            list(
+                              eitherSubjects = 0,
+                              bothSubjects = 0,
+                              tOnlySubjects = 0,
+                              cOnlySubjects = 0,
+                              tBeforeCSubjects = 0,
+                              cBeforeTSubjects = 0,
+                              sameDaySubjects = 0,
+                              tInCSubjects = 0,
+                              cInTSubjects = 0
+                            ))
+
+      data <- makeDataExportable(
+        x = data,
+        tableName = "cohort_overlap",
+        minCellCount = minCellCount,
+        databaseId = databaseId
+      )
 
       writeToCsv(
         data = data,

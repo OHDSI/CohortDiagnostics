@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.0</span>
       </span>
     </div>
 
@@ -96,7 +96,7 @@
       <h1 data-toc-skip>Viewing results using Diagnostics Explorer</h1>
                         <h4 data-toc-skip class="author">Gowtham Rao</h4>
             
-            <h4 data-toc-skip class="date">2022-01-24</h4>
+            <h4 data-toc-skip class="date">2022-02-09</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd" class="external-link"><code>vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd</code></a></small>
       <div class="hidden name"><code>ViewingResultsUsingDiagnosticsExplorer.Rmd</code></div>
@@ -105,42 +105,43 @@
 
     
     
-<div class="section level1">
-<h1 id="viewing-the-diagnostics">Viewing the diagnostics<a class="anchor" aria-label="anchor" href="#viewing-the-diagnostics"></a>
-</h1>
+<pre><code><span class="co">## Warning: package 'SqlRender' was built under R version 4.1.2</span></code></pre>
+<div class="section level2">
+<h2 id="viewing-the-diagnostics">Viewing the diagnostics<a class="anchor" aria-label="anchor" href="#viewing-the-diagnostics"></a>
+</h2>
 <p>The Diagnostics Explorer shiny application is able to present the results output of Cohort Diagnostics in either local mode (i.e. using premerged file) or database mode (connected to postgres database server). The Shiny app can be found <a href="https://github.com/OHDSI/CohortDiagnostics/tree/master/inst/shiny/DiagnosticsExplorer" class="external-link">here</a>. Make sure to copy all files in the <code>DiagnosticsExplorer</code> folder. When launching the application. You maybe asked to install additional packages required by the app, such as shiny, shinydashboard, shinyWidgets, DT, htmltools, scales, plotly, dplyr, purrr, tidyr, ggiraph.</p>
 <div class="figure">
 <img src="shiny.png" alt=""><p class="caption">The Diagnostics Explorer Shiny app</p>
 </div>
 <p>Note that each of the tabs on the left has an information icon. Clicking on these icons will show additional information on each diagnostic, how they were computed, and how they may be interpreted.</p>
 </div>
-<div class="section level1">
-<h1 id="launching-diagnostics-explorer">Launching Diagnostics Explorer<a class="anchor" aria-label="anchor" href="#launching-diagnostics-explorer"></a>
-</h1>
+<div class="section level2">
+<h2 id="launching-diagnostics-explorer">Launching Diagnostics Explorer<a class="anchor" aria-label="anchor" href="#launching-diagnostics-explorer"></a>
+</h2>
 <ul>
 <li>From R, launch the DiagnosticExplorer shiny application by calling the ‘launchDiagnosticsExplorer()’ function of CohortDiagnostics.</li>
 <li>From R-studio, you may start the project by clicking on the ‘DiagnosticsExplorer.Rproj’ in the shiny folder, then open the global.R and press the ‘RunApp’ button. From R-server (shiny server), you will need to copy all the files in the DiagnosticsExplorer shiny app into a folder on the server. The server should automatically launch the application (please talk to the shiny server administrator for your site specific rules.)</li>
 </ul>
 </div>
-<div class="section level1">
-<h1 id="running-the-app-using-local-file-mode-premerged-file-">Running the app using local file mode (Premerged file).<a class="anchor" aria-label="anchor" href="#running-the-app-using-local-file-mode-premerged-file-"></a>
-</h1>
-<p>Local mode is the most common mode to run the Shiny application. We recommend that you convert all the csv files that are the precomputed output of Cohort Diagnostics into a .RData file as follows</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/preMergeDiagnosticsFiles.html">preMergeDiagnosticsFiles</a></span><span class="op">(</span><span class="st">"C:/temp/allZipFiles"</span><span class="op">)</span></code></pre></div>
-<p>.RData files enables faster load of the Shiny application. Once you have converted your results data into a premerged file, you may launch the Diagnostics Explorer app as follows:</p>
+<div class="section level2">
+<h2 id="running-the-app-using-local-file-mode-sqlite-db-">Running the app using local file mode (Sqlite db).<a class="anchor" aria-label="anchor" href="#running-the-app-using-local-file-mode-sqlite-db-"></a>
+</h2>
+<p>Local mode is the most common mode to run the Shiny application. We recommend that you convert all the csv files that are the precomputed output of Cohort Diagnostics into an sqlite database file as follows</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span><span class="op">(</span>dataFolder <span class="op">=</span> <span class="st">"C:/temp"</span>, dataFile <span class="op">=</span> <span class="st">"Premerged.RData"</span><span class="op">)</span></code></pre></div>
-<p>If running the application from a R-studio environment, please make sure the ‘Premerged.RData’ is in a folder called ‘data’. Go to global.R and to the line that <code>defaultDatabaseMode &lt;- FALSE</code>. Ensure defaultDatabaseMode is FALSE. This will prevent the application from attempting to connect to a remote database system, and only look for local premerged.RData file.</p>
+<code class="sourceCode R"><span class="fu"><a href="../reference/createMergedResultsFile.html">createMergedResultsFile</a></span><span class="op">(</span><span class="st">"C:/temp/allZipFiles"</span>, sqliteDbPath <span class="op">=</span> <span class="st">"MyCohortDiagnosticsResulst.sqlite"</span><span class="op">)</span></code></pre></div>
+<p>.RData files enables faster load of the Shiny application. Once you have converted your results data into an sqlite database file, you may launch the Diagnostics Explorer app as follows:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span><span class="op">(</span>sqliteDbPath <span class="op">=</span> <span class="st">"MyCohortDiagnosticsResulst.sqlite"</span><span class="op">)</span></code></pre></div>
+<p>If running the application from a R-studio environment, please make sure the sqlite file is in a folder called ‘data’.</p>
 </div>
-<div class="section level1">
-<h1 id="running-the-app-using-database-mode">Running the app using Database mode<a class="anchor" aria-label="anchor" href="#running-the-app-using-database-mode"></a>
-</h1>
-<p>We recommend the use of a database system, when file size of the cohort diagnostics output becomes large e.g. &gt; 100mb, as using the premerged.RData may leading sluggish performance. Currently only postgres server is supported. See Vignette on Database mode on how to load data into remote database.</p>
+<div class="section level2">
+<h2 id="running-the-app-using-database-mode">Running the app using Database mode<a class="anchor" aria-label="anchor" href="#running-the-app-using-database-mode"></a>
+</h2>
+<p>We recommend the use of a database system, when file size of the cohort diagnostics output becomes large e.g. &gt; 100mb, as using the sqlite database may leading sluggish performance. Currently, only postgres server is fully supported, though platforms with DatabaseConnector support may work (currently experimental). See Vignette on Database mode on how to load data into remote database.</p>
 </div>
-<div class="section level1">
-<h1 id="running-over-the-network">Running over the network<a class="anchor" aria-label="anchor" href="#running-over-the-network"></a>
-</h1>
+<div class="section level2">
+<h2 id="running-over-the-network">Running over the network<a class="anchor" aria-label="anchor" href="#running-over-the-network"></a>
+</h2>
 <p>If you want to run the application over the network then set <code>runOverNetwork = TRUE</code> while launching the application using ‘launchDiagnosticsExplorer()’. This will make the shiny application available over your network (i.e. within your networks firewall).</p>
 </div>
   </div>
@@ -162,7 +163,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
       </footer>

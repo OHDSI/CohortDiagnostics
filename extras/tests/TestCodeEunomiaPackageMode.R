@@ -1,4 +1,4 @@
-# remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy')
+remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy', ref = "develop")
 # remotes::install_github('OHDSI/Eunomia')
 
 library(CohortDiagnostics)
@@ -24,7 +24,8 @@ execute(
   outputFolder = outputFolder,
   databaseId = "Eunomia",
   databaseName = "Eunomia Test",
-  databaseDescription = "This is a test data base called Eunomia"
+  databaseDescription = "This is a test data base called Eunomia", 
+  verifyDependencies = FALSE
 )
 
 CohortDiagnostics::createResultsDataModel(dataFolder = outputFolder)

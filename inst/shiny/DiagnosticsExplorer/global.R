@@ -2,20 +2,18 @@ library(magrittr)
 
 ### Change this lane if deploying shiny files directly with sqlite database
 sqliteDbPath <- file.path("data", "MergedCohortDiagnosticsData.sqlite")
-
 source("R/StartUpScripts.R")
 source("R/DisplayFunctions.R")
 source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 
-appVersionNum <- "Version: 2.2.1"
+appVersionNum <- "Version: 3.0.0"
 appInformationText <- paste("Powered by OHDSI Cohort Diagnostics application", paste0(appVersionNum, "."))
-appInformationText <- paste0(appInformationText, 
+appInformationText <- paste0(appInformationText,
                              "Application was last initated on ",
                              lubridate::now(tzone = "EST"),
                              " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/")
-
 
 if (exists("shinySettings")) {
   writeLines("Using settings provided by user")
@@ -40,11 +38,11 @@ if (exists("shinySettings")) {
     user = Sys.getenv("shinydbUser"),
     password = Sys.getenv("shinydbPw")
   )
-
+  
   resultsDatabaseSchema <- Sys.getenv("shinydbResultsSchema", unset = "thrombosisthrombocytopenia")
   vocabularyDatabaseSchemas <- resultsDatabaseSchema
   alternateVocabularySchema <-  Sys.getenv("shinydbVocabularySchema", unset = c("vocabulary"))
-
+  
   vocabularyDatabaseSchemas <-
     setdiff(x = c(vocabularyDatabaseSchemas, alternateVocabularySchema),
             y = resultsDatabaseSchema) %>%
@@ -84,7 +82,6 @@ suppressWarnings(rm(
   list = SqlRender::snakeCaseToCamelCase(dataModelSpecifications$tableName)
 ))
 
-
 onStop(function() {
   if (DBI::dbIsValid(connectionPool)) {
     writeLines("Closing database pool")
@@ -118,7 +115,6 @@ dataSource <-
     resultsDatabaseSchema = resultsDatabaseSchema,
     vocabularyDatabaseSchema = resultsDatabaseSchema
   )
-
 
 if (exists("database")) {
   if (nrow(database) > 0 &&

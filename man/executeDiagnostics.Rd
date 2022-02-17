@@ -2,24 +2,23 @@
 % Please edit documentation in R/RunDiagnostics.R
 \name{executeDiagnostics}
 \alias{executeDiagnostics}
-\title{Execute cohort diagnostics functions}
+\title{Execute cohort diagnostics}
 \usage{
 executeDiagnostics(
   cohortDefinitionSet,
   exportFolder,
   databaseId,
+  cohortDatabaseSchema,
+  databaseName = databaseId,
+  databaseDescription = databaseId,
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-  cohortDatabaseSchema,
   cohortTable = "cohort",
   cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortIds = NULL,
-  inclusionStatisticsFolder = NULL,
-  databaseName = databaseId,
-  databaseDescription = databaseId,
   cdmVersion = 5,
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
@@ -28,7 +27,6 @@ executeDiagnostics(
   runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
-  runTimeSeries = FALSE,
   runCohortOverlap = TRUE,
   runCohortCharacterization = TRUE,
   covariateSettings = createDefaultCovariateSettings(),
@@ -49,6 +47,14 @@ does not exist it will be created.}
 
 \item{databaseId}{A short string for identifying the database (e.g. 'Synpuf').}
 
+\item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
+this should include both the database and schema name, for example
+'scratch.dbo'.}
+
+\item{databaseName}{The full name of the database. If NULL, defaults to databaseId.}
+
+\item{databaseDescription}{A short description (several sentences) of the database. If NULL, defaults to databaseId.}
+
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 DatabaseConnector package. Can be left NULL if \code{connection} is
@@ -67,10 +73,6 @@ schema name, for example 'cdm_data.dbo'.}
 \item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
 tables, provide a schema with write privileges where temp tables can be created.}
 
-\item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
-this should include both the database and schema name, for example
-'scratch.dbo'.}
-
 \item{cohortTable}{Name of the cohort table.}
 
 \item{cohortTableNames}{Cohort Table names used by CohortGenerator package}
@@ -82,13 +84,6 @@ schema name, for example 'vocabulary.dbo'.}
 
 \item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
 diagnostics to.}
-
-\item{inclusionStatisticsFolder}{The folder where the inclusion rule statistics are stored. Can be
-left NULL if \code{runInclusionStatistics = FALSE}.}
-
-\item{databaseName}{The full name of the database. If NULL, defaults to databaseId.}
-
-\item{databaseDescription}{A short description (several sentences) of the database. If NULL, defaults to databaseId.}
 
 \item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
 
@@ -105,8 +100,6 @@ left NULL if \code{runInclusionStatistics = FALSE}.}
 \item{runBreakdownIndexEvents}{Generate and export the breakdown of index events?}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
-
-\item{runTimeSeries}{Generate and export the cohort prevalence  rates?}
 
 \item{runCohortOverlap}{Generate and export the cohort overlap? Overlaps are checked within cohortIds
 that have the same phenotype ID sourced from the CohortSetReference or
@@ -134,17 +127,31 @@ of such objects.}
 of which cohort diagnostics has been executed.}
 }
 \description{
-Execute cohort diagnostics on a set of cohorts.
-Assumes that cohorts have already been instantiated in advance.
+Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
+Assumes the cohorts have already been instantiated. with the CohortGenerator package
 
-Note that none of the references passed to this function are used, they are required for results.
+Characterization:
+If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
+using \code{RFeatureExtraction::createTemporalCovariateSettings}
+Alternatively, a covariate setting object may be created using the above as an example.
+}
+\details{
+The \code{cohortSetReference} argument must be a data frame with  the following columns:
+\describe{
+\item{cohortId}{The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999}
+\item{atlasId}{Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.}
+\item{cohortName}{The full name of the cohort. This will be shown in the Shiny app.}
+\item{logicDescription}{A human understandable brief description of the cohort definition. This logic does not have to a 
+fully specified description of the cohort definition, but should provide enough context to help user understand the
+meaning of the cohort definition}
+\item{referentConceptId}{A standard omop concept id that serves as the referent phenotype definition for the cohort Id (optional)}
+}
 }
 \examples{
-
 \dontrun{
 # Load cohorts (assumes that they have already been instantiated)
 cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort")
-cohorts <- loadCohortsFromPackage(packageName = "MyGreatPackage")
+cohorts <- CohortGenerator::getCohortDefinitionSet(packageName = "MyGreatPackage")
 connectionDetails <- createConnectionDetails(dbms = "postgresql",
                                              server = "ohdsi.com",
                                              port = 5432,

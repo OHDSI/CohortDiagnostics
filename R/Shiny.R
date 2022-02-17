@@ -126,7 +126,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
 #' It also checks whether the results conform to the results data model specifications.
 #'
 #' @param dataFolder       folder where the exported zip files for the diagnostics are stored. Use
-#'                         the \code{\link{runCohortDiagnostics}} function to generate these zip files.
+#'                         the \code{\link{executeDiagnostics}} function to generate these zip files.
 #'                         Zip files containing results from multiple databases may be placed in the same
 #'                         folder.
 #' @param sqliteDbPath     Output path where sqlite database is placed

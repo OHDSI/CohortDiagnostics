@@ -1,48 +1,5 @@
-
-test_that("Cohort instantiation", {
-  skip_if(skipCdmTests, 'cdm settings not configured')
-
-  expect_message(
-    instantiateCohortSet(
-      connectionDetails = connectionDetails,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      tempEmulationSchema = tempEmulationSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      packageName = "CohortDiagnostics",
-      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-      cohortIds = cohortIds,
-      generateInclusionStats = TRUE,
-      createCohortTable = TRUE,
-      inclusionStatisticsFolder = file.path(folder, "incStats")
-    ), "This function will be removed in a future version"
-  )
-  connection <- DatabaseConnector::connect(connectionDetails)
-  with_dbc_connection(connection, {
-    sql <-
-      "SELECT COUNT(*) AS cohort_count, cohort_definition_id
-    FROM @cohort_database_schema.@cohort_table
-    GROUP BY cohort_definition_id;"
-    counts <-
-      DatabaseConnector::renderTranslateQuerySql(
-        connection,
-        sql,
-        cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable,
-        snakeCaseToCamelCase = TRUE
-      )
-    testthat::expect_gt(nrow(counts), 0)
-  })
-})
-
 test_that("Cohort diagnostics in incremental mode", {
   skip_if(skipCdmTests, 'cdm settings not configured')
-  cohortDefinitionSet <- loadCohortsFromPackage(
-    packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-    cohortIds = cohortIds
-  )
 
   cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
   # Next create the tables on the database
@@ -81,7 +38,6 @@ test_that("Cohort diagnostics in incremental mode", {
       runIncludedSourceConcepts = TRUE,
       runOrphanConcepts = TRUE,
       runTimeDistributions = TRUE,
-      runTimeSeries = TRUE,
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
@@ -108,12 +64,12 @@ test_that("Cohort diagnostics in incremental mode", {
       runInclusionStatistics = TRUE,
       runBreakdownIndexEvents = TRUE,
       runCohortCharacterization = TRUE,
+      runTemporalCohortCharacterization = TRUE,
       runCohortOverlap = TRUE,
       runIncidenceRate = TRUE,
       runIncludedSourceConcepts = TRUE,
       runOrphanConcepts = TRUE,
       runTimeDistributions = TRUE,
-      runTimeSeries = TRUE,
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
@@ -121,8 +77,6 @@ test_that("Cohort diagnostics in incremental mode", {
       temporalCovariateSettings = temporalCovariateSettings
     )
   )
-  expect_lt(secondTime[1], firstTime[1])
-
   # generate sqlite file
   sqliteDbPath <- tempfile(fileext = ".sqlite")
   createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = sqliteDbPath)

@@ -34,3 +34,4 @@ for (i in (1:length(listFiles))) {
     dplyr::filter(!.data$task %in% tasksToRemove) %>%
     readr::write_excel_csv(file = listFiles[[i]])
 }
+
