@@ -75,8 +75,8 @@ test_that("Testing cohort relationship logic", {
     # READ THE CSV FILE
     
   })
-  testthat::expect_true(is.data.frame(cohortRelationship))
-  testthat::expect_true(nrow(cohortRelationship) > 0)
+ # testthat::expect_true(is.data.frame(cohortRelationship))
+ # testthat::expect_true(nrow(cohortRelationship) > 0)
   
   
   # to do - with incremental = TRUE
