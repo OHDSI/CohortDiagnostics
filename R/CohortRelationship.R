@@ -37,6 +37,8 @@
 #' @param comparatorCohortIds          A vector of one or more Cohort Ids for use as feature/comparator cohorts.
 #'
 #' @param relationshipDays             A dataframe with two columns startDay and endDay representing periods of time to compute relationship
+#' 
+#' @param observationPeriodRelationship Do you want to compute temporal relationship between target cohort and observation period table?
 #'
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #'
@@ -54,6 +56,7 @@ runCohortRelationshipDiagnostics <-
            targetCohortIds,
            comparatorCohortIds,
            relationshipDays,
+           observationPeriodRelationship = TRUE,
            incremental = FALSE,
            incrementalFolder = NULL) {
     startTime <- Sys.time()
@@ -110,7 +113,7 @@ runCohortRelationshipDiagnostics <-
         cohort_ids = targetCohortIds, 
         snakeCaseToCamelCase = TRUE
       )
-    comparatorCohortIds <-
+    comparatorCohortCount <-
       renderTranslateQuerySql(
         connection = connection,
         sql = sqlCount,
@@ -119,11 +122,11 @@ runCohortRelationshipDiagnostics <-
         snakeCaseToCamelCase = TRUE
       )
     
-    if (length(targetCohortIds) == 0) {
+    if (targetCohortCount == 0) {
       ParallelLogger::logInfo("No instantiated target cohorts found. Atleast one instantiated target cohort is necessary to compute cohort relatonship.")
       return(NULL)
     }
-    if (length(comparatorCohortIds) == 0) {
+    if (length(comparatorCohortCount) == 0) {
       ParallelLogger::logInfo("No instantiated comparator cohorts found. Atleast one instantiated comparator cohort is necessary to compute cohort relatonship.")
       return(NULL)
     }
@@ -157,12 +160,14 @@ runCohortRelationshipDiagnostics <-
       	FROM @cohort_database_schema_table
       	WHERE cohort_definition_id IN (@cohort_ids);
 
+      {@observation_period_relationship} ? {
       INSERT INTO #comparator_subset
       SELECT -1 cohort_definition_id,
             person_id subject_id,
             observation_period_start_date cohort_start_date,
             observation_period_end_date cohort_end_date
-      FROM @cdm_database_schema.observation_period;"
+      FROM @cdm_database_schema.observation_period;
+    }"
     
     
     ParallelLogger::logTrace("   - Target subset")
@@ -202,6 +207,7 @@ runCohortRelationshipDiagnostics <-
       cdm_database_schema = cdmDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       cohort_ids = comparatorCohortIds,
+      observation_period_relationship = observationPeriodRelationship,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )
