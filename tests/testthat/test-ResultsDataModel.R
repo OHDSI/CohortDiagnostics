@@ -49,7 +49,17 @@ test_that("Create schema", {
 
 test_that("Results upload", {
   skip_if(skipResultsDm | skipCdmTests, 'results data model test server not set')
-
+  if (dbms == "sqlite") {
+    # Checks to see if adding extra OMOP vocab, unexpectedly breaks things
+    connection <- DatabaseConnector::connect(connectionDetails)
+    with_dbc_connection(connection, {
+      DatabaseConnector::renderTranslateExecuteSql(connection, "
+        INSERT INTO main.vocabulary
+        (VOCABULARY_ID, VOCABULARY_NAME, VOCABULARY_REFERENCE, VOCABULARY_VERSION, VOCABULARY_CONCEPT_ID) VALUES
+        ('None','OMOP Standardized Vocabularies','OMOP generated','v5.5 17-FEB-22',44819096)
+      ")
+    })
+  }
   cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
   # Next create the tables on the database
   CohortGenerator::createCohortTables(connectionDetails = connectionDetails,

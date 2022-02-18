@@ -27,6 +27,11 @@ this is experimental. Postgres and sqlite are the only backends recommended for 
 
 11. Additional checks to the output of cohort diagnostics to ensure it conforms to its own results data model. The new function (internal) is makeDataExportable. Results data model csv file has been enhanced with new fields, including a field to specify if the value is to be subjected to privacy protection (i.e. min cell count, eg. person count). Note a bug was discovered in the orphan concepts and included source concepts that was leading to duplication of row records by primary key. This bug has been fixed by calculating its max value grouped by primary keys. It will be fixed in another commit.
 
+
+Bug fixes:
+
+1. Added support for users to include non-standard columns in their CDM preventing crashes
+
 CohortDiagnostics 2.2.3
 =======================
 

@@ -508,6 +508,5 @@ CREATE TABLE @results_schema.@vocabulary (
 			vocabulary_name VARCHAR(255) NOT NULL,
 			vocabulary_reference VARCHAR,
 			vocabulary_version VARCHAR,
-			vocabulary_concept_id BIGINT NOT NULL,
-			PRIMARY KEY(vocabulary_id)
+			vocabulary_concept_id BIGINT NOT NULL
 );
