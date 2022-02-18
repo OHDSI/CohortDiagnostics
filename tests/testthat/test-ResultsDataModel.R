@@ -58,6 +58,10 @@ test_that("Results upload", {
         (VOCABULARY_ID, VOCABULARY_NAME, VOCABULARY_REFERENCE, VOCABULARY_VERSION, VOCABULARY_CONCEPT_ID) VALUES
         ('None','OMOP Standardized Vocabularies','OMOP generated','v5.5 17-FEB-22',44819096)
       ")
+
+      # Check to see if non-standard extra columns are handled
+      DatabaseConnector::renderTranslateExecuteSql(connection,
+                                                   "ALTER TABLE VOCABULARY ADD TEST_COLUMN varchar(255) DEFAULT 'foo';")
     })
   }
   cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
