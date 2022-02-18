@@ -44,8 +44,6 @@ test_that("Testing cohort relationship logic", {
   
   # to do - with incremental = FALSE
   with_dbc_connection(connectionCohortRelationship, {
-    connectionCohortRelationship <-
-      DatabaseConnector::connect(connectionDetails)
     
     tableName <- paste0("cr", as.numeric(Sys.time()) * 100000)
     
