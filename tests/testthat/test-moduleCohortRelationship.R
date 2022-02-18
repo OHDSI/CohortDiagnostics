@@ -69,6 +69,13 @@ test_that("Testing cohort relationship logic", {
                                        endDay = temporalEndDays), 
       incremental = FALSE
     )
+    
+    DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                 sql = "DROP TABLE @cohort_database_schema.@cohort_relationship_cohort_table;",
+                                                 cohort_database_schema = cohortDatabaseSchema,
+                                                 cohort_relationship_cohort_table = cohortRelationshipCohortTable,
+                                                 profile = FALSE, 
+                                                 progressBar = FALSE)
     # TO DO
     # READ THE CSV FILE
     
