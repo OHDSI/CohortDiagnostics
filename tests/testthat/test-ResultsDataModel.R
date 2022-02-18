@@ -82,6 +82,8 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
                                      cohortTableNames = cohortTableNames,
                                      cohortDefinitionSet = cohortDefinitionSet,
                                      incremental = FALSE)
+
+  if (dbms == "sqlite") {
   expect_warning({
     executeDiagnostics(
       connectionDetails = connectionDetails,
@@ -107,8 +109,36 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
       incrementalFolder = file.path(folder, "incremental"),
       covariateSettings = covariateSettings,
       temporalCovariateSettings = temporalCovariateSettings
-    ) },
+    )
+  },
     "CDM Source table has more than one record while only one is expected.")
+  } else {
+    executeDiagnostics(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTableNames = cohortTableNames,
+      cohortIds = cohortIds,
+      cohortDefinitionSet = cohortDefinitionSet,
+      exportFolder = file.path(folder, "export"),
+      databaseId = dbms,
+      runInclusionStatistics = TRUE,
+      runBreakdownIndexEvents = TRUE,
+      runCohortCharacterization = TRUE,
+      runTemporalCohortCharacterization = TRUE,
+      runCohortOverlap = TRUE,
+      runIncidenceRate = TRUE,
+      runIncludedSourceConcepts = TRUE,
+      runOrphanConcepts = TRUE,
+      runTimeDistributions = TRUE,
+      incremental = TRUE,
+      incrementalFolder = file.path(folder, "incremental"),
+      covariateSettings = covariateSettings,
+      temporalCovariateSettings = temporalCovariateSettings
+    )
+  }
 
   listOfZipFilesToUpload <-
     list.files(
