@@ -109,5 +109,8 @@ test_that("Testing cohort relationship logic", {
     testthat::expect_equal(object = cohortRelationshipT1C10$subCsWindowT,
                            expected = 1) # there is one subject in comparator that started within the window of Target cohort
     
+    testthat::expect_equal(object = cohortRelationshipT1C10$subCeWindowT,
+                           expected = 1) # there is one subject in comparator that ended within the window of Target cohort
+    
   })
 })
