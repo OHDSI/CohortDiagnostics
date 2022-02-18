@@ -54,10 +54,14 @@ test_that("Results upload", {
     connection <- DatabaseConnector::connect(connectionDetails)
     with_dbc_connection(connection, {
       DatabaseConnector::renderTranslateExecuteSql(connection, "
-        INSERT INTO main.vocabulary
-        (VOCABULARY_ID, VOCABULARY_NAME, VOCABULARY_REFERENCE, VOCABULARY_VERSION, VOCABULARY_CONCEPT_ID) VALUES
-        ('None','OMOP Standardized Vocabularies','OMOP generated','v5.5 17-FEB-22',44819096)
-      ")
+INSERT INTO main.vocabulary
+(VOCABULARY_ID, VOCABULARY_NAME, VOCABULARY_REFERENCE, VOCABULARY_VERSION, VOCABULARY_CONCEPT_ID) VALUES
+('None','OMOP Standardized Vocabularies','OMOP generated','v5.5 17-FEB-22',44819096);
+
+INSERT INTO CDM_SOURCE
+(CDM_SOURCE_NAME,CDM_SOURCE_ABBREVIATION,CDM_HOLDER,SOURCE_DESCRIPTION,SOURCE_DOCUMENTATION_REFERENCE,CDM_ETL_REFERENCE,SOURCE_RELEASE_DATE,CDM_RELEASE_DATE,CDM_VERSION,VOCABULARY_VERSION)
+VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient Population Simulator.','https://synthetichealth.github.io/synthea/','https://github.com/OHDSI/ETL-Synthea',1558742400,1558742400,'v5.4','v5.0 22-JAN-22');"
+      )
 
       # Check to see if non-standard extra columns are handled
       DatabaseConnector::renderTranslateExecuteSql(connection,
@@ -78,32 +82,33 @@ test_that("Results upload", {
                                      cohortTableNames = cohortTableNames,
                                      cohortDefinitionSet = cohortDefinitionSet,
                                      incremental = FALSE)
-
-  executeDiagnostics(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTableNames = cohortTableNames,
-    cohortIds = cohortIds,
-    cohortDefinitionSet = cohortDefinitionSet,
-    exportFolder = file.path(folder, "export"),
-    databaseId = dbms,
-    runInclusionStatistics = TRUE,
-    runBreakdownIndexEvents = TRUE,
-    runCohortCharacterization = TRUE,
-    runTemporalCohortCharacterization = TRUE,
-    runCohortOverlap = TRUE,
-    runIncidenceRate = TRUE,
-    runIncludedSourceConcepts = TRUE,
-    runOrphanConcepts = TRUE,
-    runTimeDistributions = TRUE,
-    incremental = TRUE,
-    incrementalFolder = file.path(folder, "incremental"),
-    covariateSettings = covariateSettings,
-    temporalCovariateSettings = temporalCovariateSettings
-  )
+  expect_warning({
+    executeDiagnostics(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTableNames = cohortTableNames,
+      cohortIds = cohortIds,
+      cohortDefinitionSet = cohortDefinitionSet,
+      exportFolder = file.path(folder, "export"),
+      databaseId = dbms,
+      runInclusionStatistics = TRUE,
+      runBreakdownIndexEvents = TRUE,
+      runCohortCharacterization = TRUE,
+      runTemporalCohortCharacterization = TRUE,
+      runCohortOverlap = TRUE,
+      runIncidenceRate = TRUE,
+      runIncludedSourceConcepts = TRUE,
+      runOrphanConcepts = TRUE,
+      runTimeDistributions = TRUE,
+      incremental = TRUE,
+      incrementalFolder = file.path(folder, "incremental"),
+      covariateSettings = covariateSettings,
+      temporalCovariateSettings = temporalCovariateSettings
+    ) },
+    "CDM Source table has more than one record while only one is expected.")
 
   listOfZipFilesToUpload <-
     list.files(
