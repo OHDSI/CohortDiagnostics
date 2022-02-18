@@ -319,17 +319,23 @@ runCohortRelationshipDiagnostics <-
           ")"
         )
       )
-      sql <- SqlRender::loadRenderTranslateSql(
-        "CohortRelationship.sql",
-        packageName = "CohortDiagnostics",
-        dbms = connection@dbms,
-        time_id = timePeriods[i,]$timeId,
-        start_day_offset = timePeriods[i,]$startDay,
-        end_day_offset = timePeriods[i,]$endDay
-      )
-      DatabaseConnector::querySqlToAndromeda(
+      
+      cohortRelationshipSql <-
+        SqlRender::readSql(
+          sourceFile = system.file(
+            "sql",
+            "sql_server",
+            "CohortRelationship.sql",
+            package = utils::packageName()
+          )
+        )
+      DatabaseConnector::renderTranslateQuerySqlToAndromeda(
         connection = connection,
-        sql = sql,
+        tempEmulationSchema = tempEmulationSchema,
+        sql = cohortRelationshipSql,
+        time_id = timePeriods[i, ]$timeId,
+        start_day_offset = timePeriods[i, ]$startDay,
+        end_day_offset = timePeriods[i, ]$endDay,
         snakeCaseToCamelCase = TRUE,
         andromeda = resultsInAndromeda,
         andromedaTableName = 'temp'
