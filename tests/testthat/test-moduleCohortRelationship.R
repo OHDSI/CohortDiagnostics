@@ -70,12 +70,17 @@ test_that("Testing cohort relationship logic", {
       incremental = FALSE
     )
     
-    DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-                                                 sql = "DROP TABLE @cohort_database_schema.@cohort_relationship_cohort_table;",
-                                                 cohort_database_schema = cohortDatabaseSchema,
-                                                 cohort_relationship_cohort_table = cohortRelationshipCohortTable,
-                                                 profile = FALSE, 
-                                                 progressBar = FALSE)
+    sqlDrop <-
+      "IF OBJECT_ID('@cohort_database_schema.@cohort_relationship_cohort_table', 'U') IS NOT NULL
+            DROP TABLE @cohort_database_schema.@cohort_relationship_cohort_table;"
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connectionCohortRelationship,
+      sql = sqlDrop,
+      cohort_database_schema = cohortDatabaseSchema,
+      cohort_relationship_cohort_table = tableName,
+      profile = FALSE,
+      progressBar = FALSE
+    )
     # TO DO
     # READ THE CSV FILE
     
