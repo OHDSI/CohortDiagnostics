@@ -14,9 +14,7 @@ runCohortRelationshipDiagnostics(
   targetCohortIds,
   comparatorCohortIds,
   relationshipDays,
-  observationPeriodRelationship = TRUE,
-  incremental = FALSE,
-  incrementalFolder = NULL
+  observationPeriodRelationship = TRUE
 )
 }
 \arguments{
@@ -51,11 +49,6 @@ tables, provide a schema with write privileges where temp tables can be created.
 \item{relationshipDays}{A dataframe with two columns startDay and endDay representing periods of time to compute relationship}
 
 \item{observationPeriodRelationship}{Do you want to compute temporal relationship between target cohort and observation period table?}
-
-\item{incremental}{Create only cohort diagnostics that haven't been created before?}
-
-\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
-of which cohort diagnostics has been executed.}
 }
 \description{
 Given a set of cohorts, get temporal relationships between the

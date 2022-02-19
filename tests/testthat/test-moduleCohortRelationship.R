@@ -1,11 +1,7 @@
-test_that("Testing cohort relationship logic", {
+test_that("Testing cohort relationship logic - incremental FALSE", {
   skip_if(skipCdmTests, 'cdm settings not configured')
+  
   # manually create cohort table and load to table
-  
-  # connectionDetails <- Eunomia::getEunomiaConnectionDetails()
-  # cdmDatabaseSchema <- "main"
-  # cohortDatabaseSchema <- "main"
-  
   # for the logic to work - there has to be some overlap of the comparator cohort over target cohort
   # note - we will not be testing offset in this test. it is expected to work as it is a simple substraction
   
@@ -21,21 +17,17 @@ test_that("Testing cohort relationship logic", {
   
   comparatorCohort <- #all records here overlap with targetCohort
     dplyr::tibble(
-      cohortDefinitionId = c(10, 10, 10, 10, 10),
-      subjectId = c(1, 1, 1, 3, 3),
+      cohortDefinitionId = c(10, 10, 10),
+      subjectId = c(1, 1, 1),
       cohortStartDate = c(
         as.Date("1900-01-01"), # starts before target cohort start
         as.Date("1900-01-22"), # starts during target cohort period and ends during target cohort period
-        as.Date("1900-01-31"),
-        as.Date("1900-01-15"),
-        as.Date("1900-01-20")
+        as.Date("1900-01-31")
       ),
       cohortEndDate = c(
         as.Date("1900-01-20"),
         as.Date("1900-01-29"),
-        as.Date("1900-01-31"),
-        as.Date("1900-01-18"),
-        as.Date("1900-01-30")
+        as.Date("1900-01-31")
       )
     )
   
@@ -72,8 +64,8 @@ test_that("Testing cohort relationship logic", {
       comparatorCohortIds = c(10),
       relationshipDays = dplyr::tibble(startDay = temporalStartDays,
                                        endDay = temporalEndDays),
-      observationPeriodRelationship = FALSE,
-      incremental = FALSE
+      observationPeriodRelationship = FALSE, #this is set to FALSE because it will otherwise use real CDM observation table
+                                            #which is not possible because we are simulating cohort table/person_id
     )
     
     sqlDrop <-
@@ -115,3 +107,5 @@ test_that("Testing cohort relationship logic", {
     
   })
 })
+
+

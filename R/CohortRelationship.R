@@ -40,11 +40,6 @@
 #' 
 #' @param observationPeriodRelationship Do you want to compute temporal relationship between target cohort and observation period table?
 #'
-#' @param incremental                 Create only cohort diagnostics that haven't been created before?
-#'
-#' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
-#'                                    of which cohort diagnostics has been executed.
-#'
 #' @export
 runCohortRelationshipDiagnostics <-
   function(connectionDetails = NULL,
@@ -56,9 +51,7 @@ runCohortRelationshipDiagnostics <-
            targetCohortIds,
            comparatorCohortIds,
            relationshipDays,
-           observationPeriodRelationship = TRUE,
-           incremental = FALSE,
-           incrementalFolder = NULL) {
+           observationPeriodRelationship = TRUE) {
     startTime <- Sys.time()
     
     # Assert checks
@@ -86,8 +79,6 @@ runCohortRelationshipDiagnostics <-
       unique = TRUE,
       add = errorMessage
     )
-    checkmate::assertLogical(x = incremental,
-                             add = errorMessage)
     checkmate::reportAssertions(collection = errorMessage)
     
 
@@ -220,95 +211,11 @@ runCohortRelationshipDiagnostics <-
     ParallelLogger::logTrace(paste0("   - Working with ", scales::comma(nrow(timePeriods)), " time ids."))
     resultsInAndromeda <- Andromeda::andromeda()
     
-    if (incremental) {
-      ParallelLogger::logTrace("  - Running in Incremental mode.")
-      ParallelLogger::logTrace(
-        "    - Looking for results from previous run in incremental mode for time periods that have already executed."
-      )
-      if (file.exists(file.path(
-        incrementalFolder,
-        "CreatedDiagnosticsCohortRelationship.csv"
-      ))) {
-        ParallelLogger::logTrace(
-          "    - Found results from previous execution. Subsetting to required time periods before computing cohort relationship diagnostic."
-        )
-        previousRunResults <-
-          readr::read_csv(
-            file = file.path(
-              incrementalFolder,
-              "CreatedDiagnosticsCohortRelationship.csv"
-            ),
-            col_types = readr::cols(),
-            lazy = FALSE,
-            guess_max = 1e7
-          ) %>%
-          dplyr::inner_join(timePeriods,
-                            by = c('startDay', 'endDay'))
-        requiredColNames <- setdiff(
-          x = c(
-            "cohortId",
-            "comparatorCohortId",
-            "startDay",
-            "endDay",
-            "timeId"
-          ),
-          y = colnames(previousRunResults)
-        )
-        if (length(requiredColNames) > 0) {
-          ParallelLogger::logWarn(
-            " - Attempted to run cohort relationship diagnostics in incremental mode,\n
-          by limiting to only the time periods that were not previously\n
-          executed. But the diagnostic file does not have the required fields. \n
-          Please check CreatedDiagnosticsCohortRelationship.csv in your incremental\n
-          folder. Ignoring the file and continuing diagnostic. File may be overwritten."
-          )
-          unlink(
-            file.path(
-              incrementalFolder,
-              "CreatedDiagnosticsCohortRelationship.csv"
-            ),
-            force = TRUE
-          )
-        } else {
-          timePeriodsPreviouslyExecuted <- previousRunResults %>%
-            dplyr::select("startDay",
-                          "endDay",
-                          "timeId") %>%
-            dplyr::distinct()
-          timePeriodsPreviouslyExecuted <-
-            timePeriodsPreviouslyExecuted %>%
-            dplyr::inner_join(timePeriods,
-                              by = c("startDay",
-                                     "endDay",
-                                     "timeId")) %>%
-            dplyr::select(.data$timeId) %>%
-            dplyr::distinct()
-          
-          ParallelLogger::logTrace(
-            paste0(
-              "    - Found previous execution to have ",
-              scales::comma(nrow(timePeriodsPreviouslyExecuted)),
-              " records. Removing time_periods corresponding to those executions and reusing previous results."
-            )
-          )
-          timePeriods <- timePeriods %>%
-            dplyr::anti_join(timePeriodsPreviouslyExecuted,
-                             by = c("timeId"))
-          
-          ParallelLogger::logTrace(paste0(
-            "    - Executing over ",
-            scales::comma(nrow(timePeriods)),
-            " time_periods."
-          ))
-          
-          resultsInAndromeda$cohortRelationships <-
-            previousRunResults %>%
-            dplyr::select(-.data$startDay,-.data$endDay)
-        }
-      } else {
-        ParallelLogger::logTrace("    - Not found, running cohort relationship diagnostics for all time periods.")
-      }
-    }
+    #looping over timePeriods
+    #obviously if there are lot of timePeriods this may take for ever - as execution of each timePeriod 
+    # depends on the number of combis of targetCohortId * comparatorCohortId
+    # in future version we could introduce a permanent table that stores the results of the cohortRelationship
+    # and maybe retrieved - but this will need the use of startDay/endDay instead of timeId
     for (i in (1:nrow(timePeriods))) {
       ParallelLogger::logTrace(
         paste0(
@@ -351,22 +258,6 @@ runCohortRelationshipDiagnostics <-
         Andromeda::appendToTable(resultsInAndromeda$cohortRelationships,
                                  resultsInAndromeda$temp)
       }
-      if (incremental) {
-        readr::write_excel_csv(
-          x = resultsInAndromeda$cohortRelationships %>%
-            dplyr::collect() %>%
-            dplyr::inner_join(timePeriods,
-                              by = "timeId") %>%
-            dplyr::select(-.data$timeId),
-          file = file.path(
-            incrementalFolder,
-            "CreatedDiagnosticsCohortRelationship.csv"
-          ),
-          na = "",
-          append = FALSE,
-          delim = ","
-        )
-      }
     }
     
     resultsInAndromeda$timePeriods <- timePeriods
@@ -397,8 +288,8 @@ runCohortRelationshipDiagnostics <-
     )
     unlink(
       x = file.path(
-        incrementalFolder,
-        "CreatedDiagnosticsCohortRelationship.csv"
+        "resumeTimeId",
+        "timeIdResults.csv"
       ),
       force = TRUE
     )
@@ -514,9 +405,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
         targetCohortIds = subset$cohortId,
         comparatorCohortIds = cohortDefinitionSet$cohortId,
         relationshipDays = dplyr::tibble(startDay = temporalStartDays,
-                                         endDay = temporalEndDays),
-        incremental = incremental,
-        incrementalFolder = incrementalFolder
+                                         endDay = temporalEndDays)
       )
     
     data <- makeDataExportable(
