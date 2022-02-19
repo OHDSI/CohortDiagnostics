@@ -1,4 +1,5 @@
 test_that("Testing cohort relationship logic", {
+  skip_if(skipCdmTests, 'cdm settings not configured')
   # manually create cohort table and load to table
   
   # connectionDetails <- Eunomia::getEunomiaConnectionDetails()
