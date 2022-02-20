@@ -280,8 +280,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            signif(delta, 3),
                            " ",
                            attr(delta, "units"))
-  browser()
-  debug(getConceptStandardSourceMappingCount)
+  
   ## Counting standard to source concept mapping----
   ParallelLogger::logInfo("  - Counting standard to source concept mapping.")
   startconceptStdSrcCnt <- Sys.time()
@@ -299,10 +298,12 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            " ",
                            attr(delta, "units"))
   
+  
+  browser()
+  debug(getConceptOccurrenceRelativeToIndexDay)
   ## Index event breakdown ----
   ParallelLogger::logInfo("  - Learning about the breakdown in index events.")
   startBreakdownEvents <- Sys.time()
-  debug(getConceptOccurrenceRelativeToIndexDay)
   conceptSetDiagnosticsResults$indexEventBreakdown <-
     getConceptOccurrenceRelativeToIndexDay(
       cohortIds = subset$cohortId,
