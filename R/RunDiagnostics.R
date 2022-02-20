@@ -461,7 +461,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runIncludedSourceConcepts ||
     runOrphanConcepts ||
     runBreakdownIndexEvents) {
-  
     executeConceptSetDiagnostics(
       connection = connection,
       tempEmulationSchema = tempEmulationSchema,

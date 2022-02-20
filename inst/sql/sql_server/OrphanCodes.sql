@@ -1,5 +1,3 @@
-{DEFAULT @use_direct_concepts_only = FALSE}
-
 IF OBJECT_ID('tempdb..#starting_concepts', 'U') IS NOT NULL
   DROP TABLE #starting_concepts;
   
@@ -25,12 +23,12 @@ SELECT DISTINCT codeset_id,
 INTO #starting_concepts
 FROM (
 	SELECT codeset_id, concept_id
-	FROM @instantiated_code_sets
+	FROM @resolved_concept_sets
 	
 	UNION
 	
 	SELECT codeset_id, concept_id_1
-	FROM @instantiated_code_sets codesets
+	FROM @resolved_concept_sets codesets
 	INNER JOIN @vocabulary_database_schema.concept_relationship
 		ON codesets.concept_id = concept_id_2
 			AND concept_relationship.relationship_id = 'Maps to'
