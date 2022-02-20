@@ -416,8 +416,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
                        exportFolder,
                        cdmSourceInformation$vocabularyVersion,
                        vocabularyVersion)
-  # Create concept table ------------------------------------------
-  createConceptTable(connection, tempEmulationSchema, cohortDefinitionSet)
 
   # Counting cohorts -----------------------------------------------------------------------
   cohortCounts <- computeCohortCounts(connection,
@@ -463,6 +461,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runIncludedSourceConcepts ||
     runOrphanConcepts ||
     runBreakdownIndexEvents) {
+  
     executeConceptSetDiagnostics(
       connection = connection,
       tempEmulationSchema = tempEmulationSchema,

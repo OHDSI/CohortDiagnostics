@@ -14,23 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-createConceptTable <- function(connection, tempEmulationSchema, cohorts) {
-  ParallelLogger::logTrace("Creating concept ID table for tracking concepts used in diagnostics")
-  sql <-
-    SqlRender::loadRenderTranslateSql(
-      "CreateConceptIdTable.sql",
-      packageName = utils::packageName(),
-      dbms = connection@dbms,
-      tempEmulationSchema = tempEmulationSchema,
-      table_name = "#concept_ids"
-    )
-  DatabaseConnector::executeSql(
-    connection = connection,
-    sql = sql,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-}
 
 exportConceptInformation <- function(connection = NULL,
                                      cdmDatabaseSchema,

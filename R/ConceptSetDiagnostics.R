@@ -218,8 +218,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  browser()
-  debug(resolveConceptSets)
+  
   ## Instantiate (resolve) unique concept sets----
   ParallelLogger::logInfo("  - Resolving concept sets found in cohorts.")
   startInstantiateConceptSet <- Sys.time()
@@ -241,7 +240,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            signif(delta, 3),
                            " ",
                            attr(delta, "units"))
-  
+
   ## Excluded concepts ----
   ParallelLogger::logInfo("  - Collecting excluded concepts.")
   excludedConceptsStart <- Sys.time()
@@ -254,21 +253,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
       conceptTrackingTable = "#concept_tracking",
       keepCustomConceptId = keepCustomConceptId
     )
-  if (!is.null(conceptSetDiagnosticsResults$conceptExcluded)) {
-    if (!keepCustomConceptId) {
-      conceptSetDiagnosticsResults$conceptExcluded <-
-        conceptSetDiagnosticsResults$conceptExcluded %>%
-        dplyr::filter(.data$conceptId < 200000000)
-    }
-    conceptSetDiagnosticsResults$conceptExcluded <-
-      conceptSetDiagnosticsResults$conceptExcluded %>%
-      dplyr::inner_join(conceptSetDiagnosticsResults$conceptSets %>% dplyr::distinct(),
-                        by = "uniqueConceptSetId") %>%
-      dplyr::select(.data$cohortId,
-                    .data$conceptSetId,
-                    .data$conceptId) %>%
-      dplyr::distinct()
-  }
   delta <- Sys.time() - excludedConceptsStart
   ParallelLogger::logTrace("  - Collecting excluded concepts took ",
                            signif(delta, 3),
@@ -276,6 +260,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            attr(delta, "units"))
   
   ## Orphan concepts ----
+  browser()
   ParallelLogger::logInfo("  - Searching for concepts that may have been orphaned.")
   startOrphanCodes <- Sys.time()
   conceptSetDiagnosticsResults$orphanConcept <- getOrphanConcepts(
@@ -284,7 +269,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
     conceptTrackingTable = "#concept_tracking",
-    instantiatedCodeSets = "#resolved_concept_set"
+    instantiatedCodeSets = "#resolved_concept_set",
+    keepCustomConceptId = keepCustomConceptId
   )
   if (!keepCustomConceptId) {
     conceptSetDiagnosticsResults$orphanConcept <-
@@ -336,11 +322,9 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            " ",
                            attr(delta, "units"))
   
-  browser()
   ## Index event breakdown ----
   ParallelLogger::logInfo("  - Learning about the breakdown in index events.")
   startBreakdownEvents <- Sys.time()
-  browser()
   conceptSetDiagnosticsResults$indexEventBreakdown <-
     getConceptOccurrenceRelativeToIndexDay(
       cohortIds = subset$cohortId,
@@ -799,7 +783,7 @@ resolveConceptSets <- function(uniqueConceptSets,
               FROM @concept_sets_table cs
               INNER JOIN @concept_sets_x_walk unq
               ON cs.codeset_id = unq.unique_concept_set_id
-              {@keep_custom_concept_id} ? {WHERE cs.concept_id < 200000000};",
+              {@keep_custom_concept_id} ? {} : {WHERE cs.concept_id < 200000000};",
       connection = connection,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema,
@@ -855,7 +839,8 @@ getOrphanConcepts <- function(connectionDetails = NULL,
                               instantiatedCodeSets = "#resolved_concept_set",
                               conceptTrackingTable = NULL,
                               useDirectConceptsOnly = FALSE,
-                              concept_counts_table_is_temp = TRUE
+                              concept_counts_table_is_temp = TRUE,
+                              keepCustomConceptId = FALSE
                               ) {
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
@@ -1739,7 +1724,9 @@ getExcludedConceptSets <- function(connection,
                                    uniqueConceptSets,
                                    vocabularyDatabaseSchema,
                                    tempEmulationSchema,
-                                   conceptTrackingTable = NULL) {
+                                   conceptSetsXWalk = "#concept_sets_x_walk",
+                                   conceptTrackingTable = NULL,
+                                   keepCustomConceptId = FALSE) {
   conceptSetWithExclude <- list()
   for (i in (1:nrow(uniqueConceptSets))) {
     conceptSetExpression <-
@@ -1777,43 +1764,55 @@ getExcludedConceptSets <- function(connection,
     camelCaseToSnakeCase = TRUE
   )
   
-  sql <- "IF OBJECT_ID('tempdb..#excluded_concepts', 'U') IS NOT NULL
-      	  DROP TABLE #excluded_concepts;
-      	
-      	  SELECT DISTINCT unique_concept_set_id,
-          	concept_id
-          INTO #excluded_concepts
-          FROM (
-          	SELECT DISTINCT ex.unique_concept_set_id,
-          		ex.concept_id
-          	FROM #excluded_concepts_ex ex
-          	
-          	UNION
-          	
-          	SELECT DISTINCT ex.unique_concept_set_id,
-          		anc.descendant_concept_id concept_id
-          	FROM @vocabulary_database_schema.concept_ancestor anc
-          	INNER JOIN #excluded_concepts_ex ex ON anc.ancestor_concept_id = ex.concept_id
-          	WHERE ex.include_descendants = TRUE
-          	) f;"
+  sql <-
+    "
+      IF OBJECT_ID('tempdb..#excluded_concepts', 'U') IS NOT NULL
+      	DROP TABLE #excluded_concepts;
+
+      SELECT DISTINCT unq.cohort_id,
+      	unq.concept_set_id,
+      	cs.concept_id
+      INTO #excluded_concepts
+      FROM (
+      	SELECT DISTINCT ex.unique_concept_set_id,
+      		ex.concept_id
+      	FROM #excluded_concepts_ex ex
+
+      	UNION
+
+      	SELECT DISTINCT ex.unique_concept_set_id,
+      		anc.descendant_concept_id concept_id
+      	FROM @vocabulary_database_schema.concept_ancestor anc
+      	INNER JOIN #excluded_concepts_ex ex ON anc.ancestor_concept_id = ex.concept_id
+      	WHERE ex.include_descendants = TRUE
+      	) cs
+      INNER JOIN @concept_sets_x_walk unq ON cs.unique_concept_set_id = unq.unique_concept_set_id
+        {@keep_custom_concept_id} ? {} : {WHERE cs.concept_id < 200000000 };"
+  
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
     vocabulary_database_schema = vocabularyDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
+    keep_custom_concept_id = keepCustomConceptId,
+    concept_sets_x_walk = conceptSetsXWalk,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
   
   if (!is.null(conceptTrackingTable)) {
     sql <- "INSERT INTO @concept_tracking_table
-            SELECT DISTINCT unique_concept_set_id, concept_id
-            FROM #excluded_concepts;"
+            SELECT DISTINCT xw.unique_concept_set_id, concept_id
+            FROM #excluded_concepts ex
+            INNER JOIN @concept_sets_x_walk xw
+            ON ex.cohort_id = xw.cohort_id AND
+            ex.concept_set_id = xw.concept_set_id;"
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sql,
       tempEmulationSchema = tempEmulationSchema,
       concept_tracking_table = conceptTrackingTable,
+      concept_sets_x_walk = conceptSetsXWalk,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )
@@ -1830,7 +1829,7 @@ getExcludedConceptSets <- function(connection,
   sql <-
     "IF OBJECT_ID('tempdb..#excluded_concepts', 'U') IS NOT NULL
       	DROP TABLE #excluded_concepts;
-      
+
       IF OBJECT_ID('tempdb..#excluded_concepts_ex', 'U') IS NOT NULL
       	DROP TABLE #excluded_concepts_ex;"
   DatabaseConnector::renderTranslateExecuteSql(
@@ -2010,6 +2009,7 @@ executeConceptSetDiagnostics <- function(connection,
         nrow(cohorts) - nrow(subset)
       ))
     }
+    
     outputAndromeda <- runConceptSetDiagnostics(
       connection = connection,
       tempEmulationSchema = tempEmulationSchema,
