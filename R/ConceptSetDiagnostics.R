@@ -298,9 +298,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            " ",
                            attr(delta, "units"))
   
-  
-  browser()
-  debug(getConceptOccurrenceRelativeToIndexDay)
   ## Index event breakdown ----
   ParallelLogger::logInfo("  - Learning about the breakdown in index events.")
   startBreakdownEvents <- Sys.time()
@@ -315,14 +312,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
       tempEmulationSchema = tempEmulationSchema,
       conceptSetsXWalk = "#concept_sets_x_walk",
       conceptTrackingTable = conceptTrackingTable,
-      indexDateDiagnosticsRelativeDays = indexDateDiagnosticsRelativeDays,
-      keepCustomConceptId = keepCustomConceptId
+      indexDateDiagnosticsRelativeDays = indexDateDiagnosticsRelativeDays
     )
-  if (!keepCustomConceptId) {
-    conceptSetDiagnosticsResults$indexEventBreakdown <-
-      conceptSetDiagnosticsResults$indexEventBreakdown %>%
-      dplyr::filter(.data$conceptId < 200000000)
-  }
   delta <- (Sys.time() - startBreakdownEvents)
   ParallelLogger::logTrace("  - Index event breakdown took ",
                            signif(delta, 3),
@@ -1212,7 +1203,6 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                                    conceptSetsXWalk = "#concept_sets_x_walk",
                                                    conceptTrackingTable,
                                                    indexDateDiagnosticsRelativeDays,
-                                                   keepCustomConceptId = FALSE,
                                                    minCellCount) {
   if (is.null(minCellCount)) {
     minCellCount <- 0
@@ -1569,7 +1559,6 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
       }
     }
   }
-
   
   #avoid any potential duplication
   #removes domain table - counts are retained from the domain table that has the most prevalent concept id -
