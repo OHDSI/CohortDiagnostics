@@ -313,9 +313,10 @@ runConceptSetDiagnostics <- function(connection = NULL,
       cohortTable = cohortTable,
       minCellCount = minCellCount,
       tempEmulationSchema = tempEmulationSchema,
-      unique_concept_sets = "#concept_sets_x_walk",
+      conceptSetsXWalk = "#concept_sets_x_walk",
       conceptTrackingTable = conceptTrackingTable,
-      indexDateDiagnosticsRelativeDays = indexDateDiagnosticsRelativeDays
+      indexDateDiagnosticsRelativeDays = indexDateDiagnosticsRelativeDays,
+      keepCustomConceptId = keepCustomConceptId
     )
   if (!keepCustomConceptId) {
     conceptSetDiagnosticsResults$indexEventBreakdown <-
@@ -1211,7 +1212,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                                    conceptSetsXWalk = "#concept_sets_x_walk",
                                                    conceptTrackingTable,
                                                    indexDateDiagnosticsRelativeDays,
-                                                   minCellCountd) {
+                                                   keepCustomConceptId = FALSE,
+                                                   minCellCount) {
   if (is.null(minCellCount)) {
     minCellCount <- 0
   }
@@ -1232,7 +1234,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                     		ca.descendant_concept_id concept_id
                     	FROM @cdm_database_schema.concept_ancestor ca
                     	INNER JOIN @concept_tracking_table cu ON ancestor_concept_id = cu.concept_id
-                    	INNER JOIN @unique_concept_sets unq ON cu.codeset_id = unq.codeset_id
+                    	INNER JOIN @concept_sets_x_walk unq ON cu.unique_concept_set_id = unq.unique_concept_set_id
                     	),
                     all_concepts
                     AS (
@@ -1257,7 +1259,8 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
     sql = sqlVocabulary,
     progressBar = FALSE,
     reportOverallTime = FALSE,
-    concepts_in_cohort = conceptsInCohort,
+    concept_tracking_table = conceptTrackingTable,
+    concept_sets_x_walk = conceptSetsXWalk,
     cdm_database_schema = cdmDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema
   )
@@ -1267,7 +1270,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql =  "INSERT INTO @concept_tracking_table
-            SELECT DISTINCT concept_id
+            SELECT DISTINCT cohort_id, concept_id
             FROM #indx_concepts
             WHERE concept_id != 0;",
       tempEmulationSchema = tempEmulationSchema,
@@ -1324,6 +1327,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                         INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
                         	AND DATEADD(dd, @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
                         INNER JOIN #indx_concepts cu ON d1.@domain_concept_id = cu.concept_id
+                          AND cu.cohort_id = c.cohort_definition_id
                         WHERE c.cohort_definition_id IN (@cohortIds)
                         	AND d1.@domain_concept_id != 0
                         	AND d1.@domain_concept_id IS NOT NULL
@@ -1347,22 +1351,21 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                         			'_',
                                         			cast(c.subject_id AS VARCHAR(30))
                                         			)) concept_count
-                                        FROM (
-                                        	SELECT *
-                                        	FROM @cohort_database_schema.@cohort_table
-                                        	WHERE cohort_definition_id IN (@cohortIds)
-                                        	) c
+                                        FROM @cohort_database_schema.@cohort_table c
                                         INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
                                         	AND DATEADD(dd, @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
                                         INNER JOIN @cdm_database_schema.@domain_table d2 ON c.subject_id = d2.person_id
                                         	AND DATEADD(dd, @days_relative_index, c.cohort_start_date) = d2.@domain_start_date
-                                        -- AND d1.@domain_start_date = d2.@domain_start_date
-                                        -- AND d1.person_id = d2.person_id
+                                          -- AND d1.@domain_start_date = d2.@domain_start_date
+                                          -- AND d1.person_id = d2.person_id
                                         INNER JOIN #indx_concepts cu1
                                         ON d1.@domain_concept_id = cu1.concept_id
+                                          AND cu1.cohort_id = c.cohort_definition_id
                                         INNER JOIN #indx_concepts cu2
                                         ON d2.@domain_concept_id = cu2.concept_id
+                                          AND cu2.cohort_id = c.cohort_definition_id
                                         WHERE d1.@domain_concept_id != d2.@domain_concept_id
+                                          AND c.cohort_definition_id IN (@cohortIds)
                                         GROUP BY cohort_definition_id,
                                         	d1.@domain_concept_id,
                                         	d2.@domain_concept_id
@@ -1372,8 +1375,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
   #conceptId is from _concept_id field of domain table and coConceptId is also from _source_concept_id field of same domain table
   # i.e. same day co-occurrence of concept ids where second (coConceptId) maybe non-standard relative to index date
   # the inner join to conceptIdUnivese to _concep_id limits to standard concepts in conceptTrackingTable - because only standard concept should be in _concept_id
-  sqlConceptIdCoConceptIdOppositeCount <-
-    " INSERT INTO #indx_breakdown
+  sqlConceptIdCoConceptIdOppositeCount <- " INSERT INTO #indx_breakdown
                                             SELECT cohort_definition_id cohort_id,
                                             	@days_relative_index days_relative_index,
                                             	d1.@domain_concept_id concept_id,
@@ -1386,11 +1388,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                             			'_',
                                             			cast(c.subject_id AS VARCHAR(30))
                                             			)) concept_count
-                                            FROM (
-                                            	SELECT *
-                                            	FROM @cohort_database_schema.@cohort_table
-                                            	WHERE cohort_definition_id IN (@cohortIds)
-                                            	) c
+                                            FROM @cohort_database_schema.@cohort_table c
                                             INNER JOIN @cdm_database_schema.@domain_table d1 ON c.subject_id = d1.person_id
                                             	AND DATEADD(dd, @days_relative_index, c.cohort_start_date) = d1.@domain_start_date
                                             INNER JOIN @cdm_database_schema.@domain_table d2 ON c.subject_id = d2.person_id
@@ -1399,9 +1397,12 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                             	-- AND d1.person_id = d2.person_id
                                             INNER JOIN #indx_concepts cu1
                                             ON d1.@domain_concept_id = cu1.concept_id
+                                              AND cu1.cohort_id = c.cohort_definition_id
                                             INNER JOIN #indx_concepts cu2
                                             ON d1.@domain_source_concept_id = cu2.concept_id
+                                              AND cu2.cohort_id = c.cohort_definition_id
                                             WHERE d1.@domain_concept_id != d2.@domain_source_concept_id
+                                              AND c.cohort_definition_id IN (@cohortIds)
                                             GROUP BY cohort_definition_id,
                                             	d1.@domain_concept_id,
                                             	d2.@domain_source_concept_id
@@ -1492,6 +1493,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
             " table"
           )
         )
+        # counting SqlConceptIdCount for domainSourceConceptId
         DatabaseConnector::renderTranslateExecuteSql(
           connection = connection,
           sql = sqlConceptIdCount,
@@ -1517,6 +1519,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
             " table"
           )
         )
+        # counting sqlConceptIdCoConceptIdSameCount for domainSourceConceptId
         DatabaseConnector::renderTranslateExecuteSql(
           connection = connection,
           sql = sqlConceptIdCoConceptIdSameCount,
@@ -1545,6 +1548,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
             " table"
           )
         )
+        # counting sqlConceptIdCoConceptIdOppositeCount
         DatabaseConnector::renderTranslateExecuteSql(
           connection = connection,
           sql = sqlConceptIdCoConceptIdOppositeCount,
@@ -1565,20 +1569,10 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
       }
     }
   }
-  sql <- "INSERT INTO @concept_id_table (concept_id)
-                  SELECT DISTINCT concept_id
-                  FROM #indx_breakdown;"
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = connection,
-    sql = sql,
-    tempEmulationSchema = tempEmulationSchema,
-    concept_id_table = conceptTrackingTable,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
+
   
   #avoid any potential duplication
-  #removes domain table - counts are retained from the domain table that has the most prevalence concept id -
+  #removes domain table - counts are retained from the domain table that has the most prevalent concept id -
   #assumption here is that a conceptId should not be in more than one domain table
   data <-
     DatabaseConnector::renderTranslateQuerySql(
