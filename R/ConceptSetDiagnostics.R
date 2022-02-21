@@ -320,15 +320,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            " ",
                            attr(delta, "units"))
   
-  sqlDrop <- paste0("DROP TABLE #concepts_in_cohort;")
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = connection,
-    sql = sqlDrop,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-  ParallelLogger::logInfo("    - Success")
-  
   ## Concept count----
   ParallelLogger::logInfo("  - Counting concepts in data source.")
   conceptSetDiagnosticsResults$conceptCount <-
