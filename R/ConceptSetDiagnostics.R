@@ -458,20 +458,12 @@ runConceptSetDiagnostics <- function(connection = NULL,
   ParallelLogger::logTrace(" - Dropping temporary tables")
   sql <-
     "IF OBJECT_ID('tempdb..#resolved_concept_set', 'U') IS NOT NULL
-                      	        DROP TABLE #resolved_concept_set;"
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection,
-    sql,
-    tempEmulationSchema = tempEmulationSchema,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-  sql <-
-    "IF OBJECT_ID('tempdb..@concept_tracking_table', 'U') IS NOT NULL
+                      	        DROP TABLE #resolved_concept_set;
+     IF OBJECT_ID('tempdb..@concept_tracking_table', 'U') IS NOT NULL
                       	        DROP TABLE @concept_tracking_table;"
   DatabaseConnector::renderTranslateExecuteSql(
-    connection,
-    sql,
+    connection = connection,
+    sql = sql,
     tempEmulationSchema = tempEmulationSchema,
     progressBar = FALSE,
     reportOverallTime = FALSE
