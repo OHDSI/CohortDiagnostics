@@ -338,11 +338,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
       tempEmulationSchema = tempEmulationSchema,
       conceptTrackingTable = conceptTrackingTable
     )
-  if (!keepCustomConceptId) {
-    conceptSetDiagnosticsResults$conceptCount <-
-      conceptSetDiagnosticsResults$conceptCount %>%
-      dplyr::filter(.data$conceptId < 200000000)
-  }
   
   ## Finalize----
   conceptSetDiagnosticsResults$conceptSets <-
@@ -387,7 +382,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     ), "'")
     sql <- "SELECT a.* FROM @vocabulary_database_schema.@table a
             INNER JOIN
-              (SELECT distinct concept_id FROM @unique_concept_id_table) b
+              (SELECT distinct concept_id FROM @concept_tracking_table) b
             ON a.concept_id = b.concept_id;"
     conceptSetDiagnosticsResults[[vocabularyTables2[[i]]]] <-
       renderTranslateQuerySql(
@@ -395,7 +390,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
         sql = sql,
         vocabulary_database_schema = vocabularyDatabaseSchema,
         table = camelCaseToSnakeCase(vocabularyTables2[[i]]),
-        unique_concept_id_table = conceptTrackingTable,
+        concept_tracking_table = conceptTrackingTable,
         snakeCaseToCamelCase = TRUE
       ) %>%
       dplyr::tibble()
@@ -411,7 +406,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
         FROM @vocabulary_database_schema.@table a
         INNER JOIN (
         	SELECT DISTINCT concept_id
-        	FROM @unique_concept_id_table
+        	FROM @concept_tracking_table
         	) b1 ON a.concept_id_1 = b1.concept_id
 
         UNION
@@ -420,7 +415,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
         FROM @vocabulary_database_schema.@table a
         INNER JOIN (
         	SELECT DISTINCT concept_id
-        	FROM @unique_concept_id_table
+        	FROM @concept_tracking_table
         	) b2 ON a.concept_id_2 = b2.concept_id;"
     conceptSetDiagnosticsResults[[vocabularyTables3[[i]]]] <-
       renderTranslateQuerySql(
@@ -428,7 +423,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
         sql = sql,
         vocabulary_database_schema = vocabularyDatabaseSchema,
         table = camelCaseToSnakeCase(vocabularyTables3[[i]]),
-        unique_concept_id_table = conceptTrackingTable,
+        concept_tracking_table = conceptTrackingTable,
         snakeCaseToCamelCase = TRUE
       ) %>%
       dplyr::tibble()
@@ -441,9 +436,9 @@ runConceptSetDiagnostics <- function(connection = NULL,
     ), "'")
     sql <-
       "SELECT DISTINCT a.* FROM @vocabulary_database_schema.@table a
-            LEFT JOIN (SELECT distinct concept_id FROM @unique_concept_id_table) b1
+            LEFT JOIN (SELECT distinct concept_id FROM @concept_tracking_table) b1
               ON a.ancestor_concept_id = b1.concept_id
-            LEFT JOIN (SELECT distinct concept_id FROM @unique_concept_id_table) b2
+            LEFT JOIN (SELECT distinct concept_id FROM @concept_tracking_table) b2
               ON a.descendant_concept_id = b2.concept_id
             WHERE b1.concept_id IS NOT NULL or b2.concept_id IS NOT NULL;"
     conceptSetDiagnosticsResults[[vocabularyTables4[[i]]]] <-
@@ -452,7 +447,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
         sql = sql,
         vocabulary_database_schema = vocabularyDatabaseSchema,
         table = camelCaseToSnakeCase(vocabularyTables4[[i]]),
-        unique_concept_id_table = conceptTrackingTable,
+        concept_tracking_table = conceptTrackingTable,
         snakeCaseToCamelCase = TRUE
       ) %>%
       dplyr::tibble()
