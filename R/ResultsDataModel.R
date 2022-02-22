@@ -36,11 +36,11 @@ getResultsDataModelSpecifications <- function() {
 #'
 #' @export
 getDefaultVocabularyTableNames <- function() {
-  getResultsDataModelSpecifications() %>%
+  getResultsDataModelSpecifications() %>% 
     dplyr::filter(.data$isVocabularyTable == "Yes") %>%
     dplyr::pull(.data$tableName) %>%
     unique() %>%
-    sort() %>%
+    sort() %>% 
     SqlRender::snakeCaseToCamelCase()
 }
 

@@ -78,6 +78,27 @@ minCellRealDef <- function(columns, digits = 1) {
        ))
 }
 
+minCellDefReactable <- function(showResultsAsPercent = FALSE) {
+  if (showResultsAsPercent) {
+    reactable::JS(
+      "function(data) {
+          if (isNaN(parseFloat(data.value))) return data.value;
+          if (data.value >= 0) return (100 * data.value).toFixed(1).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
+          return '<' + Math.abs(100 * data.value).toFixed(1).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
+        }"
+    )
+  } else {
+    reactable::JS(
+      "function(data) {
+          if (isNaN(parseFloat(data.value)) || data.value <= 999) return data.value;
+          if (data.value > 999) return data.value.toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
+          return '<' + Math.abs(data.value).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
+        }"
+    )
+  }
+  
+}
+
 styleAbsColorBar <-
   function(maxValue,
            colorPositive,

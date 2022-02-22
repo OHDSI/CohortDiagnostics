@@ -27,12 +27,152 @@ renderTranslateQuerySql <- function(connection, sql, ..., snakeCaseToCamelCase =
   }
 }
 
+renderTranslateExecuteSql <- function(connection, sql, ...) {
+  if (is(connection, "Pool")) {
+    sql <- SqlRender::render(sql, ...)
+    sqlFinal <- SqlRender::translate(sql, targetDialect = dbms)
+    DatabaseConnector::dbExecute(connection, sqlFinal)
+  } else {
+    DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                 sql = sql,
+                                                 ...)
+  }
+}
+
 quoteLiterals <- function(x) {
   if (is.null(x)) {
     return("")
   } else {
     return(paste0("'", paste(x, collapse = "', '"), "'"))
   }
+}
+
+
+insertAnnotationResults <- function(dataSource,
+                                    resultsDatabaseSchema,
+                                    diagnosticsId,
+                                    cohortIds,
+                                    databaseIds,
+                                    annotation,
+                                    annotationAttributes = "",
+                                    createdBy,
+                                    createdOn = getTimeAsInteger(),
+                                    modifiedOn = NULL,
+                                    deletedOn = NULL) {
+  
+  sqlInsert <- "INSERT INTO @results_database_schema.annotation (
+                                                          	annotation_id,
+                                                          	created_by,
+                                                          	created_on,
+                                                          	modified_last_on,
+                                                          	deleted_on,
+                                                          	annotation
+                                                          	)
+                                                          SELECT CASE
+                                                          		WHEN max(annotation_id) IS NULL
+                                                          			THEN 1
+                                                          		ELSE max(annotation_id) + 1
+                                                          		END AS annotation_id,
+                                                          	'@created_by' created_by,
+                                                          	@created_on created_on,
+                                                          	@modified_last_on modified_last_on,
+                                                          	@deleted_on deleted_on,
+                                                          	'@annotation' annotation
+                                                          FROM @results_database_schema.annotation;"
+  
+  
+  tryCatch({
+    renderTranslateExecuteSql(
+      connection = dataSource$connection,
+      sql = sqlInsert,
+      results_database_schema = dataSource$resultsDatabaseSchema,
+      annotation = annotation,
+      created_by = createdBy,
+      created_on = createdOn,
+      modified_last_on = modifiedOn,
+      deleted_on = deletedOn
+    )
+  }, error = function(err) {
+    stop(err)
+  })
+  
+  # get annotation id
+  sqlRetrieve <- "SELECT max(annotation_id) annotation_id
+                  FROM @results_database_schema.annotation
+                  WHERE created_by = '@created_by'
+                  	AND created_on = @created_on;"
+  maxAnnotationId <-
+    renderTranslateQuerySql(
+      connection = dataSource$connection,
+      sql = sqlRetrieve,
+      results_database_schema = dataSource$resultsDatabaseSchema,
+      created_by = createdBy,
+      created_on = createdOn
+    ) %>% dplyr::pull()
+  
+  # insert annotation link
+  annotationLink <-
+    tidyr::crossing(
+      annotationId = !!maxAnnotationId,
+      diagnosticsId = !!diagnosticsId,
+      cohortId = !!cohortIds,
+      databaseId = !!databaseIds
+    )
+  realConnection <- pool::poolCheckout(dataSource$connection)
+  DatabaseConnector::insertTable(
+    connection = realConnection,
+    databaseSchema = dataSource$resultsDatabaseSchema,
+    tableName = "annotation_link",
+    createTable = FALSE,
+    dropTableIfExists = FALSE,
+    tempTable = FALSE,
+    progressBar = FALSE,
+    camelCaseToSnakeCase = TRUE,
+    data = annotationLink
+  )
+  pool::poolReturn(realConnection)
+  return(TRUE)
+}
+
+
+getAnnotationResult <- function(dataSource,
+                                diagnosticsId,
+                                cohortIds,
+                                databaseIds) {
+  # get annotation id
+  sqlRetrieveAnnotationLink <- "SELECT *
+                                FROM @results_database_schema.annotation_link
+                                WHERE diagnostics_id = '@diagnosticsId'
+                                	AND cohort_id IN (@cohortIds)
+                                  AND database_id IN (@databaseIds);"
+  annotationLink <-
+    renderTranslateQuerySql(
+      connection = dataSource$connection,
+      sql = sqlRetrieveAnnotationLink,
+      results_database_schema = dataSource$resultsDatabaseSchema,
+      diagnosticsId = diagnosticsId,
+      cohortIds = cohortIds,
+      databaseIds = quoteLiterals(databaseIds), 
+      snakeCaseToCamelCase = TRUE
+    )
+  
+  sqlRetrieveAnnotation <- "SELECT *
+                            FROM @results_database_schema.annotation
+                            WHERE annotation_id IN (@annotationIds);"
+  
+  annotation <-
+    renderTranslateQuerySql(
+      connection = dataSource$connection,
+      sql = sqlRetrieveAnnotation,
+      results_database_schema = dataSource$resultsDatabaseSchema,
+      annotationIds = annotationLink$annotationId, 
+      snakeCaseToCamelCase = TRUE
+    )
+  
+  data <- list(annotation = annotation,
+               annotationLink = annotationLink)
+  
+  return(data)
 }
 
 getCohortCountResult <- function(dataSource,
@@ -698,4 +838,18 @@ getSearchTerms <- function(dataSource, includeDescendants = FALSE) {
                                   snakeCaseToCamelCase = TRUE) %>%
     tidyr::tibble()
   return(data)
+}
+
+getDatabaseCounts <- function(dataSource,
+                        databaseIds) {
+  sql <- "SELECT *
+              FROM  @results_database_schema.database
+              WHERE database_id in (@database_ids);"
+  data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                  sql = sql,
+                                  results_database_schema = dataSource$resultsDatabaseSchema,
+                                  database_ids = quoteLiterals(databaseIds),
+                                  snakeCaseToCamelCase = TRUE) %>%
+    tidyr::tibble()
+  
 }

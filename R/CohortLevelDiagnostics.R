@@ -110,18 +110,18 @@ computeCohortCounts <- function(connection,
     cohortTable = cohortTable,
     cohortIds = cohorts$cohortId
   )
-
+  
   if (is.null(cohortCounts)) {
     stop("Cohort table is empty")
   }
-
+  
   cohortCounts <- makeDataExportable(
     x = cohortCounts,
     tableName = "cohort_count",
     minCellCount = minCellCount,
     databaseId = databaseId
   )
-
+  
   writeToCsv(
     data = cohortCounts,
     fileName = file.path(exportFolder, "cohort_count.csv"),
