@@ -1736,7 +1736,8 @@ getExcludedConceptSets <- function(connection,
     }
   }
   conceptSetWithEx <-
-    dplyr::bind_rows(conceptSetWithEx)
+    dplyr::bind_rows(conceptSetWithEx) %>% 
+    dplyr::mutate(includeDescendants = as.integer(.data$includeDescendants))
   
   if (nrow(conceptSetWithEx) == 0) {
     return(NULL)
@@ -1752,7 +1753,6 @@ getExcludedConceptSets <- function(connection,
     progressBar = FALSE,
     camelCaseToSnakeCase = TRUE
   )
-  
   if (is.null(conceptSetsXWalk)) {
     sql <-
       "
@@ -1773,7 +1773,7 @@ getExcludedConceptSets <- function(connection,
       		anc.descendant_concept_id concept_id
       	FROM @vocabulary_database_schema.concept_ancestor anc
       	INNER JOIN #concept_set_with_ex ex ON anc.ancestor_concept_id = ex.concept_id
-      	WHERE ex.include_descendants = TRUE
+      	WHERE ex.include_descendants = 1
       	) cs
         {@keep_custom_concept_id} ? {} : {WHERE concept_id < 200000000 };"
     
@@ -1807,7 +1807,7 @@ getExcludedConceptSets <- function(connection,
       		anc.descendant_concept_id concept_id
       	FROM @vocabulary_database_schema.concept_ancestor anc
       	INNER JOIN #concept_set_with_ex ex ON anc.ancestor_concept_id = ex.concept_id
-      	WHERE ex.include_descendants = TRUE
+      	WHERE ex.include_descendants = 1
       	) cs
       INNER JOIN @concept_sets_x_walk unq ON cs.unique_concept_set_id = unq.unique_concept_set_id
         {@keep_custom_concept_id} ? {} : {WHERE cs.concept_id < 200000000 };"
