@@ -351,7 +351,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   for (i in (1:length(vocabularyTables1))) {
     ParallelLogger::logInfo(paste0(
       "   - Retrieving '",
-      camelCaseToTitleCase(vocabularyTables1[[i]])
+      SqlRender::camelCaseToTitleCase(vocabularyTables1[[i]])
     ), "'")
     sql <- "SELECT * FROM @vocabulary_database_schema.@table;"
     conceptSetDiagnosticsResults[[vocabularyTables1[[i]]]] <-
@@ -359,7 +359,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
         connection = connection,
         sql = sql,
         vocabulary_database_schema = vocabularyDatabaseSchema,
-        table = camelCaseToSnakeCase(vocabularyTables1[[i]]),
+        table = SqlRender::camelCaseToSnakeCase(vocabularyTables1[[i]]),
         snakeCaseToCamelCase = TRUE
       ) %>%
       dplyr::tibble()
@@ -369,7 +369,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   for (i in (1:length(vocabularyTables2))) {
     ParallelLogger::logInfo(paste0(
       "   - Retrieving '",
-      camelCaseToTitleCase(vocabularyTables2[[i]])
+      SqlRender::camelCaseToTitleCase(vocabularyTables2[[i]])
     ), "'")
     sql <- "SELECT a.* FROM @vocabulary_database_schema.@table a
             INNER JOIN
@@ -380,7 +380,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
         connection = connection,
         sql = sql,
         vocabulary_database_schema = vocabularyDatabaseSchema,
-        table = camelCaseToSnakeCase(vocabularyTables2[[i]]),
+        table = SqlRender::camelCaseToSnakeCase(vocabularyTables2[[i]]),
         concept_tracking_table = conceptTrackingTable,
         snakeCaseToCamelCase = TRUE
       ) %>%
@@ -390,7 +390,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   for (i in (1:length(vocabularyTables3))) {
     ParallelLogger::logInfo(paste0(
       "   - Retrieving '",
-      camelCaseToTitleCase(vocabularyTables3[[i]])
+      SqlRender::camelCaseToTitleCase(vocabularyTables3[[i]])
     ), "'")
     sql <-
       " SELECT a.*
@@ -413,7 +413,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
         connection = connection,
         sql = sql,
         vocabulary_database_schema = vocabularyDatabaseSchema,
-        table = camelCaseToSnakeCase(vocabularyTables3[[i]]),
+        table = SqlRender::camelCaseToSnakeCase(vocabularyTables3[[i]]),
         concept_tracking_table = conceptTrackingTable,
         snakeCaseToCamelCase = TRUE
       ) %>%
@@ -423,7 +423,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   for (i in (1:length(vocabularyTables4))) {
     ParallelLogger::logInfo(paste0(
       "   - Retrieving '",
-      camelCaseToTitleCase(vocabularyTables4[[i]])
+      SqlRender::camelCaseToTitleCase(vocabularyTables4[[i]])
     ), "'")
     sql <-
       "SELECT DISTINCT a.* FROM @vocabulary_database_schema.@table a
@@ -437,7 +437,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
         connection = connection,
         sql = sql,
         vocabulary_database_schema = vocabularyDatabaseSchema,
-        table = camelCaseToSnakeCase(vocabularyTables4[[i]]),
+        table = SqlRender::camelCaseToSnakeCase(vocabularyTables4[[i]]),
         concept_tracking_table = conceptTrackingTable,
         snakeCaseToCamelCase = TRUE
       ) %>%
@@ -2055,17 +2055,17 @@ executeConceptSetDiagnostics <- function(connection,
                incremental) {
         data <- makeDataExportable(
           x = outputAndromeda[[tableNameCamelCase]] %>% dplyr::collect(),
-          tableName = camelCaseToSnakeCase(tableNameCamelCase),
+          tableName = SqlRender::camelCaseToSnakeCase(tableNameCamelCase),
           minCellCount = minCellCount,
           databaseId = databaseId
         )
         ParallelLogger::logInfo("  - writing ",
-                                paste0(camelCaseToSnakeCase(tableNameCamelCase),
+                                paste0(SqlRender::camelCaseToSnakeCase(tableNameCamelCase),
                                        ".csv"))
         writeToCsv(
           data = data,
           fileName = file.path(exportFolder, paste0(
-            camelCaseToSnakeCase(tableNameCamelCase),
+            SqlRender::camelCaseToSnakeCase(tableNameCamelCase),
             ".csv"
           )),
           incremental = incremental
@@ -2201,7 +2201,7 @@ getConceptSetDataFrameFromConceptSetExpression <-
           INCLUDE_MAPPED = FALSE
         ))
       colnames(conceptSetExpressionDetails) <-
-        snakeCaseToCamelCase(colnames(conceptSetExpressionDetails))
+        SqlRender::snakeCaseToCamelCase(colnames(conceptSetExpressionDetails))
     }
     return(conceptSetExpressionDetails)
   }

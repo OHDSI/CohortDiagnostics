@@ -137,28 +137,28 @@ makeDataExportable <- function(x,
   fieldsInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::pull(.data$fieldName) %>%
-    snakeCaseToCamelCase() %>%
+    SqlRender::snakeCaseToCamelCase() %>%
     unique()
   
   requiredFieldsInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$isRequired == "Yes") %>%
     dplyr::pull(.data$fieldName) %>%
-    snakeCaseToCamelCase() %>%
+    SqlRender::snakeCaseToCamelCase() %>%
     unique()
   
   primaryKeyInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$primaryKey == "Yes") %>%
     dplyr::pull(.data$fieldName) %>%
-    snakeCaseToCamelCase() %>%
+    SqlRender::snakeCaseToCamelCase() %>%
     unique()
   
   columnsToApplyMinCellValue <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$minCellCount == 'Yes') %>%
     dplyr::pull(.data$fieldName) %>%
-    snakeCaseToCamelCase() %>%
+    SqlRender::snakeCaseToCamelCase() %>%
     unique()
   
   ParallelLogger::logTrace(paste0(

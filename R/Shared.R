@@ -77,7 +77,7 @@ getDomainInformation <- function(packageName = NULL) {
     stringr::str_replace_all(
       string = sapply(
         stringr::str_extract_all(
-          string = camelCaseToTitleCase(snakeCaseToCamelCase(domains$domainConceptId)),
+          string = SqlRender::camelCaseToTitleCase(SqlRender::snakeCaseToCamelCase(domains$domainConceptId)),
           pattern = '[A-Z]'
         ),
         paste,
@@ -90,7 +90,7 @@ getDomainInformation <- function(packageName = NULL) {
     stringr::str_replace_all(
       string = sapply(
         stringr::str_extract_all(
-          string = camelCaseToTitleCase(snakeCaseToCamelCase(domains$domainSourceConceptId)),
+          string = SqlRender::camelCaseToTitleCase(SqlRender::snakeCaseToCamelCase(domains$domainSourceConceptId)),
           pattern = '[A-Z]'
         ),
         paste,
@@ -157,34 +157,6 @@ getDomainInformation <- function(packageName = NULL) {
   return(data)
 }
 
-
-# private function - not exported
-camelCaseToTitleCase <- function(string) {
-  string <- gsub("([A-Z])", " \\1", string)
-  string <- gsub("([a-z])([0-9])", "\\1 \\2", string)
-  substr(string, 1, 1) <- toupper(substr(string, 1, 1))
-  return(string)
-}
-
-
-# private function - not exported
-snakeCaseToCamelCase <- function(string) {
-  string <- tolower(string)
-  for (letter in letters) {
-    string <-
-      gsub(paste("_", letter, sep = ""), toupper(letter), string)
-  }
-  string <- gsub("_([0-9])", "\\1", string)
-  return(string)
-}
-
-# private function - not exported
-camelCaseToSnakeCase <- function(string) {
-  string <- gsub("([A-Z])", "_\\1", string)
-  string <- tolower(string)
-  string <- gsub("([a-z])([0-9])", "\\1_\\2", string)
-  return(string)
-}
 
 # private function - not exported
 titleCaseToCamelCase <- function(string) {
