@@ -27,7 +27,7 @@ Imports:
   readr (>= 2.0.1),
   RJSONIO,
   rlang,
-  SqlRender (>= 1.7.0),
+  SqlRender (>= 1.9.0),
   stringr,
   tidyr (>= 1.0.0),
   CohortGenerator (>= 0.2.0)

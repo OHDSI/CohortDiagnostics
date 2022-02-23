@@ -190,9 +190,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
   ## Create concept tracking table----
   ParallelLogger::logTrace(" - Creating concept ID table for tracking concepts used in diagnostics")
   sql <-
-    "IF OBJECT_ID('tempdb..@concept_tracking_table', 'U') IS NOT NULL
-                      	DROP TABLE @concept_tracking_table;
-                      CREATE TABLE @concept_tracking_table (unique_concept_set_id INT, concept_id INT);
+    "DROP TABLE IF NOT EXISTS @concept_tracking_table;
+     CREATE TABLE @concept_tracking_table (unique_concept_set_id INT, concept_id INT);
   "
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
@@ -448,10 +447,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
   # Drop temporary tables
   ParallelLogger::logTrace(" - Dropping temporary tables")
   sql <-
-    "IF OBJECT_ID('tempdb..#resolved_concept_set', 'U') IS NOT NULL
-                      	        DROP TABLE #resolved_concept_set;
-     IF OBJECT_ID('tempdb..@concept_tracking_table', 'U') IS NOT NULL
-                      	        DROP TABLE @concept_tracking_table;"
+    "DROP TABLE IF NOT EXISTS #resolved_concept_set;
+      DROP TABLE IF NOT EXISTS @concept_tracking_table;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
@@ -771,9 +768,7 @@ resolveConceptSets <- function(uniqueConceptSets,
   if (dropResolvedConceptsTable) {
     # Drop temporary tables
     ParallelLogger::logTrace(" - Dropping temporary table: resolved concept set")
-    sql <-
-      "IF OBJECT_ID('tempdb..#resolved_concept_set', 'U') IS NOT NULL
-                      	        DROP TABLE #resolved_concept_set;"
+    sql <- "DROP TABLE IF NOT EXISTS #resolved_concept_set;"
     DatabaseConnector::renderTranslateExecuteSql(
       connection,
       sql,
@@ -877,9 +872,7 @@ getOrphanConcepts <- function(connectionDetails = NULL,
     )
   }
 
-  sql <-
-    "IF OBJECT_ID('tempdb..#orphan_concept_table', 'U') IS NOT NULL
-	              DROP TABLE #orphan_concept_table;"
+  sql <- "DROP TABLE IF NOT EXISTS #orphan_concept_table;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
@@ -899,9 +892,7 @@ getConceptRecordCount <- function(connection,
   domains <- domains$wide %>%
     dplyr::filter(.data$isEraTable == FALSE)
   #filtering out ERA tables because they are supposed to be derived tables, and counting them is double counting
-  sqlDdlDrop <-
-    "IF OBJECT_ID('tempdb..#concept_count_temp', 'U') IS NOT NULL
-                	      DROP TABLE #concept_count_temp;"
+  sqlDdlDrop <- "DROP TABLE IF NOT EXISTS #concept_count_temp;"
   sqlDdlCreate <- "
   CREATE TABLE #concept_count_temp (
                                     	concept_id INT,
@@ -1193,34 +1184,33 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
     indexDateDiagnosticsRelativeDays %>% sort() %>% unique()
   
   sqlVocabulary <-
-    "IF OBJECT_ID('tempdb..#indx_concepts', 'U') IS NOT NULL
-                	      DROP TABLE #indx_concepts;
+    "DROP TABLE IF NOT EXISTS #indx_concepts;
 
-                	  WITH c_ancestor
-                    AS (
-                    	SELECT DISTINCT unq.cohort_id,
-                    		ca.descendant_concept_id concept_id
-                    	FROM @cdm_database_schema.concept_ancestor ca
-                    	INNER JOIN @concept_tracking_table cu ON ancestor_concept_id = cu.concept_id
-                    	INNER JOIN @concept_sets_x_walk unq ON cu.unique_concept_set_id = unq.unique_concept_set_id
-                    	),
-                    all_concepts
-                    AS (
-                    	SELECT cohort_id,
-                    		concept_id_2 concept_id
-                    	FROM @cdm_database_schema.concept_relationship cr
-                    	INNER JOIN c_ancestor ca ON concept_id_1 = ca.concept_id
+  	  WITH c_ancestor
+      AS (
+      	SELECT DISTINCT unq.cohort_id,
+      		ca.descendant_concept_id concept_id
+      	FROM @cdm_database_schema.concept_ancestor ca
+      	INNER JOIN @concept_tracking_table cu ON ancestor_concept_id = cu.concept_id
+      	INNER JOIN @concept_sets_x_walk unq ON cu.unique_concept_set_id = unq.unique_concept_set_id
+      	),
+      all_concepts
+      AS (
+      	SELECT cohort_id,
+      		concept_id_2 concept_id
+      	FROM @cdm_database_schema.concept_relationship cr
+      	INNER JOIN c_ancestor ca ON concept_id_1 = ca.concept_id
 
-                    	UNION
+      	UNION
 
-                    	SELECT cohort_id,
-                    		concept_id
-                    	FROM c_ancestor
-                    	)
-                    SELECT DISTINCT cohort_id,
-                    	concept_id
-                    INTO #indx_concepts
-                    FROM all_concepts;"
+      	SELECT cohort_id,
+      		concept_id
+      	FROM c_ancestor
+      	)
+      SELECT DISTINCT cohort_id,
+      	concept_id
+      INTO #indx_concepts
+      FROM all_concepts;"
   
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
@@ -1259,8 +1249,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
     dplyr::filter(.data$domainTableShort %in% c(nonEraTables))
   
   sqlDdlDrop <-
-    "IF OBJECT_ID('tempdb..#indx_breakdown', 'U') IS NOT NULL
-                	      DROP TABLE #indx_breakdown;"
+    "DROP TABLE IF NOT EXISTS #indx_breakdown;"
   sqlDdlCreate <- "
   CREATE TABLE #indx_breakdown (
                               	cohort_id BIGINT NOT NULL,
@@ -1586,13 +1575,12 @@ getConceptStandardSourceMappingCount <- function(connection,
     dplyr::filter(nchar(.data$domainSourceConceptId) > 1)
   
   sqlconceptStdSrcCnt <-
-    "IF OBJECT_ID('tempdb..#concept_std_src_cnt', 'U') IS NOT NULL
-                      	DROP TABLE #concept_std_src_cnt;
-                      CREATE TABLE #concept_std_src_cnt ( concept_id INT,
-                                                          source_concept_id INT,
-                                                          domain_table VARCHAR(20),
-                                                          concept_count BIGINT,
-                                                          subject_count BIGINT);"
+    "DROP TABLE IF NOT EXISTS #concept_std_src_cnt;
+      CREATE TABLE #concept_std_src_cnt ( concept_id INT,
+                                          source_concept_id INT,
+                                          domain_table VARCHAR(20),
+                                          concept_count BIGINT,
+                                          subject_count BIGINT);"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sqlconceptStdSrcCnt,
@@ -1695,8 +1683,7 @@ getConceptStandardSourceMappingCount <- function(connection,
   )
   
   sqlDdlDrop <-
-    "IF OBJECT_ID('tempdb..#concept_std_src_cnt', 'U') IS NOT NULL
-                	      DROP TABLE #concept_std_src_cnt;"
+    "DROP TABLE IF NOT EXISTS #concept_std_src_cnt;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sqlDdlDrop,
@@ -1737,7 +1724,7 @@ getExcludedConceptSets <- function(connection,
   }
   conceptSetWithEx <-
     dplyr::bind_rows(conceptSetWithEx) %>% 
-    dplyr::mutate(includeDescendants = as.integer(.data$includeDescendants))
+    dplyr::mutate(includeDescendants = as.numeric(.data$includeDescendants))
   
   if (nrow(conceptSetWithEx) == 0) {
     return(NULL)
@@ -1756,8 +1743,7 @@ getExcludedConceptSets <- function(connection,
   if (is.null(conceptSetsXWalk)) {
     sql <-
       "
-      IF OBJECT_ID('tempdb..#excluded_concepts', 'U') IS NOT NULL
-      	DROP TABLE #excluded_concepts;
+      DROP TABLE IF NOT EXISTS #excluded_concepts;
 
       SELECT DISTINCT unique_concept_set_id codeset_id,
       	concept_id
@@ -1789,8 +1775,7 @@ getExcludedConceptSets <- function(connection,
   } else {
     sql <-
       "
-      IF OBJECT_ID('tempdb..#excluded_concepts', 'U') IS NOT NULL
-      	DROP TABLE #excluded_concepts;
+      DROP TABLE IF NOT EXISTS #excluded_concepts;
 
       SELECT DISTINCT unq.cohort_id,
       	unq.concept_set_id,
@@ -1851,11 +1836,8 @@ getExcludedConceptSets <- function(connection,
     )
   
   sql <-
-    "IF OBJECT_ID('tempdb..#excluded_concepts', 'U') IS NOT NULL
-      	DROP TABLE #excluded_concepts;
-
-      IF OBJECT_ID('tempdb..#concept_set_with_ex', 'U') IS NOT NULL
-      	DROP TABLE #concept_set_with_ex;"
+    "DROP TABLE IF NOT EXISTS #excluded_concepts;
+      DROP TABLE IF NOT EXISTS #concept_set_with_ex;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
@@ -1975,9 +1957,7 @@ getOptimizationRecommendationForConceptSetExpression <-
         snakeCaseToCamelCase = TRUE
       )
     
-    sqlCleanUp <-
-      "IF OBJECT_ID('tempdb..#optimized_set', 'U') IS NOT NULL
-	        DROP TABLE #optimized_set;"
+    sqlCleanUp <- "DROP TABLE IF NOT EXISTS #optimized_set;"
     
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
