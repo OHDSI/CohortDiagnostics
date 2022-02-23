@@ -190,7 +190,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   ## Create concept tracking table----
   ParallelLogger::logTrace(" - Creating concept ID table for tracking concepts used in diagnostics")
   sql <-
-    "DROP TABLE IF NOT EXISTS @concept_tracking_table;
+    "DROP TABLE IF EXISTS @concept_tracking_table;
      CREATE TABLE @concept_tracking_table (unique_concept_set_id INT, concept_id INT);
   "
   DatabaseConnector::renderTranslateExecuteSql(
@@ -447,8 +447,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
   # Drop temporary tables
   ParallelLogger::logTrace(" - Dropping temporary tables")
   sql <-
-    "DROP TABLE IF NOT EXISTS #resolved_concept_set;
-      DROP TABLE IF NOT EXISTS @concept_tracking_table;"
+    "DROP TABLE IF EXISTS #resolved_concept_set;
+      DROP TABLE IF EXISTS @concept_tracking_table;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
@@ -768,7 +768,7 @@ resolveConceptSets <- function(uniqueConceptSets,
   if (dropResolvedConceptsTable) {
     # Drop temporary tables
     ParallelLogger::logTrace(" - Dropping temporary table: resolved concept set")
-    sql <- "DROP TABLE IF NOT EXISTS #resolved_concept_set;"
+    sql <- "DROP TABLE IF EXISTS #resolved_concept_set;"
     DatabaseConnector::renderTranslateExecuteSql(
       connection,
       sql,
@@ -872,7 +872,7 @@ getOrphanConcepts <- function(connectionDetails = NULL,
     )
   }
 
-  sql <- "DROP TABLE IF NOT EXISTS #orphan_concept_table;"
+  sql <- "DROP TABLE IF EXISTS #orphan_concept_table;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
@@ -892,7 +892,7 @@ getConceptRecordCount <- function(connection,
   domains <- domains$wide %>%
     dplyr::filter(.data$isEraTable == FALSE)
   #filtering out ERA tables because they are supposed to be derived tables, and counting them is double counting
-  sqlDdlDrop <- "DROP TABLE IF NOT EXISTS #concept_count_temp;"
+  sqlDdlDrop <- "DROP TABLE IF EXISTS #concept_count_temp;"
   sqlDdlCreate <- "
   CREATE TABLE #concept_count_temp (
                                     	concept_id INT,
@@ -1184,7 +1184,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
     indexDateDiagnosticsRelativeDays %>% sort() %>% unique()
   
   sqlVocabulary <-
-    "DROP TABLE IF NOT EXISTS #indx_concepts;
+    "DROP TABLE IF EXISTS #indx_concepts;
 
   	  WITH c_ancestor
       AS (
@@ -1249,7 +1249,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
     dplyr::filter(.data$domainTableShort %in% c(nonEraTables))
   
   sqlDdlDrop <-
-    "DROP TABLE IF NOT EXISTS #indx_breakdown;"
+    "DROP TABLE IF EXISTS #indx_breakdown;"
   sqlDdlCreate <- "
   CREATE TABLE #indx_breakdown (
                               	cohort_id BIGINT NOT NULL,
@@ -1575,7 +1575,7 @@ getConceptStandardSourceMappingCount <- function(connection,
     dplyr::filter(nchar(.data$domainSourceConceptId) > 1)
   
   sqlconceptStdSrcCnt <-
-    "DROP TABLE IF NOT EXISTS #concept_std_src_cnt;
+    "DROP TABLE IF EXISTS #concept_std_src_cnt;
       CREATE TABLE #concept_std_src_cnt ( concept_id INT,
                                           source_concept_id INT,
                                           domain_table VARCHAR(20),
@@ -1683,7 +1683,7 @@ getConceptStandardSourceMappingCount <- function(connection,
   )
   
   sqlDdlDrop <-
-    "DROP TABLE IF NOT EXISTS #concept_std_src_cnt;"
+    "DROP TABLE IF EXISTS #concept_std_src_cnt;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sqlDdlDrop,
@@ -1743,7 +1743,7 @@ getExcludedConceptSets <- function(connection,
   if (is.null(conceptSetsXWalk)) {
     sql <-
       "
-      DROP TABLE IF NOT EXISTS #excluded_concepts;
+      DROP TABLE IF EXISTS #excluded_concepts;
 
       SELECT DISTINCT unique_concept_set_id codeset_id,
       	concept_id
@@ -1775,7 +1775,7 @@ getExcludedConceptSets <- function(connection,
   } else {
     sql <-
       "
-      DROP TABLE IF NOT EXISTS #excluded_concepts;
+      DROP TABLE IF EXISTS #excluded_concepts;
 
       SELECT DISTINCT unq.cohort_id,
       	unq.concept_set_id,
@@ -1836,8 +1836,8 @@ getExcludedConceptSets <- function(connection,
     )
   
   sql <-
-    "DROP TABLE IF NOT EXISTS #excluded_concepts;
-      DROP TABLE IF NOT EXISTS #concept_set_with_ex;"
+    "DROP TABLE IF EXISTS #excluded_concepts;
+      DROP TABLE IF EXISTS #concept_set_with_ex;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
@@ -1957,7 +1957,7 @@ getOptimizationRecommendationForConceptSetExpression <-
         snakeCaseToCamelCase = TRUE
       )
     
-    sqlCleanUp <- "DROP TABLE IF NOT EXISTS #optimized_set;"
+    sqlCleanUp <- "DROP TABLE IF EXISTS #optimized_set;"
     
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
