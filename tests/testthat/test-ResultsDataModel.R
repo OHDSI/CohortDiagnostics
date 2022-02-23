@@ -168,43 +168,43 @@ test_that("Sqlite results data model", {
 })
 
 
-# 
-# 
-# test_that("Data removal works", {
-#   skip_if(skipResultsDm | skipCdmTests, 'results data model test server not set')
-#   specifications <- getResultsDataModelSpecifications()
-# 
-#   pgConnection <- DatabaseConnector::connect(connectionDetails = postgresConnectionDetails)
-#   with_dbc_connection(pgConnection, {
-#     for (tableName in unique(specifications$tableName)) {
-#       primaryKey <- specifications %>%
-#         dplyr::filter(.data$tableName == !!tableName &
-#                         .data$primaryKey == "Yes") %>%
-#         dplyr::select(.data$fieldName) %>%
-#         dplyr::pull()
-# 
-#       if ("database_id" %in% primaryKey) {
-#         deleteAllRecordsForDatabaseId(
-#           connection = pgConnection,
-#           schema = resultsDatabaseSchema,
-#           tableName = tableName,
-#           databaseId = "cdmv5"
-#         )
-# 
-#         sql <- "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
-#         sql <- SqlRender::render(
-#           sql = sql,
-#           schema = resultsDatabaseSchema,
-#           table_name = tableName,
-#           database_id = "cdmv5"
-#         )
-#         databaseIdCount <-
-#           DatabaseConnector::querySql(pgConnection, sql)[, 1]
-#         expect_true(databaseIdCount == 0)
-#       }
-#     }
-#   })
-# })
+
+
+test_that("Data removal works", {
+  skip_if(skipResultsDm | skipCdmTests, 'results data model test server not set')
+  specifications <- getResultsDataModelSpecifications()
+
+  pgConnection <- DatabaseConnector::connect(connectionDetails = postgresConnectionDetails)
+  with_dbc_connection(pgConnection, {
+    for (tableName in unique(specifications$tableName)) {
+      primaryKey <- specifications %>%
+        dplyr::filter(.data$tableName == !!tableName &
+                        .data$primaryKey == "Yes") %>%
+        dplyr::select(.data$fieldName) %>%
+        dplyr::pull()
+
+      if ("database_id" %in% primaryKey) {
+        deleteAllRecordsForDatabaseId(
+          connection = pgConnection,
+          schema = resultsDatabaseSchema,
+          tableName = tableName,
+          databaseId = "cdmv5"
+        )
+
+        sql <- "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
+        sql <- SqlRender::render(
+          sql = sql,
+          schema = resultsDatabaseSchema,
+          table_name = tableName,
+          database_id = "cdmv5"
+        )
+        databaseIdCount <-
+          DatabaseConnector::querySql(pgConnection, sql)[, 1]
+        expect_true(databaseIdCount == 0)
+      }
+    }
+  })
+})
 
 test_that("util functions", {
   expect_true(naToEmpty(NA) == "")
