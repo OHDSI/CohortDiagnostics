@@ -95,15 +95,7 @@ test_that("Cohort diagnostics", {
                        cohortDatabaseSchema = cohortDatabaseSchema,
                        cohortTable = cohortTable,
                        databaseId = "Synpuf",
-                       exportFolder =  file.path(folder, "export"),
-                       runBreakdownIndexEvents = TRUE,
-                       runCohortCharacterization = TRUE,
-                       runTemporalCohortCharacterization = TRUE,
-                       runCohortOverlap = TRUE,
-                       runIncidenceRate = TRUE,
-                       runIncludedSourceConcepts = TRUE,
-                       runOrphanConcepts = TRUE,
-                       runTimeDistributions = TRUE)
+                       exportFolder =  file.path(folder, "export"))
   
   
   executeDiagnostics(
@@ -117,14 +109,6 @@ test_that("Cohort diagnostics", {
     inclusionStatisticsFolder = file.path(folder, "incStats"),
     exportFolder =  file.path(folder, "export"),
     databaseId = "SynPuf",
-    runBreakdownIndexEvents = TRUE,
-    runCohortCharacterization = TRUE,
-    runTemporalCohortCharacterization = TRUE,
-    runCohortOverlap = TRUE,
-    runIncidenceRate = TRUE,
-    runIncludedSourceConcepts = TRUE,
-    runOrphanConcepts = TRUE,
-    runTimeDistributions = TRUE,
     minCellCount = 5
   )
   

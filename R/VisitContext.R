@@ -21,7 +21,6 @@ getVisitContext <- function(connectionDetails = NULL,
                             cohortDatabaseSchema = cdmDatabaseSchema,
                             cohortTable = "cohort",
                             cohortIds,
-                            conceptIdTable = NULL,
                             cdmVersion = 5) {
   if (!cdmVersion == 5) {
     warning('Only OMOP CDM v5.x.x is supported. Continuing execution.')
@@ -56,20 +55,6 @@ getVisitContext <- function(connectionDetails = NULL,
       snakeCaseToCamelCase = TRUE
     )
   
-  if (!is.null(conceptIdTable)) {
-    sql <- "INSERT INTO @unique_concept_id_table (concept_id)
-            SELECT DISTINCT visit_concept_id
-            FROM @visit_context_table;"
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = sql,
-      tempEmulationSchema = tempEmulationSchema,
-      unique_concept_id_table = conceptIdTable,
-      visit_context_table = "#visit_context",
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
-  }
   sql <-
     "TRUNCATE TABLE @visit_context_table;\nDROP TABLE @visit_context_table;"
   DatabaseConnector::renderTranslateExecuteSql(
@@ -126,8 +111,7 @@ executeVisitContextDiagnostics <- function(connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
         cdmVersion = cdmVersion,
-        cohortIds = subset$cohortId,
-        conceptIdTable = "#concept_ids"
+        cohortIds = subset$cohortId
       )
       data <- makeDataExportable(
         x = data,

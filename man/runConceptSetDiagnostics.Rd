@@ -13,10 +13,18 @@ runConceptSetDiagnostics(
   cohorts,
   cohortIds = NULL,
   cohortDatabaseSchema = NULL,
-  keepCustomConceptId = FALSE,
-  indexDateDiagnosticsRelativeDays = c(0),
-  minCellCount = 5,
-  cohortTable = NULL
+  cohortTable = NULL,
+  keep2BillionConceptId = FALSE,
+  runConceptSetOptimization = TRUE,
+  runExcludedConceptSet = TRUE,
+  runOrphanConcepts = TRUE,
+  runBreakdownIndexEvents = TRUE,
+  runBreakdownIndexEventRelativeDays = c(0),
+  runIndexDateConceptCoOccurrence = FALSE,
+  runStandardToSourceMappingCount = TRUE,
+  runConceptCount = TRUE,
+  runConceptCountByCalendarPeriod = FALSE,
+  minCellCount = 5
 )
 }
 \arguments{
@@ -52,15 +60,33 @@ diagnostics to.}
 this should include both the database and schema name, for example
 'scratch.dbo'.}
 
-\item{keepCustomConceptId}{(Optional) Default FALSE. Do you want to keep concept id above 2 billion.
+\item{cohortTable}{Name of the cohort table.}
+
+\item{keep2BillionConceptId}{(Optional) Default FALSE. Do you want to keep concept id above 2 billion.
 Per OMOP conventions any conceptId >= 2 billion are considered site specific
 custom value that are not shipped as part of default OMOP vocabulary tables.}
 
-\item{indexDateDiagnosticsRelativeDays}{An array of days relative to index date to perform diagnositcs on. Default 0 - i.e. same days an index.}
+\item{runConceptSetOptimization}{Generate and export optimized concept set expression?}
+
+\item{runExcludedConceptSet}{Generate and export excluded concept id in concept set expression?}
+
+\item{runOrphanConcepts}{Generate and export potential orphan concepts?}
+
+\item{runBreakdownIndexEvents}{Generate and export breakdown of index events?}
+
+\item{runBreakdownIndexEventRelativeDays}{(optional) array of days to offset breakdown of index events. 
+default value is 0 i.e. no offsets. Options include c(-5:5) to calculate a 
+range of days starting -5 of cohort start to +5 of cohort start.}
+
+\item{runIndexDateConceptCoOccurrence}{Generate concept co-occurrence on index date}
+
+\item{runStandardToSourceMappingCount}{Generate and export counts for mapping between standard to non standard as observed in data.}
+
+\item{runConceptCount}{Generate and export count of concept id}
+
+\item{runConceptCountByCalendarPeriod}{Do you want to stratify the counts by calendar period like calendar year, calendar month?}
 
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
-
-\item{cohortTable}{Name of the cohort table.}
 }
 \description{
 Runs concept set diagnostics on a set of cohorts. For index event breakdown,

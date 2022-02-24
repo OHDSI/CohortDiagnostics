@@ -47,12 +47,21 @@
 #' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to databaseId.
 #' @template cdmVersion
 #' @param runInclusionStatistics      Generate and export statistic on the cohort inclusion rules?
-#' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
-#' @param runOrphanConcepts           Generate and export potential orphan concepts?
+#' @param runConceptSetDiagnostics    Generate and export concept set diagnostics that includes concept set optimization,
+#'                                    excluded concepts, orphan concepts, index event breakdown, standard to non standard mapping
+#'                                    counts, concept counts. Optional additional diagnostics are available runBreakdownIndexEventRelativeDays,
+#'                                    runIndexDateConceptCoOccurrence, runConceptCountByCalendarPeriod, runStandardToSourceMappingCount
+#' @param runBreakdownIndexEventRelativeDays (optional) array of days to offset breakdown of index events. 
+#'                                    default value is 0 i.e. no offsets. Options include c(-5:5) to calculate a 
+#'                                    range of days starting -5 of cohort start to +5 of cohort start.
+#' @param runIndexDateConceptCoOccurrence Generate and export co-occurrence of concepts on index date. This diagnostics will
+#'                                    compute if any two concept-id co-occur on the same day. Computation will be performed
+#'                                    for co-occurrence of standard-standard, standard-source, and source-source
+#'                                    concept ids. This may take time. It is set to FALSE by default.
+#' @param runStandardToSourceMappingCount Generate and export counts for mapping between standard to non standard as observed in data.
+#' @param runConceptCountByCalendarPeriod  Do you want to stratify the counts by calendar period like calendar year, calendar month?
 #' @param runTimeDistributions        Generate and export cohort time distributions?
 #' @param runVisitContext             Generate and export index-date visit context?
-#' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
-#' @template IndexDateDiagnosticsRelativeDays
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap? Overlaps are checked within cohortIds
 #'                                    that have the same phenotype ID sourced from the CohortSetReference or
@@ -127,12 +136,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                cohortIds = NULL,
                                cdmVersion = 5,
                                runInclusionStatistics = TRUE,
-                               runIncludedSourceConcepts = TRUE,
-                               runOrphanConcepts = TRUE,
+                               runConceptSetDiagnostics = TRUE,
+                               runIndexDateConceptCoOccurrence = TRUE,
+                               runConceptCountByCalendarPeriod = FALSE,
                                runTimeDistributions = TRUE,
                                runVisitContext = TRUE,
-                               runBreakdownIndexEvents = TRUE,
-                               indexDateDiagnosticsRelativeDays = c(-5:5),  #part of index event breakdown
                                runIncidenceRate = TRUE,
                                runCohortOverlap = TRUE,
                                runCohortCharacterization = TRUE,
@@ -155,11 +163,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
   argumentsAtDiagnosticsInitiationJson <-
     list(
       runInclusionStatistics = argumentsAtDiagnosticsInitiation$runInclusionStatistics,
-      runIncludedSourceConcepts = argumentsAtDiagnosticsInitiation$runIncludedSourceConcepts,
-      runOrphanConcepts = argumentsAtDiagnosticsInitiation$runOrphanConcepts,
+      runConceptSetDiagnostics = argumentsAtDiagnosticsInitiation$runConceptSetDiagnostics,
+      runBreakdownIndexEventRelativeDays = argumentsAtDiagnosticsInitiation$runBreakdownIndexEventRelativeDays,
+      runIndexDateConceptCoOccurrence = argumentsAtDiagnosticsInitiation$runIndexDateConceptCoOccurrence,
       runTimeDistributions = argumentsAtDiagnosticsInitiation$runTimeDistributions,
       runVisitContext = argumentsAtDiagnosticsInitiation$runVisitContext,
-      runBreakdownIndexEvents = argumentsAtDiagnosticsInitiation$runBreakdownIndexEvents,
       runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,
       runCohortOverlap = argumentsAtDiagnosticsInitiation$runCohortOverlap,
       runCohortCharacterization = argumentsAtDiagnosticsInitiation$runCohortCharacterization,
@@ -214,10 +222,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   cohortTable <- cohortTableNames$cohortTable
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
-  checkmate::assertLogical(runIncludedSourceConcepts, add = errorMessage)
-  checkmate::assertLogical(runOrphanConcepts, add = errorMessage)
+  checkmate::assertLogical(runConceptSetDiagnostics, add = errorMessage)
+  checkmate::assertLogical(runIndexDateConceptCoOccurrence, add = errorMessage)
   checkmate::assertLogical(runTimeDistributions, add = errorMessage)
-  checkmate::assertLogical(runBreakdownIndexEvents, add = errorMessage)
   checkmate::assertLogical(runIncidenceRate, add = errorMessage)
   checkmate::assertLogical(runCohortOverlap, add = errorMessage)
   checkmate::assertLogical(runCohortCharacterization, add = errorMessage)
@@ -235,10 +242,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   if (any(
     runInclusionStatistics,
-    runIncludedSourceConcepts,
-    runOrphanConcepts,
+    runConceptSetDiagnostics,
+    runIndexDateConceptCoOccurrence,
     runTimeDistributions,
-    runBreakdownIndexEvents,
     runIncidenceRate,
     runCohortOverlap,
     runCohortCharacterization
@@ -458,9 +464,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
 
   # Concept set diagnostics -----------------------------------------------
-  if (runIncludedSourceConcepts ||
-    runOrphanConcepts ||
-    runBreakdownIndexEvents) {
+  if (runConceptSetDiagnostics) {
     executeConceptSetDiagnostics(
       connection = connection,
       tempEmulationSchema = tempEmulationSchema,
@@ -468,21 +472,16 @@ executeDiagnostics <- function(cohortDefinitionSet,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       databaseId = databaseId,
       cohorts = cohortDefinitionSet,
-      runIncludedSourceConcepts = runIncludedSourceConcepts,
-      runOrphanConcepts = runOrphanConcepts,
-      runBreakdownIndexEvents = runBreakdownIndexEvents,
-      indexDateDiagnosticsRelativeDays = indexDateDiagnosticsRelativeDays,
-      exportFolder = exportFolder,
-      minCellCount = minCellCount,
-      keepCustomConceptId = FALSE,
-      conceptCountsDatabaseSchema = NULL,
-      conceptCountsTable = "#concept_counts",
-      conceptCountsTableIsTemp = TRUE,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
-      useExternalConceptCountsTable = FALSE,
+      runConceptSetDiagnostics = runConceptSetDiagnostics,
+      runIndexDateConceptCoOccurrence = runIndexDateConceptCoOccurrence,
+      runConceptCountByCalendarPeriod = runConceptCountByCalendarPeriod,
+      exportFolder = exportFolder,
+      minCellCount = minCellCount,
+      keep2BillionConceptId = FALSE,
+      # by default all concept id >= 2 billion are removed. to overide set this parameter to TRUE
       incremental = incremental,
-      conceptIdTable = "#concept_ids",
       recordKeepingFile = recordKeepingFile
     )
   }
@@ -604,29 +603,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
       timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv")
     )
   }
-
-  # Store information from the vocabulary on the concepts used -------------------------
-  exportConceptInformation(
-    connection = connection,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    conceptIdTable = "#concept_ids",
-    incremental = incremental,
-    exportFolder = exportFolder
-  )
-
-  # Delete unique concept ID table ---------------------------------
-  ParallelLogger::logTrace("Deleting concept ID table")
-  sql <- "TRUNCATE TABLE @table;\nDROP TABLE @table;"
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = connection,
-    sql = sql,
-    tempEmulationSchema = tempEmulationSchema,
-    table = "#concept_ids",
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-
 
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")

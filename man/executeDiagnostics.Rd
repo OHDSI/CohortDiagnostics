@@ -21,12 +21,11 @@ executeDiagnostics(
   cohortIds = NULL,
   cdmVersion = 5,
   runInclusionStatistics = TRUE,
-  runIncludedSourceConcepts = TRUE,
-  runOrphanConcepts = TRUE,
+  runConceptSetDiagnostics = TRUE,
+  runIndexDateConceptCoOccurrence = TRUE,
+  runConceptCountByCalendarPeriod = FALSE,
   runTimeDistributions = TRUE,
   runVisitContext = TRUE,
-  runBreakdownIndexEvents = TRUE,
-  indexDateDiagnosticsRelativeDays = c(-5:5),
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
   runCohortCharacterization = TRUE,
@@ -90,17 +89,21 @@ diagnostics to.}
 
 \item{runInclusionStatistics}{Generate and export statistic on the cohort inclusion rules?}
 
-\item{runIncludedSourceConcepts}{Generate and export the source concepts included in the cohorts?}
+\item{runConceptSetDiagnostics}{Generate and export concept set diagnostics that includes concept set optimization,
+excluded concepts, orphan concepts, index event breakdown, standard to non standard mapping
+counts, concept counts. Optional additional diagnostics are available runBreakdownIndexEventRelativeDays,
+runIndexDateConceptCoOccurrence, runConceptCountByCalendarPeriod, runStandardToSourceMappingCount}
 
-\item{runOrphanConcepts}{Generate and export potential orphan concepts?}
+\item{runIndexDateConceptCoOccurrence}{Generate and export co-occurrence of concepts on index date. This diagnostics will
+compute if any two concept-id co-occur on the same day. Computation will be performed
+for co-occurrence of standard-standard, standard-source, and source-source
+concept ids. This may take time. It is set to FALSE by default.}
+
+\item{runConceptCountByCalendarPeriod}{Do you want to stratify the counts by calendar period like calendar year, calendar month?}
 
 \item{runTimeDistributions}{Generate and export cohort time distributions?}
 
 \item{runVisitContext}{Generate and export index-date visit context?}
-
-\item{runBreakdownIndexEvents}{Generate and export the breakdown of index events?}
-
-\item{indexDateDiagnosticsRelativeDays}{An array of days relative to index date to perform diagnositcs on. Default 0 - i.e. same days an index.}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
@@ -128,6 +131,12 @@ of such objects.}
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which cohort diagnostics has been executed.}
+
+\item{runBreakdownIndexEventRelativeDays}{(optional) array of days to offset breakdown of index events. 
+default value is 0 i.e. no offsets. Options include c(-5:5) to calculate a 
+range of days starting -5 of cohort start to +5 of cohort start.}
+
+\item{runStandardToSourceMappingCount}{Generate and export counts for mapping between standard to non standard as observed in data.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
