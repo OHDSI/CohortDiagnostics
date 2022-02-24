@@ -168,30 +168,42 @@ test_that("Data removal works", {
   pgConnection <- DatabaseConnector::connect(connectionDetails = postgresConnectionDetails)
   with_dbc_connection(pgConnection, {
     for (tableName in unique(specifications$tableName)) {
-      primaryKey <- specifications %>%
-        dplyr::filter(.data$tableName == !!tableName &
-                        .data$primaryKey == "Yes") %>%
-        dplyr::select(.data$fieldName) %>%
-        dplyr::pull()
-
-      if ("database_id" %in% primaryKey) {
-        deleteAllRecordsForDatabaseId(
-          connection = pgConnection,
-          schema = resultsDatabaseSchema,
-          tableName = tableName,
-          databaseId = "cdmv5"
-        )
-
-        sql <- "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
-        sql <- SqlRender::render(
-          sql = sql,
-          schema = resultsDatabaseSchema,
-          table_name = tableName,
-          database_id = "cdmv5"
-        )
-        databaseIdCount <-
-          DatabaseConnector::querySql(pgConnection, sql)[, 1]
-        expect_true(databaseIdCount == 0)
+      
+      tableExists <-
+        DatabaseConnector::existsTable(connection = connection,
+                                       databaseSchema = schema,
+                                       tableName = tableName)
+      if (!tableExists) {
+        writeLines(paste0(" - Table does not exist: '", tableName, "'"))
+      }
+      
+      if (tableExists) {
+        primaryKey <- specifications %>%
+          dplyr::filter(.data$tableName == !!tableName &
+                          .data$primaryKey == "Yes") %>%
+          dplyr::select(.data$fieldName) %>%
+          dplyr::pull()
+        
+        if ("database_id" %in% primaryKey) {
+          deleteAllRecordsForDatabaseId(
+            connection = pgConnection,
+            schema = resultsDatabaseSchema,
+            tableName = tableName,
+            databaseId = "cdmv5"
+          )
+          
+          sql <-
+            "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
+          sql <- SqlRender::render(
+            sql = sql,
+            schema = resultsDatabaseSchema,
+            table_name = tableName,
+            database_id = "cdmv5"
+          )
+          databaseIdCount <-
+            DatabaseConnector::querySql(pgConnection, sql)[, 1]
+          expect_true(databaseIdCount == 0)
+        }
       }
     }
   })
