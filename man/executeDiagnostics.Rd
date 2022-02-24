@@ -22,7 +22,7 @@ executeDiagnostics(
   cdmVersion = 5,
   runInclusionStatistics = TRUE,
   runConceptSetDiagnostics = TRUE,
-  runIndexDateConceptCoOccurrence = TRUE,
+  runIndexDateConceptCoOccurrence = FALSE,
   runConceptCountByCalendarPeriod = FALSE,
   runTimeDistributions = TRUE,
   runVisitContext = TRUE,

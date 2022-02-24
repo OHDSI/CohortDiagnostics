@@ -436,65 +436,70 @@ runConceptSetDiagnostics <- function(connection = NULL,
       ) %>%
       dplyr::tibble()
   }
-  vocabularyTables3 <- c("conceptRelationship")
-  for (i in (1:length(vocabularyTables3))) {
-    ParallelLogger::logInfo(paste0(
-      "   - Retrieving '",
-      SqlRender::camelCaseToTitleCase(vocabularyTables3[[i]])
-    ),
-    "'")
-    sql <-
-      " SELECT a.*
-      FROM @vocabulary_database_schema.@table a
-      INNER JOIN (
-      	SELECT DISTINCT concept_id
-      	FROM @concept_tracking_table
-      	) b1 ON a.concept_id_1 = b1.concept_id
+  
+  ParallelLogger::logInfo("   - Retrieving Concept Relationship")
+  sql <-
+    " SELECT DISTINCT f.*
+        FROM (
+        	SELECT a.*
+        	FROM @vocabulary_database_schema.concept_relationship a
+        	INNER JOIN (
+        		SELECT DISTINCT concept_id
+        		FROM @concept_tracking_table
+        		) b1 ON a.concept_id_1 = b1.concept_id
 
-      UNION
+        	UNION
 
-      SELECT a.*
-      FROM @vocabulary_database_schema.@table a
-      INNER JOIN (
-      	SELECT DISTINCT concept_id
-      	FROM @concept_tracking_table
-      	) b2 ON a.concept_id_2 = b2.concept_id;"
-    conceptSetDiagnosticsResults[[vocabularyTables3[[i]]]] <-
-      renderTranslateQuerySql(
-        connection = connection,
-        sql = sql,
-        vocabulary_database_schema = vocabularyDatabaseSchema,
-        table = SqlRender::camelCaseToSnakeCase(vocabularyTables3[[i]]),
-        concept_tracking_table = conceptTrackingTable,
-        snakeCaseToCamelCase = TRUE
-      ) %>%
-      dplyr::tibble()
-  }
-  vocabularyTables4 <- c("conceptAncestor")
-  for (i in (1:length(vocabularyTables4))) {
-    ParallelLogger::logInfo(paste0(
-      "   - Retrieving '",
-      SqlRender::camelCaseToTitleCase(vocabularyTables4[[i]])
-    ),
-    "'")
-    sql <-
-      "SELECT DISTINCT a.* FROM @vocabulary_database_schema.@table a
-          LEFT JOIN (SELECT distinct concept_id FROM @concept_tracking_table) b1
-            ON a.ancestor_concept_id = b1.concept_id
-          LEFT JOIN (SELECT distinct concept_id FROM @concept_tracking_table) b2
-            ON a.descendant_concept_id = b2.concept_id
-          WHERE b1.concept_id IS NOT NULL or b2.concept_id IS NOT NULL;"
-    conceptSetDiagnosticsResults[[vocabularyTables4[[i]]]] <-
-      renderTranslateQuerySql(
-        connection = connection,
-        sql = sql,
-        vocabulary_database_schema = vocabularyDatabaseSchema,
-        table = SqlRender::camelCaseToSnakeCase(vocabularyTables4[[i]]),
-        concept_tracking_table = conceptTrackingTable,
-        snakeCaseToCamelCase = TRUE
-      ) %>%
-      dplyr::tibble()
-  }
+        	SELECT b.*
+        	FROM @vocabulary_database_schema.concept_relationship b
+        	INNER JOIN (
+        		SELECT DISTINCT concept_id
+        		FROM @concept_tracking_table
+        		) b2 ON b.concept_id_2 = b2.concept_id
+        	) f
+      ORDER BY concept_id_1;"
+  conceptSetDiagnosticsResults$conceptRelationship <-
+    renderTranslateQuerySql(
+      connection = connection,
+      sql = sql,
+      vocabulary_database_schema = vocabularyDatabaseSchema,
+      concept_tracking_table = conceptTrackingTable,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+    dplyr::tibble()
+  
+
+  ParallelLogger::logInfo("   - Retrieving Concept Ancestor'")
+  sql <-
+    " SELECT DISTINCT f.*
+      FROM (
+      	SELECT a.*
+      	FROM @vocabulary_database_schema.concept_ancestor a
+      	INNER JOIN (
+      		SELECT DISTINCT concept_id
+      		FROM @concept_tracking_table
+      		) b1 ON a.ancestor_concept_id = b1.concept_id
+
+      	UNION ALL
+
+      	SELECT b.*
+      	FROM @vocabulary_database_schema.concept_ancestor b
+      	INNER JOIN (
+      		SELECT DISTINCT concept_id
+      		FROM @concept_tracking_table
+      		) b2 ON b.descendant_concept_id = b2.concept_id
+      	) f
+      ORDER BY ancestor_concept_id, descendant_concept_id;"
+  conceptSetDiagnosticsResults$conceptAncestor <-
+    renderTranslateQuerySql(
+      connection = connection,
+      sql = sql,
+      vocabulary_database_schema = vocabularyDatabaseSchema,
+      concept_tracking_table = conceptTrackingTable,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+    dplyr::tibble()
+  
   
   # Clean up----
   # Drop temporary tables
