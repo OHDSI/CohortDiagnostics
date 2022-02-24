@@ -24,39 +24,22 @@
 #'
 #' @return
 #' A list with two tibble data frame objects with domain information represented in wide and long format respectively.
-getDomainInformation <- function(packageName = NULL) {
+getDomainInformation <- function() {
   ParallelLogger::logTrace("  - Reading domains.csv")
-  
-  
-  if (is.null(packageName)) {
-    if (file.exists("domains.csv")) {
-      domains <-
-        readr::read_csv("domains.csv",
-                        guess_max = min(1e7),
-                        col_types = readr::cols())
-      ParallelLogger::logTrace(paste0("  - Retrieved domains.csv ",
-                                      packageName))
-    } else {
-      stop("Can't find domains.csv file in package")
-    }
+  pathToCsv <-
+    system.file("csv",
+                "domains.csv",
+                package = utils::packageName())
+  if (!pathToCsv == "") {
+    domains <-
+      readr::read_csv(
+        file = pathToCsv,
+        guess_max = min(1e7),
+        col_types = readr::cols()
+      )
   } else {
-    pathToCsv <-
-      system.file("csv",
-                  "domains.csv",
-                  package = packageName)
-    if (!pathToCsv == "") {
-      domains <-
-        readr::read_csv(
-          file = pathToCsv,
-          guess_max = min(1e7),
-          col_types = readr::cols()
-        )
-    } else {
-      stop(paste0(
-        "domains.csv was not found in installed package: ",
-        packageName
-      ))
-    }
+    stop(paste0("domains.csv was not found in installed package: ",
+                packageName))
   }
   
   domains <- domains %>%

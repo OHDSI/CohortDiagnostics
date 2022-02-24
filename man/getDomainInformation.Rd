@@ -4,7 +4,7 @@
 \alias{getDomainInformation}
 \title{Get domain information}
 \usage{
-getDomainInformation(packageName = NULL)
+getDomainInformation()
 }
 \arguments{
 \item{packageName}{e.g. 'CohortDiagnostics'}

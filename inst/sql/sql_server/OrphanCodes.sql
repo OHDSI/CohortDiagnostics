@@ -1,20 +1,9 @@
-IF OBJECT_ID('tempdb..#starting_concepts', 'U') IS NOT NULL
-  DROP TABLE #starting_concepts;
-  
-IF OBJECT_ID('tempdb..#concept_synonyms', 'U') IS NOT NULL
-  DROP TABLE #concept_synonyms;
-  
-IF OBJECT_ID('tempdb..#search_strings', 'U') IS NOT NULL
-  DROP TABLE #search_strings;
-  
-IF OBJECT_ID('tempdb..#search_str_top1000', 'U') IS NOT NULL
-  DROP TABLE #search_str_top1000;
-  
-IF OBJECT_ID('tempdb..#search_string_subset', 'U') IS NOT NULL
-  DROP TABLE #search_string_subset;
-
-IF OBJECT_ID('tempdb..#orphan_concept_table', 'U') IS NOT NULL
-  DROP TABLE #orphan_concept_table;
+DROP TABLE IF EXISTS #starting_concepts;
+DROP TABLE IF EXISTS #concept_synonyms;
+DROP TABLE IF EXISTS #search_strings;
+DROP TABLE IF EXISTS #search_str_top1000;
+DROP TABLE IF EXISTS #search_string_subset;
+DROP TABLE IF EXISTS #orphan_concept_table;
 
 -- Find directly included concept and source concepts that map to those
 SELECT DISTINCT codeset_id,
@@ -48,7 +37,7 @@ INNER JOIN @vocabulary_database_schema.concept_synonym cs1
 WHERE concept_synonym_name IS NOT NULL;
 
 -- Create list of search strings from concept names and synonyms, discarding those short than 5 and longer than 50 characters
-SELECT codeset_id,
+SELECT DISTINCT codeset_id,
   concept_name,
 	concept_name_length,
 	concept_name_terms
@@ -62,7 +51,7 @@ FROM (
 	WHERE len(concept_name) > 5
 		AND len(concept_name) < 50
 	
-	UNION
+	UNION ALL
 	
 	SELECT codeset_id,
 	  LOWER(concept_name) AS concept_name,
@@ -74,7 +63,7 @@ FROM (
 	) tmp;
 
 
--- Order search terms by length (words and characters), take top 1000
+-- Order search terms by length (words and characters), take top 1000 per codeset_id
 SELECT codeset_id,
   concept_name,
 	concept_name_length,
@@ -94,33 +83,46 @@ FROM (
 WHERE rn1 < 1000;
 
 -- If search string is substring of another search string, discard longer string
-SELECT ss1.*
+WITH longer_string
+AS (
+	SELECT DISTINCT ss1.codeset_id,
+		ss1.concept_name
+	FROM #search_str_top1000 ss1
+	INNER JOIN #search_str_top1000 ss2 ON 
+	  ss2.concept_name_length < ss1.concept_name_length
+		AND ss1.codeset_id = ss2.codeset_id
+		AND ss1.concept_name LIKE CONCAT (
+			'%',
+			ss2.concept_name,
+			'%'
+			)
+	)
+SELECT DISTINCT ss1.*
 INTO #search_string_subset
 FROM #search_str_top1000 ss1
-WHERE ss1.concept_name NOT IN (
-    SELECT ss1.concept_name
-    FROM #search_str_top1000 ss1
-        INNER JOIN #search_str_top1000 ss2
-            ON ss2.concept_name_length < ss1.concept_name_length
-                   AND ss1.codeset_id = ss2.codeset_id
-                   AND ss1.concept_name LIKE CONCAT ('%', ss2.concept_name, '%')
-    );
+LEFT JOIN longer_string ls ON ss1.codeset_id = ls.codeset_id
+	AND ss1.concept_name = ls.concept_name
+WHERE ls.codeset_id IS NULL;
 
 -- Create recommended list: concepts containing search string but not mapping to start set
 SELECT DISTINCT ss1.codeset_id,
   c1.concept_id
 INTO #orphan_concept_table
-FROM (
-	SELECT c1.concept_id,
-		c1.concept_name
-	FROM @vocabulary_database_schema.concept c1
-	LEFT JOIN (SELECT DISTINCT concept_id FROM #starting_concepts) sc1
-		ON c1.concept_id = sc1.concept_id
-	WHERE sc1.concept_id IS NULL
-	) c1
+FROM @vocabulary_database_schema.concept c1
 INNER JOIN #search_string_subset ss1
 	ON LOWER(c1.concept_name) LIKE CONCAT (
 			'%',
 			ss1.concept_name,
 			'%'
-			);
+			)
+LEFT JOIN #starting_concepts sc
+ON c1.concept_id = sc.concept_id
+AND ss1.codeset_id = sc.codeset_id
+WHERE sc.concept_id IS NULL;
+			
+			
+DROP TABLE IF EXISTS #starting_concepts;
+DROP TABLE IF EXISTS #concept_synonyms;
+DROP TABLE IF EXISTS #search_strings;
+DROP TABLE IF EXISTS #search_str_top1000;
+DROP TABLE IF EXISTS #search_string_subset;

@@ -275,7 +275,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                              " ",
                              attr(delta, "units"))
   }
-  
+
   if (runOrphanConcepts) {
     ## Orphan concepts ----
     ParallelLogger::logInfo("  - Searching for concepts that may have been orphaned.")
@@ -413,6 +413,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       ) %>%
       dplyr::tibble()
   }
+  
   ## Partial data -----
   vocabularyTables2 <- c('concept', "conceptSynonym")
   for (i in (1:length(vocabularyTables2))) {
@@ -437,27 +438,29 @@ runConceptSetDiagnostics <- function(connection = NULL,
       dplyr::tibble()
   }
   
-  ParallelLogger::logInfo("   - Retrieving Concept Relationship")
+  ParallelLogger::logInfo("   - Retrieving 'Concept Relationship'")
   sql <-
-    " SELECT DISTINCT f.*
-        FROM (
-        	SELECT a.*
-        	FROM @vocabulary_database_schema.concept_relationship a
-        	INNER JOIN (
-        		SELECT DISTINCT concept_id
-        		FROM @concept_tracking_table
-        		) b1 ON a.concept_id_1 = b1.concept_id
-
-        	UNION
-
-        	SELECT b.*
-        	FROM @vocabulary_database_schema.concept_relationship b
-        	INNER JOIN (
-        		SELECT DISTINCT concept_id
-        		FROM @concept_tracking_table
-        		) b2 ON b.concept_id_2 = b2.concept_id
-        	) f
-      ORDER BY concept_id_1;"
+    " WITH concept_id_table (concept_id)
+      AS (
+      	SELECT DISTINCT concept_id
+      	FROM @concept_tracking_table
+      	)
+      SELECT DISTINCT f.*
+      FROM (
+      	SELECT a.*
+      	FROM @vocabulary_database_schema.concept_relationship a
+      	INNER JOIN concept_id_table b1 ON a.concept_id_1 = b1.concept_id
+			  WHERE a.invalid_reason IS NULL
+      	
+      	UNION ALL
+      	
+      	SELECT b.*
+      	FROM @vocabulary_database_schema.concept_relationship b
+      	INNER JOIN concept_id_table b2 ON b.concept_id_2 = b2.concept_id
+			  WHERE b.invalid_reason IS NULL
+      	) f
+      ORDER BY concept_id_1,
+      	concept_id_2;"
   conceptSetDiagnosticsResults$conceptRelationship <-
     renderTranslateQuerySql(
       connection = connection,
@@ -469,25 +472,24 @@ runConceptSetDiagnostics <- function(connection = NULL,
     dplyr::tibble()
   
 
-  ParallelLogger::logInfo("   - Retrieving Concept Ancestor'")
+  ParallelLogger::logInfo("   - Retrieving 'Concept Ancestor'")
   sql <-
-    " SELECT DISTINCT f.*
+    " WITH concept_id_table (concept_id)
+      AS (
+      	SELECT DISTINCT concept_id
+      	FROM @concept_tracking_table
+      	)
+      SELECT DISTINCT f.*
       FROM (
       	SELECT a.*
       	FROM @vocabulary_database_schema.concept_ancestor a
-      	INNER JOIN (
-      		SELECT DISTINCT concept_id
-      		FROM @concept_tracking_table
-      		) b1 ON a.ancestor_concept_id = b1.concept_id
+      	INNER JOIN concept_id_table b1 ON a.ancestor_concept_id = b1.concept_id
 
       	UNION ALL
 
       	SELECT b.*
       	FROM @vocabulary_database_schema.concept_ancestor b
-      	INNER JOIN (
-      		SELECT DISTINCT concept_id
-      		FROM @concept_tracking_table
-      		) b2 ON b.descendant_concept_id = b2.concept_id
+      	INNER JOIN concept_id_table b2 ON b.descendant_concept_id = b2.concept_id
       	) f
       ORDER BY ancestor_concept_id, descendant_concept_id;"
   conceptSetDiagnosticsResults$conceptAncestor <-
@@ -505,7 +507,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   # Drop temporary tables
   ParallelLogger::logTrace(" - Dropping temporary tables")
   sql <-
-    "DROP TABLE IF EXISTS #resolved_concept_set;
+    " DROP TABLE IF EXISTS #resolved_concept_set;
       DROP TABLE IF EXISTS @concept_tracking_table;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
@@ -876,7 +878,7 @@ getOrphanConcepts <- function(connectionDetails = NULL,
   }
   sql <- SqlRender::loadRenderTranslateSql(
     "OrphanCodes.sql",
-    packageName = "CohortDiagnostics",
+    packageName = utils::packageName(),
     dbms = connection@dbms,
     tempEmulationSchema = tempEmulationSchema,
     vocabulary_database_schema = vocabularyDatabaseSchema,
@@ -886,7 +888,7 @@ getOrphanConcepts <- function(connectionDetails = NULL,
     connection = connection,
     sql = sql,
     profile = FALSE,
-    progressBar = FALSE,
+    progressBar = TRUE,
     reportOverallTime = FALSE
   )
   if (!is.null(conceptTrackingTable)) {
@@ -949,7 +951,7 @@ getConceptRecordCount <- function(connection,
                                   conceptTrackingTable,
                                   runConceptCountByCalendarPeriod,
                                   minCellCount = 5) {
-  domains <- getDomainInformation(packageName = 'CohortDiagnostics')
+  domains <- getDomainInformation()
   domains <- domains$wide %>%
     dplyr::filter(.data$isEraTable == FALSE)
   #filtering out ERA tables because they are supposed to be derived tables, and counting them is double counting
@@ -1312,7 +1314,7 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
     )
   }
   
-  domains <- getDomainInformation(packageName = 'CohortDiagnostics')
+  domains <- getDomainInformation()
   domains <- domains$wide
   nonEraTables <- domains %>%
     #filtering out ERA tables because they are supposed to be derived tables, and counting them is double counting
@@ -1647,7 +1649,7 @@ getConceptStandardSourceMappingCount <- function(connection,
                                                  tempEmulationSchema,
                                                  conceptTrackingTable,
                                                  keep2BillionConceptId = FALSE) {
-  domains <- getDomainInformation(packageName = 'CohortDiagnostics')
+  domains <- getDomainInformation()
   domains <- domains$wide %>%
     dplyr::filter(nchar(.data$domainSourceConceptId) > 1)
   

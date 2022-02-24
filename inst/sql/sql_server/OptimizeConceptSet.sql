@@ -1,11 +1,18 @@
+DROP TABLE IF EXISTS #o_not_excluded;
+DROP TABLE IF EXISTS #o_not_excluded_desc;
+DROP TABLE IF EXISTS #o_not_excl_non_std;
+DROP TABLE IF EXISTS #o_excluded;
+DROP TABLE IF EXISTS #o_excluded_desc;
+DROP TABLE IF EXISTS #o_concepts_included;
+DROP TABLE IF EXISTS #o_concepts_excluded;
+DROP TABLE IF EXISTS #concepts_optimized;
+
 {DEFAULT @conceptSetConceptIdsExcluded = 0 } 
 {DEFAULT @conceptSetConceptIdsDescendantsExcluded = 0 } 
 {DEFAULT @conceptSetConceptIdsNotExcluded = 0 } 
 {DEFAULT @conceptSetConceptIdsDescendantsNotExcluded = 0 }
 
 
-IF OBJECT_ID('tempdb..#o_not_excluded', 'U') IS NOT NULL
-	DROP TABLE #o_not_excluded;
 -- Concepts that are part of the concept set definition that are "EXCLUDED = N, DECENDANTS = Y or N"
 SELECT DISTINCT concept_id,
 	standard_concept,
@@ -15,9 +22,6 @@ FROM @vocabulary_database_schema.concept
 WHERE concept_id IN (@conceptSetConceptIdsNotExcluded);
 
 
-
-IF OBJECT_ID('tempdb..#o_not_excluded_desc', 'U') IS NOT NULL
-	DROP TABLE #o_not_excluded_desc;
 -- Concepts that are part of the concept set definition that are "EXCLUDED = N, DECENDANTS = Y"
 SELECT DISTINCT ancestor_concept_id,
 	descendant_concept_id concept_id
@@ -27,9 +31,6 @@ WHERE ancestor_concept_id IN (@conceptSetConceptIdsDescendantsNotExcluded)
 	AND ancestor_concept_id != descendant_concept_id;-- Exclude the selected ancestor itself	
 
 
-
-IF OBJECT_ID('tempdb..#o_not_excl_non_std', 'U') IS NOT NULL
-	DROP TABLE #o_not_excl_non_std;
 -- Concepts that are part of the concept set definition that are "EXCLUDED = N, DECENDANTS = Y"
 SELECT cr.concept_id_1 concept_id,
 	cr.concept_id_2 concept_id_standard,
@@ -52,9 +53,6 @@ WHERE ISNULL(standard_concept,'') = ''
 	AND ISNULL(cr.invalid_reason,'') = '';
 
 
-
-IF OBJECT_ID('tempdb..#o_excluded', 'U') IS NOT NULL
-	DROP TABLE #o_excluded;
 -- Concepts that are part of the concept set definition that are "EXCLUDED = Y, DECENDANTS = Y or N"
 SELECT DISTINCT concept_id,
 	standard_concept,
@@ -64,9 +62,6 @@ FROM @vocabulary_database_schema.concept
 WHERE concept_id IN (@conceptSetConceptIdsExcluded);
 
 
-
-IF OBJECT_ID('tempdb..#o_excluded_desc', 'U') IS NOT NULL
-	DROP TABLE #o_excluded_desc;
 -- Concepts that are part of the concept set definition that are "EXCLUDED = Y, DECENDANTS = Y"
 SELECT DISTINCT ancestor_concept_id,
 	descendant_concept_id concept_id
@@ -76,10 +71,7 @@ WHERE ancestor_concept_id IN (@conceptSetConceptIdsDescendantsExcluded)
 	AND ancestor_concept_id != descendant_concept_id;
 
 
-
 -- Exclude the selected ancestor itself
-IF OBJECT_ID('tempdb..#o_concepts_included', 'U') IS NOT NULL
-	DROP TABLE #o_concepts_included;
 SELECT a.concept_id original_concept_id,
 	a.invalid_reason,
 	c1.concept_name original_concept_name,
@@ -100,8 +92,7 @@ LEFT JOIN @vocabulary_database_schema.concept c4 ON d.available_standard_concept
 
 
 
-IF OBJECT_ID('tempdb..#o_concepts_excluded', 'U') IS NOT NULL
-	DROP TABLE #o_concepts_excluded;
+DROP TABLE IF EXISTS #o_concepts_excluded;
 SELECT a.concept_id original_concept_id,
 	a.invalid_reason,
 	c1.concept_name original_concept_name,
@@ -119,9 +110,6 @@ LEFT JOIN @vocabulary_database_schema.concept c2 ON b.concept_id = c2.concept_id
 LEFT JOIN @vocabulary_database_schema.concept c3 ON b.ancestor_concept_id = c3.concept_id;
 
 
-
-IF OBJECT_ID('tempdb..#concepts_optimized', 'U') IS NOT NULL
-	DROP TABLE #concepts_optimized;
 SELECT concept_id,
   concept_name,
   invalid_reason,
@@ -150,8 +138,7 @@ FROM (
 	
 	
 
-IF OBJECT_ID('tempdb..#concepts_removed', 'U') IS NOT NULL
-	DROP TABLE #concepts_removed;
+DROP TABLE IF EXISTS #concepts_removed;
 SELECT concept_id,
   concept_name,
   invalid_reason,
@@ -179,9 +166,6 @@ FROM (
 	) rmv;
 
 
-
-IF OBJECT_ID('tempdb..#optimized_set', 'U') IS NOT NULL
-	DROP TABLE #optimized_set;
 SELECT *
 INTO #optimized_set
 FROM (
@@ -202,24 +186,10 @@ FROM (
 WHERE concept_id IS NOT NULL;
 
 
-
-IF OBJECT_ID('tempdb..#o_not_excluded', 'U') IS NOT NULL
-	DROP TABLE #o_not_excluded;
-
-IF OBJECT_ID('tempdb..#o_not_excluded_desc', 'U') IS NOT NULL
-	DROP TABLE #o_not_excluded_desc;
-
-IF OBJECT_ID('tempdb..#o_not_excl_non_std', 'U') IS NOT NULL
-	DROP TABLE #o_not_excl_non_std;
-
-IF OBJECT_ID('tempdb..#o_excluded', 'U') IS NOT NULL
-	DROP TABLE #o_excluded;
-
-IF OBJECT_ID('tempdb..#o_excluded_desc', 'U') IS NOT NULL
-	DROP TABLE #o_excluded_desc;
-
-IF OBJECT_ID('tempdb..#o_concepts_included', 'U') IS NOT NULL
-	DROP TABLE #o_concepts_included;
-
-IF OBJECT_ID('tempdb..#o_concepts_excluded', 'U') IS NOT NULL
-	DROP TABLE #o_concepts_excluded;
+DROP TABLE IF EXISTS #o_not_excluded;
+DROP TABLE IF EXISTS #o_not_excluded_desc;
+DROP TABLE IF EXISTS #o_not_excl_non_std;
+DROP TABLE IF EXISTS #o_excluded;
+DROP TABLE IF EXISTS #o_excluded_desc;
+DROP TABLE IF EXISTS #o_concepts_included;
+DROP TABLE IF EXISTS #o_concepts_excluded;
