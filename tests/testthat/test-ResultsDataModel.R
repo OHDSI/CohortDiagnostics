@@ -170,7 +170,7 @@ test_that("Data removal works", {
     for (tableName in unique(specifications$tableName)) {
       
       tableExists <-
-        DatabaseConnector::existsTable(connection = connection,
+        DatabaseConnector::existsTable(connection = pgConnection,
                                        databaseSchema = schema,
                                        tableName = tableName)
       if (!tableExists) {
