@@ -88,7 +88,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
   ParallelLogger::logTrace(" - Running concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
   if (length(cohortIds) == 0) {
-    return(NULL)
+    ParallelLogger::logTrace("  - Running concept set diagnostics for all cohorts.")
+    cohortIds <- cohorts$cohortId %>% unique()
   }
   if (all(is.null(connectionDetails),
           is.null(connection))) {
@@ -322,20 +323,53 @@ runConceptSetDiagnostics <- function(connection = NULL,
     ## Index event breakdown ----
     ParallelLogger::logInfo("  - Learning about the breakdown in index events.")
     startBreakdownEvents <- Sys.time()
-    conceptSetDiagnosticsResults$indexEventBreakdown <-
-      getConceptOccurrenceRelativeToIndexDay(
-        cohortIds = subset$cohortId,
+    ableToRunBreakdownEvents <- TRUE
+    
+    if (is.null(cohortTable)) {
+      ParallelLogger::logInfo("   - Skipping because no cohort table provided.")
+      ableToRunBreakdownEvents <- FALSE
+    }
+    if (ableToRunBreakdownEvents) {
+      cohortCounts <- getCohortCounts(
         connection = connection,
-        cdmDatabaseSchema = cdmDatabaseSchema,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
-        minCellCount = minCellCount,
-        tempEmulationSchema = tempEmulationSchema,
-        conceptSetsXWalk = "#concept_sets_x_walk",
-        conceptTrackingTable = conceptTrackingTable,
-        runBreakdownIndexEventRelativeDays = runBreakdownIndexEventRelativeDays,
-        runIndexDateConceptCoOccurrence = runIndexDateConceptCoOccurrence
+        cohortIds = cohorts$cohortId
       )
+      if (is.null(cohortCounts)) {
+        ParallelLogger::logInfo("   - Skipping because no instantiated cohorts found.")
+        ableToRunBreakdownEvents <- FALSE
+      }
+    }
+    
+    if (ableToRunBreakdownEvents) {
+      instantiatedCohorts <- cohortCounts %>%
+        dplyr::filter(.data$cohortEntries > 0) %>%
+        dplyr::pull(.data$cohortId)
+      if (length(instantiatedCohorts) == 0) {
+        ableToRunBreakdownEvents <- FALSE
+        ParallelLogger::logInfo("   - Skipping because no instantiated cohorts found.")
+      }
+    }
+    
+    if (ableToRunBreakdownEvents) {
+      if (length(instantiatedCohorts) > 0) {
+        conceptSetDiagnosticsResults$indexEventBreakdown <-
+          getConceptOccurrenceRelativeToIndexDay(
+            cohortIds = instantiatedCohorts,
+            connection = connection,
+            cdmDatabaseSchema = cdmDatabaseSchema,
+            cohortDatabaseSchema = cohortDatabaseSchema,
+            cohortTable = cohortTable,
+            minCellCount = minCellCount,
+            tempEmulationSchema = tempEmulationSchema,
+            conceptSetsXWalk = "#concept_sets_x_walk",
+            conceptTrackingTable = conceptTrackingTable,
+            runBreakdownIndexEventRelativeDays = runBreakdownIndexEventRelativeDays,
+            runIndexDateConceptCoOccurrence = runIndexDateConceptCoOccurrence
+          )
+      }
+    }
     delta <- (Sys.time() - startBreakdownEvents)
     ParallelLogger::logTrace("  - Index event breakdown took ",
                              signif(delta, 3),

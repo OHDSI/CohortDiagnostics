@@ -171,7 +171,7 @@ test_that("Data removal works", {
       
       tableExists <-
         DatabaseConnector::existsTable(connection = pgConnection,
-                                       databaseSchema = schema,
+                                       databaseSchema = resultsDatabaseSchema,
                                        tableName = tableName)
       if (!tableExists) {
         writeLines(paste0(" - Table does not exist: '", tableName, "'"))
