@@ -83,7 +83,8 @@ executeTimeDistributionDiagnostics <- function(connection,
                                                cohorts,
                                                instantiatedCohorts,
                                                incremental,
-                                               recordKeepingFile) {
+                                               recordKeepingFile,
+                                               minCellCount) {
   ParallelLogger::logInfo("Creating time distributions")
     subset <- subsetToRequiredCohorts(
       cohorts = cohorts %>%
