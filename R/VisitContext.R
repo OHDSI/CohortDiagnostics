@@ -33,18 +33,21 @@ getVisitContext <- function(connectionDetails = NULL,
     on.exit(DatabaseConnector::disconnect(connection))
   }
   
-  sql <- SqlRender::loadRenderTranslateSql(
-    "VisitContext.sql",
-    packageName = utils::packageName(),
-    dbms = connection@dbms,
-    tempEmulationSchema = tempEmulationSchema,
-    visit_context_table = "#visit_context",
-    cdm_database_schema = cdmDatabaseSchema,
-    cohort_database_schema = cohortDatabaseSchema,
-    cohort_table = cohortTable,
-    cohort_ids = cohortIds
-  )
-  DatabaseConnector::executeSql(connection, sql)
+  sql <- SqlRender::readSql(system.file("sql/sql_server/VisitContext.sql", 
+                                        package = utils::packageName()))
+  
+  DatabaseConnector::renderTranslateExecuteSql(connection = connection, 
+                                               sql = sql,
+                                               tempEmulationSchema = tempEmulationSchema,
+                                               visit_context_table = "#visit_context",
+                                               cdm_database_schema = cdmDatabaseSchema,
+                                               cohort_database_schema = cohortDatabaseSchema,
+                                               cohort_table = cohortTable,
+                                               cohort_ids = cohortIds, 
+                                               profile = FALSE, 
+                                               progressBar = FALSE, 
+                                               reportOverallTime = FALSE)
+  
   sql <- "SELECT * FROM @visit_context_table;"
   visitContext <-
     DatabaseConnector::renderTranslateQuerySql(

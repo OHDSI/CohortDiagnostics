@@ -876,19 +876,16 @@ getOrphanConcepts <- function(connectionDetails = NULL,
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  sql <- SqlRender::loadRenderTranslateSql(
-    "OrphanCodes.sql",
-    packageName = utils::packageName(),
-    dbms = connection@dbms,
-    tempEmulationSchema = tempEmulationSchema,
-    vocabulary_database_schema = vocabularyDatabaseSchema,
-    resolved_concept_sets = resolvedConceptSets
-  )
-  DatabaseConnector::executeSql(
+  sql <- SqlRender::readSql(system.file("sql/sql_server/OrphanCodes.sql", 
+                                        package = utils::packageName()))
+  DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
+    tempEmulationSchema = tempEmulationSchema,
+    vocabulary_database_schema = vocabularyDatabaseSchema,
+    resolved_concept_sets = resolvedConceptSets,
     profile = FALSE,
-    progressBar = TRUE,
+    progressBar = FALSE,
     reportOverallTime = FALSE
   )
   if (!is.null(conceptTrackingTable)) {
@@ -1441,18 +1438,26 @@ getConceptOccurrenceRelativeToIndexDay <- function(cohortIds,
                                             	d2.@domain_source_concept_id
                                             HAVING count(DISTINCT c.subject_id) > @min_subject_count;"
   
-  for (j in (1:length(runBreakdownIndexEventRelativeDays))) {
-    ParallelLogger::logTrace(
-      paste0(
-        "  - Working on ",
-        scales::comma(x = runBreakdownIndexEventRelativeDays[[j]]),
-        " days relative to index date. ",
-        scales::comma(j),
-        " of ",
-        scales::comma(length(runBreakdownIndexEventRelativeDays)),
-        "."
-      )
+  if (runIndexDateConceptCoOccurrence) {
+    ParallelLogger::logInfo(
+      "      - concept Co-occurrence matrix computation has been requested. This may take time"
     )
+  }
+  
+  for (j in (1:length(runBreakdownIndexEventRelativeDays))) {
+    if (length(runBreakdownIndexEventRelativeDays) > 1) {
+      ParallelLogger::logInfo(
+        paste0(
+          "   - Working on ",
+          scales::comma(x = runBreakdownIndexEventRelativeDays[[j]]),
+          " days relative to index date. ",
+          scales::comma(j),
+          " of ",
+          scales::comma(length(runBreakdownIndexEventRelativeDays)),
+          "."
+        )
+      )
+    }
     for (i in (1:nrow(domains))) {
       rowData <- domains[i,]
       ParallelLogger::logTrace(paste0(
@@ -2014,7 +2019,7 @@ getOptimizationRecommendationForConceptSetExpression <-
         sourceFile = system.file("sql",
                                  "sql_server",
                                  'OptimizeConceptSet.sql',
-                                 package = "CohortDiagnostics")
+                                 package = utils::packageName())
       )
     
     DatabaseConnector::renderTranslateExecuteSql(

@@ -176,3 +176,96 @@ hasData <- function(data) {
   return(TRUE)
 }
 
+
+
+#' Returns list with circe generated documentation
+#'
+#' @description
+#' Returns list with circe generated documentation
+#'
+#' @param cohortDefinition An R object (list) with a list representation of the cohort definition expression.
+#'
+#' @param cohortName Name for the cohort definition
+#'
+#' @param embedText Any additional text to embed in the top of circe generated content.
+#'
+#' @param includeConceptSets Do you want to inclued concept set in the documentation
+#'
+#' @return list object
+#'
+#' @export
+getCirceRenderedExpression <- function(cohortDefinition,
+                                       cohortName = NULL,
+                                       embedText = NULL,
+                                       includeConceptSets = FALSE) {
+  cohortJson <-
+    RJSONIO::toJSON(x = cohortDefinition,
+                    digits = 23,
+                    pretty = TRUE)
+  circeExpression <-
+    CirceR::cohortExpressionFromJson(expressionJson = cohortJson)
+  circeExpressionMarkdown <-
+    CirceR::cohortPrintFriendly(circeExpression)
+  circeConceptSetListmarkdown <-
+    CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
+  
+  if (hasData(embedText)) {
+    circeExpressionMarkdown <-
+      paste0(
+        "##### ",
+        embedText,
+        "\r\n\r\n",
+        "# Cohort Definition:",
+        "\r\n\r\n",
+        "### ",
+        cohortName,
+        "\r\n\r\n",
+        circeExpressionMarkdown
+      )
+  }
+  if (includeConceptSets) {
+    circeExpressionMarkdown <-
+      paste0(
+        circeExpressionMarkdown,
+        "\r\n\r\n",
+        "\r\n\r\n",
+        "## Concept Sets:",
+        "\r\n\r\n",
+        circeConceptSetListmarkdown
+      )
+  }
+  
+  htmlExpressionCohort <-
+    convertMdToHtml(circeExpressionMarkdown)
+  htmlExpressionConceptSetExpression <-
+    convertMdToHtml(circeConceptSetListmarkdown)
+  return(
+    list(
+      cohortJson = cohortJson,
+      cohortMarkdown = circeExpressionMarkdown,
+      conceptSetMarkdown = circeConceptSetListmarkdown,
+      cohortHtmlExpression = htmlExpressionCohort,
+      conceptSetHtmlExpression = htmlExpressionConceptSetExpression
+    )
+  )
+}
+
+convertMdToHtml <- function(markdown) {
+  markdown <- gsub("'", "%sq%", markdown)
+  mdFile <- tempfile(fileext = ".md")
+  htmlFile <- tempfile(fileext = ".html")
+  SqlRender::writeSql(markdown, mdFile)
+  rmarkdown::render(
+    input = mdFile,
+    output_format = "html_fragment",
+    output_file = htmlFile,
+    clean = TRUE,
+    quiet = TRUE
+  )
+  html <- SqlRender::readSql(htmlFile)
+  unlink(mdFile)
+  unlink(htmlFile)
+  html <- gsub("%sq%", "'", html)
+  
+  return(html)
+}

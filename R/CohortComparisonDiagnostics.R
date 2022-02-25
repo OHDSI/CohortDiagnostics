@@ -67,18 +67,15 @@ computeCohortOverlap <- function(connectionDetails = NULL,
     return(tidyr::tibble())
   }
   
-  sql <- SqlRender::loadRenderTranslateSql(
-    "CohortOverlap.sql",
-    packageName = utils::packageName(),
-    dbms = connection@dbms,
+  sql <- SqlRender::readSql(system.file("sql/sql_server/CohortOverlap.sql", 
+                                        package = utils::packageName()))
+  overlap <- DatabaseConnector::renderTranslateQuerySql(
+    connection = connection,
+    sql = sql,
     cohort_database_schema = cohortDatabaseSchema,
     cohort_table = cohortTable,
     target_cohort_id = targetCohortId,
-    comparator_cohort_id = comparatorCohortId
-  )
-  overlap <- DatabaseConnector::querySql(
-    connection = connection,
-    sql = sql,
+    comparator_cohort_id = comparatorCohortId,
     snakeCaseToCamelCase = TRUE
   ) %>%
     tidyr::tibble()
