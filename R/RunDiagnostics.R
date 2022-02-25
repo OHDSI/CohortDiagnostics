@@ -47,13 +47,6 @@
 #' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to databaseId.
 #' @template cdmVersion
 #' @param runInclusionStatistics      Generate and export statistic on the cohort inclusion rules?
-#' @param runConceptSetDiagnostics    Generate and export concept set diagnostics that includes concept set optimization,
-#'                                    excluded concepts, orphan concepts, index event breakdown, standard to non standard mapping
-#'                                    counts, concept counts. Optional additional diagnostics are available runBreakdownIndexEventRelativeDays,
-#'                                    runIndexDateConceptCoOccurrence, runConceptCountByCalendarPeriod, runStandardToSourceMappingCount
-#' @param runBreakdownIndexEventRelativeDays (optional) array of days to offset breakdown of index events. 
-#'                                    default value is 0 i.e. no offsets. Options include c(-5:5) to calculate a 
-#'                                    range of days starting -5 of cohort start to +5 of cohort start.
 #' @param runIndexDateConceptCoOccurrence Generate and export co-occurrence of concepts on index date. This diagnostics will
 #'                                    compute if any two concept-id co-occur on the same day. Computation will be performed
 #'                                    for co-occurrence of standard-standard, standard-source, and source-source
@@ -164,8 +157,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
     list(
       runInclusionStatistics = argumentsAtDiagnosticsInitiation$runInclusionStatistics,
       runConceptSetDiagnostics = argumentsAtDiagnosticsInitiation$runConceptSetDiagnostics,
-      runBreakdownIndexEventRelativeDays = argumentsAtDiagnosticsInitiation$runBreakdownIndexEventRelativeDays,
-      runIndexDateConceptCoOccurrence = argumentsAtDiagnosticsInitiation$runIndexDateConceptCoOccurrence,
       runTimeDistributions = argumentsAtDiagnosticsInitiation$runTimeDistributions,
       runVisitContext = argumentsAtDiagnosticsInitiation$runVisitContext,
       runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,

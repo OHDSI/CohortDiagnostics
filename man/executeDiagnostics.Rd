@@ -89,11 +89,6 @@ diagnostics to.}
 
 \item{runInclusionStatistics}{Generate and export statistic on the cohort inclusion rules?}
 
-\item{runConceptSetDiagnostics}{Generate and export concept set diagnostics that includes concept set optimization,
-excluded concepts, orphan concepts, index event breakdown, standard to non standard mapping
-counts, concept counts. Optional additional diagnostics are available runBreakdownIndexEventRelativeDays,
-runIndexDateConceptCoOccurrence, runConceptCountByCalendarPeriod, runStandardToSourceMappingCount}
-
 \item{runIndexDateConceptCoOccurrence}{Generate and export co-occurrence of concepts on index date. This diagnostics will
 compute if any two concept-id co-occur on the same day. Computation will be performed
 for co-occurrence of standard-standard, standard-source, and source-source
@@ -131,10 +126,6 @@ of such objects.}
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which cohort diagnostics has been executed.}
-
-\item{runBreakdownIndexEventRelativeDays}{(optional) array of days to offset breakdown of index events. 
-default value is 0 i.e. no offsets. Options include c(-5:5) to calculate a 
-range of days starting -5 of cohort start to +5 of cohort start.}
 
 \item{runStandardToSourceMappingCount}{Generate and export counts for mapping between standard to non standard as observed in data.}
 }
