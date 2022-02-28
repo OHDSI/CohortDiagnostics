@@ -358,7 +358,7 @@ uploadResults <- function(connectionDetails = NULL,
       if (purgeSiteDataBeforeUploading &&
           "database_id" %in% primaryKey) {
         env$primaryKeyValuesInDb <- NULL
-      } else if (length(primaryKey)) {
+      } else if (length(primaryKey) > 0) {
         sql <- "SELECT DISTINCT @primary_key FROM @schema.@table_name;"
         sql <- SqlRender::render(
           sql = sql,
