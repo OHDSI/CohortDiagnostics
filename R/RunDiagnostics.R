@@ -56,6 +56,8 @@
 #' @param runCohortOverlap            Generate and export the cohort overlap? Overlaps are checked within cohortIds
 #'                                    that have the same phenotype ID sourced from the CohortSetReference or
 #'                                    cohortToCreateFile.
+#' @param runCohortRelationship       Generate and export the cohort relationship? Cohort relationship checks the temporal
+#'                                    relationship between two or more cohorts.
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
 #'                                    Only records with values greater than 0.0001 are returned.
 #' @param covariateSettings           Either an object of type \code{covariateSettings} as created using one of
@@ -133,6 +135,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runBreakdownIndexEvents = TRUE,
                                runIncidenceRate = TRUE,
                                runCohortOverlap = TRUE,
+                               runCohortRelationship = TRUE,
                                runCohortCharacterization = TRUE,
                                covariateSettings = createDefaultCovariateSettings(),
                                runTemporalCohortCharacterization = TRUE,
@@ -273,7 +276,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   checkmate::reportAssertions(collection = errorMessage)
 
   if (!is.null(cohortIds)) {
-    cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(cohortId %in% cohortIds)
+    cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
 
   if (nrow(cohortDefinitionSet) == 0) {
@@ -412,6 +415,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                        databaseName,
                        databaseDescription,
                        exportFolder,
+                       minCellCount,
                        cdmSourceInformation$vocabularyVersion,
                        vocabularyVersion)
   # Create concept table ------------------------------------------
@@ -496,6 +500,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       cdmVersion,
       databaseId,
       exportFolder,
+      minCellCount,
       cohortDefinitionSet,
       instantiatedCohorts,
       incremental,
@@ -552,6 +557,26 @@ executeDiagnostics <- function(cohortDefinitionSet,
       minCellCount,
       recordKeepingFile,
       incremental
+    )
+  }
+  
+  
+  # Cohort relationship ---------------------------------------------------------------------------------
+  if (runCohortRelationship) {
+    executeCohortRelationshipDiagnostics(
+      connection,
+      databaseId,
+      exportFolder,
+      cohortDatabaseSchema,
+      cdmDatabaseSchema,
+      tempEmulationSchema,
+      cohortTable,
+      cohortDefinitionSet,
+      temporalCovariateSettings,
+      minCellCount,
+      recordKeepingFile,
+      incremental,
+      incrementalFolder
     )
   }
 

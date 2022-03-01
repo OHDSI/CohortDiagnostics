@@ -1,6 +1,7 @@
 {DEFAULT @analysis_ref = analysis_ref}
 {DEFAULT @cohort = cohort}
 {DEFAULT @cohort_count = cohort_count}
+{DEFAULT @cohort_relationships = cohort_relationships}
 {DEFAULT @cohort_overlap = cohort_overlap}
 {DEFAULT @concept = concept}
 {DEFAULT @concept_ancestor = concept_ancestor}
@@ -36,6 +37,9 @@ IF OBJECT_ID('@results_schema.@cohort', 'U') IS NOT NULL
 
 IF OBJECT_ID('@results_schema.@cohort_count', 'U') IS NOT NULL
     DROP TABLE @results_schema.@cohort_count;
+
+IF OBJECT_ID('@results_schema.@cohort_relationships', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@cohort_relationships;
 
 IF OBJECT_ID('@results_schema.@cohort_overlap', 'U') IS NOT NULL
     DROP TABLE @results_schema.@cohort_overlap;
@@ -179,6 +183,53 @@ CREATE TABLE @results_schema.@cohort_overlap (
 			database_id VARCHAR NOT NULL,
 			PRIMARY KEY(target_cohort_id, comparator_cohort_id, database_id)
 );
+
+
+--Table cohort_relationships
+CREATE TABLE @results_schema.@cohort_relationships (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			comparator_cohort_id BIGINT NOT NULL,
+			start_day FLOAT NOT NULL,
+			end_day FLOAT NOT NULL,
+			subjects BIGINT NOT NULL,
+			sub_cs_before_ts BIGINT NOT NULL,
+			rec_cs_before_ts BIGINT NOT NULL,
+			sub_cs_on_ts BIGINT NOT NULL,
+			rec_cs_on_ts BIGINT NOT NULL,
+			sub_cs_after_ts BIGINT NOT NULL,
+			rec_cs_after_ts BIGINT NOT NULL,
+			sub_cs_before_te BIGINT NOT NULL,
+			rec_cs_before_te BIGINT NOT NULL,
+			sub_cs_on_te BIGINT NOT NULL,
+			rec_cs_on_te BIGINT NOT NULL,
+			sub_cs_after_te BIGINT NOT NULL,
+			rec_cs_after_te BIGINT NOT NULL,
+			sub_cs_window_t BIGINT NOT NULL,
+			rec_cs_window_t BIGINT NOT NULL,
+			sub_ce_window_t BIGINT NOT NULL,
+			rec_ce_window_t BIGINT NOT NULL,
+			sub_cs_window_ts BIGINT NOT NULL,
+			rec_cs_window_ts BIGINT NOT NULL,
+			sub_cs_window_te BIGINT NOT NULL,
+			rec_cs_window_te BIGINT NOT NULL,
+			sub_ce_window_ts BIGINT NOT NULL,
+			rec_ce_window_ts BIGINT NOT NULL,
+			sub_ce_window_te BIGINT NOT NULL,
+			rec_ce_window_te BIGINT NOT NULL,
+			sub_c_within_t BIGINT NOT NULL,
+			rec_c_within_t BIGINT NOT NULL,
+			c_days_before_ts BIGINT NOT NULL,
+			c_days_before_te BIGINT NOT NULL,
+			c_days_within_t_days BIGINT NOT NULL,
+			c_days_after_ts BIGINT NOT NULL,
+			c_days_after_te BIGINT NOT NULL,
+			t_days BIGINT NOT NULL,
+			c_days BIGINT NOT NULL,
+			PRIMARY KEY(database_id, cohort_id, comparator_cohort_id, start_day, end_day)
+);
+
+
 
 --Table concept
 
