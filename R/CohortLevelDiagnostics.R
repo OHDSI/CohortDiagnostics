@@ -42,8 +42,13 @@ getCohortCounts <- function(connectionDetails = NULL,
     on.exit(DatabaseConnector::disconnect(connection))
   }
 
-  sql <- SqlRender::readSql(system.file("sql/sql_server/CohortCounts.sql", 
-                                        package = utils::packageName()))
+  sql <-
+    SqlRender::readSql(system.file(
+      "sql",
+      "sql_server",
+      "CohortCounts.sql",
+      package = utils::packageName()
+    ))
   tablesInServer <-
     tolower(DatabaseConnector::dbListTables(conn = connection, schema = cohortDatabaseSchema))
   if (tolower(cohortTable) %in% tablesInServer) {

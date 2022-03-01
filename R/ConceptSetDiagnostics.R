@@ -910,8 +910,13 @@ getOrphanConcepts <- function(connectionDetails = NULL,
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  sql <- SqlRender::readSql(system.file("sql/sql_server/OrphanCodes.sql", 
-                                        package = utils::packageName()))
+  sql <-
+    SqlRender::readSql(system.file(
+      "sql",
+      "sql_server",
+      "OrphanCodes.sql",
+      package = utils::packageName()
+    ))
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
@@ -2050,10 +2055,12 @@ getOptimizationRecommendationForConceptSetExpression <-
     
     sql <-
       SqlRender::readSql(
-        sourceFile = system.file("sql",
-                                 "sql_server",
-                                 'OptimizeConceptSet.sql',
-                                 package = utils::packageName())
+        sourceFile = system.file(
+          "sql",
+          "sql_server",
+          'OptimizeConceptSet.sql',
+          package = utils::packageName()
+        )
       )
     
     DatabaseConnector::renderTranslateExecuteSql(

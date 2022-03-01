@@ -33,8 +33,13 @@ getVisitContext <- function(connectionDetails = NULL,
     on.exit(DatabaseConnector::disconnect(connection))
   }
   
-  sql <- SqlRender::readSql(system.file("sql/sql_server/VisitContext.sql", 
-                                        package = utils::packageName()))
+  sql <-
+    SqlRender::readSql(system.file(
+      "sql",
+      "sql_server",
+      "VisitContext.sql",
+      package = utils::packageName()
+    ))
   
   DatabaseConnector::renderTranslateExecuteSql(connection = connection, 
                                                sql = sql,

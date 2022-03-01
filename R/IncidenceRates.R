@@ -56,8 +56,15 @@ getIncidenceRate <- function(connectionDetails = NULL,
   }
   
   ParallelLogger::logInfo("Calculating incidence rate per year by age and gender")
-  sql <- SqlRender::readSql(system.file("sql/sql_server/GetCalendarYearRange.sql", 
-                                        package = utils::packageName()))
+  sql <-
+    SqlRender::readSql(
+      system.file(
+        "sql",
+        "sql_server",
+        "GetCalendarYearRange.sql",
+        package = utils::packageName()
+      )
+    )
   yearRange <-
     DatabaseConnector::renderTranslateQuerySql(connection = connection, 
                                                sql = sql,
@@ -77,8 +84,15 @@ getIncidenceRate <- function(connectionDetails = NULL,
     camelCaseToSnakeCase = TRUE
   )
   
-  sql <- SqlRender::readSql(system.file("sql/sql_server/ComputeIncidenceRates.sql", 
-                                        package = utils::packageName()))
+  sql <-
+    SqlRender::readSql(
+      system.file(
+        "sql",
+        "sql_server",
+        "ComputeIncidenceRates.sql",
+        package = utils::packageName()
+      )
+    )
   DatabaseConnector::renderTranslateExecuteSql(connection = connection, 
                                                sql = sql,
                                                tempEmulationSchema = tempEmulationSchema,

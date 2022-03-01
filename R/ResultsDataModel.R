@@ -256,8 +256,15 @@ createResultsDataModel <- function(connection = NULL,
     stop("Invalid schema for sqlite, use schema = 'main'")
   }
   
-  sql <- SqlRender::readSql(system.file("sql/sql_server/CreateResultsDataModel.sql", 
-                                        package = utils::packageName()))
+  sql <-
+    SqlRender::readSql(
+      system.file(
+        "sql",
+        "sql_server",
+        "CreateResultsDataModel.sql",
+        package = utils::packageName()
+      )
+    )
   DatabaseConnector::renderTranslateExecuteSql(connection = connection, 
                                                sql = sql,
                                                results_schema = schema, 
