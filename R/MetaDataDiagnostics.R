@@ -20,8 +20,7 @@ saveDatabaseMetaData <- function(databaseId,
                                  exportFolder,
                                  minCellCount,
                                  vocabularyVersionCdm,
-                                 vocabularyVersion,
-                                 minCellCount) {
+                                 vocabularyVersion) {
   ParallelLogger::logInfo("Saving database metadata")
   startMetaData <- Sys.time()
   database <- dplyr::tibble(
