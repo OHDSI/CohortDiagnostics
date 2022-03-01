@@ -542,16 +542,6 @@ deleteAllRecordsForDatabaseId <- function(connection,
                                           schema,
                                           tableName,
                                           databaseId) {
-  tableExists <-
-    DatabaseConnector::existsTable(connection = connection,
-                                   databaseSchema = schema,
-                                   tableName = tableName)
-  
-  if (!tableExists) {
-    ParallelLogger::logInfo(paste0(" - Table does not exist: '", tableName, "'"))
-    return(NULL)
-  }
-  
   sql <-
     "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
   sql <- SqlRender::render(
