@@ -18,6 +18,7 @@ saveDatabaseMetaData <- function(databaseId,
                                  databaseName,
                                  databaseDescription,
                                  exportFolder,
+                                 minCellCount,
                                  vocabularyVersionCdm,
                                  vocabularyVersion,
                                  minCellCount) {

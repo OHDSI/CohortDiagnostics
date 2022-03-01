@@ -27,7 +27,9 @@ this is experimental. Postgres and sqlite are the only backends recommended for 
 
 11. Additional checks to the output of cohort diagnostics to ensure it conforms to its own results data model. The new function (internal) is makeDataExportable. Results data model csv file has been enhanced with new fields, including a field to specify if the value is to be subjected to privacy protection (i.e. min cell count, eg. person count). Note a bug was discovered in the orphan concepts and included source concepts that was leading to duplication of row records by primary key. This bug has been fixed by calculating its max value grouped by primary keys. It will be fixed in another commit.
 
-13. Concept Set Diagnostics has been refactored. New functionality to a) provide optimization recommendations for concept set expressions, b) added option to not included (default) custom concept ids i.e. concept id >= 2 billion, c) new diagnostics that reveals concept id explicitly excluded by a concept set expression,  
+12. New diagnostics computes temporal relationship between any two cohorts. Temporal relationship are the same as temporalCovariateSettings. This diagnostics will be integerated into the temporal characterization output of diagnostics explorer, where cohorts will be covariates.
+
+13. Concept Set Diagnostics has been refactored. New functionality to a) provide optimization recommendations for concept set expressions, b) added option to not included (default) custom concept ids i.e. concept id >= 2 billion, c) new diagnostics that reveals concept id explicitly excluded by a concept set expression.
 
 
 CohortDiagnostics 2.2.3
