@@ -38,11 +38,11 @@ if (exists("shinySettings")) {
     user = Sys.getenv("shinydbUser"),
     password = Sys.getenv("shinydbPw")
   )
-  
+
   resultsDatabaseSchema <- Sys.getenv("shinydbResultsSchema", unset = "thrombosisthrombocytopenia")
   vocabularyDatabaseSchemas <- resultsDatabaseSchema
   alternateVocabularySchema <-  Sys.getenv("shinydbVocabularySchema", unset = c("vocabulary"))
-  
+
   vocabularyDatabaseSchemas <-
     setdiff(x = c(vocabularyDatabaseSchemas, alternateVocabularySchema),
             y = resultsDatabaseSchema) %>%

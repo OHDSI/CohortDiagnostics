@@ -2,7 +2,7 @@ CohortDiagnostics
 =================
 
 [![Build Status](https://github.com/OHDSI/CohortDiagnostics/workflows/R-CMD-check/badge.svg)](https://github.com/OHDSI/CohortDiagnostics/actions?query=workflow%3AR-CMD-check)
-[![codecov.io](https://codecov.io/github/OHDSI/CohortDiagnostics/coverage.svg?branch=master)](https://codecov.io/github/OHDSI/CohortDiagnostics?branch=master)
+[![codecov.io](https://codecov.io/github/OHDSI/CohortDiagnostics/coverage.svg?branch=main)](https://codecov.io/github/OHDSI/CohortDiagnostics?branch=main)
 
 CohortDiagnostics is part of [HADES](https://ohdsi.github.io/Hades).
 
@@ -50,7 +50,7 @@ Documentation can be found on the [package website](https://ohdsi.github.io/Coho
 
 PDF versions of the documentation are also available:
 
-* Package manual: [CohortDiagnostics manual](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/extras/CohortDiagnostics.pdf) 
+* Package manual: [CohortDiagnostics manual](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/extras/CohortDiagnostics.pdf)
 * Vignette: [What is Cohort Diagnostics](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/WhatIsCohortDiagnostics.pdf)
 * Vignette: [Running Cohort Diagnostics](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/RunningCohortDiagnostics.pdf)
 * Vignette: [Viewing Results Using Diagnostics Explorer](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/ViewingResultsUsingDiagnosticsExplorer.pdf)
