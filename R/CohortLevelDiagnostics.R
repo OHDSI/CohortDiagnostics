@@ -41,33 +41,30 @@ getCohortCounts <- function(connectionDetails = NULL,
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-
+  
   sql <-
-    SqlRender::readSql(system.file(
-      "sql",
-      "sql_server",
-      "CohortCounts.sql",
-      package = utils::packageName()
-    ))
+    SqlRender::loadRenderTranslateSql(
+      sqlFilename = "CohortCounts.sql",
+      packageName = utils::packageName(),
+      dbms = connection@dbms,
+      cohort_database_schema = cohortDatabaseSchema,
+      cohort_table = cohortTable,
+      cohort_ids = cohortIds
+    )
   tablesInServer <-
     tolower(DatabaseConnector::dbListTables(conn = connection, schema = cohortDatabaseSchema))
   if (tolower(cohortTable) %in% tablesInServer) {
     counts <-
-      DatabaseConnector::renderTranslateQuerySql(connection = connection, 
-                                                 sql = sql,
-                                                 cohort_database_schema = cohortDatabaseSchema,
-                                                 cohort_table = cohortTable,
-                                                 cohort_ids = cohortIds, 
-                                                 snakeCaseToCamelCase = TRUE) %>%
+      DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>%
       tidyr::tibble()
-
+    
     if (length(cohortIds) > 0) {
       cohortIdDf <- tidyr::tibble(cohortId = cohortIds)
       counts <- cohortIdDf %>%
         dplyr::left_join(counts, by = "cohortId") %>%
         tidyr::replace_na(list(cohortEntries = 0, cohortSubjects = 0))
     }
-
+    
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste(
       "Counting cohorts took",
@@ -113,18 +110,18 @@ computeCohortCounts <- function(connection,
     cohortTable = cohortTable,
     cohortIds = cohorts$cohortId
   )
-
+  
   if (is.null(cohortCounts)) {
     stop("Cohort table is empty")
   }
-
+  
   cohortCounts <- makeDataExportable(
     x = cohortCounts,
     tableName = "cohort_count",
     minCellCount = minCellCount,
     databaseId = databaseId
   )
-
+  
   writeToCsv(
     data = cohortCounts,
     fileName = file.path(exportFolder, "cohort_count.csv"),

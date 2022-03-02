@@ -56,20 +56,14 @@ getIncidenceRate <- function(connectionDetails = NULL,
   }
   
   ParallelLogger::logInfo("Calculating incidence rate per year by age and gender")
-  sql <-
-    SqlRender::readSql(
-      system.file(
-        "sql",
-        "sql_server",
-        "GetCalendarYearRange.sql",
-        package = utils::packageName()
-      )
-    )
+  sql <- SqlRender::loadRenderTranslateSql(
+    sqlFilename = "GetCalendarYearRange.sql",
+    packageName = utils::packageName(),
+    dbms = connection@dbms,
+    cdm_database_schema = cdmDatabaseSchema
+  )
   yearRange <-
-    DatabaseConnector::renderTranslateQuerySql(connection = connection, 
-                                               sql = sql,
-                                               cdm_database_schema = cdmDatabaseSchema, 
-                                               snakeCaseToCamelCase = TRUE)
+    DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
   
   calendarYears <-
     dplyr::tibble(calendarYear = as.integer(seq(yearRange$startYear, yearRange$endYear, by = 1)))
@@ -85,27 +79,20 @@ getIncidenceRate <- function(connectionDetails = NULL,
   )
   
   sql <-
-    SqlRender::readSql(
-      system.file(
-        "sql",
-        "sql_server",
-        "ComputeIncidenceRates.sql",
-        package = utils::packageName()
-      )
+    SqlRender::loadRenderTranslateSql(
+      sqlFilename = "ComputeIncidenceRates.sql",
+      packageName = utils::packageName(),
+      dbms = connection@dbms,
+      tempEmulationSchema = tempEmulationSchema,
+      cohort_database_schema = cohortDatabaseSchema,
+      cohort_table = cohortTable,
+      cdm_database_schema = cdmDatabaseSchema,
+      vocabulary_database_schema = vocabularyDatabaseSchema,
+      first_occurrence_only = firstOccurrenceOnly,
+      washout_period = washoutPeriod,
+      cohort_id = cohortId
     )
-  DatabaseConnector::renderTranslateExecuteSql(connection = connection, 
-                                               sql = sql,
-                                               tempEmulationSchema = tempEmulationSchema,
-                                               cohort_database_schema = cohortDatabaseSchema,
-                                               cohort_table = cohortTable,
-                                               cdm_database_schema = cdmDatabaseSchema,
-                                               vocabulary_database_schema = vocabularyDatabaseSchema,
-                                               first_occurrence_only = firstOccurrenceOnly,
-                                               washout_period = washoutPeriod,
-                                               cohort_id = cohortId, 
-                                               reportOverallTime = FALSE, 
-                                               profile = FALSE, 
-                                               progressBar = FALSE)
+  DatabaseConnector::executeSql(connection, sql)
   
   sql <- "SELECT * FROM #rates_summary;"
   ratesSummary <-

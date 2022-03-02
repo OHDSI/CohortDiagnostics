@@ -67,22 +67,18 @@ computeCohortOverlap <- function(connectionDetails = NULL,
     return(tidyr::tibble())
   }
   
-  sql <-
-    SqlRender::readSql(
-      system.file(
-        "sql",
-        "sql_server",
-        "CohortOverlap.sql",
-        package = utils::packageName()
-      )
-    )
-  overlap <- DatabaseConnector::renderTranslateQuerySql(
-    connection = connection,
-    sql = sql,
+  sql <- SqlRender::loadRenderTranslateSql(
+    "CohortOverlap.sql",
+    packageName = utils::packageName(),
+    dbms = connection@dbms,
     cohort_database_schema = cohortDatabaseSchema,
     cohort_table = cohortTable,
     target_cohort_id = targetCohortId,
-    comparator_cohort_id = comparatorCohortId,
+    comparator_cohort_id = comparatorCohortId
+  )
+  overlap <- DatabaseConnector::querySql(
+    connection = connection,
+    sql = sql,
     snakeCaseToCamelCase = TRUE
   ) %>%
     tidyr::tibble()
@@ -106,17 +102,17 @@ executeCohortComparisonDiagnostics <- function(connection,
                                                incremental) {
   ParallelLogger::logInfo("Computing cohort overlap")
   startCohortOverlap <- Sys.time()
-
+  
   combis <- cohorts %>%
     dplyr::select(.data$cohortId) %>%
     dplyr::distinct()
-
+  
   # Select cross product of all cohort ids
   combis <- combis %>%
     dplyr::rename(targetCohortId = .data$cohortId) %>%
     tidyr::crossing(dplyr::rename(combis, comparatorCohortId = .data$cohortId)) %>%
     dplyr::filter(.data$targetCohortId < .data$comparatorCohortId)
-
+  
   if (incremental) {
     combis <- combis %>%
       dplyr::inner_join(
@@ -141,7 +137,7 @@ executeCohortComparisonDiagnostics <- function(connection,
     incremental = incremental,
     recordKeepingFile = recordKeepingFile
   )
-
+  
   if (incremental && (nrow(combis) - nrow(subset)) > 0) {
     ParallelLogger::logInfo(sprintf(
       "Skipping %s cohort combinations in incremental mode.",
@@ -149,7 +145,7 @@ executeCohortComparisonDiagnostics <- function(connection,
     ))
   }
   if (nrow(subset) > 0) {
-
+    
     runCohortOverlap <- function(row) {
       ParallelLogger::logInfo(
         "- Computing overlap for cohorts ",
@@ -173,7 +169,7 @@ executeCohortComparisonDiagnostics <- function(connection,
       }
       return(data)
     }
-
+    
     data <-
       lapply(split(subset, 1:nrow(subset)), runCohortOverlap)
     data <- dplyr::bind_rows(data)
@@ -188,7 +184,7 @@ executeCohortComparisonDiagnostics <- function(connection,
       revData <-
         swapColumnContents(revData, "tInCSubjects", "cInTSubjects")
       data <- dplyr::bind_rows(data, revData)
-
+      
       data <- data %>%
         tidyr::replace_na(replace =
                             list(
@@ -202,14 +198,14 @@ executeCohortComparisonDiagnostics <- function(connection,
                               tInCSubjects = 0,
                               cInTSubjects = 0
                             ))
-
+      
       data <- makeDataExportable(
         x = data,
         tableName = "cohort_overlap",
         minCellCount = minCellCount,
         databaseId = databaseId
       )
-
+      
       writeToCsv(
         data = data,
         fileName = file.path(exportFolder, "cohort_overlap.csv"),
@@ -227,7 +223,7 @@ executeCohortComparisonDiagnostics <- function(connection,
       incremental = incremental
     )
   }
-
+  
   delta <- Sys.time() - startCohortOverlap
   ParallelLogger::logInfo("Running Cohort Overlap took ",
                           signif(delta, 3),

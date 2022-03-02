@@ -910,19 +910,17 @@ getOrphanConcepts <- function(connectionDetails = NULL,
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  sql <-
-    SqlRender::readSql(system.file(
-      "sql",
-      "sql_server",
-      "OrphanCodes.sql",
-      package = utils::packageName()
-    ))
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = connection,
-    sql = sql,
+  sql <- SqlRender::loadRenderTranslateSql(
+    "OrphanCodes.sql",
+    packageName = utils::packageName(),
+    dbms = connection@dbms,
     tempEmulationSchema = tempEmulationSchema,
     vocabulary_database_schema = vocabularyDatabaseSchema,
-    resolved_concept_sets = resolvedConceptSets,
+    resolved_concept_sets = resolvedConceptSets
+  )
+  DatabaseConnector::querySql(
+    connection = connection,
+    sql = sql,
     profile = FALSE,
     progressBar = FALSE,
     reportOverallTime = FALSE
@@ -2058,21 +2056,27 @@ getOptimizationRecommendationForConceptSetExpression <-
         sourceFile = system.file(
           "sql",
           "sql_server",
-          'OptimizeConceptSet.sql',
+          "OptimizeConceptSet.sql",
           package = utils::packageName()
         )
       )
-    
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = sql,
-      reportOverallTime = FALSE,
-      progressBar = FALSE,
+    sql <- SqlRender::loadRenderTranslateSql(
+      "OptimizeConceptSet.sql",
+      packageName = utils::packageName(),
+      dbms = connection@dbms,
+      tempEmulationSchema = tempEmulationSchema,
       vocabulary_database_schema = vocabularyDatabaseSchema,
       conceptSetConceptIdsExcluded = conceptSetConceptIdsExcluded,
       conceptSetConceptIdsDescendantsExcluded = conceptSetConceptIdsDescendantsExcluded,
       conceptSetConceptIdsNotExcluded = conceptSetConceptIdsNotExcluded,
       conceptSetConceptIdsDescendantsNotExcluded = conceptSetConceptIdsDescendantsNotExcluded
+    )
+    
+    DatabaseConnector::executeSql(
+      connection = connection,
+      sql = sql,
+      reportOverallTime = FALSE,
+      progressBar = FALSE
     )
     
     data <-
