@@ -188,13 +188,13 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
   }
 
   if ("webApiCohortId" %in% names(cohortSetReference)) {
-    cohortSetReference <-
-      dplyr::rename(cohortSetReference, atlasId = webApiCohortId)
+    cohortSetReference <- cohortSetReference %>% 
+      dplyr::rename(atlasId = .data$webApiCohortId)
   }
 
   if (!"atlasId" %in% names(cohortSetReference)) {
-    cohortSetReference <-
-      dplyr::mutate(cohortSetReference, atlasId = cohortId)
+    cohortSetReference <- cohortSetReference %>% 
+      dplyr::mutate(atlasId = .data$cohortId)
   }
 
   cohortSetReference$json <- ""

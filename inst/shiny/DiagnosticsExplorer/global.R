@@ -22,7 +22,7 @@ alternateVocabularySchema <- c('vocabulary')
 
 defaultDatabaseMode <- FALSE # Use file system if FALSE
 
-appVersionNum <- "Version: 2.2.3"
+appVersionNum <- "Version: 2.2.4"
 appInformationText <- paste("Powered by OHDSI Cohort Diagnostics application", paste0(appVersionNum, "."), "This app is working in")
 if (defaultDatabaseMode) {
   appInformationText <- paste0(appInformationText, " database")
@@ -187,6 +187,7 @@ if (exists("covariateRef")) {
 } else {
   prettyAnalysisIds <- c(0)
 }
+
 
 
 
