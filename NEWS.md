@@ -1,3 +1,11 @@
+CohortDiagnostics 2.2.4
+=======================
+
+Bug fixes:
+
+1. Fixed a bug that was causing generation of premerged and upload files to fail when the output had fields that were not in the results data model.
+
+
 CohortDiagnostics 2.2.3
 =======================
 
