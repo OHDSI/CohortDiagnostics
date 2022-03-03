@@ -125,6 +125,7 @@ saveDatabaseMetaData <- function(databaseId,
                                  databaseName,
                                  databaseDescription,
                                  exportFolder,
+                                 minCellCount,
                                  vocabularyVersionCdm,
                                  vocabularyVersion) {
   ParallelLogger::logInfo("Saving database metadata")

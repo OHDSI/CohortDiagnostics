@@ -28,6 +28,7 @@ executeDiagnostics(
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
+  runCohortRelationship = TRUE,
   runCohortCharacterization = TRUE,
   covariateSettings = createDefaultCovariateSettings(),
   runTemporalCohortCharacterization = TRUE,
@@ -104,6 +105,9 @@ diagnostics to.}
 \item{runCohortOverlap}{Generate and export the cohort overlap? Overlaps are checked within cohortIds
 that have the same phenotype ID sourced from the CohortSetReference or
 cohortToCreateFile.}
+
+\item{runCohortRelationship}{Generate and export the cohort relationship? Cohort relationship checks the temporal
+relationship between two or more cohorts.}
 
 \item{runCohortCharacterization}{Generate and export the cohort characterization?
 Only records with values greater than 0.0001 are returned.}
