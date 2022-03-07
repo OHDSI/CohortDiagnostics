@@ -270,7 +270,7 @@ shiny::shinyServer(function(input, output, session) {
         convertMdToHtml(circeExpressionMarkdown)
       details$htmlExpressionConceptSetExpression <-
         convertMdToHtml(circeConceptSetListmarkdown)
-      
+
       details <- dplyr::bind_rows(details)
     } else {
       return(NULL)
@@ -341,28 +341,32 @@ shiny::shinyServer(function(input, output, session) {
       if (is.null(expression$ConceptSets)) {
         return(NULL)
       }
-      
-      conceptSetExpression <- expression$ConceptSets %>%
-        dplyr::bind_rows() %>%
-        dplyr::mutate(json = RJSONIO::toJSON(x = .data$expression,
-                                             pretty = TRUE))
-      
-      conceptSetExpressionDetails <- list()
-      i <- 0
-      for (id in conceptSetExpression$id) {
-        i <- i + 1
-        conceptSetExpressionDetails[[i]] <-
-          getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
-                                                           conceptSetExpression[i, ]$expression$items) %>%
-          dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
-          dplyr::relocate(.data$id) %>%
-          dplyr::arrange(.data$id)
-      }
-      conceptSetExpressionDetails <-
-        dplyr::bind_rows(conceptSetExpressionDetails)
-      output <- list(conceptSetExpression = conceptSetExpression,
+
+      if (length(expression$ConceptSets) > 0) {
+        conceptSetExpression <- expression$ConceptSets %>%
+          dplyr::bind_rows() %>%
+          dplyr::mutate(json = RJSONIO::toJSON(x = .data$expression,
+                                               pretty = TRUE))
+
+        conceptSetExpressionDetails <- list()
+        i <- 0
+        for (id in conceptSetExpression$id) {
+          i <- i + 1
+          conceptSetExpressionDetails[[i]] <-
+            getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
+                                                             conceptSetExpression[i, ]$expression$items) %>%
+            dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
+            dplyr::relocate(.data$id) %>%
+            dplyr::arrange(.data$id)
+        }
+
+        conceptSetExpressionDetails <-
+          dplyr::bind_rows(conceptSetExpressionDetails)
+        output <- list(conceptSetExpression = conceptSetExpression,
                      conceptSetExpressionDetails = conceptSetExpressionDetails)
-      return(output)
+        return(output)
+      }
+      return(NULL)
     }
   
   cohortDefinistionConceptSetExpression <- shiny::reactive({
@@ -1059,7 +1063,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$conceptSetId %in% getConceptSetIds()) %>% 
         dplyr::select(.data$conceptId) %>% 
         dplyr::distinct()
-      
+
       conceptIdsForFilters <- conceptIdsForFilters %>% 
         dplyr::bind_rows(mappedConceptSetIds) %>%
         dplyr::distinct()
@@ -2782,7 +2786,7 @@ shiny::shinyServer(function(input, output, session) {
     jsonExpression <- RJSONIO::fromJSON(jsonExpression$json, digits = 23)
     expression <-
       getConceptSetDetailsFromCohortDefinition(cohortDefinitionExpression = jsonExpression)
-    
+
     if (!is.null(expression)) {
       expression <- expression$conceptSetExpression %>% 
         dplyr::select(.data$name)
@@ -2927,7 +2931,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::arrange(.data$position, desc(.data$header)) %>%
         dplyr::mutate(sortOrder = dplyr::row_number()) %>%
         dplyr::distinct()
-      
+
       characteristics <- dplyr::bind_rows(
         characteristics %>%
           dplyr::filter(.data$header == 1) %>%
