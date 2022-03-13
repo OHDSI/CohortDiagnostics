@@ -918,7 +918,7 @@ getOrphanConcepts <- function(connectionDetails = NULL,
     vocabulary_database_schema = vocabularyDatabaseSchema,
     resolved_concept_sets = resolvedConceptSets
   )
-  DatabaseConnector::querySql(
+  DatabaseConnector::executeSql(
     connection = connection,
     sql = sql,
     profile = FALSE,
