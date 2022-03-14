@@ -118,7 +118,7 @@ test_that("Cohort instantiation", {
 test_that("Concept set diagnostics - with cohort table but not instantiated", {
   
   cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
-  
+  debug(CohortDiagnostics:::getOrphanConcepts)
   conceptSetDiagnostics <-
     runConceptSetDiagnostics(
       connectionDetails = connectionDetails,
