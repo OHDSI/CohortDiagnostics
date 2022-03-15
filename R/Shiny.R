@@ -74,7 +74,6 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
   ensure_installed("checkmate")
   ensure_installed("DatabaseConnector")
   ensure_installed("dplyr")
-  ensure_installed("DT")
   ensure_installed("ggplot2")
   ensure_installed("ggiraph")
   ensure_installed("gtable")
@@ -91,6 +90,9 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
   ensure_installed("tidyr")
   ensure_installed("CirceR")
   ensure_installed("rmarkdown")
+  ensure_installed("reactable")
+  ensure_installed("markdownInput")
+  ensure_installed("markdown")
   
   appDir <-
     system.file("shiny", "DiagnosticsExplorer", package= utils::packageName())

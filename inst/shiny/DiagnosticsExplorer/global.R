@@ -7,6 +7,9 @@ source("R/DisplayFunctions.R")
 source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
+source("R/Annotation.R")
+
+authorizationBaseUrl <- "https://atlas-phenotype.ohdsi.org/WebAPI"
 
 appVersionNum <- "Version: 3.0.0"
 appInformationText <- paste("Powered by OHDSI Cohort Diagnostics application", paste0(appVersionNum, "."))
@@ -38,11 +41,11 @@ if (exists("shinySettings")) {
     user = Sys.getenv("shinydbUser"),
     password = Sys.getenv("shinydbPw")
   )
-
+  
   resultsDatabaseSchema <- Sys.getenv("shinydbResultsSchema", unset = "thrombosisthrombocytopenia")
   vocabularyDatabaseSchemas <- resultsDatabaseSchema
   alternateVocabularySchema <-  Sys.getenv("shinydbVocabularySchema", unset = c("vocabulary"))
-
+  
   vocabularyDatabaseSchemas <-
     setdiff(x = c(vocabularyDatabaseSchemas, alternateVocabularySchema),
             y = resultsDatabaseSchema) %>%
@@ -92,8 +95,17 @@ onStop(function() {
 resultsTablesOnServer <-
   tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
 
+showAnnotation <- FALSE
+if ("annotation" %in% resultsTablesOnServer &&
+    "annotation_link" %in% resultsTablesOnServer &&
+    "annotation_attributes" %in% resultsTablesOnServer) {
+  showAnnotation <- TRUE
+}
+
+
 loadResultsTable("database", required = TRUE)
 loadResultsTable("cohort", required = TRUE)
+loadResultsTable("metadata", required = TRUE)
 loadResultsTable("temporal_time_ref")
 loadResultsTable("concept_sets")
 loadResultsTable("cohort_count", required = TRUE)
@@ -130,8 +142,21 @@ if (exists("cohort")) {
   cohort <- get("cohort")
   cohort <- cohort %>%
     dplyr::arrange(.data$cohortId) %>%
-    dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>%
-    dplyr::mutate(compoundName = paste0(.data$shortName, ": ", .data$cohortName,"(", .data$cohortId, ")"))
+    dplyr::mutate(shortName = paste0("C", .data$cohortId)) %>%
+    dplyr::mutate(compoundName = paste0(.data$shortName, ": ", .data$cohortName))
+}
+
+if (exists("database")) {
+  database <- get("database")
+  databaseMetadata <- processMetadata(get("metadata"))
+  database <- database %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(id = dplyr::row_number()) %>%
+    dplyr::mutate(shortName = paste0("D", .data$id)) %>% 
+    dplyr::left_join(databaseMetadata, 
+                     by = "databaseId") %>% 
+    dplyr::relocate(.data$id, .data$databaseId, .data$shortName)
+  rm("databaseMetadata")
 }
 
 if (exists("temporalTimeRef")) {
