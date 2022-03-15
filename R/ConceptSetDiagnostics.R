@@ -1987,7 +1987,7 @@ getExcludedConceptSets <- function(connection,
 getOptimizationRecommendationForConceptSetExpression <-
   function(conceptSetExpression,
            vocabularyDatabaseSchema = 'vocabulary',
-           tempEmulationSchema = tempEmulationSchema,
+           tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
            connectionDetails = NULL,
            connection = NULL) {
     conceptSetExpressionDataFrame <-

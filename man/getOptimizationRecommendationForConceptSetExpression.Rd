@@ -7,7 +7,7 @@
 getOptimizationRecommendationForConceptSetExpression(
   conceptSetExpression,
   vocabularyDatabaseSchema = "vocabulary",
-  tempEmulationSchema = tempEmulationSchema,
+  tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   connectionDetails = NULL,
   connection = NULL
 )
