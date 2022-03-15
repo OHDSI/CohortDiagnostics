@@ -51,7 +51,6 @@
 #'                                    compute if any two concept-id co-occur on the same day. Computation will be performed
 #'                                    for co-occurrence of standard-standard, standard-source, and source-source
 #'                                    concept ids. This may take time. It is set to FALSE by default.
-#' @param runStandardToSourceMappingCount Generate and export counts for mapping between standard to non standard as observed in data.
 #' @param runConceptCountByCalendarPeriod  Do you want to stratify the counts by calendar period like calendar year, calendar month?
 #' @param runTimeDistributions        Generate and export cohort time distributions?
 #' @param runVisitContext             Generate and export index-date visit context?

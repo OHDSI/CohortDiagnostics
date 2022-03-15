@@ -132,8 +132,6 @@ of such objects.}
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which cohort diagnostics has been executed.}
-
-\item{runStandardToSourceMappingCount}{Generate and export counts for mapping between standard to non standard as observed in data.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
