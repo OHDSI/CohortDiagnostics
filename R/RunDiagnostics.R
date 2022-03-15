@@ -181,7 +181,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
 
   start <- Sys.time()
-  startTimeInteger <- getTimeAsInteger()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
 
   databaseId <- as.character(databaseId)
@@ -762,7 +761,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   )
   metadata <- dplyr::tibble(
     databaseId = as.character(!!databaseId),
-    startTime = as.character(startTimeInteger),
+    startTime = paste0("TM_", as.character(start)),
     variableField = variableField,
     valueField = valueField
   )
