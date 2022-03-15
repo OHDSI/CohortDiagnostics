@@ -63,7 +63,6 @@ exportConceptInformation <- function(connection = NULL,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema
     )[, 1]
-
   if (length(uniqueConceptIds) == 0) {
     if (!incremental) {
       warning("No concept IDs in cohorts. No concept information exported.")

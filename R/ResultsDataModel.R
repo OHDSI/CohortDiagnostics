@@ -110,7 +110,12 @@ checkFixColumnNames <-
         )
       )
     }
-    return(table[, expectedNames])
+
+    sharedFields <- intersect(x = observeredNames,
+                              y = tableSpecs$fieldName)
+    table <- table %>%
+      dplyr::select(dplyr::all_of(sharedFields))
+    return(table)
   }
 
 checkAndFixDataTypes <-
