@@ -567,8 +567,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       temporalCovariateSettings = temporalCovariateSettings,
       minCellCount = minCellCount,
       recordKeepingFile = recordKeepingFile,
-      incremental = incremental,
-      incrementalFolder = incrementalFolder
+      incremental = incremental
     )
   }
 

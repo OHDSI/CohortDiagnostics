@@ -20,8 +20,6 @@
 
 #' Get domain information
 #'
-#' @param packageName e.g. 'CohortDiagnostics'
-#'
 #' @return
 #' A list with two tibble data frame objects with domain information represented in wide and long format respectively.
 getDomainInformation <- function() {
