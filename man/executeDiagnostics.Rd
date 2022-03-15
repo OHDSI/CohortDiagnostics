@@ -90,6 +90,8 @@ diagnostics to.}
 
 \item{runInclusionStatistics}{Generate and export statistic on the cohort inclusion rules?}
 
+\item{runConceptSetDiagnostics}{Do you want to run concept set diagnostics?}
+
 \item{runIndexDateConceptCoOccurrence}{Generate and export co-occurrence of concepts on index date. This diagnostics will
 compute if any two concept-id co-occur on the same day. Computation will be performed
 for co-occurrence of standard-standard, standard-source, and source-source

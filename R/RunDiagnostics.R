@@ -61,6 +61,7 @@
 #'                                    cohortToCreateFile.
 #' @param runCohortRelationship       Generate and export the cohort relationship? Cohort relationship checks the temporal
 #'                                    relationship between two or more cohorts.
+#' @param runConceptSetDiagnostics       Do you want to run concept set diagnostics?
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
 #'                                    Only records with values greater than 0.0001 are returned.
 #' @param covariateSettings           Either an object of type \code{covariateSettings} as created using one of
