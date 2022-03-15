@@ -281,16 +281,16 @@ runConceptSetDiagnostics <- function(connection = NULL,
     ## Orphan concepts ----
     ParallelLogger::logInfo("  - Searching for concepts that may have been orphaned.")
     startOrphanCodes <- Sys.time()
-    # conceptSetDiagnosticsResults$orphanConcept <- getOrphanConcepts(
-    #   connection = connection,
-    #   cdmDatabaseSchema = cdmDatabaseSchema,
-    #   vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    #   tempEmulationSchema = tempEmulationSchema,
-    #   conceptTrackingTable = conceptTrackingTable,
-    #   conceptSetsXWalk = "#concept_sets_x_walk",
-    #   resolvedConceptSets = "#resolved_concept_set",
-    #   keep2BillionConceptId = keep2BillionConceptId
-    # )
+    conceptSetDiagnosticsResults$orphanConcept <- getOrphanConcepts(
+      connection = connection,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      conceptTrackingTable = conceptTrackingTable,
+      conceptSetsXWalk = "#concept_sets_x_walk",
+      resolvedConceptSets = "#resolved_concept_set",
+      keep2BillionConceptId = keep2BillionConceptId
+    )
     delta <- Sys.time() - startOrphanCodes
     ParallelLogger::logTrace("  - Finding orphan concepts took ",
                              signif(delta, 3),
