@@ -456,7 +456,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       SqlRender::camelCaseToTitleCase(vocabularyTables2[[i]])
     ),
     "'")
-    sql <- "SELECT a.* FROM @vocabulary_database_schema.@table a
+    sql <- "SELECT DISTINCT a.* FROM @vocabulary_database_schema.@table a
           INNER JOIN
             (SELECT distinct concept_id FROM @concept_tracking_table) b
           ON a.concept_id = b.concept_id;"
