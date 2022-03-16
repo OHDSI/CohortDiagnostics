@@ -3,6 +3,7 @@ DROP TABLE IF EXISTS #concept_synonyms;
 DROP TABLE IF EXISTS #search_strings;
 DROP TABLE IF EXISTS #search_str_top1000;
 DROP TABLE IF EXISTS #search_string_subset;
+DROP TABLE IF EXISTS #orphan_candidates;
 DROP TABLE IF EXISTS #orphan_concept_table;
 
 -- Find directly included concept and source concepts that map to those
@@ -64,7 +65,7 @@ FROM (
 
 
 -- Order search terms by length (words and characters), take top 1000 per codeset_id
-SELECT codeset_id,
+SELECT DISTINCT codeset_id,
   concept_name,
 	concept_name_length,
 	concept_name_terms
@@ -104,25 +105,34 @@ LEFT JOIN longer_string ls ON ss1.codeset_id = ls.codeset_id
 	AND ss1.concept_name = ls.concept_name
 WHERE ls.codeset_id IS NULL;
 
--- Create recommended list: concepts containing search string but not mapping to start set
+-- Orphan Candidates
 SELECT DISTINCT ss1.codeset_id,
-  c1.concept_id
-INTO #orphan_concept_table
+	c1.concept_id
+INTO #orphan_candidates
 FROM @vocabulary_database_schema.concept c1
-INNER JOIN #search_string_subset ss1
-	ON LOWER(c1.concept_name) LIKE CONCAT (
-			'%',
-			ss1.concept_name,
-			'%'
-			)
-LEFT JOIN #starting_concepts sc
-ON c1.concept_id = sc.concept_id
-AND ss1.codeset_id = sc.codeset_id
+INNER JOIN #search_string_subset ss1 ON LOWER(c1.concept_name) LIKE CONCAT (
+		'%',
+		ss1.concept_name,
+		'%'
+		)
+	AND c1.invalid_reason IS NULL;
+	
+-- Create recommended list: concepts containing search string but not mapping to start set
+SELECT DISTINCT sc.codeset_id,
+	c1.concept_id,
+	c1.concept_name
+INTO #orphan_concept_table
+FROM #orphan_candidates c1
+LEFT JOIN #starting_concepts sc ON c1.concept_id = sc.concept_id
+AND c1.codeset_id = sc.codeset_id
 WHERE sc.concept_id IS NULL;
+
+
 			
 			
-DROP TABLE IF EXISTS #starting_concepts;
-DROP TABLE IF EXISTS #concept_synonyms;
-DROP TABLE IF EXISTS #search_strings;
-DROP TABLE IF EXISTS #search_str_top1000;
-DROP TABLE IF EXISTS #search_string_subset;
+-- DROP TABLE IF EXISTS #starting_concepts;
+-- DROP TABLE IF EXISTS #concept_synonyms;
+-- DROP TABLE IF EXISTS #search_strings;
+-- DROP TABLE IF EXISTS #search_str_top1000;
+-- DROP TABLE IF EXISTS #search_string_subset;
+-- DROP TABLE IF EXISTS #orphan_candidates;
