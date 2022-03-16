@@ -210,7 +210,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
                          must.include = c("json",
                                           "cohortId",
                                           "cohortName",
-                                          "logicDescription",
                                           "sql"),
                          add = errorMessage)
 
@@ -316,10 +315,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       paste0(requiredButNotObsevered, collapse = ", ")
     ))
   }
-
-  if ('logicDescription' %in% expectedButNotObsevered) {
-    cohortDefinitionSet$logicDescription <- cohortDefinitionSet$cohortName
-  }
+  
   if ('metadata' %in% expectedButNotObsevered) {
     if (length(obseveredButNotExpected) > 0) {
       writeLines(

@@ -9,9 +9,11 @@ library(testthat)
 # Settings -----------------------------------------------------------
 cdmDatabaseSchema <- "CDMV5"
 cohortDatabaseSchema <- "OHDSI"
+vocabularyDatabaseSchema <- "CDMV5"
 rootFolder <- file.path("d:", "temp", "test")
 outputFolder <- file.path(rootFolder, "results")
 incrementalFolder <- file.path(rootFolder, "incremental")
+minCellCountValue <- 2
 
 
 cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
@@ -146,7 +148,6 @@ test_that("Concept set diagnostics - with cohort table but not instantiated", {
 
 # Test CohortDiagnostics -------------------------------------------------------------------------
 test_that("Cohort diagnostics", {
-  
   CohortDiagnostics::executeDiagnostics(
     cohortDefinitionSet = cohortDefinitionSet,
     connectionDetails = connectionDetails,
@@ -154,15 +155,13 @@ test_that("Cohort diagnostics", {
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortDefinitionSet,
+    cohortTable = cohortTableNames$cohortTable,
     exportFolder = outputFolder,
-    databaseId = dbms,
+    databaseId = "SynPuf",
     minCellCount = minCellCountValue,
     incremental = TRUE,
     incrementalFolder = incrementalFolder
   )
-  
-  
   testthat::expect_true(file.exists(file.path(
     folder, "export", "Results_SynPuf.zip"
   )))

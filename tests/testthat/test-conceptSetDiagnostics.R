@@ -105,7 +105,7 @@ test_that("Concept set diagnostics - with instantiation", {
       keep2BillionConceptId = TRUE,
       runConceptSetOptimization = TRUE,
       runExcludedConceptSet = TRUE,
-      runOrphanConcepts = TRUE,
+      runOrphanConcepts = FALSE,
       runBreakdownIndexEvents = TRUE,
       runBreakdownIndexEventRelativeDays = c(-5:5),
       runIndexDateConceptCoOccurrence = TRUE,
