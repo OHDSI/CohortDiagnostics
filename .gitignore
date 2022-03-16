@@ -22,3 +22,4 @@ tests/testthat/testthat-problems.rds
 .Rprofile
 /renv/
 renv.lock
+*.lnk
