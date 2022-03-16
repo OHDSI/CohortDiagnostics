@@ -9,11 +9,9 @@ library(testthat)
 # Settings -----------------------------------------------------------
 cdmDatabaseSchema <- "CDMV5"
 cohortDatabaseSchema <- "OHDSI"
-cohortTable <- "cohortdiagnostics_test"
 rootFolder <- file.path("d:", "temp", "test")
 outputFolder <- file.path(rootFolder, "results")
 incrementalFolder <- file.path(rootFolder, "incremental")
-cohortTable <- "cohort_test"
 
 
 cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
@@ -75,7 +73,7 @@ tempEmulationSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
 # tempEmulationSchema <- NULL
 
 # Cohort generation using CohortDiagnostics' instantiateCohortSet function -------------------------------
-unlink(x = incrementalFolder, recursive = TRUE, force = TRUE)
+unlink(x = rootFolder, recursive = TRUE, force = TRUE)
 test_that("Cohort instantiation", {
   
   # Next create the tables on the database
@@ -149,28 +147,19 @@ test_that("Concept set diagnostics - with cohort table but not instantiated", {
 # Test CohortDiagnostics -------------------------------------------------------------------------
 test_that("Cohort diagnostics", {
   
-  CohortDiagnostics::executeDiagnostics(packageName = "CohortDiagnostics",
-                                        cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-                                        connectionDetails = connectionDetails,
-                                        cdmDatabaseSchema = cdmDatabaseSchema,
-                                        cohortDatabaseSchema = cohortDatabaseSchema,
-                                        cohortTable = cohortTable,
-                                        databaseId = "Synpuf",
-                                        exportFolder =  file.path(folder, "export"))
-  
-  
-  executeDiagnostics(
+  CohortDiagnostics::executeDiagnostics(
     cohortDefinitionSet = cohortDefinitionSet,
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = cdmDatabaseSchema,
-    tempEmulationSchema = cohortDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    inclusionStatisticsFolder = file.path(folder, "incStats"),
-    exportFolder =  file.path(folder, "export"),
-    databaseId = "SynPuf",
-    minCellCount = 5
+    cohortTable = cohortDefinitionSet,
+    exportFolder = outputFolder,
+    databaseId = dbms,
+    minCellCount = minCellCountValue,
+    incremental = TRUE,
+    incrementalFolder = incrementalFolder
   )
   
   
@@ -179,35 +168,4 @@ test_that("Cohort diagnostics", {
   )))
 })
 
-# Test CohortDiagnostics -------------------------------------------------------------------------
-test_that("Cohort diagnostics", {
 
-  CohortDiagnostics::executeDiagnostics(packageName = "CohortDiagnostics",
-                       cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-                       connectionDetails = connectionDetails,
-                       cdmDatabaseSchema = cdmDatabaseSchema,
-                       cohortDatabaseSchema = cohortDatabaseSchema,
-                       cohortTable = cohortTable,
-                       databaseId = "Synpuf",
-                       exportFolder =  file.path(folder, "export"))
-  
-  
-  executeDiagnostics(
-    cohortDefinitionSet = cohortDefinitionSet,
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = cdmDatabaseSchema,
-    tempEmulationSchema = cohortDatabaseSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    inclusionStatisticsFolder = file.path(folder, "incStats"),
-    exportFolder =  file.path(folder, "export"),
-    databaseId = "SynPuf",
-    minCellCount = 5
-  )
-  
-  
-  testthat::expect_true(file.exists(file.path(
-    folder, "export", "Results_SynPuf.zip"
-  )))
-})

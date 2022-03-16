@@ -5,8 +5,8 @@ DROP TABLE IF EXISTS #search_str_top1000;
 DROP TABLE IF EXISTS #search_long_string;
 DROP TABLE IF EXISTS #string_not_long;
 DROP TABLE IF EXISTS #string_not_long_id;
-DROP TABLE IF EXISTS #string_search_results;
-DROP TABLE IF EXISTS #string_search_results2;
+DROP TABLE IF EXISTS #search_results_1;
+DROP TABLE IF EXISTS #search_results_2;
 DROP TABLE IF EXISTS #orphan_concept_table;
 
 -- For each codeset, find directly included concept and source concepts that map to those
@@ -128,7 +128,7 @@ FROM (
 -- this takes the most time
 SELECT DISTINCT ss1.search_string_id,
 	c1.concept_id
-INTO #string_search_results
+INTO #search_results_1
 FROM @vocabulary_database_schema.concept c1
 INNER JOIN #string_not_long_id ss1 ON LOWER(c1.concept_name) LIKE CONCAT (
 		'%',
@@ -141,8 +141,8 @@ INNER JOIN #string_not_long_id ss1 ON LOWER(c1.concept_name) LIKE CONCAT (
 -- add back codeset_id 
 SELECT snls.codeset_id,
 	ssr.concept_id
-INTO #string_search_results2
-FROM #string_search_results ssr
+INTO #search_results_2
+FROM #search_results_1 ssr
 INNER JOIN #string_not_long_id snlsid ON ssr.search_string_id = snlsid.search_string_id
 INNER JOIN #string_not_long snls ON snlsid.string_not_long = snls.string_not_long;
 
@@ -152,10 +152,18 @@ SELECT DISTINCT sc.codeset_id,
 	c1.concept_id,
 	c1.concept_name
 INTO #orphan_concept_table
-FROM #string_search_results2 c1
+FROM #search_results_2 c1
 LEFT JOIN #starting_concepts sc ON c1.concept_id = sc.concept_id
 	AND c1.codeset_id = sc.codeset_id
 WHERE sc.concept_id IS NULL;
 
 			
-			
+DROP TABLE IF EXISTS #starting_concepts;
+DROP TABLE IF EXISTS #concept_synonyms;
+DROP TABLE IF EXISTS #search_strings;
+DROP TABLE IF EXISTS #search_str_top1000;
+DROP TABLE IF EXISTS #search_long_string;
+DROP TABLE IF EXISTS #string_not_long;
+DROP TABLE IF EXISTS #string_not_long_id;
+DROP TABLE IF EXISTS #search_results_1;
+DROP TABLE IF EXISTS #search_results_2;			
