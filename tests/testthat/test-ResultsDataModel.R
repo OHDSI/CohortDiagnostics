@@ -47,91 +47,91 @@ test_that("Create schema", {
   })
 })
 
+
 test_that("Results upload", {
   skip_if(skipResultsDm |
             skipCdmTests,
           'results data model test server not set')
   
-  if (dbms != "sql_server") {
-    cohortTableNames <-
-      CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
-    # Next create the tables on the database
-    CohortGenerator::createCohortTables(
-      connectionDetails = connectionDetails,
-      cohortTableNames = cohortTableNames,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      incremental = FALSE
+  cohortTableNames <-
+    CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
+  # Next create the tables on the database
+  CohortGenerator::createCohortTables(
+    connectionDetails = connectionDetails,
+    cohortTableNames = cohortTableNames,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    incremental = FALSE
+  )
+  
+  # Generate the cohort set
+  CohortGenerator::generateCohortSet(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTableNames = cohortTableNames,
+    cohortDefinitionSet = cohortDefinitionSet,
+    incremental = FALSE
+  )
+  
+  executeDiagnostics(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTableNames = cohortTableNames,
+    cohortIds = cohortIds,
+    cohortDefinitionSet = cohortDefinitionSet,
+    exportFolder = file.path(folder, "export"),
+    databaseId = dbms,
+    incremental = TRUE,
+    incrementalFolder = file.path(folder, "incremental"),
+    covariateSettings = covariateSettings,
+    temporalCovariateSettings = temporalCovariateSettings
+  )
+  
+  listOfZipFilesToUpload <-
+    list.files(
+      path = file.path(folder, "export"),
+      pattern = ".zip",
+      full.names = TRUE,
+      recursive = TRUE
     )
-    
-    # Generate the cohort set
-    CohortGenerator::generateCohortSet(
-      connectionDetails = connectionDetails,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTableNames = cohortTableNames,
-      cohortDefinitionSet = cohortDefinitionSet,
-      incremental = FALSE
+  for (i in (1:length(listOfZipFilesToUpload))) {
+    uploadResults(
+      connectionDetails = postgresConnectionDetails,
+      schema = resultsDatabaseSchema,
+      zipFileName = listOfZipFilesToUpload[[i]]
     )
-    
-    executeDiagnostics(
-      connectionDetails = connectionDetails,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      tempEmulationSchema = tempEmulationSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTableNames = cohortTableNames,
-      cohortIds = cohortIds,
-      cohortDefinitionSet = cohortDefinitionSet,
-      exportFolder = file.path(folder, "export"),
-      databaseId = dbms,
-      incremental = TRUE,
-      incrementalFolder = file.path(folder, "incremental"),
-      covariateSettings = covariateSettings,
-      temporalCovariateSettings = temporalCovariateSettings
-    )
-    
-    listOfZipFilesToUpload <-
-      list.files(
-        path = file.path(folder, "export"),
-        pattern = ".zip",
-        full.names = TRUE,
-        recursive = TRUE
-      )
-    for (i in (1:length(listOfZipFilesToUpload))) {
-      uploadResults(
-        connectionDetails = postgresConnectionDetails,
-        schema = resultsDatabaseSchema,
-        zipFileName = listOfZipFilesToUpload[[i]]
-      )
-    }
-    
-    specifications <- getResultsDataModelSpecifications()
-    pgConnection <-
-      DatabaseConnector::connect(connectionDetails = postgresConnectionDetails)
-    with_dbc_connection(pgConnection, {
-      for (tableName in unique(specifications$tableName)) {
-        primaryKey <- specifications %>%
-          dplyr::filter(.data$tableName == !!tableName &
-                          .data$primaryKey == "Yes") %>%
-          dplyr::select(.data$fieldName) %>%
-          dplyr::pull()
-        
-        if ("database_id" %in% primaryKey) {
-          sql <-
-            "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
-          sql <- SqlRender::render(
-            sql = sql,
-            schema = resultsDatabaseSchema,
-            table_name = tableName,
-            database_id = "cdmv5"
-          )
-          databaseIdCount <-
-            DatabaseConnector::querySql(pgConnection, sql)[, 1]
-          expect_true(databaseIdCount >= 0)
-        }
-      }
-    })
   }
+  
+  specifications <- getResultsDataModelSpecifications()
+  pgConnection <-
+    DatabaseConnector::connect(connectionDetails = postgresConnectionDetails)
+  with_dbc_connection(pgConnection, {
+    for (tableName in unique(specifications$tableName)) {
+      primaryKey <- specifications %>%
+        dplyr::filter(.data$tableName == !!tableName &
+                        .data$primaryKey == "Yes") %>%
+        dplyr::select(.data$fieldName) %>%
+        dplyr::pull()
+      
+      if ("database_id" %in% primaryKey) {
+        sql <-
+          "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
+        sql <- SqlRender::render(
+          sql = sql,
+          schema = resultsDatabaseSchema,
+          table_name = tableName,
+          database_id = "cdmv5"
+        )
+        databaseIdCount <-
+          DatabaseConnector::querySql(pgConnection, sql)[, 1]
+        expect_true(databaseIdCount >= 0)
+      }
+    }
+  })
+  
 })
 
 test_that("Sqlite results data model", {
