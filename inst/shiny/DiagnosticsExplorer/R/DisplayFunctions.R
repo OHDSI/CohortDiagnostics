@@ -46,15 +46,6 @@ formatDataCellValueInDisplayTable <-
     }
   }
 
-sumCounts <- function(counts) {
-  result <- sum(abs(counts))
-  if (any(counts < 0)) {
-    return(-result)
-  } else {
-    return(result)
-  }
-}
-
 copyToClipboardButton <-
   function(toCopyId,
            label = "Copy to clipboard",
