@@ -118,22 +118,22 @@ getDomainInformation <- function() {
   return(data)
 }
 
+
 .replaceNaInDataFrameWithEmptyString <- function(data) {
-  #https://github.com/r-lib/tidyselect/issues/201
-  data <- 
-  data %>%
+  characterColumns <- c()
+  
+  colnamesInData <- colnames(data)
+  for (i in (1:length(colnamesInData))) {
+    if (class(data[[colnamesInData[[i]]]]) == "character") {
+      characterColumns <- c(characterColumns, colnamesInData[[i]])
+    }
+  }
+  data <-
+    data %>%
     dplyr::collect() %>%
     dplyr::mutate(dplyr::across(
-      tidyselect:::where(is.character),
-      ~ tidyr::replace_na(.x, as.character(''))
-    )) %>%
-    dplyr::mutate(dplyr::across(
-      tidyselect:::where(is.logical),
-      ~ tidyr::replace_na(.x, as.character(''))
-    )) %>%
-    dplyr::mutate(dplyr::across(
-      tidyselect:::where(is.numeric),
-      ~ tidyr::replace_na(.x, as.numeric(''))
+      .cols = dplyr::all_of(characterColumns),
+      .fns = ~ tidyr::replace_na(.x, as.character(''))
     ))
   return(data)
 }
