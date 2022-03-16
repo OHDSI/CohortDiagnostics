@@ -17,7 +17,7 @@ runConceptSetDiagnostics(
   keep2BillionConceptId = FALSE,
   runConceptSetOptimization = TRUE,
   runExcludedConceptSet = TRUE,
-  runOrphanConcepts = FALSE,
+  runOrphanConcepts = TRUE,
   runBreakdownIndexEvents = TRUE,
   runBreakdownIndexEventRelativeDays = c(0),
   runIndexDateConceptCoOccurrence = FALSE,
