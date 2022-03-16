@@ -918,12 +918,14 @@ getOrphanConcepts <- function(connectionDetails = NULL,
     vocabulary_database_schema = vocabularyDatabaseSchema,
     resolved_concept_sets = resolvedConceptSets
   )
+  ParallelLogger::logInfo("Starting Orphan concept string search. This might take some time.")
+  browser()
   DatabaseConnector::executeSql(
     connection = connection,
     sql = sql,
-    profile = FALSE,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
+    profile = TRUE,
+    progressBar = TRUE,
+    reportOverallTime = TRUE
   )
   if (!is.null(conceptTrackingTable)) {
     # tracking table
