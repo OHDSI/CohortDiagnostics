@@ -52,27 +52,27 @@ cohortDefinitionSet <-
 
 
 # Oracle test ---------------------------------
-# connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "oracle",
-#                                                                 server = Sys.getenv("CDM5_ORACLE_SERVER"),
-#                                                                 user = Sys.getenv("CDM5_ORACLE_USER"),
-#                                                                 password = Sys.getenv("CDM5_ORACLE_PASSWORD"))
-# tempEmulationSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
+connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "oracle",
+                                                                server = Sys.getenv("CDM5_ORACLE_SERVER"),
+                                                                user = Sys.getenv("CDM5_ORACLE_USER"),
+                                                                password = Sys.getenv("CDM5_ORACLE_PASSWORD"))
+tempEmulationSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
 
 # postgres test ---------------------------------
-# connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "oracle",
+# connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "postgresql",
 #                                                                 server = Sys.getenv("CDM5_POSTGRESQL_SERVER"),
 #                                                                 user = Sys.getenv("CDM5_POSTGRESQL_USER"),
 #                                                                 password = Sys.getenv("CDM5_POSTGRESQL_PASSWORD"))
 # tempEmulationSchema <- NULL
 
 # SqlServer test ---------------------------------
-connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sql server",
-                                                                server = Sys.getenv("CDM5_SQL_SERVER_SERVER"),
-                                                                user = Sys.getenv("CDM5_SQL_SERVER_USER"),
-                                                                password = Sys.getenv("CDM5_SQL_SERVER_PASSWORD"))
-cdmDatabaseSchema = 'cdmv5.dbo'
-cohortDatabaseSchema = 'ohdsi.dbo'
-tempEmulationSchema <- NULL
+# connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sql server",
+#                                                                 server = Sys.getenv("CDM5_SQL_SERVER_SERVER"),
+#                                                                 user = Sys.getenv("CDM5_SQL_SERVER_USER"),
+#                                                                 password = Sys.getenv("CDM5_SQL_SERVER_PASSWORD"))
+# cdmDatabaseSchema = 'cdmv5.dbo'
+# cohortDatabaseSchema = 'ohdsi.dbo'
+# tempEmulationSchema <- NULL
 
 # Cohort generation using CohortDiagnostics' instantiateCohortSet function -------------------------------
 unlink(x = incrementalFolder, recursive = TRUE, force = TRUE)
