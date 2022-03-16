@@ -1,3 +1,3 @@
-# library(testthat)
-# options(dbms = "sqlite")
-# test_check("CohortDiagnostics")
+library(testthat)
+options(dbms = "sqlite")
+test_check("CohortDiagnostics")
