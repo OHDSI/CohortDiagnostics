@@ -130,9 +130,9 @@ WHERE sc.concept_id IS NULL;
 
 			
 			
--- DROP TABLE IF EXISTS #starting_concepts;
--- DROP TABLE IF EXISTS #concept_synonyms;
--- DROP TABLE IF EXISTS #search_strings;
--- DROP TABLE IF EXISTS #search_str_top1000;
--- DROP TABLE IF EXISTS #search_string_subset;
--- DROP TABLE IF EXISTS #orphan_candidates;
+DROP TABLE IF EXISTS #starting_concepts;
+DROP TABLE IF EXISTS #concept_synonyms;
+DROP TABLE IF EXISTS #search_strings;
+DROP TABLE IF EXISTS #search_str_top1000;
+DROP TABLE IF EXISTS #search_string_subset;
+DROP TABLE IF EXISTS #orphan_candidates;
