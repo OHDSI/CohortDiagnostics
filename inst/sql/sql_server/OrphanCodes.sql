@@ -3,8 +3,8 @@ DROP TABLE IF EXISTS #concept_synonyms;
 DROP TABLE IF EXISTS #search_strings;
 DROP TABLE IF EXISTS #search_str_top1000;
 DROP TABLE IF EXISTS #search_long_string;
-DROP TABLE IF EXISTS #search_no_long_string;
-DROP TABLE IF EXISTS #search_no_long_string_id;
+DROP TABLE IF EXISTS #string_not_long;
+DROP TABLE IF EXISTS #string_not_long_id;
 DROP TABLE IF EXISTS #string_search_results;
 DROP TABLE IF EXISTS #string_search_results2;
 DROP TABLE IF EXISTS #orphan_concept_table;
@@ -104,8 +104,8 @@ INNER JOIN #search_str_top1000 ss2 ON ss2.search_string_length < ss1.search_stri
 	
 -- Discard longer string from search_string
 SELECT DISTINCT ss1.codeset_id,
-	ss1.search_string search_no_long_string
-INTO #search_no_long_string
+	ss1.search_string string_not_long
+INTO #string_not_long
 FROM #search_str_top1000 ss1
 LEFT JOIN #search_long_string ls ON ss1.codeset_id = ls.codeset_id
 	AND ss1.search_string = ls.search_string_long
@@ -113,14 +113,14 @@ WHERE ls.codeset_id IS NULL;
 
 
 -- add unique id for each search_string
-SELECT ss.search_no_long_string,
+SELECT ss.string_not_long,
 	ROW_NUMBER() OVER (
-		ORDER BY ss.search_no_long_string
+		ORDER BY ss.string_not_long
 		) search_string_id
-INTO #search_no_long_string_id
+INTO #string_not_long_id
 FROM (
-	SELECT DISTINCT search_no_long_string
-	FROM #search_no_long_string
+	SELECT DISTINCT string_not_long
+	FROM #string_not_long
 	) ss;
 
  
@@ -130,9 +130,9 @@ SELECT DISTINCT ss1.search_string_id,
 	c1.concept_id
 INTO #string_search_results
 FROM @vocabulary_database_schema.concept c1
-INNER JOIN #search_no_long_string_id ss1 ON LOWER(c1.concept_name) LIKE CONCAT (
+INNER JOIN #string_not_long_id ss1 ON LOWER(c1.concept_name) LIKE CONCAT (
 		'%',
-		ss1.search_no_long_string,
+		ss1.string_not_long,
 		'%'
 		)
 	AND c1.invalid_reason IS NULL;
@@ -143,8 +143,8 @@ SELECT snls.codeset_id,
 	ssr.concept_id
 INTO #string_search_results2
 FROM #string_search_results ssr
-INNER JOIN #search_no_long_string_id snlsid ON ssr.search_string_id = snlsid.search_string_id
-INNER JOIN #search_no_long_string snls ON snlsid.search_no_long_string = snls.search_no_long_string;
+INNER JOIN #string_not_long_id snlsid ON ssr.search_string_id = snlsid.search_string_id
+INNER JOIN #string_not_long snls ON snlsid.string_not_long = snls.string_not_long;
 
 	
 -- Create recommended list: concepts containing search string but not mapping to start set

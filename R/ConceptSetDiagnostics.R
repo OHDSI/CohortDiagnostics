@@ -791,6 +791,7 @@ resolveConceptSets <- function(uniqueConceptSets,
       sprintf("SELECT *\nINTO %s\nFROM (\n %s\n) tmp;",
               tempTable,
               sqlSubset)
+    sqlSubset <- paste0("DROP TABLE IF EXISTS ", tempTable, "; ", sqlSubset)
     sqlSubset <-
       SqlRender::render(sqlSubset, vocabulary_database_schema = vocabularyDatabaseSchema)
     sqlSubset <- SqlRender::translate(sqlSubset,
