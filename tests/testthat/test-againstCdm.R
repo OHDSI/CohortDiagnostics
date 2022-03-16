@@ -1,7 +1,8 @@
 test_that("Cohort diagnostics in incremental mode", {
   skip_if(skipCdmTests, 'cdm settings not configured')
-
-  cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
+  
+  cohortTableName <- paste0("ct_", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
+  cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTableName)
   # Next create the tables on the database
   CohortGenerator::createCohortTables(connectionDetails = connectionDetails,
                                       cohortTableNames = cohortTableNames,
@@ -15,7 +16,6 @@ test_that("Cohort diagnostics in incremental mode", {
                                      cohortTableNames = cohortTableNames,
                                      cohortDefinitionSet = cohortDefinitionSet,
                                      incremental = FALSE)
-
 
   firstTime <- system.time(
     executeDiagnostics(

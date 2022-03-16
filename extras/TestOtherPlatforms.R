@@ -14,9 +14,10 @@ rootFolder <- file.path("d:", "temp", "test")
 outputFolder <- file.path(rootFolder, "results")
 incrementalFolder <- file.path(rootFolder, "incremental")
 minCellCountValue <- 2
+cohortTableName <- paste0("ct_", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
 
 
-cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
+cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTableName)
 # get cohort definitions from study package
 cohortDefinitionSet <-
   dplyr::tibble(CohortGenerator::getCohortDefinitionSet(packageName = "SkeletonCohortDiagnosticsStudy", 

@@ -53,8 +53,9 @@ test_that("Results upload", {
             skipCdmTests,
           'results data model test server not set')
   
+  cohortTableName <- paste0("ct_", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
   cohortTableNames <-
-    CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
+    CohortGenerator::getCohortTableNames(cohortTable = cohortTableName)
   # Next create the tables on the database
   CohortGenerator::createCohortTables(
     connectionDetails = connectionDetails,
