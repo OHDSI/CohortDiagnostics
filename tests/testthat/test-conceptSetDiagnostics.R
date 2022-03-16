@@ -50,7 +50,7 @@ test_that("Concept set diagnostics - with cohort table but not instantiated", {
       keep2BillionConceptId = TRUE,
       runConceptSetOptimization = TRUE,
       runExcludedConceptSet = TRUE,
-      runOrphanConcepts = TRUE,
+      runOrphanConcepts = FALSE,
       runBreakdownIndexEvents = TRUE,
       runBreakdownIndexEventRelativeDays = c(-5:5),
       runIndexDateConceptCoOccurrence = TRUE,
