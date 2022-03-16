@@ -25,7 +25,7 @@ test_that("Cohort diagnostics in incremental mode", {
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
+      cohortTableNames = cohortTableNames,
       cohortIds = cohortIds,
       exportFolder = file.path(folder, "export"),
       databaseId = dbms,
