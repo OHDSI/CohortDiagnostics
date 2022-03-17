@@ -685,37 +685,38 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "timeDistribution",
     cohortReference("timeDistSelectedCohorts"),
-    shiny::radioButtons(
-      inputId = "timeDistributionType",
-      label = "",
-      choices = c("Table", "Plot"),
-      selected = "Plot",
-      inline = TRUE
-    ),
-    shiny::conditionalPanel(condition = "input.timeDistributionType=='Table'",
-                            tags$table(width = "100%", 
-                                       tags$tr(
-                                         tags$td(align = "right",
-                                                 tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('timeDistTable')")    
-                                         )
-                                       )
-                            ),
-                            reactable::reactableOutput(outputId = "timeDistTable")),
-    shiny::conditionalPanel(
-      condition = "input.timeDistributionType=='Plot'",
-      shinydashboard::box(
-        title = "Time Distributions",
-        width = NULL,
-        status = "primary",
+    shinydashboard::box(
+      title = "Time Distributions",
+      width = NULL,
+      status = "primary",
+      shiny::radioButtons(
+        inputId = "timeDistributionType",
+        label = "",
+        choices = c("Table", "Plot"),
+        selected = "Plot",
+        inline = TRUE
+      ),
+      shiny::conditionalPanel(
+        condition = "input.timeDistributionType=='Table'",
+        tags$table(width = "100%",
+                   tags$tr(tags$td(
+                     align = "right",
+                     tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('timeDistTable')")
+                   ))),
+        reactable::reactableOutput(outputId = "timeDistTable")
+      ),
+      shiny::conditionalPanel(
+        condition = "input.timeDistributionType=='Plot'",
+        
         tags$br(),
         ggiraph::ggiraphOutput("timeDisPlot", width = "100%", height = "100%")
-      )
-    ),
-    if (showAnnotation) {
-      column(12,
-             tags$br(),
-             annotationFunction("timeDistribution"))
-    }
+      ),
+      if (showAnnotation) {
+        column(12,
+               tags$br(),
+               annotationFunction("timeDistribution"))
+      }
+    )
   ),
   shinydashboard::tabItem(
     tabName = "conceptsInDataSource",
