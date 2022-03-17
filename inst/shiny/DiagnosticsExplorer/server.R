@@ -1492,7 +1492,8 @@ shiny::shinyServer(function(input, output, session) {
       dataSource = dataSource,
       cohortIds = cohortId(),
       databaseIds = databaseIds()
-    ) %>% dplyr::rename(Meet = .data$meetSubjects,
+    ) %>% 
+      dplyr::rename(Meet = .data$meetSubjects,
                         Gain = .data$gainSubjects,
                         Remain = .data$remainSubjects,
                         Total = .data$totalSubjects)
@@ -1521,7 +1522,6 @@ shiny::shinyServer(function(input, output, session) {
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = table,
                                                     string = dataColumnFields)
-    
     
     showDataAsPercent <- FALSE
     ## showDataAsPercent set based on UI selection - proportion

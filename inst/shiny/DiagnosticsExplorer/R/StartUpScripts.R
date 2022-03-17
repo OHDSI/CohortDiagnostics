@@ -51,24 +51,6 @@ isEmpty <- function(tableName) {
   return(nrow(oneRow) == 0)
 }
 
-
-
-# borrowed from https://stackoverflow.com/questions/19747384/create-new-column-in-dataframe-based-on-partial-string-matching-other-column
-patternReplacement <- function(x, patterns, replacements = patterns, fill = NA, ...)
-{
-  stopifnot(length(patterns) == length(replacements))
-  
-  ans = rep_len(as.character(fill), length(x))    
-  empty = seq_along(x)
-  
-  for (i in seq_along(patterns)) {
-    greps = grepl(patterns[[i]], x[empty], ...)
-    ans[empty[greps]] = replacements[[i]]  
-    empty = empty[!greps]
-  }
-  return(ans)
-}
-
 getTimeAsInteger <- function(time = Sys.time(),
                              tz = "UTC") {
   return(as.numeric(as.POSIXlt(time, tz = tz)))
@@ -78,11 +60,6 @@ getTimeFromInteger <- function(x, tz = "UTC") {
   originDate <- as.POSIXct("1970-01-01", tz = tz)
   originDate <- originDate + x
   return(originDate)
-}
-
-capitalizeFirstLetter <- function(x) {
-  substr(x, 1, 1) <- toupper(substr(x, 1, 1))
-  x
 }
 
 processMetadata <- function(data) {

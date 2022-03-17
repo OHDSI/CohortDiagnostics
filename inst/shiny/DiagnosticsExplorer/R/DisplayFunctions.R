@@ -46,15 +46,6 @@ formatDataCellValueInDisplayTable <-
     }
   }
 
-sumCounts <- function(counts) {
-  result <- sum(abs(counts))
-  if (any(counts < 0)) {
-    return(-result)
-  } else {
-    return(result)
-  }
-}
-
 copyToClipboardButton <-
   function(toCopyId,
            label = "Copy to clipboard",
@@ -241,11 +232,15 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     )]
   
   columnDefinitions <- list()
+  columnTotalMinWidth <- 0
+  columnTotalMaxWidth <- 0
   for (i in (1:length(keyColumns))) {
     columnName <- camelCaseToTitleCase(colnames(data)[i])
     displayTableColumnMinMaxWidth <-
       getDisplayTableColumnMinMaxWidth(data = data,
                                        columnName = keyColumns[[i]])
+    columnTotalMinWidth <- columnTotalMinWidth + displayTableColumnMinMaxWidth$minValue
+    columnTotalMaxWidth <- columnTotalMaxWidth + displayTableColumnMinMaxWidth$maxValue
     if (class(data[[keyColumns[[i]]]]) == 'logical') {
       data[[keyColumns[[i]]]] <- ifelse(data[[keyColumns[[i]]]],
                                         as.character(icon("check")), "")
@@ -278,6 +273,11 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     columnNameWithDatabaseAndCount <-
       stringr::str_split(dataColumns[i], "_sep_")[[1]]
     columnName <- columnNameWithDatabaseAndCount[2]
+    displayTableColumnMinMaxWidth <-
+      getDisplayTableColumnMinMaxWidth(data = data,
+                                       columnName = columnName)
+    columnTotalMinWidth <- columnTotalMinWidth + 200
+    columnTotalMaxWidth <- columnTotalMaxWidth + 200
     
     if (!is.null(headerCount)) {
       if (countLocation == 2) {
@@ -298,6 +298,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         filterable = TRUE,
         show = TRUE,
         minWidth = 200,
+        maxWidth = 200,
         html = TRUE,
         na = "",
         align = "left",
@@ -319,6 +320,10 @@ getDisplayTableGroupedByDatabaseId <- function(data,
           }
         }
       )
+  }
+  if (columnTotalMaxWidth > 1300) {
+    columnTotalMaxWidth <- "auto"
+    columnTotalMinWidth <- "auto"
   }
   
   columnGroups <- list()
@@ -372,6 +377,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
       defaultPageSize = pageSize,
       selection = selection,
       onClick = "select",
+      style = list(maxWidth = columnTotalMaxWidth, minWidth = columnTotalMinWidth),
       theme = reactable::reactableTheme(
         rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
       )
