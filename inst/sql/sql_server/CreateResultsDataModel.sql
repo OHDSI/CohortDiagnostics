@@ -28,6 +28,7 @@
 {DEFAULT @temporal_covariate_value_dist = temporal_covariate_value_dist}
 {DEFAULT @temporal_time_ref = temporal_time_ref}
 {DEFAULT @time_distribution = time_distribution}
+{DEFAULT @time_series = time_series}
 {DEFAULT @visit_context = visit_context}
 {DEFAULT @vocabulary = vocabulary}
 
