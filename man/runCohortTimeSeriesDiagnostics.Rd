@@ -15,7 +15,7 @@ runCohortTimeSeriesDiagnostics(
   runDataSourceTimeSeries = TRUE,
   timeSeriesMinDate = as.Date("1980-01-01"),
   timeSeriesMaxDate = as.Date(Sys.Date()),
-  cohortIds = NULL
+  cohortIds
 )
 }
 \arguments{
