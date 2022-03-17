@@ -29,6 +29,9 @@ this is experimental. Postgres and sqlite are the only backends recommended for 
 
 12. New diagnostics computes temporal relationship between any two cohorts. Temporal relationship are the same as temporalCovariateSettings. This diagnostics will be integerated into the temporal characterization output of diagnostics explorer, where cohorts will be covariates.
 
+13. New diagnostics called time series diagnostics. Time series diagnostics takes as input a calendar period range, and in that calendar period range for calendar units (year, quarter, month) computes the incidence and prevalence of the cohort start and cohort end dates. 
+
+
 CohortDiagnostics 2.2.4
 =======================
 

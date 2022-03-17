@@ -20,6 +20,7 @@ Depends:
 Imports:
   Andromeda,
   checkmate,
+  clock,
   digest,
   dplyr (>= 1.0.0),
   methods,
