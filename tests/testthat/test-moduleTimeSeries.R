@@ -1,12 +1,12 @@
 test_that("Testing time series logic", {
   skip_if(skipCdmTests, 'cdm settings not configured')
   
-  # manually create cohort table and load to table
-  connectionCohortRelationship <-
+  connectionTimeSeries <-
     DatabaseConnector::connect(connectionDetails)
   
   # to do - with incremental = FALSE
-  with_dbc_connection(connectionCohortRelationship, {
+  with_dbc_connection(connectionTimeSeries, {
+    # manually create cohort table and load to table
     cohort <- dplyr::tibble(
       cohortDefinitionId = c(1),
       subjectId = c(1, 2),
@@ -19,7 +19,7 @@ test_that("Testing time series logic", {
              gsub("[: -]", "", Sys.time(), perl = TRUE),
              sample(1:100, 1))
     DatabaseConnector::insertTable(
-      connection = connectionCohortRelationship,
+      connection = connectionTimeSeries,
       databaseSchema = cohortDatabaseSchema,
       tableName = cohortTable,
       data = cohort,
@@ -32,7 +32,7 @@ test_that("Testing time series logic", {
     
     timeSeries <-
       runCohortTimeSeriesDiagnostics(
-        connectionDetails = connectionDetails,
+        connection = connectionTimeSeries,
         tempEmulationSchema = tempEmulationSchema,
         cdmDatabaseSchema = cdmDatabaseSchema,
         cohortDatabaseSchema = cohortDatabaseSchema,
@@ -41,32 +41,7 @@ test_that("Testing time series logic", {
         runDataSourceTimeSeries = TRUE
       )
     
-    browser()
     
-    cohortRelationshipT1C10 <- cohortRelationship %>%
-      dplyr::filter(.data$cohortId == 1) %>%
-      dplyr::filter(.data$comparatorCohortId == 10)
-    
-    testthat::expect_equal(object = cohortRelationshipT1C10$subCsBeforeTs,
-                           expected = 1) # there is one subject in comparator that starts before target
-    
-    testthat::expect_equal(object = cohortRelationshipT1C10$subCsBeforeTe,
-                           expected = 1) # there is one subject in comparator that starts before target end
-    
-    testthat::expect_equal(object = cohortRelationshipT1C10$subCsAfterTs,
-                           expected = 1) # there is one subject in comparator that starts after target start
-    
-    testthat::expect_equal(object = cohortRelationshipT1C10$subCsAfterTs,
-                           expected = 1) # there is one subject in comparator that starts after target start
-    
-    testthat::expect_equal(object = cohortRelationshipT1C10$subCsOnTe,
-                           expected = 1) # there is one subject in comparator that starts on target end
-    
-    testthat::expect_equal(object = cohortRelationshipT1C10$subCsWindowT,
-                           expected = 1) # there is one subject in comparator that started within the window of Target cohort
-    
-    testthat::expect_equal(object = cohortRelationshipT1C10$subCeWindowT,
-                           expected = 1) # there is one subject in comparator that ended within the window of Target cohort
     
     
   })
