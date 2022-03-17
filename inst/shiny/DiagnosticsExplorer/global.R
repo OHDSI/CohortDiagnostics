@@ -9,8 +9,6 @@ source("R/Plots.R")
 source("R/Results.R")
 source("R/Annotation.R")
 
-authorizationBaseUrl <- "https://atlas-phenotype.ohdsi.org/WebAPI"
-
 appVersionNum <- "Version: 3.0.0"
 appInformationText <- paste("Powered by OHDSI Cohort Diagnostics application", paste0(appVersionNum, "."))
 appInformationText <- paste0(appInformationText,
@@ -18,12 +16,17 @@ appInformationText <- paste0(appInformationText,
                              lubridate::now(tzone = "EST"),
                              " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/")
 
+#### Set enableAnnotation to true to enable annotation in deployed apps
+#### Not reccomended outside of secure firewalled deployments
+enableAnnotation <- FALSE
+
 if (exists("shinySettings")) {
   writeLines("Using settings provided by user")
   connectionDetails <- shinySettings$connectionDetails
   dbms <- connectionDetails$dbms
   resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
   vocabularyDatabaseSchemas <- shinySettings$vocabularyDatabaseSchemas
+  enableAnnotation <- shinySettings$enableAnnotation
 } else if (file.exists(sqliteDbPath)){
   writeLines("Using data directory")
   sqliteDbPath <- normalizePath(sqliteDbPath)
@@ -96,8 +99,9 @@ resultsTablesOnServer <-
   tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
 
 showAnnotation <- FALSE
-if ("annotation" %in% resultsTablesOnServer &&
-    "annotation_link" %in% resultsTablesOnServer &&
+if (enableAnnotation &
+    "annotation" %in% resultsTablesOnServer &
+    "annotation_link" %in% resultsTablesOnServer &
     "annotation_attributes" %in% resultsTablesOnServer) {
   showAnnotation <- TRUE
 }

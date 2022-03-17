@@ -34,6 +34,9 @@
 #'                         Note: copying to clipboard will not work in a Shiny window.
 #' @param aboutText        Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 #'                         If not provided, no About tab will be shown.
+#' @param enableAnnotation (optional) Boolean - Enable users to annotate cohorts.
+#'                         Note, this is not reccomended outside of an organisational firewall.
+#'                         Default is to only use with an sqlite database.
 #'
 #' @details
 #' Launches a Shiny app that allows the user to explore the diagnostics
@@ -47,7 +50,8 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
                                       aboutText = NULL,
                                       runOverNetwork = FALSE,
                                       port = 80,
-                                      launch.browser = FALSE) {
+                                      launch.browser = FALSE,
+                                      enableAnnotation = is.null(connectionDetails)) {
 
   sqliteDbPath <- normalizePath(sqliteDbPath)
   if (is.null(connectionDetails)) {
@@ -58,6 +62,14 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     resultsDatabaseSchema <- "main"
     vocabularyDatabaseSchemas <- "main"
     connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
+  }
+
+  if (enableAnnotation) {
+    message("Starting application with annotations enabled")
+  }
+
+  if (connectionDetails$dbms != "sqlite" & enableAnnotation) {
+    warning("Enabling annotation is not currently recommended outside of sqlite databases")
   }
 
   if (is.null(resultsDatabaseSchema)) {
@@ -112,7 +124,8 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     connectionDetails = connectionDetails,
     resultsDatabaseSchema = resultsDatabaseSchema,
     vocabularyDatabaseSchemas = vocabularyDatabaseSchemas,
-    aboutText = aboutText
+    aboutText = aboutText,
+    enableAnnotation = enableAnnotation
   )
   .GlobalEnv$shinySettings <- shinySettings
   on.exit(rm("shinySettings", envir = .GlobalEnv))

@@ -51,12 +51,18 @@ choicesFordatabaseOrVocabularySchema <- list(
   'Reference Vocabulary' = vocabularyDatabaseSchemas
 )
 
-headerContent <- tags$li(
-  shiny::actionButton(inputId = "signInModelPopUp",
-                      label = "Sign In"),
-  class = "dropdown",
-  style = "margin-top: 8px !important; margin-right : 5px !important"
-)
+if (enableAnnotation) {
+  headerContent <- tags$li(
+    shiny::actionButton(inputId = "annotationUserPopUp",
+                        label = "Enable Annotation"),
+    class = "dropdown",
+    style = "margin-top: 8px !important; margin-right : 5px !important"
+  )
+} else {
+  headerContent <- tags$li(class = "dropdown",
+    style = "margin-top: 8px !important; margin-right : 5px !important"
+  )
+}
 
 header <-  
   shinydashboard::dashboardHeader(title = "Cohort Diagnostics", headerContent)

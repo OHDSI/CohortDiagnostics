@@ -119,6 +119,9 @@ postAnnotationResult <- function(dataSource,
                                  createdOn = getTimeAsInteger(),
                                  modifiedOn = NULL,
                                  deletedOn = NULL) {
+
+  # Prevent potential sql injection
+  annotation <- gsub("'", "`", annotation)
   sqlInsert <- "INSERT INTO @results_database_schema.annotation (
                                                           	annotation_id,
                                                           	created_by,

@@ -2766,69 +2766,50 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  #Sign in/Authentication ---------------------------------------------
+  #Annotation ---------------------------------------------
   activeLoggedInUser <- reactiveVal(NULL)
-  observeEvent(eventExpr = input$signInModelPopUp,
-               handlerExpr = {
-                 if (is.null(activeLoggedInUser())) {
-                   shiny::showModal(
-                     shiny::modalDialog(
-                       title = "Sign in",
-                       easyClose = TRUE,
-                       size = "s",
-                       footer =  tagList(
-                         shiny::modalButton("Cancel"),
-                         shiny::actionButton("signIn", "Sign in")
-                       ),
-                       tags$div(
-                         shiny::textInput(
-                           inputId = "userName",
-                           label = "User name",
-                           width = NULL
-                         ),
-                         shiny::passwordInput(
-                           inputId = "userPassword",
-                           label = "Password",
-                           width = NULL
-                         )
-                       )
-                     )
-                   )
-                 } else {
-                   activeLoggedInUser(NULL)
-                   shiny::updateActionButton(session = session,
-                                             inputId = "signInModelPopUp",
-                                             label = "Sign in")
-                 }
-               })
-  
-  shiny::observeEvent(eventExpr = input$signIn,
-                      handlerExpr = {
-                        tryCatch(
-                          expr = {
-                            ROhdsiWebApi::authorizeWebApi(
-                              baseUrl = authorizationBaseUrl,
-                              authMethod = "db",
-                              webApiUsername = input$userName,
-                              webApiPassword = input$userPassword
+
+  if (enableAnnotation) {
+    shiny::observeEvent(eventExpr = input$annotationUserPopUp,
+                        handlerExpr = {
+                          shiny::showModal(
+                            shiny::modalDialog(
+                              title = "Annotate",
+                              easyClose = TRUE,
+                              size = "s",
+                              footer = tagList(
+                                shiny::modalButton("Cancel"),
+                                shiny::actionButton("setUser", "Set User")
+                              ),
+                              tags$div(
+                                shiny::p("Annotation is wiki style - use name to set"),
+                                shiny::textInput(
+                                  inputId = "userName",
+                                  label = "User name",
+                                  width = NULL
+                                )
+                              )
                             )
-                            activeLoggedInUser(input$userName)
-                            shiny::removeModal()
-                            shiny::updateActionButton(session = session,
-                                                      inputId = "signInModelPopUp",
-                                                      label = "Sign out")
-                          },
-                          error = function() {
-                            activeLoggedInUser(NULL)
-                          }
-                        )
-                      })
-  
-  
+                          )
+
+                        })
+
+    shiny::observeEvent(eventExpr = input$setUser,
+                        handlerExpr = {
+                          tryCatch(
+                            expr = {
+                              activeLoggedInUser(input$userName)
+                              shiny::removeModal()
+                            },
+                            error = function() {
+                              activeLoggedInUser(NULL)
+                            }
+                          )
+                        })
   #Annotation Section ------------------------------------
   ## Annotation enabled ------
   output$postAnnotationEnabled <- shiny::reactive({
-    return(!is.null(activeLoggedInUser()))
+    return(!is.null(activeLoggedInUser()) & enableAnnotation)
   })
   shiny::outputOptions(x = output,
                        name = "postAnnotationEnabled",
@@ -2942,7 +2923,7 @@ shiny::shinyServer(function(input, output, session) {
                    reloadAnnotationSection(reloadAnnotationSection() + 1)
                  }
                })
-  
+  }
   # Infoboxes ------------------------------------------------------------------------
   showInfoBox <- function(title, htmlFileName) {
     shiny::showModal(shiny::modalDialog(
