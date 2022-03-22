@@ -78,7 +78,7 @@ checkFixColumnNames <-
            tableName,
            zipFileName,
            specifications = getResultsDataModelSpecifications()) {
-    if (tableName %in% c('cohort', 'phenotype_description', 
+    if (tableName %in% c('cohort', 'phenotype_description',
                          'covariate_value', 'temporal_covariate_value')) {
       table <- fixTableMetadataForBackwardCompatibility(table = table,
                                                         tableName = tableName)
@@ -110,6 +110,7 @@ checkFixColumnNames <-
         )
       )
     }
+
     sharedFields <- intersect(x = observeredNames,
                               y = tableSpecs$fieldName)
     table <- table %>%
@@ -362,7 +363,7 @@ uploadResults <- function(connectionDetails = NULL,
       if (purgeSiteDataBeforeUploading &&
           "database_id" %in% primaryKey) {
         env$primaryKeyValuesInDb <- NULL
-      } else {
+      } else if (length(primaryKey) > 0) {
         sql <- "SELECT DISTINCT @primary_key FROM @schema.@table_name;"
         sql <- SqlRender::render(
           sql = sql,
