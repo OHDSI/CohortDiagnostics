@@ -24,6 +24,7 @@ executeDiagnostics(
   runIncludedSourceConcepts = TRUE,
   runOrphanConcepts = TRUE,
   runTimeDistributions = TRUE,
+  runTimeSeries = TRUE,
   runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
@@ -95,6 +96,8 @@ diagnostics to.}
 \item{runOrphanConcepts}{Generate and export potential orphan concepts?}
 
 \item{runTimeDistributions}{Generate and export cohort time distributions?}
+
+\item{runTimeSeries}{Generate and export the time series diagnostics?}
 
 \item{runVisitContext}{Generate and export index-date visit context?}
 
