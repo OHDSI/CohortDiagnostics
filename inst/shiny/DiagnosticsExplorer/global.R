@@ -17,8 +17,27 @@ appInformationText <- paste0(appInformationText,
                              " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/")
 
 #### Set enableAnnotation to true to enable annotation in deployed apps
-#### Not reccomended outside of secure firewalled deployments
+#### Not recommended outside of secure firewalls deployments
 enableAnnotation <- FALSE
+enableAuthorization <- FALSE
+
+### if you need a way to authorize users
+### generate hash using code like digest::digest("diagnostics",algo = "sha512")
+### you can store them as a comma seperated array to object storedHash like below
+storedHash <- c("52e6000f483fe4602b3234f1a686d69f2ca3219fea796ae601a573451944d2d1b130b630ba18e7b1ac06928443bf89fa6ab49ded04245e6d9c9ea1956967e01e",
+                "4823cb731badf383a0b09cc09ac0c5904f315d256c66a7bbd5032efd2df39bc8eaf979333ed97f580c734b53965f2c2b57920239d78f8df031a0e198a8e5740c")
+
+if (enableAuthorization) {
+  if (!exists("storedHash") ||
+      length(storedHash) == 0 || storedHash == "") {
+    if (exists("storedHash")) {
+      rm("storedHash")
+    }
+    enableAuthorization <- FALSE
+  } else {
+    enableAuthorization <- TRUE
+  }
+}
 
 if (exists("shinySettings")) {
   writeLines("Using settings provided by user")
@@ -104,6 +123,10 @@ if (enableAnnotation &
     "annotation_link" %in% resultsTablesOnServer &
     "annotation_attributes" %in% resultsTablesOnServer) {
   showAnnotation <- TRUE
+} else {
+  enableAnnotation <- FALSE
+  showAnnotation <- FALSE
+  enableAuthorization <- FALSE
 }
 
 

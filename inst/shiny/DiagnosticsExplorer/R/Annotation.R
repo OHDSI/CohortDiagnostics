@@ -22,7 +22,7 @@ annotationFunction <- function(diagnosticsId) {
       width = NULL,
       collapsible = TRUE,
       collapsed = FALSE,
-      shiny::uiOutput(
+      reactable::reactableOutput(
         outputId = paste0("output", diagnosticsId),
         width = NULL
       ),
@@ -36,7 +36,7 @@ annotationFunction <- function(diagnosticsId) {
       shiny::conditionalPanel(
         condition = "output.postAnnotationEnabled == true",
         shinydashboard::box(
-          title = "Post Your Comment",
+          title = "Comments",
           width = NULL,
           collapsible = TRUE,
           collapsed = TRUE,
@@ -108,7 +108,6 @@ annotationFunction <- function(diagnosticsId) {
   )
 }
 
-
 postAnnotationResult <- function(dataSource,
                                  resultsDatabaseSchema,
                                  diagnosticsId,
@@ -154,7 +153,7 @@ postAnnotationResult <- function(dataSource,
       deleted_on = deletedOn
     )
   }, error = function(err) {
-    stop(err)
+    stop(paste("Error while posting the comment, \nDescription:", err))
   })
   
   # get annotation id
@@ -234,62 +233,4 @@ getAnnotationResult <- function(dataSource,
                annotationLink = annotationLink)
   
   return(data)
-}
-
-
-
-getAnnotationString <- function(dataSource,
-                                diagnosticsId,
-                                cohortIds,
-                                databaseIds,
-                                cohort) {
-  results <- getAnnotationResult(
-    dataSource = dataSource,
-    diagnosticsId = diagnosticsId,
-    cohortIds = cohortIds,
-    databaseIds = databaseIds
-  )
-  
-  if (nrow(results$annotation) == 0) {
-    return(NULL)
-  }
-  data <- results$annotation  %>%
-    dplyr::inner_join(
-      results$annotationLink %>%
-        dplyr::inner_join(
-          cohort %>%
-            dplyr::select(.data$cohortId,
-                          .data$cohortName),
-          by = "cohortId"
-        ) %>%
-        dplyr::group_by(.data$annotationId, .data$diagnosticsId) %>%
-        dplyr::summarise(
-          cohortName = paste(.data$cohortName, collapse = ";"),
-          databaseId = paste(.data$databaseId, collapse = ";")
-        ),
-      by = "annotationId"
-    )
-  
-  if (nrow(data) == 0) {
-    return(NULL)
-  }
-  
-  resultString <- ""
-  for (i in 1:nrow(data)) {
-    resultString <- paste(
-      resultString,
-      "<span>",
-      data[i,]$createdBy,
-      "@",
-      getTimeFromInteger(data[i,]$createdOn),
-      ":",
-      data[i,]$annotation,
-      "<br/><span style='font-size:10px;color:gray'><b>Related Cohorts : </b>",
-      data[i,]$cohortName,
-      "<br/><b>Related Databases : </b>",
-      data[i,]$databaseId,
-      "<br/></span></span><hr/>"
-    )
-  }
-  return(resultString)
 }
