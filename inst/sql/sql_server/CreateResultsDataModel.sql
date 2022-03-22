@@ -28,6 +28,7 @@
 {DEFAULT @temporal_covariate_value_dist = temporal_covariate_value_dist}
 {DEFAULT @temporal_time_ref = temporal_time_ref}
 {DEFAULT @time_distribution = time_distribution}
+{DEFAULT @time_series = time_series}
 {DEFAULT @visit_context = visit_context}
 {DEFAULT @vocabulary = vocabulary}
 
@@ -118,6 +119,9 @@ IF OBJECT_ID('@results_schema.@temporal_time_ref', 'U') IS NOT NULL
 
 IF OBJECT_ID('@results_schema.@time_distribution', 'U') IS NOT NULL
     DROP TABLE @results_schema.@time_distribution;
+
+IF OBJECT_ID('@results_schema.@time_series', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@time_series;
 
 IF OBJECT_ID('@results_schema.@visit_context', 'U') IS NOT NULL
     DROP TABLE @results_schema.@visit_context;
@@ -539,6 +543,26 @@ CREATE TABLE @results_schema.@time_distribution (
 			time_metric VARCHAR NOT NULL,
 			database_id VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, time_metric, database_id)
+);
+
+--Table time_series
+CREATE TABLE @results_schema.@time_series (
+			cohort_id BIGINT NOT NULL,
+			database_id VARCHAR NOT NULL,
+			period_begin DATE NOT NULL,
+			calendar_interval VARCHAR NOT NULL,
+			series_type VARCHAR NOT NULL,
+			records BIGINT NOT NULL,
+			subjects BIGINT NOT NULL,
+			person_days BIGINT NOT NULL,
+			person_days_in BIGINT NOT NULL,
+			records_start BIGINT,
+			subjects_start BIGINT,
+			subjects_start_in BIGINT,
+			records_end BIGINT,
+			subjects_end BIGINT,
+			subjects_end_in BIGINT,
+			PRIMARY KEY(cohort_id, database_id, period_begin, calendar_interval, series_type)
 );
 
 --Table visit_context

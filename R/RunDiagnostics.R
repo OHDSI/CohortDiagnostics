@@ -50,6 +50,7 @@
 #' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
 #' @param runOrphanConcepts           Generate and export potential orphan concepts?
 #' @param runTimeDistributions        Generate and export cohort time distributions?
+#' @param runTimeSeries               Generate and export the time series diagnostics?
 #' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
@@ -131,6 +132,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runIncludedSourceConcepts = TRUE,
                                runOrphanConcepts = TRUE,
                                runTimeDistributions = TRUE,
+                               runTimeSeries = TRUE,
                                runVisitContext = TRUE,
                                runBreakdownIndexEvents = TRUE,
                                runIncidenceRate = TRUE,
@@ -159,6 +161,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       runIncludedSourceConcepts = argumentsAtDiagnosticsInitiation$runIncludedSourceConcepts,
       runOrphanConcepts = argumentsAtDiagnosticsInitiation$runOrphanConcepts,
       runTimeDistributions = argumentsAtDiagnosticsInitiation$runTimeDistributions,
+      runTimeSeries = argumentsAtDiagnosticsInitiation$runTimeSeries,
       runVisitContext = argumentsAtDiagnosticsInitiation$runVisitContext,
       runBreakdownIndexEvents = argumentsAtDiagnosticsInitiation$runBreakdownIndexEvents,
       runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,
@@ -218,6 +221,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   checkmate::assertLogical(runIncludedSourceConcepts, add = errorMessage)
   checkmate::assertLogical(runOrphanConcepts, add = errorMessage)
   checkmate::assertLogical(runTimeDistributions, add = errorMessage)
+  checkmate::assertLogical(runTimeSeries, add = errorMessage)
   checkmate::assertLogical(runBreakdownIndexEvents, add = errorMessage)
   checkmate::assertLogical(runIncidenceRate, add = errorMessage)
   checkmate::assertLogical(runCohortOverlap, add = errorMessage)
@@ -507,6 +511,27 @@ executeDiagnostics <- function(cohortDefinitionSet,
       recordKeepingFile
     )
   }
+  
+  # Time series ----------------------------------------------------------------------
+  if (runTimeSeries) {
+    executeTimeSeriesDiagnostics(
+      connection = connection,
+      tempEmulationSchema = tempEmulationSchema,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      cohortDefinitionSet = cohortDefinitionSet,
+      cdmVersion = cdmVersion,
+      databaseId = databaseId,
+      exportFolder = exportFolder,
+      minCellCount = minCellCount,
+      instantiatedCohorts = instantiatedCohorts,
+      incremental = incremental,
+      recordKeepingFile = recordKeepingFile,
+      observationPeriodDateRange = observationPeriodDateRange
+    )
+  }
+  
 
   # Visit context ----------------------------------------------------------------------------
   if (runVisitContext) {
