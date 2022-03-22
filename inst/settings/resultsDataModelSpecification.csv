@@ -243,8 +243,8 @@ visit_context,visit_concept_id,int,Yes,Yes,No,Yes,No,No,No
 visit_context,visit_context,varchar,Yes,Yes,No,Yes,No,No,No
 visit_context,subjects,float,Yes,No,No,Yes,Yes,No,No
 visit_context,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-vocabulary,vocabulary_id,varchar(50),Yes,Yes,No,Yes,No,Yes,No
+vocabulary,vocabulary_id,varchar(50),Yes,No,No,Yes,No,Yes,No
 vocabulary,vocabulary_name,varchar(255),Yes,No,No,Yes,No,Yes,No
 vocabulary,vocabulary_reference,varchar,No,No,No,Yes,No,Yes,No
 vocabulary,vocabulary_version,varchar,No,No,No,Yes,No,Yes,No
-vocabulary,vocabulary_concept_id,int,Yes,Yes,No,Yes,No,Yes,No
+vocabulary,vocabulary_concept_id,int,Yes,No,No,Yes,No,Yes,No

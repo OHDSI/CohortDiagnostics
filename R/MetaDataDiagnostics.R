@@ -130,6 +130,8 @@ saveDatabaseMetaData <- function(databaseId,
                                  vocabularyVersion) {
   ParallelLogger::logInfo("Saving database metadata")
   startMetaData <- Sys.time()
+  vocabularyVersion <- paste(vocabularyVersion, collapse = ";")
+  vocabularyVersionCdm <- paste(vocabularyVersionCdm, collapse = ";")
   database <- dplyr::tibble(
     databaseId = databaseId,
     databaseName = dplyr::coalesce(databaseName, databaseId),
@@ -155,7 +157,7 @@ saveDatabaseMetaData <- function(databaseId,
 }
 
 getVocabularyVersion <- function(connection, vocabularyDatabaseSchema) {
-  DatabaseConnector::renderTranslateQuerySql(
+  vocabularyVersion <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "select * from @vocabulary_database_schema.vocabulary where vocabulary_id = 'None';",
     vocabulary_database_schema = vocabularyDatabaseSchema,
@@ -165,4 +167,7 @@ getVocabularyVersion <- function(connection, vocabularyDatabaseSchema) {
     dplyr::rename(vocabularyVersion = .data$vocabularyVersion) %>%
     dplyr::pull(.data$vocabularyVersion) %>%
     unique()
+
+  # Edge case where a CDM has more than a single entry
+  paste(vocabularyVersion, collapse = ";")
 }

@@ -31,6 +31,10 @@ this is experimental. Postgres and sqlite are the only backends recommended for 
 
 13. New diagnostics called time series diagnostics. Time series diagnostics takes as input a calendar period range, and in that calendar period range for calendar units (year, quarter, month) computes the incidence and prevalence of the cohort start and cohort end dates. 
 
+Bug fixes:
+
+1. 12. Added support for users to include non-standard columns in their CDM preventing crashes
+
 
 CohortDiagnostics 2.2.4
 =======================

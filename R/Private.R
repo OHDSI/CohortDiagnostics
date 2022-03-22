@@ -195,13 +195,17 @@ makeDataExportable <- function(x,
     )
   }
   
-  if (nrow(x) >  nrow(x %>% dplyr::select(dplyr::all_of(primaryKeyInDataModel)) %>% dplyr::distinct())) {
-    stop(
-      " - duplicates found in primary key for table ",
-      tableName,
-      ". The primary keys are: ",
-      paste0(primaryKeyInDataModel, collapse = ", ")
-    )
+  # check to see if there are primary key collision in tables that have this unique constraint
+  if (length(primaryKeyInDataModel) > 0) {
+    distinctRows <- x %>% dplyr::select(dplyr::all_of(primaryKeyInDataModel)) %>% dplyr::distinct() %>% nrow()
+    if (nrow(x) > distinctRows) {
+      stop(
+        " - duplicates found in primary key for table ",
+        tableName,
+        ". The primary keys are: ",
+        paste0(primaryKeyInDataModel, collapse = ", ")
+      )
+    }
   }
   ## because Andromeda is not handling date consistently -
   # https://github.com/OHDSI/Andromeda/issues/28
