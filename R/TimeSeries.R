@@ -137,20 +137,6 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1) %>%
     dplyr::mutate(calendarInterval = 'y')
   
-  # calendarWeek <- dplyr::tibble(periodBegin = clock::date_seq(from = (clock::year_month_weekday(year = cohortDateRange$minYear %>% as.integer(),
-  #                                                                                               month = clock::clock_months$january,
-  #                                                                                               day = clock::clock_weekdays$monday,
-  #                                                                                               index = 1) %>%
-  #                                                                       clock::as_date() %>%
-  #                                                                       clock::add_weeks(n = -1)),
-  #                                                             to = (clock::year_month_weekday(year = (cohortDateRange$maxYear  %>% as.integer()) + 1,
-  #                                                                                             month = clock::clock_months$january,
-  #                                                                                             day = clock::clock_weekdays$sunday,
-  #                                                                                             index = 1) %>%
-  #                                                                     clock::as_date()),
-  #                                                             by = clock::duration_weeks(n = 1))) %>%
-  #   dplyr::mutate(periodEnd = clock::add_days(x = .data$periodBegin, n = 6))
-  
   calendarPeriods <-
     dplyr::bind_rows(calendarMonth, calendarQuarter, calendarYear) %>%  #calendarWeek
     dplyr::distinct() %>%
@@ -284,34 +270,6 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         )
       )
     }
-    # commenting out time series 4/5/6 as it does not seem have value
-    # if (seriesToRun[[i]] == 'ComputeTimeSeries4.sql') {
-    #   ParallelLogger::logInfo(
-    #     paste0(
-    #       "  - (",
-    #       scales::percent(i / length(seriesToRun)),
-    #       ") Running cohort time series T4: subjects in the cohorts whose cohort period are embedded within calendar period."
-    #     )
-    #   )
-    # }
-    # if (seriesToRun[[i]] == 'ComputeTimeSeries5.sql') {
-    #   ParallelLogger::logInfo(
-    #     paste0(
-    #       "  - (",
-    #       scales::percent(i / length(seriesToRun)),
-    #       ") Running cohort time series T5: subjects in the cohorts whose observation period is embedded within calendar period."
-    #     )
-    #   )
-    # }
-    # if (seriesToRun[[i]] == 'ComputeTimeSeries6.sql') {
-    #   ParallelLogger::logInfo(
-    #     paste0(
-    #       "  - (",
-    #       scales::percent(i / length(seriesToRun)),
-    #       ") Running datasource time series T6: persons in the observation table whose observation period is embedded within calendar period."
-    #     )
-    #   )
-    # }
     
     seriesId <-  stringr::str_replace(string = seriesToRun[[i]],
                                       pattern = 'ComputeTimeSeries',
