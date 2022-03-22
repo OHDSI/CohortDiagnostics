@@ -29,6 +29,10 @@ this is experimental. Postgres and sqlite are the only backends recommended for 
 
 12. New diagnostics computes temporal relationship between any two cohorts. Temporal relationship are the same as temporalCovariateSettings. This diagnostics will be integerated into the temporal characterization output of diagnostics explorer, where cohorts will be covariates.
 
+Bug fixes:
+
+1. 12. Added support for users to include non-standard columns in their CDM preventing crashes
+
 CohortDiagnostics 2.2.4
 =======================
 
