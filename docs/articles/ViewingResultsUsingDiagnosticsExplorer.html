@@ -43,7 +43,7 @@
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -96,7 +96,7 @@
       <h1 data-toc-skip>Viewing results using Diagnostics Explorer</h1>
                         <h4 data-toc-skip class="author">Gowtham Rao</h4>
             
-            <h4 data-toc-skip class="date">2022-02-09</h4>
+            <h4 data-toc-skip class="date">2022-03-23</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd" class="external-link"><code>vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd</code></a></small>
       <div class="hidden name"><code>ViewingResultsUsingDiagnosticsExplorer.Rmd</code></div>
@@ -105,7 +105,6 @@
 
     
     
-<pre><code><span class="co">## Warning: package 'SqlRender' was built under R version 4.1.2</span></code></pre>
 <div class="section level2">
 <h2 id="viewing-the-diagnostics">Viewing the diagnostics<a class="anchor" aria-label="anchor" href="#viewing-the-diagnostics"></a>
 </h2>
@@ -127,10 +126,10 @@
 <h2 id="running-the-app-using-local-file-mode-sqlite-db-">Running the app using local file mode (Sqlite db).<a class="anchor" aria-label="anchor" href="#running-the-app-using-local-file-mode-sqlite-db-"></a>
 </h2>
 <p>Local mode is the most common mode to run the Shiny application. We recommend that you convert all the csv files that are the precomputed output of Cohort Diagnostics into an sqlite database file as follows</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/createMergedResultsFile.html">createMergedResultsFile</a></span><span class="op">(</span><span class="st">"C:/temp/allZipFiles"</span>, sqliteDbPath <span class="op">=</span> <span class="st">"MyCohortDiagnosticsResulst.sqlite"</span><span class="op">)</span></code></pre></div>
 <p>.RData files enables faster load of the Shiny application. Once you have converted your results data into an sqlite database file, you may launch the Diagnostics Explorer app as follows:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span><span class="op">(</span>sqliteDbPath <span class="op">=</span> <span class="st">"MyCohortDiagnosticsResulst.sqlite"</span><span class="op">)</span></code></pre></div>
 <p>If running the application from a R-studio environment, please make sure the sqlite file is in a folder called ‘data’.</p>
 </div>
