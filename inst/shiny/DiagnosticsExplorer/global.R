@@ -18,12 +18,12 @@ appInformationText <- paste0(appInformationText,
 
 #### Set enableAnnotation to true to enable annotation in deployed apps
 #### Not recommended outside of secure firewalls deployments
-enableAnnotation <- FALSE
-enableAuthorization <- FALSE
+enableAnnotation <- TRUE
+enableAuthorization <- TRUE
 
 ### if you need a way to authorize users
 ### generate hash using code like digest::digest("diagnostics",algo = "sha512")
-### you can store them as a comma seperated array to object storedHash like below
+### you can store them as a comma separated array to object storedHash like below
 storedHash <- c("52e6000f483fe4602b3234f1a686d69f2ca3219fea796ae601a573451944d2d1b130b630ba18e7b1ac06928443bf89fa6ab49ded04245e6d9c9ea1956967e01e",
                 "4823cb731badf383a0b09cc09ac0c5904f315d256c66a7bbd5032efd2df39bc8eaf979333ed97f580c734b53965f2c2b57920239d78f8df031a0e198a8e5740c")
 

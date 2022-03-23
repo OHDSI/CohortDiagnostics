@@ -53,9 +53,15 @@ choicesFordatabaseOrVocabularySchema <- list(
 
 if (enableAnnotation) {
   headerContent <- tags$li(
-    shinyjs::useShinyjs(),
-    shiny::actionButton(inputId = "annotationUserPopUp",
-                        label = "Enable Annotation"),
+    shiny::conditionalPanel(
+      "output.postAnnotationEnabled == false",
+      shiny::actionButton(inputId = "annotationUserPopUp",
+                          label = "Enable Annotation")
+    ),
+    shiny::conditionalPanel(
+      "output.postAnnotationEnabled == true",
+      shiny::uiOutput(outputId = "userNameLabel", style = "color:white;font-weight:bold;padding-right:30px")
+    ),
     class = "dropdown",
     style = "margin-top: 8px !important; margin-right : 5px !important"
   )

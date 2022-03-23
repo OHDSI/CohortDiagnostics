@@ -2788,13 +2788,14 @@ shiny::shinyServer(function(input, output, session) {
                                   width = NULL,
                                   value = "annonymous"
                                 ),
-                                shiny::passwordInput(
-                                  inputId = "password",
-                                  label = "Local Password",
-                                  width = NULL, 
-                                  value = "none"
-                                ),
-                                
+                                if (enableAuthorization) {
+                                  shiny::passwordInput(
+                                    inputId = "password",
+                                    label = "Local Password",
+                                    width = NULL, 
+                                    value = "none"
+                                  )
+                                }, 
                               )
                             )
                           )
@@ -2805,35 +2806,48 @@ shiny::shinyServer(function(input, output, session) {
                         handlerExpr = {
                           tryCatch(
                             expr = {
-                              if (input$userName == "" || input$password == "") {
-                                activeLoggedInUser(NULL)
-                                shiny::showModal(
-                                  shiny::modalDialog(
-                                    title = "Error",
-                                    easyClose = TRUE,
-                                    size = "s",
-                                    fade = TRUE,
-                                    "Please enter both the fields"
-                                  )
-                                )
-                              } else {
-                                if (enableAuthorization == TRUE) {
-                                  passwordHash <- digest::digest(input$password, algo = "sha512")
-                                  if (passwordHash %in% storedHash) {
-                                    activeLoggedInUser(input$userName)
-                                    shiny::removeModal()
-                                  } else {
-                                    activeLoggedInUser(NULL)
-                                    shiny::showModal(
-                                      shiny::modalDialog(
-                                        title = "Error",
-                                        easyClose = TRUE,
-                                        size = "s",
-                                        fade = TRUE,
-                                        "Invalid User"
-                                      )
+                              if (enableAuthorization == TRUE) {
+                                if (input$userName == "" || input$password == "") {
+                                  activeLoggedInUser(NULL)
+                                  shiny::showModal(
+                                    shiny::modalDialog(
+                                      title = "Error",
+                                      easyClose = TRUE,
+                                      size = "s",
+                                      fade = TRUE,
+                                      "Please enter both the fields"
                                     )
-                                  }
+                                  )
+                                }
+                                passwordHash <-
+                                  digest::digest(input$password, algo = "sha512")
+                                if (passwordHash %in% storedHash) {
+                                  activeLoggedInUser(input$userName)
+                                  shiny::removeModal()
+                                } else {
+                                  activeLoggedInUser(NULL)
+                                  shiny::showModal(
+                                    shiny::modalDialog(
+                                      title = "Error",
+                                      easyClose = TRUE,
+                                      size = "s",
+                                      fade = TRUE,
+                                      "Invalid User"
+                                    )
+                                  )
+                                }
+                              } else {
+                                if (input$userName == "") {
+                                  activeLoggedInUser(NULL)
+                                  shiny::showModal(
+                                    shiny::modalDialog(
+                                      title = "Error",
+                                      easyClose = TRUE,
+                                      size = "s",
+                                      fade = TRUE,
+                                      "Please enter the user name."
+                                    )
+                                  )
                                 } else {
                                   activeLoggedInUser(input$userName)
                                   shiny::removeModal()
@@ -2846,6 +2860,16 @@ shiny::shinyServer(function(input, output, session) {
                           )
                         })
     
+    output$userNameLabel <- shiny::renderText({
+      return(ifelse(
+        is.null(activeLoggedInUser()),
+        "",
+        paste(
+          as.character(icon("user-circle")),
+          stringr::str_to_title(activeLoggedInUser())
+        )
+      ))
+    })
     
     #Annotation Section ------------------------------------
     ## Annotation enabled ------
@@ -2895,6 +2919,7 @@ shiny::shinyServer(function(input, output, session) {
           markdownInput::moduleMarkdownInput,
           paste0("annotation", input$tabs)
         ))
+        
         output[[paste0("output", input$tabs)]] <-
           reactable::renderReactable({
             results <- getAnnotationReactive()
