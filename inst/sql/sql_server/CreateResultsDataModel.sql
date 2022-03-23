@@ -148,11 +148,8 @@ CREATE TABLE @results_schema.@analysis_ref (
 --Table cohort
 
 CREATE TABLE @results_schema.@cohort (
-			phenotype_id BIGINT,
 			cohort_id BIGINT NOT NULL,
-			atlas_id BIGINT NOT NULL,
 			cohort_name VARCHAR(255) NOT NULL,
-			logic_description VARCHAR,
 			metadata VARCHAR,
 			sql VARCHAR NOT NULL,
 			json VARCHAR NOT NULL,

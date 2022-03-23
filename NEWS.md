@@ -27,13 +27,13 @@ this is experimental. Postgres and sqlite are the only backends recommended for 
 
 11. Additional checks to the output of cohort diagnostics to ensure it conforms to its own results data model. The new function (internal) is makeDataExportable. Results data model csv file has been enhanced with new fields, including a field to specify if the value is to be subjected to privacy protection (i.e. min cell count, eg. person count). Note a bug was discovered in the orphan concepts and included source concepts that was leading to duplication of row records by primary key. This bug has been fixed by calculating its max value grouped by primary keys. It will be fixed in another commit.
 
-12. New diagnostics computes temporal relationship between any two cohorts. Temporal relationship are the same as temporalCovariateSettings. This diagnostics will be integerated into the temporal characterization output of diagnostics explorer, where cohorts will be covariates.
+12. New optional diagnostics computes temporal relationship between any two cohorts. The settings for the temporal relationship between cohorts defaults to be the same as temporalCovariateSettings. This diagnostics will be integrated into the characterization output of diagnostics explorer, where cohorts will be covariates.
 
-13. New diagnostics called time series diagnostics. Time series diagnostics takes as input a calendar period range, and in that calendar period range for calendar units (year, quarter, month) computes the incidence and prevalence of the cohort start and cohort end dates. 
+13. New optional diagnostics called time series diagnostics. Time series diagnostics takes as input a calendar period range, and in that calendar period range for calendar units (year, quarter, month) computes the approximate new occurrence (approximates incidence) and observations (approximates prevalence) of the cohort start and cohort end dates during the calendar period. 
 
 Bug fixes:
 
-1. 12. Added support for users to include non-standard columns in their CDM preventing crashes
+1. Added support for users to include non-standard columns in their CDM preventing crashes
 
 
 CohortDiagnostics 2.2.4

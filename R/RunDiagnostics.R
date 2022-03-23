@@ -132,12 +132,12 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runIncludedSourceConcepts = TRUE,
                                runOrphanConcepts = TRUE,
                                runTimeDistributions = TRUE,
-                               runTimeSeries = TRUE,
+                               runTimeSeries = FALSE,
                                runVisitContext = TRUE,
                                runBreakdownIndexEvents = TRUE,
                                runIncidenceRate = TRUE,
                                runCohortOverlap = TRUE,
-                               runCohortRelationship = TRUE,
+                               runCohortRelationship = FALSE,
                                runCohortCharacterization = TRUE,
                                covariateSettings = createDefaultCovariateSettings(),
                                runTemporalCohortCharacterization = TRUE,
@@ -212,7 +212,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
                          must.include = c("json",
                                           "cohortId",
                                           "cohortName",
-                                          "logicDescription",
                                           "sql"),
                          add = errorMessage)
 
@@ -278,17 +277,13 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
 
   checkmate::reportAssertions(collection = errorMessage)
-
+browser()
   if (!is.null(cohortIds)) {
     cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
 
   if (nrow(cohortDefinitionSet) == 0) {
     stop("No cohorts specified")
-  }
-  if ('name' %in% colnames(cohortDefinitionSet)) {
-    cohortDefinitionSet <- cohortDefinitionSet %>%
-      dplyr::select(-.data$name)
   }
   cohortTableColumnNamesObserved <- colnames(cohortDefinitionSet) %>%
     sort()
@@ -322,42 +317,13 @@ executeDiagnostics <- function(cohortDefinitionSet,
     ))
   }
 
-  if ('logicDescription' %in% expectedButNotObsevered) {
-    cohortDefinitionSet$logicDescription <- cohortDefinitionSet$cohortName
-  }
-  if ('metadata' %in% expectedButNotObsevered) {
-    if (length(obseveredButNotExpected) > 0) {
-      writeLines(
-        paste(
-          "The following columns were observed in the cohort table, \n
-        that are not expected and will be available as part of json object \n
-        in a newly created 'metadata' column.",
-          paste0(obseveredButNotExpected, collapse = ", ")
-        )
-      )
-    }
-    columnsToAddToJson <-
-      setdiff(x = cohortTableColumnNamesObserved,
-              y = c('json', 'sql')) %>%
-        unique() %>%
-        sort()
-    cohortDefinitionSet <- cohortDefinitionSet %>%
-      dplyr::mutate(metadata = as.list(columnsToAddToJson) %>% RJSONIO::toJSON(digits = 23))
-  } else {
-    if (length(obseveredButNotExpected) > 0) {
-      writeLines(
-        paste(
-          "The following columns were observed in the cohort table, \n
-          that are not expected. If you would like to retain them please \n
-          them as JSON objects in the 'metadata' column.",
-          paste0(obseveredButNotExpected, collapse = ", ")
-        )
-      )
-      stop(paste0(
-        "Terminating - please update the metadata column to include: ",
+  if (length(obseveredButNotExpected) > 0) {
+    ParallelLogger::logInfo(
+      paste(
+        "The following fields in cohortDefinitionSet are stored in output table cohort \n in the field metadata as a JSON object.",
         paste0(obseveredButNotExpected, collapse = ", ")
-      ))
-    }
+      )
+    )
   }
   
   cohortDefinitionSet <- makeDataExportable(

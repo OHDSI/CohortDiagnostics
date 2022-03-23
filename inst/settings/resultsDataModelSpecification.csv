@@ -7,9 +7,7 @@ analysis_ref,end_day,float,No,No,No,Yes,No,No,No
 analysis_ref,is_binary,varchar(1),Yes,No,No,Yes,No,No,No
 analysis_ref,missing_means_zero,varchar(1),No,No,No,Yes,No,No,No
 cohort,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-cohort,atlas_id,bigint,No,No,Yes,Yes,No,No,No
 cohort,cohort_name,varchar,Yes,No,No,Yes,No,No,No
-cohort,logic_description,varchar,No,No,Yes,Yes,No,No,No
 cohort,metadata,varchar,No,No,Yes,Yes,No,No,No
 cohort,sql,varchar,Yes,No,No,Yes,No,No,No
 cohort,json,varchar,Yes,No,No,Yes,No,No,No
