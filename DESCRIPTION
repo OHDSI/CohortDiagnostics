@@ -33,12 +33,34 @@ Imports:
   tidyr (>= 1.2.0),
   CohortGenerator (>= 0.4.0)
 Suggests:
+  CirceR,
+  DT,
+  Eunomia,
+  ggiraph,
+  ggplot2,
+  htmltools,
+  knitr,
+  lubridate,
+  pool,
+  plotly,
+  purrr,
+  RColorBrewer,
+  remotes,
+  rmarkdown,
+  ROhdsiWebApi (>= 1.2.0),
   RSQLite (>= 2.2.1),
+  scales,
+  shiny,
+  shinydashboard,
+  shinyWidgets,
   testthat,
   withr,
   zip
 Remotes:
+  ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
+  ohdsi/ROhdsiWebApi,
+  ohdsi/CirceR,
   ohdsi/CohortGenerator
 License: Apache License
 VignetteBuilder: knitr
