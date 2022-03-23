@@ -42,7 +42,7 @@ takepackageDependencySnapshot <- function() {
     function(package,
              recursive = TRUE,
              level = 0) {
-      description <- packageDescription(package)
+      description <- utils::packageDescription(package)
       packages <- splitPackageList(description$Depends)
       packages <- c(packages, splitPackageList(description$Imports))
       packages <-
@@ -78,7 +78,7 @@ takepackageDependencySnapshot <- function() {
     fetchDependencies("CohortDiagnostics", recursive = TRUE)
   packages <- packages[order(-packages$level), ]
   getVersion <- function(package) {
-    return(packageDescription(package)$Version)
+    return(utils::packageDescription(package)$Version)
   }
   versions <-
     sapply(c(packages$name, "CohortDiagnostics"), getVersion)
@@ -87,7 +87,7 @@ takepackageDependencySnapshot <- function() {
     version = as.vector(versions),
     stringsAsFactors = FALSE
   )
-  s <- sessionInfo()
+  s <- utils::sessionInfo()
   rVersion <- data.frame(
     package = "R",
     version = paste(s$R.version$major, s$R.version$minor, sep = "."),
