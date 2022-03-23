@@ -199,7 +199,8 @@ getIndexEventBreakdown <- function(dataSource,
               concept.concept_name,
               concept.domain_id,
               concept.vocabulary_id,
-              concept.standard_concept
+              concept.standard_concept,
+              concept.concept_code
             FROM  @results_database_schema.index_event_breakdown
             INNER JOIN  @vocabulary_database_schema.concept
               ON index_event_breakdown.concept_id = concept.concept_id

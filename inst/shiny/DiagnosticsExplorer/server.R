@@ -1667,6 +1667,7 @@ shiny::shinyServer(function(input, output, session) {
         .data$domainField,
         .data$databaseId,
         .data$vocabularyId,
+        .data$conceptCode,
         .data$conceptCount,
         .data$subjectCount
       ) %>%
@@ -1679,7 +1680,7 @@ shiny::shinyServer(function(input, output, session) {
       ))))
     
     keyColumnFields <-
-      c("conceptId", "conceptName", "domainField", "vocabularyId")
+      c("conceptId", "conceptName", "conceptCode", "domainField", "vocabularyId")
     if (input$indexEventBreakdownTableFilter == "Persons") {
       dataColumnFields <- c("persons")
       countLocation <- 1
@@ -1703,8 +1704,6 @@ shiny::shinyServer(function(input, output, session) {
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)
-    
-    
     
     showDataAsPercent <- FALSE
     ## showDataAsPercent set based on UI selection - proportion
