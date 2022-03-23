@@ -303,7 +303,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
 
   checkmate::reportAssertions(collection = errorMessage)
-  browser()
   if (!is.null(cohortIds)) {
     cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
