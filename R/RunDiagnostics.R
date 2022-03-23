@@ -79,19 +79,23 @@
 #' # Load cohorts (assumes that they have already been instantiated)
 #' cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort")
 #' cohorts <- CohortGenerator::getCohortDefinitionSet(packageName = "MyGreatPackage")
-#' connectionDetails <- createConnectionDetails(dbms = "postgresql",
-#'                                              server = "ohdsi.com",
-#'                                              port = 5432,
-#'                                              user = "me",
-#'                                              password = "secure")
+#' connectionDetails <- createConnectionDetails(
+#'   dbms = "postgresql",
+#'   server = "ohdsi.com",
+#'   port = 5432,
+#'   user = "me",
+#'   password = "secure"
+#' )
 #'
-#' executeDiagnostics(cohorts = cohorts,
-#'                    exportFolder = "export",
-#'                    cohortTableNames = cohortTableNames,
-#'                    cohortDatabaseSchema = "results",
-#'                    cdmDatabaseSchema = "cdm",
-#'                    databaseId = "mySpecialCdm",
-#'                    connectionDetails = connectionDetails)
+#' executeDiagnostics(
+#'   cohorts = cohorts,
+#'   exportFolder = "export",
+#'   cohortTableNames = cohortTableNames,
+#'   cohortDatabaseSchema = "results",
+#'   cdmDatabaseSchema = "cdm",
+#'   databaseId = "mySpecialCdm",
+#'   connectionDetails = connectionDetails
+#' )
 #'
 #' # Use a custom set of cohorts defined in a data.frame
 #' cohorts <- data.frame(
@@ -101,13 +105,15 @@
 #'   sql = c(readLines("path_to.sql")),
 #'   json = c(readLines("path_to.json"))
 #' )
-#' executeDiagnostics(cohorts = cohorts,
-#'                    exportFolder = "export",
-#'                    cohortTable = "cohort",
-#'                    cohortDatabaseSchema = "results",
-#'                    cdmDatabaseSchema = "cdm",
-#'                    databaseId = "mySpecialCdm",
-#'                    connectionDetails = connectionDetails)
+#' executeDiagnostics(
+#'   cohorts = cohorts,
+#'   exportFolder = "export",
+#'   cohortTable = "cohort",
+#'   cohortDatabaseSchema = "results",
+#'   cdmDatabaseSchema = "cdm",
+#'   databaseId = "mySpecialCdm",
+#'   connectionDetails = connectionDetails
+#' )
 #' }
 #'
 #' @importFrom CohortGenerator getCohortTableNames
@@ -190,30 +196,36 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   if (any(is.null(databaseName), is.na(databaseName))) {
     databaseName <- databaseId
-    ParallelLogger::logTrace(' - Databasename was not provided.')
+    ParallelLogger::logTrace(" - Databasename was not provided.")
   }
   if (any(is.null(databaseDescription), is.na(databaseDescription))) {
     databaseDescription <- databaseId
-    ParallelLogger::logTrace(' - Databasedescription was not provided.')
+    ParallelLogger::logTrace(" - Databasedescription was not provided.")
   }
 
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertList(cohortTableNames, null.ok = FALSE, types = "character", add = errorMessage, names = "named")
   checkmate::assertNames(names(cohortTableNames),
-                         must.include = c("cohortTable",
-                                          "cohortInclusionTable",
-                                          "cohortInclusionResultTable",
-                                          "cohortInclusionStatsTable",
-                                          "cohortSummaryStatsTable",
-                                          "cohortCensorStatsTable"),
-                         add = errorMessage)
+    must.include = c(
+      "cohortTable",
+      "cohortInclusionTable",
+      "cohortInclusionResultTable",
+      "cohortInclusionStatsTable",
+      "cohortSummaryStatsTable",
+      "cohortCensorStatsTable"
+    ),
+    add = errorMessage
+  )
   checkmate::assertDataFrame(cohortDefinitionSet, add = errorMessage)
   checkmate::assertNames(names(cohortDefinitionSet),
-                         must.include = c("json",
-                                          "cohortId",
-                                          "cohortName",
-                                          "sql"),
-                         add = errorMessage)
+    must.include = c(
+      "json",
+      "cohortId",
+      "cohortName",
+      "sql"
+    ),
+    add = errorMessage
+  )
 
   cohortTable <- cohortTableNames$cohortTable
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
@@ -247,37 +259,51 @@ executeDiagnostics <- function(cohortDefinitionSet,
     runCohortOverlap,
     runCohortCharacterization
   )) {
-    checkmate::assertCharacter(x = cdmDatabaseSchema,
-                               min.len = 1,
-                               add = errorMessage)
-    checkmate::assertCharacter(x = vocabularyDatabaseSchema,
-                               min.len = 1,
-                               add = errorMessage)
-    checkmate::assertCharacter(x = cohortDatabaseSchema,
-                               min.len = 1,
-                               add = errorMessage)
-    checkmate::assertCharacter(x = cohortTable,
-                               min.len = 1,
-                               add = errorMessage)
-    checkmate::assertCharacter(x = databaseId,
-                               min.len = 1,
-                               add = errorMessage)
+    checkmate::assertCharacter(
+      x = cdmDatabaseSchema,
+      min.len = 1,
+      add = errorMessage
+    )
+    checkmate::assertCharacter(
+      x = vocabularyDatabaseSchema,
+      min.len = 1,
+      add = errorMessage
+    )
+    checkmate::assertCharacter(
+      x = cohortDatabaseSchema,
+      min.len = 1,
+      add = errorMessage
+    )
+    checkmate::assertCharacter(
+      x = cohortTable,
+      min.len = 1,
+      add = errorMessage
+    )
+    checkmate::assertCharacter(
+      x = databaseId,
+      min.len = 1,
+      add = errorMessage
+    )
   }
   checkmate::reportAssertions(collection = errorMessage)
 
   errorMessage <-
-    createIfNotExist(type = "folder",
-                     name = exportFolder,
-                     errorMessage = errorMessage)
+    createIfNotExist(
+      type = "folder",
+      name = exportFolder,
+      errorMessage = errorMessage
+    )
   if (incremental) {
     errorMessage <-
-      createIfNotExist(type = "folder",
-                       name = incrementalFolder,
-                       errorMessage = errorMessage)
+      createIfNotExist(
+        type = "folder",
+        name = incrementalFolder,
+        errorMessage = errorMessage
+      )
   }
 
   checkmate::reportAssertions(collection = errorMessage)
-browser()
+  browser()
   if (!is.null(cohortIds)) {
     cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
@@ -289,17 +315,17 @@ browser()
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
-      dplyr::filter(.data$tableName == 'cohort') %>%
-      dplyr::pull(.data$fieldName) %>%
-      SqlRender::snakeCaseToCamelCase() %>%
-      sort()
+    dplyr::filter(.data$tableName == "cohort") %>%
+    dplyr::pull(.data$fieldName) %>%
+    SqlRender::snakeCaseToCamelCase() %>%
+    sort()
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
-      dplyr::filter(.data$tableName == 'cohort') %>%
-      dplyr::filter(.data$isRequired == 'Yes') %>%
-      dplyr::pull(.data$fieldName) %>%
-      SqlRender::snakeCaseToCamelCase() %>%
-      sort()
+    dplyr::filter(.data$tableName == "cohort") %>%
+    dplyr::filter(.data$isRequired == "Yes") %>%
+    dplyr::pull(.data$fieldName) %>%
+    SqlRender::snakeCaseToCamelCase() %>%
+    sort()
 
   expectedButNotObsevered <-
     setdiff(x = cohortTableColumnNamesExpected, y = cohortTableColumnNamesObserved)
@@ -325,7 +351,7 @@ browser()
       )
     )
   }
-  
+
   cohortDefinitionSet <- makeDataExportable(
     x = cohortDefinitionSet,
     tableName = "cohort",
@@ -333,8 +359,10 @@ browser()
     databaseId = NULL
   )
 
-  writeToCsv(data = cohortDefinitionSet,
-             fileName = file.path(exportFolder, "cohort.csv"))
+  writeToCsv(
+    data = cohortDefinitionSet,
+    fileName = file.path(exportFolder, "cohort.csv")
+  )
 
   # Set up connection to server ----------------------------------------------------
   if (is.null(connection)) {
@@ -348,8 +376,10 @@ browser()
 
   ## CDM source information----
   cdmSourceInformation <-
-    getCdmDataSourceInformation(connection = connection,
-                                cdmDatabaseSchema = cdmDatabaseSchema)
+    getCdmDataSourceInformation(
+      connection = connection,
+      cdmDatabaseSchema = cdmDatabaseSchema
+    )
 
   vocabularyVersion <- getVocabularyVersion(connection, vocabularyDatabaseSchema)
 
@@ -381,24 +411,28 @@ browser()
   )
 
   # Database metadata ---------------------------------------------
-  saveDatabaseMetaData(databaseId,
-                       databaseName,
-                       databaseDescription,
-                       exportFolder,
-                       minCellCount,
-                       cdmSourceInformation$vocabularyVersion,
-                       vocabularyVersion)
+  saveDatabaseMetaData(
+    databaseId,
+    databaseName,
+    databaseDescription,
+    exportFolder,
+    minCellCount,
+    cdmSourceInformation$vocabularyVersion,
+    vocabularyVersion
+  )
   # Create concept table ------------------------------------------
   createConceptTable(connection, tempEmulationSchema, cohortDefinitionSet)
 
   # Counting cohorts -----------------------------------------------------------------------
-  cohortCounts <- computeCohortCounts(connection,
-                                      cohortDatabaseSchema,
-                                      cohortTable,
-                                      cohortDefinitionSet,
-                                      exportFolder,
-                                      minCellCount,
-                                      databaseId)
+  cohortCounts <- computeCohortCounts(
+    connection,
+    cohortDatabaseSchema,
+    cohortTable,
+    cohortDefinitionSet,
+    exportFolder,
+    minCellCount,
+    databaseId
+  )
 
   if (nrow(cohortCounts) > 0) {
     instantiatedCohorts <- cohortCounts %>%
@@ -419,16 +453,18 @@ browser()
 
   # Inclusion statistics -----------------------------------------------------------------------
   if (runInclusionStatistics) {
-    getInclusionStats(connection,
-                      exportFolder,
-                      databaseId,
-                      cohortDefinitionSet,
-                      cohortDatabaseSchema,
-                      cohortTableNames,
-                      incremental,
-                      instantiatedCohorts,
-                      minCellCount,
-                      recordKeepingFile)
+    getInclusionStats(
+      connection,
+      exportFolder,
+      databaseId,
+      cohortDefinitionSet,
+      cohortDatabaseSchema,
+      cohortTableNames,
+      incremental,
+      instantiatedCohorts,
+      minCellCount,
+      recordKeepingFile
+    )
   }
 
   # Concept set diagnostics -----------------------------------------------
@@ -477,7 +513,7 @@ browser()
       recordKeepingFile
     )
   }
-  
+
   # Time series ----------------------------------------------------------------------
   if (runTimeSeries) {
     executeTimeSeriesDiagnostics(
@@ -497,7 +533,7 @@ browser()
       observationPeriodDateRange = observationPeriodDateRange
     )
   }
-  
+
 
   # Visit context ----------------------------------------------------------------------------
   if (runVisitContext) {
@@ -649,106 +685,106 @@ browser()
   packageVersion <- if (!methods::getPackageName() == ".GlobalEnv") {
     as.character(utils::packageVersion(packageName))
   } else {
-    ''
+    ""
   }
   delta <- Sys.time() - start
   variableField <- c(
     "timeZone",
-    #1
+    # 1
     "runTime",
-    #2
+    # 2
     "runTimeUnits",
-    #3
+    # 3
     "packageDependencySnapShotJson",
-    #4
+    # 4
     "argumentsAtDiagnosticsInitiationJson",
-    #5
+    # 5
     "rversion",
-    #6
+    # 6
     "currentPackage",
-    #7
+    # 7
     "currentPackageVersion",
-    #8
+    # 8
     "sourceDescription",
-    #9
+    # 9
     "cdmSourceName",
-    #10
+    # 10
     "sourceReleaseDate",
-    #11
+    # 11
     "cdmVersion",
-    #12
+    # 12
     "cdmReleaseDate",
-    #13
+    # 13
     "vocabularyVersion",
-    #14
+    # 14
     "datasourceName",
-    #15
+    # 15
     "datasourceDescription",
-    #16
+    # 16
     "vocabularyVersionCdm",
-    #17
+    # 17
     "observationPeriodMinDate",
-    #18
+    # 18
     "observationPeriodMaxDate",
-    #19
+    # 19
     "personsInDatasource",
-    #20
+    # 20
     "recordsInDatasource",
-    #21
-    "personDaysInDatasource" #22
+    # 21
+    "personDaysInDatasource" # 22
   )
-  valueField <-   c(
+  valueField <- c(
     as.character(Sys.timezone()),
-    #1
+    # 1
     as.character(as.numeric(
       x = delta, units = attr(delta, "units")
     )),
-    #2
+    # 2
     as.character(attr(delta, "units")),
-    #3
+    # 3
     packageDependencySnapShotJson,
-    #4
+    # 4
     argumentsAtDiagnosticsInitiationJson,
-    #5
+    # 5
     as.character(R.Version()$version.string),
-    #6
+    # 6
     as.character(nullToEmpty(packageName)),
-    #7
+    # 7
     as.character(nullToEmpty(packageVersion)),
-    #8
+    # 8
     as.character(nullToEmpty(
       cdmSourceInformation$sourceDescription
     )),
-    #9
+    # 9
     as.character(nullToEmpty(cdmSourceInformation$cdmSourceName)),
-    #10
+    # 10
     as.character(nullToEmpty(
       cdmSourceInformation$sourceReleaseDate
     )),
-    #11
+    # 11
     as.character(nullToEmpty(cdmSourceInformation$cdmVersion)),
-    #12
+    # 12
     as.character(nullToEmpty(cdmSourceInformation$cdmReleaseDate)),
-    #13
+    # 13
     as.character(nullToEmpty(
       cdmSourceInformation$vocabularyVersion
     )),
-    #14
+    # 14
     as.character(databaseName),
-    #15
+    # 15
     as.character(databaseDescription),
-    #16
+    # 16
     as.character(nullToEmpty(cdmSourceInformation$vocabularyVersion)),
-    #17
+    # 17
     as.character(observationPeriodDateRange$observationPeriodMinDate),
-    #18
+    # 18
     as.character(observationPeriodDateRange$observationPeriodMaxDate),
-    #19
+    # 19
     as.character(observationPeriodDateRange$persons),
-    #20
+    # 20
     as.character(observationPeriodDateRange$records),
-    #21
-    as.character(observationPeriodDateRange$personDays) #22
+    # 21
+    as.character(observationPeriodDateRange$personDays) # 22
   )
   metadata <- dplyr::tibble(
     databaseId = as.character(!!databaseId),
@@ -771,10 +807,12 @@ browser()
 
   # Add all to zip file -------------------------------------------------------------------------------
   writeResultsZip(exportFolder, databaseId)
-  ParallelLogger::logInfo("Computing all diagnostics took ",
-                          signif(delta, 3),
-                          " ",
-                          attr(delta, "units"))
+  ParallelLogger::logInfo(
+    "Computing all diagnostics took ",
+    signif(delta, 3),
+    " ",
+    attr(delta, "units")
+  )
 }
 
 

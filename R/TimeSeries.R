@@ -59,26 +59,26 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                                            cohortTable = "cohort",
                                            runCohortTimeSeries = TRUE,
                                            runDataSourceTimeSeries = TRUE,
-                                           timeSeriesMinDate = as.Date('1980-01-01'),
+                                           timeSeriesMinDate = as.Date("1980-01-01"),
                                            timeSeriesMaxDate = as.Date(Sys.Date()),
                                            cohortIds = NULL) {
-  if (all(!runCohortTimeSeries,!runDataSourceTimeSeries)) {
+  if (all(!runCohortTimeSeries, !runDataSourceTimeSeries)) {
     warning(
-      ' - Both Cohort Time Series and Data Source Time Series are set to FALSE. Exiting time series diagnostics.'
+      " - Both Cohort Time Series and Data Source Time Series are set to FALSE. Exiting time series diagnostics."
     )
     return(NULL)
   }
   start <- Sys.time()
-  
+
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
   ParallelLogger::logTrace(" - Creating Andromeda object to collect results")
   resultsInAndromeda <- Andromeda::andromeda()
-  
+
   sqlCount <-
-    " SELECT cohort_definition_id, COUNT(*) count 
+    " SELECT cohort_definition_id, COUNT(*) count
       FROM @cohort_database_schema.@cohort_table
       {@cohort_ids != ''} ? { where cohort_definition_id IN (@cohort_ids)}
       GROUP BY cohort_definition_id;"
@@ -93,17 +93,19 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     warning("Please check if cohorts are instantiated. Exiting cohort time series.")
     return(NULL)
   }
-  
+
   ## Calendar period----
   ParallelLogger::logTrace(" - Preparing calendar table for time series computation.")
   # note calendar span is created based on all dates in observation period table,
   # with 1980 cut off/left censor (arbitrary choice)
   minYear <-
-    (max(clock::get_year(timeSeriesMinDate),
-         1980) %>% as.integer())
+    (max(
+      clock::get_year(timeSeriesMinDate),
+      1980
+    ) %>% as.integer())
   maxYear <-
     clock::get_year(timeSeriesMaxDate) %>% as.integer()
-  
+
   calendarQuarter <-
     dplyr::tibble(
       periodBegin = clock::date_seq(
@@ -113,8 +115,8 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       )
     ) %>%
     dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 3) - 1) %>%
-    dplyr::mutate(calendarInterval = 'q')
-  
+    dplyr::mutate(calendarInterval = "q")
+
   calendarMonth <-
     dplyr::tibble(
       periodBegin = clock::date_seq(
@@ -124,8 +126,8 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       )
     ) %>%
     dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1) %>%
-    dplyr::mutate(calendarInterval = 'm')
-  
+    dplyr::mutate(calendarInterval = "m")
+
   calendarYear <-
     dplyr::tibble(
       periodBegin = clock::date_seq(
@@ -135,14 +137,14 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       )
     ) %>%
     dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1) %>%
-    dplyr::mutate(calendarInterval = 'y')
-  
+    dplyr::mutate(calendarInterval = "y")
+
   calendarPeriods <-
-    dplyr::bind_rows(calendarMonth, calendarQuarter, calendarYear) %>%  #calendarWeek
+    dplyr::bind_rows(calendarMonth, calendarQuarter, calendarYear) %>% # calendarWeek
     dplyr::distinct() %>%
     dplyr::arrange(.data$periodBegin, .data$periodEnd, .data$calendarInterval) %>%
     dplyr::mutate(timeId = dplyr::row_number())
-  
+
   ParallelLogger::logTrace(" - Inserting calendar periods")
   DatabaseConnector::insertTable(
     connection = connection,
@@ -155,7 +157,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     tempEmulationSchema = tempEmulationSchema,
     camelCaseToSnakeCase = TRUE
   )
-  
+
   tsSetUpSql <- "-- #time_series
                 DROP TABLE IF EXISTS #time_series;
                 DROP TABLE IF EXISTS #c_time_series1;
@@ -164,7 +166,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                 DROP TABLE IF EXISTS #c_time_series4;
                 DROP TABLE IF EXISTS #c_time_series5;
                 DROP TABLE IF EXISTS #d_time_series6;"
-  
+
   ParallelLogger::logTrace(" - Dropping any time_series temporary tables that maybe present at start up.")
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
@@ -172,25 +174,29 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  
+
   seriesToRun <- NULL
   if (runCohortTimeSeries) {
-    seriesToRun <- c(seriesToRun,
-                     'ComputeTimeSeries1.sql',
-                     'ComputeTimeSeries2.sql')
+    seriesToRun <- c(
+      seriesToRun,
+      "ComputeTimeSeries1.sql",
+      "ComputeTimeSeries2.sql"
+    )
   }
   # ,
   # 'ComputeTimeSeries4.sql',
   # 'ComputeTimeSeries5.sql'
   if (runDataSourceTimeSeries) {
-    seriesToRun <- c(seriesToRun,
-                     'ComputeTimeSeries3.sql')
+    seriesToRun <- c(
+      seriesToRun,
+      "ComputeTimeSeries3.sql"
+    )
     # ,
     # 'ComputeTimeSeries6.sql'
   }
   seriesToRun <- seriesToRun %>% sort()
   ParallelLogger::logTrace(" - Beginning time series SQL")
-  
+
   sqlCohortDrop <-
     "DROP TABLE IF EXISTS #cohort_ts;"
   ParallelLogger::logTrace("   - Dropping any cohort temporary tables used by time series")
@@ -200,7 +206,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  
+
   sqlCohort <- "--HINT DISTRIBUTE_ON_KEY(subject_id)
       WITH cohort
       AS (
@@ -228,7 +234,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       FROM cohort c
       INNER JOIN cohort_first cf ON c.cohort_definition_id = cf.cohort_definition_id
       	AND c.subject_id = cf.subject_id;"
-  
+
   ParallelLogger::logTrace("   - Creating cohort table copy for time series")
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
@@ -240,10 +246,10 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  
+
   for (i in (1:length(seriesToRun))) {
     ParallelLogger::logTrace(paste0(" - Running ", seriesToRun[[i]]))
-    if (seriesToRun[[i]] == 'ComputeTimeSeries1.sql') {
+    if (seriesToRun[[i]] == "ComputeTimeSeries1.sql") {
       ParallelLogger::logInfo(
         paste0(
           "  - (",
@@ -252,7 +258,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         )
       )
     }
-    if (seriesToRun[[i]] == 'ComputeTimeSeries2.sql') {
+    if (seriesToRun[[i]] == "ComputeTimeSeries2.sql") {
       ParallelLogger::logInfo(
         paste0(
           "  - (",
@@ -261,7 +267,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         )
       )
     }
-    if (seriesToRun[[i]] == 'ComputeTimeSeries3.sql') {
+    if (seriesToRun[[i]] == "ComputeTimeSeries3.sql") {
       ParallelLogger::logInfo(
         paste0(
           "  - (",
@@ -270,53 +276,62 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         )
       )
     }
-    
-    seriesId <-  stringr::str_replace(string = seriesToRun[[i]],
-                                      pattern = 'ComputeTimeSeries',
-                                      replacement = '') %>%
-      stringr::str_replace(pattern = '.sql',
-                           replacement = '')
-    seriesId <- paste0('T', as.character(seriesId))
-    
+
+    seriesId <- stringr::str_replace(
+      string = seriesToRun[[i]],
+      pattern = "ComputeTimeSeries",
+      replacement = ""
+    ) %>%
+      stringr::str_replace(
+        pattern = ".sql",
+        replacement = ""
+      )
+    seriesId <- paste0("T", as.character(seriesId))
+
     sql <- SqlRender::loadRenderTranslateSql(
       sqlFilename = seriesToRun[[i]],
       packageName = utils::packageName(),
       dbms = connection@dbms
-    )  
-    if (seriesToRun[[i]] %in% c('ComputeTimeSeries2.sql',
-                                'ComputeTimeSeries3.sql')) {
+    )
+    if (seriesToRun[[i]] %in% c(
+      "ComputeTimeSeries2.sql",
+      "ComputeTimeSeries3.sql"
+    )) {
       sql <- SqlRender::render(
         sql = sql,
         cdm_database_schema = cdmDatabaseSchema,
         warnOnMissingParameters = FALSE
       )
     }
-    
+
     DatabaseConnector::querySqlToAndromeda(
       connection = connection,
       sql = sql,
       snakeCaseToCamelCase = TRUE,
       andromeda = resultsInAndromeda,
-      andromedaTableName = 'temp'
+      andromedaTableName = "temp"
     )
-    
+
     resultsInAndromeda$temp <- resultsInAndromeda$temp %>%
       dplyr::mutate(seriesType = !!seriesId)
-    
+
     if (!"timeSeries" %in% names(resultsInAndromeda)) {
       resultsInAndromeda$timeSeries <- resultsInAndromeda$temp
     } else {
-      Andromeda::appendToTable(resultsInAndromeda$timeSeries,
-                               resultsInAndromeda$temp)
+      Andromeda::appendToTable(
+        resultsInAndromeda$timeSeries,
+        resultsInAndromeda$temp
+      )
     }
-    ParallelLogger::logTrace('     Completed.')
+    ParallelLogger::logTrace("     Completed.")
   }
   resultsInAndromeda$calendarPeriods <- calendarPeriods
   resultsInAndromeda$timeSeries <- resultsInAndromeda$timeSeries %>%
-    dplyr::collect() %>% #temporal solution till fix of bug in andromeda on handling dates
+    dplyr::collect() %>% # temporal solution till fix of bug in andromeda on handling dates
     # periodBegin gets converted to integer
     dplyr::inner_join(resultsInAndromeda$calendarPeriods %>% dplyr::collect(),
-                      by = c('timeId')) %>%
+      by = c("timeId")
+    ) %>%
     dplyr::arrange(
       .data$cohortId,
       .data$periodBegin,
@@ -348,12 +363,14 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  
+
   delta <- Sys.time() - start
-  ParallelLogger::logTrace(" - Retrieving Time Series data took ",
-                           signif(delta, 3),
-                           " ",
-                           attr(delta, "units"))
+  ParallelLogger::logTrace(
+    " - Retrieving Time Series data took ",
+    signif(delta, 3),
+    " ",
+    attr(delta, "units")
+  )
   return(resultsInAndromeda$timeSeries %>% dplyr::collect())
 }
 
@@ -383,7 +400,7 @@ executeTimeSeriesDiagnostics <- function(connection,
   cohortIds <- subset$cohortId
   if (nrow(subset) > 0) {
     if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
+      (length(instantiatedCohorts) - nrow(subset)) > 0) {
       ParallelLogger::logInfo(sprintf(
         " - Skipping %s cohorts in incremental mode.",
         length(instantiatedCohorts) - nrow(subset)

@@ -20,7 +20,7 @@ createIfNotExist <-
            recursive = TRUE,
            errorMessage = NULL) {
     if (is.null(errorMessage) |
-        !class(errorMessage) == 'AssertColection') {
+      !class(errorMessage) == "AssertColection") {
       errorMessage <- checkmate::makeAssertCollection()
     }
     if (!is.null(type)) {
@@ -35,9 +35,11 @@ createIfNotExist <-
           # ParallelLogger::logInfo(type, " already exists at ", name)
         }
       }
-      checkmate::assertDirectory(x = name,
-                                 access = 'x',
-                                 add = errorMessage)
+      checkmate::assertDirectory(
+        x = name,
+        access = "x",
+        add = errorMessage
+      )
     }
     invisible(errorMessage)
   }
@@ -56,7 +58,7 @@ enforceMinCellValue <-
   function(data, fieldName, minValues, silent = FALSE) {
     toCensor <-
       !is.na(data[, fieldName]) &
-      data[, fieldName] < minValues & data[, fieldName] != 0
+        data[, fieldName] < minValues & data[, fieldName] != 0
     if (!silent) {
       percent <- round(100 * sum(toCensor) / nrow(data), 1)
       ParallelLogger::logInfo(
@@ -91,7 +93,7 @@ enforceMinCellValue <-
 #'
 checkInputFileEncoding <- function(fileName) {
   encoding <- readr::guess_encoding(file = fileName, n_max = min(1e7))
-  
+
   if (!encoding$encoding[1] %in% c("UTF-8", "ASCII")) {
     stop(
       "Illegal encoding found in file ",
@@ -126,55 +128,55 @@ makeDataExportable <- function(x,
   if (is.null(x) || nrow(x) == 0) {
     ParallelLogger::logTrace("  - Object has no data.")
   }
-  
+
   resultsDataModel <- getResultsDataModelSpecifications()
-  
+
   if (!is.null(databaseId)) {
     x <- x %>%
       dplyr::mutate(databaseId = !!databaseId)
   }
-  
+
   fieldsInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::pull(.data$fieldName) %>%
     snakeCaseToCamelCase() %>%
     unique()
-  
+
   requiredFieldsInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$isRequired == "Yes") %>%
     dplyr::pull(.data$fieldName) %>%
     snakeCaseToCamelCase() %>%
     unique()
-  
+
   primaryKeyInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$primaryKey == "Yes") %>%
     dplyr::pull(.data$fieldName) %>%
     snakeCaseToCamelCase() %>%
     unique()
-  
+
   columnsToApplyMinCellValue <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
-    dplyr::filter(.data$minCellCount == 'Yes') %>%
+    dplyr::filter(.data$minCellCount == "Yes") %>%
     dplyr::pull(.data$fieldName) %>%
     snakeCaseToCamelCase() %>%
     unique()
-  
+
   ParallelLogger::logTrace(paste0(
     "  - Found in table ",
     tableName,
     " the following fields: ",
     paste0(names(x), collapse = ", ")
   ))
-  
+
   presentInBoth <-
     intersect(fieldsInDataModel, names(x))
   presentInDataOnly <-
     setdiff(names(x), fieldsInDataModel)
   missingRequiredFields <-
     setdiff(requiredFieldsInDataModel, presentInBoth)
-  
+
   if (length(presentInDataOnly) > 0) {
     ParallelLogger::logInfo(
       " - Unexpected fields found in table ",
@@ -184,7 +186,7 @@ makeDataExportable <- function(x,
       ". These fields will be ignored."
     )
   }
-  
+
   if (length(missingRequiredFields) > 0) {
     stop(
       " - Cannot find required field ",
@@ -194,10 +196,13 @@ makeDataExportable <- function(x,
       "."
     )
   }
-  
+
   # check to see if there are primary key collision in tables that have this unique constraint
   if (length(primaryKeyInDataModel) > 0) {
-    distinctRows <- x %>% dplyr::select(dplyr::all_of(primaryKeyInDataModel)) %>% dplyr::distinct() %>% nrow()
+    distinctRows <- x %>%
+      dplyr::select(dplyr::all_of(primaryKeyInDataModel)) %>%
+      dplyr::distinct() %>%
+      nrow()
     if (nrow(x) > distinctRows) {
       stop(
         " - duplicates found in primary key for table ",
@@ -210,18 +215,20 @@ makeDataExportable <- function(x,
   ## because Andromeda is not handling date consistently -
   # https://github.com/OHDSI/Andromeda/issues/28
   ## temporary solution is to collect data into R memory using dplyr::collect()
-  
+
   x <- x %>%
     dplyr::collect()
-  
-  #limit to fields in data model
+
+  # limit to fields in data model
   x <- x %>%
     dplyr::select(dplyr::all_of(presentInBoth))
-  
+
   # enforce minimum cell count value
   x <- x %>%
-    enforceMinCellValueInDataframe(columnNames = columnsToApplyMinCellValue,
-                                   minCellCount = minCellCount)
+    enforceMinCellValueInDataframe(
+      columnNames = columnsToApplyMinCellValue,
+      minCellCount = minCellCount
+    )
   return(x)
 }
 
@@ -238,9 +245,11 @@ enforceMinCellValueInDataframe <- function(data,
   for (i in (1:length(presentInBoth))) {
     if (presentInBoth[[i]] %in% colnames(data)) {
       data <-
-        enforceMinCellValue(data = data,
-                            fieldName = presentInBoth[[i]],
-                            minValues = minCellCount)
+        enforceMinCellValue(
+          data = data,
+          fieldName = presentInBoth[[i]],
+          minValues = minCellCount
+        )
     }
   }
   return(data)
@@ -267,9 +276,11 @@ camelCaseToSnakeCase <- function(string) {
 
 # private function - not exported
 titleCaseToCamelCase <- function(string) {
-  string <- stringr::str_replace_all(string = string,
-                                     pattern = ' ',
-                                     replacement = '')
+  string <- stringr::str_replace_all(
+    string = string,
+    pattern = " ",
+    replacement = ""
+  )
   substr(string, 1, 1) <- tolower(substr(string, 1, 1))
   return(string)
 }

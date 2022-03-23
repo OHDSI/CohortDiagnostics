@@ -34,11 +34,13 @@ getCdmDataSourceInformation <-
   function(connectionDetails = NULL,
            connection = NULL,
            cdmDatabaseSchema) {
-    if (all(is.null(connectionDetails),
-            is.null(connection))) {
-      stop('Please provide either connection or connectionDetails to connect to database.')
+    if (all(
+      is.null(connectionDetails),
+      is.null(connection)
+    )) {
+      stop("Please provide either connection or connectionDetails to connect to database.")
     }
-    
+
     # Set up connection to server ----
     if (is.null(connection)) {
       if (!is.null(connectionDetails)) {
@@ -46,8 +48,8 @@ getCdmDataSourceInformation <-
         on.exit(DatabaseConnector::disconnect(connection))
       }
     }
-    
-    if (!DatabaseConnector::dbExistsTable(conn = connection, name = 'cdm_source')) {
+
+    if (!DatabaseConnector::dbExistsTable(conn = connection, name = "cdm_source")) {
       warning("CDM Source table not found in CDM. Metadata on CDM source will be limited.")
       return(NULL)
     }
@@ -60,7 +62,7 @@ getCdmDataSourceInformation <-
         cdm_database_schema = cdmDatabaseSchema,
         snakeCaseToCamelCase = TRUE
       )
-    
+
     if (nrow(cdmDataSource) == 0) {
       warning("CDM Source table does not have any records. Metadata on CDM source will be limited.")
       return(NULL)
@@ -71,48 +73,50 @@ getCdmDataSourceInformation <-
       )
       return(NULL)
     }
-    
+
     sourceDescription <- as.character(NA)
-    if ('sourceDescription' %in% colnames(cdmDataSource)) {
+    if ("sourceDescription" %in% colnames(cdmDataSource)) {
       sourceDescription <- max(cdmDataSource$sourceDescription)
     }
-    
+
     cdmSourceName <- as.character(NA)
-    if ('cdmSourceName' %in% colnames(cdmDataSource)) {
+    if ("cdmSourceName" %in% colnames(cdmDataSource)) {
       cdmSourceName <- max(cdmDataSource$cdmSourceName)
     }
-    
+
     sourceReleaseDate <- as.Date(NA)
-    if ('sourceReleaseDate' %in% colnames(cdmDataSource)) {
-      if (class(cdmDataSource$sourceReleaseDate) != 'Date') {
+    if ("sourceReleaseDate" %in% colnames(cdmDataSource)) {
+      if (class(cdmDataSource$sourceReleaseDate) != "Date") {
         try(sourceReleaseDate <-
-              max(as.Date(cdmDataSource$sourceReleaseDate)),
-            silent = TRUE)
+          max(as.Date(cdmDataSource$sourceReleaseDate)),
+        silent = TRUE
+        )
       } else {
         sourceReleaseDate <- max(as.Date(cdmDataSource$sourceReleaseDate))
       }
     }
-    
+
     cdmReleaseDate <- as.Date(NA)
-    if ('cdmReleaseDate' %in% colnames(cdmDataSource)) {
-      if (class(cdmDataSource$cdmReleaseDate) != 'Date') {
+    if ("cdmReleaseDate" %in% colnames(cdmDataSource)) {
+      if (class(cdmDataSource$cdmReleaseDate) != "Date") {
         try(cdmReleaseDate <- max(as.Date(cdmDataSource$cdmReleaseDate)),
-            silent = TRUE)
+          silent = TRUE
+        )
       } else {
         cdmReleaseDate <- max(as.Date(cdmDataSource$cdmReleaseDate))
       }
     }
-    
+
     cdmVersion <- as.character(NA)
-    if ('cdmVersion' %in% colnames(cdmDataSource)) {
+    if ("cdmVersion" %in% colnames(cdmDataSource)) {
       cdmVersion <- max(cdmDataSource$cdmVersion)
     }
-    
+
     vocabularyVersion <- as.character(NA)
-    if ('vocabularyVersion' %in% colnames(cdmDataSource)) {
+    if ("vocabularyVersion" %in% colnames(cdmDataSource)) {
       vocabularyVersion <- max(cdmDataSource$vocabularyVersion)
     }
-    
+
     return(
       dplyr::tibble(
         sourceDescription = !!sourceDescription,

@@ -26,7 +26,7 @@
                                 conceptCountsTable = "concept_counts",
                                 conceptCountsTableIsTemp = FALSE,
                                 instantiatedCodeSets = "#InstConceptSets",
-                                orphanConceptTable = '#recommended_concepts') {
+                                orphanConceptTable = "#recommended_concepts") {
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -58,7 +58,7 @@
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
-  
+
   # For debugging:
   # x <- querySql(connection, "SELECT * FROM #starting_concepts;")
   # View(x)
@@ -77,7 +77,7 @@
   #
   # x <- querySql(connection, "SELECT * FROM #recommended_concepts;")
   # View(x)
-  
+
   ParallelLogger::logTrace("- Dropping orphan temp tables")
   sql <-
     SqlRender::loadRenderTranslateSql(
@@ -146,8 +146,10 @@ saveDatabaseMetaData <- function(databaseId,
     databaseId = databaseId,
     minCellCount = minCellCount
   )
-  writeToCsv(data = database,
-             fileName = file.path(exportFolder, "database.csv"))
+  writeToCsv(
+    data = database,
+    fileName = file.path(exportFolder, "database.csv")
+  )
   delta <- Sys.time() - startMetaData
   writeLines(paste(
     "Saving database metadata took",
