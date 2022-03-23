@@ -303,6 +303,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
 
   checkmate::reportAssertions(collection = errorMessage)
+  browser()
   if (!is.null(cohortIds)) {
     cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
@@ -344,9 +345,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   if (length(obseveredButNotExpected) > 0) {
     ParallelLogger::logInfo(
-      paste(
-        "The following fields in cohortDefinitionSet are stored in output table cohort \n in the field metadata as a JSON object.",
-        paste0(obseveredButNotExpected, collapse = ", ")
+      paste0(
+        "The following fields found in the cohortDefinitionSet will be exported in JSON format as part of metadata field of cohort table:\n    ",
+        paste0(obseveredButNotExpected, collapse = ",\n    ")
       )
     )
   }
