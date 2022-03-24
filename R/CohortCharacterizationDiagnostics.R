@@ -75,20 +75,20 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
       )
     }
     if ("timeRef" %in% names(featureExtractionOutput) &&
-        !"timeRef" %in% names(results)) {
+      !"timeRef" %in% names(results)) {
       results$timeRef <- featureExtractionOutput$timeRef
     }
 
     if ("covariates" %in% names(featureExtractionOutput) &&
-        dplyr::pull(dplyr::count(featureExtractionOutput$covariates)) > 0) {
+      dplyr::pull(dplyr::count(featureExtractionOutput$covariates)) > 0) {
       covariates <- featureExtractionOutput$covariates %>%
         dplyr::rename(cohortId = .data$cohortDefinitionId) %>%
         dplyr::left_join(populationSize, by = "cohortId", copy = TRUE) %>%
         dplyr::mutate(p = .data$sumValue / .data$populationSize)
 
       if (nrow(covariates %>%
-               dplyr::filter(.data$p > 1) %>%
-               dplyr::collect()) > 0) {
+        dplyr::filter(.data$p > 1) %>%
+        dplyr::collect()) > 0) {
         stop(
           paste0(
             "During characterization, population size (denominator) was found to be smaller than features Value (numerator).",
@@ -105,19 +105,23 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
 
       if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
         covariates <- covariates %>%
-          dplyr::select(.data$cohortId,
-                        .data$timeId,
-                        .data$covariateId,
-                        .data$sumValue,
-                        .data$mean,
-                        .data$sd)
+          dplyr::select(
+            .data$cohortId,
+            .data$timeId,
+            .data$covariateId,
+            .data$sumValue,
+            .data$mean,
+            .data$sd
+          )
       } else {
         covariates <- covariates %>%
-          dplyr::select(.data$cohortId,
-                        .data$covariateId,
-                        .data$sumValue,
-                        .data$mean,
-                        .data$sd)
+          dplyr::select(
+            .data$cohortId,
+            .data$covariateId,
+            .data$sumValue,
+            .data$mean,
+            .data$sd
+          )
       }
       if ("covariates" %in% names(results)) {
         Andromeda::appendToTable(results$covariates, covariates)
@@ -127,7 +131,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     }
 
     if ("covariatesContinuous" %in% names(featureExtractionOutput) &&
-        dplyr::pull(dplyr::count(featureExtractionOutput$covariatesContinuous)) > 0) {
+      dplyr::pull(dplyr::count(featureExtractionOutput$covariatesContinuous)) > 0) {
       covariates <- featureExtractionOutput$covariatesContinuous %>%
         dplyr::rename(
           mean = .data$averageValue,
@@ -138,20 +142,24 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
       if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
         covariates <- covariates %>%
           dplyr::mutate(sumValue = -1) %>%
-          dplyr::select(.data$cohortId,
-                        .data$timeId,
-                        .data$covariateId,
-                        .data$sum,
-                        .data$mean,
-                        .data$sd)
+          dplyr::select(
+            .data$cohortId,
+            .data$timeId,
+            .data$covariateId,
+            .data$sum,
+            .data$mean,
+            .data$sd
+          )
       } else {
         covariates <- covariates %>%
           dplyr::mutate(sumValue = -1) %>%
-          dplyr::select(.data$cohortId,
-                        .data$covariateId,
-                        .data$sumValue,
-                        .data$mean,
-                        .data$sd)
+          dplyr::select(
+            .data$cohortId,
+            .data$covariateId,
+            .data$sumValue,
+            .data$mean,
+            .data$sd
+          )
       }
       if ("covariates" %in% names(results)) {
         Andromeda::appendToTable(results$covariates, covariates)
@@ -167,10 +175,12 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
   }
 
   delta <- Sys.time() - startTime
-  ParallelLogger::logInfo("Cohort characterization took ",
-                          signif(delta, 3),
-                          " ",
-                          attr(delta, "units"))
+  ParallelLogger::logInfo(
+    "Cohort characterization took ",
+    signif(delta, 3),
+    " ",
+    attr(delta, "units")
+  )
   return(results)
 }
 
@@ -250,8 +260,10 @@ executeCohortCharacterization <- function(connection,
     incremental = incremental
   )
   delta <- Sys.time() - startCohortCharacterization
-  ParallelLogger::logInfo("Running ", jobName, " took",
-                          signif(delta, 3),
-                          " ",
-                          attr(delta, "units"))
+  ParallelLogger::logInfo(
+    "Running ", jobName, " took",
+    signif(delta, 3),
+    " ",
+    attr(delta, "units")
+  )
 }

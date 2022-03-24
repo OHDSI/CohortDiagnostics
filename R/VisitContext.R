@@ -21,18 +21,19 @@ getVisitContext <- function(connectionDetails = NULL,
                             cohortDatabaseSchema = cdmDatabaseSchema,
                             cohortTable = "cohort",
                             cohortIds,
+                            conceptIdTable = NULL,
                             cdmVersion = 5) {
   if (!cdmVersion == 5) {
-    warning('Only OMOP CDM v5.x.x is supported. Continuing execution.')
+    warning("Only OMOP CDM v5.x.x is supported. Continuing execution.")
   }
-  
+
   start <- Sys.time()
-  
+
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
+
   sql <- SqlRender::loadRenderTranslateSql(
     "VisitContext.sql",
     packageName = utils::packageName(),
@@ -45,7 +46,6 @@ getVisitContext <- function(connectionDetails = NULL,
     cohort_ids = cohortIds
   )
   DatabaseConnector::executeSql(connection, sql)
-  
   sql <- "SELECT * FROM @visit_context_table;"
   visitContext <-
     DatabaseConnector::renderTranslateQuerySql(
@@ -55,7 +55,21 @@ getVisitContext <- function(connectionDetails = NULL,
       visit_context_table = "#visit_context",
       snakeCaseToCamelCase = TRUE
     )
-  
+
+  if (!is.null(conceptIdTable)) {
+    sql <- "INSERT INTO @unique_concept_id_table (concept_id)
+            SELECT DISTINCT visit_concept_id
+            FROM @visit_context_table;"
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = sql,
+      tempEmulationSchema = tempEmulationSchema,
+      unique_concept_id_table = conceptIdTable,
+      visit_context_table = "#visit_context",
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+  }
   sql <-
     "TRUNCATE TABLE @visit_context_table;\nDROP TABLE @visit_context_table;"
   DatabaseConnector::renderTranslateExecuteSql(
@@ -66,12 +80,14 @@ getVisitContext <- function(connectionDetails = NULL,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  
+
   delta <- Sys.time() - start
-  ParallelLogger::logInfo("Retrieving visit context took ",
-                          signif(delta, 3),
-                          " ",
-                          attr(delta, "units"))
+  ParallelLogger::logInfo(
+    "Retrieving visit context took ",
+    signif(delta, 3),
+    " ",
+    attr(delta, "units")
+  )
   return(visitContext)
 }
 
@@ -89,49 +105,50 @@ executeVisitContextDiagnostics <- function(connection,
                                            recordKeepingFile,
                                            incremental) {
   ParallelLogger::logInfo("Retrieving visit context for index dates")
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohorts %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runVisitContext",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    )
+  subset <- subsetToRequiredCohorts(
+    cohorts = cohorts %>%
+      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+    task = "runVisitContext",
+    incremental = incremental,
+    recordKeepingFile = recordKeepingFile
+  )
 
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
-    if (nrow(subset) > 0) {
-      data <- getVisitContext(
-        connection = connection,
-        tempEmulationSchema = tempEmulationSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable,
-        cdmVersion = cdmVersion,
-        cohortIds = subset$cohortId
-      )
-      data <- makeDataExportable(
-        x = data,
-        tableName = "visit_context",
-        minCellCount = minCellCount,
-        databaseId = databaseId
-      )
-      writeToCsv(
-        data = data,
-        fileName = file.path(exportFolder, "visit_context.csv"),
-        incremental = incremental,
-        cohortId = subset$cohortId
-      )
-      recordTasksDone(
-        cohortId = subset$cohortId,
-        task = "runVisitContext",
-        checksum = subset$checksum,
-        recordKeepingFile = recordKeepingFile,
-        incremental = incremental
-      )
-    }
+  if (incremental &&
+    (length(instantiatedCohorts) - nrow(subset)) > 0) {
+    ParallelLogger::logInfo(sprintf(
+      "Skipping %s cohorts in incremental mode.",
+      length(instantiatedCohorts) - nrow(subset)
+    ))
+  }
+  if (nrow(subset) > 0) {
+    data <- getVisitContext(
+      connection = connection,
+      tempEmulationSchema = tempEmulationSchema,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      cdmVersion = cdmVersion,
+      cohortIds = subset$cohortId,
+      conceptIdTable = "#concept_ids"
+    )
+    data <- makeDataExportable(
+      x = data,
+      tableName = "visit_context",
+      minCellCount = minCellCount,
+      databaseId = databaseId
+    )
+    writeToCsv(
+      data = data,
+      fileName = file.path(exportFolder, "visit_context.csv"),
+      incremental = incremental,
+      cohortId = subset$cohortId
+    )
+    recordTasksDone(
+      cohortId = subset$cohortId,
+      task = "runVisitContext",
+      checksum = subset$checksum,
+      recordKeepingFile = recordKeepingFile,
+      incremental = incremental
+    )
+  }
 }

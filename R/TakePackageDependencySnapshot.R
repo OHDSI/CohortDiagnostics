@@ -29,18 +29,20 @@ takepackageDependencySnapshot <- function() {
     if (is.null(packageList)) {
       return(c())
     } else {
-      return(strsplit(gsub(
-        "\\([^)]*\\)", "", gsub(" ", "", gsub("\n", "", packageList))
-      ),
-      ",")[[1]])
+      return(strsplit(
+        gsub(
+          "\\([^)]*\\)", "", gsub(" ", "", gsub("\n", "", packageList))
+        ),
+        ","
+      )[[1]])
     }
   }
-  
+
   fetchDependencies <-
     function(package,
              recursive = TRUE,
              level = 0) {
-      description <- packageDescription(package)
+      description <- utils::packageDescription(package)
       packages <- splitPackageList(description$Depends)
       packages <- c(packages, splitPackageList(description$Imports))
       packages <-
@@ -50,16 +52,19 @@ takepackageDependencySnapshot <- function() {
       packages <- packages[packages != "R"]
       packages <- data.frame(
         name = packages,
-        level = rep(level,
-                    length(packages)),
+        level = rep(
+          level,
+          length(packages)
+        ),
         stringsAsFactors = FALSE
       )
       if (recursive && nrow(packages) > 0) {
         all <-
           lapply(packages$name,
-                 fetchDependencies,
-                 recursive = TRUE,
-                 level = level + 1)
+            fetchDependencies,
+            recursive = TRUE,
+            level = level + 1
+          )
         dependencies <- do.call("rbind", all)
         if (nrow(dependencies) > 0) {
           packages <- rbind(packages, dependencies)
@@ -68,21 +73,21 @@ takepackageDependencySnapshot <- function() {
       }
       return(packages)
     }
-  
+
   packages <-
-    fetchDependencies('CohortDiagnostics', recursive = TRUE)
-  packages <- packages[order(-packages$level),]
+    fetchDependencies("CohortDiagnostics", recursive = TRUE)
+  packages <- packages[order(-packages$level), ]
   getVersion <- function(package) {
-    return(packageDescription(package)$Version)
+    return(utils::packageDescription(package)$Version)
   }
   versions <-
-    sapply(c(packages$name, 'CohortDiagnostics'), getVersion)
+    sapply(c(packages$name, "CohortDiagnostics"), getVersion)
   snapshot <- data.frame(
     package = names(versions),
     version = as.vector(versions),
     stringsAsFactors = FALSE
   )
-  s <- sessionInfo()
+  s <- utils::sessionInfo()
   rVersion <- data.frame(
     package = "R",
     version = paste(s$R.version$major, s$R.version$minor, sep = "."),

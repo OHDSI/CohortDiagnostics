@@ -29,18 +29,21 @@ isTaskRequired <-
            recordKeepingFile,
            verbose = TRUE) {
     if (file.exists(recordKeepingFile)) {
-      recordKeeping <-  readr::read_csv(recordKeepingFile,
-                                        col_types = readr::cols(),
-                                        guess_max = min(1e7), 
-                                        lazy = FALSE)
-      task <- recordKeeping[getKeyIndex(list(...), recordKeeping),]
+      recordKeeping <- readr::read_csv(recordKeepingFile,
+        col_types = readr::cols(),
+        guess_max = min(1e7),
+        lazy = FALSE
+      )
+      task <- recordKeeping[getKeyIndex(list(...), recordKeeping), ]
       if (nrow(task) == 0) {
         return(TRUE)
       }
       if (nrow(task) > 1) {
-        stop("Duplicate key ",
-             as.character(list(...)),
-             " found in recordkeeping table")
+        stop(
+          "Duplicate key ",
+          as.character(list(...)),
+          " found in recordkeeping table"
+        )
       }
       if (task$checksum == checksum) {
         if (verbose) {
@@ -61,22 +64,23 @@ isTaskRequired <-
 getRequiredTasks <- function(..., checksum, recordKeepingFile) {
   tasks <- list(...)
   if (file.exists(recordKeepingFile) && length(tasks[[1]]) > 0) {
-    recordKeeping <-  readr::read_csv(recordKeepingFile,
-                                      col_types = readr::cols(),
-                                      guess_max = min(1e7), 
-                                      lazy = FALSE)
+    recordKeeping <- readr::read_csv(recordKeepingFile,
+      col_types = readr::cols(),
+      guess_max = min(1e7),
+      lazy = FALSE
+    )
     tasks$checksum <- checksum
     tasks <- dplyr::as_tibble(tasks)
     if (all(names(tasks) %in% names(recordKeeping))) {
       idx <- getKeyIndex(recordKeeping[, names(tasks)], tasks)
     } else {
-      idx = c()
+      idx <- c()
     }
     tasks$checksum <- NULL
     if (length(idx) > 0) {
       # text <- paste(sprintf("%s = %s", names(tasks), tasks[idx,]), collapse = ", ")
       # ParallelLogger::logInfo("Skipping ", text, " because unchanged from earlier run")
-      tasks <- tasks[-idx,]
+      tasks <- tasks[-idx, ]
     }
   }
   return(tasks)
@@ -84,8 +88,8 @@ getRequiredTasks <- function(..., checksum, recordKeepingFile) {
 
 getKeyIndex <- function(key, recordKeeping) {
   if (nrow(recordKeeping) == 0 ||
-      length(key[[1]]) == 0 ||
-      !all(names(key) %in% names(recordKeeping))) {
+    length(key[[1]]) == 0 ||
+    !all(names(key) %in% names(recordKeeping))) {
     return(c())
   } else {
     key <- dplyr::as_tibble(key) %>% dplyr::distinct()
@@ -106,37 +110,37 @@ recordTasksDone <-
     if (length(list(...)[[1]]) == 0) {
       return()
     }
-    
+
     if (file.exists(recordKeepingFile)) {
-      #reading record keeping file into memory
-      #prevent lazy loading to avoid lock on file
-      recordKeeping <-  readr::read_csv(
+      # reading record keeping file into memory
+      # prevent lazy loading to avoid lock on file
+      recordKeeping <- readr::read_csv(
         file = recordKeepingFile,
         col_types = readr::cols(),
         guess_max = min(1e7),
         lazy = FALSE
       )
-      
+
       recordKeeping$timeStamp <-
         as.character(recordKeeping$timeStamp)
-      if ('cohortId' %in% colnames(recordKeeping)) {
+      if ("cohortId" %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
           dplyr::mutate(cohortId = as.double(.data$cohortId))
       }
-      if ('comparatorId' %in% colnames(recordKeeping)) {
+      if ("comparatorId" %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
           dplyr::mutate(comparatorId = as.double(.data$comparatorId))
       }
       idx <- getKeyIndex(list(...), recordKeeping)
       if (length(idx) > 0) {
-        recordKeeping <- recordKeeping[-idx,]
+        recordKeeping <- recordKeeping[-idx, ]
       }
     } else {
       recordKeeping <- dplyr::tibble()
     }
     newRow <- dplyr::as_tibble(list(...))
     newRow$checksum <- checksum
-    newRow$timeStamp <-  as.character(Sys.time())
+    newRow$timeStamp <- as.character(Sys.time())
     recordKeeping <- dplyr::bind_rows(recordKeeping, newRow)
     readr::write_csv(recordKeeping, recordKeepingFile)
   }
@@ -146,15 +150,17 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
   if (incremental) {
     params <- list(...)
     names(params) <- SqlRender::camelCaseToSnakeCase(names(params))
-    params$data = data
-    params$fileName = fileName
+    params$data <- data
+    params$fileName <- fileName
     do.call(saveIncremental, params)
     ParallelLogger::logDebug("appending records to ", fileName)
   } else {
     if (file.exists(fileName)) {
-      ParallelLogger::logDebug("Overwriting and replacing previous ",
-                               fileName,
-                               " with new.")
+      ParallelLogger::logDebug(
+        "Overwriting and replacing previous ",
+        fileName,
+        " with new."
+      )
     } else {
       ParallelLogger::logDebug("creating ", fileName)
     }
@@ -173,19 +179,19 @@ writeCovariateDataAndromedaToCsv <-
     if (incremental && file.exists(fileName)) {
       ParallelLogger::logDebug("Appending records to ", fileName)
       batchSize <- 1e5
-      
+
       cohortIds <- data %>%
         distinct(.data$cohortId) %>%
         pull()
-      
+
       tempName <- paste0(fileName, "2")
-      
+
       processChunk <- function(chunk, pos) {
         chunk <- chunk %>%
           filter(!.data$cohort_id %in% cohortIds)
         readr::write_csv(chunk, tempName, append = (pos != 1))
       }
-      
+
       readr::read_csv_chunked(
         file = fileName,
         callback = processChunk,
@@ -193,7 +199,7 @@ writeCovariateDataAndromedaToCsv <-
         col_types = readr::cols(),
         guess_max = batchSize
       )
-      
+
       addChunk <- function(chunk) {
         colnames(chunk) <- SqlRender::camelCaseToSnakeCase(colnames(chunk))
         readr::write_csv(chunk, tempName, append = TRUE)
@@ -203,9 +209,11 @@ writeCovariateDataAndromedaToCsv <-
       file.rename(tempName, fileName)
     } else {
       if (file.exists(fileName)) {
-        ParallelLogger::logDebug("Overwriting and replacing previous ",
-                                 fileName,
-                                 " with new.")
+        ParallelLogger::logDebug(
+          "Overwriting and replacing previous ",
+          fileName,
+          " with new."
+        )
         unlink(fileName)
       } else {
         ParallelLogger::logDebug("Creating ", fileName)
@@ -229,9 +237,10 @@ saveIncremental <- function(data, fileName, ...) {
   }
   if (file.exists(fileName)) {
     previousData <- readr::read_csv(fileName,
-                                    col_types = readr::cols(),
-                                    guess_max = min(1e7),
-                                    lazy = FALSE)
+      col_types = readr::cols(),
+      guess_max = min(1e7),
+      lazy = FALSE
+    )
     if ((nrow(previousData)) > 0) {
       if (!length(list(...)) == 0) {
         idx <- getKeyIndex(list(...), previousData)
@@ -239,7 +248,7 @@ saveIncremental <- function(data, fileName, ...) {
         idx <- NULL
       }
       if (length(idx) > 0) {
-        previousData <- previousData[-idx,]
+        previousData <- previousData[-idx, ]
       }
       if (nrow(previousData) > 0) {
         data <- dplyr::bind_rows(previousData, data) %>%
@@ -265,7 +274,7 @@ subsetToRequiredCohorts <-
         checksum = cohorts$checksum,
         recordKeepingFile = recordKeepingFile
       )
-      return(cohorts[cohorts$cohortId %in% tasks$cohortId,])
+      return(cohorts[cohorts$cohortId %in% tasks$cohortId, ])
     } else {
       return(cohorts)
     }

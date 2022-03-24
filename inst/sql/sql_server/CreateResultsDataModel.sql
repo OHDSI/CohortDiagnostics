@@ -1,4 +1,7 @@
 {DEFAULT @analysis_ref = analysis_ref}
+{DEFAULT @annotation = annotation}
+{DEFAULT @annotation_link = annotation_link}
+{DEFAULT @annotation_score = annotation_score}
 {DEFAULT @cohort = cohort}
 {DEFAULT @cohort_count = cohort_count}
 {DEFAULT @cohort_relationships = cohort_relationships}
@@ -34,46 +37,115 @@
 {DEFAULT @temporal_covariate_value_dist = temporal_covariate_value_dist}
 {DEFAULT @temporal_time_ref = temporal_time_ref}
 {DEFAULT @time_distribution = time_distribution}
+{DEFAULT @time_series = time_series}
 {DEFAULT @visit_context = visit_context}
 {DEFAULT @vocabulary = vocabulary}
 
 -- Drop old tables if exist
-DROP TABLE IF EXISTS @results_schema.@cohort;
-DROP TABLE IF EXISTS @results_schema.@cohort_count;
-DROP TABLE IF EXISTS @results_schema.@cohort_overlap;
-DROP TABLE IF EXISTS @results_schema.@concept;
-DROP TABLE IF EXISTS @results_schema.@concept_ancestor;
-DROP TABLE IF EXISTS @results_schema.@concept_class;
-DROP TABLE IF EXISTS @results_schema.@concept_count;
-DROP TABLE IF EXISTS @results_schema.@concept_excluded;
-DROP TABLE IF EXISTS @results_schema.@concept_std_src_cnt;
-DROP TABLE IF EXISTS @results_schema.@concept_optimized;
-DROP TABLE IF EXISTS @results_schema.@concept_relationship;
-DROP TABLE IF EXISTS @results_schema.@concept_resolved;
-DROP TABLE IF EXISTS @results_schema.@concept_sets;
-DROP TABLE IF EXISTS @results_schema.@concept_synonym;
-DROP TABLE IF EXISTS @results_schema.@covariate_ref;
-DROP TABLE IF EXISTS @results_schema.@covariate_value;
-DROP TABLE IF EXISTS @results_schema.@covariate_value_dist;
-DROP TABLE IF EXISTS @results_schema.@database;
-DROP TABLE IF EXISTS @results_schema.@domain;
-DROP TABLE IF EXISTS @results_schema.@incidence_rate;
-DROP TABLE IF EXISTS @results_schema.@included_source_concept;
-DROP TABLE IF EXISTS @results_schema.@inclusion_rule_stats;
-DROP TABLE IF EXISTS @results_schema.@index_event_breakdown;
-DROP TABLE IF EXISTS @results_schema.@metadata;
-DROP TABLE IF EXISTS @results_schema.@orphan_concept;
-DROP TABLE IF EXISTS @results_schema.@phenotype_description;
-DROP TABLE IF EXISTS @results_schema.@relationship;
-DROP TABLE IF EXISTS @results_schema.@resolved_concepts;
-DROP TABLE IF EXISTS @results_schema.@temporal_analysis_ref;
-DROP TABLE IF EXISTS @results_schema.@temporal_covariate_ref;
-DROP TABLE IF EXISTS @results_schema.@temporal_covariate_value;
-DROP TABLE IF EXISTS @results_schema.@temporal_covariate_value_dist;
-DROP TABLE IF EXISTS @results_schema.@temporal_time_ref;
-DROP TABLE IF EXISTS @results_schema.@time_distribution;
-DROP TABLE IF EXISTS @results_schema.@visit_context;
-DROP TABLE IF EXISTS @results_schema.@vocabulary;
+IF OBJECT_ID('@results_schema.@annotation', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@annotation;
+    
+IF OBJECT_ID('@results_schema.@annotation_link', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@annotation_link;
+    
+IF OBJECT_ID('@results_schema.@annotation_score', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@annotation_score;
+    
+IF OBJECT_ID('@results_schema.@cohort', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@cohort;
+
+IF OBJECT_ID('@results_schema.@cohort_count', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@cohort_count;
+
+IF OBJECT_ID('@results_schema.@cohort_relationships', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@cohort_relationships;
+
+IF OBJECT_ID('@results_schema.@cohort_overlap', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@cohort_overlap;
+
+IF OBJECT_ID('@results_schema.@concept', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@concept;
+
+IF OBJECT_ID('@results_schema.@concept_ancestor', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@concept_ancestor;
+
+IF OBJECT_ID('@results_schema.@concept_relationship', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@concept_relationship;
+
+IF OBJECT_ID('@results_schema.@concept_sets', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@concept_sets;
+
+IF OBJECT_ID('@results_schema.@concept_synonym', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@concept_synonym;
+
+IF OBJECT_ID('@results_schema.@covariate_ref', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@covariate_ref;
+
+IF OBJECT_ID('@results_schema.@covariate_value', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@covariate_value;
+
+IF OBJECT_ID('@results_schema.@covariate_value_dist', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@covariate_value_dist;
+
+IF OBJECT_ID('@results_schema.@database', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@database;
+
+IF OBJECT_ID('@results_schema.@domain', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@domain;
+
+IF OBJECT_ID('@results_schema.@incidence_rate', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@incidence_rate;
+
+IF OBJECT_ID('@results_schema.@included_source_concept', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@included_source_concept;
+
+IF OBJECT_ID('@results_schema.@inclusion_rule_stats', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@inclusion_rule_stats;
+
+IF OBJECT_ID('@results_schema.@index_event_breakdown', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@index_event_breakdown;
+
+IF OBJECT_ID('@results_schema.@metadata', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@metadata;
+
+IF OBJECT_ID('@results_schema.@orphan_concept', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@orphan_concept;
+
+IF OBJECT_ID('@results_schema.@phenotype_description', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@phenotype_description;
+
+IF OBJECT_ID('@results_schema.@relationship', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@relationship;
+
+IF OBJECT_ID('@results_schema.@resolved_concepts', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@resolved_concepts;
+
+IF OBJECT_ID('@results_schema.@temporal_analysis_ref', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@temporal_analysis_ref;
+
+IF OBJECT_ID('@results_schema.@temporal_covariate_ref', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@temporal_covariate_ref;
+
+IF OBJECT_ID('@results_schema.@temporal_covariate_value', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@temporal_covariate_value;
+
+IF OBJECT_ID('@results_schema.@temporal_covariate_value_dist', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@temporal_covariate_value_dist;
+
+IF OBJECT_ID('@results_schema.@temporal_time_ref', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@temporal_time_ref;
+
+IF OBJECT_ID('@results_schema.@time_distribution', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@time_distribution;
+
+IF OBJECT_ID('@results_schema.@time_series', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@time_series;
+
+IF OBJECT_ID('@results_schema.@visit_context', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@visit_context;
+
+IF OBJECT_ID('@results_schema.@vocabulary', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@vocabulary;
 
 
 -- Create tables
@@ -91,14 +163,43 @@ CREATE TABLE @results_schema.@analysis_ref (
 			PRIMARY KEY(analysis_id)
 );
 
+--Table annotation
+
+CREATE TABLE @results_schema.@annotation (
+      annotation_id BIGINT NOT NULL,
+			created_by VARCHAR NOT NULL,
+			created_on BIGINT NOT NULL,
+			modified_last_on BIGINT,
+			deleted_on BIGINT,
+			annotation VARCHAR NOT NULL,
+			PRIMARY KEY(annotation_id)
+);
+
+--Table annotation_link
+
+CREATE TABLE @results_schema.@annotation_link (
+      annotation_id BIGINT NOT NULL DEFAULT 0,
+			diagnostics_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			database_id VARCHAR NOT NULL,
+			PRIMARY KEY(annotation_id, diagnostics_id, cohort_id, database_id)
+);
+
+--Table annotation_score
+
+CREATE TABLE @results_schema.@annotation_attributes (
+      annotation_id BIGINT NOT NULL DEFAULT 0,
+			created_by VARCHAR NOT NULL,
+			annotation_attributes VARCHAR NOT NULL,
+			created_on BIGINT NOT NULL,
+			PRIMARY KEY(annotation_id, created_by)
+);
+
 --Table cohort
 
 CREATE TABLE @results_schema.@cohort (
-			phenotype_id BIGINT,
 			cohort_id BIGINT NOT NULL,
-			atlas_id BIGINT NOT NULL,
 			cohort_name VARCHAR(255) NOT NULL,
-			logic_description VARCHAR,
 			metadata VARCHAR,
 			sql VARCHAR NOT NULL,
 			json VARCHAR NOT NULL,
@@ -553,6 +654,26 @@ CREATE TABLE @results_schema.@time_distribution (
 			PRIMARY KEY(cohort_id, time_metric, database_id)
 );
 
+--Table time_series
+CREATE TABLE @results_schema.@time_series (
+			cohort_id BIGINT NOT NULL,
+			database_id VARCHAR NOT NULL,
+			period_begin DATE NOT NULL,
+			calendar_interval VARCHAR NOT NULL,
+			series_type VARCHAR NOT NULL,
+			records BIGINT NOT NULL,
+			subjects BIGINT NOT NULL,
+			person_days BIGINT NOT NULL,
+			person_days_in BIGINT NOT NULL,
+			records_start BIGINT,
+			subjects_start BIGINT,
+			subjects_start_in BIGINT,
+			records_end BIGINT,
+			subjects_end BIGINT,
+			subjects_end_in BIGINT,
+			PRIMARY KEY(cohort_id, database_id, period_begin, calendar_interval, series_type)
+);
+
 --Table visit_context
 
 CREATE TABLE @results_schema.@visit_context (
@@ -571,6 +692,5 @@ CREATE TABLE @results_schema.@vocabulary (
 			vocabulary_name VARCHAR(255) NOT NULL,
 			vocabulary_reference VARCHAR,
 			vocabulary_version VARCHAR,
-			vocabulary_concept_id BIGINT NOT NULL,
-			PRIMARY KEY(vocabulary_id)
+			vocabulary_concept_id BIGINT NOT NULL
 );

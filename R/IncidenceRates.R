@@ -29,12 +29,12 @@ getIncidenceRate <- function(connectionDetails = NULL,
   if (!cdmVersion == 5) {
     stop("Only CDM version 5 is supported. Terminating.")
   }
-  
+
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
+
   if (!checkIfCohortInstantiated(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
@@ -54,7 +54,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
     ))
     return(tidyr::tibble())
   }
-  
+
   ParallelLogger::logInfo("Calculating incidence rate per year by age and gender")
   sql <- SqlRender::loadRenderTranslateSql(
     sqlFilename = "GetCalendarYearRange.sql",
@@ -64,7 +64,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
   )
   yearRange <-
     DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
-  
+
   calendarYears <-
     dplyr::tibble(calendarYear = as.integer(seq(yearRange$startYear, yearRange$endYear, by = 1)))
   DatabaseConnector::insertTable(
@@ -77,7 +77,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
     tempEmulationSchema = tempEmulationSchema,
     camelCaseToSnakeCase = TRUE
   )
-  
+
   sql <-
     SqlRender::loadRenderTranslateSql(
       sqlFilename = "ComputeIncidenceRates.sql",
@@ -93,7 +93,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
       cohort_id = cohortId
     )
   DatabaseConnector::executeSql(connection, sql)
-  
+
   sql <- "SELECT * FROM #rates_summary;"
   ratesSummary <-
     DatabaseConnector::renderTranslateQuerySql(
@@ -103,7 +103,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
-  
+
   sql <- "TRUNCATE TABLE #rates_summary; DROP TABLE #rates_summary;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
@@ -112,7 +112,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
     reportOverallTime = FALSE,
     tempEmulationSchema = tempEmulationSchema
   )
-  
+
   irYearAgeGender <- recode(ratesSummary)
   irOverall <-
     tidyr::tibble(
@@ -126,12 +126,16 @@ getIncidenceRate <- function(connectionDetails = NULL,
   irAgeGender <-
     aggregateIr(
       irYearAgeGender,
-      list(ageGroup = irYearAgeGender$ageGroup,
-           gender = irYearAgeGender$gender)
+      list(
+        ageGroup = irYearAgeGender$ageGroup,
+        gender = irYearAgeGender$gender
+      )
     )
   irYear <-
-    aggregateIr(irYearAgeGender,
-                list(calendarYear = irYearAgeGender$calendarYear))
+    aggregateIr(
+      irYearAgeGender,
+      list(calendarYear = irYearAgeGender$calendarYear)
+    )
   irYearAge <-
     aggregateIr(
       irYearAgeGender,
@@ -224,22 +228,26 @@ computeIncidenceRates <- function(connection,
     ))
   }
   if (nrow(subset) > 0) {
-
     runIncidenceRate <- function(row) {
-      ParallelLogger::logInfo("  Computing incidence rate for cohort '",
-                              row$cohortName,
-                              "'")
+      ParallelLogger::logInfo(
+        "  Computing incidence rate for cohort '",
+        row$cohortName,
+        "'"
+      )
 
       # TODO: do we really want to get this from the cohort definition?
       cohortExpression <- RJSONIO::fromJSON(row$json, digits = 23)
-      washoutPeriod <- tryCatch({
-        cohortExpression$
-          PrimaryCriteria$
-          ObservationWindow$
-          PriorDays
-      }, error = function(e) {
-        0
-      })
+      washoutPeriod <- tryCatch(
+        {
+          cohortExpression$
+            PrimaryCriteria$
+            ObservationWindow$
+            PriorDays
+        },
+        error = function(e) {
+          0
+        }
+      )
       data <- getIncidenceRate(
         connection = connection,
         cdmDatabaseSchema = cdmDatabaseSchema,
@@ -268,9 +276,11 @@ computeIncidenceRates <- function(connection,
 
     if (nrow(data) > 0) {
       data <-
-        enforceMinCellValue(data,
-                            "incidenceRate",
-                            1000 * minCellCount / data$personYears)
+        enforceMinCellValue(
+          data,
+          "incidenceRate",
+          1000 * minCellCount / data$personYears
+        )
     }
 
     writeToCsv(
@@ -288,9 +298,10 @@ computeIncidenceRates <- function(connection,
     incremental = incremental
   )
   delta <- Sys.time() - startIncidenceRate
-  ParallelLogger::logInfo("Running Incidence Rate took ",
-                          signif(delta, 3),
-                          " ",
-                          attr(delta, "units"))
-
+  ParallelLogger::logInfo(
+    "Running Incidence Rate took ",
+    signif(delta, 3),
+    " ",
+    attr(delta, "units")
+  )
 }

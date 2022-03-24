@@ -14,6 +14,113 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+.findOrphanConcepts <- function(connectionDetails = NULL,
+                                connection = NULL,
+                                cdmDatabaseSchema,
+                                vocabularyDatabaseSchema = cdmDatabaseSchema,
+                                tempEmulationSchema = NULL,
+                                conceptIds = c(),
+                                useCodesetTable = FALSE,
+                                codesetId = 1,
+                                conceptCountsDatabaseSchema = cdmDatabaseSchema,
+                                conceptCountsTable = "concept_counts",
+                                conceptCountsTableIsTemp = FALSE,
+                                instantiatedCodeSets = "#InstConceptSets",
+                                orphanConceptTable = "#recommended_concepts") {
+  if (is.null(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails)
+    on.exit(DatabaseConnector::disconnect(connection))
+  }
+  sql <- SqlRender::loadRenderTranslateSql(
+    "OrphanCodes.sql",
+    packageName = utils::packageName(),
+    dbms = connection@dbms,
+    tempEmulationSchema = tempEmulationSchema,
+    vocabulary_database_schema = vocabularyDatabaseSchema,
+    work_database_schema = conceptCountsDatabaseSchema,
+    concept_counts_table = conceptCountsTable,
+    concept_counts_table_is_temp = conceptCountsTableIsTemp,
+    concept_ids = conceptIds,
+    use_codesets_table = useCodesetTable,
+    orphan_concept_table = orphanConceptTable,
+    instantiated_code_sets = instantiatedCodeSets,
+    codeset_id = codesetId
+  )
+  DatabaseConnector::executeSql(connection, sql)
+  ParallelLogger::logTrace("- Fetching orphan concepts from server")
+  sql <- "SELECT * FROM @orphan_concept_table;"
+  orphanConcepts <-
+    DatabaseConnector::renderTranslateQuerySql(
+      sql = sql,
+      connection = connection,
+      tempEmulationSchema = tempEmulationSchema,
+      orphan_concept_table = orphanConceptTable,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+    tidyr::tibble()
+
+  # For debugging:
+  # x <- querySql(connection, "SELECT * FROM #starting_concepts;")
+  # View(x)
+  #
+  # x <- querySql(connection, "SELECT * FROM #concept_synonyms;")
+  # View(x)
+  #
+  # x <- querySql(connection, "SELECT * FROM #search_strings;")
+  # View(x)
+  #
+  # x <- querySql(connection, "SELECT * FROM #search_str_top1000;")
+  # View(x)
+  #
+  # x <- querySql(connection, "SELECT * FROM #search_string_subset;")
+  # View(x)
+  #
+  # x <- querySql(connection, "SELECT * FROM #recommended_concepts;")
+  # View(x)
+
+  ParallelLogger::logTrace("- Dropping orphan temp tables")
+  sql <-
+    SqlRender::loadRenderTranslateSql(
+      "DropOrphanConceptTempTables.sql",
+      packageName = utils::packageName(),
+      dbms = connection@dbms,
+      tempEmulationSchema = tempEmulationSchema
+    )
+  DatabaseConnector::executeSql(
+    connection = connection,
+    sql = sql,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  return(orphanConcepts)
+}
+
+createConceptCountsTable <- function(connectionDetails = NULL,
+                                     connection = NULL,
+                                     cdmDatabaseSchema,
+                                     tempEmulationSchema = NULL,
+                                     conceptCountsDatabaseSchema = cdmDatabaseSchema,
+                                     conceptCountsTable = "concept_counts",
+                                     conceptCountsTableIsTemp = FALSE) {
+  ParallelLogger::logInfo("Creating internal concept counts table")
+  if (is.null(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails)
+    on.exit(DatabaseConnector::disconnect(connection))
+  }
+  sql <-
+    SqlRender::loadRenderTranslateSql(
+      "CreateConceptCountTable.sql",
+      packageName = utils::packageName(),
+      dbms = connection@dbms,
+      tempEmulationSchema = tempEmulationSchema,
+      cdm_database_schema = cdmDatabaseSchema,
+      work_database_schema = conceptCountsDatabaseSchema,
+      concept_counts_table = conceptCountsTable,
+      table_is_temp = conceptCountsTableIsTemp
+    )
+  DatabaseConnector::executeSql(connection, sql)
+}
+
 saveDatabaseMetaData <- function(databaseId,
                                  databaseName,
                                  databaseDescription,
@@ -23,6 +130,8 @@ saveDatabaseMetaData <- function(databaseId,
                                  vocabularyVersion) {
   ParallelLogger::logInfo("Saving database metadata")
   startMetaData <- Sys.time()
+  vocabularyVersion <- paste(vocabularyVersion, collapse = ";")
+  vocabularyVersionCdm <- paste(vocabularyVersionCdm, collapse = ";")
   database <- dplyr::tibble(
     databaseId = databaseId,
     databaseName = dplyr::coalesce(databaseName, databaseId),
@@ -37,8 +146,10 @@ saveDatabaseMetaData <- function(databaseId,
     databaseId = databaseId,
     minCellCount = minCellCount
   )
-  writeToCsv(data = database,
-             fileName = file.path(exportFolder, "database.csv"))
+  writeToCsv(
+    data = database,
+    fileName = file.path(exportFolder, "database.csv")
+  )
   delta <- Sys.time() - startMetaData
   writeLines(paste(
     "Saving database metadata took",
@@ -48,7 +159,7 @@ saveDatabaseMetaData <- function(databaseId,
 }
 
 getVocabularyVersion <- function(connection, vocabularyDatabaseSchema) {
-  DatabaseConnector::renderTranslateQuerySql(
+  vocabularyVersion <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
     sql = "select * from @vocabulary_database_schema.vocabulary where vocabulary_id = 'None';",
     vocabulary_database_schema = vocabularyDatabaseSchema,
@@ -58,4 +169,7 @@ getVocabularyVersion <- function(connection, vocabularyDatabaseSchema) {
     dplyr::rename(vocabularyVersion = .data$vocabularyVersion) %>%
     dplyr::pull(.data$vocabularyVersion) %>%
     unique()
+
+  # Edge case where a CDM has more than a single entry
+  paste(vocabularyVersion, collapse = ";")
 }

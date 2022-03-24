@@ -2,7 +2,7 @@ Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Cohorts
 Version: 3.0.0
-Date: 2022-02-03
+Date: 2022-03-23
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
     person("Martijn", "Schuemie", email = "schuemie@ohdsi.org", role = c("aut")),
@@ -14,23 +14,24 @@ Authors@R: c(
 Maintainer: Gowtham Rao <rao@ohdsi.org>
 Description: Diagnostics for cohorts that use the OMOP Common Data Model and the OHDSI tools.
 Depends:
-	DatabaseConnector (>= 4.0.0),
-	FeatureExtraction (>= 3.1.1),
-	R (>= 4.0.0)
+	DatabaseConnector (>= 5.0.0),
+	FeatureExtraction (>= 3.2.0),
+	R (>= 4.1.0)
 Imports:
   Andromeda,
   checkmate,
+  clock,
   digest,
   dplyr (>= 1.0.0),
   methods,
-  ParallelLogger (>= 2.0.0),
-  readr (>= 2.0.1),
+  ParallelLogger (>= 3.0.0),
+  readr (>= 2.1.0),
   RJSONIO,
   rlang,
   SqlRender (>= 1.9.0),
   stringr,
-  tidyr (>= 1.0.0),
-  CohortGenerator (>= 0.2.0)
+  tidyr (>= 1.2.0),
+  CohortGenerator (>= 0.4.0)
 Suggests:
   CirceR,
   DT,

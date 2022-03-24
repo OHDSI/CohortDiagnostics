@@ -21,12 +21,12 @@ computeCohortOverlap <- function(connectionDetails = NULL,
                                  targetCohortId,
                                  comparatorCohortId) {
   start <- Sys.time()
-  
+
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
+
   if (!checkIfCohortInstantiated(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
@@ -46,7 +46,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
     ))
     return(tidyr::tibble())
   }
-  
+
   if (!checkIfCohortInstantiated(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
@@ -66,7 +66,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
     ))
     return(tidyr::tibble())
   }
-  
+
   sql <- SqlRender::loadRenderTranslateSql(
     "CohortOverlap.sql",
     packageName = utils::packageName(),
@@ -102,17 +102,17 @@ executeCohortComparisonDiagnostics <- function(connection,
                                                incremental) {
   ParallelLogger::logInfo("Computing cohort overlap")
   startCohortOverlap <- Sys.time()
-  
+
   combis <- cohorts %>%
     dplyr::select(.data$cohortId) %>%
     dplyr::distinct()
-  
+
   # Select cross product of all cohort ids
   combis <- combis %>%
     dplyr::rename(targetCohortId = .data$cohortId) %>%
     tidyr::crossing(dplyr::rename(combis, comparatorCohortId = .data$cohortId)) %>%
     dplyr::filter(.data$targetCohortId < .data$comparatorCohortId)
-  
+
   if (incremental) {
     combis <- combis %>%
       dplyr::inner_join(
@@ -137,7 +137,7 @@ executeCohortComparisonDiagnostics <- function(connection,
     incremental = incremental,
     recordKeepingFile = recordKeepingFile
   )
-  
+
   if (incremental && (nrow(combis) - nrow(subset)) > 0) {
     ParallelLogger::logInfo(sprintf(
       "Skipping %s cohort combinations in incremental mode.",
@@ -145,7 +145,6 @@ executeCohortComparisonDiagnostics <- function(connection,
     ))
   }
   if (nrow(subset) > 0) {
-    
     runCohortOverlap <- function(row) {
       ParallelLogger::logInfo(
         "- Computing overlap for cohorts ",
@@ -169,7 +168,7 @@ executeCohortComparisonDiagnostics <- function(connection,
       }
       return(data)
     }
-    
+
     data <-
       lapply(split(subset, 1:nrow(subset)), runCohortOverlap)
     data <- dplyr::bind_rows(data)
@@ -184,28 +183,30 @@ executeCohortComparisonDiagnostics <- function(connection,
       revData <-
         swapColumnContents(revData, "tInCSubjects", "cInTSubjects")
       data <- dplyr::bind_rows(data, revData)
-      
+
       data <- data %>%
-        tidyr::replace_na(replace =
-                            list(
-                              eitherSubjects = 0,
-                              bothSubjects = 0,
-                              tOnlySubjects = 0,
-                              cOnlySubjects = 0,
-                              tBeforeCSubjects = 0,
-                              cBeforeTSubjects = 0,
-                              sameDaySubjects = 0,
-                              tInCSubjects = 0,
-                              cInTSubjects = 0
-                            ))
-      
+        tidyr::replace_na(
+          replace =
+            list(
+              eitherSubjects = 0,
+              bothSubjects = 0,
+              tOnlySubjects = 0,
+              cOnlySubjects = 0,
+              tBeforeCSubjects = 0,
+              cBeforeTSubjects = 0,
+              sameDaySubjects = 0,
+              tInCSubjects = 0,
+              cInTSubjects = 0
+            )
+        )
+
       data <- makeDataExportable(
         x = data,
         tableName = "cohort_overlap",
         minCellCount = minCellCount,
         databaseId = databaseId
       )
-      
+
       writeToCsv(
         data = data,
         fileName = file.path(exportFolder, "cohort_overlap.csv"),
@@ -223,10 +224,12 @@ executeCohortComparisonDiagnostics <- function(connection,
       incremental = incremental
     )
   }
-  
+
   delta <- Sys.time() - startCohortOverlap
-  ParallelLogger::logInfo("Running Cohort Overlap took ",
-                          signif(delta, 3),
-                          " ",
-                          attr(delta, "units"))
+  ParallelLogger::logInfo(
+    "Running Cohort Overlap took ",
+    signif(delta, 3),
+    " ",
+    attr(delta, "units")
+  )
 }

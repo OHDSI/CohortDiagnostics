@@ -25,10 +25,11 @@ executeDiagnostics(
   runIndexDateConceptCoOccurrence = FALSE,
   runConceptCountByCalendarPeriod = FALSE,
   runTimeDistributions = TRUE,
+  runTimeSeries = FALSE,
   runVisitContext = TRUE,
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
-  runCohortRelationship = TRUE,
+  runCohortRelationship = FALSE,
   runCohortCharacterization = TRUE,
   covariateSettings = createDefaultCovariateSettings(),
   runTemporalCohortCharacterization = TRUE,
@@ -101,6 +102,8 @@ concept ids. This may take time. It is set to FALSE by default.}
 
 \item{runTimeDistributions}{Generate and export cohort time distributions?}
 
+\item{runTimeSeries}{Generate and export the time series diagnostics?}
+
 \item{runVisitContext}{Generate and export index-date visit context?}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
@@ -143,15 +146,12 @@ using \code{RFeatureExtraction::createTemporalCovariateSettings}
 Alternatively, a covariate setting object may be created using the above as an example.
 }
 \details{
-The \code{cohortSetReference} argument must be a data frame with  the following columns:
+The \code{cohortSetReference} argument must be a data frame with at least the following columns.These fields will be exported as is to the cohort table that is part of Cohort Diagnostics results data model. Any additional fields found will be stored as JSON object in the metadata field of the cohort table:
 \describe{
-\item{cohortId}{The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999}
-\item{atlasId}{Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.}
+\item{cohortId}{The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names.}
 \item{cohortName}{The full name of the cohort. This will be shown in the Shiny app.}
-\item{logicDescription}{A human understandable brief description of the cohort definition. This logic does not have to a 
-fully specified description of the cohort definition, but should provide enough context to help user understand the
-meaning of the cohort definition}
-\item{referentConceptId}{A standard omop concept id that serves as the referent phenotype definition for the cohort Id (optional)}
+\item{json}{The JSON cohort definition for the cohort.}
+\item{sql}{The SQL of the cohort definition rendered from the cohort json.}
 }
 }
 \examples{
@@ -159,19 +159,23 @@ meaning of the cohort definition}
 # Load cohorts (assumes that they have already been instantiated)
 cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort")
 cohorts <- CohortGenerator::getCohortDefinitionSet(packageName = "MyGreatPackage")
-connectionDetails <- createConnectionDetails(dbms = "postgresql",
-                                             server = "ohdsi.com",
-                                             port = 5432,
-                                             user = "me",
-                                             password = "secure")
+connectionDetails <- createConnectionDetails(
+  dbms = "postgresql",
+  server = "ohdsi.com",
+  port = 5432,
+  user = "me",
+  password = "secure"
+)
 
-executeDiagnostics(cohorts = cohorts,
-                   exportFolder = "export",
-                   cohortTableNames = cohortTableNames,
-                   cohortDatabaseSchema = "results",
-                   cdmDatabaseSchema = "cdm",
-                   databaseId = "mySpecialCdm",
-                   connectionDetails = connectionDetails)
+executeDiagnostics(
+  cohorts = cohorts,
+  exportFolder = "export",
+  cohortTableNames = cohortTableNames,
+  cohortDatabaseSchema = "results",
+  cdmDatabaseSchema = "cdm",
+  databaseId = "mySpecialCdm",
+  connectionDetails = connectionDetails
+)
 
 # Use a custom set of cohorts defined in a data.frame
 cohorts <- data.frame(
@@ -181,13 +185,15 @@ cohorts <- data.frame(
   sql = c(readLines("path_to.sql")),
   json = c(readLines("path_to.json"))
 )
-executeDiagnostics(cohorts = cohorts,
-                   exportFolder = "export",
-                   cohortTable = "cohort",
-                   cohortDatabaseSchema = "results",
-                   cdmDatabaseSchema = "cdm",
-                   databaseId = "mySpecialCdm",
-                   connectionDetails = connectionDetails)
+executeDiagnostics(
+  cohorts = cohorts,
+  exportFolder = "export",
+  cohortTable = "cohort",
+  cohortDatabaseSchema = "results",
+  cdmDatabaseSchema = "cdm",
+  databaseId = "mySpecialCdm",
+  connectionDetails = connectionDetails
+)
 }
 
 }

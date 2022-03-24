@@ -34,6 +34,9 @@
 #'                         Note: copying to clipboard will not work in a Shiny window.
 #' @param aboutText        Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 #'                         If not provided, no About tab will be shown.
+#' @param enableAnnotation (optional) Boolean - Enable users to annotate cohorts.
+#'                         Note, this is not reccomended outside of an organisational firewall.
+#'                         Default is to only use with an sqlite database.
 #'
 #' @details
 #' Launches a Shiny app that allows the user to explore the diagnostics
@@ -47,7 +50,8 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
                                       aboutText = NULL,
                                       runOverNetwork = FALSE,
                                       port = 80,
-                                      launch.browser = FALSE) {
+                                      launch.browser = FALSE,
+                                      enableAnnotation = is.null(connectionDetails)) {
 
   sqliteDbPath <- normalizePath(sqliteDbPath)
   if (is.null(connectionDetails)) {
@@ -60,21 +64,28 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
   }
 
+  if (enableAnnotation) {
+    message("Starting application with annotations enabled")
+  }
+
+  if (connectionDetails$dbms != "sqlite" & enableAnnotation) {
+    warning("Enabling annotation is not currently recommended outside of sqlite databases")
+  }
+
   if (is.null(resultsDatabaseSchema)) {
     stop("resultsDatabaseSchema is required to connect to the database.")
   }
   if (!is.null(vocabularyDatabaseSchema) &
-      is.null(vocabularyDatabaseSchemas)) {
+    is.null(vocabularyDatabaseSchemas)) {
     vocabularyDatabaseSchemas <- vocabularyDatabaseSchema
     warning(
-      'vocabularyDatabaseSchema option is deprecated. Please use vocabularyDatabaseSchemas.'
+      "vocabularyDatabaseSchema option is deprecated. Please use vocabularyDatabaseSchemas."
     )
   }
-  
+
   ensure_installed("checkmate")
   ensure_installed("DatabaseConnector")
   ensure_installed("dplyr")
-  ensure_installed("DT")
   ensure_installed("ggplot2")
   ensure_installed("ggiraph")
   ensure_installed("gtable")
@@ -86,19 +97,23 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
   ensure_installed("shiny")
   ensure_installed("shinydashboard")
   ensure_installed("shinyWidgets")
+  ensure_installed("shinyjs")
   ensure_installed("stringr")
   ensure_installed("SqlRender")
   ensure_installed("tidyr")
   ensure_installed("CirceR")
   ensure_installed("rmarkdown")
+  ensure_installed("reactable")
+  ensure_installed("markdownInput")
+  ensure_installed("markdown")
   
   appDir <-
-    system.file("shiny", "DiagnosticsExplorer", package= utils::packageName())
-  
+    system.file("shiny", "DiagnosticsExplorer", package = utils::packageName())
+
   if (launch.browser) {
     options(shiny.launch.browser = TRUE)
   }
-  
+
   if (runOverNetwork) {
     myIpAddress <- system("ipconfig", intern = TRUE)
     myIpAddress <- myIpAddress[grep("IPv4", myIpAddress)]
@@ -110,7 +125,8 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     connectionDetails = connectionDetails,
     resultsDatabaseSchema = resultsDatabaseSchema,
     vocabularyDatabaseSchemas = vocabularyDatabaseSchemas,
-    aboutText = aboutText
+    aboutText = aboutText,
+    enableAnnotation = enableAnnotation
   )
   .GlobalEnv$shinySettings <- shinySettings
   on.exit(rm("shinySettings", envir = .GlobalEnv))
@@ -136,18 +152,19 @@ createMergedResultsFile <-
   function(dataFolder,
            sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
            overwrite = FALSE) {
-
     if (file.exists(sqliteDbPath) & !overwrite) {
       stop("File ", sqliteDbPath, " already exists. Set overwrite = TRUE to replace")
-    } else if (file.exists(sqliteDbPath)){
+    } else if (file.exists(sqliteDbPath)) {
       unlink(sqliteDbPath)
     }
 
     connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
     connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
-    createResultsDataModel(connection = connection,
-                           schema = "main")
+    createResultsDataModel(
+      connection = connection,
+      schema = "main"
+    )
     listOfZipFilesToUpload <-
       list.files(
         path = dataFolder,
@@ -195,7 +212,7 @@ launchCohortExplorer <- function(connectionDetails,
   ensure_installed("RColorBrewer")
   ensure_installed("ggplot2")
   ensure_installed("magrittr")
-  
+
   .GlobalEnv$shinySettings <-
     list(
       connectionDetails = connectionDetails,
@@ -208,7 +225,7 @@ launchCohortExplorer <- function(connectionDetails,
     )
   on.exit(rm("shinySettings", envir = .GlobalEnv))
   appDir <-
-    system.file("shiny", "CohortExplorer", package= utils::packageName())
+    system.file("shiny", "CohortExplorer", package = utils::packageName())
   shiny::runApp(appDir)
 }
 
@@ -218,10 +235,11 @@ is_installed <- function(pkg, version = 0) {
   installed_version <-
     tryCatch(
       utils::packageVersion(pkg),
-      error = function(e)
+      error = function(e) {
         NA
+      }
     )
-  ! is.na(installed_version) && installed_version >= version
+  !is.na(installed_version) && installed_version >= version
 }
 
 # Borrowed and adapted from devtools:
@@ -233,7 +251,7 @@ ensure_installed <- function(pkg) {
     if (interactive()) {
       message(msg, "\nWould you like to install it?")
       if (menu(c("Yes", "No")) == 1) {
-        if (pkg == 'CirceR') {
+        if (pkg == "CirceR") {
           ensure_installed("remotes")
           message(msg, "\nInstalling from Github using remotes")
           remotes::install_github("OHDSI/CirceR")

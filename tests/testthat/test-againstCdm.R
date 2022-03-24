@@ -1,21 +1,25 @@
 test_that("Cohort diagnostics in incremental mode", {
-  skip_if(skipCdmTests, 'cdm settings not configured')
-  
-  cohortTableName <- paste0("ct_", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
-  cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTableName)
+  skip_if(skipCdmTests, "cdm settings not configured")
+
+  cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
   # Next create the tables on the database
-  CohortGenerator::createCohortTables(connectionDetails = connectionDetails,
-                                      cohortTableNames = cohortTableNames,
-                                      cohortDatabaseSchema = cohortDatabaseSchema,
-                                      incremental = FALSE)
+  CohortGenerator::createCohortTables(
+    connectionDetails = connectionDetails,
+    cohortTableNames = cohortTableNames,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    incremental = FALSE
+  )
 
   # Generate the cohort set
-  CohortGenerator::generateCohortSet(connectionDetails = connectionDetails,
-                                     cdmDatabaseSchema = cdmDatabaseSchema,
-                                     cohortDatabaseSchema = cohortDatabaseSchema,
-                                     cohortTableNames = cohortTableNames,
-                                     cohortDefinitionSet = cohortDefinitionSet,
-                                     incremental = FALSE)
+  CohortGenerator::generateCohortSet(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTableNames = cohortTableNames,
+    cohortDefinitionSet = cohortDefinitionSet,
+    incremental = FALSE
+  )
+
 
   firstTime <- system.time(
     executeDiagnostics(
@@ -25,10 +29,21 @@ test_that("Cohort diagnostics in incremental mode", {
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTableNames = cohortTableNames,
+      cohortTable = cohortTable,
       cohortIds = cohortIds,
       exportFolder = file.path(folder, "export"),
       databaseId = dbms,
+      runInclusionStatistics = TRUE,
+      runBreakdownIndexEvents = TRUE,
+      runCohortCharacterization = TRUE,
+      runTemporalCohortCharacterization = TRUE,
+      runCohortOverlap = TRUE,
+      runIncidenceRate = TRUE,
+      runIncludedSourceConcepts = TRUE,
+      runOrphanConcepts = TRUE,
+      runTimeDistributions = TRUE,
+      runTimeSeries = TRUE,
+      runCohortRelationship = TRUE,
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
@@ -38,7 +53,7 @@ test_that("Cohort diagnostics in incremental mode", {
   )
 
   expect_true(file.exists(file.path(
-    folder, "export", paste0("Results_", dbms ,".zip")
+    folder, "export", paste0("Results_", dbms, ".zip")
   )))
 
   # We now run it with all cohorts without specifying ids - testing incremental mode
@@ -52,6 +67,17 @@ test_that("Cohort diagnostics in incremental mode", {
       cohortDefinitionSet = cohortDefinitionSet,
       exportFolder = file.path(folder, "export"),
       databaseId = dbms,
+      runInclusionStatistics = TRUE,
+      runBreakdownIndexEvents = TRUE,
+      runCohortCharacterization = TRUE,
+      runTemporalCohortCharacterization = TRUE,
+      runCohortOverlap = TRUE,
+      runIncidenceRate = TRUE,
+      runIncludedSourceConcepts = TRUE,
+      runOrphanConcepts = TRUE,
+      runTimeDistributions = TRUE,
+      runTimeSeries = TRUE,
+      runCohortRelationship = TRUE,
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
@@ -71,4 +97,3 @@ test_that("Cohort diagnostics in incremental mode", {
   expect_true(is.numeric(output$sum_value[2]))
   expect_true(is.numeric(output$mean[2]))
 })
-
