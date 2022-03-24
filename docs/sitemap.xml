@@ -247,6 +247,12 @@
     <loc>/reference/runCohortDiagnosticsUsingExternalCounts.html</loc>
   </url>
   <url>
+    <loc>/reference/runCohortRelationshipDiagnostics.html</loc>
+  </url>
+  <url>
+    <loc>/reference/runCohortTimeSeriesDiagnostics.html</loc>
+  </url>
+  <url>
     <loc>/reference/runStudyDiagnostics.html</loc>
   </url>
   <url>

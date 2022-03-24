@@ -21,9 +21,7 @@ annotation_attributes,created_by,varchar,Yes,Yes,No,Yes,No,No,No
 annotation_attributes,annotation_attributes,int,Yes,No,No,Yes,No,No,No
 annotation_attributes,created_on,bigint,Yes,No,No,Yes,No,No,No
 cohort,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-cohort,atlas_id,bigint,No,No,Yes,Yes,No,No,No
 cohort,cohort_name,varchar,Yes,No,No,Yes,No,No,No
-cohort,logic_description,varchar,No,No,Yes,Yes,No,No,No
 cohort,metadata,varchar,No,No,Yes,Yes,No,No,No
 cohort,sql,varchar,Yes,No,No,Yes,No,No,No
 cohort,json,varchar,Yes,No,No,Yes,No,No,No

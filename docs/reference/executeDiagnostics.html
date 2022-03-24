@@ -31,7 +31,7 @@ Alternatively, a covariate setting object may be created using the above as an e
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -108,10 +108,12 @@ Alternatively, a covariate setting object may be created using the above as an e
   runIncludedSourceConcepts <span class="op">=</span> <span class="cn">TRUE</span>,
   runOrphanConcepts <span class="op">=</span> <span class="cn">TRUE</span>,
   runTimeDistributions <span class="op">=</span> <span class="cn">TRUE</span>,
+  runTimeSeries <span class="op">=</span> <span class="cn">FALSE</span>,
   runVisitContext <span class="op">=</span> <span class="cn">TRUE</span>,
   runBreakdownIndexEvents <span class="op">=</span> <span class="cn">TRUE</span>,
   runIncidenceRate <span class="op">=</span> <span class="cn">TRUE</span>,
   runCohortOverlap <span class="op">=</span> <span class="cn">TRUE</span>,
+  runCohortRelationship <span class="op">=</span> <span class="cn">FALSE</span>,
   runCohortCharacterization <span class="op">=</span> <span class="cn">TRUE</span>,
   covariateSettings <span class="op">=</span> <span class="fu">createDefaultCovariateSettings</span><span class="op">(</span><span class="op">)</span>,
   runTemporalCohortCharacterization <span class="op">=</span> <span class="cn">TRUE</span>,
@@ -181,6 +183,8 @@ diagnostics to.</p></dd>
 <dd><p>Generate and export potential orphan concepts?</p></dd>
 <dt>runTimeDistributions</dt>
 <dd><p>Generate and export cohort time distributions?</p></dd>
+<dt>runTimeSeries</dt>
+<dd><p>Generate and export the time series diagnostics?</p></dd>
 <dt>runVisitContext</dt>
 <dd><p>Generate and export index-date visit context?</p></dd>
 <dt>runBreakdownIndexEvents</dt>
@@ -191,6 +195,9 @@ diagnostics to.</p></dd>
 <dd><p>Generate and export the cohort overlap? Overlaps are checked within cohortIds
 that have the same phenotype ID sourced from the CohortSetReference or
 cohortToCreateFile.</p></dd>
+<dt>runCohortRelationship</dt>
+<dd><p>Generate and export the cohort relationship? Cohort relationship checks the temporal
+relationship between two or more cohorts.</p></dd>
 <dt>runCohortCharacterization</dt>
 <dd><p>Generate and export the cohort characterization?
 Only records with values greater than 0.0001 are returned.</p></dd>
@@ -215,22 +222,17 @@ of which cohort diagnostics has been executed.</p></dd>
 </dl></div>
     <div id="details">
     <h2>Details</h2>
-    <p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl><dt>cohortId</dt>
-<dd><p>The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999</p></dd>
-
-<dt>atlasId</dt>
-<dd><p>Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.</p></dd>
+    <p>The <code>cohortSetReference</code> argument must be a data frame with at least the following columns.These fields will be exported as is to the cohort table that is part of Cohort Diagnostics results data model. Any additional fields found will be stored as JSON object in the metadata field of the cohort table:</p><dl><dt>cohortId</dt>
+<dd><p>The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names.</p></dd>
 
 <dt>cohortName</dt>
 <dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
 
-<dt>logicDescription</dt>
-<dd><p>A human understandable brief description of the cohort definition. This logic does not have to a 
-fully specified description of the cohort definition, but should provide enough context to help user understand the
-meaning of the cohort definition</p></dd>
+<dt>json</dt>
+<dd><p>The JSON cohort definition for the cohort.</p></dd>
 
-<dt>referentConceptId</dt>
-<dd><p>A standard omop concept id that serves as the referent phenotype definition for the cohort Id (optional)</p></dd>
+<dt>sql</dt>
+<dd><p>The SQL of the cohort definition rendered from the cohort json.</p></dd>
 
 
 </dl></div>
@@ -241,19 +243,23 @@ meaning of the cohort definition</p></dd>
 <span class="r-in"><span class="co"># Load cohorts (assumes that they have already been instantiated)</span></span>
 <span class="r-in"><span class="va">cohortTableNames</span> <span class="op">&lt;-</span> <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortTableNames.html" class="external-link">getCohortTableNames</a></span><span class="op">(</span>cohortTable <span class="op">=</span> <span class="st">"cohort"</span><span class="op">)</span></span>
 <span class="r-in"><span class="va">cohorts</span> <span class="op">&lt;-</span> <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortDefinitionSet.html" class="external-link">getCohortDefinitionSet</a></span><span class="op">(</span>packageName <span class="op">=</span> <span class="st">"MyGreatPackage"</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu">createConnectionDetails</span><span class="op">(</span>dbms <span class="op">=</span> <span class="st">"postgresql"</span>,</span>
-<span class="r-in">                                             server <span class="op">=</span> <span class="st">"ohdsi.com"</span>,</span>
-<span class="r-in">                                             port <span class="op">=</span> <span class="fl">5432</span>,</span>
-<span class="r-in">                                             user <span class="op">=</span> <span class="st">"me"</span>,</span>
-<span class="r-in">                                             password <span class="op">=</span> <span class="st">"secure"</span><span class="op">)</span></span>
+<span class="r-in"><span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu">createConnectionDetails</span><span class="op">(</span></span>
+<span class="r-in">  dbms <span class="op">=</span> <span class="st">"postgresql"</span>,</span>
+<span class="r-in">  server <span class="op">=</span> <span class="st">"ohdsi.com"</span>,</span>
+<span class="r-in">  port <span class="op">=</span> <span class="fl">5432</span>,</span>
+<span class="r-in">  user <span class="op">=</span> <span class="st">"me"</span>,</span>
+<span class="r-in">  password <span class="op">=</span> <span class="st">"secure"</span></span>
+<span class="r-in"><span class="op">)</span></span>
 <span class="r-in"></span>
-<span class="r-in"><span class="fu">executeDiagnostics</span><span class="op">(</span>cohorts <span class="op">=</span> <span class="va">cohorts</span>,</span>
-<span class="r-in">                   exportFolder <span class="op">=</span> <span class="st">"export"</span>,</span>
-<span class="r-in">                   cohortTableNames <span class="op">=</span> <span class="va">cohortTableNames</span>,</span>
-<span class="r-in">                   cohortDatabaseSchema <span class="op">=</span> <span class="st">"results"</span>,</span>
-<span class="r-in">                   cdmDatabaseSchema <span class="op">=</span> <span class="st">"cdm"</span>,</span>
-<span class="r-in">                   databaseId <span class="op">=</span> <span class="st">"mySpecialCdm"</span>,</span>
-<span class="r-in">                   connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span><span class="op">)</span></span>
+<span class="r-in"><span class="fu">executeDiagnostics</span><span class="op">(</span></span>
+<span class="r-in">  cohorts <span class="op">=</span> <span class="va">cohorts</span>,</span>
+<span class="r-in">  exportFolder <span class="op">=</span> <span class="st">"export"</span>,</span>
+<span class="r-in">  cohortTableNames <span class="op">=</span> <span class="va">cohortTableNames</span>,</span>
+<span class="r-in">  cohortDatabaseSchema <span class="op">=</span> <span class="st">"results"</span>,</span>
+<span class="r-in">  cdmDatabaseSchema <span class="op">=</span> <span class="st">"cdm"</span>,</span>
+<span class="r-in">  databaseId <span class="op">=</span> <span class="st">"mySpecialCdm"</span>,</span>
+<span class="r-in">  connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span></span>
+<span class="r-in"><span class="op">)</span></span>
 <span class="r-in"></span>
 <span class="r-in"><span class="co"># Use a custom set of cohorts defined in a data.frame</span></span>
 <span class="r-in"><span class="va">cohorts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
@@ -263,13 +269,15 @@ meaning of the cohort definition</p></dd>
 <span class="r-in">  sql <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="st">"path_to.sql"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span class="r-in">  json <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="st">"path_to.json"</span><span class="op">)</span><span class="op">)</span></span>
 <span class="r-in"><span class="op">)</span></span>
-<span class="r-in"><span class="fu">executeDiagnostics</span><span class="op">(</span>cohorts <span class="op">=</span> <span class="va">cohorts</span>,</span>
-<span class="r-in">                   exportFolder <span class="op">=</span> <span class="st">"export"</span>,</span>
-<span class="r-in">                   cohortTable <span class="op">=</span> <span class="st">"cohort"</span>,</span>
-<span class="r-in">                   cohortDatabaseSchema <span class="op">=</span> <span class="st">"results"</span>,</span>
-<span class="r-in">                   cdmDatabaseSchema <span class="op">=</span> <span class="st">"cdm"</span>,</span>
-<span class="r-in">                   databaseId <span class="op">=</span> <span class="st">"mySpecialCdm"</span>,</span>
-<span class="r-in">                   connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span><span class="op">)</span></span>
+<span class="r-in"><span class="fu">executeDiagnostics</span><span class="op">(</span></span>
+<span class="r-in">  cohorts <span class="op">=</span> <span class="va">cohorts</span>,</span>
+<span class="r-in">  exportFolder <span class="op">=</span> <span class="st">"export"</span>,</span>
+<span class="r-in">  cohortTable <span class="op">=</span> <span class="st">"cohort"</span>,</span>
+<span class="r-in">  cohortDatabaseSchema <span class="op">=</span> <span class="st">"results"</span>,</span>
+<span class="r-in">  cdmDatabaseSchema <span class="op">=</span> <span class="st">"cdm"</span>,</span>
+<span class="r-in">  databaseId <span class="op">=</span> <span class="st">"mySpecialCdm"</span>,</span>
+<span class="r-in">  connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span></span>
+<span class="r-in"><span class="op">)</span></span>
 <span class="r-in"><span class="op">}</span></span>
 <span class="r-in"></span>
 </code></pre></div>

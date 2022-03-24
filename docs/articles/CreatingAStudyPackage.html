@@ -43,7 +43,7 @@
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -96,7 +96,7 @@
       <h1 data-toc-skip>Creating a study package</h1>
                         <h4 data-toc-skip class="author">Gowtham A. Rao</h4>
             
-            <h4 data-toc-skip class="date">2022-02-09</h4>
+            <h4 data-toc-skip class="date">2022-03-23</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/CreatingAStudyPackage.Rmd" class="external-link"><code>vignettes/CreatingAStudyPackage.Rmd</code></a></small>
       <div class="hidden name"><code>CreatingAStudyPackage.Rmd</code></div>
@@ -105,7 +105,6 @@
 
     
     
-<pre><code><span class="co">## Warning: package 'SqlRender' was built under R version 4.1.2</span></code></pre>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
@@ -151,7 +150,7 @@
 </h3>
 <p>Note: this option is required Hydra 0.3, as of writing this document that version of Hydra is in develop branch.</p>
 <p>The skeleton cohort diagnostics study package is <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics" class="external-link">here</a>. A skeleton package is a special package that is designed to be used with <a href="https://github.com/OHDSI/Hydra" class="external-link">Hydra</a>. The input for Hydra is study a specifications file (in json format). Example is <a href="https://github.com/OHDSI/Hydra/blob/master/extras/ExampleCohortDiagnosticsSpecs.json" class="external-link">here</a>.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># please ensure you have the latest version of Hydra. As of 08/13/2021 - CohortDiagnostics support for Hydra is still in develop branch.</span>
 <span class="co"># please check hydra release notes and update hydra</span>
 <span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"OHDSI/Hydra"</span>, ref <span class="op">=</span> <span class="st">"develop"</span><span class="op">)</span>

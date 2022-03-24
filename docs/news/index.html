@@ -26,7 +26,7 @@
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -86,6 +86,20 @@
 <li><p>Improved metadata collection and storage from runs of cohort diagnostics.</p></li>
 <li><p>Removed phenotype_id field from data ddl</p></li>
 <li><p>Additional checks to the output of cohort diagnostics to ensure it conforms to its own results data model. The new function (internal) is makeDataExportable. Results data model csv file has been enhanced with new fields, including a field to specify if the value is to be subjected to privacy protection (i.e. min cell count, eg. person count). Note a bug was discovered in the orphan concepts and included source concepts that was leading to duplication of row records by primary key. This bug has been fixed by calculating its max value grouped by primary keys. It will be fixed in another commit.</p></li>
+<li><p>New optional diagnostics computes temporal relationship between any two cohorts. The settings for the temporal relationship between cohorts defaults to be the same as temporalCovariateSettings. This diagnostics will be integrated into the characterization output of diagnostics explorer, where cohorts will be covariates.</p></li>
+<li><p>New optional diagnostics called time series diagnostics. Time series diagnostics takes as input a calendar period range, and in that calendar period range for calendar units (year, quarter, month) computes the approximate new occurrence (approximates incidence) and observations (approximates prevalence) of the cohort start and cohort end dates during the calendar period.</p></li>
+</ol><p>Bug fixes:</p>
+<ol style="list-style-type: decimal"><li>Added support for users to include non-standard columns in their CDM preventing crashes</li>
+</ol></div>
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="2.2.4" id="cohortdiagnostics-224">CohortDiagnostics 2.2.4<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-224"></a></h2>
+<p>Bug fixes:</p>
+<ol style="list-style-type: decimal"><li>Fixed a bug that was causing generation of premerged and upload files to fail when the output had fields that were not in the results data model.</li>
+</ol></div>
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="2.2.3" id="cohortdiagnostics-223">CohortDiagnostics 2.2.3<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-223"></a></h2>
+<p>Bug fixes:</p>
+<ol style="list-style-type: decimal"><li>Replace use dplyr across() for bug introduced by tidyr v1.2.0</li>
 </ol></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="2.2.2" id="cohortdiagnostics-222">CohortDiagnostics 2.2.2<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-222"></a></h2>

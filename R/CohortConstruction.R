@@ -15,7 +15,7 @@
 # limitations under the License.
 
 checkCohortReference <- function(cohortReference, errorMessage = NULL) {
-  if (is.null(errorMessage) | !class(errorMessage) == 'AssertColection') {
+  if (is.null(errorMessage) | !class(errorMessage) == "AssertColection") {
     errorMessage <- checkmate::makeAssertCollection()
   }
   checkmate::assertDataFrame(
@@ -43,10 +43,10 @@ checkCohortReference <- function(cohortReference, errorMessage = NULL) {
 
 makeBackwardsCompatible <- function(cohorts) {
   if (!"name" %in% colnames(cohorts)) {
-    if ('cohortId' %in% colnames(cohorts)) {
+    if ("cohortId" %in% colnames(cohorts)) {
       cohorts <- cohorts %>%
         dplyr::mutate(name = as.character(.data$cohortId))
-    } else if ('id' %in% colnames(cohorts)) {
+    } else if ("id" %in% colnames(cohorts)) {
       cohorts <- cohorts %>%
         dplyr::mutate(name = as.character(.data$id)) %>%
         dplyr::mutate(cohortId = .data$id)
@@ -58,7 +58,7 @@ makeBackwardsCompatible <- function(cohorts) {
       dplyr::mutate(atlasId = .data$webApiCohortId)
   }
   if (!"cohortName" %in% colnames(cohorts) &
-      "atlasName" %in% colnames(cohorts)) {
+    "atlasName" %in% colnames(cohorts)) {
     cohorts <- cohorts %>%
       dplyr::mutate(cohortName = .data$atlasName)
   }
@@ -78,32 +78,41 @@ selectColumnAccordingToResultsModel <- function(data) {
     columsToInclude <- c(columsToInclude, "atlasId")
   }
   columsToInclude <-
-    c(columsToInclude, "json" , "sql")
+    c(columsToInclude, "json", "sql")
   return(data[, columsToInclude])
 }
 
 getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
                                             folder,
-                                            cohortInclusionFile = file.path(folder,
-                                                                            "cohortInclusion.csv"),
-                                            cohortInclusionResultFile = file.path(folder,
-                                                                                  "cohortIncResult.csv"),
-                                            cohortInclusionStatsFile = file.path(folder,
-                                                                                 "cohortIncStats.csv"),
-                                            cohortSummaryStatsFile = file.path(folder,
-                                                                               "cohortSummaryStats.csv"),
+                                            cohortInclusionFile = file.path(
+                                              folder,
+                                              "cohortInclusion.csv"
+                                            ),
+                                            cohortInclusionResultFile = file.path(
+                                              folder,
+                                              "cohortIncResult.csv"
+                                            ),
+                                            cohortInclusionStatsFile = file.path(
+                                              folder,
+                                              "cohortIncStats.csv"
+                                            ),
+                                            cohortSummaryStatsFile = file.path(
+                                              folder,
+                                              "cohortSummaryStats.csv"
+                                            ),
                                             simplify = TRUE) {
   start <- Sys.time()
-  
+
   if (!file.exists(cohortInclusionFile)) {
     return(NULL)
   }
-  
+
   fetchStats <- function(file) {
     ParallelLogger::logDebug("- Fetching data from ", file)
     stats <- readr::read_csv(file,
-                             col_types = readr::cols(),
-                             guess_max = min(1e7))
+      col_types = readr::cols(),
+      guess_max = min(1e7)
+    )
     if (!is.null(cohortIds)) {
       stats <- stats %>%
         dplyr::filter(.data$cohortDefinitionId %in% cohortIds)
@@ -112,7 +121,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
   }
 
   inclusion <- fetchStats(cohortInclusionFile)
-  if ('description' %in% names(inclusion)) {
+  if ("description" %in% names(inclusion)) {
     inclusion$description <- as.character(inclusion$description)
     inclusion$description[is.na(inclusion$description)] <- ""
   } else {
@@ -159,7 +168,7 @@ processInclusionStats <- function(inclusion,
     if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {
       return(NULL)
     }
-    
+
     result <- inclusion %>%
       dplyr::select(.data$ruleSequence, .data$name) %>%
       dplyr::distinct() %>%
@@ -175,12 +184,12 @@ processInclusionStats <- function(inclusion,
         by = "ruleSequence"
       ) %>%
       dplyr::mutate(remain = 0)
-    
+
     inclusionResults <- inclusionResults %>%
       dplyr::filter(.data$modeId == 0)
     mask <- 0
     for (ruleId in 0:(nrow(result) - 1)) {
-      mask <- bitwOr(mask, 2 ^ ruleId)
+      mask <- bitwOr(mask, 2^ruleId)
       idx <-
         bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
       result$remain[result$ruleSequence == ruleId] <-
@@ -236,19 +245,23 @@ getInclusionStats <- function(connection,
   }
   if (nrow(subset) > 0) {
     ParallelLogger::logInfo("Exporting inclusion rules with CohortGenerator")
-    CohortGenerator::insertInclusionRuleNames(connection = connection,
-                                              cohortDefinitionSet = subset,
-                                              cohortDatabaseSchema = cohortDatabaseSchema,
-                                              cohortInclusionTable = cohortTableNames$cohortInclusionTable)
+    CohortGenerator::insertInclusionRuleNames(
+      connection = connection,
+      cohortDefinitionSet = subset,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortInclusionTable = cohortTableNames$cohortInclusionTable
+    )
     # This part will change in future version, with a patch to CohortGenerator that
     # supports the usage of exporting tables without writing to disk
     inclusionStatisticsFolder <- tempfile("CdCohortStatisticsFolder")
     on.exit(unlink(inclusionStatisticsFolder), add = TRUE)
-    CohortGenerator::exportCohortStatsTables(connection = connection,
-                                             cohortDatabaseSchema = cohortDatabaseSchema,
-                                             cohortTableNames = cohortTableNames,
-                                             cohortStatisticsFolder = inclusionStatisticsFolder,
-                                             incremental = FALSE) # Note use of FALSE to always genrate stats here
+    CohortGenerator::exportCohortStatsTables(
+      connection = connection,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTableNames = cohortTableNames,
+      cohortStatisticsFolder = inclusionStatisticsFolder,
+      incremental = FALSE
+    ) # Note use of FALSE to always genrate stats here
     stats <-
       getInclusionStatisticsFromFiles(
         cohortIds = subset$cohortId,

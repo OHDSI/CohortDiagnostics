@@ -76,13 +76,13 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     stop("resultsDatabaseSchema is required to connect to the database.")
   }
   if (!is.null(vocabularyDatabaseSchema) &
-      is.null(vocabularyDatabaseSchemas)) {
+    is.null(vocabularyDatabaseSchemas)) {
     vocabularyDatabaseSchemas <- vocabularyDatabaseSchema
     warning(
-      'vocabularyDatabaseSchema option is deprecated. Please use vocabularyDatabaseSchemas.'
+      "vocabularyDatabaseSchema option is deprecated. Please use vocabularyDatabaseSchemas."
     )
   }
-  
+
   ensure_installed("checkmate")
   ensure_installed("DatabaseConnector")
   ensure_installed("dplyr")
@@ -108,12 +108,12 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
   ensure_installed("markdown")
   
   appDir <-
-    system.file("shiny", "DiagnosticsExplorer", package= utils::packageName())
-  
+    system.file("shiny", "DiagnosticsExplorer", package = utils::packageName())
+
   if (launch.browser) {
     options(shiny.launch.browser = TRUE)
   }
-  
+
   if (runOverNetwork) {
     myIpAddress <- system("ipconfig", intern = TRUE)
     myIpAddress <- myIpAddress[grep("IPv4", myIpAddress)]
@@ -152,18 +152,19 @@ createMergedResultsFile <-
   function(dataFolder,
            sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
            overwrite = FALSE) {
-
     if (file.exists(sqliteDbPath) & !overwrite) {
       stop("File ", sqliteDbPath, " already exists. Set overwrite = TRUE to replace")
-    } else if (file.exists(sqliteDbPath)){
+    } else if (file.exists(sqliteDbPath)) {
       unlink(sqliteDbPath)
     }
 
     connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
     connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
-    createResultsDataModel(connection = connection,
-                           schema = "main")
+    createResultsDataModel(
+      connection = connection,
+      schema = "main"
+    )
     listOfZipFilesToUpload <-
       list.files(
         path = dataFolder,
@@ -211,7 +212,7 @@ launchCohortExplorer <- function(connectionDetails,
   ensure_installed("RColorBrewer")
   ensure_installed("ggplot2")
   ensure_installed("magrittr")
-  
+
   .GlobalEnv$shinySettings <-
     list(
       connectionDetails = connectionDetails,
@@ -224,7 +225,7 @@ launchCohortExplorer <- function(connectionDetails,
     )
   on.exit(rm("shinySettings", envir = .GlobalEnv))
   appDir <-
-    system.file("shiny", "CohortExplorer", package= utils::packageName())
+    system.file("shiny", "CohortExplorer", package = utils::packageName())
   shiny::runApp(appDir)
 }
 
@@ -234,10 +235,11 @@ is_installed <- function(pkg, version = 0) {
   installed_version <-
     tryCatch(
       utils::packageVersion(pkg),
-      error = function(e)
+      error = function(e) {
         NA
+      }
     )
-  ! is.na(installed_version) && installed_version >= version
+  !is.na(installed_version) && installed_version >= version
 }
 
 # Borrowed and adapted from devtools:
@@ -249,7 +251,7 @@ ensure_installed <- function(pkg) {
     if (interactive()) {
       message(msg, "\nWould you like to install it?")
       if (menu(c("Yes", "No")) == 1) {
-        if (pkg == 'CirceR') {
+        if (pkg == "CirceR") {
           ensure_installed("remotes")
           message(msg, "\nInstalling from Github using remotes")
           remotes::install_github("OHDSI/CirceR")

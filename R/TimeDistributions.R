@@ -23,19 +23,19 @@ getTimeDistributions <- function(connectionDetails = NULL,
                                  cohortIds,
                                  cdmVersion = 5) {
   start <- Sys.time()
-  
+
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
+
   covariateSettings <-
     FeatureExtraction::createCovariateSettings(
       useDemographicsPriorObservationTime = TRUE,
       useDemographicsPostObservationTime = TRUE,
       useDemographicsTimeInCohort = TRUE
     )
-  
+
   data <-
     FeatureExtraction::getDbCovariateData(
       connection = connection,
@@ -48,7 +48,7 @@ getTimeDistributions <- function(connectionDetails = NULL,
       cdmVersion = cdmVersion,
       aggregated = TRUE
     )
-  
+
   if (is.null(data$covariatesContinuous)) {
     result <- tidyr::tibble()
   } else {
@@ -59,16 +59,20 @@ getTimeDistributions <- function(connectionDetails = NULL,
         -.data$analysisId,
         -.data$covariateId
       ) %>%
-      dplyr::rename(timeMetric = .data$covariateName,
-                    cohortId = .data$cohortDefinitionId) %>%
+      dplyr::rename(
+        timeMetric = .data$covariateName,
+        cohortId = .data$cohortDefinitionId
+      ) %>%
       dplyr::collect()
   }
   attr(result, "cohortSize") <- data$metaData$populationSize
   delta <- Sys.time() - start
-  ParallelLogger::logInfo("Computing time distributions took ",
-                          signif(delta, 3),
-                          " ",
-                          attr(delta, "units"))
+  ParallelLogger::logInfo(
+    "Computing time distributions took ",
+    signif(delta, 3),
+    " ",
+    attr(delta, "units")
+  )
   return(result)
 }
 
@@ -86,51 +90,49 @@ executeTimeDistributionDiagnostics <- function(connection,
                                                incremental,
                                                recordKeepingFile) {
   ParallelLogger::logInfo("Creating time distributions")
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohorts %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runTimeDistributions",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
+  subset <- subsetToRequiredCohorts(
+    cohorts = cohorts %>%
+      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+    task = "runTimeDistributions",
+    incremental = incremental,
+    recordKeepingFile = recordKeepingFile
+  )
+
+  if (incremental &&
+    (length(instantiatedCohorts) - nrow(subset)) > 0) {
+    ParallelLogger::logInfo(sprintf(
+      "Skipping %s cohorts in incremental mode.",
+      length(instantiatedCohorts) - nrow(subset)
+    ))
+  }
+  if (nrow(subset) > 0) {
+    data <- getTimeDistributions(
+      connection = connection,
+      tempEmulationSchema = tempEmulationSchema,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      cdmVersion = cdmVersion,
+      cohortIds = subset$cohortId
     )
-
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
-    if (nrow(subset) > 0) {
-      data <- getTimeDistributions(
-        connection = connection,
-        tempEmulationSchema = tempEmulationSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable,
-        cdmVersion = cdmVersion,
-        cohortIds = subset$cohortId
-      )
-      data <- makeDataExportable(
-        x = data,
-        tableName = "time_distribution",
-        minCellCount = minCellCount,
-        databaseId = databaseId
-      )
-      writeToCsv(
-        data = data,
-        fileName = file.path(exportFolder, "time_distribution.csv"),
-        incremental = incremental,
-        cohortId = subset$cohortId
-      )
-      recordTasksDone(
-        cohortId = subset$cohortId,
-        task = "runTimeDistributions",
-        checksum = subset$checksum,
-        recordKeepingFile = recordKeepingFile,
-        incremental = incremental
-      )
-    }
+    data <- makeDataExportable(
+      x = data,
+      tableName = "time_distribution",
+      minCellCount = minCellCount,
+      databaseId = databaseId
+    )
+    writeToCsv(
+      data = data,
+      fileName = file.path(exportFolder, "time_distribution.csv"),
+      incremental = incremental,
+      cohortId = subset$cohortId
+    )
+    recordTasksDone(
+      cohortId = subset$cohortId,
+      task = "runTimeDistributions",
+      checksum = subset$checksum,
+      recordKeepingFile = recordKeepingFile,
+      incremental = incremental
+    )
+  }
 }
-
-
