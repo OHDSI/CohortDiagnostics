@@ -8,7 +8,13 @@
 {DEFAULT @cohort_overlap = cohort_overlap}
 {DEFAULT @concept = concept}
 {DEFAULT @concept_ancestor = concept_ancestor}
+{DEFAULT @concept_class = concept_class}
+{DEFAULT @concept_count = concept_count}
+{DEFAULT @concept_excluded = concept_excluded}
+{DEFAULT @concept_std_src_cnt = concept_std_src_cnt}
+{DEFAULT @concept_optimized = concept_optimized}
 {DEFAULT @concept_relationship = concept_relationship}
+{DEFAULT @concept_resolved = concept_resolved}
 {DEFAULT @concept_sets = concept_sets}
 {DEFAULT @concept_synonym = concept_synonym}
 {DEFAULT @covariate_ref = covariate_ref}
@@ -302,6 +308,60 @@ CREATE TABLE @results_schema.@concept_ancestor (
 			PRIMARY KEY(ancestor_concept_id, descendant_concept_id)
 );
 
+--Table concept_class
+
+CREATE TABLE @results_schema.@concept_class (
+  concept_class_id			VARCHAR		NOT NULL,
+  concept_class_name		VARCHAR	NOT NULL,
+  concept_class_concept_id	INTEGER			NOT NULL
+);
+
+--Table concept_count
+
+CREATE TABLE @results_schema.@concept_count (
+			database_id VARCHAR NOT NULL,
+			concept_id INT NOT NULL,
+			event_year INT NOT NULL,
+			event_month INT NOT NULL,
+			concept_count FLOAT NOT NULL,
+			subject_count FLOAT NOT NULL,
+			PRIMARY KEY(database_id, concept_id, event_year, event_month)
+);
+
+--Table concept_excluded
+
+CREATE TABLE @results_schema.@concept_excluded (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			concept_set_id INT NOT NULL,
+			concept_id INT NOT NULL,
+			PRIMARY KEY(database_id, cohort_id, concept_set_id, concept_id)
+);
+
+--Table concept_sets_optimized
+
+CREATE TABLE @results_schema.@concept_sets_optimized (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			concept_set_id INT NOT NULL,
+			concept_id INT NOT NULL,
+			excluded INT NOT NULL,
+			removed INT NOT NULL,
+			PRIMARY KEY(database_id, cohort_id, concept_set_id, concept_id, excluded, removed)
+);
+
+--Table concept_std_src_cnt
+
+CREATE TABLE @results_schema.@concept_std_src_cnt (
+			database_id VARCHAR NOT NULL,
+			domain_table VARCHAR NOT NULL,
+			concept_id INT NOT NULL,
+			source_concept_id INT NOT NULL,
+			concept_count FLOAT NOT NULL,
+			subject_count FLOAT NOT NULL,
+			PRIMARY KEY(database_id, domain_table, concept_id, source_concept_id)
+);
+
 --Table concept_relationship
 
 CREATE TABLE @results_schema.@concept_relationship (
@@ -312,6 +372,16 @@ CREATE TABLE @results_schema.@concept_relationship (
 			valid_end_date DATE NOT NULL,
 			invalid_reason VARCHAR(1),
 			PRIMARY KEY(concept_id_1, concept_id_2, relationship_id)
+);
+
+--Table concept_resolved
+
+CREATE TABLE @results_schema.@concept_resolved (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			concept_set_id INT NOT NULL,
+			concept_id INT NOT NULL,
+			PRIMARY KEY(cohort_id, concept_set_id, concept_id, database_id)
 );
 
 --Table concept_sets
@@ -440,14 +510,14 @@ CREATE TABLE @results_schema.@inclusion_rule_stats (
 --Table index_event_breakdown
 
 CREATE TABLE @results_schema.@index_event_breakdown (
-			concept_id BIGINT NOT NULL,
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			days_relative_index BIGINT NOT NULL DEFAULT 0,
+			concept_id INT NOT NULL,
+			co_concept_id INT NOT NULL,
 			concept_count FLOAT NOT NULL,
 			subject_count FLOAT NOT NULL,
-			cohort_id BIGINT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			domain_field VARCHAR NOT NULL,
-			domain_table VARCHAR NOT NULL,
-			PRIMARY KEY(concept_id, cohort_id, database_id, domain_field, domain_table)
+			PRIMARY KEY(database_id, cohort_id, days_relative_index, concept_id, co_concept_id)
 );
 
 --Table metadata
@@ -467,8 +537,6 @@ CREATE TABLE @results_schema.@orphan_concept (
 			concept_set_id INT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			concept_id BIGINT NOT NULL,
-			concept_count FLOAT NOT NULL,
-			concept_subjects FLOAT NOT NULL,
 			PRIMARY KEY(cohort_id, concept_set_id, database_id, concept_id)
 );
 

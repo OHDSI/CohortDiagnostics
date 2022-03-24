@@ -1548,7 +1548,8 @@ shiny::shinyServer(function(input, output, session) {
       data <- getIndexEventBreakdown(
         dataSource = dataSource,
         cohortIds = cohortId(),
-        databaseIds = databaseIds()
+        databaseIds = databaseIds(), 
+        daysRelativeIndex = 0
       )
       if (any(is.null(data),
               nrow(data) == 0)) {
