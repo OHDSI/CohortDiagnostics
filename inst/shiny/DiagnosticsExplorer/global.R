@@ -23,19 +23,15 @@ enableAuthorization <- TRUE
 
 ### if you need a way to authorize users
 ### generate hash using code like digest::digest("diagnostics",algo = "sha512")
-### you can store them as a comma separated array to object storedHash like below
-storedHash <- c("52e6000f483fe4602b3234f1a686d69f2ca3219fea796ae601a573451944d2d1b130b630ba18e7b1ac06928443bf89fa6ab49ded04245e6d9c9ea1956967e01e",
-                "4823cb731badf383a0b09cc09ac0c5904f315d256c66a7bbd5032efd2df39bc8eaf979333ed97f580c734b53965f2c2b57920239d78f8df031a0e198a8e5740c")
+### store in external file called UserCredentials.csv - with fields userId, hashCode
+### place the file in the root folder
 
 if (enableAuthorization) {
-  if (!exists("storedHash") ||
-      length(storedHash) == 0 || storedHash == "") {
-    if (exists("storedHash")) {
-      rm("storedHash")
-    }
-    enableAuthorization <- FALSE
+  if (file.exists("UserCredentials.csv")) {
+    userCredentials <-
+      readr::read_csv(file = "UserCredentials.csv", col_types = readr::cols())
   } else {
-    enableAuthorization <- TRUE
+    enableAuthorization <- FALSE
   }
 }
 

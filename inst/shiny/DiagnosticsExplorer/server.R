@@ -1703,7 +1703,7 @@ shiny::shinyServer(function(input, output, session) {
     
     maxCountValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
-                                                    string = dataColumnFields)
+                                                    string = dataColumnFields)   
     
     showDataAsPercent <- FALSE
     ## showDataAsPercent set based on UI selection - proportion
@@ -2768,7 +2768,7 @@ shiny::shinyServer(function(input, output, session) {
   #Login User ---------------------------------------------
   activeLoggedInUser <- reactiveVal(NULL)
   
-  if (enableAnnotation && exists("storedHash") && !is.null(storedHash)) {
+  if (enableAnnotation && exists("userCredentials") && nrow(userCredentials) > 0) {
     shiny::observeEvent(eventExpr = input$annotationUserPopUp,
                         handlerExpr = {
                           shiny::showModal(
@@ -2783,16 +2783,15 @@ shiny::shinyServer(function(input, output, session) {
                               tags$div(
                                 shiny::textInput(
                                   inputId = "userName",
-                                  label = "User",
+                                  label = "User Name",
                                   width = NULL,
-                                  value = "annonymous"
+                                  value = if (enableAuthorization) "" else {"annonymous"}
                                 ),
                                 if (enableAuthorization) {
                                   shiny::passwordInput(
                                     inputId = "password",
                                     label = "Local Password",
-                                    width = NULL, 
-                                    value = "none"
+                                    width = NULL
                                   )
                                 }, 
                               )
@@ -2818,11 +2817,26 @@ shiny::shinyServer(function(input, output, session) {
                                     )
                                   )
                                 }
-                                passwordHash <-
-                                  digest::digest(input$password, algo = "sha512")
-                                if (passwordHash %in% storedHash) {
-                                  activeLoggedInUser(input$userName)
-                                  shiny::removeModal()
+                                userCredentialsFiltered <- userCredentials %>%
+                                  dplyr::filter(.data$userId == input$userName)
+                                if (nrow(userCredentialsFiltered) > 0) {
+                                  passwordHash <-
+                                    digest::digest(input$password, algo = "sha512")
+                                  if (passwordHash %in% userCredentialsFiltered$hashCode) {
+                                    activeLoggedInUser(input$userName)
+                                    shiny::removeModal()
+                                  } else {
+                                    activeLoggedInUser(NULL)
+                                    shiny::showModal(
+                                      shiny::modalDialog(
+                                        title = "Error",
+                                        easyClose = TRUE,
+                                        size = "s",
+                                        fade = TRUE,
+                                        "Invalid User"
+                                      )
+                                    )
+                                  }
                                 } else {
                                   activeLoggedInUser(NULL)
                                   shiny::showModal(

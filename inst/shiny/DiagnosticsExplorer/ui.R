@@ -56,7 +56,7 @@ if (enableAnnotation) {
     shiny::conditionalPanel(
       "output.postAnnotationEnabled == false",
       shiny::actionButton(inputId = "annotationUserPopUp",
-                          label = "Enable Annotation")
+                          label = "Sign in")
     ),
     shiny::conditionalPanel(
       "output.postAnnotationEnabled == true",
