@@ -636,15 +636,6 @@ plotTemporalCompareStandardizedDifference <- function(balance,
     dplyr::distinct(balance$comparatorCohort) %>% 
     dplyr::pull()
   
-  # balance <- balance %>% 
-  #   dplyr::arrange(.data$startDay, .data$endDay)
-  
-  # facetLabel <- balance %>% 
-  #   dplyr::select(.data$startDay, .data$choices) %>% 
-  #   dplyr::distinct() %>% 
-  #   dplyr::arrange(.data$startDay) %>% 
-  #   dplyr::pull(.data$choices)
-  
   plot <-
     ggplot2::ggplot(balance,
                     ggplot2::aes(
@@ -694,32 +685,6 @@ plotTemporalCompareStandardizedDifference <- function(balance,
 plotCohortOverlap <- function(data,
                               shortNameRef = NULL,
                               yAxis = "Percentages") {
-  # Perform error checks for input variables
-  # errorMessage <- checkmate::makeAssertCollection()
-  # checkmate::assertTibble(
-  #   x = data,
-  #   any.missing = FALSE,
-  #   min.rows = 1,
-  #   min.cols = 6,
-  #   null.ok = FALSE,
-  #   add = errorMessage
-  # )
-  # checkmate::reportAssertions(collection = errorMessage)
-  # checkmate::assertNames(
-  #   x = colnames(data),
-  #   must.include = c(
-  #     "databaseId",
-  #     "targetCohortId",
-  #     "comparatorCohortId",
-  #     "tOnlySubjects",
-  #     "cOnlySubjects",
-  #     "bothSubjects"
-  #   ),
-  #   add = errorMessage
-  # )
-  # checkmate::reportAssertions(collection = errorMessage)
-  
-  
   data <- data %>%
     addShortName(
       shortNameRef = shortNameRef,

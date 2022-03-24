@@ -230,7 +230,8 @@ compareCohortCharacteristics <-
         sd = sqrt(.data$sd1 ^ 2 + .data$sd2 ^ 2),
         stdDiff = (.data$mean2 - .data$mean1) / .data$sd
       ) %>%
-      dplyr::arrange(-abs(.data$stdDiff))
+      dplyr::arrange(-abs(.data$stdDiff)) %>% 
+      dplyr::mutate(stdDiff = dplyr::na_if(.data$sd, "Inf"))
     return(m)
   }
 
