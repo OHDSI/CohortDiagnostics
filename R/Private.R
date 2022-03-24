@@ -284,3 +284,8 @@ titleCaseToCamelCase <- function(string) {
   substr(string, 1, 1) <- tolower(substr(string, 1, 1))
   return(string)
 }
+
+getTimeAsInteger <- function(time = Sys.time(),
+                             tz = "UTC") {
+  return(as.numeric(as.POSIXlt(time, tz = tz)))
+}

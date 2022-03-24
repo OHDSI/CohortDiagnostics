@@ -1,4 +1,7 @@
 {DEFAULT @analysis_ref = analysis_ref}
+{DEFAULT @annotation = annotation}
+{DEFAULT @annotation_link = annotation_link}
+{DEFAULT @annotation_score = annotation_score}
 {DEFAULT @cohort = cohort}
 {DEFAULT @cohort_count = cohort_count}
 {DEFAULT @cohort_relationships = cohort_relationships}
@@ -33,6 +36,15 @@
 {DEFAULT @vocabulary = vocabulary}
 
 -- Drop old tables if exist
+IF OBJECT_ID('@results_schema.@annotation', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@annotation;
+    
+IF OBJECT_ID('@results_schema.@annotation_link', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@annotation_link;
+    
+IF OBJECT_ID('@results_schema.@annotation_score', 'U') IS NOT NULL
+    DROP TABLE @results_schema.@annotation_score;
+    
 IF OBJECT_ID('@results_schema.@cohort', 'U') IS NOT NULL
     DROP TABLE @results_schema.@cohort;
 
@@ -143,6 +155,38 @@ CREATE TABLE @results_schema.@analysis_ref (
 			is_binary VARCHAR(1) NOT NULL,
 			missing_means_zero VARCHAR(1),
 			PRIMARY KEY(analysis_id)
+);
+
+--Table annotation
+
+CREATE TABLE @results_schema.@annotation (
+      annotation_id BIGINT NOT NULL,
+			created_by VARCHAR NOT NULL,
+			created_on BIGINT NOT NULL,
+			modified_last_on BIGINT,
+			deleted_on BIGINT,
+			annotation VARCHAR NOT NULL,
+			PRIMARY KEY(annotation_id)
+);
+
+--Table annotation_link
+
+CREATE TABLE @results_schema.@annotation_link (
+      annotation_id BIGINT NOT NULL DEFAULT 0,
+			diagnostics_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			database_id VARCHAR NOT NULL,
+			PRIMARY KEY(annotation_id, diagnostics_id, cohort_id, database_id)
+);
+
+--Table annotation_score
+
+CREATE TABLE @results_schema.@annotation_attributes (
+      annotation_id BIGINT NOT NULL DEFAULT 0,
+			created_by VARCHAR NOT NULL,
+			annotation_attributes VARCHAR NOT NULL,
+			created_on BIGINT NOT NULL,
+			PRIMARY KEY(annotation_id, created_by)
 );
 
 --Table cohort
