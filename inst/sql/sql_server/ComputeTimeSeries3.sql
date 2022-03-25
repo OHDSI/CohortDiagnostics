@@ -53,12 +53,13 @@ INNER JOIN #calendar_periods cp ON cp.period_end >= observation_period_start_dat
 	{@stratify_by_gender | @stratify_by_age_group} ? {
 INNER JOIN
 	(
-		SELECT p1.person_id,
-				p1.year_of_birth,
-				c.concept_name gender
+		SELECT p1.person_id
+      {@stratify_by_age_group} ? {, p1.year_of_birth}
+		  {@stratify_by_gender} ? {, c.concept_name gender}
 		FROM @cdm_database_schema.person p1
+		  {@stratify_by_gender} ? {
 		INNER JOIN @cdm_database_schema.concept c 
-		ON p1.gender_concept_id = c.concept_id) p
+		ON p1.gender_concept_id = c.concept_id}) p
   ON o.person_id = p.person_id
 }
 GROUP BY time_id

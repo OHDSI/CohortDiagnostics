@@ -221,7 +221,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                 			THEN 'Y'
                 		ELSE 'N'
                 		END first_occurrence
-                		{@stratify_by_gender} ? {, p.gender}
+                		{@stratify_by_gender} ? {, concept.concept_name gender}
                 		{@stratify_by_age_group} ? {, p.year_of_birth}
                 INTO #cohort_ts
                 FROM cohort c
@@ -229,14 +229,10 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                 	AND c.subject_id = cf.subject_id
 
                 {@stratify_by_gender  | @stratify_by_age_group} ? {
-                INNER JOIN (
-              							SELECT p1.person_id,
-              									p1.year_of_birth,
-              									c.concept_name gender
-              							FROM @cdm_database_schema.person p1
-              							INNER JOIN @cdm_database_schema.concept c 
-              							ON p1.gender_concept_id = c.concept_id) p 
-				ON c.subject_id = p.person_id};"
+                INNER JOIN @cdm_database_schema.person p ON c.subject_id = p.person_id}
+                
+                {@stratify_by_gender} ? {
+                INNER JOIN @cdm_database_schema.concept ON p.gender_concept_id = concept.concept_id};"
   
   ParallelLogger::logTrace("   - Creating cohort table copy for time series")
   DatabaseConnector::renderTranslateExecuteSql(
