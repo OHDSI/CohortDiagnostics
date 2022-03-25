@@ -8,7 +8,7 @@
 SELECT cohort_definition_id cohort_id,
 	time_id,
 	{@stratify_by_gender} ? {gender,} : {CAST(NULL AS VARCHAR) gender, }
-	{@stratify_by_age_group} ? {FLOOR((YEAR(period_begin) - year_of_birth) / 10) age_group,} : {NULL age_group, }
+	{@stratify_by_age_group} ? {FLOOR((YEAR(period_begin) - year_of_birth) / 10) age_group,} : {CAST(NULL AS INT) age_group, }
 	COUNT_BIG(DISTINCT CONCAT(cast(subject_id AS VARCHAR(30)), '_', cast(cohort_start_date AS VARCHAR(30)))) records,
 	-- records in calendar period
 	COUNT_BIG(DISTINCT subject_id) subjects,

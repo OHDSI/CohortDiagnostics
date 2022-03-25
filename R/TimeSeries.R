@@ -288,29 +288,29 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     sqlAll <- SqlRender::loadRenderTranslateSql(
       sqlFilename = seriesToRun[[i]],
       packageName = utils::packageName(),
-      stratify_by_gender = stratifyByGender,
-      stratify_by_age_group = stratifyByAgeGroup,
+      stratify_by_gender = FALSE,
+      stratify_by_age_group = FALSE,
       dbms = connection@dbms
     )
     sqlGender <- SqlRender::loadRenderTranslateSql(
       sqlFilename = seriesToRun[[i]],
       packageName = utils::packageName(),
-      stratify_by_gender = stratifyByGender,
-      stratify_by_age_group = stratifyByAgeGroup,
+      stratify_by_gender = TRUE,
+      stratify_by_age_group = FALSE,
       dbms = connection@dbms
     )
     sqlAgeGroup <- SqlRender::loadRenderTranslateSql(
       sqlFilename = seriesToRun[[i]],
       packageName = utils::packageName(),
-      stratify_by_gender = stratifyByGender,
-      stratify_by_age_group = stratifyByAgeGroup,
+      stratify_by_gender = FALSE,
+      stratify_by_age_group = TRUE,
       dbms = connection@dbms
     )
     sqlAgeGroupGender <- SqlRender::loadRenderTranslateSql(
       sqlFilename = seriesToRun[[i]],
       packageName = utils::packageName(),
-      stratify_by_gender = stratifyByGender,
-      stratify_by_age_group = stratifyByAgeGroup,
+      stratify_by_gender = TRUE,
+      stratify_by_age_group = TRUE,
       dbms = connection@dbms
     )
     
@@ -352,11 +352,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     if (stratifyByGender) {
       DatabaseConnector::querySqlToAndromeda(
         connection = connection,
-        sql = SqlRender::render(
-          sql = sqlGender,
-          stratify_by_gender = TRUE,
-          warnOnMissingParameters = FALSE
-        ),
+        sql = sqlGender,
         snakeCaseToCamelCase = TRUE,
         andromeda = resultsInAndromeda,
         andromedaTableName = "gender"
@@ -371,11 +367,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     if (stratifyByAgeGroup) {
       DatabaseConnector::querySqlToAndromeda(
         connection = connection,
-        sql = SqlRender::render(
-          sql = sqlAgeGroup,
-          stratify_by_age_group = TRUE,
-          warnOnMissingParameters = FALSE
-        ),
+        sql = sqlAgeGroup,
         snakeCaseToCamelCase = TRUE,
         andromeda = resultsInAndromeda,
         andromedaTableName = "ageGroup"
@@ -390,12 +382,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     if (stratifyByGender && stratifyByAgeGroup) {
       DatabaseConnector::querySqlToAndromeda(
         connection = connection,
-        sql = SqlRender::render(
-          sql = sqlAgeGroupGender,
-          stratify_by_gender = TRUE,
-          stratify_by_age_group = TRUE,
-          warnOnMissingParameters = FALSE
-        ),
+        sql = sqlAgeGroupGender,
         snakeCaseToCamelCase = TRUE,
         andromeda = resultsInAndromeda,
         andromedaTableName = "ageGroupGender"
@@ -430,11 +417,13 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       .data$seriesType,
       .data$periodBegin
     ) %>%
+    dplyr::select(-.data$timeId) %>%
     dplyr::mutate(ageGroup = dplyr::if_else(
       condition = is.na(.data$ageGroup),
       true = as.character(.data$ageGroup),
       false = paste(10 * .data$ageGroup, 10 * .data$ageGroup + 9, sep = "-")
     ))
+  
   resultsInAndromeda$calendarPeriods <- NULL
   resultsInAndromeda$temp <- NULL
   resultsInAndromeda$cohortCount <- NULL
