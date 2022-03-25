@@ -35,7 +35,7 @@
 #' @param aboutText        Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 #'                         If not provided, no About tab will be shown.
 #' @param enableAnnotation (optional) Boolean - Enable users to annotate cohorts.
-#'                         Note, this is not reccomended outside of an organisational firewall.
+#'                         Note, this is not recommended outside of an organisational firewall.
 #'                         Default is to only use with an sqlite database.
 #'
 #' @details

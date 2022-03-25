@@ -19,6 +19,7 @@
 # Format and check code
 OhdsiRTools::checkUsagePackage("CohortDiagnostics")
 OhdsiRTools::updateCopyrightYearFolder()
+styler::style_pkg()
 devtools::spell_check()
 spelling::spell_check_files(list.files(path = "inst/shiny", pattern = "*.html", recursive = TRUE, full.names = TRUE))
 
