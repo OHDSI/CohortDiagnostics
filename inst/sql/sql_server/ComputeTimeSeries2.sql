@@ -60,7 +60,7 @@ INNER JOIN (
 INNER JOIN #calendar_periods cp ON cp.period_end >= observation_period_start_date
 	AND cp.period_begin <= observation_period_end_date
 WHERE cohort_definition_id >=0
-  AND year_of_birth <= YEAR(period_begin)
+  {@stratify_by_age_group} ? {AND year_of_birth <= YEAR(period_begin)}
 GROUP BY time_id,
 	cohort_definition_id
 	{@stratify_by_gender} ? {, gender}

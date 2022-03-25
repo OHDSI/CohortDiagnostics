@@ -83,7 +83,7 @@ SELECT cohort_definition_id cohort_id,
 FROM #cohort_ts
 INNER JOIN #calendar_periods cp ON cp.period_end >= cohort_start_date
 	AND cp.period_begin <= cohort_end_date
-WHERE year_of_birth <= YEAR(period_begin)
+{@stratify_by_age_group} ? {WHERE year_of_birth <= YEAR(period_begin)}
 GROUP BY time_id,
 	cohort_definition_id
 	{@stratify_by_gender} ? {, gender}

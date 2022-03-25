@@ -62,6 +62,7 @@ INNER JOIN
 		ON p1.gender_concept_id = c.concept_id}) p
   ON o.person_id = p.person_id
 }
+{@stratify_by_age_group} ? {WHERE year_of_birth <= YEAR(period_begin)}
 GROUP BY time_id
 	{@stratify_by_gender} ? {, gender}
 	{@stratify_by_age_group} ? {, FLOOR((YEAR(period_begin) - year_of_birth) / 10)};

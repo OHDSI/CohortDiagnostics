@@ -593,7 +593,7 @@ CREATE TABLE @results_schema.@time_series (
 			period_begin DATE NOT NULL,
 			period_end DATE NOT NULL,
 			calendar_interval VARCHAR NOT NULL,
-			gender_concept_id BIGINT NULL,
+			gender VARCHAR NULL,
 			age_group VARCHAR NULL,
 			series_type VARCHAR NOT NULL,
 			records BIGINT NOT NULL,
