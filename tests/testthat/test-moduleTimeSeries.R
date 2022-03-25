@@ -44,12 +44,14 @@ test_that("Testing time series logic", {
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
         runCohortTimeSeries = TRUE,
-        runDataSourceTimeSeries = FALSE,
+        runDataSourceTimeSeries = FALSE, # cannot test data source time series because we are using simulated cohort table
         timeSeriesMinDate = as.Date("2004-01-01"),
         timeSeriesMaxDate = as.Date("2006-12-31"),
-        cohortIds = c(1, 2)
+        cohortIds = c(1, 2),
+        stratifyByGender = FALSE, # cannot test stratification because it will require cohort table to be built from cdm
+        stratifyByAgeGroup = FALSE # this test is using simulated cohort table
       )
-
+browser()
     # testing if values returned for cohort 1 is as expected
     timeSeriesCohort <- timeSeries %>%
       dplyr::filter(.data$cohortId == 1) %>%

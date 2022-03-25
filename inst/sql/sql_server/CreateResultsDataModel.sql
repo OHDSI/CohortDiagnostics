@@ -591,7 +591,10 @@ CREATE TABLE @results_schema.@time_series (
 			cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			period_begin DATE NOT NULL,
+			period_end DATE NOT NULL,
 			calendar_interval VARCHAR NOT NULL,
+			gender_concept_id BIGINT NULL,
+			age_group VARCHAR NULL,
 			series_type VARCHAR NOT NULL,
 			records BIGINT NOT NULL,
 			subjects BIGINT NOT NULL,
@@ -603,7 +606,7 @@ CREATE TABLE @results_schema.@time_series (
 			records_end BIGINT,
 			subjects_end BIGINT,
 			subjects_end_in BIGINT,
-			PRIMARY KEY(cohort_id, database_id, period_begin, calendar_interval, series_type)
+			PRIMARY KEY(cohort_id, database_id, period_begin, period_end, calendar_interval, gender, age_group, series_type)
 );
 
 --Table visit_context

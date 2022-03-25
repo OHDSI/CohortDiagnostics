@@ -15,6 +15,8 @@ runCohortTimeSeriesDiagnostics(
   runDataSourceTimeSeries = TRUE,
   timeSeriesMinDate = as.Date("1980-01-01"),
   timeSeriesMaxDate = as.Date(Sys.Date()),
+  stratifyByGender = TRUE,
+  stratifyByAgeGroup = TRUE,
   cohortIds = NULL
 )
 }
@@ -51,6 +53,10 @@ using all persons found in observation period table.}
 \item{timeSeriesMinDate}{(optional) Minimum date for time series. Default value January 1st 1980.}
 
 \item{timeSeriesMaxDate}{(optional) Maximum date for time series. Default value System date.}
+
+\item{stratifyByGender}{Do you want to stratify by Gender}
+
+\item{stratifyByAgeGroup}{Do you want to stratify by Age group}
 
 \item{cohortIds}{A vector of one or more Cohort Ids to compute time distribution for.}
 }
