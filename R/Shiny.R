@@ -52,7 +52,6 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
                                       port = 80,
                                       launch.browser = FALSE,
                                       enableAnnotation = is.null(connectionDetails)) {
-
   sqliteDbPath <- normalizePath(sqliteDbPath)
   if (is.null(connectionDetails)) {
     if (!file.exists(sqliteDbPath)) {
@@ -106,7 +105,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
   ensure_installed("reactable")
   ensure_installed("markdownInput")
   ensure_installed("markdown")
-  
+
   appDir <-
     system.file("shiny", "DiagnosticsExplorer", package = utils::packageName())
 

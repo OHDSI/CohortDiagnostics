@@ -585,8 +585,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
       incremental
     )
   }
-  
-  
+
+
   # Cohort relationship ---------------------------------------------------------------------------------
   if (runCohortRelationship) {
     executeCohortRelationshipDiagnostics(
