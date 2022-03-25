@@ -52,9 +52,9 @@ FROM @cdm_database_schema.observation_period o
 INNER JOIN (
 	-- limiting to the cohort
 	SELECT DISTINCT cohort_definition_id,
-		subject_id,
-		gender,
-		year_of_birth
+		subject_id
+		{@stratify_by_gender} ? {, gender}
+		{@stratify_by_age_group} ? {, year_of_birth}
 	FROM #cohort_ts
 	) c ON o.person_id = c.subject_id
 INNER JOIN #calendar_periods cp ON cp.period_end >= observation_period_start_date
