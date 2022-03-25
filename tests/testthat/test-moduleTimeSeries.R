@@ -51,7 +51,7 @@ test_that("Testing time series logic", {
         stratifyByGender = FALSE, # cannot test stratification because it will require cohort table to be built from cdm
         stratifyByAgeGroup = FALSE # this test is using simulated cohort table
       )
-browser()
+	  
     # testing if values returned for cohort 1 is as expected
     timeSeriesCohort <- timeSeries %>%
       dplyr::filter(.data$cohortId == 1) %>%
