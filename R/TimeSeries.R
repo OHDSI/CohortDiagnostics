@@ -144,9 +144,20 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     ) %>%
     dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1) %>%
     dplyr::mutate(calendarInterval = "y")
-
+  
+  timeSeriesDateRange <- dplyr::tibble(
+    periodBegin = timeSeriesMinDate,
+    periodEnd = timeSeriesMaxDate,
+    calendarInterval = "c"
+  )
+  
   calendarPeriods <-
-    dplyr::bind_rows(calendarMonth, calendarQuarter, calendarYear) %>% # calendarWeek
+    dplyr::bind_rows(
+      calendarMonth,
+      calendarQuarter,
+      calendarYear,
+      timeSeriesDateRange
+    ) %>% # calendarWeek
     dplyr::distinct() %>%
     dplyr::arrange(.data$periodBegin, .data$periodEnd, .data$calendarInterval) %>%
     dplyr::mutate(timeId = dplyr::row_number())
