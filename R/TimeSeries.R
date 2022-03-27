@@ -62,7 +62,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                                            cohortDatabaseSchema = cdmDatabaseSchema,
                                            cohortTable = "cohort",
                                            runCohortTimeSeries = TRUE,
-                                           runDataSourceTimeSeries = TRUE,
+                                           runDataSourceTimeSeries = FALSE,
                                            timeSeriesMinDate = as.Date("1980-01-01"),
                                            timeSeriesMaxDate = as.Date(Sys.Date()),
                                            stratifyByGender = TRUE,
@@ -144,13 +144,13 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     ) %>%
     dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1) %>%
     dplyr::mutate(calendarInterval = "y")
-  
+
   timeSeriesDateRange <- dplyr::tibble(
     periodBegin = timeSeriesMinDate,
     periodEnd = timeSeriesMaxDate,
     calendarInterval = "c"
   )
-  
+
   calendarPeriods <-
     dplyr::bind_rows(
       calendarMonth,
@@ -499,7 +499,8 @@ executeTimeSeriesDiagnostics <- function(connection,
                                          cohortDatabaseSchema,
                                          cohortTable,
                                          cohortDefinitionSet,
-                                         cdmVersion,
+                                         runCohortTimeSeries = TRUE,
+                                         runDataSourceTimeSeries = FALSE,
                                          databaseId,
                                          exportFolder,
                                          minCellCount,
@@ -530,8 +531,8 @@ executeTimeSeriesDiagnostics <- function(connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cdmDatabaseSchema = cdmDatabaseSchema,
         cohortTable = cohortTable,
-        runDataSourceTimeSeries = TRUE,
-        runCohortTimeSeries = TRUE,
+        runCohortTimeSeries = runCohortTimeSeries,
+        runDataSourceTimeSeries = runDataSourceTimeSeries,
         timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
         timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
         cohortIds = cohortIds
