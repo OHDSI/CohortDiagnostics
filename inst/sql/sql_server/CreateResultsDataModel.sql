@@ -404,16 +404,6 @@ CREATE TABLE @results_schema.@orphan_concept (
 			PRIMARY KEY(cohort_id, concept_set_id, database_id, concept_id)
 );
 
---Table phenotype_description
-
-CREATE TABLE @results_schema.@phenotype_description (
-			phenotype_id BIGINT NOT NULL,
-			phenotype_name VARCHAR NOT NULL,
-			clinical_description VARCHAR,
-			metadata VARCHAR,
-			PRIMARY KEY(phenotype_id)
-);
-
 --Table relationship
 
 CREATE TABLE @results_schema.@relationship (
