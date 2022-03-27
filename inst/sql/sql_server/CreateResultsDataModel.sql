@@ -111,7 +111,7 @@ CREATE TABLE @results_schema.@annotation_link (
 			PRIMARY KEY(annotation_id, diagnostics_id, cohort_id, database_id)
 );
 
---Table annotation_score
+--Table annotation_attributes
 
 CREATE TABLE @results_schema.@annotation_attributes (
       annotation_id BIGINT NOT NULL DEFAULT 0,
