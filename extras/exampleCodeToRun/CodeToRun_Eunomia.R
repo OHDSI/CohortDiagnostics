@@ -10,19 +10,19 @@ cohortDatabaseSchema = "main"
 tempEmulationSchema = getOption("sqlRenderTempEmulationSchema")
 
 
+
+
 # Cohort Definitions ----
 remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy', ref = "develop")
 ## get cohort definition set ----
 cohortDefinitionSet <-
-  dplyr::tibble(
-    CohortGenerator::getCohortDefinitionSet(
-      settingsFileName = "settings/CohortsToCreate.csv",
-      jsonFolder = "cohorts",
-      sqlFolder = "sql/sql_server",
-      packageName = "SkeletonCohortDiagnosticsStudy",
-      cohortFileNameValue = "cohortId"
-    )
-  )
+  CohortGenerator::getCohortDefinitionSet(
+    settingsFileName = "settings/CohortsToCreate.csv",
+    jsonFolder = "cohorts",
+    sqlFolder = "sql/sql_server",
+    packageName = "SkeletonCohortDiagnosticsStudy",
+    cohortFileNameValue = "cohortId"
+  ) %>%  dplyr::tibble()
 cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = "cohortEunomia")
 
 # output folder information ----
