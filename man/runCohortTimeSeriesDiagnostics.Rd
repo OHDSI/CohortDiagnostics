@@ -12,7 +12,7 @@ runCohortTimeSeriesDiagnostics(
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
   runCohortTimeSeries = TRUE,
-  runDataSourceTimeSeries = TRUE,
+  runDataSourceTimeSeries = FALSE,
   timeSeriesMinDate = as.Date("1980-01-01"),
   timeSeriesMaxDate = as.Date(Sys.Date()),
   stratifyByGender = TRUE,
