@@ -47,7 +47,7 @@ If not provided, no About tab will be shown.}
 Note: copying to clipboard will not work in a Shiny window.}
 
 \item{enableAnnotation}{(optional) Boolean - Enable users to annotate cohorts.
-Note, this is not reccomended outside of an organisational firewall.
+Note, this is not recommended outside of an organisational firewall.
 Default is to only use with an sqlite database.}
 }
 \description{

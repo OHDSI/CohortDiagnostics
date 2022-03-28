@@ -265,8 +265,11 @@ time_distribution,database_id,varchar,Yes,Yes,No,Yes,No,No,No
 time_series,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
 time_series,database_id,varchar,Yes,Yes,No,Yes,No,No,No
 time_series,period_begin,Date,Yes,Yes,No,Yes,No,No,No
+time_series,period_end,Date,Yes,Yes,No,Yes,No,No,No
 time_series,series_type,varchar,Yes,Yes,No,Yes,No,No,No
 time_series,calendar_interval,varchar,Yes,Yes,No,Yes,No,No,No
+time_series,gender,varchar,No,Yes,Yes,Yes,No,No,No
+time_series,age_group,varchar,No,Yes,Yes,Yes,No,No,No
 time_series,records,bigint,Yes,No,No,Yes,Yes,No,No
 time_series,subjects,bigint,Yes,No,No,Yes,Yes,No,No
 time_series,person_days,bigint,Yes,No,No,Yes,Yes,No,No

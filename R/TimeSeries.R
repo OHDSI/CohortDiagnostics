@@ -43,6 +43,10 @@
 #'
 #' @param timeSeriesMaxDate      (optional) Maximum date for time series. Default value System date.
 #'
+#' @param stratifyByGender       Do you want to stratify by Gender
+#'
+#' @param stratifyByAgeGroup     Do you want to stratify by Age group
+#'
 #' @param cohortIds              A vector of one or more Cohort Ids to compute time distribution for.
 #'
 #' @param runCohortTimeSeries         Generate and export the cohort level time series?
@@ -58,9 +62,11 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                                            cohortDatabaseSchema = cdmDatabaseSchema,
                                            cohortTable = "cohort",
                                            runCohortTimeSeries = TRUE,
-                                           runDataSourceTimeSeries = TRUE,
+                                           runDataSourceTimeSeries = FALSE,
                                            timeSeriesMinDate = as.Date("1980-01-01"),
                                            timeSeriesMaxDate = as.Date(Sys.Date()),
+                                           stratifyByGender = TRUE,
+                                           stratifyByAgeGroup = TRUE,
                                            cohortIds = NULL) {
   if (all(!runCohortTimeSeries, !runDataSourceTimeSeries)) {
     warning(
@@ -139,8 +145,19 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1) %>%
     dplyr::mutate(calendarInterval = "y")
 
+  timeSeriesDateRange <- dplyr::tibble(
+    periodBegin = timeSeriesMinDate,
+    periodEnd = timeSeriesMaxDate,
+    calendarInterval = "c"
+  )
+
   calendarPeriods <-
-    dplyr::bind_rows(calendarMonth, calendarQuarter, calendarYear) %>% # calendarWeek
+    dplyr::bind_rows(
+      calendarMonth,
+      calendarQuarter,
+      calendarYear,
+      timeSeriesDateRange
+    ) %>% # calendarWeek
     dplyr::distinct() %>%
     dplyr::arrange(.data$periodBegin, .data$periodEnd, .data$calendarInterval) %>%
     dplyr::mutate(timeId = dplyr::row_number())
@@ -162,10 +179,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                 DROP TABLE IF EXISTS #time_series;
                 DROP TABLE IF EXISTS #c_time_series1;
                 DROP TABLE IF EXISTS #c_time_series2;
-                DROP TABLE IF EXISTS #d_time_series3;
-                DROP TABLE IF EXISTS #c_time_series4;
-                DROP TABLE IF EXISTS #c_time_series5;
-                DROP TABLE IF EXISTS #d_time_series6;"
+                DROP TABLE IF EXISTS #c_time_series3;"
 
   ParallelLogger::logTrace(" - Dropping any time_series temporary tables that maybe present at start up.")
   DatabaseConnector::renderTranslateExecuteSql(
@@ -174,7 +188,6 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-
   seriesToRun <- NULL
   if (runCohortTimeSeries) {
     seriesToRun <- c(
@@ -183,16 +196,12 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       "ComputeTimeSeries2.sql"
     )
   }
-  # ,
-  # 'ComputeTimeSeries4.sql',
-  # 'ComputeTimeSeries5.sql'
+
   if (runDataSourceTimeSeries) {
     seriesToRun <- c(
       seriesToRun,
       "ComputeTimeSeries3.sql"
     )
-    # ,
-    # 'ComputeTimeSeries6.sql'
   }
   seriesToRun <- seriesToRun %>% sort()
   ParallelLogger::logTrace(" - Beginning time series SQL")
@@ -206,34 +215,41 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-
   sqlCohort <- "--HINT DISTRIBUTE_ON_KEY(subject_id)
-      WITH cohort
-      AS (
-      	SELECT *
-      	FROM @cohort_database_schema.@cohort_table
-      	WHERE cohort_definition_id IN (@cohort_ids)
-      	),
-      cohort_first
-      AS (
-      	SELECT cohort_definition_id,
-      		subject_id,
-      		min(cohort_start_date) cohort_start_date,
-      		min(cohort_end_date) cohort_end_date
-      	FROM cohort
-      	GROUP BY cohort_definition_id,
-      		subject_id
-      	)
-      SELECT c.*,
-      	CASE
-      		WHEN c.cohort_start_date = cf.cohort_start_date
-      			THEN 'Y'
-      		ELSE 'N'
-      		END first_occurrence
-      INTO #cohort_ts
-      FROM cohort c
-      INNER JOIN cohort_first cf ON c.cohort_definition_id = cf.cohort_definition_id
-      	AND c.subject_id = cf.subject_id;"
+                WITH cohort
+                AS (
+                	SELECT *
+                	FROM @cohort_database_schema.@cohort_table
+                	WHERE cohort_definition_id IN (@cohort_ids)
+                	),
+                cohort_first
+                AS (
+                	SELECT cohort_definition_id,
+                		subject_id,
+                		min(cohort_start_date) cohort_start_date,
+                		min(cohort_end_date) cohort_end_date
+                	FROM cohort
+                	GROUP BY cohort_definition_id,
+                		subject_id
+                	)
+                SELECT c.*,
+                	CASE
+                		WHEN c.cohort_start_date = cf.cohort_start_date
+                			THEN 'Y'
+                		ELSE 'N'
+                		END first_occurrence
+                		{@stratify_by_gender} ? {, concept.concept_name gender}
+                		{@stratify_by_age_group} ? {, p.year_of_birth}
+                INTO #cohort_ts
+                FROM cohort c
+                INNER JOIN cohort_first cf ON c.cohort_definition_id = cf.cohort_definition_id
+                	AND c.subject_id = cf.subject_id
+
+                {@stratify_by_gender  | @stratify_by_age_group} ? {
+                INNER JOIN @cdm_database_schema.person p ON c.subject_id = p.person_id}
+
+                {@stratify_by_gender} ? {
+                INNER JOIN @cdm_database_schema.concept ON p.gender_concept_id = concept.concept_id};"
 
   ParallelLogger::logTrace("   - Creating cohort table copy for time series")
   DatabaseConnector::renderTranslateExecuteSql(
@@ -243,6 +259,9 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     tempEmulationSchema = tempEmulationSchema,
     cohort_table = cohortTable,
     cohort_ids = cohortIds,
+    stratify_by_gender = stratifyByGender,
+    stratify_by_age_group = stratifyByAgeGroup,
+    cdm_database_schema = cdmDatabaseSchema,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
@@ -276,7 +295,6 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         )
       )
     }
-
     seriesId <- stringr::str_replace(
       string = seriesToRun[[i]],
       pattern = "ComputeTimeSeries",
@@ -288,17 +306,56 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       )
     seriesId <- paste0("T", as.character(seriesId))
 
-    sql <- SqlRender::loadRenderTranslateSql(
+    sqlAll <- SqlRender::loadRenderTranslateSql(
       sqlFilename = seriesToRun[[i]],
       packageName = utils::packageName(),
+      stratify_by_gender = FALSE,
+      stratify_by_age_group = FALSE,
       dbms = connection@dbms
     )
+    sqlGender <- SqlRender::loadRenderTranslateSql(
+      sqlFilename = seriesToRun[[i]],
+      packageName = utils::packageName(),
+      stratify_by_gender = TRUE,
+      stratify_by_age_group = FALSE,
+      dbms = connection@dbms
+    )
+    sqlAgeGroup <- SqlRender::loadRenderTranslateSql(
+      sqlFilename = seriesToRun[[i]],
+      packageName = utils::packageName(),
+      stratify_by_gender = FALSE,
+      stratify_by_age_group = TRUE,
+      dbms = connection@dbms
+    )
+    sqlAgeGroupGender <- SqlRender::loadRenderTranslateSql(
+      sqlFilename = seriesToRun[[i]],
+      packageName = utils::packageName(),
+      stratify_by_gender = TRUE,
+      stratify_by_age_group = TRUE,
+      dbms = connection@dbms
+    )
+
     if (seriesToRun[[i]] %in% c(
       "ComputeTimeSeries2.sql",
       "ComputeTimeSeries3.sql"
     )) {
-      sql <- SqlRender::render(
-        sql = sql,
+      sqlAll <- SqlRender::render(
+        sql = sqlAll,
+        cdm_database_schema = cdmDatabaseSchema,
+        warnOnMissingParameters = FALSE
+      )
+      sqlGender <- SqlRender::render(
+        sql = sqlGender,
+        cdm_database_schema = cdmDatabaseSchema,
+        warnOnMissingParameters = FALSE
+      )
+      sqlAgeGroup <- SqlRender::render(
+        sql = sqlAgeGroup,
+        cdm_database_schema = cdmDatabaseSchema,
+        warnOnMissingParameters = FALSE
+      )
+      sqlAgeGroupGender <- SqlRender::render(
+        sql = sqlAgeGroupGender,
         cdm_database_schema = cdmDatabaseSchema,
         warnOnMissingParameters = FALSE
       )
@@ -306,21 +363,74 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
 
     DatabaseConnector::querySqlToAndromeda(
       connection = connection,
-      sql = sql,
+      sql = sqlAll,
       snakeCaseToCamelCase = TRUE,
       andromeda = resultsInAndromeda,
-      andromedaTableName = "temp"
+      andromedaTableName = "allData"
     )
-
-    resultsInAndromeda$temp <- resultsInAndromeda$temp %>%
+    resultsInAndromeda$allData <- resultsInAndromeda$allData %>%
       dplyr::mutate(seriesType = !!seriesId)
+    ParallelLogger::logInfo("       Time series without stratification - completed.")
+
+    if (stratifyByGender) {
+      DatabaseConnector::querySqlToAndromeda(
+        connection = connection,
+        sql = sqlGender,
+        snakeCaseToCamelCase = TRUE,
+        andromeda = resultsInAndromeda,
+        andromedaTableName = "gender"
+      )
+      resultsInAndromeda$gender <- resultsInAndromeda$gender %>%
+        dplyr::mutate(seriesType = !!seriesId)
+      Andromeda::appendToTable(
+        resultsInAndromeda$allData,
+        resultsInAndromeda$gender
+      )
+    }
+    ParallelLogger::logInfo("       Time series stratified by gender - completed.")
+
+    if (stratifyByAgeGroup) {
+      DatabaseConnector::querySqlToAndromeda(
+        connection = connection,
+        sql = sqlAgeGroup,
+        snakeCaseToCamelCase = TRUE,
+        andromeda = resultsInAndromeda,
+        andromedaTableName = "ageGroup"
+      )
+      resultsInAndromeda$ageGroup <- resultsInAndromeda$ageGroup %>%
+        dplyr::mutate(seriesType = !!seriesId)
+      Andromeda::appendToTable(
+        resultsInAndromeda$allData,
+        resultsInAndromeda$ageGroup
+      )
+    }
+    ParallelLogger::logInfo("       Time series stratified by age group - completed.")
+
+    if (stratifyByGender && stratifyByAgeGroup) {
+      DatabaseConnector::querySqlToAndromeda(
+        connection = connection,
+        sql = sqlAgeGroupGender,
+        snakeCaseToCamelCase = TRUE,
+        andromeda = resultsInAndromeda,
+        andromedaTableName = "ageGroupGender"
+      )
+      resultsInAndromeda$ageGroupGender <-
+        resultsInAndromeda$ageGroupGender %>%
+        dplyr::mutate(seriesType = !!seriesId)
+      Andromeda::appendToTable(
+        resultsInAndromeda$allData,
+        resultsInAndromeda$ageGroupGender
+      )
+    }
+    ParallelLogger::logInfo("       Time series stratified by age group and gender - completed.")
 
     if (!"timeSeries" %in% names(resultsInAndromeda)) {
-      resultsInAndromeda$timeSeries <- resultsInAndromeda$temp
+      resultsInAndromeda$timeSeries <-
+        resultsInAndromeda$allData
     } else {
       Andromeda::appendToTable(
         resultsInAndromeda$timeSeries,
-        resultsInAndromeda$temp
+        resultsInAndromeda$allData
       )
     }
     ParallelLogger::logTrace("     Completed.")
@@ -338,7 +448,14 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       .data$calendarInterval,
       .data$seriesType,
       .data$periodBegin
-    )
+    ) %>%
+    dplyr::select(-.data$timeId) %>%
+    dplyr::mutate(ageGroup = dplyr::if_else(
+      condition = is.na(.data$ageGroup),
+      true = as.character(.data$ageGroup),
+      false = paste(10 * .data$ageGroup, 10 * .data$ageGroup + 9, sep = "-")
+    ))
+
   resultsInAndromeda$calendarPeriods <- NULL
   resultsInAndromeda$temp <- NULL
   resultsInAndromeda$cohortCount <- NULL
@@ -382,7 +499,8 @@ executeTimeSeriesDiagnostics <- function(connection,
                                          cohortDatabaseSchema,
                                          cohortTable,
                                          cohortDefinitionSet,
-                                         cdmVersion,
+                                         runCohortTimeSeries = TRUE,
+                                         runDataSourceTimeSeries = FALSE,
                                          databaseId,
                                          exportFolder,
                                          minCellCount,
@@ -413,8 +531,8 @@ executeTimeSeriesDiagnostics <- function(connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cdmDatabaseSchema = cdmDatabaseSchema,
         cohortTable = cohortTable,
-        runDataSourceTimeSeries = TRUE,
-        runCohortTimeSeries = TRUE,
+        runCohortTimeSeries = runCohortTimeSeries,
+        runDataSourceTimeSeries = runDataSourceTimeSeries,
         timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
         timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
         cohortIds = cohortIds

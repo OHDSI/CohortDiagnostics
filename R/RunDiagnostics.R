@@ -517,7 +517,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
       cohortDefinitionSet = cohortDefinitionSet,
-      cdmVersion = cdmVersion,
       databaseId = databaseId,
       exportFolder = exportFolder,
       minCellCount = minCellCount,
@@ -580,8 +579,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
       incremental
     )
   }
-  
-  
+
+
   # Cohort relationship ---------------------------------------------------------------------------------
   if (runCohortRelationship) {
     executeCohortRelationshipDiagnostics(
