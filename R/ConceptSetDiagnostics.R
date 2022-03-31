@@ -920,7 +920,7 @@ getOrphanConcepts <- function(searchFrom,
 
 
   # dont forget miscellaneous code below
-  return(orphanCodes)
+  return(NULL)
 }
 
 # function: getOrphanConcepts ---- OLD orphan concept function
