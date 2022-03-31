@@ -77,13 +77,13 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      keep2BillionConceptId = FALSE,
                                      runConceptSetOptimization = TRUE,
                                      runExcludedConceptSet = TRUE,
-                                     runOrphanConcepts = FALSE,
+                                     runOrphanConcepts = TRUE,
                                      runBreakdownIndexEvents = TRUE,
                                      runBreakdownIndexEventRelativeDays = c(0),
-                                     runIndexDateConceptCoOccurrence = FALSE,
+                                     runIndexDateConceptCoOccurrence = TRUE,
                                      runStandardToSourceMappingCount = TRUE,
                                      runConceptCount = TRUE,
-                                     runConceptCountByCalendarPeriod = FALSE,
+                                     runConceptCountByCalendarPeriod = TRUE,
                                      minCellCount = 5) {
   ParallelLogger::logTrace(" - Running concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
@@ -277,25 +277,41 @@ runConceptSetDiagnostics <- function(connection = NULL,
                              attr(delta, "units"))
   }
 
+  
   if (runOrphanConcepts) {
-    ## Orphan concepts ----
-    ParallelLogger::logInfo("  - Searching for concepts that may have been orphaned.")
-    startOrphanCodes <- Sys.time()
-    conceptSetDiagnosticsResults$orphanConcept <- getOrphanConcepts(
-      connection = connection,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      tempEmulationSchema = tempEmulationSchema,
-      conceptTrackingTable = conceptTrackingTable,
-      conceptSetsXWalk = "#concept_sets_x_walk",
-      resolvedConceptSets = "#resolved_concept_set",
-      keep2BillionConceptId = keep2BillionConceptId
-    )
-    delta <- Sys.time() - startOrphanCodes
-    ParallelLogger::logTrace("  - Finding orphan concepts took ",
-                             signif(delta, 3),
-                             " ",
-                             attr(delta, "units"))
+    # browser()
+    # ## Orphan concepts ----
+    # ParallelLogger::logInfo("  - Searching for concepts that may have been orphaned.")
+    # startOrphanCodes <- Sys.time()
+    # 
+    # conceptTableFull <-
+    #   DatabaseConnector::renderTranslateQuerySql(
+    #     connection = connection,
+    #     sql = "SELECT concept_id, concept_name
+    #            FROM @vocabulary_database_schema.concept c
+    #            WHERE INVALID_REASON IS NULL
+    #            {@keep_custom_concept_id} ? {} : {AND c.concept_id < 200000000}
+    #     
+    #             UNION
+    #     
+    #            SELECT DISTINCT concept_id, concept_synonym_name concept_name
+    #            FROM @vocabulary_database_schema.concept_synonym cs
+    #            WHERE language_concept_id = 4180186
+    #            {@keep_custom_concept_id} ? {} : {AND cs.concept_id < 200000000};;",
+    #     vocabulary_database_schema = vocabularyDatabaseSchema,
+    #     keep_custom_concept_id = keep2BillionConceptId
+    #   ) %>%
+    #   dplyr::tibble()
+    # 
+    # resolvedConceptsForOrphan <- conceptSetDiagnosticsResults$conceptResolved %>% dplyr::collect()
+    # 
+    # conceptSetDiagnosticsResults$orphanConcept <- getOrphanConcepts(searchFrom = conceptTableFull,
+    #                                                                 searchFor = resolvedConceptsForOrphan)
+    # delta <- Sys.time() - startOrphanCodes
+    # ParallelLogger::logTrace("  - Finding orphan concepts took ",
+    #                          signif(delta, 3),
+    #                          " ",
+    #                          attr(delta, "units"))
   }
   
   if (runStandardToSourceMappingCount) {
@@ -896,89 +912,100 @@ getCodeSetIds <- function(criterionList) {
            %>% filter(!is.na(codeSetIds)))
   }
 }
-# function: getOrphanConcepts ----
-getOrphanConcepts <- function(connectionDetails = NULL,
-                              connection = NULL,
-                              cdmDatabaseSchema,
-                              vocabularyDatabaseSchema = cdmDatabaseSchema,
-                              tempEmulationSchema = NULL,
-                              resolvedConceptSets = "#resolved_concept_set",
-                              conceptSetsXWalk = NULL,
-                              conceptTrackingTable = NULL,
-                              keep2BillionConceptId = FALSE
-) {
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
-  sql <- SqlRender::loadRenderTranslateSql(
-    "OrphanCodes.sql",
-    packageName = utils::packageName(),
-    dbms = connection@dbms,
-    tempEmulationSchema = tempEmulationSchema,
-    vocabulary_database_schema = vocabularyDatabaseSchema,
-    resolved_concept_sets = resolvedConceptSets
-  )
-  ParallelLogger::logInfo("Starting Orphan concept string search. This might take some time.")
-  DatabaseConnector::executeSql(
-    connection = connection,
-    sql = sql,
-    profile = FALSE,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-  if (!is.null(conceptTrackingTable)) {
-    # tracking table
-    sql <-
-      "INSERT INTO @concept_tracking_table (unique_concept_set_id, concept_id)
-            SELECT DISTINCT codeset_id unique_concept_set_id, concept_id
-            FROM #orphan_concept_table
-            WHERE concept_id != 0
-            {@keep_custom_concept_id} ? {} : {AND concept_id < 200000000};"
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = sql,
-      tempEmulationSchema = tempEmulationSchema,
-      concept_tracking_table = conceptTrackingTable,
-      keep_custom_concept_id = keep2BillionConceptId,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
-  }
-  
-  if (!is.null(conceptSetsXWalk)) {
-    orphanCodes <- renderTranslateQuerySql(
-      sql = " Select DISTINCT unq.cohort_id, unq.concept_set_id concept_set_id, cs.concept_id
-              FROM #orphan_concept_table cs
-              INNER JOIN @concept_sets_x_walk unq
-              ON cs.codeset_id = unq.unique_concept_set_id
-              {@keep_custom_concept_id} ? {} : {WHERE cs.concept_id < 200000000};",
-      connection = connection,
-      keep_custom_concept_id = keep2BillionConceptId,
-      concept_sets_x_walk = conceptSetsXWalk,
-      snakeCaseToCamelCase = TRUE
-    )   
-  } else {
-    orphanCodes <- renderTranslateQuerySql(
-      sql = " Select DISTINCT 0 cohort_id, codeset_id concept_set_id, concept_id
-              FROM #orphan_concept_table cs
-              {@keep_custom_concept_id} ? {} : {WHERE cs.concept_id < 200000000};",
-      connection = connection,
-      keep_custom_concept_id = keep2BillionConceptId,
-      snakeCaseToCamelCase = TRUE
-    )
-  }
 
-  sql <- "DROP TABLE IF EXISTS #orphan_concept_table;"
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = connection,
-    sql = sql,
-    tempEmulationSchema = tempEmulationSchema,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
+
+getOrphanConcepts <- function(searchFrom,
+                              searchFor
+) {
+
+
+  # dont forget miscellaneous code below
   return(orphanCodes)
 }
+
+# function: getOrphanConcepts ---- OLD orphan concept function
+# getOrphanConcepts <- function(connectionDetails = NULL,
+#                               connection = NULL,
+#                               cdmDatabaseSchema,
+#                               vocabularyDatabaseSchema = cdmDatabaseSchema,
+#                               tempEmulationSchema = NULL,
+#                               resolvedConceptSets = "#resolved_concept_set",
+#                               conceptSetsXWalk = NULL,
+#                               conceptTrackingTable = NULL,
+#                               keep2BillionConceptId = FALSE
+# ) {
+#   if (is.null(connection)) {
+#     connection <- DatabaseConnector::connect(connectionDetails)
+#     on.exit(DatabaseConnector::disconnect(connection))
+#   }
+#   sql <- SqlRender::loadRenderTranslateSql(
+#     "OrphanCodes.sql",
+#     packageName = utils::packageName(),
+#     dbms = connection@dbms,
+#     tempEmulationSchema = tempEmulationSchema,
+#     vocabulary_database_schema = vocabularyDatabaseSchema,
+#     resolved_concept_sets = resolvedConceptSets
+#   )
+#   ParallelLogger::logInfo("Starting Orphan concept string search. This might take some time.")
+#   DatabaseConnector::executeSql(
+#     connection = connection,
+#     sql = sql,
+#     profile = FALSE,
+#     progressBar = FALSE,
+#     reportOverallTime = FALSE
+#   )
+#   if (!is.null(conceptTrackingTable)) {
+#     # tracking table
+#     sql <-
+#       "INSERT INTO @concept_tracking_table (unique_concept_set_id, concept_id)
+#             SELECT DISTINCT codeset_id unique_concept_set_id, concept_id
+#             FROM #orphan_concept_table
+#             WHERE concept_id != 0
+#             {@keep_custom_concept_id} ? {} : {AND concept_id < 200000000};"
+#     DatabaseConnector::renderTranslateExecuteSql(
+#       connection = connection,
+#       sql = sql,
+#       tempEmulationSchema = tempEmulationSchema,
+#       concept_tracking_table = conceptTrackingTable,
+#       keep_custom_concept_id = keep2BillionConceptId,
+#       progressBar = FALSE,
+#       reportOverallTime = FALSE
+#     )
+#   }
+#   
+#   if (!is.null(conceptSetsXWalk)) {
+#     orphanCodes <- renderTranslateQuerySql(
+#       sql = " Select DISTINCT unq.cohort_id, unq.concept_set_id concept_set_id, cs.concept_id
+#               FROM #orphan_concept_table cs
+#               INNER JOIN @concept_sets_x_walk unq
+#               ON cs.codeset_id = unq.unique_concept_set_id
+#               {@keep_custom_concept_id} ? {} : {WHERE cs.concept_id < 200000000};",
+#       connection = connection,
+#       keep_custom_concept_id = keep2BillionConceptId,
+#       concept_sets_x_walk = conceptSetsXWalk,
+#       snakeCaseToCamelCase = TRUE
+#     )   
+#   } else {
+#     orphanCodes <- renderTranslateQuerySql(
+#       sql = " Select DISTINCT 0 cohort_id, codeset_id concept_set_id, concept_id
+#               FROM #orphan_concept_table cs
+#               {@keep_custom_concept_id} ? {} : {WHERE cs.concept_id < 200000000};",
+#       connection = connection,
+#       keep_custom_concept_id = keep2BillionConceptId,
+#       snakeCaseToCamelCase = TRUE
+#     )
+#   }
+# 
+#   sql <- "DROP TABLE IF EXISTS #orphan_concept_table;"
+#   DatabaseConnector::renderTranslateExecuteSql(
+#     connection = connection,
+#     sql = sql,
+#     tempEmulationSchema = tempEmulationSchema,
+#     progressBar = FALSE,
+#     reportOverallTime = FALSE
+#   )
+#   return(orphanCodes)
+# }
 
 # function: getConceptRecordCount ----
 getConceptRecordCount <- function(connection,
@@ -2116,7 +2143,7 @@ executeConceptSetDiagnostics <- function(connection,
                                          cohortDatabaseSchema,
                                          cohortTable,
                                          runConceptSetDiagnostics = TRUE,
-                                         runBreakdownIndexEventRelativeDays = c(0),
+                                         runBreakdownIndexEventRelativeDays = c(-5:5),
                                          runIndexDateConceptCoOccurrence = FALSE,
                                          runConceptCountByCalendarPeriod = FALSE,
                                          exportFolder,
