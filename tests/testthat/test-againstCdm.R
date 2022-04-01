@@ -72,7 +72,7 @@ test_that("Cohort diagnostics in incremental mode", {
       runCohortOverlap = TRUE,
       runIncidenceRate = TRUE,
       runIncludedSourceConcepts = TRUE,
-      runOrphanConcepts = TRUE,
+      runOrphanConcepts = FALSE,
       runTimeDistributions = TRUE,
       runTimeSeries = TRUE,
       runCohortRelationship = TRUE,

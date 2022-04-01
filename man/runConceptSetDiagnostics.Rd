@@ -19,7 +19,7 @@ runConceptSetDiagnostics(
   runExcludedConceptSet = TRUE,
   runOrphanConcepts = TRUE,
   runBreakdownIndexEvents = TRUE,
-  runBreakdownIndexEventRelativeDays = c(0),
+  runBreakdownIndexEventRelativeDays = c(-5:5),
   runIndexDateConceptCoOccurrence = TRUE,
   runStandardToSourceMappingCount = TRUE,
   runConceptCount = TRUE,
