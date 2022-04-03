@@ -69,3 +69,4 @@ writeLines(text, con = file(filePath))
 file.copy(from = "inst/settings/resultsDataModelSpecification.csv", 
           to = "inst/shiny/DiagnosticsExplorer/resultsDataModelSpecification.csv",
           overwrite = TRUE)
+

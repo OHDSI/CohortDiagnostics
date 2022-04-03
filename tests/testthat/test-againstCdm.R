@@ -34,16 +34,14 @@ test_that("Cohort diagnostics in incremental mode", {
       exportFolder = file.path(folder, "export"),
       databaseId = dbms,
       runInclusionStatistics = TRUE,
-      runBreakdownIndexEvents = TRUE,
-      runCohortCharacterization = TRUE,
-      runTemporalCohortCharacterization = TRUE,
-      runCohortOverlap = TRUE,
-      runIncidenceRate = TRUE,
-      runIncludedSourceConcepts = TRUE,
-      runOrphanConcepts = TRUE,
+      runConceptSetDiagnostics = TRUE,
       runTimeDistributions = TRUE,
       runTimeSeries = TRUE,
-      runCohortRelationship = TRUE,
+      runVisitContext = TRUE,
+      runIncidenceRate = TRUE,
+      runCohortOverlap = TRUE,
+      runCohortRelationship = FALSE,
+      runCohortCharacterization = TRUE,
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
@@ -68,16 +66,14 @@ test_that("Cohort diagnostics in incremental mode", {
       exportFolder = file.path(folder, "export"),
       databaseId = dbms,
       runInclusionStatistics = TRUE,
-      runBreakdownIndexEvents = TRUE,
-      runCohortCharacterization = TRUE,
-      runTemporalCohortCharacterization = TRUE,
-      runCohortOverlap = TRUE,
-      runIncidenceRate = TRUE,
-      runIncludedSourceConcepts = TRUE,
-      runOrphanConcepts = TRUE,
+      runConceptSetDiagnostics = TRUE,
       runTimeDistributions = TRUE,
       runTimeSeries = TRUE,
+      runVisitContext = TRUE,
+      runIncidenceRate = TRUE,
+      runCohortOverlap = TRUE,
       runCohortRelationship = TRUE,
+      runCohortCharacterization = TRUE,
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
@@ -86,14 +82,14 @@ test_that("Cohort diagnostics in incremental mode", {
     )
   )
   # generate sqlite file
-  sqliteDbPath <- tempfile(fileext = ".sqlite")
-  createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = sqliteDbPath)
-  expect_true(file.exists(sqliteDbPath))
+  # sqliteDbPath <- tempfile(fileext = ".sqlite")
+  # createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = sqliteDbPath)
+  # expect_true(file.exists(sqliteDbPath))
   # File exists
-  expect_error(createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = sqliteDbPath))
+  # expect_error(createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = sqliteDbPath))
 
-  output <- read.csv(file.path(folder, "export", "covariate_value.csv"))
+  # output <- read.csv(file.path(folder, "export", "covariate_value.csv"))
 
-  expect_true(is.numeric(output$sum_value[2]))
-  expect_true(is.numeric(output$mean[2]))
+  # expect_true(is.numeric(output$sum_value[2]))
+  # expect_true(is.numeric(output$mean[2]))
 })

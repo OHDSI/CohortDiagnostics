@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-createConceptTable <- function(connection, tempEmulationSchema, cohorts) {
+createConceptTable <- function(connection, tempEmulationSchema) {
   ParallelLogger::logTrace("Creating concept ID table for tracking concepts used in diagnostics")
   sql <-
     SqlRender::loadRenderTranslateSql(

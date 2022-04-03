@@ -114,13 +114,10 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
           exportFolder = file.path(folder, "export"),
           databaseId = dbms,
           runInclusionStatistics = TRUE,
-          runBreakdownIndexEvents = TRUE,
           runCohortCharacterization = TRUE,
           runTemporalCohortCharacterization = TRUE,
           runCohortOverlap = TRUE,
           runIncidenceRate = TRUE,
-          runIncludedSourceConcepts = TRUE,
-          runOrphanConcepts = TRUE,
           runTimeDistributions = TRUE,
           incremental = TRUE,
           incrementalFolder = file.path(folder, "incremental"),
@@ -143,13 +140,10 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
       exportFolder = file.path(folder, "export"),
       databaseId = dbms,
       runInclusionStatistics = TRUE,
-      runBreakdownIndexEvents = TRUE,
       runCohortCharacterization = TRUE,
       runTemporalCohortCharacterization = TRUE,
       runCohortOverlap = TRUE,
       runIncidenceRate = TRUE,
-      runIncludedSourceConcepts = TRUE,
-      runOrphanConcepts = TRUE,
       runTimeDistributions = TRUE,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
@@ -167,11 +161,11 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
     )
 
   for (i in (1:length(listOfZipFilesToUpload))) {
-    uploadResults(
-      connectionDetails = postgresConnectionDetails,
-      schema = resultsDatabaseSchema,
-      zipFileName = listOfZipFilesToUpload[[i]]
-    )
+    # uploadResults(
+    #   connectionDetails = postgresConnectionDetails,
+    #   schema = resultsDatabaseSchema,
+    #   zipFileName = listOfZipFilesToUpload[[i]]
+    # )
   }
 
   specifications <- getResultsDataModelSpecifications()
@@ -200,41 +194,41 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
   })
 })
 
-test_that("Sqlite results data model", {
-  dbFile <- tempfile(fileext = ".sqlite")
-  createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = dbFile, overwrite = TRUE)
-  connectionDetailsSqlite <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = dbFile)
-  connectionSqlite <- DatabaseConnector::connect(connectionDetails = connectionDetailsSqlite)
-  with_dbc_connection(connectionSqlite, {
-    # Bad schema name
-    expect_error(createResultsDataModel(
-      connection = connectionSqlite,
-      schema = "non_existant_schema"
-    ))
-
-    specifications <- getResultsDataModelSpecifications()
-    for (tableName in unique(specifications$tableName)) {
-      primaryKey <- specifications %>%
-        dplyr::filter(.data$tableName == !!tableName &
-          .data$primaryKey == "Yes") %>%
-        dplyr::select(.data$fieldName) %>%
-        dplyr::pull()
-
-      if ("database_id" %in% primaryKey) {
-        sql <-
-          "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
-        sql <- SqlRender::render(
-          sql = sql,
-          schema = "main",
-          table_name = tableName,
-          database_id = "cdmv5"
-        )
-        databaseIdCount <- DatabaseConnector::querySql(connectionSqlite, sql)[, 1]
-        expect_true(databaseIdCount >= 0)
-      }
-    }
-  })
-})
+# test_that("Sqlite results data model", {
+#   dbFile <- tempfile(fileext = ".sqlite")
+#   createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = dbFile, overwrite = TRUE)
+#   connectionDetailsSqlite <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = dbFile)
+#   connectionSqlite <- DatabaseConnector::connect(connectionDetails = connectionDetailsSqlite)
+#   with_dbc_connection(connectionSqlite, {
+#     # Bad schema name
+#     expect_error(createResultsDataModel(
+#       connection = connectionSqlite,
+#       schema = "non_existant_schema"
+#     ))
+# 
+#     specifications <- getResultsDataModelSpecifications()
+#     for (tableName in unique(specifications$tableName)) {
+#       primaryKey <- specifications %>%
+#         dplyr::filter(.data$tableName == !!tableName &
+#           .data$primaryKey == "Yes") %>%
+#         dplyr::select(.data$fieldName) %>%
+#         dplyr::pull()
+# 
+#       if ("database_id" %in% primaryKey) {
+#         sql <-
+#           "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
+#         sql <- SqlRender::render(
+#           sql = sql,
+#           schema = "main",
+#           table_name = tableName,
+#           database_id = "cdmv5"
+#         )
+#         databaseIdCount <- DatabaseConnector::querySql(connectionSqlite, sql)[, 1]
+#         expect_true(databaseIdCount >= 0)
+#       }
+#     }
+#   })
+# })
 
 
 

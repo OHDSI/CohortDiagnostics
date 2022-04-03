@@ -30,9 +30,9 @@ outputLocation <- "D:\\temp"
 outputFolder <-
   file.path(outputLocation, "outputFolder", "packageMode", "eunomia")
 ## optionally delete previous execution ----
-# unlink(x = outputFolder,
-#        recursive = TRUE,
-#        force = TRUE)
+unlink(x = outputFolder,
+       recursive = TRUE,
+       force = TRUE)
 dir.create(path = outputFolder,
            showWarnings = FALSE,
            recursive = TRUE)
@@ -68,19 +68,16 @@ CohortDiagnostics::executeDiagnostics(
   vocabularyDatabaseSchema = vocabularyDatabaseSchema,
   cdmVersion = 5,
   runInclusionStatistics = TRUE,
-  runIncludedSourceConcepts = TRUE,
-  runOrphanConcepts = TRUE,
   runTimeDistributions = TRUE,
   runTimeSeries = FALSE,
   runVisitContext = TRUE,
-  runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
   runCohortRelationship = TRUE,
   runCohortCharacterization = TRUE,
   covariateSettings = createDefaultCovariateSettings(),
   runTemporalCohortCharacterization = TRUE,
-  temporalCovariateSettings = createTemporalCovariateSettings(
+  temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(
     useConditionOccurrence = TRUE,
     useDrugEraStart = TRUE,
     useProcedureOccurrence = TRUE,

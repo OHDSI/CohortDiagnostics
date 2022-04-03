@@ -87,8 +87,6 @@ test_that("Cohort diagnostics", {
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      cohortTableNames = cohortTableNames,
                      runInclusionStatistics = TRUE,
-                     runIncludedSourceConcepts = TRUE,
-                     runOrphanConcepts = TRUE,
                      runTimeDistributions = TRUE,
                      runTimeSeries = TRUE,
                      runVisitContext = TRUE,
