@@ -146,7 +146,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
             .data$cohortId,
             .data$timeId,
             .data$covariateId,
-            .data$sum,
+            .data$sumValue,
             .data$mean,
             .data$sd
           )
