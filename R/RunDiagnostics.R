@@ -414,26 +414,26 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   # Database metadata ---------------------------------------------
   saveDatabaseMetaData(
-    databaseId,
-    databaseName,
-    databaseDescription,
-    exportFolder,
-    minCellCount,
-    cdmSourceInformation$vocabularyVersion,
-    vocabularyVersion
+    databaseId = databaseId,
+    databaseName = databaseName,
+    databaseDescription = databaseDescription,
+    exportFolder = exportFolder,
+    minCellCount = minCellCount,
+    vocabularyVersionCdm = cdmSourceInformation$vocabularyVersion,
+    vocabularyVersion = vocabularyVersion
   )
   # Create concept table ------------------------------------------
   createConceptTable(connection, tempEmulationSchema, cohortDefinitionSet)
 
   # Counting cohorts -----------------------------------------------------------------------
   cohortCounts <- computeCohortCounts(
-    connection,
-    cohortDatabaseSchema,
-    cohortTable,
-    cohortDefinitionSet,
-    exportFolder,
-    minCellCount,
-    databaseId
+    connection = connection,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTable = cohortTable,
+    cohorts = cohortDefinitionSet,
+    exportFolder = exportFolder,
+    minCellCount = minCellCount,
+    databaseId = databaseId
   )
 
   if (nrow(cohortCounts) > 0) {
@@ -456,16 +456,16 @@ executeDiagnostics <- function(cohortDefinitionSet,
   # Inclusion statistics -----------------------------------------------------------------------
   if (runInclusionStatistics) {
     getInclusionStats(
-      connection,
-      exportFolder,
-      databaseId,
-      cohortDefinitionSet,
-      cohortDatabaseSchema,
-      cohortTableNames,
-      incremental,
-      instantiatedCohorts,
-      minCellCount,
-      recordKeepingFile
+      connection = connection,
+      exportFolder = exportFolder,
+      databaseId = databaseId,
+      cohortDefinitionSet = cohortDefinitionSet,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTableNames = cohortTableNames,
+      incremental = incremental,
+      instantiatedCohorts = instantiatedCohorts,
+      minCellCount = minCellCount,
+      recordKeepingFile = recordKeepingFile
     )
   }
 
@@ -495,19 +495,19 @@ executeDiagnostics <- function(cohortDefinitionSet,
   # Time distributions ----------------------------------------------------------------------
   if (runTimeDistributions) {
     executeTimeDistributionDiagnostics(
-      connection,
-      tempEmulationSchema,
-      cdmDatabaseSchema,
-      cohortDatabaseSchema,
-      cohortTable,
-      cdmVersion,
-      databaseId,
-      exportFolder,
-      minCellCount,
-      cohortDefinitionSet,
-      instantiatedCohorts,
-      incremental,
-      recordKeepingFile
+      connection = connection,
+      tempEmulationSchema = tempEmulationSchema,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      cdmVersion = cdmVersion,
+      databaseId = databaseId,
+      exportFolder = exportFolder,
+      minCellCount = minCellCount,
+      cohorts = cohortDefinitionSet,
+      instantiatedCohorts = instantiatedCohorts,
+      incremental = incremental,
+      recordKeepingFile = recordKeepingFile
     )
   }
 
@@ -534,52 +534,52 @@ executeDiagnostics <- function(cohortDefinitionSet,
   # Visit context ----------------------------------------------------------------------------
   if (runVisitContext) {
     executeVisitContextDiagnostics(
-      connection,
-      tempEmulationSchema,
-      cdmDatabaseSchema,
-      cohortDatabaseSchema,
-      cohortTable,
-      cdmVersion,
-      databaseId,
-      exportFolder,
-      minCellCount,
-      cohortDefinitionSet,
-      instantiatedCohorts,
-      recordKeepingFile,
-      incremental
+      connection = connection,
+      tempEmulationSchema = tempEmulationSchema,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      cdmVersion = cdmVersion,
+      databaseId = databaseId,
+      exportFolder = exportFolder,
+      minCellCount = minCellCount,
+      cohorts = cohortDefinitionSet,
+      instantiatedCohorts = instantiatedCohorts,
+      recordKeepingFile = recordKeepingFile,
+      incremental = incremental
     )
   }
 
   # Incidence rates --------------------------------------------------------------------------------------
   if (runIncidenceRate) {
     computeIncidenceRates(
-      connection,
-      tempEmulationSchema,
-      cdmDatabaseSchema,
-      cohortDatabaseSchema,
-      cohortTable,
-      databaseId,
-      exportFolder,
-      minCellCount,
-      cohortDefinitionSet,
-      instantiatedCohorts,
-      recordKeepingFile,
-      incremental
+      connection = connection,
+      tempEmulationSchema = tempEmulationSchema,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      databaseId = databaseId,
+      exportFolder = exportFolder,
+      minCellCount = minCellCount,
+      cohorts = cohortDefinitionSet,
+      instantiatedCohorts = instantiatedCohorts,
+      recordKeepingFile = recordKeepingFile,
+      incremental = incremental
     )
   }
 
   # Cohort overlap ---------------------------------------------------------------------------------
   if (runCohortOverlap) {
     executeCohortComparisonDiagnostics(
-      connection,
-      databaseId,
-      exportFolder,
-      cohortDatabaseSchema,
-      cohortTable,
-      cohortDefinitionSet,
-      minCellCount,
-      recordKeepingFile,
-      incremental
+      connection = connection,
+      databaseId = databaseId,
+      exportFolder = exportFolder,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      cohorts = cohortDefinitionSet,
+      minCellCount = minCellCount,
+      recordKeepingFile = recordKeepingFile,
+      incremental = incremental
     )
   }
 
@@ -587,63 +587,62 @@ executeDiagnostics <- function(cohortDefinitionSet,
   # Cohort relationship ---------------------------------------------------------------------------------
   if (runCohortRelationship) {
     executeCohortRelationshipDiagnostics(
-      connection,
-      databaseId,
-      exportFolder,
-      cohortDatabaseSchema,
-      cdmDatabaseSchema,
-      tempEmulationSchema,
-      cohortTable,
-      cohortDefinitionSet,
-      temporalCovariateSettings,
-      minCellCount,
-      recordKeepingFile,
-      incremental,
-      incrementalFolder
+      connection = connection,
+      databaseId = databaseId,
+      exportFolder = exportFolder,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      cohortTable = cohortTable,
+      cohortDefinitionSet = cohortDefinitionSet,
+      temporalCovariateSettings = temporalCovariateSettings,
+      minCellCount = minCellCount,
+      recordKeepingFile = recordKeepingFile,
+      incremental = incremental
     )
   }
 
   # Cohort characterization ---------------------------------------------------------------
   if (runCohortCharacterization) {
     executeCohortCharacterization(
-      connection,
-      databaseId,
-      exportFolder,
-      cdmDatabaseSchema,
-      cohortDatabaseSchema,
-      cohortTable,
-      covariateSettings,
-      tempEmulationSchema,
-      cdmVersion,
-      cohortDefinitionSet,
-      cohortCounts,
-      minCellCount,
-      instantiatedCohorts,
-      incremental,
-      recordKeepingFile
+      connection = connection,
+      databaseId = databaseId,
+      exportFolder = exportFolder,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      covariateSettings = covariateSettings,
+      tempEmulationSchema = tempEmulationSchema,
+      cdmVersion = cdmVersion,
+      cohorts = cohortDefinitionSet,
+      cohortCounts = cohortCounts,
+      minCellCount = minCellCount,
+      instantiatedCohorts = instantiatedCohorts,
+      incremental = incremental,
+      recordKeepingFile = recordKeepingFile
     )
   }
 
   # Temporal Cohort characterization ---------------------------------------------------------------
   if (runTemporalCohortCharacterization) {
     executeCohortCharacterization(
-      connection,
-      databaseId,
-      exportFolder,
-      cdmDatabaseSchema,
-      cohortDatabaseSchema,
-      cohortTable,
-      temporalCovariateSettings,
-      tempEmulationSchema,
-      cdmVersion,
-      cohortDefinitionSet,
-      cohortCounts,
-      minCellCount,
-      instantiatedCohorts,
-      incremental,
-      recordKeepingFile,
-      jobName = "Temporal Cohort characterization",
+      connection = connection,
+      databaseId = databaseId,
+      exportFolder = exportFolder,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      covariateSettings = temporalCovariateSettings,
+      tempEmulationSchema = tempEmulationSchema,
+      cdmVersion = cdmVersion,
+      cohorts = cohortDefinitionSet,
+      cohortCounts = cohortCounts,
+      minCellCount = minCellCount,
+      instantiatedCohorts = instantiatedCohorts,
+      incremental = incremental,
+      recordKeepingFile = recordKeepingFile,
       task = "runTemporalCohortCharacterization",
+      jobName = "Temporal Cohort characterization",
       covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
       covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
       analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
