@@ -35,7 +35,6 @@ test_that("Cohort diagnostics in incremental mode", {
       databaseId = dbms,
       runInclusionStatistics = TRUE,
       runBreakdownIndexEvents = TRUE,
-      runCohortCharacterization = TRUE,
       runTemporalCohortCharacterization = TRUE,
       runCohortOverlap = TRUE,
       runIncidenceRate = TRUE,
@@ -47,7 +46,6 @@ test_that("Cohort diagnostics in incremental mode", {
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
-      covariateSettings = covariateSettings,
       temporalCovariateSettings = temporalCovariateSettings
     )
   )
@@ -69,7 +67,6 @@ test_that("Cohort diagnostics in incremental mode", {
       databaseId = dbms,
       runInclusionStatistics = TRUE,
       runBreakdownIndexEvents = TRUE,
-      runCohortCharacterization = TRUE,
       runTemporalCohortCharacterization = TRUE,
       runCohortOverlap = TRUE,
       runIncidenceRate = TRUE,
@@ -81,7 +78,6 @@ test_that("Cohort diagnostics in incremental mode", {
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
-      covariateSettings = covariateSettings,
       temporalCovariateSettings = temporalCovariateSettings
     )
   )

@@ -30,8 +30,6 @@ executeDiagnostics(
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
   runCohortRelationship = FALSE,
-  runCohortCharacterization = FALSE,
-  covariateSettings = createDefaultCovariateSettings(),
   runTemporalCohortCharacterization = TRUE,
  
     temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useDemographicsGender
@@ -47,10 +45,8 @@ executeDiagnostics(
     TRUE, useObservation = TRUE, useDeviceExposure = TRUE, useCharlsonIndex = TRUE,
     useDcsi = TRUE, useChads2 = TRUE, useChads2Vasc = TRUE, useHfrs = FALSE,
     temporalStartDays = c(-365, -30, 0, 1, 31, -9999, -365, -180, -30, -9999, -365, -180,
-             -30, -9999, seq(from = -421, to = -31, by = 30), seq(from = 0, to = 390, by
-    = 30), seq(from = -5, to = 5, by = 1)), temporalEndDays = c(-31, -1, 0, 30, 365, 0,
-    0, 0, 0, -1, -1, -1, -1, 9999, seq(from = -391, to = -1, by = 30), seq(from = 30, to
-    = 420, by = 30), seq(from = -5, to = 5, by = 1))),
+             -30, -9999, seq(from = -5, to = 5, by = 1)), temporalEndDays = c(-31, -1, 0,
+    30, 365, 0, 0, 0, 0, -1, -1, -1, -1, 9999, seq(from = -5, to = 5, by = 1))),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental")
@@ -126,13 +122,6 @@ cohortToCreateFile.}
 
 \item{runCohortRelationship}{Generate and export the cohort relationship? Cohort relationship checks the temporal
 relationship between two or more cohorts.}
-
-\item{runCohortCharacterization}{Generate and export the cohort characterization?
-Only records with values greater than 0.0001 are returned.}
-
-\item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of
-the createCovariateSettings function in the FeatureExtraction package, or a list
-of such objects.}
 
 \item{runTemporalCohortCharacterization}{Generate and export the temporal cohort characterization?
 Only records with values greater than 0.001 are returned.}

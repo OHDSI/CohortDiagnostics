@@ -77,8 +77,6 @@ CohortDiagnostics::executeDiagnostics(
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
   runCohortRelationship = TRUE,
-  runCohortCharacterization = FALSE,
-  covariateSettings = createDefaultCovariateSettings(),
   runTemporalCohortCharacterization = TRUE,
   minCellCount = 5,
   incremental = TRUE,

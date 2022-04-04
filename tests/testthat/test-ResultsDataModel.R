@@ -115,7 +115,6 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
           databaseId = dbms,
           runInclusionStatistics = TRUE,
           runBreakdownIndexEvents = TRUE,
-          runCohortCharacterization = TRUE,
           runTemporalCohortCharacterization = TRUE,
           runCohortOverlap = TRUE,
           runIncidenceRate = TRUE,
@@ -124,7 +123,6 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
           runTimeDistributions = TRUE,
           incremental = TRUE,
           incrementalFolder = file.path(folder, "incremental"),
-          covariateSettings = covariateSettings,
           temporalCovariateSettings = temporalCovariateSettings
         )
       },
@@ -144,7 +142,6 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
       databaseId = dbms,
       runInclusionStatistics = TRUE,
       runBreakdownIndexEvents = TRUE,
-      runCohortCharacterization = TRUE,
       runTemporalCohortCharacterization = TRUE,
       runCohortOverlap = TRUE,
       runIncidenceRate = TRUE,
@@ -153,7 +150,6 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
       runTimeDistributions = TRUE,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
-      covariateSettings = covariateSettings,
       temporalCovariateSettings = temporalCovariateSettings
     )
   }

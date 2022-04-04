@@ -87,7 +87,7 @@ exportCharacterization <- function(characteristics,
       )
     }
   }
-
+  
   if (!"covariatesContinuous" %in% names(characteristics)) {
     ParallelLogger::logInfo("No continuous characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
@@ -95,13 +95,22 @@ exportCharacterization <- function(characteristics,
       characteristics$covariatesContinuous %>%
       dplyr::filter(.data$countValue >= minCellCount) %>%
       dplyr::mutate(databaseId = !!databaseId)
-
-    if (dplyr::pull(dplyr::count(characteristics$filteredCovariatesContinous)) > 0) {
-      writeCovariateDataAndromedaToCsv(
-        data = characteristics$filteredCovariatesContinous,
-        fileName = covariateValueContFileName,
-        incremental = incremental
-      )
+    
+    if (!(
+      characteristics$filteredCovariatesContinous %>%
+      dplyr::select(.data$timeId) %>%
+      dplyr::collect() %>%
+      dplyr::distinct() %>%
+      dplyr::pull() %>% is.na()
+    )) {
+      # preventing writing of temporal_covariate_value_dist because of https://github.com/OHDSI/FeatureExtraction/issues/127
+      if (dplyr::pull(dplyr::count(characteristics$filteredCovariatesContinous)) > 0) {
+        writeCovariateDataAndromedaToCsv(
+          data = characteristics$filteredCovariatesContinous,
+          fileName = covariateValueContFileName,
+          incremental = incremental
+        )
+      }
     }
   }
 }
