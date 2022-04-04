@@ -137,23 +137,85 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runInclusionStatistics = TRUE,
                                runIncludedSourceConcepts = TRUE,
                                runOrphanConcepts = TRUE,
-                               runTimeDistributions = TRUE,
+                               runTimeDistributions = FALSE,
                                runTimeSeries = FALSE,
                                runVisitContext = TRUE,
                                runBreakdownIndexEvents = TRUE,
                                runIncidenceRate = TRUE,
                                runCohortOverlap = TRUE,
                                runCohortRelationship = FALSE,
-                               runCohortCharacterization = TRUE,
+                               runCohortCharacterization = FALSE,
                                covariateSettings = createDefaultCovariateSettings(),
                                runTemporalCohortCharacterization = TRUE,
-                               temporalCovariateSettings = createTemporalCovariateSettings(
+                               temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(
+                                 useDemographicsGender = TRUE,
+                                 useDemographicsAge = TRUE,
+                                 useDemographicsAgeGroup = TRUE,
+                                 useDemographicsRace = TRUE,
+                                 useDemographicsEthnicity = TRUE,
+                                 useDemographicsIndexYear = TRUE,
+                                 useDemographicsIndexMonth = TRUE,
+                                 useDemographicsIndexYearMonth = TRUE,
+                                 useDemographicsPriorObservationTime = TRUE,
+                                 useDemographicsPostObservationTime = TRUE,
+                                 useDemographicsTimeInCohort = TRUE,
                                  useConditionOccurrence = TRUE,
-                                 useDrugEraStart = TRUE,
                                  useProcedureOccurrence = TRUE,
+                                 useDrugEraStart = TRUE,
                                  useMeasurement = TRUE,
-                                 temporalStartDays = c(-365, -30, 0, 1, 31),
-                                 temporalEndDays = c(-31, -1, 0, 30, 365)
+                                 useConditionEraStart = TRUE,
+                                 useConditionEraOverlap = TRUE,
+                                 useConditionEraGroupStart = FALSE,
+                                 useConditionEraGroupOverlap = TRUE,
+                                 useDrugExposure = FALSE, #leads to too many concept id
+                                 useDrugEraOverlap = FALSE,
+                                 useDrugEraGroupStart = FALSE,
+                                 useDrugEraGroupOverlap = TRUE,
+                                 useObservation = TRUE,
+                                 useDeviceExposure = TRUE,
+                                 useCharlsonIndex = TRUE,
+                                 useDcsi = TRUE,
+                                 useChads2 = TRUE,
+                                 useChads2Vasc = TRUE,
+                                 useHfrs = FALSE,
+                                 temporalStartDays = c(
+                                   -365,
+                                   -30,
+                                   0,
+                                   1,
+                                   31,
+                                   -9999, # anytime
+                                   -365,  # long term 
+                                   -180,  # medium term
+                                   -30,   # short term
+                                   -9999, # anytime prior not including start date
+                                   -365,  # long term not including start date
+                                   -180,  # medium term not including start date
+                                   -30,   # short term not including start date
+                                   -9999, # any time
+                                   seq(from = -421, to = -31, by = 30),
+                                   seq(from = 0, to = 390, by = 30),
+                                   seq(from = -5, to = 5, by = 1)
+                                 ),
+                                 temporalEndDays = c(
+                                   -31,
+                                   -1,
+                                   0,
+                                   30,
+                                   365,
+                                   0,  # anytime
+                                   0,  # long term 
+                                   0,  # medium term
+                                   0,  # short term
+                                   -1, # anytime prior not including start date
+                                   -1, # long term not including start date 
+                                   -1, # medium term not including start date
+                                   -1, # short term not including start date
+                                   9999, # any time
+                                   seq(from = -391, to = -1, by = 30),
+                                   seq(from = 30, to = 420, by = 30),
+                                   seq(from = -5, to = 5, by = 1)
+                                 )
                                ),
                                minCellCount = 5,
                                incremental = FALSE,

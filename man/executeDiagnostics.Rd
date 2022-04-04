@@ -23,19 +23,34 @@ executeDiagnostics(
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
   runOrphanConcepts = TRUE,
-  runTimeDistributions = TRUE,
+  runTimeDistributions = FALSE,
   runTimeSeries = FALSE,
   runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
   runCohortRelationship = FALSE,
-  runCohortCharacterization = TRUE,
+  runCohortCharacterization = FALSE,
   covariateSettings = createDefaultCovariateSettings(),
   runTemporalCohortCharacterization = TRUE,
-  temporalCovariateSettings = createTemporalCovariateSettings(useConditionOccurrence =
-    TRUE, useDrugEraStart = TRUE, useProcedureOccurrence = TRUE, useMeasurement = TRUE,
-    temporalStartDays = c(-365, -30, 0, 1, 31), temporalEndDays = c(-31, -1, 0, 30, 365)),
+ 
+    temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useDemographicsGender
+    = TRUE, useDemographicsAge = TRUE, useDemographicsAgeGroup = TRUE,
+    useDemographicsRace = TRUE, useDemographicsEthnicity = TRUE, useDemographicsIndexYear
+    = TRUE, useDemographicsIndexMonth = TRUE, useDemographicsIndexYearMonth = TRUE,
+    useDemographicsPriorObservationTime = TRUE, useDemographicsPostObservationTime =
+    TRUE, useDemographicsTimeInCohort = TRUE, useConditionOccurrence = TRUE,
+    useProcedureOccurrence = TRUE, useDrugEraStart = TRUE,      useMeasurement = TRUE,
+    useConditionEraStart = TRUE, useConditionEraOverlap = TRUE, useConditionEraGroupStart
+    = FALSE, useConditionEraGroupOverlap = TRUE, useDrugExposure = FALSE,
+    useDrugEraOverlap = FALSE, useDrugEraGroupStart = FALSE, useDrugEraGroupOverlap =
+    TRUE, useObservation = TRUE, useDeviceExposure = TRUE, useCharlsonIndex = TRUE,
+    useDcsi = TRUE, useChads2 = TRUE, useChads2Vasc = TRUE, useHfrs = FALSE,
+    temporalStartDays = c(-365, -30, 0, 1, 31, -9999, -365, -180, -30, -9999, -365, -180,
+             -30, -9999, seq(from = -421, to = -31, by = 30), seq(from = 0, to = 390, by
+    = 30), seq(from = -5, to = 5, by = 1)), temporalEndDays = c(-31, -1, 0, 30, 365, 0,
+    0, 0, 0, -1, -1, -1, -1, 9999, seq(from = -391, to = -1, by = 30), seq(from = 30, to
+    = 420, by = 30), seq(from = -5, to = 5, by = 1))),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental")
