@@ -327,8 +327,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
                                                  temporalCovariateSettings,
                                                  minCellCount,
                                                  recordKeepingFile,
-                                                 incremental,
-                                                 incrementalFolder) {
+                                                 incremental) {
   ParallelLogger::logInfo("Computing Cohort Relationship")
   startCohortRelationship <- Sys.time()
 
