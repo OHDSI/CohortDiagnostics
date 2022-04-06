@@ -11,8 +11,8 @@ getCirceRenderedExpression(
 )
 }
 \arguments{
-\item{cohortDefinition}{An R object (list) with a list representation of the cohort definition expression, 
-that may be converted to a cohort expression JSON using 
+\item{cohortDefinition}{An R object (list) with a list representation of the cohort definition expression,
+that may be converted to a cohort expression JSON using
 RJSONIO::toJSON(x = cohortDefinition, digits = 23, pretty = TRUE)}
 
 \item{cohortName}{Name for the cohort definition}

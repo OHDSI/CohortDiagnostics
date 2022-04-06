@@ -70,7 +70,6 @@ CohortDiagnostics::executeDiagnostics(
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
   runOrphanConcepts = TRUE,
-  runTimeDistributions = TRUE,
   runTimeSeries = TRUE,
   runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,

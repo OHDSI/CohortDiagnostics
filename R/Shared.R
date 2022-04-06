@@ -44,8 +44,8 @@ hasData <- function(data) {
 #' @description
 #' Returns list with circe generated documentation
 #'
-#' @param cohortDefinition An R object (list) with a list representation of the cohort definition expression, 
-#'                          that may be converted to a cohort expression JSON using 
+#' @param cohortDefinition An R object (list) with a list representation of the cohort definition expression,
+#'                          that may be converted to a cohort expression JSON using
 #'                          RJSONIO::toJSON(x = cohortDefinition, digits = 23, pretty = TRUE)
 #'
 #' @param cohortName Name for the cohort definition
@@ -59,27 +59,33 @@ getCirceRenderedExpression <- function(cohortDefinition,
                                        cohortName = "Cohort Definition",
                                        includeConceptSets = FALSE) {
   cohortJson <-
-    RJSONIO::toJSON(x = cohortDefinition,
-                    digits = 23,
-                    pretty = TRUE)
+    RJSONIO::toJSON(
+      x = cohortDefinition,
+      digits = 23,
+      pretty = TRUE
+    )
   circeExpression <-
     CirceR::cohortExpressionFromJson(expressionJson = cohortJson)
   circeExpressionMarkdown <-
     CirceR::cohortPrintFriendly(circeExpression)
   circeConceptSetListmarkdown <-
     CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
-  
+
   circeExpressionMarkdown <-
-    paste0("## Human Readable Cohort Definition",
-           "\r\n\r\n",
-           circeExpressionMarkdown)
-  
+    paste0(
+      "## Human Readable Cohort Definition",
+      "\r\n\r\n",
+      circeExpressionMarkdown
+    )
+
   circeExpressionMarkdown <-
-    paste0("# ",
-           cohortName,
-           "\r\n\r\n",
-           circeExpressionMarkdown)
-  
+    paste0(
+      "# ",
+      cohortName,
+      "\r\n\r\n",
+      circeExpressionMarkdown
+    )
+
   if (includeConceptSets) {
     circeExpressionMarkdown <-
       paste0(
@@ -91,7 +97,7 @@ getCirceRenderedExpression <- function(cohortDefinition,
         circeConceptSetListmarkdown
       )
   }
-  
+
   htmlExpressionCohort <-
     convertMdToHtml(circeExpressionMarkdown)
   htmlExpressionConceptSetExpression <-
@@ -117,22 +123,22 @@ getConceptSetDataFrameFromConceptSetExpression <-
     }
     conceptSetExpressionDetails <- items %>%
       purrr::map_df(.f = purrr::flatten)
-    if ('CONCEPT_ID' %in% colnames(conceptSetExpressionDetails)) {
-      if ('isExcluded' %in% colnames(conceptSetExpressionDetails)) {
+    if ("CONCEPT_ID" %in% colnames(conceptSetExpressionDetails)) {
+      if ("isExcluded" %in% colnames(conceptSetExpressionDetails)) {
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
           dplyr::rename(IS_EXCLUDED = .data$isExcluded)
       } else {
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
           dplyr::mutate(IS_EXCLUDED = FALSE)
       }
-      if ('includeDescendants' %in% colnames(conceptSetExpressionDetails)) {
+      if ("includeDescendants" %in% colnames(conceptSetExpressionDetails)) {
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
           dplyr::rename(INCLUDE_DESCENDANTS = .data$includeDescendants)
       } else {
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
           dplyr::mutate(INCLUDE_DESCENDANTS = FALSE)
       }
-      if ('includeMapped' %in% colnames(conceptSetExpressionDetails)) {
+      if ("includeMapped" %in% colnames(conceptSetExpressionDetails)) {
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
           dplyr::rename(INCLUDE_MAPPED = .data$includeMapped)
       } else {
@@ -160,31 +166,37 @@ getConceptSetDetailsFromCohortDefinition <-
     } else {
       expression <- cohortDefinitionExpression
     }
-    
+
     if (is.null(expression$ConceptSets)) {
       return(NULL)
     }
-    
+
     conceptSetExpression <- expression$ConceptSets %>%
       dplyr::bind_rows() %>%
-      dplyr::mutate(json = RJSONIO::toJSON(x = .data$expression,
-                                           pretty = TRUE))
-    
+      dplyr::mutate(json = RJSONIO::toJSON(
+        x = .data$expression,
+        pretty = TRUE
+      ))
+
     conceptSetExpressionDetails <- list()
     i <- 0
     for (id in conceptSetExpression$id) {
       i <- i + 1
       conceptSetExpressionDetails[[i]] <-
-        getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
-                                                         conceptSetExpression[i, ]$expression$items) %>%
-        dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
+        getConceptSetDataFrameFromConceptSetExpression(
+          conceptSetExpression =
+            conceptSetExpression[i, ]$expression$items
+        ) %>%
+        dplyr::mutate(id = conceptSetExpression[i, ]$id) %>%
         dplyr::relocate(.data$id) %>%
         dplyr::arrange(.data$id)
     }
     conceptSetExpressionDetails <-
       dplyr::bind_rows(conceptSetExpressionDetails)
-    output <- list(conceptSetExpression = conceptSetExpression,
-                   conceptSetExpressionDetails = conceptSetExpressionDetails)
+    output <- list(
+      conceptSetExpression = conceptSetExpression,
+      conceptSetExpressionDetails = conceptSetExpressionDetails
+    )
     return(output)
   }
 
@@ -200,18 +212,22 @@ quoteLiterals <- function(x) {
 renderTranslateQuerySql <-
   function(connection,
            sql,
+           dbms,
            ...,
            snakeCaseToCamelCase = FALSE) {
     if (is(connection, "Pool")) {
       sql <- SqlRender::render(sql, ...)
       sql <- SqlRender::translate(sql, targetDialect = dbms)
-      
-      tryCatch({
-        data <- DatabaseConnector::dbGetQuery(connection, sql)
-      }, error = function(err) {
-        writeLines(sql)
-        stop(err)
-      })
+
+      tryCatch(
+        {
+          data <- DatabaseConnector::dbGetQuery(connection, sql)
+        },
+        error = function(err) {
+          writeLines(sql)
+          stop(err)
+        }
+      )
       if (snakeCaseToCamelCase) {
         colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
       }
@@ -259,10 +275,11 @@ queryResultCovariateValue <- function(dataSource,
     null.ok = TRUE,
     add = errorMessage
   )
-  
+
   temporalTimeRefData <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
+      dbms = dataSource$dbms,
       sql = "SELECT *
              FROM @results_database_schema.temporal_time_ref
              WHERE time_id IS NOT NULL
@@ -274,10 +291,11 @@ queryResultCovariateValue <- function(dataSource,
       end_day = endDay
     ) %>%
     dplyr::tibble()
-  
+
   temporalAnalysisRefData <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
+      dbms = dataSource$dbms,
       sql = "SELECT *
              FROM @results_database_schema.temporal_analysis_ref
               WHERE analysis_id IS NOT NULL
@@ -288,10 +306,11 @@ queryResultCovariateValue <- function(dataSource,
       results_database_schema = dataSource$resultsDatabaseSchema
     ) %>%
     dplyr::tibble()
-  
+
   temporalCovariateRefData <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
+      dbms = dataSource$dbms,
       sql = "SELECT *
              FROM @results_database_schema.temporal_covariate_ref
               WHERE covariate_id IS NOT NULL
@@ -301,12 +320,13 @@ queryResultCovariateValue <- function(dataSource,
       results_database_schema = dataSource$resultsDatabaseSchema
     ) %>%
     dplyr::tibble()
-  
+
   temporalCovariateValueData <- NULL
   if (temporalCovariateValue) {
     temporalCovariateValueData <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
+        dbms = dataSource$dbms,
         sql = "SELECT *
                 FROM @results_database_schema.temporal_covariate_value
                 WHERE covariate_id IN (
@@ -327,12 +347,13 @@ queryResultCovariateValue <- function(dataSource,
       ) %>%
       dplyr::tibble()
   }
-  
+
   temporalCovariateValueDistData <- NULL
   if (temporalCovariateValueDist) {
     temporalCovariateValueDistData <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
+        dbms = dataSource$dbms,
         sql = "SELECT *
              FROM @results_database_schema.temporal_covariate_value_dist
               WHERE covariate_id IS NOT NULL
@@ -349,7 +370,7 @@ queryResultCovariateValue <- function(dataSource,
       ) %>%
       dplyr::tibble()
   }
-  
+
   data <- list(
     temporalTimeRef = temporalTimeRefData,
     temporalAnalysisRef = temporalAnalysisRefData,
@@ -379,22 +400,27 @@ getCovariateValueResult <- function(dataSource,
     temporalCovariateValue = temporalCovariateValue,
     temporalCovariateValueDist = temporalCovariateValueDist
   )
-  
+
   resultCovariateValue <- NULL
   if ("temporalCovariateValue" %in% names(data) &&
-      hasData(data$temporalCovariateValue)) {
+    hasData(data$temporalCovariateValue)) {
     resultCovariateValue <- data$temporalCovariateValue %>%
-      dplyr::arrange(.data$cohortId,
-                     .data$databaseId,
-                     .data$timeId,
-                     .data$covariateId) %>%
+      dplyr::arrange(
+        .data$cohortId,
+        .data$databaseId,
+        .data$timeId,
+        .data$covariateId
+      ) %>%
       dplyr::left_join(data$temporalTimeRef,
-                       by = "timeId") %>%
+        by = "timeId"
+      ) %>%
       # dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
       dplyr::inner_join(data$temporalCovariateRef,
-                        by = "covariateId") %>%
+        by = "covariateId"
+      ) %>%
       dplyr::inner_join(data$temporalAnalysisRef,
-                        by = "analysisId") %>%
+        by = "analysisId"
+      ) %>%
       dplyr::relocate(
         .data$cohortId,
         .data$databaseId,
@@ -407,19 +433,19 @@ getCovariateValueResult <- function(dataSource,
         .data$covariateName,
         .data$isBinary
       )
-    
-    if ('missingMeansZero' %in% colnames(resultCovariateValue)) {
+
+    if ("missingMeansZero" %in% colnames(resultCovariateValue)) {
       resultCovariateValue <- resultCovariateValue %>%
         dplyr::mutate(mean = dplyr::if_else(
           is.na(.data$mean) &
             !is.na(.data$missingMeansZero) &
-            .data$missingMeansZero == 'Y',
+            .data$missingMeansZero == "Y",
           0,
           .data$mean
         )) %>%
         dplyr::select(-.data$missingMeansZero)
     }
-    
+
     resultCovariateValue <- resultCovariateValue %>%
       dplyr::mutate(
         covariateName = stringr::str_replace(
@@ -471,22 +497,27 @@ getCovariateValueResult <- function(dataSource,
         )
       )
   }
-  
+
   resultCovariateValueDist <- NULL
   if ("temporalCovariateValueDist" %in% names(data) &&
-      hasData(data$temporalCovariateValueDist)) {
+    hasData(data$temporalCovariateValueDist)) {
     resultCovariateValueDist <- data$temporalCovariateValueDist %>%
-      dplyr::arrange(.data$cohortId,
-                     .data$databaseId,
-                     .data$timeId,
-                     .data$covariateId) %>%
+      dplyr::arrange(
+        .data$cohortId,
+        .data$databaseId,
+        .data$timeId,
+        .data$covariateId
+      ) %>%
       dplyr::left_join(data$temporalTimeRef,
-                       by = "timeId") %>%
+        by = "timeId"
+      ) %>%
       # dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
       dplyr::inner_join(data$temporalCovariateRef,
-                        by = "covariateId") %>%
+        by = "covariateId"
+      ) %>%
       dplyr::inner_join(data$temporalAnalysisRef,
-                        by = "analysisId") %>%
+        by = "analysisId"
+      ) %>%
       dplyr::relocate(
         .data$cohortId,
         .data$databaseId,
@@ -498,12 +529,12 @@ getCovariateValueResult <- function(dataSource,
         .data$covariateName,
         .data$isBinary
       )
-    if ('missingMeansZero' %in% colnames(resultCovariateValueDist)) {
+    if ("missingMeansZero" %in% colnames(resultCovariateValueDist)) {
       resultCovariateValueDist <- resultCovariateValueDist %>%
         dplyr::mutate(mean = dplyr::if_else(
           is.na(.data$mean) &
             !is.na(.data$missingMeansZero) &
-            .data$missingMeansZero == 'Y',
+            .data$missingMeansZero == "Y",
           0,
           .data$mean
         )) %>%
@@ -545,11 +576,12 @@ getCovariateValueResult <- function(dataSource,
           replacement = ""
         )
       )
-    
   }
   return(
-    list(covariateValue = resultCovariateValue,
-         covariateValueDist = resultCovariateValueDist)
+    list(
+      covariateValue = resultCovariateValue,
+      covariateValueDist = resultCovariateValueDist
+    )
   )
 }
 
@@ -562,4 +594,87 @@ checkIfObjectIsTrue <- function(object) {
     return(FALSE)
   }
   return(TRUE)
+}
+
+getTimeDistributionResult <- function(dataSource,
+                                      cohortIds,
+                                      databaseIds) {
+  data <- getCovariateValueResult(
+    dataSource = dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    analysisIds = c(8, 9, 10),
+    temporalCovariateValue = FALSE,
+    temporalCovariateValueDist = TRUE
+  )
+  if (!hasData(data)) {
+    return(NULL)
+  }
+  data <- data$covariateValueDist
+  if (!hasData(data)) {
+    return(NULL)
+  }
+  data <- data %>%
+    dplyr::rename(
+      "timeMetric" = .data$covariateName,
+      "averageValue" = .data$mean,
+      "standardDeviation" = .data$sd
+    ) %>%
+    dplyr::select(
+      "cohortId",
+      "databaseId",
+      "timeMetric",
+      "averageValue",
+      "standardDeviation",
+      "minValue",
+      "p10Value",
+      "p25Value",
+      "medianValue",
+      "p75Value",
+      "p90Value",
+      "maxValue"
+    )
+  return(data)
+}
+
+convertMdToHtml <- function(markdown) {
+  markdown <- gsub("'", "%sq%", markdown)
+  mdFile <- tempfile(fileext = ".md")
+  htmlFile <- tempfile(fileext = ".html")
+  SqlRender::writeSql(markdown, mdFile)
+  rmarkdown::render(
+    input = mdFile,
+    output_format = "html_fragment",
+    output_file = htmlFile,
+    clean = TRUE,
+    quiet = TRUE
+  )
+  html <- SqlRender::readSql(htmlFile)
+  unlink(mdFile)
+  unlink(htmlFile)
+  html <- gsub("%sq%", "'", html)
+
+  return(html)
+}
+
+checkErrorCohortIdsDatabaseIds <- function(errorMessage,
+                                           cohortIds,
+                                           databaseIds) {
+  checkmate::assertDouble(
+    x = cohortIds,
+    null.ok = FALSE,
+    lower = 1,
+    upper = 2^53,
+    any.missing = FALSE,
+    add = errorMessage
+  )
+  checkmate::assertCharacter(
+    x = databaseIds,
+    min.len = 1,
+    any.missing = FALSE,
+    unique = TRUE,
+    add = errorMessage
+  )
+  checkmate::reportAssertions(collection = errorMessage)
+  return(errorMessage)
 }

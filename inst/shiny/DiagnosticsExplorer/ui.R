@@ -99,7 +99,7 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Incidence Rate", tabName = "incidenceRate"),
         infoId = "incidenceRateInfo"
       ),
-    if (exists("timeDistribution"))
+    if (exists("temporalCovariateValue"))
       addInfo(
         item = shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution"),
         infoId = "timeDistributionInfo"
@@ -697,7 +697,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "timeDistribution",
-    cohortReference("timeDistSelectedCohorts"),
+    cohortReference("timeDistributionSelectedCohorts"),
     shinydashboard::box(
       title = "Time Distributions",
       width = NULL,
@@ -714,15 +714,15 @@ bodyTabItems <- shinydashboard::tabItems(
         tags$table(width = "100%",
                    tags$tr(tags$td(
                      align = "right",
-                     tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('timeDistTable')")
+                     tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('timeDistributionTable')")
                    ))),
-        reactable::reactableOutput(outputId = "timeDistTable")
+        reactable::reactableOutput(outputId = "timeDistributionTable")
       ),
       shiny::conditionalPanel(
         condition = "input.timeDistributionType=='Plot'",
         
         tags$br(),
-        ggiraph::ggiraphOutput("timeDisPlot", width = "100%", height = "100%")
+        ggiraph::ggiraphOutput("timeDistributionPlot", width = "100%", height = "100%")
       ),
       if (showAnnotation) {
         column(12,

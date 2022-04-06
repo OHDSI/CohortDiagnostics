@@ -1,7 +1,11 @@
-createDatabaseDataSource <- function(connection, resultsDatabaseSchema, vocabularyDatabaseSchema = resultsDatabaseSchema) {
+createDatabaseDataSource <- function(connection, 
+                                     resultsDatabaseSchema, 
+                                     vocabularyDatabaseSchema = resultsDatabaseSchema,
+                                     dbms) {
   return(list(connection = connectionPool,
               resultsDatabaseSchema = resultsDatabaseSchema,
-              vocabularyDatabaseSchema = vocabularyDatabaseSchema))
+              vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+              dbms = dbms))
 }
 
 
@@ -27,6 +31,7 @@ getCohortCountResult <- function(dataSource,
             {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
             ;"
   data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                  dbms = dataSource$dbms,
                                   sql = sql,
                                   results_database_schema = dataSource$resultsDatabaseSchema,
                                   cohort_ids = cohortIds,
@@ -37,23 +42,6 @@ getCohortCountResult <- function(dataSource,
   return(data)
 }
 
-getTimeDistributionResult <- function(dataSource,
-                                      cohortIds,
-                                      databaseIds) {
-  sql <- "SELECT *
-              FROM  @results_database_schema.time_distribution
-              WHERE cohort_id in (@cohort_ids)
-            	AND database_id in (@database_ids);"
-  data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                  sql = sql,
-                                  results_database_schema = dataSource$resultsDatabaseSchema,
-                                  cohort_ids = cohortIds,
-                                  database_ids = quoteLiterals(databaseIds),
-                                  snakeCaseToCamelCase = TRUE) %>%
-    tidyr::tibble()
-
-  return(data)
-}
 
 
 getIncidenceRateResult <- function(dataSource,
@@ -95,6 +83,7 @@ getIncidenceRateResult <- function(dataSource,
             {@calendar_year == TRUE} ? {AND calendar_year != ''} : {  AND calendar_year = ''}
               AND person_years > @personYears;"
   data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                  dbms = dataSource$dbms,
                                   sql = sql,
                                   results_database_schema = dataSource$resultsDatabaseSchema,
                                   cohort_ids = cohortIds,
@@ -134,6 +123,7 @@ getInclusionRuleStats <- function(dataSource,
     {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
     ;"
   data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                  dbms = dataSource$dbms,
                                   sql = sql,
                                   resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
                                   cohort_ids = cohortIds,
@@ -176,6 +166,7 @@ getIndexEventBreakdown <- function(dataSource,
             WHERE database_id in (@database_id)
               AND cohort_id in (@cohort_ids);"
   data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                  dbms = dataSource$dbms,
                                   sql = sql,
                                   results_database_schema = dataSource$resultsDatabaseSchema,
                                   vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
@@ -211,6 +202,7 @@ getVisitContextResults <- function(dataSource,
             WHERE database_id in (@database_id)
               AND cohort_id in (@cohort_ids);"
   data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                  dbms = dataSource$dbms,
                                   sql = sql,
                                   results_database_schema = dataSource$resultsDatabaseSchema,
                                   vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
@@ -267,6 +259,7 @@ getConceptsInCohort <-
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
+        dbms = dataSource$dbms,
         sql = sql,
         results_database_schema = dataSource$resultsDatabaseSchema,
         cohort_id = cohortId,
@@ -289,6 +282,7 @@ getCountForConceptIdInCohort <-
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
+        dbms = dataSource$dbms,
         sql = sql,
         results_database_schema = dataSource$resultsDatabaseSchema,
         cohort_id = cohortId,
@@ -362,6 +356,7 @@ getOrphanConceptResult <- function(dataSource,
             WHERE orphan_concept.cohort_id = @cohort_id
              AND database_id in (@database_ids);"
   data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                  dbms = dataSource$dbms,
                                   sql = sql,
                                   results_database_schema = dataSource$resultsDatabaseSchema,
                                   vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
@@ -396,6 +391,7 @@ getCohortOverlapResult <- function(dataSource,
               AND comparator_cohort_id in (@comparatorCohortId)
             	AND database_id in (@databaseId);"
   data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                  dbms = dataSource$dbms,
                                   sql = sql,
                                   results_database_schema = dataSource$resultsDatabaseSchema,
                                   targetCohortId = targetCohortIds,
@@ -428,6 +424,7 @@ getConceptDetails <- function(dataSource,
             FROM @vocabulary_database_schema.concept
             WHERE concept_id IN (@concept_ids);"
   data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                  dbms = dataSource$dbms,
                                   sql = sql,
                                   vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
                                   concept_ids = conceptIds,
@@ -468,6 +465,7 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <- function(dataSource,
                      sep = "\n")
 
   resolved <- renderTranslateQuerySql(connection = dataSource$connection,
+                                      dbms = dataSource$dbms,
                                       sql = sqlResolved,
                                       vocabulary_database_schema = vocabularyDatabaseSchema,
                                       snakeCaseToCamelCase = TRUE) %>%
@@ -477,6 +475,7 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <- function(dataSource,
                   .data$standardConcept, .data$conceptCode, .data$invalidReason) %>%
     dplyr::arrange(.data$conceptId)
   mapped <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    dbms = dataSource$dbms,
                                     sql = sqlMapped,
                                     vocabulary_database_schema = vocabularyDatabaseSchema,
                                     snakeCaseToCamelCase = TRUE) %>%
@@ -531,9 +530,11 @@ resolvedConceptSet <- function(dataSource,
                     WHERE database_id IN (@databaseIds)
                     	AND cohort_id = @cohortId
                     ORDER BY concept.concept_id;"
+  browser()
   resolved <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
+      dbms = dataSource$dbms,
       sql = sqlResolved,
       results_database_schema = dataSource$resultsDatabaseSchema,
       databaseIds = quoteLiterals(databaseIds),
@@ -598,6 +599,7 @@ mappedConceptSet <- function(dataSource,
   mapped <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
+      dbms = dataSource$dbms,
       sql = sqlMapped,
       results_database_schema = dataSource$resultsDatabaseSchema,
       databaseIds = quoteLiterals(databaseIds),
@@ -610,25 +612,6 @@ mappedConceptSet <- function(dataSource,
 }
 
 
-
-checkErrorCohortIdsDatabaseIds <- function(errorMessage,
-                                           cohortIds,
-                                           databaseIds) {
-  checkmate::assertDouble(x = cohortIds,
-                          null.ok = FALSE,
-                          lower = 1,
-                          upper = 2^53,
-                          any.missing = FALSE,
-                          add = errorMessage)
-  checkmate::assertCharacter(x = databaseIds,
-                             min.len = 1,
-                             any.missing = FALSE,
-                             unique = TRUE,
-                             add = errorMessage)
-  checkmate::reportAssertions(collection = errorMessage)
-  return(errorMessage)
-}
-
 getDatabaseCounts <- function(dataSource,
                               databaseIds) {
   sql <- "SELECT *
@@ -637,6 +620,7 @@ getDatabaseCounts <- function(dataSource,
   data <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
+      dbms = dataSource$dbms,
       sql = sql,
       results_database_schema = dataSource$resultsDatabaseSchema,
       database_ids = quoteLiterals(databaseIds),

@@ -234,8 +234,6 @@ shiny::shinyServer(function(input, output, session) {
       getCirceRenderedExpression(
         cohortDefinition = data$json[1] %>% RJSONIO::fromJSON(digits = 23),
         cohortName = data$cohortName[1],
-        embedText = paste0("Generated for cohort id:",
-                           data$cohortId[1], " on ", Sys.time()),
         includeConceptSets = TRUE
       )
     return(details)
@@ -1194,8 +1192,9 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  # Time distribution -----------------------------------------------------------------------------
-  timeDist <- reactive({
+  # Time distribution -----
+  ## timeDistributionData -----
+  timeDistributionData <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     data <- getTimeDistributionResult(
@@ -1206,22 +1205,24 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  output$timeDisPlot <- ggiraph::renderggiraph(expr = {
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    data <- timeDist()
-    validate(need(nrow(data) > 0, paste0("No data for this combination")))
+  ## output: timeDistributionPlot -----
+  output$timeDistributionPlot <- ggiraph::renderggiraph(expr = {
+    data <- timeDistributionData()
+    validate(need(hasData(data), "No data for this combination"))
     plot <- plotTimeDistribution(data = data, shortNameRef = cohort)
     return(plot)
   })
   
-  output$timeDistTable <- reactable::renderReactable(expr = {
-    data <- timeDist()  %>%
+  ## output: timeDistributionTable -----
+  output$timeDistributionTable <- reactable::renderReactable(expr = {
+    data <- timeDistributionData()
+    validate(need(hasData(data), "No data for this combination"))
+    
+    data <- data %>%
       addShortName(cohort) %>%
       dplyr::arrange(.data$databaseId, .data$cohortId) %>%
-      dplyr::mutate(
-        # shortName = as.factor(.data$shortName),
-        databaseId = as.factor(.data$databaseId)
-      ) %>%
+      dplyr::mutate(# shortName = as.factor(.data$shortName),
+        databaseId = as.factor(.data$databaseId)) %>%
       dplyr::select(
         Database = .data$databaseId,
         Cohort = .data$shortName,
@@ -1237,17 +1238,11 @@ shiny::shinyServer(function(input, output, session) {
         Max = .data$maxValue
       )
     
+    validate(need(hasData(data), "No data for this combination"))
     
-    validate(need(all(!is.null(data), nrow(data) > 0),
-                  "No data available for selected combination."))
-    
-    
-    keyColumns <- c(
-      "Database",
-      "Cohort",
-      "TimeMeasure"
-    )
-    
+    keyColumns <- c("Database",
+                    "Cohort",
+                    "TimeMeasure")
     dataColumns <- c("Average",
                      "SD",
                      "Min",
@@ -1258,9 +1253,10 @@ shiny::shinyServer(function(input, output, session) {
                      "P90",
                      "Max")
     
-    getDisplayTableSimple(data = data,
-                          keyColumns = keyColumns,
-                          dataColumns = dataColumns)
+    table <- getDisplayTableSimple(data = data,
+                                   keyColumns = keyColumns,
+                                   dataColumns = dataColumns)
+    return(table)
   })
   
   # Concepts in data source-----------------------------------------------------------
@@ -1487,6 +1483,9 @@ shiny::shinyServer(function(input, output, session) {
   
   # Inclusion rules table -----------------------------------------------------------------------
   output$inclusionRuleTable <- reactable::renderReactable(expr = {
+    if (!input$tabs %in% c("inclusionRuleStats")) {
+      return(NULL)
+    }
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     table <- getInclusionRuleStats(
       dataSource = dataSource,
@@ -1543,6 +1542,9 @@ shiny::shinyServer(function(input, output, session) {
   # Index event breakdown ----------------------------------------------------------------
   
   indexEventBreakDownData <- shiny::reactive(x = {
+    if (!input$tabs %in% c("indexEventBreakdown")) {
+      return(NULL)
+    }
     if (length(cohortId()) > 0 &&
         length(databaseIds()) > 0) {
       data <- getIndexEventBreakdown(
@@ -3350,7 +3352,7 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       selectedCohorts()
     })
-  output$timeDistSelectedCohorts <-
+  output$timeDistributionSelectedCohorts <-
     shiny::renderUI({
       selectedCohorts()
     })

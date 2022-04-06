@@ -120,7 +120,6 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
           runIncidenceRate = TRUE,
           runIncludedSourceConcepts = TRUE,
           runOrphanConcepts = TRUE,
-          runTimeDistributions = TRUE,
           incremental = TRUE,
           incrementalFolder = file.path(folder, "incremental"),
           temporalCovariateSettings = temporalCovariateSettings
@@ -147,7 +146,6 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
       runIncidenceRate = TRUE,
       runIncludedSourceConcepts = TRUE,
       runOrphanConcepts = TRUE,
-      runTimeDistributions = TRUE,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
       temporalCovariateSettings = temporalCovariateSettings

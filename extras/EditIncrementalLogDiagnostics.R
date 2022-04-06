@@ -15,7 +15,7 @@ listFiles <-
   )
 
 # "getCohortCounts", "runInclusionStatistics", "runIncludedSourceConcepts",
-# "runBreakdownIndexEvents", "runOrphanConcepts", "runTimeDistributions",
+# "runBreakdownIndexEvents", "runOrphanConcepts", 
 # "runVisitContext", "runIncidenceRate", "runCohortOverlap","runCohortAsFeatures",
 # "runTemporalCohortCharacterization"
 

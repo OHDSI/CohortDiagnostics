@@ -164,6 +164,7 @@ postAnnotationResult <- function(dataSource,
   maxAnnotationId <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
+      dbms = dataSource$dbms,
       sql = sqlRetrieve,
       results_database_schema = dataSource$resultsDatabaseSchema,
       created_by = createdBy,
@@ -208,6 +209,7 @@ getAnnotationResult <- function(dataSource,
   annotationLink <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
+      dbms = dataSource$dbms,
       sql = sqlRetrieveAnnotationLink,
       results_database_schema = dataSource$resultsDatabaseSchema,
       diagnosticsId = diagnosticsId,
@@ -223,6 +225,7 @@ getAnnotationResult <- function(dataSource,
   annotation <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
+      dbms = dataSource$dbms,
       sql = sqlRetrieveAnnotation,
       results_database_schema = dataSource$resultsDatabaseSchema,
       annotationIds = annotationLink$annotationId,

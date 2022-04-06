@@ -25,7 +25,6 @@
 {DEFAULT @temporal_covariate_value = temporal_covariate_value}
 {DEFAULT @temporal_covariate_value_dist = temporal_covariate_value_dist}
 {DEFAULT @temporal_time_ref = temporal_time_ref}
-{DEFAULT @time_distribution = time_distribution}
 {DEFAULT @time_series = time_series}
 {DEFAULT @visit_context = visit_context}
 {DEFAULT @vocabulary = vocabulary}
@@ -59,7 +58,6 @@ DROP TABLE IF EXISTS @results_schema.@temporal_covariate_ref;
 DROP TABLE IF EXISTS @results_schema.@temporal_covariate_value;
 DROP TABLE IF EXISTS @results_schema.@temporal_covariate_value_dist;
 DROP TABLE IF EXISTS @results_schema.@temporal_time_ref;
-DROP TABLE IF EXISTS @results_schema.@time_distribution;
 DROP TABLE IF EXISTS @results_schema.@time_series;
 DROP TABLE IF EXISTS @results_schema.@visit_context;
 DROP TABLE IF EXISTS @results_schema.@vocabulary;
@@ -425,25 +423,6 @@ CREATE TABLE @results_schema.@temporal_time_ref (
 			start_day FLOAT NOT NULL,
 			end_day FLOAT NOT NULL,
 			PRIMARY KEY(time_id)
-);
-
---Table time_distribution
-
-CREATE TABLE @results_schema.@time_distribution (
-			cohort_id BIGINT NOT NULL,
-			count_value FLOAT NOT NULL,
-			min_value FLOAT NOT NULL,
-			max_value FLOAT NOT NULL,
-			average_value FLOAT NOT NULL,
-			standard_deviation FLOAT NOT NULL,
-			median_value FLOAT NOT NULL,
-			p_10_value FLOAT NOT NULL,
-			p_25_value FLOAT NOT NULL,
-			p_75_value FLOAT NOT NULL,
-			p_90_value FLOAT NOT NULL,
-			time_metric VARCHAR NOT NULL,
-			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, time_metric, database_id)
 );
 
 --Table time_series

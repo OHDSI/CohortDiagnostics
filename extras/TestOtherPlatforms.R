@@ -89,7 +89,6 @@ test_that("Cohort diagnostics", {
                      runInclusionStatistics = TRUE,
                      runIncludedSourceConcepts = TRUE,
                      runOrphanConcepts = TRUE,
-                     runTimeDistributions = TRUE,
                      runTimeSeries = TRUE,
                      runVisitContext = TRUE,
                      runBreakdownIndexEvents = TRUE,
