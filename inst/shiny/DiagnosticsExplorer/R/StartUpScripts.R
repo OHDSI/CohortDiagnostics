@@ -134,8 +134,36 @@ checkIfObjectIsTrue <- function(object) {
   if (is.null(object)) {
     return(FALSE)
   }
-  if (!isTRUE(object)) {
-    return(FALSE)
+  return(isTRUE(object))
+}
+
+
+checkErrorCohortIdsDatabaseIds <- function(errorMessage,
+                                           cohortIds,
+                                           databaseIds) {
+  checkmate::assertDouble(
+    x = cohortIds,
+    null.ok = FALSE,
+    lower = 1,
+    upper = 2^53,
+    any.missing = FALSE,
+    add = errorMessage
+  )
+  checkmate::assertCharacter(
+    x = databaseIds,
+    min.len = 1,
+    any.missing = FALSE,
+    unique = TRUE,
+    add = errorMessage
+  )
+  checkmate::reportAssertions(collection = errorMessage)
+  return(errorMessage)
+}
+
+quoteLiterals <- function(x) {
+  if (is.null(x)) {
+    return("")
+  } else {
+    return(paste0("'", paste(x, collapse = "', '"), "'"))
   }
-  return(TRUE)
 }
