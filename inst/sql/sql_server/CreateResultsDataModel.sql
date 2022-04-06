@@ -1,4 +1,3 @@
-{DEFAULT @analysis_ref = analysis_ref}
 {DEFAULT @annotation = annotation}
 {DEFAULT @annotation_link = annotation_link}
 {DEFAULT @annotation_attributes = annotation_attributes}
@@ -11,9 +10,6 @@
 {DEFAULT @concept_relationship = concept_relationship}
 {DEFAULT @concept_sets = concept_sets}
 {DEFAULT @concept_synonym = concept_synonym}
-{DEFAULT @covariate_ref = covariate_ref}
-{DEFAULT @covariate_value = covariate_value}
-{DEFAULT @covariate_value_dist = covariate_value_dist}
 {DEFAULT @database = database}
 {DEFAULT @domain = domain}
 {DEFAULT @incidence_rate = incidence_rate}
@@ -29,14 +25,12 @@
 {DEFAULT @temporal_covariate_value = temporal_covariate_value}
 {DEFAULT @temporal_covariate_value_dist = temporal_covariate_value_dist}
 {DEFAULT @temporal_time_ref = temporal_time_ref}
-{DEFAULT @time_distribution = time_distribution}
 {DEFAULT @time_series = time_series}
 {DEFAULT @visit_context = visit_context}
 {DEFAULT @vocabulary = vocabulary}
 
 
 -- Drop old tables if exist
-DROP TABLE IF EXISTS @results_schema.@analysis_ref;
 DROP TABLE IF EXISTS @results_schema.@annotation;
 DROP TABLE IF EXISTS @results_schema.@annotation_link;
 DROP TABLE IF EXISTS @results_schema.@annotation_attributes;
@@ -49,9 +43,6 @@ DROP TABLE IF EXISTS @results_schema.@concept_ancestor;
 DROP TABLE IF EXISTS @results_schema.@concept_relationship;
 DROP TABLE IF EXISTS @results_schema.@concept_sets;
 DROP TABLE IF EXISTS @results_schema.@concept_synonym;
-DROP TABLE IF EXISTS @results_schema.@covariate_ref;
-DROP TABLE IF EXISTS @results_schema.@covariate_value;
-DROP TABLE IF EXISTS @results_schema.@covariate_value_dist;
 DROP TABLE IF EXISTS @results_schema.@database;
 DROP TABLE IF EXISTS @results_schema.@domain;
 DROP TABLE IF EXISTS @results_schema.@incidence_rate;
@@ -67,7 +58,6 @@ DROP TABLE IF EXISTS @results_schema.@temporal_covariate_ref;
 DROP TABLE IF EXISTS @results_schema.@temporal_covariate_value;
 DROP TABLE IF EXISTS @results_schema.@temporal_covariate_value_dist;
 DROP TABLE IF EXISTS @results_schema.@temporal_time_ref;
-DROP TABLE IF EXISTS @results_schema.@time_distribution;
 DROP TABLE IF EXISTS @results_schema.@time_series;
 DROP TABLE IF EXISTS @results_schema.@visit_context;
 DROP TABLE IF EXISTS @results_schema.@vocabulary;
@@ -75,19 +65,6 @@ DROP TABLE IF EXISTS @results_schema.@vocabulary;
 
 
 -- Create tables
-
---Table analysis_ref
-
-CREATE TABLE @results_schema.@analysis_ref (
-			analysis_id BIGINT NOT NULL,
-			analysis_name VARCHAR NOT NULL,
-			domain_id VARCHAR(20),
-			start_day FLOAT,
-			end_day FLOAT,
-			is_binary VARCHAR(1) NOT NULL,
-			missing_means_zero VARCHAR(1),
-			PRIMARY KEY(analysis_id)
-);
 
 --Table annotation
 
@@ -266,47 +243,6 @@ CREATE TABLE @results_schema.@concept_synonym (
 			PRIMARY KEY(concept_id, concept_synonym_name, language_concept_id)
 );
 
---Table covariate_ref
-
-CREATE TABLE @results_schema.@covariate_ref (
-			covariate_id BIGINT NOT NULL,
-			covariate_name VARCHAR NOT NULL,
-			analysis_id INT NOT NULL,
-			concept_id BIGINT NOT NULL,
-			PRIMARY KEY(covariate_id)
-);
-
---Table covariate_value
-
-CREATE TABLE @results_schema.@covariate_value (
-			cohort_id BIGINT NOT NULL,
-			covariate_id BIGINT NOT NULL,
-			sum_value FLOAT NOT NULL,
-			mean FLOAT NOT NULL,
-			sd FLOAT,
-			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, covariate_id, database_id)
-);
-
---Table covariate_value_dist
-
-CREATE TABLE @results_schema.@covariate_value_dist (
-			cohort_id BIGINT NOT NULL,
-			covariate_id BIGINT NOT NULL,
-			count_value FLOAT NOT NULL,
-			min_value FLOAT NOT NULL,
-			max_value FLOAT NOT NULL,
-			mean FLOAT NOT NULL,
-			sd FLOAT,
-			median_value FLOAT NOT NULL,
-			p_10_value FLOAT NOT NULL,
-			p_25_value FLOAT NOT NULL,
-			p_75_value FLOAT NOT NULL,
-			p_90_value FLOAT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, covariate_id, database_id)
-);
-
 --Table database
 
 CREATE TABLE @results_schema.@database (
@@ -451,7 +387,7 @@ CREATE TABLE @results_schema.@temporal_covariate_ref (
 
 CREATE TABLE @results_schema.@temporal_covariate_value (
 			cohort_id BIGINT NOT NULL,
-			time_id INT NOT NULL,
+			time_id INT,
 			covariate_id BIGINT NOT NULL,
 			sum_value FLOAT NOT NULL,
 			mean FLOAT NOT NULL,
@@ -464,7 +400,7 @@ CREATE TABLE @results_schema.@temporal_covariate_value (
 
 CREATE TABLE @results_schema.@temporal_covariate_value_dist (
 			cohort_id BIGINT NOT NULL,
-			time_id INT NOT NULL,
+			time_id INT,
 			covariate_id BIGINT NOT NULL,
 			count_value FLOAT NOT NULL,
 			min_value FLOAT NOT NULL,
@@ -477,7 +413,7 @@ CREATE TABLE @results_schema.@temporal_covariate_value_dist (
 			p_75_value FLOAT NOT NULL,
 			p_90_value FLOAT NOT NULL,
 			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, covariate_id, database_id)
+			PRIMARY KEY(cohort_id, time_id, covariate_id, database_id)
 );
 
 --Table temporal_time_ref
@@ -487,25 +423,6 @@ CREATE TABLE @results_schema.@temporal_time_ref (
 			start_day FLOAT NOT NULL,
 			end_day FLOAT NOT NULL,
 			PRIMARY KEY(time_id)
-);
-
---Table time_distribution
-
-CREATE TABLE @results_schema.@time_distribution (
-			cohort_id BIGINT NOT NULL,
-			count_value FLOAT NOT NULL,
-			min_value FLOAT NOT NULL,
-			max_value FLOAT NOT NULL,
-			average_value FLOAT NOT NULL,
-			standard_deviation FLOAT NOT NULL,
-			median_value FLOAT NOT NULL,
-			p_10_value FLOAT NOT NULL,
-			p_25_value FLOAT NOT NULL,
-			p_75_value FLOAT NOT NULL,
-			p_90_value FLOAT NOT NULL,
-			time_metric VARCHAR NOT NULL,
-			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, time_metric, database_id)
 );
 
 --Table time_series

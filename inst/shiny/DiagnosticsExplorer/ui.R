@@ -99,7 +99,7 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Incidence Rate", tabName = "incidenceRate"),
         infoId = "incidenceRateInfo"
       ),
-    if (exists("timeDistribution"))
+    if (exists("temporalCovariateValue"))
       addInfo(
         item = shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution"),
         infoId = "timeDistributionInfo"
@@ -124,7 +124,7 @@ sidebarMenu <-
         shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap"),
         infoId = "cohortOverlapInfo"
       ),
-    if (exists("covariateValue"))
+    if (exists("temporalCovariateValue"))
       addInfo(
         shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization"),
         infoId = "cohortCharacterizationInfo"
@@ -134,7 +134,7 @@ sidebarMenu <-
         shinydashboard::menuItem(text = "Temporal Characterization", tabName = "temporalCharacterization"),
         infoId = "temporalCharacterizationInfo"
       ),
-    if (exists("covariateValue"))
+    if (exists("temporalCovariateValue"))
       addInfo(
         item = shinydashboard::menuItem(text = "Compare Cohort Char.", tabName = "compareCohortCharacterization"),
         infoId = "compareCohortCharacterizationInfo"
@@ -210,14 +210,14 @@ sidebarMenu <-
         shinyWidgets::pickerInput(
           inputId = "timeIdChoices",
           label = "Temporal Choice",
-          choices = temporalCovariateChoices$choices,
+          choices = temporalCharacterizationCovariateChoices$choices,
           multiple = TRUE,
           choicesOpt = list(style = rep_len("color: black;", 999)),
-          selected = temporalCovariateChoices %>%
+          selected = temporalCharacterizationCovariateChoices %>%
             dplyr::filter(.data$timeId %in% (
               c(
-                min(temporalCovariateChoices$timeId),
-                temporalCovariateChoices %>%
+                min(temporalCharacterizationCovariateChoices$timeId),
+                temporalCharacterizationCovariateChoices %>%
                   dplyr::pull(.data$timeId)
               ) %>%
                 unique() %>%
@@ -697,7 +697,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "timeDistribution",
-    cohortReference("timeDistSelectedCohorts"),
+    cohortReference("timeDistributionSelectedCohorts"),
     shinydashboard::box(
       title = "Time Distributions",
       width = NULL,
@@ -714,15 +714,15 @@ bodyTabItems <- shinydashboard::tabItems(
         tags$table(width = "100%",
                    tags$tr(tags$td(
                      align = "right",
-                     tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('timeDistTable')")
+                     tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('timeDistributionTable')")
                    ))),
-        reactable::reactableOutput(outputId = "timeDistTable")
+        reactable::reactableOutput(outputId = "timeDistributionTable")
       ),
       shiny::conditionalPanel(
         condition = "input.timeDistributionType=='Plot'",
         
         tags$br(),
-        ggiraph::ggiraphOutput("timeDisPlot", width = "100%", height = "100%")
+        ggiraph::ggiraphOutput("timeDistributionPlot", width = "100%", height = "100%")
       ),
       if (showAnnotation) {
         column(12,
@@ -1014,7 +1014,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                       ),
                                       tags$td(
                                         shiny::radioButtons(
-                                          inputId = "charProportionOrContinuous",
+                                          inputId = "characterizationProportionOrContinuous",
                                           label = "",
                                           choices = c("All", "Proportion", "Continuous"),
                                           selected = "Proportion",
@@ -1062,7 +1062,7 @@ bodyTabItems <- shinydashboard::tabItems(
       tags$table(tags$tr(
         tags$td(
           shinyWidgets::pickerInput(
-            inputId = "temporalAnalysisNameFilter",
+            inputId = "temporalCharacterizationAnalysisNameFilter",
             label = "Analysis name",
             choices = c(""),
             selected = c(""),
@@ -1081,7 +1081,7 @@ bodyTabItems <- shinydashboard::tabItems(
         ),
         tags$td(
           shinyWidgets::pickerInput(
-            inputId = "temporalDomainNameFilter",
+            inputId = "temporalCharacterizationDomainNameFilter",
             label = "Domain name",
             choices = c(""),
             selected = c(""),
@@ -1160,7 +1160,7 @@ bodyTabItems <- shinydashboard::tabItems(
                               tags$table(tags$tr(
                                 tags$td(
                                   shinyWidgets::pickerInput(
-                                    inputId = "charCompareAnalysisNameFilter",
+                                    inputId = "compareCohortCharacterizationAnalysisNameFilter",
                                     label = "Analysis name",
                                     choices = c(""),
                                     selected = c(""),
@@ -1179,7 +1179,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                 ),
                                 tags$td(
                                   shinyWidgets::pickerInput(
-                                    inputId = "charaCompareDomainNameFilter",
+                                    inputId = "compareCohortCharacterizationDomainNameFilter",
                                     label = "Domain name",
                                     choices = c(""),
                                     selected = c(""),
@@ -1198,7 +1198,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                 ),
                                 tags$td(
                                   shiny::radioButtons(
-                                    inputId = "charCompareProportionOrContinuous",
+                                    inputId = "compareCharacterizationProportionOrContinuous",
                                     label = "",
                                     choices = c("All", "Proportion", "Continuous"),
                                     selected = "Proportion",
@@ -1210,11 +1210,11 @@ bodyTabItems <- shinydashboard::tabItems(
                               tags$table(width = "100%", 
                                          tags$tr(
                                            tags$td(align = "right",
-                                                   tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('charCompareTable')")
+                                                   tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('compareCohortCharacterizationTable')")
                                            )
                                          )
                               ),
-                              reactable::reactableOutput("charCompareTable")),
+                              reactable::reactableOutput("compareCohortCharacterizationTable")),
       shiny::conditionalPanel(
         condition = "input.charCompareType=='Plot'",
         shinydashboard::box(
@@ -1223,7 +1223,7 @@ bodyTabItems <- shinydashboard::tabItems(
           status = "primary",
           shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
           ggiraph::ggiraphOutput(
-            outputId = "charComparePlot",
+            outputId = "compareCohortCharacterizationBalancePlot",
             width = "100%",
             height = "100%"
           )
@@ -1310,7 +1310,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                 ),
                                 tags$td(
                                   shiny::radioButtons(
-                                    inputId = "temporalCharacterProportionOrContinuous",
+                                    inputId = "temporalCompareCharacterizationProportionOrContinuous",
                                     label = "Filter to:",
                                     choices = c("All", "Proportion", "Continuous"),
                                     selected = "Proportion",
@@ -1337,7 +1337,7 @@ bodyTabItems <- shinydashboard::tabItems(
           width = NULL,
           status = "primary",
           ggiraph::ggiraphOutput(
-            outputId = "temporalCharComparePlot",
+            outputId = "temporalCharacterizationComparePlot",
             width = "100%",
             height = "100%"
           )

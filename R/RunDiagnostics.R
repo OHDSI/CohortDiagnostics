@@ -49,7 +49,6 @@
 #' @param runInclusionStatistics      Generate and export statistic on the cohort inclusion rules?
 #' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
 #' @param runOrphanConcepts           Generate and export potential orphan concepts?
-#' @param runTimeDistributions        Generate and export cohort time distributions?
 #' @param runTimeSeries               Generate and export the time series diagnostics?
 #' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
@@ -59,11 +58,6 @@
 #'                                    cohortToCreateFile.
 #' @param runCohortRelationship       Generate and export the cohort relationship? Cohort relationship checks the temporal
 #'                                    relationship between two or more cohorts.
-#' @param runCohortCharacterization   Generate and export the cohort characterization?
-#'                                    Only records with values greater than 0.0001 are returned.
-#' @param covariateSettings           Either an object of type \code{covariateSettings} as created using one of
-#'                                    the createCovariateSettings function in the FeatureExtraction package, or a list
-#'                                    of such objects.
 #' @param runTemporalCohortCharacterization   Generate and export the temporal cohort characterization?
 #'                                    Only records with values greater than 0.001 are returned.
 #' @param temporalCovariateSettings   Either an object of type \code{covariateSettings} as created using one of
@@ -137,23 +131,78 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runInclusionStatistics = TRUE,
                                runIncludedSourceConcepts = TRUE,
                                runOrphanConcepts = TRUE,
-                               runTimeDistributions = TRUE,
                                runTimeSeries = FALSE,
                                runVisitContext = TRUE,
                                runBreakdownIndexEvents = TRUE,
                                runIncidenceRate = TRUE,
                                runCohortOverlap = TRUE,
-                               runCohortRelationship = FALSE,
-                               runCohortCharacterization = TRUE,
-                               covariateSettings = createDefaultCovariateSettings(),
+                               runCohortRelationship = TRUE,
                                runTemporalCohortCharacterization = TRUE,
-                               temporalCovariateSettings = createTemporalCovariateSettings(
+                               temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(
+                                 useDemographicsGender = TRUE,
+                                 useDemographicsAge = TRUE,
+                                 useDemographicsAgeGroup = TRUE,
+                                 useDemographicsRace = TRUE,
+                                 useDemographicsEthnicity = TRUE,
+                                 useDemographicsIndexYear = TRUE,
+                                 useDemographicsIndexMonth = TRUE,
+                                 useDemographicsIndexYearMonth = TRUE,
+                                 useDemographicsPriorObservationTime = TRUE,
+                                 useDemographicsPostObservationTime = TRUE,
+                                 useDemographicsTimeInCohort = TRUE,
                                  useConditionOccurrence = TRUE,
-                                 useDrugEraStart = TRUE,
                                  useProcedureOccurrence = TRUE,
+                                 useDrugEraStart = TRUE,
                                  useMeasurement = TRUE,
-                                 temporalStartDays = c(-365, -30, 0, 1, 31),
-                                 temporalEndDays = c(-31, -1, 0, 30, 365)
+                                 useConditionEraStart = TRUE,
+                                 useConditionEraOverlap = TRUE,
+                                 useConditionEraGroupStart = FALSE, # do not use because https://github.com/OHDSI/FeatureExtraction/issues/144
+                                 useConditionEraGroupOverlap = TRUE,
+                                 useDrugExposure = FALSE, # leads to too many concept id
+                                 useDrugEraOverlap = FALSE,
+                                 useDrugEraGroupStart = FALSE, # do not use because https://github.com/OHDSI/FeatureExtraction/issues/144
+                                 useDrugEraGroupOverlap = TRUE,
+                                 useObservation = TRUE,
+                                 useDeviceExposure = TRUE,
+                                 useCharlsonIndex = TRUE,
+                                 useDcsi = TRUE,
+                                 useChads2 = TRUE,
+                                 useChads2Vasc = TRUE,
+                                 useHfrs = FALSE,
+                                 temporalStartDays = c(
+                                   -365,
+                                   1,
+                                   31,
+                                   -9999, # anytime
+                                   -365, # long term
+                                   -180, # medium term
+                                   -30, # short term
+                                   -9999, # anytime prior not including start date
+                                   -365, # long term not including start date
+                                   -180, # medium term not including start date
+                                   -30, # short term not including start date
+                                   -9999, # any time
+                                   # seq(from = -421, to = -31, by = 30),
+                                   # seq(from = 0, to = 390, by = 30),
+                                   seq(from = -5, to = 5, by = 1)
+                                 ),
+                                 temporalEndDays = c(
+                                   -31,
+                                   30,
+                                   365,
+                                   0, # anytime
+                                   0, # long term
+                                   0, # medium term
+                                   0, # short term
+                                   -1, # anytime prior not including start date
+                                   -1, # long term not including start date
+                                   -1, # medium term not including start date
+                                   -1, # short term not including start date
+                                   9999, # any time
+                                   # seq(from = -391, to = -1, by = 30),
+                                   # seq(from = 30, to = 420, by = 30),
+                                   seq(from = -5, to = 5, by = 1)
+                                 )
                                ),
                                minCellCount = 5,
                                incremental = FALSE,
@@ -166,17 +215,14 @@ executeDiagnostics <- function(cohortDefinitionSet,
       runInclusionStatistics = argumentsAtDiagnosticsInitiation$runInclusionStatistics,
       runIncludedSourceConcepts = argumentsAtDiagnosticsInitiation$runIncludedSourceConcepts,
       runOrphanConcepts = argumentsAtDiagnosticsInitiation$runOrphanConcepts,
-      runTimeDistributions = argumentsAtDiagnosticsInitiation$runTimeDistributions,
       runTimeSeries = argumentsAtDiagnosticsInitiation$runTimeSeries,
       runVisitContext = argumentsAtDiagnosticsInitiation$runVisitContext,
       runBreakdownIndexEvents = argumentsAtDiagnosticsInitiation$runBreakdownIndexEvents,
       runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,
       runCohortOverlap = argumentsAtDiagnosticsInitiation$runCohortOverlap,
-      runCohortCharacterization = argumentsAtDiagnosticsInitiation$runCohortCharacterization,
       runTemporalCohortCharacterization = argumentsAtDiagnosticsInitiation$runTemporalCohortCharacterization,
       minCellCount = argumentsAtDiagnosticsInitiation$minCellCount,
       incremental = argumentsAtDiagnosticsInitiation$incremental,
-      covariateSettings = argumentsAtDiagnosticsInitiation$covariateSettings,
       temporalCovariateSettings = argumentsAtDiagnosticsInitiation$temporalCovariateSettings
     ) %>%
     RJSONIO::toJSON(digits = 23, pretty = TRUE)
@@ -231,12 +277,10 @@ executeDiagnostics <- function(cohortDefinitionSet,
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
   checkmate::assertLogical(runIncludedSourceConcepts, add = errorMessage)
   checkmate::assertLogical(runOrphanConcepts, add = errorMessage)
-  checkmate::assertLogical(runTimeDistributions, add = errorMessage)
   checkmate::assertLogical(runTimeSeries, add = errorMessage)
   checkmate::assertLogical(runBreakdownIndexEvents, add = errorMessage)
   checkmate::assertLogical(runIncidenceRate, add = errorMessage)
   checkmate::assertLogical(runCohortOverlap, add = errorMessage)
-  checkmate::assertLogical(runCohortCharacterization, add = errorMessage)
   checkmate::assertInt(
     x = cdmVersion,
     na.ok = FALSE,
@@ -253,11 +297,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
     runInclusionStatistics,
     runIncludedSourceConcepts,
     runOrphanConcepts,
-    runTimeDistributions,
     runBreakdownIndexEvents,
     runIncidenceRate,
-    runCohortOverlap,
-    runCohortCharacterization
+    runCohortOverlap
   )) {
     checkmate::assertCharacter(
       x = cdmDatabaseSchema,
@@ -420,7 +462,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     vocabularyVersion = vocabularyVersion
   )
   # Create concept table ------------------------------------------
-  createConceptTable(connection, tempEmulationSchema, cohortDefinitionSet)
+  createConceptTable(connection, tempEmulationSchema)
 
   # Counting cohorts -----------------------------------------------------------------------
   cohortCounts <- computeCohortCounts(
@@ -490,25 +532,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
       useExternalConceptCountsTable = FALSE,
       incremental = incremental,
       conceptIdTable = "#concept_ids",
-      recordKeepingFile = recordKeepingFile
-    )
-  }
-
-  # Time distributions ----------------------------------------------------------------------
-  if (runTimeDistributions) {
-    executeTimeDistributionDiagnostics(
-      connection = connection,
-      tempEmulationSchema = tempEmulationSchema,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      cdmVersion = cdmVersion,
-      databaseId = databaseId,
-      exportFolder = exportFolder,
-      minCellCount = minCellCount,
-      cohorts = cohortDefinitionSet,
-      instantiatedCohorts = instantiatedCohorts,
-      incremental = incremental,
       recordKeepingFile = recordKeepingFile
     )
   }
@@ -604,27 +627,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
     )
   }
 
-  # Cohort characterization ---------------------------------------------------------------
-  if (runCohortCharacterization) {
-    executeCohortCharacterization(
-      connection = connection,
-      databaseId = databaseId,
-      exportFolder = exportFolder,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      covariateSettings = covariateSettings,
-      tempEmulationSchema = tempEmulationSchema,
-      cdmVersion = cdmVersion,
-      cohorts = cohortDefinitionSet,
-      cohortCounts = cohortCounts,
-      minCellCount = minCellCount,
-      instantiatedCohorts = instantiatedCohorts,
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    )
-  }
-
   # Temporal Cohort characterization ---------------------------------------------------------------
   if (runTemporalCohortCharacterization) {
     executeCohortCharacterization(
@@ -646,6 +648,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       task = "runTemporalCohortCharacterization",
       jobName = "Temporal Cohort characterization",
       covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
+      covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
       covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
       analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
       timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv")

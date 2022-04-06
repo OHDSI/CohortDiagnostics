@@ -35,19 +35,16 @@ test_that("Cohort diagnostics in incremental mode", {
       databaseId = dbms,
       runInclusionStatistics = TRUE,
       runBreakdownIndexEvents = TRUE,
-      runCohortCharacterization = TRUE,
       runTemporalCohortCharacterization = TRUE,
       runCohortOverlap = TRUE,
       runIncidenceRate = TRUE,
       runIncludedSourceConcepts = TRUE,
       runOrphanConcepts = TRUE,
-      runTimeDistributions = TRUE,
       runTimeSeries = TRUE,
       runCohortRelationship = TRUE,
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
-      covariateSettings = covariateSettings,
       temporalCovariateSettings = temporalCovariateSettings
     )
   )
@@ -69,19 +66,16 @@ test_that("Cohort diagnostics in incremental mode", {
       databaseId = dbms,
       runInclusionStatistics = TRUE,
       runBreakdownIndexEvents = TRUE,
-      runCohortCharacterization = TRUE,
       runTemporalCohortCharacterization = TRUE,
       runCohortOverlap = TRUE,
       runIncidenceRate = TRUE,
       runIncludedSourceConcepts = TRUE,
       runOrphanConcepts = TRUE,
-      runTimeDistributions = TRUE,
       runTimeSeries = TRUE,
       runCohortRelationship = TRUE,
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
-      covariateSettings = covariateSettings,
       temporalCovariateSettings = temporalCovariateSettings
     )
   )
@@ -92,7 +86,7 @@ test_that("Cohort diagnostics in incremental mode", {
   # File exists
   expect_error(createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = sqliteDbPath))
 
-  output <- read.csv(file.path(folder, "export", "covariate_value.csv"))
+  output <- read.csv(file.path(folder, "export", "temporal_covariate_value.csv"))
 
   expect_true(is.numeric(output$sum_value[2]))
   expect_true(is.numeric(output$mean[2]))

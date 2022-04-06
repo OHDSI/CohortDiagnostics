@@ -89,14 +89,12 @@ test_that("Cohort diagnostics", {
                      runInclusionStatistics = TRUE,
                      runIncludedSourceConcepts = TRUE,
                      runOrphanConcepts = TRUE,
-                     runTimeDistributions = TRUE,
                      runTimeSeries = TRUE,
                      runVisitContext = TRUE,
                      runBreakdownIndexEvents = TRUE,
                      runIncidenceRate = TRUE,
                      runCohortOverlap = TRUE,
                      runCohortRelationship = TRUE,
-                     runCohortCharacterization = TRUE,
                      runTemporalCohortCharacterization = TRUE)
 
   testthat::expect_true(file.exists(file.path(

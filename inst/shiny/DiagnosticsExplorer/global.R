@@ -8,6 +8,8 @@ source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 source("R/Annotation.R")
+source("R/CirceRendering.R")
+source("R/ResultRetrieval.R")
 
 appVersionNum <- "Version: 3.0.0"
 appInformationText <- paste("Powered by OHDSI Cohort Diagnostics application", paste0(appVersionNum, "."))
@@ -148,7 +150,8 @@ dataSource <-
   createDatabaseDataSource(
     connection = connectionPool,
     resultsDatabaseSchema = resultsDatabaseSchema,
-    vocabularyDatabaseSchema = resultsDatabaseSchema
+    vocabularyDatabaseSchema = resultsDatabaseSchema,
+    dbms = dbms
   )
 
 if (exists("database")) {
@@ -183,13 +186,26 @@ if (exists("database")) {
 }
 
 if (exists("temporalTimeRef")) {
-  temporalCovariateChoices <- get("temporalTimeRef") %>%
+  temporalCharacterizationCovariateChoices <- get("temporalTimeRef") %>%
+    dplyr::filter((.data$startDay == -365 & .data$endDay == -31) |
+                    (.data$startDay == -30 & .data$endDay == -1) |
+                    (.data$startDay == 0 & .data$endDay == 0) |
+                    (.data$startDay == 1 & .data$endDay == 30) |
+                    (.data$startDay == 31 & .data$endDay == 365)
+    ) %>%
+    dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
+    dplyr::select(.data$timeId, .data$choices) %>%
+    dplyr::arrange(.data$timeId)
+  
+  characterizationCovariateChoices <- get("temporalTimeRef") %>%
+    dplyr::filter((.data$startDay == -365 & .data$endDay == 0) |
+                    (.data$startDay == -30 & .data$endDay == 0)) %>%
     dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
     dplyr::select(.data$timeId, .data$choices) %>%
     dplyr::arrange(.data$timeId)
 }
 
-if (exists("covariateRef")) {
+if (exists("temporalCovariateRef")) {
   specifications <- readr::read_csv(
     file = "Table1Specs.csv",
     col_types = readr::cols(),
@@ -199,3 +215,9 @@ if (exists("covariateRef")) {
 } else {
   prettyAnalysisIds <- c(0)
 }
+
+
+analysisIdInCohortCharacterization <- c(1, 3, 4, 5, 6, 7,
+                                        203, 403, 501, 703,
+                                        801, 901, 903, 904)
+analysisIdInTemporalCharacterization <- c(101, 401, 501, 701)

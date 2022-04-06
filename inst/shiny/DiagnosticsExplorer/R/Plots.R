@@ -416,18 +416,18 @@ plotCohortComparisonStandardizedDifference <- function(balance,
                                                        yLimitMax = 1,
                                                        domain = "all") {
   domains <-
-    c("condition",
-      "device",
-      "drug",
-      "measurement",
-      "observation",
-      "procedure")
-  balance$domain <-
-    tolower(stringr::str_extract(balance$covariateName, "[a-z]+"))
-  balance$domain[!balance$domain %in% domains] <- "other"
+    c("Condition",
+      "Device",
+      "Drug",
+      "Measurement",
+      "Observation",
+      "Procedure",
+      "Demographics")
+  
+  balance$domainId[!balance$domainId %in% domains] <- "other"
   if (domain != "all") {
     balance <- balance %>%
-      dplyr::filter(.data$domain == !!domain)
+      dplyr::filter(.data$domainId == !!domain)
   }
   
   # Can't make sense of plot with > 1000 dots anyway, so remove
@@ -484,10 +484,10 @@ plotCohortComparisonStandardizedDifference <- function(balance,
       "#66A61E",
       "#E6AB02",
       "#444444")
-  colors <- colors[c(domains, "other") %in% unique(balance$domain)]
+  colors <- colors[c(domains, "other") %in% unique(balance$domainId)]
   
-  balance$domain <-
-    factor(balance$domain, levels = c(domains, "other"))
+  balance$domainId <-
+    factor(balance$domainId, levels = c(domains, "other"))
   
   # targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
   # comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
@@ -508,7 +508,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
                     ggplot2::aes(
                       x = .data$mean1,
                       y = .data$mean2,
-                      color = .data$domain
+                      color = .data$domainId
                     )) +
     ggiraph::geom_point_interactive(
       ggplot2::aes(tooltip = .data$tooltip),
@@ -549,18 +549,16 @@ plotTemporalCompareStandardizedDifference <- function(balance,
                                                       yLimitMax = 1,
                                                       domain = "all") {
   domains <-
-    c("condition",
-      "device",
-      "drug",
-      "measurement",
-      "observation",
-      "procedure")
-  balance$domain <-
-    tolower(stringr::str_extract(balance$covariateName, "[a-z]+"))
-  balance$domain[!balance$domain %in% domains] <- "other"
+    c("Condition",
+      "Device",
+      "Drug",
+      "Measurement",
+      "Observation",
+      "Procedure")
+  balance$domainId[!balance$domainId %in% domains] <- "Other"
   if (domain != "all") {
     balance <- balance %>%
-      dplyr::filter(.data$domain == !!domain)
+      dplyr::filter(.data$domainId == !!domain)
   }
   
   validate(need((nrow(balance) > 0), paste0("No data for selected combination.")))
@@ -621,10 +619,10 @@ plotTemporalCompareStandardizedDifference <- function(balance,
       "#66A61E",
       "#E6AB02",
       "#444444")
-  colors <- colors[c(domains, "other") %in% unique(balance$domain)]
+  colors <- colors[c(domains, "Other") %in% unique(balance$domainId)]
   
-  balance$domain <-
-    factor(balance$domain, levels = c(domains, "other"))
+  balance$domainId <-
+    factor(balance$domainId, levels = c(domains, "Other"))
   
   # targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
   # comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
@@ -641,7 +639,7 @@ plotTemporalCompareStandardizedDifference <- function(balance,
                     ggplot2::aes(
                       x = .data$mean1,
                       y = .data$mean2,
-                      color = .data$domain
+                      color = .data$domainId
                     )) +
     ggiraph::geom_point_interactive(
       ggplot2::aes(tooltip = .data$tooltip),

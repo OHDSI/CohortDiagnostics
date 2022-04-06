@@ -23,19 +23,29 @@ executeDiagnostics(
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
   runOrphanConcepts = TRUE,
-  runTimeDistributions = TRUE,
   runTimeSeries = FALSE,
   runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
-  runCohortRelationship = FALSE,
-  runCohortCharacterization = TRUE,
-  covariateSettings = createDefaultCovariateSettings(),
+  runCohortRelationship = TRUE,
   runTemporalCohortCharacterization = TRUE,
-  temporalCovariateSettings = createTemporalCovariateSettings(useConditionOccurrence =
-    TRUE, useDrugEraStart = TRUE, useProcedureOccurrence = TRUE, useMeasurement = TRUE,
-    temporalStartDays = c(-365, -30, 0, 1, 31), temporalEndDays = c(-31, -1, 0, 30, 365)),
+ 
+    temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useDemographicsGender
+    = TRUE, useDemographicsAge = TRUE, useDemographicsAgeGroup = TRUE,
+    useDemographicsRace = TRUE, useDemographicsEthnicity = TRUE, useDemographicsIndexYear
+    = TRUE, useDemographicsIndexMonth = TRUE, useDemographicsIndexYearMonth = TRUE,
+    useDemographicsPriorObservationTime = TRUE, useDemographicsPostObservationTime =
+    TRUE, useDemographicsTimeInCohort = TRUE, useConditionOccurrence = TRUE,
+    useProcedureOccurrence = TRUE, useDrugEraStart = TRUE,      useMeasurement = TRUE,
+    useConditionEraStart = TRUE, useConditionEraOverlap = TRUE, useConditionEraGroupStart
+    = FALSE, useConditionEraGroupOverlap = TRUE, useDrugExposure = FALSE,
+    useDrugEraOverlap = FALSE, useDrugEraGroupStart = FALSE, useDrugEraGroupOverlap =
+    TRUE, useObservation = TRUE, useDeviceExposure = TRUE, useCharlsonIndex = TRUE,
+    useDcsi = TRUE, useChads2 = TRUE, useChads2Vasc = TRUE, useHfrs = FALSE,
+    temporalStartDays = c(-365, 1, 31, -9999, -365, -180, -30, -9999, -365, -180, -30,   
+          -9999, seq(from = -5, to = 5, by = 1)), temporalEndDays = c(-31, 30, 365, 0, 0,
+    0, 0, -1, -1, -1, -1, 9999, seq(from = -5, to = 5, by = 1))),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental")
@@ -95,8 +105,6 @@ diagnostics to.}
 
 \item{runOrphanConcepts}{Generate and export potential orphan concepts?}
 
-\item{runTimeDistributions}{Generate and export cohort time distributions?}
-
 \item{runTimeSeries}{Generate and export the time series diagnostics?}
 
 \item{runVisitContext}{Generate and export index-date visit context?}
@@ -111,13 +119,6 @@ cohortToCreateFile.}
 
 \item{runCohortRelationship}{Generate and export the cohort relationship? Cohort relationship checks the temporal
 relationship between two or more cohorts.}
-
-\item{runCohortCharacterization}{Generate and export the cohort characterization?
-Only records with values greater than 0.0001 are returned.}
-
-\item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of
-the createCovariateSettings function in the FeatureExtraction package, or a list
-of such objects.}
 
 \item{runTemporalCohortCharacterization}{Generate and export the temporal cohort characterization?
 Only records with values greater than 0.001 are returned.}

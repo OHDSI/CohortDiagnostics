@@ -69,3 +69,9 @@ writeLines(text, con = file(filePath))
 file.copy(from = "inst/settings/resultsDataModelSpecification.csv", 
           to = "inst/shiny/DiagnosticsExplorer/resultsDataModelSpecification.csv",
           overwrite = TRUE)
+
+
+# Copy shared script
+file.copy(from = "R/Shared.R", 
+          to = "inst/shiny/DiagnosticsExplorer/R/Shared.R",
+          overwrite = TRUE)
