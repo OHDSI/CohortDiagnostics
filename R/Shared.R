@@ -50,7 +50,7 @@ hasData <- function(data) {
 #'
 #' @param cohortName Name for the cohort definition
 #'
-#' @param includeConceptSets Do you want to included concept set in the documentation
+#' @param includeConceptSets Do you want to inclued concept set in the documentation
 #'
 #' @return list object
 #'
@@ -554,3 +554,12 @@ getCovariateValueResult <- function(dataSource,
 }
 
 
+checkIfObjectIsTrue <- function(object) {
+  if (is.null(object)) {
+    return(FALSE)
+  }
+  if (!isTRUE(object)) {
+    return(FALSE)
+  }
+  return(TRUE)
+}

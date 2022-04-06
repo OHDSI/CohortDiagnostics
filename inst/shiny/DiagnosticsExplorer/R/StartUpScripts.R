@@ -129,3 +129,13 @@ processMetadata <- function(data) {
   return(data)
 }
 
+
+checkIfObjectIsTrue <- function(object) {
+  if (is.null(object)) {
+    return(FALSE)
+  }
+  if (!isTRUE(object)) {
+    return(FALSE)
+  }
+  return(TRUE)
+}

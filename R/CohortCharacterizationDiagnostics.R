@@ -199,12 +199,12 @@ executeCohortCharacterization <- function(connection,
                                           instantiatedCohorts,
                                           incremental,
                                           recordKeepingFile,
-                                          task = "runCohortCharacterization",
-                                          jobName = "Cohort Charachterization",
-                                          covariateValueFileName = file.path(exportFolder, "covariate_value.csv"),
-                                          covariateValueContFileName = file.path(exportFolder, "covariate_value_dist.csv"),
-                                          covariateRefFileName = file.path(exportFolder, "covariate_ref.csv"),
-                                          analysisRefFileName = file.path(exportFolder, "analysis_ref.csv"),
+                                          task = "runTemporalCohortCharacterization",
+                                          jobName = "Temporal Cohort characterization",
+                                          covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
+                                          covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
+                                          covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
+                                          analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
                                           timeRefFileName = NULL) {
   ParallelLogger::logInfo("Running ", jobName)
   startCohortCharacterization <- Sys.time()

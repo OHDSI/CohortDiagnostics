@@ -4,28 +4,6 @@ createDatabaseDataSource <- function(connection, resultsDatabaseSchema, vocabula
               vocabularyDatabaseSchema = vocabularyDatabaseSchema))
 }
 
-renderTranslateQuerySql <- function(connection, sql, ..., snakeCaseToCamelCase = FALSE) {
-  if (is(connection, "Pool")) {
-    sql <- SqlRender::render(sql, ...)
-    sql <- SqlRender::translate(sql, targetDialect = dbms)
-
-    tryCatch({
-      data <- DatabaseConnector::dbGetQuery(connection, sql)
-    }, error = function(err) {
-      writeLines(sql)
-      stop(err)
-    })
-    if (snakeCaseToCamelCase) {
-      colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
-    }
-    return(data)
-  } else {
-    return(DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                      sql = sql,
-                                                      ...,
-                                                      snakeCaseToCamelCase = snakeCaseToCamelCase))
-  }
-}
 
 renderTranslateExecuteSql <- function(connection, sql, ...) {
   if (is(connection, "Pool")) {
@@ -38,15 +16,6 @@ renderTranslateExecuteSql <- function(connection, sql, ...) {
                                                  ...)
   }
 }
-
-quoteLiterals <- function(x) {
-  if (is.null(x)) {
-    return("")
-  } else {
-    return(paste0("'", paste(x, collapse = "', '"), "'"))
-  }
-}
-
 
 getCohortCountResult <- function(dataSource,
                                  cohortIds = NULL,
@@ -442,127 +411,8 @@ getCohortOverlapResult <- function(dataSource,
   return(data)
 }
 
-getCovariateValueResult <- function(dataSource,
-                                    cohortIds,
-                                    analysisIds = NULL,
-                                    databaseIds,
-                                    timeIds = NULL,
-                                    isTemporal = FALSE) {
-
-  # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertLogical(x = isTemporal,
-                           any.missing = FALSE,
-                           min.len = 1,
-                           max.len = 1,
-                           add = errorMessage)
-  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
-                                                 databaseIds = databaseIds,
-                                                 errorMessage = errorMessage)
-  if (isTemporal) {
-    checkmate::assertIntegerish(x = timeIds,
-                                lower = 0,
-                                any.missing = FALSE,
-                                unique = TRUE,
-                                null.ok = TRUE,
-                                add = errorMessage)
-  }
-  checkmate::reportAssertions(collection = errorMessage)
 
 
-  if (isTemporal) {
-    table <- "temporalCovariateValue"
-    covariateRefTable <- "temporalCovariateRef"
-    analysisRefTable <- "temporalAnalysisRef"
-    timeRefTable <- "temporalTimeRef"
-  } else {
-    table <- "covariateValue"
-    covariateRefTable <- "covariateRef"
-    analysisRefTable <- "analysisRef"
-    timeRefTable <- ""
-  }
-
-
-  sql <- "SELECT covariate.*,
-              covariate_name,
-            {@time_ref_table != \"\"} ? {
-              start_day,
-              end_day,
-            }
-              concept_id,
-              covariate_ref.analysis_id,
-              analysis_ref.is_binary,
-              analysis_ref.analysis_name,
-              analysis_ref.domain_id
-            FROM  @results_database_schema.@table covariate
-            INNER JOIN @results_database_schema.@covariate_ref_table covariate_ref
-              ON covariate.covariate_id = covariate_ref.covariate_id
-            INNER JOIN @results_database_schema.@analysis_ref_table analysis_ref
-              ON covariate_ref.analysis_id = analysis_ref.analysis_id
-            {@time_ref_table != \"\"} ? {
-            INNER JOIN @results_database_schema.@time_ref_table time_ref
-              ON covariate.time_id = time_ref.time_id
-            }
-            WHERE cohort_id in (@cohort_ids)
-            {@time_ref_table != \"\" & @time_ids != \"\"} ? {  AND covariate.time_id IN (@time_ids)}
-            {@analysis_ids != \"\"} ? {  AND covariate_ref.analysis_id IN (@analysis_ids)}
-            	AND database_id in (@databaseIds);"
-  if (is.null(timeIds)) {
-    timeIds <- ""
-  }
-  if (is.null(analysisIds)) {
-    analysisIds <- ""
-  }
-  # bringing down a lot of covariateName is probably slowing the return.
-  # An alternative is to create two temp tables - one of it has distinct values of covariateId, covariateName
-  data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                  sql = sql,
-                                  table = SqlRender::camelCaseToSnakeCase(table),
-                                  covariate_ref_table = SqlRender::camelCaseToSnakeCase(covariateRefTable),
-                                  analysis_ref_table = SqlRender::camelCaseToSnakeCase(analysisRefTable),
-                                  time_ref_table = SqlRender::camelCaseToSnakeCase(timeRefTable),
-                                  results_database_schema = dataSource$resultsDatabaseSchema,
-                                  cohort_ids = cohortIds,
-                                  analysis_ids = analysisIds,
-                                  databaseIds = quoteLiterals(databaseIds),
-                                  time_ids = timeIds,
-                                  snakeCaseToCamelCase = TRUE) %>%
-    tidyr::tibble()
-
-  if (isTemporal) {
-    data <- data %>%
-      dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
-      dplyr::relocate(.data$cohortId,
-                      .data$databaseId,
-                      .data$timeId,
-                      .data$startDay,
-                      .data$endDay,
-                      .data$analysisId,
-                      .data$covariateId,
-                      .data$covariateName,
-                      .data$isBinary) %>%
-      dplyr::arrange(.data$cohortId, .data$databaseId, .data$timeId, .data$covariateId, .data$covariateName)
-  } else {
-    data <- data %>%
-      dplyr::relocate(.data$cohortId,
-                      .data$databaseId,
-                      .data$analysisId,
-                      .data$covariateId,
-                      .data$covariateName,
-                      .data$isBinary) %>%
-      dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
-  }
-  if ('missingMeansZero' %in% colnames(data)) {
-    data <- data %>%
-      dplyr::mutate(mean = dplyr::if_else(is.na(.data$mean) &
-                                            !is.na(.data$missingMeansZero) &
-                                            .data$missingMeansZero == 'Y',
-                                          0,
-                                          .data$mean)) %>%
-      dplyr::select(-.data$missingMeansZero)
-  }
-  return(data)
-}
 
 getConceptDetails <- function(dataSource,
                               conceptIds) {
