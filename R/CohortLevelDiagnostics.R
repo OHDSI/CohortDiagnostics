@@ -36,12 +36,12 @@ getCohortCounts <- function(connectionDetails = NULL,
                             cohortTable = "cohort",
                             cohortIds = c()) {
   start <- Sys.time()
-
+  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-
+  
   sql <-
     SqlRender::loadRenderTranslateSql(
       sqlFilename = "CohortCounts.sql",
@@ -51,31 +51,24 @@ getCohortCounts <- function(connectionDetails = NULL,
       cohort_table = cohortTable,
       cohort_ids = cohortIds
     )
-  tablesInServer <-
-    tolower(DatabaseConnector::dbListTables(conn = connection, schema = cohortDatabaseSchema))
-  if (tolower(cohortTable) %in% tablesInServer) {
-    counts <-
-      DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>%
-      tidyr::tibble()
-
-    if (length(cohortIds) > 0) {
-      cohortIdDf <- tidyr::tibble(cohortId = cohortIds)
-      counts <- cohortIdDf %>%
-        dplyr::left_join(counts, by = "cohortId") %>%
-        tidyr::replace_na(list(cohortEntries = 0, cohortSubjects = 0))
-    }
-
-    delta <- Sys.time() - start
-    ParallelLogger::logInfo(paste(
-      "Counting cohorts took",
-      signif(delta, 3),
-      attr(delta, "units")
-    ))
-    return(counts)
-  } else {
-    warning("Cohort table was not found. Was it created?")
-    return(NULL)
+  counts <-
+    DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>%
+    tidyr::tibble()
+  
+  if (length(cohortIds) > 0) {
+    cohortIdDf <- tidyr::tibble(cohortId = cohortIds)
+    counts <- cohortIdDf %>%
+      dplyr::left_join(counts, by = "cohortId") %>%
+      tidyr::replace_na(list(cohortEntries = 0, cohortSubjects = 0))
   }
+  
+  delta <- Sys.time() - start
+  ParallelLogger::logInfo(paste(
+    "Counting cohorts took",
+    signif(delta, 3),
+    attr(delta, "units")
+  ))
+  return(counts)
 }
 
 checkIfCohortInstantiated <- function(connection,
