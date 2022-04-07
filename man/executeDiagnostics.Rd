@@ -4,7 +4,6 @@
 \alias{executeDiagnostics}
 \title{Execute cohort diagnostics}
 \usage{
-<<<<<<<< HEAD:man/executeDiagnostics.Rd
 executeDiagnostics(
   cohortDefinitionSet,
   exportFolder,
@@ -20,29 +19,6 @@ executeDiagnostics(
   cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortIds = NULL,
-========
-runCohortDiagnostics(
-  packageName = NULL,
-  cohortToCreateFile = "settings/CohortsToCreate.csv",
-  cohortDefinitionSet = NULL,
-  baseUrl = NULL,
-  cohortSetReference = NULL,
-  connectionDetails = NULL,
-  connection = NULL,
-  cdmDatabaseSchema,
-  oracleTempSchema = NULL,
-  tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-  cohortDatabaseSchema,
-  vocabularyDatabaseSchema = cdmDatabaseSchema,
-  cohortTable = "cohort",
-  cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
-  cohortIds = NULL,
-  inclusionStatisticsFolder = NULL,
-  exportFolder,
-  databaseId,
-  databaseName = databaseId,
-  databaseDescription = databaseId,
->>>>>>>> main:man/runCohortDiagnostics.Rd
   cdmVersion = 5,
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
@@ -82,17 +58,9 @@ does not exist it will be created.}
 
 \item{databaseId}{A short string for identifying the database (e.g. 'Synpuf').}
 
-<<<<<<<< HEAD:man/executeDiagnostics.Rd
 \item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example
 'scratch.dbo'.}
-========
-\item{cohortDefinitionSet}{Data.frame of cohorts must include columns cohortId, cohortName, json, sql}
-
-\item{baseUrl}{The base URL for the WebApi instance, for example:
-"http://server.org:80/WebAPI". Can be left NULL if 
-\code{packageName} and \code{cohortToCreateFile} have been specified.}
->>>>>>>> main:man/runCohortDiagnostics.Rd
 
 \item{databaseName}{The full name of the database. If NULL, defaults to databaseId.}
 
@@ -125,13 +93,6 @@ commonly the same as cdmDatabaseSchema. Note that for
 SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
 
-<<<<<<<< HEAD:man/executeDiagnostics.Rd
-========
-\item{cohortTable}{Name of the cohort table.}
-
-\item{cohortTableNames}{Cohort Table names used by CohortGenerator package}
-
->>>>>>>> main:man/runCohortDiagnostics.Rd
 \item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
 diagnostics to.}
 
@@ -184,7 +145,6 @@ Alternatively, a covariate setting object may be created using the above as an e
 \details{
 The \code{cohortSetReference} argument must be a data frame with at least the following columns.These fields will be exported as is to the cohort table that is part of Cohort Diagnostics results data model. Any additional fields found will be stored as JSON object in the metadata field of the cohort table:
 \describe{
-<<<<<<<< HEAD:man/executeDiagnostics.Rd
 \item{cohortId}{The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names.}
 \item{cohortName}{The full name of the cohort. This will be shown in the Shiny app.}
 \item{json}{The JSON cohort definition for the cohort.}
@@ -231,15 +191,6 @@ executeDiagnostics(
   databaseId = "mySpecialCdm",
   connectionDetails = connectionDetails
 )
-========
-\item{cohortId}{The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999}
-\item{atlasId}{Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.}
-\item{cohortName}{The full name of the cohort. This will be shown in the Shiny app.}
-\item{logicDescription}{A human understandable brief description of the cohort definition. This logic does not have to a 
-fully specified description of the cohort definition, but should provide enough context to help user understand the
-meaning of the cohort definition}
-\item{referentConceptId}{A standard omop concept id that serves as the referent phenotype definition for the cohort Id (optional)}
->>>>>>>> main:man/runCohortDiagnostics.Rd
 }
 
 }
