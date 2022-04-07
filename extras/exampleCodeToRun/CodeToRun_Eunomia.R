@@ -14,6 +14,7 @@ tempEmulationSchema = getOption("sqlRenderTempEmulationSchema")
 
 # Cohort Definitions ----
 remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy', ref = "develop")
+studyName <- 'epi999'
 ## get cohort definition set ----
 cohortDefinitionSet <-
   CohortGenerator::getCohortDefinitionSet(
@@ -26,9 +27,8 @@ cohortDefinitionSet <-
 cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = "cohortEunomia")
 
 # output folder information ----
-outputLocation <- "D:\\temp"
 outputFolder <-
-  file.path(outputLocation, "outputFolder", "packageMode", "eunomia")
+  file.path("D:", "temp", "outputFolder", studyName, "eunomia")
 ## optionally delete previous execution ----
 unlink(x = outputFolder,
        recursive = TRUE,
@@ -66,44 +66,31 @@ CohortDiagnostics::executeDiagnostics(
   connectionDetails = connectionDetails,
   cohortTableNames = cohortTableNames,
   vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-  cdmVersion = 5,
-  runInclusionStatistics = TRUE,
-  runIncludedSourceConcepts = TRUE,
-  runOrphanConcepts = TRUE,
-  runTimeSeries = TRUE,
-  runVisitContext = TRUE,
-  runBreakdownIndexEvents = TRUE,
-  runIncidenceRate = TRUE,
-  runCohortOverlap = TRUE,
-  runCohortRelationship = TRUE,
-  runTemporalCohortCharacterization = TRUE,
-  minCellCount = 5,
-  incremental = TRUE,
-  incrementalFolder = file.path(outputFolder, "incremental")
+  incremental = TRUE
 )
 
 
 
 # example of how to run full time series diagnostics outside executeDiagnostics
-# data <-
-#   CohortDiagnostics::runCohortTimeSeriesDiagnostics(
-#     connectionDetails = connectionDetails,
-#     cdmDatabaseSchema = 'main',
-#     cohortDatabaseSchema = "main",
-#     cohortTable = cohortTableNames$cohortTable,
-#     runCohortTimeSeries = TRUE,
-#     runDataSourceTimeSeries = TRUE
-#   )
-# # to export data into csv in Cohort Diagnostics compatible form
-# data <- CohortDiagnostics:::makeDataExportable(x = data,
-#                                                tableName = "time_series",
-#                                                databaseId = databaseId)
-# CohortDiagnostics:::writeToCsv(
-#   data = data,
-#   fileName = file.path(outputFolder, "time_series.csv"),
-#   incremental = FALSE,
-#   cohortId = data$cohortId %>% unique()
-# )
+data <-
+  CohortDiagnostics::runCohortTimeSeriesDiagnostics(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = 'main',
+    cohortDatabaseSchema = "main",
+    cohortTable = cohortTableNames$cohortTable,
+    runCohortTimeSeries = TRUE,
+    runDataSourceTimeSeries = TRUE
+  )
+# to export data into csv in Cohort Diagnostics compatible form
+data <- CohortDiagnostics:::makeDataExportable(x = data,
+                                               tableName = "time_series",
+                                               databaseId = databaseId)
+CohortDiagnostics:::writeToCsv(
+  data = data,
+  fileName = file.path(outputFolder, "time_series.csv"),
+  incremental = FALSE,
+  cohortId = data$cohortId %>% unique()
+)
 
 
 # package results ----

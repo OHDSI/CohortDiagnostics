@@ -48,9 +48,9 @@ cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable =
 outputFolder <-
   file.path("D:", "temp", "outputFolder", studyName, connectionSpecifications$database)
 ## optionally delete previous execution ----
-# unlink(x = outputFolder,
-#        recursive = TRUE,
-#        force = TRUE)
+unlink(x = outputFolder,
+       recursive = TRUE,
+       force = TRUE)
 dir.create(path = outputFolder,
            showWarnings = FALSE,
            recursive = TRUE)
@@ -84,30 +84,8 @@ CohortDiagnostics::executeDiagnostics(
   connectionDetails = connectionDetails,
   cohortTableNames = cohortTableNames,
   vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-  cdmVersion = 5,
-  runInclusionStatistics = TRUE,
-  runIncludedSourceConcepts = TRUE,
-  runOrphanConcepts = TRUE,
-  runTimeSeries = FALSE,
-  runVisitContext = TRUE,
-  runBreakdownIndexEvents = TRUE,
-  runIncidenceRate = TRUE,
-  runCohortOverlap = TRUE,
-  runCohortRelationship = TRUE,
-  runTemporalCohortCharacterization = TRUE,
-  temporalCovariateSettings = createTemporalCovariateSettings(
-    useConditionOccurrence = TRUE,
-    useDrugEraStart = TRUE,
-    useProcedureOccurrence = TRUE,
-    useMeasurement = TRUE,
-    temporalStartDays = c(-365,-30, 0, 1, 31),
-    temporalEndDays = c(-31,-1, 0, 30, 365)
-  ),
-  minCellCount = 5,
-  incremental = TRUE,
-  incrementalFolder = file.path(outputFolder, "incremental")
+  incremental = TRUE
 )
-
 
 
 # example of how to run full time series diagnostics outside executeDiagnostics
