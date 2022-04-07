@@ -173,35 +173,21 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                    -365,
                                    1,
                                    31,
-                                   -9999, # anytime
-                                   -365, # long term
-                                   -180, # medium term
-                                   -30, # short term
-                                   -9999, # anytime prior not including start date
-                                   -365, # long term not including start date
-                                   -180, # medium term not including start date
-                                   -30, # short term not including start date
-                                   -9999, # any time
-                                   # seq(from = -421, to = -31, by = 30),
-                                   # seq(from = 0, to = 390, by = 30),
-                                   seq(from = -5, to = 5, by = 1)
+                                   -9999, # anytime prior
+                                   -365, # long term prior
+                                   -180, # medium term prior
+                                   -30, # short term prior
+                                   0 # on cohort start date
                                  ),
                                  temporalEndDays = c(
                                    -31,
                                    30,
                                    365,
-                                   0, # anytime
-                                   0, # long term
-                                   0, # medium term
-                                   0, # short term
-                                   -1, # anytime prior not including start date
-                                   -1, # long term not including start date
-                                   -1, # medium term not including start date
-                                   -1, # short term not including start date
-                                   9999, # any time
-                                   # seq(from = -391, to = -1, by = 30),
-                                   # seq(from = 30, to = 420, by = 30),
-                                   seq(from = -5, to = 5, by = 1)
+                                   0, # anytime prior
+                                   0, # long term prior
+                                   0, # medium term prior
+                                   0, # short term prior
+                                   0 # on cohort start date
                                  )
                                ),
                                minCellCount = 5,
