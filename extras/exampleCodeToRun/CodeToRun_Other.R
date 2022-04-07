@@ -48,9 +48,9 @@ cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable =
 outputFolder <-
   file.path("D:", "temp", "outputFolder", studyName, connectionSpecifications$database)
 ## optionally delete previous execution ----
-# unlink(x = outputFolder,
-#        recursive = TRUE,
-#        force = TRUE)
+unlink(x = outputFolder,
+       recursive = TRUE,
+       force = TRUE)
 dir.create(path = outputFolder,
            showWarnings = FALSE,
            recursive = TRUE)
@@ -89,25 +89,25 @@ CohortDiagnostics::executeDiagnostics(
 
 
 # example of how to run full time series diagnostics outside executeDiagnostics
-# data <-
-#   CohortDiagnostics::runCohortTimeSeriesDiagnostics(
-#     connectionDetails = connectionDetails,
-#     cdmDatabaseSchema = 'main',
-#     cohortDatabaseSchema = "main",
-#     cohortTable = cohortTableNames$cohortTable,
-#     runCohortTimeSeries = TRUE,
-#     runDataSourceTimeSeries = TRUE
-#   )
-# # to export data into csv in Cohort Diagnostics compatible form
-# data <- CohortDiagnostics:::makeDataExportable(x = data,
-#                                                tableName = "time_series",
-#                                                databaseId = databaseId)
-# CohortDiagnostics:::writeToCsv(
-#   data = data,
-#   fileName = file.path(outputFolder, "time_series.csv"),
-#   incremental = FALSE,
-#   cohortId = data$cohortId %>% unique()
-# )
+data <-
+  CohortDiagnostics::runCohortTimeSeriesDiagnostics(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = 'main',
+    cohortDatabaseSchema = "main",
+    cohortTable = cohortTableNames$cohortTable,
+    runCohortTimeSeries = TRUE,
+    runDataSourceTimeSeries = TRUE
+  )
+# to export data into csv in Cohort Diagnostics compatible form
+data <- CohortDiagnostics:::makeDataExportable(x = data,
+                                               tableName = "time_series",
+                                               databaseId = databaseId)
+CohortDiagnostics:::writeToCsv(
+  data = data,
+  fileName = file.path(outputFolder, "time_series.csv"),
+  incremental = FALSE,
+  cohortId = data$cohortId %>% unique()
+)
 
 
 # package results ----
