@@ -14,6 +14,7 @@ tempEmulationSchema = getOption("sqlRenderTempEmulationSchema")
 
 # Cohort Definitions ----
 remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy', ref = "develop")
+studyName <- 'epi999'
 ## get cohort definition set ----
 cohortDefinitionSet <-
   CohortGenerator::getCohortDefinitionSet(
@@ -28,7 +29,7 @@ cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = "cohortEun
 # output folder information ----
 outputLocation <- "D:\\temp"
 outputFolder <-
-  file.path(outputLocation, "outputFolder", "packageMode", "eunomia")
+  file.path("D:", "temp", "outputFolder", studyName, "eunomia")
 ## optionally delete previous execution ----
 unlink(x = outputFolder,
        recursive = TRUE,
