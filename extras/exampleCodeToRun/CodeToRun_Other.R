@@ -92,8 +92,8 @@ CohortDiagnostics::executeDiagnostics(
 data <-
   CohortDiagnostics::runCohortTimeSeriesDiagnostics(
     connectionDetails = connectionDetails,
-    cdmDatabaseSchema = 'main',
-    cohortDatabaseSchema = "main",
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
     cohortTable = cohortTableNames$cohortTable,
     runCohortTimeSeries = TRUE,
     runDataSourceTimeSeries = TRUE
