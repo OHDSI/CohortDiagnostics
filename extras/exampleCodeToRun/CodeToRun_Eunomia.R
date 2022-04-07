@@ -66,20 +66,7 @@ CohortDiagnostics::executeDiagnostics(
   connectionDetails = connectionDetails,
   cohortTableNames = cohortTableNames,
   vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-  cdmVersion = 5,
-  runInclusionStatistics = TRUE,
-  runIncludedSourceConcepts = TRUE,
-  runOrphanConcepts = TRUE,
-  runTimeSeries = TRUE,
-  runVisitContext = TRUE,
-  runBreakdownIndexEvents = TRUE,
-  runIncidenceRate = TRUE,
-  runCohortOverlap = TRUE,
-  runCohortRelationship = TRUE,
-  runTemporalCohortCharacterization = TRUE,
-  minCellCount = 5,
-  incremental = TRUE,
-  incrementalFolder = file.path(outputFolder, "incremental")
+  incremental = TRUE
 )
 
 
