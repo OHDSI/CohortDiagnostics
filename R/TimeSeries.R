@@ -220,7 +220,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                 AS (
                 	SELECT *
                 	FROM @cohort_database_schema.@cohort_table
-                	WHERE cohort_definition_id IN (@cohort_ids)
+                  {@cohort_ids != ''} ? { where cohort_definition_id IN (@cohort_ids)}
                 	),
                 cohort_first
                 AS (
