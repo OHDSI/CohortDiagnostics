@@ -27,7 +27,6 @@ cohortDefinitionSet <-
 cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = "cohortEunomia")
 
 # output folder information ----
-outputLocation <- "D:\\temp"
 outputFolder <-
   file.path("D:", "temp", "outputFolder", studyName, "eunomia")
 ## optionally delete previous execution ----
