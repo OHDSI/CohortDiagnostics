@@ -2,13 +2,19 @@
 {DEFAULT @annotation_link = annotation_link}
 {DEFAULT @annotation_attributes = annotation_attributes}
 {DEFAULT @cohort = cohort}
-{DEFAULT @cohort_count = cohort_count}
+{DEFAULT @concept_class = concept_class}
+{DEFAULT @concept_count = concept_count}
+{DEFAULT @concept_excluded = concept_excluded}
+{DEFAULT @concept_mapping = concept_mapping}
+{DEFAULT @concept_sets_optimized = concept_sets_optimized}
+{DEFAULT @concept_resolved = concept_resolved}
 {DEFAULT @cohort_overlap = cohort_overlap}
 {DEFAULT @cohort_relationships = cohort_relationships}
 {DEFAULT @concept = concept}
 {DEFAULT @concept_ancestor = concept_ancestor}
 {DEFAULT @concept_relationship = concept_relationship}
 {DEFAULT @concept_sets = concept_sets}
+{DEAFULT @concept_std_src_cnt = concept_std_src_cnt}
 {DEFAULT @concept_synonym = concept_synonym}
 {DEFAULT @database = database}
 {DEFAULT @domain = domain}
@@ -35,6 +41,12 @@ DROP TABLE IF EXISTS @results_schema.@annotation;
 DROP TABLE IF EXISTS @results_schema.@annotation_link;
 DROP TABLE IF EXISTS @results_schema.@annotation_attributes;
 DROP TABLE IF EXISTS @results_schema.@cohort;
+DROP TABLE IF EXISTS @results_schema.@concept_class;
+DROP TABLE IF EXISTS @results_schema.@concept_count;
+DROP TABLE IF EXISTS @results_schema.@concept_excluded;
+DROP TABLE IF EXISTS @results_schema.@concept_mapping;
+DROP TABLE IF EXISTS @results_schema.@concept_sets_optimized;
+DROP TABLE IF EXISTS @results_schema.@concept_resolved;
 DROP TABLE IF EXISTS @results_schema.@cohort_count;
 DROP TABLE IF EXISTS @results_schema.@cohort_overlap;
 DROP TABLE IF EXISTS @results_schema.@cohort_relationships;
@@ -42,6 +54,7 @@ DROP TABLE IF EXISTS @results_schema.@concept;
 DROP TABLE IF EXISTS @results_schema.@concept_ancestor;
 DROP TABLE IF EXISTS @results_schema.@concept_relationship;
 DROP TABLE IF EXISTS @results_schema.@concept_sets;
+DROP TABLE IF EXISTS @results_schema.@concept_std_src_cnt;
 DROP TABLE IF EXISTS @results_schema.@concept_synonym;
 DROP TABLE IF EXISTS @results_schema.@database;
 DROP TABLE IF EXISTS @results_schema.@domain;
@@ -212,6 +225,61 @@ CREATE TABLE @results_schema.@concept_ancestor (
 			PRIMARY KEY(ancestor_concept_id, descendant_concept_id)
 );
 
+
+--Table concept_class
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE @results_schema.@concept_class (
+  concept_class_id			VARCHAR		NOT NULL,
+  concept_class_name		VARCHAR	NOT NULL,
+  concept_class_concept_id	INTEGER			NOT NULL
+);
+
+--Table concept_count
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE @results_schema.@concept_count (
+			database_id VARCHAR NOT NULL,
+			concept_id INT NOT NULL,
+			event_year INT NOT NULL,
+			event_month INT NOT NULL,
+			concept_count FLOAT NOT NULL,
+			subject_count FLOAT NOT NULL,
+			PRIMARY KEY(database_id, concept_id, event_year, event_month)
+);
+                                    
+--Table concept_excluded
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE @results_schema.@concept_excluded (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			concept_set_id INT NOT NULL,
+			concept_id INT NOT NULL,
+			PRIMARY KEY(database_id, cohort_id, concept_set_id, concept_id)
+);
+
+--Table concept_sets_optimized
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE @results_schema.@concept_sets_optimized (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			concept_set_id INT NOT NULL,
+			concept_id INT NOT NULL,
+			excluded INT NOT NULL,
+			removed INT NOT NULL,
+			PRIMARY KEY(database_id, cohort_id, concept_set_id, concept_id, excluded, removed)
+);
+
+--Table concept_mapping
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE @results_schema.@concept_mapping (
+			database_id VARCHAR NOT NULL,
+			domain_table VARCHAR NOT NULL,
+			concept_id INT NOT NULL,
+			source_concept_id INT NOT NULL,
+			concept_count FLOAT NOT NULL,
+			subject_count FLOAT NOT NULL,
+			PRIMARY KEY(database_id, domain_table, concept_id, source_concept_id)
+);
+
 --Table concept_relationship
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@concept_relationship (
@@ -223,6 +291,25 @@ CREATE TABLE @results_schema.@concept_relationship (
 			invalid_reason VARCHAR(1),
 			PRIMARY KEY(concept_id_1, concept_id_2, relationship_id)
 );
+
+--Table concept_resolved
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE @results_schema.@concept_resolved (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			concept_set_id INT NOT NULL,
+			concept_id INT NOT NULL,
+			PRIMARY KEY(cohort_id, concept_set_id, concept_id, database_id)
+);
+
+--Table concept_std_src_cnt
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE @results_schema.@concept_std_src_cnt ( 
+      concept_id INT,
+      source_concept_id INT,
+      domain_table VARCHAR(20),
+      concept_count BIGINT,
+      subject_count BIGINT);
 
 --Table concept_sets
 --HINT DISTRIBUTE ON RANDOM
@@ -309,14 +396,16 @@ CREATE TABLE @results_schema.@inclusion_rule_stats (
 --Table index_event_breakdown
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@index_event_breakdown (
-			concept_id BIGINT NOT NULL,
-			concept_count BIGINT NOT NULL,
-			subject_count BIGINT NOT NULL,
-			cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			days_relative_index BIGINT NOT NULL,
 			domain_field VARCHAR NOT NULL,
 			domain_table VARCHAR NOT NULL,
-			PRIMARY KEY(concept_id, cohort_id, database_id, domain_field, domain_table)
+			concept_id INT NOT NULL,
+			co_concept_id INT NOT NULL,
+			concept_count BIGINT NOT NULL,
+			subject_count BIGINT NOT NULL,
+			PRIMARY KEY(database_id, cohort_id, days_relative_index, domain_field, domain_table, concept_id, co_concept_id)
 );
 
 --Table metadata
@@ -336,8 +425,6 @@ CREATE TABLE @results_schema.@orphan_concept (
 			concept_set_id INT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			concept_id BIGINT NOT NULL,
-			concept_count BIGINT NOT NULL,
-			concept_subjects BIGINT NOT NULL,
 			PRIMARY KEY(cohort_id, concept_set_id, database_id, concept_id)
 );
 

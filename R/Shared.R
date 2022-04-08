@@ -14,6 +14,138 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+#' Get domain information
+#'
+#' @return
+#' A list with two tibble data frame objects with domain information represented in wide and long format respectively.
+getDomainInformation <- function() {
+  ParallelLogger::logTrace("  - Reading domains.csv")
+  pathToCsv <-
+    system.file("csv",
+                "domains.csv",
+                package = utils::packageName())
+  if (!pathToCsv == "") {
+    domains <-
+      readr::read_csv(
+        file = pathToCsv,
+        guess_max = min(1e7),
+        col_types = readr::cols()
+      )
+  } else {
+    stop(paste0("domains.csv was not found in installed package: ",
+                packageName))
+  }
+  
+  domains <- domains %>%
+    .replaceNaInDataFrameWithEmptyString() %>%
+    dplyr::mutate(domainTableShort = stringr::str_sub(
+      string = toupper(.data$domain),
+      start = 1,
+      end = 2
+    )) %>%
+    dplyr::mutate(
+      domainTableShort = dplyr::case_when(
+        stringr::str_detect(string = tolower(.data$domain), pattern = 'era') ~ paste0(.data$domainTableShort, 'E'),
+        TRUE ~ .data$domainTableShort
+      )
+    )
+  
+  domains$domainConceptIdShort <-
+    stringr::str_replace_all(
+      string = sapply(
+        stringr::str_extract_all(
+          string = SqlRender::camelCaseToTitleCase(SqlRender::snakeCaseToCamelCase(domains$domainConceptId)),
+          pattern = '[A-Z]'
+        ),
+        paste,
+        collapse = ' '
+      ),
+      pattern = " ",
+      replacement = ""
+    )
+  domains$domainSourceConceptIdShort <-
+    stringr::str_replace_all(
+      string = sapply(
+        stringr::str_extract_all(
+          string = SqlRender::camelCaseToTitleCase(SqlRender::snakeCaseToCamelCase(domains$domainSourceConceptId)),
+          pattern = '[A-Z]'
+        ),
+        paste,
+        collapse = ' '
+      ),
+      pattern = " ",
+      replacement = ""
+    )
+  domains <- domains  %>%
+    dplyr::mutate(isEraTable = stringr::str_detect(string = .data$domainTable,
+                                                   pattern = 'era'))
+  data <- list()
+  data$wide <- domains
+  data$long <- dplyr::bind_rows(
+    data$wide %>%
+      dplyr::select(
+        .data$domainTableShort,
+        .data$domainTable,
+        .data$domainConceptIdShort,
+        .data$domainConceptId
+      ) %>%
+      dplyr::rename(
+        domainFieldShort = .data$domainConceptIdShort,
+        domainField = .data$domainConceptId
+      ),
+    data$wide %>%
+      dplyr::select(
+        .data$domainTableShort,
+        .data$domainSourceConceptIdShort,
+        .data$domainTable,
+        .data$domainSourceConceptId
+      ) %>%
+      dplyr::rename(
+        domainFieldShort = .data$domainSourceConceptIdShort,
+        domainField = .data$domainSourceConceptId
+      )
+  ) %>%
+    dplyr::distinct() %>%
+    dplyr::filter(.data$domainFieldShort != "") %>%
+    dplyr::mutate(eraTable = stringr::str_detect(string = .data$domainTable,
+                                                 pattern = 'era')) %>%
+    dplyr::mutate(isSourceField = stringr::str_detect(string = .data$domainField,
+                                                      pattern = 'source'))
+  return(data)
+}
+
+
+.replaceNaInDataFrameWithEmptyString <- function(data) {
+  characterColumns <- c()
+  
+  colnamesInData <- colnames(data)
+  for (i in (1:length(colnamesInData))) {
+    if (class(data[[colnamesInData[[i]]]]) == "character") {
+      characterColumns <- c(characterColumns, colnamesInData[[i]])
+    }
+  }
+  data <-
+    data %>%
+    dplyr::collect() %>%
+    dplyr::mutate(dplyr::across(
+      .cols = dplyr::all_of(characterColumns),
+      .fns = ~ tidyr::replace_na(.x, as.character(''))
+    ))
+  return(data)
+}
+
+
+# private function - not exported
+titleCaseToCamelCase <- function(string) {
+  string <- stringr::str_replace_all(string = string,
+                                     pattern = ' ',
+                                     replacement = '')
+  substr(string, 1, 1) <- tolower(substr(string, 1, 1))
+  return(string)
+}
+
+# private function - not exported
 hasData <- function(data) {
   if (is.null(data)) {
     return(FALSE)

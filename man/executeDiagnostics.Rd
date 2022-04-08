@@ -21,11 +21,11 @@ executeDiagnostics(
   cohortIds = NULL,
   cdmVersion = 5,
   runInclusionStatistics = TRUE,
-  runIncludedSourceConcepts = TRUE,
-  runOrphanConcepts = TRUE,
+  runConceptSetDiagnostics = TRUE,
+  runIndexDateConceptCoOccurrence = FALSE,
+  runConceptCountByCalendarPeriod = FALSE,
   runTimeSeries = FALSE,
   runVisitContext = TRUE,
-  runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
   runCohortRelationship = TRUE,
@@ -100,15 +100,18 @@ diagnostics to.}
 
 \item{runInclusionStatistics}{Generate and export statistic on the cohort inclusion rules?}
 
-\item{runIncludedSourceConcepts}{Generate and export the source concepts included in the cohorts?}
+\item{runConceptSetDiagnostics}{Do you want to run concept set diagnostics?}
 
-\item{runOrphanConcepts}{Generate and export potential orphan concepts?}
+\item{runIndexDateConceptCoOccurrence}{Generate and export co-occurrence of concepts on index date. This diagnostics will
+compute if any two concept-id co-occur on the same day. Computation will be performed
+for co-occurrence of standard-standard, standard-source, and source-source
+concept ids. This may take time. It is set to FALSE by default.}
+
+\item{runConceptCountByCalendarPeriod}{Do you want to stratify the counts by calendar period like calendar year, calendar month?}
 
 \item{runTimeSeries}{Generate and export the time series diagnostics?}
 
 \item{runVisitContext}{Generate and export index-date visit context?}
-
-\item{runBreakdownIndexEvents}{Generate and export the breakdown of index events?}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
