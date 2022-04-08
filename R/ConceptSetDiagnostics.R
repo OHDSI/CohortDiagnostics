@@ -316,7 +316,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       )
     delta <- Sys.time() - startconceptStdSrcCnt
     ParallelLogger::logTrace(
-      "  - Counting standard to source concept mapping mapping took ",
+      "  - Counting standard to source concept mapping took ",
       signif(delta, 3),
       " ",
       attr(delta, "units")
