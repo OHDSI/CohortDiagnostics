@@ -115,7 +115,7 @@ CREATE TABLE @results_schema.@annotation_attributes (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@cohort (
 			cohort_id BIGINT NOT NULL,
-			cohort_name VARCHAR NOT NULL,
+			cohort_name VARCHAR(255) NOT NULL,
 			metadata VARCHAR,
 			sql VARCHAR NOT NULL,
 			json VARCHAR NOT NULL,
@@ -203,10 +203,10 @@ CREATE TABLE @results_schema.@cohort_relationships (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@concept (
 			concept_id BIGINT NOT NULL,
-			concept_name VARCHAR NOT NULL,
-			domain_id VARCHAR NOT NULL,
+			concept_name VARCHAR(255) NOT NULL,
+			domain_id VARCHAR(20) NOT NULL,
 			vocabulary_id VARCHAR NOT NULL,
-			concept_class_id VARCHAR NOT NULL,
+			concept_class_id VARCHAR(20) NOT NULL,
 			standard_concept VARCHAR(1),
 			concept_code VARCHAR NOT NULL,
 			valid_start_date DATE NOT NULL,
@@ -285,7 +285,7 @@ CREATE TABLE @results_schema.@concept_mapping (
 CREATE TABLE @results_schema.@concept_relationship (
 			concept_id_1 BIGINT NOT NULL,
 			concept_id_2 BIGINT NOT NULL,
-			relationship_id VARCHAR NOT NULL,
+			relationship_id VARCHAR(20) NOT NULL,
 			valid_start_date DATE NOT NULL,
 			valid_end_date DATE NOT NULL,
 			invalid_reason VARCHAR(1),
@@ -307,11 +307,9 @@ CREATE TABLE @results_schema.@concept_resolved (
 CREATE TABLE @results_schema.@concept_std_src_cnt ( 
       concept_id INT,
       source_concept_id INT,
-      domain_table VARCHAR,
+      domain_table VARCHAR(20),
       concept_count BIGINT,
-      subject_count BIGINT,
-			PRIMARY KEY(cohort_id, source_concept_id, domain_table)
-);
+      subject_count BIGINT);
 
 --Table concept_sets
 --HINT DISTRIBUTE ON RANDOM
@@ -319,7 +317,7 @@ CREATE TABLE @results_schema.@concept_sets (
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
 			concept_set_sql VARCHAR NOT NULL,
-			concept_set_name VARCHAR NOT NULL,
+			concept_set_name VARCHAR(255) NOT NULL,
 			concept_set_expression VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, concept_set_id)
 );
@@ -348,8 +346,8 @@ CREATE TABLE @results_schema.@database (
 --Table domain
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@domain (
-			domain_id VARCHAR NOT NULL,
-			domain_name VARCHAR NOT NULL,
+			domain_id VARCHAR(20) NOT NULL,
+			domain_name VARCHAR(255) NOT NULL,
 			domain_concept_id BIGINT NOT NULL,
 			PRIMARY KEY(domain_id)
 );
@@ -401,13 +399,14 @@ CREATE TABLE @results_schema.@index_event_breakdown (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
 			days_relative_index BIGINT NOT NULL,
-			domain_field VARCHAR NOT NULL,
 			domain_table VARCHAR NOT NULL,
+			domain_field VARCHAR NOT NULL,
+			mapping INT NOT NULL,
 			concept_id INT NOT NULL,
-			co_concept_id INT NOT NULL,
+			co_concept_id INT,
 			concept_count BIGINT NOT NULL,
 			subject_count BIGINT NOT NULL,
-			PRIMARY KEY(database_id, cohort_id, days_relative_index, domain_field, domain_table, concept_id, co_concept_id)
+			PRIMARY KEY(database_id, cohort_id, days_relative_index, domain_table, domain_field, mapping, concept_id, co_concept_id)
 );
 
 --Table metadata
@@ -433,11 +432,11 @@ CREATE TABLE @results_schema.@orphan_concept (
 --Table relationship
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@relationship (
-			relationship_id VARCHAR NOT NULL,
-			relationship_name VARCHAR NOT NULL,
+			relationship_id VARCHAR(20) NOT NULL,
+			relationship_name VARCHAR(255) NOT NULL,
 			is_hierarchical VARCHAR(1) NOT NULL,
 			defines_ancestry VARCHAR(1) NOT NULL,
-			reverse_relationship_id VARCHAR NOT NULL,
+			reverse_relationship_id VARCHAR(20) NOT NULL,
 			relationship_concept_id BIGINT NOT NULL,
 			PRIMARY KEY(relationship_id, reverse_relationship_id, relationship_concept_id)
 );
@@ -457,7 +456,7 @@ CREATE TABLE @results_schema.@resolved_concepts (
 CREATE TABLE @results_schema.@temporal_analysis_ref (
 			analysis_id INT NOT NULL,
 			analysis_name VARCHAR NOT NULL,
-			domain_id VARCHAR NOT NULL,
+			domain_id VARCHAR(20) NOT NULL,
 			is_binary VARCHAR(1) NOT NULL,
 			missing_means_zero VARCHAR(1),
 			PRIMARY KEY(analysis_id, domain_id)
@@ -554,7 +553,7 @@ CREATE TABLE @results_schema.@visit_context (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@vocabulary (
 			vocabulary_id VARCHAR NOT NULL,
-			vocabulary_name VARCHAR NOT NULL,
+			vocabulary_name VARCHAR(255) NOT NULL,
 			vocabulary_reference VARCHAR,
 			vocabulary_version VARCHAR,
 			vocabulary_concept_id BIGINT NOT NULL
