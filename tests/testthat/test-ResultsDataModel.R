@@ -166,23 +166,28 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
   pgConnection <- DatabaseConnector::connect(connectionDetails = postgresConnectionDetails)
   with_dbc_connection(pgConnection, {
     for (tableName in unique(specifications$tableName)) {
-      primaryKey <- specifications %>%
-        dplyr::filter(.data$tableName == !!tableName &
-          .data$primaryKey == "Yes") %>%
-        dplyr::select(.data$fieldName) %>%
-        dplyr::pull()
-
-      if ("database_id" %in% primaryKey) {
-        sql <-
-          "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
-        sql <- SqlRender::render(
-          sql = sql,
-          schema = resultsDatabaseSchema,
-          table_name = tableName,
-          database_id = "cdmv5"
-        )
-        databaseIdCount <- DatabaseConnector::querySql(pgConnection, sql)[, 1]
-        expect_true(databaseIdCount >= 0)
+      if (stringr::str_detect(string = tableName,
+                              pattern = "annotation",
+                              negate = TRUE)) {
+        primaryKey <- specifications %>%
+          dplyr::filter(.data$tableName == !!tableName &
+                          .data$primaryKey == "Yes") %>%
+          dplyr::select(.data$fieldName) %>%
+          dplyr::pull()
+        
+        if ("database_id" %in% primaryKey) {
+          sql <-
+            "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
+          sql <- SqlRender::render(
+            sql = sql,
+            schema = resultsDatabaseSchema,
+            table_name = tableName,
+            database_id = "cdmv5"
+          )
+          databaseIdCount <-
+            DatabaseConnector::querySql(pgConnection, sql)[, 1]
+          expect_true(databaseIdCount >= 0)
+        }
       }
     }
   })
