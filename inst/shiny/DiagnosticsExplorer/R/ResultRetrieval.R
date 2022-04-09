@@ -75,7 +75,7 @@ queryResultCovariateValue <- function(dataSource,
              FROM @results_database_schema.temporal_time_ref
              WHERE time_id IS NOT NULL
               {@start_day != \"\"} ? { AND start_day IN (@start_day)}
-              {@end_day != \"\"} ? { AND AND end_day IN (@end_day)};",
+              {@end_day != \"\"} ? { AND end_day IN (@end_day)};",
       snakeCaseToCamelCase = TRUE,
       results_database_schema = dataSource$resultsDatabaseSchema,
       start_day = startDay,
@@ -236,7 +236,6 @@ getCovariateValueResult <- function(dataSource,
         )) %>%
         dplyr::select(-.data$missingMeansZero)
     }
-    
     resultCovariateValue <- resultCovariateValue %>%
       dplyr::mutate(
         covariateName = stringr::str_replace(
@@ -286,7 +285,16 @@ getCovariateValueResult <- function(dataSource,
           pattern = stringr::fixed("procedure_occurrence: "),
           replacement = ""
         )
-      )
+      ) %>% dplyr::mutate(
+        covariateName = stringr::str_replace_all(
+          string = .data$covariateName,
+          pattern = "^.*: ",
+          replacement = ""
+        )
+      ) %>% dplyr::mutate(
+        covariateName = stringr::str_to_sentence(
+          string = .data$covariateName)
+        )
   }
   
   resultCovariateValueDist <- NULL
