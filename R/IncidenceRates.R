@@ -275,6 +275,7 @@ computeIncidenceRates <- function(connection,
       databaseId = databaseId
     )
 
+    # incidenceRate field is a calculated field that does not follow the same pattern as others for minCellValue
     if (nrow(data) > 0) {
       data <-
         enforceMinCellValue(
