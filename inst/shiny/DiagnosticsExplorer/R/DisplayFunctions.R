@@ -1,28 +1,3 @@
-camelCaseToSnakeCase <- function(string) {
-  string <- gsub("([A-Z])", "_\\1", string)
-  string <- tolower(string)
-  string <- gsub("([a-z])([0-9])", "\\1_\\2", string)
-  return(string)
-}
-
-
-camelCaseToTitleCase <- function(string) {
-  string <- gsub("([A-Z])", " \\1", string)
-  string <- gsub("([a-z])([0-9])", "\\1 \\2", string)
-  substr(string, 1, 1) <- toupper(substr(string, 1, 1))
-  return(string)
-}
-
-snakeCaseToCamelCase <- function(string) {
-  string <- tolower(string)
-  for (letter in letters) {
-    string <-
-      gsub(paste("_", letter, sep = ""), toupper(letter), string)
-  }
-  string <- gsub("_([0-9])", "\\1", string)
-  return(string)
-}
-
 formatDataCellValueInDisplayTable <-
   function(showDataAsPercent = FALSE) {
    if (showDataAsPercent) {
@@ -215,7 +190,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
   columnTotalMinWidth <- 0
   columnTotalMaxWidth <- 0
   for (i in (1:length(keyColumns))) {
-    columnName <- camelCaseToTitleCase(colnames(data)[i])
+    columnName <- SqlRender::camelCaseToTitleCase(colnames(data)[i])
     displayTableColumnMinMaxWidth <-
       getDisplayTableColumnMinMaxWidth(data = data,
                                        columnName = keyColumns[[i]])
@@ -271,7 +246,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     
     columnDefinitions[[dataColumns[i]]] <-
       reactable::colDef(
-        name =  camelCaseToTitleCase(columnName),
+        name =  SqlRender::camelCaseToTitleCase(columnName),
         cell =  formatDataCellValueInDisplayTable(showDataAsPercent = showDataAsPercent),
         sortable = TRUE,
         resizable = TRUE,
@@ -379,7 +354,7 @@ getDisplayTableSimple <- function(data,
   
   columnDefinitions <- list()
   for (i in (1:length(keyColumns))) {
-    columnName <- camelCaseToTitleCase(keyColumns[i])
+    columnName <- SqlRender::camelCaseToTitleCase(keyColumns[i])
     
     displayTableColumnMinMaxWidth <-
       getDisplayTableColumnMinMaxWidth(data = data,
@@ -415,7 +390,7 @@ getDisplayTableSimple <- function(data,
     maxValue <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = dataColumns)
     
     for (i in (1:length(dataColumns))) {
-      columnName <- camelCaseToTitleCase(dataColumns[i])
+      columnName <- SqlRender::camelCaseToTitleCase(dataColumns[i])
       colnames(data)[which(names(data) == dataColumns[i])]  <-
         columnName
       columnDefinitions[[columnName]] <-
@@ -510,7 +485,7 @@ getDisplayTableColumnMinMaxWidth <- function(data,
                                              maxWidth = NULL,
                                              minWidth = 10 * pixelMultipler) {
   
-  columnNameFormatted <- camelCaseToTitleCase(columnName)
+  columnNameFormatted <- SqlRender::camelCaseToTitleCase(columnName)
   
   if ("character" %in% class(data[[columnName]])) {
     maxWidth <- (max(stringr::str_length(c(
