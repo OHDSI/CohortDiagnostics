@@ -125,10 +125,15 @@ makeDataExportable <- function(x,
                                minCellCount = 5,
                                databaseId = NULL) {
   ParallelLogger::logTrace(paste0(" - Ensuring data is exportable: ", tableName))
-  if (is.null(x) || nrow(x) == 0) {
+  if (hasData(x)) {
     ParallelLogger::logTrace("  - Object has no data.")
   }
 
+  if ("cohortDefinitionId" %in% colnames(x)) {
+    x <- x %>% 
+      dplyr::rename(cohortId = .data$cohortDefinitionId)
+  }
+  
   resultsDataModel <- getResultsDataModelSpecifications()
 
   if (!is.null(databaseId)) {
@@ -139,28 +144,28 @@ makeDataExportable <- function(x,
   fieldsInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::pull(.data$fieldName) %>%
-    snakeCaseToCamelCase() %>%
+    SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   requiredFieldsInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$isRequired == "Yes") %>%
     dplyr::pull(.data$fieldName) %>%
-    snakeCaseToCamelCase() %>%
+    SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   primaryKeyInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$primaryKey == "Yes") %>%
     dplyr::pull(.data$fieldName) %>%
-    snakeCaseToCamelCase() %>%
+    SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   columnsToApplyMinCellValue <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$minCellCount == "Yes") %>%
     dplyr::pull(.data$fieldName) %>%
-    snakeCaseToCamelCase() %>%
+    SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   ParallelLogger::logTrace(paste0(
@@ -224,11 +229,11 @@ makeDataExportable <- function(x,
     dplyr::select(dplyr::all_of(presentInBoth))
 
   # enforce minimum cell count value
-  x <- x %>%
-    enforceMinCellValueInDataframe(
-      columnNames = columnsToApplyMinCellValue,
-      minCellCount = minCellCount
-    )
+  if (hasData(x)) {
+    x <- x %>%
+      enforceMinCellValueInDataframe(columnNames = columnsToApplyMinCellValue,
+                                     minCellCount = minCellCount)
+  }
   return(x)
 }
 
@@ -255,24 +260,6 @@ enforceMinCellValueInDataframe <- function(data,
   return(data)
 }
 
-# private function - not exported
-snakeCaseToCamelCase <- function(string) {
-  string <- tolower(string)
-  for (letter in letters) {
-    string <-
-      gsub(paste("_", letter, sep = ""), toupper(letter), string)
-  }
-  string <- gsub("_([0-9])", "\\1", string)
-  return(string)
-}
-
-# private function - not exported
-camelCaseToSnakeCase <- function(string) {
-  string <- gsub("([A-Z])", "_\\1", string)
-  string <- tolower(string)
-  string <- gsub("([a-z])([0-9])", "\\1_\\2", string)
-  return(string)
-}
 
 # private function - not exported
 titleCaseToCamelCase <- function(string) {
