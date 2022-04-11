@@ -32,19 +32,18 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
                                             cohortSummaryStatsFile = file.path(
                                               folder,
                                               "cohortSummaryStats.csv"
-                                            ),
-                                            simplify = TRUE) {
+                                            )) {
   start <- Sys.time()
-
+  
   if (!file.exists(cohortInclusionFile)) {
     return(NULL)
   }
-
+  
   fetchStats <- function(file) {
     ParallelLogger::logDebug("- Fetching data from ", file)
     stats <- readr::read_csv(file,
-      col_types = readr::cols(),
-      guess_max = min(1e7)
+                             col_types = readr::cols(),
+                             guess_max = min(1e7)
     )
     if (!is.null(cohortIds)) {
       stats <- stats %>%
@@ -52,7 +51,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     }
     return(stats)
   }
-
+  
   inclusion <- fetchStats(cohortInclusionFile)
   if ("description" %in% names(inclusion)) {
     inclusion$description <- as.character(inclusion$description)
@@ -60,23 +59,33 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
   } else {
     inclusion$description <- ""
   }
-
+  
   summaryStats <- fetchStats(cohortSummaryStatsFile)
   inclusionStats <- fetchStats(cohortInclusionStatsFile)
   inclusionResults <- fetchStats(cohortInclusionResultFile)
-  result <- dplyr::tibble()
+  
+  #create empty tibble to hold output of simplified cohort inclusion rules
+  inclusionRuleStats <- dplyr::tibble(
+    ruleSequenceId = as.integer(),
+    ruleName = as.character(),
+    meetSubjects = as.integer(),
+    gainSubjects = as.integer(),
+    totalSubjects = as.integer(),
+    remainSubjects = as.integer(),
+    cohortDefinitionId = as.integer()
+  )
+    
   for (cohortId in unique(inclusion$cohortDefinitionId)) {
     cohortResult <-
       processInclusionStats(
         inclusion = filter(inclusion, .data$cohortDefinitionId == cohortId),
         inclusionResults = filter(inclusionResults, .data$cohortDefinitionId == cohortId),
-        inclusionStats = filter(inclusionStats, .data$cohortDefinitionId == cohortId),
-        summaryStats = filter(summaryStats, .data$cohortDefinitionId == cohortId),
-        simplify = simplify
+        inclusionStats = filter(inclusionStats, .data$cohortDefinitionId == cohortId)
       )
     if (!is.null(cohortResult)) {
       cohortResult$cohortDefinitionId <- cohortId
-      result <- dplyr::bind_rows(result, cohortResult)
+      inclusionRuleStats <-
+        dplyr::bind_rows(inclusionRuleStats, cohortResult)
     }
   }
   delta <- Sys.time() - start
@@ -85,68 +94,55 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     signif(delta, 3),
     attr(delta, "units")
   ))
-  if (nrow(result) > 0) {
-    return(result)
-  } else {
-    return(NULL)
-  }
+  inclusionRule <- list(inclusionRuleStats = inclusionRuleStats,
+                        cohortInclusion = inclusion,
+                        cohortIncStats = inclusionStats,
+                        cohortIncResult = inclusionResults,
+                        cohortSummaryStats = summaryStats)
+  return(inclusionRule)
 }
 
 processInclusionStats <- function(inclusion,
                                   inclusionResults,
-                                  simplify,
-                                  inclusionStats,
-                                  summaryStats) {
-  if (simplify) {
-    if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {
-      return(NULL)
-    }
-
-    result <- inclusion %>%
-      dplyr::select(.data$ruleSequence, .data$name) %>%
-      dplyr::distinct() %>%
-      dplyr::inner_join(
-        inclusionStats %>%
-          dplyr::filter(.data$modeId == 0) %>%
-          dplyr::select(
-            .data$ruleSequence,
-            .data$personCount,
-            .data$gainCount,
-            .data$personTotal
-          ),
-        by = "ruleSequence"
-      ) %>%
-      dplyr::mutate(remain = 0)
-
-    inclusionResults <- inclusionResults %>%
-      dplyr::filter(.data$modeId == 0)
-    mask <- 0
-    for (ruleId in 0:(nrow(result) - 1)) {
-      mask <- bitwOr(mask, 2^ruleId)
-      idx <-
-        bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
-      result$remain[result$ruleSequence == ruleId] <-
-        sum(inclusionResults$personCount[idx])
-    }
-    colnames(result) <- c(
-      "ruleSequenceId",
-      "ruleName",
-      "meetSubjects",
-      "gainSubjects",
-      "totalSubjects",
-      "remainSubjects"
-    )
-  } else {
-    if (nrow(inclusion) == 0) {
-      return(list())
-    }
-    result <- list(
-      inclusion = inclusion,
-      inclusionResults = inclusionResults,
-      inclusionStats = inclusionStats,
-      summaryStats = summaryStats
-    )
+                                  inclusionStats) {
+  if (!hasData(inclusion) || !hasData(inclusionStats)) {
+    return(NULL)
   }
+  
+  result <- inclusion %>%
+    dplyr::select(.data$ruleSequence, .data$name) %>%
+    dplyr::distinct() %>%
+    dplyr::inner_join(
+      inclusionStats %>%
+        dplyr::filter(.data$modeId == 0) %>%
+        dplyr::select(
+          .data$ruleSequence,
+          .data$personCount,
+          .data$gainCount,
+          .data$personTotal
+        ),
+      by = "ruleSequence"
+    ) %>%
+    dplyr::mutate(remain = 0)
+  
+  inclusionResults <- inclusionResults %>%
+    dplyr::filter(.data$modeId == 0)
+  mask <- 0
+  for (ruleId in 0:(nrow(result) - 1)) {
+    mask <- bitwOr(mask, 2 ^ ruleId)
+    idx <-
+      bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
+    result$remain[result$ruleSequence == ruleId] <-
+      sum(inclusionResults$personCount[idx])
+  }
+  colnames(result) <- c(
+    "ruleSequenceId",
+    "ruleName",
+    "meetSubjects",
+    "gainSubjects",
+    "totalSubjects",
+    "remainSubjects"
+  )
   return(result)
 }
 
@@ -168,9 +164,9 @@ getInclusionStats <- function(connection,
     incremental = incremental,
     recordKeepingFile = recordKeepingFile
   )
-
+  
   if (incremental &&
-    (length(instantiatedCohorts) - nrow(subset)) > 0) {
+      (length(instantiatedCohorts) - nrow(subset)) > 0) {
     ParallelLogger::logInfo(sprintf(
       "Skipping %s cohorts in incremental mode.",
       length(instantiatedCohorts) - nrow(subset)
@@ -186,7 +182,8 @@ getInclusionStats <- function(connection,
     )
     # This part will change in future version, with a patch to CohortGenerator that
     # supports the usage of exporting tables without writing to disk
-    inclusionStatisticsFolder <- tempfile("CdCohortStatisticsFolder")
+    inclusionStatisticsFolder <-
+      tempfile("CdCohortStatisticsFolder")
     on.exit(unlink(inclusionStatisticsFolder), add = TRUE)
     CohortGenerator::exportCohortStatsTables(
       connection = connection,
@@ -194,34 +191,85 @@ getInclusionStats <- function(connection,
       cohortTableNames = cohortTableNames,
       cohortStatisticsFolder = inclusionStatisticsFolder,
       incremental = FALSE
-    ) # Note use of FALSE to always genrate stats here
+    ) # Note use of FALSE to always generate stats here
     stats <-
       getInclusionStatisticsFromFiles(
         cohortIds = subset$cohortId,
-        folder = inclusionStatisticsFolder,
-        simplify = TRUE
+        folder = inclusionStatisticsFolder
       )
-
+    browser()
     if (!is.null(stats)) {
-      if ("cohortDefinitionId" %in% (colnames(stats))) {
-        stats <- stats %>%
-          dplyr::rename(cohortId = .data$cohortDefinitionId)
+      if ("inclusionRuleStats" %in% (names(stats))) {
+        inclusionRuleStats <- makeDataExportable(
+          x = stats$inclusionRuleStats,
+          tableName = "inclusion_rule_stats",
+          databaseId = databaseId,
+          minCellCount = minCellCount
+        )
+        writeToCsv(
+          data = inclusionRuleStats,
+          fileName = file.path(exportFolder, "inclusion_rule_stats.csv"),
+          incremental = incremental,
+          cohortId = subset$cohortId
+        )
       }
-
-      stats <- makeDataExportable(
-        x = stats,
-        tableName = "inclusion_rule_stats",
-        databaseId = databaseId,
-        minCellCount = minCellCount
-      )
-
-      writeToCsv(
-        data = stats,
-        fileName = file.path(exportFolder, "inclusion_rule_stats.csv"),
-        incremental = incremental,
-        cohortId = subset$cohortId
-      )
-
+      if ("cohortInclusion" %in% (names(stats))) {
+        cohortInclusion <- makeDataExportable(
+          x = stats$cohortInclusion,
+          tableName = "cohort_inclusion",
+          databaseId = databaseId,
+          minCellCount = minCellCount
+        )
+        writeToCsv(
+          data = cohortInclusion,
+          fileName = file.path(exportFolder, "cohort_inclusion.csv"),
+          incremental = incremental,
+          cohortId = subset$cohortId
+        )
+      }
+      if ("cohortIncStats" %in% (names(stats))) {
+        cohortIncStats <- makeDataExportable(
+          x = stats$cohortIncStats,
+          tableName = "cohort_inc_stats",
+          databaseId = databaseId,
+          minCellCount = minCellCount
+        )
+        writeToCsv(
+          data = cohortIncStats,
+          fileName = file.path(exportFolder, "cohort_inc_stats.csv"),
+          incremental = incremental,
+          cohortId = subset$cohortId
+        )
+      }
+      if ("cohortIncResult" %in% (names(stats))) {
+        cohortIncResult <- makeDataExportable(
+          x = stats$cohortIncResult,
+          tableName = "cohort_inc_result",
+          databaseId = databaseId,
+          minCellCount = minCellCount
+        )
+        writeToCsv(
+          data = cohortIncResult,
+          fileName = file.path(exportFolder, "cohort_inc_result.csv"),
+          incremental = incremental,
+          cohortId = subset$cohortId
+        )
+      }
+      if ("cohortSummaryStats" %in% (names(stats))) {
+        cohortSummaryStats <- makeDataExportable(
+          x = stats$cohortSummaryStats,
+          tableName = "cohort_summary_stats",
+          databaseId = databaseId,
+          minCellCount = minCellCount
+        )
+        writeToCsv(
+          data = cohortSummaryStats,
+          fileName = file.path(exportFolder, "cohort_summary_stats.csv"),
+          incremental = incremental,
+          cohortId = subset$cohortId
+        )
+      }
+      
       recordTasksDone(
         cohortId = subset$cohortId,
         task = "runInclusionStatistics",

@@ -3,6 +3,9 @@
 {DEFAULT @annotation_attributes = annotation_attributes}
 {DEFAULT @cohort = cohort}
 {DEFAULT @cohort_count = cohort_count}
+{DEFAULT @cohort_inclusion = cohort_inclusion}
+{DEFAULT @cohort_inc_result = cohort_inc_result}
+{DEFAULT @cohort_inc_stats = cohort_inc_stats}
 {DEFAULT @cohort_overlap = cohort_overlap}
 {DEFAULT @cohort_relationships = cohort_relationships}
 {DEFAULT @concept = concept}
@@ -36,6 +39,9 @@ DROP TABLE IF EXISTS @results_schema.@annotation_link;
 DROP TABLE IF EXISTS @results_schema.@annotation_attributes;
 DROP TABLE IF EXISTS @results_schema.@cohort;
 DROP TABLE IF EXISTS @results_schema.@cohort_count;
+DROP TABLE IF EXISTS @results_schema.@cohort_inclusion;
+DROP TABLE IF EXISTS @results_schema.@cohort_inc_result;
+DROP TABLE IF EXISTS @results_schema.@cohort_inc_stats;
 DROP TABLE IF EXISTS @results_schema.@cohort_overlap;
 DROP TABLE IF EXISTS @results_schema.@cohort_relationships;
 DROP TABLE IF EXISTS @results_schema.@concept;
@@ -119,6 +125,54 @@ CREATE TABLE @results_schema.@cohort_count (
 			database_id VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, database_id)
 );
+
+--Table cohort_inclusion
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE @results_schema.@cohort_inclusion (
+			cohort_id BIGINT NOT NULL,
+			database_id VARCHAR NOT NULL,
+			rule_sequence INT NOT NULL,
+      name VARCHAR NOT NULL,
+      description VARCHAR,
+			PRIMARY KEY(cohort_id, database_id, rule_sequence)
+);
+
+--Table cohort_inc_result
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE @results_schema.@cohort_inc_result (
+			cohort_id BIGINT NOT NULL,
+			database_id VARCHAR NOT NULL,
+			mode_id BIGINT NOT NULL,
+      inclusion_rule_mask BIGINT NOT NULL,
+      person_count BIGINT NOT NULL,
+			PRIMARY KEY(cohort_id, database_id, mode_id, inclusion_rule_mask)
+);
+
+--Table cohort_inc_stats
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE @results_schema.@cohort_inc_stats (
+			cohort_id BIGINT NOT NULL,
+			database_id VARCHAR NOT NULL,
+			rule_sequence INT NOT NULL,
+			mode_id BIGINT NOT NULL,
+      person_count BIGINT NOT NULL,
+      gain_count BIGINT NOT NULL,
+      person_total BIGINT NOT NULL,
+			PRIMARY KEY(cohort_id, database_id, rule_sequence, mode_id)
+);
+
+
+--Table cohort_summary_stats
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE @results_schema.@cohort_summary_stats (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			mode_id BIGINT NOT NULL,
+      base_count BIGINT NOT NULL,
+      final_count BIGINT NOT NULL,
+			PRIMARY KEY(cohort_id, database_id, mode_id)
+);
+
 
 --Table cohort_overlap
 --HINT DISTRIBUTE ON RANDOM

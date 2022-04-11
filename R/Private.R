@@ -125,10 +125,15 @@ makeDataExportable <- function(x,
                                minCellCount = 5,
                                databaseId = NULL) {
   ParallelLogger::logTrace(paste0(" - Ensuring data is exportable: ", tableName))
-  if (is.null(x) || nrow(x) == 0) {
+  if (hasData(x)) {
     ParallelLogger::logTrace("  - Object has no data.")
   }
 
+  if ("cohortDefinitionId" %in% colnames(x)) {
+    x <- x %>% 
+      dplyr::rename(cohortId = .data$cohortDefinitionId)
+  }
+  
   resultsDataModel <- getResultsDataModelSpecifications()
 
   if (!is.null(databaseId)) {
@@ -224,11 +229,11 @@ makeDataExportable <- function(x,
     dplyr::select(dplyr::all_of(presentInBoth))
 
   # enforce minimum cell count value
-  x <- x %>%
-    enforceMinCellValueInDataframe(
-      columnNames = columnsToApplyMinCellValue,
-      minCellCount = minCellCount
-    )
+  if (hasData(x)) {
+    x <- x %>%
+      enforceMinCellValueInDataframe(columnNames = columnsToApplyMinCellValue,
+                                     minCellCount = minCellCount)
+  }
   return(x)
 }
 
