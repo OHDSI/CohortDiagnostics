@@ -39,8 +39,8 @@ if (enableAuthorization) {
 
 if (exists("shinySettings")) {
   writeLines("Using settings provided by user")
-  connectionDetails <- shinySettings$connectionDetails
-  dbms <- connectionDetails$dbms
+  shinyConnectionDetails <- shinySettings$connectionDetails
+  dbms <- shinyConnectionDetails$dbms
   resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
   vocabularyDatabaseSchemas <- shinySettings$vocabularyDatabaseSchemas
   enableAnnotation <- shinySettings$enableAnnotation
@@ -73,28 +73,28 @@ if (exists("shinySettings")) {
     sort()
 }
 
-if (is(connectionDetails$server, "function")) {
+if (is(shinyConnectionDetails$server, "function")) {
   connectionPool <-
     pool::dbPool(
       drv = DatabaseConnector::DatabaseConnectorDriver(),
-      dbms = connectionDetails$dbms,
-      server = connectionDetails$server(),
-      port = connectionDetails$port(),
-      user = connectionDetails$user(),
-      password = connectionDetails$password(),
-      connectionString = connectionDetails$connectionString()
+      dbms = shinyConnectionDetails$dbms,
+      server = shinyConnectionDetails$server(),
+      port = shinyConnectionDetails$port(),
+      user = shinyConnectionDetails$user(),
+      password = shinyConnectionDetails$password(),
+      connectionString = shinyConnectionDetails$connectionString()
     )
 } else {
   # For backwards compatibility with older versions of DatabaseConnector:
   connectionPool <-
     pool::dbPool(
       drv = DatabaseConnector::DatabaseConnectorDriver(),
-      dbms = connectionDetails$dbms,
-      server = connectionDetails$server,
-      port = connectionDetails$port,
-      user = connectionDetails$user,
-      password = connectionDetails$password,
-      connectionString = connectionDetails$connectionString
+      dbms = shinyConnectionDetails$dbms,
+      server = shinyConnectionDetails$server,
+      port = shinyConnectionDetails$port,
+      user = shinyConnectionDetails$user,
+      password = shinyConnectionDetails$password,
+      connectionString = shinyConnectionDetails$connectionString
     )
 }
 
@@ -187,12 +187,6 @@ if (exists("database")) {
 
 if (exists("temporalTimeRef")) {
   temporalCharacterizationCovariateChoices <- get("temporalTimeRef") %>%
-    dplyr::filter((.data$startDay == -365 & .data$endDay == -31) |
-                    (.data$startDay == -30 & .data$endDay == -1) |
-                    (.data$startDay == 0 & .data$endDay == 0) |
-                    (.data$startDay == 1 & .data$endDay == 30) |
-                    (.data$startDay == 31 & .data$endDay == 365)
-    ) %>%
     dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
     dplyr::select(.data$timeId, .data$choices) %>%
     dplyr::arrange(.data$timeId)

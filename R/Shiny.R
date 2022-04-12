@@ -85,6 +85,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
   ensure_installed("checkmate")
   ensure_installed("DatabaseConnector")
   ensure_installed("dplyr")
+  ensure_installed("plyr")
   ensure_installed("ggplot2")
   ensure_installed("ggiraph")
   ensure_installed("gtable")
@@ -97,6 +98,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
   ensure_installed("shinydashboard")
   ensure_installed("shinyWidgets")
   ensure_installed("shinyjs")
+  ensure_installed("shinycssloaders")
   ensure_installed("stringr")
   ensure_installed("SqlRender")
   ensure_installed("tidyr")
@@ -120,15 +122,14 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     options(shiny.port = port)
     options(shiny.host = myIpAddress)
   }
-  shinySettings <- list(
+  .GlobalEnv$shinySettings <- list(
     connectionDetails = connectionDetails,
     resultsDatabaseSchema = resultsDatabaseSchema,
     vocabularyDatabaseSchemas = vocabularyDatabaseSchemas,
     aboutText = aboutText,
     enableAnnotation = enableAnnotation
   )
-  .GlobalEnv$shinySettings <- shinySettings
-  on.exit(rm("shinySettings", envir = .GlobalEnv))
+
   shiny::runApp(appDir = appDir)
 }
 

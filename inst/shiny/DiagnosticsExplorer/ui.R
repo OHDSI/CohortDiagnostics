@@ -357,7 +357,7 @@ bodyTabItems <- shinydashboard::tabItems(
         )
       ),   
       shiny::column(12,
-             reactable::reactableOutput(outputId = "cohortDefinitionTable")),
+             shinycssloaders::withSpinner(shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionTable")))),
       shiny::column(
         12,
         conditionalPanel(
@@ -377,7 +377,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                     )
                               )
                             ),
-                            reactable::reactableOutput(outputId = "cohortCountsTableInCohortDefinition")),
+                            shinycssloaders::withSpinner(shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortCountsTableInCohortDefinition")))),
             shiny::tabPanel(title = "Cohort definition",
                             tags$table(
                               tags$tr(
@@ -398,7 +398,7 @@ bodyTabItems <- shinydashboard::tabItems(
                             shiny::htmlOutput("cohortDefinitionText")),
             shiny::tabPanel(
               title = "Concept Sets",
-              reactable::reactableOutput(outputId = "conceptsetExpressionsInCohort"),
+              shinycssloaders::withSpinner(shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "conceptsetExpressionsInCohort"))),
               shiny::conditionalPanel(condition = "output.cohortDefinitionConceptSetExpressionRowIsSelected == true",
                                       tags$table(tags$tr(
                                         tags$td(
@@ -465,7 +465,7 @@ bodyTabItems <- shinydashboard::tabItems(
                         )
                   )
                 ), 
-                reactable::reactableOutput(outputId = "cohortDefinitionConceptSetDetailsTable")
+                shinycssloaders::withSpinner(shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionConceptSetDetailsTable")))
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Resolved'",
@@ -478,7 +478,7 @@ bodyTabItems <- shinydashboard::tabItems(
                         )
                   )
                 ), 
-                reactable::reactableOutput(outputId = "cohortDefinitionResolvedConceptsTable")
+                shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionResolvedConceptsTable"))
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Mapped'",
@@ -491,7 +491,7 @@ bodyTabItems <- shinydashboard::tabItems(
                         )
                   )
                 ), 
-                reactable::reactableOutput(outputId = "cohortDefinitionMappedConceptsTable")
+                shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionMappedConceptsTable"))
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Orphan concepts'",
@@ -504,7 +504,7 @@ bodyTabItems <- shinydashboard::tabItems(
                         )
                   )
                 ), 
-                reactable::reactableOutput(outputId = "cohortDefinitionOrphanConceptTable")
+                shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionOrphanConceptTable"))
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Json'",
@@ -559,11 +559,11 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )
       ),
-      reactable::reactableOutput(outputId = "cohortCountsTable"),
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortCountsTable")),
       shiny::conditionalPanel(
         condition = "output.cohortCountRowIsSelected == true",
         tags$br(),
-        reactable::reactableOutput("InclusionRuleStatForCohortSeletedTable",width = NULL)
+        shinycssloaders::withSpinner(reactable::reactableOutput("InclusionRuleStatForCohortSeletedTable",width = NULL))
         
       ),
       if (showAnnotation) {
@@ -740,7 +740,7 @@ bodyTabItems <- shinydashboard::tabItems(
                      align = "right",
                      tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('timeDistributionTable')")
                    ))),
-        reactable::reactableOutput(outputId = "timeDistributionTable")
+        shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "timeDistributionTable"))
       ),
       shiny::conditionalPanel(
         condition = "input.timeDistributionType=='Plot'",
@@ -791,7 +791,7 @@ bodyTabItems <- shinydashboard::tabItems(
                           )
                         ))),
       column(12,
-             reactable::reactableOutput(outputId = "conceptsInDataSourceTable")),
+             shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "conceptsInDataSourceTable"))),
       if (showAnnotation) {
         column(12,
                tags$br(),
@@ -835,7 +835,7 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )
       ),
-      reactable::reactableOutput(outputId = "orphanConceptsTable"),
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "orphanConceptsTable")),
       if (showAnnotation) {
         column(12,
                tags$br(),
@@ -867,7 +867,7 @@ bodyTabItems <- shinydashboard::tabItems(
                 )
               ))
       ), 
-      reactable::reactableOutput(outputId = "inclusionRuleTable"),
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "inclusionRuleTable")),
       column(12,
              if (showAnnotation) {
                column(12,
@@ -908,7 +908,7 @@ bodyTabItems <- shinydashboard::tabItems(
           )
         )
       ),
-      reactable::reactableOutput(outputId = "breakdownTable"),
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "breakdownTable")),
       if (showAnnotation) {
         column(12,
                tags$br(),
@@ -947,7 +947,7 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )
       ),
-      reactable::reactableOutput(outputId = "visitContextTable"),
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "visitContextTable")),
       if (showAnnotation) {
         column(12,
                tags$br(),
@@ -968,7 +968,7 @@ bodyTabItems <- shinydashboard::tabItems(
         selected = "Percentages",
         inline = TRUE
       ),
-      ggiraph::ggiraphOutput("overlapPlot", width = "100%", height = "100%"),
+      shinycssloaders::withSpinner(ggiraph::ggiraphOutput("overlapPlot", width = "100%", height = "100%")),
       if (showAnnotation) {
         column(12,
                tags$br(),
@@ -1069,7 +1069,7 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )
       ),
-      reactable::reactableOutput(outputId = "characterizationTable"),
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "characterizationTable")),
       if (showAnnotation) {
         column(12,
                tags$br(),
@@ -1139,7 +1139,7 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )
       ),
-      reactable::reactableOutput("temporalCharacterizationTable"),
+      shinycssloaders::withSpinner(reactable::reactableOutput("temporalCharacterizationTable")),
       if (showAnnotation) {
         column(12,
                tags$br(),
@@ -1238,7 +1238,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                            )
                                          )
                               ),
-                              reactable::reactableOutput("compareCohortCharacterizationTable")),
+                              shinycssloaders::withSpinner(reactable::reactableOutput("compareCohortCharacterizationTable"))),
       shiny::conditionalPanel(
         condition = "input.charCompareType=='Plot'",
         shinydashboard::box(
@@ -1246,10 +1246,12 @@ bodyTabItems <- shinydashboard::tabItems(
           width = NULL,
           status = "primary",
           shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
-          ggiraph::ggiraphOutput(
-            outputId = "compareCohortCharacterizationBalancePlot",
-            width = "100%",
-            height = "100%"
+          shinycssloaders::withSpinner(
+            ggiraph::ggiraphOutput(
+              outputId = "compareCohortCharacterizationBalancePlot",
+              width = "100%",
+              height = "100%"
+            )
           )
         )
       ),
@@ -1352,7 +1354,7 @@ bodyTabItems <- shinydashboard::tabItems(
                      )
                    )
         ),
-        reactable::reactableOutput(outputId = "temporalCharacterizationCompareTable")
+        shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "temporalCharacterizationCompareTable"))
       ),
       shiny::conditionalPanel(
         condition = "input.temporalCharacterizationType=='Plot'",
@@ -1360,10 +1362,12 @@ bodyTabItems <- shinydashboard::tabItems(
           title = "Compare Temporal Characterization",
           width = NULL,
           status = "primary",
-          ggiraph::ggiraphOutput(
-            outputId = "temporalCharacterizationComparePlot",
-            width = "100%",
-            height = "100%"
+          shinycssloaders::withSpinner(
+            ggiraph::ggiraphOutput(
+              outputId = "temporalCharacterizationComparePlot",
+              width = "100%",
+              height = "100%"
+            )
           )
         )
       ),
@@ -1386,7 +1390,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                        )
                             )),
                             tags$br(),
-                            reactable::reactableOutput(outputId = "databaseInformationTable")
+                            shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "databaseInformationTable"))
                           ))
 )
 
