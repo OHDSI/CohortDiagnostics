@@ -530,7 +530,6 @@ resolvedConceptSet <- function(dataSource,
                     WHERE database_id IN (@databaseIds)
                     	AND cohort_id = @cohortId
                     ORDER BY concept.concept_id;"
-  browser()
   resolved <-
     renderTranslateQuerySql(
       connection = dataSource$connection,

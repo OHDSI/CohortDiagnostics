@@ -216,6 +216,13 @@ if (exists("temporalCovariateRef")) {
   prettyAnalysisIds <- c(0)
 }
 
+prettyTable1Specifications <- readr::read_csv(
+  file = "Table1SpecsLong.csv",
+  col_types = readr::cols(),
+  guess_max = min(1e7),
+  lazy = FALSE
+)
+
 
 analysisIdInCohortCharacterization <- c(1, 3, 4, 5, 6, 7,
                                         203, 403, 501, 703,

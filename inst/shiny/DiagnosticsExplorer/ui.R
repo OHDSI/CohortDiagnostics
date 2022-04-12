@@ -379,8 +379,22 @@ bodyTabItems <- shinydashboard::tabItems(
                             ),
                             reactable::reactableOutput(outputId = "cohortCountsTableInCohortDefinition")),
             shiny::tabPanel(title = "Cohort definition",
-                            copyToClipboardButton(toCopyId = "cohortDefinitionText",
-                                                  style = "margin-top: 5px; margin-bottom: 5px;"),
+                            tags$table(
+                              tags$tr(
+                                tags$td(
+                                  copyToClipboardButton(toCopyId = "cohortDefinitionText",
+                                                        style = "margin-top: 5px; margin-bottom: 5px;")
+                                ),
+                                tags$td(
+                                  shiny::downloadButton(
+                                    outputId = "exportAllCohortDetails",
+                                    label = "Export all cohort",
+                                    icon = shiny::icon("file-export"),
+                                    style = "margin-top: 5px; margin-bottom: 5px;"
+                                  )
+                                )
+                              )
+                            ),
                             shiny::htmlOutput("cohortDefinitionText")),
             shiny::tabPanel(
               title = "Concept Sets",
@@ -419,11 +433,21 @@ bodyTabItems <- shinydashboard::tabItems(
                                             )
                                           )
                                         ),
-                                        tags$td(
-                                          shiny::htmlOutput("subjectCountInCohortConceptSet")
-                                        ),
+                                        tags$td(shiny::htmlOutput("subjectCountInCohortConceptSet")), 
                                         tags$td(
                                           shiny::htmlOutput("recordCountInCohortConceptSet")
+                                        ),
+                                        tags$td(
+                                          shiny::conditionalPanel(
+                                            condition = "input.conceptSetsType == 'Resolved' ||
+                                                                input.conceptSetsType == 'Mapped'||
+                                                                input.conceptSetsType == 'Orphan concepts'",
+                                            shiny::checkboxInput(
+                                              inputId = "withRecordCount",
+                                              label = "With Record Count",
+                                              value = TRUE
+                                            )
+                                          )
                                         )
                                       ))),
               shiny::conditionalPanel(

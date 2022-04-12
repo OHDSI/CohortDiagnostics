@@ -1,6 +1,6 @@
 formatDataCellValueInDisplayTable <-
   function(showDataAsPercent = FALSE) {
-   if (showDataAsPercent) {
+    if (showDataAsPercent) {
       reactable::JS(
         "function(data) {
           if (isNaN(parseFloat(data.value))) return data.value;
@@ -106,12 +106,12 @@ prepDataForDisplay <- function(data,
     )
   }
   data <- data %>%
-    dplyr::select(dplyr::all_of(commonColumns)) %>% 
+    dplyr::select(dplyr::all_of(commonColumns)) %>%
     dplyr::mutate(dplyr::across(.cols = dplyr::all_of(intersect(dataColumns, commonColumns)), 
                                 .fns = ~tidyr::replace_na(data = ., replace = 0)))
   
   if ("databaseId" %in% colnames(data)) {
-    data <- data %>% 
+    data <- data %>%
       dplyr::relocate("databaseId")
   }
   return(data)
@@ -220,7 +220,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
   
   maxValue <- 0
   if (valueFill == 0) {
-    maxValue <-
+    maxValue <- 
       getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = dataColumns)
   }
   
@@ -249,7 +249,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         name =  SqlRender::camelCaseToTitleCase(columnName),
         cell =  formatDataCellValueInDisplayTable(showDataAsPercent = showDataAsPercent),
         sortable = TRUE,
-        resizable = TRUE,
+        resizable = FALSE,
         filterable = TRUE,
         show = TRUE,
         minWidth = 200,
@@ -359,7 +359,7 @@ getDisplayTableSimple <- function(data,
     displayTableColumnMinMaxWidth <-
       getDisplayTableColumnMinMaxWidth(data = data,
                                        columnName = keyColumns[[i]])
-  
+    
     colnames(data)[which(names(data) == keyColumns[i])] <-
       columnName
     
@@ -398,7 +398,7 @@ getDisplayTableSimple <- function(data,
           name = columnName,
           cell = formatDataCellValueInDisplayTable(showDataAsPercent = showDataAsPercent),
           sortable = TRUE,
-          resizable = TRUE,
+          resizable = FALSE,
           filterable = TRUE,
           show = TRUE,
           html = TRUE,
@@ -462,7 +462,7 @@ getMaxValueForStringMatchedColumnsInDataFrame <-
     if (!hasData(data)) {
       return(0)
     }
-    string <- intersect(string, 
+    string <- intersect(string,
                         colnames(data))
     data <- data %>%
       dplyr::select(dplyr::all_of(string)) %>%
@@ -489,10 +489,10 @@ getDisplayTableColumnMinMaxWidth <- function(data,
   
   if ("character" %in% class(data[[columnName]])) {
     maxWidth <- (max(stringr::str_length(c(
-      stringr::str_replace_na(string = data[[columnName]],
-                              replacement = ""),
-      columnNameFormatted
-    ))) * pixelMultipler) + padPixel # to pad for table icon like sort
+        stringr::str_replace_na(string = data[[columnName]],
+                                replacement = ""),
+        columnNameFormatted
+      ))) * pixelMultipler) + padPixel # to pad for table icon like sort
     minWidth <-
       min(stringr::str_length(columnNameFormatted) * pixelMultipler,
           maxWidth) + padPixel
@@ -513,10 +513,91 @@ getDisplayTableColumnMinMaxWidth <- function(data,
       ), na.rm = TRUE) * pixelMultipler) + padPixel # to pad for table icon like sort
     minWidth <-
       min(stringr::str_length(columnNameFormatted) * pixelMultipler,
-          maxWidth, na.rm = TRUE) + padPixel
+          maxWidth,
+          na.rm = TRUE) + padPixel
   }
   
   data <- list(minValue = minWidth,
                maxValue = maxWidth)
   return(data)
+}
+
+exportCohortDetailsAsZip <- function(dataSource,
+                                     cohort,
+                                     cohortIds = NULL,
+                                     zipFile = NULL) {
+  rootFolder <-
+    stringr::str_replace_all(string = Sys.time(),
+                             pattern = "-",
+                             replacement = "")
+  rootFolder <-
+    stringr::str_replace_all(string = rootFolder,
+                             pattern = ":",
+                             replacement = "")
+  tempdir <- file.path(tempdir(), rootFolder)
+  
+  for (i in (1:nrow(cohort))) {
+    cohortId <- cohort[i,]$cohortId
+    dir.create(
+      path = file.path(tempdir, cohortId),
+      recursive = TRUE,
+      showWarnings = FALSE
+    )
+    cohortExpression <- cohort[i,]$json %>%
+      RJSONIO::fromJSON(digits = 23)
+    
+    details <-
+      getCirceRenderedExpression(cohortDefinition =  cohortExpression)
+    
+    SqlRender::writeSql(sql = details$cohortJson,
+                        targetFile = file.path(
+                          tempdir,
+                          cohortId,
+                          paste0('cohortDefinitionJson_', cohortId, '.json')
+                        ))
+    SqlRender::writeSql(
+      sql = details$cohortMarkdown,
+      targetFile = file.path(
+        tempdir,
+        cohortId,
+        paste0('cohortDefinitionMarkdown_', cohortId, '.md')
+      )
+    )
+    
+    SqlRender::writeSql(
+      sql = details$conceptSetMarkdown,
+      targetFile = file.path(
+        tempdir,
+        cohortId,
+        paste0('conceptSetMarkdown_', cohortId, '.md')
+      )
+    )
+    
+    SqlRender::writeSql(
+      sql = details$cohortHtmlExpression,
+      targetFile = file.path(
+        tempdir,
+        cohortId,
+        paste0('cohortDefinitionHtml_', cohortId, '.html')
+      )
+    )
+    
+    SqlRender::writeSql(
+      sql = details$conceptSetHtmlExpression,
+      targetFile = file.path(
+        tempdir,
+        cohortId,
+        paste0("conceptSetsHtml_", cohortId, '.html')
+      )
+    )
+    
+  }
+  
+  return(
+    DatabaseConnector::createZipFile(
+      zipFile = zipFile,
+      files = tempdir,
+      rootFolder = tempdir
+    )
+  )
 }
