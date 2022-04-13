@@ -50,11 +50,11 @@ if (exists("shinySettings")) {
   resultsDatabaseSchema <- "main"
   vocabularyDatabaseSchemas <- "main"
   dbms <- "sqlite"
-  connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
+  shinyConnectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
 } else {
   writeLines("Connecting to remote database")
   dbms <- Sys.getenv("shinydbDatabase", unset = "postgresql")
-  connectionDetails <- DatabaseConnector::createConnectionDetails(
+  shinyConnectionDetails <- DatabaseConnector::createConnectionDetails(
     dbms = dbms,
     server = Sys.getenv("shinydbServer"),
     port = Sys.getenv("shinydbPort", unset = 5432),
