@@ -197,7 +197,6 @@ getInclusionStats <- function(connection,
         cohortIds = subset$cohortId,
         folder = inclusionStatisticsFolder
       )
-    browser()
     if (!is.null(stats)) {
       if ("inclusionRuleStats" %in% (names(stats))) {
         inclusionRuleStats <- makeDataExportable(
