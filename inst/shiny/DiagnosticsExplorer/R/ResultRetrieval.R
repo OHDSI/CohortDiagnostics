@@ -162,6 +162,19 @@ queryResultCovariateValue <- function(dataSource,
       dplyr::tibble()
   }
   
+  if (hasData(temporalCovariateValueData)) {
+    temporalCovariateValueData <- temporalCovariateValueData %>%
+      dplyr::left_join(temporalTimeRef,
+                       by = "timeId")
+  }
+  
+  if (hasData(temporalCovariateValueDistData)) {
+    temporalCovariateValueDistData <-
+      temporalCovariateValueDistData %>%
+      dplyr::left_join(temporalTimeRef,
+                       by = "timeId")
+  }
+  
   data <- list(
     temporalTimeRef = temporalTimeRefData,
     temporalAnalysisRef = temporalAnalysisRefData,
@@ -181,7 +194,8 @@ getCharacterizationOutput <- function(dataSource,
                                     endDay = NULL,
                                     temporalCovariateValue = TRUE,
                                     temporalCovariateValueDist = TRUE) {
-  temporalChoices <- getResultsTemporalTimeRef(dataSource = dataSource)
+  temporalChoices <-
+    getResultsTemporalTimeRef(dataSource = dataSource)
   
   covariateValue <- queryResultCovariateValue(
     dataSource = dataSource,
@@ -194,12 +208,14 @@ getCharacterizationOutput <- function(dataSource,
     temporalCovariateValueDist = temporalCovariateValueDist
   )
   
-  postProcessCovariateValue <- function(data,
-                                        temporalChoices) {
+  postProcessCharacterizationValue <- function(data,
+                                               temporalChoices) {
+    if ("timeId" %in% colnames(data$temporalCovariateValue)) {
+      data$temporalCovariateValue$timeId <- NULL
+    }
     resultCovariateValue <- data$temporalCovariateValue %>%
       dplyr::arrange(.data$cohortId,
                      .data$databaseId,
-                     .data$timeId,
                      .data$covariateId) %>%
       dplyr::inner_join(data$temporalCovariateRef,
                         by = "covariateId") %>%
@@ -207,11 +223,11 @@ getCharacterizationOutput <- function(dataSource,
                         by = "analysisId") %>%
       dplyr::left_join(
         temporalChoices %>%
-          dplyr::select(.data$timeId,
-                        .data$startDay,
+          dplyr::select(.data$startDay,
                         .data$endDay,
+                        .data$timeId,
                         .data$choices),
-        by = "timeId"
+        by = c("startDay", "endDay")
       ) %>%
       dplyr::relocate(
         .data$cohortId,
@@ -251,26 +267,54 @@ getCharacterizationOutput <- function(dataSource,
     return(resultCovariateValue)
   }
   
-  
-  # add feature cohort code
   resultCovariateValue <- NULL
   if ("temporalCovariateValue" %in% names(covariateValue) &&
       hasData(covariateValue$temporalCovariateValue)) {
-    resultCovariateValue <- postProcessCovariateValue(data = covariateValue,
-                                                      temporalChoices = temporalChoices)
+    resultCovariateValue <-
+      postProcessCharacterizationValue(data = covariateValue,
+                                       temporalChoices = temporalChoices)
+  }
+  resultCovariateValueDist <- NULL
+  
+  cohortRelationshipCharacterizationResults <-
+    getCohortRelationshipCharacterizationResults(dataSource = dataSource,
+                                                 cohortIds = cohortIds,
+                                                 databaseIds = databaseIds)
+  resultCohortValue <- NULL
+  if ("temporalCovariateValue" %in% names(cohortRelationshipCharacterizationResults) &&
+      hasData(cohortRelationshipCharacterizationResults$temporalCovariateValue)) {
+    resultCohortValue <-
+      postProcessCharacterizationValue(data = cohortRelationshipCharacterizationResults,
+                                       temporalChoices = temporalChoices)
   }
   
   resultCovariateValueDist <- NULL
-  if ("temporalCovariateValueDist" %in% names(covariateValue) &&
-      hasData(covariateValue$temporalCovariateValueDist)) {
-    resultCovariateValue <- postProcessCovariateValue(data = covariateValue,
-                                                      temporalChoices = temporalChoices)
+  
+  temporalCovariateValue <- NULL
+  temporalCovariateValueDist <- NULL
+  
+  if (hasData(resultCovariateValue)) {
+    temporalCovariateValue <- dplyr::bind_rows(temporalCovariateValue,
+                                               resultCovariateValue)
+  }
+  if (hasData(resultCovariateValueDist)) {
+    temporalCovariateValueDist <-
+      dplyr::bind_rows(temporalCovariateValueDist,
+                       resultCovariateValueDist)
+  }
+  
+  if (hasData(resultCohortValue)) {
+    temporalCovariateValue <- dplyr::bind_rows(temporalCovariateValue,
+                                               resultCohortValue)
+  }
+  if (hasData(resultCovariateValueDist)) {
+    temporalCovariateValueDist <-
+      dplyr::bind_rows(temporalCovariateValueDist,
+                       resultCovariateValueDist)
   }
   return(
-    list(
-      covariateValue = resultCovariateValue,
-      covariateValueDist = resultCovariateValueDist
-    )
+    list(covariateValue = temporalCovariateValue,
+         covariateValueDist = temporalCovariateValueDist)
   )
 }
 
@@ -827,9 +871,9 @@ getCohortRelationshipCharacterizationResults <-
            cohortIds = NULL,
            databaseIds = NULL) {
     cohortCounts <-
-      getResultsCohortCount(dataSource = dataSource,
-                            cohortIds = cohortIds,
-                            databaseIds = databaseIds)
+      getResultsCohortCounts(dataSource = dataSource,
+                             cohortIds = cohortIds,
+                             databaseIds = databaseIds)
     cohort <- getResultsCohort(dataSource = dataSource)
     
     cohortRelationships <-
@@ -838,7 +882,6 @@ getCohortRelationshipCharacterizationResults <-
                                     databaseIds = databaseIds)
     
     # cannot do records because comparator cohorts may have sumValue > target cohort (which is first occurrence only)
-    
     # subjects overlap
     subjectsOverlap <- cohortRelationships %>% 
       dplyr::inner_join(cohortCounts,
@@ -933,15 +976,20 @@ getCohortRelationshipCharacterizationResults <-
                           dplyr::select(.data$analysisId) %>% 
                           dplyr::distinct(),
                         by = c("analysisId"))
-    
     covariateRef <- tidyr::crossing(cohort,
                                     analysisRef %>%
                                       dplyr::select(.data$analysisId,
                                                     .data$analysisName)) %>%
       dplyr::mutate(covariateId = (.data$cohortId * -1000) + .data$analysisId) %>%
       dplyr::inner_join(data %>% dplyr::select(.data$covariateId) %>% dplyr::distinct(),
-                        by = "covariateId") %>% 
-      dplyr::mutate(covariateName = paste0(.data$analysisName, ": ", .data$shortName, " ", .data$cohortName)) %>%
+                        by = "covariateId") %>%
+      dplyr::mutate(covariateName = paste0(
+        .data$analysisName,
+        ": (",
+        .data$cohortId,
+        ") ",
+        .data$cohortName
+      )) %>%
       dplyr::mutate(conceptId = .data$cohortId * -1) %>%
       dplyr::arrange(.data$covariateId) %>%
       dplyr::select(.data$analysisId,
@@ -987,10 +1035,10 @@ getCohortRelationshipCharacterizationResults <-
                     .data$sumValue)
     
     data <- list(
-      covariateRef = covariateRef,
-      covariateValue = covariateValue,
-      covariateValueDist = NULL,
-      analysisRef = analysisRef,
+      temporalCovariateRef = covariateRef,
+      temporalCovariateValue = covariateValue,
+      temporalCovariateValueDist = NULL,
+      temporalAnalysisRef = analysisRef,
       concept = concept
     )
     return(data)
@@ -1018,7 +1066,8 @@ getResultsCohort <- function(dataSource, cohortIds = NULL) {
     dbms = dataSource$dbms,
     sql = "SELECT * FROM @results_database_schema.cohort
                                           {@cohort_id != \"\"} ? { WHERE cohort_id IN (@cohort_id)};",
-    cohort_id = cohortIds
+    cohort_id = cohortIds,
+    snakeCaseToCamelCase = TRUE
   )
   return(data)
 }

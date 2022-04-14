@@ -1966,13 +1966,13 @@ shiny::shinyServer(function(input, output, session) {
         ),
         value = 0
       )
-      
-      getCharacterizationOutput(
+      data <- getCharacterizationOutput(
         dataSource = dataSource,
         cohortIds = targetCohortId(),
         databaseIds = input$databases,
         temporalCovariateValueDist = FALSE
       )
+      return(data)
     })
   
   ## characterizationOutputForTemporalCharacterizationMenu ----
@@ -2081,9 +2081,9 @@ shiny::shinyServer(function(input, output, session) {
     characterizationAnalysisOptionsUniverse <- NULL
     charcterizationAnalysisOptionsSelected <- NULL
     
-    if (hasData(get("temporalAnalysisRef"))) {
+    if (hasData(temporalAnalysisRef)) {
       characterizationAnalysisOptionsUniverse <- analysisNameOptions
-      charcterizationAnalysisOptionsSelected <- get("temporalAnalysisRef") %>%
+      charcterizationAnalysisOptionsSelected <- temporalAnalysisRef %>%
         dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
         dplyr::pull(.data$analysisName) %>%
         unique()
@@ -2116,9 +2116,9 @@ shiny::shinyServer(function(input, output, session) {
     characterizationDomainOptionsUniverse <- NULL
     charcterizationDomainOptionsSelected <- NULL
     
-    if (hasData(get("temporalAnalysisRef"))) {
+    if (hasData(temporalAnalysisRef)) {
       characterizationDomainOptionsUniverse <- domainIdOptions
-      charcterizationDomainOptionsSelected <- get("temporalAnalysisRef") %>%
+      charcterizationDomainOptionsSelected <- temporalAnalysisRef %>%
         dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
         dplyr::pull(.data$domainId) %>%
         unique()
@@ -2385,11 +2385,11 @@ shiny::shinyServer(function(input, output, session) {
     temporalCharacterizationAnalysisOptionsUniverse <- NULL
     temporalCharcterizationAnalysisOptionsSelected <- NULL
     
-    if (hasData(get("temporalAnalysisRef"))) {
+    if (hasData(temporalAnalysisRef)) {
       temporalCharacterizationAnalysisOptionsUniverse <-
         analysisNameOptions
       temporalCharcterizationAnalysisOptionsSelected <-
-        get("temporalAnalysisRef") %>%
+        temporalAnalysisRef %>%
         dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
         dplyr::pull(.data$analysisName) %>%
         unique()
@@ -2421,11 +2421,11 @@ shiny::shinyServer(function(input, output, session) {
     temporalCharacterizationDomainOptionsUniverse <- NULL
     temporalCharcterizationDomainOptionsSelected <- NULL
     
-    if (hasData(get("temporalAnalysisRef"))) {
+    if (hasData(temporalAnalysisRef)) {
       temporalCharacterizationDomainOptionsUniverse <-
         domainIdOptions
       temporalCharcterizationDomainOptionsSelected <-
-        get("temporalAnalysisRef") %>%
+        temporalAnalysisRef %>%
         dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
         dplyr::pull(.data$domainId) %>%
         unique()
@@ -2549,15 +2549,27 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   # Compare cohort characterization --------------------------------------------
-  ## compareCohortCharacterizationAnalysisNameFilter -----
+  ## ReactiveVal: compareCohortCharacterizationAnalysisNameFilter ----
+  compareCohortCharacterizationAnalysisNameFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$compareCohortCharacterizationAnalysisNameFilter_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$compareCohortCharacterizationAnalysisNameFilter_open) ||
+        !is.null(input$tabs)) {
+      compareCohortCharacterizationAnalysisNameFilter(input$compareCohortCharacterizationAnalysisNameFilter)
+    }
+  })
+  
+  ### compareCohortCharacterizationAnalysisNameFilter -----
   shiny::observe({
     characterizationAnalysisOptionsUniverse <- NULL
     charcterizationAnalysisOptionsSelected <- NULL
     
-    if (hasData(get("temporalAnalysisRef"))) {
+    if (hasData(temporalAnalysisRef)) {
       characterizationAnalysisOptionsUniverse <- analysisNameOptions
       charcterizationAnalysisOptionsSelected <-
-        get("temporalAnalysisRef") %>%
+        temporalAnalysisRef %>%
         dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
         dplyr::pull(.data$analysisName) %>%
         unique()
@@ -2572,16 +2584,26 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  
-  ## compareCohortcharacterizationDomainIdFilter -----
+  ## ReactiveVal: compareCohortcharacterizationDomainIdFilter ----
+  compareCohortcharacterizationDomainIdFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$compareCohortcharacterizationDomainIdFilter_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$compareCohortcharacterizationDomainIdFilter_open) ||
+        !is.null(input$tabs)) {
+      compareCohortcharacterizationDomainIdFilter(input$compareCohortcharacterizationDomainIdFilter)
+    }
+  })
+  ### compareCohortcharacterizationDomainIdFilter -----
   shiny::observe({
     characterizationDomainOptionsUniverse <- NULL
     charcterizationDomainOptionsSelected <- NULL
     
-    if (hasData(get("temporalAnalysisRef"))) {
+    if (hasData(temporalAnalysisRef)) {
       characterizationDomainOptionsUniverse <- domainIdOptions
       charcterizationDomainOptionsSelected <-
-        get("temporalAnalysisRef") %>%
+        temporalAnalysisRef %>%
         dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
         dplyr::pull(.data$domainId) %>%
         unique()
@@ -2637,19 +2659,10 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$isBinary == 'N')
       }
     }
-    if (!hasData(input$compareCohortCharacterizationAnalysisNameFilter) ||
-        checkIfObjectIsTrue(input$compareCohortCharacterizationAnalysisNameFilter_open)) {
-      return(NULL)
-    }
-    data <- data %>%
-      dplyr::filter(.data$analysisName %in% input$compareCohortCharacterizationAnalysisNameFilter)
     
-    if (!hasData(input$compareCohortcharacterizationDomainIdFilter) ||
-        checkIfObjectIsTrue(input$compareCohortcharacterizationDomainIdFilter_open)) {
-      return(NULL)
-    }
     data <- data %>%
-      dplyr::filter(.data$domainId %in% input$compareCohortcharacterizationDomainIdFilter)
+      dplyr::filter(.data$analysisName %in% compareCohortCharacterizationAnalysisNameFilter()) %>%
+      dplyr::filter(.data$domainId %in% compareCohortcharacterizationDomainIdFilter())
     
     if (hasData(input$conceptSetsSelected)) {
       if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
@@ -2896,16 +2909,28 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   #Compare Temporal Characterization.-----------------------------------------
+  ## ReactiveVal: temporalCompareAnalysisNameFilter ----
+  temporalCompareAnalysisNameFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$temporalCompareAnalysisNameFilter_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$temporalCompareAnalysisNameFilter_open) ||
+        !is.null(input$tabs)) {
+      temporalCompareAnalysisNameFilter(input$temporalCompareAnalysisNameFilter)
+    }
+  })
+  
   ## temporalCompareAnalysisNameFilter ----
   shiny::observe({
     temporalCharacterizationAnalysisOptionsUniverse <- NULL
     temporalCharcterizationAnalysisOptionsSelected <- NULL
     
-    if (hasData(get("temporalAnalysisRef"))) {
+    if (hasData(temporalAnalysisRef)) {
       temporalCharacterizationAnalysisOptionsUniverse <-
         analysisNameOptions
       temporalCharcterizationAnalysisOptionsSelected <-
-        get("temporalAnalysisRef") %>%
+        temporalAnalysisRef %>%
         dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
         dplyr::pull(.data$analysisName) %>%
         unique()
@@ -2920,18 +2945,29 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
+  ## ReactiveVal: temporalCompareDomainNameFilter ----
+  temporalCompareDomainNameFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$temporalCompareDomainNameFilter_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$temporalCompareDomainNameFilter_open) ||
+        !is.null(input$tabs)) {
+      temporalCompareDomainNameFilter(input$temporalCompareDomainNameFilter)
+    }
+  })
   ## temporalCompareDomainNameFilter ----
   shiny::observe({
     temporalCharacterizationDomainOptionsUniverse <- NULL
     temporalCharcterizationDomainOptionsSelected <- NULL
     
-    if (hasData(get("temporalAnalysisRef"))) {
+    if (hasData(temporalAnalysisRef)) {
       temporalCharacterizationDomainOptionsUniverse <-
-        analysisNameOptions
+        domainIdOptions
       temporalCharcterizationDomainOptionsSelected <-
-        get("temporalAnalysisRef") %>%
+        temporalAnalysisRef %>%
         dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
-        dplyr::pull(.data$analysisName) %>%
+        dplyr::pull(.data$domainId) %>%
         unique()
     }
     
@@ -2989,19 +3025,9 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$isBinary == 'N')
     }
     
-    if (!hasData(input$temporalCompareAnalysisNameFilter) ||
-        checkIfObjectIsTrue(input$temporalCompareAnalysisNameFilter_open)) {
-      return(NULL)
-    }
     data <- data %>%
-      dplyr::filter(.data$analysisName %in% input$temporalCompareAnalysisNameFilter)
-    
-    if (!hasData(input$temporalCompareDomainNameFilter) ||
-        checkIfObjectIsTrue(input$temporalCompareDomainNameFilter_open)) {
-      return(NULL)
-    }
-    data <- data %>%
-      dplyr::filter(.data$domainId %in% input$temporalCompareDomainNameFilter)
+      dplyr::filter(.data$analysisName %in% temporalCompareAnalysisNameFilter()) %>%
+      dplyr::filter(.data$domainId %in% temporalCompareDomainNameFilter())
     
     if (hasData(input$conceptSetsSelected)) {
       if (hasData(getResolvedAndMappedConceptIdsForFilters())) {

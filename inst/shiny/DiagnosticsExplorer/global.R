@@ -205,15 +205,28 @@ if (exists("temporalTimeRef")) {
 
 if (exists("temporalAnalysisRef")) {
   
-  domainIdOptions <- get("temporalAnalysisRef") %>% 
+  temporalAnalysisRef <- dplyr::bind_rows(
+    temporalAnalysisRef,
+    dplyr::tibble(
+      analysisId = c(-201,-301),
+      analysisName = c("CohortEraStart", "CohortEraOverlap"),
+      domainId = "Cohort",
+      isBinary = "Y",
+      missingMeansZero = "Y"
+    )
+  )
+  
+  domainIdOptions <- temporalAnalysisRef %>% 
     dplyr::select(.data$domainId) %>% 
     dplyr::pull(.data$domainId) %>% 
-    unique()
+    unique() %>% 
+    sort()
   
-  analysisNameOptions <- get("temporalAnalysisRef") %>% 
+  analysisNameOptions <- temporalAnalysisRef %>% 
     dplyr::select(.data$analysisName) %>% 
     dplyr::pull(.data$analysisName) %>% 
-    unique()
+    unique() %>% 
+    sort()
   
 }
 
@@ -226,5 +239,7 @@ prettyTable1Specifications <- readr::read_csv(
 
 analysisIdInCohortCharacterization <- c(1, 3, 4, 5, 6, 7,
                                         203, 403, 501, 703,
-                                        801, 901, 903, 904)
-analysisIdInTemporalCharacterization <- c(101, 401, 501, 701)
+                                        801, 901, 903, 904,
+                                        -301, -201)
+analysisIdInTemporalCharacterization <- c(101, 401, 501, 701,
+                                          -301, -201)
