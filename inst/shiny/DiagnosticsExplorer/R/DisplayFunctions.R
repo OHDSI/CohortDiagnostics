@@ -122,7 +122,6 @@ sticky_style <- function(leftIndent = 0,
   style <-
     list(
       position = "sticky",
-      background = "#fff",
       left = paste0(leftIndent, "px"),
       zIndex = 1
     )

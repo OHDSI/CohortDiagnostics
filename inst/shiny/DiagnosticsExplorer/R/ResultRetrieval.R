@@ -294,7 +294,7 @@ getCharacterizationOutput <- function(dataSource,
 getTimeDistributionResult <- function(dataSource,
                                       cohortIds,
                                       databaseIds) {
-  data <- getCovariateValueResult(
+  data <- queryResultCovariateValue(
     dataSource = dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
@@ -305,11 +305,15 @@ getTimeDistributionResult <- function(dataSource,
   if (!hasData(data)) {
     return(NULL)
   }
-  data <- data$covariateValueDist
-  if (!hasData(data)) {
+  temporalCovariateValueDist <- data$temporalCovariateValueDist
+  if (!hasData(temporalCovariateValueDist)) {
     return(NULL)
   }
-  data <- data %>%
+  data <- temporalCovariateValueDist %>%
+    dplyr::inner_join(data$temporalCovariateRef,
+                      by = "covariateId") %>% 
+    dplyr::inner_join(data$temporalAnalysisRef,
+                      by = "analysisId") %>% 
     dplyr::rename(
       "timeMetric" = .data$covariateName,
       "averageValue" = .data$mean,

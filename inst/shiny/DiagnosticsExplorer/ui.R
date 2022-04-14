@@ -45,11 +45,7 @@ cohortReferenceWithDatabaseId <- function(cohortOutputId, databaseOutputId) {
   )
 }
 
-
-choicesFordatabaseOrVocabularySchema <- list(
-  'From site' = database$databaseIdWithVocabularyVersion,
-  'Reference Vocabulary' = vocabularyDatabaseSchemas
-)
+choicesFordatabaseOrVocabularySchema <- database$databaseIdWithVocabularyVersion
 
 if (enableAnnotation) {
   headerContent <- tags$li(
@@ -379,10 +375,10 @@ bodyTabItems <- shinydashboard::tabItems(
                                         tr(
                                           td(
                                             align = "right",
-                                            button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortCountsTableInCohortDefinition')")
+                                            button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionCohortCountTable')")
                                           )
                                         ))),
-              reactable::reactableOutput(outputId = "cohortCountsTableInCohortDefinition")
+              reactable::reactableOutput(outputId = "cohortDefinitionCohortCountTable")
             ),
             shiny::tabPanel(
               title = "Cohort definition",
@@ -403,7 +399,6 @@ bodyTabItems <- shinydashboard::tabItems(
                                               choices = c(
                                                 "Concept Set Expression",
                                                 "Resolved",
-                                                "Mapped",
                                                 "Orphan concepts",
                                                 "Json"
                                               ),
@@ -435,7 +430,6 @@ bodyTabItems <- shinydashboard::tabItems(
                                           tags$td(
                                             shiny::conditionalPanel(
                                               condition = "input.conceptSetsType == 'Resolved' ||
-                                                                input.conceptSetsType == 'Mapped'||
                                                                 input.conceptSetsType == 'Orphan concepts'",
                                               shiny::checkboxInput(
                                                 inputId = "withRecordCount",
@@ -449,7 +443,6 @@ bodyTabItems <- shinydashboard::tabItems(
               shiny::conditionalPanel(
                 condition = "output.cohortDefinitionConceptSetExpressionRowIsSelected == true &
                 input.conceptSetsType != 'Resolved' &
-                input.conceptSetsType != 'Mapped' &
                 input.conceptSetsType != 'Json' &
                 input.conceptSetsType != 'Orphan concepts'",
                 htmltools::withTags(table(width = "100%",
@@ -473,17 +466,21 @@ bodyTabItems <- shinydashboard::tabItems(
                 reactable::reactableOutput(outputId = "cohortDefinitionResolvedConceptsTable")
               ),
               shiny::conditionalPanel(
-                condition = "input.conceptSetsType == 'Mapped'",
+                condition = "output.cohortDefinitionResolvedRowIsSelected == true && input.conceptSetsType == 'Resolved'",
                 htmltools::withTags(table(width = "100%",
                                           tr(
                                             td(
                                               align = "right",
-                                              button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionMappedConceptsTable')")
+                                              button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionResolvedTableSelectedConceptIdMappedConcepts')")
                                             )
                                           ))),
-                reactable::reactableOutput(outputId = "cohortDefinitionMappedConceptsTable")
+                shinydashboard::box(
+                  title = "Mapped Concepts",
+                  width = NULL,
+                  reactable::reactableOutput(outputId = "cohortDefinitionResolvedTableSelectedConceptIdMappedConcepts")
+                )
               ),
-              shiny::conditionalPanel(
+             shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Orphan concepts'",
                 htmltools::withTags(table(width = "100%",
                                           tr(
@@ -1063,9 +1060,9 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )
       ),
-      shinycssloaders::withSpinner(shinycssloaders::withSpinner(
+      shinycssloaders::withSpinner(
         reactable::reactableOutput(outputId = "characterizationTable")
-      )),
+      ),
       if (showAnnotation) {
         column(12,
                tags$br(),
