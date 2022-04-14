@@ -1,8 +1,11 @@
 shiny::shinyServer(function(input, output, session) {
-  cohortId <- shiny::reactive({
-    return(cohort$cohortId[cohort$compoundName == input$cohort])
+  
+  # Reacive: targetCohortId
+  targetCohortId <- shiny::reactive({
+    return(cohort$cohortId[cohort$compoundName == input$targetCohort])
   })
   
+  # ReaciveVal: cohortIds
   cohortIds <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$cohorts_open,
@@ -15,6 +18,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  # Reacive: comparatorCohortId
   comparatorCohortId <- shiny::reactive({
     return(cohort$cohortId[cohort$compoundName == input$comparatorCohort])
   })
@@ -23,7 +27,7 @@ shiny::shinyServer(function(input, output, session) {
   conceptSetIds <- shiny::reactive(x = {
     conceptSetsFiltered <- conceptSets %>% 
       dplyr::filter(.data$conceptSetName %in% input$conceptSetsSelected) %>% 
-      dplyr::filter(.data$cohortId %in% cohortId()) %>% 
+      dplyr::filter(.data$cohortId %in% targetCohortId()) %>% 
       dplyr::select(.data$conceptSetId) %>% 
       dplyr::pull() %>% 
       unique()
@@ -35,17 +39,17 @@ shiny::shinyServer(function(input, output, session) {
     list(input$timeIdChoices_open,
          input$tabs)
   }, handlerExpr = {
-    if (exists('temporalCharacterizationCovariateChoices') &&
+    if (exists('temporalCharacterizationTimeIdChoices') &&
         (isFALSE(input$timeIdChoices_open) ||
          !is.null(input$tabs))) {
-      selectedTimeIds <- temporalCharacterizationCovariateChoices %>%
+      selectedTimeIds <- temporalCharacterizationTimeIdChoices %>%
         dplyr::filter(choices %in% input$timeIdChoices) %>%
         dplyr::pull(timeId)
       timeIds(selectedTimeIds)
     }
   })
   
-  ## ReactiveValue: databaseIds ----
+  ## ReactiveValue: selectedDatabaseIds ----
   selectedDatabaseIds <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$databases_open,
@@ -59,11 +63,32 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(input$tabs)) {
       if (input$tabs %in% c("compareCohortCharacterization",
                             "compareTemporalCharacterization",
-                            "temporalCharacterization")) {
+                            "temporalCharacterization",
+                            "databaseInformation")) {
         selectedDatabaseIds(input$database)
       } else {
         selectedDatabaseIds(input$databases)
       }
+    }
+  })
+  
+  
+  ## ReactiveValue: selectedTemporalTimeIds ----
+  selectedTemporalTimeIds <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$timeIdChoices_open,
+         input$timeIdChoices,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$timeIdChoices_open) ||
+        !is.null(input$tabs)) {
+      selectedTemporalTimeIds(
+        timeIds <- temporalCharacterizationTimeIdChoices %>%
+          dplyr::filter(.data$choices %in% input$timeIdChoices) %>%
+          dplyr::pull(.data$timeId) %>%
+          unique() %>%
+          sort()
+      )
     }
   })
   
@@ -76,7 +101,7 @@ shiny::shinyServer(function(input, output, session) {
     subset <- cohortSubset()$compoundName
     shinyWidgets::updatePickerInput(
       session = session,
-      inputId = "cohort",
+      inputId = "targetCohort",
       choicesOpt = list(style = rep_len("color: black;", 999)),
       choices = subset
     )
@@ -100,12 +125,12 @@ shiny::shinyServer(function(input, output, session) {
         input$tabs == 'timeDistribution') {
       subset <- input$cohorts
     } else {
-      subset <- input$cohort
+      subset <- input$targetCohort
     }
     
     shinyWidgets::updatePickerInput(
       session = session,
-      inputId = paste0("cohort", input$tabs),
+      inputId = paste0("targetCohort", input$tabs),
       choicesOpt = list(style = rep_len("color: black;", 999)),
       choices = subset,
       selected = subset
@@ -149,13 +174,12 @@ shiny::shinyServer(function(input, output, session) {
       keyColumns <- c("cohort", "cohortId", "cohortName")
       dataColumns <- c()
       
-      displayTable <- getDisplayTableSimple(
+      getDisplayTableSimple(
         data = data,
         keyColumns = keyColumns,
         dataColumns = dataColumns,
         selection = "single"
       )
-      return(displayTable)
     })
   
   selectedCohortDefinitionRow <- reactive({
@@ -811,7 +835,7 @@ shiny::shinyServer(function(input, output, session) {
         resolvedConceptSet(
           dataSource = dataSource,
           databaseIds = database$databaseId,
-          cohortId =  cohortId()
+          cohortId =  targetCohortId()
         )
       if (!hasData(output)) {
         return(NULL)
@@ -829,7 +853,7 @@ shiny::shinyServer(function(input, output, session) {
         mappedConceptSet(
           dataSource = dataSource,
           databaseIds = database$databaseId,
-          cohortId =  cohortId()
+          cohortId =  targetCohortId()
         )
       if (!hasData(output)) {
         return(NULL)
@@ -840,7 +864,7 @@ shiny::shinyServer(function(input, output, session) {
   ### getResolvedAndMappedConceptIdsForFilters ---------------------------------------------------------
   getResolvedAndMappedConceptIdsForFilters <- shiny::reactive({
     validate(need(hasData(selectedDatabaseIds()), "No data sources chosen"))
-    validate(need(hasData(cohortId()), "No cohort chosen"))
+    validate(need(hasData(targetCohortId()), "No cohort chosen"))
     validate(need(hasData(conceptSetIds()), "No concept set id chosen"))
     
     resolved <- getResolvedConceptsReactive()
@@ -849,14 +873,14 @@ shiny::shinyServer(function(input, output, session) {
     if (hasData(resolved)) {
       resolved <- resolved %>%
         dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-        dplyr::filter(.data$cohortId %in% cohortId()) %>%
+        dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
         dplyr::filter(.data$conceptSetId %in% conceptSetIds())
       output <- c(output, resolved$conceptId) %>% unique()
     }
     if (hasData(mapped)) {
       mapped <- mapped %>%
         dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-        dplyr::filter(.data$cohortId %in% cohortId()) %>%
+        dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
         dplyr::filter(.data$conceptSetId %in% conceptSetIds())
       output <- c(output, mapped$conceptId) %>% unique()
     }
@@ -874,21 +898,25 @@ shiny::shinyServer(function(input, output, session) {
       paste("ExportDetails", "zip", sep = ".")
     },
     content = function(file) {
-      exportCohortDetailsAsZip(dataSource = dataSource,
-                               cohort = cohort,
-                               zipFile = file)
+      shiny::withProgress(
+        message = "Export is in progress",{
+          exportCohortDetailsAsZip(dataSource = dataSource,
+                                   cohort = cohort,
+                                   zipFile = file)
+        },detail = "Please Wait"
+      )
     },
     contentType = "application/zip"
   )
   
   # Cohort Counts ---------------------------------------------------------------------------
-  getCohortCountResultReactive <- shiny::reactive(x = {
+  getResultsCohortCountReactive <- shiny::reactive(x = {
     if (!input$tabs == "cohortCounts") {
       return(NULL)
     }
     validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    data <- getCohortCountResult(
+    data <- getResultsCohortCounts(
       dataSource = dataSource,
       databaseIds = selectedDatabaseIds(),
       cohortIds = cohortIds()
@@ -907,10 +935,10 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     
-    data <- getCohortCountResultReactive()
+    data <- getResultsCohortCountReactive()
     validate(need(hasData(data), "There is no data on any cohort"))
     
-    data <- getCohortCountResultReactive() %>%
+    data <- getResultsCohortCountReactive() %>%
       dplyr::rename(cohort = .data$shortName) %>%
       dplyr::rename(persons = .data$cohortSubjects,
                     records = .data$cohortEntries)
@@ -950,8 +978,8 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(idx)) {
       return(NULL)
     } else {
-      if (hasData(getCohortCountResultReactive())) {
-        subset <- getCohortCountResultReactive() %>% 
+      if (hasData(getResultsCohortCountReactive())) {
+        subset <- getResultsCohortCountReactive() %>% 
           dplyr::select(.data$cohortId, 
                         .data$shortName) %>% 
           dplyr::distinct()
@@ -1314,11 +1342,11 @@ shiny::shinyServer(function(input, output, session) {
     }
     validate(need(all(!is.null(selectedDatabaseIds()), length(selectedDatabaseIds()) > 0), 
                   "No data sources chosen"))
-    validate(need(all(!is.null(cohortId()),length(cohortId()) > 0),
+    validate(need(all(!is.null(targetCohortId()),length(targetCohortId()) > 0),
                   "No cohort chosen"))
     data <- getConceptsInCohort(
       dataSource = dataSource,
-      cohortId = cohortId(),
+      cohortId = targetCohortId(),
       databaseIds = selectedDatabaseIds()
     )
     return(data)
@@ -1326,7 +1354,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$conceptsInDataSourceTable <- reactable::renderReactable(expr = {
     validate(need(hasData(selectedDatabaseIds()), "No cohort chosen"))
-    validate(need(hasData(cohortId()), "No cohort chosen"))
+    validate(need(hasData(targetCohortId()), "No cohort chosen"))
     
     data <- conceptsInDataSourceReactive()
     validate(need(hasData(data),
@@ -1380,7 +1408,7 @@ shiny::shinyServer(function(input, output, session) {
       getDisplayTableHeaderCount(
         dataSource =  dataSource,
         databaseIds = selectedDatabaseIds(),
-        cohortIds = cohortId(),
+        cohortIds = targetCohortId(),
         source = "cohort",
         fields = input$conceptsInDataSourceTableColumnFilter
       )
@@ -1411,10 +1439,10 @@ shiny::shinyServer(function(input, output, session) {
   
   # Orphan concepts table -------------------------------------------------------------------------
   orphanConceptsDataReactive <- shiny::reactive(x = {
-    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
+    validate(need(length(targetCohortId()) > 0, "No cohorts chosen"))
     data <- getOrphanConceptResult(
       dataSource = dataSource,
-      cohortId = cohortId(),
+      cohortId = targetCohortId(),
       databaseIds = database$databaseId
     )
     return(data)
@@ -1425,7 +1453,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(hasData(data), "There is no data for the selected combination."))
     data <- data %>% 
       dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>% 
-      dplyr::filter(.data$cohortId %in% cohortId())
+      dplyr::filter(.data$cohortId %in% targetCohortId())
     validate(need(hasData(data), "There is no data for the selected combination."))
     
     if (hasData(input$conceptSetsSelected)) {
@@ -1537,7 +1565,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
     table <- getInclusionRuleStats(
       dataSource = dataSource,
-      cohortIds = cohortId(),
+      cohortIds = targetCohortId(),
       databaseIds = selectedDatabaseIds()
     ) %>% 
       dplyr::rename(Meet = .data$meetSubjects,
@@ -1561,7 +1589,7 @@ shiny::shinyServer(function(input, output, session) {
       getDisplayTableHeaderCount(
         dataSource =  dataSource,
         databaseIds = selectedDatabaseIds(),
-        cohortIds = cohortId(),
+        cohortIds = targetCohortId(),
         source = "cohort",
         fields = "Persons"
       )
@@ -1593,11 +1621,11 @@ shiny::shinyServer(function(input, output, session) {
     if (!input$tabs %in% c("indexEventBreakdown")) {
       return(NULL)
     }
-    if (length(cohortId()) > 0 &&
+    if (length(targetCohortId()) > 0 &&
         length(selectedDatabaseIds()) > 0) {
       data <- getIndexEventBreakdown(
         dataSource = dataSource,
-        cohortIds = cohortId(),
+        cohortIds = targetCohortId(),
         databaseIds = selectedDatabaseIds()
       )
       if (any(is.null(data),
@@ -1636,71 +1664,11 @@ shiny::shinyServer(function(input, output, session) {
       }
     })
   
-  domaintable <- shiny::reactive(x = {
-    if (!is.null(indexEventBreakDownDataFilteredByRadioButton())) {
-      return(
-        indexEventBreakDownDataFilteredByRadioButton() %>%
-          dplyr::pull(.data$domainTable) %>% unique()
-      )
-    } else {
-      return(NULL)
-    }
-  })
-  
-  shiny::observe({
-    data <- domaintable()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "breakdownDomainTable",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = data,
-      selected = data
-    )
-  })
-  
-  shiny::observe({
-    data <- indexEventBreakDownDataFilteredByRadioButton()
-    if (!is.null(data) &&
-        nrow(data) > 0) {
-      data <- data %>%
-        dplyr::filter(.data$domainTable %in% input$breakdownDomainTable) %>%
-        dplyr::pull(.data$domainField) %>% unique()
-    }
-    
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "breakdownDomainField",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = data,
-      selected = data
-    )
-  })
-  
-  selectedDomainTable <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(input$breakdownDomainTable_open,
-         input$tabs)
-  }, handlerExpr = {
-    if (isFALSE(input$breakdownDomainTable_open) ||
-        !is.null(input$tabs)) {
-      selectedDomainTable(input$breakdownDomainTable)
-    }
-  })
-  
-  selectedDomainField <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(input$breakdownDomainField_open,
-         input$tabs)
-  }, handlerExpr = {
-    if (isFALSE(input$breakdownDomainField_open) ||
-        !is.null(input$tabs)) {
-      selectedDomainField(input$breakdownDomainField)
-    }
-  })
-  
   output$breakdownTable <- reactable::renderReactable(expr = {
     validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortId()) > 0, "No cohorts chosen chosen"))
+    validate(need(length(targetCohortId()) > 0, "No cohorts chosen chosen"))
+    
+    showDataAsPercent <- input$indexEventBreakDownShowAsPercent
     data <- indexEventBreakDownDataFilteredByRadioButton()
     
     validate(need(all(!is.null(data),nrow(data) > 0),
@@ -1719,12 +1687,24 @@ shiny::shinyServer(function(input, output, session) {
         .data$vocabularyId,
         .data$conceptCode,
         .data$conceptCount,
-        .data$subjectCount
+        .data$subjectCount,
+        .data$subjectPercent,
+        .data$conceptPercent 
       ) %>%
       dplyr::filter(.data$conceptId > 0) %>%
-      dplyr::distinct() %>%
-      dplyr::rename(persons = .data$subjectCount,
-                    records = .data$conceptCount) %>%
+      dplyr::distinct()
+    
+    if (showDataAsPercent) {
+      data <- data %>% 
+        dplyr::rename(persons = .data$subjectPercent,
+                      records = .data$conceptPercent)
+    } else {
+      data <- data %>% 
+        dplyr::rename(persons = .data$subjectCount,
+                      records = .data$conceptCount) 
+    }
+    
+    data <- data %>%
       dplyr::arrange(dplyr::desc(abs(dplyr::across(
         c("records", "persons")
       ))))
@@ -1746,7 +1726,7 @@ shiny::shinyServer(function(input, output, session) {
       getDisplayTableHeaderCount(
         dataSource =  dataSource,
         databaseIds = selectedDatabaseIds(),
-        cohortIds = cohortId(),
+        cohortIds = targetCohortId(),
         source = "cohort",
         fields = input$indexEventBreakdownTableFilter
       )
@@ -1755,8 +1735,7 @@ shiny::shinyServer(function(input, output, session) {
       getMaxValueForStringMatchedColumnsInDataFrame(data = data,
                                                     string = dataColumnFields)   
     
-    showDataAsPercent <- FALSE
-    ## showDataAsPercent set based on UI selection - proportion
+    
     
     getDisplayTableGroupedByDatabaseId(
       data = data,
@@ -1787,7 +1766,7 @@ shiny::shinyServer(function(input, output, session) {
     visitContext <-
       getVisitContextResults(
         dataSource = dataSource,
-        cohortIds = cohortId(),
+        cohortIds = targetCohortId(),
         databaseIds = selectedDatabaseIds()
       )
     if (!hasData(visitContext)) {
@@ -1870,7 +1849,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$visitContextTable <- reactable::renderReactable(expr = {
     validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
+    validate(need(length(targetCohortId()) > 0, "No cohorts chosen"))
     data <- getVisitContexDataEnhanced()
     validate(need(nrow(data) > 0,
                   "No data available for selected combination."))
@@ -1898,7 +1877,7 @@ shiny::shinyServer(function(input, output, session) {
       getDisplayTableHeaderCount(
         dataSource = dataSource,
         databaseIds = selectedDatabaseIds(),
-        cohortIds = cohortId(),
+        cohortIds = targetCohortId(),
         source = "cohort",
         fields = input$visitContextPersonOrRecords
       )
@@ -1927,12 +1906,12 @@ shiny::shinyServer(function(input, output, session) {
   ## Reactive objects ----
   ### getConceptSetNameForFilter ----
   getConceptSetNameForFilter <- shiny::reactive(x = {
-    if (!hasData(cohortId()) || !hasData(selectedDatabaseIds())) {
+    if (!hasData(targetCohortId()) || !hasData(selectedDatabaseIds())) {
       return(NULL)
     }
     
     jsonExpression <- cohortSubset() %>%
-      dplyr::filter(.data$cohortId == cohortId()) %>%
+      dplyr::filter(.data$cohortId == targetCohortId()) %>%
       dplyr::select(.data$json)
     jsonExpression <-
       RJSONIO::fromJSON(jsonExpression$json, digits = 23)
@@ -1947,234 +1926,193 @@ shiny::shinyServer(function(input, output, session) {
     return(expression)
   })
   
-  ## isCharacterizationTab ----
-  isCharacterizationTab <- shiny::reactiveVal(FALSE)
-  observeEvent(eventExpr = input$tabs, handlerExpr = {
-    if (((input$tabs == "cohortCharacterization" && !is.null(selectedDatabaseIds())) ||
-        (input$tabs == "temporalCharacterization" && !is.null(selectedDatabaseIds()))) &&
-        !is.null(input$cohort)) {
-      isCharacterizationTab(TRUE)
-    } else {
-      isCharacterizationTab(FALSE)
-    }
-  })
   
-  ## isCompareCharacterizationTab ----
-  isCompareCharacterizationTab <- shiny::reactiveVal(FALSE)
-  observeEvent(eventExpr = input$tabs, handlerExpr = {
-    if (((input$tabs == "compareCohortCharacterization" && !is.null(selectedDatabaseIds())) ||
-         (input$tabs == "compareTemporalCharacterization" && !is.null(selectedDatabaseIds()))) &&
-        hasData(cohortId()) &&
-        hasData(comparatorCohortId())) {
-      isCompareCharacterizationTab(TRUE)
-    } else {
-      isCompareCharacterizationTab(FALSE)
-    }
-  })
-  
-  ## characterizationTableRawDataSingleCohortMultipleDatabase ----
-  characterizationTableRawDataSingleCohortMultipleDatabase <- shiny::reactive(x = {
-    if (!isCharacterizationTab()) {
-      return(NULL)
-    }    
-    validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortId()) == 1, "Only one cohort may be selected"))
-    
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())    
-    progress$set(
-      message = paste0(
-        "Retrieving characterization output for ",
-        length(c(cohortId()) %>% unique()),
-        " cohorts and ",
-        length(selectedDatabaseIds()),
-        " data sources."
-      ),
-      value = 0
-    )
-    
-    data <- getCovariateValueResult(
-      dataSource = dataSource,
-      cohortIds = cohortId(),
-      databaseIds = selectedDatabaseIds(), 
-      analysisIds = c(analysisIdInCohortCharacterization, 
-                      analysisIdInTemporalCharacterization) %>% unique(),
-      startDay = get("temporalTimeRef") %>% 
-        dplyr::filter(.data$timeId %in% 
-                        c(temporalCharacterizationCovariateChoices$timeId,
-                          characterizationCovariateChoices$timeId)) %>% 
-        dplyr::pull(.data$startDay) %>% 
-        unique(),
-      endDay = get("temporalTimeRef") %>% 
-        dplyr::filter(.data$timeId %in% 
-                        c(temporalCharacterizationCovariateChoices$timeId,
-                          characterizationCovariateChoices$timeId)) %>% 
-        dplyr::pull(.data$endDay) %>% 
-        unique(),
-      temporalCovariateValueDist = FALSE
-    )
-    if (!hasData(data)) {
-      return(NULL)
-    }
-    return(data)
-  })
-  
-  ### characterizationTableRawDataSingleCohortMultipleDatabaseCohortCharacterization ----
-  characterizationTableRawDataSingleCohortMultipleDatabaseCohortCharacterization <-
+  ## characterizationOutputForCharacterizationMenu ----
+  characterizationOutputForCharacterizationMenu <-
     shiny::reactive(x = {
-      data <-
-        characterizationTableRawDataSingleCohortMultipleDatabase()
-      if (!hasData(data)) {
-        return(NULL)
-      }
-      data <- data$covariateValue %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization)
-      data <- dplyr::bind_rows(
-        data %>%
-          dplyr::inner_join(characterizationCovariateChoices,
-                            by = "timeId"),
-        data %>%
-          dplyr::filter(is.na(.data$startDay))
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = paste0(
+          "Retrieving characterization output for cohort id ",
+          targetCohortId(),
+          " cohorts and ",
+          length(input$databases),
+          " data sources."
+        ),
+        value = 0
       )
-      if (!hasData(data)) {
-        return(NULL)
-      }
-      return(data)
-    })
-  
-  ### characterizationTableRawDataSingleCohortMultipleDatabaseTemporalCohortCharacterization ----
-  characterizationTableRawDataSingleCohortMultipleDatabaseTemporalCohortCharacterization <-
-    shiny::reactive(x = {
-      data <-
-        characterizationTableRawDataSingleCohortMultipleDatabase()
-      if (!hasData(data)) {
-        return(NULL)
-      }
-      data <- data$covariateValue %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
-        dplyr::inner_join(temporalCharacterizationCovariateChoices, by = "timeId") %>%
-        dplyr::arrange(.data$timeId)
-      if (!hasData(data)) {
-        return(NULL)
-      }
-      return(data)
-    })
-  
-  ## characterizationTableRawDataMultipleCohortMultipleDatabase ----
-  characterizationTableRawDataMultipleCohortMultipleDatabase <- shiny::reactive(x = {
-    if (!isCompareCharacterizationTab()) {
-      return(NULL)
-    }
-    validate(need(hasData(selectedDatabaseIds()), "No data sources chosen"))
-    validate(need(length(cohortId()) == 1, "Target Cohort id not selected"))
-    validate(need(length(comparatorCohortId()) == 1, "Comparator Cohort id not selected"))
-    
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())    
-    progress$set(
-      message = paste0(
-        "Retrieving characterization output for ",
-        length(c(cohortId(), comparatorCohortId()) %>% unique()),
-        " cohorts and ",
-        length(selectedDatabaseIds()),
-        " data sources."
-      ),
-      value = 0
-    )
-    
-    data <- getCovariateValueResult(
-      dataSource = dataSource,
-      cohortIds = c(cohortId(),comparatorCohortId()) %>% unique(),
-      databaseIds = selectedDatabaseIds(), 
-      analysisIds = c(analysisIdInCohortCharacterization, 
-                      analysisIdInTemporalCharacterization) %>% unique(),
-      startDay = get("temporalTimeRef") %>% 
-        dplyr::filter(.data$timeId %in% 
-                        c(temporalCharacterizationCovariateChoices$timeId,
-                          characterizationCovariateChoices$timeId)) %>% 
-        dplyr::pull(.data$startDay) %>% 
-        unique(),
-      endDay = get("temporalTimeRef") %>% 
-        dplyr::filter(.data$timeId %in% 
-                        c(temporalCharacterizationCovariateChoices$timeId,
-                          characterizationCovariateChoices$timeId)) %>% 
-        dplyr::pull(.data$endDay) %>% 
-        unique(),
-      temporalCovariateValueDist = FALSE
-    )
-    if (!hasData(data)) {
-      return(NULL)
-    }
-    return(data)
-  })
-  
-  ### characterizationTableRawDataMultipleCohortMultipleDatabaseCohortCharacterization ----
-  characterizationTableRawDataMultipleCohortMultipleDatabaseCohortCharacterization <-
-    shiny::reactive(x = {
-      data <-
-        characterizationTableRawDataMultipleCohortMultipleDatabase()
-      if (!hasData(data)) {
-        return(NULL)
-      }
-      data <- data$covariateValue %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization)
-      data <- dplyr::bind_rows(
-        data %>%
-          dplyr::inner_join(characterizationCovariateChoices,
-                            by = "timeId"),
-        data %>%
-          dplyr::filter(is.na(.data$startDay))
+      
+      getCharacterizationOutput(
+        dataSource = dataSource,
+        cohortIds = targetCohortId(),
+        databaseIds = input$databases,
+        temporalCovariateValueDist = FALSE
       )
-      if (!hasData(data)) {
-        return(NULL)
+    })
+  
+  ## characterizationOutputForTemporalCharacterizationMenu ----
+  characterizationOutputForTemporalCharacterizationMenu <-
+    shiny::reactive(x = {
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = paste0(
+          "Retrieving characterization output for cohort id ",
+          targetCohortId(),
+          " from ",
+          input$database,
+          "."
+        ),
+        value = 0
+      )
+      
+      if (input$database %in% c(input$databases)) {
+        data <- characterizationOutputForCharacterizationMenu()
+        if (hasData(data$covariateValue)) {
+          data$covariateValue <- data$covariateValue %>%
+            dplyr::filter(.data$databaseId %in% c(input$database))
+        }
+        if (hasData(data$covariateValueDist)) {
+          data$covariateValueDist <- data$covariateValueDist %>%
+            dplyr::filter(.data$databaseId %in% c(input$database))
+        }
+      } else {
+        data <- getCharacterizationOutput(
+          dataSource = dataSource,
+          cohortIds = targetCohortId(),
+          databaseIds = input$database,
+          temporalCovariateValueDist = FALSE
+        )
       }
       return(data)
     })
   
-  ### characterizationTableRawDataMultipleCohortMultipleDatabaseTemporalCohortCharacterization ----
-  characterizationTableRawDataMultipleCohortMultipleDatabaseTemporalCohortCharacterization <-
+  ## characterizationOutputForCompareCharacterizationMenu ----
+  characterizationOutputForCompareCharacterizationMenu <-
     shiny::reactive(x = {
-      data <-
-        characterizationTableRawDataMultipleCohortMultipleDatabase()
-      if (!hasData(data)) {
+      dataTarget <-
+        characterizationOutputForTemporalCharacterizationMenu()
+      if (!hasData(dataTarget)) {
         return(NULL)
       }
-      data <- data$covariateValue %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
-        dplyr::inner_join(temporalCharacterizationCovariateChoices, by = "timeId") %>%
-        dplyr::arrange(.data$timeId)
-      if (!hasData(data)) {
+      
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = paste0(
+          "Retrieving characterization output for cohort id ",
+          comparatorCohortId(),
+          " from ",
+          input$database,
+          "."
+        ),
+        value = 0
+      )
+      dataComparator <- getCharacterizationOutput(
+        dataSource = dataSource,
+        cohortIds = c(comparatorCohortId()),
+        databaseIds = input$database,
+        temporalCovariateValueDist = FALSE
+      )
+      if (!hasData(dataComparator)) {
         return(NULL)
+      }
+      data <- NULL
+      data$covariateValue <-
+        dplyr::bind_rows(dataTarget$covariateValue,
+                         dataComparator$covariateValue)
+      if (!hasData(data$covariateValue)) {
+        data$covariateValue <- NULL
+      }
+      data$covariateValueDist <-
+        dplyr::bind_rows(dataTarget$covariateValueDist,
+                         dataComparator$covariateValueDist)
+      if (!hasData(data$covariateValueDist)) {
+        data$covariateValueDist <- NULL
       }
       return(data)
     })
+  
+  ## characterizationOutputForCompareTemporalCharacterizationMenu ----
+  characterizationOutputForCompareTemporalCharacterizationMenu <- shiny::reactive(x = {
+    characterizationOutputForCompareCharacterizationMenu()
+  })
   
   # Cohort Characterization -------------------------------------------------
+  ## ReactiveVal: characterizationAnalysisNameFilter ----
+  characterizationAnalysisNameFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$characterizationAnalysisNameFilter_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$characterizationAnalysisNameFilter_open) ||
+        !is.null(input$tabs)) {
+      characterizationAnalysisNameFilter(input$characterizationAnalysisNameFilter)
+    }
+  })
+  #### characterizationAnalysisNameFilter ----
   shiny::observe({
-    subset <-
-      characterizationTableRawDataSingleCohortMultipleDatabaseCohortCharacterization()$analysisName %>% 
-      unique() %>% 
-      sort()
+    
+    characterizationAnalysisOptionsUniverse <- NULL
+    charcterizationAnalysisOptionsSelected <- NULL
+    
+    if (hasData(get("temporalAnalysisRef"))) {
+      characterizationAnalysisOptionsUniverse <- analysisNameOptions
+      charcterizationAnalysisOptionsSelected <- get("temporalAnalysisRef") %>%
+        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
+        dplyr::pull(.data$analysisName) %>%
+        unique()
+    }
+    
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "characterizationAnalysisNameFilter",
       choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
+      choices = characterizationAnalysisOptionsUniverse,
+      selected = charcterizationAnalysisOptionsSelected
     )
   })
   
+  ## ReactiveVal: characterizationDomainIdFilter ----
+  characterizationDomainIdFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$characterizationDomainIdFilter_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$characterizationDomainIdFilter_open) ||
+        !is.null(input$tabs)) {
+      characterizationDomainIdFilter(input$characterizationDomainIdFilter)
+    }
+  })
+  
+  ### characterizationDomainNameFilter ----
   shiny::observe({
-    subset <-
-      characterizationTableRawDataSingleCohortMultipleDatabaseCohortCharacterization()$domainId %>% 
-      unique() %>% 
-      sort()
+    
+    characterizationDomainOptionsUniverse <- NULL
+    charcterizationDomainOptionsSelected <- NULL
+    
+    if (hasData(get("temporalAnalysisRef"))) {
+      characterizationDomainOptionsUniverse <- domainIdOptions
+      charcterizationDomainOptionsSelected <- get("temporalAnalysisRef") %>%
+        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
+        dplyr::pull(.data$domainId) %>%
+        unique()
+    }
+    
     shinyWidgets::updatePickerInput(
       session = session,
-      inputId = "characterizationDomainNameFilter",
+      inputId = "characterizationDomainIdFilter",
       choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
+      choices = characterizationDomainOptionsUniverse,
+      selected = charcterizationDomainOptionsSelected
+    )
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "characterizationDomainIdFilter",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = characterizationDomainOptionsUniverse,
+      selected = charcterizationDomainOptionsSelected
     )
   })
   
@@ -2193,11 +2131,25 @@ shiny::shinyServer(function(input, output, session) {
     if (!input$tabs %in% c("cohortCharacterization")) {
       return(NULL)
     }
+    validate(need(length(input$databases) > 0, "Atleast one data source must be selected"))
+    validate(need(length(targetCohortId()) == 1, "One target cohort must be selected"))
+    
     data <-
-      characterizationTableRawDataSingleCohortMultipleDatabaseCohortCharacterization()
+      characterizationOutputForCharacterizationMenu()
     if (!hasData(data)) {
       return(NULL)
     }
+    data <- data$covariateValue
+    if (!hasData(data)) {
+      return(NULL)
+    }
+    
+    data <- data %>%
+      dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
+      dplyr::filter(.data$timeId %in% c(characterizationTimeIdChoices$timeId %>% unique(), NA)) %>% 
+      dplyr::filter(.data$cohortId %in% c(targetCohortId())) %>% 
+      dplyr::filter(.data$databaseId %in% c(input$databases))
+    
     if (input$charType == "Raw") {
       if (input$characterizationProportionOrContinuous == "Proportion") {
         data <- data %>%
@@ -2207,19 +2159,12 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$isBinary == 'N')
       }
     }
-    if (!hasData(input$characterizationAnalysisNameFilter) ||
-        checkIfObjectIsTrue(input$characterizationAnalysisNameFilter_open)) {
-      return(NULL)
-    }
-    data <- data %>%
-      dplyr::filter(.data$analysisName %in% input$characterizationAnalysisNameFilter)
     
-    if (!hasData(input$characterizationDomainNameFilter) ||
-        checkIfObjectIsTrue(input$characterizationDomainNameFilter_open)) {
-      return(NULL)
-    }
     data <- data %>%
-      dplyr::filter(.data$domainId %in% input$characterizationDomainNameFilter)
+      dplyr::filter(.data$analysisName %in% characterizationAnalysisNameFilter())
+    
+    data <- data %>%
+      dplyr::filter(.data$domainId %in% characterizationDomainIdFilter())
     
     if (hasData(input$conceptSetsSelected)) {
       if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
@@ -2235,12 +2180,27 @@ shiny::shinyServer(function(input, output, session) {
   
   ## cohortCharacterizationPrettyTable ----
   cohortCharacterizationPrettyTable <- shiny::reactive(x = {
+    if (!input$tabs %in% c("cohortCharacterization")) {
+      return(NULL)
+    }
+    validate(need(length(input$databases) > 0, "Atleast one data source must be selected"))
+    validate(need(length(targetCohortId()) == 1, "One target cohort must be selected"))
+    
     data <-
-      characterizationTableRawDataSingleCohortMultipleDatabaseCohortCharacterization()
+      characterizationOutputForCharacterizationMenu()
+    if (!hasData(data)) {
+      return(NULL)
+    }
+    data <- data$covariateValue
     if (!hasData(data)) {
       return(NULL)
     }
     
+    data <- data %>%
+      dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
+      dplyr::filter(.data$timeId %in% c(characterizationTimeIdChoices$timeId %>% unique(), NA)) %>% 
+      dplyr::filter(.data$cohortId %in% c(targetCohortId())) %>% 
+      dplyr::filter(.data$databaseId %in% c(input$databases))
     if (!hasData(data)) {
       return(NULL)
     }
@@ -2263,7 +2223,7 @@ shiny::shinyServer(function(input, output, session) {
       getDisplayTableHeaderCount(
         dataSource =  dataSource,
         databaseIds = selectedDatabaseIds(),
-        cohortIds = cohortId(),
+        cohortIds = targetCohortId(),
         source = "cohort",
         fields = "Persons"
       )
@@ -2328,7 +2288,7 @@ shiny::shinyServer(function(input, output, session) {
       getDisplayTableHeaderCount(
         dataSource =  dataSource,
         databaseIds = selectedDatabaseIds(),
-        cohortIds = cohortId(),
+        cohortIds = targetCohortId(),
         source = "cohort",
         fields = "Persons"
       )
@@ -2366,27 +2326,52 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   # Temporal characterization -----------------------------------------------------------------
+  
+  ## temporalCharacterizationAnalysisNameFilter ----
   shiny::observe({
-    subset <-
-      characterizationTableRawDataSingleCohortMultipleDatabaseTemporalCohortCharacterization()$analysisName %>% unique() %>% sort()
+    temporalCharacterizationAnalysisOptionsUniverse <- NULL
+    temporalCharcterizationAnalysisOptionsSelected <- NULL
+    
+    if (hasData(get("temporalAnalysisRef"))) {
+      temporalCharacterizationAnalysisOptionsUniverse <-
+        analysisNameOptions
+      temporalCharcterizationAnalysisOptionsSelected <-
+        get("temporalAnalysisRef") %>%
+        dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
+        dplyr::pull(.data$analysisName) %>%
+        unique()
+    }
+    
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "temporalCharacterizationAnalysisNameFilter",
       choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
+      choices = temporalCharacterizationAnalysisOptionsUniverse,
+      selected = temporalCharcterizationAnalysisOptionsSelected
     )
   })
   
+  ## temporalcharacterizationDomainIdFilter ----
   shiny::observe({
-    subset <-
-      characterizationTableRawDataSingleCohortMultipleDatabaseTemporalCohortCharacterization()$domainId %>% unique() %>% sort()
+    temporalCharacterizationDomainOptionsUniverse <- NULL
+    temporalCharcterizationDomainOptionsSelected <- NULL
+    
+    if (hasData(get("temporalAnalysisRef"))) {
+      temporalCharacterizationDomainOptionsUniverse <-
+        analysisNameOptions
+      temporalCharcterizationDomainOptionsSelected <-
+        get("temporalAnalysisRef") %>%
+        dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
+        dplyr::pull(.data$analysisName) %>%
+        unique()
+    }
+    
     shinyWidgets::updatePickerInput(
       session = session,
-      inputId = "temporalCharacterizationDomainNameFilter",
+      inputId = "temporalcharacterizationDomainIdFilter",
       choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
+      choices = temporalCharacterizationDomainOptionsUniverse,
+      selected = temporalCharcterizationDomainOptionsSelected
     )
   })
   
@@ -2395,21 +2380,26 @@ shiny::shinyServer(function(input, output, session) {
     if (!input$tabs %in% c("temporalCharacterization")) {
       return(NULL)
     }
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())    
-    progress$set(
-      message = "Post processing: filtering data",
-      value = 0
-    )
-    
+    validate(need(length(input$database) == 1, "One data source must be selected"))
+    validate(need(length(targetCohortId()) == 1, "One target cohort must be selected"))
+    if (!hasData(selectedTemporalTimeIds())) {
+      return(NULL)
+    }
     data <-
-      characterizationTableRawDataSingleCohortMultipleDatabaseTemporalCohortCharacterization() 
-    
+      characterizationOutputForCharacterizationMenu()
     if (!hasData(data)) {
       return(NULL)
     }
-    data <- data %>% 
-      dplyr::filter(.data$databaseId %in% selectedDatabaseIds())
+    data <- data$covariateValue 
+    if (!hasData(data)) {
+      return(NULL)
+    }
+    data <- data  %>% 
+      dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>% 
+      dplyr::filter(.data$timeId %in% selectedTemporalTimeIds()) %>% 
+      dplyr::filter(.data$cohortId %in% c(targetCohortId())) %>%
+      dplyr::filter(.data$databaseId %in% c(input$database)) 
+    
     if (input$temporalProportionOrContinuous == "Proportion") {
       data <- data %>%
         dplyr::filter(.data$isBinary == 'Y')
@@ -2425,11 +2415,12 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>%
       dplyr::filter(.data$analysisName %in% input$temporalCharacterizationAnalysisNameFilter)
     
-    if (!hasData(input$temporalCharacterizationDomainNameFilter) ||
-        checkIfObjectIsTrue(input$temporalCharacterizationDomainNameFilter_open)) {
-      data <- data %>%
-        dplyr::filter(.data$domainId %in% input$temporalCharacterizationDomainNameFilter)
+    if (!hasData(input$temporalcharacterizationDomainIdFilter) ||
+        checkIfObjectIsTrue(input$temporalcharacterizationDomainIdFilter_open)) {
+      return(NULL)
     }
+    data <- data %>%
+      dplyr::filter(.data$domainId %in% input$temporalcharacterizationDomainIdFilter)
     
     if (hasData(input$conceptSetsSelected)) {
       if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
@@ -2456,13 +2447,10 @@ shiny::shinyServer(function(input, output, session) {
       value = 0
     )
     
-    # sorts choices by startDay
-    temporalChoices <- data %>%
-      dplyr::select(.data$startDay, .data$endDay, .data$choices) %>%
-      dplyr::distinct() %>%
-      dplyr::arrange(.data$startDay, .data$endDay, .data$choices) %>%
-      dplyr::select(.data$choices) %>%
-      dplyr::pull(.data$choices)
+    temporalChoices <- temporalCharacterizationTimeIdChoices %>%
+      dplyr::filter(.data$timeId %in% c(data$timeId %>% unique())) %>%
+      dplyr::pull(.data$choices) %>% 
+      unique()
     
     keyColumns <- c("covariateName", "analysisName", "conceptId")
     data <- data %>%
@@ -2481,7 +2469,7 @@ shiny::shinyServer(function(input, output, session) {
         names_sep = "_"
       ) %>%
       dplyr::relocate(dplyr::all_of(c(keyColumns, temporalChoices))) %>%
-      dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with('Start'))))
+      dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with('Temporal'))))
     
     dataColumns <- c(temporalChoices)
     
@@ -2490,14 +2478,13 @@ shiny::shinyServer(function(input, output, session) {
       showDataAsPercent <- TRUE
     }
     
-    table <- getDisplayTableSimple(
+    getDisplayTableSimple(
       data = data,
       keyColumns = keyColumns,
       dataColumns = dataColumns,
       showDataAsPercent = showDataAsPercent,
       pageSize = 100
     )
-    return(table)
   })
   
   ## Output: temporalCharacterizationTable -----------------------------------------------------------------------------
@@ -2507,37 +2494,86 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   # Compare cohort characterization --------------------------------------------
+  ## compareCohortCharacterizationAnalysisNameFilter -----
   shiny::observe({
-    subset <- characterizationTableRawDataMultipleCohortMultipleDatabaseCohortCharacterization()$analysisName %>% unique() %>% sort()
+    characterizationAnalysisOptionsUniverse <- NULL
+    charcterizationAnalysisOptionsSelected <- NULL
+    
+    if (hasData(get("temporalAnalysisRef"))) {
+      characterizationAnalysisOptionsUniverse <- analysisNameOptions
+      charcterizationAnalysisOptionsSelected <-
+        get("temporalAnalysisRef") %>%
+        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
+        dplyr::pull(.data$analysisName) %>%
+        unique()
+    }
+    
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "compareCohortCharacterizationAnalysisNameFilter",
       choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
+      choices = characterizationAnalysisOptionsUniverse,
+      selected = charcterizationAnalysisOptionsSelected
     )
   })
   
+  
+  ## compareCohortcharacterizationDomainIdFilter -----
   shiny::observe({
-    subset <- characterizationTableRawDataMultipleCohortMultipleDatabaseCohortCharacterization()$domainId %>% unique() %>% sort()
+    characterizationDomainOptionsUniverse <- NULL
+    charcterizationDomainOptionsSelected <- NULL
+    
+    if (hasData(get("temporalAnalysisRef"))) {
+      characterizationDomainOptionsUniverse <- domainIdOptions
+      charcterizationDomainOptionsSelected <-
+        get("temporalAnalysisRef") %>%
+        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
+        dplyr::pull(.data$domainId) %>%
+        unique()
+    }
+    
     shinyWidgets::updatePickerInput(
       session = session,
-      inputId = "compareCohortCharacterizationDomainNameFilter",
+      inputId = "compareCohortcharacterizationDomainIdFilter",
       choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
+      choices = characterizationDomainOptionsUniverse,
+      selected = charcterizationDomainOptionsSelected
     )
   })
   
   ## compareCohortCharacterizationDataFiltered -----------------------------------------------------------------
   compareCohortCharacterizationDataFiltered <- shiny::reactive({
-    data <- characterizationTableRawDataMultipleCohortMultipleDatabaseCohortCharacterization() 
+    if (!input$tabs %in% c("compareCohortCharacterization")) {
+      return(NULL)
+    }
+    validate(need(length(input$database) == 1, "One data source must be selected"))
+    validate(need(length(targetCohortId()) == 1, "One target cohort must be selected"))
+    validate(need(
+      length(comparatorCohortId()) == 1,
+      "One comparator cohort must be selected"
+    ))
+    validate(
+      need(
+        targetCohortId() != comparatorCohortId(),
+        "Target and comparator cohorts cannot be the same"
+      )
+    )
+    data <- characterizationOutputForCompareCharacterizationMenu() 
     if (!hasData(data)) {
       return(NULL)
     }
-    data <- data %>% 
-      dplyr::filter(.data$databaseId %in% selectedDatabaseIds())
-    if (input$charCompareType %in% c("Raw table", "Plot")) {
+    
+    data <- data$covariateValue 
+    if (!hasData(data)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
+      dplyr::filter(.data$timeId %in% c(characterizationTimeIdChoices$timeId %>% unique(), NA)) %>% 
+      dplyr::filter(.data$cohortId %in% c(targetCohortId(), comparatorCohortId())) %>% 
+      dplyr::filter(.data$databaseId %in% c(input$database))
+    
+    if (input$charCompareType == "Raw") {
       if (input$compareCharacterizationProportionOrContinuous == "Proportion") {
         data <- data %>%
           dplyr::filter(.data$isBinary == 'Y')
@@ -2546,7 +2582,6 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$isBinary == 'N')
       }
     }
-    
     if (!hasData(input$compareCohortCharacterizationAnalysisNameFilter) ||
         checkIfObjectIsTrue(input$compareCohortCharacterizationAnalysisNameFilter_open)) {
       return(NULL)
@@ -2554,17 +2589,21 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>%
       dplyr::filter(.data$analysisName %in% input$compareCohortCharacterizationAnalysisNameFilter)
     
-    if (!hasData(input$compareCohortCharacterizationDomainNameFilter) ||
-        checkIfObjectIsTrue(input$compareCohortCharacterizationDomainNameFilter_open)) {
+    if (!hasData(input$compareCohortcharacterizationDomainIdFilter) ||
+        checkIfObjectIsTrue(input$compareCohortcharacterizationDomainIdFilter_open)) {
       return(NULL)
     }
     data <- data %>%
-      dplyr::filter(.data$domainId %in% input$compareCohortCharacterizationDomainNameFilter)
+      dplyr::filter(.data$domainId %in% input$compareCohortcharacterizationDomainIdFilter)
     
-    if (hasData(input$conceptSetsSelected) &&
-        length(getResolvedAndMappedConceptIdsForFilters()) > 0) {
-      data <- data %>%
-        dplyr::filter(.data$conceptId %in% getResolvedAndMappedConceptIdsForFilters())
+    if (hasData(input$conceptSetsSelected)) {
+      if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
+        data <- data %>%
+          dplyr::filter(.data$conceptId %in% getResolvedAndMappedConceptIdsForFilters())
+      }
+    }
+    if (!hasData(data)) {
+      return(NULL)
     }
     return(data)
   })
@@ -2578,8 +2617,9 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(data)) {
       return(NULL)
     }
+    
     covs1 <- data %>%
-      dplyr::filter(.data$cohortId %in% c(cohortId()))
+      dplyr::filter(.data$cohortId %in% c(targetCohortId()))
     if (!hasData(covs1)) {
       return(NULL)
     }
@@ -2662,7 +2702,7 @@ shiny::shinyServer(function(input, output, session) {
       getDisplayTableHeaderCount(
         dataSource =  dataSource,
         databaseIds = selectedDatabaseIds(),
-        cohortIds = cohortId(),
+        cohortIds = targetCohortId(),
         source = "cohort",
         fields = "Persons"
       )
@@ -2721,46 +2761,91 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   #Compare Temporal Characterization.-----------------------------------------
+  ## temporalCompareAnalysisNameFilter ----
   shiny::observe({
-    subset <-
-      characterizationTableRawDataMultipleCohortMultipleDatabaseTemporalCohortCharacterization()$analysisName %>% 
-      unique() %>% 
-      sort()
+    temporalCharacterizationAnalysisOptionsUniverse <- NULL
+    temporalCharcterizationAnalysisOptionsSelected <- NULL
+    
+    if (hasData(get("temporalAnalysisRef"))) {
+      temporalCharacterizationAnalysisOptionsUniverse <-
+        analysisNameOptions
+      temporalCharcterizationAnalysisOptionsSelected <-
+        get("temporalAnalysisRef") %>%
+        dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
+        dplyr::pull(.data$analysisName) %>%
+        unique()
+    }
+    
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "temporalCompareAnalysisNameFilter",
       choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
+      choices = temporalCharacterizationAnalysisOptionsUniverse,
+      selected = temporalCharcterizationAnalysisOptionsSelected
     )
   })
   
+  ## temporalCompareDomainNameFilter ----
   shiny::observe({
-    subset <-
-      characterizationTableRawDataMultipleCohortMultipleDatabaseTemporalCohortCharacterization()$domainId %>% 
-      unique() %>% 
-      sort()
+    temporalCharacterizationDomainOptionsUniverse <- NULL
+    temporalCharcterizationDomainOptionsSelected <- NULL
+    
+    if (hasData(get("temporalAnalysisRef"))) {
+      temporalCharacterizationDomainOptionsUniverse <-
+        analysisNameOptions
+      temporalCharcterizationDomainOptionsSelected <-
+        get("temporalAnalysisRef") %>%
+        dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
+        dplyr::pull(.data$analysisName) %>%
+        unique()
+    }
+    
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "temporalCompareDomainNameFilter",
       choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
+      choices = temporalCharacterizationDomainOptionsUniverse,
+      selected = temporalCharcterizationDomainOptionsSelected
     )
   })
   
   
   ## compareTemporalCharacterizationDataFiltered -----------------------------------------------------------------
   compareTemporalCharacterizationDataFiltered <- shiny::reactive({
-    data <- characterizationTableRawDataMultipleCohortMultipleDatabaseTemporalCohortCharacterization() 
+    if (!input$tabs %in% c("compareTemporalCharacterization")) {
+      return(NULL)
+    }
+    validate(need(length(input$database) == 1, "One data source must be selected"))
+    validate(need(length(targetCohortId()) == 1,
+                  "One target cohort must be selected"))
+    validate(need(
+      length(comparatorCohortId()) == 1,
+      "One comparator cohort must be selected"
+    ))
+    validate(
+      need(
+        targetCohortId() != comparatorCohortId(),
+        "Target and comparator cohorts cannot be the same"
+      )
+    )
+    if (!hasData(selectedTemporalTimeIds())) {
+      return(NULL)
+    }
+    data <-
+      characterizationOutputForCompareCharacterizationMenu()
     if (!hasData(data)) {
       return(NULL)
     }
-    data <- data %>% 
-      dplyr::filter(.data$databaseId %in% selectedDatabaseIds())
-    if (!hasData(input$temporalCompareCharacterizationProportionOrContinuous)) {
+    data <- data$covariateValue
+    if (!hasData(data)) {
       return(NULL)
     }
+    data <- data %>%
+      dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
+      dplyr::filter(.data$timeId %in% selectedTemporalTimeIds()) %>%
+      dplyr::filter(.data$cohortId %in% c(targetCohortId(), comparatorCohortId())) %>%
+      dplyr::filter(.data$databaseId %in% c(input$database))
+ 
     if (input$temporalCompareCharacterizationProportionOrContinuous == "Proportion") {
       data <- data %>%
         dplyr::filter(.data$isBinary == 'Y')
@@ -2783,10 +2868,14 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>%
       dplyr::filter(.data$domainId %in% input$temporalCompareDomainNameFilter)
     
-    if (hasData(input$conceptSetsSelected) &&
-        length(getResolvedAndMappedConceptIdsForFilters()) > 0) {
-      data <- data %>%
-        dplyr::filter(.data$conceptId %in% getResolvedAndMappedConceptIdsForFilters())
+    if (hasData(input$conceptSetsSelected)) {
+      if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
+        data <- data %>%
+          dplyr::filter(.data$conceptId %in% getResolvedAndMappedConceptIdsForFilters())
+      }
+    }
+    if (!hasData(data)) {
+      return(NULL)
     }
     return(data)
   })
@@ -2803,7 +2892,7 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       covs1 <- data %>%
-        dplyr::filter(.data$cohortId == cohortId())
+        dplyr::filter(.data$cohortId == targetCohortId())
       if (!hasData(covs1)) {
         return(NULL)
       }
@@ -2812,7 +2901,6 @@ shiny::shinyServer(function(input, output, session) {
       if (!hasData(covs2)) {
         return(NULL)
       }
-      
       balance <-
         compareTemporalCohortCharacteristics(covs1, covs2) %>%
         dplyr::mutate(absStdDiff = abs(.data$stdDiff))
@@ -2901,6 +2989,10 @@ shiny::shinyServer(function(input, output, session) {
                     (nrow(data) - nrow(data[data$mean2 < 0.001,])) > 5,
                   paste0("Values of the means are too low.")
     ))
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = "Plotting ",
+                 value = 0)
     plot <-
       plotTemporalCompareStandardizedDifference(
         balance = data,
@@ -2922,8 +3014,8 @@ shiny::shinyServer(function(input, output, session) {
       as.data.frame() %>% 
       dplyr::tibble()
     colnames(combisOfTargetComparator) <- c('targetCohortId', 'comparatorCohortId')
-    
-    data <- getCohortOverlapResult(
+
+    data <- getResultsCohortOverlap(
       dataSource = dataSource,
       targetCohortIds = combisOfTargetComparator$targetCohortId,
       comparatorCohortIds = combisOfTargetComparator$comparatorCohortId,
@@ -2965,19 +3057,34 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   
+  getDatabaseInformation <- shiny::reactive(x = {
+      return(database)
+  })
+  
+  getFilteredMetadataInformation  <- shiny::reactive(x = {
+    data <- getExecutionMetadata(dataSource = dataSource)
+    if (!hasData(data)) {
+      return(NULL)
+    }
+    data <- data %>% 
+      dplyr::filter(.data$databaseId == selectedDatabaseIds())
+    return(data)
+  })
+  
   #Output: databaseInformationTable ------------------------
   output$databaseInformationTable <- reactable::renderReactable(expr = {
     if (!input$tabs == "databaseInformation") {
       return(NULL)
     }
-    validate(need(all(!is.null(database), nrow(database) > 0),
+    
+    data <- getDatabaseInformation()
+    validate(need(all(!is.null(data), nrow(data) > 0),
                   "No data available for selected combination."))
     
-    data <- database 
-    if (!'vocabularyVersionCdm' %in% colnames(database)) {
+    if (!'vocabularyVersionCdm' %in% colnames(data)) {
       data$vocabularyVersionCdm <- "Not in data"
     }
-    if (!'vocabularyVersion' %in% colnames(database)) {
+    if (!'vocabularyVersion' %in% colnames(data)) {
       data$vocabularyVersion <- "Not in data"
     }
     
@@ -3004,11 +3111,81 @@ shiny::shinyServer(function(input, output, session) {
                      "recordsInDatasource",
                      "personDaysInDatasource")
     
-    data <- getDisplayTableSimple(data = data,
-                                  keyColumns = keyColumns,
-                                  dataColumns = dataColumns)
-    return(data)
+    getDisplayTableSimple(data = data,
+                          keyColumns = keyColumns,
+                          dataColumns = dataColumns)
   })
+  
+  output$metadataInfoTitle <- shiny::renderUI(expr = {
+    data <- getFilteredMetadataInformation()
+    
+    if (!hasData(data)) {
+      return(NULL)
+    }
+    tags$p(paste(
+      "Run on ",
+      data$databaseId,
+      "on ",
+      data$startTime,
+      " for ",
+      data$runTime,
+      " ",
+      data$runTimeUnits
+    ))
+  })
+  
+  output$metadataInfoDetailsText <- shiny::renderUI(expr = {
+    data <- getFilteredMetadataInformation()
+    if (!hasData(data)) {
+      return(NULL)
+    }
+    tags$table(tags$tr(tags$td(
+      paste(
+        "Ran for ",
+        data$runTime,
+        data$runTimeUnits,
+        "on ",
+        data$currentPackage,
+        "(",
+        data$currentPackageVersion,
+        ")"
+      )
+    )))
+  })
+  
+  ##output: packageDependencySnapShotTable----
+  output$packageDependencySnapShotTable <-
+    reactable::renderReactable(expr = {
+      data <- getFilteredMetadataInformation()
+      if (!hasData(data)) {
+        return(NULL)
+      }
+      data <- data %>%
+        dplyr::pull(.data$packageDependencySnapShotJson)
+      
+      data <- dplyr::as_tibble(RJSONIO::fromJSON(content = data,
+                                                 digits = 23))
+      keyColumns <- colnames(data)
+      getDisplayTableSimple(data = data,
+                         keyColumns = keyColumns,
+                         dataColumns = c(),
+                         pageSize = 10)
+    })
+  
+  ##output: argumentsAtDiagnosticsInitiationJson----
+  output$argumentsAtDiagnosticsInitiationJson <-
+    shiny::renderText(expr = {
+      data <- getFilteredMetadataInformation()
+      if (!hasData(data)) {
+        return(NULL)
+      }
+      data <- data %>%
+        dplyr::pull(.data$argumentsAtDiagnosticsInitiationJson) %>%
+        RJSONIO::fromJSON(digits = 23) %>%
+        RJSONIO::toJSON(digits = 23,
+                        pretty = TRUE)
+      return(data)
+    })
   
   #Login User ---------------------------------------------
   activeLoggedInUser <- reactiveVal(NULL)
@@ -3151,7 +3328,7 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::pull(.data$cohortId)
       } else {
         selectedCohortIds <- cohort %>%
-          dplyr::filter(.data$compoundName %in% c(input$cohort)) %>%  #one cohort selected
+          dplyr::filter(.data$compoundName %in% c(input$targetCohort)) %>%  #one cohort selected
           dplyr::pull(.data$cohortId)
       }
       results <- getAnnotationResult(
@@ -3260,7 +3437,7 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::pull(.data$cohortId)
         #cohortsConceptInDataSource should be the same as in menu cohort
       } else {
-        selectedCohortIds <- input$cohort
+        selectedCohortIds <- input$targetCohort
       }
       tempList$cohortIds <- selectedCohortIds
       
@@ -3384,9 +3561,9 @@ shiny::shinyServer(function(input, output, session) {
   # Cohort labels --------------------------------------------------------------------------------------------
   targetCohortCount <- shiny::reactive({
     targetCohortWithCount <-
-      getCohortCountResult(
+      getResultsCohortCounts(
         dataSource = dataSource,
-        cohortIds = cohortId(),
+        cohortIds = targetCohortId(),
         databaseIds = selectedDatabaseIds()
       ) %>%
       dplyr::left_join(y = cohort, by = "cohortId") %>%
@@ -3417,7 +3594,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   selectedCohort <- shiny::reactive({
-    return(input$cohort)
+    return(input$targetCohort)
   })
   
   selectedComparatorCohort <- shiny::reactive({

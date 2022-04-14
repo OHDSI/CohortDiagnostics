@@ -132,6 +132,7 @@ loadResultsTable("database", required = TRUE)
 loadResultsTable("cohort", required = TRUE)
 loadResultsTable("metadata", required = TRUE)
 loadResultsTable("temporal_time_ref")
+loadResultsTable("temporal_analysis_ref")
 loadResultsTable("concept_sets")
 loadResultsTable("cohort_count", required = TRUE)
 
@@ -186,34 +187,34 @@ if (exists("database")) {
 }
 
 if (exists("temporalTimeRef")) {
-  temporalCharacterizationCovariateChoices <- get("temporalTimeRef") %>%
-    dplyr::filter((.data$startDay == -365 & .data$endDay == -31) |
-                    (.data$startDay == -30 & .data$endDay == -1) |
-                    (.data$startDay == 0 & .data$endDay == 0) |
-                    (.data$startDay == 1 & .data$endDay == 30) |
-                    (.data$startDay == 31 & .data$endDay == 365)
-    ) %>%
-    dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
-    dplyr::select(.data$timeId, .data$choices) %>%
-    dplyr::arrange(.data$timeId)
+  temporalChoices <- getResultsTemporalTimeRef(dataSource = dataSource)
   
-  characterizationCovariateChoices <- get("temporalTimeRef") %>%
-    dplyr::filter((.data$startDay == -365 & .data$endDay == 0) |
-                    (.data$startDay == -30 & .data$endDay == 0)) %>%
-    dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
-    dplyr::select(.data$timeId, .data$choices) %>%
-    dplyr::arrange(.data$timeId)
+  temporalCharacterizationTimeIdChoices <-
+    temporalChoices %>% 
+    dplyr::filter(.data$isTemporal == 1) %>% 
+    dplyr::select(.data$timeId, .data$choices, .data$primaryTimeId)
+  
+  characterizationTimeIdChoices <- 
+    temporalChoices %>% 
+    dplyr::filter(.data$isTemporal == 0) %>% 
+    dplyr::select(.data$timeId, .data$choices, .data$primaryTimeId) %>% 
+    dplyr::filter(.data$primaryTimeId == 1) %>% 
+    dplyr::filter(stringr::str_detect(string = .data$choices,
+                                      pattern = stringr::fixed("0d)")))
 }
 
-if (exists("temporalCovariateRef")) {
-  specifications <- readr::read_csv(
-    file = "Table1Specs.csv",
-    col_types = readr::cols(),
-    guess_max = min(1e7)
-  )
-  prettyAnalysisIds <- specifications$analysisId
-} else {
-  prettyAnalysisIds <- c(0)
+if (exists("temporalAnalysisRef")) {
+  
+  domainIdOptions <- get("temporalAnalysisRef") %>% 
+    dplyr::select(.data$domainId) %>% 
+    dplyr::pull(.data$domainId) %>% 
+    unique()
+  
+  analysisNameOptions <- get("temporalAnalysisRef") %>% 
+    dplyr::select(.data$analysisName) %>% 
+    dplyr::pull(.data$analysisName) %>% 
+    unique()
+  
 }
 
 prettyTable1Specifications <- readr::read_csv(
@@ -223,6 +224,13 @@ prettyTable1Specifications <- readr::read_csv(
   lazy = FALSE
 )
 
+prettyAnalysisIds <- readr::read_csv(
+  file = "Table1Specs.csv",
+  col_types = readr::cols(),
+  guess_max = min(1e7)
+) %>%
+  dplyr::pull(.data$analysisId) %>%
+  unique()
 
 analysisIdInCohortCharacterization <- c(1, 3, 4, 5, 6, 7,
                                         203, 403, 501, 703,

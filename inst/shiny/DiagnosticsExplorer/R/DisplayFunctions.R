@@ -63,7 +63,7 @@ getDisplayTableHeaderCount <-
                                            databaseIds = databaseIds)
     } else if (source == "cohort") {
       countsForHeader <-
-        getCohortCountResult(
+        getResultsCohortCounts(
           dataSource = dataSource,
           cohortIds = cohortIds,
           databaseIds = databaseIds
@@ -116,6 +116,22 @@ prepDataForDisplay <- function(data,
   }
   return(data)
 }
+
+sticky_style <- function(leftIndent = 0,
+                         lastColumn = FALSE) {
+  style <-
+    list(
+      position = "sticky",
+      background = "#fff",
+      left = paste0(leftIndent, "px"),
+      zIndex = 1
+    )
+  if (lastColumn) {
+    style <- c(style, list(borderRight = "1px solid #eee"))
+  }
+  return(style)
+}
+
 
 
 getDisplayTableGroupedByDatabaseId <- function(data,
@@ -189,6 +205,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
   columnDefinitions <- list()
   columnTotalMinWidth <- 0
   columnTotalMaxWidth <- 0
+  lastColumn <- FALSE
   for (i in (1:length(keyColumns))) {
     columnName <- SqlRender::camelCaseToTitleCase(colnames(data)[i])
     displayTableColumnMinMaxWidth <-
@@ -200,6 +217,9 @@ getDisplayTableGroupedByDatabaseId <- function(data,
       data[[keyColumns[[i]]]] <- ifelse(data[[keyColumns[[i]]]],
                                         as.character(icon("check")), "")
     }
+    if (i == length(keyColumns)) {
+      lastColumn <- TRUE
+    }
     
     colnames(data)[which(names(data) == keyColumns[i])]  <-
       columnName
@@ -210,6 +230,8 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         resizable = TRUE,
         filterable = TRUE,
         show = TRUE,
+        style = sticky_style(leftIndent = (i - 1) * 120 , lastColumn = lastColumn),
+        headerStyle = sticky_style(leftIndent = (i - 1) *  120, lastColumn = lastColumn),
         minWidth = displayTableColumnMinMaxWidth$minValue,
         maxWidth = displayTableColumnMinMaxWidth$maxValue,
         html = TRUE,
@@ -285,7 +307,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
   for (i in 1:length(distinctColumnGroups)) {
     extractedDataColumns <-
       dataColumns[stringr::str_detect(string = dataColumns,
-                                      pattern = distinctColumnGroups[i])]
+                                      pattern = stringr::fixed(distinctColumnGroups[i]))]
     
     columnName <- distinctColumnGroups[i]
     
@@ -353,12 +375,17 @@ getDisplayTableSimple <- function(data,
                              dataColumns = dataColumns)
   
   columnDefinitions <- list()
+  lastColumn <- FALSE
   for (i in (1:length(keyColumns))) {
     columnName <- SqlRender::camelCaseToTitleCase(keyColumns[i])
     
     displayTableColumnMinMaxWidth <-
       getDisplayTableColumnMinMaxWidth(data = data,
                                        columnName = keyColumns[[i]])
+    
+    if (i == length(keyColumns)) {
+      lastColumn <- TRUE
+    }
     
     colnames(data)[which(names(data) == keyColumns[i])] <-
       columnName
@@ -376,6 +403,8 @@ getDisplayTableSimple <- function(data,
         },
         minWidth = displayTableColumnMinMaxWidth$minValue,
         maxWidth = displayTableColumnMinMaxWidth$maxValue,
+        style = sticky_style(leftIndent = (i - 1)*120, lastColumn = lastColumn),
+        headerStyle = sticky_style(leftIndent = (i - 1)*120, lastColumn = lastColumn),
         sortable = TRUE,
         resizable = TRUE,
         filterable = TRUE,
@@ -601,3 +630,5 @@ exportCohortDetailsAsZip <- function(dataSource,
     )
   )
 }
+
+

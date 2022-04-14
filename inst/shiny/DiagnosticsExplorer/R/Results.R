@@ -21,24 +21,31 @@ renderTranslateExecuteSql <- function(connection, sql, ...) {
   }
 }
 
-getCohortCountResult <- function(dataSource,
-                                 cohortIds = NULL,
-                                 databaseIds = NULL) {
+getResultsCohortCounts <- function(dataSource,
+                                   cohortIds = NULL,
+                                   databaseIds = NULL) {
   sql <- "SELECT *
             FROM  @results_database_schema.cohort_count
-            WHERE cohort_id IS NOT NULL 
+            WHERE cohort_id IS NOT NULL
             {@database_ids != ''} ? { AND database_id in (@database_id)}
             {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
             ;"
-  data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                  dbms = dataSource$dbms,
-                                  sql = sql,
-                                  results_database_schema = dataSource$resultsDatabaseSchema,
-                                  cohort_ids = cohortIds,
-                                  database_id = if (!is.null(databaseIds)) {quoteLiterals(databaseIds)} else {''},
-                                  snakeCaseToCamelCase = TRUE) %>%
+  data <-
+    renderTranslateQuerySql(
+      connection = dataSource$connection,
+      dbms = dataSource$dbms,
+      sql = sql,
+      results_database_schema = dataSource$resultsDatabaseSchema,
+      cohort_ids = cohortIds,
+      database_id = if (!is.null(databaseIds)) {
+        quoteLiterals(databaseIds)
+      } else {
+        ''
+      },
+      snakeCaseToCamelCase = TRUE
+    ) %>%
     tidyr::tibble()
-
+  
   return(data)
 }
 
@@ -368,7 +375,7 @@ getOrphanConceptResult <- function(dataSource,
 }
 
 
-getCohortOverlapResult <- function(dataSource,
+getCohortOverlapResultLegacy <- function(dataSource,
                                    targetCohortIds,
                                    comparatorCohortIds,
                                    databaseIds) {
@@ -629,3 +636,142 @@ getDatabaseCounts <- function(dataSource,
   
   return(data)
 }
+
+getMetaDataResults <- function(dataSource) {
+  sql <- "SELECT *
+              FROM  @results_database_schema.metadata;"
+  data <-
+    renderTranslateQuerySql(
+      connection = dataSource$connection,
+      dbms = dataSource$dbms,
+      sql = sql,
+      results_database_schema = dataSource$resultsDatabaseSchema,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+    tidyr::tibble()
+  
+  return(data)
+}
+
+
+
+getExecutionMetadata <- function(dataSource) {
+  databaseMetadata <-
+    getMetaDataResults(dataSource)
+  if (!hasData(databaseMetadata)) {
+    return(NULL)
+  }
+  columnNames <-
+    databaseMetadata$variableField %>% unique() %>% sort()
+  columnNamesNoJson <-
+    columnNames[stringr::str_detect(
+      string = tolower(columnNames),
+      pattern = "json",
+      negate = TRUE
+    )]
+  columnNamesJson <-
+    columnNames[stringr::str_detect(
+      string = tolower(columnNames),
+      pattern = "json",
+      negate = FALSE
+    )]
+  transposeNonJsons <- databaseMetadata %>%
+    dplyr::filter(.data$variableField %in% c(columnNamesNoJson)) %>%
+    dplyr::rename(name = "variableField") %>%
+    dplyr::group_by(.data$databaseId, .data$startTime, .data$name) %>%
+    dplyr::summarise(valueField = max(.data$valueField),
+                     .groups = "keep") %>%
+    dplyr::ungroup() %>%
+    tidyr::pivot_wider(names_from = .data$name,
+                       values_from = .data$valueField) %>%
+    dplyr::mutate(startTime = stringr::str_replace(
+      string = .data$startTime,
+      pattern = "TM_",
+      replacement = ""
+    ))
+  transposeNonJsons$startTime <-
+    transposeNonJsons$startTime %>% lubridate::as_datetime()
+  
+  transposeJsons <- databaseMetadata %>%
+    dplyr::filter(.data$variableField %in% c(columnNamesJson)) %>%
+    dplyr::rename(name = "variableField") %>%
+    dplyr::group_by(.data$databaseId, .data$startTime, .data$name) %>%
+    dplyr::summarise(valueField = max(.data$valueField),
+                     .groups = "keep") %>%
+    dplyr::ungroup() %>%
+    tidyr::pivot_wider(names_from = .data$name,
+                       values_from = .data$valueField) %>%
+    dplyr::mutate(startTime = stringr::str_replace(
+      string = .data$startTime,
+      pattern = "TM_",
+      replacement = ""
+    ))
+  transposeJsons$startTime <-
+    transposeJsons$startTime %>% lubridate::as_datetime()
+  
+  transposeJsonsTemp <- list()
+  for (i in (1:nrow(transposeJsons))) {
+    transposeJsonsTemp[[i]] <- transposeJsons[i, ]
+    for (j in (1:length(columnNamesJson))) {
+      transposeJsonsTemp[[i]][[columnNamesJson[[j]]]] <-
+        transposeJsonsTemp[[i]][[columnNamesJson[[j]]]] %>%
+        RJSONIO::fromJSON(digits = 23) %>%
+        RJSONIO::toJSON(digits = 23, pretty = TRUE)
+    }
+  }
+  transposeJsons <- dplyr::bind_rows(transposeJsonsTemp)
+  data <- transposeNonJsons %>%
+    dplyr::left_join(transposeJsons,
+                     by = c("databaseId", "startTime"))
+  if ('observationPeriodMaxDate' %in% colnames(data)) {
+    data$observationPeriodMaxDate <-
+      tryCatch(
+        expr = lubridate::as_date(data$observationPeriodMaxDate),
+        error = data$observationPeriodMaxDate
+      )
+  }
+  if ('observationPeriodMinDate' %in% colnames(data)) {
+    data$observationPeriodMinDate <-
+      tryCatch(
+        expr = lubridate::as_date(data$observationPeriodMinDate),
+        error = data$observationPeriodMinDate
+      )
+  }
+  if ('sourceReleaseDate' %in% colnames(data)) {
+    data$sourceReleaseDate <-
+      tryCatch(
+        expr = lubridate::as_date(data$sourceReleaseDate),
+        error = data$sourceReleaseDate
+      )
+  }
+  if ('personDaysInDatasource' %in% colnames(data)) {
+    data$personDaysInDatasource <-
+      tryCatch(
+        expr = as.numeric(data$personDaysInDatasource),
+        error = data$personDaysInDatasource
+      )
+  }
+  if ('recordsInDatasource' %in% colnames(data)) {
+    data$recordsInDatasource <-
+      tryCatch(
+        expr = as.numeric(data$recordsInDatasource),
+        error = data$recordsInDatasource
+      )
+  }
+  if ('personDaysInDatasource' %in% colnames(data)) {
+    data$personDaysInDatasource <-
+      tryCatch(
+        expr = as.numeric(data$personDaysInDatasource),
+        error = data$personDaysInDatasource
+      )
+  }
+  if ('runTime' %in% colnames(data)) {
+    data$runTime <-
+      tryCatch(
+        expr = round(as.numeric(data$runTime), digits = 1),
+        error = data$runTime
+      )
+  }
+  return(data)
+}
+

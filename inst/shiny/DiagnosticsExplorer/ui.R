@@ -144,7 +144,7 @@ sidebarMenu <-
         shinydashboard::menuItem(text = "Compare Temporal Char.", tabName = "compareTemporalCharacterization"),
         infoId = "compareTemporalCharacterizationInfo"
       ),
-    shinydashboard::menuItem(text = "Data Source Information", tabName = "databaseInformation"),
+    shinydashboard::menuItem(text = "Meta data", tabName = "databaseInformation"),
     # Conditional dropdown boxes in the side bar ------------------------------------------------------
     shiny::conditionalPanel(
       condition = "input.tabs!='incidenceRate' &
@@ -152,7 +152,6 @@ sidebarMenu <-
       input.tabs != 'cohortCharacterization' &
       input.tabs != 'cohortCounts' &
       input.tabs != 'indexEventBreakdown' &
-      input.tabs != 'databaseInformation' &
       input.tabs != 'cohortDefinition' &
       input.tabs != 'conceptsInDataSource' &
       input.tabs != 'orphanConcepts' &
@@ -210,14 +209,15 @@ sidebarMenu <-
         shinyWidgets::pickerInput(
           inputId = "timeIdChoices",
           label = "Temporal Choice",
-          choices = temporalCharacterizationCovariateChoices$choices,
+          choices = temporalCharacterizationTimeIdChoices$choices,
           multiple = TRUE,
           choicesOpt = list(style = rep_len("color: black;", 999)),
-          selected = temporalCharacterizationCovariateChoices %>%
+          selected = temporalCharacterizationTimeIdChoices %>%
+            dplyr::filter(.data$primaryTimeId == 1) %>% 
             dplyr::filter(.data$timeId %in% (
               c(
-                min(temporalCharacterizationCovariateChoices$timeId),
-                temporalCharacterizationCovariateChoices %>%
+                min(temporalCharacterizationTimeIdChoices$timeId),
+                temporalCharacterizationTimeIdChoices %>%
                   dplyr::pull(.data$timeId)
               ) %>%
                 unique() %>%
@@ -243,7 +243,7 @@ sidebarMenu <-
       input.tabs != 'incidenceRate' &
       input.tabs != 'timeDistribution'",
       shinyWidgets::pickerInput(
-        inputId = "cohort",
+        inputId = "targetCohort",
         label = "Cohort",
         choices = c(""),
         multiple = FALSE,
@@ -351,7 +351,13 @@ bodyTabItems <- shinydashboard::tabItems(
               h4("Cohort Definition")
             ),
             td(align = "right",
-              button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionTable')")
+              button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionTable')"),
+              shiny::downloadButton(
+                outputId = "exportAllCohortDetails",
+                label = "Export all cohort",
+                icon = shiny::icon("file-export"),
+                style = "margin-top: 5px; margin-bottom: 5px;"
+              )
             )
           )
         )
@@ -366,144 +372,126 @@ bodyTabItems <- shinydashboard::tabItems(
             type = "tab",
             shiny::tabPanel(title = "Details",
                             shiny::htmlOutput("cohortDetailsText")),
-            shiny::tabPanel(title = "Cohort Count",
-                            tags$br(),
-                            htmltools::withTags(
-                              table(width = "100%",
-                                    tr(
-                                      td(align = "right",
-                                         button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortCountsTableInCohortDefinition')")
-                                      )
-                                    )
-                              )
-                            ),
-                            reactable::reactableOutput(outputId = "cohortCountsTableInCohortDefinition")),
-            shiny::tabPanel(title = "Cohort definition",
-                            tags$table(
-                              tags$tr(
-                                tags$td(
-                                  copyToClipboardButton(toCopyId = "cohortDefinitionText",
-                                                        style = "margin-top: 5px; margin-bottom: 5px;")
-                                ),
-                                tags$td(
-                                  shiny::downloadButton(
-                                    outputId = "exportAllCohortDetails",
-                                    label = "Export all cohort",
-                                    icon = shiny::icon("file-export"),
-                                    style = "margin-top: 5px; margin-bottom: 5px;"
-                                  )
-                                )
-                              )
-                            ),
-                            shiny::htmlOutput("cohortDefinitionText")),
+            shiny::tabPanel(
+              title = "Cohort Count",
+              tags$br(),
+              htmltools::withTags(table(width = "100%",
+                                        tr(
+                                          td(
+                                            align = "right",
+                                            button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortCountsTableInCohortDefinition')")
+                                          )
+                                        ))),
+              reactable::reactableOutput(outputId = "cohortCountsTableInCohortDefinition")
+            ),
+            shiny::tabPanel(
+              title = "Cohort definition",
+              copyToClipboardButton(toCopyId = "cohortDefinitionText",
+                                    style = "margin-top: 5px; margin-bottom: 5px;"),
+              shiny::htmlOutput("cohortDefinitionText")
+            ),
             shiny::tabPanel(
               title = "Concept Sets",
               reactable::reactableOutput(outputId = "conceptsetExpressionsInCohort"),
               shiny::conditionalPanel(condition = "output.cohortDefinitionConceptSetExpressionRowIsSelected == true",
-                                      tags$table(tags$tr(
-                                        tags$td(
-                                          shiny::radioButtons(
-                                            inputId = "conceptSetsType",
-                                            label = "",
-                                            choices = c("Concept Set Expression",
-                                                        "Resolved",
-                                                        "Mapped",
-                                                        "Orphan concepts",
-                                                        "Json"),
-                                            selected = "Concept Set Expression",
-                                            inline = TRUE
-                                          )
-                                        ),
-                                        tags$td(
-                                          shinyWidgets::pickerInput(
-                                            inputId = "databaseOrVocabularySchema",
-                                            label = "Vocabulary version choices:",
-                                            choices = choicesFordatabaseOrVocabularySchema,
-                                            multiple = FALSE,
-                                            width = 200,
-                                            inline = TRUE,
-                                            choicesOpt = list(style = rep_len("color: black;", 999)),
-                                            options = shinyWidgets::pickerOptions(
-                                              actionsBox = TRUE,
-                                              liveSearch = TRUE,
-                                              size = 10,
-                                              liveSearchStyle = "contains",
-                                              liveSearchPlaceholder = "Type here to search",
-                                              virtualScroll = 50
+                                      tags$table(
+                                        tags$tr(
+                                          tags$td(
+                                            shiny::radioButtons(
+                                              inputId = "conceptSetsType",
+                                              label = "",
+                                              choices = c(
+                                                "Concept Set Expression",
+                                                "Resolved",
+                                                "Mapped",
+                                                "Orphan concepts",
+                                                "Json"
+                                              ),
+                                              selected = "Concept Set Expression",
+                                              inline = TRUE
                                             )
-                                          )
-                                        ),
-                                        tags$td(shiny::htmlOutput("subjectCountInCohortConceptSet")), 
-                                        tags$td(
-                                          shiny::htmlOutput("recordCountInCohortConceptSet")
-                                        ),
-                                        tags$td(
-                                          shiny::conditionalPanel(
-                                            condition = "input.conceptSetsType == 'Resolved' ||
+                                          ),
+                                          tags$td(
+                                            shinyWidgets::pickerInput(
+                                              inputId = "databaseOrVocabularySchema",
+                                              label = "Vocabulary version choices:",
+                                              choices = choicesFordatabaseOrVocabularySchema,
+                                              multiple = FALSE,
+                                              width = 200,
+                                              inline = TRUE,
+                                              choicesOpt = list(style = rep_len("color: black;", 999)),
+                                              options = shinyWidgets::pickerOptions(
+                                                actionsBox = TRUE,
+                                                liveSearch = TRUE,
+                                                size = 10,
+                                                liveSearchStyle = "contains",
+                                                liveSearchPlaceholder = "Type here to search",
+                                                virtualScroll = 50
+                                              )
+                                            )
+                                          ),
+                                          tags$td(shiny::htmlOutput("subjectCountInCohortConceptSet")),
+                                          tags$td(shiny::htmlOutput("recordCountInCohortConceptSet")),
+                                          tags$td(
+                                            shiny::conditionalPanel(
+                                              condition = "input.conceptSetsType == 'Resolved' ||
                                                                 input.conceptSetsType == 'Mapped'||
                                                                 input.conceptSetsType == 'Orphan concepts'",
-                                            shiny::checkboxInput(
-                                              inputId = "withRecordCount",
-                                              label = "With Record Count",
-                                              value = TRUE
+                                              shiny::checkboxInput(
+                                                inputId = "withRecordCount",
+                                                label = "With Record Count",
+                                                value = TRUE
+                                              )
                                             )
                                           )
                                         )
-                                      ))),
+                                      )),
               shiny::conditionalPanel(
                 condition = "output.cohortDefinitionConceptSetExpressionRowIsSelected == true &
                 input.conceptSetsType != 'Resolved' &
                 input.conceptSetsType != 'Mapped' &
                 input.conceptSetsType != 'Json' &
                 input.conceptSetsType != 'Orphan concepts'",
-                htmltools::withTags(
-                  table(width = "100%",
-                        tr(
-                          td(align = "right",
-                             button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionConceptSetDetailsTable')")
-                          )
-                        )
-                  )
-                ), 
+                htmltools::withTags(table(width = "100%",
+                                          tr(
+                                            td(
+                                              align = "right",
+                                              button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionConceptSetDetailsTable')")
+                                            )
+                                          ))),
                 reactable::reactableOutput(outputId = "cohortDefinitionConceptSetDetailsTable")
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Resolved'",
-                htmltools::withTags(
-                  table(width = "100%",
-                        tr(
-                          td(align = "right",
-                             button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionResolvedConceptsTable')")
-                          )
-                        )
-                  )
-                ), 
+                htmltools::withTags(table(width = "100%",
+                                          tr(
+                                            td(
+                                              align = "right",
+                                              button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionResolvedConceptsTable')")
+                                            )
+                                          ))),
                 reactable::reactableOutput(outputId = "cohortDefinitionResolvedConceptsTable")
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Mapped'",
-                htmltools::withTags(
-                  table(width = "100%",
-                        tr(
-                          td(align = "right",
-                             button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionMappedConceptsTable')")
-                          )
-                        )
-                  )
-                ), 
+                htmltools::withTags(table(width = "100%",
+                                          tr(
+                                            td(
+                                              align = "right",
+                                              button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionMappedConceptsTable')")
+                                            )
+                                          ))),
                 reactable::reactableOutput(outputId = "cohortDefinitionMappedConceptsTable")
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Orphan concepts'",
-                htmltools::withTags(
-                  table(width = "100%",
-                        tr(
-                          td(align = "right",
-                             button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionOrphanConceptTable')")
-                          )
-                        )
-                  )
-                ), 
+                htmltools::withTags(table(width = "100%",
+                                          tr(
+                                            td(
+                                              align = "right",
+                                              button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionOrphanConceptTable')")
+                                            )
+                                          ))),
                 reactable::reactableOutput(outputId = "cohortDefinitionOrphanConceptTable")
               ),
               shiny::conditionalPanel(
@@ -520,17 +508,17 @@ bodyTabItems <- shinydashboard::tabItems(
               title = "JSON",
               copyToClipboardButton("cohortDefinitionJson", style = "margin-top: 5px; margin-bottom: 5px;"),
               shiny::verbatimTextOutput("cohortDefinitionJson"),
-              tags$head(
-                tags$style("#cohortDefinitionJson { max-height:400px};")
-              )
+              tags$head(tags$style(
+                "#cohortDefinitionJson { max-height:400px};"
+              ))
             ),
             shiny::tabPanel(
               title = "SQL",
               copyToClipboardButton("cohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
               shiny::verbatimTextOutput("cohortDefinitionSql"),
-              tags$head(
-                tags$style("#cohortDefinitionSql { max-height:400px};")
-              )
+              tags$head(tags$style(
+                "#cohortDefinitionSql { max-height:400px};"
+              ))
             )
           )
         )
@@ -903,6 +891,12 @@ bodyTabItems <- shinydashboard::tabItems(
               inline = TRUE
             )
           ),
+          tags$td(
+            shiny::checkboxInput(
+              inputId = "indexEventBreakDownShowAsPercent",
+              label = "Show as percent"
+            )
+          ),
           tags$td(align = "right",
                   tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('breakdownTable')")
           )
@@ -1018,7 +1012,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                       ),
                                       tags$td(
                                         shinyWidgets::pickerInput(
-                                          inputId = "characterizationDomainNameFilter",
+                                          inputId = "characterizationDomainIdFilter",
                                           label = "Domain name",
                                           choices = c(""),
                                           selected = c(""),
@@ -1069,7 +1063,9 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )
       ),
-      reactable::reactableOutput(outputId = "characterizationTable"),
+      shinycssloaders::withSpinner(shinycssloaders::withSpinner(
+        reactable::reactableOutput(outputId = "characterizationTable")
+      )),
       if (showAnnotation) {
         column(12,
                tags$br(),
@@ -1105,7 +1101,7 @@ bodyTabItems <- shinydashboard::tabItems(
         ),
         tags$td(
           shinyWidgets::pickerInput(
-            inputId = "temporalCharacterizationDomainNameFilter",
+            inputId = "temporalcharacterizationDomainIdFilter",
             label = "Domain name",
             choices = c(""),
             selected = c(""),
@@ -1139,7 +1135,7 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )
       ),
-      reactable::reactableOutput("temporalCharacterizationTable"),
+      shinycssloaders::withSpinner(shinycssloaders::withSpinner(reactable::reactableOutput("temporalCharacterizationTable"))),
       if (showAnnotation) {
         column(12,
                tags$br(),
@@ -1203,7 +1199,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                 ),
                                 tags$td(
                                   shinyWidgets::pickerInput(
-                                    inputId = "compareCohortCharacterizationDomainNameFilter",
+                                    inputId = "compareCohortcharacterizationDomainIdFilter",
                                     label = "Domain name",
                                     choices = c(""),
                                     selected = c(""),
@@ -1238,7 +1234,8 @@ bodyTabItems <- shinydashboard::tabItems(
                                            )
                                          )
                               ),
-                              reactable::reactableOutput("compareCohortCharacterizationTable")),
+                              shinycssloaders::withSpinner(shinycssloaders::withSpinner(
+                                reactable::reactableOutput("compareCohortCharacterizationTable")))),
       shiny::conditionalPanel(
         condition = "input.charCompareType=='Plot'",
         shinydashboard::box(
@@ -1246,11 +1243,13 @@ bodyTabItems <- shinydashboard::tabItems(
           width = NULL,
           status = "primary",
           shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
-          ggiraph::ggiraphOutput(
-            outputId = "compareCohortCharacterizationBalancePlot",
-            width = "100%",
-            height = "100%"
-          )
+          shinycssloaders::withSpinner(shinycssloaders::withSpinner(
+            ggiraph::ggiraphOutput(
+              outputId = "compareCohortCharacterizationBalancePlot",
+              width = "100%",
+              height = "100%"
+            )
+          ))
         )
       ),
       if (showAnnotation) {
@@ -1352,7 +1351,9 @@ bodyTabItems <- shinydashboard::tabItems(
                      )
                    )
         ),
-        reactable::reactableOutput(outputId = "temporalCharacterizationCompareTable")
+        shinycssloaders::withSpinner(shinycssloaders::withSpinner(
+          reactable::reactableOutput(outputId = "temporalCharacterizationCompareTable")
+        ))
       ),
       shiny::conditionalPanel(
         condition = "input.temporalCharacterizationType=='Plot'",
@@ -1360,11 +1361,13 @@ bodyTabItems <- shinydashboard::tabItems(
           title = "Compare Temporal Characterization",
           width = NULL,
           status = "primary",
-          ggiraph::ggiraphOutput(
-            outputId = "temporalCharacterizationComparePlot",
-            width = "100%",
-            height = "100%"
-          )
+          shinycssloaders::withSpinner(shinycssloaders::withSpinner(
+            ggiraph::ggiraphOutput(
+              outputId = "temporalCharacterizationComparePlot",
+              width = "100%",
+              height = "100%"
+            )
+          ))
         )
       ),
       if (showAnnotation) {
@@ -1378,15 +1381,54 @@ bodyTabItems <- shinydashboard::tabItems(
                           shinydashboard::box(
                             width = NULL,
                             title = NULL,
-                            htmltools::withTags(table(width = "100%", 
-                                       tr(
-                                         td(align = "right",
-                                              button("Download as CSV", onclick = "Reactable.downloadDataCSV('databaseInformationTable')")
-                                         )
-                                       )
-                            )),
-                            tags$br(),
-                            reactable::reactableOutput(outputId = "databaseInformationTable")
+                            shiny::tabsetPanel(
+                              id = "metadataInformationTabsetPanel",
+                              shiny::tabPanel(
+                                title = "Data source",
+                                value = "datasourceTabPanel",
+                                tags$br(),
+                                htmltools::withTags(table(width = "100%", 
+                                                          tr(
+                                                            td(align = "right",
+                                                               button("Download as CSV", onclick = "Reactable.downloadDataCSV('databaseInformationTable')")
+                                                            )
+                                                          )
+                                )),
+                                tags$br(),
+                                reactable::reactableOutput(outputId = "databaseInformationTable")
+                              ),
+                              shiny::tabPanel(
+                                title = "Meta data information",
+                                value = "metaDataInformationTabPanel",
+                                tags$br(),
+                                shinydashboard::box(
+                                  title = shiny::htmlOutput(outputId = "metadataInfoTitle"),
+                                  collapsible = TRUE,
+                                  width = NULL,
+                                  collapsed = FALSE,
+                                  shiny::htmlOutput(outputId = "metadataInfoDetailsText"),
+                                  shinydashboard::box(
+                                    title = NULL,
+                                    collapsible = TRUE,
+                                    width = NULL,
+                                    collapsed = FALSE,
+                                    tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('packageDependencySnapShotTable')"),
+                                    reactable::reactableOutput(outputId = "packageDependencySnapShotTable")
+                                  ),
+                                  shinydashboard::box(
+                                    title = NULL,
+                                    collapsible = TRUE,
+                                    width = NULL,
+                                    collapsed = FALSE,
+                                    shiny::verbatimTextOutput(outputId = "argumentsAtDiagnosticsInitiationJson"),
+                                    tags$head(
+                                      tags$style("#argumentsAtDiagnosticsInitiationJson { max-height:400px};")
+                                    )
+                                  )
+                                )
+                              )
+                            )
+                            
                           ))
 )
 
