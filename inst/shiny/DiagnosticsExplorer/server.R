@@ -744,13 +744,20 @@ shiny::shinyServer(function(input, output, session) {
       if (input$conceptSetsType != 'Orphan concepts') {
         return(NULL)
       }
+      validate(need(
+        hasData(input$databaseOrVocabularySchema),
+        "Please select a data source"
+      ))
       databaseIdToFilter <- database %>%
         dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
         dplyr::pull(.data$databaseId)
-      if (!hasData(databaseIdToFilter)) {
-        return(NULL)
-      }
+      
       data <- getCohortDefinitionOrphanConceptsReactive()
+      validate(need(
+        hasData(data),
+        paste0("No data for database id ", input$databaseOrVocabularySchema)
+      ))
+      
       if (input$withRecordCount) {
         data <- data %>%
           dplyr::filter(!is.na(.data$persons))
@@ -2637,6 +2644,7 @@ shiny::shinyServer(function(input, output, session) {
         "Target and comparator cohorts cannot be the same"
       )
     )
+    browser()
     data <- characterizationOutputForCompareCharacterizationMenu() 
     if (!hasData(data)) {
       return(NULL)
