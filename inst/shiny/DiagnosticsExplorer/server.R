@@ -1982,7 +1982,7 @@ shiny::shinyServer(function(input, output, session) {
       on.exit(progress$close())
       progress$set(
         message = paste0(
-          "Retrieving characterization output for cohort id ",
+          "Retrieving characterization output for target cohort id ",
           targetCohortId(),
           " from ",
           input$database,
@@ -2025,7 +2025,7 @@ shiny::shinyServer(function(input, output, session) {
       on.exit(progress$close())
       progress$set(
         message = paste0(
-          "Retrieving characterization output for cohort id ",
+          "Retrieving characterization output for comparator cohort id ",
           comparatorCohortId(),
           " from ",
           input$database,
@@ -2059,9 +2059,11 @@ shiny::shinyServer(function(input, output, session) {
     })
   
   ## characterizationOutputForCompareTemporalCharacterizationMenu ----
-  characterizationOutputForCompareTemporalCharacterizationMenu <- shiny::reactive(x = {
-    characterizationOutputForCompareCharacterizationMenu()
-  })
+  characterizationOutputForCompareTemporalCharacterizationMenu <-
+    shiny::reactive(x = {
+      data <- characterizationOutputForCompareCharacterizationMenu()
+      return(data)
+    })
   
   # Cohort Characterization -------------------------------------------------
   ## ReactiveVal: characterizationAnalysisNameFilter ----
@@ -2518,7 +2520,7 @@ shiny::shinyServer(function(input, output, session) {
         .data$sd
       ) %>%
       tidyr::pivot_wider(
-        id_cols = keyColumns,
+        id_cols = dplyr::all_of(keyColumns),
         names_from = "choices",
         values_from = "mean" ,
         names_sep = "_"
@@ -2921,7 +2923,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  ## temporalCompareAnalysisNameFilter ----
+  ### temporalCompareAnalysisNameFilter ----
   shiny::observe({
     temporalCharacterizationAnalysisOptionsUniverse <- NULL
     temporalCharcterizationAnalysisOptionsSelected <- NULL
@@ -2956,7 +2958,7 @@ shiny::shinyServer(function(input, output, session) {
       temporalCompareDomainNameFilter(input$temporalCompareDomainNameFilter)
     }
   })
-  ## temporalCompareDomainNameFilter ----
+  ### temporalCompareDomainNameFilter ----
   shiny::observe({
     temporalCharacterizationDomainOptionsUniverse <- NULL
     temporalCharcterizationDomainOptionsSelected <- NULL
@@ -3003,7 +3005,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <-
-      characterizationOutputForCompareCharacterizationMenu()
+      characterizationOutputForCompareTemporalCharacterizationMenu()
     if (!hasData(data)) {
       return(NULL)
     }
