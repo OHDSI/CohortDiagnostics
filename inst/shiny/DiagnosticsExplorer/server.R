@@ -2644,7 +2644,6 @@ shiny::shinyServer(function(input, output, session) {
         "Target and comparator cohorts cannot be the same"
       )
     )
-    browser()
     data <- characterizationOutputForCompareCharacterizationMenu() 
     if (!hasData(data)) {
       return(NULL)
