@@ -14,9 +14,8 @@ addShortName <-
       dplyr::distinct(.data$cohortId, .data$shortName)
     colnames(shortNameRef) <- c(cohortIdColumn, shortNameColumn)
     data <- data %>%
-      dplyr::inner_join(shortNameRef, by = cohortIdColumn)
+      dplyr::inner_join(shortNameRef, by = dplyr::all_of(cohortIdColumn))
     return(data)
-    
   }
 
 plotTimeDistribution <- function(data, shortNameRef = NULL) {
@@ -424,7 +423,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
       "Procedure",
       "Demographics")
   
-  balance$domainId[!balance$domainId %in% domains] <- "other"
+  balance$domainId[!balance$domainId %in% domains] <- "Other"
   if (domain != "all") {
     balance <- balance %>%
       dplyr::filter(.data$domainId == !!domain)
@@ -435,6 +434,10 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   if (nrow(balance) > 1000) {
     balance <- balance %>%
       dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+  }
+  if (nrow(balance) > 1000) {
+    balance <- balance %>%
+      dplyr::filter(.data$sumValue1 > 0 & .data$sumValue2 > 0)
   }
   
   balance <- balance %>%
@@ -484,10 +487,10 @@ plotCohortComparisonStandardizedDifference <- function(balance,
       "#66A61E",
       "#E6AB02",
       "#444444")
-  colors <- colors[c(domains, "other") %in% unique(balance$domainId)]
+  colors <- colors[c(domains, "Other") %in% unique(balance$domainId)]
   
   balance$domainId <-
-    factor(balance$domainId, levels = c(domains, "other"))
+    factor(balance$domainId, levels = c(domains, "Other"))
   
   # targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
   # comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
@@ -554,13 +557,14 @@ plotTemporalCompareStandardizedDifference <- function(balance,
       "Drug",
       "Measurement",
       "Observation",
-      "Procedure")
+      "Procedure",
+      "Demographics")
+  
   balance$domainId[!balance$domainId %in% domains] <- "Other"
   if (domain != "all") {
     balance <- balance %>%
       dplyr::filter(.data$domainId == !!domain)
   }
-  
   validate(need((nrow(balance) > 0), paste0("No data for selected combination.")))
   
   # Can't make sense of plot with > 1000 dots anyway, so remove
@@ -568,6 +572,10 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   if (nrow(balance) > 1000) {
     balance <- balance %>%
       dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+  }
+  if (nrow(balance) > 1000) {
+    balance <- balance %>%
+      dplyr::filter(.data$sumValue1 > 0 & .data$sumValue2 > 0)
   }
   
   balance <- balance %>%
@@ -592,18 +600,16 @@ plotTemporalCompareStandardizedDifference <- function(balance,
         balance$domainId,
         "\nAnalysis: ",
         balance$analysisName,
-        "\n Y ",
+        "\nY ",
         balance$comparatorCohort,
         ": ",
         scales::comma(balance$mean2, accuracy = 0.01),
-        "\n X ",
+        "\nX ",
         balance$targetCohort,
         ": ",
         scales::comma(balance$mean1, accuracy = 0.01),
-        "\nStd diff.: ",
-        scales::comma(balance$stdDiff, accuracy = 0.01),
-        "\nTime Id: ",
-        balance$choices
+        "\nStd diff.:",
+        scales::comma(balance$stdDiff, accuracy = 0.01)
       )
     )
   
@@ -634,6 +640,10 @@ plotTemporalCompareStandardizedDifference <- function(balance,
     dplyr::distinct(balance$comparatorCohort) %>% 
     dplyr::pull()
   
+  if (nrow(balance) ==0) {
+    return(NULL)
+  }
+  
   plot <-
     ggplot2::ggplot(balance,
                     ggplot2::aes(
@@ -652,18 +662,18 @@ plotTemporalCompareStandardizedDifference <- function(balance,
                          linetype = "dashed") +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_vline(xintercept = 0) +
-    ggplot2::xlab(paste("Covariate Mean in ",xCohort)) +
-    ggplot2::ylab(paste("Covariate Mean in ",yCohort)) +
     # ggplot2::scale_x_continuous("Mean") +
     # ggplot2::scale_y_continuous("Mean") +
+    ggplot2::xlab(paste("Covariate Mean in ", xCohort)) +
+    ggplot2::ylab(paste("Covariate Mean in ", yCohort)) +
     ggplot2::scale_color_manual("Domain", values = colors) +
-    ggplot2::facet_grid(cols = ggplot2::vars(choices)) + # need to facet by 'startDay' that way it is arranged in numeric order.
+    ggplot2::facet_grid(cols = ggplot2::vars(temporalChoices)) + # need to facet by 'startDay' that way it is arranged in numeric order.
     # but labels should be based on choices
-    # ggplot2::facet_wrap(~choices) +
+    # ggplot2::facet_wrap(~temporalChoices) +
     ggplot2::theme(strip.background = ggplot2::element_blank(),
                    panel.spacing = ggplot2::unit(2, "lines")) +
     ggplot2::xlim(xLimitMin, xLimitMax) +
-    ggplot2::ylim(yLimitMin, yLimitMax) 
+    ggplot2::ylim(yLimitMin, yLimitMax)
   
   numberOfTimeIds <- balance$timeId %>% unique() %>% length()
   

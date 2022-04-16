@@ -187,20 +187,18 @@ if (exists("database")) {
 }
 
 if (exists("temporalTimeRef")) {
-  temporalChoices <- getResultsTemporalTimeRef(dataSource = dataSource)
+  temporalChoices <-
+    getResultsTemporalTimeRef(dataSource = dataSource)
   
   temporalCharacterizationTimeIdChoices <-
-    temporalChoices %>% 
-    dplyr::filter(.data$isTemporal == 1) %>% 
-    dplyr::select(.data$timeId, .data$choices, .data$primaryTimeId)
+    temporalChoices %>%
+    dplyr::arrange(.data$sequence)
   
-  characterizationTimeIdChoices <- 
-    temporalChoices %>% 
-    dplyr::filter(.data$isTemporal == 0) %>% 
-    dplyr::select(.data$timeId, .data$choices, .data$primaryTimeId) %>% 
-    dplyr::filter(.data$primaryTimeId == 1) %>% 
-    dplyr::filter(stringr::str_detect(string = .data$choices,
-                                      pattern = stringr::fixed("0d)")))
+  characterizationTimeIdChoices <-
+    temporalChoices %>%
+    dplyr::filter(.data$isTemporal == 0)  %>%
+    dplyr::filter(.data$primaryTimeId == 1) %>%
+    dplyr::arrange(.data$sequence) 
 }
 
 if (exists("temporalAnalysisRef")) {

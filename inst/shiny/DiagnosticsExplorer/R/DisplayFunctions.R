@@ -92,7 +92,7 @@ prepDataForDisplay <- function(data,
   keyColumns <- c(keyColumns %>% unique())
   dataColumns <- dataColumns %>% unique()
   commonColumns <- intersect(colnames(data),
-                             c(keyColumns, dataColumns, "databaseId", "choices")) %>% unique()
+                             c(keyColumns, dataColumns, "databaseId", "temporalChoices")) %>% unique()
   
   missingColumns <-
     setdiff(x = c(keyColumns, dataColumns) %>% unique(),
@@ -106,9 +106,7 @@ prepDataForDisplay <- function(data,
     )
   }
   data <- data %>%
-    dplyr::select(dplyr::all_of(commonColumns)) %>%
-    dplyr::mutate(dplyr::across(.cols = dplyr::all_of(intersect(dataColumns, commonColumns)), 
-                                .fns = ~tidyr::replace_na(data = ., replace = 0)))
+    dplyr::select(dplyr::all_of(commonColumns))
   
   if ("databaseId" %in% colnames(data)) {
     data <- data %>%
@@ -117,17 +115,14 @@ prepDataForDisplay <- function(data,
   return(data)
 }
 
-sticky_style <- function(leftIndent = 0,
-                         lastColumn = FALSE) {
+sticky_style <- function() {
   style <-
     list(
       position = "sticky",
-      left = paste0(leftIndent, "px"),
+      left = 0,
+      background = "#FFF",
       zIndex = 1
     )
-  if (lastColumn) {
-    style <- c(style, list(borderRight = "1px solid #eee"))
-  }
   return(style)
 }
 
@@ -161,9 +156,9 @@ getDisplayTableGroupedByDatabaseId <- function(data,
   if (isTemporal) {
     data <- data %>%
       dplyr::mutate(type = paste0(.data$databaseId,
-                                  .data$choices, "_sep_",
+                                  .data$temporalChoices, "_sep_",
                                   .data$type))
-    distinctColumnGroups <- data$choices %>%  unique()
+    distinctColumnGroups <- data$temporalChoices %>%  unique()
   } else {
     data <- data %>%
       dplyr::mutate(type = paste0(.data$databaseId,
@@ -176,8 +171,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     tidyr::pivot_wider(
       id_cols = dplyr::all_of(keyColumns),
       names_from = "type",
-      values_from = "valuesData",
-      values_fill = valueFill
+      values_from = "valuesData"
     )
   
   if (sort) {
@@ -204,7 +198,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
   columnDefinitions <- list()
   columnTotalMinWidth <- 0
   columnTotalMaxWidth <- 0
-  lastColumn <- FALSE
+  
   for (i in (1:length(keyColumns))) {
     columnName <- SqlRender::camelCaseToTitleCase(colnames(data)[i])
     displayTableColumnMinMaxWidth <-
@@ -216,9 +210,6 @@ getDisplayTableGroupedByDatabaseId <- function(data,
       data[[keyColumns[[i]]]] <- ifelse(data[[keyColumns[[i]]]],
                                         as.character(icon("check")), "")
     }
-    if (i == length(keyColumns)) {
-      lastColumn <- TRUE
-    }
     
     colnames(data)[which(names(data) == keyColumns[i])]  <-
       columnName
@@ -229,14 +220,17 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         resizable = TRUE,
         filterable = TRUE,
         show = TRUE,
-        style = sticky_style(leftIndent = (i - 1) * 120 , lastColumn = lastColumn),
-        headerStyle = sticky_style(leftIndent = (i - 1) *  120, lastColumn = lastColumn),
         minWidth = displayTableColumnMinMaxWidth$minValue,
         maxWidth = displayTableColumnMinMaxWidth$maxValue,
         html = TRUE,
         na = "",
         align = "left"
       )
+    if (stringr::str_detect(columnName, "Name")) {
+      columnDefinitions[[columnName]] <-
+        reactable::colDef(style = sticky_style(),
+                          headerStyle = sticky_style())
+    }
   }
   
   maxValue <- 0
@@ -374,17 +368,12 @@ getDisplayTableSimple <- function(data,
                              dataColumns = dataColumns)
   
   columnDefinitions <- list()
-  lastColumn <- FALSE
   for (i in (1:length(keyColumns))) {
     columnName <- SqlRender::camelCaseToTitleCase(keyColumns[i])
     
     displayTableColumnMinMaxWidth <-
       getDisplayTableColumnMinMaxWidth(data = data,
                                        columnName = keyColumns[[i]])
-    
-    if (i == length(keyColumns)) {
-      lastColumn <- TRUE
-    }
     
     colnames(data)[which(names(data) == keyColumns[i])] <-
       columnName
@@ -402,8 +391,6 @@ getDisplayTableSimple <- function(data,
         },
         minWidth = displayTableColumnMinMaxWidth$minValue,
         maxWidth = displayTableColumnMinMaxWidth$maxValue,
-        style = sticky_style(leftIndent = (i - 1)*120, lastColumn = lastColumn),
-        headerStyle = sticky_style(leftIndent = (i - 1)*120, lastColumn = lastColumn),
         sortable = TRUE,
         resizable = TRUE,
         filterable = TRUE,
@@ -412,6 +399,11 @@ getDisplayTableSimple <- function(data,
         na = "",
         align = "left"
       )
+    if (stringr::str_detect(columnName, "Name")) {
+      columnDefinitions[[columnName]] <-
+        reactable::colDef(style = sticky_style(),
+                          headerStyle = sticky_style())
+    }
   }
   
   if (hasData(dataColumns)) {

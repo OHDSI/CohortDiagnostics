@@ -83,6 +83,9 @@ queryResultCovariateValue <- function(dataSource,
     ) %>%
     dplyr::tibble()
   
+  temporalTimeRefData <- dplyr::bind_rows(temporalTimeRefData,
+                                          dplyr::tibble(timeId = -1))
+  
   temporalAnalysisRefData <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
@@ -136,7 +139,8 @@ queryResultCovariateValue <- function(dataSource,
         cohort_id = cohortIds,
         results_database_schema = dataSource$resultsDatabaseSchema
       ) %>%
-      dplyr::tibble()
+      dplyr::tibble() %>% 
+      tidyr::replace_na(replace = list(timeId = -1))
   }
   
   temporalCovariateValueDistData <- NULL
@@ -159,7 +163,8 @@ queryResultCovariateValue <- function(dataSource,
         cohort_id = cohortIds,
         results_database_schema = dataSource$resultsDatabaseSchema
       ) %>%
-      dplyr::tibble()
+      dplyr::tibble() %>% 
+      tidyr::replace_na(replace = list(timeId = -1))
   }
   
   if (hasData(temporalCovariateValueData)) {
@@ -187,13 +192,13 @@ queryResultCovariateValue <- function(dataSource,
 
 
 getCharacterizationOutput <- function(dataSource,
-                                    cohortIds,
-                                    analysisIds = NULL,
-                                    databaseIds,
-                                    startDay = NULL,
-                                    endDay = NULL,
-                                    temporalCovariateValue = TRUE,
-                                    temporalCovariateValueDist = TRUE) {
+                                      cohortIds,
+                                      analysisIds = NULL,
+                                      databaseIds,
+                                      startDay = NULL,
+                                      endDay = NULL,
+                                      temporalCovariateValue = TRUE,
+                                      temporalCovariateValueDist = TRUE) {
   temporalChoices <-
     getResultsTemporalTimeRef(dataSource = dataSource)
   
@@ -226,7 +231,7 @@ getCharacterizationOutput <- function(dataSource,
           dplyr::select(.data$startDay,
                         .data$endDay,
                         .data$timeId,
-                        .data$choices),
+                        .data$temporalChoices),
         by = c("startDay", "endDay")
       ) %>%
       dplyr::relocate(
@@ -235,7 +240,7 @@ getCharacterizationOutput <- function(dataSource,
         .data$timeId,
         .data$startDay,
         .data$endDay,
-        .data$choices,
+        .data$temporalChoices,
         .data$analysisId,
         .data$covariateId,
         .data$covariateName,
@@ -676,8 +681,8 @@ getResultsCohortOverlap <- function(dataSource,
   cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique()
   cohortCounts <-
     getResultsCohortCounts(dataSource = dataSource,
-                          cohortIds = cohortIds,
-                          databaseIds = databaseIds)
+                           cohortIds = cohortIds,
+                           databaseIds = databaseIds)
   
   if (any(is.null(cohortCounts),
           nrow(cohortCounts) == 0)) {
@@ -1133,66 +1138,51 @@ getResultsTemporalTimeRef <- function(dataSource) {
   if (nrow(temporalTimeRef) == 0) {
     return(NULL)
   }
-  data1 <- temporalTimeRef %>%
-    dplyr::arrange(.data$startDay, .data$endDay) %>%
-    dplyr::mutate(
-      choices = dplyr::case_when(
-        .data$endDay == 0 &
-          .data$startDay == -30 ~ "Baseline1 (Short Term, -30d to 0d)",
-        .data$endDay == 0 &
-          .data$startDay == -180 ~ "Baseline1 (Medium Term, -180d to 0d)",
-        .data$endDay == 0 &
-          .data$startDay == -365 ~ "Baseline1 (Long Term, -365d to 0d)",
-        .data$endDay == 0 &
-          .data$startDay == -9999 ~ "Baseline1 (Any Time Prior, <= 0d)",
-        .data$endDay == -1 &
-          .data$startDay == -30 ~ "Baseline2 (Short Term, no index date, -30d to -1d)",
-        .data$endDay == -1 &
-          .data$startDay == -180 ~ "Baseline2 (Medium Term, no index date, -180d to -1d)",
-        .data$endDay == -1 &
-          .data$startDay == -365 ~ "Baseline2 (Long Term, no index date, -365d to -1d)",
-        .data$endDay == -1 &
-          .data$startDay == -9999 ~ "Baseline2 (Any Time Prior, no index date, <= -1d)"
-      )
-    ) %>%
-    dplyr::select(.data$timeId,
-                  .data$startDay,
-                  .data$endDay,
-                  .data$choices) %>%
-    dplyr::filter(!is.na(.data$choices))
   
-  data2 <- temporalTimeRef %>%
-    dplyr::anti_join(data1 %>%
-                       dplyr::select(.data$timeId,
-                                     .data$startDay,
-                                     .data$endDay),
-                     by = c("startDay", "endDay")) %>%
-    dplyr::mutate(choices = paste0("Temporal (", .data$startDay, "d to ", .data$endDay, "d)"))
-  
-  temporalChoices <- dplyr::bind_rows(data1, data2) %>%
+  temporalChoices <- temporalTimeRef %>%
+    dplyr::mutate(temporalChoices = paste0("T (", .data$startDay, "d to ", .data$endDay, "d)")) %>%
     dplyr::arrange(.data$startDay, .data$endDay) %>%
     dplyr::select(.data$timeId,
                   .data$startDay,
                   .data$endDay,
-                  .data$choices) %>%
+                  .data$temporalChoices) %>%
     dplyr::mutate(primaryTimeId = dplyr::if_else(
-      condition = (.data$startDay == -365 & .data$endDay == -31) |
-        (.data$startDay == -30 & .data$endDay == -1) |
-        (.data$startDay == 0 & .data$endDay == 0) |
-        (.data$startDay == 1 & .data$endDay == 30) |
-        (.data$startDay == 31 &
-           .data$endDay == 365) |
-        (.data$startDay == -365 & .data$endDay == 0) |
-        (.data$startDay == -30 & .data$endDay == 0),
+      condition = (
+        (.data$startDay == -365 & .data$endDay == -31) |
+          (.data$startDay == -30 & .data$endDay == -1) |
+          (.data$startDay == 0 & .data$endDay == 0) |
+          (.data$startDay == 1 & .data$endDay == 30) |
+          (.data$startDay == 31 & .data$endDay == 365) |
+          (.data$startDay == -365 & .data$endDay == 0) |
+          (.data$startDay == -30 & .data$endDay == 0)
+      ),
       true = 1,
       false = 0
     )) %>%
     dplyr::mutate(isTemporal = dplyr::if_else(
-      condition = stringr::str_detect(string = tolower(.data$choices),
-                                      pattern = "temporal"),
-      true = 1,
-      false = 0
-    ))
+      condition = (
+        (.data$endDay == 0 & .data$startDay == -30) |
+          (.data$endDay == 0 & .data$startDay == -180) |
+          (.data$endDay == 0 & .data$startDay == -365) |
+          (.data$endDay == 0 & .data$startDay == -9999)
+      ),
+      true = 0,
+      false = 1
+    )
+    ) %>% 
+    dplyr::arrange(.data$startDay, .data$timeId, .data$endDay)
+  
+  temporalChoices <- dplyr::bind_rows(
+    temporalChoices %>% dplyr::slice(0),
+    dplyr::tibble(
+      timeId = -1,
+      temporalChoices = "Time invariant",
+      primaryTimeId = 1,
+      isTemporal = 0
+    ),
+    temporalChoices
+  ) %>% 
+    dplyr::mutate(sequence = dplyr::row_number())
   
   return(temporalChoices)
 }

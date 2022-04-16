@@ -164,60 +164,54 @@ prepareTable1 <- function(covariates,
 
 compareCohortCharacteristics <-
   function(characteristics1, characteristics2) {
-    m <- dplyr::full_join(
-      x = characteristics1 %>% dplyr::distinct(),
-      y = characteristics2 %>% dplyr::distinct(),
-      by = c(
-        "covariateId",
-        "conceptId",
-        "databaseId",
-        "covariateName",
-        "analysisId",
-        "isBinary",
-        "analysisName",
-        "domainId",
-        "timeId",
-        "startDay",
-        "endDay"
-      ),
-      suffix = c("1", "2")
-    ) %>%
+    characteristics1Renamed <- characteristics1 %>% 
+      dplyr::rename(sumValue1 = .data$sumValue,
+                    mean1 = .data$mean,
+                    sd1 = .data$sd,
+                    cohortId1 = .data$cohortId)
+    cohortId1Value <- characteristics1Renamed$cohortId1 %>% unique()
+    if (length(cohortId1Value) > 1) {
+      stop("We can only compare one target cohort id to one comparator cohort id")
+    }
+    
+    characteristics2Renamed <- characteristics2 %>% 
+      dplyr::rename(sumValue2 = .data$sumValue,
+                    mean2 = .data$mean,
+                    sd2 = .data$sd,
+                    cohortId2 = .data$cohortId)
+    cohortId2Value <- characteristics2Renamed$cohortId2 %>% unique()
+    if (length(cohortId2Value) > 1) {
+      stop("We can only compare one target cohort id to one comparator cohort id")
+    }
+    
+    characteristics <- characteristics1Renamed %>%
+      dplyr::full_join(
+        characteristics2Renamed,
+        na_matches = c("na"),
+        by = c(
+          "databaseId",
+          "timeId",
+          "startDay",
+          "endDay",
+          "temporalChoices",
+          "analysisId",
+          "covariateId",
+          "covariateName",
+          "isBinary",
+          "conceptId",
+          "analysisName",
+          "domainId"
+        )
+      ) %>%
       dplyr::mutate(
         sd = sqrt(.data$sd1 ^ 2 + .data$sd2 ^ 2),
         stdDiff = (.data$mean2 - .data$mean1) / .data$sd
       ) %>%
       dplyr::arrange(-abs(.data$stdDiff)) %>% 
-      dplyr::mutate(stdDiff = dplyr::na_if(.data$sd, "Inf"))
-    return(m)
-  }
-
-
-compareTemporalCohortCharacteristics <-
-  function(characteristics1, characteristics2) {
-    m <- characteristics1 %>%
-      dplyr::full_join(
-        characteristics2,
-        by = c(
-          "covariateId",
-          "conceptId",
-          "databaseId",
-          "covariateName",
-          "analysisId",
-          "isBinary",
-          "analysisName",
-          "domainId",
-          "timeId",
-          "startDay",
-          "endDay",
-          "choices"
-        ),
-        suffix = c("1", "2")
-      ) %>%
-      dplyr::mutate(
-        sd = sqrt(.data$sd1 ^ 2 + .data$sd2 ^ 2),
-        stdDiff = (.data$mean2 - .data$mean1) / .data$sd
-      ) %>%
-      dplyr::arrange(-abs(.data$stdDiff))
-    return(m)
+      dplyr::mutate(stdDiff = dplyr::na_if(.data$sd, "Inf")) %>%
+      dplyr::mutate(absStdDiff = abs(.data$stdDiff),
+                    cohortId1 = !!cohortId1Value,
+                    cohortId2 = !!cohortId2Value)
+    return(characteristics)
   }
 

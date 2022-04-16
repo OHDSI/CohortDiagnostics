@@ -205,21 +205,14 @@ sidebarMenu <-
         shinyWidgets::pickerInput(
           inputId = "timeIdChoices",
           label = "Temporal Choice",
-          choices = temporalCharacterizationTimeIdChoices$choices,
+          choices = temporalCharacterizationTimeIdChoices$temporalChoices,
           multiple = TRUE,
           choicesOpt = list(style = rep_len("color: black;", 999)),
           selected = temporalCharacterizationTimeIdChoices %>%
             dplyr::filter(.data$primaryTimeId == 1) %>% 
-            dplyr::filter(.data$timeId %in% (
-              c(
-                min(temporalCharacterizationTimeIdChoices$timeId),
-                temporalCharacterizationTimeIdChoices %>%
-                  dplyr::pull(.data$timeId)
-              ) %>%
-                unique() %>%
-                sort()
-            )) %>%
-            dplyr::pull("choices"),
+            dplyr::filter(.data$isTemporal == 1) %>% 
+            dplyr::arrange(.data$sequence) %>% 
+            dplyr::pull("temporalChoices"),
           options = shinyWidgets::pickerOptions(
             actionsBox = TRUE,
             liveSearch = TRUE,
