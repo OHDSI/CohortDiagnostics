@@ -1,11 +1,15 @@
-createDatabaseDataSource <- function(connection, 
-                                     resultsDatabaseSchema, 
+createDatabaseDataSource <- function(connection,
+                                     resultsDatabaseSchema,
                                      vocabularyDatabaseSchema = resultsDatabaseSchema,
                                      dbms) {
-  return(list(connection = connectionPool,
-              resultsDatabaseSchema = resultsDatabaseSchema,
-              vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-              dbms = dbms))
+  return(
+    list(
+      connection = connectionPool,
+      resultsDatabaseSchema = resultsDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      dbms = dbms
+    )
+  )
 }
 
 
@@ -15,9 +19,11 @@ renderTranslateExecuteSql <- function(connection, sql, ...) {
     sqlFinal <- SqlRender::translate(sql, targetDialect = dbms)
     DatabaseConnector::dbExecute(connection, sqlFinal)
   } else {
-    DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-                                                 sql = sql,
-                                                 ...)
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = sql,
+      ...
+    )
   }
 }
 
@@ -40,12 +46,12 @@ getResultsCohortCounts <- function(dataSource,
       database_id = if (!is.null(databaseIds)) {
         quoteLiterals(databaseIds)
       } else {
-        ''
+        ""
       },
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
-  
+
   return(data)
 }
 
@@ -61,24 +67,33 @@ getIncidenceRateResult <- function(dataSource,
                                    minSubjectCount = NA) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
-                                                 databaseIds = databaseIds,
-                                                 errorMessage = errorMessage)
-  checkmate::assertLogical(x = stratifyByGender,
-                           add = errorMessage,
-                           min.len = 1,
-                           max.len = 2,
-                           unique = TRUE)
-  checkmate::assertLogical(x = stratifyByAgeGroup,
-                           add = errorMessage,
-                           min.len = 1,
-                           max.len = 2,
-                           unique = TRUE)
-  checkmate::assertLogical(x = stratifyByCalendarYear,
-                           add = errorMessage,
-                           min.len = 1,
-                           max.len = 2,
-                           unique = TRUE)
+  errorMessage <-
+    checkErrorCohortIdsDatabaseIds(
+      cohortIds = cohortIds,
+      databaseIds = databaseIds,
+      errorMessage = errorMessage
+    )
+  checkmate::assertLogical(
+    x = stratifyByGender,
+    add = errorMessage,
+    min.len = 1,
+    max.len = 2,
+    unique = TRUE
+  )
+  checkmate::assertLogical(
+    x = stratifyByAgeGroup,
+    add = errorMessage,
+    min.len = 1,
+    max.len = 2,
+    unique = TRUE
+  )
+  checkmate::assertLogical(
+    x = stratifyByCalendarYear,
+    add = errorMessage,
+    min.len = 1,
+    max.len = 2,
+    unique = TRUE
+  )
   checkmate::reportAssertions(collection = errorMessage)
 
   sql <- "SELECT *
@@ -89,26 +104,32 @@ getIncidenceRateResult <- function(dataSource,
             {@age_group == TRUE} ? {AND age_group != ''} : {  AND age_group = ''}
             {@calendar_year == TRUE} ? {AND calendar_year != ''} : {  AND calendar_year = ''}
               AND person_years > @personYears;"
-  data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                  dbms = dataSource$dbms,
-                                  sql = sql,
-                                  results_database_schema = dataSource$resultsDatabaseSchema,
-                                  cohort_ids = cohortIds,
-                                  database_ids = quoteLiterals(databaseIds),
-                                  gender = stratifyByGender,
-                                  age_group = stratifyByAgeGroup,
-                                  calendar_year = stratifyByCalendarYear,
-                                  personYears = minPersonYears,
-                                  snakeCaseToCamelCase = TRUE) %>%
+  data <-
+    renderTranslateQuerySql(
+      connection = dataSource$connection,
+      dbms = dataSource$dbms,
+      sql = sql,
+      results_database_schema = dataSource$resultsDatabaseSchema,
+      cohort_ids = cohortIds,
+      database_ids = quoteLiterals(databaseIds),
+      gender = stratifyByGender,
+      age_group = stratifyByAgeGroup,
+      calendar_year = stratifyByCalendarYear,
+      personYears = minPersonYears,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
     tidyr::tibble()
   data <- data %>%
-    dplyr::mutate(gender = dplyr::na_if(.data$gender, ""),
-                  ageGroup = dplyr::na_if(.data$ageGroup, ""),
-                  calendarYear = dplyr::na_if(.data$calendarYear, ""))
+    dplyr::mutate(
+      gender = dplyr::na_if(.data$gender, ""),
+      ageGroup = dplyr::na_if(.data$ageGroup, ""),
+      calendarYear = dplyr::na_if(.data$calendarYear, "")
+    )
 
   data <- data %>%
     dplyr::inner_join(cohortCount,
-                      by = c("cohortId", "databaseId")) %>%
+      by = c("cohortId", "databaseId")
+    ) %>%
     dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
     dplyr::arrange(.data$cohortId, .data$databaseId)
 
@@ -123,30 +144,34 @@ getIncidenceRateResult <- function(dataSource,
 getInclusionRuleStats <- function(dataSource,
                                   cohortIds = NULL,
                                   databaseIds) {
-
   sql <- "SELECT *
     FROM  @resultsDatabaseSchema.inclusion_rule_stats
     WHERE database_id in (@database_id)
     {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
     ;"
-  data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                  dbms = dataSource$dbms,
-                                  sql = sql,
-                                  resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
-                                  cohort_ids = cohortIds,
-                                  database_id = quoteLiterals(databaseIds),
-                                  snakeCaseToCamelCase = TRUE) %>%
+  data <-
+    renderTranslateQuerySql(
+      connection = dataSource$connection,
+      dbms = dataSource$dbms,
+      sql = sql,
+      resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
+      cohort_ids = cohortIds,
+      database_id = quoteLiterals(databaseIds),
+      snakeCaseToCamelCase = TRUE
+    ) %>%
     tidyr::tibble()
 
   data <- data %>%
-    dplyr::select(.data$cohortId,
-                  .data$ruleSequenceId,
-                  .data$ruleName,
-                  .data$meetSubjects,
-                  .data$gainSubjects,
-                  .data$remainSubjects,
-                  .data$totalSubjects,
-                  .data$databaseId) %>%
+    dplyr::select(
+      .data$cohortId,
+      .data$ruleSequenceId,
+      .data$ruleName,
+      .data$meetSubjects,
+      .data$gainSubjects,
+      .data$remainSubjects,
+      .data$totalSubjects,
+      .data$databaseId
+    ) %>%
     dplyr::arrange(.data$cohortId, .data$ruleSequenceId)
   return(data)
 }
@@ -156,9 +181,12 @@ getIndexEventBreakdown <- function(dataSource,
                                    cohortIds,
                                    databaseIds) {
   errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
-                                                 databaseIds = databaseIds,
-                                                 errorMessage = errorMessage)
+  errorMessage <-
+    checkErrorCohortIdsDatabaseIds(
+      cohortIds = cohortIds,
+      databaseIds = databaseIds,
+      errorMessage = errorMessage
+    )
   checkmate::reportAssertions(collection = errorMessage)
 
   sql <- "SELECT index_event_breakdown.*,
@@ -172,22 +200,28 @@ getIndexEventBreakdown <- function(dataSource,
               ON index_event_breakdown.concept_id = concept.concept_id
             WHERE database_id in (@database_id)
               AND cohort_id in (@cohort_ids);"
-  data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                  dbms = dataSource$dbms,
-                                  sql = sql,
-                                  results_database_schema = dataSource$resultsDatabaseSchema,
-                                  vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
-                                  cohort_ids = cohortIds,
-                                  database_id = quoteLiterals(databaseIds),
-                                  snakeCaseToCamelCase = TRUE) %>%
+  data <-
+    renderTranslateQuerySql(
+      connection = dataSource$connection,
+      dbms = dataSource$dbms,
+      sql = sql,
+      results_database_schema = dataSource$resultsDatabaseSchema,
+      vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
+      cohort_ids = cohortIds,
+      database_id = quoteLiterals(databaseIds),
+      snakeCaseToCamelCase = TRUE
+    ) %>%
     tidyr::tibble()
 
 
   data <- data %>%
     dplyr::inner_join(cohortCount,
-                      by = c('databaseId', 'cohortId')) %>%
-    dplyr::mutate(subjectPercent = .data$subjectCount / .data$cohortSubjects,
-                  conceptPercent = .data$conceptCount / .data$cohortEntries)
+      by = c("databaseId", "cohortId")
+    ) %>%
+    dplyr::mutate(
+      subjectPercent = .data$subjectCount / .data$cohortSubjects,
+      conceptPercent = .data$conceptCount / .data$cohortEntries
+    )
 
   return(data)
 }
@@ -196,9 +230,12 @@ getVisitContextResults <- function(dataSource,
                                    cohortIds,
                                    databaseIds) {
   errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
-                                                 databaseIds = databaseIds,
-                                                 errorMessage = errorMessage)
+  errorMessage <-
+    checkErrorCohortIdsDatabaseIds(
+      cohortIds = cohortIds,
+      databaseIds = databaseIds,
+      errorMessage = errorMessage
+    )
   checkmate::reportAssertions(collection = errorMessage)
 
   sql <- "SELECT visit_context.*,
@@ -208,19 +245,23 @@ getVisitContextResults <- function(dataSource,
               ON visit_context.visit_concept_id = standard_concept.concept_id
             WHERE database_id in (@database_id)
               AND cohort_id in (@cohort_ids);"
-  data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                  dbms = dataSource$dbms,
-                                  sql = sql,
-                                  results_database_schema = dataSource$resultsDatabaseSchema,
-                                  vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
-                                  cohort_ids = cohortIds,
-                                  database_id = quoteLiterals(databaseIds),
-                                  snakeCaseToCamelCase = TRUE) %>%
+  data <-
+    renderTranslateQuerySql(
+      connection = dataSource$connection,
+      dbms = dataSource$dbms,
+      sql = sql,
+      results_database_schema = dataSource$resultsDatabaseSchema,
+      vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
+      cohort_ids = cohortIds,
+      database_id = quoteLiterals(databaseIds),
+      snakeCaseToCamelCase = TRUE
+    ) %>%
     tidyr::tibble()
 
   data <- data %>%
     dplyr::inner_join(cohortCount,
-                      by = c("cohortId", "databaseId")) %>%
+      by = c("cohortId", "databaseId")
+    ) %>%
     dplyr::mutate(subjectPercent = .data$subjects / .data$cohortSubjects)
   return(data)
 }
@@ -248,9 +289,9 @@ getConceptsInCohort <-
             	GROUP BY database_id,
             		cohort_id,
             		concept_id
-            	
+
             	UNION
-            	
+
             	SELECT c.database_id,
             		c.cohort_id,
             		c.source_concept_id concept_id,
@@ -297,22 +338,26 @@ getCountForConceptIdInCohort <-
         snakeCaseToCamelCase = TRUE
       ) %>%
       tidyr::tibble()
-    
+
     standardConceptId <- data %>%
-      dplyr::select(.data$databaseId,
-                    .data$conceptId,
-                    .data$conceptSubjects,
-                    .data$conceptCount) %>%
-      dplyr::group_by(.data$databaseId,
-                      .data$conceptId) %>% 
-    dplyr::summarise(
-      conceptSubjects = max(.data$conceptSubjects),
-      conceptCount = sum(.data$conceptCount), 
-      .groups = "keep"
-    ) %>%
+      dplyr::select(
+        .data$databaseId,
+        .data$conceptId,
+        .data$conceptSubjects,
+        .data$conceptCount
+      ) %>%
+      dplyr::group_by(
+        .data$databaseId,
+        .data$conceptId
+      ) %>%
+      dplyr::summarise(
+        conceptSubjects = max(.data$conceptSubjects),
+        conceptCount = sum(.data$conceptCount),
+        .groups = "keep"
+      ) %>%
       dplyr::ungroup()
-    
-    
+
+
     sourceConceptId <- data %>%
       dplyr::select(
         .data$databaseId,
@@ -321,15 +366,17 @@ getCountForConceptIdInCohort <-
         .data$conceptCount
       ) %>%
       dplyr::rename(conceptId = .data$sourceConceptId) %>%
-      dplyr::group_by(.data$databaseId,
-                      .data$conceptId) %>% 
+      dplyr::group_by(
+        .data$databaseId,
+        .data$conceptId
+      ) %>%
       dplyr::summarise(
         conceptSubjects = max(.data$conceptSubjects),
-        conceptCount = sum(.data$conceptCount), 
+        conceptCount = sum(.data$conceptCount),
         .groups = "keep"
       ) %>%
       dplyr::ungroup()
-    
+
     data <- dplyr::bind_rows(
       standardConceptId,
       sourceConceptId %>%
@@ -341,7 +388,7 @@ getCountForConceptIdInCohort <-
     ) %>%
       dplyr::distinct() %>%
       dplyr::arrange(.data$databaseId, .data$conceptId)
-    
+
     return(data)
   }
 
@@ -364,149 +411,115 @@ getOrphanConceptResult <- function(dataSource,
             WHERE orphan_concept.cohort_id = @cohort_id
               AND database_id in (@database_ids)
               {@concept_set_id != \"\"} ? { AND orphan_concept.concept_set_id IN (@concept_set_id)};"
-  data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                  dbms = dataSource$dbms,
-                                  sql = sql,
-                                  results_database_schema = dataSource$resultsDatabaseSchema,
-                                  vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
-                                  cohort_id = cohortId,
-                                  database_ids = quoteLiterals(databaseIds),
-                                  concept_set_id = conceptSetId,
-                                  snakeCaseToCamelCase = TRUE) %>%
+  data <-
+    renderTranslateQuerySql(
+      connection = dataSource$connection,
+      dbms = dataSource$dbms,
+      sql = sql,
+      results_database_schema = dataSource$resultsDatabaseSchema,
+      vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
+      cohort_id = cohortId,
+      database_ids = quoteLiterals(databaseIds),
+      concept_set_id = conceptSetId,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
     tidyr::tibble()
   return(data)
 }
 
+resolveMappedConceptSetFromVocabularyDatabaseSchema <-
+  function(dataSource,
+           conceptSets,
+           vocabularyDatabaseSchema = "vocabulary") {
+    sqlBase <-
+      paste(
+        "SELECT DISTINCT codeset_id AS concept_set_id, concept.*",
+        "FROM (",
+        paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
+        ") concept_sets",
+        sep = "\n"
+      )
+    sqlResolved <- paste(
+      sqlBase,
+      "INNER JOIN @vocabulary_database_schema.concept",
+      "  ON concept_sets.concept_id = concept.concept_id;",
+      sep = "\n"
+    )
 
-getCohortOverlapResultLegacy <- function(dataSource,
-                                   targetCohortIds,
-                                   comparatorCohortIds,
-                                   databaseIds) {
-  errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = targetCohortIds,
-                                                 databaseIds = databaseIds,
-                                                 errorMessage = errorMessage)
-  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = comparatorCohortIds,
-                                                 databaseIds = databaseIds,
-                                                 errorMessage = errorMessage)
-  sql <- "SELECT cohort_overlap.*,
-                target_cohort.cohort_name AS target_cohort_name,
-                comparator_cohort.cohort_name AS comparator_cohort_name
-              FROM  @results_database_schema.cohort_overlap
-              INNER JOIN @results_database_schema.cohort target_cohort
-                ON cohort_overlap.target_cohort_id = target_cohort.cohort_id
-              INNER JOIN @results_database_schema.cohort comparator_cohort
-                ON cohort_overlap.comparator_cohort_id = comparator_cohort.cohort_id
-              WHERE target_cohort_id in (@targetCohortId)
-              AND comparator_cohort_id in (@comparatorCohortId)
-            	AND database_id in (@databaseId);"
-  data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                  dbms = dataSource$dbms,
-                                  sql = sql,
-                                  results_database_schema = dataSource$resultsDatabaseSchema,
-                                  targetCohortId = targetCohortIds,
-                                  comparatorCohortId = comparatorCohortIds,
-                                  databaseId = quoteLiterals(databaseIds),
-                                  snakeCaseToCamelCase = TRUE) %>%
-    tidyr::tibble()
-
-
-  if (nrow(data) == 0) {
-    return(tidyr::tibble())
-  }
-  return(data)
-}
-
-
-
-
-getConceptDetails <- function(dataSource,
-                              conceptIds) {
-  # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertIntegerish(x = conceptIds,
-                              min.len = 1,
-                              null.ok = TRUE,
-                              add = errorMessage)
-  checkmate::reportAssertions(collection = errorMessage)
-
-  sql <- "SELECT *
-            FROM @vocabulary_database_schema.concept
-            WHERE concept_id IN (@concept_ids);"
-  data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                  dbms = dataSource$dbms,
-                                  sql = sql,
-                                  vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
-                                  concept_ids = conceptIds,
-                                  snakeCaseToCamelCase = TRUE) %>%
-    tidyr::tibble()
-
-  return(data)
-}
-
-resolveMappedConceptSetFromVocabularyDatabaseSchema <- function(dataSource,
-                                                                conceptSets,
-                                                                vocabularyDatabaseSchema = 'vocabulary') {
-
-  sqlBase <- paste("SELECT DISTINCT codeset_id AS concept_set_id, concept.*",
-                   "FROM (",
-                   paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
-                   ") concept_sets",
-                   sep = "\n")
-  sqlResolved <- paste(sqlBase,
-                       "INNER JOIN @vocabulary_database_schema.concept",
-                       "  ON concept_sets.concept_id = concept.concept_id;",
-                       sep = "\n")
-
-  sqlBaseMapped <- paste("SELECT DISTINCT codeset_id AS concept_set_id,
+    sqlBaseMapped <-
+      paste(
+        "SELECT DISTINCT codeset_id AS concept_set_id,
                            concept_sets.concept_id AS resolved_concept_id,
                            concept.*",
-                         "FROM (",
-                         paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
-                         ") concept_sets",
-                         sep = "\n")
-  sqlMapped <- paste(sqlBaseMapped,
-                     "INNER JOIN @vocabulary_database_schema.concept_relationship",
-                     "  ON concept_sets.concept_id = concept_relationship.concept_id_2",
-                     "INNER JOIN @vocabulary_database_schema.concept",
-                     "  ON concept_relationship.concept_id_1 = concept.concept_id",
-                     "WHERE relationship_id = 'Maps to'",
-                     "  AND standard_concept IS NULL;",
-                     sep = "\n")
+        "FROM (",
+        paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
+        ") concept_sets",
+        sep = "\n"
+      )
+    sqlMapped <- paste(
+      sqlBaseMapped,
+      "INNER JOIN @vocabulary_database_schema.concept_relationship",
+      "  ON concept_sets.concept_id = concept_relationship.concept_id_2",
+      "INNER JOIN @vocabulary_database_schema.concept",
+      "  ON concept_relationship.concept_id_1 = concept.concept_id",
+      "WHERE relationship_id = 'Maps to'",
+      "  AND standard_concept IS NULL;",
+      sep = "\n"
+    )
 
-  resolved <- renderTranslateQuerySql(connection = dataSource$connection,
-                                      dbms = dataSource$dbms,
-                                      sql = sqlResolved,
-                                      vocabulary_database_schema = vocabularyDatabaseSchema,
-                                      snakeCaseToCamelCase = TRUE) %>%
-    tidyr::tibble() %>%
-    dplyr::select(.data$conceptSetId, .data$conceptId, .data$conceptName,
-                  .data$domainId, .data$vocabularyId, .data$conceptClassId,
-                  .data$standardConcept, .data$conceptCode, .data$invalidReason) %>%
-    dplyr::arrange(.data$conceptId)
-  mapped <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    dbms = dataSource$dbms,
-                                    sql = sqlMapped,
-                                    vocabulary_database_schema = vocabularyDatabaseSchema,
-                                    snakeCaseToCamelCase = TRUE) %>%
-    tidyr::tibble() %>%
-    dplyr::select(.data$resolvedConceptId, .data$conceptId,
-                  .data$conceptName, .data$domainId,
-                  .data$vocabularyId, .data$conceptClassId,
-                  .data$standardConcept, .data$conceptCode,
-                  .data$conceptSetId) %>%
-    dplyr::distinct() %>%
-    dplyr::arrange(.data$resolvedConceptId, .data$conceptId)
+    resolved <-
+      renderTranslateQuerySql(
+        connection = dataSource$connection,
+        dbms = dataSource$dbms,
+        sql = sqlResolved,
+        vocabulary_database_schema = vocabularyDatabaseSchema,
+        snakeCaseToCamelCase = TRUE
+      ) %>%
+      tidyr::tibble() %>%
+      dplyr::select(
+        .data$conceptSetId,
+        .data$conceptId,
+        .data$conceptName,
+        .data$domainId,
+        .data$vocabularyId,
+        .data$conceptClassId,
+        .data$standardConcept,
+        .data$conceptCode,
+        .data$invalidReason
+      ) %>%
+      dplyr::arrange(.data$conceptId)
+    mapped <-
+      renderTranslateQuerySql(
+        connection = dataSource$connection,
+        dbms = dataSource$dbms,
+        sql = sqlMapped,
+        vocabulary_database_schema = vocabularyDatabaseSchema,
+        snakeCaseToCamelCase = TRUE
+      ) %>%
+      tidyr::tibble() %>%
+      dplyr::select(
+        .data$resolvedConceptId,
+        .data$conceptId,
+        .data$conceptName,
+        .data$domainId,
+        .data$vocabularyId,
+        .data$conceptClassId,
+        .data$standardConcept,
+        .data$conceptCode,
+        .data$conceptSetId
+      ) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(.data$resolvedConceptId, .data$conceptId)
 
-  data <- list(resolved = resolved, mapped = mapped)
-  return(data)
-}
+    data <- list(resolved = resolved, mapped = mapped)
+    return(data)
+  }
 
 
 resolvedConceptSet <- function(dataSource,
-                              databaseIds,
-                              cohortId,
-                              conceptSetId = NULL) {
+                               databaseIds,
+                               cohortId,
+                               conceptSetId = NULL) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertIntegerish(
@@ -554,7 +567,7 @@ resolvedConceptSet <- function(dataSource,
     ) %>%
     tidyr::tibble() %>%
     dplyr::arrange(.data$conceptId)
-  
+
   return(resolved)
 }
 
@@ -569,7 +582,7 @@ getMappedStandardConcepts <-
         WHERE cr.concept_id_2 IN (@concept_ids)
         	AND cr.INVALID_REASON IS NULL
         	AND relationship_id IN ('Mapped from');"
-    
+
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
@@ -580,7 +593,7 @@ getMappedStandardConcepts <-
         snakeCaseToCamelCase = TRUE
       ) %>%
       tidyr::tibble()
-    
+
     return(data)
   }
 
@@ -597,7 +610,7 @@ getMappedSourceConcepts <-
       WHERE cr.concept_id_2 IN (@concept_ids)
       	AND cr.INVALID_REASON IS NULL
       	AND relationship_id IN ('Maps to');"
-    
+
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
@@ -608,7 +621,7 @@ getMappedSourceConcepts <-
         snakeCaseToCamelCase = TRUE
       ) %>%
       tidyr::tibble()
-    
+
     return(data)
   }
 
@@ -693,7 +706,7 @@ getDatabaseCounts <- function(dataSource,
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
-  
+
   return(data)
 }
 
@@ -709,7 +722,7 @@ getMetaDataResults <- function(dataSource) {
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
-  
+
   return(data)
 }
 
@@ -722,7 +735,9 @@ getExecutionMetadata <- function(dataSource) {
     return(NULL)
   }
   columnNames <-
-    databaseMetadata$variableField %>% unique() %>% sort()
+    databaseMetadata$variableField %>%
+    unique() %>%
+    sort()
   columnNamesNoJson <-
     columnNames[stringr::str_detect(
       string = tolower(columnNames),
@@ -739,11 +754,15 @@ getExecutionMetadata <- function(dataSource) {
     dplyr::filter(.data$variableField %in% c(columnNamesNoJson)) %>%
     dplyr::rename(name = "variableField") %>%
     dplyr::group_by(.data$databaseId, .data$startTime, .data$name) %>%
-    dplyr::summarise(valueField = max(.data$valueField),
-                     .groups = "keep") %>%
+    dplyr::summarise(
+      valueField = max(.data$valueField),
+      .groups = "keep"
+    ) %>%
     dplyr::ungroup() %>%
-    tidyr::pivot_wider(names_from = .data$name,
-                       values_from = .data$valueField) %>%
+    tidyr::pivot_wider(
+      names_from = .data$name,
+      values_from = .data$valueField
+    ) %>%
     dplyr::mutate(startTime = stringr::str_replace(
       string = .data$startTime,
       pattern = "TM_",
@@ -751,16 +770,20 @@ getExecutionMetadata <- function(dataSource) {
     ))
   transposeNonJsons$startTime <-
     transposeNonJsons$startTime %>% lubridate::as_datetime()
-  
+
   transposeJsons <- databaseMetadata %>%
     dplyr::filter(.data$variableField %in% c(columnNamesJson)) %>%
     dplyr::rename(name = "variableField") %>%
     dplyr::group_by(.data$databaseId, .data$startTime, .data$name) %>%
-    dplyr::summarise(valueField = max(.data$valueField),
-                     .groups = "keep") %>%
+    dplyr::summarise(
+      valueField = max(.data$valueField),
+      .groups = "keep"
+    ) %>%
     dplyr::ungroup() %>%
-    tidyr::pivot_wider(names_from = .data$name,
-                       values_from = .data$valueField) %>%
+    tidyr::pivot_wider(
+      names_from = .data$name,
+      values_from = .data$valueField
+    ) %>%
     dplyr::mutate(startTime = stringr::str_replace(
       string = .data$startTime,
       pattern = "TM_",
@@ -768,7 +791,7 @@ getExecutionMetadata <- function(dataSource) {
     ))
   transposeJsons$startTime <-
     transposeJsons$startTime %>% lubridate::as_datetime()
-  
+
   transposeJsonsTemp <- list()
   for (i in (1:nrow(transposeJsons))) {
     transposeJsonsTemp[[i]] <- transposeJsons[i, ]
@@ -782,50 +805,51 @@ getExecutionMetadata <- function(dataSource) {
   transposeJsons <- dplyr::bind_rows(transposeJsonsTemp)
   data <- transposeNonJsons %>%
     dplyr::left_join(transposeJsons,
-                     by = c("databaseId", "startTime"))
-  if ('observationPeriodMaxDate' %in% colnames(data)) {
+      by = c("databaseId", "startTime")
+    )
+  if ("observationPeriodMaxDate" %in% colnames(data)) {
     data$observationPeriodMaxDate <-
       tryCatch(
         expr = lubridate::as_date(data$observationPeriodMaxDate),
         error = data$observationPeriodMaxDate
       )
   }
-  if ('observationPeriodMinDate' %in% colnames(data)) {
+  if ("observationPeriodMinDate" %in% colnames(data)) {
     data$observationPeriodMinDate <-
       tryCatch(
         expr = lubridate::as_date(data$observationPeriodMinDate),
         error = data$observationPeriodMinDate
       )
   }
-  if ('sourceReleaseDate' %in% colnames(data)) {
+  if ("sourceReleaseDate" %in% colnames(data)) {
     data$sourceReleaseDate <-
       tryCatch(
         expr = lubridate::as_date(data$sourceReleaseDate),
         error = data$sourceReleaseDate
       )
   }
-  if ('personDaysInDatasource' %in% colnames(data)) {
+  if ("personDaysInDatasource" %in% colnames(data)) {
     data$personDaysInDatasource <-
       tryCatch(
         expr = as.numeric(data$personDaysInDatasource),
         error = data$personDaysInDatasource
       )
   }
-  if ('recordsInDatasource' %in% colnames(data)) {
+  if ("recordsInDatasource" %in% colnames(data)) {
     data$recordsInDatasource <-
       tryCatch(
         expr = as.numeric(data$recordsInDatasource),
         error = data$recordsInDatasource
       )
   }
-  if ('personDaysInDatasource' %in% colnames(data)) {
+  if ("personDaysInDatasource" %in% colnames(data)) {
     data$personDaysInDatasource <-
       tryCatch(
         expr = as.numeric(data$personDaysInDatasource),
         error = data$personDaysInDatasource
       )
   }
-  if ('runTime' %in% colnames(data)) {
+  if ("runTime" %in% colnames(data)) {
     data$runTime <-
       tryCatch(
         expr = round(as.numeric(data$runTime), digits = 1),
@@ -834,4 +858,3 @@ getExecutionMetadata <- function(dataSource) {
   }
   return(data)
 }
-

@@ -13,10 +13,12 @@ source("R/ResultRetrieval.R")
 
 appVersionNum <- "Version: 3.0.0"
 appInformationText <- paste("Powered by OHDSI Cohort Diagnostics application", paste0(appVersionNum, "."))
-appInformationText <- paste0(appInformationText,
-                             "Application was last initated on ",
-                             lubridate::now(tzone = "EST"),
-                             " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/")
+appInformationText <- paste0(
+  appInformationText,
+  "Application was last initated on ",
+  lubridate::now(tzone = "EST"),
+  " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/"
+)
 
 #### Set enableAnnotation to true to enable annotation in deployed apps
 #### Not recommended outside of secure firewalls deployments
@@ -44,7 +46,7 @@ if (exists("shinySettings")) {
   resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
   vocabularyDatabaseSchemas <- shinySettings$vocabularyDatabaseSchemas
   enableAnnotation <- shinySettings$enableAnnotation
-} else if (file.exists(sqliteDbPath)){
+} else if (file.exists(sqliteDbPath)) {
   writeLines("Using data directory")
   sqliteDbPath <- normalizePath(sqliteDbPath)
   resultsDatabaseSchema <- "main"
@@ -61,14 +63,16 @@ if (exists("shinySettings")) {
     user = Sys.getenv("shinydbUser"),
     password = Sys.getenv("shinydbPw")
   )
-  
+
   resultsDatabaseSchema <- Sys.getenv("shinydbResultsSchema", unset = "thrombosisthrombocytopenia")
   vocabularyDatabaseSchemas <- resultsDatabaseSchema
-  alternateVocabularySchema <-  Sys.getenv("shinydbVocabularySchema", unset = c("vocabulary"))
-  
+  alternateVocabularySchema <- Sys.getenv("shinydbVocabularySchema", unset = c("vocabulary"))
+
   vocabularyDatabaseSchemas <-
-    setdiff(x = c(vocabularyDatabaseSchemas, alternateVocabularySchema),
-            y = resultsDatabaseSchema) %>%
+    setdiff(
+      x = c(vocabularyDatabaseSchemas, alternateVocabularySchema),
+      y = resultsDatabaseSchema
+    ) %>%
     unique() %>%
     sort()
 }
@@ -117,9 +121,9 @@ resultsTablesOnServer <-
 
 showAnnotation <- FALSE
 if (enableAnnotation &
-    "annotation" %in% resultsTablesOnServer &
-    "annotation_link" %in% resultsTablesOnServer &
-    "annotation_attributes" %in% resultsTablesOnServer) {
+  "annotation" %in% resultsTablesOnServer &
+  "annotation_link" %in% resultsTablesOnServer &
+  "annotation_attributes" %in% resultsTablesOnServer) {
   showAnnotation <- TRUE
 } else {
   enableAnnotation <- FALSE
@@ -137,13 +141,15 @@ loadResultsTable("concept_sets")
 loadResultsTable("cohort_count", required = TRUE)
 
 for (table in c(dataModelSpecifications$tableName)) {
-  #, "recommender_set"
+  # , "recommender_set"
   if (table %in% resultsTablesOnServer &&
-      !exists(SqlRender::snakeCaseToCamelCase(table)) &&
-      !isEmpty(table)) {
-    #if table is empty, nothing is returned because type instability concerns.
-    assign(SqlRender::snakeCaseToCamelCase(table),
-           dplyr::tibble())
+    !exists(SqlRender::snakeCaseToCamelCase(table)) &&
+    !isEmpty(table)) {
+    # if table is empty, nothing is returned because type instability concerns.
+    assign(
+      SqlRender::snakeCaseToCamelCase(table),
+      dplyr::tibble()
+    )
   }
 }
 
@@ -157,7 +163,7 @@ dataSource <-
 
 if (exists("database")) {
   if (nrow(database) > 0 &&
-      "vocabularyVersion" %in% colnames(database)) {
+    "vocabularyVersion" %in% colnames(database)) {
     database <- database %>%
       dplyr::mutate(
         databaseIdWithVocabularyVersion = paste0(databaseId, " (", .data$vocabularyVersion, ")")
@@ -179,9 +185,10 @@ if (exists("database")) {
   database <- database %>%
     dplyr::distinct() %>%
     dplyr::mutate(id = dplyr::row_number()) %>%
-    dplyr::mutate(shortName = paste0("D", .data$id)) %>% 
-    dplyr::left_join(databaseMetadata, 
-                     by = "databaseId") %>% 
+    dplyr::mutate(shortName = paste0("D", .data$id)) %>%
+    dplyr::left_join(databaseMetadata,
+      by = "databaseId"
+    ) %>%
     dplyr::relocate(.data$id, .data$databaseId, .data$shortName)
   rm("databaseMetadata")
 }
@@ -189,43 +196,41 @@ if (exists("database")) {
 if (exists("temporalTimeRef")) {
   temporalChoices <-
     getResultsTemporalTimeRef(dataSource = dataSource)
-  
+
   temporalCharacterizationTimeIdChoices <-
     temporalChoices %>%
     dplyr::arrange(.data$sequence)
-  
+
   characterizationTimeIdChoices <-
     temporalChoices %>%
-    dplyr::filter(.data$isTemporal == 0)  %>%
+    dplyr::filter(.data$isTemporal == 0) %>%
     dplyr::filter(.data$primaryTimeId == 1) %>%
-    dplyr::arrange(.data$sequence) 
+    dplyr::arrange(.data$sequence)
 }
 
 if (exists("temporalAnalysisRef")) {
-  
   temporalAnalysisRef <- dplyr::bind_rows(
     temporalAnalysisRef,
     dplyr::tibble(
-      analysisId = c(-201,-301),
+      analysisId = c(-201, -301),
       analysisName = c("CohortEraStart", "CohortEraOverlap"),
       domainId = "Cohort",
       isBinary = "Y",
       missingMeansZero = "Y"
     )
   )
-  
-  domainIdOptions <- temporalAnalysisRef %>% 
-    dplyr::select(.data$domainId) %>% 
-    dplyr::pull(.data$domainId) %>% 
-    unique() %>% 
+
+  domainIdOptions <- temporalAnalysisRef %>%
+    dplyr::select(.data$domainId) %>%
+    dplyr::pull(.data$domainId) %>%
+    unique() %>%
     sort()
-  
-  analysisNameOptions <- temporalAnalysisRef %>% 
-    dplyr::select(.data$analysisName) %>% 
-    dplyr::pull(.data$analysisName) %>% 
-    unique() %>% 
+
+  analysisNameOptions <- temporalAnalysisRef %>%
+    dplyr::select(.data$analysisName) %>%
+    dplyr::pull(.data$analysisName) %>%
+    unique() %>%
     sort()
-  
 }
 
 prettyTable1Specifications <- readr::read_csv(
@@ -235,9 +240,13 @@ prettyTable1Specifications <- readr::read_csv(
   lazy = FALSE
 )
 
-analysisIdInCohortCharacterization <- c(1, 3, 4, 5, 6, 7,
-                                        203, 403, 501, 703,
-                                        801, 901, 903, 904,
-                                        -301, -201)
-analysisIdInTemporalCharacterization <- c(101, 401, 501, 701,
-                                          -301, -201)
+analysisIdInCohortCharacterization <- c(
+  1, 3, 4, 5, 6, 7,
+  203, 403, 501, 703,
+  801, 901, 903, 904,
+  -301, -201
+)
+analysisIdInTemporalCharacterization <- c(
+  101, 401, 501, 701,
+  -301, -201
+)

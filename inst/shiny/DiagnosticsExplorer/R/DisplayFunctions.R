@@ -42,13 +42,15 @@ copyToClipboardButton <-
       toCopyId,
       toCopyId
     )
-    
-    tags$button(type = "button",
-                class = "btn btn-default action-button",
-                onclick = script,
-                icon,
-                label,
-                ...)
+
+    tags$button(
+      type = "button",
+      class = "btn btn-default action-button",
+      onclick = script,
+      icon,
+      label,
+      ...
+    )
   }
 
 
@@ -59,8 +61,10 @@ getDisplayTableHeaderCount <-
            source = "Datasource",
            fields = "Both") {
     if (source == "Datasource") {
-      countsForHeader <- getDatabaseCounts(dataSource = dataSource,
-                                           databaseIds = databaseIds)
+      countsForHeader <- getDatabaseCounts(
+        dataSource = dataSource,
+        databaseIds = databaseIds
+      )
     } else if (source == "cohort") {
       countsForHeader <-
         getResultsCohortCounts(
@@ -68,11 +72,13 @@ getDisplayTableHeaderCount <-
           cohortIds = cohortIds,
           databaseIds = databaseIds
         ) %>%
-        dplyr::rename(records = .data$cohortEntries,
-                      persons = .data$cohortSubjects)
+        dplyr::rename(
+          records = .data$cohortEntries,
+          persons = .data$cohortSubjects
+        )
     }
-    
-    if (fields  %in% c("Persons")) {
+
+    if (fields %in% c("Persons")) {
       countsForHeader <- countsForHeader %>%
         dplyr::select(-.data$records) %>%
         dplyr::rename(count = .data$persons)
@@ -91,13 +97,17 @@ prepDataForDisplay <- function(data,
   # ensure the data has required fields
   keyColumns <- c(keyColumns %>% unique())
   dataColumns <- dataColumns %>% unique()
-  commonColumns <- intersect(colnames(data),
-                             c(keyColumns, dataColumns, "databaseId", "temporalChoices")) %>% unique()
-  
+  commonColumns <- intersect(
+    colnames(data),
+    c(keyColumns, dataColumns, "databaseId", "temporalChoices")
+  ) %>% unique()
+
   missingColumns <-
-    setdiff(x = c(keyColumns, dataColumns) %>% unique(),
-            y = colnames(data))
-  if (length(missingColumns) > 0 && missingColumns != "")  {
+    setdiff(
+      x = c(keyColumns, dataColumns) %>% unique(),
+      y = colnames(data)
+    )
+  if (length(missingColumns) > 0 && missingColumns != "") {
     stop(
       paste0(
         "Improper specification for sketch, following fields are missing in data ",
@@ -107,26 +117,13 @@ prepDataForDisplay <- function(data,
   }
   data <- data %>%
     dplyr::select(dplyr::all_of(commonColumns))
-  
+
   if ("databaseId" %in% colnames(data)) {
     data <- data %>%
       dplyr::relocate("databaseId")
   }
   return(data)
 }
-
-sticky_style <- function() {
-  style <-
-    list(
-      position = "sticky",
-      left = 0,
-      background = "#FFF",
-      zIndex = 1
-    )
-  return(style)
-}
-
-
 
 getDisplayTableGroupedByDatabaseId <- function(data,
                                                cohort,
@@ -138,47 +135,57 @@ getDisplayTableGroupedByDatabaseId <- function(data,
                                                maxCount,
                                                sort = TRUE,
                                                showDataAsPercent = FALSE,
+                                               excludedColumnFromPercentage = NULL,
                                                pageSize = 20,
                                                valueFill = 0,
                                                selection = NULL,
                                                isTemporal = FALSE) {
-  data <- prepDataForDisplay(data = data,
-                             keyColumns = keyColumns,
-                             dataColumns = dataColumns)
-  
+  data <- prepDataForDisplay(
+    data = data,
+    keyColumns = keyColumns,
+    dataColumns = dataColumns
+  )
+
   data <- data %>%
     tidyr::pivot_longer(
       cols = dplyr::all_of(dataColumns),
       names_to = "type",
       values_to = "valuesData"
     )
-  
+
   if (isTemporal) {
     data <- data %>%
-      dplyr::mutate(type = paste0(.data$databaseId,
-                                  .data$temporalChoices, "_sep_",
-                                  .data$type))
-    distinctColumnGroups <- data$temporalChoices %>%  unique()
+      dplyr::mutate(type = paste0(
+        .data$databaseId,
+        .data$temporalChoices,
+        "_sep_",
+        .data$type
+      ))
+    distinctColumnGroups <- data$temporalChoices %>% unique()
   } else {
     data <- data %>%
-      dplyr::mutate(type = paste0(.data$databaseId,
-                                  "_sep_",
-                                  .data$type))
-    distinctColumnGroups <- data$databaseId %>%  unique()
+      dplyr::mutate(type = paste0(
+        .data$databaseId,
+        "_sep_",
+        .data$type
+      ))
+    distinctColumnGroups <- data$databaseId %>% unique()
   }
-  
+
   data <- data %>%
     tidyr::pivot_wider(
       id_cols = dplyr::all_of(keyColumns),
       names_from = "type",
       values_from = "valuesData"
     )
-  
+
   if (sort) {
     sortByColumns <- colnames(data)
     sortByColumns <-
-      sortByColumns[stringr::str_detect(string = sortByColumns,
-                                        pattern = paste(dataColumns, collapse = "|"))]
+      sortByColumns[stringr::str_detect(
+        string = sortByColumns,
+        pattern = paste(dataColumns, collapse = "|")
+      )]
     if (length(sortByColumns) > 0) {
       sortByColumns <- sortByColumns[[1]]
       data <- data %>%
@@ -187,31 +194,36 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         ))))
     }
   }
-  
+
   dataColumns <-
     colnames(data)[stringr::str_detect(
       string = colnames(data),
       pattern = paste0(keyColumns, collapse = "|"),
       negate = TRUE
     )]
-  
+
   columnDefinitions <- list()
   columnTotalMinWidth <- 0
   columnTotalMaxWidth <- 0
-  
+
   for (i in (1:length(keyColumns))) {
     columnName <- SqlRender::camelCaseToTitleCase(colnames(data)[i])
     displayTableColumnMinMaxWidth <-
-      getDisplayTableColumnMinMaxWidth(data = data,
-                                       columnName = keyColumns[[i]])
-    columnTotalMinWidth <- columnTotalMinWidth + displayTableColumnMinMaxWidth$minValue
-    columnTotalMaxWidth <- columnTotalMaxWidth + displayTableColumnMinMaxWidth$maxValue
-    if (class(data[[keyColumns[[i]]]]) == 'logical') {
+      getDisplayTableColumnMinMaxWidth(
+        data = data,
+        columnName = keyColumns[[i]]
+      )
+    columnTotalMinWidth <-
+      columnTotalMinWidth + displayTableColumnMinMaxWidth$minValue
+    columnTotalMaxWidth <-
+      columnTotalMaxWidth + displayTableColumnMinMaxWidth$maxValue
+    if (class(data[[keyColumns[[i]]]]) == "logical") {
       data[[keyColumns[[i]]]] <- ifelse(data[[keyColumns[[i]]]],
-                                        as.character(icon("check")), "")
+        as.character(icon("check")), ""
+      )
     }
-    
-    colnames(data)[which(names(data) == keyColumns[i])]  <-
+
+    colnames(data)[which(names(data) == keyColumns[i])] <-
       columnName
     columnDefinitions[[columnName]] <-
       reactable::colDef(
@@ -226,43 +238,49 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         na = "",
         align = "left"
       )
-    if (stringr::str_detect(columnName, "Name")) {
-      columnDefinitions[[columnName]] <-
-        reactable::colDef(style = sticky_style(),
-                          headerStyle = sticky_style())
-    }
   }
-  
+
   maxValue <- 0
   if (valueFill == 0) {
-    maxValue <- 
+    maxValue <-
       getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = dataColumns)
   }
-  
+
   for (i in (1:length(dataColumns))) {
     columnNameWithDatabaseAndCount <-
       stringr::str_split(dataColumns[i], "_sep_")[[1]]
     columnName <- columnNameWithDatabaseAndCount[2]
     displayTableColumnMinMaxWidth <-
-      getDisplayTableColumnMinMaxWidth(data = data,
-                                       columnName = columnName)
+      getDisplayTableColumnMinMaxWidth(
+        data = data,
+        columnName = columnName
+      )
     columnTotalMinWidth <- columnTotalMinWidth + 200
     columnTotalMaxWidth <- columnTotalMaxWidth + 200
-    
+
     if (!is.null(headerCount)) {
       if (countLocation == 2) {
         filteredHeaderCount <- headerCount %>%
-          dplyr::filter(.data$databaseId ==  columnNameWithDatabaseAndCount[1])
+          dplyr::filter(.data$databaseId == columnNameWithDatabaseAndCount[1])
         columnCount <- filteredHeaderCount[[columnName]]
         columnName <-
           paste0(columnName, " (", scales::comma(columnCount), ")")
       }
     }
-    
+    showPercent <- showDataAsPercent
+    if (showDataAsPercent &&
+      !is.null(excludedColumnFromPercentage)) {
+      if (stringr::str_detect(
+        tolower(dataColumns[i]),
+        tolower(excludedColumnFromPercentage)
+      )) {
+        showPercent <- FALSE
+      }
+    }
     columnDefinitions[[dataColumns[i]]] <-
       reactable::colDef(
-        name =  SqlRender::camelCaseToTitleCase(columnName),
-        cell =  formatDataCellValueInDisplayTable(showDataAsPercent = showDataAsPercent),
+        name = SqlRender::camelCaseToTitleCase(columnName),
+        cell = formatDataCellValueInDisplayTable(showDataAsPercent = showPercent),
         sortable = TRUE,
         resizable = FALSE,
         filterable = TRUE,
@@ -295,19 +313,21 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     columnTotalMaxWidth <- "auto"
     columnTotalMinWidth <- "auto"
   }
-  
+
   columnGroups <- list()
   for (i in 1:length(distinctColumnGroups)) {
     extractedDataColumns <-
-      dataColumns[stringr::str_detect(string = dataColumns,
-                                      pattern = stringr::fixed(distinctColumnGroups[i]))]
-    
+      dataColumns[stringr::str_detect(
+        string = dataColumns,
+        pattern = stringr::fixed(distinctColumnGroups[i])
+      )]
+
     columnName <- distinctColumnGroups[i]
-    
+
     if (!is.null(headerCount)) {
       if (countLocation == 1) {
         columnName <- headerCount %>%
-          dplyr::filter(.data$databaseId ==  distinctColumnGroups[i]) %>%
+          dplyr::filter(.data$databaseId == distinctColumnGroups[i]) %>%
           dplyr::mutate(count = paste0(
             .data$databaseId,
             " (",
@@ -318,10 +338,12 @@ getDisplayTableGroupedByDatabaseId <- function(data,
       }
     }
     columnGroups[[i]] <-
-      reactable::colGroup(name = columnName,
-                          columns = extractedDataColumns)
+      reactable::colGroup(
+        name = columnName,
+        columns = extractedDataColumns
+      )
   }
-  
+
   dataTable <-
     reactable::reactable(
       data = data,
@@ -363,30 +385,35 @@ getDisplayTableSimple <- function(data,
                                   showDataAsPercent = FALSE,
                                   defaultSelected = NULL,
                                   pageSize = 20) {
-  data <- prepDataForDisplay(data = data,
-                             keyColumns = keyColumns,
-                             dataColumns = dataColumns)
-  
+  data <- prepDataForDisplay(
+    data = data,
+    keyColumns = keyColumns,
+    dataColumns = dataColumns
+  )
+
   columnDefinitions <- list()
   for (i in (1:length(keyColumns))) {
     columnName <- SqlRender::camelCaseToTitleCase(keyColumns[i])
-    
+
     displayTableColumnMinMaxWidth <-
-      getDisplayTableColumnMinMaxWidth(data = data,
-                                       columnName = keyColumns[[i]])
-    
+      getDisplayTableColumnMinMaxWidth(
+        data = data,
+        columnName = keyColumns[[i]]
+      )
+
     colnames(data)[which(names(data) == keyColumns[i])] <-
       columnName
-    
+
     columnDefinitions[[columnName]] <-
       reactable::colDef(
         name = columnName,
         cell = if ("logical" %in% class(data[[columnName]])) {
           function(value) {
-            if (value)
+            if (value) {
               "\u2714\ufe0f"
-            else
+            } else {
               ""
+            }
           }
         },
         minWidth = displayTableColumnMinMaxWidth$minValue,
@@ -399,19 +426,15 @@ getDisplayTableSimple <- function(data,
         na = "",
         align = "left"
       )
-    if (stringr::str_detect(columnName, "Name")) {
-      columnDefinitions[[columnName]] <-
-        reactable::colDef(style = sticky_style(),
-                          headerStyle = sticky_style())
-    }
   }
-  
+
   if (hasData(dataColumns)) {
-    maxValue <- getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = dataColumns)
-    
+    maxValue <-
+      getMaxValueForStringMatchedColumnsInDataFrame(data = data, string = dataColumns)
+
     for (i in (1:length(dataColumns))) {
       columnName <- SqlRender::camelCaseToTitleCase(dataColumns[i])
-      colnames(data)[which(names(data) == dataColumns[i])]  <-
+      colnames(data)[which(names(data) == dataColumns[i])] <-
         columnName
       columnDefinitions[[columnName]] <-
         reactable::colDef(
@@ -444,7 +467,7 @@ getDisplayTableSimple <- function(data,
         )
     }
   }
-  
+
   dataTable <- reactable::reactable(
     data = data,
     columns = columnDefinitions,
@@ -482,14 +505,16 @@ getMaxValueForStringMatchedColumnsInDataFrame <-
     if (!hasData(data)) {
       return(0)
     }
-    string <- intersect(string,
-                        colnames(data))
+    string <- intersect(
+      string,
+      colnames(data)
+    )
     data <- data %>%
       dplyr::select(dplyr::all_of(string)) %>%
       tidyr::pivot_longer(values_to = "value", cols = dplyr::everything()) %>%
       dplyr::filter(!is.na(.data$value)) %>%
       dplyr::pull(.data$value)
-    
+
     if (!hasData(data)) {
       return(0)
     } else {
@@ -500,45 +525,58 @@ getMaxValueForStringMatchedColumnsInDataFrame <-
 
 getDisplayTableColumnMinMaxWidth <- function(data,
                                              columnName,
-                                             pixelMultipler = 10, #approximate number of pixels per character
+                                             pixelMultipler = 10,
+                                             # approximate number of pixels per character
                                              padPixel = 25,
                                              maxWidth = NULL,
                                              minWidth = 10 * pixelMultipler) {
-  
   columnNameFormatted <- SqlRender::camelCaseToTitleCase(columnName)
-  
+
   if ("character" %in% class(data[[columnName]])) {
-    maxWidth <- (max(stringr::str_length(c(
-        stringr::str_replace_na(string = data[[columnName]],
-                                replacement = ""),
+    maxWidth <- (max(stringr::str_length(
+      c(
+        stringr::str_replace_na(
+          string = data[[columnName]],
+          replacement = ""
+        ),
         columnNameFormatted
-      ))) * pixelMultipler) + padPixel # to pad for table icon like sort
+      )
+    )) * pixelMultipler) + padPixel # to pad for table icon like sort
     minWidth <-
-      min(stringr::str_length(columnNameFormatted) * pixelMultipler,
-          maxWidth) + padPixel
+      min(
+        stringr::str_length(columnNameFormatted) * pixelMultipler,
+        maxWidth
+      ) + padPixel
   }
-  
+
   if ("logical" %in% class(data[[columnName]])) {
     maxWidth <-
-      max(stringr::str_length(columnNameFormatted) * pixelMultipler, na.rm = TRUE) + padPixel
+      max(stringr::str_length(columnNameFormatted) * pixelMultipler,
+        na.rm = TRUE
+      ) + padPixel
     minWidth <-
       (stringr::str_length(columnNameFormatted) * pixelMultipler) + padPixel
   }
-  
+
   if ("numeric" %in% class(data[[columnName]])) {
     maxWidth <-
       (max(stringr::str_length(
-        c(as.character(data[[columnName]]),
-          columnNameFormatted)
+        c(
+          as.character(data[[columnName]]),
+          columnNameFormatted
+        )
       ), na.rm = TRUE) * pixelMultipler) + padPixel # to pad for table icon like sort
     minWidth <-
       min(stringr::str_length(columnNameFormatted) * pixelMultipler,
-          maxWidth,
-          na.rm = TRUE) + padPixel
+        maxWidth,
+        na.rm = TRUE
+      ) + padPixel
   }
-  
-  data <- list(minValue = minWidth,
-               maxValue = maxWidth)
+
+  data <- list(
+    minValue = minWidth,
+    maxValue = maxWidth
+  )
   return(data)
 }
 
@@ -547,72 +585,77 @@ exportCohortDetailsAsZip <- function(dataSource,
                                      cohortIds = NULL,
                                      zipFile = NULL) {
   rootFolder <-
-    stringr::str_replace_all(string = Sys.time(),
-                             pattern = "-",
-                             replacement = "")
+    stringr::str_replace_all(
+      string = Sys.time(),
+      pattern = "-",
+      replacement = ""
+    )
   rootFolder <-
-    stringr::str_replace_all(string = rootFolder,
-                             pattern = ":",
-                             replacement = "")
+    stringr::str_replace_all(
+      string = rootFolder,
+      pattern = ":",
+      replacement = ""
+    )
   tempdir <- file.path(tempdir(), rootFolder)
-  
+
   for (i in (1:nrow(cohort))) {
-    cohortId <- cohort[i,]$cohortId
+    cohortId <- cohort[i, ]$cohortId
     dir.create(
       path = file.path(tempdir, cohortId),
       recursive = TRUE,
       showWarnings = FALSE
     )
-    cohortExpression <- cohort[i,]$json %>%
+    cohortExpression <- cohort[i, ]$json %>%
       RJSONIO::fromJSON(digits = 23)
-    
+
     details <-
-      getCirceRenderedExpression(cohortDefinition =  cohortExpression)
-    
-    SqlRender::writeSql(sql = details$cohortJson,
-                        targetFile = file.path(
-                          tempdir,
-                          cohortId,
-                          paste0('cohortDefinitionJson_', cohortId, '.json')
-                        ))
+      getCirceRenderedExpression(cohortDefinition = cohortExpression)
+
+    SqlRender::writeSql(
+      sql = details$cohortJson,
+      targetFile = file.path(
+        tempdir,
+        cohortId,
+        paste0("cohortDefinitionJson_", cohortId, ".json")
+      )
+    )
     SqlRender::writeSql(
       sql = details$cohortMarkdown,
       targetFile = file.path(
         tempdir,
         cohortId,
-        paste0('cohortDefinitionMarkdown_', cohortId, '.md')
+        paste0("cohortDefinitionMarkdown_", cohortId, ".md")
       )
     )
-    
+
     SqlRender::writeSql(
       sql = details$conceptSetMarkdown,
       targetFile = file.path(
         tempdir,
         cohortId,
-        paste0('conceptSetMarkdown_', cohortId, '.md')
+        paste0("conceptSetMarkdown_", cohortId, ".md")
       )
     )
-    
+
     SqlRender::writeSql(
       sql = details$cohortHtmlExpression,
       targetFile = file.path(
         tempdir,
         cohortId,
-        paste0('cohortDefinitionHtml_', cohortId, '.html')
+        paste0("cohortDefinitionHtml_", cohortId, ".html")
       )
     )
-    
+
     SqlRender::writeSql(
       sql = details$conceptSetHtmlExpression,
       targetFile = file.path(
         tempdir,
         cohortId,
-        paste0("conceptSetsHtml_", cohortId, '.html')
+        paste0("conceptSetsHtml_", cohortId, ".html")
       )
     )
-    
   }
-  
+
   return(
     DatabaseConnector::createZipFile(
       zipFile = zipFile,
@@ -621,5 +664,3 @@ exportCohortDetailsAsZip <- function(dataSource,
     )
   )
 }
-
-

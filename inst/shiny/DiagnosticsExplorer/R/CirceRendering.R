@@ -29,14 +29,14 @@ getCirceRenderedExpression <- function(cohortDefinition,
     CirceR::cohortPrintFriendly(circeExpression)
   circeConceptSetListmarkdown <-
     CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
-  
+
   circeExpressionMarkdown <-
     paste0(
       "## Human Readable Cohort Definition",
       "\r\n\r\n",
       circeExpressionMarkdown
     )
-  
+
   circeExpressionMarkdown <-
     paste0(
       "# ",
@@ -44,7 +44,7 @@ getCirceRenderedExpression <- function(cohortDefinition,
       "\r\n\r\n",
       circeExpressionMarkdown
     )
-  
+
   if (includeConceptSets) {
     circeExpressionMarkdown <-
       paste0(
@@ -56,7 +56,7 @@ getCirceRenderedExpression <- function(cohortDefinition,
         circeConceptSetListmarkdown
       )
   }
-  
+
   htmlExpressionCohort <-
     convertMdToHtml(circeExpressionMarkdown)
   htmlExpressionConceptSetExpression <-
@@ -125,18 +125,18 @@ getConceptSetDetailsFromCohortDefinition <-
     } else {
       expression <- cohortDefinitionExpression
     }
-    
+
     if (is.null(expression$ConceptSets)) {
       return(NULL)
     }
-    
+
     conceptSetExpression <- expression$ConceptSets %>%
       dplyr::bind_rows() %>%
       dplyr::mutate(json = RJSONIO::toJSON(
         x = .data$expression,
         pretty = TRUE
       ))
-    
+
     conceptSetExpressionDetails <- list()
     i <- 0
     for (id in conceptSetExpression$id) {
@@ -176,7 +176,6 @@ convertMdToHtml <- function(markdown) {
   unlink(mdFile)
   unlink(htmlFile)
   html <- gsub("%sq%", "'", html)
-  
+
   return(html)
 }
-
