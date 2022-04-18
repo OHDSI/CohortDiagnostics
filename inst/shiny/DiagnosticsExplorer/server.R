@@ -2359,6 +2359,14 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$isBinary == "N")
       }
     }
+    
+    if (input$characterizationProportionOrContinuous == "Proportion") {
+      data <- data %>%
+        dplyr::filter(.data$isBinary == "Y")
+    } else if (input$characterizationProportionOrContinuous == "Continuous") {
+      data <- data %>%
+        dplyr::filter(.data$isBinary == "N")
+    }
 
     data <- data %>%
       dplyr::filter(.data$analysisName %in% characterizationAnalysisNameFilter())
