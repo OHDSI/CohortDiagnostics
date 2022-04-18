@@ -41,8 +41,8 @@ if (enableAuthorization) {
 
 if (exists("shinySettings")) {
   writeLines("Using settings provided by user")
-  connectionDetails <- shinySettings$connectionDetails
-  dbms <- connectionDetails$dbms
+  shinyConnectionDetails <- shinySettings$connectionDetails
+  dbms <- shinyConnectionDetails$dbms
   resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
   vocabularyDatabaseSchemas <- shinySettings$vocabularyDatabaseSchemas
   enableAnnotation <- shinySettings$enableAnnotation
@@ -52,11 +52,11 @@ if (exists("shinySettings")) {
   resultsDatabaseSchema <- "main"
   vocabularyDatabaseSchemas <- "main"
   dbms <- "sqlite"
-  connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
+  shinyConnectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
 } else {
   writeLines("Connecting to remote database")
   dbms <- Sys.getenv("shinydbDatabase", unset = "postgresql")
-  connectionDetails <- DatabaseConnector::createConnectionDetails(
+  shinyConnectionDetails <- DatabaseConnector::createConnectionDetails(
     dbms = dbms,
     server = Sys.getenv("shinydbServer"),
     port = Sys.getenv("shinydbPort", unset = 5432),
@@ -77,28 +77,28 @@ if (exists("shinySettings")) {
     sort()
 }
 
-if (is(connectionDetails$server, "function")) {
+if (is(shinyConnectionDetails$server, "function")) {
   connectionPool <-
     pool::dbPool(
       drv = DatabaseConnector::DatabaseConnectorDriver(),
-      dbms = connectionDetails$dbms,
-      server = connectionDetails$server(),
-      port = connectionDetails$port(),
-      user = connectionDetails$user(),
-      password = connectionDetails$password(),
-      connectionString = connectionDetails$connectionString()
+      dbms = shinyConnectionDetails$dbms,
+      server = shinyConnectionDetails$server(),
+      port = shinyConnectionDetails$port(),
+      user = shinyConnectionDetails$user(),
+      password = shinyConnectionDetails$password(),
+      connectionString = shinyConnectionDetails$connectionString()
     )
 } else {
   # For backwards compatibility with older versions of DatabaseConnector:
   connectionPool <-
     pool::dbPool(
       drv = DatabaseConnector::DatabaseConnectorDriver(),
-      dbms = connectionDetails$dbms,
-      server = connectionDetails$server,
-      port = connectionDetails$port,
-      user = connectionDetails$user,
-      password = connectionDetails$password,
-      connectionString = connectionDetails$connectionString
+      dbms = shinyConnectionDetails$dbms,
+      server = shinyConnectionDetails$server,
+      port = shinyConnectionDetails$port,
+      user = shinyConnectionDetails$user,
+      password = shinyConnectionDetails$password,
+      connectionString = shinyConnectionDetails$connectionString
     )
 }
 

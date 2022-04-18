@@ -58,9 +58,9 @@ getCirceRenderedExpression <- function(cohortDefinition,
   }
 
   htmlExpressionCohort <-
-    convertMdToHtml(circeExpressionMarkdown)
+    markdown::renderMarkdown(text = circeExpressionMarkdown)
   htmlExpressionConceptSetExpression <-
-    convertMdToHtml(circeConceptSetListmarkdown)
+    markdown::renderMarkdown(text = circeConceptSetListmarkdown)
   return(
     list(
       cohortJson = cohortJson,
@@ -158,24 +158,3 @@ getConceptSetDetailsFromCohortDefinition <-
     )
     return(output)
   }
-
-
-convertMdToHtml <- function(markdown) {
-  markdown <- gsub("'", "%sq%", markdown)
-  mdFile <- tempfile(fileext = ".md")
-  htmlFile <- tempfile(fileext = ".html")
-  SqlRender::writeSql(markdown, mdFile)
-  rmarkdown::render(
-    input = mdFile,
-    output_format = "html_fragment",
-    output_file = htmlFile,
-    clean = TRUE,
-    quiet = TRUE
-  )
-  html <- SqlRender::readSql(htmlFile)
-  unlink(mdFile)
-  unlink(htmlFile)
-  html <- gsub("%sq%", "'", html)
-
-  return(html)
-}
