@@ -52,6 +52,13 @@ launchDiagnosticsExplorer(sqliteDbPath = "MyCohortDiagnosticsResulst.sqlite")
 ```
 If running the application from a R-studio environment, please make sure the sqlite file is in a folder called 'data'.
 
+To automatically create a zip archive containing the `DiagnosticsExplorer` shiny application for deployment on shared environments, such as data.ohdsi.org, run the function `createDiagnosticsExplorerZip`:
+
+```{r tidy=FALSE,eval=FALSE}
+createDiagnosticsExplorerZip(outputZipfile = "MyCdProject.zip", sqliteDbPath = "MyCohortDiagnosticsResulst.sqlite")
+```
+This archive will contain a fully executable shiny application.
+
 # Running the app using Database mode
 
 We recommend the use of a database system, when file size of the cohort diagnostics output becomes large e.g. > 100mb, as using the sqlite database may leading sluggish performance. Currently, only postgres server is fully supported, though platforms with DatabaseConnector support may work (currently experimental). See Vignette on Database mode on how to load data into remote database.

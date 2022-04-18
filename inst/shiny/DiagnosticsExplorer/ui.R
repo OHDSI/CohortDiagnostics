@@ -368,10 +368,9 @@ bodyTabItems <- shinydashboard::tabItems(
             ),
             td(
               align = "right",
-              button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionTable')"),
-              shiny::downloadButton(
+                            shiny::downloadButton(
                 outputId = "exportAllCohortDetails",
-                label = "Export all cohort",
+                label = "Export Cohorts Zip",
                 icon = shiny::icon("file-export"),
                 style = "margin-top: 5px; margin-bottom: 5px;"
               )
@@ -401,8 +400,7 @@ bodyTabItems <- shinydashboard::tabItems(
                 tr(
                   td(
                     align = "right",
-                    button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionCohortCountTable')")
-                  )
+                                      )
                 )
               )),
               shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionCohortCountTable"))
@@ -481,8 +479,7 @@ bodyTabItems <- shinydashboard::tabItems(
                   tr(
                     td(
                       align = "right",
-                      button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionConceptSetDetailsTable')")
-                    )
+                                          )
                   )
                 )),
                 shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionConceptSetDetailsTable"))
@@ -494,8 +491,7 @@ bodyTabItems <- shinydashboard::tabItems(
                   tr(
                     td(
                       align = "right",
-                      button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionResolvedConceptsTable')")
-                    )
+                                          )
                   )
                 )),
                 shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionResolvedConceptsTable"))
@@ -507,8 +503,7 @@ bodyTabItems <- shinydashboard::tabItems(
                   tr(
                     td(
                       align = "right",
-                      button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionResolvedTableSelectedConceptIdMappedConcepts')")
-                    )
+                                          )
                   )
                 )),
                 shinydashboard::box(
@@ -524,8 +519,7 @@ bodyTabItems <- shinydashboard::tabItems(
                   tr(
                     td(
                       align = "right",
-                      button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortDefinitionOrphanConceptTable')")
-                    )
+                                          )
                   )
                 )),
                 shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionOrphanConceptTable"))
@@ -584,8 +578,7 @@ bodyTabItems <- shinydashboard::tabItems(
             ),
             td(
               align = "right",
-              button("Download as CSV", onclick = "Reactable.downloadDataCSV('cohortCountsTable')")
-            )
+                          )
           )
         )
       ),
@@ -774,8 +767,7 @@ bodyTabItems <- shinydashboard::tabItems(
           width = "100%",
           tags$tr(tags$td(
             align = "right",
-            tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('timeDistributionTable')")
-          ))
+                      ))
         ),
         shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "timeDistributionTable"))
       ),
@@ -824,8 +816,7 @@ bodyTabItems <- shinydashboard::tabItems(
             ),
             td(
               align = "right",
-              button("Download as CSV", onclick = "Reactable.downloadDataCSV('conceptsInDataSourceTable')")
-            )
+                          )
           )
         )
       ),
@@ -869,8 +860,7 @@ bodyTabItems <- shinydashboard::tabItems(
               )
             ),
             td(
-              button("Download as CSV", onclick = "Reactable.downloadDataCSV('orphanConceptsTable')")
-            )
+                          )
           )
         )
       ),
@@ -906,8 +896,7 @@ bodyTabItems <- shinydashboard::tabItems(
             ),
             td(
               align = "right",
-              button("Download as CSV", onclick = "Reactable.downloadDataCSV('inclusionRuleTable')")
-            )
+                          )
           )
         )
       ),
@@ -961,8 +950,7 @@ bodyTabItems <- shinydashboard::tabItems(
             ),
             td(
               align = "right",
-              tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('breakdownTable')")
-            )
+                          )
           )
         )
       ),
@@ -1005,8 +993,7 @@ bodyTabItems <- shinydashboard::tabItems(
           ),
           tags$td(
             align = "right",
-            tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('visitContextTable')")
-          )
+                      )
         )
       ),
       shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "visitContextTable")),
@@ -1138,8 +1125,7 @@ bodyTabItems <- shinydashboard::tabItems(
         tags$tr(
           tags$td(
             align = "right",
-            tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('characterizationTable')")
-          )
+                      )
         )
       ),
       shinycssloaders::withSpinner(
@@ -1214,8 +1200,7 @@ bodyTabItems <- shinydashboard::tabItems(
         tags$tr(
           tags$td(
             align = "right",
-            tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('temporalCharacterizationTable')")
-          )
+                      )
         )
       ),
       shinycssloaders::withSpinner(reactable::reactableOutput("temporalCharacterizationTable")),
@@ -1319,8 +1304,7 @@ bodyTabItems <- shinydashboard::tabItems(
           tags$tr(
             tags$td(
               align = "right",
-              tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('compareCohortCharacterizationTable')")
-            )
+                          )
           )
         ),
         shinycssloaders::withSpinner(
@@ -1444,8 +1428,7 @@ bodyTabItems <- shinydashboard::tabItems(
           tags$tr(
             tags$td(
               align = "right",
-              tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('temporalCharacterizationCompareTable')")
-            )
+                          )
           )
         ),
         shinycssloaders::withSpinner(
@@ -1492,8 +1475,7 @@ bodyTabItems <- shinydashboard::tabItems(
             tr(
               td(
                 align = "right",
-                button("Download as CSV", onclick = "Reactable.downloadDataCSV('databaseInformationTable')")
-              )
+                              )
             )
           )),
           tags$br(),
@@ -1514,8 +1496,7 @@ bodyTabItems <- shinydashboard::tabItems(
               collapsible = TRUE,
               width = NULL,
               collapsed = FALSE,
-              tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('packageDependencySnapShotTable')"),
-              shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "packageDependencySnapShotTable"))
+                            shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "packageDependencySnapShotTable"))
             ),
             shinydashboard::box(
               title = NULL,

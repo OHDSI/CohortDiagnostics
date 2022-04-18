@@ -83,9 +83,21 @@ test_that("Cohort diagnostics in incremental mode", {
   sqliteDbPath <- tempfile(fileext = ".sqlite")
   createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = sqliteDbPath)
   expect_true(file.exists(sqliteDbPath))
+
   # File exists
   expect_error(createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = sqliteDbPath))
 
+  # Test zip works
+  DiagnosticsExplorerZip <- tempfile(fileext = "de.zip")
+  unlink(DiagnosticsExplorerZip)
+  on.exit(unlink(DiagnosticsExplorerZip))
+  createDiagnosticeExplorerZip(outputZipfile = DiagnosticsExplorerZip, sqliteDbPath = sqliteDbPath)
+
+  expect_true(file.exists(DiagnosticsExplorerZip))
+  # already exists
+  expect_error(createDiagnosticeExplorerZip(outputZipfile = DiagnosticsExplorerZip, sqliteDbPath = sqliteDbPath))
+  # Bad filepath
+  expect_error(createDiagnosticeExplorerZip(outputZipfile = "foo", sqliteDbPath = "sdlfkmdkmfkd"))
   output <- read.csv(file.path(folder, "export", "temporal_covariate_value.csv"))
 
   expect_true(is.numeric(output$sum_value[2]))
