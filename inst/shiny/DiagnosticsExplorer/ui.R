@@ -381,7 +381,7 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       shiny::column(
         12,
-        reactable::reactableOutput(outputId = "cohortDefinitionTable")
+        shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionTable"))
       ),
       shiny::column(
         12,
@@ -405,7 +405,7 @@ bodyTabItems <- shinydashboard::tabItems(
                   )
                 )
               )),
-              reactable::reactableOutput(outputId = "cohortDefinitionCohortCountTable")
+              shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionCohortCountTable"))
             ),
             shiny::tabPanel(
               title = "Cohort definition",
@@ -417,7 +417,7 @@ bodyTabItems <- shinydashboard::tabItems(
             ),
             shiny::tabPanel(
               title = "Concept Sets",
-              reactable::reactableOutput(outputId = "conceptsetExpressionsInCohort"),
+              shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "conceptsetExpressionsInCohort")),
               shiny::conditionalPanel(
                 condition = "output.cohortDefinitionConceptSetExpressionRowIsSelected == true",
                 tags$table(
@@ -485,7 +485,7 @@ bodyTabItems <- shinydashboard::tabItems(
                     )
                   )
                 )),
-                reactable::reactableOutput(outputId = "cohortDefinitionConceptSetDetailsTable")
+                shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionConceptSetDetailsTable"))
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Resolved'",
@@ -498,7 +498,7 @@ bodyTabItems <- shinydashboard::tabItems(
                     )
                   )
                 )),
-                reactable::reactableOutput(outputId = "cohortDefinitionResolvedConceptsTable")
+                shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionResolvedConceptsTable"))
               ),
               shiny::conditionalPanel(
                 condition = "output.cohortDefinitionResolvedRowIsSelected == true && input.conceptSetsType == 'Resolved'",
@@ -514,7 +514,7 @@ bodyTabItems <- shinydashboard::tabItems(
                 shinydashboard::box(
                   title = "Mapped Concepts",
                   width = NULL,
-                  reactable::reactableOutput(outputId = "cohortDefinitionResolvedTableSelectedConceptIdMappedConcepts")
+                  shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionResolvedTableSelectedConceptIdMappedConcepts"))
                 )
               ),
               shiny::conditionalPanel(
@@ -528,7 +528,7 @@ bodyTabItems <- shinydashboard::tabItems(
                     )
                   )
                 )),
-                reactable::reactableOutput(outputId = "cohortDefinitionOrphanConceptTable")
+                shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionOrphanConceptTable"))
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Json'",
@@ -589,11 +589,11 @@ bodyTabItems <- shinydashboard::tabItems(
           )
         )
       ),
-      reactable::reactableOutput(outputId = "cohortCountsTable"),
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortCountsTable")),
       shiny::conditionalPanel(
         condition = "output.cohortCountRowIsSelected == true",
         tags$br(),
-        reactable::reactableOutput("InclusionRuleStatForCohortSeletedTable", width = NULL)
+        shinycssloaders::withSpinner(reactable::reactableOutput("InclusionRuleStatForCohortSeletedTable", width = NULL))
       ),
       if (showAnnotation) {
         column(
@@ -777,7 +777,7 @@ bodyTabItems <- shinydashboard::tabItems(
             tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('timeDistributionTable')")
           ))
         ),
-        reactable::reactableOutput(outputId = "timeDistributionTable")
+        shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "timeDistributionTable"))
       ),
       shiny::conditionalPanel(
         condition = "input.timeDistributionType=='Plot'",
@@ -829,7 +829,7 @@ bodyTabItems <- shinydashboard::tabItems(
           )
         )
       ),
-      reactable::reactableOutput(outputId = "conceptsInDataSourceTable"),
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "conceptsInDataSourceTable")),
       if (showAnnotation) {
         column(
           12,
@@ -874,7 +874,7 @@ bodyTabItems <- shinydashboard::tabItems(
           )
         )
       ),
-      reactable::reactableOutput(outputId = "orphanConceptsTable"),
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "orphanConceptsTable")),
       if (showAnnotation) {
         column(
           12,
@@ -911,7 +911,7 @@ bodyTabItems <- shinydashboard::tabItems(
           )
         )
       ),
-      reactable::reactableOutput(outputId = "inclusionRuleTable"),
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "inclusionRuleTable")),
       column(
         12,
         if (showAnnotation) {
@@ -966,7 +966,7 @@ bodyTabItems <- shinydashboard::tabItems(
           )
         )
       ),
-      reactable::reactableOutput(outputId = "breakdownTable"),
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "breakdownTable")),
       if (showAnnotation) {
         column(
           12,
@@ -1009,7 +1009,7 @@ bodyTabItems <- shinydashboard::tabItems(
           )
         )
       ),
-      reactable::reactableOutput(outputId = "visitContextTable"),
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "visitContextTable")),
       if (showAnnotation) {
         column(
           12,
@@ -1497,7 +1497,7 @@ bodyTabItems <- shinydashboard::tabItems(
             )
           )),
           tags$br(),
-          reactable::reactableOutput(outputId = "databaseInformationTable")
+          shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "databaseInformationTable"))
         ),
         shiny::tabPanel(
           title = "Meta data information",
@@ -1515,7 +1515,7 @@ bodyTabItems <- shinydashboard::tabItems(
               width = NULL,
               collapsed = FALSE,
               tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('packageDependencySnapShotTable')"),
-              reactable::reactableOutput(outputId = "packageDependencySnapShotTable")
+              shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "packageDependencySnapShotTable"))
             ),
             shinydashboard::box(
               title = NULL,
