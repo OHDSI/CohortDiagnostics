@@ -413,7 +413,7 @@ bodyTabItems <- shinydashboard::tabItems(
                 toCopyId = "cohortDefinitionText",
                 style = "margin-top: 5px; margin-bottom: 5px;"
               ),
-              shiny::htmlOutput("cohortDefinitionText")
+              shinycssloaders::withSpinner(shiny::htmlOutput("cohortDefinitionText"))
             ),
             shiny::tabPanel(
               title = "Concept Sets",
@@ -1218,7 +1218,7 @@ bodyTabItems <- shinydashboard::tabItems(
           )
         )
       ),
-      shinycssloaders::withSpinner(shinycssloaders::withSpinner(reactable::reactableOutput("temporalCharacterizationTable"))),
+      shinycssloaders::withSpinner(reactable::reactableOutput("temporalCharacterizationTable")),
       if (showAnnotation) {
         column(
           12,
@@ -1323,9 +1323,9 @@ bodyTabItems <- shinydashboard::tabItems(
             )
           )
         ),
-        shinycssloaders::withSpinner(shinycssloaders::withSpinner(
+        shinycssloaders::withSpinner(
           reactable::reactableOutput("compareCohortCharacterizationTable")
-        ))
+        )
       ),
       shiny::conditionalPanel(
         condition = "input.charCompareType=='Plot'",
@@ -1334,13 +1334,13 @@ bodyTabItems <- shinydashboard::tabItems(
           width = NULL,
           status = "primary",
           shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
-          shinycssloaders::withSpinner(shinycssloaders::withSpinner(
+          shinycssloaders::withSpinner(
             ggiraph::ggiraphOutput(
               outputId = "compareCohortCharacterizationBalancePlot",
               width = "100%",
               height = "100%"
             )
-          ))
+          )
         )
       ),
       if (showAnnotation) {
@@ -1448,9 +1448,9 @@ bodyTabItems <- shinydashboard::tabItems(
             )
           )
         ),
-        shinycssloaders::withSpinner(shinycssloaders::withSpinner(
+        shinycssloaders::withSpinner(
           reactable::reactableOutput(outputId = "temporalCharacterizationCompareTable")
-        ))
+        )
       ),
       shiny::conditionalPanel(
         condition = "input.temporalCharacterizationType=='Plot'",
@@ -1458,13 +1458,13 @@ bodyTabItems <- shinydashboard::tabItems(
           title = "Compare Temporal Characterization",
           width = NULL,
           status = "primary",
-          shinycssloaders::withSpinner(shinycssloaders::withSpinner(
+          shinycssloaders::withSpinner(
             ggiraph::ggiraphOutput(
               outputId = "temporalCharacterizationComparePlot",
               width = "100%",
               height = "100%"
             )
-          ))
+          )
         )
       ),
       if (showAnnotation) {
