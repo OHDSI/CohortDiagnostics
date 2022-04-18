@@ -2359,7 +2359,7 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$isBinary == "N")
       }
     }
-    
+
     if (input$characterizationProportionOrContinuous == "Proportion") {
       data <- data %>%
         dplyr::filter(.data$isBinary == "Y")
@@ -2875,7 +2875,7 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$isBinary == "N")
       }
     }
-    
+
     if (input$compareCharacterizationProportionOrContinuous == "Proportion") {
       data <- data %>%
         dplyr::filter(.data$isBinary == "Y")
@@ -2883,7 +2883,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::filter(.data$isBinary == "N")
     }
-    
+
     data <- data %>%
       dplyr::filter(.data$analysisName %in% compareCohortCharacterizationAnalysisNameFilter()) %>%
       dplyr::filter(.data$domainId %in% compareCohortcharacterizationDomainIdFilter())
