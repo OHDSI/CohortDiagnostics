@@ -91,13 +91,13 @@ test_that("Cohort diagnostics in incremental mode", {
   DiagnosticsExplorerZip <- tempfile(fileext = "de.zip")
   unlink(DiagnosticsExplorerZip)
   on.exit(unlink(DiagnosticsExplorerZip))
-  createDiagnosticeExplorerZip(outputZipfile = DiagnosticsExplorerZip, sqliteDbPath = sqliteDbPath)
+  createDiagnosticsExplorerZip(outputZipfile = DiagnosticsExplorerZip, sqliteDbPath = sqliteDbPath)
 
   expect_true(file.exists(DiagnosticsExplorerZip))
   # already exists
-  expect_error(createDiagnosticeExplorerZip(outputZipfile = DiagnosticsExplorerZip, sqliteDbPath = sqliteDbPath))
+  expect_error(createDiagnosticsExplorerZip(outputZipfile = DiagnosticsExplorerZip, sqliteDbPath = sqliteDbPath))
   # Bad filepath
-  expect_error(createDiagnosticeExplorerZip(outputZipfile = "foo", sqliteDbPath = "sdlfkmdkmfkd"))
+  expect_error(createDiagnosticsExplorerZip(outputZipfile = "foo", sqliteDbPath = "sdlfkmdkmfkd"))
   output <- read.csv(file.path(folder, "export", "temporal_covariate_value.csv"))
 
   expect_true(is.numeric(output$sum_value[2]))
