@@ -29,14 +29,14 @@ getCirceRenderedExpression <- function(cohortDefinition,
     CirceR::cohortPrintFriendly(circeExpression)
   circeConceptSetListmarkdown <-
     CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
-  
+
   circeExpressionMarkdown <-
     paste0(
       "## Human Readable Cohort Definition",
       "\r\n\r\n",
       circeExpressionMarkdown
     )
-  
+
   circeExpressionMarkdown <-
     paste0(
       "# ",
@@ -44,7 +44,7 @@ getCirceRenderedExpression <- function(cohortDefinition,
       "\r\n\r\n",
       circeExpressionMarkdown
     )
-  
+
   if (includeConceptSets) {
     circeExpressionMarkdown <-
       paste0(
@@ -56,11 +56,11 @@ getCirceRenderedExpression <- function(cohortDefinition,
         circeConceptSetListmarkdown
       )
   }
-  
+
   htmlExpressionCohort <-
-    convertMdToHtml(circeExpressionMarkdown)
+    markdown::renderMarkdown(text = circeExpressionMarkdown)
   htmlExpressionConceptSetExpression <-
-    convertMdToHtml(circeConceptSetListmarkdown)
+    markdown::renderMarkdown(text = circeConceptSetListmarkdown)
   return(
     list(
       cohortJson = cohortJson,
@@ -125,18 +125,18 @@ getConceptSetDetailsFromCohortDefinition <-
     } else {
       expression <- cohortDefinitionExpression
     }
-    
+
     if (is.null(expression$ConceptSets)) {
       return(NULL)
     }
-    
+
     conceptSetExpression <- expression$ConceptSets %>%
       dplyr::bind_rows() %>%
       dplyr::mutate(json = RJSONIO::toJSON(
         x = .data$expression,
         pretty = TRUE
       ))
-    
+
     conceptSetExpressionDetails <- list()
     i <- 0
     for (id in conceptSetExpression$id) {
@@ -158,25 +158,3 @@ getConceptSetDetailsFromCohortDefinition <-
     )
     return(output)
   }
-
-
-convertMdToHtml <- function(markdown) {
-  markdown <- gsub("'", "%sq%", markdown)
-  mdFile <- tempfile(fileext = ".md")
-  htmlFile <- tempfile(fileext = ".html")
-  SqlRender::writeSql(markdown, mdFile)
-  rmarkdown::render(
-    input = mdFile,
-    output_format = "html_fragment",
-    output_file = htmlFile,
-    clean = TRUE,
-    quiet = TRUE
-  )
-  html <- SqlRender::readSql(htmlFile)
-  unlink(mdFile)
-  unlink(htmlFile)
-  html <- gsub("%sq%", "'", html)
-  
-  return(html)
-}
-

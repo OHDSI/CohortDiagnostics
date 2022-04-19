@@ -118,7 +118,6 @@ postAnnotationResult <- function(dataSource,
                                  createdOn = getTimeAsInteger(),
                                  modifiedOn = NULL,
                                  deletedOn = NULL) {
-
   # Prevent potential sql injection
   annotation <- gsub("'", "`", annotation)
   sqlInsert <- "INSERT INTO @results_database_schema.annotation (
@@ -140,22 +139,25 @@ postAnnotationResult <- function(dataSource,
                 	@deleted_on deleted_on,
                 	'@annotation' annotation
                 FROM @results_database_schema.annotation;"
-  
-  tryCatch({
-    renderTranslateExecuteSql(
-      connection = dataSource$connection,
-      sql = sqlInsert,
-      results_database_schema = dataSource$resultsDatabaseSchema,
-      annotation = annotation,
-      created_by = createdBy,
-      created_on = createdOn,
-      modified_last_on = modifiedOn,
-      deleted_on = deletedOn
-    )
-  }, error = function(err) {
-    stop(paste("Error while posting the comment, \nDescription:", err))
-  })
-  
+
+  tryCatch(
+    {
+      renderTranslateExecuteSql(
+        connection = dataSource$connection,
+        sql = sqlInsert,
+        results_database_schema = dataSource$resultsDatabaseSchema,
+        annotation = annotation,
+        created_by = createdBy,
+        created_on = createdOn,
+        modified_last_on = modifiedOn,
+        deleted_on = deletedOn
+      )
+    },
+    error = function(err) {
+      stop(paste("Error while posting the comment, \nDescription:", err))
+    }
+  )
+
   # get annotation id
   sqlRetrieve <- "SELECT max(annotation_id) annotation_id
                   FROM @results_database_schema.annotation
@@ -170,7 +172,7 @@ postAnnotationResult <- function(dataSource,
       created_by = createdBy,
       created_on = createdOn
     ) %>% dplyr::pull()
-  
+
   # insert annotation link
   annotationLink <-
     tidyr::crossing(
@@ -217,11 +219,11 @@ getAnnotationResult <- function(dataSource,
       databaseIds = quoteLiterals(databaseIds),
       snakeCaseToCamelCase = TRUE
     )
-  
+
   sqlRetrieveAnnotation <- "SELECT *
                             FROM @results_database_schema.annotation
                             WHERE annotation_id IN (@annotationIds);"
-  
+
   annotation <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
@@ -231,9 +233,11 @@ getAnnotationResult <- function(dataSource,
       annotationIds = annotationLink$annotationId,
       snakeCaseToCamelCase = TRUE
     )
-  
-  data <- list(annotation = annotation,
-               annotationLink = annotationLink)
-  
+
+  data <- list(
+    annotation = annotation,
+    annotationLink = annotationLink
+  )
+
   return(data)
 }

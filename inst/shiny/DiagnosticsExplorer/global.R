@@ -13,10 +13,12 @@ source("R/ResultRetrieval.R")
 
 appVersionNum <- "Version: 3.0.0"
 appInformationText <- paste("Powered by OHDSI Cohort Diagnostics application", paste0(appVersionNum, "."))
-appInformationText <- paste0(appInformationText,
-                             "Application was last initated on ",
-                             lubridate::now(tzone = "EST"),
-                             " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/")
+appInformationText <- paste0(
+  appInformationText,
+  "Application was last initated on ",
+  lubridate::now(tzone = "EST"),
+  " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/"
+)
 
 #### Set enableAnnotation to true to enable annotation in deployed apps
 #### Not recommended outside of secure firewalls deployments
@@ -39,62 +41,64 @@ if (enableAuthorization) {
 
 if (exists("shinySettings")) {
   writeLines("Using settings provided by user")
-  connectionDetails <- shinySettings$connectionDetails
-  dbms <- connectionDetails$dbms
+  shinyConnectionDetails <- shinySettings$connectionDetails
+  dbms <- shinyConnectionDetails$dbms
   resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
   vocabularyDatabaseSchemas <- shinySettings$vocabularyDatabaseSchemas
   enableAnnotation <- shinySettings$enableAnnotation
-} else if (file.exists(sqliteDbPath)){
+} else if (file.exists(sqliteDbPath)) {
   writeLines("Using data directory")
   sqliteDbPath <- normalizePath(sqliteDbPath)
   resultsDatabaseSchema <- "main"
   vocabularyDatabaseSchemas <- "main"
   dbms <- "sqlite"
-  connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
+  shinyConnectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
 } else {
   writeLines("Connecting to remote database")
   dbms <- Sys.getenv("shinydbDatabase", unset = "postgresql")
-  connectionDetails <- DatabaseConnector::createConnectionDetails(
+  shinyConnectionDetails <- DatabaseConnector::createConnectionDetails(
     dbms = dbms,
     server = Sys.getenv("shinydbServer"),
     port = Sys.getenv("shinydbPort", unset = 5432),
     user = Sys.getenv("shinydbUser"),
     password = Sys.getenv("shinydbPw")
   )
-  
+
   resultsDatabaseSchema <- Sys.getenv("shinydbResultsSchema", unset = "thrombosisthrombocytopenia")
   vocabularyDatabaseSchemas <- resultsDatabaseSchema
-  alternateVocabularySchema <-  Sys.getenv("shinydbVocabularySchema", unset = c("vocabulary"))
-  
+  alternateVocabularySchema <- Sys.getenv("shinydbVocabularySchema", unset = c("vocabulary"))
+
   vocabularyDatabaseSchemas <-
-    setdiff(x = c(vocabularyDatabaseSchemas, alternateVocabularySchema),
-            y = resultsDatabaseSchema) %>%
+    setdiff(
+      x = c(vocabularyDatabaseSchemas, alternateVocabularySchema),
+      y = resultsDatabaseSchema
+    ) %>%
     unique() %>%
     sort()
 }
 
-if (is(connectionDetails$server, "function")) {
+if (is(shinyConnectionDetails$server, "function")) {
   connectionPool <-
     pool::dbPool(
       drv = DatabaseConnector::DatabaseConnectorDriver(),
-      dbms = connectionDetails$dbms,
-      server = connectionDetails$server(),
-      port = connectionDetails$port(),
-      user = connectionDetails$user(),
-      password = connectionDetails$password(),
-      connectionString = connectionDetails$connectionString()
+      dbms = shinyConnectionDetails$dbms,
+      server = shinyConnectionDetails$server(),
+      port = shinyConnectionDetails$port(),
+      user = shinyConnectionDetails$user(),
+      password = shinyConnectionDetails$password(),
+      connectionString = shinyConnectionDetails$connectionString()
     )
 } else {
   # For backwards compatibility with older versions of DatabaseConnector:
   connectionPool <-
     pool::dbPool(
       drv = DatabaseConnector::DatabaseConnectorDriver(),
-      dbms = connectionDetails$dbms,
-      server = connectionDetails$server,
-      port = connectionDetails$port,
-      user = connectionDetails$user,
-      password = connectionDetails$password,
-      connectionString = connectionDetails$connectionString
+      dbms = shinyConnectionDetails$dbms,
+      server = shinyConnectionDetails$server,
+      port = shinyConnectionDetails$port,
+      user = shinyConnectionDetails$user,
+      password = shinyConnectionDetails$password,
+      connectionString = shinyConnectionDetails$connectionString
     )
 }
 
@@ -117,9 +121,9 @@ resultsTablesOnServer <-
 
 showAnnotation <- FALSE
 if (enableAnnotation &
-    "annotation" %in% resultsTablesOnServer &
-    "annotation_link" %in% resultsTablesOnServer &
-    "annotation_attributes" %in% resultsTablesOnServer) {
+  "annotation" %in% resultsTablesOnServer &
+  "annotation_link" %in% resultsTablesOnServer &
+  "annotation_attributes" %in% resultsTablesOnServer) {
   showAnnotation <- TRUE
 } else {
   enableAnnotation <- FALSE
@@ -132,17 +136,20 @@ loadResultsTable("database", required = TRUE)
 loadResultsTable("cohort", required = TRUE)
 loadResultsTable("metadata", required = TRUE)
 loadResultsTable("temporal_time_ref")
+loadResultsTable("temporal_analysis_ref")
 loadResultsTable("concept_sets")
 loadResultsTable("cohort_count", required = TRUE)
 
 for (table in c(dataModelSpecifications$tableName)) {
-  #, "recommender_set"
+  # , "recommender_set"
   if (table %in% resultsTablesOnServer &&
-      !exists(SqlRender::snakeCaseToCamelCase(table)) &&
-      !isEmpty(table)) {
-    #if table is empty, nothing is returned because type instability concerns.
-    assign(SqlRender::snakeCaseToCamelCase(table),
-           dplyr::tibble())
+    !exists(SqlRender::snakeCaseToCamelCase(table)) &&
+    !isEmpty(table)) {
+    # if table is empty, nothing is returned because type instability concerns.
+    assign(
+      SqlRender::snakeCaseToCamelCase(table),
+      dplyr::tibble()
+    )
   }
 }
 
@@ -156,7 +163,7 @@ dataSource <-
 
 if (exists("database")) {
   if (nrow(database) > 0 &&
-      "vocabularyVersion" %in% colnames(database)) {
+    "vocabularyVersion" %in% colnames(database)) {
     database <- database %>%
       dplyr::mutate(
         databaseIdWithVocabularyVersion = paste0(databaseId, " (", .data$vocabularyVersion, ")")
@@ -178,42 +185,52 @@ if (exists("database")) {
   database <- database %>%
     dplyr::distinct() %>%
     dplyr::mutate(id = dplyr::row_number()) %>%
-    dplyr::mutate(shortName = paste0("D", .data$id)) %>% 
-    dplyr::left_join(databaseMetadata, 
-                     by = "databaseId") %>% 
+    dplyr::mutate(shortName = paste0("D", .data$id)) %>%
+    dplyr::left_join(databaseMetadata,
+      by = "databaseId"
+    ) %>%
     dplyr::relocate(.data$id, .data$databaseId, .data$shortName)
   rm("databaseMetadata")
 }
 
 if (exists("temporalTimeRef")) {
-  temporalCharacterizationCovariateChoices <- get("temporalTimeRef") %>%
-    dplyr::filter((.data$startDay == -365 & .data$endDay == -31) |
-                    (.data$startDay == -30 & .data$endDay == -1) |
-                    (.data$startDay == 0 & .data$endDay == 0) |
-                    (.data$startDay == 1 & .data$endDay == 30) |
-                    (.data$startDay == 31 & .data$endDay == 365)
-    ) %>%
-    dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
-    dplyr::select(.data$timeId, .data$choices) %>%
-    dplyr::arrange(.data$timeId)
-  
-  characterizationCovariateChoices <- get("temporalTimeRef") %>%
-    dplyr::filter((.data$startDay == -365 & .data$endDay == 0) |
-                    (.data$startDay == -30 & .data$endDay == 0)) %>%
-    dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
-    dplyr::select(.data$timeId, .data$choices) %>%
-    dplyr::arrange(.data$timeId)
+  temporalChoices <-
+    getResultsTemporalTimeRef(dataSource = dataSource)
+
+  temporalCharacterizationTimeIdChoices <-
+    temporalChoices %>%
+    dplyr::arrange(.data$sequence)
+
+  characterizationTimeIdChoices <-
+    temporalChoices %>%
+    dplyr::filter(.data$isTemporal == 0) %>%
+    dplyr::filter(.data$primaryTimeId == 1) %>%
+    dplyr::arrange(.data$sequence)
 }
 
-if (exists("temporalCovariateRef")) {
-  specifications <- readr::read_csv(
-    file = "Table1Specs.csv",
-    col_types = readr::cols(),
-    guess_max = min(1e7)
+if (exists("temporalAnalysisRef")) {
+  temporalAnalysisRef <- dplyr::bind_rows(
+    temporalAnalysisRef,
+    dplyr::tibble(
+      analysisId = c(-201, -301),
+      analysisName = c("CohortEraStart", "CohortEraOverlap"),
+      domainId = "Cohort",
+      isBinary = "Y",
+      missingMeansZero = "Y"
+    )
   )
-  prettyAnalysisIds <- specifications$analysisId
-} else {
-  prettyAnalysisIds <- c(0)
+
+  domainIdOptions <- temporalAnalysisRef %>%
+    dplyr::select(.data$domainId) %>%
+    dplyr::pull(.data$domainId) %>%
+    unique() %>%
+    sort()
+
+  analysisNameOptions <- temporalAnalysisRef %>%
+    dplyr::select(.data$analysisName) %>%
+    dplyr::pull(.data$analysisName) %>%
+    unique() %>%
+    sort()
 }
 
 prettyTable1Specifications <- readr::read_csv(
@@ -223,8 +240,13 @@ prettyTable1Specifications <- readr::read_csv(
   lazy = FALSE
 )
 
-
-analysisIdInCohortCharacterization <- c(1, 3, 4, 5, 6, 7,
-                                        203, 403, 501, 703,
-                                        801, 901, 903, 904)
-analysisIdInTemporalCharacterization <- c(101, 401, 501, 701)
+analysisIdInCohortCharacterization <- c(
+  1, 3, 4, 5, 6, 7,
+  203, 403, 501, 703,
+  801, 901, 903, 904,
+  -301, -201
+)
+analysisIdInTemporalCharacterization <- c(
+  101, 401, 501, 701,
+  -301, -201
+)

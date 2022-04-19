@@ -85,6 +85,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
   ensure_installed("checkmate")
   ensure_installed("DatabaseConnector")
   ensure_installed("dplyr")
+  ensure_installed("plyr")
   ensure_installed("ggplot2")
   ensure_installed("ggiraph")
   ensure_installed("gtable")
@@ -97,6 +98,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
   ensure_installed("shinydashboard")
   ensure_installed("shinyWidgets")
   ensure_installed("shinyjs")
+  ensure_installed("shinycssloaders")
   ensure_installed("stringr")
   ensure_installed("SqlRender")
   ensure_installed("tidyr")
@@ -120,14 +122,13 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     options(shiny.port = port)
     options(shiny.host = myIpAddress)
   }
-  shinySettings <- list(
+  .GlobalEnv$shinySettings <- list(
     connectionDetails = connectionDetails,
     resultsDatabaseSchema = resultsDatabaseSchema,
     vocabularyDatabaseSchemas = vocabularyDatabaseSchemas,
     aboutText = aboutText,
     enableAnnotation = enableAnnotation
   )
-  .GlobalEnv$shinySettings <- shinySettings
   on.exit(rm("shinySettings", envir = .GlobalEnv))
   shiny::runApp(appDir = appDir)
 }
@@ -180,6 +181,51 @@ createMergedResultsFile <-
       )
     }
   }
+
+#' Create publishable shiny zip
+#' @description
+#' A utility designed for creating a published zip of a shiny app with an sqlite database.
+#' Designed for sharing projects on servers like data.ohdsi.org.
+#'
+#' Takes the shiny code from the R project and adds an sqlite file to a zip archive.
+#' Uncompressed cohort diagnostics sqlite databases can become large very quickly.
+#'
+#' @param outputZipfile         The output path for the zip file
+#' @param sqliteDbPath          Merged Cohort Diagnostics sqlitedb created with \code{\link{createMergedResultsFile}}
+#' @param shinyDirectory        (optional) Path to the location where the shiny code is stored. By default,
+#'                              this is the package root
+#' @param overwrite             If the zip file already exists, overwrite it?
+#'
+#' @export
+createDiagnosticsExplorerZip <- function(outputZipfile = file.path(getwd(), "DiagnosticsExplorer.zip"),
+                                         sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
+                                         shinyDirectory = system.file(file.path("shiny", "DiagnosticsExplorer"),
+                                                                      package = "CohortDiagnostics"),
+                                         overwrite = FALSE) {
+
+  outputZipfile <- normalizePath(outputZipfile, mustWork = FALSE)
+
+  if (file.exists(outputZipfile) & !overwrite) {
+    stop(outputZipfile, " already exists. Set overwrite = TRUE to continue")
+  }
+  stopifnot(dir.exists(shinyDirectory))
+  stopifnot(file.exists(sqliteDbPath))
+
+  sqliteDbPath <- normalizePath(sqliteDbPath)
+
+  message("Creating zip archive")
+
+  tmpDir <- tempfile()
+  dir.create(tmpDir)
+
+  on.exit(unlink(tmpDir, recursive = TRUE, force = TRUE), add = TRUE)
+  file.copy(shinyDirectory, tmpDir, recursive = TRUE)
+  dir.create(file.path(tmpDir, "DiagnosticsExplorer", "data"))
+  file.copy(sqliteDbPath, file.path(tmpDir, "DiagnosticsExplorer", "data", "MergedCohortDiagnosticsData.sqlite"))
+
+  DatabaseConnector::createZipFile(outputZipfile, file.path(tmpDir, "DiagnosticsExplorer"), rootFolder = tmpDir)
+}
+
 
 #' Launch the CohortExplorer Shiny app
 #'

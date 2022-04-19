@@ -31,9 +31,6 @@ hasData <- function(data) {
       if (is.na(data)) {
         return(FALSE)
       }
-      if (data == "") {
-        return(FALSE)
-      }
     }
   }
   return(TRUE)

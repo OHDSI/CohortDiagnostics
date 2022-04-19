@@ -17,17 +17,22 @@
 
 loadResultsTable <- function(tableName, required = FALSE) {
   if (required || tableName %in% resultsTablesOnServer) {
-    tryCatch({
-      table <- DatabaseConnector::dbReadTable(connectionPool,
-                                              paste(resultsDatabaseSchema, tableName, sep = "."))
-    }, error = function(err) {
-      stop(
-        "Error reading from ",
-        paste(resultsDatabaseSchema, tableName, sep = "."),
-        ": ",
-        err$message
-      )
-    })
+    tryCatch(
+      {
+        table <- DatabaseConnector::dbReadTable(
+          connectionPool,
+          paste(resultsDatabaseSchema, tableName, sep = ".")
+        )
+      },
+      error = function(err) {
+        stop(
+          "Error reading from ",
+          paste(resultsDatabaseSchema, tableName, sep = "."),
+          ": ",
+          err$message
+        )
+      }
+    )
     colnames(table) <-
       SqlRender::snakeCaseToCamelCase(colnames(table))
     if (nrow(table) > 0) {
@@ -44,9 +49,11 @@ loadResultsTable <- function(tableName, required = FALSE) {
 # Create empty objects in memory for all other tables. This is used by the Shiny app to decide what tabs to show:
 isEmpty <- function(tableName) {
   sql <-
-    sprintf("SELECT 1 FROM %s.%s LIMIT 1;",
-            resultsDatabaseSchema,
-            tableName)
+    sprintf(
+      "SELECT 1 FROM %s.%s LIMIT 1;",
+      resultsDatabaseSchema,
+      tableName
+    )
   oneRow <- DatabaseConnector::dbGetQuery(connectionPool, sql)
   return(nrow(oneRow) == 0)
 }
@@ -78,13 +85,15 @@ processMetadata <- function(data) {
     ) %>%
     dplyr::mutate(startTime = paste0(.data$startTime, " ", .data$timeZone)) %>%
     dplyr::mutate(startTime = as.POSIXct(.data$startTime)) %>%
-    dplyr::group_by(.data$databaseId,
-                    .data$startTime) %>%
+    dplyr::group_by(
+      .data$databaseId,
+      .data$startTime
+    ) %>%
     dplyr::arrange(.data$databaseId, dplyr::desc(.data$startTime), .by_group = TRUE) %>%
     dplyr::mutate(rn = dplyr::row_number()) %>%
     dplyr::filter(.data$rn == 1) %>%
     dplyr::select(-.data$timeZone)
-  
+
   if ("runTime" %in% colnames(data)) {
     data$runTime <- round(x = as.numeric(data$runTime), digits = 2)
   }
@@ -114,29 +123,20 @@ processMetadata <- function(data) {
       "runTimeUnits",
       "sourceReleaseDate",
       "cdmVersion",
-      "cdmReleaseDate" ,
+      "cdmReleaseDate",
       "observationPeriodMinDate",
       "observationPeriodMaxDate",
       "personsInDatasource",
       "recordsInDatasource",
       "personDaysInDatasource"
     )
-  
+
   commonColNames <- intersect(colnames(data), colnamesOfInterest)
-  
+
   data <- data %>%
     dplyr::select(dplyr::all_of(commonColNames))
   return(data)
 }
-
-
-checkIfObjectIsTrue <- function(object) {
-  if (is.null(object)) {
-    return(FALSE)
-  }
-  return(isTRUE(object))
-}
-
 
 checkErrorCohortIdsDatabaseIds <- function(errorMessage,
                                            cohortIds,
