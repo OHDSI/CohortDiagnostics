@@ -53,9 +53,6 @@
 #' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
-#' @param runCohortOverlap            Generate and export the cohort overlap? Overlaps are checked within cohortIds
-#'                                    that have the same phenotype ID sourced from the CohortSetReference or
-#'                                    cohortToCreateFile.
 #' @param runCohortRelationship       Generate and export the cohort relationship? Cohort relationship checks the temporal
 #'                                    relationship between two or more cohorts.
 #' @param runTemporalCohortCharacterization   Generate and export the temporal cohort characterization?
@@ -135,7 +132,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runVisitContext = TRUE,
                                runBreakdownIndexEvents = TRUE,
                                runIncidenceRate = TRUE,
-                               runCohortOverlap = TRUE,
                                runCohortRelationship = TRUE,
                                runTemporalCohortCharacterization = TRUE,
                                temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(
@@ -205,18 +201,17 @@ executeDiagnostics <- function(cohortDefinitionSet,
       runVisitContext = argumentsAtDiagnosticsInitiation$runVisitContext,
       runBreakdownIndexEvents = argumentsAtDiagnosticsInitiation$runBreakdownIndexEvents,
       runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,
-      runCohortOverlap = argumentsAtDiagnosticsInitiation$runCohortOverlap,
       runTemporalCohortCharacterization = argumentsAtDiagnosticsInitiation$runTemporalCohortCharacterization,
       minCellCount = argumentsAtDiagnosticsInitiation$minCellCount,
       incremental = argumentsAtDiagnosticsInitiation$incremental,
       temporalCovariateSettings = argumentsAtDiagnosticsInitiation$temporalCovariateSettings
     ) %>%
-    RJSONIO::toJSON(digits = 23, pretty = TRUE)
+      RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
   # take package dependency snapshot
   packageDependencySnapShotJson <-
     takepackageDependencySnapshot() %>%
-    RJSONIO::toJSON(digits = 23, pretty = TRUE)
+      RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
@@ -238,25 +233,25 @@ executeDiagnostics <- function(cohortDefinitionSet,
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertList(cohortTableNames, null.ok = FALSE, types = "character", add = errorMessage, names = "named")
   checkmate::assertNames(names(cohortTableNames),
-    must.include = c(
-      "cohortTable",
-      "cohortInclusionTable",
-      "cohortInclusionResultTable",
-      "cohortInclusionStatsTable",
-      "cohortSummaryStatsTable",
-      "cohortCensorStatsTable"
-    ),
-    add = errorMessage
+                         must.include = c(
+                           "cohortTable",
+                           "cohortInclusionTable",
+                           "cohortInclusionResultTable",
+                           "cohortInclusionStatsTable",
+                           "cohortSummaryStatsTable",
+                           "cohortCensorStatsTable"
+                         ),
+                         add = errorMessage
   )
   checkmate::assertDataFrame(cohortDefinitionSet, add = errorMessage)
   checkmate::assertNames(names(cohortDefinitionSet),
-    must.include = c(
-      "json",
-      "cohortId",
-      "cohortName",
-      "sql"
-    ),
-    add = errorMessage
+                         must.include = c(
+                           "json",
+                           "cohortId",
+                           "cohortName",
+                           "sql"
+                         ),
+                         add = errorMessage
   )
 
   cohortTable <- cohortTableNames$cohortTable
@@ -266,7 +261,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
   checkmate::assertLogical(runTimeSeries, add = errorMessage)
   checkmate::assertLogical(runBreakdownIndexEvents, add = errorMessage)
   checkmate::assertLogical(runIncidenceRate, add = errorMessage)
-  checkmate::assertLogical(runCohortOverlap, add = errorMessage)
   checkmate::assertInt(
     x = cdmVersion,
     na.ok = FALSE,
@@ -284,8 +278,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     runIncludedSourceConcepts,
     runOrphanConcepts,
     runBreakdownIndexEvents,
-    runIncidenceRate,
-    runCohortOverlap
+    runIncidenceRate
   )) {
     checkmate::assertCharacter(
       x = cdmDatabaseSchema,
@@ -342,17 +335,17 @@ executeDiagnostics <- function(cohortDefinitionSet,
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(.data$tableName == "cohort") %>%
-    dplyr::pull(.data$fieldName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    sort()
+      dplyr::filter(.data$tableName == "cohort") %>%
+      dplyr::pull(.data$fieldName) %>%
+      SqlRender::snakeCaseToCamelCase() %>%
+      sort()
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(.data$tableName == "cohort") %>%
-    dplyr::filter(.data$isRequired == "Yes") %>%
-    dplyr::pull(.data$fieldName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    sort()
+      dplyr::filter(.data$tableName == "cohort") %>%
+      dplyr::filter(.data$isRequired == "Yes") %>%
+      dplyr::pull(.data$fieldName) %>%
+      SqlRender::snakeCaseToCamelCase() %>%
+      sort()
 
   expectedButNotObsevered <-
     setdiff(x = cohortTableColumnNamesExpected, y = cohortTableColumnNamesObserved)
@@ -578,22 +571,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
       incremental = incremental
     )
   }
-
-  # Cohort overlap ---------------------------------------------------------------------------------
-  if (runCohortOverlap) {
-    executeCohortComparisonDiagnostics(
-      connection = connection,
-      databaseId = databaseId,
-      exportFolder = exportFolder,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      cohorts = cohortDefinitionSet,
-      minCellCount = minCellCount,
-      recordKeepingFile = recordKeepingFile,
-      incremental = incremental
-    )
-  }
-
 
   # Cohort relationship ---------------------------------------------------------------------------------
   if (runCohortRelationship) {
