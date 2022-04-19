@@ -107,19 +107,28 @@ Alternatively, a covariate setting object may be created using the above as an e
   runInclusionStatistics <span class="op">=</span> <span class="cn">TRUE</span>,
   runIncludedSourceConcepts <span class="op">=</span> <span class="cn">TRUE</span>,
   runOrphanConcepts <span class="op">=</span> <span class="cn">TRUE</span>,
-  runTimeDistributions <span class="op">=</span> <span class="cn">TRUE</span>,
   runTimeSeries <span class="op">=</span> <span class="cn">FALSE</span>,
   runVisitContext <span class="op">=</span> <span class="cn">TRUE</span>,
   runBreakdownIndexEvents <span class="op">=</span> <span class="cn">TRUE</span>,
   runIncidenceRate <span class="op">=</span> <span class="cn">TRUE</span>,
-  runCohortOverlap <span class="op">=</span> <span class="cn">TRUE</span>,
-  runCohortRelationship <span class="op">=</span> <span class="cn">FALSE</span>,
-  runCohortCharacterization <span class="op">=</span> <span class="cn">TRUE</span>,
-  covariateSettings <span class="op">=</span> <span class="fu">createDefaultCovariateSettings</span><span class="op">(</span><span class="op">)</span>,
+  runCohortOverlap <span class="op">=</span> <span class="cn">FALSE</span>,
+  runCohortRelationship <span class="op">=</span> <span class="cn">TRUE</span>,
   runTemporalCohortCharacterization <span class="op">=</span> <span class="cn">TRUE</span>,
-  temporalCovariateSettings <span class="op">=</span> <span class="fu">createTemporalCovariateSettings</span><span class="op">(</span>useConditionOccurrence <span class="op">=</span>
-    <span class="cn">TRUE</span>, useDrugEraStart <span class="op">=</span> <span class="cn">TRUE</span>, useProcedureOccurrence <span class="op">=</span> <span class="cn">TRUE</span>, useMeasurement <span class="op">=</span> <span class="cn">TRUE</span>,
-    temporalStartDays <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">365</span>, <span class="op">-</span><span class="fl">30</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">31</span><span class="op">)</span>, temporalEndDays <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">31</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">30</span>, <span class="fl">365</span><span class="op">)</span><span class="op">)</span>,
+ 
+    temporalCovariateSettings <span class="op">=</span> <span class="fu">FeatureExtraction</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/FeatureExtraction/man/createTemporalCovariateSettings.html" class="external-link">createTemporalCovariateSettings</a></span><span class="op">(</span>useDemographicsGender
+    <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsAge <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsAgeGroup <span class="op">=</span> <span class="cn">TRUE</span>,
+    useDemographicsRace <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsEthnicity <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsIndexYear
+    <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsIndexMonth <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsIndexYearMonth <span class="op">=</span> <span class="cn">TRUE</span>,
+    useDemographicsPriorObservationTime <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsPostObservationTime <span class="op">=</span>
+    <span class="cn">TRUE</span>, useDemographicsTimeInCohort <span class="op">=</span> <span class="cn">TRUE</span>, useConditionOccurrence <span class="op">=</span> <span class="cn">TRUE</span>,
+    useProcedureOccurrence <span class="op">=</span> <span class="cn">TRUE</span>, useDrugEraStart <span class="op">=</span> <span class="cn">TRUE</span>,      useMeasurement <span class="op">=</span> <span class="cn">TRUE</span>,
+    useConditionEraStart <span class="op">=</span> <span class="cn">TRUE</span>, useConditionEraOverlap <span class="op">=</span> <span class="cn">TRUE</span>, useConditionEraGroupStart
+    <span class="op">=</span> <span class="cn">FALSE</span>, useConditionEraGroupOverlap <span class="op">=</span> <span class="cn">TRUE</span>, useDrugExposure <span class="op">=</span> <span class="cn">FALSE</span>,
+    useDrugEraOverlap <span class="op">=</span> <span class="cn">FALSE</span>, useDrugEraGroupStart <span class="op">=</span> <span class="cn">FALSE</span>, useDrugEraGroupOverlap <span class="op">=</span>
+    <span class="cn">TRUE</span>, useObservation <span class="op">=</span> <span class="cn">TRUE</span>, useDeviceExposure <span class="op">=</span> <span class="cn">TRUE</span>, useCharlsonIndex <span class="op">=</span> <span class="cn">TRUE</span>,
+    useDcsi <span class="op">=</span> <span class="cn">TRUE</span>, useChads2 <span class="op">=</span> <span class="cn">TRUE</span>, useChads2Vasc <span class="op">=</span> <span class="cn">TRUE</span>, useHfrs <span class="op">=</span> <span class="cn">FALSE</span>,
+    temporalStartDays <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">365</span>, <span class="fl">1</span>, <span class="fl">31</span>, <span class="op">-</span><span class="fl">9999</span>, <span class="op">-</span><span class="fl">365</span>, <span class="op">-</span><span class="fl">180</span>, <span class="op">-</span><span class="fl">30</span>, <span class="fl">0</span><span class="op">)</span>, temporalEndDays <span class="op">=</span>
+    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">31</span>,          <span class="fl">30</span>, <span class="fl">365</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span>,
   minCellCount <span class="op">=</span> <span class="fl">5</span>,
   incremental <span class="op">=</span> <span class="cn">FALSE</span>,
   incrementalFolder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">exportFolder</span>, <span class="st">"incremental"</span><span class="op">)</span>
@@ -181,8 +190,6 @@ diagnostics to.</p></dd>
 <dd><p>Generate and export the source concepts included in the cohorts?</p></dd>
 <dt>runOrphanConcepts</dt>
 <dd><p>Generate and export potential orphan concepts?</p></dd>
-<dt>runTimeDistributions</dt>
-<dd><p>Generate and export cohort time distributions?</p></dd>
 <dt>runTimeSeries</dt>
 <dd><p>Generate and export the time series diagnostics?</p></dd>
 <dt>runVisitContext</dt>
@@ -192,19 +199,14 @@ diagnostics to.</p></dd>
 <dt>runIncidenceRate</dt>
 <dd><p>Generate and export the cohort incidence  rates?</p></dd>
 <dt>runCohortOverlap</dt>
-<dd><p>Generate and export the cohort overlap? Overlaps are checked within cohortIds
+<dd><p>(Deprecated) Please use runCohortRelationship. Cohortelationship provides
+richer set of diagnostics. Generate and export
+the cohort overlap? Overlaps are checked within cohortIds
 that have the same phenotype ID sourced from the CohortSetReference or
 cohortToCreateFile.</p></dd>
 <dt>runCohortRelationship</dt>
 <dd><p>Generate and export the cohort relationship? Cohort relationship checks the temporal
 relationship between two or more cohorts.</p></dd>
-<dt>runCohortCharacterization</dt>
-<dd><p>Generate and export the cohort characterization?
-Only records with values greater than 0.0001 are returned.</p></dd>
-<dt>covariateSettings</dt>
-<dd><p>Either an object of type <code>covariateSettings</code> as created using one of
-the createCovariateSettings function in the FeatureExtraction package, or a list
-of such objects.</p></dd>
 <dt>runTemporalCohortCharacterization</dt>
 <dd><p>Generate and export the temporal cohort characterization?
 Only records with values greater than 0.001 are returned.</p></dd>

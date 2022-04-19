@@ -53,7 +53,9 @@
 #' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
-#' @param runCohortOverlap            Generate and export the cohort overlap? Overlaps are checked within cohortIds
+#' @param runCohortOverlap            (Deprecated) Please use runCohortRelationship. Cohortelationship provides
+#'                                    richer set of diagnostics. Generate and export
+#'                                    the cohort overlap? Overlaps are checked within cohortIds
 #'                                    that have the same phenotype ID sourced from the CohortSetReference or
 #'                                    cohortToCreateFile.
 #' @param runCohortRelationship       Generate and export the cohort relationship? Cohort relationship checks the temporal
@@ -135,7 +137,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runVisitContext = TRUE,
                                runBreakdownIndexEvents = TRUE,
                                runIncidenceRate = TRUE,
-                               runCohortOverlap = TRUE,
+                               runCohortOverlap = FALSE,
                                runCohortRelationship = TRUE,
                                runTemporalCohortCharacterization = TRUE,
                                temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(
@@ -581,6 +583,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   # Cohort overlap ---------------------------------------------------------------------------------
   if (runCohortOverlap) {
+    warning("runCohortOverlap has been deprecated in favor of runCohortRelationship.")
     executeCohortComparisonDiagnostics(
       connection = connection,
       databaseId = databaseId,

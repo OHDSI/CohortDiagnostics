@@ -34,16 +34,16 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
                                               "cohortSummaryStats.csv"
                                             )) {
   start <- Sys.time()
-  
+
   if (!file.exists(cohortInclusionFile)) {
     return(NULL)
   }
-  
+
   fetchStats <- function(file) {
     ParallelLogger::logDebug("- Fetching data from ", file)
     stats <- readr::read_csv(file,
-                             col_types = readr::cols(),
-                             guess_max = min(1e7)
+      col_types = readr::cols(),
+      guess_max = min(1e7)
     )
     if (!is.null(cohortIds)) {
       stats <- stats %>%
@@ -51,7 +51,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     }
     return(stats)
   }
-  
+
   inclusion <- fetchStats(cohortInclusionFile)
   if ("description" %in% names(inclusion)) {
     inclusion$description <- as.character(inclusion$description)
@@ -59,12 +59,12 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
   } else {
     inclusion$description <- ""
   }
-  
+
   summaryStats <- fetchStats(cohortSummaryStatsFile)
   inclusionStats <- fetchStats(cohortInclusionStatsFile)
   inclusionResults <- fetchStats(cohortInclusionResultFile)
-  
-  #create empty tibble to hold output of simplified cohort inclusion rules
+
+  # create empty tibble to hold output of simplified cohort inclusion rules
   inclusionRuleStats <- dplyr::tibble(
     ruleSequenceId = as.integer(),
     ruleName = as.character(),
@@ -74,7 +74,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     remainSubjects = as.integer(),
     cohortDefinitionId = as.integer()
   )
-    
+
   for (cohortId in unique(inclusion$cohortDefinitionId)) {
     cohortResult <-
       processInclusionStats(
@@ -94,11 +94,13 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     signif(delta, 3),
     attr(delta, "units")
   ))
-  inclusionRule <- list(inclusionRuleStats = inclusionRuleStats,
-                        cohortInclusion = inclusion,
-                        cohortIncStats = inclusionStats,
-                        cohortIncResult = inclusionResults,
-                        cohortSummaryStats = summaryStats)
+  inclusionRule <- list(
+    inclusionRuleStats = inclusionRuleStats,
+    cohortInclusion = inclusion,
+    cohortIncStats = inclusionStats,
+    cohortIncResult = inclusionResults,
+    cohortSummaryStats = summaryStats
+  )
   return(inclusionRule)
 }
 
@@ -108,7 +110,7 @@ processInclusionStats <- function(inclusion,
   if (!hasData(inclusion) || !hasData(inclusionStats)) {
     return(NULL)
   }
-  
+
   result <- inclusion %>%
     dplyr::select(.data$ruleSequence, .data$name) %>%
     dplyr::distinct() %>%
@@ -124,12 +126,12 @@ processInclusionStats <- function(inclusion,
       by = "ruleSequence"
     ) %>%
     dplyr::mutate(remain = 0)
-  
+
   inclusionResults <- inclusionResults %>%
     dplyr::filter(.data$modeId == 0)
   mask <- 0
   for (ruleId in 0:(nrow(result) - 1)) {
-    mask <- bitwOr(mask, 2 ^ ruleId)
+    mask <- bitwOr(mask, 2^ruleId)
     idx <-
       bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
     result$remain[result$ruleSequence == ruleId] <-
@@ -164,9 +166,9 @@ getInclusionStats <- function(connection,
     incremental = incremental,
     recordKeepingFile = recordKeepingFile
   )
-  
+
   if (incremental &&
-      (length(instantiatedCohorts) - nrow(subset)) > 0) {
+    (length(instantiatedCohorts) - nrow(subset)) > 0) {
     ParallelLogger::logInfo(sprintf(
       "Skipping %s cohorts in incremental mode.",
       length(instantiatedCohorts) - nrow(subset)
@@ -268,7 +270,7 @@ getInclusionStats <- function(connection,
           cohortId = subset$cohortId
         )
       }
-      
+
       recordTasksDone(
         cohortId = subset$cohortId,
         task = "runInclusionStatistics",

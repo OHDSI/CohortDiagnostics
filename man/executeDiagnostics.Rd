@@ -27,7 +27,7 @@ executeDiagnostics(
   runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
-  runCohortOverlap = TRUE,
+  runCohortOverlap = FALSE,
   runCohortRelationship = TRUE,
   runTemporalCohortCharacterization = TRUE,
  
@@ -112,7 +112,9 @@ diagnostics to.}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
-\item{runCohortOverlap}{Generate and export the cohort overlap? Overlaps are checked within cohortIds
+\item{runCohortOverlap}{(Deprecated) Please use runCohortRelationship. Cohortelationship provides
+richer set of diagnostics. Generate and export
+the cohort overlap? Overlaps are checked within cohortIds
 that have the same phenotype ID sourced from the CohortSetReference or
 cohortToCreateFile.}
 
