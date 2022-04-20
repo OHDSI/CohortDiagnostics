@@ -350,7 +350,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
     if (!found) {
       temporalCovariateSettings$temporalStartDays <- c(temporalCovariateSettings$temporalStartDays, p1[1])
-      temporalCovariateSettings$temporalEndDays <- c(temporalCovariateSettings$temporalStartDays, p1[2])
+      temporalCovariateSettings$temporalEndDays <- c(temporalCovariateSettings$temporalEndDays, p1[2])
     }
   }
 
