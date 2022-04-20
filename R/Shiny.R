@@ -200,9 +200,9 @@ createMergedResultsFile <-
 createDiagnosticsExplorerZip <- function(outputZipfile = file.path(getwd(), "DiagnosticsExplorer.zip"),
                                          sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
                                          shinyDirectory = system.file(file.path("shiny", "DiagnosticsExplorer"),
-                                                                      package = "CohortDiagnostics"),
+                                           package = "CohortDiagnostics"
+                                         ),
                                          overwrite = FALSE) {
-
   outputZipfile <- normalizePath(outputZipfile, mustWork = FALSE)
 
   if (file.exists(outputZipfile) & !overwrite) {

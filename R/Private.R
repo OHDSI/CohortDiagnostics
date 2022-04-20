@@ -130,10 +130,10 @@ makeDataExportable <- function(x,
   }
 
   if ("cohortDefinitionId" %in% colnames(x)) {
-    x <- x %>% 
+    x <- x %>%
       dplyr::rename(cohortId = .data$cohortDefinitionId)
   }
-  
+
   resultsDataModel <- getResultsDataModelSpecifications()
 
   if (!is.null(databaseId)) {
@@ -231,8 +231,10 @@ makeDataExportable <- function(x,
   # enforce minimum cell count value
   if (hasData(x)) {
     x <- x %>%
-      enforceMinCellValueInDataframe(columnNames = columnsToApplyMinCellValue,
-                                     minCellCount = minCellCount)
+      enforceMinCellValueInDataframe(
+        columnNames = columnsToApplyMinCellValue,
+        minCellCount = minCellCount
+      )
   }
   return(x)
 }

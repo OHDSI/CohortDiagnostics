@@ -206,12 +206,12 @@ executeDiagnostics <- function(cohortDefinitionSet,
       incremental = argumentsAtDiagnosticsInitiation$incremental,
       temporalCovariateSettings = argumentsAtDiagnosticsInitiation$temporalCovariateSettings
     ) %>%
-      RJSONIO::toJSON(digits = 23, pretty = TRUE)
+    RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
   # take package dependency snapshot
   packageDependencySnapShotJson <-
     takepackageDependencySnapshot() %>%
-      RJSONIO::toJSON(digits = 23, pretty = TRUE)
+    RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
@@ -233,25 +233,25 @@ executeDiagnostics <- function(cohortDefinitionSet,
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertList(cohortTableNames, null.ok = FALSE, types = "character", add = errorMessage, names = "named")
   checkmate::assertNames(names(cohortTableNames),
-                         must.include = c(
-                           "cohortTable",
-                           "cohortInclusionTable",
-                           "cohortInclusionResultTable",
-                           "cohortInclusionStatsTable",
-                           "cohortSummaryStatsTable",
-                           "cohortCensorStatsTable"
-                         ),
-                         add = errorMessage
+    must.include = c(
+      "cohortTable",
+      "cohortInclusionTable",
+      "cohortInclusionResultTable",
+      "cohortInclusionStatsTable",
+      "cohortSummaryStatsTable",
+      "cohortCensorStatsTable"
+    ),
+    add = errorMessage
   )
   checkmate::assertDataFrame(cohortDefinitionSet, add = errorMessage)
   checkmate::assertNames(names(cohortDefinitionSet),
-                         must.include = c(
-                           "json",
-                           "cohortId",
-                           "cohortName",
-                           "sql"
-                         ),
-                         add = errorMessage
+    must.include = c(
+      "json",
+      "cohortId",
+      "cohortName",
+      "sql"
+    ),
+    add = errorMessage
   )
 
   cohortTable <- cohortTableNames$cohortTable
@@ -325,19 +325,22 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   # Adding required temporal windows required in results viewer
   requiredTemporalPairs <-
-    list(c(0, 0),
-         c(-30,-1),
-         c(-365,-31),
-         c(1, 30),
-         c(31, 365),
-         c(-365, 0),
-         c(-30, 0))
+    list(
+      c(0, 0),
+      c(-30, -1),
+      c(-365, -31),
+      c(1, 30),
+      c(31, 365),
+      c(-365, 0),
+      c(-30, 0)
+    )
   for (p1 in requiredTemporalPairs) {
     found <- FALSE
     for (i in 1:length(temporalCovariateSettings$temporalStartDays)) {
-
-      p2 <- c(temporalCovariateSettings$temporalStartDays[i],
-              temporalCovariateSettings$temporalEndDays[i])
+      p2 <- c(
+        temporalCovariateSettings$temporalStartDays[i],
+        temporalCovariateSettings$temporalEndDays[i]
+      )
 
       if (p2[1] == p1[1] & p2[2] == p1[2]) {
         found <- TRUE
@@ -363,17 +366,17 @@ executeDiagnostics <- function(cohortDefinitionSet,
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
-      dplyr::filter(.data$tableName == "cohort") %>%
-      dplyr::pull(.data$fieldName) %>%
-      SqlRender::snakeCaseToCamelCase() %>%
-      sort()
+    dplyr::filter(.data$tableName == "cohort") %>%
+    dplyr::pull(.data$fieldName) %>%
+    SqlRender::snakeCaseToCamelCase() %>%
+    sort()
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
-      dplyr::filter(.data$tableName == "cohort") %>%
-      dplyr::filter(.data$isRequired == "Yes") %>%
-      dplyr::pull(.data$fieldName) %>%
-      SqlRender::snakeCaseToCamelCase() %>%
-      sort()
+    dplyr::filter(.data$tableName == "cohort") %>%
+    dplyr::filter(.data$isRequired == "Yes") %>%
+    dplyr::pull(.data$fieldName) %>%
+    SqlRender::snakeCaseToCamelCase() %>%
+    sort()
 
   expectedButNotObsevered <-
     setdiff(x = cohortTableColumnNamesExpected, y = cohortTableColumnNamesObserved)

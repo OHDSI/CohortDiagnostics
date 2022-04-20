@@ -158,3 +158,4 @@ getConceptSetDetailsFromCohortDefinition <-
     )
     return(output)
   }
+
