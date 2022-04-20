@@ -53,9 +53,6 @@
 #' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
-#' @param runCohortOverlap            Generate and export the cohort overlap? Overlaps are checked within cohortIds
-#'                                    that have the same phenotype ID sourced from the CohortSetReference or
-#'                                    cohortToCreateFile.
 #' @param runCohortRelationship       Generate and export the cohort relationship? Cohort relationship checks the temporal
 #'                                    relationship between two or more cohorts.
 #' @param runTemporalCohortCharacterization   Generate and export the temporal cohort characterization?
@@ -135,7 +132,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runVisitContext = TRUE,
                                runBreakdownIndexEvents = TRUE,
                                runIncidenceRate = TRUE,
-                               runCohortOverlap = TRUE,
                                runCohortRelationship = TRUE,
                                runTemporalCohortCharacterization = TRUE,
                                temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(
@@ -170,30 +166,37 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                  useChads2Vasc = TRUE,
                                  useHfrs = FALSE,
                                  temporalStartDays = c(
-                                   -365,
-                                   1,
-                                   31,
+                                   # components displayed in cohort characterization
                                    -9999, # anytime prior
                                    -365, # long term prior
                                    -180, # medium term prior
                                    -30, # short term prior
-                                   0 # on cohort start date
+                                   
+                                   # components displayed in temporal characterization
+                                   -365, # one year prior to -31
+                                   -30, # 30 day prior not including day 0
+                                   0, # index date only
+                                   1, # 1 day after to day 30
+                                   31
                                  ),
                                  temporalEndDays = c(
-                                   -31,
-                                   30,
-                                   365,
                                    0, # anytime prior
                                    0, # long term prior
                                    0, # medium term prior
                                    0, # short term prior
-                                   0 # on cohort start date
+                                   
+                                   # components displayed in temporal characterization
+                                   -31, # one year prior to -31
+                                   -1, # 30 day prior not including day 0
+                                   0, # index date only
+                                   30, # 1 day after to day 30
+                                   365
                                  )
                                ),
                                minCellCount = 5,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental")) {
-
+  
   # collect arguments that were passed to cohort diagnostics at initiation
   argumentsAtDiagnosticsInitiation <- formals(executeDiagnostics)
   argumentsAtDiagnosticsInitiationJson <-
@@ -205,27 +208,26 @@ executeDiagnostics <- function(cohortDefinitionSet,
       runVisitContext = argumentsAtDiagnosticsInitiation$runVisitContext,
       runBreakdownIndexEvents = argumentsAtDiagnosticsInitiation$runBreakdownIndexEvents,
       runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,
-      runCohortOverlap = argumentsAtDiagnosticsInitiation$runCohortOverlap,
       runTemporalCohortCharacterization = argumentsAtDiagnosticsInitiation$runTemporalCohortCharacterization,
       minCellCount = argumentsAtDiagnosticsInitiation$minCellCount,
       incremental = argumentsAtDiagnosticsInitiation$incremental,
       temporalCovariateSettings = argumentsAtDiagnosticsInitiation$temporalCovariateSettings
     ) %>%
     RJSONIO::toJSON(digits = 23, pretty = TRUE)
-
+  
   # take package dependency snapshot
   packageDependencySnapShotJson <-
     takepackageDependencySnapshot() %>%
     RJSONIO::toJSON(digits = 23, pretty = TRUE)
-
+  
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
-
+  
   start <- Sys.time()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
-
+  
   databaseId <- as.character(databaseId)
-
+  
   if (any(is.null(databaseName), is.na(databaseName))) {
     databaseName <- databaseId
     ParallelLogger::logTrace(" - Databasename was not provided.")
@@ -234,31 +236,31 @@ executeDiagnostics <- function(cohortDefinitionSet,
     databaseDescription <- databaseId
     ParallelLogger::logTrace(" - Databasedescription was not provided.")
   }
-
+  
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertList(cohortTableNames, null.ok = FALSE, types = "character", add = errorMessage, names = "named")
   checkmate::assertNames(names(cohortTableNames),
-    must.include = c(
-      "cohortTable",
-      "cohortInclusionTable",
-      "cohortInclusionResultTable",
-      "cohortInclusionStatsTable",
-      "cohortSummaryStatsTable",
-      "cohortCensorStatsTable"
-    ),
-    add = errorMessage
+                         must.include = c(
+                           "cohortTable",
+                           "cohortInclusionTable",
+                           "cohortInclusionResultTable",
+                           "cohortInclusionStatsTable",
+                           "cohortSummaryStatsTable",
+                           "cohortCensorStatsTable"
+                         ),
+                         add = errorMessage
   )
   checkmate::assertDataFrame(cohortDefinitionSet, add = errorMessage)
   checkmate::assertNames(names(cohortDefinitionSet),
-    must.include = c(
-      "json",
-      "cohortId",
-      "cohortName",
-      "sql"
-    ),
-    add = errorMessage
+                         must.include = c(
+                           "json",
+                           "cohortId",
+                           "cohortName",
+                           "sql"
+                         ),
+                         add = errorMessage
   )
-
+  
   cohortTable <- cohortTableNames$cohortTable
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
   checkmate::assertLogical(runIncludedSourceConcepts, add = errorMessage)
@@ -266,7 +268,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
   checkmate::assertLogical(runTimeSeries, add = errorMessage)
   checkmate::assertLogical(runBreakdownIndexEvents, add = errorMessage)
   checkmate::assertLogical(runIncidenceRate, add = errorMessage)
-  checkmate::assertLogical(runCohortOverlap, add = errorMessage)
   checkmate::assertInt(
     x = cdmVersion,
     na.ok = FALSE,
@@ -278,14 +279,13 @@ executeDiagnostics <- function(cohortDefinitionSet,
   minCellCount <- utils::type.convert(minCellCount, as.is = TRUE)
   checkmate::assertInteger(x = minCellCount, lower = 0, add = errorMessage)
   checkmate::assertLogical(incremental, add = errorMessage)
-
+  
   if (any(
     runInclusionStatistics,
     runIncludedSourceConcepts,
     runOrphanConcepts,
     runBreakdownIndexEvents,
-    runIncidenceRate,
-    runCohortOverlap
+    runIncidenceRate
   )) {
     checkmate::assertCharacter(
       x = cdmDatabaseSchema,
@@ -314,7 +314,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     )
   }
   checkmate::reportAssertions(collection = errorMessage)
-
+  
   errorMessage <-
     createIfNotExist(
       type = "folder",
@@ -329,12 +329,42 @@ executeDiagnostics <- function(cohortDefinitionSet,
         errorMessage = errorMessage
       )
   }
-
+  # Adding required temporal windows required in results viewer
+  requiredTemporalPairs <-
+    list(
+      c(-365, 0),
+      c(-30, 0),
+      c(-365, -31),
+      c(-30, -1),
+      c(0, 0),
+      c(1, 30),
+      c(31, 365)
+    )
+  for (p1 in requiredTemporalPairs) {
+    found <- FALSE
+    for (i in 1:length(temporalCovariateSettings$temporalStartDays)) {
+      p2 <- c(
+        temporalCovariateSettings$temporalStartDays[i],
+        temporalCovariateSettings$temporalEndDays[i]
+      )
+      
+      if (p2[1] == p1[1] & p2[2] == p1[2]) {
+        found <- TRUE
+        break
+      }
+    }
+    
+    if (!found) {
+      temporalCovariateSettings$temporalStartDays <- c(temporalCovariateSettings$temporalStartDays, p1[1])
+      temporalCovariateSettings$temporalEndDays <- c(temporalCovariateSettings$temporalEndDays, p1[2])
+    }
+  }
+  
   checkmate::reportAssertions(collection = errorMessage)
   if (!is.null(cohortIds)) {
     cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
-
+  
   if (nrow(cohortDefinitionSet) == 0) {
     stop("No cohorts specified")
   }
@@ -353,7 +383,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     dplyr::pull(.data$fieldName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     sort()
-
+  
   expectedButNotObsevered <-
     setdiff(x = cohortTableColumnNamesExpected, y = cohortTableColumnNamesObserved)
   if (length(expectedButNotObsevered) > 0) {
@@ -362,14 +392,14 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
   obseveredButNotExpected <-
     setdiff(x = cohortTableColumnNamesObserved, y = cohortTableColumnNamesExpected)
-
+  
   if (length(requiredButNotObsevered) > 0) {
     stop(paste(
       "The following required fields not found in cohort table:",
       paste0(requiredButNotObsevered, collapse = ", ")
     ))
   }
-
+  
   if (length(obseveredButNotExpected) > 0) {
     ParallelLogger::logInfo(
       paste0(
@@ -378,19 +408,19 @@ executeDiagnostics <- function(cohortDefinitionSet,
       )
     )
   }
-
+  
   cohortDefinitionSet <- makeDataExportable(
     x = cohortDefinitionSet,
     tableName = "cohort",
     minCellCount = minCellCount,
     databaseId = NULL
   )
-
+  
   writeToCsv(
     data = cohortDefinitionSet,
     fileName = file.path(exportFolder, "cohort.csv")
   )
-
+  
   # Set up connection to server ----------------------------------------------------
   if (is.null(connection)) {
     if (!is.null(connectionDetails)) {
@@ -400,16 +430,16 @@ executeDiagnostics <- function(cohortDefinitionSet,
       stop("No connection or connectionDetails provided.")
     }
   }
-
+  
   ## CDM source information----
   cdmSourceInformation <-
     getCdmDataSourceInformation(
       connection = connection,
       cdmDatabaseSchema = cdmDatabaseSchema
     )
-
+  
   vocabularyVersion <- getVocabularyVersion(connection, vocabularyDatabaseSchema)
-
+  
   if (incremental) {
     ParallelLogger::logDebug("Working in incremental mode.")
     cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)
@@ -421,7 +451,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       )
     }
   }
-
+  
   ## Observation period----
   ParallelLogger::logTrace(" - Collecting date range from Observational period table.")
   observationPeriodDateRange <- renderTranslateQuerySql(
@@ -436,7 +466,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     snakeCaseToCamelCase = TRUE,
     tempEmulationSchema = tempEmulationSchema
   )
-
+  
   # Database metadata ---------------------------------------------
   saveDatabaseMetaData(
     databaseId = databaseId,
@@ -449,7 +479,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   )
   # Create concept table ------------------------------------------
   createConceptTable(connection, tempEmulationSchema)
-
+  
   # Counting cohorts -----------------------------------------------------------------------
   cohortCounts <- computeCohortCounts(
     connection = connection,
@@ -460,7 +490,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     minCellCount = minCellCount,
     databaseId = databaseId
   )
-
+  
   if (nrow(cohortCounts) > 0) {
     instantiatedCohorts <- cohortCounts %>%
       dplyr::filter(.data$cohortEntries > 0) %>%
@@ -477,7 +507,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   } else {
     stop("All cohorts were either not instantiated or all have 0 records.")
   }
-
+  
   # Inclusion statistics -----------------------------------------------------------------------
   if (runInclusionStatistics) {
     getInclusionStats(
@@ -493,11 +523,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
       recordKeepingFile = recordKeepingFile
     )
   }
-
+  
   # Concept set diagnostics -----------------------------------------------
   if (runIncludedSourceConcepts ||
-    runOrphanConcepts ||
-    runBreakdownIndexEvents) {
+      runOrphanConcepts ||
+      runBreakdownIndexEvents) {
     runConceptSetDiagnostics(
       connection = connection,
       tempEmulationSchema = tempEmulationSchema,
@@ -521,7 +551,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       recordKeepingFile = recordKeepingFile
     )
   }
-
+  
   # Time series ----------------------------------------------------------------------
   if (runTimeSeries) {
     executeTimeSeriesDiagnostics(
@@ -540,8 +570,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
       observationPeriodDateRange = observationPeriodDateRange
     )
   }
-
-
+  
+  
   # Visit context ----------------------------------------------------------------------------
   if (runVisitContext) {
     executeVisitContextDiagnostics(
@@ -560,7 +590,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       incremental = incremental
     )
   }
-
+  
   # Incidence rates --------------------------------------------------------------------------------------
   if (runIncidenceRate) {
     computeIncidenceRates(
@@ -578,23 +608,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       incremental = incremental
     )
   }
-
-  # Cohort overlap ---------------------------------------------------------------------------------
-  if (runCohortOverlap) {
-    executeCohortComparisonDiagnostics(
-      connection = connection,
-      databaseId = databaseId,
-      exportFolder = exportFolder,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      cohorts = cohortDefinitionSet,
-      minCellCount = minCellCount,
-      recordKeepingFile = recordKeepingFile,
-      incremental = incremental
-    )
-  }
-
-
+  
   # Cohort relationship ---------------------------------------------------------------------------------
   if (runCohortRelationship) {
     executeCohortRelationshipDiagnostics(
@@ -612,7 +626,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       incremental = incremental
     )
   }
-
+  
   # Temporal Cohort characterization ---------------------------------------------------------------
   if (runTemporalCohortCharacterization) {
     executeCohortCharacterization(
@@ -640,7 +654,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv")
     )
   }
-
+  
   # Store information from the vocabulary on the concepts used -------------------------
   exportConceptInformation(
     connection = connection,
@@ -650,7 +664,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     incremental = incremental,
     exportFolder = exportFolder
   )
-
+  
   # Delete unique concept ID table ---------------------------------
   ParallelLogger::logTrace("Deleting concept ID table")
   sql <- "TRUNCATE TABLE @table;\nDROP TABLE @table;"
@@ -662,11 +676,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-
-
+  
+  
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
-
+  
   packageName <- utils::packageName()
   packageVersion <- if (!methods::getPackageName() == ".GlobalEnv") {
     as.character(utils::packageVersion(packageName))
@@ -790,7 +804,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     incremental = TRUE,
     start_time = as.character(start)
   )
-
+  
   # Add all to zip file -------------------------------------------------------------------------------
   writeResultsZip(exportFolder, databaseId)
   ParallelLogger::logInfo(

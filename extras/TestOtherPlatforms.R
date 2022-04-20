@@ -93,7 +93,6 @@ test_that("Cohort diagnostics", {
                      runVisitContext = TRUE,
                      runBreakdownIndexEvents = TRUE,
                      runIncidenceRate = TRUE,
-                     runCohortOverlap = TRUE,
                      runCohortRelationship = TRUE,
                      runTemporalCohortCharacterization = TRUE)
 

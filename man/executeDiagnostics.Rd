@@ -27,7 +27,6 @@ executeDiagnostics(
   runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
-  runCohortOverlap = TRUE,
   runCohortRelationship = TRUE,
   runTemporalCohortCharacterization = TRUE,
  
@@ -43,8 +42,8 @@ executeDiagnostics(
     useDrugEraOverlap = FALSE, useDrugEraGroupStart = FALSE, useDrugEraGroupOverlap =
     TRUE, useObservation = TRUE, useDeviceExposure = TRUE, useCharlsonIndex = TRUE,
     useDcsi = TRUE, useChads2 = TRUE, useChads2Vasc = TRUE, useHfrs = FALSE,
-    temporalStartDays = c(-365, 1, 31, -9999, -365, -180, -30, 0), temporalEndDays =
-    c(-31,          30, 365, 0, 0, 0, 0, 0)),
+    temporalStartDays = c(-9999, -365, -180, -30, -365, -30, 0, 1, 31), temporalEndDays =
+    c(0,          0, 0, 0, -31, -1, 0, 30, 365)),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental")
@@ -111,10 +110,6 @@ diagnostics to.}
 \item{runBreakdownIndexEvents}{Generate and export the breakdown of index events?}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
-
-\item{runCohortOverlap}{Generate and export the cohort overlap? Overlaps are checked within cohortIds
-that have the same phenotype ID sourced from the CohortSetReference or
-cohortToCreateFile.}
 
 \item{runCohortRelationship}{Generate and export the cohort relationship? Cohort relationship checks the temporal
 relationship between two or more cohorts.}
