@@ -268,6 +268,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   checkmate::assertLogical(runTimeSeries, add = errorMessage)
   checkmate::assertLogical(runBreakdownIndexEvents, add = errorMessage)
   checkmate::assertLogical(runIncidenceRate, add = errorMessage)
+  checkmate::assertLogical(runTemporalCohortCharacterization, add = errorMessage)
   checkmate::assertInt(
     x = cdmVersion,
     na.ok = FALSE,
@@ -329,34 +330,53 @@ executeDiagnostics <- function(cohortDefinitionSet,
         errorMessage = errorMessage
       )
   }
-  # Adding required temporal windows required in results viewer
-  requiredTemporalPairs <-
-    list(
-      c(-365, 0),
-      c(-30, 0),
-      c(-365, -31),
-      c(-30, -1),
-      c(0, 0),
-      c(1, 30),
-      c(31, 365)
-    )
-  for (p1 in requiredTemporalPairs) {
-    found <- FALSE
-    for (i in 1:length(temporalCovariateSettings$temporalStartDays)) {
-      p2 <- c(
-        temporalCovariateSettings$temporalStartDays[i],
-        temporalCovariateSettings$temporalEndDays[i]
-      )
-      
-      if (p2[1] == p1[1] & p2[2] == p1[2]) {
-        found <- TRUE
-        break
-      }
-    }
+  if (runTemporalCohortCharacterization) {
+    checkmate::assert_class(x = temporalCovariateSettings,
+                            classes = c("covariateSettings"))
+    # forcefully set ConditionEraGroupStart and drugEraGroupStart to NULL
+    # because of known bug in FeatureExtraction. https://github.com/OHDSI/FeatureExtraction/issues/144
+    temporalCovariateSettings$ConditionEraGroupStart <- NULL
+    temporalCovariateSettings$DrugEraGroupStart <- NULL
     
-    if (!found) {
-      temporalCovariateSettings$temporalStartDays <- c(temporalCovariateSettings$temporalStartDays, p1[1])
-      temporalCovariateSettings$temporalEndDays <- c(temporalCovariateSettings$temporalEndDays, p1[2])
+    checkmate::assert_double(x = temporalCovariateSettings$temporalStartDays,
+                            any.missing = FALSE,
+                            min.len = 1,
+                            add = errorMessage)
+    checkmate::assert_double(x = temporalCovariateSettings$temporalEndDays,
+                             any.missing = FALSE,
+                             min.len = 1,
+                             add = errorMessage)
+    checkmate::reportAssertions(collection = errorMessage)
+    
+    # Adding required temporal windows required in results viewer
+    requiredTemporalPairs <-
+      list(c(-365, 0),
+           c(-30, 0),
+           c(-365,-31),
+           c(-30,-1),
+           c(0, 0),
+           c(1, 30),
+           c(31, 365))
+    for (p1 in requiredTemporalPairs) {
+      found <- FALSE
+      for (i in 1:length(temporalCovariateSettings$temporalStartDays)) {
+        p2 <- c(
+          temporalCovariateSettings$temporalStartDays[i],
+          temporalCovariateSettings$temporalEndDays[i]
+        )
+        
+        if (p2[1] == p1[1] & p2[2] == p1[2]) {
+          found <- TRUE
+          break
+        }
+      }
+      
+      if (!found) {
+        temporalCovariateSettings$temporalStartDays <-
+          c(temporalCovariateSettings$temporalStartDays, p1[1])
+        temporalCovariateSettings$temporalEndDays <-
+          c(temporalCovariateSettings$temporalEndDays, p1[2])
+      }
     }
   }
   
