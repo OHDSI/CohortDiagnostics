@@ -3466,7 +3466,6 @@ shiny::shinyServer(function(input, output, session) {
 
   # Cohort Overlap ------------------------
   cohortOverlapData <- reactive({
-    browser()
     validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 1, "Please select at least two cohorts."))
     combisOfTargetComparator <- t(utils::combn(cohortIds(), 2)) %>%
