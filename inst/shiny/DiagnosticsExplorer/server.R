@@ -60,8 +60,8 @@ shiny::shinyServer(function(input, output, session) {
         !is.null(input$tabs))) {
       if (!is.null(temporalChoices)) {
         selectedTimeIds <- temporalCharacterizationTimeIdChoices %>%
-          dplyr::filter(temporalChoices %in% input$timeIdChoices) %>%
-          dplyr::pull(timeId)
+          dplyr::filter(.data$temporalChoices %in% input$timeIdChoices) %>%
+          dplyr::pull(.data$timeId)
         timeIds(selectedTimeIds)
       }
     }
