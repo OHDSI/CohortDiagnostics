@@ -43,7 +43,7 @@
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -96,7 +96,7 @@
       <h1 data-toc-skip>Creating a study package</h1>
                         <h4 data-toc-skip class="author">Gowtham A. Rao</h4>
             
-            <h4 data-toc-skip class="date">2022-04-20</h4>
+            <h4 data-toc-skip class="date">2022-04-27</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/CreatingAStudyPackage.Rmd" class="external-link"><code>vignettes/CreatingAStudyPackage.Rmd</code></a></small>
       <div class="hidden name"><code>CreatingAStudyPackage.Rmd</code></div>
@@ -105,24 +105,24 @@
 
     
     
-<div class="section level2">
-<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
-</h2>
+<div class="section level1">
+<h1 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h1>
 <p>There are currently two approaches to run Cohort Diagnostics. - Embed in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or - WebAPi mode - where cohort diagnostics dynamically pulls the cohort definition from a webapi instance. WebAPI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS.</p>
 <p>This vignette describes how to create a self contained shareable study package that can execute cohort diagnostics on a given set of cohort definitions. This is the recommended mode to run CohortDiagnostics for a study.</p>
 <p>In this vignette, you will learn how to - use the Cohort Diagnostics template package - Hydrate the template package with the cohort definitions you want to diagnose. - Execute the diagnostics on one or more data sources. - Review the result set using the Diagnostics Explorer R shiny app of Cohort Diagnostics - (optional) Submit the results of your cohort diagnostics to the OHDSI Phenotype library.</p>
-<div class="section level3">
-<h3 id="assumptions">Assumptions:<a class="anchor" aria-label="anchor" href="#assumptions"></a>
-</h3>
+<div class="section level2">
+<h2 id="assumptions">Assumptions:<a class="anchor" aria-label="anchor" href="#assumptions"></a>
+</h2>
 <ul>
 <li>You have a set of valid cohort definition sql files (in parameterized OHDSI Sql format) that you want to run diagnostics on, or you are able to export cohort definitions that you want to diagnose from Atlas by using the export tab within cohort definition module of Atlas or using ROhdsiWebApi as described <a href="https://ohdsi.github.io/ROhdsiWebApi/articles/InsertCohortDefinitionsIntoPackage.html" class="external-link">here</a>.</li>
 <li>You have access to person level data in OMOP CDM V5.x + format on a database, are able to execute and instantiate cohorts in cohort tables (i.e. you have access to a schema in the same database with Create, Read, Update, Delete privileges.)</li>
 </ul>
 </div>
 </div>
-<div class="section level2">
-<h2 id="creating-the-study-package">Creating the study package<a class="anchor" aria-label="anchor" href="#creating-the-study-package"></a>
-</h2>
+<div class="section level1">
+<h1 id="creating-the-study-package">Creating the study package<a class="anchor" aria-label="anchor" href="#creating-the-study-package"></a>
+</h1>
 <p>The cohorts to diagnose should have two attributes to them.</p>
 <ul>
 <li>
@@ -145,9 +145,9 @@
 <td align="left">[PL 4112853001] Malignant tumor of breast referent concept incident cohort: First occurrence of referent concept + descendants with &gt;=365d prior observation</td>
 </tr></tbody>
 </table>
-<div class="section level3">
-<h3 id="option-a-using-hydra-and-rohdsiwebapi">option A: Using Hydra and ROhdsiWebApi<a class="anchor" aria-label="anchor" href="#option-a-using-hydra-and-rohdsiwebapi"></a>
-</h3>
+<div class="section level2">
+<h2 id="option-a-using-hydra-and-rohdsiwebapi">option A: Using Hydra and ROhdsiWebApi<a class="anchor" aria-label="anchor" href="#option-a-using-hydra-and-rohdsiwebapi"></a>
+</h2>
 <p>Note: this option is required Hydra 0.3, as of writing this document that version of Hydra is in develop branch.</p>
 <p>The skeleton cohort diagnostics study package is <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics" class="external-link">here</a>. A skeleton package is a special package that is designed to be used with <a href="https://github.com/OHDSI/Hydra" class="external-link">Hydra</a>. The input for Hydra is study a specifications file (in json format). Example is <a href="https://github.com/OHDSI/Hydra/blob/master/extras/ExampleCohortDiagnosticsSpecs.json" class="external-link">here</a>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -266,10 +266,10 @@
 
 
 <span class="co">#### Code that uses the ExampleCohortDiagnosticsSpecs in Hydra to build package</span>
-<span class="va">hydraSpecificationFromFile</span> <span class="op">&lt;-</span> <span class="fu">Hydra</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/Hydra/reference/loadSpecifications.html" class="external-link">loadSpecifications</a></span><span class="op">(</span>fileName <span class="op">=</span> <span class="va">jsonFileName</span><span class="op">)</span>
+<span class="va">hydraSpecificationFromFile</span> <span class="op">&lt;-</span> <span class="fu">Hydra</span><span class="fu">::</span><span class="fu">loadSpecifications</span><span class="op">(</span>fileName <span class="op">=</span> <span class="va">jsonFileName</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">outputFolder</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span>path <span class="op">=</span> <span class="va">outputFolder</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="fu">Hydra</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/Hydra/reference/hydrate.html" class="external-link">hydrate</a></span><span class="op">(</span>specifications <span class="op">=</span> <span class="va">hydraSpecificationFromFile</span>,
+<span class="fu">Hydra</span><span class="fu">::</span><span class="fu">hydrate</span><span class="op">(</span>specifications <span class="op">=</span> <span class="va">hydraSpecificationFromFile</span>,
                outputFolder <span class="op">=</span> <span class="va">outputFolder</span>
 <span class="op">)</span>
 
@@ -302,7 +302,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>

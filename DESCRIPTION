@@ -11,7 +11,7 @@ Authors@R: c(
     person("Jamie", "Gilbert", role = c("aut")),
     person("Observational Health Data Science and Informatics", role = c("cph"))
   )
-Maintainer: Gowtham Rao <rao@ohdsi.org>
+Maintainer: Jamie Gilbert <jpg@azimov.co.uk>
 Description: Diagnostics for cohorts that use the OMOP Common Data Model and the OHDSI tools.
 Depends:
 	DatabaseConnector (>= 5.0.0),
