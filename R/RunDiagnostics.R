@@ -177,7 +177,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                    -30, # 30 day prior not including day 0
                                    0, # index date only
                                    1, # 1 day after to day 30
-                                   31
+                                   31,
+                                   -9999 # Any time prior to any time future
                                  ),
                                  temporalEndDays = c(
                                    0, # anytime prior
@@ -190,7 +191,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                    -1, # 30 day prior not including day 0
                                    0, # index date only
                                    30, # 1 day after to day 30
-                                   365
+                                   365,
+                                   9999 # Any time prior to any time future
                                  )
                                ),
                                minCellCount = 5,
@@ -356,7 +358,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
            c(-30,-1),
            c(0, 0),
            c(1, 30),
-           c(31, 365))
+           c(31, 365),
+           c(-9999, 9999))
     for (p1 in requiredTemporalPairs) {
       found <- FALSE
       for (i in 1:length(temporalCovariateSettings$temporalStartDays)) {

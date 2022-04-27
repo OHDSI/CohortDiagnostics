@@ -132,7 +132,7 @@ sidebarMenu <-
         infoId = "visitContextInfo"
       )
     },
-    if (exists("cohortOverlap")) {
+    if (exists("relationship")) {
       addInfo(
         shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap"),
         infoId = "cohortOverlapInfo"

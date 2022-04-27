@@ -58,10 +58,12 @@ shiny::shinyServer(function(input, output, session) {
     if (exists("temporalCharacterizationTimeIdChoices") &&
       (isFALSE(input$timeIdChoices_open) ||
         !is.null(input$tabs))) {
-      selectedTimeIds <- temporalCharacterizationTimeIdChoices %>%
-        dplyr::filter(temporalChoices %in% input$timeIdChoices) %>%
-        dplyr::pull(timeId)
-      timeIds(selectedTimeIds)
+      if (!is.null(temporalChoices)) {
+        selectedTimeIds <- temporalCharacterizationTimeIdChoices %>%
+          dplyr::filter(.data$temporalChoices %in% input$timeIdChoices) %>%
+          dplyr::pull(.data$timeId)
+        timeIds(selectedTimeIds)
+      }
     }
   })
 
@@ -111,7 +113,7 @@ shiny::shinyServer(function(input, output, session) {
     )
   }, handlerExpr = {
     if (isFALSE(input$timeIdChoices_open) ||
-      !is.null(input$tabs)) {
+      !is.null(input$tabs) & !is.null(temporalCharacterizationTimeIdChoices)) {
       selectedTemporalTimeIds(
         timeIds <- temporalCharacterizationTimeIdChoices %>%
           dplyr::filter(.data$temporalChoices %in% input$timeIdChoices) %>%
@@ -2698,7 +2700,6 @@ shiny::shinyServer(function(input, output, session) {
       hasData(data),
       "No temporal characterization data"
     ))
-
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(
