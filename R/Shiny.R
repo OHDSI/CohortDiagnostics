@@ -34,9 +34,6 @@
 #'                         Note: copying to clipboard will not work in a Shiny window.
 #' @param aboutText        Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 #'                         If not provided, no About tab will be shown.
-#' @param enableAnnotation (optional) Boolean - Enable users to annotate cohorts.
-#'                         Note, this is not recommended outside of an organisational firewall.
-#'                         Default is to only use with an sqlite database.
 #'
 #' @details
 #' Launches a Shiny app that allows the user to explore the diagnostics
@@ -50,8 +47,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
                                       aboutText = NULL,
                                       runOverNetwork = FALSE,
                                       port = 80,
-                                      launch.browser = FALSE,
-                                      enableAnnotation = is.null(connectionDetails)) {
+                                      launch.browser = FALSE) {
   sqliteDbPath <- normalizePath(sqliteDbPath)
   if (is.null(connectionDetails)) {
     if (!file.exists(sqliteDbPath)) {
@@ -127,7 +123,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     resultsDatabaseSchema = resultsDatabaseSchema,
     vocabularyDatabaseSchemas = vocabularyDatabaseSchemas,
     aboutText = aboutText,
-    enableAnnotation = enableAnnotation
+    enableAnnotation = FALSE
   )
   on.exit(rm("shinySettings", envir = .GlobalEnv))
   shiny::runApp(appDir = appDir)
