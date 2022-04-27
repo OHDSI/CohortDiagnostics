@@ -21,8 +21,8 @@ appInformationText <- paste0(
 
 #### Set enableAnnotation to true to enable annotation in deployed apps
 #### Not recommended outside of secure firewalls deployments
-enableAnnotation <- TRUE
-enableAuthorization <- TRUE
+enableAnnotation <- FALSE
+enableAuthorization <- FALSE
 
 ### if you need a way to authorize users
 ### generate hash using code like digest::digest("diagnostics",algo = "sha512")
@@ -251,3 +251,8 @@ analysisIdInTemporalCharacterization <- c(
   101, 401, 501, 701,
   -301, -201
 )
+
+## Disabled until future release
+enableAnnotation <- FALSE
+enableAuthorization <- FALSE
+

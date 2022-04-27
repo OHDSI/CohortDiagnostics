@@ -2,7 +2,7 @@ Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Cohorts
 Version: 3.0.0
-Date: 2022-04-20
+Date: 2022-04-27
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
     person("Martijn", "Schuemie", email = "schuemie@ohdsi.org", role = c("aut")),
@@ -11,7 +11,7 @@ Authors@R: c(
     person("Jamie", "Gilbert", role = c("aut")),
     person("Observational Health Data Science and Informatics", role = c("cph"))
   )
-Maintainer: Gowtham Rao <rao@ohdsi.org>
+Maintainer: Jamie Gilbert <jpg@azimov.co.uk>
 Description: Diagnostics for cohorts that use the OMOP Common Data Model and the OHDSI tools.
 Depends:
 	DatabaseConnector (>= 5.0.0),
