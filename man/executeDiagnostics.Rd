@@ -42,8 +42,8 @@ executeDiagnostics(
     useDrugEraOverlap = FALSE, useDrugEraGroupStart = FALSE, useDrugEraGroupOverlap =
     TRUE, useObservation = TRUE, useDeviceExposure = TRUE, useCharlsonIndex = TRUE,
     useDcsi = TRUE, useChads2 = TRUE, useChads2Vasc = TRUE, useHfrs = FALSE,
-    temporalStartDays = c(-9999, -365, -180, -30, -365, -30, 0, 1, 31), temporalEndDays =
-    c(0,          0, 0, 0, -31, -1, 0, 30, 365)),
+    temporalStartDays = c(-9999, -365, -180, -30, -365, -30, 0, 1, 31, -9999),
+    temporalEndDays = c(0,          0, 0, 0, -31, -1, 0, 30, 365, 9999)),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental")
