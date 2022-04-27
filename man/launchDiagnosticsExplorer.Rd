@@ -13,8 +13,7 @@ launchDiagnosticsExplorer(
   aboutText = NULL,
   runOverNetwork = FALSE,
   port = 80,
-  launch.browser = FALSE,
-  enableAnnotation = is.null(connectionDetails)
+  launch.browser = FALSE
 )
 }
 \arguments{
@@ -45,10 +44,6 @@ If not provided, no About tab will be shown.}
 
 \item{launch.browser}{Should the app be launched in your default browser, or in a Shiny window.
 Note: copying to clipboard will not work in a Shiny window.}
-
-\item{enableAnnotation}{(optional) Boolean - Enable users to annotate cohorts.
-Note, this is not recommended outside of an organisational firewall.
-Default is to only use with an sqlite database.}
 }
 \description{
 Launch the Diagnostics Explorer Shiny app
