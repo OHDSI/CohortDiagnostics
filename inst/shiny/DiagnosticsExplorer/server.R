@@ -3660,7 +3660,7 @@ shiny::shinyServer(function(input, output, session) {
   # Login User ---------------------------------------------
   activeLoggedInUser <- reactiveVal(NULL)
 
-  if (enableAnnotation && exists("userCredentials") && nrow(userCredentials) > 0) {
+  if (enableAnnotation & exists("userCredentials") & nrow(userCredentials) > 0) {
     shiny::observeEvent(
       eventExpr = input$annotationUserPopUp,
       handlerExpr = {
@@ -3783,200 +3783,9 @@ shiny::shinyServer(function(input, output, session) {
         )
       ))
     })
-
-    # Annotation Section ------------------------------------
-    ## Annotation enabled ------
-    output$postAnnotationEnabled <- shiny::reactive({
-      return(!is.null(activeLoggedInUser()) & enableAnnotation)
-    })
-    shiny::outputOptions(
-      x = output,
-      name = "postAnnotationEnabled",
-      suspendWhenHidden = FALSE
-    )
-
-    ## Retrieve Annotation ----------------
-    reloadAnnotationSection <- reactiveVal(0)
-    getAnnotationReactive <- shiny::reactive({
-      reloadAnnotationSection()
-      if (input$tabs == "cohortCounts" |
-        input$tabs == "cohortOverlap" |
-        input$tabs == "incidenceRate" |
-        input$tabs == "timeDistribution") {
-        selectedCohortIds <- cohort %>%
-          dplyr::filter(.data$compoundName %in% c(input$cohorts)) %>% # many cohorts selected
-          dplyr::pull(.data$cohortId)
-      } else {
-        selectedCohortIds <- cohort %>%
-          dplyr::filter(.data$compoundName %in% c(input$targetCohort)) %>% # one cohort selected
-          dplyr::pull(.data$cohortId)
-      }
-      results <- getAnnotationResult(
-        dataSource = dataSource,
-        diagnosticsId = input$tabs,
-        cohortIds = selectedCohortIds,
-        databaseIds = selectedDatabaseIds()
-      )
-
-      if (nrow(results$annotation) == 0) {
-        return(NULL)
-      }
-      return(results)
-    })
-
-
-    ## renderedAnnotation ----
-    renderedAnnotation <- shiny::reactiveVal()
-    shiny::observeEvent(eventExpr = input$tabs, {
-      if (!is.null(input$tabs)) {
-        renderedAnnotation(callModule(
-          markdownInput::moduleMarkdownInput,
-          paste0("annotation", input$tabs)
-        ))
-
-        output[[paste0("output", input$tabs)]] <-
-          reactable::renderReactable({
-            results <- getAnnotationReactive()
-
-            if (is.null(results)) {
-              return(NULL)
-            }
-            data <- results$annotation
-            for (i in 1:nrow(data)) {
-              data[i, ]$annotation <-
-                markdown::renderMarkdown(text = data[i, ]$annotation)
-            }
-            data <- data %>%
-              dplyr::mutate(
-                Annotation = paste0(
-                  "<b>",
-                  .data$createdBy,
-                  "@",
-                  getTimeFromInteger(.data$createdOn),
-                  ":</b>",
-                  .data$annotation
-                )
-              ) %>%
-              dplyr::select(.data$annotationId, .data$Annotation)
-
-            reactable::reactable(
-              data,
-              columns = list(
-                annotationId = reactable::colDef(show = FALSE),
-                Annotation = reactable::colDef(html = TRUE)
-              ),
-              details = function(index) {
-                subTable <- results$annotationLink %>%
-                  dplyr::filter(.data$annotationId == data[index, ]$annotationId) %>%
-                  dplyr::inner_join(cohort %>%
-                    dplyr::select(
-                      .data$cohortId,
-                      .data$cohortName
-                    ),
-                  by = "cohortId"
-                  )
-                distinctCohortName <- subTable %>%
-                  dplyr::distinct(.data$cohortName)
-                distinctDatabaseId <- subTable %>%
-                  dplyr::distinct(.data$databaseId)
-
-                htmltools::div(
-                  style = "margin:0;padding:0;padding-left:50px;",
-                  tags$p(
-                    style = "margin:0;padding:0;",
-                    "Related Cohorts: ",
-                    tags$p(
-                      style = "padding-left:30px;",
-                      tags$pre(
-                        paste(distinctCohortName$cohortName, collapse = "\n")
-                      )
-                    )
-                  ),
-                  tags$br(),
-                  tags$p(
-                    "Related Databses: ",
-                    tags$p(
-                      style = "padding-left:30px;",
-                      tags$pre(
-                        paste(distinctDatabaseId$databaseId, collapse = "\n")
-                      )
-                    )
-                  )
-                )
-              }
-            )
-          })
-      }
-    })
-
-
-    ## Post Annotation ----------------
-    getParametersToPostAnnotation <- shiny::reactive({
-      tempList <- list()
-      tempList$diagnosticsId <- input$tabs
-
-      # Annotation - cohort Ids
-      if (!is.null(input[[paste0("cohort", input$tabs)]])) {
-        selectedCohortIds <-
-          cohort %>%
-          dplyr::filter(.data$compoundName %in% input[[paste0("cohort", input$tabs)]]) %>%
-          dplyr::pull(.data$cohortId)
-        # cohortsConceptInDataSource should be the same as in menu cohort
-      } else {
-        selectedCohortIds <- input$targetCohort
-      }
-      tempList$cohortIds <- selectedCohortIds
-
-      # Annotation - database Ids
-      if (!is.null(input[[paste0("database", input$tabs)]])) {
-        selectedDatabaseIds <- input[[paste0("database", input$tabs)]]
-      } else {
-        selectedDatabaseIds <- selectedDatabaseIds()
-      }
-      tempList$databaseIds <- selectedDatabaseIds
-      return(tempList)
-    })
-
-    postAnnotationTabList <- reactiveVal(c())
-    observeEvent(eventExpr = input[[paste0("postAnnotation", input$tabs)]], {
-      if (!paste(toString(input[[paste0("postAnnotation", input$tabs)]]), input$tabs) %in% postAnnotationTabList()) {
-        postAnnotationTabList(c(
-          postAnnotationTabList(),
-          paste(toString(input[[paste0("postAnnotation", input$tabs)]]), input$tabs)
-        ))
-      }
-    })
-
-    observeEvent(
-      eventExpr = postAnnotationTabList(),
-      handlerExpr = {
-        parametersToPostAnnotation <- getParametersToPostAnnotation()
-        annotation <-
-          renderedAnnotation()() # ()() - This is to retrieve a function inside reactive
-        if (!is.null(activeLoggedInUser())) {
-          createdBy <- activeLoggedInUser()
-        } else {
-          createdBy <- "Unknown"
-        }
-
-        result <- postAnnotationResult(
-          dataSource = dataSource,
-          resultsDatabaseSchema = resultsDatabaseSchema,
-          diagnosticsId = parametersToPostAnnotation$diagnosticsId,
-          cohortIds = parametersToPostAnnotation$cohortIds,
-          databaseIds = parametersToPostAnnotation$databaseIds,
-          annotation = annotation,
-          createdBy = createdBy,
-          createdOn = getTimeAsInteger()
-        )
-
-        if (result) {
-          # trigger reload
-          reloadAnnotationSection(reloadAnnotationSection() + 1)
-        }
-      }
-    )
   }
+
+
   # Infoboxes -------------------
   showInfoBox <- function(title, htmlFileName) {
     shiny::showModal(shiny::modalDialog(
@@ -4191,4 +4000,18 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       return(selectedDatabaseIds())
     })
+
+
+  postAnnoataionEnabled <- shiny::reactive(TRUE)
+
+  #--- Annotation modules
+
+  annoationModule("",
+                  dataSource,
+                  resultsDatabaseSchema,
+                  activeLoggedInUser,
+                  selectedDatabaseIds,
+                  postAnnoataionEnabled,
+                  TRUE)
+
 })
