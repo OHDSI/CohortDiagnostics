@@ -11,12 +11,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Tar files
-        run: tar -cvf DiagnosticsExplorer-${{ github.run_number }}.tar inst/shiny/DiagnosticsExplorer
-
+      - name: Copy directory
+        run: cp -r inst/shiny/DiagnosticsExplorer DiagnosticsExplorer
       - name: Upload shiny folder
         uses: actions/upload-artifact@v3
         with:
-          name: DiagnosticsExplorer Upload
-          path: DiagnosticsExplorer-${{ github.run_number }}.tar
+          name: DiagnosticsExplorer-v${{ github.run_number }}
+          path: DiagnosticsExplorer
