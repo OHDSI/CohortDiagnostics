@@ -11,10 +11,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Get version number
+      run: |
+        echo "version="$(perl get_version --tag) >> $GITHUB_ENV
+
+      # To make the package the root of the zip folder
       - name: Copy directory
         run: cp -r inst/shiny/DiagnosticsExplorer DiagnosticsExplorer
+
       - name: Upload shiny folder
         uses: actions/upload-artifact@v3
         with:
-          name: DiagnosticsExplorer-v${{ github.run_number }}
+          name: DiagnosticsExplorer-${{GITHUB_REF##*/}}${{ env.version }}
           path: DiagnosticsExplorer
