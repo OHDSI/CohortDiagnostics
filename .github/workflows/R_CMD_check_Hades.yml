@@ -27,6 +27,7 @@ jobs:
 
     env:
       GITHUB_PAT: ${{ secrets.GH_TOKEN }}
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       RSPM: ${{ matrix.config.rspm }}
       CDM5_ORACLE_CDM_SCHEMA: ${{ secrets.CDM5_ORACLE_CDM_SCHEMA }}
@@ -156,6 +157,7 @@ jobs:
           echo "${{ env.new_version }}"
 
       - name: Create release
+        id: create_release
         if: ${{ env.new_version != '' }}
         uses: actions/create-release@v1
         env:
@@ -196,3 +198,28 @@ jobs:
         if: ${{ env.new_version != '' }}
         run: |
           curl --data "build=true" -X POST https://registry.hub.docker.com/u/ohdsi/broadsea-methodslibrary/trigger/f0b51cec-4027-4781-9383-4b38b42dd4f5/
+
+      ## *** Creating shiny assets at release *** ##
+      # To make the package the root of the zip folder
+      - name: Copy directory
+        if: ${{ env.new_version != '' }}
+        run: cp -r inst/shiny/DiagnosticsExplorer DiagnosticsExplorer-${{ env.BRANCH_NAME }}-${{ env.new_version }}
+
+      - name: Create diagnostics explorer artifact
+        if: ${{ env.new_version != '' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: DiagnosticsExplorer-${{ env.BRANCH_NAME }}-${{ env.new_version }}
+          path: DiagnosticsExplorer-${{ env.BRANCH_NAME }}-${{ env.new_version }}
+
+      - name: Upload Release Asset
+        if: ${{ env.new_version != '' }}
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: DiagnosticsExplorer-${{ env.BRANCH_NAME }}-${{ env.new_version }}
+          asset_name: DiagnosticsExplorer-${{ env.BRANCH_NAME }}-${{ env.new_version }}
+          asset_content_type: application/zip
