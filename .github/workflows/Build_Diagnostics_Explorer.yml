@@ -1,0 +1,20 @@
+on:
+  push:
+    branches:
+      - test-push
+
+name: Build diagnostics explorer
+jobs:
+  build-shiny-app:
+    name: Build Project
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Tar files
+        run: tar -cvf my_files.tar inst/shiny/DiagnosticsExplorer
+      - name: Upload shiny folder
+        uses: actions/upload-artifact@v3
+        with:
+          name: DiagnosticsExplorer-{{github.run_number}}
+          path: DiagnosticsExplorer-{{github.run_number}}.tar
