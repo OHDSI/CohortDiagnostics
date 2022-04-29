@@ -24,5 +24,5 @@ jobs:
       - name: Upload shiny folder
         uses: actions/upload-artifact@v3
         with:
-          name: DiagnosticsExplorer-${{ BRANCH_NAME }}-${{ env.version }}
+          name: DiagnosticsExplorer-${{ env.BRANCH_NAME }}-${{ env.version }}
           path: DiagnosticsExplorer
