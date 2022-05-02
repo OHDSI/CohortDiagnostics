@@ -23,6 +23,7 @@ appInformationText <- paste0(
 #### Not recommended outside of secure firewalls deployments
 enableAnnotation <- TRUE
 enableAuthorization <- TRUE
+activeUser <- NULL
 
 ### if you need a way to authorize users
 ### generate hash using code like digest::digest("diagnostics",algo = "sha512")
@@ -44,7 +45,8 @@ if (exists("shinySettings")) {
   dbms <- shinyConnectionDetails$dbms
   resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
   vocabularyDatabaseSchemas <- shinySettings$vocabularyDatabaseSchemas
-  enableAnnotation <- shinySettings$enableAnnotation
+  enableAnnotation <- getOption("enableCdAnnotation", default = FALSE)
+  activeUser <- Sys.info()[['user']]
 } else if (file.exists(sqliteDbPath)) {
   writeLines("Using data directory")
   sqliteDbPath <- normalizePath(sqliteDbPath)

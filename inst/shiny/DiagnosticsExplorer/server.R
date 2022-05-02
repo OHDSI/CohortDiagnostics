@@ -150,7 +150,8 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
 
-  shiny::observe({
+
+  inputCohortIds <- shiny::reactive({
     if (input$tabs == "cohortCounts" |
       input$tabs == "cohortOverlap" |
       input$tabs == "incidenceRate" |
@@ -160,12 +161,16 @@ shiny::shinyServer(function(input, output, session) {
       subset <- input$targetCohort
     }
 
+    return(subset)
+  })
+
+  shiny::observe({
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = paste0("targetCohort", input$tabs),
       choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
+      choices = inputCohortIds(),
+      selected = inputCohortIds()
     )
   })
 
@@ -3657,10 +3662,11 @@ shiny::shinyServer(function(input, output, session) {
       return(data)
     })
 
-  # Login User ---------------------------------------------
-  activeLoggedInUser <- reactiveVal(NULL)
+  enableAnnotation <- getOption("enableCdAnnotation", default = FALSE)
 
-  if (enableAnnotation & exists("userCredentials") & nrow(userCredentials) > 0) {
+  # Login User ---------------------------------------------
+  activeLoggedInUser <- reactiveVal(activeUser)
+  if (enableAnnotation & nrow(userCredentials) > 0) {
     shiny::observeEvent(
       eventExpr = input$annotationUserPopUp,
       handlerExpr = {
@@ -3703,7 +3709,7 @@ shiny::shinyServer(function(input, output, session) {
       handlerExpr = {
         tryCatch(
           expr = {
-            if (enableAuthorization == TRUE) {
+            if (enableAuthorization) {
               if (input$userName == "" || input$password == "") {
                 activeLoggedInUser(NULL)
                 shiny::showModal(
@@ -3772,19 +3778,16 @@ shiny::shinyServer(function(input, output, session) {
         )
       }
     )
-
-    output$userNameLabel <- shiny::renderText({
-      return(ifelse(
-        is.null(activeLoggedInUser()),
-        "",
-        paste(
-          as.character(icon("user-circle")),
-          stringr::str_to_title(activeLoggedInUser())
-        )
-      ))
-    })
   }
 
+  output$userNameLabel <- shiny::renderText({
+    if (is.null(activeLoggedInUser())) {
+      return("")
+    }
+    paste(as.character(icon("user-circle")),
+          stringr::str_to_title(activeLoggedInUser()))
+
+    })
 
   # Infoboxes -------------------
   showInfoBox <- function(title, htmlFileName) {
@@ -4001,17 +4004,38 @@ shiny::shinyServer(function(input, output, session) {
       return(selectedDatabaseIds())
     })
 
-
-  postAnnoataionEnabled <- shiny::reactive(TRUE)
+  # Display login based on value of active logged in user
+  postAnnoataionEnabled <- shiny::reactive(!is.null(activeLoggedInUser()))
+  output$postAnnoataionEnabled <- shiny::reactive({
+    postAnnoataionEnabled()
+  })
+  outputOptions(output, "postAnnoataionEnabled", suspendWhenHidden = FALSE)
 
   #--- Annotation modules
+  activeModules <- c("cohortCountsAnnotation",
+                     "timeDistributionAnnotation",
+                     "conceptsInDataSourceAnnotation",
+                     "orphanConceptsAnnotation",
+                     "inclusionRuleStatsAnnotation",
+                     "indexEventBreakdownAnnotation",
+                     "visitContextAnnotation",
+                     "cohortOverlapAnnotation",
+                     "cohortCharacterizationAnnotation",
+                     "temporalCharacterizationAnnotation",
+                     "compareCohortCharacterizationAnnotation",
+                     "compareTemporalCharacterizationAnnotation")
 
-  annoationModule("",
-                  dataSource,
-                  resultsDatabaseSchema,
-                  activeLoggedInUser,
-                  selectedDatabaseIds,
-                  postAnnoataionEnabled,
-                  TRUE)
+  if (enableAnnotation) {
+    for (module in activeModules) {
+      annoationModule(module,
+                      dataSource,
+                      resultsDatabaseSchema,
+                      activeLoggedInUser,
+                      selectedDatabaseIds,
+                      inputCohortIds,
+                      cohort,
+                      postAnnoataionEnabled)
+    }
+  }
 
 })

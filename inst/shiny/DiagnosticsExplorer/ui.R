@@ -23,7 +23,7 @@ cohortReference <- function(outputId) {
   )
 }
 
-enableAnnotation <- getOption("enableDiagnosticsExplorerAnnotation", default = FALSE)
+enableAnnotation <- getOption("enableCdAnnotation", default = FALSE)
 showAnnotation <- getOption("showDiagnosticsExplorerAnnotation", default = FALSE)
 
 cohortReferenceWithDatabaseId <- function(cohortOutputId, databaseOutputId) {
@@ -53,17 +53,17 @@ cohortReferenceWithDatabaseId <- function(cohortOutputId, databaseOutputId) {
 
 choicesFordatabaseOrVocabularySchema <- database$databaseIdWithVocabularyVersion
 
-if (enableAnnotation) {
+if (enableAnnotation & showAnnotation) {
   headerContent <- tags$li(
     shiny::conditionalPanel(
-      "output.postAnnotationEnabled == false",
+      "output.postAnnoataionEnabled == false",
       shiny::actionButton(
         inputId = "annotationUserPopUp",
         label = "Sign in"
       )
     ),
     shiny::conditionalPanel(
-      "output.postAnnotationEnabled == true",
+      "output.postAnnoataionEnabled == true",
       shiny::uiOutput(outputId = "userNameLabel", style = "color:white;font-weight:bold;padding-right:30px")
     ),
     class = "dropdown",
