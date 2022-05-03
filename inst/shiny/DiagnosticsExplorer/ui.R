@@ -685,54 +685,14 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "indexEventBreakdown",
-    cohortReference("indexEventBreakdownSelectedCohort"),
-    shinydashboard::box(
-      width = NULL,
-      title = NULL,
-      htmltools::withTags(
-        table(
-          width = "100%",
-          tr(
-            td(
-              shiny::radioButtons(
-                inputId = "indexEventBreakdownTableRadioButton",
-                label = "",
-                choices = c("All", "Standard concepts", "Non Standard Concepts"),
-                selected = "All",
-                inline = TRUE
-              )
-            ),
-            td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
-            td(
-              shiny::radioButtons(
-                inputId = "indexEventBreakdownTableFilter",
-                label = "Display",
-                choices = c("Both", "Records", "Persons"),
-                selected = "Persons",
-                inline = TRUE
-              )
-            ),
-            td(
-              shiny::checkboxInput(
-                inputId = "indexEventBreakDownShowAsPercent",
-                label = "Show as percent"
-              )
-            ),
-            td(
-              align = "right",
-                          )
-          )
-        )
-      ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "breakdownTable")),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationFunction("indexEventBreakdown")
-        )
-      }
-    )
+    indexEventBreakdownView("indexEvents"),
+    if (showAnnotation) {
+      column(
+        12,
+        tags$br(),
+        annotationFunction("indexEventBreakdown")
+      )
+    }
   ),
   shinydashboard::tabItem(
     tabName = "visitContext",
