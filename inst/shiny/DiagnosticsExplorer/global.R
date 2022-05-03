@@ -13,6 +13,7 @@ source("R/ResultRetrieval.R")
 source("R/CohortCountsModule.R")
 source("R/CohortDefinitionModule.R")
 source("R/IndexEventModule.R")
+source("R/InclusionRulesModule.R")
 
 
 appVersionNum <- "Version: 3.0.0"

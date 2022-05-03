@@ -646,41 +646,16 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "inclusionRuleStats",
-    cohortReference("inclusionRuleStatSelectedCohort"),
-    shinydashboard::box(
-      title = NULL,
-      width = NULL,
-      htmltools::withTags(
-        table(
-          width = "100%",
-          tr(
-            td(
-              align = "left",
-              shiny::radioButtons(
-                inputId = "inclusionRuleTableFilters",
-                label = "Inclusion Rule Events",
-                choices = c("All", "Meet", "Gain", "Remain", "Total"),
-                selected = "All",
-                inline = TRUE
-              )
-            ),
-            td(
-              align = "right",
-                          )
-          )
+    inclusionRulesView("inclusionRules"),
+    column(
+      12,
+      if (showAnnotation) {
+        column(
+          12,
+          tags$br(),
+          annotationFunction("inclusionRuleStats")
         )
-      ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "inclusionRuleTable")),
-      column(
-        12,
-        if (showAnnotation) {
-          column(
-            12,
-            tags$br(),
-            annotationFunction("inclusionRuleStats")
-          )
-        }
-      )
+      }
     )
   ),
   shinydashboard::tabItem(

@@ -775,72 +775,6 @@ shiny::shinyServer(function(input, output, session) {
     return(displayTable)
   })
 
-  # Inclusion rules table ------------------
-  output$inclusionRuleTable <- reactable::renderReactable(expr = {
-    if (!input$tabs %in% c("inclusionRuleStats")) {
-      return(NULL)
-    }
-    validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
-    table <- getInclusionRuleStats(
-      dataSource = dataSource,
-      cohortIds = targetCohortId(),
-      databaseIds = selectedDatabaseIds()
-    ) %>%
-      dplyr::rename(
-        Meet = .data$meetSubjects,
-        Gain = .data$gainSubjects,
-        Remain = .data$remainSubjects,
-        Total = .data$totalSubjects
-      )
-
-    validate(need(
-      (nrow(table) > 0),
-      "There is no data for the selected combination."
-    ))
-
-    keyColumnFields <-
-      c("cohortId", "ruleName")
-    countLocation <- 1
-    if (input$inclusionRuleTableFilters == "All") {
-      dataColumnFields <- c("Meet", "Gain", "Remain", "Total")
-    } else {
-      dataColumnFields <- input$inclusionRuleTableFilters
-    }
-
-    countsForHeader <-
-      getDisplayTableHeaderCount(
-        dataSource = dataSource,
-        databaseIds = selectedDatabaseIds(),
-        cohortIds = targetCohortId(),
-        source = "cohort",
-        fields = "Persons"
-      )
-
-    maxCountValue <-
-      getMaxValueForStringMatchedColumnsInDataFrame(
-        data = table,
-        string = dataColumnFields
-      )
-
-    showDataAsPercent <- FALSE
-    ## showDataAsPercent set based on UI selection - proportion
-
-    getDisplayTableGroupedByDatabaseId(
-      data = table,
-      cohort = cohort,
-      database = database,
-      headerCount = countsForHeader,
-      keyColumns = keyColumnFields,
-      countLocation = countLocation,
-      dataColumns = dataColumnFields,
-      maxCount = maxCountValue,
-      showDataAsPercent = showDataAsPercent,
-      sort = TRUE
-    )
-  })
-
-
-
   # Visit Context ----------------------------------------
   getVisitContextData <- shiny::reactive(x = {
     if (all(
@@ -3014,10 +2948,6 @@ shiny::shinyServer(function(input, output, session) {
     return(input$comparatorCohort)
   })
 
-  output$inclusionRuleStatSelectedCohort <-
-    shiny::renderUI({
-      selectedCohort()
-    })
   output$conceptsInDataSourceSelectedCohort <-
     shiny::renderUI({
       selectedCohort()
@@ -3026,18 +2956,12 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       selectedCohort()
     })
-  output$indexEventBreakdownSelectedCohort <-
-    shiny::renderUI({
-      selectedCohort()
-    })
+
   output$characterizationSelectedCohort <-
     shiny::renderUI({
       selectedCohort()
     })
-  output$inclusionRuleStatSelectedCohort <-
-    shiny::renderUI({
-      selectedCohort()
-    })
+
   output$cohortOverlapSelectedCohort <-
     shiny::renderUI({
       selectedCohorts()
@@ -3118,5 +3042,13 @@ shiny::shinyServer(function(input, output, session) {
                             selectedCohort = selectedCohort,
                             targetCohortId = targetCohortId,
                             selectedDatabaseIds = selectedDatabaseIds)
+
+  inclusionRulesModule(id = "inclusionRules",
+                       dataSource = dataSource,
+                       cohortTable = cohort,
+                       databaseTable = database,
+                       selectedCohort = selectedCohort,
+                       targetCohortId = targetCohortId,
+                       selectedDatabaseIds = selectedDatabaseIds)
 
 })
