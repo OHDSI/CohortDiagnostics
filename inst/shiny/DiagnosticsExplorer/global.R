@@ -7,7 +7,6 @@ source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 source("R/Annotation.R")
-source("R/CirceRendering.R")
 source("R/ResultRetrieval.R")
 
 # Modules
