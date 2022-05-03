@@ -10,6 +10,12 @@ source("R/Annotation.R")
 source("R/CirceRendering.R")
 source("R/ResultRetrieval.R")
 
+# Modules
+source("R/CohortCountsModule.R")
+source("R/CohortDefinitionModule.R")
+source("R/IndexEventModule.R")
+
+
 appVersionNum <- "Version: 3.0.0"
 appInformationText <- paste("Powered by OHDSI Cohort Diagnostics application", paste0(appVersionNum, "."))
 appInformationText <- paste0(

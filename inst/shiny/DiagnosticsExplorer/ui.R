@@ -559,43 +559,14 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "cohortCounts",
-    cohortReference("cohortCountsSelectedCohorts"),
-    shinydashboard::box(
-      width = NULL,
-      title = NULL,
-      htmltools::withTags(
-        table(
-          width = "100%",
-          tr(
-            td(
-              shiny::radioButtons(
-                inputId = "cohortCountsTableColumnFilter",
-                label = "Display",
-                choices = c("Both", "Persons", "Records"),
-                selected = "Both",
-                inline = TRUE
-              )
-            ),
-            td(
-              align = "right",
-                          )
-          )
-        )
-      ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortCountsTable")),
-      shiny::conditionalPanel(
-        condition = "output.cohortCountRowIsSelected == true",
+    cohortCountsView("cohortCounts"),
+    if (showAnnotation) {
+      column(
+        12,
         tags$br(),
-        shinycssloaders::withSpinner(reactable::reactableOutput("InclusionRuleStatForCohortSeletedTable", width = NULL))
-      ),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationFunction("cohortCounts")
-        )
-      }
-    )
+        annotationFunction("cohortCounts")
+      )
+    }
   ),
   shinydashboard::tabItem(
     tabName = "incidenceRate",
