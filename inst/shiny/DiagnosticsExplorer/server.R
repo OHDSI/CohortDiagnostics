@@ -3463,58 +3463,6 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
 
-
-  # Cohort Overlap ------------------------
-  cohortOverlapData <- reactive({
-    validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 1, "Please select at least two cohorts."))
-    combisOfTargetComparator <- t(utils::combn(cohortIds(), 2)) %>%
-      as.data.frame() %>%
-      dplyr::tibble()
-    colnames(combisOfTargetComparator) <- c("targetCohortId", "comparatorCohortId")
-
-    data <- getResultsCohortOverlap(
-      dataSource = dataSource,
-      targetCohortIds = combisOfTargetComparator$targetCohortId,
-      comparatorCohortIds = combisOfTargetComparator$comparatorCohortId,
-      databaseIds = selectedDatabaseIds()
-    )
-    validate(need(
-      !is.null(data),
-      paste0("No cohort overlap data for this combination")
-    ))
-    validate(need(
-      nrow(data) > 0,
-      paste0("No cohort overlap data for this combination.")
-    ))
-    return(data)
-  })
-
-  output$overlapPlot <- ggiraph::renderggiraph(expr = {
-    validate(need(
-      length(cohortIds()) > 0,
-      paste0("Please select Target Cohort(s)")
-    ))
-
-    data <- cohortOverlapData()
-    validate(need(
-      !is.null(data),
-      paste0("No cohort overlap data for this combination")
-    ))
-    validate(need(
-      nrow(data) > 0,
-      paste0("No cohort overlap data for this combination.")
-    ))
-
-    plot <- plotCohortOverlap(
-      data = data,
-      shortNameRef = cohort,
-      yAxis = input$overlapPlotType
-    )
-    return(plot)
-  })
-
-
   getDatabaseInformation <- shiny::reactive(x = {
     return(database)
   })
@@ -4133,10 +4081,7 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       selectedCohort()
     })
-  output$cohortOverlapSelectedCohort <-
-    shiny::renderUI({
-      selectedCohorts()
-    })
+
   output$incidenceRateSelectedCohorts <-
     shiny::renderUI({
       selectedCohorts()
@@ -4191,4 +4136,13 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       return(selectedDatabaseIds())
     })
+
+
+  cohortOverlapModule(id = "cohortOverlap",
+                      dataSource = dataSource,
+                      selectedCohorts = selectedCohorts,
+                      selectedDatabaseIds = selectedDatabaseIds,
+                      targetCohortId = targetCohortId,
+                      cohortIds = cohortIds,
+                      cohortTable = cohort)
 })
