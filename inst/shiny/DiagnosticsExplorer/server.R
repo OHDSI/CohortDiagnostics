@@ -2249,199 +2249,6 @@ shiny::shinyServer(function(input, output, session) {
       )
     })
 
-  # Temporal characterization ------------
-  ## ReactiveVal: temporalCharacterizationAnalysisNameFilter ----
-  temporalCharacterizationAnalysisNameFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(
-      input$temporalCharacterizationAnalysisNameFilter_open,
-      input$tabs
-    )
-  }, handlerExpr = {
-    if (isFALSE(input$temporalCharacterizationAnalysisNameFilter_open) ||
-      !is.null(input$tabs)) {
-      temporalCharacterizationAnalysisNameFilter(input$temporalCharacterizationAnalysisNameFilter)
-    }
-  })
-  ### temporalCharacterizationAnalysisNameFilter ----
-  shiny::observe({
-    temporalCharacterizationAnalysisOptionsUniverse <- NULL
-    temporalCharcterizationAnalysisOptionsSelected <- NULL
-
-    if (hasData(temporalAnalysisRef)) {
-      temporalCharacterizationAnalysisOptionsUniverse <-
-        analysisNameOptions
-      temporalCharcterizationAnalysisOptionsSelected <-
-        temporalAnalysisRef %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
-        dplyr::pull(.data$analysisName) %>%
-        unique()
-    }
-
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "temporalCharacterizationAnalysisNameFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = temporalCharacterizationAnalysisOptionsUniverse,
-      selected = temporalCharcterizationAnalysisOptionsSelected
-    )
-  })
-
-  ## ReactiveVal: temporalCharacterizationDomainIdFilter ----
-  temporalcharacterizationDomainIdFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(
-      input$temporalcharacterizationDomainIdFilter_open,
-      input$tabs
-    )
-  }, handlerExpr = {
-    if (isFALSE(input$temporalcharacterizationDomainIdFilter_open) ||
-      !is.null(input$tabs)) {
-      temporalcharacterizationDomainIdFilter(input$temporalcharacterizationDomainIdFilter)
-    }
-  })
-
-  ### temporalcharacterizationDomainIdFilter ----
-  shiny::observe({
-    temporalCharacterizationDomainOptionsUniverse <- NULL
-    temporalCharcterizationDomainOptionsSelected <- NULL
-
-    if (hasData(temporalAnalysisRef)) {
-      temporalCharacterizationDomainOptionsUniverse <-
-        domainIdOptions
-      temporalCharcterizationDomainOptionsSelected <-
-        temporalAnalysisRef %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
-        dplyr::pull(.data$domainId) %>%
-        unique()
-    }
-
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "temporalcharacterizationDomainIdFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = temporalCharacterizationDomainOptionsUniverse,
-      selected = temporalCharcterizationDomainOptionsSelected
-    )
-  })
-
-  ## temporalCohortCharacterizationDataFiltered ------------
-  temporalCohortCharacterizationDataFiltered <- shiny::reactive({
-    if (!input$tabs %in% c("temporalCharacterization")) {
-      return(NULL)
-    }
-    validate(need(length(input$database) == 1, "One data source must be selected"))
-    validate(need(length(targetCohortId()) == 1, "One target cohort must be selected"))
-    if (!hasData(selectedTemporalTimeIds())) {
-      return(NULL)
-    }
-    data <-
-      characterizationOutputForCharacterizationMenu()
-    if (!hasData(data)) {
-      return(NULL)
-    }
-    data <- data$covariateValue
-    if (!hasData(data)) {
-      return(NULL)
-    }
-    data <- data %>%
-      dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
-      dplyr::filter(.data$timeId %in% selectedTemporalTimeIds()) %>%
-      dplyr::filter(.data$cohortId %in% c(targetCohortId())) %>%
-      dplyr::filter(.data$databaseId %in% c(input$database))
-
-    if (input$temporalProportionOrContinuous == "Proportion") {
-      data <- data %>%
-        dplyr::filter(.data$isBinary == "Y")
-    } else if (input$temporalProportionOrContinuous == "Continuous") {
-      data <- data %>%
-        dplyr::filter(.data$isBinary == "N")
-    }
-
-    data <- data %>%
-      dplyr::filter(.data$analysisName %in% temporalCharacterizationAnalysisNameFilter()) %>%
-      dplyr::filter(.data$domainId %in% temporalcharacterizationDomainIdFilter())
-
-    if (hasData(selectedConceptSets())) {
-      if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
-        data <- data %>%
-          dplyr::filter(.data$conceptId %in% getResolvedAndMappedConceptIdsForFilters())
-      }
-    }
-    if (!hasData(data)) {
-      return(NULL)
-    }
-    return(data)
-  })
-
-  ## temporalCharacterizationRawTable ----
-  temporalCharacterizationRawTable <- shiny::reactive(x = {
-    data <- temporalCohortCharacterizationDataFiltered()
-    validate(need(
-      hasData(data),
-      "No temporal characterization data"
-    ))
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(
-      message = "Post processing: Rendering table",
-      value = 0
-    )
-
-    temporalChoices <- temporalCharacterizationTimeIdChoices %>%
-      dplyr::filter(.data$timeId %in% c(data$timeId %>% unique())) %>%
-      dplyr::pull(.data$temporalChoices) %>%
-      unique()
-
-    keyColumns <- c("covariateName", "analysisName", "conceptId")
-    data <- data %>%
-      dplyr::select(
-        .data$covariateName,
-        .data$analysisName,
-        .data$temporalChoices,
-        .data$conceptId,
-        .data$mean,
-        .data$sd
-      ) %>%
-      tidyr::pivot_wider(
-        id_cols = dplyr::all_of(keyColumns),
-        names_from = "temporalChoices",
-        values_from = "mean",
-        names_sep = "_"
-      ) %>%
-      dplyr::relocate(dplyr::all_of(c(keyColumns, temporalChoices))) %>%
-      dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with("T ("))))
-
-    if (any(stringr::str_detect(
-      string = colnames(data),
-      pattern = stringr::fixed("T (0")
-    ))) {
-      data <- data %>%
-        dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with("T (0"))))
-    }
-
-    dataColumns <- c(temporalChoices)
-
-    showDataAsPercent <- FALSE
-    if (input$temporalProportionOrContinuous == "Proportion") {
-      showDataAsPercent <- TRUE
-    }
-
-    getDisplayTableSimple(
-      data = data,
-      keyColumns = keyColumns,
-      dataColumns = dataColumns,
-      showDataAsPercent = showDataAsPercent,
-      pageSize = 100
-    )
-  })
-
-  ## Output: temporalCharacterizationTable ------------------------
-  output$temporalCharacterizationTable <-
-    reactable::renderReactable(expr = {
-      temporalCharacterizationRawTable()
-    })
-
   # Compare cohort characterization --------------------------------------------
   ## ReactiveVal: compareCohortCharacterizationAnalysisNameFilter ----
   compareCohortCharacterizationAnalysisNameFilter <- reactiveVal(NULL)
@@ -3775,15 +3582,6 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       selectedCohort()
     })
-  output$temporalCharacterizationSelectedCohort <-
-    shiny::renderUI({
-      return(selectedCohort())
-    })
-
-  output$temporalCharacterizationSelectedDatabase <-
-    shiny::renderUI({
-      return(selectedDatabaseIds())
-    })
 
   output$cohortCharCompareSelectedCohort <- shiny::renderUI({
     htmltools::withTags(table(
@@ -3840,4 +3638,20 @@ shiny::shinyServer(function(input, output, session) {
                          selectedConceptSets = selectedConceptSets,
                          characterizationMenuOutput = characterizationOutputForCharacterizationMenu, # This name must be changed
                          characterizationTimeIdChoices)
+
+
+  temporalCharacterizationModule(id = "temporalCharacterization",
+                                 dataSource,
+                                 selectedCohorts,
+                                 selectedDatabaseIds,
+                                 targetCohortId,
+                                 temporalAnalysisRef,
+                                 analysisNameOptions,
+                                 selectedTemporalTimeIds,
+                                 getResolvedAndMappedConceptIdsForFilters,
+                                 selectedConceptSets,
+                                 analysisIdInTemporalCharacterization,
+                                 domainIdOptions,
+                                 temporalCharacterizationTimeIdChoices,
+                                 characterizationOutputForCharacterizationMenu)
 })

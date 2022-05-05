@@ -1031,76 +1031,14 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "temporalCharacterization",
-    cohortReferenceWithDatabaseId("temporalCharacterizationSelectedCohort", "temporalCharacterizationSelectedDatabase"),
-    shinydashboard::box(
-      width = NULL,
-      title = NULL,
-      tags$table(tags$tr(
-        tags$td(
-          shinyWidgets::pickerInput(
-            inputId = "temporalCharacterizationAnalysisNameFilter",
-            label = "Analysis name",
-            choices = c(""),
-            selected = c(""),
-            multiple = TRUE,
-            width = 200,
-            choicesOpt = list(style = rep_len("color: black;", 999)),
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              liveSearch = TRUE,
-              size = 10,
-              liveSearchStyle = "contains",
-              liveSearchPlaceholder = "Type here to search",
-              virtualScroll = 50
-            )
-          )
-        ),
-        tags$td(
-          shinyWidgets::pickerInput(
-            inputId = "temporalcharacterizationDomainIdFilter",
-            label = "Domain name",
-            choices = c(""),
-            selected = c(""),
-            multiple = TRUE,
-            width = 200,
-            choicesOpt = list(style = rep_len("color: black;", 999)),
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              liveSearch = TRUE,
-              size = 10,
-              liveSearchStyle = "contains",
-              liveSearchPlaceholder = "Type here to search",
-              virtualScroll = 50
-            )
-          )
-        ),
-        tags$td(
-          shiny::radioButtons(
-            inputId = "temporalProportionOrContinuous",
-            label = "",
-            choices = c("All", "Proportion", "Continuous"),
-            selected = "Proportion",
-            inline = TRUE
-          )
-        )
-      )),
-      tags$table(
-        width = "100%",
-        tags$tr(
-          tags$td(
-            align = "right",
-                      )
-        )
-      ),
-      shinycssloaders::withSpinner(reactable::reactableOutput("temporalCharacterizationTable")),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationFunction("temporalCharacterization")
-        )
-      }
-    )
+    temporalCharacterizationView("temporalCharacterization"),
+    if (showAnnotation) {
+      column(
+        12,
+        tags$br(),
+        annotationFunction("temporalCharacterization")
+      )
+    }
   ),
   shinydashboard::tabItem(
     tabName = "compareCohortCharacterization",

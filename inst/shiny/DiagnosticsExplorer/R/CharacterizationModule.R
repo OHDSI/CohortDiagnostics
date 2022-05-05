@@ -133,19 +133,6 @@ characterizationModule <- function(id,
 
     output$selectedCohorts <- shiny::renderUI(selectedCohorts())
     # Cohort Characterization -------------------------------------------------
-    ## ReactiveVal: characterizationAnalysisNameFilter ----
-    characterizationAnalysisNameFilter <- reactiveVal(NULL)
-    shiny::observeEvent(eventExpr = {
-      list(
-        input$characterizationAnalysisNameFilter_open,
-        input$tabs
-      )
-    }, handlerExpr = {
-      if (isFALSE(input$characterizationAnalysisNameFilter_open) ||
-        !is.null(input$tabs)) {
-        characterizationAnalysisNameFilter(input$characterizationAnalysisNameFilter)
-      }
-    })
 
     #### characterizationAnalysisNameFilter ----
     shiny::observe({
@@ -167,20 +154,6 @@ characterizationModule <- function(id,
         choices = characterizationAnalysisOptionsUniverse,
         selected = charcterizationAnalysisOptionsSelected
       )
-    })
-
-    ## ReactiveVal: characterizationDomainIdFilter ----
-    characterizationDomainIdFilter <- reactiveVal(NULL)
-    shiny::observeEvent(eventExpr = {
-      list(
-        input$characterizationDomainIdFilter_open,
-        input$tabs
-      )
-    }, handlerExpr = {
-      if (isFALSE(input$characterizationDomainIdFilter_open) ||
-        !is.null(input$tabs)) {
-        characterizationDomainIdFilter(input$characterizationDomainIdFilter)
-      }
     })
 
     ### characterizationDomainNameFilter ----
@@ -219,6 +192,7 @@ characterizationModule <- function(id,
 
       data <-
         characterizationMenuOutput()
+
       if (!hasData(data)) {
         return(NULL)
       }
@@ -252,10 +226,10 @@ characterizationModule <- function(id,
       }
 
       data <- data %>%
-        dplyr::filter(.data$analysisName %in% characterizationAnalysisNameFilter())
+        dplyr::filter(.data$analysisName %in% input$characterizationAnalysisNameFilter)
 
       data <- data %>%
-        dplyr::filter(.data$domainId %in% characterizationDomainIdFilter())
+        dplyr::filter(.data$domainId %in% input$characterizationDomainIdFilter)
 
       if (hasData(selectedConceptSets())) {
         if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
