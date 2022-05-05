@@ -1020,113 +1020,14 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
-    cohortReference("characterizationSelectedCohort"),
-    shinydashboard::box(
-      width = NULL,
-      title = NULL,
-      tags$table(
-        tags$tr(
-          tags$td(
-            shiny::radioButtons(
-              inputId = "charType",
-              label = "",
-              choices = c("Pretty", "Raw"),
-              selected = "Pretty",
-              inline = TRUE
-            )
-          ),
-          tags$td(
-            shiny::conditionalPanel(
-              condition = "input.charType == 'Raw'",
-              tags$table(tags$tr(
-                tags$td(
-                  shinyWidgets::pickerInput(
-                    inputId = "characterizationAnalysisNameFilter",
-                    label = "Analysis name",
-                    choices = c(""),
-                    selected = c(""),
-                    inline = TRUE,
-                    multiple = TRUE,
-                    width = 300,
-                    choicesOpt = list(style = rep_len("color: black;", 999)),
-                    options = shinyWidgets::pickerOptions(
-                      actionsBox = TRUE,
-                      liveSearch = TRUE,
-                      size = 10,
-                      liveSearchStyle = "contains",
-                      liveSearchPlaceholder = "Type here to search",
-                      virtualScroll = 50
-                    )
-                  )
-                ),
-                tags$td(
-                  shinyWidgets::pickerInput(
-                    inputId = "characterizationDomainIdFilter",
-                    label = "Domain name",
-                    choices = c(""),
-                    selected = c(""),
-                    inline = TRUE,
-                    multiple = TRUE,
-                    width = 300,
-                    choicesOpt = list(style = rep_len("color: black;", 999)),
-                    options = shinyWidgets::pickerOptions(
-                      actionsBox = TRUE,
-                      liveSearch = TRUE,
-                      size = 10,
-                      liveSearchStyle = "contains",
-                      liveSearchPlaceholder = "Type here to search",
-                      virtualScroll = 50
-                    )
-                  )
-                ),
-                tags$td(
-                  shiny::radioButtons(
-                    inputId = "characterizationProportionOrContinuous",
-                    label = "",
-                    choices = c("All", "Proportion", "Continuous"),
-                    selected = "Proportion",
-                    inline = TRUE
-                  )
-                )
-              ))
-            )
-          )
-        ),
-        tags$tr(
-          tags$td(
-            colspan = 2,
-            shiny::conditionalPanel(
-              condition = "input.charType == 'Raw'",
-              shiny::radioButtons(
-                inputId = "characterizationColumnFilters",
-                label = "Display",
-                choices = c("Mean and Standard Deviation", "Mean only"),
-                selected = "Mean only",
-                inline = TRUE
-              )
-            )
-          )
-        )
-      ),
-      tags$table(
-        width = "100%",
-        tags$tr(
-          tags$td(
-            align = "right",
-                      )
-        )
-      ),
-      shinycssloaders::withSpinner(
-        reactable::reactableOutput(outputId = "characterizationTable")
-      ),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationFunction("cohortCharacterization")
-        )
-      }
-    )
+    characterizationView("characterization"),
+    if (showAnnotation) {
+      column(
+        12,
+        tags$br(),
+        annotationFunction("cohortCharacterization")
+      )
+    }
   ),
   shinydashboard::tabItem(
     tabName = "temporalCharacterization",
