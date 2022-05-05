@@ -1174,80 +1174,6 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
 
-  # Time distribution -----
-  ## timeDistributionData -----
-  timeDistributionData <- reactive({
-    validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    data <- getTimeDistributionResult(
-      dataSource = dataSource,
-      cohortIds = cohortIds(),
-      databaseIds = selectedDatabaseIds()
-    )
-    return(data)
-  })
-
-  ## output: timeDistributionPlot -----
-  output$timeDistributionPlot <- ggiraph::renderggiraph(expr = {
-    data <- timeDistributionData()
-    validate(need(hasData(data), "No data for this combination"))
-    plot <- plotTimeDistribution(data = data, shortNameRef = cohort)
-    return(plot)
-  })
-
-  ## output: timeDistributionTable -----
-  output$timeDistributionTable <- reactable::renderReactable(expr = {
-    data <- timeDistributionData()
-    validate(need(hasData(data), "No data for this combination"))
-
-    data <- data %>%
-      addShortName(cohort) %>%
-      dplyr::arrange(.data$databaseId, .data$cohortId) %>%
-      dplyr::mutate( # shortName = as.factor(.data$shortName),
-        databaseId = as.factor(.data$databaseId)
-      ) %>%
-      dplyr::select(
-        Database = .data$databaseId,
-        Cohort = .data$shortName,
-        TimeMeasure = .data$timeMetric,
-        Average = .data$averageValue,
-        SD = .data$standardDeviation,
-        Min = .data$minValue,
-        P10 = .data$p10Value,
-        P25 = .data$p25Value,
-        Median = .data$medianValue,
-        P75 = .data$p75Value,
-        P90 = .data$p90Value,
-        Max = .data$maxValue
-      )
-
-    validate(need(hasData(data), "No data for this combination"))
-
-    keyColumns <- c(
-      "Database",
-      "Cohort",
-      "TimeMeasure"
-    )
-    dataColumns <- c(
-      "Average",
-      "SD",
-      "Min",
-      "P10",
-      "P25",
-      "Median",
-      "P75",
-      "P90",
-      "Max"
-    )
-
-    table <- getDisplayTableSimple(
-      data = data,
-      keyColumns = keyColumns,
-      dataColumns = dataColumns
-    )
-    return(table)
-  })
-
   # Orphan concepts table --------------------
   orphanConceptsDataReactive <- shiny::reactive(x = {
     validate(need(length(targetCohortId()) > 0, "No cohorts chosen"))
@@ -3580,10 +3506,7 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       selectedCohorts()
     })
-  output$timeDistributionSelectedCohorts <-
-    shiny::renderUI({
-      selectedCohorts()
-    })
+
   output$temporalCharacterizationSelectedCohort <-
     shiny::renderUI({
       return(selectedCohort())
@@ -3660,4 +3583,11 @@ shiny::shinyServer(function(input, output, session) {
                        cohortIds = cohortIds,
                        selectedDatabaseIds = selectedDatabaseIds,
                        cohortTable = cohort)
+
+  timeDistributionsModule(id = "timeDistributions",
+                          dataSource = dataSource,
+                          selectedCohorts = selectedCohorts,
+                          cohortIds = cohortIds,
+                          selectedDatabaseIds = selectedDatabaseIds,
+                          cohortTable = cohort)
 })

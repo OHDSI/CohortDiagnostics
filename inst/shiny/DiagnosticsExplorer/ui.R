@@ -603,41 +603,15 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "timeDistribution",
-    cohortReference("timeDistributionSelectedCohorts"),
-    shinydashboard::box(
-      title = "Time Distributions",
-      width = NULL,
-      status = "primary",
-      shiny::radioButtons(
-        inputId = "timeDistributionType",
-        label = "",
-        choices = c("Table", "Plot"),
-        selected = "Plot",
-        inline = TRUE
-      ),
-      shiny::conditionalPanel(
-        condition = "input.timeDistributionType=='Table'",
-        tags$table(
-          width = "100%",
-          tags$tr(tags$td(
-            align = "right",
-                      ))
-        ),
-        shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "timeDistributionTable"))
-      ),
-      shiny::conditionalPanel(
-        condition = "input.timeDistributionType=='Plot'",
+    timeDistributionsView("timeDistributions"),
+    if (showAnnotation) {
+      column(
+        12,
         tags$br(),
-        ggiraph::ggiraphOutput("timeDistributionPlot", width = "100%", height = "100%")
-      ),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationFunction("timeDistribution")
-        )
-      }
-    )
+        annotationFunction("timeDistribution")
+      )
+    }
+
   ),
   shinydashboard::tabItem(
     tabName = "conceptsInDataSource",
