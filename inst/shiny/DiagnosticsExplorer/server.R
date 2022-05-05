@@ -2874,40 +2874,6 @@ shiny::shinyServer(function(input, output, session) {
       selectedCohort()
     })
 
-  output$cohortCharCompareSelectedCohort <- shiny::renderUI({
-    htmltools::withTags(table(
-      tr(td(
-        selectedCohort()
-      )),
-      tr(td(
-        selectedComparatorCohort()
-      ))
-    ))
-  })
-
-  output$cohortCharCompareSelectedDatabase <-
-    shiny::renderUI({
-      return(selectedDatabaseIds())
-    })
-
-  output$temporalCharCompareSelectedCohort <-
-    shiny::renderUI({
-      htmltools::withTags(table(
-        tr(td(
-          selectedCohort()
-        )),
-        tr(td(
-          selectedComparatorCohort()
-        ))
-      ))
-    })
-
-  output$temporalCharCompareSelectedDatabase <-
-    shiny::renderUI({
-      return(selectedDatabaseIds())
-    })
-
-
   cohortOverlapModule(id = "cohortOverlap",
                       dataSource = dataSource,
                       selectedCohorts = selectedCohorts,
@@ -2948,10 +2914,11 @@ shiny::shinyServer(function(input, output, session) {
 
   compareCohortCharacterizationModule("compareCohortCharacterization",
                                       dataSource = dataSource,
-                                      selectedCohorts = selectedCohorts,
+                                      selectedCohort = selectedCohort,
                                       selectedDatabaseIds = selectedDatabaseIds,
                                       targetCohortId = targetCohortId,
                                       comparatorCohortId = comparatorCohortId,
+                                      selectedComparatorCohort = selectedComparatorCohort,
                                       selectedConceptSets = selectedConceptSets,
                                       selectedTimeIds = shiny::reactive({c(characterizationTimeIdChoices$timeId %>% unique(), NA)}),
                                       characterizationOutputMenu = characterizationOutputForCompareCharacterizationMenu,
@@ -2968,10 +2935,11 @@ shiny::shinyServer(function(input, output, session) {
 
   compareCohortCharacterizationModule("compareTemporalCohortCharacterization",
                                       dataSource = dataSource,
-                                      selectedCohorts = selectedCohorts,
+                                      selectedCohort = selectedCohort,
                                       selectedDatabaseIds = selectedDatabaseIds,
                                       targetCohortId = targetCohortId,
                                       comparatorCohortId = comparatorCohortId,
+                                      selectedComparatorCohort = selectedComparatorCohort,
                                       selectedConceptSets = selectedConceptSets,
                                       selectedTimeIds = selectedTemporalTimeIds,
                                       characterizationOutputMenu = characterizationOutputForCompareCharacterizationMenu,

@@ -1,4 +1,3 @@
-
 plotTemporalCompareStandardizedDifference <- function(balance,
                                                       shortNameRef = NULL,
                                                       xLimitMin = 0,
@@ -113,33 +112,33 @@ plotTemporalCompareStandardizedDifference <- function(balance,
         color = .data$domainId
       )
     ) +
-    ggiraph::geom_point_interactive(
-      ggplot2::aes(tooltip = .data$tooltip),
-      size = 3,
-      shape = 16,
-      alpha = 0.5
-    ) +
-    ggplot2::geom_abline(
-      slope = 1,
-      intercept = 0,
-      linetype = "dashed"
-    ) +
-    ggplot2::geom_hline(yintercept = 0) +
-    ggplot2::geom_vline(xintercept = 0) +
-    # ggplot2::scale_x_continuous("Mean") +
-    # ggplot2::scale_y_continuous("Mean") +
-    ggplot2::xlab(paste("Covariate Mean in ", xCohort)) +
-    ggplot2::ylab(paste("Covariate Mean in ", yCohort)) +
-    ggplot2::scale_color_manual("Domain", values = colors) +
-    ggplot2::facet_grid(cols = ggplot2::vars(temporalChoices)) + # need to facet by 'startDay' that way it is arranged in numeric order.
-    # but labels should be based on choices
-    # ggplot2::facet_wrap(~temporalChoices) +
-    ggplot2::theme(
-      strip.background = ggplot2::element_blank(),
-      panel.spacing = ggplot2::unit(2, "lines")
-    ) +
-    ggplot2::xlim(xLimitMin, xLimitMax) +
-    ggplot2::ylim(yLimitMin, yLimitMax)
+      ggiraph::geom_point_interactive(
+        ggplot2::aes(tooltip = .data$tooltip),
+        size = 3,
+        shape = 16,
+        alpha = 0.5
+      ) +
+      ggplot2::geom_abline(
+        slope = 1,
+        intercept = 0,
+        linetype = "dashed"
+      ) +
+      ggplot2::geom_hline(yintercept = 0) +
+      ggplot2::geom_vline(xintercept = 0) +
+      # ggplot2::scale_x_continuous("Mean") +
+      # ggplot2::scale_y_continuous("Mean") +
+      ggplot2::xlab(paste("Covariate Mean in ", xCohort)) +
+      ggplot2::ylab(paste("Covariate Mean in ", yCohort)) +
+      ggplot2::scale_color_manual("Domain", values = colors) +
+      ggplot2::facet_grid(cols = ggplot2::vars(temporalChoices)) + # need to facet by 'startDay' that way it is arranged in numeric order.
+      # but labels should be based on choices
+      # ggplot2::facet_wrap(~temporalChoices) +
+      ggplot2::theme(
+        strip.background = ggplot2::element_blank(),
+        panel.spacing = ggplot2::unit(2, "lines")
+      ) +
+      ggplot2::xlim(xLimitMin, xLimitMax) +
+      ggplot2::ylim(yLimitMin, yLimitMax)
 
   numberOfTimeIds <- balance$timeId %>%
     unique() %>%
@@ -302,10 +301,11 @@ compareCohortCharacterizationView <- function(id) {
 
 compareCohortCharacterizationModule <- function(id,
                                                 dataSource,
-                                                selectedCohorts,
+                                                selectedCohort,
                                                 selectedDatabaseIds,
                                                 targetCohortId,
                                                 comparatorCohortId,
+                                                selectedComparatorCohort,
                                                 selectedConceptSets,
                                                 selectedTimeIds,
                                                 characterizationOutputMenu,
@@ -322,7 +322,16 @@ compareCohortCharacterizationModule <- function(id,
 
 
   shiny::moduleServer(id, function(input, output, session) {
-    output$selectedCohorts <- shiny::renderUI(selectedCohorts())
+    output$selectedCohorts <- shiny::renderUI({
+      htmltools::withTags(table(
+        tr(td(
+          selectedCohort()
+        )),
+        tr(td(
+          selectedComparatorCohort()
+        ))
+      ))
+    })
     output$selectedDatabases <- shiny::renderUI(selectedDatabaseIds())
 
     # Compare cohort characterization --------------------------------------------
