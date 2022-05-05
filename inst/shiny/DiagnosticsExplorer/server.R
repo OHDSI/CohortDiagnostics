@@ -2237,6 +2237,18 @@ shiny::shinyServer(function(input, output, session) {
       return(data)
     })
 
+  shiny::observe({
+      subset <- getConceptSetNameForFilter()$name %>%
+        sort() %>%
+        unique()
+      shinyWidgets::updatePickerInput(
+        session = session,
+        inputId = "conceptSetsSelected",
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        choices = subset
+      )
+    })
+
   # Temporal characterization ------------
   ## ReactiveVal: temporalCharacterizationAnalysisNameFilter ----
   temporalCharacterizationAnalysisNameFilter <- reactiveVal(NULL)

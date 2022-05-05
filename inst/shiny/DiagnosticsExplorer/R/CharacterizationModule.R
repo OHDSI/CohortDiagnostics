@@ -147,28 +147,6 @@ characterizationModule <- function(id,
       }
     })
 
-
-    getConceptSetNameForFilter <- shiny::reactive(x = {
-      if (!hasData(targetCohortId()) || !hasData(selectedDatabaseIds())) {
-        return(NULL)
-      }
-
-      jsonExpression <- cohortSubset() %>%
-        dplyr::filter(.data$cohortId == targetCohortId()) %>%
-        dplyr::select(.data$json)
-      jsonExpression <-
-        RJSONIO::fromJSON(jsonExpression$json, digits = 23)
-      expression <-
-        getConceptSetDetailsFromCohortDefinition(cohortDefinitionExpression = jsonExpression)
-      if (is.null(expression)) {
-        return(NULL)
-      }
-
-      expression <- expression$conceptSetExpression %>%
-        dplyr::select(.data$name)
-      return(expression)
-    })
-
     #### characterizationAnalysisNameFilter ----
     shiny::observe({
       characterizationAnalysisOptionsUniverse <- NULL
@@ -231,18 +209,6 @@ characterizationModule <- function(id,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         choices = characterizationDomainOptionsUniverse,
         selected = charcterizationDomainOptionsSelected
-      )
-    })
-
-    shiny::observe({
-      subset <- getConceptSetNameForFilter()$name %>%
-        sort() %>%
-        unique()
-      shinyWidgets::updatePickerInput(
-        session = session,
-        inputId = "conceptSetsSelected",
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = subset
       )
     })
 
