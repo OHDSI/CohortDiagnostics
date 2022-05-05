@@ -966,45 +966,14 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "visitContext",
-    cohortReference("visitContextSelectedCohort"),
-    shinydashboard::box(
-      width = NULL,
-      title = NULL,
-      tags$table(
-        width = "100%",
-        tags$tr(
-          tags$td(
-            shiny::radioButtons(
-              inputId = "visitContextTableFilters",
-              label = "Display",
-              choices = c("All", "Before", "During", "Simultaneous", "After"),
-              selected = "All",
-              inline = TRUE
-            )
-          ),
-          tags$td(
-            shiny::radioButtons(
-              inputId = "visitContextPersonOrRecords",
-              label = "Display",
-              choices = c("Persons", "Records"),
-              selected = "Persons",
-              inline = TRUE
-            )
-          ),
-          tags$td(
-            align = "right",
-                      )
-        )
-      ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "visitContextTable")),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationFunction("visitContext")
-        )
-      }
-    )
+    visitContextView("visitContext"),
+    if (showAnnotation) {
+      column(
+        12,
+        tags$br(),
+        annotationFunction("visitContext")
+      )
+    }
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
