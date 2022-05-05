@@ -2230,13 +2230,6 @@ shiny::shinyServer(function(input, output, session) {
       return(data)
     })
 
-  ## characterizationOutputForCompareTemporalCharacterizationMenu ----
-  characterizationOutputForCompareTemporalCharacterizationMenu <-
-    shiny::reactive(x = {
-      data <- characterizationOutputForCompareCharacterizationMenu()
-      return(data)
-    })
-
   shiny::observe({
       subset <- getConceptSetNameForFilter()$name %>%
         sort() %>%
@@ -2248,708 +2241,6 @@ shiny::shinyServer(function(input, output, session) {
         choices = subset
       )
     })
-
-  # Compare cohort characterization --------------------------------------------
-  ## ReactiveVal: compareCohortCharacterizationAnalysisNameFilter ----
-  compareCohortCharacterizationAnalysisNameFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(
-      input$compareCohortCharacterizationAnalysisNameFilter_open,
-      input$tabs
-    )
-  }, handlerExpr = {
-    if (isFALSE(input$compareCohortCharacterizationAnalysisNameFilter_open) ||
-      !is.null(input$tabs)) {
-      compareCohortCharacterizationAnalysisNameFilter(input$compareCohortCharacterizationAnalysisNameFilter)
-    }
-  })
-
-  ### compareCohortCharacterizationAnalysisNameFilter -----
-  shiny::observe({
-    characterizationAnalysisOptionsUniverse <- NULL
-    charcterizationAnalysisOptionsSelected <- NULL
-
-    if (hasData(temporalAnalysisRef)) {
-      characterizationAnalysisOptionsUniverse <- analysisNameOptions
-      charcterizationAnalysisOptionsSelected <-
-        temporalAnalysisRef %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
-        dplyr::pull(.data$analysisName) %>%
-        unique()
-    }
-
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "compareCohortCharacterizationAnalysisNameFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = characterizationAnalysisOptionsUniverse,
-      selected = charcterizationAnalysisOptionsSelected
-    )
-  })
-
-  ## ReactiveVal: compareCohortcharacterizationDomainIdFilter ----
-  compareCohortcharacterizationDomainIdFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(
-      input$compareCohortcharacterizationDomainIdFilter_open,
-      input$tabs
-    )
-  }, handlerExpr = {
-    if (isFALSE(input$compareCohortcharacterizationDomainIdFilter_open) ||
-      !is.null(input$tabs)) {
-      compareCohortcharacterizationDomainIdFilter(input$compareCohortcharacterizationDomainIdFilter)
-    }
-  })
-  ### compareCohortcharacterizationDomainIdFilter -----
-  shiny::observe({
-    characterizationDomainOptionsUniverse <- NULL
-    charcterizationDomainOptionsSelected <- NULL
-
-    if (hasData(temporalAnalysisRef)) {
-      characterizationDomainOptionsUniverse <- domainIdOptions
-      charcterizationDomainOptionsSelected <-
-        temporalAnalysisRef %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
-        dplyr::pull(.data$domainId) %>%
-        unique()
-    }
-
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "compareCohortcharacterizationDomainIdFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = characterizationDomainOptionsUniverse,
-      selected = charcterizationDomainOptionsSelected
-    )
-  })
-
-  ## compareCohortCharacterizationDataFiltered ------------
-  compareCohortCharacterizationDataFiltered <- shiny::reactive({
-    if (!input$tabs %in% c("compareCohortCharacterization")) {
-      return(NULL)
-    }
-    validate(need(length(input$database) == 1, "One data source must be selected"))
-    validate(need(length(targetCohortId()) == 1, "One target cohort must be selected"))
-    validate(need(
-      length(comparatorCohortId()) == 1,
-      "One comparator cohort must be selected"
-    ))
-    validate(
-      need(
-        targetCohortId() != comparatorCohortId(),
-        "Target and comparator cohorts cannot be the same"
-      )
-    )
-    data <- characterizationOutputForCompareCharacterizationMenu()
-    if (!hasData(data)) {
-      return(NULL)
-    }
-
-    data <- data$covariateValue
-    if (!hasData(data)) {
-      return(NULL)
-    }
-    data <- data %>%
-      dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
-      dplyr::filter(.data$timeId %in% c(characterizationTimeIdChoices$timeId %>% unique(), NA)) %>%
-      dplyr::filter(.data$cohortId %in% c(targetCohortId(), comparatorCohortId())) %>%
-      dplyr::filter(.data$databaseId %in% c(input$database))
-
-    if (input$charCompareType == "Raw") {
-      if (input$compareCharacterizationProportionOrContinuous == "Proportion") {
-        data <- data %>%
-          dplyr::filter(.data$isBinary == "Y")
-      } else if (input$compareCharacterizationProportionOrContinuous == "Continuous") {
-        data <- data %>%
-          dplyr::filter(.data$isBinary == "N")
-      }
-    }
-
-    if (input$compareCharacterizationProportionOrContinuous == "Proportion") {
-      data <- data %>%
-        dplyr::filter(.data$isBinary == "Y")
-    } else if (input$compareCharacterizationProportionOrContinuous == "Continuous") {
-      data <- data %>%
-        dplyr::filter(.data$isBinary == "N")
-    }
-
-    data <- data %>%
-      dplyr::filter(.data$analysisName %in% compareCohortCharacterizationAnalysisNameFilter()) %>%
-      dplyr::filter(.data$domainId %in% compareCohortcharacterizationDomainIdFilter())
-
-    if (hasData(selectedConceptSets())) {
-      if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
-        data <- data %>%
-          dplyr::filter(.data$conceptId %in% getResolvedAndMappedConceptIdsForFilters())
-      }
-    }
-    if (!hasData(data)) {
-      return(NULL)
-    }
-    return(data)
-  })
-
-  ## compareCohortCharacterizationBalanceData ----------------------------------------
-  compareCohortCharacterizationBalanceData <- shiny::reactive({
-    if (!input$tabs %in% c("compareCohortCharacterization")) {
-      return(NULL)
-    }
-    data <- compareCohortCharacterizationDataFiltered()
-    if (!hasData(data)) {
-      return(NULL)
-    }
-
-    covs1 <- data %>%
-      dplyr::filter(.data$cohortId %in% c(targetCohortId()))
-    if (!hasData(covs1)) {
-      return(NULL)
-    }
-    covs2 <- data %>%
-      dplyr::filter(.data$cohortId %in% c(comparatorCohortId()))
-    if (!hasData(covs2)) {
-      return(NULL)
-    }
-
-    balance <- compareCohortCharacteristics(covs1, covs2)
-    return(balance)
-  })
-
-  ## compareCohortCharacterizationPrettyTable ----------------------------------------
-  compareCohortCharacterizationPrettyTable <- shiny::reactive(x = {
-    if (!input$charCompareType == "Pretty table") {
-      return(NULL)
-    }
-    data <- compareCohortCharacterizationBalanceData()
-    if (!hasData(data)) {
-      return(NULL)
-    }
-
-    showDataAsPercent <- TRUE
-
-    if (showDataAsPercent) {
-      data1 <- data %>%
-        dplyr::rename(
-          "cohortId" = .data$cohortId1,
-          "mean" = .data$mean1,
-          "sumValue" = .data$sumValue1
-        ) %>%
-        dplyr::select(
-          .data$cohortId,
-          .data$databaseId,
-          .data$analysisId,
-          .data$covariateId,
-          .data$covariateName,
-          .data$mean
-        ) %>%
-        dplyr::rename(sumValue = .data$mean)
-
-      data2 <- data %>%
-        dplyr::rename(
-          "cohortId" = .data$cohortId2,
-          "mean" = .data$mean2,
-          "sumValue" = .data$sumValue2
-        ) %>%
-        dplyr::select(
-          .data$cohortId,
-          .data$databaseId,
-          .data$analysisId,
-          .data$covariateId,
-          .data$covariateName,
-          .data$mean
-        ) %>%
-        dplyr::rename(sumValue = .data$mean)
-    } else {
-      data1 <- data %>%
-        dplyr::rename(
-          "cohortId" = .data$cohortId1,
-          "mean" = .data$mean1,
-          "sumValue" = .data$sumValue1
-        ) %>%
-        dplyr::select(
-          .data$cohortId,
-          .data$databaseId,
-          .data$analysisId,
-          .data$covariateId,
-          .data$covariateName,
-          .data$sumValue
-        )
-      data2 <- data %>%
-        dplyr::rename(
-          "cohortId" = .data$cohortId2,
-          "mean" = .data$mean2,
-          "sumValue" = .data$sumValue2
-        ) %>%
-        dplyr::select(
-          .data$cohortId,
-          .data$databaseId,
-          .data$analysisId,
-          .data$covariateId,
-          .data$covariateName,
-          .data$sumValue
-        )
-    }
-
-    data1 <-
-      prepareTable1(
-        covariates = data1,
-        prettyTable1Specifications = prettyTable1Specifications,
-        cohort = cohort
-      )
-
-    data2 <-
-      prepareTable1(
-        covariates = data2,
-        prettyTable1Specifications = prettyTable1Specifications,
-        cohort = cohort
-      )
-
-    data <- data1 %>%
-      dplyr::full_join(data2,
-        by = c(
-          "characteristic",
-          "sequence",
-          "databaseId"
-        )
-      ) %>%
-      dplyr::arrange(.data$databaseId, .data$sequence) %>%
-      dplyr::select(-.data$databaseId)
-
-    if (!hasData(data)) {
-      return(NULL)
-    }
-    keyColumns <- c("characteristic")
-    dataColumns <- intersect(
-      x = colnames(data),
-      y = cohort$shortName
-    )
-
-    table <- getDisplayTableSimple(
-      data = data,
-      keyColumns = keyColumns,
-      dataColumns = dataColumns,
-      showDataAsPercent = showDataAsPercent
-    )
-    return(table)
-  })
-
-  ## compareCohortCharacterizationRawTable ----------------------------------------
-  compareCohortCharacterizationRawTable <- shiny::reactive(x = {
-    if (!input$charCompareType == "Raw table") {
-      return(NULL)
-    }
-    data <- compareCohortCharacterizationBalanceData()
-    if (!hasData(data)) {
-      return(NULL)
-    }
-
-    distinctTemporalChoices <- unique(temporalChoices$temporalChoices)
-    sortedTemporalChoices <- data %>%
-      dplyr::arrange(factor(.data$temporalChoices, levels = distinctTemporalChoices)) %>%
-      dplyr::distinct(.data$temporalChoices) %>%
-      dplyr::pull(.data$temporalChoices)
-
-    data <- data %>%
-      dplyr::arrange(factor(.data$temporalChoices, levels = sortedTemporalChoices))
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(
-      message = "Post processing: Rendering table",
-      value = 0
-    )
-    data <- data %>%
-      dplyr::rename(
-        "target" = mean1,
-        "sdT" = sd1,
-        "comparator" = mean2,
-        "sdC" = sd2,
-        "StdDiff" = absStdDiff
-      )
-
-    keyColumnFields <-
-      c("covariateName", "analysisName", "conceptId")
-
-    showDataAsPercent <- FALSE
-    if (input$compareCharacterizationColumnFilters == "Mean and Standard Deviation") {
-      dataColumnFields <-
-        c(
-          "target",
-          "sdT",
-          "comparator",
-          "sdC",
-          "StdDiff"
-        )
-    } else {
-      dataColumnFields <- c("target", "comparator", "StdDiff")
-      if (input$compareCharacterizationProportionOrContinuous == "Proportion") {
-        showDataAsPercent <- TRUE
-      }
-    }
-    countLocation <- 1
-
-    maxCountValue <-
-      getMaxValueForStringMatchedColumnsInDataFrame(
-        data = data,
-        string = dataColumnFields
-      )
-
-    getDisplayTableGroupedByDatabaseId(
-      data = data,
-      cohort = cohort,
-      database = database,
-      headerCount = NULL,
-      keyColumns = keyColumnFields,
-      countLocation = countLocation,
-      dataColumns = dataColumnFields,
-      maxCount = maxCountValue,
-      showDataAsPercent = showDataAsPercent,
-      excludedColumnFromPercentage = "StdDiff",
-      sort = TRUE,
-      isTemporal = TRUE,
-      pageSize = 100
-    )
-  })
-
-  ## output: compareCohortCharacterizationTable ----------------------------------------
-  output$compareCohortCharacterizationTable <- reactable::renderReactable(expr = {
-    if (input$charCompareType == "Pretty table") {
-      data <- compareCohortCharacterizationPrettyTable()
-      validate(need(hasData(data), "No data for selected combination"))
-      return(data)
-    } else if (input$charCompareType == "Raw table") {
-      data <- compareCohortCharacterizationRawTable()
-      validate(need(hasData(data), "No data for selected combination"))
-      return(data)
-    }
-  })
-
-  ## output: compareCohortCharacterizationBalancePlot ----------------------------------------
-  output$compareCohortCharacterizationBalancePlot <-
-    ggiraph::renderggiraph(expr = {
-      if (!input$charCompareType == "Plot") {
-        return(NULL)
-      }
-      data <- compareCohortCharacterizationBalanceData()
-      validate(need(
-        hasData(data),
-        "No data available for selected combination."
-      ))
-
-      distinctTemporalChoices <- unique(temporalChoices$temporalChoices)
-      data <- data %>%
-        dplyr::arrange(factor(.data$temporalChoices, levels = distinctTemporalChoices)) %>%
-        dplyr::mutate(temporalChoices = factor(.data$temporalChoices, levels = unique(.data$temporalChoices)))
-
-      plot <-
-        plotTemporalCompareStandardizedDifference(
-          balance = data,
-          shortNameRef = cohort,
-          xLimitMin = 0,
-          xLimitMax = 1,
-          yLimitMin = 0,
-          yLimitMax = 1
-        )
-      validate(need(
-        !is.null(plot),
-        "No plot available for selected combination."
-      ))
-      return(plot)
-    })
-
-  # Compare Temporal Characterization.-----------------------------------------
-  ## ReactiveVal: temporalCompareAnalysisNameFilter ----
-  temporalCompareAnalysisNameFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(
-      input$temporalCompareAnalysisNameFilter_open,
-      input$tabs
-    )
-  }, handlerExpr = {
-    if (isFALSE(input$temporalCompareAnalysisNameFilter_open) ||
-      !is.null(input$tabs)) {
-      temporalCompareAnalysisNameFilter(input$temporalCompareAnalysisNameFilter)
-    }
-  })
-
-  ### temporalCompareAnalysisNameFilter ----
-  shiny::observe({
-    temporalCharacterizationAnalysisOptionsUniverse <- NULL
-    temporalCharcterizationAnalysisOptionsSelected <- NULL
-
-    if (hasData(temporalAnalysisRef)) {
-      temporalCharacterizationAnalysisOptionsUniverse <-
-        analysisNameOptions
-      temporalCharcterizationAnalysisOptionsSelected <-
-        temporalAnalysisRef %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
-        dplyr::pull(.data$analysisName) %>%
-        unique()
-    }
-
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "temporalCompareAnalysisNameFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = temporalCharacterizationAnalysisOptionsUniverse,
-      selected = temporalCharcterizationAnalysisOptionsSelected
-    )
-  })
-
-  ## ReactiveVal: temporalCompareDomainNameFilter ----
-  temporalCompareDomainNameFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(
-      input$temporalCompareDomainNameFilter_open,
-      input$tabs
-    )
-  }, handlerExpr = {
-    if (isFALSE(input$temporalCompareDomainNameFilter_open) ||
-      !is.null(input$tabs)) {
-      temporalCompareDomainNameFilter(input$temporalCompareDomainNameFilter)
-    }
-  })
-  ### temporalCompareDomainNameFilter ----
-  shiny::observe({
-    temporalCharacterizationDomainOptionsUniverse <- NULL
-    temporalCharcterizationDomainOptionsSelected <- NULL
-
-    if (hasData(temporalAnalysisRef)) {
-      temporalCharacterizationDomainOptionsUniverse <-
-        domainIdOptions
-      temporalCharcterizationDomainOptionsSelected <-
-        temporalAnalysisRef %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
-        dplyr::pull(.data$domainId) %>%
-        unique()
-    }
-
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "temporalCompareDomainNameFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = temporalCharacterizationDomainOptionsUniverse,
-      selected = temporalCharcterizationDomainOptionsSelected
-    )
-  })
-
-
-  ## compareTemporalCharacterizationDataFiltered ------------
-  compareTemporalCharacterizationDataFiltered <- shiny::reactive({
-    if (!input$tabs %in% c("compareTemporalCharacterization")) {
-      return(NULL)
-    }
-    validate(need(length(input$database) == 1, "One data source must be selected"))
-    validate(need(
-      length(targetCohortId()) == 1,
-      "One target cohort must be selected"
-    ))
-    validate(need(
-      length(comparatorCohortId()) == 1,
-      "One comparator cohort must be selected"
-    ))
-    validate(
-      need(
-        targetCohortId() != comparatorCohortId(),
-        "Target and comparator cohorts cannot be the same"
-      )
-    )
-    if (!hasData(selectedTemporalTimeIds())) {
-      return(NULL)
-    }
-    data <-
-      characterizationOutputForCompareTemporalCharacterizationMenu()
-    if (!hasData(data)) {
-      return(NULL)
-    }
-    data <- data$covariateValue
-    if (!hasData(data)) {
-      return(NULL)
-    }
-    data <- data %>%
-      dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
-      dplyr::filter(.data$timeId %in% selectedTemporalTimeIds()) %>%
-      dplyr::filter(.data$cohortId %in% c(targetCohortId(), comparatorCohortId())) %>%
-      dplyr::filter(.data$databaseId %in% c(input$database))
-
-    if (input$temporalCompareCharacterizationProportionOrContinuous == "Proportion") {
-      data <- data %>%
-        dplyr::filter(.data$isBinary == "Y")
-    } else if (input$temporalCompareCharacterizationProportionOrContinuous == "Continuous") {
-      data <- data %>%
-        dplyr::filter(.data$isBinary == "N")
-    }
-
-    data <- data %>%
-      dplyr::filter(.data$analysisName %in% temporalCompareAnalysisNameFilter()) %>%
-      dplyr::filter(.data$domainId %in% temporalCompareDomainNameFilter())
-
-    if (hasData(selectedConceptSets())) {
-      if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
-        data <- data %>%
-          dplyr::filter(.data$conceptId %in% getResolvedAndMappedConceptIdsForFilters())
-      }
-    }
-    if (!hasData(data)) {
-      return(NULL)
-    }
-    return(data)
-  })
-
-
-  ## compareCohortTemporalCharacterizationBalanceData ---------------------------
-  compareCohortTemporalCharacterizationBalanceData <-
-    shiny::reactive({
-      if (!input$tabs %in% c("compareTemporalCharacterization")) {
-        return(NULL)
-      }
-      data <- compareTemporalCharacterizationDataFiltered()
-      if (!hasData(data)) {
-        return(NULL)
-      }
-      covs1 <- data %>%
-        dplyr::filter(.data$cohortId == targetCohortId())
-      if (!hasData(covs1)) {
-        return(NULL)
-      }
-      covs2 <- data %>%
-        dplyr::filter(.data$cohortId %in% c(comparatorCohortId()))
-      if (!hasData(covs2)) {
-        return(NULL)
-      }
-      balance <-
-        compareCohortCharacteristics(covs1, covs2)
-      if (!hasData(balance)) {
-        return(NULL)
-      }
-      return(balance)
-    })
-
-
-  ## compareCohortTemporalCharacterizationTable ---------------------------
-  compareCohortTemporalCharacterizationTable <-
-    shiny::reactive({
-      if (!input$temporalCharacterizationType == "Raw table") {
-        return(NULL)
-      }
-      data <- compareCohortTemporalCharacterizationBalanceData()
-      validate(need(
-        hasData(data),
-        "No data available for selected combination."
-      ))
-
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
-      progress$set(
-        message = "Post processing: Rendering table",
-        value = 0
-      )
-
-      distinctTemporalChoices <- unique(temporalChoices$temporalChoices)
-      sortedTemporalChoices <- data %>%
-        dplyr::arrange(factor(.data$temporalChoices, levels = distinctTemporalChoices)) %>%
-        dplyr::distinct(.data$temporalChoices) %>%
-        dplyr::pull(.data$temporalChoices)
-
-      data <- data %>%
-        dplyr::rename(
-          "target" = mean1,
-          "sDTarget" = sd1,
-          "comparator" = mean2,
-          "sDComparator" = sd2,
-          "stdDiff" = stdDiff
-        ) %>%
-        dplyr::arrange(factor(.data$temporalChoices, levels = sortedTemporalChoices))
-
-      showDataAsPercent <- FALSE
-      keyColumnFields <-
-        c("covariateId", "covariateName", "analysisName")
-      if (input$temporalCharacterizationTypeColumnFilter == "Mean and Standard Deviation") {
-        dataColumnFields <-
-          c(
-            "target",
-            "sDTarget",
-            "comparator",
-            "sDComparator",
-            "stdDiff"
-          )
-      } else {
-        dataColumnFields <- c("target", "comparator", "stdDiff")
-
-        if (input$temporalCompareCharacterizationProportionOrContinuous == "Proportion") {
-          showDataAsPercent <- TRUE
-        }
-      }
-
-      maxCountValue <-
-        getMaxValueForStringMatchedColumnsInDataFrame(
-          data = data,
-          string = dataColumnFields
-        )
-
-      table <- getDisplayTableGroupedByDatabaseId(
-        data = data,
-        cohort = cohort,
-        database = database,
-        headerCount = NULL,
-        keyColumns = keyColumnFields,
-        countLocation = 1,
-        dataColumns = dataColumnFields,
-        maxCount = maxCountValue,
-        showDataAsPercent = showDataAsPercent,
-        excludedColumnFromPercentage = "stdDiff",
-        sort = TRUE,
-        isTemporal = TRUE,
-        pageSize = 100
-      )
-      return(table)
-    })
-
-  ## Output: temporalCharacterizationCompareTable ---------------------------
-  output$temporalCharacterizationCompareTable <-
-    reactable::renderReactable(expr = {
-      data <- compareCohortTemporalCharacterizationTable()
-      if (!hasData(data)) {
-        return(NULL)
-      }
-      return(data)
-    })
-
-  ## Output: temporalCharacterizationComparePlot ---------------------------
-  output$temporalCharacterizationComparePlot <- ggiraph::renderggiraph(expr = {
-    if (!input$temporalCharacterizationType == "Plot") {
-      return(NULL)
-    }
-    data <- compareCohortTemporalCharacterizationBalanceData()
-    validate(need(
-      hasData(data),
-      "No data available for selected combination."
-    ))
-    validate(need(
-      (nrow(data) - nrow(data[data$mean1 < 0.001, ])) > 5 &&
-        (nrow(data) - nrow(data[data$mean2 < 0.001, ])) > 5,
-      paste0("Values of the means are too low.")
-    ))
-
-    distinctTemporalChoices <- unique(temporalChoices$temporalChoices)
-    data <- data %>%
-      dplyr::arrange(factor(.data$temporalChoices, levels = distinctTemporalChoices)) %>%
-      dplyr::mutate(temporalChoices = factor(.data$temporalChoices, levels = unique(.data$temporalChoices)))
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(
-      message = "Plotting ",
-      value = 0
-    )
-    plot <-
-      plotTemporalCompareStandardizedDifference(
-        balance = data,
-        shortNameRef = cohort,
-        xLimitMin = 0,
-        xLimitMax = 1,
-        yLimitMin = 0,
-        yLimitMax = 1
-      )
-    return(plot)
-  })
 
   getDatabaseInformation <- shiny::reactive(x = {
     return(database)
@@ -3626,32 +2917,72 @@ shiny::shinyServer(function(input, output, session) {
                       cohortTable = cohort)
 
   characterizationModule(id = "characterization",
-                         dataSource,
+                         dataSource = dataSource,
                          selectedCohorts = selectedCohorts,
-                         selectedDatabaseIds,
-                         targetCohortId,
-                         cohortSubset,
-                         temporalAnalysisRef,
-                         analysisNameOptions,
-                         analysisIdInCohortCharacterization,
+                         selectedDatabaseIds = selectedDatabaseIds,
+                         targetCohortId = targetCohortId,
+                         cohortSubset = cohortSubset,
+                         temporalAnalysisRef = temporalAnalysisRef,
+                         analysisNameOptions = analysisNameOptions,
+                         analysisIdInCohortCharacterization = analysisIdInCohortCharacterization,
                          getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
                          selectedConceptSets = selectedConceptSets,
                          characterizationMenuOutput = characterizationOutputForCharacterizationMenu, # This name must be changed
-                         characterizationTimeIdChoices)
+                         characterizationTimeIdChoices = characterizationTimeIdChoices)
 
 
   temporalCharacterizationModule(id = "temporalCharacterization",
-                                 dataSource,
-                                 selectedCohorts,
-                                 selectedDatabaseIds,
-                                 targetCohortId,
-                                 temporalAnalysisRef,
-                                 analysisNameOptions,
-                                 selectedTemporalTimeIds,
-                                 getResolvedAndMappedConceptIdsForFilters,
-                                 selectedConceptSets,
-                                 analysisIdInTemporalCharacterization,
-                                 domainIdOptions,
-                                 temporalCharacterizationTimeIdChoices,
-                                 characterizationOutputForCharacterizationMenu)
+                                 dataSource = dataSource,
+                                 selectedCohorts = selectedCohorts,
+                                 selectedDatabaseIds = selectedDatabaseIds,
+                                 targetCohortId = targetCohortId,
+                                 temporalAnalysisRef = temporalAnalysisRef,
+                                 analysisNameOptions = analysisNameOptions,
+                                 selectedTemporalTimeIds = selectedTemporalTimeIds,
+                                 getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
+                                 selectedConceptSets = selectedConceptSets,
+                                 analysisIdInTemporalCharacterization = analysisIdInTemporalCharacterization,
+                                 domainIdOptions = domainIdOptions,
+                                 temporalCharacterizationTimeIdChoices = temporalCharacterizationTimeIdChoices,
+                                 characterizationOutputForCharacterizationMenu = characterizationOutputForCharacterizationMenu)
+
+  compareCohortCharacterizationModule("compareCohortCharacterization",
+                                      dataSource = dataSource,
+                                      selectedCohorts = selectedCohorts,
+                                      selectedDatabaseIds = selectedDatabaseIds,
+                                      targetCohortId = targetCohortId,
+                                      comparatorCohortId = comparatorCohortId,
+                                      selectedConceptSets = selectedConceptSets,
+                                      selectedTimeIds = shiny::reactive({c(characterizationTimeIdChoices$timeId %>% unique(), NA)}),
+                                      characterizationOutputMenu = characterizationOutputForCompareCharacterizationMenu,
+                                      getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
+                                      cohortTable = cohort,
+                                      databaseTable = database,
+                                      temporalAnalysisRef = temporalAnalysisRef,
+                                      analysisIdInCohortCharacterization = analysisIdInCohortCharacterization,
+                                      analysisNameOptions = analysisNameOptions,
+                                      domainIdOptions = domainIdOptions,
+                                      characterizationTimeIdChoices = characterizationTimeIdChoices,
+                                      temporalChoices = temporalChoices,
+                                      prettyTable1Specifications = prettyTable1Specifications)
+
+  compareCohortCharacterizationModule("compareTemporalCohortCharacterization",
+                                      dataSource = dataSource,
+                                      selectedCohorts = selectedCohorts,
+                                      selectedDatabaseIds = selectedDatabaseIds,
+                                      targetCohortId = targetCohortId,
+                                      comparatorCohortId = comparatorCohortId,
+                                      selectedConceptSets = selectedConceptSets,
+                                      selectedTimeIds = selectedTemporalTimeIds,
+                                      characterizationOutputMenu = characterizationOutputForCompareCharacterizationMenu,
+                                      getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
+                                      cohortTable = cohort,
+                                      databaseTable = database,
+                                      temporalAnalysisRef = temporalAnalysisRef,
+                                      analysisIdInCohortCharacterization = analysisIdInCohortCharacterization,
+                                      analysisNameOptions = analysisNameOptions,
+                                      domainIdOptions = domainIdOptions,
+                                      characterizationTimeIdChoices = characterizationTimeIdChoices,
+                                      temporalChoices = temporalChoices,
+                                      prettyTable1Specifications = prettyTable1Specifications)
 })

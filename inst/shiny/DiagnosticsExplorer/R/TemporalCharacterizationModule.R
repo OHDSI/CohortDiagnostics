@@ -92,7 +92,7 @@ temporalCharacterizationView <- function(id) {
 temporalCharacterizationModule <- function(id,
                                            dataSource,
                                            selectedCohorts,
-                                           selectedDatabaseId,
+                                           selectedDatabaseIds,
                                            targetCohortId,
                                            temporalAnalysisRef,
                                            analysisNameOptions,
@@ -106,7 +106,7 @@ temporalCharacterizationModule <- function(id,
   ns <- shiny::NS(id)
   shiny::moduleServer(id, function(input, output, session) {
     output$selectedCohorts <- shiny::renderUI(selectedCohorts())
-    output$selectedDatabases <- shiny::renderUI(selectedDatabaseId())
+    output$selectedDatabases <- shiny::renderUI(selectedDatabaseIds())
 
     # Temporal characterization ------------
 
@@ -160,7 +160,7 @@ temporalCharacterizationModule <- function(id,
 
     ## temporalCohortCharacterizationDataFiltered ------------
     temporalCohortCharacterizationDataFiltered <- shiny::reactive({
-      validate(need(length(selectedDatabaseId()) == 1, "One data source must be selected"))
+      validate(need(length(selectedDatabaseIds()) == 1, "One data source must be selected"))
       validate(need(length(targetCohortId()) == 1, "One target cohort must be selected"))
       if (!hasData(selectedTemporalTimeIds())) {
         return(NULL)
@@ -178,7 +178,7 @@ temporalCharacterizationModule <- function(id,
         dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
         dplyr::filter(.data$timeId %in% selectedTemporalTimeIds()) %>%
         dplyr::filter(.data$cohortId %in% c(targetCohortId())) %>%
-        dplyr::filter(.data$databaseId %in% c(selectedDatabaseId()))
+        dplyr::filter(.data$databaseId %in% c(selectedDatabaseIds()))
 
       if (input$temporalProportionOrContinuous == "Proportion") {
         data <- data %>%
