@@ -787,48 +787,14 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "conceptsInDataSource",
-    cohortReference("conceptsInDataSourceSelectedCohort"),
-    shinydashboard::box(
-      title = "Concepts in Data Source",
-      width = NULL,
-      htmltools::withTags(
-        table(
-          width = "100%",
-          tr(
-            td(
-              shiny::radioButtons(
-                inputId = "includedType",
-                label = "",
-                choices = c("Source fields", "Standard fields"),
-                selected = "Standard fields",
-                inline = TRUE
-              )
-            ),
-            td(
-              shiny::radioButtons(
-                inputId = "conceptsInDataSourceTableColumnFilter",
-                label = "",
-                choices = c("Both", "Persons", "Records"),
-                #
-                selected = "Persons",
-                inline = TRUE
-              )
-            ),
-            td(
-              align = "right",
-                          )
-          )
-        )
-      ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "conceptsInDataSourceTable")),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationFunction("conceptsInDataSource")
-        )
-      }
-    )
+    conceptsInDataSourceView("conceptsInDataSource"),
+    if (showAnnotation) {
+      column(
+        12,
+        tags$br(),
+        annotationFunction("conceptsInDataSource")
+      )
+    }
   ),
   shinydashboard::tabItem(
     tabName = "orphanConcepts",
