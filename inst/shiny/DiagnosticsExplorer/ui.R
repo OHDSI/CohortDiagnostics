@@ -1212,57 +1212,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "databaseInformation",
-    shinydashboard::box(
-      width = NULL,
-      title = NULL,
-      shiny::tabsetPanel(
-        id = "metadataInformationTabsetPanel",
-        shiny::tabPanel(
-          title = "Data source",
-          value = "datasourceTabPanel",
-          tags$br(),
-          htmltools::withTags(table(
-            width = "100%",
-            tr(
-              td(
-                align = "right",
-                              )
-            )
-          )),
-          tags$br(),
-          shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "databaseInformationTable"))
-        ),
-        shiny::tabPanel(
-          title = "Meta data information",
-          value = "metaDataInformationTabPanel",
-          tags$br(),
-          shinydashboard::box(
-            title = shiny::htmlOutput(outputId = "metadataInfoTitle"),
-            collapsible = TRUE,
-            width = NULL,
-            collapsed = FALSE,
-            shiny::htmlOutput(outputId = "metadataInfoDetailsText"),
-            shinydashboard::box(
-              title = NULL,
-              collapsible = TRUE,
-              width = NULL,
-              collapsed = FALSE,
-                            shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "packageDependencySnapShotTable"))
-            ),
-            shinydashboard::box(
-              title = NULL,
-              collapsible = TRUE,
-              width = NULL,
-              collapsed = FALSE,
-              shiny::verbatimTextOutput(outputId = "argumentsAtDiagnosticsInitiationJson"),
-              tags$head(
-                tags$style("#argumentsAtDiagnosticsInitiationJson { max-height:400px};")
-              )
-            )
-          )
-        )
-      )
-    )
+    databaseInformationView("databaseInformation"),
   )
 )
 
