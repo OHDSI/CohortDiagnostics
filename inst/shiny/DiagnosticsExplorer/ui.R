@@ -713,27 +713,15 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
-    cohortReference("cohortOverlapSelectedCohort"),
-    shinydashboard::box(
-      title = "Cohort Overlap (Subjects)",
-      width = NULL,
-      status = "primary",
-      shiny::radioButtons(
-        inputId = "overlapPlotType",
-        label = "",
-        choices = c("Percentages", "Counts"),
-        selected = "Percentages",
-        inline = TRUE
-      ),
-      ggiraph::ggiraphOutput("overlapPlot", width = "100%", height = "100%"),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationFunction("cohortOverlap")
-        )
-      }
-    )
+    cohortOverlapView("cohortOverlap"),
+    if (showAnnotation) {
+      column(
+        12,
+        tags$br(),
+        annotationFunction("cohortOverlap")
+      )
+    }
+
   ),
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
