@@ -213,7 +213,6 @@ if (exists("temporalTimeRef")) {
 }
 
 
-temporalAnalysisRef <- NULL
 if (exists("temporalAnalysisRef")) {
   temporalAnalysisRef <- dplyr::bind_rows(
     temporalAnalysisRef,

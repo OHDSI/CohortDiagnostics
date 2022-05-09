@@ -62,14 +62,6 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
   }
 
-  if (enableAnnotation) {
-    message("Starting application with annotations enabled")
-  }
-
-  if (connectionDetails$dbms != "sqlite" & enableAnnotation) {
-    warning("Enabling annotation is not currently recommended outside of sqlite databases")
-  }
-
   if (is.null(resultsDatabaseSchema)) {
     stop("resultsDatabaseSchema is required to connect to the database.")
   }
