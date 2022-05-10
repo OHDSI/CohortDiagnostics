@@ -7,9 +7,13 @@ source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 source("R/Annotation.R")
-source("R/CirceRendering.R")
 source("R/ResultRetrieval.R")
 
+# Modules
+source("R/CohortCountsModule.R")
+source("R/CohortDefinitionModule.R")
+source("R/IndexEventModule.R")
+source("R/InclusionRulesModule.R")
 source("R/OrphanConceptsModule.R")
 
 
