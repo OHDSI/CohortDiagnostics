@@ -783,432 +783,47 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
-    cohortReference("characterizationSelectedCohort"),
-    shinydashboard::box(
-      width = NULL,
-      title = NULL,
-      tags$table(
-        tags$tr(
-          tags$td(
-            shiny::radioButtons(
-              inputId = "charType",
-              label = "",
-              choices = c("Pretty", "Raw"),
-              selected = "Pretty",
-              inline = TRUE
-            )
-          ),
-          tags$td(
-            shiny::conditionalPanel(
-              condition = "input.charType == 'Raw'",
-              tags$table(tags$tr(
-                tags$td(
-                  shinyWidgets::pickerInput(
-                    inputId = "characterizationAnalysisNameFilter",
-                    label = "Analysis name",
-                    choices = c(""),
-                    selected = c(""),
-                    inline = TRUE,
-                    multiple = TRUE,
-                    width = 300,
-                    choicesOpt = list(style = rep_len("color: black;", 999)),
-                    options = shinyWidgets::pickerOptions(
-                      actionsBox = TRUE,
-                      liveSearch = TRUE,
-                      size = 10,
-                      liveSearchStyle = "contains",
-                      liveSearchPlaceholder = "Type here to search",
-                      virtualScroll = 50
-                    )
-                  )
-                ),
-                tags$td(
-                  shinyWidgets::pickerInput(
-                    inputId = "characterizationDomainIdFilter",
-                    label = "Domain name",
-                    choices = c(""),
-                    selected = c(""),
-                    inline = TRUE,
-                    multiple = TRUE,
-                    width = 300,
-                    choicesOpt = list(style = rep_len("color: black;", 999)),
-                    options = shinyWidgets::pickerOptions(
-                      actionsBox = TRUE,
-                      liveSearch = TRUE,
-                      size = 10,
-                      liveSearchStyle = "contains",
-                      liveSearchPlaceholder = "Type here to search",
-                      virtualScroll = 50
-                    )
-                  )
-                ),
-                tags$td(
-                  shiny::radioButtons(
-                    inputId = "characterizationProportionOrContinuous",
-                    label = "",
-                    choices = c("All", "Proportion", "Continuous"),
-                    selected = "Proportion",
-                    inline = TRUE
-                  )
-                )
-              ))
-            )
-          )
-        ),
-        tags$tr(
-          tags$td(
-            colspan = 2,
-            shiny::conditionalPanel(
-              condition = "input.charType == 'Raw'",
-              shiny::radioButtons(
-                inputId = "characterizationColumnFilters",
-                label = "Display",
-                choices = c("Mean and Standard Deviation", "Mean only"),
-                selected = "Mean only",
-                inline = TRUE
-              )
-            )
-          )
-        )
-      ),
-      tags$table(
-        width = "100%",
-        tags$tr(
-          tags$td(
-            align = "right",
-                      )
-        )
-      ),
-      shinycssloaders::withSpinner(
-        reactable::reactableOutput(outputId = "characterizationTable")
-      ),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationFunction("cohortCharacterization")
-        )
-      }
-    )
+    characterizationView("characterization"),
+    if (showAnnotation) {
+      column(
+        12,
+        tags$br(),
+        annotationFunction("cohortCharacterization")
+      )
+    }
   ),
   shinydashboard::tabItem(
     tabName = "temporalCharacterization",
-    cohortReferenceWithDatabaseId("temporalCharacterizationSelectedCohort", "temporalCharacterizationSelectedDatabase"),
-    shinydashboard::box(
-      width = NULL,
-      title = NULL,
-      tags$table(tags$tr(
-        tags$td(
-          shinyWidgets::pickerInput(
-            inputId = "temporalCharacterizationAnalysisNameFilter",
-            label = "Analysis name",
-            choices = c(""),
-            selected = c(""),
-            multiple = TRUE,
-            width = 200,
-            choicesOpt = list(style = rep_len("color: black;", 999)),
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              liveSearch = TRUE,
-              size = 10,
-              liveSearchStyle = "contains",
-              liveSearchPlaceholder = "Type here to search",
-              virtualScroll = 50
-            )
-          )
-        ),
-        tags$td(
-          shinyWidgets::pickerInput(
-            inputId = "temporalcharacterizationDomainIdFilter",
-            label = "Domain name",
-            choices = c(""),
-            selected = c(""),
-            multiple = TRUE,
-            width = 200,
-            choicesOpt = list(style = rep_len("color: black;", 999)),
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              liveSearch = TRUE,
-              size = 10,
-              liveSearchStyle = "contains",
-              liveSearchPlaceholder = "Type here to search",
-              virtualScroll = 50
-            )
-          )
-        ),
-        tags$td(
-          shiny::radioButtons(
-            inputId = "temporalProportionOrContinuous",
-            label = "",
-            choices = c("All", "Proportion", "Continuous"),
-            selected = "Proportion",
-            inline = TRUE
-          )
-        )
-      )),
-      tags$table(
-        width = "100%",
-        tags$tr(
-          tags$td(
-            align = "right",
-                      )
-        )
-      ),
-      shinycssloaders::withSpinner(reactable::reactableOutput("temporalCharacterizationTable")),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationFunction("temporalCharacterization")
-        )
-      }
-    )
+    temporalCharacterizationView("temporalCharacterization"),
+    if (showAnnotation) {
+      column(
+        12,
+        tags$br(),
+        annotationFunction("temporalCharacterization")
+      )
+    }
   ),
   shinydashboard::tabItem(
     tabName = "compareCohortCharacterization",
-    cohortReferenceWithDatabaseId("cohortCharCompareSelectedCohort", "cohortCharCompareSelectedDatabase"),
-    shinydashboard::box(
-      width = NULL,
-      title = NULL,
-      tags$table(
-        tags$tr(
-          tags$td(
-            shiny::radioButtons(
-              inputId = "charCompareType",
-              label = "",
-              choices = c("Pretty table", "Raw table", "Plot"),
-              selected = "Plot",
-              inline = TRUE
-            ),
-          ),
-          tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
-          tags$td(
-            shiny::conditionalPanel(
-              condition = "input.charCompareType == 'Raw table'",
-              shiny::radioButtons(
-                inputId = "compareCharacterizationColumnFilters",
-                label = "Display",
-                choices = c("Mean and Standard Deviation", "Mean only"),
-                selected = "Mean only",
-                inline = TRUE
-              )
-            )
-          )
-        )
-      ),
-      shiny::conditionalPanel(
-        condition = "input.charCompareType == 'Raw table' | input.charCompareType=='Plot'",
-        tags$table(tags$tr(
-          tags$td(
-            shinyWidgets::pickerInput(
-              inputId = "compareCohortCharacterizationAnalysisNameFilter",
-              label = "Analysis name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              width = 200,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ),
-          tags$td(
-            shinyWidgets::pickerInput(
-              inputId = "compareCohortcharacterizationDomainIdFilter",
-              label = "Domain name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              width = 200,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ),
-          tags$td(
-            shiny::radioButtons(
-              inputId = "compareCharacterizationProportionOrContinuous",
-              label = "",
-              choices = c("All", "Proportion", "Continuous"),
-              selected = "Proportion",
-              inline = TRUE
-            )
-          )
-        ))
-      ),
-      shiny::conditionalPanel(
-        condition = "input.charCompareType=='Pretty table' | input.charCompareType=='Raw table'",
-        tags$table(
-          width = "100%",
-          tags$tr(
-            tags$td(
-              align = "right",
-                          )
-          )
-        ),
-        shinycssloaders::withSpinner(
-          reactable::reactableOutput("compareCohortCharacterizationTable")
-        )
-      ),
-      shiny::conditionalPanel(
-        condition = "input.charCompareType=='Plot'",
-        shinydashboard::box(
-          title = "Compare Cohort Characterization",
-          width = NULL,
-          status = "primary",
-          shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
-          shinycssloaders::withSpinner(
-            ggiraph::ggiraphOutput(
-              outputId = "compareCohortCharacterizationBalancePlot",
-              width = "100%",
-              height = "100%"
-            )
-          )
-        )
-      ),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationFunction("compareCohortCharacterization")
-        )
-      }
-    )
+    compareCohortCharacterizationView("compareCohortCharacterization"),
+    if (showAnnotation) {
+      column(
+        12,
+        tags$br(),
+        annotationFunction("compareCohortCharacterization")
+      )
+    }
   ),
   shinydashboard::tabItem(
     tabName = "compareTemporalCharacterization",
-    cohortReferenceWithDatabaseId(cohortOutputId = "temporalCharCompareSelectedCohort", databaseOutputId = "temporalCharCompareSelectedDatabase"),
-    shinydashboard::box(
-      width = NULL,
-      title = NULL,
-      tags$table(
-        tags$tr(
-          tags$td(
-            shiny::radioButtons(
-              inputId = "temporalCharacterizationType",
-              label = "",
-              choices = c("Raw table", "Plot"),
-              selected = "Plot",
-              inline = TRUE
-            )
-          ),
-          tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
-          tags$td(
-            shiny::conditionalPanel(
-              condition = "input.temporalCharacterizationType == 'Raw table'",
-              shiny::radioButtons(
-                inputId = "temporalCharacterizationTypeColumnFilter",
-                label = "Show  in table:",
-                choices = c("Mean and Standard Deviation", "Mean only"),
-                selected = "Mean only",
-                inline = TRUE
-              )
-            )
-          )
-        )
-      ),
-      shiny::conditionalPanel(
-        condition = "input.temporalCharacterizationType == 'Raw table' | input.temporalCharacterizationType=='Plot'",
-        tags$table(tags$tr(
-          tags$td(
-            shinyWidgets::pickerInput(
-              inputId = "temporalCompareAnalysisNameFilter",
-              label = "Analysis name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              width = 200,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ),
-          tags$td(
-            shinyWidgets::pickerInput(
-              inputId = "temporalCompareDomainNameFilter",
-              label = "Domain name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              width = 200,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ),
-          tags$td(
-            shiny::radioButtons(
-              inputId = "temporalCompareCharacterizationProportionOrContinuous",
-              label = "Filter to:",
-              choices = c("All", "Proportion", "Continuous"),
-              selected = "Proportion",
-              inline = TRUE
-            )
-          )
-        ))
-      ),
-      shiny::conditionalPanel(
-        condition = "input.temporalCharacterizationType=='Pretty table' |
-                            input.temporalCharacterizationType=='Raw table'",
-        tags$table(
-          width = "100%",
-          tags$tr(
-            tags$td(
-              align = "right",
-                          )
-          )
-        ),
-        shinycssloaders::withSpinner(
-          reactable::reactableOutput(outputId = "temporalCharacterizationCompareTable")
-        )
-      ),
-      shiny::conditionalPanel(
-        condition = "input.temporalCharacterizationType=='Plot'",
-        shinydashboard::box(
-          title = "Compare Temporal Characterization",
-          width = NULL,
-          status = "primary",
-          shinycssloaders::withSpinner(
-            ggiraph::ggiraphOutput(
-              outputId = "temporalCharacterizationComparePlot",
-              width = "100%",
-              height = "100%"
-            )
-          )
-        )
-      ),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationFunction("compareTemporalCharacterization")
-        )
-      }
-    )
+    compareCohortCharacterizationView("compareTemporalCohortCharacterization"),
+    if (showAnnotation) {
+      column(
+        12,
+        tags$br(),
+        annotationFunction("compareTemporalCharacterization")
+      )
+    }
   ),
   shinydashboard::tabItem(
     tabName = "databaseInformation",

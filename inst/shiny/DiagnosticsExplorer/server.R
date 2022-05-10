@@ -1652,103 +1652,159 @@ shiny::shinyServer(function(input, output, session) {
       return(data)
     })
 
-  ## characterizationOutputForCompareTemporalCharacterizationMenu ----
-  characterizationOutputForCompareTemporalCharacterizationMenu <-
-    shiny::reactive(x = {
-      data <- characterizationOutputForCompareCharacterizationMenu()
-      return(data)
+  shiny::observe({
+      subset <- getConceptSetNameForFilter()$name %>%
+        sort() %>%
+        unique()
+      shinyWidgets::updatePickerInput(
+        session = session,
+        inputId = "conceptSetsSelected",
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        choices = subset
+      )
     })
 
-  # Cohort Characterization -------------------------------------------------
-  ## ReactiveVal: characterizationAnalysisNameFilter ----
-  characterizationAnalysisNameFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(
-      input$characterizationAnalysisNameFilter_open,
-      input$tabs
-    )
-  }, handlerExpr = {
-    if (isFALSE(input$characterizationAnalysisNameFilter_open) ||
-      !is.null(input$tabs)) {
-      characterizationAnalysisNameFilter(input$characterizationAnalysisNameFilter)
-    }
+  getDatabaseInformation <- shiny::reactive(x = {
+    return(database)
   })
-  #### characterizationAnalysisNameFilter ----
-  shiny::observe({
-    characterizationAnalysisOptionsUniverse <- NULL
-    charcterizationAnalysisOptionsSelected <- NULL
 
-    if (hasData(temporalAnalysisRef)) {
-      characterizationAnalysisOptionsUniverse <- analysisNameOptions
-      charcterizationAnalysisOptionsSelected <- temporalAnalysisRef %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
-        dplyr::pull(.data$analysisName) %>%
-        unique()
+  getFilteredMetadataInformation <- shiny::reactive(x = {
+    data <- getExecutionMetadata(dataSource = dataSource)
+    if (!hasData(data)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::filter(.data$databaseId == selectedDatabaseIds())
+    return(data)
+  })
+
+  # Output: databaseInformationTable ------------------------
+  output$databaseInformationTable <- reactable::renderReactable(expr = {
+    if (!input$tabs == "databaseInformation") {
+      return(NULL)
     }
 
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "characterizationAnalysisNameFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = characterizationAnalysisOptionsUniverse,
-      selected = charcterizationAnalysisOptionsSelected
-    )
-  })
+    data <- getDatabaseInformation()
+    validate(need(
+      all(!is.null(data), nrow(data) > 0),
+      "No data available for selected combination."
+    ))
 
-  ## ReactiveVal: characterizationDomainIdFilter ----
-  characterizationDomainIdFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(
-      input$characterizationDomainIdFilter_open,
-      input$tabs
-    )
-  }, handlerExpr = {
-    if (isFALSE(input$characterizationDomainIdFilter_open) ||
-      !is.null(input$tabs)) {
-      characterizationDomainIdFilter(input$characterizationDomainIdFilter)
+    if (!"vocabularyVersionCdm" %in% colnames(data)) {
+      data$vocabularyVersionCdm <- "Not in data"
     }
-  })
-
-  ### characterizationDomainNameFilter ----
-  shiny::observe({
-    characterizationDomainOptionsUniverse <- NULL
-    charcterizationDomainOptionsSelected <- NULL
-
-    if (hasData(temporalAnalysisRef)) {
-      characterizationDomainOptionsUniverse <- domainIdOptions
-      charcterizationDomainOptionsSelected <- temporalAnalysisRef %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
-        dplyr::pull(.data$domainId) %>%
-        unique()
+    if (!"vocabularyVersion" %in% colnames(data)) {
+      data$vocabularyVersion <- "Not in data"
     }
 
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "characterizationDomainIdFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = characterizationDomainOptionsUniverse,
-      selected = charcterizationDomainOptionsSelected
+    keyColumns <- intersect(
+      colnames(data),
+      c(
+        "databaseId",
+        "databaseName",
+        "vocabularyVersionCdm",
+        "vocabularyVersion",
+        "description",
+        "startTime",
+        "runTime",
+        "runTimeUnits",
+        "sourceReleaseDate",
+        "cdmVersion",
+        "cdmReleaseDate",
+        "observationPeriodMinDate",
+        "observationPeriodMaxDate"
+      )
     )
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "characterizationDomainIdFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = characterizationDomainOptionsUniverse,
-      selected = charcterizationDomainOptionsSelected
+
+    dataColumns <- c(
+      "personsInDatasource",
+      "recordsInDatasource",
+      "personDaysInDatasource"
+    )
+
+    getDisplayTableSimple(
+      data = data,
+      keyColumns = keyColumns,
+      dataColumns = dataColumns
     )
   })
 
-  shiny::observe({
-    subset <- getConceptSetNameForFilter()$name %>%
-      sort() %>%
-      unique()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "conceptSetsSelected",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset
-    )
+  output$metadataInfoTitle <- shiny::renderUI(expr = {
+    data <- getFilteredMetadataInformation()
+
+    if (!hasData(data)) {
+      return(NULL)
+    }
+    tags$p(paste(
+      "Run on ",
+      data$databaseId,
+      "on ",
+      data$startTime,
+      " for ",
+      data$runTime,
+      " ",
+      data$runTimeUnits
+    ))
   })
+
+  output$metadataInfoDetailsText <- shiny::renderUI(expr = {
+    data <- getFilteredMetadataInformation()
+    if (!hasData(data)) {
+      return(NULL)
+    }
+    tags$table(tags$tr(tags$td(
+      paste(
+        "Ran for ",
+        data$runTime,
+        data$runTimeUnits,
+        "on ",
+        data$currentPackage,
+        "(",
+        data$currentPackageVersion,
+        ")"
+      )
+    )))
+  })
+
+  ## output: packageDependencySnapShotTable----
+  output$packageDependencySnapShotTable <-
+    reactable::renderReactable(expr = {
+      data <- getFilteredMetadataInformation()
+      if (!hasData(data)) {
+        return(NULL)
+      }
+      data <- data %>%
+        dplyr::pull(.data$packageDependencySnapShotJson)
+
+      data <- dplyr::as_tibble(RJSONIO::fromJSON(
+        content = data,
+        digits = 23
+      ))
+      keyColumns <- colnames(data)
+      getDisplayTableSimple(
+        data = data,
+        keyColumns = keyColumns,
+        dataColumns = c(),
+        pageSize = 10
+      )
+    })
+
+  ## output: argumentsAtDiagnosticsInitiationJson----
+  output$argumentsAtDiagnosticsInitiationJson <-
+    shiny::renderText(expr = {
+      data <- getFilteredMetadataInformation()
+      if (!hasData(data)) {
+        return(NULL)
+      }
+      data <- data %>%
+        dplyr::pull(.data$argumentsAtDiagnosticsInitiationJson) %>%
+        RJSONIO::fromJSON(digits = 23) %>%
+        RJSONIO::toJSON(
+          digits = 23,
+          pretty = TRUE
+        )
+      return(data)
+    })
 
   ## cohortCharacterizationDataFiltered ----
   cohortCharacterizationDataFiltered <- shiny::reactive(x = {
@@ -3364,50 +3420,14 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       selectedCohorts()
     })
-
-  output$temporalCharacterizationSelectedCohort <-
+  output$timeDistributionSelectedCohorts <-
     shiny::renderUI({
-      return(selectedCohort())
+      selectedCohorts()
     })
-
-  output$temporalCharacterizationSelectedDatabase <-
+  output$visitContextSelectedCohort <-
     shiny::renderUI({
-      return(selectedDatabaseIds())
+      selectedCohort()
     })
-
-  output$cohortCharCompareSelectedCohort <- shiny::renderUI({
-    htmltools::withTags(table(
-      tr(td(
-        selectedCohort()
-      )),
-      tr(td(
-        selectedComparatorCohort()
-      ))
-    ))
-  })
-
-  output$cohortCharCompareSelectedDatabase <-
-    shiny::renderUI({
-      return(selectedDatabaseIds())
-    })
-
-  output$temporalCharCompareSelectedCohort <-
-    shiny::renderUI({
-      htmltools::withTags(table(
-        tr(td(
-          selectedCohort()
-        )),
-        tr(td(
-          selectedComparatorCohort()
-        ))
-      ))
-    })
-
-  output$temporalCharCompareSelectedDatabase <-
-    shiny::renderUI({
-      return(selectedDatabaseIds())
-    })
-
 
   cohortOverlapModule(id = "cohortOverlap",
                       dataSource = dataSource,
@@ -3416,6 +3436,78 @@ shiny::shinyServer(function(input, output, session) {
                       targetCohortId = targetCohortId,
                       cohortIds = cohortIds,
                       cohortTable = cohort)
+
+  characterizationModule(id = "characterization",
+                         dataSource = dataSource,
+                         selectedCohorts = selectedCohorts,
+                         selectedDatabaseIds = selectedDatabaseIds,
+                         targetCohortId = targetCohortId,
+                         cohortSubset = cohortSubset,
+                         temporalAnalysisRef = temporalAnalysisRef,
+                         analysisNameOptions = analysisNameOptions,
+                         analysisIdInCohortCharacterization = analysisIdInCohortCharacterization,
+                         getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
+                         selectedConceptSets = selectedConceptSets,
+                         characterizationMenuOutput = characterizationOutputForCharacterizationMenu, # This name must be changed
+                         characterizationTimeIdChoices = characterizationTimeIdChoices)
+
+
+  temporalCharacterizationModule(id = "temporalCharacterization",
+                                 dataSource = dataSource,
+                                 selectedCohorts = selectedCohorts,
+                                 selectedDatabaseIds = selectedDatabaseIds,
+                                 targetCohortId = targetCohortId,
+                                 temporalAnalysisRef = temporalAnalysisRef,
+                                 analysisNameOptions = analysisNameOptions,
+                                 selectedTemporalTimeIds = selectedTemporalTimeIds,
+                                 getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
+                                 selectedConceptSets = selectedConceptSets,
+                                 analysisIdInTemporalCharacterization = analysisIdInTemporalCharacterization,
+                                 domainIdOptions = domainIdOptions,
+                                 temporalCharacterizationTimeIdChoices = temporalCharacterizationTimeIdChoices,
+                                 characterizationOutputForCharacterizationMenu = characterizationOutputForCharacterizationMenu)
+
+  compareCohortCharacterizationModule("compareCohortCharacterization",
+                                      dataSource = dataSource,
+                                      selectedCohort = selectedCohort,
+                                      selectedDatabaseIds = selectedDatabaseIds,
+                                      targetCohortId = targetCohortId,
+                                      comparatorCohortId = comparatorCohortId,
+                                      selectedComparatorCohort = selectedComparatorCohort,
+                                      selectedConceptSets = selectedConceptSets,
+                                      selectedTimeIds = shiny::reactive({c(characterizationTimeIdChoices$timeId %>% unique(), NA)}),
+                                      characterizationOutputMenu = characterizationOutputForCompareCharacterizationMenu,
+                                      getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
+                                      cohortTable = cohort,
+                                      databaseTable = database,
+                                      temporalAnalysisRef = temporalAnalysisRef,
+                                      analysisIdInCohortCharacterization = analysisIdInCohortCharacterization,
+                                      analysisNameOptions = analysisNameOptions,
+                                      domainIdOptions = domainIdOptions,
+                                      characterizationTimeIdChoices = characterizationTimeIdChoices,
+                                      temporalChoices = temporalChoices,
+                                      prettyTable1Specifications = prettyTable1Specifications)
+
+  compareCohortCharacterizationModule("compareTemporalCohortCharacterization",
+                                      dataSource = dataSource,
+                                      selectedCohort = selectedCohort,
+                                      selectedDatabaseIds = selectedDatabaseIds,
+                                      targetCohortId = targetCohortId,
+                                      comparatorCohortId = comparatorCohortId,
+                                      selectedComparatorCohort = selectedComparatorCohort,
+                                      selectedConceptSets = selectedConceptSets,
+                                      selectedTimeIds = selectedTemporalTimeIds,
+                                      characterizationOutputMenu = characterizationOutputForCompareCharacterizationMenu,
+                                      getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
+                                      cohortTable = cohort,
+                                      databaseTable = database,
+                                      temporalAnalysisRef = temporalAnalysisRef,
+                                      analysisIdInCohortCharacterization = analysisIdInCohortCharacterization,
+                                      analysisNameOptions = analysisNameOptions,
+                                      domainIdOptions = domainIdOptions,
+                                      characterizationTimeIdChoices = characterizationTimeIdChoices,
+                                      temporalChoices = temporalChoices,
+                                      prettyTable1Specifications = prettyTable1Specifications)
 
   visitContextModule(id = "visitContext",
                      dataSource = dataSource,
