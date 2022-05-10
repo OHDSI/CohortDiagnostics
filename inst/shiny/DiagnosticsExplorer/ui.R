@@ -397,46 +397,14 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "orphanConcepts",
-    cohortReference("orphanConceptsSelectedCohort"),
-    shinydashboard::box(
-      title = NULL,
-      width = NULL,
-      htmltools::withTags(
-        table(
-          width = "100%",
-          tr(
-            td(
-              shiny::radioButtons(
-                inputId = "orphanConceptsType",
-                label = "Filters",
-                choices = c("All", "Standard Only", "Non Standard Only"),
-                selected = "All",
-                inline = TRUE
-              )
-            ),
-            td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
-            td(
-              shiny::radioButtons(
-                inputId = "orphanConceptsColumFilterType",
-                label = "Display",
-                choices = c("All", "Persons", "Records"),
-                selected = "All",
-                inline = TRUE
-              )
-            ),
-            td()
-          )
-        )
-      ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "orphanConceptsTable")),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationFunction("orphanConcepts")
-        )
-      }
-    )
+    orpahanConceptsView("orphanConcepts"),
+    if (showAnnotation) {
+      column(
+        12,
+        tags$br(),
+        annotationFunction("orphanConcepts")
+      )
+    }
   ),
   shinydashboard::tabItem(
     tabName = "inclusionRuleStats",

@@ -14,6 +14,7 @@ source("R/CohortCountsModule.R")
 source("R/CohortDefinitionModule.R")
 source("R/IndexEventModule.R")
 source("R/InclusionRulesModule.R")
+source("R/OrphanConceptsModule.R")
 
 
 appVersionNum <- "Version: 3.0.0"

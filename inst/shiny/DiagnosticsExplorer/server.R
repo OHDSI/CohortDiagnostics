@@ -229,138 +229,6 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
 
-  # Orphan concepts table --------------------
-  orphanConceptsDataReactive <- shiny::reactive(x = {
-    validate(need(length(targetCohortId()) > 0, "No cohorts chosen"))
-    data <- getOrphanConceptResult(
-      dataSource = dataSource,
-      cohortId = targetCohortId(),
-      databaseIds = selectedDatabaseIds()
-    )
-    if (!hasData(data)) {
-      return(NULL)
-    }
-    data <- data %>%
-      dplyr::arrange(dplyr::desc(.data$conceptCount))
-    return(data)
-  })
-
-  output$orphanConceptsTable <- reactable::renderReactable(expr = {
-    data <- orphanConceptsDataReactive()
-    validate(need(hasData(data), "There is no data for the selected combination."))
-
-    if (hasData(selectedConceptSets())) {
-      if (!is.null(selectedConceptSets())) {
-        if (length(conceptSetIds()) > 0) {
-          data <- data %>%
-            dplyr::filter(.data$conceptSetId %in% conceptSetIds())
-        } else {
-          data <- data[0,]
-        }
-      }
-    }
-
-    if (input$orphanConceptsType == "Standard Only") {
-      data <- data %>%
-        dplyr::filter(.data$standardConcept == "S")
-    } else if (input$orphanConceptsType == "Non Standard Only") {
-      data <- data %>%
-        dplyr::filter(is.na(.data$standardConcept) |
-                        (
-                          !is.na(.data$standardConcept) && .data$standardConcept != "S"
-                        ))
-    }
-
-    validate(need(hasData(data), "There is no data for the selected combination."))
-
-    data <- data %>%
-      dplyr::select(
-        .data$databaseId,
-        .data$cohortId,
-        .data$conceptId,
-        .data$conceptSubjects,
-        .data$conceptCount
-      ) %>%
-      dplyr::group_by(
-        .data$databaseId,
-        .data$cohortId,
-        .data$conceptId
-      ) %>%
-      dplyr::summarise(
-        conceptSubjects = sum(.data$conceptSubjects),
-        conceptCount = sum(.data$conceptCount),
-        .groups = "keep"
-      ) %>%
-      dplyr::ungroup() %>%
-      dplyr::arrange(
-        .data$databaseId,
-        .data$cohortId
-      ) %>%
-      dplyr::inner_join(
-        data %>%
-          dplyr::select(
-            .data$conceptId,
-            .data$databaseId,
-            .data$cohortId,
-            .data$conceptName,
-            .data$vocabularyId,
-            .data$conceptCode
-          ),
-        by = c("databaseId", "cohortId", "conceptId")
-      ) %>%
-      dplyr::rename(
-        persons = .data$conceptSubjects,
-        records = .data$conceptCount
-      ) %>%
-      dplyr::arrange(dplyr::desc(abs(dplyr::across(
-        c("records", "persons")
-      ))))
-
-    keyColumnFields <-
-      c("conceptId", "conceptName", "vocabularyId", "conceptCode")
-    if (input$orphanConceptsColumFilterType == "Persons") {
-      dataColumnFields <- c("persons")
-      countLocation <- 1
-    } else if (input$orphanConceptsColumFilterType == "Records") {
-      dataColumnFields <- c("records")
-      countLocation <- 1
-    } else {
-      dataColumnFields <- c("persons", "records")
-      countLocation <- 2
-    }
-    countsForHeader <-
-      getDisplayTableHeaderCount(
-        dataSource = dataSource,
-        databaseIds = data$databaseId %>% unique(),
-        cohortIds = data$cohortId %>% unique(),
-        source = "cohort",
-        fields = input$orphanConceptsColumFilterType
-      )
-
-    maxCountValue <-
-      getMaxValueForStringMatchedColumnsInDataFrame(
-        data = data,
-        string = dataColumnFields
-      )
-
-    showDataAsPercent <- FALSE
-    ## showDataAsPercent set based on UI selection - proportion
-
-    displayTable <- getDisplayTableGroupedByDatabaseId(
-      data = data,
-      cohort = cohort,
-      database = database,
-      headerCount = countsForHeader,
-      keyColumns = keyColumnFields,
-      countLocation = countLocation,
-      dataColumns = dataColumnFields,
-      maxCount = maxCountValue,
-      showDataAsPercent = showDataAsPercent,
-      sort = TRUE
-    )
-    return(displayTable)
-  })
-
   # Characterization (Shared across) -------------------------------------------------
   ## Reactive objects ----
   ### getConceptSetNameForFilter ----
@@ -2382,6 +2250,13 @@ shiny::shinyServer(function(input, output, session) {
                              cohortTable = cohort,
                              databaseTable = database)
 
+  orphanConceptsModule("orphanConcepts",
+                       dataSource = dataSource,
+                       selectedCohorts = selectedCohorts,
+                       selectedDatabaseIds = selectedDatabaseIds,
+                       targetCohortId = targetCohortId,
+                       selectedConceptSets = selectedConceptSets,
+                       conceptSetIds = conceptSetIds)
   incidenceRatesModule(id = "incidenceRates",
                        dataSource = dataSource,
                        selectedCohorts = selectedCohorts,
