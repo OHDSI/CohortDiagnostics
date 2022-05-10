@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-createConceptTable <- function(connection, tempEmulationSchema, cohorts) {
+createConceptTable <- function(connection, tempEmulationSchema) {
   ParallelLogger::logTrace("Creating concept ID table for tracking concepts used in diagnostics")
   sql <-
     SqlRender::loadRenderTranslateSql(
@@ -30,66 +30,27 @@ createConceptTable <- function(connection, tempEmulationSchema, cohorts) {
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-
-  referentConceptIdToInsert <- dplyr::tibble()
-  if ('referentConceptId' %in% colnames(cohorts)) {
-    referentConceptIdToInsert <-
-      dplyr::bind_rows(referentConceptIdToInsert,
-                       cohorts %>%
-                         dplyr::transmute(conceptId = as.double(.data$referentConceptId))) %>%
-        dplyr::distinct()
-  }
-  if (nrow(referentConceptIdToInsert) > 0) {
-    ParallelLogger::logInfo(
-      sprintf(
-        "Inserting %s referent concept IDs into the concept ID table. This may take a while.",
-        nrow(referentConceptIdToInsert)
-      )
-    )
-    DatabaseConnector::insertTable(
-      connection = connection,
-      tableName = "#concept_ids",
-      data = referentConceptIdToInsert,
-      dropTableIfExists = FALSE,
-      createTable = FALSE,
-      progressBar = TRUE,
-      tempTable = TRUE,
-      tempEmulationSchema = tempEmulationSchema,
-      camelCaseToSnakeCase = TRUE
-    )
-    ParallelLogger::logTrace("Done inserting")
-  }
 }
 
 exportConceptInformation <- function(connection = NULL,
                                      cdmDatabaseSchema,
                                      tempEmulationSchema,
                                      conceptIdTable,
-                                     vocabularyTableNames = c(
-                                       "concept",
-                                       "conceptAncestor",
-                                       "conceptClass",
-                                       "conceptRelationship",
-                                       "conceptSynonym",
-                                       "domain",
-                                       "relationship",
-                                       "vocabulary"
-                                     ),
+                                     vocabularyTableNames = getDefaultVocabularyTableNames(),
                                      incremental,
                                      exportFolder) {
   ParallelLogger::logInfo("Retrieving concept information")
   start <- Sys.time()
   if (is.null(connection)) {
-    warning('No connection provided')
+    warning("No connection provided")
   }
-  
   vocabularyTableNames <-
     tolower(SqlRender::camelCaseToSnakeCase(vocabularyTableNames))
   tablesInCdmDatabaseSchema <-
     tolower(DatabaseConnector::getTableNames(connection, cdmDatabaseSchema))
   vocabularyTablesInCdmDatabaseSchema <-
     tablesInCdmDatabaseSchema[tablesInCdmDatabaseSchema %in% vocabularyTableNames]
-  
+
   if (length(vocabularyTablesInCdmDatabaseSchema) == 0) {
     stop("Vocabulary tables not found in ", cdmDatabaseSchema)
   }
@@ -102,7 +63,6 @@ exportConceptInformation <- function(connection = NULL,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema
     )[, 1]
- 
   if (length(uniqueConceptIds) == 0) {
     if (!incremental) {
       warning("No concept IDs in cohorts. No concept information exported.")
@@ -111,11 +71,13 @@ exportConceptInformation <- function(connection = NULL,
     }
     return(NULL)
   }
-  
+
   for (vocabularyTable in vocabularyTablesInCdmDatabaseSchema) {
-    ParallelLogger::logInfo("- Retrieving concept information from vocabulary table '",
-                            vocabularyTable,
-                            "'")
+    ParallelLogger::logInfo(
+      "- Retrieving concept information from vocabulary table '",
+      vocabularyTable,
+      "'"
+    )
     if (vocabularyTable %in% c("concept", "concept_synonym")) {
       sql <- "SELECT a.* FROM @cdm_database_schema.@table a
         INNER JOIN (SELECT distinct concept_id FROM @unique_concept_id_table) b
@@ -135,10 +97,12 @@ exportConceptInformation <- function(connection = NULL,
           ON a.concept_id_2 = b2.concept_id
         WHERE b1.concept_id IS NOT NULL or b2.concept_id IS NOT NULL;"
     }
-    if (vocabularyTable %in% c("concept",
-                               "concept_synonym",
-                               "concept_ancestor",
-                               "concept_relationship")) {
+    if (vocabularyTable %in% c(
+      "concept",
+      "concept_synonym",
+      "concept_ancestor",
+      "concept_relationship"
+    )) {
       data <-
         DatabaseConnector::renderTranslateQuerySql(
           connection = connection,
@@ -150,6 +114,11 @@ exportConceptInformation <- function(connection = NULL,
           snakeCaseToCamelCase = TRUE
         )
       if (nrow(data) > 0) {
+        data <- makeDataExportable(
+          x = data,
+          tableName = vocabularyTable
+        )
+
         writeToCsv(
           data = data,
           fileName = file.path(exportFolder, paste(vocabularyTable, "csv", sep = ".")),
@@ -157,10 +126,12 @@ exportConceptInformation <- function(connection = NULL,
           conceptId = uniqueConceptIds
         )
       }
-    } else if (vocabularyTable %in% c("domain",
-                                      "relationship",
-                                      "vocabulary",
-                                      "conceptClass")) {
+    } else if (vocabularyTable %in% c(
+      "domain",
+      "relationship",
+      "vocabulary",
+      "conceptClass"
+    )) {
       sql <- "SELECT * FROM @cdm_database_schema.@table;"
       data <-
         DatabaseConnector::renderTranslateQuerySql(
@@ -172,6 +143,11 @@ exportConceptInformation <- function(connection = NULL,
           snakeCaseToCamelCase = TRUE
         )
       if (nrow(data) > 0) {
+        data <- makeDataExportable(
+          x = data,
+          tableName = vocabularyTable
+        )
+
         writeToCsv(
           data = data,
           fileName = file.path(exportFolder, paste(vocabularyTable, "csv", sep = ".")),
@@ -181,8 +157,10 @@ exportConceptInformation <- function(connection = NULL,
     }
   }
   delta <- Sys.time() - start
-  ParallelLogger::logInfo("Retrieving concept information took ",
-                          signif(delta, 3),
-                          " ",
-                          attr(delta, "units"))
+  ParallelLogger::logInfo(
+    "Retrieving concept information took ",
+    signif(delta, 3),
+    " ",
+    attr(delta, "units")
+  )
 }

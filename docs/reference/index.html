@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.2.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.0</span>
       </span>
     </div>
 
@@ -80,25 +80,37 @@
         </td>
         <td><p>Check character encoding of input file</p></td>
       </tr><tr><td>
+          <p><code><a href="createDiagnosticsExplorerZip.html">createDiagnosticsExplorerZip()</a></code> </p>
+        </td>
+        <td><p>Create publishable shiny zip</p></td>
+      </tr><tr><td>
+          <p><code><a href="createMergedResultsFile.html">createMergedResultsFile()</a></code> </p>
+        </td>
+        <td><p>Merge Shiny diagnostics files into sqlite database</p></td>
+      </tr><tr><td>
           <p><code><a href="createResultsDataModel.html">createResultsDataModel()</a></code> </p>
         </td>
         <td><p>Create the results data model tables on a database server.</p></td>
       </tr><tr><td>
-          <p><code><a href="executeDiagnostics.html">executeDiagnostics()</a></code> </p>
+          <p><code><a href="executeDiagnostics.html">executeDiagnostics</a></code> </p>
         </td>
-        <td><p>Execute cohort diagnostics functions</p></td>
+        <td><p>Execute cohort diagnostics</p></td>
+      </tr><tr><td>
+          <p><code><a href="getCdmDataSourceInformation.html">getCdmDataSourceInformation()</a></code> </p>
+        </td>
+        <td><p>Returns information from CDM source table.</p></td>
       </tr><tr><td>
           <p><code><a href="getCohortCounts.html">getCohortCounts()</a></code> </p>
         </td>
         <td><p>Count the cohort(s)</p></td>
       </tr><tr><td>
+          <p><code><a href="getDefaultVocabularyTableNames.html">getDefaultVocabularyTableNames()</a></code> </p>
+        </td>
+        <td><p>Get a list of vocabulary table names</p></td>
+      </tr><tr><td>
           <p><code><a href="getResultsDataModelSpecifications.html">getResultsDataModelSpecifications()</a></code> </p>
         </td>
         <td><p>Get specifications for Cohort Diagnostics results data model</p></td>
-      </tr><tr><td>
-          <p><code><a href="instantiateCohortSet.html">instantiateCohortSet()</a></code> </p>
-        </td>
-        <td><p>Instantiate a set of cohort</p></td>
       </tr><tr><td>
           <p><code><a href="launchCohortExplorer.html">launchCohortExplorer()</a></code> </p>
         </td>
@@ -112,13 +124,17 @@
         </td>
         <td><p>Load Cohort Definitions From A Study Package</p></td>
       </tr><tr><td>
-          <p><code><a href="preMergeDiagnosticsFiles.html">preMergeDiagnosticsFiles()</a></code> </p>
+          <p><code><a href="runCohortRelationshipDiagnostics.html">runCohortRelationshipDiagnostics()</a></code> </p>
         </td>
-        <td><p>Premerge Shiny diagnostics files</p></td>
+        <td><p>Given a set of cohorts get relationships between the cohorts.</p></td>
       </tr><tr><td>
-          <p><code><a href="runCohortDiagnostics.html">runCohortDiagnostics()</a></code> </p>
+          <p><code><a href="runCohortTimeSeriesDiagnostics.html">runCohortTimeSeriesDiagnostics()</a></code> </p>
         </td>
-        <td><p>Run cohort diagnostics</p></td>
+        <td><p>Given a set of instantiated cohorts get time series for the cohorts.</p></td>
+      </tr><tr><td>
+          <p><code><a href="takepackageDependencySnapshot.html">takepackageDependencySnapshot()</a></code> </p>
+        </td>
+        <td><p>Take a snapshot of the R environment</p></td>
       </tr><tr><td>
           <p><code><a href="uploadResults.html">uploadResults()</a></code> </p>
         </td>
@@ -136,7 +152,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer></div>

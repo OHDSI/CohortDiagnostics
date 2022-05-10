@@ -13,42 +13,52 @@ connectionDetails <- createConnectionDetails(dbms = "bigquery",
 cdmDatabaseSchema <- "synpuf_2m"
 cohortDatabaseSchema <- "synpuf_2m_results"
 cohortTable <- "cohortdiagnostics_test"
-folder <- "s:/temp"
+options("sqlRenderTempEmulationSchema" = "synpuf_2m_results")
+folder <- "s:/temp/CdBqTest"
 
 # Drop temp tables not cleaned up:
-# connection = connect(connectionDetails)
-# dropEmulatedTempTables(connection = connection, tempEmulationSchema = cohortDatabaseSchema)
-# disconnect(connection)
-
-# RedShift 
-connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "redshift",
-                                                                connectionString = keyring::key_get("redShiftConnectionStringOhdaMdcd"),
-                                                                user = keyring::key_get("redShiftUserName"),
-                                                                password = keyring::key_get("redShiftPassword"))
-
-cdmDatabaseSchema <- "cdm_truven_mdcd_v1734"
-cohortDatabaseSchema <- "scratch_mschuemi"
-cohortTable <- "cohortdiagnostics_test"
-folder <- "s:/temp/RS"
-
+connection = connect(connectionDetails)
+dropEmulatedTempTables(connection = connection)
+disconnect(connection)
 
 # Cohort generation using CohortDiagnostics' instantiateCohortSet function -------------------------------
+loadTestCohortDefinitionSet <- function(cohortIds = NULL) {
+  creationFile <- file.path("tests/testthat/cohorts", "CohortsToCreate.csv")
+  cohortDefinitionSet <- CohortGenerator::getCohortDefinitionSet(
+    settingsFileName = creationFile,
+    sqlFolder = "tests/testthat/cohorts",
+    jsonFolder = "tests/testthat/cohorts",
+    cohortFileNameValue = c("cohortId")
+  )
+  if (!is.null(cohortIds)) {
+    cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
+  }
+  
+  cohortDefinitionSet
+}
+cohortIds <- c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906)
+cohortDefinitionSet <- loadTestCohortDefinitionSet(cohortIds)
+
 
 test_that("Cohort instantiation", {
-  instantiateCohortSet(
+  cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
+  # Next create the tables on the database
+  CohortGenerator::createCohortTables(
     connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    tempEmulationSchema = cohortDatabaseSchema,
+    cohortTableNames = cohortTableNames,
     cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-    generateInclusionStats = TRUE,
-    createCohortTable = TRUE,
-    inclusionStatisticsFolder = file.path(folder, "incStats")
+    incremental = FALSE
   )
   
-  
+  CohortGenerator::generateCohortSet(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTableNames = cohortTableNames,
+    cohortDefinitionSet = cohortDefinitionSet,
+    incremental = FALSE
+  )
+
   connection <- DatabaseConnector::connect(connectionDetails)
   sql <-
     "SELECT COUNT(*) AS cohort_count, cohort_definition_id
@@ -66,69 +76,26 @@ test_that("Cohort instantiation", {
   DatabaseConnector::disconnect(connection)
 })
 
-
-# Cohort instantiation using CohortGenerator -----------------------------------------------------------
-cohortDefinitionSet <- CohortGenerator::getCohortDefinitionSetFromPackage(packageName = "CohortDiagnostics",
-                                                                          fileName = "settings/CohortsToCreateForTesting.csv")
-cohortDefinitionSet <- cohortDefinitionSet[1:2, ] # Two cohorts is enough to test everything
-tableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
-CohortGenerator::createCohortTables(connectionDetails = connectionDetails,
-                                    cohortDatabaseSchema = cohortDatabaseSchema,
-                                    cohortTableNames = tableNames)
-CohortGenerator::generateCohortSet(connectionDetails = connectionDetails,
-                                   cdmDatabaseSchema = cdmDatabaseSchema,
-                                   tempEmulationSchema = cohortDatabaseSchema,
-                                   cohortDatabaseSchema = cohortDatabaseSchema,
-                                   cohortTableNames = tableNames,
-                                   cohortDefinitionSet = cohortDefinitionSet)
-
 # Test CohortDiagnostics -------------------------------------------------------------------------
 test_that("Cohort diagnostics", {
   
-  cohortDefinitionSet$atlasId <- cohortDefinitionSet$cohortId
-  
-  
-  runCohortDiagnostics(packageName = "CohortDiagnostics",
-                       cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-                       connectionDetails = connectionDetails,
-                       cdmDatabaseSchema = cdmDatabaseSchema,
-                       cohortDatabaseSchema = cohortDatabaseSchema,
-                       cohortTable = cohortTable,
-                       databaseId = "Synpuf",
-                       exportFolder =  file.path(folder, "export"),
-                       runBreakdownIndexEvents = TRUE,
-                       runCohortCharacterization = TRUE,
-                       runTemporalCohortCharacterization = TRUE,
-                       runCohortOverlap = TRUE,
-                       runIncidenceRate = TRUE,
-                       runIncludedSourceConcepts = TRUE,
-                       runOrphanConcepts = TRUE,
-                       runTimeDistributions = TRUE)
-  
-  
-  executeDiagnostics(
-    cohortDefinitionSet = cohortDefinitionSet,
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = cdmDatabaseSchema,
-    tempEmulationSchema = cohortDatabaseSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    inclusionStatisticsFolder = file.path(folder, "incStats"),
-    exportFolder =  file.path(folder, "export"),
-    databaseId = "SynPuf",
-    runBreakdownIndexEvents = TRUE,
-    runCohortCharacterization = TRUE,
-    runTemporalCohortCharacterization = TRUE,
-    runCohortOverlap = TRUE,
-    runIncidenceRate = TRUE,
-    runIncludedSourceConcepts = TRUE,
-    runOrphanConcepts = TRUE,
-    runTimeDistributions = TRUE,
-    minCellCount = 5
-  )
-  
-  
+  executeDiagnostics(connectionDetails = connectionDetails,
+                     cohortDefinitionSet = cohortDefinitionSet,
+                     databaseId = "Synpuf",
+                     exportFolder =  file.path(folder, "export"),
+                     cdmDatabaseSchema = cdmDatabaseSchema,
+                     cohortDatabaseSchema = cohortDatabaseSchema,
+                     cohortTableNames = cohortTableNames,
+                     runInclusionStatistics = TRUE,
+                     runIncludedSourceConcepts = TRUE,
+                     runOrphanConcepts = TRUE,
+                     runTimeSeries = TRUE,
+                     runVisitContext = TRUE,
+                     runBreakdownIndexEvents = TRUE,
+                     runIncidenceRate = TRUE,
+                     runCohortRelationship = TRUE,
+                     runTemporalCohortCharacterization = TRUE)
+
   testthat::expect_true(file.exists(file.path(
     folder, "export", "Results_SynPuf.zip"
   )))

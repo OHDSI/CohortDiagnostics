@@ -1,39 +1,38 @@
-getSubjectCountsByDatabasae <- function(data, cohortId, databaseIds) {
-  data %>% 
-    dplyr::left_join(cohortCount, by = c('databaseId', 'cohortId')) %>% 
-    dplyr::filter(.data$cohortId == cohortId) %>% 
-    dplyr::filter(.data$databaseId %in% databaseIds) %>% 
-    dplyr::arrange(.data$databaseId) %>% 
-    dplyr::mutate(cohortSubjects = dplyr::coalesce(.data$cohortSubjects, 0)) %>% 
-    dplyr::mutate(databaseIdsWithCount = paste0(.data$databaseId, 
-                                                "<br>(n = ",
-                                                scales::comma(.data$cohortSubjects, accuracy = 1),
-                                                ")"
-    )) %>% 
-    dplyr::mutate(databaseIdsWithCountWithoutBr = paste0(.data$databaseId, 
-                                                         " (n = ",
-                                                         scales::comma(.data$cohortSubjects, accuracy = 1),
-                                                         ")"
-    )) %>% 
-    dplyr::select(.data$databaseId, .data$databaseIdsWithCount, .data$databaseIdsWithCountWithoutBr) %>% 
-    dplyr::distinct() %>% 
-    dplyr::arrange(.data$databaseId)
-}
+# Copyright 2022 Observational Health Data Sciences and Informatics
+#
+# This file is part of CohortDiagnostics
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 
 loadResultsTable <- function(tableName, required = FALSE) {
   if (required || tableName %in% resultsTablesOnServer) {
-    tryCatch({
-      table <- DatabaseConnector::dbReadTable(connectionPool,
-                                              paste(resultsDatabaseSchema, tableName, sep = "."))
-    }, error = function(err) {
-      stop(
-        "Error reading from ",
-        paste(resultsDatabaseSchema, tableName, sep = "."),
-        ": ",
-        err$message
-      )
-    })
+    tryCatch(
+      {
+        table <- DatabaseConnector::dbReadTable(
+          connectionPool,
+          paste(resultsDatabaseSchema, tableName, sep = ".")
+        )
+      },
+      error = function(err) {
+        stop(
+          "Error reading from ",
+          paste(resultsDatabaseSchema, tableName, sep = "."),
+          ": ",
+          err$message
+        )
+      }
+    )
     colnames(table) <-
       SqlRender::snakeCaseToCamelCase(colnames(table))
     if (nrow(table) > 0) {
@@ -50,27 +49,121 @@ loadResultsTable <- function(tableName, required = FALSE) {
 # Create empty objects in memory for all other tables. This is used by the Shiny app to decide what tabs to show:
 isEmpty <- function(tableName) {
   sql <-
-    sprintf("SELECT 1 FROM %s.%s LIMIT 1;",
-            resultsDatabaseSchema,
-            tableName)
+    sprintf(
+      "SELECT 1 FROM %s.%s LIMIT 1;",
+      resultsDatabaseSchema,
+      tableName
+    )
   oneRow <- DatabaseConnector::dbGetQuery(connectionPool, sql)
   return(nrow(oneRow) == 0)
 }
 
+getTimeAsInteger <- function(time = Sys.time(),
+                             tz = "UTC") {
+  return(as.numeric(as.POSIXlt(time, tz = tz)))
+}
 
+getTimeFromInteger <- function(x, tz = "UTC") {
+  originDate <- as.POSIXct("1970-01-01", tz = tz)
+  originDate <- originDate + x
+  return(originDate)
+}
 
-# borrowed from https://stackoverflow.com/questions/19747384/create-new-column-in-dataframe-based-on-partial-string-matching-other-column
-patternReplacement <- function(x, patterns, replacements = patterns, fill = NA, ...)
-{
-  stopifnot(length(patterns) == length(replacements))
-  
-  ans = rep_len(as.character(fill), length(x))    
-  empty = seq_along(x)
-  
-  for (i in seq_along(patterns)) {
-    greps = grepl(patterns[[i]], x[empty], ...)
-    ans[empty[greps]] = replacements[[i]]  
-    empty = empty[!greps]
+processMetadata <- function(data) {
+  data <- data %>%
+    tidyr::pivot_wider(
+      id_cols = c(.data$startTime, .data$databaseId),
+      names_from = .data$variableField,
+      values_from = .data$valueField
+    ) %>%
+    dplyr::mutate(
+      startTime = stringr::str_replace(
+        string = .data$startTime,
+        pattern = stringr::fixed("TM_"),
+        replacement = ""
+      )
+    ) %>%
+    dplyr::mutate(startTime = paste0(.data$startTime, " ", .data$timeZone)) %>%
+    dplyr::mutate(startTime = as.POSIXct(.data$startTime)) %>%
+    dplyr::group_by(
+      .data$databaseId,
+      .data$startTime
+    ) %>%
+    dplyr::arrange(.data$databaseId, dplyr::desc(.data$startTime), .by_group = TRUE) %>%
+    dplyr::mutate(rn = dplyr::row_number()) %>%
+    dplyr::filter(.data$rn == 1) %>%
+    dplyr::select(-.data$timeZone)
+
+  if ("runTime" %in% colnames(data)) {
+    data$runTime <- round(x = as.numeric(data$runTime), digits = 2)
   }
-  return(ans)
+  if ("observationPeriodMinDate" %in% colnames(data)) {
+    data$observationPeriodMinDate <-
+      as.Date(data$observationPeriodMinDate)
+  }
+  if ("observationPeriodMaxDate" %in% colnames(data)) {
+    data$observationPeriodMaxDate <-
+      as.Date(data$observationPeriodMaxDate)
+  }
+  if ("personsInDatasource" %in% colnames(data)) {
+    data$personsInDatasource <- as.numeric(data$personsInDatasource)
+  }
+  if ("recordsInDatasource" %in% colnames(data)) {
+    data$recordsInDatasource <- as.numeric(data$recordsInDatasource)
+  }
+  if ("personDaysInDatasource" %in% colnames(data)) {
+    data$personDaysInDatasource <-
+      as.numeric(data$personDaysInDatasource)
+  }
+  colnamesOfInterest <-
+    c(
+      "startTime",
+      "databaseId",
+      "runTime",
+      "runTimeUnits",
+      "sourceReleaseDate",
+      "cdmVersion",
+      "cdmReleaseDate",
+      "observationPeriodMinDate",
+      "observationPeriodMaxDate",
+      "personsInDatasource",
+      "recordsInDatasource",
+      "personDaysInDatasource"
+    )
+
+  commonColNames <- intersect(colnames(data), colnamesOfInterest)
+
+  data <- data %>%
+    dplyr::select(dplyr::all_of(commonColNames))
+  return(data)
+}
+
+checkErrorCohortIdsDatabaseIds <- function(errorMessage,
+                                           cohortIds,
+                                           databaseIds) {
+  checkmate::assertDouble(
+    x = cohortIds,
+    null.ok = FALSE,
+    lower = 1,
+    upper = 2^53,
+    any.missing = FALSE,
+    add = errorMessage
+  )
+  checkmate::assertCharacter(
+    x = databaseIds,
+    min.len = 1,
+    any.missing = FALSE,
+    unique = TRUE,
+    add = errorMessage
+  )
+  checkmate::reportAssertions(collection = errorMessage)
+  return(errorMessage)
+}
+
+quoteLiterals <- function(x) {
+  if (is.null(x)) {
+    return("")
+  } else {
+    return(paste0("'", paste(x, collapse = "', '"), "'"))
+  }
 }

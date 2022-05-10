@@ -3,7 +3,7 @@ library(CohortDiagnostics)
 
 # OHDSI's server:
 connectionDetails <- createConnectionDetails(
-  dbms = "postgresql",
+  dbms = Sys.getenv("shinydbDbms", unset = "postgresql"),
   server = paste(
     Sys.getenv("shinydbServer"),
     Sys.getenv("shinydbDatabase"),
@@ -13,14 +13,23 @@ connectionDetails <- createConnectionDetails(
   user = Sys.getenv("shinydbUser"),
   password = Sys.getenv("shinydbPW")
 )
-resultsSchema <- 'thrombosisthrombocytopenia'
+resultsSchema <- 'targetSchema'
 
 # commenting this function as it maybe accidentally run - loosing data.
-# createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSchema)
+# CohortDiagnostics::createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSchema)
+# sqlGrant <-
+#   paste0("grant select on all tables in schema ",
+#          resultsSchema,
+#          " to phenotypelibrary;")
+# DatabaseConnector::renderTranslateExecuteSql(
+#   connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
+#   sql = sqlGrant
+# )
+
 
 Sys.setenv("POSTGRES_PATH" = Sys.getenv('POSTGRES_PATH'))
 
-folderWithZipFilesToUpload <- "D:\\results\\twt\\withInclusion"
+folderWithZipFilesToUpload <- "D:\\results"
 listOfZipFilesToUpload <-
   list.files(
     path = folderWithZipFilesToUpload,
@@ -37,9 +46,5 @@ for (i in (1:length(listOfZipFilesToUpload))) {
   )
 }
 
-# uploadPrintFriendly was removed in version 2.1
-# uploadPrintFriendly(connectionDetails = connectionDetails,
-#                     schema = resultsSchema)
-
-launchDiagnosticsExplorer(connectionDetails = connectionDetails,
-                          resultsDatabaseSchema = resultsSchema)
+CohortDiagnostics::launchDiagnosticsExplorer(connectionDetails = connectionDetails,
+                                             resultsDatabaseSchema = resultsSchema)

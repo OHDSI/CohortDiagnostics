@@ -15,3 +15,12 @@ tests/testthat/testthat-problems.rds
 *.RData
 /check/
 /.idea
+/doc/
+/Meta/
+/renv/.gitignore
+/sql/
+.Rprofile
+/renv/
+renv.lock
+*.sqlite
+MergedCohortDiagnosticsData.7z

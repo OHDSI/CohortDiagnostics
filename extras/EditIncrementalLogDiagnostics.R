@@ -15,9 +15,9 @@ listFiles <-
   )
 
 # "getCohortCounts", "runInclusionStatistics", "runIncludedSourceConcepts",
-# "runBreakdownIndexEvents", "runOrphanConcepts", "runTimeDistributions",
+# "runBreakdownIndexEvents", "runOrphanConcepts", 
 # "runVisitContext", "runIncidenceRate", "runCohortOverlap","runCohortAsFeatures",
-# "runCohortCharacterization", "runTemporalCohortCharacterization"
+# "runTemporalCohortCharacterization"
 
 
 # tasksToRemove <- c("runTimeSeries")
@@ -34,3 +34,4 @@ for (i in (1:length(listFiles))) {
     dplyr::filter(!.data$task %in% tasksToRemove) %>%
     readr::write_excel_csv(file = listFiles[[i]])
 }
+

@@ -38,23 +38,30 @@ Note that each of the tabs on the left has an information icon. Clicking on thes
 From R-server (shiny server), you will need to copy all the files in the DiagnosticsExplorer shiny app into a folder on the server. The server should automatically launch the application (please talk to the shiny server administrator for your site specific rules.)
 
 
-# Running the app using local file mode (Premerged file).
+# Running the app using local file mode (Sqlite db).
 
-Local mode is the most common mode to run the Shiny application. We recommend that you convert all the csv files that are the precomputed output of Cohort Diagnostics into a .RData file as follows
-
-```{r tidy=FALSE,eval=FALSE}
-preMergeDiagnosticsFiles("C:/temp/allZipFiles")
-```
-.RData files enables faster load of the Shiny application. Once you have converted your results data into a premerged file, you may launch the Diagnostics Explorer app as follows:
+Local mode is the most common mode to run the Shiny application. We recommend that you convert all the csv files that are the precomputed output of Cohort Diagnostics into an sqlite database file as follows
 
 ```{r tidy=FALSE,eval=FALSE}
-launchDiagnosticsExplorer(dataFolder = "C:/temp", dataFile = "Premerged.RData")
+createMergedResultsFile("C:/temp/allZipFiles", sqliteDbPath = "MyCohortDiagnosticsResulst.sqlite")
 ```
-If running the application from a R-studio environment, please make sure the 'Premerged.RData' is in a folder called 'data'. Go to global.R and to the line that `defaultDatabaseMode <- FALSE `. Ensure defaultDatabaseMode is FALSE. This will prevent the application from attempting to connect to a remote database system, and only look for local premerged.RData file.
+.RData files enables faster load of the Shiny application. Once you have converted your results data into an sqlite database file, you may launch the Diagnostics Explorer app as follows:
+
+```{r tidy=FALSE,eval=FALSE}
+launchDiagnosticsExplorer(sqliteDbPath = "MyCohortDiagnosticsResulst.sqlite")
+```
+If running the application from a R-studio environment, please make sure the sqlite file is in a folder called 'data'.
+
+To automatically create a zip archive containing the `DiagnosticsExplorer` shiny application for deployment on shared environments, such as data.ohdsi.org, run the function `createDiagnosticsExplorerZip`:
+
+```{r tidy=FALSE,eval=FALSE}
+createDiagnosticsExplorerZip(outputZipfile = "MyCdProject.zip", sqliteDbPath = "MyCohortDiagnosticsResulst.sqlite")
+```
+This archive will contain a fully executable shiny application.
 
 # Running the app using Database mode
 
-We recommend the use of a database system, when file size of the cohort diagnostics output becomes large e.g. > 100mb, as using the premerged.RData may leading sluggish performance. Currently only postgres server is supported. See Vignette on Database mode on how to load data into remote database.
+We recommend the use of a database system, when file size of the cohort diagnostics output becomes large e.g. > 100mb, as using the sqlite database may leading sluggish performance. Currently, only postgres server is fully supported, though platforms with DatabaseConnector support may work (currently experimental). See Vignette on Database mode on how to load data into remote database.
 
 
 # Running over the network

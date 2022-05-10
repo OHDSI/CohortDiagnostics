@@ -172,15 +172,15 @@ When unzipped, the zip file will contain several .csv files that maybe easily au
 Note that cell counts smaller than 5 have been removed, as specified using the `minCellCount` argument, to ensure non-identifiability.
 
 
-## Creating a pre merged file
+## Creating an sqlite db file
 
 Assuming you completed the steps described above for one or more databases, you should now have a set of zip files, one per database.
 Make sure to place all zip files in a single folder.
 
-Optionally, we can pre-merge the zip files, so we can view results in the Shiny app:
+Optionally, we can pre-merge the zip files into an sqlite database so we can view results in the Shiny app:
 
 ```{r tidy=FALSE,eval=FALSE}
-preMergeDiagnosticsFiles(exportFolder)
+createMergedResultsFile(exportFolder)
 ```
 
 This file can be used in the shiny app to explore results.

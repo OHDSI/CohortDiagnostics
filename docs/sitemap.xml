@@ -19,9 +19,6 @@
     <loc>/articles/GeneratingStudyDiagnostics.html</loc>
   </url>
   <url>
-    <loc>/articles/index.html</loc>
-  </url>
-  <url>
     <loc>/articles/RunningCohortDiagnostics.html</loc>
   </url>
   <url>
@@ -29,6 +26,9 @@
   </url>
   <url>
     <loc>/articles/WhatIsCohortDiagnostics.html</loc>
+  </url>
+  <url>
+    <loc>/articles/index.html</loc>
   </url>
   <url>
     <loc>/authors.html</loc>
@@ -40,6 +40,12 @@
     <loc>/news/index.html</loc>
   </url>
   <url>
+    <loc>/reference/CohortDiagnostics-package.html</loc>
+  </url>
+  <url>
+    <loc>/reference/CohortDiagnostics.html</loc>
+  </url>
+  <url>
     <loc>/reference/breakDownIndexEvents.html</loc>
   </url>
   <url>
@@ -47,12 +53,6 @@
   </url>
   <url>
     <loc>/reference/checkInputFileEncoding.html</loc>
-  </url>
-  <url>
-    <loc>/reference/CohortDiagnostics-package.html</loc>
-  </url>
-  <url>
-    <loc>/reference/CohortDiagnostics.html</loc>
   </url>
   <url>
     <loc>/reference/combineResultsDataModelCsvFiles.html</loc>
@@ -79,6 +79,12 @@
     <loc>/reference/createDdlPkConstraints.html</loc>
   </url>
   <url>
+    <loc>/reference/createDiagnosticsExplorerZip.html</loc>
+  </url>
+  <url>
+    <loc>/reference/createMergedResultsFile.html</loc>
+  </url>
+  <url>
     <loc>/reference/createResultsDataModel.html</loc>
   </url>
   <url>
@@ -101,6 +107,9 @@
   </url>
   <url>
     <loc>/reference/findOrphanConcepts.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getCdmDataSourceInformation.html</loc>
   </url>
   <url>
     <loc>/reference/getCohortCharacteristics.html</loc>
@@ -137,6 +146,9 @@
   </url>
   <url>
     <loc>/reference/getDatabaseReference.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getDefaultVocabularyTableNames.html</loc>
   </url>
   <url>
     <loc>/reference/getIncidenceProportion.html</loc>
@@ -217,10 +229,10 @@
     <loc>/reference/plotIncidenceProportionByYear.html</loc>
   </url>
   <url>
-    <loc>/reference/plotincidenceRate.html</loc>
+    <loc>/reference/plotTimeDistribution.html</loc>
   </url>
   <url>
-    <loc>/reference/plotTimeDistribution.html</loc>
+    <loc>/reference/plotincidenceRate.html</loc>
   </url>
   <url>
     <loc>/reference/preMergeDiagnosticsFiles.html</loc>
@@ -238,7 +250,16 @@
     <loc>/reference/runCohortDiagnosticsUsingExternalCounts.html</loc>
   </url>
   <url>
+    <loc>/reference/runCohortRelationshipDiagnostics.html</loc>
+  </url>
+  <url>
+    <loc>/reference/runCohortTimeSeriesDiagnostics.html</loc>
+  </url>
+  <url>
     <loc>/reference/runStudyDiagnostics.html</loc>
+  </url>
+  <url>
+    <loc>/reference/takepackageDependencySnapshot.html</loc>
   </url>
   <url>
     <loc>/reference/uploadPrintFriendly.html</loc>

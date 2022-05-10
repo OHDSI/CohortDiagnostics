@@ -17,3 +17,19 @@ with_dbc_connection <- function(connection, code) {
     )
   )[[1]])
 }
+
+# Create a cohort definition set from test cohorts
+loadTestCohortDefinitionSet <- function(cohortIds = NULL) {
+  creationFile <- file.path("cohorts", "CohortsToCreate.csv")
+  cohortDefinitionSet <- CohortGenerator::getCohortDefinitionSet(
+    settingsFileName = creationFile,
+    sqlFolder = "cohorts",
+    jsonFolder = "cohorts",
+    cohortFileNameValue = c("cohortId")
+  )
+  if (!is.null(cohortIds)) {
+    cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
+  }
+
+  cohortDefinitionSet
+}

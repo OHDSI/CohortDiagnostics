@@ -1,6 +1,7 @@
 library(testthat)
 library(CohortDiagnostics)
 library(Eunomia)
+library(dplyr)
 
 dbms <- getOption("dbms", default = "sqlite")
 message("************* Testing on ", dbms, " *************")
@@ -16,9 +17,12 @@ if (dir.exists(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))) {
     DatabaseConnector::downloadJdbcDrivers(dbms, pathToDriver = jdbcDriverFolder)
   }
 
-  withr::defer({
-    unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
-  }, testthat::teardown_env())
+  withr::defer(
+    {
+      unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
+    },
+    testthat::teardown_env()
+  )
 }
 
 folder <- tempfile()
@@ -35,23 +39,24 @@ if (dbms == "sqlite") {
   tempEmulationSchema <- NULL
   cohortIds <- c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906)
 
-  covariateSettings <- FeatureExtraction::createDefaultCovariateSettings()
-  temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence = TRUE,
-                                                                                  useDrugEraStart = TRUE,
-                                                                                  useProcedureOccurrence = TRUE,
-                                                                                  useMeasurement = TRUE,
-                                                                                  temporalStartDays = c(-365, -30, 0, 1, 31),
-                                                                                  temporalEndDays = c(-31, -1, 0, 30, 365))
-
+  temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(
+    useConditionOccurrence = TRUE,
+    useDrugEraStart = TRUE,
+    useProcedureOccurrence = TRUE,
+    useMeasurement = TRUE,
+    temporalStartDays = c(-365, -30, 0, 1, 31),
+    temporalEndDays = c(-31, -1, 0, 30, 365)
+  )
 } else {
   # only test all cohorts in sqlite
   cohortIds <- c(18345, 17720, 14907) # Celecoxib, Type 2 diabetes, diclofenac (no history of GIH)
   cohortTable <- paste0("ct_", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
 
-  covariateSettings <- FeatureExtraction::createCovariateSettings(useDemographicsAge = TRUE, useDemographicsAgeGroup = TRUE)
-  temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence = TRUE,
-                                                                                  temporalStartDays = c(-1, 0, 1),
-                                                                                  temporalEndDays = c(-1, 0, 1))
+  temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(
+    useConditionOccurrence = TRUE,
+    temporalStartDays = c(-1, 0, 1),
+    temporalEndDays = c(-1, 0, 1)
+  )
   if (dbms == "postgresql") {
     dbUser <- Sys.getenv("CDM5_POSTGRESQL_USER")
     dbPassword <- Sys.getenv("CDM5_POSTGRESQL_PASSWORD")
@@ -103,15 +108,20 @@ if (dbms == "sqlite") {
   sql <- "IF OBJECT_ID('@cohort_database_schema.@cohort_table', 'U') IS NOT NULL
               DROP TABLE @cohort_database_schema.@cohort_table;"
 
-  withr::defer({
-
-    if (!skipCdmTests) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      DatabaseConnector::renderTranslateExecuteSql(connection,
-                                                   sql,
-                                                   cohort_database_schema = cohortDatabaseSchema,
-                                                   cohort_table = cohortTable)
-      DatabaseConnector::disconnect(connection)
-    }
-  }, testthat::teardown_env())
+  withr::defer(
+    {
+      if (!skipCdmTests) {
+        connection <- DatabaseConnector::connect(connectionDetails)
+        DatabaseConnector::renderTranslateExecuteSql(connection,
+          sql,
+          cohort_database_schema = cohortDatabaseSchema,
+          cohort_table = cohortTable
+        )
+        DatabaseConnector::disconnect(connection)
+      }
+    },
+    testthat::teardown_env()
+  )
 }
+
+cohortDefinitionSet <- loadTestCohortDefinitionSet(cohortIds)

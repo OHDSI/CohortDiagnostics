@@ -19,6 +19,7 @@
 # Format and check code
 OhdsiRTools::checkUsagePackage("CohortDiagnostics")
 OhdsiRTools::updateCopyrightYearFolder()
+styler::style_pkg()
 devtools::spell_check()
 spelling::spell_check_files(list.files(path = "inst/shiny", pattern = "*.html", recursive = TRUE, full.names = TRUE))
 
@@ -67,4 +68,10 @@ writeLines(text, con = file(filePath))
 # Copy data model specs to Shiny app
 file.copy(from = "inst/settings/resultsDataModelSpecification.csv", 
           to = "inst/shiny/DiagnosticsExplorer/resultsDataModelSpecification.csv",
+          overwrite = TRUE)
+
+
+# Copy shared script
+file.copy(from = "R/Shared.R", 
+          to = "inst/shiny/DiagnosticsExplorer/R/Shared.R",
           overwrite = TRUE)
