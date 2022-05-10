@@ -355,247 +355,18 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "cohortDefinition",
-    shinydashboard::box(
-      width = NULL,
-      status = "primary",
-      htmltools::withTags(
-        table(
-          width = "100%",
-          tr(
-            td(
-              align = "left",
-              h4("Cohort Definition")
-            ),
-            td(
-              align = "right",
-                            shiny::downloadButton(
-                outputId = "exportAllCohortDetails",
-                label = "Export Cohorts Zip",
-                icon = shiny::icon("file-export"),
-                style = "margin-top: 5px; margin-bottom: 5px;"
-              )
-            )
-          )
-        )
-      ),
-      shiny::column(
-        12,
-        shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionTable"))
-      ),
-      shiny::column(
-        12,
-        conditionalPanel(
-          "output.cohortDefinitionRowIsSelected == true",
-          shiny::tabsetPanel(
-            type = "tab",
-            shiny::tabPanel(
-              title = "Details",
-              shiny::htmlOutput("cohortDetailsText")
-            ),
-            shiny::tabPanel(
-              title = "Cohort Count",
-              tags$br(),
-              htmltools::withTags(table(
-                width = "100%",
-                tr(
-                  td(
-                    align = "right",
-                                      )
-                )
-              )),
-              shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionCohortCountTable"))
-            ),
-            shiny::tabPanel(
-              title = "Cohort definition",
-              copyToClipboardButton(
-                toCopyId = "cohortDefinitionText",
-                style = "margin-top: 5px; margin-bottom: 5px;"
-              ),
-              shinycssloaders::withSpinner(shiny::htmlOutput("cohortDefinitionText"))
-            ),
-            shiny::tabPanel(
-              title = "Concept Sets",
-              shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "conceptsetExpressionsInCohort")),
-              shiny::conditionalPanel(
-                condition = "output.cohortDefinitionConceptSetExpressionRowIsSelected == true",
-                tags$table(
-                  tags$tr(
-                    tags$td(
-                      shiny::radioButtons(
-                        inputId = "conceptSetsType",
-                        label = "",
-                        choices = c(
-                          "Concept Set Expression",
-                          "Resolved",
-                          "Orphan concepts",
-                          "Json"
-                        ),
-                        selected = "Concept Set Expression",
-                        inline = TRUE
-                      )
-                    ),
-                    tags$td(
-                      shinyWidgets::pickerInput(
-                        inputId = "databaseOrVocabularySchema",
-                        label = "Vocabulary version choices:",
-                        choices = choicesFordatabaseOrVocabularySchema,
-                        multiple = FALSE,
-                        width = 200,
-                        inline = TRUE,
-                        choicesOpt = list(style = rep_len("color: black;", 999)),
-                        options = shinyWidgets::pickerOptions(
-                          actionsBox = TRUE,
-                          liveSearch = TRUE,
-                          size = 10,
-                          liveSearchStyle = "contains",
-                          liveSearchPlaceholder = "Type here to search",
-                          virtualScroll = 50
-                        )
-                      )
-                    ),
-                    tags$td(shiny::htmlOutput("subjectCountInCohortConceptSet")),
-                    tags$td(shiny::htmlOutput("recordCountInCohortConceptSet")),
-                    tags$td(
-                      shiny::conditionalPanel(
-                        condition = "input.conceptSetsType == 'Resolved' ||
-                                                                input.conceptSetsType == 'Orphan concepts'",
-                        shiny::checkboxInput(
-                          inputId = "withRecordCount",
-                          label = "With Record Count",
-                          value = TRUE
-                        )
-                      )
-                    )
-                  )
-                )
-              ),
-              shiny::conditionalPanel(
-                condition = "output.cohortDefinitionConceptSetExpressionRowIsSelected == true &
-                input.conceptSetsType != 'Resolved' &
-                input.conceptSetsType != 'Json' &
-                input.conceptSetsType != 'Orphan concepts'",
-                htmltools::withTags(table(
-                  width = "100%",
-                  tr(
-                    td(
-                      align = "right",
-                                          )
-                  )
-                )),
-                shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionConceptSetDetailsTable"))
-              ),
-              shiny::conditionalPanel(
-                condition = "input.conceptSetsType == 'Resolved'",
-                htmltools::withTags(table(
-                  width = "100%",
-                  tr(
-                    td(
-                      align = "right",
-                                          )
-                  )
-                )),
-                shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionResolvedConceptsTable"))
-              ),
-              shiny::conditionalPanel(
-                condition = "output.cohortDefinitionResolvedRowIsSelected == true && input.conceptSetsType == 'Resolved'",
-                htmltools::withTags(table(
-                  width = "100%",
-                  tr(
-                    td(
-                      align = "right",
-                                          )
-                  )
-                )),
-                shinydashboard::box(
-                  title = "Mapped Concepts",
-                  width = NULL,
-                  shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionResolvedTableSelectedConceptIdMappedConcepts"))
-                )
-              ),
-              shiny::conditionalPanel(
-                condition = "input.conceptSetsType == 'Orphan concepts'",
-                htmltools::withTags(table(
-                  width = "100%",
-                  tr(
-                    td(
-                      align = "right",
-                                          )
-                  )
-                )),
-                shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortDefinitionOrphanConceptTable"))
-              ),
-              shiny::conditionalPanel(
-                condition = "input.conceptSetsType == 'Json'",
-                copyToClipboardButton(
-                  toCopyId = "cohortConceptsetExpressionJson",
-                  style = "margin-top: 5px; margin-bottom: 5px;"
-                ),
-                shiny::verbatimTextOutput(outputId = "cohortConceptsetExpressionJson"),
-                tags$head(
-                  tags$style("#cohortConceptsetExpressionJson { max-height:400px};")
-                )
-              )
-            ),
-            shiny::tabPanel(
-              title = "JSON",
-              copyToClipboardButton("cohortDefinitionJson", style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::verbatimTextOutput("cohortDefinitionJson"),
-              tags$head(tags$style(
-                "#cohortDefinitionJson { max-height:400px};"
-              ))
-            ),
-            shiny::tabPanel(
-              title = "SQL",
-              copyToClipboardButton("cohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::verbatimTextOutput("cohortDefinitionSql"),
-              tags$head(tags$style(
-                "#cohortDefinitionSql { max-height:400px};"
-              ))
-            )
-          )
-        )
-      ),
-    )
+    cohortDefinitionsView("cohortDefinitions")
   ),
   shinydashboard::tabItem(
     tabName = "cohortCounts",
-    cohortReference("cohortCountsSelectedCohorts"),
-    shinydashboard::box(
-      width = NULL,
-      title = NULL,
-      htmltools::withTags(
-        table(
-          width = "100%",
-          tr(
-            td(
-              shiny::radioButtons(
-                inputId = "cohortCountsTableColumnFilter",
-                label = "Display",
-                choices = c("Both", "Persons", "Records"),
-                selected = "Both",
-                inline = TRUE
-              )
-            ),
-            td(
-              align = "right",
-                          )
-          )
-        )
-      ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "cohortCountsTable")),
-      shiny::conditionalPanel(
-        condition = "output.cohortCountRowIsSelected == true",
+    cohortCountsView("cohortCounts"),
+    if (showAnnotation) {
+      column(
+        12,
         tags$br(),
-        shinycssloaders::withSpinner(reactable::reactableOutput("InclusionRuleStatForCohortSeletedTable", width = NULL))
-      ),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationFunction("cohortCounts")
-        )
-      }
-    )
+        annotationFunction("cohortCounts")
+      )
+    }
   ),
   shinydashboard::tabItem(
     tabName = "incidenceRate",
@@ -653,8 +424,7 @@ bodyTabItems <- shinydashboard::tabItems(
                 inline = TRUE
               )
             ),
-            td(
-                          )
+            td()
           )
         )
       ),
@@ -670,93 +440,28 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "inclusionRuleStats",
-    cohortReference("inclusionRuleStatSelectedCohort"),
-    shinydashboard::box(
-      title = NULL,
-      width = NULL,
-      htmltools::withTags(
-        table(
-          width = "100%",
-          tr(
-            td(
-              align = "left",
-              shiny::radioButtons(
-                inputId = "inclusionRuleTableFilters",
-                label = "Inclusion Rule Events",
-                choices = c("All", "Meet", "Gain", "Remain", "Total"),
-                selected = "All",
-                inline = TRUE
-              )
-            ),
-            td(
-              align = "right",
-                          )
-          )
-        )
-      ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "inclusionRuleTable")),
-      column(
-        12,
-        if (showAnnotation) {
-          column(
-            12,
-            tags$br(),
-            annotationFunction("inclusionRuleStats")
-          )
-        }
-      )
-    )
-  ),
-  shinydashboard::tabItem(
-    tabName = "indexEventBreakdown",
-    cohortReference("indexEventBreakdownSelectedCohort"),
-    shinydashboard::box(
-      width = NULL,
-      title = NULL,
-      htmltools::withTags(
-        table(
-          width = "100%",
-          tr(
-            td(
-              shiny::radioButtons(
-                inputId = "indexEventBreakdownTableRadioButton",
-                label = "",
-                choices = c("All", "Standard concepts", "Non Standard Concepts"),
-                selected = "All",
-                inline = TRUE
-              )
-            ),
-            td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
-            td(
-              shiny::radioButtons(
-                inputId = "indexEventBreakdownTableFilter",
-                label = "Display",
-                choices = c("Both", "Records", "Persons"),
-                selected = "Persons",
-                inline = TRUE
-              )
-            ),
-            td(
-              shiny::checkboxInput(
-                inputId = "indexEventBreakDownShowAsPercent",
-                label = "Show as percent"
-              )
-            ),
-            td(
-              align = "right",
-                          )
-          )
-        )
-      ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = "breakdownTable")),
+    inclusionRulesView("inclusionRules"),
+    column(
+      12,
       if (showAnnotation) {
         column(
           12,
           tags$br(),
-          annotationFunction("indexEventBreakdown")
+          annotationFunction("inclusionRuleStats")
         )
       }
     )
+  ),
+  shinydashboard::tabItem(
+    tabName = "indexEventBreakdown",
+    indexEventBreakdownView("indexEvents"),
+    if (showAnnotation) {
+      column(
+        12,
+        tags$br(),
+        annotationFunction("indexEventBreakdown")
+      )
+    }
   ),
   shinydashboard::tabItem(
     tabName = "visitContext",
