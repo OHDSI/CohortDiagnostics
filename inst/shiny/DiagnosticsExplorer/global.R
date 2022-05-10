@@ -10,11 +10,20 @@ source("R/Annotation.R")
 source("R/ResultRetrieval.R")
 
 # Modules
+source("R/Annotation.R")
 source("R/CohortCountsModule.R")
+source("R/CharacterizationModule.R")
 source("R/CohortDefinitionModule.R")
-source("R/IndexEventModule.R")
+source("R/CohortOverlapModule.R")
+source("R/CompareCharacterizationModule.R")
+source("R/ConceptsInDataSourceModule.R")
+source("R/DatabaseInformationModule.R")
 source("R/InclusionRulesModule.R")
+source("R/IndexEventModule.R")
 source("R/OrphanConceptsModule.R")
+source("R/TemporalCharacterizationModule.R")
+source("R/TimeDistributionsModule.R")
+source("R/VisitContextModule.R")
 
 
 appVersionNum <- "Version: 3.0.0"

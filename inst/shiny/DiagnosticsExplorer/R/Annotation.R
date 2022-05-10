@@ -15,7 +15,7 @@
 # limitations under the License.
 
 #' @param id            unqiue identifier for module. Must match call to annotationModule
-annoataionUi <- function(id) {
+annotationUi <- function(id) {
   ns <- shiny::NS(id)
 
   postAnnotationArea <- shiny::conditionalPanel(
@@ -123,14 +123,14 @@ annoataionUi <- function(id) {
 #' @param selectedDatabaseIds       shiny::reactive the current selected by the user
 #' @param postAnnoataionEnabled     shiny::reactive - is posting enabled for the user?
 #' @param multiCohortSelection      Boolean is the input set of cohorts many or one?
-annoationModule <- function(id,
-                            dataSource,
-                            resultsDatabaseSchema,
-                            activeLoggedInUser,
-                            selectedDatabaseIds,
-                            selectedCohortIds,
-                            cohort,
-                            postAnnoataionEnabled) {
+annotationModule <- function(id,
+                             dataSource,
+                             resultsDatabaseSchema,
+                             activeLoggedInUser,
+                             selectedDatabaseIds,
+                             selectedCohortIds,
+                             cohort,
+                             postAnnoataionEnabled) {
 
   ns <- shiny::NS(id)
   annotationServer <- function(input, output, session) {

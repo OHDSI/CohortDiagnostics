@@ -365,7 +365,7 @@ bodyTabItems <- shinydashboard::tabItems(
       column(
         12,
         tags$br(),
-        annoataionUi("cohortCountsAnnotation")
+        annotationUi("cohortCountsAnnotation")
       )
     }
   ),
@@ -380,7 +380,7 @@ bodyTabItems <- shinydashboard::tabItems(
       column(
         12,
         tags$br(),
-        annotationFunction("timeDistribution")
+        annotationUi("timeDistributionAnnotation")
       )
     }
 
@@ -392,7 +392,7 @@ bodyTabItems <- shinydashboard::tabItems(
       column(
         12,
         tags$br(),
-        annotationFunction("conceptsInDataSource")
+        annotationUi("conceptsInDataSourceAnnotation")
       )
     }
   ),
@@ -403,7 +403,7 @@ bodyTabItems <- shinydashboard::tabItems(
       column(
         12,
         tags$br(),
-        annotationFunction("orphanConcepts")
+        annotationUi("orphanConceptsAnnotation")
       )
     }
   ),
@@ -416,7 +416,7 @@ bodyTabItems <- shinydashboard::tabItems(
         column(
           12,
           tags$br(),
-          annotationFunction("inclusionRuleStats")
+          annotationUi("inclusionRuleStatsAnnotation")
         )
       }
     )
@@ -428,7 +428,7 @@ bodyTabItems <- shinydashboard::tabItems(
       column(
         12,
         tags$br(),
-        annotationFunction("indexEventBreakdown")
+        annotationUi("indexEventBreakdownAnnotation")
       )
     }
   ),
@@ -439,18 +439,18 @@ bodyTabItems <- shinydashboard::tabItems(
       column(
         12,
         tags$br(),
-        annotationFunction("visitContext")
+        annotationUi("visitContextAnnotation")
       )
     }
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
-    cohortOverlapView("cohortOverlap")
+    cohortOverlapView("cohortOverlap"),
     if (showAnnotation) {
       column(
         12,
         tags$br(),
-        annotationFunction("cohortOverlap")
+        annotationUi("cohortOverlapAnnotation")
       )
     }
   ),
@@ -472,7 +472,7 @@ bodyTabItems <- shinydashboard::tabItems(
       column(
         12,
         tags$br(),
-        annoataionUi("temporalCharacterizationAnnotation")
+        annotationUi("temporalCharacterizationAnnotation")
       )
     }
   ),
@@ -483,7 +483,7 @@ bodyTabItems <- shinydashboard::tabItems(
       column(
         12,
         tags$br(),
-        annotationFunction("compareCohortCharacterization")
+        annotationUi("compareCohortCharacterizationAnnotation")
       )
     }
   ),
@@ -494,7 +494,7 @@ bodyTabItems <- shinydashboard::tabItems(
       column(
         12,
         tags$br(),
-        annotationFunction("compareTemporalCharacterization")
+        annotationUi("compareTemporalCharacterizationAnnotation")
       )
     }
   ),
