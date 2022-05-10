@@ -23,7 +23,8 @@ cohortReference <- function(outputId) {
   )
 }
 
-
+enableAnnotation <- getOption("enableCdAnnotation", default = FALSE)
+showAnnotation <- getOption("showDiagnosticsExplorerAnnotation", default = FALSE)
 
 cohortReferenceWithDatabaseId <- function(cohortOutputId, databaseOutputId) {
   shinydashboard::box(
@@ -52,17 +53,17 @@ cohortReferenceWithDatabaseId <- function(cohortOutputId, databaseOutputId) {
 
 choicesFordatabaseOrVocabularySchema <- database$databaseIdWithVocabularyVersion
 
-if (enableAnnotation) {
+if (enableAnnotation & showAnnotation) {
   headerContent <- tags$li(
     shiny::conditionalPanel(
-      "output.postAnnotationEnabled == false",
+      "output.postAnnoataionEnabled == false",
       shiny::actionButton(
         inputId = "annotationUserPopUp",
         label = "Sign in"
       )
     ),
     shiny::conditionalPanel(
-      "output.postAnnotationEnabled == true",
+      "output.postAnnoataionEnabled == true",
       shiny::uiOutput(outputId = "userNameLabel", style = "color:white;font-weight:bold;padding-right:30px")
     ),
     class = "dropdown",
@@ -364,7 +365,7 @@ bodyTabItems <- shinydashboard::tabItems(
       column(
         12,
         tags$br(),
-        annotationFunction("cohortCounts")
+        annoataionUi("cohortCountsAnnotation")
       )
     }
   ),
@@ -444,7 +445,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
-    cohortOverlapView("cohortOverlap"),
+    cohortOverlapView("cohortOverlap")
     if (showAnnotation) {
       column(
         12,
@@ -452,7 +453,6 @@ bodyTabItems <- shinydashboard::tabItems(
         annotationFunction("cohortOverlap")
       )
     }
-
   ),
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
@@ -461,7 +461,7 @@ bodyTabItems <- shinydashboard::tabItems(
       column(
         12,
         tags$br(),
-        annotationFunction("cohortCharacterization")
+        annotationUi("cohortCharacterization")
       )
     }
   ),
@@ -472,7 +472,7 @@ bodyTabItems <- shinydashboard::tabItems(
       column(
         12,
         tags$br(),
-        annotationFunction("temporalCharacterization")
+        annoataionUi("temporalCharacterizationAnnotation")
       )
     }
   ),

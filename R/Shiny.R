@@ -32,6 +32,7 @@
 #' @param port             (optional) Only used if \code{runOverNetwork} = TRUE.
 #' @param launch.browser   Should the app be launched in your default browser, or in a Shiny window.
 #'                         Note: copying to clipboard will not work in a Shiny window.
+#' @param enableAnnotation Enable annotation functionality in shiny app
 #' @param aboutText        Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 #'                         If not provided, no About tab will be shown.
 #'
@@ -47,7 +48,9 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
                                       aboutText = NULL,
                                       runOverNetwork = FALSE,
                                       port = 80,
-                                      launch.browser = FALSE) {
+                                      launch.browser = FALSE,
+                                      enableAnnotation = TRUE) {
+
   sqliteDbPath <- normalizePath(sqliteDbPath)
   if (is.null(connectionDetails)) {
     if (!file.exists(sqliteDbPath)) {
@@ -114,9 +117,10 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     connectionDetails = connectionDetails,
     resultsDatabaseSchema = resultsDatabaseSchema,
     vocabularyDatabaseSchemas = vocabularyDatabaseSchemas,
-    aboutText = aboutText,
-    enableAnnotation = FALSE
+    aboutText = aboutText
   )
+
+  options("enableCdAnnotation" = enableAnnotation)
   on.exit(rm("shinySettings", envir = .GlobalEnv))
   shiny::runApp(appDir = appDir)
 }

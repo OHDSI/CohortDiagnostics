@@ -28,13 +28,15 @@ appInformationText <- paste0(
 
 #### Set enableAnnotation to true to enable annotation in deployed apps
 #### Not recommended outside of secure firewalls deployments
-enableAnnotation <- FALSE
-enableAuthorization <- FALSE
+enableAnnotation <- TRUE
+enableAuthorization <- TRUE
+activeUser <- NULL
 
 ### if you need a way to authorize users
 ### generate hash using code like digest::digest("diagnostics",algo = "sha512")
 ### store in external file called UserCredentials.csv - with fields userId, hashCode
 ### place the file in the root folder
+userCredentials <- data.frame()
 if (enableAuthorization) {
   if (file.exists("UserCredentials.csv")) {
     userCredentials <-
@@ -50,7 +52,8 @@ if (exists("shinySettings")) {
   dbms <- shinyConnectionDetails$dbms
   resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
   vocabularyDatabaseSchemas <- shinySettings$vocabularyDatabaseSchemas
-  enableAnnotation <- shinySettings$enableAnnotation
+  enableAnnotation <- getOption("enableCdAnnotation", default = FALSE)
+  activeUser <- Sys.info()[['user']]
 } else if (file.exists(sqliteDbPath)) {
   writeLines("Using data directory")
   sqliteDbPath <- normalizePath(sqliteDbPath)
@@ -127,6 +130,7 @@ if (enableAnnotation &
   "annotation_link" %in% resultsTablesOnServer &
   "annotation_attributes" %in% resultsTablesOnServer) {
   showAnnotation <- TRUE
+  options("showDiagnosticsExplorerAnnotation" = TRUE)
 } else {
   enableAnnotation <- FALSE
   showAnnotation <- FALSE
@@ -257,8 +261,3 @@ analysisIdInTemporalCharacterization <- c(
   101, 401, 501, 701,
   -301, -201
 )
-
-## Disabled until future release
-enableAnnotation <- FALSE
-enableAuthorization <- FALSE
-
