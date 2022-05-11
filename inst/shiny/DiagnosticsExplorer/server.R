@@ -3972,14 +3972,14 @@ shiny::shinyServer(function(input, output, session) {
 
   if (enableAnnotation) {
     for (module in activeModules) {
-      annoationModule(module,
-                      dataSource,
-                      resultsDatabaseSchema,
-                      activeLoggedInUser,
-                      selectedDatabaseIds,
-                      inputCohortIds,
-                      cohort,
-                      postAnnoataionEnabled)
+      annotationModule(module,
+                       dataSource,
+                       resultsDatabaseSchema,
+                       activeLoggedInUser,
+                       selectedDatabaseIds,
+                       inputCohortIds,
+                       cohort,
+                       postAnnoataionEnabled)
     }
   }
 
