@@ -121,7 +121,7 @@ annotationUi <- function(id) {
 #' @param resultsDatabaseSchema     Results database schema to store comment in
 #' @param activeLoggedInUser        shiny::reactive that returns the active logged in user that stores the comment
 #' @param selectedDatabaseIds       shiny::reactive the current selected by the user
-#' @param postAnnoataionEnabled     shiny::reactive - is posting enabled for the user?
+#' @param postAnnotaionEnabled     shiny::reactive - is posting enabled for the user?
 #' @param multiCohortSelection      Boolean is the input set of cohorts many or one?
 annotationModule <- function(id,
                              dataSource,
@@ -130,14 +130,14 @@ annotationModule <- function(id,
                              selectedDatabaseIds,
                              selectedCohortIds,
                              cohort,
-                             postAnnoataionEnabled) {
+                             postAnnotaionEnabled) {
 
   ns <- shiny::NS(id)
   annotationServer <- function(input, output, session) {
     # Annotation Section ------------------------------------
     ## posting annotation enabled ------
 
-    output$postAnnoataionEnabled <- shiny::reactive(postAnnoataionEnabled())
+    output$postAnnoataionEnabled <- shiny::reactive(postAnnotaionEnabled())
     outputOptions(output, "postAnnoataionEnabled", suspendWhenHidden = FALSE)
 
     ## Retrieve Annotation ----------------

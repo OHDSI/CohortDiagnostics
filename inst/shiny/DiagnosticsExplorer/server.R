@@ -3950,9 +3950,9 @@ shiny::shinyServer(function(input, output, session) {
     })
 
   # Display login based on value of active logged in user
-  postAnnoataionEnabled <- shiny::reactive(!is.null(activeLoggedInUser()))
+  postAnnotaionEnabled <- shiny::reactive(!is.null(activeLoggedInUser()))
   output$postAnnoataionEnabled <- shiny::reactive({
-    postAnnoataionEnabled()
+    postAnnotaionEnabled()
   })
   outputOptions(output, "postAnnoataionEnabled", suspendWhenHidden = FALSE)
 
@@ -3979,7 +3979,7 @@ shiny::shinyServer(function(input, output, session) {
                        selectedDatabaseIds,
                        inputCohortIds,
                        cohort,
-                       postAnnoataionEnabled)
+                       postAnnotaionEnabled)
     }
   }
 
