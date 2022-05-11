@@ -162,7 +162,6 @@ annotationModule <- function(id,
       return(results)
     })
 
-
     markdownModule <- shiny::callModule(markdownInput::moduleMarkdownInput, "markdownInputArea")
 
     shiny::observe({
