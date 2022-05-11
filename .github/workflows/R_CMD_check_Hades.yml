@@ -205,7 +205,7 @@ jobs:
         if: ${{ env.new_version != '' }}
         run: |
           cp -r inst/shiny/DiagnosticsExplorer DiagnosticsExplorer-${{ env.new_version }}
-          zip -r DiagnosticsExplorer-${{ env.new_version }}.zip DiagnosticsExplorer-${{ env.new_version }}.zip 
+          zip -r DiagnosticsExplorer-${{ env.new_version }}.zip DiagnosticsExplorer-${{ env.new_version }}
 
       - name: Upload Diagnostics Explorer Release Asset
         if: ${{ env.new_version != '' }}
