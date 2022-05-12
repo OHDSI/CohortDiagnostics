@@ -1,26 +1,12 @@
-createDatabaseDataSource <- function(connection,
-                                     resultsDatabaseSchema,
-                                     vocabularyDatabaseSchema = resultsDatabaseSchema,
-                                     dbms) {
-  return(
-    list(
-      connection = connectionPool,
-      resultsDatabaseSchema = resultsDatabaseSchema,
-      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      dbms = dbms
-    )
-  )
-}
 
-
-renderTranslateExecuteSql <- function(connection, sql, ...) {
-  if (is(connection, "Pool")) {
+renderTranslateExecuteSql <- function(dataSource, sql, ...) {
+  if (is(dataSource$connection, "Pool")) {
     sql <- SqlRender::render(sql, ...)
-    sqlFinal <- SqlRender::translate(sql, targetDialect = dbms)
-    DatabaseConnector::dbExecute(connection, sqlFinal)
+    sqlFinal <- SqlRender::translate(sql, targetDialect = dataSource$dbms)
+    DatabaseConnector::dbExecute(dataSource$connection, sqlFinal)
   } else {
     DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
+      connection = dataSource$connection,
       sql = sql,
       ...
     )

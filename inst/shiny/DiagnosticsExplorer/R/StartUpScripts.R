@@ -15,19 +15,22 @@
 # limitations under the License.
 
 
-loadResultsTable <- function(tableName, required = FALSE) {
+loadResultsTable <- function(dataSource, tableName, required = FALSE) {
+  resultsTablesOnServer <-
+    tolower(DatabaseConnector::dbListTables(dataSource$connection, schema = dataSource$resultsDatabaseSchema))
+
   if (required || tableName %in% resultsTablesOnServer) {
     tryCatch(
-      {
-        table <- DatabaseConnector::dbReadTable(
-          connectionPool,
-          paste(resultsDatabaseSchema, tableName, sep = ".")
-        )
-      },
+    {
+      table <- DatabaseConnector::dbReadTable(
+        dataSource$connection,
+        paste(dataSource$resultsDatabaseSchema, tableName, sep = ".")
+      )
+    },
       error = function(err) {
         stop(
           "Error reading from ",
-          paste(resultsDatabaseSchema, tableName, sep = "."),
+          paste(dataSource$resultsDatabaseSchema, tableName, sep = "."),
           ": ",
           err$message
         )
@@ -47,14 +50,14 @@ loadResultsTable <- function(tableName, required = FALSE) {
 
 
 # Create empty objects in memory for all other tables. This is used by the Shiny app to decide what tabs to show:
-isEmpty <- function(tableName) {
+isEmpty <- function(dataSource, tableName) {
   sql <-
     sprintf(
       "SELECT 1 FROM %s.%s LIMIT 1;",
-      resultsDatabaseSchema,
+      dataSource$resultsDatabaseSchema,
       tableName
     )
-  oneRow <- DatabaseConnector::dbGetQuery(connectionPool, sql)
+  oneRow <- DatabaseConnector::dbGetQuery(dataSource$connection, sql)
   return(nrow(oneRow) == 0)
 }
 
@@ -165,5 +168,150 @@ quoteLiterals <- function(x) {
     return("")
   } else {
     return(paste0("'", paste(x, collapse = "', '"), "'"))
+  }
+}
+
+getConnectionPool <- function(connectionDetails) {
+  if (is(connectionDetails$server, "function")) {
+    connectionPool <-
+      pool::dbPool(
+        drv = DatabaseConnector::DatabaseConnectorDriver(),
+        dbms = connectionDetails$dbms,
+        server = connectionDetails$server(),
+        port = connectionDetails$port(),
+        user = connectionDetails$user(),
+        password = connectionDetails$password(),
+        connectionString = connectionDetails$connectionString()
+      )
+  } else {
+    # For backwards compatibility with older versions of DatabaseConnector:
+    connectionPool <-
+      pool::dbPool(
+        drv = DatabaseConnector::DatabaseConnectorDriver(),
+        dbms = connectionDetails$dbms,
+        server = connectionDetails$server,
+        port = connectionDetails$port,
+        user = connectionDetails$user,
+        password = connectionDetails$password,
+        connectionString = connectionDetails$connectionString
+      )
+  }
+
+  return(connectionPool)
+}
+
+createDatabaseDataSource <- function(connection,
+                                     resultsDatabaseSchema,
+                                     vocabularyDatabaseSchema = resultsDatabaseSchema,
+                                     dbms) {
+  return(
+    list(
+      connection = connection,
+      resultsDatabaseSchema = resultsDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      dbms = dbms,
+      resultsTablesOnServer = tolower(DatabaseConnector::dbListTables(connection, schema = resultsDatabaseSchema))
+    )
+  )
+}
+
+initializeTables <- function(dataSource, dataModelSpecifications) {
+
+  loadResultsTable(dataSource, "database", required = TRUE)
+  loadResultsTable(dataSource, "cohort", required = TRUE)
+  loadResultsTable(dataSource, "metadata", required = TRUE)
+  loadResultsTable(dataSource, "temporal_time_ref")
+  loadResultsTable(dataSource, "temporal_analysis_ref")
+  loadResultsTable(dataSource, "concept_sets")
+  loadResultsTable(dataSource, "cohort_count", required = TRUE)
+  loadResultsTable(dataSource, "relationship")
+
+  for (table in c(dataModelSpecifications$tableName)) {
+    # , "recommender_set"
+    if (table %in% dataSource$resultsTablesOnServer &&
+      !exists(SqlRender::snakeCaseToCamelCase(table)) &&
+      !isEmpty(dataSource, table)) {
+      # if table is empty, nothing is returned because type instability concerns.
+      assign(
+        SqlRender::snakeCaseToCamelCase(table),
+        dplyr::tibble()
+      )
+    }
+  }
+
+  if (exists("database")) {
+    if (nrow(database) > 0 &&
+      "vocabularyVersion" %in% colnames(database)) {
+      database <- database %>%
+        dplyr::mutate(
+          databaseIdWithVocabularyVersion = paste0(databaseId, " (", .data$vocabularyVersion, ")")
+        )
+    }
+  }
+
+
+  if (exists("cohort")) {
+    .GlobalEnv$cohort <- get("cohort")
+    .GlobalEnv$cohort <- cohort %>%
+      dplyr::arrange(.data$cohortId) %>%
+      dplyr::mutate(shortName = paste0("C", .data$cohortId)) %>%
+      dplyr::mutate(compoundName = paste0(.data$shortName, ": ", .data$cohortName))
+  }
+
+
+  if (exists("database")) {
+    .GlobalEnv$database <- get("database")
+    .GlobalEnv$databaseMetadata <- processMetadata(get("metadata"))
+    .GlobalEnv$database <- database %>%
+      dplyr::distinct() %>%
+      dplyr::mutate(id = dplyr::row_number()) %>%
+      dplyr::mutate(shortName = paste0("D", .data$id)) %>%
+      dplyr::left_join(.GlobalEnv$databaseMetadata,
+                       by = "databaseId"
+      ) %>%
+      dplyr::relocate(.data$id, .data$databaseId, .data$shortName)
+  }
+
+
+  .GlobalEnv$temporalChoices <- NULL
+  .GlobalEnv$temporalCharacterizationTimeIdChoices <- NULL
+  if (exists("temporalTimeRef")) {
+    .GlobalEnv$temporalChoices <-
+      getResultsTemporalTimeRef(dataSource = dataSource)
+    .GlobalEnv$temporalCharacterizationTimeIdChoices <-
+
+      temporalChoices %>%
+        dplyr::arrange(.data$sequence)
+
+    .GlobalEnv$characterizationTimeIdChoices <-
+      temporalChoices %>%
+        dplyr::filter(.data$isTemporal == 0) %>%
+        dplyr::filter(.data$primaryTimeId == 1) %>%
+        dplyr::arrange(.data$sequence)
+  }
+
+
+  if (exists("temporalAnalysisRef")) {
+    .GlobalEnv$temporalAnalysisRef <- dplyr::bind_rows(
+      temporalAnalysisRef,
+      dplyr::tibble(
+        analysisId = c(-201, -301),
+        analysisName = c("CohortEraStart", "CohortEraOverlap"),
+        domainId = "Cohort",
+        isBinary = "Y",
+        missingMeansZero = "Y"
+      )
+    )
+
+    .GlobalEnv$domainIdOptions <- temporalAnalysisRef %>%
+      dplyr::select(.data$domainId) %>%
+      dplyr::pull(.data$domainId) %>%
+      unique() %>%
+      sort()
+    .GlobalEnv$analysisNameOptions <- temporalAnalysisRef %>%
+      dplyr::select(.data$analysisName) %>%
+      dplyr::pull(.data$analysisName) %>%
+      unique() %>%
+      sort()
   }
 }

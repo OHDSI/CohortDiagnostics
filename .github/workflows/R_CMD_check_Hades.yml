@@ -126,6 +126,10 @@ jobs:
           name: package_tarball
           path: check/*.tar.gz
 
+      - name: Test DiagnosticsExplorer
+        run: testthat::test_dir("inst/shiny/DiagnosticsExplorer/tests")
+        shell: Rscript {0}
+
       - name: Test coverage
         if: runner.os == 'macOS'
         run: covr::codecov()
@@ -205,6 +209,7 @@ jobs:
         if: ${{ env.new_version != '' }}
         run: |
           cp -r inst/shiny/DiagnosticsExplorer DiagnosticsExplorer-${{ env.new_version }}
+          rm DiagnosticsExplorer-${{ env.new_version }}/tests/testDb.sqlite
           zip -r DiagnosticsExplorer-${{ env.new_version }}.zip DiagnosticsExplorer-${{ env.new_version }}.zip 
 
       - name: Upload Diagnostics Explorer Release Asset

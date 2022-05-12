@@ -327,7 +327,6 @@ annotationModule <- function(id,
 
 
 postAnnotationResult <- function(dataSource,
-                                 resultsDatabaseSchema,
                                  diagnosticsId,
                                  cohortIds,
                                  databaseIds,
@@ -361,7 +360,7 @@ postAnnotationResult <- function(dataSource,
   tryCatch(
   {
     renderTranslateExecuteSql(
-      connection = dataSource$connection,
+      dataSource = dataSource,
       sql = sqlInsert,
       results_database_schema = dataSource$resultsDatabaseSchema,
       annotation = annotation,
