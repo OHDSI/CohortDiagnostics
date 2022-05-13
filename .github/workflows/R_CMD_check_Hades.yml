@@ -126,14 +126,20 @@ jobs:
           name: package_tarball
           path: check/*.tar.gz
 
-      - name: Test DiagnosticsExplorer
-        run: testthat::test_dir("inst/shiny/DiagnosticsExplorer/tests")
-        shell: Rscript {0}
-
       - name: Test coverage
         if: runner.os == 'macOS'
         run: covr::codecov()
         shell: Rscript {0}
+
+      - name: Set up DiagnosticsExplorer Environment
+        run: |
+            setwd("inst/shiny/DiagnosticsExplorer")
+            renv::restore()
+
+      - name: Test DiagnosticsExplorer
+        run: |
+          testthat::test_dir("tests")
+        shell: cd inst/shiny/DiagnosticsExplorer && Rscript {0}
 
   Release:
     needs: R-CMD-Check

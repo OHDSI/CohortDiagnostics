@@ -305,7 +305,6 @@ annotationModule <- function(id,
 
         result <- postAnnotationResult(
           dataSource = dataSource,
-          resultsDatabaseSchema = resultsDatabaseSchema,
           diagnosticsId = id,
           cohortIds = parametersToPostAnnotation$cohortIds,
           databaseIds = parametersToPostAnnotation$databaseIds,
