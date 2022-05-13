@@ -133,6 +133,7 @@ jobs:
 
       - name: Set up DiagnosticsExplorer Environment
         run: |
+          install.packages("renv")
           setwd("inst/shiny/DiagnosticsExplorer")
           renv::restore()
         shell: Rscript {0}
