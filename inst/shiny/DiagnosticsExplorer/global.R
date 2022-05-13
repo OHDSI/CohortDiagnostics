@@ -34,9 +34,11 @@ if (enableAuthorization) {
   if (file.exists("UserCredentials.csv")) {
     userCredentials <-
       readr::read_csv(file = "UserCredentials.csv", col_types = readr::cols())
-  } else {
-    enableAuthorization <- FALSE
   }
+}
+
+if (nrow(userCredentials) == 0) {
+  enableAuthorization <- FALSE
 }
 
 if (exists("shinySettings")) {
@@ -77,6 +79,12 @@ if (exists("shinySettings")) {
 }
 
 connectionPool <- getConnectionPool(shinyConnectionDetails)
+shiny::onStop(function() {
+  if (DBI::dbIsValid(connectionPool)) {
+    writeLines("Closing database pool")
+    pool::poolClose(connectionPool)
+  }
+})
 
 dataModelSpecifications <-
   read.csv("resultsDataModelSpecification.csv")
@@ -84,12 +92,6 @@ dataModelSpecifications <-
 suppressWarnings(rm(
   list = SqlRender::snakeCaseToCamelCase(dataModelSpecifications$tableName)
 ))
-onStop(function() {
-  if (DBI::dbIsValid(connectionPool)) {
-    writeLines("Closing database pool")
-    pool::poolClose(connectionPool)
-  }
-})
 
 resultsTablesOnServer <-
   tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
@@ -116,7 +118,7 @@ dataSource <-
   )
 
 # Init tables in global session
-initializeTables(dataSource, dataModelSpecifications)
+enabledTabs <- initializeTables(dataSource, dataModelSpecifications)
 
 prettyTable1Specifications <- readr::read_csv(
   file = "Table1SpecsLong.csv",

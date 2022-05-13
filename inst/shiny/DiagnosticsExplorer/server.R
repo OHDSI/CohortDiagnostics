@@ -1,5 +1,4 @@
 shiny::shinyServer(function(input, output, session) {
-
   # Reacive: targetCohortId
   targetCohortId <- shiny::reactive({
     return(cohort$cohortId[cohort$compoundName == input$targetCohort])
@@ -55,7 +54,7 @@ shiny::shinyServer(function(input, output, session) {
       input$tabs
     )
   }, handlerExpr = {
-    if (exists("temporalCharacterizationTimeIdChoices") &&
+    if ("temporalCharacterizationTimeIdChoices" %in% enabledTabs &
       (isFALSE(input$timeIdChoices_open) ||
         !is.null(input$tabs))) {
       if (!is.null(temporalChoices)) {
@@ -1182,9 +1181,6 @@ shiny::shinyServer(function(input, output, session) {
   # Incidence rate ---------------------------
 
   incidenceRateData <- reactive({
-    if (!exists("incidenceRate")) {
-      return(NULL)
-    }
     validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     stratifyByAge <- "Age" %in% input$irStratification
@@ -1949,7 +1945,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!hasData(selectedDatabaseIds())) {
       return(NULL)
     }
-    if (all(is(dataSource, "environment"), !exists("visitContext"))) {
+    if (all(is(dataSource, "environment"), !"visitContext" %in% enabledTabs)) {
       return(NULL)
     }
     visitContext <-
@@ -3610,8 +3606,6 @@ shiny::shinyServer(function(input, output, session) {
       return(data)
     })
 
-  enableAnnotation <- getOption("enableCdAnnotation", default = FALSE)
-
   # Login User ---------------------------------------------
   activeLoggedInUser <- reactiveVal(activeUser)
   if (enableAnnotation & nrow(userCredentials) > 0) {
@@ -3974,7 +3968,6 @@ shiny::shinyServer(function(input, output, session) {
     for (module in activeModules) {
       annotationModule(module,
                        dataSource,
-                       resultsDatabaseSchema,
                        activeLoggedInUser,
                        selectedDatabaseIds,
                        inputCohortIds,

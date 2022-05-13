@@ -39,18 +39,16 @@ loadResultsTable <- function(dataSource, tableName, required = FALSE) {
     colnames(table) <-
       SqlRender::snakeCaseToCamelCase(colnames(table))
     if (nrow(table) > 0) {
-      assign(
-        SqlRender::snakeCaseToCamelCase(tableName),
-        dplyr::as_tibble(table),
-        envir = .GlobalEnv
-      )
+      return(dplyr::as_tibble(table))
     }
   }
+
+  return(NULL)
 }
 
 
 # Create empty objects in memory for all other tables. This is used by the Shiny app to decide what tabs to show:
-isEmpty <- function(dataSource, tableName) {
+tableIsEmpty <- function(dataSource, tableName) {
   sql <-
     sprintf(
       "SELECT 1 FROM %s.%s LIMIT 1;",
@@ -215,85 +213,60 @@ createDatabaseDataSource <- function(connection,
   )
 }
 
-initializeTables <- function(dataSource, dataModelSpecifications) {
+initializeTables <- function(dataSource, dataModelSpecifications, envir = .GlobalEnv) {
 
-  loadResultsTable(dataSource, "database", required = TRUE)
-  loadResultsTable(dataSource, "cohort", required = TRUE)
-  loadResultsTable(dataSource, "metadata", required = TRUE)
-  loadResultsTable(dataSource, "temporal_time_ref")
-  loadResultsTable(dataSource, "temporal_analysis_ref")
-  loadResultsTable(dataSource, "concept_sets")
-  loadResultsTable(dataSource, "cohort_count", required = TRUE)
-  loadResultsTable(dataSource, "relationship")
+  envir$database <- loadResultsTable(dataSource, "database", required = TRUE)
+  envir$cohort <- loadResultsTable(dataSource, "cohort", required = TRUE)
+  envir$metadata <- loadResultsTable(dataSource, "metadata", required = TRUE)
+  envir$temporalTimeRef <- loadResultsTable(dataSource, "temporal_time_ref")
+  envir$temporalAnalysisRef <- loadResultsTable(dataSource, "temporal_analysis_ref")
+  envir$conceptSets <- loadResultsTable(dataSource, "concept_sets")
+  envir$cohortCount <- loadResultsTable(dataSource, "cohort_count", required = TRUE)
+  envir$relationship <- loadResultsTable(dataSource, "relationship")
 
-  for (table in c(dataModelSpecifications$tableName)) {
-    # , "recommender_set"
-    if (table %in% dataSource$resultsTablesOnServer &&
-      !exists(SqlRender::snakeCaseToCamelCase(table)) &&
-      !isEmpty(dataSource, table)) {
-      # if table is empty, nothing is returned because type instability concerns.
-      assign(
-        SqlRender::snakeCaseToCamelCase(table),
-        dplyr::tibble()
-      )
-    }
-  }
-
-  if (exists("database")) {
-    if (nrow(database) > 0 &&
-      "vocabularyVersion" %in% colnames(database)) {
-      database <- database %>%
-        dplyr::mutate(
-          databaseIdWithVocabularyVersion = paste0(databaseId, " (", .data$vocabularyVersion, ")")
-        )
-    }
-  }
-
-
-  if (exists("cohort")) {
-    .GlobalEnv$cohort <- get("cohort")
-    .GlobalEnv$cohort <- cohort %>%
+  if (!is.null(envir$cohort)) {
+    envir$cohort <- cohort %>%
       dplyr::arrange(.data$cohortId) %>%
       dplyr::mutate(shortName = paste0("C", .data$cohortId)) %>%
       dplyr::mutate(compoundName = paste0(.data$shortName, ": ", .data$cohortName))
   }
 
+  if (!is.null(envir$database)) {
+    if (nrow(envir$database) > 0 &
+      "vocabularyVersion" %in% colnames(envir$database)) {
+      envir$database <- envir$database %>%
+        dplyr::mutate(
+          databaseIdWithVocabularyVersion = paste0(.data$databaseId, " (", .data$vocabularyVersion, ")")
+        )
+    }
 
-  if (exists("database")) {
-    .GlobalEnv$database <- get("database")
-    .GlobalEnv$databaseMetadata <- processMetadata(get("metadata"))
-    .GlobalEnv$database <- database %>%
+    envir$databaseMetadata <- processMetadata(envir$metadata)
+    envir$database <- database %>%
       dplyr::distinct() %>%
       dplyr::mutate(id = dplyr::row_number()) %>%
       dplyr::mutate(shortName = paste0("D", .data$id)) %>%
-      dplyr::left_join(.GlobalEnv$databaseMetadata,
+      dplyr::left_join(envir$databaseMetadata,
                        by = "databaseId"
       ) %>%
       dplyr::relocate(.data$id, .data$databaseId, .data$shortName)
   }
 
-
-  .GlobalEnv$temporalChoices <- NULL
-  .GlobalEnv$temporalCharacterizationTimeIdChoices <- NULL
-  if (exists("temporalTimeRef")) {
-    .GlobalEnv$temporalChoices <-
-      getResultsTemporalTimeRef(dataSource = dataSource)
-    .GlobalEnv$temporalCharacterizationTimeIdChoices <-
-
-      temporalChoices %>%
+  envir$temporalChoices <- NULL
+  envir$temporalCharacterizationTimeIdChoices <- NULL
+  if (!is.null(envir$temporalTimeRef)) {
+    envir$temporalChoices <- getResultsTemporalTimeRef(dataSource = dataSource)
+    envir$temporalCharacterizationTimeIdChoices <- envir$temporalChoices %>%
         dplyr::arrange(.data$sequence)
 
-    .GlobalEnv$characterizationTimeIdChoices <-
-      temporalChoices %>%
+    envir$characterizationTimeIdChoices <- envir$temporalChoices %>%
         dplyr::filter(.data$isTemporal == 0) %>%
         dplyr::filter(.data$primaryTimeId == 1) %>%
         dplyr::arrange(.data$sequence)
   }
 
-
-  if (exists("temporalAnalysisRef")) {
-    .GlobalEnv$temporalAnalysisRef <- dplyr::bind_rows(
-      temporalAnalysisRef,
+  if (!is.null(envir$temporalAnalysisRef)) {
+    envir$temporalAnalysisRef <- dplyr::bind_rows(
+      envir$temporalAnalysisRef,
       dplyr::tibble(
         analysisId = c(-201, -301),
         analysisName = c("CohortEraStart", "CohortEraOverlap"),
@@ -303,15 +276,29 @@ initializeTables <- function(dataSource, dataModelSpecifications) {
       )
     )
 
-    .GlobalEnv$domainIdOptions <- temporalAnalysisRef %>%
+    envir$domainIdOptions <- envir$temporalAnalysisRef %>%
       dplyr::select(.data$domainId) %>%
       dplyr::pull(.data$domainId) %>%
       unique() %>%
       sort()
-    .GlobalEnv$analysisNameOptions <- temporalAnalysisRef %>%
+    envir$analysisNameOptions <- envir$temporalAnalysisRef %>%
       dplyr::select(.data$analysisName) %>%
       dplyr::pull(.data$analysisName) %>%
       unique() %>%
       sort()
   }
+
+
+  resultsTables <- tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
+  enabledTabs <- c()
+  for (table in c(dataModelSpecifications$tableName)) {
+    # , "recommender_set"
+    if (table %in% resultsTables &
+      !tableIsEmpty(dataSource, table)) {
+      enabledTabs <- c(enabledTabs, SqlRender::snakeCaseToCamelCase(table))
+    }
+  }
+
+
+  return(enabledTabs)
 }

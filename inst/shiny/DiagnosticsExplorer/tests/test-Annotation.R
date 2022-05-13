@@ -63,7 +63,6 @@ test_that("Posting annotation works", {
   shiny::testServer(annotationModule, args = list(
     id = "testAnnotationServer",
     dataSource = dataSource,
-    resultsDatabaseSchema = "main",
     activeLoggedInUser = shiny::reactiveVal("test-user"),
     selectedDatabaseIds = shiny::reactive(c("Eunomia")),
     selectedCohortIds = shiny::reactive(c(17492, 18342, 17720)),

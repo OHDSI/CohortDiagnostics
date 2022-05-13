@@ -19,7 +19,7 @@ annotationUi <- function(id) {
   ns <- shiny::NS(id)
 
   postAnnotationArea <- shiny::conditionalPanel(
-        condition = "ouput.postAnnotationEnabled == true",
+        condition = "output.postAnnotationEnabled == true",
         ns = ns,
         shinydashboard::box(
           title = "Add comment",
@@ -118,27 +118,25 @@ annotationUi <- function(id) {
 #'
 #' @param id                        The namespace id of the module instance - must align with `annotationUi`
 #' @param dataSource                Database intance used to store comments and retrieve them
-#' @param resultsDatabaseSchema     Results database schema to store comment in
 #' @param activeLoggedInUser        shiny::reactive that returns the active logged in user that stores the comment
 #' @param selectedDatabaseIds       shiny::reactive the current selected by the user
 #' @param postAnnotaionEnabled     shiny::reactive - is posting enabled for the user?
 #' @param multiCohortSelection      Boolean is the input set of cohorts many or one?
 annotationModule <- function(id,
                              dataSource,
-                             resultsDatabaseSchema,
                              activeLoggedInUser,
                              selectedDatabaseIds,
                              selectedCohortIds,
                              cohort,
                              postAnnotaionEnabled) {
-
   ns <- shiny::NS(id)
   annotationServer <- function(input, output, session) {
     # Annotation Section ------------------------------------
     ## posting annotation enabled ------
-
-    output$postAnnoataionEnabled <- shiny::reactive(postAnnotaionEnabled())
-    outputOptions(output, "postAnnoataionEnabled", suspendWhenHidden = FALSE)
+    output$postAnnotationEnabled <- shiny::reactive({
+      postAnnotaionEnabled() & !is.null(activeLoggedInUser())
+    })
+    outputOptions(output, "postAnnotationEnabled", suspendWhenHidden = FALSE)
 
     ## Retrieve Annotation ----------------
     reloadAnnotationSection <- reactiveVal(0)
@@ -293,16 +291,10 @@ annotationModule <- function(id,
         parametersToPostAnnotation <- getParametersToPostAnnotation()
         comment <- markdownModule()
 
-        if (comment == "Write some _markdown_ **here:**" | is.null(comment)) {
+        if (comment == "Write some _markdown_ **here:**" | is.null(comment) | is.null(activeLoggedInUser())) {
           return(NULL)
         }
-
-        if (!is.null(activeLoggedInUser())) {
-          createdBy <- activeLoggedInUser()
-        } else {
-          createdBy <- "Unknown"
-        }
-
+        createdBy <- activeLoggedInUser()
         result <- postAnnotationResult(
           dataSource = dataSource,
           diagnosticsId = id,
