@@ -132,6 +132,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Set up DiagnosticsExplorer Environment
+        if: success() && runner.os == 'macOS'
         run: |
           install.packages("renv")
           setwd("inst/shiny/DiagnosticsExplorer")
@@ -139,9 +140,10 @@ jobs:
         shell: Rscript {0}
 
       - name: Test DiagnosticsExplorer
+        if: success() && runner.os == 'macOS'
         run: |
           testthat::test_dir("tests")
-        shell: cd inst/shiny/DiagnosticsExplorer && Rscript {0}
+        shell: cd inst/shiny/DiagnosticsExplorer; Rscript {0}
 
   Release:
     needs: R-CMD-Check
