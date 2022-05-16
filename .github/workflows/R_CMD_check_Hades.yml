@@ -142,8 +142,9 @@ jobs:
       - name: Test DiagnosticsExplorer
         if: success() && runner.os == 'macOS'
         run: |
-          testthat::test_dir("tests")
-        shell: cd inst/shiny/DiagnosticsExplorer; Rscript {0}
+          renv::activate("inst/shiny/DiagnosticsExplorer/")
+          testthat::test_dir("inst/shiny/DiagnosticsExplorer/tests")
+        shell: Rscript {0}
 
   Release:
     needs: R-CMD-Check
