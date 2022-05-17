@@ -50,9 +50,11 @@ if (enableAuthorization) {
   if (file.exists("UserCredentials.csv")) {
     userCredentials <-
       readr::read_csv(file = "UserCredentials.csv", col_types = readr::cols())
-  } else {
-    enableAuthorization <- FALSE
   }
+}
+
+if (nrow(userCredentials) == 0) {
+  enableAuthorization <- FALSE
 }
 
 if (exists("shinySettings")) {
@@ -92,30 +94,13 @@ if (exists("shinySettings")) {
     sort()
 }
 
-if (is(shinyConnectionDetails$server, "function")) {
-  connectionPool <-
-    pool::dbPool(
-      drv = DatabaseConnector::DatabaseConnectorDriver(),
-      dbms = shinyConnectionDetails$dbms,
-      server = shinyConnectionDetails$server(),
-      port = shinyConnectionDetails$port(),
-      user = shinyConnectionDetails$user(),
-      password = shinyConnectionDetails$password(),
-      connectionString = shinyConnectionDetails$connectionString()
-    )
-} else {
-  # For backwards compatibility with older versions of DatabaseConnector:
-  connectionPool <-
-    pool::dbPool(
-      drv = DatabaseConnector::DatabaseConnectorDriver(),
-      dbms = shinyConnectionDetails$dbms,
-      server = shinyConnectionDetails$server,
-      port = shinyConnectionDetails$port,
-      user = shinyConnectionDetails$user,
-      password = shinyConnectionDetails$password,
-      connectionString = shinyConnectionDetails$connectionString
-    )
-}
+connectionPool <- getConnectionPool(shinyConnectionDetails)
+shiny::onStop(function() {
+  if (DBI::dbIsValid(connectionPool)) {
+    writeLines("Closing database pool")
+    pool::poolClose(connectionPool)
+  }
+})
 
 dataModelSpecifications <-
   read.csv("resultsDataModelSpecification.csv")
@@ -123,12 +108,6 @@ dataModelSpecifications <-
 suppressWarnings(rm(
   list = SqlRender::snakeCaseToCamelCase(dataModelSpecifications$tableName)
 ))
-onStop(function() {
-  if (DBI::dbIsValid(connectionPool)) {
-    writeLines("Closing database pool")
-    pool::poolClose(connectionPool)
-  }
-})
 
 resultsTablesOnServer <-
   tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
@@ -146,27 +125,6 @@ if (enableAnnotation &
   enableAuthorization <- FALSE
 }
 
-loadResultsTable("database", required = TRUE)
-loadResultsTable("cohort", required = TRUE)
-loadResultsTable("metadata", required = TRUE)
-loadResultsTable("temporal_time_ref")
-loadResultsTable("temporal_analysis_ref")
-loadResultsTable("concept_sets")
-loadResultsTable("cohort_count", required = TRUE)
-loadResultsTable("relationship")
-
-for (table in c(dataModelSpecifications$tableName)) {
-  # , "recommender_set"
-  if (table %in% resultsTablesOnServer &&
-    !exists(SqlRender::snakeCaseToCamelCase(table)) &&
-    !isEmpty(table)) {
-    # if table is empty, nothing is returned because type instability concerns.
-    assign(
-      SqlRender::snakeCaseToCamelCase(table),
-      dplyr::tibble()
-    )
-  }
-}
 dataSource <-
   createDatabaseDataSource(
     connection = connectionPool,
@@ -175,83 +133,8 @@ dataSource <-
     dbms = dbms
   )
 
-if (exists("database")) {
-  if (nrow(database) > 0 &&
-    "vocabularyVersion" %in% colnames(database)) {
-    database <- database %>%
-      dplyr::mutate(
-        databaseIdWithVocabularyVersion = paste0(databaseId, " (", .data$vocabularyVersion, ")")
-      )
-  }
-}
-
-
-if (exists("cohort")) {
-  cohort <- get("cohort")
-  cohort <- cohort %>%
-    dplyr::arrange(.data$cohortId) %>%
-    dplyr::mutate(shortName = paste0("C", .data$cohortId)) %>%
-    dplyr::mutate(compoundName = paste0(.data$shortName, ": ", .data$cohortName))
-}
-
-
-
-if (exists("database")) {
-  database <- get("database")
-  databaseMetadata <- processMetadata(get("metadata"))
-  database <- database %>%
-    dplyr::distinct() %>%
-    dplyr::mutate(id = dplyr::row_number()) %>%
-    dplyr::mutate(shortName = paste0("D", .data$id)) %>%
-    dplyr::left_join(databaseMetadata,
-      by = "databaseId"
-    ) %>%
-    dplyr::relocate(.data$id, .data$databaseId, .data$shortName)
-  rm("databaseMetadata")
-}
-
-
-temporalChoices <- NULL
-temporalCharacterizationTimeIdChoices <- NULL
-if (exists("temporalTimeRef")) {
-  temporalChoices <-
-    getResultsTemporalTimeRef(dataSource = dataSource)
-  temporalCharacterizationTimeIdChoices <-
-
-    temporalChoices %>%
-    dplyr::arrange(.data$sequence)
-
-  characterizationTimeIdChoices <-
-    temporalChoices %>%
-    dplyr::filter(.data$isTemporal == 0) %>%
-    dplyr::filter(.data$primaryTimeId == 1) %>%
-    dplyr::arrange(.data$sequence)
-}
-
-
-if (exists("temporalAnalysisRef")) {
-  temporalAnalysisRef <- dplyr::bind_rows(
-    temporalAnalysisRef,
-    dplyr::tibble(
-      analysisId = c(-201, -301),
-      analysisName = c("CohortEraStart", "CohortEraOverlap"),
-      domainId = "Cohort",
-      isBinary = "Y",
-      missingMeansZero = "Y"
-    )
-  )
-
-  domainIdOptions <- temporalAnalysisRef %>%
-    dplyr::select(.data$domainId) %>%
-    dplyr::pull(.data$domainId) %>%
-    unique() %>%
-    sort()
-  analysisNameOptions <- temporalAnalysisRef %>%
-    dplyr::select(.data$analysisName) %>%
-    dplyr::pull(.data$analysisName) %>%
-    unique() %>%
-    sort()
-}
+# Init tables in global session
+enabledTabs <- initializeTables(dataSource, dataModelSpecifications)
 
 prettyTable1Specifications <- readr::read_csv(
   file = "Table1SpecsLong.csv",

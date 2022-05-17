@@ -131,6 +131,21 @@ jobs:
         run: covr::codecov()
         shell: Rscript {0}
 
+      - name: Set up DiagnosticsExplorer Environment
+        if: success() && runner.os == 'macOS'
+        run: |
+          install.packages("renv")
+          setwd("inst/shiny/DiagnosticsExplorer")
+          renv::restore()
+        shell: Rscript {0}
+
+      - name: Test DiagnosticsExplorer
+        if: success() && runner.os == 'macOS'
+        run: |
+          renv::activate("inst/shiny/DiagnosticsExplorer/")
+          testthat::test_dir("inst/shiny/DiagnosticsExplorer/tests")
+        shell: Rscript {0}
+
   Release:
     needs: R-CMD-Check
 
@@ -205,6 +220,7 @@ jobs:
         if: ${{ env.new_version != '' }}
         run: |
           cp -r inst/shiny/DiagnosticsExplorer DiagnosticsExplorer-${{ env.new_version }}
+          rm DiagnosticsExplorer-${{ env.new_version }}/tests/testDb.sqlite
           zip -r DiagnosticsExplorer-${{ env.new_version }}.zip DiagnosticsExplorer-${{ env.new_version }}.zip 
 
       - name: Upload Diagnostics Explorer Release Asset

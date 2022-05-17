@@ -1,5 +1,4 @@
 shiny::shinyServer(function(input, output, session) {
-
   # Reacive: targetCohortId
   targetCohortId <- shiny::reactive({
     return(cohort$cohortId[cohort$compoundName == input$targetCohort])
@@ -55,7 +54,7 @@ shiny::shinyServer(function(input, output, session) {
       input$tabs
     )
   }, handlerExpr = {
-    if (exists("temporalCharacterizationTimeIdChoices") &&
+    if ("temporalCharacterizationTimeIdChoices" %in% enabledTabs &
       (isFALSE(input$timeIdChoices_open) ||
         !is.null(input$tabs))) {
       if (!is.null(temporalChoices)) {
@@ -571,9 +570,9 @@ shiny::shinyServer(function(input, output, session) {
   })
 
   # Display login based on value of active logged in user
-  postAnnoataionEnabled <- shiny::reactive(!is.null(activeLoggedInUser()))
+  postAnnotaionEnabled <- shiny::reactive(!is.null(activeLoggedInUser()))
   output$postAnnoataionEnabled <- shiny::reactive({
-    postAnnoataionEnabled()
+    postAnnotaionEnabled()
   })
   outputOptions(output, "postAnnoataionEnabled", suspendWhenHidden = FALSE)
 
@@ -595,12 +594,11 @@ shiny::shinyServer(function(input, output, session) {
     for (module in activeModules) {
       annotationModule(module,
                        dataSource,
-                       resultsDatabaseSchema,
                        activeLoggedInUser,
                        selectedDatabaseIds,
                        inputCohortIds,
                        cohort,
-                       postAnnoataionEnabled)
+                       postAnnotaionEnabled)
     }
   }
 
