@@ -1,4 +1,6 @@
 
+ns <- shiny::NS("DiagnosticsExplorer")
+
 addInfo <- function(item, infoId) {
   infoTag <- tags$small(
     class = "badge pull-right action-button",
@@ -12,42 +14,6 @@ addInfo <- function(item, infoId) {
   return(item)
 }
 
-cohortReference <- function(outputId) {
-  shinydashboard::box(
-    status = "warning",
-    width = "100%",
-    tags$div(
-      style = "max-height: 100px; overflow-y: auto",
-      shiny::uiOutput(outputId = outputId)
-    )
-  )
-}
-
-cohortReferenceWithDatabaseId <- function(cohortOutputId, databaseOutputId) {
-  shinydashboard::box(
-    status = "warning",
-    width = "100%",
-    tags$div(
-      style = "max-height: 100px; overflow-y: auto",
-      tags$table(
-        width = "100%",
-        tags$tr(
-          tags$td(
-            width = "70%",
-            tags$b("Cohorts :"),
-            shiny::uiOutput(outputId = cohortOutputId)
-          ),
-          tags$td(
-            style = "align: right !important;", width = "30%",
-            tags$b("Database :"),
-            shiny::uiOutput(outputId = databaseOutputId)
-          )
-        )
-      )
-    )
-  )
-}
-
 choicesFordatabaseOrVocabularySchema <- database$databaseIdWithVocabularyVersion
 
 if (enableAnnotation & showAnnotation) {
@@ -55,15 +21,18 @@ if (enableAnnotation & showAnnotation) {
     if (enableAuthorization) {
       shiny::conditionalPanel(
         "!output.postAnnoataionEnabled",
+        ns = ns,
         shiny::actionButton(
-          inputId = "annotationUserPopUp",
+          inputId = ns("annotationUserPopUp"),
           label = "Sign in"
         )
       )
     },
     shiny::conditionalPanel(
       "output.postAnnoataionEnabled == true",
-      shiny::uiOutput(outputId = "userNameLabel", style = "color:white;font-weight:bold;padding-right:30px")
+      ns = ns,
+      shiny::uiOutput(outputId = ns("userNameLabel"),
+                      style = "color:white;font-weight:bold;padding-right:30px")
     ),
     class = "dropdown",
     style = "margin-top: 8px !important; margin-right : 5px !important"
@@ -80,7 +49,7 @@ header <-
 
 sidebarMenu <-
   shinydashboard::sidebarMenu(
-    id = "tabs",
+    id = ns("tabs"),
     if ("cohort" %in% enabledTabs) {
       shinydashboard::menuItem(text = "Cohort Definition", tabName = "cohortDefinition")
     },
@@ -176,8 +145,9 @@ sidebarMenu <-
       input.tabs != 'inclusionRuleStats' &
       input.tabs != 'visitContext' &
       input.tabs != 'cohortOverlap'",
+      ns = ns,
       shinyWidgets::pickerInput(
-        inputId = "database",
+        inputId = ns("database"),
         label = "Database",
         choices = database$databaseId,
         selected = database$databaseId[1],
@@ -204,8 +174,9 @@ sidebarMenu <-
       input.tabs == 'inclusionRuleStats' |
       input.tabs == 'visitContext' |
       input.tabs == 'cohortOverlap'",
+      ns = ns,
       shinyWidgets::pickerInput(
-        inputId = "databases",
+        inputId = ns("databases"),
         label = "Database",
         choices = database$databaseId,
         selected = database$databaseId[1],
@@ -224,8 +195,9 @@ sidebarMenu <-
     if ("temporalCovariateValue" %in% enabledTabs) {
       shiny::conditionalPanel(
         condition = "input.tabs=='temporalCharacterization' | input.tabs =='compareTemporalCharacterization'",
+        ns = ns,
         shinyWidgets::pickerInput(
-          inputId = "timeIdChoices",
+          inputId = ns("timeIdChoices"),
           label = "Temporal Choice",
           choices = temporalCharacterizationTimeIdChoices$temporalChoices,
           multiple = TRUE,
@@ -253,8 +225,9 @@ sidebarMenu <-
       input.tabs != 'cohortOverlap'&
       input.tabs != 'incidenceRate' &
       input.tabs != 'timeDistribution'",
+      ns = ns,
       shinyWidgets::pickerInput(
-        inputId = "targetCohort",
+        inputId = ns("targetCohort"),
         label = "Cohort",
         choices = c(""),
         multiple = FALSE,
@@ -274,8 +247,9 @@ sidebarMenu <-
       input.tabs == 'cohortOverlap' |
       input.tabs == 'incidenceRate' |
       input.tabs == 'timeDistribution'",
+      ns = ns,
       shinyWidgets::pickerInput(
-        inputId = "cohorts",
+        inputId = ns("cohorts"),
         label = "Cohorts",
         choices = c(""),
         selected = c(""),
@@ -295,8 +269,9 @@ sidebarMenu <-
     shiny::conditionalPanel(
       condition = "input.tabs == 'compareCohortCharacterization'|
         input.tabs == 'compareTemporalCharacterization'",
+      ns = ns,
       shinyWidgets::pickerInput(
-        inputId = "comparatorCohort",
+        inputId = ns("comparatorCohort"),
         label = "Comparator",
         choices = c(""),
         multiple = FALSE,
@@ -319,8 +294,9 @@ sidebarMenu <-
       input.tabs == 'compareTemporalCharacterization' |
       input.tabs == 'conceptsInDataSource' |
       input.tabs == 'orphanConcepts'",
+      ns = ns,
       shinyWidgets::pickerInput(
-        inputId = "conceptSetsSelected",
+        inputId = ns("conceptSetsSelected"),
         label = "Concept sets",
         choices = c(""),
         selected = c(""),
@@ -355,151 +331,151 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "cohortDefinition",
-    cohortDefinitionsView("cohortDefinitions")
+    cohortDefinitionsView(ns("cohortDefinitions"))
   ),
   shinydashboard::tabItem(
     tabName = "cohortCounts",
-    cohortCountsView("cohortCounts"),
+    cohortCountsView(ns("cohortCounts")),
     if (showAnnotation) {
       column(
         12,
         tags$br(),
-        annotationUi("cohortCountsAnnotation")
+        annotationUi(ns("cohortCountsAnnotation"))
       )
     }
   ),
   shinydashboard::tabItem(
     tabName = "incidenceRate",
-    incidenceRatesView("incidenceRates")
+    incidenceRatesView(ns("incidenceRates"))
   ),
   shinydashboard::tabItem(
     tabName = "timeDistribution",
-    timeDistributionsView("timeDistributions"),
+    timeDistributionsView(ns("timeDistributions")),
     if (showAnnotation) {
       column(
         12,
         tags$br(),
-        annotationUi("timeDistributionAnnotation")
+        annotationUi(ns("timeDistributionAnnotation"))
       )
     }
 
   ),
   shinydashboard::tabItem(
     tabName = "conceptsInDataSource",
-    conceptsInDataSourceView("conceptsInDataSource"),
+    conceptsInDataSourceView(ns("conceptsInDataSource")),
     if (showAnnotation) {
       column(
         12,
         tags$br(),
-        annotationUi("conceptsInDataSourceAnnotation")
+        annotationUi(ns("conceptsInDataSourceAnnotation"))
       )
     }
   ),
   shinydashboard::tabItem(
     tabName = "orphanConcepts",
-    orpahanConceptsView("orphanConcepts"),
+    orpahanConceptsView(ns("orphanConcepts")),
     if (showAnnotation) {
       column(
         12,
         tags$br(),
-        annotationUi("orphanConceptsAnnotation")
+        annotationUi(ns("orphanConceptsAnnotation"))
       )
     }
   ),
   shinydashboard::tabItem(
     tabName = "inclusionRuleStats",
-    inclusionRulesView("inclusionRules"),
+    inclusionRulesView(ns("inclusionRules")),
     column(
       12,
       if (showAnnotation) {
         column(
           12,
           tags$br(),
-          annotationUi("inclusionRuleStatsAnnotation")
+          annotationUi(ns("inclusionRuleStatsAnnotation"))
         )
       }
     )
   ),
   shinydashboard::tabItem(
     tabName = "indexEventBreakdown",
-    indexEventBreakdownView("indexEvents"),
+    indexEventBreakdownView(ns("indexEvents")),
     if (showAnnotation) {
       column(
         12,
         tags$br(),
-        annotationUi("indexEventBreakdownAnnotation")
+        annotationUi(ns("indexEventBreakdownAnnotation"))
       )
     }
   ),
   shinydashboard::tabItem(
     tabName = "visitContext",
-    visitContextView("visitContext"),
+    visitContextView(ns("visitContext")),
     if (showAnnotation) {
       column(
         12,
         tags$br(),
-        annotationUi("visitContextAnnotation")
+        annotationUi(ns("visitContextAnnotation"))
       )
     }
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
-    cohortOverlapView("cohortOverlap"),
+    cohortOverlapView(ns("cohortOverlap")),
     if (showAnnotation) {
       column(
         12,
         tags$br(),
-        annotationUi("cohortOverlapAnnotation")
+        annotationUi(ns("cohortOverlapAnnotation"))
       )
     }
   ),
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
-    characterizationView("characterization"),
+    characterizationView(ns("characterization")),
     if (showAnnotation) {
       column(
         12,
         tags$br(),
-        annotationUi("cohortCharacterization")
+        annotationUi(ns("cohortCharacterization"))
       )
     }
   ),
   shinydashboard::tabItem(
     tabName = "temporalCharacterization",
-    temporalCharacterizationView("temporalCharacterization"),
+    temporalCharacterizationView(ns("temporalCharacterization")),
     if (showAnnotation) {
       column(
         12,
         tags$br(),
-        annotationUi("temporalCharacterizationAnnotation")
+        annotationUi(ns("temporalCharacterizationAnnotation"))
       )
     }
   ),
   shinydashboard::tabItem(
     tabName = "compareCohortCharacterization",
-    compareCohortCharacterizationView("compareCohortCharacterization"),
+    compareCohortCharacterizationView(ns("compareCohortCharacterization")),
     if (showAnnotation) {
       column(
         12,
         tags$br(),
-        annotationUi("compareCohortCharacterizationAnnotation")
+        annotationUi(ns("compareCohortCharacterizationAnnotation"))
       )
     }
   ),
   shinydashboard::tabItem(
     tabName = "compareTemporalCharacterization",
-    compareCohortCharacterizationView("compareTemporalCohortCharacterization"),
+    compareCohortCharacterizationView(ns("compareTemporalCohortCharacterization")),
     if (showAnnotation) {
       column(
         12,
         tags$br(),
-        annotationUi("compareTemporalCharacterizationAnnotation")
+        annotationUi(ns("compareTemporalCharacterizationAnnotation"))
       )
     }
   ),
   shinydashboard::tabItem(
     tabName = "databaseInformation",
-    databaseInformationView("databaseInformation"),
+    databaseInformationView(ns("databaseInformation")),
   )
 )
 

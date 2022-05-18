@@ -383,13 +383,11 @@ cohortDefinitionsView <- function(id) {
 #' @param dataSource                    DatabaseConnection
 #' @param cohortDefinitions             reactive of cohort definitions to display
 #' @param databaseTable                 data.frame of databasese
-#' @param vocabularyDatabaseSchemas     vector of vocabulary database schemas
 cohortDefinitionsModule <- function(id,
                                     dataSource,
                                     cohortDefinitions,
                                     cohortTable,
-                                    databaseTable,
-                                    vocabularyDatabaseSchemas) {
+                                    databaseTable) {
   ns <- shiny::NS(id)
 
   cohortDefinitionServer <- function(input, output, session) {
@@ -1023,7 +1021,7 @@ cohortDefinitionsModule <- function(id,
 
     vocabularyChoices <- list(
       'From site' = databaseTable$databaseIdWithVocabularyVersion,
-      'Reference Vocabulary' = vocabularyDatabaseSchemas
+      'Reference Vocabulary' = dataSource$vocabularyDatabaseSchema
     )
 
     output$databasePicker <- shiny::renderUI({

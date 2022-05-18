@@ -129,7 +129,7 @@ dataSource <-
   createDatabaseDataSource(
     connection = connectionPool,
     resultsDatabaseSchema = resultsDatabaseSchema,
-    vocabularyDatabaseSchema = resultsDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchemas,
     dbms = dbms
   )
 
