@@ -127,7 +127,7 @@ annotationModule <- function(id,
                              activeLoggedInUser,
                              selectedDatabaseIds,
                              selectedCohortIds,
-                             cohort,
+                             cohortTable,
                              postAnnotaionEnabled) {
   ns <- shiny::NS(id)
   annotationServer <- function(input, output, session) {
@@ -143,7 +143,7 @@ annotationModule <- function(id,
     getAnnotationReactive <- shiny::reactive({
       reloadAnnotationSection()
 
-      inputCohortIds <- cohort %>%
+      inputCohortIds <- cohortTable %>%
             dplyr::filter(.data$compoundName %in% selectedCohortIds()) %>%
             dplyr::pull(.data$cohortId)
 
@@ -216,7 +216,7 @@ annotationModule <- function(id,
           details = function(index) {
             subTable <- results$annotationLink %>%
               dplyr::filter(.data$annotationId == data[index,]$annotationId) %>%
-              dplyr::inner_join(cohort %>%
+              dplyr::inner_join(cohortTable %>%
                                   dplyr::select(
                                     .data$cohortId,
                                     .data$cohortName
@@ -262,13 +262,13 @@ annotationModule <- function(id,
       # Annotation - cohort Ids
       if (!is.null(input$targetCohort)) {
         inputCohortIds <-
-          cohort %>%
+          cohortTable %>%
             dplyr::filter(.data$compoundName %in% input$targetCohort) %>%
             dplyr::pull(.data$cohortId)
         # cohortsConceptInDataSource should be the same as in menu cohort
       } else {
          inputCohortIds <-
-          cohort %>%
+          cohortTable %>%
             dplyr::filter(.data$compoundName %in% selectedCohortIds()) %>%
             dplyr::pull(.data$cohortId)
       }

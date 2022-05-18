@@ -583,28 +583,28 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
     outputOptions(output, "postAnnoataionEnabled", suspendWhenHidden = FALSE)
 
     #--- Annotation modules
-    activeModules <- c("cohortCountsAnnotation",
-                       "timeDistributionAnnotation",
-                       "conceptsInDataSourceAnnotation",
-                       "orphanConceptsAnnotation",
-                       "inclusionRuleStatsAnnotation",
-                       "indexEventBreakdownAnnotation",
-                       "visitContextAnnotation",
-                       "cohortOverlapAnnotation",
-                       "cohortCharacterizationAnnotation",
-                       "temporalCharacterizationAnnotation",
-                       "compareCohortCharacterizationAnnotation",
-                       "compareTemporalCharacterizationAnnotation")
+    annotationModules <- c("cohortCountsAnnotation",
+                           "timeDistributionAnnotation",
+                           "conceptsInDataSourceAnnotation",
+                           "orphanConceptsAnnotation",
+                           "inclusionRuleStatsAnnotation",
+                           "indexEventBreakdownAnnotation",
+                           "visitContextAnnotation",
+                           "cohortOverlapAnnotation",
+                           "cohortCharacterizationAnnotation",
+                           "temporalCharacterizationAnnotation",
+                           "compareCohortCharacterizationAnnotation",
+                           "compareTemporalCharacterizationAnnotation")
 
     if (enableAnnotation) {
-      for (module in activeModules) {
-        annotationModule(module,
-                         dataSource,
-                         activeLoggedInUser,
-                         selectedDatabaseIds,
-                         inputCohortIds,
-                         cohortTable,
-                         postAnnotaionEnabled)
+      for (module in annotationModules) {
+        annotationModule(id = module,
+                         dataSource = dataSource,
+                         activeLoggedInUser = activeLoggedInUser,
+                         selectedDatabaseIds = selectedDatabaseIds,
+                         inputCohortIds = inputCohortIds,
+                         cohortTable = cohortTable,
+                         postAnnotaionEnabled = postAnnotaionEnabled)
       }
     }
 
@@ -648,6 +648,8 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
 
     characterizationModule(id = "characterization",
                            dataSource = dataSource,
+                           cohortTable = cohortTable,
+                           databaseTable = databaseTable,
                            selectedCohorts = selectedCohorts,
                            selectedDatabaseIds = selectedDatabaseIds,
                            targetCohortId = targetCohortId,

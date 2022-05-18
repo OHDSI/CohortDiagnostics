@@ -116,6 +116,8 @@ characterizationView <- function(id) {
 
 characterizationModule <- function(id,
                                    dataSource,
+                                   cohortTable,
+                                   databaseTable,
                                    selectedCohorts,
                                    selectedDatabaseIds,
                                    targetCohortId,
@@ -322,8 +324,8 @@ characterizationModule <- function(id,
         )
       displayTable <- getDisplayTableGroupedByDatabaseId(
         data = table,
-        cohort = cohort,
-        database = database,
+        cohort = cohortTable,
+        database = databaseTable,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
@@ -393,8 +395,8 @@ characterizationModule <- function(id,
 
       getDisplayTableGroupedByDatabaseId(
         data = data,
-        cohort = cohort,
-        database = database,
+        cohort = cohortTable,
+        database = databaseTable,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,

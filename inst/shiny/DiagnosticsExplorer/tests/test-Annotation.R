@@ -66,7 +66,7 @@ test_that("Posting annotation works", {
     activeLoggedInUser = shiny::reactiveVal("test-user"),
     selectedDatabaseIds = shiny::reactive(c("Eunomia")),
     selectedCohortIds = shiny::reactive(c(17492, 18342, 17720)),
-    cohort = cohort,
+    cohortTable = cohort,
     postAnnotaionEnabled = shiny::reactive(TRUE)
   ), {
 
