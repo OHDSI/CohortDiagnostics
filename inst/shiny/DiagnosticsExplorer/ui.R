@@ -1,5 +1,12 @@
-
 ns <- shiny::NS("DiagnosticsExplorer")
+
+appInformationText <- paste("Powered by OHDSI Cohort Diagnostics application", paste0(appVersionNum, "."))
+appInformationText <- paste0(
+  appInformationText,
+  "Application was last initated on ",
+  lubridate::now(tzone = "EST"),
+  " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/"
+)
 
 addInfo <- function(item, infoId) {
   infoTag <- tags$small(

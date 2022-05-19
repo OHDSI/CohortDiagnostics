@@ -25,15 +25,7 @@ source("R/TemporalCharacterizationModule.R")
 source("R/TimeDistributionsModule.R")
 source("R/VisitContextModule.R")
 
-
 appVersionNum <- "Version: 3.0.0"
-appInformationText <- paste("Powered by OHDSI Cohort Diagnostics application", paste0(appVersionNum, "."))
-appInformationText <- paste0(
-  appInformationText,
-  "Application was last initated on ",
-  lubridate::now(tzone = "EST"),
-  " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/"
-)
 
 #### Set enableAnnotation to true to enable annotation in deployed apps
 #### Not recommended outside of secure firewalls deployments
@@ -102,29 +94,6 @@ shiny::onStop(function() {
   }
 })
 
-dataModelSpecifications <-
-  read.csv("resultsDataModelSpecification.csv")
-# Cleaning up any tables in memory:
-suppressWarnings(rm(
-  list = SqlRender::snakeCaseToCamelCase(dataModelSpecifications$tableName)
-))
-
-resultsTablesOnServer <-
-  tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
-
-showAnnotation <- FALSE
-if (enableAnnotation &
-  "annotation" %in% resultsTablesOnServer &
-  "annotation_link" %in% resultsTablesOnServer &
-  "annotation_attributes" %in% resultsTablesOnServer) {
-  showAnnotation <- TRUE
-  options("showDiagnosticsExplorerAnnotation" = TRUE)
-} else {
-  enableAnnotation <- FALSE
-  showAnnotation <- FALSE
-  enableAuthorization <- FALSE
-}
-
 dataSource <-
   createDatabaseDataSource(
     connection = connectionPool,
@@ -133,23 +102,6 @@ dataSource <-
     dbms = dbms
   )
 
-# Init tables in global session
-enabledTabs <- initializeTables(dataSource, dataModelSpecifications)
+# Init tables and other parameters in global session
+initializeEnvironment(dataSource)
 
-prettyTable1Specifications <- readr::read_csv(
-  file = "Table1SpecsLong.csv",
-  col_types = readr::cols(),
-  guess_max = min(1e7),
-  lazy = FALSE
-)
-analysisIdInCohortCharacterization <- c(
-  1, 3, 4, 5, 6, 7,
-  203, 403, 501, 703,
-  801, 901, 903, 904,
-  -301, -201
-)
-
-analysisIdInTemporalCharacterization <- c(
-  101, 401, 501, 701,
-  -301, -201
-)

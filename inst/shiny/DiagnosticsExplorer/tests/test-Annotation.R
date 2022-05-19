@@ -8,7 +8,7 @@ source("../R/ResultRetrieval.R")
 test_that("Posting annotation works", {
   connectionPool <- getConnectionPool(connectionDetails)
   dataModelSpecifications <-
-    read.csv("../resultsDataModelSpecification.csv")
+    read.csv("../data/resultsDataModelSpecification.csv")
 
   on.exit({
     pool::poolClose(pool = connectionPool)
@@ -58,7 +58,7 @@ test_that("Posting annotation works", {
   renderTranslateExecuteSql(dataSource, "DELETE FROM ANNOTATION_LINK")
   renderTranslateExecuteSql(dataSource, "DELETE FROM ANNOTATION")
 
-  initializeTables(dataSource, dataModelSpecifications)
+  initializeEnvironment(dataSource, dataModelSpecifications = dataModelSpecifications)
 
   shiny::testServer(annotationModule, args = list(
     id = "testAnnotationServer",

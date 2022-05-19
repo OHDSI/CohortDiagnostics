@@ -170,30 +170,16 @@ quoteLiterals <- function(x) {
 }
 
 getConnectionPool <- function(connectionDetails) {
-  if (is(connectionDetails$server, "function")) {
-    connectionPool <-
-      pool::dbPool(
-        drv = DatabaseConnector::DatabaseConnectorDriver(),
-        dbms = connectionDetails$dbms,
-        server = connectionDetails$server(),
-        port = connectionDetails$port(),
-        user = connectionDetails$user(),
-        password = connectionDetails$password(),
-        connectionString = connectionDetails$connectionString()
-      )
-  } else {
-    # For backwards compatibility with older versions of DatabaseConnector:
-    connectionPool <-
-      pool::dbPool(
-        drv = DatabaseConnector::DatabaseConnectorDriver(),
-        dbms = connectionDetails$dbms,
-        server = connectionDetails$server,
-        port = connectionDetails$port,
-        user = connectionDetails$user,
-        password = connectionDetails$password,
-        connectionString = connectionDetails$connectionString
-      )
-  }
+  connectionPool <-
+    pool::dbPool(
+      drv = DatabaseConnector::DatabaseConnectorDriver(),
+      dbms = connectionDetails$dbms,
+      server = connectionDetails$server(),
+      port = connectionDetails$port(),
+      user = connectionDetails$user(),
+      password = connectionDetails$password(),
+      connectionString = connectionDetails$connectionString()
+    )
 
   return(connectionPool)
 }
@@ -213,7 +199,18 @@ createDatabaseDataSource <- function(connection,
   )
 }
 
-initializeTables <- function(dataSource, dataModelSpecifications, envir = .GlobalEnv) {
+#' Initialize variables required in applications global shared environment
+#' These settings are shared accross settings (e.g. accessed by all users) and should be read only during run time
+initializeEnvironment <- function(dataSource,
+                                  dataModelSpecifications = read.csv("data/resultsDataModelSpecification.csv"),
+                                  envir = .GlobalEnv) {
+
+  envir$dataModelSpecifications <- dataModelSpecifications
+  # Cleaning up any tables alreadu in memory:
+  suppressWarnings(rm(
+    list = SqlRender::snakeCaseToCamelCase(envir$dataModelSpecifications$tableName),
+    envir = envir
+  ))
 
   envir$database <- loadResultsTable(dataSource, "database", required = TRUE)
   envir$cohort <- loadResultsTable(dataSource, "cohort", required = TRUE)
@@ -288,17 +285,48 @@ initializeTables <- function(dataSource, dataModelSpecifications, envir = .Globa
       sort()
   }
 
-
-  resultsTables <- tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
-  enabledTabs <- c()
-  for (table in c(dataModelSpecifications$tableName)) {
-    # , "recommender_set"
+  envir$resultsTables <- tolower(DatabaseConnector::dbListTables(dataSource$connection,
+                                                           schema = dataSource$resultsDatabaseSchema))
+  envir$enabledTabs <- c()
+  for (table in c(envir$dataModelSpecifications$tableName)) {
     if (table %in% resultsTables &
       !tableIsEmpty(dataSource, table)) {
-      enabledTabs <- c(enabledTabs, SqlRender::snakeCaseToCamelCase(table))
+      envir$enabledTabs <- c(envir$enabledTabs, SqlRender::snakeCaseToCamelCase(table))
     }
   }
 
+  envir$prettyTable1Specifications <- readr::read_csv(
+    file = "data/Table1SpecsLong.csv",
+    col_types = readr::cols(),
+    guess_max = min(1e7),
+    lazy = FALSE
+  )
 
-  return(enabledTabs)
+  envir$analysisIdInCohortCharacterization <- c(
+    1, 3, 4, 5, 6, 7,
+    203, 403, 501, 703,
+    801, 901, 903, 904,
+    -301, -201
+  )
+
+  envir$analysisIdInTemporalCharacterization <- c(
+    101, 401, 501, 701,
+    -301, -201
+  )
+
+
+  envir$showAnnotation <- FALSE
+  if (envir$enableAnnotation &
+    "annotation" %in% envir$resultsTablesOnServer &
+    "annotation_link" %in% envir$resultsTablesOnServer &
+    "annotation_attributes" %in% envir$resultsTablesOnServer) {
+    envir$showAnnotation <- TRUE
+    options("showDiagnosticsExplorerAnnotation" = TRUE)
+  } else {
+    envir$enableAnnotation <- FALSE
+    envir$showAnnotation <- FALSE
+    envir$enableAuthorization <- FALSE
+  }
+
+  return(envir)
 }

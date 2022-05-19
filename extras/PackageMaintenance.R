@@ -67,7 +67,7 @@ writeLines(text, con = file(filePath))
 
 # Copy data model specs to Shiny app
 file.copy(from = "inst/settings/resultsDataModelSpecification.csv", 
-          to = "inst/shiny/DiagnosticsExplorer/resultsDataModelSpecification.csv",
+          to = "inst/shiny/DiagnosticsExplorer/data/resultsDataModelSpecification.csv",
           overwrite = TRUE)
 
 
