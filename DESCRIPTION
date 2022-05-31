@@ -1,7 +1,7 @@
 Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Cohorts
-Version: 3.0.0
+Version: 3.0.1
 Date: 2022-04-27
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
@@ -31,7 +31,7 @@ Imports:
   SqlRender (>= 1.9.0),
   stringr,
   tidyr (>= 1.2.0),
-  CohortGenerator (>= 0.4.0)
+  CohortGenerator (>= 0.5.0)
 Suggests:
   CirceR,
   DT,
