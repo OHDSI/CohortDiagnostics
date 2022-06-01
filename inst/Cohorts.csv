@@ -1,0 +1,5 @@
+cohort_id,name,cohort_name
+17492,[PL 192671002] Gastrointestinal hemorrhage referent concept prevalent cohort: First occurrence of referent concept + descendants,[PL 192671002] Gastrointestinal hemorrhage referent concept prevalent cohort: First occurrence of referent concept + descendants
+17493,[PL 192671001] Gastrointestinal hemorrhage referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation,[PL 192671001] Gastrointestinal hemorrhage referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation
+17720,[PL 201826003] Type 2 diabetes mellitus prevalent cohort: First condition occurrence of 'Type 2 diabetes mellitus' conceptset or observation of 'History of diabetes',[PL 201826003] Type 2 diabetes mellitus prevalent cohort:  First condition occurrence of 'Type 2 diabetes mellitus' conceptset or observation of 'History of diabetes'
+14909,[Cohort Diagnostics] Gastrointestinal hemorrhage for Eunomia,[Cohort Diagnostics] Gastrointestinal hemorrhage for Eunomia
