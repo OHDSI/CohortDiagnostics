@@ -97,7 +97,9 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
                      "rmarkdown",
                      "reactable",
                      "markdownInput",
-                     "markdown"))
+                     "markdown",
+                     "jsonlite",
+                     "yaml"))
 
   appDir <-
     system.file("shiny", "DiagnosticsExplorer", package = utils::packageName())

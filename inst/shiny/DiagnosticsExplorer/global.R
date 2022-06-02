@@ -1,6 +1,6 @@
 library(magrittr)
-### Change this lane if deploying shiny files directly with sqlite database
-sqliteDbPath <- file.path("data", "MergedCohortDiagnosticsData.sqlite")
+shinyConfigPath <- "config.yml"
+
 source("R/StartUpScripts.R")
 source("R/DisplayFunctions.R")
 source("R/Tables.R")
@@ -33,15 +33,23 @@ enableAnnotation <- TRUE
 enableAuthorization <- TRUE
 activeUser <- NULL
 
+
+if (exists("shinySettings")) {
+  enableAnnotation <- getOption("enableCdAnnotation", default = FALSE)
+  activeUser <- Sys.info()[['user']]
+} else {
+  shinySettings <- loadShinySettings(shinyConfigPath)
+}
+
 ### if you need a way to authorize users
 ### generate hash using code like digest::digest("diagnostics",algo = "sha512")
 ### store in external file called UserCredentials.csv - with fields userId, hashCode
 ### place the file in the root folder
 userCredentials <- data.frame()
-if (enableAuthorization) {
-  if (file.exists("UserCredentials.csv")) {
+if (enableAuthorization & !is.null(shinySettings$userCredentialsFile)) {
+  if (file.exists(shinySettings$userCredentialsFile)) {
     userCredentials <-
-      readr::read_csv(file = "UserCredentials.csv", col_types = readr::cols())
+      readr::read_csv(file = shinySettings$userCredentialsFile, col_types = readr::cols())
   }
 }
 
@@ -49,44 +57,8 @@ if (nrow(userCredentials) == 0) {
   enableAuthorization <- FALSE
 }
 
-if (exists("shinySettings")) {
-  writeLines("Using settings provided by user")
-  shinyConnectionDetails <- shinySettings$connectionDetails
-  dbms <- shinyConnectionDetails$dbms
-  resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
-  vocabularyDatabaseSchemas <- shinySettings$vocabularyDatabaseSchemas
-  enableAnnotation <- getOption("enableCdAnnotation", default = FALSE)
-  activeUser <- Sys.info()[['user']]
-} else if (file.exists(sqliteDbPath)) {
-  writeLines("Using data directory")
-  sqliteDbPath <- normalizePath(sqliteDbPath)
-  resultsDatabaseSchema <- "main"
-  vocabularyDatabaseSchemas <- "main"
-  dbms <- "sqlite"
-  shinyConnectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
-} else {
-  writeLines("Connecting to remote database")
-  dbms <- Sys.getenv("shinydbDatabase", unset = "postgresql")
-  shinyConnectionDetails <- DatabaseConnector::createConnectionDetails(
-    dbms = dbms,
-    server = Sys.getenv("shinydbServer"),
-    port = Sys.getenv("shinydbPort", unset = 5432),
-    user = Sys.getenv("shinydbUser"),
-    password = Sys.getenv("shinydbPw")
-  )
-  resultsDatabaseSchema <- Sys.getenv("shinydbResultsSchema", unset = "thrombosisthrombocytopenia")
-  vocabularyDatabaseSchemas <- resultsDatabaseSchema
-  alternateVocabularySchema <- Sys.getenv("shinydbVocabularySchema", unset = c("vocabulary"))
-  vocabularyDatabaseSchemas <-
-    setdiff(
-      x = c(vocabularyDatabaseSchemas, alternateVocabularySchema),
-      y = resultsDatabaseSchema
-    ) %>%
-    unique() %>%
-    sort()
-}
 
-connectionPool <- getConnectionPool(shinyConnectionDetails)
+connectionPool <- getConnectionPool(shinySettings$connectionDetails)
 shiny::onStop(function() {
   if (DBI::dbIsValid(connectionPool)) {
     writeLines("Closing database pool")
@@ -97,9 +69,9 @@ shiny::onStop(function() {
 dataSource <-
   createDatabaseDataSource(
     connection = connectionPool,
-    resultsDatabaseSchema = resultsDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchemas,
-    dbms = dbms
+    resultsDatabaseSchema = shinySettings$resultsDatabaseSchema,
+    vocabularyDatabaseSchema = shinySettings$vocabularyDatabaseSchemas,
+    dbms = shinySettings$connectionDetails$dbms
   )
 
 # Init tables and other parameters in global session

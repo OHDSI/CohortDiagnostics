@@ -184,6 +184,34 @@ getConnectionPool <- function(connectionDetails) {
   return(connectionPool)
 }
 
+loadShinySettings <- function(configPath) {
+  writeLines("Using settings provided by user")
+  stopifnot(file.exists(configPath))
+  shinySettings <- yaml::read_yaml(configPath)
+
+  defaultValues <- list(
+    resultsDatabaseSchema = c("main"),
+    vocabularyDatabaseSchemas = c("main"),
+    enableAnnotation = TRUE,
+    enableAuthorization = TRUE,
+    userCredentialsFile = "UserCredentials.csv"
+  )
+
+  for (key in names(defaultValues)) {
+    if (is.null(shinySettings[[key]])) {
+      shinySettings[[key]] <- defaultValues[[key]]
+    }
+  }
+
+  if (!is.null(shinySettings$connectionDetailsSecureKey)) {
+    shinySettings$connectionDetails <- jsonlite::fromJSON(keyring::key_get(shinySettings$connectionDetailsSecureKey))
+  }
+  shinySettings$connectionDetails <- do.call(DatabaseConnector::createConnectionDetails,
+                                             shinySettings$connectionDetails)
+
+  return(shinySettings)
+}
+
 createDatabaseDataSource <- function(connection,
                                      resultsDatabaseSchema,
                                      vocabularyDatabaseSchema = resultsDatabaseSchema,
@@ -253,12 +281,12 @@ initializeEnvironment <- function(dataSource,
   if (!is.null(envir$temporalTimeRef)) {
     envir$temporalChoices <- getResultsTemporalTimeRef(dataSource = dataSource)
     envir$temporalCharacterizationTimeIdChoices <- envir$temporalChoices %>%
-        dplyr::arrange(.data$sequence)
+      dplyr::arrange(.data$sequence)
 
     envir$characterizationTimeIdChoices <- envir$temporalChoices %>%
-        dplyr::filter(.data$isTemporal == 0) %>%
-        dplyr::filter(.data$primaryTimeId == 1) %>%
-        dplyr::arrange(.data$sequence)
+      dplyr::filter(.data$isTemporal == 0) %>%
+      dplyr::filter(.data$primaryTimeId == 1) %>%
+      dplyr::arrange(.data$sequence)
   }
 
   if (!is.null(envir$temporalAnalysisRef)) {
@@ -286,7 +314,7 @@ initializeEnvironment <- function(dataSource,
   }
 
   envir$resultsTables <- tolower(DatabaseConnector::dbListTables(dataSource$connection,
-                                                           schema = dataSource$resultsDatabaseSchema))
+                                                                 schema = dataSource$resultsDatabaseSchema))
   envir$enabledTabs <- c()
   for (table in c(envir$dataModelSpecifications$tableName)) {
     if (table %in% resultsTables &

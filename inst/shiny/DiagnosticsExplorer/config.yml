@@ -1,0 +1,19 @@
+# Alter these configuration settings for usage with remote databases
+connectionDetails:
+  dbms: "sqlite"
+  server: "data/MergedCohortDiagnosticsData.sqlite"
+  user: ""
+  password: ""
+  port: ""
+
+# Store connection details as a json string in keyring
+# Store with keyring::key_set_with_value("KEYNAME", jsonlite::toJSON(myConnectionDetails))
+connectionDetailsSecureKey: ~
+
+resultsDatabaseSchema: "main"
+vocabularyDatabaseSchemas: ["main"]
+
+enableAnnotation: TRUE
+enableAuthorization: TRUE
+
+userCredentialsFile: UserCredentials.csv
