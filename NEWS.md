@@ -1,3 +1,14 @@
+CohortDiagnostics 3.0.1
+=======================
+
+Bug fixes:
+
+1. Updated old/incorrect documentation on package usage
+
+2. Fixed bug with new versions of CohortGenerator v0.5.0 causing cohort definition sets in package to not load
+
+3. Fixed bug in shiny app where multiple runs on the same database would cause the app to crash when selecting database
+
 CohortDiagnostics 3.0.0
 =======================
 Changes:

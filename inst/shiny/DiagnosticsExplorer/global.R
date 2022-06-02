@@ -25,7 +25,7 @@ source("R/TemporalCharacterizationModule.R")
 source("R/TimeDistributionsModule.R")
 source("R/VisitContextModule.R")
 
-appVersionNum <- "Version: 3.0.0"
+appVersionNum <- "Version: 3.0.1"
 
 #### Set enableAnnotation to true to enable annotation in deployed apps
 #### Not recommended outside of secure firewalls deployments
