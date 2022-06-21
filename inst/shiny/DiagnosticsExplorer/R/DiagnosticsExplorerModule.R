@@ -750,12 +750,12 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                          selectedConceptSets = selectedConceptSets,
                          conceptSetIds = conceptSetIds)
 
-    incidenceRatesModule(id = "incidenceRates",
-                         dataSource = dataSource,
-                         selectedCohorts = selectedCohorts,
-                         cohortIds = cohortIds,
-                         selectedDatabaseIds = selectedDatabaseIds,
-                         cohortTable = cohortTable)
+    # incidenceRatesModule(id = "incidenceRates",
+    #                      dataSource = dataSource,
+    #                      selectedCohorts = selectedCohorts,
+    #                      cohortIds = cohortIds,
+    #                      selectedDatabaseIds = selectedDatabaseIds,
+    #                      cohortTable = cohortTable)
 
     timeDistributionsModule(id = "timeDistributions",
                             dataSource = dataSource,
