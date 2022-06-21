@@ -587,21 +587,22 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
     })
     outputOptions(output, "postAnnoataionEnabled", suspendWhenHidden = FALSE)
 
-    #--- Annotation modules
-    annotationModules <- c("cohortCountsAnnotation",
-                           "timeDistributionAnnotation",
-                           "conceptsInDataSourceAnnotation",
-                           "orphanConceptsAnnotation",
-                           "inclusionRuleStatsAnnotation",
-                           "indexEventBreakdownAnnotation",
-                           "visitContextAnnotation",
-                           "cohortOverlapAnnotation",
-                           "cohortCharacterizationAnnotation",
-                           "temporalCharacterizationAnnotation",
-                           "compareCohortCharacterizationAnnotation",
-                           "compareTemporalCharacterizationAnnotation")
-
     if (enableAnnotation) {
+      #--- Annotation modules
+      annotationModules <- c("cohortCountsAnnotation",
+                             "timeDistributionAnnotation",
+                             "conceptsInDataSourceAnnotation",
+                             "orphanConceptsAnnotation",
+                             "inclusionRuleStatsAnnotation",
+                             "indexEventBreakdownAnnotation",
+                             "visitContextAnnotation",
+                             "cohortOverlapAnnotation",
+                             "cohortCharacterizationAnnotation",
+                             "temporalCharacterizationAnnotation",
+                             "compareCohortCharacterizationAnnotation",
+                             "compareTemporalCharacterizationAnnotation")
+
+
       for (module in annotationModules) {
         annotationModule(id = module,
                          dataSource = dataSource,
@@ -613,142 +614,165 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       }
     }
 
-    cohortCountsModule(id = "cohortCounts",
-                       dataSource = dataSource,
-                       cohortTable = cohortTable, # The injection of tables like this should be removed
-                       databaseTable = databaseTable, # The injection of tables like this should be removed
-                       selectedCohorts = selectedCohorts,
-                       selectedDatabaseIds = selectedDatabaseIds,
-                       cohortIds = cohortIds)
-
-
-    cohortDefinitionsModule(id = "cohortDefinitions",
-                            dataSource = dataSource,
-                            cohortDefinitions = cohortSubset,
-                            cohortTable = cohortTable,
-                            databaseTable = databaseTable)
-
-    indexEventBreakdownModule("indexEvents",
+    if ("cohort" %in% enabledTabs) {
+      cohortDefinitionsModule(id = "cohortDefinitions",
                               dataSource = dataSource,
-                              selectedCohort = selectedCohort,
-                              targetCohortId = targetCohortId,
-                              selectedDatabaseIds = selectedDatabaseIds)
+                              cohortDefinitions = cohortSubset,
+                              cohortTable = cohortTable,
+                              databaseTable = databaseTable)
+    }
 
+    if ("includedSourceConcept" %in% enabledTabs) {
+      conceptsInDataSourceModule(id = "conceptsInDataSource",
+                                 dataSource = dataSource,
+                                 selectedCohort = selectedCohort,
+                                 selectedDatabaseIds = selectedDatabaseIds,
+                                 targetCohortId = targetCohortId,
+                                 selectedConceptSets = selectedConceptSets,
+                                 getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
+                                 cohortTable = cohortTable,
+                                 databaseTable = databaseTable)
+    }
 
-    inclusionRulesModule(id = "inclusionRules",
+    if ("orphanConcept" %in% enabledTabs) {
+      orphanConceptsModule("orphanConcepts",
+                           dataSource = dataSource,
+                           selectedCohorts = selectedCohorts,
+                           selectedDatabaseIds = selectedDatabaseIds,
+                           targetCohortId = targetCohortId,
+                           selectedConceptSets = selectedConceptSets,
+                           conceptSetIds = conceptSetIds)
+    }
+
+    if ("cohortCount" %in% enabledTabs) {
+      cohortCountsModule(id = "cohortCounts",
                          dataSource = dataSource,
-                         cohortTable = cohortTable,
-                         databaseTable = databaseTable,
-                         selectedCohort = selectedCohort,
-                         targetCohortId = targetCohortId,
-                         selectedDatabaseIds = selectedDatabaseIds)
+                         cohortTable = cohortTable, # The injection of tables like this should be removed
+                         databaseTable = databaseTable, # The injection of tables like this should be removed
+                         selectedCohorts = selectedCohorts,
+                         selectedDatabaseIds = selectedDatabaseIds,
+                         cohortIds = cohortIds)
+    }
 
-    cohortOverlapModule(id = "cohortOverlap",
-                        dataSource = dataSource,
-                        selectedCohorts = selectedCohorts,
-                        selectedDatabaseIds = selectedDatabaseIds,
-                        targetCohortId = targetCohortId,
-                        cohortIds = cohortIds,
-                        cohortTable = cohortTable)
-
-    characterizationModule(id = "characterization",
+    if ("inclusionRuleStats" %in% enabledTabs) {
+      inclusionRulesModule(id = "inclusionRules",
                            dataSource = dataSource,
                            cohortTable = cohortTable,
                            databaseTable = databaseTable,
                            selectedCohort = selectedCohort,
-                           selectedDatabaseIds = selectedDatabaseIds,
                            targetCohortId = targetCohortId,
-                           temporalAnalysisRef = envir$temporalAnalysisRef,
-                           analysisNameOptions = envir$analysisNameOptions,
-                           analysisIdInCohortCharacterization = envir$analysisIdInCohortCharacterization,
-                           getResolvedAndMappedConceptIdsForFilters = envir$getResolvedAndMappedConceptIdsForFilters,
-                           selectedConceptSets = selectedConceptSets,
-                           characterizationMenuOutput = characterizationOutputForCharacterizationMenu, # This name must be changed
-                           characterizationTimeIdChoices = envir$characterizationTimeIdChoices)
+                           selectedDatabaseIds = selectedDatabaseIds)
+    }
 
+    if ("indexEventBreakdown" %in% enabledTabs) {
+      indexEventBreakdownModule("indexEvents",
+                                dataSource = dataSource,
+                                selectedCohort = selectedCohort,
+                                targetCohortId = targetCohortId,
+                                selectedDatabaseIds = selectedDatabaseIds)
+    }
 
-    temporalCharacterizationModule(id = "temporalCharacterization",
-                                   dataSource = dataSource,
-                                   selectedCohort = selectedCohort,
-                                   selectedDatabaseIds = selectedDatabaseIds,
-                                   targetCohortId = targetCohortId,
-                                   temporalAnalysisRef = envir$temporalAnalysisRef,
-                                   analysisNameOptions = envir$analysisNameOptions,
-                                   selectedTemporalTimeIds = selectedTemporalTimeIds,
-                                   getResolvedAndMappedConceptIdsForFilters = envir$getResolvedAndMappedConceptIdsForFilters,
-                                   selectedConceptSets = selectedConceptSets,
-                                   analysisIdInTemporalCharacterization = envir$analysisIdInTemporalCharacterization,
-                                   domainIdOptions = envir$domainIdOptions,
-                                   temporalCharacterizationTimeIdChoices = envir$temporalCharacterizationTimeIdChoices,
-                                   characterizationOutputForCharacterizationMenu = characterizationOutputForCharacterizationMenu)
-
-    compareCohortCharacterizationModule("compareCohortCharacterization",
-                                        dataSource = dataSource,
-                                        selectedCohort = selectedCohort,
-                                        selectedDatabaseIds = selectedDatabaseIds,
-                                        targetCohortId = targetCohortId,
-                                        comparatorCohortId = comparatorCohortId,
-                                        selectedComparatorCohort = selectedComparatorCohort,
-                                        selectedConceptSets = selectedConceptSets,
-                                        selectedTimeIds = shiny::reactive({ c(envir$characterizationTimeIdChoices$timeId %>% unique(), NA) }),
-                                        characterizationOutputMenu = characterizationOutputForCompareCharacterizationMenu,
-                                        getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
-                                        cohortTable = cohortTable,
-                                        databaseTable = databaseTable,
-                                        temporalAnalysisRef = envir$temporalAnalysisRef,
-                                        analysisIdInCohortCharacterization = envir$analysisIdInCohortCharacterization,
-                                        analysisNameOptions = envir$analysisNameOptions,
-                                        domainIdOptions = envir$domainIdOptions,
-                                        characterizationTimeIdChoices = envir$characterizationTimeIdChoices,
-                                        temporalChoices = envir$temporalChoices,
-                                        prettyTable1Specifications = envir$prettyTable1Specifications)
-
-    compareCohortCharacterizationModule("compareTemporalCohortCharacterization",
-                                        dataSource = dataSource,
-                                        selectedCohort = selectedCohort,
-                                        selectedDatabaseIds = selectedDatabaseIds,
-                                        targetCohortId = targetCohortId,
-                                        comparatorCohortId = comparatorCohortId,
-                                        selectedComparatorCohort = selectedComparatorCohort,
-                                        selectedConceptSets = selectedConceptSets,
-                                        selectedTimeIds = selectedTemporalTimeIds,
-                                        characterizationOutputMenu = characterizationOutputForCompareCharacterizationMenu,
-                                        getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
-                                        cohortTable = cohortTable,
-                                        databaseTable = databaseTable,
-                                        temporalAnalysisRef = envir$temporalAnalysisRef,
-                                        analysisIdInCohortCharacterization = envir$analysisIdInCohortCharacterization,
-                                        analysisNameOptions = envir$analysisNameOptions,
-                                        domainIdOptions = envir$domainIdOptions,
-                                        characterizationTimeIdChoices = envir$characterizationTimeIdChoices,
-                                        temporalChoices = envir$temporalChoices,
-                                        prettyTable1Specifications = envir$prettyTable1Specifications)
-
-    visitContextModule(id = "visitContext",
-                       dataSource = dataSource,
-                       selectedCohort = selectedCohort,
-                       selectedDatabaseIds = selectedDatabaseIds,
-                       targetCohortId = targetCohortId,
-                       cohortTable = cohortTable,
-                       databaseTable = databaseTable)
-
-    conceptsInDataSourceModule(id = "conceptsInDataSource",
-                               dataSource = dataSource,
-                               selectedCohort = selectedCohort,
-                               selectedDatabaseIds = selectedDatabaseIds,
-                               targetCohortId = targetCohortId,
-                               selectedConceptSets = selectedConceptSets,
-                               getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
-                               cohortTable = cohortTable,
-                               databaseTable = databaseTable)
-
-    orphanConceptsModule("orphanConcepts",
+    if ("visitContext" %in% enabledTabs) {
+      visitContextModule(id = "visitContext",
                          dataSource = dataSource,
-                         selectedCohorts = selectedCohorts,
+                         selectedCohort = selectedCohort,
                          selectedDatabaseIds = selectedDatabaseIds,
                          targetCohortId = targetCohortId,
-                         selectedConceptSets = selectedConceptSets,
-                         conceptSetIds = conceptSetIds)
+                         cohortTable = cohortTable,
+                         databaseTable = databaseTable)
+    }
+
+    if ("relationship" %in% enabledTabs) {
+      cohortOverlapModule(id = "cohortOverlap",
+                          dataSource = dataSource,
+                          selectedCohorts = selectedCohorts,
+                          selectedDatabaseIds = selectedDatabaseIds,
+                          targetCohortId = targetCohortId,
+                          cohortIds = cohortIds,
+                          cohortTable = cohortTable)
+    }
+
+    if ("temporalCovariateValue" %in% enabledTabs) {
+      timeDistributionsModule(id = "timeDistributions",
+                              dataSource = dataSource,
+                              selectedCohorts = selectedCohorts,
+                              cohortIds = cohortIds,
+                              selectedDatabaseIds = selectedDatabaseIds,
+                              cohortTable = cohortTable)
+
+      characterizationModule(id = "characterization",
+                             dataSource = dataSource,
+                             cohortTable = cohortTable,
+                             databaseTable = databaseTable,
+                             selectedCohort = selectedCohort,
+                             selectedDatabaseIds = selectedDatabaseIds,
+                             targetCohortId = targetCohortId,
+                             temporalAnalysisRef = envir$temporalAnalysisRef,
+                             analysisNameOptions = envir$analysisNameOptions,
+                             analysisIdInCohortCharacterization = envir$analysisIdInCohortCharacterization,
+                             getResolvedAndMappedConceptIdsForFilters = envir$getResolvedAndMappedConceptIdsForFilters,
+                             selectedConceptSets = selectedConceptSets,
+                             characterizationMenuOutput = characterizationOutputForCharacterizationMenu, # This name must be changed
+                             characterizationTimeIdChoices = envir$characterizationTimeIdChoices)
+
+
+      temporalCharacterizationModule(id = "temporalCharacterization",
+                                     dataSource = dataSource,
+                                     selectedCohort = selectedCohort,
+                                     selectedDatabaseIds = selectedDatabaseIds,
+                                     targetCohortId = targetCohortId,
+                                     temporalAnalysisRef = envir$temporalAnalysisRef,
+                                     analysisNameOptions = envir$analysisNameOptions,
+                                     selectedTemporalTimeIds = selectedTemporalTimeIds,
+                                     getResolvedAndMappedConceptIdsForFilters = envir$getResolvedAndMappedConceptIdsForFilters,
+                                     selectedConceptSets = selectedConceptSets,
+                                     analysisIdInTemporalCharacterization = envir$analysisIdInTemporalCharacterization,
+                                     domainIdOptions = envir$domainIdOptions,
+                                     temporalCharacterizationTimeIdChoices = envir$temporalCharacterizationTimeIdChoices,
+                                     characterizationOutputForCharacterizationMenu = characterizationOutputForCharacterizationMenu)
+
+      compareCohortCharacterizationModule("compareCohortCharacterization",
+                                          dataSource = dataSource,
+                                          selectedCohort = selectedCohort,
+                                          selectedDatabaseIds = selectedDatabaseIds,
+                                          targetCohortId = targetCohortId,
+                                          comparatorCohortId = comparatorCohortId,
+                                          selectedComparatorCohort = selectedComparatorCohort,
+                                          selectedConceptSets = selectedConceptSets,
+                                          selectedTimeIds = shiny::reactive({ c(envir$characterizationTimeIdChoices$timeId %>% unique(), NA) }),
+                                          characterizationOutputMenu = characterizationOutputForCompareCharacterizationMenu,
+                                          getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
+                                          cohortTable = cohortTable,
+                                          databaseTable = databaseTable,
+                                          temporalAnalysisRef = envir$temporalAnalysisRef,
+                                          analysisIdInCohortCharacterization = envir$analysisIdInCohortCharacterization,
+                                          analysisNameOptions = envir$analysisNameOptions,
+                                          domainIdOptions = envir$domainIdOptions,
+                                          characterizationTimeIdChoices = envir$characterizationTimeIdChoices,
+                                          temporalChoices = envir$temporalChoices,
+                                          prettyTable1Specifications = envir$prettyTable1Specifications)
+
+      compareCohortCharacterizationModule("compareTemporalCohortCharacterization",
+                                          dataSource = dataSource,
+                                          selectedCohort = selectedCohort,
+                                          selectedDatabaseIds = selectedDatabaseIds,
+                                          targetCohortId = targetCohortId,
+                                          comparatorCohortId = comparatorCohortId,
+                                          selectedComparatorCohort = selectedComparatorCohort,
+                                          selectedConceptSets = selectedConceptSets,
+                                          selectedTimeIds = selectedTemporalTimeIds,
+                                          characterizationOutputMenu = characterizationOutputForCompareCharacterizationMenu,
+                                          getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
+                                          cohortTable = cohortTable,
+                                          databaseTable = databaseTable,
+                                          temporalAnalysisRef = envir$temporalAnalysisRef,
+                                          analysisIdInCohortCharacterization = envir$analysisIdInCohortCharacterization,
+                                          analysisNameOptions = envir$analysisNameOptions,
+                                          domainIdOptions = envir$domainIdOptions,
+                                          characterizationTimeIdChoices = envir$characterizationTimeIdChoices,
+                                          temporalChoices = envir$temporalChoices,
+                                          prettyTable1Specifications = envir$prettyTable1Specifications)
+    }
 
     if ("incidenceRate" %in% enabledTabs) {
       incidenceRatesModule(id = "incidenceRates",
@@ -758,13 +782,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                            selectedDatabaseIds = selectedDatabaseIds,
                            cohortTable = cohortTable)
     }
-
-    timeDistributionsModule(id = "timeDistributions",
-                            dataSource = dataSource,
-                            selectedCohorts = selectedCohorts,
-                            cohortIds = cohortIds,
-                            selectedDatabaseIds = selectedDatabaseIds,
-                            cohortTable = cohortTable)
 
     databaseInformationModule(id = "databaseInformation",
                               dataSource = dataSource,

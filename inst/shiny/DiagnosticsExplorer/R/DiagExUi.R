@@ -602,7 +602,8 @@ tabularUi <- function(databaseTable,
             shiny::tabPanel("Compare Temporal Characterization", compareCohortCharacterizationView(ns("compareTemporalCohortCharacterization")),
                             value = "compareTemporalCharacterization")
           },
-          shiny::tabPanel("Database Information", databaseInformationView(ns("databaseInformation"))),
+          shiny::tabPanel("Database Information", databaseInformationView(ns("databaseInformation")),
+                          value = "databaseInformation"),
           type = "pills",
           id = ns("tabs")
         ),
