@@ -550,7 +550,7 @@ tabularUi <- function(databaseTable,
                       id = "DiagnosticsExplorer") {
   ns <- shiny::NS(id)
   ui <-
-      shinydashboard::box(
+      shiny::fluidPage(
         shinydashboard::box(uiControls(databaseTable,
                                        ns,
                                        enabledTabs,
@@ -596,14 +596,14 @@ tabularUi <- function(databaseTable,
           },
           if ("temporalCovariateValue" %in% enabledTabs) {
             shiny::tabPanel("Compare Characterization", compareCohortCharacterizationView(ns("compareCohortCharacterization")),
-                            value = "compareCharacterization")
+                            value = "compareCohortCharacterization")
           },
           if ("temporalCovariateValue" %in% enabledTabs) {
             shiny::tabPanel("Compare Temporal Characterization", compareCohortCharacterizationView(ns("compareTemporalCohortCharacterization")),
                             value = "compareTemporalCharacterization")
           },
           shiny::tabPanel("Database Information", databaseInformationView(ns("databaseInformation"))),
-          type = "tabs",
+          type = "pills",
           id = ns("tabs")
         ),
         width = "100%"

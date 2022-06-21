@@ -118,7 +118,7 @@ characterizationModule <- function(id,
                                    dataSource,
                                    cohortTable,
                                    databaseTable,
-                                   selectedCohorts,
+                                   selectedCohort,
                                    selectedDatabaseIds,
                                    targetCohortId,
                                    temporalAnalysisRef,
@@ -132,7 +132,7 @@ characterizationModule <- function(id,
   shiny::moduleServer(id, function(input, output, session) {
 
 
-    output$selectedCohorts <- shiny::renderUI(selectedCohorts())
+    output$selectedCohorts <- shiny::renderUI(selectedCohort())
     # Cohort Characterization -------------------------------------------------
 
     #### characterizationAnalysisNameFilter ----
