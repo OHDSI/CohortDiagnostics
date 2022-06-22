@@ -134,10 +134,11 @@ queryResultCovariateValue <- function(dataSource,
                                       )
                 {@cohort_id != \"\"} ? { AND cohort_id IN (@cohort_id)}
                 {@time_id != \"\"} ? { AND (time_id IN (@time_id) OR time_id IS NULL)}
-                {@database_id != \"\"} ? { AND database_id IN (@database_id)};",
+                {@use_database_id} ? { AND database_id IN (@database_id)};",
         snakeCaseToCamelCase = TRUE,
         analysis_ids = analysisIds,
         time_id = temporalTimeRefData$timeId %>% unique(),
+        use_database_id = is.null(databaseIds),
         database_id = quoteLiterals(databaseIds),
         cohort_id = cohortIds,
         results_database_schema = dataSource$resultsDatabaseSchema
@@ -158,10 +159,11 @@ queryResultCovariateValue <- function(dataSource,
         {@covariate_id != \"\"} ? { AND covariate_id IN (@covariate_id)}
                 {@cohort_id != \"\"} ? { AND cohort_id IN (@cohort_id)}
                 {@time_id != \"\"} ? { AND (time_id IN (@time_id) OR time_id IS NULL)}
-                {@database_id != \"\"} ? { AND database_id IN (@database_id)};",
+                {@use_database_id} ? { AND database_id IN (@database_id)};",
         snakeCaseToCamelCase = TRUE,
         covariate_id = temporalCovariateRefData$covariateId %>% unique(),
         time_id = temporalTimeRefData$timeId %>% unique(),
+        use_database_id = is.null(databaseIds),
         database_id = quoteLiterals(databaseIds),
         cohort_id = cohortIds,
         results_database_schema = dataSource$resultsDatabaseSchema

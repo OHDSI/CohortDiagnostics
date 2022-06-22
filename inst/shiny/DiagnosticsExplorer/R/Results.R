@@ -19,7 +19,7 @@ getResultsCohortCounts <- function(dataSource,
   sql <- "SELECT *
             FROM  @results_database_schema.cohort_count
             WHERE cohort_id IS NOT NULL
-            {@database_ids != ''} ? { AND database_id in (@database_id)}
+            {@use_database_ids} ? { AND database_id in (@database_ids)}
             {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
             ;"
   data <-
@@ -29,11 +29,8 @@ getResultsCohortCounts <- function(dataSource,
       sql = sql,
       results_database_schema = dataSource$resultsDatabaseSchema,
       cohort_ids = cohortIds,
-      database_id = if (!is.null(databaseIds)) {
-        quoteLiterals(databaseIds)
-      } else {
-        ""
-      },
+      use_database_ids = is.null(databaseIds),
+      database_id = quoteLiterals(databaseIds),
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
