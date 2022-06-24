@@ -1,13 +1,13 @@
 shiny::shinyServer(function(input, output, session) {
-  diagnosticsExplorerModule(id = "DiagnosticsExplorer",
-                            dataSource = dataSource,
-                            databaseTable = database,
-                            cohortTable = cohort,
-                            enableAnnotation = enableAnnotation,
-                            enableAuthorization = enableAuthorization,
-                            enabledTabs = enabledTabs,
-                            conceptSets = conceptSets,
-                            userCredentials = userCredentials,
-                            activeUser = activeUser)
+  diagExpEnv$diagnosticsExplorerModule(id = "DiagnosticsExplorer",
+                                       dataSource = diagExpEnv$dataSource,
+                                       databaseTable = diagExpEnv$database,
+                                       cohortTable = diagExpEnv$cohort,
+                                       enableAnnotation = diagExpEnv$enableAnnotation,
+                                       enableAuthorization = diagExpEnv$enableAuthorization,
+                                       enabledTabs = diagExpEnv$enabledTabs,
+                                       conceptSets = diagExpEnv$conceptSets,
+                                       userCredentials = diagExpEnv$userCredentials,
+                                       activeUser = diagExpEnv$activeUser)
 
 })
