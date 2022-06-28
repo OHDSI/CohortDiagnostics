@@ -339,15 +339,15 @@ executeDiagnostics <- function(cohortDefinitionSet,
     # because of known bug in FeatureExtraction. https://github.com/OHDSI/FeatureExtraction/issues/144
     temporalCovariateSettings$ConditionEraGroupStart <- NULL
     temporalCovariateSettings$DrugEraGroupStart <- NULL
-    
-    checkmate::assert_double(x = temporalCovariateSettings$temporalStartDays,
-                            any.missing = FALSE,
-                            min.len = 1,
-                            add = errorMessage)
-    checkmate::assert_double(x = temporalCovariateSettings$temporalEndDays,
-                             any.missing = FALSE,
-                             min.len = 1,
-                             add = errorMessage)
+
+    checkmate::assert_integerish(x = temporalCovariateSettings$temporalStartDays,
+                              any.missing = FALSE,
+                              min.len = 1,
+                              add = errorMessage)
+    checkmate::assert_integerish(x = temporalCovariateSettings$temporalEndDays,
+                              any.missing = FALSE,
+                              min.len = 1,
+                              add = errorMessage)
     checkmate::reportAssertions(collection = errorMessage)
     
     # Adding required temporal windows required in results viewer
