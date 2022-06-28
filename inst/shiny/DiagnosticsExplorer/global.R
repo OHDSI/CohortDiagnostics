@@ -56,4 +56,4 @@ diagExpEnv$dataSource <-
   )
 
 # Init tables and other parameters in global session
-initializeEnvironment(diagExpEnv$dataSource, envir = diagExpEnv)
+diagExpEnv$initializeEnvironment(diagExpEnv$dataSource, envir = diagExpEnv)
