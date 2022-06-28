@@ -131,21 +131,6 @@ jobs:
         run: covr::codecov()
         shell: Rscript {0}
 
-      - name: Set up DiagnosticsExplorer Environment
-        if: success() && runner.os == 'macOS'
-        run: |
-          install.packages("renv")
-          setwd("inst/shiny/DiagnosticsExplorer")
-          renv::restore()
-        shell: Rscript {0}
-
-      - name: Test DiagnosticsExplorer
-        if: success() && runner.os == 'macOS'
-        run: |
-          renv::activate("inst/shiny/DiagnosticsExplorer/")
-          testthat::test_dir("inst/shiny/DiagnosticsExplorer/tests")
-        shell: Rscript {0}
-
   Release:
     needs: R-CMD-Check
 
