@@ -257,10 +257,46 @@ createDatabaseDataSource <- function(connection,
 
 #' Initialize variables required in applications global shared environment
 #' These settings are shared accross settings (e.g. accessed by all users) and should be read only during run time
-initializeEnvironment <- function(dataSource,
-                                  dataModelSpecifications = read.csv("data/resultsDataModelSpecification.csv"),
+initializeEnvironment <- function(shinySettings,
+                                  table1SpecPath = "data/Table1SpecsLong.csv",
+                                  dataModelSpecificationsPath = "data/resultsDataModelSpecification.csv",
                                   envir = .GlobalEnv) {
 
+  envir$shinySettings <- shinySettings
+  envir$connectionPool <- envir$getConnectionPool(envir$shinySettings$connectionDetails)
+  shiny::onStop(function() {
+    if (DBI::dbIsValid(envir$connectionPool)) {
+      writeLines("Closing database pool")
+      pool::poolClose(envir$connectionPool)
+    }
+  })
+
+  envir$dataSource <-
+    envir$createDatabaseDataSource(
+      connection = envir$connectionPool,
+      resultsDatabaseSchema = envir$shinySettings$resultsDatabaseSchema,
+      vocabularyDatabaseSchema = envir$
+        shinySettings$
+        vocabularyDatabaseSchemas,
+      dbms = envir$shinySettings$connectionDetails$dbms,
+      tablePrefix = envir$shinySettings$tablePrefix,
+      cohortTableName = envir$shinySettings$cohortTableName,
+      databaseTableName = envir$shinySettings$databaseTableName
+    )
+
+  envir$userCredentials <- data.frame()
+  if (envir$enableAuthorization & !is.null(envir$shinySettings$userCredentialsFile)) {
+    if (file.exists(envir$shinySettings$userCredentialsFile)) {
+      envir$userCredentials <-
+        readr::read_csv(file = envir$shinySettings$userCredentialsFile, col_types = readr::cols())
+    }
+  }
+
+  if (nrow(envir$userCredentials) == 0) {
+    envir$enableAuthorization <- FALSE
+  }
+
+  dataModelSpecifications <- read.csv(dataModelSpecificationsPath)
   envir$dataModelSpecifications <- dataModelSpecifications
   # Cleaning up any tables alreadu in memory:
   suppressWarnings(rm(
@@ -385,7 +421,7 @@ initializeEnvironment <- function(dataSource,
   envir$enabledTabs <- c(envir$enabledTabs, "database", "cohort")
 
   envir$prettyTable1Specifications <- readr::read_csv(
-    file = "data/Table1SpecsLong.csv",
+    file = table1SpecPath,
     col_types = readr::cols(),
     guess_max = min(1e7),
     lazy = FALSE
@@ -403,12 +439,13 @@ initializeEnvironment <- function(dataSource,
     -301, -201
   )
 
-  envir$showAnnotation <- FALSE
-  if (envir$enableAnnotation &
-    "annotation" %in% envir$resultsTablesOnServer &
-    "annotation_link" %in% envir$resultsTablesOnServer &
-    "annotation_attributes" %in% envir$resultsTablesOnServer) {
+  if (envir$shinySettings$enableAnnotation &
+    "annotation" %in% envir$resultsTables &
+    "annotation_link" %in% envir$resultsTables &
+    "annotation_attributes" %in% envir$resultsTables) {
     envir$showAnnotation <- TRUE
+    envir$enableAnnotation <- TRUE
+    envir$enableAuthorization <- TRUE
     options("showDiagnosticsExplorerAnnotation" = TRUE)
   } else {
     envir$enableAnnotation <- FALSE

@@ -140,17 +140,13 @@ annotationModule <- function(id,
 
     ## Retrieve Annotation ----------------
     reloadAnnotationSection <- reactiveVal(0)
+
     getAnnotationReactive <- shiny::reactive({
       reloadAnnotationSection()
-
-      inputCohortIds <- cohortTable %>%
-            dplyr::filter(.data$compoundName %in% selectedCohortIds()) %>%
-            dplyr::pull(.data$cohortId)
-
       results <- getAnnotationResult(
         dataSource = dataSource,
         diagnosticsId = id,
-        cohortIds = inputCohortIds,
+        cohortIds = selectedCohortIds(),
         databaseIds = selectedDatabaseIds()
       )
 

@@ -1,31 +1,22 @@
 ## Tests for annotation module
-
-source("../R/Annotation.R")
-source("../R/StartUpScripts.R")
-source("../R/Results.R")
-source("../R/ResultRetrieval.R")
-
-test_that("Posting annotation works", {
+test_that("Post annotation functions", {
   connectionPool <- getConnectionPool(connectionDetails)
-  dataModelSpecifications <-
-    read.csv("../data/resultsDataModelSpecification.csv")
-
   on.exit({
     pool::poolClose(pool = connectionPool)
   })
 
-  dataSource <- createDatabaseDataSource(
+  testDataSource <- createDatabaseDataSource(
     connection = connectionPool,
     resultsDatabaseSchema = "main",
     vocabularyDatabaseSchema = "main",
     dbms = "sqlite"
   )
 
-  renderTranslateExecuteSql(dataSource, "DELETE FROM ANNOTATION_LINK")
-  renderTranslateExecuteSql(dataSource, "DELETE FROM ANNOTATION")
+  renderTranslateExecuteSql(testDataSource, "DELETE FROM ANNOTATION_LINK")
+  renderTranslateExecuteSql(testDataSource, "DELETE FROM ANNOTATION")
 
   # Check the retreval functions work outside of shiny
-  result <- getAnnotationResult(dataSource,
+  result <- getAnnotationResult(testDataSource,
                                 "testAnnotationServer",
                                 c(17492, 18342, 17720),
                                 c("Eunomia"))
@@ -35,14 +26,14 @@ test_that("Posting annotation works", {
   checkmate::expect_data_frame(result$annotationLink)
 
   # Post test annotation
-  postAnnotationResult(dataSource,
+  postAnnotationResult(testDataSource,
                        "testAnnotationServer",
                        c(17492),
                        c("Eunomia"),
                        "TEST annotation",
                        "Test user")
 
-  result <- getAnnotationResult(dataSource,
+  result <- getAnnotationResult(testDataSource,
                                 "testAnnotationServer",
                                 c(17492),
                                 c("Eunomia"))
@@ -55,13 +46,17 @@ test_that("Posting annotation works", {
   expect_equal(result$annotation$annotation[[1]], "TEST annotation")
   expect_equal(result$annotation$createdBy[[1]], "Test user")
 
-  renderTranslateExecuteSql(dataSource, "DELETE FROM ANNOTATION_LINK")
-  renderTranslateExecuteSql(dataSource, "DELETE FROM ANNOTATION")
+  renderTranslateExecuteSql(testDataSource, "DELETE FROM ANNOTATION_LINK")
+  renderTranslateExecuteSql(testDataSource, "DELETE FROM ANNOTATION")
+})
 
-  initializeEnvironment(dataSource, dataModelSpecifications = dataModelSpecifications)
-
+test_that("Annotation shiny server functions", {
+  initializeEnvironment(shinySettings,
+                        table1SpecPath = table1SpecPath,
+                        dataModelSpecificationsPath = dataModelSpecificationsPath)
+  id <-"testAnnotationServer"
   shiny::testServer(annotationModule, args = list(
-    id = "testAnnotationServer",
+    id = id,
     dataSource = dataSource,
     activeLoggedInUser = shiny::reactiveVal("test-user"),
     selectedDatabaseIds = shiny::reactive(c("Eunomia")),
@@ -74,22 +69,23 @@ test_that("Posting annotation works", {
       targetCohort = NULL,
       database = "Eunomia"
     )
-    expect_null(getAnnotationReactive())
     params <- getParametersToPostAnnotation()
     expect_equal(params$database, "Eunomia")
 
     # post an entry
     postAnnotationResult(dataSource,
-                     "testAnnotationServer",
-                     c(17492),
-                     c("Eunomia"),
-                     "TEST annotation",
-                     "Test user")
-
+                         id,
+                         selectedCohortIds(),
+                         selectedDatabaseIds(),
+                         "TEST annotation",
+                         "Test user")
     # check results are valid
-    results <- getAnnotationReactive()
+    results <- getAnnotationResult(dataSource,
+                                "testAnnotationServer",
+                                   selectedCohortIds(),
+                                   selectedDatabaseIds())
     # Make sure result matches the input
-    checkmate::expect_data_frame(result$annotation, nrows = 1)
-    checkmate::expect_data_frame(result$annotationLink, nrows = 1)
+    checkmate::expect_data_frame(results$annotation, nrows = 1)
+    checkmate::expect_data_frame(results$annotationLink, nrows = 3)
   })
 })
