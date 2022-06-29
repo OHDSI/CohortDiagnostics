@@ -17,7 +17,7 @@ getResultsCohortCounts <- function(dataSource,
                                    cohortIds = NULL,
                                    databaseIds = NULL) {
   sql <- "SELECT *
-            FROM  @results_database_schema.cohort_count
+            FROM  @results_database_schema.@table_name
             WHERE cohort_id IS NOT NULL
             {@use_database_ids} ? { AND database_id in (@database_ids)}
             {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
@@ -31,6 +31,7 @@ getResultsCohortCounts <- function(dataSource,
       cohort_ids = cohortIds,
       use_database_ids = is.null(databaseIds),
       database_id = quoteLiterals(databaseIds),
+      table_name = dataSource$prefixTable("cohort_count"),
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
@@ -80,7 +81,7 @@ getIncidenceRateResult <- function(dataSource,
   checkmate::reportAssertions(collection = errorMessage)
 
   sql <- "SELECT *
-            FROM  @results_database_schema.incidence_rate
+            FROM  @results_database_schema.@table_name
             WHERE cohort_id in (@cohort_ids)
            	  AND database_id in (@database_ids)
             {@gender == TRUE} ? {AND gender != ''} : {  AND gender = ''}
@@ -99,6 +100,7 @@ getIncidenceRateResult <- function(dataSource,
       age_group = stratifyByAgeGroup,
       calendar_year = stratifyByCalendarYear,
       personYears = minPersonYears,
+      table_name = dataSource$prefixTable("incidence_rate"),
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
@@ -128,7 +130,7 @@ getInclusionRuleStats <- function(dataSource,
                                   cohortIds = NULL,
                                   databaseIds) {
   sql <- "SELECT *
-    FROM  @resultsDatabaseSchema.inclusion_rule_stats
+    FROM  @resultsDatabaseSchema.@table_name
     WHERE database_id in (@database_id)
     {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
     ;"
@@ -140,6 +142,7 @@ getInclusionRuleStats <- function(dataSource,
       resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
       cohort_ids = cohortIds,
       database_id = quoteLiterals(databaseIds),
+      table_name = dataSource$prefixTable("inclusion_rule_stats"),
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
@@ -178,8 +181,8 @@ getIndexEventBreakdown <- function(dataSource,
               concept.vocabulary_id,
               concept.standard_concept,
               concept.concept_code
-            FROM  @results_database_schema.index_event_breakdown
-            INNER JOIN  @vocabulary_database_schema.concept
+            FROM  @results_database_schema.@table_name index_event_breakdown
+            INNER JOIN  @vocabulary_database_schema.@concept_table concept
               ON index_event_breakdown.concept_id = concept.concept_id
             WHERE database_id in (@database_id)
               AND cohort_id in (@cohort_ids);"
@@ -192,6 +195,8 @@ getIndexEventBreakdown <- function(dataSource,
       vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
       cohort_ids = cohortIds,
       database_id = quoteLiterals(databaseIds),
+      table_name = dataSource$prefixTable("index_event_breakdown"),
+      concept_table = dataSource$prefixVocabTable("concept"),
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
@@ -223,8 +228,8 @@ getVisitContextResults <- function(dataSource,
 
   sql <- "SELECT visit_context.*,
               standard_concept.concept_name AS visit_concept_name
-            FROM  @results_database_schema.visit_context
-            INNER JOIN  @vocabulary_database_schema.concept standard_concept
+            FROM  @results_database_schema.@table_name visit_context
+            INNER JOIN  @vocabulary_database_schema.@concept_table standard_concept
               ON visit_context.visit_concept_id = standard_concept.concept_id
             WHERE database_id in (@database_id)
               AND cohort_id in (@cohort_ids);"
@@ -237,6 +242,8 @@ getVisitContextResults <- function(dataSource,
       vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
       cohort_ids = cohortIds,
       database_id = quoteLiterals(databaseIds),
+      table_name = dataSource$prefixTable("visit_context"),
+      concept_table = dataSource$prefixVocabTable("concept"),
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
@@ -260,32 +267,36 @@ getConceptsInCohort <-
             	c.standard_concept,
             	c.concept_code
             FROM (
-            	SELECT database_id,
-            		cohort_id,
-            		concept_id,
+            	SELECT isc.database_id,
+            		isc.cohort_id,
+            		isc.concept_id,
             		0 source_concept_id,
             		max(concept_subjects) concept_subjects,
             		sum(concept_count) concept_count
-            	FROM @results_database_schema.included_source_concept
-            	WHERE included_source_concept.cohort_id = @cohort_id
-            		AND database_id IN (@database_ids)
-            	GROUP BY database_id,
-            		cohort_id,
-            		concept_id
+            	FROM @results_database_schema.@table_name isc
+            	WHERE isc.cohort_id = @cohort_id
+            		AND isc.database_id IN (@database_ids)
+            	GROUP BY isc.database_id,
+            		isc.cohort_id,
+            		isc.concept_id
 
             	UNION
 
             	SELECT c.database_id,
             		c.cohort_id,
-            		c.source_concept_id concept_id,
+            		c.source_concept_id as concept_id,
             		1 source_concept_id,
             		max(c.concept_subjects) concept_subjects,
             		sum(c.concept_count) concept_count
-            	FROM @results_database_schema.included_source_concept c
+            	FROM @results_database_schema.@table_name c
             	WHERE c.cohort_id = @cohort_id
             		AND c.database_id IN (@database_ids)
+            	GROUP BY
+            	    c.database_id,
+            		c.cohort_id,
+            		c.source_concept_id
             	) concepts
-            INNER JOIN @results_database_schema.concept c ON concepts.concept_id = c.concept_id
+            INNER JOIN @results_database_schema.@concept_table c ON concepts.concept_id = c.concept_id
             WHERE c.invalid_reason IS NULL;"
     data <-
       renderTranslateQuerySql(
@@ -295,6 +306,8 @@ getConceptsInCohort <-
         results_database_schema = dataSource$resultsDatabaseSchema,
         cohort_id = cohortId,
         database_ids = quoteLiterals(databaseIds),
+        table_name = dataSource$prefixTable("included_source_concept"),
+        concept_table = dataSource$prefixTable("concept"),
         snakeCaseToCamelCase = TRUE
       ) %>%
       tidyr::tibble()
@@ -306,9 +319,9 @@ getCountForConceptIdInCohort <-
   function(dataSource,
            cohortId,
            databaseIds) {
-    sql <- "SELECT included_source_concept.*
-            FROM  @results_database_schema.included_source_concept
-            WHERE included_source_concept.cohort_id = @cohort_id
+    sql <- "SELECT ics.*
+            FROM  @results_database_schema.@table_name ics
+            WHERE ics.cohort_id = @cohort_id
              AND database_id in (@database_ids);"
     data <-
       renderTranslateQuerySql(
@@ -318,6 +331,7 @@ getCountForConceptIdInCohort <-
         results_database_schema = dataSource$resultsDatabaseSchema,
         cohort_id = cohortId,
         database_ids = quoteLiterals(databaseIds),
+        table_name = dataSource$prefixTable("included_source_concept"),
         snakeCaseToCamelCase = TRUE
       ) %>%
       tidyr::tibble()
@@ -379,21 +393,21 @@ getOrphanConceptResult <- function(dataSource,
                                    databaseIds,
                                    cohortId,
                                    conceptSetId = NULL) {
-  sql <- "SELECT orphan_concept.*,
-              concept_set_name,
+  sql <- "SELECT oc.*,
+              cs.concept_set_name,
               c.concept_name,
               c.vocabulary_id,
               c.concept_code,
               c.standard_concept
-            FROM  @results_database_schema.orphan_concept
-            INNER JOIN  @results_database_schema.concept_sets
-              ON orphan_concept.cohort_id = concept_sets.cohort_id
-                AND orphan_concept.concept_set_id = concept_sets.concept_set_id
-            INNER JOIN  @vocabulary_database_schema.concept c
-              ON orphan_concept.concept_id = c.concept_id
-            WHERE orphan_concept.cohort_id = @cohort_id
+            FROM  @results_database_schema.@orphan_table_name oc
+            INNER JOIN  @results_database_schema.@cs_table_name cs
+              ON oc.cohort_id = cs.cohort_id
+                AND oc.concept_set_id = cs.concept_set_id
+            INNER JOIN  @vocabulary_database_schema.@concept_table c
+              ON oc.concept_id = c.concept_id
+            WHERE oc.cohort_id = @cohort_id
               AND database_id in (@database_ids)
-              {@concept_set_id != \"\"} ? { AND orphan_concept.concept_set_id IN (@concept_set_id)};"
+              {@concept_set_id != \"\"} ? { AND oc.concept_set_id IN (@concept_set_id)};"
   data <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
@@ -403,6 +417,9 @@ getOrphanConceptResult <- function(dataSource,
       vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
       cohort_id = cohortId,
       database_ids = quoteLiterals(databaseIds),
+      orphan_table_name = dataSource$prefixTable("orphan_concept"),
+      cs_table_name = dataSource$prefixTable("concept_sets"),
+      concept_table = dataSource$prefixVocabTable("concept"),
       concept_set_id = conceptSetId,
       snakeCaseToCamelCase = TRUE
     ) %>%
@@ -424,7 +441,7 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <-
       )
     sqlResolved <- paste(
       sqlBase,
-      "INNER JOIN @vocabulary_database_schema.concept",
+      "INNER JOIN @vocabulary_database_schema.@concept",
       "  ON concept_sets.concept_id = concept.concept_id;",
       sep = "\n"
     )
@@ -441,9 +458,9 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <-
       )
     sqlMapped <- paste(
       sqlBaseMapped,
-      "INNER JOIN @vocabulary_database_schema.concept_relationship",
+      "INNER JOIN @vocabulary_database_schema.@concept_relationship",
       "  ON concept_sets.concept_id = concept_relationship.concept_id_2",
-      "INNER JOIN @vocabulary_database_schema.concept",
+      "INNER JOIN @vocabulary_database_schema.@concept",
       "  ON concept_relationship.concept_id_1 = concept.concept_id",
       "WHERE relationship_id = 'Maps to'",
       "  AND standard_concept IS NULL;",
@@ -456,6 +473,7 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <-
         dbms = dataSource$dbms,
         sql = sqlResolved,
         vocabulary_database_schema = vocabularyDatabaseSchema,
+        concept = dataSource$prefixVocabTable("concept"),
         snakeCaseToCamelCase = TRUE
       ) %>%
       tidyr::tibble() %>%
@@ -477,6 +495,8 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <-
         dbms = dataSource$dbms,
         sql = sqlMapped,
         vocabulary_database_schema = vocabularyDatabaseSchema,
+        concept = dataSource$prefixVocabTable("concept"),
+        concept_relationship = dataSource$prefixVocabTable("concept_relationship"),
         snakeCaseToCamelCase = TRUE
       ) %>%
       tidyr::tibble() %>%
@@ -520,23 +540,23 @@ resolvedConceptSet <- function(dataSource,
     add = errorMessage
   )
   checkmate::reportAssertions(collection = errorMessage)
-  sqlResolved <- "SELECT DISTINCT resolved_concepts.cohort_id,
-                    	resolved_concepts.concept_set_id,
-                    	concept.concept_id,
-                    	concept.concept_name,
-                    	concept.domain_id,
-                    	concept.vocabulary_id,
-                    	concept.concept_class_id,
-                    	concept.standard_concept,
-                    	concept.concept_code,
-                    	resolved_concepts.database_id
-                    FROM @results_database_schema.resolved_concepts
-                    INNER JOIN @results_database_schema.concept
-                    ON resolved_concepts.concept_id = concept.concept_id
-                    WHERE database_id IN (@databaseIds)
-                    	AND cohort_id = @cohortId
-                      {@concept_set_id != \"\"} ? { AND concept_set_id IN (@concept_set_id)}
-                    ORDER BY concept.concept_id;"
+  sqlResolved <- "SELECT DISTINCT rc.cohort_id,
+                    	rc.concept_set_id,
+                    	c.concept_id,
+                    	c.concept_name,
+                    	c.domain_id,
+                    	c.vocabulary_id,
+                    	c.concept_class_id,
+                    	c.standard_concept,
+                    	c.concept_code,
+                    	rc.database_id
+                    FROM @results_database_schema.@resolved_concepts_table rc
+                    INNER JOIN @results_database_schema.@concept_table c
+                    ON rc.concept_id = c.concept_id
+                    WHERE rc.database_id IN (@databaseIds)
+                    	AND rc.cohort_id = @cohortId
+                      {@concept_set_id != \"\"} ? { AND rc.concept_set_id IN (@concept_set_id)}
+                    ORDER BY c.concept_id;"
   resolved <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
@@ -546,6 +566,8 @@ resolvedConceptSet <- function(dataSource,
       databaseIds = quoteLiterals(databaseIds),
       cohortId = cohortId,
       concept_set_id = conceptSetId,
+      resolved_concepts_table = dataSource$prefixTable("orphan_concept"),
+      concept_table = dataSource$prefixTable("concept"),
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble() %>%
@@ -560,8 +582,8 @@ getMappedStandardConcepts <-
     sql <-
       "SELECT cr.CONCEPT_ID_2 AS SEARCHED_CONCEPT_ID,
           c.*
-        FROM @results_database_schema.concept_relationship cr
-        JOIN @results_database_schema.concept c ON c.concept_id = cr.concept_id_1
+        FROM @results_database_schema.@concept_relationship cr
+        JOIN @results_database_schema.@concept c ON c.concept_id = cr.concept_id_1
         WHERE cr.concept_id_2 IN (@concept_ids)
         	AND cr.INVALID_REASON IS NULL
         	AND relationship_id IN ('Mapped from');"
@@ -573,6 +595,8 @@ getMappedStandardConcepts <-
         sql = sql,
         results_database_schema = dataSource$resultsDatabaseSchema,
         concept_ids = conceptIds,
+        concept = dataSource$prefixTable("concept"),
+        concept_relationship = dataSource$prefixTable("concept_relationship"),
         snakeCaseToCamelCase = TRUE
       ) %>%
       tidyr::tibble()
@@ -588,8 +612,8 @@ getMappedSourceConcepts <-
       "
       SELECT cr.CONCEPT_ID_2 AS SEARCHED_CONCEPT_ID,
         c.*
-      FROM @results_database_schema.concept_relationship cr
-      JOIN @results_database_schema.concept c ON c.concept_id = cr.concept_id_1
+      FROM @results_database_schema.@concept_relationship cr
+      JOIN @results_database_schema.@concept c ON c.concept_id = cr.concept_id_1
       WHERE cr.concept_id_2 IN (@concept_ids)
       	AND cr.INVALID_REASON IS NULL
       	AND relationship_id IN ('Maps to');"
@@ -601,6 +625,8 @@ getMappedSourceConcepts <-
         sql = sql,
         results_database_schema = dataSource$resultsDatabaseSchema,
         concept_ids = conceptIds,
+        concept = dataSource$prefixTable("concept"),
+        concept_relationship = dataSource$prefixTable("concept_relationship"),
         snakeCaseToCamelCase = TRUE
       ) %>%
       tidyr::tibble()
@@ -634,21 +660,21 @@ mappedConceptSet <- function(dataSource,
     "WITH resolved_concepts_mapped
     AS (
     	SELECT concept_sets.concept_id AS resolved_concept_id,
-    		concept.concept_id,
-    		concept.concept_name,
-    		concept.domain_id,
-    		concept.vocabulary_id,
-    		concept.concept_class_id,
-    		concept.standard_concept,
-    		concept.concept_code
+    		c1.concept_id,
+    		c1.concept_name,
+    		c1.domain_id,
+    		c1.vocabulary_id,
+    		c1.concept_class_id,
+    		c1.standard_concept,
+    		c1.concept_code
     	FROM (
     		SELECT DISTINCT concept_id
-    		FROM @results_database_schema.resolved_concepts
+    		FROM @results_database_schema.@resolved_concepts
     		WHERE database_id IN (@databaseIds)
     			AND cohort_id = @cohortId
     		) concept_sets
-    	INNER JOIN @results_database_schema.concept_relationship ON concept_sets.concept_id = concept_relationship.concept_id_2
-    	INNER JOIN @results_database_schema.concept ON concept_relationship.concept_id_1 = concept.concept_id
+    	INNER JOIN @results_database_schema.@concept_relationship cr ON concept_sets.concept_id = cr.concept_id_2
+    	INNER JOIN @results_database_schema.@concept c1 ON cr.concept_id_1 = c1.concept_id
     	WHERE relationship_id = 'Maps to'
     		AND standard_concept IS NULL
     	)
@@ -656,7 +682,7 @@ mappedConceptSet <- function(dataSource,
     	c.cohort_id,
     	c.concept_set_id,
     	mapped.*
-    FROM (SELECT DISTINCT concept_id, database_id, cohort_id, concept_set_id FROM @results_database_schema.resolved_concepts) c
+    FROM (SELECT DISTINCT concept_id, database_id, cohort_id, concept_set_id FROM @results_database_schema.@resolved_concepts) c
     INNER JOIN resolved_concepts_mapped mapped ON c.concept_id = mapped.resolved_concept_id;"
   mapped <-
     renderTranslateQuerySql(
@@ -665,6 +691,9 @@ mappedConceptSet <- function(dataSource,
       sql = sqlMapped,
       results_database_schema = dataSource$resultsDatabaseSchema,
       databaseIds = quoteLiterals(databaseIds),
+      concept = dataSource$prefixTable("concept"),
+      concept_relationship = dataSource$prefixTable("concept_relationship"),
+      resolved_concepts = dataSource$prefixTable("resolved_concepts"),
       cohortId = cohortId,
       snakeCaseToCamelCase = TRUE
     ) %>%
@@ -677,7 +706,7 @@ mappedConceptSet <- function(dataSource,
 getDatabaseCounts <- function(dataSource,
                               databaseIds) {
   sql <- "SELECT *
-              FROM  @results_database_schema.database
+              FROM  @results_database_schema.@database_table
               WHERE database_id in (@database_ids);"
   data <-
     renderTranslateQuerySql(
@@ -686,6 +715,7 @@ getDatabaseCounts <- function(dataSource,
       sql = sql,
       results_database_schema = dataSource$resultsDatabaseSchema,
       database_ids = quoteLiterals(databaseIds),
+      databaseTable = dataSource$databaseTableName,
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
@@ -695,12 +725,13 @@ getDatabaseCounts <- function(dataSource,
 
 getMetaDataResults <- function(dataSource) {
   sql <- "SELECT *
-              FROM  @results_database_schema.metadata;"
+              FROM  @results_database_schema.@metadata;"
   data <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
       dbms = dataSource$dbms,
       sql = sql,
+      metadata = dataSource$prefixTable("metadata"),
       results_database_schema = dataSource$resultsDatabaseSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%

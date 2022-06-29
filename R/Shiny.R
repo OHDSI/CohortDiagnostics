@@ -35,6 +35,9 @@
 #' @param enableAnnotation Enable annotation functionality in shiny app
 #' @param aboutText        Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 #'                         If not provided, no About tab will be shown.
+#' @param tablePrefix      (Optional)  string to insert before table names (e.g. "cd_") for database table names
+#' @param cohortTableName  (Optional) if cohort table name differs from the standard - cohort (ignores prefix if set)
+#' @param databaseTableName (Optional) if database table name differs from the standard - database (ignores prefix if set)
 #'
 #' @details
 #' Launches a Shiny app that allows the user to explore the diagnostics
@@ -45,14 +48,16 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
                                       resultsDatabaseSchema = NULL,
                                       vocabularyDatabaseSchema = NULL,
                                       vocabularyDatabaseSchemas = resultsDatabaseSchema,
+                                      tablePrefix = "",
+                                      cohortTableName = "cohort",
+                                      databaseTableName = "database",
                                       aboutText = NULL,
                                       runOverNetwork = FALSE,
                                       port = 80,
                                       launch.browser = FALSE,
                                       enableAnnotation = TRUE) {
-
-  sqliteDbPath <- normalizePath(sqliteDbPath)
   if (is.null(connectionDetails)) {
+    sqliteDbPath <- normalizePath(sqliteDbPath)
     if (!file.exists(sqliteDbPath)) {
       stop("Sqlite database", sqliteDbPath, "not found. Please see createMergedSqliteResults")
     }
@@ -71,6 +76,14 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     warning(
       "vocabularyDatabaseSchema option is deprecated. Please use vocabularyDatabaseSchemas."
     )
+  }
+
+  if (cohortTableName == "cohort") {
+    cohortTableName <- paste0(tablePrefix, cohortTableName)
+  }
+
+  if (databaseTableName == "database") {
+    databaseTableName <- paste0(tablePrefix, databaseTableName)
   }
 
   ensure_installed(c("checkmate",
@@ -119,7 +132,10 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     connectionDetails = connectionDetails,
     resultsDatabaseSchema = resultsDatabaseSchema,
     vocabularyDatabaseSchemas = vocabularyDatabaseSchemas,
-    aboutText = aboutText
+    aboutText = aboutText,
+    tablePrefix = tablePrefix,
+    cohortTableName = cohortTableName,
+    databaseTableName = databaseTableName
   )
 
   options("enableCdAnnotation" = enableAnnotation)
@@ -141,6 +157,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
 #'                         folder.
 #' @param sqliteDbPath     Output path where sqlite database is placed
 #' @param overwrite        (Optional) overwrite existing sqlite lite db if it exists.
+#' @param tablePrefix      (Optional) string to insert before table names (e.g. "cd_") for database table names
 #' @export
 createMergedResultsFile <-
   function(dataFolder,

@@ -10,8 +10,11 @@ connectionDetails:
 # Store with keyring::key_set_with_value("KEYNAME", jsonlite::toJSON(myConnectionDetails))
 connectionDetailsSecureKey: ~
 
+tablePrefix: ""
 resultsDatabaseSchema: "main"
 vocabularyDatabaseSchemas: ["main"]
+cohortTableName: "cohort"
+databaseTableName: "database"
 
 enableAnnotation: TRUE
 enableAuthorization: TRUE

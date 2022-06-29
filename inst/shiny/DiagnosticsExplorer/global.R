@@ -19,7 +19,7 @@ if (exists("shinySettings")) {
   diagExpEnv$enableAnnotation <- getOption("enableCdAnnotation", default = FALSE)
   diagExpEnv$activeUser <- Sys.info()[['user']]
 } else {
-  diagExpEnv$shinySettings <- loadShinySettings(diagExpEnv$shinyConfigPath)
+  diagExpEnv$shinySettings <- diagExpEnv$loadShinySettings(diagExpEnv$shinyConfigPath)
 }
 
 ### if you need a way to authorize users
@@ -52,7 +52,10 @@ diagExpEnv$dataSource <-
     connection = diagExpEnv$connectionPool,
     resultsDatabaseSchema = diagExpEnv$shinySettings$resultsDatabaseSchema,
     vocabularyDatabaseSchema = diagExpEnv$shinySettings$vocabularyDatabaseSchemas,
-    dbms = diagExpEnv$shinySettings$connectionDetails$dbms
+    dbms = diagExpEnv$shinySettings$connectionDetails$dbms,
+    tablePrefix = diagExpEnv$shinySettings$tablePrefix,
+    cohortTableName = diagExpEnv$shinySettings$cohortTableName,
+    databaseTableName = diagExpEnv$shinySettings$databaseTableName
   )
 
 # Init tables and other parameters in global session

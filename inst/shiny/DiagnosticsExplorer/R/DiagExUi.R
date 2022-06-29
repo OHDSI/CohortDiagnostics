@@ -7,10 +7,19 @@ getAppInfo <- function(appVersionNum) {
   )
 }
 
-uiControls <- function(databaseTable,
+uiControls <- function(dbMapping,
                        ns,
                        enabledTabs,
                        temporalCharacterizationTimeIdChoices) {
+
+  databaseChoices <- list()
+
+  for (i in 1:nrow(dbMapping)) {
+    row <- dbMapping[i,]
+    databaseChoices[row$databaseName] <- row$databaseId
+  }
+
+  selectedDb <- dbMapping$databaseId[[1]]
 
   panels <- shiny::tagList(
     shiny::conditionalPanel(
@@ -29,8 +38,8 @@ uiControls <- function(databaseTable,
       shinyWidgets::pickerInput(
         inputId = ns("database"),
         label = "Database",
-        choices = databaseTable$databaseId %>% unique(),
-        selected = databaseTable$databaseId[1],
+        choices = databaseChoices,
+        selected = selectedDb,
         multiple = FALSE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
@@ -58,8 +67,8 @@ uiControls <- function(databaseTable,
       shinyWidgets::pickerInput(
         inputId = ns("databases"),
         label = "Database",
-        choices = databaseTable$databaseId %>% unique(),
-        selected = databaseTable$databaseId[1],
+        choices = databaseChoices,
+        selected = selectedDb,
         multiple = TRUE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(

@@ -622,6 +622,67 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                               databaseTable = databaseTable)
     }
 
+    ### getResolvedConceptsReactive ----
+    getResolvedConceptsReactive <-
+      shiny::reactive(x = {
+        output <-
+          resolvedConceptSet(
+            dataSource = dataSource,
+            databaseIds = as.character(databaseTable$databaseId),
+            cohortId = targetCohortId()
+          )
+        if (!hasData(output)) {
+          return(NULL)
+        }
+        return(output)
+      })
+
+    ### getMappedConceptsReactive ----
+    getMappedConceptsReactive <-
+      shiny::reactive(x = {
+        progress <- shiny::Progress$new()
+        on.exit(progress$close())
+        progress$set(message = "Getting concepts mapped to concept ids resolved by concept set expression (may take time)", value = 0)
+        output <-
+          mappedConceptSet(
+            dataSource = dataSource,
+            databaseIds =  as.character(databaseTable$databaseId),
+            cohortId = targetCohortId()
+          )
+        if (!hasData(output)) {
+          return(NULL)
+        }
+        return(output)
+      })
+
+    getResolvedAndMappedConceptIdsForFilters <- shiny::reactive({
+      validate(need(hasData(selectedDatabaseIds()), "No data sources chosen"))
+      validate(need(hasData(targetCohortId()), "No cohort chosen"))
+      validate(need(hasData(conceptSetIds()), "No concept set id chosen"))
+      resolved <- getResolvedConceptsReactive()
+      mapped <- getMappedConceptsReactive()
+      output <- c()
+      if (hasData(resolved)) {
+        resolved <- resolved %>%
+          dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
+          dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
+          dplyr::filter(.data$conceptSetId %in% conceptSetIds())
+        output <- c(output, resolved$conceptId) %>% unique()
+      }
+      if (hasData(mapped)) {
+        mapped <- mapped %>%
+          dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
+          dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
+          dplyr::filter(.data$conceptSetId %in% conceptSetIds())
+        output <- c(output, mapped$conceptId) %>% unique()
+      }
+      if (hasData(output)) {
+        return(output)
+      } else {
+        return(NULL)
+      }
+    })
+
     if ("includedSourceConcept" %in% enabledTabs) {
       conceptsInDataSourceModule(id = "conceptsInDataSource",
                                  dataSource = dataSource,

@@ -10,6 +10,9 @@ launchDiagnosticsExplorer(
   resultsDatabaseSchema = NULL,
   vocabularyDatabaseSchema = NULL,
   vocabularyDatabaseSchemas = resultsDatabaseSchema,
+  tablePrefix = "",
+  cohortTableName = "cohort",
+  databaseTableName = "database",
   aboutText = NULL,
   runOverNetwork = FALSE,
   port = 80,
@@ -35,6 +38,12 @@ have been uploaded.}
 The default value is the value of the resultsDatabaseSchema. We can provide a list of vocabulary schema
 that might represent different versions of the OMOP vocabulary tables. It allows us to compare the impact
 of vocabulary changes on Diagnostics. Not supported with an sqlite database.}
+
+\item{tablePrefix}{(Optional)  string to insert before table names (e.g. "cd_") for database table names}
+
+\item{cohortTableName}{(Optional) if cohort table name differs from the standard - cohort (ignores prefix if set)}
+
+\item{databaseTableName}{(Optional) if database table name differs from the standard - database (ignores prefix if set)}
 
 \item{aboutText}{Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 If not provided, no About tab will be shown.}
