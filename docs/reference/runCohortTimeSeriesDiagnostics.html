@@ -25,7 +25,7 @@ but is for ALL people in the datasource (i.e. present in observation period tabl
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.2</span>
       </span>
     </div>
 
@@ -94,21 +94,21 @@ but is for ALL people in the datasource (i.e. present in observation period tabl
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">runCohortTimeSeriesDiagnostics</span><span class="op">(</span>
-  connectionDetails <span class="op">=</span> <span class="cn">NULL</span>,
-  connection <span class="op">=</span> <span class="cn">NULL</span>,
-  tempEmulationSchema <span class="op">=</span> <span class="cn">NULL</span>,
-  <span class="va">cdmDatabaseSchema</span>,
-  cohortDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,
-  cohortTable <span class="op">=</span> <span class="st">"cohort"</span>,
-  runCohortTimeSeries <span class="op">=</span> <span class="cn">TRUE</span>,
-  runDataSourceTimeSeries <span class="op">=</span> <span class="cn">FALSE</span>,
-  timeSeriesMinDate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"1980-01-01"</span><span class="op">)</span>,
-  timeSeriesMaxDate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>,
-  stratifyByGender <span class="op">=</span> <span class="cn">TRUE</span>,
-  stratifyByAgeGroup <span class="op">=</span> <span class="cn">TRUE</span>,
-  cohortIds <span class="op">=</span> <span class="cn">NULL</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">runCohortTimeSeriesDiagnostics</span><span class="op">(</span></span>
+<span>  connectionDetails <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  connection <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  tempEmulationSchema <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">cdmDatabaseSchema</span>,</span>
+<span>  cohortDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,</span>
+<span>  cohortTable <span class="op">=</span> <span class="st">"cohort"</span>,</span>
+<span>  runCohortTimeSeries <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  runDataSourceTimeSeries <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  timeSeriesMinDate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"1980-01-01"</span><span class="op">)</span>,</span>
+<span>  timeSeriesMaxDate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  stratifyByGender <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  stratifyByAgeGroup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  cohortIds <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -118,40 +118,65 @@ but is for ALL people in the datasource (i.e. present in observation period tabl
 <code><a href="https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html" class="external-link">createConnectionDetails</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connection</code> is
 provided.</p></dd>
+
+
 <dt>connection</dt>
 <dd><p>An object of type <code>connection</code> as created using the
 <code><a href="https://ohdsi.github.io/DatabaseConnector/reference/connect.html" class="external-link">connect</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.</p></dd>
+
+
 <dt>tempEmulationSchema</dt>
 <dd><p>Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
 tables, provide a schema with write privileges where temp tables can be created.</p></dd>
+
+
 <dt>cdmDatabaseSchema</dt>
 <dd><p>Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.</p></dd>
+
+
 <dt>cohortDatabaseSchema</dt>
 <dd><p>Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example
 'scratch.dbo'.</p></dd>
+
+
 <dt>cohortTable</dt>
 <dd><p>Name of the cohort table.</p></dd>
+
+
 <dt>runCohortTimeSeries</dt>
 <dd><p>Generate and export the cohort level time series?</p></dd>
+
+
 <dt>runDataSourceTimeSeries</dt>
 <dd><p>Generate and export the Data source level time series? i.e.
 using all persons found in observation period table.</p></dd>
+
+
 <dt>timeSeriesMinDate</dt>
 <dd><p>(optional) Minimum date for time series. Default value January 1st 1980.</p></dd>
+
+
 <dt>timeSeriesMaxDate</dt>
 <dd><p>(optional) Maximum date for time series. Default value System date.</p></dd>
+
+
 <dt>stratifyByGender</dt>
 <dd><p>Do you want to stratify by Gender</p></dd>
+
+
 <dt>stratifyByAgeGroup</dt>
 <dd><p>Do you want to stratify by Age group</p></dd>
+
+
 <dt>cohortIds</dt>
 <dd><p>A vector of one or more Cohort Ids to compute time distribution for.</p></dd>
+
 </dl></div>
 
   </div>
@@ -166,7 +191,7 @@ using all persons found in observation period table.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

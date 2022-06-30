@@ -483,7 +483,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
              MAX(observation_period_end_date) observation_period_max_date,
              COUNT(distinct person_id) persons,
              COUNT(person_id) records,
-             SUM(DATEDIFF(dd, observation_period_start_date, observation_period_end_date)) person_days
+             SUM(CAST(DATEDIFF(dd, observation_period_start_date, observation_period_end_date) AS BIGINT)) person_days
              FROM @cdm_database_schema.observation_period;",
     cdm_database_schema = cdmDatabaseSchema,
     snakeCaseToCamelCase = TRUE,

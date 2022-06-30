@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.2</span>
       </span>
     </div>
 
@@ -72,6 +72,12 @@
       <small>Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="3.0.2" id="cohortdiagnostics-302">CohortDiagnostics 3.0.2<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-302"></a></h2>
+<p>Bug fixes:</p>
+<ol style="list-style-type: decimal"><li><p>Fixed issue with writing csvs caused by update to SqlRender camelCaseToSnakeCase function check that caused execution to crash if parameters were null.</p></li>
+<li><p>Fixed issue with observation period overflowing sql integer on BigQuery causing execution to crash</p></li>
+</ol></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="3.0.1" id="cohortdiagnostics-301">CohortDiagnostics 3.0.1<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-301"></a></h2>
 <p>Bug fixes:</p>
@@ -339,7 +345,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

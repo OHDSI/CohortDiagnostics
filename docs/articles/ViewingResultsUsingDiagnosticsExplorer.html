@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.2</span>
       </span>
     </div>
 
@@ -97,7 +97,7 @@
                         <h4 data-toc-skip class="author">Gowtham
 Rao</h4>
             
-            <h4 data-toc-skip class="date">2022-05-31</h4>
+            <h4 data-toc-skip class="date">2022-06-29</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd" class="external-link"><code>vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd</code></a></small>
       <div class="hidden name"><code>ViewingResultsUsingDiagnosticsExplorer.Rmd</code></div>
@@ -147,12 +147,12 @@ specific rules.)</li>
 recommend that you convert all the csv files that are the precomputed
 output of Cohort Diagnostics into an sqlite database file as follows</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/createMergedResultsFile.html">createMergedResultsFile</a></span><span class="op">(</span><span class="st">"C:/temp/allZipFiles"</span>, sqliteDbPath <span class="op">=</span> <span class="st">"MyCohortDiagnosticsResulst.sqlite"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/createMergedResultsFile.html">createMergedResultsFile</a></span><span class="op">(</span><span class="st">"C:/temp/allZipFiles"</span>, sqliteDbPath <span class="op">=</span> <span class="st">"MyCohortDiagnosticsResulst.sqlite"</span><span class="op">)</span></span></code></pre></div>
 <p>.RData files enables faster load of the Shiny application. Once you
 have converted your results data into an sqlite database file, you may
 launch the Diagnostics Explorer app as follows:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span><span class="op">(</span>sqliteDbPath <span class="op">=</span> <span class="st">"MyCohortDiagnosticsResulst.sqlite"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span><span class="op">(</span>sqliteDbPath <span class="op">=</span> <span class="st">"MyCohortDiagnosticsResulst.sqlite"</span><span class="op">)</span></span></code></pre></div>
 <p>If running the application from a R-studio environment, please make
 sure the sqlite file is in a folder called ‘data’.</p>
 <p>To automatically create a zip archive containing the
@@ -160,7 +160,7 @@ sure the sqlite file is in a folder called ‘data’.</p>
 shared environments, such as data.ohdsi.org, run the function
 <code>createDiagnosticsExplorerZip</code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/createDiagnosticsExplorerZip.html">createDiagnosticsExplorerZip</a></span><span class="op">(</span>outputZipfile <span class="op">=</span> <span class="st">"MyCdProject.zip"</span>, sqliteDbPath <span class="op">=</span> <span class="st">"MyCohortDiagnosticsResulst.sqlite"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/createDiagnosticsExplorerZip.html">createDiagnosticsExplorerZip</a></span><span class="op">(</span>outputZipfile <span class="op">=</span> <span class="st">"MyCdProject.zip"</span>, sqliteDbPath <span class="op">=</span> <span class="st">"MyCohortDiagnosticsResulst.sqlite"</span><span class="op">)</span></span></code></pre></div>
 <p>This archive will contain a fully executable shiny application.</p>
 </div>
 <div class="section level2">
@@ -200,7 +200,7 @@ available over your network (i.e. within your networks firewall).</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer>

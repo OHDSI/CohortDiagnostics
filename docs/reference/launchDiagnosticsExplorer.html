@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.2</span>
       </span>
     </div>
 
@@ -78,49 +78,66 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">launchDiagnosticsExplorer</span><span class="op">(</span>
-  sqliteDbPath <span class="op">=</span> <span class="st">"MergedCohortDiagnosticsData.sqlite"</span>,
-  connectionDetails <span class="op">=</span> <span class="cn">NULL</span>,
-  resultsDatabaseSchema <span class="op">=</span> <span class="cn">NULL</span>,
-  vocabularyDatabaseSchema <span class="op">=</span> <span class="cn">NULL</span>,
-  vocabularyDatabaseSchemas <span class="op">=</span> <span class="va">resultsDatabaseSchema</span>,
-  aboutText <span class="op">=</span> <span class="cn">NULL</span>,
-  runOverNetwork <span class="op">=</span> <span class="cn">FALSE</span>,
-  port <span class="op">=</span> <span class="fl">80</span>,
-  launch.browser <span class="op">=</span> <span class="cn">FALSE</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">launchDiagnosticsExplorer</span><span class="op">(</span></span>
+<span>  sqliteDbPath <span class="op">=</span> <span class="st">"MergedCohortDiagnosticsData.sqlite"</span>,</span>
+<span>  connectionDetails <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  resultsDatabaseSchema <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  vocabularyDatabaseSchema <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  vocabularyDatabaseSchemas <span class="op">=</span> <span class="va">resultsDatabaseSchema</span>,</span>
+<span>  aboutText <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  runOverNetwork <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  port <span class="op">=</span> <span class="fl">80</span>,</span>
+<span>  launch.browser <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>sqliteDbPath</dt>
 <dd><p>Path to merged sqlite file. See <code><a href="createMergedResultsFile.html">createMergedResultsFile</a></code> to create file.</p></dd>
+
+
 <dt>connectionDetails</dt>
 <dd><p>An object of type <code>connectionDetails</code> as created using the
 <code><a href="https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html" class="external-link">createConnectionDetails</a></code> function in the
 DatabaseConnector package, specifying how to connect to the server where
 the CohortDiagnostics results have been uploaded using the
 <code><a href="uploadResults.html">uploadResults</a></code> function.</p></dd>
+
+
 <dt>resultsDatabaseSchema</dt>
 <dd><p>The schema on the database server where the CohortDiagnostics results
 have been uploaded.</p></dd>
+
+
 <dt>vocabularyDatabaseSchema</dt>
 <dd><p>(Deprecated) Please use vocabularyDatabaseSchemas.</p></dd>
+
+
 <dt>vocabularyDatabaseSchemas</dt>
 <dd><p>(optional) A list of one or more schemas on the database server where the vocabulary tables are located.
 The default value is the value of the resultsDatabaseSchema. We can provide a list of vocabulary schema
 that might represent different versions of the OMOP vocabulary tables. It allows us to compare the impact
 of vocabulary changes on Diagnostics. Not supported with an sqlite database.</p></dd>
+
+
 <dt>aboutText</dt>
 <dd><p>Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 If not provided, no About tab will be shown.</p></dd>
+
+
 <dt>runOverNetwork</dt>
 <dd><p>(optional) Do you want the app to run over your network?</p></dd>
+
+
 <dt>port</dt>
 <dd><p>(optional) Only used if <code>runOverNetwork</code> = TRUE.</p></dd>
+
+
 <dt>launch.browser</dt>
 <dd><p>Should the app be launched in your default browser, or in a Shiny window.
 Note: copying to clipboard will not work in a Shiny window.</p></dd>
+
 </dl></div>
     <div id="details">
     <h2>Details</h2>
@@ -139,7 +156,7 @@ Note: copying to clipboard will not work in a Shiny window.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>
