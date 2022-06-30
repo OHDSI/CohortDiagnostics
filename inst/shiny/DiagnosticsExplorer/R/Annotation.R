@@ -141,12 +141,18 @@ annotationModule <- function(id,
     ## Retrieve Annotation ----------------
     reloadAnnotationSection <- reactiveVal(0)
 
+    inputCohortIds <- shiny::reactive({
+      cohortTable %>%
+        dplyr::filter(.data$compoundName %in% selectedCohortIds()) %>%
+        dplyr::pull(.data$cohortId)
+    })
+
     getAnnotationReactive <- shiny::reactive({
       reloadAnnotationSection()
       results <- getAnnotationResult(
         dataSource = dataSource,
         diagnosticsId = id,
-        cohortIds = selectedCohortIds(),
+        cohortIds = inputCohortIds(),
         databaseIds = selectedDatabaseIds()
       )
 
@@ -256,19 +262,7 @@ annotationModule <- function(id,
     getParametersToPostAnnotation <- shiny::reactive({
       tempList <- list()
       # Annotation - cohort Ids
-      if (!is.null(input$targetCohort)) {
-        inputCohortIds <-
-          cohortTable %>%
-            dplyr::filter(.data$compoundName %in% input$targetCohort) %>%
-            dplyr::pull(.data$cohortId)
-        # cohortsConceptInDataSource should be the same as in menu cohort
-      } else {
-         inputCohortIds <-
-          cohortTable %>%
-            dplyr::filter(.data$compoundName %in% selectedCohortIds()) %>%
-            dplyr::pull(.data$cohortId)
-      }
-      tempList$cohortIds <- inputCohortIds
+      tempList$cohortIds <- inputCohortIds()
 
       # Annotation - database Ids
       if (!is.null(input$database)) {
