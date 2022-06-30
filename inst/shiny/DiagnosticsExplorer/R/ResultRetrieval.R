@@ -77,7 +77,7 @@ queryResultCovariateValue <- function(dataSource,
       dbms = dataSource$dbms,
       sql = "SELECT *
              FROM @results_database_schema.@table_name
-             WHERE time_id IS NOT NULL
+             WHERE (time_id IS NOT NULL AND time_id != 0)
               {@start_day != \"\"} ? { AND start_day IN (@start_day)}
               {@end_day != \"\"} ? { AND end_day IN (@end_day)};",
       snakeCaseToCamelCase = TRUE,
@@ -139,7 +139,7 @@ queryResultCovariateValue <- function(dataSource,
                                           {@analysis_ids != \"\"} ? { AND analysis_id IN (@analysis_ids)}
                                       )
                 {@cohort_id != \"\"} ? { AND cohort_id IN (@cohort_id)}
-                {@time_id != \"\"} ? { AND (time_id IN (@time_id) OR time_id IS NULL)}
+                {@time_id != \"\"} ? { AND (time_id IN (@time_id) OR time_id IS NULL OR time_id == 0)}
                 {@use_database_id} ? { AND database_id IN (@database_id)};",
         snakeCaseToCamelCase = TRUE,
         analysis_ids = analysisIds,
@@ -166,7 +166,7 @@ queryResultCovariateValue <- function(dataSource,
               WHERE covariate_id IS NOT NULL
         {@covariate_id != \"\"} ? { AND covariate_id IN (@covariate_id)}
                 {@cohort_id != \"\"} ? { AND cohort_id IN (@cohort_id)}
-                {@time_id != \"\"} ? { AND (time_id IN (@time_id) OR time_id IS NULL)}
+                {@time_id != \"\"} ? { AND (time_id IN (@time_id) OR time_id IS NULL OR time_id == 0)}
                 {@use_database_id} ? { AND database_id IN (@database_id)};",
         snakeCaseToCamelCase = TRUE,
         covariate_id = temporalCovariateRefData$covariateId %>% unique(),

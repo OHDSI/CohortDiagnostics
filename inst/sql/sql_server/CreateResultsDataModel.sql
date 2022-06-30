@@ -329,8 +329,7 @@ CREATE TABLE @results_schema.@incidence_rate (
 			calendar_year VARCHAR(4),
 			incidence_rate FLOAT NOT NULL,
 			cohort_id BIGINT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(gender, age_group, calendar_year, cohort_id, database_id)
+			database_id VARCHAR NOT NULL
 );
 
 --Table included_source_concept
@@ -442,7 +441,7 @@ CREATE TABLE @results_schema.@temporal_covariate_ref (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@temporal_covariate_value (
 			cohort_id BIGINT NOT NULL,
-			time_id INT,
+			time_id INT NOT NULL,
 			covariate_id BIGINT NOT NULL,
 			sum_value FLOAT NOT NULL,
 			mean FLOAT NOT NULL,
@@ -455,7 +454,7 @@ CREATE TABLE @results_schema.@temporal_covariate_value (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@temporal_covariate_value_dist (
 			cohort_id BIGINT NOT NULL,
-			time_id INT,
+			time_id INT NOT NULL,
 			covariate_id BIGINT NOT NULL,
 			count_value FLOAT NOT NULL,
 			min_value FLOAT NOT NULL,
@@ -500,8 +499,7 @@ CREATE TABLE @results_schema.@time_series (
 			subjects_start_in BIGINT,
 			records_end BIGINT,
 			subjects_end BIGINT,
-			subjects_end_in BIGINT,
-			PRIMARY KEY(cohort_id, database_id, period_begin, period_end, calendar_interval, gender, age_group, series_type)
+			subjects_end_in BIGINT
 );
 
 --Table visit_context
