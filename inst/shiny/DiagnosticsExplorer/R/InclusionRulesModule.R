@@ -23,7 +23,7 @@ inclusionRulesView <- function(id) {
                 inputId = "inclusionRuleTableFilters",
                 label = "Inclusion Rule Events",
                 choices = c("All", "Meet", "Gain", "Remain", "Total"),
-                selected = "All",
+                selected = "Remain",
                 inline = TRUE
               )
             ),
@@ -62,12 +62,15 @@ inclusionRulesModule <- function(id,
         cohortIds = targetCohortId(),
         databaseIds = selectedDatabaseIds()
       ) %>%
-        dplyr::rename(
-          Meet = .data$meetSubjects,
-          Gain = .data$gainSubjects,
-          Remain = .data$remainSubjects,
+        dplyr::mutate(
+          Meet = .data$meetSubjects / .data$totalSubjects,
+          Gain = .data$gainSubjects / .data$totalSubjects,
+          Remain = .data$remainSubjects / .data$totalSubjects,
           Total = .data$totalSubjects
-        )
+        ) %>%
+        dplyr::arrange(.data$cohortId,
+                       .data$databaseId,
+                       .data$ruleSequenceId)
 
       validate(need(
         (nrow(table) > 0),
@@ -75,7 +78,7 @@ inclusionRulesModule <- function(id,
       ))
 
       keyColumnFields <-
-        c("cohortId", "ruleName")
+        c("ruleSequenceId", "ruleName")
       countLocation <- 1
       if (input$inclusionRuleTableFilters == "All") {
         dataColumnFields <- c("Meet", "Gain", "Remain", "Total")
@@ -98,7 +101,7 @@ inclusionRulesModule <- function(id,
           string = dataColumnFields
         )
 
-      showDataAsPercent <- FALSE
+      showDataAsPercent <- TRUE
       ## showDataAsPercent set based on UI selection - proportion
 
       getDisplayTableGroupedByDatabaseId(
@@ -111,7 +114,7 @@ inclusionRulesModule <- function(id,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showDataAsPercent = showDataAsPercent,
-        sort = TRUE
+        sort = FALSE
       )
     })
   })
