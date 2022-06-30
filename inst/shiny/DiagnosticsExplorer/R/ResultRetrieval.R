@@ -753,11 +753,25 @@ getResultsCohortOverlap <- function(dataSource,
       endDays = c(9999, 0)
     )
 
-  if (any(
-    is.null(cohortRelationship),
-    nrow(cohortRelationship) == 0
-  )) {
-    return(NULL)
+  if (any(is.null(cohortRelationship),
+          nrow(cohortRelationship) == 0)) {
+    cohortRelationship <- dplyr::tibble(databaseId = databaseIds) %>%
+      tidyr::crossing(dplyr::tibble(cohortId = cohortIds)) %>%
+      tidyr::crossing(dplyr::tibble(comparatorCohortId = comparatorCohortIds)) %>%
+      dplyr::filter(.data$comparatorCohortId != .data$cohortId) %>%
+      tidyr::crossing(dplyr::tibble(startDay = c(-9999, 0),
+                                    endDay = c(9999, 0))) %>%
+      dplyr::full_join(
+        cohortRelationship,
+        by = c(
+          "databaseId",
+          "cohortId",
+          "comparatorCohortId",
+          "startDay",
+          "endDay"
+        )
+      )
+    cohortRelationship[is.na(cohortRelationship)] <- 0
   }
 
   fullOffSet <- cohortRelationship %>%
