@@ -889,8 +889,8 @@ bodyTabItems <- shinydashboard::tabItems(
               shiny::radioButtons(
                 inputId = "inclusionRuleTableFilters",
                 label = "Inclusion Rule Events",
-                choices = c("All", "Meet", "Gain", "Remain", "Total"),
-                selected = "All",
+                choices = c("All", "Meet", "Gain", "Remain"), # "Total"
+                selected = "Remain",
                 inline = TRUE
               )
             ),

@@ -1150,8 +1150,6 @@ shiny::shinyServer(function(input, output, session) {
       "There is no data for the selected combination."
     ))
 
-
-
     countsForHeader <- NULL
 
     maxCountValue <-
@@ -1732,23 +1730,26 @@ shiny::shinyServer(function(input, output, session) {
       cohortIds = targetCohortId(),
       databaseIds = selectedDatabaseIds()
     ) %>%
-      dplyr::rename(
-        Meet = .data$meetSubjects,
-        Gain = .data$gainSubjects,
-        Remain = .data$remainSubjects,
+      dplyr::mutate(
+        Meet = .data$meetSubjects/.data$totalSubjects,
+        Gain = .data$gainSubjects/.data$totalSubjects,
+        Remain = .data$remainSubjects/.data$totalSubjects,
         Total = .data$totalSubjects
-      )
+      ) %>% 
+      dplyr::arrange(.data$cohortId,
+                     .data$databaseId,
+                     .data$ruleSequenceId)
 
     validate(need(
       (nrow(table) > 0),
       "There is no data for the selected combination."
     ))
-
+    
     keyColumnFields <-
-      c("cohortId", "ruleName")
+      c("ruleSequenceId", "ruleName")
     countLocation <- 1
     if (input$inclusionRuleTableFilters == "All") {
-      dataColumnFields <- c("Meet", "Gain", "Remain", "Total")
+      dataColumnFields <- c("Meet", "Gain", "Remain")
     } else {
       dataColumnFields <- input$inclusionRuleTableFilters
     }
@@ -1768,7 +1769,7 @@ shiny::shinyServer(function(input, output, session) {
         string = dataColumnFields
       )
 
-    showDataAsPercent <- FALSE
+    showDataAsPercent <- TRUE
     ## showDataAsPercent set based on UI selection - proportion
 
     getDisplayTableGroupedByDatabaseId(
@@ -1781,7 +1782,7 @@ shiny::shinyServer(function(input, output, session) {
       dataColumns = dataColumnFields,
       maxCount = maxCountValue,
       showDataAsPercent = showDataAsPercent,
-      sort = TRUE
+      sort = FALSE
     )
   })
 
