@@ -22,7 +22,7 @@ Alternatively, a covariate setting object may be created using the above as an e
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.2</span>
       </span>
     </div>
 
@@ -88,132 +88,189 @@ Alternatively, a covariate setting object may be created using the above as an e
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">executeDiagnostics</span><span class="op">(</span>
-  <span class="va">cohortDefinitionSet</span>,
-  <span class="va">exportFolder</span>,
-  <span class="va">databaseId</span>,
-  <span class="va">cohortDatabaseSchema</span>,
-  databaseName <span class="op">=</span> <span class="va">databaseId</span>,
-  databaseDescription <span class="op">=</span> <span class="va">databaseId</span>,
-  connectionDetails <span class="op">=</span> <span class="cn">NULL</span>,
-  connection <span class="op">=</span> <span class="cn">NULL</span>,
-  <span class="va">cdmDatabaseSchema</span>,
-  tempEmulationSchema <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"sqlRenderTempEmulationSchema"</span><span class="op">)</span>,
-  cohortTable <span class="op">=</span> <span class="st">"cohort"</span>,
-  cohortTableNames <span class="op">=</span> <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortTableNames.html" class="external-link">getCohortTableNames</a></span><span class="op">(</span>cohortTable <span class="op">=</span> <span class="va">cohortTable</span><span class="op">)</span>,
-  vocabularyDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,
-  cohortIds <span class="op">=</span> <span class="cn">NULL</span>,
-  cdmVersion <span class="op">=</span> <span class="fl">5</span>,
-  runInclusionStatistics <span class="op">=</span> <span class="cn">TRUE</span>,
-  runIncludedSourceConcepts <span class="op">=</span> <span class="cn">TRUE</span>,
-  runOrphanConcepts <span class="op">=</span> <span class="cn">TRUE</span>,
-  runTimeSeries <span class="op">=</span> <span class="cn">FALSE</span>,
-  runVisitContext <span class="op">=</span> <span class="cn">TRUE</span>,
-  runBreakdownIndexEvents <span class="op">=</span> <span class="cn">TRUE</span>,
-  runIncidenceRate <span class="op">=</span> <span class="cn">TRUE</span>,
-  runCohortRelationship <span class="op">=</span> <span class="cn">TRUE</span>,
-  runTemporalCohortCharacterization <span class="op">=</span> <span class="cn">TRUE</span>,
- 
-    temporalCovariateSettings <span class="op">=</span> <span class="fu">FeatureExtraction</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/FeatureExtraction/man/createTemporalCovariateSettings.html" class="external-link">createTemporalCovariateSettings</a></span><span class="op">(</span>useDemographicsGender
-    <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsAge <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsAgeGroup <span class="op">=</span> <span class="cn">TRUE</span>,
-    useDemographicsRace <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsEthnicity <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsIndexYear
-    <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsIndexMonth <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsIndexYearMonth <span class="op">=</span> <span class="cn">TRUE</span>,
-    useDemographicsPriorObservationTime <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsPostObservationTime <span class="op">=</span>
-    <span class="cn">TRUE</span>, useDemographicsTimeInCohort <span class="op">=</span> <span class="cn">TRUE</span>, useConditionOccurrence <span class="op">=</span> <span class="cn">TRUE</span>,
-    useProcedureOccurrence <span class="op">=</span> <span class="cn">TRUE</span>, useDrugEraStart <span class="op">=</span> <span class="cn">TRUE</span>,      useMeasurement <span class="op">=</span> <span class="cn">TRUE</span>,
-    useConditionEraStart <span class="op">=</span> <span class="cn">TRUE</span>, useConditionEraOverlap <span class="op">=</span> <span class="cn">TRUE</span>, useConditionEraGroupStart
-    <span class="op">=</span> <span class="cn">FALSE</span>, useConditionEraGroupOverlap <span class="op">=</span> <span class="cn">TRUE</span>, useDrugExposure <span class="op">=</span> <span class="cn">FALSE</span>,
-    useDrugEraOverlap <span class="op">=</span> <span class="cn">FALSE</span>, useDrugEraGroupStart <span class="op">=</span> <span class="cn">FALSE</span>, useDrugEraGroupOverlap <span class="op">=</span>
-    <span class="cn">TRUE</span>, useObservation <span class="op">=</span> <span class="cn">TRUE</span>, useDeviceExposure <span class="op">=</span> <span class="cn">TRUE</span>, useCharlsonIndex <span class="op">=</span> <span class="cn">TRUE</span>,
-    useDcsi <span class="op">=</span> <span class="cn">TRUE</span>, useChads2 <span class="op">=</span> <span class="cn">TRUE</span>, useChads2Vasc <span class="op">=</span> <span class="cn">TRUE</span>, useHfrs <span class="op">=</span> <span class="cn">FALSE</span>,
-    temporalStartDays <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">9999</span>, <span class="op">-</span><span class="fl">365</span>, <span class="op">-</span><span class="fl">180</span>, <span class="op">-</span><span class="fl">30</span>, <span class="op">-</span><span class="fl">365</span>, <span class="op">-</span><span class="fl">30</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">31</span>, <span class="op">-</span><span class="fl">9999</span><span class="op">)</span>,
-    temporalEndDays <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>,          <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="op">-</span><span class="fl">31</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">30</span>, <span class="fl">365</span>, <span class="fl">9999</span><span class="op">)</span><span class="op">)</span>,
-  minCellCount <span class="op">=</span> <span class="fl">5</span>,
-  incremental <span class="op">=</span> <span class="cn">FALSE</span>,
-  incrementalFolder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">exportFolder</span>, <span class="st">"incremental"</span><span class="op">)</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">executeDiagnostics</span><span class="op">(</span></span>
+<span>  <span class="va">cohortDefinitionSet</span>,</span>
+<span>  <span class="va">exportFolder</span>,</span>
+<span>  <span class="va">databaseId</span>,</span>
+<span>  <span class="va">cohortDatabaseSchema</span>,</span>
+<span>  databaseName <span class="op">=</span> <span class="va">databaseId</span>,</span>
+<span>  databaseDescription <span class="op">=</span> <span class="va">databaseId</span>,</span>
+<span>  connectionDetails <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  connection <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">cdmDatabaseSchema</span>,</span>
+<span>  tempEmulationSchema <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"sqlRenderTempEmulationSchema"</span><span class="op">)</span>,</span>
+<span>  cohortTable <span class="op">=</span> <span class="st">"cohort"</span>,</span>
+<span>  cohortTableNames <span class="op">=</span> <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortTableNames.html" class="external-link">getCohortTableNames</a></span><span class="op">(</span>cohortTable <span class="op">=</span> <span class="va">cohortTable</span><span class="op">)</span>,</span>
+<span>  vocabularyDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,</span>
+<span>  cohortIds <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cdmVersion <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  runInclusionStatistics <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  runIncludedSourceConcepts <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  runOrphanConcepts <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  runTimeSeries <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  runVisitContext <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  runBreakdownIndexEvents <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  runIncidenceRate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  runCohortRelationship <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  runTemporalCohortCharacterization <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span> </span>
+<span>    temporalCovariateSettings <span class="op">=</span> <span class="fu">FeatureExtraction</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/FeatureExtraction/man/createTemporalCovariateSettings.html" class="external-link">createTemporalCovariateSettings</a></span><span class="op">(</span>useDemographicsGender</span>
+<span>    <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsAge <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsAgeGroup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    useDemographicsRace <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsEthnicity <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsIndexYear</span>
+<span>    <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsIndexMonth <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsIndexYearMonth <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    useDemographicsPriorObservationTime <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsPostObservationTime <span class="op">=</span></span>
+<span>    <span class="cn">TRUE</span>, useDemographicsTimeInCohort <span class="op">=</span> <span class="cn">TRUE</span>, useConditionOccurrence <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    useProcedureOccurrence <span class="op">=</span> <span class="cn">TRUE</span>, useDrugEraStart <span class="op">=</span> <span class="cn">TRUE</span>, </span>
+<span>     useMeasurement <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    useConditionEraStart <span class="op">=</span> <span class="cn">TRUE</span>, useConditionEraOverlap <span class="op">=</span> <span class="cn">TRUE</span>, useConditionEraGroupStart</span>
+<span>    <span class="op">=</span> <span class="cn">FALSE</span>, useConditionEraGroupOverlap <span class="op">=</span> <span class="cn">TRUE</span>, useDrugExposure <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>    useDrugEraOverlap <span class="op">=</span> <span class="cn">FALSE</span>, useDrugEraGroupStart <span class="op">=</span> <span class="cn">FALSE</span>, useDrugEraGroupOverlap <span class="op">=</span></span>
+<span>    <span class="cn">TRUE</span>, useObservation <span class="op">=</span> <span class="cn">TRUE</span>, useDeviceExposure <span class="op">=</span> <span class="cn">TRUE</span>, useCharlsonIndex <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>    useDcsi <span class="op">=</span> <span class="cn">TRUE</span>, useChads2 <span class="op">=</span> <span class="cn">TRUE</span>, useChads2Vasc <span class="op">=</span> <span class="cn">TRUE</span>, useHfrs <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>    temporalStartDays <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">9999</span>, <span class="op">-</span><span class="fl">365</span>, <span class="op">-</span><span class="fl">180</span>, <span class="op">-</span><span class="fl">30</span>, <span class="op">-</span><span class="fl">365</span>, <span class="op">-</span><span class="fl">30</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">31</span>, <span class="op">-</span><span class="fl">9999</span><span class="op">)</span>,</span>
+<span>    temporalEndDays <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, </span>
+<span>         <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="op">-</span><span class="fl">31</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">30</span>, <span class="fl">365</span>, <span class="fl">9999</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  minCellCount <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  incremental <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  incrementalFolder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">exportFolder</span>, <span class="st">"incremental"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>cohortDefinitionSet</dt>
 <dd><p>Data.frame of cohorts must include columns cohortId, cohortName, json, sql</p></dd>
+
+
 <dt>exportFolder</dt>
 <dd><p>The folder where the output will be exported to. If this folder
 does not exist it will be created.</p></dd>
+
+
 <dt>databaseId</dt>
 <dd><p>A short string for identifying the database (e.g. 'Synpuf').</p></dd>
+
+
 <dt>cohortDatabaseSchema</dt>
 <dd><p>Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example
 'scratch.dbo'.</p></dd>
+
+
 <dt>databaseName</dt>
 <dd><p>The full name of the database. If NULL, defaults to databaseId.</p></dd>
+
+
 <dt>databaseDescription</dt>
 <dd><p>A short description (several sentences) of the database. If NULL, defaults to databaseId.</p></dd>
+
+
 <dt>connectionDetails</dt>
 <dd><p>An object of type <code>connectionDetails</code> as created using the
 <code><a href="https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html" class="external-link">createConnectionDetails</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connection</code> is
 provided.</p></dd>
+
+
 <dt>connection</dt>
 <dd><p>An object of type <code>connection</code> as created using the
 <code><a href="https://ohdsi.github.io/DatabaseConnector/reference/connect.html" class="external-link">connect</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.</p></dd>
+
+
 <dt>cdmDatabaseSchema</dt>
 <dd><p>Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.</p></dd>
+
+
 <dt>tempEmulationSchema</dt>
 <dd><p>Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
 tables, provide a schema with write privileges where temp tables can be created.</p></dd>
+
+
 <dt>cohortTable</dt>
 <dd><p>Name of the cohort table.</p></dd>
+
+
 <dt>cohortTableNames</dt>
 <dd><p>Cohort Table names used by CohortGenerator package</p></dd>
+
+
 <dt>vocabularyDatabaseSchema</dt>
 <dd><p>Schema name where your OMOP vocabulary data resides. This is 
 commonly the same as cdmDatabaseSchema. Note that for 
 SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.</p></dd>
+
+
 <dt>cohortIds</dt>
 <dd><p>Optionally, provide a subset of cohort IDs to restrict the
 diagnostics to.</p></dd>
+
+
 <dt>cdmVersion</dt>
 <dd><p>The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)</p></dd>
+
+
 <dt>runInclusionStatistics</dt>
 <dd><p>Generate and export statistic on the cohort inclusion rules?</p></dd>
+
+
 <dt>runIncludedSourceConcepts</dt>
 <dd><p>Generate and export the source concepts included in the cohorts?</p></dd>
+
+
 <dt>runOrphanConcepts</dt>
 <dd><p>Generate and export potential orphan concepts?</p></dd>
+
+
 <dt>runTimeSeries</dt>
 <dd><p>Generate and export the time series diagnostics?</p></dd>
+
+
 <dt>runVisitContext</dt>
 <dd><p>Generate and export index-date visit context?</p></dd>
+
+
 <dt>runBreakdownIndexEvents</dt>
 <dd><p>Generate and export the breakdown of index events?</p></dd>
+
+
 <dt>runIncidenceRate</dt>
 <dd><p>Generate and export the cohort incidence  rates?</p></dd>
+
+
 <dt>runCohortRelationship</dt>
 <dd><p>Generate and export the cohort relationship? Cohort relationship checks the temporal
 relationship between two or more cohorts.</p></dd>
+
+
 <dt>runTemporalCohortCharacterization</dt>
 <dd><p>Generate and export the temporal cohort characterization?
 Only records with values greater than 0.001 are returned.</p></dd>
+
+
 <dt>temporalCovariateSettings</dt>
 <dd><p>Either an object of type <code>covariateSettings</code> as created using one of
 the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 of such objects.</p></dd>
+
+
 <dt>minCellCount</dt>
 <dd><p>The minimum cell count for fields contains person counts or fractions.</p></dd>
+
+
 <dt>incremental</dt>
 <dd><p>Create only cohort diagnostics that haven't been created before?</p></dd>
+
+
 <dt>incrementalFolder</dt>
 <dd><p>If <code>incremental = TRUE</code>, specify a folder where records are kept
 of which cohort diagnostics has been executed.</p></dd>
+
 </dl></div>
     <div id="details">
     <h2>Details</h2>
@@ -234,47 +291,47 @@ of which cohort diagnostics has been executed.</p></dd>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span>
-<span class="r-in"><span class="co"># Load cohorts (assumes that they have already been instantiated)</span></span>
-<span class="r-in"><span class="va">cohortTableNames</span> <span class="op">&lt;-</span> <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortTableNames.html" class="external-link">getCohortTableNames</a></span><span class="op">(</span>cohortTable <span class="op">=</span> <span class="st">"cohort"</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">cohorts</span> <span class="op">&lt;-</span> <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortDefinitionSet.html" class="external-link">getCohortDefinitionSet</a></span><span class="op">(</span>packageName <span class="op">=</span> <span class="st">"MyGreatPackage"</span><span class="op">)</span></span>
-<span class="r-in"><span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu">createConnectionDetails</span><span class="op">(</span></span>
-<span class="r-in">  dbms <span class="op">=</span> <span class="st">"postgresql"</span>,</span>
-<span class="r-in">  server <span class="op">=</span> <span class="st">"ohdsi.com"</span>,</span>
-<span class="r-in">  port <span class="op">=</span> <span class="fl">5432</span>,</span>
-<span class="r-in">  user <span class="op">=</span> <span class="st">"me"</span>,</span>
-<span class="r-in">  password <span class="op">=</span> <span class="st">"secure"</span></span>
-<span class="r-in"><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="fu">executeDiagnostics</span><span class="op">(</span></span>
-<span class="r-in">  cohorts <span class="op">=</span> <span class="va">cohorts</span>,</span>
-<span class="r-in">  exportFolder <span class="op">=</span> <span class="st">"export"</span>,</span>
-<span class="r-in">  cohortTableNames <span class="op">=</span> <span class="va">cohortTableNames</span>,</span>
-<span class="r-in">  cohortDatabaseSchema <span class="op">=</span> <span class="st">"results"</span>,</span>
-<span class="r-in">  cdmDatabaseSchema <span class="op">=</span> <span class="st">"cdm"</span>,</span>
-<span class="r-in">  databaseId <span class="op">=</span> <span class="st">"mySpecialCdm"</span>,</span>
-<span class="r-in">  connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span></span>
-<span class="r-in"><span class="op">)</span></span>
-<span class="r-in"></span>
-<span class="r-in"><span class="co"># Use a custom set of cohorts defined in a data.frame</span></span>
-<span class="r-in"><span class="va">cohorts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span class="r-in">  cohortId <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>,</span>
-<span class="r-in">  cohortName <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Cohort Name"</span><span class="op">)</span>,</span>
-<span class="r-in">  logicDescription <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"My Cohort"</span><span class="op">)</span>,</span>
-<span class="r-in">  sql <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="st">"path_to.sql"</span><span class="op">)</span><span class="op">)</span>,</span>
-<span class="r-in">  json <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="st">"path_to.json"</span><span class="op">)</span><span class="op">)</span></span>
-<span class="r-in"><span class="op">)</span></span>
-<span class="r-in"><span class="fu">executeDiagnostics</span><span class="op">(</span></span>
-<span class="r-in">  cohorts <span class="op">=</span> <span class="va">cohorts</span>,</span>
-<span class="r-in">  exportFolder <span class="op">=</span> <span class="st">"export"</span>,</span>
-<span class="r-in">  cohortTable <span class="op">=</span> <span class="st">"cohort"</span>,</span>
-<span class="r-in">  cohortDatabaseSchema <span class="op">=</span> <span class="st">"results"</span>,</span>
-<span class="r-in">  cdmDatabaseSchema <span class="op">=</span> <span class="st">"cdm"</span>,</span>
-<span class="r-in">  databaseId <span class="op">=</span> <span class="st">"mySpecialCdm"</span>,</span>
-<span class="r-in">  connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span></span>
-<span class="r-in"><span class="op">)</span></span>
-<span class="r-in"><span class="op">}</span></span>
-<span class="r-in"></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="co"># Load cohorts (assumes that they have already been instantiated)</span></span></span>
+<span class="r-in"><span><span class="va">cohortTableNames</span> <span class="op">&lt;-</span> <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortTableNames.html" class="external-link">getCohortTableNames</a></span><span class="op">(</span>cohortTable <span class="op">=</span> <span class="st">"cohort"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cohorts</span> <span class="op">&lt;-</span> <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortDefinitionSet.html" class="external-link">getCohortDefinitionSet</a></span><span class="op">(</span>packageName <span class="op">=</span> <span class="st">"MyGreatPackage"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu">createConnectionDetails</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  dbms <span class="op">=</span> <span class="st">"postgresql"</span>,</span></span>
+<span class="r-in"><span>  server <span class="op">=</span> <span class="st">"ohdsi.com"</span>,</span></span>
+<span class="r-in"><span>  port <span class="op">=</span> <span class="fl">5432</span>,</span></span>
+<span class="r-in"><span>  user <span class="op">=</span> <span class="st">"me"</span>,</span></span>
+<span class="r-in"><span>  password <span class="op">=</span> <span class="st">"secure"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu">executeDiagnostics</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cohorts <span class="op">=</span> <span class="va">cohorts</span>,</span></span>
+<span class="r-in"><span>  exportFolder <span class="op">=</span> <span class="st">"export"</span>,</span></span>
+<span class="r-in"><span>  cohortTableNames <span class="op">=</span> <span class="va">cohortTableNames</span>,</span></span>
+<span class="r-in"><span>  cohortDatabaseSchema <span class="op">=</span> <span class="st">"results"</span>,</span></span>
+<span class="r-in"><span>  cdmDatabaseSchema <span class="op">=</span> <span class="st">"cdm"</span>,</span></span>
+<span class="r-in"><span>  databaseId <span class="op">=</span> <span class="st">"mySpecialCdm"</span>,</span></span>
+<span class="r-in"><span>  connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Use a custom set of cohorts defined in a data.frame</span></span></span>
+<span class="r-in"><span><span class="va">cohorts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cohortId <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  cohortName <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Cohort Name"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  logicDescription <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"My Cohort"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  sql <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="st">"path_to.sql"</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  json <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="st">"path_to.json"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">executeDiagnostics</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cohorts <span class="op">=</span> <span class="va">cohorts</span>,</span></span>
+<span class="r-in"><span>  exportFolder <span class="op">=</span> <span class="st">"export"</span>,</span></span>
+<span class="r-in"><span>  cohortTable <span class="op">=</span> <span class="st">"cohort"</span>,</span></span>
+<span class="r-in"><span>  cohortDatabaseSchema <span class="op">=</span> <span class="st">"results"</span>,</span></span>
+<span class="r-in"><span>  cdmDatabaseSchema <span class="op">=</span> <span class="st">"cdm"</span>,</span></span>
+<span class="r-in"><span>  databaseId <span class="op">=</span> <span class="st">"mySpecialCdm"</span>,</span></span>
+<span class="r-in"><span>  connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </div>
@@ -289,7 +346,7 @@ of which cohort diagnostics has been executed.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

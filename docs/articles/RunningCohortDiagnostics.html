@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.2</span>
       </span>
     </div>
 
@@ -97,7 +97,7 @@
                         <h4 data-toc-skip class="author">Gowtham Rao and
 James P. Gilbert</h4>
             
-            <h4 data-toc-skip class="date">2022-05-31</h4>
+            <h4 data-toc-skip class="date">2022-06-29</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/RunningCohortDiagnostics.Rmd" class="external-link"><code>vignettes/RunningCohortDiagnostics.Rmd</code></a></small>
       <div class="hidden name"><code>RunningCohortDiagnostics.Rmd</code></div>
@@ -122,8 +122,8 @@ be using the <code>Eunomia</code> test package. Optionally, you may
 install the <code>ROhdsiWebApi</code> package to download cohort
 definitions from an ATLAS instance:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">'OHDSI/Eunomia'</span><span class="op">)</span>
-<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">'OHDSI/ROhdsiWebApi'</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">'OHDSI/Eunomia'</span><span class="op">)</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">'OHDSI/ROhdsiWebApi'</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -137,21 +137,21 @@ settings required for the various database management systems (DBMS).
 For example, one might connect to a PostgreSQL database using this
 code:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ohdsi.github.io/CohortDiagnostics" class="external-link">CohortDiagnostics</a></span><span class="op">)</span>
-
-<span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html" class="external-link">createConnectionDetails</a></span><span class="op">(</span>dbms <span class="op">=</span> <span class="st">"postgresql"</span>,
-                                             server <span class="op">=</span> <span class="st">"localhost/ohdsi"</span>,
-                                             user <span class="op">=</span> <span class="st">"joe"</span>,
-                                             password <span class="op">=</span> <span class="st">"supersecret"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ohdsi.github.io/CohortDiagnostics" class="external-link">CohortDiagnostics</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html" class="external-link">createConnectionDetails</a></span><span class="op">(</span>dbms <span class="op">=</span> <span class="st">"postgresql"</span>,</span>
+<span>                                             server <span class="op">=</span> <span class="st">"localhost/ohdsi"</span>,</span>
+<span>                                             user <span class="op">=</span> <span class="st">"joe"</span>,</span>
+<span>                                             password <span class="op">=</span> <span class="st">"supersecret"</span><span class="op">)</span></span></code></pre></div>
 <p>For the purposes of this example, we will use the Eunomia test CDM
 package that is in an Sqlite database stored locally.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu">Eunomia</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Eunomia/man/getEunomiaConnectionDetails.html" class="external-link">getEunomiaConnectionDetails</a></span><span class="op">(</span><span class="op">)</span>
-
-<span class="va">cdmDatabaseSchema</span> <span class="op">&lt;-</span> <span class="st">"main"</span>
-<span class="va">tempEmulationSchema</span> <span class="op">&lt;-</span> <span class="cn">NULL</span>
-<span class="va">cohortDatabaseSchema</span> <span class="op">&lt;-</span> <span class="st">"main"</span>
-<span class="va">cohortTable</span> <span class="op">&lt;-</span> <span class="st">"cohort"</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu">Eunomia</span><span class="fu">::</span><span class="fu">getEunomiaConnectionDetails</span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">cdmDatabaseSchema</span> <span class="op">&lt;-</span> <span class="st">"main"</span></span>
+<span><span class="va">tempEmulationSchema</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
+<span><span class="va">cohortDatabaseSchema</span> <span class="op">&lt;-</span> <span class="st">"main"</span></span>
+<span><span class="va">cohortTable</span> <span class="op">&lt;-</span> <span class="st">"cohort"</span></span></code></pre></div>
 <p>The last four lines define the <code>cdmDatabaseSchema</code>,
 <code>tempEmulationSchema</code>, <code>cohortDatabaseSchema</code>, and
 <code>cohortTable</code> variables. We’ll use the
@@ -180,15 +180,15 @@ incrementally updated.</p>
 of cohort sql and json to run on the <code>Eunomia</code> test data in
 the OMOP Common Data Model format.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ohdsi.github.io/CohortDiagnostics" class="external-link">CohortDiagnostics</a></span><span class="op">)</span>
-<span class="va">cohortDefinitionSet</span> <span class="op">&lt;-</span> <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortDefinitionSet.html" class="external-link">getCohortDefinitionSet</a></span><span class="op">(</span>settingsFileName <span class="op">=</span> <span class="st">"Cohorts.csv"</span>,
-                                                               jsonFolder <span class="op">=</span> <span class="st">"cohorts"</span>,
-                                                               sqlFolder <span class="op">=</span> <span class="st">"sql/sql_server"</span>,
-                                                               packageName <span class="op">=</span> <span class="st">"CohortDiagnostics"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ohdsi.github.io/CohortDiagnostics" class="external-link">CohortDiagnostics</a></span><span class="op">)</span></span>
+<span><span class="va">cohortDefinitionSet</span> <span class="op">&lt;-</span> <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortDefinitionSet.html" class="external-link">getCohortDefinitionSet</a></span><span class="op">(</span>settingsFileName <span class="op">=</span> <span class="st">"Cohorts.csv"</span>,</span>
+<span>                                                               jsonFolder <span class="op">=</span> <span class="st">"cohorts"</span>,</span>
+<span>                                                               sqlFolder <span class="op">=</span> <span class="st">"sql/sql_server"</span>,</span>
+<span>                                                               packageName <span class="op">=</span> <span class="st">"CohortDiagnostics"</span><span class="op">)</span></span></code></pre></div>
 <p>Looking at this data.frame of Cohorts you will see the sql and json
 for these cohorts:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/View.html" class="external-link">View</a></span><span class="op">(</span><span class="va">cohortDefinitionSet</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/View.html" class="external-link">View</a></span><span class="op">(</span><span class="va">cohortDefinitionSet</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="loading-cohort-references-from-webapi">Loading cohort references from WebApi<a class="anchor" aria-label="anchor" href="#loading-cohort-references-from-webapi"></a>
@@ -201,14 +201,14 @@ references into a data frame used by cohort diagnostics.</p>
 <p>The following code demonstrates how to create a set of cohort
 references from ATLAS that can be used by cohort diagnostics:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># Set up url</span>
-<span class="va">baseUrl</span> <span class="op">&lt;-</span> <span class="st">"https://atlas.hosting.com/WebAPI"</span>
-<span class="co"># list of cohort ids</span>
-<span class="va">cohortIds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">18345</span>,<span class="fl">18346</span><span class="op">)</span>
-
-<span class="va">cohortDefinitionSet</span> <span class="op">&lt;-</span> <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/exportCohortDefinitionSet.html" class="external-link">exportCohortDefinitionSet</a></span><span class="op">(</span>baseUrl <span class="op">=</span> <span class="va">baseUrl</span>,
-                                                               cohortIds <span class="op">=</span> <span class="va">cohortIds</span>,
-                                                               generateStats <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># Set up url</span></span>
+<span><span class="va">baseUrl</span> <span class="op">&lt;-</span> <span class="st">"https://atlas.hosting.com/WebAPI"</span></span>
+<span><span class="co"># list of cohort ids</span></span>
+<span><span class="va">cohortIds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">18345</span>,<span class="fl">18346</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">cohortDefinitionSet</span> <span class="op">&lt;-</span> <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu">exportCohortDefinitionSet</span><span class="op">(</span>baseUrl <span class="op">=</span> <span class="va">baseUrl</span>,</span>
+<span>                                                               cohortIds <span class="op">=</span> <span class="va">cohortIds</span>,</span>
+<span>                                                               generateStats <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>Consult the ROhdsiWebApi documentation for details on authentication
 to your atlas instance. Please note that in order to generate inclusion
 rules statistics (a useful diagnostic tool) the parameter
@@ -223,21 +223,21 @@ rules statistics (a useful diagnostic tool) the parameter
 </h4>
 <p>For example,</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">cohortTableNames</span> <span class="op">&lt;-</span> <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortTableNames.html" class="external-link">getCohortTableNames</a></span><span class="op">(</span>cohortTable <span class="op">=</span> <span class="va">cohortTable</span><span class="op">)</span>
-
-<span class="co"># Next create the tables on the database</span>
-<span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/createCohortTables.html" class="external-link">createCohortTables</a></span><span class="op">(</span>connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span>,
-                                    cohortTableNames <span class="op">=</span> <span class="va">cohortTableNames</span>,
-                                    cohortDatabaseSchema <span class="op">=</span> <span class="st">"main"</span>,
-                                    incremental <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
-
-<span class="co"># Generate the cohort set</span>
-<span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/generateCohortSet.html" class="external-link">generateCohortSet</a></span><span class="op">(</span>connectionDetails<span class="op">=</span> <span class="va">connectionDetails</span>,
-                                   cdmDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,
-                                   cohortDatabaseSchema <span class="op">=</span> <span class="va">cohortDatabaseSchema</span>,
-                                   cohortTableNames <span class="op">=</span> <span class="va">cohortTableNames</span>,
-                                   cohortDefinitionSet <span class="op">=</span> <span class="va">cohortDefinitionSet</span>,
-                                   incremental <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">cohortTableNames</span> <span class="op">&lt;-</span> <span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/getCohortTableNames.html" class="external-link">getCohortTableNames</a></span><span class="op">(</span>cohortTable <span class="op">=</span> <span class="va">cohortTable</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Next create the tables on the database</span></span>
+<span><span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/createCohortTables.html" class="external-link">createCohortTables</a></span><span class="op">(</span>connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span>,</span>
+<span>                                    cohortTableNames <span class="op">=</span> <span class="va">cohortTableNames</span>,</span>
+<span>                                    cohortDatabaseSchema <span class="op">=</span> <span class="st">"main"</span>,</span>
+<span>                                    incremental <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Generate the cohort set</span></span>
+<span><span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/generateCohortSet.html" class="external-link">generateCohortSet</a></span><span class="op">(</span>connectionDetails<span class="op">=</span> <span class="va">connectionDetails</span>,</span>
+<span>                                   cdmDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,</span>
+<span>                                   cohortDatabaseSchema <span class="op">=</span> <span class="va">cohortDatabaseSchema</span>,</span>
+<span>                                   cohortTableNames <span class="op">=</span> <span class="va">cohortTableNames</span>,</span>
+<span>                                   cohortDefinitionSet <span class="op">=</span> <span class="va">cohortDefinitionSet</span>,</span>
+<span>                                   incremental <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Note, that the above code will delete an existing
 table</strong>. However, incremental mode can be used when setting the
 parameter <code>incremental = TRUE</code>.</p>
@@ -254,18 +254,18 @@ populated cohort diagnostics is ready to be executed.</p>
 <p>First we set an export folder, this is where the results will be
 stored.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">exportFolder</span> <span class="op">&lt;-</span> <span class="st">"export"</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">exportFolder</span> <span class="op">&lt;-</span> <span class="st">"export"</span></span></code></pre></div>
 <p>Then we execute the function (using the default settings) as
 follows:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/executeDiagnostics.html">executeDiagnostics</a></span><span class="op">(</span><span class="va">cohortDefinitionSet</span>,
-                   connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span>,
-                   cohortTable <span class="op">=</span> <span class="va">cohortTable</span>,
-                   cohortDatabaseSchema <span class="op">=</span> <span class="va">cohortDatabaseSchema</span>,
-                   cdmDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,
-                   exportFolder <span class="op">=</span> <span class="va">exportFolder</span>,
-                   databaseId <span class="op">=</span> <span class="st">"MyCdm"</span>,
-                   minCellCount <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/executeDiagnostics.html">executeDiagnostics</a></span><span class="op">(</span><span class="va">cohortDefinitionSet</span>,</span>
+<span>                   connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span>,</span>
+<span>                   cohortTable <span class="op">=</span> <span class="va">cohortTable</span>,</span>
+<span>                   cohortDatabaseSchema <span class="op">=</span> <span class="va">cohortDatabaseSchema</span>,</span>
+<span>                   cdmDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,</span>
+<span>                   exportFolder <span class="op">=</span> <span class="va">exportFolder</span>,</span>
+<span>                   databaseId <span class="op">=</span> <span class="st">"MyCdm"</span>,</span>
+<span>                   minCellCount <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="cohort-statistics-table-clean-up">Cohort Statistics Table Clean up<a class="anchor" aria-label="anchor" href="#cohort-statistics-table-clean-up"></a>
@@ -274,9 +274,9 @@ follows:</p>
 tables. As the process is complete, these are no longer required and can
 be removed.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/dropCohortStatsTables.html" class="external-link">dropCohortStatsTables</a></span><span class="op">(</span>connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span>,
-                                       cohortDatabaseSchema <span class="op">=</span> <span class="va">cohortDatabaseSchema</span>,
-                                       cohortTableNames <span class="op">=</span> <span class="va">cohortTableNames</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">CohortGenerator</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/CohortGenerator/reference/dropCohortStatsTables.html" class="external-link">dropCohortStatsTables</a></span><span class="op">(</span>connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span>,</span>
+<span>                                       cohortDatabaseSchema <span class="op">=</span> <span class="va">cohortDatabaseSchema</span>,</span>
+<span>                                       cohortTableNames <span class="op">=</span> <span class="va">cohortTableNames</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -298,7 +298,7 @@ Make sure to place all zip files in a single folder.</p>
 <p>Optionally, we can pre-merge the zip files into an sqlite database so
 we can view results in the Shiny app:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/createMergedResultsFile.html">createMergedResultsFile</a></span><span class="op">(</span><span class="va">exportFolder</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/createMergedResultsFile.html">createMergedResultsFile</a></span><span class="op">(</span><span class="va">exportFolder</span><span class="op">)</span></span></code></pre></div>
 <p>This file can be used in the shiny app to explore results. See the
 vignette “Viewing results using Diagnostics Explorer” for more
 details.</p>
@@ -323,7 +323,7 @@ details.</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer>

@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.2</span>
       </span>
     </div>
 
@@ -97,7 +97,7 @@
                         <h4 data-toc-skip class="author">Gowtham A.
 Rao</h4>
             
-            <h4 data-toc-skip class="date">2022-05-31</h4>
+            <h4 data-toc-skip class="date">2022-06-29</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/CreatingAStudyPackage.Rmd" class="external-link"><code>vignettes/CreatingAStudyPackage.Rmd</code></a></small>
       <div class="hidden name"><code>CreatingAStudyPackage.Rmd</code></div>
@@ -183,136 +183,136 @@ skeleton package is a special package that is designed to be used with
 <a href="https://github.com/OHDSI/Hydra" class="external-link">Hydra</a>. The input for Hydra
 is study a specifications file (in json format). Example is <a href="https://github.com/OHDSI/Hydra/blob/master/extras/ExampleCohortDiagnosticsSpecs.json" class="external-link">here</a>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># please ensure you have the latest version of Hydra. As of 08/13/2021 - CohortDiagnostics support for Hydra is still in develop branch.</span>
-<span class="co"># please check hydra release notes and update hydra</span>
-<span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"OHDSI/Hydra"</span>, ref <span class="op">=</span> <span class="st">"develop"</span><span class="op">)</span>
-<span class="va">outputFolder</span> <span class="op">&lt;-</span> <span class="st">"d:/temp/output"</span>  <span class="co"># location where you study package will be created</span>
-
-
-<span class="co">########## Please populate the information below #####################</span>
-<span class="va">version</span> <span class="op">&lt;-</span> <span class="st">"v0.1.0"</span>
-<span class="va">name</span> <span class="op">&lt;-</span> <span class="st">"Thrombosis With Thrombocytopenia Syndrome cohorts - an OHDSI network study"</span>
-<span class="va">packageName</span> <span class="op">&lt;-</span> <span class="st">"ThrombosisWithThrombocytopeniaSyndrome"</span>
-<span class="va">skeletonVersion</span> <span class="op">&lt;-</span> <span class="st">"v0.0.1"</span>
-<span class="va">createdBy</span> <span class="op">&lt;-</span> <span class="st">"rao@ohdsi.org"</span>
-<span class="va">createdDate</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># default</span>
-<span class="va">modifiedBy</span> <span class="op">&lt;-</span> <span class="st">"rao@ohdsi.org"</span>
-<span class="va">modifiedDate</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span>
-<span class="va">skeletonType</span> <span class="op">&lt;-</span> <span class="st">"CohortDiagnosticsStudy"</span>
-<span class="va">organizationName</span> <span class="op">&lt;-</span> <span class="st">"OHDSI"</span>
-<span class="va">description</span> <span class="op">&lt;-</span> <span class="st">"Cohort diagnostics on Thrombosis With Thrombocytopenia Syndrome cohorts."</span>
-
-
-<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org" class="external-link">magrittr</a></span><span class="op">)</span>
-<span class="co"># Set up</span>
-<span class="va">baseUrl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"baseUrl"</span><span class="op">)</span>
-<span class="co"># if you have security enabled, please authorize the use - example below</span>
-<span class="co"># ROhdsiWebApi::authorizeWebApi(baseUrl, 'windows')</span>
-<span class="va">cohortIds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">22040</span>,
-               <span class="fl">22042</span>,
-               <span class="fl">22041</span>,
-               <span class="fl">22039</span>,
-               <span class="fl">22038</span>,
-               <span class="fl">22037</span>,
-               <span class="fl">22036</span>,
-               <span class="fl">22035</span>,
-               <span class="fl">22034</span>,
-               <span class="fl">22033</span>,
-               <span class="fl">22031</span>,
-               <span class="fl">22032</span>,
-               <span class="fl">22030</span>,
-               <span class="fl">22028</span>,
-               <span class="fl">22029</span><span class="op">)</span>
-
-
-
-<span class="co">################# end of user input ##############</span>
-<span class="va">webApiCohorts</span> <span class="op">&lt;-</span> <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/getCohortDefinitionsMetaData.html" class="external-link">getCohortDefinitionsMetaData</a></span><span class="op">(</span>baseUrl <span class="op">=</span> <span class="va">baseUrl</span><span class="op">)</span>
-<span class="va">studyCohorts</span> <span class="op">&lt;-</span>  <span class="va">webApiCohorts</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span>
-        <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">.data</span><span class="op">$</span><span class="va">id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">cohortIds</span><span class="op">)</span>
-
-<span class="co"># compile them into a data table</span>
-<span class="va">cohortDefinitionsArray</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>
-<span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">studyCohorts</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
-        <span class="va">cohortDefinition</span> <span class="op">&lt;-</span>
-                <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/getCohortDefinition.html" class="external-link">getCohortDefinition</a></span><span class="op">(</span>cohortId <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">id</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,
-                                                  baseUrl <span class="op">=</span> <span class="va">baseUrl</span><span class="op">)</span>
-        <span class="va">cohortDefinitionsArray</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>
-                id <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">id</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,
-                createdDate <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">createdDate</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,
-                modifiedDate <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">createdDate</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,
-                logicDescription <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">description</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,
-                name <span class="op">=</span> <span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_trim.html" class="external-link">str_trim</a></span><span class="op">(</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_trim.html" class="external-link">str_squish</a></span><span class="op">(</span><span class="va">cohortDefinition</span><span class="op">$</span><span class="va">name</span><span class="op">)</span><span class="op">)</span>,
-                expression <span class="op">=</span> <span class="va">cohortDefinition</span><span class="op">$</span><span class="va">expression</span>
-        <span class="op">)</span>
-<span class="op">}</span>
-
-<span class="va">tempFolder</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">tempFolder</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span>path <span class="op">=</span> <span class="va">tempFolder</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-
-<span class="va">specifications</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fl">1</span>,
-                       version <span class="op">=</span> <span class="va">version</span>,
-                       name <span class="op">=</span> <span class="va">name</span>,
-                       packageName <span class="op">=</span> <span class="va">packageName</span>,
-                       skeletonVersion <span class="op">=</span> <span class="va">skeletonVersion</span>,
-                       createdBy <span class="op">=</span> <span class="va">createdBy</span>,
-                       createdDate <span class="op">=</span> <span class="va">createdDate</span>,
-                       modifiedBy <span class="op">=</span> <span class="va">modifiedBy</span>,
-                       modifiedDate <span class="op">=</span> <span class="va">modifiedDate</span>,
-                       skeletonType <span class="op">=</span> <span class="va">skeletonType</span>,
-                       organizationName <span class="op">=</span> <span class="va">organizationName</span>,
-                       description <span class="op">=</span> <span class="va">description</span>,
-                       cohortDefinitions <span class="op">=</span> <span class="va">cohortDefinitionsArray</span><span class="op">)</span>
-
-<span class="va">jsonFileName</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">tempFolder</span>, <span class="st">"CohortDiagnosticsSpecs.json"</span><span class="op">)</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/write.html" class="external-link">write</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">specifications</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">RJSONIO</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/RJSONIO/man/toJSON.html" class="external-link">toJSON</a></span><span class="op">(</span>pretty <span class="op">=</span> <span class="cn">TRUE</span>, digits <span class="op">=</span> <span class="fl">23</span><span class="op">)</span>, file <span class="op">=</span> <span class="va">jsonFileName</span><span class="op">)</span>
-
-
-<span class="co">##############################################################</span>
-<span class="co">##############################################################</span>
-<span class="co">#######       Get skeleton from github            ############</span>
-<span class="co">#######       Uncomment if you want to use latest ############</span>
-<span class="co">#######       skeleton only - for advanced user   ############</span>
-<span class="co">##############################################################</span>
-<span class="co">##############################################################</span>
-<span class="co">##############################################################</span>
-<span class="co">#### get the skeleton from github</span>
-<span class="co"># download.file(url = "https://github.com/OHDSI/SkeletonCohortDiagnosticsStudy/archive/refs/heads/main.zip",</span>
-<span class="co">#                          destfile = file.path(tempFolder, 'skeleton.zip'))</span>
-<span class="co"># unzip(zipfile =  file.path(tempFolder, 'skeleton.zip'), </span>
-<span class="co">#       overwrite = TRUE,</span>
-<span class="co">#       exdir = file.path(tempFolder, "skeleton")</span>
-<span class="co">#         )</span>
-<span class="co"># fileList &lt;- list.files(path = file.path(tempFolder, "skeleton"), full.names = TRUE, recursive = TRUE, all.files = TRUE)</span>
-<span class="co"># DatabaseConnector::createZipFile(zipFile = file.path(tempFolder, 'skeleton.zip'), </span>
-<span class="co">#                                  files = fileList, </span>
-<span class="co">#                                  rootFolder = list.dirs(file.path(tempFolder, 'skeleton'), recursive = FALSE))</span>
-
-<span class="co">##############################################################</span>
-<span class="co">##############################################################</span>
-<span class="co">#######               Build package              #############</span>
-<span class="co">##############################################################</span>
-<span class="co">##############################################################</span>
-<span class="co">##############################################################</span>
-
-
-<span class="co">#### Code that uses the ExampleCohortDiagnosticsSpecs in Hydra to build package</span>
-<span class="va">hydraSpecificationFromFile</span> <span class="op">&lt;-</span> <span class="fu">Hydra</span><span class="fu">::</span><span class="fu">loadSpecifications</span><span class="op">(</span>fileName <span class="op">=</span> <span class="va">jsonFileName</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">outputFolder</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span>path <span class="op">=</span> <span class="va">outputFolder</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="fu">Hydra</span><span class="fu">::</span><span class="fu">hydrate</span><span class="op">(</span>specifications <span class="op">=</span> <span class="va">hydraSpecificationFromFile</span>,
-               outputFolder <span class="op">=</span> <span class="va">outputFolder</span>
-<span class="op">)</span>
-
-<span class="co"># for advanced user using skeletons outside of Hydra</span>
-<span class="co"># Hydra::hydrate(specifications = hydraSpecificationFromFile,</span>
-<span class="co">#                outputFolder = outputFolder, </span>
-<span class="co">#                skeletonFileName = file.path(tempFolder, 'skeleton.zip')</span>
-<span class="co"># )</span>
-
-
-<span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">tempFolder</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># please ensure you have the latest version of Hydra. As of 08/13/2021 - CohortDiagnostics support for Hydra is still in develop branch.</span></span>
+<span><span class="co"># please check hydra release notes and update hydra</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"OHDSI/Hydra"</span>, ref <span class="op">=</span> <span class="st">"develop"</span><span class="op">)</span></span>
+<span><span class="va">outputFolder</span> <span class="op">&lt;-</span> <span class="st">"d:/temp/output"</span>  <span class="co"># location where you study package will be created</span></span>
+<span></span>
+<span></span>
+<span><span class="co">########## Please populate the information below #####################</span></span>
+<span><span class="va">version</span> <span class="op">&lt;-</span> <span class="st">"v0.1.0"</span></span>
+<span><span class="va">name</span> <span class="op">&lt;-</span> <span class="st">"Thrombosis With Thrombocytopenia Syndrome cohorts - an OHDSI network study"</span></span>
+<span><span class="va">packageName</span> <span class="op">&lt;-</span> <span class="st">"ThrombosisWithThrombocytopeniaSyndrome"</span></span>
+<span><span class="va">skeletonVersion</span> <span class="op">&lt;-</span> <span class="st">"v0.0.1"</span></span>
+<span><span class="va">createdBy</span> <span class="op">&lt;-</span> <span class="st">"rao@ohdsi.org"</span></span>
+<span><span class="va">createdDate</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span> <span class="co"># default</span></span>
+<span><span class="va">modifiedBy</span> <span class="op">&lt;-</span> <span class="st">"rao@ohdsi.org"</span></span>
+<span><span class="va">modifiedDate</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">skeletonType</span> <span class="op">&lt;-</span> <span class="st">"CohortDiagnosticsStudy"</span></span>
+<span><span class="va">organizationName</span> <span class="op">&lt;-</span> <span class="st">"OHDSI"</span></span>
+<span><span class="va">description</span> <span class="op">&lt;-</span> <span class="st">"Cohort diagnostics on Thrombosis With Thrombocytopenia Syndrome cohorts."</span></span>
+<span></span>
+<span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org" class="external-link">magrittr</a></span><span class="op">)</span></span>
+<span><span class="co"># Set up</span></span>
+<span><span class="va">baseUrl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"baseUrl"</span><span class="op">)</span></span>
+<span><span class="co"># if you have security enabled, please authorize the use - example below</span></span>
+<span><span class="co"># ROhdsiWebApi::authorizeWebApi(baseUrl, 'windows')</span></span>
+<span><span class="va">cohortIds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">22040</span>,</span>
+<span>               <span class="fl">22042</span>,</span>
+<span>               <span class="fl">22041</span>,</span>
+<span>               <span class="fl">22039</span>,</span>
+<span>               <span class="fl">22038</span>,</span>
+<span>               <span class="fl">22037</span>,</span>
+<span>               <span class="fl">22036</span>,</span>
+<span>               <span class="fl">22035</span>,</span>
+<span>               <span class="fl">22034</span>,</span>
+<span>               <span class="fl">22033</span>,</span>
+<span>               <span class="fl">22031</span>,</span>
+<span>               <span class="fl">22032</span>,</span>
+<span>               <span class="fl">22030</span>,</span>
+<span>               <span class="fl">22028</span>,</span>
+<span>               <span class="fl">22029</span><span class="op">)</span></span>
+<span></span>
+<span></span>
+<span></span>
+<span><span class="co">################# end of user input ##############</span></span>
+<span><span class="va">webApiCohorts</span> <span class="op">&lt;-</span> <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu">getCohortDefinitionsMetaData</span><span class="op">(</span>baseUrl <span class="op">=</span> <span class="va">baseUrl</span><span class="op">)</span></span>
+<span><span class="va">studyCohorts</span> <span class="op">&lt;-</span>  <span class="va">webApiCohorts</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>        <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">.data</span><span class="op">$</span><span class="va">id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">cohortIds</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># compile them into a data table</span></span>
+<span><span class="va">cohortDefinitionsArray</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">studyCohorts</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>        <span class="va">cohortDefinition</span> <span class="op">&lt;-</span></span>
+<span>                <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu">getCohortDefinition</span><span class="op">(</span>cohortId <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">id</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>                                                  baseUrl <span class="op">=</span> <span class="va">baseUrl</span><span class="op">)</span></span>
+<span>        <span class="va">cohortDefinitionsArray</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>                id <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">id</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>                createdDate <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">createdDate</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>                modifiedDate <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">createdDate</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>                logicDescription <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">description</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>                name <span class="op">=</span> <span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_trim.html" class="external-link">str_trim</a></span><span class="op">(</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_trim.html" class="external-link">str_squish</a></span><span class="op">(</span><span class="va">cohortDefinition</span><span class="op">$</span><span class="va">name</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                expression <span class="op">=</span> <span class="va">cohortDefinition</span><span class="op">$</span><span class="va">expression</span></span>
+<span>        <span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">tempFolder</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">tempFolder</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span>path <span class="op">=</span> <span class="va">tempFolder</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">specifications</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>                       version <span class="op">=</span> <span class="va">version</span>,</span>
+<span>                       name <span class="op">=</span> <span class="va">name</span>,</span>
+<span>                       packageName <span class="op">=</span> <span class="va">packageName</span>,</span>
+<span>                       skeletonVersion <span class="op">=</span> <span class="va">skeletonVersion</span>,</span>
+<span>                       createdBy <span class="op">=</span> <span class="va">createdBy</span>,</span>
+<span>                       createdDate <span class="op">=</span> <span class="va">createdDate</span>,</span>
+<span>                       modifiedBy <span class="op">=</span> <span class="va">modifiedBy</span>,</span>
+<span>                       modifiedDate <span class="op">=</span> <span class="va">modifiedDate</span>,</span>
+<span>                       skeletonType <span class="op">=</span> <span class="va">skeletonType</span>,</span>
+<span>                       organizationName <span class="op">=</span> <span class="va">organizationName</span>,</span>
+<span>                       description <span class="op">=</span> <span class="va">description</span>,</span>
+<span>                       cohortDefinitions <span class="op">=</span> <span class="va">cohortDefinitionsArray</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">jsonFileName</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">tempFolder</span>, <span class="st">"CohortDiagnosticsSpecs.json"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/write.html" class="external-link">write</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">specifications</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">RJSONIO</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/RJSONIO/man/toJSON.html" class="external-link">toJSON</a></span><span class="op">(</span>pretty <span class="op">=</span> <span class="cn">TRUE</span>, digits <span class="op">=</span> <span class="fl">23</span><span class="op">)</span>, file <span class="op">=</span> <span class="va">jsonFileName</span><span class="op">)</span></span>
+<span></span>
+<span></span>
+<span><span class="co">##############################################################</span></span>
+<span><span class="co">##############################################################</span></span>
+<span><span class="co">#######       Get skeleton from github            ############</span></span>
+<span><span class="co">#######       Uncomment if you want to use latest ############</span></span>
+<span><span class="co">#######       skeleton only - for advanced user   ############</span></span>
+<span><span class="co">##############################################################</span></span>
+<span><span class="co">##############################################################</span></span>
+<span><span class="co">##############################################################</span></span>
+<span><span class="co">#### get the skeleton from github</span></span>
+<span><span class="co"># download.file(url = "https://github.com/OHDSI/SkeletonCohortDiagnosticsStudy/archive/refs/heads/main.zip",</span></span>
+<span><span class="co">#                          destfile = file.path(tempFolder, 'skeleton.zip'))</span></span>
+<span><span class="co"># unzip(zipfile =  file.path(tempFolder, 'skeleton.zip'), </span></span>
+<span><span class="co">#       overwrite = TRUE,</span></span>
+<span><span class="co">#       exdir = file.path(tempFolder, "skeleton")</span></span>
+<span><span class="co">#         )</span></span>
+<span><span class="co"># fileList &lt;- list.files(path = file.path(tempFolder, "skeleton"), full.names = TRUE, recursive = TRUE, all.files = TRUE)</span></span>
+<span><span class="co"># DatabaseConnector::createZipFile(zipFile = file.path(tempFolder, 'skeleton.zip'), </span></span>
+<span><span class="co">#                                  files = fileList, </span></span>
+<span><span class="co">#                                  rootFolder = list.dirs(file.path(tempFolder, 'skeleton'), recursive = FALSE))</span></span>
+<span></span>
+<span><span class="co">##############################################################</span></span>
+<span><span class="co">##############################################################</span></span>
+<span><span class="co">#######               Build package              #############</span></span>
+<span><span class="co">##############################################################</span></span>
+<span><span class="co">##############################################################</span></span>
+<span><span class="co">##############################################################</span></span>
+<span></span>
+<span></span>
+<span><span class="co">#### Code that uses the ExampleCohortDiagnosticsSpecs in Hydra to build package</span></span>
+<span><span class="va">hydraSpecificationFromFile</span> <span class="op">&lt;-</span> <span class="fu">Hydra</span><span class="fu">::</span><span class="fu">loadSpecifications</span><span class="op">(</span>fileName <span class="op">=</span> <span class="va">jsonFileName</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">outputFolder</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span>path <span class="op">=</span> <span class="va">outputFolder</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu">Hydra</span><span class="fu">::</span><span class="fu">hydrate</span><span class="op">(</span>specifications <span class="op">=</span> <span class="va">hydraSpecificationFromFile</span>,</span>
+<span>               outputFolder <span class="op">=</span> <span class="va">outputFolder</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># for advanced user using skeletons outside of Hydra</span></span>
+<span><span class="co"># Hydra::hydrate(specifications = hydraSpecificationFromFile,</span></span>
+<span><span class="co">#                outputFolder = outputFolder, </span></span>
+<span><span class="co">#                skeletonFileName = file.path(tempFolder, 'skeleton.zip')</span></span>
+<span><span class="co"># )</span></span>
+<span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">tempFolder</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
   </div>
@@ -334,7 +334,7 @@ is study a specifications file (in json format). Example is <a href="https://git
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer>

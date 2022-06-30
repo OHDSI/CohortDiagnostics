@@ -149,7 +149,9 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
   colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
   if (incremental) {
     params <- list(...)
-    names(params) <- SqlRender::camelCaseToSnakeCase(names(params))
+    if (length(params) > 0) {
+      names(params) <- SqlRender::camelCaseToSnakeCase(names(params))
+    }
     params$data <- data
     params$fileName <- fileName
     do.call(saveIncremental, params)

@@ -1,3 +1,13 @@
+CohortDiagnostics 3.0.2
+=======================
+
+Bug fixes:
+
+1. Fixed issue with writing csvs caused by update to SqlRender camelCaseToSnakeCase function check that caused execution
+to crash if parameters were null.
+
+3. Fixed issue with observation period overflowing sql integer on BigQuery causing execution to crash
+
 CohortDiagnostics 3.0.1
 =======================
 
