@@ -19,7 +19,7 @@ It also checks whether the results conform to the results data model specificati
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.2</span>
       </span>
     </div>
 
@@ -82,11 +82,11 @@ sqlite database that can be used as input for the Diagnostics Explorer Shiny app
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">createMergedResultsFile</span><span class="op">(</span>
-  <span class="va">dataFolder</span>,
-  sqliteDbPath <span class="op">=</span> <span class="st">"MergedCohortDiagnosticsData.sqlite"</span>,
-  overwrite <span class="op">=</span> <span class="cn">FALSE</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">createMergedResultsFile</span><span class="op">(</span></span>
+<span>  <span class="va">dataFolder</span>,</span>
+<span>  sqliteDbPath <span class="op">=</span> <span class="st">"MergedCohortDiagnosticsData.sqlite"</span>,</span>
+<span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -96,10 +96,15 @@ sqlite database that can be used as input for the Diagnostics Explorer Shiny app
 the <code><a href="executeDiagnostics.html">executeDiagnostics</a></code> function to generate these zip files.
 Zip files containing results from multiple databases may be placed in the same
 folder.</p></dd>
+
+
 <dt>sqliteDbPath</dt>
 <dd><p>Output path where sqlite database is placed</p></dd>
+
+
 <dt>overwrite</dt>
 <dd><p>(Optional) overwrite existing sqlite lite db if it exists.</p></dd>
+
 </dl></div>
 
   </div>
@@ -114,7 +119,7 @@ folder.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>

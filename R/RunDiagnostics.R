@@ -339,15 +339,15 @@ executeDiagnostics <- function(cohortDefinitionSet,
     # because of known bug in FeatureExtraction. https://github.com/OHDSI/FeatureExtraction/issues/144
     temporalCovariateSettings$ConditionEraGroupStart <- NULL
     temporalCovariateSettings$DrugEraGroupStart <- NULL
-    
-    checkmate::assert_double(x = temporalCovariateSettings$temporalStartDays,
-                            any.missing = FALSE,
-                            min.len = 1,
-                            add = errorMessage)
-    checkmate::assert_double(x = temporalCovariateSettings$temporalEndDays,
-                             any.missing = FALSE,
-                             min.len = 1,
-                             add = errorMessage)
+
+    checkmate::assert_integerish(x = temporalCovariateSettings$temporalStartDays,
+                              any.missing = FALSE,
+                              min.len = 1,
+                              add = errorMessage)
+    checkmate::assert_integerish(x = temporalCovariateSettings$temporalEndDays,
+                              any.missing = FALSE,
+                              min.len = 1,
+                              add = errorMessage)
     checkmate::reportAssertions(collection = errorMessage)
     
     # Adding required temporal windows required in results viewer
@@ -483,7 +483,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
              MAX(observation_period_end_date) observation_period_max_date,
              COUNT(distinct person_id) persons,
              COUNT(person_id) records,
-             SUM(DATEDIFF(dd, observation_period_start_date, observation_period_end_date)) person_days
+             SUM(CAST(DATEDIFF(dd, observation_period_start_date, observation_period_end_date) AS BIGINT)) person_days
              FROM @cdm_database_schema.observation_period;",
     cdm_database_schema = cdmDatabaseSchema,
     snakeCaseToCamelCase = TRUE,

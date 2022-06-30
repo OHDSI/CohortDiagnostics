@@ -18,7 +18,7 @@ cohort_start_date of the cohorts."><!-- mathjax --><script src="https://cdnjs.cl
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.2</span>
       </span>
     </div>
 
@@ -80,18 +80,18 @@ cohort_start_date of the cohorts.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">runCohortRelationshipDiagnostics</span><span class="op">(</span>
-  connectionDetails <span class="op">=</span> <span class="cn">NULL</span>,
-  connection <span class="op">=</span> <span class="cn">NULL</span>,
-  cohortDatabaseSchema <span class="op">=</span> <span class="cn">NULL</span>,
-  <span class="va">cdmDatabaseSchema</span>,
-  tempEmulationSchema <span class="op">=</span> <span class="cn">NULL</span>,
-  cohortTable <span class="op">=</span> <span class="st">"cohort"</span>,
-  <span class="va">targetCohortIds</span>,
-  <span class="va">comparatorCohortIds</span>,
-  <span class="va">relationshipDays</span>,
-  observationPeriodRelationship <span class="op">=</span> <span class="cn">TRUE</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">runCohortRelationshipDiagnostics</span><span class="op">(</span></span>
+<span>  connectionDetails <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  connection <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cohortDatabaseSchema <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">cdmDatabaseSchema</span>,</span>
+<span>  tempEmulationSchema <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cohortTable <span class="op">=</span> <span class="st">"cohort"</span>,</span>
+<span>  <span class="va">targetCohortIds</span>,</span>
+<span>  <span class="va">comparatorCohortIds</span>,</span>
+<span>  <span class="va">relationshipDays</span>,</span>
+<span>  observationPeriodRelationship <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -101,33 +101,52 @@ cohort_start_date of the cohorts.</p>
 <code><a href="https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html" class="external-link">createConnectionDetails</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connection</code> is
 provided.</p></dd>
+
+
 <dt>connection</dt>
 <dd><p>An object of type <code>connection</code> as created using the
 <code><a href="https://ohdsi.github.io/DatabaseConnector/reference/connect.html" class="external-link">connect</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.</p></dd>
+
+
 <dt>cohortDatabaseSchema</dt>
 <dd><p>Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example
 'scratch.dbo'.</p></dd>
+
+
 <dt>cdmDatabaseSchema</dt>
 <dd><p>Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.</p></dd>
+
+
 <dt>tempEmulationSchema</dt>
 <dd><p>Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
 tables, provide a schema with write privileges where temp tables can be created.</p></dd>
+
+
 <dt>cohortTable</dt>
 <dd><p>Name of the cohort table.</p></dd>
+
+
 <dt>targetCohortIds</dt>
 <dd><p>A vector of one or more Cohort Ids for use as target cohorts.</p></dd>
+
+
 <dt>comparatorCohortIds</dt>
 <dd><p>A vector of one or more Cohort Ids for use as feature/comparator cohorts.</p></dd>
+
+
 <dt>relationshipDays</dt>
 <dd><p>A dataframe with two columns startDay and endDay representing periods of time to compute relationship</p></dd>
+
+
 <dt>observationPeriodRelationship</dt>
 <dd><p>Do you want to compute temporal relationship between target cohort and observation period table?</p></dd>
+
 </dl></div>
 
   </div>
@@ -142,7 +161,7 @@ tables, provide a schema with write privileges where temp tables can be created.
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
 </div>
 
       </footer></div>
