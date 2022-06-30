@@ -187,7 +187,6 @@ getConnectionPool <- function(connectionDetails) {
 }
 
 loadShinySettings <- function(configPath) {
-  writeLines("Using settings provided by user")
   stopifnot(file.exists(configPath))
   shinySettings <- yaml::read_yaml(configPath)
 

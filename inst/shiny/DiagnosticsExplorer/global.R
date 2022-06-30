@@ -18,6 +18,7 @@ if (exists("shinySettings")) {
   diagExpEnv$shinySettings <- shinySettings
   diagExpEnv$activeUser <- Sys.info()[['user']]
 } else {
+  writeLines("Using settings provided by user")
   diagExpEnv$shinySettings <- diagExpEnv$loadShinySettings(diagExpEnv$shinyConfigPath)
 }
 
