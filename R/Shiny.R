@@ -298,7 +298,7 @@ ensure_installed <- function(pkgs) {
   for (pkg in notInstalled) {
     if (pkg == "CirceR") {
       ensure_installed("remotes")
-      message(msg, "\nInstalling from Github using remotes")
+      message("\nInstalling from Github using remotes")
       remotes::install_github("OHDSI/CirceR")
     } else {
       install.packages(pkg)
