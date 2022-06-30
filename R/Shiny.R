@@ -163,7 +163,8 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
 createMergedResultsFile <-
   function(dataFolder,
            sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
-           overwrite = FALSE) {
+           overwrite = FALSE,
+           tablePrefix = "") {
     if (file.exists(sqliteDbPath) & !overwrite) {
       stop("File ", sqliteDbPath, " already exists. Set overwrite = TRUE to replace")
     } else if (file.exists(sqliteDbPath)) {
@@ -175,7 +176,8 @@ createMergedResultsFile <-
     on.exit(DatabaseConnector::disconnect(connection))
     createResultsDataModel(
       connection = connection,
-      schema = "main"
+      schema = "main",
+      tablePrefix = tablePrefix
     )
     listOfZipFilesToUpload <-
       list.files(
@@ -189,7 +191,8 @@ createMergedResultsFile <-
       uploadResults(
         connectionDetails = connectionDetails,
         schema = "main",
-        zipFileName = zipFileName
+        zipFileName = zipFileName,
+        tablePrefix = tablePrefix
       )
     }
   }

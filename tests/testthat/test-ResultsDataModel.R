@@ -42,13 +42,14 @@ test_that("Create schema", {
     )
     createResultsDataModel(
       connectionDetails = postgresConnectionDetails,
-      schema = resultsDatabaseSchema
+      schema = resultsDatabaseSchema,
+      tablePrefix = "cd_"
     )
 
     specifications <- getResultsDataModelSpecifications()
 
     for (tableName in unique(specifications$tableName)) {
-      expect_true(.pgTableExists(pgConnection, resultsDatabaseSchema, tableName))
+      expect_true(.pgTableExists(pgConnection, resultsDatabaseSchema, paste0("cd_", tableName)))
     }
     # Bad schema name
     expect_error(createResultsDataModel(
@@ -162,7 +163,8 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
     uploadResults(
       connectionDetails = postgresConnectionDetails,
       schema = resultsDatabaseSchema,
-      zipFileName = listOfZipFilesToUpload[[i]]
+      zipFileName = listOfZipFilesToUpload[[i]],
+      tablePrefix = "cd_"
     )
   }
 
@@ -182,7 +184,7 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
         sql <- SqlRender::render(
           sql = sql,
           schema = resultsDatabaseSchema,
-          table_name = tableName,
+          table_name = paste0("cd_", tableName),
           database_id = "cdmv5"
         )
         databaseIdCount <- DatabaseConnector::querySql(pgConnection, sql)[, 1]
@@ -194,7 +196,7 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
 
 test_that("Sqlite results data model", {
   dbFile <- tempfile(fileext = ".sqlite")
-  createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = dbFile, overwrite = TRUE)
+  createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = dbFile, overwrite = TRUE, tablePrefix = "cd_")
   connectionDetailsSqlite <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = dbFile)
   connectionSqlite <- DatabaseConnector::connect(connectionDetails = connectionDetailsSqlite)
   with_dbc_connection(connectionSqlite, {
@@ -218,7 +220,7 @@ test_that("Sqlite results data model", {
         sql <- SqlRender::render(
           sql = sql,
           schema = "main",
-          table_name = tableName,
+          table_name = paste0("cd_", tableName),
           database_id = "cdmv5"
         )
         databaseIdCount <- DatabaseConnector::querySql(connectionSqlite, sql)[, 1]
@@ -259,7 +261,8 @@ test_that("Data removal works", {
             connection = pgConnection,
             schema = resultsDatabaseSchema,
             tableName = tableName,
-            databaseId = "cdmv5"
+            databaseId = "cdmv5",
+            tablePrefix = "cd_"
           )
 
           sql <-
@@ -267,7 +270,7 @@ test_that("Data removal works", {
           sql <- SqlRender::render(
             sql = sql,
             schema = resultsDatabaseSchema,
-            table_name = tableName,
+            table_name = paste0("cd_", tableName),
             database_id = "cdmv5"
           )
           databaseIdCount <-
