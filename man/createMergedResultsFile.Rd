@@ -7,7 +7,8 @@
 createMergedResultsFile(
   dataFolder,
   sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
-  overwrite = FALSE
+  overwrite = FALSE,
+  tablePrefix = ""
 )
 }
 \arguments{
