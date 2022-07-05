@@ -1,3 +1,23 @@
+CohortDiagnostics 3.1.0
+=======================
+Changes:
+
+1. Major refactoring of shiny app to use modular code for ease of maintenance
+
+2. Initial tests for shiny modules in `inst/shiny/DiagnosticsExplorer/tests`
+
+3. Added support for table prefixes in Diagnostics Explorer databases (e.g. cg_cohort_definition)
+
+4. Enabled annotation on local instances of DiagnosticsExplorer
+
+5. Added yaml configuration for diagnostics explorer app, including docs on usage
+
+Bug fixes:
+
+1. Fixed issue uploading results to postgres db caused by null values in primary key field. 
+Removed constraint to fix issue.
+
+
 CohortDiagnostics 3.0.2
 =======================
 
