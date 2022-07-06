@@ -8,6 +8,7 @@ shiny::shinyServer(function(input, output, session) {
                                        enabledTabs = diagExpEnv$enabledTabs,
                                        conceptSets = diagExpEnv$conceptSets,
                                        userCredentials = diagExpEnv$userCredentials,
-                                       activeUser = diagExpEnv$activeUser)
+                                       activeUser = diagExpEnv$activeUser,
+                                       envir = diagExpEnv)
 
 })

@@ -240,8 +240,8 @@ createDatabaseDataSource <- function(connection,
       dbms = dbms,
       resultsTablesOnServer = tolower(DatabaseConnector::dbListTables(connection, schema = resultsDatabaseSchema)),
       tablePrefix = tablePrefix,
-      prefixTable = function (tableName) { paste0(tablePrefix, tableName) },
-      prefixVocabTable = function (tableName) {
+      prefixTable = function(tableName) { paste0(tablePrefix, tableName) },
+      prefixVocabTable = function(tableName) {
         # don't prexfix table if we us a dedicated vocabulary schema
         if (vocabularyDatabaseSchema == resultsDatabaseSchema)
           return(paste0(tablePrefix, tableName))
@@ -303,14 +303,14 @@ initializeEnvironment <- function(shinySettings,
     envir = envir
   ))
 
-  envir$database <- loadResultsTable(dataSource, dataSource$databaseTableName, required = TRUE)
-  envir$cohort <- loadResultsTable(dataSource, dataSource$cohortTableName, required = TRUE)
-  envir$metadata <- loadResultsTable(dataSource, "metadata", required = TRUE, tablePrefix = dataSource$tablePrefix)
-  envir$temporalTimeRef <- loadResultsTable(dataSource, "temporal_time_ref", tablePrefix = dataSource$tablePrefix)
-  envir$temporalAnalysisRef <- loadResultsTable(dataSource, "temporal_analysis_ref", tablePrefix = dataSource$tablePrefix)
-  envir$conceptSets <- loadResultsTable(dataSource, "concept_sets", tablePrefix = dataSource$tablePrefix)
-  envir$cohortCount <- loadResultsTable(dataSource, "cohort_count", required = TRUE, tablePrefix = dataSource$tablePrefix)
-  envir$relationship <- loadResultsTable(dataSource, "relationship", tablePrefix = dataSource$tablePrefix)
+  envir$database <- loadResultsTable(envir$dataSource, envir$dataSource$databaseTableName, required = TRUE)
+  envir$cohort <- loadResultsTable(envir$dataSource, envir$dataSource$cohortTableName, required = TRUE)
+  envir$metadata <- loadResultsTable(envir$dataSource, "metadata", required = TRUE, tablePrefix = envir$dataSource$tablePrefix)
+  envir$temporalTimeRef <- loadResultsTable(envir$dataSource, "temporal_time_ref", tablePrefix = envir$dataSource$tablePrefix)
+  envir$temporalAnalysisRef <- loadResultsTable(envir$dataSource, "temporal_analysis_ref", tablePrefix = envir$dataSource$tablePrefix)
+  envir$conceptSets <- loadResultsTable(envir$dataSource, "concept_sets", tablePrefix = envir$dataSource$tablePrefix)
+  envir$cohortCount <- loadResultsTable(envir$dataSource, "cohort_count", required = TRUE, tablePrefix = envir$dataSource$tablePrefix)
+  envir$relationship <- loadResultsTable(envir$dataSource, "relationship", tablePrefix = envir$dataSource$tablePrefix)
 
 
   if (is.numeric(envir$database$databaseId)) {
@@ -367,8 +367,9 @@ initializeEnvironment <- function(shinySettings,
 
   envir$temporalChoices <- NULL
   envir$temporalCharacterizationTimeIdChoices <- NULL
+
   if (!is.null(envir$temporalTimeRef)) {
-    envir$temporalChoices <- getResultsTemporalTimeRef(dataSource = dataSource)
+    envir$temporalChoices <- getResultsTemporalTimeRef(dataSource = envir$dataSource)
     envir$temporalCharacterizationTimeIdChoices <- envir$temporalChoices %>%
       dplyr::arrange(.data$sequence)
 
@@ -406,15 +407,15 @@ initializeEnvironment <- function(shinySettings,
                                                                  schema = dataSource$resultsDatabaseSchema))
   envir$enabledTabs <- c()
   for (table in envir$dataModelSpecifications$tableName %>% unique()) {
-    if (dataSource$prefixTable(table) %in% envir$resultsTables) {
-      if (!tableIsEmpty(dataSource, dataSource$prefixTable(table))) {
+    if (envir$dataSource$prefixTable(table) %in% envir$resultsTables) {
+      if (!tableIsEmpty(envir$dataSource, envir$dataSource$prefixTable(table))) {
         envir$enabledTabs <- c(envir$enabledTabs, SqlRender::snakeCaseToCamelCase(table))
       }
     }
   }
 
-  if (!(dataSource$cohortTableName %in% envir$resultsTables & dataSource$databaseTableName %in% envir$resultsTables)) {
-    stop(paste("cohort table:", dataSource$cohortTableName, "and database table:", dataSource$databaseTableName, "must be in results schema"))
+  if (!(envir$dataSource$cohortTableName %in% envir$resultsTables & envir$dataSource$databaseTableName %in% envir$resultsTables)) {
+    stop(paste("cohort table:", envir$dataSource$cohortTableName, "and database table:", envir$dataSource$databaseTableName, "must be in results schema"))
   }
 
   envir$enabledTabs <- c(envir$enabledTabs, "database", "cohort")

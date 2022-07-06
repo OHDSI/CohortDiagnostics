@@ -165,6 +165,7 @@ temporalCharacterizationModule <- function(id,
       if (!hasData(selectedTemporalTimeIds())) {
         return(NULL)
       }
+
       data <-
         characterizationOutputForCharacterizationMenu()
       if (!hasData(data)) {
@@ -207,6 +208,7 @@ temporalCharacterizationModule <- function(id,
     ## temporalCharacterizationRawTable ----
     temporalCharacterizationRawTable <- shiny::reactive(x = {
       data <- temporalCohortCharacterizationDataFiltered()
+
       validate(need(
         hasData(data),
         "No temporal characterization data"
