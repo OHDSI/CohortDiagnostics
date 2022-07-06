@@ -65,6 +65,14 @@ text <- gsub(patternRep, paste0('appVersionNum <- "', version, '"'), text)
 writeLines(text, con = file(filePath))
 
 
+version <- gsub("Version: ", "", version)
+filePath <- file.path("inst", "sql", "sql_server", "CreateResultsDataModel.sql")
+text <- readChar(filePath, file.info(filePath)$size)
+patternRep <- "\\{DEFAULT @version_number = '(\\d+\\.\\d+\\.\\d+)'\\}"# 'appVersionNum <- "Version: (\\d+\\.\\d+\\.\\d+)"'
+text <- gsub(patternRep, paste0("\\{DEFAULT @version_number = '", version, "'\\}"), text)
+writeLines(text, con = file(filePath))
+
+
 # Copy data model specs to Shiny app
 file.copy(from = "inst/settings/resultsDataModelSpecification.csv", 
           to = "inst/shiny/DiagnosticsExplorer/data/resultsDataModelSpecification.csv",

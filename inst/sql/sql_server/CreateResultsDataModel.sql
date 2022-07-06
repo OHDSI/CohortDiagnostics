@@ -31,7 +31,8 @@
 {DEFAULT @time_series = time_series}
 {DEFAULT @visit_context = visit_context}
 {DEFAULT @vocabulary = vocabulary}
-
+{DEFAULT @cd_version = cd_version}
+{DEFAULT @version_number = '3.1.0'}
 
 -- Drop old tables if exist
 DROP TABLE IF EXISTS @results_schema.@annotation;
@@ -68,9 +69,14 @@ DROP TABLE IF EXISTS @results_schema.@time_series;
 DROP TABLE IF EXISTS @results_schema.@visit_context;
 DROP TABLE IF EXISTS @results_schema.@vocabulary;
 
-
-
 -- Create tables
+--Table annotation
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE @results_schema.@cd_version (
+    version_number VARCHAR PRIMARY KEY
+);
+
+INSERT INTO @results_schema.@cd_version (version_number) VALUES ('@version_number');
 
 --Table annotation
 --HINT DISTRIBUTE ON RANDOM
@@ -522,3 +528,9 @@ CREATE TABLE @results_schema.@vocabulary (
 			vocabulary_version VARCHAR,
 			vocabulary_concept_id BIGINT NOT NULL
 );
+
+
+
+
+
+

@@ -688,7 +688,7 @@ cohortDefinitionsModule <- function(id,
       })
 
     getDatabaseIdInCohortConceptSet <- shiny::reactive({
-      return(databaseTable$databaseId[databaseTable$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema])
+      return(databaseTable$databaseId[databaseTable$databaseIdWithVocabularyVersion == input$vocabularySchema])
     })
 
     ## Cohort Concept Set
@@ -772,7 +772,7 @@ cohortDefinitionsModule <- function(id,
         }
 
         databaseIdToFilter <- databaseTable %>%
-          dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
+          dplyr::filter(.data$databaseIdWithVocabularyVersion == vocabSchema()) %>%
           dplyr::pull(.data$databaseId)
         if (!hasData(databaseIdToFilter)) {
           return(NULL)
@@ -786,7 +786,7 @@ cohortDefinitionsModule <- function(id,
         data <- getCohortDefinitionResolvedConceptsReactive()
         validate(need(
           hasData(data),
-          paste0("No data for database id ", input$databaseOrVocabularySchema)
+          paste0("No data for database id ", input$vocabularySchema)
         ))
         data <- data %>%
           dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id) %>%
@@ -795,7 +795,7 @@ cohortDefinitionsModule <- function(id,
                         "count" = .data$conceptCount)
         validate(need(
           hasData(data),
-          paste0("No data for database id ", input$databaseOrVocabularySchema)
+          paste0("No data for database id ", input$vocabularySchema)
         ))
         keyColumns <- c(
           "conceptId",
@@ -859,7 +859,7 @@ cohortDefinitionsModule <- function(id,
         return(NULL)
       }
       validate(need(
-        length(input$databaseOrVocabularySchema) > 0,
+        length(input$vocabularySchema) > 0,
         "No data sources chosen"
       ))
       row <- selectedCohortDefinitionRow()
@@ -896,13 +896,22 @@ cohortDefinitionsModule <- function(id,
       return(output)
     })
 
+    vocabSchema <- shiny::reactive({
+      browser()
+      if (is.null(input$vocabularySchema)) {
+        return("")
+      }
+      input$vocabularySchema
+    })
+
     output$cohortDefinitionOrphanConceptTable <-
       reactable::renderReactable(expr = {
         if (input$conceptSetsType != 'Orphan concepts') {
           return(NULL)
         }
+
         databaseIdToFilter <- databaseTable %>%
-          dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
+          dplyr::filter(.data$databaseIdWithVocabularyVersion == vocabSchema()) %>%
           dplyr::pull(.data$databaseId)
         if (!hasData(databaseIdToFilter)) {
           return(NULL)
@@ -910,7 +919,7 @@ cohortDefinitionsModule <- function(id,
         data <- getCohortDefinitionOrphanConceptsReactive()
         validate(need(
           hasData(data),
-          paste0("No data for database id ", input$databaseOrVocabularySchema)
+          paste0("No data for database id ", input$vocabularySchema)
         ))
         data <- data %>%
           dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id) %>%
@@ -922,7 +931,7 @@ cohortDefinitionsModule <- function(id,
           )
         validate(need(
           hasData(data),
-          paste0("No data for database id ", input$databaseOrVocabularySchema)
+          paste0("No data for database id ", input$vocabularySchema)
         ))
         keyColumns <-
           c("conceptId",
@@ -972,7 +981,7 @@ cohortDefinitionsModule <- function(id,
         }
 
         databaseIdToFilter <- databaseTable %>%
-          dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
+          dplyr::filter(.data$databaseIdWithVocabularyVersion == vocabSchema()) %>%
           dplyr::pull(.data$databaseId)
         if (!hasData(databaseIdToFilter)) {
           return(NULL)
@@ -986,7 +995,7 @@ cohortDefinitionsModule <- function(id,
         data <- getCohortDefinitionMappedConceptsReactive()
         validate(need(
           hasData(data),
-          paste0("No data for database id ", input$databaseOrVocabularySchema)
+          paste0("No data for database id ", input$vocabularySchema)
         ))
 
         data <- data %>%
@@ -996,7 +1005,7 @@ cohortDefinitionsModule <- function(id,
                         "count" = .data$conceptCount)
         validate(need(
           hasData(data),
-          paste0("No data for database id ", input$databaseOrVocabularySchema)
+          paste0("No data for database id ", input$vocabularySchema)
         ))
 
         keyColumns <- c(
@@ -1026,8 +1035,8 @@ cohortDefinitionsModule <- function(id,
 
     output$databasePicker <- shiny::renderUI({
       shinyWidgets::pickerInput(
-        inputId = ns("databaseOrVocabularySchema"),
-        label = "Vocabulary version choices:",
+        inputId = ns("vocabularySchema"),
+        label = "Vocabulary version:",
         choices = vocabularyChoices,
         multiple = FALSE,
         width = 200,

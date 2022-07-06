@@ -12,6 +12,8 @@ Changes:
 
 5. Added yaml configuration for diagnostics explorer app, including docs on usage
 
+6. Storage of version number in database results file to allow future migrations
+
 Bug fixes:
 
 1. Fixed issue uploading results to postgres db caused by null values in primary key field. 
