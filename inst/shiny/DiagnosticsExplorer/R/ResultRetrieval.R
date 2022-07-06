@@ -17,6 +17,9 @@ renderTranslateQuerySql <-
         },
         error = function(err) {
           writeLines(sql)
+          if (dbms %in% c("postgresql", "redshift")) {
+            DatabaseConnector::dbExecute(connection, "ABORT;")
+          }
           stop(err)
         }
       )
@@ -73,12 +76,13 @@ queryResultCovariateValue <- function(dataSource,
       connection = dataSource$connection,
       dbms = dataSource$dbms,
       sql = "SELECT *
-             FROM @results_database_schema.temporal_time_ref
-             WHERE time_id IS NOT NULL
+             FROM @results_database_schema.@table_name
+             WHERE (time_id IS NOT NULL AND time_id != 0)
               {@start_day != \"\"} ? { AND start_day IN (@start_day)}
               {@end_day != \"\"} ? { AND end_day IN (@end_day)};",
       snakeCaseToCamelCase = TRUE,
       results_database_schema = dataSource$resultsDatabaseSchema,
+      table_name = dataSource$prefixTable("temporal_time_ref"),
       start_day = startDay,
       end_day = endDay
     ) %>%
@@ -94,11 +98,12 @@ queryResultCovariateValue <- function(dataSource,
       connection = dataSource$connection,
       dbms = dataSource$dbms,
       sql = "SELECT *
-             FROM @results_database_schema.temporal_analysis_ref
+             FROM @results_database_schema.@table_name
               WHERE analysis_id IS NOT NULL
                 {@analysis_ids != \"\"} ? { AND analysis_id IN (@analysis_ids)}
               ;",
       analysis_ids = analysisIds,
+      table_name = dataSource$prefixTable("temporal_analysis_ref"),
       snakeCaseToCamelCase = TRUE,
       results_database_schema = dataSource$resultsDatabaseSchema
     ) %>%
@@ -109,11 +114,12 @@ queryResultCovariateValue <- function(dataSource,
       connection = dataSource$connection,
       dbms = dataSource$dbms,
       sql = "SELECT *
-             FROM @results_database_schema.temporal_covariate_ref
+             FROM @results_database_schema.@table_name
               WHERE covariate_id IS NOT NULL
                 {@analysis_ids != \"\"} ? { AND analysis_id IN (@analysis_ids)};",
       snakeCaseToCamelCase = TRUE,
       analysis_ids = analysisIds,
+      table_name = dataSource$prefixTable("temporal_covariate_ref"),
       results_database_schema = dataSource$resultsDatabaseSchema
     ) %>%
     dplyr::tibble()
@@ -125,20 +131,23 @@ queryResultCovariateValue <- function(dataSource,
         connection = dataSource$connection,
         dbms = dataSource$dbms,
         sql = "SELECT *
-                FROM @results_database_schema.temporal_covariate_value
+                FROM @results_database_schema.@table_name
                 WHERE covariate_id IN (
                                         SELECT DISTINCT covariate_id
-                                        FROM @results_database_schema.temporal_covariate_ref
+                                        FROM @results_database_schema.@ref_table_name
                                         WHERE covariate_id IS NOT NULL
                                           {@analysis_ids != \"\"} ? { AND analysis_id IN (@analysis_ids)}
                                       )
                 {@cohort_id != \"\"} ? { AND cohort_id IN (@cohort_id)}
-                {@time_id != \"\"} ? { AND (time_id IN (@time_id) OR time_id IS NULL)}
-                {@database_id != \"\"} ? { AND database_id IN (@database_id)};",
+                {@time_id != \"\"} ? { AND (time_id IN (@time_id) OR time_id IS NULL OR time_id == 0)}
+                {@use_database_id} ? { AND database_id IN (@database_id)};",
         snakeCaseToCamelCase = TRUE,
         analysis_ids = analysisIds,
         time_id = temporalTimeRefData$timeId %>% unique(),
+        use_database_id = is.null(databaseIds),
         database_id = quoteLiterals(databaseIds),
+        table_name = dataSource$prefixTable("temporal_covariate_value"),
+        ref_table_name = dataSource$prefixTable("temporal_covariate_ref"),
         cohort_id = cohortIds,
         results_database_schema = dataSource$resultsDatabaseSchema
       ) %>%
@@ -153,17 +162,19 @@ queryResultCovariateValue <- function(dataSource,
         connection = dataSource$connection,
         dbms = dataSource$dbms,
         sql = "SELECT *
-             FROM @results_database_schema.temporal_covariate_value_dist
+             FROM @results_database_schema.@table_name
               WHERE covariate_id IS NOT NULL
         {@covariate_id != \"\"} ? { AND covariate_id IN (@covariate_id)}
                 {@cohort_id != \"\"} ? { AND cohort_id IN (@cohort_id)}
-                {@time_id != \"\"} ? { AND (time_id IN (@time_id) OR time_id IS NULL)}
-                {@database_id != \"\"} ? { AND database_id IN (@database_id)};",
+                {@time_id != \"\"} ? { AND (time_id IN (@time_id) OR time_id IS NULL OR time_id == 0)}
+                {@use_database_id} ? { AND database_id IN (@database_id)};",
         snakeCaseToCamelCase = TRUE,
         covariate_id = temporalCovariateRefData$covariateId %>% unique(),
         time_id = temporalTimeRefData$timeId %>% unique(),
+        use_database_id = is.null(databaseIds),
         database_id = quoteLiterals(databaseIds),
         cohort_id = cohortIds,
+        table_name = dataSource$prefixTable("temporal_covariate_value_dist"),
         results_database_schema = dataSource$resultsDatabaseSchema
       ) %>%
       dplyr::tibble() %>%
@@ -465,7 +476,7 @@ getCohortTemporalRelationshipMatrix <- function(dataSource,
                     start_day,
                     end_day,
                     sub_cs_window_t
-             FROM @results_database_schema.cohort_relationships
+             FROM @results_database_schema.@table_name
              WHERE cohort_id IN (@cohort_id) AND
              database_id IN (@database_id)
               {@start_day != \"\"} ? { AND start_day IN (@start_day)}
@@ -474,6 +485,7 @@ getCohortTemporalRelationshipMatrix <- function(dataSource,
       results_database_schema = dataSource$resultsDatabaseSchema,
       cohort_id = cohortIds,
       database_id = quoteLiterals(databaseIds),
+      table_name = dataSource$prefixTable("cohort_relationships"),
       start_day = startDay,
       end_day = endDay
     ) %>%
@@ -741,11 +753,25 @@ getResultsCohortOverlap <- function(dataSource,
       endDays = c(9999, 0)
     )
 
-  if (any(
-    is.null(cohortRelationship),
-    nrow(cohortRelationship) == 0
-  )) {
-    return(NULL)
+  if (any(is.null(cohortRelationship),
+          nrow(cohortRelationship) == 0)) {
+    cohortRelationship <- dplyr::tibble(databaseId = databaseIds) %>%
+      tidyr::crossing(dplyr::tibble(cohortId = cohortIds)) %>%
+      tidyr::crossing(dplyr::tibble(comparatorCohortId = comparatorCohortIds)) %>%
+      dplyr::filter(.data$comparatorCohortId != .data$cohortId) %>%
+      tidyr::crossing(dplyr::tibble(startDay = c(-9999, 0),
+                                    endDay = c(9999, 0))) %>%
+      dplyr::full_join(
+        cohortRelationship,
+        by = c(
+          "databaseId",
+          "cohortId",
+          "comparatorCohortId",
+          "startDay",
+          "endDay"
+        )
+      )
+    cohortRelationship[is.na(cohortRelationship)] <- 0
   }
 
   fullOffSet <- cohortRelationship %>%
@@ -882,7 +908,7 @@ getResultsCohortRelationships <- function(dataSource,
       connection = dataSource$connection,
       dbms = dataSource$dbms,
       sql = "SELECT *
-             FROM @results_database_schema.cohort_relationships
+             FROM @results_database_schema.@table_name
              WHERE cohort_id IN (@cohort_id) AND
              database_id IN (@database_id)
               {@comparator_cohort_id != \"\"} ? { AND comparator_cohort_id IN (@comparator_cohort_id)}
@@ -891,6 +917,7 @@ getResultsCohortRelationships <- function(dataSource,
       snakeCaseToCamelCase = TRUE,
       results_database_schema = dataSource$resultsDatabaseSchema,
       database_id = quoteLiterals(databaseIds),
+      table_name = dataSource$prefixTable("cohort_relationships"),
       cohort_id = cohortIds,
       comparator_cohort_id = comparatorCohortIds,
       start_day = startDays,
@@ -1145,9 +1172,10 @@ getResultsCohort <- function(dataSource, cohortIds = NULL) {
     connection = dataSource$connection,
     results_database_schema = dataSource$resultsDatabaseSchema,
     dbms = dataSource$dbms,
-    sql = "SELECT * FROM @results_database_schema.cohort
+    sql = "SELECT * FROM @results_database_schema.@table_name
                                           {@cohort_id != \"\"} ? { WHERE cohort_id IN (@cohort_id)};",
     cohort_id = cohortIds,
+    table_name = dataSource$cohortTableName,
     snakeCaseToCamelCase = TRUE
   )
   return(data)
@@ -1158,7 +1186,7 @@ getResultsCohort <- function(dataSource, cohortIds = NULL) {
 getResultsCovariateRef <- function(dataSource,
                                    covariateIds = NULL) {
   sql <- "SELECT *
-            FROM @results_database_schema.covariate_ref
+            FROM @results_database_schema.@table_name
             {@covariate_ids == ''} ? { WHERE covariate_id IN (@covariate_ids)}
             ;"
   data <-
@@ -1167,6 +1195,7 @@ getResultsCovariateRef <- function(dataSource,
       sql = sql,
       results_database_schema = dataSource$resultsDatabaseSchema,
       covariate_id = covariateIds,
+      table_name = dataSource$prefixTable("covariate_ref"),
       snakeCaseToCamelCase = TRUE
     )
 
@@ -1179,15 +1208,15 @@ getResultsCovariateRef <- function(dataSource,
 # not exported
 getResultsTemporalCovariateRef <- function(dataSource,
                                            covariateIds = NULL) {
-  dataTableName <- "temporalCovariateRef"
   sql <- "SELECT *
-            FROM @results_database_schema.temporal_covariate_ref
+            FROM @results_database_schema.@table_name
             {@covariate_ids == ''} ? { WHERE covariate_id IN (@covariate_ids)};"
   data <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
       sql = sql,
       results_database_schema = dataSource$resultsDatabaseSchema,
+      table_name = dataSource$prefixTable("temporal_time_ref"),
       covariate_id = covariateIds,
       snakeCaseToCamelCase = TRUE
     )
@@ -1201,13 +1230,14 @@ getResultsTemporalCovariateRef <- function(dataSource,
 # not exported
 getResultsTemporalTimeRef <- function(dataSource) {
   sql <- "SELECT *
-            FROM @results_database_schema.temporal_time_ref;"
+            FROM @results_database_schema.@table_name;"
   temporalTimeRef <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
       dbms = dataSource$dbms,
       sql = sql,
       results_database_schema = dataSource$resultsDatabaseSchema,
+      table_name = dataSource$prefixTable("temporal_time_ref"),
       snakeCaseToCamelCase = TRUE
     )
 
@@ -1269,13 +1299,14 @@ getResultsTemporalTimeRef <- function(dataSource) {
 getResultsAnalysisRef <- function(dataSource) {
   dataTableName <- "analysisRef"
   sql <- "SELECT *
-            FROM @results_database_schema.analysis_ref;"
+            FROM @results_database_schema.@table_name;"
   data <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
       dbms = dataSource$dbms,
       sql = sql,
       results_database_schema = dataSource$resultsDatabaseSchema,
+      table_name = dataSource$prefixTable("analysis_ref"),
       snakeCaseToCamelCase = TRUE
     )
   if (nrow(data) == 0) {
@@ -1287,15 +1318,15 @@ getResultsAnalysisRef <- function(dataSource) {
 
 # not exported
 getResultsTemporalAnalysisRef <- function(dataSource) {
-  dataTableName <- "temporalAnalysisRef"
   sql <- "SELECT *
-            FROM @results_database_schema.temporal_analysis_ref;"
+            FROM @results_database_schema.@table_name;"
   data <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
       dbms = dataSource$dbms,
       sql = sql,
       results_database_schema = dataSource$resultsDatabaseSchema,
+      table_name = dataSource$prefixTable("temporal_analysis_ref"),
       snakeCaseToCamelCase = TRUE
     )
   if (nrow(data) == 0) {

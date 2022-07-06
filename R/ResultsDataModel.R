@@ -49,7 +49,7 @@ fixTableMetadataForBackwardCompatibility <- function(table, tableName) {
     if (!"metadata" %in% colnames(table)) {
       data <- list()
       for (i in (1:nrow(table))) {
-        data[[i]] <- table[i, ]
+        data[[i]] <- table[i,]
         colnamesDf <- colnames(data[[i]])
         metaDataList <- list()
         for (j in (1:length(colnamesDf))) {
@@ -99,7 +99,7 @@ checkFixColumnNames <-
     expectedNames <- tableSpecs %>%
       dplyr::select(.data$fieldName) %>%
       dplyr::anti_join(dplyr::filter(optionalNames, !.data$fieldName %in% observeredNames),
-        by = "fieldName"
+                       by = "fieldName"
       ) %>%
       dplyr::arrange(.data$fieldName) %>%
       dplyr::pull()
@@ -206,7 +206,7 @@ checkAndFixDuplicateRows <-
            specifications = getResultsDataModelSpecifications()) {
     primaryKeys <- specifications %>%
       dplyr::filter(.data$tableName == !!tableName &
-        .data$primaryKey == "Yes") %>%
+                      .data$primaryKey == "Yes") %>%
       dplyr::select(.data$fieldName) %>%
       dplyr::pull()
     duplicatedRows <- duplicated(table[, primaryKeys])
@@ -219,7 +219,7 @@ checkAndFixDuplicateRows <-
           sum(duplicatedRows)
         )
       )
-      return(table[!duplicatedRows, ])
+      return(table[!duplicatedRows,])
     } else {
       return(table)
     }
@@ -233,7 +233,7 @@ appendNewRows <-
     if (nrow(data) > 0) {
       primaryKeys <- specifications %>%
         dplyr::filter(.data$tableName == !!tableName &
-          .data$primaryKey == "Yes") %>%
+                        .data$primaryKey == "Yes") %>%
         dplyr::select(.data$fieldName) %>%
         dplyr::pull()
       newData <- newData %>%
@@ -250,11 +250,13 @@ appendNewRows <-
 #'
 #' @template Connection
 #' @param schema         The schema on the postgres server where the tables will be created.
+#' @param tablePrefix    (Optional)  string to insert before table names (e.g. "cd_") for database table names
 #'
 #' @export
 createResultsDataModel <- function(connection = NULL,
                                    connectionDetails = NULL,
-                                   schema) {
+                                   schema,
+                                   tablePrefix = "") {
   if (is.null(connection)) {
     if (!is.null(connectionDetails)) {
       connection <- DatabaseConnector::connect(connectionDetails)
@@ -268,12 +270,15 @@ createResultsDataModel <- function(connection = NULL,
     stop("Invalid schema for sqlite, use schema = 'main'")
   }
 
-  sql <- SqlRender::loadRenderTranslateSql(
-    sqlFilename = "CreateResultsDataModel.sql",
-    packageName = utils::packageName(),
-    dbms = connection@dbms,
-    results_schema = schema
-  )
+  sqlParams <- getPrefixedTableNames(tablePrefix)
+  sql <- do.call(SqlRender::loadRenderTranslateSql,
+                 c(sqlParams,
+                   list(
+                     sqlFilename = "CreateResultsDataModel.sql",
+                     packageName = utils::packageName(),
+                     dbms = connection@dbms,
+                     results_schema = schema
+                   )))
   DatabaseConnector::executeSql(connection, sql)
 }
 
@@ -309,6 +314,7 @@ naToZero <- function(x) {
 #' @param tempFolder     A folder on the local file system where the zip files are extracted to. Will be cleaned
 #'                       up when the function is finished. Can be used to specify a temp folder on a drive that
 #'                       has sufficient space if the default system temp space is too limited.
+#' @param tablePrefix    (Optional)  string to insert before table names (e.g. "cd_") for database table names
 #'
 #' @export
 uploadResults <- function(connectionDetails = NULL,
@@ -316,7 +322,8 @@ uploadResults <- function(connectionDetails = NULL,
                           zipFileName,
                           forceOverWriteOfSpecifications = FALSE,
                           purgeSiteDataBeforeUploading = TRUE,
-                          tempFolder = tempdir()) {
+                          tempFolder = tempdir(),
+                          tablePrefix = "") {
   if (connectionDetails$dbms == "sqlite" & schema != "main") {
     stop("Invalid schema for sqlite, use schema = 'main'")
   }
@@ -350,7 +357,7 @@ uploadResults <- function(connectionDetails = NULL,
 
     primaryKey <- specifications %>%
       filter(.data$tableName == !!tableName &
-        .data$primaryKey == "Yes") %>%
+               .data$primaryKey == "Yes") %>%
       select(.data$fieldName) %>%
       pull()
 
@@ -360,7 +367,8 @@ uploadResults <- function(connectionDetails = NULL,
         connection = connection,
         schema = schema,
         tableName = tableName,
-        databaseId = databaseId
+        databaseId = databaseId,
+        tablePrefix = tablePrefix
       )
     }
 
@@ -370,16 +378,18 @@ uploadResults <- function(connectionDetails = NULL,
       env$schema <- schema
       env$tableName <- tableName
       env$primaryKey <- primaryKey
+      env$tablePrefix <- tablePrefix
       if (purgeSiteDataBeforeUploading &&
         "database_id" %in% primaryKey) {
         env$primaryKeyValuesInDb <- NULL
       } else if (length(primaryKey) > 0) {
-        sql <- "SELECT DISTINCT @primary_key FROM @schema.@table_name;"
+        sql <- "SELECT DISTINCT @primary_key FROM @schema.@table_prefix@table_name;"
         sql <- SqlRender::render(
           sql = sql,
           primary_key = primaryKey,
           schema = schema,
-          table_name = tableName
+          table_name = tableName,
+          table_prefix = tablePrefix
         )
         primaryKeyValuesInDb <-
           DatabaseConnector::querySql(connection, sql)
@@ -419,7 +429,8 @@ uploadResults <- function(connectionDetails = NULL,
         toEmpty <- specifications %>%
           filter(
             .data$tableName == env$tableName &
-              .data$emptyIsNa == "No" & grepl("varchar", .data$type)
+              .data$emptyIsNa == "No" &
+              grepl("varchar", .data$type)
           ) %>%
           select(.data$fieldName) %>%
           pull()
@@ -445,8 +456,8 @@ uploadResults <- function(connectionDetails = NULL,
         if (!is.null(env$primaryKeyValuesInDb)) {
           primaryKeyValuesInChunk <- unique(chunk[env$primaryKey])
           duplicates <- inner_join(env$primaryKeyValuesInDb,
-            primaryKeyValuesInChunk,
-            by = env$primaryKey
+                                   primaryKeyValuesInChunk,
+                                   by = env$primaryKey
           )
           if (nrow(duplicates) != 0) {
             if ("database_id" %in% env$primaryKey ||
@@ -461,7 +472,8 @@ uploadResults <- function(connectionDetails = NULL,
                 connection = connection,
                 schema = env$schema,
                 tableName = env$tableName,
-                keyValues = duplicates
+                keyValues = duplicates,
+                tablePrefix = tablePrefix
               )
             } else {
               ParallelLogger::logInfo(
@@ -483,7 +495,7 @@ uploadResults <- function(connectionDetails = NULL,
         } else {
           DatabaseConnector::insertTable(
             connection = connection,
-            tableName = env$tableName,
+            tableName = paste0(tablePrefix, env$tableName),
             databaseSchema = env$schema,
             data = chunk,
             dropTableIfExists = FALSE,
@@ -493,6 +505,7 @@ uploadResults <- function(connectionDetails = NULL,
           )
         }
       }
+
       readr::read_csv_chunked(
         file = file.path(unzipFolder, csvFileName),
         callback = uploadChunk,
@@ -507,27 +520,31 @@ uploadResults <- function(connectionDetails = NULL,
       # guess_max = 1e6)
     }
   }
+
   invisible(lapply(unique(specifications$tableName), uploadTable))
   delta <- Sys.time() - start
   writeLines(paste("Uploading data took", signif(delta, 3), attr(delta, "units")))
 }
 
 deleteFromServer <-
-  function(connection, schema, tableName, keyValues) {
+  function(connection, schema, tableName, keyValues, tablePrefix) {
+
     createSqlStatement <- function(i) {
       sql <- paste0(
         "DELETE FROM ",
         schema,
         ".",
+        tablePrefix,
         tableName,
         "\nWHERE ",
         paste(paste0(
-          colnames(keyValues), " = '", keyValues[i, ], "'"
+          colnames(keyValues), " = '", keyValues[i,], "'"
         ), collapse = " AND "),
         ";"
       )
       return(sql)
     }
+
     batchSize <- 1000
     for (start in seq(1, nrow(keyValues), by = batchSize)) {
       end <- min(start + batchSize - 1, nrow(keyValues))
@@ -546,13 +563,14 @@ deleteFromServer <-
 deleteAllRecordsForDatabaseId <- function(connection,
                                           schema,
                                           tableName,
-                                          databaseId) {
+                                          databaseId,
+                                          tablePrefix = "") {
   sql <-
     "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
   sql <- SqlRender::render(
     sql = sql,
     schema = schema,
-    table_name = tableName,
+    table_name = paste0(tablePrefix, tableName),
     database_id = databaseId
   )
   databaseIdCount <-
@@ -570,13 +588,13 @@ deleteAllRecordsForDatabaseId <- function(connection,
     sql <- SqlRender::render(
       sql = sql,
       schema = schema,
-      table_name = tableName,
-      database_id = databaseId
+      table_name = paste0(tablePrefix, tableName),
+      database_id = databaseId,
     )
     DatabaseConnector::renderTranslateExecuteSql(connection,
-      sql,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
+                                                 sql,
+                                                 progressBar = FALSE,
+                                                 reportOverallTime = FALSE
     )
   }
 }

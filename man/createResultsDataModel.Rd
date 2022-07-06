@@ -4,7 +4,12 @@
 \alias{createResultsDataModel}
 \title{Create the results data model tables on a database server.}
 \usage{
-createResultsDataModel(connection = NULL, connectionDetails = NULL, schema)
+createResultsDataModel(
+  connection = NULL,
+  connectionDetails = NULL,
+  schema,
+  tablePrefix = ""
+)
 }
 \arguments{
 \item{connection}{An object of type \code{connection} as created using the
@@ -19,6 +24,8 @@ DatabaseConnector package. Can be left NULL if \code{connection} is
 provided.}
 
 \item{schema}{The schema on the postgres server where the tables will be created.}
+
+\item{tablePrefix}{(Optional)  string to insert before table names (e.g. "cd_") for database table names}
 }
 \description{
 Create the results data model tables on a database server.

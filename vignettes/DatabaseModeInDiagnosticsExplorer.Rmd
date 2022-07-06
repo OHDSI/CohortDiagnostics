@@ -36,3 +36,38 @@ We have an example script on how to upload data to remote postgres server [here]
 To upload the results, we recommend that you use the 'uploadResults()' function, and provide it the path to your postgres driver.
 
 Once the data is uploaded into the postgres server - you can execute the shiny application using the 'launchDiagnosticsExplorer()' function. Please provide the connection details, along with the schema that you have uploaded your results (resultsDatabaseSchema). 
+
+For deploying the server, a yaml file called `config.yml` should be placed in the DiagnosticsExplorer path.
+See the README.md file in this directory for more details on configuration.
+Example yaml settings are included below:
+
+```{yaml}
+# Alter these configuration settings for usage with remote databases
+connectionDetails:
+  dbms: "postgresql"
+  server: "my-database-server.com/myDatabaseName"
+  user: "postrgres"
+  password: "secret_password"
+  port: 5432
+
+# Store connection details as a json string in keyring
+# Store with keyring::key_set_with_value("KEYNAME", jsonlite::toJSON(myConnectionDetails))
+connectionDetailsSecureKey: ~
+
+# If you used a table prefix to store the results (e.g. cd_)
+tablePrefix: ""
+
+# Results schema being used
+resultsDatabaseSchema: "cohort_diagnostics"
+
+# Vocabulary schemas. Should include the reuslts schema and optional custom vocabularies
+vocabularyDatabaseSchemas: ["cohort_diagnostics"]
+
+# Custom table name for cohorts and cdm databases (probably not needed, ignores table prefix)
+cohortTableName: "cohort"
+databaseTableName: "database"
+
+# If you wish to enable annotation - not currently reccomended in multi-user environments
+enableAnnotation: FALSE
+enableAuthorization: FALSE
+```

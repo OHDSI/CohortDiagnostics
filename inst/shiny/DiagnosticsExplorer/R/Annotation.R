@@ -14,36 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#' @param id            unqiue identifier for module. Must match call to annotationModule
+annotationUi <- function(id) {
+  ns <- shiny::NS(id)
 
-annotationFunction <- function(diagnosticsId) {
-  return(
-    shinydashboard::box(
-      title = "",
-      width = NULL,
-      collapsible = TRUE,
-      collapsed = FALSE,
-      reactable::reactableOutput(
-        outputId = paste0("output", diagnosticsId),
-        width = NULL
-      ),
-      tags$style(
-        paste0(
-          "#output",
-          diagnosticsId,
-          " {max-height:300px;overflow:auto;padding-left:30px;margin:0 0 30px 10px;border-left:1px solid #eee;}"
-        )
-      ),
-      shiny::conditionalPanel(
+  postAnnotationArea <- shiny::conditionalPanel(
         condition = "output.postAnnotationEnabled == true",
+        ns = ns,
         shinydashboard::box(
-          title = "Comments",
+          title = "Add comment",
           width = NULL,
           collapsible = TRUE,
           collapsed = TRUE,
           column(
             5,
             shinyWidgets::pickerInput(
-              inputId = paste0("database", diagnosticsId),
+              inputId = ns("database"),
               label = "Related Database:",
               width = 300,
               choices = c(""),
@@ -64,7 +50,7 @@ annotationFunction <- function(diagnosticsId) {
           column(
             5,
             shinyWidgets::pickerInput(
-              inputId = paste0("cohort", diagnosticsId),
+              inputId = ns("targetCohort"),
               label = "Related Cohorts",
               width = 300,
               choices = c(""),
@@ -86,7 +72,7 @@ annotationFunction <- function(diagnosticsId) {
           column(
             11,
             markdownInput::markdownInput(
-              inputId = paste0("annotation", diagnosticsId),
+              inputId = ns("markdownInputArea"),
               label = "Comment : ",
               theme = "github",
               value = "Write some _markdown_ **here:**"
@@ -96,7 +82,7 @@ annotationFunction <- function(diagnosticsId) {
             1,
             tags$br(),
             shiny::actionButton(
-              inputId = paste0("postAnnotation", diagnosticsId),
+              inputId = ns("postAnnotation"),
               label = "POST",
               width = NULL,
               style = "margin-top: 15px; margin-bottom: 15px;"
@@ -104,12 +90,224 @@ annotationFunction <- function(diagnosticsId) {
           )
         )
       )
+
+  return(
+    shinydashboard::box(
+      title = "Comments",
+      width = NULL,
+      collapsible = TRUE,
+      collapsed = FALSE,
+      reactable::reactableOutput(
+        outputId = ns("comments"),
+        width = NULL
+      ),
+      tags$style(
+        paste0(
+          "#output",
+          id,
+          " {max-height:300px;overflow:auto;padding-left:30px;margin:0 0 30px 10px;border-left:1px solid #eee;}"
+        )
+      ),
+      postAnnotationArea
     )
   )
 }
 
+#' Annoation module
+#' Adds annoation section that allows display and addition of markdown comments for cohorts
+#'
+#' @param id                        The namespace id of the module instance - must align with `annotationUi`
+#' @param dataSource                Database intance used to store comments and retrieve them
+#' @param activeLoggedInUser        shiny::reactive that returns the active logged in user that stores the comment
+#' @param selectedDatabaseIds       shiny::reactive the current selected by the user
+#' @param postAnnotaionEnabled     shiny::reactive - is posting enabled for the user?
+#' @param multiCohortSelection      Boolean is the input set of cohorts many or one?
+annotationModule <- function(id,
+                             dataSource,
+                             activeLoggedInUser,
+                             selectedDatabaseIds,
+                             selectedCohortIds,
+                             cohortTable,
+                             postAnnotaionEnabled) {
+  ns <- shiny::NS(id)
+  annotationServer <- function(input, output, session) {
+    # Annotation Section ------------------------------------
+    ## posting annotation enabled ------
+    output$postAnnotationEnabled <- shiny::reactive({
+      postAnnotaionEnabled() & !is.null(activeLoggedInUser())
+    })
+    outputOptions(output, "postAnnotationEnabled", suspendWhenHidden = FALSE)
+
+    ## Retrieve Annotation ----------------
+    reloadAnnotationSection <- reactiveVal(0)
+
+    inputCohortIds <- shiny::reactive({
+      cohortTable %>%
+        dplyr::filter(.data$compoundName %in% selectedCohortIds()) %>%
+        dplyr::pull(.data$cohortId)
+    })
+
+    getAnnotationReactive <- shiny::reactive({
+      reloadAnnotationSection()
+      results <- getAnnotationResult(
+        dataSource = dataSource,
+        diagnosticsId = id,
+        cohortIds = inputCohortIds(),
+        databaseIds = selectedDatabaseIds()
+      )
+
+      if (nrow(results$annotation) == 0) {
+        return(NULL)
+      }
+      return(results)
+    })
+
+    markdownModule <- shiny::callModule(markdownInput::moduleMarkdownInput, "markdownInputArea")
+
+    shiny::observe({
+      shinyWidgets::updatePickerInput(
+        session = session,
+        inputId = "database",
+        choices = selectedDatabaseIds(),
+        selected = selectedDatabaseIds()
+      )
+    })
+
+    shiny::observe({
+      shinyWidgets::updatePickerInput(
+        session = session,
+        inputId = "targetCohort",
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        choices = selectedCohortIds(),
+        selected = selectedCohortIds()
+      )
+    })
+
+    ## renderedAnnotation ----
+    output$comments <-
+      reactable::renderReactable({
+        results <- getAnnotationReactive()
+
+        if (is.null(results)) {
+          return(NULL)
+        }
+        data <- results$annotation
+        for (i in 1:nrow(data)) {
+          data[i,]$annotation <-
+            markdown::renderMarkdown(text = data[i,]$annotation)
+        }
+        data <- data %>%
+          dplyr::mutate(
+            Annotation = paste0(
+              "<b>",
+              .data$createdBy,
+              "@",
+              getTimeFromInteger(.data$createdOn),
+              ":</b>",
+              .data$annotation
+            )
+          ) %>%
+          dplyr::select(.data$annotationId, .data$Annotation)
+
+        reactable::reactable(
+          data,
+          columns = list(
+            annotationId = reactable::colDef(show = FALSE),
+            Annotation = reactable::colDef(html = TRUE)
+          ),
+          details = function(index) {
+            subTable <- results$annotationLink %>%
+              dplyr::filter(.data$annotationId == data[index,]$annotationId) %>%
+              dplyr::inner_join(cohortTable %>%
+                                  dplyr::select(
+                                    .data$cohortId,
+                                    .data$cohortName
+                                  ),
+                                by = "cohortId"
+              )
+            distinctCohortName <- subTable %>%
+              dplyr::distinct(.data$cohortName)
+            distinctDatabaseId <- subTable %>%
+              dplyr::distinct(.data$databaseId)
+
+            htmltools::div(
+              style = "margin:0;padding:0;padding-left:50px;",
+              tags$p(
+                style = "margin:0;padding:0;",
+                "Related Cohorts: ",
+                tags$p(
+                  style = "padding-left:30px;",
+                  tags$pre(
+                    paste(distinctCohortName$cohortName, collapse = "\n")
+                  )
+                )
+              ),
+              tags$br(),
+              tags$p(
+                "Related Databses: ",
+                tags$p(
+                  style = "padding-left:30px;",
+                  tags$pre(
+                    paste(distinctDatabaseId$databaseId, collapse = "\n")
+                  )
+                )
+              )
+            )
+          }
+        )
+      })
+
+
+    ## Post Annotation ----------------
+    getParametersToPostAnnotation <- shiny::reactive({
+      tempList <- list()
+      # Annotation - cohort Ids
+      tempList$cohortIds <- inputCohortIds()
+
+      # Annotation - database Ids
+      if (!is.null(input$database)) {
+        selectedDatabaseIds <- input$database
+      } else {
+        selectedDatabaseIds <- selectedDatabaseIds()
+      }
+      tempList$databaseIds <- selectedDatabaseIds
+      return(tempList)
+    })
+
+
+    shiny::observeEvent(
+      eventExpr = input$postAnnotation,
+      handlerExpr = {
+        parametersToPostAnnotation <- getParametersToPostAnnotation()
+        comment <- markdownModule()
+
+        if (comment == "Write some _markdown_ **here:**" | is.null(comment) | is.null(activeLoggedInUser())) {
+          return(NULL)
+        }
+        createdBy <- activeLoggedInUser()
+        result <- postAnnotationResult(
+          dataSource = dataSource,
+          diagnosticsId = id,
+          cohortIds = parametersToPostAnnotation$cohortIds,
+          databaseIds = parametersToPostAnnotation$databaseIds,
+          annotation = comment,
+          createdBy = createdBy,
+          createdOn = getTimeAsInteger()
+        )
+
+        if (result) {
+          # trigger reload
+          reloadAnnotationSection(reloadAnnotationSection() + 1)
+        }
+      }
+    )
+  }
+
+  return(shiny::moduleServer(id, annotationServer))
+}
+
+
 postAnnotationResult <- function(dataSource,
-                                 resultsDatabaseSchema,
                                  diagnosticsId,
                                  cohortIds,
                                  databaseIds,
@@ -141,18 +339,18 @@ postAnnotationResult <- function(dataSource,
                 FROM @results_database_schema.annotation;"
 
   tryCatch(
-    {
-      renderTranslateExecuteSql(
-        connection = dataSource$connection,
-        sql = sqlInsert,
-        results_database_schema = dataSource$resultsDatabaseSchema,
-        annotation = annotation,
-        created_by = createdBy,
-        created_on = createdOn,
-        modified_last_on = modifiedOn,
-        deleted_on = deletedOn
-      )
-    },
+  {
+    renderTranslateExecuteSql(
+      dataSource = dataSource,
+      sql = sqlInsert,
+      results_database_schema = dataSource$resultsDatabaseSchema,
+      annotation = annotation,
+      created_by = createdBy,
+      created_on = createdOn,
+      modified_last_on = modifiedOn,
+      deleted_on = deletedOn
+    )
+  },
     error = function(err) {
       stop(paste("Error while posting the comment, \nDescription:", err))
     }

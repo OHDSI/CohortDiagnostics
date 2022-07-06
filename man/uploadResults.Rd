@@ -10,7 +10,8 @@ uploadResults(
   zipFileName,
   forceOverWriteOfSpecifications = FALSE,
   purgeSiteDataBeforeUploading = TRUE,
-  tempFolder = tempdir()
+  tempFolder = tempdir(),
+  tablePrefix = ""
 )
 }
 \arguments{
@@ -33,6 +34,8 @@ data site.}
 \item{tempFolder}{A folder on the local file system where the zip files are extracted to. Will be cleaned
 up when the function is finished. Can be used to specify a temp folder on a drive that
 has sufficient space if the default system temp space is too limited.}
+
+\item{tablePrefix}{(Optional)  string to insert before table names (e.g. "cd_") for database table names}
 }
 \description{
 Requires the results data model tables have been created using the \code{\link{createResultsDataModel}} function.

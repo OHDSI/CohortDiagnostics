@@ -121,7 +121,8 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
             .data$sumValue,
             .data$mean,
             .data$sd
-          )
+          ) %>%
+          dplyr::mutate(timeId = 0)
       }
       if ("covariates" %in% names(results)) {
         Andromeda::appendToTable(results$covariates, covariates)
@@ -152,7 +153,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           )
       } else {
         covariates <- covariates %>%
-          dplyr::mutate(sumValue = -1) %>%
+          dplyr::mutate(sumValue = -1, timeId = 0) %>%
           dplyr::select(
             .data$cohortId,
             .data$covariateId,

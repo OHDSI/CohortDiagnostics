@@ -31,7 +31,8 @@
 {DEFAULT @time_series = time_series}
 {DEFAULT @visit_context = visit_context}
 {DEFAULT @vocabulary = vocabulary}
-
+{DEFAULT @cd_version = cd_version}
+{DEFAULT @version_number = '3.1.0'}
 
 -- Drop old tables if exist
 DROP TABLE IF EXISTS @results_schema.@annotation;
@@ -68,9 +69,14 @@ DROP TABLE IF EXISTS @results_schema.@time_series;
 DROP TABLE IF EXISTS @results_schema.@visit_context;
 DROP TABLE IF EXISTS @results_schema.@vocabulary;
 
-
-
 -- Create tables
+--Table annotation
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE @results_schema.@cd_version (
+    version_number VARCHAR PRIMARY KEY
+);
+
+INSERT INTO @results_schema.@cd_version (version_number) VALUES ('@version_number');
 
 --Table annotation
 --HINT DISTRIBUTE ON RANDOM
@@ -329,8 +335,7 @@ CREATE TABLE @results_schema.@incidence_rate (
 			calendar_year VARCHAR(4),
 			incidence_rate FLOAT NOT NULL,
 			cohort_id BIGINT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(gender, age_group, calendar_year, cohort_id, database_id)
+			database_id VARCHAR NOT NULL
 );
 
 --Table included_source_concept
@@ -442,7 +447,7 @@ CREATE TABLE @results_schema.@temporal_covariate_ref (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@temporal_covariate_value (
 			cohort_id BIGINT NOT NULL,
-			time_id INT,
+			time_id INT NOT NULL,
 			covariate_id BIGINT NOT NULL,
 			sum_value FLOAT NOT NULL,
 			mean FLOAT NOT NULL,
@@ -455,7 +460,7 @@ CREATE TABLE @results_schema.@temporal_covariate_value (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@temporal_covariate_value_dist (
 			cohort_id BIGINT NOT NULL,
-			time_id INT,
+			time_id INT NOT NULL,
 			covariate_id BIGINT NOT NULL,
 			count_value FLOAT NOT NULL,
 			min_value FLOAT NOT NULL,
@@ -500,8 +505,7 @@ CREATE TABLE @results_schema.@time_series (
 			subjects_start_in BIGINT,
 			records_end BIGINT,
 			subjects_end BIGINT,
-			subjects_end_in BIGINT,
-			PRIMARY KEY(cohort_id, database_id, period_begin, period_end, calendar_interval, gender, age_group, series_type)
+			subjects_end_in BIGINT
 );
 
 --Table visit_context
@@ -524,3 +528,9 @@ CREATE TABLE @results_schema.@vocabulary (
 			vocabulary_version VARCHAR,
 			vocabulary_concept_id BIGINT NOT NULL
 );
+
+
+
+
+
+
