@@ -48,7 +48,7 @@ conceptsInDataSourceModule <- function(id,
                                        selectedDatabaseIds,
                                        targetCohortId,
                                        selectedConceptSets,
-                                       getResolvedAndMappedConceptIdsForFilters,
+                                       getFilteredConceptIds,
                                        cohortTable,
                                        databaseTable) {
   ns <- shiny::NS(id)
@@ -82,9 +82,9 @@ conceptsInDataSourceModule <- function(id,
         "No data available for selected combination"
       ))
       if (hasData(selectedConceptSets())) {
-        if (length(getResolvedAndMappedConceptIdsForFilters()) > 0) {
+        if (length(getFilteredConceptIds()) > 0) {
           data <- data %>%
-            dplyr::filter(.data$conceptId %in% getResolvedAndMappedConceptIdsForFilters())
+            dplyr::filter(.data$conceptId %in% getFilteredConceptIds())
         }
       }
       validate(need(

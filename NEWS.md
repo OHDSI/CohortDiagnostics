@@ -14,6 +14,8 @@ Changes:
 
 6. Storage of version number in database results file to allow future migrations
 
+7. Slight optimization of cohort characterization queries in diagnostics explorer
+
 Bug fixes:
 
 1. Fixed issue uploading results to postgres db caused by null values in primary key field. 
