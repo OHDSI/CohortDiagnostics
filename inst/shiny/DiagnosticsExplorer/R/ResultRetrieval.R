@@ -130,21 +130,18 @@ queryResultCovariateValue <- function(dataSource,
       renderTranslateQuerySql(
         connection = dataSource$connection,
         dbms = dataSource$dbms,
-        sql = "SELECT *
-                FROM @results_database_schema.@table_name
-                WHERE covariate_id IN (
-                                        SELECT DISTINCT covariate_id
-                                        FROM @results_database_schema.@ref_table_name
-                                        WHERE covariate_id IS NOT NULL
-                                          {@analysis_ids != \"\"} ? { AND analysis_id IN (@analysis_ids)}
-                                      )
-                {@cohort_id != \"\"} ? { AND cohort_id IN (@cohort_id)}
+        sql = "SELECT tcv.*
+                FROM @results_database_schema.@table_name tcv
+                INNER JOIN @results_database_schema.@ref_table_name ref ON ref.covariate_id = tcv.covariate_id
+                WHERE ref.covariate_id IS NOT NULL
+                {@analysis_ids != \"\"} ? { AND ref.analysis_id IN (@analysis_ids)}
+                {@cohort_id != \"\"} ? { AND tcv.cohort_id IN (@cohort_id)}
                 {@time_id != \"\"} ? { AND (time_id IN (@time_id) OR time_id IS NULL OR time_id == 0)}
                 {@use_database_id} ? { AND database_id IN (@database_id)};",
         snakeCaseToCamelCase = TRUE,
         analysis_ids = analysisIds,
         time_id = temporalTimeRefData$timeId %>% unique(),
-        use_database_id = is.null(databaseIds),
+        use_database_id = !is.null(databaseIds),
         database_id = quoteLiterals(databaseIds),
         table_name = dataSource$prefixTable("temporal_covariate_value"),
         ref_table_name = dataSource$prefixTable("temporal_covariate_ref"),
@@ -171,7 +168,7 @@ queryResultCovariateValue <- function(dataSource,
         snakeCaseToCamelCase = TRUE,
         covariate_id = temporalCovariateRefData$covariateId %>% unique(),
         time_id = temporalTimeRefData$timeId %>% unique(),
-        use_database_id = is.null(databaseIds),
+        use_database_id = !is.null(databaseIds),
         database_id = quoteLiterals(databaseIds),
         cohort_id = cohortIds,
         table_name = dataSource$prefixTable("temporal_covariate_value_dist"),
@@ -183,7 +180,7 @@ queryResultCovariateValue <- function(dataSource,
 
   if (hasData(temporalCovariateValueData)) {
     temporalCovariateValueData <- temporalCovariateValueData %>%
-      dplyr::left_join(temporalTimeRef,
+      dplyr::left_join(temporalTimeRefData,
         by = "timeId"
       )
   }
@@ -191,7 +188,7 @@ queryResultCovariateValue <- function(dataSource,
   if (hasData(temporalCovariateValueDistData)) {
     temporalCovariateValueDistData <-
       temporalCovariateValueDistData %>%
-      dplyr::left_join(temporalTimeRef,
+      dplyr::left_join(temporalTimeRefData,
         by = "timeId"
       )
   }
@@ -229,8 +226,7 @@ getCharacterizationOutput <- function(dataSource,
     temporalCovariateValueDist = temporalCovariateValueDist
   )
 
-  postProcessCharacterizationValue <- function(data,
-                                               temporalChoices) {
+  postProcessCharacterizationValue <- function(data) {
     if ("timeId" %in% colnames(data$temporalCovariateValue)) {
       data$temporalCovariateValue$timeId <- NULL
     }
@@ -300,27 +296,20 @@ getCharacterizationOutput <- function(dataSource,
   if ("temporalCovariateValue" %in% names(covariateValue) &&
     hasData(covariateValue$temporalCovariateValue)) {
     resultCovariateValue <-
-      postProcessCharacterizationValue(
-        data = covariateValue,
-        temporalChoices = temporalChoices
-      )
+      postProcessCharacterizationValue(data = covariateValue)
   }
-  resultCovariateValueDist <- NULL
 
-  cohortRelationshipCharacterizationResults <-
+  cohortRelCharRes <-
     getCohortRelationshipCharacterizationResults(
       dataSource = dataSource,
       cohortIds = cohortIds,
       databaseIds = databaseIds
     )
   resultCohortValue <- NULL
-  if ("temporalCovariateValue" %in% names(cohortRelationshipCharacterizationResults) &&
-    hasData(cohortRelationshipCharacterizationResults$temporalCovariateValue)) {
+  if ("temporalCovariateValue" %in% names(cohortRelCharRes) &&
+    hasData(cohortRelCharRes$temporalCovariateValue)) {
     resultCohortValue <-
-      postProcessCharacterizationValue(
-        data = cohortRelationshipCharacterizationResults,
-        temporalChoices = temporalChoices
-      )
+      postProcessCharacterizationValue(data = cohortRelCharRes)
   }
 
   resultCovariateValueDist <- NULL
@@ -334,6 +323,7 @@ getCharacterizationOutput <- function(dataSource,
       resultCovariateValue
     )
   }
+
   if (hasData(resultCovariateValueDist)) {
     temporalCovariateValueDist <-
       dplyr::bind_rows(
@@ -348,13 +338,7 @@ getCharacterizationOutput <- function(dataSource,
       resultCohortValue
     )
   }
-  if (hasData(resultCovariateValueDist)) {
-    temporalCovariateValueDist <-
-      dplyr::bind_rows(
-        temporalCovariateValueDist,
-        resultCovariateValueDist
-      )
-  }
+
   return(
     list(
       covariateValue = temporalCovariateValue,
@@ -1003,42 +987,12 @@ getCohortRelationshipCharacterizationResults <-
       ) %>%
       dplyr::mutate(analysisId = -201)
 
-    # TO DO - person days
-    # tDays <- cohortRelationships %>%
-    #   dplyr::filter(.data$startDay == 0) %>%
-    #   dplyr::filter(.data$endDay == 0) %>%
-    #   dplyr::filter(.data$comparatorCohortId == -1) %>%
-    #   dplyr::select(.data$cohortId, .data$databaseId, .data$tDays) %>%
-    #   dplyr::rename(tDaysObsCohort = tDays)
-    # # days overlap
-    # daysOverlap <- cohortRelationships %>%
-    #   dplyr::inner_join(cohortCounts,
-    #                     by = c("cohortId", "databaseId")) %>%
-    #   dplyr::mutate(sumValue = (.data$cDaysWithinTDays)) %>%
-    #   dplyr::inner_join(tDays,
-    #                     by = c("cohortId", "databaseId")) %>%
-    #   dplyr::mutate(mean = .data$sumValue/.data$tDaysObsCohort) %>%
-    #   dplyr::select(.data$cohortId,
-    #                 .data$comparatorCohortId,
-    #                 .data$databaseId,
-    #                 .data$startDay,
-    #                 .data$endDay,
-    #                 .data$mean,
-    #                 .data$sumValue
-    #   )
-
     data <- dplyr::bind_rows(
       subjectsOverlap,
       subjectsStart
     ) %>%
       dplyr::filter(.data$comparatorCohortId > 0) %>%
       dplyr::mutate(covariateId = (.data$comparatorCohortId * -1000) + .data$analysisId)
-
-    if (nrow(data %>% dplyr::filter(.data$mean > 1)) > 0) {
-      stop(
-        "During characterization, population size (denominator) was found to be smaller than features Value (numerator)."
-      )
-    }
 
     # suppressing warning because of - negative causing NaN values
     data <- suppressWarnings(expr = {

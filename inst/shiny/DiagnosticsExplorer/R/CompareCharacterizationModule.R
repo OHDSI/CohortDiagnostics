@@ -309,7 +309,7 @@ compareCohortCharacterizationModule <- function(id,
                                                 selectedConceptSets,
                                                 selectedTimeIds,
                                                 characterizationOutputMenu,
-                                                getResolvedAndMappedConceptIdsForFilters,
+                                                getFilteredConceptIds,
                                                 cohortTable,
                                                 databaseTable,
                                                 temporalAnalysisRef,
@@ -435,9 +435,9 @@ compareCohortCharacterizationModule <- function(id,
         dplyr::filter(.data$domainId %in% input$compareCohortcharacterizationDomainIdFilter)
 
       if (hasData(selectedConceptSets())) {
-        if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
+        if (hasData(getFilteredConceptIds())) {
           data <- data %>%
-            dplyr::filter(.data$conceptId %in% getResolvedAndMappedConceptIdsForFilters())
+            dplyr::filter(.data$conceptId %in% getFilteredConceptIds())
         }
       }
       if (!hasData(data)) {
