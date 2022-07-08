@@ -329,7 +329,7 @@ CREATE TABLE @results_schema.@domain (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@incidence_rate (
 			cohort_count BIGINT NOT NULL,
-			person_years BIGINT NOT NULL,
+			person_years FLOAT,
 			gender VARCHAR,
 			age_group VARCHAR,
 			calendar_year VARCHAR(4),
