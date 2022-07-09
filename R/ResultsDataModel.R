@@ -242,6 +242,19 @@ appendNewRows <-
     return(dplyr::bind_rows(data, newData))
   }
 
+#' Private function for testing migrations in isolation
+.createDataModel <- function(connection, schema, tablePrefix) {
+  sqlParams <- getPrefixedTableNames(tablePrefix)
+  sql <- do.call(SqlRender::loadRenderTranslateSql,
+                 c(sqlParams,
+                   list(
+                     sqlFilename = "CreateResultsDataModel.sql",
+                     packageName = utils::packageName(),
+                     dbms = connection@dbms,
+                     results_schema = schema
+                   )))
+  DatabaseConnector::executeSql(connection, sql)
+}
 
 #' Create the results data model tables on a database server.
 #'
@@ -251,7 +264,6 @@ appendNewRows <-
 #' @template Connection
 #' @param schema         The schema on the postgres server where the tables will be created.
 #' @param tablePrefix    (Optional)  string to insert before table names (e.g. "cd_") for database table names
-#'
 #' @export
 createResultsDataModel <- function(connection = NULL,
                                    connectionDetails = NULL,
@@ -270,16 +282,10 @@ createResultsDataModel <- function(connection = NULL,
     stop("Invalid schema for sqlite, use schema = 'main'")
   }
 
-  sqlParams <- getPrefixedTableNames(tablePrefix)
-  sql <- do.call(SqlRender::loadRenderTranslateSql,
-                 c(sqlParams,
-                   list(
-                     sqlFilename = "CreateResultsDataModel.sql",
-                     packageName = utils::packageName(),
-                     dbms = connection@dbms,
-                     results_schema = schema
-                   )))
-  DatabaseConnector::executeSql(connection, sql)
+  .createDataModel(connection, schema, tablePrefix)
+  migrateDataModel(connection = connection,
+                   schema = schema,
+                   tablePrefix = tablePrefix)
 }
 
 naToEmpty <- function(x) {
