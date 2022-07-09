@@ -242,7 +242,7 @@ appendNewRows <-
     return(dplyr::bind_rows(data, newData))
   }
 
-#' Private function for testing migrations in isolation
+# Private function for testing migrations in isolation
 .createDataModel <- function(connection, schema, tablePrefix) {
   sqlParams <- getPrefixedTableNames(tablePrefix)
   sql <- do.call(SqlRender::loadRenderTranslateSql,
