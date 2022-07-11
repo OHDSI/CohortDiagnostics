@@ -55,10 +55,10 @@ swapColumnContents <-
   }
 
 enforceMinCellValue <-
-  function(data, fieldName, minValues, silent = FALSE) {
+  function(data, columnName, minValues, silent = FALSE) {
     toCensor <-
-      !is.na(data[, fieldName]) &
-        data[, fieldName] < minValues & data[, fieldName] != 0
+      !is.na(data[, columnName]) &
+        data[, columnName] < minValues & data[, columnName] != 0
     if (!silent) {
       percent <- round(100 * sum(toCensor) / nrow(data), 1)
       ParallelLogger::logInfo(
@@ -67,14 +67,14 @@ enforceMinCellValue <-
         " values (",
         percent,
         "%) from ",
-        fieldName,
+        columnName,
         " because value below minimum"
       )
     }
     if (length(minValues) == 1) {
-      data[toCensor, fieldName] <- -minValues
+      data[toCensor, columnName] <- -minValues
     } else {
-      data[toCensor, fieldName] <- -minValues[toCensor]
+      data[toCensor, columnName] <- -minValues[toCensor]
     }
     return(data)
   }
@@ -143,28 +143,28 @@ makeDataExportable <- function(x,
 
   fieldsInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
-    dplyr::pull(.data$fieldName) %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   requiredFieldsInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$isRequired == "Yes") %>%
-    dplyr::pull(.data$fieldName) %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   primaryKeyInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$primaryKey == "Yes") %>%
-    dplyr::pull(.data$fieldName) %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   columnsToApplyMinCellValue <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$minCellCount == "Yes") %>%
-    dplyr::pull(.data$fieldName) %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
@@ -254,7 +254,7 @@ enforceMinCellValueInDataframe <- function(data,
       data <-
         enforceMinCellValue(
           data = data,
-          fieldName = presentInBoth[[i]],
+          columnName = presentInBoth[[i]],
           minValues = minCellCount
         )
     }

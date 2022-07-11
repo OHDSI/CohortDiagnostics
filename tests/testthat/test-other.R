@@ -18,7 +18,7 @@ test_that("Check function makeDataExportable", {
 
   resultsDataModel <- getResultsDataModelSpecifications() %>%
     dplyr::filter(.data$tableName == "cohort_count") %>%
-    dplyr::select(.data$fieldName) %>%
+    dplyr::select(.data$columnName) %>%
     dplyr::pull() %>%
     sort()
 

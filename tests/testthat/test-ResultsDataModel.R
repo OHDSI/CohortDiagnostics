@@ -175,7 +175,7 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
       primaryKey <- specifications %>%
         dplyr::filter(.data$tableName == !!tableName &
           .data$primaryKey == "Yes") %>%
-        dplyr::select(.data$fieldName) %>%
+        dplyr::select(.data$columnName) %>%
         dplyr::pull()
 
       if ("database_id" %in% primaryKey) {
@@ -211,7 +211,7 @@ test_that("Sqlite results data model", {
       primaryKey <- specifications %>%
         dplyr::filter(.data$tableName == !!tableName &
           .data$primaryKey == "Yes") %>%
-        dplyr::select(.data$fieldName) %>%
+        dplyr::select(.data$columnName) %>%
         dplyr::pull()
 
       if ("database_id" %in% primaryKey) {
@@ -253,7 +253,7 @@ test_that("Data removal works", {
         primaryKey <- specifications %>%
           dplyr::filter(.data$tableName == !!tableName &
             .data$primaryKey == "Yes") %>%
-          dplyr::select(.data$fieldName) %>%
+          dplyr::select(.data$columnName) %>%
           dplyr::pull()
 
         if ("database_id" %in% primaryKey) {

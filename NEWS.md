@@ -16,6 +16,8 @@ Changes:
 
 7. Slight optimization of cohort characterization queries in diagnostics explorer
 
+8. Changed type to dataType and fieldName to columnName to align with strategus modules
+
 Bug fixes:
 
 1. Fixed issue uploading results to postgres db caused by null values in primary key field. 
