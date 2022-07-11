@@ -136,7 +136,8 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     tablePrefix = tablePrefix,
     cohortTableName = cohortTableName,
     databaseTableName = databaseTableName,
-    enableAnnotation = enableAnnotation
+    enableAnnotation = enableAnnotation,
+    enableAuthorization = FALSE
   )
 
   options("enableCdAnnotation" = enableAnnotation)
