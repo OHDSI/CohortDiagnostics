@@ -897,7 +897,6 @@ cohortDefinitionsModule <- function(id,
     })
 
     vocabSchema <- shiny::reactive({
-      browser()
       if (is.null(input$vocabularySchema)) {
         return("")
       }
