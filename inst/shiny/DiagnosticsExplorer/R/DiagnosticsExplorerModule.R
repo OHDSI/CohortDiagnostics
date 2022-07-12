@@ -88,6 +88,13 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       }
     })
 
+    databaseChoices <- list()
+    dbMapping <- databaseTable
+    for (i in 1:nrow(dbMapping)) {
+      row <- dbMapping[i,]
+      databaseChoices[row$databaseName] <- row$databaseId
+    }
+
     shiny::observeEvent(eventExpr = {
       list(input$database_open)
     }, handlerExpr = {
@@ -113,6 +120,71 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       }
     })
 
+    ## Note - the following two database pickers could be improved by setting the multiple parameter to depend on the
+    ## input$tabs variable for the selected tab. However, careful consideration needs to be taken as this can lead
+    ## To even more confusing ux
+    output$databasePicker <- shiny::renderUI({
+      shinyWidgets::pickerInput(
+        inputId = ns("database"),
+        label = "Database",
+        choices = databaseChoices,
+        selected = databaseChoices[[1]],
+        multiple = FALSE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          size = 10,
+          liveSearchStyle = "contains",
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+        )
+      )
+    })
+
+    ## This is for multiple databases
+    output$databasesPicker <- shiny::renderUI({
+      shinyWidgets::pickerInput(
+        inputId = ns("databases"),
+        label = "Database",
+        choices = databaseChoices,
+        selected = databaseChoices,
+        multiple = TRUE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          size = 10,
+          liveSearchStyle = "contains",
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+        )
+      )
+    })
+
+    # Temporal choices (e.g. -30d - 0d ) are dynamic to execution input
+    output$timeIdChoices <- shiny::renderUI({
+      shinyWidgets::pickerInput(
+        inputId = ns("timeIdChoices"),
+        label = "Temporal Choice",
+        choices = envir$temporalCharacterizationTimeIdChoices$temporalChoices,
+        multiple = TRUE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        selected = envir$temporalCharacterizationTimeIdChoices %>%
+          dplyr::filter(.data$primaryTimeId == 1) %>%
+          dplyr::filter(.data$isTemporal == 1) %>%
+          dplyr::arrange(.data$sequence) %>%
+          dplyr::pull("temporalChoices"),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          size = 10,
+          liveSearchStyle = "contains",
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+        )
+      )
+    })
 
     ## ReactiveValue: selectedTemporalTimeIds ----
     selectedTemporalTimeIds <- reactiveVal(NULL)
@@ -609,6 +681,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                          selectedDatabaseIds = selectedDatabaseIds,
                          selectedCohortIds = inputCohortIds,
                          cohortTable = cohortTable,
+                         databaseTable = databaseTable,
                          postAnnotaionEnabled = postAnnotaionEnabled)
       }
     }
