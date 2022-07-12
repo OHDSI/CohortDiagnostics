@@ -1,4 +1,4 @@
-tableName,fieldName,type,isRequired,primaryKey,optional,emptyIsNa,minCellCount,isVocabularyTable,neverIncremental
+tableName,columnName,dataType,isRequired,primaryKey,optional,emptyIsNa,minCellCount,isVocabularyTable,neverIncremental
 annotation,annotation_id,bigint,Yes,Yes,No,Yes,No,No,No
 annotation,created_by,varchar,Yes,No,No,Yes,No,No,No
 annotation,created_on,bigint,Yes,No,No,Yes,No,No,No
