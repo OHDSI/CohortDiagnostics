@@ -148,7 +148,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         inputId = ns("databases"),
         label = "Database",
         choices = databaseChoices,
-        selected = databaseChoices,
+        selected = databaseChoices[[1]],
         multiple = TRUE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
