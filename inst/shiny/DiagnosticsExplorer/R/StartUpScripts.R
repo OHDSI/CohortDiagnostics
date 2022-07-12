@@ -286,6 +286,10 @@ initializeEnvironment <- function(shinySettings,
   envir$userCredentials <- data.frame()
   envir$enableAuthorization <- envir$shinySettings$enableAuthorization
 
+  if (is.null(envir$enableAuthorization)) {
+    envir$enableAuthorization <- FALSE
+  }
+
   if (envir$enableAuthorization & !is.null(envir$shinySettings$userCredentialsFile)) {
     if (file.exists(envir$shinySettings$userCredentialsFile)) {
       envir$userCredentials <-
