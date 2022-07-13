@@ -78,8 +78,15 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       }
     })
 
+    databaseChoices <- list()
+    dbMapping <- databaseTable
+    for (i in 1:nrow(dbMapping)) {
+      row <- dbMapping[i,]
+      databaseChoices[row$databaseName] <- row$databaseId
+    }
+
     ## ReactiveValue: selectedDatabaseIds ----
-    selectedDatabaseIds <- reactiveVal(NULL)
+    selectedDatabaseIds <- reactiveVal(databaseChoices[[1]])
     shiny::observeEvent(eventExpr = {
       list(input$databases_open)
     }, handlerExpr = {
@@ -87,13 +94,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         selectedDatabaseIds(input$databases)
       }
     })
-
-    databaseChoices <- list()
-    dbMapping <- databaseTable
-    for (i in 1:nrow(dbMapping)) {
-      row <- dbMapping[i,]
-      databaseChoices[row$databaseName] <- row$databaseId
-    }
 
     shiny::observeEvent(eventExpr = {
       list(input$database_open)
@@ -831,7 +831,8 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                               selectedCohorts = selectedCohorts,
                               cohortIds = cohortIds,
                               selectedDatabaseIds = selectedDatabaseIds,
-                              cohortTable = cohortTable)
+                              cohortTable = cohortTable,
+                              databaseTable = databaseTable)
 
       characterizationModule(id = "characterization",
                              dataSource = dataSource,
@@ -919,7 +920,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
     databaseInformationModule(id = "databaseInformation",
                               dataSource = dataSource,
                               selectedDatabaseIds = selectedDatabaseIds,
-                              databaseTable = databaseTable)
+                              databaseMetadata = envir$databaseMetadata)
 
   })
 

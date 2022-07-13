@@ -366,7 +366,8 @@ getCharacterizationOutput <- function(dataSource,
 #' @export
 getTimeDistributionResult <- function(dataSource,
                                       cohortIds,
-                                      databaseIds) {
+                                      databaseIds,
+                                      databaseTable) {
   data <- queryResultCovariateValue(
     dataSource = dataSource,
     cohortIds = cohortIds,
@@ -389,6 +390,9 @@ getTimeDistributionResult <- function(dataSource,
     dplyr::inner_join(data$temporalAnalysisRef,
       by = "analysisId"
     ) %>%
+    dplyr::inner_join(databaseTable,
+      by = "databaseId"
+    ) %>%
     dplyr::rename(
       "timeMetric" = .data$covariateName,
       "averageValue" = .data$mean,
@@ -397,6 +401,7 @@ getTimeDistributionResult <- function(dataSource,
     dplyr::select(
       "cohortId",
       "databaseId",
+      "databaseName",
       "timeMetric",
       "averageValue",
       "standardDeviation",

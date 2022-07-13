@@ -726,9 +726,11 @@ getDatabaseCounts <- function(dataSource,
   return(data)
 }
 
-getMetaDataResults <- function(dataSource) {
+getMetaDataResults <- function(dataSource, databaseId) {
   sql <- "SELECT *
-              FROM  @results_database_schema.@metadata;"
+              FROM  @results_database_schema.@metadata
+              WHERE database_id = @database_id;"
+
   data <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
@@ -736,6 +738,7 @@ getMetaDataResults <- function(dataSource) {
       sql = sql,
       metadata = dataSource$prefixTable("metadata"),
       results_database_schema = dataSource$resultsDatabaseSchema,
+      database_id = quoteLiterals(databaseId),
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
@@ -745,9 +748,10 @@ getMetaDataResults <- function(dataSource) {
 
 
 
-getExecutionMetadata <- function(dataSource) {
+getExecutionMetadata <- function(dataSource, databaseId) {
   databaseMetadata <-
-    getMetaDataResults(dataSource)
+    getMetaDataResults(dataSource, databaseId)
+
   if (!hasData(databaseMetadata)) {
     return(NULL)
   }
@@ -767,6 +771,7 @@ getExecutionMetadata <- function(dataSource) {
       pattern = "json",
       negate = FALSE
     )]
+
   transposeNonJsons <- databaseMetadata %>%
     dplyr::filter(.data$variableField %in% c(columnNamesNoJson)) %>%
     dplyr::rename(name = "variableField") %>%
@@ -785,6 +790,7 @@ getExecutionMetadata <- function(dataSource) {
       pattern = "TM_",
       replacement = ""
     ))
+
   transposeNonJsons$startTime <-
     transposeNonJsons$startTime %>% lubridate::as_datetime()
 
@@ -806,6 +812,7 @@ getExecutionMetadata <- function(dataSource) {
       pattern = "TM_",
       replacement = ""
     ))
+
   transposeJsons$startTime <-
     transposeJsons$startTime %>% lubridate::as_datetime()
 
