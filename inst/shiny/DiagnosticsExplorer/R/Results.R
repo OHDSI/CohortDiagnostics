@@ -16,11 +16,12 @@ renderTranslateExecuteSql <- function(dataSource, sql, ...) {
 getResultsCohortCounts <- function(dataSource,
                                    cohortIds = NULL,
                                    databaseIds = NULL) {
-  sql <- "SELECT *
-            FROM  @results_database_schema.@table_name
-            WHERE cohort_id IS NOT NULL
-            {@use_database_ids} ? { AND database_id in (@database_ids)}
-            {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
+  sql <- "SELECT cc.*, db.database_name
+            FROM  @results_database_schema.@table_name cc
+            INNER JOIN @results_database_schema.@database_table db ON db.database_id = cc.database_id
+            WHERE cc.cohort_id IS NOT NULL
+            {@use_database_ids} ? { AND cc.database_id in (@database_ids)}
+            {@cohort_ids != ''} ? {  AND cc.cohort_id in (@cohort_ids)}
             ;"
   data <-
     renderTranslateQuerySql(
@@ -32,6 +33,7 @@ getResultsCohortCounts <- function(dataSource,
       use_database_ids = is.null(databaseIds),
       database_id = quoteLiterals(databaseIds),
       table_name = dataSource$prefixTable("cohort_count"),
+      database_table = dataSource$databaseTableName,
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()

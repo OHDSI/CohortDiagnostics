@@ -572,6 +572,8 @@ getResultsCohortCoOccurrenceMatrix <- function(dataSource,
   if (is.null(cohortRelationship)) {
     return(NULL)
   }
+
+
   cohortRelationship <- cohortRelationship %>%
     dplyr::mutate(records = 0) %>%
     dplyr::rename(
@@ -742,6 +744,7 @@ getResultsCohortOverlap <- function(dataSource,
       endDays = c(9999, 0)
     )
 
+  # It's not remotely clear what any of the following code is for
   if (any(is.null(cohortRelationship),
           nrow(cohortRelationship) == 0)) {
     cohortRelationship <- dplyr::tibble(databaseId = databaseIds) %>%
@@ -760,7 +763,7 @@ getResultsCohortOverlap <- function(dataSource,
           "endDay"
         )
       )
-    cohortRelationship[is.na(cohortRelationship)] <- 0
+    cohortRelationship[is.na(is.numeric(cohortRelationship))] <- 0
   }
 
   fullOffSet <- cohortRelationship %>%
@@ -805,6 +808,7 @@ getResultsCohortOverlap <- function(dataSource,
       .data$cOnlySubjects,
       .data$eitherSubjects
     )
+
 
   noOffset <- cohortRelationship %>%
     dplyr::filter(.data$comparatorCohortId %in% comparatorCohortIds) %>%
@@ -860,6 +864,9 @@ getResultsCohortOverlap <- function(dataSource,
       .data$cStartOnTEnd,
     )
 
+  databaseNames <- cohortCounts %>% dplyr::distinct(.data$databaseId, .data$databaseName)
+  result <- result %>% dplyr::inner_join(databaseNames, by = "databaseId")
+
   return(result)
 }
 
@@ -896,23 +903,26 @@ getResultsCohortRelationships <- function(dataSource,
     renderTranslateQuerySql(
       connection = dataSource$connection,
       dbms = dataSource$dbms,
-      sql = "SELECT *
-             FROM @results_database_schema.@table_name
-             WHERE cohort_id IN (@cohort_id) AND
-             database_id IN (@database_id)
-              {@comparator_cohort_id != \"\"} ? { AND comparator_cohort_id IN (@comparator_cohort_id)}
-              {@start_day != \"\"} ? { AND start_day IN (@start_day)}
-              {@end_day != \"\"} ? { AND end_day IN (@end_day)};",
+      sql = "SELECT cr.*, db.database_name
+             FROM @results_database_schema.@table_name cr
+             INNER JOIN @results_database_schema.@database_table db ON db.database_id = cr.database_id
+             WHERE cr.cohort_id IN (@cohort_id)
+             AND cr.database_id IN (@database_id)
+              {@comparator_cohort_id != \"\"} ? { AND cr.comparator_cohort_id IN (@comparator_cohort_id)}
+              {@start_day != \"\"} ? { AND cr.start_day IN (@start_day)}
+              {@end_day != \"\"} ? { AND cr.end_day IN (@end_day)};",
       snakeCaseToCamelCase = TRUE,
       results_database_schema = dataSource$resultsDatabaseSchema,
       database_id = quoteLiterals(databaseIds),
       table_name = dataSource$prefixTable("cohort_relationships"),
+      database_table = dataSource$databaseTableName,
       cohort_id = cohortIds,
       comparator_cohort_id = comparatorCohortIds,
       start_day = startDays,
       end_day = endDays
     ) %>%
     dplyr::tibble()
+
   return(data)
 }
 
