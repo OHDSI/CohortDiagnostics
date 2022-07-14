@@ -21,6 +21,8 @@ Versions of data generated with CohortDiagnostics 3.0.0 are intended to be futur
 i.e. if you have an sqlite results file or postgres database generated with version 3.0.0 of cohort diagnostics
 new shiny app functionality will be supported if you run ``migrateDataModel`` on it.
 
+9. Changed type to dataType and fieldName to columnName to align with strategus modules
+
 Bug fixes:
 
 1. Fixed issue uploading results to postgres db caused by null values in primary key field. 

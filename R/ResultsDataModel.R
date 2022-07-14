@@ -94,14 +94,14 @@ checkFixColumnNames <-
 
     optionalNames <- tableSpecs %>%
       dplyr::filter(.data$optional == "Yes") %>%
-      dplyr::select(.data$fieldName)
+      dplyr::select(.data$columnName)
 
     expectedNames <- tableSpecs %>%
-      dplyr::select(.data$fieldName) %>%
-      dplyr::anti_join(dplyr::filter(optionalNames, !.data$fieldName %in% observeredNames),
-                       by = "fieldName"
+      dplyr::select(.data$columnName) %>%
+      dplyr::anti_join(dplyr::filter(optionalNames, !.data$columnName %in% observeredNames),
+                       by = "columnName"
       ) %>%
-      dplyr::arrange(.data$fieldName) %>%
+      dplyr::arrange(.data$columnName) %>%
       dplyr::pull()
 
     if (!checkmate::testNames(observeredNames, must.include = expectedNames)) {
@@ -118,7 +118,7 @@ checkFixColumnNames <-
 
     sharedFields <- intersect(
       x = observeredNames,
-      y = tableSpecs$fieldName
+      y = tableSpecs$columnName
     )
     table <- table %>%
       dplyr::select(dplyr::all_of(sharedFields))
@@ -135,15 +135,15 @@ checkAndFixDataTypes <-
 
     observedTypes <- sapply(table, class)
     for (i in 1:length(observedTypes)) {
-      fieldName <- names(observedTypes)[i]
+      columnName <- names(observedTypes)[i]
       expectedType <-
-        gsub("\\(.*\\)", "", tolower(tableSpecs$type[tableSpecs$fieldName == fieldName]))
+        gsub("\\(.*\\)", "", tolower(tableSpecs$dataType[tableSpecs$columnName == columnName]))
       if (expectedType == "bigint" || expectedType == "float") {
         if (observedTypes[i] != "numeric" && observedTypes[i] != "double") {
           ParallelLogger::logDebug(
             sprintf(
               "Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
-              fieldName,
+              columnName,
               tableName,
               zipFileName,
               observedTypes[i],
@@ -157,7 +157,7 @@ checkAndFixDataTypes <-
           ParallelLogger::logDebug(
             sprintf(
               "Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
-              fieldName,
+              columnName,
               tableName,
               zipFileName,
               observedTypes[i],
@@ -171,7 +171,7 @@ checkAndFixDataTypes <-
           ParallelLogger::logDebug(
             sprintf(
               "Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
-              fieldName,
+              columnName,
               tableName,
               zipFileName,
               observedTypes[i],
@@ -185,7 +185,7 @@ checkAndFixDataTypes <-
           ParallelLogger::logDebug(
             sprintf(
               "Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
-              fieldName,
+              columnName,
               tableName,
               zipFileName,
               observedTypes[i],
@@ -207,7 +207,7 @@ checkAndFixDuplicateRows <-
     primaryKeys <- specifications %>%
       dplyr::filter(.data$tableName == !!tableName &
                       .data$primaryKey == "Yes") %>%
-      dplyr::select(.data$fieldName) %>%
+      dplyr::select(.data$columnName) %>%
       dplyr::pull()
     duplicatedRows <- duplicated(table[, primaryKeys])
     if (any(duplicatedRows)) {
@@ -234,7 +234,7 @@ appendNewRows <-
       primaryKeys <- specifications %>%
         dplyr::filter(.data$tableName == !!tableName &
                         .data$primaryKey == "Yes") %>%
-        dplyr::select(.data$fieldName) %>%
+        dplyr::select(.data$columnName) %>%
         dplyr::pull()
       newData <- newData %>%
         dplyr::anti_join(data, by = primaryKeys)
@@ -364,7 +364,7 @@ uploadResults <- function(connectionDetails = NULL,
     primaryKey <- specifications %>%
       filter(.data$tableName == !!tableName &
                .data$primaryKey == "Yes") %>%
-      select(.data$fieldName) %>%
+      select(.data$columnName) %>%
       pull()
 
     if (purgeSiteDataBeforeUploading &&
@@ -436,9 +436,9 @@ uploadResults <- function(connectionDetails = NULL,
           filter(
             .data$tableName == env$tableName &
               .data$emptyIsNa == "No" &
-              grepl("varchar", .data$type)
+              grepl("varchar", .data$dataType)
           ) %>%
-          select(.data$fieldName) %>%
+          select(.data$columnName) %>%
           pull()
         if (length(toEmpty) > 0) {
           chunk <- chunk %>%
@@ -449,9 +449,9 @@ uploadResults <- function(connectionDetails = NULL,
           filter(
             .data$tableName == env$tableName &
               .data$emptyIsNa == "No" &
-              .data$type %in% c("int", "bigint", "float")
+              .data$dataType %in% c("int", "bigint", "float")
           ) %>%
-          select(.data$fieldName) %>%
+          select(.data$columnName) %>%
           pull()
         if (length(tozero) > 0) {
           chunk <- chunk %>%
