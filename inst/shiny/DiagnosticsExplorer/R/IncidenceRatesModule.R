@@ -481,6 +481,7 @@ incidenceRatesModule <- function(id,
     # Incidence rate ---------------------------
 
     incidenceRateData <- reactive({
+     #browser() #added for debugging
       validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
       validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
       stratifyByAge <- "Age" %in% input$irStratification
@@ -591,6 +592,7 @@ incidenceRatesModule <- function(id,
     })
 
     incidenceRateCalenderFilter <- shiny::reactive({
+      #browser() #added for debugging
       calenderFilter <- incidenceRateData() %>%
         dplyr::select(.data$calendarYear) %>%
         dplyr::filter(
