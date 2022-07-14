@@ -60,9 +60,9 @@ migrateDataModel <- function(connection = NULL,
   allMigrations <- list.files(migrationDir, pattern = .migrationFileRexp)
   # List files that have been executed
   tables <- DatabaseConnector::getTableNames(connection, schema)
-  if (paste0(tablePrefix, "migration") %in% tables) {
+  if (toupper(paste0(tablePrefix, "migration")) %in% tables) {
     migrationsExecuted <- getExecutedMigrations(connection, schema, tablePrefix)
-    migrationsToExecute <- setdiff(allMigrations, migrationsExecuted)
+    migrationsToExecute <- setdiff(allMigrations, migrationsExecuted$migrationFile)
   } else {
     migrationsToExecute <- allMigrations
   }

@@ -61,4 +61,15 @@ test_that("Database Migrations execute without error", {
 
   expect_true(length(setdiff(availableMigrations, completedMigrations$migrationFile)) == 0)
   expect_true(length(setdiff(completedMigrations$migrationFile, availableMigrations)) == 0)
+
+  ## Reruning migrations should not cause an error
+  migrateDataModel(connection = connection,
+                 schema = resultsDatabaseSchema,
+                 tablePrefix = "cd_")
+
+  completedMigrations2 <- getExecutedMigrations(connection = connection,
+                                                schema = resultsDatabaseSchema,
+                                                tablePrefix = "cd_")
+
+  checkmate::expect_set_equal(completedMigrations$migrationFile, completedMigrations2$migrationFile)
 })
