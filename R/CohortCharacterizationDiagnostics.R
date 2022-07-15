@@ -113,6 +113,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
             .data$mean,
             .data$sd
           )
+         covariates[is.na(covariates$timeId),]$timeId <- -1
       } else {
         covariates <- covariates %>%
           dplyr::mutate(timeId = 0) %>%
@@ -153,6 +154,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
             .data$mean,
             .data$sd
           )
+          covariates[is.na(covariates$timeId),]$timeId <- -1
       } else {
         covariates <- covariates %>%
           dplyr::mutate(sumValue = -1,
