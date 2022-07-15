@@ -203,6 +203,14 @@ writeCovariateDataAndromedaToCsv <-
       )
 
       addChunk <- function(chunk) {
+        if ("timeId" %in% colnames(chunk)) {
+          if (nrow(chunk[is.na(chunk$timeId),]) > 0) {
+            chunk[is.na(chunk$timeId),]$timeId <- 0
+          }
+        } else {
+          chunk$timeId <- 0
+        }
+
         colnames(chunk) <- SqlRender::camelCaseToSnakeCase(colnames(chunk))
         readr::write_csv(chunk, tempName, append = TRUE)
       }
@@ -222,6 +230,14 @@ writeCovariateDataAndromedaToCsv <-
       }
       writeToFile <- function(batch) {
         first <- !file.exists(fileName)
+        if ("timeId" %in% colnames(batch)) {
+          if (nrow(batch[is.na(batch$timeId), ]) > 0) {
+            batch[is.na(batch$timeId), ]$timeId <- 0
+          }
+        } else {
+          batch$timeId <- 0
+        }
+
         if (first) {
           colnames(batch) <- SqlRender::camelCaseToSnakeCase(colnames(batch))
         }
