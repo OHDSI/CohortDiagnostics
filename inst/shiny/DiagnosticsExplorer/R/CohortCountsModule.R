@@ -103,7 +103,6 @@ cohortCountsModule <- function(id,
 
     # Cohort Counts ----------------------
     getResults <- shiny::reactive(x = {
-      # browser() #added for testing to see what this function does
       validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
       validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
       data <- getResultsCohortCounts(
@@ -122,7 +121,6 @@ cohortCountsModule <- function(id,
     })
 
     output$cohortCountsTable <- reactable::renderReactable(expr = {
-      #browser() #added for testing to see what this function does
       validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
       validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
 
