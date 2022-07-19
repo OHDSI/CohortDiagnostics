@@ -46,7 +46,7 @@ visitContextView <- function(id) {
 
 visitContextModule <- function(id,
                                dataSource,
-                               selectedCohort,
+                               selectedCohort, #this is selectedCohorts in other modules
                                selectedDatabaseIds,
                                targetCohortId,
                                cohortTable,
@@ -54,7 +54,7 @@ visitContextModule <- function(id,
   ns <- shiny::NS(id)
   shiny::moduleServer(id, function(input, output, session) {
     output$selectedCohorts <- shiny::renderUI(selectedCohort())
-
+    
     # Visit Context ----------------------------------------
     getVisitContextData <- shiny::reactive(x = {
       if (!hasData(selectedDatabaseIds())) {
@@ -155,7 +155,7 @@ visitContextModule <- function(id,
         nrow(data) > 0,
         "No data available for selected combination."
       ))
-
+  
       dataColumnFields <-
         c(
           "Before",
