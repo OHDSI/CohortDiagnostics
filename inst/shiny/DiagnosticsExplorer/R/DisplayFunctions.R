@@ -579,3 +579,11 @@ getDisplayTableColumnMinMaxWidth <- function(data,
   )
   return(data)
 }
+
+
+csvDownloadButton <- function(ns,
+                              outputTableId,
+                              buttonText = "Download as CSV") {
+  shiny::tags$button(buttonText,
+                     onclick = "Reactable.downloadDataCSV('", ns(outputTableId), "')")
+}

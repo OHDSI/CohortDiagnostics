@@ -134,7 +134,8 @@ timeDistributionsView <- function(id) {
             align = "right",
           ))
         ),
-        shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("timeDistributionTable")))
+        shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("timeDistributionTable"))),
+        csvDownloadButton(ns, "timeDistributionTable")
       ),
       shiny::conditionalPanel(
         condition = "input.timeDistributionType=='Plot'",
