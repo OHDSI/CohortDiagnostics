@@ -275,8 +275,8 @@ compareCohortCharacterizationView <- function(id) {
         ),
         shinycssloaders::withSpinner(
           reactable::reactableOutput(ns("compareCohortCharacterizationTable")),
-          csvDownloadButton(ns, "compareCohortCharacterizationTable")
-        )
+        ),
+        csvDownloadButton(ns, "compareCohortCharacterizationTable")
       ),
       shiny::conditionalPanel(
         condition = "input.charCompareType=='Plot'",
