@@ -17,7 +17,7 @@ test_that("Visit context page", {
   ), {
     ## input tests will go here
      session$setInputs(
-       visitContextTableFilters = "Simultaneous" 
+       visitContextTableFilters = "All" 
       )
     
     # Checking to see if a dataframe is returned and all the elements are of the 
@@ -26,6 +26,7 @@ test_that("Visit context page", {
     checkmate::expect_data_frame(getVisitContexDataEnhanced())
     checkmate::expect_character(getVisitContexDataEnhanced()$databaseId)
     checkmate::expect_character(getVisitContexDataEnhanced()$visitConceptName)
+
     
     # Initializing vectors with column names
     before_vec <- c("databaseId", "visitConceptName", "Before")
@@ -55,7 +56,6 @@ test_that("Visit context page", {
       checkmate::expect_numeric(getVisitContexDataEnhanced()$After)
       testthat::expect_equal(colnames(getVisitContexDataEnhanced()), all_vec)
     }
-    
-    
+   
   })
 })
