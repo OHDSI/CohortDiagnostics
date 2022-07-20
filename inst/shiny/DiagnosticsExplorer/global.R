@@ -10,7 +10,7 @@ source("R/Annotation.R")
 source("R/CirceRendering.R")
 source("R/ResultRetrieval.R")
 
-appVersionNum <- "Version: 3.0.2"
+appVersionNum <- "Version: 3.0.3"
 appInformationText <- paste("Powered by OHDSI Cohort Diagnostics application", paste0(appVersionNum, "."))
 appInformationText <- paste0(
   appInformationText,
@@ -254,6 +254,8 @@ analysisIdInTemporalCharacterization <- c(
 ## Disabled until future release
 enableAnnotation <- FALSE
 enableAuthorization <- FALSE
+
+
 
 
 

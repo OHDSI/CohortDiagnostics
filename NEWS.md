@@ -2,6 +2,7 @@ CohortDiagnostics 3.0.3
 =======================
 
 Changes:
+
 1. Changed default batch size for characterization feature extraction from 100 to 5 as it was causing performance issues
 on redshift clusters.
 
