@@ -23,6 +23,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                      cohortIds,
                                      cdmVersion = 5,
                                      covariateSettings,
+                                     exportFolder,
                                      batchSize = 100) {
   startTime <- Sys.time()
   if (is.null(connection)) {
@@ -39,19 +40,25 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
         end
       ))
     }
-    featureExtractionOutput <-
-      FeatureExtraction::getDbCovariateData(
-        connection = connection,
-        oracleTempSchema = tempEmulationSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cdmVersion = cdmVersion,
-        cohortTable = cohortTable,
-        cohortId = cohortIds[start:end],
-        covariateSettings = covariateSettings,
-        aggregated = TRUE
-      )
-
+    timeExecution(
+      exportFolder,
+      taskName = "getDbCovariateData",
+      parent = "getCohortCharacteristics",
+      cohortIds = cohortIds[start:end],
+      expr = {
+        featureExtractionOutput <-
+          FeatureExtraction::getDbCovariateData(
+            connection = connection,
+            oracleTempSchema = tempEmulationSchema,
+            cdmDatabaseSchema = cdmDatabaseSchema,
+            cohortDatabaseSchema = cohortDatabaseSchema,
+            cdmVersion = cdmVersion,
+            cohortTable = cohortTable,
+            cohortId = cohortIds[start:end],
+            covariateSettings = covariateSettings,
+            aggregated = TRUE
+          )
+      })
     populationSize <-
       attr(x = featureExtractionOutput, which = "metaData")$populationSize
     populationSize <-
@@ -248,7 +255,8 @@ executeCohortCharacterization <- function(connection,
         cohortTable = cohortTable,
         cohortIds = subset$cohortId,
         covariateSettings = covariateSettings,
-        cdmVersion = cdmVersion
+        cdmVersion = cdmVersion,
+        exportFolder = exportFolder
       )
     exportCharacterization(
       characteristics = characteristics,

@@ -14,24 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Internal utility function for logging execution of variables
-timeExecution <- function(executionTimes, taskName, cohortIds = NULL, parent = NULL, expr) {
-  start <- Sys.time()
-  eval(expr)
-  execTime <- Sys.time() - start
-  executionTimes <- rbind(executionTimes,
-                    data.frame(
-                      task = taskName,
-                      startTime = start,
-                      cohortIds = cohortIds,
-                      executionTime = execTime,
-                      parent = parent
-                    ))
-
-  return(executionTimes)
-}
-
-
 #' Execute cohort diagnostics
 #'
 #' @description
@@ -216,10 +198,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                minCellCount = 5,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental")) {
-
-  execEnvir <- parent.frame()
-  execEnvir$executionTimes <- data.frame()
-
   # collect arguments that were passed to cohort diagnostics at initiation
   argumentsAtDiagnosticsInitiation <- formals(executeDiagnostics)
   argumentsAtDiagnosticsInitiationJson <-
@@ -245,6 +223,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
+  executionTimePath <- file.path(exportFolder, "taskExecutionTimes.csv")
 
   start <- Sys.time()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
@@ -476,14 +455,21 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
 
   ## CDM source information----
-  cdmSourceInformation <-
-    getCdmDataSourceInformation(
-      connection = connection,
-      cdmDatabaseSchema = cdmDatabaseSchema
-    )
 
-  vocabularyVersion <- getVocabularyVersion(connection, vocabularyDatabaseSchema)
+  timeExecution(
+    exportFolder,
+    taskName = "getCdmDataSourceInformation",
+    cohortIds = NULL,
+    parent = "executeDiagnostics",
+    expr = {
+      cdmSourceInformation <-
+        getCdmDataSourceInformation(
+          connection = connection,
+          cdmDatabaseSchema = cdmDatabaseSchema
+        )
 
+      vocabularyVersion <- getVocabularyVersion(connection, vocabularyDatabaseSchema)
+    })
   if (incremental) {
     ParallelLogger::logDebug("Working in incremental mode.")
     cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)
@@ -498,19 +484,25 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   ## Observation period----
   ParallelLogger::logTrace(" - Collecting date range from Observational period table.")
-  observationPeriodDateRange <- renderTranslateQuerySql(
-    connection = connection,
-    sql = "SELECT MIN(observation_period_start_date) observation_period_min_date,
+   timeExecution(
+     exportFolder,
+     taskName = "observationPeriodDateRange",
+     cohortIds = NULL,
+     parent = "executeDiagnostics",
+     expr = {
+      observationPeriodDateRange <- renderTranslateQuerySql(
+        connection = connection,
+        sql = "SELECT MIN(observation_period_start_date) observation_period_min_date,
              MAX(observation_period_end_date) observation_period_max_date,
              COUNT(distinct person_id) persons,
              COUNT(person_id) records,
              SUM(CAST(DATEDIFF(dd, observation_period_start_date, observation_period_end_date) AS BIGINT)) person_days
              FROM @cdm_database_schema.observation_period;",
-    cdm_database_schema = cdmDatabaseSchema,
-    snakeCaseToCamelCase = TRUE,
-    tempEmulationSchema = tempEmulationSchema
-  )
-
+        cdm_database_schema = cdmDatabaseSchema,
+        snakeCaseToCamelCase = TRUE,
+        tempEmulationSchema = tempEmulationSchema
+      )
+    })
   # Database metadata ---------------------------------------------
   saveDatabaseMetaData(
     databaseId = databaseId,
@@ -525,23 +517,22 @@ executeDiagnostics <- function(cohortDefinitionSet,
   createConceptTable(connection, tempEmulationSchema)
 
   # Counting cohorts -----------------------------------------------------------------------
-
-  execEnvir$executionTimes <- timeExecution(
-     execEnvir$executionTimes,
-     "getInclusionStats",
-     cohortIds,
-     parent = "executeDiagnostics",
-     expr = {
-       cohortCounts <- computeCohortCounts(
-         connection = connection,
-         cohortDatabaseSchema = cohortDatabaseSchema,
-         cohortTable = cohortTable,
-         cohorts = cohortDefinitionSet,
-         exportFolder = exportFolder,
-         minCellCount = minCellCount,
-         databaseId = databaseId
-       )
-     })
+  timeExecution(
+    exportFolder,
+    taskName = "getInclusionStats",
+    cohortIds = cohortIds,
+    parent = "executeDiagnostics",
+    expr = {
+      cohortCounts <- computeCohortCounts(
+        connection = connection,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        cohorts = cohortDefinitionSet,
+        exportFolder = exportFolder,
+        minCellCount = minCellCount,
+        databaseId = databaseId
+      )
+    })
 
   if (nrow(cohortCounts) > 0) {
     instantiatedCohorts <- cohortCounts %>%
@@ -563,7 +554,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   # Inclusion statistics -----------------------------------------------------------------------
   if (runInclusionStatistics) {
     timeExecution(
-      execEnvir$executionTimes,
+      exportFolder,
       "getInclusionStats",
       cohortIds,
       parent = "executeDiagnostics",
@@ -588,8 +579,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
     runOrphanConcepts ||
     runBreakdownIndexEvents) {
     timeExecution(
-      execEnvir$executionTimes,
-      "runConceptSetDiagnostics",
+      exportFolder,
+      taskName = "runConceptSetDiagnostics",
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
@@ -621,7 +612,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   # Time series ----------------------------------------------------------------------
   if (runTimeSeries) {
     timeExecution(
-      execEnvir$executionTimes,
+      exportFolder,
       "executeTimeSeriesDiagnostics",
       cohortIds,
       parent = "executeDiagnostics",
@@ -648,7 +639,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   # Visit context ----------------------------------------------------------------------------
   if (runVisitContext) {
     timeExecution(
-      execEnvir$executionTimes,
+      exportFolder,
       "executeVisitContextDiagnostics",
       cohortIds,
       parent = "executeDiagnostics",
@@ -674,7 +665,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   # Incidence rates --------------------------------------------------------------------------------------
   if (runIncidenceRate) {
     timeExecution(
-      execEnvir$executionTimes,
+      exportFolder,
       "computeIncidenceRates",
       cohortIds,
       parent = "executeDiagnostics",
@@ -699,7 +690,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   # Cohort relationship ---------------------------------------------------------------------------------
   if (runCohortRelationship) {
     timeExecution(
-      execEnvir$executionTimes,
+      exportFolder,
       "executeCohortRelationshipDiagnostics",
       cohortIds,
       parent = "executeDiagnostics",
@@ -724,7 +715,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   # Temporal Cohort characterization ---------------------------------------------------------------
   if (runTemporalCohortCharacterization) {
     timeExecution(
-      execEnvir$executionTimes,
+      exportFolder,
       "executeCohortCharacterization",
       cohortIds,
       parent = "executeDiagnostics",
@@ -757,27 +748,39 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
 
   # Store information from the vocabulary on the concepts used -------------------------
-  exportConceptInformation(
-    connection = connection,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    conceptIdTable = "#concept_ids",
-    incremental = incremental,
-    exportFolder = exportFolder
-  )
-
+  timeExecution(
+    exportFolder,
+    "exportConceptInformation",
+    parent = "executeDiagnostics",
+    expr =
+    {
+      exportConceptInformation(
+        connection = connection,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        conceptIdTable = "#concept_ids",
+        incremental = incremental,
+        exportFolder = exportFolder
+      )
+    })
   # Delete unique concept ID table ---------------------------------
   ParallelLogger::logTrace("Deleting concept ID table")
-  sql <- "TRUNCATE TABLE @table;\nDROP TABLE @table;"
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = connection,
-    sql = sql,
-    tempEmulationSchema = tempEmulationSchema,
-    table = "#concept_ids",
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-
+  timeExecution(
+    exportFolder,
+    "DeleteConceptIdTable",
+    parent = "executeDiagnostics",
+    expr =
+    {
+      sql <- "TRUNCATE TABLE @table;\nDROP TABLE @table;"
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection = connection,
+        sql = sql,
+        tempEmulationSchema = tempEmulationSchema,
+        table = "#concept_ids",
+        progressBar = FALSE,
+        reportOverallTime = FALSE
+      )
+    })
 
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
@@ -790,15 +793,13 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
   delta <- Sys.time() - start
 
-  execEnvir$executionTimes <- rbind(
-    execEnvir$executionTimes,
-    data.frame(
-      task = "All diagnostics",
-      parent = NULL,
-      cohortIds = NULL,
-      start = start,
-      time = delta
-    )
+  timeExecution(
+    exportFolder = exportFolder,
+    taskName = "executeDiagnostics",
+    parent = NULL,
+    cohortIds = NULL,
+    start = start,
+    execTime = delta
   )
 
   variableField <- c(
@@ -920,20 +921,13 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   # Add all to zip file -------------------------------------------------------------------------------
   timeExecution(
-    execEnvir$executionTimes,
+    exportFolder,
     "writeResultsZip",
     NULL,
     parent = "executeDiagnostics",
     expr = {
       writeResultsZip(exportFolder, databaseId)
     })
-
-   writeToCsv(
-    data = execEnvir$executionTimes,
-    fileName = file.path(exportFolder, "executionTimes.csv"),
-    incremental = TRUE,
-    start_time = as.character(start)
-  )
 
   ParallelLogger::logInfo(
     "Computing all diagnostics took ",
