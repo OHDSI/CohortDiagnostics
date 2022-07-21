@@ -121,7 +121,7 @@ indexEventBreakdownModule <- function(id,
 
       showDataAsPercent <- input$indexEventBreakDownShowAsPercent
       data <- indexEventBreakDownDataFilteredByRadioButton()
-
+     
       validate(need(
         all(!is.null(data), nrow(data) > 0),
         "There is no data for the selected combination."
