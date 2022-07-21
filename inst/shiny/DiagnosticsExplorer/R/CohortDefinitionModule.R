@@ -307,7 +307,11 @@ cohortDefinitionsView <- function(id) {
                                           )
                                         ),
                                         tags$td(
-                                          shiny::uiOutput(ns("databasePicker"))
+                                          # Choices load in server
+                                          shiny::selectInput(ns("vocabularySelection"),
+                                                             label = "Vocabulary version:",
+                                                             width = 200,
+                                                             choices = c())
                                         ),
                                         tags$td(
                                           shiny::htmlOutput(ns("subjectCountInCohortConceptSet"))
@@ -770,7 +774,6 @@ cohortDefinitionsModule <- function(id,
         if (input$conceptSetsType != 'Resolved') {
           return(NULL)
         }
-
         databaseIdToFilter <- databaseTable %>%
           dplyr::filter(.data$databaseIdWithVocabularyVersion == vocabSchema()) %>%
           dplyr::pull(.data$databaseId)
@@ -897,10 +900,10 @@ cohortDefinitionsModule <- function(id,
     })
 
     vocabSchema <- shiny::reactive({
-      if (is.null(input$vocabularySchema)) {
+      if (is.null(input$vocabularySelection)) {
         return("")
       }
-      input$vocabularySchema
+      input$vocabularySelection
     })
 
     output$cohortDefinitionOrphanConceptTable <-
@@ -1031,25 +1034,10 @@ cohortDefinitionsModule <- function(id,
       'From site' = databaseTable$databaseIdWithVocabularyVersion,
       'Reference Vocabulary' = dataSource$vocabularyDatabaseSchema
     )
-
-    output$databasePicker <- shiny::renderUI({
-      shinyWidgets::pickerInput(
-        inputId = ns("vocabularySchema"),
-        label = "Vocabulary version:",
-        choices = vocabularyChoices,
-        multiple = FALSE,
-        width = 200,
-        inline = TRUE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
-          liveSearch = TRUE,
-          size = 10,
-          liveSearchStyle = "contains",
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50
-        )
-      )
+    shiny::observe({
+      shiny::updateSelectInput(session,
+                               inputId = "vocabularySelection",
+                               choices = vocabularyChoices)
     })
 
     ## Export all cohort details ----
