@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.3</span>
       </span>
     </div>
 
@@ -72,6 +72,12 @@
       <small>Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="3.0.3" id="cohortdiagnostics-303">CohortDiagnostics 3.0.3<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-303"></a></h2>
+<p>Changes:</p>
+<ol style="list-style-type: decimal"><li><p>Changed default batch size for characterization feature extraction from 100 to 5 as it was causing performance issues on redshift clusters.</p></li>
+<li><p>Allow setting of batch size for feature extraction with <code>options("CohortDiagnostics-FE-batch-size" = batchSize)</code></p></li>
+</ol></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="3.0.2" id="cohortdiagnostics-302">CohortDiagnostics 3.0.2<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-302"></a></h2>
 <p>Bug fixes:</p>

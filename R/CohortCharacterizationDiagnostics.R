@@ -23,7 +23,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                      cohortIds,
                                      cdmVersion = 5,
                                      covariateSettings,
-                                     batchSize = 100) {
+                                     batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 5)) {
   startTime <- Sys.time()
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
