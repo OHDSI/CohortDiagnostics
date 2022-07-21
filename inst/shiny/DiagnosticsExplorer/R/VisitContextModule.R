@@ -46,7 +46,7 @@ visitContextView <- function(id) {
 
 visitContextModule <- function(id,
                                dataSource,
-                               selectedCohort,
+                               selectedCohort, #this is selectedCohorts in other modules
                                selectedDatabaseIds,
                                targetCohortId,
                                cohortTable,
@@ -54,7 +54,7 @@ visitContextModule <- function(id,
   ns <- shiny::NS(id)
   shiny::moduleServer(id, function(input, output, session) {
     output$selectedCohorts <- shiny::renderUI(selectedCohort())
-
+    
     # Visit Context ----------------------------------------
     getVisitContextData <- shiny::reactive(x = {
       if (!hasData(selectedDatabaseIds())) {
@@ -76,7 +76,7 @@ visitContextModule <- function(id,
     })
 
     ## getVisitContexDataEnhanced----
-    getVisitContexDataEnhanced <- shiny::reactive(x = {
+    getVisitContexDataEnhanced <- shiny::reactive(x = { #spelling error here missing the t in Context
       visitContextData <- getVisitContextData() %>%
         dplyr::rename(visitContextSubject = .data$subjects)
       if (!hasData(visitContextData)) {
@@ -144,6 +144,7 @@ visitContextModule <- function(id,
           names_from = "visitContext",
           values_from = c("visitContextSubject")
         )
+      
       return(visitContextData)
     })
 
@@ -155,7 +156,7 @@ visitContextModule <- function(id,
         nrow(data) > 0,
         "No data available for selected combination."
       ))
-
+  
       dataColumnFields <-
         c(
           "Before",
@@ -174,7 +175,7 @@ visitContextModule <- function(id,
         dataColumnFields <- "After"
       }
       keyColumnFields <- "visitConceptName"
-
+      
       countsForHeader <-
         getDisplayTableHeaderCount(
           dataSource = dataSource,
@@ -192,7 +193,7 @@ visitContextModule <- function(id,
           data = data,
           string = dataColumnFields
         )
-
+    
       getDisplayTableGroupedByDatabaseId(
         data = data,
         cohort = cohortTable,
