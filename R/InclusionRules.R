@@ -56,6 +56,7 @@ getInclusionStats <- function(connection,
                     )
 
                     stats <- CohortGenerator::getCohortStats(connection = connection,
+                                                             cohortTableNames = cohortTableNames,
                                                              cohortDatabaseSchema = cohortDatabaseSchema)
                   })
     if (!is.null(stats)) {
