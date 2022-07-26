@@ -283,6 +283,11 @@ cohortOverlapModule <- function(id,
         paste0("No cohort overlap data for this combination.")
       ))
 
+      validate(need(
+        !all(is.na(data$eitherSubjects)),
+        paste0("No cohort overlap data for this combination.")
+      ))
+
       plot <- plotCohortOverlap(
         data = data,
         shortNameRef = cohortTable,
