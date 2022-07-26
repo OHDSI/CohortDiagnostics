@@ -73,3 +73,18 @@ test_that("Database Migrations execute without error", {
 
   checkmate::expect_set_equal(completedMigrations$migrationFile, completedMigrations2$migrationFile)
 })
+
+# This is an internal function so it is assumed that strings passed follow correct pattern
+test_that("Migration order from string pattern is correct", {
+  testSet <- c("Migration_11-test.sql", "Migration_2-test.sql")
+  execOrder <- .getMigrationOrder(testSet)
+
+  expect_true(execOrder[1,]$file == "Migration_2-test.sql")
+  expect_true(execOrder[2,]$file == "Migration_11-test.sql")
+
+  testSet2 <- c("Migration_13-test.sql", "Migration_21-test.sql")
+  execOrder <- .getMigrationOrder(testSet2)
+
+  expect_true(execOrder[1,]$file == "Migration_13-test.sql")
+  expect_true(execOrder[2,]$file == "Migration_21-test.sql")
+})

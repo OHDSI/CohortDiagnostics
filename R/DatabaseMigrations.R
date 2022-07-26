@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.migrationFileRexp <- "(Migration_[0-9]+)-(.+).sql"
+.migrationFileRexp <- "(Migration_([0-9]+))-(.+).sql"
 
 getExecutedMigrations <- function(connection, schema, tablePrefix) {
   sql <- "
@@ -27,6 +27,14 @@ getExecutedMigrations <- function(connection, schema, tablePrefix) {
                                                                    snakeCaseToCamelCase = TRUE)
 
   return(migrationsExecuted)
+}
+
+.getMigrationOrder <- function(migrationsToExecute, regExp = .migrationFileRexp) {
+  execution <- data.frame(
+    file = migrationsToExecute,
+    sortOrder = as.integer(gsub(regExp, "\\2", migrationsToExecute))
+  )
+  return(execution[order(execution$sortOrder), ])
 }
 
 #' Migrate Data model
@@ -67,10 +75,11 @@ migrateDataModel <- function(connection = NULL,
     migrationsToExecute <- allMigrations
   }
 
+  execution <- .getMigrationOrder(migrationsToExecute)
+
   ParallelLogger::logInfo("Executing database migrations on schema - ", schema)
-  migrationsToExecute <- sort(migrationsToExecute)
   # Run files that have not been executed (in sequence order)
-  for (migration in migrationsToExecute) {
+  for (migration in execution$file) {
     ParallelLogger::logInfo("STARTING MIGRATION: ", migration)
     sql <- SqlRender::loadRenderTranslateSql(file.path("migrations", migration),
                                              packageName = utils::packageName(),
