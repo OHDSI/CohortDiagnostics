@@ -826,6 +826,35 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
     }
 
     if ("temporalCovariateValue" %in% enabledTabs) {
+      ### getResolvedAndMappedConceptIdsForFilters ----
+      getResolvedAndMappedConceptIdsForFilters <- shiny::reactive({
+        validate(need(hasData(selectedDatabaseIds()), "No data sources chosen"))
+        validate(need(hasData(targetCohortId()), "No cohort chosen"))
+        validate(need(hasData(conceptSetIds()), "No concept set id chosen"))
+        resolved <- getResolvedConcepts()
+        mapped <- getMappedConcepts()
+        output <- c()
+        if (hasData(resolved)) {
+          resolved <- resolved %>%
+            dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
+            dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
+            dplyr::filter(.data$conceptSetId %in% conceptSetIds())
+          output <- c(output, resolved$conceptId) %>% unique()
+        }
+        if (hasData(mapped)) {
+          mapped <- mapped %>%
+            dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
+            dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
+            dplyr::filter(.data$conceptSetId %in% conceptSetIds())
+          output <- c(output, mapped$conceptId) %>% unique()
+        }
+        if (hasData(output)) {
+          return(output)
+        } else {
+          return(NULL)
+        }
+      })
+
       timeDistributionsModule(id = "timeDistributions",
                               dataSource = dataSource,
                               selectedCohorts = selectedCohorts,
@@ -844,7 +873,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                              temporalAnalysisRef = envir$temporalAnalysisRef,
                              analysisNameOptions = envir$analysisNameOptions,
                              analysisIdInCohortCharacterization = envir$analysisIdInCohortCharacterization,
-                             getResolvedAndMappedConceptIdsForFilters = envir$getResolvedAndMappedConceptIdsForFilters,
+                             getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
                              selectedConceptSets = selectedConceptSets,
                              characterizationMenuOutput = characterizationOutput, # This name must be changed
                              characterizationTimeIdChoices = envir$characterizationTimeIdChoices)
@@ -852,13 +881,14 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
 
       temporalCharacterizationModule(id = "temporalCharacterization",
                                      dataSource = dataSource,
+                                     databaseTable = databaseTable,
                                      selectedCohort = selectedCohort,
                                      selectedDatabaseIds = selectedDatabaseIds,
                                      targetCohortId = targetCohortId,
                                      temporalAnalysisRef = envir$temporalAnalysisRef,
                                      analysisNameOptions = envir$analysisNameOptions,
                                      selectedTemporalTimeIds = selectedTemporalTimeIds,
-                                     getResolvedAndMappedConceptIdsForFilters = envir$getResolvedAndMappedConceptIdsForFilters,
+                                     getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
                                      selectedConceptSets = selectedConceptSets,
                                      analysisIdInTemporalCharacterization = envir$analysisIdInTemporalCharacterization,
                                      domainIdOptions = envir$domainIdOptions,

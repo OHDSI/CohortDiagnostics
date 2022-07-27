@@ -200,7 +200,7 @@ indexEventBreakdownModule <- function(id,
       getDisplayTableGroupedByDatabaseId(
         data = data,
         cohort = cohort,
-        database = database,
+        databaseTable = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,

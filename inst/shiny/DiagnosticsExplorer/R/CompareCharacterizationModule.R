@@ -332,7 +332,12 @@ compareCohortCharacterizationModule <- function(id,
         ))
       ))
     })
-    output$selectedDatabases <- shiny::renderUI(selectedDatabaseIds())
+
+    output$selectedDatabases <- shiny::renderUI({
+      paste(databaseTable %>%
+              dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>% dplyr::select(.data$databaseName),
+            collapse = ", ")
+    })
 
     # Compare cohort characterization --------------------------------------------
     ### compareCohortCharacterizationAnalysisNameFilter -----
@@ -649,7 +654,7 @@ compareCohortCharacterizationModule <- function(id,
       getDisplayTableGroupedByDatabaseId(
         data = data,
         cohort = cohortTable,
-        database = databaseTable,
+        databaseTable = databaseTable,
         headerCount = NULL,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
