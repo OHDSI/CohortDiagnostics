@@ -84,6 +84,7 @@ temporalCharacterizationView <- function(id) {
         )
       ),
       shinycssloaders::withSpinner(reactable::reactableOutput(ns("temporalCharacterizationTable"))),
+      csvDownloadButton(ns, "temporalCharacterizationTable")
     )
   )
 }

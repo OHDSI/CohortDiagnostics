@@ -108,7 +108,8 @@ characterizationView <- function(id) {
       ),
       shinycssloaders::withSpinner(
         reactable::reactableOutput(outputId = ns("characterizationTable"))
-      )
+      ),
+      csvDownloadButton(ns, "characterizationTable")
     )
   )
 }

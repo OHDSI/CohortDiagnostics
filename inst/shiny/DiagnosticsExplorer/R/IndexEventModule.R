@@ -49,7 +49,8 @@ indexEventBreakdownView <- function(id) {
           )
         )
       ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("breakdownTable")))
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("breakdownTable"))),
+      csvDownloadButton(ns, "breakdownTable")
     )
   )
 }

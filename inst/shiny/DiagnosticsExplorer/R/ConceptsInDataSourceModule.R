@@ -36,7 +36,8 @@ conceptsInDataSourceView <- function(id) {
           )
         ),
       ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("conceptsInDataSourceTable")))
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("conceptsInDataSourceTable"))),
+      csvDownloadButton(ns, "conceptsInDataSourceTable")
     )
   )
 }
