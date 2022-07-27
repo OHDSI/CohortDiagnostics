@@ -91,6 +91,7 @@ temporalCharacterizationView <- function(id) {
 
 temporalCharacterizationModule <- function(id,
                                            dataSource,
+                                           databaseTable,
                                            selectedCohort,
                                            selectedDatabaseIds,
                                            targetCohortId,
@@ -106,7 +107,11 @@ temporalCharacterizationModule <- function(id,
   ns <- shiny::NS(id)
   shiny::moduleServer(id, function(input, output, session) {
     output$selectedCohorts <- shiny::renderUI(selectedCohort())
-    output$selectedDatabases <- shiny::renderUI(selectedDatabaseIds())
+    output$selectedDatabases <- shiny::renderUI({
+      paste(databaseTable %>%
+              dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>% dplyr::select(.data$databaseName),
+            collapse = ", ")
+    })
 
     # Temporal characterization ------------
 

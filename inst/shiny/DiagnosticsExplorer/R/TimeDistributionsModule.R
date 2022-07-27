@@ -80,7 +80,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
       fill = rgb(0, 0, 0.8, alpha = 0.25),
       size = 0.2
     ) +
-    ggplot2::facet_grid(databaseId ~ timeMetric, scales = "free") +
+    ggplot2::facet_grid(databaseName ~ timeMetric, scales = "free") +
     ggplot2::coord_flip() +
     ggplot2::theme(
       panel.grid.major.y = ggplot2::element_blank(),
@@ -151,7 +151,8 @@ timeDistributionsModule <- function(id,
                                     selectedCohorts,
                                     selectedDatabaseIds,
                                     cohortIds,
-                                    cohortTable) {
+                                    cohortTable,
+                                    databaseTable) {
   ns <- shiny::NS(id)
   shiny::moduleServer(id, function(input, output, session) {
     output$selectedCohorts <- shiny::renderUI({ selectedCohorts() })
@@ -164,7 +165,8 @@ timeDistributionsModule <- function(id,
       data <- getTimeDistributionResult(
         dataSource = dataSource,
         cohortIds = cohortIds(),
-        databaseIds = selectedDatabaseIds()
+        databaseIds = selectedDatabaseIds(),
+        databaseTable = databaseTable
       )
       return(data)
     })
@@ -185,11 +187,11 @@ timeDistributionsModule <- function(id,
       data <- data %>%
         addShortName(cohortTable) %>%
         dplyr::arrange(.data$databaseId, .data$cohortId) %>%
-        dplyr::mutate( # shortName = as.factor(.data$shortName),
-          databaseId = as.factor(.data$databaseId)
+        dplyr::mutate(
+          databaseName = as.factor(.data$databaseName)
         ) %>%
         dplyr::select(
-          Database = .data$databaseId,
+          Database = .data$databaseName,
           Cohort = .data$shortName,
           TimeMeasure = .data$timeMetric,
           Average = .data$averageValue,

@@ -149,7 +149,7 @@ conceptsInDataSourceModule <- function(id,
       displayTable <- getDisplayTableGroupedByDatabaseId(
         data = data,
         cohort = cohortTable,
-        database = databaseTable,
+        databaseTable = databaseTable,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,

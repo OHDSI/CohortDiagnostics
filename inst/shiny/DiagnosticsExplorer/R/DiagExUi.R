@@ -7,20 +7,8 @@ getAppInfo <- function(appVersionNum) {
   )
 }
 
-uiControls <- function(dbMapping,
-                       ns,
-                       enabledTabs,
-                       temporalCharacterizationTimeIdChoices) {
-
-  databaseChoices <- list()
-
-  for (i in 1:nrow(dbMapping)) {
-    row <- dbMapping[i,]
-    databaseChoices[row$databaseName] <- row$databaseId
-  }
-
-  selectedDb <- dbMapping$databaseId[[1]]
-
+uiControls <- function(ns,
+                       enabledTabs) {
   panels <- shiny::tagList(
     shiny::conditionalPanel(
       condition = "input.tabs!='incidenceRate' &
@@ -35,22 +23,7 @@ uiControls <- function(dbMapping,
       input.tabs != 'visitContext' &
       input.tabs != 'cohortOverlap'",
       ns = ns,
-      shinyWidgets::pickerInput(
-        inputId = ns("database"),
-        label = "Database",
-        choices = databaseChoices,
-        selected = selectedDb,
-        multiple = FALSE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
-          liveSearch = TRUE,
-          size = 10,
-          liveSearchStyle = "contains",
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50
-        )
-      )
+      shiny::uiOutput(ns("databasePicker"))
     ),
     shiny::conditionalPanel(
       condition = "input.tabs=='incidenceRate' |
@@ -64,47 +37,13 @@ uiControls <- function(dbMapping,
       input.tabs == 'visitContext' |
       input.tabs == 'cohortOverlap'",
       ns = ns,
-      shinyWidgets::pickerInput(
-        inputId = ns("databases"),
-        label = "Database",
-        choices = databaseChoices,
-        selected = selectedDb,
-        multiple = TRUE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
-          liveSearch = TRUE,
-          size = 10,
-          liveSearchStyle = "contains",
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50
-        )
-      )
+      shiny::uiOutput(ns("databasesPicker"))
     ),
     if ("temporalCovariateValue" %in% enabledTabs) {
       shiny::conditionalPanel(
         condition = "input.tabs=='temporalCharacterization' | input.tabs =='compareTemporalCharacterization'",
         ns = ns,
-        shinyWidgets::pickerInput(
-          inputId = ns("timeIdChoices"),
-          label = "Temporal Choice",
-          choices = temporalCharacterizationTimeIdChoices$temporalChoices,
-          multiple = TRUE,
-          choicesOpt = list(style = rep_len("color: black;", 999)),
-          selected = temporalCharacterizationTimeIdChoices %>%
-            dplyr::filter(.data$primaryTimeId == 1) %>%
-            dplyr::filter(.data$isTemporal == 1) %>%
-            dplyr::arrange(.data$sequence) %>%
-            dplyr::pull("temporalChoices"),
-          options = shinyWidgets::pickerOptions(
-            actionsBox = TRUE,
-            liveSearch = TRUE,
-            size = 10,
-            liveSearchStyle = "contains",
-            liveSearchPlaceholder = "Type here to search",
-            virtualScroll = 50
-          )
-        )
+        shiny::uiOutput(ns("timeIdChoices"))
       )
     },
     shiny::conditionalPanel(
@@ -206,13 +145,11 @@ uiControls <- function(dbMapping,
   return(panels)
 }
 
-dashboardUi <- function(databaseTable,
-                        enabledTabs,
+dashboardUi <- function(enabledTabs,
                         enableAnnotation,
                         showAnnotation,
                         enableAuthorization,
                         appVersionNum,
-                        temporalCharacterizationTimeIdChoices,
                         id = "DiagnosticsExplorer") {
 
   ns <- shiny::NS(id)
@@ -348,10 +285,7 @@ dashboardUi <- function(databaseTable,
       },
       shinydashboard::menuItem(text = "Meta data", tabName = "databaseInformation"),
       # Conditional dropdown boxes in the side bar ------------------------------------------------------
-      uiControls(databaseTable,
-                 ns,
-                 enabledTabs,
-                 temporalCharacterizationTimeIdChoices)
+      uiControls(ns, enabledTabs)
     )
 
   # Side bar code
@@ -549,21 +483,12 @@ dashboardUi <- function(databaseTable,
   return(ui)
 }
 
-tabularUi <- function(databaseTable,
-                      enabledTabs,
-                      enableAnnotation,
-                      showAnnotation,
-                      enableAuthorization,
-                      appVersionNum,
-                      temporalCharacterizationTimeIdChoices,
+tabularUi <- function(enabledTabs,
                       id = "DiagnosticsExplorer") {
   ns <- shiny::NS(id)
   ui <-
       shiny::fluidPage(
-        shinydashboard::box(uiControls(databaseTable,
-                                       ns,
-                                       enabledTabs,
-                                       temporalCharacterizationTimeIdChoices), width = 12),
+        shinydashboard::box(uiControls(ns, enabledTabs), width = 12),
         shiny::tabsetPanel(
           # shiny::tabPanel("About", shiny::HTML(aboutText)),
           if ("cohort" %in% enabledTabs) {

@@ -107,7 +107,7 @@ inclusionRulesModule <- function(id,
       getDisplayTableGroupedByDatabaseId(
         data = table,
         cohort = cohortTable,
-        database = databaseTable,
+        databaseTable = databaseTable,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,

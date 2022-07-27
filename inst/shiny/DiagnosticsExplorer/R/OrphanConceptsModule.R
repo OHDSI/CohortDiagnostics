@@ -178,7 +178,7 @@ orphanConceptsModule <- function(id,
       displayTable <- getDisplayTableGroupedByDatabaseId(
         data = data,
         cohort = cohort,
-        database = database,
+        databaseTable = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
