@@ -39,24 +39,34 @@ if (dbms == "sqlite") {
   tempEmulationSchema <- NULL
   cohortIds <- c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906)
 
-  temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(
-    useConditionOccurrence = TRUE,
-    useDrugEraStart = TRUE,
-    useProcedureOccurrence = TRUE,
-    useMeasurement = TRUE,
-    temporalStartDays = c(-365, -30, 0, 1, 31),
-    temporalEndDays = c(-31, -1, 0, 30, 365)
-  )
+
+  if (getOption("useAllCovariates", default = FALSE)) {
+    temporalCovariateSettings <- getDefaultCovariateSettings()
+  } else {
+    temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(
+      useConditionOccurrence = TRUE,
+      useDrugEraStart = TRUE,
+      useProcedureOccurrence = TRUE,
+      useMeasurement = TRUE,
+      useCharlsonIndex = TRUE,
+      temporalStartDays = c(-365, -30, 0, 1, 31),
+      temporalEndDays = c(-31, -1, 0, 30, 365)
+    )
+  }
 } else {
   # only test all cohorts in sqlite
   cohortIds <- c(18345, 17720, 14907) # Celecoxib, Type 2 diabetes, diclofenac (no history of GIH)
   cohortTable <- paste0("ct_", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
-
-  temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(
-    useConditionOccurrence = TRUE,
-    temporalStartDays = c(-1, 0, 1),
-    temporalEndDays = c(-1, 0, 1)
-  )
+  if (getOption("useAllCovariates", default = FALSE)) {
+    temporalCovariateSettings <- getDefaultCovariateSettings()
+  } else {
+    temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(
+      useConditionOccurrence = TRUE,
+      useCharlsonIndex = TRUE,
+      temporalStartDays = c(-1, 0, 1),
+      temporalEndDays = c(-1, 0, 1)
+    )
+  }
   if (dbms == "postgresql") {
     dbUser <- Sys.getenv("CDM5_POSTGRESQL_USER")
     dbPassword <- Sys.getenv("CDM5_POSTGRESQL_PASSWORD")

@@ -207,8 +207,14 @@ makeDataExportable <- function(x,
     distinctRows <- x %>%
       dplyr::select(dplyr::all_of(primaryKeyInDataModel)) %>%
       dplyr::distinct() %>%
-      nrow()
-    if (nrow(x) > distinctRows) {
+      dplyr::count() %>%
+      dplyr::pull()
+
+    rowCount <- x %>%
+      dplyr::count() %>%
+      dplyr::pull()
+
+    if (rowCount > distinctRows) {
       stop(
         " - duplicates found in primary key for table ",
         tableName,
@@ -235,6 +241,11 @@ makeDataExportable <- function(x,
         columnNames = columnsToApplyMinCellValue,
         minCellCount = minCellCount
       )
+  }
+
+  # Ensure that timeId is never NA
+  if ("timeId" %in% colnames(x)) {
+    x[is.na(x$timeId), ]$timeId <- 0
   }
   return(x)
 }
