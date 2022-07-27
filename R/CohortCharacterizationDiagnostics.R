@@ -216,7 +216,7 @@ executeCohortCharacterization <- function(connection,
                                           covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
                                           covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
                                           analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
-                                          timeRefFileName = NULL) {
+                                          timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv")) {
   ParallelLogger::logInfo("Running ", jobName)
   startCohortCharacterization <- Sys.time()
   subset <- subsetToRequiredCohorts(

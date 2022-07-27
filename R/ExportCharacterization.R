@@ -81,19 +81,18 @@ exportCharacterization <- function(characteristics,
         incremental = incremental,
         analysisId = analysisRef$analysisId
       )
-      if (!is.null(timeRefFileName)) {
-        timeRef <- makeDataExportable(
-          x = characteristics$timeRef,
-          tableName = "temporal_time_ref",
-          minCellCount = minCellCount
-        )
-        writeToCsv(
-          data = timeRef,
-          fileName = timeRefFileName,
-          incremental = incremental,
-          analysisId = timeRef$timeId
-        )
-      }
+
+      timeRef <- makeDataExportable(
+        x = characteristics$timeRef,
+        tableName = "temporal_time_ref",
+        minCellCount = minCellCount
+      )
+      writeToCsv(
+        data = timeRef,
+        fileName = timeRefFileName,
+        incremental = incremental,
+        analysisId = timeRef$timeId
+      )
 
       filteredCovariates <- makeDataExportable(
         x = characteristics$filteredCovariates,

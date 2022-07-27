@@ -73,8 +73,16 @@ test_that("Execute and export characterization", {
     checkmate::expect_file_exists(file.path(exportFolder, "temporal_analysis_ref.csv"))
     checkmate::expect_file_exists(file.path(exportFolder, "temporal_covariate_value.csv"))
     checkmate::expect_file_exists(file.path(exportFolder, "temporal_covariate_value_dist.csv"))
+    checkmate::expect_file_exists(file.path(exportFolder, "temporal_time_ref.csv"))
     # Check no time ids are NA/NULL
     tdata <- readr::read_csv(file.path(exportFolder, "temporal_covariate_value_dist.csv"))
+    expect_false(any(is.na(tdata$time_id) | is.null(tdata$time_id)))
+
+    tdata <- readr::read_csv(file.path(exportFolder, "temporal_covariate_value.csv"))
+    expect_false(any(is.na(tdata$time_id) | is.null(tdata$time_id)))
+
+    # It would make no sense if there were NA values here
+    tdata <- readr::read_csv(file.path(exportFolder, "temporal_time_ref.csv"))
     expect_false(any(is.na(tdata$time_id) | is.null(tdata$time_id)))
   })
 
