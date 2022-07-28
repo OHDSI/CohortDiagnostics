@@ -1,7 +1,5 @@
-diagExpEnv$dashboardUi(diagExpEnv$dbMapping,
-                       diagExpEnv$enabledTabs,
+diagExpEnv$dashboardUi(diagExpEnv$enabledTabs,
                        diagExpEnv$enableAnnotation,
                        diagExpEnv$showAnnotation,
                        diagExpEnv$enableAuthorization,
-                       diagExpEnv$appVersionNum,
-                       diagExpEnv$temporalCharacterizationTimeIdChoices)
+                       diagExpEnv$appVersionNum)

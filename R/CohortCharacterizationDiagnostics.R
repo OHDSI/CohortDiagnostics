@@ -23,7 +23,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                      cohortIds,
                                      cdmVersion = 5,
                                      covariateSettings,
-                                     batchSize = 100) {
+                                     batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 5)) {
   startTime <- Sys.time()
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
@@ -113,6 +113,9 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
             .data$mean,
             .data$sd
           )
+          if (length(is.na(covariates$timeId)) > 0) {
+            covariates[is.na(covariates$timeId),]$timeId <- -1
+          }
       } else {
         covariates <- covariates %>%
           dplyr::mutate(timeId = 0) %>%
@@ -152,6 +155,9 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
             .data$mean,
             .data$sd
           )
+          if (length(is.na(covariates$timeId)) > 0) {
+            covariates[is.na(covariates$timeId),]$timeId <- -1
+          }
       } else {
         covariates <- covariates %>%
           dplyr::mutate(sumValue = -1,

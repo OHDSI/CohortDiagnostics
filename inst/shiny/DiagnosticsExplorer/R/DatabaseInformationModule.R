@@ -5,49 +5,32 @@ databaseInformationView <- function(id) {
     shinydashboard::box(
       width = NULL,
       title = NULL,
-      shiny::tabsetPanel(
-        id = "metadataInformationTabsetPanel",
-        shiny::tabPanel(
-          title = "Data source",
-          value = "datasourceTabPanel",
-          tags$br(),
-          htmltools::withTags(table(
-            width = "100%",
-            tags$tr(
-              tags$td(
-                align = "right",
-              )
-            )
-          )),
-          tags$br(),
-          shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("databaseInformationTable")))
-        ),
-        shiny::tabPanel(
-          title = "Meta data information",
-          value = "metaDataInformationTabPanel",
-          tags$br(),
+      shiny::tags$h3("Select execution to view meta data"),
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("databaseInformationTable"))),
+      shiny::conditionalPanel(
+        "output.databaseInformationTableIsSelected == true",
+        ns = ns,
+        shinydashboard::box(
+          title = shiny::htmlOutput(outputId = ns("metadataInfoTitle")),
+          collapsible = TRUE,
+          width = NULL,
+          collapsed = FALSE,
+          shiny::htmlOutput(outputId = ns("metadataInfoDetailsText")),
           shinydashboard::box(
-            title = shiny::htmlOutput(outputId = ns("metadataInfoTitle")),
+            title = NULL,
             collapsible = TRUE,
             width = NULL,
             collapsed = FALSE,
-            shiny::htmlOutput(outputId = ns("metadataInfoDetailsText")),
-            shinydashboard::box(
-              title = NULL,
-              collapsible = TRUE,
-              width = NULL,
-              collapsed = FALSE,
-              shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("packageDependencySnapShotTable")))
-            ),
-            shinydashboard::box(
-              title = NULL,
-              collapsible = TRUE,
-              width = NULL,
-              collapsed = FALSE,
-              shiny::verbatimTextOutput(outputId = ns("argumentsAtDiagnosticsInitiationJson")),
-              tags$head(
-                tags$style("#argumentsAtDiagnosticsInitiationJson { max-height:400px};")
-              )
+            shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("packageDependencySnapShotTable")))
+          ),
+          shinydashboard::box(
+            title = NULL,
+            collapsible = TRUE,
+            width = NULL,
+            collapsed = FALSE,
+            shiny::verbatimTextOutput(outputId = ns("argumentsAtDiagnosticsInitiationJson")),
+            tags$head(
+              tags$style("#argumentsAtDiagnosticsInitiationJson { max-height:400px};")
             )
           )
         )
@@ -59,22 +42,12 @@ databaseInformationView <- function(id) {
 databaseInformationModule <- function(id,
                                       dataSource,
                                       selectedDatabaseIds,
-                                      databaseTable) {
-
+                                      databaseMetadata) {
+  ns <- shiny::NS(id)
   shiny::moduleServer(id, function(input, output, session) {
 
-    getFilteredMetadataInformation <- shiny::reactive(x = {
-      data <- getExecutionMetadata(dataSource = dataSource)
-      if (!hasData(data)) {
-        return(NULL)
-      }
-      data <- data %>%
-        dplyr::filter(.data$databaseId == selectedDatabaseIds())
-      return(data)
-    })
-
     getDatabaseInformation <- shiny::reactive(x = {
-      return(databaseTable)
+      return(databaseMetadata %>% dplyr::filter(.data$databaseId %in% selectedDatabaseIds()))
     })
 
     # Output: databaseInformationTable ------------------------
@@ -120,8 +93,43 @@ databaseInformationModule <- function(id,
       getDisplayTableSimple(
         data = data,
         keyColumns = keyColumns,
-        dataColumns = dataColumns
+        dataColumns = dataColumns,
+        selection = "single"
       )
+    })
+
+    selectedDbRow <- shiny::reactive({
+      reactable::getReactableState("databaseInformationTable", "selected")
+    })
+
+    output$databaseInformationTableIsSelected <- shiny::reactive({
+      return(!is.null(selectedDbRow()))
+    })
+
+    shiny::outputOptions(output,
+                  "databaseInformationTableIsSelected",
+                  suspendWhenHidden = FALSE)
+
+    getFilteredMetadataInformation <- shiny::reactive(x = {
+      idx <- selectedDbRow()
+      dbInfo <- getDatabaseInformation()[idx,]
+      if (is.null(dbInfo)) {
+        return(NULL)
+      }
+      data <- getExecutionMetadata(dataSource = dataSource,
+                                   databaseId = dbInfo$databaseId)
+
+       if (is.null(data)) {
+        return(NULL)
+      }
+
+      # The meta-data data structure needs to be taken out!
+      data <- data %>%
+        dplyr::mutate(startTime = paste0(.data$startTime)) %>%
+        dplyr::mutate(startTime = as.POSIXct(.data$startTime))
+
+      data <- data %>% dplyr::filter(.data$startTime == dbInfo$startTime)
+      return(data)
     })
 
     output$metadataInfoTitle <- shiny::renderUI(expr = {
@@ -168,6 +176,7 @@ databaseInformationModule <- function(id,
         if (!hasData(data)) {
           return(NULL)
         }
+
         data <- data %>%
           dplyr::pull(.data$packageDependencySnapShotJson)
 

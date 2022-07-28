@@ -22,7 +22,7 @@ inclusionRulesView <- function(id) {
               shiny::radioButtons(
                 inputId = "inclusionRuleTableFilters",
                 label = "Inclusion Rule Events",
-                choices = c("All", "Meet", "Gain", "Remain", "Total"),
+                choices = c("All", "Meet", "Gain", "Remain"),
                 selected = "Remain",
                 inline = TRUE
               )
@@ -33,7 +33,8 @@ inclusionRulesView <- function(id) {
           )
         )
       ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("inclusionRuleTable")))
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("inclusionRuleTable"))),
+      csvDownloadButton(ns, "inclusionRuleTable")
     )
   )
 }
@@ -81,7 +82,7 @@ inclusionRulesModule <- function(id,
         c("ruleSequenceId", "ruleName")
       countLocation <- 1
       if (input$inclusionRuleTableFilters == "All") {
-        dataColumnFields <- c("Meet", "Gain", "Remain", "Total")
+        dataColumnFields <- c("Meet", "Gain", "Remain")
       } else {
         dataColumnFields <- input$inclusionRuleTableFilters
       }
@@ -107,7 +108,7 @@ inclusionRulesModule <- function(id,
       getDisplayTableGroupedByDatabaseId(
         data = table,
         cohort = cohortTable,
-        database = databaseTable,
+        databaseTable = databaseTable,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,

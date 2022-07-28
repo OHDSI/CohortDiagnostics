@@ -36,7 +36,8 @@ conceptsInDataSourceView <- function(id) {
           )
         ),
       ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("conceptsInDataSourceTable")))
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("conceptsInDataSourceTable"))),
+      csvDownloadButton(ns, "conceptsInDataSourceTable")
     )
   )
 }
@@ -149,7 +150,7 @@ conceptsInDataSourceModule <- function(id,
       displayTable <- getDisplayTableGroupedByDatabaseId(
         data = data,
         cohort = cohortTable,
-        database = databaseTable,
+        databaseTable = databaseTable,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,

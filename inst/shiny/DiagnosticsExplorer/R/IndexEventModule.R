@@ -49,7 +49,8 @@ indexEventBreakdownView <- function(id) {
           )
         )
       ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("breakdownTable")))
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("breakdownTable"))),
+      csvDownloadButton(ns, "breakdownTable")
     )
   )
 }
@@ -121,7 +122,7 @@ indexEventBreakdownModule <- function(id,
 
       showDataAsPercent <- input$indexEventBreakDownShowAsPercent
       data <- indexEventBreakDownDataFilteredByRadioButton()
-
+     
       validate(need(
         all(!is.null(data), nrow(data) > 0),
         "There is no data for the selected combination."
@@ -200,7 +201,7 @@ indexEventBreakdownModule <- function(id,
       getDisplayTableGroupedByDatabaseId(
         data = data,
         cohort = cohort,
-        database = database,
+        databaseTable = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
