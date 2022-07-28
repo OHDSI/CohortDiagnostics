@@ -118,8 +118,6 @@ nullToEmpty <- function(x) {
   return(x)
 }
 
-
-
 makeDataExportable <- function(x,
                                tableName,
                                minCellCount = 5,
@@ -207,8 +205,14 @@ makeDataExportable <- function(x,
     distinctRows <- x %>%
       dplyr::select(dplyr::all_of(primaryKeyInDataModel)) %>%
       dplyr::distinct() %>%
-      nrow()
-    if (nrow(x) > distinctRows) {
+      dplyr::count() %>%
+      dplyr::pull()
+
+    rowCount <- x %>%
+      dplyr::count() %>%
+      dplyr::pull()
+
+    if (rowCount > distinctRows) {
       stop(
         " - duplicates found in primary key for table ",
         tableName,
@@ -220,7 +224,8 @@ makeDataExportable <- function(x,
   ## because Andromeda is not handling date consistently -
   # https://github.com/OHDSI/Andromeda/issues/28
   ## temporary solution is to collect data into R memory using dplyr::collect()
-
+  # Note: this means that all data processed ends up fully in memory
+  # This could be changed with batch operations on andromeda objects
   x <- x %>%
     dplyr::collect()
 
@@ -235,6 +240,11 @@ makeDataExportable <- function(x,
         columnNames = columnsToApplyMinCellValue,
         minCellCount = minCellCount
       )
+  }
+
+  # Ensure that timeId is never NA
+  if ("timeId" %in% colnames(x)) {
+    x[is.na(x$timeId), ]$timeId <- 0
   }
   return(x)
 }
