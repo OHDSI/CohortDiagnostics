@@ -55,11 +55,15 @@ exportCharacterization <- function(characteristics,
         sd = round(.data$sd, digits = 4)
       ) %>%
       dplyr::select(-.data$cohortEntries, -.data$cohortSubjects) %>%
-      dplyr::distinct()
+      dplyr::distinct() %>% makeDataExportable(
+        tableName = "temporal_covariate_value",
+        minCellCount = minCellCount,
+        databaseId = databaseId
+      )
 
     if (dplyr::pull(dplyr::count(characteristics$filteredCovariates)) > 0) {
       covariateRef <- makeDataExportable(
-        x = characteristics$covariateRef %>% dplyr::collect(),
+        x = characteristics$covariateRef,
         tableName = "temporal_covariate_ref",
         minCellCount = minCellCount
       )
@@ -94,14 +98,8 @@ exportCharacterization <- function(characteristics,
         analysisId = timeRef$timeId
       )
 
-      filteredCovariates <- makeDataExportable(
-        x = characteristics$filteredCovariates,
-        tableName = "temporal_covariate_value",
-        minCellCount = minCellCount,
-        databaseId = databaseId
-      )
       writeToCsv(
-        data = filteredCovariates,
+        data = characteristics$filteredCovariates,
         fileName = covariateValueFileName,
         incremental = incremental
       )
@@ -111,21 +109,16 @@ exportCharacterization <- function(characteristics,
   if (!"covariatesContinuous" %in% names(characteristics)) {
     ParallelLogger::logInfo("No continuous characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
-     characteristics$filteredCovariatesContinous <-
-      characteristics$covariatesContinuous %>%
-      dplyr::filter(.data$countValue >= minCellCount) %>%
-      dplyr::mutate(databaseId = !!databaseId)
+     characteristics$filteredCovariatesContinous <- makeDataExportable(
+       x = characteristics$covariatesContinuous,
+       tableName = "temporal_covariate_value_dist",
+       minCellCount = minCellCount,
+       databaseId = databaseId
+     )
 
-    filteredCovariatesContinous <- makeDataExportable(
-      x = characteristics$filteredCovariatesContinous,
-      tableName = "temporal_covariate_value_dist",
-      minCellCount = minCellCount,
-      databaseId = databaseId
-    )
-
-    if (dplyr::pull(dplyr::count(filteredCovariatesContinous)) > 0) {
+    if (dplyr::pull(dplyr::count(characteristics$filteredCovariatesContinous)) > 0) {
       writeToCsv(
-        data = filteredCovariatesContinous,
+        data = characteristics$filteredCovariatesContinous,
         fileName = covariateValueContFileName,
         incremental = incremental
       )

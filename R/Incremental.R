@@ -151,7 +151,7 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
 }
 
 
-writeToCsv.data.frame <- function(data, fileName, incremental = FALSE, ...) {
+writeToCsv.default <- function(data, fileName, incremental = FALSE, ...) {
   colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
   if (incremental) {
     params <- list(...)
@@ -183,7 +183,7 @@ writeToCsv.data.frame <- function(data, fileName, incremental = FALSE, ...) {
 
 }
 
-writeToCsv.Andromeda <-
+writeToCsv.tbl_Andromeda <-
   function(data, fileName, incremental = FALSE, ...) {
     if (incremental && file.exists(fileName)) {
       ParallelLogger::logDebug("Appending records to ", fileName)

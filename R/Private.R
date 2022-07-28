@@ -118,8 +118,6 @@ nullToEmpty <- function(x) {
   return(x)
 }
 
-
-
 makeDataExportable <- function(x,
                                tableName,
                                minCellCount = 5,
@@ -226,7 +224,8 @@ makeDataExportable <- function(x,
   ## because Andromeda is not handling date consistently -
   # https://github.com/OHDSI/Andromeda/issues/28
   ## temporary solution is to collect data into R memory using dplyr::collect()
-
+  # Note: this means that all data processed ends up fully in memory
+  # This could be changed with batch operations on andromeda objects
   x <- x %>%
     dplyr::collect()
 
