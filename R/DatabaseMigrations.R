@@ -15,8 +15,9 @@
 # limitations under the License.
 
 .migrationFileRexp <- "(Migration_([0-9]+))-(.+).sql"
+.migrationDir <- system.file("sql", "sql_server", "migrations", package = utils::packageName())
 
-getExecutedMigrations <- function(connection, schema, tablePrefix) {
+getCompletedMigrations <- function(connection, schema, tablePrefix) {
   sql <- "
     {DEFAULT @migration = migration}
     SELECT migration_file FROM @result_schema.@table_prefix@migration ORDER BY migration_order;"
@@ -31,11 +32,58 @@ getExecutedMigrations <- function(connection, schema, tablePrefix) {
 
 .getMigrationOrder <- function(migrationsToExecute, regExp = .migrationFileRexp) {
   execution <- data.frame(
-    file = migrationsToExecute,
+    migrationFile = migrationsToExecute,
     sortOrder = as.integer(gsub(regExp, "\\2", migrationsToExecute))
   )
   return(execution[order(execution$sortOrder), ])
 }
+
+#' getMigrationStatus
+#' @description
+#' Get set of migrations that are yet to be run
+#'
+#' @inheritParams createResultsDataModel
+#' @export
+getMigrationStatus <- function(connection = NULL,
+                               connectionDetails = NULL,
+                               schema = NULL,
+                               tablePrefix = "") {
+  if (is.null(connection)) {
+    if (!is.null(connectionDetails)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    } else {
+      stop("No connection or connectionDetails provided.")
+    }
+  }
+  # List all migration files
+  allMigrations <- list.files(.migrationDir, pattern = .migrationFileRexp)
+  # List files that have been executed
+  tables <- DatabaseConnector::getTableNames(connection, schema)
+  if (toupper(paste0(tablePrefix, "migration")) %in% tables) {
+    migrationsExecuted <- getCompletedMigrations(connection, schema, tablePrefix)
+    migrationsToExecute <- setdiff(allMigrations, migrationsExecuted$migrationFile)
+  } else {
+    migrationsToExecute <- allMigrations
+  }
+
+  return(.getMigrationOrder(migrationsToExecute))
+}
+
+#' getMigrationStatus
+#' @description
+#' Check if migrations conform to specific naming conventions.
+checkMigrationFiles <- function(dir = .migrationDir) {
+  sqlFiles <- list.files(dir, pattern = "*.sql")
+  fileNameValidity <- grepl(.migrationFileRexp, sqlFiles)
+
+  if (any(fileNameValidity == 0)) {
+    ParallelLogger::logError(paste("File name not valid", sqlFiles[fileNameValidity == 0], collapse = "\n"))
+  }
+
+  return(all(fileNameValidity > 0))
+}
+
 
 #' Migrate Data model
 #' @description
@@ -63,23 +111,10 @@ migrateDataModel <- function(connection = NULL,
     stop("Invalid schema for sqlite, use schema = 'main'")
   }
 
-  migrationDir <- system.file("sql", "sql_server", "migrations", package = utils::packageName())
-  # List all migration files
-  allMigrations <- list.files(migrationDir, pattern = .migrationFileRexp)
-  # List files that have been executed
-  tables <- DatabaseConnector::getTableNames(connection, schema)
-  if (toupper(paste0(tablePrefix, "migration")) %in% tables) {
-    migrationsExecuted <- getExecutedMigrations(connection, schema, tablePrefix)
-    migrationsToExecute <- setdiff(allMigrations, migrationsExecuted$migrationFile)
-  } else {
-    migrationsToExecute <- allMigrations
-  }
-
-  execution <- .getMigrationOrder(migrationsToExecute)
-
+  migrationsToExecute <- getMigrationStatus(connection = connection, schema = schema, tablePrefix = tablePrefix)
   ParallelLogger::logInfo("Executing database migrations on schema - ", schema)
   # Run files that have not been executed (in sequence order)
-  for (migration in execution$file) {
+  for (migration in migrationsToExecute$migrationFile) {
     ParallelLogger::logInfo("STARTING MIGRATION: ", migration)
     sql <- SqlRender::loadRenderTranslateSql(file.path("migrations", migration),
                                              packageName = utils::packageName(),
@@ -97,14 +132,14 @@ migrateDataModel <- function(connection = NULL,
   }
 
   # Verify that files are in migration table
-  migrationsCompleted <- getExecutedMigrations(connection, schema, tablePrefix)
-  migrationsNotCompleted <- setdiff(migrationsToExecute, migrationsCompleted$migrationFile)
+  migrationsCompleted <- getCompletedMigrations(connection, schema, tablePrefix)
+  migrationsNotCompleted <- setdiff(migrationsToExecute$migrationFile, migrationsCompleted$migrationFile)
   if (length(migrationsNotCompleted) > 0) {
     stop(paste("Migration :", migrationsNotCompleted, "has not completed", collapse = "\n"))
   }
 
   # Complete by updating version number to current package version
-  sql <- SqlRender::loadRenderTranslateSql(file.path("migrations", "UpdateVersionNumber.sql"),
+  sql <- SqlRender::loadRenderTranslateSql("UpdateVersionNumber.sql",
                                            packageName = utils::packageName(),
                                            results_schema = schema,
                                            table_prefix = tablePrefix,

@@ -1,5 +1,7 @@
 if (dbms == "postgresql") {
-  resultsDatabaseSchema <- paste0("r", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
+  resultsDatabaseSchema <- paste0("r",
+                                  gsub("[: -]", "", Sys.time(), perl = TRUE),
+                                  sample(1:100, 1))
 
   # Always clean up
   withr::defer(
@@ -53,9 +55,9 @@ test_that("Database Migrations execute without error", {
                    schema = resultsDatabaseSchema,
                    tablePrefix = "cd_")
 
-  completedMigrations <- getExecutedMigrations(connection = connection,
-                                               schema = resultsDatabaseSchema,
-                                               tablePrefix = "cd_")
+  completedMigrations <- getCompletedMigrations(connection = connection,
+                                                schema = resultsDatabaseSchema,
+                                                tablePrefix = "cd_")
   migrationDir <- system.file("sql", "sql_server", "migrations", package = utils::packageName())
   availableMigrations <- list.files(migrationDir, pattern = .migrationFileRexp)
 
@@ -67,9 +69,9 @@ test_that("Database Migrations execute without error", {
                  schema = resultsDatabaseSchema,
                  tablePrefix = "cd_")
 
-  completedMigrations2 <- getExecutedMigrations(connection = connection,
-                                                schema = resultsDatabaseSchema,
-                                                tablePrefix = "cd_")
+  completedMigrations2 <- getCompletedMigrations(connection = connection,
+                                                 schema = resultsDatabaseSchema,
+                                                 tablePrefix = "cd_")
 
   checkmate::expect_set_equal(completedMigrations$migrationFile, completedMigrations2$migrationFile)
 })
@@ -79,12 +81,25 @@ test_that("Migration order from string pattern is correct", {
   testSet <- c("Migration_11-test.sql", "Migration_2-test.sql")
   execOrder <- .getMigrationOrder(testSet)
 
-  expect_true(execOrder[1,]$file == "Migration_2-test.sql")
-  expect_true(execOrder[2,]$file == "Migration_11-test.sql")
+  expect_true(execOrder[1,]$migrationFile == "Migration_2-test.sql")
+  expect_true(execOrder[2,]$migrationFile == "Migration_11-test.sql")
 
   testSet2 <- c("Migration_13-test.sql", "Migration_21-test.sql")
   execOrder <- .getMigrationOrder(testSet2)
 
-  expect_true(execOrder[1,]$file == "Migration_13-test.sql")
-  expect_true(execOrder[2,]$file == "Migration_21-test.sql")
+  expect_true(execOrder[1,]$migrationFile == "Migration_13-test.sql")
+  expect_true(execOrder[2,]$migrationFile == "Migration_21-test.sql")
+})
+
+test_that("Migration check utility", {
+  expect_true(checkMigrationFiles())
+
+  # Check the function works
+  testDir <- tempfile()
+  dir.create(testDir)
+  on.exit(unlink(testDir, force = TRUE, recursive = TRUE), add = TRUE)
+  file.create(file.path(testDir, "TEST.sql"))
+  file.create(file.path(testDir, "TEST2.sql"))
+
+  expect_false(checkMigrationFiles(testDir))
 })
