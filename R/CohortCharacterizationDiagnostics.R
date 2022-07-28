@@ -250,6 +250,8 @@ executeCohortCharacterization <- function(connection,
         covariateSettings = covariateSettings,
         cdmVersion = cdmVersion
       )
+
+    on.exit(Andromeda::close(characteristics), add = TRUE)
     exportCharacterization(
       characteristics = characteristics,
       databaseId = databaseId,
@@ -263,6 +265,7 @@ executeCohortCharacterization <- function(connection,
       minCellCount = minCellCount
     )
   }
+
   recordTasksDone(
     cohortId = subset$cohortId,
     task = task,
