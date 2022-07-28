@@ -23,6 +23,10 @@ new shiny app functionality will be supported if you run ``migrateDataModel`` on
 
 9. Changed type to dataType and fieldName to columnName to align with strategus modules
 
+9. Refactored export of characterization results to use common export
+
+10. Ensure that tests cases always use a continuous covariate
+
 Bug fixes:
 
 1. Fixed issue uploading results to postgres db caused by null values in primary key field. 

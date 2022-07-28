@@ -146,6 +146,11 @@ recordTasksDone <-
   }
 
 writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
+  UseMethod("writeToCsv", data)
+}
+
+
+writeToCsv.default <- function(data, fileName, incremental = FALSE, ...) {
   colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
   if (incremental) {
     params <- list(...)
@@ -174,10 +179,11 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
       delim = ","
     )
   }
+
 }
 
-writeCovariateDataAndromedaToCsv <-
-  function(data, fileName, incremental = FALSE) {
+writeToCsv.tbl_Andromeda <-
+  function(data, fileName, incremental = FALSE, ...) {
     if (incremental && file.exists(fileName)) {
       ParallelLogger::logDebug("Appending records to ", fileName)
       batchSize <- 1e5
