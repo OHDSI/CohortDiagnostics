@@ -33,7 +33,8 @@ inclusionRulesView <- function(id) {
           )
         )
       ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("inclusionRuleTable")))
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("inclusionRuleTable"))),
+      csvDownloadButton(ns, "inclusionRuleTable")
     )
   )
 }
@@ -107,7 +108,7 @@ inclusionRulesModule <- function(id,
       getDisplayTableGroupedByDatabaseId(
         data = table,
         cohort = cohortTable,
-        database = databaseTable,
+        databaseTable = databaseTable,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,

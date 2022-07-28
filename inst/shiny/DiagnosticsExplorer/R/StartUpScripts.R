@@ -349,7 +349,7 @@ initializeEnvironment <- function(shinySettings,
     }
 
     envir$databaseMetadata <- processMetadata(envir$metadata)
-    envir$database <- envir$database %>%
+    envir$databaseMetadata <- envir$database %>%
       dplyr::distinct() %>%
       dplyr::mutate(id = dplyr::row_number()) %>%
       dplyr::mutate(shortName = paste0("D", .data$id)) %>%

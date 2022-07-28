@@ -414,6 +414,7 @@ cohortDefinitionsModule <- function(id,
 
         displayTable <- getDisplayTableSimple(
           data = data,
+          databaseTable = databaseTable,
           keyColumns = keyColumns,
           dataColumns = dataColumns,
           selection = "single"
