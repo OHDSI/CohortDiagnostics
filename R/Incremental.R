@@ -145,7 +145,6 @@ recordTasksDone <-
     readr::write_csv(recordKeeping, recordKeepingFile)
   }
 
-#' S3 write to csv
 writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
   UseMethod("writeToCsv", data)
 }
