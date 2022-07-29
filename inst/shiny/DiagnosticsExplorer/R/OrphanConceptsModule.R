@@ -66,6 +66,7 @@ orphanConceptsModule <- function(id,
         cohortId = targetCohortId(),
         databaseIds = selectedDatabaseIds()
       )
+      
       if (!hasData(data)) {
         return(NULL)
       }
