@@ -159,8 +159,8 @@ writeToCsv.default <- function(data, fileName, incremental = FALSE, ...) {
     }
     params$data <- data
     params$fileName <- fileName
-    do.call(saveIncremental, params)
     ParallelLogger::logDebug("appending records to ", fileName)
+    do.call(saveIncremental, params)
   } else {
     if (file.exists(fileName)) {
       ParallelLogger::logDebug(

@@ -792,16 +792,6 @@ runConceptSetDiagnostics <- function(connection,
           runBreakdownIndexEvents
         )
       data <- dplyr::bind_rows(data)
-      if (nrow(data) > 0) {
-        data <- data %>%
-          dplyr::mutate(databaseId = !!databaseId)
-        data <-
-          enforceMinCellValue(data, "conceptCount", minCellCount)
-        if ("subjectCount" %in% colnames(data)) {
-          data <-
-            enforceMinCellValue(data, "subjectCount", minCellCount)
-        }
-      }
 
       data <- makeDataExportable(
         x = data,
