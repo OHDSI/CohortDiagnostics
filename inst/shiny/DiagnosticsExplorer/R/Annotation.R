@@ -371,7 +371,7 @@ postAnnotationResult <- function(dataSource,
   sqlRetrieve <- "SELECT max(annotation_id) annotation_id
                   FROM @results_database_schema.annotation
                   WHERE created_by = '@created_by'
-                  	AND created_on = CAST(@created_on AS INT);"
+                  	AND created_on = @created_on;"
   maxAnnotationId <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
