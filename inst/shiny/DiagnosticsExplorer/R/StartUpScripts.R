@@ -63,7 +63,7 @@ tableIsEmpty <- function(dataSource, tableName) {
 
 getTimeAsInteger <- function(time = Sys.time(),
                              tz = "UTC") {
-  return(as.numeric(as.POSIXlt(time, tz = tz)))
+  return(floor(as.numeric(as.POSIXlt(time, tz = tz))))
 }
 
 getTimeFromInteger <- function(x, tz = "UTC") {
