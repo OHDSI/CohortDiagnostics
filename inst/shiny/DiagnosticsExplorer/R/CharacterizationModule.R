@@ -108,7 +108,8 @@ characterizationView <- function(id) {
       ),
       shinycssloaders::withSpinner(
         reactable::reactableOutput(outputId = ns("characterizationTable"))
-      )
+      ),
+      csvDownloadButton(ns, "characterizationTable")
     )
   )
 }
@@ -325,7 +326,7 @@ characterizationModule <- function(id,
       displayTable <- getDisplayTableGroupedByDatabaseId(
         data = table,
         cohort = cohortTable,
-        database = databaseTable,
+        databaseTable = databaseTable,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,
@@ -396,7 +397,7 @@ characterizationModule <- function(id,
       getDisplayTableGroupedByDatabaseId(
         data = data,
         cohort = cohortTable,
-        database = databaseTable,
+        databaseTable = databaseTable,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,

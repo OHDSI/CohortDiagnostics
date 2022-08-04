@@ -62,7 +62,7 @@ plotCohortOverlap <- function(data,
     dplyr::mutate(
       tooltip = paste0(
         "Database: ",
-        .data$databaseId,
+        .data$databaseName,
         "\n",
         "\n",
         .data$targetShortName,
@@ -80,6 +80,7 @@ plotCohortOverlap <- function(data,
       .data$targetShortName,
       .data$comparatorShortName,
       .data$databaseId,
+      .data$databaseName,
       .data$absTOnlySubjects,
       .data$absCOnlySubjects,
       .data$absBothSubjects,
@@ -159,7 +160,7 @@ plotCohortOverlap <- function(data,
     ggplot2::ylab(label = "") +
     ggplot2::xlab(label = "") +
     ggplot2::scale_fill_manual("Subjects in", values = c(rgb(0.8, 0.2, 0.2), rgb(0.3, 0.2, 0.4), rgb(0.4, 0.4, 0.9))) +
-    ggplot2::facet_grid(comparatorShortName ~ databaseId) +
+    ggplot2::facet_grid(comparatorShortName ~ databaseName) +
     ggplot2::theme(
       panel.background = ggplot2::element_blank(),
       strip.background = ggplot2::element_blank(),
@@ -281,6 +282,11 @@ cohortOverlapModule <- function(id,
       ))
       validate(need(
         nrow(data) > 0,
+        paste0("No cohort overlap data for this combination.")
+      ))
+
+      validate(need(
+        !all(is.na(data$eitherSubjects)),
         paste0("No cohort overlap data for this combination.")
       ))
 

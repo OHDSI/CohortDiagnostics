@@ -152,7 +152,7 @@ plotIncidenceRate <- function(data,
     paste0(
       plotData$shortName,
       " ",
-      plotData$databaseId,
+      plotData$databaseName,
       "\nIncidence Rate = ",
       scales::comma(plotData$incidenceRate, accuracy = 0.01),
       "/per 1k PY",
@@ -252,14 +252,14 @@ plotIncidenceRate <- function(data,
     if (stratifyByGender | stratifyByCalendarYear) {
       if (stratifyByAgeGroup) {
         plot <-
-          plot + facet_nested(databaseId + shortName ~ plotData$ageGroup, scales = scales)
+          plot + facet_nested(databaseName + shortName ~ plotData$ageGroup, scales = scales)
       } else {
         plot <-
-          plot + facet_nested(databaseId + shortName ~ ., scales = scales)
+          plot + facet_nested(databaseName + shortName ~ ., scales = scales)
       }
     } else {
       plot <-
-        plot + facet_nested(databaseId + shortName ~ ., scales = scales)
+        plot + facet_nested(databaseName + shortName ~ ., scales = scales)
     }
     # spacing <- rep(c(1, rep(0.5, length(unique(plotData$shortName)) - 1)), length(unique(plotData$databaseId)))[-1]
     spacing <- plotData %>%

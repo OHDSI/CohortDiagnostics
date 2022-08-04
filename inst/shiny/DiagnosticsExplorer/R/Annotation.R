@@ -19,77 +19,60 @@ annotationUi <- function(id) {
   ns <- shiny::NS(id)
 
   postAnnotationArea <- shiny::conditionalPanel(
-        condition = "output.postAnnotationEnabled == true",
-        ns = ns,
-        shinydashboard::box(
-          title = "Add comment",
-          width = NULL,
-          collapsible = TRUE,
-          collapsed = TRUE,
-          column(
-            5,
-            shinyWidgets::pickerInput(
-              inputId = ns("database"),
-              label = "Related Database:",
-              width = 300,
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              inline = TRUE,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ),
-          column(
-            5,
-            shinyWidgets::pickerInput(
-              inputId = ns("targetCohort"),
-              label = "Related Cohorts",
-              width = 300,
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              inline = TRUE,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                liveSearchStyle = "contains",
-                size = 10,
-                dropupAuto = TRUE,
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ),
-          column(
-            11,
-            markdownInput::markdownInput(
-              inputId = ns("markdownInputArea"),
-              label = "Comment : ",
-              theme = "github",
-              value = "Write some _markdown_ **here:**"
-            )
-          ),
-          column(
-            1,
-            tags$br(),
-            shiny::actionButton(
-              inputId = ns("postAnnotation"),
-              label = "POST",
-              width = NULL,
-              style = "margin-top: 15px; margin-bottom: 15px;"
-            )
+    condition = "output.postAnnotationEnabled == true",
+    ns = ns,
+    shinydashboard::box(
+      title = "Add comment",
+      width = NULL,
+      collapsible = TRUE,
+      collapsed = TRUE,
+      column(
+        5,
+        shiny::uiOutput(ns("databasePicker"))
+      ),
+      column(
+        5,
+        shinyWidgets::pickerInput(
+          inputId = ns("targetCohort"),
+          label = "Related Cohorts",
+          width = 300,
+          choices = c(""),
+          selected = c(""),
+          multiple = TRUE,
+          inline = TRUE,
+          choicesOpt = list(style = rep_len("color: black;", 999)),
+          options = shinyWidgets::pickerOptions(
+            actionsBox = TRUE,
+            liveSearch = TRUE,
+            liveSearchStyle = "contains",
+            size = 10,
+            dropupAuto = TRUE,
+            liveSearchPlaceholder = "Type here to search",
+            virtualScroll = 50
           )
         )
+      ),
+      column(
+        11,
+        markdownInput::markdownInput(
+          inputId = ns("markdownInputArea"),
+          label = "Comment : ",
+          theme = "github",
+          value = "Write some _markdown_ **here:**"
+        )
+      ),
+      column(
+        1,
+        tags$br(),
+        shiny::actionButton(
+          inputId = ns("postAnnotation"),
+          label = "POST",
+          width = NULL,
+          style = "margin-top: 15px; margin-bottom: 15px;"
+        )
       )
+    )
+  )
 
   return(
     shinydashboard::box(
@@ -128,8 +111,10 @@ annotationModule <- function(id,
                              selectedDatabaseIds,
                              selectedCohortIds,
                              cohortTable,
+                             databaseTable,
                              postAnnotaionEnabled) {
   ns <- shiny::NS(id)
+
   annotationServer <- function(input, output, session) {
     # Annotation Section ------------------------------------
     ## posting annotation enabled ------
@@ -156,7 +141,7 @@ annotationModule <- function(id,
         databaseIds = selectedDatabaseIds()
       )
 
-      if (nrow(results$annotation) == 0) {
+      if (!hasData(results)) {
         return(NULL)
       }
       return(results)
@@ -164,12 +149,34 @@ annotationModule <- function(id,
 
     markdownModule <- shiny::callModule(markdownInput::moduleMarkdownInput, "markdownInputArea")
 
-    shiny::observe({
-      shinyWidgets::updatePickerInput(
-        session = session,
-        inputId = "database",
-        choices = selectedDatabaseIds(),
-        selected = selectedDatabaseIds()
+    dbChoices <- shiny::reactive({
+      databaseChoices <- list()
+      dbMapping <- databaseTable %>% dplyr::filter(.data$databaseId %in% selectedDatabaseIds())
+      for (i in 1:nrow(dbMapping)) {
+        row <- dbMapping[i,]
+        databaseChoices[row$databaseName] <- row$databaseId
+      }
+      return(databaseChoices)
+    })
+
+    output$databasePicker <- shiny::renderUI({
+      shinyWidgets::pickerInput(
+        inputId = ns("database"),
+        label = "Related Database:",
+        width = 300,
+        choices = dbChoices(),
+        selected = dbChoices(),
+        multiple = TRUE,
+        inline = TRUE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          size = 10,
+          liveSearchStyle = "contains",
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+        )
       )
     })
 
@@ -281,7 +288,9 @@ annotationModule <- function(id,
         parametersToPostAnnotation <- getParametersToPostAnnotation()
         comment <- markdownModule()
 
-        if (comment == "Write some _markdown_ **here:**" | is.null(comment) | is.null(activeLoggedInUser())) {
+        if (comment == "Write some _markdown_ **here:**" |
+          is.null(comment) |
+          is.null(activeLoggedInUser())) {
           return(NULL)
         }
         createdBy <- activeLoggedInUser()
@@ -400,6 +409,7 @@ getAnnotationResult <- function(dataSource,
                                 diagnosticsId,
                                 cohortIds,
                                 databaseIds) {
+  data <- NULL
   # get annotation id's
   sqlRetrieveAnnotationLink <- "SELECT *
                                 FROM @results_database_schema.annotation_link
@@ -417,25 +427,25 @@ getAnnotationResult <- function(dataSource,
       databaseIds = quoteLiterals(databaseIds),
       snakeCaseToCamelCase = TRUE
     )
-
-  sqlRetrieveAnnotation <- "SELECT *
+  
+  if (hasData(annotationLink)) {
+    sqlRetrieveAnnotation <- "SELECT *
                             FROM @results_database_schema.annotation
                             WHERE annotation_id IN (@annotationIds);"
-
-  annotation <-
-    renderTranslateQuerySql(
-      connection = dataSource$connection,
-      dbms = dataSource$dbms,
-      sql = sqlRetrieveAnnotation,
-      results_database_schema = dataSource$resultsDatabaseSchema,
-      annotationIds = annotationLink$annotationId,
-      snakeCaseToCamelCase = TRUE
-    )
-
-  data <- list(
-    annotation = annotation,
-    annotationLink = annotationLink
-  )
-
+    
+    annotation <-
+      renderTranslateQuerySql(
+        connection = dataSource$connection,
+        dbms = dataSource$dbms,
+        sql = sqlRetrieveAnnotation,
+        results_database_schema = dataSource$resultsDatabaseSchema,
+        annotationIds = annotationLink$annotationId,
+        snakeCaseToCamelCase = TRUE
+      )
+    
+    data <- list(annotation = annotation,
+                 annotationLink = annotationLink)
+  }
+  
   return(data)
 }

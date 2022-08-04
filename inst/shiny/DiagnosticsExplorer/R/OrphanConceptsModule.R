@@ -40,7 +40,8 @@ orpahanConceptsView <- function(id) {
           )
         )
       ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("orphanConceptsTable")))
+      shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("orphanConceptsTable"))),
+      csvDownloadButton(ns, "orphanConceptsTable")
     )
   )
 }
@@ -218,7 +219,7 @@ orphanConceptsModule <- function(id,
       displayTable <- getDisplayTableGroupedByDatabaseId(
         data = data,
         cohort = cohort,
-        database = database,
+        databaseTable = database,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,

@@ -1,22 +1,16 @@
 test_that("DiagnosticsExplorer loads", {
+  envir <- new.env()
   initializeEnvironment(shinySettings,
                         table1SpecPath = table1SpecPath,
-                        dataModelSpecificationsPath = dataModelSpecificationsPath)
+                        dataModelSpecificationsPath = dataModelSpecificationsPath,
+                        envir = envir)
 
   # Environment should have initialized
   expect_true(exists("dataSource"))
 
   shiny::testServer(diagnosticsExplorerModule, args = list(
     id = "testAnnotationServer",
-    dataSource = dataSource,
-    databaseTable = database,
-    cohortTable = cohort,
-    enableAnnotation = enableAnnotation,
-    enableAuthorization = enableAuthorization,
-    enabledTabs = enabledTabs,
-    conceptSets = conceptSets,
-    userCredentials = userCredentials,
-    activeUser = activeUser
+    envir = envir
   ), {
     ## input tests will go here
     session$setInputs(
@@ -24,6 +18,5 @@ test_that("DiagnosticsExplorer loads", {
       database = "Eunomia"
     )
     expect_null(inputCohortIds())
-
   })
 })

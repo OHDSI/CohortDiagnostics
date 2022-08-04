@@ -18,11 +18,25 @@ Changes:
 
 8. Changed type to dataType and fieldName to columnName to align with strategus modules
 
+9. Refactored export of characterization results to use common export
+
+10. Ensure that tests cases always use a continuous covariate
+
 Bug fixes:
 
 1. Fixed issue uploading results to postgres db caused by null values in primary key field. 
 Removed constraint to fix issue.
 
+
+CohortDiagnostics 3.0.3
+=======================
+
+Changes:
+
+1. Changed default batch size for characterization feature extraction from 100 to 5 as it was causing performance issues
+on redshift clusters.
+
+2. Allow setting of batch size for feature extraction with `options("CohortDiagnostics-FE-batch-size" = batchSize)`
 
 CohortDiagnostics 3.0.2
 =======================
