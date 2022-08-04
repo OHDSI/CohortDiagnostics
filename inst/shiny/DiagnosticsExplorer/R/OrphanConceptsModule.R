@@ -74,22 +74,26 @@ orphanConceptsModule <- function(id,
         dplyr::arrange(dplyr::desc(.data$conceptCount))
       return(data)
     })
-
-    output$orphanConceptsTable <- reactable::renderReactable(expr = {
+    
+    # Creating this reactive to test whether the data editing is working properly
+    filteringStandardConceptsReactive <- shiny::reactive(x = {
       data <- orphanConceptsDataReactive()
       validate(need(hasData(data), "There is no data for the selected combination."))
-
-      if (hasData(selectedConceptSets())) {
-        if (!is.null(selectedConceptSets())) {
-          if (length(conceptSetIds()) > 0) {
-            data <- data %>%
-              dplyr::filter(.data$conceptSetId %in% conceptSetIds())
-          } else {
-            data <- data[0,]
-          }
-        }
-      }
-
+      
+      # If I uncomment this code block it keeps erroring 
+      # Error in `selectedConceptSets()`: could not find function "selectedConceptSets"
+      
+      # if (hasData(selectedConceptSets())) {
+      #   if (!is.null(selectedConceptSets())) {
+      #     if (length(conceptSetIds()) > 0) {
+      #       data <- data %>%
+      #         dplyr::filter(.data$conceptSetId %in% conceptSetIds())
+      #     } else {
+      #       data <- data[0,]
+      #     }
+      #   }
+      # }
+      
       if (input$orphanConceptsType == "Standard Only") {
         data <- data %>%
           dplyr::filter(.data$standardConcept == "S")
@@ -100,8 +104,43 @@ orphanConceptsModule <- function(id,
                             !is.na(.data$standardConcept) && .data$standardConcept != "S"
                           ))
       }
+      #browser() #for testing purposes
+      return (data)
+      
+    })
 
+    output$orphanConceptsTable <- reactable::renderReactable(expr = {
+      
+      # Commenting out this block and turning into a reactable for testing purposes
+      
+      # data <- orphanConceptsDataReactive()
+      # validate(need(hasData(data), "There is no data for the selected combination."))
+      # 
+      # if (hasData(selectedConceptSets())) {
+      #   if (!is.null(selectedConceptSets())) {
+      #     if (length(conceptSetIds()) > 0) {
+      #       data <- data %>%
+      #         dplyr::filter(.data$conceptSetId %in% conceptSetIds())
+      #     } else {
+      #       data <- data[0,]
+      #     }
+      #   }
+      # }
+
+      # if (input$orphanConceptsType == "Standard Only") {
+      #   data <- data %>%
+      #     dplyr::filter(.data$standardConcept == "S")
+      # } else if (input$orphanConceptsType == "Non Standard Only") {
+      #   data <- data %>%
+      #     dplyr::filter(is.na(.data$standardConcept) |
+      #                     (
+      #                       !is.na(.data$standardConcept) && .data$standardConcept != "S"
+      #                     ))
+      # }
+      
+      data <- filteringStandardConceptsReactive()
       validate(need(hasData(data), "There is no data for the selected combination."))
+    
 
       data <- data %>%
         dplyr::select(

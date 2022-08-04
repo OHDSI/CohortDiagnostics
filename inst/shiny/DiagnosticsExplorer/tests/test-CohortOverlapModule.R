@@ -35,19 +35,8 @@ test_that("Cohort Overlap Page", {
     checkmate::expect_numeric(cohortOverlapData()$cStartBeforeTEnd)
     checkmate::expect_numeric(cohortOverlapData()$cStartOnTStart)
     checkmate::expect_numeric(cohortOverlapData()$cStartOnTEnd)
-    
-    # I attempted to make the code less repetitive by looping, but keeps error-ing
-    # Leaving it here if anyone would like to take a look
-    
-    # name_vec <- colnames(cohortOverlapData())
-    # 
-    # for (name in name_vec){
-    #   if (name == "databaseId"){
-    #     checkmate::expect_character(cohortOverlapData()$name)
-    #   } else {
-    #     checkmate::expect_numeric(cohortOverlapData()$name)
-    #   }
-    # }
+
+
 
   })
 })

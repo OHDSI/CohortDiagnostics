@@ -17,7 +17,7 @@ test_that("Orphan Concepts Page", {
   ), {
     ## input tests will go here
     session$setInputs(
-      
+      orphanConceptsType = "Non Standard Only"
     )
     
     # Checking to see if all of the data types outputted are as expected
@@ -33,5 +33,25 @@ test_that("Orphan Concepts Page", {
     checkmate::expect_character(orphanConceptsDataReactive()$conceptCode)
     checkmate::expect_character(orphanConceptsDataReactive()$standardConcept)
     
+    
+    
+    # Creating my own testing function to see if standard concepts are only present when called upon
+    checkForConceptType <- function(checkTable) {
+      if (input$orphanConceptsType == "Standard Only") {
+        return (sum(checkTable$standardConcept == "S") == length(checkTable$standardConcept))
+      } else if (input$orphanConceptsType == "Non Standard Only") {
+        return (sum(checkTable$standardConcept != "S" | is.na(checkTable$standardConcept)) == length(checkTable$standardConcept))
+      }
+    }
+    
+    
+    # Converting the previous function to a checkmate package expectation test
+    expectConceptType = function(checkTable, info = NULL, label = NULL) {
+      res = checkForConceptType(checkTable)
+      checkmate::makeExpectation(checkTable, res, info = info, label = label)
+    }
+
+    # running the test 
+    expectConceptType(filteringStandardConceptsReactive())
   })
 })
