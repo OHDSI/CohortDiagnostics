@@ -97,7 +97,7 @@ orphanConceptsModule <- function(id,
         data <- data %>%
           dplyr::filter(is.na(.data$standardConcept) |
                           (
-                            !is.na(.data$standardConcept) && .data$standardConcept != "S"
+                            any(!is.na(.data$standardConcept), .data$standardConcept != "S")
                           ))
       }
 
