@@ -141,7 +141,7 @@ annotationModule <- function(id,
         databaseIds = selectedDatabaseIds()
       )
 
-      if (nrow(results$annotation) == 0) {
+      if (!hasData(results)) {
         return(NULL)
       }
       return(results)
@@ -409,6 +409,7 @@ getAnnotationResult <- function(dataSource,
                                 diagnosticsId,
                                 cohortIds,
                                 databaseIds) {
+  data <- NULL
   # get annotation id's
   sqlRetrieveAnnotationLink <- "SELECT *
                                 FROM @results_database_schema.annotation_link
@@ -426,25 +427,25 @@ getAnnotationResult <- function(dataSource,
       databaseIds = quoteLiterals(databaseIds),
       snakeCaseToCamelCase = TRUE
     )
-
-  sqlRetrieveAnnotation <- "SELECT *
+  
+  if (hasData(annotationLink)) {
+    sqlRetrieveAnnotation <- "SELECT *
                             FROM @results_database_schema.annotation
                             WHERE annotation_id IN (@annotationIds);"
-
-  annotation <-
-    renderTranslateQuerySql(
-      connection = dataSource$connection,
-      dbms = dataSource$dbms,
-      sql = sqlRetrieveAnnotation,
-      results_database_schema = dataSource$resultsDatabaseSchema,
-      annotationIds = annotationLink$annotationId,
-      snakeCaseToCamelCase = TRUE
-    )
-
-  data <- list(
-    annotation = annotation,
-    annotationLink = annotationLink
-  )
-
+    
+    annotation <-
+      renderTranslateQuerySql(
+        connection = dataSource$connection,
+        dbms = dataSource$dbms,
+        sql = sqlRetrieveAnnotation,
+        results_database_schema = dataSource$resultsDatabaseSchema,
+        annotationIds = annotationLink$annotationId,
+        snakeCaseToCamelCase = TRUE
+      )
+    
+    data <- list(annotation = annotation,
+                 annotationLink = annotationLink)
+  }
+  
   return(data)
 }
