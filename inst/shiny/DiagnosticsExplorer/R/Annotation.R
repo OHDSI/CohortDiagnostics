@@ -371,7 +371,7 @@ postAnnotationResult <- function(dataSource,
   sqlRetrieve <- "SELECT max(annotation_id) annotation_id
                   FROM @results_database_schema.annotation
                   WHERE created_by = '@created_by'
-                  	AND created_on = @created_on;"
+                  	AND created_on = CAST(@created_on AS INT);"
   maxAnnotationId <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
@@ -380,8 +380,10 @@ postAnnotationResult <- function(dataSource,
       results_database_schema = dataSource$resultsDatabaseSchema,
       created_by = createdBy,
       created_on = createdOn
-    ) %>% dplyr::pull()
-
+    )
+  
+  maxAnnotationId <- maxAnnotationId$annotation_id
+  
   # insert annotation link
   annotationLink <-
     tidyr::crossing(
@@ -445,8 +447,10 @@ getAnnotationResult <- function(dataSource,
         snakeCaseToCamelCase = TRUE
       )
     
-    data <- list(annotation = annotation,
-                 annotationLink = annotationLink)
+    if (hasData(annotation)) {
+      data <- list(annotation = annotation,
+                   annotationLink = annotationLink)
+    }
   }
   
   return(data)
