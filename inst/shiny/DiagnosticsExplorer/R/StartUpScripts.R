@@ -61,13 +61,16 @@ tableIsEmpty <- function(dataSource, tableName) {
   return(nrow(oneRow) == 0)
 }
 
-getTimeAsInteger <- function(time = Sys.time(),
-                             tz = "UTC") {
-  return(as.numeric(as.POSIXlt(time, tz = tz)))
+getTimeAsInteger <- function() {
+  time <- unclass(Sys.time())
+  time <- lapply(time, as.vector)[[1]]
+  attributes(time) <- NULL
+  time <- as.double(time)
+  return(time)
 }
 
-getTimeFromInteger <- function(x, tz = "UTC") {
-  originDate <- as.POSIXct("1970-01-01", tz = tz)
+getTimeFromInteger <- function(x) {
+  originDate <- as.POSIXct("1970-01-01")
   originDate <- originDate + x
   return(originDate)
 }
