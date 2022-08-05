@@ -23,7 +23,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                      cohortIds,
                                      cdmVersion = 5,
                                      covariateSettings,
-                                     batchSize = 100) {
+                                     batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 5)) {
   startTime <- Sys.time()
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
@@ -216,7 +216,7 @@ executeCohortCharacterization <- function(connection,
                                           covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
                                           covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
                                           analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
-                                          timeRefFileName = NULL) {
+                                          timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv")) {
   ParallelLogger::logInfo("Running ", jobName)
   startCohortCharacterization <- Sys.time()
   subset <- subsetToRequiredCohorts(
@@ -250,6 +250,8 @@ executeCohortCharacterization <- function(connection,
         covariateSettings = covariateSettings,
         cdmVersion = cdmVersion
       )
+
+    on.exit(Andromeda::close(characteristics), add = TRUE)
     exportCharacterization(
       characteristics = characteristics,
       databaseId = databaseId,
@@ -263,6 +265,7 @@ executeCohortCharacterization <- function(connection,
       minCellCount = minCellCount
     )
   }
+
   recordTasksDone(
     cohortId = subset$cohortId,
     task = task,

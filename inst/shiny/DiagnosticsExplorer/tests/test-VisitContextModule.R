@@ -30,6 +30,7 @@ test_that("Visit context page", {
 
     
     # Initializing vectors with column names
+
     beforeSelection <- c("databaseId", "visitConceptName", "Before")
     duringSelection <- c("databaseId", "visitConceptName", "During")
     simulSelection <- c("databaseId", "visitConceptName", "Simultaneous")

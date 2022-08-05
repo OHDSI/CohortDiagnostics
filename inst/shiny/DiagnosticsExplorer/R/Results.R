@@ -16,11 +16,12 @@ renderTranslateExecuteSql <- function(dataSource, sql, ...) {
 getResultsCohortCounts <- function(dataSource,
                                    cohortIds = NULL,
                                    databaseIds = NULL) {
-  sql <- "SELECT *
-            FROM  @results_database_schema.@table_name
-            WHERE cohort_id IS NOT NULL
-            {@use_database_ids} ? { AND database_id in (@database_ids)}
-            {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
+  sql <- "SELECT cc.*, db.database_name
+            FROM  @results_database_schema.@table_name cc
+            INNER JOIN @results_database_schema.@database_table db ON db.database_id = cc.database_id
+            WHERE cc.cohort_id IS NOT NULL
+            {@use_database_ids} ? { AND cc.database_id in (@database_ids)}
+            {@cohort_ids != ''} ? {  AND cc.cohort_id in (@cohort_ids)}
             ;"
   data <-
     renderTranslateQuerySql(
@@ -29,9 +30,10 @@ getResultsCohortCounts <- function(dataSource,
       sql = sql,
       results_database_schema = dataSource$resultsDatabaseSchema,
       cohort_ids = cohortIds,
-      use_database_ids = is.null(databaseIds),
-      database_id = quoteLiterals(databaseIds),
+      use_database_ids = !is.null(databaseIds),
+      database_ids = quoteLiterals(databaseIds),
       table_name = dataSource$prefixTable("cohort_count"),
+      database_table = dataSource$databaseTableName,
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
@@ -80,14 +82,18 @@ getIncidenceRateResult <- function(dataSource,
   )
   checkmate::reportAssertions(collection = errorMessage)
 
-  sql <- "SELECT *
-            FROM  @results_database_schema.@table_name
-            WHERE cohort_id in (@cohort_ids)
-           	  AND database_id in (@database_ids)
-            {@gender == TRUE} ? {AND gender != ''} : {  AND gender = ''}
-            {@age_group == TRUE} ? {AND age_group != ''} : {  AND age_group = ''}
-            {@calendar_year == TRUE} ? {AND calendar_year != ''} : {  AND calendar_year = ''}
-              AND person_years > @personYears;"
+  sql <- "SELECT ir.*, dt.database_name, cc.cohort_subjects
+            FROM  @results_database_schema.@ir_table ir
+            INNER JOIN @results_database_schema.@database_table dt ON ir.database_id = dt.database_id
+            INNER JOIN @results_database_schema.@cc_table cc ON (
+              ir.database_id = cc.database_id AND ir.cohort_id = cc.cohort_id
+            )
+            WHERE ir.cohort_id in (@cohort_ids)
+           	  AND ir.database_id in (@database_ids)
+            {@gender == TRUE} ? {AND ir.gender != ''} : {  AND ir.gender = ''}
+            {@age_group == TRUE} ? {AND ir.age_group != ''} : {  AND ir.age_group = ''}
+            {@calendar_year == TRUE} ? {AND ir.calendar_year != ''} : {  AND ir.calendar_year = ''}
+              AND ir.person_years > @personYears;"
   data <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
@@ -100,23 +106,22 @@ getIncidenceRateResult <- function(dataSource,
       age_group = stratifyByAgeGroup,
       calendar_year = stratifyByCalendarYear,
       personYears = minPersonYears,
-      table_name = dataSource$prefixTable("incidence_rate"),
+      ir_table = dataSource$prefixTable("incidence_rate"),
+      cc_table = dataSource$prefixTable("cohort_count"),
+      database_table = dataSource$databaseTableName,
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
+
   data <- data %>%
     dplyr::mutate(
       gender = dplyr::na_if(.data$gender, ""),
       ageGroup = dplyr::na_if(.data$ageGroup, ""),
       calendarYear = dplyr::na_if(.data$calendarYear, "")
-    )
-
-  data <- data %>%
-    dplyr::inner_join(cohortCount,
-      by = c("cohortId", "databaseId")
     ) %>%
     dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
     dplyr::arrange(.data$cohortId, .data$databaseId)
+
 
   if (!is.na(minSubjectCount)) {
     data <- data %>%
@@ -715,7 +720,7 @@ getDatabaseCounts <- function(dataSource,
       sql = sql,
       results_database_schema = dataSource$resultsDatabaseSchema,
       database_ids = quoteLiterals(databaseIds),
-      databaseTable = dataSource$databaseTableName,
+      database_table = dataSource$databaseTableName,
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
@@ -723,9 +728,11 @@ getDatabaseCounts <- function(dataSource,
   return(data)
 }
 
-getMetaDataResults <- function(dataSource) {
+getMetaDataResults <- function(dataSource, databaseId) {
   sql <- "SELECT *
-              FROM  @results_database_schema.@metadata;"
+              FROM  @results_database_schema.@metadata
+              WHERE database_id = @database_id;"
+
   data <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
@@ -733,6 +740,7 @@ getMetaDataResults <- function(dataSource) {
       sql = sql,
       metadata = dataSource$prefixTable("metadata"),
       results_database_schema = dataSource$resultsDatabaseSchema,
+      database_id = quoteLiterals(databaseId),
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
@@ -742,9 +750,10 @@ getMetaDataResults <- function(dataSource) {
 
 
 
-getExecutionMetadata <- function(dataSource) {
+getExecutionMetadata <- function(dataSource, databaseId) {
   databaseMetadata <-
-    getMetaDataResults(dataSource)
+    getMetaDataResults(dataSource, databaseId)
+
   if (!hasData(databaseMetadata)) {
     return(NULL)
   }
@@ -764,6 +773,7 @@ getExecutionMetadata <- function(dataSource) {
       pattern = "json",
       negate = FALSE
     )]
+
   transposeNonJsons <- databaseMetadata %>%
     dplyr::filter(.data$variableField %in% c(columnNamesNoJson)) %>%
     dplyr::rename(name = "variableField") %>%
@@ -782,6 +792,7 @@ getExecutionMetadata <- function(dataSource) {
       pattern = "TM_",
       replacement = ""
     ))
+
   transposeNonJsons$startTime <-
     transposeNonJsons$startTime %>% lubridate::as_datetime()
 
@@ -803,6 +814,7 @@ getExecutionMetadata <- function(dataSource) {
       pattern = "TM_",
       replacement = ""
     ))
+
   transposeJsons$startTime <-
     transposeJsons$startTime %>% lubridate::as_datetime()
 

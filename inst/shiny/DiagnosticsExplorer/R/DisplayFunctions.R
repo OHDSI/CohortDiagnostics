@@ -127,7 +127,7 @@ prepDataForDisplay <- function(data,
 
 getDisplayTableGroupedByDatabaseId <- function(data,
                                                cohort,
-                                               database,
+                                               databaseTable,
                                                headerCount = NULL,
                                                keyColumns,
                                                dataColumns,
@@ -140,6 +140,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
                                                valueFill = 0,
                                                selection = NULL,
                                                isTemporal = FALSE) {
+
   data <- prepDataForDisplay(
     data = data,
     keyColumns = keyColumns,
@@ -153,10 +154,16 @@ getDisplayTableGroupedByDatabaseId <- function(data,
       values_to = "valuesData"
     )
 
+  data <- data %>%
+      dplyr::inner_join(databaseTable %>%
+                          dplyr::select(.data$databaseId, .data$databaseName),
+                        by = "databaseId")
+
   if (isTemporal) {
     data <- data %>%
       dplyr::mutate(type = paste0(
         .data$databaseId,
+        "-",
         .data$temporalChoices,
         "_sep_",
         .data$type
@@ -313,7 +320,13 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     columnTotalMaxWidth <- "auto"
     columnTotalMinWidth <- "auto"
   }
-
+  
+  dbNameMap <- list()
+  for (i in 1: nrow(databaseTable)) {
+    dbNameMap[[databaseTable[i,]$databaseId]] <- databaseTable[i,]$databaseName
+  }
+  
+  
   columnGroups <- list()
   for (i in 1:length(distinctColumnGroups)) {
     extractedDataColumns <-
@@ -321,15 +334,15 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         string = dataColumns,
         pattern = stringr::fixed(distinctColumnGroups[i])
       )]
-
-    columnName <- distinctColumnGroups[i]
+    
+    columnName <- dbNameMap[[distinctColumnGroups[i]]]
 
     if (!is.null(headerCount)) {
       if (countLocation == 1) {
         columnName <- headerCount %>%
           dplyr::filter(.data$databaseId == distinctColumnGroups[i]) %>%
           dplyr::mutate(count = paste0(
-            .data$databaseId,
+            .data$databaseName,
             " (",
             scales::comma(.data$count),
             ")"
@@ -384,6 +397,7 @@ getDisplayTableSimple <- function(data,
                                   selection = NULL,
                                   showDataAsPercent = FALSE,
                                   defaultSelected = NULL,
+                                  databaseTable = NULL,
                                   pageSize = 20) {
   data <- prepDataForDisplay(
     data = data,
@@ -578,4 +592,15 @@ getDisplayTableColumnMinMaxWidth <- function(data,
     maxValue = maxWidth
   )
   return(data)
+}
+
+
+csvDownloadButton <- function(ns,
+                              outputTableId,
+                              buttonText = "Download as CSV") {
+
+  shiny::tagList(
+    shiny::tags$br(),
+    shiny::tags$button(buttonText,
+                       onclick = paste0("Reactable.downloadDataCSV('", ns(outputTableId), "')")))
 }

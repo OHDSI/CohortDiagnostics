@@ -62,6 +62,7 @@ test_that("Annotation shiny server functions", {
     selectedDatabaseIds = shiny::reactive(c("Eunomia")),
     selectedCohortIds = shiny::reactive(c(17492, 18342, 17720)),
     cohortTable = cohort,
+    databaseTable = database,
     postAnnotaionEnabled = shiny::reactive(TRUE)
   ), {
 
