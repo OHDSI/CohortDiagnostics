@@ -23,7 +23,7 @@ inclusionRulesView <- function(id) {
                 inputId = "inclusionRuleTableFilters",
                 label = "Inclusion Rule Events",
                 choices = c("All", "Meet", "Gain", "Remain"),
-                selected = "Remain",
+                selected = "All",
                 inline = TRUE
               )
             ),
@@ -81,7 +81,8 @@ inclusionRulesModule <- function(id,
       keyColumnFields <-
         c("ruleSequenceId", "ruleName")
       countLocation <- 1
-      if (input$inclusionRuleTableFilters == "All") {
+      
+      if (any(!hasData(input$inclusionRuleTableFilters), input$inclusionRuleTableFilters == "All")) {
         dataColumnFields <- c("Meet", "Gain", "Remain")
       } else {
         dataColumnFields <- input$inclusionRuleTableFilters

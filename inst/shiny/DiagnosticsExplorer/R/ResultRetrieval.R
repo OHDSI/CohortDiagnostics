@@ -727,10 +727,7 @@ getResultsCohortOverlap <- function(dataSource,
       databaseIds = databaseIds
     )
 
-  if (any(
-    is.null(cohortCounts),
-    nrow(cohortCounts) == 0
-  )) {
+  if (!hasData(cohortCounts)) {
     return(NULL)
   }
 
@@ -743,28 +740,6 @@ getResultsCohortOverlap <- function(dataSource,
       startDays = c(-9999, 0),
       endDays = c(9999, 0)
     )
-
-  # It's not remotely clear what any of the following code is for
-  if (any(is.null(cohortRelationship),
-          nrow(cohortRelationship) == 0)) {
-    cohortRelationship <- dplyr::tibble(databaseId = databaseIds) %>%
-      tidyr::crossing(dplyr::tibble(cohortId = cohortIds)) %>%
-      tidyr::crossing(dplyr::tibble(comparatorCohortId = comparatorCohortIds)) %>%
-      dplyr::filter(.data$comparatorCohortId != .data$cohortId) %>%
-      tidyr::crossing(dplyr::tibble(startDay = c(-9999, 0),
-                                    endDay = c(9999, 0))) %>%
-      dplyr::full_join(
-        cohortRelationship,
-        by = c(
-          "databaseId",
-          "cohortId",
-          "comparatorCohortId",
-          "startDay",
-          "endDay"
-        )
-      )
-    cohortRelationship[is.na(is.numeric(cohortRelationship))] <- 0
-  }
 
   fullOffSet <- cohortRelationship %>%
     dplyr::filter(.data$startDay == -9999) %>%
@@ -922,8 +897,22 @@ getResultsCohortRelationships <- function(dataSource,
       end_day = endDays
     ) %>%
     dplyr::tibble()
-
-  return(data)
+  
+  allData <- dplyr::tibble(databaseId = databaseIds) %>%
+    tidyr::crossing(dplyr::tibble(cohortId = cohortIds)) %>%
+    tidyr::crossing(dplyr::tibble(comparatorCohortId = comparatorCohortIds)) %>%
+    dplyr::filter(.data$comparatorCohortId != .data$cohortId) %>%
+    tidyr::crossing(dplyr::tibble(startDay = startDays,
+                                  endDay = endDays))
+  
+  allData <- allData %>%
+    dplyr::left_join(data,
+                     by = c("databaseId", "cohortId", "comparatorCohortId", "startDay", "endDay"))
+  
+  allData <- allData %>%
+    dplyr::mutate(dplyr::across(.cols = is.numeric, ~ tidyr::replace_na(., 0)))
+  
+  return(allData)
 }
 
 

@@ -24,3 +24,4 @@ tests/testthat/testthat-problems.rds
 renv.lock
 *.sqlite
 MergedCohortDiagnosticsData.7z
+inst/shiny/DiagnosticsExplorer/UserCredentials.csv
