@@ -12,7 +12,7 @@ test_that("Orphan Concepts Page", {
     selectedCohorts = shiny::reactive("Any String"),
     selectedDatabaseIds = shiny::reactive("Eunomia"),
     targetCohortId = shiny::reactive({c(14906)}),
-    selectedConceptSets = NULL,
+    selectedConceptSets = shiny::reactiveVal(NULL),
     conceptSetIds = shiny::reactive({c(0)})
   ), {
     ## input tests will go here
