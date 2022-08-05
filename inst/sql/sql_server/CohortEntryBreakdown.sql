@@ -11,7 +11,7 @@ SELECT domain_table,
   domain_field,
   concept.concept_id,
 	sum(concept_count) as concept_count,
-	sum(subject_count) as subject_count
+	max(subject_count) as subject_count
 {@store} ? {
 INTO @store_table
 } : {
