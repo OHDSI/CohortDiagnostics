@@ -469,19 +469,19 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   ## Use CDM source table as default name/description
   if (!is.null(cdmSourceInformation)) {
-    if (is.null(databaseName) | is.na(databaseName)) {
+    if (any(is.null(databaseName), is.na(databaseName))) {
       databaseName <- cdmSourceInformation$cdmSourceName
     }
 
-    if (is.null(databaseDescription) | is.na(databaseDescription)) {
+    if (any(is.null(databaseDescription), is.na(databaseDescription))) {
        databaseDescription <- cdmSourceInformation$sourceDescription
     }
   } else {
-     if (is.null(databaseName) | is.na(databaseName)) {
+     if (any(is.null(databaseName), is.na(databaseName))) {
       databaseName <- databaseId
     }
 
-    if (is.null(databaseDescription) | is.na(databaseDescription)) {
+    if (any(is.null(databaseDescription), is.na(databaseDescription))) {
        databaseDescription <- databaseName
     }
   }
