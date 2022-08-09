@@ -256,6 +256,7 @@ cohortOverlapModule <- function(id,
         comparatorCohortIds = combisOfTargetComparator$comparatorCohortId,
         databaseIds = selectedDatabaseIds()
       )
+
       validate(need(
         !is.null(data),
         paste0("No cohort overlap data for this combination")
