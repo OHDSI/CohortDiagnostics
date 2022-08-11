@@ -189,11 +189,11 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       return(cohortTable$cohortId[cohortTable$compoundName == input$targetCohort])
     })
 
-    # ReaciveVal: cohortIds
+    # ReactiveVal: cohortIds
     cohortIds <- reactiveVal(NULL)
     shiny::observeEvent(eventExpr = {
       list(
-        input$cohorts_open,
+        input$cohorts,
         input$tabs
       )
     }, handlerExpr = {
