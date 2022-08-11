@@ -43,7 +43,8 @@ indexEventBreakdownView <- function(id) {
             td(
               shiny::checkboxInput(
                 inputId = ns("indexEventBreakDownShowAsPercent"),
-                label = "Show as percent"
+                label = "Show as percent",
+                value = TRUE
               )
             )
           )
