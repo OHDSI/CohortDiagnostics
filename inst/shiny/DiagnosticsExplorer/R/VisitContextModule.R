@@ -25,15 +25,6 @@ visitContextView <- function(id) {
             )
           ),
           tags$td(
-            shiny::radioButtons(
-              inputId = ns("visitContextPersonOrRecords"),
-              label = "Display",
-              choices = c("Persons", "Records"),
-              selected = "Persons",
-              inline = TRUE
-            )
-          ),
-          tags$td(
             align = "right",
           )
         )
@@ -76,8 +67,8 @@ visitContextModule <- function(id,
       return(visitContext)
     })
 
-    ## getVisitContexDataEnhanced----
-    getVisitContexDataEnhanced <- shiny::reactive(x = { #spelling error here missing the t in Context
+    ## getVisitContextDataEnhanced----
+    getVisitContextDataEnhanced <- shiny::reactive(x = {
       visitContextData <- getVisitContextData() %>%
         dplyr::rename(visitContextSubject = .data$subjects)
       if (!hasData(visitContextData)) {
@@ -152,7 +143,7 @@ visitContextModule <- function(id,
     output$visitContextTable <- reactable::renderReactable(expr = {
       validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
       validate(need(length(targetCohortId()) > 0, "No cohorts chosen"))
-      data <- getVisitContexDataEnhanced()
+      data <- getVisitContextDataEnhanced()
       validate(need(
         nrow(data) > 0,
         "No data available for selected combination."
@@ -183,7 +174,7 @@ visitContextModule <- function(id,
           databaseIds = selectedDatabaseIds(),
           cohortIds = targetCohortId(),
           source = "cohort",
-          fields = input$visitContextPersonOrRecords
+          fields = "Persons"
         )
       if (!hasData(countsForHeader)) {
         return(NULL)

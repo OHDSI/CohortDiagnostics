@@ -23,9 +23,9 @@ test_that("Visit context page", {
     # Checking to see if a dataframe is returned and all the elements are of the 
     # correct datatype
     checkmate::expect_data_frame(getVisitContextData())
-    checkmate::expect_data_frame(getVisitContexDataEnhanced())
-    checkmate::expect_character(getVisitContexDataEnhanced()$databaseId)
-    checkmate::expect_character(getVisitContexDataEnhanced()$visitConceptName)
+    checkmate::expect_data_frame(getVisitContextDataEnhanced())
+    checkmate::expect_character(getVisitContextDataEnhanced()$databaseId)
+    checkmate::expect_character(getVisitContextDataEnhanced()$visitConceptName)
 
     
     # Initializing vectors with column names
@@ -38,23 +38,23 @@ test_that("Visit context page", {
     # Checking to see if the appropriate columns are represented in the data table 
     # depending on what filtering selection is utilized
     if (input$visitContextTableFilters == "Before"){
-      checkmate::expect_numeric(getVisitContexDataEnhanced()$Before)
-      testthat::expect_equal(colnames(getVisitContexDataEnhanced()), before_vec)
+      checkmate::expect_numeric(getVisitContextDataEnhanced()$Before)
+      testthat::expect_equal(colnames(getVisitContextDataEnhanced()), before_vec)
     } else if (input$visitContextTableFilters == "During"){
-      checkmate::expect_numeric(getVisitContexDataEnhanced()$During)
-      testthat::expect_equal(colnames(getVisitContexDataEnhanced()), during_vec)
+      checkmate::expect_numeric(getVisitContextDataEnhanced()$During)
+      testthat::expect_equal(colnames(getVisitContextDataEnhanced()), during_vec)
     } else if (input$visitContextTableFilters == "Simultaneous"){
-      checkmate::expect_numeric(getVisitContexDataEnhanced()$Simultaneous)
-      testthat::expect_equal(colnames(getVisitContexDataEnhanced()), simul_vec)
+      checkmate::expect_numeric(getVisitContextDataEnhanced()$Simultaneous)
+      testthat::expect_equal(colnames(getVisitContextDataEnhanced()), simul_vec)
     } else if (input$visitContextTableFilters == "After"){
-      checkmate::expect_numeric(getVisitContexDataEnhanced()$After)
-      testthat::expect_equal(colnames(getVisitContexDataEnhanced()), after_vec)
+      checkmate::expect_numeric(getVisitContextDataEnhanced()$After)
+      testthat::expect_equal(colnames(getVisitContextDataEnhanced()), after_vec)
     } else if (input$visitContextTableFilters == "All"){
-      checkmate::expect_numeric(getVisitContexDataEnhanced()$Before)
-      checkmate::expect_numeric(getVisitContexDataEnhanced()$During)
-      checkmate::expect_numeric(getVisitContexDataEnhanced()$Simultaneous)
-      checkmate::expect_numeric(getVisitContexDataEnhanced()$After)
-      testthat::expect_equal(colnames(getVisitContexDataEnhanced()), all_vec)
+      checkmate::expect_numeric(getVisitContextDataEnhanced()$Before)
+      checkmate::expect_numeric(getVisitContextDataEnhanced()$During)
+      checkmate::expect_numeric(getVisitContextDataEnhanced()$Simultaneous)
+      checkmate::expect_numeric(getVisitContextDataEnhanced()$After)
+      testthat::expect_equal(colnames(getVisitContextDataEnhanced()), all_vec)
     }
    
   })
