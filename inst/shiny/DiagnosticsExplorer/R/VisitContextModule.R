@@ -25,6 +25,13 @@ visitContextView <- function(id) {
             )
           ),
           tags$td(
+            shiny::checkboxInput(
+              inputId = ns("visitContextShowAsPercent"),
+              label = "Show as percent",
+              value = TRUE
+            )
+          ),
+          tags$td(
             align = "right",
           )
         )
@@ -93,7 +100,8 @@ visitContextModule <- function(id,
           ) %>%
           dplyr::rename(
             subjects = .data$cohortSubjects,
-            records = .data$cohortEntries
+            records = .data$cohortEntries,
+            visitContextSubjectPercent = .data$subjectPercent
           ) %>%
           dplyr::select(
             .data$databaseId,
@@ -102,7 +110,8 @@ visitContextModule <- function(id,
             .data$visitContext,
             .data$subjects,
             .data$records,
-            .data$visitContextSubject
+            .data$visitContextSubject,
+            .data$visitContextSubjectPercent
           ) %>%
           dplyr::mutate(
             visitContext = dplyr::case_when(
@@ -130,13 +139,6 @@ visitContextModule <- function(id,
       if (!hasData(visitContextData)) {
         return(NULL)
       }
-      visitContextData <- visitContextData %>%
-        tidyr::pivot_wider(
-          id_cols = c("databaseId", "visitConceptName"),
-          names_from = "visitContext",
-          values_from = c("visitContextSubject")
-        )
-      
       return(visitContextData)
     })
 
@@ -148,6 +150,24 @@ visitContextModule <- function(id,
         nrow(data) > 0,
         "No data available for selected combination."
       ))
+      
+      showDataAsPercent <- input$visitContextShowAsPercent
+      
+      if (showDataAsPercent) {
+        data <- data %>%
+          tidyr::pivot_wider(
+            id_cols = c("databaseId", "visitConceptName"),
+            names_from = "visitContext",
+            values_from = c("visitContextSubjectPercent")
+          )
+      } else {
+        data <- data %>%
+          tidyr::pivot_wider(
+            id_cols = c("databaseId", "visitConceptName"),
+            names_from = "visitContext",
+            values_from = c("visitContextSubject")
+          )
+      }
   
       dataColumnFields <-
         c(
@@ -195,6 +215,7 @@ visitContextModule <- function(id,
         countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
+        showDataAsPercent = showDataAsPercent,
         sort = TRUE
       )
     })
