@@ -135,7 +135,8 @@ orphanConceptsModule <- function(id,
               .data$conceptName,
               .data$vocabularyId,
               .data$conceptCode
-            ),
+            ) %>% 
+            dplyr::distinct(),
           by = c("databaseId", "cohortId", "conceptId")
         ) %>%
         dplyr::rename(
