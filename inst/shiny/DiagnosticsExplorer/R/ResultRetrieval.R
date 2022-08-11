@@ -752,7 +752,7 @@ getResultsCohortOverlap <- function(dataSource,
   cohortRelationship <- allCombinations %>%
     dplyr::left_join(cohortRelationship,
                      by = c("databaseId", "cohortId", "comparatorCohortId", "startDay", "endDay")) %>%
-    dplyr::mutate(dplyr::across(.cols = is.numeric, ~tidyr::replace_na(., 0)))
+    dplyr::mutate(dplyr::across(.cols = where(is.numeric), ~tidyr::replace_na(., 0)))
 
   fullOffSet <- cohortRelationship %>%
     dplyr::filter(.data$startDay == -9999) %>%
