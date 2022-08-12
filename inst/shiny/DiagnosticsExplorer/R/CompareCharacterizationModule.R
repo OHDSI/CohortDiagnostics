@@ -15,7 +15,7 @@ plotTemporalCompareStandardizedDifference <- function(balance,
       "Procedure",
       "Demographics"
     )
-
+  
   balance$domainId[!balance$domainId %in% domains] <- "Other"
   if (domain != "all") {
     balance <- balance %>%
@@ -425,7 +425,7 @@ compareCohortCharacterizationModule <- function(id,
       
       if (isTRUE(input$compareCharacterizationFilterLowValues)) {
         data <- data %>% 
-          dplyr::filter(.data$mean > 0.001)
+          dplyr::filter(.data$mean > 0.01)
       }
       
       data <- data %>%

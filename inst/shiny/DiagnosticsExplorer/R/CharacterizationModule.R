@@ -216,7 +216,7 @@ characterizationModule <- function(id,
       
       if (isTRUE(input$characterizationFilterLowValues)) {
         data <- data %>% 
-          dplyr::filter(.data$mean > 0.001)
+          dplyr::filter(.data$mean > 0.01)
       }
 
       data <- data %>%
