@@ -73,6 +73,13 @@ temporalCharacterizationView <- function(id) {
             selected = "Proportion",
             inline = TRUE
           )
+        ),
+        tags$td(
+          shiny::checkboxInput(
+            inputId = ns("temporalCharacterizationFilterLowValues"),
+            label = "Filter low values",
+            value = TRUE
+          )
         )
       )),
       tags$table(
@@ -126,9 +133,11 @@ temporalCharacterizationModule <- function(id,
           analysisNameOptions
         temporalCharcterizationAnalysisOptionsSelected <-
           temporalAnalysisRef %>%
-            dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
-            dplyr::pull(.data$analysisName) %>%
-            unique()
+          dplyr::filter(.data$domainId %in% c('Condition')) %>%
+          dplyr::filter(.data$isBinary == 'Y') %>%
+          dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
+          dplyr::pull(.data$analysisName) %>%
+          unique()
       }
 
       shinyWidgets::updatePickerInput(
@@ -150,9 +159,11 @@ temporalCharacterizationModule <- function(id,
           domainIdOptions
         temporalCharcterizationDomainOptionsSelected <-
           temporalAnalysisRef %>%
-            dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
-            dplyr::pull(.data$domainId) %>%
-            unique()
+          dplyr::filter(.data$domainId %in% c('Condition')) %>%
+          dplyr::filter(.data$isBinary == 'Y') %>%
+          dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
+          dplyr::pull(.data$domainId) %>%
+          unique()
       }
 
       shinyWidgets::updatePickerInput(
@@ -181,6 +192,12 @@ temporalCharacterizationModule <- function(id,
       if (!hasData(data)) {
         return(NULL)
       }
+      
+      if (isTRUE(input$temporalCharacterizationFilterLowValues)) {
+        data <- data %>% 
+          dplyr::filter(.data$mean > 0.001)
+      }
+      
       data <- data %>%
         dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
         dplyr::filter(.data$timeId %in% selectedTemporalTimeIds()) %>%

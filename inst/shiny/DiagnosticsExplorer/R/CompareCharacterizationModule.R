@@ -193,6 +193,13 @@ compareCohortCharacterizationView <- function(id) {
               inline = TRUE
             ),
           ),
+          tags$td(
+            shiny::checkboxInput(
+              inputId = ns("compareCharacterizationFilterLowValues"),
+              label = "Filter low values",
+              value = TRUE
+            )
+          ),
           tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
           tags$td(
             shiny::conditionalPanel(
@@ -321,7 +328,6 @@ compareCohortCharacterizationModule <- function(id,
                                                 temporalChoices,
                                                 prettyTable1Specifications) {
 
-
   shiny::moduleServer(id, function(input, output, session) {
     output$selectedCohorts <- shiny::renderUI({
       htmltools::withTags(table(
@@ -350,9 +356,11 @@ compareCohortCharacterizationModule <- function(id,
         characterizationAnalysisOptionsUniverse <- analysisNameOptions
         charcterizationAnalysisOptionsSelected <-
           temporalAnalysisRef %>%
-            dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
-            dplyr::pull(.data$analysisName) %>%
-            unique()
+          dplyr::filter(.data$domainId %in% c('Condition')) %>%
+          dplyr::filter(.data$isBinary == 'Y') %>%
+          dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
+          dplyr::pull(.data$analysisName) %>%
+          unique()
       }
 
       shinyWidgets::updatePickerInput(
@@ -374,9 +382,11 @@ compareCohortCharacterizationModule <- function(id,
         characterizationDomainOptionsUniverse <- domainIdOptions
         charcterizationDomainOptionsSelected <-
           temporalAnalysisRef %>%
-            dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
-            dplyr::pull(.data$domainId) %>%
-            unique()
+          dplyr::filter(.data$domainId %in% c('Condition')) %>%
+          dplyr::filter(.data$isBinary == 'Y') %>%
+          dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
+          dplyr::pull(.data$domainId) %>%
+          unique()
       }
 
       shinyWidgets::updatePickerInput(
@@ -412,6 +422,12 @@ compareCohortCharacterizationModule <- function(id,
       if (!hasData(data)) {
         return(NULL)
       }
+      
+      if (isTRUE(input$compareCharacterizationFilterLowValues)) {
+        data <- data %>% 
+          dplyr::filter(.data$mean > 0.001)
+      }
+      
       data <- data %>%
         dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
         dplyr::filter(.data$timeId %in% selectedTimeIds()) %>%

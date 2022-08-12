@@ -76,6 +76,13 @@ characterizationView <- function(id) {
                     selected = "Proportion",
                     inline = TRUE
                   )
+                ),
+                tags$td(
+                  shiny::checkboxInput(
+                    inputId = ns("characterizationFilterLowValues"),
+                    label = "Filter low values",
+                    value = TRUE
+                  )
                 )
               ))
             )
@@ -140,10 +147,12 @@ characterizationModule <- function(id,
     shiny::observe({
       characterizationAnalysisOptionsUniverse <- NULL
       charcterizationAnalysisOptionsSelected <- NULL
-
+      
       if (hasData(temporalAnalysisRef)) {
         characterizationAnalysisOptionsUniverse <- analysisNameOptions
         charcterizationAnalysisOptionsSelected <- temporalAnalysisRef %>%
+          dplyr::filter(.data$domainId %in% c('Condition')) %>% 
+          dplyr::filter(.data$isBinary == 'Y') %>% 
           dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
           dplyr::pull(.data$analysisName) %>%
           unique()
@@ -162,10 +171,12 @@ characterizationModule <- function(id,
     shiny::observe({
       characterizationDomainOptionsUniverse <- NULL
       charcterizationDomainOptionsSelected <- NULL
-
+      
       if (hasData(temporalAnalysisRef)) {
         characterizationDomainOptionsUniverse <- domainIdOptions
         charcterizationDomainOptionsSelected <- temporalAnalysisRef %>%
+          dplyr::filter(.data$domainId %in% c('Condition')) %>% 
+          dplyr::filter(.data$isBinary == 'Y') %>% 
           dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
           dplyr::pull(.data$domainId) %>%
           unique()
@@ -201,6 +212,11 @@ characterizationModule <- function(id,
       data <- data$covariateValue
       if (!hasData(data)) {
         return(NULL)
+      }
+      
+      if (isTRUE(input$characterizationFilterLowValues)) {
+        data <- data %>% 
+          dplyr::filter(.data$mean > 0.001)
       }
 
       data <- data %>%

@@ -47,7 +47,8 @@ queryResultCovariateValue <- function(dataSource,
                                       startDay = NULL,
                                       endDay = NULL,
                                       temporalCovariateValue = TRUE,
-                                      temporalCovariateValueDist = TRUE) {
+                                      temporalCovariateValueDist = TRUE,
+                                      meanThreshold = 0) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   errorMessage <-
@@ -137,7 +138,8 @@ queryResultCovariateValue <- function(dataSource,
                 {@analysis_ids != \"\"} ? { AND ref.analysis_id IN (@analysis_ids)}
                 {@cohort_id != \"\"} ? { AND tcv.cohort_id IN (@cohort_id)}
                 {@time_id != \"\"} ? { AND (time_id IN (@time_id) OR time_id IS NULL OR time_id = 0)}
-                {@use_database_id} ? { AND database_id IN (@database_id)};",
+                {@use_database_id} ? { AND database_id IN (@database_id)}
+                {@filter_mean_threshold != \"\"} ? { AND tcv.mean > @filter_mean_threshold};",
         snakeCaseToCamelCase = TRUE,
         analysis_ids = analysisIds,
         time_id = temporalTimeRefData$timeId %>% unique(),
@@ -146,7 +148,8 @@ queryResultCovariateValue <- function(dataSource,
         table_name = dataSource$prefixTable("temporal_covariate_value"),
         ref_table_name = dataSource$prefixTable("temporal_covariate_ref"),
         cohort_id = cohortIds,
-        results_database_schema = dataSource$resultsDatabaseSchema
+        results_database_schema = dataSource$resultsDatabaseSchema,
+        filter_mean_threshold = meanThreshold
       ) %>%
       dplyr::tibble() %>%
       tidyr::replace_na(replace = list(timeId = -1))
@@ -161,10 +164,11 @@ queryResultCovariateValue <- function(dataSource,
         sql = "SELECT *
              FROM @results_database_schema.@table_name
               WHERE covariate_id IS NOT NULL
-        {@covariate_id != \"\"} ? { AND covariate_id IN (@covariate_id)}
+                {@covariate_id != \"\"} ? { AND covariate_id IN (@covariate_id)}
                 {@cohort_id != \"\"} ? { AND cohort_id IN (@cohort_id)}
                 {@time_id != \"\"} ? { AND (time_id IN (@time_id) OR time_id IS NULL OR time_id = 0)}
-                {@use_database_id} ? { AND database_id IN (@database_id)};",
+                {@use_database_id} ? { AND database_id IN (@database_id)}
+                {@filter_mean_threshold != \"\"} ? { AND tcv.mean > @filter_mean_threshold};",
         snakeCaseToCamelCase = TRUE,
         covariate_id = temporalCovariateRefData$covariateId %>% unique(),
         time_id = temporalTimeRefData$timeId %>% unique(),
@@ -172,7 +176,8 @@ queryResultCovariateValue <- function(dataSource,
         database_id = quoteLiterals(databaseIds),
         cohort_id = cohortIds,
         table_name = dataSource$prefixTable("temporal_covariate_value_dist"),
-        results_database_schema = dataSource$resultsDatabaseSchema
+        results_database_schema = dataSource$resultsDatabaseSchema,
+        filter_mean_threshold = meanThreshold
       ) %>%
       dplyr::tibble() %>%
       tidyr::replace_na(replace = list(timeId = -1))
@@ -211,7 +216,8 @@ getCharacterizationOutput <- function(dataSource,
                                       startDay = NULL,
                                       endDay = NULL,
                                       temporalCovariateValue = TRUE,
-                                      temporalCovariateValueDist = TRUE) {
+                                      temporalCovariateValueDist = TRUE,
+                                      meanThreshold = 0.005) {
   temporalChoices <-
     getResultsTemporalTimeRef(dataSource = dataSource)
 
@@ -223,7 +229,8 @@ getCharacterizationOutput <- function(dataSource,
     startDay = startDay,
     endDay = endDay,
     temporalCovariateValue = temporalCovariateValue,
-    temporalCovariateValueDist = temporalCovariateValueDist
+    temporalCovariateValueDist = temporalCovariateValueDist,
+    meanThreshold = meanThreshold
   )
 
   postProcessCharacterizationValue <- function(data) {
