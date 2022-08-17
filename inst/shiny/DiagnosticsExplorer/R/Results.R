@@ -571,7 +571,7 @@ resolvedConceptSet <- function(dataSource,
       databaseIds = quoteLiterals(databaseIds),
       cohortId = cohortId,
       concept_set_id = conceptSetId,
-      resolved_concepts_table = dataSource$prefixTable("orphan_concept"),
+      resolved_concepts_table = dataSource$prefixTable("resolved_concepts"),
       concept_table = dataSource$prefixTable("concept"),
       snakeCaseToCamelCase = TRUE
     ) %>%

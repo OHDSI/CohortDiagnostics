@@ -129,14 +129,18 @@ getConceptSetDetailsFromCohortDefinition <-
     if (is.null(expression$ConceptSets)) {
       return(NULL)
     }
-
+    
     conceptSetExpression <- expression$ConceptSets %>%
       dplyr::bind_rows() %>%
       dplyr::mutate(json = RJSONIO::toJSON(
         x = .data$expression,
         pretty = TRUE
       ))
-
+    if (hasData(conceptSetExpression)) {
+      conceptSetExpression <- conceptSetExpression %>% 
+        dplyr::arrange(.data$id) 
+    }
+    
     conceptSetExpressionDetails <- list()
     i <- 0
     for (id in conceptSetExpression$id) {
@@ -152,6 +156,12 @@ getConceptSetDetailsFromCohortDefinition <-
     }
     conceptSetExpressionDetails <-
       dplyr::bind_rows(conceptSetExpressionDetails)
+    if (hasData(conceptSetExpressionDetails)) {
+      conceptSetExpressionDetails <- conceptSetExpressionDetails %>% 
+        dplyr::arrange(.data$id,
+                       .data$conceptId) 
+    }
+    
     output <- list(
       conceptSetExpression = conceptSetExpression,
       conceptSetExpressionDetails = conceptSetExpressionDetails
@@ -305,19 +315,6 @@ cohortDefinitionsView <- function(id) {
                                             selected = "Concept Set Expression",
                                             inline = TRUE
                                           )
-                                        ),
-                                        tags$td(
-                                          # Choices load in server
-                                          shiny::selectInput(ns("vocabularySelection"),
-                                                             label = "Vocabulary version:",
-                                                             width = 200,
-                                                             choices = c())
-                                        ),
-                                        tags$td(
-                                          shiny::htmlOutput(ns("subjectCountInCohortConceptSet"))
-                                        ),
-                                        tags$td(
-                                          shiny::htmlOutput(ns("recordCountInCohortConceptSet"))
                                         )
                                       ))),
               shiny::conditionalPanel(
@@ -557,20 +554,18 @@ cohortDefinitionsModule <- function(id,
 
     output$conceptsetExpressionsInCohort <- reactable::renderReactable(expr = {
       data <- cohortDefinitionConceptSetExpression()
-      if (is.null(data)) {
+      if (!hasData(data)) {
         return(NULL)
       }
-      if (!is.null(data$conceptSetExpression) &&
-        nrow(data$conceptSetExpression) > 0) {
+      if (hasData(data$conceptSetExpression)) {
         data <- data$conceptSetExpression %>%
-          dplyr::select(.data$id, .data$name)
+          dplyr::select(.data$id, .data$name) %>% 
+          dplyr::arrange(.data$id, .data$name)
       } else {
         return(NULL)
       }
 
-      validate(need(
-        all(!is.null(data),
-            nrow(data) > 0),
+      validate(need(hasData(data),
         "There is no data for this cohort."
       ))
 
@@ -593,7 +588,7 @@ cohortDefinitionsModule <- function(id,
       if (hasData(cohortDefinitionConceptSetExpression()$conceptSetExpression)) {
         data <-
           cohortDefinitionConceptSetExpression()$conceptSetExpression[idx,]
-        if (!is.null(data)) {
+        if (hasData(data)) {
           return(data)
         } else {
           return(NULL)
@@ -692,10 +687,6 @@ cohortDefinitionsModule <- function(id,
 
       })
 
-    getDatabaseIdInCohortConceptSet <- shiny::reactive({
-      return(databaseTable$databaseId[databaseTable$databaseIdWithVocabularyVersion == input$vocabularySchema])
-    })
-
     ## Cohort Concept Set
     ### getSubjectAndRecordCountForCohortConceptSet ---------------------------------------------------------
     getSubjectAndRecordCountForCohortConceptSet <- shiny::reactive(x = {
@@ -717,36 +708,6 @@ cohortDefinitionsModule <- function(id,
       }
     })
 
-    ### subjectCountInCohortConceptSet ---------------------------------------------------------
-    output$subjectCountInCohortConceptSet <- shiny::renderUI({
-      row <- getSubjectAndRecordCountForCohortConceptSet()
-      if (is.null(row)) {
-        return(NULL)
-      } else {
-        tags$table(
-          tags$tr(
-            tags$td("Subjects: "),
-            tags$td(scales::comma(row$cohortSubjects, accuracy = 1))
-          )
-        )
-      }
-    })
-
-    ### recordCountInCohortConceptSet ---------------------------------------------------------
-    output$recordCountInCohortConceptSet <- shiny::renderUI({
-      row <- getSubjectAndRecordCountForCohortConceptSet()
-      if (is.null(row)) {
-        return(NULL)
-      } else {
-        tags$table(
-          tags$tr(
-            tags$td("Records: "),
-            tags$td(scales::comma(row$cohortEntries, accuracy = 1))
-          )
-        )
-      }
-    })
-
     ### getCohortDefinitionResolvedConceptsReactive ---------------------------------------------------------
     getCohortDefinitionResolvedConceptsReactive <-
       shiny::reactive(x = {
@@ -763,10 +724,50 @@ cohortDefinitionsModule <- function(id,
         if (!hasData(output)) {
           return(NULL)
         }
+        return(output)
+      })
+    
+    
+    ### getCohortDefinitionResolvedConceptsReactiveFiltered ---------------------------------------------------------
+    getCohortDefinitionResolvedConceptsReactiveFiltered <-
+      shiny::reactive(x = {
+        output <- getCohortDefinitionResolvedConceptsReactive()
+        if (!hasData(output)) {
+          return(NULL)
+        }
+        output <- output %>% 
+          dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId,
+                        .data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id)
+        if (!hasData(output)) {
+          return(NULL)
+        }
+        allConceptIds <- output %>% 
+          dplyr::select(.data$cohortId,
+                        .data$conceptSetId,
+                        .data$conceptId,
+                        .data$conceptName,
+                        .data$domainId,
+                        .data$vocabularyId,
+                        .data$conceptClassId,
+                        .data$standardConcept,
+                        .data$conceptCode) %>% 
+          dplyr::distinct() 
+        
+        allConceptIdsAllDatabase <- allConceptIds %>% 
+          tidyr::crossing(databaseTable %>% 
+                            dplyr::select(.data$databaseId))
+        
         conceptCount <- getCountForConceptIdInCohortReactive()
-        output <- output %>%
-          dplyr::left_join(conceptCount,
-                           by = c("databaseId", "conceptId"))
+        
+        output <- allConceptIdsAllDatabase %>%
+          dplyr::left_join(
+            conceptCount %>%
+              dplyr::rename(
+                "subjects" = .data$conceptSubjects,
+                "count" = .data$conceptCount
+              ),
+            by = c("databaseId", "conceptId")
+          )
         return(output)
       })
 
@@ -775,46 +776,43 @@ cohortDefinitionsModule <- function(id,
         if (input$conceptSetsType != 'Resolved') {
           return(NULL)
         }
-        databaseIdToFilter <- databaseTable %>%
-          dplyr::filter(.data$databaseIdWithVocabularyVersion == vocabSchema()) %>%
-          dplyr::pull(.data$databaseId)
-        if (!hasData(databaseIdToFilter)) {
-          return(NULL)
-        }
-
+        
         validate(need(
           length(cohortDefinitionConceptSetExpressionSelected()$id) > 0,
           "Please select concept set"
         ))
-
-        data <- getCohortDefinitionResolvedConceptsReactive()
+        data <- getCohortDefinitionResolvedConceptsReactiveFiltered()
+        
         validate(need(
           hasData(data),
-          paste0("No data for database id ", input$vocabularySchema)
+          paste0("No resolved concept id for any of the data sources")
         ))
-        data <- data %>%
-          dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id) %>%
-          dplyr::filter(.data$databaseId == databaseIdToFilter) %>%
-          dplyr::rename("subjects" = .data$conceptSubjects,
-                        "count" = .data$conceptCount)
-        validate(need(
-          hasData(data),
-          paste0("No data for database id ", input$vocabularySchema)
-        ))
-        keyColumns <- c(
+        
+        keyColumnFields <- c(
           "conceptId",
           "conceptName",
-          "domainId",
-          "vocabularyId",
-          "conceptClassId",
-          "standardConcept",
-          "conceptCode"
+          "standardConcept"
         )
-        dataColumns <- c("subjects",
-                         "count")
-        displayTable <- getDisplayTableSimple(data = data,
-                                              keyColumns = keyColumns,
-                                              dataColumns = dataColumns)
+        dataColumnFields <- c("subjects", "count")
+        countsForHeader <- NULL
+        maxCountValue <-
+          getColumnMax(
+            data = data,
+            string = dataColumnFields
+          )
+        
+        displayTable <- getDisplayTableGroupedByDatabaseId(
+          data = data,
+          cohort = cohortTable,
+          databaseTable = databaseTable,
+          headerCount = countsForHeader,
+          keyColumns = keyColumnFields,
+          countLocation = 1,
+          dataColumns = dataColumnFields,
+          maxCount = maxCountValue,
+          sort = TRUE,
+          selection = "single"
+        )
         return(displayTable)
       })
 
@@ -844,67 +842,72 @@ cohortDefinitionsModule <- function(id,
     })
 
     ## Other ---------------------------------------------------------
-    ### getConceptSetIds ---------------------------------------------------------
-    getConceptSetIds <- shiny::reactive(x = {
-      return(conceptSets$conceptSetId[conceptSets$conceptSetName %in% input$conceptSetsSelected])
-    })
-
     ### getCohortDefinitionOrphanConceptsReactive ---------------------------------------------------------
-    getCohortDefinitionOrphanConceptsReactive <- shiny::reactive(x = {
-      validate(need(
-        all(
-          !is.null(getDatabaseIdInCohortConceptSet()),
-          length(getDatabaseIdInCohortConceptSet()) > 0
-        ),
-        "Orphan codes are not available for reference vocabulary in this version."
-      ))
-      if (is.null(row) ||
-        length(cohortDefinitionConceptSetExpressionSelected()$name) == 0) {
-        return(NULL)
-      }
-      validate(need(
-        length(input$vocabularySchema) > 0,
-        "No data sources chosen"
-      ))
-      row <- selectedCohortDefinitionRow()
-      if (is.null(row)) {
-        return(NULL)
-      }
-      output <- getOrphanConceptResult(
-        dataSource = dataSource,
-        databaseIds = databaseTable$databaseId,
-        cohortId = row$cohortId
-      )
+    getCohortDefinitionOrphanConceptsReactive <-
+      shiny::reactive(x = {
+        row <- selectedCohortDefinitionRow()
+        if (!hasData(row)) {
+          return(NULL)
+        }
+        output <- getOrphanConceptResult(
+          dataSource = dataSource,
+          databaseIds = databaseTable$databaseId,
+          cohortId = row$cohortId
+        )
+        if (!hasData(output)) {
+          return(NULL)
+        }
+        return(output)
+      })
+    
+    
+    ### getCohortDefinitionOrphanConceptsReactiveFiltered ---------------------------------------------------------
+    getCohortDefinitionOrphanConceptsReactiveFiltered <- shiny::reactive(x = {
+      output <- getCohortDefinitionOrphanConceptsReactive()
       if (!hasData(output)) {
         return(NULL)
       }
+      output <- output %>% 
+        dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId,
+                      .data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id)
+      
+      # remove concepts that are portential orphans but are in resolved concepts
       output <- output %>%
-        dplyr::anti_join(getCohortDefinitionResolvedConceptsReactive() %>%
+        dplyr::anti_join(getCohortDefinitionResolvedConceptsReactiveFiltered() %>%
                            dplyr::select(.data$conceptId) %>%
                            dplyr::distinct(),
                          by = "conceptId")
+      
       if (!hasData(output)) {
         return(NULL)
       }
-      output <- output %>%
-        dplyr::anti_join(getCohortDefinitionMappedConceptsReactive() %>%
-                           dplyr::select(.data$conceptId) %>%
-                           dplyr::distinct(),
-                         by = "conceptId")
-      if (!hasData(output)) {
-        return(NULL)
-      }
-      output <- output %>%
-        dplyr::rename("persons" = .data$conceptSubjects,
-                      "records" = .data$conceptCount)
+      
+      allConceptIds <- output %>% 
+        dplyr::select(.data$cohortId,
+                      .data$conceptSetId,
+                      .data$conceptId,
+                      .data$conceptName,
+                      .data$vocabularyId,
+                      .data$standardConcept,
+                      .data$conceptCode) %>% 
+        dplyr::distinct() 
+      
+      allConceptIdsAllDatabase <- allConceptIds %>% 
+        tidyr::crossing(databaseTable %>% 
+                          dplyr::select(.data$databaseId))
+      
+      conceptCount <- getCountForConceptIdInCohortReactive()
+      
+      output <- allConceptIdsAllDatabase %>%
+        dplyr::left_join(
+          conceptCount %>%
+            dplyr::rename(
+              "subjects" = .data$conceptSubjects,
+              "count" = .data$conceptCount
+            ),
+          by = c("databaseId", "conceptId")
+        )
       return(output)
-    })
-
-    vocabSchema <- shiny::reactive({
-      if (is.null(input$vocabularySelection)) {
-        return("")
-      }
-      input$vocabularySelection
     })
 
     output$cohortDefinitionOrphanConceptTable <-
@@ -913,41 +916,39 @@ cohortDefinitionsModule <- function(id,
           return(NULL)
         }
 
-        databaseIdToFilter <- databaseTable %>%
-          dplyr::filter(.data$databaseIdWithVocabularyVersion == vocabSchema()) %>%
-          dplyr::pull(.data$databaseId)
-        if (!hasData(databaseIdToFilter)) {
-          return(NULL)
-        }
-        data <- getCohortDefinitionOrphanConceptsReactive()
+        data <- getCohortDefinitionOrphanConceptsReactiveFiltered()
         validate(need(
           hasData(data),
           paste0("No data for database id ", input$vocabularySchema)
         ))
-        data <- data %>%
-          dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id) %>%
-          dplyr::filter(.data$databaseId == databaseIdToFilter) %>%
-          dplyr::rename(
-            "subjects" = .data$persons,
-            "count" = .data$records,
-            "standard" = .data$standardConcept
+        
+        keyColumnFields <- c(
+          "conceptId",
+          "conceptName",
+          "standardConcept",
+          "vocabularyId",
+          "conceptCode"
+        )
+        dataColumnFields <- c("subjects", "count")
+        countsForHeader <- NULL
+        maxCountValue <-
+          getColumnMax(
+            data = data,
+            string = dataColumnFields
           )
-        validate(need(
-          hasData(data),
-          paste0("No data for database id ", input$vocabularySchema)
-        ))
-        keyColumns <-
-          c("conceptId",
-            "conceptName",
-            "vocabularyId",
-            "conceptCode",
-            "standard")
-        dataColumns <- c("subjects",
-                         "count")
-
-        displayTable <- getDisplayTableSimple(data = data,
-                                              keyColumns = keyColumns,
-                                              dataColumns = dataColumns)
+        
+        displayTable <- getDisplayTableGroupedByDatabaseId(
+          data = data,
+          cohort = cohortTable,
+          databaseTable = databaseTable,
+          headerCount = countsForHeader,
+          keyColumns = keyColumnFields,
+          countLocation = 1,
+          dataColumns = dataColumnFields,
+          maxCount = maxCountValue,
+          sort = TRUE, 
+          selection = "single"
+        )
         return(displayTable)
       })
 
@@ -961,7 +962,7 @@ cohortDefinitionsModule <- function(id,
         progress <- shiny::Progress$new()
         on.exit(progress$close())
         progress$set(message = "Getting concepts mapped to concept ids resolved by concept set expression (may take time)", value = 0)
-        output <-
+       output <-
           mappedConceptSet(
             dataSource = dataSource,
             databaseIds = databaseTable$databaseId,
@@ -970,76 +971,102 @@ cohortDefinitionsModule <- function(id,
         if (!hasData(output)) {
           return(NULL)
         }
-        conceptCount <- getCountForConceptIdInCohortReactive()
-        output <- output %>%
-          dplyr::left_join(conceptCount,
-                           by = c("databaseId", "conceptId"))
         return(output)
       })
+    
+    ### getCohortDefinitionMappedConceptsReactiveFiltered ---------------------------------------------------------
+    getCohortDefinitionMappedConceptsReactiveFiltered <-
+      shiny::reactive(x = {
+        output <- getCohortDefinitionMappedConceptsReactive()
+        if (!hasData(output)) {
+          return(NULL)
+        }
+        output <- output %>% 
+          dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId,
+                        .data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id)
+        if (!hasData(output)) {
+          return(NULL)
+        }
+        allConceptIds <- output %>% 
+          dplyr::select(.data$cohortId,
+                        .data$conceptSetId,
+                        .data$resolvedConceptId,
+                        .data$conceptId,
+                        .data$conceptName,
+                        .data$domainId,
+                        .data$vocabularyId,
+                        .data$conceptClassId,
+                        .data$standardConcept,
+                        .data$conceptCode) %>% 
+          dplyr::distinct() 
+        
+        allConceptIdsAllDatabase <- allConceptIds %>% 
+          tidyr::crossing(databaseTable %>% 
+                            dplyr::select(.data$databaseId))
+        
+        conceptCount <- getCountForConceptIdInCohortReactive()
+        
+        output <- allConceptIdsAllDatabase %>%
+          dplyr::left_join(
+            conceptCount %>%
+              dplyr::rename(
+                "subjects" = .data$conceptSubjects,
+                "count" = .data$conceptCount
+              ),
+            by = c("databaseId", "conceptId")
+          )
+        return(output)
+      })
+    
 
     output$cohortDefinitionMappedConceptsTable <-
       reactable::renderReactable(expr = {
         if (input$conceptSetsType != 'Mapped') {
           return(NULL)
         }
-
-        databaseIdToFilter <- databaseTable %>%
-          dplyr::filter(.data$databaseIdWithVocabularyVersion == vocabSchema()) %>%
-          dplyr::pull(.data$databaseId)
-        if (!hasData(databaseIdToFilter)) {
-          return(NULL)
-        }
-
         validate(need(
           length(cohortDefinitionConceptSetExpressionSelected()$id) > 0,
           "Please select concept set"
         ))
 
-        data <- getCohortDefinitionMappedConceptsReactive()
+        data <- getCohortDefinitionMappedConceptsReactiveFiltered()
         validate(need(
           hasData(data),
           paste0("No data for database id ", input$vocabularySchema)
         ))
 
-        data <- data %>%
-          dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id) %>%
-          dplyr::filter(.data$databaseId == databaseIdToFilter) %>%
-          dplyr::rename("subjects" = .data$conceptSubjects,
-                        "count" = .data$conceptCount)
-        validate(need(
-          hasData(data),
-          paste0("No data for database id ", input$vocabularySchema)
-        ))
-
-        keyColumns <- c(
+        keyColumnFields <- c(
           "resolvedConceptId",
           "conceptId",
           "conceptName",
-          "domainId",
-          "vocabularyId",
-          "conceptClassId",
           "standardConcept",
+          "vocabularyId",
           "conceptCode"
         )
-        dataColumns <- c("subjects",
-                         "count")
-
-        getDisplayTableSimple(data = data,
-                              keyColumns = keyColumns,
-                              dataColumns = dataColumns)
+        dataColumnFields <- c("subjects", "count")
+        countsForHeader <- NULL
+        maxCountValue <-
+          getColumnMax(
+            data = data,
+            string = dataColumnFields
+          )
+        
+        displayTable <- getDisplayTableGroupedByDatabaseId(
+          data = data,
+          cohort = cohortTable,
+          databaseTable = databaseTable,
+          headerCount = countsForHeader,
+          keyColumns = keyColumnFields,
+          countLocation = 1,
+          dataColumns = dataColumnFields,
+          maxCount = maxCountValue,
+          sort = TRUE,
+          selection = "single"
+        )
+        return(displayTable)
 
       })
 
-
-    vocabularyChoices <- list(
-      'From site' = databaseTable$databaseIdWithVocabularyVersion,
-      'Reference Vocabulary' = dataSource$vocabularyDatabaseSchema
-    )
-    shiny::observe({
-      shiny::updateSelectInput(session,
-                               inputId = "vocabularySelection",
-                               choices = vocabularyChoices)
-    })
 
     ## Export all cohort details ----
     output$exportAllCohortDetails <- shiny::downloadHandler(
