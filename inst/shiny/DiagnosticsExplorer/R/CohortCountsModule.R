@@ -119,8 +119,12 @@ cohortCountsModule <- function(id,
       }
 
       data <- data %>%
-        addShortName(cohort) %>%
-        dplyr::arrange(.data$shortName, .data$databaseId)
+        dplyr::inner_join(
+          cohortTable %>% 
+            dplyr::select(.data$cohortId,
+                          .data$cohortName),
+          by = "cohortId") %>%
+        dplyr::arrange(.data$cohortId, .data$databaseId)
       return(data)
     })
 
@@ -132,7 +136,6 @@ cohortCountsModule <- function(id,
       validate(need(hasData(data), "There is no data on any cohort"))
 
       data <- getResults() %>%
-        dplyr::rename(cohort = .data$shortName) %>%
         dplyr::rename(
           persons = .data$cohortSubjects,
           records = .data$cohortEntries
@@ -145,8 +148,8 @@ cohortCountsModule <- function(id,
       } else if (input$cohortCountsTableColumnFilter == "Records") {
         dataColumnFields <- "records"
       }
-
-      keyColumnFields <- c("cohortId", "cohort")
+      
+      keyColumnFields <- c("cohortId", "cohortName")
 
       countsForHeader <- NULL
 
@@ -165,25 +168,26 @@ cohortCountsModule <- function(id,
         countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        sort = TRUE,
+        sort = FALSE, #dont sort this by value. reactTable reactiveState does not give row value, only row number
         selection = "single"
       )
       return(displayTable)
     })
 
-    getCohortIdOnCohortCountRowSelect <- reactive({
-      idx <- reactable::getReactableState("cohortCountsTable", "selected")
-      if (is.null(idx)) {
+    getCohortIdOnCohortCountRowSelect <- shiny::reactive({
+      idx <- reactable::getReactableState(outputId = "cohortCountsTable", "selected")
+      if (!hasData(idx)) {
         return(NULL)
       } else {
         if (hasData(getResults())) {
           subset <- getResults() %>%
             dplyr::select(
-              .data$cohortId,
-              .data$shortName
-            ) %>%
+              .data$cohortId
+            ) %>% 
+            dplyr::distinct() %>% 
+            dplyr::arrange()
+          subset <- subset[idx,] %>%
             dplyr::distinct()
-          subset <- subset[idx,]
           return(subset)
         } else {
           return(NULL)
