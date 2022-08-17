@@ -398,20 +398,20 @@ cohortDefinitionsModule <- function(id,
 
     cohortDefinitionTableData <- shiny::reactive(x = {
       data <- cohortDefinitions() %>%
-        dplyr::select(cohort = .data$shortName, .data$cohortId, .data$cohortName)
+        dplyr::select(.data$cohortId, .data$cohortName) %>% 
+        dplyr::arrange(.data$cohortId)
       return(data)
     })
 
     # Cohort Definition ---------------------------------------------------------
     output$cohortDefinitionTable <-
       reactable::renderReactable(expr = {
-        data <- cohortDefinitionTableData() %>%
-          dplyr::mutate(cohortId = as.character(.data$cohortId))
+        data <- cohortDefinitionTableData()
 
         validate(need(hasData(data), "There is no data for this cohort."))
-        keyColumns <- c("cohort", "cohortId", "cohortName")
+        keyColumns <- c("cohortId", "cohortName")
         dataColumns <- c()
-
+        
         displayTable <- getDisplayTableSimple(
           data = data,
           databaseTable = databaseTable,
