@@ -383,11 +383,13 @@ cohortDefinitionsView <- function(id) {
 #' @param id                            Namespace id
 #' @param dataSource                    DatabaseConnection
 #' @param cohortDefinitions             reactive of cohort definitions to display
-#' @param databaseTable                 data.frame of databasese
+#' @param databaseTable                 data.frame of database
+#' @param selectedDatabaseIds           selected data sources
 cohortDefinitionsModule <- function(id,
                                     dataSource,
                                     cohortDefinitions,
                                     cohortTable,
+                                    selectedDatabaseIds,
                                     databaseTable) {
   ns <- shiny::NS(id)
 
@@ -473,9 +475,14 @@ cohortDefinitionsModule <- function(id,
         if (!hasData(data)) {
           return(NULL)
         }
+        
+        if (!hasData(selectedDatabaseIds())) {
+          return(NULL)
+        }
+        
         data <- data %>%
           dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId) %>%
-          dplyr::filter(.data$databaseId %in% databaseTable$databaseId) %>%
+          dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
           dplyr::select(.data$databaseId,
                         .data$cohortSubjects,
                         .data$cohortEntries) %>%
@@ -688,26 +695,6 @@ cohortDefinitionsModule <- function(id,
       })
 
     ## Cohort Concept Set
-    ### getSubjectAndRecordCountForCohortConceptSet ---------------------------------------------------------
-    getSubjectAndRecordCountForCohortConceptSet <- shiny::reactive(x = {
-      row <- selectedCohortDefinitionRow()
-
-      if (is.null(row) || length(getDatabaseIdInCohortConceptSet()) == 0) {
-        return(NULL)
-      } else {
-        data <- cohortCount %>%
-          dplyr::filter(.data$cohortId == row$cohortId) %>%
-          dplyr::filter(.data$databaseId == getDatabaseIdInCohortConceptSet()) %>%
-          dplyr::select(.data$cohortSubjects, .data$cohortEntries)
-
-        if (nrow(data) == 0) {
-          return(NULL)
-        } else {
-          return(data)
-        }
-      }
-    })
-
     ### getCohortDefinitionResolvedConceptsReactive ---------------------------------------------------------
     getCohortDefinitionResolvedConceptsReactive <-
       shiny::reactive(x = {
@@ -735,9 +722,13 @@ cohortDefinitionsModule <- function(id,
         if (!hasData(output)) {
           return(NULL)
         }
+        if (!hasData(selectedDatabaseIds())) {
+          return(NULL)
+        }
         output <- output %>% 
           dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId,
-                        .data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id)
+                        .data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id,
+                        .data$databaseId == selectedDatabaseIds())
         if (!hasData(output)) {
           return(NULL)
         }
@@ -755,6 +746,7 @@ cohortDefinitionsModule <- function(id,
         
         allConceptIdsAllDatabase <- allConceptIds %>% 
           tidyr::crossing(databaseTable %>% 
+                            dplyr::filter(.data$databaseId %in% c(selectedDatabaseIds())) %>% 
                             dplyr::select(.data$databaseId))
         
         conceptCount <- getCountForConceptIdInCohortReactive()
@@ -867,9 +859,14 @@ cohortDefinitionsModule <- function(id,
       if (!hasData(output)) {
         return(NULL)
       }
+      
+      if (!hasData(selectedDatabaseIds())) {
+        return(NULL)
+      }
       output <- output %>% 
         dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId,
-                      .data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id)
+                      .data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id,
+                      .data$databaseId == selectedDatabaseIds())
       
       # remove concepts that are portential orphans but are in resolved concepts
       output <- output %>%
@@ -894,6 +891,7 @@ cohortDefinitionsModule <- function(id,
       
       allConceptIdsAllDatabase <- allConceptIds %>% 
         tidyr::crossing(databaseTable %>% 
+                          dplyr::filter(.data$databaseId %in% c(selectedDatabaseIds())) %>% 
                           dplyr::select(.data$databaseId))
       
       conceptCount <- getCountForConceptIdInCohortReactive()
@@ -981,9 +979,15 @@ cohortDefinitionsModule <- function(id,
         if (!hasData(output)) {
           return(NULL)
         }
+        
+        if (!hasData(selectedDatabaseIds())) {
+          return(NULL)
+        }
         output <- output %>% 
           dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId,
-                        .data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id)
+                        .data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id,
+                        .data$databaseId == selectedDatabaseIds())
+
         if (!hasData(output)) {
           return(NULL)
         }
@@ -1002,6 +1006,7 @@ cohortDefinitionsModule <- function(id,
         
         allConceptIdsAllDatabase <- allConceptIds %>% 
           tidyr::crossing(databaseTable %>% 
+                            dplyr::filter(.data$databaseId %in% c(selectedDatabaseIds())) %>% 
                             dplyr::select(.data$databaseId))
         
         conceptCount <- getCountForConceptIdInCohortReactive()

@@ -30,6 +30,7 @@ uiControls <- function(ns,
       input.tabs == 'timeDistribution' |
       input.tabs =='cohortCharacterization' |
       input.tabs == 'cohortCounts' |
+      input.tabs == 'cohortDefinition' |
       input.tabs == 'indexEventBreakdown' |
       input.tabs == 'conceptsInDataSource' |
       input.tabs == 'orphanConcepts' |

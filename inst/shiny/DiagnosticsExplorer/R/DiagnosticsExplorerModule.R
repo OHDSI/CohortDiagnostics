@@ -706,6 +706,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                               dataSource = dataSource,
                               cohortDefinitions = cohortSubset,
                               cohortTable = cohortTable,
+                              selectedDatabaseIds = selectedDatabaseIds,
                               databaseTable = databaseTable)
     }
 
