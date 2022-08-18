@@ -315,8 +315,20 @@ cohortDefinitionsView <- function(id) {
                                             selected = "Concept Set Expression",
                                             inline = TRUE
                                           )
+                                        ),
+                                        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
+                                        tags$td(
+                                          shiny::radioButtons(
+                                            inputId = ns("conceptSetValueTypeFilter"),
+                                            label = "Display",
+                                            choices = c("Both", "Persons", "Records"),
+                                            selected = "Persons",
+                                            inline = TRUE
+                                          )
                                         )
-                                      ))),
+                                      ))
+                                      
+                                      ),
               shiny::conditionalPanel(
                 ns = ns,
                 condition = "output.cohortDefinitionConceptSetExpressionRowIsSelected == true &
@@ -726,9 +738,10 @@ cohortDefinitionsModule <- function(id,
           return(NULL)
         }
         output <- output %>% 
-          dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId,
-                        .data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id,
-                        .data$databaseId == selectedDatabaseIds())
+          dplyr::filter(.data$cohortId %in% c(selectedCohortDefinitionRow()$cohortId),
+                        .data$conceptSetId %in% c(cohortDefinitionConceptSetExpressionSelected()$id),
+                        .data$databaseId %in% c(selectedDatabaseIds()))
+        
         if (!hasData(output)) {
           return(NULL)
         }
@@ -755,8 +768,8 @@ cohortDefinitionsModule <- function(id,
           dplyr::left_join(
             conceptCount %>%
               dplyr::rename(
-                "subjects" = .data$conceptSubjects,
-                "count" = .data$conceptCount
+                "persons" = .data$conceptSubjects,
+                "records" = .data$conceptCount
               ),
             by = c("databaseId", "conceptId")
           )
@@ -785,8 +798,29 @@ cohortDefinitionsModule <- function(id,
           "conceptName",
           "standardConcept"
         )
-        dataColumnFields <- c("subjects", "count")
-        countsForHeader <- NULL
+        
+        if (input$conceptSetValueTypeFilter == "Records") {
+          dataColumnFields <- c("records")
+          countLocation <- 1
+        } else if (input$conceptSetValueTypeFilter == "Persons") {
+          dataColumnFields <- c("persons")
+          countLocation <- 1
+        } else {
+          dataColumnFields <- c("persons", "records")
+          countLocation <- 2
+        }
+        
+        fields <- input$conceptSetValueTypeFilter
+        
+        countsForHeader <-
+          getDisplayTableHeaderCount(
+            dataSource = dataSource,
+            databaseIds = selectedDatabaseIds(),
+            cohortIds = selectedCohortDefinitionRow()$cohortId,
+            source = "cohort",
+            fields = fields
+          )
+        
         maxCountValue <-
           getColumnMax(
             data = data,
@@ -799,7 +833,7 @@ cohortDefinitionsModule <- function(id,
           databaseTable = databaseTable,
           headerCount = countsForHeader,
           keyColumns = keyColumnFields,
-          countLocation = 1,
+          countLocation = countLocation,
           dataColumns = dataColumnFields,
           maxCount = maxCountValue,
           sort = TRUE,
@@ -864,9 +898,9 @@ cohortDefinitionsModule <- function(id,
         return(NULL)
       }
       output <- output %>% 
-        dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId,
-                      .data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id,
-                      .data$databaseId == selectedDatabaseIds())
+        dplyr::filter(.data$cohortId %in% c(selectedCohortDefinitionRow()$cohortId),
+                      .data$conceptSetId %in% c(cohortDefinitionConceptSetExpressionSelected()$id),
+                      .data$databaseId %in% c(selectedDatabaseIds()))
       
       # remove concepts that are portential orphans but are in resolved concepts
       output <- output %>%
@@ -900,8 +934,8 @@ cohortDefinitionsModule <- function(id,
         dplyr::left_join(
           conceptCount %>%
             dplyr::rename(
-              "subjects" = .data$conceptSubjects,
-              "count" = .data$conceptCount
+              "persons" = .data$conceptSubjects,
+              "records" = .data$conceptCount
             ),
           by = c("databaseId", "conceptId")
         )
@@ -927,8 +961,29 @@ cohortDefinitionsModule <- function(id,
           "vocabularyId",
           "conceptCode"
         )
-        dataColumnFields <- c("subjects", "count")
-        countsForHeader <- NULL
+        
+        if (input$conceptSetValueTypeFilter == "Records") {
+          dataColumnFields <- c("records")
+          countLocation <- 1
+        } else if (input$conceptSetValueTypeFilter == "Persons") {
+          dataColumnFields <- c("persons")
+          countLocation <- 1
+        } else {
+          dataColumnFields <- c("persons", "records")
+          countLocation <- 2
+        }
+        
+        fields <- input$conceptSetValueTypeFilter
+        
+        countsForHeader <-
+          getDisplayTableHeaderCount(
+            dataSource = dataSource,
+            databaseIds = selectedDatabaseIds(),
+            cohortIds = selectedCohortDefinitionRow()$cohortId,
+            source = "cohort",
+            fields = fields
+          )
+        
         maxCountValue <-
           getColumnMax(
             data = data,
@@ -941,10 +996,10 @@ cohortDefinitionsModule <- function(id,
           databaseTable = databaseTable,
           headerCount = countsForHeader,
           keyColumns = keyColumnFields,
-          countLocation = 1,
+          countLocation = countLocation,
           dataColumns = dataColumnFields,
           maxCount = maxCountValue,
-          sort = TRUE, 
+          sort = TRUE,
           selection = "single"
         )
         return(displayTable)
@@ -984,9 +1039,9 @@ cohortDefinitionsModule <- function(id,
           return(NULL)
         }
         output <- output %>% 
-          dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId,
-                        .data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id,
-                        .data$databaseId == selectedDatabaseIds())
+          dplyr::filter(.data$cohortId %in% c(selectedCohortDefinitionRow()$cohortId),
+                        .data$conceptSetId %in% c(cohortDefinitionConceptSetExpressionSelected()$id),
+                        .data$databaseId %in% c(selectedDatabaseIds()))
 
         if (!hasData(output)) {
           return(NULL)
@@ -1015,8 +1070,8 @@ cohortDefinitionsModule <- function(id,
           dplyr::left_join(
             conceptCount %>%
               dplyr::rename(
-                "subjects" = .data$conceptSubjects,
-                "count" = .data$conceptCount
+                "persons" = .data$conceptSubjects,
+                "records" = .data$conceptCount
               ),
             by = c("databaseId", "conceptId")
           )
@@ -1048,8 +1103,29 @@ cohortDefinitionsModule <- function(id,
           "vocabularyId",
           "conceptCode"
         )
-        dataColumnFields <- c("subjects", "count")
-        countsForHeader <- NULL
+        
+        if (input$conceptSetValueTypeFilter == "Records") {
+          dataColumnFields <- c("records")
+          countLocation <- 1
+        } else if (input$conceptSetValueTypeFilter == "Persons") {
+          dataColumnFields <- c("persons")
+          countLocation <- 1
+        } else {
+          dataColumnFields <- c("persons", "records")
+          countLocation <- 2
+        }
+        
+        fields <- input$conceptSetValueTypeFilter
+        
+        countsForHeader <-
+          getDisplayTableHeaderCount(
+            dataSource = dataSource,
+            databaseIds = selectedDatabaseIds(),
+            cohortIds = selectedCohortDefinitionRow()$cohortId,
+            source = "cohort",
+            fields = fields
+          )
+        
         maxCountValue <-
           getColumnMax(
             data = data,
@@ -1062,7 +1138,7 @@ cohortDefinitionsModule <- function(id,
           databaseTable = databaseTable,
           headerCount = countsForHeader,
           keyColumns = keyColumnFields,
-          countLocation = 1,
+          countLocation = countLocation,
           dataColumns = dataColumnFields,
           maxCount = maxCountValue,
           sort = TRUE,
