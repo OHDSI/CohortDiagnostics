@@ -254,7 +254,7 @@ createDatabaseDataSource <- function(connection,
 }
 
 #' Initialize variables required in applications global shared environment
-#' These settings are shared accross settings (e.g. accessed by all users) and should be read only during run time
+#' These settings are shared across settings (e.g. accessed by all users) and should be read only during run time
 initializeEnvironment <- function(shinySettings,
                                   table1SpecPath = "data/Table1SpecsLong.csv",
                                   dataModelSpecificationsPath = "data/resultsDataModelSpecification.csv",
