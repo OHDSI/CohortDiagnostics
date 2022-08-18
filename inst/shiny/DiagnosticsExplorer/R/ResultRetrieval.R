@@ -162,7 +162,7 @@ queryResultCovariateValue <- function(dataSource,
         connection = dataSource$connection,
         dbms = dataSource$dbms,
         sql = "SELECT *
-             FROM @results_database_schema.@table_name
+             FROM @results_database_schema.@table_name tcv
               WHERE covariate_id IS NOT NULL
                 {@covariate_id != \"\"} ? { AND covariate_id IN (@covariate_id)}
                 {@cohort_id != \"\"} ? { AND cohort_id IN (@cohort_id)}
