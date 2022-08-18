@@ -288,8 +288,6 @@ cohortDefinitionsView <- function(id) {
           ns = ns,
           shiny::tabsetPanel(
             type = "tab",
-            shiny::tabPanel(title = "Details",
-                            shiny::htmlOutput(ns("cohortDetailsText"))),
             shiny::tabPanel(title = "Cohort Count",
                             tags$br(),
                             reactable::reactableOutput(outputId = ns("cohortCountsTableInCohortDefinition"))),
@@ -379,7 +377,9 @@ cohortDefinitionsView <- function(id) {
               tags$head(
                 tags$style("#cohortDefinitionSql { max-height:400px};")
               )
-            )
+            ),
+            shiny::tabPanel(title = "Cohort Metadata",
+                            shiny::htmlOutput(ns("cohortDetailsText")))
           )
         )
       )
