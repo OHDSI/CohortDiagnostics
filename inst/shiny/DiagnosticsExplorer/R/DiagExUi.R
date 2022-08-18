@@ -199,18 +199,18 @@ dashboardUi <- function(enabledTabs,
       if ("cohort" %in% enabledTabs) {
         shinydashboard::menuItem(text = "Cohort Definition", tabName = "cohortDefinition")
       },
-      if ("includedSourceConcept" %in% enabledTabs) {
-        addInfo(
-          item = shinydashboard::menuItem(text = "Concepts in Data Source", tabName = "conceptsInDataSource"),
-          infoId = "conceptsInDataSourceInfo"
-        )
-      },
-      if ("orphanConcept" %in% enabledTabs) {
-        addInfo(
-          item = shinydashboard::menuItem(text = "Orphan Concepts", tabName = "orphanConcepts"),
-          infoId = "orphanConceptsInfo"
-        )
-      },
+      # if ("includedSourceConcept" %in% enabledTabs) {
+      #   addInfo(
+      #     item = shinydashboard::menuItem(text = "Concepts in Data Source", tabName = "conceptsInDataSource"),
+      #     infoId = "conceptsInDataSourceInfo"
+      #   )
+      # },
+      # if ("orphanConcept" %in% enabledTabs) {
+      #   addInfo(
+      #     item = shinydashboard::menuItem(text = "Orphan Concepts", tabName = "orphanConcepts"),
+      #     infoId = "orphanConceptsInfo"
+      #   )
+      # },
       if ("cohortCount" %in% enabledTabs) {
         addInfo(
           item = shinydashboard::menuItem(text = "Cohort Counts", tabName = "cohortCounts"),
