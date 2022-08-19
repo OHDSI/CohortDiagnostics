@@ -51,7 +51,7 @@ runCohortRelationshipDiagnostics <-
            targetCohortIds,
            comparatorCohortIds,
            relationshipDays,
-           observationPeriodRelationship = TRUE) {
+           observationPeriodRelationship = FALSE) {
     startTime <- Sys.time()
 
     # Assert checks
@@ -122,9 +122,7 @@ runCohortRelationshipDiagnostics <-
 
     ParallelLogger::logTrace("  - Creating cohort table subsets")
     cohortSubsetSqlTargetDrop <-
-      " IF OBJECT_ID('tempdb..#target_subset', 'U') IS NOT NULL
-      	DROP TABLE #target_subset;
-      "
+      " DROP TABLE IF EXISTS #target_subset;"
 
     cohortSubsetSqlTarget <-
       "--HINT DISTRIBUTE_ON_KEY(subject_id)
@@ -139,8 +137,7 @@ runCohortRelationshipDiagnostics <-
       	subject_id;"
 
     cohortSubsetSqlComparatorDrop <-
-      "IF OBJECT_ID('tempdb..#comparator_subset', 'U') IS NOT NULL
-      	DROP TABLE #comparator_subset;"
+      "DROP TABLE IF EXISTS #comparator_subset;"
 
     cohortSubsetSqlComparator <-
       "--HINT DISTRIBUTE_ON_KEY(subject_id)
@@ -327,7 +324,8 @@ executeCohortRelationshipDiagnostics <- function(connection,
                                                  temporalCovariateSettings,
                                                  minCellCount,
                                                  recordKeepingFile,
-                                                 incremental) {
+                                                 incremental,
+                                                 batchSize = 50) {
   ParallelLogger::logInfo("Computing Cohort Relationship")
   startCohortRelationship <- Sys.time()
 
@@ -400,41 +398,53 @@ executeCohortRelationshipDiagnostics <- function(connection,
       )
     }
 
-    output <-
-      runCohortRelationshipDiagnostics(
-        connection = connection,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        tempEmulationSchema = tempEmulationSchema,
-        cohortTable = cohortTable,
-        targetCohortIds = subset$cohortId,
-        comparatorCohortIds = cohortDefinitionSet$cohortId,
-        relationshipDays = dplyr::tibble(
-          startDay = temporalStartDays,
-          endDay = temporalEndDays
+    cohortIdsToRunCohortRelationship <- sort(unique(subset$cohortId))
+    
+    for (start in seq(1, length(cohortIdsToRunCohortRelationship), by = batchSize)) {
+      end <- min(start + batchSize - 1, length(cohortIdsToRunCohortRelationship))
+      
+      if (length(cohortIdsToRunCohortRelationship) > batchSize) {
+        ParallelLogger::logInfo(sprintf(
+          "Batch cohort relationship. Processing cohorts %s through %s",
+          start,
+          end
+        ))
+      }
+      
+      output <-
+        runCohortRelationshipDiagnostics(
+          connection = connection,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cdmDatabaseSchema = cdmDatabaseSchema,
+          tempEmulationSchema = tempEmulationSchema,
+          cohortTable = cohortTable,
+          targetCohortIds = cohortIdsToRunCohortRelationship[start:end],
+          comparatorCohortIds = cohortDefinitionSet$cohortId,
+          relationshipDays = dplyr::tibble(startDay = temporalStartDays,
+                                           endDay = temporalEndDays)
         )
+      
+      data <- makeDataExportable(
+        x = output,
+        tableName = "cohort_relationships",
+        minCellCount = minCellCount,
+        databaseId = databaseId
       )
-
-    data <- makeDataExportable(
-      x = output,
-      tableName = "cohort_relationships",
-      minCellCount = minCellCount,
-      databaseId = databaseId
-    )
-
-    writeToCsv(
-      data = data,
-      fileName = file.path(exportFolder, "cohort_relationships.csv"),
-      incremental = incremental
-    )
-
-    recordTasksDone(
-      cohortId = subset$cohortId,
-      task = "runCohortRelationship",
-      checksum = subset$checksum,
-      recordKeepingFile = recordKeepingFile,
-      incremental = incremental
-    )
+      
+      writeToCsv(
+        data = data,
+        fileName = file.path(exportFolder, "cohort_relationships.csv"),
+        incremental = incremental
+      )
+      
+      recordTasksDone(
+        cohortId = cohortIdsToRunCohortRelationship[start:end],
+        task = "runCohortRelationship",
+        checksum = subset$checksum,
+        recordKeepingFile = recordKeepingFile,
+        incremental = incremental
+      )
+    }
   } else {
     ParallelLogger::logInfo("  - Skipping in incremental mode.")
   }
