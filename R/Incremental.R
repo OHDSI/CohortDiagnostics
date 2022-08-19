@@ -313,6 +313,8 @@ subsetToRequiredCombis <-
       tasks <- getRequiredTasks(
         cohortId = combis$targetCohortId,
         comparatorId = combis$comparatorCohortId,
+        targetChecksum = combis$targetChecksum,
+        comparatorChecksum = combis$comparatorChecksum,
         task = task,
         checksum = combis$checksum,
         recordKeepingFile = recordKeepingFile

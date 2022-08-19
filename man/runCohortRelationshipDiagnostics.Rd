@@ -14,7 +14,7 @@ runCohortRelationshipDiagnostics(
   targetCohortIds,
   comparatorCohortIds,
   relationshipDays,
-  observationPeriodRelationship = TRUE
+  observationPeriodRelationship = FALSE
 )
 }
 \arguments{

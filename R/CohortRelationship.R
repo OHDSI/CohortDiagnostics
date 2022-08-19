@@ -112,11 +112,11 @@ runCohortRelationshipDiagnostics <-
       )
 
     if (targetCohortCount == 0) {
-      ParallelLogger::logInfo("No instantiated target cohorts found. Atleast one instantiated target cohort is necessary to compute cohort relatonship.")
+      ParallelLogger::logInfo("No instantiated target cohorts found in this iteration.")
       return(NULL)
     }
     if (length(comparatorCohortCount) == 0) {
-      ParallelLogger::logInfo("No instantiated comparator cohorts found. Atleast one instantiated comparator cohort is necessary to compute cohort relatonship.")
+      ParallelLogger::logInfo("No instantiated comparator cohorts found in this iteration.")
       return(NULL)
     }
 
@@ -328,9 +328,22 @@ executeCohortRelationshipDiagnostics <- function(connection,
                                                  batchSize = 50) {
   ParallelLogger::logInfo("Computing Cohort Relationship")
   startCohortRelationship <- Sys.time()
-
-  subset <- subsetToRequiredCohorts(
-    cohorts = cohortDefinitionSet,
+  
+  allCohortIds <- cohortDefinitionSet %>%
+    dplyr::select(.data$cohortId, .data$checksum) |>
+    dplyr::rename(targetCohortId = .data$cohortId,
+                  targetChecksum = .data$checksum) |>
+    dplyr::distinct()
+  combinationsOfPossibleCohortRelationships <- allCohortIds |>
+    tidyr::crossing(allCohortIds |>
+                      dplyr::rename(comparatorCohortId = .data$targetCohortId,
+                                    comparatorChecksum = .data$targetChecksum)) |>
+    dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) |> 
+    dplyr::arrange(.data$targetCohortId, .data$comparatorCohortId) |> 
+    dplyr::mutate(checksum = paste0(.data$targetChecksum, .data$comparatorChecksum))
+  
+  subset <- subsetToRequiredCombis(
+    combis = combinationsOfPossibleCohortRelationships,
     task = "runCohortRelationship",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile
@@ -397,17 +410,16 @@ executeCohortRelationshipDiagnostics <- function(connection,
         )
       )
     }
-
-    cohortIdsToRunCohortRelationship <- sort(unique(subset$cohortId))
     
-    for (start in seq(1, length(cohortIdsToRunCohortRelationship), by = batchSize)) {
-      end <- min(start + batchSize - 1, length(cohortIdsToRunCohortRelationship))
+    for (start in seq(1, nrow(subset), by = batchSize)) {
+      end <- min(start + batchSize - 1, nrow(subset))
       
-      if (length(cohortIdsToRunCohortRelationship) > batchSize) {
+      if (nrow(subset) > batchSize) {
         ParallelLogger::logInfo(sprintf(
-          "Batch cohort relationship. Processing cohorts %s through %s",
+          "Batch cohort relationship. Processing cohorts %s through %s combinations of %s total combinations",
           start,
-          end
+          end,
+          nrow(subset)
         ))
       }
       
@@ -418,8 +430,8 @@ executeCohortRelationshipDiagnostics <- function(connection,
           cdmDatabaseSchema = cdmDatabaseSchema,
           tempEmulationSchema = tempEmulationSchema,
           cohortTable = cohortTable,
-          targetCohortIds = cohortIdsToRunCohortRelationship[start:end],
-          comparatorCohortIds = cohortDefinitionSet$cohortId,
+          targetCohortIds = subset[start:end,]$targetCohortId |> unique(),
+          comparatorCohortIds = subset[start:end,]$comparatorCohortId |> unique(),
           relationshipDays = dplyr::tibble(startDay = temporalStartDays,
                                            endDay = temporalEndDays)
         )
@@ -438,12 +450,25 @@ executeCohortRelationshipDiagnostics <- function(connection,
       )
       
       recordTasksDone(
-        cohortId = cohortIdsToRunCohortRelationship[start:end],
+        cohortId = subset[start:end,]$targetCohortId,
+        comparatorId = subset[start:end,]$comparatorCohortId,
+        targetChecksum = subset[start:end,]$targetChecksum,
+        comparatorChecksum = subset[start:end,]$comparatorChecksum,
         task = "runCohortRelationship",
         checksum = subset$checksum,
         recordKeepingFile = recordKeepingFile,
         incremental = incremental
       )
+      deltaIteration <- Sys.time() - startCohortRelationship
+      ParallelLogger::logInfo(" - Running Cohort Overlap iteration with batchsize ",
+                              batchSize,
+                              " from ",
+                              start,
+                              end,
+                              " took ",
+                              signif(deltaIteration, 3),
+                              " ",
+                              attr(deltaIteration, "units"))
     }
   } else {
     ParallelLogger::logInfo("  - Skipping in incremental mode.")
