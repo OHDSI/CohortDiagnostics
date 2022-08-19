@@ -24,14 +24,14 @@ exportCharacterization <- function(characteristics,
                                    analysisRefFileName,
                                    timeRefFileName = NULL,
                                    counts,
-                                   cutOff = 0.0001,
+                                   minCharacterizationMean = 0.001,
                                    minCellCount) {
   if (!"covariates" %in% names(characteristics)) {
     warning("No characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
     characteristics$filteredCovariates <-
       characteristics$covariates %>%
-      dplyr::filter(.data$mean >= cutOff) %>%
+      dplyr::filter(.data$mean >= minCharacterizationMean) %>%
       dplyr::mutate(databaseId = !!databaseId) %>%
       dplyr::left_join(counts,
         by = c("cohortId", "databaseId"),
