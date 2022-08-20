@@ -228,12 +228,33 @@ executeCohortRelationshipDiagnostics <- function(connection,
 
   if (nrow(subset) > 0) {
     if (incremental &&
-      (nrow(cohortDefinitionSet) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        " - Skipping %s cohort combinations in incremental mode.",
-        nrow(cohortDefinitionSet) - nrow(subset)
-      ))
+        (nrow(cohortDefinitionSet) - (length(subset$targetCohortId |> unique()))) > 0) {
+      ParallelLogger::logInfo(
+        sprintf(
+          " - Skipping %s target cohorts in incremental mode because the relationships has already been computed with other cohorts.",
+          nrow(cohortDefinitionSet) - (length(subset$targetCohortId |> unique()))
+        )
+      )
     }
+    
+    if (incremental &&
+        (nrow(combinationsOfPossibleCohortRelationships) - (
+          nrow(
+            combinationsOfPossibleCohortRelationships |>
+            dplyr::filter(.data$targetCohortId %in% c(subset$targetCohortId))
+          )
+        )) > 0) {
+      ParallelLogger::logInfo(
+        sprintf(
+          " - Skipping %s combinations in incremental mode because these were previously computed.",
+          nrow(combinationsOfPossibleCohortRelationships) - nrow(
+            combinationsOfPossibleCohortRelationships |>
+              dplyr::filter(.data$targetCohortId %in% c(subset$targetCohortId))
+          )
+        )
+      )
+    }
+    
     ParallelLogger::logTrace(" - Beginning Cohort Relationship SQL")
     if (all(exists("temporalCovariateSettings"), !is.null(temporalCovariateSettings))) {
       temporalStartDays <- temporalCovariateSettings$temporalStartDays
@@ -339,8 +360,9 @@ executeCohortRelationshipDiagnostics <- function(connection,
       deltaIteration <- Sys.time() - startCohortRelationship
       ParallelLogger::logInfo(" - Running Cohort Overlap iteration with batchsize ",
                               batchSize,
-                              " from ",
+                              " from row number ",
                               start,
+                              " to ",
                               end,
                               " took ",
                               signif(deltaIteration, 3),
