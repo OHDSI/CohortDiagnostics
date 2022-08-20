@@ -455,7 +455,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
         targetChecksum = subset[start:end,]$targetChecksum,
         comparatorChecksum = subset[start:end,]$comparatorChecksum,
         task = "runCohortRelationship",
-        checksum = subset$checksum,
+        checksum = subset[start:end,]$checksum,
         recordKeepingFile = recordKeepingFile,
         incremental = incremental
       )
