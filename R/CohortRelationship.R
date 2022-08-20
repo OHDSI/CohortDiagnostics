@@ -83,122 +83,10 @@ runCohortRelationshipDiagnostics <-
     )
     checkmate::reportAssertions(collection = errorMessage)
 
-
     if (is.null(connection)) {
       connection <- DatabaseConnector::connect(connectionDetails)
       on.exit(DatabaseConnector::disconnect(connection))
     }
-
-    sqlCount <-
-      "SELECT COUNT(*) count FROM @cohort_database_schema.@cohort_table where cohort_definition_id IN (@cohort_ids);"
-
-    targetCohortCount <-
-      renderTranslateQuerySql(
-        connection = connection,
-        sql = sqlCount,
-        cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable,
-        cohort_ids = targetCohortIds,
-        snakeCaseToCamelCase = TRUE
-      )
-    comparatorCohortCount <-
-      renderTranslateQuerySql(
-        connection = connection,
-        sql = sqlCount,
-        cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable,
-        cohort_ids = comparatorCohortIds,
-        snakeCaseToCamelCase = TRUE
-      )
-
-    if (targetCohortCount == 0) {
-      ParallelLogger::logInfo("No instantiated target cohorts found in this iteration.")
-      return(NULL)
-    }
-    if (length(comparatorCohortCount) == 0) {
-      ParallelLogger::logInfo("No instantiated comparator cohorts found in this iteration.")
-      return(NULL)
-    }
-
-    ParallelLogger::logTrace("  - Creating cohort table subsets")
-    cohortSubsetSqlTargetDrop <-
-      " DROP TABLE IF EXISTS #target_subset;"
-
-    cohortSubsetSqlTarget <-
-      "--HINT DISTRIBUTE_ON_KEY(subject_id)
-      SELECT cohort_definition_id,
-      	subject_id,
-      	min(cohort_start_date) cohort_start_date,
-      	min(cohort_end_date) cohort_end_date
-      INTO #target_subset
-      FROM @cohort_database_schema.@cohort_table
-      WHERE cohort_definition_id IN (@cohort_ids)
-      GROUP BY cohort_definition_id,
-      	subject_id;"
-
-    cohortSubsetSqlComparatorDrop <-
-      "DROP TABLE IF EXISTS #comparator_subset;"
-
-    cohortSubsetSqlComparator <-
-      "--HINT DISTRIBUTE_ON_KEY(subject_id)
-      	SELECT *
-      	INTO #comparator_subset
-      	FROM @cohort_database_schema.@cohort_table
-      	WHERE cohort_definition_id IN (@cohort_ids);
-
-      {@observation_period_relationship} ? {
-      INSERT INTO #comparator_subset
-      SELECT -1 cohort_definition_id,
-            person_id subject_id,
-            observation_period_start_date cohort_start_date,
-            observation_period_end_date cohort_end_date
-      FROM @cdm_database_schema.observation_period;
-    }"
-
-
-    ParallelLogger::logTrace("   - Target subset")
-    ParallelLogger::logTrace("    - dropping temporary table")
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = cohortSubsetSqlTargetDrop,
-      tempEmulationSchema = tempEmulationSchema,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
-    ParallelLogger::logTrace("    - creating temporary table")
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = cohortSubsetSqlTarget,
-      cohort_database_schema = cohortDatabaseSchema,
-      cohort_table = cohortTable,
-      tempEmulationSchema = tempEmulationSchema,
-      cohort_ids = targetCohortIds,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
-
-    ParallelLogger::logTrace("   - Comparator subset")
-    ParallelLogger::logTrace("    - dropping temporary table")
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = cohortSubsetSqlComparatorDrop,
-      tempEmulationSchema = tempEmulationSchema,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
-    ParallelLogger::logTrace("    - creating temporary table")
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = cohortSubsetSqlComparator,
-      cohort_database_schema = cohortDatabaseSchema,
-      cohort_table = cohortTable,
-      cdm_database_schema = cdmDatabaseSchema,
-      tempEmulationSchema = tempEmulationSchema,
-      cohort_ids = comparatorCohortIds,
-      observation_period_relationship = observationPeriodRelationship,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
 
     timePeriods <- relationshipDays %>%
       dplyr::distinct() %>%
@@ -246,6 +134,10 @@ runCohortRelationshipDiagnostics <-
         time_id = timePeriods[i, ]$timeId,
         start_day_offset = timePeriods[i, ]$startDay,
         end_day_offset = timePeriods[i, ]$endDay,
+        target_cohort_ids = targetCohortIds,
+        comparator_cohort_ids = comparatorCohortIds,
+        cohort_database_schema = cohortDatabaseSchema,
+        cohort_table = cohortTable,
         snakeCaseToCamelCase = TRUE,
         andromeda = resultsInAndromeda,
         andromedaTableName = "temp"
@@ -275,20 +167,7 @@ runCohortRelationshipDiagnostics <-
         .data$endDay
       )
     resultsInAndromeda$timePeriods <- NULL
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = cohortSubsetSqlTargetDrop,
-      tempEmulationSchema = tempEmulationSchema,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = cohortSubsetSqlComparatorDrop,
-      tempEmulationSchema = tempEmulationSchema,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
+
     unlink(
       x = file.path(
         "resumeTimeId",
@@ -302,8 +181,6 @@ runCohortRelationshipDiagnostics <-
       signif(delta, 3),
       attr(delta, "units")
     ))
-    # changing the output from Andromeda object to in R-memory
-    # in next version explore making the output an Andromeda object
     data <-
       resultsInAndromeda$cohortRelationships %>% dplyr::collect()
     return(data)

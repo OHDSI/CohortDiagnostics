@@ -250,11 +250,13 @@ SELECT t.cohort_definition_id cohort_id,
 	-- target cohort days (no offset)
 	SUM(datediff(dd, c.cohort_start_date, c.cohort_end_date) + 1) c_days
 -- comparator cohort days (offset)
-FROM #target_subset t
-INNER JOIN #comparator_subset c ON c.subject_id = t.subject_id
+FROM @cohort_database_schema.@cohort_table t
+INNER JOIN @cohort_database_schema.@cohort_table c ON c.subject_id = t.subject_id
 	AND c.cohort_definition_id != t.cohort_definition_id
 	-- comparator cohort overlaps with target cohort during the offset period
 	AND c.cohort_end_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
 	AND c.cohort_start_date <= DATEADD(day, @end_day_offset, t.cohort_end_date)
+WHERE t.cohort_definition_id IN (@target_cohort_ids)
+    AND c.cohort_definition_id IN (@comparator_cohort_ids)
 GROUP BY t.cohort_definition_id,
 	c.cohort_definition_id;
