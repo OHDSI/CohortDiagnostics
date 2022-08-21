@@ -615,6 +615,7 @@ cohortDefinitionsModule <- function(id,
       }
     })
 
+    ### output cohortDefinitionConceptSetExpressionRowIsSelected----
     output$cohortDefinitionConceptSetExpressionRowIsSelected <- shiny::reactive(x = {
       return(!is.null(cohortDefinitionConceptSetExpressionSelected()))
     })
@@ -630,6 +631,15 @@ cohortDefinitionsModule <- function(id,
                          name = "isDataSourceEnvironment",
                          suspendWhenHidden = FALSE)
 
+    ### cohortConceptsetExpressionJson ---------------------------------------------------------
+    output$cohortConceptsetExpressionJson <- shiny::renderText({
+      if (is.null(cohortDefinitionConceptSetExpressionSelected())) {
+        return(NULL)
+      }
+      json <- cohortDefinitionConceptSetExpressionSelected()$json
+      return(json)
+    })
+    
     ### cohortDefinitionConceptSetDetails ---------------------------------------------------------
     cohortDefinitionConceptSetDetails <- shiny::reactive(x = {
       if (is.null(cohortDefinitionConceptSetExpressionSelected())) {
@@ -706,7 +716,7 @@ cohortDefinitionsModule <- function(id,
 
       })
 
-    ## Cohort Concept Set
+    ## Resolved Concepts ----
     ### getCohortDefinitionResolvedConceptsReactive ---------------------------------------------------------
     getCohortDefinitionResolvedConceptsReactive <-
       shiny::reactive(x = {
@@ -776,6 +786,7 @@ cohortDefinitionsModule <- function(id,
         return(output)
       })
 
+    ### output - cohortDefinitionResolvedConceptsTable ----
     output$cohortDefinitionResolvedConceptsTable <-
       reactable::renderReactable(expr = {
         if (input$conceptSetsType != 'Resolved') {
@@ -843,31 +854,7 @@ cohortDefinitionsModule <- function(id,
       })
 
 
-    ### getCountForConceptIdInCohortReactive ---------------------------------------------------------
-    getCountForConceptIdInCohortReactive <-
-      shiny::reactive(x = {
-        row <- selectedCohortDefinitionRow()
-        if (is.null(row)) {
-          return(NULL)
-        }
-        data <- getCountForConceptIdInCohort(
-          dataSource = dataSource,
-          databaseIds = databaseTable$databaseId,
-          cohortId = row$cohortId
-        )
-        return(data)
-      })
-
-    ## cohortConceptsetExpressionJson ---------------------------------------------------------
-    output$cohortConceptsetExpressionJson <- shiny::renderText({
-      if (is.null(cohortDefinitionConceptSetExpressionSelected())) {
-        return(NULL)
-      }
-      json <- cohortDefinitionConceptSetExpressionSelected()$json
-      return(json)
-    })
-
-    ## Other ---------------------------------------------------------
+    ## Orphan Concepts ---------------------------------------------------------
     ### getCohortDefinitionOrphanConceptsReactive ---------------------------------------------------------
     getCohortDefinitionOrphanConceptsReactive <-
       shiny::reactive(x = {
@@ -942,6 +929,7 @@ cohortDefinitionsModule <- function(id,
       return(output)
     })
 
+    ### output - cohortDefinitionOrphanConceptTable ----
     output$cohortDefinitionOrphanConceptTable <-
       reactable::renderReactable(expr = {
         if (input$conceptSetsType != 'Orphan concepts') {
@@ -1005,6 +993,7 @@ cohortDefinitionsModule <- function(id,
         return(displayTable)
       })
 
+    ## Mapped Concepts ---------------------------------------------------------
     ### getCohortDefinitionMappedConceptsReactive ---------------------------------------------------------
     getCohortDefinitionMappedConceptsReactive <-
       shiny::reactive(x = {
@@ -1078,7 +1067,7 @@ cohortDefinitionsModule <- function(id,
         return(output)
       })
     
-
+    ### output - cohortDefinitionMappedConceptsTable ----
     output$cohortDefinitionMappedConceptsTable <-
       reactable::renderReactable(expr = {
         if (input$conceptSetsType != 'Mapped') {
@@ -1149,6 +1138,22 @@ cohortDefinitionsModule <- function(id,
       })
 
 
+    ## Other ----
+    ### getCountForConceptIdInCohortReactive ---------------------------------------------------------
+    getCountForConceptIdInCohortReactive <-
+      shiny::reactive(x = {
+        row <- selectedCohortDefinitionRow()
+        if (is.null(row)) {
+          return(NULL)
+        }
+        data <- getCountForConceptIdInCohort(
+          dataSource = dataSource,
+          databaseIds = databaseTable$databaseId,
+          cohortId = row$cohortId
+        )
+        return(data)
+      })
+    
     ## Export all cohort details ----
     output$exportAllCohortDetails <- shiny::downloadHandler(
       filename = function() {
