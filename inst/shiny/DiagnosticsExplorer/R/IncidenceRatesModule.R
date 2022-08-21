@@ -563,9 +563,14 @@ incidenceRatesModule <- function(id,
           dplyr::distinct(.data$calendarYear) %>%
           dplyr::arrange(.data$calendarYear)
 
-        minValue <- min(calenderFilter$calendarYear)
-
-        maxValue <- max(calenderFilter$calendarYear)
+        minValue <- 0
+        maxValue <- 99999
+        if (hasData(calenderFilter$calendarYear)) {
+          minValue <- min(calenderFilter$calendarYear)
+        }
+        if (hasData(calenderFilter$calendarYear)) {
+          maxValue <- max(calenderFilter$calendarYear)
+        }
 
         shiny::updateSliderInput(
           session = session,
