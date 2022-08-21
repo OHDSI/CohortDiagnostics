@@ -547,7 +547,7 @@ resolvedConceptSet <- function(dataSource,
   checkmate::reportAssertions(collection = errorMessage)
   sqlResolved <- "SELECT DISTINCT rc.cohort_id,
                     	rc.concept_set_id,
-                    	c.concept_id,
+                    	rc.concept_id,
                     	c.concept_name,
                     	c.domain_id,
                     	c.vocabulary_id,
@@ -556,7 +556,7 @@ resolvedConceptSet <- function(dataSource,
                     	c.concept_code,
                     	rc.database_id
                     FROM @results_database_schema.@resolved_concepts_table rc
-                    INNER JOIN @results_database_schema.@concept_table c
+                    LEFT JOIN @results_database_schema.@concept_table c
                     ON rc.concept_id = c.concept_id
                     WHERE rc.database_id IN (@databaseIds)
                     	AND rc.cohort_id = @cohortId
