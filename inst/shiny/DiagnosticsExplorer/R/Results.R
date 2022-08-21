@@ -561,7 +561,7 @@ resolvedConceptSet <- function(dataSource,
                     WHERE rc.database_id IN (@databaseIds)
                     	AND rc.cohort_id = @cohortId
                       {@concept_set_id != \"\"} ? { AND rc.concept_set_id IN (@concept_set_id)}
-                    ORDER BY c.concept_id;"
+                    ORDER BY rc.concept_id;"
   resolved <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
