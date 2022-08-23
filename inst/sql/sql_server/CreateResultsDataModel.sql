@@ -38,6 +38,7 @@
 DROP TABLE IF EXISTS @results_schema.@annotation;
 DROP TABLE IF EXISTS @results_schema.@annotation_link;
 DROP TABLE IF EXISTS @results_schema.@annotation_attributes;
+DROP TABLE IF EXISTS @results_schema.@cd_version;
 DROP TABLE IF EXISTS @results_schema.@cohort;
 DROP TABLE IF EXISTS @results_schema.@cohort_count;
 DROP TABLE IF EXISTS @results_schema.@cohort_inclusion;
@@ -70,7 +71,7 @@ DROP TABLE IF EXISTS @results_schema.@visit_context;
 DROP TABLE IF EXISTS @results_schema.@vocabulary;
 
 -- Create tables
---Table annotation
+--Table cd_version
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@cd_version (
     version_number VARCHAR PRIMARY KEY
