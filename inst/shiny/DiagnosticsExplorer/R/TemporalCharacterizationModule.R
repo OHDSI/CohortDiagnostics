@@ -133,7 +133,7 @@ temporalCharacterizationModule <- function(id,
           analysisNameOptions
         temporalCharcterizationAnalysisOptionsSelected <-
           temporalAnalysisRef %>%
-          dplyr::filter(.data$domainId %in% c('Condition')) %>%
+          dplyr::filter(.data$domainId %in% c('Condition', 'Cohort')) %>%
           dplyr::filter(.data$isBinary == 'Y') %>%
           dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
           dplyr::pull(.data$analysisName) %>%
@@ -159,7 +159,7 @@ temporalCharacterizationModule <- function(id,
           domainIdOptions
         temporalCharcterizationDomainOptionsSelected <-
           temporalAnalysisRef %>%
-          dplyr::filter(.data$domainId %in% c('Condition')) %>%
+          dplyr::filter(.data$domainId %in% c('Condition', 'Cohort')) %>%
           dplyr::filter(.data$isBinary == 'Y') %>%
           dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
           dplyr::pull(.data$domainId) %>%

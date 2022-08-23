@@ -260,6 +260,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
 
     ## ReactiveValue: selectedDatabaseIds ----
     selectedDatabaseIds <- reactiveVal(databaseChoices[[1]])
+    ### databaseId multi select ----
     shiny::observeEvent(eventExpr = {
       list(input$databases_open)
     }, handlerExpr = {
@@ -267,7 +268,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         selectedDatabaseIds(input$databases)
       }
     })
-
+    ### databaseId single select ----
     shiny::observeEvent(eventExpr = {
       list(input$database_open)
     }, handlerExpr = {
@@ -478,7 +479,9 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       return(expression)
     })
 
-
+    
+    ## Characterization outputs ----
+    ### characterizationOutput----
     characterizationOutput <-
       shiny::reactive(x = {
         progress <- shiny::Progress$new()
@@ -502,7 +505,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         return(data)
       })
 
-
+    ### temporalCharacterizationOutput----
     temporalCharacterizationOutput <-
       shiny::reactive(x = {
         progress <- shiny::Progress$new()
@@ -539,13 +542,11 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         return(data)
       })
 
+    ### compareCharacterizationOutput----
     compareCharacterizationOutput <-
       shiny::reactive(x = {
         dataTarget <-
           temporalCharacterizationOutput()
-        if (!hasData(dataTarget)) {
-          return(NULL)
-        }
 
         progress <- shiny::Progress$new()
         on.exit(progress$close())
@@ -565,26 +566,12 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
           databaseIds = input$database,
           temporalCovariateValueDist = FALSE
         )
-        if (!hasData(dataComparator)) {
-          return(NULL)
-        }
+        
         data <- NULL
-        data$covariateValue <-
-          dplyr::bind_rows(
-            dataTarget$covariateValue,
-            dataComparator$covariateValue
-          )
-        if (!hasData(data$covariateValue)) {
-          data$covariateValue <- NULL
-        }
-        data$covariateValueDist <-
-          dplyr::bind_rows(
-            dataTarget$covariateValueDist,
-            dataComparator$covariateValueDist
-          )
-        if (!hasData(data$covariateValueDist)) {
-          data$covariateValueDist <- NULL
-        }
+        data$targetCohortCovariateValue <- dataTarget$covariateValue
+        data$comparatorCohortCovariateValue <- dataComparator$covariateValue
+        data$targetCohortCovariateValueDist <- dataTarget$covariateValueDist
+        data$comparatorCohortCovariateValueDist <- dataComparator$covariateValueDist
         return(data)
       })
 

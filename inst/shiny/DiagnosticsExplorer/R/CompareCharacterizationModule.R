@@ -8,6 +8,7 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   domains <-
     c(
       "Condition",
+      "Cohort",
       "Device",
       "Drug",
       "Measurement",
@@ -76,6 +77,7 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   colors <-
     c(
       "#1B9E77",
+      "#666666",
       "#D95F02",
       "#7570B3",
       "#E7298A",
@@ -306,7 +308,7 @@ compareCohortCharacterizationView <- function(id) {
   )
 }
 
-
+# compareCohortCharacterizationModule ----
 compareCohortCharacterizationModule <- function(id,
                                                 dataSource,
                                                 selectedCohort,
@@ -346,8 +348,8 @@ compareCohortCharacterizationModule <- function(id,
             collapse = ", ")
     })
 
-    # Compare cohort characterization --------------------------------------------
-    ### compareCohortCharacterizationAnalysisNameFilter -----
+    ## filters -----
+    ### compareCohortCharacterizationAnalysisNameFilter --------------------------------------------
     shiny::observe({
       characterizationAnalysisOptionsUniverse <- NULL
       charcterizationAnalysisOptionsSelected <- NULL
@@ -356,7 +358,7 @@ compareCohortCharacterizationModule <- function(id,
         characterizationAnalysisOptionsUniverse <- analysisNameOptions
         charcterizationAnalysisOptionsSelected <-
           temporalAnalysisRef %>%
-          dplyr::filter(.data$domainId %in% c('Condition')) %>%
+          dplyr::filter(.data$domainId %in% c('Condition', 'Cohort')) %>%
           dplyr::filter(.data$isBinary == 'Y') %>%
           dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
           dplyr::pull(.data$analysisName) %>%
@@ -382,7 +384,7 @@ compareCohortCharacterizationModule <- function(id,
         characterizationDomainOptionsUniverse <- domainIdOptions
         charcterizationDomainOptionsSelected <-
           temporalAnalysisRef %>%
-          dplyr::filter(.data$domainId %in% c('Condition')) %>%
+          dplyr::filter(.data$domainId %in% c('Condition', 'Cohort')) %>%
           dplyr::filter(.data$isBinary == 'Y') %>%
           dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
           dplyr::pull(.data$domainId) %>%
@@ -399,9 +401,17 @@ compareCohortCharacterizationModule <- function(id,
     })
 
     ## compareCohortCharacterizationDataFiltered ------------
-    compareCohortCharacterizationDataFiltered <- shiny::reactive({
-      validate(need(length(selectedDatabaseIds()) == 1, "One data source must be selected"))
-      validate(need(length(targetCohortId()) == 1, "One target cohort must be selected"))
+    ### compareCohortCharacterizationDataFiltered1 -----
+    #### filter step 1 - this goes to pretty table, no filter by analysis, domain etc
+    compareCohortCharacterizationDataFiltered1 <- shiny::reactive({
+      validate(need(
+        length(selectedDatabaseIds()) == 1,
+        "One data source must be selected"
+      ))
+      validate(need(
+        length(targetCohortId()) == 1,
+        "One target cohort must be selected"
+      ))
       validate(need(
         length(comparatorCohortId()) == 1,
         "One comparator cohort must be selected"
@@ -412,38 +422,131 @@ compareCohortCharacterizationModule <- function(id,
           "Target and comparator cohorts cannot be the same"
         )
       )
-
       data <- characterizationOutputMenu()
       if (!hasData(data)) {
         return(NULL)
       }
-
-      data <- data$covariateValue
-      if (!hasData(data)) {
+      
+      validate(need(
+        hasData(data$targetCohortCovariateValue),
+        paste0(
+          "Target cohort ",
+          targetCohortId(),
+          " does not appear to have characterization data. Was it run? Maybe the cohort has no count?"
+        )
+      ))
+      validate(need(
+        hasData(data$comparatorCohortCovariateValue),
+        paste0(
+          "Comparator cohort ",
+          comparatorCohortId(),
+          " does not appear to have characterization data. Was it run? Maybe the cohort has no count?"
+        )
+      ))
+      
+      if (isTRUE(input$compareCharacterizationFilterLowValues)) {
+        # restrict to covariate in which either target or compartor has value above threshold
+        covariates <- dplyr::bind_rows(
+          data$targetCohortCovariateValue %>%
+            dplyr::filter(.data$mean > 0.01),
+          data$comparatorCohortCovariateValue %>%
+            dplyr::filter(.data$mean > 0.01)
+        ) |>
+          dplyr::select(
+            "timeId",
+            "startDay",
+            "endDay",
+            "temporalChoices",
+            "analysisId",
+            "covariateId",
+            "covariateName",
+            "isBinary"
+          ) |>
+          dplyr::distinct()
+      } else {
+        # do not filter
+        covariates <- dplyr::bind_rows(
+          data$targetCohortCovariateValue %>%
+            dplyr::filter(.data$mean > 0.01),
+          data$comparatorCohortCovariateValue %>%
+            dplyr::filter(.data$mean > 0.01)
+        ) |>
+          dplyr::select(
+            "timeId",
+            "startDay",
+            "endDay",
+            "temporalChoices",
+            "analysisId",
+            "covariateId",
+            "covariateName",
+            "isBinary"
+          ) |>
+          dplyr::distinct()
+      }
+      
+      dataCovariateValue <-
+        covariates |>
+        dplyr::left_join(
+          dplyr::bind_rows(
+            data$targetCohortCovariateValue,
+            data$comparatorCohortCovariateValue
+          ),
+          by = c(
+            "timeId",
+            "startDay",
+            "endDay",
+            "temporalChoices",
+            "analysisId",
+            "covariateId",
+            "covariateName",
+            "isBinary"
+          )
+        ) |>
+        dplyr::select(dplyr::all_of(colnames(data$targetCohortCovariateValue)))
+      
+      if (!hasData(dataCovariateValue)) {
         return(NULL)
       }
       
-      if (isTRUE(input$compareCharacterizationFilterLowValues)) {
-        data <- data %>% 
-          dplyr::filter(.data$mean > 0.01)
-      }
+      validate(need(
+        hasData(dataCovariateValue |> dplyr::filter(.data$cohortId %in% c(targetCohortId(
+        )))),
+        paste0(
+          "Target cohort ",
+          targetCohortId(),
+          " has no data after filtering based on selections."
+        )
+      ))
+      validate(need(
+        hasData(dataCovariateValue |> dplyr::filter(
+          .data$cohortId %in% c(comparatorCohortId())
+        )),
+        paste0(
+          "Comparator cohort ",
+          comparatorCohortId(),
+          " has no data after filtering based on selections."
+        )
+      ))
       
+      if (!hasData(dataCovariateValue)) {
+        return(NULL)
+      }
+      return(dataCovariateValue)
+    })
+    
+    ### compareCohortCharacterizationDataFiltered2 ------------
+    ### no analysis, domain id 
+    compareCohortCharacterizationDataFiltered2 <- shiny::reactive({
+      data <- compareCohortCharacterizationDataFiltered1()
+      if (!hasData(data)) {
+        return(NULL)
+      }
       data <- data %>%
         dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
         dplyr::filter(.data$timeId %in% selectedTimeIds()) %>%
         dplyr::filter(.data$cohortId %in% c(targetCohortId(), comparatorCohortId())) %>%
         dplyr::filter(.data$databaseId %in% selectedDatabaseIds())
-
-      if (input$charCompareType == "Raw") {
-        if (input$compareCharacterizationProportionOrContinuous == "Proportion") {
-          data <- data %>%
-            dplyr::filter(.data$isBinary == "Y")
-        } else if (input$compareCharacterizationProportionOrContinuous == "Continuous") {
-          data <- data %>%
-            dplyr::filter(.data$isBinary == "N")
-        }
-      }
-
+      
       if (input$compareCharacterizationProportionOrContinuous == "Proportion") {
         data <- data %>%
           dplyr::filter(.data$isBinary == "Y")
@@ -451,11 +554,11 @@ compareCohortCharacterizationModule <- function(id,
         data <- data %>%
           dplyr::filter(.data$isBinary == "N")
       }
-
+      
       data <- data %>%
         dplyr::filter(.data$analysisName %in% input$compareCohortCharacterizationAnalysisNameFilter) %>%
         dplyr::filter(.data$domainId %in% input$compareCohortcharacterizationDomainIdFilter)
-
+      
       if (hasData(selectedConceptSets())) {
         if (hasData(getFilteredConceptIds())) {
           data <- data %>%
@@ -467,14 +570,15 @@ compareCohortCharacterizationModule <- function(id,
       }
       return(data)
     })
+    
 
-    ## compareCohortCharacterizationBalanceData ----------------------------------------
-    compareCohortCharacterizationBalanceData <- shiny::reactive({
-      data <- compareCohortCharacterizationDataFiltered()
+    ## Using compare data before filter ----
+    ### compareCohortCharacterizationBalanceData1 ----------------------------------------
+    compareCohortCharacterizationBalanceData1 <- shiny::reactive({
+      data <- compareCohortCharacterizationDataFiltered1()
       if (!hasData(data)) {
         return(NULL)
       }
-
       covs1 <- data %>%
         dplyr::filter(.data$cohortId %in% c(targetCohortId()))
       if (!hasData(covs1)) {
@@ -485,21 +589,21 @@ compareCohortCharacterizationModule <- function(id,
       if (!hasData(covs2)) {
         return(NULL)
       }
-
+      
       balance <- compareCohortCharacteristics(covs1, covs2)
       return(balance)
     })
-
-    ## compareCohortCharacterizationPrettyTable ----------------------------------------
+    
+    
+    ### compareCohortCharacterizationPrettyTable ----------------------------------------
     compareCohortCharacterizationPrettyTable <- shiny::reactive(x = {
       if (!input$charCompareType == "Pretty table") {
         return(NULL)
       }
-      data <- compareCohortCharacterizationBalanceData()
+      data <- compareCohortCharacterizationBalanceData1()
       if (!hasData(data)) {
         return(NULL)
       }
-
       showDataAsPercent <- TRUE
 
       if (showDataAsPercent) {
@@ -608,12 +712,35 @@ compareCohortCharacterizationModule <- function(id,
       return(table)
     })
 
-    ## compareCohortCharacterizationRawTable ----------------------------------------
+    
+    ## Using compare cohort data after filter -----
+    ### compareCohortCharacterizationBalanceData2 ----------------------------------------
+    compareCohortCharacterizationBalanceData2 <- shiny::reactive({
+      data <- compareCohortCharacterizationDataFiltered2()
+      if (!hasData(data)) {
+        return(NULL)
+      }
+      covs1 <- data %>%
+        dplyr::filter(.data$cohortId %in% c(targetCohortId()))
+      if (!hasData(covs1)) {
+        return(NULL)
+      }
+      covs2 <- data %>%
+        dplyr::filter(.data$cohortId %in% c(comparatorCohortId()))
+      if (!hasData(covs2)) {
+        return(NULL)
+      }
+      balance <- compareCohortCharacteristics(covs1, covs2)
+      return(balance)
+    })
+    
+    
+    ### compareCohortCharacterizationRawTable ----------------------------------------
     compareCohortCharacterizationRawTable <- shiny::reactive(x = {
       if (!input$charCompareType == "Raw table") {
         return(NULL)
       }
-      data <- compareCohortCharacterizationBalanceData()
+      data <- compareCohortCharacterizationBalanceData2()
       if (!hasData(data)) {
         return(NULL)
       }
@@ -704,25 +831,27 @@ compareCohortCharacterizationModule <- function(id,
         if (!input$charCompareType == "Plot") {
           return(NULL)
         }
-        data <- compareCohortCharacterizationBalanceData()
+        data <- compareCohortCharacterizationBalanceData2()
         validate(need(
           hasData(data),
           "No data available for selected combination."
         ))
-
+        
         distinctTemporalChoices <- unique(temporalChoices$temporalChoices)
         data <- data %>%
           dplyr::arrange(factor(.data$temporalChoices, levels = distinctTemporalChoices)) %>%
           dplyr::mutate(temporalChoices = factor(.data$temporalChoices, levels = unique(.data$temporalChoices)))
 
         plot <-
-          plotTemporalCompareStandardizedDifference(
-            balance = data,
-            shortNameRef = cohortTable,
-            xLimitMin = 0,
-            xLimitMax = 1,
-            yLimitMin = 0,
-            yLimitMax = 1
+          suppressWarnings(
+            plotTemporalCompareStandardizedDifference(
+              balance = data,
+              shortNameRef = cohortTable,
+              xLimitMin = 0,
+              xLimitMax = 1,
+              yLimitMin = 0,
+              yLimitMax = 1
+            )
           )
         validate(need(
           !is.null(plot),

@@ -151,7 +151,7 @@ characterizationModule <- function(id,
       if (hasData(temporalAnalysisRef)) {
         characterizationAnalysisOptionsUniverse <- analysisNameOptions
         charcterizationAnalysisOptionsSelected <- temporalAnalysisRef %>%
-          dplyr::filter(.data$domainId %in% c('Condition')) %>% 
+          dplyr::filter(.data$domainId %in% c('Condition', 'Cohort')) %>% 
           dplyr::filter(.data$isBinary == 'Y') %>% 
           dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
           dplyr::pull(.data$analysisName) %>%
@@ -175,7 +175,7 @@ characterizationModule <- function(id,
       if (hasData(temporalAnalysisRef)) {
         characterizationDomainOptionsUniverse <- domainIdOptions
         charcterizationDomainOptionsSelected <- temporalAnalysisRef %>%
-          dplyr::filter(.data$domainId %in% c('Condition')) %>% 
+          dplyr::filter(.data$domainId %in% c('Condition', 'Cohort')) %>% 
           dplyr::filter(.data$isBinary == 'Y') %>% 
           dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
           dplyr::pull(.data$domainId) %>%
