@@ -454,7 +454,7 @@ compareCohortCharacterizationModule <- function(id,
             dplyr::filter(.data$mean > 0.01),
           data$comparatorCohortCovariateValue %>%
             dplyr::filter(.data$mean > 0.01)
-        ) |>
+        ) %>%
           dplyr::select(
             "timeId",
             "startDay",
@@ -464,7 +464,7 @@ compareCohortCharacterizationModule <- function(id,
             "covariateId",
             "covariateName",
             "isBinary"
-          ) |>
+          ) %>%
           dplyr::distinct()
       } else {
         # do not filter
@@ -473,7 +473,7 @@ compareCohortCharacterizationModule <- function(id,
             dplyr::filter(.data$mean > 0.01),
           data$comparatorCohortCovariateValue %>%
             dplyr::filter(.data$mean > 0.01)
-        ) |>
+        ) %>%
           dplyr::select(
             "timeId",
             "startDay",
@@ -483,12 +483,12 @@ compareCohortCharacterizationModule <- function(id,
             "covariateId",
             "covariateName",
             "isBinary"
-          ) |>
+          ) %>%
           dplyr::distinct()
       }
       
       dataCovariateValue <-
-        covariates |>
+        covariates %>%
         dplyr::left_join(
           dplyr::bind_rows(
             data$targetCohortCovariateValue,
@@ -504,7 +504,7 @@ compareCohortCharacterizationModule <- function(id,
             "covariateName",
             "isBinary"
           )
-        ) |>
+        ) %>%
         dplyr::select(dplyr::all_of(colnames(data$targetCohortCovariateValue)))
       
       if (!hasData(dataCovariateValue)) {
@@ -512,7 +512,7 @@ compareCohortCharacterizationModule <- function(id,
       }
       
       validate(need(
-        hasData(dataCovariateValue |> dplyr::filter(.data$cohortId %in% c(targetCohortId(
+        hasData(dataCovariateValue %>% dplyr::filter(.data$cohortId %in% c(targetCohortId(
         )))),
         paste0(
           "Target cohort ",
@@ -521,7 +521,7 @@ compareCohortCharacterizationModule <- function(id,
         )
       ))
       validate(need(
-        hasData(dataCovariateValue |> dplyr::filter(
+        hasData(dataCovariateValue %>% dplyr::filter(
           .data$cohortId %in% c(comparatorCohortId())
         )),
         paste0(

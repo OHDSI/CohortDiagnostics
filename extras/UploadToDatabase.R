@@ -46,5 +46,21 @@ for (i in (1:length(listOfZipFilesToUpload))) {
   )
 }
 
+tablesInResultsDataModel <- CohortDiagnostics::getResultsDataModelSpecifications() |> 
+  dplyr::select(.data$tableName) |> 
+  dplyr::distinct() |> 
+  dplyr::arrange() |> 
+  dplyr::pull()
+
+
+connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+for (i in (1:length(tablesInResultsDataModel))) {
+  # vacuum
+  DatabaseConnector::executeSql(connection = connection, sql = "VACCUM @database_schema.@table_name;
+                                                                ANALYZE @database_schema.@table_name;",
+                                database_schema = resultsSchema,
+                                table_name = tablesInResultsDataModel[[i]])
+}
+
 CohortDiagnostics::launchDiagnosticsExplorer(connectionDetails = connectionDetails,
                                              resultsDatabaseSchema = resultsSchema)
