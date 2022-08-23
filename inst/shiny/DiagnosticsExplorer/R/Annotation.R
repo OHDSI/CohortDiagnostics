@@ -134,6 +134,12 @@ annotationModule <- function(id,
 
     getAnnotationReactive <- shiny::reactive({
       reloadAnnotationSection()
+      if (!hasData(selectedDatabaseIds())) {
+        return(NULL)
+      }
+      if (!hasData(inputCohortIds())) {
+        return(NULL)
+      }
       results <- getAnnotationResult(
         dataSource = dataSource,
         diagnosticsId = id,
