@@ -121,7 +121,7 @@ temporalCharacterizationModule <- function(id,
             collapse = ", ")
     })
 
-    # Temporal characterization ------------
+    ## Filters ------------
 
     ### temporalCharacterizationAnalysisNameFilter ----
     shiny::observe({

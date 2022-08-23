@@ -898,7 +898,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                      temporalCharacterizationTimeIdChoices = envir$temporalCharacterizationTimeIdChoices,
                                      characterizationOutputForCharacterizationMenu = characterizationOutput)
 
-      compareCohortCharacterizationModule("compareCohortCharacterization",
+      compareCohortCharacterizationModule(id = "compareCohortCharacterization",
                                           dataSource = dataSource,
                                           selectedCohort = selectedCohort,
                                           selectedDatabaseIds = selectedDatabaseIds,
@@ -919,7 +919,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                           temporalChoices = envir$temporalChoices,
                                           prettyTable1Specifications = envir$prettyTable1Specifications)
 
-      compareCohortCharacterizationModule("compareTemporalCohortCharacterization",
+      compareCohortCharacterizationModule(id = "compareTemporalCohortCharacterization",
                                           dataSource = dataSource,
                                           selectedCohort = selectedCohort,
                                           selectedDatabaseIds = selectedDatabaseIds,
