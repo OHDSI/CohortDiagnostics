@@ -184,7 +184,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       }
     }
 
-    # Reacive: targetCohortId
+    # Reatcive: targetCohortId
     targetCohortId <- shiny::reactive({
       return(cohortTable$cohortId[cohortTable$compoundName == input$targetCohort])
     })
@@ -204,33 +204,34 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       }
     })
 
-    # Reacive: comparatorCohortId
+    # Reactive: comparatorCohortId
     comparatorCohortId <- shiny::reactive({
-      return(cohortTable$cohortId[cohortTable$compoundName == input$comparatorCohort])
-    })
-
-    selectedConceptSets <- reactiveVal(NULL)
-    shiny::observeEvent(eventExpr = {
-      list(
-        input$conceptSetsSelected_open,
-        input$tabs
-      )
-    }, handlerExpr = {
-      if (isFALSE(input$conceptSetsSelected_open) || !is.null(input$tabs)) {
-        selectedConceptSets(input$conceptSetsSelected)
+      if (input$tabs %in% c('compareCohortCharacterization',
+                            'compareTemporalCharacterization',
+                            'cohortOverlap')) {
+        return(cohortTable$cohortId[cohortTable$compoundName == input$comparatorCohort])
+      } else {
+        return(NULL)
       }
     })
 
-    # conceptSetIds ----
-    conceptSetIds <- shiny::reactive(x = {
-      conceptSetsFiltered <- conceptSets %>%
-        dplyr::filter(.data$conceptSetName %in% selectedConceptSets()) %>%
-        dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
-        dplyr::select(.data$conceptSetId) %>%
-        dplyr::pull() %>%
-        unique()
-      return(conceptSetsFiltered)
+    # ReactiveValue: selectedConceptSets ----
+    # can't seem to make the drop down to wait till close prior to triggering
+    selectedConceptSets <- reactiveVal(NULL)
+    shiny::observeEvent(eventExpr = {
+      list(input$conceptSetsSelected)
+    }, handlerExpr = {
+      if (hasData(input$conceptSetsSelected)) { #input$conceptSetsSelected_open seems to be always NULL
+        selectedConceptSets(conceptSets |>
+                              dplyr::filter(
+                                .data$compositeConceptSetName %in% c(input$conceptSetsSelected)
+                              ))
+      } else {
+        selectedConceptSets(NULL)
+      }
     })
+    
+    
 
     timeIds <- reactiveVal(NULL)
     shiny::observeEvent(eventExpr = {
@@ -455,30 +456,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
     })
 
 
-    # Characterization (Shared across) -------------------------------------------------
-    ## Reactive objects ----
-    ### getConceptSetNameForFilter ----
-    getConceptSetNameForFilter <- shiny::reactive(x = {
-      if (!hasData(targetCohortId()) || !hasData(selectedDatabaseIds())) {
-        return(NULL)
-      }
-
-      jsonExpression <- cohortSubset() %>%
-        dplyr::filter(.data$cohortId == targetCohortId()) %>%
-        dplyr::select(.data$json)
-      jsonExpression <-
-        RJSONIO::fromJSON(jsonExpression$json, digits = 23)
-      expression <-
-        getConceptSetDetailsFromCohortDefinition(cohortDefinitionExpression = jsonExpression)
-      if (is.null(expression)) {
-        return(NULL)
-      }
-
-      expression <- expression$conceptSetExpression %>%
-        dplyr::select(.data$name)
-      return(expression)
-    })
-
+    # Characterization (Shared across) ---------
     
     ## Characterization outputs ----
     ### characterizationOutput----
@@ -576,14 +554,13 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       })
 
     shiny::observe({
-      subset <- getConceptSetNameForFilter()$name %>%
-        sort() %>%
-        unique()
+      subset <- conceptSets$compositeConceptSetName
       shinyWidgets::updatePickerInput(
         session = session,
         inputId = "conceptSetsSelected",
         choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = subset
+        choices = subset,
+        selected = character(0)
       )
     })
 
@@ -704,7 +681,8 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
           resolvedConceptSet(
             dataSource = dataSource,
             databaseIds = as.character(databaseTable$databaseId),
-            cohortId = targetCohortId()
+            cohortId = selectedConceptSets()$cohortId |> unique(),
+            conceptSetId = selectedConceptSets()$conceptSetId |> unique()
           )
         if (!hasData(output)) {
           return(NULL)
@@ -718,11 +696,13 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         progress <- shiny::Progress$new()
         on.exit(progress$close())
         progress$set(message = "Getting concepts mapped to concept ids resolved by concept set expression (may take time)", value = 0)
+ 
         output <-
           mappedConceptSet(
             dataSource = dataSource,
             databaseIds = as.character(databaseTable$databaseId),
-            cohortId = targetCohortId()
+            cohortId = selectedConceptSets()$cohortId |> unique(),
+            conceptSetId = selectedConceptSets()$conceptSetId |> unique()
           )
         if (!hasData(output)) {
           return(NULL)
@@ -730,26 +710,33 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         return(output)
       })
 
-    getFilteredConceptIds <- shiny::reactive({
+    ## getConceptIdsToFilterCharacterizationOutput----
+    getConceptIdsToFilterCharacterizationOutput <- shiny::reactive({
       validate(need(hasData(selectedDatabaseIds()), "No data sources chosen"))
       validate(need(hasData(targetCohortId()), "No cohort chosen"))
-      validate(need(hasData(conceptSetIds()), "No concept set id chosen"))
+      validate(need(hasData(selectedConceptSets()), "No concept set id chosen"))
       resolved <- getResolvedConcepts()
       mapped <- getMappedConcepts()
       output <- c()
       if (hasData(resolved)) {
         resolved <- resolved %>%
-          dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-          dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
-          dplyr::filter(.data$conceptSetId %in% conceptSetIds())
-        output <- c(output, resolved$conceptId) %>% unique()
+          dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId) |> 
+          dplyr::distinct() |> 
+          dplyr::inner_join(
+            selectedConceptSets() |> 
+              dplyr::select(.data$conceptSetId, 
+                            .data$cohortId),
+            by = c("cohortId", "conceptSetId")
+          ) |> 
+          dplyr::pull(.data$conceptId) |> 
+          unique()
+        output <- c(output, resolved) %>% unique()
       }
       if (hasData(mapped)) {
         mapped <- mapped %>%
-          dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-          dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
-          dplyr::filter(.data$conceptSetId %in% conceptSetIds())
-        output <- c(output, mapped$conceptId) %>% unique()
+          dplyr::pull(.data$conceptId) |> 
+          unique()
+        output <- c(output, mapped) %>% unique()
       }
       if (hasData(output)) {
         return(output)
@@ -765,7 +752,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                  selectedDatabaseIds = selectedDatabaseIds,
                                  targetCohortId = targetCohortId,
                                  selectedConceptSets = selectedConceptSets,
-                                 getFilteredConceptIds = getFilteredConceptIds,
+                                 getFilteredConceptIds = getConceptIdsToFilterCharacterizationOutput,
                                  cohortTable = cohortTable,
                                  databaseTable = databaseTable)
     }
@@ -829,34 +816,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
     }
 
     if ("temporalCovariateValue" %in% enabledTabs) {
-      ### getResolvedAndMappedConceptIdsForFilters ----
-      getResolvedAndMappedConceptIdsForFilters <- shiny::reactive({
-        validate(need(hasData(selectedDatabaseIds()), "No data sources chosen"))
-        validate(need(hasData(targetCohortId()), "No cohort chosen"))
-        validate(need(hasData(conceptSetIds()), "No concept set id chosen"))
-        resolved <- getResolvedConcepts()
-        mapped <- getMappedConcepts()
-        output <- c()
-        if (hasData(resolved)) {
-          resolved <- resolved %>%
-            dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-            dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
-            dplyr::filter(.data$conceptSetId %in% conceptSetIds())
-          output <- c(output, resolved$conceptId) %>% unique()
-        }
-        if (hasData(mapped)) {
-          mapped <- mapped %>%
-            dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-            dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
-            dplyr::filter(.data$conceptSetId %in% conceptSetIds())
-          output <- c(output, mapped$conceptId) %>% unique()
-        }
-        if (hasData(output)) {
-          return(output)
-        } else {
-          return(NULL)
-        }
-      })
 
       timeDistributionsModule(id = "timeDistributions",
                               dataSource = dataSource,
@@ -876,7 +835,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                              temporalAnalysisRef = envir$temporalAnalysisRef,
                              analysisNameOptions = envir$analysisNameOptions,
                              analysisIdInCohortCharacterization = envir$analysisIdInCohortCharacterization,
-                             getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
+                             getConceptIdsToFilterCharacterizationOutput = getConceptIdsToFilterCharacterizationOutput,
                              selectedConceptSets = selectedConceptSets,
                              characterizationMenuOutput = characterizationOutput, # This name must be changed
                              characterizationTimeIdChoices = envir$characterizationTimeIdChoices)
@@ -891,7 +850,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                      temporalAnalysisRef = envir$temporalAnalysisRef,
                                      analysisNameOptions = envir$analysisNameOptions,
                                      selectedTemporalTimeIds = selectedTemporalTimeIds,
-                                     getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
+                                     getConceptIdsToFilterCharacterizationOutput = getConceptIdsToFilterCharacterizationOutput,
                                      selectedConceptSets = selectedConceptSets,
                                      analysisIdInTemporalCharacterization = envir$analysisIdInTemporalCharacterization,
                                      domainIdOptions = envir$domainIdOptions,
@@ -908,7 +867,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                           selectedConceptSets = selectedConceptSets,
                                           selectedTimeIds = shiny::reactive({ c(envir$characterizationTimeIdChoices$timeId %>% unique(), NA) }),
                                           characterizationOutputMenu = compareCharacterizationOutput,
-                                          getFilteredConceptIds = getFilteredConceptIds,
+                                          getConceptIdsToFilterCharacterizationOutput = getConceptIdsToFilterCharacterizationOutput,
                                           cohortTable = cohortTable,
                                           databaseTable = databaseTable,
                                           temporalAnalysisRef = envir$temporalAnalysisRef,
@@ -929,7 +888,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                           selectedConceptSets = selectedConceptSets,
                                           selectedTimeIds = selectedTemporalTimeIds,
                                           characterizationOutputMenu = compareCharacterizationOutput,
-                                          getFilteredConceptIds = getFilteredConceptIds,
+                                          getConceptIdsToFilterCharacterizationOutput = getConceptIdsToFilterCharacterizationOutput,
                                           cohortTable = cohortTable,
                                           databaseTable = databaseTable,
                                           temporalAnalysisRef = envir$temporalAnalysisRef,

@@ -106,7 +106,7 @@ temporalCharacterizationModule <- function(id,
                                            temporalAnalysisRef,
                                            analysisNameOptions,
                                            selectedTemporalTimeIds,
-                                           getResolvedAndMappedConceptIdsForFilters,
+                                           getConceptIdsToFilterCharacterizationOutput,
                                            selectedConceptSets,
                                            analysisIdInTemporalCharacterization,
                                            domainIdOptions,
@@ -217,9 +217,9 @@ temporalCharacterizationModule <- function(id,
         dplyr::filter(.data$domainId %in% input$temporalcharacterizationDomainIdFilter)
 
       if (hasData(selectedConceptSets())) {
-        if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
+        if (hasData(getConceptIdsToFilterCharacterizationOutput())) {
           data <- data %>%
-            dplyr::filter(.data$conceptId %in% getResolvedAndMappedConceptIdsForFilters())
+            dplyr::filter(.data$conceptId %in% getConceptIdsToFilterCharacterizationOutput())
         }
       }
       if (!hasData(data)) {

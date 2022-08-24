@@ -132,7 +132,7 @@ characterizationModule <- function(id,
                                    temporalAnalysisRef,
                                    analysisNameOptions,
                                    analysisIdInCohortCharacterization,
-                                   getResolvedAndMappedConceptIdsForFilters,
+                                   getConceptIdsToFilterCharacterizationOutput,
                                    selectedConceptSets,
                                    characterizationMenuOutput,
                                    characterizationTimeIdChoices) {
@@ -250,9 +250,9 @@ characterizationModule <- function(id,
         dplyr::filter(.data$domainId %in% input$characterizationDomainIdFilter)
 
       if (hasData(selectedConceptSets())) {
-        if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
+        if (hasData(getConceptIdsToFilterCharacterizationOutput())) {
           data <- data %>%
-            dplyr::filter(.data$conceptId %in% getResolvedAndMappedConceptIdsForFilters())
+            dplyr::filter(.data$conceptId %in% getConceptIdsToFilterCharacterizationOutput())
         }
       }
       if (!hasData(data)) {

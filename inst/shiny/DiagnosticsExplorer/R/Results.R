@@ -525,15 +525,15 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <-
 
 
 resolvedConceptSet <- function(dataSource,
-                               databaseIds,
-                               cohortId,
+                               databaseIds = NULL,
+                               cohortId = NULL,
                                conceptSetId = NULL) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
+  
   checkmate::assertIntegerish(
     x = cohortId,
     min.len = 1,
-    max.len = 1,
     null.ok = TRUE,
     add = errorMessage
   )
@@ -558,8 +558,9 @@ resolvedConceptSet <- function(dataSource,
                     FROM @results_database_schema.@resolved_concepts_table rc
                     LEFT JOIN @results_database_schema.@concept_table c
                     ON rc.concept_id = c.concept_id
-                    WHERE rc.database_id IN (@databaseIds)
-                    	AND rc.cohort_id = @cohortId
+                    WHERE rc.concept_id > 0
+                      {@databaseIds != \"\"} ? { AND rc.database_id IN (@databaseIds)}
+                    	{@cohortId != \"\"} ? { AND rc.cohort_id IN (@cohortId)}
                       {@concept_set_id != \"\"} ? { AND rc.concept_set_id IN (@concept_set_id)}
                     ORDER BY rc.concept_id;"
   resolved <-
@@ -643,13 +644,13 @@ getMappedSourceConcepts <-
 
 mappedConceptSet <- function(dataSource,
                              databaseIds,
-                             cohortId) {
+                             cohortId = NULL,
+                             conceptSetId = NULL) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertIntegerish(
     x = cohortId,
     min.len = 1,
-    max.len = 1,
     null.ok = TRUE,
     add = errorMessage
   )
@@ -662,8 +663,7 @@ mappedConceptSet <- function(dataSource,
   )
   checkmate::reportAssertions(collection = errorMessage)
   sqlMapped <-
-    "WITH resolved_concepts_mapped
-    AS (
+    "
     	SELECT concept_sets.concept_id AS resolved_concept_id,
     		c1.concept_id,
     		c1.concept_name,
@@ -675,31 +675,26 @@ mappedConceptSet <- function(dataSource,
     	FROM (
     		SELECT DISTINCT concept_id
     		FROM @results_database_schema.@resolved_concepts
-    		WHERE database_id IN (@databaseIds)
-    			AND cohort_id = @cohortId
+    		WHERE database_id IN (@database_ids)
+    		    {@cohort_ids != \"\"} ? { AND cohort_id IN (@cohort_ids)}
+            {@concept_set_ids != \"\"} ? { AND concept_set_id IN (@concept_set_ids)}
     		) concept_sets
     	INNER JOIN @results_database_schema.@concept_relationship cr ON concept_sets.concept_id = cr.concept_id_2
     	INNER JOIN @results_database_schema.@concept c1 ON cr.concept_id_1 = c1.concept_id
     	WHERE relationship_id = 'Maps to'
-    		AND standard_concept IS NULL
-    	)
-    SELECT c.database_id,
-    	c.cohort_id,
-    	c.concept_set_id,
-    	mapped.*
-    FROM (SELECT DISTINCT concept_id, database_id, cohort_id, concept_set_id FROM @results_database_schema.@resolved_concepts) c
-    INNER JOIN resolved_concepts_mapped mapped ON c.concept_id = mapped.resolved_concept_id;"
+    		AND standard_concept IS NULL;"
   mapped <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
       dbms = dataSource$dbms,
       sql = sqlMapped,
       results_database_schema = dataSource$resultsDatabaseSchema,
-      databaseIds = quoteLiterals(databaseIds),
+      database_ids = quoteLiterals(databaseIds),
       concept = dataSource$prefixTable("concept"),
       concept_relationship = dataSource$prefixTable("concept_relationship"),
       resolved_concepts = dataSource$prefixTable("resolved_concepts"),
-      cohortId = cohortId,
+      cohort_ids = cohortId,
+      concept_set_ids = conceptSetId,
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble() %>%

@@ -1004,6 +1004,7 @@ cohortDefinitionsModule <- function(id,
         progress <- shiny::Progress$new()
         on.exit(progress$close())
         progress$set(message = "Getting concepts mapped to concept ids resolved by concept set expression (may take time)", value = 0)
+
        output <-
           mappedConceptSet(
             dataSource = dataSource,
@@ -1023,48 +1024,26 @@ cohortDefinitionsModule <- function(id,
         if (!hasData(output)) {
           return(NULL)
         }
-        
-        if (!hasData(selectedDatabaseIds())) {
-          return(NULL)
-        }
-        output <- output %>% 
-          dplyr::filter(.data$cohortId %in% c(selectedCohortDefinitionRow()$cohortId),
-                        .data$conceptSetId %in% c(cohortDefinitionConceptSetExpressionSelected()$id),
-                        .data$databaseId %in% c(selectedDatabaseIds()))
-
-        if (!hasData(output)) {
-          return(NULL)
-        }
-        allConceptIds <- output %>% 
-          dplyr::select(.data$cohortId,
-                        .data$conceptSetId,
-                        .data$resolvedConceptId,
-                        .data$conceptId,
-                        .data$conceptName,
-                        .data$domainId,
-                        .data$vocabularyId,
-                        .data$conceptClassId,
-                        .data$standardConcept,
-                        .data$conceptCode) %>% 
-          dplyr::distinct() 
-        
-        allConceptIdsAllDatabase <- allConceptIds %>% 
-          tidyr::crossing(databaseTable %>% 
-                            dplyr::filter(.data$databaseId %in% c(selectedDatabaseIds())) %>% 
-                            dplyr::select(.data$databaseId))
+        allConceptIdsAllDatabase <- output %>%
+          tidyr::crossing(
+            databaseTable %>%
+              dplyr::filter(.data$databaseId %in% c(selectedDatabaseIds())) %>%
+              dplyr::select(.data$databaseId)
+          )
         
         conceptCount <- getCountForConceptIdInCohortReactive()
-        
-        output <- allConceptIdsAllDatabase %>%
-          dplyr::left_join(
-            conceptCount %>%
-              dplyr::rename(
-                "persons" = .data$conceptSubjects,
-                "records" = .data$conceptCount
-              ),
-            by = c("databaseId", "conceptId")
-          )
-        return(output)
+        if (hasData(conceptCount)) {
+          allConceptIdsAllDatabase <- allConceptIdsAllDatabase |>
+            dplyr::left_join(
+              conceptCount %>%
+                dplyr::rename(
+                  "persons" = .data$conceptSubjects,
+                  "records" = .data$conceptCount
+                ),
+              by = c("databaseId", "conceptId")
+            )
+        }
+        return(allConceptIdsAllDatabase)
       })
     
     ### output - cohortDefinitionMappedConceptsTable ----

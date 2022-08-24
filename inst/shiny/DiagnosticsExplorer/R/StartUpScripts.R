@@ -408,6 +408,20 @@ initializeEnvironment <- function(shinySettings,
       unique() %>%
       sort()
   }
+  
+  if (!is.null(envir$conceptSets)) {
+    envir$conceptSets <- envir$conceptSets |> 
+      dplyr::mutate(compositeConceptSetName = paste0("C",
+                                                     .data$cohortId,
+                                                     ": ", 
+                                                     .data$conceptSetName,
+                                                     " (",
+                                                     .data$conceptSetId,
+                                                     ")")) |> 
+      dplyr::arrange(.data$cohortId,
+                     .data$conceptSetName,
+                     .data$conceptSetId)
+  }
 
   envir$resultsTables <- tolower(DatabaseConnector::dbListTables(dataSource$connection,
                                                                  schema = dataSource$resultsDatabaseSchema))
