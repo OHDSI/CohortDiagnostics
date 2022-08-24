@@ -158,11 +158,13 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
 
     if (enableAnnotation) {
       #--- Annotation modules
-      annotationModules <- c("cohortCountsAnnotation",
+      annotationModules <- c("cohortDefinitionsAnnotation",
+                             "cohortCountsAnnotation",
                              "timeDistributionAnnotation",
                              "conceptsInDataSourceAnnotation",
                              "orphanConceptsAnnotation",
                              "inclusionRuleStatsAnnotation",
+                             "incidenceRateAnnotation",
                              "indexEventBreakdownAnnotation",
                              "visitContextAnnotation",
                              "cohortOverlapAnnotation",
@@ -252,19 +254,14 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       }
     })
 
-    databaseChoices <- list()
-    dbMapping <- databaseTable
-    for (i in 1:nrow(dbMapping)) {
-      row <- dbMapping[i,]
-      databaseChoices[row$databaseName] <- row$databaseId
-    }
-
     ## ReactiveValue: selectedDatabaseIds ----
-    selectedDatabaseIds <- reactiveVal(databaseChoices[[1]])
+    selectedDatabaseIds <- shiny::reactiveVal(value = databaseTable[1,]$databaseId)
     ### databaseId multi select ----
     shiny::observeEvent(eventExpr = {
-      list(input$databases_open)
+      list(input$databases_open,
+           input$tabs)
     }, handlerExpr = {
+      browser()
       if (isFALSE(input$databases_open)) {
         selectedDatabaseIds(input$databases)
       }
@@ -302,8 +299,8 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       shinyWidgets::pickerInput(
         inputId = ns("database"),
         label = "Database",
-        choices = databaseChoices,
-        selected = databaseChoices[[1]],
+        choices = databaseTable$databaseId,
+        selected = databaseTable[1,]$databaseId,
         multiple = FALSE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
@@ -322,8 +319,8 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       shinyWidgets::pickerInput(
         inputId = ns("databases"),
         label = "Database",
-        choices = databaseChoices,
-        selected = databaseChoices[[1]],
+        choices = databaseTable$databaseId,
+        selected = databaseTable[1,]$databaseId,
         multiple = TRUE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
@@ -420,6 +417,11 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       } else if (input$tabs == "compareCohortCharacterization" |
                  input$tabs == "compareTemporalCharacterization") {
         subset <- c(input$targetCohort, input$comparatorCohort) |> 
+          unique() |> 
+          sort()
+      } else if (input$tabs == "cohortDefinition") {
+        subset <- cohortTable |> 
+          dplyr::pull(.data$compoundName) |> 
           unique() |> 
           sort()
       } else {

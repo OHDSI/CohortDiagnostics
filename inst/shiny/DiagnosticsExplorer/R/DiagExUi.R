@@ -299,7 +299,14 @@ dashboardUi <- function(enabledTabs,
     ),
     shinydashboard::tabItem(
       tabName = "cohortDefinition",
-      cohortDefinitionsView(ns("cohortDefinitions"))
+      cohortDefinitionsView(ns("cohortDefinitions")),
+      if (showAnnotation) {
+        column(
+          12,
+          tags$br(),
+          annotationUi(ns("cohortDefinitionsAnnotation"))
+        )
+      }
     ),
     shinydashboard::tabItem(
       tabName = "cohortCounts",
@@ -314,7 +321,14 @@ dashboardUi <- function(enabledTabs,
     ),
     shinydashboard::tabItem(
       tabName = "incidenceRate",
-      incidenceRatesView(ns("incidenceRates"))
+      incidenceRatesView(ns("incidenceRates")),
+      if (showAnnotation) {
+        column(
+          12,
+          tags$br(),
+          annotationUi(ns("incidenceRateAnnotation"))
+        )
+      }
     ),
     shinydashboard::tabItem(
       tabName = "timeDistribution",
@@ -404,7 +418,7 @@ dashboardUi <- function(enabledTabs,
         column(
           12,
           tags$br(),
-          annotationUi(ns("cohortCharacterization"))
+          annotationUi(ns("cohortCharacterizationAnnotation"))
         )
       }
     ),
