@@ -261,7 +261,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       list(input$databases_open,
            input$tabs)
     }, handlerExpr = {
-      browser()
       if (isFALSE(input$databases_open)) {
         selectedDatabaseIds(input$databases)
       }
