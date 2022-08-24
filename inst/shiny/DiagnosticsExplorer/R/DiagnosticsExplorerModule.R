@@ -136,13 +136,13 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
     })
 
     # Display login based on value of active logged in user
-    postAnnotaionEnabled <- shiny::reactive(!is.null(activeLoggedInUser()))
+    postAnnotationEnabled <- shiny::reactive(!is.null(activeLoggedInUser()))
     output$postAnnoataionEnabled <- shiny::reactive({
-      postAnnotaionEnabled()
+      postAnnotationEnabled()
     })
 
     output$signInButton <- shiny::renderUI({
-      if (enableAuthorization & !postAnnotaionEnabled()) {
+      if (enableAuthorization & !postAnnotationEnabled()) {
         return(
           shiny::actionButton(
             inputId = ns("annotationUserPopUp"),
@@ -180,7 +180,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                          selectedCohortIds = inputCohortIds,
                          cohortTable = cohortTable,
                          databaseTable = databaseTable,
-                         postAnnotaionEnabled = postAnnotaionEnabled)
+                         postAnnotationEnabled = postAnnotationEnabled)
       }
     }
 

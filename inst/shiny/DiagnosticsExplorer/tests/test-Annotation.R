@@ -60,7 +60,7 @@ test_that("Annotation shiny server functions", {
     selectedCohortIds = shiny::reactive(c(17492, 18342, 17720)),
     cohortTable = cohort,
     databaseTable = database,
-    postAnnotaionEnabled = shiny::reactive(TRUE)
+    postAnnotationEnabled = shiny::reactive(TRUE)
   ), {
 
     session$setInputs(
