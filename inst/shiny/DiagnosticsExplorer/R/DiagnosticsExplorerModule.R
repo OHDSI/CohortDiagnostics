@@ -417,6 +417,11 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         input$tabs == "incidenceRate" |
         input$tabs == "timeDistribution") {
         subset <- input$cohorts
+      } else if (input$tabs == "compareCohortCharacterization" |
+                 input$tabs == "compareTemporalCharacterization") {
+        subset <- c(input$targetCohort, input$comparatorCohort) |> 
+          unique() |> 
+          sort()
       } else {
         subset <- input$targetCohort
       }
