@@ -106,7 +106,7 @@ runCohortRelationshipDiagnostics <-
     for (i in (1:nrow(timePeriods))) {
       ParallelLogger::logTrace(
         paste0(
-          "    - Working on ",
+          "       - Working on ",
           scales::comma(timePeriods[i, ]$startDay),
           " to ",
           scales::comma(timePeriods[i, ]$endDay),
@@ -177,7 +177,7 @@ runCohortRelationshipDiagnostics <-
     )
     delta <- Sys.time() - startTime
     ParallelLogger::logTrace(paste(
-      " - Computing cohort relationship took",
+      "   - Computing cohort relationship took",
       signif(delta, 3),
       attr(delta, "units")
     ))
@@ -314,7 +314,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
       
       if (nrow(subset) > batchSize) {
         ParallelLogger::logInfo(sprintf(
-          "Batch cohort relationship. Processing cohorts %s through %s combinations of %s total combinations",
+          "  - Batch cohort relationship. Processing cohorts %s through %s combinations of %s total combinations",
           start,
           end,
           nrow(subset)
@@ -358,7 +358,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
         incremental = incremental
       )
       deltaIteration <- Sys.time() - startCohortRelationship
-      ParallelLogger::logInfo(" - Running Cohort Overlap iteration with batchsize ",
+      ParallelLogger::logInfo("    - Running Cohort Relationship iteration with batchsize ",
                               batchSize,
                               " from row number ",
                               start,
@@ -370,7 +370,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
                               attr(deltaIteration, "units"))
     }
   } else {
-    ParallelLogger::logInfo("  - Skipping in incremental mode.")
+    ParallelLogger::logInfo("    - Skipping in incremental mode.")
   }
   delta <- Sys.time() - startCohortRelationship
   ParallelLogger::logInfo(
