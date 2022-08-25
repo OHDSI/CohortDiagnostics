@@ -330,6 +330,16 @@ executeDiagnostics <- function(cohortDefinitionSet,
       name = exportFolder,
       errorMessage = errorMessage
     )
+  
+  ParallelLogger::addDefaultFileLogger(file.path(exportFolder, "log.txt"))
+  ParallelLogger::addDefaultErrorReportLogger(file.path(exportFolder, "errorReportR.txt"))
+  on.exit(ParallelLogger::unregisterLogger("DEFAULT_FILE_LOGGER", silent = TRUE))
+  on.exit(
+    ParallelLogger::unregisterLogger("DEFAULT_ERRORREPORT_LOGGER", silent = TRUE),
+    add = TRUE
+  )
+  
+  
   if (incremental) {
     errorMessage <-
       createIfNotExist(
