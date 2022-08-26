@@ -207,16 +207,16 @@ executeCohortRelationshipDiagnostics <- function(connection,
   startCohortRelationship <- Sys.time()
   
   allCohortIds <- cohortDefinitionSet %>%
-    dplyr::select(.data$cohortId, .data$checksum) |>
+    dplyr::select(.data$cohortId, .data$checksum) %>%
     dplyr::rename(targetCohortId = .data$cohortId,
-                  targetChecksum = .data$checksum) |>
+                  targetChecksum = .data$checksum) %>%
     dplyr::distinct()
-  combinationsOfPossibleCohortRelationships <- allCohortIds |>
-    tidyr::crossing(allCohortIds |>
+  combinationsOfPossibleCohortRelationships <- allCohortIds %>%
+    tidyr::crossing(allCohortIds %>%
                       dplyr::rename(comparatorCohortId = .data$targetCohortId,
-                                    comparatorChecksum = .data$targetChecksum)) |>
-    dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) |> 
-    dplyr::arrange(.data$targetCohortId, .data$comparatorCohortId) |> 
+                                    comparatorChecksum = .data$targetChecksum)) %>%
+    dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) %>% 
+    dplyr::arrange(.data$targetCohortId, .data$comparatorCohortId) %>% 
     dplyr::mutate(checksum = paste0(.data$targetChecksum, .data$comparatorChecksum))
   
   subset <- subsetToRequiredCombis(
@@ -228,11 +228,11 @@ executeCohortRelationshipDiagnostics <- function(connection,
 
   if (nrow(subset) > 0) {
     if (incremental &&
-        (nrow(cohortDefinitionSet) - (length(subset$targetCohortId |> unique()))) > 0) {
+        (nrow(cohortDefinitionSet) - (length(subset$targetCohortId %>% unique()))) > 0) {
       ParallelLogger::logInfo(
         sprintf(
           " - Skipping %s target cohorts in incremental mode because the relationships has already been computed with other cohorts.",
-          nrow(cohortDefinitionSet) - (length(subset$targetCohortId |> unique()))
+          nrow(cohortDefinitionSet) - (length(subset$targetCohortId %>% unique()))
         )
       )
     }
@@ -240,7 +240,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
     if (incremental &&
         (nrow(combinationsOfPossibleCohortRelationships) - (
           nrow(
-            combinationsOfPossibleCohortRelationships |>
+            combinationsOfPossibleCohortRelationships %>%
             dplyr::filter(.data$targetCohortId %in% c(subset$targetCohortId))
           )
         )) > 0) {
@@ -248,7 +248,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
         sprintf(
           " - Skipping %s combinations in incremental mode because these were previously computed.",
           nrow(combinationsOfPossibleCohortRelationships) - nrow(
-            combinationsOfPossibleCohortRelationships |>
+            combinationsOfPossibleCohortRelationships %>%
               dplyr::filter(.data$targetCohortId %in% c(subset$targetCohortId))
           )
         )
@@ -328,8 +328,8 @@ executeCohortRelationshipDiagnostics <- function(connection,
           cdmDatabaseSchema = cdmDatabaseSchema,
           tempEmulationSchema = tempEmulationSchema,
           cohortTable = cohortTable,
-          targetCohortIds = subset[start:end,]$targetCohortId |> unique(),
-          comparatorCohortIds = subset[start:end,]$comparatorCohortId |> unique(),
+          targetCohortIds = subset[start:end,]$targetCohortId %>% unique(),
+          comparatorCohortIds = subset[start:end,]$comparatorCohortId %>% unique(),
           relationshipDays = dplyr::tibble(startDay = temporalStartDays,
                                            endDay = temporalEndDays)
         )
