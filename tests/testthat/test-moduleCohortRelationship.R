@@ -218,7 +218,7 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
     testthat::expect_equal(
       object = recordKeepingFileData2 %>%
         dplyr::anti_join(
-          recordKeepingFile %>%
+          recordKeepingFileData %>%
             dplyr::select(.data$cohortId,
                           .data$comparatorId),
           by = c("cohortId", "comparatorId")
