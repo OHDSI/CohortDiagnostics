@@ -61,13 +61,12 @@ tableIsEmpty <- function(dataSource, tableName) {
   return(nrow(oneRow) == 0)
 }
 
-getTimeAsInteger <- function(time = Sys.time(),
-                             tz = "UTC") {
-  return(as.numeric(as.POSIXlt(time, tz = tz)))
+getTimeAsInteger <- function(time = Sys.time()) {
+  return(floor(as.numeric(as.POSIXlt(time))))
 }
 
-getTimeFromInteger <- function(x, tz = "UTC") {
-  originDate <- as.POSIXct("1970-01-01", tz = tz)
+getTimeFromInteger <- function(x) {
+  originDate <- as.POSIXct("1970-01-01")
   originDate <- originDate + x
   return(originDate)
 }
@@ -260,9 +259,9 @@ initializeEnvironment <- function(shinySettings,
                                   table1SpecPath = "data/Table1SpecsLong.csv",
                                   dataModelSpecificationsPath = "data/resultsDataModelSpecification.csv",
                                   envir = .GlobalEnv) {
-
   envir$shinySettings <- shinySettings
-  envir$connectionPool <- envir$getConnectionPool(envir$shinySettings$connectionDetails)
+
+  envir$connectionPool <- getConnectionPool(envir$shinySettings$connectionDetails)
   shiny::onStop(function() {
     if (DBI::dbIsValid(envir$connectionPool)) {
       writeLines("Closing database pool")
@@ -271,7 +270,7 @@ initializeEnvironment <- function(shinySettings,
   })
 
   envir$dataSource <-
-    envir$createDatabaseDataSource(
+    createDatabaseDataSource(
       connection = envir$connectionPool,
       resultsDatabaseSchema = envir$shinySettings$resultsDatabaseSchema,
       vocabularyDatabaseSchema = envir$
@@ -285,7 +284,6 @@ initializeEnvironment <- function(shinySettings,
 
   envir$userCredentials <- data.frame()
   envir$enableAuthorization <- envir$shinySettings$enableAuthorization
-
   if (is.null(envir$enableAuthorization)) {
     envir$enableAuthorization <- FALSE
   }
@@ -296,6 +294,8 @@ initializeEnvironment <- function(shinySettings,
         readr::read_csv(file = envir$shinySettings$userCredentialsFile, col_types = readr::cols())
     }
   }
+
+  envir$enableAnnotation  <- envir$shinySettings$enableAnnotation
 
   if (nrow(envir$userCredentials) == 0) {
     envir$enableAuthorization <- FALSE
@@ -445,14 +445,12 @@ initializeEnvironment <- function(shinySettings,
     -301, -201
   )
 
-  if (envir$shinySettings$enableAnnotation &
+  if (envir$enableAnnotation &
     "annotation" %in% envir$resultsTables &
     "annotation_link" %in% envir$resultsTables &
     "annotation_attributes" %in% envir$resultsTables) {
     envir$showAnnotation <- TRUE
     envir$enableAnnotation <- TRUE
-    envir$enableAuthorization <- TRUE
-    options("showDiagnosticsExplorerAnnotation" = TRUE)
   } else {
     envir$enableAnnotation <- FALSE
     envir$showAnnotation <- FALSE

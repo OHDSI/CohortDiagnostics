@@ -9,8 +9,8 @@ executeDiagnostics(
   exportFolder,
   databaseId,
   cohortDatabaseSchema,
-  databaseName = databaseId,
-  databaseDescription = databaseId,
+  databaseName = NULL,
+  databaseDescription = NULL,
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
@@ -47,9 +47,9 @@ does not exist it will be created.}
 this should include both the database and schema name, for example
 'scratch.dbo'.}
 
-\item{databaseName}{The full name of the database. If NULL, defaults to databaseId.}
+\item{databaseName}{The full name of the database. If NULL, defaults to value in cdm_source table}
 
-\item{databaseDescription}{A short description (several sentences) of the database. If NULL, defaults to databaseId.}
+\item{databaseDescription}{A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table}
 
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the

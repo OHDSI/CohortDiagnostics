@@ -27,6 +27,8 @@ Bug fixes:
 1. Fixed issue uploading results to postgres db caused by null values in primary key field. 
 Removed constraint to fix issue.
 
+2. Fix for `index_event_breakdown` having duplicate entries where concept is observed in the same domain multiple times
+
 
 CohortDiagnostics 3.0.3
 =======================

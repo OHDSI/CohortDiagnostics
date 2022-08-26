@@ -111,8 +111,8 @@ getDefaultCovariateSettings <- function() {
 #' @param cohortDefinitionSet         Data.frame of cohorts must include columns cohortId, cohortName, json, sql
 #' @param cohortTableNames            Cohort Table names used by CohortGenerator package
 #' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf').
-#' @param databaseName                The full name of the database. If NULL, defaults to databaseId.
-#' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to databaseId.
+#' @param databaseName                The full name of the database. If NULL, defaults to value in cdm_source table
+#' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table
 #' @template cdmVersion
 #' @param runInclusionStatistics      Generate and export statistic on the cohort inclusion rules?
 #' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
@@ -182,8 +182,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                exportFolder,
                                databaseId,
                                cohortDatabaseSchema,
-                               databaseName = databaseId,
-                               databaseDescription = databaseId,
+                               databaseName = NULL,
+                               databaseDescription = NULL,
                                connectionDetails = NULL,
                                connection = NULL,
                                cdmDatabaseSchema,
@@ -239,12 +239,10 @@ executeDiagnostics <- function(cohortDefinitionSet,
   databaseId <- as.character(databaseId)
 
   if (any(is.null(databaseName), is.na(databaseName))) {
-    databaseName <- databaseId
-    ParallelLogger::logTrace(" - Databasename was not provided.")
+    ParallelLogger::logTrace(" - Databasename was not provided. Using CDM source table")
   }
   if (any(is.null(databaseDescription), is.na(databaseDescription))) {
-    databaseDescription <- databaseId
-    ParallelLogger::logTrace(" - Databasedescription was not provided.")
+    ParallelLogger::logTrace(" - Databasedescription was not provided. Using CDM source table")
   }
 
   errorMessage <- checkmate::makeAssertCollection()
@@ -332,6 +330,16 @@ executeDiagnostics <- function(cohortDefinitionSet,
       name = exportFolder,
       errorMessage = errorMessage
     )
+
+  ParallelLogger::addDefaultFileLogger(file.path(exportFolder, "log.txt"))
+  ParallelLogger::addDefaultErrorReportLogger(file.path(exportFolder, "errorReportR.txt"))
+  on.exit(ParallelLogger::unregisterLogger("DEFAULT_FILE_LOGGER", silent = TRUE))
+  on.exit(
+    ParallelLogger::unregisterLogger("DEFAULT_ERRORREPORT_LOGGER", silent = TRUE),
+    add = TRUE
+  )
+
+
   if (incremental) {
     errorMessage <-
       createIfNotExist(
@@ -463,7 +471,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
 
   ## CDM source information----
-
   timeExecution(
     exportFolder,
     taskName = "getCdmDataSourceInformation",
@@ -475,9 +482,27 @@ executeDiagnostics <- function(cohortDefinitionSet,
           connection = connection,
           cdmDatabaseSchema = cdmDatabaseSchema
         )
+      ## Use CDM source table as default name/description
+      if (!is.null(cdmSourceInformation)) {
+        if (any(is.null(databaseName), is.na(databaseName))) {
+          databaseName <- cdmSourceInformation$cdmSourceName
+        }
 
-      vocabularyVersion <- getVocabularyVersion(connection, vocabularyDatabaseSchema)
-    })
+        if (any(is.null(databaseDescription), is.na(databaseDescription))) {
+          databaseDescription <- cdmSourceInformation$sourceDescription
+        }
+      } else {
+        if (any(is.null(databaseName), is.na(databaseName))) {
+          databaseName <- databaseId
+        }
+
+        if (any(is.null(databaseDescription), is.na(databaseDescription))) {
+          databaseDescription <- databaseName
+        }
+        vocabularyVersion <- getVocabularyVersion(connection, vocabularyDatabaseSchema)
+
+      })
+
   if (incremental) {
     ParallelLogger::logDebug("Working in incremental mode.")
     cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)

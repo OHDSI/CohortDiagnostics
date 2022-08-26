@@ -12,26 +12,23 @@ test_that("Post annotation functions", {
     dbms = "sqlite"
   )
 
-  renderTranslateExecuteSql(testDataSource, "DELETE FROM ANNOTATION_LINK")
-  renderTranslateExecuteSql(testDataSource, "DELETE FROM ANNOTATION")
+  renderTranslateExecuteSql(testDataSource, "DELETE FROM ANNOTATION_LINK;")
+  renderTranslateExecuteSql(testDataSource, "DELETE FROM ANNOTATION;")
 
   # Check the retreval functions work outside of shiny
   result <- getAnnotationResult(testDataSource,
                                 "testAnnotationServer",
                                 c(17492, 18342, 17720),
                                 c("Eunomia"))
-
-  checkmate::expect_list(result)
-  checkmate::expect_data_frame(result$annotation)
-  checkmate::expect_data_frame(result$annotationLink)
+  checkmate::assert_null(x = result)
 
   # Post test annotation
-  postAnnotationResult(testDataSource,
-                       "testAnnotationServer",
-                       c(17492),
-                       c("Eunomia"),
-                       "TEST annotation",
-                       "Test user")
+  postAnnotationResult(dataSource = testDataSource,
+                       diagnosticsId = "testAnnotationServer",
+                       cohortIds = c(17492),
+                       databaseIds = c("Eunomia"),
+                       annotation = "TEST annotation",
+                       createdBy = "Test user")
 
   result <- getAnnotationResult(testDataSource,
                                 "testAnnotationServer",

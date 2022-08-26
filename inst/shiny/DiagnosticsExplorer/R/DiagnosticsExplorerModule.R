@@ -1,16 +1,189 @@
 diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
-                                      dataSource,
-                                      databaseTable,
-                                      cohortTable,
-                                      enableAnnotation,
-                                      enableAuthorization,
-                                      enabledTabs,
-                                      conceptSets,
-                                      userCredentials = data.frame(),
-                                      activeUser = NULL,
-                                      envir = .GlobalEnv) {
+                                      envir = .GlobalEnv,
+                                      dataSource = envir$dataSource,
+                                      databaseTable = envir$database,
+                                      cohortTable = envir$cohort,
+                                      enableAnnotation = envir$enableAnnotation,
+                                      enableAuthorization = envir$enableAuthorization,
+                                      enabledTabs = envir$enabledTabs,
+                                      conceptSets = envir$conceptSets,
+                                      userCredentials = envir$userCredentials,
+                                      activeUser = envir$activeUser) {
   ns <- shiny::NS(id)
   shiny::moduleServer(id, function(input, output, session) {
+
+    activeLoggedInUser <- reactiveVal(activeUser)
+    if (enableAnnotation & nrow(userCredentials) > 0) {
+      shiny::observeEvent(
+        eventExpr = input$annotationUserPopUp,
+        handlerExpr = {
+          shiny::showModal(
+            shiny::modalDialog(
+              title = "Annotate",
+              easyClose = TRUE,
+              size = "s",
+              footer = tagList(
+                shiny::actionButton(inputId = ns("login"), label = "Login"),
+                shiny::modalButton("Cancel")
+              ),
+              tags$div(
+                shiny::textInput(
+                  inputId = ns("userName"),
+                  label = "Username",
+                  width = NULL,
+                  value = if (enableAuthorization) {
+                    ""
+                  } else {
+                    "annonymous"
+                  }
+                ),
+                if (enableAuthorization) {
+                  shiny::passwordInput(
+                    inputId = ns("password"),
+                    label = "Password",
+                    width = NULL
+                  )
+                },
+              )
+            )
+          )
+        }
+      )
+
+      shiny::observeEvent(
+        eventExpr = input$login,
+        handlerExpr = {
+          tryCatch(
+            expr = {
+              if (enableAuthorization) {
+                if (input$userName == "" || input$password == "") {
+                  activeLoggedInUser(NULL)
+                  shiny::showModal(
+                    shiny::modalDialog(
+                      title = "Error",
+                      easyClose = TRUE,
+                      size = "s",
+                      fade = TRUE,
+                      "Please enter both the fields"
+                    )
+                  )
+                }
+                userCredentialsFiltered <- userCredentials %>%
+                  dplyr::filter(.data$userId == input$userName)
+                if (nrow(userCredentialsFiltered) > 0) {
+                  passwordHash <-
+                    digest::digest(input$password, algo = "sha512")
+                  if (passwordHash %in% userCredentialsFiltered$hashCode) {
+                    activeLoggedInUser(input$userName)
+                    shiny::removeModal()
+                  } else {
+                    activeLoggedInUser(NULL)
+                    shiny::showModal(
+                      shiny::modalDialog(
+                        title = "Error",
+                        easyClose = TRUE,
+                        size = "s",
+                        fade = TRUE,
+                        "Invalid User"
+                      )
+                    )
+                  }
+                } else {
+                  activeLoggedInUser(NULL)
+                  shiny::showModal(
+                    shiny::modalDialog(
+                      title = "Error",
+                      easyClose = TRUE,
+                      size = "s",
+                      fade = TRUE,
+                      "Invalid User"
+                    )
+                  )
+                }
+              } else {
+                if (input$userName == "") {
+                  activeLoggedInUser(NULL)
+                  shiny::showModal(
+                    shiny::modalDialog(
+                      title = "Error",
+                      easyClose = TRUE,
+                      size = "s",
+                      fade = TRUE,
+                      "Please enter the user name."
+                    )
+                  )
+                } else {
+                  activeLoggedInUser(input$userName)
+                  shiny::removeModal()
+                }
+              }
+            },
+            error = function() {
+              activeLoggedInUser(NULL)
+            }
+          )
+        }
+      )
+    }
+
+    output$userNameLabel <- shiny::renderText({
+      if (is.null(activeLoggedInUser())) {
+        return("")
+      }
+      paste(as.character(icon("user-circle")),
+            stringr::str_to_title(activeLoggedInUser()))
+
+    })
+
+    # Display login based on value of active logged in user
+    postAnnotaionEnabled <- shiny::reactive(!is.null(activeLoggedInUser()))
+    output$postAnnoataionEnabled <- shiny::reactive({
+      postAnnotaionEnabled()
+    })
+
+    output$signInButton <- shiny::renderUI({
+      if (enableAuthorization & !postAnnotaionEnabled()) {
+        return(
+          shiny::actionButton(
+            inputId = ns("annotationUserPopUp"),
+            label = "Sign in"
+          )
+        )
+      } else {
+        return(shiny::span())
+      }
+    })
+
+    outputOptions(output, "postAnnoataionEnabled", suspendWhenHidden = FALSE)
+
+    if (enableAnnotation) {
+      #--- Annotation modules
+      annotationModules <- c("cohortCountsAnnotation",
+                             "timeDistributionAnnotation",
+                             "conceptsInDataSourceAnnotation",
+                             "orphanConceptsAnnotation",
+                             "inclusionRuleStatsAnnotation",
+                             "indexEventBreakdownAnnotation",
+                             "visitContextAnnotation",
+                             "cohortOverlapAnnotation",
+                             "cohortCharacterizationAnnotation",
+                             "temporalCharacterizationAnnotation",
+                             "compareCohortCharacterizationAnnotation",
+                             "compareTemporalCharacterizationAnnotation")
+
+
+      for (module in annotationModules) {
+        annotationModule(id = module,
+                         dataSource = dataSource,
+                         activeLoggedInUser = activeLoggedInUser,
+                         selectedDatabaseIds = selectedDatabaseIds,
+                         selectedCohortIds = inputCohortIds,
+                         cohortTable = cohortTable,
+                         databaseTable = databaseTable,
+                         postAnnotaionEnabled = postAnnotaionEnabled)
+      }
+    }
+
     # Reacive: targetCohortId
     targetCohortId <- shiny::reactive({
       return(cohortTable$cohortId[cohortTable$compoundName == input$targetCohort])
@@ -167,7 +340,9 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       shinyWidgets::pickerInput(
         inputId = ns("timeIdChoices"),
         label = "Temporal Choice",
-        choices = envir$temporalCharacterizationTimeIdChoices$temporalChoices,
+        choices = envir$
+          temporalCharacterizationTimeIdChoices$
+          temporalChoices,
         multiple = TRUE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         selected = envir$temporalCharacterizationTimeIdChoices %>%
@@ -304,7 +479,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
     })
 
 
-
     characterizationOutput <-
       shiny::reactive(x = {
         progress <- shiny::Progress$new()
@@ -426,130 +600,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       )
     })
 
-    activeLoggedInUser <- reactiveVal(activeUser)
-    if (enableAnnotation & nrow(userCredentials) > 0) {
-      shiny::observeEvent(
-        eventExpr = input$annotationUserPopUp,
-        handlerExpr = {
-          shiny::showModal(
-            shiny::modalDialog(
-              title = "Annotate",
-              easyClose = TRUE,
-              size = "s",
-              footer = tagList(
-                shiny::actionButton(inputId = "login", label = "Login"),
-                shiny::modalButton("Cancel")
-              ),
-              tags$div(
-                shiny::textInput(
-                  inputId = ns("userName"),
-                  label = "User Name",
-                  width = NULL,
-                  value = if (enableAuthorization) {
-                    ""
-                  } else {
-                    "annonymous"
-                  }
-                ),
-                if (enableAuthorization) {
-                  shiny::passwordInput(
-                    inputId = ns("password"),
-                    label = "Local Password",
-                    width = NULL
-                  )
-                },
-              )
-            )
-          )
-        }
-      )
-
-
-      shiny::observeEvent(
-        eventExpr = input$login,
-        handlerExpr = {
-          tryCatch(
-            expr = {
-              if (enableAuthorization) {
-                if (input$userName == "" || input$password == "") {
-                  activeLoggedInUser(NULL)
-                  shiny::showModal(
-                    shiny::modalDialog(
-                      title = "Error",
-                      easyClose = TRUE,
-                      size = "s",
-                      fade = TRUE,
-                      "Please enter both the fields"
-                    )
-                  )
-                }
-                userCredentialsFiltered <- userCredentials %>%
-                  dplyr::filter(.data$userId == input$userName)
-                if (nrow(userCredentialsFiltered) > 0) {
-                  passwordHash <-
-                    digest::digest(input$password, algo = "sha512")
-                  if (passwordHash %in% userCredentialsFiltered$hashCode) {
-                    activeLoggedInUser(input$userName)
-                    shiny::removeModal()
-                  } else {
-                    activeLoggedInUser(NULL)
-                    shiny::showModal(
-                      shiny::modalDialog(
-                        title = "Error",
-                        easyClose = TRUE,
-                        size = "s",
-                        fade = TRUE,
-                        "Invalid User"
-                      )
-                    )
-                  }
-                } else {
-                  activeLoggedInUser(NULL)
-                  shiny::showModal(
-                    shiny::modalDialog(
-                      title = "Error",
-                      easyClose = TRUE,
-                      size = "s",
-                      fade = TRUE,
-                      "Invalid User"
-                    )
-                  )
-                }
-              } else {
-                if (input$userName == "") {
-                  activeLoggedInUser(NULL)
-                  shiny::showModal(
-                    shiny::modalDialog(
-                      title = "Error",
-                      easyClose = TRUE,
-                      size = "s",
-                      fade = TRUE,
-                      "Please enter the user name."
-                    )
-                  )
-                } else {
-                  activeLoggedInUser(input$userName)
-                  shiny::removeModal()
-                }
-              }
-            },
-            error = function() {
-              activeLoggedInUser(NULL)
-            }
-          )
-        }
-      )
-    }
-
-    output$userNameLabel <- shiny::renderText({
-      if (is.null(activeLoggedInUser())) {
-        return("")
-      }
-      paste(as.character(icon("user-circle")),
-            stringr::str_to_title(activeLoggedInUser()))
-
-    })
-
     # Infoboxes -------------------
     showInfoBox <- function(title, htmlFileName) {
       shiny::showModal(shiny::modalDialog(
@@ -651,41 +701,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       return(input$comparatorCohort)
     })
 
-    # Display login based on value of active logged in user
-    postAnnotaionEnabled <- shiny::reactive(!is.null(activeLoggedInUser()))
-    output$postAnnoataionEnabled <- shiny::reactive({
-      postAnnotaionEnabled()
-    })
-    outputOptions(output, "postAnnoataionEnabled", suspendWhenHidden = FALSE)
-
-    if (enableAnnotation) {
-      #--- Annotation modules
-      annotationModules <- c("cohortCountsAnnotation",
-                             "timeDistributionAnnotation",
-                             "conceptsInDataSourceAnnotation",
-                             "orphanConceptsAnnotation",
-                             "inclusionRuleStatsAnnotation",
-                             "indexEventBreakdownAnnotation",
-                             "visitContextAnnotation",
-                             "cohortOverlapAnnotation",
-                             "cohortCharacterizationAnnotation",
-                             "temporalCharacterizationAnnotation",
-                             "compareCohortCharacterizationAnnotation",
-                             "compareTemporalCharacterizationAnnotation")
-
-
-      for (module in annotationModules) {
-        annotationModule(id = module,
-                         dataSource = dataSource,
-                         activeLoggedInUser = activeLoggedInUser,
-                         selectedDatabaseIds = selectedDatabaseIds,
-                         selectedCohortIds = inputCohortIds,
-                         cohortTable = cohortTable,
-                         databaseTable = databaseTable,
-                         postAnnotaionEnabled = postAnnotaionEnabled)
-      }
-    }
-
     if ("cohort" %in% enabledTabs) {
       cohortDefinitionsModule(id = "cohortDefinitions",
                               dataSource = dataSource,
@@ -718,7 +733,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         output <-
           mappedConceptSet(
             dataSource = dataSource,
-            databaseIds =  as.character(databaseTable$databaseId),
+            databaseIds = as.character(databaseTable$databaseId),
             cohortId = targetCohortId()
           )
         if (!hasData(output)) {
