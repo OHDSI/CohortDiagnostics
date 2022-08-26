@@ -1033,7 +1033,7 @@ cohortDefinitionsModule <- function(id,
         
         conceptCount <- getCountForConceptIdInCohortReactive()
         if (hasData(conceptCount)) {
-          allConceptIdsAllDatabase <- allConceptIdsAllDatabase |>
+          allConceptIdsAllDatabase <- allConceptIdsAllDatabase %>%
             dplyr::left_join(
               conceptCount %>%
                 dplyr::rename(

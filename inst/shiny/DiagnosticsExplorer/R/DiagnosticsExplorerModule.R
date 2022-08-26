@@ -224,7 +224,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       list(input$conceptSetsSelected)
     }, handlerExpr = {
       if (hasData(input$conceptSetsSelected)) { #input$conceptSetsSelected_open seems to be always NULL
-        selectedConceptSets(conceptSets |>
+        selectedConceptSets(conceptSets %>%
                               dplyr::filter(
                                 .data$compositeConceptSetName %in% c(input$conceptSetsSelected)
                               ))
@@ -415,13 +415,13 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         subset <- input$cohorts
       } else if (input$tabs == "compareCohortCharacterization" |
                  input$tabs == "compareTemporalCharacterization") {
-        subset <- c(input$targetCohort, input$comparatorCohort) |> 
-          unique() |> 
+        subset <- c(input$targetCohort, input$comparatorCohort) %>% 
+          unique() %>% 
           sort()
       } else if (input$tabs == "cohortDefinition") {
-        subset <- cohortTable |> 
-          dplyr::pull(.data$compoundName) |> 
-          unique() |> 
+        subset <- cohortTable %>% 
+          dplyr::pull(.data$compoundName) %>% 
+          unique() %>% 
           sort()
       } else {
         subset <- input$targetCohort
@@ -687,8 +687,8 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
           resolvedConceptSet(
             dataSource = dataSource,
             databaseIds = as.character(databaseTable$databaseId),
-            cohortId = selectedConceptSets()$cohortId |> unique(),
-            conceptSetId = selectedConceptSets()$conceptSetId |> unique()
+            cohortId = selectedConceptSets()$cohortId %>% unique(),
+            conceptSetId = selectedConceptSets()$conceptSetId %>% unique()
           )
         if (!hasData(output)) {
           return(NULL)
@@ -707,8 +707,8 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
           mappedConceptSet(
             dataSource = dataSource,
             databaseIds = as.character(databaseTable$databaseId),
-            cohortId = selectedConceptSets()$cohortId |> unique(),
-            conceptSetId = selectedConceptSets()$conceptSetId |> unique()
+            cohortId = selectedConceptSets()$cohortId %>% unique(),
+            conceptSetId = selectedConceptSets()$conceptSetId %>% unique()
           )
         if (!hasData(output)) {
           return(NULL)
@@ -726,21 +726,21 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       output <- c()
       if (hasData(resolved)) {
         resolved <- resolved %>%
-          dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId) |> 
-          dplyr::distinct() |> 
+          dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId) %>% 
+          dplyr::distinct() %>% 
           dplyr::inner_join(
-            selectedConceptSets() |> 
+            selectedConceptSets() %>% 
               dplyr::select(.data$conceptSetId, 
                             .data$cohortId),
             by = c("cohortId", "conceptSetId")
-          ) |> 
-          dplyr::pull(.data$conceptId) |> 
+          ) %>% 
+          dplyr::pull(.data$conceptId) %>% 
           unique()
         output <- c(output, resolved) %>% unique()
       }
       if (hasData(mapped)) {
         mapped <- mapped %>%
-          dplyr::pull(.data$conceptId) |> 
+          dplyr::pull(.data$conceptId) %>% 
           unique()
         output <- c(output, mapped) %>% unique()
       }
