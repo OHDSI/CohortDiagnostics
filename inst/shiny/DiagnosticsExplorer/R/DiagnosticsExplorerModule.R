@@ -254,42 +254,52 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       }
     })
 
-    ## ReactiveValue: selectedDatabaseIds ----
-    selectedDatabaseIds <- shiny::reactiveVal(value = databaseTable[1,]$databaseId)
-    ### databaseId multi select ----
-    shiny::observeEvent(eventExpr = {
-      list(input$databases_open,
-           input$tabs)
-    }, handlerExpr = {
-      if (isFALSE(input$databases_open)) {
-        selectedDatabaseIds(input$databases)
-      }
-    })
+    ## ReactiveValue: selectedDatabaseId ----
+    selectedDatabaseId <- shiny::reactiveVal()
     ### databaseId single select ----
     shiny::observeEvent(eventExpr = {
-      list(input$database_open)
+      list(input$database,
+           input$database_open,
+           input$tabs)
     }, handlerExpr = {
-      if (isFALSE(input$database_open)) {
-        selectedDatabaseIds(input$database)
+      if (!hasData(selectedDatabaseId())) {
+        selectedDatabaseId(databaseTable[1, ]$databaseId)
+      }
+      if (input$tabs %in% c(
+        "compareCohortCharacterization",
+        "compareTemporalCharacterization",
+        "temporalCharacterization",
+        "databaseInformation"
+      )) {
+        if (isFALSE(input$database_open)) {
+          selectedDatabaseId(input$database)
+        }
       }
     })
-
+    
+    ## ReactiveValue: selectedDatabaseIds ----
+    selectedDatabaseIds <- shiny::reactiveVal()
+    ### databaseId multi select ----
     shiny::observeEvent(eventExpr = {
-      list(input$tabs)
+      list(input$databases,
+           input$databases_open,
+           input$tabs)
     }, handlerExpr = {
-      if (!is.null(input$tabs)) {
-        if (input$tabs %in% c(
-          "compareCohortCharacterization",
-          "compareTemporalCharacterization",
-          "temporalCharacterization",
-          "databaseInformation"
-        )) {
-          selectedDatabaseIds(input$database)
-        } else {
+      if (!hasData(selectedDatabaseIds())) {
+        selectedDatabaseIds(databaseTable[1, ]$databaseId)
+      }
+      if (!input$tabs %in% c(
+        "compareCohortCharacterization",
+        "compareTemporalCharacterization",
+        "temporalCharacterization",
+        "databaseInformation"
+      )) {
+        if (isFALSE(input$databases_open)) {
           selectedDatabaseIds(input$databases)
         }
       }
     })
+    
 
     ## Note - the following two database pickers could be improved by setting the multiple parameter to depend on the
     ## input$tabs variable for the selected tab. However, careful consideration needs to be taken as this can lead
@@ -464,15 +474,13 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
 
     # Characterization (Shared across) ---------
     
-    ## Characterization outputs ----
-    ### characterizationOutput----
     characterizationOutput <-
       shiny::reactive(x = {
         progress <- shiny::Progress$new()
         on.exit(progress$close())
         progress$set(
           message = paste0(
-            "Retrieving characterization output for cohort id ",
+            "C1: Retrieving characterization output for cohort id ",
             targetCohortId(),
             " cohorts and ",
             length(selectedDatabaseIds()),
@@ -496,30 +504,33 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         on.exit(progress$close())
         progress$set(
           message = paste0(
-            "Retrieving characterization output for target cohort id ",
+            "C2: Retrieving characterization output for target cohort id ",
             targetCohortId(),
             " from ",
-            input$database,
+            selectedDatabaseId(),
             "."
           ),
           value = 0
         )
 
-        if (input$database %in% c(selectedDatabaseIds())) {
+        if (all(hasData(characterizationOutput()$covariateValue),
+                selectedDatabaseId() %in% c(selectedDatabaseIds()),
+                nrow(characterizationOutput()$covariateValue %>% 
+                     dplyr::filter(.data$databaseId %in% c(selectedDatabaseId()))) > 0)) {
           data <- characterizationOutput()
           if (hasData(data$covariateValue)) {
             data$covariateValue <- data$covariateValue %>%
-              dplyr::filter(.data$databaseId %in% c(input$database))
+              dplyr::filter(.data$databaseId %in% c(selectedDatabaseId()))
           }
           if (hasData(data$covariateValueDist)) {
             data$covariateValueDist <- data$covariateValueDist %>%
-              dplyr::filter(.data$databaseId %in% c(input$database))
+              dplyr::filter(.data$databaseId %in% c(selectedDatabaseId()))
           }
         } else {
           data <- getCharacterizationOutput(
             dataSource = dataSource,
             cohortIds = targetCohortId(),
-            databaseIds = input$database,
+            databaseIds = selectedDatabaseId(),
             temporalCovariateValueDist = FALSE
           )
         }
@@ -536,10 +547,10 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         on.exit(progress$close())
         progress$set(
           message = paste0(
-            "Retrieving characterization output for comparator cohort id ",
+            "C3: Retrieving characterization output for comparator cohort id ",
             comparatorCohortId(),
             " from ",
-            input$database,
+            selectedDatabaseId(),
             "."
           ),
           value = 0
@@ -547,7 +558,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         dataComparator <- getCharacterizationOutput(
           dataSource = dataSource,
           cohortIds = c(comparatorCohortId()),
-          databaseIds = input$database,
+          databaseIds = selectedDatabaseId(),
           temporalCovariateValueDist = FALSE
         )
         
@@ -851,7 +862,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                      dataSource = dataSource,
                                      databaseTable = databaseTable,
                                      selectedCohort = selectedCohort,
-                                     selectedDatabaseIds = selectedDatabaseIds,
+                                     selectedDatabaseIds = selectedDatabaseId,
                                      targetCohortId = targetCohortId,
                                      temporalAnalysisRef = envir$temporalAnalysisRef,
                                      analysisNameOptions = envir$analysisNameOptions,
@@ -861,12 +872,12 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                      analysisIdInTemporalCharacterization = envir$analysisIdInTemporalCharacterization,
                                      domainIdOptions = envir$domainIdOptions,
                                      temporalCharacterizationTimeIdChoices = envir$temporalCharacterizationTimeIdChoices,
-                                     characterizationOutputForCharacterizationMenu = characterizationOutput)
+                                     characterizationOutputForCharacterizationMenu = temporalCharacterizationOutput)
 
       compareCohortCharacterizationModule(id = "compareCohortCharacterization",
                                           dataSource = dataSource,
                                           selectedCohort = selectedCohort,
-                                          selectedDatabaseIds = selectedDatabaseIds,
+                                          selectedDatabaseIds = selectedDatabaseId,
                                           targetCohortId = targetCohortId,
                                           comparatorCohortId = comparatorCohortId,
                                           selectedComparatorCohort = selectedComparatorCohort,
@@ -887,7 +898,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       compareCohortCharacterizationModule(id = "compareTemporalCohortCharacterization",
                                           dataSource = dataSource,
                                           selectedCohort = selectedCohort,
-                                          selectedDatabaseIds = selectedDatabaseIds,
+                                          selectedDatabaseIds = selectedDatabaseId,
                                           targetCohortId = targetCohortId,
                                           comparatorCohortId = comparatorCohortId,
                                           selectedComparatorCohort = selectedComparatorCohort,
