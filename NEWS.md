@@ -22,6 +22,8 @@ Changes:
 
 10. Ensure that tests cases always use a continuous covariate
 
+11. Cohort relationship logic now supports chunking.This was essential when running a large number of cohorts (e.g. > 100 cohorts, leading to very large number combinations of cohorts to be computed. This was challenging to most infrastructures.)
+
 Bug fixes:
 
 1. Fixed issue uploading results to postgres db caused by null values in primary key field. 
