@@ -499,9 +499,10 @@ executeDiagnostics <- function(cohortDefinitionSet,
         if (any(is.null(databaseDescription), is.na(databaseDescription))) {
           databaseDescription <- databaseName
         }
-        vocabularyVersion <- getVocabularyVersion(connection, vocabularyDatabaseSchema)
+      }
+      vocabularyVersion <- getVocabularyVersion(connection, vocabularyDatabaseSchema)
 
-      })
+    })
 
   if (incremental) {
     ParallelLogger::logDebug("Working in incremental mode.")
