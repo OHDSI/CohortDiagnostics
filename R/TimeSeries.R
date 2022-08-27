@@ -257,20 +257,22 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                 DROP TABLE IF EXISTS #ts_cohort;
                 DROP TABLE IF EXISTS #ts_cohort_first;"
 
-  ParallelLogger::logTrace("   - Creating cohort table copy for time series")
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = connection,
-    sql = sqlCohort,
-    cohort_database_schema = cohortDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    cohort_table = cohortTable,
-    cohort_ids = cohortIds,
-    stratify_by_gender = stratifyByGender,
-    stratify_by_age_group = stratifyByAgeGroup,
-    cdm_database_schema = cdmDatabaseSchema,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
+  if (runCohortTimeSeries) {
+    ParallelLogger::logTrace("   - Creating cohort table copy for time series")
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = sqlCohort,
+      cohort_database_schema = cohortDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      cohort_table = cohortTable,
+      cohort_ids = cohortIds,
+      stratify_by_gender = stratifyByGender,
+      stratify_by_age_group = stratifyByAgeGroup,
+      cdm_database_schema = cdmDatabaseSchema,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+  }
 
   for (i in (1:length(seriesToRun))) {
     ParallelLogger::logTrace(paste0(" - Running ", seriesToRun[[i]]))
@@ -530,6 +532,7 @@ executeTimeSeriesDiagnostics <- function(connection,
         length(instantiatedCohorts) - nrow(subset)
       ))
     }
+      
     data <-
       runCohortTimeSeriesDiagnostics(
         connection = connection,
@@ -538,7 +541,7 @@ executeTimeSeriesDiagnostics <- function(connection,
         cdmDatabaseSchema = cdmDatabaseSchema,
         cohortTable = cohortTable,
         runCohortTimeSeries = runCohortTimeSeries,
-        runDataSourceTimeSeries = runDataSourceTimeSeries,
+        runDataSourceTimeSeries = FALSE,
         timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
         timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
         cohortIds = cohortIds
