@@ -1,4 +1,4 @@
-test_that("Testing time series execution", {
+test_that("Testing cohort time series execution", {
   skip_if(skipCdmTests, "cdm settings not configured")
   
   connectionTimeSeries <-
@@ -246,3 +246,97 @@ test_that("Testing time series logic", {
     )
   })
 })
+
+
+test_that("Testing Data source time series execution", {
+  skip_if(skipCdmTests, "cdm settings not configured")
+  
+  connectionTimeSeries <-
+    DatabaseConnector::connect(connectionDetails)
+  
+  # to do - with incremental = FALSE
+  with_dbc_connection(connectionTimeSeries, {
+    cohortDefinitionSet = dplyr::tibble(
+      cohortId = -44819062,
+      # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
+      checksum = CohortDiagnostics:::computeChecksum(column = "data source time series")
+    )
+    
+    exportFolder <- tempdir()
+    exportFile <- tempfile()
+    
+    unlink(x = exportFolder,
+           recursive = TRUE,
+           force = TRUE)
+    dir.create(path = exportFolder,
+               showWarnings = FALSE,
+               recursive = TRUE)
+    
+    CohortDiagnostics:::executeTimeSeriesDiagnostics(
+      connection = connectionTimeSeries,
+      tempEmulationSchema = tempEmulationSchema,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortDefinitionSet = NULL,
+      runCohortTimeSeries = FALSE,
+      runDataSourceTimeSeries = TRUE,
+      databaseId = "testDatabaseId",
+      exportFolder = exportFolder,
+      minCellCount = 0,
+      incremental = TRUE,
+      recordKeepingFile = paste0(exportFile, "recordKeeping"),
+      observationPeriodDateRange = dplyr::tibble(
+        observationPeriodMinDate = as.Date("2004-01-01"),
+        observationPeriodMaxDate = as.Date("2007-12-31")
+      )
+    )
+    
+    recordKeepingFileData <-
+      readr::read_csv(file = paste0(exportFile, "recordKeeping"),
+                      col_types = readr::cols())
+    
+    # testing if check sum is written
+    testthat::expect_true("checksum" %in% colnames(recordKeepingFileData))
+    testthat::expect_equal(object = recordKeepingFileData$cohortId, expected = -44819062)
+    
+    # result
+    dataSourceTimeSeriesResult <-
+      readr::read_csv(
+        file = file.path(exportFolder, "time_series.csv"),
+        col_types = readr::cols()
+      )
+    
+    subset <- CohortDiagnostics:::subsetToRequiredCohorts(
+      cohorts = cohortDefinitionSet,
+      task = "runDataSourceTimeSeries",
+      incremental = TRUE,
+      recordKeepingFile = paste0(exportFile, "recordKeeping")
+    ) %>%
+      dplyr::arrange(.data$cohortId)
+    
+    testthat::expect_equal(object = nrow(subset),
+                           expected = 0)
+  })
+})
+
+
+test_that("Testing logic of setting both dataSourceTime and cohort time series to false",
+          {
+            testthat::expect_warning(
+              CohortDiagnostics:::executeTimeSeriesDiagnostics(
+                connection = NULL,
+                tempEmulationSchema = NULL,
+                cdmDatabaseSchema = NULL,
+                cohortDatabaseSchema = NULL,
+                cohortDefinitionSet = NULL,
+                runCohortTimeSeries = FALSE,
+                runDataSourceTimeSeries = FALSE,
+                databaseId = NULL,
+                exportFolder = NULL,
+                minCellCount = NULL,
+                incremental = NULL,
+                recordKeepingFile = NULL,
+                observationPeriodDateRange = NULL
+              )
+            )
+          })

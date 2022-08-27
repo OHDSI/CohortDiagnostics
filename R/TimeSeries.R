@@ -83,21 +83,23 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   ParallelLogger::logTrace(" - Creating Andromeda object to collect results")
   resultsInAndromeda <- Andromeda::andromeda()
 
-  sqlCount <-
-    " SELECT cohort_definition_id, COUNT(*) count
+  if (runCohortTimeSeries) {
+    sqlCount <-
+      " SELECT cohort_definition_id, COUNT(*) count
       FROM @cohort_database_schema.@cohort_table
       {@cohort_ids != ''} ? { where cohort_definition_id IN (@cohort_ids)}
       GROUP BY cohort_definition_id;"
-  resultsInAndromeda$cohortCount <- renderTranslateQuerySql(
-    connection = connection,
-    sql = sqlCount,
-    cohort_database_schema = cohortDatabaseSchema,
-    cohort_ids = cohortIds,
-    cohort_table = cohortTable
-  )
-  if (resultsInAndromeda$cohortCount %>% dplyr::summarise(n = dplyr::n()) %>% dplyr::pull(.data$n) == 0) {
-    warning("Please check if cohorts are instantiated. Exiting cohort time series.")
-    return(NULL)
+    resultsInAndromeda$cohortCount <- renderTranslateQuerySql(
+      connection = connection,
+      sql = sqlCount,
+      cohort_database_schema = cohortDatabaseSchema,
+      cohort_ids = cohortIds,
+      cohort_table = cohortTable
+    )
+    if (resultsInAndromeda$cohortCount %>% dplyr::summarise(n = dplyr::n()) %>% dplyr::pull(.data$n) == 0) {
+      warning("Please check if cohorts are instantiated. Exiting cohort time series.")
+      return(NULL)
+    }
   }
 
   ## Calendar period----
@@ -516,6 +518,13 @@ executeTimeSeriesDiagnostics <- function(connection,
                                          recordKeepingFile,
                                          observationPeriodDateRange,
                                          batchSize = 20) {
+  
+  if (all(!runCohortTimeSeries,!runDataSourceTimeSeries)) {
+    warning(
+      "Both Datasource time series and cohort time series are set to FALSE. Skippping executeTimeSeriesDiagnostics."
+    )
+  }
+  
   if (runCohortTimeSeries) {
     subset <- subsetToRequiredCohorts(
       cohorts = cohortDefinitionSet %>%
@@ -589,7 +598,7 @@ executeTimeSeriesDiagnostics <- function(connection,
   if (runDataSourceTimeSeries) {
     subset <- subsetToRequiredCohorts(
       cohorts = dplyr::tibble(
-        cohortId = 0,
+        cohortId = -44819062, # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
         checksum = computeChecksum(column = "data source time series")
       ),
       task = "runDataSourceTimeSeries",
@@ -607,7 +616,6 @@ executeTimeSeriesDiagnostics <- function(connection,
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
         cdmDatabaseSchema = cdmDatabaseSchema,
-        cohortTable = cohortTable,
         runCohortTimeSeries = FALSE,
         runDataSourceTimeSeries = runDataSourceTimeSeries,
         timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
@@ -623,10 +631,10 @@ executeTimeSeriesDiagnostics <- function(connection,
       data = data,
       fileName = file.path(exportFolder, "time_series.csv"),
       incremental = incremental,
-      cohortId = 0
+      cohortId = -44819062
     )
     recordTasksDone(
-      cohortId = 0,
+      cohortId = -44819062,
       task = "runDataSourceTimeSeries",
       checksum = subset$checksum,
       recordKeepingFile = recordKeepingFile,
