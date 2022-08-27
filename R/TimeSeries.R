@@ -500,7 +500,6 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
 }
 
 
-
 executeTimeSeriesDiagnostics <- function(connection,
                                          tempEmulationSchema,
                                          cdmDatabaseSchema,
@@ -515,36 +514,104 @@ executeTimeSeriesDiagnostics <- function(connection,
                                          instantiatedCohorts,
                                          incremental,
                                          recordKeepingFile,
-                                         observationPeriodDateRange) {
-  subset <- subsetToRequiredCohorts(
-    cohorts = cohortDefinitionSet %>%
-      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-    task = "runCohortTimeSeries",
-    incremental = incremental,
-    recordKeepingFile = recordKeepingFile
-  )
-  cohortIds <- subset$cohortId
-  if (nrow(subset) > 0) {
-    if (incremental &&
-      (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        " - Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
+                                         observationPeriodDateRange,
+                                         batchSize = 20) {
+  if (runCohortTimeSeries) {
+    subset <- subsetToRequiredCohorts(
+      cohorts = cohortDefinitionSet %>%
+        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+      task = "runCohortTimeSeries",
+      incremental = incremental,
+      recordKeepingFile = recordKeepingFile
+    ) %>%
+      dplyr::arrange(.data$cohortId)
+    
+    if (nrow(subset) > 0) {
+      if (incremental &&
+          (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo(sprintf(
+          " - Skipping %s cohorts in incremental mode.",
+          length(instantiatedCohorts) - nrow(subset)
+        ))
+      }
       
+      for (start in seq(1, nrow(subset), by = batchSize)) {
+        end <- min(start + batchSize - 1, nrow(subset))
+        
+        if (nrow(subset) > batchSize) {
+          ParallelLogger::logInfo(
+            sprintf(
+              "  - Batch cohort time series. Processing cohorts %s through %s combinations of %s total combinations",
+              start,
+              end,
+              nrow(subset)
+            )
+          )
+        }
+        
+        data <-
+          runCohortTimeSeriesDiagnostics(
+            connection = connection,
+            tempEmulationSchema = tempEmulationSchema,
+            cohortDatabaseSchema = cohortDatabaseSchema,
+            cdmDatabaseSchema = cdmDatabaseSchema,
+            cohortTable = cohortTable,
+            runCohortTimeSeries = runCohortTimeSeries,
+            runDataSourceTimeSeries = FALSE,
+            timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
+            timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
+            cohortIds = subset[start:end, ]$cohortId %>% unique()
+          )
+        data <- makeDataExportable(
+          x = data,
+          tableName = "time_series",
+          minCellCount = minCellCount,
+          databaseId = databaseId
+        )
+        writeToCsv(
+          data = data,
+          fileName = file.path(exportFolder, "time_series.csv"),
+          incremental = incremental,
+          cohortId = subset[start:end, ]$cohortId %>% unique()
+        )
+        recordTasksDone(
+          cohortId = subset[start:end, ]$cohortId %>% unique(),
+          task = "runCohortTimeSeries",
+          checksum = subset[start:end, ]$checksum,
+          recordKeepingFile = recordKeepingFile,
+          incremental = incremental
+        )
+      }
+    }
+  }
+  
+  # separating out data source time series
+  if (runDataSourceTimeSeries) {
+    subset <- subsetToRequiredCohorts(
+      cohorts = dplyr::tibble(
+        cohortId = 0,
+        checksum = computeChecksum(column = "data source time series")
+      ),
+      task = "runDataSourceTimeSeries",
+      incremental = incremental,
+      recordKeepingFile = recordKeepingFile
+    )
+    if (all(nrow(subset) == 0,
+            incremental)) {
+      ParallelLogger::logInfo("Skipping Data Source Time Series in Incremental mode.")
+      return(NULL)
+    }
+    
     data <-
       runCohortTimeSeriesDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
         cdmDatabaseSchema = cdmDatabaseSchema,
         cohortTable = cohortTable,
-        runCohortTimeSeries = runCohortTimeSeries,
-        runDataSourceTimeSeries = FALSE,
+        runCohortTimeSeries = FALSE,
+        runDataSourceTimeSeries = runDataSourceTimeSeries,
         timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
-        timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
-        cohortIds = cohortIds
+        timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate
       )
     data <- makeDataExportable(
       x = data,
@@ -556,11 +623,11 @@ executeTimeSeriesDiagnostics <- function(connection,
       data = data,
       fileName = file.path(exportFolder, "time_series.csv"),
       incremental = incremental,
-      cohortId = subset$cohortId
+      cohortId = 0
     )
     recordTasksDone(
-      cohortId = subset$cohortId,
-      task = "runTimeSeries",
+      cohortId = 0,
+      task = "runDataSourceTimeSeries",
       checksum = subset$checksum,
       recordKeepingFile = recordKeepingFile,
       incremental = incremental
