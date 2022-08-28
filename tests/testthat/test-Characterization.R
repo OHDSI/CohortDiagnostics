@@ -5,6 +5,7 @@ test_that("Execute and export characterization", {
 
   with_dbc_connection(tConnection, {
     exportFolder <- tempfile()
+    recordKeepingFile <- tempfile(fileext="csv")
     dir.create(exportFolder)
     on.exit(unlink(exportFolder), add = TRUE)
 
@@ -59,12 +60,12 @@ test_that("Execute and export characterization", {
                                   covariateSettings = temporalCovariateSettings,
                                   tempEmulationSchema = tempEmulationSchema,
                                   cdmVersion = 5,
-                                  cohorts = cohortDefinitionSet,
+                                  cohorts = cohortDefinitionSet[1:3,],
                                   cohortCounts = cohortCounts,
                                   minCellCount = 5,
                                   instantiatedCohorts = cohortDefinitionSet$cohortId,
-                                  incremental = FALSE,
-                                  recordKeepingFile = tempfile(fileext="csv"),
+                                  incremental = TRUE,
+                                  recordKeepingFile = recordKeepingFile,
                                   task = "runTemporalCohortCharacterization",
                                   jobName = "Temporal Cohort characterization")
 
@@ -74,6 +75,25 @@ test_that("Execute and export characterization", {
     checkmate::expect_file_exists(file.path(exportFolder, "temporal_covariate_value.csv"))
     checkmate::expect_file_exists(file.path(exportFolder, "temporal_covariate_value_dist.csv"))
     checkmate::expect_file_exists(file.path(exportFolder, "temporal_time_ref.csv"))
+    
+    recordKeepingFileData <- readr::read_csv(file = recordKeepingFile, col_types = readr::cols())
+    testthat::expect_equal(object = nrow(recordKeepingFileData), expected = 3)
+    
+    # check if subset works
+    subset <- subsetToRequiredCohorts(
+      cohorts = cohortDefinitionSet,
+      task = "runTemporalCohortCharacterization",
+      incremental = TRUE,
+      recordKeepingFile = recordKeepingFile
+    )
+    
+    #should not have the cohorts that were previously run
+    testthat::expect_equal(object = nrow(subset %>%
+                                           dplyr::filter(
+                                             .data$cohortId %in% c(cohortDefinitionSet[1:3, ]$cohortId)
+                                           )),
+                           expected = 0)
+    
     # Check no time ids are NA/NULL
     tdata <- readr::read_csv(file.path(exportFolder, "temporal_covariate_value_dist.csv"))
     expect_false(any(is.na(tdata$time_id) | is.null(tdata$time_id)))
@@ -84,6 +104,51 @@ test_that("Execute and export characterization", {
     # It would make no sense if there were NA values here
     tdata <- readr::read_csv(file.path(exportFolder, "temporal_time_ref.csv"))
     expect_false(any(is.na(tdata$time_id) | is.null(tdata$time_id)))
+    
+    
+    unlink(x = file.path(exportFolder, "temporal_covariate_value_dist.csv"), recursive = TRUE, force = TRUE)
+    unlink(x = file.path(exportFolder, "temporal_covariate_value.csv"), recursive = TRUE, force = TRUE)
+    unlink(x = file.path(exportFolder, "temporal_time_ref.csv"), recursive = TRUE, force = TRUE)
+    executeCohortCharacterization(connection = tConnection,
+                                  databaseId = "Testdb",
+                                  exportFolder = exportFolder,
+                                  cdmDatabaseSchema = cdmDatabaseSchema,
+                                  cohortDatabaseSchema = cohortDatabaseSchema,
+                                  cohortTable = cohortTable,
+                                  covariateSettings = temporalCovariateSettings,
+                                  tempEmulationSchema = tempEmulationSchema,
+                                  cdmVersion = 5,
+                                  cohorts = cohortDefinitionSet,
+                                  cohortCounts = cohortCounts,
+                                  minCellCount = 5,
+                                  instantiatedCohorts = cohortDefinitionSet$cohortId,
+                                  incremental = TRUE,
+                                  recordKeepingFile = recordKeepingFile,
+                                  task = "runTemporalCohortCharacterization",
+                                  jobName = "Temporal Cohort characterization")
+    
+    
+    # check if subset works
+    subset <- subsetToRequiredCohorts(
+      cohorts = cohortDefinitionSet,
+      task = "runTemporalCohortCharacterization",
+      incremental = TRUE,
+      recordKeepingFile = recordKeepingFile
+    )
+    
+    #should not have the cohorts that were previously run
+    testthat::expect_equal(object = nrow(subset),
+                           expected = 0)
+    
+    # should not have data from first run cohorts --it was deleted, and second run is in incremental
+    tdata <-
+      readr::read_csv(file.path(exportFolder, "temporal_covariate_value.csv"))
+    testthat::expect_equal(object = nrow(tdata %>%
+                                           dplyr::filter(
+                                             .data$cohort_id %in% c(cohortDefinitionSet[1:3, ]$cohortId)
+                                           )),
+                           expected = 0)
+    
   })
 
 })
