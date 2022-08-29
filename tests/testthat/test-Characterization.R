@@ -93,24 +93,35 @@ test_that("Execute and export characterization", {
                                            )),
                            expected = 0)
     
+    # finish the rest of characterization
+    executeCohortCharacterization(connection = tConnection,
+                                  databaseId = "Testdb",
+                                  exportFolder = exportFolder,
+                                  cdmDatabaseSchema = cdmDatabaseSchema,
+                                  cohortDatabaseSchema = cohortDatabaseSchema,
+                                  cohortTable = cohortTable,
+                                  covariateSettings = temporalCovariateSettings,
+                                  tempEmulationSchema = tempEmulationSchema,
+                                  cdmVersion = 5,
+                                  cohorts = cohortDefinitionSet,
+                                  cohortCounts = cohortCounts,
+                                  minCellCount = 5,
+                                  instantiatedCohorts = cohortDefinitionSet$cohortId,
+                                  incremental = TRUE,
+                                  recordKeepingFile = recordKeepingFile,
+                                  task = "runTemporalCohortCharacterization",
+                                  jobName = "Temporal Cohort characterization")
+    
     # Check no time ids are NA/NULL
     tdata <- readr::read_csv(file.path(exportFolder, "temporal_covariate_value_dist.csv"))
     expect_false(any(is.na(tdata$time_id) | is.null(tdata$time_id)))
-
+    
     tdata <- readr::read_csv(file.path(exportFolder, "temporal_covariate_value.csv"))
     expect_false(any(is.na(tdata$time_id) | is.null(tdata$time_id)))
-
+    
     # It would make no sense if there were NA values here
     tdata <- readr::read_csv(file.path(exportFolder, "temporal_time_ref.csv"))
     expect_false(any(is.na(tdata$time_id) | is.null(tdata$time_id)))
     
-    # check if subset works
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohortDefinitionSet,
-      task = "runTemporalCohortCharacterization",
-      incremental = TRUE,
-      recordKeepingFile = recordKeepingFile
-    )
   })
-
 })
