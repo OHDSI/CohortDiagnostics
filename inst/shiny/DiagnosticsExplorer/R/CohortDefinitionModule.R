@@ -1004,12 +1004,13 @@ cohortDefinitionsModule <- function(id,
         progress <- shiny::Progress$new()
         on.exit(progress$close())
         progress$set(message = "Getting concepts mapped to concept ids resolved by concept set expression (may take time)", value = 0)
-
+        
        output <-
           mappedConceptSet(
             dataSource = dataSource,
             databaseIds = databaseTable$databaseId,
-            cohortId = row$cohortId
+            cohortId = row$cohortId,
+            conceptSetId = cohortDefinitionConceptSetExpressionSelected()$id
           )
         if (!hasData(output)) {
           return(NULL)
@@ -1030,7 +1031,6 @@ cohortDefinitionsModule <- function(id,
               dplyr::filter(.data$databaseId %in% c(selectedDatabaseIds())) %>%
               dplyr::select(.data$databaseId)
           )
-        
         conceptCount <- getCountForConceptIdInCohortReactive()
         if (hasData(conceptCount)) {
           allConceptIdsAllDatabase <- allConceptIdsAllDatabase %>%
