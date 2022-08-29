@@ -46,10 +46,10 @@ for (i in (1:length(listOfZipFilesToUpload))) {
   )
 }
 
-tablesInResultsDataModel <- CohortDiagnostics::getResultsDataModelSpecifications() |> 
-  dplyr::select(.data$tableName) |> 
-  dplyr::distinct() |> 
-  dplyr::arrange() |> 
+tablesInResultsDataModel <- CohortDiagnostics::getResultsDataModelSpecifications() %>% 
+  dplyr::select(.data$tableName) %>% 
+  dplyr::distinct() %>% 
+  dplyr::arrange() %>% 
   dplyr::pull()
 
 
