@@ -213,27 +213,34 @@ cohortCountsModule <- function(id,
       if (!hasData(getCohortIdOnCohortCountRowSelect())) {
         return(NULL)
       }
-
+      
       data <- getInclusionRuleStats(
         dataSource = dataSource,
         cohortIds = getCohortIdOnCohortCountRowSelect()$cohortId,
         databaseIds = selectedDatabaseIds()
-      ) %>% dplyr::rename(
-        Meet = .data$meetSubjects,
-        Gain = .data$gainSubjects,
-        Remain = .data$remainSubjects,
-        Total = .data$totalSubjects
       )
-
-      countLocation <- 1
-      keyColumnFields <-
-        c("cohortId", "ruleName")
-      dataColumnFields <- c("Meet", "Gain", "Remain", "Total")
-
+      
+      
       validate(need(
         (nrow(data) > 0),
         "There is no data for the selected combination."
       ))
+      
+      data <- data %>% dplyr::rename(
+        Meet = .data$meetSubjects,
+        Gain = .data$gainSubjects,
+        Remain = .data$remainSubjects,
+        Total = .data$totalSubjects,
+        id = .data$ruleSequenceId
+      ) %>% 
+        dplyr::arrange(.data$cohortId,
+                       .data$id)
+
+      countLocation <- 1
+      keyColumnFields <-
+        c("id", "ruleName")
+      dataColumnFields <- c("Meet", "Gain", "Remain", "Total")
+
 
       countsForHeader <- NULL
 
