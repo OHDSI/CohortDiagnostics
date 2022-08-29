@@ -190,10 +190,10 @@ compareCohortCharacterizationView <- function(id) {
             shiny::radioButtons(
               inputId = ns("charCompareType"),
               label = "",
-              choices = if (id == "compareCohortCharacterization") 
+              choices = if (id == "DiagnosticsExplorer-compareCohortCharacterization") 
                 {c("Pretty table", "Raw table", "Plot")}
               else {c("Raw table", "Plot")},
-              #pretty table should only be for compare cohort characterization, This code will show it for compare temporal cohort characterization
+              #pretty table is only for compare cohort characterization and characterizations.,
               selected = "Plot",
               inline = TRUE
             ),
