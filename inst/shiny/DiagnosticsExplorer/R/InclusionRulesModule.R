@@ -78,7 +78,8 @@ inclusionRulesModule <- function(id,
           dplyr::mutate(
             Meet = .data$meetSubjects / .data$totalSubjects,
             Gain = .data$gainSubjects / .data$totalSubjects,
-            Remain = .data$remainSubjects / .data$totalSubjects
+            Remain = .data$remainSubjects / .data$totalSubjects,
+            id = .data$ruleSequenceId
           )
       } else {
         table <- table %>%
@@ -86,14 +87,15 @@ inclusionRulesModule <- function(id,
             Meet = .data$meetSubjects,
             Gain = .data$gainSubjects,
             Remain = .data$remainSubjects,
-            Total = .data$totalSubjects
+            Total = .data$totalSubjects,
+            id = .data$ruleSequenceId
           )
       }
       
       table <- table %>%
         dplyr::arrange(.data$cohortId,
                        .data$databaseId,
-                       .data$ruleSequenceId)
+                       .data$id)
 
       validate(need(
         (nrow(table) > 0),
@@ -101,7 +103,7 @@ inclusionRulesModule <- function(id,
       ))
 
       keyColumnFields <-
-        c("ruleSequenceId", "ruleName")
+        c("id", "ruleName")
       countLocation <- 1
       
       if (!hasData(input$inclusionRuleTableFilters)) {

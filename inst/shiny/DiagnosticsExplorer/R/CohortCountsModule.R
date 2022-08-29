@@ -220,7 +220,6 @@ cohortCountsModule <- function(id,
         databaseIds = selectedDatabaseIds()
       )
       
-      
       validate(need(
         (nrow(data) > 0),
         "There is no data for the selected combination."
@@ -235,7 +234,18 @@ cohortCountsModule <- function(id,
       ) %>% 
         dplyr::arrange(.data$cohortId,
                        .data$id)
-
+      
+      if (!hasData(input$cohortCountInclusionRuleTableFilters)) {
+        dataColumnFields <- c("Meet", "Gain", "Remain")
+      } else {
+        dataColumnFields <- c(input$inclusionRuleTableFilters)
+      }
+      
+      if (!showDataAsPercent) {
+        dataColumnFields <- c(dataColumnFields, "Total")
+      }
+      
+      
       countLocation <- 1
       keyColumnFields <-
         c("id", "ruleName")
