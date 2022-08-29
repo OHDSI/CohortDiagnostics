@@ -20,7 +20,7 @@ inclusionRulesView <- function(id) {
             td(
               align = "left",
               shiny::radioButtons(
-                inputId = "inclusionRuleTableFilters",
+                inputId = ns("inclusionRuleTableFilters"),
                 label = "Inclusion Rule Events",
                 choices = c("All", "Meet", "Gain", "Remain"),
                 selected = "All",
@@ -106,13 +106,14 @@ inclusionRulesModule <- function(id,
         c("id", "ruleName")
       countLocation <- 1
       
-      if (!hasData(input$inclusionRuleTableFilters)) {
+      if (any(!hasData(input$inclusionRuleTableFilters),
+              input$inclusionRuleTableFilters == "All")) {
         dataColumnFields <- c("Meet", "Gain", "Remain")
       } else {
         dataColumnFields <- c(input$inclusionRuleTableFilters)
       }
       
-      if (!showDataAsPercent) {
+      if (all(hasData(showDataAsPercent), !showDataAsPercent)) {
         dataColumnFields <- c(dataColumnFields, "Total")
       }
 

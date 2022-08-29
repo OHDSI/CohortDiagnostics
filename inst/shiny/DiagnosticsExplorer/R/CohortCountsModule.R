@@ -66,10 +66,39 @@ cohortCountsView <- function(id) {
         shiny::conditionalPanel(
           condition = "output.cohortCountRowIsSelected == true",
           ns = ns,
-          shinycssloaders::withSpinner(
-            reactable::reactableOutput(ns("inclusionRuleStats"))
-          ),
-          csvDownloadButton(ns, "inclusionRuleStats")
+          shinydashboard::box(
+            title = NULL,
+            width = NULL,
+            htmltools::withTags(
+              table(
+                width = "100%",
+                tr(
+                  tags$td(
+                    align = "left",
+                    shiny::radioButtons(
+                      inputId = ns("cohortCountInclusionRuleTableFilters"),
+                      label = "Inclusion Rule Events",
+                      choices = c("All", "Meet", "Gain", "Remain"),
+                      selected = "All",
+                      inline = TRUE
+                    )
+                  ),
+                  tags$td(
+                    shiny::checkboxInput(
+                      inputId = ns("cohortCountInclusionRulesShowAsPercent"),
+                      label = "Show as percent",
+                      value = TRUE
+                    )
+                  ),
+                  tags$td(
+                    align = "right",
+                  )
+                )
+              )
+            ),
+            shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("inclusionRuleStats"))),
+            csvDownloadButton(ns, "inclusionRuleStats")
+          )
         )
       )
     )
@@ -220,57 +249,83 @@ cohortCountsModule <- function(id,
         databaseIds = selectedDatabaseIds()
       )
       
+      showDataAsPercent <- input$cohortCountInclusionRulesShowAsPercent
+      
       validate(need(
         (nrow(data) > 0),
         "There is no data for the selected combination."
       ))
       
-      data <- data %>% dplyr::rename(
-        Meet = .data$meetSubjects,
-        Gain = .data$gainSubjects,
-        Remain = .data$remainSubjects,
-        Total = .data$totalSubjects,
-        id = .data$ruleSequenceId
-      ) %>% 
+      if (all(hasData(showDataAsPercent), showDataAsPercent)) {
+        data <- data %>%
+          dplyr::mutate(
+            Meet = .data$meetSubjects / .data$totalSubjects,
+            Gain = .data$gainSubjects / .data$totalSubjects,
+            Remain = .data$remainSubjects / .data$totalSubjects,
+            id = .data$ruleSequenceId
+          )
+      } else {
+        data <- data %>%
+          dplyr::mutate(
+            Meet = .data$meetSubjects,
+            Gain = .data$gainSubjects,
+            Remain = .data$remainSubjects,
+            Total = .data$totalSubjects,
+            id = .data$ruleSequenceId
+          )
+      }
+      
+      data <- data %>%
         dplyr::arrange(.data$cohortId,
+                       .data$databaseId,
                        .data$id)
       
-      if (!hasData(input$cohortCountInclusionRuleTableFilters)) {
-        dataColumnFields <- c("Meet", "Gain", "Remain")
-      } else {
-        dataColumnFields <- c(input$inclusionRuleTableFilters)
-      }
+      validate(need(
+        (nrow(data) > 0),
+        "There is no data for the selected combination."
+      ))
       
-      if (!showDataAsPercent) {
-        dataColumnFields <- c(dataColumnFields, "Total")
-      }
-      
-      
-      countLocation <- 1
       keyColumnFields <-
         c("id", "ruleName")
-      dataColumnFields <- c("Meet", "Gain", "Remain", "Total")
+      countLocation <- 1
+      
+      if (any(!hasData(input$cohortCountInclusionRuleTableFilters),
+              input$cohortCountInclusionRuleTableFilters == "All")) {
+        dataColumnFields <- c("Meet", "Gain", "Remain")
+      } else {
+        dataColumnFields <- c(input$cohortCountInclusionRuleTableFilters)
+      }
+      
+      if (all(hasData(showDataAsPercent), !showDataAsPercent)) {
+        dataColumnFields <- c(dataColumnFields, "Total")
+      }
 
-
-      countsForHeader <- NULL
-
+      countsForHeader <-
+        getDisplayTableHeaderCount(
+          dataSource = dataSource,
+          databaseIds = selectedDatabaseIds(),
+          cohortIds = getCohortIdOnCohortCountRowSelect()$cohortId,
+          source = "cohort",
+          fields = "Persons"
+        )
+      
       maxCountValue <-
-        getColumnMax(
+        getMaxValueForStringMatchedColumnsInDataFrame(
           data = data,
           string = dataColumnFields
         )
-
+      
       getDisplayTableGroupedByDatabaseId(
         data = data,
         cohort = cohortTable,
         databaseTable = databaseTable,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        countLocation = 1,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        sort = TRUE,
-        selection = "single"
+        showDataAsPercent = showDataAsPercent,
+        sort = FALSE
       )
     })
   }
