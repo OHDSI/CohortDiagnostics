@@ -176,7 +176,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         "_sep_",
         .data$type
       ))
-    distinctColumnGroups <- data$databaseName %>% unique()
+    distinctColumnGroups <- data$databaseId %>% unique()
   }
 
   data <- data %>%
@@ -336,7 +336,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         columnName <- headerCount %>%
           dplyr::filter(.data$databaseId == distinctColumnGroups[i]) %>%
           dplyr::mutate(count = paste0(
-            .data$databaseName,
+            .data$databaseId,
             " (",
             scales::comma(.data$count),
             ")"
