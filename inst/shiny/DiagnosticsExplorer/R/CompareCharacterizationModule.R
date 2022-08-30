@@ -710,7 +710,8 @@ compareCohortCharacterizationModule <- function(id,
         data = data,
         keyColumns = keyColumns,
         dataColumns = dataColumns,
-        showDataAsPercent = showDataAsPercent
+        showDataAsPercent = showDataAsPercent, 
+        pageSize = 1000
       )
       return(table)
     })
