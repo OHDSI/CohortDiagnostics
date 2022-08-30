@@ -515,15 +515,19 @@ incidenceRatesModule <- function(id,
           dplyr::select(.data$ageGroup) %>%
           dplyr::filter(.data$ageGroup != "NA", !is.na(.data$ageGroup)) %>%
           dplyr::distinct() %>%
-          dplyr::arrange(as.integer(sub(
+          dplyr::mutate(lowerValue = as.integer(sub(
             pattern = "-.+$", "", x = .data$ageGroup
-          )))
+          ))) %>% 
+          dplyr::arrange(.data$lowerValue)
 
         shinyWidgets::updatePickerInput(
           session = session,
           inputId = "incidenceRateAgeFilter",
           selected = ageFilter$ageGroup,
-          choices = ageFilter$ageGroup,
+          choices = ageFilter %>% 
+            dplyr::filter(.data$lowerValue >= 0) %>% 
+            dplyr::filter(.data$lowerValue < 80) %>% 
+            dplyr::pull(.data$ageGroup),
           choicesOpt = list(style = rep_len("color: black;", 999))
         )
       }
@@ -540,13 +544,13 @@ incidenceRatesModule <- function(id,
           ) %>%
           dplyr::distinct() %>%
           dplyr::arrange(.data$gender)
-
+        
         shinyWidgets::updatePickerInput(
           session = session,
           inputId = "incidenceRateGenderFilter",
           choicesOpt = list(style = rep_len("color: black;", 999)),
           choices = genderFilter$gender,
-          selected = genderFilter$gender
+          selected = c('Female', 'Male')
         )
       }
     })
