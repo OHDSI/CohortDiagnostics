@@ -229,12 +229,12 @@ dashboardUi <- function(enabledTabs,
           infoId = "timeDistributionInfo"
         )
       },
-      if ("inclusionRuleStats" %in% enabledTabs) {
-        addInfo(
-          item = shinydashboard::menuItem(text = "Inclusion Rule Statistics", tabName = "inclusionRuleStats"),
-          infoId = "inclusionRuleStatsInfo"
-        )
-      },
+      # if ("inclusionRuleStats" %in% enabledTabs) {
+      #   addInfo(
+      #     item = shinydashboard::menuItem(text = "Inclusion Rule Statistics", tabName = "inclusionRuleStats"),
+      #     infoId = "inclusionRuleStatsInfo"
+      #   )
+      # },
       if ("indexEventBreakdown" %in% enabledTabs) {
         addInfo(
           item = shinydashboard::menuItem(text = "Index Event Breakdown", tabName = "indexEventBreakdown"),
