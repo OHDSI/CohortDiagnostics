@@ -139,7 +139,8 @@ getDisplayTableGroupedByDatabaseId <- function(data,
                                                pageSize = 20,
                                                valueFill = 0,
                                                selection = NULL,
-                                               isTemporal = FALSE) {
+                                               isTemporal = FALSE,
+                                               sortable = TRUE) {
 
   data <- prepDataForDisplay(
     data = data,
@@ -235,7 +236,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     columnDefinitions[[columnName]] <-
       reactable::colDef(
         name = columnName,
-        sortable = TRUE,
+        sortable = sortable,
         resizable = TRUE,
         filterable = TRUE,
         show = TRUE,

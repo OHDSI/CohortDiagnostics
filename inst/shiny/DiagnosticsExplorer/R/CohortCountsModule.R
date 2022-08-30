@@ -325,7 +325,8 @@ cohortCountsModule <- function(id,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showDataAsPercent = showDataAsPercent,
-        sort = FALSE
+        sort = FALSE,
+        sortable = FALSE
       )
     })
   }
