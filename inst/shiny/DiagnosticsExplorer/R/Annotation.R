@@ -160,7 +160,7 @@ annotationModule <- function(id,
       dbMapping <- databaseTable %>% dplyr::filter(.data$databaseId %in% selectedDatabaseIds())
       for (i in 1:nrow(dbMapping)) {
         row <- dbMapping[i,]
-        databaseChoices[row$databaseName] <- row$databaseId
+        databaseChoices[row$databaseId] <- row$databaseId
       }
       return(databaseChoices)
     })
@@ -276,7 +276,6 @@ annotationModule <- function(id,
       tempList <- list()
       # Annotation - cohort Ids
       tempList$cohortIds <- inputCohortIds()
-
       # Annotation - database Ids
       if (!is.null(input$database)) {
         selectedDatabaseIds <- input$database
