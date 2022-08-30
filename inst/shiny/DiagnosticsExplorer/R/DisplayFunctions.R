@@ -176,7 +176,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         "_sep_",
         .data$type
       ))
-    distinctColumnGroups <- data$databaseId %>% unique()
+    distinctColumnGroups <- data$databaseName %>% unique()
   }
 
   data <- data %>%
@@ -321,12 +321,6 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     columnTotalMinWidth <- "auto"
   }
   
-  dbNameMap <- list()
-  for (i in 1: nrow(databaseTable)) {
-    dbNameMap[[databaseTable[i,]$databaseId]] <- databaseTable[i,]$databaseName
-  }
-  
-  
   columnGroups <- list()
   for (i in 1:length(distinctColumnGroups)) {
     extractedDataColumns <-
@@ -335,7 +329,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         pattern = stringr::fixed(distinctColumnGroups[i])
       )]
     
-    columnName <- dbNameMap[[distinctColumnGroups[i]]]
+    columnName <- distinctColumnGroups[i]
 
     if (!is.null(headerCount)) {
       if (countLocation == 1) {
