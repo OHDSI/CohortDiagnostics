@@ -2570,17 +2570,8 @@ shiny::shinyServer(function(input, output, session) {
 
   # Temporal characterization ------------
   ## ReactiveVal: temporalCharacterizationAnalysisNameFilter ----
-  temporalCharacterizationAnalysisNameFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(
-      input$temporalCharacterizationAnalysisNameFilter_open,
-      input$tabs
-    )
-  }, handlerExpr = {
-    if (isFALSE(input$temporalCharacterizationAnalysisNameFilter_open) ||
-      !is.null(input$tabs)) {
-      temporalCharacterizationAnalysisNameFilter(input$temporalCharacterizationAnalysisNameFilter)
-    }
+  temporalCharacterizationAnalysisNameFilter <- reactive({
+    input$temporalCharacterizationAnalysisNameFilter
   })
   ### temporalCharacterizationAnalysisNameFilter ----
   shiny::observe({
@@ -2607,18 +2598,7 @@ shiny::shinyServer(function(input, output, session) {
   })
 
   ## ReactiveVal: temporalCharacterizationDomainIdFilter ----
-  temporalcharacterizationDomainIdFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(
-      input$temporalcharacterizationDomainIdFilter_open,
-      input$tabs
-    )
-  }, handlerExpr = {
-    if (isFALSE(input$temporalcharacterizationDomainIdFilter_open) ||
-      !is.null(input$tabs)) {
-      temporalcharacterizationDomainIdFilter(input$temporalcharacterizationDomainIdFilter)
-    }
-  })
+  temporalcharacterizationDomainIdFilter <- reactive({input$temporalcharacterizationDomainIdFilter})
 
   ### temporalcharacterizationDomainIdFilter ----
   shiny::observe({
