@@ -249,15 +249,23 @@ computeIncidenceRates <- function(connection,
           0
         }
       )
-      data <- getIncidenceRate(
-        connection = connection,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        tempEmulationSchema = tempEmulationSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable,
-        cohortId = row$cohortId,
-        firstOccurrenceOnly = TRUE,
-        washoutPeriod = washoutPeriod
+      timeExecution(
+        exportFolder,
+        taskName = "getIncidenceRate",
+        parent = "computeIncidenceRates",
+        cohortIds = row$cohortId,
+        expr = {
+          data <- getIncidenceRate(
+            connection = connection,
+            cdmDatabaseSchema = cdmDatabaseSchema,
+            tempEmulationSchema = tempEmulationSchema,
+            cohortDatabaseSchema = cohortDatabaseSchema,
+            cohortTable = cohortTable,
+            cohortId = row$cohortId,
+            firstOccurrenceOnly = TRUE,
+            washoutPeriod = washoutPeriod
+          )
+        }
       )
       if (nrow(data) > 0) {
         data <- data %>% dplyr::mutate(cohortId = row$cohortId)
