@@ -84,6 +84,16 @@ cohortCountsView <- function(id) {
                     )
                   ),
                   tags$td(
+                    align = "left",
+                    shiny::radioButtons(
+                      inputId = ns("cohortCountInclusionRuleTableShowPersonsOrEvents"),
+                      label = "Report",
+                      choices = c("Persons", "Events"),
+                      selected = "Persons",
+                      inline = TRUE
+                    )
+                  ),
+                  tags$td(
                     shiny::checkboxInput(
                       inputId = ns("cohortCountInclusionRulesShowAsPercent"),
                       label = "Show as percent",
@@ -242,12 +252,23 @@ cohortCountsModule <- function(id,
       if (!hasData(getCohortIdOnCohortCountRowSelect())) {
         return(NULL)
       }
-      
-      data <- getInclusionRuleStats(
-        dataSource = dataSource,
-        cohortIds = getCohortIdOnCohortCountRowSelect()$cohortId,
-        databaseIds = selectedDatabaseIds()
-      )
+      if (any(
+        !hasData(input$cohortCountInclusionRuleTableShowPersonsOrEvents),
+        input$cohortCountInclusionRuleTableShowPersonsOrEvents == "Persons"
+      )) {
+        data <- getInclusionRuleStatsPersons(
+          dataSource = dataSource,
+          cohortIds = getCohortIdOnCohortCountRowSelect()$cohortId,
+          databaseIds = selectedDatabaseIds(),
+          mode = 1 # modeId = 1 - best event, i.e. person
+        )
+      } else {
+        data <- getInclusionRuleStatsEvents(
+          dataSource = dataSource,
+          cohortIds = getCohortIdOnCohortCountRowSelect()$cohortId,
+          databaseIds = selectedDatabaseIds()
+        )
+      }
       
       showDataAsPercent <- input$cohortCountInclusionRulesShowAsPercent
       

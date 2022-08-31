@@ -65,7 +65,7 @@ inclusionRulesModule <- function(id,
     # Inclusion rules table ------------------
     output$inclusionRuleTable <- reactable::renderReactable(expr = {
       validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
-      table <- getInclusionRuleStats(
+      table <- getInclusionRuleStatsEvents(
         dataSource = dataSource,
         cohortIds = targetCohortId(),
         databaseIds = selectedDatabaseIds()

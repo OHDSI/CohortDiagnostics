@@ -131,9 +131,9 @@ getIncidenceRateResult <- function(dataSource,
   return(data)
 }
 
-getInclusionRuleStats <- function(dataSource,
-                                  cohortIds = NULL,
-                                  databaseIds) {
+getInclusionRuleStatsEvents <- function(dataSource,
+                                            cohortIds = NULL,
+                                            databaseIds) {
   sql <- "SELECT *
     FROM  @resultsDatabaseSchema.@table_name
     WHERE database_id in (@database_id)
@@ -151,7 +151,7 @@ getInclusionRuleStats <- function(dataSource,
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble()
-
+  
   data <- data %>%
     dplyr::select(
       .data$cohortId,
@@ -165,6 +165,136 @@ getInclusionRuleStats <- function(dataSource,
     ) %>%
     dplyr::arrange(.data$cohortId, .data$ruleSequenceId)
   return(data)
+}
+
+
+
+getInclusionRuleStatsPersons <- function(dataSource,
+                                 cohortIds = NULL,
+                                 databaseIds,
+                                 modeId = 1) {
+  # modeId = 0 -- Events
+  # modeId = 1 -- Persons
+  
+  sql <- "SELECT *
+    FROM  @resultsDatabaseSchema.@table_name
+    WHERE database_id in (@database_id)
+    {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
+    ;"
+  
+  inclusion <-
+    renderTranslateQuerySql(
+      connection = dataSource$connection,
+      dbms = dataSource$dbms,
+      sql = sql,
+      resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
+      cohort_ids = cohortIds,
+      database_id = quoteLiterals(databaseIds),
+      table_name = dataSource$prefixTable("cohort_inclusion"),
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+    tidyr::tibble()
+  
+  inclusionResults <-
+    renderTranslateQuerySql(
+      connection = dataSource$connection,
+      dbms = dataSource$dbms,
+      sql = sql,
+      resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
+      cohort_ids = cohortIds,
+      database_id = quoteLiterals(databaseIds),
+      table_name = dataSource$prefixTable("cohort_inc_result"),
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+    tidyr::tibble()
+  
+  inclusionStats <-
+    renderTranslateQuerySql(
+      connection = dataSource$connection,
+      dbms = dataSource$dbms,
+      sql = sql,
+      resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
+      cohort_ids = cohortIds,
+      database_id = quoteLiterals(databaseIds),
+      table_name = dataSource$prefixTable("cohort_inc_stats"),
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+    tidyr::tibble()
+  
+  
+  if (!hasData(inclusion) || !hasData(inclusionStats)) {
+    return(NULL)
+  }
+  
+  result <- inclusion %>%
+    dplyr::select(.data$cohortId, .data$databaseId, .data$ruleSequence, .data$name) %>%
+    dplyr::distinct() %>%
+    dplyr::left_join(
+      inclusionStats %>%
+        dplyr::filter(.data$modeId == !!modeId) %>%
+        dplyr::select(
+          .data$cohortId,
+          .data$databaseId,
+          .data$ruleSequence,
+          .data$personCount,
+          .data$gainCount,
+          .data$personTotal
+        ),
+      by = c("cohortId", "databaseId", "ruleSequence")
+    ) %>%
+    dplyr::arrange(.data$cohortId,
+                   .data$databaseId,
+                   .data$ruleSequence) %>% 
+    dplyr::mutate(remain = 0)
+  
+  inclusionResults <- inclusionResults %>%
+    dplyr::filter(.data$modeId == !!modeId)
+  
+  combis <- result %>% 
+    dplyr::select(.data$cohortId,
+                  .data$databaseId) %>% 
+    dplyr::distinct()
+  
+  resultFinal <- c()
+  for (j in (1:nrow(combis))) {
+    combi <- combis[j,]
+    data <- result %>% 
+      dplyr::inner_join(combi,
+                        by = c("cohortId", "databaseId"))
+    
+    inclusionResult <- inclusionResults %>% 
+      dplyr::inner_join(combi,
+                        by = c("cohortId", "databaseId"))
+    mask <- 0
+    for (ruleId in (0:(nrow(data) - 1))) {
+      mask <- bitwOr(mask, 2 ^ ruleId) #bitwise OR operation: if both are 0, then 0; else 1
+      idx <-
+        bitwAnd(inclusionResult$inclusionRuleMask, mask) == mask
+      data$remain[data$ruleSequence == ruleId] <-
+        sum(inclusionResult$personCount[idx])
+    }
+    resultFinal[[j]] <- data
+  }
+  resultFinal <- dplyr::bind_rows(resultFinal) %>%
+    dplyr::rename(
+      "meetSubjects" = .data$personCount,
+      "gainSubjects" = .data$gainCount,
+      "remainSubjects" = .data$remain,
+      "totalSubjects" = .data$personTotal,
+      "ruleName" = .data$name,
+      "ruleSequenceId" = .data$ruleSequence
+    ) %>%
+    dplyr::select(
+      .data$cohortId,
+      .data$ruleSequenceId,
+      .data$ruleName,
+      .data$meetSubjects,
+      .data$gainSubjects,
+      .data$remainSubjects,
+      .data$totalSubjects,
+      .data$databaseId
+    )
+  return(resultFinal)
 }
 
 
