@@ -2238,84 +2238,6 @@ shiny::shinyServer(function(input, output, session) {
     })
 
   # Cohort Characterization -------------------------------------------------
-  ## ReactiveVal: characterizationAnalysisNameFilter ----
-  characterizationAnalysisNameFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(
-      input$characterizationAnalysisNameFilter_open,
-      input$tabs
-    )
-  }, handlerExpr = {
-    if (isFALSE(input$characterizationAnalysisNameFilter_open) ||
-      !is.null(input$tabs)) {
-      characterizationAnalysisNameFilter(input$characterizationAnalysisNameFilter)
-    }
-  })
-  #### characterizationAnalysisNameFilter ----
-  shiny::observe({
-    characterizationAnalysisOptionsUniverse <- NULL
-    charcterizationAnalysisOptionsSelected <- NULL
-
-    if (hasData(temporalAnalysisRef)) {
-      characterizationAnalysisOptionsUniverse <- analysisNameOptions
-      charcterizationAnalysisOptionsSelected <- temporalAnalysisRef %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
-        dplyr::pull(.data$analysisName) %>%
-        unique()
-    }
-
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "characterizationAnalysisNameFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = characterizationAnalysisOptionsUniverse,
-      selected = charcterizationAnalysisOptionsSelected
-    )
-  })
-
-  ## ReactiveVal: characterizationDomainIdFilter ----
-  characterizationDomainIdFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(
-      input$characterizationDomainIdFilter_open,
-      input$tabs
-    )
-  }, handlerExpr = {
-    if (isFALSE(input$characterizationDomainIdFilter_open) ||
-      !is.null(input$tabs)) {
-      characterizationDomainIdFilter(input$characterizationDomainIdFilter)
-    }
-  })
-
-  ### characterizationDomainNameFilter ----
-  shiny::observe({
-    characterizationDomainOptionsUniverse <- NULL
-    charcterizationDomainOptionsSelected <- NULL
-
-    if (hasData(temporalAnalysisRef)) {
-      characterizationDomainOptionsUniverse <- domainIdOptions
-      charcterizationDomainOptionsSelected <- temporalAnalysisRef %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
-        dplyr::pull(.data$domainId) %>%
-        unique()
-    }
-
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "characterizationDomainIdFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = characterizationDomainOptionsUniverse,
-      selected = charcterizationDomainOptionsSelected
-    )
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "characterizationDomainIdFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = characterizationDomainOptionsUniverse,
-      selected = charcterizationDomainOptionsSelected
-    )
-  })
-
   shiny::observe({
     subset <- getConceptSetNameForFilter()$name %>%
       sort() %>%
@@ -2338,6 +2260,7 @@ shiny::shinyServer(function(input, output, session) {
 
     data <-
       characterizationOutputForCharacterizationMenu()
+
     if (!hasData(data)) {
       return(NULL)
     }
@@ -2347,10 +2270,7 @@ shiny::shinyServer(function(input, output, session) {
     }
 
     data <- data %>%
-      dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
-      dplyr::filter(.data$timeId %in% c(characterizationTimeIdChoices$timeId %>% unique())) %>%
-      dplyr::filter(.data$cohortId %in% c(targetCohortId())) %>%
-      dplyr::filter(.data$databaseId %in% c(selectedDatabaseIds()))
+      dplyr::filter(.data$timeId %in% c(characterizationTimeIdChoices$timeId %>% unique()))
 
     if (input$charType == "Raw") {
       if (input$characterizationProportionOrContinuous == "Proportion") {
@@ -2369,12 +2289,6 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::filter(.data$isBinary == "N")
     }
-
-    data <- data %>%
-      dplyr::filter(.data$analysisName %in% characterizationAnalysisNameFilter())
-
-    data <- data %>%
-      dplyr::filter(.data$domainId %in% characterizationDomainIdFilter())
 
     if (hasData(selectedConceptSets())) {
       if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
@@ -2568,81 +2482,6 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
 
-  # Temporal characterization ------------
-  ## ReactiveVal: temporalCharacterizationAnalysisNameFilter ----
-  temporalCharacterizationAnalysisNameFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(
-      input$temporalCharacterizationAnalysisNameFilter_open,
-      input$tabs
-    )
-  }, handlerExpr = {
-    if (isFALSE(input$temporalCharacterizationAnalysisNameFilter_open) ||
-      !is.null(input$tabs)) {
-      temporalCharacterizationAnalysisNameFilter(input$temporalCharacterizationAnalysisNameFilter)
-    }
-  })
-  ### temporalCharacterizationAnalysisNameFilter ----
-  shiny::observe({
-    temporalCharacterizationAnalysisOptionsUniverse <- NULL
-    temporalCharcterizationAnalysisOptionsSelected <- NULL
-
-    if (hasData(temporalAnalysisRef)) {
-      temporalCharacterizationAnalysisOptionsUniverse <-
-        analysisNameOptions
-      temporalCharcterizationAnalysisOptionsSelected <-
-        temporalAnalysisRef %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
-        dplyr::pull(.data$analysisName) %>%
-        unique()
-    }
-
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "temporalCharacterizationAnalysisNameFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = temporalCharacterizationAnalysisOptionsUniverse,
-      selected = temporalCharcterizationAnalysisOptionsSelected
-    )
-  })
-
-  ## ReactiveVal: temporalCharacterizationDomainIdFilter ----
-  temporalcharacterizationDomainIdFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(
-      input$temporalcharacterizationDomainIdFilter_open,
-      input$tabs
-    )
-  }, handlerExpr = {
-    if (isFALSE(input$temporalcharacterizationDomainIdFilter_open) ||
-      !is.null(input$tabs)) {
-      temporalcharacterizationDomainIdFilter(input$temporalcharacterizationDomainIdFilter)
-    }
-  })
-
-  ### temporalcharacterizationDomainIdFilter ----
-  shiny::observe({
-    temporalCharacterizationDomainOptionsUniverse <- NULL
-    temporalCharcterizationDomainOptionsSelected <- NULL
-
-    if (hasData(temporalAnalysisRef)) {
-      temporalCharacterizationDomainOptionsUniverse <-
-        domainIdOptions
-      temporalCharcterizationDomainOptionsSelected <-
-        temporalAnalysisRef %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
-        dplyr::pull(.data$domainId) %>%
-        unique()
-    }
-
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "temporalcharacterizationDomainIdFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = temporalCharacterizationDomainOptionsUniverse,
-      selected = temporalCharcterizationDomainOptionsSelected
-    )
-  })
 
   ## temporalCohortCharacterizationDataFiltered ------------
   temporalCohortCharacterizationDataFiltered <- shiny::reactive({
@@ -2656,6 +2495,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <-
       characterizationOutputForCharacterizationMenu()
+
     if (!hasData(data)) {
       return(NULL)
     }
@@ -2664,10 +2504,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <- data %>%
-      dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
-      dplyr::filter(.data$timeId %in% selectedTemporalTimeIds()) %>%
-      dplyr::filter(.data$cohortId %in% c(targetCohortId())) %>%
-      dplyr::filter(.data$databaseId %in% c(input$database))
+      dplyr::filter(.data$timeId %in% selectedTemporalTimeIds())
 
     if (input$temporalProportionOrContinuous == "Proportion") {
       data <- data %>%
@@ -2676,10 +2513,6 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::filter(.data$isBinary == "N")
     }
-
-    data <- data %>%
-      dplyr::filter(.data$analysisName %in% temporalCharacterizationAnalysisNameFilter()) %>%
-      dplyr::filter(.data$domainId %in% temporalcharacterizationDomainIdFilter())
 
     if (hasData(selectedConceptSets())) {
       if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
@@ -2706,7 +2539,6 @@ shiny::shinyServer(function(input, output, session) {
       message = "Post processing: Rendering table",
       value = 0
     )
-
     temporalChoices <- temporalCharacterizationTimeIdChoices %>%
       dplyr::filter(.data$timeId %in% c(data$timeId %>% unique())) %>%
       dplyr::pull(.data$temporalChoices) %>%
