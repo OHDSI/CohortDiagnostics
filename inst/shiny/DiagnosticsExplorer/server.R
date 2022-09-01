@@ -2238,31 +2238,6 @@ shiny::shinyServer(function(input, output, session) {
     })
 
   # Cohort Characterization -------------------------------------------------
-  ## ReactiveVal: characterizationAnalysisNameFilter ----
-  characterizationAnalysisNameFilter <- shiny::reactive(input$characterizationAnalysisNameFilter)
-
-  #### characterizationAnalysisNameFilter ----
-  shiny::observe({
-    characterizationAnalysisOptionsUniverse <- NULL
-    charcterizationAnalysisOptionsSelected <- NULL
-
-    if (hasData(temporalAnalysisRef)) {
-      characterizationAnalysisOptionsUniverse <- analysisNameOptions
-      charcterizationAnalysisOptionsSelected <- temporalAnalysisRef %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
-        dplyr::pull(.data$analysisName) %>%
-        unique()
-    }
-
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "characterizationAnalysisNameFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = characterizationAnalysisOptionsUniverse,
-      selected = charcterizationAnalysisOptionsSelected
-    )
-  })
-
   shiny::observe({
     subset <- getConceptSetNameForFilter()$name %>%
       sort() %>%
