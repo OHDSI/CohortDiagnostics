@@ -1052,46 +1052,6 @@ bodyTabItems <- shinydashboard::tabItems(
               condition = "input.charType == 'Raw'",
               tags$table(tags$tr(
                 tags$td(
-                  shinyWidgets::pickerInput(
-                    inputId = "characterizationAnalysisNameFilter",
-                    label = "Analysis name",
-                    choices = c(""),
-                    selected = c(""),
-                    inline = TRUE,
-                    multiple = TRUE,
-                    width = 300,
-                    choicesOpt = list(style = rep_len("color: black;", 999)),
-                    options = shinyWidgets::pickerOptions(
-                      actionsBox = TRUE,
-                      liveSearch = TRUE,
-                      size = 10,
-                      liveSearchStyle = "contains",
-                      liveSearchPlaceholder = "Type here to search",
-                      virtualScroll = 50
-                    )
-                  )
-                ),
-                tags$td(
-                  shinyWidgets::pickerInput(
-                    inputId = "characterizationDomainIdFilter",
-                    label = "Domain name",
-                    choices = c(""),
-                    selected = c(""),
-                    inline = TRUE,
-                    multiple = TRUE,
-                    width = 300,
-                    choicesOpt = list(style = rep_len("color: black;", 999)),
-                    options = shinyWidgets::pickerOptions(
-                      actionsBox = TRUE,
-                      liveSearch = TRUE,
-                      size = 10,
-                      liveSearchStyle = "contains",
-                      liveSearchPlaceholder = "Type here to search",
-                      virtualScroll = 50
-                    )
-                  )
-                ),
-                tags$td(
                   shiny::radioButtons(
                     inputId = "characterizationProportionOrContinuous",
                     label = "",
@@ -1148,42 +1108,8 @@ bodyTabItems <- shinydashboard::tabItems(
       title = NULL,
       tags$table(tags$tr(
         tags$td(
-          shinyWidgets::pickerInput(
-            inputId = "temporalCharacterizationAnalysisNameFilter",
-            label = "Analysis name",
-            choices = c(""),
-            selected = c(""),
-            multiple = TRUE,
-            width = 200,
-            choicesOpt = list(style = rep_len("color: black;", 999)),
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              liveSearch = TRUE,
-              size = 10,
-              liveSearchStyle = "contains",
-              liveSearchPlaceholder = "Type here to search",
-              virtualScroll = 50
-            )
-          )
         ),
         tags$td(
-          shinyWidgets::pickerInput(
-            inputId = "temporalcharacterizationDomainIdFilter",
-            label = "Domain name",
-            choices = c(""),
-            selected = c(""),
-            multiple = TRUE,
-            width = 200,
-            choicesOpt = list(style = rep_len("color: black;", 999)),
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              liveSearch = TRUE,
-              size = 10,
-              liveSearchStyle = "contains",
-              liveSearchPlaceholder = "Type here to search",
-              virtualScroll = 50
-            )
-          )
         ),
         tags$td(
           shiny::radioButtons(
@@ -1375,25 +1301,6 @@ bodyTabItems <- shinydashboard::tabItems(
             shinyWidgets::pickerInput(
               inputId = "temporalCompareAnalysisNameFilter",
               label = "Analysis name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              width = 200,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ),
-          tags$td(
-            shinyWidgets::pickerInput(
-              inputId = "temporalCompareDomainNameFilter",
-              label = "Domain name",
               choices = c(""),
               selected = c(""),
               multiple = TRUE,
