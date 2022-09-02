@@ -49,7 +49,6 @@ temporalCharacterizationView <- function(id) {
         choices = c(""),
         selected = c(""),
         multiple = TRUE,
-        width = 200,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE,
@@ -66,7 +65,6 @@ temporalCharacterizationView <- function(id) {
         choices = c(""),
         selected = c(""),
         multiple = TRUE,
-        width = 200,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE,
