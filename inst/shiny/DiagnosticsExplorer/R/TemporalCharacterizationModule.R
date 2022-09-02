@@ -2,28 +2,6 @@ temporalCharacterizationView <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
     shinydashboard::box(
-      status = "warning",
-      width = "100%",
-      tags$div(
-        style = "max-height: 100px; overflow-y: auto",
-        tags$table(
-          width = "100%",
-          tags$tr(
-            tags$td(
-              width = "70%",
-              tags$b("Cohorts :"),
-              shiny::uiOutput(outputId = ns("selectedCohorts"))
-            ),
-            tags$td(
-              style = "align: right !important;", width = "30%",
-              tags$b("Database :"),
-              shiny::uiOutput(outputId = ns("selectedDatabases"))
-            )
-          )
-        )
-      )
-    ),
-    shinydashboard::box(
       width = NULL,
       title = NULL,
       shinyWidgets::pickerInput(
@@ -82,11 +60,13 @@ temporalCharacterizationView <- function(id) {
         selected = "Proportion",
         inline = TRUE
       ),
+      tags$p("Note - returned table can be very large. Please click to manually update after selecting options."),
       shiny::actionButton(label = "Get Temporal covariate data", inputId = ns("generateReport")),
 
       shiny::conditionalPanel("input.generateReport != 0",
                               ns = ns,
                               shiny::tagList(
+                                tags$h3(shiny::textOutput(ns("selectedCohortDbOptions"))),
                                 shinycssloaders::withSpinner(reactable::reactableOutput(ns("temporalCharacterizationTable"))),
                                 csvDownloadButton(ns, "temporalCharacterizationTable")
                               ))
@@ -110,13 +90,6 @@ temporalCharacterizationModule <- function(id,
                                            temporalCharacterizationTimeIdChoices) {
   ns <- shiny::NS(id)
   shiny::moduleServer(id, function(input, output, session) {
-    output$selectedCohorts <- shiny::renderUI(selectedCohort())
-    output$selectedDatabases <- shiny::renderUI({
-      paste(databaseTable %>%
-              dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-              dplyr::select(.data$databaseName),
-            collapse = ", ")
-    })
 
     # Temporal choices (e.g. -30d - 0d ) are dynamic to execution
     timeIdOptions <- getResultsTemporalTimeRef(dataSource = dataSource) %>%
@@ -165,7 +138,6 @@ temporalCharacterizationModule <- function(id,
           analysisNameOptions
         selectedAnalysisOptions <-
           temporalAnalysisRef %>%
-            dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
             dplyr::pull(.data$analysisName) %>%
             unique()
       }
@@ -201,6 +173,18 @@ temporalCharacterizationModule <- function(id,
         selected = domainOptionsSelected
       )
     })
+
+    selectedCohortDbOptions <- shiny::eventReactive(input$generateReport, {
+      dbText <- paste(
+        databaseTable %>%
+          dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
+          dplyr::select(.data$databaseName),
+                collapse = ", ")
+
+      paste("Temporal covariate data for cohort", selectedCohort(), "on database", dbText)
+    })
+
+    output$selectedCohortDbOptions <- shiny::renderText(selectedCohortDbOptions())
 
     ## temporalCohortCharacterizationDataFiltered ------------
     temporalCharacterizationDataFilt <- shiny::reactive({
@@ -306,9 +290,7 @@ temporalCharacterizationModule <- function(id,
         data <- data %>%
           dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with("T (0"))))
       }
-
-      dataColumns <- c(temporalChoices)
-
+      dataColumns <- temporalChoices
       showDataAsPercent <- FALSE
       if (input$proportionOrContinuous == "Proportion") {
         showDataAsPercent <- TRUE
@@ -330,13 +312,6 @@ temporalCharacterizationModule <- function(id,
 
     output$temporalCharacterizationTable <-
       reactable::renderReactable(expr = {
-        progress <- shiny::Progress$new()
-        on.exit(progress$close())
-        progress$set(
-          message = paste0("Returning result"),
-          value = 90
-        )
-
         temporalCharacterizationRawTable()
       })
   })
