@@ -182,116 +182,144 @@ compareCohortCharacterizationView <- function(id) {
     shinydashboard::box(
       width = NULL,
       title = NULL,
-      tags$table(
-        tags$tr(
-          tags$td(
-            shiny::radioButtons(
-              inputId = ns("charCompareType"),
-              label = "",
-              choices = c("Pretty table", "Raw table", "Plot"),
-              selected = "Plot",
-              inline = TRUE
-            ),
-          ),
-          tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
-          tags$td(
-            shiny::conditionalPanel(
-              condition = "input.charCompareType == 'Raw table'",
-              ns = ns,
-              shiny::radioButtons(
-                inputId = ns("compareCharacterizationColumnFilters"),
-                label = "Display",
-                choices = c("Mean and Standard Deviation", "Mean only"),
-                selected = "Mean only",
-                inline = TRUE
-              )
-            )
+      shiny::conditionalPanel(
+        condition = "output.showTemporalChoices == 'TRUE'",
+        ns = ns,
+        shinyWidgets::pickerInput(
+          inputId = ns("timeIdChoices"),
+          label = "Temporal Window (s)",
+          choices = NULL,
+          multiple = TRUE,
+          choicesOpt = list(style = rep_len("color: black;", 999)),
+          selected = NULL,
+          options = shinyWidgets::pickerOptions(
+            actionsBox = TRUE,
+            liveSearch = TRUE,
+            maxOptions = 5, # Selecting even this many will be slow
+            size = 10,
+            liveSearchStyle = "contains",
+            liveSearchPlaceholder = "Type here to search",
+            virtualScroll = 50
           )
-        )
+        ),
+      ),
+
+      shiny::radioButtons(
+        inputId = ns("charCompareType"),
+        label = "Output type",
+        choices = c("Pretty table", "Raw table", "Plot"),
+        selected = "Plot",
+        inline = TRUE
       ),
       shiny::conditionalPanel(
         condition = "input.charCompareType == 'Raw table' | input.charCompareType=='Plot'",
         ns = ns,
-        tags$table(tags$tr(
-          tags$td(
-            shinyWidgets::pickerInput(
-              inputId = ns("compareCohortCharacterizationAnalysisNameFilter"),
-              label = "Analysis name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              width = 200,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ),
-          tags$td(
-            shinyWidgets::pickerInput(
-              inputId = ns("compareCohortcharacterizationDomainIdFilter"),
-              label = "Domain name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              width = 200,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ),
-          tags$td(
-            shiny::radioButtons(
-              inputId = ns("compareCharacterizationProportionOrContinuous"),
-              label = "",
-              choices = c("All", "Proportion", "Continuous"),
-              selected = "Proportion",
-              inline = TRUE
-            )
+        shinyWidgets::pickerInput(
+          inputId = ns("analysisNameFilter"),
+          label = "Analysis name",
+          choices = c(""),
+          selected = c(""),
+          multiple = TRUE,
+          choicesOpt = list(style = rep_len("color: black;", 999)),
+          options = shinyWidgets::pickerOptions(
+            actionsBox = TRUE,
+            liveSearch = TRUE,
+            size = 10,
+            liveSearchStyle = "contains",
+            liveSearchPlaceholder = "Type here to search",
+            virtualScroll = 50
           )
-        ))
+        ),
+        shinyWidgets::pickerInput(
+          inputId = ns("domainIdFilter"),
+          label = "Domain name",
+          choices = c(""),
+          selected = c(""),
+          multiple = TRUE,
+          choicesOpt = list(style = rep_len("color: black;", 999)),
+          options = shinyWidgets::pickerOptions(
+            actionsBox = TRUE,
+            liveSearch = TRUE,
+            size = 10,
+            liveSearchStyle = "contains",
+            liveSearchPlaceholder = "Type here to search",
+            virtualScroll = 50
+          )
+        ),
+
+        shiny::conditionalPanel(
+          condition = "input.charCompareType=='Raw table'",
+          ns = ns,
+          shiny::radioButtons(
+            inputId = ns("compareCharacterizationColumnFilters"),
+            label = "Display values",
+            choices = c("Mean", "Mean and Standard Deviation"),
+            selected = "Mean",
+            inline = TRUE
+          )
+        ),
+
+        shiny::radioButtons(
+          inputId = ns("proportionOrContinuous"),
+          label = "Covariate Type",
+          choices = c("All", "Proportion", "Continuous"),
+          selected = "Proportion",
+          inline = TRUE
+        )
       ),
       shiny::conditionalPanel(
-        condition = "input.charCompareType=='Pretty table' | input.charCompareType=='Raw table'",
+        condition = "input.charCompareType=='Raw table'",
         ns = ns,
-        tags$table(
-          width = "100%",
-          tags$tr(
-            tags$td(
-              align = "right",
-            )
-          )
-        ),
-        shinycssloaders::withSpinner(
-          reactable::reactableOutput(ns("compareCohortCharacterizationTable")),
-        ),
-        csvDownloadButton(ns, "compareCohortCharacterizationTable")
+        shiny::actionButton(label = "Generate Table", inputId = ns("generateTable"))
+      ),
+      shiny::conditionalPanel(
+        condition = "input.charCompareType=='Pretty table'",
+        ns = ns,
+        shiny::actionButton(label = "Generate Table", inputId = ns("generatePrettyTable"))
       ),
       shiny::conditionalPanel(
         condition = "input.charCompareType=='Plot'",
         ns = ns,
-        shinydashboard::box(
-          title = "Compare Cohort Characterization",
-          width = NULL,
-          status = "primary",
-          shiny::htmlOutput(ns("compareCohortCharacterizationSelectedCohort")),
-          shinycssloaders::withSpinner(
-            ggiraph::ggiraphOutput(
-              outputId = ns("compareCohortCharacterizationBalancePlot"),
-              width = "100%",
-              height = "100%"
-            )
+        shiny::actionButton(label = "Generate Plot", inputId = ns("generatePlot"))
+      )
+    ),
+    shiny::conditionalPanel(
+      condition = "input.generateTable != 0 & input.charCompareType=='Raw table'",
+      ns = ns,
+       shinydashboard::box(
+        width = NULL,
+        title = NULL,
+        shinycssloaders::withSpinner(
+          reactable::reactableOutput(ns("compareCohortCharacterizationTable")),
+        ),
+        csvDownloadButton(ns, "compareCohortCharacterizationTable")
+       )
+    ),
+    shiny::conditionalPanel(
+      condition = "input.generatePrettyTable != 0 & input.charCompareType=='Pretty table'",
+      ns = ns,
+       shinydashboard::box(
+        width = NULL,
+        title = NULL,
+        shinycssloaders::withSpinner(
+          reactable::reactableOutput(ns("compareCohortCharacterizationPrettyTable")),
+        ),
+        csvDownloadButton(ns, "compareCohortCharacterizationPrettyTable")
+       )
+    ),
+    shiny::conditionalPanel(
+      condition = "input.generatePlot != 0 & input.charCompareType=='Plot'",
+      ns = ns,
+      shinydashboard::box(
+        title = "Compare Cohort Characterization",
+        width = NULL,
+        status = "primary",
+        shiny::htmlOutput(ns("compareCohortCharacterizationSelectedCohort")),
+        shinycssloaders::withSpinner(
+          ggiraph::ggiraphOutput(
+            outputId = ns("compareCohortCharacterizationBalancePlot"),
+            width = "100%",
+            height = "100%"
           )
         )
       )
@@ -313,7 +341,7 @@ compareCohortCharacterizationModule <- function(id,
                                                 cohortTable,
                                                 databaseTable,
                                                 temporalAnalysisRef,
-                                                analysisIdInCohortCharacterization,
+                                                showTemporalChoices,
                                                 analysisNameOptions,
                                                 domainIdOptions,
                                                 temporalChoices,
@@ -321,6 +349,36 @@ compareCohortCharacterizationModule <- function(id,
 
 
   shiny::moduleServer(id, function(input, output, session) {
+
+    output$showTemporalChoices <- shiny::renderText({showTemporalChoices})
+    shiny::outputOptions(output, "showTemporalChoices", suspendWhenHidden = FALSE)
+    if (showTemporalChoices) {
+          # Temporal choices (e.g. -30d - 0d ) are dynamic to execution
+      timeIdOptions <- getResultsTemporalTimeRef(dataSource = dataSource) %>%
+        dplyr::arrange(.data$sequence)
+
+      shiny::observe({
+        # Default time windows
+        selectedTimeWindows <- timeIdOptions %>%
+          dplyr::filter(.data$primaryTimeId == 1) %>%
+          dplyr::filter(.data$isTemporal == 1) %>%
+          dplyr::arrange(.data$sequence) %>%
+          dplyr::pull("temporalChoices")
+
+        shinyWidgets::updatePickerInput(session,
+                                        inputId = "timeIdChoices",
+                                        choices = timeIdOptions$temporalChoices,
+                                        selected = selectedTimeWindows)
+
+      })
+      selectedTimeIds <- shiny::reactive({
+        timeIdOptions %>%
+          dplyr::filter(.data$temporalChoices %in% input$timeIdChoices) %>%
+          dplyr::select(.data$timeId) %>%
+          dplyr::pull()
+      })
+
+    }
     output$selectedCohorts <- shiny::renderUI({
       htmltools::withTags(table(
         tr(td(
@@ -334,125 +392,35 @@ compareCohortCharacterizationModule <- function(id,
 
     output$selectedDatabases <- shiny::renderUI({
       paste(databaseTable %>%
-              dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>% dplyr::select(.data$databaseName),
+              dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
+              dplyr::select(.data$databaseName),
             collapse = ", ")
     })
 
-
-
-    characterizationOutput <-
+    temporalCharacterizationOutput <-
       shiny::reactive(x = {
-        progress <- shiny::Progress$new()
-        on.exit(progress$close())
-        progress$set(
-          message = paste0(
-            "Retrieving characterization output for cohort id ",
-            targetCohortId(),
-            " cohorts and ",
-            length(selectedDatabaseIds()),
-            " data sources."
-          ),
-          value = 0
-        )
         data <- getCharacterizationOutput(
           dataSource = dataSource,
-          cohortIds = targetCohortId(),
+          cohortIds = c(targetCohortId(), comparatorCohortId()),
           databaseIds = selectedDatabaseIds(),
           temporalCovariateValueDist = FALSE
         )
-        return(data)
-      })
 
-
-    temporalCharacterizationOutput <-
-      shiny::reactive(x = {
-        progress <- shiny::Progress$new()
-        on.exit(progress$close())
-        progress$set(
-          message = paste0(
-            "Retrieving characterization output for target cohort id ",
-            targetCohortId(),
-            " from ",
-            input$database,
-            "."
-          ),
-          value = 0
-        )
-
-        if (input$database %in% c(selectedDatabaseIds())) {
-          data <- characterizationOutput()
-          if (hasData(data$covariateValue)) {
-            data$covariateValue <- data$covariateValue %>%
-              dplyr::filter(.data$databaseId %in% c(input$database))
-          }
-          if (hasData(data$covariateValueDist)) {
-            data$covariateValueDist <- data$covariateValueDist %>%
-              dplyr::filter(.data$databaseId %in% c(input$database))
-          }
-        } else {
-          data <- getCharacterizationOutput(
-            dataSource = dataSource,
-            cohortIds = targetCohortId(),
-            databaseIds = input$database,
-            temporalCovariateValueDist = FALSE
-          )
-        }
         return(data)
       })
 
     compareCharacterizationOutput <-
       shiny::reactive(x = {
-        dataTarget <-
-          temporalCharacterizationOutput()
-        if (!hasData(dataTarget)) {
+        data <- temporalCharacterizationOutput()
+        if (!hasData(data)) {
           return(NULL)
-        }
-
-        progress <- shiny::Progress$new()
-        on.exit(progress$close())
-        progress$set(
-          message = paste0(
-            "Retrieving characterization output for comparator cohort id ",
-            comparatorCohortId(),
-            " from ",
-            input$database,
-            "."
-          ),
-          value = 0
-        )
-        dataComparator <- getCharacterizationOutput(
-          dataSource = dataSource,
-          cohortIds = c(comparatorCohortId()),
-          databaseIds = input$database,
-          temporalCovariateValueDist = FALSE
-        )
-        if (!hasData(dataComparator)) {
-          return(NULL)
-        }
-        data <- NULL
-        data$covariateValue <-
-          dplyr::bind_rows(
-            dataTarget$covariateValue,
-            dataComparator$covariateValue
-          )
-        if (!hasData(data$covariateValue)) {
-          data$covariateValue <- NULL
-        }
-        data$covariateValueDist <-
-          dplyr::bind_rows(
-            dataTarget$covariateValueDist,
-            dataComparator$covariateValueDist
-          )
-        if (!hasData(data$covariateValueDist)) {
-          data$covariateValueDist <- NULL
         }
         return(data)
       })
 
 
-
     # Compare cohort characterization --------------------------------------------
-    ### compareCohortCharacterizationAnalysisNameFilter -----
+    ### analysisNameFilter -----
     shiny::observe({
       characterizationAnalysisOptionsUniverse <- NULL
       charcterizationAnalysisOptionsSelected <- NULL
@@ -461,14 +429,13 @@ compareCohortCharacterizationModule <- function(id,
         characterizationAnalysisOptionsUniverse <- analysisNameOptions
         charcterizationAnalysisOptionsSelected <-
           temporalAnalysisRef %>%
-            dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
             dplyr::pull(.data$analysisName) %>%
             unique()
       }
 
       shinyWidgets::updatePickerInput(
         session = session,
-        inputId = "compareCohortCharacterizationAnalysisNameFilter",
+        inputId = "analysisNameFilter",
         choicesOpt = list(style = rep_len("color: black;", 999)),
         choices = characterizationAnalysisOptionsUniverse,
         selected = charcterizationAnalysisOptionsSelected
@@ -476,7 +443,7 @@ compareCohortCharacterizationModule <- function(id,
     })
 
 
-    ### compareCohortcharacterizationDomainIdFilter -----
+    ### domainIdFilter -----
     shiny::observe({
       characterizationDomainOptionsUniverse <- NULL
       charcterizationDomainOptionsSelected <- NULL
@@ -485,14 +452,13 @@ compareCohortCharacterizationModule <- function(id,
         characterizationDomainOptionsUniverse <- domainIdOptions
         charcterizationDomainOptionsSelected <-
           temporalAnalysisRef %>%
-            dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
             dplyr::pull(.data$domainId) %>%
             unique()
       }
 
       shinyWidgets::updatePickerInput(
         session = session,
-        inputId = "compareCohortcharacterizationDomainIdFilter",
+        inputId = "domainIdFilter",
         choicesOpt = list(style = rep_len("color: black;", 999)),
         choices = characterizationDomainOptionsUniverse,
         selected = charcterizationDomainOptionsSelected
@@ -524,32 +490,23 @@ compareCohortCharacterizationModule <- function(id,
         return(NULL)
       }
       data <- data %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
         dplyr::filter(.data$timeId %in% selectedTimeIds()) %>%
         dplyr::filter(.data$cohortId %in% c(targetCohortId(), comparatorCohortId())) %>%
         dplyr::filter(.data$databaseId %in% selectedDatabaseIds())
 
       if (input$charCompareType == "Raw") {
-        if (input$compareCharacterizationProportionOrContinuous == "Proportion") {
+        if (input$proportionOrContinuous == "Proportion") {
           data <- data %>%
             dplyr::filter(.data$isBinary == "Y")
-        } else if (input$compareCharacterizationProportionOrContinuous == "Continuous") {
+        } else if (input$proportionOrContinuous == "Continuous") {
           data <- data %>%
             dplyr::filter(.data$isBinary == "N")
         }
       }
-
-      if (input$compareCharacterizationProportionOrContinuous == "Proportion") {
-        data <- data %>%
-          dplyr::filter(.data$isBinary == "Y")
-      } else if (input$compareCharacterizationProportionOrContinuous == "Continuous") {
-        data <- data %>%
-          dplyr::filter(.data$isBinary == "N")
-      }
-
+      
       data <- data %>%
-        dplyr::filter(.data$analysisName %in% input$compareCohortCharacterizationAnalysisNameFilter) %>%
-        dplyr::filter(.data$domainId %in% input$compareCohortcharacterizationDomainIdFilter)
+        dplyr::filter(.data$analysisName %in% input$analysisNameFilter) %>%
+        dplyr::filter(.data$domainId %in% input$domainIdFilter)
 
       if (hasData(selectedConceptSets())) {
         if (hasData(getFilteredConceptIds())) {
@@ -736,6 +693,7 @@ compareCohortCharacterizationModule <- function(id,
           "StdDiff" = absStdDiff
         )
 
+      browser()
       keyColumnFields <-
         c("covariateName", "analysisName", "conceptId")
 
@@ -751,7 +709,7 @@ compareCohortCharacterizationModule <- function(id,
           )
       } else {
         dataColumnFields <- c("target", "comparator", "StdDiff")
-        if (input$compareCharacterizationProportionOrContinuous == "Proportion") {
+        if (input$proportionOrContinuous == "Proportion") {
           showDataAsPercent <- TRUE
         }
       }
@@ -780,50 +738,79 @@ compareCohortCharacterizationModule <- function(id,
       )
     })
 
+    generateTable <- shiny::eventReactive(input$generateTable, {
+      data <- compareCohortCharacterizationRawTable()
+      validate(need(hasData(data), "No data for selected combination"))
+      return(data)
+    })
+
     ## output: compareCohortCharacterizationTable ----------------------------------------
     output$compareCohortCharacterizationTable <- reactable::renderReactable(expr = {
-      if (input$charCompareType == "Pretty table") {
-        data <- compareCohortCharacterizationPrettyTable()
-        validate(need(hasData(data), "No data for selected combination"))
-        return(data)
-      } else if (input$charCompareType == "Raw table") {
-        data <- compareCohortCharacterizationRawTable()
-        validate(need(hasData(data), "No data for selected combination"))
-        return(data)
+      generateTable()
+    })
+
+    generatePrettyTable <- shiny::eventReactive(input$generatePrettyTable, {
+      data <- compareCohortCharacterizationPrettyTable()
+      validate(need(hasData(data), "No data for selected combination"))
+      return(data)
+    })
+
+    ## output: compareCohortCharacterizationTable ----------------------------------------
+    output$compareCohortCharacterizationPrettyTable <- reactable::renderReactable(expr = {
+      generatePrettyTable()
+    })
+
+    generatePlot <- shiny::eventReactive(input$generatePlot, {
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = "Getting plot data",
+        value = 0
+      )
+
+      if (!input$charCompareType == "Plot") {
+        return(NULL)
       }
+      data <- compareCohortCharacterizationBalanceData()
+      validate(need(
+        hasData(data),
+        "No data available for selected combination."
+      ))
+
+      progress$set(
+          message = "Plotting results",
+          value = 50
+        )
+      distinctTemporalChoices <- unique(temporalChoices$temporalChoices)
+      data <- data %>%
+        dplyr::arrange(factor(.data$temporalChoices, levels = distinctTemporalChoices)) %>%
+        dplyr::mutate(temporalChoices = factor(.data$temporalChoices, levels = unique(.data$temporalChoices)))
+
+      plot <-
+        plotTemporalCompareStandardizedDifference(
+          balance = data,
+          shortNameRef = cohortTable,
+          xLimitMin = 0,
+          xLimitMax = 1,
+          yLimitMin = 0,
+          yLimitMax = 1
+        )
+
+      progress$set(
+          message = "Returning data",
+          value = 90
+        )
+      validate(need(
+        !is.null(plot),
+        "No plot available for selected combination."
+      ))
+      return(plot)
     })
 
     ## output: compareCohortCharacterizationBalancePlot ----------------------------------------
     output$compareCohortCharacterizationBalancePlot <-
       ggiraph::renderggiraph(expr = {
-        if (!input$charCompareType == "Plot") {
-          return(NULL)
-        }
-        data <- compareCohortCharacterizationBalanceData()
-        validate(need(
-          hasData(data),
-          "No data available for selected combination."
-        ))
-
-        distinctTemporalChoices <- unique(temporalChoices$temporalChoices)
-        data <- data %>%
-          dplyr::arrange(factor(.data$temporalChoices, levels = distinctTemporalChoices)) %>%
-          dplyr::mutate(temporalChoices = factor(.data$temporalChoices, levels = unique(.data$temporalChoices)))
-
-        plot <-
-          plotTemporalCompareStandardizedDifference(
-            balance = data,
-            shortNameRef = cohortTable,
-            xLimitMin = 0,
-            xLimitMax = 1,
-            yLimitMin = 0,
-            yLimitMax = 1
-          )
-        validate(need(
-          !is.null(plot),
-          "No plot available for selected combination."
-        ))
-        return(plot)
+        generatePlot()
       })
   })
 }

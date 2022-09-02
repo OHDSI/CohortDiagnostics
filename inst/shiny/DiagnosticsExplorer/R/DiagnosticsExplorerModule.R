@@ -335,32 +335,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       )
     })
 
-    # Temporal choices (e.g. -30d - 0d ) are dynamic to execution input
-    output$timeIdChoices <- shiny::renderUI({
-      shinyWidgets::pickerInput(
-        inputId = ns("timeIdChoices"),
-        label = "Temporal Choice",
-        choices = envir$
-          temporalCharacterizationTimeIdChoices$
-          temporalChoices,
-        multiple = TRUE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        selected = envir$temporalCharacterizationTimeIdChoices %>%
-          dplyr::filter(.data$primaryTimeId == 1) %>%
-          dplyr::filter(.data$isTemporal == 1) %>%
-          dplyr::arrange(.data$sequence) %>%
-          dplyr::pull("temporalChoices"),
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
-          liveSearch = TRUE,
-          size = 10,
-          liveSearchStyle = "contains",
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50
-        )
-      )
-    })
-
     ## ReactiveValue: selectedTemporalTimeIds ----
     selectedTemporalTimeIds <- reactiveVal(NULL)
     shiny::observeEvent(eventExpr = {
@@ -809,7 +783,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                           cohortTable = cohortTable,
                                           databaseTable = databaseTable,
                                           temporalAnalysisRef = envir$temporalAnalysisRef,
-                                          analysisIdInCohortCharacterization = envir$analysisIdInCohortCharacterization,
+                                          showTemporalChoices = FALSE,
                                           analysisNameOptions = envir$analysisNameOptions,
                                           domainIdOptions = envir$domainIdOptions,
                                           temporalChoices = envir$temporalChoices,
@@ -823,12 +797,12 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                           comparatorCohortId = comparatorCohortId,
                                           selectedComparatorCohort = selectedComparatorCohort,
                                           selectedConceptSets = selectedConceptSets,
-                                          selectedTimeIds = selectedTemporalTimeIds,
+                                          selectedTimeIds = NULL,
                                           getFilteredConceptIds = getFilteredConceptIds,
                                           cohortTable = cohortTable,
                                           databaseTable = databaseTable,
                                           temporalAnalysisRef = envir$temporalAnalysisRef,
-                                          analysisIdInCohortCharacterization = envir$analysisIdInCohortCharacterization,
+                                          showTemporalChoices = TRUE,
                                           analysisNameOptions = envir$analysisNameOptions,
                                           domainIdOptions = envir$domainIdOptions,
                                           temporalChoices = envir$temporalChoices,
