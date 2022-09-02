@@ -127,7 +127,6 @@ characterizationModule <- function(id,
                                    analysisIdInCohortCharacterization,
                                    getResolvedAndMappedConceptIdsForFilters,
                                    selectedConceptSets,
-                                   characterizationMenuOutput,
                                    characterizationTimeIdChoices) {
 
   shiny::moduleServer(id, function(input, output, session) {
@@ -136,6 +135,28 @@ characterizationModule <- function(id,
     output$selectedCohorts <- shiny::renderUI(selectedCohort())
     # Cohort Characterization -------------------------------------------------
 
+    # Temporal characterization ------------
+    characterizationOutput <- shiny::reactive(x = {
+        progress <- shiny::Progress$new()
+        on.exit(progress$close())
+        progress$set(
+          message = paste0(
+            "Retrieving characterization output for cohort id ",
+            targetCohortId(),
+            " cohorts and ",
+            length(selectedDatabaseIds()),
+            " data sources."
+          ),
+          value = 20
+        )
+        data <- getCharacterizationOutput(
+          dataSource = dataSource,
+          cohortIds = targetCohortId(),
+          databaseIds = selectedDatabaseIds(),
+          temporalCovariateValueDist = FALSE
+        )
+        return(data)
+      })
     #### characterizationAnalysisNameFilter ----
     shiny::observe({
       characterizationAnalysisOptionsUniverse <- NULL
@@ -193,7 +214,7 @@ characterizationModule <- function(id,
       validate(need(length(targetCohortId()) == 1, "One target cohort must be selected"))
 
       data <-
-        characterizationMenuOutput()
+        characterizationOutput()
 
       if (!hasData(data)) {
         return(NULL)
@@ -250,7 +271,7 @@ characterizationModule <- function(id,
       validate(need(length(selectedDatabaseIds()) > 0, "Atleast one data source must be selected"))
       validate(need(length(targetCohortId()) == 1, "One target cohort must be selected"))
       data <-
-        characterizationMenuOutput()
+        characterizationOutput()
       if (!hasData(data)) {
         return(NULL)
       }

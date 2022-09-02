@@ -41,7 +41,7 @@ uiControls <- function(ns,
     ),
     if ("temporalCovariateValue" %in% enabledTabs) {
       shiny::conditionalPanel(
-        condition = "input.tabs=='temporalCharacterization' | input.tabs =='compareTemporalCharacterization'",
+        condition = "input.tabs =='compareTemporalCharacterization'",
         ns = ns,
         shiny::uiOutput(ns("timeIdChoices"))
       )

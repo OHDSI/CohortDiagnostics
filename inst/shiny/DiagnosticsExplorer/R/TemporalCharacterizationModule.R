@@ -26,66 +26,74 @@ temporalCharacterizationView <- function(id) {
     shinydashboard::box(
       width = NULL,
       title = NULL,
-      tags$table(tags$tr(
-        tags$td(
-          shinyWidgets::pickerInput(
-            inputId = ns("temporalCharacterizationAnalysisNameFilter"),
-            label = "Analysis name",
-            choices = c(""),
-            selected = c(""),
-            multiple = TRUE,
-            width = 200,
-            choicesOpt = list(style = rep_len("color: black;", 999)),
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              liveSearch = TRUE,
-              size = 10,
-              liveSearchStyle = "contains",
-              liveSearchPlaceholder = "Type here to search",
-              virtualScroll = 50
-            )
-          )
-        ),
-        tags$td(
-          shinyWidgets::pickerInput(
-            inputId = ns("temporalcharacterizationDomainIdFilter"),
-            label = "Domain name",
-            choices = c(""),
-            selected = c(""),
-            multiple = TRUE,
-            width = 200,
-            choicesOpt = list(style = rep_len("color: black;", 999)),
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              liveSearch = TRUE,
-              size = 10,
-              liveSearchStyle = "contains",
-              liveSearchPlaceholder = "Type here to search",
-              virtualScroll = 50
-            )
-          )
-        ),
-        tags$td(
-          shiny::radioButtons(
-            inputId = ns("temporalProportionOrContinuous"),
-            label = "",
-            choices = c("All", "Proportion", "Continuous"),
-            selected = "Proportion",
-            inline = TRUE
-          )
-        )
-      )),
-      tags$table(
-        width = "100%",
-        tags$tr(
-          tags$td(
-            align = "right",
-          )
+      shinyWidgets::pickerInput(
+        inputId = ns("timeIdChoices"),
+        label = "Temporal Window (s)",
+        choices = NULL,
+        multiple = TRUE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        selected = NULL,
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          maxOptions = 5, # Selecting even this many will be slow
+          size = 10,
+          liveSearchStyle = "contains",
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
         )
       ),
-      shinycssloaders::withSpinner(reactable::reactableOutput(ns("temporalCharacterizationTable"))),
-      csvDownloadButton(ns, "temporalCharacterizationTable")
+      shinyWidgets::pickerInput(
+        inputId = ns("analysisNameFilter"),
+        label = "Analysis name",
+        choices = c(""),
+        selected = c(""),
+        multiple = TRUE,
+        width = 200,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          size = 10,
+          liveSearchStyle = "contains",
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+        )
+      ),
+      shinyWidgets::pickerInput(
+        inputId = ns("domainIdFilter"),
+        label = "Domain name",
+        choices = c(""),
+        selected = c(""),
+        multiple = TRUE,
+        width = 200,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          size = 10,
+          liveSearchStyle = "contains",
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+        )
+      ),
+      shiny::radioButtons(
+        inputId = ns("proportionOrContinuous"),
+        label = "View Covariate Type(s)",
+        choices = c("All", "Proportion", "Continuous"),
+        selected = "Proportion",
+        inline = TRUE
+      ),
+      shiny::actionButton(label = "Get Temporal covariate data", inputId = ns("generateReport")),
+
+      shiny::conditionalPanel("input.generateReport != 0",
+                              ns = ns,
+                              shiny::tagList(
+                                shinycssloaders::withSpinner(reactable::reactableOutput(ns("temporalCharacterizationTable"))),
+                                csvDownloadButton(ns, "temporalCharacterizationTable")
+                              ))
     )
+
   )
 }
 
@@ -98,33 +106,66 @@ temporalCharacterizationModule <- function(id,
                                            targetCohortId,
                                            temporalAnalysisRef,
                                            analysisNameOptions,
-                                           selectedTemporalTimeIds,
                                            getResolvedAndMappedConceptIdsForFilters,
                                            selectedConceptSets,
-                                           analysisIdInTemporalCharacterization,
                                            domainIdOptions,
-                                           temporalCharacterizationTimeIdChoices,
-                                           characterizationOutputForCharacterizationMenu) {
+                                           temporalCharacterizationTimeIdChoices) {
   ns <- shiny::NS(id)
   shiny::moduleServer(id, function(input, output, session) {
     output$selectedCohorts <- shiny::renderUI(selectedCohort())
     output$selectedDatabases <- shiny::renderUI({
       paste(databaseTable %>%
-              dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>% dplyr::select(.data$databaseName),
+              dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
+              dplyr::select(.data$databaseName),
             collapse = ", ")
     })
 
-    # Temporal characterization ------------
+    # Temporal choices (e.g. -30d - 0d ) are dynamic to execution
+    timeIdOptions <- getResultsTemporalTimeRef(dataSource = dataSource) %>%
+      dplyr::arrange(.data$sequence)
 
-    ### temporalCharacterizationAnalysisNameFilter ----
     shiny::observe({
-      temporalCharacterizationAnalysisOptionsUniverse <- NULL
-      temporalCharcterizationAnalysisOptionsSelected <- NULL
+      # Default time windows
+      selectedTimeWindows <- timeIdOptions %>%
+        dplyr::filter(.data$primaryTimeId == 1) %>%
+        dplyr::filter(.data$isTemporal == 1) %>%
+        dplyr::arrange(.data$sequence) %>%
+        dplyr::pull("temporalChoices")
+
+      shinyWidgets::updatePickerInput(session,
+                                      inputId = "timeIdChoices",
+                                      choices = timeIdOptions$temporalChoices,
+                                      selected = selectedTimeWindows)
+
+    })
+    selectedTemporalTimeIds <- shiny::reactive({
+      timeIdOptions %>%
+        dplyr::filter(.data$temporalChoices %in% input$timeIdChoices) %>%
+        dplyr::select(.data$timeId) %>%
+        dplyr::pull()
+    })
+
+    # Temporal characterization ------------
+    characterizationOutput <- shiny::reactive(x = {
+      data <- getCharacterizationOutput(
+        dataSource = dataSource,
+        cohortIds = targetCohortId(),
+        databaseIds = selectedDatabaseIds(),
+        temporalCovariateValueDist = FALSE
+      )
+      return(data)
+    })
+
+
+    ### analysisNameFilter ----
+    shiny::observe({
+      analysisOptions <- NULL
+      selectedAnalysisOptions <- NULL
 
       if (hasData(temporalAnalysisRef)) {
-        temporalCharacterizationAnalysisOptionsUniverse <-
+        analysisOptions <-
           analysisNameOptions
-        temporalCharcterizationAnalysisOptionsSelected <-
+        selectedAnalysisOptions <-
           temporalAnalysisRef %>%
             dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
             dplyr::pull(.data$analysisName) %>%
@@ -133,39 +174,38 @@ temporalCharacterizationModule <- function(id,
 
       shinyWidgets::updatePickerInput(
         session = session,
-        inputId = "temporalCharacterizationAnalysisNameFilter",
+        inputId = "analysisNameFilter",
         choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = temporalCharacterizationAnalysisOptionsUniverse,
-        selected = temporalCharcterizationAnalysisOptionsSelected
+        choices = analysisOptions,
+        selected = selectedAnalysisOptions
       )
     })
 
-    ### temporalcharacterizationDomainIdFilter ----
+    ### domainIdFilter ----
     shiny::observe({
-      temporalCharacterizationDomainOptionsUniverse <- NULL
-      temporalCharcterizationDomainOptionsSelected <- NULL
+      domainOptions <- NULL
+      domainOptionsSelected <- NULL
 
       if (hasData(temporalAnalysisRef)) {
-        temporalCharacterizationDomainOptionsUniverse <-
+        domainOptions <-
           domainIdOptions
-        temporalCharcterizationDomainOptionsSelected <-
+        domainOptionsSelected <-
           temporalAnalysisRef %>%
-            dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
             dplyr::pull(.data$domainId) %>%
             unique()
       }
 
       shinyWidgets::updatePickerInput(
         session = session,
-        inputId = "temporalcharacterizationDomainIdFilter",
+        inputId = "domainIdFilter",
         choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = temporalCharacterizationDomainOptionsUniverse,
-        selected = temporalCharcterizationDomainOptionsSelected
+        choices = domainOptions,
+        selected = domainOptionsSelected
       )
     })
 
     ## temporalCohortCharacterizationDataFiltered ------------
-    temporalCohortCharacterizationDataFiltered <- shiny::reactive({
+    temporalCharacterizationDataFilt <- shiny::reactive({
       validate(need(length(selectedDatabaseIds()) == 1, "One data source must be selected"))
       validate(need(length(targetCohortId()) == 1, "One target cohort must be selected"))
       if (!hasData(selectedTemporalTimeIds())) {
@@ -173,7 +213,7 @@ temporalCharacterizationModule <- function(id,
       }
 
       data <-
-        characterizationOutputForCharacterizationMenu()
+        characterizationOutput()
       if (!hasData(data)) {
         return(NULL)
       }
@@ -182,27 +222,27 @@ temporalCharacterizationModule <- function(id,
         return(NULL)
       }
       data <- data %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInTemporalCharacterization) %>%
         dplyr::filter(.data$timeId %in% selectedTemporalTimeIds()) %>%
         dplyr::filter(.data$cohortId %in% c(targetCohortId())) %>%
         dplyr::filter(.data$databaseId %in% c(selectedDatabaseIds()))
 
-      if (input$temporalProportionOrContinuous == "Proportion") {
+      if (input$proportionOrContinuous == "Proportion") {
         data <- data %>%
           dplyr::filter(.data$isBinary == "Y")
-      } else if (input$temporalProportionOrContinuous == "Continuous") {
+      } else if (input$proportionOrContinuous == "Continuous") {
         data <- data %>%
           dplyr::filter(.data$isBinary == "N")
       }
 
       data <- data %>%
-        dplyr::filter(.data$analysisName %in% input$temporalCharacterizationAnalysisNameFilter) %>%
-        dplyr::filter(.data$domainId %in% input$temporalcharacterizationDomainIdFilter)
+        dplyr::filter(.data$analysisName %in% input$analysisNameFilter) %>%
+        dplyr::filter(.data$domainId %in% input$domainIdFilter)
 
       if (hasData(selectedConceptSets())) {
-        if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
+        mappedConcepts <- getResolvedAndMappedConceptIdsForFilters()
+        if (hasData()) {
           data <- data %>%
-            dplyr::filter(.data$conceptId %in% getResolvedAndMappedConceptIdsForFilters())
+            dplyr::filter(.data$conceptId %in% mappedConcepts)
         }
       }
       if (!hasData(data)) {
@@ -212,18 +252,29 @@ temporalCharacterizationModule <- function(id,
     })
 
     ## temporalCharacterizationRawTable ----
-    temporalCharacterizationRawTable <- shiny::reactive(x = {
-      data <- temporalCohortCharacterizationDataFiltered()
+    temporalCharacterizationRawTable <- shiny::eventReactive(input$generateReport, {
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = paste0(
+          "Retrieving characterization output for cohort id ",
+          targetCohortId(),
+          " cohorts and ",
+          length(selectedDatabaseIds()),
+          " data sources."
+        ),
+        value = 0
+      )
+
+      data <- temporalCharacterizationDataFilt()
 
       validate(need(
         hasData(data),
         "No temporal characterization data"
       ))
-      progress <- shiny::Progress$new()
-      on.exit(progress$close())
       progress$set(
-        message = "Post processing: Rendering table",
-        value = 0
+        message = "Post processing: filtering table",
+        value = 50
       )
 
       temporalChoices <- temporalCharacterizationTimeIdChoices %>%
@@ -261,9 +312,14 @@ temporalCharacterizationModule <- function(id,
       dataColumns <- c(temporalChoices)
 
       showDataAsPercent <- FALSE
-      if (input$temporalProportionOrContinuous == "Proportion") {
+      if (input$proportionOrContinuous == "Proportion") {
         showDataAsPercent <- TRUE
       }
+
+      progress$set(
+        message = "Rendering table",
+        value = 80
+      )
 
       getDisplayTableSimple(
         data = data,
@@ -274,11 +330,16 @@ temporalCharacterizationModule <- function(id,
       )
     })
 
-    ## Output: temporalCharacterizationTable ------------------------
     output$temporalCharacterizationTable <-
       reactable::renderReactable(expr = {
+        progress <- shiny::Progress$new()
+        on.exit(progress$close())
+        progress$set(
+          message = paste0("Returning result"),
+          value = 90
+        )
+
         temporalCharacterizationRawTable()
       })
-
   })
 }

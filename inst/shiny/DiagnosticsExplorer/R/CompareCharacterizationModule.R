@@ -309,7 +309,6 @@ compareCohortCharacterizationModule <- function(id,
                                                 selectedComparatorCohort,
                                                 selectedConceptSets,
                                                 selectedTimeIds,
-                                                characterizationOutputMenu,
                                                 getFilteredConceptIds,
                                                 cohortTable,
                                                 databaseTable,
@@ -317,7 +316,6 @@ compareCohortCharacterizationModule <- function(id,
                                                 analysisIdInCohortCharacterization,
                                                 analysisNameOptions,
                                                 domainIdOptions,
-                                                characterizationTimeIdChoices,
                                                 temporalChoices,
                                                 prettyTable1Specifications) {
 
@@ -339,6 +337,119 @@ compareCohortCharacterizationModule <- function(id,
               dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>% dplyr::select(.data$databaseName),
             collapse = ", ")
     })
+
+
+
+    characterizationOutput <-
+      shiny::reactive(x = {
+        progress <- shiny::Progress$new()
+        on.exit(progress$close())
+        progress$set(
+          message = paste0(
+            "Retrieving characterization output for cohort id ",
+            targetCohortId(),
+            " cohorts and ",
+            length(selectedDatabaseIds()),
+            " data sources."
+          ),
+          value = 0
+        )
+        data <- getCharacterizationOutput(
+          dataSource = dataSource,
+          cohortIds = targetCohortId(),
+          databaseIds = selectedDatabaseIds(),
+          temporalCovariateValueDist = FALSE
+        )
+        return(data)
+      })
+
+
+    temporalCharacterizationOutput <-
+      shiny::reactive(x = {
+        progress <- shiny::Progress$new()
+        on.exit(progress$close())
+        progress$set(
+          message = paste0(
+            "Retrieving characterization output for target cohort id ",
+            targetCohortId(),
+            " from ",
+            input$database,
+            "."
+          ),
+          value = 0
+        )
+
+        if (input$database %in% c(selectedDatabaseIds())) {
+          data <- characterizationOutput()
+          if (hasData(data$covariateValue)) {
+            data$covariateValue <- data$covariateValue %>%
+              dplyr::filter(.data$databaseId %in% c(input$database))
+          }
+          if (hasData(data$covariateValueDist)) {
+            data$covariateValueDist <- data$covariateValueDist %>%
+              dplyr::filter(.data$databaseId %in% c(input$database))
+          }
+        } else {
+          data <- getCharacterizationOutput(
+            dataSource = dataSource,
+            cohortIds = targetCohortId(),
+            databaseIds = input$database,
+            temporalCovariateValueDist = FALSE
+          )
+        }
+        return(data)
+      })
+
+    compareCharacterizationOutput <-
+      shiny::reactive(x = {
+        dataTarget <-
+          temporalCharacterizationOutput()
+        if (!hasData(dataTarget)) {
+          return(NULL)
+        }
+
+        progress <- shiny::Progress$new()
+        on.exit(progress$close())
+        progress$set(
+          message = paste0(
+            "Retrieving characterization output for comparator cohort id ",
+            comparatorCohortId(),
+            " from ",
+            input$database,
+            "."
+          ),
+          value = 0
+        )
+        dataComparator <- getCharacterizationOutput(
+          dataSource = dataSource,
+          cohortIds = c(comparatorCohortId()),
+          databaseIds = input$database,
+          temporalCovariateValueDist = FALSE
+        )
+        if (!hasData(dataComparator)) {
+          return(NULL)
+        }
+        data <- NULL
+        data$covariateValue <-
+          dplyr::bind_rows(
+            dataTarget$covariateValue,
+            dataComparator$covariateValue
+          )
+        if (!hasData(data$covariateValue)) {
+          data$covariateValue <- NULL
+        }
+        data$covariateValueDist <-
+          dplyr::bind_rows(
+            dataTarget$covariateValueDist,
+            dataComparator$covariateValueDist
+          )
+        if (!hasData(data$covariateValueDist)) {
+          data$covariateValueDist <- NULL
+        }
+        return(data)
+      })
+
+
 
     # Compare cohort characterization --------------------------------------------
     ### compareCohortCharacterizationAnalysisNameFilter -----
@@ -403,7 +514,7 @@ compareCohortCharacterizationModule <- function(id,
         )
       )
 
-      data <- characterizationOutputMenu()
+      data <- compareCharacterizationOutput()
       if (!hasData(data)) {
         return(NULL)
       }
