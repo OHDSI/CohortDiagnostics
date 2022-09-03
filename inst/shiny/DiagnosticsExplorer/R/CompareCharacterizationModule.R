@@ -183,7 +183,7 @@ compareCohortCharacterizationView <- function(id) {
       width = NULL,
       title = NULL,
       shiny::conditionalPanel(
-        condition = "output.showTemporalChoices == 'TRUE'",
+        condition = "output.showTemporalChoices == 'TRUE' & input.charCompareType == 'Plot'",
         ns = ns,
         shinyWidgets::pickerInput(
           inputId = ns("timeIdChoices"),
@@ -196,6 +196,26 @@ compareCohortCharacterizationView <- function(id) {
             actionsBox = TRUE,
             liveSearch = TRUE,
             maxOptions = 5, # Selecting even this many will be slow
+            size = 10,
+            liveSearchStyle = "contains",
+            liveSearchPlaceholder = "Type here to search",
+            virtualScroll = 50
+          )
+        ),
+      ),
+      shiny::conditionalPanel(
+        condition = "input.charCompareType != 'Plot'",
+        ns = ns,
+        shinyWidgets::pickerInput(
+          inputId = ns("timeIdChoicesSingle"),
+          label = "Temporal Window",
+          choices = NULL,
+          multiple = FALSE,
+          choicesOpt = list(style = rep_len("color: black;", 999)),
+          selected = NULL,
+          options = shinyWidgets::pickerOptions(
+            actionsBox = TRUE,
+            liveSearch = TRUE,
             size = 10,
             liveSearchStyle = "contains",
             liveSearchPlaceholder = "Type here to search",
@@ -336,7 +356,6 @@ compareCohortCharacterizationModule <- function(id,
                                                 comparatorCohortId,
                                                 selectedComparatorCohort,
                                                 selectedConceptSets,
-                                                selectedTimeIds,
                                                 getFilteredConceptIds,
                                                 cohortTable,
                                                 databaseTable,
@@ -353,10 +372,9 @@ compareCohortCharacterizationModule <- function(id,
     output$showTemporalChoices <- shiny::renderText({showTemporalChoices})
     shiny::outputOptions(output, "showTemporalChoices", suspendWhenHidden = FALSE)
     if (showTemporalChoices) {
-          # Temporal choices (e.g. -30d - 0d ) are dynamic to execution
+      # Temporal choices (e.g. -30d - 0d ) are dynamic to execution
       timeIdOptions <- getResultsTemporalTimeRef(dataSource = dataSource) %>%
         dplyr::arrange(.data$sequence)
-
       shiny::observe({
         # Default time windows
         selectedTimeWindows <- timeIdOptions %>%
@@ -370,6 +388,10 @@ compareCohortCharacterizationModule <- function(id,
                                         choices = timeIdOptions$temporalChoices,
                                         selected = selectedTimeWindows)
 
+        shinyWidgets::updatePickerInput(session,
+                                        inputId = "timeIdChoicesSingle",
+                                        choices = timeIdOptions$temporalChoices)
+
       })
       selectedTimeIds <- shiny::reactive({
         timeIdOptions %>%
@@ -377,8 +399,31 @@ compareCohortCharacterizationModule <- function(id,
           dplyr::select(.data$timeId) %>%
           dplyr::pull()
       })
+    } else {
+      timeIdOptions <- getResultsTemporalTimeRef(dataSource = dataSource) %>%
+        dplyr::arrange(.data$sequence) %>%
+        dplyr::filter(.data$isTemporal == 0) %>%
+        dplyr::filter(.data$primaryTimeId == 1) %>%
+        dplyr::arrange(.data$sequence)
 
+      selectedTimeIds <- shiny::reactive({
+        timeIdOptions %>%
+          dplyr::select(.data$timeId) %>%
+          dplyr::pull()
+      })
+
+      shinyWidgets::updatePickerInput(session,
+                                        inputId = "timeIdChoicesSingle",
+                                        choices = timeIdOptions$temporalChoices)
     }
+
+     selectedTimeIdsSingle <- shiny::reactive({
+        timeIdOptions %>%
+          dplyr::filter(.data$temporalChoices %in% input$timeIdChoicesSingle) %>%
+          dplyr::select(.data$timeId) %>%
+          dplyr::pull()
+      })
+
     output$selectedCohorts <- shiny::renderUI({
       htmltools::withTags(table(
         tr(td(
@@ -490,7 +535,6 @@ compareCohortCharacterizationModule <- function(id,
         return(NULL)
       }
       data <- data %>%
-        dplyr::filter(.data$timeId %in% selectedTimeIds()) %>%
         dplyr::filter(.data$cohortId %in% c(targetCohortId(), comparatorCohortId())) %>%
         dplyr::filter(.data$databaseId %in% selectedDatabaseIds())
 
@@ -552,70 +596,41 @@ compareCohortCharacterizationModule <- function(id,
         return(NULL)
       }
 
-      showDataAsPercent <- TRUE
+      data <- data %>%
+        dplyr::filter(.data$timeId %in% selectedTimeIdsSingle())
 
-      if (showDataAsPercent) {
-        data1 <- data %>%
-          dplyr::rename(
-            "cohortId" = .data$cohortId1,
-            "mean" = .data$mean1,
-            "sumValue" = .data$sumValue1
-          ) %>%
-          dplyr::select(
-            .data$cohortId,
-            .data$databaseId,
-            .data$analysisId,
-            .data$covariateId,
-            .data$covariateName,
-            .data$mean
-          ) %>%
-          dplyr::rename(sumValue = .data$mean)
+      data1 <- data %>%
+        dplyr::rename(
+          "cohortId" = .data$cohortId1,
+          "mean" = .data$mean1,
+          "sumValue" = .data$sumValue1
+        ) %>%
+        dplyr::select(
+          .data$cohortId,
+          .data$databaseId,
+          .data$analysisId,
+          .data$covariateId,
+          .data$covariateName,
+          .data$mean
+        ) %>%
+        dplyr::rename(sumValue = .data$mean)
 
-        data2 <- data %>%
-          dplyr::rename(
-            "cohortId" = .data$cohortId2,
-            "mean" = .data$mean2,
-            "sumValue" = .data$sumValue2
-          ) %>%
-          dplyr::select(
-            .data$cohortId,
-            .data$databaseId,
-            .data$analysisId,
-            .data$covariateId,
-            .data$covariateName,
-            .data$mean
-          ) %>%
-          dplyr::rename(sumValue = .data$mean)
-      } else {
-        data1 <- data %>%
-          dplyr::rename(
-            "cohortId" = .data$cohortId1,
-            "mean" = .data$mean1,
-            "sumValue" = .data$sumValue1
-          ) %>%
-          dplyr::select(
-            .data$cohortId,
-            .data$databaseId,
-            .data$analysisId,
-            .data$covariateId,
-            .data$covariateName,
-            .data$sumValue
-          )
-        data2 <- data %>%
-          dplyr::rename(
-            "cohortId" = .data$cohortId2,
-            "mean" = .data$mean2,
-            "sumValue" = .data$sumValue2
-          ) %>%
-          dplyr::select(
-            .data$cohortId,
-            .data$databaseId,
-            .data$analysisId,
-            .data$covariateId,
-            .data$covariateName,
-            .data$sumValue
-          )
-      }
+      data2 <- data %>%
+        dplyr::rename(
+          "cohortId" = .data$cohortId2,
+          "mean" = .data$mean2,
+          "sumValue" = .data$sumValue2
+        ) %>%
+        dplyr::select(
+          .data$cohortId,
+          .data$databaseId,
+          .data$analysisId,
+          .data$covariateId,
+          .data$covariateName,
+          .data$mean
+        ) %>%
+        dplyr::rename(sumValue = .data$mean)
+
 
       data1 <-
         prepareTable1(
@@ -655,7 +670,7 @@ compareCohortCharacterizationModule <- function(id,
         data = data,
         keyColumns = keyColumns,
         dataColumns = dataColumns,
-        showDataAsPercent = showDataAsPercent
+        showDataAsPercent = TRUE
       )
       return(table)
     })
@@ -678,6 +693,10 @@ compareCohortCharacterizationModule <- function(id,
 
       data <- data %>%
         dplyr::arrange(factor(.data$temporalChoices, levels = sortedTemporalChoices))
+
+      data <- data %>%
+        dplyr::filter(.data$timeId %in% selectedTimeIdsSingle())
+
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(
@@ -693,7 +712,6 @@ compareCohortCharacterizationModule <- function(id,
           "StdDiff" = absStdDiff
         )
 
-      browser()
       keyColumnFields <-
         c("covariateName", "analysisName", "conceptId")
 
@@ -713,23 +731,15 @@ compareCohortCharacterizationModule <- function(id,
           showDataAsPercent <- TRUE
         }
       }
-      countLocation <- 1
-
-      maxCountValue <-
-        getMaxValueForStringMatchedColumnsInDataFrame(
-          data = data,
-          string = dataColumnFields
-        )
-
       getDisplayTableGroupedByDatabaseId(
         data = data,
         cohort = cohortTable,
         databaseTable = databaseTable,
         headerCount = NULL,
         keyColumns = keyColumnFields,
-        countLocation = countLocation,
+        countLocation = 1,
         dataColumns = dataColumnFields,
-        maxCount = maxCountValue,
+        maxCount = 1,
         showDataAsPercent = showDataAsPercent,
         excludedColumnFromPercentage = "StdDiff",
         sort = TRUE,
@@ -782,7 +792,9 @@ compareCohortCharacterizationModule <- function(id,
           value = 50
         )
       distinctTemporalChoices <- unique(temporalChoices$temporalChoices)
+
       data <- data %>%
+        dplyr::filter(.data$timeId %in% selectedTimeIds())%>%
         dplyr::arrange(factor(.data$temporalChoices, levels = distinctTemporalChoices)) %>%
         dplyr::mutate(temporalChoices = factor(.data$temporalChoices, levels = unique(.data$temporalChoices)))
 

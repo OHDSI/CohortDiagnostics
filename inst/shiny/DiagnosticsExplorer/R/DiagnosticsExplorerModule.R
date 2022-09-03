@@ -232,25 +232,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       return(conceptSetsFiltered)
     })
 
-    timeIds <- reactiveVal(NULL)
-    shiny::observeEvent(eventExpr = {
-      list(
-        input$timeIdChoices_open,
-        input$tabs
-      )
-    }, handlerExpr = {
-      if ("temporalCharacterizationTimeIdChoices" %in% enabledTabs &
-        (isFALSE(input$timeIdChoices_open) ||
-          !is.null(input$tabs))) {
-        if (!is.null(envir$temporalChoices)) {
-          selectedTimeIds <- envir$temporalCharacterizationTimeIdChoices %>%
-            dplyr::filter(.data$temporalChoices %in% input$timeIdChoices) %>%
-            dplyr::pull(.data$timeId)
-          timeIds(selectedTimeIds)
-        }
-      }
-    })
-
     databaseChoices <- list()
     dbMapping <- databaseTable
     for (i in 1:nrow(dbMapping)) {
@@ -778,7 +759,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                           comparatorCohortId = comparatorCohortId,
                                           selectedComparatorCohort = selectedComparatorCohort,
                                           selectedConceptSets = selectedConceptSets,
-                                          selectedTimeIds = shiny::reactive({ c(envir$characterizationTimeIdChoices$timeId %>% unique(), NA) }),
                                           getFilteredConceptIds = getFilteredConceptIds,
                                           cohortTable = cohortTable,
                                           databaseTable = databaseTable,
@@ -797,7 +777,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                           comparatorCohortId = comparatorCohortId,
                                           selectedComparatorCohort = selectedComparatorCohort,
                                           selectedConceptSets = selectedConceptSets,
-                                          selectedTimeIds = NULL,
                                           getFilteredConceptIds = getFilteredConceptIds,
                                           cohortTable = cohortTable,
                                           databaseTable = databaseTable,
