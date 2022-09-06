@@ -262,29 +262,22 @@ appendNewRows <-
 #' Only PostgreSQL servers are supported.
 #'
 #' @template Connection
-#' @param schema         The schema on the postgres server where the tables will be created.
+#' @param databaseSchema         The schema on the postgres server where the tables will be created.
 #' @param tablePrefix    (Optional)  string to insert before table names (e.g. "cd_") for database table names
 #' @export
-createResultsDataModel <- function(connection = NULL,
-                                   connectionDetails = NULL,
-                                   schema,
+createResultsDataModel <- function(connectionDetails = NULL,
+                                   databaseSchema,
                                    tablePrefix = "") {
-  if (is.null(connection)) {
-    if (!is.null(connectionDetails)) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection))
-    } else {
-      stop("No connection or connectionDetails provided.")
-    }
-  }
-
-  if (connection@dbms == "sqlite" & schema != "main") {
+  if (connectionDetails$dbms == "sqlite" & schema != "main") {
     stop("Invalid schema for sqlite, use schema = 'main'")
   }
 
-  .createDataModel(connection, schema, tablePrefix)
+  connection <- DatabaseConnector::connect(connectionDetails)
+  on.exit(DatabaseConnector::disconnect(connection))
+
+  .createDataModel(connection, databaseSchema, tablePrefix)
   migrateDataModel(connectionDetails = connectionDetails,
-                   databaseSchema = schema,
+                   databaseSchema = databaseSchema,
                    tablePrefix = tablePrefix)
 }
 
@@ -323,7 +316,7 @@ naToZero <- function(x) {
 #' @param tablePrefix    (Optional)  string to insert before table names (e.g. "cd_") for database table names
 #'
 #' @export
-uploadResults <- function(connectionDetails = NULL,
+uploadResults <- function(connectionDetails,
                           schema,
                           zipFileName,
                           forceOverWriteOfSpecifications = FALSE,
