@@ -283,8 +283,8 @@ createResultsDataModel <- function(connection = NULL,
   }
 
   .createDataModel(connection, schema, tablePrefix)
-  migrateDataModel(connection = connection,
-                   schema = schema,
+  migrateDataModel(connectionDetails = connectionDetails,
+                   databaseSchema = schema,
                    tablePrefix = tablePrefix)
 }
 

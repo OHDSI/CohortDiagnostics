@@ -13,23 +13,13 @@
 {DEFAULT @table_prefix = ''}
 
 -- Create table indicating version number of ddl
-DROP TABLE IF EXISTS @results_schema.@package_version;
+DROP TABLE IF EXISTS @database_schema.@package_version;
 
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema. @table_prefix@package_version (
+CREATE TABLE @database_schema.@table_prefix@package_version (
     version_number VARCHAR PRIMARY KEY
 );
 
 -- Update time_ids in relevant tables
-UPDATE @results_schema.@table_prefix@temporal_covariate_value SET time_id = 0 WHERE time_id IS NULL;
-UPDATE @results_schema.@table_prefix@temporal_covariate_value_dist SET time_id = 0 WHERE time_id IS NULL;
-
---HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@table_prefix@migration (
-    migration_file VARCHAR PRIMARY KEY, --string value represents file name
-    migration_order INT NOT NULL unique
-);
-
--- If other statements fail, this won't update
-INSERT INTO @results_schema.@table_prefix@migration (migration_file, migration_order)
-    VALUES ('Migration_1-v3_1_0_time_id.sql', 1);
+UPDATE @database_schema.@table_prefix@temporal_covariate_value SET time_id = 0 WHERE time_id IS NULL;
+UPDATE @database_schema.@table_prefix@temporal_covariate_value_dist SET time_id = 0 WHERE time_id IS NULL;

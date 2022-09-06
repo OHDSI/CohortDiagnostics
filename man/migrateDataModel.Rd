@@ -4,28 +4,14 @@
 \alias{migrateDataModel}
 \title{Migrate Data model}
 \usage{
-migrateDataModel(
-  connection = NULL,
-  connectionDetails = NULL,
-  schema = NULL,
-  tablePrefix = ""
-)
+migrateDataModel(connectionDetails, databaseSchema, tablePrefix = "")
 }
 \arguments{
-\item{connection}{An object of type \code{connection} as created using the
-\code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package. Can be left NULL if \code{connectionDetails}
-is provided, in which case a new connection will be opened at the start
-of the function, and closed when the function finishes.}
+\item{connectionDetails}{DatabaseConnector connection details object}
 
-\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
-\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is
-provided.}
+\item{databaseSchema}{String schema where database schema lives}
 
-\item{schema}{The schema on the postgres server where the tables will be created.}
-
-\item{tablePrefix}{(Optional)  string to insert before table names (e.g. "cd_") for database table names}
+\item{tablePrefix}{(Optional) Use if a table prefix is used before table names (e.g. cd_)}
 }
 \description{
 Migrate data from current state to next state

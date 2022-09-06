@@ -19,6 +19,7 @@ Depends:
 	R (>= 4.1.0)
 Imports:
   Andromeda,
+  ResultModelManager,
   checkmate,
   clock,
   digest,
@@ -59,6 +60,7 @@ Suggests:
 Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
+  ohdsi/ResultModelManager,
   ohdsi/ROhdsiWebApi,
   ohdsi/CirceR,
   ohdsi/CohortGenerator
