@@ -111,8 +111,8 @@ getDefaultCovariateSettings <- function() {
 #' @param cohortDefinitionSet         Data.frame of cohorts must include columns cohortId, cohortName, json, sql
 #' @param cohortTableNames            Cohort Table names used by CohortGenerator package
 #' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf').
-#' @param databaseName                The full name of the database. If NULL, defaults to databaseId.
-#' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to databaseId.
+#' @param databaseName                The full name of the database. If NULL, defaults to value in cdm_source table
+#' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table
 #' @template cdmVersion
 #' @param runInclusionStatistics      Generate and export statistic on the cohort inclusion rules?
 #' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
@@ -124,11 +124,14 @@ getDefaultCovariateSettings <- function() {
 #' @param runCohortRelationship       Generate and export the cohort relationship? Cohort relationship checks the temporal
 #'                                    relationship between two or more cohorts.
 #' @param runTemporalCohortCharacterization   Generate and export the temporal cohort characterization?
-#'                                    Only records with values greater than 0.001 are returned.
+#'                                            Only records with values greater than 0.001 are returned.
 #' @param temporalCovariateSettings   Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 #'                                    of such objects.
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
+#' @param minCharacterizationMean     The minimum mean value for characterization output. Values below this will be cut off from output. This
+#'                                    will help reduce the file size of the characterization output, but will remove information
+#'                                    on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
@@ -182,8 +185,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                exportFolder,
                                databaseId,
                                cohortDatabaseSchema,
-                               databaseName = databaseId,
-                               databaseDescription = databaseId,
+                               databaseName = NULL,
+                               databaseDescription = NULL,
                                connectionDetails = NULL,
                                connection = NULL,
                                cdmDatabaseSchema,
@@ -204,9 +207,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runTemporalCohortCharacterization = TRUE,
                                temporalCovariateSettings = getDefaultCovariateSettings(),
                                minCellCount = 5,
+                               minCharacterizationMean = 0.01,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental")) {
-  
   # collect arguments that were passed to cohort diagnostics at initiation
   argumentsAtDiagnosticsInitiation <- formals(executeDiagnostics)
   argumentsAtDiagnosticsInitiationJson <-
@@ -220,33 +223,33 @@ executeDiagnostics <- function(cohortDefinitionSet,
       runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,
       runTemporalCohortCharacterization = argumentsAtDiagnosticsInitiation$runTemporalCohortCharacterization,
       minCellCount = argumentsAtDiagnosticsInitiation$minCellCount,
+      minCharacterizationMean = argumentsAtDiagnosticsInitiation$minCharacterizationMean,
       incremental = argumentsAtDiagnosticsInitiation$incremental,
       temporalCovariateSettings = argumentsAtDiagnosticsInitiation$temporalCovariateSettings
     ) %>%
-    RJSONIO::toJSON(digits = 23, pretty = TRUE)
-  
+      RJSONIO::toJSON(digits = 23, pretty = TRUE)
+
   # take package dependency snapshot
   packageDependencySnapShotJson <-
     takepackageDependencySnapshot() %>%
-    RJSONIO::toJSON(digits = 23, pretty = TRUE)
-  
+      RJSONIO::toJSON(digits = 23, pretty = TRUE)
+
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
-  
+  executionTimePath <- file.path(exportFolder, "taskExecutionTimes.csv")
+
   start <- Sys.time()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
-  
+
   databaseId <- as.character(databaseId)
-  
+
   if (any(is.null(databaseName), is.na(databaseName))) {
-    databaseName <- databaseId
-    ParallelLogger::logTrace(" - Databasename was not provided.")
+    ParallelLogger::logTrace(" - Databasename was not provided. Using CDM source table")
   }
   if (any(is.null(databaseDescription), is.na(databaseDescription))) {
-    databaseDescription <- databaseId
-    ParallelLogger::logTrace(" - Databasedescription was not provided.")
+    ParallelLogger::logTrace(" - Databasedescription was not provided. Using CDM source table")
   }
-  
+
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertList(cohortTableNames, null.ok = FALSE, types = "character", add = errorMessage, names = "named")
   checkmate::assertNames(names(cohortTableNames),
@@ -270,7 +273,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                          ),
                          add = errorMessage
   )
-  
+
   cohortTable <- cohortTableNames$cohortTable
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
   checkmate::assertLogical(runIncludedSourceConcepts, add = errorMessage)
@@ -289,8 +292,10 @@ executeDiagnostics <- function(cohortDefinitionSet,
   )
   minCellCount <- utils::type.convert(minCellCount, as.is = TRUE)
   checkmate::assertInteger(x = minCellCount, lower = 0, add = errorMessage)
+  minCharacterizationMean <- utils::type.convert(minCharacterizationMean, as.is = TRUE)
+  checkmate::assertNumeric(x = minCharacterizationMean, lower = 0, add = errorMessage)
   checkmate::assertLogical(incremental, add = errorMessage)
-  
+
   if (any(
     runInclusionStatistics,
     runIncludedSourceConcepts,
@@ -325,13 +330,23 @@ executeDiagnostics <- function(cohortDefinitionSet,
     )
   }
   checkmate::reportAssertions(collection = errorMessage)
-  
+
   errorMessage <-
     createIfNotExist(
       type = "folder",
       name = exportFolder,
       errorMessage = errorMessage
     )
+
+  ParallelLogger::addDefaultFileLogger(file.path(exportFolder, "log.txt"))
+  ParallelLogger::addDefaultErrorReportLogger(file.path(exportFolder, "errorReportR.txt"))
+  on.exit(ParallelLogger::unregisterLogger("DEFAULT_FILE_LOGGER", silent = TRUE))
+  on.exit(
+    ParallelLogger::unregisterLogger("DEFAULT_ERRORREPORT_LOGGER", silent = TRUE),
+    add = TRUE
+  )
+
+
   if (incremental) {
     errorMessage <-
       createIfNotExist(
@@ -349,21 +364,21 @@ executeDiagnostics <- function(cohortDefinitionSet,
     temporalCovariateSettings$DrugEraGroupStart <- NULL
 
     checkmate::assert_integerish(x = temporalCovariateSettings$temporalStartDays,
-                              any.missing = FALSE,
-                              min.len = 1,
-                              add = errorMessage)
+                                 any.missing = FALSE,
+                                 min.len = 1,
+                                 add = errorMessage)
     checkmate::assert_integerish(x = temporalCovariateSettings$temporalEndDays,
-                              any.missing = FALSE,
-                              min.len = 1,
-                              add = errorMessage)
+                                 any.missing = FALSE,
+                                 min.len = 1,
+                                 add = errorMessage)
     checkmate::reportAssertions(collection = errorMessage)
-    
+
     # Adding required temporal windows required in results viewer
     requiredTemporalPairs <-
       list(c(-365, 0),
            c(-30, 0),
-           c(-365,-31),
-           c(-30,-1),
+           c(-365, -31),
+           c(-30, -1),
            c(0, 0),
            c(1, 30),
            c(31, 365),
@@ -375,13 +390,13 @@ executeDiagnostics <- function(cohortDefinitionSet,
           temporalCovariateSettings$temporalStartDays[i],
           temporalCovariateSettings$temporalEndDays[i]
         )
-        
+
         if (p2[1] == p1[1] & p2[2] == p1[2]) {
           found <- TRUE
           break
         }
       }
-      
+
       if (!found) {
         temporalCovariateSettings$temporalStartDays <-
           c(temporalCovariateSettings$temporalStartDays, p1[1])
@@ -390,12 +405,12 @@ executeDiagnostics <- function(cohortDefinitionSet,
       }
     }
   }
-  
+
   checkmate::reportAssertions(collection = errorMessage)
   if (!is.null(cohortIds)) {
     cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
-  
+
   if (nrow(cohortDefinitionSet) == 0) {
     stop("No cohorts specified")
   }
@@ -403,18 +418,18 @@ executeDiagnostics <- function(cohortDefinitionSet,
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(.data$tableName == "cohort") %>%
-    dplyr::pull(.data$columnName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    sort()
+      dplyr::filter(.data$tableName == "cohort") %>%
+      dplyr::pull(.data$columnName) %>%
+      SqlRender::snakeCaseToCamelCase() %>%
+      sort()
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(.data$tableName == "cohort") %>%
-    dplyr::filter(.data$isRequired == "Yes") %>%
-    dplyr::pull(.data$columnName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    sort()
-  
+      dplyr::filter(.data$tableName == "cohort") %>%
+      dplyr::filter(.data$isRequired == "Yes") %>%
+      dplyr::pull(.data$columnName) %>%
+      SqlRender::snakeCaseToCamelCase() %>%
+      sort()
+
   expectedButNotObsevered <-
     setdiff(x = cohortTableColumnNamesExpected, y = cohortTableColumnNamesObserved)
   if (length(expectedButNotObsevered) > 0) {
@@ -423,14 +438,14 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
   obseveredButNotExpected <-
     setdiff(x = cohortTableColumnNamesObserved, y = cohortTableColumnNamesExpected)
-  
+
   if (length(requiredButNotObsevered) > 0) {
     stop(paste(
       "The following required fields not found in cohort table:",
       paste0(requiredButNotObsevered, collapse = ", ")
     ))
   }
-  
+
   if (length(obseveredButNotExpected) > 0) {
     ParallelLogger::logInfo(
       paste0(
@@ -439,19 +454,19 @@ executeDiagnostics <- function(cohortDefinitionSet,
       )
     )
   }
-  
+
   cohortDefinitionSet <- makeDataExportable(
     x = cohortDefinitionSet,
     tableName = "cohort",
     minCellCount = minCellCount,
     databaseId = NULL
   )
-  
+
   writeToCsv(
     data = cohortDefinitionSet,
     fileName = file.path(exportFolder, "cohort.csv")
   )
-  
+
   # Set up connection to server ----------------------------------------------------
   if (is.null(connection)) {
     if (!is.null(connectionDetails)) {
@@ -461,16 +476,41 @@ executeDiagnostics <- function(cohortDefinitionSet,
       stop("No connection or connectionDetails provided.")
     }
   }
-  
+
   ## CDM source information----
-  cdmSourceInformation <-
-    getCdmDataSourceInformation(
-      connection = connection,
-      cdmDatabaseSchema = cdmDatabaseSchema
-    )
-  
-  vocabularyVersion <- getVocabularyVersion(connection, vocabularyDatabaseSchema)
-  
+  timeExecution(
+    exportFolder,
+    taskName = "getCdmDataSourceInformation",
+    cohortIds = NULL,
+    parent = "executeDiagnostics",
+    expr = {
+      cdmSourceInformation <-
+        getCdmDataSourceInformation(
+          connection = connection,
+          cdmDatabaseSchema = cdmDatabaseSchema
+        )
+      ## Use CDM source table as default name/description
+      if (!is.null(cdmSourceInformation)) {
+        if (any(is.null(databaseName), is.na(databaseName))) {
+          databaseName <- cdmSourceInformation$cdmSourceName
+        }
+
+        if (any(is.null(databaseDescription), is.na(databaseDescription))) {
+          databaseDescription <- cdmSourceInformation$sourceDescription
+        }
+      } else {
+        if (any(is.null(databaseName), is.na(databaseName))) {
+          databaseName <- databaseId
+        }
+
+        if (any(is.null(databaseDescription), is.na(databaseDescription))) {
+          databaseDescription <- databaseName
+        }
+      }
+      vocabularyVersion <- getVocabularyVersion(connection, vocabularyDatabaseSchema)
+
+    })
+
   if (incremental) {
     ParallelLogger::logDebug("Working in incremental mode.")
     cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)
@@ -482,22 +522,28 @@ executeDiagnostics <- function(cohortDefinitionSet,
       )
     }
   }
-  
+
   ## Observation period----
   ParallelLogger::logTrace(" - Collecting date range from Observational period table.")
-  observationPeriodDateRange <- renderTranslateQuerySql(
-    connection = connection,
-    sql = "SELECT MIN(observation_period_start_date) observation_period_min_date,
+   timeExecution(
+     exportFolder,
+     taskName = "observationPeriodDateRange",
+     cohortIds = NULL,
+     parent = "executeDiagnostics",
+     expr = {
+      observationPeriodDateRange <- renderTranslateQuerySql(
+        connection = connection,
+        sql = "SELECT MIN(observation_period_start_date) observation_period_min_date,
              MAX(observation_period_end_date) observation_period_max_date,
              COUNT(distinct person_id) persons,
              COUNT(person_id) records,
              SUM(CAST(DATEDIFF(dd, observation_period_start_date, observation_period_end_date) AS BIGINT)) person_days
              FROM @cdm_database_schema.observation_period;",
-    cdm_database_schema = cdmDatabaseSchema,
-    snakeCaseToCamelCase = TRUE,
-    tempEmulationSchema = tempEmulationSchema
-  )
-  
+        cdm_database_schema = cdmDatabaseSchema,
+        snakeCaseToCamelCase = TRUE,
+        tempEmulationSchema = tempEmulationSchema
+      )
+    })
   # Database metadata ---------------------------------------------
   saveDatabaseMetaData(
     databaseId = databaseId,
@@ -510,18 +556,25 @@ executeDiagnostics <- function(cohortDefinitionSet,
   )
   # Create concept table ------------------------------------------
   createConceptTable(connection, tempEmulationSchema)
-  
+
   # Counting cohorts -----------------------------------------------------------------------
-  cohortCounts <- computeCohortCounts(
-    connection = connection,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    cohorts = cohortDefinitionSet,
-    exportFolder = exportFolder,
-    minCellCount = minCellCount,
-    databaseId = databaseId
-  )
-  
+  timeExecution(
+    exportFolder,
+    taskName = "getInclusionStats",
+    cohortIds = cohortIds,
+    parent = "executeDiagnostics",
+    expr = {
+      cohortCounts <- computeCohortCounts(
+        connection = connection,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        cohorts = cohortDefinitionSet,
+        exportFolder = exportFolder,
+        minCellCount = minCellCount,
+        databaseId = databaseId
+      )
+    })
+
   if (nrow(cohortCounts) > 0) {
     instantiatedCohorts <- cohortCounts %>%
       dplyr::filter(.data$cohortEntries > 0) %>%
@@ -538,180 +591,242 @@ executeDiagnostics <- function(cohortDefinitionSet,
   } else {
     stop("All cohorts were either not instantiated or all have 0 records.")
   }
-  
+
   # Inclusion statistics -----------------------------------------------------------------------
   if (runInclusionStatistics) {
-    getInclusionStats(
-      connection = connection,
-      exportFolder = exportFolder,
-      databaseId = databaseId,
-      cohortDefinitionSet = cohortDefinitionSet,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTableNames = cohortTableNames,
-      incremental = incremental,
-      instantiatedCohorts = instantiatedCohorts,
-      minCellCount = minCellCount,
-      recordKeepingFile = recordKeepingFile
-    )
+    timeExecution(
+      exportFolder,
+      "getInclusionStats",
+      cohortIds,
+      parent = "executeDiagnostics",
+      expr = {
+        getInclusionStats(
+          connection = connection,
+          exportFolder = exportFolder,
+          databaseId = databaseId,
+          cohortDefinitionSet = cohortDefinitionSet,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cohortTableNames = cohortTableNames,
+          incremental = incremental,
+          instantiatedCohorts = instantiatedCohorts,
+          minCellCount = minCellCount,
+          recordKeepingFile = recordKeepingFile
+        )
+      })
   }
-  
+
   # Concept set diagnostics -----------------------------------------------
   if (runIncludedSourceConcepts ||
-      runOrphanConcepts ||
-      runBreakdownIndexEvents) {
-    runConceptSetDiagnostics(
-      connection = connection,
-      tempEmulationSchema = tempEmulationSchema,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      databaseId = databaseId,
-      cohorts = cohortDefinitionSet,
-      runIncludedSourceConcepts = runIncludedSourceConcepts,
-      runOrphanConcepts = runOrphanConcepts,
-      runBreakdownIndexEvents = runBreakdownIndexEvents,
-      exportFolder = exportFolder,
-      minCellCount = minCellCount,
-      conceptCountsDatabaseSchema = NULL,
-      conceptCountsTable = "#concept_counts",
-      conceptCountsTableIsTemp = TRUE,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      useExternalConceptCountsTable = FALSE,
-      incremental = incremental,
-      conceptIdTable = "#concept_ids",
-      recordKeepingFile = recordKeepingFile
-    )
+    runOrphanConcepts ||
+    runBreakdownIndexEvents) {
+    timeExecution(
+      exportFolder,
+      taskName = "runConceptSetDiagnostics",
+      cohortIds,
+      parent = "executeDiagnostics",
+      expr = {
+        runConceptSetDiagnostics(
+          connection = connection,
+          tempEmulationSchema = tempEmulationSchema,
+          cdmDatabaseSchema = cdmDatabaseSchema,
+          vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+          databaseId = databaseId,
+          cohorts = cohortDefinitionSet,
+          runIncludedSourceConcepts = runIncludedSourceConcepts,
+          runOrphanConcepts = runOrphanConcepts,
+          runBreakdownIndexEvents = runBreakdownIndexEvents,
+          exportFolder = exportFolder,
+          minCellCount = minCellCount,
+          conceptCountsDatabaseSchema = NULL,
+          conceptCountsTable = "#concept_counts",
+          conceptCountsTableIsTemp = TRUE,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cohortTable = cohortTable,
+          useExternalConceptCountsTable = FALSE,
+          incremental = incremental,
+          conceptIdTable = "#concept_ids",
+          recordKeepingFile = recordKeepingFile
+        )
+      })
   }
-  
+
   # Time series ----------------------------------------------------------------------
   if (runTimeSeries) {
-    executeTimeSeriesDiagnostics(
-      connection = connection,
-      tempEmulationSchema = tempEmulationSchema,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      cohortDefinitionSet = cohortDefinitionSet,
-      databaseId = databaseId,
-      exportFolder = exportFolder,
-      minCellCount = minCellCount,
-      instantiatedCohorts = instantiatedCohorts,
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile,
-      observationPeriodDateRange = observationPeriodDateRange
-    )
+    timeExecution(
+      exportFolder,
+      "executeTimeSeriesDiagnostics",
+      cohortIds,
+      parent = "executeDiagnostics",
+      expr = {
+        executeTimeSeriesDiagnostics(
+          connection = connection,
+          tempEmulationSchema = tempEmulationSchema,
+          cdmDatabaseSchema = cdmDatabaseSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cohortTable = cohortTable,
+          cohortDefinitionSet = cohortDefinitionSet,
+          databaseId = databaseId,
+          exportFolder = exportFolder,
+          minCellCount = minCellCount,
+          instantiatedCohorts = instantiatedCohorts,
+          incremental = incremental,
+          recordKeepingFile = recordKeepingFile,
+          observationPeriodDateRange = observationPeriodDateRange
+        )
+      })
   }
-  
-  
+
+
   # Visit context ----------------------------------------------------------------------------
   if (runVisitContext) {
-    executeVisitContextDiagnostics(
-      connection = connection,
-      tempEmulationSchema = tempEmulationSchema,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      cdmVersion = cdmVersion,
-      databaseId = databaseId,
-      exportFolder = exportFolder,
-      minCellCount = minCellCount,
-      cohorts = cohortDefinitionSet,
-      instantiatedCohorts = instantiatedCohorts,
-      recordKeepingFile = recordKeepingFile,
-      incremental = incremental
-    )
+    timeExecution(
+      exportFolder,
+      "executeVisitContextDiagnostics",
+      cohortIds,
+      parent = "executeDiagnostics",
+      expr = {
+        executeVisitContextDiagnostics(
+          connection = connection,
+          tempEmulationSchema = tempEmulationSchema,
+          cdmDatabaseSchema = cdmDatabaseSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cohortTable = cohortTable,
+          cdmVersion = cdmVersion,
+          databaseId = databaseId,
+          exportFolder = exportFolder,
+          minCellCount = minCellCount,
+          cohorts = cohortDefinitionSet,
+          instantiatedCohorts = instantiatedCohorts,
+          recordKeepingFile = recordKeepingFile,
+          incremental = incremental
+        )
+      })
   }
-  
+
   # Incidence rates --------------------------------------------------------------------------------------
   if (runIncidenceRate) {
-    computeIncidenceRates(
-      connection = connection,
-      tempEmulationSchema = tempEmulationSchema,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      databaseId = databaseId,
-      exportFolder = exportFolder,
-      minCellCount = minCellCount,
-      cohorts = cohortDefinitionSet,
-      instantiatedCohorts = instantiatedCohorts,
-      recordKeepingFile = recordKeepingFile,
-      incremental = incremental
-    )
+    timeExecution(
+      exportFolder,
+      "computeIncidenceRates",
+      cohortIds,
+      parent = "executeDiagnostics",
+      expr = {
+        computeIncidenceRates(
+          connection = connection,
+          tempEmulationSchema = tempEmulationSchema,
+          cdmDatabaseSchema = cdmDatabaseSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cohortTable = cohortTable,
+          databaseId = databaseId,
+          exportFolder = exportFolder,
+          minCellCount = minCellCount,
+          cohorts = cohortDefinitionSet,
+          instantiatedCohorts = instantiatedCohorts,
+          recordKeepingFile = recordKeepingFile,
+          incremental = incremental
+        )
+      })
   }
-  
+
   # Cohort relationship ---------------------------------------------------------------------------------
   if (runCohortRelationship) {
-    executeCohortRelationshipDiagnostics(
-      connection = connection,
-      databaseId = databaseId,
-      exportFolder = exportFolder,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      tempEmulationSchema = tempEmulationSchema,
-      cohortTable = cohortTable,
-      cohortDefinitionSet = cohortDefinitionSet,
-      temporalCovariateSettings = temporalCovariateSettings,
-      minCellCount = minCellCount,
-      recordKeepingFile = recordKeepingFile,
-      incremental = incremental
-    )
+    timeExecution(
+      exportFolder,
+      "executeCohortRelationshipDiagnostics",
+      cohortIds,
+      parent = "executeDiagnostics",
+      expr = {
+        executeCohortRelationshipDiagnostics(
+          connection = connection,
+          databaseId = databaseId,
+          exportFolder = exportFolder,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cdmDatabaseSchema = cdmDatabaseSchema,
+          tempEmulationSchema = tempEmulationSchema,
+          cohortTable = cohortTable,
+          cohortDefinitionSet = cohortDefinitionSet,
+          temporalCovariateSettings = temporalCovariateSettings,
+          minCellCount = minCellCount,
+          recordKeepingFile = recordKeepingFile,
+          incremental = incremental
+        )
+      })
   }
-  
+
   # Temporal Cohort characterization ---------------------------------------------------------------
   if (runTemporalCohortCharacterization) {
-    executeCohortCharacterization(
-      connection = connection,
-      databaseId = databaseId,
-      exportFolder = exportFolder,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      covariateSettings = temporalCovariateSettings,
-      tempEmulationSchema = tempEmulationSchema,
-      cdmVersion = cdmVersion,
-      cohorts = cohortDefinitionSet,
-      cohortCounts = cohortCounts,
-      minCellCount = minCellCount,
-      instantiatedCohorts = instantiatedCohorts,
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile,
-      task = "runTemporalCohortCharacterization",
-      jobName = "Temporal Cohort characterization",
-      covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
-      covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
-      covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
-      analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
-      timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv")
-    )
+    timeExecution(
+      exportFolder,
+      "executeCohortCharacterization",
+      cohortIds,
+      parent = "executeDiagnostics",
+      expr = {
+        executeCohortCharacterization(
+          connection = connection,
+          databaseId = databaseId,
+          exportFolder = exportFolder,
+          cdmDatabaseSchema = cdmDatabaseSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cohortTable = cohortTable,
+          covariateSettings = temporalCovariateSettings,
+          tempEmulationSchema = tempEmulationSchema,
+          cdmVersion = cdmVersion,
+          cohorts = cohortDefinitionSet,
+          cohortCounts = cohortCounts,
+          minCellCount = minCellCount,
+          instantiatedCohorts = instantiatedCohorts,
+          incremental = incremental,
+          recordKeepingFile = recordKeepingFile,
+          task = "runTemporalCohortCharacterization",
+          jobName = "Temporal Cohort characterization",
+          covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
+          covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
+          covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
+          analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
+          timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
+          minCharacterizationMean = minCharacterizationMean
+        )
+      })
   }
-  
+
   # Store information from the vocabulary on the concepts used -------------------------
-  exportConceptInformation(
-    connection = connection,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    conceptIdTable = "#concept_ids",
-    incremental = incremental,
-    exportFolder = exportFolder
-  )
-  
+  timeExecution(
+    exportFolder,
+    "exportConceptInformation",
+    parent = "executeDiagnostics",
+    expr =
+    {
+      exportConceptInformation(
+        connection = connection,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        conceptIdTable = "#concept_ids",
+        incremental = incremental,
+        exportFolder = exportFolder
+      )
+    })
   # Delete unique concept ID table ---------------------------------
   ParallelLogger::logTrace("Deleting concept ID table")
-  sql <- "TRUNCATE TABLE @table;\nDROP TABLE @table;"
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = connection,
-    sql = sql,
-    tempEmulationSchema = tempEmulationSchema,
-    table = "#concept_ids",
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-  
-  
+  timeExecution(
+    exportFolder,
+    "DeleteConceptIdTable",
+    parent = "executeDiagnostics",
+    expr =
+    {
+      sql <- "TRUNCATE TABLE @table;\nDROP TABLE @table;"
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection = connection,
+        sql = sql,
+        tempEmulationSchema = tempEmulationSchema,
+        table = "#concept_ids",
+        progressBar = FALSE,
+        reportOverallTime = FALSE
+      )
+    })
+
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
-  
+
   packageName <- utils::packageName()
   packageVersion <- if (!methods::getPackageName() == ".GlobalEnv") {
     as.character(utils::packageVersion(packageName))
@@ -719,6 +834,16 @@ executeDiagnostics <- function(cohortDefinitionSet,
     ""
   }
   delta <- Sys.time() - start
+
+  timeExecution(
+    exportFolder = exportFolder,
+    taskName = "executeDiagnostics",
+    parent = NULL,
+    cohortIds = NULL,
+    start = start,
+    execTime = delta
+  )
+
   variableField <- c(
     "timeZone",
     # 1
@@ -835,9 +960,17 @@ executeDiagnostics <- function(cohortDefinitionSet,
     incremental = TRUE,
     start_time = as.character(start)
   )
-  
+
   # Add all to zip file -------------------------------------------------------------------------------
-  writeResultsZip(exportFolder, databaseId)
+  timeExecution(
+    exportFolder,
+    "writeResultsZip",
+    NULL,
+    parent = "executeDiagnostics",
+    expr = {
+      writeResultsZip(exportFolder, databaseId)
+    })
+
   ParallelLogger::logInfo(
     "Computing all diagnostics took ",
     signif(delta, 3),

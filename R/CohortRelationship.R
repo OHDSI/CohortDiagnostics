@@ -205,7 +205,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
                                                  batchSize = 500) {
   ParallelLogger::logInfo("Computing Cohort Relationship")
   startCohortRelationship <- Sys.time()
-  
+
   allCohortIds <- cohortDefinitionSet %>%
     dplyr::select(.data$cohortId, .data$checksum) %>%
     dplyr::rename(targetCohortId = .data$cohortId,
@@ -215,10 +215,10 @@ executeCohortRelationshipDiagnostics <- function(connection,
     tidyr::crossing(allCohortIds %>%
                       dplyr::rename(comparatorCohortId = .data$targetCohortId,
                                     comparatorChecksum = .data$targetChecksum)) %>%
-    dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) %>% 
-    dplyr::arrange(.data$targetCohortId, .data$comparatorCohortId) %>% 
+    dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) %>%
+    dplyr::arrange(.data$targetCohortId, .data$comparatorCohortId) %>%
     dplyr::mutate(checksum = paste0(.data$targetChecksum, .data$comparatorChecksum))
-  
+
   subset <- subsetToRequiredCombis(
     combis = combinationsOfPossibleCohortRelationships,
     task = "runCohortRelationship",
@@ -236,7 +236,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
         )
       )
     }
-    
+
     if (incremental &&
         (nrow(combinationsOfPossibleCohortRelationships) - (
           nrow(
@@ -254,7 +254,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
         )
       )
     }
-    
+
     ParallelLogger::logTrace(" - Beginning Cohort Relationship SQL")
     if (all(exists("temporalCovariateSettings"), !is.null(temporalCovariateSettings))) {
       temporalStartDays <- temporalCovariateSettings$temporalStartDays
@@ -308,10 +308,10 @@ executeCohortRelationshipDiagnostics <- function(connection,
         )
       )
     }
-    
+
     for (start in seq(1, nrow(subset), by = batchSize)) {
       end <- min(start + batchSize - 1, nrow(subset))
-      
+
       if (nrow(subset) > batchSize) {
         ParallelLogger::logInfo(sprintf(
           "  - Batch cohort relationship. Processing cohorts %s through %s combinations of %s total combinations",
@@ -320,33 +320,42 @@ executeCohortRelationshipDiagnostics <- function(connection,
           nrow(subset)
         ))
       }
-      
-      output <-
-        runCohortRelationshipDiagnostics(
-          connection = connection,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cdmDatabaseSchema = cdmDatabaseSchema,
-          tempEmulationSchema = tempEmulationSchema,
-          cohortTable = cohortTable,
-          targetCohortIds = subset[start:end,]$targetCohortId %>% unique(),
-          comparatorCohortIds = subset[start:end,]$comparatorCohortId %>% unique(),
-          relationshipDays = dplyr::tibble(startDay = temporalStartDays,
-                                           endDay = temporalEndDays)
-        )
-      
+
+
+      timeExecution(
+        exportFolder,
+        "runCohortRelationshipDiagnostics",
+        c(subset[start:end,]$targetCohortId %>% unique(), subset[start:end,]$comparatorCohortId %>% unique()),
+        parent = "executeCohortRelationshipDiagnostics",
+        expr = {
+          output <-
+            runCohortRelationshipDiagnostics(
+              connection = connection,
+              cohortDatabaseSchema = cohortDatabaseSchema,
+              cdmDatabaseSchema = cdmDatabaseSchema,
+              tempEmulationSchema = tempEmulationSchema,
+              cohortTable = cohortTable,
+              targetCohortIds = subset[start:end,]$targetCohortId %>% unique(),
+              comparatorCohortIds = subset[start:end,]$comparatorCohortId %>% unique(),
+              relationshipDays = dplyr::tibble(startDay = temporalStartDays,
+                                               endDay = temporalEndDays)
+            )
+        }
+      )
+
       data <- makeDataExportable(
         x = output,
         tableName = "cohort_relationships",
         minCellCount = minCellCount,
         databaseId = databaseId
       )
-      
+
       writeToCsv(
         data = data,
         fileName = file.path(exportFolder, "cohort_relationships.csv"),
         incremental = incremental
       )
-      
+
       recordTasksDone(
         cohortId = subset[start:end,]$targetCohortId,
         comparatorId = subset[start:end,]$comparatorCohortId,

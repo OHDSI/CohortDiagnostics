@@ -23,6 +23,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                      cohortIds,
                                      cdmVersion = 5,
                                      covariateSettings,
+                                     exportFolder,
                                      batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 5)) {
   startTime <- Sys.time()
   if (is.null(connection)) {
@@ -39,19 +40,25 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
         end
       ))
     }
-    featureExtractionOutput <-
-      FeatureExtraction::getDbCovariateData(
-        connection = connection,
-        oracleTempSchema = tempEmulationSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cdmVersion = cdmVersion,
-        cohortTable = cohortTable,
-        cohortId = cohortIds[start:end],
-        covariateSettings = covariateSettings,
-        aggregated = TRUE
-      )
-
+    timeExecution(
+      exportFolder,
+      taskName = "getDbCovariateData",
+      parent = "getCohortCharacteristics",
+      cohortIds = cohortIds[start:end],
+      expr = {
+        featureExtractionOutput <-
+          FeatureExtraction::getDbCovariateData(
+            connection = connection,
+            oracleTempSchema = tempEmulationSchema,
+            cdmDatabaseSchema = cdmDatabaseSchema,
+            cohortDatabaseSchema = cohortDatabaseSchema,
+            cdmVersion = cdmVersion,
+            cohortTable = cohortTable,
+            cohortId = cohortIds[start:end],
+            covariateSettings = covariateSettings,
+            aggregated = TRUE
+          )
+      })
     populationSize <-
       attr(x = featureExtractionOutput, which = "metaData")$populationSize
     populationSize <-
@@ -216,7 +223,8 @@ executeCohortCharacterization <- function(connection,
                                           covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
                                           covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
                                           analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
-                                          timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv")) {
+                                          timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
+                                          minCharacterizationMean = 0.001) {
   ParallelLogger::logInfo("Running ", jobName)
   startCohortCharacterization <- Sys.time()
   subset <- subsetToRequiredCohorts(
@@ -248,7 +256,8 @@ executeCohortCharacterization <- function(connection,
         cohortTable = cohortTable,
         cohortIds = subset$cohortId,
         covariateSettings = covariateSettings,
-        cdmVersion = cdmVersion
+        cdmVersion = cdmVersion,
+        exportFolder = exportFolder
       )
 
     on.exit(Andromeda::close(characteristics), add = TRUE)
@@ -262,6 +271,7 @@ executeCohortCharacterization <- function(connection,
       analysisRefFileName = analysisRefFileName,
       timeRefFileName = timeRefFileName,
       counts = cohortCounts,
+      minCharacterizationMean = minCharacterizationMean,
       minCellCount = minCellCount
     )
   }

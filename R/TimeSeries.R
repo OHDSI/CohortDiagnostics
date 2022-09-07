@@ -524,19 +524,28 @@ executeTimeSeriesDiagnostics <- function(connection,
         length(instantiatedCohorts) - nrow(subset)
       ))
     }
-    data <-
-      runCohortTimeSeriesDiagnostics(
-        connection = connection,
-        tempEmulationSchema = tempEmulationSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        cohortTable = cohortTable,
-        runCohortTimeSeries = runCohortTimeSeries,
-        runDataSourceTimeSeries = runDataSourceTimeSeries,
-        timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
-        timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
-        cohortIds = cohortIds
-      )
+
+    timeExecution(
+      exportFolder,
+      "runCohortTimeSeriesDiagnostics",
+      cohortIds,
+      parent = "executeTimeSeriesDiagnostics",
+      expr = {
+        data <-
+          runCohortTimeSeriesDiagnostics(
+            connection = connection,
+            tempEmulationSchema = tempEmulationSchema,
+            cohortDatabaseSchema = cohortDatabaseSchema,
+            cdmDatabaseSchema = cdmDatabaseSchema,
+            cohortTable = cohortTable,
+            runCohortTimeSeries = runCohortTimeSeries,
+            runDataSourceTimeSeries = runDataSourceTimeSeries,
+            timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
+            timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
+            cohortIds = cohortIds
+          )
+      }
+    )
     data <- makeDataExportable(
       x = data,
       tableName = "time_series",
