@@ -37,8 +37,10 @@ loadTestCohortDefinitionSet <- function(cohortIds = NULL) {
   if (!is.null(cohortIds)) {
     cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
+  
+  cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)
 
-  cohortDefinitionSet
+  return(cohortDefinitionSet)
 }
 
 #' Use to create test fixture for shiny tests
