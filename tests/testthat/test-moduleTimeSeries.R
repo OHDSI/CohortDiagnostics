@@ -272,12 +272,12 @@ test_that("Testing Data source time series execution", {
                showWarnings = FALSE,
                recursive = TRUE)
     
-    CohortDiagnostics:::executeTimeSeriesDiagnostics(
+    executeTimeSeriesDiagnostics(
       connection = connectionTimeSeries,
       tempEmulationSchema = tempEmulationSchema,
       cdmDatabaseSchema = cdmDatabaseSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortDefinitionSet = NULL,
+      cohortDefinitionSet = data.frame(),
       runCohortTimeSeries = FALSE,
       runDataSourceTimeSeries = TRUE,
       databaseId = "testDatabaseId",
@@ -306,7 +306,7 @@ test_that("Testing Data source time series execution", {
         col_types = readr::cols()
       )
     
-    subset <- CohortDiagnostics:::subsetToRequiredCohorts(
+    subset <- subsetToRequiredCohorts(
       cohorts = cohortDefinitionSet,
       task = "runDataSourceTimeSeries",
       incremental = TRUE,
@@ -319,24 +319,3 @@ test_that("Testing Data source time series execution", {
   })
 })
 
-
-test_that("Testing logic of setting both dataSourceTime and cohort time series to false",
-          {
-            testthat::expect_warning(
-              CohortDiagnostics:::executeTimeSeriesDiagnostics(
-                connection = NULL,
-                tempEmulationSchema = NULL,
-                cdmDatabaseSchema = NULL,
-                cohortDatabaseSchema = NULL,
-                cohortDefinitionSet = NULL,
-                runCohortTimeSeries = FALSE,
-                runDataSourceTimeSeries = FALSE,
-                databaseId = NULL,
-                exportFolder = NULL,
-                minCellCount = NULL,
-                incremental = NULL,
-                recordKeepingFile = NULL,
-                observationPeriodDateRange = NULL
-              )
-            )
-          })
