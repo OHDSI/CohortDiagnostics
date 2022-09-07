@@ -96,7 +96,9 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       cohort_ids = cohortIds,
       cohort_table = cohortTable
     )
-    if (resultsInAndromeda$cohortCount %>% dplyr::summarise(n = dplyr::n()) %>% dplyr::pull(.data$n) == 0) {
+    if (resultsInAndromeda$cohortCount %>%
+      dplyr::summarise(n = dplyr::n()) %>%
+      dplyr::pull(.data$n) == 0) {
       warning("Please check if cohorts are instantiated. Exiting cohort time series.")
       return(NULL)
     }
@@ -122,8 +124,8 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         by = clock::duration_months(3)
       )
     ) %>%
-    dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 3) - 1) %>%
-    dplyr::mutate(calendarInterval = "q")
+      dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 3) - 1) %>%
+      dplyr::mutate(calendarInterval = "q")
 
   calendarMonth <-
     dplyr::tibble(
@@ -133,8 +135,8 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         by = clock::duration_months(1)
       )
     ) %>%
-    dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1) %>%
-    dplyr::mutate(calendarInterval = "m")
+      dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1) %>%
+      dplyr::mutate(calendarInterval = "m")
 
   calendarYear <-
     dplyr::tibble(
@@ -144,8 +146,8 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         by = clock::duration_years(1)
       )
     ) %>%
-    dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1) %>%
-    dplyr::mutate(calendarInterval = "y")
+      dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1) %>%
+      dplyr::mutate(calendarInterval = "y")
 
   timeSeriesDateRange <- dplyr::tibble(
     periodBegin = timeSeriesMinDate,
@@ -160,9 +162,9 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       calendarYear,
       timeSeriesDateRange
     ) %>% # calendarWeek
-    dplyr::distinct() %>%
-    dplyr::arrange(.data$periodBegin, .data$periodEnd, .data$calendarInterval) %>%
-    dplyr::mutate(timeId = dplyr::row_number())
+      dplyr::distinct() %>%
+      dplyr::arrange(.data$periodBegin, .data$periodEnd, .data$calendarInterval) %>%
+      dplyr::mutate(timeId = dplyr::row_number())
 
   ParallelLogger::logTrace(" - Inserting calendar periods")
   DatabaseConnector::insertTable(
@@ -220,13 +222,13 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   sqlCohort <- "DROP TABLE IF EXISTS #ts_cohort;
                 DROP TABLE IF EXISTS #ts_cohort_first;
                 DROP TABLE IF EXISTS #ts_output;
-                
+
                 --HINT DISTRIBUTE_ON_KEY(subject_id)
                 SELECT *
                 INTO #ts_cohort
                 FROM @cohort_database_schema.@cohort_table {@cohort_ids != '' } ? {
                 WHERE cohort_definition_id IN (@cohort_ids) };
-                
+
                 --HINT DISTRIBUTE_ON_KEY(subject_id)
                 SELECT cohort_definition_id,
                 	subject_id,
@@ -236,10 +238,10 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                 FROM #ts_cohort
                 GROUP BY cohort_definition_id,
                 	subject_id;
-                
-                
+
+
                 SELECT c.*,
-                	CASE 
+                	CASE
                 		WHEN c.cohort_start_date = cf.cohort_start_date
                 			THEN 'Y'
                 		ELSE 'N'
@@ -255,7 +257,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                 	ON c.subject_id = p.person_id} {@stratify_by_gender} ? {
                 INNER JOIN @cdm_database_schema.concept
                 	ON p.gender_concept_id = concept.concept_id};
-  
+
                 DROP TABLE IF EXISTS #ts_cohort;
                 DROP TABLE IF EXISTS #ts_cohort_first;"
 
@@ -426,7 +428,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       )
       resultsInAndromeda$ageGroupGender <-
         resultsInAndromeda$ageGroupGender %>%
-        dplyr::mutate(seriesType = !!seriesId)
+          dplyr::mutate(seriesType = !!seriesId)
       Andromeda::appendToTable(
         resultsInAndromeda$allData,
         resultsInAndromeda$ageGroupGender
@@ -450,7 +452,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     dplyr::collect() %>% # temporal solution till fix of bug in andromeda on handling dates
     # periodBegin gets converted to integer
     dplyr::inner_join(resultsInAndromeda$calendarPeriods %>% dplyr::collect(),
-      by = c("timeId")
+                      by = c("timeId")
     ) %>%
     dplyr::arrange(
       .data$cohortId,
@@ -518,15 +520,14 @@ executeTimeSeriesDiagnostics <- function(connection,
                                          recordKeepingFile,
                                          observationPeriodDateRange,
                                          batchSize = 20) {
-  
-  if (all(!runCohortTimeSeries,!runDataSourceTimeSeries)) {
+
+  if (all(!runCohortTimeSeries, !runDataSourceTimeSeries)) {
     warning(
       "Both Datasource time series and cohort time series are set to FALSE. Skippping executeTimeSeriesDiagnostics."
     )
   }
-  
-  if (runCohortTimeSeries) {
-    subset <- subsetToRequiredCohorts(
+
+  subset <- subsetToRequiredCohorts(
       cohorts = cohortDefinitionSet %>%
         dplyr::filter(.data$cohortId %in% instantiatedCohorts),
       task = "runCohortTimeSeries",
@@ -534,19 +535,20 @@ executeTimeSeriesDiagnostics <- function(connection,
       recordKeepingFile = recordKeepingFile
     ) %>%
       dplyr::arrange(.data$cohortId)
-    
+
+  if (runCohortTimeSeries) {
     if (nrow(subset) > 0) {
       if (incremental &&
-          (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        (length(instantiatedCohorts) - nrow(subset)) > 0) {
         ParallelLogger::logInfo(sprintf(
           " - Skipping %s cohorts in incremental mode.",
           length(instantiatedCohorts) - nrow(subset)
         ))
       }
-      
+
       for (start in seq(1, nrow(subset), by = batchSize)) {
         end <- min(start + batchSize - 1, nrow(subset))
-        
+
         if (nrow(subset) > batchSize) {
           ParallelLogger::logInfo(
             sprintf(
@@ -557,20 +559,29 @@ executeTimeSeriesDiagnostics <- function(connection,
             )
           )
         }
-        
-        data <-
-          runCohortTimeSeriesDiagnostics(
-            connection = connection,
-            tempEmulationSchema = tempEmulationSchema,
-            cohortDatabaseSchema = cohortDatabaseSchema,
-            cdmDatabaseSchema = cdmDatabaseSchema,
-            cohortTable = cohortTable,
-            runCohortTimeSeries = runCohortTimeSeries,
-            runDataSourceTimeSeries = FALSE,
-            timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
-            timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
-            cohortIds = subset[start:end, ]$cohortId %>% unique()
-          )
+
+        cohortIds <- subset[start:end,]$cohortId %>% unique()
+        timeExecution(
+          exportFolder,
+          "runCohortTimeSeriesDiagnostics",
+          cohortIds,
+          parent = "executeTimeSeriesDiagnostics",
+          expr = {
+            data <-
+              runCohortTimeSeriesDiagnostics(
+                connection = connection,
+                tempEmulationSchema = tempEmulationSchema,
+                cohortDatabaseSchema = cohortDatabaseSchema,
+                cdmDatabaseSchema = cdmDatabaseSchema,
+                cohortTable = cohortTable,
+                runCohortTimeSeries = runCohortTimeSeries,
+                runDataSourceTimeSeries = FALSE,
+                timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
+                timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
+                cohortIds = cohortIds
+              )
+          }
+        )
         data <- makeDataExportable(
           x = data,
           tableName = "time_series",
@@ -581,19 +592,19 @@ executeTimeSeriesDiagnostics <- function(connection,
           data = data,
           fileName = file.path(exportFolder, "time_series.csv"),
           incremental = incremental,
-          cohortId = subset[start:end, ]$cohortId %>% unique()
+          cohortId = subset[start:end,]$cohortId %>% unique()
         )
         recordTasksDone(
-          cohortId = subset[start:end, ]$cohortId %>% unique(),
+          cohortId = subset[start:end,]$cohortId %>% unique(),
           task = "runCohortTimeSeries",
-          checksum = subset[start:end, ]$checksum,
+          checksum = subset[start:end,]$checksum,
           recordKeepingFile = recordKeepingFile,
           incremental = incremental
         )
       }
     }
   }
-  
+
   # separating out data source time series
   if (runDataSourceTimeSeries) {
     subset <- subsetToRequiredCohorts(
@@ -605,22 +616,31 @@ executeTimeSeriesDiagnostics <- function(connection,
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
     )
+
     if (all(nrow(subset) == 0,
             incremental)) {
       ParallelLogger::logInfo("Skipping Data Source Time Series in Incremental mode.")
       return(NULL)
     }
-    
-    data <-
-      runCohortTimeSeriesDiagnostics(
-        connection = connection,
-        tempEmulationSchema = tempEmulationSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        runCohortTimeSeries = FALSE,
-        runDataSourceTimeSeries = runDataSourceTimeSeries,
-        timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
-        timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate
-      )
+
+    timeExecution(
+      exportFolder,
+      "runCohortTimeSeriesDiagnostics",
+      cohortIds,
+      parent = "executeTimeSeriesDiagnostics",
+      expr = {
+        data <-
+          runCohortTimeSeriesDiagnostics(
+            connection = connection,
+            tempEmulationSchema = tempEmulationSchema,
+            cdmDatabaseSchema = cdmDatabaseSchema,
+            runCohortTimeSeries = FALSE,
+            runDataSourceTimeSeries = runDataSourceTimeSeries,
+            timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
+            timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate
+          )
+      }
+    )
     data <- makeDataExportable(
       x = data,
       tableName = "time_series",
