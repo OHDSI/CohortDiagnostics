@@ -261,9 +261,9 @@ appendNewRows <-
 #' @details
 #' Only PostgreSQL servers are supported.
 #'
-#' @template Connection
+#' @param connectionDetails      DatabaseConnector connectionDetails instance @seealso[DatabaseConnector::createConnectionDetails]
 #' @param databaseSchema         The schema on the postgres server where the tables will be created.
-#' @param tablePrefix    (Optional)  string to insert before table names (e.g. "cd_") for database table names
+#' @param tablePrefix            (Optional)  string to insert before table names (e.g. "cd_") for database table names
 #' @export
 createResultsDataModel <- function(connectionDetails = NULL,
                                    databaseSchema,

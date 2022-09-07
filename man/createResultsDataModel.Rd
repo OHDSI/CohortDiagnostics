@@ -11,20 +11,11 @@ createResultsDataModel(
 )
 }
 \arguments{
-\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
-\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is
-provided.}
+\item{connectionDetails}{DatabaseConnector connectionDetails instance @seealso[DatabaseConnector::createConnectionDetails]}
 
 \item{databaseSchema}{The schema on the postgres server where the tables will be created.}
 
 \item{tablePrefix}{(Optional)  string to insert before table names (e.g. "cd_") for database table names}
-
-\item{connection}{An object of type \code{connection} as created using the
-\code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package. Can be left NULL if \code{connectionDetails}
-is provided, in which case a new connection will be opened at the start
-of the function, and closed when the function finishes.}
 }
 \description{
 Create the results data model tables on a database server.
