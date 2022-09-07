@@ -40,7 +40,7 @@ test_that("Database Migrations execute without error", {
   expect_true(migrator$check())
 
   .createDataModel(connection = connection,
-                   schema = resultsDatabaseSchema,
+                   databaseSchema = resultsDatabaseSchema,
                    tablePrefix = "cd_")
 
   expect_false(all(migrator$getStatus()$executed))

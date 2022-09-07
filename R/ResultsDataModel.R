@@ -243,7 +243,7 @@ appendNewRows <-
   }
 
 # Private function for testing migrations in isolation
-.createDataModel <- function(connection, schema, tablePrefix) {
+.createDataModel <- function(connection, databaseSchema, tablePrefix) {
   sqlParams <- getPrefixedTableNames(tablePrefix)
   sql <- do.call(SqlRender::loadRenderTranslateSql,
                  c(sqlParams,
@@ -251,7 +251,7 @@ appendNewRows <-
                      sqlFilename = "CreateResultsDataModel.sql",
                      packageName = utils::packageName(),
                      dbms = connection@dbms,
-                     results_schema = schema
+                     results_schema = databaseSchema
                    )))
   DatabaseConnector::executeSql(connection, sql)
 }
@@ -268,8 +268,8 @@ appendNewRows <-
 createResultsDataModel <- function(connectionDetails = NULL,
                                    databaseSchema,
                                    tablePrefix = "") {
-  if (connectionDetails$dbms == "sqlite" & schema != "main") {
-    stop("Invalid schema for sqlite, use schema = 'main'")
+  if (connectionDetails$dbms == "sqlite" & databaseSchema != "main") {
+    stop("Invalid schema for sqlite, use databaseSchema = 'main'")
   }
 
   connection <- DatabaseConnector::connect(connectionDetails)
