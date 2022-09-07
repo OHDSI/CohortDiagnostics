@@ -627,7 +627,7 @@ executeTimeSeriesDiagnostics <- function(connection,
     timeExecution(
       exportFolder,
       "runCohortTimeSeriesDiagnostics",
-      cohortIds,
+      -44819062,
       parent = "executeTimeSeriesDiagnostics",
       expr = {
         data <-
