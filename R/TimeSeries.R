@@ -527,7 +527,8 @@ executeTimeSeriesDiagnostics <- function(connection,
     )
   }
 
-  subset <- subsetToRequiredCohorts(
+  if (runCohortTimeSeries & nrow(cohortDefinitionSet) > 0) {
+    subset <- subsetToRequiredCohorts(
       cohorts = cohortDefinitionSet %>%
         dplyr::filter(.data$cohortId %in% instantiatedCohorts),
       task = "runCohortTimeSeries",
@@ -536,7 +537,6 @@ executeTimeSeriesDiagnostics <- function(connection,
     ) %>%
       dplyr::arrange(.data$cohortId)
 
-  if (runCohortTimeSeries) {
     if (nrow(subset) > 0) {
       if (incremental &&
         (length(instantiatedCohorts) - nrow(subset)) > 0) {
@@ -545,6 +545,7 @@ executeTimeSeriesDiagnostics <- function(connection,
           length(instantiatedCohorts) - nrow(subset)
         ))
       }
+
 
       for (start in seq(1, nrow(subset), by = batchSize)) {
         end <- min(start + batchSize - 1, nrow(subset))
