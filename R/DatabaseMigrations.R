@@ -30,10 +30,14 @@ migrateDataModel <- function(connectionDetails, databaseSchema, tablePrefix = ""
 
 
 #' Get database migrations instance
+#' @description
+#'
+#' Returns ResultModelManager DataMigrationsManager instance.
+# '@seealso [ResultModelManager::DataMigrationManager] which this function is a utility for.
 #'
 #' @param connectionDetails             DatabaseConnector connection details object
 #' @param databaseSchema                String schema where database schema lives
-#' @param  tablePrefix                   (Optional) Use if a table prefix is used before table names (e.g. cd_)
+#' @param  tablePrefix                   (Optional) Use if a table prefix is used before table names (e.g. "cd_")
 #' @returns Instance of ResultModelManager::DataMigrationManager that has interface for converting existing data models
 #' @export
 getDataMigrator <- function(connectionDetails, databaseSchema, tablePrefix = "") {
