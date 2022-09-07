@@ -34,7 +34,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     exportFolder,
     taskName = "getDbCovariateData",
     parent = "getCohortCharacteristics",
-    cohortIds = cohortIds[start:end],
+    cohortIds = cohortIds,
     expr = {
       featureExtractionOutput <-
         FeatureExtraction::getDbCovariateData(
