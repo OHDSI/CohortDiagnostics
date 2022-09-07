@@ -400,21 +400,28 @@ executeCohortRelationshipDiagnostics <- function(connection,
       )
     }
 
-    output <-
-      runCohortRelationshipDiagnostics(
-        connection = connection,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        tempEmulationSchema = tempEmulationSchema,
-        cohortTable = cohortTable,
-        targetCohortIds = subset$cohortId,
-        comparatorCohortIds = cohortDefinitionSet$cohortId,
-        relationshipDays = dplyr::tibble(
-          startDay = temporalStartDays,
-          endDay = temporalEndDays
-        )
-      )
-
+    timeExecution(
+      exportFolder,
+      "runCohortRelationshipDiagnostics",
+      c(subset$cohortId, cohortDefinitionSet$cohortId),
+      parent = "executeCohortRelationshipDiagnostics",
+      expr = {
+        output <-
+          runCohortRelationshipDiagnostics(
+            connection = connection,
+            cohortDatabaseSchema = cohortDatabaseSchema,
+            cdmDatabaseSchema = cdmDatabaseSchema,
+            tempEmulationSchema = tempEmulationSchema,
+            cohortTable = cohortTable,
+            targetCohortIds = subset$cohortId,
+            comparatorCohortIds = cohortDefinitionSet$cohortId,
+            relationshipDays = dplyr::tibble(
+              startDay = temporalStartDays,
+              endDay = temporalEndDays
+            )
+          )
+      }
+    )
     data <- makeDataExportable(
       x = output,
       tableName = "cohort_relationships",
