@@ -309,3 +309,27 @@ getPrefixedTableNames <- function(tablePrefix) {
 
   return(resultList)
 }
+
+#' Internal utility function for logging execution of variables
+timeExecution <- function(exportFolder,
+                          taskName,
+                          cohortIds = NULL,
+                          parent = NULL,
+                          start = NA,
+                          execTime = NA,
+                          expr = NULL) {
+  executionTimePath <- file.path(exportFolder, "executionTimes.csv")
+  if (!is.null(expr)) {
+    start <- Sys.time()
+    eval(expr)
+    execTime <- Sys.time() - start
+  }
+  executionTimes <- data.frame(task = taskName,
+                               startTime = start,
+                               cohortIds = paste(cohortIds, collapse = ";"),
+                               executionTime = execTime,
+                               parent = paste(parent, collapse = ""))
+
+  readr::write_csv(executionTimes, file = executionTimePath, append = file.exists(executionTimePath))
+  return(executionTimes)
+}

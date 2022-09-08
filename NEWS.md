@@ -22,10 +22,14 @@ Changes:
 
 10. Ensure that tests cases always use a continuous covariate
 
+11. New parameter minCharacterizationMean. This introduces a cut off for the output of FeatureExtraction. In the absence of the parameter the output would have atleast one row for every covariateId in the datasource  - most having very low count to be useful for diagnostics.
+
 Bug fixes:
 
 1. Fixed issue uploading results to postgres db caused by null values in primary key field. 
 Removed constraint to fix issue.
+
+2. Fix for `index_event_breakdown` having duplicate entries where concept is observed in the same domain multiple times
 
 
 CohortDiagnostics 3.0.3

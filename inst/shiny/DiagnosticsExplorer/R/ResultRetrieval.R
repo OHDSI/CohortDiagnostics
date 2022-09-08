@@ -727,10 +727,7 @@ getResultsCohortOverlap <- function(dataSource,
       databaseIds = databaseIds
     )
 
-  if (any(
-    is.null(cohortCounts),
-    nrow(cohortCounts) == 0
-  )) {
+  if (!hasData(cohortCounts)) {
     return(NULL)
   }
 
@@ -744,27 +741,18 @@ getResultsCohortOverlap <- function(dataSource,
       endDays = c(9999, 0)
     )
 
-  # It's not remotely clear what any of the following code is for
-  if (any(is.null(cohortRelationship),
-          nrow(cohortRelationship) == 0)) {
-    cohortRelationship <- dplyr::tibble(databaseId = databaseIds) %>%
-      tidyr::crossing(dplyr::tibble(cohortId = cohortIds)) %>%
-      tidyr::crossing(dplyr::tibble(comparatorCohortId = comparatorCohortIds)) %>%
-      dplyr::filter(.data$comparatorCohortId != .data$cohortId) %>%
-      tidyr::crossing(dplyr::tibble(startDay = c(-9999, 0),
-                                    endDay = c(9999, 0))) %>%
-      dplyr::full_join(
-        cohortRelationship,
-        by = c(
-          "databaseId",
-          "cohortId",
-          "comparatorCohortId",
-          "startDay",
-          "endDay"
-        )
-      )
-    cohortRelationship[is.na(is.numeric(cohortRelationship))] <- 0
-  }
+  # Fix relationship data so 0 overlap displays
+  allCombinations <- dplyr::tibble(databaseId = databaseIds) %>%
+        tidyr::crossing(dplyr::tibble(cohortId = cohortIds)) %>%
+        tidyr::crossing(dplyr::tibble(comparatorCohortId = comparatorCohortIds)) %>%
+        dplyr::filter(.data$comparatorCohortId != .data$cohortId) %>%
+        tidyr::crossing(dplyr::tibble(startDay = c(-9999, 0),
+                                      endDay = c(9999, 0)))
+
+  cohortRelationship <- allCombinations %>%
+    dplyr::left_join(cohortRelationship,
+                     by = c("databaseId", "cohortId", "comparatorCohortId", "startDay", "endDay")) %>%
+    dplyr::mutate(dplyr::across(.cols = is.numeric, ~tidyr::replace_na(., 0)))
 
   fullOffSet <- cohortRelationship %>%
     dplyr::filter(.data$startDay == -9999) %>%

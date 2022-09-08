@@ -249,15 +249,14 @@ cohortOverlapModule <- function(id,
         as.data.frame() %>%
         dplyr::tibble()
       colnames(combisOfTargetComparator) <- c("targetCohortId", "comparatorCohortId")
-      
-      
+
+
       data <- getResultsCohortOverlap(
         dataSource = dataSource,
         targetCohortIds = combisOfTargetComparator$targetCohortId,
         comparatorCohortIds = combisOfTargetComparator$comparatorCohortId,
         databaseIds = selectedDatabaseIds()
       )
-      
       validate(need(
         !is.null(data),
         paste0("No cohort overlap data for this combination")

@@ -335,18 +335,20 @@ postAnnotationResult <- function(dataSource,
                                                           	deleted_on,
                                                           	annotation
                                                           	)
+                SELECT annotation_id,
+                	'@created_by' created_by,
+                	@created_on created_on,
+                	{@modified_last_on == ''} ? {NULL} : {@modified_last_on} modified_last_on,
+                	{@deleted_on == ''} ? {NULL} : {@deleted_on} deleted_on,
+                	'@annotation' annotation
+                FROM (
                 SELECT CASE
                 		WHEN max(annotation_id) IS NULL
                 			THEN 1
                 		ELSE max(annotation_id) + 1
-                		END AS annotation_id,
-                	'@created_by' created_by,
-                	@created_on created_on,
-                	@modified_last_on modified_last_on,
-                	@deleted_on deleted_on,
-                	'@annotation' annotation
-                FROM @results_database_schema.annotation;"
-
+                		END AS annotation_id
+                FROM @results_database_schema.annotation
+              ) F;"
   tryCatch(
   {
     renderTranslateExecuteSql(
@@ -378,8 +380,10 @@ postAnnotationResult <- function(dataSource,
       results_database_schema = dataSource$resultsDatabaseSchema,
       created_by = createdBy,
       created_on = createdOn
-    ) %>% dplyr::pull()
-
+    )
+  
+  maxAnnotationId <- maxAnnotationId$annotation_id
+  
   # insert annotation link
   annotationLink <-
     tidyr::crossing(
@@ -443,8 +447,10 @@ getAnnotationResult <- function(dataSource,
         snakeCaseToCamelCase = TRUE
       )
     
-    data <- list(annotation = annotation,
-                 annotationLink = annotationLink)
+    if (hasData(annotation)) {
+      data <- list(annotation = annotation,
+                   annotationLink = annotationLink)
+    }
   }
   
   return(data)
