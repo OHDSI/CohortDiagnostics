@@ -12,7 +12,8 @@ test_that("Time Distribution Page", {
     cohortTable = cohort,
     selectedCohorts = shiny::reactive("Any String"),
     selectedDatabaseIds = shiny::reactive("Eunomia"),
-    cohortIds = shiny::reactive({c(14906, 14907)})
+    cohortIds = shiny::reactive({c(14906, 14907)}),
+    databaseTable = database
   ), {
     ## input tests will go here
     session$setInputs(
