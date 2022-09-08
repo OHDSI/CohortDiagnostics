@@ -130,7 +130,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       if (is.null(activeLoggedInUser())) {
         return("")
       }
-      paste(as.character(icon("user-circle")),
+      paste(as.character(icon("user")),
             stringr::str_to_title(activeLoggedInUser()))
 
     })

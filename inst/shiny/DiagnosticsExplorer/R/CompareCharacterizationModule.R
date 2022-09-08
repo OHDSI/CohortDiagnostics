@@ -160,109 +160,140 @@ compareCohortCharacterizationView <- function(id) {
     shinydashboard::box(
       width = NULL,
       title = NULL,
-      shiny::conditionalPanel(
-        condition = "output.showTemporalChoices == 'TRUE' & input.charCompareType == 'Plot'",
-        ns = ns,
-        shinyWidgets::pickerInput(
-          inputId = ns("timeIdChoices"),
-          label = "Temporal Window (s)",
-          choices = NULL,
-          multiple = TRUE,
-          choicesOpt = list(style = rep_len("color: black;", 999)),
-          selected = NULL,
-          options = shinyWidgets::pickerOptions(
-            actionsBox = TRUE,
-            liveSearch = TRUE,
-            maxOptions = 5, # Selecting even this many will be slow
-            size = 10,
-            liveSearchStyle = "contains",
-            liveSearchPlaceholder = "Type here to search",
-            virtualScroll = 50
+      shiny::fluidRow(
+        shiny::column(
+          width = 6,
+          shiny::radioButtons(
+            inputId = ns("charCompareType"),
+            label = "Output type",
+            choices = c("Pretty table", "Raw table", "Plot"),
+            selected = "Plot",
+            inline = TRUE
           )
         ),
-      ),
-      shiny::conditionalPanel(
-        condition = "input.charCompareType != 'Plot'",
-        ns = ns,
-        shinyWidgets::pickerInput(
-          inputId = ns("timeIdChoicesSingle"),
-          label = "Temporal Window",
-          choices = NULL,
-          multiple = FALSE,
-          choicesOpt = list(style = rep_len("color: black;", 999)),
-          selected = NULL,
-          options = shinyWidgets::pickerOptions(
-            actionsBox = TRUE,
-            liveSearch = TRUE,
-            size = 10,
-            liveSearchStyle = "contains",
-            liveSearchPlaceholder = "Type here to search",
-            virtualScroll = 50
+        shiny::column(
+          width = 6,
+          shiny::conditionalPanel(
+            condition = "output.showTemporalChoices == 'TRUE' & input.charCompareType == 'Plot'",
+            ns = ns,
+            shinyWidgets::pickerInput(
+              inputId = ns("timeIdChoices"),
+              label = "Temporal Window (s)",
+              choices = NULL,
+              multiple = TRUE,
+              choicesOpt = list(style = rep_len("color: black;", 999)),
+              selected = NULL,
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                maxOptions = 5, # Selecting even this many will be slow
+                size = 10,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
+              )
+            ),
+          ),
+          shiny::conditionalPanel(
+            condition = "input.charCompareType != 'Plot'",
+            ns = ns,
+            shinyWidgets::pickerInput(
+              inputId = ns("timeIdChoicesSingle"),
+              label = "Temporal Window",
+              choices = NULL,
+              multiple = FALSE,
+              choicesOpt = list(style = rep_len("color: black;", 999)),
+              selected = NULL,
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                size = 10,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
+              )
+            ),
           )
-        ),
-      ),
-
-      shiny::radioButtons(
-        inputId = ns("charCompareType"),
-        label = "Output type",
-        choices = c("Pretty table", "Raw table", "Plot"),
-        selected = "Plot",
-        inline = TRUE
+        )
       ),
       shiny::conditionalPanel(
         condition = "input.charCompareType == 'Raw table' | input.charCompareType=='Plot'",
         ns = ns,
-        shinyWidgets::pickerInput(
-          inputId = ns("analysisNameFilter"),
-          label = "Analysis name",
-          choices = c(""),
-          selected = c(""),
-          multiple = TRUE,
-          choicesOpt = list(style = rep_len("color: black;", 999)),
-          options = shinyWidgets::pickerOptions(
-            actionsBox = TRUE,
-            liveSearch = TRUE,
-            size = 10,
-            liveSearchStyle = "contains",
-            liveSearchPlaceholder = "Type here to search",
-            virtualScroll = 50
+        shiny::fluidRow(
+          shiny::column(
+            width = 6,
+            shinyWidgets::pickerInput(
+              inputId = ns("analysisNameFilter"),
+              label = "Analysis name",
+              choices = c(""),
+              selected = c(""),
+              multiple = TRUE,
+              choicesOpt = list(style = rep_len("color: black;", 999)),
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                size = 10,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
+              )
+            )
+          ),
+          shiny::column(
+            width = 6,
+            shinyWidgets::pickerInput(
+              inputId = ns("domainIdFilter"),
+              label = "Domain name",
+              choices = c(""),
+              selected = c(""),
+              multiple = TRUE,
+              choicesOpt = list(style = rep_len("color: black;", 999)),
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                size = 10,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
+              )
+            )
           )
-        ),
-        shinyWidgets::pickerInput(
-          inputId = ns("domainIdFilter"),
-          label = "Domain name",
-          choices = c(""),
-          selected = c(""),
-          multiple = TRUE,
-          choicesOpt = list(style = rep_len("color: black;", 999)),
-          options = shinyWidgets::pickerOptions(
-            actionsBox = TRUE,
-            liveSearch = TRUE,
-            size = 10,
-            liveSearchStyle = "contains",
-            liveSearchPlaceholder = "Type here to search",
-            virtualScroll = 50
-          )
-        ),
+        )
+      ),
 
-        shiny::conditionalPanel(
-          condition = "input.charCompareType=='Raw table'",
-          ns = ns,
+      shiny::conditionalPanel(
+        condition = "input.charCompareType=='Raw table'",
+        ns = ns,
+        shiny::radioButtons(
+          inputId = ns("compareCharacterizationColumnFilters"),
+          label = "Display values",
+          choices = c("Mean", "Mean and Standard Deviation"),
+          selected = "Mean",
+          inline = TRUE
+        )
+      ),
+
+      shiny::fluidRow(
+        shiny::column(
+          width = 6,
+          shiny::numericInput(
+            inputId = ns("minMeanFilterVal"),
+            label = "Min Covariate Mean",
+            value = 0.005,
+            min = 0.0,
+            max = 0.9,
+            step = 0.005
+          )
+        ),
+        shiny::column(
+          width = 6,
           shiny::radioButtons(
-            inputId = ns("compareCharacterizationColumnFilters"),
-            label = "Display values",
-            choices = c("Mean", "Mean and Standard Deviation"),
-            selected = "Mean",
+            inputId = ns("proportionOrContinuous"),
+            label = "Covariate Type",
+            choices = c("All", "Proportion", "Continuous"),
+            selected = "Proportion",
             inline = TRUE
           )
-        ),
-
-        shiny::radioButtons(
-          inputId = ns("proportionOrContinuous"),
-          label = "Covariate Type",
-          choices = c("All", "Proportion", "Continuous"),
-          selected = "Proportion",
-          inline = TRUE
         )
       ),
       shiny::conditionalPanel(
@@ -411,7 +442,8 @@ compareCohortCharacterizationModule <- function(id,
           dataSource = dataSource,
           cohortIds = c(targetCohortId(), comparatorCohortId()),
           databaseIds = selectedDatabaseIds(),
-          temporalCovariateValueDist = FALSE
+          temporalCovariateValueDist = FALSE,
+          meanThreshold = input$minMeanFilterVal
         )
 
         return(data)
@@ -555,12 +587,13 @@ compareCohortCharacterizationModule <- function(id,
         return(NULL)
       }
       data <- compareCohortCharacterizationBalanceData()
-      if (!hasData(data)) {
-        return(NULL)
-      }
 
       data <- data %>%
         dplyr::filter(.data$timeId %in% selectedTimeIdsSingle())
+
+      if (!hasData(data)) {
+        return(NULL)
+      }
 
       data1 <- data %>%
         dplyr::rename(
@@ -578,6 +611,10 @@ compareCohortCharacterizationModule <- function(id,
         ) %>%
         dplyr::rename(sumValue = .data$mean)
 
+      if (!hasData(data1)) {
+        return(NULL)
+      }
+
       data2 <- data %>%
         dplyr::rename(
           "cohortId" = .data$cohortId2,
@@ -594,6 +631,9 @@ compareCohortCharacterizationModule <- function(id,
         ) %>%
         dplyr::rename(sumValue = .data$mean)
 
+      if (!hasData(data2)) {
+        return(NULL)
+      }
 
       data1 <-
         prepareTable1(
@@ -602,12 +642,20 @@ compareCohortCharacterizationModule <- function(id,
           cohort = cohort
         )
 
+      if (!hasData(data1)) {
+        return(NULL)
+      }
+
       data2 <-
         prepareTable1(
           covariates = data2,
           prettyTable1Specifications = prettyTable1Specifications,
           cohort = cohort
         )
+
+      if (!hasData(data2)) {
+        return(NULL)
+      }
 
       data <- data1 %>%
         dplyr::full_join(data2,
@@ -712,28 +760,37 @@ compareCohortCharacterizationModule <- function(id,
     })
 
     selectionsOutput <- shiny::reactive({
+
+      target <- paste(cohortTable %>%
+                        dplyr::filter(.data$cohortId == targetCohortId()) %>%
+                        dplyr::select(.data$cohortName) %>%
+                        dplyr::pull(),
+                      collapse = ", ")
+      comparator <- paste(cohortTable %>%
+                            dplyr::filter(.data$cohortId == comparatorCohortId()) %>%
+                            dplyr::select(.data$cohortName) %>%
+                            dplyr::pull(),
+                          collapse = ", ")
+
+
       shinydashboard::box(
         status = "warning",
         width = "100%",
         shiny::fluidRow(
           shiny::column(
             width = 9,
-            tags$b("Cohorts :"),
-            paste(cohortTable %>%
-                    dplyr::filter(.data$cohortId %in% c(targetCohortId(), comparatorCohortId()) %>%
-                                    dplyr::select(.data$cohortName) %>%
-                                    dplyr::pull(),
-                                  collapse = ", ")
-            ),
-            shiny::column(
-              width = 3,
-              tags$b("Database :"),
-              paste(databaseTable %>%
-                      dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-                      dplyr::select(.data$databaseName) %>%
-                      dplyr::pull(),
-                    collapse = ", ")
-            )
+            tags$b("Target Cohort :"), paste0(target, " C", targetCohortId()),
+            tags$br(),
+            tags$b("Comparator Cohort :"), paste0(comparator, " C", comparatorCohortId())
+          ),
+          shiny::column(
+            width = 3,
+            tags$b("Database :"),
+            paste(databaseTable %>%
+                    dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
+                    dplyr::select(.data$databaseName) %>%
+                    dplyr::pull(),
+                  collapse = ", ")
           )
         )
       )

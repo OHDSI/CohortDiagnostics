@@ -26,12 +26,12 @@ temporalCharacterizationView <- function(id) {
           )
         ),
         shiny::radioButtons(
-            inputId = ns("proportionOrContinuous"),
-            label = "View Covariate Type(s)",
-            choices = c("All", "Proportion", "Continuous"),
-            selected = "Proportion",
-            inline = TRUE
-          )
+          inputId = ns("proportionOrContinuous"),
+          label = "View Covariate Type(s)",
+          choices = c("All", "Proportion", "Continuous"),
+          selected = "Proportion",
+          inline = TRUE
+        )
       ),
       shiny::fluidRow(
         shiny::column(
@@ -55,8 +55,6 @@ temporalCharacterizationView <- function(id) {
         ),
         shiny::column(
           width = 6,
-          shiny::column(
-          width = 6,
           shinyWidgets::pickerInput(
             inputId = ns("analysisNameFilter"),
             label = "Analysis name",
@@ -72,8 +70,8 @@ temporalCharacterizationView <- function(id) {
               liveSearchPlaceholder = "Type here to search",
               virtualScroll = 50
             )
+
           )
-        )
         )
       ),
       shiny::fluidRow(
@@ -81,13 +79,13 @@ temporalCharacterizationView <- function(id) {
           width = 3,
           shiny::numericInput(
             inputId = ns("minMeanFilterVal"),
-            label = "Min Covariate threshold",
+            label = "Min Covariate Mean",
             value = 0.005,
             min = 0.0,
             max = 0.9,
             step = 0.005
           )
-         )
+        )
       ),
       tags$p("Note - returned table can be very large. Please click to manually update after selecting options."),
       shiny::actionButton(label = "Get Temporal covariate data", inputId = ns("generateReport")),
