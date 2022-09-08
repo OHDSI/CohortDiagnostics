@@ -10,8 +10,8 @@ IF OBJECT_ID('tempdb..@store_table', 'U') IS NOT NULL
 SELECT domain_table,
   domain_field,
   concept.concept_id,
-	concept_count,
-	subject_count
+	sum(concept_count) as concept_count,
+	max(subject_count) as subject_count
 {@store} ? {
 INTO @store_table
 } : {
@@ -71,4 +71,6 @@ FROM (
 	
 	) concept_counts
 INNER JOIN @vocabulary_database_schema.concept
-	ON concept_counts.concept_id = concept.concept_id;
+	ON concept_counts.concept_id = concept.concept_id
+
+GROUP BY domain_table, domain_field, concept.concept_id;

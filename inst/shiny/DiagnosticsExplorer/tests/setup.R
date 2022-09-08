@@ -20,3 +20,8 @@ shinySettings <- list(
     cohortTableName = "cohort",
     databaseTableName = "database"
   )
+
+withr::defer({
+  # objects from local env to avoid issues with development
+  rm("shinySettings", envir = .GlobalEnv)
+}, testthat::teardown_env())

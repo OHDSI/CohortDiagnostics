@@ -23,85 +23,80 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                      cohortIds,
                                      cdmVersion = 5,
                                      covariateSettings,
-                                     batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 5)) {
+                                     exportFolder) {
   startTime <- Sys.time()
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
   results <- Andromeda::andromeda()
-  for (start in seq(1, length(cohortIds), by = batchSize)) {
-    end <- min(start + batchSize - 1, length(cohortIds))
-    if (length(cohortIds) > batchSize) {
-      ParallelLogger::logInfo(sprintf(
-        "Batch characterization. Processing cohorts %s through %s",
-        start,
-        end
-      ))
-    }
-    featureExtractionOutput <-
-      FeatureExtraction::getDbCovariateData(
-        connection = connection,
-        oracleTempSchema = tempEmulationSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cdmVersion = cdmVersion,
-        cohortTable = cohortTable,
-        cohortId = cohortIds[start:end],
-        covariateSettings = covariateSettings,
-        aggregated = TRUE
-      )
-
-    populationSize <-
-      attr(x = featureExtractionOutput, which = "metaData")$populationSize
-    populationSize <-
-      dplyr::tibble(
-        cohortId = names(populationSize) %>% as.numeric(),
-        populationSize = populationSize
-      )
-
-    if (!"analysisRef" %in% names(results)) {
-      results$analysisRef <- featureExtractionOutput$analysisRef
-    }
-    if (!"covariateRef" %in% names(results)) {
-      results$covariateRef <- featureExtractionOutput$covariateRef
-    } else {
-      covariateIds <- results$covariateRef %>%
-        dplyr::select(.data$covariateId)
-      Andromeda::appendToTable(
-        results$covariateRef,
-        featureExtractionOutput$covariateRef %>%
-          dplyr::anti_join(covariateIds, by = "covariateId", copy = TRUE)
-      )
-    }
-    if ("timeRef" %in% names(featureExtractionOutput) &&
-      !"timeRef" %in% names(results)) {
-      results$timeRef <- featureExtractionOutput$timeRef
-    }
-
-    if ("covariates" %in% names(featureExtractionOutput) &&
-      dplyr::pull(dplyr::count(featureExtractionOutput$covariates)) > 0) {
-      covariates <- featureExtractionOutput$covariates %>%
-        dplyr::rename(cohortId = .data$cohortDefinitionId) %>%
-        dplyr::left_join(populationSize, by = "cohortId", copy = TRUE) %>%
-        dplyr::mutate(p = .data$sumValue / .data$populationSize)
-
-      if (nrow(covariates %>%
-        dplyr::filter(.data$p > 1) %>%
-        dplyr::collect()) > 0) {
-        stop(
-          paste0(
-            "During characterization, population size (denominator) was found to be smaller than features Value (numerator).",
-            "- this may have happened because of an error in Feature generation process. Please contact the package developer."
-          )
+  timeExecution(
+    exportFolder,
+    taskName = "getDbCovariateData",
+    parent = "getCohortCharacteristics",
+    cohortIds = cohortIds,
+    expr = {
+      featureExtractionOutput <-
+        FeatureExtraction::getDbCovariateData(
+          connection = connection,
+          oracleTempSchema = tempEmulationSchema,
+          cdmDatabaseSchema = cdmDatabaseSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cdmVersion = cdmVersion,
+          cohortTable = cohortTable,
+          cohortId = cohortIds,
+          covariateSettings = covariateSettings,
+          aggregated = TRUE
         )
-      }
+    })
+  populationSize <-
+    attr(x = featureExtractionOutput, which = "metaData")$populationSize
+  populationSize <-
+    dplyr::tibble(cohortId = names(populationSize) %>% as.numeric(),
+                  populationSize = populationSize)
 
-      covariates <- covariates %>%
-        dplyr::mutate(sd = sqrt(.data$p * (1 - .data$p))) %>%
-        dplyr::select(-.data$p) %>%
-        dplyr::rename(mean = .data$averageValue) %>%
-        dplyr::select(-.data$populationSize)
+  if (!"analysisRef" %in% names(results)) {
+    results$analysisRef <- featureExtractionOutput$analysisRef
+  }
+  if (!"covariateRef" %in% names(results)) {
+    results$covariateRef <- featureExtractionOutput$covariateRef
+  } else {
+    covariateIds <- results$covariateRef %>%
+      dplyr::select(.data$covariateId)
+    Andromeda::appendToTable(
+      results$covariateRef,
+      featureExtractionOutput$covariateRef %>%
+        dplyr::anti_join(covariateIds, by = "covariateId", copy = TRUE)
+    )
+  }
+  if ("timeRef" %in% names(featureExtractionOutput) &&
+    !"timeRef" %in% names(results)) {
+    results$timeRef <- featureExtractionOutput$timeRef
+  }
+
+  if ("covariates" %in% names(featureExtractionOutput) &&
+    dplyr::pull(dplyr::count(featureExtractionOutput$covariates)) > 0) {
+    covariates <- featureExtractionOutput$covariates %>%
+      dplyr::rename(cohortId = .data$cohortDefinitionId) %>%
+      dplyr::left_join(populationSize, by = "cohortId", copy = TRUE) %>%
+      dplyr::mutate(p = .data$sumValue / .data$populationSize)
+
+    if (nrow(covariates %>%
+               dplyr::filter(.data$p > 1) %>%
+               dplyr::collect()) > 0) {
+      stop(
+        paste0(
+          "During characterization, population size (denominator) was found to be smaller than features Value (numerator).",
+          "- this may have happened because of an error in Feature generation process. Please contact the package developer."
+        )
+      )
+    }
+
+    covariates <- covariates %>%
+      dplyr::mutate(sd = sqrt(.data$p * (1 - .data$p))) %>%
+      dplyr::select(-.data$p) %>%
+      dplyr::rename(mean = .data$averageValue) %>%
+      dplyr::select(-.data$populationSize)
 
       if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
         covariates <- covariates %>%
@@ -135,62 +130,59 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
       }
     }
 
-    if ("covariatesContinuous" %in% names(featureExtractionOutput) &&
-      dplyr::pull(dplyr::count(featureExtractionOutput$covariatesContinuous)) > 0) {
-      covariates <- featureExtractionOutput$covariatesContinuous %>%
-        dplyr::rename(
-          mean = .data$averageValue,
-          sd = .data$standardDeviation,
-          cohortId = .data$cohortDefinitionId
+  if ("covariatesContinuous" %in% names(featureExtractionOutput) &&
+    dplyr::pull(dplyr::count(featureExtractionOutput$covariatesContinuous)) > 0) {
+    covariates <- featureExtractionOutput$covariatesContinuous %>%
+      dplyr::rename(
+        mean = .data$averageValue,
+        sd = .data$standardDeviation,
+        cohortId = .data$cohortDefinitionId
+      )
+    covariatesContinuous <- covariates
+    if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
+      covariates <- covariates %>%
+        dplyr::mutate(sumValue = -1) %>%
+        dplyr::select(
+          .data$cohortId,
+          .data$timeId,
+          .data$covariateId,
+          .data$sumValue,
+          .data$mean,
+          .data$sd
         )
-      covariatesContinuous <- covariates
-      if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
-        covariates <- covariates %>%
-          dplyr::mutate(sumValue = -1) %>%
-          dplyr::select(
-            .data$cohortId,
-            .data$timeId,
-            .data$covariateId,
-            .data$sumValue,
-            .data$mean,
-            .data$sd
-          )
-          if (length(is.na(covariates$timeId)) > 0) {
-            covariates[is.na(covariates$timeId),]$timeId <- -1
-          }
-      } else {
-        covariates <- covariates %>%
-          dplyr::mutate(sumValue = -1,
-                        timeId = 0) %>%
-          dplyr::select(
-            .data$cohortId,
-            .data$timeId,
-            .data$covariateId,
-            .data$sumValue,
-            .data$mean,
-            .data$sd
-          )
+      if (length(is.na(covariates$timeId)) > 0) {
+        covariates[is.na(covariates$timeId),]$timeId <- -1
       }
-      if ("covariates" %in% names(results)) {
-        Andromeda::appendToTable(results$covariates, covariates)
-      } else {
-        results$covariates <- covariates
-      }
-      if ("covariatesContinuous" %in% names(results)) {
-        Andromeda::appendToTable(results$covariatesContinuous, covariatesContinuous)
-      } else {
-        results$covariatesContinuous <- covariatesContinuous
-      }
+    } else {
+      covariates <- covariates %>%
+        dplyr::mutate(sumValue = -1,
+                      timeId = 0) %>%
+        dplyr::select(
+          .data$cohortId,
+          .data$timeId,
+          .data$covariateId,
+          .data$sumValue,
+          .data$mean,
+          .data$sd
+        )
+    }
+    if ("covariates" %in% names(results)) {
+      Andromeda::appendToTable(results$covariates, covariates)
+    } else {
+      results$covariates <- covariates
+    }
+    if ("covariatesContinuous" %in% names(results)) {
+      Andromeda::appendToTable(results$covariatesContinuous, covariatesContinuous)
+    } else {
+      results$covariatesContinuous <- covariatesContinuous
     }
   }
 
   delta <- Sys.time() - startTime
-  ParallelLogger::logInfo(
-    "Cohort characterization took ",
-    signif(delta, 3),
-    " ",
-    attr(delta, "units")
-  )
+  ParallelLogger::logInfo("Cohort characterization took ",
+                          signif(delta, 3),
+                          " ",
+                          attr(delta, "units"))
   return(results)
 }
 
@@ -215,7 +207,9 @@ executeCohortCharacterization <- function(connection,
                                           covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
                                           covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
                                           analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
-                                          timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv")) {
+                                          timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
+                                          minCharacterizationMean = 0.001,
+                                          batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 5)) {
   ParallelLogger::logInfo("Running ", jobName)
   startCohortCharacterization <- Sys.time()
   subset <- subsetToRequiredCohorts(
@@ -229,7 +223,7 @@ executeCohortCharacterization <- function(connection,
   if (incremental &&
     (length(instantiatedCohorts) - nrow(subset)) > 0) {
     ParallelLogger::logInfo(sprintf(
-      "Skipping %s cohorts in incremental mode.",
+      "Skipping %s instantiated cohorts in incremental mode.",
       length(instantiatedCohorts) - nrow(subset)
     ))
   }
@@ -238,45 +232,76 @@ executeCohortCharacterization <- function(connection,
       "Starting large scale characterization of %s cohort(s)",
       nrow(subset)
     ))
-    characteristics <-
-      getCohortCharacteristics(
-        connection = connection,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        tempEmulationSchema = tempEmulationSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable,
-        cohortIds = subset$cohortId,
-        covariateSettings = covariateSettings,
-        cdmVersion = cdmVersion
+
+    for (start in seq(1, nrow(subset), by = batchSize)) {
+      end <- min(start + batchSize - 1, nrow(subset))
+      if (nrow(subset) > batchSize) {
+        ParallelLogger::logInfo(
+          sprintf(
+            "Batch characterization. Processing rows %s through %s of total %s.",
+            start,
+            end,
+            nrow(subset)
+          )
+        )
+      }
+
+      characteristics <-
+        getCohortCharacteristics(
+          connection = connection,
+          cdmDatabaseSchema = cdmDatabaseSchema,
+          tempEmulationSchema = tempEmulationSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cohortTable = cohortTable,
+          cohortIds = subset[start:end, ]$cohortId,
+          covariateSettings = covariateSettings,
+          cdmVersion = cdmVersion,
+          exportFolder = exportFolder
+        )
+
+      on.exit(Andromeda::close(characteristics), add = TRUE)
+      exportCharacterization(
+        characteristics = characteristics,
+        databaseId = databaseId,
+        incremental = incremental,
+        covariateValueFileName = covariateValueFileName,
+        covariateValueContFileName = covariateValueContFileName,
+        covariateRefFileName = covariateRefFileName,
+        analysisRefFileName = analysisRefFileName,
+        timeRefFileName = timeRefFileName,
+        counts = cohortCounts,
+        minCharacterizationMean = minCharacterizationMean,
+        minCellCount = minCellCount
       )
 
-    on.exit(Andromeda::close(characteristics), add = TRUE)
-    exportCharacterization(
-      characteristics = characteristics,
-      databaseId = databaseId,
-      incremental = incremental,
-      covariateValueFileName = covariateValueFileName,
-      covariateValueContFileName = covariateValueContFileName,
-      covariateRefFileName = covariateRefFileName,
-      analysisRefFileName = analysisRefFileName,
-      timeRefFileName = timeRefFileName,
-      counts = cohortCounts,
-      minCellCount = minCellCount
-    )
-  }
+      recordTasksDone(
+        cohortId = subset[start:end, ]$cohortId,
+        task = task,
+        checksum = subset[start:end, ]$checksum,
+        recordKeepingFile = recordKeepingFile,
+        incremental = incremental
+      )
 
-  recordTasksDone(
-    cohortId = subset$cohortId,
-    task = task,
-    checksum = subset$checksum,
-    recordKeepingFile = recordKeepingFile,
-    incremental = incremental
-  )
+      deltaIteration <- Sys.time() - startCohortCharacterization
+      ParallelLogger::logInfo(
+        "    - Running Cohort Characterization iteration with batchsize ",
+        batchSize,
+        " from row number ",
+        start,
+        " to ",
+        end,
+        " took ",
+        signif(deltaIteration, 3),
+        " ",
+        attr(deltaIteration, "units")
+      )
+    }
+  }
   delta <- Sys.time() - startCohortCharacterization
-  ParallelLogger::logInfo(
-    "Running ", jobName, " took",
-    signif(delta, 3),
-    " ",
-    attr(delta, "units")
-  )
+  ParallelLogger::logInfo("Running ",
+                          jobName,
+                          " took",
+                          signif(delta, 3),
+                          " ",
+                          attr(delta, "units"))
 }

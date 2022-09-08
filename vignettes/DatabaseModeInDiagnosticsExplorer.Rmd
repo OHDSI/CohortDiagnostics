@@ -25,7 +25,7 @@ knitr::opts_chunk$set(
 
 # Database mode
 
-We recommend the use of a database system, when file size of the cohort diagnostics output becomes large e.g. > 100mb, as using the premerged.RData may leading sluggish performance. Currently only postgres server is supported.
+We recommend the use of a database system, when file size of the cohort diagnostics output becomes large e.g. > 1GB, as using the premerged.RData may leading sluggish performance. Currently only postgres server is supported.
 
 
 We use DatabaseConnector and DbPool to manage connections between the shiny application and postgres. The recommended method to launch a Shiny application is to provide the connection details to the 'launchDiagnosticsExplorer()' shiny application. Please review the documentation of 'DatabaseConnector::createConnectionDetails()' function in the DatabaseConnector package on how to connect to the server.

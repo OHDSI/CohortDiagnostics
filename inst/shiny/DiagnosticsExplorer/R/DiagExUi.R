@@ -171,14 +171,7 @@ dashboardUi <- function(enabledTabs,
   if (enableAnnotation & showAnnotation) {
     headerContent <- tags$li(
       if (enableAuthorization) {
-        shiny::conditionalPanel(
-          "!output.postAnnoataionEnabled",
-          ns = ns,
-          shiny::actionButton(
-            inputId = ns("annotationUserPopUp"),
-            label = "Sign in"
-          )
-        )
+        shiny::uiOutput(outputId = ns("signInButton"))
       },
       shiny::conditionalPanel(
         "output.postAnnoataionEnabled == true",
