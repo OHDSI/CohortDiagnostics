@@ -1,3 +1,18 @@
+DROP TABLE IF EXISTS #target_cohort_table;
+DROP TABLE IF EXISTS #cohort_rel_output;
+
+-- target cohort: cohort relationship uses the first occurrence 
+SELECT cohort_definition_id,
+        subject_id,
+        MIN(cohort_start_date) cohort_start_date,
+        MIN(cohort_end_date) cohort_end_date
+INTO #target_cohort_table
+FROM @cohort_database_schema.@cohort_table
+WHERE cohort_definition_id IN (@target_cohort_ids)
+GROUP BY cohort_definition_id,
+          subject_id;
+
+
 -- target cohort: always one subject per cohort (first time)
 SELECT t.cohort_definition_id cohort_id,
 	c.cohort_definition_id comparator_cohort_id,
@@ -250,7 +265,8 @@ SELECT t.cohort_definition_id cohort_id,
 	-- target cohort days (no offset)
 	SUM(datediff(dd, c.cohort_start_date, c.cohort_end_date) + 1) c_days
 -- comparator cohort days (offset)
-FROM @cohort_database_schema.@cohort_table t
+INTO #cohort_rel_output
+FROM #target_cohort_table t
 INNER JOIN @cohort_database_schema.@cohort_table c ON c.subject_id = t.subject_id
 	AND c.cohort_definition_id != t.cohort_definition_id
 	-- comparator cohort overlaps with target cohort during the offset period
@@ -260,3 +276,5 @@ WHERE t.cohort_definition_id IN (@target_cohort_ids)
     AND c.cohort_definition_id IN (@comparator_cohort_ids)
 GROUP BY t.cohort_definition_id,
 	c.cohort_definition_id;
+
+DROP TABLE IF EXISTS #target_cohort_table;

@@ -127,7 +127,8 @@ runCohortRelationshipDiagnostics <-
             package = utils::packageName()
           )
         )
-      DatabaseConnector::renderTranslateQuerySqlToAndromeda(
+      
+      DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
         sql = cohortRelationshipSql,
@@ -137,7 +138,13 @@ runCohortRelationshipDiagnostics <-
         target_cohort_ids = targetCohortIds,
         comparator_cohort_ids = comparatorCohortIds,
         cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable,
+        cohort_table = cohortTable
+      )
+      
+      DatabaseConnector::renderTranslateQuerySqlToAndromeda(
+        connection = connection,
+        tempEmulationSchema = tempEmulationSchema,
+        sql = "SELECT * FROM #cohort_rel_output;",
         snakeCaseToCamelCase = TRUE,
         andromeda = resultsInAndromeda,
         andromedaTableName = "temp"
