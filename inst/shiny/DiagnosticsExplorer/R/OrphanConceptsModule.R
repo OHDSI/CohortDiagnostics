@@ -67,6 +67,7 @@ orphanConceptsModule <- function(id,
         cohortId = targetCohortId(),
         databaseIds = selectedDatabaseIds()
       )
+      
       if (!hasData(data)) {
         return(NULL)
       }
@@ -74,11 +75,14 @@ orphanConceptsModule <- function(id,
         dplyr::arrange(dplyr::desc(.data$conceptCount))
       return(data)
     })
-
-    output$orphanConceptsTable <- reactable::renderReactable(expr = {
+    
+    # Reactive below developed for testing purposes
+    # Focuses on filtering the standard vs. non-standard codes
+    filteringStandardConceptsReactive <- shiny::reactive(x = {
       data <- orphanConceptsDataReactive()
       validate(need(hasData(data), "There is no data for the selected combination."))
-
+      
+      
       if (hasData(selectedConceptSets())) {
         if (!is.null(selectedConceptSets())) {
           if (length(conceptSetIds()) > 0) {
@@ -100,8 +104,16 @@ orphanConceptsModule <- function(id,
                             all(!is.na(.data$standardConcept), .data$standardConcept != "S")
                           ))
       }
+      
+      return (data)
+      
+    })
 
+    output$orphanConceptsTable <- reactable::renderReactable(expr = {
+      
+      data <- filteringStandardConceptsReactive()
       validate(need(hasData(data), "There is no data for the selected combination."))
+    
 
       data <- data %>%
         dplyr::select(

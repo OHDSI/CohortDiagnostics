@@ -194,7 +194,7 @@ visitContextModule <- function(id,
           data = data,
           string = dataColumnFields
         )
-
+    
       getDisplayTableGroupedByDatabaseId(
         data = data,
         cohort = cohortTable,
