@@ -158,28 +158,6 @@ compareCohortCharacterizationView <- function(id) {
 
   shiny::tagList(
     shinydashboard::box(
-      status = "warning",
-      width = "100%",
-      tags$div(
-        style = "max-height: 100px; overflow-y: auto",
-        tags$table(
-          width = "100%",
-          tags$tr(
-            tags$td(
-              width = "70%",
-              tags$b("Cohorts :"),
-              shiny::uiOutput(outputId = ns("selectedCohorts"))
-            ),
-            tags$td(
-              style = "align: right !important;", width = "30%",
-              tags$b("Database :"),
-              shiny::uiOutput(outputId = ns("selectedDatabases"))
-            )
-          )
-        )
-      )
-    ),
-    shinydashboard::box(
       width = NULL,
       title = NULL,
       shiny::conditionalPanel(
@@ -306,30 +284,33 @@ compareCohortCharacterizationView <- function(id) {
     shiny::conditionalPanel(
       condition = "input.generateTable != 0 & input.charCompareType=='Raw table'",
       ns = ns,
-       shinydashboard::box(
+      shiny::uiOutput(ns("selectionsRawTable")),
+      shinydashboard::box(
         width = NULL,
         title = NULL,
         shinycssloaders::withSpinner(
           reactable::reactableOutput(ns("compareCohortCharacterizationTable")),
         ),
         csvDownloadButton(ns, "compareCohortCharacterizationTable")
-       )
+      )
     ),
     shiny::conditionalPanel(
       condition = "input.generatePrettyTable != 0 & input.charCompareType=='Pretty table'",
       ns = ns,
-       shinydashboard::box(
+      shiny::uiOutput(ns("selectionsPrettyTable")),
+      shinydashboard::box(
         width = NULL,
         title = NULL,
         shinycssloaders::withSpinner(
           reactable::reactableOutput(ns("compareCohortCharacterizationPrettyTable")),
         ),
         csvDownloadButton(ns, "compareCohortCharacterizationPrettyTable")
-       )
+      )
     ),
     shiny::conditionalPanel(
       condition = "input.generatePlot != 0 & input.charCompareType=='Plot'",
       ns = ns,
+      shiny::uiOutput(ns("selectionsPlot")),
       shinydashboard::box(
         title = "Compare Cohort Characterization",
         width = NULL,
@@ -369,7 +350,7 @@ compareCohortCharacterizationModule <- function(id,
 
   shiny::moduleServer(id, function(input, output, session) {
 
-    output$showTemporalChoices <- shiny::renderText({showTemporalChoices})
+    output$showTemporalChoices <- shiny::renderText({ showTemporalChoices })
     shiny::outputOptions(output, "showTemporalChoices", suspendWhenHidden = FALSE)
     if (showTemporalChoices) {
       # Temporal choices (e.g. -30d - 0d ) are dynamic to execution
@@ -413,33 +394,15 @@ compareCohortCharacterizationModule <- function(id,
       })
 
       shinyWidgets::updatePickerInput(session,
-                                        inputId = "timeIdChoicesSingle",
-                                        choices = timeIdOptions$temporalChoices)
+                                      inputId = "timeIdChoicesSingle",
+                                      choices = timeIdOptions$temporalChoices)
     }
 
-     selectedTimeIdsSingle <- shiny::reactive({
-        timeIdOptions %>%
-          dplyr::filter(.data$temporalChoices %in% input$timeIdChoicesSingle) %>%
-          dplyr::select(.data$timeId) %>%
-          dplyr::pull()
-      })
-
-    output$selectedCohorts <- shiny::renderUI({
-      htmltools::withTags(table(
-        tr(td(
-          selectedCohort()
-        )),
-        tr(td(
-          selectedComparatorCohort()
-        ))
-      ))
-    })
-
-    output$selectedDatabases <- shiny::renderUI({
-      paste(databaseTable %>%
-              dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-              dplyr::select(.data$databaseName),
-            collapse = ", ")
+    selectedTimeIdsSingle <- shiny::reactive({
+      timeIdOptions %>%
+        dplyr::filter(.data$temporalChoices %in% input$timeIdChoicesSingle) %>%
+        dplyr::select(.data$timeId) %>%
+        dplyr::pull()
     })
 
     temporalCharacterizationOutput <-
@@ -547,7 +510,7 @@ compareCohortCharacterizationModule <- function(id,
             dplyr::filter(.data$isBinary == "N")
         }
       }
-      
+
       data <- data %>%
         dplyr::filter(.data$analysisName %in% input$analysisNameFilter) %>%
         dplyr::filter(.data$domainId %in% input$domainIdFilter)
@@ -748,6 +711,42 @@ compareCohortCharacterizationModule <- function(id,
       )
     })
 
+    selectionsOutput <- shiny::reactive({
+      shinydashboard::box(
+        status = "warning",
+        width = "100%",
+        shiny::fluidRow(
+          shiny::column(
+            width = 9,
+            tags$b("Cohorts :"),
+            paste(cohortTable %>%
+                    dplyr::filter(.data$cohortId %in% c(targetCohortId(), comparatorCohortId()) %>%
+                                    dplyr::select(.data$cohortName) %>%
+                                    dplyr::pull(),
+                                  collapse = ", ")
+            ),
+            shiny::column(
+              width = 3,
+              tags$b("Database :"),
+              paste(databaseTable %>%
+                      dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
+                      dplyr::select(.data$databaseName) %>%
+                      dplyr::pull(),
+                    collapse = ", ")
+            )
+          )
+        )
+      )
+    })
+
+    selectionsOutputRaw <- shiny::eventReactive(input$generateTable, {
+      selectionsOutput()
+    })
+
+    output$selectionsRawTable <- shiny::renderUI({
+      selectionsOutputRaw()
+    })
+
     generateTable <- shiny::eventReactive(input$generateTable, {
       data <- compareCohortCharacterizationRawTable()
       validate(need(hasData(data), "No data for selected combination"))
@@ -763,6 +762,14 @@ compareCohortCharacterizationModule <- function(id,
       data <- compareCohortCharacterizationPrettyTable()
       validate(need(hasData(data), "No data for selected combination"))
       return(data)
+    })
+
+    selectionsOutputPretty <- shiny::eventReactive(input$generatePrettyTable, {
+      selectionsOutput()
+    })
+
+    output$selectionsPrettyTable <- shiny::renderUI({
+      selectionsOutputPretty()
     })
 
     ## output: compareCohortCharacterizationTable ----------------------------------------
@@ -788,13 +795,13 @@ compareCohortCharacterizationModule <- function(id,
       ))
 
       progress$set(
-          message = "Plotting results",
-          value = 50
-        )
+        message = "Plotting results",
+        value = 50
+      )
       distinctTemporalChoices <- unique(temporalChoices$temporalChoices)
 
       data <- data %>%
-        dplyr::filter(.data$timeId %in% selectedTimeIds())%>%
+        dplyr::filter(.data$timeId %in% selectedTimeIds()) %>%
         dplyr::arrange(factor(.data$temporalChoices, levels = distinctTemporalChoices)) %>%
         dplyr::mutate(temporalChoices = factor(.data$temporalChoices, levels = unique(.data$temporalChoices)))
 
@@ -809,14 +816,22 @@ compareCohortCharacterizationModule <- function(id,
         )
 
       progress$set(
-          message = "Returning data",
-          value = 90
-        )
+        message = "Returning data",
+        value = 90
+      )
       validate(need(
         !is.null(plot),
         "No plot available for selected combination."
       ))
       return(plot)
+    })
+
+    selectionsOutputPlot <- shiny::eventReactive(input$generatePlot, {
+      selectionsOutput()
+    })
+
+    output$selectionsPlot <- shiny::renderUI({
+      selectionsOutputPlot()
     })
 
     ## output: compareCohortCharacterizationBalancePlot ----------------------------------------

@@ -4,74 +4,104 @@ temporalCharacterizationView <- function(id) {
     shinydashboard::box(
       width = NULL,
       title = NULL,
-      shinyWidgets::pickerInput(
-        inputId = ns("timeIdChoices"),
-        label = "Temporal Window (s)",
-        choices = NULL,
-        multiple = TRUE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        selected = NULL,
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
-          liveSearch = TRUE,
-          maxOptions = 5, # Selecting even this many will be slow
-          size = 10,
-          liveSearchStyle = "contains",
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50
+      shiny::fluidRow(
+        shiny::column(
+          width = 6,
+          shinyWidgets::pickerInput(
+            inputId = ns("timeIdChoices"),
+            label = "Temporal Window (s)",
+            choices = NULL,
+            multiple = TRUE,
+            choicesOpt = list(style = rep_len("color: black;", 999)),
+            selected = NULL,
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              maxOptions = 5, # Selecting even this many will be slow
+              size = 10,
+              liveSearchStyle = "contains",
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
+          )
+        ),
+        shiny::radioButtons(
+            inputId = ns("proportionOrContinuous"),
+            label = "View Covariate Type(s)",
+            choices = c("All", "Proportion", "Continuous"),
+            selected = "Proportion",
+            inline = TRUE
+          )
+      ),
+      shiny::fluidRow(
+        shiny::column(
+          width = 6,
+          shinyWidgets::pickerInput(
+            inputId = ns("domainIdFilter"),
+            label = "Domain name",
+            choices = c(""),
+            selected = c(""),
+            multiple = TRUE,
+            choicesOpt = list(style = rep_len("color: black;", 999)),
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              size = 10,
+              liveSearchStyle = "contains",
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
+          )
+        ),
+        shiny::column(
+          width = 6,
+          shiny::column(
+          width = 6,
+          shinyWidgets::pickerInput(
+            inputId = ns("analysisNameFilter"),
+            label = "Analysis name",
+            choices = c(""),
+            selected = c(""),
+            multiple = TRUE,
+            choicesOpt = list(style = rep_len("color: black;", 999)),
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              size = 10,
+              liveSearchStyle = "contains",
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
+          )
+        )
         )
       ),
-      shinyWidgets::pickerInput(
-        inputId = ns("analysisNameFilter"),
-        label = "Analysis name",
-        choices = c(""),
-        selected = c(""),
-        multiple = TRUE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
-          liveSearch = TRUE,
-          size = 10,
-          liveSearchStyle = "contains",
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50
-        )
-      ),
-      shinyWidgets::pickerInput(
-        inputId = ns("domainIdFilter"),
-        label = "Domain name",
-        choices = c(""),
-        selected = c(""),
-        multiple = TRUE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
-          liveSearch = TRUE,
-          size = 10,
-          liveSearchStyle = "contains",
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50
-        )
-      ),
-      shiny::radioButtons(
-        inputId = ns("proportionOrContinuous"),
-        label = "View Covariate Type(s)",
-        choices = c("All", "Proportion", "Continuous"),
-        selected = "Proportion",
-        inline = TRUE
+      shiny::fluidRow(
+        shiny::column(
+          width = 3,
+          shiny::numericInput(
+            inputId = ns("minMeanFilterVal"),
+            label = "Min Covariate threshold",
+            value = 0.005,
+            min = 0.0,
+            max = 0.9,
+            step = 0.005
+          )
+         )
       ),
       tags$p("Note - returned table can be very large. Please click to manually update after selecting options."),
       shiny::actionButton(label = "Get Temporal covariate data", inputId = ns("generateReport")),
-
-      shiny::conditionalPanel("input.generateReport != 0",
-                              ns = ns,
-                              shiny::tagList(
-                                tags$h3(shiny::textOutput(ns("selectedCohortDbOptions"))),
-                                shinycssloaders::withSpinner(reactable::reactableOutput(ns("temporalCharacterizationTable"))),
-                                csvDownloadButton(ns, "temporalCharacterizationTable")
-                              ))
+    ),
+    shiny::conditionalPanel("input.generateReport != 0",
+                            ns = ns,
+                            shiny::uiOutput(ns("selections")),
+                            shinydashboard::box(
+                              width = NULL,
+                              title = NULL,
+                              shinycssloaders::withSpinner(reactable::reactableOutput(ns("temporalCharacterizationTable"))),
+                              csvDownloadButton(ns, "temporalCharacterizationTable")
+                            )
     )
-
   )
 }
 
@@ -79,7 +109,7 @@ temporalCharacterizationView <- function(id) {
 temporalCharacterizationModule <- function(id,
                                            dataSource,
                                            databaseTable,
-                                           selectedCohort,
+                                           cohortTable,
                                            selectedDatabaseIds,
                                            targetCohortId,
                                            temporalAnalysisRef,
@@ -122,7 +152,8 @@ temporalCharacterizationModule <- function(id,
         dataSource = dataSource,
         cohortIds = targetCohortId(),
         databaseIds = selectedDatabaseIds(),
-        temporalCovariateValueDist = FALSE
+        temporalCovariateValueDist = FALSE,
+        meanThreshold = input$minMeanFilterVal
       )
       return(data)
     })
@@ -174,17 +205,34 @@ temporalCharacterizationModule <- function(id,
       )
     })
 
-    selectedCohortDbOptions <- shiny::eventReactive(input$generateReport, {
-      dbText <- paste(
-        databaseTable %>%
-          dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-          dplyr::select(.data$databaseName),
-                collapse = ", ")
-
-      paste("Temporal covariate data for cohort", selectedCohort(), "on database", dbText)
+    selectionsOutput <- shiny::eventReactive(input$generateReport, {
+      shinydashboard::box(
+        status = "warning",
+        width = "100%",
+        shiny::fluidRow(
+          shiny::column(
+            width = 9,
+            tags$b("Cohort :"),
+            paste(cohortTable %>%
+                    dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
+                    dplyr::select(.data$cohortName) %>%
+                    dplyr::pull(),
+                  collapse = ", ")
+          ),
+          shiny::column(
+            width = 3,
+            tags$b("Database :"),
+            paste(databaseTable %>%
+                    dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
+                    dplyr::select(.data$databaseName) %>%
+                    dplyr::pull(),
+                  collapse = ", ")
+          )
+        )
+      )
     })
 
-    output$selectedCohortDbOptions <- shiny::renderText(selectedCohortDbOptions())
+    output$selections <- shiny::renderUI(selectionsOutput())
 
     ## temporalCohortCharacterizationDataFiltered ------------
     temporalCharacterizationDataFilt <- shiny::reactive({
