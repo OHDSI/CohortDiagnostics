@@ -617,7 +617,8 @@ migrateDataModel <- function(connectionDetails, databaseSchema, tablePrefix = ""
   updateVersionSql <- SqlRender::loadRenderTranslateSql("UpdateVersionNumber.sql",
                                                         packageName = utils::packageName(),
                                                         database_schema = databaseSchema,
-                                                        target = connectionDetails$dbms)
+                                                        table_prefix = tablePrefix,
+                                                        dbms = connectionDetails$dbms)
 
   connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
