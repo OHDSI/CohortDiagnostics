@@ -597,3 +597,48 @@ deleteAllRecordsForDatabaseId <- function(connection,
     )
   }
 }
+
+#' Migrate Data model
+#' @description
+#' Migrate data from current state to next state
+#'
+#' It is strongly advised that you have a backup of all data (either sqlite files, a backup database (in the case you
+#' are using a postgres backend) or have kept the csv/zip files from your data generation.
+#'
+#' @inheritParams getDataMigrator
+#' @export
+migrateDataModel <- function(connectionDetails, databaseSchema, tablePrefix = "") {
+  ParallelLogger::logInfo("Migrating data set")
+  migrator <- getDataMigrator(connectionDetails = connectionDetails, databaseSchema = databaseSchema, tablePrefix = tablePrefix)
+  migrator$executeMigrations()
+  migrator$finalize()
+
+  ParallelLogger::logInfo("Updating version number")
+  updateVersionSql <- SqlRender::loadRenderTranslateSql("UpdateVersionNumber.sql",
+                                                        packageName = utils::packageName(),
+                                                        target = connectionDetails$dbms)
+
+  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+  on.exit(DatabaseConnector::disconnect(connection))
+  DatabaseConnector::executeSql(connection, updateVersionSql)
+}
+
+
+#' Get database migrations instance
+#' @description
+#'
+#' Returns ResultModelManager DataMigrationsManager instance.
+# '@seealso [ResultModelManager::DataMigrationManager] which this function is a utility for.
+#'
+#' @param connectionDetails             DatabaseConnector connection details object
+#' @param databaseSchema                String schema where database schema lives
+#' @param  tablePrefix                  (Optional) Use if a table prefix is used before table names (e.g. "cd_")
+#' @returns Instance of ResultModelManager::DataMigrationManager that has interface for converting existing data models
+#' @export
+getDataMigrator <- function(connectionDetails, databaseSchema, tablePrefix = "") {
+  ResultModelManager::DataMigrationManager$new(connectionDetails = connectionDetails,
+                                               databaseSchema = databaseSchema,
+                                               tablePrefix = tablePrefix,
+                                               migrationPath = "migrations",
+                                               packageName = utils::packageName())
+}
