@@ -13,7 +13,7 @@
 {DEFAULT @table_prefix = ''}
 
 -- Create table indicating version number of ddl
-DROP TABLE IF EXISTS @database_schema.@package_version;
+DROP TABLE IF EXISTS @database_schema.@table_prefix@package_version;
 
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @database_schema.@table_prefix@package_version (
