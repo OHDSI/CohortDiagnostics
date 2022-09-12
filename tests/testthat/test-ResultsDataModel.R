@@ -286,3 +286,21 @@ test_that("util functions", {
   expect_true(naToEmpty(NA) == "")
   expect_true(naToZero(NA) == 0)
 })
+
+
+test_that("No database file fails upload", {
+  testZipFile <- "test.zip"
+  on.exit(unlink(testZipFile, force = T))
+  # Just a random file to test
+  DatabaseConnector::createZipFile(testZipFile, "cohorts/CohortsToCreate.csv")
+
+  expect_error(
+   uploadResults(
+      connectionDetails = connectionDetails,
+      schema = "main",
+      zipFileName = testZipFile,
+      tablePrefix = "cd_"
+    ),
+   regexp ="database metadata file not found - cannot upload results"
+  )
+})
