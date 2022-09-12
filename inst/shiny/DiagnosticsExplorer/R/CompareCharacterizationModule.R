@@ -153,13 +153,13 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   return(plot)
 }
 
-compareCohortCharacterizationView <- function(id) {
+compareCohortCharacterizationView <- function(id, title = "Compare cohort characterization") {
   ns <- shiny::NS(id)
 
   shiny::tagList(
     shinydashboard::box(
       width = NULL,
-      title = NULL,
+      title = title,
       shiny::fluidRow(
         shiny::column(
           width = 6,

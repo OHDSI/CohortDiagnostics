@@ -3,7 +3,7 @@ temporalCharacterizationView <- function(id) {
   shiny::tagList(
     shinydashboard::box(
       width = NULL,
-      title = NULL,
+      title = "Temporal cohort characterization",
       shiny::fluidRow(
         shiny::column(
           width = 6,

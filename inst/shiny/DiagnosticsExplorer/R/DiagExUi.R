@@ -424,7 +424,8 @@ dashboardUi <- function(enabledTabs,
     ),
     shinydashboard::tabItem(
       tabName = "compareTemporalCharacterization",
-      compareCohortCharacterizationView(ns("compareTemporalCohortCharacterization")),
+      compareCohortCharacterizationView(ns("compareTemporalCohortCharacterization"),
+                                        title = "Compare temporal cohort characterization"),
       if (showAnnotation) {
         column(
           12,
