@@ -142,7 +142,7 @@ recordTasksDone <-
     newRow$checksum <- checksum
     newRow$timeStamp <- as.character(Sys.time())
     recordKeeping <- dplyr::bind_rows(recordKeeping, newRow)
-    readr::write_csv(recordKeeping, recordKeepingFile)
+    readr::write_csv(x = recordKeeping, file = recordKeepingFile, na = "")
   }
 
 writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
@@ -313,6 +313,8 @@ subsetToRequiredCombis <-
       tasks <- getRequiredTasks(
         cohortId = combis$targetCohortId,
         comparatorId = combis$comparatorCohortId,
+        targetChecksum = combis$targetChecksum,
+        comparatorChecksum = combis$comparatorChecksum,
         task = task,
         checksum = combis$checksum,
         recordKeepingFile = recordKeepingFile
