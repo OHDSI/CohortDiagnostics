@@ -289,6 +289,7 @@ test_that("util functions", {
 
 
 test_that("No database file fails upload", {
+  skip_if(skipResultsDm | skipCdmTests, "results data model test server not set")
   testZipFile <- "test.zip"
   on.exit(unlink(testZipFile, force = T))
   # Just a random file to test
