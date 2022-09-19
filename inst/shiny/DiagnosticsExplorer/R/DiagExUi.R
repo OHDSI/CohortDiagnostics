@@ -39,13 +39,6 @@ uiControls <- function(ns,
       ns = ns,
       shiny::uiOutput(ns("databasesPicker"))
     ),
-    if ("temporalCovariateValue" %in% enabledTabs) {
-      shiny::conditionalPanel(
-        condition = "input.tabs=='temporalCharacterization' | input.tabs =='compareTemporalCharacterization'",
-        ns = ns,
-        shiny::uiOutput(ns("timeIdChoices"))
-      )
-    },
     shiny::conditionalPanel(
       condition = "input.tabs != 'databaseInformation' &
       input.tabs != 'cohortDefinition' &
@@ -431,7 +424,8 @@ dashboardUi <- function(enabledTabs,
     ),
     shinydashboard::tabItem(
       tabName = "compareTemporalCharacterization",
-      compareCohortCharacterizationView(ns("compareTemporalCohortCharacterization")),
+      compareCohortCharacterizationView(ns("compareTemporalCohortCharacterization"),
+                                        title = "Compare temporal cohort characterization"),
       if (showAnnotation) {
         column(
           12,

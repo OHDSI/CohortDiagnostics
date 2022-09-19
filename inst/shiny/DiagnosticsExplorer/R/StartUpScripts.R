@@ -440,11 +440,6 @@ initializeEnvironment <- function(shinySettings,
     -301, -201
   )
 
-  envir$analysisIdInTemporalCharacterization <- c(
-    101, 401, 501, 701,
-    -301, -201
-  )
-
   if (envir$enableAnnotation &
     "annotation" %in% envir$resultsTables &
     "annotation_link" %in% envir$resultsTables &

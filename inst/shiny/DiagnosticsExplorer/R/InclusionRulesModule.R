@@ -20,7 +20,7 @@ inclusionRulesView <- function(id) {
             td(
               align = "left",
               shiny::radioButtons(
-                inputId = "inclusionRuleTableFilters",
+                inputId = ns("inclusionRuleTableFilters"),
                 label = "Inclusion Rule Events",
                 choices = c("All", "Meet", "Gain", "Remain"),
                 selected = "All",

@@ -130,7 +130,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       if (is.null(activeLoggedInUser())) {
         return("")
       }
-      paste(as.character(icon("user-circle")),
+      paste(as.character(icon("user")),
             stringr::str_to_title(activeLoggedInUser()))
 
     })
@@ -232,25 +232,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       return(conceptSetsFiltered)
     })
 
-    timeIds <- reactiveVal(NULL)
-    shiny::observeEvent(eventExpr = {
-      list(
-        input$timeIdChoices_open,
-        input$tabs
-      )
-    }, handlerExpr = {
-      if ("temporalCharacterizationTimeIdChoices" %in% enabledTabs &
-        (isFALSE(input$timeIdChoices_open) ||
-          !is.null(input$tabs))) {
-        if (!is.null(envir$temporalChoices)) {
-          selectedTimeIds <- envir$temporalCharacterizationTimeIdChoices %>%
-            dplyr::filter(.data$temporalChoices %in% input$timeIdChoices) %>%
-            dplyr::pull(.data$timeId)
-          timeIds(selectedTimeIds)
-        }
-      }
-    })
-
     databaseChoices <- list()
     dbMapping <- databaseTable
     for (i in 1:nrow(dbMapping)) {
@@ -324,32 +305,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         selected = databaseChoices[[1]],
         multiple = TRUE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
-          liveSearch = TRUE,
-          size = 10,
-          liveSearchStyle = "contains",
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50
-        )
-      )
-    })
-
-    # Temporal choices (e.g. -30d - 0d ) are dynamic to execution input
-    output$timeIdChoices <- shiny::renderUI({
-      shinyWidgets::pickerInput(
-        inputId = ns("timeIdChoices"),
-        label = "Temporal Choice",
-        choices = envir$
-          temporalCharacterizationTimeIdChoices$
-          temporalChoices,
-        multiple = TRUE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        selected = envir$temporalCharacterizationTimeIdChoices %>%
-          dplyr::filter(.data$primaryTimeId == 1) %>%
-          dplyr::filter(.data$isTemporal == 1) %>%
-          dplyr::arrange(.data$sequence) %>%
-          dplyr::pull("temporalChoices"),
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE,
           liveSearch = TRUE,
@@ -477,116 +432,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         dplyr::select(.data$name)
       return(expression)
     })
-
-
-    characterizationOutput <-
-      shiny::reactive(x = {
-        progress <- shiny::Progress$new()
-        on.exit(progress$close())
-        progress$set(
-          message = paste0(
-            "Retrieving characterization output for cohort id ",
-            targetCohortId(),
-            " cohorts and ",
-            length(selectedDatabaseIds()),
-            " data sources."
-          ),
-          value = 0
-        )
-        data <- getCharacterizationOutput(
-          dataSource = dataSource,
-          cohortIds = targetCohortId(),
-          databaseIds = selectedDatabaseIds(),
-          temporalCovariateValueDist = FALSE
-        )
-        return(data)
-      })
-
-
-    temporalCharacterizationOutput <-
-      shiny::reactive(x = {
-        progress <- shiny::Progress$new()
-        on.exit(progress$close())
-        progress$set(
-          message = paste0(
-            "Retrieving characterization output for target cohort id ",
-            targetCohortId(),
-            " from ",
-            input$database,
-            "."
-          ),
-          value = 0
-        )
-
-        if (input$database %in% c(selectedDatabaseIds())) {
-          data <- characterizationOutput()
-          if (hasData(data$covariateValue)) {
-            data$covariateValue <- data$covariateValue %>%
-              dplyr::filter(.data$databaseId %in% c(input$database))
-          }
-          if (hasData(data$covariateValueDist)) {
-            data$covariateValueDist <- data$covariateValueDist %>%
-              dplyr::filter(.data$databaseId %in% c(input$database))
-          }
-        } else {
-          data <- getCharacterizationOutput(
-            dataSource = dataSource,
-            cohortIds = targetCohortId(),
-            databaseIds = input$database,
-            temporalCovariateValueDist = FALSE
-          )
-        }
-        return(data)
-      })
-
-    compareCharacterizationOutput <-
-      shiny::reactive(x = {
-        dataTarget <-
-          temporalCharacterizationOutput()
-        if (!hasData(dataTarget)) {
-          return(NULL)
-        }
-
-        progress <- shiny::Progress$new()
-        on.exit(progress$close())
-        progress$set(
-          message = paste0(
-            "Retrieving characterization output for comparator cohort id ",
-            comparatorCohortId(),
-            " from ",
-            input$database,
-            "."
-          ),
-          value = 0
-        )
-        dataComparator <- getCharacterizationOutput(
-          dataSource = dataSource,
-          cohortIds = c(comparatorCohortId()),
-          databaseIds = input$database,
-          temporalCovariateValueDist = FALSE
-        )
-        if (!hasData(dataComparator)) {
-          return(NULL)
-        }
-        data <- NULL
-        data$covariateValue <-
-          dplyr::bind_rows(
-            dataTarget$covariateValue,
-            dataComparator$covariateValue
-          )
-        if (!hasData(data$covariateValue)) {
-          data$covariateValue <- NULL
-        }
-        data$covariateValueDist <-
-          dplyr::bind_rows(
-            dataTarget$covariateValueDist,
-            dataComparator$covariateValueDist
-          )
-        if (!hasData(data$covariateValueDist)) {
-          data$covariateValueDist <- NULL
-        }
-        return(data)
-      })
 
     shiny::observe({
       subset <- getConceptSetNameForFilter()$name %>%
@@ -882,7 +727,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                              dataSource = dataSource,
                              cohortTable = cohortTable,
                              databaseTable = databaseTable,
-                             selectedCohort = selectedCohort,
                              selectedDatabaseIds = selectedDatabaseIds,
                              targetCohortId = targetCohortId,
                              temporalAnalysisRef = envir$temporalAnalysisRef,
@@ -890,25 +734,21 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                              analysisIdInCohortCharacterization = envir$analysisIdInCohortCharacterization,
                              getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
                              selectedConceptSets = selectedConceptSets,
-                             characterizationMenuOutput = characterizationOutput, # This name must be changed
                              characterizationTimeIdChoices = envir$characterizationTimeIdChoices)
 
 
       temporalCharacterizationModule(id = "temporalCharacterization",
                                      dataSource = dataSource,
                                      databaseTable = databaseTable,
-                                     selectedCohort = selectedCohort,
+                                     cohortTable = cohortTable,
                                      selectedDatabaseIds = selectedDatabaseIds,
                                      targetCohortId = targetCohortId,
                                      temporalAnalysisRef = envir$temporalAnalysisRef,
                                      analysisNameOptions = envir$analysisNameOptions,
-                                     selectedTemporalTimeIds = selectedTemporalTimeIds,
                                      getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
                                      selectedConceptSets = selectedConceptSets,
-                                     analysisIdInTemporalCharacterization = envir$analysisIdInTemporalCharacterization,
                                      domainIdOptions = envir$domainIdOptions,
-                                     temporalCharacterizationTimeIdChoices = envir$temporalCharacterizationTimeIdChoices,
-                                     characterizationOutputForCharacterizationMenu = characterizationOutput)
+                                     temporalCharacterizationTimeIdChoices = envir$temporalCharacterizationTimeIdChoices)
 
       compareCohortCharacterizationModule("compareCohortCharacterization",
                                           dataSource = dataSource,
@@ -918,16 +758,13 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                           comparatorCohortId = comparatorCohortId,
                                           selectedComparatorCohort = selectedComparatorCohort,
                                           selectedConceptSets = selectedConceptSets,
-                                          selectedTimeIds = shiny::reactive({ c(envir$characterizationTimeIdChoices$timeId %>% unique(), NA) }),
-                                          characterizationOutputMenu = compareCharacterizationOutput,
                                           getFilteredConceptIds = getFilteredConceptIds,
                                           cohortTable = cohortTable,
                                           databaseTable = databaseTable,
                                           temporalAnalysisRef = envir$temporalAnalysisRef,
-                                          analysisIdInCohortCharacterization = envir$analysisIdInCohortCharacterization,
+                                          showTemporalChoices = FALSE,
                                           analysisNameOptions = envir$analysisNameOptions,
                                           domainIdOptions = envir$domainIdOptions,
-                                          characterizationTimeIdChoices = envir$characterizationTimeIdChoices,
                                           temporalChoices = envir$temporalChoices,
                                           prettyTable1Specifications = envir$prettyTable1Specifications)
 
@@ -939,16 +776,13 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                           comparatorCohortId = comparatorCohortId,
                                           selectedComparatorCohort = selectedComparatorCohort,
                                           selectedConceptSets = selectedConceptSets,
-                                          selectedTimeIds = selectedTemporalTimeIds,
-                                          characterizationOutputMenu = compareCharacterizationOutput,
                                           getFilteredConceptIds = getFilteredConceptIds,
                                           cohortTable = cohortTable,
                                           databaseTable = databaseTable,
                                           temporalAnalysisRef = envir$temporalAnalysisRef,
-                                          analysisIdInCohortCharacterization = envir$analysisIdInCohortCharacterization,
+                                          showTemporalChoices = TRUE,
                                           analysisNameOptions = envir$analysisNameOptions,
                                           domainIdOptions = envir$domainIdOptions,
-                                          characterizationTimeIdChoices = envir$characterizationTimeIdChoices,
                                           temporalChoices = envir$temporalChoices,
                                           prettyTable1Specifications = envir$prettyTable1Specifications)
     }
