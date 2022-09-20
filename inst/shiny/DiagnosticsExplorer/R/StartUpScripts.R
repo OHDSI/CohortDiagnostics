@@ -22,6 +22,10 @@ loadResultsTable <- function(dataSource, tableName, required = FALSE, tablePrefi
     tolower(DatabaseConnector::dbListTables(dataSource$connection, schema = dataSource$resultsDatabaseSchema))
 
   if (required || selectTableName %in% resultsTablesOnServer) {
+    if (tableIsEmpty(dataSource, selectTableName)) {
+      return(NULL)
+    }
+
     tryCatch(
     {
       table <- DatabaseConnector::dbReadTable(
@@ -51,14 +55,19 @@ loadResultsTable <- function(dataSource, tableName, required = FALSE, tablePrefi
 
 # Create empty objects in memory for all other tables. This is used by the Shiny app to decide what tabs to show:
 tableIsEmpty <- function(dataSource, tableName) {
-  sql <-
-    sprintf(
-      "SELECT 1 FROM %s.%s LIMIT 1;",
-      dataSource$resultsDatabaseSchema,
-      tableName
-    )
-  oneRow <- DatabaseConnector::dbGetQuery(dataSource$connection, sql)
-  return(nrow(oneRow) == 0)
+  sql <- "SELECT * FROM @result_schema.@table LIMIT 1"
+  row <- data.frame()
+  tryCatch({
+    row <- renderTranslateQuerySql(dataSource$connection,
+                                   sql,
+                                   dataSource$dbms,
+                                   result_schema = dataSource$resultsDatabaseSchema,
+                                   table = tableName)
+  }, error = function(...) {
+    message("Table not found: ", tableName)
+  })
+
+  return(nrow(row) == 0)
 }
 
 getTimeAsInteger <- function(time = Sys.time()) {
@@ -295,7 +304,7 @@ initializeEnvironment <- function(shinySettings,
     }
   }
 
-  envir$enableAnnotation  <- envir$shinySettings$enableAnnotation
+  envir$enableAnnotation <- envir$shinySettings$enableAnnotation
 
   if (nrow(envir$userCredentials) == 0) {
     envir$enableAuthorization <- FALSE
