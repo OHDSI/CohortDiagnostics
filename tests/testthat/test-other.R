@@ -174,7 +174,7 @@ test_that("subset function", {
     readr::read_csv(file = file.path(outputFolder, "cohort.csv"),
                     col_types = readr::cols())
   
-  testthat::expect_length(object = cohort$cohortId, n = 2)
-  testthat::expect_equal(cohort$cohortId %>% sort(), expected = c(1, 2))
+  testthat::expect_length(object = cohort$cohort_id, n = 2)
+  testthat::expect_equal(cohort$cohort_id %>% sort(), expected = c(1, 2))
   
 })

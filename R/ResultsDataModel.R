@@ -672,24 +672,21 @@ subsetResultsZip <-
               exportDirectory,
               paste0(tablesInResultsDataModel[[j]], ".csv")
             ),
-            col_types = readr::cols()) %>%
-            SqlRender::snakeCaseToCamelCaseNames()
+            col_types = readr::cols())
           
-          if ("cohortId" %in% colnames(dataFromZip)) {
+          if ("cohort_id" %in% colnames(dataFromZip)) {
             dataFromZip <- dataFromZip %>%
-              dplyr::filter(.data$cohortId %in% cohortIds)
+              dplyr::filter(.data$cohort_id %in% cohortIds)
+            
+            readr::write_excel_csv(
+              x = dataFromZip,
+              file = file.path(exportDirectory,
+                               paste0(tablesInResultsDataModel[[j]], ".csv")),
+              na = "",
+              quote = "all",
+              append = FALSE
+            )
           }
-          
-          readr::write_excel_csv(
-            x = dataFromZip,
-            file = file.path(
-              exportDirectory,
-              paste0(tablesInResultsDataModel[[j]], ".csv")
-            ),
-            na = "",
-            quote = "all",
-            append = FALSE
-          )
         }
       }
       
