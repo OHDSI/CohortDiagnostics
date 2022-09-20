@@ -598,3 +598,113 @@ deleteAllRecordsForDatabaseId <- function(connection,
     )
   }
 }
+
+
+
+
+#' Subset a previously generated cohort diagnostics results zip file
+#'
+#' @description
+#' Subset a previously generated cohort diagnostics results zip file sourced from a single data source by cohort ids
+#'
+#' @param inputFolder Location of previously generated cohort diagnostics results zip file.
+#'
+#' @param outputFolder Location for the output zip file.
+#'
+#' @param cohortIds An array of one or more cohort ids
+#'
+#' @return
+#' NULL
+#'
+#' @export
+subsetResultsZip <-
+  function(inputFolder,
+           outputFolder,
+           cohortIds) {
+    
+    checkmate::assertIntegerish(
+      x = cohortIds,
+      any.missing = FALSE,
+      min.len = 1,
+      null.ok = FALSE
+    )
+    
+    tempFolder <- tempdir()
+    unzipFolder <- tempfile(tmpdir = tempFolder)
+    dir.create(path = unzipFolder, recursive = TRUE)
+    on.exit(unlink(unzipFolder, recursive = TRUE), add = TRUE)
+    
+    zipFiles <-
+      list.files(
+        path = inputFolder,
+        pattern = ".zip",
+        full.names = TRUE,
+        recursive = TRUE,
+        include.dirs = TRUE
+      )
+    
+    if (length(zipFiles) == 0) {
+      stop("Did not find zipped file in inputFolder location")
+    }
+    
+    resultsDataModel <-
+      CohortDiagnostics::getResultsDataModelSpecifications()
+    tablesInResultsDataModel <- resultsDataModel %>%
+      dplyr::select(.data$tableName) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange() %>%
+      dplyr::pull(.data$tableName)
+    
+    for (i in (1:length(zipFiles))) {
+      ParallelLogger::logInfo("Unzipping ", basename(zipFiles[[i]]))
+      exportDirectory <-
+        file.path(unzipFolder, i, tools::file_path_sans_ext(basename(zipFiles[[i]])))
+      utils::unzip(zipfile = zipFiles[[i]],
+                   junkpaths = FALSE,
+                   exdir = exportDirectory)
+      listOfFilesInZippedFolder <-
+        list.files(path = exportDirectory, pattern = ".csv")
+      
+      for (j in (1:length(tablesInResultsDataModel))) {
+        if (paste0(tablesInResultsDataModel[[j]], ".csv") %in% listOfFilesInZippedFolder) {
+          dataFromZip <-
+            readr::read_csv(file = file.path(
+              exportDirectory,
+              paste0(tablesInResultsDataModel[[j]], ".csv")
+            ),
+            col_types = readr::cols()) %>%
+            SqlRender::snakeCaseToCamelCaseNames()
+          
+          if ("cohortId" %in% colnames(dataFromZip)) {
+            dataFromZip <- dataFromZip %>%
+              dplyr::filter(.data$cohortId %in% cohortIds)
+          }
+          
+          readr::write_excel_csv(
+            x = dataFromZip,
+            file = file.path(
+              exportDirectory,
+              paste0(tablesInResultsDataModel[[j]], ".csv")
+            ),
+            na = "",
+            quote = "all",
+            append = FALSE
+          )
+        }
+      }
+      
+      dir.create(path = outputFolder,
+                 showWarnings = FALSE,
+                 recursive = TRUE)
+      DatabaseConnector::createZipFile(
+        zipFile = file.path(outputFolder, basename(zipFiles[[i]])),
+        files = list.files(
+          path = exportDirectory,
+          pattern = ".csv",
+          full.names = TRUE,
+          include.dirs = TRUE
+        ),
+        rootFolder = exportDirectory
+      )
+    }
+  }

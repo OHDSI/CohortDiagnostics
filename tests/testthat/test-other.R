@@ -120,3 +120,61 @@ test_that("timeExecutions function", {
   result <- readr::read_csv(expectedFilePath)
   checkmate::expect_data_frame(result, nrows = 5, ncols = 5)
 })
+
+
+
+test_that("subset function", {
+  tempFolder <- tempdir()
+  on.exit(unlink(tempFolder, force = TRUE, recursive = TRUE))
+  
+  inputFolder <- file.path(tempFolder, "i")
+  outputFolder <- file.path(tempFolder, "o")
+  
+  dir.create(path = inputFolder,
+             showWarnings = FALSE,
+             recursive = TRUE)
+  dir.create(path = outputFolder,
+             showWarnings = FALSE,
+             recursive = TRUE)
+  
+  dplyr::tibble(cohort_id = c(1, 2, 3, 4, 5)) %>%
+    readr::write_excel_csv(file = file.path(inputFolder, "cohort.csv"))
+  
+  DatabaseConnector::createZipFile(
+    zipFile = file.path(inputFolder, "someDatasource.zip"),
+    files = file.path(inputFolder, "cohort.csv"),
+    rootFolder = file.path(inputFolder)
+  )
+  unlink(
+    x = file.path(inputFolder, "cohort.csv"),
+    recursive = TRUE,
+    force = TRUE
+  )
+  
+  subsetResultsZip(
+    inputFolder = tempFolder,
+    outputFolder = outputFolder,
+    cohortIds = c(1, 2)
+  )
+  
+  utils::unzip(
+    zipfile = list.files(
+      outputFolder,
+      pattern = ".zip",
+      full.names = TRUE,
+      recursive = TRUE,
+      include.dirs = TRUE
+    ),
+    overwrite = TRUE,
+    junkpaths = TRUE,
+    exdir = outputFolder
+  )
+  
+  cohort <-
+    readr::read_csv(file = file.path(outputFolder, "cohort.csv"),
+                    col_types = readr::cols())
+  
+  testthat::expect_length(object = cohort$cohortId, n = 2)
+  testthat::expect_equal(cohort$cohortId %>% sort(), expected = c(1, 2))
+  
+})
