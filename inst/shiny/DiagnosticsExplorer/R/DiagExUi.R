@@ -21,6 +21,7 @@ uiControls <- function(ns,
       input.tabs != 'orphanConcepts' &
       input.tabs != 'inclusionRuleStats' &
       input.tabs != 'visitContext' &
+      input.tabs != 'compareTemporalCharacterization' &
       input.tabs != 'cohortOverlap'",
       ns = ns,
       shiny::uiOutput(ns("databasePicker"))
@@ -45,6 +46,7 @@ uiControls <- function(ns,
       input.tabs != 'cohortCounts' &
       input.tabs != 'cohortOverlap'&
       input.tabs != 'incidenceRate' &
+      input.tabs != 'compareTemporalCharacterization' &
       input.tabs != 'timeDistribution'",
       ns = ns,
       shinyWidgets::pickerInput(
@@ -88,31 +90,8 @@ uiControls <- function(ns,
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs == 'compareCohortCharacterization'|
-        input.tabs == 'compareTemporalCharacterization'",
-      ns = ns,
-      shinyWidgets::pickerInput(
-        inputId = ns("comparatorCohort"),
-        label = "Comparator",
-        choices = c(""),
-        multiple = FALSE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
-          liveSearch = TRUE,
-          liveSearchStyle = "contains",
-          size = 10,
-          dropupAuto = TRUE,
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50
-        )
-      )
-    ),
-    shiny::conditionalPanel(
       condition = "input.tabs == 'cohortCharacterization' |
-      input.tabs == 'compareCohortCharacterization' |
       input.tabs == 'temporalCharacterization' |
-      input.tabs == 'compareTemporalCharacterization' |
       input.tabs == 'conceptsInDataSource' |
       input.tabs == 'orphanConcepts'",
       ns = ns,
@@ -259,13 +238,7 @@ dashboardUi <- function(enabledTabs,
       },
       if ("temporalCovariateValue" %in% enabledTabs) {
         addInfo(
-          item = shinydashboard::menuItem(text = "Compare Cohort Char.", tabName = "compareCohortCharacterization"),
-          infoId = "compareCohortCharacterizationInfo"
-        )
-      },
-      if ("temporalCovariateValue" %in% enabledTabs) {
-        addInfo(
-          shinydashboard::menuItem(text = "Compare Temporal Char.", tabName = "compareTemporalCharacterization"),
+          shinydashboard::menuItem(text = "Compare Characterization", tabName = "compareTemporalCharacterization"),
           infoId = "compareTemporalCharacterizationInfo"
         )
       },
@@ -412,20 +385,8 @@ dashboardUi <- function(enabledTabs,
       }
     ),
     shinydashboard::tabItem(
-      tabName = "compareCohortCharacterization",
-      compareCohortCharacterizationView(ns("compareCohortCharacterization")),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationUi(ns("compareCohortCharacterizationAnnotation"))
-        )
-      }
-    ),
-    shinydashboard::tabItem(
       tabName = "compareTemporalCharacterization",
-      compareCohortCharacterizationView(ns("compareTemporalCohortCharacterization"),
-                                        title = "Compare temporal cohort characterization"),
+      compareCohortCharacterizationView(ns("compareTemporalCohortCharacterization")),
       if (showAnnotation) {
         column(
           12,
@@ -516,11 +477,7 @@ tabularUi <- function(enabledTabs,
                             value = "temporalCharacterization")
           },
           if ("temporalCovariateValue" %in% enabledTabs) {
-            shiny::tabPanel("Compare Characterization", compareCohortCharacterizationView(ns("compareCohortCharacterization")),
-                            value = "compareCohortCharacterization")
-          },
-          if ("temporalCovariateValue" %in% enabledTabs) {
-            shiny::tabPanel("Compare Temporal Characterization", compareCohortCharacterizationView(ns("compareTemporalCohortCharacterization")),
+            shiny::tabPanel("Compare Characterization", compareCohortCharacterizationView(ns("compareTemporalCohortCharacterization")),
                             value = "compareTemporalCharacterization")
           },
           shiny::tabPanel("Database Information", databaseInformationView(ns("databaseInformation")),

@@ -224,7 +224,6 @@ compareCohortCharacteristics <-
         characteristics2Renamed,
         na_matches = c("na"),
         by = c(
-          "databaseId",
           "timeId",
           "startDay",
           "endDay",

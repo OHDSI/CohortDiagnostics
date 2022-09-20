@@ -204,11 +204,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       }
     })
 
-    # Reacive: comparatorCohortId
-    comparatorCohortId <- shiny::reactive({
-      return(cohortTable$cohortId[cohortTable$compoundName == input$comparatorCohort])
-    })
-
     selectedConceptSets <- reactiveVal(NULL)
     shiny::observeEvent(eventExpr = {
       list(
@@ -750,41 +745,15 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                      domainIdOptions = envir$domainIdOptions,
                                      temporalCharacterizationTimeIdChoices = envir$temporalCharacterizationTimeIdChoices)
 
-      compareCohortCharacterizationModule("compareCohortCharacterization",
-                                          dataSource = dataSource,
-                                          selectedCohort = selectedCohort,
-                                          selectedDatabaseIds = selectedDatabaseIds,
-                                          targetCohortId = targetCohortId,
-                                          comparatorCohortId = comparatorCohortId,
-                                          selectedComparatorCohort = selectedComparatorCohort,
-                                          selectedConceptSets = selectedConceptSets,
-                                          getFilteredConceptIds = getFilteredConceptIds,
-                                          cohortTable = cohortTable,
-                                          databaseTable = databaseTable,
-                                          temporalAnalysisRef = envir$temporalAnalysisRef,
-                                          showTemporalChoices = FALSE,
-                                          analysisNameOptions = envir$analysisNameOptions,
-                                          domainIdOptions = envir$domainIdOptions,
-                                          temporalChoices = envir$temporalChoices,
-                                          prettyTable1Specifications = envir$prettyTable1Specifications)
-
       compareCohortCharacterizationModule("compareTemporalCohortCharacterization",
                                           dataSource = dataSource,
-                                          selectedCohort = selectedCohort,
-                                          selectedDatabaseIds = selectedDatabaseIds,
-                                          targetCohortId = targetCohortId,
-                                          comparatorCohortId = comparatorCohortId,
-                                          selectedComparatorCohort = selectedComparatorCohort,
-                                          selectedConceptSets = selectedConceptSets,
-                                          getFilteredConceptIds = getFilteredConceptIds,
                                           cohortTable = cohortTable,
                                           databaseTable = databaseTable,
+                                          conceptSets = conceptSets,
                                           temporalAnalysisRef = envir$temporalAnalysisRef,
-                                          showTemporalChoices = TRUE,
                                           analysisNameOptions = envir$analysisNameOptions,
                                           domainIdOptions = envir$domainIdOptions,
-                                          temporalChoices = envir$temporalChoices,
-                                          prettyTable1Specifications = envir$prettyTable1Specifications)
+                                          temporalChoices = envir$temporalChoices)
     }
 
     if ("incidenceRate" %in% enabledTabs) {

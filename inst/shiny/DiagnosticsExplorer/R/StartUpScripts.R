@@ -143,7 +143,7 @@ processMetadata <- function(data) {
 checkErrorCohortIdsDatabaseIds <- function(errorMessage,
                                            cohortIds,
                                            databaseIds) {
-  checkmate::assertDouble(
+  checkmate::assertNumeric(
     x = cohortIds,
     null.ok = FALSE,
     lower = 1,

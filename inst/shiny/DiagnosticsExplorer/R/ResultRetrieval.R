@@ -51,12 +51,6 @@ queryResultCovariateValue <- function(dataSource,
                                       meanThreshold = 0) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <-
-    checkErrorCohortIdsDatabaseIds(
-      cohortIds = cohortIds,
-      databaseIds = databaseIds,
-      errorMessage = errorMessage
-    )
   checkmate::assertIntegerish(
     x = startDay,
     any.missing = TRUE,
