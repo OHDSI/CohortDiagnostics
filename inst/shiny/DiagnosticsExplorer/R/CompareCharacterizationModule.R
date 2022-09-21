@@ -681,7 +681,11 @@ compareCohortCharacterizationModule <- function(id,
         columns = list(
           StdDiff = reactable::colDef(
             cell = function(value) { round(value, 3)}
-          )
+          ),
+
+          covariateName = reactable::colDef(name = "Covariate Name", width = 400),
+          analysisName = reactable::colDef(name = "Analysis Name"),
+          conceptId = reactable::colDef(name = "Concept Id")
         ),
         sortable = TRUE,
         resizable = TRUE,
