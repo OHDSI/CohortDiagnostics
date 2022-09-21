@@ -106,11 +106,11 @@ getConceptSetDataFrameFromConceptSetExpression <-
       }
       conceptSetExpressionDetails <-
         conceptSetExpressionDetails %>%
-        tidyr::replace_na(list(
-          IS_EXCLUDED = FALSE,
-          INCLUDE_DESCENDANTS = FALSE,
-          INCLUDE_MAPPED = FALSE
-        ))
+          tidyr::replace_na(list(
+            IS_EXCLUDED = FALSE,
+            INCLUDE_DESCENDANTS = FALSE,
+            INCLUDE_MAPPED = FALSE
+          ))
       colnames(conceptSetExpressionDetails) <-
         SqlRender::snakeCaseToCamelCase(colnames(conceptSetExpressionDetails))
     }
@@ -144,11 +144,11 @@ getConceptSetDetailsFromCohortDefinition <-
       conceptSetExpressionDetails[[i]] <-
         getConceptSetDataFrameFromConceptSetExpression(
           conceptSetExpression =
-            conceptSetExpression[i, ]$expression$items
+            conceptSetExpression[i,]$expression$items
         ) %>%
-        dplyr::mutate(id = conceptSetExpression[i, ]$id) %>%
-        dplyr::relocate(.data$id) %>%
-        dplyr::arrange(.data$id)
+          dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
+          dplyr::relocate(.data$id) %>%
+          dplyr::arrange(.data$id)
     }
     conceptSetExpressionDetails <-
       dplyr::bind_rows(conceptSetExpressionDetails)
@@ -158,7 +158,6 @@ getConceptSetDetailsFromCohortDefinition <-
     )
     return(output)
   }
-
 
 
 exportCohortDefinitionsZip <- function(cohortDefinitions,
@@ -178,13 +177,13 @@ exportCohortDefinitionsZip <- function(cohortDefinitions,
   tempdir <- file.path(tempdir(), rootFolder)
 
   for (i in (1:nrow(cohortDefinitions))) {
-    cohortId <- cohort[i, ]$cohortId
+    cohortId <- cohort[i,]$cohortId
     dir.create(
       path = file.path(tempdir, cohortId),
       recursive = TRUE,
       showWarnings = FALSE
     )
-    cohortExpression <- cohortDefinitions[i, ]$json %>%
+    cohortExpression <- cohortDefinitions[i,]$json %>%
       RJSONIO::fromJSON(digits = 23)
 
     details <-
@@ -306,11 +305,13 @@ cohortDefinitionsView <- function(id) {
                                           )
                                         ),
                                         tags$td(
-                                          # Choices load in server
-                                          shiny::selectInput(ns("vocabularySelection"),
-                                                             label = "Vocabulary version:",
-                                                             width = 200,
-                                                             choices = c())
+                                          shiny::conditionalPanel(
+                                            condition = "input.conceptSetsType == 'Resolved' | input.conceptSetsType == 'Mapped'",
+                                            shiny::selectInput(ns("vocabularySelection"),
+                                                               label = "Database:",
+                                                               width = 400,
+                                                               choices = c())
+                                          )
                                         ),
                                         tags$td(
                                           shiny::htmlOutput(ns("subjectCountInCohortConceptSet"))
@@ -325,17 +326,17 @@ cohortDefinitionsView <- function(id) {
                   input.conceptSetsType != 'Resolved' &
                   input.conceptSetsType != 'Mapped' &
                   input.conceptSetsType != 'Json'",
-                reactable::reactableOutput(outputId = ns("cohortDefinitionConceptSetDetailsTable"))
+                shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("cohortDefinitionConceptSetDetailsTable")))
               ),
               shiny::conditionalPanel(
                 ns = ns,
                 condition = "input.conceptSetsType == 'Resolved'",
-                reactable::reactableOutput(outputId = ns("cohortDefinitionResolvedConceptsTable"))
+                shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("cohortDefinitionResolvedConceptsTable")))
               ),
               shiny::conditionalPanel(
                 ns = ns,
                 condition = "input.conceptSetsType == 'Mapped'",
-                reactable::reactableOutput(outputId = ns("cohortDefinitionMappedConceptsTable"))
+                shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("cohortDefinitionMappedConceptsTable")))
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Json'",
@@ -836,56 +837,6 @@ cohortDefinitionsModule <- function(id,
       return(json)
     })
 
-    ## Other ---------------------------------------------------------
-    ### getConceptSetIds ---------------------------------------------------------
-    getConceptSetIds <- shiny::reactive(x = {
-      return(conceptSets$conceptSetId[conceptSets$conceptSetName %in% input$conceptSetsSelected])
-    })
-
-    ### getCohortDefinitionOrphanConceptsReactive ---------------------------------------------------------
-    getCohortDefinitionOrphanConceptsReactive <- shiny::reactive(x = {
-      validate(need(
-        all(
-          !is.null(getDatabaseIdInCohortConceptSet()),
-          length(getDatabaseIdInCohortConceptSet()) > 0
-        ),
-        "Orphan codes are not available for reference vocabulary in this version."
-      ))
-      if (is.null(row) ||
-        length(cohortDefinitionConceptSetExpressionSelected()$name) == 0) {
-        return(NULL)
-      }
-      validate(need(
-        length(input$vocabularySchema) > 0,
-        "No data sources chosen"
-      ))
-      row <- selectedCohortDefinitionRow()
-      if (is.null(row)) {
-        return(NULL)
-      }
-      output <- getOrphanConceptResult(
-        dataSource = dataSource,
-        databaseIds = databaseTable$databaseId,
-        cohortId = row$cohortId
-      )
-      if (!hasData(output)) {
-        return(NULL)
-      }
-      output <- output %>%
-        dplyr::anti_join(getCohortDefinitionResolvedConceptsReactive() %>%
-                           dplyr::select(.data$conceptId) %>%
-                           dplyr::distinct(),
-                         by = "conceptId")
-      if (!hasData(output)) {
-        return(NULL)
-      }
-
-      output <- output %>%
-        dplyr::rename("persons" = .data$conceptSubjects,
-                      "records" = .data$conceptCount)
-      return(output)
-    })
-
     vocabSchema <- shiny::reactive({
       if (is.null(input$vocabularySelection)) {
         return("")
@@ -972,11 +923,9 @@ cohortDefinitionsModule <- function(id,
 
       })
 
+    vocabularyChoices <- databaseTable$databaseIdWithVocabularyVersion
+    names(vocabularyChoices) <- databaseTable$databaseName
 
-    vocabularyChoices <- list(
-      'From site' = databaseTable$databaseIdWithVocabularyVersion,
-      'Reference Vocabulary' = dataSource$vocabularyDatabaseSchema
-    )
     shiny::observe({
       shiny::updateSelectInput(session,
                                inputId = "vocabularySelection",
