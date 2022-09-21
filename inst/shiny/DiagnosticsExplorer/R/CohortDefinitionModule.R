@@ -300,7 +300,6 @@ cohortDefinitionsView <- function(id) {
                                             choices = c("Concept Set Expression",
                                                         "Resolved",
                                                         "Mapped",
-                                                        "Orphan concepts",
                                                         "Json"),
                                             selected = "Concept Set Expression",
                                             inline = TRUE
@@ -325,8 +324,7 @@ cohortDefinitionsView <- function(id) {
                 condition = "output.cohortDefinitionConceptSetExpressionRowIsSelected == true &
                   input.conceptSetsType != 'Resolved' &
                   input.conceptSetsType != 'Mapped' &
-                  input.conceptSetsType != 'Json' &
-                  input.conceptSetsType != 'Orphan concepts'",
+                  input.conceptSetsType != 'Json'",
                 reactable::reactableOutput(outputId = ns("cohortDefinitionConceptSetDetailsTable"))
               ),
               shiny::conditionalPanel(
@@ -338,11 +336,6 @@ cohortDefinitionsView <- function(id) {
                 ns = ns,
                 condition = "input.conceptSetsType == 'Mapped'",
                 reactable::reactableOutput(outputId = ns("cohortDefinitionMappedConceptsTable"))
-              ),
-              shiny::conditionalPanel(
-                ns = ns,
-                condition = "input.conceptSetsType == 'Orphan concepts'",
-                reactable::reactableOutput(outputId = ns("cohortDefinitionOrphanConceptTable"))
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Json'",
@@ -886,14 +879,7 @@ cohortDefinitionsModule <- function(id,
       if (!hasData(output)) {
         return(NULL)
       }
-      output <- output %>%
-        dplyr::anti_join(getCohortDefinitionMappedConceptsReactive() %>%
-                           dplyr::select(.data$conceptId) %>%
-                           dplyr::distinct(),
-                         by = "conceptId")
-      if (!hasData(output)) {
-        return(NULL)
-      }
+
       output <- output %>%
         dplyr::rename("persons" = .data$conceptSubjects,
                       "records" = .data$conceptCount)
@@ -906,50 +892,6 @@ cohortDefinitionsModule <- function(id,
       }
       input$vocabularySelection
     })
-
-    output$cohortDefinitionOrphanConceptTable <-
-      reactable::renderReactable(expr = {
-        if (input$conceptSetsType != 'Orphan concepts') {
-          return(NULL)
-        }
-
-        databaseIdToFilter <- databaseTable %>%
-          dplyr::filter(.data$databaseIdWithVocabularyVersion == vocabSchema()) %>%
-          dplyr::pull(.data$databaseId)
-        if (!hasData(databaseIdToFilter)) {
-          return(NULL)
-        }
-        data <- getCohortDefinitionOrphanConceptsReactive()
-        validate(need(
-          hasData(data),
-          paste0("No data for database id ", input$vocabularySchema)
-        ))
-        data <- data %>%
-          dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id) %>%
-          dplyr::filter(.data$databaseId == databaseIdToFilter) %>%
-          dplyr::rename(
-            "subjects" = .data$persons,
-            "count" = .data$records,
-            "standard" = .data$standardConcept
-          )
-        validate(need(
-          hasData(data),
-          paste0("No data for database id ", input$vocabularySchema)
-        ))
-        keyColumns <-
-          c("conceptId",
-            "conceptName",
-            "vocabularyId",
-            "conceptCode",
-            "standard")
-        dataColumns <- c("subjects",
-                         "count")
-
-        displayTable <- getDisplayTableSimple(data = data,
-                                              keyColumns = keyColumns,
-                                              dataColumns = dataColumns)
-        return(displayTable)
-      })
 
     ### getCohortDefinitionMappedConceptsReactive ---------------------------------------------------------
     getCohortDefinitionMappedConceptsReactive <-
