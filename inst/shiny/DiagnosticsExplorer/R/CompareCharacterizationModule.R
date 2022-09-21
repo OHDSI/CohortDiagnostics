@@ -161,7 +161,7 @@ compareCohortCharacterizationView <- function(id, title = "Compare cohort charac
       width = NULL,
       title = title,
       shiny::fluidRow(
-      shiny::column(
+        shiny::column(
           width = 2,
           shiny::radioButtons(
             inputId = ns("charCompareType"),
@@ -224,26 +224,7 @@ compareCohortCharacterizationView <- function(id, title = "Compare cohort charac
       ),
       shiny::fluidRow(
         shiny::column(
-          width = 6,
-          shinyWidgets::pickerInput(
-            inputId = ns("conceptSetsSelected"),
-            label = "Concept sets",
-            choices = c(""),
-            selected = c(""),
-            multiple = TRUE,
-            choicesOpt = list(style = rep_len("color: black;", 999)),
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              liveSearch = TRUE,
-              size = 10,
-              liveSearchStyle = "contains",
-              liveSearchPlaceholder = "Type here to search",
-              virtualScroll = 50
-            )
-          )
-        ),
-        shiny::column(
-          width = 6,
+          width = 4,
           shiny::conditionalPanel(
             condition = "input.charCompareType == 'Plot'",
             ns = ns,
@@ -285,68 +266,49 @@ compareCohortCharacterizationView <- function(id, title = "Compare cohort charac
               )
             )
           )
-        )
-      ),
-      shiny::conditionalPanel(
-        condition = "input.charCompareType == 'Raw table' | input.charCompareType=='Plot'",
-        ns = ns,
-        shiny::fluidRow(
-          shiny::column(
-            width = 6,
-            shinyWidgets::pickerInput(
-              inputId = ns("analysisNameFilter"),
-              label = "Analysis name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ),
-          shiny::column(
-            width = 6,
-            shinyWidgets::pickerInput(
-              inputId = ns("domainIdFilter"),
-              label = "Domain name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
+        ),
+        shiny::column(
+          width = 4,
+          shinyWidgets::pickerInput(
+            inputId = ns("analysisNameFilter"),
+            label = "Analysis name",
+            choices = c(""),
+            selected = c(""),
+            multiple = TRUE,
+            choicesOpt = list(style = rep_len("color: black;", 999)),
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              size = 10,
+              liveSearchStyle = "contains",
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
             )
           )
-        )
+        ),
+        shiny::column(
+          width = 4,
+          shinyWidgets::pickerInput(
+            inputId = ns("domainIdFilter"),
+            label = "Domain name",
+            choices = c(""),
+            selected = c(""),
+            multiple = TRUE,
+            choicesOpt = list(style = rep_len("color: black;", 999)),
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              size = 10,
+              liveSearchStyle = "contains",
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
+          )
+        ),
       ),
-
-      shiny::conditionalPanel(
-        condition = "input.charCompareType=='Raw table'",
-        ns = ns,
-        shiny::radioButtons(
-          inputId = ns("compareCharacterizationColumnFilters"),
-          label = "Display values",
-          choices = c("Mean", "Mean and Standard Deviation"),
-          selected = "Mean",
-          inline = TRUE
-        )
-      ),
-
       shiny::fluidRow(
         shiny::column(
-          width = 6,
+          width = 3,
           shiny::numericInput(
             inputId = ns("minMeanFilterVal"),
             label = "Min Covariate Mean",
@@ -356,14 +318,33 @@ compareCohortCharacterizationView <- function(id, title = "Compare cohort charac
             step = 0.005
           )
         ),
-        shiny::column(
-          width = 6,
-          shiny::radioButtons(
-            inputId = ns("proportionOrContinuous"),
-            label = "Covariate Type",
-            choices = c("All", "Proportion", "Continuous"),
-            selected = "Proportion",
-            inline = TRUE
+        shiny::conditionalPanel(
+          condition = "input.charCompareType=='Raw table'",
+          ns = ns,
+          shiny::column(
+            width = 3,
+            shiny::radioButtons(
+              inputId = ns("proportionOrContinuous"),
+              label = "Covariate Type",
+              choices = c("All", "Proportion", "Continuous"),
+              selected = "Proportion",
+              inline = TRUE
+            )
+          ),
+          shiny::column(
+            width = 3,
+            shiny::radioButtons(
+              inputId = ns("compareCharacterizationColumnFilters"),
+              label = "Display values",
+              choices = c("Mean", "Mean and Standard Deviation"),
+              selected = "Mean",
+              inline = TRUE
+            ),
+            shiny::checkboxInput(
+              inputId = ns("showOnlyMutualCovariates"),
+              label = "Show only covariates found in target and comparator",
+              value = FALSE
+            )
           )
         )
       ),
@@ -492,54 +473,6 @@ compareCohortCharacterizationModule <- function(id,
     selectedDatabaseIds <- shiny::reactive({
       c(input$targetDatabase, input$comparatorDatabase)
     })
-
-    getConceptSetNameForFilter <- shiny::reactive(x = {
-      if (!hasData(targetCohortId()) || !hasData(selectedDatabaseIds())) {
-        return(NULL)
-      }
-
-      jsonExpression <- cohortTable %>%
-        dplyr::filter(.data$cohortId == targetCohortId()) %>%
-        dplyr::select(.data$json)
-      jsonExpression <-
-        RJSONIO::fromJSON(jsonExpression$json, digits = 23)
-      expression <-
-        getConceptSetDetailsFromCohortDefinition(cohortDefinitionExpression = jsonExpression)
-      if (is.null(expression)) {
-        return(NULL)
-      }
-
-      expression <- expression$conceptSetExpression %>%
-        dplyr::select(.data$name)
-
-      return(expression)
-    })
-
-    shiny::observe({
-      subset <- getConceptSetNameForFilter()
-      subset <- subset$name %>%
-        sort() %>%
-        unique()
-      shinyWidgets::updatePickerInput(
-        session = session,
-        inputId = "conceptSetsSelected",
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = subset
-      )
-    })
-
-    selectedConceptSets <- shiny::reactive(input$conceptSetsSelected)
-
-    conceptSetIds <- shiny::reactive(x = {
-      conceptSetsFiltered <- conceptSets %>%
-        dplyr::filter(.data$conceptSetName %in% selectedConceptSets()) %>%
-        dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
-        dplyr::select(.data$conceptSetId) %>%
-        dplyr::pull() %>%
-        unique()
-      return(conceptSetsFiltered)
-    })
-
     temporalCharacterizationOutput <-
       shiny::reactive(x = {
 
@@ -610,67 +543,6 @@ compareCohortCharacterizationModule <- function(id,
       )
     })
 
-    ### getResolvedConceptsReactive ----
-    getResolvedConcepts <-
-      shiny::reactive(x = {
-        output <-
-          resolvedConceptSet(
-            dataSource = dataSource,
-            databaseIds = as.character(databaseTable$databaseId),
-            cohortId = targetCohortId()
-          )
-        if (!hasData(output)) {
-          return(NULL)
-        }
-        return(output)
-      })
-
-    ### getMappedConceptsReactive ----
-    getMappedConcepts <-
-      shiny::reactive(x = {
-        progress <- shiny::Progress$new()
-        on.exit(progress$close())
-        progress$set(message = "Getting concepts mapped to concept ids resolved by concept set expression (may take time)", value = 0)
-        output <-
-          mappedConceptSet(
-            dataSource = dataSource,
-            databaseIds = as.character(databaseTable$databaseId),
-            cohortId = targetCohortId()
-          )
-        if (!hasData(output)) {
-          return(NULL)
-        }
-        return(output)
-      })
-
-    getFilteredConceptIds <- shiny::reactive({
-      validate(need(hasData(selectedDatabaseIds()), "No data sources chosen"))
-      validate(need(hasData(targetCohortId()), "No cohort chosen"))
-      validate(need(hasData(conceptSetIds()), "No concept set id chosen"))
-      resolved <- getResolvedConcepts()
-      mapped <- getMappedConcepts()
-      output <- c()
-      if (hasData(resolved)) {
-        resolved <- resolved %>%
-          dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-          dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
-          dplyr::filter(.data$conceptSetId %in% conceptSetIds())
-        output <- c(output, resolved$conceptId) %>% unique()
-      }
-      if (hasData(mapped)) {
-        mapped <- mapped %>%
-          dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-          dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
-          dplyr::filter(.data$conceptSetId %in% conceptSetIds())
-        output <- c(output, mapped$conceptId) %>% unique()
-      }
-      if (hasData(output)) {
-        return(output)
-      } else {
-        return(NULL)
-      }
-    })
-
     ## compareCohortCharacterizationDataFiltered ------------
     compareCohortCharacterizationDataFiltered <- shiny::reactive({
       validate(need(length(targetCohortId()) == 1, "One target cohort must be selected"))
@@ -698,7 +570,7 @@ compareCohortCharacterizationModule <- function(id,
         dplyr::filter(.data$cohortId %in% c(targetCohortId(), comparatorCohortId())) %>%
         dplyr::filter(.data$databaseId %in% selectedDatabaseIds())
 
-      if (input$charCompareType == "Raw") {
+      if (input$charCompareType == "Raw table") {
         if (input$proportionOrContinuous == "Proportion") {
           data <- data %>%
             dplyr::filter(.data$isBinary == "Y")
@@ -712,12 +584,6 @@ compareCohortCharacterizationModule <- function(id,
         dplyr::filter(.data$analysisName %in% input$analysisNameFilter) %>%
         dplyr::filter(.data$domainId %in% input$domainIdFilter)
 
-      if (hasData(selectedConceptSets())) {
-        if (hasData(getFilteredConceptIds())) {
-          data <- data %>%
-            dplyr::filter(.data$conceptId %in% getFilteredConceptIds())
-        }
-      }
       if (!hasData(data)) {
         return(NULL)
       }
@@ -743,8 +609,7 @@ compareCohortCharacterizationModule <- function(id,
         return(NULL)
       }
 
-      balance <- compareCohortCharacteristics(covs1, covs2)
-      return(balance)
+      return(compareCohortCharacteristics(covs1, covs2))
     })
 
     ## compareCohortCharacterizationRawTable ----------------------------------------
@@ -767,7 +632,7 @@ compareCohortCharacterizationModule <- function(id,
         dplyr::arrange(factor(.data$temporalChoices, levels = sortedTemporalChoices))
 
       data <- data %>%
-        dplyr::filter(.data$timeId %in% selectedTimeIdsSingle())
+        dplyr::filter(.data$timeId == selectedTimeIdsSingle())
 
       progress <- shiny::Progress$new()
       on.exit(progress$close())
@@ -777,47 +642,71 @@ compareCohortCharacterizationModule <- function(id,
       )
       data <- data %>%
         dplyr::rename(
-          "target" = mean1,
-          "sdT" = sd1,
-          "comparator" = mean2,
-          "sdC" = sd2,
-          "StdDiff" = absStdDiff
+          "target" = .data$mean1,
+          "sdT" = .data$sd1,
+          "comparator" = .data$mean2,
+          "sdC" = .data$sd2,
+          "StdDiff" = .data$absStdDiff
         )
 
-      keyColumnFields <-
-        c("covariateName", "analysisName", "conceptId")
-
-      showDataAsPercent <- FALSE
       if (input$compareCharacterizationColumnFilters == "Mean and Standard Deviation") {
-        dataColumnFields <-
-          c(
-            "target",
-            "sdT",
-            "comparator",
-            "sdC",
-            "StdDiff"
-          )
+
+        data <- data %>%
+          dplyr::select(.data$covariateName,
+                        .data$analysisName,
+                        .data$conceptId,
+                        .data$target,
+                        .data$sdT,
+                        .data$comparator,
+                        .data$sdC,
+                        .data$StdDiff)
       } else {
-        dataColumnFields <- c("target", "comparator", "StdDiff")
-        if (input$proportionOrContinuous == "Proportion") {
-          showDataAsPercent <- TRUE
-        }
+        data <- data %>%
+          dplyr::select(.data$covariateName,
+                        .data$analysisName,
+                        .data$conceptId,
+                        .data$target,
+                        .data$comparator,
+                        .data$StdDiff)
       }
-      getDisplayTableGroupedByDatabaseId(
+
+      # Covariates where stdDiff is NA or NULL
+      if (input$showOnlyMutualCovariates) {
+        data <- data %>% dplyr::filter(!is.na(.data$StdDiff),
+                                       !is.null(.data$StdDiff))
+      }
+
+      reactable::reactable(
         data = data,
-        cohort = cohortTable,
-        databaseTable = databaseTable,
-        headerCount = NULL,
-        keyColumns = keyColumnFields,
-        countLocation = 1,
-        dataColumns = dataColumnFields,
-        maxCount = 1,
-        showDataAsPercent = showDataAsPercent,
-        excludedColumnFromPercentage = "StdDiff",
-        sort = TRUE,
-        isTemporal = TRUE,
-        pageSize = 100
+        columns = list(
+          StdDiff = reactable::colDef(
+            cell = function(value) { round(value, 3)}
+          )
+        ),
+        sortable = TRUE,
+        resizable = TRUE,
+        filterable = TRUE,
+        searchable = TRUE,
+        pagination = TRUE,
+        showPagination = TRUE,
+        showPageInfo = TRUE,
+        highlight = TRUE,
+        striped = TRUE,
+        compact = TRUE,
+        wrap = FALSE,
+        showSortIcon = TRUE,
+        showSortable = TRUE,
+        fullWidth = TRUE,
+        bordered = TRUE,
+        showPageSizeOptions = TRUE,
+        pageSizeOptions = c(10, 20, 50, 100, 1000),
+        defaultPageSize = 100,
+        selection = NULL,
+        theme = reactable::reactableTheme(
+          rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
+        )
       )
+
     })
 
     selectionsOutput <- shiny::reactive({
@@ -839,13 +728,13 @@ compareCohortCharacterizationModule <- function(id,
         width = "100%",
         shiny::fluidRow(
           shiny::column(
-            width = 9,
+            width = 7,
             tags$b("Target Cohort :"), paste0(target, " C", targetCohortId()),
             tags$br(),
             tags$b("Comparator Cohort :"), paste0(comparator, " C", comparatorCohortId())
           ),
           shiny::column(
-            width = 3,
+            width = 5,
             tags$b("Target Database :"),
             paste(databaseTable %>%
                     dplyr::filter(.data$databaseId == input$targetDatabase) %>%
@@ -907,7 +796,8 @@ compareCohortCharacterizationModule <- function(id,
       distinctTemporalChoices <- unique(temporalChoices$temporalChoices)
 
       data <- data %>%
-        dplyr::filter(.data$timeId %in% selectedTimeIds()) %>%
+        dplyr::filter(.data$timeId %in% selectedTimeIds(),
+                      !is.na(.data$stdDiff)) %>%
         dplyr::arrange(factor(.data$temporalChoices, levels = distinctTemporalChoices)) %>%
         dplyr::mutate(temporalChoices = factor(.data$temporalChoices, levels = unique(.data$temporalChoices)))
 

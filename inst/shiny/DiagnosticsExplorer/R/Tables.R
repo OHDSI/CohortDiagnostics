@@ -204,7 +204,7 @@ compareCohortCharacteristics <-
       )
     cohortId1Value <- characteristics1Renamed$cohortId1 %>% unique()
     if (length(cohortId1Value) > 1) {
-      stop("We can only compare one target cohort id to one comparator cohort id")
+      stop("Can only compare one target cohort id to one comparator cohort id")
     }
 
     characteristics2Renamed <- characteristics2 %>%
@@ -216,7 +216,7 @@ compareCohortCharacteristics <-
       )
     cohortId2Value <- characteristics2Renamed$cohortId2 %>% unique()
     if (length(cohortId2Value) > 1) {
-      stop("We can only compare one target cohort id to one comparator cohort id")
+      stop("Can only compare one target cohort id to one comparator cohort id")
     }
 
     characteristics <- characteristics1Renamed %>%
@@ -238,15 +238,19 @@ compareCohortCharacteristics <-
         )
       ) %>%
       dplyr::mutate(
-        sd = sqrt(.data$sd1^2 + .data$sd2^2),
-        stdDiff = (.data$mean2 - .data$mean1) / .data$sd
-      ) %>%
+        sdd = sqrt(.data$sd1^2 + .data$sd2^2)
+      )
+
+    characteristics$stdDiff <- (characteristics$mean1 - characteristics$mean2) / characteristics$sdd
+
+    characteristics <- characteristics %>%
       dplyr::arrange(-abs(.data$stdDiff)) %>%
-      dplyr::mutate(stdDiff = dplyr::na_if(.data$sd, "Inf")) %>%
+      dplyr::mutate(stdDiff = dplyr::na_if(.data$stdDiff, "Inf")) %>%
       dplyr::mutate(
         absStdDiff = abs(.data$stdDiff),
         cohortId1 = !!cohortId1Value,
         cohortId2 = !!cohortId2Value
       )
+
     return(characteristics)
   }
