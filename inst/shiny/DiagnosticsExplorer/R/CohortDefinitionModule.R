@@ -259,7 +259,7 @@ cohortDefinitionsView <- function(id) {
                 td(
                   align = "right",
                   shiny::downloadButton(
-                    outputId = "exportAllCohortDetails",
+                    outputId = ns("exportAllCohortDetails"),
                     label = "Export Cohorts Zip",
                     icon = shiny::icon("file-export"),
                     style = "margin-top: 5px; margin-bottom: 5px;"
@@ -941,10 +941,8 @@ cohortDefinitionsModule <- function(id,
         shiny::withProgress(
           message = "Export is in progress",
         {
-          exportCohortDefinitionsZip(
-            cohortDefintions = cohortTable,
-            zipFile = file
-          )
+
+          exportCohortDefinitionsZip(cohortTable, zipFile = file)
         },
           detail = "Please Wait"
         )
