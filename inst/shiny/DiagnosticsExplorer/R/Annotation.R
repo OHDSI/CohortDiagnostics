@@ -381,9 +381,9 @@ postAnnotationResult <- function(dataSource,
       created_by = createdBy,
       created_on = createdOn
     )
-  
+
   maxAnnotationId <- maxAnnotationId$annotation_id
-  
+
   # insert annotation link
   annotationLink <-
     tidyr::crossing(
@@ -414,29 +414,31 @@ getAnnotationResult <- function(dataSource,
                                 cohortIds,
                                 databaseIds) {
   data <- NULL
-  # get annotation id's
-  sqlRetrieveAnnotationLink <- "SELECT *
+
+  if (hasData(cohortIds) & hasData(databaseIds)) {
+    # get annotation id's
+    sqlRetrieveAnnotationLink <- "SELECT *
                                 FROM @results_database_schema.annotation_link
                                 WHERE diagnostics_id = '@diagnosticsId'
                                 	AND cohort_id IN (@cohortIds)
                                   AND database_id IN (@databaseIds);"
-  annotationLink <-
-    renderTranslateQuerySql(
-      connection = dataSource$connection,
-      dbms = dataSource$dbms,
-      sql = sqlRetrieveAnnotationLink,
-      results_database_schema = dataSource$resultsDatabaseSchema,
-      diagnosticsId = diagnosticsId,
-      cohortIds = cohortIds,
-      databaseIds = quoteLiterals(databaseIds),
-      snakeCaseToCamelCase = TRUE
-    )
-  
+    annotationLink <-
+      renderTranslateQuerySql(
+        connection = dataSource$connection,
+        dbms = dataSource$dbms,
+        sql = sqlRetrieveAnnotationLink,
+        results_database_schema = dataSource$resultsDatabaseSchema,
+        diagnosticsId = diagnosticsId,
+        cohortIds = cohortIds,
+        databaseIds = quoteLiterals(databaseIds),
+        snakeCaseToCamelCase = TRUE
+      )
+  }
   if (hasData(annotationLink)) {
     sqlRetrieveAnnotation <- "SELECT *
                             FROM @results_database_schema.annotation
                             WHERE annotation_id IN (@annotationIds);"
-    
+
     annotation <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
@@ -446,12 +448,12 @@ getAnnotationResult <- function(dataSource,
         annotationIds = annotationLink$annotationId,
         snakeCaseToCamelCase = TRUE
       )
-    
+
     if (hasData(annotation)) {
       data <- list(annotation = annotation,
                    annotationLink = annotationLink)
     }
   }
-  
+
   return(data)
 }
