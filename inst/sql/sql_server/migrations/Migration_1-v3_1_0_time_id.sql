@@ -17,7 +17,7 @@ DROP TABLE IF EXISTS @database_schema.@table_prefix@package_version;
 
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @database_schema.@table_prefix@package_version (
-    version_number VARCHAR PRIMARY KEY
+    version_number VARCHAR(50) PRIMARY KEY
 );
 
 -- Update time_ids in relevant tables
