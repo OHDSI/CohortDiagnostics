@@ -10,12 +10,12 @@ ALTER TABLE @database_schema.@table_prefix@incidence_rate RENAME TO _incidence_r
 CREATE TABLE @database_schema.@table_prefix@incidence_rate (
     cohort_count BIGINT NOT NULL,
     person_years NUMERIC,
-    gender VARCHAR,
-    age_group VARCHAR,
+    gender VARCHAR(255),
+    age_group VARCHAR(255),
     calendar_year VARCHAR(4),
     incidence_rate NUMERIC NOT NULL,
     cohort_id BIGINT NOT NULL,
-    database_id VARCHAR NOT NULL
+    database_id VARCHAR(255) NOT NULL
 );
 
 INSERT INTO @database_schema.@table_prefix@incidence_rate
