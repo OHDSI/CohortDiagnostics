@@ -2,8 +2,14 @@ characterizationView <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
     shinydashboard::box(
+      collapsible = TRUE,
+      collapsed = TRUE,
+      title = "Cohort Characterization",
+      width = "100%",
+      shiny::htmlTemplate(file.path("html", "cohortCharacterization.html"))
+    ),
+    shinydashboard::box(
       width = NULL,
-      title = "Cohort characterization",
       shiny::radioButtons(
         inputId = ns("charType"),
         label = "Table type",
