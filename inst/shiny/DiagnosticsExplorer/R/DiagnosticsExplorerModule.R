@@ -630,7 +630,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
     if ("orphanConcept" %in% enabledTabs) {
       orphanConceptsModule("orphanConcepts",
                            dataSource = dataSource,
-                           selectedCohorts = selectedCohorts,
+                           selectedCohorts = selectedCohort,
                            selectedDatabaseIds = selectedDatabaseIds,
                            targetCohortId = targetCohortId,
                            selectedConceptSets = selectedConceptSets,
