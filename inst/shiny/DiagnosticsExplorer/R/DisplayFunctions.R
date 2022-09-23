@@ -72,10 +72,10 @@ getDisplayTableHeaderCount <-
           cohortIds = cohortIds,
           databaseIds = databaseIds
         ) %>%
-        dplyr::rename(
-          records = .data$cohortEntries,
-          persons = .data$cohortSubjects
-        )
+          dplyr::rename(
+            records = .data$cohortEntries,
+            persons = .data$cohortSubjects
+          )
     }
 
     if (fields %in% c("Persons")) {
@@ -125,6 +125,20 @@ prepDataForDisplay <- function(data,
   return(data)
 }
 
+pallete <- function(x) {
+  cr <- colorRamp(c("white", "#9ccee7"))
+  col <- "#ffffff"
+  tryCatch({
+    if (x > 1.0) {
+      x <- 1
+    }
+
+    col <- rgb(cr(x), maxColorValue = 255)
+  }, error = function(...) {
+  })
+  return(col)
+}
+
 getDisplayTableGroupedByDatabaseId <- function(data,
                                                cohort,
                                                databaseTable,
@@ -155,9 +169,9 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     )
 
   data <- data %>%
-      dplyr::inner_join(databaseTable %>%
-                          dplyr::select(.data$databaseId, .data$databaseName),
-                        by = "databaseId")
+    dplyr::inner_join(databaseTable %>%
+                        dplyr::select(.data$databaseId, .data$databaseName),
+                      by = "databaseId")
 
   if (isTemporal) {
     data <- data %>%
@@ -226,7 +240,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
       columnTotalMaxWidth + displayTableColumnMinMaxWidth$maxValue
     if (class(data[[keyColumns[[i]]]]) == "logical") {
       data[[keyColumns[[i]]]] <- ifelse(data[[keyColumns[[i]]]],
-        as.character(icon("check")), ""
+                                        as.character(icon("check")), ""
       )
     }
 
@@ -298,21 +312,13 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         na = "",
         align = "left",
         style = function(value) {
-          if (class(value) != "character") {
-            list(
-              backgroundImage = sprintf(
-                "linear-gradient(90deg, %1$s %2$s, transparent %2$s)",
-                "#9ccee7",
-                paste0((value / maxValue) * 100, "%")
-              ),
-              backgroundSize = paste("100%", "100%"),
-              backgroundRepeat = "no-repeat",
-              backgroundPosition = "center",
-              color = "#000"
-            )
-          } else {
-            list()
+          color <- '#fff'
+          if (is.numeric(value) & hasData(data[[dataColumns[i]]])) {
+            value <- ifelse(is.na(value), min(data[[dataColumns[i]]], na.rm = TRUE), value)
+            normalized <- (value - min(data[[dataColumns[i]]], na.rm = TRUE)) / (max(data[[dataColumns[i]]], na.rm = TRUE) - min(data[[dataColumns[i]]], na.rm = TRUE))
+            color <- pallete(normalized)
           }
+          list(background = color)
         }
       )
   }
@@ -320,13 +326,13 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     columnTotalMaxWidth <- "auto"
     columnTotalMinWidth <- "auto"
   }
-  
+
   dbNameMap <- list()
-  for (i in 1: nrow(databaseTable)) {
+  for (i in 1:nrow(databaseTable)) {
     dbNameMap[[databaseTable[i,]$databaseId]] <- databaseTable[i,]$databaseName
   }
-  
-  
+
+
   columnGroups <- list()
   for (i in 1:length(distinctColumnGroups)) {
     extractedDataColumns <-
@@ -334,7 +340,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         string = dataColumns,
         pattern = stringr::fixed(distinctColumnGroups[i])
       )]
-    
+
     columnName <- dbNameMap[[distinctColumnGroups[i]]]
 
     if (!is.null(headerCount)) {
@@ -450,6 +456,7 @@ getDisplayTableSimple <- function(data,
       columnName <- SqlRender::camelCaseToTitleCase(dataColumns[i])
       colnames(data)[which(names(data) == dataColumns[i])] <-
         columnName
+
       columnDefinitions[[columnName]] <-
         reactable::colDef(
           name = columnName,
@@ -462,21 +469,14 @@ getDisplayTableSimple <- function(data,
           na = "",
           align = "left",
           style = function(value) {
-            if (class(value) != "character") {
-              list(
-                backgroundImage = sprintf(
-                  "linear-gradient(90deg, %1$s %2$s, transparent %2$s)",
-                  "#9ccee7",
-                  paste0((value / maxValue) * 100, "%")
-                ),
-                backgroundSize = paste("100%", "100%"),
-                backgroundRepeat = "no-repeat",
-                backgroundPosition = "center",
-                color = "#000"
-              )
-            } else {
-              list()
+            color <- '#fff'
+            columnName <- dataColumns[i]
+            if (is.numeric(value) & hasData(data[[columnName]])) {
+              value <- ifelse(is.na(value), min(data[[columnName]], na.rm = TRUE), value)
+              normalized <- (value - min(data[[columnName]], na.rm = TRUE)) / (max(data[[columnName]], na.rm = TRUE) - min(data[[columnName]], na.rm = TRUE))
+              color <- pallete(normalized)
             }
+            list(background = color)
           }
         )
     }
@@ -513,7 +513,7 @@ getDisplayTableSimple <- function(data,
   return(dataTable)
 }
 
-
+# This is bad
 getMaxValueForStringMatchedColumnsInDataFrame <-
   function(data, string) {
     if (!hasData(data)) {
@@ -566,7 +566,7 @@ getDisplayTableColumnMinMaxWidth <- function(data,
   if ("logical" %in% class(data[[columnName]])) {
     maxWidth <-
       max(stringr::str_length(columnNameFormatted) * pixelMultipler,
-        na.rm = TRUE
+          na.rm = TRUE
       ) + padPixel
     minWidth <-
       (stringr::str_length(columnNameFormatted) * pixelMultipler) + padPixel
@@ -582,8 +582,8 @@ getDisplayTableColumnMinMaxWidth <- function(data,
       ), na.rm = TRUE) * pixelMultipler) + padPixel # to pad for table icon like sort
     minWidth <-
       min(stringr::str_length(columnNameFormatted) * pixelMultipler,
-        maxWidth,
-        na.rm = TRUE
+          maxWidth,
+          na.rm = TRUE
       ) + padPixel
   }
 
