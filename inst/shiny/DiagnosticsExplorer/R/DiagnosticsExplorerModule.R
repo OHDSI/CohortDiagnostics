@@ -747,7 +747,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                      domainIdOptions = envir$domainIdOptions,
                                      temporalCharacterizationTimeIdChoices = envir$temporalCharacterizationTimeIdChoices)
 
-      compareCohortCharacterizationModule("compareTemporalCohortCharacterization",
+      compareCohortCharacterizationModule("compareCohortCharacterization",
                                           dataSource = dataSource,
                                           cohortTable = cohortTable,
                                           databaseTable = databaseTable,

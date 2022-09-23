@@ -21,7 +21,7 @@ uiControls <- function(ns,
       input.tabs != 'orphanConcepts' &
       input.tabs != 'inclusionRuleStats' &
       input.tabs != 'visitContext' &
-      input.tabs != 'compareTemporalCharacterization' &
+      input.tabs != 'compareCohortCharacterization' &
       input.tabs != 'cohortOverlap'",
       ns = ns,
       shiny::uiOutput(ns("databasePicker"))
@@ -46,7 +46,7 @@ uiControls <- function(ns,
       input.tabs != 'cohortCounts' &
       input.tabs != 'cohortOverlap'&
       input.tabs != 'incidenceRate' &
-      input.tabs != 'compareTemporalCharacterization' &
+      input.tabs != 'compareCohortCharacterization' &
       input.tabs != 'timeDistribution'",
       ns = ns,
       shinyWidgets::pickerInput(
@@ -336,8 +336,8 @@ dashboardUi <- function(enabledTabs,
       }
     ),
     shinydashboard::tabItem(
-      tabName = "compareTemporalCharacterization",
-      compareCohortCharacterizationView(ns("compareTemporalCohortCharacterization")),
+      tabName = "compareCohortCharacterization",
+      compareCohortCharacterizationView(ns("compareCohortCharacterization")),
       if (showAnnotation) {
         column(
           12,
