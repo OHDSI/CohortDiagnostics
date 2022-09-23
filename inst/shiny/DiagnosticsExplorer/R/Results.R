@@ -556,9 +556,9 @@ resolvedConceptSet <- function(dataSource,
                     	c.concept_code,
                     	rc.database_id
                     FROM @results_database_schema.@resolved_concepts_table rc
-                    INNER JOIN @results_database_schema.@concept_table c
+                    LEFT JOIN @results_database_schema.@concept_table c
                     ON rc.concept_id = c.concept_id
-                    WHERE rc.database_id IN (@databaseIds)
+                    WHERE rc.database_id IN (@database_ids)
                     	AND rc.cohort_id = @cohortId
                       {@concept_set_id != \"\"} ? { AND rc.concept_set_id IN (@concept_set_id)}
                     ORDER BY c.concept_id;"
@@ -568,10 +568,10 @@ resolvedConceptSet <- function(dataSource,
       dbms = dataSource$dbms,
       sql = sqlResolved,
       results_database_schema = dataSource$resultsDatabaseSchema,
-      databaseIds = quoteLiterals(databaseIds),
+      database_ids = quoteLiterals(databaseIds),
       cohortId = cohortId,
       concept_set_id = conceptSetId,
-      resolved_concepts_table = dataSource$prefixTable("orphan_concept"),
+      resolved_concepts_table = dataSource$prefixTable("resolved_concepts"),
       concept_table = dataSource$prefixTable("concept"),
       snakeCaseToCamelCase = TRUE
     ) %>%

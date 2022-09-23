@@ -3,6 +3,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                                       dataSource = envir$dataSource,
                                       databaseTable = envir$database,
                                       cohortTable = envir$cohort,
+                                      cohortCountTable = envir$cohortCount,
                                       enableAnnotation = envir$enableAnnotation,
                                       enableAuthorization = envir$enableAuthorization,
                                       enabledTabs = envir$enabledTabs,
@@ -551,6 +552,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                               dataSource = dataSource,
                               cohortDefinitions = cohortSubset,
                               cohortTable = cohortTable,
+                              cohortCount = cohortCountTable,
                               databaseTable = databaseTable)
     }
 
