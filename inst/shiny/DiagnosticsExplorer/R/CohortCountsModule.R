@@ -35,6 +35,13 @@ cohortCountsView <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
     shinydashboard::box(
+      collapsible = TRUE,
+      collapsed = TRUE,
+      title = "Cohort Counts",
+      width = "100%",
+      shiny::htmlTemplate(file.path("html", "cohortCounts.html"))
+    ),
+    shinydashboard::box(
       status = "warning",
       width = "100%",
       shiny::tags$div(
@@ -66,6 +73,7 @@ cohortCountsView <- function(id) {
         shiny::conditionalPanel(
           condition = "output.cohortCountRowIsSelected == true",
           ns = ns,
+          tags$h4("Inclusion Rule Statistics"),
           shinycssloaders::withSpinner(
             reactable::reactableOutput(ns("inclusionRuleStats"))
           ),
@@ -119,8 +127,9 @@ cohortCountsModule <- function(id,
       }
 
       data <- data %>%
-        addShortName(cohort) %>%
-        dplyr::arrange(.data$shortName, .data$databaseId)
+        dplyr::inner_join(cohortTable %>% dplyr::select(.data$cohortName, .data$cohortId), by = "cohortId") %>%
+        dplyr::arrange(.data$cohortId, .data$databaseId)
+
       return(data)
     })
 
@@ -132,7 +141,7 @@ cohortCountsModule <- function(id,
       validate(need(hasData(data), "There is no data on any cohort"))
 
       data <- getResults() %>%
-        dplyr::rename(cohort = .data$shortName) %>%
+        dplyr::rename(cohort = .data$cohortName) %>%
         dplyr::rename(
           persons = .data$cohortSubjects,
           records = .data$cohortEntries
@@ -179,8 +188,7 @@ cohortCountsModule <- function(id,
         if (hasData(getResults())) {
           subset <- getResults() %>%
             dplyr::select(
-              .data$cohortId,
-              .data$shortName
+              .data$cohortId
             ) %>%
             dplyr::distinct()
           subset <- subset[idx,]
@@ -228,7 +236,7 @@ cohortCountsModule <- function(id,
 
       validate(need(
         (nrow(data) > 0),
-        "There is no data for the selected combination."
+        "No data for the selected cohort."
       ))
 
       countsForHeader <- NULL

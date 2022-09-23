@@ -2,6 +2,13 @@
 inclusionRulesView <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
+     shinydashboard::box(
+      collapsible = TRUE,
+      collapsed = TRUE,
+      title = "Inclusion Rules",
+      width = "100%",
+      shiny::htmlTemplate(file.path("html", "inclusionRuleStats.html"))
+    ),
     shinydashboard::box(
       status = "warning",
       width = "100%",

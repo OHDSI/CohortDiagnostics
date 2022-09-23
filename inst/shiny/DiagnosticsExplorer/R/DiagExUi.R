@@ -127,19 +127,6 @@ dashboardUi <- function(enabledTabs,
   ns <- shiny::NS(id)
   appInformationText <- getAppInfo(appVersionNum)
 
-  addInfo <- function(item, infoId) {
-    infoTag <- tags$small(
-      class = "badge pull-right action-button",
-      style = "padding: 1px 6px 2px 6px; background-color: steelblue;",
-      type = "button",
-      id = infoId,
-      "i"
-    )
-    item$children[[1]]$children <-
-      append(item$children[[1]]$children, list(infoTag))
-    return(item)
-  }
-
   if (enableAnnotation & showAnnotation) {
     headerContent <- tags$li(
       if (enableAuthorization) {
@@ -168,81 +155,45 @@ dashboardUi <- function(enabledTabs,
     shinydashboard::sidebarMenu(
       id = ns("tabs"),
       if ("cohort" %in% enabledTabs) {
-        shinydashboard::menuItem(text = "Cohort Definition", tabName = "cohortDefinition")
+        shinydashboard::menuItem(text = "Cohort Definition", tabName = "cohortDefinition", icon = shiny::icon("dna"))
       },
       if ("includedSourceConcept" %in% enabledTabs) {
-        addInfo(
-          item = shinydashboard::menuItem(text = "Concepts in Data Source", tabName = "conceptsInDataSource"),
-          infoId = "conceptsInDataSourceInfo"
-        )
+        shinydashboard::menuItem(text = "Concepts in Data Source", tabName = "conceptsInDataSource", icon = shiny::icon("table"))
       },
       if ("orphanConcept" %in% enabledTabs) {
-        addInfo(
-          item = shinydashboard::menuItem(text = "Orphan Concepts", tabName = "orphanConcepts"),
-          infoId = "orphanConceptsInfo"
-        )
+        shinydashboard::menuItem(text = "Orphan Concepts", tabName = "orphanConcepts", icon = shiny::icon("notes-medical"))
       },
       if ("cohortCount" %in% enabledTabs) {
-        addInfo(
-          item = shinydashboard::menuItem(text = "Cohort Counts", tabName = "cohortCounts"),
-          infoId = "cohortCountsInfo"
-        )
+        shinydashboard::menuItem(text = "Cohort Counts", tabName = "cohortCounts", icon = shiny::icon("bars"))
       },
       if ("incidenceRate" %in% enabledTabs) {
-        addInfo(
-          item = shinydashboard::menuItem(text = "Incidence Rate", tabName = "incidenceRate"),
-          infoId = "incidenceRateInfo"
-        )
+        shinydashboard::menuItem(text = "Incidence Rate", tabName = "incidenceRate", icon = shiny::icon("plus"))
       },
       if ("temporalCovariateValue" %in% enabledTabs) {
-        addInfo(
-          item = shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution"),
-          infoId = "timeDistributionInfo"
-        )
+        shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution", icon = shiny::icon("clock"))
       },
       if ("inclusionRuleStats" %in% enabledTabs) {
-        addInfo(
-          item = shinydashboard::menuItem(text = "Inclusion Rule Statistics", tabName = "inclusionRuleStats"),
-          infoId = "inclusionRuleStatsInfo"
-        )
+        shinydashboard::menuItem(text = "Inclusion Rule Statistics", tabName = "inclusionRuleStats", icon = shiny::icon("file-medical"))
       },
       if ("indexEventBreakdown" %in% enabledTabs) {
-        addInfo(
-          item = shinydashboard::menuItem(text = "Index Event Breakdown", tabName = "indexEventBreakdown"),
-          infoId = "indexEventBreakdownInfo"
-        )
+        shinydashboard::menuItem(text = "Index Event Breakdown", tabName = "indexEventBreakdown", icon = shiny::icon("hospital"))
       },
       if ("visitContext" %in% enabledTabs) {
-        addInfo(
-          item = shinydashboard::menuItem(text = "Visit Context", tabName = "visitContext"),
-          infoId = "visitContextInfo"
-        )
+        shinydashboard::menuItem(text = "Visit Context", tabName = "visitContext", icon = shiny::icon("building"))
       },
       if ("relationship" %in% enabledTabs) {
-        addInfo(
-          shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap"),
-          infoId = "cohortOverlapInfo"
-        )
+        shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap", icon = shiny::icon("circle"))
       },
       if ("temporalCovariateValue" %in% enabledTabs) {
-        addInfo(
-          shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization"),
-          infoId = "cohortCharacterizationInfo"
-        )
+        shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization", icon = shiny::icon("users"))
       },
       if ("temporalCovariateValue" %in% enabledTabs) {
-        addInfo(
-          shinydashboard::menuItem(text = "Temporal Characterization", tabName = "temporalCharacterization"),
-          infoId = "temporalCharacterizationInfo"
-        )
+        shinydashboard::menuItem(text = "Temporal Characterization", tabName = "temporalCharacterization")
       },
       if ("temporalCovariateValue" %in% enabledTabs) {
-        addInfo(
-          shinydashboard::menuItem(text = "Compare Characterization", tabName = "compareTemporalCharacterization"),
-          infoId = "compareTemporalCharacterizationInfo"
-        )
+        shinydashboard::menuItem(text = "Compare Characterization", tabName = "compareCohortCharacterization")
       },
-      shinydashboard::menuItem(text = "Meta data", tabName = "databaseInformation"),
+      shinydashboard::menuItem(text = "Meta data", tabName = "databaseInformation", icon = shiny::icon("gear", verify_fa = FALSE)),
       # Conditional dropdown boxes in the side bar ------------------------------------------------------
       uiControls(ns, enabledTabs)
     )

@@ -158,6 +158,13 @@ compareCohortCharacterizationView <- function(id, title = "Compare cohort charac
 
   shiny::tagList(
     shinydashboard::box(
+      collapsible = TRUE,
+      collapsed = TRUE,
+      title = "Compare Cohort Characterization",
+      width = "100%",
+      shiny::htmlTemplate(file.path("html", "compareCohortCharacterization.html"))
+    ),
+    shinydashboard::box(
       width = NULL,
       title = title,
       shiny::fluidRow(
@@ -306,7 +313,6 @@ compareCohortCharacterizationView <- function(id, title = "Compare cohort charac
       ns = ns,
       shiny::uiOutput(ns("selectionsPlot")),
       shinydashboard::box(
-        title = "Compare Cohort Characterization",
         width = NULL,
         status = "primary",
         shiny::tabsetPanel(

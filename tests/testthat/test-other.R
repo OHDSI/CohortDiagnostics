@@ -69,6 +69,9 @@ test_that("timeExecutions function", {
   result <- readr::read_csv(expectedFilePath)
   checkmate::expect_data_frame(result, nrows = 1, ncols = 5)
 
+  expect_false(all(is.na(result$startTime)))
+  expect_false(all(is.na(result$executionTime)))
+
   # Test append
   timeExecution(
     exportFolder = temp,
@@ -119,4 +122,5 @@ test_that("timeExecutions function", {
 
   result <- readr::read_csv(expectedFilePath)
   checkmate::expect_data_frame(result, nrows = 5, ncols = 5)
+  expect_false(all(is.na(result$startTime)))
 })

@@ -7,6 +7,13 @@ indexEventBreakdownView <- function(id) {
 
   shiny::tagList(
     shinydashboard::box(
+      collapsible = TRUE,
+      collapsed = TRUE,
+      title = "Index Events",
+      width = "100%",
+      shiny::htmlTemplate(file.path("html", "indexEventBreakdown.html"))
+    ),
+    shinydashboard::box(
       status = "warning",
       width = "100%",
       tags$div(

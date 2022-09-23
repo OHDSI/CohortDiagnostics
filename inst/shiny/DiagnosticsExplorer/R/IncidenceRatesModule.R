@@ -1,6 +1,5 @@
-
 plotIncidenceRate <- function(data,
-                              shortNameRef = NULL,
+                              cohortTable = NULL,
                               stratifyByAgeGroup = TRUE,
                               stratifyByGender = TRUE,
                               stratifyByCalendarYear = TRUE,
@@ -65,8 +64,12 @@ plotIncidenceRate <- function(data,
   )
   checkmate::reportAssertions(collection = errorMessage)
 
+  cohortNames <- cohortTable %>% dplyr::select(.data$cohortId,
+                                               .data$cohortName)
+
   plotData <- data %>%
-    addShortName(shortNameRef) %>%
+    dplyr::inner_join(cohortNames, by = "cohortId",) %>%
+    addShortName(cohortTable) %>%
     dplyr::mutate(incidenceRate = round(.data$incidenceRate, digits = 3))
   plotData <- plotData %>%
     dplyr::mutate(
@@ -109,7 +112,6 @@ plotIncidenceRate <- function(data,
   }
 
 
-
   sortShortName <- plotData %>%
     dplyr::select(.data$shortName) %>%
     dplyr::distinct() %>%
@@ -124,10 +126,8 @@ plotIncidenceRate <- function(data,
     )
 
 
-
   plotData$shortName <- factor(plotData$shortName,
-    levels = sortShortName$shortName
-  )
+                               levels = sortShortName$shortName)
 
   if (stratifyByAgeGroup) {
     sortAgeGroup <- plotData %>%
@@ -144,14 +144,14 @@ plotIncidenceRate <- function(data,
       )
 
     plotData$ageGroup <- factor(plotData$ageGroup,
-      levels = sortAgeGroup$ageGroup
+                                levels = sortAgeGroup$ageGroup
     )
   }
 
   plotData$tooltip <- c(
     paste0(
-      plotData$shortName,
-      " ",
+      plotData$cohortName,
+      "\n",
       plotData$databaseName,
       "\nIncidence Rate = ",
       scales::comma(plotData$incidenceRate, accuracy = 0.01),
@@ -184,7 +184,6 @@ plotIncidenceRate <- function(data,
 
   if (stratifyByGender) {
     # Make sure colors are consistent, no matter which genders are included:
-
     genders <- c("Female", "Male", "No matching concept")
     # Code used to generate palette:
     # writeLines(paste(RColorBrewer::brewer.pal(n = 2, name = "Dark2"), collapse = "\", \""))
@@ -196,9 +195,9 @@ plotIncidenceRate <- function(data,
 
   plot <-
     ggplot2::ggplot(data = plotData, do.call(ggplot2::aes_string, aesthetics)) +
-    ggplot2::xlab(xLabel) +
-    ggplot2::ylab("Incidence Rate (/1,000 person years)") +
-    ggplot2::scale_y_continuous(expand = c(0, 0))
+      ggplot2::xlab(xLabel) +
+      ggplot2::ylab("Incidence Rate (/1,000 person years)") +
+      ggplot2::scale_y_continuous(expand = c(0, 0))
 
   if (stratifyByCalendarYear) {
     distinctCalenderYear <- plotData$calendarYear %>%
@@ -216,7 +215,6 @@ plotIncidenceRate <- function(data,
   }
 
 
-
   plot <- plot + ggplot2::theme(
     legend.position = "top",
     legend.title = ggplot2::element_blank(),
@@ -231,8 +229,8 @@ plotIncidenceRate <- function(data,
     plot <- plot +
       ggiraph::geom_line_interactive(ggplot2::aes(), size = 1, alpha = 0.6) +
       ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip),
-        size = 2,
-        alpha = 0.6
+                                      size = 2,
+                                      alpha = 0.6
       )
   } else {
     plot <-
@@ -306,6 +304,13 @@ incidenceRatesView <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
     shinydashboard::box(
+      collapsible = TRUE,
+      collapsed = TRUE,
+      title = "Incidence Rates",
+      width = "100%",
+      shiny::htmlTemplate(file.path("html", "incidenceRate.html"))
+    ),
+    shinydashboard::box(
       status = "warning",
       width = "100%",
       tags$div(
@@ -314,7 +319,6 @@ incidenceRatesView <- function(id) {
       )
     ),
     shinydashboard::box(
-      title = "Incidence Rate",
       width = NULL,
       status = "primary",
       htmltools::withTags(
@@ -443,25 +447,21 @@ incidenceRatesView <- function(id) {
                 label = "Minimum subject count",
                 value = NULL
               )
-            ),
-            tags$td(
-              align = "right",
-              shiny::downloadButton(
-                ns("saveIncidenceRatePlot"),
-                label = "",
-                icon = shiny::icon("download"),
-                style = "margin-top: 5px; margin-bottom: 5px;"
-              )
             )
           )
         )
       ),
       shiny::htmlOutput(outputId = ns("hoverInfoIr")),
-      shinycssloaders::withSpinner(
-        ggiraph::ggiraphOutput(
-          outputId = ns("incidenceRatePlot"),
-          width = "100%",
-          height = "100%"
+      shiny::actionButton(inputId = ns("generatePlot"), label = "Generate Plot"),
+      shiny::conditionalPanel(
+        ns = ns,
+        condition = "input.generatePlot > 0",
+        shinycssloaders::withSpinner(
+          ggiraph::ggiraphOutput(
+            outputId = ns("incidenceRatePlot"),
+            width = "100%",
+            height = "100%"
+          )
         )
       )
     )
@@ -623,7 +623,7 @@ incidenceRatesModule <- function(id,
       return(incidenceRateFilter)
     })
 
-    output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
+    getIrPlot <- shiny::eventReactive(input$generatePlot, {
       validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
       validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
       stratifyByAge <- "Age" %in% input$irStratification
@@ -663,7 +663,7 @@ incidenceRatesModule <- function(id,
         if (all(!is.null(data), nrow(data) > 0)) {
           plot <- plotIncidenceRate(
             data = data,
-            shortNameRef = cohortTable,
+            cohortTable = cohortTable,
             stratifyByAgeGroup = stratifyByAge,
             stratifyByGender = stratifyByGender,
             stratifyByCalendarYear = stratifyByCalendarYear,
@@ -674,6 +674,11 @@ incidenceRatesModule <- function(id,
       },
         detail = "Please Wait"
       )
+
+    })
+
+    output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
+      getIrPlot()
     })
 
   })
