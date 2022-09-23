@@ -304,6 +304,13 @@ incidenceRatesView <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
     shinydashboard::box(
+      collapsible = TRUE,
+      collapsed = TRUE,
+      title = "Incidence Rates",
+      width = "100%",
+      shiny::htmlTemplate(file.path("html", "incidenceRate.html"))
+    ),
+    shinydashboard::box(
       status = "warning",
       width = "100%",
       tags$div(
@@ -312,7 +319,6 @@ incidenceRatesView <- function(id) {
       )
     ),
     shinydashboard::box(
-      title = "Incidence Rate",
       width = NULL,
       status = "primary",
       htmltools::withTags(
