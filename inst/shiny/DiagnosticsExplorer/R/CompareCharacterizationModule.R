@@ -621,7 +621,9 @@ compareCohortCharacterizationModule <- function(id,
       data <- data %>%
         dplyr::filter(.data$timeId == selectedTimeIdsSingle())
 
+      showAsPercent <- FALSE
       if (input$proportionOrContinuous == "Proportion") {
+        showAsPercent <- TRUE
         data <- data %>%
           dplyr::filter(.data$isBinary == "Y")
       } else if (input$proportionOrContinuous == "Continuous") {
@@ -639,7 +641,6 @@ compareCohortCharacterizationModule <- function(id,
         )
 
       if (input$compareCharacterizationColumnFilters == "Mean and Standard Deviation") {
-
         data <- data %>%
           dplyr::select(.data$covariateName,
                         .data$analysisName,
@@ -668,10 +669,27 @@ compareCohortCharacterizationModule <- function(id,
       reactable::reactable(
         data = data,
         columns = list(
-          StdDiff = reactable::colDef(
-            cell = function(value) { round(value, 3) }
+          target = reactable::colDef(
+            cell = formatDataCellValueInDisplayTable(showDataAsPercent = showAsPercent),
+            na = ""
           ),
-
+          comparator = reactable::colDef(
+            cell = formatDataCellValueInDisplayTable(showDataAsPercent = showAsPercent),
+            na = ""
+          ),
+          StdDiff = reactable::colDef(
+            cell = formatDataCellValueInDisplayTable(showDataAsPercent = FALSE),
+            style = function(value) {
+              color <- '#fff'
+              if (is.numeric(value) & hasData(data$StdDiff)) {
+                value <- ifelse(is.na(value), min(data$StdDiff, na.rm = TRUE), value)
+                normalized <- (value - min(data$StdDiff, na.rm = TRUE)) / (max(data$StdDiff, na.rm = TRUE) - min(data$StdDiff, na.rm = TRUE))
+                color <- pallete(normalized)
+              }
+              list(background = color)
+            },
+            na = ""
+          ),
           covariateName = reactable::colDef(name = "Covariate Name", minWidth = 500),
           analysisName = reactable::colDef(name = "Analysis Name"),
           conceptId = reactable::colDef(name = "Concept Id")

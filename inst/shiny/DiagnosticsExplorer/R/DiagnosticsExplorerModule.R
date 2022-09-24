@@ -724,28 +724,12 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                              dataSource = dataSource,
                              cohortTable = cohortTable,
                              databaseTable = databaseTable,
-                             selectedDatabaseIds = selectedDatabaseIds,
-                             targetCohortId = targetCohortId,
                              temporalAnalysisRef = envir$temporalAnalysisRef,
                              analysisNameOptions = envir$analysisNameOptions,
                              analysisIdInCohortCharacterization = envir$analysisIdInCohortCharacterization,
                              getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
                              selectedConceptSets = selectedConceptSets,
                              characterizationTimeIdChoices = envir$characterizationTimeIdChoices)
-
-
-      temporalCharacterizationModule(id = "temporalCharacterization",
-                                     dataSource = dataSource,
-                                     databaseTable = databaseTable,
-                                     cohortTable = cohortTable,
-                                     selectedDatabaseIds = selectedDatabaseIds,
-                                     targetCohortId = targetCohortId,
-                                     temporalAnalysisRef = envir$temporalAnalysisRef,
-                                     analysisNameOptions = envir$analysisNameOptions,
-                                     getResolvedAndMappedConceptIdsForFilters = getResolvedAndMappedConceptIdsForFilters,
-                                     selectedConceptSets = selectedConceptSets,
-                                     domainIdOptions = envir$domainIdOptions,
-                                     temporalCharacterizationTimeIdChoices = envir$temporalCharacterizationTimeIdChoices)
 
       compareCohortCharacterizationModule("compareCohortCharacterization",
                                           dataSource = dataSource,

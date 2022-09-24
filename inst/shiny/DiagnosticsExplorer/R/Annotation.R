@@ -414,7 +414,7 @@ getAnnotationResult <- function(dataSource,
                                 cohortIds,
                                 databaseIds) {
   data <- NULL
-
+  annotationLink <- NULL
   if (hasData(cohortIds) & hasData(databaseIds)) {
     # get annotation id's
     sqlRetrieveAnnotationLink <- "SELECT *
