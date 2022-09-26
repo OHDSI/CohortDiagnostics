@@ -331,6 +331,7 @@ cohortDefinitionsView <- function(id) {
                   input.conceptSetsType != 'Resolved' &
                   input.conceptSetsType != 'Mapped' &
                   input.conceptSetsType != 'Json'",
+                tags$p("Filter logical values with \"T\" and \"F\""),
                 shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("cohortDefinitionConceptSetDetailsTable")))
               ),
               shiny::conditionalPanel(
@@ -574,6 +575,8 @@ cohortDefinitionsModule <- function(id,
             nrow(data) > 0),
         "There is no data for this cohort."
       ))
+
+      data <- data %>% dplyr::mutate()
 
       keyColumns <- c("id", "name")
       dataColumns <- c()
@@ -867,6 +870,7 @@ cohortDefinitionsModule <- function(id,
             databaseIds = databaseTable$databaseId,
             cohortId = row$cohortId
           )
+
         if (!hasData(output)) {
           return(NULL)
         }

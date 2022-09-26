@@ -676,19 +676,22 @@ mappedConceptSet <- function(dataSource,
     		SELECT DISTINCT concept_id
     		FROM @results_database_schema.@resolved_concepts
     		WHERE database_id IN (@databaseIds)
-    			AND cohort_id = @cohortId
+    			AND cohort_id = @cohort_id
     		) concept_sets
     	INNER JOIN @results_database_schema.@concept_relationship cr ON concept_sets.concept_id = cr.concept_id_2
     	INNER JOIN @results_database_schema.@concept c1 ON cr.concept_id_1 = c1.concept_id
     	WHERE relationship_id = 'Maps to'
     		AND standard_concept IS NULL
     	)
-    SELECT c.database_id,
+    SELECT
+        c.database_id,
     	c.cohort_id,
     	c.concept_set_id,
     	mapped.*
     FROM (SELECT DISTINCT concept_id, database_id, cohort_id, concept_set_id FROM @results_database_schema.@resolved_concepts) c
-    INNER JOIN resolved_concepts_mapped mapped ON c.concept_id = mapped.resolved_concept_id;"
+    INNER JOIN resolved_concepts_mapped mapped ON c.concept_id = mapped.resolved_concept_id
+    {@cohort_id != ''} ? { WHERE c.cohort_id = @cohort_id};
+    "
   mapped <-
     renderTranslateQuerySql(
       connection = dataSource$connection,
@@ -699,7 +702,7 @@ mappedConceptSet <- function(dataSource,
       concept = dataSource$prefixTable("concept"),
       concept_relationship = dataSource$prefixTable("concept_relationship"),
       resolved_concepts = dataSource$prefixTable("resolved_concepts"),
-      cohortId = cohortId,
+      cohort_id = cohortId,
       snakeCaseToCamelCase = TRUE
     ) %>%
     tidyr::tibble() %>%
