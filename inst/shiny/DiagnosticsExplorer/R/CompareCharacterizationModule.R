@@ -678,7 +678,9 @@ compareCohortCharacterizationModule <- function(id,
             na = ""
           ),
           StdDiff = reactable::colDef(
-            cell = formatDataCellValueInDisplayTable(showDataAsPercent = FALSE),
+            cell = function(value) {
+              return(round(value,2))
+            },
             style = function(value) {
               color <- '#fff'
               if (is.numeric(value) & hasData(data$StdDiff)) {

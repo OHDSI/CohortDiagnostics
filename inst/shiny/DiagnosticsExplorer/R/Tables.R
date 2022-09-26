@@ -238,6 +238,12 @@ compareCohortCharacteristics <-
         )
       ) %>%
       dplyr::mutate(
+        mean2 = ifelse(is.na(.data$mean2), 0, .data$mean2),
+        sd2 = ifelse(is.na(.data$sd2), 0, .data$sd2),
+        sd1 = ifelse(is.na(.data$sd1), 0, .data$sd1),
+        mean1 = ifelse(is.na(.data$mean1), 0, .data$mean1),
+      ) %>%
+      dplyr::mutate(
         sdd = sqrt(.data$sd1^2 + .data$sd2^2)
       )
 
@@ -245,11 +251,11 @@ compareCohortCharacteristics <-
 
     characteristics <- characteristics %>%
       dplyr::arrange(-abs(.data$stdDiff)) %>%
-      dplyr::mutate(stdDiff = dplyr::na_if(.data$stdDiff, "Inf")) %>%
+      dplyr::mutate(stdDiff = dplyr::na_if(.data$stdDiff, 0)) %>%
       dplyr::mutate(
         absStdDiff = abs(.data$stdDiff),
         cohortId1 = !!cohortId1Value,
-        cohortId2 = !!cohortId2Value
+        cohortId2 = !!cohortId2Value,
       )
 
     return(characteristics)
