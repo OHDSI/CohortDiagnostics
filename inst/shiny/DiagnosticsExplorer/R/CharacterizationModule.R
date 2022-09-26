@@ -174,7 +174,7 @@ characterizationView <- function(id) {
               inputId = ns("characterizationProportionOrContinuous"),
               label = "Covariate type(s)",
               choices = c("All", "Proportion", "Continuous"),
-              selected = "Proportion",
+              selected = "All",
               inline = TRUE
             )
           ),
@@ -218,11 +218,18 @@ characterizationModule <- function(id,
                                    databaseTable,
                                    temporalAnalysisRef,
                                    analysisNameOptions,
+                                   domainIdOptions,
                                    analysisIdInCohortCharacterization,
                                    getResolvedAndMappedConceptIdsForFilters,
                                    selectedConceptSets,
-                                   characterizationTimeIdChoices) {
-
+                                   characterizationTimeIdChoices,
+                                   table1SpecPath = "data/Table1SpecsLong.csv") {
+  prettyTable1Specifications <- readr::read_csv(
+    file = table1SpecPath,
+    col_types = readr::cols(),
+    guess_max = min(1e7),
+    lazy = FALSE
+  )
   shiny::moduleServer(id, function(input, output, session) {
 
     timeIdOptions <- getResultsTemporalTimeRef(dataSource = dataSource) %>%
@@ -400,31 +407,17 @@ characterizationModule <- function(id,
         return(NULL)
       }
 
-      showDataAsPercent <-
-        TRUE ## showDataAsPercent set based on UI selection - proportion)
+      data <- data %>%
+        dplyr::select(
+          .data$cohortId,
+          .data$databaseId,
+          .data$analysisId,
+          .data$covariateId,
+          .data$covariateName,
+          .data$mean
+        ) %>%
+        dplyr::rename(sumValue = .data$mean)
 
-      if (showDataAsPercent) {
-        data <- data %>%
-          dplyr::select(
-            .data$cohortId,
-            .data$databaseId,
-            .data$analysisId,
-            .data$covariateId,
-            .data$covariateName,
-            .data$mean
-          ) %>%
-          dplyr::rename(sumValue = .data$mean)
-      } else {
-        data <- data %>%
-          dplyr::select(
-            .data$cohortId,
-            .data$databaseId,
-            .data$analysisId,
-            .data$covariateId,
-            .data$covariateName,
-            .data$sumValue
-          )
-      }
 
       table <- data %>%
         prepareTable1(
@@ -437,9 +430,8 @@ characterizationModule <- function(id,
       keyColumnFields <- c("characteristic")
       dataColumnFields <- intersect(
         x = colnames(table),
-        y = cohort$shortName
+        y = cohortTable$shortName
       )
-
 
       countLocation <- 1
       countsForHeader <-
@@ -464,7 +456,7 @@ characterizationModule <- function(id,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showDataAsPercent = showDataAsPercent,
+        showDataAsPercent = TRUE,
         sort = FALSE,
         pageSize = 100
       )
@@ -496,6 +488,7 @@ characterizationModule <- function(id,
         dplyr::filter(.data$analysisName %in% input$characterizationAnalysisNameFilter) %>%
         dplyr::filter(.data$domainId %in% input$characterizationDomainIdFilter)
 
+
       if (hasData(selectedConceptSets())) {
         if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
           data <- data %>%
@@ -510,37 +503,24 @@ characterizationModule <- function(id,
 
     rawTableReactable <- shiny::reactive({
       data <- cohortCharacterizationDataFiltered()
+      if (is.null(data)) {
+        return(NULL)
+      }
+
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(
         message = "Post processing: Rendering table",
         value = 0
       )
-      data <- data %>%
-        dplyr::select(
-          .data$covariateName,
-          .data$analysisName,
-          .data$startDay,
-          .data$endDay,
-          .data$conceptId,
-          .data$mean,
-          .data$sd,
-          .data$cohortId,
-          .data$databaseId,
-          .data$temporalChoices
-        )
 
       keyColumnFields <-
         c("covariateName", "analysisName", "temporalChoices", "conceptId")
 
-      showDataAsPercent <- FALSE
       if (input$characterizationColumnFilters == "Mean and Standard Deviation") {
         dataColumnFields <- c("mean", "sd")
       } else {
         dataColumnFields <- c("mean")
-        if (input$characterizationProportionOrContinuous == "Proportion") {
-          showDataAsPercent <- TRUE
-        }
       }
       countLocation <- 1
 
@@ -559,6 +539,20 @@ characterizationModule <- function(id,
           string = dataColumnFields
         )
 
+      data <- data %>%
+        dplyr::select(
+          .data$covariateName,
+          .data$analysisName,
+          .data$startDay,
+          .data$endDay,
+          .data$conceptId,
+          .data$mean,
+          .data$sd,
+          .data$cohortId,
+          .data$databaseId,
+          .data$temporalChoices
+        )
+
       getDisplayTableGroupedByDatabaseId(
         data = data,
         cohort = cohortTable,
@@ -568,7 +562,7 @@ characterizationModule <- function(id,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showDataAsPercent = showDataAsPercent,
+        showDataAsPercent = FALSE,
         sort = TRUE,
         pageSize = 100
       )
@@ -594,7 +588,7 @@ characterizationModule <- function(id,
 
       data <-
         data %>% dplyr::inner_join(databaseTable %>%
-                                   dplyr::select(.data$databaseId, .data$databaseName),
+                                     dplyr::select(.data$databaseId, .data$databaseName),
                                    by = "databaseId")
       keyColumns <- c("covariateName", "analysisName", "conceptId", "databaseName")
       data <- data %>%
@@ -624,11 +618,6 @@ characterizationModule <- function(id,
           dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with("T (0"))))
       }
       dataColumns <- temporalChoices
-      showDataAsPercent <- FALSE
-      if (input$characterizationProportionOrContinuous == "Proportion") {
-        showDataAsPercent <- TRUE
-      }
-
       progress$set(
         message = "Rendering table",
         value = 80
@@ -638,7 +627,7 @@ characterizationModule <- function(id,
         data = data,
         keyColumns = keyColumns,
         dataColumns = dataColumns,
-        showDataAsPercent = showDataAsPercent,
+        showDataAsPercent = FALSE,
         pageSize = 100
       )
     })

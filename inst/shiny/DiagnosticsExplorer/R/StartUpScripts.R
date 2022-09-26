@@ -411,6 +411,7 @@ initializeEnvironment <- function(shinySettings,
       dplyr::pull(.data$domainId) %>%
       unique() %>%
       sort()
+
     envir$analysisNameOptions <- envir$temporalAnalysisRef %>%
       dplyr::select(.data$analysisName) %>%
       dplyr::pull(.data$analysisName) %>%
@@ -434,13 +435,6 @@ initializeEnvironment <- function(shinySettings,
   }
 
   envir$enabledTabs <- c(envir$enabledTabs, "database", "cohort")
-
-  envir$prettyTable1Specifications <- readr::read_csv(
-    file = table1SpecPath,
-    col_types = readr::cols(),
-    guess_max = min(1e7),
-    lazy = FALSE
-  )
 
   envir$analysisIdInCohortCharacterization <- c(
     1, 3, 4, 5, 6, 7,
