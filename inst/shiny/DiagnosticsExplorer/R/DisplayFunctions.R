@@ -4,9 +4,9 @@ formatDataCellValueInDisplayTable <-
       reactable::JS(
         "function(data) {
           if (isNaN(parseFloat(data.value))) return data.value;
-          if (Number.isInteger(data.value)) return data.value.toFixed(0).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
+          if (Number.isInteger(data.value)) return (100 * data.value).toFixed(0).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
           if (data.value > 999) return (100 * data.value).toFixed(2).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
-          if (data.value < 0) return '<' + (Math.abs(data.value) * 100).toFixed(1) + '%';
+          if (data.value < 0) return '<' + (Math.abs(data.value) * 100).toFixed(2) + '%';
           return (100 * data.value).toFixed(1) + '%';
         }"
       )
@@ -251,7 +251,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     columnDefinitions[[columnName]] <-
       reactable::colDef(
         name = columnName,
-        sortable = TRUE,
+        sortable = sort,
         resizable = TRUE,
         filterable = TRUE,
         show = TRUE,
@@ -304,7 +304,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
       reactable::colDef(
         name = SqlRender::camelCaseToTitleCase(columnName),
         cell = formatDataCellValueInDisplayTable(showDataAsPercent = showPercent),
-        sortable = TRUE,
+        sortable = sort,
         resizable = FALSE,
         filterable = TRUE,
         show = TRUE,
@@ -370,7 +370,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
       data = data,
       columns = columnDefinitions,
       columnGroups = columnGroups,
-      sortable = TRUE,
+      sortable = sort,
       resizable = TRUE,
       filterable = TRUE,
       searchable = TRUE,
@@ -381,8 +381,8 @@ getDisplayTableGroupedByDatabaseId <- function(data,
       striped = TRUE,
       compact = TRUE,
       wrap = FALSE,
-      showSortIcon = TRUE,
-      showSortable = TRUE,
+      showSortIcon = sort,
+      showSortable = sort,
       fullWidth = TRUE,
       bordered = TRUE,
       showPageSizeOptions = TRUE,
@@ -434,7 +434,7 @@ getDisplayTableSimple <- function(data,
             if (value) {
               "\u2714\ufe0f"
             } else {
-              ""
+              "\U2716\ufe0f"
             }
           }
         },
@@ -472,10 +472,9 @@ getDisplayTableSimple <- function(data,
           align = "left",
           style = function(value) {
             color <- '#fff'
-            columnName <- dataColumns[i]
-            if (is.numeric(value) & hasData(data[[columnName]])) {
-              value <- ifelse(is.na(value), min(data[[columnName]], na.rm = TRUE), value)
-              normalized <- (value - min(data[[columnName]], na.rm = TRUE)) / (max(data[[columnName]], na.rm = TRUE) - min(data[[columnName]], na.rm = TRUE))
+            if (is.numeric(value) & hasData(data[[dataColumns[i]]])) {
+              value <- ifelse(is.na(value), min(data[[dataColumns[i]]], na.rm = TRUE), value)
+              normalized <- (value - min(data[[dataColumns[i]]], na.rm = TRUE)) / (max(data[[dataColumns[i]]], na.rm = TRUE) - min(data[[dataColumns[i]]], na.rm = TRUE))
               color <- pallete(normalized)
             }
             list(background = color)

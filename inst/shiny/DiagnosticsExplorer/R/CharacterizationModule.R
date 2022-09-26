@@ -17,13 +17,85 @@ characterizationView <- function(id) {
         selected = "Pretty",
         inline = TRUE
       ),
-
+      shiny::fluidRow(
+        shiny::column(
+          width = 4,
+          shinyWidgets::pickerInput(
+            inputId = ns("targetCohort"),
+            label = "Select Cohort",
+            choices = NULL,
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              size = 10,
+              maxOptions = 5, # Selecting even this many will be slow
+              liveSearchStyle = "contains",
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
+          )
+        ),
+        shiny::column(
+          width = 4,
+          shinyWidgets::pickerInput(
+            inputId = ns("targetDatabase"),
+            label = "Select Database (s)",
+            choices = NULL,
+            multiple = TRUE,
+            choicesOpt = list(style = rep_len("color: black;", 999)),
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              size = 10,
+              liveSearchStyle = "contains",
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
+          )
+        ),
+        shiny::column(
+          width = 4,
+          shinyWidgets::pickerInput(
+            inputId = ns("selectedConceptSet"),
+            label = "Select Concept Set",
+            choices = NULL,
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              size = 10,
+              liveSearchStyle = "contains",
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
+          )
+        )
+      ),
       shiny::conditionalPanel(
         condition = "input.charType == 'Raw'",
         ns = ns,
         shiny::fluidRow(
           shiny::column(
-            width = 6,
+            width = 4,
+            shinyWidgets::pickerInput(
+              inputId = ns("timeIdChoices"),
+              label = "Temporal Window (s)",
+              choices = NULL,
+              multiple = TRUE,
+              choicesOpt = list(style = rep_len("color: black;", 999)),
+              selected = NULL,
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                maxOptions = 5, # Selecting even this many will be slow
+                size = 10,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
+              )
+            )
+          ),
+          shiny::column(
+            width = 4,
             shinyWidgets::pickerInput(
               inputId = ns("characterizationAnalysisNameFilter"),
               label = "Analysis name",
@@ -44,7 +116,7 @@ characterizationView <- function(id) {
             )
           ),
           shiny::column(
-            width = 6,
+            width = 4,
             shinyWidgets::pickerInput(
               inputId = ns("characterizationDomainIdFilter"),
               label = "Domain name",
@@ -64,15 +136,45 @@ characterizationView <- function(id) {
               )
             )
           )
+        )
+      ),
+      shiny::conditionalPanel(
+        ns = ns,
+        condition = "input.charType == 'Pretty'",
+        shiny::actionButton(label = "Generate Table", inputId = ns("generateReport"))
+      ),
+      shiny::conditionalPanel(
+        ns = ns,
+        condition = "input.charType == 'Raw'",
+        shiny::actionButton(label = "Generate Table", inputId = ns("generateRaw"))
+      ),
+    ),
+    shiny::conditionalPanel(
+      condition = "input.generateReport > 0 && input.charType == 'Pretty'",
+      ns = ns,
+      shiny::uiOutput(outputId = ns("selections")),
+      shinydashboard::box(
+        width = NULL,
+        shinycssloaders::withSpinner(
+          reactable::reactableOutput(outputId = ns("characterizationTable"))
         ),
+        csvDownloadButton(ns, "characterizationTable")
+      )
+    ),
+    shiny::conditionalPanel(
+      condition = "input.generateRaw > 0 && input.charType == 'Raw'",
+      ns = ns,
+      shiny::uiOutput(outputId = ns("selectionsRaw")),
+      shinydashboard::box(
+        width = NULL,
         shiny::fluidRow(
           shiny::column(
             width = 6,
             shiny::radioButtons(
-              inputId = ns("characterizationProportionOrContinuous"),
+              inputId = ns("proportionOrContinuous"),
               label = "Covariate type(s)",
               choices = c("All", "Proportion", "Continuous"),
-              selected = "Proportion",
+              selected = "All",
               inline = TRUE
             )
           ),
@@ -86,20 +188,24 @@ characterizationView <- function(id) {
               inline = TRUE
             )
           )
-        )
-      ),
-      shiny::actionButton(label = "Generate Table", inputId = ns("generateReport"))
-    ),
-    shiny::conditionalPanel(
-      condition = "input.generateReport > 0",
-      ns = ns,
-      shiny::uiOutput(outputId = ns("selections")),
-      shinydashboard::box(
-        width = NULL,
-        shinycssloaders::withSpinner(
-          reactable::reactableOutput(outputId = ns("characterizationTable"))
         ),
-        csvDownloadButton(ns, "characterizationTable")
+        shiny::tabsetPanel(
+          type = "pills",
+          shiny::tabPanel(
+            title = "Group by Database",
+            shinycssloaders::withSpinner(
+              reactable::reactableOutput(outputId = ns("characterizationTableRaw"))
+            ),
+            csvDownloadButton(ns, "characterizationTableRaw")
+          ),
+          shiny::tabPanel(
+            title = "Group by Time ID",
+            shinycssloaders::withSpinner(
+              reactable::reactableOutput(outputId = ns("characterizationTableRawGroupedByTime"))
+            ),
+            csvDownloadButton(ns, "characterizationTableRawGroupedByTime")
+          )
+        )
       )
     )
   )
@@ -110,24 +216,70 @@ characterizationModule <- function(id,
                                    dataSource,
                                    cohortTable,
                                    databaseTable,
-                                   selectedDatabaseIds,
-                                   targetCohortId,
                                    temporalAnalysisRef,
                                    analysisNameOptions,
+                                   domainIdOptions,
                                    analysisIdInCohortCharacterization,
                                    getResolvedAndMappedConceptIdsForFilters,
                                    selectedConceptSets,
-                                   characterizationTimeIdChoices) {
-
+                                   characterizationTimeIdChoices,
+                                   table1SpecPath = "data/Table1SpecsLong.csv") {
+  prettyTable1Specifications <- readr::read_csv(
+    file = table1SpecPath,
+    col_types = readr::cols(),
+    guess_max = min(1e7),
+    lazy = FALSE
+  )
   shiny::moduleServer(id, function(input, output, session) {
 
-    selectionsOutput <- shiny::eventReactive(input$generateReport, {
+    timeIdOptions <- getResultsTemporalTimeRef(dataSource = dataSource) %>%
+      dplyr::arrange(.data$sequence)
+    shiny::observe({
+      # Default time windows
+      selectedTimeWindows <- timeIdOptions %>%
+        dplyr::filter(.data$primaryTimeId == 1) %>%
+        dplyr::filter(.data$isTemporal == 1) %>%
+        dplyr::arrange(.data$sequence) %>%
+        dplyr::pull("temporalChoices")
+
+      shinyWidgets::updatePickerInput(session,
+                                      inputId = "timeIdChoices",
+                                      choices = timeIdOptions$temporalChoices,
+                                      selected = selectedTimeWindows)
+
+      cohortChoices <- cohortTable$cohortId
+      names(cohortChoices) <- cohortTable$cohortName
+      shinyWidgets::updatePickerInput(session,
+                                      inputId = "targetCohort",
+                                      choices = cohortChoices)
+
+
+      databaseChoices <- databaseTable$databaseId
+      names(databaseChoices) <- databaseTable$databaseName
+      shinyWidgets::updatePickerInput(session,
+                                      inputId = "targetDatabase",
+                                      selected = databaseChoices[1],
+                                      choices = databaseChoices)
+    })
+
+    selectedTimeIds <- shiny::reactive({
+      timeIdOptions %>%
+        dplyr::filter(.data$temporalChoices %in% input$timeIdChoices) %>%
+        dplyr::select(.data$timeId) %>%
+        dplyr::pull()
+    })
+
+    selectedDatabaseIds <- shiny::reactive(input$targetDatabase)
+    targetCohortId <- shiny::reactive(input$targetCohort)
+
+
+    selectionsPanel <- shiny::reactive({
       shinydashboard::box(
         status = "warning",
         width = "100%",
         shiny::fluidRow(
           shiny::column(
-            width = 9,
+            width = 4,
             tags$b("Cohort :"),
             paste(cohortTable %>%
                     dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
@@ -136,7 +288,7 @@ characterizationModule <- function(id,
                   collapse = ", ")
           ),
           shiny::column(
-            width = 3,
+            width = 8,
             tags$b("Database(s) :"),
             paste(databaseTable %>%
                     dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
@@ -148,11 +300,20 @@ characterizationModule <- function(id,
       )
     })
 
+    selectionsOutput <- shiny::eventReactive(input$generateReport, {
+      selectionsPanel()
+    })
+
+    selectionsOutputRaw <- shiny::eventReactive(input$generateRaw, {
+      selectionsPanel()
+    })
+
     output$selections <- shiny::renderUI(selectionsOutput())
+    output$selectionsRaw <- shiny::renderUI(selectionsOutputRaw())
     # Cohort Characterization -------------------------------------------------
 
     # Temporal characterization ------------
-    characterizationOutput <- shiny::eventReactive(input$generateReport, {
+    characterizationOutput <- shiny::reactive({
       validate(need(length(selectedDatabaseIds()) > 0, "At least one data source must be selected"))
       validate(need(length(targetCohortId()) == 1, "One target cohort must be selected"))
 
@@ -227,62 +388,8 @@ characterizationModule <- function(id,
       )
     })
 
-    ## cohortCharacterizationDataFiltered ----
-    cohortCharacterizationDataFiltered <- shiny::reactive({
-
-      data <-
-        characterizationOutput()
-
-      if (!hasData(data)) {
-        return(NULL)
-      }
-      data <- data$covariateValue
-      if (!hasData(data)) {
-        return(NULL)
-      }
-
-      data <- data %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
-        dplyr::filter(.data$timeId %in% c(characterizationTimeIdChoices$timeId %>% unique()))
-
-      if (input$charType == "Raw") {
-        if (input$characterizationProportionOrContinuous == "Proportion") {
-          data <- data %>%
-            dplyr::filter(.data$isBinary == "Y")
-        } else if (input$characterizationProportionOrContinuous == "Continuous") {
-          data <- data %>%
-            dplyr::filter(.data$isBinary == "N")
-        }
-      }
-
-      if (input$characterizationProportionOrContinuous == "Proportion") {
-        data <- data %>%
-          dplyr::filter(.data$isBinary == "Y")
-      } else if (input$characterizationProportionOrContinuous == "Continuous") {
-        data <- data %>%
-          dplyr::filter(.data$isBinary == "N")
-      }
-
-      data <- data %>%
-        dplyr::filter(.data$analysisName %in% input$characterizationAnalysisNameFilter)
-
-      data <- data %>%
-        dplyr::filter(.data$domainId %in% input$characterizationDomainIdFilter)
-
-      if (hasData(selectedConceptSets())) {
-        if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
-          data <- data %>%
-            dplyr::filter(.data$conceptId %in% getResolvedAndMappedConceptIdsForFilters())
-        }
-      }
-      if (!hasData(data)) {
-        return(NULL)
-      }
-      return(data)
-    })
-
     ## cohortCharacterizationPrettyTable ----
-    cohortCharacterizationPrettyTable <- shiny::reactive({
+    cohortCharacterizationPrettyTable <- shiny::eventReactive(input$generateReport, {
       data <-
         characterizationOutput()
       if (!hasData(data)) {
@@ -300,31 +407,17 @@ characterizationModule <- function(id,
         return(NULL)
       }
 
-      showDataAsPercent <-
-        TRUE ## showDataAsPercent set based on UI selection - proportion)
+      data <- data %>%
+        dplyr::select(
+          .data$cohortId,
+          .data$databaseId,
+          .data$analysisId,
+          .data$covariateId,
+          .data$covariateName,
+          .data$mean
+        ) %>%
+        dplyr::rename(sumValue = .data$mean)
 
-      if (showDataAsPercent) {
-        data <- data %>%
-          dplyr::select(
-            .data$cohortId,
-            .data$databaseId,
-            .data$analysisId,
-            .data$covariateId,
-            .data$covariateName,
-            .data$mean
-          ) %>%
-          dplyr::rename(sumValue = .data$mean)
-      } else {
-        data <- data %>%
-          dplyr::select(
-            .data$cohortId,
-            .data$databaseId,
-            .data$analysisId,
-            .data$covariateId,
-            .data$covariateName,
-            .data$sumValue
-          )
-      }
 
       table <- data %>%
         prepareTable1(
@@ -337,9 +430,8 @@ characterizationModule <- function(id,
       keyColumnFields <- c("characteristic")
       dataColumnFields <- intersect(
         x = colnames(table),
-        y = cohort$shortName
+        y = cohortTable$shortName
       )
-
 
       countLocation <- 1
       countsForHeader <-
@@ -364,52 +456,78 @@ characterizationModule <- function(id,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showDataAsPercent = showDataAsPercent,
+        showDataAsPercent = TRUE,
         sort = FALSE,
         pageSize = 100
       )
       return(displayTable)
     })
 
-    ## cohortCharacterizationRawTable ----
-    cohortCharacterizationRawTable <- shiny::reactive({
-      data <- cohortCharacterizationDataFiltered()
+    ## Output: characterizationTable ----
+    output$characterizationTable <- reactable::renderReactable(expr = {
+      data <- cohortCharacterizationPrettyTable()
+      validate(need(hasData(data), "No data for selected combination"))
+      return(data)
+    })
+
+
+    ## cohortCharacterizationDataFiltered ----
+    cohortCharacterizationDataFiltered <- shiny::eventReactive(input$generateRaw, {
+      data <- characterizationOutput()
+
       if (!hasData(data)) {
         return(NULL)
       }
+      data <- data$covariateValue
+      if (!hasData(data)) {
+        return(NULL)
+      }
+
+      data <- data %>%
+        dplyr::filter(.data$timeId %in% selectedTimeIds()) %>%
+        dplyr::filter(.data$analysisName %in% input$characterizationAnalysisNameFilter) %>%
+        dplyr::filter(.data$domainId %in% input$characterizationDomainIdFilter)
+
+
+      if (hasData(selectedConceptSets())) {
+        if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
+          data <- data %>%
+            dplyr::filter(.data$conceptId %in% getResolvedAndMappedConceptIdsForFilters())
+        }
+      }
+      if (!hasData(data)) {
+        return(NULL)
+      }
+      return(data)
+    })
+
+    rawTableReactable <- shiny::reactive({
+      data <- cohortCharacterizationDataFiltered()
+      if (is.null(data)) {
+        return(NULL)
+      }
+
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(
         message = "Post processing: Rendering table",
         value = 0
       )
-      data <- data %>%
-        dplyr::select(
-          .data$covariateName,
-          .data$analysisName,
-          .data$startDay,
-          .data$endDay,
-          .data$conceptId,
-          .data$mean,
-          .data$sd,
-          .data$cohortId,
-          .data$databaseId,
-          .data$temporalChoices
-        )
 
       keyColumnFields <-
         c("covariateName", "analysisName", "temporalChoices", "conceptId")
 
-      showDataAsPercent <- FALSE
       if (input$characterizationColumnFilters == "Mean and Standard Deviation") {
         dataColumnFields <- c("mean", "sd")
       } else {
         dataColumnFields <- c("mean")
-        if (input$characterizationProportionOrContinuous == "Proportion") {
-          showDataAsPercent <- TRUE
-        }
       }
       countLocation <- 1
+
+
+      if (!hasData(data)) {
+        return(NULL)
+      }
 
       countsForHeader <-
         getDisplayTableHeaderCount(
@@ -426,6 +544,30 @@ characterizationModule <- function(id,
           string = dataColumnFields
         )
 
+      data <- data %>%
+        dplyr::select(
+          .data$covariateName,
+          .data$analysisName,
+          .data$startDay,
+          .data$endDay,
+          .data$conceptId,
+          .data$isBinary,
+          .data$mean,
+          .data$sd,
+          .data$cohortId,
+          .data$databaseId,
+          .data$temporalChoices
+        )
+
+      if (input$proportionOrContinuous == "Proportion") {
+        data <- data %>%
+          dplyr::filter(.data$isBinary == "Y") %>%
+          dplyr::select(-.data$isBinary)
+      } else if (input$proportionOrContinuous == "Continuous") {
+        data <- data %>% dplyr::filter(.data$isBinary == "N") %>%
+          dplyr::select(-.data$isBinary)
+      }
+
       getDisplayTableGroupedByDatabaseId(
         data = data,
         cohort = cohortTable,
@@ -435,24 +577,80 @@ characterizationModule <- function(id,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showDataAsPercent = showDataAsPercent,
+        showDataAsPercent = FALSE,
         sort = TRUE,
         pageSize = 100
       )
     })
 
-    ## Output: characterizationTable ----
-    output$characterizationTable <- reactable::renderReactable(expr = {
-      if (input$charType == "Pretty") {
-        data <- cohortCharacterizationPrettyTable()
-        validate(need(hasData(data), "No data for selected combination"))
-        return(data)
-      } else {
-        data <- cohortCharacterizationRawTable()
-        validate(need(hasData(data), "No data for selected combination"))
-        return(data)
-      }
+    output$characterizationTableRaw <- reactable::renderReactable(expr = {
+      data <- rawTableReactable()
+      validate(need(hasData(data), "No data for selected combination"))
+      return(data)
     })
 
+
+    rawTableTimeIdReactable <- shiny::reactive({
+      data <- cohortCharacterizationDataFiltered()
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(
+        message = "Post processing: Rendering table",
+        value = 0
+      )
+
+      temporalChoices <- data$temporalChoices %>% unique()
+
+      data <-
+        data %>% dplyr::inner_join(databaseTable %>%
+                                     dplyr::select(.data$databaseId, .data$databaseName),
+                                   by = "databaseId")
+      keyColumns <- c("covariateName", "analysisName", "conceptId", "databaseName")
+      data <- data %>%
+        dplyr::select(
+          .data$covariateName,
+          .data$analysisName,
+          .data$databaseName,
+          .data$temporalChoices,
+          .data$conceptId,
+          .data$mean,
+          .data$sd
+        ) %>%
+        tidyr::pivot_wider(
+          id_cols = dplyr::all_of(keyColumns),
+          names_from = "temporalChoices",
+          values_from = "mean",
+          names_sep = "_"
+        ) %>%
+        dplyr::relocate(dplyr::all_of(c(keyColumns, temporalChoices))) %>%
+        dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with("T ("))))
+
+      if (any(stringr::str_detect(
+        string = colnames(data),
+        pattern = stringr::fixed("T (0")
+      ))) {
+        data <- data %>%
+          dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with("T (0"))))
+      }
+      dataColumns <- temporalChoices
+      progress$set(
+        message = "Rendering table",
+        value = 80
+      )
+
+      getDisplayTableSimple(
+        data = data,
+        keyColumns = keyColumns,
+        dataColumns = dataColumns,
+        showDataAsPercent = FALSE,
+        pageSize = 100
+      )
+    })
+
+    output$characterizationTableRawGroupedByTime <- reactable::renderReactable(expr = {
+      data <- rawTableTimeIdReactable()
+      validate(need(hasData(data), "No data for selected combination"))
+      return(data)
+    })
   })
 }

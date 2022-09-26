@@ -21,6 +21,8 @@ uiControls <- function(ns,
       input.tabs != 'orphanConcepts' &
       input.tabs != 'inclusionRuleStats' &
       input.tabs != 'visitContext' &
+      input.tabs != 'compareCohortCharacterization' &
+      input.tabs != 'cohortCharacterization' &
       input.tabs != 'cohortOverlap'",
       ns = ns,
       shiny::uiOutput(ns("databasePicker"))
@@ -28,7 +30,6 @@ uiControls <- function(ns,
     shiny::conditionalPanel(
       condition = "input.tabs=='incidenceRate' |
       input.tabs == 'timeDistribution' |
-      input.tabs =='cohortCharacterization' |
       input.tabs == 'cohortCounts' |
       input.tabs == 'indexEventBreakdown' |
       input.tabs == 'conceptsInDataSource' |
@@ -45,6 +46,8 @@ uiControls <- function(ns,
       input.tabs != 'cohortCounts' &
       input.tabs != 'cohortOverlap'&
       input.tabs != 'incidenceRate' &
+      input.tabs != 'compareCohortCharacterization' &
+      input.tabs != 'cohortCharacterization' &
       input.tabs != 'timeDistribution'",
       ns = ns,
       shinyWidgets::pickerInput(
@@ -88,31 +91,7 @@ uiControls <- function(ns,
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs == 'compareCohortCharacterization'|
-        input.tabs == 'compareTemporalCharacterization'",
-      ns = ns,
-      shinyWidgets::pickerInput(
-        inputId = ns("comparatorCohort"),
-        label = "Comparator",
-        choices = c(""),
-        multiple = FALSE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
-          liveSearch = TRUE,
-          liveSearchStyle = "contains",
-          size = 10,
-          dropupAuto = TRUE,
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50
-        )
-      )
-    ),
-    shiny::conditionalPanel(
-      condition = "input.tabs == 'cohortCharacterization' |
-      input.tabs == 'compareCohortCharacterization' |
-      input.tabs == 'temporalCharacterization' |
-      input.tabs == 'compareTemporalCharacterization' |
+      condition = "input.tabs == 'temporalCharacterization' |
       input.tabs == 'conceptsInDataSource' |
       input.tabs == 'orphanConcepts'",
       ns = ns,
@@ -176,7 +155,7 @@ dashboardUi <- function(enabledTabs,
     shinydashboard::sidebarMenu(
       id = ns("tabs"),
       if ("cohort" %in% enabledTabs) {
-        shinydashboard::menuItem(text = "Cohort Definition", tabName = "cohortDefinition", icon = shiny::icon("dna"))
+        shinydashboard::menuItem(text = "Cohort Definition", tabName = "cohortDefinition", icon = shiny::icon("code"))
       },
       if ("includedSourceConcept" %in% enabledTabs) {
         shinydashboard::menuItem(text = "Concepts in Data Source", tabName = "conceptsInDataSource", icon = shiny::icon("table"))
@@ -206,17 +185,10 @@ dashboardUi <- function(enabledTabs,
         shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap", icon = shiny::icon("circle"))
       },
       if ("temporalCovariateValue" %in% enabledTabs) {
-        shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization", icon = shiny::icon("users"))
+        shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization", icon = shiny::icon("user"))
       },
       if ("temporalCovariateValue" %in% enabledTabs) {
-        shinydashboard::menuItem(text = "Temporal Characterization", tabName = "temporalCharacterization")
-      },
-      if ("temporalCovariateValue" %in% enabledTabs) {
-        shinydashboard::menuItem(text = "Compare Cohort Char.", tabName = "compareCohortCharacterization")
-
-      },
-      if ("temporalCovariateValue" %in% enabledTabs) {
-        shinydashboard::menuItem(text = "Compare Temporal Char.", tabName = "compareTemporalCharacterization")
+        shinydashboard::menuItem(text = "Compare Characterization", tabName = "compareCohortCharacterization", icon = shiny::icon("users"))
       },
       shinydashboard::menuItem(text = "Meta data", tabName = "databaseInformation", icon = shiny::icon("gear", verify_fa = FALSE)),
       # Conditional dropdown boxes in the side bar ------------------------------------------------------
@@ -350,31 +322,8 @@ dashboardUi <- function(enabledTabs,
       }
     ),
     shinydashboard::tabItem(
-      tabName = "temporalCharacterization",
-      temporalCharacterizationView(ns("temporalCharacterization")),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationUi(ns("temporalCharacterizationAnnotation"))
-        )
-      }
-    ),
-    shinydashboard::tabItem(
       tabName = "compareCohortCharacterization",
       compareCohortCharacterizationView(ns("compareCohortCharacterization")),
-      if (showAnnotation) {
-        column(
-          12,
-          tags$br(),
-          annotationUi(ns("compareCohortCharacterizationAnnotation"))
-        )
-      }
-    ),
-    shinydashboard::tabItem(
-      tabName = "compareTemporalCharacterization",
-      compareCohortCharacterizationView(ns("compareTemporalCohortCharacterization"),
-                                        title = "Compare temporal cohort characterization"),
       if (showAnnotation) {
         column(
           12,
@@ -423,61 +372,53 @@ tabularUi <- function(enabledTabs,
                       id = "DiagnosticsExplorer") {
   ns <- shiny::NS(id)
   ui <-
-    shiny::fluidPage(
-      shinydashboard::box(uiControls(ns, enabledTabs), width = 12),
-      shiny::tabsetPanel(
-        # shiny::tabPanel("About", shiny::HTML(aboutText)),
-        if ("cohort" %in% enabledTabs) {
-          shiny::tabPanel("Cohort Definitions", cohortDefinitionsView(ns("cohortDefinitions")), value = "cohortDefinition")
-        },
-        if ("includedSourceConcept" %in% enabledTabs) {
-          shiny::tabPanel("Concepts in Data Source", conceptsInDataSourceView(ns("conceptsInDataSource")), value = "conceptsInDataSource")
-        },
-        if ("orphanConcept" %in% enabledTabs) {
-          shiny::tabPanel("Orphan Concepts", orpahanConceptsView(ns("orphanConcepts")), value = "orphanConcept")
-        },
-        if ("cohortCount" %in% enabledTabs) {
-          shiny::tabPanel("Cohort counts", cohortCountsView(ns("cohortCounts")), value = "cohortCounts")
-        },
-        if ("incidenceRate" %in% enabledTabs) {
-          shiny::tabPanel("Incidence Rates", incidenceRatesView(ns("incidenceRates")), value = "incidenceRate")
-        },
-        if ("inclusionRuleStats" %in% enabledTabs) {
-          shiny::tabPanel("Inclusion Rules", inclusionRulesView(ns("inclusionRules")), value = "inclusionRules")
-        },
-        if ("indexEventBreakdown" %in% enabledTabs) {
-          shiny::tabPanel("Index Events", indexEventBreakdownView(ns("indexEvents")), value = "indexEventBreakdown")
-        },
-        if ("visitContext" %in% enabledTabs) {
-          shiny::tabPanel("Visit Context", visitContextView(ns("visitContext")), value = "visitContext")
-        },
-        if ("relationship" %in% enabledTabs) {
-          shiny::tabPanel("Cohort Overlap", cohortOverlapView(ns("cohortOverlap")), value = "cohortOverlap")
-        },
-        if ("temporalCovariateValue" %in% enabledTabs) {
-          shiny::tabPanel("Time Distributions", timeDistributionsView(ns("timeDistributions")), value = "timeDistribution")
-        },
-        if ("temporalCovariateValue" %in% enabledTabs) {
-          shiny::tabPanel("Characterization", characterizationView(ns("characterization")), value = "characterization")
-        },
-        if ("temporalCovariateValue" %in% enabledTabs) {
-          shiny::tabPanel("Temporal Characterization", temporalCharacterizationView(ns("temporalCharacterization")),
-                          value = "temporalCharacterization")
-        },
-        if ("temporalCovariateValue" %in% enabledTabs) {
-          shiny::tabPanel("Compare Characterization", compareCohortCharacterizationView(ns("compareCohortCharacterization")),
-                          value = "compareCohortCharacterization")
-        },
-        if ("temporalCovariateValue" %in% enabledTabs) {
-          shiny::tabPanel("Compare Temporal Characterization", compareCohortCharacterizationView(ns("compareTemporalCohortCharacterization")),
-                          value = "compareTemporalCharacterization")
-        },
-        shiny::tabPanel("Database Information", databaseInformationView(ns("databaseInformation")),
-                        value = "databaseInformation"),
-        type = "pills",
-        id = ns("tabs")
-      ),
-      width = "100%"
-    )
+      shiny::fluidPage(
+        shinydashboard::box(uiControls(ns, enabledTabs), width = 12),
+        shiny::tabsetPanel(
+          # shiny::tabPanel("About", shiny::HTML(aboutText)),
+          if ("cohort" %in% enabledTabs) {
+            shiny::tabPanel("Cohort Definitions", cohortDefinitionsView(ns("cohortDefinitions")), value = "cohortDefinition")
+          },
+          if ("includedSourceConcept" %in% enabledTabs) {
+            shiny::tabPanel("Concepts in Data Source", conceptsInDataSourceView(ns("conceptsInDataSource")), value = "conceptsInDataSource")
+          },
+          if ("orphanConcept" %in% enabledTabs) {
+            shiny::tabPanel("Orphan Concepts", orpahanConceptsView(ns("orphanConcepts")), value = "orphanConcept")
+          },
+          if ("cohortCount" %in% enabledTabs) {
+            shiny::tabPanel("Cohort counts", cohortCountsView(ns("cohortCounts")), value = "cohortCounts")
+          },
+          if ("incidenceRate" %in% enabledTabs) {
+            shiny::tabPanel("Incidence Rates", incidenceRatesView(ns("incidenceRates")), value = "incidenceRate")
+          },
+          if ("inclusionRuleStats" %in% enabledTabs) {
+            shiny::tabPanel("Inclusion Rules", inclusionRulesView(ns("inclusionRules")), value = "inclusionRules")
+          },
+          if ("indexEventBreakdown" %in% enabledTabs) {
+            shiny::tabPanel("Index Events", indexEventBreakdownView(ns("indexEvents")), value = "indexEventBreakdown")
+          },
+          if ("visitContext" %in% enabledTabs) {
+            shiny::tabPanel("Visit Context", visitContextView(ns("visitContext")), value = "visitContext")
+          },
+          if ("relationship" %in% enabledTabs) {
+            shiny::tabPanel("Cohort Overlap", cohortOverlapView(ns("cohortOverlap")), value = "cohortOverlap")
+          },
+          if ("temporalCovariateValue" %in% enabledTabs) {
+            shiny::tabPanel("Time Distributions", timeDistributionsView(ns("timeDistributions")), value = "timeDistribution")
+          },
+          if ("temporalCovariateValue" %in% enabledTabs) {
+            shiny::tabPanel("Characterization", characterizationView(ns("characterization")), value = "characterization")
+          },
+          if ("temporalCovariateValue" %in% enabledTabs) {
+            shiny::tabPanel("Compare Characterization", compareCohortCharacterizationView(ns("compareCohortCharacterization")),
+                            value = "compareTemporalCharacterization")
+          },
+          shiny::tabPanel("Database Information", databaseInformationView(ns("databaseInformation")),
+                          value = "databaseInformation"),
+          type = "pills",
+          id = ns("tabs")
+        ),
+        width = "100%"
+      )
   return(ui)
 }
