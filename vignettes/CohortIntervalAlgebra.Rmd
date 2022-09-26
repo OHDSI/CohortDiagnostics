@@ -1,0 +1,204 @@
+---
+html_document:
+  number_sections: yes
+author: "Gowtham Rao"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: null
+  toc: yes
+  html_document:
+    df_print: paged
+title: "Cohort Interval Algebra"
+toc: yes
+vignette: "%\\VignetteIndexEntry{WhatIsCohortDiagnostics} %\\VignetteEncoding{UTF-8}
+  \    %\\VignetteEngine{knitr::rmarkdown}\n"
+---
+  
+  ```{r, echo = FALSE, message = FALSE}
+library(SqlRender)
+knitr::opts_chunk$set(
+  cache = FALSE,
+  comment = "#>",
+  error = FALSE,
+  tidy = FALSE)
+  ```
+
+# Cohort
+
+A cohort is a set of persons who satisfy one or more inclusion criteria (a phenotype) for a duration of time - and this is identified by cohort start date (start) and cohort end date (end). In OHDSI a) One person may belong to multiple cohorts, b) One person may belong to the same cohort for multiple different time periods, c) One person may not belong to the same cohort multiple times during the same period of time, d) A cohort may have zero or more members.
+
+# Multiple cohorts
+Thus a person may belong to different cohorts, and these cohorts may or may not have shared dates. Studying population level temporal relationships between persons start/end of one cohort and start/end of another cohort may offer us useful characterization insights.
+
+## Use Cases
+An example is a cohort of persons dispensed drug Hydrochlorthiazide (HCTZ), and a cohort of persons with diagnosis of Hypertension (HTN). Since most agree that HCTZ is one of first line drugs used in the management of Hypertension - we expect that
+- persons with the diagnosis of hypertension and the dispensation of HCTZ to be present in both cohorts.
+- in general, we expect the start of the HCTZ cohort to be on or after the diagnosis of Hypertension (because we expect the management to start after diagnosis), i.e. hctz.cohort_start_date >= hypertension.cohort_start_date. If we find that a large proportion of persons had HCTZ start prior to HTN diagnosis - then this may indicate index date misclassification.
+
+Another use case maybe to study the relationship between end of a treatment and start of a new condition. e.g. if a person is on a long term treatment with HCTZ, stops the drug (and no other treatment is initiated) - we may expect to observe their hypertension to be uncontrolled after stopping HCTZ. i.e. HCTZ.cohort_end_date < uncontrolledHTN.cohort_start_date
+
+
+# Formal representation
+One formal way of representing temporal relationships between multiple cohort is to use [Allen's interval algebra](https://en.wikipedia.org/wiki/Allen%27s_interval_algebra) (a calculus for temporal reasoning that was introduced by James F. Allen in 1983). 
+
+
+## Thirteen basic relationship
+There are 13 basic relationships. They are
+
+1) **p precedes:**  
+  comparator cohort *Precedes* Target cohort  
+  cPrecedesT: cs < ts  
+  Field in cohort_relationship output: ce_before_ts
+  
+  ```{r eval = FALSE}
+      |---C----|    
+      
+                   |----T----| 
+  ```
+                      
+
+2) **m meets:**   
+  comparator cohort *meets* target cohort  
+  cMeetsT: ce = ts  
+  Field in cohort_relationship output: ce_on_ts  
+    
+  ```{r eval = FALSE}
+    
+      |---C---|  
+      
+              |---T---|  
+  ```
+                 
+3) **o overlaps:**  
+  comparator cohort *overlaps* target cohort  
+  cOverlapsT: ce > ts & ce < ts & cs < ts  
+  Field in cohort_relationship output: ce_in_t_cs_bf_ts
+    
+  ```{r eval = FALSE}
+    
+        |---C---|  
+        
+             |---T---|   
+  ```
+             
+4) **F finished by:**  
+  comparator cohort *finished by* target cohort  
+  cIsFinishedByT: ce = te & cs < ts  
+  Field in cohort_relationship output: ce_on_te_cs_bf_ts 
+    
+  ```{r eval = FALSE} 
+    
+      |-----C-----|  
+
+          |---T---|   
+  ```
+
+5) **D contains:**  
+  comparator cohort *contains* target cohort 
+  cContainsT: cs < ts & ce > te  
+  Field in cohort_relationship output: cs_bf_ts_ce_gt_te 
+    
+  ```{r eval = FALSE} 
+    
+      |---C-------| 
+        
+        |--T----|   
+  ```
+        
+6) **s starts:**  
+  comparator cohort *starts* target cohort  
+  cStartsT: cs = ts & ce < te  
+  Field in cohort_relationship output: cs_on_ts_ce_bf_te  
+    
+  ```{r eval = FALSE}
+      |---C---|  
+      
+      |------T-------|   
+  ```
+      
+7) **e equals:** 
+  comparator cohort equals target cohort  
+  cEqualsT: cs = ts & ce = te  
+  Field in cohort_relationship output: c_equals_t  
+    
+  ```{r eval = FALSE}
+        |---C-----|  
+        
+        |---T-----|   
+  ```
+        
+8) **S started by:**  
+  comparator cohort is started by Target  
+  cIsStartedByT: cs = ts & ce > te  
+  Field in cohort_relationship output: cs_on_ts_ce_gt_te  
+    
+  ```{r eval = FALSE}
+    
+      |------C-------|  
+      
+      |----T-----|   
+  ```
+      
+9) **d during:**  
+  comparator cohort is during Target cohort  
+  cDuringT: cs > ts & ce < te  
+  Field in cohort_relationship output: c_in_t  
+    
+  ```{r eval = FALSE}
+        |---C----|
+      |------T-------|
+   
+  ```
+
+10) **f finishes:**  
+  comparator cohort finishes target cohort  
+  cFinishesT: ce = te & cs > ts-  
+  Field in cohort_relationship output: ce_on_te_cs_gt_ts  
+    
+  ```{r eval = FALSE}
+    
+        |---C--------| 
+        
+      |------T-------|  
+  ```
+      
+      
+
+11) **O overlapped by:**  
+  comparator cohort overlapped by Target cohort  
+  cIsOverlappedByT: te > cs & te < ce & cs > ts & cs < te  
+  Field in cohort_relationship output: cs_in_t_te_in_c  
+    
+  ```{r eval = FALSE}
+    
+             |------C-------|  
+               
+        |----T-----|   
+  ```
+        
+12) **M met by:**  
+   comparator is met by target cohort  
+   cIsMetByT: te = cs  
+   Field in cohort_relationship output: cs_on_te      
+    
+    
+  ```{r eval = FALSE}
+                 |------C-------|  
+                 
+     |-----T-----|   
+  ```
+      
+      
+13) **P preceded by:**  
+  compartor is preceded by Target  
+  cPrecededByT: Te < Cs  
+  Field in cohort_relationship output: cs_after_te  
+    
+  ```{r eval = FALSE}
+    
+                      |------C-------|  
+      |----T-----|   
+  ```
+      
+    
+    
