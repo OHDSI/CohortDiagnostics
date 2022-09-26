@@ -315,7 +315,7 @@ There are 13 basic relationships. They are
 ```
     
     
-7) **startsBeforeEnd:**  pmoFD
+7) **startsBeforeEnd:**  pmoFDseSdfO
   comparator cohort starts before target end  
   cs < te, note: ce can be </=/> TE
   Field in cohort_relationship output: cs_before_te   
@@ -353,4 +353,232 @@ There are 13 basic relationships. They are
 
          |------C-------|
     |----T-----|                     cIsOverlappedByT(O)
+```
+
+
+7) **endsBeforeEnd:**  pmosd
+  comparator cohort ends before target end  
+  ce < te, note: ce can be </=/> TE
+  Field in cohort_relationship output: ce_before_te       
+
+  ```{r eval = FALSE}
+  |----C-----|
+                  |------T-------| cPrecedesT (p)
+
+
+  |----C-----|
+             |------T-------| cMeetsT (m)
+
+
+    |----C-----|
+         |------T-------| cOverlapsT (o)
+
+  |----C-----|
+  |------T-------|  cStartsT (s)
+
+    |---C----|
+  |------T-------|  cDuringT (d)
+```
+
+
+8) **endsAfterEnd:**  DSOMP
+  comparator cohort ends after target end  
+  ce > te, note: cs can be </=/> TS/TE  
+  Field in cohort_relationship output: ce_after_te  
+
+  ```{r eval = FALSE}               
+  |------C-------|
+    |---T----|       cContainsT (D)
+
+  |------C-------|
+  |----T-----|       cIsStartedByT (S)
+
+         |------C-------|
+    |----T-----|     cIsOverlappedByT (O)
+
+             |------C-------|
+  |----T-----|       cIsMetByT (M)
+
+                  |------C-------|
+  |----T-----|       cPrecededByT (P)
+```
+
+9) **startsInInclusive:**
+  comparator cohort ends after target end  
+  cs >= ts & cs <= ts, note: ce can be </=/> TE  
+  Field in cohort_relationship output: cs_window_t   
+
+  ```{r eval = FALSE} 
+  
+  |----C-----|
+  |------T-------|   cStartsT (s)
+
+    |---C-----|
+    |---T-----|  cEqualsT (e)
+
+  |------C-------|
+  |----T-----|  cIsStartedByT (S)
+
+    |---C----|
+  |------T-------| cDuringT (d)
+
+    |---C--------|
+  |------T-------| cFinishesT (f)
+
+         |------C-------|
+    |----T-----|    cIsOverlappedByT (O)
+
+             |------C-------|
+  |----T-----|      cIsMetByT (M)
+```
+
+10. **endsInInclusive** oFSedf
+  comparator cohort ends after target, inclusive of start and end date
+  cs >= ts & cs <= ts, note: ce can be </=/> TE 
+  Field in cohort_relationship output: ce_window_t
+
+  ```{r eval = FALSE} 
+    |----C-----|
+         |------T-------|   cOverlapsT (o)
+
+  |------C-------|
+    |---T--------|          cIsFinishedByT(F)
+
+    |----C-----|
+    |------T-------|        cStartsT (s)
+
+    |---C-----|
+    |---T-----|             cEqualsT (e)
+
+    |----C-----|
+ |------T-------|           cDuringT (d)
+
+    |---C--------|
+  |------T-------|          cFinishesT (f)
+```
+
+
+10. **startsOnOrBeforeStart** pmoFDseS
+  comparator cohort starts on or before target start
+  Field in cohort_relationship output: cs_window_ts
+  
+  ```{r eval = FALSE} 
+  |----C-----|
+                  |------T-------|  cPrecedesT (p)
+
+  |----C-----|
+             |------T-------|      CeOnTs (m)
+
+    |----C-----|
+         |------T-------|-      cOverlapsT (o)
+
+  |------C-------|
+    |---T--------|   cIsFinishedByT (F)
+
+  |------C-------|
+    |---T----|       cContainsT (D)
+
+  |----C-----|
+  |------T-------|    cStartsT (s)
+
+    |---C-----|
+    |---T-----|       cEqualsT (e)
+
+  |------C-------|
+  |----T-----|     cIsStartedByT (S)
+```
+
+
+11. **startsOnOrBeforeEnd** pmoFDseSdfOM 
+  comparator cohort starts on or before target end
+  Field in cohort_relationship output: cs_window_te
+  
+  ```{r eval = FALSE} 
+
+  |----C-----|
+                  |------T-------| cPrecedesT (p)
+
+  |----C-----|
+             |------T-------|      cMeetsT (m)
+
+    |----C-----|
+         |------T-------|          cOverlapsT(o)
+
+  |------C-------|
+    |---T--------|                 cIsFinishedByT (F)
+
+  |------C-------|
+    |---T----|                     cContainsT (D)
+
+  |----C-----|
+  |------T-------|                 cStartsT (s)
+
+    |---C-----|
+    |---T-----|                    cEqualsT (e)
+
+  |------C-------|
+  |----T-----|                     cIsStartedByT (S)
+
+    |---C----|
+  |------T-------|                 cDuringT (d)
+
+    |---C--------|
+  |------T-------|                 cFinishesT (f)
+
+         |------C-------|
+    |----T-----|                   cIsOverlappedByT (O)
+
+             |------C-------|
+  |----T-----|                     cIsMetByT (M)
+```
+
+
+12. **endsOnOrBeforeEnd** pmoFsedf  
+  comparator cohort starts on or before target end
+  Field in cohort_relationship output: ce_window_te
+
+
+  ```{r eval = FALSE} 
+  |----C-----|
+                  |------T-------|  cPrecedesT (p)
+
+  |----C-----|
+             |------T-------|  cMeetsT (m)
+
+    |----C-----|
+         |------T-------|  cOverlapsT (o)
+
+  |------C-------|
+    |---T--------| cIsFinishedByT (F)
+
+  |----C-----|
+  |------T-------|  cStartsT (s)
+
+    |---C-----|
+    |---T-----| cEqualsT (e)
+
+    |---C----|
+  |------T-------| cDuringT (d)
+
+    |---C--------|
+  |------T-------|  cFinishesT (f)
+```
+
+12. **duringInclusive** esdf   
+  comparator cohort starts on or before target end  
+  Field in cohort_relationship output: c_within_t  
+
+  ```{r eval = FALSE}  
+
+    |---C-----|
+    |---T-----|             cEqualsT (e)
+
+  |----C-----|
+  |------T-------|          cStartsT (s)
+
+    |---C----|
+  |------T-------|          cDuringT (d)
+
+    |---C--------|
+  |------T-------|          cFinishesT (f)
 ```
