@@ -31,7 +31,6 @@
 {DEFAULT @time_series = time_series}
 {DEFAULT @visit_context = visit_context}
 {DEFAULT @vocabulary = vocabulary}
-{DEFAULT @cd_version = cd_version}
 {DEFAULT @version_number = '3.1.0'}
 
 -- Drop old tables if exist
@@ -70,13 +69,6 @@ DROP TABLE IF EXISTS @results_schema.@visit_context;
 DROP TABLE IF EXISTS @results_schema.@vocabulary;
 
 -- Create tables
---Table annotation
---HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@cd_version (
-    version_number VARCHAR PRIMARY KEY
-);
-
-INSERT INTO @results_schema.@cd_version (version_number) VALUES ('@version_number');
 
 --Table annotation
 --HINT DISTRIBUTE ON RANDOM
@@ -210,20 +202,46 @@ CREATE TABLE @results_schema.@cohort_relationships (
 			subjects BIGINT NOT NULL,
 			sub_cs_before_ts BIGINT NOT NULL,
 			rec_cs_before_ts BIGINT NOT NULL,
+			sub_ce_before_ts BIGINT NOT NULL,
+			rec_ce_before_ts BIGINT NOT NULL,
 			sub_cs_on_ts BIGINT NOT NULL,
 			rec_cs_on_ts BIGINT NOT NULL,
+			sub_cs_on_ts_ce_bf_te BIGINT NOT NULL,
+			rec_cs_on_ts_ce_bf_te BIGINT NOT NULL,
+			sub_cs_on_ts_ce_gt_te BIGINT NOT NULL,
+			rec_cs_on_ts_ce_gt_te BIGINT NOT NULL,
+			sub_ce_on_ts BIGINT NOT NULL,
+			rec_ce_on_ts BIGINT NOT NULL,
 			sub_cs_after_ts BIGINT NOT NULL,
 			rec_cs_after_ts BIGINT NOT NULL,
 			sub_cs_before_te BIGINT NOT NULL,
 			rec_cs_before_te BIGINT NOT NULL,
+			sub_ce_before_te BIGINT NOT NULL,
+			rec_ce_before_te BIGINT NOT NULL,
 			sub_cs_on_te BIGINT NOT NULL,
 			rec_cs_on_te BIGINT NOT NULL,
+			sub_ce_on_te BIGINT NOT NULL,
+			rec_ce_on_te BIGINT NOT NULL,
+			sub_ce_on_te_cs_gt_ts BIGINT NOT NULL,
+			rec_ce_on_te_cs_gt_ts BIGINT NOT NULL,
+			sub_ce_on_te_cs_bf_ts BIGINT NOT NULL,
+			rec_ce_on_te_cs_bf_ts BIGINT NOT NULL,
 			sub_cs_after_te BIGINT NOT NULL,
 			rec_cs_after_te BIGINT NOT NULL,
+			sub_ce_after_te BIGINT NOT NULL,
+			rec_ce_after_te BIGINT NOT NULL,
 			sub_cs_window_t BIGINT NOT NULL,
 			rec_cs_window_t BIGINT NOT NULL,
+			sub_cs_in_t BIGINT NOT NULL,
+			rec_cs_in_t BIGINT NOT NULL,
+			sub_cs_in_t_te_in_c BIGINT NOT NULL,
+			rec_cs_in_t_te_in_c BIGINT NOT NULL,
 			sub_ce_window_t BIGINT NOT NULL,
 			rec_ce_window_t BIGINT NOT NULL,
+			sub_ce_in_t BIGINT NOT NULL,
+			rec_ce_in_t BIGINT NOT NULL,
+			sub_ce_in_t_cs_bf_ts BIGINT NOT NULL,
+			rec_ce_in_t_cs_bf_ts BIGINT NOT NULL,
 			sub_cs_window_ts BIGINT NOT NULL,
 			rec_cs_window_ts BIGINT NOT NULL,
 			sub_cs_window_te BIGINT NOT NULL,
@@ -234,6 +252,12 @@ CREATE TABLE @results_schema.@cohort_relationships (
 			rec_ce_window_te BIGINT NOT NULL,
 			sub_c_within_t BIGINT NOT NULL,
 			rec_c_within_t BIGINT NOT NULL,
+			sub_c_in_t BIGINT NOT NULL,
+			rec_c_in_t BIGINT NOT NULL,
+			sub_cs_bf_ts_ce_gt_te BIGINT NOT NULL,
+			rec_cs_bf_ts_ce_gt_te BIGINT NOT NULL,
+			sub_c_equals_t BIGINT NOT NULL,
+			rec_c_equals_t BIGINT NOT NULL,
 			c_days_before_ts BIGINT NOT NULL,
 			c_days_before_te BIGINT NOT NULL,
 			c_days_within_t_days BIGINT NOT NULL,
