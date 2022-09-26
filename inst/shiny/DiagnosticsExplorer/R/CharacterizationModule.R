@@ -171,7 +171,7 @@ characterizationView <- function(id) {
           shiny::column(
             width = 6,
             shiny::radioButtons(
-              inputId = ns("characterizationProportionOrContinuous"),
+              inputId = ns("proportionOrContinuous"),
               label = "Covariate type(s)",
               choices = c("All", "Proportion", "Continuous"),
               selected = "All",
@@ -524,6 +524,11 @@ characterizationModule <- function(id,
       }
       countLocation <- 1
 
+
+      if (!hasData(data)) {
+        return(NULL)
+      }
+
       countsForHeader <-
         getDisplayTableHeaderCount(
           dataSource = dataSource,
@@ -546,12 +551,22 @@ characterizationModule <- function(id,
           .data$startDay,
           .data$endDay,
           .data$conceptId,
+          .data$isBinary,
           .data$mean,
           .data$sd,
           .data$cohortId,
           .data$databaseId,
           .data$temporalChoices
         )
+
+      if (input$proportionOrContinuous == "Proportion") {
+        data <- data %>%
+          dplyr::filter(.data$isBinary == "Y") %>%
+          dplyr::select(-.data$isBinary)
+      } else if (input$proportionOrContinuous == "Continuous") {
+        data <- data %>% dplyr::filter(.data$isBinary == "N") %>%
+          dplyr::select(-.data$isBinary)
+      }
 
       getDisplayTableGroupedByDatabaseId(
         data = data,
