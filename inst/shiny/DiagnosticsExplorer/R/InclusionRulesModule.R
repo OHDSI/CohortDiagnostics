@@ -14,7 +14,7 @@ inclusionRulesView <- function(id) {
       width = "100%",
       tags$div(
         style = "max-height: 100px; overflow-y: auto",
-        shiny::uiOutput(outputId = "selectedCohort")
+        shiny::uiOutput(outputId = ns("selectedCohort"))
       )
     ),
     shinydashboard::box(
