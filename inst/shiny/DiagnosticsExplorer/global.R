@@ -5,7 +5,7 @@ diagExpEnv$shinyConfigPath <- "config.yml"
 # Source all app files in to isolated namespace
 lapply(file.path("R", list.files("R", pattern = "*.R")), source, local = diagExpEnv)
 
-diagExpEnv$appVersionNum <- "Version: 3.0.2"
+diagExpEnv$appVersionNum <- "Version: 3.1.0"
 
 if (exists("shinySettings")) {
   diagExpEnv$shinySettings <- shinySettings
