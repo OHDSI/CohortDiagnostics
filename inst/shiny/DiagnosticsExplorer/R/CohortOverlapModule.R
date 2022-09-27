@@ -31,8 +31,8 @@ plotCohortOverlap <- function(data,
         " (",
         .data$signTOnlySubjects,
         scales::percent(.data$absTOnlySubjects /
-          .data$absEitherSubjects,
-        accuracy = 1
+                          .data$absEitherSubjects,
+                        accuracy = 1
         ),
         ")"
       ),
@@ -42,8 +42,8 @@ plotCohortOverlap <- function(data,
         " (",
         .data$signCOnlySubjects,
         scales::percent(.data$absCOnlySubjects /
-          .data$absEitherSubjects,
-        accuracy = 1
+                          .data$absEitherSubjects,
+                        accuracy = 1
         ),
         ")"
       ),
@@ -53,8 +53,8 @@ plotCohortOverlap <- function(data,
         " (",
         .data$signBothSubjects,
         scales::percent(.data$absBothSubjects /
-          .data$absEitherSubjects,
-        accuracy = 1
+                          .data$absEitherSubjects,
+                        accuracy = 1
         ),
         ")"
       )
@@ -141,12 +141,12 @@ plotCohortOverlap <- function(data,
     )
 
   plotData$targetShortName <- factor(plotData$targetShortName,
-    levels = sortTargetShortName$targetShortName
+                                     levels = sortTargetShortName$targetShortName
   )
 
   plotData$comparatorShortName <-
     factor(plotData$comparatorShortName,
-      levels = sortComparatorShortName$comparatorShortName
+           levels = sortComparatorShortName$comparatorShortName
     )
 
   plot <- ggplot2::ggplot(data = plotData) +
@@ -182,7 +182,9 @@ plotCohortOverlap <- function(data,
   width <- length(unique(plotData$databaseId))
   height <-
     nrow(
-      plotData %>% dplyr::select(.data$targetShortName, .data$comparatorShortName) %>% dplyr::distinct()
+      plotData %>%
+        dplyr::select(.data$targetShortName, .data$comparatorShortName) %>%
+        dplyr::distinct()
     )
   plot <- ggiraph::girafe(
     ggobj = plot,
@@ -217,14 +219,46 @@ cohortOverlapView <- function(id) {
     shinydashboard::box(
       width = NULL,
       status = "primary",
-      shiny::radioButtons(
-        inputId = ns("overlapPlotType"),
-        label = "",
-        choices = c("Percentages", "Counts"),
-        selected = "Percentages",
-        inline = TRUE
-      ),
-      shinycssloaders::withSpinner(ggiraph::ggiraphOutput(ns("overlapPlot"), width = "100%", height = "100%"))
+
+      shiny::tabsetPanel(
+        type = "pills",
+        shiny::tabPanel(
+          title = "Plot",
+          shiny::radioButtons(
+            inputId = ns("overlapPlotType"),
+            label = "",
+            choices = c("Percentages", "Counts"),
+            selected = "Percentages",
+            inline = TRUE
+          ),
+          shinycssloaders::withSpinner(ggiraph::ggiraphOutput(ns("overlapPlot"), width = "100%", height = "100%"))
+        ),
+
+        shiny::tabPanel(
+          title = "Table",
+          shiny::fluidRow(
+            shiny::column(
+              width = 3,
+              shiny::checkboxInput(
+                inputId = ns("showAsPercentage"),
+                label = "Show As Percentage",
+                value = TRUE
+              )
+            ),
+            shiny::column(
+              width = 3,
+              shiny::checkboxInput(
+                inputId = ns("showCohortIds"),
+                label = "Show Cohort Ids",
+                value = TRUE
+              )
+            )
+          ),
+          shinycssloaders::withSpinner(
+            reactable::reactableOutput(ns("overlapTable"))
+          )
+        )
+      )
     )
   )
 }
@@ -301,6 +335,100 @@ cohortOverlapModule <- function(id,
         yAxis = input$overlapPlotType
       )
       return(plot)
+    })
+
+
+    output$overlapTable <- reactable::renderReactable({
+      data <- cohortOverlapData()
+      validate(need(
+        !is.null(data),
+        paste0("No cohort overlap data for this combination")
+      ))
+
+      data <- data %>%
+        dplyr::inner_join(cohortTable %>% dplyr::select(.data$cohortId,
+                                                        targetCohortName = .data$cohortName),
+                          by = c("targetCohortId" = "cohortId")) %>%
+        dplyr::inner_join(cohortTable %>% dplyr::select(.data$cohortId,
+                                                        comparatorCohortName = .data$cohortName),
+                          by = c("comparatorCohortId" = "cohortId")) %>%
+        dplyr::select(
+          .data$databaseName,
+          .data$targetCohortId,
+          .data$targetCohortName,
+          .data$comparatorCohortId,
+          .data$comparatorCohortName,
+          tOnly = .data$tOnlySubjects,
+          cOnly = .data$cOnlySubjects,
+          both = .data$bothSubjects,
+          totalSubjects = .data$eitherSubjects
+        )
+
+      if (input$showCohortIds) {
+        data <- data %>% dplyr::mutate(
+          targetCohortName = paste0("C", .data$targetCohortId, " - ", .data$targetCohortName),
+          comparatorCohortName = paste0("C", .data$comparatorCohortId, " - ", .data$comparatorCohortName)
+        )
+      }
+
+      data <- data %>% dplyr::select(-.data$targetCohortId, -.data$comparatorCohortId)
+
+      if (input$showAsPercentage) {
+        data$tOnly <- data$tOnly / data$totalSubjects
+        data$cOnly <- data$cOnly / data$totalSubjects
+        data$both <- data$both / data$totalSubjects
+      }
+
+      styleFunc <- function(value) {
+        color <- '#fff'
+        if (input$showAsPercentage) {
+          if (is.numeric(value)) {
+            value <- ifelse(is.na(value), 0, value)
+            color <- pallete(value)
+          }
+        }
+        list(background = color)
+      }
+
+      valueColDef <- reactable::colDef(
+        cell = formatDataCellValueInDisplayTable(input$showAsPercentage),
+        style = styleFunc,
+        width = 80
+      )
+      colnames(data) <- SqlRender::camelCaseToTitleCase(colnames(data))
+      reactable::reactable(
+        data = data,
+        columns = list(
+          "T Only" = valueColDef,
+          "C Only" = valueColDef,
+          "Both" = valueColDef,
+          "Target Cohort Name" = reactable::colDef(minWidth = 300),
+          "Comparator Cohort Name" = reactable::colDef(minWidth = 300)
+        ),
+        sortable = TRUE,
+        groupBy = c("Target Cohort Name", "Comparator Cohort Name"),
+        resizable = TRUE,
+        filterable = TRUE,
+        searchable = TRUE,
+        pagination = TRUE,
+        showPagination = TRUE,
+        showPageInfo = TRUE,
+        highlight = TRUE,
+        striped = TRUE,
+        compact = TRUE,
+        wrap = TRUE,
+        showSortIcon = TRUE,
+        showSortable = TRUE,
+        fullWidth = TRUE,
+        bordered = TRUE,
+        onClick = "select",
+        showPageSizeOptions = TRUE,
+        pageSizeOptions = c(10, 20, 50, 100, 1000),
+        defaultPageSize = 20,
+        theme = reactable::reactableTheme(
+          rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
+        )
+      )
     })
   })
 }
