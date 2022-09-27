@@ -41,6 +41,74 @@ getResultsCohortCounts <- function(dataSource,
   return(data)
 }
 
+#' Global ranges for IR values
+getIncidenceRateRanges <- function(dataSource, minPersonYears = 0) {
+  sql <- "SELECT DISTINCT age_group FROM @results_database_schema.@ir_table WHERE person_years >= @person_years"
+
+  ageGroups <- renderTranslateQuerySql(
+    connection = dataSource$connection,
+    dbms = dataSource$dbms,
+    sql = sql,
+    results_database_schema = dataSource$resultsDatabaseSchema,
+    ir_table = dataSource$prefixTable("incidence_rate"),
+    person_years = minPersonYears,
+    snakeCaseToCamelCase = TRUE
+  ) %>%
+    dplyr::mutate(ageGroup = dplyr::na_if(.data$ageGroup, ""))
+
+  sql <- "SELECT DISTINCT calendar_year FROM @results_database_schema.@ir_table WHERE person_years >= @person_years"
+
+  calendarYear <- renderTranslateQuerySql(
+    connection = dataSource$connection,
+    dbms = dataSource$dbms,
+    sql = sql,
+    results_database_schema = dataSource$resultsDatabaseSchema,
+    ir_table = dataSource$prefixTable("incidence_rate"),
+    person_years = minPersonYears,
+    snakeCaseToCamelCase = TRUE
+  ) %>%
+    dplyr::mutate(
+      calendarYear = dplyr::na_if(.data$calendarYear, "")
+    ) %>%
+    dplyr::mutate(calendarYear = as.integer(.data$calendarYear))
+
+  sql <- "SELECT DISTINCT gender FROM @results_database_schema.@ir_table WHERE person_years >= @person_years"
+
+  gender <- renderTranslateQuerySql(
+    connection = dataSource$connection,
+    dbms = dataSource$dbms,
+    sql = sql,
+    results_database_schema = dataSource$resultsDatabaseSchema,
+    ir_table = dataSource$prefixTable("incidence_rate"),
+    person_years = minPersonYears,
+    snakeCaseToCamelCase = TRUE
+  ) %>%
+    dplyr::mutate(gender = dplyr::na_if(.data$gender, ""))
+
+
+  sql <- "SELECT
+    min(incidence_rate) as min_ir,
+    max(incidence_rate) as max_ir
+   FROM @results_database_schema.@ir_table
+   WHERE person_years >= @person_years
+   AND incidence_rate > 0.0
+   "
+
+  incidenceRate <- renderTranslateQuerySql(
+    connection = dataSource$connection,
+    dbms = dataSource$dbms,
+    sql = sql,
+    results_database_schema = dataSource$resultsDatabaseSchema,
+    ir_table = dataSource$prefixTable("incidence_rate"),
+    person_years = minPersonYears,
+    snakeCaseToCamelCase = TRUE
+  )
+
+  return(list(gender = gender,
+              incidenceRate = incidenceRate,
+              calendarYear = calendarYear,
+              ageGroups = ageGroups))
+}
 
 
 getIncidenceRateResult <- function(dataSource,

@@ -228,34 +228,11 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       return(conceptSetsFiltered)
     })
 
-    databaseChoices <- list()
-    dbMapping <- databaseTable
-    for (i in 1:nrow(dbMapping)) {
-      row <- dbMapping[i,]
-      databaseChoices[row$databaseName] <- row$databaseId
-    }
+    databaseChoices <- databaseTable$databaseId
+    names(databaseChoices) <- databaseTable$databaseName
 
     ## ReactiveValue: selectedDatabaseIds ----
-    selectedDatabaseIds <- reactiveVal(databaseChoices[[1]])
-    shiny::observeEvent(eventExpr = {
-      list(input$databases_open)
-    }, handlerExpr = {
-      if (isFALSE(input$databases_open)) {
-        selectedDatabaseIds(input$databases)
-      }
-    })
-
-    shiny::observeEvent(eventExpr = {
-      list(input$database_open)
-    }, handlerExpr = {
-      if (isFALSE(input$database_open)) {
-        selectedDatabaseIds(input$database)
-      }
-    })
-
-    shiny::observeEvent(eventExpr = {
-      list(input$tabs)
-    }, handlerExpr = {
+    selectedDatabaseIds <- shiny::reactive({
       if (!is.null(input$tabs)) {
         if (input$tabs %in% c(
           "compareCohortCharacterization",
@@ -263,52 +240,24 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
           "temporalCharacterization",
           "databaseInformation"
         )) {
-          selectedDatabaseIds(input$database)
+          return(input$database)
         } else {
-          selectedDatabaseIds(input$databases)
+          return(input$databases)
         }
       }
     })
 
-    ## Note - the following two database pickers could be improved by setting the multiple parameter to depend on the
-    ## input$tabs variable for the selected tab. However, careful consideration needs to be taken as this can lead
-    ## To even more confusing ux
-    output$databasePicker <- shiny::renderUI({
-      shinyWidgets::pickerInput(
-        inputId = ns("database"),
-        label = "Database",
-        choices = databaseChoices,
-        selected = databaseChoices[[1]],
-        multiple = FALSE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
-          liveSearch = TRUE,
-          size = 10,
-          liveSearchStyle = "contains",
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50
-        )
-      )
-    })
 
-    ## This is for multiple databases
-    output$databasesPicker <- shiny::renderUI({
-      shinyWidgets::pickerInput(
-        inputId = ns("databases"),
-        label = "Database",
-        choices = databaseChoices,
-        selected = databaseChoices[[1]],
-        multiple = TRUE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
-          liveSearch = TRUE,
-          size = 10,
-          liveSearchStyle = "contains",
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50
-        )
+    shiny::observe({
+      shinyWidgets::updatePickerInput(session = session,
+                                      inputId = "database",
+                                      choices = databaseChoices,
+                                      selected = databaseChoices[[1]],
+      )
+      shinyWidgets::updatePickerInput(session = session,
+                                      inputId = "databases",
+                                      choices = databaseChoices,
+                                      selected = databaseChoices[[1]],
       )
     })
 

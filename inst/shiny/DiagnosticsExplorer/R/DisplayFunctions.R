@@ -4,7 +4,7 @@ formatDataCellValueInDisplayTable <-
       reactable::JS(
         "function(data) {
           if (isNaN(parseFloat(data.value))) return data.value;
-          if (Number.isInteger(data.value)) return (100 * data.value).toFixed(0).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
+          if (Number.isInteger(data.value)) return (100 * data.value).toFixed(0).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
           if (data.value > 999) return (100 * data.value).toFixed(2).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
           if (data.value < 0) return '<' + (Math.abs(data.value) * 100).toFixed(2) + '%';
           return (100 * data.value).toFixed(1) + '%';
@@ -16,7 +16,7 @@ formatDataCellValueInDisplayTable <-
           if (isNaN(parseFloat(data.value))) return data.value;
           if (Number.isInteger(data.value)) return data.value.toFixed(0).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
           if (data.value > 999) return data.value.toFixed(1).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
-          if (data.value < 0) return  '<' + Math.abs(data.value.toFixed(2));
+          if (data.value < 0) return  '<' + Math.abs(data.value.toFixed(3));
           return data.value.toFixed(1);
         }"
       )
@@ -456,30 +456,27 @@ getDisplayTableSimple <- function(data,
 
     for (i in (1:length(dataColumns))) {
       columnName <- SqlRender::camelCaseToTitleCase(dataColumns[i])
-      colnames(data)[which(names(data) == dataColumns[i])] <-
-        columnName
-
-      columnDefinitions[[columnName]] <-
-        reactable::colDef(
-          name = columnName,
-          cell = formatDataCellValueInDisplayTable(showDataAsPercent = showDataAsPercent),
-          sortable = TRUE,
-          resizable = FALSE,
-          filterable = TRUE,
-          show = TRUE,
-          html = TRUE,
-          na = "",
-          align = "left",
-          style = function(value) {
-            color <- '#fff'
-            if (is.numeric(value) & hasData(data[[dataColumns[i]]])) {
-              value <- ifelse(is.na(value), min(data[[dataColumns[i]]], na.rm = TRUE), value)
-              normalized <- (value - min(data[[dataColumns[i]]], na.rm = TRUE)) / (max(data[[dataColumns[i]]], na.rm = TRUE) - min(data[[dataColumns[i]]], na.rm = TRUE))
-              color <- pallete(normalized)
-            }
-            list(background = color)
+      colnames(data)[which(names(data) == dataColumns[i])] <- columnName
+      columnDefinitions[[columnName]] <- reactable::colDef(
+        name = columnName,
+        cell = formatDataCellValueInDisplayTable(showDataAsPercent = showDataAsPercent),
+        sortable = TRUE,
+        resizable = FALSE,
+        filterable = TRUE,
+        show = TRUE,
+        html = TRUE,
+        na = "",
+        align = "left",
+        style = function(value) {
+          color <- '#fff'
+          if (is.numeric(value) & hasData(data[[columnName]])) {
+            value <- ifelse(is.na(value), min(data[[columnName]], na.rm = TRUE), value)
+            normalized <- (value - min(data[[columnName]], na.rm = TRUE)) / (maxValue - min(data[[columnName]], na.rm = TRUE))
+            color <- pallete(normalized)
           }
-        )
+          list(background = color)
+        }
+      )
     }
   }
 
@@ -598,7 +595,7 @@ getDisplayTableColumnMinMaxWidth <- function(data,
 
 csvDownloadButton <- function(ns,
                               outputTableId,
-                              buttonText = "Download as CSV") {
+                              buttonText = "Download CSV (filtered)") {
 
   shiny::tagList(
     shiny::tags$br(),

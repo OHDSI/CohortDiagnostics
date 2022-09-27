@@ -25,7 +25,21 @@ uiControls <- function(ns,
       input.tabs != 'cohortCharacterization' &
       input.tabs != 'cohortOverlap'",
       ns = ns,
-      shiny::uiOutput(ns("databasePicker"))
+      shinyWidgets::pickerInput(
+        inputId = ns("database"),
+        label = "Database",
+        choices = NULL,
+        multiple = FALSE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          size = 10,
+          liveSearchStyle = "contains",
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+        )
+      )
     ),
     shiny::conditionalPanel(
       condition = "input.tabs=='incidenceRate' |
@@ -38,7 +52,21 @@ uiControls <- function(ns,
       input.tabs == 'visitContext' |
       input.tabs == 'cohortOverlap'",
       ns = ns,
-      shiny::uiOutput(ns("databasesPicker"))
+      shinyWidgets::pickerInput(
+        inputId = ns("databases"),
+        label = "Database(s)",
+        choices = NULL,
+        multiple = TRUE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          size = 10,
+          liveSearchStyle = "contains",
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+        )
+      )
     ),
     shiny::conditionalPanel(
       condition = "input.tabs != 'databaseInformation' &

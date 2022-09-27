@@ -105,6 +105,24 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
 
 timeDistributionsView <- function(id) {
   ns <- shiny::NS(id)
+  selectableCols <- c(
+    "Average",
+    "SD",
+    "Min",
+    "P10",
+    "P25",
+    "Median",
+    "P75",
+    "P90",
+    "Max"
+  )
+
+  selectableTimeMeasures <- c(
+    "observation time (days) prior to index",
+    "observation time (days) after index",
+    "time (days) between cohort start and end"
+  )
+
   shiny::tagList(
     shinydashboard::box(
       collapsible = TRUE,
@@ -125,22 +143,64 @@ timeDistributionsView <- function(id) {
       title = "Time Distributions",
       width = NULL,
       status = "primary",
-      shiny::radioButtons(
-        inputId = ns("timeDistributionType"),
-        label = "",
-        choices = c("Table", "Plot"),
-        selected = "Plot",
-        inline = TRUE
+
+      shiny::fluidRow(
+        shiny::column(
+          width = 2,
+          shiny::radioButtons(
+            inputId = ns("timeDistributionType"),
+            label = "",
+            choices = c("Table", "Plot"),
+            selected = "Plot",
+            inline = TRUE
+          )
+        ),
+        shiny::column(
+          width = 5,
+          shinyWidgets::pickerInput(
+            label = "View Time Measures",
+            inputId = ns("selecatableTimeMeasures"),
+            multiple = TRUE,
+            selected = selectableTimeMeasures,
+            choices = selectableTimeMeasures,
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              size = 10,
+              dropupAuto = TRUE,
+              liveSearchStyle = "contains",
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
+          )
+        ),
+        shiny::column(
+          width = 5,
+          shiny::conditionalPanel(
+            condition = "input.timeDistributionType=='Table'",
+            ns = ns,
+            shinyWidgets::pickerInput(
+              label = "View Columns",
+              inputId = ns("selecatableCols"),
+              multiple = TRUE,
+              selected = selectableCols,
+              choices = selectableCols,
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                size = 10,
+                dropupAuto = TRUE,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
+              )
+            )
+          )
+        )
       ),
       shiny::conditionalPanel(
         condition = "input.timeDistributionType=='Table'",
         ns = ns,
-        tags$table(
-          width = "100%",
-          tags$tr(tags$td(
-            align = "right",
-          ))
-        ),
         shinycssloaders::withSpinner(reactable::reactableOutput(outputId = ns("timeDistributionTable"))),
         csvDownloadButton(ns, "timeDistributionTable")
       ),
@@ -167,7 +227,7 @@ timeDistributionsModule <- function(id,
 
     # Time distribution -----
     ## timeDistributionData -----
-    timeDistributionData <- reactive({
+    timeDistributionData <- shiny::reactive({
       validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
       validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
       data <- getTimeDistributionResult(
@@ -175,7 +235,8 @@ timeDistributionsModule <- function(id,
         cohortIds = cohortIds(),
         databaseIds = selectedDatabaseIds(),
         databaseTable = databaseTable
-      )
+      ) %>%
+        dplyr::filter(.data$timeMetric %in% input$selecatableTimeMeasures)
       return(data)
     })
 
@@ -193,14 +254,12 @@ timeDistributionsModule <- function(id,
       validate(need(hasData(data), "No data for this combination"))
 
       data <- data %>%
-        addShortName(cohortTable) %>%
+        dplyr::inner_join(cohortTable %>% dplyr::select(.data$cohortName, .data$cohortId), by = "cohortId") %>%
         dplyr::arrange(.data$databaseId, .data$cohortId) %>%
-        dplyr::mutate(
-          databaseName = as.factor(.data$databaseName)
-        ) %>%
         dplyr::select(
+          .data$cohortId,
           Database = .data$databaseName,
-          Cohort = .data$shortName,
+          Cohort = .data$cohortName,
           TimeMeasure = .data$timeMetric,
           Average = .data$averageValue,
           SD = .data$standardDeviation,
@@ -211,26 +270,18 @@ timeDistributionsModule <- function(id,
           P75 = .data$p75Value,
           P90 = .data$p90Value,
           Max = .data$maxValue
-        )
+        ) %>%
+        dplyr::select(all_of(c("Database", "cohortId", "Cohort", "TimeMeasure", input$selecatableCols)))
 
       validate(need(hasData(data), "No data for this combination"))
 
       keyColumns <- c(
         "Database",
+        "cohortId",
         "Cohort",
         "TimeMeasure"
       )
-      dataColumns <- c(
-        "Average",
-        "SD",
-        "Min",
-        "P10",
-        "P25",
-        "Median",
-        "P75",
-        "P90",
-        "Max"
-      )
+      dataColumns <- input$selecatableCols
 
       table <- getDisplayTableSimple(
         data = data,
