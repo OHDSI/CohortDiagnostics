@@ -1,6 +1,6 @@
 library(magrittr)
 diagExpEnv <- new.env()
-diagExpEnv$shinyConfigPath <- "config.yml"
+diagExpEnv$shinyConfigPath <- getOption("CD-shiny-config", default = "config.yml")
 
 # Source all app files in to isolated namespace
 lapply(file.path("R", list.files("R", pattern = "*.R")), source, local = diagExpEnv)
