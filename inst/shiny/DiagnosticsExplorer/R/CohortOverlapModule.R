@@ -403,7 +403,8 @@ cohortOverlapModule <- function(id,
           "C Only" = valueColDef,
           "Both" = valueColDef,
           "Target Cohort Name" = reactable::colDef(minWidth = 300),
-          "Comparator Cohort Name" = reactable::colDef(minWidth = 300)
+          "Comparator Cohort Name" = reactable::colDef(minWidth = 300),
+          "Total Subjects" = reactable::colDef(cell = formatDataCellValueInDisplayTable(FALSE))
         ),
         sortable = TRUE,
         groupBy = c("Target Cohort Name", "Comparator Cohort Name"),
