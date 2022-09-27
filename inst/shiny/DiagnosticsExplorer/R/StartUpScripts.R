@@ -419,8 +419,8 @@ initializeEnvironment <- function(shinySettings,
       sort()
   }
 
-  envir$resultsTables <- tolower(DatabaseConnector::dbListTables(dataSource$connection,
-                                                                 schema = dataSource$resultsDatabaseSchema))
+  envir$resultsTables <- tolower(DatabaseConnector::dbListTables(envir$dataSource$connection,
+                                                                 schema = envir$dataSource$resultsDatabaseSchema))
   envir$enabledTabs <- c()
   for (table in envir$dataModelSpecifications$tableName %>% unique()) {
     if (envir$dataSource$prefixTable(table) %in% envir$resultsTables) {
