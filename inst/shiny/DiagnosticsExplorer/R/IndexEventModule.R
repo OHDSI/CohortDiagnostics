@@ -46,12 +46,6 @@ indexEventBreakdownView <- function(id) {
                 selected = "Persons",
                 inline = TRUE
               )
-            ),
-            td(
-              shiny::checkboxInput(
-                inputId = ns("indexEventBreakDownShowAsPercent"),
-                label = "Show as percent"
-              )
             )
           )
         )
@@ -127,7 +121,7 @@ indexEventBreakdownModule <- function(id,
       validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
       validate(need(length(targetCohortId()) > 0, "No cohorts chosen chosen"))
 
-      showDataAsPercent <- input$indexEventBreakDownShowAsPercent
+      showDataAsPercent <- FALSE # input$indexEventBreakDownShowAsPercent
       data <- indexEventBreakDownDataFilteredByRadioButton()
      
       validate(need(
