@@ -341,16 +341,13 @@ test_that("Testing cohort relationship logic - incremental FALSE", {
     cohortRelationship <- runCohortRelationshipDiagnostics(
       connection = connectionCohortRelationship,
       cohortDatabaseSchema = cohortDatabaseSchema,
-      cdmDatabaseSchema = cohortDatabaseSchema,
       cohortTable = tableName,
       targetCohortIds = c(1),
       comparatorCohortIds = c(10),
       relationshipDays = dplyr::tibble(
         startDay = temporalStartDays,
         endDay = temporalEndDays
-      ),
-      observationPeriodRelationship = FALSE, # this is set to FALSE because it will otherwise use real CDM observation table
-      # which is not possible because we are simulating cohort table/person_id
+      )
     )
 
     sqlDrop <-

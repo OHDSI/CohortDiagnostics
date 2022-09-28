@@ -31,7 +31,13 @@ minCellCountValue <- 5
 skipCdmTests <- FALSE
 
 if (dbms == "sqlite") {
-  connectionDetails <- Eunomia::getEunomiaConnectionDetails()
+  connectionDetails <- Eunomia::getEunomiaConnectionDetails(databaseFile = "testEunomia.sqlite")
+   withr::defer(
+    {
+      unlink("testEunomia.sqlite", recursive = TRUE, force = TRUE)
+    },
+    testthat::teardown_env()
+  )
   cdmDatabaseSchema <- "main"
   cohortDatabaseSchema <- "main"
   vocabularyDatabaseSchema <- cohortDatabaseSchema

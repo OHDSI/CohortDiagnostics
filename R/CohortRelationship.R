@@ -26,8 +26,6 @@
 #'
 #' @template CohortDatabaseSchema
 #'
-#' @template CdmDatabaseSchema
-#'
 #' @template TempEmulationSchema
 #'
 #' @template CohortTable
@@ -38,20 +36,17 @@
 #'
 #' @param relationshipDays             A dataframe with two columns startDay and endDay representing periods of time to compute relationship
 #'
-#' @param observationPeriodRelationship Do you want to compute temporal relationship between target cohort and observation period table?
 #'
 #' @export
 runCohortRelationshipDiagnostics <-
   function(connectionDetails = NULL,
            connection = NULL,
            cohortDatabaseSchema = NULL,
-           cdmDatabaseSchema,
            tempEmulationSchema = NULL,
            cohortTable = "cohort",
            targetCohortIds,
            comparatorCohortIds,
-           relationshipDays,
-           observationPeriodRelationship = FALSE) {
+           relationshipDays) {
     startTime <- Sys.time()
 
     # Assert checks
@@ -339,7 +334,6 @@ executeCohortRelationshipDiagnostics <- function(connection,
             runCohortRelationshipDiagnostics(
               connection = connection,
               cohortDatabaseSchema = cohortDatabaseSchema,
-              cdmDatabaseSchema = cdmDatabaseSchema,
               tempEmulationSchema = tempEmulationSchema,
               cohortTable = cohortTable,
               targetCohortIds = subset[start:end,]$targetCohortId %>% unique(),
