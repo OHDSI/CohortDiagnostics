@@ -686,23 +686,6 @@ resolvedConceptSet <- function(dataSource,
                                databaseIds,
                                cohortId,
                                conceptSetId = NULL) {
-  # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertIntegerish(
-    x = cohortId,
-    min.len = 1,
-    max.len = 1,
-    null.ok = TRUE,
-    add = errorMessage
-  )
-  checkmate::assertCharacter(
-    x = databaseIds,
-    min.len = 1,
-    min.chars = 1,
-    null.ok = TRUE,
-    add = errorMessage
-  )
-  checkmate::reportAssertions(collection = errorMessage)
   sqlResolved <- "SELECT DISTINCT rc.cohort_id,
                     	rc.concept_set_id,
                     	c.concept_id,
@@ -801,23 +784,6 @@ getMappedSourceConcepts <-
 mappedConceptSet <- function(dataSource,
                              databaseIds,
                              cohortId) {
-  # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertIntegerish(
-    x = cohortId,
-    min.len = 1,
-    max.len = 1,
-    null.ok = TRUE,
-    add = errorMessage
-  )
-  checkmate::assertCharacter(
-    x = databaseIds,
-    min.len = 1,
-    min.chars = 1,
-    null.ok = TRUE,
-    add = errorMessage
-  )
-  checkmate::reportAssertions(collection = errorMessage)
   sqlMapped <-
     "WITH resolved_concepts_mapped
     AS (

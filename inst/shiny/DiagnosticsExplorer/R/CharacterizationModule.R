@@ -19,7 +19,7 @@ characterizationView <- function(id) {
       ),
       shiny::fluidRow(
         shiny::column(
-          width = 4,
+          width = 5,
           shinyWidgets::pickerInput(
             inputId = ns("targetCohort"),
             label = "Select Cohort",
@@ -36,29 +36,13 @@ characterizationView <- function(id) {
           )
         ),
         shiny::column(
-          width = 4,
+          width = 5,
           shinyWidgets::pickerInput(
             inputId = ns("targetDatabase"),
             label = "Select Database (s)",
             choices = NULL,
             multiple = TRUE,
             choicesOpt = list(style = rep_len("color: black;", 999)),
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              liveSearch = TRUE,
-              size = 10,
-              liveSearchStyle = "contains",
-              liveSearchPlaceholder = "Type here to search",
-              virtualScroll = 50
-            )
-          )
-        ),
-        shiny::column(
-          width = 4,
-          shinyWidgets::pickerInput(
-            inputId = ns("selectedConceptSet"),
-            label = "Select Concept Set",
-            choices = NULL,
             options = shinyWidgets::pickerOptions(
               actionsBox = TRUE,
               liveSearch = TRUE,
@@ -169,7 +153,7 @@ characterizationView <- function(id) {
         width = NULL,
         shiny::fluidRow(
           shiny::column(
-            width = 6,
+            width = 4,
             shiny::radioButtons(
               inputId = ns("proportionOrContinuous"),
               label = "Covariate type(s)",
@@ -179,13 +163,29 @@ characterizationView <- function(id) {
             )
           ),
           shiny::column(
-            width = 6,
+            width = 4,
             shiny::radioButtons(
               inputId = ns("characterizationColumnFilters"),
               label = "Display",
               choices = c("Mean and Standard Deviation", "Mean only"),
               selected = "Mean only",
               inline = TRUE
+            )
+          ),
+          shiny::column(
+            width = 4,
+            shinyWidgets::pickerInput(
+              inputId = ns("selectedConceptSet"),
+              label = "Subset to Concept Set",
+              choices = NULL,
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                size = 10,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
+              )
             )
           )
         ),
@@ -220,8 +220,6 @@ characterizationModule <- function(id,
                                    analysisNameOptions,
                                    domainIdOptions,
                                    analysisIdInCohortCharacterization,
-                                   getResolvedAndMappedConceptIdsForFilters,
-                                   selectedConceptSets,
                                    characterizationTimeIdChoices,
                                    table1SpecPath = getOption("CD-spec-1-path", "data/Table1SpecsLong.csv")) {
   prettyTable1Specifications <- readr::read_csv(
@@ -234,6 +232,37 @@ characterizationModule <- function(id,
 
     timeIdOptions <- getResultsTemporalTimeRef(dataSource = dataSource) %>%
       dplyr::arrange(.data$sequence)
+
+    selectedTimeIds <- shiny::reactive({
+      timeIdOptions %>%
+        dplyr::filter(.data$temporalChoices %in% input$timeIdChoices) %>%
+        dplyr::select(.data$timeId) %>%
+        dplyr::pull()
+    })
+
+    selectedDatabaseIds <- shiny::reactive(input$targetDatabase)
+    targetCohortId <- shiny::reactive(input$targetCohort)
+
+    getCohortConceptSets <- shiny::reactive({
+      if (!hasData(input$targetCohort) || !hasData(selectedDatabaseIds())) {
+        return(NULL)
+      }
+
+      jsonExpression <- cohortTable %>%
+        dplyr::filter(.data$cohortId == input$targetCohort) %>%
+        dplyr::select(.data$json)
+      jsonExpression <-
+        RJSONIO::fromJSON(jsonExpression$json, digits = 23)
+      expression <-
+        getConceptSetDetailsFromCohortDefinition(cohortDefinitionExpression = jsonExpression)
+      if (is.null(expression)) {
+        return(NULL)
+      }
+
+      expression <- expression$conceptSetExpression
+      return(expression)
+    })
+
     shiny::observe({
       # Default time windows
       selectedTimeWindows <- timeIdOptions %>%
@@ -262,16 +291,69 @@ characterizationModule <- function(id,
                                       choices = databaseChoices)
     })
 
-    selectedTimeIds <- shiny::reactive({
-      timeIdOptions %>%
-        dplyr::filter(.data$temporalChoices %in% input$timeIdChoices) %>%
-        dplyr::select(.data$timeId) %>%
-        dplyr::pull()
+    conceptSetIds <- shiny::reactive({
+      if (input$selectedConceptSet == "") {
+        return(NULL)
+      }
+      input$selectedConceptSet
     })
 
-    selectedDatabaseIds <- shiny::reactive(input$targetDatabase)
-    targetCohortId <- shiny::reactive(input$targetCohort)
+    getResolvedConcepts <- shiny::reactive({
+      output <- resolvedConceptSet(
+        dataSource = dataSource,
+        databaseIds = selectedDatabaseIds(),
+        cohortId = targetCohortId()
+      )
+      if (!hasData(output)) {
+        return(NULL)
+      }
+      return(output)
+    })
 
+    ### getMappedConceptsReactive ----
+    getMappedConcepts <- shiny::reactive({
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message = "Getting concepts mapped to concept ids resolved by concept set expression (may take time)", value = 0)
+      output <- mappedConceptSet(dataSource = dataSource,
+                                 databaseIds = selectedDatabaseIds(),
+                                 cohortId = targetCohortId())
+      if (!hasData(output)) {
+        return(NULL)
+      }
+      return(output)
+    })
+
+    getFilteredConceptIds <- shiny::reactive({
+      validate(need(hasData(selectedDatabaseIds()), "No data sources chosen"))
+      validate(need(hasData(targetCohortId()), "No cohort chosen"))
+      validate(need(hasData(conceptSetIds()), "No concept set id chosen"))
+      resolved <- getResolvedConcepts()
+      mapped <- getMappedConcepts()
+      output <- c()
+      if (hasData(resolved)) {
+        resolved <- resolved %>%
+          dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
+          dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
+          dplyr::filter(.data$conceptSetId %in% conceptSetIds())
+        output <- c(output, resolved$conceptId) %>% unique()
+      }
+      if (hasData(mapped)) {
+        mapped <- mapped %>%
+          dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
+          dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
+          dplyr::filter(.data$conceptSetId %in% conceptSetIds())
+        output <- c(output, mapped$conceptId) %>% unique()
+      }
+
+      if (hasData(output)) {
+        return(output)
+      } else {
+        return(NULL)
+      }
+    })
+
+    selectedConceptSets <- shiny::reactive(input$selectedConceptSet)
 
     selectionsPanel <- shiny::reactive({
       shinydashboard::box(
@@ -473,11 +555,19 @@ characterizationModule <- function(id,
 
     ## cohortCharacterizationDataFiltered ----
     cohortCharacterizationDataFiltered <- shiny::eventReactive(input$generateRaw, {
-      data <- characterizationOutput()
+      cohortConcepSets <- getCohortConceptSets()
+      cohortConcepSetOptions <- c("", cohortConcepSets$id)
+      names(cohortConcepSetOptions) <- c("None selected", cohortConcepSets$name)
+      shinyWidgets::updatePickerInput(session,
+                                      inputId = "selectedConceptSet",
+                                      selected = NULL,
+                                      choices = cohortConcepSetOptions)
 
+      data <- characterizationOutput()
       if (!hasData(data)) {
         return(NULL)
       }
+
       data <- data$covariateValue
       if (!hasData(data)) {
         return(NULL)
@@ -488,13 +578,6 @@ characterizationModule <- function(id,
         dplyr::filter(.data$analysisName %in% input$characterizationAnalysisNameFilter) %>%
         dplyr::filter(.data$domainId %in% input$characterizationDomainIdFilter)
 
-
-      if (hasData(selectedConceptSets())) {
-        if (hasData(getResolvedAndMappedConceptIdsForFilters())) {
-          data <- data %>%
-            dplyr::filter(.data$conceptId %in% getResolvedAndMappedConceptIdsForFilters())
-        }
-      }
       if (!hasData(data)) {
         return(NULL)
       }
@@ -564,9 +647,18 @@ characterizationModule <- function(id,
           dplyr::filter(.data$isBinary == "Y") %>%
           dplyr::select(-.data$isBinary)
       } else if (input$proportionOrContinuous == "Continuous") {
-        data <- data %>% dplyr::filter(.data$isBinary == "N") %>%
+        data <- data %>%
+          dplyr::filter(.data$isBinary == "N") %>%
           dplyr::select(-.data$isBinary)
       }
+
+      if (hasData(selectedConceptSets())) {
+        if (hasData(getFilteredConceptIds())) {
+          data <- data %>%
+            dplyr::filter(.data$conceptId %in% getFilteredConceptIds())
+        }
+      }
+      validate(need(hasData(data), "No data for selected combination"))
 
       getDisplayTableGroupedByDatabaseId(
         data = data,
