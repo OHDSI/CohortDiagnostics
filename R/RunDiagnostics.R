@@ -511,9 +511,10 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
     })
 
+  cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)
+
   if (incremental) {
     ParallelLogger::logDebug("Working in incremental mode.")
-    cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)
     recordKeepingFile <-
       file.path(incrementalFolder, "CreatedDiagnostics.csv")
     if (file.exists(path = recordKeepingFile)) {
