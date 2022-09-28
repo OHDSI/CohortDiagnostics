@@ -593,7 +593,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                          cohortIds = cohortIds)
     }
 
-    if ("inclusionRuleStats" %in% enabledTabs) {
+    if ("cohortIncStats" %in% enabledTabs) {
       inclusionRulesModule(id = "inclusionRules",
                            dataSource = dataSource,
                            cohortTable = cohortTable,

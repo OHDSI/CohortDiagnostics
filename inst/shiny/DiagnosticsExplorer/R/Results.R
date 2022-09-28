@@ -1,4 +1,3 @@
-
 renderTranslateExecuteSql <- function(dataSource, sql, ...) {
   if (is(dataSource$connection, "Pool")) {
     sql <- SqlRender::render(sql, ...)
@@ -36,7 +35,7 @@ getResultsCohortCounts <- function(dataSource,
       database_table = dataSource$databaseTableName,
       snakeCaseToCamelCase = TRUE
     ) %>%
-    tidyr::tibble()
+      tidyr::tibble()
 
   return(data)
 }
@@ -179,7 +178,7 @@ getIncidenceRateResult <- function(dataSource,
       database_table = dataSource$databaseTableName,
       snakeCaseToCamelCase = TRUE
     ) %>%
-    tidyr::tibble()
+      tidyr::tibble()
 
   data <- data %>%
     dplyr::mutate(
@@ -199,50 +198,12 @@ getIncidenceRateResult <- function(dataSource,
   return(data)
 }
 
+# modeId = 0 -- Events
+# modeId = 1 -- Persons
 getInclusionRuleStats <- function(dataSource,
                                   cohortIds = NULL,
-                                  databaseIds) {
-  sql <- "SELECT *
-    FROM  @resultsDatabaseSchema.@table_name
-    WHERE database_id in (@database_id)
-    {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
-    ;"
-  data <-
-    renderTranslateQuerySql(
-      connection = dataSource$connection,
-      dbms = dataSource$dbms,
-      sql = sql,
-      resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
-      cohort_ids = cohortIds,
-      database_id = quoteLiterals(databaseIds),
-      table_name = dataSource$prefixTable("inclusion_rule_stats"),
-      snakeCaseToCamelCase = TRUE
-    ) %>%
-    tidyr::tibble()
-
-  data <- data %>%
-    dplyr::select(
-      .data$cohortId,
-      .data$ruleSequenceId,
-      .data$ruleName,
-      .data$meetSubjects,
-      .data$gainSubjects,
-      .data$remainSubjects,
-      .data$totalSubjects,
-      .data$databaseId
-    ) %>%
-    dplyr::arrange(.data$cohortId, .data$ruleSequenceId)
-  return(data)
-}
-
-
-getInclusionRuleStatsPersons <- function(dataSource,
-                                         cohortIds = NULL,
-                                         databaseIds,
-                                         modeId = 1) {
-  # modeId = 0 -- Events
-  # modeId = 1 -- Persons
-
+                                  databaseIds,
+                                  modeId = 1) {
   sql <- "SELECT *
     FROM  @resultsDatabaseSchema.@table_name
     WHERE database_id in (@database_id)
@@ -260,7 +221,7 @@ getInclusionRuleStatsPersons <- function(dataSource,
       table_name = dataSource$prefixTable("cohort_inclusion"),
       snakeCaseToCamelCase = TRUE
     ) %>%
-    tidyr::tibble()
+      tidyr::tibble()
 
   inclusionResults <-
     renderTranslateQuerySql(
@@ -273,7 +234,7 @@ getInclusionRuleStatsPersons <- function(dataSource,
       table_name = dataSource$prefixTable("cohort_inc_result"),
       snakeCaseToCamelCase = TRUE
     ) %>%
-    tidyr::tibble()
+      tidyr::tibble()
 
   inclusionStats <-
     renderTranslateQuerySql(
@@ -286,7 +247,7 @@ getInclusionRuleStatsPersons <- function(dataSource,
       table_name = dataSource$prefixTable("cohort_inc_stats"),
       snakeCaseToCamelCase = TRUE
     ) %>%
-    tidyr::tibble()
+      tidyr::tibble()
 
 
   if (!hasData(inclusion) || !hasData(inclusionStats)) {
@@ -334,7 +295,7 @@ getInclusionRuleStatsPersons <- function(dataSource,
                         by = c("cohortId", "databaseId"))
     mask <- 0
     for (ruleId in (0:(nrow(data) - 1))) {
-      mask <- bitwOr(mask, 2 ^ ruleId) #bitwise OR operation: if both are 0, then 0; else 1
+      mask <- bitwOr(mask, 2^ruleId) #bitwise OR operation: if both are 0, then 0; else 1
       idx <-
         bitwAnd(inclusionResult$inclusionRuleMask, mask) == mask
       data$remain[data$ruleSequence == ruleId] <-
@@ -401,12 +362,12 @@ getIndexEventBreakdown <- function(dataSource,
       concept_table = dataSource$prefixVocabTable("concept"),
       snakeCaseToCamelCase = TRUE
     ) %>%
-    tidyr::tibble()
+      tidyr::tibble()
 
 
   data <- data %>%
     dplyr::inner_join(cohortCount,
-      by = c("databaseId", "cohortId")
+                      by = c("databaseId", "cohortId")
     ) %>%
     dplyr::mutate(
       subjectPercent = .data$subjectCount / .data$cohortSubjects,
@@ -448,11 +409,11 @@ getVisitContextResults <- function(dataSource,
       concept_table = dataSource$prefixVocabTable("concept"),
       snakeCaseToCamelCase = TRUE
     ) %>%
-    tidyr::tibble()
+      tidyr::tibble()
 
   data <- data %>%
     dplyr::inner_join(cohortCount,
-      by = c("cohortId", "databaseId")
+                      by = c("cohortId", "databaseId")
     ) %>%
     dplyr::mutate(subjectPercent = .data$subjects / .data$cohortSubjects)
   return(data)
@@ -512,7 +473,7 @@ getConceptsInCohort <-
         concept_table = dataSource$prefixTable("concept"),
         snakeCaseToCamelCase = TRUE
       ) %>%
-      tidyr::tibble()
+        tidyr::tibble()
     return(data)
   }
 
@@ -536,7 +497,7 @@ getCountForConceptIdInCohort <-
         table_name = dataSource$prefixTable("included_source_concept"),
         snakeCaseToCamelCase = TRUE
       ) %>%
-      tidyr::tibble()
+        tidyr::tibble()
 
     standardConceptId <- data %>%
       dplyr::select(
@@ -625,7 +586,7 @@ getOrphanConceptResult <- function(dataSource,
       concept_set_id = conceptSetId,
       snakeCaseToCamelCase = TRUE
     ) %>%
-    tidyr::tibble()
+      tidyr::tibble()
   return(data)
 }
 
@@ -678,19 +639,19 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <-
         concept = dataSource$prefixVocabTable("concept"),
         snakeCaseToCamelCase = TRUE
       ) %>%
-      tidyr::tibble() %>%
-      dplyr::select(
-        .data$conceptSetId,
-        .data$conceptId,
-        .data$conceptName,
-        .data$domainId,
-        .data$vocabularyId,
-        .data$conceptClassId,
-        .data$standardConcept,
-        .data$conceptCode,
-        .data$invalidReason
-      ) %>%
-      dplyr::arrange(.data$conceptId)
+        tidyr::tibble() %>%
+        dplyr::select(
+          .data$conceptSetId,
+          .data$conceptId,
+          .data$conceptName,
+          .data$domainId,
+          .data$vocabularyId,
+          .data$conceptClassId,
+          .data$standardConcept,
+          .data$conceptCode,
+          .data$invalidReason
+        ) %>%
+        dplyr::arrange(.data$conceptId)
     mapped <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
@@ -701,20 +662,20 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <-
         concept_relationship = dataSource$prefixVocabTable("concept_relationship"),
         snakeCaseToCamelCase = TRUE
       ) %>%
-      tidyr::tibble() %>%
-      dplyr::select(
-        .data$resolvedConceptId,
-        .data$conceptId,
-        .data$conceptName,
-        .data$domainId,
-        .data$vocabularyId,
-        .data$conceptClassId,
-        .data$standardConcept,
-        .data$conceptCode,
-        .data$conceptSetId
-      ) %>%
-      dplyr::distinct() %>%
-      dplyr::arrange(.data$resolvedConceptId, .data$conceptId)
+        tidyr::tibble() %>%
+        dplyr::select(
+          .data$resolvedConceptId,
+          .data$conceptId,
+          .data$conceptName,
+          .data$domainId,
+          .data$vocabularyId,
+          .data$conceptClassId,
+          .data$standardConcept,
+          .data$conceptCode,
+          .data$conceptSetId
+        ) %>%
+        dplyr::distinct() %>%
+        dplyr::arrange(.data$resolvedConceptId, .data$conceptId)
 
     data <- list(resolved = resolved, mapped = mapped)
     return(data)
@@ -772,8 +733,8 @@ resolvedConceptSet <- function(dataSource,
       concept_table = dataSource$prefixTable("concept"),
       snakeCaseToCamelCase = TRUE
     ) %>%
-    tidyr::tibble() %>%
-    dplyr::arrange(.data$conceptId)
+      tidyr::tibble() %>%
+      dplyr::arrange(.data$conceptId)
 
   return(resolved)
 }
@@ -801,7 +762,7 @@ getMappedStandardConcepts <-
         concept_relationship = dataSource$prefixTable("concept_relationship"),
         snakeCaseToCamelCase = TRUE
       ) %>%
-      tidyr::tibble()
+        tidyr::tibble()
 
     return(data)
   }
@@ -831,11 +792,10 @@ getMappedSourceConcepts <-
         concept_relationship = dataSource$prefixTable("concept_relationship"),
         snakeCaseToCamelCase = TRUE
       ) %>%
-      tidyr::tibble()
+        tidyr::tibble()
 
     return(data)
   }
-
 
 
 mappedConceptSet <- function(dataSource,
@@ -902,8 +862,8 @@ mappedConceptSet <- function(dataSource,
       cohort_id = cohortId,
       snakeCaseToCamelCase = TRUE
     ) %>%
-    tidyr::tibble() %>%
-    dplyr::arrange(.data$resolvedConceptId)
+      tidyr::tibble() %>%
+      dplyr::arrange(.data$resolvedConceptId)
   return(mapped)
 }
 
@@ -923,7 +883,7 @@ getDatabaseCounts <- function(dataSource,
       database_table = dataSource$databaseTableName,
       snakeCaseToCamelCase = TRUE
     ) %>%
-    tidyr::tibble()
+      tidyr::tibble()
 
   return(data)
 }
@@ -943,11 +903,10 @@ getMetaDataResults <- function(dataSource, databaseId) {
       database_id = quoteLiterals(databaseId),
       snakeCaseToCamelCase = TRUE
     ) %>%
-    tidyr::tibble()
+      tidyr::tibble()
 
   return(data)
 }
-
 
 
 getExecutionMetadata <- function(dataSource, databaseId) {
@@ -959,8 +918,8 @@ getExecutionMetadata <- function(dataSource, databaseId) {
   }
   columnNames <-
     databaseMetadata$variableField %>%
-    unique() %>%
-    sort()
+      unique() %>%
+      sort()
   columnNamesNoJson <-
     columnNames[stringr::str_detect(
       string = tolower(columnNames),
@@ -1020,18 +979,18 @@ getExecutionMetadata <- function(dataSource, databaseId) {
 
   transposeJsonsTemp <- list()
   for (i in (1:nrow(transposeJsons))) {
-    transposeJsonsTemp[[i]] <- transposeJsons[i, ]
+    transposeJsonsTemp[[i]] <- transposeJsons[i,]
     for (j in (1:length(columnNamesJson))) {
       transposeJsonsTemp[[i]][[columnNamesJson[[j]]]] <-
         transposeJsonsTemp[[i]][[columnNamesJson[[j]]]] %>%
-        RJSONIO::fromJSON(digits = 23) %>%
-        RJSONIO::toJSON(digits = 23, pretty = TRUE)
+          RJSONIO::fromJSON(digits = 23) %>%
+          RJSONIO::toJSON(digits = 23, pretty = TRUE)
     }
   }
   transposeJsons <- dplyr::bind_rows(transposeJsonsTemp)
   data <- transposeNonJsons %>%
     dplyr::left_join(transposeJsons,
-      by = c("databaseId", "startTime")
+                     by = c("databaseId", "startTime")
     )
   if ("observationPeriodMaxDate" %in% colnames(data)) {
     data$observationPeriodMaxDate <-

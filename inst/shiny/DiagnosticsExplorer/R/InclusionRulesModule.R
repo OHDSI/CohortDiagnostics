@@ -78,6 +78,7 @@ inclusionRulesModule <- function(id,
         databaseIds = selectedDatabaseIds(),
         mode = 0
       )
+      validate(need(hasData(table), "There is no data for the selected combination."))
 
       showDataAsPercent <- input$inclusionRulesShowAsPercent
 

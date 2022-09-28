@@ -147,14 +147,6 @@ included_source_concept,concept_id,int,Yes,Yes,No,Yes,No,No,No
 included_source_concept,source_concept_id,int,No,Yes,Yes,No,No,No,No
 included_source_concept,concept_subjects,float,Yes,No,No,Yes,Yes,No,No
 included_source_concept,concept_count,float,Yes,No,No,Yes,Yes,No,No
-inclusion_rule_stats,rule_sequence_id,int,Yes,Yes,No,Yes,No,No,No
-inclusion_rule_stats,rule_name,varchar,Yes,No,No,Yes,No,No,No
-inclusion_rule_stats,meet_subjects,float,Yes,No,No,Yes,Yes,No,No
-inclusion_rule_stats,gain_subjects,float,Yes,No,No,Yes,Yes,No,No
-inclusion_rule_stats,total_subjects,float,Yes,No,No,Yes,Yes,No,No
-inclusion_rule_stats,remain_subjects,float,Yes,No,No,Yes,Yes,No,No
-inclusion_rule_stats,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-inclusion_rule_stats,database_id,varchar,Yes,Yes,No,Yes,No,No,No
 index_event_breakdown,concept_id,int,Yes,Yes,No,Yes,No,No,No
 index_event_breakdown,concept_count,float,Yes,No,No,Yes,Yes,No,No
 index_event_breakdown,subject_count,float,Yes,No,No,Yes,Yes,No,No

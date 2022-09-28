@@ -1,6 +1,5 @@
 test_that("Cohort counts page", {
   initializeEnvironment(shinySettings,
-                        table1SpecPath = table1SpecPath,
                         dataModelSpecificationsPath = dataModelSpecificationsPath)
   
   # Environment should have initialized
@@ -29,7 +28,7 @@ test_that("Cohort counts page", {
     checkmate::expect_numeric(getResults()$cohortEntries)
     checkmate::expect_numeric(getResults()$cohortSubjects)
     checkmate::expect_character(getResults()$databaseId)
-    checkmate::expect_character(getResults()$shortName)
+    checkmate::expect_character(getResults()$cohortName)
     
     #print(str(output$cohortCountsTable)) #Not sure why this isnt running
   })
