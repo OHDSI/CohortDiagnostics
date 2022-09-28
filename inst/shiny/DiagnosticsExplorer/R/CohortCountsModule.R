@@ -74,6 +74,37 @@ cohortCountsView <- function(id) {
           condition = "output.cohortCountRowIsSelected == true",
           ns = ns,
           tags$h4("Inclusion Rule Statistics"),
+
+          shiny::fluidRow(
+            shiny::column(
+              width = 4,
+              shiny::radioButtons(
+                inputId = ns("cohortCountInclusionRuleTableFilters"),
+                label = "Inclusion Rule Events",
+                choices = c("All", "Meet", "Gain", "Remain"),
+                selected = "All",
+                inline = TRUE
+              )
+            ),
+            shiny::column(
+              width = 4,
+              shiny::radioButtons(
+                inputId = ns("cohortCountInclusionRuleTableShowPersonsOrEvents"),
+                label = "Report",
+                choices = c("Persons", "Events"),
+                selected = "Persons",
+                inline = TRUE
+              )
+            ),
+            shiny::column(
+              width = 4,
+              shiny::checkboxInput(
+                inputId = ns("cohortCountInclusionRulesShowAsPercent"),
+                label = "Show as percent",
+                value = TRUE
+              )
+            )
+          ),
           shinycssloaders::withSpinner(
             reactable::reactableOutput(ns("inclusionRuleStats"))
           ),
@@ -218,7 +249,7 @@ cohortCountsModule <- function(id,
         return(NULL)
       }
 
-      data <- getInclusionRuleStats(
+      data <- getInclusionRuleStatsPersons(
         dataSource = dataSource,
         cohortIds = getCohortIdOnCohortCountRowSelect()$cohortId,
         databaseIds = selectedDatabaseIds()
