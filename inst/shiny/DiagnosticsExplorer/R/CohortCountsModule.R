@@ -256,7 +256,7 @@ cohortCountsModule <- function(id,
         mode <- 0
       }
       
-      data <- getInclusionRuleStatsPersons(
+      data <- getInclusionRuleStats(
           dataSource = dataSource,
           cohortIds = getCohortIdOnCohortCountRowSelect()$cohortId,
           databaseIds = selectedDatabaseIds(),
