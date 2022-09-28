@@ -49,7 +49,6 @@ test_that("Post annotation functions", {
 
 test_that("Annotation shiny server functions", {
   initializeEnvironment(shinySettings,
-                        table1SpecPath = table1SpecPath,
                         dataModelSpecificationsPath = dataModelSpecificationsPath)
   id <-"testAnnotationServer"
   shiny::testServer(annotationModule, args = list(

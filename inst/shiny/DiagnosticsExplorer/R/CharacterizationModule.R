@@ -223,7 +223,7 @@ characterizationModule <- function(id,
                                    getResolvedAndMappedConceptIdsForFilters,
                                    selectedConceptSets,
                                    characterizationTimeIdChoices,
-                                   table1SpecPath = "data/Table1SpecsLong.csv") {
+                                   table1SpecPath = getOption("CD-spec-1-path", "data/Table1SpecsLong.csv")) {
   prettyTable1Specifications <- readr::read_csv(
     file = table1SpecPath,
     col_types = readr::cols(),
