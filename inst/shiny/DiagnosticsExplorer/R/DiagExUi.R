@@ -200,7 +200,7 @@ dashboardUi <- function(enabledTabs,
       if ("temporalCovariateValue" %in% enabledTabs) {
         shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution", icon = shiny::icon("clock"))
       },
-      if ("inclusionRuleStats" %in% enabledTabs) {
+      if ("cohortIncStats" %in% enabledTabs) {
         shinydashboard::menuItem(text = "Inclusion Rule Statistics", tabName = "inclusionRuleStats", icon = shiny::icon("file-medical"))
       },
       if ("indexEventBreakdown" %in% enabledTabs) {
@@ -419,7 +419,7 @@ tabularUi <- function(enabledTabs,
           if ("incidenceRate" %in% enabledTabs) {
             shiny::tabPanel("Incidence Rates", incidenceRatesView(ns("incidenceRates")), value = "incidenceRate")
           },
-          if ("inclusionRuleStats" %in% enabledTabs) {
+          if ("cohortIncStats" %in% enabledTabs) {
             shiny::tabPanel("Inclusion Rules", inclusionRulesView(ns("inclusionRules")), value = "inclusionRules")
           },
           if ("indexEventBreakdown" %in% enabledTabs) {

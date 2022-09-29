@@ -74,6 +74,37 @@ cohortCountsView <- function(id) {
           condition = "output.cohortCountRowIsSelected == true",
           ns = ns,
           tags$h4("Inclusion Rule Statistics"),
+
+          shiny::fluidRow(
+            shiny::column(
+              width = 4,
+              shiny::radioButtons(
+                inputId = ns("cohortCountInclusionRuleTableFilters"),
+                label = "Inclusion Rule Events",
+                choices = c("All", "Meet", "Gain", "Remain"),
+                selected = "All",
+                inline = TRUE
+              )
+            ),
+            shiny::column(
+              width = 4,
+              shiny::radioButtons(
+                inputId = ns("showPersonOrEvents"),
+                label = "Report",
+                choices = c("Persons", "Events"),
+                selected = "Persons",
+                inline = TRUE
+              )
+            ),
+            shiny::column(
+              width = 4,
+              shiny::checkboxInput(
+                inputId = ns("showAsPercent"),
+                label = "Show as percent",
+                value = TRUE
+              )
+            )
+          ),
           shinycssloaders::withSpinner(
             reactable::reactableOutput(ns("inclusionRuleStats"))
           ),
@@ -141,7 +172,6 @@ cohortCountsModule <- function(id,
       validate(need(hasData(data), "There is no data on any cohort"))
 
       data <- getResults() %>%
-        dplyr::rename(cohort = .data$cohortName) %>%
         dplyr::rename(
           persons = .data$cohortSubjects,
           records = .data$cohortEntries
@@ -155,7 +185,7 @@ cohortCountsModule <- function(id,
         dataColumnFields <- "records"
       }
 
-      keyColumnFields <- c("cohortId", "cohort")
+      keyColumnFields <- c("cohortId", "cohortName")
 
       countsForHeader <- NULL
 
@@ -174,15 +204,15 @@ cohortCountsModule <- function(id,
         countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        sort = TRUE,
+        sort = FALSE, #dont sort this by value. reactTable reactiveState does not give row value, only row number
         selection = "single"
       )
       return(displayTable)
     })
 
-    getCohortIdOnCohortCountRowSelect <- reactive({
-      idx <- reactable::getReactableState("cohortCountsTable", "selected")
-      if (is.null(idx)) {
+    getCohortIdOnCohortCountRowSelect <- shiny::reactive({
+      idx <- reactable::getReactableState(outputId = "cohortCountsTable", "selected")
+      if (!hasData(idx)) {
         return(NULL)
       } else {
         if (hasData(getResults())) {
@@ -217,32 +247,84 @@ cohortCountsModule <- function(id,
       if (!hasData(getCohortIdOnCohortCountRowSelect())) {
         return(NULL)
       }
-
+      if (any(
+        !hasData(input$showPersonOrEvents),
+        input$showPersonOrEvents == "Persons"
+      )) {
+        mode <- 1
+      } else {
+        mode <- 0
+      }
+      
       data <- getInclusionRuleStats(
-        dataSource = dataSource,
-        cohortIds = getCohortIdOnCohortCountRowSelect()$cohortId,
-        databaseIds = selectedDatabaseIds()
-      ) %>% dplyr::rename(
-        Meet = .data$meetSubjects,
-        Gain = .data$gainSubjects,
-        Remain = .data$remainSubjects,
-        Total = .data$totalSubjects
-      )
+          dataSource = dataSource,
+          cohortIds = getCohortIdOnCohortCountRowSelect()$cohortId,
+          databaseIds = selectedDatabaseIds(),
+          mode = mode # modeId = 1 - best event, i.e. person
+        )
 
-      countLocation <- 1
-      keyColumnFields <-
-        c("cohortId", "ruleName")
-      dataColumnFields <- c("Meet", "Gain", "Remain", "Total")
+      showDataAsPercent <- input$showAsPercent
 
       validate(need(
         (nrow(data) > 0),
-        "No data for the selected cohort."
+        "There is no data for the selected combination."
       ))
 
-      countsForHeader <- NULL
+      if (all(hasData(showDataAsPercent), showDataAsPercent)) {
+        data <- data %>%
+          dplyr::mutate(
+            Meet = .data$meetSubjects / .data$totalSubjects,
+            Gain = .data$gainSubjects / .data$totalSubjects,
+            Remain = .data$remainSubjects / .data$totalSubjects,
+            id = .data$ruleSequenceId
+          )
+      } else {
+        data <- data %>%
+          dplyr::mutate(
+            Meet = .data$meetSubjects,
+            Gain = .data$gainSubjects,
+            Remain = .data$remainSubjects,
+            Total = .data$totalSubjects,
+            id = .data$ruleSequenceId
+          )
+      }
+
+      data <- data %>%
+        dplyr::arrange(.data$cohortId,
+                       .data$databaseId,
+                       .data$id)
+
+      validate(need(
+        (nrow(data) > 0),
+        "There is no data for the selected combination."
+      ))
+
+      keyColumnFields <-
+        c("id", "ruleName")
+      countLocation <- 1
+
+      if (any(!hasData(input$cohortCountInclusionRuleTableFilters),
+              input$cohortCountInclusionRuleTableFilters == "All")) {
+        dataColumnFields <- c("Meet", "Gain", "Remain")
+      } else {
+        dataColumnFields <- c(input$cohortCountInclusionRuleTableFilters)
+      }
+
+      if (all(hasData(showDataAsPercent), !showDataAsPercent)) {
+        dataColumnFields <- c(dataColumnFields, "Total")
+      }
+
+      countsForHeader <-
+        getDisplayTableHeaderCount(
+          dataSource = dataSource,
+          databaseIds = selectedDatabaseIds(),
+          cohortIds = getCohortIdOnCohortCountRowSelect()$cohortId,
+          source = "cohort",
+          fields = "Persons"
+        )
 
       maxCountValue <-
-        getColumnMax(
+        getMaxValueForStringMatchedColumnsInDataFrame(
           data = data,
           string = dataColumnFields
         )
@@ -253,11 +335,11 @@ cohortCountsModule <- function(id,
         databaseTable = databaseTable,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
-        countLocation = 1,
+        countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        sort = TRUE,
-        selection = "single"
+        showDataAsPercent = showDataAsPercent,
+        sort = FALSE
       )
     })
   }

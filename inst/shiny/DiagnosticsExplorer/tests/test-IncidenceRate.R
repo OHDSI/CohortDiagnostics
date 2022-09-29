@@ -1,6 +1,5 @@
 test_that("Incidence Rate Page", {
   initializeEnvironment(shinySettings,
-                        table1SpecPath = table1SpecPath,
                         dataModelSpecificationsPath = dataModelSpecificationsPath)
   
   # Environment should have initialized
