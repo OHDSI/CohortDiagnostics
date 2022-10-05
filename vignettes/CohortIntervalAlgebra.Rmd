@@ -10,7 +10,7 @@ output:
     df_print: paged
 title: "Cohort Interval Algebra"
 toc: yes
-vignette: "%\\VignetteIndexEntry{WhatIsCohortDiagnostics} %\\VignetteEncoding{UTF-8}
+vignette: "%\\VignetteIndexEntry{CohortIntervalAlgebra} %\\VignetteEncoding{UTF-8}
   \    %\\VignetteEngine{knitr::rmarkdown}\n"
 ---
   
