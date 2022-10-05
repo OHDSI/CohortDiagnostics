@@ -84,59 +84,9 @@ file.copy(from = "R/Shared.R",
           to = "inst/shiny/DiagnosticsExplorer/R/Shared.R",
           overwrite = TRUE)
 
+# Copy cohort analysis ref
+file.copy(from = "inst/settings/cohortAnalysisRef.csv", 
+          to = "inst/shiny/DiagnosticsExplorer/data/cohortAnalysisRef.csv",
+          overwrite = TRUE)
 
-# Cohort Analysis Ref used by Shiny to report CohortRelationship
-cohortAnalysisRef <-
-  dplyr::bind_rows(
-    dplyr::tibble(
-      analysisName = c(
-        "c1:precedes (p)",
-        "c1:meets (m)",
-        "c1:overlaps (o)",
-        "c1:finished by (F)",
-        "c1:contains (D)",
-        "c1:starts (s)",
-        "c1:equals (e)",
-        "c1:started by (S)",
-        "c1:during (d)",
-        "c1:finishes (f)",
-        "c1:overlapped by (O)",
-        "c1:met by (M)",
-        "c1:preceded by (P)"
-      ),
-      analysisId = c(-1:-13)
-    ),
-    dplyr::tibble(
-      analysisName = c(
-        "c2:endsIn (osd)",
-        "c2:startsWithStart (seS)",
-        "c2:startsIn (dfO)",
-        "c2:endsWithEnd (Fef)",
-        "c2:startsBeforeStart (pmoFD)",
-        "c2:startsAfterStart (dfOMP)",
-        "c2:startsBeforeEnd",
-        "c2:endsBeforeEnd (pmoFDseSd)",
-        "c2:endsAfterEnd (DSOMP)",
-        "c2:startsInInclusive (seSdfOM)",
-        "c2:endsInInclusive (oFsedf)",
-        "c2:startsOnOrBeforeStart (pmoFDseS)",
-        "c2:startsOnOrBeforeEnd (pmoFDseSdfoM)",
-        "c2:endsOnOrBeforeEnd (pmoFsedf)",
-        "c2:duringInclusive (esdf)"
-      ),
-      analysisId = c(-101:-115)
-    )
-  ) %>%
-  dplyr::mutate(domainId = "Cohort",
-                isBinary = "Y",
-                missingMeansZero = "Y") %>% 
-  dplyr::arrange(dplyr::desc(.data$analysisId))
-
-
-readr::write_excel_csv(
-  x = cohortAnalysisRef,
-  file = "inst/shiny/DiagnosticsExplorer/data/cohortAnalysisRef.csv",
-  na = "",
-  append = FALSE,
-  quote = "all"
-)
+readxl::read_excel(path = "inst/settings/cohortAnalysisRef.xlsx")
