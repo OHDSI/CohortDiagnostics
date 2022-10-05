@@ -14,7 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+#' Get Cohort Relationship interval ontology
+#'
+#' @return
+#' A tibble describing cohort relationship interval ontology
+#'
+#' @export
+getCohortRelationshipIntervalOntology <- function() {
+  pathToCsv <-
+    system.file("settings",
+                "cohortAnalysisRef.csv",
+                package = utils::packageName())
+  ontology <-
+    readr::read_csv(file = pathToCsv, col_types = readr::cols())
+  return(ontology)
+}
 
 #' Given a set of cohorts get relationships between the cohorts.
 #'

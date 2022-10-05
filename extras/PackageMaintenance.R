@@ -88,5 +88,3 @@ file.copy(from = "R/Shared.R",
 file.copy(from = "inst/settings/cohortAnalysisRef.csv", 
           to = "inst/shiny/DiagnosticsExplorer/data/cohortAnalysisRef.csv",
           overwrite = TRUE)
-
-readxl::read_excel(path = "inst/settings/cohortAnalysisRef.xlsx")
