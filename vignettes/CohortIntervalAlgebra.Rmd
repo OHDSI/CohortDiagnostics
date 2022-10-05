@@ -42,25 +42,72 @@ Another use case maybe to study the relationship between end of a treatment and 
 One formal way of representing temporal relationships between multiple cohort is to use [Allen's interval algebra](https://en.wikipedia.org/wiki/Allen%27s_interval_algebra) (a calculus for temporal reasoning that was introduced by James F. Allen in 1983). 
 
 
+
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+ontology <-
+  CohortDiagnostics::getCohortRelationshipIntervalOntology()
+
+lines <- function(analysisId) {
+  data <- ontology %>% 
+    dplyr::filter(.data$analysisId == !!analysisId)
+  
+  lines <- c()
+  lines[[1]] <- paste0(" **", data$ontology, " (", data$code, ")**")
+  lines[[2]] <- paste0("Comparator cohort *",
+      data$ontology,
+      "* target cohort")
+  lines[[3]] <- paste0("Field in cohortRelationship table: ",
+      data$field)
+  lines[[4]] <- paste0("Logic: ",
+      data$logic)
+  lines[[5]] <- paste0("Analysis id: ",
+      data$analysisId)
+  return(lines)
+}
+```
+
 ## Thirteen basic relationship
 There are 13 basic relationships. They are
 
-1) **p precedes:**  
-  comparator cohort *Precedes* Target cohort  
-  cPrecedesT: cs < ts  
-  Field in cohort_relationship output: ce_before_ts
+
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -1)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("1)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+``` 
   
-  ```{r eval = FALSE}
-      |---C----|    
-      
-                   |----T----| 
-  ```
+```{r eval = FALSE}
+    |---C----|    
+    
+                 |----T----| 
+```
                       
 
-2) **m meets:**   
-  comparator cohort *meets* target cohort  
-  cMeetsT: ce = ts  
-  Field in cohort_relationship output: ce_on_ts  
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -2)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("2)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+``` 
     
   ```{r eval = FALSE}
     
@@ -69,10 +116,21 @@ There are 13 basic relationships. They are
               |---T---|  
   ```
                  
-3) **o overlaps:**  
-  comparator cohort *overlaps* target cohort  
-  cOverlapsT: ce > ts & ce < ts & cs < ts  
-  Field in cohort_relationship output: ce_in_t_cs_bf_ts
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -3)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("3)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+``` 
     
   ```{r eval = FALSE}
     
@@ -81,10 +139,21 @@ There are 13 basic relationships. They are
              |---T---|   
   ```
              
-4) **F finished by:**  
-  comparator cohort *finished by* target cohort  
-  cIsFinishedByT: ce = te & cs < ts  
-  Field in cohort_relationship output: ce_on_te_cs_bf_ts 
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -4)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("4)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+``` 
     
   ```{r eval = FALSE} 
     
@@ -93,10 +162,21 @@ There are 13 basic relationships. They are
           |---T---|   
   ```
 
-5) **D contains:**  
-  comparator cohort *contains* target cohort 
-  cContainsT: cs < ts & ce > te  
-  Field in cohort_relationship output: cs_bf_ts_ce_gt_te 
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -5)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("5)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+``` 
     
   ```{r eval = FALSE} 
     
@@ -105,10 +185,21 @@ There are 13 basic relationships. They are
         |--T----|   
   ```
         
-6) **s starts:**  
-  comparator cohort *starts* target cohort  
-  cStartsT: cs = ts & ce < te  
-  Field in cohort_relationship output: cs_on_ts_ce_bf_te  
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -6)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("6)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```  
     
   ```{r eval = FALSE}
       |---C---|  
@@ -116,10 +207,21 @@ There are 13 basic relationships. They are
       |------T-------|   
   ```
       
-7) **e equals:** 
-  comparator cohort equals target cohort  
-  cEqualsT: cs = ts & ce = te  
-  Field in cohort_relationship output: c_equals_t  
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -7)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("7)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```  
     
   ```{r eval = FALSE}
         |---C-----|  
@@ -127,10 +229,21 @@ There are 13 basic relationships. They are
         |---T-----|   
   ```
         
-8) **S started by:**  
-  comparator cohort is started by Target  
-  cIsStartedByT: cs = ts & ce > te  
-  Field in cohort_relationship output: cs_on_ts_ce_gt_te  
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -8)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("8)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```  
     
   ```{r eval = FALSE}
     
@@ -139,10 +252,21 @@ There are 13 basic relationships. They are
       |----T-----|   
   ```
       
-9) **d during:**  
-  comparator cohort is during Target cohort  
-  cDuringT: cs > ts & ce < te  
-  Field in cohort_relationship output: c_in_t  
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -9)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("9)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+``` 
     
   ```{r eval = FALSE}
         |---C----|
@@ -150,10 +274,21 @@ There are 13 basic relationships. They are
    
   ```
 
-10) **f finishes:**  
-  comparator cohort finishes target cohort  
-  cFinishesT: ce = te & cs > ts-  
-  Field in cohort_relationship output: ce_on_te_cs_gt_ts  
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -10)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("10)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```  
     
   ```{r eval = FALSE}
     
@@ -164,10 +299,21 @@ There are 13 basic relationships. They are
       
       
 
-11) **O overlapped by:**  
-  comparator cohort overlapped by Target cohort  
-  cIsOverlappedByT: te > cs & te < ce & cs > ts & cs < te  
-  Field in cohort_relationship output: cs_in_t_te_in_c  
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -11)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("11)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+``` 
     
   ```{r eval = FALSE}
     
@@ -176,10 +322,21 @@ There are 13 basic relationships. They are
         |----T-----|   
   ```
         
-12) **M met by:**  
-   comparator is met by target cohort  
-   cIsMetByT: te = cs  
-   Field in cohort_relationship output: cs_on_te      
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -12)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("12)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```      
     
     
   ```{r eval = FALSE}
@@ -189,10 +346,21 @@ There are 13 basic relationships. They are
   ```
       
       
-13) **P preceded by:**  
-  compartor is preceded by Target  
-  cPrecededByT: Te < Cs  
-  Field in cohort_relationship output: cs_after_te  
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -13)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("13)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```  
     
   ```{r eval = FALSE}
     
@@ -205,10 +373,21 @@ There are 13 basic relationships. They are
 
 ## Secondary relationships
 
-1) **endsIn:**  ods 
-  comparator ends in T  
-  ce > ts & ce < ts, note: Cs can be </=/> Ts
-  Field in cohort_relationship output: ce_in_t  
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -101)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("101)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```  
 
   ```{r eval = FALSE}
     |----C-----|
@@ -221,10 +400,21 @@ There are 13 basic relationships. They are
       |------T-------|        cStartsT (s)  
   ```
 
-2) **startsWithStart:**  seS
-  comparator starts with target  
-  cs = ts, note: ce can be </=/> Te  
-  Field in cohort_relationship output: cs_on_ts  
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -102)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("102)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```   
   
   ```{r eval = FALSE}
   |----C-----|
@@ -237,10 +427,21 @@ There are 13 basic relationships. They are
   |------T-|
   ```
   
-3) **startsIn:** dfO
-  comparator start in target
-  cs > ts & cs < te, note: Ce can be </=/> Te  
-  Field in cohort_relationship output: cs_in_t  
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -103)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("103)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```    
   
   
   ```{r eval = FALSE}
@@ -254,10 +455,21 @@ There are 13 basic relationships. They are
   ```
   
 
-4) **endsWithEnd:**  Fef
-  comparator cohort ends with target end  
-  ce = te, note: cs can be </=/> Ts  
-  Field in cohort_relationship output: ce_on_te    
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -104)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("104)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```    
   
   ```{r eval = FALSE}
     |---C--------|           cIsFinishedByT (F)
@@ -270,10 +482,21 @@ There are 13 basic relationships. They are
   |------T-------|
   ```
   
-5) **startsBeforeStart:**  pmoFD
-  comparator cohort starts before target start  
-  cs < ts, note: ce can be </=/> Ts/TE  
-  Field in cohort_relationship output: cs_before_ts 
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -105)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("105)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```  
   
   ```{r eval = FALSE}
   |----C-----|
@@ -292,10 +515,21 @@ There are 13 basic relationships. They are
     |---T----|                     cContainsT (D)
 ```
 
-6) **startsAfterStart:**  dfOMP
-  comparator cohort starts after target start  
-  cs > ts, note: ce can be </=/> TE
-  Field in cohort_relationship output: cs_after_ts   
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -106)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("106)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```    
   
   ```{r eval = FALSE}
     |---C----|
@@ -315,10 +549,21 @@ There are 13 basic relationships. They are
 ```
     
     
-7) **startsBeforeEnd:**  pmoFDseSdfO
-  comparator cohort starts before target end  
-  cs < te, note: ce can be </=/> TE
-  Field in cohort_relationship output: cs_before_te   
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -107)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("107)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```   
   
   ```{r eval = FALSE}
   |----C-----|
@@ -356,10 +601,21 @@ There are 13 basic relationships. They are
 ```
 
 
-7) **endsBeforeEnd:**  pmosd
-  comparator cohort ends before target end  
-  ce < te, note: ce can be </=/> TE
-  Field in cohort_relationship output: ce_before_te       
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -108)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("108)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```        
 
   ```{r eval = FALSE}
   |----C-----|
@@ -381,10 +637,21 @@ There are 13 basic relationships. They are
 ```
 
 
-8) **endsAfterEnd:**  DSOMP
-  comparator cohort ends after target end  
-  ce > te, note: cs can be </=/> TS/TE  
-  Field in cohort_relationship output: ce_after_te  
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -109)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("109)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```  
 
   ```{r eval = FALSE}               
   |------C-------|
@@ -403,10 +670,21 @@ There are 13 basic relationships. They are
   |----T-----|       cPrecededByT (P)
 ```
 
-9) **startsInInclusive:**
-  comparator cohort ends after target end  
-  cs >= ts & cs <= ts, note: ce can be </=/> TE  
-  Field in cohort_relationship output: cs_window_t   
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -110)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("110)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```  
 
   ```{r eval = FALSE} 
   
@@ -432,10 +710,21 @@ There are 13 basic relationships. They are
   |----T-----|      cIsMetByT (M)
 ```
 
-10. **endsInInclusive** oFSedf
-  comparator cohort ends after target, inclusive of start and end date
-  cs >= ts & cs <= ts, note: ce can be </=/> TE 
-  Field in cohort_relationship output: ce_window_t
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -111)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("111)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+``` 
 
   ```{r eval = FALSE} 
     |----C-----|
@@ -458,9 +747,21 @@ There are 13 basic relationships. They are
 ```
 
 
-10. **startsOnOrBeforeStart** pmoFDseS
-  comparator cohort starts on or before target start
-  Field in cohort_relationship output: cs_window_ts
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -112)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("112)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+``` 
   
   ```{r eval = FALSE} 
   |----C-----|
@@ -489,9 +790,21 @@ There are 13 basic relationships. They are
 ```
 
 
-11. **startsOnOrBeforeEnd** pmoFDseSdfOM 
-  comparator cohort starts on or before target end
-  Field in cohort_relationship output: cs_window_te
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -113)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("113)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+``` 
   
   ```{r eval = FALSE} 
 
@@ -533,9 +846,21 @@ There are 13 basic relationships. They are
 ```
 
 
-12. **endsOnOrBeforeEnd** pmoFsedf  
-  comparator cohort starts on or before target end
-  Field in cohort_relationship output: ce_window_te
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -114)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("114)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+``` 
 
 
   ```{r eval = FALSE} 
@@ -564,9 +889,21 @@ There are 13 basic relationships. They are
   |------T-------|  cFinishesT (f)
 ```
 
-12. **duringInclusive** esdf   
-  comparator cohort starts on or before target end  
-  Field in cohort_relationship output: c_within_t  
+```{r tidy=FALSE,eval=TRUE, echo = FALSE}
+linesText <- lines(analysisId = -115)
+```
+
+```{r, results='asis', echo = FALSE}
+  cat("115)", linesText[[1]], "\n")
+  cat("\n")
+  cat(linesText[[2]], "\n")
+  cat("\n")
+  cat(linesText[[3]], "\n")
+  cat("\n")
+  cat(linesText[[4]], "\n")
+  cat("\n")
+  cat(linesText[[5]], "\n")
+```  
 
   ```{r eval = FALSE}  
 
@@ -584,56 +921,6 @@ There are 13 basic relationships. They are
 ```
 
 
-```{r tidy=FALSE,eval=TRUE, echo=FALSE}
-# Cohort Analysis Ref used by Shiny to report CohortRelationship
-cohortAnalysisRef <-
-  dplyr::bind_rows(
-    dplyr::tibble(
-      analysisName = c(
-        "c1:precedes (p)",
-        "c1:meets (m)",
-        "c1:overlaps (o)",
-        "c1:finished by (F)",
-        "c1:contains (D)",
-        "c1:starts (s)",
-        "c1:equals (e)",
-        "c1:started by (S)",
-        "c1:during (d)",
-        "c1:finishes (f)",
-        "c1:overlapped by (O)",
-        "c1:met by (M)",
-        "c1:preceded by (P)"
-      ),
-      analysisId = c(-1:-13)
-    ),
-    dplyr::tibble(
-      analysisName = c(
-        "c2:endsIn (osd)",
-        "c2:startsWithStart (seS)",
-        "c2:startsIn (dfO)",
-        "c2:endsWithEnd (Fef)",
-        "c2:startsBeforeStart (pmoFD)",
-        "c2:startsAfterStart (dfOMP)",
-        "c2:startsBeforeEnd",
-        "c2:endsBeforeEnd (pmoFDseSd)",
-        "c2:endsAfterEnd (DSOMP)",
-        "c2:startsInInclusive (seSdfOM)",
-        "c2:endsInInclusive (oFsedf)",
-        "c2:startsOnOrBeforeStart (pmoFDseS)",
-        "c2:startsOnOrBeforeEnd (pmoFDseSdfoM)",
-        "c2:endsOnOrBeforeEnd (pmoFsedf)",
-        "c2:duringInclusive (esdf)"
-      ),
-      analysisId = c(-101:-115)
-    )
-  ) %>%
-  dplyr::mutate(domainId = "Cohort",
-                isBinary = "Y",
-                missingMeansZero = "Y") %>% 
-  dplyr::arrange(dplyr::desc(.data$analysisId))
-```
-
-
-```{r tidy=FALSE,eval=TRUE, echo = FALSE, results = 'asis'}
-cohortAnalysisRef
+```{r tidy=FALSE, eval=TRUE, echo = FALSE}
+ontology
 ```
