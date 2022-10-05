@@ -394,15 +394,28 @@ initializeEnvironment <- function(shinySettings,
   }
 
   if (!is.null(envir$temporalAnalysisRef)) {
+    cohortAnalysisRef <-
+      readr::read_csv(
+        file = getOption("CD-spec-1-path", file.path("data", "cohortAnalysisRef.csv")),
+        col_types = readr::cols(),
+        guess_max = min(1e7),
+        lazy = FALSE
+      ) %>% 
+      dplyr::mutate(analysisName = paste0("C",
+                                          2-.data$primary,
+                                          ":",
+                                          .data$ontology,
+                                          " (",
+                                          .data$code,
+                                          ")")) %>% 
+      dplyr::mutate(domainId = "Cohort",
+                    isBinary = "Y",
+                    missingMeansZero = "Y")
+    
     envir$temporalAnalysisRef <- dplyr::bind_rows(
       envir$temporalAnalysisRef,
-      dplyr::tibble(
-        analysisId = c(-201, -301),
-        analysisName = c("CohortEraStart", "CohortEraOverlap"),
-        domainId = "Cohort",
-        isBinary = "Y",
-        missingMeansZero = "Y"
-      )
+      cohortAnalysisRef %>% 
+        dplyr::select(colnames(envir$temporalAnalysisRef))
     )
 
     envir$domainIdOptions <- envir$temporalAnalysisRef %>%
@@ -434,13 +447,8 @@ initializeEnvironment <- function(shinySettings,
   }
 
   envir$enabledTabs <- c(envir$enabledTabs, "database", "cohort")
-
-  envir$analysisIdInCohortCharacterization <- c(
-    1, 3, 4, 5, 6, 7,
-    203, 403, 501, 703,
-    801, 901, 903, 904,
-    -301, -201
-  )
+  
+  envir$analysisIdInCohortCharacterization <- envir$temporalAnalysisRef$analysisId %>% unique() %>% sort()
 
   if (envir$enableAnnotation &
     "annotation" %in% envir$resultsTables &

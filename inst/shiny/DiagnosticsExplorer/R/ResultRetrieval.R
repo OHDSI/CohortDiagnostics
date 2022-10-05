@@ -301,7 +301,7 @@ getCharacterizationOutput <- function(dataSource,
   }
 
   cohortRelCharRes <-
-    getCohortRelationshipCharacterizationResults(
+    getCohortRelationshipAsIntervalAlgebra(
       dataSource = dataSource,
       cohortIds = cohortIds,
       databaseIds = databaseIds
@@ -916,200 +916,6 @@ getResultsCohortRelationships <- function(dataSource,
 }
 
 
-#' Returns cohort as feature characterization
-#'
-#' @description
-#' Returns a list object with covariateValue,
-#' covariateRef, analysisRef output of cohort as features.
-#'
-#' @template DataSource
-#'
-#' @template CohortIds
-#'
-#' @template DatabaseIds
-#'
-#' @return
-#' Returns a list object with covariateValue,
-#' covariateRef, analysisRef output of cohort as features. To avoid clash
-#' with covaraiteId and conceptId returned from Feature Extraction
-#' the output is a negative integer.
-#'
-#' @export
-getCohortRelationshipCharacterizationResults <-
-  function(dataSource = .GlobalEnv,
-           cohortIds = NULL,
-           databaseIds = NULL) {
-    cohortCounts <-
-      getResultsCohortCounts(
-        dataSource = dataSource,
-        cohortIds = cohortIds,
-        databaseIds = databaseIds
-      )
-    cohort <- getResultsCohort(dataSource = dataSource)
-
-    cohortRelationships <-
-      getResultsCohortRelationships(
-        dataSource = dataSource,
-        cohortIds = cohortIds,
-        databaseIds = databaseIds
-      )
-
-    # cannot do records because comparator cohorts may have sumValue > target cohort (which is first occurrence only)
-    # subjects overlap
-    subjectsOverlap <- cohortRelationships %>%
-      dplyr::inner_join(cohortCounts,
-        by = c("cohortId", "databaseId")
-      ) %>%
-      dplyr::mutate(sumValue = .data$subCeWindowT + .data$subCsWindowT - .data$subCWithinT) %>%
-      dplyr::mutate(mean = .data$sumValue / .data$cohortSubjects) %>%
-      dplyr::select(
-        .data$cohortId,
-        .data$comparatorCohortId,
-        .data$databaseId,
-        .data$startDay,
-        .data$endDay,
-        .data$mean,
-        .data$sumValue
-      ) %>%
-      dplyr::mutate(analysisId = -301)
-
-    # subjects start
-    subjectsStart <- cohortRelationships %>%
-      dplyr::inner_join(cohortCounts,
-        by = c("cohortId", "databaseId")
-      ) %>%
-      dplyr::mutate(sumValue = .data$subCsWindowT) %>%
-      dplyr::mutate(mean = .data$sumValue / .data$cohortSubjects) %>%
-      dplyr::select(
-        .data$cohortId,
-        .data$comparatorCohortId,
-        .data$databaseId,
-        .data$startDay,
-        .data$endDay,
-        .data$mean,
-        .data$sumValue
-      ) %>%
-      dplyr::mutate(analysisId = -201)
-
-    data <- dplyr::bind_rows(
-      subjectsOverlap,
-      subjectsStart
-    ) %>%
-      dplyr::filter(.data$comparatorCohortId > 0) %>%
-      dplyr::mutate(covariateId = (.data$comparatorCohortId * -1000) + .data$analysisId)
-
-    # suppressing warning because of - negative causing NaN values
-    data <- suppressWarnings(expr = {
-      data %>%
-        dplyr::mutate(sd = sqrt(.data$mean * (1 - .data$mean)))
-    }, classes = "warning")
-
-    temporalTimeRefFull <-
-      getResultsTemporalTimeRef(dataSource = dataSource)
-
-    temporalTimeRef <- data %>%
-      dplyr::select(
-        .data$startDay,
-        .data$endDay
-      ) %>%
-      dplyr::distinct() %>%
-      dplyr::inner_join(temporalTimeRefFull,
-        by = c(
-          "startDay",
-          "endDay"
-        )
-      )
-
-    analysisRef <-
-      dplyr::tibble(
-        analysisId = c(-201, -301),
-        analysisName = c("CohortEraStart", "CohortEraOverlap"),
-        domainId = "Cohort",
-        isBinary = "Y",
-        missingMeansZero = "Y"
-      ) %>%
-      dplyr::inner_join(data %>%
-        dplyr::select(.data$analysisId) %>%
-        dplyr::distinct(),
-      by = c("analysisId")
-      )
-    covariateRef <- tidyr::crossing(
-      cohort,
-      analysisRef %>%
-        dplyr::select(
-          .data$analysisId,
-          .data$analysisName
-        )
-    ) %>%
-      dplyr::mutate(covariateId = (.data$cohortId * -1000) + .data$analysisId) %>%
-      dplyr::inner_join(data %>% dplyr::select(.data$covariateId) %>% dplyr::distinct(),
-        by = "covariateId"
-      ) %>%
-      dplyr::mutate(covariateName = paste0(
-        .data$analysisName,
-        ": (",
-        .data$cohortId,
-        ") ",
-        .data$cohortName
-      )) %>%
-      dplyr::mutate(conceptId = .data$cohortId * -1) %>%
-      dplyr::arrange(.data$covariateId) %>%
-      dplyr::select(
-        .data$analysisId,
-        .data$conceptId,
-        .data$covariateId,
-        .data$covariateName
-      )
-    concept <- cohort %>%
-      dplyr::filter(.data$cohortId %in% c(data$comparatorCohortId %>% unique())) %>%
-      dplyr::mutate(
-        conceptId = .data$cohortId * -1,
-        conceptName = .data$cohortName,
-        domainId = "Cohort",
-        vocabularyId = "Cohort",
-        conceptClassId = "Cohort",
-        standardConcept = "S",
-        conceptCode = as.character(.data$cohortId),
-        validStartDate = as.Date("2002-01-31"),
-        validEndDate = as.Date("2099-12-31"),
-        invalidReason = as.character(NA)
-      ) %>%
-      dplyr::select(
-        .data$conceptId,
-        .data$conceptName,
-        .data$domainId,
-        .data$vocabularyId,
-        .data$conceptClassId,
-        .data$standardConcept,
-        .data$conceptCode,
-        .data$validStartDate,
-        .data$validEndDate,
-        .data$invalidReason
-      ) %>%
-      dplyr::arrange(.data$conceptId)
-
-    covariateValue <- data %>%
-      dplyr::select(
-        .data$cohortId,
-        .data$covariateId,
-        .data$databaseId,
-        .data$startDay,
-        .data$endDay,
-        .data$mean,
-        .data$sd,
-        .data$sumValue
-      )
-
-    data <- list(
-      temporalCovariateRef = covariateRef,
-      temporalCovariateValue = covariateValue,
-      temporalCovariateValueDist = NULL,
-      temporalAnalysisRef = analysisRef,
-      concept = concept
-    )
-    return(data)
-  }
-
 
 # Cohort ----
 #' Returns data from cohort table of Cohort Diagnostics results data model
@@ -1292,3 +1098,251 @@ getResultsTemporalAnalysisRef <- function(dataSource) {
   }
   return(data)
 }
+
+
+
+
+#' Returns relationships between cohorts using interval algebra ontology
+#'
+#' @description
+#' Returns relationships between cohorts using interval algebra ontology as
+#' a list object with covariateValue,
+#' covariateRef, analysisRef output of cohort as features. The interval algebra
+#' Ontology is described in Cohort Diagnostics vignette called CohortIntervalAlgebra.
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a list object with covariateValue,
+#' covariateRef, analysisRef output of cohort as features. To avoid clash
+#' with covaraiteId and conceptId returned from Feature Extraction
+#' the output is a negative integer.
+#'
+#' @export
+getCohortRelationshipAsIntervalAlgebra <-
+  function(dataSource = .GlobalEnv,
+           cohortIds = NULL,
+           databaseIds = NULL) {
+    
+    cohortCounts <-
+      getResultsCohortCounts(
+        dataSource = dataSource,
+        cohortIds = cohortIds,
+        databaseIds = databaseIds
+      )
+    cohort <- getResultsCohort(dataSource = dataSource)
+    
+    cohortRelationships <-
+      getResultsCohortRelationships(
+        dataSource = dataSource,
+        cohortIds = cohortIds,
+        databaseIds = databaseIds
+      )
+    
+    # check if data exists for cohort relationship with time offset = 0
+    # this is required for all cohort relationship report
+    if (nrow(
+      cohortRelationships %>%
+      dplyr::select(.data$startDay) %>%
+      dplyr::distinct() %>%
+      dplyr::filter(.data$startDay == 0)
+    ) == 0) {
+      # there is no results with startDay Offset = 0. 
+      # i.e. we cannot report cohort characterization
+      return(NULL)
+    }
+    
+    variablesToSelectInOutput <-
+      c(
+        "cohortId",
+        "comparatorCohortId",
+        "databaseId",
+        "startDay",
+        "endDay",
+        "startDay",
+        "endDay",
+        "mean",
+        "sumValue"
+      )
+    
+    processData <- function(var, 
+                            variables = variablesToSelectInOutput,
+                            cohortRelationship = cohortRelationships,
+                            cohortCount = cohortCounts,
+                            analysisId,
+                            type = "subjects") {
+      
+      if (type == "subjects") {
+        var2 <- SqlRender::snakeCaseToCamelCase(paste0("sub_", var))
+      } else {
+        var2 <- SqlRender::snakeCaseToCamelCase(paste0("rec_", var))
+      }
+      
+      data <- NULL
+      if (var2 %in% colnames(cohortRelationship)) {
+        data <- cohortRelationship %>%
+          dplyr::select(dplyr::all_of(
+            c(
+              "cohortId",
+              "comparatorCohortId",
+              "databaseId",
+              "startDay",
+              "endDay",
+              var2
+            )
+          )) %>%
+          dplyr::rename(sumValue = get("var2")) %>%
+          dplyr::inner_join(cohortCount,
+                            by = c("cohortId", "databaseId"))  %>%
+          dplyr::mutate(mean = .data$sumValue / .data$cohortSubjects) %>%
+          dplyr::select(dplyr::all_of(variables)) %>%
+          dplyr::mutate(analysisId = !!analysisId)
+        
+      }
+      return(data)
+    }
+    
+    # Ontology is described in Cohort Diagnostics vignette called CohortIntervalAlgebra.
+    # Cohort Characterization in this case is reporting the occurrence of another cohort in relation
+    # to the first occurrence of a target cohort using the ontology described in
+    # Allens interval algebra Ontology https://en.wikipedia.org/wiki/Allen%27s_interval_algebra
+    # Allens interval algebra ontology has 13 base relationships
+    # in this order (pmoFDseSdfOMP) https://www.ics.uci.edu/~alspaugh/cls/shr/allen.html
+
+    analysisRef <-
+      readr::read_csv(
+        file = getOption("CD-spec-1-path", file.path("data", "cohortAnalysisRef.csv")),
+        col_types = readr::cols(),
+        guess_max = min(1e7),
+        lazy = FALSE
+      ) %>% 
+      dplyr::mutate(analysisName = paste0("C",
+                                          2-.data$primary,
+                                          ":",
+                                          .data$ontology,
+                                          " (",
+                                          .data$code,
+                                          ")")) %>% 
+      dplyr::mutate(domainId = "Cohort",
+                    isBinary = "Y",
+                    missingMeansZero = "Y")
+    
+    allData <- c()
+    for (i in (1:nrow(analysisRef))) {
+      analysis <- analysisRef[i,]
+      allData[[i]] <- processData(var = analysis$field, analysisId = analysis$analysisId)
+    }
+    
+    data <- dplyr::bind_rows(allData) %>%
+      dplyr::filter(.data$comparatorCohortId > 0) %>%
+      dplyr::mutate(covariateId = (.data$comparatorCohortId * -1000) + .data$analysisId)
+    
+    # suppressing warning because of - negative causing NaN values
+    data <- suppressWarnings(expr = {
+      data %>%
+        dplyr::mutate(sd = sqrt(.data$mean * (1 - .data$mean)))
+    }, classes = "warning")
+    
+    temporalTimeRefFull <-
+      getResultsTemporalTimeRef(dataSource = dataSource)
+    
+    temporalTimeRef <- data %>%
+      dplyr::select(
+        .data$startDay,
+        .data$endDay
+      ) %>%
+      dplyr::distinct() %>%
+      dplyr::inner_join(temporalTimeRefFull,
+                        by = c(
+                          "startDay",
+                          "endDay"
+                        )
+      )
+    
+    analysisRef <-
+      analysisRef %>%
+      dplyr::inner_join(data %>%
+                          dplyr::select(.data$analysisId) %>%
+                          dplyr::distinct(),
+                        by = c("analysisId")
+      )
+    covariateRef <- tidyr::crossing(
+      cohort,
+      analysisRef %>%
+        dplyr::select(
+          .data$analysisId,
+          .data$analysisName
+        )
+    ) %>%
+      dplyr::mutate(covariateId = (.data$cohortId * -1000) + .data$analysisId) %>%
+      dplyr::inner_join(data %>% dplyr::select(.data$covariateId) %>% dplyr::distinct(),
+                        by = "covariateId"
+      ) %>%
+      dplyr::mutate(covariateName = paste0(
+        .data$analysisName,
+        ": (",
+        .data$cohortId,
+        ") ",
+        .data$cohortName
+      )) %>%
+      dplyr::mutate(conceptId = .data$cohortId * -1) %>%
+      dplyr::arrange(.data$covariateId) %>%
+      dplyr::select(
+        .data$analysisId,
+        .data$conceptId,
+        .data$covariateId,
+        .data$covariateName
+      )
+    concept <- cohort %>%
+      dplyr::filter(.data$cohortId %in% c(data$comparatorCohortId %>% unique())) %>%
+      dplyr::mutate(
+        conceptId = .data$cohortId * -1,
+        conceptName = .data$cohortName,
+        domainId = "Cohort",
+        vocabularyId = "Cohort",
+        conceptClassId = "Cohort",
+        standardConcept = "S",
+        conceptCode = as.character(.data$cohortId),
+        validStartDate = as.Date("2002-01-31"),
+        validEndDate = as.Date("2099-12-31"),
+        invalidReason = as.character(NA)
+      ) %>%
+      dplyr::select(
+        .data$conceptId,
+        .data$conceptName,
+        .data$domainId,
+        .data$vocabularyId,
+        .data$conceptClassId,
+        .data$standardConcept,
+        .data$conceptCode,
+        .data$validStartDate,
+        .data$validEndDate,
+        .data$invalidReason
+      ) %>%
+      dplyr::arrange(.data$conceptId)
+    
+    covariateValue <- data %>%
+      dplyr::select(
+        .data$cohortId,
+        .data$covariateId,
+        .data$databaseId,
+        .data$startDay,
+        .data$endDay,
+        .data$mean,
+        .data$sd,
+        .data$sumValue
+      )
+    
+    data <- list(
+      temporalCovariateRef = covariateRef,
+      temporalCovariateValue = covariateValue,
+      temporalCovariateValueDist = NULL,
+      temporalAnalysisRef = analysisRef,
+      concept = concept
+    )
+    return(data)
+  }
