@@ -266,8 +266,8 @@ saveIncremental <- function(data, fileName, ...) {
       lazy = FALSE
     )
     if ((nrow(previousData)) > 0) {
-      if("databaseId" %in% colnames(previousData)) {
-        previousData$databaseId <- as.character(previousData$databaseId)
+      if("database_id" %in% colnames(previousData)) {
+        previousData$database_id <- as.character(previousData$database_id)
       }
 
       if (!length(list(...)) == 0) {
