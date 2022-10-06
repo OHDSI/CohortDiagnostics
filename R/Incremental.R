@@ -142,7 +142,7 @@ recordTasksDone <-
     newRow$checksum <- checksum
     newRow$timeStamp <- as.character(Sys.time())
     recordKeeping <- dplyr::bind_rows(recordKeeping, newRow)
-    readr::write_csv(recordKeeping, recordKeepingFile)
+    readr::write_csv(x = recordKeeping, file = recordKeepingFile, na = "")
   }
 
 writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
@@ -266,6 +266,10 @@ saveIncremental <- function(data, fileName, ...) {
       lazy = FALSE
     )
     if ((nrow(previousData)) > 0) {
+      if("database_id" %in% colnames(previousData)) {
+        previousData$database_id <- as.character(previousData$database_id)
+      }
+
       if (!length(list(...)) == 0) {
         idx <- getKeyIndex(list(...), previousData)
       } else {
@@ -313,6 +317,8 @@ subsetToRequiredCombis <-
       tasks <- getRequiredTasks(
         cohortId = combis$targetCohortId,
         comparatorId = combis$comparatorCohortId,
+        targetChecksum = combis$targetChecksum,
+        comparatorChecksum = combis$comparatorChecksum,
         task = task,
         checksum = combis$checksum,
         recordKeepingFile = recordKeepingFile

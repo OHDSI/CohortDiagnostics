@@ -2,6 +2,13 @@ visitContextView <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
     shinydashboard::box(
+      collapsible = TRUE,
+      collapsed = TRUE,
+      title = "Visit Context",
+      width = "100%",
+      shiny::htmlTemplate(file.path("html", "visitContext.html"))
+    ),
+    shinydashboard::box(
       status = "warning",
       width = "100%",
       tags$div(
@@ -194,7 +201,7 @@ visitContextModule <- function(id,
           data = data,
           string = dataColumnFields
         )
-
+    
       getDisplayTableGroupedByDatabaseId(
         data = data,
         cohort = cohortTable,

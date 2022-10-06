@@ -339,17 +339,21 @@ uploadResults <- function(connectionDetails,
   zip::unzip(zipFileName, exdir = unzipFolder)
 
   specifications <- getResultsDataModelSpecifications()
-
-  if (purgeSiteDataBeforeUploading) {
-    database <-
-      readr::read_csv(
-        file = file.path(unzipFolder, "database.csv"),
-        col_types = readr::cols()
-      )
-    colnames(database) <-
-      SqlRender::snakeCaseToCamelCase(colnames(database))
-    databaseId <- database$databaseId
+  databaseFile <- file.path(unzipFolder, "database.csv")
+  # check required tables are found in folder
+  if (!file.exists(databaseFile)) {
+    stop("database metadata file not found - cannot upload results")
   }
+
+  database <-
+    readr::read_csv(
+      file = databaseFile,
+      col_types = readr::cols()
+    )
+  colnames(database) <-
+    SqlRender::snakeCaseToCamelCase(colnames(database))
+  databaseId <- database$databaseId
+
 
   uploadTable <- function(tableName) {
     ParallelLogger::logInfo("Uploading table ", tableName)
@@ -513,10 +517,6 @@ uploadResults <- function(connectionDetails,
         guess_max = 1e6,
         progress = FALSE
       )
-
-      # chunk <- readr::read_csv(file = file.path(unzipFolder, csvFileName),
-      # col_types = readr::cols(),
-      # guess_max = 1e6)
     }
   }
 

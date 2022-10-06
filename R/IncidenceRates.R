@@ -238,17 +238,11 @@ computeIncidenceRates <- function(connection,
 
       # TODO: do we really want to get this from the cohort definition?
       cohortExpression <- RJSONIO::fromJSON(row$json, digits = 23)
-      washoutPeriod <- tryCatch(
-        {
-          cohortExpression$
-            PrimaryCriteria$
-            ObservationWindow$
-            PriorDays
-        },
-        error = function(e) {
-          0
-        }
-      )
+      washoutPeriod <- cohortExpression$PrimaryCriteria$ObservationWindow[["PriorDays"]]
+      if (is.null(washoutPeriod)) {
+        washoutPeriod <- 0
+      }
+
       timeExecution(
         exportFolder,
         taskName = "getIncidenceRate",

@@ -2,12 +2,19 @@
 inclusionRulesView <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
+     shinydashboard::box(
+      collapsible = TRUE,
+      collapsed = TRUE,
+      title = "Inclusion Rules",
+      width = "100%",
+      shiny::htmlTemplate(file.path("html", "inclusionRuleStats.html"))
+    ),
     shinydashboard::box(
       status = "warning",
       width = "100%",
       tags$div(
         style = "max-height: 100px; overflow-y: auto",
-        shiny::uiOutput(outputId = "selectedCohort")
+        shiny::uiOutput(outputId = ns("selectedCohort"))
       )
     ),
     shinydashboard::box(
@@ -20,11 +27,18 @@ inclusionRulesView <- function(id) {
             td(
               align = "left",
               shiny::radioButtons(
-                inputId = "inclusionRuleTableFilters",
+                inputId = ns("inclusionRuleTableFilters"),
                 label = "Inclusion Rule Events",
                 choices = c("All", "Meet", "Gain", "Remain"),
                 selected = "All",
                 inline = TRUE
+              )
+            ),
+            tags$td(
+              shiny::checkboxInput(
+                inputId = ns("inclusionRulesShowAsPercent"),
+                label = "Show as percent",
+                value = TRUE
               )
             ),
             td(
@@ -61,17 +75,36 @@ inclusionRulesModule <- function(id,
       table <- getInclusionRuleStats(
         dataSource = dataSource,
         cohortIds = targetCohortId(),
-        databaseIds = selectedDatabaseIds()
-      ) %>%
-        dplyr::mutate(
-          Meet = .data$meetSubjects / .data$totalSubjects,
-          Gain = .data$gainSubjects / .data$totalSubjects,
-          Remain = .data$remainSubjects / .data$totalSubjects,
-          Total = .data$totalSubjects
-        ) %>%
+        databaseIds = selectedDatabaseIds(),
+        mode = 0
+      )
+      validate(need(hasData(table), "There is no data for the selected combination."))
+
+      showDataAsPercent <- input$inclusionRulesShowAsPercent
+
+      if (showDataAsPercent) {
+        table <- table %>%
+          dplyr::mutate(
+            Meet = .data$meetSubjects / .data$totalSubjects,
+            Gain = .data$gainSubjects / .data$totalSubjects,
+            Remain = .data$remainSubjects / .data$totalSubjects,
+            id = .data$ruleSequenceId
+          )
+      } else {
+        table <- table %>%
+          dplyr::mutate(
+            Meet = .data$meetSubjects,
+            Gain = .data$gainSubjects,
+            Remain = .data$remainSubjects,
+            Total = .data$totalSubjects,
+            id = .data$ruleSequenceId
+          )
+      }
+
+      table <- table %>%
         dplyr::arrange(.data$cohortId,
                        .data$databaseId,
-                       .data$ruleSequenceId)
+                       .data$id)
 
       validate(need(
         (nrow(table) > 0),
@@ -79,13 +112,18 @@ inclusionRulesModule <- function(id,
       ))
 
       keyColumnFields <-
-        c("ruleSequenceId", "ruleName")
+        c("id", "ruleName")
       countLocation <- 1
       
-      if (any(!hasData(input$inclusionRuleTableFilters), input$inclusionRuleTableFilters == "All")) {
+      if (any(!hasData(input$inclusionRuleTableFilters),
+              input$inclusionRuleTableFilters == "All")) {
         dataColumnFields <- c("Meet", "Gain", "Remain")
       } else {
-        dataColumnFields <- input$inclusionRuleTableFilters
+        dataColumnFields <- c(input$inclusionRuleTableFilters)
+      }
+
+      if (all(hasData(showDataAsPercent), !showDataAsPercent)) {
+        dataColumnFields <- c(dataColumnFields, "Total")
       }
 
       countsForHeader <-
@@ -102,9 +140,6 @@ inclusionRulesModule <- function(id,
           data = table,
           string = dataColumnFields
         )
-
-      showDataAsPercent <- TRUE
-      ## showDataAsPercent set based on UI selection - proportion
 
       getDisplayTableGroupedByDatabaseId(
         data = table,

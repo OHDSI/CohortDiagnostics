@@ -7,6 +7,13 @@ indexEventBreakdownView <- function(id) {
 
   shiny::tagList(
     shinydashboard::box(
+      collapsible = TRUE,
+      collapsed = TRUE,
+      title = "Index Events",
+      width = "100%",
+      shiny::htmlTemplate(file.path("html", "indexEventBreakdown.html"))
+    ),
+    shinydashboard::box(
       status = "warning",
       width = "100%",
       tags$div(
@@ -38,12 +45,6 @@ indexEventBreakdownView <- function(id) {
                 choices = c("Both", "Records", "Persons"),
                 selected = "Persons",
                 inline = TRUE
-              )
-            ),
-            td(
-              shiny::checkboxInput(
-                inputId = ns("indexEventBreakDownShowAsPercent"),
-                label = "Show as percent"
               )
             )
           )
@@ -120,7 +121,7 @@ indexEventBreakdownModule <- function(id,
       validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
       validate(need(length(targetCohortId()) > 0, "No cohorts chosen chosen"))
 
-      showDataAsPercent <- input$indexEventBreakDownShowAsPercent
+      showDataAsPercent <- FALSE # input$indexEventBreakDownShowAsPercent
       data <- indexEventBreakDownDataFilteredByRadioButton()
      
       validate(need(

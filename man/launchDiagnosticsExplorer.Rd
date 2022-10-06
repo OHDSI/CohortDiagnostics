@@ -7,6 +7,7 @@
 launchDiagnosticsExplorer(
   sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
   connectionDetails = NULL,
+  shinyConfigPath = NULL,
   resultsDatabaseSchema = NULL,
   vocabularyDatabaseSchema = NULL,
   vocabularyDatabaseSchemas = resultsDatabaseSchema,
@@ -28,6 +29,8 @@ launchDiagnosticsExplorer(
 DatabaseConnector package, specifying how to connect to the server where
 the CohortDiagnostics results have been uploaded using the
 \code{\link{uploadResults}} function.}
+
+\item{shinyConfigPath}{Path to shiny yml configuration file (use instead of sqliteDbPath or connectionDetails object)}
 
 \item{resultsDatabaseSchema}{The schema on the database server where the CohortDiagnostics results
 have been uploaded.}

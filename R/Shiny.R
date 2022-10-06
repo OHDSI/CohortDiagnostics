@@ -28,6 +28,7 @@
 #'                                   that might represent different versions of the OMOP vocabulary tables. It allows us to compare the impact
 #'                                   of vocabulary changes on Diagnostics. Not supported with an sqlite database.
 #' @param sqliteDbPath     Path to merged sqlite file. See \code{\link{createMergedResultsFile}} to create file.
+#' @param shinyConfigPath  Path to shiny yml configuration file (use instead of sqliteDbPath or connectionDetails object)
 #' @param runOverNetwork   (optional) Do you want the app to run over your network?
 #' @param port             (optional) Only used if \code{runOverNetwork} = TRUE.
 #' @param launch.browser   Should the app be launched in your default browser, or in a Shiny window.
@@ -45,6 +46,7 @@
 #' @export
 launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
                                       connectionDetails = NULL,
+                                      shinyConfigPath = NULL,
                                       resultsDatabaseSchema = NULL,
                                       vocabularyDatabaseSchema = NULL,
                                       vocabularyDatabaseSchemas = resultsDatabaseSchema,
@@ -56,34 +58,56 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
                                       port = 80,
                                       launch.browser = FALSE,
                                       enableAnnotation = TRUE) {
-  if (is.null(connectionDetails)) {
-    sqliteDbPath <- normalizePath(sqliteDbPath)
-    if (!file.exists(sqliteDbPath)) {
-      stop("Sqlite database", sqliteDbPath, "not found. Please see createMergedSqliteResults")
+
+  if (is.null(shinyConfigPath)) {
+    if (is.null(connectionDetails)) {
+      sqliteDbPath <- normalizePath(sqliteDbPath)
+      if (!file.exists(sqliteDbPath)) {
+        stop("Sqlite database", sqliteDbPath, "not found. Please see createMergedSqliteResults")
+      }
+
+      resultsDatabaseSchema <- "main"
+      vocabularyDatabaseSchemas <- "main"
+      connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
     }
 
-    resultsDatabaseSchema <- "main"
-    vocabularyDatabaseSchemas <- "main"
-    connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
-  }
+    if (is.null(resultsDatabaseSchema)) {
+      stop("resultsDatabaseSchema is required to connect to the database.")
+    }
+    if (!is.null(vocabularyDatabaseSchema) &
+      is.null(vocabularyDatabaseSchemas)) {
+      vocabularyDatabaseSchemas <- vocabularyDatabaseSchema
+      warning(
+        "vocabularyDatabaseSchema option is deprecated. Please use vocabularyDatabaseSchemas."
+      )
+    }
 
-  if (is.null(resultsDatabaseSchema)) {
-    stop("resultsDatabaseSchema is required to connect to the database.")
-  }
-  if (!is.null(vocabularyDatabaseSchema) &
-    is.null(vocabularyDatabaseSchemas)) {
-    vocabularyDatabaseSchemas <- vocabularyDatabaseSchema
-    warning(
-      "vocabularyDatabaseSchema option is deprecated. Please use vocabularyDatabaseSchemas."
+    if (cohortTableName == "cohort") {
+      cohortTableName <- paste0(tablePrefix, cohortTableName)
+    }
+
+    if (databaseTableName == "database") {
+      databaseTableName <- paste0(tablePrefix, databaseTableName)
+    }
+
+    .GlobalEnv$shinySettings <- list(
+      connectionDetails = connectionDetails,
+      resultsDatabaseSchema = resultsDatabaseSchema,
+      vocabularyDatabaseSchemas = vocabularyDatabaseSchemas,
+      aboutText = aboutText,
+      tablePrefix = tablePrefix,
+      cohortTableName = cohortTableName,
+      databaseTableName = databaseTableName,
+      enableAnnotation = enableAnnotation,
+      enableAuthorization = FALSE
     )
-  }
 
-  if (cohortTableName == "cohort") {
-    cohortTableName <- paste0(tablePrefix, cohortTableName)
-  }
-
-  if (databaseTableName == "database") {
-    databaseTableName <- paste0(tablePrefix, databaseTableName)
+    options("enableCdAnnotation" = enableAnnotation)
+    on.exit(rm("shinySettings", envir = .GlobalEnv))
+  } else {
+    checkmate::assertFileExists(shinyConfigPath)
+    options("CD-shiny-config" = normalizePath(shinyConfigPath))
+    on.exit(options("CD-shiny-config" = NULL))
   }
 
   ensure_installed(c("checkmate",
@@ -128,20 +152,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     options(shiny.port = port)
     options(shiny.host = myIpAddress)
   }
-  .GlobalEnv$shinySettings <- list(
-    connectionDetails = connectionDetails,
-    resultsDatabaseSchema = resultsDatabaseSchema,
-    vocabularyDatabaseSchemas = vocabularyDatabaseSchemas,
-    aboutText = aboutText,
-    tablePrefix = tablePrefix,
-    cohortTableName = cohortTableName,
-    databaseTableName = databaseTableName,
-    enableAnnotation = enableAnnotation,
-    enableAuthorization = FALSE
-  )
 
-  options("enableCdAnnotation" = enableAnnotation)
-  on.exit(rm("shinySettings", envir = .GlobalEnv))
   shiny::runApp(appDir = appDir)
 }
 
@@ -216,7 +227,7 @@ createMergedResultsFile <-
 createDiagnosticsExplorerZip <- function(outputZipfile = file.path(getwd(), "DiagnosticsExplorer.zip"),
                                          sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
                                          shinyDirectory = system.file(file.path("shiny", "DiagnosticsExplorer"),
-                                           package = "CohortDiagnostics"
+                                                                      package = "CohortDiagnostics"
                                          ),
                                          overwrite = FALSE) {
   outputZipfile <- normalizePath(outputZipfile, mustWork = FALSE)
@@ -295,7 +306,7 @@ ensure_installed <- function(pkgs) {
 
   if (interactive() & length(notInstalled) > 0) {
     message(paste("Package(s): ", paste(paste(notInstalled, collapse = ", "), "not installed")))
-    if(!isTRUE(utils::askYesNo("Would you like to install them?"))) {
+    if (!isTRUE(utils::askYesNo("Would you like to install them?"))) {
       return(invisible(NULL))
     }
   }

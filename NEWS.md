@@ -27,7 +27,9 @@ new shiny app functionality will be supported if you run ``migrateDataModel`` on
 
 10. Ensure that tests cases always use a continuous covariate
 
-11. New parameter minCharacterizationMean. This introduces a cut off for the output of FeatureExtraction. In the absence of the parameter the output would have atleast one row for every covariateId in the datasource  - most having very low count to be useful for diagnostics.
+11. Batch operations for executing cohort relationship, time series, and feature extraction based diagnostics.
+
+13. New parameter minCharacterizationMean. This introduces a cut off for the output of FeatureExtraction. In the absence of the parameter the output would have atleast one row for every covariateId in the datasource  - most having very low count to be useful for diagnostics.
 
 Bug fixes:
 

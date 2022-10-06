@@ -1,6 +1,5 @@
-
 plotIncidenceRate <- function(data,
-                              shortNameRef = NULL,
+                              cohortTable = NULL,
                               stratifyByAgeGroup = TRUE,
                               stratifyByGender = TRUE,
                               stratifyByCalendarYear = TRUE,
@@ -65,8 +64,12 @@ plotIncidenceRate <- function(data,
   )
   checkmate::reportAssertions(collection = errorMessage)
 
+  cohortNames <- cohortTable %>% dplyr::select(.data$cohortId,
+                                               .data$cohortName)
+
   plotData <- data %>%
-    addShortName(shortNameRef) %>%
+    dplyr::inner_join(cohortNames, by = "cohortId",) %>%
+    addShortName(cohortTable) %>%
     dplyr::mutate(incidenceRate = round(.data$incidenceRate, digits = 3))
   plotData <- plotData %>%
     dplyr::mutate(
@@ -109,7 +112,6 @@ plotIncidenceRate <- function(data,
   }
 
 
-
   sortShortName <- plotData %>%
     dplyr::select(.data$shortName) %>%
     dplyr::distinct() %>%
@@ -124,10 +126,8 @@ plotIncidenceRate <- function(data,
     )
 
 
-
   plotData$shortName <- factor(plotData$shortName,
-    levels = sortShortName$shortName
-  )
+                               levels = sortShortName$shortName)
 
   if (stratifyByAgeGroup) {
     sortAgeGroup <- plotData %>%
@@ -144,14 +144,14 @@ plotIncidenceRate <- function(data,
       )
 
     plotData$ageGroup <- factor(plotData$ageGroup,
-      levels = sortAgeGroup$ageGroup
+                                levels = sortAgeGroup$ageGroup
     )
   }
 
   plotData$tooltip <- c(
     paste0(
-      plotData$shortName,
-      " ",
+      plotData$cohortName,
+      "\n",
       plotData$databaseName,
       "\nIncidence Rate = ",
       scales::comma(plotData$incidenceRate, accuracy = 0.01),
@@ -184,7 +184,6 @@ plotIncidenceRate <- function(data,
 
   if (stratifyByGender) {
     # Make sure colors are consistent, no matter which genders are included:
-
     genders <- c("Female", "Male", "No matching concept")
     # Code used to generate palette:
     # writeLines(paste(RColorBrewer::brewer.pal(n = 2, name = "Dark2"), collapse = "\", \""))
@@ -196,9 +195,9 @@ plotIncidenceRate <- function(data,
 
   plot <-
     ggplot2::ggplot(data = plotData, do.call(ggplot2::aes_string, aesthetics)) +
-    ggplot2::xlab(xLabel) +
-    ggplot2::ylab("Incidence Rate (/1,000 person years)") +
-    ggplot2::scale_y_continuous(expand = c(0, 0))
+      ggplot2::xlab(xLabel) +
+      ggplot2::ylab("Incidence Rate (/1,000 person years)") +
+      ggplot2::scale_y_continuous(expand = c(0, 0))
 
   if (stratifyByCalendarYear) {
     distinctCalenderYear <- plotData$calendarYear %>%
@@ -216,7 +215,6 @@ plotIncidenceRate <- function(data,
   }
 
 
-
   plot <- plot + ggplot2::theme(
     legend.position = "top",
     legend.title = ggplot2::element_blank(),
@@ -231,8 +229,8 @@ plotIncidenceRate <- function(data,
     plot <- plot +
       ggiraph::geom_line_interactive(ggplot2::aes(), size = 1, alpha = 0.6) +
       ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip),
-        size = 2,
-        alpha = 0.6
+                                      size = 2,
+                                      alpha = 0.6
       )
   } else {
     plot <-
@@ -306,6 +304,13 @@ incidenceRatesView <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
     shinydashboard::box(
+      collapsible = TRUE,
+      collapsed = TRUE,
+      title = "Incidence Rates",
+      width = "100%",
+      shiny::htmlTemplate(file.path("html", "incidenceRate.html"))
+    ),
+    shinydashboard::box(
       status = "warning",
       width = "100%",
       tags$div(
@@ -314,154 +319,147 @@ incidenceRatesView <- function(id) {
       )
     ),
     shinydashboard::box(
-      title = "Incidence Rate",
       width = NULL,
       status = "primary",
-      htmltools::withTags(
-        tags$table(
-          style = "width: 100%",
-          tags$tr(
-            tags$td(
-              valign = "bottom",
-              shiny::checkboxGroupInput(
-                inputId = ns("irStratification"),
-                label = "Stratify by",
-                choices = c("Age", "Sex", "Calendar Year"),
-                selected = c("Age", "Sex", "Calendar Year"),
-                inline = TRUE
-              )
-            ),
-            tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
-            tags$td(
-              valign = "bottom",
-              style = "width:30% !important;margin-top:10px;",
-              shiny::conditionalPanel(
-                condition = "input.irYscaleFixed",
-                ns = ns,
-                shiny::sliderInput(
-                  inputId = ns("YscaleMinAndMax"),
-                  label = "Limit y-scale range to:",
-                  min = c(0),
-                  max = c(0),
-                  value = c(0, 0),
-                  dragRange = TRUE, width = 400,
-                  step = 1,
-                  sep = "",
-                )
-              )
-            ),
-            tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
-            tags$td(
-              valign = "bottom",
-              style = "text-align: right",
-              shiny::checkboxInput(ns("irYscaleFixed"), "Use same y-scale across databases")
+
+      shiny::fluidRow(
+        shiny::column(
+          width = 4,
+          shiny::checkboxGroupInput(
+            inputId = ns("irStratification"),
+            label = "Stratify by",
+            choices = c("Age", "Sex", "Calendar Year"),
+            selected = c("Age", "Sex", "Calendar Year"),
+            inline = TRUE
+          )
+        ),
+        shiny::column(
+          width = 3,
+          tags$br(),
+          shiny::checkboxInput(
+            inputId = ns("irYscaleFixed"),
+            label = "Use same y-scale across databases"),
+        ),
+        shiny::column(
+          width = 5,
+          shiny::conditionalPanel(
+            condition = "input.irYscaleFixed",
+            ns = ns,
+            shiny::sliderInput(
+              inputId = ns("YscaleMinAndMax"),
+              label = "Limit y-scale range to:",
+              min = c(0),
+              max = c(0),
+              value = c(0, 0),
+              dragRange = TRUE, width = 400,
+              step = 1,
+              sep = "",
             )
           )
         )
       ),
-      htmltools::withTags(
-        tags$table(
-          width = "100%",
-          tags$tr(
-            tags$td(
-              shiny::conditionalPanel(
-                condition = "input.irStratification.indexOf('Age') > -1",
-                ns = ns,
-                shinyWidgets::pickerInput(
-                  inputId = ns("incidenceRateAgeFilter"),
-                  label = "Filter By Age",
-                  width = 400,
-                  choices = c("All"),
-                  selected = c("All"),
-                  multiple = TRUE,
-                  choicesOpt = list(style = rep_len("color: black;", 999)),
-                  options = shinyWidgets::pickerOptions(
-                    actionsBox = TRUE,
-                    liveSearch = TRUE,
-                    size = 10,
-                    dropupAuto = TRUE,
-                    liveSearchStyle = "contains",
-                    liveSearchPlaceholder = "Type here to search",
-                    virtualScroll = 50
-                  )
-                )
+      shiny::fluidRow(
+        shiny::conditionalPanel(
+          condition = "input.irStratification.indexOf('Age') > -1",
+          ns = ns,
+          shiny::column(
+            width = 6,
+            shinyWidgets::pickerInput(
+              inputId = ns("incidenceRateAgeFilter"),
+              label = "Filter By Age",
+              choices = c("All"),
+              selected = c("All"),
+              multiple = TRUE,
+              choicesOpt = list(style = rep_len("color: black;", 999)),
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                size = 10,
+                dropupAuto = TRUE,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
               )
-            ),
-            tags$td(
-              shiny::conditionalPanel(
-                condition = "input.irStratification.indexOf('Sex') > -1",
-                ns = ns,
-                shinyWidgets::pickerInput(
-                  inputId = ns("incidenceRateGenderFilter"),
-                  label = "Filter By Sex",
-                  width = 200,
-                  choices = c("All"),
-                  selected = c("All"),
-                  multiple = TRUE,
-                  choicesOpt = list(style = rep_len("color: black;", 999)),
-                  options = shinyWidgets::pickerOptions(
-                    actionsBox = TRUE,
-                    liveSearch = TRUE,
-                    size = 10,
-                    dropupAuto = TRUE,
-                    liveSearchStyle = "contains",
-                    liveSearchPlaceholder = "Type here to search",
-                    virtualScroll = 50
-                  )
-                )
-              )
-            ),
-            tags$td(
-              style = "width:30% !important",
-              shiny::conditionalPanel(
-                condition = "input.irStratification.indexOf('Calendar Year') > -1",
-                ns = ns,
-                shiny::sliderInput(
-                  inputId = ns("incidenceRateCalenderFilter"),
-                  label = "Filter By Calender Year",
-                  min = c(0),
-                  max = c(0),
-                  value = c(0, 0),
-                  dragRange = TRUE,
-                  pre = "Year ",
-                  step = 1,
-                  sep = ""
-                )
-              )
-            ),
-            tags$td(
-              shiny::numericInput(
-                inputId = ns("minPersonYear"),
-                label = "Minimum person years",
-                value = 1000,
-                min = 0
-              )
-            ),
-            tags$td(
-              shiny::numericInput(
-                inputId = ns("minSubjetCount"),
-                label = "Minimum subject count",
-                value = NULL
-              )
-            ),
-            tags$td(
-              align = "right",
-              shiny::downloadButton(
-                ns("saveIncidenceRatePlot"),
-                label = "",
-                icon = shiny::icon("download"),
-                style = "margin-top: 5px; margin-bottom: 5px;"
+            )
+          )
+        ),
+        shiny::conditionalPanel(
+          condition = "input.irStratification.indexOf('Sex') > -1",
+          ns = ns,
+          shiny::column(
+            width = 6,
+            shinyWidgets::pickerInput(
+              inputId = ns("incidenceRateGenderFilter"),
+              label = "Filter By Sex",
+              choices = c("All"),
+              selected = c("All"),
+              multiple = TRUE,
+              choicesOpt = list(style = rep_len("color: black;", 999)),
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                size = 10,
+                dropupAuto = TRUE,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
               )
             )
           )
         )
       ),
-      shiny::htmlOutput(outputId = ns("hoverInfoIr")),
-      shinycssloaders::withSpinner(
-        ggiraph::ggiraphOutput(
-          outputId = ns("incidenceRatePlot"),
-          width = "100%",
-          height = "100%"
+
+      shiny::fluidRow(
+         shiny::column(
+          width = 3,
+          shiny::numericInput(
+            inputId = ns("minPersonYear"),
+            label = "Minimum person years",
+            value = 1000,
+            min = 0
+          )
+        ),
+        shiny::column(
+          width = 3,
+          shiny::numericInput(
+            inputId = ns("minSubjetCount"),
+            label = "Minimum subject count",
+            value = NULL
+          )
+        ),
+        shiny::column(
+          width = 6,
+          shiny::conditionalPanel(
+            condition = "input.irStratification.indexOf('Calendar Year') > -1",
+            ns = ns,
+            shiny::sliderInput(
+              inputId = ns("incidenceRateCalenderFilter"),
+              label = "Filter By Calender Year",
+              min = c(0),
+              max = c(0),
+              value = c(0, 0),
+              dragRange = TRUE,
+              pre = "Year ",
+              step = 1,
+              sep = ""
+            )
+          )
+        )
+      ),
+      shiny::actionButton(inputId = ns("generatePlot"), label = "Generate Plot")
+    ),
+    shiny::conditionalPanel(
+      ns = ns,
+      condition = "input.generatePlot > 0",
+      shinydashboard::box(
+        width = NULL,
+        shiny::htmlOutput(outputId = ns("hoverInfoIr")),
+        shinycssloaders::withSpinner(
+          ggiraph::ggiraphOutput(
+            outputId = ns("incidenceRatePlot"),
+            width = "100%",
+            height = "100%"
+          )
         )
       )
     )
@@ -476,6 +474,7 @@ incidenceRatesModule <- function(id,
                                  cohortTable) {
   ns <- shiny::NS(id)
   shiny::moduleServer(id, function(input, output, session) {
+    irRanges <- getIncidenceRateRanges(dataSource)
     output$selectedCohorts <- shiny::renderUI({ selectedCohorts() })
 
     # Incidence rate ---------------------------
@@ -509,85 +508,80 @@ incidenceRatesModule <- function(id,
     })
 
     shiny::observe({
-      if (!is.null(incidenceRateData()) &&
-        nrow(incidenceRateData()) > 0) {
-        ageFilter <- incidenceRateData() %>%
-          dplyr::select(.data$ageGroup) %>%
-          dplyr::filter(.data$ageGroup != "NA", !is.na(.data$ageGroup)) %>%
-          dplyr::distinct() %>%
-          dplyr::arrange(as.integer(sub(
-            pattern = "-.+$", "", x = .data$ageGroup
-          )))
+      ageFilter <- irRanges$ageGroups %>%
+        dplyr::filter(.data$ageGroup != " ", .data$ageGroup != "NA", !is.na(.data$ageGroup)) %>%
+        dplyr::distinct() %>%
+        dplyr::arrange(as.integer(sub(
+          pattern = "-.+$", "", x = .data$ageGroup
+        )))
 
-        shinyWidgets::updatePickerInput(
-          session = session,
-          inputId = "incidenceRateAgeFilter",
-          selected = ageFilter$ageGroup,
-          choices = ageFilter$ageGroup,
-          choicesOpt = list(style = rep_len("color: black;", 999))
-        )
-      }
+      shinyWidgets::updatePickerInput(
+        session = session,
+        inputId = "incidenceRateAgeFilter",
+        selected = ageFilter$ageGroup,
+        choices = ageFilter$ageGroup,
+        choicesOpt = list(style = rep_len("color: black;", 999))
+      )
+
     })
 
     shiny::observe({
-      if (!is.null(incidenceRateData()) &&
-        nrow(incidenceRateData()) > 0) {
-        genderFilter <- incidenceRateData() %>%
-          dplyr::select(.data$gender) %>%
-          dplyr::filter(
-            .data$gender != "NA",
-            !is.na(.data$gender)
-          ) %>%
-          dplyr::distinct() %>%
-          dplyr::arrange(.data$gender)
+      genderFilter <- irRanges$gender %>%
+        dplyr::select(.data$gender) %>%
+        dplyr::filter(
+          .data$gender != "NA",
+          .data$gender != " ",
+          !is.na(.data$gender),
+          !is.null(.data$gender)
+        ) %>%
+        dplyr::distinct() %>%
+        dplyr::arrange(.data$gender)
 
-        shinyWidgets::updatePickerInput(
-          session = session,
-          inputId = "incidenceRateGenderFilter",
-          choicesOpt = list(style = rep_len("color: black;", 999)),
-          choices = genderFilter$gender,
-          selected = genderFilter$gender
-        )
-      }
+      shinyWidgets::updatePickerInput(
+        session = session,
+        inputId = "incidenceRateGenderFilter",
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        choices = genderFilter$gender,
+        selected = genderFilter$gender
+      )
+
     })
 
     shiny::observe({
-      if (!is.null(incidenceRateData()) &&
-        nrow(incidenceRateData()) > 0) {
-        calenderFilter <- incidenceRateData() %>%
-          dplyr::select(.data$calendarYear) %>%
-          dplyr::filter(
-            .data$calendarYear != "NA",
-            !is.na(.data$calendarYear)
-          ) %>%
-          dplyr::distinct(.data$calendarYear) %>%
-          dplyr::arrange(.data$calendarYear)
+      calenderFilter <- irRanges$calendarYear %>%
+        dplyr::select(.data$calendarYear) %>%
+        dplyr::filter(
+          .data$calendarYear != " ",
+          .data$calendarYear != "NA",
+          !is.na(.data$calendarYear)
+        ) %>%
+        dplyr::distinct(.data$calendarYear) %>%
+        dplyr::arrange(.data$calendarYear)
 
-        minValue <- min(calenderFilter$calendarYear)
+      minValue <- min(calenderFilter$calendarYear)
 
-        maxValue <- max(calenderFilter$calendarYear)
+      maxValue <- max(calenderFilter$calendarYear)
 
-        shiny::updateSliderInput(
-          session = session,
-          inputId = "incidenceRateCalenderFilter",
-          min = minValue,
-          max = maxValue,
-          value = c(2010, maxValue)
-        )
+      shiny::updateSliderInput(
+        session = session,
+        inputId = "incidenceRateCalenderFilter",
+        min = minValue,
+        max = maxValue,
+        value = c(2010, maxValue)
+      )
+    })
 
-        minIncidenceRateValue <- round(min(incidenceRateData()$incidenceRate), digits = 2)
-
-        maxIncidenceRateValue <- round(max(incidenceRateData()$incidenceRate), digits = 2)
-
-        shiny::updateSliderInput(
-          session = session,
-          inputId = "YscaleMinAndMax",
-          min = 0,
-          max = maxIncidenceRateValue,
-          value = c(minIncidenceRateValue, maxIncidenceRateValue),
-          step = round((maxIncidenceRateValue - minIncidenceRateValue) / 5, digits = 2)
-        )
-      }
+    shiny::observe({
+      minIncidenceRateValue <- round(min(irRanges$incidenceRate$minIr), digits = 2)
+      maxIncidenceRateValue <- round(max(irRanges$incidenceRate$maxIr), digits = 2)
+      shiny::updateSliderInput(
+        session = session,
+        inputId = "YscaleMinAndMax",
+        min = 0,
+        max = maxIncidenceRateValue,
+        value = c(minIncidenceRateValue, maxIncidenceRateValue),
+        step = round((maxIncidenceRateValue - minIncidenceRateValue) / 5, digits = 2)
+      )
     })
 
     incidenceRateCalenderFilter <- shiny::reactive({
@@ -623,7 +617,7 @@ incidenceRatesModule <- function(id,
       return(incidenceRateFilter)
     })
 
-    output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
+    getIrPlot <- shiny::eventReactive(input$generatePlot, {
       validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
       validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
       stratifyByAge <- "Age" %in% input$irStratification
@@ -663,7 +657,7 @@ incidenceRatesModule <- function(id,
         if (all(!is.null(data), nrow(data) > 0)) {
           plot <- plotIncidenceRate(
             data = data,
-            shortNameRef = cohortTable,
+            cohortTable = cohortTable,
             stratifyByAgeGroup = stratifyByAge,
             stratifyByGender = stratifyByGender,
             stratifyByCalendarYear = stratifyByCalendarYear,
@@ -674,6 +668,11 @@ incidenceRatesModule <- function(id,
       },
         detail = "Please Wait"
       )
+
+    })
+
+    output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
+      getIrPlot()
     })
 
   })
