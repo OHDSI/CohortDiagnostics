@@ -109,8 +109,8 @@ concept_ancestor,ancestor_concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No
 concept_ancestor,descendant_concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No
 concept_ancestor,min_levels_of_separation,int,Yes,No,No,Yes,No,Yes,No
 concept_ancestor,max_levels_of_separation,int,Yes,No,No,Yes,No,Yes,No
-concept_relationship,concept_id_1,int,Yes,Yes,No,Yes,No,Yes,No
-concept_relationship,concept_id_2,int,Yes,Yes,No,Yes,No,Yes,No
+concept_relationship,concept_id_1,bigint,Yes,Yes,No,Yes,No,Yes,No
+concept_relationship,concept_id_2,bigint,Yes,Yes,No,Yes,No,Yes,No
 concept_relationship,relationship_id,varchar(20),Yes,Yes,No,Yes,No,Yes,No
 concept_relationship,valid_start_date,Date,Yes,No,No,Yes,No,Yes,No
 concept_relationship,valid_end_date,Date,Yes,No,No,Yes,No,Yes,No
@@ -120,7 +120,7 @@ concept_sets,concept_set_id,int,Yes,Yes,No,Yes,No,No,No
 concept_sets,concept_set_sql,varchar,Yes,No,No,Yes,No,No,No
 concept_sets,concept_set_name,varchar(255),Yes,No,No,Yes,No,No,No
 concept_sets,concept_set_expression,varchar,Yes,No,No,Yes,No,No,No
-concept_synonym,concept_id,int,Yes,Yes,No,Yes,No,Yes,No
+concept_synonym,concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No
 concept_synonym,concept_synonym_name,varchar,Yes,Yes,No,Yes,No,Yes,No
 concept_synonym,language_concept_id,int,Yes,Yes,No,Yes,No,Yes,No
 database,database_id,varchar,Yes,Yes,No,Yes,No,No,No
