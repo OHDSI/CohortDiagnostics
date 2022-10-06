@@ -95,7 +95,7 @@ cohort_summary_stats,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
 cohort_summary_stats,mode_id,bigint,Yes,Yes,No,Yes,No,No,No
 cohort_summary_stats,base_count,float,Yes,No,No,Yes,Yes,No,No
 cohort_summary_stats,final_count,float,Yes,No,No,Yes,Yes,No,No
-concept,concept_id,int,Yes,Yes,No,Yes,No,Yes,No
+concept,concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No
 concept,concept_name,varchar(255),Yes,No,No,Yes,No,Yes,No
 concept,domain_id,varchar(20),Yes,No,No,Yes,No,Yes,No
 concept,vocabulary_id,varchar(50),Yes,No,No,Yes,No,Yes,No

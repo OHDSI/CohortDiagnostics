@@ -266,6 +266,10 @@ saveIncremental <- function(data, fileName, ...) {
       lazy = FALSE
     )
     if ((nrow(previousData)) > 0) {
+      if("database_id" %in% colnames(previousData)) {
+        previousData$database_id <- as.character(previousData$database_id)
+      }
+
       if (!length(list(...)) == 0) {
         idx <- getKeyIndex(list(...), previousData)
       } else {
