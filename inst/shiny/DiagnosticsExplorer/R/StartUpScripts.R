@@ -206,7 +206,8 @@ loadShinySettings <- function(configPath) {
     userCredentialsFile = "UserCredentials.csv",
     tablePrefix = "",
     cohortTableName = "cohort",
-    databaseTableName = "database"
+    databaseTableName = "database",
+    connectionEnvironmentVariables = NULL
   )
 
   for (key in names(defaultValues)) {
@@ -223,9 +224,37 @@ loadShinySettings <- function(configPath) {
     shinySettings$databaseTableName <- paste0(shinySettings$tablePrefix, shinySettings$databaseTableName)
   }
 
-
   if (!is.null(shinySettings$connectionDetailsSecureKey)) {
     shinySettings$connectionDetails <- jsonlite::fromJSON(keyring::key_get(shinySettings$connectionDetailsSecureKey))
+  } else if(!is.null(shinySettings$connectionEnvironmentVariables$server)) {
+
+    defaultValues <- list(
+      dbms = "",
+      user = "",
+      password = "",
+      port = "",
+      extraSettings = ""
+    )
+
+    for (key in names(defaultValues)) {
+      if (is.null(shinySettings$connectionEnvironmentVariables[[key]])) {
+        shinySettings$connectionEnvironmentVariables[[key]] <- defaultValues[[key]]
+      }
+    }
+
+    serverStr <- Sys.getenv(shinySettings$connectionEnvironmentVariables$server)
+    if (!is.null(shinySettings$connectionEnvironmentVariables$database)) {
+      serverStr <- paste0(serverStr, "/", Sys.getenv(shinySettings$connectionEnvironmentVariables$database))
+    }
+
+    shinySettings$connectionDetails <- list(
+      dbms = Sys.getenv(shinySettings$connectionEnvironmentVariables$dbms, unset = shinySettings$connectionDetails$dbms),
+      server = serverStr,
+      user = Sys.getenv(shinySettings$connectionEnvironmentVariables$user),
+      password = Sys.getenv(shinySettings$connectionEnvironmentVariables$password),
+      port = Sys.getenv(shinySettings$connectionEnvironmentVariables$port, unset = shinySettings$connectionDetails$port),
+      extraSettings = Sys.getenv(shinySettings$connectionEnvironmentVariables$extraSettings)
+    )
   }
   shinySettings$connectionDetails <- do.call(DatabaseConnector::createConnectionDetails,
                                              shinySettings$connectionDetails)
