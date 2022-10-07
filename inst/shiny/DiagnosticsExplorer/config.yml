@@ -10,6 +10,17 @@ connectionDetails:
 # Store with keyring::key_set_with_value("KEYNAME", jsonlite::toJSON(myConnectionDetails))
 connectionDetailsSecureKey: ~
 
+# store connection details with environment variables
+# Note - if dbms and port vars are unset in environment variables they will default to above connectionDetails settings
+connectionEnvironmentVariables:
+  dbms: ~
+  database: ~
+  server: ~
+  user: ~
+  password: ~
+  port: ~
+  extraSettings: ~
+
 tablePrefix: ""
 resultsDatabaseSchema: "main"
 vocabularyDatabaseSchemas: ["main"]
