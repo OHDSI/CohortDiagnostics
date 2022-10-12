@@ -4,7 +4,7 @@ formatDataCellValueInDisplayTable <-
       reactable::JS(
         "function(data) {
           if (isNaN(parseFloat(data.value))) return data.value;
-          if (Number.isInteger(data.value)) return (100 * data.value).toFixed(0).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
+          if (Number.isInteger(data.value) && data.value > 0) return (100 * data.value).toFixed(0).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
           if (data.value > 999) return (100 * data.value).toFixed(2).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
           if (data.value < 0) return '<' + (Math.abs(data.value) * 100).toFixed(2) + '%';
           return (100 * data.value).toFixed(1) + '%';
@@ -14,7 +14,7 @@ formatDataCellValueInDisplayTable <-
       reactable::JS(
         "function(data) {
           if (isNaN(parseFloat(data.value))) return data.value;
-          if (Number.isInteger(data.value)) return data.value.toFixed(0).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
+          if (Number.isInteger(data.value) && data.value > 0) return data.value.toFixed(0).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
           if (data.value > 999) return data.value.toFixed(1).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
           if (data.value < 0) return  '<' + Math.abs(data.value.toFixed(3));
           return data.value.toFixed(1);
