@@ -437,7 +437,7 @@ getDisplayTableSimple <- function(data,
             if (value) {
               "\u2714\ufe0f"
             } else {
-              "\U2716\ufe0f"
+              "\u274C"
             }
           }
         },
