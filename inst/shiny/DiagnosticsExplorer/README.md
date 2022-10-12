@@ -77,3 +77,37 @@ keyring::key_set_with_value("KEYNAME", jsonlite::toJSON(myConnectionDetails))
 
 This list will then be loaded at runtime, meaning that secure credentails don't need to be saved in plain
 text.
+
+## OHDSI shiny server instructions
+To use this shiny app on the (OHDSI ShinyServer)['https://github.com/OHDSI/ShinyDeploy'] use the environment variable
+configuration settings included in the file `config-ohdsi-shiny.yml`.
+The following settings can be reconfigured if environment variables differ:
+
+```{yaml}
+# Alter these configuration settings for usage with remote databases
+
+
+# store connection details with environment variables
+# Note - if dbms and port vars are unset in environment variables they will default to above connectionDetails settings
+# See above for postgresql 
+connectionEnvironmentVariables:
+  dbms: ~
+  database: "shinydbDatabase"
+  server: "shinydbServer"
+  user: "shinydbUser"
+  password: "shinydbPw"
+  port: "shinydbPort"
+  extraSettings: ~
+
+connectionDetails:
+  dbms: "postgresql"
+  port: 5432
+
+# This must be set up by a system administrator
+resultsDatabaseSchema: "some_schema"
+vocabularyDatabaseSchemas: ["some_schema"]
+```
+
+
+This file makes use of system set environment variables with a read-only account.
+Please contact the system administrator for creating a schema that can be accessed by the applications.
