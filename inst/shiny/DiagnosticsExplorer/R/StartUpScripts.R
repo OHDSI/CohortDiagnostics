@@ -464,13 +464,6 @@ initializeEnvironment <- function(shinySettings,
 
   envir$enabledTabs <- c(envir$enabledTabs, "database", "cohort")
 
-  envir$analysisIdInCohortCharacterization <- c(
-    1, 3, 4, 5, 6, 7,
-    203, 403, 501, 703,
-    801, 901, 903, 904,
-    -301, -201
-  )
-
   if (envir$enableAnnotation &
     "annotation" %in% envir$resultsTables &
     "annotation_link" %in% envir$resultsTables &

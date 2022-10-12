@@ -219,7 +219,6 @@ characterizationModule <- function(id,
                                    temporalAnalysisRef,
                                    analysisNameOptions,
                                    domainIdOptions,
-                                   analysisIdInCohortCharacterization,
                                    characterizationTimeIdChoices,
                                    table1SpecPath = getOption("CD-spec-1-path", "data/Table1SpecsLong.csv")) {
   prettyTable1Specifications <- readr::read_csv(
@@ -228,6 +227,15 @@ characterizationModule <- function(id,
     guess_max = min(1e7),
     lazy = FALSE
   )
+
+  # Analysis IDs for pretty table
+  analysisIdInCohortCharacterization <- c(
+    1, 3, 4, 5, 6, 7,
+    203, 403, 501, 703,
+    801, 901, 903, 904,
+    -301, -201
+  )
+
   shiny::moduleServer(id, function(input, output, session) {
 
     timeIdOptions <- getResultsTemporalTimeRef(dataSource = dataSource) %>%
@@ -427,7 +435,6 @@ characterizationModule <- function(id,
       if (hasData(temporalAnalysisRef)) {
         characterizationAnalysisOptionsUniverse <- analysisNameOptions
         charcterizationAnalysisOptionsSelected <- temporalAnalysisRef %>%
-          dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
           dplyr::pull(.data$analysisName) %>%
           unique()
       }
@@ -449,7 +456,6 @@ characterizationModule <- function(id,
       if (hasData(temporalAnalysisRef)) {
         characterizationDomainOptionsUniverse <- domainIdOptions
         charcterizationDomainOptionsSelected <- temporalAnalysisRef %>%
-          dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
           dplyr::pull(.data$domainId) %>%
           unique()
       }
@@ -684,6 +690,10 @@ characterizationModule <- function(id,
 
     rawTableTimeIdReactable <- shiny::reactive({
       data <- cohortCharacterizationDataFiltered()
+      if (is.null(data)) {
+        return(NULL)
+      }
+
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(
