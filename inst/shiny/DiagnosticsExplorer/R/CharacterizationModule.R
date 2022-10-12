@@ -707,6 +707,15 @@ characterizationModule <- function(id,
         data %>% dplyr::inner_join(databaseTable %>%
                                      dplyr::select(.data$databaseId, .data$databaseName),
                                    by = "databaseId")
+
+      if (hasData(selectedConceptSets())) {
+        if (hasData(getFilteredConceptIds())) {
+          data <- data %>%
+            dplyr::filter(.data$conceptId %in% getFilteredConceptIds())
+        }
+      }
+
+
       keyColumns <- c("covariateName", "analysisName", "conceptId", "databaseName")
       data <- data %>%
         dplyr::select(
