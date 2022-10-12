@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.1.0</span>
       </span>
     </div>
 
@@ -81,13 +81,18 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">launchDiagnosticsExplorer</span><span class="op">(</span></span>
 <span>  sqliteDbPath <span class="op">=</span> <span class="st">"MergedCohortDiagnosticsData.sqlite"</span>,</span>
 <span>  connectionDetails <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  shinyConfigPath <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  resultsDatabaseSchema <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  vocabularyDatabaseSchema <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  vocabularyDatabaseSchemas <span class="op">=</span> <span class="va">resultsDatabaseSchema</span>,</span>
+<span>  tablePrefix <span class="op">=</span> <span class="st">""</span>,</span>
+<span>  cohortTableName <span class="op">=</span> <span class="st">"cohort"</span>,</span>
+<span>  databaseTableName <span class="op">=</span> <span class="st">"database"</span>,</span>
 <span>  aboutText <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  runOverNetwork <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  port <span class="op">=</span> <span class="fl">80</span>,</span>
-<span>  launch.browser <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  launch.browser <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  enableAnnotation <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -103,6 +108,10 @@
 DatabaseConnector package, specifying how to connect to the server where
 the CohortDiagnostics results have been uploaded using the
 <code><a href="uploadResults.html">uploadResults</a></code> function.</p></dd>
+
+
+<dt>shinyConfigPath</dt>
+<dd><p>Path to shiny yml configuration file (use instead of sqliteDbPath or connectionDetails object)</p></dd>
 
 
 <dt>resultsDatabaseSchema</dt>
@@ -121,6 +130,18 @@ that might represent different versions of the OMOP vocabulary tables. It allows
 of vocabulary changes on Diagnostics. Not supported with an sqlite database.</p></dd>
 
 
+<dt>tablePrefix</dt>
+<dd><p>(Optional)  string to insert before table names (e.g. "cd_") for database table names</p></dd>
+
+
+<dt>cohortTableName</dt>
+<dd><p>(Optional) if cohort table name differs from the standard - cohort (ignores prefix if set)</p></dd>
+
+
+<dt>databaseTableName</dt>
+<dd><p>(Optional) if database table name differs from the standard - database (ignores prefix if set)</p></dd>
+
+
 <dt>aboutText</dt>
 <dd><p>Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 If not provided, no About tab will be shown.</p></dd>
@@ -137,6 +158,10 @@ If not provided, no About tab will be shown.</p></dd>
 <dt>launch.browser</dt>
 <dd><p>Should the app be launched in your default browser, or in a Shiny window.
 Note: copying to clipboard will not work in a Shiny window.</p></dd>
+
+
+<dt>enableAnnotation</dt>
+<dd><p>Enable annotation functionality in shiny app</p></dd>
 
 </dl></div>
     <div id="details">

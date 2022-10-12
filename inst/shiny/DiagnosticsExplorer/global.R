@@ -18,3 +18,4 @@ if (exists("shinySettings")) {
 
 # Init tables and other parameters in global session
 diagExpEnv$initializeEnvironment(diagExpEnv$shinySettings, envir = diagExpEnv)
+

@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.1.0</span>
       </span>
     </div>
 
@@ -72,6 +72,26 @@
       <small>Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="3.1.0" id="cohortdiagnostics-310">CohortDiagnostics 3.1.0<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-310"></a></h2>
+<p>Changes:</p>
+<ol style="list-style-type: decimal"><li><p>Major refactoring of shiny app to use modular code for ease of maintenance</p></li>
+<li><p>Some tests for shiny modules in <code>inst/shiny/DiagnosticsExplorer/tests</code></p></li>
+<li><p>Added support for table prefixes in Diagnostics Explorer databases (e.g. cg_cohort_definition)</p></li>
+<li><p>Enabled annotation on local instances of DiagnosticsExplorer</p></li>
+<li><p>Added yaml configuration for diagnostics explorer app, including docs on usage</p></li>
+<li><p>Storage of version number in database results file to allow future migrations</p></li>
+<li><p>Slight optimization of cohort characterization queries in diagnostics explorer</p></li>
+<li><p>Changed type to dataType and fieldName to columnName to align with strategus modules</p></li>
+<li><p>Refactored export of characterization results to use common export</p></li>
+<li><p>Ensure that tests cases always use a continuous covariate</p></li>
+<li><p>Batch operations for executing cohort relationship, time series, and feature extraction based diagnostics.</p></li>
+<li><p>New parameter minCharacterizationMean. This introduces a cut off for the output of FeatureExtraction. In the absence of the parameter the output would have atleast one row for every covariateId in the datasource - most having very low count to be useful for diagnostics.</p></li>
+</ol><p>Bug fixes:</p>
+<ol style="list-style-type: decimal"><li><p>Fixed issue uploading results to postgres db caused by null values in primary key field. Removed constraint to fix issue.</p></li>
+<li><p>Fix for <code>index_event_breakdown</code> having duplicate entries where concept is observed in the same domain multiple times</p></li>
+<li><p>Many other issues resolved in shiny codebase</p></li>
+</ol></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="3.0.3" id="cohortdiagnostics-303">CohortDiagnostics 3.0.3<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-303"></a></h2>
 <p>Changes:</p>

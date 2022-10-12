@@ -22,7 +22,7 @@ Alternatively, a covariate setting object may be created using the above as an e
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.0.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.1.0</span>
       </span>
     </div>
 
@@ -93,8 +93,8 @@ Alternatively, a covariate setting object may be created using the above as an e
 <span>  <span class="va">exportFolder</span>,</span>
 <span>  <span class="va">databaseId</span>,</span>
 <span>  <span class="va">cohortDatabaseSchema</span>,</span>
-<span>  databaseName <span class="op">=</span> <span class="va">databaseId</span>,</span>
-<span>  databaseDescription <span class="op">=</span> <span class="va">databaseId</span>,</span>
+<span>  databaseName <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  databaseDescription <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  connectionDetails <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  connection <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">cdmDatabaseSchema</span>,</span>
@@ -113,24 +113,9 @@ Alternatively, a covariate setting object may be created using the above as an e
 <span>  runIncidenceRate <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  runCohortRelationship <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  runTemporalCohortCharacterization <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span> </span>
-<span>    temporalCovariateSettings <span class="op">=</span> <span class="fu">FeatureExtraction</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/FeatureExtraction/man/createTemporalCovariateSettings.html" class="external-link">createTemporalCovariateSettings</a></span><span class="op">(</span>useDemographicsGender</span>
-<span>    <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsAge <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsAgeGroup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>    useDemographicsRace <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsEthnicity <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsIndexYear</span>
-<span>    <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsIndexMonth <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsIndexYearMonth <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>    useDemographicsPriorObservationTime <span class="op">=</span> <span class="cn">TRUE</span>, useDemographicsPostObservationTime <span class="op">=</span></span>
-<span>    <span class="cn">TRUE</span>, useDemographicsTimeInCohort <span class="op">=</span> <span class="cn">TRUE</span>, useConditionOccurrence <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>    useProcedureOccurrence <span class="op">=</span> <span class="cn">TRUE</span>, useDrugEraStart <span class="op">=</span> <span class="cn">TRUE</span>, </span>
-<span>     useMeasurement <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>    useConditionEraStart <span class="op">=</span> <span class="cn">TRUE</span>, useConditionEraOverlap <span class="op">=</span> <span class="cn">TRUE</span>, useConditionEraGroupStart</span>
-<span>    <span class="op">=</span> <span class="cn">FALSE</span>, useConditionEraGroupOverlap <span class="op">=</span> <span class="cn">TRUE</span>, useDrugExposure <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>    useDrugEraOverlap <span class="op">=</span> <span class="cn">FALSE</span>, useDrugEraGroupStart <span class="op">=</span> <span class="cn">FALSE</span>, useDrugEraGroupOverlap <span class="op">=</span></span>
-<span>    <span class="cn">TRUE</span>, useObservation <span class="op">=</span> <span class="cn">TRUE</span>, useDeviceExposure <span class="op">=</span> <span class="cn">TRUE</span>, useCharlsonIndex <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>    useDcsi <span class="op">=</span> <span class="cn">TRUE</span>, useChads2 <span class="op">=</span> <span class="cn">TRUE</span>, useChads2Vasc <span class="op">=</span> <span class="cn">TRUE</span>, useHfrs <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>    temporalStartDays <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">9999</span>, <span class="op">-</span><span class="fl">365</span>, <span class="op">-</span><span class="fl">180</span>, <span class="op">-</span><span class="fl">30</span>, <span class="op">-</span><span class="fl">365</span>, <span class="op">-</span><span class="fl">30</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">31</span>, <span class="op">-</span><span class="fl">9999</span><span class="op">)</span>,</span>
-<span>    temporalEndDays <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, </span>
-<span>         <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="op">-</span><span class="fl">31</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">30</span>, <span class="fl">365</span>, <span class="fl">9999</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  temporalCovariateSettings <span class="op">=</span> <span class="fu"><a href="getDefaultCovariateSettings.html">getDefaultCovariateSettings</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  minCellCount <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  minCharacterizationMean <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  incremental <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  incrementalFolder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">exportFolder</span>, <span class="st">"incremental"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -158,11 +143,11 @@ this should include both the database and schema name, for example
 
 
 <dt>databaseName</dt>
-<dd><p>The full name of the database. If NULL, defaults to databaseId.</p></dd>
+<dd><p>The full name of the database. If NULL, defaults to value in cdm_source table</p></dd>
 
 
 <dt>databaseDescription</dt>
-<dd><p>A short description (several sentences) of the database. If NULL, defaults to databaseId.</p></dd>
+<dd><p>A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table</p></dd>
 
 
 <dt>connectionDetails</dt>
@@ -261,6 +246,12 @@ of such objects.</p></dd>
 
 <dt>minCellCount</dt>
 <dd><p>The minimum cell count for fields contains person counts or fractions.</p></dd>
+
+
+<dt>minCharacterizationMean</dt>
+<dd><p>The minimum mean value for characterization output. Values below this will be cut off from output. This
+will help reduce the file size of the characterization output, but will remove information
+on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)</p></dd>
 
 
 <dt>incremental</dt>
