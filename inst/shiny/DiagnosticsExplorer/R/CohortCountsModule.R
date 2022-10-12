@@ -204,7 +204,7 @@ cohortCountsModule <- function(id,
         countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        sort = FALSE, #dont sort this by value. reactTable reactiveState does not give row value, only row number
+        sort = TRUE,
         selection = "single"
       )
       return(displayTable)
@@ -339,7 +339,7 @@ cohortCountsModule <- function(id,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
         showDataAsPercent = showDataAsPercent,
-        sort = FALSE
+        sort = TRUE
       )
     })
   }
