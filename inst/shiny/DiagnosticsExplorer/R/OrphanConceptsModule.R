@@ -4,6 +4,13 @@ orpahanConceptsView <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
     shinydashboard::box(
+      collapsible = TRUE,
+      collapsed = TRUE,
+      title = "Orphan Concepts",
+      width = "100%",
+      shiny::htmlTemplate(file.path("html", "orphanConcepts.html"))
+    ),
+    shinydashboard::box(
       status = "warning",
       width = "100%",
       tags$div(
@@ -110,7 +117,6 @@ orphanConceptsModule <- function(id,
     })
 
     output$orphanConceptsTable <- reactable::renderReactable(expr = {
-      
       data <- filteringStandardConceptsReactive()
       validate(need(hasData(data), "There is no data for the selected combination."))
     

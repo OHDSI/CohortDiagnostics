@@ -1,10 +1,7 @@
 # Alter these configuration settings for usage with remote databases
 connectionDetails:
-  dbms: "sqlite"
-  server: "data/MergedCohortDiagnosticsData.sqlite"
-  user: ""
-  password: ""
-  port: ""
+  dbms: "postgresql"
+  port: 5432
 
 # Store connection details as a json string in keyring
 # Store with keyring::key_set_with_value("KEYNAME", jsonlite::toJSON(myConnectionDetails))
@@ -14,16 +11,16 @@ connectionDetailsSecureKey: ~
 # Note - if dbms and port vars are unset in environment variables they will default to above connectionDetails settings
 connectionEnvironmentVariables:
   dbms: ~
-  database: ~
-  server: ~
-  user: ~
-  password: ~
-  port: ~
+  database: "shinydbDatabase"
+  server: "shinydbServer"
+  user: "shinydbUser"
+  password: "shinydbPw"
+  port: "shinydbPort"
   extraSettings: ~
 
 tablePrefix: ""
-resultsDatabaseSchema: "main"
-vocabularyDatabaseSchemas: ["main"]
+resultsDatabaseSchema: "some_schema"
+vocabularyDatabaseSchemas: ["some_schema"]
 cohortTableName: "cohort"
 databaseTableName: "database"
 

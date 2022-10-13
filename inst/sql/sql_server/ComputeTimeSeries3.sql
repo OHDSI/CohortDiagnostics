@@ -5,7 +5,7 @@
 {DEFAULT @stratify_by_gender = FALSE}
 {DEFAULT @stratify_by_age_group = FALSE}
 
-SELECT 0 cohort_id,
+SELECT -44819062 cohort_id,
 	time_id,
 	{@stratify_by_gender} ? {p.gender,} : {CAST(NULL AS VARCHAR) gender, }
 	{@stratify_by_age_group} ? {FLOOR((YEAR(period_begin) - year_of_birth) / 10) AS age_group,} : {CAST(NULL AS INT) age_group, }

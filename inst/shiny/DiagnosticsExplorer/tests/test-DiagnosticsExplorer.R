@@ -1,7 +1,6 @@
 test_that("DiagnosticsExplorer loads", {
   envir <- new.env()
   initializeEnvironment(shinySettings,
-                        table1SpecPath = table1SpecPath,
                         dataModelSpecificationsPath = dataModelSpecificationsPath,
                         envir = envir)
 

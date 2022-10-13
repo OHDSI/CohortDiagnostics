@@ -60,20 +60,6 @@ getInclusionStats <- function(connection,
                                                              cohortDatabaseSchema = cohortDatabaseSchema)
                   })
     if (!is.null(stats)) {
-      if ("inclusionRuleStats" %in% (names(stats))) {
-        inclusionRuleStats <- makeDataExportable(
-          x = stats$inclusionRuleStats,
-          tableName = "inclusion_rule_stats",
-          databaseId = databaseId,
-          minCellCount = minCellCount
-        )
-        writeToCsv(
-          data = inclusionRuleStats,
-          fileName = file.path(exportFolder, "inclusion_rule_stats.csv"),
-          incremental = incremental,
-          cohortId = subset$cohortId
-        )
-      }
       if ("cohortInclusionTable" %in% (names(stats))) {
         cohortInclusion <- makeDataExportable(
           x = stats$cohortInclusionTable,

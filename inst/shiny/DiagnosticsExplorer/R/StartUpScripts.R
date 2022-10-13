@@ -22,6 +22,10 @@ loadResultsTable <- function(dataSource, tableName, required = FALSE, tablePrefi
     tolower(DatabaseConnector::dbListTables(dataSource$connection, schema = dataSource$resultsDatabaseSchema))
 
   if (required || selectTableName %in% resultsTablesOnServer) {
+    if (tableIsEmpty(dataSource, selectTableName)) {
+      return(NULL)
+    }
+
     tryCatch(
     {
       table <- DatabaseConnector::dbReadTable(
@@ -51,14 +55,19 @@ loadResultsTable <- function(dataSource, tableName, required = FALSE, tablePrefi
 
 # Create empty objects in memory for all other tables. This is used by the Shiny app to decide what tabs to show:
 tableIsEmpty <- function(dataSource, tableName) {
-  sql <-
-    sprintf(
-      "SELECT 1 FROM %s.%s LIMIT 1;",
-      dataSource$resultsDatabaseSchema,
-      tableName
-    )
-  oneRow <- DatabaseConnector::dbGetQuery(dataSource$connection, sql)
-  return(nrow(oneRow) == 0)
+  sql <- "SELECT * FROM @result_schema.@table LIMIT 1"
+  row <- data.frame()
+  tryCatch({
+    row <- renderTranslateQuerySql(dataSource$connection,
+                                   sql,
+                                   dataSource$dbms,
+                                   result_schema = dataSource$resultsDatabaseSchema,
+                                   table = tableName)
+  }, error = function(...) {
+    message("Table not found: ", tableName)
+  })
+
+  return(nrow(row) == 0)
 }
 
 getTimeAsInteger <- function(time = Sys.time()) {
@@ -143,7 +152,7 @@ processMetadata <- function(data) {
 checkErrorCohortIdsDatabaseIds <- function(errorMessage,
                                            cohortIds,
                                            databaseIds) {
-  checkmate::assertDouble(
+  checkmate::assertNumeric(
     x = cohortIds,
     null.ok = FALSE,
     lower = 1,
@@ -197,7 +206,8 @@ loadShinySettings <- function(configPath) {
     userCredentialsFile = "UserCredentials.csv",
     tablePrefix = "",
     cohortTableName = "cohort",
-    databaseTableName = "database"
+    databaseTableName = "database",
+    connectionEnvironmentVariables = NULL
   )
 
   for (key in names(defaultValues)) {
@@ -214,9 +224,37 @@ loadShinySettings <- function(configPath) {
     shinySettings$databaseTableName <- paste0(shinySettings$tablePrefix, shinySettings$databaseTableName)
   }
 
-
   if (!is.null(shinySettings$connectionDetailsSecureKey)) {
     shinySettings$connectionDetails <- jsonlite::fromJSON(keyring::key_get(shinySettings$connectionDetailsSecureKey))
+  } else if(!is.null(shinySettings$connectionEnvironmentVariables$server)) {
+
+    defaultValues <- list(
+      dbms = "",
+      user = "",
+      password = "",
+      port = "",
+      extraSettings = ""
+    )
+
+    for (key in names(defaultValues)) {
+      if (is.null(shinySettings$connectionEnvironmentVariables[[key]])) {
+        shinySettings$connectionEnvironmentVariables[[key]] <- defaultValues[[key]]
+      }
+    }
+
+    serverStr <- Sys.getenv(shinySettings$connectionEnvironmentVariables$server)
+    if (!is.null(shinySettings$connectionEnvironmentVariables$database)) {
+      serverStr <- paste0(serverStr, "/", Sys.getenv(shinySettings$connectionEnvironmentVariables$database))
+    }
+
+    shinySettings$connectionDetails <- list(
+      dbms = Sys.getenv(shinySettings$connectionEnvironmentVariables$dbms, unset = shinySettings$connectionDetails$dbms),
+      server = serverStr,
+      user = Sys.getenv(shinySettings$connectionEnvironmentVariables$user),
+      password = Sys.getenv(shinySettings$connectionEnvironmentVariables$password),
+      port = Sys.getenv(shinySettings$connectionEnvironmentVariables$port, unset = shinySettings$connectionDetails$port),
+      extraSettings = Sys.getenv(shinySettings$connectionEnvironmentVariables$extraSettings)
+    )
   }
   shinySettings$connectionDetails <- do.call(DatabaseConnector::createConnectionDetails,
                                              shinySettings$connectionDetails)
@@ -256,7 +294,6 @@ createDatabaseDataSource <- function(connection,
 #' Initialize variables required in applications global shared environment
 #' These settings are shared accross settings (e.g. accessed by all users) and should be read only during run time
 initializeEnvironment <- function(shinySettings,
-                                  table1SpecPath = "data/Table1SpecsLong.csv",
                                   dataModelSpecificationsPath = "data/resultsDataModelSpecification.csv",
                                   envir = .GlobalEnv) {
   envir$shinySettings <- shinySettings
@@ -295,7 +332,7 @@ initializeEnvironment <- function(shinySettings,
     }
   }
 
-  envir$enableAnnotation  <- envir$shinySettings$enableAnnotation
+  envir$enableAnnotation <- envir$shinySettings$enableAnnotation
 
   if (nrow(envir$userCredentials) == 0) {
     envir$enableAuthorization <- FALSE
@@ -402,6 +439,7 @@ initializeEnvironment <- function(shinySettings,
       dplyr::pull(.data$domainId) %>%
       unique() %>%
       sort()
+
     envir$analysisNameOptions <- envir$temporalAnalysisRef %>%
       dplyr::select(.data$analysisName) %>%
       dplyr::pull(.data$analysisName) %>%
@@ -409,8 +447,8 @@ initializeEnvironment <- function(shinySettings,
       sort()
   }
 
-  envir$resultsTables <- tolower(DatabaseConnector::dbListTables(dataSource$connection,
-                                                                 schema = dataSource$resultsDatabaseSchema))
+  envir$resultsTables <- tolower(DatabaseConnector::dbListTables(envir$dataSource$connection,
+                                                                 schema = envir$dataSource$resultsDatabaseSchema))
   envir$enabledTabs <- c()
   for (table in envir$dataModelSpecifications$tableName %>% unique()) {
     if (envir$dataSource$prefixTable(table) %in% envir$resultsTables) {
@@ -425,20 +463,6 @@ initializeEnvironment <- function(shinySettings,
   }
 
   envir$enabledTabs <- c(envir$enabledTabs, "database", "cohort")
-
-  envir$prettyTable1Specifications <- readr::read_csv(
-    file = table1SpecPath,
-    col_types = readr::cols(),
-    guess_max = min(1e7),
-    lazy = FALSE
-  )
-
-  envir$analysisIdInCohortCharacterization <- c(
-    1, 3, 4, 5, 6, 7,
-    203, 403, 501, 703,
-    801, 901, 903, 904,
-    -301, -201
-  )
 
   if (envir$enableAnnotation &
     "annotation" %in% envir$resultsTables &

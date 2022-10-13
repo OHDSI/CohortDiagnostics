@@ -1,7 +1,7 @@
 -- datasource time series T6: persons in the observation table whose observation period is embedded within calendar period
 --- (observation start is between (inclusive) calendar period, AND 
 --- (observation end is between (inclusive) calendar period)
-SELECT 0 cohort_id,
+SELECT -44819062 cohort_id,
 	time_id,
 	COUNT_BIG(DISTINCT CONCAT(cast(person_id AS VARCHAR(30)), '_', cast(observation_period_start_date AS VARCHAR(30)))) records, -- records in calendar month
 	COUNT_BIG(DISTINCT person_id) subjects, -- unique subjects
