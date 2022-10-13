@@ -117,7 +117,6 @@ orphanConceptsModule <- function(id,
     })
 
     output$orphanConceptsTable <- reactable::renderReactable(expr = {
-      
       data <- filteringStandardConceptsReactive()
       validate(need(hasData(data), "There is no data for the selected combination."))
     

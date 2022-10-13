@@ -476,8 +476,6 @@ initializeEnvironment <- function(shinySettings,
   }
 
   envir$enabledTabs <- c(envir$enabledTabs, "database", "cohort")
-  
-  envir$analysisIdInCohortCharacterization <- envir$temporalAnalysisRef$analysisId %>% unique() %>% sort()
 
   if (envir$enableAnnotation &
     "annotation" %in% envir$resultsTables &

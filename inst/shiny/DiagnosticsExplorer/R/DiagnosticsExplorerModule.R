@@ -443,16 +443,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                          cohortIds = cohortIds)
     }
 
-    if ("cohortIncStats" %in% enabledTabs) {
-      inclusionRulesModule(id = "inclusionRules",
-                           dataSource = dataSource,
-                           cohortTable = cohortTable,
-                           databaseTable = databaseTable,
-                           selectedCohort = selectedCohort,
-                           targetCohortId = targetCohortId,
-                           selectedDatabaseIds = selectedDatabaseIds)
-    }
-
     if ("indexEventBreakdown" %in% enabledTabs) {
       indexEventBreakdownModule("indexEvents",
                                 dataSource = dataSource,
@@ -497,7 +487,6 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                              temporalAnalysisRef = envir$temporalAnalysisRef,
                              analysisNameOptions = envir$analysisNameOptions,
                              domainIdOptions = envir$domainIdOptions,
-                             analysisIdInCohortCharacterization = envir$analysisIdInCohortCharacterization,
                              characterizationTimeIdChoices = envir$characterizationTimeIdChoices)
 
       compareCohortCharacterizationModule("compareCohortCharacterization",

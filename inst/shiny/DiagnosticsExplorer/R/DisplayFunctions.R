@@ -4,7 +4,7 @@ formatDataCellValueInDisplayTable <-
       reactable::JS(
         "function(data) {
           if (isNaN(parseFloat(data.value))) return data.value;
-          if (Number.isInteger(data.value)) return (100 * data.value).toFixed(0).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
+          if (Number.isInteger(data.value) && data.value > 0) return (100 * data.value).toFixed(0).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
           if (data.value > 999) return (100 * data.value).toFixed(2).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
           if (data.value < 0) return '<' + (Math.abs(data.value) * 100).toFixed(2) + '%';
           return (100 * data.value).toFixed(1) + '%';
@@ -14,7 +14,7 @@ formatDataCellValueInDisplayTable <-
       reactable::JS(
         "function(data) {
           if (isNaN(parseFloat(data.value))) return data.value;
-          if (Number.isInteger(data.value)) return data.value.toFixed(0).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
+          if (Number.isInteger(data.value) && data.value > 0) return data.value.toFixed(0).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
           if (data.value > 999) return data.value.toFixed(1).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
           if (data.value < 0) return  '<' + Math.abs(data.value.toFixed(3));
           return data.value.toFixed(1);
@@ -156,7 +156,6 @@ getDisplayTableGroupedByDatabaseId <- function(data,
                                                valueFill = 0,
                                                selection = NULL,
                                                isTemporal = FALSE) {
-
   data <- prepDataForDisplay(
     data = data,
     keyColumns = keyColumns,
@@ -315,9 +314,13 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         align = "left",
         style = function(value) {
           color <- '#fff'
-          if (is.numeric(value) & hasData(data[[dataColumns[i]]])) {
-            value <- ifelse(is.na(value), min(data[[dataColumns[i]]], na.rm = TRUE), value)
-            normalized <- (value - min(data[[dataColumns[i]]], na.rm = TRUE)) / (max(data[[dataColumns[i]]], na.rm = TRUE) - min(data[[dataColumns[i]]], na.rm = TRUE))
+          dt <- data[[dataColumns[i]]]
+          if (is.list(dt)) {
+            dt <- dt %>% unlist()
+          }
+          if (is.numeric(value) & hasData(dt)) {
+            value <- ifelse(is.na(value), min(dt, na.rm = TRUE), value)
+            normalized <- (value - min(dt, na.rm = TRUE)) / (max(dt, na.rm = TRUE) - min(dt, na.rm = TRUE))
             color <- pallete(normalized)
           }
           list(background = color)
@@ -434,7 +437,7 @@ getDisplayTableSimple <- function(data,
             if (value) {
               "\u2714\ufe0f"
             } else {
-              "\U2716\ufe0f"
+              "\u274C"
             }
           }
         },
@@ -526,7 +529,11 @@ getMaxValueForStringMatchedColumnsInDataFrame <-
       tidyr::pivot_longer(values_to = "value", cols = dplyr::everything()) %>%
       dplyr::filter(!is.na(.data$value)) %>%
       dplyr::pull(.data$value)
-
+    
+    if (is.list(data)) {
+      data <- data %>% unlist()
+    }
+    
     if (!hasData(data)) {
       return(0)
     } else {
