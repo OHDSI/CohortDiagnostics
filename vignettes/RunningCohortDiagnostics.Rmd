@@ -78,7 +78,7 @@ However, a study package can be seen as a snapshot, frozen at the time of creati
 
 For example, the cohort diagnostics package includes an example set of cohort sql and json to run on the `Eunomia` test data in the OMOP Common Data Model format.
 
-```{r results = FALSE,message = FALSE,warning=FALSE}
+```{r results = FALSE,message = FALSE,warning=FALSE,eval=FALSE}
 library(CohortDiagnostics)
 cohortDefinitionSet <- CohortGenerator::getCohortDefinitionSet(settingsFileName = "Cohorts.csv",
                                                                jsonFolder = "cohorts",
