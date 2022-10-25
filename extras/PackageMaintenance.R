@@ -66,9 +66,9 @@ writeLines(text, con = file(filePath))
 
 
 version <- gsub("Version: ", "", version)
-filePath <- file.path("inst", "sql", "sql_server", "CreateResultsDataModel.sql")
+filePath <- file.path("inst", "sql", "sql_server", "migrations", "UpdateVersionNumber.sql")
 text <- readChar(filePath, file.info(filePath)$size)
-patternRep <- "\\{DEFAULT @version_number = '(\\d+\\.\\d+\\.\\d+)'\\}"# 'appVersionNum <- "Version: (\\d+\\.\\d+\\.\\d+)"'
+patternRep <- "\\{DEFAULT @version_number = '(\\d+\\.\\d+\\.\\d+)'\\}"
 text <- gsub(patternRep, paste0("\\{DEFAULT @version_number = '", version, "'\\}"), text)
 writeLines(text, con = file(filePath))
 

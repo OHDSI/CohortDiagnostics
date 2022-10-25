@@ -5,7 +5,7 @@
 \title{Upload results to the database server.}
 \usage{
 uploadResults(
-  connectionDetails = NULL,
+  connectionDetails,
   schema,
   zipFileName,
   forceOverWriteOfSpecifications = FALSE,

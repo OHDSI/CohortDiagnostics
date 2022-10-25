@@ -242,34 +242,8 @@ appendNewRows <-
     return(dplyr::bind_rows(data, newData))
   }
 
-
-#' Create the results data model tables on a database server.
-#'
-#' @details
-#' Only PostgreSQL servers are supported.
-#'
-#' @template Connection
-#' @param schema         The schema on the postgres server where the tables will be created.
-#' @param tablePrefix    (Optional)  string to insert before table names (e.g. "cd_") for database table names
-#'
-#' @export
-createResultsDataModel <- function(connection = NULL,
-                                   connectionDetails = NULL,
-                                   schema,
-                                   tablePrefix = "") {
-  if (is.null(connection)) {
-    if (!is.null(connectionDetails)) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection))
-    } else {
-      stop("No connection or connectionDetails provided.")
-    }
-  }
-
-  if (connection@dbms == "sqlite" & schema != "main") {
-    stop("Invalid schema for sqlite, use schema = 'main'")
-  }
-
+# Private function for testing migrations in isolation
+.createDataModel <- function(connection, databaseSchema, tablePrefix) {
   sqlParams <- getPrefixedTableNames(tablePrefix)
   sql <- do.call(SqlRender::loadRenderTranslateSql,
                  c(sqlParams,
@@ -277,9 +251,34 @@ createResultsDataModel <- function(connection = NULL,
                      sqlFilename = "CreateResultsDataModel.sql",
                      packageName = utils::packageName(),
                      dbms = connection@dbms,
-                     results_schema = schema
+                     results_schema = databaseSchema
                    )))
   DatabaseConnector::executeSql(connection, sql)
+}
+
+#' Create the results data model tables on a database server.
+#'
+#' @details
+#' Only PostgreSQL servers are supported.
+#'
+#' @param connectionDetails      DatabaseConnector connectionDetails instance @seealso[DatabaseConnector::createConnectionDetails]
+#' @param databaseSchema         The schema on the postgres server where the tables will be created.
+#' @param tablePrefix            (Optional)  string to insert before table names (e.g. "cd_") for database table names
+#' @export
+createResultsDataModel <- function(connectionDetails = NULL,
+                                   databaseSchema,
+                                   tablePrefix = "") {
+  if (connectionDetails$dbms == "sqlite" & databaseSchema != "main") {
+    stop("Invalid schema for sqlite, use databaseSchema = 'main'")
+  }
+
+  connection <- DatabaseConnector::connect(connectionDetails)
+  on.exit(DatabaseConnector::disconnect(connection))
+
+  .createDataModel(connection, databaseSchema, tablePrefix)
+  migrateDataModel(connectionDetails = connectionDetails,
+                   databaseSchema = databaseSchema,
+                   tablePrefix = tablePrefix)
 }
 
 naToEmpty <- function(x) {
@@ -317,7 +316,7 @@ naToZero <- function(x) {
 #' @param tablePrefix    (Optional)  string to insert before table names (e.g. "cd_") for database table names
 #'
 #' @export
-uploadResults <- function(connectionDetails = NULL,
+uploadResults <- function(connectionDetails,
                           schema,
                           zipFileName,
                           forceOverWriteOfSpecifications = FALSE,
@@ -597,4 +596,51 @@ deleteAllRecordsForDatabaseId <- function(connection,
                                                  reportOverallTime = FALSE
     )
   }
+}
+
+#' Migrate Data model
+#' @description
+#' Migrate data from current state to next state
+#'
+#' It is strongly advised that you have a backup of all data (either sqlite files, a backup database (in the case you
+#' are using a postgres backend) or have kept the csv/zip files from your data generation.
+#'
+#' @inheritParams getDataMigrator
+#' @export
+migrateDataModel <- function(connectionDetails, databaseSchema, tablePrefix = "") {
+  ParallelLogger::logInfo("Migrating data set")
+  migrator <- getDataMigrator(connectionDetails = connectionDetails, databaseSchema = databaseSchema, tablePrefix = tablePrefix)
+  migrator$executeMigrations()
+  migrator$finalize()
+
+  ParallelLogger::logInfo("Updating version number")
+  updateVersionSql <- SqlRender::loadRenderTranslateSql("UpdateVersionNumber.sql",
+                                                        packageName = utils::packageName(),
+                                                        database_schema = databaseSchema,
+                                                        table_prefix = tablePrefix,
+                                                        dbms = connectionDetails$dbms)
+
+  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+  on.exit(DatabaseConnector::disconnect(connection))
+  DatabaseConnector::executeSql(connection, updateVersionSql)
+}
+
+
+#' Get database migrations instance
+#' @description
+#'
+#' Returns ResultModelManager DataMigrationsManager instance.
+# '@seealso [ResultModelManager::DataMigrationManager] which this function is a utility for.
+#'
+#' @param connectionDetails             DatabaseConnector connection details object
+#' @param databaseSchema                String schema where database schema lives
+#' @param  tablePrefix                  (Optional) Use if a table prefix is used before table names (e.g. "cd_")
+#' @returns Instance of ResultModelManager::DataMigrationManager that has interface for converting existing data models
+#' @export
+getDataMigrator <- function(connectionDetails, databaseSchema, tablePrefix = "") {
+  ResultModelManager::DataMigrationManager$new(connectionDetails = connectionDetails,
+                                               databaseSchema = databaseSchema,
+                                               tablePrefix = tablePrefix,
+                                               migrationPath = "migrations",
+                                               packageName = utils::packageName())
 }

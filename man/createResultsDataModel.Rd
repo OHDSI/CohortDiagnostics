@@ -5,25 +5,15 @@
 \title{Create the results data model tables on a database server.}
 \usage{
 createResultsDataModel(
-  connection = NULL,
   connectionDetails = NULL,
-  schema,
+  databaseSchema,
   tablePrefix = ""
 )
 }
 \arguments{
-\item{connection}{An object of type \code{connection} as created using the
-\code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package. Can be left NULL if \code{connectionDetails}
-is provided, in which case a new connection will be opened at the start
-of the function, and closed when the function finishes.}
+\item{connectionDetails}{DatabaseConnector connectionDetails instance @seealso[DatabaseConnector::createConnectionDetails]}
 
-\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
-\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is
-provided.}
-
-\item{schema}{The schema on the postgres server where the tables will be created.}
+\item{databaseSchema}{The schema on the postgres server where the tables will be created.}
 
 \item{tablePrefix}{(Optional)  string to insert before table names (e.g. "cd_") for database table names}
 }
