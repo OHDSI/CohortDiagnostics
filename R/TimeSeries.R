@@ -29,7 +29,7 @@
 #' period table. This output is NOT limited to individuals in the cohort table
 #' but is for ALL people in the datasource (i.e. present in observation period table)
 #'
-#' @template Connection
+#' @template ConnectionDetails
 #'
 #' @template CohortDatabaseSchema
 #'
@@ -38,7 +38,11 @@
 #' @template TempEmulationSchema
 #'
 #' @template CohortTable
+#' 
+#' @param runCohortTimeSeries         Generate and export the cohort level time series?
 #'
+#' @param runDataSourceTimeSeries     Generate and export the Data source level time series? i.e.
+#'                                    using all persons found in observation period table.
 #' @param timeSeriesMinDate      (optional) Minimum date for time series. Default value January 1st 1980.
 #'
 #' @param timeSeriesMaxDate      (optional) Maximum date for time series. Default value System date.
@@ -49,16 +53,12 @@
 #'
 #' @param cohortIds              A vector of one or more Cohort Ids to compute time distribution for.
 #'
-#' @param runCohortTimeSeries         Generate and export the cohort level time series?
-#'
-#' @param runDataSourceTimeSeries     Generate and export the Data source level time series? i.e.
-#'                                    using all persons found in observation period table.
 #'
 #' @export
-runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
+getCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                                            connection = NULL,
-                                           tempEmulationSchema = NULL,
                                            cdmDatabaseSchema,
+                                           tempEmulationSchema = NULL,
                                            cohortDatabaseSchema = cdmDatabaseSchema,
                                            cohortTable = "cohort",
                                            runCohortTimeSeries = TRUE,
@@ -504,22 +504,51 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
 }
 
 
-executeTimeSeriesDiagnostics <- function(connection,
-                                         tempEmulationSchema,
-                                         cdmDatabaseSchema,
-                                         cohortDatabaseSchema,
-                                         cohortTable,
-                                         cohortDefinitionSet,
-                                         runCohortTimeSeries = TRUE,
-                                         runDataSourceTimeSeries = FALSE,
-                                         databaseId,
-                                         exportFolder,
-                                         minCellCount,
-                                         instantiatedCohorts,
-                                         incremental,
-                                         recordKeepingFile,
-                                         observationPeriodDateRange,
-                                         batchSize = 20) {
+#' Batch time series diagnostics
+#'
+#' @description
+#' This function runs time series diagnostics on mulitple cohorts.
+#' 
+#' @template Connection
+#'
+#' @template CdmDatabaseSchema
+#'
+#' @template TempEmulationSchema
+#'
+#' @template CohortTable
+#' 
+#' @template CohortDefinitionSet
+#' 
+#' @template DataExport
+#' 
+#' @template BatchOptions
+#' 
+#' @param batchSize                    an integer indicating the number of batches 
+#' 
+#' @param runCohortTimeSeries          an option to run the cohort time series, the default is TRUE
+#'
+#' @param runDataSourceTimeSeries      an option to run the data source time series, the default is FALSE
+#'
+#' @param observationPeriodDateRange   a data frame containing the observation min date, max date, number of persons 
+#'                                     and the number of records
+#' 
+#' @export
+batchTimeSeriesDiagnostics <- function(connection,
+                                       cdmDatabaseSchema,
+                                       tempEmulationSchema,
+                                       cohortDatabaseSchema,
+                                       cohortTable,
+                                       cohortDefinitionSet,
+                                       databaseId,
+                                       exportFolder,
+                                       minCellCount,
+                                       instantiatedCohorts,
+                                       recordKeepingFile,
+                                       incremental,
+                                       batchSize = 20,
+                                       runCohortTimeSeries = TRUE,
+                                       runDataSourceTimeSeries = FALSE,
+                                       observationPeriodDateRange) {
 
   if (all(!runCohortTimeSeries, !runDataSourceTimeSeries)) {
     warning(
@@ -569,7 +598,7 @@ executeTimeSeriesDiagnostics <- function(connection,
           parent = "executeTimeSeriesDiagnostics",
           expr = {
             data <-
-              runCohortTimeSeriesDiagnostics(
+              getCohortTimeSeriesDiagnostics(
                 connection = connection,
                 tempEmulationSchema = tempEmulationSchema,
                 cohortDatabaseSchema = cohortDatabaseSchema,
@@ -631,7 +660,7 @@ executeTimeSeriesDiagnostics <- function(connection,
       parent = "executeTimeSeriesDiagnostics",
       expr = {
         data <-
-          runCohortTimeSeriesDiagnostics(
+          getCohortTimeSeriesDiagnostics(
             connection = connection,
             tempEmulationSchema = tempEmulationSchema,
             cdmDatabaseSchema = cdmDatabaseSchema,

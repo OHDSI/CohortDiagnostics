@@ -14,15 +14,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#' Get Visit Context for Cohort Diagnostics
+#' 
+#' @description generates visit context for a single cohort 
+#' 
+#' @template ConnectionDetails
+#'
+#' @template CdmDatabaseSchema
+#' 
+#' @template TempEmulationSchema
+#' 
+#' @template CohortTable
+#' 
+#' @template cdmVersion
+#' 
+#' @param cohortIds            a vector of cohort ids to identify the cohort definitions used to get visit context
+#' 
+#' @param conceptIdTable       a table storing concept ids from the cohort definitions to asses visit context
+#' 
+#' @export
 getVisitContext <- function(connectionDetails = NULL,
                             connection = NULL,
                             cdmDatabaseSchema,
                             tempEmulationSchema = NULL,
                             cohortDatabaseSchema = cdmDatabaseSchema,
                             cohortTable = "cohort",
+                            cdmVersion = 5,
                             cohortIds,
-                            conceptIdTable = NULL,
-                            cdmVersion = 5) {
+                            conceptIdTable = NULL) {
   if (!cdmVersion == 5) {
     warning("Only OMOP CDM v5.x.x is supported. Continuing execution.")
   }
@@ -91,22 +110,43 @@ getVisitContext <- function(connectionDetails = NULL,
   return(visitContext)
 }
 
-executeVisitContextDiagnostics <- function(connection,
-                                           tempEmulationSchema,
-                                           cdmDatabaseSchema,
-                                           cohortDatabaseSchema,
-                                           cohortTable,
-                                           cdmVersion,
-                                           databaseId,
-                                           exportFolder,
-                                           minCellCount,
-                                           cohorts,
-                                           instantiatedCohorts,
-                                           recordKeepingFile,
-                                           incremental) {
+#' Batch Incidence Rates
+#' 
+#' @description Batch generation of incidence rate for multiple cohorts in Cohort Diagnostics
+#' 
+#' @template Connection
+#'
+#' @template CdmDatabaseSchema
+#' 
+#' @template TempEmulationSchema
+#' 
+#' @template CohortTable
+#' 
+#' @template CohortDefinitionSet
+#' 
+#' @template cdmVersion
+#' 
+#' @template DataExport
+#' 
+#' @template BatchOptions
+#' 
+#' @export
+batchVisitContextDiagnostics <- function(connection,
+                                         cdmDatabaseSchema,
+                                         tempEmulationSchema,
+                                         cohortDatabaseSchema,
+                                         cohortTable,
+                                         cohortDefinitionSet,
+                                         cdmVersion,
+                                         databaseId,
+                                         exportFolder,
+                                         minCellCount,
+                                         instantiatedCohorts,
+                                         recordKeepingFile,
+                                         incremental) {
   ParallelLogger::logInfo("Retrieving visit context for index dates")
   subset <- subsetToRequiredCohorts(
-    cohorts = cohorts %>%
+    cohorts = cohortDefinitionSet %>%
       dplyr::filter(.data$cohortId %in% instantiatedCohorts),
     task = "runVisitContext",
     incremental = incremental,

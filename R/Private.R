@@ -317,8 +317,7 @@ timeExecution <- function(exportFolder,
                           parent = NULL,
                           start = NA,
                           execTime = NA,
-                          expr = NULL,
-                          env = parent.frame()) {
+                          expr = NULL) {
   executionTimePath <- file.path(exportFolder, "executionTimes.csv")
   if (is.na(start)) {
     start <- Sys.time()

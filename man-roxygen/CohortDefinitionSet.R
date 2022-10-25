@@ -1,0 +1,1 @@
+#' @param cohortDefinitionSet        Data.frame of cohorts must include columns cohortId, cohortName, json, sql

@@ -14,14 +14,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#' Get Incidence Rate for Cohort Diagnostics
+#' 
+#' @description generates incidence rates for a single cohort 
+#' 
+#' @template ConnectionDetails
+#'
+#' @template CdmDatabaseSchema
+#' 
+#' @template VocabularyDatabaseSchema
+#' 
+#' @template TempEmulationSchema
+#' 
+#' @template CohortTable
+#' 
+#' @template cdmVersion
+#' 
+#' @param firstOccurrenceOnly a indicator stating whether the incidence rate should be based on the first occurrence
+#'
+#' @param washoutPeriod the period of time in days where the subject is not exposed to the medical event. 
+#' The default value is 365 days
+#' 
+#' @param cohortId a cohort id to identify the cohort definition to use to get incidence rate
+#' 
+#' @export
 getIncidenceRate <- function(connectionDetails = NULL,
                              connection = NULL,
-                             cohortDatabaseSchema,
-                             cohortTable,
                              cdmDatabaseSchema,
                              vocabularyDatabaseSchema = cdmDatabaseSchema,
-                             cdmVersion = 5,
                              tempEmulationSchema = tempEmulationSchema,
+                             cohortDatabaseSchema,
+                             cohortTable,
+                             cdmVersion = 5,
                              firstOccurrenceOnly = TRUE,
                              washoutPeriod = 365,
                              cohortId) {
@@ -199,22 +223,43 @@ aggregateIr <- function(ratesSummary, aggregateList) {
   }
 }
 
-computeIncidenceRates <- function(connection,
-                                  tempEmulationSchema,
-                                  cdmDatabaseSchema,
-                                  cohortDatabaseSchema,
-                                  cohortTable,
-                                  databaseId,
-                                  exportFolder,
-                                  minCellCount,
-                                  cohorts,
-                                  instantiatedCohorts,
-                                  recordKeepingFile,
-                                  incremental) {
+
+
+#' Batch Incidence Rates
+#' 
+#' @description Batch generation of incidence rate for multiple cohorts in Cohort Diagnostics
+#' 
+#' @template Connection
+#'
+#' @template CdmDatabaseSchema
+#' 
+#' @template TempEmulationSchema
+#' 
+#' @template CohortTable
+#' 
+#' @template CohortDefinitionSet
+#' 
+#' @template DataExport
+#' 
+#' @template BatchOptions
+#' 
+#' @export
+batchIncidenceRates <- function(connection,
+                                cdmDatabaseSchema,
+                                tempEmulationSchema,
+                                cohortDatabaseSchema,
+                                cohortTable,
+                                cohortDefinitionSet,
+                                databaseId,
+                                exportFolder,
+                                minCellCount,
+                                instantiatedCohorts,
+                                recordKeepingFile,
+                                incremental) {
   ParallelLogger::logInfo("Computing incidence rates")
   startIncidenceRate <- Sys.time()
   subset <- subsetToRequiredCohorts(
-    cohorts = cohorts %>%
+    cohorts = cohortDefinitionSet %>% #replace cohorts to cohort definition set consistency
       dplyr::filter(.data$cohortId %in% instantiatedCohorts),
     task = "runIncidenceRate",
     incremental = incremental,

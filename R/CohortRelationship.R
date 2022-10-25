@@ -22,9 +22,7 @@
 #' Given a set of cohorts, get temporal relationships between the
 #' cohort_start_date of the cohorts.
 #'
-#' @template Connection
-#'
-#' @template CohortDatabaseSchema
+#' @template ConnectionDetails
 #'
 #' @template TempEmulationSchema
 #'
@@ -38,15 +36,14 @@
 #'
 #'
 #' @export
-runCohortRelationshipDiagnostics <-
-  function(connectionDetails = NULL,
-           connection = NULL,
-           cohortDatabaseSchema = NULL,
-           tempEmulationSchema = NULL,
-           cohortTable = "cohort",
-           targetCohortIds,
-           comparatorCohortIds,
-           relationshipDays) {
+getCohortRelationshipDiagnostics <- function(connectionDetails = NULL,
+                                             connection = NULL,
+                                             tempEmulationSchema = NULL,
+                                             cohortDatabaseSchema = NULL,
+                                             cohortTable = "cohort",
+                                             targetCohortIds,
+                                             comparatorCohortIds,
+                                             relationshipDays) {
     startTime <- Sys.time()
 
     # Assert checks
@@ -191,20 +188,44 @@ runCohortRelationshipDiagnostics <-
 
 
 
-
-executeCohortRelationshipDiagnostics <- function(connection,
-                                                 databaseId,
-                                                 exportFolder,
-                                                 cohortDatabaseSchema,
-                                                 cdmDatabaseSchema,
-                                                 tempEmulationSchema,
-                                                 cohortTable,
-                                                 cohortDefinitionSet,
-                                                 temporalCovariateSettings,
-                                                 minCellCount,
-                                                 recordKeepingFile,
-                                                 incremental,
-                                                 batchSize = 500) {
+#' Batch Cohort Relationship
+#' 
+#' @description Batch generation of cohort relationship for multiple cohorts in Cohort Diagnostics
+#' 
+#' @template Connection
+#'
+#' @template CdmDatabaseSchema
+#' 
+#' @template TempEmulationSchema
+#' 
+#' @template CohortTable
+#' 
+#' @template CohortDefinitionSet
+#' 
+#' @template DataExport
+#' 
+#' @param recordKeepingFile           File that tracks the instantiated cohorts
+#' 
+#' @param incremental                 Create only cohort diagnostics that haven't been created before?
+#' 
+#' @template TemporalCovariateSettings
+#' 
+#' @param batchSize                   an integer indicating the number of batches 
+#' 
+#' @export
+batchCohortRelationshipDiagnostics <- function(connection,
+                                               cdmDatabaseSchema,
+                                               tempEmulationSchema,
+                                               cohortDatabaseSchema,
+                                               cohortTable,
+                                               cohortDefinitionSet,
+                                               databaseId,
+                                               exportFolder,
+                                               minCellCount,
+                                               recordKeepingFile,
+                                               incremental,
+                                               temporalCovariateSettings,
+                                               batchSize = 500) {
   ParallelLogger::logInfo("Computing Cohort Relationship")
   startCohortRelationship <- Sys.time()
 
@@ -331,7 +352,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
         parent = "executeCohortRelationshipDiagnostics",
         expr = {
           output <-
-            runCohortRelationshipDiagnostics(
+            getCohortRelationshipDiagnostics(
               connection = connection,
               cohortDatabaseSchema = cohortDatabaseSchema,
               tempEmulationSchema = tempEmulationSchema,

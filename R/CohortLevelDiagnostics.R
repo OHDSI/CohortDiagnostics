@@ -19,7 +19,7 @@
 #' @description
 #' Computes the subject and entry count per cohort
 #'
-#' @template Connection
+#' @template ConnectionDetails
 #'
 #' @template CohortTable
 #'
@@ -89,19 +89,33 @@ checkIfCohortInstantiated <- function(connection,
   return(count > 0)
 }
 
-computeCohortCounts <- function(connection,
-                                cohortDatabaseSchema,
-                                cohortTable,
-                                cohorts,
-                                exportFolder,
-                                minCellCount,
-                                databaseId) {
+#' Batch Cohort Counts
+#' 
+#' @description Batch generation of cohort counts, retrieves person and event counts from cohort generation
+#' 
+#' @template Connection
+#' 
+#' @template CohortTable
+#' 
+#' @template CohortDefinitionSet
+#' 
+#' @template DataExport
+#' 
+#' @export
+batchCohortCounts <- function(connection,
+                              cohortDatabaseSchema,
+                              cohortTable,
+                              cohortDefinitionSet,
+                              exportFolder,
+                              minCellCount,
+                              databaseId) {
+  
   ParallelLogger::logInfo("Counting cohort records and subjects")
   cohortCounts <- getCohortCounts(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cohortTable = cohortTable,
-    cohortIds = cohorts$cohortId
+    cohortIds = cohortDefinitionSet$cohortId #change cohorts to cohortDefinition set for consistency
   )
 
   if (is.null(cohortCounts)) {
@@ -119,7 +133,7 @@ computeCohortCounts <- function(connection,
     data = cohortCounts,
     fileName = file.path(exportFolder, "cohort_count.csv"),
     incremental = FALSE,
-    cohortId = cohorts$cohortId
+    cohortId = cohortDefinitionSet$cohortId
   )
   return(cohortCounts)
 }

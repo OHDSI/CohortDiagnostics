@@ -561,15 +561,15 @@ executeDiagnostics <- function(cohortDefinitionSet,
   # Counting cohorts -----------------------------------------------------------------------
   timeExecution(
     exportFolder,
-    taskName = "getInclusionStats",
+    taskName = "batchCohortCounts", #change to match new function signatures
     cohortIds = cohortIds,
     parent = "executeDiagnostics",
     expr = {
-      cohortCounts <- computeCohortCounts(
+      cohortCounts <- batchCohortCounts(
         connection = connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
-        cohorts = cohortDefinitionSet,
+        cohortDefinitionSet = cohortDefinitionSet,
         exportFolder = exportFolder,
         minCellCount = minCellCount,
         databaseId = databaseId
@@ -597,22 +597,22 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runInclusionStatistics) {
     timeExecution(
       exportFolder,
-      "getInclusionStats",
+      "batchInclusionStats", #change to match new function signatures
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        getInclusionStats(
+        batchInclusionStats(
           connection = connection,
-          exportFolder = exportFolder,
-          databaseId = databaseId,
-          cohortDefinitionSet = cohortDefinitionSet,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTableNames = cohortTableNames,
-          incremental = incremental,
-          instantiatedCohorts = instantiatedCohorts,
+          cohortDefinitionSet = cohortDefinitionSet,
+          exportFolder = exportFolder,
+          databaseId = databaseId,
           minCellCount = minCellCount,
-          recordKeepingFile = recordKeepingFile
-        )
+          instantiatedCohorts = instantiatedCohorts,
+          recordKeepingFile = recordKeepingFile,
+          incremental = incremental
+         )
       })
   }
 
@@ -622,31 +622,31 @@ executeDiagnostics <- function(cohortDefinitionSet,
     runBreakdownIndexEvents) {
     timeExecution(
       exportFolder,
-      taskName = "runConceptSetDiagnostics",
+      taskName = "batchConceptSetDiagnostics", #change to match new function signatures
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        runConceptSetDiagnostics(
+        batchConceptSetDiagnostics(
           connection = connection,
-          tempEmulationSchema = tempEmulationSchema,
           cdmDatabaseSchema = cdmDatabaseSchema,
           vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+          tempEmulationSchema = tempEmulationSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cohortTable = cohortTable,
+          cohortDefinitionSet = cohortDefinitionSet,
           databaseId = databaseId,
-          cohorts = cohortDefinitionSet,
+          exportFolder = exportFolder,
+          minCellCount = minCellCount,
+          recordKeepingFile = recordKeepingFile,
+          incremental = incremental,
           runIncludedSourceConcepts = runIncludedSourceConcepts,
           runOrphanConcepts = runOrphanConcepts,
           runBreakdownIndexEvents = runBreakdownIndexEvents,
-          exportFolder = exportFolder,
-          minCellCount = minCellCount,
           conceptCountsDatabaseSchema = NULL,
           conceptCountsTable = "#concept_counts",
           conceptCountsTableIsTemp = TRUE,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
           useExternalConceptCountsTable = FALSE,
-          incremental = incremental,
-          conceptIdTable = "#concept_ids",
-          recordKeepingFile = recordKeepingFile
+          conceptIdTable = "#concept_ids"
         )
       })
   }
@@ -655,14 +655,14 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runTimeSeries) {
     timeExecution(
       exportFolder,
-      "executeTimeSeriesDiagnostics",
+      "batchTimeSeriesDiagnostics", #change to match new function signatures
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        executeTimeSeriesDiagnostics(
+        batchTimeSeriesDiagnostics(
           connection = connection,
-          tempEmulationSchema = tempEmulationSchema,
           cdmDatabaseSchema = cdmDatabaseSchema,
+          tempEmulationSchema = tempEmulationSchema,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
           cohortDefinitionSet = cohortDefinitionSet,
@@ -670,8 +670,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
           exportFolder = exportFolder,
           minCellCount = minCellCount,
           instantiatedCohorts = instantiatedCohorts,
-          incremental = incremental,
           recordKeepingFile = recordKeepingFile,
+          incremental = incremental,
           observationPeriodDateRange = observationPeriodDateRange
         )
       })
@@ -682,21 +682,21 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runVisitContext) {
     timeExecution(
       exportFolder,
-      "executeVisitContextDiagnostics",
+      "batchVisitContextDiagnostics", #change to match new function signatures
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        executeVisitContextDiagnostics(
+        batchVisitContextDiagnostics(
           connection = connection,
-          tempEmulationSchema = tempEmulationSchema,
           cdmDatabaseSchema = cdmDatabaseSchema,
+          tempEmulationSchema = tempEmulationSchema,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
+          cohortDefinitionSet = cohortDefinitionSet,
           cdmVersion = cdmVersion,
           databaseId = databaseId,
           exportFolder = exportFolder,
           minCellCount = minCellCount,
-          cohorts = cohortDefinitionSet,
           instantiatedCohorts = instantiatedCohorts,
           recordKeepingFile = recordKeepingFile,
           incremental = incremental
@@ -708,20 +708,20 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runIncidenceRate) {
     timeExecution(
       exportFolder,
-      "computeIncidenceRates",
+      "batchIncidenceRates", #change to match new function signatures
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        computeIncidenceRates(
+        batchIncidenceRates(
           connection = connection,
-          tempEmulationSchema = tempEmulationSchema,
           cdmDatabaseSchema = cdmDatabaseSchema,
+          tempEmulationSchema = tempEmulationSchema,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
+          cohortDefinitionSet = cohortDefinitionSet,
           databaseId = databaseId,
           exportFolder = exportFolder,
           minCellCount = minCellCount,
-          cohorts = cohortDefinitionSet,
           instantiatedCohorts = instantiatedCohorts,
           recordKeepingFile = recordKeepingFile,
           incremental = incremental
@@ -733,23 +733,23 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runCohortRelationship) {
     timeExecution(
       exportFolder,
-      "executeCohortRelationshipDiagnostics",
+      "batchCohortRelationshipDiagnostics", #change to match new function signatures
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        executeCohortRelationshipDiagnostics(
+        batchCohortRelationshipDiagnostics(
           connection = connection,
-          databaseId = databaseId,
-          exportFolder = exportFolder,
-          cohortDatabaseSchema = cohortDatabaseSchema,
           cdmDatabaseSchema = cdmDatabaseSchema,
           tempEmulationSchema = tempEmulationSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
           cohortDefinitionSet = cohortDefinitionSet,
-          temporalCovariateSettings = temporalCovariateSettings,
+          databaseId = databaseId,
+          exportFolder = exportFolder,
           minCellCount = minCellCount,
           recordKeepingFile = recordKeepingFile,
-          incremental = incremental
+          incremental = incremental,
+          temporalCovariateSettings = temporalCovariateSettings
         )
       })
   }
@@ -758,28 +758,26 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runTemporalCohortCharacterization) {
     timeExecution(
       exportFolder,
-      "executeCohortCharacterization",
+      "batchCohortCharacterization", #change to match new function signatures
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        executeCohortCharacterization(
+        batchCohortCharacterization(
           connection = connection,
-          databaseId = databaseId,
-          exportFolder = exportFolder,
           cdmDatabaseSchema = cdmDatabaseSchema,
+          tempEmulationSchema = tempEmulationSchema,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
-          covariateSettings = temporalCovariateSettings,
-          tempEmulationSchema = tempEmulationSchema,
-          cdmVersion = cdmVersion,
-          cohorts = cohortDefinitionSet,
+          cohortDefinitionSet = cohortDefinitionSet,
           cohortCounts = cohortCounts,
+          cdmVersion = cdmVersion,
+          databaseId = databaseId,
+          exportFolder = exportFolder,
           minCellCount = minCellCount,
           instantiatedCohorts = instantiatedCohorts,
-          incremental = incremental,
           recordKeepingFile = recordKeepingFile,
-          task = "runTemporalCohortCharacterization",
-          jobName = "Temporal Cohort characterization",
+          incremental = incremental,
+          temporalCovariateSettings = temporalCovariateSettings,
           covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
           covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
           covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),

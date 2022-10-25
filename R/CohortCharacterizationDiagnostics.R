@@ -14,6 +14,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+#' Get characterization for cohorts
+#'
+#' @description
+#' Using FeatureExtraction, this function gets temporal characteristics for the cohorts
+#' under assessment in cohort diagnostics. 
+#'
+#' @template ConnectionDetails
+#' 
+#' @template CdmDatabaseSchema
+#'
+#' @template TempEmulationSchema
+#'
+#' @template CohortTable
+#' 
+#' @param cohortIds                   cohort ids to identify the cohort definitions to use on FeatureExtraction
+#' 
+#' @template cdmVersion
+#' 
+#' @template TemporalCovariateSettings
+#' 
+#' @param exportFolder                The folder where the output will be exported to. If this folder
+#'                                    does not exist it will be created.
+#'
+#' @export
 getCohortCharacteristics <- function(connectionDetails = NULL,
                                      connection = NULL,
                                      cdmDatabaseSchema,
@@ -22,7 +47,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                      cohortTable = "cohort",
                                      cohortIds,
                                      cdmVersion = 5,
-                                     covariateSettings,
+                                     temporalCovariateSettings,
                                      exportFolder) {
   startTime <- Sys.time()
   if (is.null(connection)) {
@@ -45,7 +70,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           cdmVersion = cdmVersion,
           cohortTable = cohortTable,
           cohortId = cohortIds,
-          covariateSettings = covariateSettings,
+          covariateSettings = temporalCovariateSettings,
           aggregated = TRUE
         )
     })
@@ -187,36 +212,74 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
   return(results)
 }
 
-executeCohortCharacterization <- function(connection,
-                                          databaseId,
-                                          exportFolder,
-                                          cdmDatabaseSchema,
-                                          cohortDatabaseSchema,
-                                          cohortTable,
-                                          covariateSettings,
-                                          tempEmulationSchema,
-                                          cdmVersion,
-                                          cohorts,
-                                          cohortCounts,
-                                          minCellCount,
-                                          instantiatedCohorts,
-                                          incremental,
-                                          recordKeepingFile,
-                                          task = "runTemporalCohortCharacterization",
-                                          jobName = "Temporal Cohort characterization",
-                                          covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
-                                          covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
-                                          covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
-                                          analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
-                                          timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
-                                          minCharacterizationMean = 0.001,
-                                          batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 5)) {
-  ParallelLogger::logInfo("Running ", jobName)
+#' Batch Cohort Characterization
+#' 
+#' @description Batch generation of cohort characterization for multiple cohorts in Cohort Diagnostics
+#' 
+#' @template Connection
+#'
+#' @template CdmDatabaseSchema
+#' 
+#' @template TempEmulationSchema
+#' 
+#' @template CohortTable
+#' 
+#' @template cdmVersion
+#' 
+#' @template CohortDefinitionSet
+#' 
+#' @param cohortCounts                    computed counts or number of persons or events created from cohort generation
+#' 
+#' @template DataExport
+#' 
+#' @template BatchOptions
+#' 
+#' @template TemporalCovariateSettings
+#' 
+#' @param covariateValueFileName           file name for covariate value generated from {FeatureExtraction}
+#'
+#' @param covariateValueContFileName       file name for covariate counts generated from {FeatureExtraction}
+#'
+#' @param covariateRefFileName             file name for covariate reference generated from {FeatureExtraction}
+#'
+#' @param analysisRefFileName              file name for analysis reference generated from {FeatureExtraction}
+#'
+#' @param timeRefFileName                  file name for time reference generated from {FeatureExtraction}
+#'
+#' @param minCharacterizationMean          minimum value for a mean result from covariate characterization
+#'
+#' @param batchSize                        an integer indicating the number of batches 
+#'
+#' @export
+batchCohortCharacterization <- function(connection,
+                                        cdmDatabaseSchema,
+                                        tempEmulationSchema,
+                                        cohortDatabaseSchema,
+                                        cohortTable,
+                                        cdmVersion,
+                                        cohortDefinitionSet,
+                                        cohortCounts,
+                                        databaseId,
+                                        exportFolder,
+                                        minCellCount,
+                                        instantiatedCohorts,
+                                        recordKeepingFile,
+                                        incremental,
+                                        temporalCovariateSettings,
+                                        covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
+                                        covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
+                                        covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
+                                        analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
+                                        timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
+                                        minCharacterizationMean = 0.001,
+                                        batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 5)) {
+  
+  ParallelLogger::logInfo("Running ", "Temporal Cohort characterization")
   startCohortCharacterization <- Sys.time()
   subset <- subsetToRequiredCohorts(
-    cohorts = cohorts %>%
+    cohorts = cohortDefinitionSet %>% #replace cohorts to cohort definition set consistency
       dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-    task = task,
+    task = "runTemporalCohortCharacterization", #replace task parameter with fn default
     incremental = incremental,
     recordKeepingFile = recordKeepingFile
   )
@@ -255,7 +318,7 @@ executeCohortCharacterization <- function(connection,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
           cohortIds = subset[start:end, ]$cohortId,
-          covariateSettings = covariateSettings,
+          covariateSettings = temporalCovariateSettings, #changed for consistency
           cdmVersion = cdmVersion,
           exportFolder = exportFolder
         )
@@ -277,7 +340,7 @@ executeCohortCharacterization <- function(connection,
 
       recordTasksDone(
         cohortId = subset[start:end, ]$cohortId,
-        task = task,
+        task = "runTemporalCohortCharacterization", #replace task parameter with fn default
         checksum = subset[start:end, ]$checksum,
         recordKeepingFile = recordKeepingFile,
         incremental = incremental
@@ -300,7 +363,7 @@ executeCohortCharacterization <- function(connection,
   }
   delta <- Sys.time() - startCohortCharacterization
   ParallelLogger::logInfo("Running ",
-                          jobName,
+                          "Temporal Cohort characterization", #replace jobName parameter with default
                           " took",
                           signif(delta, 3),
                           " ",

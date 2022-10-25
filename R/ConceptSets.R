@@ -302,33 +302,71 @@ getCodeSetIds <- function(criterionList) {
   }
 }
 
-
+#' Batch Incidence Rates
+#' 
+#' @description Batch generation of incidence rate for multiple cohorts in Cohort Diagnostics
+#' 
+#' @template Connection
+#'
+#' @template CdmDatabaseSchema
+#' 
+#' @template VocabularyDatabaseSchema
+#' 
+#' @template TempEmulationSchema
+#' 
+#' @template CohortTable
+#' 
+#' @template CohortDefinitionSet
+#' 
+#' @template DataExport
+#' 
+#' @param recordKeepingFile           File that tracks the instantiated cohorts
+#' 
+#' @param incremental                 Create only cohort diagnostics that haven't been created before?
+#' 
+#' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
+#' 
+#' @param runOrphanConcepts           Generate and export potential orphan concepts?
+#' 
+#' @param runBreakdownEvents          Generate and export the breakdown of index events?
+#' 
+#' @param conceptCountsDatabaseSchema  schema for placing concept counts table
+#' 
+#' @param conceptCountsTable           table name for holding concept counts
+#' 
+#' @param conceptCountsTableIsTemp     should the concept counts table be temporary?
+#' 
+#' @param useExternalConceptCountsTable should the concept count table be external?
+#' 
+#' @param conceptIdTable              a table storing concept ids from the cohort definitions to run diagnostics
+#' 
+#' @export
 runConceptSetDiagnostics <- function(connection,
-                                     tempEmulationSchema,
                                      cdmDatabaseSchema,
                                      vocabularyDatabaseSchema = cdmDatabaseSchema,
+                                     tempEmulationSchema,
+                                     cohortDatabaseSchema,
+                                     cohortTable,
+                                     cohortDefinitionSet,
                                      databaseId,
-                                     cohorts,
+                                     exportFolder,
+                                     minCellCount,
+                                     recordKeepingFile,
+                                     incremental = FALSE,
                                      runIncludedSourceConcepts,
                                      runOrphanConcepts,
                                      runBreakdownIndexEvents,
-                                     exportFolder,
-                                     minCellCount,
                                      conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTable = "concept_counts",
                                      conceptCountsTableIsTemp = FALSE,
-                                     cohortDatabaseSchema,
-                                     cohortTable,
                                      useExternalConceptCountsTable = FALSE,
-                                     incremental = FALSE,
-                                     conceptIdTable = NULL,
-                                     recordKeepingFile) {
+                                     conceptIdTable = NULL) {
   ParallelLogger::logInfo("Starting concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
   subset <- dplyr::tibble()
   if (runIncludedSourceConcepts) {
     subsetIncluded <- subsetToRequiredCohorts(
-      cohorts = cohorts,
+      cohorts = cohortDefinitionSet,
       task = "runIncludedSourceConcepts",
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
@@ -337,7 +375,7 @@ runConceptSetDiagnostics <- function(connection,
   }
   if (runBreakdownIndexEvents) {
     subsetBreakdown <- subsetToRequiredCohorts(
-      cohorts = cohorts,
+      cohorts = cohortDefinitionSet,
       task = "runBreakdownIndexEvents",
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
@@ -347,7 +385,7 @@ runConceptSetDiagnostics <- function(connection,
 
   if (runOrphanConcepts) {
     subsetOrphans <- subsetToRequiredCohorts(
-      cohorts = cohorts,
+      cohorts = cohortDefinitionSet,
       task = "runOrphanConcepts",
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
@@ -435,10 +473,10 @@ runConceptSetDiagnostics <- function(connection,
         # Included concepts ------------------------------------------------------------------
         ParallelLogger::logInfo("Fetching included source concepts")
         # TODO: Disregard empty cohorts in tally:
-        if (incremental && (nrow(cohorts) - nrow(subsetIncluded)) > 0) {
+        if (incremental && (nrow(cohortDefinitionSet) - nrow(subsetIncluded)) > 0) {
           ParallelLogger::logInfo(sprintf(
             "Skipping %s cohorts in incremental mode.",
-            nrow(cohorts) - nrow(subsetIncluded)
+            nrow(cohortDefinitionSet) - nrow(subsetIncluded)
           ))
         }
         if (nrow(subsetIncluded) > 0) {
@@ -567,10 +605,10 @@ runConceptSetDiagnostics <- function(connection,
     # Index event breakdown --------------------------------------------------------------------------
     ParallelLogger::logInfo("Breaking down index events")
     if (incremental &&
-      (nrow(cohorts) - nrow(subsetBreakdown)) > 0) {
+      (nrow(cohortDefinitionSet) - nrow(subsetBreakdown)) > 0) {
       ParallelLogger::logInfo(sprintf(
         "Skipping %s cohorts in incremental mode.",
-        nrow(cohorts) - nrow(subsetBreakdown)
+        nrow(cohortDefinitionSet) - nrow(subsetBreakdown)
       ))
     }
     if (nrow(subsetBreakdown) > 0) {
@@ -776,10 +814,10 @@ runConceptSetDiagnostics <- function(connection,
   if (runOrphanConcepts) {
     # Orphan concepts ---------------------------------------------------------
     ParallelLogger::logInfo("Finding orphan concepts")
-    if (incremental && (nrow(cohorts) - nrow(subsetOrphans)) > 0) {
+    if (incremental && (nrow(cohortDefinitionSet) - nrow(subsetOrphans)) > 0) {
       ParallelLogger::logInfo(sprintf(
         "Skipping %s cohorts in incremental mode.",
-        nrow(cohorts) - nrow(subsetOrphans)
+        nrow(cohortDefinitionSet) - nrow(subsetOrphans)
       ))
     }
     if (nrow(subsetOrphans > 0)) {
