@@ -75,19 +75,19 @@ getDisplayTableHeaderCount <-
           databaseIds = databaseIds
         ) %>%
           dplyr::rename(
-            records = .data$cohortEntries,
-            persons = .data$cohortSubjects
+            records = cohortEntries,
+            persons = cohortSubjects
           )
     }
 
     if (fields %in% c("Persons")) {
       countsForHeader <- countsForHeader %>%
-        dplyr::select(-.data$records) %>%
-        dplyr::rename(count = .data$persons)
+        dplyr::select(-records) %>%
+        dplyr::rename(count = persons)
     } else if (fields %in% c("Events", "Records")) {
       countsForHeader <- countsForHeader %>%
-        dplyr::select(-.data$persons) %>%
-        dplyr::rename(count = .data$records)
+        dplyr::select(-persons) %>%
+        dplyr::rename(count = records)
     }
     return(countsForHeader)
   }
@@ -171,25 +171,25 @@ getDisplayTableGroupedByDatabaseId <- function(data,
 
   data <- data %>%
     dplyr::inner_join(databaseTable %>%
-                        dplyr::select(.data$databaseId, .data$databaseName),
+                        dplyr::select(databaseId, databaseName),
                       by = "databaseId")
 
   if (isTemporal) {
     data <- data %>%
       dplyr::mutate(type = paste0(
-        .data$databaseId,
+        databaseId,
         "-",
-        .data$temporalChoices,
+        temporalChoices,
         "_sep_",
-        .data$type
+        type
       ))
     distinctColumnGroups <- data$temporalChoices %>% unique()
   } else {
     data <- data %>%
       dplyr::mutate(type = paste0(
-        .data$databaseId,
+        databaseId,
         "_sep_",
-        .data$type
+        type
       ))
     distinctColumnGroups <- data$databaseId %>% unique()
   }
@@ -283,7 +283,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     if (!is.null(headerCount)) {
       if (countLocation == 2) {
         filteredHeaderCount <- headerCount %>%
-          dplyr::filter(.data$databaseId == columnNameWithDatabaseAndCount[1])
+          dplyr::filter(databaseId == columnNameWithDatabaseAndCount[1])
         columnCount <- filteredHeaderCount[[columnName]]
         columnName <-
           paste0(columnName, " (", scales::comma(columnCount), ")")
@@ -351,14 +351,14 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     if (!is.null(headerCount)) {
       if (countLocation == 1) {
         columnName <- headerCount %>%
-          dplyr::filter(.data$databaseId == distinctColumnGroups[i]) %>%
+          dplyr::filter(databaseId == distinctColumnGroups[i]) %>%
           dplyr::mutate(count = paste0(
-            .data$databaseName,
+            databaseName,
             " (",
-            scales::comma(.data$count),
+            scales::comma(count),
             ")"
           )) %>%
-          dplyr::pull(.data$count)
+          dplyr::pull(count)
       }
     }
     columnGroups[[i]] <-
@@ -527,8 +527,8 @@ getMaxValueForStringMatchedColumnsInDataFrame <-
     data <- data %>%
       dplyr::select(dplyr::all_of(string)) %>%
       tidyr::pivot_longer(values_to = "value", cols = dplyr::everything()) %>%
-      dplyr::filter(!is.na(.data$value)) %>%
-      dplyr::pull(.data$value)
+      dplyr::filter(!is.na(value)) %>%
+      dplyr::pull(value)
     
     if (is.list(data)) {
       data <- data %>% unlist()
