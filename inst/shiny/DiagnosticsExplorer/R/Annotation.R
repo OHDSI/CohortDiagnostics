@@ -128,8 +128,8 @@ annotationModule <- function(id,
 
     inputCohortIds <- shiny::reactive({
       cohortTable %>%
-        dplyr::filter(.data$compoundName %in% selectedCohortIds()) %>%
-        dplyr::pull(.data$cohortId)
+        dplyr::filter(compoundName %in% selectedCohortIds()) %>%
+        dplyr::pull(cohortId)
     })
 
     getAnnotationReactive <- shiny::reactive({
@@ -151,7 +151,7 @@ annotationModule <- function(id,
 
     dbChoices <- shiny::reactive({
       databaseChoices <- list()
-      dbMapping <- databaseTable %>% dplyr::filter(.data$databaseId %in% selectedDatabaseIds())
+      dbMapping <- databaseTable %>% dplyr::filter(databaseId %in% selectedDatabaseIds())
       for (i in 1:nrow(dbMapping)) {
         row <- dbMapping[i,]
         databaseChoices[row$databaseName] <- row$databaseId
@@ -207,14 +207,14 @@ annotationModule <- function(id,
           dplyr::mutate(
             Annotation = paste0(
               "<b>",
-              .data$createdBy,
+              createdBy,
               "@",
-              getTimeFromInteger(.data$createdOn),
+              getTimeFromInteger(createdOn),
               ":</b>",
-              .data$annotation
+              annotation
             )
           ) %>%
-          dplyr::select(.data$annotationId, .data$Annotation)
+          dplyr::select(annotationId, Annotation)
 
         reactable::reactable(
           data,
@@ -224,18 +224,18 @@ annotationModule <- function(id,
           ),
           details = function(index) {
             subTable <- results$annotationLink %>%
-              dplyr::filter(.data$annotationId == data[index,]$annotationId) %>%
+              dplyr::filter(annotationId == data[index,]$annotationId) %>%
               dplyr::inner_join(cohortTable %>%
                                   dplyr::select(
-                                    .data$cohortId,
-                                    .data$cohortName
+                                    cohortId,
+                                    cohortName
                                   ),
                                 by = "cohortId"
               )
             distinctCohortName <- subTable %>%
-              dplyr::distinct(.data$cohortName)
+              dplyr::distinct(cohortName)
             distinctDatabaseId <- subTable %>%
-              dplyr::distinct(.data$databaseId)
+              dplyr::distinct(databaseId)
 
             htmltools::div(
               style = "margin:0;padding:0;padding-left:50px;",

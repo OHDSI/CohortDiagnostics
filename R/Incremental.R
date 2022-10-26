@@ -125,11 +125,11 @@ recordTasksDone <-
         as.character(recordKeeping$timeStamp)
       if ("cohortId" %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
-          dplyr::mutate(cohortId = as.double(.data$cohortId))
+          dplyr::mutate(cohortId = as.double(cohortId))
       }
       if ("comparatorId" %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
-          dplyr::mutate(comparatorId = as.double(.data$comparatorId))
+          dplyr::mutate(comparatorId = as.double(comparatorId))
       }
       idx <- getKeyIndex(list(...), recordKeeping)
       if (length(idx) > 0) {
@@ -189,14 +189,14 @@ writeToCsv.tbl_Andromeda <-
       batchSize <- 1e5
 
       cohortIds <- data %>%
-        distinct(.data$cohortId) %>%
+        distinct(cohortId) %>%
         pull()
 
       tempName <- paste0(fileName, "2")
 
       processChunk <- function(chunk, pos) {
         chunk <- chunk %>%
-          filter(!.data$cohort_id %in% cohortIds)
+          filter(!cohort_id %in% cohortIds)
         readr::write_csv(chunk, tempName, append = (pos != 1))
       }
 

@@ -62,7 +62,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     results$covariateRef <- featureExtractionOutput$covariateRef
   } else {
     covariateIds <- results$covariateRef %>%
-      dplyr::select(.data$covariateId)
+      dplyr::select(covariateId)
     Andromeda::appendToTable(
       results$covariateRef,
       featureExtractionOutput$covariateRef %>%
@@ -77,12 +77,12 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
   if ("covariates" %in% names(featureExtractionOutput) &&
     dplyr::pull(dplyr::count(featureExtractionOutput$covariates)) > 0) {
     covariates <- featureExtractionOutput$covariates %>%
-      dplyr::rename(cohortId = .data$cohortDefinitionId) %>%
+      dplyr::rename(cohortId = cohortDefinitionId) %>%
       dplyr::left_join(populationSize, by = "cohortId", copy = TRUE) %>%
-      dplyr::mutate(p = .data$sumValue / .data$populationSize)
+      dplyr::mutate(p = sumValue / populationSize)
 
     if (nrow(covariates %>%
-               dplyr::filter(.data$p > 1) %>%
+               dplyr::filter(p > 1) %>%
                dplyr::collect()) > 0) {
       stop(
         paste0(
@@ -93,20 +93,20 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     }
 
     covariates <- covariates %>%
-      dplyr::mutate(sd = sqrt(.data$p * (1 - .data$p))) %>%
-      dplyr::select(-.data$p) %>%
-      dplyr::rename(mean = .data$averageValue) %>%
-      dplyr::select(-.data$populationSize)
+      dplyr::mutate(sd = sqrt(p * (1 - p))) %>%
+      dplyr::select(-p) %>%
+      dplyr::rename(mean = averageValue) %>%
+      dplyr::select(-populationSize)
 
       if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
         covariates <- covariates %>%
           dplyr::select(
-            .data$cohortId,
-            .data$timeId,
-            .data$covariateId,
-            .data$sumValue,
-            .data$mean,
-            .data$sd
+            cohortId,
+            timeId,
+            covariateId,
+            sumValue,
+            mean,
+            sd
           )
           if (length(is.na(covariates$timeId)) > 0) {
             covariates[is.na(covariates$timeId),]$timeId <- -1
@@ -115,12 +115,12 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
         covariates <- covariates %>%
           dplyr::mutate(timeId = 0) %>%
           dplyr::select(
-            .data$cohortId,
-            .data$timeId,
-            .data$covariateId,
-            .data$sumValue,
-            .data$mean,
-            .data$sd
+            cohortId,
+            timeId,
+            covariateId,
+            sumValue,
+            mean,
+            sd
           )
       }
       if ("covariates" %in% names(results)) {
@@ -134,21 +134,21 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     dplyr::pull(dplyr::count(featureExtractionOutput$covariatesContinuous)) > 0) {
     covariates <- featureExtractionOutput$covariatesContinuous %>%
       dplyr::rename(
-        mean = .data$averageValue,
-        sd = .data$standardDeviation,
-        cohortId = .data$cohortDefinitionId
+        mean = averageValue,
+        sd = standardDeviation,
+        cohortId = cohortDefinitionId
       )
     covariatesContinuous <- covariates
     if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
       covariates <- covariates %>%
         dplyr::mutate(sumValue = -1) %>%
         dplyr::select(
-          .data$cohortId,
-          .data$timeId,
-          .data$covariateId,
-          .data$sumValue,
-          .data$mean,
-          .data$sd
+          cohortId,
+          timeId,
+          covariateId,
+          sumValue,
+          mean,
+          sd
         )
       if (length(is.na(covariates$timeId)) > 0) {
         covariates[is.na(covariates$timeId),]$timeId <- -1
@@ -158,12 +158,12 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
         dplyr::mutate(sumValue = -1,
                       timeId = 0) %>%
         dplyr::select(
-          .data$cohortId,
-          .data$timeId,
-          .data$covariateId,
-          .data$sumValue,
-          .data$mean,
-          .data$sd
+          cohortId,
+          timeId,
+          covariateId,
+          sumValue,
+          mean,
+          sd
         )
     }
     if ("covariates" %in% names(results)) {

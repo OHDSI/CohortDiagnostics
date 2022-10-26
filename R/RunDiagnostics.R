@@ -408,7 +408,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   checkmate::reportAssertions(collection = errorMessage)
   if (!is.null(cohortIds)) {
-    cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
+    cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(cohortId %in% cohortIds)
   }
 
   if (nrow(cohortDefinitionSet) == 0) {
