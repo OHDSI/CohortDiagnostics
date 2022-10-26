@@ -608,7 +608,7 @@ compareCohortCharacterizationModule <- function(id,
     ## compareCohortCharacterizationRawTable ----------------------------------------
     compareCohortCharacterizationRawTable <- shiny::reactive({
       data <- rawTableBaseData()
-
+      validate(need(hasData(data), "No data available for selected combination."))
       distinctTemporalChoices <- unique(temporalChoices$temporalChoices)
       sortedTemporalChoices <- data %>%
         dplyr::arrange(factor(.data$temporalChoices, levels = distinctTemporalChoices)) %>%
