@@ -311,6 +311,12 @@ executeCohortRelationshipDiagnostics <- function(connection,
       )
     }
 
+    outputFile <- file.path(exportFolder, "cohort_relationships.csv")
+    if (!incremental & file.exists(outputFile)) {
+      ParallelLogger::logInfo("Time series file exists, removing before batch operations")
+      unlink(outputFile)
+    }
+
     for (start in seq(1, nrow(subset), by = batchSize)) {
       end <- min(start + batchSize - 1, nrow(subset))
 
@@ -353,8 +359,8 @@ executeCohortRelationshipDiagnostics <- function(connection,
 
       writeToCsv(
         data = data,
-        fileName = file.path(exportFolder, "cohort_relationships.csv"),
-        incremental = incremental
+        fileName = outputFile,
+        incremental = TRUE
       )
 
       recordTasksDone(

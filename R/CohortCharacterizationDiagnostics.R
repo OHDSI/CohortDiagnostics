@@ -220,6 +220,17 @@ executeCohortCharacterization <- function(connection,
     recordKeepingFile = recordKeepingFile
   )
 
+  if (!incremental) {
+    for (outputFile in c(covariateValueFileName, covariateValueContFileName,
+                         covariateRefFileName, analysisRefFileName, timeRefFileName)) {
+
+      if (file.exists(outputFile)) {
+        ParallelLogger::logInfo("Not in incremental mode - Removing file", outputFile, " and replacing")
+        unlink(outputFile)
+      }
+    }
+  }
+
   if (incremental &&
     (length(instantiatedCohorts) - nrow(subset)) > 0) {
     ParallelLogger::logInfo(sprintf(

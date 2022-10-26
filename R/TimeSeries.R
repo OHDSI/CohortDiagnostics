@@ -546,6 +546,11 @@ executeTimeSeriesDiagnostics <- function(connection,
         ))
       }
 
+      outputFile <- file.path(exportFolder, "time_series.csv")
+      if (!incremental & file.exists(outputFile)) {
+        ParallelLogger::logInfo("Time series file exists, removing before batch operations")
+        unlink(outputFile)
+      }
 
       for (start in seq(1, nrow(subset), by = batchSize)) {
         end <- min(start + batchSize - 1, nrow(subset))
@@ -591,8 +596,8 @@ executeTimeSeriesDiagnostics <- function(connection,
         )
         writeToCsv(
           data = data,
-          fileName = file.path(exportFolder, "time_series.csv"),
-          incremental = incremental,
+          fileName = outputFile,
+          incremental = TRUE,
           cohortId = subset[start:end,]$cohortId %>% unique()
         )
         recordTasksDone(
