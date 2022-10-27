@@ -44,7 +44,7 @@ takepackageDependencySnapshot <- function() {
              level = 0) {
       description <- utils::packageDescription(package)
 
-      if (is.na(description)) {
+      if (all(is.na(description))) {
         return(data.frame())
       }
 
