@@ -43,6 +43,11 @@ takepackageDependencySnapshot <- function() {
              recursive = TRUE,
              level = 0) {
       description <- utils::packageDescription(package)
+
+      if (is.na(description)) {
+        return(data.frame())
+      }
+
       packages <- splitPackageList(description$Depends)
       packages <- c(packages, splitPackageList(description$Imports))
       packages <-
