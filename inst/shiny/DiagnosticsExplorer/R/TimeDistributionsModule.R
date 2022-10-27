@@ -230,13 +230,18 @@ timeDistributionsModule <- function(id,
     timeDistributionData <- shiny::reactive({
       validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
       validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+
       data <- getTimeDistributionResult(
         dataSource = dataSource,
         cohortIds = cohortIds(),
         databaseIds = selectedDatabaseIds(),
         databaseTable = databaseTable
-      ) %>%
-        dplyr::filter(.data$timeMetric %in% input$selecatableTimeMeasures)
+      )
+
+      if (hasData(data)) {
+        data <- data %>% dplyr::filter(.data$timeMetric %in% input$selecatableTimeMeasures)
+      }
+
       return(data)
     })
 
