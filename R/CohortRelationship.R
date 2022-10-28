@@ -204,7 +204,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
                                                  minCellCount,
                                                  recordKeepingFile,
                                                  incremental,
-                                                 batchSize = 500) {
+                                                 batchSize = getOption("CohortDiagnostics-Relationship-batch-size", default = 500)) {
   ParallelLogger::logInfo("Computing Cohort Relationship")
   startCohortRelationship <- Sys.time()
 

@@ -519,7 +519,7 @@ executeTimeSeriesDiagnostics <- function(connection,
                                          incremental,
                                          recordKeepingFile,
                                          observationPeriodDateRange,
-                                         batchSize = 20) {
+                                         batchSize = getOption("CohortDiagnostics-TimeSeries-batch-size", default = 20)) {
 
   if (all(!runCohortTimeSeries, !runDataSourceTimeSeries)) {
     warning(
