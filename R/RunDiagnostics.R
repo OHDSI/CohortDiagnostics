@@ -406,6 +406,31 @@ executeDiagnostics <- function(cohortDefinitionSet,
     }
   }
 
+  if (runTemporalCohortCharacterization) {
+    requiredCharacterisationSettings <- c("DemographicsGender", "DemographicsAgeGroup", "DemographicsRace",
+                                          "DemographicsEthnicity", "DemographicsIndexYear", "DemographicsIndexMonth",
+                                          "ConditionEraGroupOverlap", "DrugEraGroupOverlap", "CharlsonIndex",
+                                          "Chads2", "Chads2Vasc")
+
+    presentSettings <- temporalCovariateSettings[requiredCharacterisationSettings]
+    if (!all(unlist(presentSettings))) {
+      warning(
+        "For cohort charcterization to display standardized results the following covariates must be present in your temporalCovariateSettings: \n\n",
+        paste(requiredCharacterisationSettings, collapse = ", "))
+    }
+
+    requiredTimeDistributionSettings <- c("DemographicsPriorObservationTime",
+                                          "DemographicsPostObservationTime",
+                                          "DemographicsTimeInCohort")
+
+    presentSettings <- temporalCovariateSettings[requiredTimeDistributionSettings]
+    if (!all(unlist(presentSettings))) {
+      warning(
+        "For time distributions diagnostics to display standardized results the following covariates must be present in your temporalCovariateSettings: \n\n",
+        paste(requiredTimeDistributionSettings, collapse = ", "))
+    }
+  }
+
   checkmate::reportAssertions(collection = errorMessage)
   if (!is.null(cohortIds)) {
     cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
@@ -526,12 +551,12 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   ## Observation period----
   ParallelLogger::logTrace(" - Collecting date range from Observational period table.")
-   timeExecution(
-     exportFolder,
-     taskName = "observationPeriodDateRange",
-     cohortIds = NULL,
-     parent = "executeDiagnostics",
-     expr = {
+  timeExecution(
+    exportFolder,
+    taskName = "observationPeriodDateRange",
+    cohortIds = NULL,
+    parent = "executeDiagnostics",
+    expr = {
       observationPeriodDateRange <- renderTranslateQuerySql(
         connection = connection,
         sql = "SELECT MIN(observation_period_start_date) observation_period_min_date,
