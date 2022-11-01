@@ -148,6 +148,9 @@
     <loc>/reference/getDatabaseReference.html</loc>
   </url>
   <url>
+    <loc>/reference/getDefaultCovariateSettings.html</loc>
+  </url>
+  <url>
     <loc>/reference/getDefaultVocabularyTableNames.html</loc>
   </url>
   <url>
@@ -260,6 +263,9 @@
   </url>
   <url>
     <loc>/reference/takepackageDependencySnapshot.html</loc>
+  </url>
+  <url>
+    <loc>/reference/timeExecution.html</loc>
   </url>
   <url>
     <loc>/reference/uploadPrintFriendly.html</loc>

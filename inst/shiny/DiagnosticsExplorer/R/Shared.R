@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# private function - not exported
 hasData <- function(data) {
   if (is.null(data)) {
     return(FALSE)
@@ -30,9 +29,6 @@ hasData <- function(data) {
     }
     if (length(data) == 1) {
       if (is.na(data)) {
-        return(FALSE)
-      }
-      if (data == "") {
         return(FALSE)
       }
     }

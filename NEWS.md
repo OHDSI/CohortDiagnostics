@@ -4,7 +4,7 @@ Changes:
 
 1. Major refactoring of shiny app to use modular code for ease of maintenance
 
-2. Initial tests for shiny modules in `inst/shiny/DiagnosticsExplorer/tests`
+2. Some tests for shiny modules in `inst/shiny/DiagnosticsExplorer/tests`
 
 3. Added support for table prefixes in Diagnostics Explorer databases (e.g. cg_cohort_definition)
 
@@ -32,6 +32,8 @@ Bug fixes:
 Removed constraint to fix issue.
 
 2. Fix for `index_event_breakdown` having duplicate entries where concept is observed in the same domain multiple times
+
+3. Many other issues resolved in shiny codebase
 
 
 CohortDiagnostics 3.0.3

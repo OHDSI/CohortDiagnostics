@@ -207,6 +207,7 @@ createMergedResultsFile <-
         tablePrefix = tablePrefix
       )
     }
+    DatabaseConnector::renderTranslateExecuteSql(connection, "VACUUM;")
   }
 
 #' Create publishable shiny zip
