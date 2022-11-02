@@ -16,7 +16,12 @@ Changes:
 
 7. Slight optimization of cohort characterization queries in diagnostics explorer
 
-8. Changed type to dataType and fieldName to columnName to align with strategus modules
+8. Support for database migrations by adding `migrateDataModel` functionality.
+Versions of data generated with CohortDiagnostics 3.0.0 are intended to be future compatible.
+i.e. if you have an sqlite results file or postgres database generated with version 3.0.0 of cohort diagnostics
+new shiny app functionality will be supported if you run ``migrateDataModel`` on it.
+
+9. Changed type to dataType and fieldName to columnName to align with strategus modules
 
 9. Refactored export of characterization results to use common export
 

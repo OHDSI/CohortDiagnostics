@@ -98,38 +98,37 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
       dplyr::rename(mean = .data$averageValue) %>%
       dplyr::select(-.data$populationSize)
 
-    if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
-      covariates <- covariates %>%
-        dplyr::select(
-          .data$cohortId,
-          .data$timeId,
-          .data$covariateId,
-          .data$sumValue,
-          .data$mean,
-          .data$sd
-        )
-      if (length(is.na(covariates$timeId)) > 0) {
-        covariates[is.na(covariates$timeId),]$timeId <- -1
+      if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
+        covariates <- covariates %>%
+          dplyr::select(
+            .data$cohortId,
+            .data$timeId,
+            .data$covariateId,
+            .data$sumValue,
+            .data$mean,
+            .data$sd
+          )
+          if (length(is.na(covariates$timeId)) > 0) {
+            covariates[is.na(covariates$timeId),]$timeId <- -1
+          }
+      } else {
+        covariates <- covariates %>%
+          dplyr::mutate(timeId = 0) %>%
+          dplyr::select(
+            .data$cohortId,
+            .data$timeId,
+            .data$covariateId,
+            .data$sumValue,
+            .data$mean,
+            .data$sd
+          )
       }
-    } else {
-      covariates <- covariates %>%
-        dplyr::mutate(timeId = 0) %>%
-        dplyr::select(
-          .data$cohortId,
-          .data$timeId,
-          .data$covariateId,
-          .data$sumValue,
-          .data$mean,
-          .data$sd
-        ) %>%
-        dplyr::mutate(timeId = 0)
+      if ("covariates" %in% names(results)) {
+        Andromeda::appendToTable(results$covariates, covariates)
+      } else {
+        results$covariates <- covariates
+      }
     }
-    if ("covariates" %in% names(results)) {
-      Andromeda::appendToTable(results$covariates, covariates)
-    } else {
-      results$covariates <- covariates
-    }
-  }
 
   if ("covariatesContinuous" %in% names(featureExtractionOutput) &&
     dplyr::pull(dplyr::count(featureExtractionOutput$covariatesContinuous)) > 0) {
@@ -220,6 +219,17 @@ executeCohortCharacterization <- function(connection,
     incremental = incremental,
     recordKeepingFile = recordKeepingFile
   )
+
+  if (!incremental) {
+    for (outputFile in c(covariateValueFileName, covariateValueContFileName,
+                         covariateRefFileName, analysisRefFileName, timeRefFileName)) {
+
+      if (file.exists(outputFile)) {
+        ParallelLogger::logInfo("Not in incremental mode - Removing file", outputFile, " and replacing")
+        unlink(outputFile)
+      }
+    }
+  }
 
   if (incremental &&
     (length(instantiatedCohorts) - nrow(subset)) > 0) {

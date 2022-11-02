@@ -31,7 +31,7 @@
 {DEFAULT @time_series = time_series}
 {DEFAULT @visit_context = visit_context}
 {DEFAULT @vocabulary = vocabulary}
-{DEFAULT @version_number = '3.1.0'}
+{DEFAULT @cd_version = cd_version}
 
 -- Drop old tables if exist
 DROP TABLE IF EXISTS @results_schema.@annotation;
@@ -69,7 +69,6 @@ DROP TABLE IF EXISTS @results_schema.@visit_context;
 DROP TABLE IF EXISTS @results_schema.@vocabulary;
 
 -- Create tables
-
 --Table annotation
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@annotation (
@@ -353,7 +352,7 @@ CREATE TABLE @results_schema.@domain (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@incidence_rate (
 			cohort_count BIGINT NOT NULL,
-			person_years FLOAT,
+			person_years BIGINT,
 			gender VARCHAR,
 			age_group VARCHAR,
 			calendar_year VARCHAR(4),

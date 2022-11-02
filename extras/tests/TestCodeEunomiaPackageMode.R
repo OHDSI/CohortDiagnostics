@@ -42,7 +42,7 @@ connectionDetailsToUpload <- createConnectionDetails(dbms = "postgresql",
 
 
 resultsSchema <- "eunomiaCd"
-createResultsDataModel(connectionDetails = connectionDetailsToUpload, schema = resultsSchema)
+createResultsDataModel(connectionDetails = connectionDetailsToUpload, databaseSchema = resultsSchema)
 
 
 path = outputFolder

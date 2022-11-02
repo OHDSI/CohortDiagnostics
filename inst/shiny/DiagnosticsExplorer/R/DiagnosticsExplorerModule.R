@@ -446,6 +446,8 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
     if ("indexEventBreakdown" %in% enabledTabs) {
       indexEventBreakdownModule("indexEvents",
                                 dataSource = dataSource,
+                                cohortTable = cohortTable,
+                                databaseTable = databaseTable,
                                 selectedCohort = selectedCohort,
                                 targetCohortId = targetCohortId,
                                 selectedDatabaseIds = selectedDatabaseIds)

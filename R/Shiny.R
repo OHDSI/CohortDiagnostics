@@ -187,8 +187,8 @@ createMergedResultsFile <-
     connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
     createResultsDataModel(
-      connection = connection,
-      schema = "main",
+      connectionDetails = connectionDetails,
+      databaseSchema = "main",
       tablePrefix = tablePrefix
     )
     listOfZipFilesToUpload <-
