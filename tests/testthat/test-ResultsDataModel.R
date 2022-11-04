@@ -173,9 +173,9 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
   with_dbc_connection(pgConnection, {
     for (tableName in unique(specifications$tableName)) {
       primaryKey <- specifications %>%
-        dplyr::filter(.data$tableName == !!tableName &
-          .data$primaryKey == "Yes") %>%
-        dplyr::select(.data$columnName) %>%
+        dplyr::filter(tableName == !!tableName &
+          primaryKey == "Yes") %>%
+        dplyr::select(columnName) %>%
         dplyr::pull()
 
       if ("database_id" %in% primaryKey) {
@@ -209,9 +209,9 @@ test_that("Sqlite results data model", {
     specifications <- getResultsDataModelSpecifications()
     for (tableName in unique(specifications$tableName)) {
       primaryKey <- specifications %>%
-        dplyr::filter(.data$tableName == !!tableName &
-          .data$primaryKey == "Yes") %>%
-        dplyr::select(.data$columnName) %>%
+        dplyr::filter(tableName == !!tableName &
+          primaryKey == "Yes") %>%
+        dplyr::select(columnName) %>%
         dplyr::pull()
 
       if ("database_id" %in% primaryKey) {

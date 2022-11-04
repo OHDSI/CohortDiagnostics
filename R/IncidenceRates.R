@@ -215,7 +215,7 @@ computeIncidenceRates <- function(connection,
   startIncidenceRate <- Sys.time()
   subset <- subsetToRequiredCohorts(
     cohorts = cohorts %>%
-      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+      dplyr::filter(cohortId %in% instantiatedCohorts),
     task = "runIncidenceRate",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile

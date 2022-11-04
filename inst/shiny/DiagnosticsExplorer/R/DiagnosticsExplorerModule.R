@@ -157,64 +157,21 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
 
     outputOptions(output, "postAnnoataionEnabled", suspendWhenHidden = FALSE)
 
-    if (enableAnnotation) {
-      #--- Annotation modules
-      annotationModules <- c("cohortCountsAnnotation",
-                             "timeDistributionAnnotation",
-                             "conceptsInDataSourceAnnotation",
-                             "orphanConceptsAnnotation",
-                             "inclusionRuleStatsAnnotation",
-                             "indexEventBreakdownAnnotation",
-                             "visitContextAnnotation",
-                             "cohortOverlapAnnotation",
-                             "cohortCharacterizationAnnotation",
-                             "temporalCharacterizationAnnotation",
-                             "compareCohortCharacterizationAnnotation",
-                             "compareTemporalCharacterizationAnnotation")
-
-
-      for (module in annotationModules) {
-        annotationModule(id = module,
-                         dataSource = dataSource,
-                         activeLoggedInUser = activeLoggedInUser,
-                         selectedDatabaseIds = selectedDatabaseIds,
-                         selectedCohortIds = inputCohortIds,
-                         cohortTable = cohortTable,
-                         databaseTable = databaseTable,
-                         postAnnotaionEnabled = postAnnotaionEnabled)
-      }
-    }
-
     # Reacive: targetCohortId
     targetCohortId <- shiny::reactive({
       return(cohortTable$cohortId[cohortTable$compoundName == input$targetCohort])
     })
 
-    # ReaciveVal: cohortIds
-    cohortIds <- reactiveVal(NULL)
-    shiny::observeEvent(eventExpr = {
-      list(
-        input$cohorts_open,
-        input$tabs
-      )
-    }, handlerExpr = {
-      if (isFALSE(input$cohorts_open) || !is.null(input$tabs)) {
-        selectedCohortIds <-
-          cohortTable$cohortId[cohortTable$compoundName %in% input$cohorts]
-        cohortIds(selectedCohortIds)
-      }
+    # Reacive: cohortIds
+    cohortIds <- shiny::reactive({
+      cohortTable %>%
+        dplyr::filter(compoundName %in% input$cohorts) %>%
+        dplyr::select(cohortId) %>%
+        dplyr::pull()
     })
 
-    selectedConceptSets <- reactiveVal(NULL)
-    shiny::observeEvent(eventExpr = {
-      list(
-        input$conceptSetsSelected_open,
-        input$tabs
-      )
-    }, handlerExpr = {
-      if (isFALSE(input$conceptSetsSelected_open) || !is.null(input$tabs)) {
-        selectedConceptSets(input$conceptSetsSelected)
-      }
+    selectedConceptSets <- shiny::reactive({
+      input$conceptSetsSelected
     })
 
     # conceptSetIds ----
@@ -352,6 +309,34 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         selected = subset[2]
       )
     })
+
+     if (enableAnnotation) {
+      #--- Annotation modules
+      annotationModules <- c("cohortCountsAnnotation",
+                             "timeDistributionAnnotation",
+                             "conceptsInDataSourceAnnotation",
+                             "orphanConceptsAnnotation",
+                             "inclusionRuleStatsAnnotation",
+                             "indexEventBreakdownAnnotation",
+                             "visitContextAnnotation",
+                             "cohortOverlapAnnotation",
+                             "cohortCharacterizationAnnotation",
+                             "temporalCharacterizationAnnotation",
+                             "compareCohortCharacterizationAnnotation",
+                             "compareTemporalCharacterizationAnnotation")
+
+
+      for (module in annotationModules) {
+        annotationModule(id = module,
+                         dataSource = dataSource,
+                         activeLoggedInUser = activeLoggedInUser,
+                         selectedDatabaseIds = selectedDatabaseIds,
+                         selectedCohortIds = inputCohortIds,
+                         cohortTable = cohortTable,
+                         databaseTable = databaseTable,
+                         postAnnotaionEnabled = postAnnotaionEnabled)
+      }
+    }
 
     # Characterization (Shared across) -------------------------------------------------
     ## Reactive objects ----
