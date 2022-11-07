@@ -1,9 +1,4 @@
 library(testthat)
-test_that("Check if package is installed", {
-  expect_true(CohortDiagnostics:::is_installed("dplyr"))
-  expect_false(CohortDiagnostics:::is_installed("abcd"))
-})
-
 
 # check makeDataExportable function
 test_that("Check function makeDataExportable", {
@@ -23,7 +18,7 @@ test_that("Check function makeDataExportable", {
 
   resultsDataModel <- getResultsDataModelSpecifications() %>%
     dplyr::filter(.data$tableName == "cohort_count") %>%
-    dplyr::select(.data$fieldName) %>%
+    dplyr::select(.data$columnName) %>%
     dplyr::pull() %>%
     sort()
 
@@ -53,4 +48,79 @@ test_that("Check function makeDataExportable", {
       tableName = "cohort_count"
     )
   )
+})
+
+test_that("timeExecutions function", {
+  temp <- tempfile()
+  on.exit(unlink(temp, force = TRUE, recursive = TRUE))
+  dir.create(temp)
+
+  # Basic test
+  timeExecution(
+    exportFolder = temp,
+    taskName = "test_task1",
+    cohortIds = c(1, 2, 3, 4),
+    expr = {
+      Sys.sleep(0.001)
+    }
+  )
+  expectedFilePath <- file.path(temp, "executionTimes.csv")
+  checkmate::expect_file_exists(expectedFilePath)
+  result <- readr::read_csv(expectedFilePath)
+  checkmate::expect_data_frame(result, nrows = 1, ncols = 5)
+
+  expect_false(all(is.na(result$startTime)))
+  expect_false(all(is.na(result$executionTime)))
+
+  # Test append
+  timeExecution(
+    exportFolder = temp,
+    taskName = "test_task2",
+    cohortIds = NULL,
+    expr = {
+      Sys.sleep(0.001)
+    }
+  )
+
+  result <- readr::read_csv(expectedFilePath)
+  checkmate::expect_data_frame(result, nrows = 2, ncols = 5)
+
+  # Parent string
+  timeExecution(
+    exportFolder = temp,
+    taskName = "test_task3",
+    parent = "testthat",
+    cohortIds = NULL,
+    expr = {
+      Sys.sleep(0.001)
+    }
+  )
+
+  result <- readr::read_csv(expectedFilePath)
+  checkmate::expect_data_frame(result, nrows = 3, ncols = 5)
+
+  # custom start/end times
+  timeExecution(
+    exportFolder = temp,
+    taskName = "test_task4",
+    parent = "testthat",
+    cohortIds = NULL,
+    start = "foo",
+    execTime = "Foo"
+  )
+
+  result <- readr::read_csv(expectedFilePath)
+  checkmate::expect_data_frame(result, nrows = 4, ncols = 5)
+
+  timeExecution(
+    exportFolder = temp,
+    taskName = "test_task5",
+    parent = "testthat",
+    cohortIds = NULL,
+    start = Sys.time()
+  )
+
+  result <- readr::read_csv(expectedFilePath)
+  checkmate::expect_data_frame(result, nrows = 5, ncols = 5)
+  expect_false(all(is.na(result$startTime)))
 })

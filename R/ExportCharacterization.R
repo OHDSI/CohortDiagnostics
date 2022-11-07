@@ -24,14 +24,14 @@ exportCharacterization <- function(characteristics,
                                    analysisRefFileName,
                                    timeRefFileName = NULL,
                                    counts,
-                                   cutOff = 0.0001,
+                                   minCharacterizationMean = 0.001,
                                    minCellCount) {
   if (!"covariates" %in% names(characteristics)) {
     warning("No characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
     characteristics$filteredCovariates <-
       characteristics$covariates %>%
-      dplyr::filter(mean >= cutOff) %>%
+      dplyr::filter(.data$mean >= minCharacterizationMean) %>%
       dplyr::mutate(databaseId = !!databaseId) %>%
       dplyr::left_join(counts,
         by = c("cohortId", "databaseId"),
@@ -54,36 +54,54 @@ exportCharacterization <- function(characteristics,
         mean = round(.data$mean, digits = 4),
         sd = round(.data$sd, digits = 4)
       ) %>%
-      dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
+      dplyr::select(-.data$cohortEntries, -.data$cohortSubjects) %>%
+      dplyr::distinct() %>% makeDataExportable(
+        tableName = "temporal_covariate_value",
+        minCellCount = minCellCount,
+        databaseId = databaseId
+      )
 
     if (dplyr::pull(dplyr::count(characteristics$filteredCovariates)) > 0) {
-      covariateRef <- dplyr::collect(characteristics$covariateRef)
+      covariateRef <- makeDataExportable(
+        x = characteristics$covariateRef,
+        tableName = "temporal_covariate_ref",
+        minCellCount = minCellCount
+      )
       writeToCsv(
         data = covariateRef,
         fileName = covariateRefFileName,
-        incremental = incremental,
+        incremental = TRUE,
         covariateId = covariateRef$covariateId
       )
-      analysisRef <- dplyr::collect(characteristics$analysisRef)
+
+      analysisRef <-  makeDataExportable(
+        x = characteristics$analysisRef,
+        tableName = "temporal_analysis_ref",
+        minCellCount = minCellCount
+      )
       writeToCsv(
         data = analysisRef,
         fileName = analysisRefFileName,
-        incremental = incremental,
+        incremental = TRUE,
         analysisId = analysisRef$analysisId
       )
-      if (!is.null(timeRefFileName)) {
-        timeRef <- dplyr::collect(characteristics$timeRef)
-        writeToCsv(
-          data = timeRef,
-          fileName = timeRefFileName,
-          incremental = incremental,
-          analysisId = timeRef$timeId
-        )
-      }
-      writeCovariateDataAndromedaToCsv(
+
+      timeRef <- makeDataExportable(
+        x = characteristics$timeRef,
+        tableName = "temporal_time_ref",
+        minCellCount = minCellCount
+      )
+      writeToCsv(
+        data = timeRef,
+        fileName = timeRefFileName,
+        incremental = TRUE,
+        analysisId = timeRef$timeId
+      )
+
+      writeToCsv(
         data = characteristics$filteredCovariates,
         fileName = covariateValueFileName,
-        incremental = incremental
+        incremental = TRUE
       )
     }
   }
@@ -91,16 +109,18 @@ exportCharacterization <- function(characteristics,
   if (!"covariatesContinuous" %in% names(characteristics)) {
     ParallelLogger::logInfo("No continuous characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
-    characteristics$filteredCovariatesContinous <-
-      characteristics$covariatesContinuous %>%
-      dplyr::filter(.data$countValue >= minCellCount) %>%
-      dplyr::mutate(databaseId = !!databaseId)
+     characteristics$filteredCovariatesContinous <- makeDataExportable(
+       x = characteristics$covariatesContinuous,
+       tableName = "temporal_covariate_value_dist",
+       minCellCount = minCellCount,
+       databaseId = databaseId
+     )
 
     if (dplyr::pull(dplyr::count(characteristics$filteredCovariatesContinous)) > 0) {
-      writeCovariateDataAndromedaToCsv(
+      writeToCsv(
         data = characteristics$filteredCovariatesContinous,
         fileName = covariateValueContFileName,
-        incremental = incremental
+        incremental = TRUE
       )
     }
   }

@@ -42,18 +42,19 @@ test_that("Create schema", {
     )
     createResultsDataModel(
       connectionDetails = postgresConnectionDetails,
-      schema = resultsDatabaseSchema
+      databaseSchema = resultsDatabaseSchema,
+      tablePrefix = "cd_"
     )
 
     specifications <- getResultsDataModelSpecifications()
 
     for (tableName in unique(specifications$tableName)) {
-      expect_true(.pgTableExists(pgConnection, resultsDatabaseSchema, tableName))
+      expect_true(.pgTableExists(pgConnection, resultsDatabaseSchema, paste0("cd_", tableName)))
     }
     # Bad schema name
     expect_error(createResultsDataModel(
-      connection = pgConnection,
-      schema = "non_existant_schema"
+      connectionDetails = postgresConnectionDetails,
+      databaseSchema = "non_existant_schema"
     ))
   })
 })
@@ -162,7 +163,8 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
     uploadResults(
       connectionDetails = postgresConnectionDetails,
       schema = resultsDatabaseSchema,
-      zipFileName = listOfZipFilesToUpload[[i]]
+      zipFileName = listOfZipFilesToUpload[[i]],
+      tablePrefix = "cd_"
     )
   }
 
@@ -171,9 +173,9 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
   with_dbc_connection(pgConnection, {
     for (tableName in unique(specifications$tableName)) {
       primaryKey <- specifications %>%
-        dplyr::filter(.data$tableName == !!tableName &
-          .data$primaryKey == "Yes") %>%
-        dplyr::select(.data$fieldName) %>%
+        dplyr::filter(tableName == !!tableName &
+          primaryKey == "Yes") %>%
+        dplyr::select(columnName) %>%
         dplyr::pull()
 
       if ("database_id" %in% primaryKey) {
@@ -182,7 +184,7 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
         sql <- SqlRender::render(
           sql = sql,
           schema = resultsDatabaseSchema,
-          table_name = tableName,
+          table_name = paste0("cd_", tableName),
           database_id = "cdmv5"
         )
         databaseIdCount <- DatabaseConnector::querySql(pgConnection, sql)[, 1]
@@ -194,22 +196,22 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
 
 test_that("Sqlite results data model", {
   dbFile <- tempfile(fileext = ".sqlite")
-  createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = dbFile, overwrite = TRUE)
+  createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = dbFile, overwrite = TRUE, tablePrefix = "cd_")
   connectionDetailsSqlite <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = dbFile)
   connectionSqlite <- DatabaseConnector::connect(connectionDetails = connectionDetailsSqlite)
   with_dbc_connection(connectionSqlite, {
     # Bad schema name
     expect_error(createResultsDataModel(
-      connection = connectionSqlite,
-      schema = "non_existant_schema"
+      connectionDetails = connectionDetailsSqlite,
+      databaseSchema = "non_existant_schema"
     ))
 
     specifications <- getResultsDataModelSpecifications()
     for (tableName in unique(specifications$tableName)) {
       primaryKey <- specifications %>%
-        dplyr::filter(.data$tableName == !!tableName &
-          .data$primaryKey == "Yes") %>%
-        dplyr::select(.data$fieldName) %>%
+        dplyr::filter(tableName == !!tableName &
+          primaryKey == "Yes") %>%
+        dplyr::select(columnName) %>%
         dplyr::pull()
 
       if ("database_id" %in% primaryKey) {
@@ -218,7 +220,7 @@ test_that("Sqlite results data model", {
         sql <- SqlRender::render(
           sql = sql,
           schema = "main",
-          table_name = tableName,
+          table_name = paste0("cd_", tableName),
           database_id = "cdmv5"
         )
         databaseIdCount <- DatabaseConnector::querySql(connectionSqlite, sql)[, 1]
@@ -251,7 +253,7 @@ test_that("Data removal works", {
         primaryKey <- specifications %>%
           dplyr::filter(.data$tableName == !!tableName &
             .data$primaryKey == "Yes") %>%
-          dplyr::select(.data$fieldName) %>%
+          dplyr::select(.data$columnName) %>%
           dplyr::pull()
 
         if ("database_id" %in% primaryKey) {
@@ -259,7 +261,8 @@ test_that("Data removal works", {
             connection = pgConnection,
             schema = resultsDatabaseSchema,
             tableName = tableName,
-            databaseId = "cdmv5"
+            databaseId = "cdmv5",
+            tablePrefix = "cd_"
           )
 
           sql <-
@@ -267,7 +270,7 @@ test_that("Data removal works", {
           sql <- SqlRender::render(
             sql = sql,
             schema = resultsDatabaseSchema,
-            table_name = tableName,
+            table_name = paste0("cd_", tableName),
             database_id = "cdmv5"
           )
           databaseIdCount <-
@@ -282,4 +285,23 @@ test_that("Data removal works", {
 test_that("util functions", {
   expect_true(naToEmpty(NA) == "")
   expect_true(naToZero(NA) == 0)
+})
+
+
+test_that("No database file fails upload", {
+  skip_if(skipResultsDm | skipCdmTests, "results data model test server not set")
+  testZipFile <- "test.zip"
+  on.exit(unlink(testZipFile, force = T))
+  # Just a random file to test
+  DatabaseConnector::createZipFile(testZipFile, "cohorts/CohortsToCreate.csv")
+
+  expect_error(
+   uploadResults(
+      connectionDetails = connectionDetails,
+      schema = "main",
+      zipFileName = testZipFile,
+      tablePrefix = "cd_"
+    ),
+   regexp ="database metadata file not found - cannot upload results"
+  )
 })

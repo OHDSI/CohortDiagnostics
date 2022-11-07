@@ -215,7 +215,7 @@ computeIncidenceRates <- function(connection,
   startIncidenceRate <- Sys.time()
   subset <- subsetToRequiredCohorts(
     cohorts = cohorts %>%
-      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+      dplyr::filter(cohortId %in% instantiatedCohorts),
     task = "runIncidenceRate",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile
@@ -238,26 +238,28 @@ computeIncidenceRates <- function(connection,
 
       # TODO: do we really want to get this from the cohort definition?
       cohortExpression <- RJSONIO::fromJSON(row$json, digits = 23)
-      washoutPeriod <- tryCatch(
-        {
-          cohortExpression$
-            PrimaryCriteria$
-            ObservationWindow$
-            PriorDays
-        },
-        error = function(e) {
-          0
+      washoutPeriod <- cohortExpression$PrimaryCriteria$ObservationWindow[["PriorDays"]]
+      if (is.null(washoutPeriod)) {
+        washoutPeriod <- 0
+      }
+
+      timeExecution(
+        exportFolder,
+        taskName = "getIncidenceRate",
+        parent = "computeIncidenceRates",
+        cohortIds = row$cohortId,
+        expr = {
+          data <- getIncidenceRate(
+            connection = connection,
+            cdmDatabaseSchema = cdmDatabaseSchema,
+            tempEmulationSchema = tempEmulationSchema,
+            cohortDatabaseSchema = cohortDatabaseSchema,
+            cohortTable = cohortTable,
+            cohortId = row$cohortId,
+            firstOccurrenceOnly = TRUE,
+            washoutPeriod = washoutPeriod
+          )
         }
-      )
-      data <- getIncidenceRate(
-        connection = connection,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        tempEmulationSchema = tempEmulationSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable,
-        cohortId = row$cohortId,
-        firstOccurrenceOnly = TRUE,
-        washoutPeriod = washoutPeriod
       )
       if (nrow(data) > 0) {
         data <- data %>% dplyr::mutate(cohortId = row$cohortId)

@@ -11,54 +11,54 @@ prepareTable1 <- function(covariates,
   }
   keyColumns <- prettyTable1Specifications %>%
     dplyr::select(
-      .data$labelOrder,
-      .data$label,
-      .data$covariateId,
-      .data$analysisId,
-      .data$sequence
+      labelOrder,
+      label,
+      covariateId,
+      analysisId,
+      sequence
     ) %>%
     dplyr::distinct() %>%
     dplyr::left_join(
       covariates %>%
         dplyr::select(
-          .data$covariateId,
-          .data$covariateName
+          covariateId,
+          covariateName
         ) %>%
         dplyr::distinct(),
       by = c("covariateId")
     ) %>%
-    dplyr::filter(!is.na(.data$covariateName)) %>%
+    dplyr::filter(!is.na(covariateName)) %>%
     tidyr::crossing(
       covariates %>%
         dplyr::select(
-          .data$cohortId,
-          .data$databaseId
+          cohortId,
+          databaseId
         ) %>%
         dplyr::distinct()
     ) %>%
     dplyr::arrange(
-      .data$cohortId,
-      .data$databaseId,
-      .data$analysisId,
-      .data$covariateId
+      cohortId,
+      databaseId,
+      analysisId,
+      covariateId
     ) %>%
     dplyr::mutate(
       covariateName = stringr::str_replace(
-        string = .data$covariateName,
+        string = covariateName,
         pattern = "black or african american",
         replacement = "Black or African American"
       )
     ) %>%
     dplyr::mutate(
       covariateName = stringr::str_replace(
-        string = .data$covariateName,
+        string = covariateName,
         pattern = "white",
         replacement = "White"
       )
     ) %>%
     dplyr::mutate(
       covariateName = stringr::str_replace(
-        string = .data$covariateName,
+        string = covariateName,
         pattern = "asian",
         replacement = "Asian"
       )
@@ -67,7 +67,7 @@ prepareTable1 <- function(covariates,
   covariates <- keyColumns %>%
     dplyr::left_join(
       covariates %>%
-        dplyr::select(-.data$covariateName),
+        dplyr::select(-covariateName),
       by = c(
         "cohortId",
         "databaseId",
@@ -75,7 +75,7 @@ prepareTable1 <- function(covariates,
         "analysisId"
       )
     ) %>%
-    dplyr::filter(!is.na(.data$covariateName))
+    dplyr::filter(!is.na(covariateName))
 
   space <- "&nbsp;"
   resultsTable <- tidyr::tibble()
@@ -84,39 +84,39 @@ prepareTable1 <- function(covariates,
   tableHeaders <-
     covariates %>%
     dplyr::select(
-      .data$cohortId,
-      .data$databaseId,
-      .data$label,
-      .data$labelOrder,
-      .data$sequence
+      cohortId,
+      databaseId,
+      label,
+      labelOrder,
+      sequence
     ) %>%
     dplyr::distinct() %>%
     dplyr::group_by(
-      .data$cohortId,
-      .data$databaseId,
-      .data$label,
-      .data$labelOrder
+      cohortId,
+      databaseId,
+      label,
+      labelOrder
     ) %>%
     dplyr::summarise(
-      sequence = min(.data$sequence),
+      sequence = min(sequence),
       .groups = "keep"
     ) %>%
     dplyr::ungroup() %>%
     dplyr::mutate(
       characteristic = paste0(
         "<strong>",
-        .data$label,
+        label,
         "</strong>"
       ),
       header = 1
     ) %>%
     dplyr::select(
-      .data$cohortId,
-      .data$databaseId,
-      .data$sequence,
-      .data$header,
-      .data$labelOrder,
-      .data$characteristic
+      cohortId,
+      databaseId,
+      sequence,
+      header,
+      labelOrder,
+      characteristic
     ) %>%
     dplyr::distinct()
 
@@ -128,62 +128,62 @@ prepareTable1 <- function(covariates,
         space,
         space,
         space,
-        .data$covariateName
+        covariateName
       ),
       header = 0,
-      valueCount = .data$sumValue
+      valueCount = sumValue
     ) %>%
     dplyr::select(
-      .data$cohortId,
-      .data$databaseId,
-      .data$covariateId,
-      .data$analysisId,
-      .data$sequence,
-      .data$header,
-      .data$labelOrder,
-      .data$characteristic,
-      .data$valueCount
+      cohortId,
+      databaseId,
+      covariateId,
+      analysisId,
+      sequence,
+      header,
+      labelOrder,
+      characteristic,
+      valueCount
     )
 
   table <- dplyr::bind_rows(tableHeaders, tableValues) %>%
-    dplyr::mutate(sequence = .data$sequence - .data$header) %>%
-    dplyr::arrange(.data$sequence) %>%
+    dplyr::mutate(sequence = sequence - header) %>%
+    dplyr::arrange(sequence) %>%
     dplyr::select(
-      .data$cohortId,
-      .data$databaseId,
-      .data$sequence,
-      .data$characteristic,
-      .data$valueCount
+      cohortId,
+      databaseId,
+      sequence,
+      characteristic,
+      valueCount
     ) %>%
-    dplyr::rename(count = .data$valueCount) %>%
+    dplyr::rename(count = valueCount) %>%
     dplyr::inner_join(cohort %>%
       dplyr::select(
-        .data$cohortId,
-        .data$shortName
+        cohortId,
+        shortName
       ),
     by = "cohortId"
     ) %>%
     dplyr::group_by(
-      .data$databaseId,
-      .data$characteristic,
-      .data$shortName
+      databaseId,
+      characteristic,
+      shortName
     ) %>%
     dplyr::summarise(
-      sequence = min(.data$sequence),
-      count = min(.data$count),
+      sequence = min(sequence),
+      count = min(count),
       .groups = "keep"
     ) %>%
     dplyr::ungroup() %>%
     tidyr::pivot_wider(
       id_cols = c(
-        .data$databaseId,
-        .data$characteristic,
-        .data$sequence
+        databaseId,
+        characteristic,
+        sequence
       ),
-      values_from = .data$count,
-      names_from = .data$shortName
+      values_from = count,
+      names_from = shortName
     ) %>%
-    dplyr::arrange(.data$sequence)
+    dplyr::arrange(sequence)
 
 
 
@@ -197,14 +197,14 @@ compareCohortCharacteristics <-
   function(characteristics1, characteristics2) {
     characteristics1Renamed <- characteristics1 %>%
       dplyr::rename(
-        sumValue1 = .data$sumValue,
+        sumValue1 = sumValue,
         mean1 = .data$mean,
         sd1 = .data$sd,
         cohortId1 = .data$cohortId
       )
     cohortId1Value <- characteristics1Renamed$cohortId1 %>% unique()
     if (length(cohortId1Value) > 1) {
-      stop("We can only compare one target cohort id to one comparator cohort id")
+      stop("Can only compare one target cohort id to one comparator cohort id")
     }
 
     characteristics2Renamed <- characteristics2 %>%
@@ -216,7 +216,7 @@ compareCohortCharacteristics <-
       )
     cohortId2Value <- characteristics2Renamed$cohortId2 %>% unique()
     if (length(cohortId2Value) > 1) {
-      stop("We can only compare one target cohort id to one comparator cohort id")
+      stop("Can only compare one target cohort id to one comparator cohort id")
     }
 
     characteristics <- characteristics1Renamed %>%
@@ -224,7 +224,6 @@ compareCohortCharacteristics <-
         characteristics2Renamed,
         na_matches = c("na"),
         by = c(
-          "databaseId",
           "timeId",
           "startDay",
           "endDay",
@@ -239,15 +238,25 @@ compareCohortCharacteristics <-
         )
       ) %>%
       dplyr::mutate(
-        sd = sqrt(.data$sd1^2 + .data$sd2^2),
-        stdDiff = (.data$mean2 - .data$mean1) / .data$sd
+        mean2 = ifelse(is.na(.data$mean2), 0, .data$mean2),
+        sd2 = ifelse(is.na(.data$sd2), 0, .data$sd2),
+        sd1 = ifelse(is.na(.data$sd1), 0, .data$sd1),
+        mean1 = ifelse(is.na(.data$mean1), 0, .data$mean1),
       ) %>%
+      dplyr::mutate(
+        sdd = sqrt(.data$sd1^2 + .data$sd2^2)
+      )
+
+    characteristics$stdDiff <- (characteristics$mean1 - characteristics$mean2) / characteristics$sdd
+
+    characteristics <- characteristics %>%
       dplyr::arrange(-abs(.data$stdDiff)) %>%
-      dplyr::mutate(stdDiff = dplyr::na_if(.data$sd, "Inf")) %>%
+      dplyr::mutate(stdDiff = dplyr::na_if(.data$stdDiff, 0)) %>%
       dplyr::mutate(
         absStdDiff = abs(.data$stdDiff),
         cohortId1 = !!cohortId1Value,
-        cohortId2 = !!cohortId2Value
+        cohortId2 = !!cohortId2Value,
       )
+
     return(characteristics)
   }

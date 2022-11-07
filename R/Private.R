@@ -55,10 +55,10 @@ swapColumnContents <-
   }
 
 enforceMinCellValue <-
-  function(data, fieldName, minValues, silent = FALSE) {
+  function(data, columnName, minValues, silent = FALSE) {
     toCensor <-
-      !is.na(data[, fieldName]) &
-        data[, fieldName] < minValues & data[, fieldName] != 0
+      !is.na(data[, columnName]) &
+        data[, columnName] < minValues & data[, columnName] != 0
     if (!silent) {
       percent <- round(100 * sum(toCensor) / nrow(data), 1)
       ParallelLogger::logInfo(
@@ -67,14 +67,14 @@ enforceMinCellValue <-
         " values (",
         percent,
         "%) from ",
-        fieldName,
+        columnName,
         " because value below minimum"
       )
     }
     if (length(minValues) == 1) {
-      data[toCensor, fieldName] <- -minValues
+      data[toCensor, columnName] <- -minValues
     } else {
-      data[toCensor, fieldName] <- -minValues[toCensor]
+      data[toCensor, columnName] <- -minValues[toCensor]
     }
     return(data)
   }
@@ -118,8 +118,6 @@ nullToEmpty <- function(x) {
   return(x)
 }
 
-
-
 makeDataExportable <- function(x,
                                tableName,
                                minCellCount = 5,
@@ -143,28 +141,28 @@ makeDataExportable <- function(x,
 
   fieldsInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
-    dplyr::pull(.data$fieldName) %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   requiredFieldsInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$isRequired == "Yes") %>%
-    dplyr::pull(.data$fieldName) %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   primaryKeyInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$primaryKey == "Yes") %>%
-    dplyr::pull(.data$fieldName) %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   columnsToApplyMinCellValue <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$minCellCount == "Yes") %>%
-    dplyr::pull(.data$fieldName) %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
@@ -207,8 +205,14 @@ makeDataExportable <- function(x,
     distinctRows <- x %>%
       dplyr::select(dplyr::all_of(primaryKeyInDataModel)) %>%
       dplyr::distinct() %>%
-      nrow()
-    if (nrow(x) > distinctRows) {
+      dplyr::count() %>%
+      dplyr::pull()
+
+    rowCount <- x %>%
+      dplyr::count() %>%
+      dplyr::pull()
+
+    if (rowCount > distinctRows) {
       stop(
         " - duplicates found in primary key for table ",
         tableName,
@@ -220,7 +224,8 @@ makeDataExportable <- function(x,
   ## because Andromeda is not handling date consistently -
   # https://github.com/OHDSI/Andromeda/issues/28
   ## temporary solution is to collect data into R memory using dplyr::collect()
-
+  # Note: this means that all data processed ends up fully in memory
+  # This could be changed with batch operations on andromeda objects
   x <- x %>%
     dplyr::collect()
 
@@ -235,6 +240,11 @@ makeDataExportable <- function(x,
         columnNames = columnsToApplyMinCellValue,
         minCellCount = minCellCount
       )
+  }
+
+  # Ensure that timeId is never NA
+  if ("timeId" %in% colnames(x)) {
+    x[is.na(x$timeId), ]$timeId <- 0
   }
   return(x)
 }
@@ -254,7 +264,7 @@ enforceMinCellValueInDataframe <- function(data,
       data <-
         enforceMinCellValue(
           data = data,
-          fieldName = presentInBoth[[i]],
+          columnName = presentInBoth[[i]],
           minValues = minCellCount
         )
     }
@@ -277,4 +287,49 @@ titleCaseToCamelCase <- function(string) {
 getTimeAsInteger <- function(time = Sys.time(),
                              tz = "UTC") {
   return(as.numeric(as.POSIXlt(time, tz = tz)))
+}
+
+
+getPrefixedTableNames <- function(tablePrefix) {
+  if (is.null(tablePrefix)) {
+    tablePrefix <- ""
+  }
+
+  if (grepl(" ", tablePrefix)) {
+    stop("Table prefix cannot include spaces")
+  }
+
+  dataModel <- getResultsDataModelSpecifications()
+  tableNames <- dataModel$tableName %>% unique()
+  resultList <- list()
+
+  for (tableName in tableNames) {
+    resultList[tableName] <- paste0(tablePrefix, tableName)
+  }
+
+  return(resultList)
+}
+
+#' Internal utility function for logging execution of variables
+timeExecution <- function(exportFolder,
+                          taskName,
+                          cohortIds = NULL,
+                          parent = NULL,
+                          start = NA,
+                          execTime = NA,
+                          expr = NULL) {
+  executionTimePath <- file.path(exportFolder, "executionTimes.csv")
+  if (is.na(start)) {
+    start <- Sys.time()
+    eval(expr)
+    execTime <- Sys.time() - start
+  }
+  executionTimes <- data.frame(task = taskName,
+                               startTime = start,
+                               cohortIds = paste(cohortIds, collapse = ";"),
+                               executionTime = execTime,
+                               parent = paste(parent, collapse = ""))
+
+  readr::write_csv(executionTimes, file = executionTimePath, append = file.exists(executionTimePath))
+  return(executionTimes)
 }

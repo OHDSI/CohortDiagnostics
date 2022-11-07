@@ -28,12 +28,17 @@
 #'                                   that might represent different versions of the OMOP vocabulary tables. It allows us to compare the impact
 #'                                   of vocabulary changes on Diagnostics. Not supported with an sqlite database.
 #' @param sqliteDbPath     Path to merged sqlite file. See \code{\link{createMergedResultsFile}} to create file.
+#' @param shinyConfigPath  Path to shiny yml configuration file (use instead of sqliteDbPath or connectionDetails object)
 #' @param runOverNetwork   (optional) Do you want the app to run over your network?
 #' @param port             (optional) Only used if \code{runOverNetwork} = TRUE.
 #' @param launch.browser   Should the app be launched in your default browser, or in a Shiny window.
 #'                         Note: copying to clipboard will not work in a Shiny window.
+#' @param enableAnnotation Enable annotation functionality in shiny app
 #' @param aboutText        Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 #'                         If not provided, no About tab will be shown.
+#' @param tablePrefix      (Optional)  string to insert before table names (e.g. "cd_") for database table names
+#' @param cohortTableName  (Optional) if cohort table name differs from the standard - cohort (ignores prefix if set)
+#' @param databaseTableName (Optional) if database table name differs from the standard - database (ignores prefix if set)
 #'
 #' @details
 #' Launches a Shiny app that allows the user to explore the diagnostics
@@ -41,60 +46,97 @@
 #' @export
 launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
                                       connectionDetails = NULL,
+                                      shinyConfigPath = NULL,
                                       resultsDatabaseSchema = NULL,
                                       vocabularyDatabaseSchema = NULL,
                                       vocabularyDatabaseSchemas = resultsDatabaseSchema,
+                                      tablePrefix = "",
+                                      cohortTableName = "cohort",
+                                      databaseTableName = "database",
                                       aboutText = NULL,
                                       runOverNetwork = FALSE,
                                       port = 80,
-                                      launch.browser = FALSE) {
-  sqliteDbPath <- normalizePath(sqliteDbPath)
-  if (is.null(connectionDetails)) {
-    if (!file.exists(sqliteDbPath)) {
-      stop("Sqlite database", sqliteDbPath, "not found. Please see createMergedSqliteResults")
+                                      launch.browser = FALSE,
+                                      enableAnnotation = TRUE) {
+
+  if (is.null(shinyConfigPath)) {
+    if (is.null(connectionDetails)) {
+      sqliteDbPath <- normalizePath(sqliteDbPath)
+      if (!file.exists(sqliteDbPath)) {
+        stop("Sqlite database", sqliteDbPath, "not found. Please see createMergedSqliteResults")
+      }
+
+      resultsDatabaseSchema <- "main"
+      vocabularyDatabaseSchemas <- "main"
+      connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
     }
 
-    resultsDatabaseSchema <- "main"
-    vocabularyDatabaseSchemas <- "main"
-    connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
-  }
+    if (is.null(resultsDatabaseSchema)) {
+      stop("resultsDatabaseSchema is required to connect to the database.")
+    }
+    if (!is.null(vocabularyDatabaseSchema) &
+      is.null(vocabularyDatabaseSchemas)) {
+      vocabularyDatabaseSchemas <- vocabularyDatabaseSchema
+      warning(
+        "vocabularyDatabaseSchema option is deprecated. Please use vocabularyDatabaseSchemas."
+      )
+    }
 
-  if (is.null(resultsDatabaseSchema)) {
-    stop("resultsDatabaseSchema is required to connect to the database.")
-  }
-  if (!is.null(vocabularyDatabaseSchema) &
-    is.null(vocabularyDatabaseSchemas)) {
-    vocabularyDatabaseSchemas <- vocabularyDatabaseSchema
-    warning(
-      "vocabularyDatabaseSchema option is deprecated. Please use vocabularyDatabaseSchemas."
+    if (cohortTableName == "cohort") {
+      cohortTableName <- paste0(tablePrefix, cohortTableName)
+    }
+
+    if (databaseTableName == "database") {
+      databaseTableName <- paste0(tablePrefix, databaseTableName)
+    }
+
+    .GlobalEnv$shinySettings <- list(
+      connectionDetails = connectionDetails,
+      resultsDatabaseSchema = resultsDatabaseSchema,
+      vocabularyDatabaseSchemas = vocabularyDatabaseSchemas,
+      aboutText = aboutText,
+      tablePrefix = tablePrefix,
+      cohortTableName = cohortTableName,
+      databaseTableName = databaseTableName,
+      enableAnnotation = enableAnnotation,
+      enableAuthorization = FALSE
     )
+
+    options("enableCdAnnotation" = enableAnnotation)
+    on.exit(rm("shinySettings", envir = .GlobalEnv))
+  } else {
+    checkmate::assertFileExists(shinyConfigPath)
+    options("CD-shiny-config" = normalizePath(shinyConfigPath))
+    on.exit(options("CD-shiny-config" = NULL))
   }
 
-  ensure_installed("checkmate")
-  ensure_installed("DatabaseConnector")
-  ensure_installed("dplyr")
-  ensure_installed("plyr")
-  ensure_installed("ggplot2")
-  ensure_installed("ggiraph")
-  ensure_installed("gtable")
-  ensure_installed("htmltools")
-  ensure_installed("lubridate")
-  ensure_installed("pool")
-  ensure_installed("purrr")
-  ensure_installed("scales")
-  ensure_installed("shiny")
-  ensure_installed("shinydashboard")
-  ensure_installed("shinyWidgets")
-  ensure_installed("shinyjs")
-  ensure_installed("shinycssloaders")
-  ensure_installed("stringr")
-  ensure_installed("SqlRender")
-  ensure_installed("tidyr")
-  ensure_installed("CirceR")
-  ensure_installed("rmarkdown")
-  ensure_installed("reactable")
-  ensure_installed("markdownInput")
-  ensure_installed("markdown")
+  ensure_installed(c("checkmate",
+                     "DatabaseConnector",
+                     "dplyr",
+                     "plyr",
+                     "ggplot2",
+                     "ggiraph",
+                     "gtable",
+                     "htmltools",
+                     "lubridate",
+                     "pool",
+                     "purrr",
+                     "scales",
+                     "shiny",
+                     "shinydashboard",
+                     "shinyWidgets",
+                     "shinyjs",
+                     "shinycssloaders",
+                     "stringr",
+                     "SqlRender",
+                     "tidyr",
+                     "CirceR",
+                     "rmarkdown",
+                     "reactable",
+                     "markdownInput",
+                     "markdown",
+                     "jsonlite",
+                     "yaml"))
 
   appDir <-
     system.file("shiny", "DiagnosticsExplorer", package = utils::packageName())
@@ -110,14 +152,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     options(shiny.port = port)
     options(shiny.host = myIpAddress)
   }
-  .GlobalEnv$shinySettings <- list(
-    connectionDetails = connectionDetails,
-    resultsDatabaseSchema = resultsDatabaseSchema,
-    vocabularyDatabaseSchemas = vocabularyDatabaseSchemas,
-    aboutText = aboutText,
-    enableAnnotation = FALSE
-  )
-  on.exit(rm("shinySettings", envir = .GlobalEnv))
+
   shiny::runApp(appDir = appDir)
 }
 
@@ -135,11 +170,13 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
 #'                         folder.
 #' @param sqliteDbPath     Output path where sqlite database is placed
 #' @param overwrite        (Optional) overwrite existing sqlite lite db if it exists.
+#' @param tablePrefix      (Optional) string to insert before table names (e.g. "cd_") for database table names
 #' @export
 createMergedResultsFile <-
   function(dataFolder,
            sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
-           overwrite = FALSE) {
+           overwrite = FALSE,
+           tablePrefix = "") {
     if (file.exists(sqliteDbPath) & !overwrite) {
       stop("File ", sqliteDbPath, " already exists. Set overwrite = TRUE to replace")
     } else if (file.exists(sqliteDbPath)) {
@@ -150,8 +187,9 @@ createMergedResultsFile <-
     connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
     createResultsDataModel(
-      connection = connection,
-      schema = "main"
+      connectionDetails = connectionDetails,
+      databaseSchema = "main",
+      tablePrefix = tablePrefix
     )
     listOfZipFilesToUpload <-
       list.files(
@@ -165,9 +203,11 @@ createMergedResultsFile <-
       uploadResults(
         connectionDetails = connectionDetails,
         schema = "main",
-        zipFileName = zipFileName
+        zipFileName = zipFileName,
+        tablePrefix = tablePrefix
       )
     }
+    DatabaseConnector::renderTranslateExecuteSql(connection, "VACUUM;")
   }
 
 #' Create publishable shiny zip
@@ -188,7 +228,7 @@ createMergedResultsFile <-
 createDiagnosticsExplorerZip <- function(outputZipfile = file.path(getwd(), "DiagnosticsExplorer.zip"),
                                          sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
                                          shinyDirectory = system.file(file.path("shiny", "DiagnosticsExplorer"),
-                                           package = "CohortDiagnostics"
+                                                                      package = "CohortDiagnostics"
                                          ),
                                          overwrite = FALSE) {
   outputZipfile <- normalizePath(outputZipfile, mustWork = FALSE)
@@ -239,12 +279,12 @@ launchCohortExplorer <- function(connectionDetails,
                                  cohortId,
                                  sampleSize = 100,
                                  subjectIds = NULL) {
-  ensure_installed("shiny")
-  ensure_installed("DT")
-  ensure_installed("plotly")
-  ensure_installed("RColorBrewer")
-  ensure_installed("ggplot2")
-  ensure_installed("magrittr")
+  ensure_installed(c("shiny",
+                     "DT",
+                     "plotly",
+                     "RColorBrewer",
+                     "ggplot2",
+                     "magrittr"))
 
   .GlobalEnv$shinySettings <-
     list(
@@ -262,40 +302,22 @@ launchCohortExplorer <- function(connectionDetails,
   shiny::runApp(appDir)
 }
 
-# Borrowed from devtools:
-# https://github.com/hadley/devtools/blob/ba7a5a4abd8258c52cb156e7b26bb4bf47a79f0b/R/utils.r#L44
-is_installed <- function(pkg, version = 0) {
-  installed_version <-
-    tryCatch(
-      utils::packageVersion(pkg),
-      error = function(e) {
-        NA
-      }
-    )
-  !is.na(installed_version) && installed_version >= version
-}
+ensure_installed <- function(pkgs) {
+  notInstalled <- pkgs[!(pkgs %in% rownames(installed.packages()))]
 
-# Borrowed and adapted from devtools:
-# https://github.com/hadley/devtools/blob/ba7a5a4abd8258c52cb156e7b26bb4bf47a79f0b/R/utils.r#L74
-ensure_installed <- function(pkg) {
-  if (!is_installed(pkg)) {
-    msg <-
-      paste0(sQuote(pkg), " must be installed for this functionality.")
-    if (interactive()) {
-      message(msg, "\nWould you like to install it?")
-      if (menu(c("Yes", "No")) == 1) {
-        if (pkg == "CirceR") {
-          ensure_installed("remotes")
-          message(msg, "\nInstalling from Github using remotes")
-          remotes::install_github("OHDSI/CirceR")
-        } else {
-          install.packages(pkg)
-        }
-      } else {
-        stop(msg, call. = FALSE)
-      }
+  if (interactive() & length(notInstalled) > 0) {
+    message(paste("Package(s): ", paste(paste(notInstalled, collapse = ", "), "not installed")))
+    if (!isTRUE(utils::askYesNo("Would you like to install them?"))) {
+      return(invisible(NULL))
+    }
+  }
+  for (pkg in notInstalled) {
+    if (pkg == "CirceR") {
+      ensure_installed("remotes")
+      message("\nInstalling from Github using remotes")
+      remotes::install_github("OHDSI/CirceR")
     } else {
-      stop(msg, call. = FALSE)
+      install.packages(pkg)
     }
   }
 }

@@ -1,3 +1,46 @@
+CohortDiagnostics 3.1.0
+=======================
+Changes:
+
+1. Major refactoring of shiny app to use modular code for ease of maintenance
+
+2. Some tests for shiny modules in `inst/shiny/DiagnosticsExplorer/tests`
+
+3. Added support for table prefixes in Diagnostics Explorer databases (e.g. cg_cohort_definition)
+
+4. Enabled annotation on local instances of DiagnosticsExplorer
+
+5. Added yaml configuration for diagnostics explorer app, including docs on usage
+
+6. Storage of version number in database results file to allow future migrations
+
+7. Slight optimization of cohort characterization queries in diagnostics explorer
+
+8. Support for database migrations by adding `migrateDataModel` functionality.
+Versions of data generated with CohortDiagnostics 3.0.0 are intended to be future compatible.
+i.e. if you have an sqlite results file or postgres database generated with version 3.0.0 of cohort diagnostics
+new shiny app functionality will be supported if you run ``migrateDataModel`` on it.
+
+9. Changed type to dataType and fieldName to columnName to align with strategus modules
+
+9. Refactored export of characterization results to use common export
+
+10. Ensure that tests cases always use a continuous covariate
+
+11. Batch operations for executing cohort relationship, time series, and feature extraction based diagnostics.
+
+13. New parameter minCharacterizationMean. This introduces a cut off for the output of FeatureExtraction. In the absence of the parameter the output would have atleast one row for every covariateId in the datasource  - most having very low count to be useful for diagnostics.
+
+Bug fixes:
+
+1. Fixed issue uploading results to postgres db caused by null values in primary key field. 
+Removed constraint to fix issue.
+
+2. Fix for `index_event_breakdown` having duplicate entries where concept is observed in the same domain multiple times
+
+3. Many other issues resolved in shiny codebase
+
+
 CohortDiagnostics 3.0.3
 =======================
 

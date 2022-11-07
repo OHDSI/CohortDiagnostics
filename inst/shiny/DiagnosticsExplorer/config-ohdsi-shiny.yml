@@ -1,0 +1,34 @@
+# Alter these configuration settings for usage with remote databases
+connectionDetails:
+  dbms: "postgresql"
+  port: 5432
+
+# Store connection details as a json string in keyring
+# Store with keyring::key_set_with_value("KEYNAME", jsonlite::toJSON(myConnectionDetails))
+connectionDetailsSecureKey: ~
+
+# store connection details with environment variables
+# Note - if dbms and port vars are unset in environment variables they will default to above connectionDetails settings
+connectionEnvironmentVariables:
+  dbms: ~
+  database: "shinydbDatabase"
+  server: "shinydbServer"
+  user: "shinydbUser"
+  password: "shinydbPw"
+  port: "shinydbPort"
+  extraSettings: ~
+
+tablePrefix: ""
+resultsDatabaseSchema: "some_schema"
+vocabularyDatabaseSchemas: ["some_schema"]
+cohortTableName: "cohort"
+databaseTableName: "database"
+
+enableAnnotation: TRUE
+enableAuthorization: TRUE
+
+### if you need a way to authorize users
+### generate hash using code like digest::digest("diagnostics",algo = "sha512")
+### store in external file called UserCredentials.csv - with fields userId, hashCode
+### place the file in the root folder
+userCredentialsFile: UserCredentials.csv

@@ -8,13 +8,11 @@ runCohortRelationshipDiagnostics(
   connectionDetails = NULL,
   connection = NULL,
   cohortDatabaseSchema = NULL,
-  cdmDatabaseSchema,
   tempEmulationSchema = NULL,
   cohortTable = "cohort",
   targetCohortIds,
   comparatorCohortIds,
-  relationshipDays,
-  observationPeriodRelationship = TRUE
+  relationshipDays
 )
 }
 \arguments{
@@ -33,10 +31,6 @@ of the function, and closed when the function finishes.}
 this should include both the database and schema name, for example
 'scratch.dbo'.}
 
-\item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'cdm_data.dbo'.}
-
 \item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
 tables, provide a schema with write privileges where temp tables can be created.}
 
@@ -47,8 +41,6 @@ tables, provide a schema with write privileges where temp tables can be created.
 \item{comparatorCohortIds}{A vector of one or more Cohort Ids for use as feature/comparator cohorts.}
 
 \item{relationshipDays}{A dataframe with two columns startDay and endDay representing periods of time to compute relationship}
-
-\item{observationPeriodRelationship}{Do you want to compute temporal relationship between target cohort and observation period table?}
 }
 \description{
 Given a set of cohorts, get temporal relationships between the

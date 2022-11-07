@@ -4,8 +4,9 @@ formatDataCellValueInDisplayTable <-
       reactable::JS(
         "function(data) {
           if (isNaN(parseFloat(data.value))) return data.value;
+          if (Number.isInteger(data.value) && data.value > 0) return (100 * data.value).toFixed(0).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
           if (data.value > 999) return (100 * data.value).toFixed(2).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
-          if (data.value < 0) return '<' + (Math.abs(data.value) * 100).toFixed(1) + '%';
+          if (data.value < 0) return '<' + (Math.abs(data.value) * 100).toFixed(2) + '%';
           return (100 * data.value).toFixed(1) + '%';
         }"
       )
@@ -13,8 +14,9 @@ formatDataCellValueInDisplayTable <-
       reactable::JS(
         "function(data) {
           if (isNaN(parseFloat(data.value))) return data.value;
+          if (Number.isInteger(data.value) && data.value > 0) return data.value.toFixed(0).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
           if (data.value > 999) return data.value.toFixed(1).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
-          if (data.value < 0) return  '<' + Math.abs(data.value.toFixed(2));
+          if (data.value < 0) return  '<' + Math.abs(data.value.toFixed(3));
           return data.value.toFixed(1);
         }"
       )
@@ -72,20 +74,20 @@ getDisplayTableHeaderCount <-
           cohortIds = cohortIds,
           databaseIds = databaseIds
         ) %>%
-        dplyr::rename(
-          records = .data$cohortEntries,
-          persons = .data$cohortSubjects
-        )
+          dplyr::rename(
+            records = cohortEntries,
+            persons = cohortSubjects
+          )
     }
 
     if (fields %in% c("Persons")) {
       countsForHeader <- countsForHeader %>%
-        dplyr::select(-.data$records) %>%
-        dplyr::rename(count = .data$persons)
+        dplyr::select(-records) %>%
+        dplyr::rename(count = persons)
     } else if (fields %in% c("Events", "Records")) {
       countsForHeader <- countsForHeader %>%
-        dplyr::select(-.data$persons) %>%
-        dplyr::rename(count = .data$records)
+        dplyr::select(-persons) %>%
+        dplyr::rename(count = records)
     }
     return(countsForHeader)
   }
@@ -125,9 +127,23 @@ prepDataForDisplay <- function(data,
   return(data)
 }
 
+pallete <- function(x) {
+  cr <- colorRamp(c("white", "#9ccee7"))
+  col <- "#ffffff"
+  tryCatch({
+    if (x > 1.0) {
+      x <- 1
+    }
+
+    col <- rgb(cr(x), maxColorValue = 255)
+  }, error = function(...) {
+  })
+  return(col)
+}
+
 getDisplayTableGroupedByDatabaseId <- function(data,
                                                cohort,
-                                               database,
+                                               databaseTable,
                                                headerCount = NULL,
                                                keyColumns,
                                                dataColumns,
@@ -153,21 +169,27 @@ getDisplayTableGroupedByDatabaseId <- function(data,
       values_to = "valuesData"
     )
 
+  data <- data %>%
+    dplyr::inner_join(databaseTable %>%
+                        dplyr::select(databaseId, databaseName),
+                      by = "databaseId")
+
   if (isTemporal) {
     data <- data %>%
       dplyr::mutate(type = paste0(
-        .data$databaseId,
-        .data$temporalChoices,
+        databaseId,
+        "-",
+        temporalChoices,
         "_sep_",
-        .data$type
+        type
       ))
     distinctColumnGroups <- data$temporalChoices %>% unique()
   } else {
     data <- data %>%
       dplyr::mutate(type = paste0(
-        .data$databaseId,
+        databaseId,
         "_sep_",
-        .data$type
+        type
       ))
     distinctColumnGroups <- data$databaseId %>% unique()
   }
@@ -219,7 +241,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
       columnTotalMaxWidth + displayTableColumnMinMaxWidth$maxValue
     if (class(data[[keyColumns[[i]]]]) == "logical") {
       data[[keyColumns[[i]]]] <- ifelse(data[[keyColumns[[i]]]],
-        as.character(icon("check")), ""
+                                        as.character(icon("check")), ""
       )
     }
 
@@ -228,7 +250,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     columnDefinitions[[columnName]] <-
       reactable::colDef(
         name = columnName,
-        sortable = TRUE,
+        sortable = sort,
         resizable = TRUE,
         filterable = TRUE,
         show = TRUE,
@@ -261,7 +283,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     if (!is.null(headerCount)) {
       if (countLocation == 2) {
         filteredHeaderCount <- headerCount %>%
-          dplyr::filter(.data$databaseId == columnNameWithDatabaseAndCount[1])
+          dplyr::filter(databaseId == columnNameWithDatabaseAndCount[1])
         columnCount <- filteredHeaderCount[[columnName]]
         columnName <-
           paste0(columnName, " (", scales::comma(columnCount), ")")
@@ -281,7 +303,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
       reactable::colDef(
         name = SqlRender::camelCaseToTitleCase(columnName),
         cell = formatDataCellValueInDisplayTable(showDataAsPercent = showPercent),
-        sortable = TRUE,
+        sortable = sort,
         resizable = FALSE,
         filterable = TRUE,
         show = TRUE,
@@ -291,21 +313,17 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         na = "",
         align = "left",
         style = function(value) {
-          if (class(value) != "character") {
-            list(
-              backgroundImage = sprintf(
-                "linear-gradient(90deg, %1$s %2$s, transparent %2$s)",
-                "#9ccee7",
-                paste0((value / maxValue) * 100, "%")
-              ),
-              backgroundSize = paste("100%", "100%"),
-              backgroundRepeat = "no-repeat",
-              backgroundPosition = "center",
-              color = "#000"
-            )
-          } else {
-            list()
+          color <- '#fff'
+          dt <- data[[dataColumns[i]]]
+          if (is.list(dt)) {
+            dt <- dt %>% unlist()
           }
+          if (is.numeric(value) & hasData(dt)) {
+            value <- ifelse(is.na(value), min(dt, na.rm = TRUE), value)
+            normalized <- (value - min(dt, na.rm = TRUE)) / (max(dt, na.rm = TRUE) - min(dt, na.rm = TRUE))
+            color <- pallete(normalized)
+          }
+          list(background = color)
         }
       )
   }
@@ -313,6 +331,12 @@ getDisplayTableGroupedByDatabaseId <- function(data,
     columnTotalMaxWidth <- "auto"
     columnTotalMinWidth <- "auto"
   }
+
+  dbNameMap <- list()
+  for (i in 1:nrow(databaseTable)) {
+    dbNameMap[[databaseTable[i,]$databaseId]] <- databaseTable[i,]$databaseName
+  }
+
 
   columnGroups <- list()
   for (i in 1:length(distinctColumnGroups)) {
@@ -322,19 +346,19 @@ getDisplayTableGroupedByDatabaseId <- function(data,
         pattern = stringr::fixed(distinctColumnGroups[i])
       )]
 
-    columnName <- distinctColumnGroups[i]
+    columnName <- dbNameMap[[distinctColumnGroups[i]]]
 
     if (!is.null(headerCount)) {
       if (countLocation == 1) {
         columnName <- headerCount %>%
-          dplyr::filter(.data$databaseId == distinctColumnGroups[i]) %>%
+          dplyr::filter(databaseId == distinctColumnGroups[i]) %>%
           dplyr::mutate(count = paste0(
-            .data$databaseId,
+            databaseName,
             " (",
-            scales::comma(.data$count),
+            scales::comma(count),
             ")"
           )) %>%
-          dplyr::pull(.data$count)
+          dplyr::pull(count)
       }
     }
     columnGroups[[i]] <-
@@ -349,7 +373,7 @@ getDisplayTableGroupedByDatabaseId <- function(data,
       data = data,
       columns = columnDefinitions,
       columnGroups = columnGroups,
-      sortable = TRUE,
+      sortable = sort,
       resizable = TRUE,
       filterable = TRUE,
       searchable = TRUE,
@@ -360,8 +384,8 @@ getDisplayTableGroupedByDatabaseId <- function(data,
       striped = TRUE,
       compact = TRUE,
       wrap = FALSE,
-      showSortIcon = TRUE,
-      showSortable = TRUE,
+      showSortIcon = sort,
+      showSortable = sort,
       fullWidth = TRUE,
       bordered = TRUE,
       showPageSizeOptions = TRUE,
@@ -384,6 +408,7 @@ getDisplayTableSimple <- function(data,
                                   selection = NULL,
                                   showDataAsPercent = FALSE,
                                   defaultSelected = NULL,
+                                  databaseTable = NULL,
                                   pageSize = 20) {
   data <- prepDataForDisplay(
     data = data,
@@ -412,7 +437,7 @@ getDisplayTableSimple <- function(data,
             if (value) {
               "\u2714\ufe0f"
             } else {
-              ""
+              "\u274C"
             }
           }
         },
@@ -434,37 +459,27 @@ getDisplayTableSimple <- function(data,
 
     for (i in (1:length(dataColumns))) {
       columnName <- SqlRender::camelCaseToTitleCase(dataColumns[i])
-      colnames(data)[which(names(data) == dataColumns[i])] <-
-        columnName
-      columnDefinitions[[columnName]] <-
-        reactable::colDef(
-          name = columnName,
-          cell = formatDataCellValueInDisplayTable(showDataAsPercent = showDataAsPercent),
-          sortable = TRUE,
-          resizable = FALSE,
-          filterable = TRUE,
-          show = TRUE,
-          html = TRUE,
-          na = "",
-          align = "left",
-          style = function(value) {
-            if (class(value) != "character") {
-              list(
-                backgroundImage = sprintf(
-                  "linear-gradient(90deg, %1$s %2$s, transparent %2$s)",
-                  "#9ccee7",
-                  paste0((value / maxValue) * 100, "%")
-                ),
-                backgroundSize = paste("100%", "100%"),
-                backgroundRepeat = "no-repeat",
-                backgroundPosition = "center",
-                color = "#000"
-              )
-            } else {
-              list()
-            }
+      colnames(data)[which(names(data) == dataColumns[i])] <- columnName
+      columnDefinitions[[columnName]] <- reactable::colDef(
+        name = columnName,
+        cell = formatDataCellValueInDisplayTable(showDataAsPercent = showDataAsPercent),
+        sortable = TRUE,
+        resizable = FALSE,
+        filterable = TRUE,
+        show = TRUE,
+        html = TRUE,
+        na = "",
+        align = "left",
+        style = function(value) {
+          color <- '#fff'
+          if (is.numeric(value) & hasData(data[[columnName]])) {
+            value <- ifelse(is.na(value), min(data[[columnName]], na.rm = TRUE), value)
+            normalized <- (value - min(data[[columnName]], na.rm = TRUE)) / (maxValue - min(data[[columnName]], na.rm = TRUE))
+            color <- pallete(normalized)
           }
-        )
+          list(background = color)
+        }
+      )
     }
   }
 
@@ -499,7 +514,7 @@ getDisplayTableSimple <- function(data,
   return(dataTable)
 }
 
-
+# This is bad
 getMaxValueForStringMatchedColumnsInDataFrame <-
   function(data, string) {
     if (!hasData(data)) {
@@ -512,9 +527,13 @@ getMaxValueForStringMatchedColumnsInDataFrame <-
     data <- data %>%
       dplyr::select(dplyr::all_of(string)) %>%
       tidyr::pivot_longer(values_to = "value", cols = dplyr::everything()) %>%
-      dplyr::filter(!is.na(.data$value)) %>%
-      dplyr::pull(.data$value)
-
+      dplyr::filter(!is.na(value)) %>%
+      dplyr::pull(value)
+    
+    if (is.list(data)) {
+      data <- data %>% unlist()
+    }
+    
     if (!hasData(data)) {
       return(0)
     } else {
@@ -552,7 +571,7 @@ getDisplayTableColumnMinMaxWidth <- function(data,
   if ("logical" %in% class(data[[columnName]])) {
     maxWidth <-
       max(stringr::str_length(columnNameFormatted) * pixelMultipler,
-        na.rm = TRUE
+          na.rm = TRUE
       ) + padPixel
     minWidth <-
       (stringr::str_length(columnNameFormatted) * pixelMultipler) + padPixel
@@ -568,8 +587,8 @@ getDisplayTableColumnMinMaxWidth <- function(data,
       ), na.rm = TRUE) * pixelMultipler) + padPixel # to pad for table icon like sort
     minWidth <-
       min(stringr::str_length(columnNameFormatted) * pixelMultipler,
-        maxWidth,
-        na.rm = TRUE
+          maxWidth,
+          na.rm = TRUE
       ) + padPixel
   }
 
@@ -580,87 +599,13 @@ getDisplayTableColumnMinMaxWidth <- function(data,
   return(data)
 }
 
-exportCohortDetailsAsZip <- function(dataSource,
-                                     cohort,
-                                     cohortIds = NULL,
-                                     zipFile = NULL) {
-  rootFolder <-
-    stringr::str_replace_all(
-      string = Sys.time(),
-      pattern = "-",
-      replacement = ""
-    )
-  rootFolder <-
-    stringr::str_replace_all(
-      string = rootFolder,
-      pattern = ":",
-      replacement = ""
-    )
-  tempdir <- file.path(tempdir(), rootFolder)
 
-  for (i in (1:nrow(cohort))) {
-    cohortId <- cohort[i, ]$cohortId
-    dir.create(
-      path = file.path(tempdir, cohortId),
-      recursive = TRUE,
-      showWarnings = FALSE
-    )
-    cohortExpression <- cohort[i, ]$json %>%
-      RJSONIO::fromJSON(digits = 23)
+csvDownloadButton <- function(ns,
+                              outputTableId,
+                              buttonText = "Download CSV (filtered)") {
 
-    details <-
-      getCirceRenderedExpression(cohortDefinition = cohortExpression)
-
-    SqlRender::writeSql(
-      sql = details$cohortJson,
-      targetFile = file.path(
-        tempdir,
-        cohortId,
-        paste0("cohortDefinitionJson_", cohortId, ".json")
-      )
-    )
-    SqlRender::writeSql(
-      sql = details$cohortMarkdown,
-      targetFile = file.path(
-        tempdir,
-        cohortId,
-        paste0("cohortDefinitionMarkdown_", cohortId, ".md")
-      )
-    )
-
-    SqlRender::writeSql(
-      sql = details$conceptSetMarkdown,
-      targetFile = file.path(
-        tempdir,
-        cohortId,
-        paste0("conceptSetMarkdown_", cohortId, ".md")
-      )
-    )
-
-    SqlRender::writeSql(
-      sql = details$cohortHtmlExpression,
-      targetFile = file.path(
-        tempdir,
-        cohortId,
-        paste0("cohortDefinitionHtml_", cohortId, ".html")
-      )
-    )
-
-    SqlRender::writeSql(
-      sql = details$conceptSetHtmlExpression,
-      targetFile = file.path(
-        tempdir,
-        cohortId,
-        paste0("conceptSetsHtml_", cohortId, ".html")
-      )
-    )
-  }
-
-  return(
-    DatabaseConnector::createZipFile(
-      zipFile = zipFile,
-      files = tempdir,
-      rootFolder = tempdir
-    )
-  )
+  shiny::tagList(
+    shiny::tags$br(),
+    shiny::tags$button(buttonText,
+                       onclick = paste0("Reactable.downloadDataCSV('", ns(outputTableId), "')")))
 }

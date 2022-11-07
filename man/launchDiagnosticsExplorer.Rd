@@ -7,13 +7,18 @@
 launchDiagnosticsExplorer(
   sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
   connectionDetails = NULL,
+  shinyConfigPath = NULL,
   resultsDatabaseSchema = NULL,
   vocabularyDatabaseSchema = NULL,
   vocabularyDatabaseSchemas = resultsDatabaseSchema,
+  tablePrefix = "",
+  cohortTableName = "cohort",
+  databaseTableName = "database",
   aboutText = NULL,
   runOverNetwork = FALSE,
   port = 80,
-  launch.browser = FALSE
+  launch.browser = FALSE,
+  enableAnnotation = TRUE
 )
 }
 \arguments{
@@ -25,6 +30,8 @@ DatabaseConnector package, specifying how to connect to the server where
 the CohortDiagnostics results have been uploaded using the
 \code{\link{uploadResults}} function.}
 
+\item{shinyConfigPath}{Path to shiny yml configuration file (use instead of sqliteDbPath or connectionDetails object)}
+
 \item{resultsDatabaseSchema}{The schema on the database server where the CohortDiagnostics results
 have been uploaded.}
 
@@ -35,6 +42,12 @@ The default value is the value of the resultsDatabaseSchema. We can provide a li
 that might represent different versions of the OMOP vocabulary tables. It allows us to compare the impact
 of vocabulary changes on Diagnostics. Not supported with an sqlite database.}
 
+\item{tablePrefix}{(Optional)  string to insert before table names (e.g. "cd_") for database table names}
+
+\item{cohortTableName}{(Optional) if cohort table name differs from the standard - cohort (ignores prefix if set)}
+
+\item{databaseTableName}{(Optional) if database table name differs from the standard - database (ignores prefix if set)}
+
 \item{aboutText}{Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 If not provided, no About tab will be shown.}
 
@@ -44,6 +57,8 @@ If not provided, no About tab will be shown.}
 
 \item{launch.browser}{Should the app be launched in your default browser, or in a Shiny window.
 Note: copying to clipboard will not work in a Shiny window.}
+
+\item{enableAnnotation}{Enable annotation functionality in shiny app}
 }
 \description{
 Launch the Diagnostics Explorer Shiny app

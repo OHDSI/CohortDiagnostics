@@ -9,8 +9,8 @@ executeDiagnostics(
   exportFolder,
   databaseId,
   cohortDatabaseSchema,
-  databaseName = databaseId,
-  databaseDescription = databaseId,
+  databaseName = NULL,
+  databaseDescription = NULL,
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
@@ -29,24 +29,9 @@ executeDiagnostics(
   runIncidenceRate = TRUE,
   runCohortRelationship = TRUE,
   runTemporalCohortCharacterization = TRUE,
- 
-    temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useDemographicsGender
-    = TRUE, useDemographicsAge = TRUE, useDemographicsAgeGroup = TRUE,
-    useDemographicsRace = TRUE, useDemographicsEthnicity = TRUE, useDemographicsIndexYear
-    = TRUE, useDemographicsIndexMonth = TRUE, useDemographicsIndexYearMonth = TRUE,
-    useDemographicsPriorObservationTime = TRUE, useDemographicsPostObservationTime =
-    TRUE, useDemographicsTimeInCohort = TRUE, useConditionOccurrence = TRUE,
-    useProcedureOccurrence = TRUE, useDrugEraStart = TRUE, 
-     useMeasurement = TRUE,
-    useConditionEraStart = TRUE, useConditionEraOverlap = TRUE, useConditionEraGroupStart
-    = FALSE, useConditionEraGroupOverlap = TRUE, useDrugExposure = FALSE,
-    useDrugEraOverlap = FALSE, useDrugEraGroupStart = FALSE, useDrugEraGroupOverlap =
-    TRUE, useObservation = TRUE, useDeviceExposure = TRUE, useCharlsonIndex = TRUE,
-    useDcsi = TRUE, useChads2 = TRUE, useChads2Vasc = TRUE, useHfrs = FALSE,
-    temporalStartDays = c(-9999, -365, -180, -30, -365, -30, 0, 1, 31, -9999),
-    temporalEndDays = c(0, 
-         0, 0, 0, -31, -1, 0, 30, 365, 9999)),
+  temporalCovariateSettings = getDefaultCovariateSettings(),
   minCellCount = 5,
+  minCharacterizationMean = 0.01,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental")
 )
@@ -63,9 +48,9 @@ does not exist it will be created.}
 this should include both the database and schema name, for example
 'scratch.dbo'.}
 
-\item{databaseName}{The full name of the database. If NULL, defaults to databaseId.}
+\item{databaseName}{The full name of the database. If NULL, defaults to value in cdm_source table}
 
-\item{databaseDescription}{A short description (several sentences) of the database. If NULL, defaults to databaseId.}
+\item{databaseDescription}{A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table}
 
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
@@ -124,6 +109,10 @@ the createTemporalCovariateSettings function in the FeatureExtraction package, o
 of such objects.}
 
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
+
+\item{minCharacterizationMean}{The minimum mean value for characterization output. Values below this will be cut off from output. This
+will help reduce the file size of the characterization output, but will remove information
+on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)}
 
 \item{incremental}{Create only cohort diagnostics that haven't been created before?}
 

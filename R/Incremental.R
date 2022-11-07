@@ -125,11 +125,11 @@ recordTasksDone <-
         as.character(recordKeeping$timeStamp)
       if ("cohortId" %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
-          dplyr::mutate(cohortId = as.double(.data$cohortId))
+          dplyr::mutate(cohortId = as.double(cohortId))
       }
       if ("comparatorId" %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
-          dplyr::mutate(comparatorId = as.double(.data$comparatorId))
+          dplyr::mutate(comparatorId = as.double(comparatorId))
       }
       idx <- getKeyIndex(list(...), recordKeeping)
       if (length(idx) > 0) {
@@ -142,10 +142,15 @@ recordTasksDone <-
     newRow$checksum <- checksum
     newRow$timeStamp <- as.character(Sys.time())
     recordKeeping <- dplyr::bind_rows(recordKeeping, newRow)
-    readr::write_csv(recordKeeping, recordKeepingFile)
+    readr::write_csv(x = recordKeeping, file = recordKeepingFile, na = "")
   }
 
 writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
+  UseMethod("writeToCsv", data)
+}
+
+
+writeToCsv.default <- function(data, fileName, incremental = FALSE, ...) {
   colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
   if (incremental) {
     params <- list(...)
@@ -174,23 +179,24 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
       delim = ","
     )
   }
+
 }
 
-writeCovariateDataAndromedaToCsv <-
-  function(data, fileName, incremental = FALSE) {
+writeToCsv.tbl_Andromeda <-
+  function(data, fileName, incremental = FALSE, ...) {
     if (incremental && file.exists(fileName)) {
       ParallelLogger::logDebug("Appending records to ", fileName)
       batchSize <- 1e5
 
       cohortIds <- data %>%
-        distinct(.data$cohortId) %>%
+        distinct(cohortId) %>%
         pull()
 
       tempName <- paste0(fileName, "2")
 
       processChunk <- function(chunk, pos) {
         chunk <- chunk %>%
-          filter(!.data$cohort_id %in% cohortIds)
+          filter(!cohort_id %in% cohortIds)
         readr::write_csv(chunk, tempName, append = (pos != 1))
       }
 
@@ -203,6 +209,14 @@ writeCovariateDataAndromedaToCsv <-
       )
 
       addChunk <- function(chunk) {
+        if ("timeId" %in% colnames(chunk)) {
+          if (nrow(chunk[is.na(chunk$timeId),]) > 0) {
+            chunk[is.na(chunk$timeId),]$timeId <- 0
+          }
+        } else {
+          chunk$timeId <- 0
+        }
+
         colnames(chunk) <- SqlRender::camelCaseToSnakeCase(colnames(chunk))
         readr::write_csv(chunk, tempName, append = TRUE)
       }
@@ -222,6 +236,14 @@ writeCovariateDataAndromedaToCsv <-
       }
       writeToFile <- function(batch) {
         first <- !file.exists(fileName)
+        if ("timeId" %in% colnames(batch)) {
+          if (nrow(batch[is.na(batch$timeId), ]) > 0) {
+            batch[is.na(batch$timeId), ]$timeId <- 0
+          }
+        } else {
+          batch$timeId <- 0
+        }
+
         if (first) {
           colnames(batch) <- SqlRender::camelCaseToSnakeCase(colnames(batch))
         }
@@ -244,6 +266,10 @@ saveIncremental <- function(data, fileName, ...) {
       lazy = FALSE
     )
     if ((nrow(previousData)) > 0) {
+      if("database_id" %in% colnames(previousData)) {
+        previousData$database_id <- as.character(previousData$database_id)
+      }
+
       if (!length(list(...)) == 0) {
         idx <- getKeyIndex(list(...), previousData)
       } else {
@@ -291,6 +317,8 @@ subsetToRequiredCombis <-
       tasks <- getRequiredTasks(
         cohortId = combis$targetCohortId,
         comparatorId = combis$comparatorCohortId,
+        targetChecksum = combis$targetChecksum,
+        comparatorChecksum = combis$comparatorChecksum,
         task = task,
         checksum = combis$checksum,
         recordKeepingFile = recordKeepingFile

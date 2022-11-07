@@ -85,6 +85,50 @@ test_that("Cohort diagnostics in incremental mode", {
   # File exists
   expect_error(createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = sqliteDbPath))
 
+  if (dbms == "sqlite") {
+    # Get file sizes of batch computed results
+    batchedResultsFiles <- c("temporal_covariate_value.csv", "cohort_relationships.csv", "time_series.csv")
+    bacthFiles <- file.path(folder, "export", batchedResultsFiles)
+    fileSizes <- list()
+    for (filePath in batchedResultsFiles) {
+      fileSizes[[filePath]] <- file.size(filePath)
+    }
+
+    ## Repeat tests with incremental set to false to ensure better code coverage
+    withr::with_options(list("CohortDiagnostics-TimeSeries-batch-size" = 1,
+                             "CohortDiagnostics-FE-batch-size" = 1,
+                             "CohortDiagnostics-Relationships-batch-size" = 50),
+    {
+      executeDiagnostics(
+        connectionDetails = connectionDetails,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTableNames = cohortTableNames,
+        cohortDefinitionSet = cohortDefinitionSet,
+        exportFolder = file.path(folder, "export"),
+        databaseId = dbms,
+        runInclusionStatistics = TRUE,
+        runBreakdownIndexEvents = TRUE,
+        runTemporalCohortCharacterization = TRUE,
+        runIncidenceRate = TRUE,
+        runIncludedSourceConcepts = TRUE,
+        runOrphanConcepts = TRUE,
+        runTimeSeries = TRUE,
+        runCohortRelationship = TRUE,
+        minCellCount = minCellCountValue,
+        incremental = FALSE,
+        incrementalFolder = file.path(folder, "incremental"),
+        temporalCovariateSettings = temporalCovariateSettings
+      )
+    })
+
+    for (filePath in names(fileSizes)) {
+      # Because we set options to small batches if these were written correctly they shouldn't have changed in size
+      expect_equal(file.size(filePath), fileSizes[[filePath]])
+    }
+  }
+
   # Test zip works
   DiagnosticsExplorerZip <- tempfile(fileext = "de.zip")
   unlink(DiagnosticsExplorerZip)

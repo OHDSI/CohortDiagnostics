@@ -26,8 +26,6 @@
 #'
 #' @template CohortDatabaseSchema
 #'
-#' @template CdmDatabaseSchema
-#'
 #' @template TempEmulationSchema
 #'
 #' @template CohortTable
@@ -38,20 +36,17 @@
 #'
 #' @param relationshipDays             A dataframe with two columns startDay and endDay representing periods of time to compute relationship
 #'
-#' @param observationPeriodRelationship Do you want to compute temporal relationship between target cohort and observation period table?
 #'
 #' @export
 runCohortRelationshipDiagnostics <-
   function(connectionDetails = NULL,
            connection = NULL,
            cohortDatabaseSchema = NULL,
-           cdmDatabaseSchema,
            tempEmulationSchema = NULL,
            cohortTable = "cohort",
            targetCohortIds,
            comparatorCohortIds,
-           relationshipDays,
-           observationPeriodRelationship = TRUE) {
+           relationshipDays) {
     startTime <- Sys.time()
 
     # Assert checks
@@ -83,125 +78,10 @@ runCohortRelationshipDiagnostics <-
     )
     checkmate::reportAssertions(collection = errorMessage)
 
-
     if (is.null(connection)) {
       connection <- DatabaseConnector::connect(connectionDetails)
       on.exit(DatabaseConnector::disconnect(connection))
     }
-
-    sqlCount <-
-      "SELECT COUNT(*) count FROM @cohort_database_schema.@cohort_table where cohort_definition_id IN (@cohort_ids);"
-
-    targetCohortCount <-
-      renderTranslateQuerySql(
-        connection = connection,
-        sql = sqlCount,
-        cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable,
-        cohort_ids = targetCohortIds,
-        snakeCaseToCamelCase = TRUE
-      )
-    comparatorCohortCount <-
-      renderTranslateQuerySql(
-        connection = connection,
-        sql = sqlCount,
-        cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable,
-        cohort_ids = comparatorCohortIds,
-        snakeCaseToCamelCase = TRUE
-      )
-
-    if (targetCohortCount == 0) {
-      ParallelLogger::logInfo("No instantiated target cohorts found. Atleast one instantiated target cohort is necessary to compute cohort relatonship.")
-      return(NULL)
-    }
-    if (length(comparatorCohortCount) == 0) {
-      ParallelLogger::logInfo("No instantiated comparator cohorts found. Atleast one instantiated comparator cohort is necessary to compute cohort relatonship.")
-      return(NULL)
-    }
-
-    ParallelLogger::logTrace("  - Creating cohort table subsets")
-    cohortSubsetSqlTargetDrop <-
-      " IF OBJECT_ID('tempdb..#target_subset', 'U') IS NOT NULL
-      	DROP TABLE #target_subset;
-      "
-
-    cohortSubsetSqlTarget <-
-      "--HINT DISTRIBUTE_ON_KEY(subject_id)
-      SELECT cohort_definition_id,
-      	subject_id,
-      	min(cohort_start_date) cohort_start_date,
-      	min(cohort_end_date) cohort_end_date
-      INTO #target_subset
-      FROM @cohort_database_schema.@cohort_table
-      WHERE cohort_definition_id IN (@cohort_ids)
-      GROUP BY cohort_definition_id,
-      	subject_id;"
-
-    cohortSubsetSqlComparatorDrop <-
-      "IF OBJECT_ID('tempdb..#comparator_subset', 'U') IS NOT NULL
-      	DROP TABLE #comparator_subset;"
-
-    cohortSubsetSqlComparator <-
-      "--HINT DISTRIBUTE_ON_KEY(subject_id)
-      	SELECT *
-      	INTO #comparator_subset
-      	FROM @cohort_database_schema.@cohort_table
-      	WHERE cohort_definition_id IN (@cohort_ids);
-
-      {@observation_period_relationship} ? {
-      INSERT INTO #comparator_subset
-      SELECT -1 cohort_definition_id,
-            person_id subject_id,
-            observation_period_start_date cohort_start_date,
-            observation_period_end_date cohort_end_date
-      FROM @cdm_database_schema.observation_period;
-    }"
-
-
-    ParallelLogger::logTrace("   - Target subset")
-    ParallelLogger::logTrace("    - dropping temporary table")
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = cohortSubsetSqlTargetDrop,
-      tempEmulationSchema = tempEmulationSchema,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
-    ParallelLogger::logTrace("    - creating temporary table")
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = cohortSubsetSqlTarget,
-      cohort_database_schema = cohortDatabaseSchema,
-      cohort_table = cohortTable,
-      tempEmulationSchema = tempEmulationSchema,
-      cohort_ids = targetCohortIds,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
-
-    ParallelLogger::logTrace("   - Comparator subset")
-    ParallelLogger::logTrace("    - dropping temporary table")
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = cohortSubsetSqlComparatorDrop,
-      tempEmulationSchema = tempEmulationSchema,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
-    ParallelLogger::logTrace("    - creating temporary table")
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = cohortSubsetSqlComparator,
-      cohort_database_schema = cohortDatabaseSchema,
-      cohort_table = cohortTable,
-      cdm_database_schema = cdmDatabaseSchema,
-      tempEmulationSchema = tempEmulationSchema,
-      cohort_ids = comparatorCohortIds,
-      observation_period_relationship = observationPeriodRelationship,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
 
     timePeriods <- relationshipDays %>%
       dplyr::distinct() %>%
@@ -221,7 +101,7 @@ runCohortRelationshipDiagnostics <-
     for (i in (1:nrow(timePeriods))) {
       ParallelLogger::logTrace(
         paste0(
-          "    - Working on ",
+          "       - Working on ",
           scales::comma(timePeriods[i, ]$startDay),
           " to ",
           scales::comma(timePeriods[i, ]$endDay),
@@ -242,13 +122,24 @@ runCohortRelationshipDiagnostics <-
             package = utils::packageName()
           )
         )
-      DatabaseConnector::renderTranslateQuerySqlToAndromeda(
+      
+      DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
         sql = cohortRelationshipSql,
         time_id = timePeriods[i, ]$timeId,
         start_day_offset = timePeriods[i, ]$startDay,
         end_day_offset = timePeriods[i, ]$endDay,
+        target_cohort_ids = targetCohortIds,
+        comparator_cohort_ids = comparatorCohortIds,
+        cohort_database_schema = cohortDatabaseSchema,
+        cohort_table = cohortTable
+      )
+      
+      DatabaseConnector::renderTranslateQuerySqlToAndromeda(
+        connection = connection,
+        tempEmulationSchema = tempEmulationSchema,
+        sql = "SELECT * FROM #cohort_rel_output;",
         snakeCaseToCamelCase = TRUE,
         andromeda = resultsInAndromeda,
         andromedaTableName = "temp"
@@ -278,20 +169,7 @@ runCohortRelationshipDiagnostics <-
         .data$endDay
       )
     resultsInAndromeda$timePeriods <- NULL
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = cohortSubsetSqlTargetDrop,
-      tempEmulationSchema = tempEmulationSchema,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = cohortSubsetSqlComparatorDrop,
-      tempEmulationSchema = tempEmulationSchema,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
+
     unlink(
       x = file.path(
         "resumeTimeId",
@@ -301,12 +179,10 @@ runCohortRelationshipDiagnostics <-
     )
     delta <- Sys.time() - startTime
     ParallelLogger::logTrace(paste(
-      " - Computing cohort relationship took",
+      "   - Computing cohort relationship took",
       signif(delta, 3),
       attr(delta, "units")
     ))
-    # changing the output from Andromeda object to in R-memory
-    # in next version explore making the output an Andromeda object
     data <-
       resultsInAndromeda$cohortRelationships %>% dplyr::collect()
     return(data)
@@ -327,12 +203,26 @@ executeCohortRelationshipDiagnostics <- function(connection,
                                                  temporalCovariateSettings,
                                                  minCellCount,
                                                  recordKeepingFile,
-                                                 incremental) {
+                                                 incremental,
+                                                 batchSize = getOption("CohortDiagnostics-Relationship-batch-size", default = 500)) {
   ParallelLogger::logInfo("Computing Cohort Relationship")
   startCohortRelationship <- Sys.time()
 
-  subset <- subsetToRequiredCohorts(
-    cohorts = cohortDefinitionSet,
+  allCohortIds <- cohortDefinitionSet %>%
+    dplyr::select(.data$cohortId, .data$checksum) %>%
+    dplyr::rename(targetCohortId = .data$cohortId,
+                  targetChecksum = .data$checksum) %>%
+    dplyr::distinct()
+  combinationsOfPossibleCohortRelationships <- allCohortIds %>%
+    tidyr::crossing(allCohortIds %>%
+                      dplyr::rename(comparatorCohortId = .data$targetCohortId,
+                                    comparatorChecksum = .data$targetChecksum)) %>%
+    dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) %>%
+    dplyr::arrange(.data$targetCohortId, .data$comparatorCohortId) %>%
+    dplyr::mutate(checksum = paste0(.data$targetChecksum, .data$comparatorChecksum))
+
+  subset <- subsetToRequiredCombis(
+    combis = combinationsOfPossibleCohortRelationships,
     task = "runCohortRelationship",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile
@@ -340,12 +230,33 @@ executeCohortRelationshipDiagnostics <- function(connection,
 
   if (nrow(subset) > 0) {
     if (incremental &&
-      (nrow(cohortDefinitionSet) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        " - Skipping %s cohort combinations in incremental mode.",
-        nrow(cohortDefinitionSet) - nrow(subset)
-      ))
+        (nrow(cohortDefinitionSet) - (length(subset$targetCohortId %>% unique()))) > 0) {
+      ParallelLogger::logInfo(
+        sprintf(
+          " - Skipping %s target cohorts in incremental mode because the relationships has already been computed with other cohorts.",
+          nrow(cohortDefinitionSet) - (length(subset$targetCohortId %>% unique()))
+        )
+      )
     }
+
+    if (incremental &&
+        (nrow(combinationsOfPossibleCohortRelationships) - (
+          nrow(
+            combinationsOfPossibleCohortRelationships %>%
+            dplyr::filter(.data$targetCohortId %in% c(subset$targetCohortId))
+          )
+        )) > 0) {
+      ParallelLogger::logInfo(
+        sprintf(
+          " - Skipping %s combinations in incremental mode because these were previously computed.",
+          nrow(combinationsOfPossibleCohortRelationships) - nrow(
+            combinationsOfPossibleCohortRelationships %>%
+              dplyr::filter(.data$targetCohortId %in% c(subset$targetCohortId))
+          )
+        )
+      )
+    }
+
     ParallelLogger::logTrace(" - Beginning Cohort Relationship SQL")
     if (all(exists("temporalCovariateSettings"), !is.null(temporalCovariateSettings))) {
       temporalStartDays <- temporalCovariateSettings$temporalStartDays
@@ -400,43 +311,82 @@ executeCohortRelationshipDiagnostics <- function(connection,
       )
     }
 
-    output <-
-      runCohortRelationshipDiagnostics(
-        connection = connection,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        tempEmulationSchema = tempEmulationSchema,
-        cohortTable = cohortTable,
-        targetCohortIds = subset$cohortId,
-        comparatorCohortIds = cohortDefinitionSet$cohortId,
-        relationshipDays = dplyr::tibble(
-          startDay = temporalStartDays,
-          endDay = temporalEndDays
-        )
+    outputFile <- file.path(exportFolder, "cohort_relationships.csv")
+    if (!incremental & file.exists(outputFile)) {
+      ParallelLogger::logInfo("Time series file exists, removing before batch operations")
+      unlink(outputFile)
+    }
+
+    for (start in seq(1, nrow(subset), by = batchSize)) {
+      end <- min(start + batchSize - 1, nrow(subset))
+
+      if (nrow(subset) > batchSize) {
+        ParallelLogger::logInfo(sprintf(
+          "  - Batch cohort relationship. Processing cohorts %s through %s combinations of %s total combinations",
+          start,
+          end,
+          nrow(subset)
+        ))
+      }
+
+
+      timeExecution(
+        exportFolder,
+        "runCohortRelationshipDiagnostics",
+        c(subset[start:end,]$targetCohortId %>% unique(), subset[start:end,]$comparatorCohortId %>% unique()),
+        parent = "executeCohortRelationshipDiagnostics",
+        expr = {
+          output <-
+            runCohortRelationshipDiagnostics(
+              connection = connection,
+              cohortDatabaseSchema = cohortDatabaseSchema,
+              tempEmulationSchema = tempEmulationSchema,
+              cohortTable = cohortTable,
+              targetCohortIds = subset[start:end,]$targetCohortId %>% unique(),
+              comparatorCohortIds = subset[start:end,]$comparatorCohortId %>% unique(),
+              relationshipDays = dplyr::tibble(startDay = temporalStartDays,
+                                               endDay = temporalEndDays)
+            )
+        }
       )
 
-    data <- makeDataExportable(
-      x = output,
-      tableName = "cohort_relationships",
-      minCellCount = minCellCount,
-      databaseId = databaseId
-    )
+      data <- makeDataExportable(
+        x = output,
+        tableName = "cohort_relationships",
+        minCellCount = minCellCount,
+        databaseId = databaseId
+      )
 
-    writeToCsv(
-      data = data,
-      fileName = file.path(exportFolder, "cohort_relationships.csv"),
-      incremental = incremental
-    )
+      writeToCsv(
+        data = data,
+        fileName = outputFile,
+        incremental = TRUE
+      )
 
-    recordTasksDone(
-      cohortId = subset$cohortId,
-      task = "runCohortRelationship",
-      checksum = subset$checksum,
-      recordKeepingFile = recordKeepingFile,
-      incremental = incremental
-    )
+      recordTasksDone(
+        cohortId = subset[start:end,]$targetCohortId,
+        comparatorId = subset[start:end,]$comparatorCohortId,
+        targetChecksum = subset[start:end,]$targetChecksum,
+        comparatorChecksum = subset[start:end,]$comparatorChecksum,
+        task = "runCohortRelationship",
+        checksum = subset[start:end,]$checksum,
+        recordKeepingFile = recordKeepingFile,
+        incremental = incremental
+      )
+      deltaIteration <- Sys.time() - startCohortRelationship
+      ParallelLogger::logInfo("    - Running Cohort Relationship iteration with batchsize ",
+                              batchSize,
+                              " from row number ",
+                              start,
+                              " to ",
+                              end,
+                              " took ",
+                              signif(deltaIteration, 3),
+                              " ",
+                              attr(deltaIteration, "units"))
+    }
   } else {
-    ParallelLogger::logInfo("  - Skipping in incremental mode.")
+    ParallelLogger::logInfo("    - Skipping in incremental mode.")
   }
   delta <- Sys.time() - startCohortRelationship
   ParallelLogger::logInfo(

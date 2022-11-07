@@ -7,7 +7,8 @@
 createMergedResultsFile(
   dataFolder,
   sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
-  overwrite = FALSE
+  overwrite = FALSE,
+  tablePrefix = ""
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ folder.}
 \item{sqliteDbPath}{Output path where sqlite database is placed}
 
 \item{overwrite}{(Optional) overwrite existing sqlite lite db if it exists.}
+
+\item{tablePrefix}{(Optional) string to insert before table names (e.g. "cd_") for database table names}
 }
 \description{
 This function combines diagnostics results from one or more databases into a single file. The result is an
