@@ -1,3 +1,65 @@
+test_that("Testing getCohortCharacterization", {
+  skip_if(skipCdmTests, "cdm settings not configured")
+  exportFolder <- tempfile()
+  dir.create(exportFolder)
+  on.exit(unlink(exportFolder), add = TRUE)
+  
+  cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
+  # Next create the tables on the database
+  CohortGenerator::createCohortTables(
+    connectionDetails = connectionDetails,
+    cohortTableNames = cohortTableNames,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    incremental = FALSE
+  )
+  
+
+  
+  #Cleanup
+  on.exit({
+    CohortGenerator::dropCohortStatsTables(connectionDetails = connectionDetails,
+                                           cohortDatabaseSchema = cohortDatabaseSchema,
+                                           cohortTableNames = cohortTableNames)
+    connection <- DatabaseConnector::connect(connectionDetails)
+    DatabaseConnector::renderTranslateExecuteSql(connection,
+                                                 "DROP TABLE @cohortDatabaseSchema.@cohortTable",
+                                                 cohortDatabaseSchema = cohortDatabaseSchema,
+                                                 cohortTable = cohortTable)
+  }, add = TRUE)
+  
+  # Generate the cohort set
+  CohortGenerator::generateCohortSet(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTableNames = cohortTableNames,
+    cohortDefinitionSet = cohortDefinitionSet,
+    incremental = FALSE
+  )
+  
+  #run cohort characterization
+  cohortCharacterization <- getCohortCharacteristics(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    cohortDatabaseSchema = cdmDatabaseSchema,
+    cohortTable = cohortTable,
+    cohortIds = cohortIds,
+    cdmVersion = 5,
+    temporalCovariateSettings = temporalCovariateSettings,
+    exportFolder = exportFolder
+  )
+  
+  #test that the object is andromeda
+  testthat::expect_s4_class(cohortCharacterization, "Andromeda")
+  
+  #test that the object has temporal feature extraction tables
+  testthat::expect_named(cohortCharacterization,
+                         c("analysisRef", "covariateRef", "covariates",
+                           "covariatesContinuous", "timeRef"))
+  
+})
+
 test_that("Execute and export characterization", {
   skip_if(skipCdmTests, "cdm settings not configured")
   tConnection <-
@@ -43,7 +105,7 @@ test_that("Execute and export characterization", {
       connection = tConnection,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
-      cohorts = cohortDefinitionSet,
+      cohortDefinitionSet = cohortDefinitionSet,
       exportFolder = exportFolder,
       minCellCount = 5,
       databaseId = "Testdb"
@@ -125,3 +187,6 @@ test_that("Execute and export characterization", {
     
   })
 })
+
+
+

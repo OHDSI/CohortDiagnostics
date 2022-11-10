@@ -110,28 +110,8 @@ getVisitContext <- function(connectionDetails = NULL,
   return(visitContext)
 }
 
-#' Batch Incidence Rates
-#' 
-#' @description Batch generation of incidence rate for multiple cohorts in Cohort Diagnostics
-#' 
-#' @template Connection
-#'
-#' @template CdmDatabaseSchema
-#' 
-#' @template TempEmulationSchema
-#' 
-#' @template CohortTable
-#' 
-#' @template CohortDefinitionSet
-#' 
-#' @template cdmVersion
-#' 
-#' @template DataExport
-#' 
-#' @template BatchOptions
-#' 
-#' @export
-batchVisitContextDiagnostics <- function(connection,
+
+computeVisitContextDiagnostics <- function(connection,
                                          cdmDatabaseSchema,
                                          tempEmulationSchema,
                                          cohortDatabaseSchema,
@@ -144,6 +124,7 @@ batchVisitContextDiagnostics <- function(connection,
                                          instantiatedCohorts,
                                          recordKeepingFile,
                                          incremental) {
+  
   ParallelLogger::logInfo("Retrieving visit context for index dates")
   subset <- subsetToRequiredCohorts(
     cohorts = cohortDefinitionSet %>%

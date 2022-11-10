@@ -213,45 +213,6 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
   return(results)
 }
 
-#' Batch Cohort Characterization
-#' 
-#' @description Batch generation of cohort characterization for multiple cohorts in Cohort Diagnostics
-#' 
-#' @template Connection
-#'
-#' @template CdmDatabaseSchema
-#' 
-#' @template TempEmulationSchema
-#' 
-#' @template CohortTable
-#' 
-#' @template cdmVersion
-#' 
-#' @template CohortDefinitionSet
-#' 
-#' @param cohortCounts                    computed counts or number of persons or events created from cohort generation
-#' 
-#' @template DataExport
-#' 
-#' @template BatchOptions
-#' 
-#' @template TemporalCovariateSettings
-#' 
-#' @param covariateValueFileName           file name for covariate value generated from {FeatureExtraction}
-#'
-#' @param covariateValueContFileName       file name for covariate counts generated from {FeatureExtraction}
-#'
-#' @param covariateRefFileName             file name for covariate reference generated from {FeatureExtraction}
-#'
-#' @param analysisRefFileName              file name for analysis reference generated from {FeatureExtraction}
-#'
-#' @param timeRefFileName                  file name for time reference generated from {FeatureExtraction}
-#'
-#' @param minCharacterizationMean          minimum value for a mean result from covariate characterization
-#'
-#' @param batchSize                        an integer indicating the number of batches 
-#'
-#' @export
 batchCohortCharacterization <- function(connection,
                                         cdmDatabaseSchema,
                                         tempEmulationSchema,
@@ -330,7 +291,7 @@ batchCohortCharacterization <- function(connection,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
           cohortIds = subset[start:end, ]$cohortId,
-          covariateSettings = temporalCovariateSettings, #changed for consistency
+          temporalCovariateSettings = temporalCovariateSettings, 
           cdmVersion = cdmVersion,
           exportFolder = exportFolder
         )

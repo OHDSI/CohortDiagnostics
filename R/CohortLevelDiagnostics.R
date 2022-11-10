@@ -89,20 +89,8 @@ checkIfCohortInstantiated <- function(connection,
   return(count > 0)
 }
 
-#' Batch Cohort Counts
-#' 
-#' @description Batch generation of cohort counts, retrieves person and event counts from cohort generation
-#' 
-#' @template Connection
-#' 
-#' @template CohortTable
-#' 
-#' @template CohortDefinitionSet
-#' 
-#' @template DataExport
-#' 
-#' @export
-batchCohortCounts <- function(connection,
+
+computeCohortCounts <- function(connection,
                               cohortDatabaseSchema,
                               cohortTable,
                               cohortDefinitionSet,

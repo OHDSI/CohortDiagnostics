@@ -31,8 +31,6 @@
 #'
 #' @template ConnectionDetails
 #'
-#' @template CohortDatabaseSchema
-#'
 #' @template CdmDatabaseSchema
 #'
 #' @template TempEmulationSchema
@@ -503,35 +501,7 @@ getCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   return(resultsInAndromeda$timeSeries %>% dplyr::collect())
 }
 
-#' Batch time series diagnostics
-#'
-#' @description
-#' This function runs time series diagnostics on mulitple cohorts.
-#' 
-#' @template Connection
-#'
-#' @template CdmDatabaseSchema
-#'
-#' @template TempEmulationSchema
-#'
-#' @template CohortTable
-#' 
-#' @template CohortDefinitionSet
-#' 
-#' @template DataExport
-#' 
-#' @template BatchOptions
-#' 
-#' @param batchSize                    an integer indicating the number of batches 
-#' 
-#' @param runCohortTimeSeries          an option to run the cohort time series, the default is TRUE
-#'
-#' @param runDataSourceTimeSeries      an option to run the data source time series, the default is FALSE
-#'
-#' @param observationPeriodDateRange   a data frame containing the observation min date, max date, number of persons 
-#'                                     and the number of records
-#' 
-#' @export
+
 batchTimeSeriesDiagnostics <- function(connection,
                                        cdmDatabaseSchema,
                                        tempEmulationSchema,

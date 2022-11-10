@@ -225,26 +225,7 @@ aggregateIr <- function(ratesSummary, aggregateList) {
 
 
 
-#' Batch Incidence Rates
-#' 
-#' @description Batch generation of incidence rate for multiple cohorts in Cohort Diagnostics
-#' 
-#' @template Connection
-#'
-#' @template CdmDatabaseSchema
-#' 
-#' @template TempEmulationSchema
-#' 
-#' @template CohortTable
-#' 
-#' @template CohortDefinitionSet
-#' 
-#' @template DataExport
-#' 
-#' @template BatchOptions
-#' 
-#' @export
-batchIncidenceRates <- function(connection,
+computeIncidenceRates <- function(connection,
                                 cdmDatabaseSchema,
                                 tempEmulationSchema,
                                 cohortDatabaseSchema,

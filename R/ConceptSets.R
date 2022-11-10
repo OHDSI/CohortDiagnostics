@@ -302,65 +302,26 @@ getCodeSetIds <- function(criterionList) {
   }
 }
 
-#' Batch Incidence Rates
-#' 
-#' @description Batch generation of incidence rate for multiple cohorts in Cohort Diagnostics
-#' 
-#' @template Connection
-#'
-#' @template CdmDatabaseSchema
-#' 
-#' @template VocabularyDatabaseSchema
-#' 
-#' @template TempEmulationSchema
-#' 
-#' @template CohortTable
-#' 
-#' @template CohortDefinitionSet
-#' 
-#' @template DataExport
-#' 
-#' @param recordKeepingFile           File that tracks the instantiated cohorts
-#' 
-#' @param incremental                 Create only cohort diagnostics that haven't been created before?
-#' 
-#' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
-#' 
-#' @param runOrphanConcepts           Generate and export potential orphan concepts?
-#' 
-#' @param runBreakdownEvents          Generate and export the breakdown of index events?
-#' 
-#' @param conceptCountsDatabaseSchema  schema for placing concept counts table
-#' 
-#' @param conceptCountsTable           table name for holding concept counts
-#' 
-#' @param conceptCountsTableIsTemp     should the concept counts table be temporary?
-#' 
-#' @param useExternalConceptCountsTable should the concept count table be external?
-#' 
-#' @param conceptIdTable              a table storing concept ids from the cohort definitions to run diagnostics
-#' 
-#' @export
-runConceptSetDiagnostics <- function(connection,
-                                     cdmDatabaseSchema,
-                                     vocabularyDatabaseSchema = cdmDatabaseSchema,
-                                     tempEmulationSchema,
-                                     cohortDatabaseSchema,
-                                     cohortTable,
-                                     cohortDefinitionSet,
-                                     databaseId,
-                                     exportFolder,
-                                     minCellCount,
-                                     recordKeepingFile,
-                                     incremental = FALSE,
-                                     runIncludedSourceConcepts,
-                                     runOrphanConcepts,
-                                     runBreakdownIndexEvents,
-                                     conceptCountsDatabaseSchema = cdmDatabaseSchema,
-                                     conceptCountsTable = "concept_counts",
-                                     conceptCountsTableIsTemp = FALSE,
-                                     useExternalConceptCountsTable = FALSE,
-                                     conceptIdTable = NULL) {
+computeConceptSetDiagnostics <- function(connection,
+                                       cdmDatabaseSchema,
+                                       vocabularyDatabaseSchema = cdmDatabaseSchema,
+                                       tempEmulationSchema,
+                                       cohortDatabaseSchema,
+                                       cohortTable,
+                                       cohortDefinitionSet,
+                                       databaseId,
+                                       exportFolder,
+                                       minCellCount,
+                                       recordKeepingFile,
+                                       incremental = FALSE,
+                                       runIncludedSourceConcepts,
+                                       runOrphanConcepts,
+                                       runBreakdownIndexEvents,
+                                       conceptCountsDatabaseSchema = cdmDatabaseSchema,
+                                       conceptCountsTable = "concept_counts",
+                                       conceptCountsTableIsTemp = FALSE,
+                                       useExternalConceptCountsTable = FALSE,
+                                       conceptIdTable = NULL) {
   ParallelLogger::logInfo("Starting concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
   subset <- dplyr::tibble()

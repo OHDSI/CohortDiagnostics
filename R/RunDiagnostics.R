@@ -97,7 +97,6 @@ getDefaultCovariateSettings <- function() {
 #'
 #' @template CdmDatabaseSchema
 #' @template VocabularyDatabaseSchema
-#' @template CohortDatabaseSchema
 #' @template TempEmulationSchema
 #'
 #' @template CohortTable
@@ -586,11 +585,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
   # Counting cohorts -----------------------------------------------------------------------
   timeExecution(
     exportFolder,
-    taskName = "batchCohortCounts", #change to match new function signatures
+    taskName = "computeCohortCounts", #change to match new function signatures
     cohortIds = cohortIds,
     parent = "executeDiagnostics",
     expr = {
-      cohortCounts <- batchCohortCounts(
+      cohortCounts <- computeCohortCounts(
         connection = connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
@@ -622,11 +621,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runInclusionStatistics) {
     timeExecution(
       exportFolder,
-      "batchInclusionStats", #change to match new function signatures
+      "computeInclusionStats", 
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        batchInclusionStats(
+        computeInclusionStats(
           connection = connection,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTableNames = cohortTableNames,
@@ -647,11 +646,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
     runBreakdownIndexEvents) {
     timeExecution(
       exportFolder,
-      taskName = "batchConceptSetDiagnostics", #change to match new function signatures
+      taskName = "computeConceptSetDiagnostics", 
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        batchConceptSetDiagnostics(
+        computeConceptSetDiagnostics(
           connection = connection,
           cdmDatabaseSchema = cdmDatabaseSchema,
           vocabularyDatabaseSchema = vocabularyDatabaseSchema,
@@ -680,7 +679,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runTimeSeries) {
     timeExecution(
       exportFolder,
-      "batchTimeSeriesDiagnostics", #change to match new function signatures
+      "batchTimeSeriesDiagnostics", 
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
@@ -707,11 +706,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runVisitContext) {
     timeExecution(
       exportFolder,
-      "batchVisitContextDiagnostics", #change to match new function signatures
+      "computeVisitContextDiagnostics", 
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        batchVisitContextDiagnostics(
+        computeVisitContextDiagnostics(
           connection = connection,
           cdmDatabaseSchema = cdmDatabaseSchema,
           tempEmulationSchema = tempEmulationSchema,
@@ -733,11 +732,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runIncidenceRate) {
     timeExecution(
       exportFolder,
-      "batchIncidenceRates", #change to match new function signatures
+      "computeIncidenceRates", 
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        batchIncidenceRates(
+        computeIncidenceRates(
           connection = connection,
           cdmDatabaseSchema = cdmDatabaseSchema,
           tempEmulationSchema = tempEmulationSchema,
@@ -758,7 +757,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runCohortRelationship) {
     timeExecution(
       exportFolder,
-      "batchCohortRelationshipDiagnostics", #change to match new function signatures
+      "batchCohortRelationshipDiagnostics", 
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
@@ -783,7 +782,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runTemporalCohortCharacterization) {
     timeExecution(
       exportFolder,
-      "batchCohortCharacterization", #change to match new function signatures
+      "batchCohortCharacterization", 
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
