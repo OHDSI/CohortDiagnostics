@@ -49,6 +49,8 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                      cdmVersion = 5,
                                      temporalCovariateSettings,
                                      exportFolder) {
+  
+  checkmate::assert_class(x = temporalCovariateSettings, classes = c("covariateSettings"))
   startTime <- Sys.time()
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)

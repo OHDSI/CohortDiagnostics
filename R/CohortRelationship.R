@@ -188,20 +188,45 @@ getCohortRelationshipDiagnostics <- function(connectionDetails = NULL,
 
 
 
-
-executeCohortRelationshipDiagnostics <- function(connection,
-                                                 databaseId,
-                                                 exportFolder,
-                                                 cohortDatabaseSchema,
-                                                 cdmDatabaseSchema,
-                                                 tempEmulationSchema,
-                                                 cohortTable,
-                                                 cohortDefinitionSet,
-                                                 temporalCovariateSettings,
-                                                 minCellCount,
-                                                 recordKeepingFile,
-                                                 incremental,
-                                                 batchSize = getOption("CohortDiagnostics-Relationship-batch-size", default = 500)) {
+#' Batch Cohort Relationship
+#' 
+#' @description Batch generation of cohort relationship for multiple cohorts in Cohort Diagnostics
+#' 
+#' @template Connection
+#'
+#' @template CdmDatabaseSchema
+#' 
+#' @template TempEmulationSchema
+#' 
+#' @template CohortTable
+#' 
+#' @template CohortDefinitionSet
+#' 
+#' @template DataExport
+#' 
+#' @param recordKeepingFile           File that tracks the instantiated cohorts
+#' 
+#' @param incremental                 Create only cohort diagnostics that haven't been created before?
+#' 
+#' @template TemporalCovariateSettings
+#' 
+#' @param batchSize                   an integer indicating the number of batches 
+#' 
+#' @export
+batchCohortRelationshipDiagnostics <- function(connection,
+                                               cdmDatabaseSchema,
+                                               tempEmulationSchema,
+                                               cohortDatabaseSchema,
+                                               cohortTable,
+                                               cohortDefinitionSet,
+                                               databaseId,
+                                               exportFolder,
+                                               minCellCount,
+                                               recordKeepingFile,
+                                               incremental,
+                                               temporalCovariateSettings,
+                                               batchSize = getOption("CohortDiagnostics-Relationship-batch-size", default = 500)) {
+  
   ParallelLogger::logInfo("Computing Cohort Relationship")
   startCohortRelationship <- Sys.time()
 

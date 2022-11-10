@@ -503,23 +503,51 @@ getCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   return(resultsInAndromeda$timeSeries %>% dplyr::collect())
 }
 
-
-executeTimeSeriesDiagnostics <- function(connection,
-                                         tempEmulationSchema,
-                                         cdmDatabaseSchema,
-                                         cohortDatabaseSchema,
-                                         cohortTable,
-                                         cohortDefinitionSet,
-                                         runCohortTimeSeries = TRUE,
-                                         runDataSourceTimeSeries = FALSE,
-                                         databaseId,
-                                         exportFolder,
-                                         minCellCount,
-                                         instantiatedCohorts,
-                                         incremental,
-                                         recordKeepingFile,
-                                         observationPeriodDateRange,
-                                         batchSize = getOption("CohortDiagnostics-TimeSeries-batch-size", default = 20)) {
+#' Batch time series diagnostics
+#'
+#' @description
+#' This function runs time series diagnostics on mulitple cohorts.
+#' 
+#' @template Connection
+#'
+#' @template CdmDatabaseSchema
+#'
+#' @template TempEmulationSchema
+#'
+#' @template CohortTable
+#' 
+#' @template CohortDefinitionSet
+#' 
+#' @template DataExport
+#' 
+#' @template BatchOptions
+#' 
+#' @param batchSize                    an integer indicating the number of batches 
+#' 
+#' @param runCohortTimeSeries          an option to run the cohort time series, the default is TRUE
+#'
+#' @param runDataSourceTimeSeries      an option to run the data source time series, the default is FALSE
+#'
+#' @param observationPeriodDateRange   a data frame containing the observation min date, max date, number of persons 
+#'                                     and the number of records
+#' 
+#' @export
+batchTimeSeriesDiagnostics <- function(connection,
+                                       cdmDatabaseSchema,
+                                       tempEmulationSchema,
+                                       cohortDatabaseSchema,
+                                       cohortTable,
+                                       cohortDefinitionSet,
+                                       databaseId,
+                                       exportFolder,
+                                       minCellCount,
+                                       instantiatedCohorts,
+                                       recordKeepingFile,
+                                       incremental,
+                                       batchSize = getOption("CohortDiagnostics-TimeSeries-batch-size", default = 20),
+                                       runCohortTimeSeries = TRUE,
+                                       runDataSourceTimeSeries = FALSE,
+                                       observationPeriodDateRange) {
 
   if (all(!runCohortTimeSeries, !runDataSourceTimeSeries)) {
     warning(
