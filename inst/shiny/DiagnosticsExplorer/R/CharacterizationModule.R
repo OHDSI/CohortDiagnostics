@@ -659,7 +659,7 @@ characterizationModule <- function(id,
       }
 
       if (hasData(selectedConceptSets())) {
-        if (hasData(getFilteredConceptIds())) {
+        if (hasData(conceptSetIds())) {
           data <- data %>%
             dplyr::filter(.data$conceptId %in% getFilteredConceptIds())
         }

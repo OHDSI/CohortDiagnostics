@@ -233,9 +233,9 @@ getCharacterizationOutput <- function(dataSource,
     }
     resultCovariateValue <- data$temporalCovariateValue %>%
       dplyr::arrange(
-        .data$cohortId,
-        .data$databaseId,
-        .data$covariateId
+        cohortId,
+        databaseId,
+        covariateId
       ) %>%
       dplyr::inner_join(data$temporalCovariateRef,
         by = "covariateId"
@@ -246,41 +246,41 @@ getCharacterizationOutput <- function(dataSource,
       dplyr::left_join(
         temporalChoices %>%
           dplyr::select(
-            .data$startDay,
-            .data$endDay,
-            .data$timeId,
-            .data$temporalChoices
+            startDay,
+            endDay,
+            timeId,
+            temporalChoices
           ),
         by = c("startDay", "endDay")
       ) %>%
       dplyr::relocate(
-        .data$cohortId,
-        .data$databaseId,
-        .data$timeId,
-        .data$startDay,
-        .data$endDay,
-        .data$temporalChoices,
-        .data$analysisId,
-        .data$covariateId,
-        .data$covariateName,
-        .data$isBinary
+        cohortId,
+        databaseId,
+        timeId,
+        startDay,
+        endDay,
+        temporalChoices,
+        analysisId,
+        covariateId,
+        covariateName,
+        isBinary
       )
 
     if ("missingMeansZero" %in% colnames(resultCovariateValue)) {
       resultCovariateValue <- resultCovariateValue %>%
         dplyr::mutate(mean = dplyr::if_else(
-          is.na(.data$mean) &
-            !is.na(.data$missingMeansZero) &
-            .data$missingMeansZero == "Y",
+          is.na(mean) &
+            !is.na(missingMeansZero) &
+            missingMeansZero == "Y",
           0,
-          .data$mean
+          mean
         )) %>%
-        dplyr::select(-.data$missingMeansZero)
+        dplyr::select(-missingMeansZero)
     }
     resultCovariateValue <- resultCovariateValue %>%
       dplyr::mutate(
         covariateName = stringr::str_replace_all(
-          string = .data$covariateName,
+          string = covariateName,
           pattern = "^.*: ",
           replacement = ""
         )

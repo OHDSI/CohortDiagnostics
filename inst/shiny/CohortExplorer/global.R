@@ -70,7 +70,7 @@ cohort <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                      subject_ids = subjectIds,
                                                      snakeCaseToCamelCase = TRUE) %>%
   dplyr::tibble() %>%
-  dplyr::arrange(.data$subjectId, .data$cohortStartDate)
+  dplyr::arrange(subjectId, cohortStartDate)
 subjectIds <- unique(cohort$subjectId)
 
 if (nrow(cohort) == 0) {

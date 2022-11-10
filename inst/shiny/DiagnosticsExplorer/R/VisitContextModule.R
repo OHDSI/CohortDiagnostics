@@ -41,7 +41,7 @@ visitContextView <- function(id) {
             )
           ),
           tags$td(
-            align = "right",
+            align = "right"
           )
         )
       ),

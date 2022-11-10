@@ -204,7 +204,7 @@ cohortCountsModule <- function(id,
         countLocation = 1,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        sort = TRUE,
+        sort = FALSE,
         selection = "single"
       )
       return(displayTable)
@@ -212,6 +212,7 @@ cohortCountsModule <- function(id,
 
     getCohortIdOnCohortCountRowSelect <- shiny::reactive({
       idx <- reactable::getReactableState(outputId = "cohortCountsTable", "selected")
+
       if (!hasData(idx)) {
         return(NULL)
       } else {

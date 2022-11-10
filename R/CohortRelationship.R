@@ -188,44 +188,20 @@ getCohortRelationshipDiagnostics <- function(connectionDetails = NULL,
 
 
 
-#' Batch Cohort Relationship
-#' 
-#' @description Batch generation of cohort relationship for multiple cohorts in Cohort Diagnostics
-#' 
-#' @template Connection
-#'
-#' @template CdmDatabaseSchema
-#' 
-#' @template TempEmulationSchema
-#' 
-#' @template CohortTable
-#' 
-#' @template CohortDefinitionSet
-#' 
-#' @template DataExport
-#' 
-#' @param recordKeepingFile           File that tracks the instantiated cohorts
-#' 
-#' @param incremental                 Create only cohort diagnostics that haven't been created before?
-#' 
-#' @template TemporalCovariateSettings
-#' 
-#' @param batchSize                   an integer indicating the number of batches 
-#' 
-#' @export
-batchCohortRelationshipDiagnostics <- function(connection,
-                                               cdmDatabaseSchema,
-                                               tempEmulationSchema,
-                                               cohortDatabaseSchema,
-                                               cohortTable,
-                                               cohortDefinitionSet,
-                                               databaseId,
-                                               exportFolder,
-                                               minCellCount,
-                                               recordKeepingFile,
-                                               incremental,
-                                               temporalCovariateSettings,
-                                               batchSize = 500) {
+
+executeCohortRelationshipDiagnostics <- function(connection,
+                                                 databaseId,
+                                                 exportFolder,
+                                                 cohortDatabaseSchema,
+                                                 cdmDatabaseSchema,
+                                                 tempEmulationSchema,
+                                                 cohortTable,
+                                                 cohortDefinitionSet,
+                                                 temporalCovariateSettings,
+                                                 minCellCount,
+                                                 recordKeepingFile,
+                                                 incremental,
+                                                 batchSize = getOption("CohortDiagnostics-Relationship-batch-size", default = 500)) {
   ParallelLogger::logInfo("Computing Cohort Relationship")
   startCohortRelationship <- Sys.time()
 
@@ -332,6 +308,12 @@ batchCohortRelationshipDiagnostics <- function(connection,
       )
     }
 
+    outputFile <- file.path(exportFolder, "cohort_relationships.csv")
+    if (!incremental & file.exists(outputFile)) {
+      ParallelLogger::logInfo("Time series file exists, removing before batch operations")
+      unlink(outputFile)
+    }
+
     for (start in seq(1, nrow(subset), by = batchSize)) {
       end <- min(start + batchSize - 1, nrow(subset))
 
@@ -374,8 +356,8 @@ batchCohortRelationshipDiagnostics <- function(connection,
 
       writeToCsv(
         data = data,
-        fileName = file.path(exportFolder, "cohort_relationships.csv"),
-        incremental = incremental
+        fileName = outputFile,
+        incremental = TRUE
       )
 
       recordTasksDone(

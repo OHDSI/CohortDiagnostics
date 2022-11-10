@@ -83,27 +83,27 @@ getTimeFromInteger <- function(x) {
 processMetadata <- function(data) {
   data <- data %>%
     tidyr::pivot_wider(
-      id_cols = c(.data$startTime, .data$databaseId),
-      names_from = .data$variableField,
-      values_from = .data$valueField
+      id_cols = c(startTime, databaseId),
+      names_from = variableField,
+      values_from = valueField
     ) %>%
     dplyr::mutate(
       startTime = stringr::str_replace(
-        string = .data$startTime,
+        string = startTime,
         pattern = stringr::fixed("TM_"),
         replacement = ""
       )
     ) %>%
-    dplyr::mutate(startTime = paste0(.data$startTime, " ", .data$timeZone)) %>%
-    dplyr::mutate(startTime = as.POSIXct(.data$startTime)) %>%
+    dplyr::mutate(startTime = paste0(startTime, " ", timeZone)) %>%
+    dplyr::mutate(startTime = as.POSIXct(startTime)) %>%
     dplyr::group_by(
-      .data$databaseId,
-      .data$startTime
+      databaseId,
+      startTime
     ) %>%
-    dplyr::arrange(.data$databaseId, dplyr::desc(.data$startTime), .by_group = TRUE) %>%
+    dplyr::arrange(databaseId, dplyr::desc(startTime), .by_group = TRUE) %>%
     dplyr::mutate(rn = dplyr::row_number()) %>%
-    dplyr::filter(.data$rn == 1) %>%
-    dplyr::select(-.data$timeZone)
+    dplyr::filter(rn == 1) %>%
+    dplyr::select(-timeZone)
 
   if ("runTime" %in% colnames(data)) {
     data$runTime <- round(x = as.numeric(data$runTime), digits = 2)
@@ -362,18 +362,18 @@ initializeEnvironment <- function(shinySettings,
 
   if (!is.null(envir$cohort)) {
     if ("cohortDefinitionId" %in% names(envir$cohort)) {
-      envir$cohort <- envir$cohort %>% dplyr::mutate(cohortId = .data$cohortDefinitionId)
+      envir$cohort <- envir$cohort %>% dplyr::mutate(cohortId = cohortDefinitionId)
 
       ## Note this is because the tables were labled wrong!
-      envir$cohort <- envir$cohort %>% dplyr::mutate(cohortId = .data$cohortDefinitionId,
-                                                     sql = .data$json,
-                                                     json = .data$sqlCommand)
+      envir$cohort <- envir$cohort %>% dplyr::mutate(cohortId = cohortDefinitionId,
+                                                     sql = json,
+                                                     json = sqlCommand)
     }
 
     envir$cohort <- envir$cohort %>%
-      dplyr::arrange(.data$cohortId) %>%
-      dplyr::mutate(shortName = paste0("C", .data$cohortId)) %>%
-      dplyr::mutate(compoundName = paste0(.data$shortName, ": ", .data$cohortName))
+      dplyr::arrange(cohortId) %>%
+      dplyr::mutate(shortName = paste0("C", cohortId)) %>%
+      dplyr::mutate(compoundName = paste0(shortName, ": ", cohortName))
   }
 
   if (!is.null(envir$database)) {
@@ -381,7 +381,7 @@ initializeEnvironment <- function(shinySettings,
       "vocabularyVersion" %in% colnames(envir$database)) {
       envir$database <- envir$database %>%
         dplyr::mutate(
-          databaseIdWithVocabularyVersion = paste0(.data$databaseId, " (", .data$vocabularyVersion, ")")
+          databaseIdWithVocabularyVersion = paste0(databaseId, " (", .data$vocabularyVersion, ")")
         )
     }
 

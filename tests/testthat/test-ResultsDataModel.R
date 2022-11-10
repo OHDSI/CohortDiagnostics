@@ -42,7 +42,7 @@ test_that("Create schema", {
     )
     createResultsDataModel(
       connectionDetails = postgresConnectionDetails,
-      schema = resultsDatabaseSchema,
+      databaseSchema = resultsDatabaseSchema,
       tablePrefix = "cd_"
     )
 
@@ -53,8 +53,8 @@ test_that("Create schema", {
     }
     # Bad schema name
     expect_error(createResultsDataModel(
-      connection = pgConnection,
-      schema = "non_existant_schema"
+      connectionDetails = postgresConnectionDetails,
+      databaseSchema = "non_existant_schema"
     ))
   })
 })
@@ -173,9 +173,9 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
   with_dbc_connection(pgConnection, {
     for (tableName in unique(specifications$tableName)) {
       primaryKey <- specifications %>%
-        dplyr::filter(.data$tableName == !!tableName &
-          .data$primaryKey == "Yes") %>%
-        dplyr::select(.data$columnName) %>%
+        dplyr::filter(tableName == !!tableName &
+          primaryKey == "Yes") %>%
+        dplyr::select(columnName) %>%
         dplyr::pull()
 
       if ("database_id" %in% primaryKey) {
@@ -202,16 +202,16 @@ test_that("Sqlite results data model", {
   with_dbc_connection(connectionSqlite, {
     # Bad schema name
     expect_error(createResultsDataModel(
-      connection = connectionSqlite,
-      schema = "non_existant_schema"
+      connectionDetails = connectionDetailsSqlite,
+      databaseSchema = "non_existant_schema"
     ))
 
     specifications <- getResultsDataModelSpecifications()
     for (tableName in unique(specifications$tableName)) {
       primaryKey <- specifications %>%
-        dplyr::filter(.data$tableName == !!tableName &
-          .data$primaryKey == "Yes") %>%
-        dplyr::select(.data$columnName) %>%
+        dplyr::filter(tableName == !!tableName &
+          primaryKey == "Yes") %>%
+        dplyr::select(columnName) %>%
         dplyr::pull()
 
       if ("database_id" %in% primaryKey) {

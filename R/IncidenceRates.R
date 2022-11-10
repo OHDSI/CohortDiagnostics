@@ -259,8 +259,8 @@ batchIncidenceRates <- function(connection,
   ParallelLogger::logInfo("Computing incidence rates")
   startIncidenceRate <- Sys.time()
   subset <- subsetToRequiredCohorts(
-    cohorts = cohortDefinitionSet %>% #replace cohorts to cohort definition set consistency
-      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+    cohorts = cohorts %>%
+      dplyr::filter(cohortId %in% instantiatedCohorts),
     task = "runIncidenceRate",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile

@@ -31,7 +31,7 @@ indexEventBreakdownView <- function(id) {
             td(
               shiny::radioButtons(
                 inputId = ns("indexEventBreakdownTableRadioButton"),
-                label = "",
+                label = "Concept type",
                 choices = c("All", "Standard concepts", "Non Standard Concepts"),
                 selected = "All",
                 inline = TRUE
@@ -45,6 +45,13 @@ indexEventBreakdownView <- function(id) {
                 choices = c("Both", "Records", "Persons"),
                 selected = "Persons",
                 inline = TRUE
+              )
+            ),
+            td(
+              shiny::checkboxInput(
+                inputId = ns("showAsPercent"),
+                label = "Show as percentage",
+                value = TRUE
               )
             )
           )
@@ -61,6 +68,8 @@ indexEventBreakdownView <- function(id) {
 #'
 indexEventBreakdownModule <- function(id,
                                       dataSource,
+                                      cohortTable,
+                                      databaseTable,
                                       selectedCohort,
                                       targetCohortId,
                                       selectedDatabaseIds) {
@@ -121,9 +130,9 @@ indexEventBreakdownModule <- function(id,
       validate(need(length(selectedDatabaseIds()) > 0, "No data sources chosen"))
       validate(need(length(targetCohortId()) > 0, "No cohorts chosen chosen"))
 
-      showDataAsPercent <- FALSE # input$indexEventBreakDownShowAsPercent
+      showDataAsPercent <- input$showAsPercent
       data <- indexEventBreakDownDataFilteredByRadioButton()
-     
+
       validate(need(
         all(!is.null(data), nrow(data) > 0),
         "There is no data for the selected combination."
@@ -198,11 +207,10 @@ indexEventBreakdownModule <- function(id,
           string = dataColumnFields
         )
 
-
       getDisplayTableGroupedByDatabaseId(
         data = data,
-        cohort = cohort,
-        databaseTable = database,
+        cohort = cohortTable,
+        databaseTable = databaseTable,
         headerCount = countsForHeader,
         keyColumns = keyColumnFields,
         countLocation = countLocation,

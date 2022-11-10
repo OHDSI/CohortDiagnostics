@@ -70,7 +70,7 @@ exportCharacterization <- function(characteristics,
       writeToCsv(
         data = covariateRef,
         fileName = covariateRefFileName,
-        incremental = incremental,
+        incremental = TRUE,
         covariateId = covariateRef$covariateId
       )
 
@@ -82,7 +82,7 @@ exportCharacterization <- function(characteristics,
       writeToCsv(
         data = analysisRef,
         fileName = analysisRefFileName,
-        incremental = incremental,
+        incremental = TRUE,
         analysisId = analysisRef$analysisId
       )
 
@@ -94,14 +94,14 @@ exportCharacterization <- function(characteristics,
       writeToCsv(
         data = timeRef,
         fileName = timeRefFileName,
-        incremental = incremental,
+        incremental = TRUE,
         analysisId = timeRef$timeId
       )
 
       writeToCsv(
         data = characteristics$filteredCovariates,
         fileName = covariateValueFileName,
-        incremental = incremental
+        incremental = TRUE
       )
     }
   }
@@ -120,7 +120,7 @@ exportCharacterization <- function(characteristics,
       writeToCsv(
         data = characteristics$filteredCovariatesContinous,
         fileName = covariateValueContFileName,
-        incremental = incremental
+        incremental = TRUE
       )
     }
   }
