@@ -1,3 +1,9 @@
+CohortDiagnostics 3.1.1
+=======================
+Bug Fixes:
+
+1. Fixed error when checking for cdm_source table
+
 CohortDiagnostics 3.1.0
 =======================
 Changes:
