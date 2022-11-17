@@ -211,21 +211,21 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental")) {
   # collect arguments that were passed to cohort diagnostics at initiation
-  argumentsAtDiagnosticsInitiation <- formals(executeDiagnostics)
-  argumentsAtDiagnosticsInitiationJson <-
+  callingArgs <- formals(executeDiagnostics)
+  callingArgsJson <-
     list(
-      runInclusionStatistics = argumentsAtDiagnosticsInitiation$runInclusionStatistics,
-      runIncludedSourceConcepts = argumentsAtDiagnosticsInitiation$runIncludedSourceConcepts,
-      runOrphanConcepts = argumentsAtDiagnosticsInitiation$runOrphanConcepts,
-      runTimeSeries = argumentsAtDiagnosticsInitiation$runTimeSeries,
-      runVisitContext = argumentsAtDiagnosticsInitiation$runVisitContext,
-      runBreakdownIndexEvents = argumentsAtDiagnosticsInitiation$runBreakdownIndexEvents,
-      runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,
-      runTemporalCohortCharacterization = argumentsAtDiagnosticsInitiation$runTemporalCohortCharacterization,
-      minCellCount = argumentsAtDiagnosticsInitiation$minCellCount,
-      minCharacterizationMean = argumentsAtDiagnosticsInitiation$minCharacterizationMean,
-      incremental = argumentsAtDiagnosticsInitiation$incremental,
-      temporalCovariateSettings = argumentsAtDiagnosticsInitiation$temporalCovariateSettings
+      runInclusionStatistics = callingArgs$runInclusionStatistics,
+      runIncludedSourceConcepts = callingArgs$runIncludedSourceConcepts,
+      runOrphanConcepts = callingArgs$runOrphanConcepts,
+      runTimeSeries = callingArgs$runTimeSeries,
+      runVisitContext = callingArgs$runVisitContext,
+      runBreakdownIndexEvents = callingArgs$runBreakdownIndexEvents,
+      runIncidenceRate = callingArgs$runIncidenceRate,
+      runTemporalCohortCharacterization = callingArgs$runTemporalCohortCharacterization,
+      minCellCount = callingArgs$minCellCount,
+      minCharacterizationMean = callingArgs$minCharacterizationMean,
+      incremental = callingArgs$incremental,
+      temporalCovariateSettings = callingArgs$temporalCovariateSettings
     ) %>%
       RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
@@ -356,18 +356,45 @@ executeDiagnostics <- function(cohortDefinitionSet,
       )
   }
   if (runTemporalCohortCharacterization) {
-    checkmate::assert_class(x = temporalCovariateSettings,
-                            classes = c("covariateSettings"))
+    if (!is.list(temporalCovariateSettings)) {
+      temporalCovariateSettings <- list(temporalCovariateSettings)
+    }
+    # All temporal covariate settings objects must be covariateSettings
+    checkmate::assert_true(all(lapply(temporalCovariateSettings, class) == c("covariateSettings")), add = errorMessage)
+
+    requiredCharacterisationSettings <- c("DemographicsGender", "DemographicsAgeGroup", "DemographicsRace",
+                                          "DemographicsEthnicity", "DemographicsIndexYear", "DemographicsIndexMonth",
+                                          "ConditionEraGroupOverlap", "DrugEraGroupOverlap", "CharlsonIndex",
+                                          "Chads2", "Chads2Vasc")
+
+    presentSettings <- temporalCovariateSettings[[1]][requiredCharacterisationSettings]
+    if (!all(unlist(presentSettings))) {
+      warning(
+        "For cohort charcterization to display standardized results the following covariates must be present in your temporalCovariateSettings: \n\n",
+        paste(requiredCharacterisationSettings, collapse = ", "))
+    }
+
+    requiredTimeDistributionSettings <- c("DemographicsPriorObservationTime",
+                                          "DemographicsPostObservationTime",
+                                          "DemographicsTimeInCohort")
+
+    presentSettings <- temporalCovariateSettings[[1]][requiredTimeDistributionSettings]
+    if (!all(unlist(presentSettings))) {
+      warning(
+        "For time distributions diagnostics to display standardized results the following covariates must be present in your temporalCovariateSettings: \n\n",
+        paste(requiredTimeDistributionSettings, collapse = ", "))
+    }
+
     # forcefully set ConditionEraGroupStart and drugEraGroupStart to NULL
     # because of known bug in FeatureExtraction. https://github.com/OHDSI/FeatureExtraction/issues/144
-    temporalCovariateSettings$ConditionEraGroupStart <- NULL
-    temporalCovariateSettings$DrugEraGroupStart <- NULL
+    temporalCovariateSettings[[1]]$ConditionEraGroupStart <- NULL
+    temporalCovariateSettings[[1]]$DrugEraGroupStart <- NULL
 
-    checkmate::assert_integerish(x = temporalCovariateSettings$temporalStartDays,
+    checkmate::assert_integerish(x = temporalCovariateSettings[[1]]$temporalStartDays,
                                  any.missing = FALSE,
                                  min.len = 1,
                                  add = errorMessage)
-    checkmate::assert_integerish(x = temporalCovariateSettings$temporalEndDays,
+    checkmate::assert_integerish(x = temporalCovariateSettings[[1]]$temporalEndDays,
                                  any.missing = FALSE,
                                  min.len = 1,
                                  add = errorMessage)
@@ -385,10 +412,10 @@ executeDiagnostics <- function(cohortDefinitionSet,
            c(-9999, 9999))
     for (p1 in requiredTemporalPairs) {
       found <- FALSE
-      for (i in 1:length(temporalCovariateSettings$temporalStartDays)) {
+      for (i in 1:length(temporalCovariateSettings[[1]]$temporalStartDays)) {
         p2 <- c(
-          temporalCovariateSettings$temporalStartDays[i],
-          temporalCovariateSettings$temporalEndDays[i]
+          temporalCovariateSettings[[1]]$temporalStartDays[i],
+          temporalCovariateSettings[[1]]$temporalEndDays[i]
         )
 
         if (p2[1] == p1[1] & p2[2] == p1[2]) {
@@ -398,36 +425,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
       }
 
       if (!found) {
-        temporalCovariateSettings$temporalStartDays <-
-          c(temporalCovariateSettings$temporalStartDays, p1[1])
-        temporalCovariateSettings$temporalEndDays <-
-          c(temporalCovariateSettings$temporalEndDays, p1[2])
+        temporalCovariateSettings[[1]]$temporalStartDays <-
+          c(temporalCovariateSettings[[1]]$temporalStartDays, p1[1])
+        temporalCovariateSettings[[1]]$temporalEndDays <-
+          c(temporalCovariateSettings[[1]]$temporalEndDays, p1[2])
       }
-    }
-  }
-
-  if (runTemporalCohortCharacterization) {
-    requiredCharacterisationSettings <- c("DemographicsGender", "DemographicsAgeGroup", "DemographicsRace",
-                                          "DemographicsEthnicity", "DemographicsIndexYear", "DemographicsIndexMonth",
-                                          "ConditionEraGroupOverlap", "DrugEraGroupOverlap", "CharlsonIndex",
-                                          "Chads2", "Chads2Vasc")
-
-    presentSettings <- temporalCovariateSettings[requiredCharacterisationSettings]
-    if (!all(unlist(presentSettings))) {
-      warning(
-        "For cohort charcterization to display standardized results the following covariates must be present in your temporalCovariateSettings: \n\n",
-        paste(requiredCharacterisationSettings, collapse = ", "))
-    }
-
-    requiredTimeDistributionSettings <- c("DemographicsPriorObservationTime",
-                                          "DemographicsPostObservationTime",
-                                          "DemographicsTimeInCohort")
-
-    presentSettings <- temporalCovariateSettings[requiredTimeDistributionSettings]
-    if (!all(unlist(presentSettings))) {
-      warning(
-        "For time distributions diagnostics to display standardized results the following covariates must be present in your temporalCovariateSettings: \n\n",
-        paste(requiredTimeDistributionSettings, collapse = ", "))
     }
   }
 
@@ -926,7 +928,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     # 3
     packageDependencySnapShotJson,
     # 4
-    argumentsAtDiagnosticsInitiationJson,
+    callingArgsJson,
     # 5
     as.character(R.Version()$version.string),
     # 6

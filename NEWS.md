@@ -1,5 +1,9 @@
 CohortDiagnostics 3.1.1
 =======================
+Changes:
+
+1. Added support for custom FeatureExtraction features
+
 Bug Fixes:
 
 1. Fixed error when checking for cdm_source table
