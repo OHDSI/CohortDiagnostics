@@ -118,16 +118,16 @@ conceptsInDataSourceModule <- function(id,
       output <- c()
       if (hasData(resolved)) {
         resolved <- resolved %>%
-          dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-          dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
-          dplyr::filter(.data$conceptSetId %in% conceptSetIds())
+          dplyr::filter(databaseId %in% selectedDatabaseIds()) %>%
+          dplyr::filter(cohortId %in% targetCohortId()) %>%
+          dplyr::filter(conceptSetId %in% conceptSetIds())
         output <- c(output, resolved$conceptId) %>% unique()
       }
       if (hasData(mapped)) {
         mapped <- mapped %>%
-          dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-          dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
-          dplyr::filter(.data$conceptSetId %in% conceptSetIds())
+          dplyr::filter(databaseId %in% selectedDatabaseIds()) %>%
+          dplyr::filter(cohortId %in% targetCohortId()) %>%
+          dplyr::filter(conceptSetId %in% conceptSetIds())
         output <- c(output, mapped$conceptId) %>% unique()
       }
 
@@ -150,7 +150,7 @@ conceptsInDataSourceModule <- function(id,
       if (hasData(selectedConceptSets())) {
         if (length(getFilteredConceptIds()) > 0) {
           data <- data %>%
-            dplyr::filter(.data$conceptId %in% getFilteredConceptIds())
+            dplyr::filter(conceptId %in% getFilteredConceptIds())
         }
       }
       validate(need(
@@ -160,17 +160,17 @@ conceptsInDataSourceModule <- function(id,
 
       if (input$includedType == "Source fields") {
         data <- data %>%
-          dplyr::filter(.data$conceptId > 0) %>%
-          dplyr::filter(.data$sourceConceptId == 1) %>%
-          dplyr::rename(standard = .data$standardConcept)
+          dplyr::filter(conceptId > 0) %>%
+          dplyr::filter(sourceConceptId == 1) %>%
+          dplyr::rename(standard = standardConcept)
         keyColumnFields <-
           c("conceptId", "conceptName", "vocabularyId", "conceptCode")
       }
       if (input$includedType == "Standard fields") {
         data <- data %>%
-          dplyr::filter(.data$conceptId > 0) %>%
-          dplyr::filter(.data$sourceConceptId == 0) %>%
-          dplyr::rename(standard = .data$standardConcept)
+          dplyr::filter(conceptId > 0) %>%
+          dplyr::filter(sourceConceptId == 0) %>%
+          dplyr::rename(standard = standardConcept)
         keyColumnFields <-
           c("conceptId", "conceptName", "vocabularyId")
       }
@@ -178,8 +178,8 @@ conceptsInDataSourceModule <- function(id,
       validate(need(hasData(data), "No data available for selected combination"))
       data <- data %>%
         dplyr::rename(
-          persons = .data$conceptSubjects,
-          records = .data$conceptCount
+          persons = conceptSubjects,
+          records = conceptCount
         ) %>%
         dplyr::arrange(dplyr::desc(abs(dplyr::across(c("records", "persons")))))
 

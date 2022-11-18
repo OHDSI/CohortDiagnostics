@@ -31,7 +31,7 @@ exportCharacterization <- function(characteristics,
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
     characteristics$filteredCovariates <-
       characteristics$covariates %>%
-      dplyr::filter(.data$mean >= minCharacterizationMean) %>%
+      dplyr::filter(mean >= minCharacterizationMean) %>%
       dplyr::mutate(databaseId = !!databaseId) %>%
       dplyr::left_join(counts,
         by = c("cohortId", "databaseId"),
@@ -39,22 +39,22 @@ exportCharacterization <- function(characteristics,
       ) %>%
       dplyr::mutate(
         mean = dplyr::if_else(
-          .data$mean != 0 & .data$mean < minCellCount / as.numeric(.data$cohortEntries),
-          -minCellCount / as.numeric(.data$cohortEntries),
-          .data$mean
+          mean != 0 & mean < minCellCount / as.numeric(cohortEntries),
+          -minCellCount / as.numeric(cohortEntries),
+          mean
         ),
         sumValue = dplyr::if_else(
-          .data$sumValue != 0 & .data$sumValue < minCellCount,
+          sumValue != 0 & sumValue < minCellCount,
           -minCellCount,
-          .data$sumValue
+          sumValue
         )
       ) %>%
-      dplyr::mutate(sd = dplyr::if_else(.data$mean >= 0, .data$sd, 0)) %>%
+      dplyr::mutate(sd = dplyr::if_else(mean >= 0, sd, 0)) %>%
       dplyr::mutate(
-        mean = round(.data$mean, digits = 4),
-        sd = round(.data$sd, digits = 4)
+        mean = round(mean, digits = 4),
+        sd = round(sd, digits = 4)
       ) %>%
-      dplyr::select(-.data$cohortEntries, -.data$cohortSubjects) %>%
+      dplyr::select(-cohortEntries, -cohortSubjects) %>%
       dplyr::distinct() %>% makeDataExportable(
         tableName = "temporal_covariate_value",
         minCellCount = minCellCount,

@@ -214,7 +214,7 @@ executeCohortCharacterization <- function(connection,
   startCohortCharacterization <- Sys.time()
   subset <- subsetToRequiredCohorts(
     cohorts = cohorts %>%
-      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+      dplyr::filter(cohortId %in% instantiatedCohorts),
     task = task,
     incremental = incremental,
     recordKeepingFile = recordKeepingFile

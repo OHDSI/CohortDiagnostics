@@ -381,7 +381,7 @@ initializeEnvironment <- function(shinySettings,
       "vocabularyVersion" %in% colnames(envir$database)) {
       envir$database <- envir$database %>%
         dplyr::mutate(
-          databaseIdWithVocabularyVersion = paste0(databaseId, " (", .data$vocabularyVersion, ")")
+          databaseIdWithVocabularyVersion = paste0(databaseId, " (", vocabularyVersion, ")")
         )
     }
 
@@ -389,22 +389,22 @@ initializeEnvironment <- function(shinySettings,
     envir$databaseMetadata <- envir$database %>%
       dplyr::distinct() %>%
       dplyr::mutate(id = dplyr::row_number()) %>%
-      dplyr::mutate(shortName = paste0("D", .data$id)) %>%
+      dplyr::mutate(shortName = paste0("D", id)) %>%
       dplyr::left_join(envir$databaseMetadata,
                        by = "databaseId"
       ) %>%
-      dplyr::relocate(.data$id, .data$databaseId, .data$shortName)
+      dplyr::relocate(id, databaseId, shortName)
 
 
     if ("databaseName" %in% names(envir$database)) {
       envir$dbMapping <- envir$database %>%
-        dplyr::select(.data$databaseId, .data$databaseName) %>%
+        dplyr::select(databaseId, databaseName) %>%
         dplyr::distinct()
     } else {
       envir$dbMapping <- envir$database %>%
-        dplyr::select(.data$databaseId, .data$cdmSourceName) %>%
+        dplyr::select(databaseId, cdmSourceName) %>%
         dplyr::distinct() %>%
-        dplyr::mutate(databaseName = .data$cdmSourceName)
+        dplyr::mutate(databaseName = cdmSourceName)
     }
   }
 
@@ -414,12 +414,12 @@ initializeEnvironment <- function(shinySettings,
   if (!is.null(envir$temporalTimeRef)) {
     envir$temporalChoices <- getResultsTemporalTimeRef(dataSource = envir$dataSource)
     envir$temporalCharacterizationTimeIdChoices <- envir$temporalChoices %>%
-      dplyr::arrange(.data$sequence)
+      dplyr::arrange(sequence)
 
     envir$characterizationTimeIdChoices <- envir$temporalChoices %>%
-      dplyr::filter(.data$isTemporal == 0) %>%
-      dplyr::filter(.data$primaryTimeId == 1) %>%
-      dplyr::arrange(.data$sequence)
+      dplyr::filter(isTemporal == 0) %>%
+      dplyr::filter(primaryTimeId == 1) %>%
+      dplyr::arrange(sequence)
   }
 
   if (!is.null(envir$temporalAnalysisRef)) {
@@ -435,14 +435,14 @@ initializeEnvironment <- function(shinySettings,
     )
 
     envir$domainIdOptions <- envir$temporalAnalysisRef %>%
-      dplyr::select(.data$domainId) %>%
-      dplyr::pull(.data$domainId) %>%
+      dplyr::select(domainId) %>%
+      dplyr::pull(domainId) %>%
       unique() %>%
       sort()
 
     envir$analysisNameOptions <- envir$temporalAnalysisRef %>%
-      dplyr::select(.data$analysisName) %>%
-      dplyr::pull(.data$analysisName) %>%
+      dplyr::select(analysisName) %>%
+      dplyr::pull(analysisName) %>%
       unique() %>%
       sort()
   }

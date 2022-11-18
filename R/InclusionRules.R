@@ -27,7 +27,7 @@ getInclusionStats <- function(connection,
   ParallelLogger::logInfo("Fetching inclusion statistics from files")
   subset <- subsetToRequiredCohorts(
     cohorts = cohortDefinitionSet %>%
-      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+      dplyr::filter(cohortId %in% instantiatedCohorts),
     task = "runInclusionStatistics",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile

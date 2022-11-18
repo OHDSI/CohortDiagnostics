@@ -47,7 +47,7 @@ databaseInformationModule <- function(id,
   shiny::moduleServer(id, function(input, output, session) {
 
     getDatabaseInformation <- shiny::reactive(x = {
-      return(databaseMetadata %>% dplyr::filter(.data$databaseId %in% selectedDatabaseIds()))
+      return(databaseMetadata %>% dplyr::filter(databaseId %in% selectedDatabaseIds()))
     })
 
     # Output: databaseInformationTable ------------------------
@@ -125,10 +125,10 @@ databaseInformationModule <- function(id,
 
       # The meta-data data structure needs to be taken out!
       data <- data %>%
-        dplyr::mutate(startTime = paste0(.data$startTime)) %>%
-        dplyr::mutate(startTime = as.POSIXct(.data$startTime))
+        dplyr::mutate(startTime = paste0(startTime)) %>%
+        dplyr::mutate(startTime = as.POSIXct(startTime))
 
-      data <- data %>% dplyr::filter(.data$startTime == dbInfo$startTime)
+      data <- data %>% dplyr::filter(startTime == dbInfo$startTime)
       return(data)
     })
 
@@ -178,7 +178,7 @@ databaseInformationModule <- function(id,
         }
 
         data <- data %>%
-          dplyr::pull(.data$packageDependencySnapShotJson)
+          dplyr::pull(packageDependencySnapShotJson)
 
         data <- dplyr::as_tibble(RJSONIO::fromJSON(
           content = data,
@@ -201,7 +201,7 @@ databaseInformationModule <- function(id,
           return(NULL)
         }
         data <- data %>%
-          dplyr::pull(.data$argumentsAtDiagnosticsInitiationJson) %>%
+          dplyr::pull(argumentsAtDiagnosticsInitiationJson) %>%
           RJSONIO::fromJSON(digits = 23) %>%
           RJSONIO::toJSON(
             digits = 23,

@@ -4,6 +4,8 @@ Bug Fixes:
 
 1. Fixed error when checking for cdm_source table
 
+2. Removal of `.data$` usage across package to fix tidyselect warning
+
 CohortDiagnostics 3.1.0
 =======================
 Changes:

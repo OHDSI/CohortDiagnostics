@@ -47,16 +47,16 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   )
 
   sortShortName <- plotData %>%
-    dplyr::select(.data$shortName) %>%
+    dplyr::select(shortName) %>%
     dplyr::distinct() %>%
     dplyr::arrange(-as.integer(sub(
-      pattern = "^C", "", x = .data$shortName
+      pattern = "^C", "", x = shortName
     )))
 
   plotData <- plotData %>%
     dplyr::arrange(
-      shortName = factor(.data$shortName, levels = sortShortName$shortName),
-      .data$shortName
+      shortName = factor(shortName, levels = sortShortName$shortName),
+      shortName
     )
 
   plotData$shortName <- factor(plotData$shortName,
@@ -65,13 +65,13 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
 
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(
-      x = .data$shortName,
-      ymin = .data$minValue,
-      lower = .data$p25Value,
-      middle = .data$medianValue,
-      upper = .data$p75Value,
-      ymax = .data$maxValue,
-      average = .data$averageValue
+      x = shortName,
+      ymin = minValue,
+      lower = p25Value,
+      middle = medianValue,
+      upper = p75Value,
+      ymax = maxValue,
+      average = averageValue
     ) +
     ggplot2::geom_errorbar(size = 0.5) +
     ggiraph::geom_boxplot_interactive(
@@ -91,7 +91,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
       strip.text.y = ggplot2::element_text(size = 5)
     )
   height <-
-    1.5 + 0.4 * nrow(dplyr::distinct(plotData, .data$databaseId, .data$shortName))
+    1.5 + 0.4 * nrow(dplyr::distinct(plotData, databaseId, shortName))
   plot <- ggiraph::girafe(
     ggobj = plot,
     options = list(
@@ -239,7 +239,7 @@ timeDistributionsModule <- function(id,
       )
 
       if (hasData(data)) {
-        data <- data %>% dplyr::filter(.data$timeMetric %in% input$selecatableTimeMeasures)
+        data <- data %>% dplyr::filter(timeMetric %in% input$selecatableTimeMeasures)
       }
 
       return(data)
@@ -259,22 +259,22 @@ timeDistributionsModule <- function(id,
       validate(need(hasData(data), "No data for this combination"))
 
       data <- data %>%
-        dplyr::inner_join(cohortTable %>% dplyr::select(.data$cohortName, .data$cohortId), by = "cohortId") %>%
-        dplyr::arrange(.data$databaseId, .data$cohortId) %>%
+        dplyr::inner_join(cohortTable %>% dplyr::select(cohortName, cohortId), by = "cohortId") %>%
+        dplyr::arrange(databaseId, cohortId) %>%
         dplyr::select(
-          .data$cohortId,
-          Database = .data$databaseName,
-          Cohort = .data$cohortName,
-          TimeMeasure = .data$timeMetric,
-          Average = .data$averageValue,
-          SD = .data$standardDeviation,
-          Min = .data$minValue,
-          P10 = .data$p10Value,
-          P25 = .data$p25Value,
-          Median = .data$medianValue,
-          P75 = .data$p75Value,
-          P90 = .data$p90Value,
-          Max = .data$maxValue
+          cohortId,
+          Database = databaseName,
+          Cohort = cohortName,
+          TimeMeasure = timeMetric,
+          Average = averageValue,
+          SD = standardDeviation,
+          Min = minValue,
+          P10 = p10Value,
+          P25 = p25Value,
+          Median = medianValue,
+          P75 = p75Value,
+          P90 = p90Value,
+          Max = maxValue
         ) %>%
         dplyr::select(all_of(c("Database", "cohortId", "Cohort", "TimeMeasure", input$selecatableCols)))
 

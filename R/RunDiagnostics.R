@@ -443,15 +443,15 @@ executeDiagnostics <- function(cohortDefinitionSet,
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
-      dplyr::filter(.data$tableName == "cohort") %>%
-      dplyr::pull(.data$columnName) %>%
+      dplyr::filter(tableName == "cohort") %>%
+      dplyr::pull(columnName) %>%
       SqlRender::snakeCaseToCamelCase() %>%
       sort()
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
-      dplyr::filter(.data$tableName == "cohort") %>%
-      dplyr::filter(.data$isRequired == "Yes") %>%
-      dplyr::pull(.data$columnName) %>%
+      dplyr::filter(tableName == "cohort") %>%
+      dplyr::filter(isRequired == "Yes") %>%
+      dplyr::pull(columnName) %>%
       SqlRender::snakeCaseToCamelCase() %>%
       sort()
 
@@ -603,8 +603,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   if (nrow(cohortCounts) > 0) {
     instantiatedCohorts <- cohortCounts %>%
-      dplyr::filter(.data$cohortEntries > 0) %>%
-      dplyr::pull(.data$cohortId)
+      dplyr::filter(cohortEntries > 0) %>%
+      dplyr::pull(cohortId)
     ParallelLogger::logInfo(
       sprintf(
         "Found %s of %s (%1.2f%%) submitted cohorts instantiated. ",

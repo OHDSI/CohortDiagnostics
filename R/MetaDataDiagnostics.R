@@ -166,8 +166,8 @@ getVocabularyVersion <- function(connection, vocabularyDatabaseSchema) {
     snakeCaseToCamelCase = TRUE
   ) %>%
     dplyr::tibble() %>%
-    dplyr::rename(vocabularyVersion = .data$vocabularyVersion) %>%
-    dplyr::pull(.data$vocabularyVersion) %>%
+    dplyr::rename(vocabularyVersion = vocabularyVersion) %>%
+    dplyr::pull(vocabularyVersion) %>%
     unique()
 
   # Edge case where a CDM has more than a single entry

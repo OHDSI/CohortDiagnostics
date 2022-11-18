@@ -29,12 +29,12 @@ test_that("Testing cohort time series execution", {
     
     cohortDefinitionSet <-
       cohort %>%
-      dplyr::select(.data$cohortDefinitionId) %>%
+      dplyr::select(cohortDefinitionId) %>%
       dplyr::distinct() %>%
-      dplyr::rename(cohortId = .data$cohortDefinitionId) %>%
+      dplyr::rename(cohortId = cohortDefinitionId) %>%
       dplyr::rowwise() %>%
       dplyr::mutate(json = RJSONIO::toJSON(list(
-        cohortId = .data$cohortId,
+        cohortId = cohortId,
         randomString = c(
           sample(x = LETTERS, 5, replace = TRUE),
           sample(x = LETTERS, 4, replace = TRUE),
@@ -43,7 +43,7 @@ test_that("Testing cohort time series execution", {
       ))) %>%
       dplyr::ungroup() %>%
       dplyr::mutate(sql = json,
-                    checksum = as.character(CohortDiagnostics:::computeChecksum(.data$json))) %>%
+                    checksum = as.character(CohortDiagnostics:::computeChecksum(json))) %>%
       dplyr::ungroup()
     
     exportFolder <- tempdir()
@@ -80,7 +80,7 @@ test_that("Testing cohort time series execution", {
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
       cohortDefinitionSet = cohortDefinitionSet %>%
-        dplyr::filter(.data$cohortId %in% c(1, 2)),
+        dplyr::filter(cohortId %in% c(1, 2)),
       runCohortTimeSeries = TRUE,
       runDataSourceTimeSeries = FALSE,
       databaseId = "testDatabaseId",
@@ -116,7 +116,7 @@ test_that("Testing cohort time series execution", {
       incremental = TRUE,
       recordKeepingFile = paste0(exportFile, "recordKeeping")
     ) %>%
-      dplyr::arrange(.data$cohortId)
+      dplyr::arrange(cohortId)
     
     testthat::expect_equal(object = subset$cohortId,
                            expected = c(1000, 2000))
@@ -223,9 +223,9 @@ test_that("Testing time series logic", {
 
     # testing if values returned for cohort 1 is as expected
     timeSeriesCohort <- timeSeries %>%
-      dplyr::filter(.data$cohortId == 1) %>%
-      dplyr::filter(.data$seriesType == "T1") %>%
-      dplyr::filter(.data$calendarInterval == "m")
+      dplyr::filter(cohortId == 1) %>%
+      dplyr::filter(seriesType == "T1") %>%
+      dplyr::filter(calendarInterval == "m")
 
     # there should be 8 records in this data frame, representing 8 months for the one subject in the cohort id  = 1
     testthat::expect_equal(
@@ -235,13 +235,13 @@ test_that("Testing time series logic", {
 
     # there should be 2 records in this data frame, representing the 2 starts for the one subject in the cohort id  = 1
     testthat::expect_equal(
-      object = nrow(timeSeriesCohort %>% dplyr::filter(.data$recordsStart == 1)),
+      object = nrow(timeSeriesCohort %>% dplyr::filter(recordsStart == 1)),
       expected = 2
     )
 
     # there should be 1 records in this data frame, representing the 1 incident start for the one subject in the cohort id  = 1
     testthat::expect_equal(
-      object = nrow(timeSeriesCohort %>% dplyr::filter(.data$subjectsStartIn == 1)),
+      object = nrow(timeSeriesCohort %>% dplyr::filter(subjectsStartIn == 1)),
       expected = 1
     )
   })
@@ -312,7 +312,7 @@ test_that("Testing Data source time series execution", {
       incremental = TRUE,
       recordKeepingFile = paste0(exportFile, "recordKeeping")
     ) %>%
-      dplyr::arrange(.data$cohortId)
+      dplyr::arrange(cohortId)
     
     testthat::expect_equal(object = nrow(subset),
                            expected = 0)

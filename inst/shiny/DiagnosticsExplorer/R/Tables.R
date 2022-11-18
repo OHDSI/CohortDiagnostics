@@ -198,9 +198,9 @@ compareCohortCharacteristics <-
     characteristics1Renamed <- characteristics1 %>%
       dplyr::rename(
         sumValue1 = sumValue,
-        mean1 = .data$mean,
-        sd1 = .data$sd,
-        cohortId1 = .data$cohortId
+        mean1 = mean,
+        sd1 = sd,
+        cohortId1 = cohortId
       )
     cohortId1Value <- characteristics1Renamed$cohortId1 %>% unique()
     if (length(cohortId1Value) > 1) {
@@ -209,10 +209,10 @@ compareCohortCharacteristics <-
 
     characteristics2Renamed <- characteristics2 %>%
       dplyr::rename(
-        sumValue2 = .data$sumValue,
-        mean2 = .data$mean,
-        sd2 = .data$sd,
-        cohortId2 = .data$cohortId
+        sumValue2 = sumValue,
+        mean2 = mean,
+        sd2 = sd,
+        cohortId2 = cohortId
       )
     cohortId2Value <- characteristics2Renamed$cohortId2 %>% unique()
     if (length(cohortId2Value) > 1) {
@@ -238,22 +238,22 @@ compareCohortCharacteristics <-
         )
       ) %>%
       dplyr::mutate(
-        mean2 = ifelse(is.na(.data$mean2), 0, .data$mean2),
-        sd2 = ifelse(is.na(.data$sd2), 0, .data$sd2),
-        sd1 = ifelse(is.na(.data$sd1), 0, .data$sd1),
-        mean1 = ifelse(is.na(.data$mean1), 0, .data$mean1),
+        mean2 = ifelse(is.na(mean2), 0, mean2),
+        sd2 = ifelse(is.na(sd2), 0, sd2),
+        sd1 = ifelse(is.na(sd1), 0, sd1),
+        mean1 = ifelse(is.na(mean1), 0, mean1),
       ) %>%
       dplyr::mutate(
-        sdd = sqrt(.data$sd1^2 + .data$sd2^2)
+        sdd = sqrt(sd1^2 + sd2^2)
       )
 
     characteristics$stdDiff <- (characteristics$mean1 - characteristics$mean2) / characteristics$sdd
 
     characteristics <- characteristics %>%
-      dplyr::arrange(-abs(.data$stdDiff)) %>%
-      dplyr::mutate(stdDiff = dplyr::na_if(.data$stdDiff, 0)) %>%
+      dplyr::arrange(-abs(stdDiff)) %>%
+      dplyr::mutate(stdDiff = dplyr::na_if(stdDiff, 0)) %>%
       dplyr::mutate(
-        absStdDiff = abs(.data$stdDiff),
+        absStdDiff = abs(stdDiff),
         cohortId1 = !!cohortId1Value,
         cohortId2 = !!cohortId2Value,
       )

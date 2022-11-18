@@ -5,13 +5,13 @@ addShortName <-
            shortNameColumn = "shortName") {
     if (is.null(shortNameRef)) {
       shortNameRef <- data %>%
-        dplyr::distinct(.data$cohortId) %>%
-        dplyr::arrange(.data$cohortId) %>%
+        dplyr::distinct(cohortId) %>%
+        dplyr::arrange(cohortId) %>%
         dplyr::mutate(shortName = paste0("C", dplyr::row_number()))
     }
 
     shortNameRef <- shortNameRef %>%
-      dplyr::distinct(.data$cohortId, .data$shortName)
+      dplyr::distinct(cohortId, shortName)
     colnames(shortNameRef) <- c(cohortIdColumn, shortNameColumn)
     data <- data %>%
       dplyr::inner_join(shortNameRef, by = dplyr::all_of(cohortIdColumn))
@@ -40,18 +40,18 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   balance$domainId[!balance$domainId %in% domains] <- "Other"
   if (domain != "all") {
     balance <- balance %>%
-      dplyr::filter(.data$domainId == !!domain)
+      dplyr::filter(domainId == !!domain)
   }
 
   # Can't make sense of plot with > 1000 dots anyway, so remove
   # anything with small mean in both target and comparator:
   if (nrow(balance) > 1000) {
     balance <- balance %>%
-      dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+      dplyr::filter(mean1 > 0.01 | mean2 > 0.01)
   }
   if (nrow(balance) > 1000) {
     balance <- balance %>%
-      dplyr::filter(.data$sumValue1 > 0 & .data$sumValue2 > 0)
+      dplyr::filter(sumValue1 > 0 & sumValue2 > 0)
   }
 
   balance <- balance %>%
@@ -127,13 +127,13 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     ggplot2::ggplot(
       balance,
       ggplot2::aes(
-        x = .data$mean1,
-        y = .data$mean2,
-        color = .data$domainId
+        x = mean1,
+        y = mean2,
+        color = domainId
       )
     ) +
     ggiraph::geom_point_interactive(
-      ggplot2::aes(tooltip = .data$tooltip),
+      ggplot2::aes(tooltip = tooltip),
       size = 3,
       shape = 16,
       alpha = 0.5

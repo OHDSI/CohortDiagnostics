@@ -31,7 +31,7 @@ loadTestCohortDefinitionSet <- function(cohortIds = NULL) {
     cohortFileNameValue = c("cohortId")
   )
   if (!is.null(cohortIds)) {
-    cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
+    cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(cohortId %in% cohortIds)
   }
   
   cohortDefinitionSet
