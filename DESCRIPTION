@@ -43,7 +43,6 @@ Suggests:
   CirceR,
   DT,
   Eunomia,
-  ggiraph,
   ggplot2,
   htmltools,
   knitr,

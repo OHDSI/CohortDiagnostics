@@ -44,7 +44,7 @@ cohortIds <- c(22040,
 ################# end of user input ##############
 webApiCohorts <- ROhdsiWebApi::getCohortDefinitionsMetaData(baseUrl = baseUrl)
 studyCohorts <-  webApiCohorts %>%
-        dplyr::filter(.data$id %in% cohortIds)
+        dplyr::filter(id %in% cohortIds)
 
 # compile them into a data table
 cohortDefinitionsArray <- list()

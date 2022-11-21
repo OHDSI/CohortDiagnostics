@@ -98,7 +98,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     )
     if (resultsInAndromeda$cohortCount %>%
       dplyr::summarise(n = dplyr::n()) %>%
-      dplyr::pull(.data$n) == 0) {
+      dplyr::pull(n) == 0) {
       warning("Please check if cohorts are instantiated. Exiting cohort time series.")
       return(NULL)
     }
@@ -124,7 +124,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         by = clock::duration_months(3)
       )
     ) %>%
-      dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 3) - 1) %>%
+      dplyr::mutate(periodEnd = clock::add_months(x = periodBegin, n = 3) - 1) %>%
       dplyr::mutate(calendarInterval = "q")
 
   calendarMonth <-
@@ -135,7 +135,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         by = clock::duration_months(1)
       )
     ) %>%
-      dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1) %>%
+      dplyr::mutate(periodEnd = clock::add_months(x = periodBegin, n = 1) - 1) %>%
       dplyr::mutate(calendarInterval = "m")
 
   calendarYear <-
@@ -146,7 +146,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         by = clock::duration_years(1)
       )
     ) %>%
-      dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1) %>%
+      dplyr::mutate(periodEnd = clock::add_years(x = periodBegin, n = 1) - 1) %>%
       dplyr::mutate(calendarInterval = "y")
 
   timeSeriesDateRange <- dplyr::tibble(
@@ -163,7 +163,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       timeSeriesDateRange
     ) %>% # calendarWeek
       dplyr::distinct() %>%
-      dplyr::arrange(.data$periodBegin, .data$periodEnd, .data$calendarInterval) %>%
+      dplyr::arrange(periodBegin, periodEnd, calendarInterval) %>%
       dplyr::mutate(timeId = dplyr::row_number())
 
   ParallelLogger::logTrace(" - Inserting calendar periods")
@@ -455,17 +455,17 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                       by = c("timeId")
     ) %>%
     dplyr::arrange(
-      .data$cohortId,
-      .data$periodBegin,
-      .data$calendarInterval,
-      .data$seriesType,
-      .data$periodBegin
+      cohortId,
+      periodBegin,
+      calendarInterval,
+      seriesType,
+      periodBegin
     ) %>%
-    dplyr::select(-.data$timeId) %>%
+    dplyr::select(-timeId) %>%
     dplyr::mutate(ageGroup = dplyr::if_else(
-      condition = is.na(.data$ageGroup),
-      true = as.character(.data$ageGroup),
-      false = paste(10 * .data$ageGroup, 10 * .data$ageGroup + 9, sep = "-")
+      condition = is.na(ageGroup),
+      true = as.character(ageGroup),
+      false = paste(10 * ageGroup, 10 * ageGroup + 9, sep = "-")
     ))
 
   resultsInAndromeda$calendarPeriods <- NULL
@@ -530,12 +530,12 @@ executeTimeSeriesDiagnostics <- function(connection,
   if (runCohortTimeSeries & nrow(cohortDefinitionSet) > 0) {
     subset <- subsetToRequiredCohorts(
       cohorts = cohortDefinitionSet %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+        dplyr::filter(cohortId %in% instantiatedCohorts),
       task = "runCohortTimeSeries",
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
     ) %>%
-      dplyr::arrange(.data$cohortId)
+      dplyr::arrange(cohortId)
 
     if (nrow(subset) > 0) {
       if (incremental &&

@@ -17,8 +17,8 @@ test_that("Check function makeDataExportable", {
     SqlRender::camelCaseToSnakeCase(names(cohortCountTableCorrect)) %>% sort()
 
   resultsDataModel <- getResultsDataModelSpecifications() %>%
-    dplyr::filter(.data$tableName == "cohort_count") %>%
-    dplyr::select(.data$columnName) %>%
+    dplyr::filter(tableName == "cohort_count") %>%
+    dplyr::select(columnName) %>%
     dplyr::pull() %>%
     sort()
 

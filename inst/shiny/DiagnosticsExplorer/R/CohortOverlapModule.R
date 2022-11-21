@@ -16,44 +16,44 @@ plotCohortOverlap <- function(data,
 
   plotData <- data %>%
     dplyr::mutate(
-      absTOnlySubjects = abs(.data$tOnlySubjects),
-      absCOnlySubjects = abs(.data$cOnlySubjects),
-      absBothSubjects = abs(.data$bothSubjects),
-      absEitherSubjects = abs(.data$eitherSubjects),
-      signTOnlySubjects = dplyr::case_when(.data$tOnlySubjects < 0 ~ "<", TRUE ~ ""),
-      signCOnlySubjects = dplyr::case_when(.data$cOnlySubjects < 0 ~ "<", TRUE ~ ""),
-      signBothSubjects = dplyr::case_when(.data$bothSubjects < 0 ~ "<", TRUE ~ "")
+      absTOnlySubjects = abs(tOnlySubjects),
+      absCOnlySubjects = abs(cOnlySubjects),
+      absBothSubjects = abs(bothSubjects),
+      absEitherSubjects = abs(eitherSubjects),
+      signTOnlySubjects = dplyr::case_when(tOnlySubjects < 0 ~ "<", TRUE ~ ""),
+      signCOnlySubjects = dplyr::case_when(cOnlySubjects < 0 ~ "<", TRUE ~ ""),
+      signBothSubjects = dplyr::case_when(bothSubjects < 0 ~ "<", TRUE ~ "")
     ) %>%
     dplyr::mutate(
       tOnlyString = paste0(
-        .data$signTOnlySubjects,
-        scales::comma(.data$absTOnlySubjects, accuracy = 1),
+        signTOnlySubjects,
+        scales::comma(absTOnlySubjects, accuracy = 1),
         " (",
-        .data$signTOnlySubjects,
-        scales::percent(.data$absTOnlySubjects /
-                          .data$absEitherSubjects,
+        signTOnlySubjects,
+        scales::percent(absTOnlySubjects /
+                          absEitherSubjects,
                         accuracy = 1
         ),
         ")"
       ),
       cOnlyString = paste0(
-        .data$signCOnlySubjects,
-        scales::comma(.data$absCOnlySubjects, accuracy = 1),
+        signCOnlySubjects,
+        scales::comma(absCOnlySubjects, accuracy = 1),
         " (",
-        .data$signCOnlySubjects,
-        scales::percent(.data$absCOnlySubjects /
-                          .data$absEitherSubjects,
+        signCOnlySubjects,
+        scales::percent(absCOnlySubjects /
+                          absEitherSubjects,
                         accuracy = 1
         ),
         ")"
       ),
       bothString = paste0(
-        .data$signBothSubjects,
-        scales::comma(.data$absBothSubjects, accuracy = 1),
+        signBothSubjects,
+        scales::comma(absBothSubjects, accuracy = 1),
         " (",
-        .data$signBothSubjects,
-        scales::percent(.data$absBothSubjects /
-                          .data$absEitherSubjects,
+        signBothSubjects,
+        scales::percent(absBothSubjects /
+                          absEitherSubjects,
                         accuracy = 1
         ),
         ")"
@@ -62,29 +62,29 @@ plotCohortOverlap <- function(data,
     dplyr::mutate(
       tooltip = paste0(
         "Database: ",
-        .data$databaseName,
+        databaseName,
         "\n",
         "\n",
-        .data$targetShortName,
+        targetShortName,
         " only: ",
-        .data$tOnlyString,
+        tOnlyString,
         "\nBoth: ",
-        .data$bothString,
+        bothString,
         "\n",
-        .data$comparatorShortName,
+        comparatorShortName,
         " only: ",
-        .data$cOnlyString
+        cOnlyString
       )
     ) %>%
     dplyr::select(
-      .data$targetShortName,
-      .data$comparatorShortName,
-      .data$databaseId,
-      .data$databaseName,
-      .data$absTOnlySubjects,
-      .data$absCOnlySubjects,
-      .data$absBothSubjects,
-      .data$tooltip
+      targetShortName,
+      comparatorShortName,
+      databaseId,
+      databaseName,
+      absTOnlySubjects,
+      absCOnlySubjects,
+      absBothSubjects,
+      tooltip
     ) %>%
     tidyr::pivot_longer(
       cols = c(
@@ -97,7 +97,7 @@ plotCohortOverlap <- function(data,
     ) %>%
     dplyr::mutate(
       subjectsIn = dplyr::recode(
-        .data$subjectsIn,
+        subjectsIn,
         absTOnlySubjects = "Left cohort only",
         absBothSubjects = "Both cohorts",
         absCOnlySubjects = "Right cohort only"
@@ -117,27 +117,27 @@ plotCohortOverlap <- function(data,
   }
 
   sortTargetShortName <- plotData %>%
-    dplyr::select(.data$targetShortName) %>%
+    dplyr::select(targetShortName) %>%
     dplyr::distinct() %>%
     dplyr::arrange(-as.integer(sub(
-      pattern = "^C", "", x = .data$targetShortName
+      pattern = "^C", "", x = targetShortName
     )))
 
   sortComparatorShortName <- plotData %>%
-    dplyr::select(.data$comparatorShortName) %>%
+    dplyr::select(comparatorShortName) %>%
     dplyr::distinct() %>%
     dplyr::arrange(as.integer(sub(
-      pattern = "^C", "", x = .data$comparatorShortName
+      pattern = "^C", "", x = comparatorShortName
     )))
 
   plotData <- plotData %>%
     dplyr::arrange(
-      targetShortName = factor(.data$targetShortName, levels = sortTargetShortName$targetShortName),
-      .data$targetShortName
+      targetShortName = factor(targetShortName, levels = sortTargetShortName$targetShortName),
+      targetShortName
     ) %>%
     dplyr::arrange(
-      comparatorShortName = factor(.data$comparatorShortName, levels = sortComparatorShortName$comparatorShortName),
-      .data$comparatorShortName
+      comparatorShortName = factor(comparatorShortName, levels = sortComparatorShortName$comparatorShortName),
+      comparatorShortName
     )
 
   plotData$targetShortName <- factor(plotData$targetShortName,
@@ -151,11 +151,11 @@ plotCohortOverlap <- function(data,
 
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(
-      fill = .data$subjectsIn,
-      y = .data$targetShortName,
-      x = .data$value,
-      tooltip = .data$tooltip,
-      group = .data$subjectsIn
+      fill = subjectsIn,
+      y = targetShortName,
+      x = value,
+      tooltip = tooltip,
+      group = subjectsIn
     ) +
     ggplot2::ylab(label = "") +
     ggplot2::xlab(label = "") +
@@ -183,7 +183,7 @@ plotCohortOverlap <- function(data,
   height <-
     nrow(
       plotData %>%
-        dplyr::select(.data$targetShortName, .data$comparatorShortName) %>%
+        dplyr::select(targetShortName, comparatorShortName) %>%
         dplyr::distinct()
     )
   plot <- ggiraph::girafe(
@@ -346,32 +346,32 @@ cohortOverlapModule <- function(id,
       ))
 
       data <- data %>%
-        dplyr::inner_join(cohortTable %>% dplyr::select(.data$cohortId,
-                                                        targetCohortName = .data$cohortName),
+        dplyr::inner_join(cohortTable %>% dplyr::select(cohortId,
+                                                        targetCohortName = cohortName),
                           by = c("targetCohortId" = "cohortId")) %>%
-        dplyr::inner_join(cohortTable %>% dplyr::select(.data$cohortId,
-                                                        comparatorCohortName = .data$cohortName),
+        dplyr::inner_join(cohortTable %>% dplyr::select(cohortId,
+                                                        comparatorCohortName = cohortName),
                           by = c("comparatorCohortId" = "cohortId")) %>%
         dplyr::select(
-          .data$databaseName,
-          .data$targetCohortId,
-          .data$targetCohortName,
-          .data$comparatorCohortId,
-          .data$comparatorCohortName,
-          tOnly = .data$tOnlySubjects,
-          cOnly = .data$cOnlySubjects,
-          both = .data$bothSubjects,
-          totalSubjects = .data$eitherSubjects
+          databaseName,
+          targetCohortId,
+          targetCohortName,
+          comparatorCohortId,
+          comparatorCohortName,
+          tOnly = tOnlySubjects,
+          cOnly = cOnlySubjects,
+          both = bothSubjects,
+          totalSubjects = eitherSubjects
         )
 
       if (input$showCohortIds) {
         data <- data %>% dplyr::mutate(
-          targetCohortName = paste0("C", .data$targetCohortId, " - ", .data$targetCohortName),
-          comparatorCohortName = paste0("C", .data$comparatorCohortId, " - ", .data$comparatorCohortName)
+          targetCohortName = paste0("C", targetCohortId, " - ", targetCohortName),
+          comparatorCohortName = paste0("C", comparatorCohortId, " - ", comparatorCohortName)
         )
       }
 
-      data <- data %>% dplyr::select(-.data$targetCohortId, -.data$comparatorCohortId)
+      data <- data %>% dplyr::select(-targetCohortId, -comparatorCohortId)
 
       if (input$showAsPercentage) {
         data$tOnly <- data$tOnly / data$totalSubjects

@@ -19,7 +19,7 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   balance$domainId[!balance$domainId %in% domains] <- "Other"
   if (domain != "all") {
     balance <- balance %>%
-      dplyr::filter(.data$domainId == !!domain)
+      dplyr::filter(domainId == !!domain)
   }
   validate(need((nrow(balance) > 0), paste0("No data for selected combination.")))
 
@@ -27,11 +27,11 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   # anything with small mean in both target and comparator:
   if (nrow(balance) > 1000) {
     balance <- balance %>%
-      dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+      dplyr::filter(mean1 > 0.01 | mean2 > 0.01)
   }
   if (nrow(balance) > 1000) {
     balance <- balance %>%
-      dplyr::filter(.data$sumValue1 > 0 & .data$sumValue2 > 0)
+      dplyr::filter(sumValue1 > 0 & sumValue2 > 0)
   }
 
   balance <- balance %>%
@@ -107,13 +107,13 @@ plotTemporalCompareStandardizedDifference <- function(balance,
     ggplot2::ggplot(
       balance,
       ggplot2::aes(
-        x = .data$mean1,
-        y = .data$mean2,
-        color = .data$domainId
+        x = mean1,
+        y = mean2,
+        color = domainId
       )
     ) +
       ggiraph::geom_point_interactive(
-        ggplot2::aes(tooltip = .data$tooltip),
+        ggplot2::aes(tooltip = tooltip),
         size = 3,
         shape = 16,
         alpha = 0.5
@@ -401,13 +401,13 @@ compareCohortCharacterizationModule <- function(id,
   shiny::moduleServer(id, function(input, output, session) {
     # Temporal choices (e.g. -30d - 0d ) are dynamic to execution
     timeIdOptions <- getResultsTemporalTimeRef(dataSource = dataSource) %>%
-      dplyr::arrange(.data$sequence)
+      dplyr::arrange(sequence)
     shiny::observe({
       # Default time windows
       selectedTimeWindows <- timeIdOptions %>%
-        dplyr::filter(.data$primaryTimeId == 1) %>%
-        dplyr::filter(.data$isTemporal == 1) %>%
-        dplyr::arrange(.data$sequence) %>%
+        dplyr::filter(primaryTimeId == 1) %>%
+        dplyr::filter(isTemporal == 1) %>%
+        dplyr::arrange(sequence) %>%
         dplyr::pull("temporalChoices")
 
       shinyWidgets::updatePickerInput(session,
@@ -444,15 +444,15 @@ compareCohortCharacterizationModule <- function(id,
 
     selectedTimeIds <- shiny::reactive({
       timeIdOptions %>%
-        dplyr::filter(.data$temporalChoices %in% input$timeIdChoices) %>%
-        dplyr::select(.data$timeId) %>%
+        dplyr::filter(temporalChoices %in% input$timeIdChoices) %>%
+        dplyr::select(timeId) %>%
         dplyr::pull()
     })
 
     selectedTimeIdsSingle <- shiny::reactive({
       timeIdOptions %>%
-        dplyr::filter(.data$temporalChoices %in% input$timeIdChoicesSingle) %>%
-        dplyr::select(.data$timeId) %>%
+        dplyr::filter(temporalChoices %in% input$timeIdChoicesSingle) %>%
+        dplyr::select(timeId) %>%
         dplyr::pull()
     })
 
@@ -501,7 +501,7 @@ compareCohortCharacterizationModule <- function(id,
         characterizationAnalysisOptionsUniverse <- analysisNameOptions
         charcterizationAnalysisOptionsSelected <-
           temporalAnalysisRef %>%
-            dplyr::pull(.data$analysisName) %>%
+            dplyr::pull(analysisName) %>%
             unique()
       }
 
@@ -524,7 +524,7 @@ compareCohortCharacterizationModule <- function(id,
         characterizationDomainOptionsUniverse <- domainIdOptions
         charcterizationDomainOptionsSelected <-
           temporalAnalysisRef %>%
-            dplyr::pull(.data$domainId) %>%
+            dplyr::pull(domainId) %>%
             unique()
       }
 
@@ -561,12 +561,12 @@ compareCohortCharacterizationModule <- function(id,
         return(NULL)
       }
       data <- data %>%
-        dplyr::filter(.data$cohortId %in% c(targetCohortId(), comparatorCohortId())) %>%
-        dplyr::filter(.data$databaseId %in% selectedDatabaseIds())
+        dplyr::filter(cohortId %in% c(targetCohortId(), comparatorCohortId())) %>%
+        dplyr::filter(databaseId %in% selectedDatabaseIds())
 
       data <- data %>%
-        dplyr::filter(.data$analysisName %in% input$analysisNameFilter) %>%
-        dplyr::filter(.data$domainId %in% input$domainIdFilter)
+        dplyr::filter(analysisName %in% input$analysisNameFilter) %>%
+        dplyr::filter(domainId %in% input$domainIdFilter)
 
       if (!hasData(data)) {
         return(NULL)
@@ -581,14 +581,14 @@ compareCohortCharacterizationModule <- function(id,
         return(NULL)
       }
       covs1 <- data %>%
-        dplyr::filter(.data$cohortId == targetCohortId(),
-                      .data$databaseId == input$targetDatabase)
+        dplyr::filter(cohortId == targetCohortId(),
+                      databaseId == input$targetDatabase)
       if (!hasData(covs1)) {
         return(NULL)
       }
       covs2 <- data %>%
-        dplyr::filter(.data$cohortId == comparatorCohortId(),
-                      .data$databaseId == input$comparatorDatabase)
+        dplyr::filter(cohortId == comparatorCohortId(),
+                      databaseId == input$comparatorDatabase)
       if (!hasData(covs2)) {
         return(NULL)
       }
@@ -611,59 +611,59 @@ compareCohortCharacterizationModule <- function(id,
       validate(need(hasData(data), "No data available for selected combination."))
       distinctTemporalChoices <- unique(temporalChoices$temporalChoices)
       sortedTemporalChoices <- data %>%
-        dplyr::arrange(factor(.data$temporalChoices, levels = distinctTemporalChoices)) %>%
-        dplyr::distinct(.data$temporalChoices) %>%
-        dplyr::pull(.data$temporalChoices)
+        dplyr::arrange(factor(temporalChoices, levels = distinctTemporalChoices)) %>%
+        dplyr::distinct(temporalChoices) %>%
+        dplyr::pull(temporalChoices)
 
       data <- data %>%
-        dplyr::arrange(factor(.data$temporalChoices, levels = sortedTemporalChoices))
+        dplyr::arrange(factor(temporalChoices, levels = sortedTemporalChoices))
 
       data <- data %>%
-        dplyr::filter(.data$timeId == selectedTimeIdsSingle())
+        dplyr::filter(timeId == selectedTimeIdsSingle())
 
       showAsPercent <- FALSE
       if (input$proportionOrContinuous == "Proportion") {
         showAsPercent <- TRUE
         data <- data %>%
-          dplyr::filter(.data$isBinary == "Y")
+          dplyr::filter(isBinary == "Y")
       } else if (input$proportionOrContinuous == "Continuous") {
         data <- data %>%
-          dplyr::filter(.data$isBinary == "N")
+          dplyr::filter(isBinary == "N")
       }
 
       data <- data %>%
         dplyr::rename(
-          "target" = .data$mean1,
-          "sdT" = .data$sd1,
-          "comparator" = .data$mean2,
-          "sdC" = .data$sd2,
-          "StdDiff" = .data$absStdDiff
+          "target" = mean1,
+          "sdT" = sd1,
+          "comparator" = mean2,
+          "sdC" = sd2,
+          "StdDiff" = absStdDiff
         )
 
       if (input$compareCharacterizationColumnFilters == "Mean and Standard Deviation") {
         data <- data %>%
-          dplyr::select(.data$covariateName,
-                        .data$analysisName,
-                        .data$conceptId,
-                        .data$target,
-                        .data$sdT,
-                        .data$comparator,
-                        .data$sdC,
-                        .data$StdDiff)
+          dplyr::select(covariateName,
+                        analysisName,
+                        conceptId,
+                        target,
+                        sdT,
+                        comparator,
+                        sdC,
+                        StdDiff)
       } else {
         data <- data %>%
-          dplyr::select(.data$covariateName,
-                        .data$analysisName,
-                        .data$conceptId,
-                        .data$target,
-                        .data$comparator,
-                        .data$StdDiff)
+          dplyr::select(covariateName,
+                        analysisName,
+                        conceptId,
+                        target,
+                        comparator,
+                        StdDiff)
       }
 
       # Covariates where stdDiff is NA or NULL
       if (input$showOnlyMutualCovariates) {
-        data <- data %>% dplyr::filter(!is.na(.data$StdDiff),
-                                       !is.null(.data$StdDiff))
+        data <- data %>% dplyr::filter(!is.na(StdDiff),
+                                       !is.null(StdDiff))
       }
 
       reactable::reactable(
@@ -725,13 +725,13 @@ compareCohortCharacterizationModule <- function(id,
     selectionsOutput <- shiny::reactive({
 
       target <- paste(cohortTable %>%
-                        dplyr::filter(.data$cohortId == targetCohortId()) %>%
-                        dplyr::select(.data$cohortName) %>%
+                        dplyr::filter(cohortId == targetCohortId()) %>%
+                        dplyr::select(cohortName) %>%
                         dplyr::pull(),
                       collapse = ", ")
       comparator <- paste(cohortTable %>%
-                            dplyr::filter(.data$cohortId == comparatorCohortId()) %>%
-                            dplyr::select(.data$cohortName) %>%
+                            dplyr::filter(cohortId == comparatorCohortId()) %>%
+                            dplyr::select(cohortName) %>%
                             dplyr::pull(),
                           collapse = ", ")
 
@@ -750,15 +750,15 @@ compareCohortCharacterizationModule <- function(id,
             width = 5,
             tags$b("Target Database :"),
             paste(databaseTable %>%
-                    dplyr::filter(.data$databaseId == input$targetDatabase) %>%
-                    dplyr::select(.data$databaseName) %>%
+                    dplyr::filter(databaseId == input$targetDatabase) %>%
+                    dplyr::select(databaseName) %>%
                     dplyr::pull(),
                   collapse = ", "),
             tags$br(),
             tags$b("Comparator Database :"),
             paste(databaseTable %>%
-                    dplyr::filter(.data$databaseId == input$comparatorDatabase) %>%
-                    dplyr::select(.data$databaseName) %>%
+                    dplyr::filter(databaseId == input$comparatorDatabase) %>%
+                    dplyr::select(databaseName) %>%
                     dplyr::pull(),
                   collapse = ", ")
           )
@@ -798,10 +798,10 @@ compareCohortCharacterizationModule <- function(id,
       distinctTemporalChoices <- unique(temporalChoices$temporalChoices)
 
       data <- data %>%
-        dplyr::filter(.data$timeId %in% selectedTimeIds(),
-                      !is.na(.data$stdDiff)) %>%
-        dplyr::arrange(factor(.data$temporalChoices, levels = distinctTemporalChoices)) %>%
-        dplyr::mutate(temporalChoices = factor(.data$temporalChoices, levels = unique(.data$temporalChoices)))
+        dplyr::filter(timeId %in% selectedTimeIds(),
+                      !is.na(stdDiff)) %>%
+        dplyr::arrange(factor(temporalChoices, levels = distinctTemporalChoices)) %>%
+        dplyr::mutate(temporalChoices = factor(temporalChoices, levels = unique(temporalChoices)))
 
       plot <-
         plotTemporalCompareStandardizedDifference(

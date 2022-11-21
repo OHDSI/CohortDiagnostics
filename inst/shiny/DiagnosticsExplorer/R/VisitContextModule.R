@@ -86,7 +86,7 @@ visitContextModule <- function(id,
     ## getVisitContexDataEnhanced----
     getVisitContexDataEnhanced <- shiny::reactive(x = { #spelling error here missing the t in Context
       visitContextData <- getVisitContextData() %>%
-        dplyr::rename(visitContextSubject = .data$subjects)
+        dplyr::rename(visitContextSubject = subjects)
       if (!hasData(visitContextData)) {
         return(NULL)
       }
@@ -108,23 +108,23 @@ visitContextModule <- function(id,
             )
           ) %>%
           dplyr::rename(
-            subjects = .data$cohortSubjects,
-            records = .data$cohortEntries
+            subjects = cohortSubjects,
+            records = cohortEntries
           ) %>%
           dplyr::select(
-            .data$databaseId,
-            .data$cohortId,
-            .data$visitConceptName,
-            .data$visitContext,
-            .data$subjects,
-            .data$records,
-            .data$visitContextSubject
+            databaseId,
+            cohortId,
+            visitConceptName,
+            visitContext,
+            subjects,
+            records,
+            visitContextSubject
           ) %>%
           dplyr::mutate(
             visitContext = dplyr::case_when(
-              .data$visitContext == "During visit" ~ "During",
-              .data$visitContext == "On visit start" ~ "Simultaneous",
-              TRUE ~ .data$visitContext
+              visitContext == "During visit" ~ "During",
+              visitContext == "On visit start" ~ "Simultaneous",
+              TRUE ~ visitContext
             )
           ) %>%
           tidyr::replace_na(replace = list(subjects = 0, records = 0))
@@ -132,16 +132,16 @@ visitContextModule <- function(id,
 
       if (input$visitContextTableFilters == "Before") {
         visitContextData <- visitContextData %>%
-          dplyr::filter(.data$visitContext == "Before")
+          dplyr::filter(visitContext == "Before")
       } else if (input$visitContextTableFilters == "During") {
         visitContextData <- visitContextData %>%
-          dplyr::filter(.data$visitContext == "During")
+          dplyr::filter(visitContext == "During")
       } else if (input$visitContextTableFilters == "Simultaneous") {
         visitContextData <- visitContextData %>%
-          dplyr::filter(.data$visitContext == "Simultaneous")
+          dplyr::filter(visitContext == "Simultaneous")
       } else if (input$visitContextTableFilters == "After") {
         visitContextData <- visitContextData %>%
-          dplyr::filter(.data$visitContext == "After")
+          dplyr::filter(visitContext == "After")
       }
       if (!hasData(visitContextData)) {
         return(NULL)
