@@ -31,7 +31,7 @@ for (i in (1:length(listFiles))) {
     col_types = readr::cols(),
     guess_max = min(1e7)
   ) %>%
-    dplyr::filter(!.data$task %in% tasksToRemove) %>%
+    dplyr::filter(!task %in% tasksToRemove) %>%
     readr::write_excel_csv(file = listFiles[[i]])
 }
 

@@ -53,7 +53,7 @@ getIncidenceRateRanges <- function(dataSource, minPersonYears = 0) {
     person_years = minPersonYears,
     snakeCaseToCamelCase = TRUE
   ) %>%
-    dplyr::mutate(ageGroup = dplyr::na_if(.data$ageGroup, ""))
+    dplyr::mutate(ageGroup = dplyr::na_if(ageGroup, ""))
 
   sql <- "SELECT DISTINCT calendar_year FROM @results_database_schema.@ir_table WHERE person_years >= @person_years"
 
@@ -67,9 +67,9 @@ getIncidenceRateRanges <- function(dataSource, minPersonYears = 0) {
     snakeCaseToCamelCase = TRUE
   ) %>%
     dplyr::mutate(
-      calendarYear = dplyr::na_if(.data$calendarYear, "")
+      calendarYear = dplyr::na_if(calendarYear, "")
     ) %>%
-    dplyr::mutate(calendarYear = as.integer(.data$calendarYear))
+    dplyr::mutate(calendarYear = as.integer(calendarYear))
 
   sql <- "SELECT DISTINCT gender FROM @results_database_schema.@ir_table WHERE person_years >= @person_years"
 
@@ -82,7 +82,7 @@ getIncidenceRateRanges <- function(dataSource, minPersonYears = 0) {
     person_years = minPersonYears,
     snakeCaseToCamelCase = TRUE
   ) %>%
-    dplyr::mutate(gender = dplyr::na_if(.data$gender, ""))
+    dplyr::mutate(gender = dplyr::na_if(gender, ""))
 
 
   sql <- "SELECT
@@ -182,17 +182,17 @@ getIncidenceRateResult <- function(dataSource,
 
   data <- data %>%
     dplyr::mutate(
-      gender = dplyr::na_if(.data$gender, ""),
-      ageGroup = dplyr::na_if(.data$ageGroup, ""),
-      calendarYear = dplyr::na_if(.data$calendarYear, "")
+      gender = dplyr::na_if(gender, ""),
+      ageGroup = dplyr::na_if(ageGroup, ""),
+      calendarYear = dplyr::na_if(calendarYear, "")
     ) %>%
-    dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
-    dplyr::arrange(.data$cohortId, .data$databaseId)
+    dplyr::mutate(calendarYear = as.integer(calendarYear)) %>%
+    dplyr::arrange(cohortId, databaseId)
 
 
   if (!is.na(minSubjectCount)) {
     data <- data %>%
-      dplyr::filter(.data$cohortSubjects > !!minSubjectCount)
+      dplyr::filter(cohortSubjects > !!minSubjectCount)
   }
 
   return(data)
@@ -255,32 +255,32 @@ getInclusionRuleStats <- function(dataSource,
   }
 
   result <- inclusion %>%
-    dplyr::select(.data$cohortId, .data$databaseId, .data$ruleSequence, .data$name) %>%
+    dplyr::select(cohortId, databaseId, ruleSequence, name) %>%
     dplyr::distinct() %>%
     dplyr::left_join(
       inclusionStats %>%
-        dplyr::filter(.data$modeId == !!modeId) %>%
+        dplyr::filter(modeId == !!modeId) %>%
         dplyr::select(
-          .data$cohortId,
-          .data$databaseId,
-          .data$ruleSequence,
-          .data$personCount,
-          .data$gainCount,
-          .data$personTotal
+          cohortId,
+          databaseId,
+          ruleSequence,
+          personCount,
+          gainCount,
+          personTotal
         ),
       by = c("cohortId", "databaseId", "ruleSequence")
     ) %>%
-    dplyr::arrange(.data$cohortId,
-                   .data$databaseId,
-                   .data$ruleSequence) %>%
+    dplyr::arrange(cohortId,
+                   databaseId,
+                   ruleSequence) %>%
     dplyr::mutate(remain = 0)
 
   inclusionResults <- inclusionResults %>%
-    dplyr::filter(.data$modeId == !!modeId)
+    dplyr::filter(modeId == !!modeId)
 
   combis <- result %>%
-    dplyr::select(.data$cohortId,
-                  .data$databaseId) %>%
+    dplyr::select(cohortId,
+                  databaseId) %>%
     dplyr::distinct()
 
   resultFinal <- c()
@@ -305,22 +305,22 @@ getInclusionRuleStats <- function(dataSource,
   }
   resultFinal <- dplyr::bind_rows(resultFinal) %>%
     dplyr::rename(
-      "meetSubjects" = .data$personCount,
-      "gainSubjects" = .data$gainCount,
-      "remainSubjects" = .data$remain,
-      "totalSubjects" = .data$personTotal,
-      "ruleName" = .data$name,
-      "ruleSequenceId" = .data$ruleSequence
+      "meetSubjects" = personCount,
+      "gainSubjects" = gainCount,
+      "remainSubjects" = remain,
+      "totalSubjects" = personTotal,
+      "ruleName" = name,
+      "ruleSequenceId" = ruleSequence
     ) %>%
     dplyr::select(
-      .data$cohortId,
-      .data$ruleSequenceId,
-      .data$ruleName,
-      .data$meetSubjects,
-      .data$gainSubjects,
-      .data$remainSubjects,
-      .data$totalSubjects,
-      .data$databaseId
+      cohortId,
+      ruleSequenceId,
+      ruleName,
+      meetSubjects,
+      gainSubjects,
+      remainSubjects,
+      totalSubjects,
+      databaseId
     )
   return(resultFinal)
 }
@@ -370,8 +370,8 @@ getIndexEventBreakdown <- function(dataSource,
                       by = c("databaseId", "cohortId")
     ) %>%
     dplyr::mutate(
-      subjectPercent = .data$subjectCount / .data$cohortSubjects,
-      conceptPercent = .data$conceptCount / .data$cohortEntries
+      subjectPercent = subjectCount / cohortSubjects,
+      conceptPercent = conceptCount / cohortEntries
     )
 
   return(data)
@@ -415,7 +415,7 @@ getVisitContextResults <- function(dataSource,
     dplyr::inner_join(cohortCount,
                       by = c("cohortId", "databaseId")
     ) %>%
-    dplyr::mutate(subjectPercent = .data$subjects / .data$cohortSubjects)
+    dplyr::mutate(subjectPercent = subjects / cohortSubjects)
   return(data)
 }
 
@@ -501,18 +501,18 @@ getCountForConceptIdInCohort <-
 
     standardConceptId <- data %>%
       dplyr::select(
-        .data$databaseId,
-        .data$conceptId,
-        .data$conceptSubjects,
-        .data$conceptCount
+        databaseId,
+        conceptId,
+        conceptSubjects,
+        conceptCount
       ) %>%
       dplyr::group_by(
-        .data$databaseId,
-        .data$conceptId
+        databaseId,
+        conceptId
       ) %>%
       dplyr::summarise(
-        conceptSubjects = max(.data$conceptSubjects),
-        conceptCount = sum(.data$conceptCount),
+        conceptSubjects = max(conceptSubjects),
+        conceptCount = sum(conceptCount),
         .groups = "keep"
       ) %>%
       dplyr::ungroup()
@@ -520,19 +520,19 @@ getCountForConceptIdInCohort <-
 
     sourceConceptId <- data %>%
       dplyr::select(
-        .data$databaseId,
-        .data$sourceConceptId,
-        .data$conceptSubjects,
-        .data$conceptCount
+        databaseId,
+        sourceConceptId,
+        conceptSubjects,
+        conceptCount
       ) %>%
-      dplyr::rename(conceptId = .data$sourceConceptId) %>%
+      dplyr::rename(conceptId = sourceConceptId) %>%
       dplyr::group_by(
-        .data$databaseId,
-        .data$conceptId
+        databaseId,
+        conceptId
       ) %>%
       dplyr::summarise(
-        conceptSubjects = max(.data$conceptSubjects),
-        conceptCount = sum(.data$conceptCount),
+        conceptSubjects = max(conceptSubjects),
+        conceptCount = sum(conceptCount),
         .groups = "keep"
       ) %>%
       dplyr::ungroup()
@@ -542,12 +542,12 @@ getCountForConceptIdInCohort <-
       sourceConceptId %>%
         dplyr::anti_join(
           y = standardConceptId %>%
-            dplyr::select(.data$databaseId, .data$conceptId),
+            dplyr::select(databaseId, conceptId),
           by = c("databaseId", "conceptId")
         )
     ) %>%
       dplyr::distinct() %>%
-      dplyr::arrange(.data$databaseId, .data$conceptId)
+      dplyr::arrange(databaseId, conceptId)
 
     return(data)
   }
@@ -641,17 +641,17 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <-
       ) %>%
         tidyr::tibble() %>%
         dplyr::select(
-          .data$conceptSetId,
-          .data$conceptId,
-          .data$conceptName,
-          .data$domainId,
-          .data$vocabularyId,
-          .data$conceptClassId,
-          .data$standardConcept,
-          .data$conceptCode,
-          .data$invalidReason
+          conceptSetId,
+          conceptId,
+          conceptName,
+          domainId,
+          vocabularyId,
+          conceptClassId,
+          standardConcept,
+          conceptCode,
+          invalidReason
         ) %>%
-        dplyr::arrange(.data$conceptId)
+        dplyr::arrange(conceptId)
     mapped <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
@@ -664,18 +664,18 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <-
       ) %>%
         tidyr::tibble() %>%
         dplyr::select(
-          .data$resolvedConceptId,
-          .data$conceptId,
-          .data$conceptName,
-          .data$domainId,
-          .data$vocabularyId,
-          .data$conceptClassId,
-          .data$standardConcept,
-          .data$conceptCode,
-          .data$conceptSetId
+          resolvedConceptId,
+          conceptId,
+          conceptName,
+          domainId,
+          vocabularyId,
+          conceptClassId,
+          standardConcept,
+          conceptCode,
+          conceptSetId
         ) %>%
         dplyr::distinct() %>%
-        dplyr::arrange(.data$resolvedConceptId, .data$conceptId)
+        dplyr::arrange(resolvedConceptId, conceptId)
 
     data <- list(resolved = resolved, mapped = mapped)
     return(data)
@@ -717,7 +717,7 @@ resolvedConceptSet <- function(dataSource,
       snakeCaseToCamelCase = TRUE
     ) %>%
       tidyr::tibble() %>%
-      dplyr::arrange(.data$conceptId)
+      dplyr::arrange(conceptId)
 
   return(resolved)
 }
@@ -829,7 +829,7 @@ mappedConceptSet <- function(dataSource,
       snakeCaseToCamelCase = TRUE
     ) %>%
       tidyr::tibble() %>%
-      dplyr::arrange(.data$resolvedConceptId)
+      dplyr::arrange(resolvedConceptId)
   return(mapped)
 }
 
@@ -900,20 +900,20 @@ getExecutionMetadata <- function(dataSource, databaseId) {
     )]
 
   transposeNonJsons <- databaseMetadata %>%
-    dplyr::filter(.data$variableField %in% c(columnNamesNoJson)) %>%
+    dplyr::filter(variableField %in% c(columnNamesNoJson)) %>%
     dplyr::rename(name = "variableField") %>%
-    dplyr::group_by(.data$databaseId, .data$startTime, .data$name) %>%
+    dplyr::group_by(databaseId, startTime, name) %>%
     dplyr::summarise(
-      valueField = max(.data$valueField),
+      valueField = max(valueField),
       .groups = "keep"
     ) %>%
     dplyr::ungroup() %>%
     tidyr::pivot_wider(
-      names_from = .data$name,
-      values_from = .data$valueField
+      names_from = name,
+      values_from = valueField
     ) %>%
     dplyr::mutate(startTime = stringr::str_replace(
-      string = .data$startTime,
+      string = startTime,
       pattern = "TM_",
       replacement = ""
     ))
@@ -922,20 +922,20 @@ getExecutionMetadata <- function(dataSource, databaseId) {
     transposeNonJsons$startTime %>% lubridate::as_datetime()
 
   transposeJsons <- databaseMetadata %>%
-    dplyr::filter(.data$variableField %in% c(columnNamesJson)) %>%
+    dplyr::filter(variableField %in% c(columnNamesJson)) %>%
     dplyr::rename(name = "variableField") %>%
-    dplyr::group_by(.data$databaseId, .data$startTime, .data$name) %>%
+    dplyr::group_by(databaseId, startTime, name) %>%
     dplyr::summarise(
-      valueField = max(.data$valueField),
+      valueField = max(valueField),
       .groups = "keep"
     ) %>%
     dplyr::ungroup() %>%
     tidyr::pivot_wider(
-      names_from = .data$name,
-      values_from = .data$valueField
+      names_from = name,
+      values_from = valueField
     ) %>%
     dplyr::mutate(startTime = stringr::str_replace(
-      string = .data$startTime,
+      string = startTime,
       pattern = "TM_",
       replacement = ""
     ))

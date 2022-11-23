@@ -85,26 +85,26 @@ inclusionRulesModule <- function(id,
       if (showDataAsPercent) {
         table <- table %>%
           dplyr::mutate(
-            Meet = .data$meetSubjects / .data$totalSubjects,
-            Gain = .data$gainSubjects / .data$totalSubjects,
-            Remain = .data$remainSubjects / .data$totalSubjects,
-            id = .data$ruleSequenceId
+            Meet = meetSubjects / totalSubjects,
+            Gain = gainSubjects / totalSubjects,
+            Remain = remainSubjects / totalSubjects,
+            id = ruleSequenceId
           )
       } else {
         table <- table %>%
           dplyr::mutate(
-            Meet = .data$meetSubjects,
-            Gain = .data$gainSubjects,
-            Remain = .data$remainSubjects,
-            Total = .data$totalSubjects,
-            id = .data$ruleSequenceId
+            Meet = meetSubjects,
+            Gain = gainSubjects,
+            Remain = remainSubjects,
+            Total = totalSubjects,
+            id = ruleSequenceId
           )
       }
 
       table <- table %>%
-        dplyr::arrange(.data$cohortId,
-                       .data$databaseId,
-                       .data$id)
+        dplyr::arrange(cohortId,
+                       databaseId,
+                       id)
 
       validate(need(
         (nrow(table) > 0),
