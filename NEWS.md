@@ -1,5 +1,9 @@
 CohortDiagnostics 3.1.1
 =======================
+Changes:
+
+1. Removed CohortExplorer app as it's now part of a [new package](https://github.com/ohdsi/cohortExplorer).
+
 Bug Fixes:
 
 1. Fixed error when checking for cdm_source table
