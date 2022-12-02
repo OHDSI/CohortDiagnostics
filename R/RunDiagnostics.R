@@ -356,7 +356,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       )
   }
   if (runTemporalCohortCharacterization) {
-    if (!is.list(temporalCovariateSettings)) {
+    if (class(temporalCovariateSettings) == "covariateSettings") {
       temporalCovariateSettings <- list(temporalCovariateSettings)
     }
     # All temporal covariate settings objects must be covariateSettings
@@ -366,7 +366,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                           "DemographicsEthnicity", "DemographicsIndexYear", "DemographicsIndexMonth",
                                           "ConditionEraGroupOverlap", "DrugEraGroupOverlap", "CharlsonIndex",
                                           "Chads2", "Chads2Vasc")
-
     presentSettings <- temporalCovariateSettings[[1]][requiredCharacterisationSettings]
     if (!all(unlist(presentSettings))) {
       warning(
