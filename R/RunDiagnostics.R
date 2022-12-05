@@ -772,7 +772,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
           tempEmulationSchema = tempEmulationSchema,
           cohortTable = cohortTable,
           cohortDefinitionSet = cohortDefinitionSet,
-          temporalCovariateSettings = temporalCovariateSettings,
+          temporalCovariateSettings = temporalCovariateSettings[[1]],
           minCellCount = minCellCount,
           recordKeepingFile = recordKeepingFile,
           incremental = incremental
