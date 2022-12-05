@@ -4,6 +4,8 @@ Changes:
 
 1. Removed CohortExplorer app as it's now part of a [new package](https://github.com/ohdsi/cohortExplorer).
 
+2. Added support for custom FeatureExtraction features
+
 Bug Fixes:
 
 1. Fixed error when checking for cdm_source table
