@@ -160,7 +160,8 @@ characterizationView <- function(id) {
               choices = c("All", "Proportion", "Continuous"),
               selected = "All",
               inline = TRUE
-            )
+            ),
+            p("Percentage displayed where only proportional data is selected")
           ),
           shiny::column(
             width = 4,
@@ -647,7 +648,7 @@ characterizationModule <- function(id,
           databaseId,
           temporalChoices
         )
-
+      showAsPercentage <- any(input$proportionOrContinuous == "Proportion", all(data$isBinary == "Y"))
       if (input$proportionOrContinuous == "Proportion") {
         data <- data %>%
           dplyr::filter(isBinary == "Y") %>%
@@ -675,7 +676,7 @@ characterizationModule <- function(id,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showDataAsPercent = FALSE,
+        showDataAsPercent = showAsPercentage,
         sort = TRUE,
         pageSize = 100
       )
@@ -701,7 +702,18 @@ characterizationModule <- function(id,
         value = 0
       )
 
-      temporalChoices <- data$temporalChoices %>% unique()
+      showAsPercentage <- any(input$proportionOrContinuous == "Proportion", all(data$isBinary == "Y"))
+      if (input$proportionOrContinuous == "Proportion") {
+        data <- data %>%
+          dplyr::filter(isBinary == "Y") %>%
+          dplyr::select(-isBinary)
+      } else if (input$proportionOrContinuous == "Continuous") {
+        data <- data %>%
+          dplyr::filter(isBinary == "N") %>%
+          dplyr::select(-isBinary)
+      }
+
+      temporalChoicesVar <- data$temporalChoices %>% unique()
 
       data <-
         data %>% dplyr::inner_join(databaseTable %>%
@@ -709,12 +721,11 @@ characterizationModule <- function(id,
                                    by = "databaseId")
 
       if (hasData(selectedConceptSets())) {
-        if (hasData(getFilteredConceptIds())) {
+        if (hasData(conceptSetIds())) {
           data <- data %>%
             dplyr::filter(conceptId %in% getFilteredConceptIds())
         }
       }
-
 
       keyColumns <- c("covariateName", "analysisName", "conceptId", "databaseName")
       data <- data %>%
@@ -733,7 +744,7 @@ characterizationModule <- function(id,
           values_from = "mean",
           names_sep = "_"
         ) %>%
-        dplyr::relocate(dplyr::all_of(c(keyColumns, temporalChoices))) %>%
+        dplyr::relocate(dplyr::all_of(c(keyColumns, temporalChoicesVar))) %>%
         dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with("T ("))))
 
       if (any(stringr::str_detect(
@@ -743,7 +754,7 @@ characterizationModule <- function(id,
         data <- data %>%
           dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with("T (0"))))
       }
-      dataColumns <- temporalChoices
+      dataColumns <- temporalChoicesVar
       progress$set(
         message = "Rendering table",
         value = 80
@@ -753,7 +764,7 @@ characterizationModule <- function(id,
         data = data,
         keyColumns = keyColumns,
         dataColumns = dataColumns,
-        showDataAsPercent = FALSE,
+        showDataAsPercent = showAsPercentage,
         pageSize = 100
       )
     })

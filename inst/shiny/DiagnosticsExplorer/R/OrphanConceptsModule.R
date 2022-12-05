@@ -56,14 +56,14 @@ orpahanConceptsView <- function(id) {
 
 orphanConceptsModule <- function(id,
                                  dataSource,
-                                 selectedCohorts,
+                                 selectedCohort,
                                  selectedDatabaseIds,
                                  targetCohortId,
                                  selectedConceptSets,
                                  conceptSetIds) {
   ns <- shiny::NS(id)
   shiny::moduleServer(id, function(input, output, session) {
-    output$selectedCohorts <- shiny::renderUI({ selectedCohorts() })
+    output$selectedCohorts <- shiny::renderUI({ selectedCohort() })
 
 
     # Orphan concepts table --------------------
