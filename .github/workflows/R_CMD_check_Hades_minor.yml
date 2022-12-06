@@ -1,8 +1,5 @@
 #Designed to be a fast github actions check - longer running actions to only run on releases
 on:
-  push:
-    branches:
-      - '**'
   pull_request:
     branches:
       - '**'
