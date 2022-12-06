@@ -250,14 +250,14 @@ plotIncidenceRate <- function(data,
     if (stratifyByGender | stratifyByCalendarYear) {
       if (stratifyByAgeGroup) {
         plot <-
-          plot + facet_nested(databaseName + shortName ~ plotData$ageGroup, scales = scales)
+          plot + ggh4x::facet_nested(databaseName + shortName ~ plotData$ageGroup, scales = scales)
       } else {
         plot <-
-          plot + facet_nested(databaseName + shortName ~ ., scales = scales)
+          plot + ggh4x::facet_nested(databaseName + shortName ~ ., scales = scales)
       }
     } else {
       plot <-
-        plot + facet_nested(databaseName + shortName ~ ., scales = scales)
+        plot + ggh4x::facet_nested(databaseName + shortName ~ ., scales = scales)
     }
     # spacing <- rep(c(1, rep(0.5, length(unique(plotData$shortName)) - 1)), length(unique(plotData$databaseId)))[-1]
     spacing <- plotData %>%

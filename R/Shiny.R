@@ -136,6 +136,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
                      "markdownInput",
                      "markdown",
                      "jsonlite",
+                     "ggh4x",
                      "yaml"))
 
   appDir <-
