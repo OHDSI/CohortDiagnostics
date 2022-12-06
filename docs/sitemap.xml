@@ -145,6 +145,9 @@
     <loc>/reference/getCovariateValueResult.html</loc>
   </url>
   <url>
+    <loc>/reference/getDataMigrator.html</loc>
+  </url>
+  <url>
     <loc>/reference/getDatabaseReference.html</loc>
   </url>
   <url>
@@ -218,6 +221,9 @@
   </url>
   <url>
     <loc>/reference/loadCohortsFromPackage.html</loc>
+  </url>
+  <url>
+    <loc>/reference/migrateDataModel.html</loc>
   </url>
   <url>
     <loc>/reference/plotCohortComparisonStandardizedDifference.html</loc>

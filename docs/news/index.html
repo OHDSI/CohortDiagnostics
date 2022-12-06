@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.1.1</span>
       </span>
     </div>
 
@@ -73,6 +73,15 @@
     </div>
 
     <div class="section level2">
+<h2 class="page-header" data-toc-text="3.1.1" id="cohortdiagnostics-311">CohortDiagnostics 3.1.1<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-311"></a></h2>
+<p>Changes:</p>
+<ol style="list-style-type: decimal"><li><p>Removed CohortExplorer app as it’s now part of a <a href="https://github.com/ohdsi/cohortExplorer" class="external-link">new package</a>.</p></li>
+<li><p>Added support for custom FeatureExtraction features</p></li>
+</ol><p>Bug Fixes:</p>
+<ol style="list-style-type: decimal"><li><p>Fixed error when checking for cdm_source table</p></li>
+<li><p>Removal of <code>.data$</code> usage across package to fix tidyselect warning</p></li>
+</ol></div>
+    <div class="section level2">
 <h2 class="page-header" data-toc-text="3.1.0" id="cohortdiagnostics-310">CohortDiagnostics 3.1.0<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-310"></a></h2>
 <p>Changes:</p>
 <ol style="list-style-type: decimal"><li><p>Major refactoring of shiny app to use modular code for ease of maintenance</p></li>
@@ -82,6 +91,7 @@
 <li><p>Added yaml configuration for diagnostics explorer app, including docs on usage</p></li>
 <li><p>Storage of version number in database results file to allow future migrations</p></li>
 <li><p>Slight optimization of cohort characterization queries in diagnostics explorer</p></li>
+<li><p>Support for database migrations by adding <code>migrateDataModel</code> functionality. Versions of data generated with CohortDiagnostics 3.0.0 are intended to be future compatible. i.e. if you have an sqlite results file or postgres database generated with version 3.0.0 of cohort diagnostics new shiny app functionality will be supported if you run <code>migrateDataModel</code> on it.</p></li>
 <li><p>Changed type to dataType and fieldName to columnName to align with strategus modules</p></li>
 <li><p>Refactored export of characterization results to use common export</p></li>
 <li><p>Ensure that tests cases always use a continuous covariate</p></li>
