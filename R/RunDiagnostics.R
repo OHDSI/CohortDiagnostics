@@ -231,7 +231,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   # take package dependency snapshot
   packageDependencySnapShotJson <-
-    takePackageDependencySnapshot() %>%
+    takepackageDependencySnapshot() %>%
       RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
