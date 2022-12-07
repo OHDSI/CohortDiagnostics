@@ -24,7 +24,7 @@
 #' A data frame listing all the dependencies of the root package and their version numbers, in the
 #' order in which they should be installed.
 #'
-takepackageDependencySnapshot <- function() {
+takePackageDependencySnapshot <- function() {
   splitPackageList <- function(packageList) {
     if (is.null(packageList)) {
       return(c())
@@ -43,6 +43,9 @@ takepackageDependencySnapshot <- function() {
              recursive = TRUE,
              level = 0) {
       description <- utils::packageDescription(package)
+      if (is.atomic(description))
+        return(data.frame())
+      
       packages <- splitPackageList(description$Depends)
       packages <- c(packages, splitPackageList(description$Imports))
       packages <-
