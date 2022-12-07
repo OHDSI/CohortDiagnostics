@@ -1,7 +1,7 @@
 Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Cohorts
-Version: 3.1.0
+Version: 3.1.1
 Date: 2022-07-20
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
@@ -43,7 +43,6 @@ Suggests:
   CirceR,
   DT,
   Eunomia,
-  ggiraph,
   ggplot2,
   htmltools,
   knitr,

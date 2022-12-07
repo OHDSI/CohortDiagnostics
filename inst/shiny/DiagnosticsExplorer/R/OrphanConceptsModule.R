@@ -56,14 +56,14 @@ orpahanConceptsView <- function(id) {
 
 orphanConceptsModule <- function(id,
                                  dataSource,
-                                 selectedCohorts,
+                                 selectedCohort,
                                  selectedDatabaseIds,
                                  targetCohortId,
                                  selectedConceptSets,
                                  conceptSetIds) {
   ns <- shiny::NS(id)
   shiny::moduleServer(id, function(input, output, session) {
-    output$selectedCohorts <- shiny::renderUI({ selectedCohorts() })
+    output$selectedCohorts <- shiny::renderUI({ selectedCohort() })
 
 
     # Orphan concepts table --------------------
@@ -79,7 +79,7 @@ orphanConceptsModule <- function(id,
         return(NULL)
       }
       data <- data %>%
-        dplyr::arrange(dplyr::desc(.data$conceptCount))
+        dplyr::arrange(dplyr::desc(conceptCount))
       return(data)
     })
     
@@ -94,7 +94,7 @@ orphanConceptsModule <- function(id,
         if (!is.null(selectedConceptSets())) {
           if (length(conceptSetIds()) > 0) {
             data <- data %>%
-              dplyr::filter(.data$conceptSetId %in% conceptSetIds())
+              dplyr::filter(conceptSetId %in% conceptSetIds())
           } else {
             data <- data[0,]
           }
@@ -103,12 +103,12 @@ orphanConceptsModule <- function(id,
 
       if (input$orphanConceptsType == "Standard Only") {
         data <- data %>%
-          dplyr::filter(.data$standardConcept == "S")
+          dplyr::filter(standardConcept == "S")
       } else if (input$orphanConceptsType == "Non Standard Only") {
         data <- data %>%
-          dplyr::filter(is.na(.data$standardConcept) |
+          dplyr::filter(is.na(standardConcept) |
                           (
-                            all(!is.na(.data$standardConcept), .data$standardConcept != "S")
+                            all(!is.na(standardConcept), standardConcept != "S")
                           ))
       }
       
@@ -123,42 +123,42 @@ orphanConceptsModule <- function(id,
 
       data <- data %>%
         dplyr::select(
-          .data$databaseId,
-          .data$cohortId,
-          .data$conceptId,
-          .data$conceptSubjects,
-          .data$conceptCount
+          databaseId,
+          cohortId,
+          conceptId,
+          conceptSubjects,
+          conceptCount
         ) %>%
         dplyr::group_by(
-          .data$databaseId,
-          .data$cohortId,
-          .data$conceptId
+          databaseId,
+          cohortId,
+          conceptId
         ) %>%
         dplyr::summarise(
-          conceptSubjects = sum(.data$conceptSubjects),
-          conceptCount = sum(.data$conceptCount),
+          conceptSubjects = sum(conceptSubjects),
+          conceptCount = sum(conceptCount),
           .groups = "keep"
         ) %>%
         dplyr::ungroup() %>%
         dplyr::arrange(
-          .data$databaseId,
-          .data$cohortId
+          databaseId,
+          cohortId
         ) %>%
         dplyr::inner_join(
           data %>%
             dplyr::select(
-              .data$conceptId,
-              .data$databaseId,
-              .data$cohortId,
-              .data$conceptName,
-              .data$vocabularyId,
-              .data$conceptCode
+              conceptId,
+              databaseId,
+              cohortId,
+              conceptName,
+              vocabularyId,
+              conceptCode
             ),
           by = c("databaseId", "cohortId", "conceptId")
         ) %>%
         dplyr::rename(
-          persons = .data$conceptSubjects,
-          records = .data$conceptCount
+          persons = conceptSubjects,
+          records = conceptCount
         ) %>%
         dplyr::arrange(dplyr::desc(abs(dplyr::across(
           c("records", "persons")

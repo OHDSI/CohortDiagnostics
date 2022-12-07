@@ -37,8 +37,8 @@ getResultsDataModelSpecifications <- function() {
 #' @export
 getDefaultVocabularyTableNames <- function() {
   getResultsDataModelSpecifications() %>%
-    dplyr::filter(.data$isVocabularyTable == "Yes") %>%
-    dplyr::pull(.data$tableName) %>%
+    dplyr::filter(isVocabularyTable == "Yes") %>%
+    dplyr::pull(tableName) %>%
     unique() %>%
     sort() %>%
     SqlRender::snakeCaseToCamelCase()
@@ -62,7 +62,7 @@ fixTableMetadataForBackwardCompatibility <- function(table, tableName) {
     }
     if ("referent_concept_id" %in% colnames(table)) {
       table <- table %>%
-        dplyr::select(-.data$referent_concept_id)
+        dplyr::select(-referent_concept_id)
     }
   }
   if (tableName %in% c("covariate_value", "temporal_covariate_value")) {
@@ -90,18 +90,18 @@ checkFixColumnNames <-
     observeredNames <- colnames(table)[order(colnames(table))]
 
     tableSpecs <- specifications %>%
-      dplyr::filter(.data$tableName == !!tableName)
+      dplyr::filter(tableName == !!tableName)
 
     optionalNames <- tableSpecs %>%
-      dplyr::filter(.data$optional == "Yes") %>%
-      dplyr::select(.data$columnName)
+      dplyr::filter(optional == "Yes") %>%
+      dplyr::select(columnName)
 
     expectedNames <- tableSpecs %>%
-      dplyr::select(.data$columnName) %>%
-      dplyr::anti_join(dplyr::filter(optionalNames, !.data$columnName %in% observeredNames),
+      dplyr::select(columnName) %>%
+      dplyr::anti_join(dplyr::filter(optionalNames, !columnName %in% observeredNames),
                        by = "columnName"
       ) %>%
-      dplyr::arrange(.data$columnName) %>%
+      dplyr::arrange(columnName) %>%
       dplyr::pull()
 
     if (!checkmate::testNames(observeredNames, must.include = expectedNames)) {
@@ -131,7 +131,7 @@ checkAndFixDataTypes <-
            zipFileName,
            specifications = getResultsDataModelSpecifications()) {
     tableSpecs <- specifications %>%
-      filter(.data$tableName == !!tableName)
+      filter(tableName == !!tableName)
 
     observedTypes <- sapply(table, class)
     for (i in 1:length(observedTypes)) {
@@ -205,9 +205,9 @@ checkAndFixDuplicateRows <-
            zipFileName,
            specifications = getResultsDataModelSpecifications()) {
     primaryKeys <- specifications %>%
-      dplyr::filter(.data$tableName == !!tableName &
-                      .data$primaryKey == "Yes") %>%
-      dplyr::select(.data$columnName) %>%
+      dplyr::filter(tableName == !!tableName &
+                      primaryKey == "Yes") %>%
+      dplyr::select(columnName) %>%
       dplyr::pull()
     duplicatedRows <- duplicated(table[, primaryKeys])
     if (any(duplicatedRows)) {
@@ -232,9 +232,9 @@ appendNewRows <-
            specifications = getResultsDataModelSpecifications()) {
     if (nrow(data) > 0) {
       primaryKeys <- specifications %>%
-        dplyr::filter(.data$tableName == !!tableName &
-                        .data$primaryKey == "Yes") %>%
-        dplyr::select(.data$columnName) %>%
+        dplyr::filter(tableName == !!tableName &
+                        primaryKey == "Yes") %>%
+        dplyr::select(columnName) %>%
         dplyr::pull()
       newData <- newData %>%
         dplyr::anti_join(data, by = primaryKeys)
@@ -359,9 +359,9 @@ uploadResults <- function(connectionDetails,
     ParallelLogger::logInfo("Uploading table ", tableName)
 
     primaryKey <- specifications %>%
-      filter(.data$tableName == !!tableName &
-               .data$primaryKey == "Yes") %>%
-      select(.data$columnName) %>%
+      filter(tableName == !!tableName &
+               primaryKey == "Yes") %>%
+      select(columnName) %>%
       pull()
 
     if (purgeSiteDataBeforeUploading &&
@@ -431,11 +431,11 @@ uploadResults <- function(connectionDetails,
         # Primary key fields cannot be NULL, so for some tables convert NAs to empty or zero:
         toEmpty <- specifications %>%
           filter(
-            .data$tableName == env$tableName &
-              .data$emptyIsNa == "No" &
-              grepl("varchar", .data$dataType)
+            tableName == env$tableName &
+              emptyIsNa == "No" &
+              grepl("varchar", dataType)
           ) %>%
-          select(.data$columnName) %>%
+          select(columnName) %>%
           pull()
         if (length(toEmpty) > 0) {
           chunk <- chunk %>%
@@ -444,11 +444,11 @@ uploadResults <- function(connectionDetails,
 
         tozero <- specifications %>%
           filter(
-            .data$tableName == env$tableName &
-              .data$emptyIsNa == "No" &
-              .data$dataType %in% c("int", "bigint", "float")
+            tableName == env$tableName &
+              emptyIsNa == "No" &
+              dataType %in% c("int", "bigint", "float")
           ) %>%
-          select(.data$columnName) %>%
+          select(columnName) %>%
           pull()
         if (length(tozero) > 0) {
           chunk <- chunk %>%

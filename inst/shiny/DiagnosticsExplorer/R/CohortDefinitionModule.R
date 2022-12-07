@@ -85,21 +85,21 @@ getConceptSetDataFrameFromConceptSetExpression <-
     if ("CONCEPT_ID" %in% colnames(conceptSetExpressionDetails)) {
       if ("isExcluded" %in% colnames(conceptSetExpressionDetails)) {
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
-          dplyr::rename(IS_EXCLUDED = .data$isExcluded)
+          dplyr::rename(IS_EXCLUDED = isExcluded)
       } else {
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
           dplyr::mutate(IS_EXCLUDED = FALSE)
       }
       if ("includeDescendants" %in% colnames(conceptSetExpressionDetails)) {
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
-          dplyr::rename(INCLUDE_DESCENDANTS = .data$includeDescendants)
+          dplyr::rename(INCLUDE_DESCENDANTS = includeDescendants)
       } else {
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
           dplyr::mutate(INCLUDE_DESCENDANTS = FALSE)
       }
       if ("includeMapped" %in% colnames(conceptSetExpressionDetails)) {
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
-          dplyr::rename(INCLUDE_MAPPED = .data$includeMapped)
+          dplyr::rename(INCLUDE_MAPPED = includeMapped)
       } else {
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
           dplyr::mutate(INCLUDE_MAPPED = FALSE)
@@ -133,7 +133,7 @@ getConceptSetDetailsFromCohortDefinition <-
     conceptSetExpression <- expression$ConceptSets %>%
       dplyr::bind_rows() %>%
       dplyr::mutate(json = RJSONIO::toJSON(
-        x = .data$expression,
+        x = expression,
         pretty = TRUE
       ))
 
@@ -147,8 +147,8 @@ getConceptSetDetailsFromCohortDefinition <-
             conceptSetExpression[i,]$expression$items
         ) %>%
           dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
-          dplyr::relocate(.data$id) %>%
-          dplyr::arrange(.data$id)
+          dplyr::relocate(id) %>%
+          dplyr::arrange(id)
     }
     conceptSetExpressionDetails <-
       dplyr::bind_rows(conceptSetExpressionDetails)
@@ -399,7 +399,7 @@ cohortDefinitionsModule <- function(id,
 
     cohortDefinitionTableData <- shiny::reactive(x = {
       data <- cohortDefinitions() %>%
-        dplyr::select(.data$cohortId, .data$cohortName)
+        dplyr::select(cohortId, cohortName)
       return(data)
     })
 
@@ -407,7 +407,7 @@ cohortDefinitionsModule <- function(id,
     output$cohortDefinitionTable <-
       reactable::renderReactable(expr = {
         data <- cohortDefinitionTableData() %>%
-          dplyr::mutate(cohortId = as.character(.data$cohortId))
+          dplyr::mutate(cohortId = as.character(cohortId))
 
         validate(need(hasData(data), "There is no data for this cohort."))
         keyColumns <- c("cohortId", "cohortName")
@@ -479,13 +479,13 @@ cohortDefinitionsModule <- function(id,
           return(NULL)
         }
         data <- data %>%
-          dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId) %>%
-          dplyr::filter(.data$databaseId %in% databaseTable$databaseId) %>%
-          dplyr::select(.data$databaseId,
-                        .data$cohortSubjects,
-                        .data$cohortEntries) %>%
-          dplyr::rename("persons" = .data$cohortSubjects,
-                        "events" = .data$cohortEntries)
+          dplyr::filter(cohortId == selectedCohortDefinitionRow()$cohortId) %>%
+          dplyr::filter(databaseId %in% databaseTable$databaseId) %>%
+          dplyr::select(databaseId,
+                        cohortSubjects,
+                        cohortEntries) %>%
+          dplyr::rename("persons" = cohortSubjects,
+                        "events" = cohortEntries)
 
         validate(need(hasData(data), "There is no data for this cohort."))
 
@@ -565,7 +565,7 @@ cohortDefinitionsModule <- function(id,
       if (!is.null(data$conceptSetExpression) &&
         nrow(data$conceptSetExpression) > 0) {
         data <- data$conceptSetExpression %>%
-          dplyr::select(.data$id, .data$name)
+          dplyr::select(id, name)
       } else {
         return(NULL)
       }
@@ -631,23 +631,23 @@ cohortDefinitionsModule <- function(id,
         return(NULL)
       }
       data <- data %>%
-        dplyr::filter(.data$id == cohortDefinitionConceptSetExpressionSelected()$id)
+        dplyr::filter(id == cohortDefinitionConceptSetExpressionSelected()$id)
       if (!hasData(data)) {
         return(NULL)
       }
       data <- data %>%
         dplyr::select(
-          .data$conceptId,
-          .data$conceptName,
-          .data$isExcluded,
-          .data$includeDescendants,
-          .data$includeMapped,
-          .data$standardConcept,
-          .data$invalidReason,
-          .data$conceptCode,
-          .data$domainId,
-          .data$vocabularyId,
-          .data$conceptClassId
+          conceptId,
+          conceptName,
+          isExcluded,
+          includeDescendants,
+          includeMapped,
+          standardConcept,
+          invalidReason,
+          conceptCode,
+          domainId,
+          vocabularyId,
+          conceptClassId
         )
       return(data)
     })
@@ -665,10 +665,10 @@ cohortDefinitionsModule <- function(id,
         }
 
         data <- data %>%
-          dplyr::rename(exclude = .data$isExcluded,
-                        descendants = .data$includeDescendants,
-                        mapped = .data$includeMapped,
-                        invalid = .data$invalidReason)
+          dplyr::rename(exclude = isExcluded,
+                        descendants = includeDescendants,
+                        mapped = includeMapped,
+                        invalid = invalidReason)
         validate(need(
           all(!is.null(data),
               nrow(data) > 0),
@@ -709,9 +709,9 @@ cohortDefinitionsModule <- function(id,
         return(NULL)
       } else {
         data <- cohortCount %>%
-          dplyr::filter(.data$cohortId == row$cohortId) %>%
-          dplyr::filter(.data$databaseId == getDatabaseIdInCohortConceptSet()) %>%
-          dplyr::select(.data$cohortSubjects, .data$cohortEntries)
+          dplyr::filter(cohortId == row$cohortId) %>%
+          dplyr::filter(databaseId == getDatabaseIdInCohortConceptSet()) %>%
+          dplyr::select(cohortSubjects, cohortEntries)
 
         if (nrow(data) == 0) {
           return(NULL)
@@ -780,8 +780,8 @@ cohortDefinitionsModule <- function(id,
           return(NULL)
         }
         databaseIdToFilter <- databaseTable %>%
-          dplyr::filter(.data$databaseIdWithVocabularyVersion == vocabSchema()) %>%
-          dplyr::pull(.data$databaseId)
+          dplyr::filter(databaseIdWithVocabularyVersion == vocabSchema()) %>%
+          dplyr::pull(databaseId)
         if (!hasData(databaseIdToFilter)) {
           return(NULL)
         }
@@ -797,10 +797,10 @@ cohortDefinitionsModule <- function(id,
           paste0("No data for database id ", input$vocabularySchema)
         ))
         data <- data %>%
-          dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id) %>%
-          dplyr::filter(.data$databaseId == databaseIdToFilter) %>%
-          dplyr::rename("persons" = .data$conceptSubjects,
-                        "records" = .data$conceptCount)
+          dplyr::filter(conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id) %>%
+          dplyr::filter(databaseId == databaseIdToFilter) %>%
+          dplyr::rename("persons" = conceptSubjects,
+                        "records" = conceptCount)
         validate(need(
           hasData(data),
           paste0("No data for database id ", input$vocabularySchema)
@@ -888,8 +888,8 @@ cohortDefinitionsModule <- function(id,
         }
 
         databaseIdToFilter <- databaseTable %>%
-          dplyr::filter(.data$databaseIdWithVocabularyVersion == vocabSchema()) %>%
-          dplyr::pull(.data$databaseId)
+          dplyr::filter(databaseIdWithVocabularyVersion == vocabSchema()) %>%
+          dplyr::pull(databaseId)
         if (!hasData(databaseIdToFilter)) {
           return(NULL)
         }
@@ -906,10 +906,10 @@ cohortDefinitionsModule <- function(id,
         ))
 
         data <- data %>%
-          dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id) %>%
-          dplyr::filter(.data$databaseId == databaseIdToFilter) %>%
-          dplyr::rename("persons" = .data$conceptSubjects,
-                        "records" = .data$conceptCount)
+          dplyr::filter(conceptSetId == cohortDefinitionConceptSetExpressionSelected()$id) %>%
+          dplyr::filter(databaseId == databaseIdToFilter) %>%
+          dplyr::rename("persons" = conceptSubjects,
+                        "records" = conceptCount)
         validate(need(
           hasData(data),
           paste0("No data for database id ", input$vocabularySchema)

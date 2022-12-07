@@ -70,7 +70,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
                   )
                 }
                 userCredentialsFiltered <- userCredentials %>%
-                  dplyr::filter(.data$userId == input$userName)
+                  dplyr::filter(userId == input$userName)
                 if (nrow(userCredentialsFiltered) > 0) {
                   passwordHash <-
                     digest::digest(input$password, algo = "sha512")
@@ -177,9 +177,9 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
     # conceptSetIds ----
     conceptSetIds <- shiny::reactive(x = {
       conceptSetsFiltered <- conceptSets %>%
-        dplyr::filter(.data$conceptSetName %in% selectedConceptSets()) %>%
-        dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
-        dplyr::select(.data$conceptSetId) %>%
+        dplyr::filter(conceptSetName %in% selectedConceptSets()) %>%
+        dplyr::filter(cohortId %in% targetCohortId()) %>%
+        dplyr::select(conceptSetId) %>%
         dplyr::pull() %>%
         unique()
       return(conceptSetsFiltered)
@@ -231,8 +231,8 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
         !is.null(input$tabs) & !is.null(envir$temporalCharacterizationTimeIdChoices)) {
         selectedTemporalTimeIds(
           envir$temporalCharacterizationTimeIdChoices %>%
-            dplyr::filter(.data$temporalChoices %in% input$timeIdChoices) %>%
-            dplyr::pull(.data$timeId) %>%
+            dplyr::filter(temporalChoices %in% input$timeIdChoices) %>%
+            dplyr::pull(timeId) %>%
             unique() %>%
             sort()
         )
@@ -241,7 +241,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
 
     cohortSubset <- shiny::reactive({
       return(cohortTable %>%
-               dplyr::arrange(.data$cohortId))
+               dplyr::arrange(cohortId))
     })
 
     shiny::observe({
@@ -347,8 +347,8 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       }
 
       jsonExpression <- cohortSubset() %>%
-        dplyr::filter(.data$cohortId == targetCohortId()) %>%
-        dplyr::select(.data$json)
+        dplyr::filter(cohortId == targetCohortId()) %>%
+        dplyr::select(json)
       jsonExpression <-
         RJSONIO::fromJSON(jsonExpression$json, digits = 23)
       expression <-
@@ -358,7 +358,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
       }
 
       expression <- expression$conceptSetExpression %>%
-        dplyr::select(.data$name)
+        dplyr::select(name)
       return(expression)
     })
 
@@ -376,9 +376,9 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
 
     selectedCohorts <- shiny::reactive({
       cohorts <- cohortSubset() %>%
-        dplyr::filter(.data$cohortId %in% cohortIds()) %>%
-        dplyr::arrange(.data$cohortId) %>%
-        dplyr::select(.data$compoundName)
+        dplyr::filter(cohortId %in% cohortIds()) %>%
+        dplyr::arrange(cohortId) %>%
+        dplyr::select(compoundName)
       return(apply(cohorts, 1, function(x) {
         tags$tr(lapply(x, tags$td))
       }))
@@ -411,7 +411,7 @@ diagnosticsExplorerModule <- function(id = "DiagnosticsExplorer",
     if ("orphanConcept" %in% enabledTabs) {
       orphanConceptsModule("orphanConcepts",
                            dataSource = dataSource,
-                           selectedCohorts = selectedCohort,
+                           selectedCohort = selectedCohort,
                            selectedDatabaseIds = selectedDatabaseIds,
                            targetCohortId = targetCohortId,
                            selectedConceptSets = selectedConceptSets,

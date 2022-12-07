@@ -14,8 +14,8 @@ getColumnMax <- function(data, string) {
   data <- data %>%
     dplyr::select(dplyr::all_of(string)) %>%
     tidyr::pivot_longer(values_to = "value", cols = dplyr::everything()) %>%
-    dplyr::filter(!is.na(.data$value)) %>%
-    dplyr::pull(.data$value)
+    dplyr::filter(!is.na(value)) %>%
+    dplyr::pull(value)
 
   if (!hasData(data)) {
     return(0)
@@ -158,8 +158,8 @@ cohortCountsModule <- function(id,
       }
 
       data <- data %>%
-        dplyr::inner_join(cohortTable %>% dplyr::select(.data$cohortName, .data$cohortId), by = "cohortId") %>%
-        dplyr::arrange(.data$cohortId, .data$databaseId)
+        dplyr::inner_join(cohortTable %>% dplyr::select(cohortName, cohortId), by = "cohortId") %>%
+        dplyr::arrange(cohortId, databaseId)
 
       return(data)
     })
@@ -173,8 +173,8 @@ cohortCountsModule <- function(id,
 
       data <- getResults() %>%
         dplyr::rename(
-          persons = .data$cohortSubjects,
-          records = .data$cohortEntries
+          persons = cohortSubjects,
+          records = cohortEntries
         )
 
       dataColumnFields <- c("persons", "records")
@@ -219,7 +219,7 @@ cohortCountsModule <- function(id,
         if (hasData(getResults())) {
           subset <- getResults() %>%
             dplyr::select(
-              .data$cohortId
+              cohortId
             ) %>%
             dplyr::distinct()
           subset <- subset[idx,]
@@ -274,26 +274,26 @@ cohortCountsModule <- function(id,
       if (all(hasData(showDataAsPercent), showDataAsPercent)) {
         data <- data %>%
           dplyr::mutate(
-            Meet = .data$meetSubjects / .data$totalSubjects,
-            Gain = .data$gainSubjects / .data$totalSubjects,
-            Remain = .data$remainSubjects / .data$totalSubjects,
-            id = .data$ruleSequenceId
+            Meet = meetSubjects / totalSubjects,
+            Gain = gainSubjects / totalSubjects,
+            Remain = remainSubjects / totalSubjects,
+            id = ruleSequenceId
           )
       } else {
         data <- data %>%
           dplyr::mutate(
-            Meet = .data$meetSubjects,
-            Gain = .data$gainSubjects,
-            Remain = .data$remainSubjects,
-            Total = .data$totalSubjects,
-            id = .data$ruleSequenceId
+            Meet = meetSubjects,
+            Gain = gainSubjects,
+            Remain = remainSubjects,
+            Total = totalSubjects,
+            id = ruleSequenceId
           )
       }
 
       data <- data %>%
-        dplyr::arrange(.data$cohortId,
-                       .data$databaseId,
-                       .data$id)
+        dplyr::arrange(cohortId,
+                       databaseId,
+                       id)
 
       validate(need(
         (nrow(data) > 0),

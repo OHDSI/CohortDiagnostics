@@ -64,23 +64,23 @@ plotIncidenceRate <- function(data,
   )
   checkmate::reportAssertions(collection = errorMessage)
 
-  cohortNames <- cohortTable %>% dplyr::select(.data$cohortId,
-                                               .data$cohortName)
+  cohortNames <- cohortTable %>% dplyr::select(cohortId,
+                                               cohortName)
 
   plotData <- data %>%
     dplyr::inner_join(cohortNames, by = "cohortId",) %>%
     addShortName(cohortTable) %>%
-    dplyr::mutate(incidenceRate = round(.data$incidenceRate, digits = 3))
+    dplyr::mutate(incidenceRate = round(incidenceRate, digits = 3))
   plotData <- plotData %>%
     dplyr::mutate(
-      strataGender = !is.na(.data$gender),
-      strataAgeGroup = !is.na(.data$ageGroup),
-      strataCalendarYear = !is.na(.data$calendarYear)
+      strataGender = !is.na(gender),
+      strataAgeGroup = !is.na(ageGroup),
+      strataCalendarYear = !is.na(calendarYear)
     ) %>%
     dplyr::filter(
-      .data$strataGender %in% !!stratifyByGender &
-        .data$strataAgeGroup %in% !!stratifyByAgeGroup &
-        .data$strataCalendarYear %in% !!stratifyByCalendarYear
+      strataGender %in% !!stratifyByGender &
+        strataAgeGroup %in% !!stratifyByAgeGroup &
+        strataCalendarYear %in% !!stratifyByCalendarYear
     ) %>%
     dplyr::select(-dplyr::starts_with("strata"))
 
@@ -113,16 +113,16 @@ plotIncidenceRate <- function(data,
 
 
   sortShortName <- plotData %>%
-    dplyr::select(.data$shortName) %>%
+    dplyr::select(shortName) %>%
     dplyr::distinct() %>%
     dplyr::arrange(as.integer(sub(
-      pattern = "^C", "", x = .data$shortName
+      pattern = "^C", "", x = shortName
     )))
 
   plotData <- plotData %>%
     dplyr::arrange(
-      shortName = factor(.data$shortName, levels = sortShortName$shortName),
-      .data$shortName
+      shortName = factor(shortName, levels = sortShortName$shortName),
+      shortName
     )
 
 
@@ -131,16 +131,16 @@ plotIncidenceRate <- function(data,
 
   if (stratifyByAgeGroup) {
     sortAgeGroup <- plotData %>%
-      dplyr::select(.data$ageGroup) %>%
+      dplyr::select(ageGroup) %>%
       dplyr::distinct() %>%
       dplyr::arrange(as.integer(sub(
-        pattern = "-.+$", "", x = .data$ageGroup
+        pattern = "-.+$", "", x = ageGroup
       )))
 
     plotData <- plotData %>%
       dplyr::arrange(
-        ageGroup = factor(.data$ageGroup, levels = sortAgeGroup$ageGroup),
-        .data$ageGroup
+        ageGroup = factor(ageGroup, levels = sortAgeGroup$ageGroup),
+        ageGroup
       )
 
     plotData$ageGroup <- factor(plotData$ageGroup,
@@ -250,20 +250,20 @@ plotIncidenceRate <- function(data,
     if (stratifyByGender | stratifyByCalendarYear) {
       if (stratifyByAgeGroup) {
         plot <-
-          plot + facet_nested(databaseName + shortName ~ plotData$ageGroup, scales = scales)
+          plot + ggh4x::facet_nested(databaseName + shortName ~ plotData$ageGroup, scales = scales)
       } else {
         plot <-
-          plot + facet_nested(databaseName + shortName ~ ., scales = scales)
+          plot + ggh4x::facet_nested(databaseName + shortName ~ ., scales = scales)
       }
     } else {
       plot <-
-        plot + facet_nested(databaseName + shortName ~ ., scales = scales)
+        plot + ggh4x::facet_nested(databaseName + shortName ~ ., scales = scales)
     }
     # spacing <- rep(c(1, rep(0.5, length(unique(plotData$shortName)) - 1)), length(unique(plotData$databaseId)))[-1]
     spacing <- plotData %>%
-      dplyr::distinct(.data$databaseId, .data$shortName) %>%
-      dplyr::arrange(.data$databaseId) %>%
-      dplyr::group_by(.data$databaseId) %>%
+      dplyr::distinct(databaseId, shortName) %>%
+      dplyr::arrange(databaseId) %>%
+      dplyr::group_by(databaseId) %>%
       dplyr::summarise(count = dplyr::n(), .groups = "keep") %>%
       dplyr::ungroup()
     spacing <-
@@ -287,7 +287,7 @@ plotIncidenceRate <- function(data,
     }
   }
   height <-
-    1.5 + 1 * nrow(dplyr::distinct(plotData, .data$databaseId, .data$shortName))
+    1.5 + 1 * nrow(dplyr::distinct(plotData, databaseId, shortName))
   plot <- ggiraph::girafe(
     ggobj = plot,
     options = list(
@@ -498,8 +498,8 @@ incidenceRatesModule <- function(id,
           minSubjectCount = input$minSubjetCount
         ) %>%
           dplyr::mutate(incidenceRate = dplyr::case_when(
-            .data$incidenceRate < 0 ~ 0,
-            TRUE ~ .data$incidenceRate
+            incidenceRate < 0 ~ 0,
+            TRUE ~ incidenceRate
           ))
       } else {
         data <- NULL
@@ -509,10 +509,10 @@ incidenceRatesModule <- function(id,
 
     shiny::observe({
       ageFilter <- irRanges$ageGroups %>%
-        dplyr::filter(.data$ageGroup != " ", .data$ageGroup != "NA", !is.na(.data$ageGroup)) %>%
+        dplyr::filter(ageGroup != " ", ageGroup != "NA", !is.na(ageGroup)) %>%
         dplyr::distinct() %>%
         dplyr::arrange(as.integer(sub(
-          pattern = "-.+$", "", x = .data$ageGroup
+          pattern = "-.+$", "", x = ageGroup
         )))
 
       shinyWidgets::updatePickerInput(
@@ -527,15 +527,15 @@ incidenceRatesModule <- function(id,
 
     shiny::observe({
       genderFilter <- irRanges$gender %>%
-        dplyr::select(.data$gender) %>%
+        dplyr::select(gender) %>%
         dplyr::filter(
-          .data$gender != "NA",
-          .data$gender != " ",
-          !is.na(.data$gender),
-          !is.null(.data$gender)
+          gender != "NA",
+          gender != " ",
+          !is.na(gender),
+          !is.null(gender)
         ) %>%
         dplyr::distinct() %>%
-        dplyr::arrange(.data$gender)
+        dplyr::arrange(gender)
 
       shinyWidgets::updatePickerInput(
         session = session,
@@ -549,14 +549,14 @@ incidenceRatesModule <- function(id,
 
     shiny::observe({
       calenderFilter <- irRanges$calendarYear %>%
-        dplyr::select(.data$calendarYear) %>%
+        dplyr::select(calendarYear) %>%
         dplyr::filter(
-          .data$calendarYear != " ",
-          .data$calendarYear != "NA",
-          !is.na(.data$calendarYear)
+          calendarYear != " ",
+          calendarYear != "NA",
+          !is.na(calendarYear)
         ) %>%
-        dplyr::distinct(.data$calendarYear) %>%
-        dplyr::arrange(.data$calendarYear)
+        dplyr::distinct(calendarYear) %>%
+        dplyr::arrange(calendarYear)
 
       minValue <- min(calenderFilter$calendarYear)
 
@@ -586,34 +586,34 @@ incidenceRatesModule <- function(id,
 
     incidenceRateCalenderFilter <- shiny::reactive({
       calenderFilter <- incidenceRateData() %>%
-        dplyr::select(.data$calendarYear) %>%
+        dplyr::select(calendarYear) %>%
         dplyr::filter(
-          .data$calendarYear != "NA",
-          !is.na(.data$calendarYear)
+          calendarYear != "NA",
+          !is.na(calendarYear)
         ) %>%
-        dplyr::distinct(.data$calendarYear) %>%
-        dplyr::arrange(.data$calendarYear)
+        dplyr::distinct(calendarYear) %>%
+        dplyr::arrange(calendarYear)
       calenderFilter <-
         calenderFilter[calenderFilter$calendarYear >= input$incidenceRateCalenderFilter[1] &
                          calenderFilter$calendarYear <= input$incidenceRateCalenderFilter[2], , drop = FALSE] %>%
-          dplyr::pull(.data$calendarYear)
+          dplyr::pull(calendarYear)
       return(calenderFilter)
     })
 
 
     incidenceRateYScaleFilter <- shiny::reactive({
       incidenceRateFilter <- incidenceRateData() %>%
-        dplyr::select(.data$incidenceRate) %>%
+        dplyr::select(incidenceRate) %>%
         dplyr::filter(
-          .data$incidenceRate != "NA",
-          !is.na(.data$incidenceRate)
+          incidenceRate != "NA",
+          !is.na(incidenceRate)
         ) %>%
-        dplyr::distinct(.data$incidenceRate) %>%
-        dplyr::arrange(.data$incidenceRate)
+        dplyr::distinct(incidenceRate) %>%
+        dplyr::arrange(incidenceRate)
       incidenceRateFilter <-
         incidenceRateFilter[incidenceRateFilter$incidenceRate >= input$YscaleMinAndMax[1] &
                               incidenceRateFilter$incidenceRate <= input$YscaleMinAndMax[2], , drop = FALSE] %>%
-          dplyr::pull(.data$incidenceRate)
+          dplyr::pull(incidenceRate)
       return(incidenceRateFilter)
     })
 
@@ -639,20 +639,20 @@ incidenceRatesModule <- function(id,
 
         if (stratifyByAge && !"All" %in% input$incidenceRateAgeFilter) {
           data <- data %>%
-            dplyr::filter(.data$ageGroup %in% input$incidenceRateAgeFilter)
+            dplyr::filter(ageGroup %in% input$incidenceRateAgeFilter)
         }
         if (stratifyByGender &&
           !"All" %in% input$incidenceRateGenderFilter) {
           data <- data %>%
-            dplyr::filter(.data$gender %in% input$incidenceRateGenderFilter)
+            dplyr::filter(gender %in% input$incidenceRateGenderFilter)
         }
         if (stratifyByCalendarYear) {
           data <- data %>%
-            dplyr::filter(.data$calendarYear %in% incidenceRateCalenderFilter())
+            dplyr::filter(calendarYear %in% incidenceRateCalenderFilter())
         }
         if (input$irYscaleFixed) {
           data <- data %>%
-            dplyr::filter(.data$incidenceRate %in% incidenceRateYScaleFilter())
+            dplyr::filter(incidenceRate %in% incidenceRateYScaleFilter())
         }
         if (all(!is.null(data), nrow(data) > 0)) {
           plot <- plotIncidenceRate(

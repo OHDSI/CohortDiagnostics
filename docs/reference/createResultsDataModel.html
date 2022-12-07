@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.1.1</span>
       </span>
     </div>
 
@@ -79,31 +79,19 @@
 
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">createResultsDataModel</span><span class="op">(</span></span>
-<span>  connection <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  connectionDetails <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">schema</span>,</span>
+<span>  <span class="va">databaseSchema</span>,</span>
 <span>  tablePrefix <span class="op">=</span> <span class="st">""</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
-    <dl><dt>connection</dt>
-<dd><p>An object of type <code>connection</code> as created using the
-<code><a href="https://ohdsi.github.io/DatabaseConnector/reference/connect.html" class="external-link">connect</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
-is provided, in which case a new connection will be opened at the start
-of the function, and closed when the function finishes.</p></dd>
+    <dl><dt>connectionDetails</dt>
+<dd><p>DatabaseConnector connectionDetails instance @seealso[DatabaseConnector::createConnectionDetails]</p></dd>
 
 
-<dt>connectionDetails</dt>
-<dd><p>An object of type <code>connectionDetails</code> as created using the
-<code><a href="https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html" class="external-link">createConnectionDetails</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connection</code> is
-provided.</p></dd>
-
-
-<dt>schema</dt>
+<dt>databaseSchema</dt>
 <dd><p>The schema on the postgres server where the tables will be created.</p></dd>
 
 

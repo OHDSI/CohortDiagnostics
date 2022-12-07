@@ -251,9 +251,9 @@ test_that("Data removal works", {
         negate = TRUE
       )) {
         primaryKey <- specifications %>%
-          dplyr::filter(.data$tableName == !!tableName &
-            .data$primaryKey == "Yes") %>%
-          dplyr::select(.data$columnName) %>%
+          dplyr::filter(tableName == !!tableName &
+            primaryKey == "Yes") %>%
+          dplyr::select(columnName) %>%
           dplyr::pull()
 
         if ("database_id" %in% primaryKey) {

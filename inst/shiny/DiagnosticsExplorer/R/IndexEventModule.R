@@ -117,9 +117,9 @@ indexEventBreakdownModule <- function(id,
           if (input$indexEventBreakdownTableRadioButton == "All") {
             return(data)
           } else if (input$indexEventBreakdownTableRadioButton == "Standard concepts") {
-            return(data %>% dplyr::filter(.data$standardConcept == "S"))
+            return(data %>% dplyr::filter(standardConcept == "S"))
           } else {
-            return(data %>% dplyr::filter(is.na(.data$standardConcept)))
+            return(data %>% dplyr::filter(is.na(standardConcept)))
           }
         } else {
           return(NULL)
@@ -144,33 +144,33 @@ indexEventBreakdownModule <- function(id,
       ))
 
       data <- data %>%
-        dplyr::arrange(.data$databaseId) %>%
+        dplyr::arrange(databaseId) %>%
         dplyr::select(
-          .data$conceptId,
-          .data$conceptName,
-          .data$domainField,
-          .data$databaseId,
-          .data$vocabularyId,
-          .data$conceptCode,
-          .data$conceptCount,
-          .data$subjectCount,
-          .data$subjectPercent,
-          .data$conceptPercent
+          conceptId,
+          conceptName,
+          domainField,
+          databaseId,
+          vocabularyId,
+          conceptCode,
+          conceptCount,
+          subjectCount,
+          subjectPercent,
+          conceptPercent
         ) %>%
-        dplyr::filter(.data$conceptId > 0) %>%
+        dplyr::filter(conceptId > 0) %>%
         dplyr::distinct()
 
       if (showDataAsPercent) {
         data <- data %>%
           dplyr::rename(
-            persons = .data$subjectPercent,
-            records = .data$conceptPercent
+            persons = subjectPercent,
+            records = conceptPercent
           )
       } else {
         data <- data %>%
           dplyr::rename(
-            persons = .data$subjectCount,
-            records = .data$conceptCount
+            persons = subjectCount,
+            records = conceptCount
           )
       }
 

@@ -1,3 +1,17 @@
+CohortDiagnostics 3.1.1
+=======================
+Changes:
+
+1. Removed CohortExplorer app as it's now part of a [new package](https://github.com/ohdsi/cohortExplorer).
+
+2. Added support for custom FeatureExtraction features
+
+Bug Fixes:
+
+1. Fixed error when checking for cdm_source table
+
+2. Removal of `.data$` usage across package to fix tidyselect warning
+
 CohortDiagnostics 3.1.0
 =======================
 Changes:

@@ -160,7 +160,8 @@ characterizationView <- function(id) {
               choices = c("All", "Proportion", "Continuous"),
               selected = "All",
               inline = TRUE
-            )
+            ),
+            p("Percentage displayed where only proportional data is selected")
           ),
           shiny::column(
             width = 4,
@@ -239,12 +240,12 @@ characterizationModule <- function(id,
   shiny::moduleServer(id, function(input, output, session) {
 
     timeIdOptions <- getResultsTemporalTimeRef(dataSource = dataSource) %>%
-      dplyr::arrange(.data$sequence)
+      dplyr::arrange(sequence)
 
     selectedTimeIds <- shiny::reactive({
       timeIdOptions %>%
-        dplyr::filter(.data$temporalChoices %in% input$timeIdChoices) %>%
-        dplyr::select(.data$timeId) %>%
+        dplyr::filter(temporalChoices %in% input$timeIdChoices) %>%
+        dplyr::select(timeId) %>%
         dplyr::pull()
     })
 
@@ -257,8 +258,8 @@ characterizationModule <- function(id,
       }
 
       jsonExpression <- cohortTable %>%
-        dplyr::filter(.data$cohortId == input$targetCohort) %>%
-        dplyr::select(.data$json)
+        dplyr::filter(cohortId == input$targetCohort) %>%
+        dplyr::select(json)
       jsonExpression <-
         RJSONIO::fromJSON(jsonExpression$json, digits = 23)
       expression <-
@@ -274,9 +275,9 @@ characterizationModule <- function(id,
     shiny::observe({
       # Default time windows
       selectedTimeWindows <- timeIdOptions %>%
-        dplyr::filter(.data$primaryTimeId == 1) %>%
-        dplyr::filter(.data$isTemporal == 1) %>%
-        dplyr::arrange(.data$sequence) %>%
+        dplyr::filter(primaryTimeId == 1) %>%
+        dplyr::filter(isTemporal == 1) %>%
+        dplyr::arrange(sequence) %>%
         dplyr::pull("temporalChoices")
 
       shinyWidgets::updatePickerInput(session,
@@ -341,16 +342,16 @@ characterizationModule <- function(id,
       output <- c()
       if (hasData(resolved)) {
         resolved <- resolved %>%
-          dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-          dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
-          dplyr::filter(.data$conceptSetId %in% conceptSetIds())
+          dplyr::filter(databaseId %in% selectedDatabaseIds()) %>%
+          dplyr::filter(cohortId %in% targetCohortId()) %>%
+          dplyr::filter(conceptSetId %in% conceptSetIds())
         output <- c(output, resolved$conceptId) %>% unique()
       }
       if (hasData(mapped)) {
         mapped <- mapped %>%
-          dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-          dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
-          dplyr::filter(.data$conceptSetId %in% conceptSetIds())
+          dplyr::filter(databaseId %in% selectedDatabaseIds()) %>%
+          dplyr::filter(cohortId %in% targetCohortId()) %>%
+          dplyr::filter(conceptSetId %in% conceptSetIds())
         output <- c(output, mapped$conceptId) %>% unique()
       }
 
@@ -372,8 +373,8 @@ characterizationModule <- function(id,
             width = 4,
             tags$b("Cohort :"),
             paste(cohortTable %>%
-                    dplyr::filter(.data$cohortId %in% targetCohortId()) %>%
-                    dplyr::select(.data$cohortName) %>%
+                    dplyr::filter(cohortId %in% targetCohortId()) %>%
+                    dplyr::select(cohortName) %>%
                     dplyr::pull(),
                   collapse = ", ")
           ),
@@ -381,8 +382,8 @@ characterizationModule <- function(id,
             width = 8,
             tags$b("Database(s) :"),
             paste(databaseTable %>%
-                    dplyr::filter(.data$databaseId %in% selectedDatabaseIds()) %>%
-                    dplyr::select(.data$databaseName) %>%
+                    dplyr::filter(databaseId %in% selectedDatabaseIds()) %>%
+                    dplyr::select(databaseName) %>%
                     dplyr::pull(),
                   collapse = ", ")
           )
@@ -435,7 +436,7 @@ characterizationModule <- function(id,
       if (hasData(temporalAnalysisRef)) {
         characterizationAnalysisOptionsUniverse <- analysisNameOptions
         charcterizationAnalysisOptionsSelected <- temporalAnalysisRef %>%
-          dplyr::pull(.data$analysisName) %>%
+          dplyr::pull(analysisName) %>%
           unique()
       }
 
@@ -456,7 +457,7 @@ characterizationModule <- function(id,
       if (hasData(temporalAnalysisRef)) {
         characterizationDomainOptionsUniverse <- domainIdOptions
         charcterizationDomainOptionsSelected <- temporalAnalysisRef %>%
-          dplyr::pull(.data$domainId) %>%
+          dplyr::pull(domainId) %>%
           unique()
       }
 
@@ -489,22 +490,22 @@ characterizationModule <- function(id,
       }
 
       data <- data %>%
-        dplyr::filter(.data$analysisId %in% analysisIdInCohortCharacterization) %>%
-        dplyr::filter(.data$timeId %in% c(characterizationTimeIdChoices$timeId %>% unique(), NA))
+        dplyr::filter(analysisId %in% analysisIdInCohortCharacterization) %>%
+        dplyr::filter(timeId %in% c(characterizationTimeIdChoices$timeId %>% unique(), NA))
       if (!hasData(data)) {
         return(NULL)
       }
 
       data <- data %>%
         dplyr::select(
-          .data$cohortId,
-          .data$databaseId,
-          .data$analysisId,
-          .data$covariateId,
-          .data$covariateName,
-          .data$mean
+          cohortId,
+          databaseId,
+          analysisId,
+          covariateId,
+          covariateName,
+          mean
         ) %>%
-        dplyr::rename(sumValue = .data$mean)
+        dplyr::rename(sumValue = mean)
 
 
       table <- data %>%
@@ -580,9 +581,9 @@ characterizationModule <- function(id,
       }
 
       data <- data %>%
-        dplyr::filter(.data$timeId %in% selectedTimeIds()) %>%
-        dplyr::filter(.data$analysisName %in% input$characterizationAnalysisNameFilter) %>%
-        dplyr::filter(.data$domainId %in% input$characterizationDomainIdFilter)
+        dplyr::filter(timeId %in% selectedTimeIds()) %>%
+        dplyr::filter(analysisName %in% input$characterizationAnalysisNameFilter) %>%
+        dplyr::filter(domainId %in% input$characterizationDomainIdFilter)
 
       if (!hasData(data)) {
         return(NULL)
@@ -635,33 +636,33 @@ characterizationModule <- function(id,
 
       data <- data %>%
         dplyr::select(
-          .data$covariateName,
-          .data$analysisName,
-          .data$startDay,
-          .data$endDay,
-          .data$conceptId,
-          .data$isBinary,
-          .data$mean,
-          .data$sd,
-          .data$cohortId,
-          .data$databaseId,
-          .data$temporalChoices
+          covariateName,
+          analysisName,
+          startDay,
+          endDay,
+          conceptId,
+          isBinary,
+          mean,
+          sd,
+          cohortId,
+          databaseId,
+          temporalChoices
         )
-
+      showAsPercentage <- any(input$proportionOrContinuous == "Proportion", all(data$isBinary == "Y"))
       if (input$proportionOrContinuous == "Proportion") {
         data <- data %>%
-          dplyr::filter(.data$isBinary == "Y") %>%
-          dplyr::select(-.data$isBinary)
+          dplyr::filter(isBinary == "Y") %>%
+          dplyr::select(-isBinary)
       } else if (input$proportionOrContinuous == "Continuous") {
         data <- data %>%
-          dplyr::filter(.data$isBinary == "N") %>%
-          dplyr::select(-.data$isBinary)
+          dplyr::filter(isBinary == "N") %>%
+          dplyr::select(-isBinary)
       }
 
       if (hasData(selectedConceptSets())) {
         if (hasData(conceptSetIds())) {
           data <- data %>%
-            dplyr::filter(.data$conceptId %in% getFilteredConceptIds())
+            dplyr::filter(conceptId %in% getFilteredConceptIds())
         }
       }
       validate(need(hasData(data), "No data for selected combination"))
@@ -675,7 +676,7 @@ characterizationModule <- function(id,
         countLocation = countLocation,
         dataColumns = dataColumnFields,
         maxCount = maxCountValue,
-        showDataAsPercent = FALSE,
+        showDataAsPercent = showAsPercentage,
         sort = TRUE,
         pageSize = 100
       )
@@ -701,31 +702,41 @@ characterizationModule <- function(id,
         value = 0
       )
 
-      temporalChoices <- data$temporalChoices %>% unique()
+      showAsPercentage <- any(input$proportionOrContinuous == "Proportion", all(data$isBinary == "Y"))
+      if (input$proportionOrContinuous == "Proportion") {
+        data <- data %>%
+          dplyr::filter(isBinary == "Y") %>%
+          dplyr::select(-isBinary)
+      } else if (input$proportionOrContinuous == "Continuous") {
+        data <- data %>%
+          dplyr::filter(isBinary == "N") %>%
+          dplyr::select(-isBinary)
+      }
+
+      temporalChoicesVar <- data$temporalChoices %>% unique()
 
       data <-
         data %>% dplyr::inner_join(databaseTable %>%
-                                     dplyr::select(.data$databaseId, .data$databaseName),
+                                     dplyr::select(databaseId, databaseName),
                                    by = "databaseId")
 
       if (hasData(selectedConceptSets())) {
-        if (hasData(getFilteredConceptIds())) {
+        if (hasData(conceptSetIds())) {
           data <- data %>%
-            dplyr::filter(.data$conceptId %in% getFilteredConceptIds())
+            dplyr::filter(conceptId %in% getFilteredConceptIds())
         }
       }
-
 
       keyColumns <- c("covariateName", "analysisName", "conceptId", "databaseName")
       data <- data %>%
         dplyr::select(
-          .data$covariateName,
-          .data$analysisName,
-          .data$databaseName,
-          .data$temporalChoices,
-          .data$conceptId,
-          .data$mean,
-          .data$sd
+          covariateName,
+          analysisName,
+          databaseName,
+          temporalChoices,
+          conceptId,
+          mean,
+          sd
         ) %>%
         tidyr::pivot_wider(
           id_cols = dplyr::all_of(keyColumns),
@@ -733,7 +744,7 @@ characterizationModule <- function(id,
           values_from = "mean",
           names_sep = "_"
         ) %>%
-        dplyr::relocate(dplyr::all_of(c(keyColumns, temporalChoices))) %>%
+        dplyr::relocate(dplyr::all_of(c(keyColumns, temporalChoicesVar))) %>%
         dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with("T ("))))
 
       if (any(stringr::str_detect(
@@ -743,7 +754,7 @@ characterizationModule <- function(id,
         data <- data %>%
           dplyr::arrange(dplyr::desc(dplyr::across(dplyr::starts_with("T (0"))))
       }
-      dataColumns <- temporalChoices
+      dataColumns <- temporalChoicesVar
       progress$set(
         message = "Rendering table",
         value = 80
@@ -753,7 +764,7 @@ characterizationModule <- function(id,
         data = data,
         keyColumns = keyColumns,
         dataColumns = dataColumns,
-        showDataAsPercent = FALSE,
+        showDataAsPercent = showAsPercentage,
         pageSize = 100
       )
     })

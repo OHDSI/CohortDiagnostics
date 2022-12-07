@@ -49,10 +49,13 @@ getCdmDataSourceInformation <-
       }
     }
 
-    if (!DatabaseConnector::dbExistsTable(conn = connection, name = "cdm_source")) {
+    if (!DatabaseConnector::existsTable(connection = connection,
+                                        databaseSchema = cdmDatabaseSchema,
+                                        tableName = "cdm_source")) {
       warning("CDM Source table not found in CDM. Metadata on CDM source will be limited.")
       return(NULL)
     }
+
     sqlCdmDataSource <-
       "select * from @cdm_database_schema.cdm_source;"
     cdmDataSource <-
