@@ -1,4 +1,8 @@
 shiny::shinyServer(function(input, output, session) {
-  diagExpEnv$diagnosticsExplorerModule(id = "DiagnosticsExplorer",
-                                       envir = diagExpEnv)
+
+  OhdsiShinyModules::cohortDiagnosticsSever(id = "DiagnosticsExplorer",
+                                            connectionHandler,
+                                            shinySettings)
+
+
 })

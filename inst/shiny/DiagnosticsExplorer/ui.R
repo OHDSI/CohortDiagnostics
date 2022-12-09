@@ -1,5 +1,2 @@
-diagExpEnv$dashboardUi(diagExpEnv$enabledTabs,
-                       diagExpEnv$enableAnnotation,
-                       diagExpEnv$showAnnotation,
-                       diagExpEnv$enableAuthorization,
-                       diagExpEnv$appVersionNum)
+OhdsiShinyModules::cohortDiagnosticsUi(id = "DiagnosticsExplorer",
+                                       enabledTabs = c("cohort", "database"))
