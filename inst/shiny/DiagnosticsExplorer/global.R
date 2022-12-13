@@ -73,3 +73,13 @@ if (!exists("shinySettings")) {
 
 
 connectionHandler <- ResultModelManager::PooledConnectionHandler$new(shinySettings$connectionDetails)
+
+dataSource <-
+    OhdsiShinyModules::createCdDatabaseDataSource(
+      connectionHandler = connectionHandler,
+      resultsDatabaseSchema = shinySettings$resultsDatabaseSchema,
+      vocabularyDatabaseSchema = shinySettings$vocabularyDatabaseSchema,
+      tablePrefix = shinySettings$tablePrefix,
+      cohortTableName = shinySettings$cohortTableName,
+      databaseTableName = shinySettings$databaseTableName
+    )

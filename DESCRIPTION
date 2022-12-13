@@ -56,7 +56,7 @@ Remotes:
   ohdsi/ROhdsiWebApi,
   ohdsi/CirceR,
   ohdsi/CohortGenerator,
-  ohdsi/OhdsiShinyModules
+  ohdsi/OhdsiShinyModules@cohortDiagnostics
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics
