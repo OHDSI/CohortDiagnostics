@@ -7,8 +7,8 @@ loadShinySettings <- function(configPath) {
     resultsDatabaseSchema = c("main"),
     vocabularyDatabaseSchemas = c("main"),
     tablePrefix = "",
-    cohortTableName = "cohort",
-    databaseTableName = "database",
+    cohortTable = "cohort",
+    databaseTable = "database",
     connectionEnvironmentVariables = NULL
   )
 
@@ -77,7 +77,7 @@ connectionHandler <- ResultModelManager::PooledConnectionHandler$new(shinySettin
 dataSource <-
     OhdsiShinyModules::createCdDatabaseDataSource(
       connectionHandler = connectionHandler,
-      resultsDatabaseSchema = shinySettings$resultsDatabaseSchema,
+      schema = shinySettings$resultsDatabaseSchema,
       vocabularyDatabaseSchema = shinySettings$vocabularyDatabaseSchema,
       tablePrefix = shinySettings$tablePrefix,
       cohortTableName = shinySettings$cohortTableName,

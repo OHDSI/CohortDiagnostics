@@ -92,7 +92,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
 
     .GlobalEnv$shinySettings <- list(
       connectionDetails = connectionDetails,
-      resultsDatabaseSchema = resultsDatabaseSchema,
+      schema = resultsDatabaseSchema,
       vocabularyDatabaseSchemas = vocabularyDatabaseSchemas,
       aboutText = aboutText,
       tablePrefix = tablePrefix,
