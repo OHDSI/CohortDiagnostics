@@ -229,11 +229,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
     ) %>%
       RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
-  # take package dependency snapshot
-  packageDependencySnapShotJson <-
-    takepackageDependencySnapshot() %>%
-      RJSONIO::toJSON(digits = 23, pretty = TRUE)
-
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
   executionTimePath <- file.path(exportFolder, "taskExecutionTimes.csv")
@@ -925,7 +920,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     # 2
     as.character(attr(delta, "units")),
     # 3
-    packageDependencySnapShotJson,
+    "{}",
     # 4
     callingArgsJson,
     # 5
