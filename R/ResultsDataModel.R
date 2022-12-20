@@ -49,7 +49,7 @@ fixTableMetadataForBackwardCompatibility <- function(table, tableName) {
     if (!"metadata" %in% colnames(table)) {
       data <- list()
       for (i in (1:nrow(table))) {
-        data[[i]] <- table[i,]
+        data[[i]] <- table[i, ]
         colnamesDf <- colnames(data[[i]])
         metaDataList <- list()
         for (j in (1:length(colnamesDf))) {
@@ -99,7 +99,7 @@ checkFixColumnNames <-
     expectedNames <- tableSpecs %>%
       dplyr::select(columnName) %>%
       dplyr::anti_join(dplyr::filter(optionalNames, !columnName %in% observeredNames),
-                       by = "columnName"
+        by = "columnName"
       ) %>%
       dplyr::arrange(columnName) %>%
       dplyr::pull()
@@ -206,7 +206,7 @@ checkAndFixDuplicateRows <-
            specifications = getResultsDataModelSpecifications()) {
     primaryKeys <- specifications %>%
       dplyr::filter(tableName == !!tableName &
-                      primaryKey == "Yes") %>%
+        primaryKey == "Yes") %>%
       dplyr::select(columnName) %>%
       dplyr::pull()
     duplicatedRows <- duplicated(table[, primaryKeys])
@@ -219,7 +219,7 @@ checkAndFixDuplicateRows <-
           sum(duplicatedRows)
         )
       )
-      return(table[!duplicatedRows,])
+      return(table[!duplicatedRows, ])
     } else {
       return(table)
     }
@@ -233,7 +233,7 @@ appendNewRows <-
     if (nrow(data) > 0) {
       primaryKeys <- specifications %>%
         dplyr::filter(tableName == !!tableName &
-                        primaryKey == "Yes") %>%
+          primaryKey == "Yes") %>%
         dplyr::select(columnName) %>%
         dplyr::pull()
       newData <- newData %>%
@@ -245,14 +245,18 @@ appendNewRows <-
 # Private function for testing migrations in isolation
 .createDataModel <- function(connection, databaseSchema, tablePrefix) {
   sqlParams <- getPrefixedTableNames(tablePrefix)
-  sql <- do.call(SqlRender::loadRenderTranslateSql,
-                 c(sqlParams,
-                   list(
-                     sqlFilename = "CreateResultsDataModel.sql",
-                     packageName = utils::packageName(),
-                     dbms = connection@dbms,
-                     results_schema = databaseSchema
-                   )))
+  sql <- do.call(
+    SqlRender::loadRenderTranslateSql,
+    c(
+      sqlParams,
+      list(
+        sqlFilename = "CreateResultsDataModel.sql",
+        packageName = utils::packageName(),
+        dbms = connection@dbms,
+        results_schema = databaseSchema
+      )
+    )
+  )
   DatabaseConnector::executeSql(connection, sql)
 }
 
@@ -276,9 +280,11 @@ createResultsDataModel <- function(connectionDetails = NULL,
   on.exit(DatabaseConnector::disconnect(connection))
 
   .createDataModel(connection, databaseSchema, tablePrefix)
-  migrateDataModel(connectionDetails = connectionDetails,
-                   databaseSchema = databaseSchema,
-                   tablePrefix = tablePrefix)
+  migrateDataModel(
+    connectionDetails = connectionDetails,
+    databaseSchema = databaseSchema,
+    tablePrefix = tablePrefix
+  )
 }
 
 naToEmpty <- function(x) {
@@ -360,7 +366,7 @@ uploadResults <- function(connectionDetails,
 
     primaryKey <- specifications %>%
       filter(tableName == !!tableName &
-               primaryKey == "Yes") %>%
+        primaryKey == "Yes") %>%
       select(columnName) %>%
       pull()
 
@@ -459,8 +465,8 @@ uploadResults <- function(connectionDetails,
         if (!is.null(env$primaryKeyValuesInDb)) {
           primaryKeyValuesInChunk <- unique(chunk[env$primaryKey])
           duplicates <- inner_join(env$primaryKeyValuesInDb,
-                                   primaryKeyValuesInChunk,
-                                   by = env$primaryKey
+            primaryKeyValuesInChunk,
+            by = env$primaryKey
           )
           if (nrow(duplicates) != 0) {
             if ("database_id" %in% env$primaryKey ||
@@ -527,7 +533,6 @@ uploadResults <- function(connectionDetails,
 
 deleteFromServer <-
   function(connection, schema, tableName, keyValues, tablePrefix) {
-
     createSqlStatement <- function(i) {
       sql <- paste0(
         "DELETE FROM ",
@@ -537,7 +542,7 @@ deleteFromServer <-
         tableName,
         "\nWHERE ",
         paste(paste0(
-          colnames(keyValues), " = '", keyValues[i,], "'"
+          colnames(keyValues), " = '", keyValues[i, ], "'"
         ), collapse = " AND "),
         ";"
       )
@@ -591,9 +596,9 @@ deleteAllRecordsForDatabaseId <- function(connection,
       database_id = databaseId,
     )
     DatabaseConnector::renderTranslateExecuteSql(connection,
-                                                 sql,
-                                                 progressBar = FALSE,
-                                                 reportOverallTime = FALSE
+      sql,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
     )
   }
 }
@@ -615,10 +620,11 @@ migrateDataModel <- function(connectionDetails, databaseSchema, tablePrefix = ""
 
   ParallelLogger::logInfo("Updating version number")
   updateVersionSql <- SqlRender::loadRenderTranslateSql("UpdateVersionNumber.sql",
-                                                        packageName = utils::packageName(),
-                                                        database_schema = databaseSchema,
-                                                        table_prefix = tablePrefix,
-                                                        dbms = connectionDetails$dbms)
+    packageName = utils::packageName(),
+    database_schema = databaseSchema,
+    table_prefix = tablePrefix,
+    dbms = connectionDetails$dbms
+  )
 
   connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
@@ -638,9 +644,11 @@ migrateDataModel <- function(connectionDetails, databaseSchema, tablePrefix = ""
 #' @returns Instance of ResultModelManager::DataMigrationManager that has interface for converting existing data models
 #' @export
 getDataMigrator <- function(connectionDetails, databaseSchema, tablePrefix = "") {
-  ResultModelManager::DataMigrationManager$new(connectionDetails = connectionDetails,
-                                               databaseSchema = databaseSchema,
-                                               tablePrefix = tablePrefix,
-                                               migrationPath = "migrations",
-                                               packageName = utils::packageName())
+  ResultModelManager::DataMigrationManager$new(
+    connectionDetails = connectionDetails,
+    databaseSchema = databaseSchema,
+    tablePrefix = tablePrefix,
+    migrationPath = "migrations",
+    packageName = utils::packageName()
+  )
 }

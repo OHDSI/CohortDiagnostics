@@ -227,7 +227,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       incremental = callingArgs$incremental,
       temporalCovariateSettings = callingArgs$temporalCovariateSettings
     ) %>%
-      RJSONIO::toJSON(digits = 23, pretty = TRUE)
+    RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
@@ -248,25 +248,25 @@ executeDiagnostics <- function(cohortDefinitionSet,
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertList(cohortTableNames, null.ok = FALSE, types = "character", add = errorMessage, names = "named")
   checkmate::assertNames(names(cohortTableNames),
-                         must.include = c(
-                           "cohortTable",
-                           "cohortInclusionTable",
-                           "cohortInclusionResultTable",
-                           "cohortInclusionStatsTable",
-                           "cohortSummaryStatsTable",
-                           "cohortCensorStatsTable"
-                         ),
-                         add = errorMessage
+    must.include = c(
+      "cohortTable",
+      "cohortInclusionTable",
+      "cohortInclusionResultTable",
+      "cohortInclusionStatsTable",
+      "cohortSummaryStatsTable",
+      "cohortCensorStatsTable"
+    ),
+    add = errorMessage
   )
   checkmate::assertDataFrame(cohortDefinitionSet, add = errorMessage)
   checkmate::assertNames(names(cohortDefinitionSet),
-                         must.include = c(
-                           "json",
-                           "cohortId",
-                           "cohortName",
-                           "sql"
-                         ),
-                         add = errorMessage
+    must.include = c(
+      "json",
+      "cohortId",
+      "cohortName",
+      "sql"
+    ),
+    add = errorMessage
   )
 
   cohortTable <- cohortTableNames$cohortTable
@@ -357,26 +357,32 @@ executeDiagnostics <- function(cohortDefinitionSet,
     # All temporal covariate settings objects must be covariateSettings
     checkmate::assert_true(all(lapply(temporalCovariateSettings, class) == c("covariateSettings")), add = errorMessage)
 
-    requiredCharacterisationSettings <- c("DemographicsGender", "DemographicsAgeGroup", "DemographicsRace",
-                                          "DemographicsEthnicity", "DemographicsIndexYear", "DemographicsIndexMonth",
-                                          "ConditionEraGroupOverlap", "DrugEraGroupOverlap", "CharlsonIndex",
-                                          "Chads2", "Chads2Vasc")
+    requiredCharacterisationSettings <- c(
+      "DemographicsGender", "DemographicsAgeGroup", "DemographicsRace",
+      "DemographicsEthnicity", "DemographicsIndexYear", "DemographicsIndexMonth",
+      "ConditionEraGroupOverlap", "DrugEraGroupOverlap", "CharlsonIndex",
+      "Chads2", "Chads2Vasc"
+    )
     presentSettings <- temporalCovariateSettings[[1]][requiredCharacterisationSettings]
     if (!all(unlist(presentSettings))) {
       warning(
         "For cohort charcterization to display standardized results the following covariates must be present in your temporalCovariateSettings: \n\n",
-        paste(requiredCharacterisationSettings, collapse = ", "))
+        paste(requiredCharacterisationSettings, collapse = ", ")
+      )
     }
 
-    requiredTimeDistributionSettings <- c("DemographicsPriorObservationTime",
-                                          "DemographicsPostObservationTime",
-                                          "DemographicsTimeInCohort")
+    requiredTimeDistributionSettings <- c(
+      "DemographicsPriorObservationTime",
+      "DemographicsPostObservationTime",
+      "DemographicsTimeInCohort"
+    )
 
     presentSettings <- temporalCovariateSettings[[1]][requiredTimeDistributionSettings]
     if (!all(unlist(presentSettings))) {
       warning(
         "For time distributions diagnostics to display standardized results the following covariates must be present in your temporalCovariateSettings: \n\n",
-        paste(requiredTimeDistributionSettings, collapse = ", "))
+        paste(requiredTimeDistributionSettings, collapse = ", ")
+      )
     }
 
     # forcefully set ConditionEraGroupStart and drugEraGroupStart to NULL
@@ -384,26 +390,32 @@ executeDiagnostics <- function(cohortDefinitionSet,
     temporalCovariateSettings[[1]]$ConditionEraGroupStart <- NULL
     temporalCovariateSettings[[1]]$DrugEraGroupStart <- NULL
 
-    checkmate::assert_integerish(x = temporalCovariateSettings[[1]]$temporalStartDays,
-                                 any.missing = FALSE,
-                                 min.len = 1,
-                                 add = errorMessage)
-    checkmate::assert_integerish(x = temporalCovariateSettings[[1]]$temporalEndDays,
-                                 any.missing = FALSE,
-                                 min.len = 1,
-                                 add = errorMessage)
+    checkmate::assert_integerish(
+      x = temporalCovariateSettings[[1]]$temporalStartDays,
+      any.missing = FALSE,
+      min.len = 1,
+      add = errorMessage
+    )
+    checkmate::assert_integerish(
+      x = temporalCovariateSettings[[1]]$temporalEndDays,
+      any.missing = FALSE,
+      min.len = 1,
+      add = errorMessage
+    )
     checkmate::reportAssertions(collection = errorMessage)
 
     # Adding required temporal windows required in results viewer
     requiredTemporalPairs <-
-      list(c(-365, 0),
-           c(-30, 0),
-           c(-365, -31),
-           c(-30, -1),
-           c(0, 0),
-           c(1, 30),
-           c(31, 365),
-           c(-9999, 9999))
+      list(
+        c(-365, 0),
+        c(-30, 0),
+        c(-365, -31),
+        c(-30, -1),
+        c(0, 0),
+        c(1, 30),
+        c(31, 365),
+        c(-9999, 9999)
+      )
     for (p1 in requiredTemporalPairs) {
       found <- FALSE
       for (i in 1:length(temporalCovariateSettings[[1]]$temporalStartDays)) {
@@ -439,17 +451,17 @@ executeDiagnostics <- function(cohortDefinitionSet,
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
-      dplyr::filter(tableName == "cohort") %>%
-      dplyr::pull(columnName) %>%
-      SqlRender::snakeCaseToCamelCase() %>%
-      sort()
+    dplyr::filter(tableName == "cohort") %>%
+    dplyr::pull(columnName) %>%
+    SqlRender::snakeCaseToCamelCase() %>%
+    sort()
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
-      dplyr::filter(tableName == "cohort") %>%
-      dplyr::filter(isRequired == "Yes") %>%
-      dplyr::pull(columnName) %>%
-      SqlRender::snakeCaseToCamelCase() %>%
-      sort()
+    dplyr::filter(tableName == "cohort") %>%
+    dplyr::filter(isRequired == "Yes") %>%
+    dplyr::pull(columnName) %>%
+    SqlRender::snakeCaseToCamelCase() %>%
+    sort()
 
   expectedButNotObsevered <-
     setdiff(x = cohortTableColumnNamesExpected, y = cohortTableColumnNamesObserved)
@@ -529,8 +541,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
         }
       }
       vocabularyVersion <- getVocabularyVersion(connection, vocabularyDatabaseSchema)
-
-    })
+    }
+  )
 
   cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)
 
@@ -565,7 +577,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
         snakeCaseToCamelCase = TRUE,
         tempEmulationSchema = tempEmulationSchema
       )
-    })
+    }
+  )
   # Database metadata ---------------------------------------------
   saveDatabaseMetaData(
     databaseId = databaseId,
@@ -595,7 +608,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
         minCellCount = minCellCount,
         databaseId = databaseId
       )
-    })
+    }
+  )
 
   if (nrow(cohortCounts) > 0) {
     instantiatedCohorts <- cohortCounts %>%
@@ -634,7 +648,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
           minCellCount = minCellCount,
           recordKeepingFile = recordKeepingFile
         )
-      })
+      }
+    )
   }
 
   # Concept set diagnostics -----------------------------------------------
@@ -669,7 +684,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
           conceptIdTable = "#concept_ids",
           recordKeepingFile = recordKeepingFile
         )
-      })
+      }
+    )
   }
 
   # Time series ----------------------------------------------------------------------
@@ -695,7 +711,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
           recordKeepingFile = recordKeepingFile,
           observationPeriodDateRange = observationPeriodDateRange
         )
-      })
+      }
+    )
   }
 
 
@@ -722,7 +739,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
           recordKeepingFile = recordKeepingFile,
           incremental = incremental
         )
-      })
+      }
+    )
   }
 
   # Incidence rates --------------------------------------------------------------------------------------
@@ -747,7 +765,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
           recordKeepingFile = recordKeepingFile,
           incremental = incremental
         )
-      })
+      }
+    )
   }
 
   # Cohort relationship ---------------------------------------------------------------------------------
@@ -772,7 +791,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
           recordKeepingFile = recordKeepingFile,
           incremental = incremental
         )
-      })
+      }
+    )
   }
 
   # Temporal Cohort characterization ---------------------------------------------------------------
@@ -808,7 +828,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
           timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
           minCharacterizationMean = minCharacterizationMean
         )
-      })
+      }
+    )
   }
 
   # Store information from the vocabulary on the concepts used -------------------------
@@ -816,8 +837,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     exportFolder,
     "exportConceptInformation",
     parent = "executeDiagnostics",
-    expr =
-    {
+    expr = {
       exportConceptInformation(
         connection = connection,
         cdmDatabaseSchema = cdmDatabaseSchema,
@@ -826,15 +846,15 @@ executeDiagnostics <- function(cohortDefinitionSet,
         incremental = incremental,
         exportFolder = exportFolder
       )
-    })
+    }
+  )
   # Delete unique concept ID table ---------------------------------
   ParallelLogger::logTrace("Deleting concept ID table")
   timeExecution(
     exportFolder,
     "DeleteConceptIdTable",
     parent = "executeDiagnostics",
-    expr =
-    {
+    expr = {
       sql <- "TRUNCATE TABLE @table;\nDROP TABLE @table;"
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
@@ -844,7 +864,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
         progressBar = FALSE,
         reportOverallTime = FALSE
       )
-    })
+    }
+  )
 
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
@@ -991,7 +1012,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
     parent = "executeDiagnostics",
     expr = {
       writeResultsZip(exportFolder, databaseId)
-    })
+    }
+  )
 
   ParallelLogger::logInfo(
     "Computing all diagnostics took ",

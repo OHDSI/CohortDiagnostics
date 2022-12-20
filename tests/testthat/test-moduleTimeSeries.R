@@ -1,9 +1,9 @@
 test_that("Testing cohort time series execution", {
   skip_if(skipCdmTests, "cdm settings not configured")
-  
+
   connectionTimeSeries <-
     DatabaseConnector::connect(connectionDetails)
-  
+
   # to do - with incremental = FALSE
   with_dbc_connection(connectionTimeSeries, {
     cohort <- dplyr::tibble(
@@ -22,11 +22,13 @@ test_that("Testing cohort time series execution", {
         as.Date("2005-09-15")
       )
     )
-    
-    cohort <- dplyr::bind_rows(cohort,
-                               cohort %>%
-                                 dplyr::mutate(cohortDefinitionId = cohortDefinitionId * 1000))
-    
+
+    cohort <- dplyr::bind_rows(
+      cohort,
+      cohort %>%
+        dplyr::mutate(cohortDefinitionId = cohortDefinitionId * 1000)
+    )
+
     cohortDefinitionSet <-
       cohort %>%
       dplyr::select(cohortDefinitionId) %>%
@@ -42,25 +44,33 @@ test_that("Testing cohort time series execution", {
         )
       ))) %>%
       dplyr::ungroup() %>%
-      dplyr::mutate(sql = json,
-                    checksum = as.character(CohortDiagnostics:::computeChecksum(json))) %>%
+      dplyr::mutate(
+        sql = json,
+        checksum = as.character(CohortDiagnostics:::computeChecksum(json))
+      ) %>%
       dplyr::ungroup()
-    
+
     exportFolder <- tempdir()
     exportFile <- tempfile()
-    
-    unlink(x = exportFolder,
-           recursive = TRUE,
-           force = TRUE)
-    dir.create(path = exportFolder,
-               showWarnings = FALSE,
-               recursive = TRUE)
-    
+
+    unlink(
+      x = exportFolder,
+      recursive = TRUE,
+      force = TRUE
+    )
+    dir.create(
+      path = exportFolder,
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+
     cohortTable <-
-      paste0("ct_",
-             gsub("[: -]", "", Sys.time(), perl = TRUE),
-             sample(1:100, 1))
-    
+      paste0(
+        "ct_",
+        gsub("[: -]", "", Sys.time(), perl = TRUE),
+        sample(1:100, 1)
+      )
+
     DatabaseConnector::insertTable(
       connection = connectionTimeSeries,
       databaseSchema = cohortDatabaseSchema,
@@ -72,7 +82,7 @@ test_that("Testing cohort time series execution", {
       camelCaseToSnakeCase = TRUE,
       progressBar = FALSE
     )
-    
+
     CohortDiagnostics:::executeTimeSeriesDiagnostics(
       connection = connectionTimeSeries,
       tempEmulationSchema = tempEmulationSchema,
@@ -95,21 +105,23 @@ test_that("Testing cohort time series execution", {
       ),
       batchSize = 1
     )
-    
+
     recordKeepingFileData <-
-      readr::read_csv(file = paste0(exportFile, "recordKeeping"),
-                      col_types = readr::cols())
-    
+      readr::read_csv(
+        file = paste0(exportFile, "recordKeeping"),
+        col_types = readr::cols()
+      )
+
     # testing if check sum is written
     testthat::expect_true("checksum" %in% colnames(recordKeepingFileData))
-    
+
     # result
     timeSeriesResults1 <-
       readr::read_csv(
         file = file.path(exportFolder, "time_series.csv"),
         col_types = readr::cols()
       )
-    
+
     subset <- CohortDiagnostics:::subsetToRequiredCohorts(
       cohorts = cohortDefinitionSet,
       task = "runCohortTimeSeries",
@@ -117,18 +129,20 @@ test_that("Testing cohort time series execution", {
       recordKeepingFile = paste0(exportFile, "recordKeeping")
     ) %>%
       dplyr::arrange(cohortId)
-    
-    testthat::expect_equal(object = subset$cohortId,
-                           expected = c(1000, 2000))
-    
-    
+
+    testthat::expect_equal(
+      object = subset$cohortId,
+      expected = c(1000, 2000)
+    )
+
+
     # delete the previously written results file. To see if the previously executed cohorts will have results after deletion
     unlink(
       x = file.path(exportFolder, "time_series.csv"),
       recursive = TRUE,
       force = TRUE
     )
-    
+
     CohortDiagnostics:::executeTimeSeriesDiagnostics(
       connection = connectionTimeSeries,
       tempEmulationSchema = tempEmulationSchema,
@@ -155,12 +169,11 @@ test_that("Testing cohort time series execution", {
         file = file.path(exportFolder, "time_series.csv"),
         col_types = readr::cols()
       )
-    
+
     testthat::expect_equal(
       object = resultsNew$cohort_id %>% unique() %>% sort(),
       expected = c(1000, 2000)
     )
-    
   })
 })
 
@@ -175,7 +188,6 @@ test_that("Testing time series logic", {
 
   # to do - with incremental = FALSE
   with_dbc_connection(connectionTimeSeries, {
-
     # manually create cohort table and load to table
     #   Cohort table has a total of four records, with each cohort id having two each
     #   cohort 1 has one subject with two different cohort entries
@@ -250,28 +262,32 @@ test_that("Testing time series logic", {
 
 test_that("Testing Data source time series execution", {
   skip_if(skipCdmTests, "cdm settings not configured")
-  
+
   connectionTimeSeries <-
     DatabaseConnector::connect(connectionDetails)
-  
+
   # to do - with incremental = FALSE
   with_dbc_connection(connectionTimeSeries, {
-    cohortDefinitionSet = dplyr::tibble(
+    cohortDefinitionSet <- dplyr::tibble(
       cohortId = -44819062,
       # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
       checksum = CohortDiagnostics:::computeChecksum(column = "data source time series")
     )
-    
+
     exportFolder <- tempdir()
     exportFile <- tempfile()
-    
-    unlink(x = exportFolder,
-           recursive = TRUE,
-           force = TRUE)
-    dir.create(path = exportFolder,
-               showWarnings = FALSE,
-               recursive = TRUE)
-    
+
+    unlink(
+      x = exportFolder,
+      recursive = TRUE,
+      force = TRUE
+    )
+    dir.create(
+      path = exportFolder,
+      showWarnings = FALSE,
+      recursive = TRUE
+    )
+
     executeTimeSeriesDiagnostics(
       connection = connectionTimeSeries,
       tempEmulationSchema = tempEmulationSchema,
@@ -290,22 +306,24 @@ test_that("Testing Data source time series execution", {
         observationPeriodMaxDate = as.Date("2007-12-31")
       )
     )
-    
+
     recordKeepingFileData <-
-      readr::read_csv(file = paste0(exportFile, "recordKeeping"),
-                      col_types = readr::cols())
-    
+      readr::read_csv(
+        file = paste0(exportFile, "recordKeeping"),
+        col_types = readr::cols()
+      )
+
     # testing if check sum is written
     testthat::expect_true("checksum" %in% colnames(recordKeepingFileData))
     testthat::expect_equal(object = recordKeepingFileData$cohortId, expected = -44819062)
-    
+
     # result
     dataSourceTimeSeriesResult <-
       readr::read_csv(
         file = file.path(exportFolder, "time_series.csv"),
         col_types = readr::cols()
       )
-    
+
     subset <- subsetToRequiredCohorts(
       cohorts = cohortDefinitionSet,
       task = "runDataSourceTimeSeries",
@@ -313,9 +331,10 @@ test_that("Testing Data source time series execution", {
       recordKeepingFile = paste0(exportFile, "recordKeeping")
     ) %>%
       dplyr::arrange(cohortId)
-    
-    testthat::expect_equal(object = nrow(subset),
-                           expected = 0)
+
+    testthat::expect_equal(
+      object = nrow(subset),
+      expected = 0
+    )
   })
 })
-

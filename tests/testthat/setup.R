@@ -32,7 +32,7 @@ skipCdmTests <- FALSE
 
 if (dbms == "sqlite") {
   connectionDetails <- Eunomia::getEunomiaConnectionDetails(databaseFile = "testEunomia.sqlite")
-   withr::defer(
+  withr::defer(
     {
       unlink("testEunomia.sqlite", recursive = TRUE, force = TRUE)
     },

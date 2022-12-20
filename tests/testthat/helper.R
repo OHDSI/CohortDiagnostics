@@ -20,7 +20,6 @@ with_dbc_connection <- function(connection, code) {
 
 # Create a cohort definition set from test cohorts
 loadTestCohortDefinitionSet <- function(cohortIds = NULL) {
-
   if (grepl("testthat", getwd())) {
     cohortPath <- "cohorts"
   } else {
@@ -37,7 +36,7 @@ loadTestCohortDefinitionSet <- function(cohortIds = NULL) {
   if (!is.null(cohortIds)) {
     cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(cohortId %in% cohortIds)
   }
-  
+
   cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)
 
   return(cohortDefinitionSet)
@@ -86,7 +85,9 @@ createTestShinyDb <- function(connectionDetails = Eunomia::getEunomiaConnectionD
     incremental = FALSE
   )
 
-  createMergedResultsFile(dataFolder = file.path(folder, "export"),
-                          sqliteDbPath = outputPath,
-                          overwrite = TRUE)
+  createMergedResultsFile(
+    dataFolder = file.path(folder, "export"),
+    sqliteDbPath = outputPath,
+    overwrite = TRUE
+  )
 }

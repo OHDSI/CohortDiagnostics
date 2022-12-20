@@ -58,7 +58,6 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
                                       port = 80,
                                       launch.browser = FALSE,
                                       enableAnnotation = TRUE) {
-
   if (is.null(shinyConfigPath)) {
     if (is.null(connectionDetails)) {
       sqliteDbPath <- normalizePath(sqliteDbPath)
@@ -110,34 +109,36 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     on.exit(options("CD-shiny-config" = NULL))
   }
 
-  ensure_installed(c("checkmate",
-                     "DatabaseConnector",
-                     "dplyr",
-                     "plyr",
-                     "ggplot2",
-                     "ggiraph",
-                     "gtable",
-                     "htmltools",
-                     "lubridate",
-                     "pool",
-                     "purrr",
-                     "scales",
-                     "shiny",
-                     "shinydashboard",
-                     "shinyWidgets",
-                     "shinyjs",
-                     "shinycssloaders",
-                     "stringr",
-                     "SqlRender",
-                     "tidyr",
-                     "CirceR",
-                     "rmarkdown",
-                     "reactable",
-                     "markdownInput",
-                     "markdown",
-                     "jsonlite",
-                     "ggh4x",
-                     "yaml"))
+  ensure_installed(c(
+    "checkmate",
+    "DatabaseConnector",
+    "dplyr",
+    "plyr",
+    "ggplot2",
+    "ggiraph",
+    "gtable",
+    "htmltools",
+    "lubridate",
+    "pool",
+    "purrr",
+    "scales",
+    "shiny",
+    "shinydashboard",
+    "shinyWidgets",
+    "shinyjs",
+    "shinycssloaders",
+    "stringr",
+    "SqlRender",
+    "tidyr",
+    "CirceR",
+    "rmarkdown",
+    "reactable",
+    "markdownInput",
+    "markdown",
+    "jsonlite",
+    "ggh4x",
+    "yaml"
+  ))
 
   appDir <-
     system.file("shiny", "DiagnosticsExplorer", package = utils::packageName())
@@ -229,7 +230,7 @@ createMergedResultsFile <-
 createDiagnosticsExplorerZip <- function(outputZipfile = file.path(getwd(), "DiagnosticsExplorer.zip"),
                                          sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
                                          shinyDirectory = system.file(file.path("shiny", "DiagnosticsExplorer"),
-                                                                      package = "CohortDiagnostics"
+                                           package = "CohortDiagnostics"
                                          ),
                                          overwrite = FALSE) {
   outputZipfile <- normalizePath(outputZipfile, mustWork = FALSE)

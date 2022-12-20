@@ -296,12 +296,12 @@ test_that("No database file fails upload", {
   DatabaseConnector::createZipFile(testZipFile, "cohorts/CohortsToCreate.csv")
 
   expect_error(
-   uploadResults(
+    uploadResults(
       connectionDetails = connectionDetails,
       schema = "main",
       zipFileName = testZipFile,
       tablePrefix = "cd_"
     ),
-   regexp ="database metadata file not found - cannot upload results"
+    regexp = "database metadata file not found - cannot upload results"
   )
 })

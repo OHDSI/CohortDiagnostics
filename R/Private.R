@@ -324,11 +324,13 @@ timeExecution <- function(exportFolder,
     eval(expr)
     execTime <- Sys.time() - start
   }
-  executionTimes <- data.frame(task = taskName,
-                               startTime = start,
-                               cohortIds = paste(cohortIds, collapse = ";"),
-                               executionTime = execTime,
-                               parent = paste(parent, collapse = ""))
+  executionTimes <- data.frame(
+    task = taskName,
+    startTime = start,
+    cohortIds = paste(cohortIds, collapse = ";"),
+    executionTime = execTime,
+    parent = paste(parent, collapse = "")
+  )
 
   readr::write_csv(executionTimes, file = executionTimePath, append = file.exists(executionTimePath))
   return(executionTimes)
