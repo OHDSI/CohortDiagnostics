@@ -17,6 +17,23 @@
       "Requirements": [],
       "Hash": "8f9ce74c6417d61f0782cbae5fd2b7b0"
     },
+    "CirceR": {
+      "Package": "CirceR",
+      "Version": "1.2.0",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "CirceR",
+      "RemoteUsername": "OHDSI",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "38bf8b44d87f759dd4ba36835ce30627b3c24e6b",
+      "Requirements": [
+        "R",
+        "RJSONIO",
+        "rJava"
+      ],
+      "Hash": "b8480aa484ebcee5551cfa77fac4b25c"
+    },
     "DBI": {
       "Package": "DBI",
       "Version": "1.1.3",

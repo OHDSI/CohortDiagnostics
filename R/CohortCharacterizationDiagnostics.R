@@ -48,12 +48,15 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           covariateSettings = covariateSettings,
           aggregated = TRUE
         )
-    })
+    }
+  )
   populationSize <-
     attr(x = featureExtractionOutput, which = "metaData")$populationSize
   populationSize <-
-    dplyr::tibble(cohortId = names(populationSize) %>% as.numeric(),
-                  populationSize = populationSize)
+    dplyr::tibble(
+      cohortId = names(populationSize) %>% as.numeric(),
+      populationSize = populationSize
+    )
 
   if (!"analysisRef" %in% names(results)) {
     results$analysisRef <- featureExtractionOutput$analysisRef
@@ -82,8 +85,8 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
       dplyr::mutate(p = sumValue / populationSize)
 
     if (nrow(covariates %>%
-               dplyr::filter(p > 1) %>%
-               dplyr::collect()) > 0) {
+      dplyr::filter(p > 1) %>%
+      dplyr::collect()) > 0) {
       stop(
         paste0(
           "During characterization, population size (denominator) was found to be smaller than features Value (numerator).",
@@ -98,37 +101,37 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
       dplyr::rename(mean = averageValue) %>%
       dplyr::select(-populationSize)
 
-      if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
-        covariates <- covariates %>%
-          dplyr::select(
-            cohortId,
-            timeId,
-            covariateId,
-            sumValue,
-            mean,
-            sd
-          )
-          if (length(is.na(covariates$timeId)) > 0) {
-            covariates[is.na(covariates$timeId),]$timeId <- -1
-          }
-      } else {
-        covariates <- covariates %>%
-          dplyr::mutate(timeId = 0) %>%
-          dplyr::select(
-            cohortId,
-            timeId,
-            covariateId,
-            sumValue,
-            mean,
-            sd
-          )
+    if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
+      covariates <- covariates %>%
+        dplyr::select(
+          cohortId,
+          timeId,
+          covariateId,
+          sumValue,
+          mean,
+          sd
+        )
+      if (length(is.na(covariates$timeId)) > 0) {
+        covariates[is.na(covariates$timeId), ]$timeId <- -1
       }
-      if ("covariates" %in% names(results)) {
-        Andromeda::appendToTable(results$covariates, covariates)
-      } else {
-        results$covariates <- covariates
-      }
+    } else {
+      covariates <- covariates %>%
+        dplyr::mutate(timeId = 0) %>%
+        dplyr::select(
+          cohortId,
+          timeId,
+          covariateId,
+          sumValue,
+          mean,
+          sd
+        )
     }
+    if ("covariates" %in% names(results)) {
+      Andromeda::appendToTable(results$covariates, covariates)
+    } else {
+      results$covariates <- covariates
+    }
+  }
 
   if ("covariatesContinuous" %in% names(featureExtractionOutput) &&
     dplyr::pull(dplyr::count(featureExtractionOutput$covariatesContinuous)) > 0) {
@@ -151,12 +154,14 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           sd
         )
       if (length(is.na(covariates$timeId)) > 0) {
-        covariates[is.na(covariates$timeId),]$timeId <- -1
+        covariates[is.na(covariates$timeId), ]$timeId <- -1
       }
     } else {
       covariates <- covariates %>%
-        dplyr::mutate(sumValue = -1,
-                      timeId = 0) %>%
+        dplyr::mutate(
+          sumValue = -1,
+          timeId = 0
+        ) %>%
         dplyr::select(
           cohortId,
           timeId,
@@ -179,10 +184,12 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
   }
 
   delta <- Sys.time() - startTime
-  ParallelLogger::logInfo("Cohort characterization took ",
-                          signif(delta, 3),
-                          " ",
-                          attr(delta, "units"))
+  ParallelLogger::logInfo(
+    "Cohort characterization took ",
+    signif(delta, 3),
+    " ",
+    attr(delta, "units")
+  )
   return(results)
 }
 
@@ -221,9 +228,10 @@ executeCohortCharacterization <- function(connection,
   )
 
   if (!incremental) {
-    for (outputFile in c(covariateValueFileName, covariateValueContFileName,
-                         covariateRefFileName, analysisRefFileName, timeRefFileName)) {
-
+    for (outputFile in c(
+      covariateValueFileName, covariateValueContFileName,
+      covariateRefFileName, analysisRefFileName, timeRefFileName
+    )) {
       if (file.exists(outputFile)) {
         ParallelLogger::logInfo("Not in incremental mode - Removing file", outputFile, " and replacing")
         unlink(outputFile)
@@ -309,10 +317,12 @@ executeCohortCharacterization <- function(connection,
     }
   }
   delta <- Sys.time() - startCohortCharacterization
-  ParallelLogger::logInfo("Running ",
-                          jobName,
-                          " took",
-                          signif(delta, 3),
-                          " ",
-                          attr(delta, "units"))
+  ParallelLogger::logInfo(
+    "Running ",
+    jobName,
+    " took",
+    signif(delta, 3),
+    " ",
+    attr(delta, "units")
+  )
 }

@@ -125,7 +125,7 @@ combineConceptSetsFromCohorts <- function(cohorts) {
   conceptSetCounter <- 0
 
   for (i in (1:nrow(cohorts))) {
-    cohort <- cohorts[i,]
+    cohort <- cohorts[i, ]
     sql <-
       extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql)
     json <-
@@ -197,13 +197,13 @@ mergeTempTables <-
       )
     sql <-
       SqlRender::translate(sql,
-                           targetDialect = connection@dbms,
-                           tempEmulationSchema = tempEmulationSchema
+        targetDialect = connection@dbms,
+        tempEmulationSchema = tempEmulationSchema
       )
     DatabaseConnector::executeSql(connection,
-                                  sql,
-                                  progressBar = FALSE,
-                                  reportOverallTime = FALSE
+      sql,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
     )
 
     # Drop temp tables:
@@ -212,13 +212,13 @@ mergeTempTables <-
         sprintf("TRUNCATE TABLE %s;\nDROP TABLE %s;", tempTable, tempTable)
       sql <-
         SqlRender::translate(sql,
-                             targetDialect = connection@dbms,
-                             tempEmulationSchema = tempEmulationSchema
+          targetDialect = connection@dbms,
+          tempEmulationSchema = tempEmulationSchema
         )
       DatabaseConnector::executeSql(connection,
-                                    sql,
-                                    progressBar = FALSE,
-                                    reportOverallTime = FALSE
+        sql,
+        progressBar = FALSE,
+        reportOverallTime = FALSE
       )
     }
   }
@@ -261,13 +261,13 @@ instantiateUniqueConceptSets <- function(uniqueConceptSets,
     sqlSubset <-
       SqlRender::render(sqlSubset, vocabulary_database_schema = vocabularyDatabaseSchema)
     sqlSubset <- SqlRender::translate(sqlSubset,
-                                      targetDialect = connection@dbms,
-                                      tempEmulationSchema = tempEmulationSchema
+      targetDialect = connection@dbms,
+      tempEmulationSchema = tempEmulationSchema
     )
     DatabaseConnector::executeSql(connection,
-                                  sqlSubset,
-                                  progressBar = FALSE,
-                                  reportOverallTime = FALSE
+      sqlSubset,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
     )
   }
   utils::setTxtProgressBar(pb, 1)
@@ -298,7 +298,7 @@ getCodeSetIds <- function(criterionList) {
     return(NULL)
   } else {
     return(dplyr::tibble(domain = names(criterionList), codeSetIds = codeSetIds)
-             %>% filter(!is.na(codeSetIds)))
+    %>% filter(!is.na(codeSetIds)))
   }
 }
 
@@ -386,8 +386,8 @@ runConceptSetDiagnostics <- function(connection,
   )
 
   uniqueConceptSets <-
-    conceptSets[!duplicated(conceptSets$uniqueConceptSetId),] %>%
-      dplyr::select(-cohortId, -conceptSetId)
+    conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ] %>%
+    dplyr::select(-cohortId, -conceptSetId)
 
   timeExecution(
     exportFolder,
@@ -403,11 +403,11 @@ runConceptSetDiagnostics <- function(connection,
         tempEmulationSchema = tempEmulationSchema,
         conceptSetsTable = "#inst_concept_sets"
       )
-    })
+    }
+  )
 
   if ((runIncludedSourceConcepts && nrow(subsetIncluded) > 0) ||
     (runOrphanConcepts && nrow(subsetOrphans) > 0)) {
-
     timeExecution(
       exportFolder,
       taskName = "createConceptCountsTable",
@@ -422,7 +422,8 @@ runConceptSetDiagnostics <- function(connection,
           conceptCountsTable = conceptCountsTable,
           conceptCountsTableIsTemp = conceptCountsTableIsTemp
         )
-      })
+      }
+    )
   }
   if (runIncludedSourceConcepts) {
     timeExecution(
@@ -431,7 +432,6 @@ runConceptSetDiagnostics <- function(connection,
       cohortIds = NULL,
       parent = "runConceptSetDiagnostics",
       expr = {
-
         # Included concepts ------------------------------------------------------------------
         ParallelLogger::logInfo("Fetching included source concepts")
         # TODO: Disregard empty cohorts in tally:
@@ -465,7 +465,7 @@ runConceptSetDiagnostics <- function(connection,
                 tempEmulationSchema = tempEmulationSchema,
                 snakeCaseToCamelCase = TRUE
               ) %>%
-                tidyr::tibble()
+              tidyr::tibble()
 
             counts <- counts %>%
               dplyr::rename(uniqueConceptSetId = conceptSetId) %>%
@@ -560,7 +560,8 @@ runConceptSetDiagnostics <- function(connection,
             ))
           }
         }
-      })
+      }
+    )
   }
 
   if (runBreakdownIndexEvents) {
@@ -595,7 +596,6 @@ runConceptSetDiagnostics <- function(connection,
           cohortIds = cohort$cohortId,
           parent = "runConceptSetDiagnostics",
           expr = {
-
             cohortDefinition <-
               RJSONIO::fromJSON(cohort$json, digits = 23)
             primaryCodesetIds <-
@@ -603,7 +603,7 @@ runConceptSetDiagnostics <- function(connection,
                 cohortDefinition$PrimaryCriteria$CriteriaList,
                 getCodeSetIds
               ) %>%
-                dplyr::bind_rows()
+              dplyr::bind_rows()
             if (nrow(primaryCodesetIds) == 0) {
               warning(
                 "No primary event criteria concept sets found for cohort id: ",
@@ -612,13 +612,13 @@ runConceptSetDiagnostics <- function(connection,
               return(tidyr::tibble())
             }
             primaryCodesetIds <- primaryCodesetIds %>% dplyr::filter(domain %in%
-                                                                       c(domains$domain %>% unique()))
+              c(domains$domain %>% unique()))
             if (nrow(primaryCodesetIds) == 0) {
               warning(
                 "Primary event criteria concept sets found for cohort id: ",
                 cohort$cohortId, " but,", "\nnone of the concept sets belong to the supported domains.",
                 "\nThe supported domains are:\n", paste(domains$domain,
-                                                        collapse = ", "
+                  collapse = ", "
                 )
               )
               return(tidyr::tibble())
@@ -643,7 +643,7 @@ runConceptSetDiagnostics <- function(connection,
             primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
 
             getCounts <- function(row) {
-              domain <- domains[domains$domain == row$domain,]
+              domain <- domains[domains$domain == row$domain, ]
               sql <-
                 SqlRender::loadRenderTranslateSql(
                   "CohortEntryBreakdown.sql",
@@ -681,7 +681,7 @@ runConceptSetDiagnostics <- function(connection,
                   store_table = "#breakdown",
                   snakeCaseToCamelCase = TRUE
                 ) %>%
-                  tidyr::tibble()
+                tidyr::tibble()
               if (!is.null(conceptIdTable)) {
                 sql <- "INSERT INTO @concept_id_table (concept_id)
                   SELECT DISTINCT concept_id
@@ -711,8 +711,8 @@ runConceptSetDiagnostics <- function(connection,
 
             counts <-
               lapply(split(primaryCodesetIds, 1:nrow(primaryCodesetIds)), getCounts) %>%
-                dplyr::bind_rows() %>%
-                dplyr::arrange(conceptCount)
+              dplyr::bind_rows() %>%
+              dplyr::arrange(conceptCount)
 
             if (nrow(counts) > 0) {
               counts$cohortId <- cohort$cohortId
@@ -724,7 +724,8 @@ runConceptSetDiagnostics <- function(connection,
               return(dplyr::tibble())
             }
             return(counts)
-          })
+          }
+        )
       }
 
       data <-
@@ -794,7 +795,7 @@ runConceptSetDiagnostics <- function(connection,
       # [OPTIMIZATION idea] can we modify the sql to do this for all uniqueConceptSetId in one query using group by?
       data <- list()
       for (i in (1:nrow(uniqueConceptSets))) {
-        conceptSet <- uniqueConceptSets[i,]
+        conceptSet <- uniqueConceptSets[i, ]
         ParallelLogger::logInfo(
           "- Finding orphan concepts for concept set '",
           conceptSet$conceptSetName,
@@ -807,7 +808,6 @@ runConceptSetDiagnostics <- function(connection,
           parent = "runConceptSetDiagnostics",
           cohortIds = paste("concept_set-", conceptSet$name),
           expr = {
-
             data[[i]] <- .findOrphanConcepts(
               connection = connection,
               cdmDatabaseSchema = cdmDatabaseSchema,
@@ -835,7 +835,8 @@ runConceptSetDiagnostics <- function(connection,
                 reportOverallTime = FALSE
               )
             }
-          })
+          }
+        )
         sql <-
           "TRUNCATE TABLE @orphan_concept_table;\nDROP TABLE @orphan_concept_table;"
         DatabaseConnector::renderTranslateExecuteSql(
@@ -940,16 +941,16 @@ runConceptSetDiagnostics <- function(connection,
       tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
-      dplyr::tibble() %>%
-      dplyr::rename(uniqueConceptSetId = codesetId) %>%
-      dplyr::inner_join(conceptSets,
-                        by = "uniqueConceptSetId"
-      ) %>%
-      dplyr::select(
-        cohortId,
-        conceptSetId,
-        conceptId
-      )
+    dplyr::tibble() %>%
+    dplyr::rename(uniqueConceptSetId = codesetId) %>%
+    dplyr::inner_join(conceptSets,
+      by = "uniqueConceptSetId"
+    ) %>%
+    dplyr::select(
+      cohortId,
+      conceptSetId,
+      conceptId
+    )
 
   resolvedConceptIds <- makeDataExportable(
     x = resolvedConceptIds,

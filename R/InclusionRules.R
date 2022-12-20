@@ -44,21 +44,23 @@ getInclusionStats <- function(connection,
     ParallelLogger::logInfo("Exporting inclusion rules with CohortGenerator")
 
     timeExecution(exportFolder,
-                  "getInclusionStatsCohortGenerator",
-                  parent = "getInclusionStats",
-                  expr =
-                  {
-                    CohortGenerator::insertInclusionRuleNames(
-                      connection = connection,
-                      cohortDefinitionSet = subset,
-                      cohortDatabaseSchema = cohortDatabaseSchema,
-                      cohortInclusionTable = cohortTableNames$cohortInclusionTable
-                    )
+      "getInclusionStatsCohortGenerator",
+      parent = "getInclusionStats",
+      expr = {
+        CohortGenerator::insertInclusionRuleNames(
+          connection = connection,
+          cohortDefinitionSet = subset,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cohortInclusionTable = cohortTableNames$cohortInclusionTable
+        )
 
-                    stats <- CohortGenerator::getCohortStats(connection = connection,
-                                                             cohortTableNames = cohortTableNames,
-                                                             cohortDatabaseSchema = cohortDatabaseSchema)
-                  })
+        stats <- CohortGenerator::getCohortStats(
+          connection = connection,
+          cohortTableNames = cohortTableNames,
+          cohortDatabaseSchema = cohortDatabaseSchema
+        )
+      }
+    )
     if (!is.null(stats)) {
       if ("cohortInclusionTable" %in% (names(stats))) {
         cohortInclusion <- makeDataExportable(
