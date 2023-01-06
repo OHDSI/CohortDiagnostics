@@ -95,10 +95,11 @@ test_that("Cohort diagnostics in incremental mode", {
     }
 
     ## Repeat tests with incremental set to false to ensure better code coverage
-    withr::with_options(list("CohortDiagnostics-TimeSeries-batch-size" = 1,
-                             "CohortDiagnostics-FE-batch-size" = 1,
-                             "CohortDiagnostics-Relationships-batch-size" = 50),
-    {
+    withr::with_options(list(
+      "CohortDiagnostics-TimeSeries-batch-size" = 1,
+      "CohortDiagnostics-FE-batch-size" = 1,
+      "CohortDiagnostics-Relationships-batch-size" = 50
+    ), {
       executeDiagnostics(
         connectionDetails = connectionDetails,
         cdmDatabaseSchema = cdmDatabaseSchema,

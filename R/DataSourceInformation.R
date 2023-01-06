@@ -49,9 +49,11 @@ getCdmDataSourceInformation <-
       }
     }
 
-    if (!DatabaseConnector::existsTable(connection = connection,
-                                        databaseSchema = cdmDatabaseSchema,
-                                        tableName = "cdm_source")) {
+    if (!DatabaseConnector::existsTable(
+      connection = connection,
+      databaseSchema = cdmDatabaseSchema,
+      tableName = "cdm_source"
+    )) {
       warning("CDM Source table not found in CDM. Metadata on CDM source will be limited.")
       return(NULL)
     }
@@ -90,9 +92,10 @@ getCdmDataSourceInformation <-
     sourceReleaseDate <- as.Date(NA)
     if ("sourceReleaseDate" %in% colnames(cdmDataSource)) {
       if (class(cdmDataSource$sourceReleaseDate) != "Date") {
-        try(sourceReleaseDate <-
-          max(as.Date(cdmDataSource$sourceReleaseDate)),
-        silent = TRUE
+        try(
+          sourceReleaseDate <-
+            max(as.Date(cdmDataSource$sourceReleaseDate)),
+          silent = TRUE
         )
       } else {
         sourceReleaseDate <- max(as.Date(cdmDataSource$sourceReleaseDate))

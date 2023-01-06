@@ -124,8 +124,8 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         by = clock::duration_months(3)
       )
     ) %>%
-      dplyr::mutate(periodEnd = clock::add_months(x = periodBegin, n = 3) - 1) %>%
-      dplyr::mutate(calendarInterval = "q")
+    dplyr::mutate(periodEnd = clock::add_months(x = periodBegin, n = 3) - 1) %>%
+    dplyr::mutate(calendarInterval = "q")
 
   calendarMonth <-
     dplyr::tibble(
@@ -135,8 +135,8 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         by = clock::duration_months(1)
       )
     ) %>%
-      dplyr::mutate(periodEnd = clock::add_months(x = periodBegin, n = 1) - 1) %>%
-      dplyr::mutate(calendarInterval = "m")
+    dplyr::mutate(periodEnd = clock::add_months(x = periodBegin, n = 1) - 1) %>%
+    dplyr::mutate(calendarInterval = "m")
 
   calendarYear <-
     dplyr::tibble(
@@ -146,8 +146,8 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         by = clock::duration_years(1)
       )
     ) %>%
-      dplyr::mutate(periodEnd = clock::add_years(x = periodBegin, n = 1) - 1) %>%
-      dplyr::mutate(calendarInterval = "y")
+    dplyr::mutate(periodEnd = clock::add_years(x = periodBegin, n = 1) - 1) %>%
+    dplyr::mutate(calendarInterval = "y")
 
   timeSeriesDateRange <- dplyr::tibble(
     periodBegin = timeSeriesMinDate,
@@ -162,9 +162,9 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       calendarYear,
       timeSeriesDateRange
     ) %>% # calendarWeek
-      dplyr::distinct() %>%
-      dplyr::arrange(periodBegin, periodEnd, calendarInterval) %>%
-      dplyr::mutate(timeId = dplyr::row_number())
+    dplyr::distinct() %>%
+    dplyr::arrange(periodBegin, periodEnd, calendarInterval) %>%
+    dplyr::mutate(timeId = dplyr::row_number())
 
   ParallelLogger::logTrace(" - Inserting calendar periods")
   DatabaseConnector::insertTable(
@@ -428,7 +428,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       )
       resultsInAndromeda$ageGroupGender <-
         resultsInAndromeda$ageGroupGender %>%
-          dplyr::mutate(seriesType = !!seriesId)
+        dplyr::mutate(seriesType = !!seriesId)
       Andromeda::appendToTable(
         resultsInAndromeda$allData,
         resultsInAndromeda$ageGroupGender
@@ -452,7 +452,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     dplyr::collect() %>% # temporal solution till fix of bug in andromeda on handling dates
     # periodBegin gets converted to integer
     dplyr::inner_join(resultsInAndromeda$calendarPeriods %>% dplyr::collect(),
-                      by = c("timeId")
+      by = c("timeId")
     ) %>%
     dplyr::arrange(
       cohortId,
@@ -520,7 +520,6 @@ executeTimeSeriesDiagnostics <- function(connection,
                                          recordKeepingFile,
                                          observationPeriodDateRange,
                                          batchSize = getOption("CohortDiagnostics-TimeSeries-batch-size", default = 20)) {
-
   if (all(!runCohortTimeSeries, !runDataSourceTimeSeries)) {
     warning(
       "Both Datasource time series and cohort time series are set to FALSE. Skippping executeTimeSeriesDiagnostics."
@@ -566,7 +565,7 @@ executeTimeSeriesDiagnostics <- function(connection,
           )
         }
 
-        cohortIds <- subset[start:end,]$cohortId %>% unique()
+        cohortIds <- subset[start:end, ]$cohortId %>% unique()
         timeExecution(
           exportFolder,
           "runCohortTimeSeriesDiagnostics",
@@ -598,12 +597,12 @@ executeTimeSeriesDiagnostics <- function(connection,
           data = data,
           fileName = outputFile,
           incremental = TRUE,
-          cohortId = subset[start:end,]$cohortId %>% unique()
+          cohortId = subset[start:end, ]$cohortId %>% unique()
         )
         recordTasksDone(
-          cohortId = subset[start:end,]$cohortId %>% unique(),
+          cohortId = subset[start:end, ]$cohortId %>% unique(),
           task = "runCohortTimeSeries",
-          checksum = subset[start:end,]$checksum,
+          checksum = subset[start:end, ]$checksum,
           recordKeepingFile = recordKeepingFile,
           incremental = incremental
         )
@@ -623,8 +622,10 @@ executeTimeSeriesDiagnostics <- function(connection,
       recordKeepingFile = recordKeepingFile
     )
 
-    if (all(nrow(subset) == 0,
-            incremental)) {
+    if (all(
+      nrow(subset) == 0,
+      incremental
+    )) {
       ParallelLogger::logInfo("Skipping Data Source Time Series in Incremental mode.")
       return(NULL)
     }

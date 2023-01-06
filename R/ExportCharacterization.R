@@ -55,7 +55,8 @@ exportCharacterization <- function(characteristics,
         sd = round(sd, digits = 4)
       ) %>%
       dplyr::select(-cohortEntries, -cohortSubjects) %>%
-      dplyr::distinct() %>% makeDataExportable(
+      dplyr::distinct() %>%
+      makeDataExportable(
         tableName = "temporal_covariate_value",
         minCellCount = minCellCount,
         databaseId = databaseId
@@ -74,7 +75,7 @@ exportCharacterization <- function(characteristics,
         covariateId = covariateRef$covariateId
       )
 
-      analysisRef <-  makeDataExportable(
+      analysisRef <- makeDataExportable(
         x = characteristics$analysisRef,
         tableName = "temporal_analysis_ref",
         minCellCount = minCellCount
@@ -109,12 +110,12 @@ exportCharacterization <- function(characteristics,
   if (!"covariatesContinuous" %in% names(characteristics)) {
     ParallelLogger::logInfo("No continuous characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
-     characteristics$filteredCovariatesContinous <- makeDataExportable(
-       x = characteristics$covariatesContinuous,
-       tableName = "temporal_covariate_value_dist",
-       minCellCount = minCellCount,
-       databaseId = databaseId
-     )
+    characteristics$filteredCovariatesContinous <- makeDataExportable(
+      x = characteristics$covariatesContinuous,
+      tableName = "temporal_covariate_value_dist",
+      minCellCount = minCellCount,
+      databaseId = databaseId
+    )
 
     if (dplyr::pull(dplyr::count(characteristics$filteredCovariatesContinous)) > 0) {
       writeToCsv(

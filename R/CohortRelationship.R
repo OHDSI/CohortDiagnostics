@@ -122,7 +122,7 @@ runCohortRelationshipDiagnostics <-
             package = utils::packageName()
           )
         )
-      
+
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
@@ -135,7 +135,7 @@ runCohortRelationshipDiagnostics <-
         cohort_database_schema = cohortDatabaseSchema,
         cohort_table = cohortTable
       )
-      
+
       DatabaseConnector::renderTranslateQuerySqlToAndromeda(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
@@ -210,13 +210,17 @@ executeCohortRelationshipDiagnostics <- function(connection,
 
   allCohortIds <- cohortDefinitionSet %>%
     dplyr::select(cohortId, checksum) %>%
-    dplyr::rename(targetCohortId = cohortId,
-                  targetChecksum = checksum) %>%
+    dplyr::rename(
+      targetCohortId = cohortId,
+      targetChecksum = checksum
+    ) %>%
     dplyr::distinct()
   combinationsOfPossibleCohortRelationships <- allCohortIds %>%
     tidyr::crossing(allCohortIds %>%
-                      dplyr::rename(comparatorCohortId = targetCohortId,
-                                    comparatorChecksum = targetChecksum)) %>%
+      dplyr::rename(
+        comparatorCohortId = targetCohortId,
+        comparatorChecksum = targetChecksum
+      )) %>%
     dplyr::filter(targetCohortId != comparatorCohortId) %>%
     dplyr::arrange(targetCohortId, comparatorCohortId) %>%
     dplyr::mutate(checksum = paste0(targetChecksum, comparatorChecksum))
@@ -230,7 +234,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
 
   if (nrow(subset) > 0) {
     if (incremental &&
-        (nrow(cohortDefinitionSet) - (length(subset$targetCohortId %>% unique()))) > 0) {
+      (nrow(cohortDefinitionSet) - (length(subset$targetCohortId %>% unique()))) > 0) {
       ParallelLogger::logInfo(
         sprintf(
           " - Skipping %s target cohorts in incremental mode because the relationships has already been computed with other cohorts.",
@@ -240,12 +244,12 @@ executeCohortRelationshipDiagnostics <- function(connection,
     }
 
     if (incremental &&
-        (nrow(combinationsOfPossibleCohortRelationships) - (
-          nrow(
-            combinationsOfPossibleCohortRelationships %>%
+      (nrow(combinationsOfPossibleCohortRelationships) - (
+        nrow(
+          combinationsOfPossibleCohortRelationships %>%
             dplyr::filter(targetCohortId %in% c(subset$targetCohortId))
-          )
-        )) > 0) {
+        )
+      )) > 0) {
       ParallelLogger::logInfo(
         sprintf(
           " - Skipping %s combinations in incremental mode because these were previously computed.",
@@ -333,7 +337,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
       timeExecution(
         exportFolder,
         "runCohortRelationshipDiagnostics",
-        c(subset[start:end,]$targetCohortId %>% unique(), subset[start:end,]$comparatorCohortId %>% unique()),
+        c(subset[start:end, ]$targetCohortId %>% unique(), subset[start:end, ]$comparatorCohortId %>% unique()),
         parent = "executeCohortRelationshipDiagnostics",
         expr = {
           output <-
@@ -342,10 +346,12 @@ executeCohortRelationshipDiagnostics <- function(connection,
               cohortDatabaseSchema = cohortDatabaseSchema,
               tempEmulationSchema = tempEmulationSchema,
               cohortTable = cohortTable,
-              targetCohortIds = subset[start:end,]$targetCohortId %>% unique(),
-              comparatorCohortIds = subset[start:end,]$comparatorCohortId %>% unique(),
-              relationshipDays = dplyr::tibble(startDay = temporalStartDays,
-                                               endDay = temporalEndDays)
+              targetCohortIds = subset[start:end, ]$targetCohortId %>% unique(),
+              comparatorCohortIds = subset[start:end, ]$comparatorCohortId %>% unique(),
+              relationshipDays = dplyr::tibble(
+                startDay = temporalStartDays,
+                endDay = temporalEndDays
+              )
             )
         }
       )
@@ -364,26 +370,28 @@ executeCohortRelationshipDiagnostics <- function(connection,
       )
 
       recordTasksDone(
-        cohortId = subset[start:end,]$targetCohortId,
-        comparatorId = subset[start:end,]$comparatorCohortId,
-        targetChecksum = subset[start:end,]$targetChecksum,
-        comparatorChecksum = subset[start:end,]$comparatorChecksum,
+        cohortId = subset[start:end, ]$targetCohortId,
+        comparatorId = subset[start:end, ]$comparatorCohortId,
+        targetChecksum = subset[start:end, ]$targetChecksum,
+        comparatorChecksum = subset[start:end, ]$comparatorChecksum,
         task = "runCohortRelationship",
-        checksum = subset[start:end,]$checksum,
+        checksum = subset[start:end, ]$checksum,
         recordKeepingFile = recordKeepingFile,
         incremental = incremental
       )
       deltaIteration <- Sys.time() - startCohortRelationship
-      ParallelLogger::logInfo("    - Running Cohort Relationship iteration with batchsize ",
-                              batchSize,
-                              " from row number ",
-                              start,
-                              " to ",
-                              end,
-                              " took ",
-                              signif(deltaIteration, 3),
-                              " ",
-                              attr(deltaIteration, "units"))
+      ParallelLogger::logInfo(
+        "    - Running Cohort Relationship iteration with batchsize ",
+        batchSize,
+        " from row number ",
+        start,
+        " to ",
+        end,
+        " took ",
+        signif(deltaIteration, 3),
+        " ",
+        attr(deltaIteration, "units")
+      )
     }
   } else {
     ParallelLogger::logInfo("    - Skipping in incremental mode.")

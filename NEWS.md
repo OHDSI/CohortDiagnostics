@@ -1,3 +1,10 @@
+CohortDiagnostics 3.1.2
+=======================
+Bug Fixes:
+
+1. Removed package dependency snapshot capture as it was breaking on newer versions of R
+
+
 CohortDiagnostics 3.1.1
 =======================
 Changes:
