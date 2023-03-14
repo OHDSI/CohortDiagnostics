@@ -48,6 +48,7 @@ Suggests:
   testthat,
   withr,
   zip,
+  knitr,
   OhdsiShinyModules
 Remotes:
   ohdsi/Eunomia,
