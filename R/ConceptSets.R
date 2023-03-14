@@ -126,6 +126,7 @@ combineConceptSetsFromCohorts <- function(cohorts) {
 
   for (i in (1:nrow(cohorts))) {
     cohort <- cohorts[i, ]
+
     sql <-
       extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql)
     json <-
@@ -326,6 +327,13 @@ runConceptSetDiagnostics <- function(connection,
   ParallelLogger::logInfo("Starting concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
   subset <- dplyr::tibble()
+
+  if (any(isTRUE(cohorts$isSubset))) {
+    cohorts <-
+      cohorts %>% dplyr::filter(!.data$isSubset)
+    message("Skipping conceptset diagnostics for subsets")
+  }
+
   if (runIncludedSourceConcepts) {
     subsetIncluded <- subsetToRequiredCohorts(
       cohorts = cohorts,
