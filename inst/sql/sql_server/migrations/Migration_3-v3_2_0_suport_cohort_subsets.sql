@@ -5,7 +5,7 @@
 {DEFAULT @table_prefix = ''}
 
 CREATE TABLE @database_schema.@table_prefix@subset_definition (
-    subset_definition_id BIG INT,
+    subset_definition_id BIGINT,
     json varchar,
     PRIMARY KEY(subset_definition_id)
 );
