@@ -58,6 +58,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
                                       port = 80,
                                       launch.browser = FALSE,
                                       enableAnnotation = TRUE) {
+
   if (is.null(shinyConfigPath)) {
     if (is.null(connectionDetails)) {
       sqliteDbPath <- normalizePath(sqliteDbPath)
@@ -109,36 +110,8 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     on.exit(options("CD-shiny-config" = NULL))
   }
 
-  ensure_installed(c(
-    "checkmate",
-    "DatabaseConnector",
-    "dplyr",
-    "plyr",
-    "ggplot2",
-    "ggiraph",
-    "gtable",
-    "htmltools",
-    "lubridate",
-    "pool",
-    "purrr",
-    "scales",
-    "shiny",
-    "shinydashboard",
-    "shinyWidgets",
-    "shinyjs",
-    "shinycssloaders",
-    "stringr",
-    "SqlRender",
-    "tidyr",
-    "CirceR",
-    "rmarkdown",
-    "reactable",
-    "markdownInput",
-    "markdown",
-    "jsonlite",
-    "ggh4x",
-    "yaml"
-  ))
+  if (!"OhdsiShinyModules" %in% as.data.frame(installed.packages())$Package)
+    remotes::install_github("OHDSI/OhdsiShinyModules")
 
   appDir <-
     system.file("shiny", "DiagnosticsExplorer", package = utils::packageName())
@@ -230,7 +203,7 @@ createMergedResultsFile <-
 createDiagnosticsExplorerZip <- function(outputZipfile = file.path(getwd(), "DiagnosticsExplorer.zip"),
                                          sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
                                          shinyDirectory = system.file(file.path("shiny", "DiagnosticsExplorer"),
-                                           package = "CohortDiagnostics"
+                                                                      package = "CohortDiagnostics"
                                          ),
                                          overwrite = FALSE) {
   outputZipfile <- normalizePath(outputZipfile, mustWork = FALSE)
@@ -254,24 +227,4 @@ createDiagnosticsExplorerZip <- function(outputZipfile = file.path(getwd(), "Dia
   file.copy(sqliteDbPath, file.path(tmpDir, "DiagnosticsExplorer", "data", "MergedCohortDiagnosticsData.sqlite"))
 
   DatabaseConnector::createZipFile(outputZipfile, file.path(tmpDir, "DiagnosticsExplorer"), rootFolder = tmpDir)
-}
-
-ensure_installed <- function(pkgs) {
-  notInstalled <- pkgs[!(pkgs %in% rownames(installed.packages()))]
-
-  if (interactive() & length(notInstalled) > 0) {
-    message(paste("Package(s): ", paste(paste(notInstalled, collapse = ", "), "not installed")))
-    if (!isTRUE(utils::askYesNo("Would you like to install them?"))) {
-      return(invisible(NULL))
-    }
-  }
-  for (pkg in notInstalled) {
-    if (pkg == "CirceR") {
-      ensure_installed("remotes")
-      message("\nInstalling from Github using remotes")
-      remotes::install_github("OHDSI/CirceR")
-    } else {
-      install.packages(pkg)
-    }
-  }
 }
