@@ -38,37 +38,26 @@ Imports:
   SqlRender (>= 1.9.0),
   stringr,
   tidyr (>= 1.2.0),
-  CohortGenerator (>= 0.8.0)
+  CohortGenerator (>= 0.8.0),
+  remotes
 Suggests:
-  CirceR,
-  DT,
   Eunomia,
-  ggplot2,
-  htmltools,
-  knitr,
-  lubridate,
-  pool,
-  plotly,
-  purrr,
-  RColorBrewer,
-  remotes,
-  rmarkdown,
   ROhdsiWebApi (>= 1.2.0),
   RSQLite (>= 2.2.1),
   scales,
-  shiny,
-  shinydashboard,
-  shinyWidgets,
   testthat,
   withr,
-  zip
+  zip,
+  knitr,
+  OhdsiShinyModules
 Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
   ohdsi/ResultModelManager,
   ohdsi/ROhdsiWebApi,
   ohdsi/CirceR,
-  ohdsi/CohortGenerator
+  ohdsi/CohortGenerator,
+  ohdsi/OhdsiShinyModules
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics

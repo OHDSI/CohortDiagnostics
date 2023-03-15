@@ -353,7 +353,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       )
   }
   if (runTemporalCohortCharacterization) {
-    if (class(temporalCovariateSettings) == "covariateSettings") {
+    if (is(temporalCovariateSettings, "covariateSettings")) {
       temporalCovariateSettings <- list(temporalCovariateSettings)
     }
     # All temporal covariate settings objects must be covariateSettings

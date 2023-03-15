@@ -32,6 +32,7 @@
 {DEFAULT @visit_context = visit_context}
 {DEFAULT @vocabulary = vocabulary}
 {DEFAULT @cd_version = cd_version}
+{DEFAULT @subset_definition = subset_definition}
 
 -- Drop old tables if exist
 DROP TABLE IF EXISTS @results_schema.@annotation;

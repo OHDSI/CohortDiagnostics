@@ -814,7 +814,7 @@ runConceptSetDiagnostics <- function(connection,
           exportFolder,
           taskName = "orphanConcepts",
           parent = "runConceptSetDiagnostics",
-          cohortIds = paste("concept_set-", conceptSet$name),
+          cohortIds = paste("concept_set-", conceptSet$conceptSetName),
           expr = {
             data[[i]] <- .findOrphanConcepts(
               connection = connection,
