@@ -18,8 +18,8 @@ cohort,cohort_name,varchar,Yes,No,No,Yes,No,No,No
 cohort,metadata,varchar,No,No,Yes,Yes,No,No,No
 cohort,json,varchar,No,No,Yes,Yes,No,No,No
 cohort,sql,varchar,Yes,No,No,Yes,No,No,No
-cohort,subset_parent,bigint,No,Yes,No,Yes,No,No,No
-cohort,subset_definition_id,bigint,No,Yes,No,Yes,No,No,No
+cohort,subset_parent,bigint,No,No,No,Yes,No,No,No
+cohort,subset_definition_id,bigint,No,No,No,Yes,No,No,No
 cohort,is_subset,int,No,Yes,No,Yes,No,No,No
 subset_definition,subset_definition_id,bigint,Yes,Yes,No,Yes,No,No,No
 subset_definition,json,varchar,Yes,Yes,No,Yes,No,No,No
