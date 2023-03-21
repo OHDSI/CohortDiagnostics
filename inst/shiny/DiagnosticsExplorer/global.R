@@ -71,8 +71,8 @@ if (!exists("shinySettings")) {
   shinySettings <- loadShinySettings(shinyConfigPath)
 }
 
-# Added to support publishing to posit connect and shinyapps.io
-if (shinySettings$connectionDetails == "sqlite") {
+# Added to support publishing to posit connect and shinyapps.io (looks for a library or reauire)
+if (FALSE) {
   require(RSQLite)
 }
 

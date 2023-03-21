@@ -72,3 +72,16 @@ databaseTableName: "database"
 enableAnnotation: FALSE
 enableAuthorization: FALSE
 ```
+# Publishing
+
+To publish with a config you can use:
+
+```{r eval = FALSE}
+launchDiagnosticsExplorer(shinyConfigPath = "path/to/config.yml",
+                          makePublishable = TRUE,
+                          publishDir = file.path(getwd(), "MyStudyDiagnosticsExplorer"),
+                          overwritePublishDir = TRUE)
+```
+
+And press the publish button in the shiny app that loads.
+Note - that in this situation the use of secure keys with keyring is not possible.
