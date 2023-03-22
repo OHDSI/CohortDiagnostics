@@ -58,6 +58,8 @@ If not provided, no About tab will be shown.}
 
 \item{port}{(optional) Only used if \code{runOverNetwork} = TRUE.}
 
+\item{makePublishable}{(Optional) copy data files to make app publishable to posit connect/shinyapp.io}
+
 \item{publishDir}{If make publishable is true - the directory that the shiny app is copied to}
 
 \item{overwritePublishDir}{(Optional) If make publishable is true - overwrite the directory for publishing}
@@ -66,8 +68,6 @@ If not provided, no About tab will be shown.}
 Note: copying to clipboard will not work in a Shiny window.}
 
 \item{enableAnnotation}{Enable annotation functionality in shiny app}
-
-\item{makepublishable}{(Optional) copy data files to make app publishable to posit connect/shinyapp.io}
 }
 \description{
 Launch the Diagnostics Explorer Shiny app

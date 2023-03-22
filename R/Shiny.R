@@ -40,7 +40,7 @@
 #' @param cohortTableName  (Optional) if cohort table name differs from the standard - cohort (ignores prefix if set)
 #' @param databaseTableName (Optional) if database table name differs from the standard - database (ignores prefix if set)
 #'
-#' @param makepublishable (Optional) copy data files to make app publishable to posit connect/shinyapp.io
+#' @param makePublishable (Optional) copy data files to make app publishable to posit connect/shinyapp.io
 #' @param publishDir      If make publishable is true - the directory that the shiny app is copied to
 #' @param overwritePublishDir      (Optional) If make publishable is true - overwrite the directory for publishing
 #'
