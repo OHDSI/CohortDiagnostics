@@ -49,6 +49,7 @@ Suggests:
   withr,
   zip,
   knitr,
+  shiny,
   OhdsiShinyModules
 Remotes:
   ohdsi/Eunomia,

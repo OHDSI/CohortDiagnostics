@@ -16,7 +16,7 @@ GROUP BY cohort_definition_id,
 -- target cohort: always one subject per cohort (first time)
 SELECT t.cohort_definition_id cohort_id,
 	c.cohort_definition_id comparator_cohort_id,
-	@time_id time_id,
+	CAST(@time_id AS INT) time_id,
 	COUNT_BIG(DISTINCT c.subject_id) subjects,
 	-- present in both target and comparator
 	COUNT_BIG(DISTINCT CASE 

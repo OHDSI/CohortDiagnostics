@@ -71,6 +71,10 @@ if (!exists("shinySettings")) {
   shinySettings <- loadShinySettings(shinyConfigPath)
 }
 
+# Added to support publishing to posit connect and shinyapps.io (looks for a library or reauire)
+if (FALSE) {
+  require(RSQLite)
+}
 
 connectionHandler <- ResultModelManager::PooledConnectionHandler$new(shinySettings$connectionDetails)
 
