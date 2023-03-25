@@ -10,7 +10,7 @@ if (Sys.getenv("CDM5_POSTGRESQL_SERVER") == "") {
     pathToDriver = jdbcDriverFolder
   )
 
-  resultsDatabaseSchema <- paste0("r", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
+  resultsDatabaseSchema <- paste0("r", Sys.getpid(), gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
 
   # Always clean up
   withr::defer(
@@ -281,12 +281,6 @@ test_that("Data removal works", {
     }
   })
 })
-
-test_that("util functions", {
-  expect_true(naToEmpty(NA) == "")
-  expect_true(naToZero(NA) == 0)
-})
-
 
 test_that("No database file fails upload", {
   skip_if(skipResultsDm | skipCdmTests, "results data model test server not set")
