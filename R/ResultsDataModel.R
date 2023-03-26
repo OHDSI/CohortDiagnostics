@@ -26,6 +26,8 @@ getResultsDataModelSpecifications <- function() {
     system.file("settings", "resultsDataModelSpecification.csv", package = utils::packageName())
   resultsDataModelSpecifications <-
     readr::read_csv(file = pathToCsv, col_types = readr::cols())
+
+  colnames(resultsDataModelSpecifications) <- SqlRender::snakeCaseToCamelCase(colnames(resultsDataModelSpecifications))
   return(resultsDataModelSpecifications)
 }
 
@@ -136,8 +138,10 @@ uploadResults <- function(connectionDetails,
                                     tablePrefix = tablePrefix,
                                     forceOverWriteOfSpecifications = forceOverWriteOfSpecifications,
                                     purgeSiteDataBeforeUploading = purgeSiteDataBeforeUploading,
+                                    runCheckAndFixCommands = TRUE,
                                     databaseIdentifierFile = "database.csv",
                                     specifications = getResultsDataModelSpecifications(),
+                                    warnOnMissingTable = FALSE,
                                     ...)
 }
 

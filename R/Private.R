@@ -129,7 +129,7 @@ makeDataExportable <- function(x,
 
   if ("cohortDefinitionId" %in% colnames(x)) {
     x <- x %>%
-      dplyr::rename(cohortId = cohortDefinitionId)
+      dplyr::rename("cohortId" = "cohortDefinitionId")
   }
 
   resultsDataModel <- getResultsDataModelSpecifications()
@@ -140,27 +140,27 @@ makeDataExportable <- function(x,
   }
 
   fieldsInDataModel <- resultsDataModel %>%
-    dplyr::filter(tableName == !!tableName) %>%
+    dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::pull(columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   requiredFieldsInDataModel <- resultsDataModel %>%
-    dplyr::filter(tableName == !!tableName) %>%
+    dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(isRequired == "Yes") %>%
     dplyr::pull(columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   primaryKeyInDataModel <- resultsDataModel %>%
-    dplyr::filter(tableName == !!tableName) %>%
+    dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(primaryKey == "Yes") %>%
     dplyr::pull(columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   columnsToApplyMinCellValue <- resultsDataModel %>%
-    dplyr::filter(tableName == !!tableName) %>%
+    dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(minCellCount == "Yes") %>%
     dplyr::pull(columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%

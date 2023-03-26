@@ -453,15 +453,15 @@ executeDiagnostics <- function(cohortDefinitionSet,
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(tableName == "cohort") %>%
-    dplyr::pull(columnName) %>%
+    dplyr::filter(.data$tableName == "cohort") %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     sort()
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(tableName == "cohort") %>%
-    dplyr::filter(isRequired == "Yes") %>%
-    dplyr::pull(columnName) %>%
+    dplyr::filter(.data$tableName == "cohort") %>%
+    dplyr::filter(.data$isRequired == "Yes") %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     sort()
 

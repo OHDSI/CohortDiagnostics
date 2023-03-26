@@ -94,6 +94,15 @@ extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
   return(dplyr::bind_rows(conceptSetExpression))
 }
 
+getParentCohort <- function(cohort, cohortDefinitionSet) {
+  if (is.null(cohort$subsetParent) || cohort$cohortId == cohort$subsetParent) {
+    return(cohort)
+  }
+
+  return(getParentCohort(cohortDefinitionSet %>% dplyr::filter(.data$cohortId == cohort$subsetParent),
+                         cohortDefinitionSet))
+}
+
 combineConceptSetsFromCohorts <- function(cohorts) {
   # cohorts should be a dataframe with at least cohortId, sql and json
 
@@ -127,30 +136,39 @@ combineConceptSetsFromCohorts <- function(cohorts) {
   for (i in (1:nrow(cohorts))) {
     cohort <- cohorts[i, ]
 
-    sql <-
+    if (isTRUE(cohort$isSubset)) {
+      parent <- getParentCohort(cohort, cohorts)
+      cohortSql <- parent$sql
+      cohortJson <- parent$json
+    } else {
+      cohortSql <- cohort$sql
+      cohortJson <- cohort$json
+    }
+
+    sqlCs <-
       extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql)
-    json <-
+    jsonCs <-
       extractConceptSetsJsonFromCohortJson(cohortJson = cohort$json)
 
-    if (nrow(sql) == 0 || nrow(json) == 0) {
+    if (nrow(sqlCs) == 0 || nrow(jsonCs) == 0) {
       ParallelLogger::logInfo(
         "Cohort Definition expression does not have a concept set expression. ",
         "Skipping Cohort: ",
         cohort$cohortName
       )
     } else {
-      if (!length(sql$conceptSetId %>% unique()) == length(json$conceptSetId %>% unique())) {
+      if (!length(sqlCs$conceptSetId %>% unique()) == length(jsonCs$conceptSetId %>% unique())) {
         stop(
           "Mismatch in concept set IDs between SQL and JSON for cohort ",
           cohort$cohortFullName
         )
       }
-      if (length(sql) > 0 && length(json) > 0) {
+      if (length(sqlCs) > 0 && length(jsonCs) > 0) {
         conceptSetCounter <- conceptSetCounter + 1
         conceptSets[[conceptSetCounter]] <-
           tidyr::tibble(
             cohortId = cohort$cohortId,
-            dplyr::inner_join(x = sql, y = json, by = "conceptSetId")
+            dplyr::inner_join(x = sqlCs, y = jsonCs, by = "conceptSetId")
           )
       }
     }
@@ -159,10 +177,10 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     return(NULL)
   }
   conceptSets <- dplyr::bind_rows(conceptSets) %>%
-    dplyr::arrange(cohortId, conceptSetId)
+    dplyr::arrange(.data$cohortId, .data$conceptSetId)
 
   uniqueConceptSets <- conceptSets %>%
-    dplyr::select(conceptSetExpression) %>%
+    dplyr::select("conceptSetExpression") %>%
     dplyr::distinct() %>%
     dplyr::mutate(uniqueConceptSetId = dplyr::row_number())
 
@@ -170,14 +188,14 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     dplyr::inner_join(uniqueConceptSets, by = "conceptSetExpression") %>%
     dplyr::distinct() %>%
     dplyr::relocate(
-      uniqueConceptSetId,
-      cohortId,
-      conceptSetId
+      "uniqueConceptSetId",
+      "cohortId",
+      "conceptSetId"
     ) %>%
     dplyr::arrange(
-      uniqueConceptSetId,
-      cohortId,
-      conceptSetId
+      .data$uniqueConceptSetId,
+      .data$cohortId,
+      .data$conceptSetId
     )
   return(conceptSets)
 }
@@ -226,60 +244,62 @@ mergeTempTables <-
 
 instantiateUniqueConceptSets <- function(uniqueConceptSets,
                                          connection,
-                                         cdmDatabaseSchema,
-                                         vocabularyDatabaseSchema = cdmDatabaseSchema,
+                                         vocabularyDatabaseSchema,
                                          tempEmulationSchema,
                                          conceptSetsTable = "#inst_concept_sets") {
   ParallelLogger::logInfo("Instantiating concept sets")
-  sql <- sapply(
-    split(uniqueConceptSets, 1:nrow(uniqueConceptSets)),
-    function(x) {
-      sub(
-        "SELECT [0-9]+ as codeset_id",
-        sprintf("SELECT %s as codeset_id", x$uniqueConceptSetId),
-        x$conceptSetSql
+
+  if (nrow(uniqueConceptSets) > 0) {
+    sql <- sapply(
+      split(uniqueConceptSets, 1:nrow(uniqueConceptSets)),
+      function(x) {
+        sub(
+          "SELECT [0-9]+ as codeset_id",
+          sprintf("SELECT %s as codeset_id", x$uniqueConceptSetId),
+          x$conceptSetSql
+        )
+      }
+    )
+
+    batchSize <- 100
+    tempTables <- c()
+    pb <- utils::txtProgressBar(style = 3)
+    for (start in seq(1, length(sql), by = batchSize)) {
+      utils::setTxtProgressBar(pb, start / length(sql))
+      tempTable <-
+        paste("#", paste(sample(letters, 20, replace = TRUE), collapse = ""), sep = "")
+      tempTables <- c(tempTables, tempTable)
+      end <- min(start + batchSize - 1, length(sql))
+      sqlSubset <- sql[start:end]
+      sqlSubset <- paste(sqlSubset, collapse = "\n\n  UNION ALL\n\n")
+      sqlSubset <-
+        sprintf(
+          "SELECT *\nINTO %s\nFROM (\n %s\n) tmp;",
+          tempTable,
+          sqlSubset
+        )
+      sqlSubset <-
+        SqlRender::render(sqlSubset, vocabulary_database_schema = vocabularyDatabaseSchema)
+      sqlSubset <- SqlRender::translate(sqlSubset,
+                                        targetDialect = connection@dbms,
+                                        tempEmulationSchema = tempEmulationSchema
+      )
+      DatabaseConnector::executeSql(connection,
+                                    sqlSubset,
+                                    progressBar = FALSE,
+                                    reportOverallTime = FALSE
       )
     }
-  )
+    utils::setTxtProgressBar(pb, 1)
+    close(pb)
 
-  batchSize <- 100
-  tempTables <- c()
-  pb <- utils::txtProgressBar(style = 3)
-  for (start in seq(1, length(sql), by = batchSize)) {
-    utils::setTxtProgressBar(pb, start / length(sql))
-    tempTable <-
-      paste("#", paste(sample(letters, 20, replace = TRUE), collapse = ""), sep = "")
-    tempTables <- c(tempTables, tempTable)
-    end <- min(start + batchSize - 1, length(sql))
-    sqlSubset <- sql[start:end]
-    sqlSubset <- paste(sqlSubset, collapse = "\n\n  UNION ALL\n\n")
-    sqlSubset <-
-      sprintf(
-        "SELECT *\nINTO %s\nFROM (\n %s\n) tmp;",
-        tempTable,
-        sqlSubset
-      )
-    sqlSubset <-
-      SqlRender::render(sqlSubset, vocabulary_database_schema = vocabularyDatabaseSchema)
-    sqlSubset <- SqlRender::translate(sqlSubset,
-      targetDialect = connection@dbms,
+    mergeTempTables(
+      connection = connection,
+      tableName = conceptSetsTable,
+      tempTables = tempTables,
       tempEmulationSchema = tempEmulationSchema
     )
-    DatabaseConnector::executeSql(connection,
-      sqlSubset,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
   }
-  utils::setTxtProgressBar(pb, 1)
-  close(pb)
-
-  mergeTempTables(
-    connection = connection,
-    tableName = conceptSetsTable,
-    tempTables = tempTables,
-    tempEmulationSchema = tempEmulationSchema
-  )
 }
 
 getCodeSetId <- function(criterion) {
@@ -299,7 +319,7 @@ getCodeSetIds <- function(criterionList) {
     return(NULL)
   } else {
     return(dplyr::tibble(domain = names(criterionList), codeSetIds = codeSetIds)
-    %>% filter(!is.na(codeSetIds)))
+    %>% dplyr::filter(!is.na(codeSetIds)))
   }
 }
 
@@ -327,12 +347,6 @@ runConceptSetDiagnostics <- function(connection,
   ParallelLogger::logInfo("Starting concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
   subset <- dplyr::tibble()
-
-  if (any(isTRUE(cohorts$isSubset))) {
-    cohorts <-
-      cohorts %>% dplyr::filter(!.data$isSubset)
-    message("Skipping conceptset diagnostics for subsets")
-  }
 
   if (runIncludedSourceConcepts) {
     subsetIncluded <- subsetToRequiredCohorts(
@@ -367,9 +381,12 @@ runConceptSetDiagnostics <- function(connection,
   if (nrow(subset) == 0) {
     return()
   }
-
-  conceptSets <- combineConceptSetsFromCohorts(subset)
-
+  
+  # We need to get concept sets from all cohorts in case subsets are present and
+  # Added incrementally after cohort generation
+  conceptSets <- combineConceptSetsFromCohorts(cohorts)
+  conceptSets <- conceptSets %>% dplyr::filter(.data$cohortId %in% subset$cohortId)
+  
   if (is.null(conceptSets)) {
     ParallelLogger::logInfo(
       "Cohorts being diagnosed does not have concept ids. Skipping concept set diagnostics."
@@ -395,7 +412,7 @@ runConceptSetDiagnostics <- function(connection,
 
   uniqueConceptSets <-
     conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ] %>%
-    dplyr::select(-cohortId, -conceptSetId)
+    dplyr::select(-"cohortId", -"conceptSetId")
 
   timeExecution(
     exportFolder,
@@ -406,7 +423,6 @@ runConceptSetDiagnostics <- function(connection,
       instantiateUniqueConceptSets(
         uniqueConceptSets = uniqueConceptSets,
         connection = connection,
-        cdmDatabaseSchema = cdmDatabaseSchema,
         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
         tempEmulationSchema = tempEmulationSchema,
         conceptSetsTable = "#inst_concept_sets"
@@ -476,36 +492,36 @@ runConceptSetDiagnostics <- function(connection,
               tidyr::tibble()
 
             counts <- counts %>%
-              dplyr::rename(uniqueConceptSetId = conceptSetId) %>%
+              dplyr::rename("uniqueConceptSetId" = "conceptSetId") %>%
               dplyr::inner_join(
                 conceptSets %>% dplyr::select(
-                  uniqueConceptSetId,
-                  cohortId,
-                  conceptSetId
+                  "uniqueConceptSetId",
+                  "cohortId",
+                  "conceptSetId"
                 ),
                 by = "uniqueConceptSetId"
               ) %>%
               dplyr::select(-uniqueConceptSetId) %>%
               dplyr::mutate(databaseId = !!databaseId) %>%
               dplyr::relocate(
-                databaseId,
-                cohortId,
-                conceptSetId,
-                conceptId
+                "databaseId",
+                "cohortId",
+                "conceptSetId",
+                "conceptId"
               ) %>%
               dplyr::distinct()
 
             counts <- counts %>%
               dplyr::group_by(
-                databaseId,
-                cohortId,
-                conceptSetId,
-                conceptId,
-                sourceConceptId
+                .data$databaseId,
+                .data$cohortId,
+                .data$conceptSetId,
+                .data$conceptId,
+                .data$sourceConceptId
               ) %>%
               dplyr::summarise(
-                conceptCount = max(conceptCount),
-                conceptSubjects = max(conceptSubjects)
+                conceptCount = max(.data$conceptCount),
+                conceptSubjects = max(.data$conceptSubjects)
               ) %>%
               dplyr::ungroup()
 
@@ -591,7 +607,7 @@ runConceptSetDiagnostics <- function(connection,
           guess_max = min(1e7)
         )
 
-      getBreakdownIndexEvents <- function(cohort) {
+      getCohortIndexEventBreakdown <- function(cohort) {
         ParallelLogger::logInfo(
           "- Breaking down index events for cohort '",
           cohort$cohortName,
@@ -604,14 +620,29 @@ runConceptSetDiagnostics <- function(connection,
           cohortIds = cohort$cohortId,
           parent = "runConceptSetDiagnostics",
           expr = {
+
+            if (isTRUE(cohort$isSubset)) {
+              parent <- getParentCohort(cohort, cohorts)
+              jsonDef <- parent$json
+            } else {
+              jsonDef <- cohort$json
+            }
+
             cohortDefinition <-
-              RJSONIO::fromJSON(cohort$json, digits = 23)
+                  RJSONIO::fromJSON(jsonDef, digits = 23)
+
             primaryCodesetIds <-
               lapply(
                 cohortDefinition$PrimaryCriteria$CriteriaList,
                 getCodeSetIds
-              ) %>%
-              dplyr::bind_rows()
+              )
+
+            if (length(primaryCodesetIds)) {
+               primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
+            } else {
+              primaryCodesetIds <- data.frame()
+            }
+
             if (nrow(primaryCodesetIds) == 0) {
               warning(
                 "No primary event criteria concept sets found for cohort id: ",
@@ -632,8 +663,8 @@ runConceptSetDiagnostics <- function(connection,
               return(tidyr::tibble())
             }
             primaryCodesetIds <- conceptSets %>%
-              dplyr::filter(cohortId %in% cohort$cohortId) %>%
-              dplyr::select(codeSetIds = conceptSetId, uniqueConceptSetId) %>%
+              dplyr::filter(.data$cohortId %in% cohort$cohortId) %>%
+              dplyr::select(codeSetIds = "conceptSetId", "uniqueConceptSetId") %>%
               dplyr::inner_join(primaryCodesetIds, by = "codeSetIds")
 
             pasteIds <- function(row) {
@@ -648,7 +679,12 @@ runConceptSetDiagnostics <- function(connection,
                 split(primaryCodesetIds, primaryCodesetIds$domain),
                 pasteIds
               )
-            primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
+
+            if (length(primaryCodesetIds) == 0) {
+              primaryCodesetIds <- data.frame()
+            } else {
+              primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
+            }
 
             getCounts <- function(row) {
               domain <- domains[domains$domain == row$domain, ]
@@ -739,7 +775,7 @@ runConceptSetDiagnostics <- function(connection,
       data <-
         lapply(
           split(subsetBreakdown, subsetBreakdown$cohortId),
-          getBreakdownIndexEvents
+          getCohortIndexEventBreakdown
         )
       data <- dplyr::bind_rows(data)
       if (nrow(data) > 0) {
@@ -858,28 +894,28 @@ runConceptSetDiagnostics <- function(connection,
       }
       data <- dplyr::bind_rows(data) %>%
         dplyr::distinct() %>%
-        dplyr::rename(uniqueConceptSetId = codesetId) %>%
+        dplyr::rename("uniqueConceptSetId" = "codesetId") %>%
         dplyr::inner_join(
           conceptSets %>%
             dplyr::select(
-              uniqueConceptSetId,
-              cohortId,
-              conceptSetId
+              "uniqueConceptSetId",
+              "cohortId",
+              "conceptSetId"
             ),
           by = "uniqueConceptSetId"
         ) %>%
-        dplyr::select(-uniqueConceptSetId) %>%
+        dplyr::select(-"uniqueConceptSetId") %>%
         dplyr::select(
-          cohortId,
-          conceptSetId,
-          conceptId,
-          conceptCount,
-          conceptSubjects
+          "cohortId",
+          "conceptSetId",
+          "conceptId",
+          "conceptCount",
+          "conceptSubjects"
         ) %>%
         dplyr::group_by(
-          cohortId,
-          conceptSetId,
-          conceptId
+          .data$cohortId,
+          .data$conceptSetId,
+          .data$conceptId
         ) %>%
         dplyr::summarise(
           conceptCount = max(conceptCount),
@@ -944,20 +980,19 @@ runConceptSetDiagnostics <- function(connection,
   resolvedConceptIds <-
     DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
-      sql = "SELECT *
-                                                      FROM #inst_concept_sets;",
+      sql = "SELECT * FROM #inst_concept_sets;",
       tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
     dplyr::tibble() %>%
-    dplyr::rename(uniqueConceptSetId = codesetId) %>%
+    dplyr::rename("uniqueConceptSetId" = "codesetId") %>%
     dplyr::inner_join(conceptSets,
       by = "uniqueConceptSetId"
     ) %>%
     dplyr::select(
-      cohortId,
-      conceptSetId,
-      conceptId
+      "cohortId",
+      "conceptSetId",
+      "conceptId"
     )
 
   resolvedConceptIds <- makeDataExportable(

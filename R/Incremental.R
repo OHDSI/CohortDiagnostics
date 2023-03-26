@@ -188,14 +188,14 @@ writeToCsv.tbl_Andromeda <-
       batchSize <- 1e5
 
       cohortIds <- data %>%
-        distinct(cohortId) %>%
-        pull()
+        dplyr::distinct("cohortId") %>%
+        dplyr::pull()
 
       tempName <- paste0(fileName, "2")
 
       processChunk <- function(chunk, pos) {
         chunk <- chunk %>%
-          filter(!cohort_id %in% cohortIds)
+          dplyr::filter(!.data$cohort_id %in% cohortIds)
         readr::write_csv(chunk, tempName, append = (pos != 1))
       }
 
