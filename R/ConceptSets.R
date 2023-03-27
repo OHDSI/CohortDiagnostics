@@ -168,7 +168,7 @@ combineConceptSetsFromCohorts <- function(cohorts) {
         conceptSets[[conceptSetCounter]] <-
           tidyr::tibble(
             cohortId = cohort$cohortId,
-            dplyr::inner_join(x = sqlCs, y = jsonCs, by = "conceptSetId")
+            dplyr::inner_join(x = sqlCs %>% dplyr::distinct(), y = jsonCs %>% dplyr::distinct(), by = "conceptSetId")
           )
       }
     }
@@ -181,8 +181,8 @@ combineConceptSetsFromCohorts <- function(cohorts) {
 
   uniqueConceptSets <- conceptSets %>%
     dplyr::select("conceptSetExpression") %>%
-    dplyr::distinct() %>%
-    dplyr::mutate(uniqueConceptSetId = dplyr::row_number())
+    dplyr::mutate(uniqueConceptSetId = dplyr::row_number()) %>%
+    dplyr::distinct()
 
   conceptSets <- conceptSets %>%
     dplyr::inner_join(uniqueConceptSets, by = "conceptSetExpression") %>%
@@ -497,17 +497,18 @@ runConceptSetDiagnostics <- function(connection,
               tidyr::tibble()
 
             counts <- counts %>%
+              dplyr::distinct() %>%
               dplyr::rename("uniqueConceptSetId" = "conceptSetId") %>%
               dplyr::inner_join(
                 conceptSets %>% dplyr::select(
                   "uniqueConceptSetId",
                   "cohortId",
                   "conceptSetId"
-                ),
+                ) %>% dplyr::distinct(),
                 by = "uniqueConceptSetId"
               ) %>%
-              dplyr::select(-uniqueConceptSetId) %>%
-              dplyr::mutate(databaseId = !!databaseId) %>%
+              dplyr::select(-"uniqueConceptSetId") %>%
+              dplyr::mutate(.data$databaseId = !!databaseId) %>%
               dplyr::relocate(
                 "databaseId",
                 "cohortId",
@@ -669,8 +670,10 @@ runConceptSetDiagnostics <- function(connection,
             }
             primaryCodesetIds <- conceptSets %>%
               dplyr::filter(.data$cohortId %in% cohort$cohortId) %>%
-              dplyr::select(codeSetIds = "conceptSetId", "uniqueConceptSetId") %>%
-              dplyr::inner_join(primaryCodesetIds, by = "codeSetIds")
+              dplyr::select(codeSetIds = "conceptSetId",
+                            "uniqueConceptSetId") %>%
+              dplyr::distinct() %>%
+              dplyr::inner_join(primaryCodesetIds %>% dplyr::distinct(), by = "codeSetIds")
 
             pasteIds <- function(row) {
               return(dplyr::tibble(
@@ -692,7 +695,7 @@ runConceptSetDiagnostics <- function(connection,
             }
 
             getCounts <- function(row) {
-              domain <- domains[domains$domain == row$domain, ]
+              domain <- domains %>% dplyr::filter(.data$domain == row$domain)
               sql <-
                 SqlRender::loadRenderTranslateSql(
                   "CohortEntryBreakdown.sql",
@@ -758,10 +761,16 @@ runConceptSetDiagnostics <- function(connection,
               return(counts)
             }
 
-            counts <-
-              lapply(split(primaryCodesetIds, 1:nrow(primaryCodesetIds)), getCounts) %>%
-              dplyr::bind_rows() %>%
-              dplyr::arrange(conceptCount)
+
+            if (nrow(primaryCodesetIds) > 0) {
+              counts <-
+                lapply(split(primaryCodesetIds, 1:nrow(primaryCodesetIds)), getCounts) %>%
+                  dplyr::bind_rows() %>%
+                  dplyr::arrange(.data$conceptCount)
+            } else {
+              counts <- data.frame()
+            }
+
 
             if (nrow(counts) > 0) {
               counts$cohortId <- cohort$cohortId
@@ -897,6 +906,7 @@ runConceptSetDiagnostics <- function(connection,
           reportOverallTime = FALSE
         )
       }
+
       data <- dplyr::bind_rows(data) %>%
         dplyr::distinct() %>%
         dplyr::rename("uniqueConceptSetId" = "codesetId") %>%
@@ -906,7 +916,7 @@ runConceptSetDiagnostics <- function(connection,
               "uniqueConceptSetId",
               "cohortId",
               "conceptSetId"
-            ),
+            ) %>% dplyr::distinct(),
           by = "uniqueConceptSetId"
         ) %>%
         dplyr::select(-"uniqueConceptSetId") %>%
@@ -991,7 +1001,7 @@ runConceptSetDiagnostics <- function(connection,
     ) %>%
     dplyr::tibble() %>%
     dplyr::rename("uniqueConceptSetId" = "codesetId") %>%
-    dplyr::inner_join(conceptSets,
+    dplyr::inner_join(conceptSets %>% dplyr::distinct(),
       by = "uniqueConceptSetId"
     ) %>%
     dplyr::select(

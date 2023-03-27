@@ -183,12 +183,13 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
       dplyr::inner_join(
         recordKeepingFileData %>%
           dplyr::select(
-            cohortId,
-            comparatorId
+            "cohortId",
+            "comparatorId"
           ) %>%
+          dplyr::distinct() %>%
           dplyr::rename(
-            targetCohortId = cohortId,
-            comparatorCohortId = comparatorId
+            targetCohortId = "cohortId",
+            comparatorCohortId = "comparatorId"
           ),
         by = c("targetCohortId", "comparatorCohortId")
       )

@@ -461,11 +461,11 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       seriesType,
       periodBegin
     ) %>%
-    dplyr::select(-timeId) %>%
+    dplyr::select(-"timeId") %>%
     dplyr::mutate(ageGroup = dplyr::if_else(
-      condition = is.na(ageGroup),
-      true = as.character(ageGroup),
-      false = paste(10 * ageGroup, 10 * ageGroup + 9, sep = "-")
+      condition = is.na(.data$ageGroup),
+      true = as.character(.data$ageGroup),
+      false = paste(10 * .data$ageGroup, 10 * .data$ageGroup + 9, sep = "-")
     ))
 
   resultsInAndromeda$calendarPeriods <- NULL
