@@ -414,6 +414,11 @@ runConceptSetDiagnostics <- function(connection,
     conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ] %>%
     dplyr::select(-"cohortId", -"conceptSetId")
 
+  if (nrow(uniqueConceptSets) == 0) {
+    ParallelLogger::logInfo("No concept sets found - skipping")
+    return(NULL)
+  }
+
   timeExecution(
     exportFolder,
     taskName = "instantiateUniqueConceptSets",
