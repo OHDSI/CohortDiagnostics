@@ -508,7 +508,7 @@ runConceptSetDiagnostics <- function(connection,
                 by = "uniqueConceptSetId"
               ) %>%
               dplyr::select(-"uniqueConceptSetId") %>%
-              dplyr::mutate(.data$databaseId = !!databaseId) %>%
+              dplyr::mutate(databaseId = !!databaseId) %>%
               dplyr::relocate(
                 "databaseId",
                 "cohortId",
