@@ -95,32 +95,6 @@
   return(orphanConcepts)
 }
 
-createConceptCountsTable <- function(connectionDetails = NULL,
-                                     connection = NULL,
-                                     cdmDatabaseSchema,
-                                     tempEmulationSchema = NULL,
-                                     conceptCountsDatabaseSchema = cdmDatabaseSchema,
-                                     conceptCountsTable = "concept_counts",
-                                     conceptCountsTableIsTemp = FALSE) {
-  ParallelLogger::logInfo("Creating internal concept counts table")
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
-  sql <-
-    SqlRender::loadRenderTranslateSql(
-      "CreateConceptCountTable.sql",
-      packageName = utils::packageName(),
-      dbms = connection@dbms,
-      tempEmulationSchema = tempEmulationSchema,
-      cdm_database_schema = cdmDatabaseSchema,
-      work_database_schema = conceptCountsDatabaseSchema,
-      concept_counts_table = conceptCountsTable,
-      table_is_temp = conceptCountsTableIsTemp
-    )
-  DatabaseConnector::executeSql(connection, sql)
-}
-
 saveDatabaseMetaData <- function(databaseId,
                                  databaseName,
                                  databaseDescription,
