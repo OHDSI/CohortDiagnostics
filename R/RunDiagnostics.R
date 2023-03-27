@@ -135,6 +135,7 @@ getDefaultCovariateSettings <- function() {
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
+#' @param useExternalConceptCountsTable if an external table for the cohort counts should be used.
 #'
 #' @examples
 #' \dontrun{
@@ -209,7 +210,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                minCellCount = 5,
                                minCharacterizationMean = 0.01,
                                incremental = FALSE,
-                               incrementalFolder = file.path(exportFolder, "incremental")) {
+                               incrementalFolder = file.path(exportFolder, "incremental"),
+                               useExternalConceptCountsTable = FALSE) {
   # collect arguments that were passed to cohort diagnostics at initiation
   callingArgs <- formals(executeDiagnostics)
   callingArgsJson <-
@@ -679,7 +681,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
           conceptCountsTableIsTemp = TRUE,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
-          useExternalConceptCountsTable = FALSE,
+          useExternalConceptCountsTable = useExternalConceptCountsTable,
           incremental = incremental,
           conceptIdTable = "#concept_ids",
           recordKeepingFile = recordKeepingFile

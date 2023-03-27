@@ -33,7 +33,8 @@ executeDiagnostics(
   minCellCount = 5,
   minCharacterizationMean = 0.01,
   incremental = FALSE,
-  incrementalFolder = file.path(exportFolder, "incremental")
+  incrementalFolder = file.path(exportFolder, "incremental"),
+  useExternalConceptCountsTable = FALSE
 )
 }
 \arguments{
@@ -118,6 +119,8 @@ on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which cohort diagnostics has been executed.}
+
+\item{useExternalConceptCountsTable}{if an external table for the cohort counts should be used.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the

@@ -443,9 +443,8 @@ runConceptSetDiagnostics <- function(connection,
         }
         if (nrow(subsetIncluded) > 0) {
           start <- Sys.time()
-          if (useExternalConceptCountsTable) {
-            stop("Use of external concept count table is not supported")
-          } else {
+          # create concept counts table
+          if (!useExternalConceptCountsTable) {
             sql <- SqlRender::loadRenderTranslateSql(
               "CohortSourceCodes.sql",
               packageName = utils::packageName(),
