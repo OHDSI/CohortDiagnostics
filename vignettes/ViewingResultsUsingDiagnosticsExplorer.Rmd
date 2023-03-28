@@ -72,10 +72,12 @@ Following this you will need a copyable resource for your shiny app.
 This can be achieved by launching the `DiagnosticsExplorer` with publishable options
 
 ```{r tidy=FALSE,eval=FALSE}
-launchDiagnosticsExplorer(sqliteDbPath = "MyCohortDiagnosticsResulst.sqlite",
-                          makePublishable = TRUE,
-                          publishDir = file.path(getwd(), "MyStudyDiagnosticsExplorer"),
-                          overwritePublishDir = TRUE)
+launchDiagnosticsExplorer(
+  sqliteDbPath = "MyCohortDiagnosticsResulst.sqlite",
+  makePublishable = TRUE,
+  publishDir = file.path(getwd(), "MyStudyDiagnosticsExplorer"),
+  overwritePublishDir = TRUE
+)
 ```
 
 This will create a shiny app folder `"MyStudyDiagnosticsExplorer"` in your R working directory.

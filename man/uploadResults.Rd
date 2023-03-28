@@ -11,7 +11,8 @@ uploadResults(
   forceOverWriteOfSpecifications = FALSE,
   purgeSiteDataBeforeUploading = TRUE,
   tempFolder = tempdir(),
-  tablePrefix = ""
+  tablePrefix = "",
+  ...
 )
 }
 \arguments{
@@ -36,6 +37,8 @@ up when the function is finished. Can be used to specify a temp folder on a driv
 has sufficient space if the default system temp space is too limited.}
 
 \item{tablePrefix}{(Optional)  string to insert before table names (e.g. "cd_") for database table names}
+
+\item{...}{See ResultModelManager::uploadResults}
 }
 \description{
 Requires the results data model tables have been created using the \code{\link{createResultsDataModel}} function.

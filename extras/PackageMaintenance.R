@@ -1,6 +1,6 @@
 # @file PackageMaintenance
 #
-# Copyright 2022 Observational Health Data Sciences and Informatics
+# Copyright 2023 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 # 
@@ -21,8 +21,6 @@ OhdsiRTools::checkUsagePackage("CohortDiagnostics")
 OhdsiRTools::updateCopyrightYearFolder()
 styler::style_pkg()
 devtools::spell_check()
-spelling::spell_check_files(list.files(path = "inst/shiny", pattern = "*.html", recursive = TRUE, full.names = TRUE))
-
 
 # Create manual and vignettes:
 unlink("extras/CohortDiagnostics.pdf")

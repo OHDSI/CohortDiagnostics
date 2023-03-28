@@ -1,4 +1,4 @@
-# Copyright 2022 Observational Health Data Sciences and Informatics
+# Copyright 2023 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -118,8 +118,9 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     on.exit(options("CD-shiny-config" = NULL))
   }
 
-  if (!"OhdsiShinyModules" %in% as.data.frame(installed.packages())$Package)
+  if (!"OhdsiShinyModules" %in% as.data.frame(installed.packages())$Package) {
     remotes::install_github("OHDSI/OhdsiShinyModules")
+  }
 
   appDir <-
     system.file("shiny", "DiagnosticsExplorer", package = utils::packageName())
@@ -128,9 +129,9 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     if (dir.exists(publishDir) && !overwritePublishDir) {
       warning("Directory for publishing exists, use overwritePublishDir to overwrite")
     } else {
-
-      if (getwd() == publishDir)
+      if (getwd() == publishDir) {
         stop("Publishable dir should not be current working directory")
+      }
 
       dir.create(publishDir, showWarnings = FALSE)
       filesToCopy <- file.path(appDir, list.files(appDir))
@@ -230,7 +231,7 @@ createMergedResultsFile <-
 createDiagnosticsExplorerZip <- function(outputZipfile = file.path(getwd(), "DiagnosticsExplorer.zip"),
                                          sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
                                          shinyDirectory = system.file(file.path("shiny", "DiagnosticsExplorer"),
-                                                                      package = "CohortDiagnostics"
+                                           package = "CohortDiagnostics"
                                          ),
                                          overwrite = FALSE) {
   outputZipfile <- normalizePath(outputZipfile, mustWork = FALSE)

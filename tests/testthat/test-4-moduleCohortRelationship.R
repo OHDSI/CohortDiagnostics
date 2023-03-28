@@ -67,7 +67,7 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
       cohort %>%
       dplyr::select(cohortDefinitionId) %>%
       dplyr::distinct() %>%
-      dplyr::rename(cohortId = cohortDefinitionId) %>%
+      dplyr::rename("cohortId" = "cohortDefinitionId") %>%
       dplyr::rowwise() %>%
       dplyr::mutate(json = RJSONIO::toJSON(list(
         cohortId = cohortId,
@@ -183,12 +183,13 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
       dplyr::inner_join(
         recordKeepingFileData %>%
           dplyr::select(
-            cohortId,
-            comparatorId
+            "cohortId",
+            "comparatorId"
           ) %>%
+          dplyr::distinct() %>%
           dplyr::rename(
-            targetCohortId = cohortId,
-            comparatorCohortId = comparatorId
+            targetCohortId = "cohortId",
+            comparatorCohortId = "comparatorId"
           ),
         by = c("targetCohortId", "comparatorCohortId")
       )
@@ -282,8 +283,8 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
       dplyr::anti_join(
         recordKeepingFileData2 %>%
           dplyr::select(
-            cohortId,
-            comparatorId
+            "cohortId",
+            "comparatorId"
           ) %>%
           dplyr::rename(
             targetCohortId = cohortId,
