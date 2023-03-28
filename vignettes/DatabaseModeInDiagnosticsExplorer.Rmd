@@ -77,10 +77,12 @@ enableAuthorization: FALSE
 To publish with a config you can use:
 
 ```{r eval = FALSE}
-launchDiagnosticsExplorer(shinyConfigPath = "path/to/config.yml",
-                          makePublishable = TRUE,
-                          publishDir = file.path(getwd(), "MyStudyDiagnosticsExplorer"),
-                          overwritePublishDir = TRUE)
+launchDiagnosticsExplorer(
+  shinyConfigPath = "path/to/config.yml",
+  makePublishable = TRUE,
+  publishDir = file.path(getwd(), "MyStudyDiagnosticsExplorer"),
+  overwritePublishDir = TRUE
+)
 ```
 
 And press the publish button in the shiny app that loads.

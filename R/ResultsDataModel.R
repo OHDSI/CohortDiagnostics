@@ -1,4 +1,4 @@
-# Copyright 2022 Observational Health Data Sciences and Informatics
+# Copyright 2023 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -115,7 +115,7 @@ createResultsDataModel <- function(connectionDetails = NULL,
 #'                       up when the function is finished. Can be used to specify a temp folder on a drive that
 #'                       has sufficient space if the default system temp space is too limited.
 #' @param tablePrefix    (Optional)  string to insert before table names (e.g. "cd_") for database table names
-#'
+#' @param ...            See ResultModelManager::uploadResults
 #' @export
 uploadResults <- function(connectionDetails,
                           schema,
@@ -132,17 +132,19 @@ uploadResults <- function(connectionDetails,
   ParallelLogger::logInfo("Unzipping ", zipFileName)
   zip::unzip(zipFileName, exdir = unzipFolder)
 
-  ResultModelManager::uploadResults(connectionDetails = connectionDetails,
-                                    schema = schema,
-                                    resultsFolder = unzipFolder,
-                                    tablePrefix = tablePrefix,
-                                    forceOverWriteOfSpecifications = forceOverWriteOfSpecifications,
-                                    purgeSiteDataBeforeUploading = purgeSiteDataBeforeUploading,
-                                    runCheckAndFixCommands = TRUE,
-                                    databaseIdentifierFile = "database.csv",
-                                    specifications = getResultsDataModelSpecifications(),
-                                    warnOnMissingTable = FALSE,
-                                    ...)
+  ResultModelManager::uploadResults(
+    connectionDetails = connectionDetails,
+    schema = schema,
+    resultsFolder = unzipFolder,
+    tablePrefix = tablePrefix,
+    forceOverWriteOfSpecifications = forceOverWriteOfSpecifications,
+    purgeSiteDataBeforeUploading = purgeSiteDataBeforeUploading,
+    runCheckAndFixCommands = TRUE,
+    databaseIdentifierFile = "database.csv",
+    specifications = getResultsDataModelSpecifications(),
+    warnOnMissingTable = FALSE,
+    ...
+  )
 }
 
 #' Migrate Data model
@@ -162,10 +164,10 @@ migrateDataModel <- function(connectionDetails, databaseSchema, tablePrefix = ""
 
   ParallelLogger::logInfo("Updating version number")
   updateVersionSql <- SqlRender::loadRenderTranslateSql("UpdateVersionNumber.sql",
-                                                        packageName = utils::packageName(),
-                                                        database_schema = databaseSchema,
-                                                        table_prefix = tablePrefix,
-                                                        dbms = connectionDetails$dbms
+    packageName = utils::packageName(),
+    database_schema = databaseSchema,
+    table_prefix = tablePrefix,
+    dbms = connectionDetails$dbms
   )
 
   connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)

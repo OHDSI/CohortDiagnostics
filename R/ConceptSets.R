@@ -1,4 +1,4 @@
-# Copyright 2022 Observational Health Data Sciences and Informatics
+# Copyright 2023 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -99,8 +99,10 @@ getParentCohort <- function(cohort, cohortDefinitionSet) {
     return(cohort)
   }
 
-  return(getParentCohort(cohortDefinitionSet %>% dplyr::filter(.data$cohortId == cohort$subsetParent),
-                         cohortDefinitionSet))
+  return(getParentCohort(
+    cohortDefinitionSet %>% dplyr::filter(.data$cohortId == cohort$subsetParent),
+    cohortDefinitionSet
+  ))
 }
 
 combineConceptSetsFromCohorts <- function(cohorts) {
@@ -281,13 +283,13 @@ instantiateUniqueConceptSets <- function(uniqueConceptSets,
       sqlSubset <-
         SqlRender::render(sqlSubset, vocabulary_database_schema = vocabularyDatabaseSchema)
       sqlSubset <- SqlRender::translate(sqlSubset,
-                                        targetDialect = connection@dbms,
-                                        tempEmulationSchema = tempEmulationSchema
+        targetDialect = connection@dbms,
+        tempEmulationSchema = tempEmulationSchema
       )
       DatabaseConnector::executeSql(connection,
-                                    sqlSubset,
-                                    progressBar = FALSE,
-                                    reportOverallTime = FALSE
+        sqlSubset,
+        progressBar = FALSE,
+        reportOverallTime = FALSE
       )
     }
     utils::setTxtProgressBar(pb, 1)
@@ -381,12 +383,12 @@ runConceptSetDiagnostics <- function(connection,
   if (nrow(subset) == 0) {
     return()
   }
-  
+
   # We need to get concept sets from all cohorts in case subsets are present and
   # Added incrementally after cohort generation
   conceptSets <- combineConceptSetsFromCohorts(cohorts)
   conceptSets <- conceptSets %>% dplyr::filter(.data$cohortId %in% subset$cohortId)
-  
+
   if (is.null(conceptSets)) {
     ParallelLogger::logInfo(
       "Cohorts being diagnosed does not have concept ids. Skipping concept set diagnostics."
@@ -626,7 +628,6 @@ runConceptSetDiagnostics <- function(connection,
           cohortIds = cohort$cohortId,
           parent = "runConceptSetDiagnostics",
           expr = {
-
             if (isTRUE(cohort$isSubset)) {
               parent <- getParentCohort(cohort, cohorts)
               jsonDef <- parent$json
@@ -635,7 +636,7 @@ runConceptSetDiagnostics <- function(connection,
             }
 
             cohortDefinition <-
-                  RJSONIO::fromJSON(jsonDef, digits = 23)
+              RJSONIO::fromJSON(jsonDef, digits = 23)
 
             primaryCodesetIds <-
               lapply(
@@ -644,7 +645,7 @@ runConceptSetDiagnostics <- function(connection,
               )
 
             if (length(primaryCodesetIds)) {
-               primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
+              primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
             } else {
               primaryCodesetIds <- data.frame()
             }
@@ -670,8 +671,10 @@ runConceptSetDiagnostics <- function(connection,
             }
             primaryCodesetIds <- conceptSets %>%
               dplyr::filter(.data$cohortId %in% cohort$cohortId) %>%
-              dplyr::select(codeSetIds = "conceptSetId",
-                            "uniqueConceptSetId") %>%
+              dplyr::select(
+                codeSetIds = "conceptSetId",
+                "uniqueConceptSetId"
+              ) %>%
               dplyr::distinct() %>%
               dplyr::inner_join(primaryCodesetIds %>% dplyr::distinct(), by = "codeSetIds")
 
@@ -765,8 +768,8 @@ runConceptSetDiagnostics <- function(connection,
             if (nrow(primaryCodesetIds) > 0) {
               counts <-
                 lapply(split(primaryCodesetIds, 1:nrow(primaryCodesetIds)), getCounts) %>%
-                  dplyr::bind_rows() %>%
-                  dplyr::arrange(.data$conceptCount)
+                dplyr::bind_rows() %>%
+                dplyr::arrange(.data$conceptCount)
             } else {
               counts <- data.frame()
             }
@@ -1008,7 +1011,7 @@ runConceptSetDiagnostics <- function(connection,
       "cohortId",
       "conceptSetId",
       "conceptId"
-    )
+    ) %>% dplyr::distinct()
 
   resolvedConceptIds <- makeDataExportable(
     x = resolvedConceptIds,

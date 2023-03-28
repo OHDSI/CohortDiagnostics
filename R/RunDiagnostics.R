@@ -1,4 +1,4 @@
-# Copyright 2022 Observational Health Data Sciences and Informatics
+# Copyright 2023 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -504,7 +504,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   subsets <- CohortGenerator::getSubsetDefinitions(cohortDefinitionSet)
   if (length(subsets)) {
-    dfs <- lapply(subsets, function(x) {data.frame(subsetDefinitionId = x$definitionId, json = as.character(x$toJSON()))})
+    dfs <- lapply(subsets, function(x) {
+      data.frame(subsetDefinitionId = x$definitionId, json = as.character(x$toJSON()))
+    })
     subsetDefinitions <- data.frame()
     for (subsetDef in dfs) {
       subsetDefinitions <- rbind(subsetDefinitions, dfs)
