@@ -103,7 +103,6 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       return(NULL)
     }
   }
-
   ## Calendar period----
   ParallelLogger::logTrace(" - Preparing calendar table for time series computation.")
   # note calendar span is created based on all dates in observation period table,
@@ -529,7 +528,7 @@ executeTimeSeriesDiagnostics <- function(connection,
   if (runCohortTimeSeries & nrow(cohortDefinitionSet) > 0) {
     subset <- subsetToRequiredCohorts(
       cohorts = cohortDefinitionSet %>%
-        dplyr::filter(cohortId %in% instantiatedCohorts),
+        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
       task = "runCohortTimeSeries",
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
@@ -587,6 +586,7 @@ executeTimeSeriesDiagnostics <- function(connection,
               )
           }
         )
+        
         data <- makeDataExportable(
           x = data,
           tableName = "time_series",
@@ -648,6 +648,7 @@ executeTimeSeriesDiagnostics <- function(connection,
           )
       }
     )
+
     data <- makeDataExportable(
       x = data,
       tableName = "time_series",
