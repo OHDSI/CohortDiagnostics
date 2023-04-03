@@ -25,6 +25,7 @@
 #' @param conceptCountsDatabaseSchema schema name for the concept counts table
 #' @param conceptCountsTable table name
 #' @param conceptCountsTableIsTemp boolean to indicate if it should be a temporary table
+#' @param removeCurrentTable if the current table should be removed
 #'
 #' @export
 createConceptCountsTable <- function(connectionDetails = NULL,
@@ -33,7 +34,8 @@ createConceptCountsTable <- function(connectionDetails = NULL,
                                      tempEmulationSchema = NULL,
                                      conceptCountsDatabaseSchema,
                                      conceptCountsTable = "concept_counts",
-                                     conceptCountsTableIsTemp = FALSE) {
+                                     conceptCountsTableIsTemp = FALSE,
+                                     removeCurrentTable = TRUE) {
   ParallelLogger::logInfo("Creating concept counts table")
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
@@ -48,7 +50,8 @@ createConceptCountsTable <- function(connectionDetails = NULL,
       cdm_database_schema = cdmDatabaseSchema,
       work_database_schema = conceptCountsDatabaseSchema,
       concept_counts_table = conceptCountsTable,
-      table_is_temp = conceptCountsTableIsTemp
+      table_is_temp = conceptCountsTableIsTemp,
+      remove_current_table = removeCurrentTable
     )
   DatabaseConnector::executeSql(connection, sql)
 }

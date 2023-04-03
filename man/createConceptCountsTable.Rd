@@ -11,7 +11,8 @@ createConceptCountsTable(
   tempEmulationSchema = NULL,
   conceptCountsDatabaseSchema,
   conceptCountsTable = "concept_counts",
-  conceptCountsTableIsTemp = FALSE
+  conceptCountsTableIsTemp = FALSE,
+  removeCurrentTable = TRUE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ createConceptCountsTable(
 \item{conceptCountsTable}{table name}
 
 \item{conceptCountsTableIsTemp}{boolean to indicate if it should be a temporary table}
+
+\item{removeCurrentTable}{if the current table should be removed}
 }
 \description{
 Create a table containing the concept counts.
