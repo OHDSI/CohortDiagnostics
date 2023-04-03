@@ -1,11 +1,13 @@
-{DEFAULT @table_is_temp = FALSE}
+{DEFAULT @table_is_temp = FALSE, @remove_current_table = TRUE}
 
-{@table_is_temp} ? {
-IF OBJECT_ID('tempdb..@concept_counts_table', 'U') IS NOT NULL
-  DROP TABLE @concept_counts_table;
-} : {
-IF OBJECT_ID('@work_database_schema.@concept_counts_table', 'U') IS NOT NULL
-	DROP TABLE @work_database_schema.@concept_counts_table;
+{@remove_current_table} ? {
+  {@table_is_temp} ? {
+  IF OBJECT_ID('tempdb..@concept_counts_table', 'U') IS NOT NULL
+    DROP TABLE @concept_counts_table;
+  } : {
+  IF OBJECT_ID('@work_database_schema.@concept_counts_table', 'U') IS NOT NULL
+	  DROP TABLE @work_database_schema.@concept_counts_table;
+  }
 }
 
 SELECT concept_id,
