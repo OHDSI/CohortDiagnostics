@@ -1,4 +1,4 @@
-# Copyright 2022 Observational Health Data Sciences and Informatics
+# Copyright 2023 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -132,6 +132,7 @@ getDefaultCovariateSettings <- function() {
 #' @param minCharacterizationMean     The minimum mean value for characterization output. Values below this will be cut off from output. This
 #'                                    will help reduce the file size of the characterization output, but will remove information
 #'                                    on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)
+#' @param irWashoutPeriod             Number of days washout to include in calculation of incidence rates - default is 0
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
@@ -208,6 +209,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                temporalCovariateSettings = getDefaultCovariateSettings(),
                                minCellCount = 5,
                                minCharacterizationMean = 0.01,
+                               irWashoutPeriod = 0,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental")) {
   # collect arguments that were passed to cohort diagnostics at initiation
@@ -351,7 +353,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       )
   }
   if (runTemporalCohortCharacterization) {
-    if (class(temporalCovariateSettings) == "covariateSettings") {
+    if (is(temporalCovariateSettings, "covariateSettings")) {
       temporalCovariateSettings <- list(temporalCovariateSettings)
     }
     # All temporal covariate settings objects must be covariateSettings
@@ -451,15 +453,15 @@ executeDiagnostics <- function(cohortDefinitionSet,
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(tableName == "cohort") %>%
-    dplyr::pull(columnName) %>%
+    dplyr::filter(.data$tableName == "cohort") %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     sort()
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(tableName == "cohort") %>%
-    dplyr::filter(isRequired == "Yes") %>%
-    dplyr::pull(columnName) %>%
+    dplyr::filter(.data$tableName == "cohort") %>%
+    dplyr::filter(.data$isRequired == "Yes") %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     sort()
 
@@ -499,6 +501,22 @@ executeDiagnostics <- function(cohortDefinitionSet,
     data = cohortDefinitionSet,
     fileName = file.path(exportFolder, "cohort.csv")
   )
+
+  subsets <- CohortGenerator::getSubsetDefinitions(cohortDefinitionSet)
+  if (length(subsets)) {
+    dfs <- lapply(subsets, function(x) {
+      data.frame(subsetDefinitionId = x$definitionId, json = as.character(x$toJSON()))
+    })
+    subsetDefinitions <- data.frame()
+    for (subsetDef in dfs) {
+      subsetDefinitions <- rbind(subsetDefinitions, dfs)
+    }
+
+    writeToCsv(
+      data = subsetDefinitions,
+      fileName = file.path(exportFolder, "subset_definition.csv")
+    )
+  }
 
   # Set up connection to server ----------------------------------------------------
   if (is.null(connection)) {
@@ -761,6 +779,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
           exportFolder = exportFolder,
           minCellCount = minCellCount,
           cohorts = cohortDefinitionSet,
+          washoutPeriod = irWashoutPeriod,
           instantiatedCohorts = instantiatedCohorts,
           recordKeepingFile = recordKeepingFile,
           incremental = incremental

@@ -1,4 +1,4 @@
-# Copyright 2022 Observational Health Data Sciences and Informatics
+# Copyright 2023 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -40,6 +40,10 @@
 #' @param cohortTableName  (Optional) if cohort table name differs from the standard - cohort (ignores prefix if set)
 #' @param databaseTableName (Optional) if database table name differs from the standard - database (ignores prefix if set)
 #'
+#' @param makePublishable (Optional) copy data files to make app publishable to posit connect/shinyapp.io
+#' @param publishDir      If make publishable is true - the directory that the shiny app is copied to
+#' @param overwritePublishDir      (Optional) If make publishable is true - overwrite the directory for publishing
+#'
 #' @details
 #' Launches a Shiny app that allows the user to explore the diagnostics
 #'
@@ -56,8 +60,12 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
                                       aboutText = NULL,
                                       runOverNetwork = FALSE,
                                       port = 80,
+                                      makePublishable = FALSE,
+                                      publishDir = file.path(getwd(), "DiagnosticsExplorer"),
+                                      overwritePublishDir = FALSE,
                                       launch.browser = FALSE,
                                       enableAnnotation = TRUE) {
+  useShinyPublishFile <- FALSE
   if (is.null(shinyConfigPath)) {
     if (is.null(connectionDetails)) {
       sqliteDbPath <- normalizePath(sqliteDbPath)
@@ -68,6 +76,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
       resultsDatabaseSchema <- "main"
       vocabularyDatabaseSchemas <- "main"
       connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
+      useShinyPublishFile <- TRUE
     }
 
     if (is.null(resultsDatabaseSchema)) {
@@ -109,50 +118,42 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     on.exit(options("CD-shiny-config" = NULL))
   }
 
-  ensure_installed(c(
-    "checkmate",
-    "DatabaseConnector",
-    "dplyr",
-    "plyr",
-    "ggplot2",
-    "ggiraph",
-    "gtable",
-    "htmltools",
-    "lubridate",
-    "pool",
-    "purrr",
-    "scales",
-    "shiny",
-    "shinydashboard",
-    "shinyWidgets",
-    "shinyjs",
-    "shinycssloaders",
-    "stringr",
-    "SqlRender",
-    "tidyr",
-    "CirceR",
-    "rmarkdown",
-    "reactable",
-    "markdownInput",
-    "markdown",
-    "jsonlite",
-    "ggh4x",
-    "yaml"
-  ))
+  if (!"OhdsiShinyModules" %in% as.data.frame(installed.packages())$Package) {
+    remotes::install_github("OHDSI/OhdsiShinyModules")
+  }
 
   appDir <-
     system.file("shiny", "DiagnosticsExplorer", package = utils::packageName())
+
+  if (makePublishable) {
+    if (dir.exists(publishDir) && !overwritePublishDir) {
+      warning("Directory for publishing exists, use overwritePublishDir to overwrite")
+    } else {
+      if (getwd() == publishDir) {
+        stop("Publishable dir should not be current working directory")
+      }
+
+      dir.create(publishDir, showWarnings = FALSE)
+      filesToCopy <- file.path(appDir, list.files(appDir))
+      file.copy(filesToCopy, publishDir, recursive = TRUE, overwrite = TRUE)
+      if (useShinyPublishFile) {
+        file.copy(sqliteDbPath, file.path(publishDir, "data", "MergedCohortDiagnosticsData.sqlite"), overwrite = TRUE)
+      } else if (is.null(shinyConfigPath)) {
+        stop("Cannot make publishable shiny app when using connectionDetails object. Please create a config file")
+      } else {
+        file.copy(shinyConfigPath, file.path(publishDir, "config.yml"))
+      }
+    }
+    appDir <- publishDir
+  }
 
   if (launch.browser) {
     options(shiny.launch.browser = TRUE)
   }
 
   if (runOverNetwork) {
-    myIpAddress <- system("ipconfig", intern = TRUE)
-    myIpAddress <- myIpAddress[grep("IPv4", myIpAddress)]
-    myIpAddress <- gsub(".*? ([[:digit:]])", "\\1", myIpAddress)
     options(shiny.port = port)
-    options(shiny.host = myIpAddress)
+    options(shiny.host = "0.0.0.0")
   }
 
   shiny::runApp(appDir = appDir)
@@ -254,24 +255,4 @@ createDiagnosticsExplorerZip <- function(outputZipfile = file.path(getwd(), "Dia
   file.copy(sqliteDbPath, file.path(tmpDir, "DiagnosticsExplorer", "data", "MergedCohortDiagnosticsData.sqlite"))
 
   DatabaseConnector::createZipFile(outputZipfile, file.path(tmpDir, "DiagnosticsExplorer"), rootFolder = tmpDir)
-}
-
-ensure_installed <- function(pkgs) {
-  notInstalled <- pkgs[!(pkgs %in% rownames(installed.packages()))]
-
-  if (interactive() & length(notInstalled) > 0) {
-    message(paste("Package(s): ", paste(paste(notInstalled, collapse = ", "), "not installed")))
-    if (!isTRUE(utils::askYesNo("Would you like to install them?"))) {
-      return(invisible(NULL))
-    }
-  }
-  for (pkg in notInstalled) {
-    if (pkg == "CirceR") {
-      ensure_installed("remotes")
-      message("\nInstalling from Github using remotes")
-      remotes::install_github("OHDSI/CirceR")
-    } else {
-      install.packages(pkg)
-    }
-  }
 }

@@ -1,3 +1,17 @@
+CohortDiagnostics 3.2.0
+=======================
+
+1. Do not run orphan concepts checks for any subset cohorts
+
+2. Remove use of lookback period for IR calculations - this is now a setting of the call to the package
+
+3. Added data migration to support subsets in database schema (allow future functionality to take care of them)
+
+4. Added functionality to `launchDiagnosticsExplorer` to make publishing to poist connect/shinyapps.io more straightforward (still requires removal of ggiraph)
+
+5. Moved most shiny code to `OHDSI/OhdsiShinyModules`
+
+
 CohortDiagnostics 3.1.2
 =======================
 Bug Fixes:

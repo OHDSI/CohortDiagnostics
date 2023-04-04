@@ -31,10 +31,12 @@ minCellCountValue <- 5
 skipCdmTests <- FALSE
 
 if (dbms == "sqlite") {
-  connectionDetails <- Eunomia::getEunomiaConnectionDetails(databaseFile = "testEunomia.sqlite")
+  databaseFile <- paste0(Sys.getpid(), "testEunomia.sqlite")
+
+  connectionDetails <- Eunomia::getEunomiaConnectionDetails(databaseFile = databaseFile)
   withr::defer(
     {
-      unlink("testEunomia.sqlite", recursive = TRUE, force = TRUE)
+      unlink(databaseFile, recursive = TRUE, force = TRUE)
     },
     testthat::teardown_env()
   )
@@ -62,7 +64,7 @@ if (dbms == "sqlite") {
 } else {
   # only test all cohorts in sqlite
   cohortIds <- c(18345, 17720, 14907) # Celecoxib, Type 2 diabetes, diclofenac (no history of GIH)
-  cohortTable <- paste0("ct_", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
+  cohortTable <- paste0("ct_", Sys.getpid(), gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
   if (getOption("useAllCovariates", default = FALSE)) {
     temporalCovariateSettings <- getDefaultCovariateSettings()
   } else {
