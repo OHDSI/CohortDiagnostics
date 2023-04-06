@@ -446,7 +446,7 @@ runConceptSetDiagnostics <- function(connection,
         if (nrow(subsetIncluded) > 0) {
           start <- Sys.time()
           # create concept counts table
-          if (!useExternalConceptCountsTable) {
+          # if (!useExternalConceptCountsTable) {
             sql <- SqlRender::loadRenderTranslateSql(
               "CohortSourceCodes.sql",
               packageName = utils::packageName(),
@@ -559,7 +559,7 @@ runConceptSetDiagnostics <- function(connection,
               signif(delta, 3),
               attr(delta, "units")
             ))
-          }
+        # }
         }
       }
     )
@@ -977,8 +977,12 @@ runConceptSetDiagnostics <- function(connection,
     reportOverallTime = FALSE
   )
 
+
+  
   if ((runIncludedSourceConcepts && nrow(subsetIncluded) > 0) ||
     (runOrphanConcepts && nrow(subsetOrphans) > 0)) {
+    ###### Avoid dropping concept count table if using external
+    if (!useExternalConceptCountsTable) {
     ParallelLogger::logTrace("Dropping temp concept count table")
     if (conceptCountsTableIsTemp) {
       countTable <- conceptCountsTable
@@ -996,6 +1000,7 @@ runConceptSetDiagnostics <- function(connection,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )
+  }
   }
 
   delta <- Sys.time() - startConceptSetDiagnostics
