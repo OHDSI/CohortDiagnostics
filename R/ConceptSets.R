@@ -408,6 +408,7 @@ runConceptSetDiagnostics <- function(connection,
 
   if ((runIncludedSourceConcepts && nrow(subsetIncluded) > 0) ||
     (runOrphanConcepts && nrow(subsetOrphans) > 0)) {
+    if (!useExternalConceptCountsTable) {
     timeExecution(
       exportFolder,
       taskName = "createConceptCountsTable",
@@ -424,6 +425,7 @@ runConceptSetDiagnostics <- function(connection,
         )
       }
     )
+  }
   }
   if (runIncludedSourceConcepts) {
     timeExecution(
@@ -788,7 +790,7 @@ runConceptSetDiagnostics <- function(connection,
       if (!useExternalConceptCountsTable) {
         ParallelLogger::logTrace("Using internal concept count table.")
       } else {
-        stop("Use of external concept count table is not supported")
+        ParallelLogger::logTrace("Using external concept count table.")
       }
 
       # [OPTIMIZATION idea] can we modify the sql to do this for all uniqueConceptSetId in one query using group by?
