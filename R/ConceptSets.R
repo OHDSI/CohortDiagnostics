@@ -405,28 +405,27 @@ runConceptSetDiagnostics <- function(connection,
       )
     }
   )
-
   if ((runIncludedSourceConcepts && nrow(subsetIncluded) > 0) ||
     (runOrphanConcepts && nrow(subsetOrphans) > 0)) {
     if (!useExternalConceptCountsTable) {
-    timeExecution(
-      exportFolder,
-      taskName = "createConceptCountsTable",
-      cohortIds = NULL,
-      parent = "runConceptSetDiagnostics",
-      expr = {
-        createConceptCountsTable(
-          connection = connection,
-          cdmDatabaseSchema = cdmDatabaseSchema,
-          tempEmulationSchema = tempEmulationSchema,
-          conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
-          conceptCountsTable = conceptCountsTable,
-          conceptCountsTableIsTemp = conceptCountsTableIsTemp
-        )
-      }
-    )
-  }
-  }
+      timeExecution(
+        exportFolder,
+        taskName = "createConceptCountsTable",
+        cohortIds = NULL,
+        parent = "runConceptSetDiagnostics",
+        expr = {
+          createConceptCountsTable(
+            connection = connection,
+            cdmDatabaseSchema = cdmDatabaseSchema,
+            tempEmulationSchema = tempEmulationSchema,
+            conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
+            conceptCountsTable = conceptCountsTable,
+            conceptCountsTableIsTemp = conceptCountsTableIsTemp
+          )
+          }
+      )
+    }
+    }
   if (runIncludedSourceConcepts) {
     timeExecution(
       exportFolder,
@@ -445,8 +444,6 @@ runConceptSetDiagnostics <- function(connection,
         }
         if (nrow(subsetIncluded) > 0) {
           start <- Sys.time()
-          # create concept counts table
-          # if (!useExternalConceptCountsTable) {
             sql <- SqlRender::loadRenderTranslateSql(
               "CohortSourceCodes.sql",
               packageName = utils::packageName(),
@@ -981,15 +978,13 @@ runConceptSetDiagnostics <- function(connection,
   
   if ((runIncludedSourceConcepts && nrow(subsetIncluded) > 0) ||
     (runOrphanConcepts && nrow(subsetOrphans) > 0)) {
-    ###### Avoid dropping concept count table if using external
     if (!useExternalConceptCountsTable) {
-    ParallelLogger::logTrace("Dropping temp concept count table")
-    if (conceptCountsTableIsTemp) {
-      countTable <- conceptCountsTable
-    } else {
-      countTable <-
-        paste(conceptCountsDatabaseSchema, conceptCountsTable, sep = ".")
-    }
+      ParallelLogger::logTrace("Dropping temp concept count table")
+      if (conceptCountsTableIsTemp) {
+        countTable <- conceptCountsTable
+        } else {
+          countTable <- paste(conceptCountsDatabaseSchema, conceptCountsTable, sep = ".")
+          }
 
     sql <- "TRUNCATE TABLE @count_table; DROP TABLE @count_table;"
     DatabaseConnector::renderTranslateExecuteSql(
