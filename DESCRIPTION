@@ -1,7 +1,7 @@
 Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Cohorts
-Version: 3.2.0
+Version: 3.2.1
 Date: 2022-12-19
 Authors@R: c(
     person("Gowtham", "Rao", email = "rao@ohdsi.org", role = c("aut", "cre")),
@@ -24,7 +24,7 @@ Depends:
 	FeatureExtraction (>= 3.2.0),
 	R (>= 4.1.0)
 Imports:
-  Andromeda,
+  Andromeda (>= 0.6.0),
   ResultModelManager,
   checkmate,
   clock,
