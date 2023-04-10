@@ -1,3 +1,10 @@
+CohortDiagnostics 3.2.1
+=======================
+
+1. Added requirement for Andromeda 0.6.0 (which is implicitly required by DatabaseConnector)
+
+2. Fixed issue saving cohort subsets to csv file for viewing and analysis in shiny app
+
 CohortDiagnostics 3.2.0
 =======================
 
