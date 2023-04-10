@@ -87,3 +87,5 @@ dataSource <-
       cohortTableName = shinySettings$cohortTableName,
       databaseTableName = shinySettings$databaseTableName
     )
+
+

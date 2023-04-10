@@ -586,7 +586,7 @@ executeTimeSeriesDiagnostics <- function(connection,
               )
           }
         )
-        
+
         data <- makeDataExportable(
           x = data,
           tableName = "time_series",
