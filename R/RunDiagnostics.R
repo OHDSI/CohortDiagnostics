@@ -509,7 +509,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     })
     subsetDefinitions <- data.frame()
     for (subsetDef in dfs) {
-      subsetDefinitions <- rbind(subsetDefinitions, dfs)
+      subsetDefinitions <- rbind(subsetDefinitions, subsetDef)
     }
 
     writeToCsv(
