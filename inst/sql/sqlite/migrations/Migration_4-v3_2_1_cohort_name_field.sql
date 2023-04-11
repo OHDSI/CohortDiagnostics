@@ -11,13 +11,15 @@ CREATE TABLE @database_schema.@table_prefix@cohort (
     metadata VARCHAR,
     sql VARCHAR NOT NULL,
     json VARCHAR NOT NULL,
+    subset_definition_id BIGINT,
+    subset_parent BIGINT,
+    is_subset INT,
     PRIMARY KEY(cohort_id)
 );
 
-
 INSERT INTO @database_schema.@table_prefix@cohort
-            (cohort_id, cohort_name, metadata, sql, json)
-SELECT cohort_id, cohort_name, metadata, sql, json
+            (cohort_id, cohort_name, metadata, sql, json, subset_definition_id, subset_parent, is_subset)
+SELECT cohort_id, cohort_name, metadata, sql, json, subset_definition_id, subset_parent, is_subset
 FROM _cohort_old;
 
 DROP TABLE _cohort_old;
