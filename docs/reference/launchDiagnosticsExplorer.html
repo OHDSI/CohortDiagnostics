@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.1.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.2.1</span>
       </span>
     </div>
 
@@ -91,6 +91,9 @@
 <span>  aboutText <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  runOverNetwork <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  port <span class="op">=</span> <span class="fl">80</span>,</span>
+<span>  makePublishable <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  publishDir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"DiagnosticsExplorer"</span><span class="op">)</span>,</span>
+<span>  overwritePublishDir <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  launch.browser <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  enableAnnotation <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -155,6 +158,18 @@ If not provided, no About tab will be shown.</p></dd>
 <dd><p>(optional) Only used if <code>runOverNetwork</code> = TRUE.</p></dd>
 
 
+<dt>makePublishable</dt>
+<dd><p>(Optional) copy data files to make app publishable to posit connect/shinyapp.io</p></dd>
+
+
+<dt>publishDir</dt>
+<dd><p>If make publishable is true - the directory that the shiny app is copied to</p></dd>
+
+
+<dt>overwritePublishDir</dt>
+<dd><p>(Optional) If make publishable is true - overwrite the directory for publishing</p></dd>
+
+
 <dt>launch.browser</dt>
 <dd><p>Should the app be launched in your default browser, or in a Shiny window.
 Note: copying to clipboard will not work in a Shiny window.</p></dd>
@@ -181,7 +196,7 @@ Note: copying to clipboard will not work in a Shiny window.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

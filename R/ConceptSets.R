@@ -1011,7 +1011,8 @@ runConceptSetDiagnostics <- function(connection,
       "cohortId",
       "conceptSetId",
       "conceptId"
-    ) %>% dplyr::distinct()
+    ) %>%
+    dplyr::distinct()
 
   resolvedConceptIds <- makeDataExportable(
     x = resolvedConceptIds,
