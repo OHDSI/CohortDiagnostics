@@ -186,6 +186,18 @@ createMergedResultsFile <-
       unlink(sqliteDbPath)
     }
 
+    listOfZipFilesToUpload <-
+      list.files(
+        path = dataFolder,
+        pattern = ".zip",
+        full.names = TRUE,
+        recursive = TRUE
+      )
+    
+    if (length(listOfZipFilesToUpload) == 0) {
+      stop(paste("No results zip files found in", dataFolder))
+    }
+    
     connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = sqliteDbPath)
     connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -194,14 +206,7 @@ createMergedResultsFile <-
       databaseSchema = "main",
       tablePrefix = tablePrefix
     )
-    listOfZipFilesToUpload <-
-      list.files(
-        path = dataFolder,
-        pattern = ".zip",
-        full.names = TRUE,
-        recursive = TRUE
-      )
-
+  
     for (zipFileName in listOfZipFilesToUpload) {
       uploadResults(
         connectionDetails = connectionDetails,
