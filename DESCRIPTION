@@ -4,11 +4,11 @@ Title: Diagnostics for OHDSI Cohorts
 Version: 3.2.1
 Date: 2022-12-19
 Authors@R: c(
+    person("Jamie", "Gilbert", email = "gilbert@ohdsi.org", role = c("aut", "cre")),
     person("Gowtham", "Rao", role = c("aut")),
-    person("Martijn", "Schuemie",r ole = c("aut")),
+    person("Martijn", "Schuemie", role = c("aut")),
     person("Patrick", "Ryan", role = c("aut")),
     person("James", "Weaver", role = c("aut")),
-    person("Jamie", "Gilbert", email = "gilbert@ohdsi.org", role = c("aut", "cre")),
     person("Observational Health Data Science and Informatics", role = c("cph"))
   )
 Maintainer: Jamie Gilbert <gilbert@ohdsi.org>
