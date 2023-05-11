@@ -92,6 +92,7 @@ checkIfCohortInstantiated <- function(connection,
 computeCohortCounts <- function(connection,
                                 cohortDatabaseSchema,
                                 cohortTable,
+                                conceptCountsTable = "cohort_count",
                                 cohorts,
                                 exportFolder,
                                 minCellCount,
@@ -110,7 +111,7 @@ computeCohortCounts <- function(connection,
 
   cohortCounts <- makeDataExportable(
     x = cohortCounts,
-    tableName = "cohort_count",
+    tableName = conceptCountsTable,
     minCellCount = minCellCount,
     databaseId = databaseId
   )

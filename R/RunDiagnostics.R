@@ -110,6 +110,7 @@ getDefaultCovariateSettings <- function() {
 #'                                    diagnostics to.
 #' @param cohortDefinitionSet         Data.frame of cohorts must include columns cohortId, cohortName, json, sql
 #' @param cohortTableNames            Cohort Table names used by CohortGenerator package
+#' @param conceptCountsTable          Concepts count table name
 #' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf').
 #' @param databaseName                The full name of the database. If NULL, defaults to value in cdm_source table
 #' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table
@@ -172,6 +173,7 @@ getDefaultCovariateSettings <- function() {
 #'   cohorts = cohorts,
 #'   exportFolder = "export",
 #'   cohortTable = "cohort",
+#'   conceptCountsTable = "concept_counts",
 #'   cohortDatabaseSchema = "results",
 #'   cdmDatabaseSchema = "cdm",
 #'   databaseId = "mySpecialCdm",
@@ -194,6 +196,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                                cohortTable = "cohort",
                                cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
+                               conceptCountsTable = "#concept_counts",
                                vocabularyDatabaseSchema = cdmDatabaseSchema,
                                cohortIds = NULL,
                                cdmVersion = 5,
@@ -605,6 +608,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
         connection = connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
+        conceptCountsTable = conceptCountsTable,
         cohorts = cohortDefinitionSet,
         exportFolder = exportFolder,
         minCellCount = minCellCount,
@@ -677,7 +681,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
           exportFolder = exportFolder,
           minCellCount = minCellCount,
           conceptCountsDatabaseSchema = NULL,
-          conceptCountsTable = "#concept_counts",
+          conceptCountsTable = conceptCountsTable,
           conceptCountsTableIsTemp = TRUE,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
