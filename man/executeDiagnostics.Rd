@@ -17,6 +17,7 @@ executeDiagnostics(
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   cohortTable = "cohort",
   cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
+  conceptCountsTable = "#concept_counts",
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortIds = NULL,
   cdmVersion = 5,
@@ -74,6 +75,8 @@ tables, provide a schema with write privileges where temp tables can be created.
 \item{cohortTable}{Name of the cohort table.}
 
 \item{cohortTableNames}{Cohort Table names used by CohortGenerator package}
+
+\item{conceptCountsTable}{Concepts count table name}
 
 \item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
 commonly the same as cdmDatabaseSchema. Note that for 
@@ -175,6 +178,7 @@ executeDiagnostics(
   cohorts = cohorts,
   exportFolder = "export",
   cohortTable = "cohort",
+  conceptCountsTable = "concept_counts",
   cohortDatabaseSchema = "results",
   cdmDatabaseSchema = "cdm",
   databaseId = "mySpecialCdm",
