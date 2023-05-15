@@ -67,7 +67,7 @@ test_that("Testing cohort time series execution", {
     cohortTable <-
       paste0(
         "ct_",
-        gsub("[: -]", "", Sys.time(), perl = TRUE),
+        format(Sys.time(), "%s"),
         sample(1:100, 1)
       )
 
