@@ -18,14 +18,14 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Gowtham Rao \email{rao@ohdsi.org}
+\strong{Maintainer}: Jamie Gilbert \email{gilbert@ohdsi.org}
 
 Authors:
 \itemize{
-  \item Martijn Schuemie \email{schuemie@ohdsi.org}
+  \item Gowtham Rao
+  \item Martijn Schuemie
   \item Patrick Ryan
   \item James Weaver
-  \item Jamie Gilbert
 }
 
 Other contributors:
