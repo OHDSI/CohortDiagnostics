@@ -200,11 +200,8 @@ test_that("Testing time series logic", {
     )
 
     cohortTable <-
-      paste0(
-        "ct_",
-        gsub("[: -]", "", Sys.time(), perl = TRUE),
-        sample(1:100, 1)
-      )
+      paste0("ct_", Sys.getpid(), format(Sys.time(), "%s"), sample(1:100, 1))
+
     DatabaseConnector::insertTable(
       connection = connectionTimeSeries,
       databaseSchema = cohortDatabaseSchema,

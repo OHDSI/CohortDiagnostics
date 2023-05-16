@@ -1,7 +1,7 @@
 if (dbms == "postgresql") {
   resultsDatabaseSchema <- paste0(
     "r",
-    gsub("[: -]", "", Sys.time(), perl = TRUE),
+    format(Sys.time(), "%s"),
     sample(1:100, 1)
   )
 
