@@ -1,3 +1,9 @@
+CohortDiagnostics 3.2.2
+=======================
+
+1. Fixes to unit tests breaking with R 4.3 due to change of Sys.time function
+
+
 CohortDiagnostics 3.2.1
 =======================
 
