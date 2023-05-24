@@ -53,6 +53,43 @@ launchDiagnosticsExplorer(sqliteDbPath = "MyCohortDiagnosticsResulst.sqlite")
 ```
 If running the application from a R-studio environment, please make sure the sqlite file is in a folder called 'data'.
 
+# Publishing to Posit Connect or shinyapps.io
+
+Publishing the shiny app to a shared posit connect source can be achieved by first setting up credentials for [your server](https://docs.posit.co/connect/user/connecting/).
+You will need to contact your internal administrator for publishing and access rights.
+
+Alternatively, you can use the [shinyapps.io](https://www.shinyapps.io/admin/#/signup) service, which provides some limited free usage for hosting your applications.
+
+Firstly, it is advised that you update to the latest version of OHDSI shiny modules with:
+
+```
+remotes::install_packages('OHDSI/OhdsiShinyModules')
+```
+
+This will update the dependencies for your shiny app.
+
+Following this you will need a copyable resource for your shiny app.
+This can be achieved by launching the `DiagnosticsExplorer` with publishable options
+
+```{r tidy=FALSE,eval=FALSE}
+launchDiagnosticsExplorer(
+  sqliteDbPath = "MyCohortDiagnosticsResulst.sqlite",
+  makePublishable = TRUE,
+  publishDir = file.path(getwd(), "MyStudyDiagnosticsExplorer"),
+  overwritePublishDir = TRUE
+)
+```
+
+This will create a shiny app folder `"MyStudyDiagnosticsExplorer"` in your R working directory.
+The above will also overwrite the existing application folder and copy your sqlite file in to it.
+Following this, the shiny window should load and show a "publsh" button.
+
+![Publish button](publish.png)
+
+After this you can follow the RStudio prompts to upload to your rsconnect/posit connect or shinyapps.io server.
+
+# Sharing a zipped copy of your shiny app
+
 To automatically create a zip archive containing the `DiagnosticsExplorer` shiny application for deployment on shared environments, such as data.ohdsi.org, run the function `createDiagnosticsExplorerZip`:
 
 ```{r tidy=FALSE,eval=FALSE}
@@ -67,3 +104,5 @@ We recommend the use of a database system, when file size of the cohort diagnost
 
 # Running over the network
 If you want to run the application over the network then set `runOverNetwork = TRUE` while launching the application using 'launchDiagnosticsExplorer()'. This will make the shiny application available over your network (i.e. within your networks firewall).
+
+

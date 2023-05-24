@@ -1,4 +1,4 @@
-# Copyright 2022 Observational Health Data Sciences and Informatics
+# Copyright 2023 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -210,6 +210,7 @@ computeIncidenceRates <- function(connection,
                                   cohorts,
                                   instantiatedCohorts,
                                   recordKeepingFile,
+                                  washoutPeriod,
                                   incremental) {
   ParallelLogger::logInfo("Computing incidence rates")
   startIncidenceRate <- Sys.time()
@@ -235,13 +236,6 @@ computeIncidenceRates <- function(connection,
         row$cohortName,
         "'"
       )
-
-      # TODO: do we really want to get this from the cohort definition?
-      cohortExpression <- RJSONIO::fromJSON(row$json, digits = 23)
-      washoutPeriod <- cohortExpression$PrimaryCriteria$ObservationWindow[["PriorDays"]]
-      if (is.null(washoutPeriod)) {
-        washoutPeriod <- 0
-      }
 
       timeExecution(
         exportFolder,

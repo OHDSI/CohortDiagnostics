@@ -1,4 +1,4 @@
-# Copyright 2022 Observational Health Data Sciences and Informatics
+# Copyright 2023 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -20,7 +20,7 @@ createIfNotExist <-
            recursive = TRUE,
            errorMessage = NULL) {
     if (is.null(errorMessage) |
-      !class(errorMessage) == "AssertColection") {
+      !is(errorMessage, "AssertColection")) {
       errorMessage <- checkmate::makeAssertCollection()
     }
     if (!is.null(type)) {
@@ -129,7 +129,7 @@ makeDataExportable <- function(x,
 
   if ("cohortDefinitionId" %in% colnames(x)) {
     x <- x %>%
-      dplyr::rename(cohortId = cohortDefinitionId)
+      dplyr::rename("cohortId" = "cohortDefinitionId")
   }
 
   resultsDataModel <- getResultsDataModelSpecifications()
@@ -140,27 +140,27 @@ makeDataExportable <- function(x,
   }
 
   fieldsInDataModel <- resultsDataModel %>%
-    dplyr::filter(tableName == !!tableName) %>%
+    dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::pull(columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   requiredFieldsInDataModel <- resultsDataModel %>%
-    dplyr::filter(tableName == !!tableName) %>%
+    dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(isRequired == "Yes") %>%
     dplyr::pull(columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   primaryKeyInDataModel <- resultsDataModel %>%
-    dplyr::filter(tableName == !!tableName) %>%
+    dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(primaryKey == "Yes") %>%
     dplyr::pull(columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   columnsToApplyMinCellValue <- resultsDataModel %>%
-    dplyr::filter(tableName == !!tableName) %>%
+    dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(minCellCount == "Yes") %>%
     dplyr::pull(columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%

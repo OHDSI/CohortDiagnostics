@@ -10,7 +10,7 @@ if (Sys.getenv("CDM5_POSTGRESQL_SERVER") == "") {
     pathToDriver = jdbcDriverFolder
   )
 
-  resultsDatabaseSchema <- paste0("r", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
+  resultsDatabaseSchema <- paste0("r", Sys.getpid(), format(Sys.time(), "%s"), sample(1:100, 1))
 
   # Always clean up
   withr::defer(
@@ -228,80 +228,4 @@ test_that("Sqlite results data model", {
       }
     }
   })
-})
-
-
-
-
-test_that("Data removal works", {
-  skip_if(
-    skipResultsDm |
-      skipCdmTests,
-    "results data model test server not set"
-  )
-  specifications <- getResultsDataModelSpecifications()
-
-  pgConnection <-
-    DatabaseConnector::connect(connectionDetails = postgresConnectionDetails)
-  with_dbc_connection(pgConnection, {
-    for (tableName in unique(specifications$tableName)) {
-      if (stringr::str_detect(
-        string = tolower(tableName),
-        pattern = "annotation",
-        negate = TRUE
-      )) {
-        primaryKey <- specifications %>%
-          dplyr::filter(tableName == !!tableName &
-            primaryKey == "Yes") %>%
-          dplyr::select(columnName) %>%
-          dplyr::pull()
-
-        if ("database_id" %in% primaryKey) {
-          deleteAllRecordsForDatabaseId(
-            connection = pgConnection,
-            schema = resultsDatabaseSchema,
-            tableName = tableName,
-            databaseId = "cdmv5",
-            tablePrefix = "cd_"
-          )
-
-          sql <-
-            "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
-          sql <- SqlRender::render(
-            sql = sql,
-            schema = resultsDatabaseSchema,
-            table_name = paste0("cd_", tableName),
-            database_id = "cdmv5"
-          )
-          databaseIdCount <-
-            DatabaseConnector::querySql(pgConnection, sql)[, 1]
-          expect_true(databaseIdCount == 0)
-        }
-      }
-    }
-  })
-})
-
-test_that("util functions", {
-  expect_true(naToEmpty(NA) == "")
-  expect_true(naToZero(NA) == 0)
-})
-
-
-test_that("No database file fails upload", {
-  skip_if(skipResultsDm | skipCdmTests, "results data model test server not set")
-  testZipFile <- "test.zip"
-  on.exit(unlink(testZipFile, force = T))
-  # Just a random file to test
-  DatabaseConnector::createZipFile(testZipFile, "cohorts/CohortsToCreate.csv")
-
-  expect_error(
-    uploadResults(
-      connectionDetails = connectionDetails,
-      schema = "main",
-      zipFileName = testZipFile,
-      tablePrefix = "cd_"
-    ),
-    regexp = "database metadata file not found - cannot upload results"
-  )
 })

@@ -22,7 +22,7 @@ Alternatively, a covariate setting object may be created using the above as an e
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.1.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.2.2</span>
       </span>
     </div>
 
@@ -116,6 +116,7 @@ Alternatively, a covariate setting object may be created using the above as an e
 <span>  temporalCovariateSettings <span class="op">=</span> <span class="fu"><a href="getDefaultCovariateSettings.html">getDefaultCovariateSettings</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  minCellCount <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  minCharacterizationMean <span class="op">=</span> <span class="fl">0.01</span>,</span>
+<span>  irWashoutPeriod <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  incremental <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  incrementalFolder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">exportFolder</span>, <span class="st">"incremental"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -254,6 +255,10 @@ will help reduce the file size of the characterization output, but will remove i
 on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)</p></dd>
 
 
+<dt>irWashoutPeriod</dt>
+<dd><p>Number of days washout to include in calculation of incidence rates - default is 0</p></dd>
+
+
 <dt>incremental</dt>
 <dd><p>Create only cohort diagnostics that haven't been created before?</p></dd>
 
@@ -333,7 +338,7 @@ of which cohort diagnostics has been executed.</p></dd>
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
+  <p></p><p>Developed by Jamie Gilbert, Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver.</p>
 </div>
 
 <div class="pkgdown">
