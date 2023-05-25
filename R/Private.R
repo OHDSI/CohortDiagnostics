@@ -311,6 +311,16 @@ getPrefixedTableNames <- function(tablePrefix) {
 }
 
 #' Internal utility function for logging execution of variables
+#'
+#' @param exportFolder folder where the execution times will be stored
+#' @param taskName name of the task that has been run
+#' @param cohortIds cohort ids
+#' @param parent parent task name
+#' @param start start time
+#' @param execTime execution time
+#' @param expr the expression to be timed
+#' 
+#' @return the execution times of the task as a dataframe
 timeExecution <- function(exportFolder,
                           taskName,
                           cohortIds = NULL,
