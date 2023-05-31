@@ -33,7 +33,7 @@ test_that("Testing cohort time series execution", {
       cohort %>%
       dplyr::select(cohortDefinitionId) %>%
       dplyr::distinct() %>%
-      dplyr::rename(cohortId = cohortDefinitionId) %>%
+      dplyr::rename("cohortId" = "cohortDefinitionId") %>%
       dplyr::rowwise() %>%
       dplyr::mutate(json = RJSONIO::toJSON(list(
         cohortId = cohortId,
@@ -67,7 +67,7 @@ test_that("Testing cohort time series execution", {
     cohortTable <-
       paste0(
         "ct_",
-        gsub("[: -]", "", Sys.time(), perl = TRUE),
+        format(Sys.time(), "%s"),
         sample(1:100, 1)
       )
 
@@ -200,11 +200,8 @@ test_that("Testing time series logic", {
     )
 
     cohortTable <-
-      paste0(
-        "ct_",
-        gsub("[: -]", "", Sys.time(), perl = TRUE),
-        sample(1:100, 1)
-      )
+      paste0("ct_", Sys.getpid(), format(Sys.time(), "%s"), sample(1:100, 1))
+
     DatabaseConnector::insertTable(
       connection = connectionTimeSeries,
       databaseSchema = cohortDatabaseSchema,

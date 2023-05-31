@@ -1,4 +1,4 @@
-# Copyright 2022 Observational Health Data Sciences and Informatics
+# Copyright 2023 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -91,7 +91,7 @@ getCdmDataSourceInformation <-
 
     sourceReleaseDate <- as.Date(NA)
     if ("sourceReleaseDate" %in% colnames(cdmDataSource)) {
-      if (class(cdmDataSource$sourceReleaseDate) != "Date") {
+      if (!is(cdmDataSource$sourceReleaseDate, "Date")) {
         try(
           sourceReleaseDate <-
             max(as.Date(cdmDataSource$sourceReleaseDate)),
@@ -104,7 +104,7 @@ getCdmDataSourceInformation <-
 
     cdmReleaseDate <- as.Date(NA)
     if ("cdmReleaseDate" %in% colnames(cdmDataSource)) {
-      if (class(cdmDataSource$cdmReleaseDate) != "Date") {
+      if (!is(cdmDataSource$cdmReleaseDate, "Date")) {
         try(cdmReleaseDate <- max(as.Date(cdmDataSource$cdmReleaseDate)),
           silent = TRUE
         )

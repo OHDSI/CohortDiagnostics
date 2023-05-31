@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.1.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.2.2</span>
       </span>
     </div>
 
@@ -97,7 +97,7 @@
                         <h4 data-toc-skip class="author">Gowtham
 Rao</h4>
             
-            <h4 data-toc-skip class="date">2022-12-19</h4>
+            <h4 data-toc-skip class="date">2023-05-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd" class="external-link"><code>vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd</code></a></small>
       <div class="hidden name"><code>ViewingResultsUsingDiagnosticsExplorer.Rmd</code></div>
@@ -155,11 +155,50 @@ launch the Diagnostics Explorer app as follows:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span><span class="op">(</span>sqliteDbPath <span class="op">=</span> <span class="st">"MyCohortDiagnosticsResulst.sqlite"</span><span class="op">)</span></span></code></pre></div>
 <p>If running the application from a R-studio environment, please make
 sure the sqlite file is in a folder called ‘data’.</p>
+</div>
+<div class="section level2">
+<h2 id="publishing-to-posit-connect-or-shinyapps-io">Publishing to Posit Connect or shinyapps.io<a class="anchor" aria-label="anchor" href="#publishing-to-posit-connect-or-shinyapps-io"></a>
+</h2>
+<p>Publishing the shiny app to a shared posit connect source can be
+achieved by first setting up credentials for <a href="https://docs.posit.co/connect/user/connecting/" class="external-link">your server</a>.
+You will need to contact your internal administrator for publishing and
+access rights.</p>
+<p>Alternatively, you can use the <a href="https://www.shinyapps.io/admin/#/signup" class="external-link">shinyapps.io</a> service,
+which provides some limited free usage for hosting your
+applications.</p>
+<p>Firstly, it is advised that you update to the latest version of OHDSI
+shiny modules with:</p>
+<pre><code><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_packages</span><span class="op">(</span><span class="st">'OHDSI/OhdsiShinyModules'</span><span class="op">)</span></span></code></pre>
+<p>This will update the dependencies for your shiny app.</p>
+<p>Following this you will need a copyable resource for your shiny app.
+This can be achieved by launching the <code>DiagnosticsExplorer</code>
+with publishable options</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span><span class="op">(</span></span>
+<span>  sqliteDbPath <span class="op">=</span> <span class="st">"MyCohortDiagnosticsResulst.sqlite"</span>,</span>
+<span>  makePublishable <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  publishDir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"MyStudyDiagnosticsExplorer"</span><span class="op">)</span>,</span>
+<span>  overwritePublishDir <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>This will create a shiny app folder
+<code>"MyStudyDiagnosticsExplorer"</code> in your R working directory.
+The above will also overwrite the existing application folder and copy
+your sqlite file in to it. Following this, the shiny window should load
+and show a “publsh” button.</p>
+<div class="figure">
+<img src="publish.png" alt=""><p class="caption">Publish button</p>
+</div>
+<p>After this you can follow the RStudio prompts to upload to your
+rsconnect/posit connect or shinyapps.io server.</p>
+</div>
+<div class="section level2">
+<h2 id="sharing-a-zipped-copy-of-your-shiny-app">Sharing a zipped copy of your shiny app<a class="anchor" aria-label="anchor" href="#sharing-a-zipped-copy-of-your-shiny-app"></a>
+</h2>
 <p>To automatically create a zip archive containing the
 <code>DiagnosticsExplorer</code> shiny application for deployment on
 shared environments, such as data.ohdsi.org, run the function
 <code>createDiagnosticsExplorerZip</code>:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/createDiagnosticsExplorerZip.html">createDiagnosticsExplorerZip</a></span><span class="op">(</span>outputZipfile <span class="op">=</span> <span class="st">"MyCdProject.zip"</span>, sqliteDbPath <span class="op">=</span> <span class="st">"MyCohortDiagnosticsResulst.sqlite"</span><span class="op">)</span></span></code></pre></div>
 <p>This archive will contain a fully executable shiny application.</p>
 </div>
@@ -195,7 +234,7 @@ available over your network (i.e. within your networks firewall).</p>
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
+<p>Developed by Jamie Gilbert, Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver.</p>
 </div>
 
 <div class="pkgdown">

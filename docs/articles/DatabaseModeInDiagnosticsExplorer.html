@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.1.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.2.2</span>
       </span>
     </div>
 
@@ -97,7 +97,7 @@
                         <h4 data-toc-skip class="author">Gowtham
 Rao</h4>
             
-            <h4 data-toc-skip class="date">2022-12-19</h4>
+            <h4 data-toc-skip class="date">2023-05-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/DatabaseModeInDiagnosticsExplorer.Rmd" class="external-link"><code>vignettes/DatabaseModeInDiagnosticsExplorer.Rmd</code></a></small>
       <div class="hidden name"><code>DatabaseModeInDiagnosticsExplorer.Rmd</code></div>
@@ -164,6 +164,21 @@ settings are included below:</p>
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="fu">enableAnnotation</span><span class="kw">:</span><span class="at"> </span><span class="ch">FALSE</span></span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="fu">enableAuthorization</span><span class="kw">:</span><span class="at"> </span><span class="ch">FALSE</span></span></code></pre></div>
 </div>
+<div class="section level2">
+<h2 id="publishing">Publishing<a class="anchor" aria-label="anchor" href="#publishing"></a>
+</h2>
+<p>To publish with a config you can use:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span><span class="op">(</span></span>
+<span>  shinyConfigPath <span class="op">=</span> <span class="st">"path/to/config.yml"</span>,</span>
+<span>  makePublishable <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  publishDir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"MyStudyDiagnosticsExplorer"</span><span class="op">)</span>,</span>
+<span>  overwritePublishDir <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>And press the publish button in the shiny app that loads. Note - that
+in this situation the use of secure keys with keyring is not
+possible.</p>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -178,7 +193,7 @@ settings are included below:</p>
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
+<p>Developed by Jamie Gilbert, Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver.</p>
 </div>
 
 <div class="pkgdown">

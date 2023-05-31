@@ -14,6 +14,24 @@ timeExecution(
   expr = NULL
 )
 }
+\arguments{
+\item{exportFolder}{folder where the execution times will be stored}
+
+\item{taskName}{name of the task that has been run}
+
+\item{cohortIds}{cohort ids}
+
+\item{parent}{parent task name}
+
+\item{start}{start time}
+
+\item{execTime}{execution time}
+
+\item{expr}{the expression to be timed}
+}
+\value{
+the execution times of the task as a dataframe
+}
 \description{
 Internal utility function for logging execution of variables
 }

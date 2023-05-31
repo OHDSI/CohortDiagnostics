@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.1.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.2.2</span>
       </span>
     </div>
 
@@ -72,6 +72,23 @@
       <small>Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="3.2.2" id="cohortdiagnostics-322">CohortDiagnostics 3.2.2<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-322"></a></h2>
+<ol style="list-style-type: decimal"><li>Fixes to unit tests breaking with R 4.3 due to change of Sys.time function</li>
+</ol></div>
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="3.2.1" id="cohortdiagnostics-321">CohortDiagnostics 3.2.1<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-321"></a></h2>
+<ol style="list-style-type: decimal"><li><p>Added requirement for Andromeda 0.6.0 (which is implicitly required by DatabaseConnector)</p></li>
+<li><p>Fixed issue saving cohort subsets to csv file for viewing and analysis in shiny app</p></li>
+</ol></div>
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="3.2.0" id="cohortdiagnostics-320">CohortDiagnostics 3.2.0<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-320"></a></h2>
+<ol style="list-style-type: decimal"><li><p>Do not run orphan concepts checks for any subset cohorts</p></li>
+<li><p>Remove use of lookback period for IR calculations - this is now a setting of the call to the package</p></li>
+<li><p>Added data migration to support subsets in database schema (allow future functionality to take care of them)</p></li>
+<li><p>Added functionality to <code>launchDiagnosticsExplorer</code> to make publishing to poist connect/shinyapps.io more straightforward (still requires removal of ggiraph)</p></li>
+<li><p>Moved most shiny code to <code>OHDSI/OhdsiShinyModules</code></p></li>
+</ol></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="3.1.2" id="cohortdiagnostics-312">CohortDiagnostics 3.1.2<a class="anchor" aria-label="anchor" href="#cohortdiagnostics-312"></a></h2>
 <p>Bug Fixes:</p>
@@ -382,7 +399,7 @@
 
 
       <footer><div class="copyright">
-  <p></p><p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
+  <p></p><p>Developed by Jamie Gilbert, Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver.</p>
 </div>
 
 <div class="pkgdown">
