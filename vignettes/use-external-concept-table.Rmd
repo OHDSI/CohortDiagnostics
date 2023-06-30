@@ -1,0 +1,47 @@
+---
+title: "Use External Concept Counts Table"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Use External Concept Counts Table}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message=FALSE, warning=FALSE}
+library(CohortDiagnostics)
+```
+
+Users are able to use the function `createConceptCountsTable()` to save the `concept_counts` in the working schema. 
+This is useful since the user doesn't have create that table every time `executeDiagnostics()` is called, saving a significant amount of time. `createConceptCountsTable()` creates the table `concept_counts` in the working schema by:
+
+```{r eval=FALSE, message=FALSE, warning=FALSE}
+CohortDiagnostics::createConceptCountsTable(connectionDetails = connectionDetails,
+                                            connection = connection,
+                                            cdmDatabaseSchema = cdmDatabaseSchema,
+                                            tempEmulationSchema = tempEmulationSchema,
+                                            conceptCountsDatabaseSchema = cohortDatabaseSchema,
+                                            conceptCountsTable = "concept_counts",
+                                            conceptCountsTableIsTemp = FALSE,
+                                            removeCurrentTable = TRUE)
+```
+
+After creating the table, the user must simply set the parameter `useExternalConceptCountsTable` as TRUE when running `executeDiagnostics()`. When `useExternalConceptCountsTable` is set as FALSE (the default option), CohortDiagnostics will create a new `concept_count` table as usual. 
+
+```{r eval=FALSE, message=FALSE, warning=FALSE}
+CohortDiagnostics::executeDiagnostics(cohortDefinitionSet = cohortDefinitionSetRow,
+                                      connectionDetails = connectionDetails,
+                                      cohortTable = cohortTable,
+                                      cohortDatabaseSchema = cohortDatabaseSchema,
+                                      cdmDatabaseSchema = cdmDatabaseSchema,
+                                      exportFolder = exportFolder,
+                                      databaseId = databaseId,
+                                      minCellCount = minCellCount,
+                                      useExternalConceptCountsTable = TRUE)
+```
