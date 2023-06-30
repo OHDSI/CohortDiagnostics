@@ -1,5 +1,7 @@
 ---
 title: "Use External Concept Counts Table"
+author: "CE Barboza"
+date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Use External Concept Counts Table}
