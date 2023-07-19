@@ -325,11 +325,11 @@ getCodeSetIds <- function(criterionList) {
   }
 }
 
-exportConceptSets <- function(cohorts, exportFolder, minCellCount, databaseId) {
+exportConceptSets <- function(cohortDefinitionSet, exportFolder, minCellCount, databaseId) {
   ParallelLogger::logInfo("Exporting cohort concept sets to csv")
   # We need to get concept sets from all cohorts in case subsets are present and
   # Added incrementally after cohort generation
-  conceptSets <- combineConceptSetsFromCohorts(cohorts)
+  conceptSets <- combineConceptSetsFromCohorts(cohortDefinitionSet)
   # Save concept set metadata ---------------------------------------
   conceptSetsExport <- makeDataExportable(
     x = conceptSets %>%
