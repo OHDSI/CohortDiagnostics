@@ -347,7 +347,6 @@ exportConceptSets <- function(cohortDefinitionSet, exportFolder, minCellCount, d
     incremental = FALSE,
     cohortId = conceptSetsExport$cohortId
   )
-
 }
 
 runConceptSetDiagnostics <- function(connection,
