@@ -1,3 +1,9 @@
+CohortDiagnostics 3.2.3
+=======================
+
+1. Resolved issue where concept sets were only exported when diagnostics for them were executed. All concept sets are
+now always exported into results csv and imported into databases
+
 CohortDiagnostics 3.2.2
 =======================
 

@@ -670,6 +670,14 @@ executeDiagnostics <- function(cohortDefinitionSet,
     )
   }
 
+  # Always export concept sets to csv
+  exportConceptSets(
+    cohortDefinitionSet = cohortDefinitionSet,
+    exportFolder = exportFolder,
+    minCellCount = minCellCount,
+    databaseId = databaseId
+  )
+
   # Concept set diagnostics -----------------------------------------------
   if (runIncludedSourceConcepts ||
     runOrphanConcepts ||

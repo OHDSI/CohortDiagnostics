@@ -325,6 +325,29 @@ getCodeSetIds <- function(criterionList) {
   }
 }
 
+exportConceptSets <- function(cohortDefinitionSet, exportFolder, minCellCount, databaseId) {
+  ParallelLogger::logInfo("Exporting cohort concept sets to csv")
+  # We need to get concept sets from all cohorts in case subsets are present and
+  # Added incrementally after cohort generation
+  conceptSets <- combineConceptSetsFromCohorts(cohortDefinitionSet)
+  # Save concept set metadata ---------------------------------------
+  conceptSetsExport <- makeDataExportable(
+    x = conceptSets %>%
+      dplyr::select(-uniqueConceptSetId) %>%
+      dplyr::distinct(),
+    tableName = "concept_sets",
+    minCellCount = minCellCount,
+    databaseId = databaseId
+  )
+
+  # Always write all concept sets for all cohorts as they are always needed
+  writeToCsv(
+    data = conceptSetsExport,
+    fileName = file.path(exportFolder, "concept_sets.csv"),
+    incremental = FALSE,
+    cohortId = conceptSetsExport$cohortId
+  )
+}
 
 runConceptSetDiagnostics <- function(connection,
                                      tempEmulationSchema,
@@ -395,22 +418,6 @@ runConceptSetDiagnostics <- function(connection,
     )
     return(NULL)
   }
-  # Save concept set metadata ---------------------------------------
-  conceptSetsExport <- makeDataExportable(
-    x = conceptSets %>%
-      dplyr::select(-uniqueConceptSetId) %>%
-      dplyr::distinct(),
-    tableName = "concept_sets",
-    minCellCount = minCellCount,
-    databaseId = databaseId
-  )
-
-  writeToCsv(
-    data = conceptSetsExport,
-    fileName = file.path(exportFolder, "concept_sets.csv"),
-    incremental = incremental,
-    cohortId = conceptSetsExport$cohortId
-  )
 
   uniqueConceptSets <-
     conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ] %>%
