@@ -59,6 +59,9 @@
       <a href="../articles/RunningCohortDiagnostics.html">Running Cohort Diagnostics</a>
     </li>
     <li>
+      <a href="../articles/UseExternalConceptTable.html">How to use an external concept counts table</a>
+    </li>
+    <li>
       <a href="../articles/ViewingResultsUsingDiagnosticsExplorer.html">Viewing results using Diagnostics Explorer</a>
     </li>
     <li>
@@ -72,7 +75,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://ohdsi.github.io/Hades" class="external-link"><img src='https://ohdsi.github.io/Hades/images/hadesMini.png' width=80 height=17 style='vertical-align: top;'></a>
+  <a href="https://ohdsi.github.io/Hades" class="external-link">hadesLogo</a>
 </li>
 <li>
   <a href="https://github.com/OHDSI/CohortDiagnostics/" class="external-link">
@@ -96,9 +99,8 @@
       <h1 data-toc-skip>Creating a study package</h1>
                         <h4 data-toc-skip class="author">Gowtham A.
 Rao</h4>
+            <h4 data-toc-skip class="date">2023-06-30</h4>
             
-            <h4 data-toc-skip class="date">2023-05-16</h4>
-      
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/CreatingAStudyPackage.Rmd" class="external-link"><code>vignettes/CreatingAStudyPackage.Rmd</code></a></small>
       <div class="hidden name"><code>CreatingAStudyPackage.Rmd</code></div>
 
@@ -229,7 +231,7 @@ is study a specifications file (in json format). Example is <a href="https://git
 <span></span>
 <span></span>
 <span><span class="co">################# end of user input ##############</span></span>
-<span><span class="va">webApiCohorts</span> <span class="op">&lt;-</span> <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu">getCohortDefinitionsMetaData</span><span class="op">(</span>baseUrl <span class="op">=</span> <span class="va">baseUrl</span><span class="op">)</span></span>
+<span><span class="va">webApiCohorts</span> <span class="op">&lt;-</span> <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/getCohortDefinitionsMetaData.html" class="external-link">getCohortDefinitionsMetaData</a></span><span class="op">(</span>baseUrl <span class="op">=</span> <span class="va">baseUrl</span><span class="op">)</span></span>
 <span><span class="va">studyCohorts</span> <span class="op">&lt;-</span> <span class="va">webApiCohorts</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">.data</span><span class="op">$</span><span class="va">id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">cohortIds</span><span class="op">)</span></span>
 <span></span>
@@ -237,7 +239,7 @@ is study a specifications file (in json format). Example is <a href="https://git
 <span><span class="va">cohortDefinitionsArray</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">studyCohorts</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">cohortDefinition</span> <span class="op">&lt;-</span></span>
-<span>    <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu">getCohortDefinition</span><span class="op">(</span></span>
+<span>    <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/getCohortDefinition.html" class="external-link">getCohortDefinition</a></span><span class="op">(</span></span>
 <span>      cohortId <span class="op">=</span> <span class="va">studyCohorts</span><span class="op">$</span><span class="va">id</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span>,</span>
 <span>      baseUrl <span class="op">=</span> <span class="va">baseUrl</span></span>
 <span>    <span class="op">)</span></span>
@@ -341,7 +343,7 @@ is study a specifications file (in json format). Example is <a href="https://git
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer>
