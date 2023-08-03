@@ -675,6 +675,15 @@ executeDiagnostics <- function(cohortDefinitionSet,
     )
   }
 
+  
+  # Defines external concept counts table variables ----------------------
+  if (useExternalConceptCountsTable == FALSE) {
+    conceptCountsTableIsTemp <- TRUE
+  } else {
+    conceptCountsTableIsTemp <- FALSE
+    conceptCountsTable <- "concept_counts"
+  }
+  
   # Concept set diagnostics -----------------------------------------------
   if (runIncludedSourceConcepts ||
     runOrphanConcepts ||
@@ -697,9 +706,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
           runBreakdownIndexEvents = runBreakdownIndexEvents,
           exportFolder = exportFolder,
           minCellCount = minCellCount,
-          conceptCountsDatabaseSchema = NULL,
+          conceptCountsDatabaseSchema = cohortDatabaseSchema,
           conceptCountsTable = conceptCountsTable,
-          conceptCountsTableIsTemp = TRUE,
+          conceptCountsTableIsTemp = conceptCountsTableIsTemp,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
           useExternalConceptCountsTable = useExternalConceptCountsTable,

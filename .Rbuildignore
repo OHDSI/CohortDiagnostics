@@ -30,3 +30,4 @@ compare_versions
 ^doc$
 ^Meta$
 inst/shiny/DiagnosticsExplorer/renv
+results/
