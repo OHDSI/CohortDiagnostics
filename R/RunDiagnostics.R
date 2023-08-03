@@ -676,12 +676,28 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
 
   
-  # Defines external concept counts table variables ----------------------
+  # Defines variables and checcs version of external concept counts table ----------------------
   if (useExternalConceptCountsTable == FALSE) {
     conceptCountsTableIsTemp <- TRUE
   } else {
     conceptCountsTableIsTemp <- FALSE
     conceptCountsTable <- "concept_counts"
+    vocabVersion <- DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT vocabulary_version FROM @cdm_database_schema.vocabulary WHERE vocabulary_id = 'None';",
+      cdm_database_schema = cdmDatabaseSchema,
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = getOption("sqlRenderTempEmulationSchena")
+    )
+    vocabVersionuseExternalConceptCountsTable <- DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT DISTINCT vocabulary_version FROM @work_database_schema.@concept_counts_table;",
+      work_database_schema = cohortDatabaseSchema,
+      concept_counts_table = conceptCountsTable,
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = getOption("sqlRenderTempEmulationSchena")
+    )
+    checkmate::assertTRUE(identical(vocabVersion[1,1], vocabVersionuseExternalConceptCountsTable[1,1]))
   }
   
   # Concept set diagnostics -----------------------------------------------
