@@ -676,7 +676,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
 
   
-  # Defines variables and checcs version of external concept counts table ----------------------
+  # Defines variables and checks version of external concept counts table ----------------------
   if (useExternalConceptCountsTable == FALSE) {
     conceptCountsTableIsTemp <- TRUE
   } else {
