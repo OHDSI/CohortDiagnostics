@@ -676,20 +676,15 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
 
   
-  # Defines variables and checks version of external concept counts table ----------------------
+  # Defines variables and checks version of external concept counts table -----
   if (useExternalConceptCountsTable == FALSE) {
     conceptCountsTableIsTemp <- TRUE
   } else {
     conceptCountsTableIsTemp <- FALSE
     conceptCountsTable <- "concept_counts"
-    vocabVersion <- DatabaseConnector::renderTranslateQuerySql(
-      connection = connection,
-      sql = "SELECT vocabulary_version FROM @cdm_database_schema.vocabulary WHERE vocabulary_id = 'None';",
-      cdm_database_schema = cdmDatabaseSchema,
-      snakeCaseToCamelCase = TRUE,
-      tempEmulationSchema = getOption("sqlRenderTempEmulationSchena")
-    )
-    vocabVersionuseExternalConceptCountsTable <- DatabaseConnector::renderTranslateQuerySql(
+    dataSourceInfo <- getCdmDataSourceInformation(connection = connection, cdmDatabaseSchema = cdmDatabaseSchema)
+    vocabVersion <- dataSourceInfo$vocabularyVersion
+    vocabVersionExternalConceptCountsTable <- DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
       sql = "SELECT DISTINCT vocabulary_version FROM @work_database_schema.@concept_counts_table;",
       work_database_schema = cohortDatabaseSchema,
@@ -697,7 +692,13 @@ executeDiagnostics <- function(cohortDefinitionSet,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = getOption("sqlRenderTempEmulationSchena")
     )
-    checkmate::assertTRUE(identical(vocabVersion[1,1], vocabVersionuseExternalConceptCountsTable[1,1]))
+    if (!identical(vocabVersion, vocabVersionExternalConceptCountsTable[1,1])) {
+      stop(paste0("External concept counts table (", 
+                 vocabVersionExternalConceptCountsTable, 
+                 ") does not match database (", 
+                 vocabVersion, 
+                 "). Update concept_counts with createConceptCountsTable()"))
+    }
   }
   
   # Concept set diagnostics -----------------------------------------------
