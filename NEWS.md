@@ -1,3 +1,30 @@
+CohortDiagnostics 3.2.2
+=======================
+
+1. Fixes to unit tests breaking with R 4.3 due to change of Sys.time function
+
+
+CohortDiagnostics 3.2.1
+=======================
+
+1. Added requirement for Andromeda 0.6.0 (which is implicitly required by DatabaseConnector)
+
+2. Fixed issue saving cohort subsets to csv file for viewing and analysis in shiny app
+
+CohortDiagnostics 3.2.0
+=======================
+
+1. Do not run orphan concepts checks for any subset cohorts
+
+2. Remove use of lookback period for IR calculations - this is now a setting of the call to the package
+
+3. Added data migration to support subsets in database schema (allow future functionality to take care of them)
+
+4. Added functionality to `launchDiagnosticsExplorer` to make publishing to poist connect/shinyapps.io more straightforward (still requires removal of ggiraph)
+
+5. Moved most shiny code to `OHDSI/OhdsiShinyModules`
+
+
 CohortDiagnostics 3.1.2
 =======================
 Bug Fixes:

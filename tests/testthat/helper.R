@@ -18,8 +18,41 @@ with_dbc_connection <- function(connection, code) {
   )[[1]])
 }
 
+getDefaultSubsetDefinition <- function() {
+  CohortGenerator::createCohortSubsetDefinition(
+    name = "subsequent GI bleed with 365 days prior observation",
+    definitionId = 1,
+    subsetOperators = list(
+      # here we are saying 'first subset to only those patients in cohort 1778213'
+      CohortGenerator::createCohortSubset(
+        name = "with GI bleed within 30 days of cohort start",
+        cohortIds = 14909,
+        cohortCombinationOperator = "any",
+        negate = FALSE,
+        startWindow = CohortGenerator::createSubsetCohortWindow(
+          startDay = 0,
+          endDay = 30,
+          targetAnchor = "cohortStart"
+        ),
+        endWindow = CohortGenerator::createSubsetCohortWindow(
+          startDay = 0,
+          endDay = 9999999,
+          targetAnchor = "cohortStart"
+        )
+      ),
+      # Next, subset to only those with 365 days of prior observation
+      CohortGenerator::createLimitSubset(
+        name = "Observation of at least 365 days prior",
+        priorTime = 365,
+        followUpTime = 0,
+        limitTo = "firstEver"
+      )
+    )
+  )
+}
+
 # Create a cohort definition set from test cohorts
-loadTestCohortDefinitionSet <- function(cohortIds = NULL) {
+loadTestCohortDefinitionSet <- function(cohortIds = NULL, useSubsets = TRUE) {
   if (grepl("testthat", getwd())) {
     cohortPath <- "cohorts"
   } else {
@@ -35,6 +68,10 @@ loadTestCohortDefinitionSet <- function(cohortIds = NULL) {
   )
   if (!is.null(cohortIds)) {
     cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(cohortId %in% cohortIds)
+  }
+
+  if (useSubsets) {
+    cohortDefinitionSet <- CohortGenerator::addCohortSubsetDefinition(cohortDefinitionSet, getDefaultSubsetDefinition(), targetCohortIds = c(18345))
   }
 
   cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)

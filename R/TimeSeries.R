@@ -1,4 +1,4 @@
-# Copyright 2022 Observational Health Data Sciences and Informatics
+# Copyright 2023 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -103,7 +103,6 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       return(NULL)
     }
   }
-
   ## Calendar period----
   ParallelLogger::logTrace(" - Preparing calendar table for time series computation.")
   # note calendar span is created based on all dates in observation period table,
@@ -461,11 +460,11 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       seriesType,
       periodBegin
     ) %>%
-    dplyr::select(-timeId) %>%
+    dplyr::select(-"timeId") %>%
     dplyr::mutate(ageGroup = dplyr::if_else(
-      condition = is.na(ageGroup),
-      true = as.character(ageGroup),
-      false = paste(10 * ageGroup, 10 * ageGroup + 9, sep = "-")
+      condition = is.na(.data$ageGroup),
+      true = as.character(.data$ageGroup),
+      false = paste(10 * .data$ageGroup, 10 * .data$ageGroup + 9, sep = "-")
     ))
 
   resultsInAndromeda$calendarPeriods <- NULL
@@ -529,7 +528,7 @@ executeTimeSeriesDiagnostics <- function(connection,
   if (runCohortTimeSeries & nrow(cohortDefinitionSet) > 0) {
     subset <- subsetToRequiredCohorts(
       cohorts = cohortDefinitionSet %>%
-        dplyr::filter(cohortId %in% instantiatedCohorts),
+        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
       task = "runCohortTimeSeries",
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
@@ -587,6 +586,7 @@ executeTimeSeriesDiagnostics <- function(connection,
               )
           }
         )
+
         data <- makeDataExportable(
           x = data,
           tableName = "time_series",
@@ -648,6 +648,7 @@ executeTimeSeriesDiagnostics <- function(connection,
           )
       }
     )
+
     data <- makeDataExportable(
       x = data,
       tableName = "time_series",

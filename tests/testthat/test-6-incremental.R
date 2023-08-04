@@ -307,13 +307,14 @@ test_that("Incremental save", {
   )
 
 
-  expect_equivalent(
+  expect_equal(
     readr::read_csv(
       tmpFile,
       col_types = readr::cols(),
       guess_max = min(1e7)
     ),
-    goldStandard
+    goldStandard,
+    ignore_attr = TRUE
   )
   unlink(tmpFile)
 })
@@ -330,13 +331,14 @@ test_that("Incremental save with empty key", {
 
   CohortDiagnostics:::saveIncremental(newData, tmpFile, cohortId = c())
 
-  expect_equivalent(
+  expect_equal(
     readr::read_csv(
       tmpFile,
       col_types = readr::cols(),
       guess_max = min(1e7)
     ),
-    data
+    data,
+    ignore_attr = TRUE
   )
   unlink(tmpFile)
 })

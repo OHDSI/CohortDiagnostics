@@ -1,4 +1,4 @@
-# Copyright 2022 Observational Health Data Sciences and Informatics
+# Copyright 2023 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -13,87 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-.findOrphanConcepts <- function(connectionDetails = NULL,
-                                connection = NULL,
-                                cdmDatabaseSchema,
-                                vocabularyDatabaseSchema = cdmDatabaseSchema,
-                                tempEmulationSchema = NULL,
-                                conceptIds = c(),
-                                useCodesetTable = FALSE,
-                                codesetId = 1,
-                                conceptCountsDatabaseSchema = cdmDatabaseSchema,
-                                conceptCountsTable = "concept_counts",
-                                conceptCountsTableIsTemp = FALSE,
-                                instantiatedCodeSets = "#InstConceptSets",
-                                orphanConceptTable = "#recommended_concepts") {
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
-  sql <- SqlRender::loadRenderTranslateSql(
-    "OrphanCodes.sql",
-    packageName = utils::packageName(),
-    dbms = connection@dbms,
-    tempEmulationSchema = tempEmulationSchema,
-    vocabulary_database_schema = vocabularyDatabaseSchema,
-    work_database_schema = conceptCountsDatabaseSchema,
-    concept_counts_table = conceptCountsTable,
-    concept_counts_table_is_temp = conceptCountsTableIsTemp,
-    concept_ids = conceptIds,
-    use_codesets_table = useCodesetTable,
-    orphan_concept_table = orphanConceptTable,
-    instantiated_code_sets = instantiatedCodeSets,
-    codeset_id = codesetId
-  )
-  DatabaseConnector::executeSql(connection, sql)
-  ParallelLogger::logTrace("- Fetching orphan concepts from server")
-  sql <- "SELECT * FROM @orphan_concept_table;"
-  orphanConcepts <-
-    DatabaseConnector::renderTranslateQuerySql(
-      sql = sql,
-      connection = connection,
-      tempEmulationSchema = tempEmulationSchema,
-      orphan_concept_table = orphanConceptTable,
-      snakeCaseToCamelCase = TRUE
-    ) %>%
-    tidyr::tibble()
-
-  # For debugging:
-  # x <- querySql(connection, "SELECT * FROM #starting_concepts;")
-  # View(x)
-  #
-  # x <- querySql(connection, "SELECT * FROM #concept_synonyms;")
-  # View(x)
-  #
-  # x <- querySql(connection, "SELECT * FROM #search_strings;")
-  # View(x)
-  #
-  # x <- querySql(connection, "SELECT * FROM #search_str_top1000;")
-  # View(x)
-  #
-  # x <- querySql(connection, "SELECT * FROM #search_string_subset;")
-  # View(x)
-  #
-  # x <- querySql(connection, "SELECT * FROM #recommended_concepts;")
-  # View(x)
-
-  ParallelLogger::logTrace("- Dropping orphan temp tables")
-  sql <-
-    SqlRender::loadRenderTranslateSql(
-      "DropOrphanConceptTempTables.sql",
-      packageName = utils::packageName(),
-      dbms = connection@dbms,
-      tempEmulationSchema = tempEmulationSchema
-    )
-  DatabaseConnector::executeSql(
-    connection = connection,
-    sql = sql,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-  return(orphanConcepts)
-}
 
 saveDatabaseMetaData <- function(databaseId,
                                  databaseName,
@@ -140,7 +59,7 @@ getVocabularyVersion <- function(connection, vocabularyDatabaseSchema) {
     snakeCaseToCamelCase = TRUE
   ) %>%
     dplyr::tibble() %>%
-    dplyr::rename(vocabularyVersion = vocabularyVersion) %>%
+    dplyr::rename("vocabularyVersion" = "vocabularyVersion") %>%
     dplyr::pull(vocabularyVersion) %>%
     unique()
 

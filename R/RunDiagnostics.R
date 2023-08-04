@@ -1,4 +1,4 @@
-# Copyright 2022 Observational Health Data Sciences and Informatics
+# Copyright 2023 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -110,6 +110,7 @@ getDefaultCovariateSettings <- function() {
 #'                                    diagnostics to.
 #' @param cohortDefinitionSet         Data.frame of cohorts must include columns cohortId, cohortName, json, sql
 #' @param cohortTableNames            Cohort Table names used by CohortGenerator package
+#' @param conceptCountsTable          Concepts count table name
 #' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf').
 #' @param databaseName                The full name of the database. If NULL, defaults to value in cdm_source table
 #' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table
@@ -132,6 +133,7 @@ getDefaultCovariateSettings <- function() {
 #' @param minCharacterizationMean     The minimum mean value for characterization output. Values below this will be cut off from output. This
 #'                                    will help reduce the file size of the characterization output, but will remove information
 #'                                    on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)
+#' @param irWashoutPeriod             Number of days washout to include in calculation of incidence rates - default is 0
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
@@ -172,6 +174,7 @@ getDefaultCovariateSettings <- function() {
 #'   cohorts = cohorts,
 #'   exportFolder = "export",
 #'   cohortTable = "cohort",
+#'   conceptCountsTable = "#concept_counts",
 #'   cohortDatabaseSchema = "results",
 #'   cdmDatabaseSchema = "cdm",
 #'   databaseId = "mySpecialCdm",
@@ -194,6 +197,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                                cohortTable = "cohort",
                                cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
+                               conceptCountsTable = "#concept_counts",
                                vocabularyDatabaseSchema = cdmDatabaseSchema,
                                cohortIds = NULL,
                                cdmVersion = 5,
@@ -209,6 +213,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                temporalCovariateSettings = getDefaultCovariateSettings(),
                                minCellCount = 5,
                                minCharacterizationMean = 0.01,
+                               irWashoutPeriod = 0,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental"),
                                useExternalConceptCountsTable = FALSE) {
@@ -353,7 +358,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       )
   }
   if (runTemporalCohortCharacterization) {
-    if (class(temporalCovariateSettings) == "covariateSettings") {
+    if (is(temporalCovariateSettings, "covariateSettings")) {
       temporalCovariateSettings <- list(temporalCovariateSettings)
     }
     # All temporal covariate settings objects must be covariateSettings
@@ -453,15 +458,15 @@ executeDiagnostics <- function(cohortDefinitionSet,
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(tableName == "cohort") %>%
-    dplyr::pull(columnName) %>%
+    dplyr::filter(.data$tableName == "cohort") %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     sort()
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(tableName == "cohort") %>%
-    dplyr::filter(isRequired == "Yes") %>%
-    dplyr::pull(columnName) %>%
+    dplyr::filter(.data$tableName == "cohort") %>%
+    dplyr::filter(.data$isRequired == "Yes") %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     sort()
 
@@ -501,6 +506,22 @@ executeDiagnostics <- function(cohortDefinitionSet,
     data = cohortDefinitionSet,
     fileName = file.path(exportFolder, "cohort.csv")
   )
+
+  subsets <- CohortGenerator::getSubsetDefinitions(cohortDefinitionSet)
+  if (length(subsets)) {
+    dfs <- lapply(subsets, function(x) {
+      data.frame(subsetDefinitionId = x$definitionId, json = as.character(x$toJSON()))
+    })
+    subsetDefinitions <- data.frame()
+    for (subsetDef in dfs) {
+      subsetDefinitions <- rbind(subsetDefinitions, subsetDef)
+    }
+
+    writeToCsv(
+      data = subsetDefinitions,
+      fileName = file.path(exportFolder, "subset_definition.csv")
+    )
+  }
 
   # Set up connection to server ----------------------------------------------------
   if (is.null(connection)) {
@@ -677,7 +698,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
           exportFolder = exportFolder,
           minCellCount = minCellCount,
           conceptCountsDatabaseSchema = NULL,
-          conceptCountsTable = "#concept_counts",
+          conceptCountsTable = conceptCountsTable,
           conceptCountsTableIsTemp = TRUE,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
@@ -763,6 +784,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
           exportFolder = exportFolder,
           minCellCount = minCellCount,
           cohorts = cohortDefinitionSet,
+          washoutPeriod = irWashoutPeriod,
           instantiatedCohorts = instantiatedCohorts,
           recordKeepingFile = recordKeepingFile,
           incremental = incremental

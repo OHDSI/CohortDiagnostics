@@ -55,3 +55,28 @@ createConceptCountsTable <- function(connectionDetails = NULL,
     )
   DatabaseConnector::executeSql(connection, sql)
 }
+
+#' getConceptCountsTableName
+#' 
+#' @description Get a concept counts table name that is unique for the current database version.
+#' We need to make sure the table is only used if the counts are for the current database.
+#' 
+#' @param connection database connection
+#' @param cdmDatabaseSchema CDM schema
+#' 
+#' @return the concepts count table name
+#' @export
+getConceptCountsTableName <- function(connection, cdmDatabaseSchema) {
+  result <- "concept_counts"
+  sql <- paste("SELECT vocabulary_version as version",
+               "FROM @cdmDatabaseSchema.VOCABULARY",
+               "WHERE vocabulary_id = 'None'")
+  dbVersion <- renderTranslateQuerySql(connection = connection,
+                                       sql = sql,
+                                       cdmDatabaseSchema = cdmDatabaseSchema) %>% 
+    dplyr::pull(1)
+  if (!identical(dbVersion, character(0))) {
+    result <- paste(gsub(" |\\.|-", "_", dbVersion), result, sep = "_")
+  }
+  return(result)
+}
