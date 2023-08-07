@@ -21,7 +21,7 @@ library(CohortDiagnostics)
 ```
 
 Run the function `createConceptCountsTable()` to save the `concept_counts` in the working schema. 
-This is useful since the user doesn't have create that table every time `executeDiagnostics()` is called, saving a significant amount of time when running CohortDiagnostics multiple times.
+This is useful since the user doesn't have create that table every time `executeDiagnostics()` is called, saving a significant amount of time when running CohortDiagnostics multiple times on the same vocabulary version. 
 
 ```{r eval=FALSE, message=FALSE, warning=FALSE}
 CohortDiagnostics::createConceptCountsTable(connectionDetails = connectionDetails,
@@ -34,7 +34,7 @@ CohortDiagnostics::createConceptCountsTable(connectionDetails = connectionDetail
                                             removeCurrentTable = TRUE)
 ```
 
-After creating the table, the user must set the parameter `useExternalConceptCountsTable` as *TRUE* when running `executeDiagnostics()`. When `useExternalConceptCountsTable` is set as *FALSE* (the default option), CohortDiagnostics will create a new `concept_count` as usual. 
+After creating the table, the user must set the parameter `useExternalConceptCountsTable` as *TRUE* when running `executeDiagnostics()` and specify the name of the table with the parameter `conceptCountsTable`. If `useExternalConceptCountsTable` is set as *FALSE* (the default option), CohortDiagnostics will create a new `concept_count` as usual. 
 
 ```{r eval=FALSE, message=FALSE, warning=FALSE}
 CohortDiagnostics::executeDiagnostics(cohortDefinitionSet = cohortDefinitionSetRow,
@@ -42,6 +42,7 @@ CohortDiagnostics::executeDiagnostics(cohortDefinitionSet = cohortDefinitionSetR
                                       cohortTable = cohortTable,
                                       cohortDatabaseSchema = cohortDatabaseSchema,
                                       cdmDatabaseSchema = cdmDatabaseSchema,
+                                      conceptCountsTable = "concept_counts",
                                       exportFolder = exportFolder,
                                       databaseId = databaseId,
                                       minCellCount = minCellCount,
