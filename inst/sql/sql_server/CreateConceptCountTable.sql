@@ -100,9 +100,6 @@ FROM (
 
 
 {@table_is_temp} ? {
-
-
-
 ALTER TABLE @concept_counts_table
 ADD vocabulary_version VARCHAR(20) NULL;
 UPDATE @concept_counts_table SET vocabulary_version = (SELECT vocabulary_version FROM @cdm_database_schema.vocabulary WHERE vocabulary_id = 'None');
