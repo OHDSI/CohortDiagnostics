@@ -675,6 +675,38 @@ executeDiagnostics <- function(cohortDefinitionSet,
     )
   }
 
+  
+  # Defines variables and checks version of external concept counts table -----
+  if (useExternalConceptCountsTable == FALSE) {
+    conceptCountsTableIsTemp <- TRUE
+    if (conceptCountsTable != "#concept_counts") {
+      stop("Please provide a default temporal ConceptCountsTable name if not using useExternalConceptCountsTable")
+    }
+  } else {
+    if (conceptCountsTable == "#concept_counts") {
+      stop("Temporal conceptCountsTable name. Please provide a valid external ConceptCountsTable name")
+    }
+    conceptCountsTableIsTemp <- FALSE
+    conceptCountsTable <- conceptCountsTable
+    dataSourceInfo <- getCdmDataSourceInformation(connection = connection, cdmDatabaseSchema = cdmDatabaseSchema)
+    vocabVersion <- dataSourceInfo$vocabularyVersion
+    vocabVersionExternalConceptCountsTable <- DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT DISTINCT vocabulary_version FROM @work_database_schema.@concept_counts_table;",
+      work_database_schema = cohortDatabaseSchema,
+      concept_counts_table = conceptCountsTable,
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = getOption("sqlRenderTempEmulationSchena")
+    )
+    if (!identical(vocabVersion, vocabVersionExternalConceptCountsTable[1,1])) {
+      stop(paste0("External concept counts table (", 
+                 vocabVersionExternalConceptCountsTable, 
+                 ") does not match database (", 
+                 vocabVersion, 
+                 "). Update concept_counts with createConceptCountsTable()"))
+    }
+  }
+  
   # Concept set diagnostics -----------------------------------------------
   if (runIncludedSourceConcepts ||
     runOrphanConcepts ||
@@ -697,9 +729,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
           runBreakdownIndexEvents = runBreakdownIndexEvents,
           exportFolder = exportFolder,
           minCellCount = minCellCount,
-          conceptCountsDatabaseSchema = NULL,
+          conceptCountsDatabaseSchema = cohortDatabaseSchema,
           conceptCountsTable = conceptCountsTable,
-          conceptCountsTableIsTemp = TRUE,
+          conceptCountsTableIsTemp = conceptCountsTableIsTemp,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
           useExternalConceptCountsTable = useExternalConceptCountsTable,
