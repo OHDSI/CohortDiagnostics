@@ -679,9 +679,15 @@ executeDiagnostics <- function(cohortDefinitionSet,
   # Defines variables and checks version of external concept counts table -----
   if (useExternalConceptCountsTable == FALSE) {
     conceptCountsTableIsTemp <- TRUE
+    if (conceptCountsTable != "#concept_counts") {
+      stop("Please provide a default temporal ConceptCountsTable name if not using useExternalConceptCountsTable")
+    }
   } else {
+    if (conceptCountsTable == "#concept_counts") {
+      stop("Temporal conceptCountsTable name. Please provide a valid external ConceptCountsTable name")
+    }
     conceptCountsTableIsTemp <- FALSE
-    conceptCountsTable <- "concept_counts"
+    conceptCountsTable <- conceptCountsTable
     dataSourceInfo <- getCdmDataSourceInformation(connection = connection, cdmDatabaseSchema = cdmDatabaseSchema)
     vocabVersion <- dataSourceInfo$vocabularyVersion
     vocabVersionExternalConceptCountsTable <- DatabaseConnector::renderTranslateQuerySql(
