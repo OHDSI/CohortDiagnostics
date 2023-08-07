@@ -680,11 +680,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (useExternalConceptCountsTable == FALSE) {
     conceptCountsTableIsTemp <- TRUE
     if (conceptCountsTable != "#concept_counts") {
-      stop("Please provide a default temporal ConceptCountsTable name if not using useExternalConceptCountsTable")
+      conceptCountsTable <- "#concept_counts"
     }
   } else {
     if (conceptCountsTable == "#concept_counts") {
-      stop("Temporal conceptCountsTable name. Please provide a valid external ConceptCountsTable name")
+      stop("Temporary conceptCountsTable name. Please provide a valid external ConceptCountsTable name")
     }
     conceptCountsTableIsTemp <- FALSE
     conceptCountsTable <- conceptCountsTable
