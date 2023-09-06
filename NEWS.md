@@ -1,3 +1,9 @@
+CohortDiagnostics 3.2.4
+=======================
+Bug Fix:
+
+1. Added support for newer API to OhdsiShinyModules (while maintaining support for old version)
+
 CohortDiagnostics 3.2.3
 =======================
 Bug Fix:
