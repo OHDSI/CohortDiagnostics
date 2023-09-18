@@ -92,7 +92,6 @@ if (packageVersion("OhdsiShinyModules") >= as.numeric_version("1.2.0")) {
     OhdsiShinyModules::createCdDatabaseDataSource(connectionHandler = connectionHandler,
                                                   resultDatabaseSettings = resultDatabaseSettings)
 } else {
-  warning("Using an old version of OhdsiShinyModules. Updating is strongly advised")
   dataSource <-
     OhdsiShinyModules::createCdDatabaseDataSource(
       connectionHandler = connectionHandler,
