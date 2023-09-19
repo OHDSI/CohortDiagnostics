@@ -78,7 +78,21 @@ if (FALSE) {
 
 connectionHandler <- ResultModelManager::PooledConnectionHandler$new(shinySettings$connectionDetails)
 
-dataSource <-
+
+if (packageVersion("OhdsiShinyModules") >= as.numeric_version("1.2.0")) {
+  resultDatabaseSettings <- list(
+    schema = shinySettings$resultsDatabaseSchema,
+    vocabularyDatabaseSchema = shinySettings$vocabularyDatabaseSchema,
+    cdTablePrefix = shinySettings$tablePrefix,
+    cgTable = shinySettings$cohortTableName,
+    databaseTable = shinySettings$databaseTableName
+  )
+
+  dataSource <-
+    OhdsiShinyModules::createCdDatabaseDataSource(connectionHandler = connectionHandler,
+                                                  resultDatabaseSettings = resultDatabaseSettings)
+} else {
+  dataSource <-
     OhdsiShinyModules::createCdDatabaseDataSource(
       connectionHandler = connectionHandler,
       schema = shinySettings$resultsDatabaseSchema,
@@ -88,6 +102,5 @@ dataSource <-
       databaseTableName = shinySettings$databaseTableName
     )
 
-
-
+}
 
