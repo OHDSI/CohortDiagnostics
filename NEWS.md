@@ -4,11 +4,7 @@ Bug Fix:
 
 1. Added support for newer API to OhdsiShinyModules (while maintaining support for old version)
 
-CohortDiagnostics 3.2.3
-=======================
-Bug Fix:
-
-1. Resolved issue with incidence rates sometimes exporting as null/infinite by setting to 0 in all error cases
+2. Resolved issue with incidence rates sometimes exporting as null/infinite by setting to 0 in all error cases
 
 
 CohortDiagnostics 3.2.3

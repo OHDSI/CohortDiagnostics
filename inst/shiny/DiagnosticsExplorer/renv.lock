@@ -70,7 +70,7 @@
       "RemoteRepo": "DatabaseConnector",
       "RemoteUsername": "OHDSI",
       "RemoteRef": "HEAD",
-      "RemoteSha": "c2ae089af5e0be8eb9de4b9e2c39e539b9ed695e",
+      "RemoteSha": "5867bc151cda2dcf30a682b23eb0afa1997f9abd",
       "Requirements": [
         "DBI",
         "R",
@@ -87,7 +87,7 @@
         "urltools",
         "utils"
       ],
-      "Hash": "bb708ff95f9db30dffb1f61dbcc291b8"
+      "Hash": "7b09eb5986ea9b0f7e9ea79949b6236d"
     },
     "MASS": {
       "Package": "MASS",
@@ -218,9 +218,9 @@
     },
     "RSQLite": {
       "Package": "RSQLite",
-      "Version": "2.3.0",
+      "Version": "2.3.1",
       "Source": "Repository",
-      "Repository": "CRAN",
+      "Repository": "RSPM",
       "Requirements": [
         "DBI",
         "R",
@@ -232,7 +232,7 @@
         "pkgconfig",
         "plogr"
       ],
-      "Hash": "264c1861d7ac1dc71ecb5ac5c4c1318a"
+      "Hash": "207c90cd5438a1f596da2cd54c606fee"
     },
     "Rcpp": {
       "Package": "Rcpp",
