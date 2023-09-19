@@ -166,8 +166,8 @@ getIncidenceRate <- function(connectionDetails = NULL,
   result$incidenceRate <-
     1000 * result$cohortCount / result$personYears
   result$incidenceRate[is.nan(result$incidenceRate) |
-                         is.infinite(result$incidenceRate) |
-                         is.null(result$incidenceRate)] <- 0
+    is.infinite(result$incidenceRate) |
+    is.null(result$incidenceRate)] <- 0
   delta <- Sys.time() - start
   ParallelLogger::logInfo(paste(
     "Computing incidence rates took",
