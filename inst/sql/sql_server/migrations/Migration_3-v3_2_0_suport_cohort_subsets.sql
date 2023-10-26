@@ -11,6 +11,6 @@ CREATE TABLE @database_schema.@table_prefix@subset_definition (
 );
 
 
-ALTER TABLE @database_schema.@table_prefix@cohort ADD COLUMN subset_definition_id BIGINT;
-ALTER TABLE @database_schema.@table_prefix@cohort ADD COLUMN subset_parent BIGINT;
-ALTER TABLE @database_schema.@table_prefix@cohort ADD COLUMN is_subset INT;
+ALTER TABLE @database_schema.@table_prefix@cohort ADD subset_definition_id BIGINT;
+ALTER TABLE @database_schema.@table_prefix@cohort ADD subset_parent BIGINT;
+ALTER TABLE @database_schema.@table_prefix@cohort ADD is_subset INT;
