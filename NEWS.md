@@ -1,3 +1,24 @@
+CohortDiagnostics 3.2.4
+=======================
+Bug Fix:
+
+1. Added support for newer API to OhdsiShinyModules (while maintaining support for old version)
+
+2. Resolved issue with incidence rates sometimes exporting as null/infinite by setting to 0 in all error cases
+
+
+CohortDiagnostics 3.2.3
+=======================
+
+1. Resolved issue where concept sets were only exported when diagnostics for them were executed. All concept sets are
+now always exported into results csv and imported into databases
+
+CohortDiagnostics 3.2.2
+=======================
+
+1. Fixes to unit tests breaking with R 4.3 due to change of Sys.time function
+
+
 CohortDiagnostics 3.2.1
 =======================
 

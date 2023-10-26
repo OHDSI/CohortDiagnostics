@@ -64,7 +64,7 @@ if (dbms == "sqlite") {
 } else {
   # only test all cohorts in sqlite
   cohortIds <- c(18345, 17720, 14907) # Celecoxib, Type 2 diabetes, diclofenac (no history of GIH)
-  cohortTable <- paste0("ct_", Sys.getpid(), gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
+  cohortTable <- paste0("ct_", Sys.getpid(), format(Sys.time(), "%s"), sample(1:100, 1))
   if (getOption("useAllCovariates", default = FALSE)) {
     temporalCovariateSettings <- getDefaultCovariateSettings()
   } else {

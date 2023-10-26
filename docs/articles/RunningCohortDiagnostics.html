@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.2.4</span>
       </span>
     </div>
 
@@ -97,7 +97,7 @@
                         <h4 data-toc-skip class="author">Gowtham Rao and
 James P. Gilbert</h4>
             
-            <h4 data-toc-skip class="date">2023-04-10</h4>
+            <h4 data-toc-skip class="date">2023-09-19</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/HEAD/vignettes/RunningCohortDiagnostics.Rmd" class="external-link"><code>vignettes/RunningCohortDiagnostics.Rmd</code></a></small>
       <div class="hidden name"><code>RunningCohortDiagnostics.Rmd</code></div>
@@ -148,7 +148,7 @@ code:</p>
 <p>For the purposes of this example, we will use the Eunomia test CDM
 package that is in an Sqlite database stored locally.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu">Eunomia</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Eunomia/man/getEunomiaConnectionDetails.html" class="external-link">getEunomiaConnectionDetails</a></span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu">Eunomia</span><span class="fu">::</span><span class="fu">getEunomiaConnectionDetails</span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">cdmDatabaseSchema</span> <span class="op">&lt;-</span> <span class="st">"main"</span></span>
 <span><span class="va">tempEmulationSchema</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
@@ -210,7 +210,7 @@ references from ATLAS that can be used by cohort diagnostics:</p>
 <span><span class="co"># list of cohort ids</span></span>
 <span><span class="va">cohortIds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">18345</span>, <span class="fl">18346</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">cohortDefinitionSet</span> <span class="op">&lt;-</span> <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/exportCohortDefinitionSet.html" class="external-link">exportCohortDefinitionSet</a></span><span class="op">(</span></span>
+<span><span class="va">cohortDefinitionSet</span> <span class="op">&lt;-</span> <span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu">exportCohortDefinitionSet</span><span class="op">(</span></span>
 <span>  baseUrl <span class="op">=</span> <span class="va">baseUrl</span>,</span>
 <span>  cohortIds <span class="op">=</span> <span class="va">cohortIds</span>,</span>
 <span>  generateStats <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -331,7 +331,7 @@ details.</p>
 
       <footer><div class="copyright">
   <p></p>
-<p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
+<p>Developed by Jamie Gilbert, Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver.</p>
 </div>
 
 <div class="pkgdown">
