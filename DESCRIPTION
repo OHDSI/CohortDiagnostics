@@ -1,7 +1,7 @@
 Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Cohorts
-Version: 3.2.4
+Version: 3.3.0
 Date: 2022-12-19
 Authors@R: c(
     person("Jamie", "Gilbert", email = "gilbert@ohdsi.org", role = c("aut", "cre")),
@@ -50,7 +50,9 @@ Suggests:
   zip,
   knitr,
   shiny,
-  OhdsiShinyModules
+  OhdsiShinyModules,
+  rsconnect,
+  yaml
 Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
