@@ -85,8 +85,8 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
       dplyr::mutate(p = sumValue / populationSize)
 
     if (nrow(covariates %>%
-      dplyr::filter(p > 1) %>%
-      dplyr::collect()) > 0) {
+               dplyr::filter(p > 1) %>%
+               dplyr::collect()) > 0) {
       stop(
         paste0(
           "During characterization, population size (denominator) was found to be smaller than features Value (numerator).",
@@ -111,8 +111,15 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           "mean",
           "sd"
         )
-      if (length(is.na(covariates$timeId)) > 0) {
-        covariates[is.na(covariates$timeId), ]$timeId <- -1
+
+      tidNaCount <- covariates %>%
+        dplyr::filter(is.na(timeId)) %>%
+        dplyr::count() %>%
+        dplyr::pull()
+
+      if (tidNaCount > 0) {
+        covariates <- covariates %>%
+          dplyr::mutate(timeId = if_else(is.na(.data$timeId), -1, .data$timeId))
       }
     } else {
       covariates <- covariates %>%
@@ -153,8 +160,15 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           "mean",
           "sd"
         )
-      if (length(is.na(covariates$timeId)) > 0) {
-        covariates[is.na(covariates$timeId), ]$timeId <- -1
+
+      tidNaCount <- covariates %>%
+        dplyr::filter(is.na(timeId)) %>%
+        dplyr::count() %>%
+        dplyr::pull()
+
+      if (tidNaCount > 0) {
+        covariates <- covariates %>%
+          dplyr::mutate(timeId = if_else(is.na(.data$timeId), -1, .data$timeId))
       }
     } else {
       covariates <- covariates %>%
@@ -272,7 +286,7 @@ executeCohortCharacterization <- function(connection,
           tempEmulationSchema = tempEmulationSchema,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
-          cohortIds = subset[start:end, ]$cohortId,
+          cohortIds = subset[start:end,]$cohortId,
           covariateSettings = covariateSettings,
           cdmVersion = cdmVersion,
           exportFolder = exportFolder
@@ -294,9 +308,9 @@ executeCohortCharacterization <- function(connection,
       )
 
       recordTasksDone(
-        cohortId = subset[start:end, ]$cohortId,
+        cohortId = subset[start:end,]$cohortId,
         task = task,
-        checksum = subset[start:end, ]$checksum,
+        checksum = subset[start:end,]$checksum,
         recordKeepingFile = recordKeepingFile,
         incremental = incremental
       )
