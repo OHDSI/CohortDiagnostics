@@ -3,6 +3,7 @@
 export(createDiagnosticsExplorerZip)
 export(createMergedResultsFile)
 export(createResultsDataModel)
+export(deployPositConnectApp)
 export(executeDiagnostics)
 export(getCdmDataSourceInformation)
 export(getCohortCounts)

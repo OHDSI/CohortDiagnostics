@@ -33,7 +33,6 @@
 #' @param port             (optional) Only used if \code{runOverNetwork} = TRUE.
 #' @param launch.browser   Should the app be launched in your default browser, or in a Shiny window.
 #'                         Note: copying to clipboard will not work in a Shiny window.
-#' @param enableAnnotation Enable annotation functionality in shiny app
 #' @param aboutText        Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 #'                         If not provided, no About tab will be shown.
 #' @param tablePrefix      (Optional)  string to insert before table names (e.g. "cd_") for database table names
@@ -63,8 +62,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
                                       makePublishable = FALSE,
                                       publishDir = file.path(getwd(), "DiagnosticsExplorer"),
                                       overwritePublishDir = FALSE,
-                                      launch.browser = FALSE,
-                                      enableAnnotation = TRUE) {
+                                      launch.browser = FALSE) {
   useShinyPublishFile <- FALSE
   if (is.null(shinyConfigPath)) {
     if (is.null(connectionDetails)) {
@@ -134,7 +132,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
       }
 
       dir.create(publishDir, showWarnings = FALSE)
-      filesToCopy <- file.path(appDir, list.files(appDir))
+      filesToCopy <- list.files(appDir, all.files = TRUE, full.names = TRUE)
       file.copy(filesToCopy, publishDir, recursive = TRUE, overwrite = TRUE)
       if (useShinyPublishFile) {
         file.copy(sqliteDbPath, file.path(publishDir, "data", "MergedCohortDiagnosticsData.sqlite"), overwrite = TRUE)
@@ -198,6 +196,7 @@ createMergedResultsFile <-
       list.files(
         path = dataFolder,
         pattern = ".zip",
+        all.files = TRUE,
         full.names = TRUE,
         recursive = TRUE
       )
@@ -231,7 +230,7 @@ createMergedResultsFile <-
 createDiagnosticsExplorerZip <- function(outputZipfile = file.path(getwd(), "DiagnosticsExplorer.zip"),
                                          sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
                                          shinyDirectory = system.file(file.path("shiny", "DiagnosticsExplorer"),
-                                           package = "CohortDiagnostics"
+                                                                      package = "CohortDiagnostics"
                                          ),
                                          overwrite = FALSE) {
   outputZipfile <- normalizePath(outputZipfile, mustWork = FALSE)
@@ -255,4 +254,99 @@ createDiagnosticsExplorerZip <- function(outputZipfile = file.path(getwd(), "Dia
   file.copy(sqliteDbPath, file.path(tmpDir, "DiagnosticsExplorer", "data", "MergedCohortDiagnosticsData.sqlite"))
 
   DatabaseConnector::createZipFile(outputZipfile, file.path(tmpDir, "DiagnosticsExplorer"), rootFolder = tmpDir)
+}
+
+
+#' Rsconnect deploy
+#' @description
+#' Deploy your application to an posit connect platform or shinyapps.io server
+#'
+#' @export
+#' @inheritParams launchDiagnosticsExplorer
+#' @param appName               string name to call app - should be unique on posit connect server
+#' @param appDir                optional - directory to use to copy files for deployment. If you use a consistent dir
+#'                              other internal options can change.
+#' @param  useRenvironFile      logical - not recommended, store db credentials in .Renviron file
+#' @param ...                   other parameters passed to rsconnect::deployApp
+deployPositConnectApp <- function(appName,
+                                  appDir = tempfile(),
+                                  sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
+                                  shinyDirectory = system.file(file.path("shiny", "DiagnosticsExplorer"),
+                                                               package = "CohortDiagnostics"
+                                  ),
+                                  connectionDetails = NULL,
+                                  shinyConfigPath = NULL,
+                                  resultsDatabaseSchema = NULL,
+                                  vocabularyDatabaseSchemas = resultsDatabaseSchema,
+                                  tablePrefix = "",
+                                  cohortTableName = "cohort",
+                                  databaseTableName = "database",
+                                  port = 80,
+                                  useRenvironFile = FALSE,
+                                  ...) {
+
+  if (!"rsconnect" %in% as.data.frame(installed.packages())$Package) {
+    install.packages("rsconnect")
+  }
+
+  if (!"yaml" %in% as.data.frame(installed.packages())$Package) {
+    install.packages("yaml")
+  }
+
+  if (!"OhdsiShinyModules" %in% as.data.frame(installed.packages())$Package) {
+    remotes::install_github("OHDSI/OhdsiShinyModules")
+  }
+
+  checkmate::assertDirectory(appDir, access = "w")
+
+  args <- rlang::dots_list(...)
+  args$envVars <- c(args$envVars, DATABASECONNECTOR_JAR_FOLDER = "./")
+
+  dir.create(appDir, showWarnings = FALSE)
+  filesToCopy <- list.files(shinyDirectory, all.files = TRUE, full.names = TRUE)
+  file.copy(filesToCopy, appDir, recursive = TRUE, overwrite = TRUE)
+
+  if (is.null(connectionDetails) && is.null(shinyConfigPath)) {
+    checkmate::assertFileExists(sqliteDbPath)
+    file.copy(sqliteDbPath, file.path(appDir, "data", "MergedCohortDiagnosticsData.sqlite"), overwrite = TRUE)
+  } else if (!is.null(shinyConfigPath)) {
+
+    DatabaseConnector::downloadJdbcDrivers(connectionDetails$dbms, appDir)
+    file.copy(shinyConfigPath, file.path(appDir, "config.yml"))
+  } else {
+    DatabaseConnector::downloadJdbcDrivers(connectionDetails$dbms, appDir)
+    if (useRenvironFile) {
+      outputText <- "# Edit credentials here to set on remote server
+# Using an renviron file will store plaintext variables and is not reccomended.
+# A local copy of this will be created and deleted following app deployment
+shinyDbServer=''
+shinydbPw=''
+shinydbUser=''
+shinydbPort=5432
+DATABASECONNECTOR_JAR_FOLDER='.'
+"
+      writeLines(outputText, file.path(appDir, ".Renviron"))
+      res <- utils::edit(file=file.path(appDir, ".Renviron"))
+      # File should always be deleted
+      on.exit(unlink(file.path(appDir, ".Renviron"), force = TRUE))
+    } else {
+      args$envVars <- c(args$envVars,
+                        shinyDbServer = connectionDetails$server(),
+                        shinydbPw = connectionDetails$password(),
+                        shinydbUser = connectionDetails$user(),
+                        shinydbPort = connectionDetails$port())
+    }
+
+    configOpts <- yaml::read_yaml(file.path(appDir, "config-ohdsi-shiny.yml"))
+    configOpts$tablePrefix <- tablePrefix
+    configOpts$resultsDatabaseSchema <- resultsDatabaseSchema
+    configOpts$vocabularyDatabaseSchemas <- vocabularyDatabaseSchemas
+    configOpts$cohortTableName <- cohortTableName
+    configOpts$databaseTableName <- databaseTableName
+    yaml::write_yaml(configOpts, file.path(appDir, "config.yml"))
+  }
+
+  args$appDir <- appDir
+  args$appName <- appName
+  do.call(rsconnect::deployApp, args)
 }

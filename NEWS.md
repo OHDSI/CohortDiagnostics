@@ -1,3 +1,17 @@
+CohortDiagnostics 3.3.0
+=======================
+
+Changes: 
+
+1. Removed need 
+
+2. Added function to make deployment to posit connect servers easier see ``
+
+Bug fix:
+
+1. Fixes to loading shiny app in OHDSI shiny modules
+
+
 CohortDiagnostics 3.2.4
 =======================
 Bug Fix:
