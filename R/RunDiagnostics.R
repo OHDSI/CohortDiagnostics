@@ -646,6 +646,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
     stop("All cohorts were either not instantiated or all have 0 records.")
   }
 
+  cohortDefinitionSet <- cohortDefinitionSet %>%
+    dplyr::filter(.data$cohortId %in% instantiatedCohorts)
+
   # Inclusion statistics -----------------------------------------------------------------------
   if (runInclusionStatistics) {
     timeExecution(
