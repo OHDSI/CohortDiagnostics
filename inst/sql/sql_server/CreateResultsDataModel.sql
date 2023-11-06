@@ -332,12 +332,13 @@ CREATE TABLE @results_schema.@incidence_rate (
 
 --Table included_source_concept
 --HINT DISTRIBUTE ON RANDOM
+--EDIT TO CORRECT BUG WITH SOURCE_CONCEPT_ID BEING FORCED TO BE NULL WHERE NO SOURCE_CONCEPT_ID IS REQUIRED IN CDM SPEC
 CREATE TABLE @results_schema.@included_source_concept (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
 			concept_id BIGINT NOT NULL,
-			source_concept_id BIGINT NOT NULL,
+			source_concept_id BIGINT, -- REMOVED NOT NULL
 			concept_subjects BIGINT NOT NULL,
 			concept_count BIGINT NOT NULL,
 			PRIMARY KEY(database_id, cohort_id, concept_set_id, concept_id, source_concept_id)
