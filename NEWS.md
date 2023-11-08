@@ -1,3 +1,13 @@
+CohortDiagnostics 3.2.5
+=======================
+
+Bug Fixes:
+
+1. Added migration and support for NULL source concepts in included_source_concept table
+
+2. Fixed issue with characterization export in Andromeda where timeId was null
+
+
 CohortDiagnostics 3.2.4
 =======================
 Bug Fix:

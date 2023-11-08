@@ -128,3 +128,68 @@ createTestShinyDb <- function(connectionDetails = Eunomia::getEunomiaConnectionD
     overwrite = TRUE
   )
 }
+
+runPackageMaintenance <- function() {
+  remotes::install_github("OHDSI/OhdsiRTools")
+  OhdsiRTools::checkUsagePackage("CohortDiagnostics")
+  OhdsiRTools::updateCopyrightYearFolder()
+  styler::style_pkg()
+  devtools::spell_check()
+
+  # Create manual and vignettes:
+  unlink("extras/CohortDiagnostics.pdf")
+  system("R CMD Rd2pdf ./ --output=extras/CohortDiagnostics.pdf")
+
+  dir.create(path = "./inst/doc/", showWarnings = FALSE)
+
+
+  rmarkdown::render("vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd",
+    output_file = "../inst/doc/ViewingResultsUsingDiagnosticsExplorer.pdf",
+    rmarkdown::pdf_document(
+      latex_engine = "pdflatex",
+      toc = TRUE,
+      number_sections = TRUE
+    )
+  )
+
+
+  rmarkdown::render("vignettes/WhatIsCohortDiagnostics.Rmd",
+    output_file = "../inst/doc/WhatIsCohortDiagnostics.pdf",
+    rmarkdown::pdf_document(
+      latex_engine = "pdflatex",
+      toc = TRUE,
+      number_sections = TRUE
+    )
+  )
+
+  rmarkdown::render("vignettes/RunningCohortDiagnostics.Rmd",
+    output_file = "../inst/doc/RunningCohortDiagnostics.pdf",
+    rmarkdown::pdf_document(
+      latex_engine = "pdflatex",
+      toc = TRUE,
+      number_sections = TRUE
+    )
+  )
+
+  pkgdown::build_site()
+  OhdsiRTools::fixHadesLogo()
+
+  # Change shiny app version number to current version
+  pattern <- "Version: (\\d+\\.\\d+\\.\\d+)"
+  text <- readChar("DESCRIPTION", file.info("DESCRIPTION")$size)
+  version <- stringi::stri_extract(text, regex = pattern)
+
+  filePath <- file.path("inst", "shiny", "DiagnosticsExplorer", "global.R")
+  text <- readChar(filePath, file.info(filePath)$size)
+  patternRep <- 'appVersionNum <- "Version: (\\d+\\.\\d+\\.\\d+)"'
+  text <- gsub(patternRep, paste0('appVersionNum <- "', version, '"'), text)
+  writeLines(text, con = file(filePath))
+
+
+  version <- gsub("Version: ", "", version)
+  filePath <- file.path("inst", "sql", "sql_server", "UpdateVersionNumber.sql")
+  text <- readChar(filePath, file.info(filePath)$size)
+  patternRep <- "\\{DEFAULT @version_number = '(\\d+\\.\\d+\\.\\d+)'\\}"
+  text <- gsub(patternRep, paste0("\\{DEFAULT @version_number = '", version, "'\\}"), text)
+  writeLines(text, con = file(filePath))
+}
