@@ -25,7 +25,7 @@ Depends:
 	R (>= 4.1.0)
 Imports:
   Andromeda (>= 0.6.0),
-  ResultModelManager,
+  ResultModelManager (>= 0.5.2),
   checkmate,
   clock,
   digest,
