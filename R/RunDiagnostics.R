@@ -136,7 +136,23 @@ getDefaultCovariateSettings <- function() {
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
+#' @param runOnSample                 Logical. If TRUE, the function will operate on a sample of the data.
+#'                                    Default is FALSE, meaning the function will operate on the full data set.
 #'
+#' @param sampleN                     Integer. The number of records to include in the sample if runOnSample is TRUE.
+#'                                    Default is 1000. Ignored if runOnSample is FALSE.
+#'
+#' @param seed                        Integer. The seed for the random number generator used to create the sample.
+#'                                    This ensures that the same sample can be drawn again in future runs. Default is 64374.
+#'
+#' @param seedArgs                    List. Additional arguments to pass to the sampling function.
+#'                                    This can be used to control aspects of the sampling process beyond the seed and sample size.
+#'
+#' @param sampleIdentifierExpression Character. An expression that generates unique identifiers for each sample.
+#'                                   This expression can use the variables 'cohortId' and 'seed'.
+#'                                   Default is "cohortId * 1000 + seed", which ensures unique identifiers
+#'                                   as long as there are fewer than 1000 cohorts.
+
 #' @examples
 #' \dontrun{
 #' # Load cohorts (assumes that they have already been instantiated)
@@ -211,7 +227,12 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                minCharacterizationMean = 0.01,
                                irWashoutPeriod = 0,
                                incremental = FALSE,
-                               incrementalFolder = file.path(exportFolder, "incremental")) {
+                               incrementalFolder = file.path(exportFolder, "incremental"),
+                               runOnSample = FALSE,
+                               sampleN = 1000,
+                               seed = 64374,
+                               seedArgs = NULL,
+                               sampleIdentifierExpression = "cohortId * 1000 + seed") {
   # collect arguments that were passed to cohort diagnostics at initiation
   callingArgs <- formals(executeDiagnostics)
   callingArgsJson <-
@@ -526,6 +547,21 @@ executeDiagnostics <- function(cohortDefinitionSet,
     } else {
       stop("No connection or connectionDetails provided.")
     }
+  }
+
+  if (runOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
+    cohortDefinitionSet <-
+      CohortGenerator::sampleCohortDefinitionSet(connection = connection,
+                                                 cohortDefinitionSet = cohortDefinitionSet,
+                                                 tempEmulationSchema = tempEmulationSchema,
+                                                 cohortDatabaseSchema = cohortDatabaseSchema,
+                                                 cohortTableNames = cohortTableNames,
+                                                 n = sampleN,
+                                                 seed = seed,
+                                                 seedArgs = seedArgs,
+                                                 identifierExpression = sampleIdentifierExpression,
+                                                 incremental = incremental,
+                                                 incrementalFolder = incrementalFolder)
   }
 
   ## CDM source information----

@@ -5,7 +5,10 @@ Changes:
 
 1. Removed need 
 
-2. Added function to make deployment to posit connect servers easier see ``
+2. Added function to make deployment to posit connect servers easier
+
+3. Added ability to use CohortGenerator sample functionality to executeDiagnostics which speeds up execution for very
+large cohort definitions
 
 Bug fix:
 

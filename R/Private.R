@@ -71,6 +71,8 @@ enforceMinCellValue <-
         " because value below minimum"
       )
     }
+
+    browser()
     if (length(minValues) == 1) {
       data[toCensor, columnName] <- -minValues
     } else {
