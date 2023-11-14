@@ -464,7 +464,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   checkmate::reportAssertions(collection = errorMessage)
   if (!is.null(cohortIds)) {
-    cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(cohortId %in% cohortIds)
+    cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
 
   if (nrow(cohortDefinitionSet) == 0) {
@@ -667,8 +667,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   if (nrow(cohortCounts) > 0) {
     instantiatedCohorts <- cohortCounts %>%
-      dplyr::filter(cohortEntries > 0) %>%
-      dplyr::pull(cohortId)
+      dplyr::filter(.data$cohortEntries > 0) %>%
+      dplyr::pull(.data$cohortId)
     ParallelLogger::logInfo(
       sprintf(
         "Found %s of %s (%1.2f%%) submitted cohorts instantiated. ",

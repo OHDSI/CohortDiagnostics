@@ -30,6 +30,8 @@ other internal options can change.}
 
 \item{sqliteDbPath}{Path to merged sqlite file. See \code{\link{createMergedResultsFile}} to create file.}
 
+\item{shinyDirectory}{(optional) Directyory shiny app code lives. Use this if you wish to modify the explorer}
+
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 DatabaseConnector package, specifying how to connect to the server where

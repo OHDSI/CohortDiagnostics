@@ -142,28 +142,28 @@ makeDataExportable <- function(x,
 
   fieldsInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
-    dplyr::pull(columnName) %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   requiredFieldsInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
-    dplyr::filter(isRequired == "Yes") %>%
-    dplyr::pull(columnName) %>%
+    dplyr::filter(.data$isRequired == "Yes") %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   primaryKeyInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
-    dplyr::filter(primaryKey == "Yes") %>%
-    dplyr::pull(columnName) %>%
+    dplyr::filter(.data$primaryKey == "Yes") %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   columnsToApplyMinCellValue <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
-    dplyr::filter(minCellCount == "Yes") %>%
-    dplyr::pull(columnName) %>%
+    dplyr::filter(.data$minCellCount == "Yes") %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
@@ -311,7 +311,7 @@ getPrefixedTableNames <- function(tablePrefix) {
   return(resultList)
 }
 
-#' Internal utility function for logging execution of variables
+# Internal utility function for logging execution of variables
 timeExecution <- function(exportFolder,
                           taskName,
                           cohortIds = NULL,

@@ -104,11 +104,8 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
       tablePrefix = tablePrefix,
       cohortTableName = cohortTableName,
       databaseTableName = databaseTableName,
-      enableAnnotation = enableAnnotation,
       enableAuthorization = FALSE
     )
-
-    options("enableCdAnnotation" = enableAnnotation)
     on.exit(rm("shinySettings", envir = .GlobalEnv))
   } else {
     checkmate::assertFileExists(shinyConfigPath)
@@ -116,7 +113,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     on.exit(options("CD-shiny-config" = NULL))
   }
 
-  if (!"OhdsiShinyModules" %in% as.data.frame(installed.packages())$Package) {
+  if (!"OhdsiShinyModules" %in% as.data.frame(utils::installed.packages())$Package) {
     remotes::install_github("OHDSI/OhdsiShinyModules")
   }
 
@@ -267,6 +264,7 @@ createDiagnosticsExplorerZip <- function(outputZipfile = file.path(getwd(), "Dia
 #' @param appDir                optional - directory to use to copy files for deployment. If you use a consistent dir
 #'                              other internal options can change.
 #' @param  useRenvironFile      logical - not recommended, store db credentials in .Renviron file
+#' @param shinyDirectory        (optional) Directyory shiny app code lives. Use this if you wish to modify the explorer
 #' @param ...                   other parameters passed to rsconnect::deployApp
 deployPositConnectApp <- function(appName,
                                   appDir = tempfile(),
@@ -285,15 +283,15 @@ deployPositConnectApp <- function(appName,
                                   useRenvironFile = FALSE,
                                   ...) {
 
-  if (!"rsconnect" %in% as.data.frame(installed.packages())$Package) {
+  if (!"rsconnect" %in% as.data.frame(utils::installed.packages())$Package) {
     install.packages("rsconnect")
   }
 
-  if (!"yaml" %in% as.data.frame(installed.packages())$Package) {
+  if (!"yaml" %in% as.data.frame(utils::installed.packages())$Package) {
     install.packages("yaml")
   }
 
-  if (!"OhdsiShinyModules" %in% as.data.frame(installed.packages())$Package) {
+  if (!"OhdsiShinyModules" %in% as.data.frame(utils::installed.packages())$Package) {
     remotes::install_github("OHDSI/OhdsiShinyModules")
   }
 

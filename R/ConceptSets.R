@@ -121,10 +121,10 @@ combineConceptSetsFromCohorts <- function(cohorts) {
   checkmate::reportAssertions(errorMessage)
   checkmate::assertDataFrame(
     x = cohorts %>% dplyr::select(
-      cohortId,
-      sql,
-      json,
-      cohortName
+      "cohortId",
+      "sql",
+      "json",
+      "cohortName"
     ),
     any.missing = FALSE,
     min.cols = 4,
@@ -321,7 +321,7 @@ getCodeSetIds <- function(criterionList) {
     return(NULL)
   } else {
     return(dplyr::tibble(domain = names(criterionList), codeSetIds = codeSetIds)
-    %>% dplyr::filter(!is.na(codeSetIds)))
+    %>% dplyr::filter(!is.na(.data$codeSetIds)))
   }
 }
 
@@ -333,7 +333,7 @@ exportConceptSets <- function(cohortDefinitionSet, exportFolder, minCellCount, d
   # Save concept set metadata ---------------------------------------
   conceptSetsExport <- makeDataExportable(
     x = conceptSets %>%
-      dplyr::select(-uniqueConceptSetId) %>%
+      dplyr::select(-"uniqueConceptSetId") %>%
       dplyr::distinct(),
     tableName = "concept_sets",
     minCellCount = minCellCount,
@@ -664,7 +664,7 @@ runConceptSetDiagnostics <- function(connection,
               )
               return(tidyr::tibble())
             }
-            primaryCodesetIds <- primaryCodesetIds %>% dplyr::filter(domain %in%
+            primaryCodesetIds <- primaryCodesetIds %>% dplyr::filter(.data$domain %in%
               c(domains$domain %>% unique()))
             if (nrow(primaryCodesetIds) == 0) {
               warning(
@@ -943,8 +943,8 @@ runConceptSetDiagnostics <- function(connection,
           .data$conceptId
         ) %>%
         dplyr::summarise(
-          conceptCount = max(conceptCount),
-          conceptSubjects = max(conceptSubjects)
+          conceptCount = max(.data$conceptCount),
+          conceptSubjects = max(.data$conceptSubjects)
         ) %>%
         dplyr::ungroup()
       data <- makeDataExportable(
