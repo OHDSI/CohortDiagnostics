@@ -74,8 +74,11 @@ extractConceptSetsSqlFromCohortSql <- function(cohortSql) {
 
 
 extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
-  cohortDefinition <-
+  cohortDefinition <- tryCatch({
     RJSONIO::fromJSON(content = cohortJson, digits = 23)
+  }, error = function(msg) {
+    return(list())
+  })
   if ("expression" %in% names(cohortDefinition)) {
     expression <- cohortDefinition$expression
   } else {
