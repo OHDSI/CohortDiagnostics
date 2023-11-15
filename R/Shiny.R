@@ -247,7 +247,7 @@ createDiagnosticsExplorerZip <- function(outputZipfile = file.path(getwd(), "Dia
 
   on.exit(unlink(tmpDir, recursive = TRUE, force = TRUE), add = TRUE)
   file.copy(shinyDirectory, tmpDir, recursive = TRUE)
-  dir.create(file.path(tmpDir, "DiagnosticsExplorer", "data"))
+  dir.create(file.path(tmpDir, "DiagnosticsExplorer", "data"), showWarnings = FALSE)
   file.copy(sqliteDbPath, file.path(tmpDir, "DiagnosticsExplorer", "data", "MergedCohortDiagnosticsData.sqlite"))
 
   DatabaseConnector::createZipFile(outputZipfile, file.path(tmpDir, "DiagnosticsExplorer"), rootFolder = tmpDir)
