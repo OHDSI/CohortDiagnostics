@@ -56,9 +56,11 @@ swapColumnContents <-
 
 enforceMinCellValue <-
   function(data, columnName, minValues, silent = FALSE) {
+    data <- as.data.frame(data)
     toCensor <-
       !is.na(data[, columnName]) &
-        data[, columnName] < minValues & data[, columnName] != 0
+        data[, columnName] < minValues & data[, columnName] > 0
+
     if (!silent) {
       percent <- round(100 * sum(toCensor) / nrow(data), 1)
       ParallelLogger::logInfo(
@@ -245,7 +247,9 @@ makeDataExportable <- function(x,
 
   # Ensure that timeId is never NA
   if ("timeId" %in% colnames(x)) {
-    x[is.na(x$timeId), ]$timeId <- 0
+    if (any(is.na(x$timeId))) {
+      x[is.na(x$timeId), "timeId"] <- 0
+    }
   }
   return(x)
 }

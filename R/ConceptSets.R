@@ -187,7 +187,8 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     dplyr::distinct()
 
   conceptSets <- conceptSets %>%
-    dplyr::inner_join(uniqueConceptSets, by = "conceptSetExpression") %>%
+    dplyr::inner_join(uniqueConceptSets, by = "conceptSetExpression", 
+                      relationship = "many-to-many") %>%
     dplyr::distinct() %>%
     dplyr::relocate(
       "uniqueConceptSetId",
@@ -514,7 +515,8 @@ runConceptSetDiagnostics <- function(connection,
                   "cohortId",
                   "conceptSetId"
                 ) %>% dplyr::distinct(),
-                by = "uniqueConceptSetId"
+                by = "uniqueConceptSetId",
+                relationship = "many-to-many"
               ) %>%
               dplyr::select(-"uniqueConceptSetId") %>%
               dplyr::mutate(databaseId = !!databaseId) %>%
@@ -927,7 +929,8 @@ runConceptSetDiagnostics <- function(connection,
               "cohortId",
               "conceptSetId"
             ) %>% dplyr::distinct(),
-          by = "uniqueConceptSetId"
+          by = "uniqueConceptSetId",
+          relationship = "many-to-many"
         ) %>%
         dplyr::select(-"uniqueConceptSetId") %>%
         dplyr::select(
@@ -1012,7 +1015,8 @@ runConceptSetDiagnostics <- function(connection,
     dplyr::tibble() %>%
     dplyr::rename("uniqueConceptSetId" = "codesetId") %>%
     dplyr::inner_join(conceptSets %>% dplyr::distinct(),
-      by = "uniqueConceptSetId"
+      by = "uniqueConceptSetId",
+      relationship = "many-to-many"
     ) %>%
     dplyr::select(
       "cohortId",

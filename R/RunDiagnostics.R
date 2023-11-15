@@ -309,7 +309,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     add = errorMessage
   )
   minCellCount <- utils::type.convert(minCellCount, as.is = TRUE)
-  checkmate::assertInteger(x = minCellCount, lower = 0, add = errorMessage)
+  checkmate::assertInteger(x = minCellCount, len = 1, lower = 0, add = errorMessage)
   minCharacterizationMean <- utils::type.convert(minCharacterizationMean, as.is = TRUE)
   checkmate::assertNumeric(x = minCharacterizationMean, lower = 0, add = errorMessage)
   checkmate::assertLogical(incremental, add = errorMessage)
