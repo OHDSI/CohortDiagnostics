@@ -20,6 +20,9 @@ extractConceptSetsSqlFromCohortSql <- function(cohortSql) {
   }
   sql <- gsub("with primary_events.*", "", cohortSql)
 
+  if (is.null(sql)) {
+    return(tidyr::tibble())
+  }
   # Find opening and closing parentheses:
   starts <- stringr::str_locate_all(sql, "\\(")[[1]][, 1]
   ends <- stringr::str_locate_all(sql, "\\)")[[1]][, 1]
