@@ -3,7 +3,7 @@ CohortDiagnostics 3.3.0
 
 Changes: 
 
-1. Removed need 
+1. Resolved issues with package creating build errors
 
 2. Added function to make deployment to posit connect servers easier
 
@@ -13,6 +13,8 @@ large cohort definitions
 Bug fix:
 
 1. Fixes to loading shiny app in OHDSI shiny modules
+
+2. Bug fixes to prevent null value issues with included source concept diagnostics
 
 
 CohortDiagnostics 3.2.4
