@@ -182,7 +182,7 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     }
   }
   if (length(conceptSets) == 0) {
-    return(NULL)
+    return(data.frame())
   }
   conceptSets <- dplyr::bind_rows(conceptSets) %>%
     dplyr::arrange(.data$cohortId, .data$conceptSetId)
@@ -337,11 +337,13 @@ exportConceptSets <- function(cohortDefinitionSet, exportFolder, minCellCount, d
   # We need to get concept sets from all cohorts in case subsets are present and
   # Added incrementally after cohort generation
   conceptSets <- combineConceptSetsFromCohorts(cohortDefinitionSet)
+
+  conceptSets <- conceptSets %>%
+      dplyr::select(-"uniqueConceptSetId") %>%
+      dplyr::distinct()
   # Save concept set metadata ---------------------------------------
   conceptSetsExport <- makeDataExportable(
-    x = conceptSets %>%
-      dplyr::select(-"uniqueConceptSetId") %>%
-      dplyr::distinct(),
+    x = conceptSets,
     tableName = "concept_sets",
     minCellCount = minCellCount,
     databaseId = databaseId
@@ -411,7 +413,7 @@ runConceptSetDiagnostics <- function(connection,
   subset <- dplyr::distinct(subset)
 
   if (nrow(subset) == 0) {
-    return()
+    return(NULL)
   }
 
   # We need to get concept sets from all cohorts in case subsets are present and
