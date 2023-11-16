@@ -74,11 +74,14 @@ extractConceptSetsSqlFromCohortSql <- function(cohortSql) {
 
 
 extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
-  cohortDefinition <- tryCatch({
-    RJSONIO::fromJSON(content = cohortJson, digits = 23)
-  }, error = function(msg) {
-    return(list())
-  })
+  cohortDefinition <- tryCatch(
+    {
+      RJSONIO::fromJSON(content = cohortJson, digits = 23)
+    },
+    error = function(msg) {
+      return(list())
+    }
+  )
   if ("expression" %in% names(cohortDefinition)) {
     expression <- cohortDefinition$expression
   } else {
@@ -193,8 +196,10 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     dplyr::distinct()
 
   conceptSets <- conceptSets %>%
-    dplyr::inner_join(uniqueConceptSets, by = "conceptSetExpression", 
-                      relationship = "many-to-many") %>%
+    dplyr::inner_join(uniqueConceptSets,
+      by = "conceptSetExpression",
+      relationship = "many-to-many"
+    ) %>%
     dplyr::distinct() %>%
     dplyr::relocate(
       "uniqueConceptSetId",
@@ -343,8 +348,8 @@ exportConceptSets <- function(cohortDefinitionSet, exportFolder, minCellCount, d
   }
 
   conceptSets <- conceptSets %>%
-      dplyr::select(-"uniqueConceptSetId") %>%
-      dplyr::distinct()
+    dplyr::select(-"uniqueConceptSetId") %>%
+    dplyr::distinct()
   # Save concept set metadata ---------------------------------------
   conceptSetsExport <- makeDataExportable(
     x = conceptSets,

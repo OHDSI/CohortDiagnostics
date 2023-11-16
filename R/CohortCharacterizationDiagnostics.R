@@ -85,8 +85,8 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
       dplyr::mutate(p = .data$sumValue / populationSize)
 
     if (nrow(covariates %>%
-               dplyr::filter(.data$p > 1) %>%
-               dplyr::collect()) > 0) {
+      dplyr::filter(.data$p > 1) %>%
+      dplyr::collect()) > 0) {
       stop(
         paste0(
           "During characterization, population size (denominator) was found to be smaller than features Value (numerator).",
@@ -286,7 +286,7 @@ executeCohortCharacterization <- function(connection,
           tempEmulationSchema = tempEmulationSchema,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
-          cohortIds = subset[start:end,]$cohortId,
+          cohortIds = subset[start:end, ]$cohortId,
           covariateSettings = covariateSettings,
           cdmVersion = cdmVersion,
           exportFolder = exportFolder
@@ -308,9 +308,9 @@ executeCohortCharacterization <- function(connection,
       )
 
       recordTasksDone(
-        cohortId = subset[start:end,]$cohortId,
+        cohortId = subset[start:end, ]$cohortId,
         task = task,
-        checksum = subset[start:end,]$checksum,
+        checksum = subset[start:end, ]$checksum,
         recordKeepingFile = recordKeepingFile,
         incremental = incremental
       )

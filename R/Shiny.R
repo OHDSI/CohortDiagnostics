@@ -227,7 +227,7 @@ createMergedResultsFile <-
 createDiagnosticsExplorerZip <- function(outputZipfile = file.path(getwd(), "DiagnosticsExplorer.zip"),
                                          sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
                                          shinyDirectory = system.file(file.path("shiny", "DiagnosticsExplorer"),
-                                                                      package = "CohortDiagnostics"
+                                           package = "CohortDiagnostics"
                                          ),
                                          overwrite = FALSE) {
   outputZipfile <- normalizePath(outputZipfile, mustWork = FALSE)
@@ -270,7 +270,7 @@ deployPositConnectApp <- function(appName,
                                   appDir = tempfile(),
                                   sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
                                   shinyDirectory = system.file(file.path("shiny", "DiagnosticsExplorer"),
-                                                               package = "CohortDiagnostics"
+                                    package = "CohortDiagnostics"
                                   ),
                                   connectionDetails = NULL,
                                   shinyConfigPath = NULL,
@@ -282,7 +282,6 @@ deployPositConnectApp <- function(appName,
                                   port = 80,
                                   useRenvironFile = FALSE,
                                   ...) {
-
   if (!"rsconnect" %in% as.data.frame(utils::installed.packages())$Package) {
     install.packages("rsconnect")
   }
@@ -308,7 +307,6 @@ deployPositConnectApp <- function(appName,
     checkmate::assertFileExists(sqliteDbPath)
     file.copy(sqliteDbPath, file.path(appDir, "data", "MergedCohortDiagnosticsData.sqlite"), overwrite = TRUE)
   } else if (!is.null(shinyConfigPath)) {
-
     DatabaseConnector::downloadJdbcDrivers(connectionDetails$dbms, appDir)
     file.copy(shinyConfigPath, file.path(appDir, "config.yml"))
   } else {
@@ -324,15 +322,16 @@ shinydbPort=5432
 DATABASECONNECTOR_JAR_FOLDER='.'
 "
       writeLines(outputText, file.path(appDir, ".Renviron"))
-      res <- utils::edit(file=file.path(appDir, ".Renviron"))
+      res <- utils::edit(file = file.path(appDir, ".Renviron"))
       # File should always be deleted
       on.exit(unlink(file.path(appDir, ".Renviron"), force = TRUE))
     } else {
       args$envVars <- c(args$envVars,
-                        shinyDbServer = connectionDetails$server(),
-                        shinydbPw = connectionDetails$password(),
-                        shinydbUser = connectionDetails$user(),
-                        shinydbPort = connectionDetails$port())
+        shinyDbServer = connectionDetails$server(),
+        shinydbPw = connectionDetails$password(),
+        shinydbUser = connectionDetails$user(),
+        shinydbPort = connectionDetails$port()
+      )
     }
 
     configOpts <- yaml::read_yaml(file.path(appDir, "config-ohdsi-shiny.yml"))

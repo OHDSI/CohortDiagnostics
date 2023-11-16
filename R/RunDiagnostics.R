@@ -551,17 +551,19 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   if (runOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
     cohortDefinitionSet <-
-      CohortGenerator::sampleCohortDefinitionSet(connection = connection,
-                                                 cohortDefinitionSet = cohortDefinitionSet,
-                                                 tempEmulationSchema = tempEmulationSchema,
-                                                 cohortDatabaseSchema = cohortDatabaseSchema,
-                                                 cohortTableNames = cohortTableNames,
-                                                 n = sampleN,
-                                                 seed = seed,
-                                                 seedArgs = seedArgs,
-                                                 identifierExpression = sampleIdentifierExpression,
-                                                 incremental = incremental,
-                                                 incrementalFolder = incrementalFolder)
+      CohortGenerator::sampleCohortDefinitionSet(
+        connection = connection,
+        cohortDefinitionSet = cohortDefinitionSet,
+        tempEmulationSchema = tempEmulationSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTableNames = cohortTableNames,
+        n = sampleN,
+        seed = seed,
+        seedArgs = seedArgs,
+        identifierExpression = sampleIdentifierExpression,
+        incremental = incremental,
+        incrementalFolder = incrementalFolder
+      )
   }
 
   ## CDM source information----
