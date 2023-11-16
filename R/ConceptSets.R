@@ -338,6 +338,10 @@ exportConceptSets <- function(cohortDefinitionSet, exportFolder, minCellCount, d
   # Added incrementally after cohort generation
   conceptSets <- combineConceptSetsFromCohorts(cohortDefinitionSet)
 
+  if (!hasData(conceptSets)) {
+    return(invisible(NULL))
+  }
+
   conceptSets <- conceptSets %>%
       dplyr::select(-"uniqueConceptSetId") %>%
       dplyr::distinct()
