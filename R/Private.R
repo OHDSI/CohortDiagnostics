@@ -56,9 +56,11 @@ swapColumnContents <-
 
 enforceMinCellValue <-
   function(data, columnName, minValues, silent = FALSE) {
+    data <- as.data.frame(data)
     toCensor <-
       !is.na(data[, columnName]) &
-        data[, columnName] < minValues & data[, columnName] != 0
+        data[, columnName] < minValues & data[, columnName] > 0
+
     if (!silent) {
       percent <- round(100 * sum(toCensor) / nrow(data), 1)
       ParallelLogger::logInfo(
@@ -71,6 +73,7 @@ enforceMinCellValue <-
         " because value below minimum"
       )
     }
+
     if (length(minValues) == 1) {
       data[toCensor, columnName] <- -minValues
     } else {
@@ -141,28 +144,28 @@ makeDataExportable <- function(x,
 
   fieldsInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
-    dplyr::pull(columnName) %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   requiredFieldsInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
-    dplyr::filter(isRequired == "Yes") %>%
-    dplyr::pull(columnName) %>%
+    dplyr::filter(.data$isRequired == "Yes") %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   primaryKeyInDataModel <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
-    dplyr::filter(primaryKey == "Yes") %>%
-    dplyr::pull(columnName) %>%
+    dplyr::filter(.data$primaryKey == "Yes") %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
   columnsToApplyMinCellValue <- resultsDataModel %>%
     dplyr::filter(.data$tableName == !!tableName) %>%
-    dplyr::filter(minCellCount == "Yes") %>%
-    dplyr::pull(columnName) %>%
+    dplyr::filter(.data$minCellCount == "Yes") %>%
+    dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     unique()
 
@@ -244,7 +247,9 @@ makeDataExportable <- function(x,
 
   # Ensure that timeId is never NA
   if ("timeId" %in% colnames(x)) {
-    x[is.na(x$timeId), ]$timeId <- 0
+    if (any(is.na(x$timeId))) {
+      x[is.na(x$timeId), "timeId"] <- 0
+    }
   }
   return(x)
 }
@@ -310,7 +315,7 @@ getPrefixedTableNames <- function(tablePrefix) {
   return(resultList)
 }
 
-#' Internal utility function for logging execution of variables
+# Internal utility function for logging execution of variables
 timeExecution <- function(exportFolder,
                           taskName,
                           cohortIds = NULL,
