@@ -5,7 +5,7 @@
 
 -- FSQLITE : ALTER TABLE @database_schema.@table_prefix@included_source_concept ALTER COLUMN source_concept_id BIGINT;
 ALTER TABLE @database_schema.@table_prefix@included_source_concept RENAME TO _included_source_concept_old;
-CREATE TABLE @database_schema.@included_source_concept (
+CREATE TABLE @database_schema.@table_prefix@included_source_concept (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE @database_schema.@included_source_concept (
 			PRIMARY KEY(database_id, cohort_id, concept_set_id, concept_id)
 );
 
-INSERT INTO @database_schema.@included_source_concept (
+INSERT INTO @database_schema.@table_prefix@included_source_concept (
         database_id,
         cohort_id,
         concept_set_id,
