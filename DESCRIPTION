@@ -38,7 +38,7 @@ Imports:
   SqlRender (>= 1.9.0),
   stringr,
   tidyr (>= 1.2.0),
-  CohortGenerator (>= 0.9.0),
+  CohortGenerator,
   remotes
 Suggests:
   Eunomia,
@@ -59,7 +59,7 @@ Remotes:
   ohdsi/ResultModelManager,
   ohdsi/ROhdsiWebApi,
   ohdsi/CirceR,
-  ohdsi/CohortGenerator,
+  ohdsi/CohortGenerator@random_sample,
   ohdsi/OhdsiShinyModules
 License: Apache License
 VignetteBuilder: knitr
