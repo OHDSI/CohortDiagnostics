@@ -51,6 +51,7 @@ test_that("Check function makeDataExportable", {
 })
 
 test_that("timeExecutions function", {
+  readr::local_edition(1)
   temp <- tempfile()
   on.exit(unlink(temp, force = TRUE, recursive = TRUE))
   dir.create(temp)
