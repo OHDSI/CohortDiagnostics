@@ -8,7 +8,7 @@ Bug Fixes:
 
 3. Fixed issue with Andromeda calls in characterization on R 4.3.x
 
-
+4. Fix for Vroom issue on mac
 
 CohortDiagnostics 3.2.4
 =======================
