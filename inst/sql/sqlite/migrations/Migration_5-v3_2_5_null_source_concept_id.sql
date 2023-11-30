@@ -16,7 +16,7 @@ CREATE TABLE @database_schema.@included_source_concept (
 			PRIMARY KEY(database_id, cohort_id, concept_set_id, concept_id)
 );
 
-INSERT INTO @database_schema.@included_source_concept (
+INSERT INTO @database_schema.@table_prefix@included_source_concept (
         database_id,
         cohort_id,
         concept_set_id,
