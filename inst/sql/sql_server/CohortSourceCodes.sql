@@ -13,7 +13,7 @@ IF OBJECT_ID('tempdb..@include_source_concept_table', 'U') IS NOT NULL
 
 SELECT codeset_id AS concept_set_id,
 	concept_sets.concept_id,
-	COALESCE(source_concept_id, 0),
+	COALESCE(source_concept_id, 0) as source_concept_id,
 {@by_month} ? {
 	event_year,
 	event_month,
