@@ -1,3 +1,6 @@
+# fix for linux systems with weird rJava behaviour
+if (is.null(getOption("java.parameters")))
+    options(java.parameters = "-Xss100m")
 
 loadShinySettings <- function(configPath) {
   stopifnot(file.exists(configPath))
@@ -103,5 +106,6 @@ if (packageVersion("OhdsiShinyModules") >= as.numeric_version("1.2.0")) {
     )
 
 }
+
 
 
