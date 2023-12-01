@@ -1,21 +1,24 @@
 CohortDiagnostics 3.3.0
 =======================
 
-Changes: 
+Changes:
 
-1. Resolved issues with package creating build errors
+1. Added function to make deployment to posit connect servers easier
 
-2. Added function to make deployment to posit connect servers easier
-
-3. Added ability to use CohortGenerator sample functionality to executeDiagnostics which speeds up execution for very
+2 Added ability to use CohortGenerator sample functionality to executeDiagnostics which speeds up execution for very
 large cohort definitions
 
-Bug fix:
+CohortDiagnostics 3.2.5
+=======================
+Bug Fixes:
 
-1. Fixes to loading shiny app in OHDSI shiny modules
+1. fixed broken migrations using "ADD COLUMN "
 
-2. Bug fixes to prevent null value issues with included source concept diagnostics
+2. Fixed broken links in manaual
 
+3. Fixed issue with Andromeda calls in characterization on R 4.3.x
+
+4. Fix for Vroom issue on mac
 
 CohortDiagnostics 3.2.4
 =======================

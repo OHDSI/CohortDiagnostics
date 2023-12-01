@@ -634,6 +634,7 @@ runConceptSetDiagnostics <- function(connection,
     }
     if (nrow(subsetBreakdown) > 0) {
       start <- Sys.time()
+      readr::local_edition(1)
       domains <-
         readr::read_csv(
           system.file("csv", "domains.csv", package = utils::packageName()),

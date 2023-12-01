@@ -11,7 +11,8 @@ FROM @instantiated_concept_sets;
 IF OBJECT_ID('tempdb..@include_source_concept_table', 'U') IS NOT NULL
   DROP TABLE @include_source_concept_table;
 
-SELECT codeset_id AS concept_set_id,
+SELECT  DISTINCT
+    codeset_id AS concept_set_id,
 	concept_sets.concept_id,
 	COALESCE(source_concept_id, concept_sets.concept_id) as source_concept_id,
 {@by_month} ? {

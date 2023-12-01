@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.3.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">3.2.5</span>
       </span>
     </div>
 
@@ -94,7 +94,8 @@
 <span>  makePublishable <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  publishDir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"DiagnosticsExplorer"</span><span class="op">)</span>,</span>
 <span>  overwritePublishDir <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  launch.browser <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  launch.browser <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  enableAnnotation <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -172,6 +173,10 @@ If not provided, no About tab will be shown.</p></dd>
 <dt>launch.browser</dt>
 <dd><p>Should the app be launched in your default browser, or in a Shiny window.
 Note: copying to clipboard will not work in a Shiny window.</p></dd>
+
+
+<dt>enableAnnotation</dt>
+<dd><p>Enable annotation functionality in shiny app</p></dd>
 
 </dl></div>
     <div id="details">
