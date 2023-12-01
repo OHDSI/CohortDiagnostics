@@ -1,3 +1,15 @@
+CohortDiagnostics 3.2.5
+=======================
+Bug Fixes:
+
+1. fixed broken migrations using "ADD COLUMN "
+
+2. Fixed broken links in manaual
+
+3. Fixed issue with Andromeda calls in characterization on R 4.3.x
+
+4. Fix for Vroom issue on mac
+
 CohortDiagnostics 3.2.4
 =======================
 Bug Fix:

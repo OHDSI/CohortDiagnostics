@@ -92,6 +92,7 @@ enforceMinCellValue <-
 #' Throws an error if the input file does not have the correct encoding.
 #'
 checkInputFileEncoding <- function(fileName) {
+  readr::local_edition(1)
   encoding <- readr::guess_encoding(file = fileName, n_max = min(1e7))
 
   if (!encoding$encoding[1] %in% c("UTF-8", "ASCII")) {
@@ -318,6 +319,7 @@ timeExecution <- function(exportFolder,
                           start = NA,
                           execTime = NA,
                           expr = NULL) {
+  readr::local_edition(1)
   executionTimePath <- file.path(exportFolder, "executionTimes.csv")
   if (is.na(start)) {
     start <- Sys.time()
