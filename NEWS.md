@@ -1,3 +1,41 @@
+=======
+CohortDiagnostics 3.3.0
+=======================
+
+Changes:
+
+1. Added function to make deployment to posit connect servers easier
+
+2 Added ability to use CohortGenerator sample functionality to executeDiagnostics which speeds up execution for very
+large cohort definitions
+
+CohortDiagnostics 3.2.5
+=======================
+Bug Fixes:
+
+1. fixed broken migrations using "ADD COLUMN "
+
+2. Fixed broken links in manaual
+
+3. Fixed issue with Andromeda calls in characterization on R 4.3.x
+
+4. Fix for Vroom issue on mac
+
+CohortDiagnostics 3.2.4
+=======================
+Bug Fix:
+
+1. Added support for newer API to OhdsiShinyModules (while maintaining support for old version)
+
+2. Resolved issue with incidence rates sometimes exporting as null/infinite by setting to 0 in all error cases
+
+
+CohortDiagnostics 3.2.3
+=======================
+
+1. Resolved issue where concept sets were only exported when diagnostics for them were executed. All concept sets are
+now always exported into results csv and imported into databases
+
 CohortDiagnostics 3.2.2
 =======================
 

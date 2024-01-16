@@ -1,3 +1,6 @@
+# fix for linux systems with weird rJava behaviour
+if (is.null(getOption("java.parameters")))
+    options(java.parameters = "-Xss100m")
 
 loadShinySettings <- function(configPath) {
   stopifnot(file.exists(configPath))
@@ -78,15 +81,25 @@ if (FALSE) {
 
 connectionHandler <- ResultModelManager::PooledConnectionHandler$new(shinySettings$connectionDetails)
 
+if (!shinySettings$connectionDetails$dbms %in% c("duckdb", "sqlite")) {
+  DatabaseConnector::downloadJdbcDrivers(dbms = shinySettings$connectionDetails,
+                                         pathToDriver = shinySettings$connectionDetails$pathToDriver)
+
+}
+
+if (packageVersion("OhdsiShinyModules") <= as.numeric_version("2.0.0")) {
+  stop("OhdsiShinyModules version no longer supported.
+  Update to a newer version with remotes::install_github('OhdsiShinyModules')")
+}
+
+resultDatabaseSettings <- list(
+  schema = shinySettings$resultsDatabaseSchema,
+  vocabularyDatabaseSchema = shinySettings$vocabularyDatabaseSchema,
+  cdTablePrefix = shinySettings$tablePrefix,
+  cgTable = shinySettings$cohortTableName,
+  databaseTable = shinySettings$databaseTableName
+)
+
 dataSource <-
-    OhdsiShinyModules::createCdDatabaseDataSource(
-      connectionHandler = connectionHandler,
-      schema = shinySettings$resultsDatabaseSchema,
-      vocabularyDatabaseSchema = shinySettings$vocabularyDatabaseSchema,
-      tablePrefix = shinySettings$tablePrefix,
-      cohortTableName = shinySettings$cohortTableName,
-      databaseTableName = shinySettings$databaseTableName
-    )
-
-
-
+  OhdsiShinyModules::createCdDatabaseDataSource(connectionHandler = connectionHandler,
+                                                resultDatabaseSettings = resultDatabaseSettings)

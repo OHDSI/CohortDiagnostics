@@ -9,10 +9,9 @@ createConceptCountsTable(
   connection = NULL,
   cdmDatabaseSchema,
   tempEmulationSchema = NULL,
-  conceptCountsDatabaseSchema,
+  conceptCountsDatabaseSchema = cdmDatabaseSchema,
   conceptCountsTable = "concept_counts",
-  conceptCountsTableIsTemp = FALSE,
-  removeCurrentTable = TRUE
+  conceptCountsTableIsTemp = FALSE
 )
 }
 \arguments{
