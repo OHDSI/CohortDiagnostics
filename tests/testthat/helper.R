@@ -74,10 +74,6 @@ loadTestCohortDefinitionSet <- function(cohortIds = NULL, useSubsets = TRUE) {
     cohortDefinitionSet <- CohortGenerator::addCohortSubsetDefinition(cohortDefinitionSet, getDefaultSubsetDefinition(), targetCohortIds = c(18345))
   }
 
-  if (useSubsets) {
-    cohortDefinitionSet <- CohortGenerator::addCohortSubsetDefinition(cohortDefinitionSet, getDefaultSubsetDefinition(), targetCohortIds = c(18345))
-  }
-
   cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)
 
   return(cohortDefinitionSet)
