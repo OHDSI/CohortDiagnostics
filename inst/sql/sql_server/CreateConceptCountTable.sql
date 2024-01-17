@@ -1,4 +1,5 @@
-{DEFAULT @table_is_temp = FALSE, @remove_current_table = TRUE}
+{DEFAULT @table_is_temp = FALSE}
+{DEFAULT @remove_current_table = TRUE}
 
 {@remove_current_table} ? {
   {@table_is_temp} ? {

@@ -10,7 +10,8 @@ if (Sys.getenv("CDM5_POSTGRESQL_SERVER") == "") {
     pathToDriver = jdbcDriverFolder
   )
   
-  resultsDatabaseSchema <- paste0("r", gsub("[: -]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
+  cdmDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
+  resultsDatabaseSchema <- paste0("r", gsub("[: -.]", "", Sys.time(), perl = TRUE), sample(1:100, 1))
   
   # Always clean up
   withr::defer({
