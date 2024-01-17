@@ -50,7 +50,9 @@ Suggests:
   zip,
   knitr,
   shiny,
-  OhdsiShinyModules
+  OhdsiShinyModules,
+  rsconnect,
+  yaml
 Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
