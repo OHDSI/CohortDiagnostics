@@ -62,7 +62,7 @@ getDefaultVocabularyTableNames <- function() {
       )
     )
   )
-  DatabaseConnector::executeSql(connection, sql)
+  executeSql(connection, sql)
 }
 
 #' Create the results data model tables on a database server.
@@ -172,7 +172,7 @@ migrateDataModel <- function(connectionDetails, databaseSchema, tablePrefix = ""
 
   connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
-  DatabaseConnector::executeSql(connection, updateVersionSql)
+  executeSql(connection, updateVersionSql)
 }
 
 

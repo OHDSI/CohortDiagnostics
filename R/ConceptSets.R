@@ -221,7 +221,7 @@ mergeTempTables <-
         targetDialect = getDbms(connection),
         tempEmulationSchema = tempEmulationSchema
       )
-    DatabaseConnector::executeSql(connection,
+    executeSql(connection,
       sql,
       progressBar = FALSE,
       reportOverallTime = FALSE
@@ -236,7 +236,7 @@ mergeTempTables <-
           targetDialect = getDbms(connection),
           tempEmulationSchema = tempEmulationSchema
         )
-      DatabaseConnector::executeSql(connection,
+      executeSql(connection,
         sql,
         progressBar = FALSE,
         reportOverallTime = FALSE
@@ -286,7 +286,7 @@ instantiateUniqueConceptSets <- function(uniqueConceptSets,
         targetDialect = getDbms(connection),
         tempEmulationSchema = tempEmulationSchema
       )
-      DatabaseConnector::executeSql(connection,
+      executeSql(connection,
         sqlSubset,
         progressBar = FALSE,
         reportOverallTime = FALSE
@@ -485,7 +485,7 @@ runConceptSetDiagnostics <- function(connection,
               include_source_concept_table = "#inc_src_concepts",
               by_month = FALSE
             )
-            DatabaseConnector::executeSql(connection = connection, sql = sql)
+            executeSql(connection = connection, sql = sql)
             counts <-
               renderTranslateQuerySql(
                 connection = connection,
@@ -719,12 +719,13 @@ runConceptSetDiagnostics <- function(connection,
                   store_table = "#breakdown"
                 )
 
-              DatabaseConnector::executeSql(
+              executeSql(
                 connection = connection,
                 sql = sql,
                 progressBar = FALSE,
                 reportOverallTime = FALSE
               )
+              
               sql <- "SELECT * FROM @store_table;"
               counts <-
                 renderTranslateQuerySql(

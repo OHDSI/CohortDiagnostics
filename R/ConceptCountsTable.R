@@ -53,7 +53,7 @@ createConceptCountsTable <- function(connectionDetails = NULL,
       table_is_temp = conceptCountsTableIsTemp,
       remove_current_table = removeCurrentTable
     )
-  DatabaseConnector::executeSql(connection, sql)
+  executeSql(connection, sql)
 }
 
 #' getConceptCountsTableName

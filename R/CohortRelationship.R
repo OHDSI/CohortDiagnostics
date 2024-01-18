@@ -136,14 +136,12 @@ runCohortRelationshipDiagnostics <-
         cohort_table = cohortTable
       )
 
-      DatabaseConnector::renderTranslateQuerySqlToAndromeda(
-        connection = connection,
-        tempEmulationSchema = tempEmulationSchema,
-        sql = "SELECT * FROM #cohort_rel_output;",
-        snakeCaseToCamelCase = TRUE,
-        andromeda = resultsInAndromeda,
-        andromedaTableName = "temp"
-      )
+      # TODO test if this works with big data
+      result <- renderTranslateQuerySql(connection = connection,
+                                        tempEmulationSchema = tempEmulationSchema,
+                                        sql = "SELECT * FROM #cohort_rel_output;",
+                                        snakeCaseToCamelCase = TRUE)
+      resultsInAndromeda$temp <- result
 
       if (!"cohortRelationships" %in% names(resultsInAndromeda)) {
         resultsInAndromeda$cohortRelationships <- resultsInAndromeda$temp

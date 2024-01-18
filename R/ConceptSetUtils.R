@@ -46,7 +46,7 @@
     instantiated_code_sets = instantiatedCodeSets,
     codeset_id = codesetId
   )
-  DatabaseConnector::executeSql(connection, sql)
+  executeSql(connection, sql)
   ParallelLogger::logTrace("- Fetching orphan concepts from server")
   sql <- "SELECT * FROM @orphan_concept_table;"
   orphanConcepts <-
@@ -67,7 +67,7 @@
       dbms = getDbms(connection),
       tempEmulationSchema = tempEmulationSchema
     )
-  DatabaseConnector::executeSql(
+  executeSql(
     connection = connection,
     sql = sql,
     progressBar = FALSE,

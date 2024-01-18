@@ -45,7 +45,7 @@ getVisitContext <- function(connectionDetails = NULL,
     cohort_table = cohortTable,
     cohort_ids = cohortIds
   )
-  DatabaseConnector::executeSql(connection, sql)
+  executeSql(connection, sql)
   sql <- "SELECT * FROM @visit_context_table;"
   visitContext <-
     renderTranslateQuerySql(

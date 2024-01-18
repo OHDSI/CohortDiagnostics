@@ -62,6 +62,19 @@ renderTranslateQuerySql <- function(connection,
   return(result)
 }
 
+querySql <- function(connection,
+                     sql,
+                     errorReportFile = file.path(getwd(), "errorReportSql.txt"),
+                     snakeCaseToCamelCase = FALSE,
+                     integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric", default = TRUE),
+                     integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric", default = TRUE)) {
+  result <- DBI::dbGetQuery(conn = connection, statement = sql)
+  if (snakeCaseToCamelCase) {
+    colnames(result) <- SqlRender::snakeCaseToCamelCase(colnames(result))
+  }
+  return(result)
+}
+
 executeSql <- function(connection,
                        sql,
                        profile = FALSE,

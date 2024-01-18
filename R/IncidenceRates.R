@@ -93,7 +93,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
       washout_period = washoutPeriod,
       cohort_id = cohortId
     )
-  DatabaseConnector::executeSql(connection, sql)
+  executeSql(connection, sql)
 
   sql <- "SELECT * FROM #rates_summary;"
   ratesSummary <-
