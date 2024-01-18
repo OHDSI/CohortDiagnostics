@@ -106,6 +106,7 @@ getDefaultCovariateSettings <- function() {
 #' @template CohortSetReference
 #' @param exportFolder                The folder where the output will be exported to. If this folder
 #'                                    does not exist it will be created.
+#' @param cdm                         CDM connection object
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
 #'                                    diagnostics to.
 #' @param cohortDefinitionSet         Data.frame of cohorts must include columns cohortId, cohortName, json, sql
@@ -185,6 +186,8 @@ getDefaultCovariateSettings <- function() {
 #' @importFrom CohortGenerator getCohortTableNames
 #' @importFrom tidyr any_of
 #' @export
+#' 
+#' 
 executeDiagnostics <- function(cohortDefinitionSet,
                                exportFolder,
                                databaseId,
@@ -193,6 +196,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                databaseDescription = NULL,
                                connectionDetails = NULL,
                                connection = NULL,
+                               cdm = NULL,
                                cdmDatabaseSchema,
                                tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                                cohortTable = "cohort",
@@ -524,13 +528,17 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
 
   # Set up connection to server ----------------------------------------------------
-  if (is.null(connection)) {
-    if (!is.null(connectionDetails)) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection))
-    } else {
-      stop("No connection or connectionDetails provided.")
+  if (is.null(cdm)) {
+    if (is.null(connection)) {
+      if (!is.null(connectionDetails)) {
+        connection <- DatabaseConnector::connect(connectionDetails)
+        on.exit(DatabaseConnector::disconnect(connection))
+      } else {
+        stop("No connection or connectionDetails provided.")
+      }
     }
+  } else {
+    connection <- attr(cdm, "dbcon")
   }
 
   ## CDM source information----
@@ -588,6 +596,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
     cohortIds = NULL,
     parent = "executeDiagnostics",
     expr = {
+      # sql <- SqlRender::render()
+      # sql <- SqlRender::translate(sql)
+      # observationPeriodDateRange <- DBI::dbGetQuery(sql)
       observationPeriodDateRange <- renderTranslateQuerySql(
         connection = connection,
         sql = "SELECT MIN(observation_period_start_date) observation_period_min_date,
