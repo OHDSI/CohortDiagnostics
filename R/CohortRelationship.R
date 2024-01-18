@@ -123,7 +123,7 @@ runCohortRelationshipDiagnostics <-
           )
         )
 
-      DatabaseConnector::renderTranslateExecuteSql(
+      renderTranslateExecuteSql(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
         sql = cohortRelationshipSql,

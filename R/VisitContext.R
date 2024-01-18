@@ -37,7 +37,7 @@ getVisitContext <- function(connectionDetails = NULL,
   sql <- SqlRender::loadRenderTranslateSql(
     "VisitContext.sql",
     packageName = utils::packageName(),
-    dbms = connection@dbms,
+    dbms = getDbms(connection),
     tempEmulationSchema = tempEmulationSchema,
     visit_context_table = "#visit_context",
     cdm_database_schema = cdmDatabaseSchema,
@@ -48,7 +48,7 @@ getVisitContext <- function(connectionDetails = NULL,
   DatabaseConnector::executeSql(connection, sql)
   sql <- "SELECT * FROM @visit_context_table;"
   visitContext <-
-    DatabaseConnector::renderTranslateQuerySql(
+    renderTranslateQuerySql(
       connection = connection,
       sql = sql,
       tempEmulationSchema = tempEmulationSchema,
@@ -60,7 +60,7 @@ getVisitContext <- function(connectionDetails = NULL,
     sql <- "INSERT INTO @unique_concept_id_table (concept_id)
             SELECT DISTINCT visit_concept_id
             FROM @visit_context_table;"
-    DatabaseConnector::renderTranslateExecuteSql(
+    renderTranslateExecuteSql(
       connection = connection,
       sql = sql,
       tempEmulationSchema = tempEmulationSchema,
@@ -72,7 +72,7 @@ getVisitContext <- function(connectionDetails = NULL,
   }
   sql <-
     "TRUNCATE TABLE @visit_context_table;\nDROP TABLE @visit_context_table;"
-  DatabaseConnector::renderTranslateExecuteSql(
+  renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
     tempEmulationSchema = tempEmulationSchema,

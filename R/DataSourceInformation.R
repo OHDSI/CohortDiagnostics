@@ -30,10 +30,10 @@
 #' Returns a data frame from CDM Data source.
 #'
 #' @export
-getCdmDataSourceInformation <-
-  function(connectionDetails = NULL,
-           connection = NULL,
-           cdmDatabaseSchema) {
+getCdmDataSourceInformation <- function(connectionDetails = NULL,
+                                        connection = NULL,
+                                        cdm = NULL,
+                                        cdmDatabaseSchema) {
     if (all(
       is.null(connectionDetails),
       is.null(connection)
@@ -49,11 +49,21 @@ getCdmDataSourceInformation <-
       }
     }
 
-    if (!DatabaseConnector::existsTable(
-      connection = connection,
-      databaseSchema = cdmDatabaseSchema,
-      tableName = "cdm_source"
-    )) {
+    sourceTableFound <- FALSE
+    if (is.null(cdm)) {
+      if (DatabaseConnector::existsTable(
+        connection = connection,
+        databaseSchema = cdmDatabaseSchema,
+        tableName = "cdm_source"
+      )) {
+        sourceTableFound <- TRUE
+      }
+    } else {
+      if ("cdm_source" %in% CDMConnector::listTables(attr(cdm, "dbcon"))) {
+        sourceTableFound <- TRUE
+      }
+    }
+    if (!sourceTableFound) {
       warning("CDM Source table not found in CDM. Metadata on CDM source will be limited.")
       return(NULL)
     }

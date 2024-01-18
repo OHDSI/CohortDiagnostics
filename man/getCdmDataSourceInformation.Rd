@@ -7,6 +7,7 @@
 getCdmDataSourceInformation(
   connectionDetails = NULL,
   connection = NULL,
+  cdm = NULL,
   cdmDatabaseSchema
 )
 }

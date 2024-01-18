@@ -57,7 +57,7 @@ getDefaultVocabularyTableNames <- function() {
       list(
         sqlFilename = "CreateResultsDataModel.sql",
         packageName = utils::packageName(),
-        dbms = connection@dbms,
+        dbms = getDbms(connection),
         results_schema = databaseSchema
       )
     )

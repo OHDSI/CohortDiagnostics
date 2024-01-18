@@ -551,6 +551,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       cdmSourceInformation <-
         getCdmDataSourceInformation(
           connection = connection,
+          cdm = cdm,
           cdmDatabaseSchema = cdmDatabaseSchema
         )
       ## Use CDM source table as default name/description
@@ -701,7 +702,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     conceptCountsTable <- conceptCountsTable
     dataSourceInfo <- getCdmDataSourceInformation(connection = connection, cdmDatabaseSchema = cdmDatabaseSchema)
     vocabVersion <- dataSourceInfo$vocabularyVersion
-    vocabVersionExternalConceptCountsTable <- DatabaseConnector::renderTranslateQuerySql(
+    vocabVersionExternalConceptCountsTable <- renderTranslateQuerySql(
       connection = connection,
       sql = "SELECT DISTINCT vocabulary_version FROM @work_database_schema.@concept_counts_table;",
       work_database_schema = cohortDatabaseSchema,
@@ -923,7 +924,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     parent = "executeDiagnostics",
     expr = {
       sql <- "TRUNCATE TABLE @table;\nDROP TABLE @table;"
-      DatabaseConnector::renderTranslateExecuteSql(
+      renderTranslateExecuteSql(
         connection = connection,
         sql = sql,
         tempEmulationSchema = tempEmulationSchema,

@@ -218,7 +218,7 @@ mergeTempTables <-
       )
     sql <-
       SqlRender::translate(sql,
-        targetDialect = connection@dbms,
+        targetDialect = getDbms(connection),
         tempEmulationSchema = tempEmulationSchema
       )
     DatabaseConnector::executeSql(connection,
@@ -233,7 +233,7 @@ mergeTempTables <-
         sprintf("TRUNCATE TABLE %s;\nDROP TABLE %s;", tempTable, tempTable)
       sql <-
         SqlRender::translate(sql,
-          targetDialect = connection@dbms,
+          targetDialect = getDbms(connection),
           tempEmulationSchema = tempEmulationSchema
         )
       DatabaseConnector::executeSql(connection,
@@ -283,7 +283,7 @@ instantiateUniqueConceptSets <- function(uniqueConceptSets,
       sqlSubset <-
         SqlRender::render(sqlSubset, vocabulary_database_schema = vocabularyDatabaseSchema)
       sqlSubset <- SqlRender::translate(sqlSubset,
-        targetDialect = connection@dbms,
+        targetDialect = getDbms(connection),
         tempEmulationSchema = tempEmulationSchema
       )
       DatabaseConnector::executeSql(connection,
@@ -478,7 +478,7 @@ runConceptSetDiagnostics <- function(connection,
             sql <- SqlRender::loadRenderTranslateSql(
               "CohortSourceCodes.sql",
               packageName = utils::packageName(),
-              dbms = connection@dbms,
+              dbms = getDbms(connection),
               tempEmulationSchema = tempEmulationSchema,
               cdm_database_schema = cdmDatabaseSchema,
               instantiated_concept_sets = "#inst_concept_sets",
@@ -487,7 +487,7 @@ runConceptSetDiagnostics <- function(connection,
             )
             DatabaseConnector::executeSql(connection = connection, sql = sql)
             counts <-
-              DatabaseConnector::renderTranslateQuerySql(
+              renderTranslateQuerySql(
                 connection = connection,
                 sql = "SELECT * FROM @include_source_concept_table;",
                 include_source_concept_table = "#inc_src_concepts",
@@ -561,7 +561,7 @@ runConceptSetDiagnostics <- function(connection,
                   INSERT INTO @concept_id_table (concept_id)
                   SELECT DISTINCT source_concept_id
                   FROM @include_source_concept_table;"
-              DatabaseConnector::renderTranslateExecuteSql(
+              renderTranslateExecuteSql(
                 connection = connection,
                 sql = sql,
                 tempEmulationSchema = tempEmulationSchema,
@@ -573,7 +573,7 @@ runConceptSetDiagnostics <- function(connection,
             }
             sql <-
               "TRUNCATE TABLE @include_source_concept_table;\nDROP TABLE @include_source_concept_table;"
-            DatabaseConnector::renderTranslateExecuteSql(
+            renderTranslateExecuteSql(
               connection = connection,
               sql = sql,
               tempEmulationSchema = tempEmulationSchema,
@@ -701,7 +701,7 @@ runConceptSetDiagnostics <- function(connection,
                 SqlRender::loadRenderTranslateSql(
                   "CohortEntryBreakdown.sql",
                   packageName = utils::packageName(),
-                  dbms = connection@dbms,
+                  dbms = getDbms(connection),
                   tempEmulationSchema = tempEmulationSchema,
                   cdm_database_schema = cdmDatabaseSchema,
                   vocabulary_database_schema = vocabularyDatabaseSchema,
@@ -727,7 +727,7 @@ runConceptSetDiagnostics <- function(connection,
               )
               sql <- "SELECT * FROM @store_table;"
               counts <-
-                DatabaseConnector::renderTranslateQuerySql(
+                renderTranslateQuerySql(
                   connection = connection,
                   sql = sql,
                   tempEmulationSchema = tempEmulationSchema,
@@ -739,7 +739,7 @@ runConceptSetDiagnostics <- function(connection,
                 sql <- "INSERT INTO @concept_id_table (concept_id)
                   SELECT DISTINCT concept_id
                   FROM @store_table;"
-                DatabaseConnector::renderTranslateExecuteSql(
+                renderTranslateExecuteSql(
                   connection = connection,
                   sql = sql,
                   tempEmulationSchema = tempEmulationSchema,
@@ -751,7 +751,7 @@ runConceptSetDiagnostics <- function(connection,
               }
               sql <-
                 "TRUNCATE TABLE @store_table;\nDROP TABLE @store_table;"
-              DatabaseConnector::renderTranslateExecuteSql(
+              renderTranslateExecuteSql(
                 connection = connection,
                 sql = sql,
                 tempEmulationSchema = tempEmulationSchema,
@@ -884,7 +884,7 @@ runConceptSetDiagnostics <- function(connection,
               sql <- "INSERT INTO @concept_id_table (concept_id)
                   SELECT DISTINCT concept_id
                   FROM @orphan_concept_table;"
-              DatabaseConnector::renderTranslateExecuteSql(
+              renderTranslateExecuteSql(
                 connection = connection,
                 sql = sql,
                 tempEmulationSchema = tempEmulationSchema,
@@ -898,7 +898,7 @@ runConceptSetDiagnostics <- function(connection,
         )
         sql <-
           "TRUNCATE TABLE @orphan_concept_table;\nDROP TABLE @orphan_concept_table;"
-        DatabaseConnector::renderTranslateExecuteSql(
+        renderTranslateExecuteSql(
           connection = connection,
           sql = sql,
           tempEmulationSchema = tempEmulationSchema,
@@ -983,7 +983,7 @@ runConceptSetDiagnostics <- function(connection,
   # this is extracted with vocabulary tables
   # this will have more codes than included source concepts
   # included source concepts is limited to resolved concept ids in source data
-  DatabaseConnector::renderTranslateExecuteSql(
+  renderTranslateExecuteSql(
     connection = connection,
     sql = "INSERT INTO #concept_ids (concept_id)
             SELECT DISTINCT concept_id
@@ -994,7 +994,7 @@ runConceptSetDiagnostics <- function(connection,
   )
 
   resolvedConceptIds <-
-    DatabaseConnector::renderTranslateQuerySql(
+    renderTranslateQuerySql(
       connection = connection,
       sql = "SELECT * FROM #inst_concept_sets;",
       tempEmulationSchema = tempEmulationSchema,
@@ -1028,7 +1028,7 @@ runConceptSetDiagnostics <- function(connection,
   ParallelLogger::logTrace("Dropping temp concept set table")
   sql <-
     "TRUNCATE TABLE #inst_concept_sets; DROP TABLE #inst_concept_sets;"
-  DatabaseConnector::renderTranslateExecuteSql(
+  renderTranslateExecuteSql(
     connection,
     sql,
     tempEmulationSchema = tempEmulationSchema,
@@ -1049,7 +1049,7 @@ runConceptSetDiagnostics <- function(connection,
           }
 
     sql <- "TRUNCATE TABLE @count_table; DROP TABLE @count_table;"
-    DatabaseConnector::renderTranslateExecuteSql(
+    renderTranslateExecuteSql(
       connection,
       sql,
       tempEmulationSchema = tempEmulationSchema,

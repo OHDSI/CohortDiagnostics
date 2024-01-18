@@ -52,7 +52,7 @@ saveDatabaseMetaData <- function(databaseId,
 }
 
 getVocabularyVersion <- function(connection, vocabularyDatabaseSchema) {
-  vocabularyVersion <- DatabaseConnector::renderTranslateQuerySql(
+  vocabularyVersion <- renderTranslateQuerySql(
     connection = connection,
     sql = "select * from @vocabulary_database_schema.vocabulary where vocabulary_id = 'None';",
     vocabulary_database_schema = vocabularyDatabaseSchema,

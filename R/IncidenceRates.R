@@ -60,7 +60,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
     SqlRender::loadRenderTranslateSql(
       sqlFilename = "GetCalendarYearRange.sql",
       packageName = utils::packageName(),
-      dbms = connection@dbms,
+      dbms = getDbms(connection),
       cdm_database_schema = cdmDatabaseSchema
     )
   yearRange <-
@@ -83,7 +83,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
     SqlRender::loadRenderTranslateSql(
       sqlFilename = "ComputeIncidenceRates.sql",
       packageName = utils::packageName(),
-      dbms = connection@dbms,
+      dbms = getDbms(connection),
       tempEmulationSchema = tempEmulationSchema,
       cohort_database_schema = cohortDatabaseSchema,
       cohort_table = cohortTable,
@@ -97,7 +97,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
 
   sql <- "SELECT * FROM #rates_summary;"
   ratesSummary <-
-    DatabaseConnector::renderTranslateQuerySql(
+    renderTranslateQuerySql(
       connection = connection,
       sql = sql,
       tempEmulationSchema = tempEmulationSchema,
@@ -106,7 +106,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
     tidyr::tibble()
 
   sql <- "TRUNCATE TABLE #rates_summary; DROP TABLE #rates_summary;"
-  DatabaseConnector::renderTranslateExecuteSql(
+  renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
     progressBar = FALSE,

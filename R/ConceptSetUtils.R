@@ -34,7 +34,7 @@
   sql <- SqlRender::loadRenderTranslateSql(
     "OrphanCodes.sql",
     packageName = utils::packageName(),
-    dbms = connection@dbms,
+    dbms = getDbms(connection),
     tempEmulationSchema = tempEmulationSchema,
     vocabulary_database_schema = vocabularyDatabaseSchema,
     work_database_schema = conceptCountsDatabaseSchema,
@@ -50,7 +50,7 @@
   ParallelLogger::logTrace("- Fetching orphan concepts from server")
   sql <- "SELECT * FROM @orphan_concept_table;"
   orphanConcepts <-
-    DatabaseConnector::renderTranslateQuerySql(
+    renderTranslateQuerySql(
       sql = sql,
       connection = connection,
       tempEmulationSchema = tempEmulationSchema,
@@ -64,7 +64,7 @@
     SqlRender::loadRenderTranslateSql(
       "DropOrphanConceptTempTables.sql",
       packageName = utils::packageName(),
-      dbms = connection@dbms,
+      dbms = getDbms(connection),
       tempEmulationSchema = tempEmulationSchema
     )
   DatabaseConnector::executeSql(

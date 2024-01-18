@@ -20,11 +20,11 @@ createConceptTable <- function(connection, tempEmulationSchema) {
     SqlRender::loadRenderTranslateSql(
       "CreateConceptIdTable.sql",
       packageName = utils::packageName(),
-      dbms = connection@dbms,
+      dbms = CDMConnector::dbms(connection),
       tempEmulationSchema = tempEmulationSchema,
       table_name = "#concept_ids"
     )
-  DatabaseConnector::executeSql(
+  executeSql(
     connection = connection,
     sql = sql,
     progressBar = FALSE,
@@ -44,6 +44,7 @@ exportConceptInformation <- function(connection = NULL,
   if (is.null(connection)) {
     warning("No connection provided")
   }
+  
   vocabularyTableNames <-
     tolower(SqlRender::camelCaseToSnakeCase(vocabularyTableNames))
   tablesInCdmDatabaseSchema <-
@@ -56,7 +57,7 @@ exportConceptInformation <- function(connection = NULL,
   }
   sql <- "SELECT DISTINCT concept_id FROM @unique_concept_id_table;"
   uniqueConceptIds <-
-    DatabaseConnector::renderTranslateQuerySql(
+    renderTranslateQuerySql(
       connection = connection,
       sql = sql,
       unique_concept_id_table = conceptIdTable,
@@ -104,7 +105,7 @@ exportConceptInformation <- function(connection = NULL,
       "concept_relationship"
     )) {
       data <-
-        DatabaseConnector::renderTranslateQuerySql(
+        renderTranslateQuerySql(
           connection = connection,
           sql = sql,
           tempEmulationSchema = tempEmulationSchema,
@@ -134,7 +135,7 @@ exportConceptInformation <- function(connection = NULL,
     )) {
       sql <- "SELECT * FROM @cdm_database_schema.@table;"
       data <-
-        DatabaseConnector::renderTranslateQuerySql(
+        renderTranslateQuerySql(
           connection = connection,
           sql = sql,
           tempEmulationSchema = tempEmulationSchema,
