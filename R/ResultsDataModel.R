@@ -22,6 +22,7 @@
 #'
 #' @export
 getResultsDataModelSpecifications <- function() {
+  readr::local_edition(1)
   pathToCsv <-
     system.file("settings", "resultsDataModelSpecification.csv", package = utils::packageName())
   resultsDataModelSpecifications <-

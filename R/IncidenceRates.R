@@ -165,7 +165,9 @@ getIncidenceRate <- function(connectionDetails = NULL,
   )
   result$incidenceRate <-
     1000 * result$cohortCount / result$personYears
-  result$incidenceRate[is.nan(result$incidenceRate)] <- 0
+  result$incidenceRate[is.nan(result$incidenceRate) |
+    is.infinite(result$incidenceRate) |
+    is.null(result$incidenceRate)] <- 0
   delta <- Sys.time() - start
   ParallelLogger::logInfo(paste(
     "Computing incidence rates took",
@@ -216,7 +218,7 @@ computeIncidenceRates <- function(connection,
   startIncidenceRate <- Sys.time()
   subset <- subsetToRequiredCohorts(
     cohorts = cohorts %>%
-      dplyr::filter(cohortId %in% instantiatedCohorts),
+      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
     task = "runIncidenceRate",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile

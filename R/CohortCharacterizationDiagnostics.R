@@ -111,9 +111,14 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           "mean",
           "sd"
         )
-      if (length(is.na(dplyr::pull(covariates, "timeId"))) > 0) {
+      tidNaCount <- covariates %>%
+        dplyr::filter(is.na(timeId)) %>%
+        dplyr::count() %>%
+        dplyr::pull()
+
+      if (tidNaCount > 0) {
         covariates <- covariates %>%
-          tidyr::replace_na(list("timeId" = -1))
+          dplyr::mutate(timeId = if_else(is.na(.data$timeId), -1, .data$timeId))
       }
     } else {
       covariates <- covariates %>%
@@ -154,9 +159,14 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           "mean",
           "sd"
         )
-      if (length(is.na(dplyr::pull(covariates, "timeId"))) > 0) {
+      tidNaCount <- covariates %>%
+        dplyr::filter(is.na(timeId)) %>%
+        dplyr::count() %>%
+        dplyr::pull()
+
+      if (tidNaCount > 0) {
         covariates <- covariates %>%
-          tidyr::replace_na(list("timeId" = -1))
+          dplyr::mutate(timeId = if_else(is.na(.data$timeId), -1, .data$timeId))
       }
     } else {
       covariates <- covariates %>%

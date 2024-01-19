@@ -1,7 +1,6 @@
 shiny::shinyServer(function(input, output, session) {
-  cdModule <- OhdsiShinyModules::cohortDiagnosticsSever(id = "DiagnosticsExplorer",
-                                                        dataSource = dataSource,
-                                                        resultDatabaseSettings = shinySettings)
-
-
+  cdModule <- OhdsiShinyModules::cohortDiagnosticsServer(id = "DiagnosticsExplorer",
+                                                         connectionHandler = connectionHandler,
+                                                         dataSource = dataSource,
+                                                         resultDatabaseSettings = shinySettings)
 })
