@@ -111,8 +111,9 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           "mean",
           "sd"
         )
-      if (length(is.na(covariates$timeId)) > 0) {
-        covariates[is.na(covariates$timeId), ]$timeId <- -1
+      if (length(is.na(dplyr::pull(covariates, "timeId"))) > 0) {
+        covariates <- covariates %>%
+          tidyr::replace_na(list("timeId" = -1))
       }
     } else {
       covariates <- covariates %>%
@@ -153,8 +154,9 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           "mean",
           "sd"
         )
-      if (length(is.na(covariates$timeId)) > 0) {
-        covariates[is.na(covariates$timeId), ]$timeId <- -1
+      if (length(is.na(dplyr::pull(covariates, "timeId"))) > 0) {
+        covariates <- covariates %>%
+          tidyr::replace_na(list("timeId" = -1))
       }
     } else {
       covariates <- covariates %>%
