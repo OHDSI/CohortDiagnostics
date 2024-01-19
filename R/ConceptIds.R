@@ -48,7 +48,7 @@ exportConceptInformation <- function(connection = NULL,
   vocabularyTableNames <-
     tolower(SqlRender::camelCaseToSnakeCase(vocabularyTableNames))
   tablesInCdmDatabaseSchema <-
-    tolower(DatabaseConnector::getTableNames(connection, cdmDatabaseSchema))
+    tolower(getTableNames(connection, cdmDatabaseSchema))
   vocabularyTablesInCdmDatabaseSchema <-
     tablesInCdmDatabaseSchema[tablesInCdmDatabaseSchema %in% vocabularyTableNames]
 

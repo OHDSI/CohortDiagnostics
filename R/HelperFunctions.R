@@ -96,3 +96,12 @@ getDbms <- function(connection) {
   return(result)
 }
 
+getTableNames <- function(connection, cdmDatabaseSchema) {
+  result <- NULL
+  if ("dbms" %in% names(attributes(connection))) {
+    result <- DatabaseConnector::getTableNames(connection, cdmDatabaseSchema)
+  } else {
+    result <- CDMConnector::listTables(connection, cdmDatabaseSchema)
+  }
+  return(result)
+}
