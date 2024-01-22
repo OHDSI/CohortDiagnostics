@@ -1,8 +1,8 @@
 CohortDiagnostics
 =================
 
-[![Build Status](https://github.com/OHDSI/CohortDiagnostics/workflows/R-CMD-check/badge.svg)](https://github.com/OHDSI/CohortDiagnostics/actions?query=workflow%3AR-CMD-check)
-[![codecov.io](https://codecov.io/github/OHDSI/CohortDiagnostics/coverage.svg?branch=main)](https://codecov.io/github/OHDSI/CohortDiagnostics?branch=main)
+[![Build Status](https://github.com/darwin-eu-dev/CohortDiagnostics/workflows/R-CMD-check/badge.svg)](https://github.com/darwin-eu-dev/CohortDiagnostics/actions?query=workflow%3AR-CMD-check)
+[![codecov.io](https://codecov.io/github/darwin-eu-dev/CohortDiagnostics/coverage.svg?branch=main)](https://codecov.io/github/darwin-eu-dev/CohortDiagnostics?branch=main)
 
 CohortDiagnostics is part of [HADES](https://ohdsi.github.io/Hades).
 
