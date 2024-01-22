@@ -232,9 +232,9 @@ test_that("Testing time series logic", {
 
     # testing if values returned for cohort 1 is as expected
     timeSeriesCohort <- timeSeries %>%
-      dplyr::filter(cohortId == 1) %>%
-      dplyr::filter(seriesType == "T1") %>%
-      dplyr::filter(calendarInterval == "m")
+      dplyr::filter(.data$cohortId == 1) %>%
+      dplyr::filter(.data$seriesType == "T1") %>%
+      dplyr::filter(.data$calendarInterval == "m")
 
     # there should be 8 records in this data frame, representing 8 months for the one subject in the cohort id  = 1
     testthat::expect_equal(
@@ -244,13 +244,13 @@ test_that("Testing time series logic", {
 
     # there should be 2 records in this data frame, representing the 2 starts for the one subject in the cohort id  = 1
     testthat::expect_equal(
-      object = nrow(timeSeriesCohort %>% dplyr::filter(recordsStart == 1)),
+      object = nrow(timeSeriesCohort %>% dplyr::filter(.data$recordsStart == 1)),
       expected = 2
     )
 
     # there should be 1 records in this data frame, representing the 1 incident start for the one subject in the cohort id  = 1
     testthat::expect_equal(
-      object = nrow(timeSeriesCohort %>% dplyr::filter(subjectsStartIn == 1)),
+      object = nrow(timeSeriesCohort %>% dplyr::filter(.data$subjectsStartIn == 1)),
       expected = 1
     )
   })

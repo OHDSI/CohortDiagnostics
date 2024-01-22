@@ -233,7 +233,7 @@ cohortDiagnosticsUi <- function(id = "DiagnosticsExplorer",
     ),
     shinydashboard::tabItem(
       tabName = "cohortCharacterization",
-      OhdsiShinyModules::characterizationView(ns("characterization"))
+      OhdsiShinyModules::cohortDiagCharacterizationView(ns("characterization"))
     ),
     shinydashboard::tabItem(
       tabName = "compareCohortCharacterization",
