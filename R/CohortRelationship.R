@@ -85,7 +85,7 @@ runCohortRelationshipDiagnostics <-
 
     timePeriods <- relationshipDays %>%
       dplyr::distinct() %>%
-      dplyr::arrange(startDay, endDay) %>%
+      dplyr::arrange(.data$startDay, .data$endDay) %>%
       dplyr::mutate(timeId = dplyr::row_number())
 
     ParallelLogger::logTrace("   - Creating Andromeda object to collect results")
@@ -161,12 +161,12 @@ runCohortRelationshipDiagnostics <-
     resultsInAndromeda$cohortRelationships <-
       resultsInAndromeda$cohortRelationships %>%
       dplyr::inner_join(resultsInAndromeda$timePeriods, by = "timeId") %>%
-      dplyr::select(-timeId) %>%
+      dplyr::select(-"timeId") %>%
       dplyr::arrange(
-        cohortId,
-        comparatorCohortId,
-        startDay,
-        endDay
+        .data$cohortId,
+        .data$comparatorCohortId,
+        .data$startDay,
+        .data$endDay
       )
     resultsInAndromeda$timePeriods <- NULL
 
@@ -209,21 +209,21 @@ executeCohortRelationshipDiagnostics <- function(connection,
   startCohortRelationship <- Sys.time()
 
   allCohortIds <- cohortDefinitionSet %>%
-    dplyr::select(cohortId, checksum) %>%
+    dplyr::select("cohortId", "checksum") %>%
     dplyr::rename(
-      targetCohortId = cohortId,
-      targetChecksum = checksum
+      targetCohortId = "cohortId",
+      targetChecksum = "checksum"
     ) %>%
     dplyr::distinct()
   combinationsOfPossibleCohortRelationships <- allCohortIds %>%
     tidyr::crossing(allCohortIds %>%
       dplyr::rename(
-        comparatorCohortId = targetCohortId,
-        comparatorChecksum = targetChecksum
+        comparatorCohortId = "targetCohortId",
+        comparatorChecksum = "targetChecksum"
       )) %>%
-    dplyr::filter(targetCohortId != comparatorCohortId) %>%
-    dplyr::arrange(targetCohortId, comparatorCohortId) %>%
-    dplyr::mutate(checksum = paste0(targetChecksum, comparatorChecksum))
+    dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) %>%
+    dplyr::arrange(.data$targetCohortId, .data$comparatorCohortId) %>%
+    dplyr::mutate(checksum = paste0(.data$targetChecksum, .data$comparatorChecksum))
 
   subset <- subsetToRequiredCombis(
     combis = combinationsOfPossibleCohortRelationships,
@@ -247,7 +247,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
       (nrow(combinationsOfPossibleCohortRelationships) - (
         nrow(
           combinationsOfPossibleCohortRelationships %>%
-            dplyr::filter(targetCohortId %in% c(subset$targetCohortId))
+            dplyr::filter(.data$targetCohortId %in% c(subset$targetCohortId))
         )
       )) > 0) {
       ParallelLogger::logInfo(
@@ -255,7 +255,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
           " - Skipping %s combinations in incremental mode because these were previously computed.",
           nrow(combinationsOfPossibleCohortRelationships) - nrow(
             combinationsOfPossibleCohortRelationships %>%
-              dplyr::filter(targetCohortId %in% c(subset$targetCohortId))
+              dplyr::filter(.data$targetCohortId %in% c(subset$targetCohortId))
           )
         )
       )

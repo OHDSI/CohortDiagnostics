@@ -1,4 +1,4 @@
-table_name,column_name,data_type,is_required,primary_key,optional,empty_is_Na,min_cell_count,is_vocabulary_table,never_incremental
+table_name,column_name,data_type,is_required,primary_key,optional,empty_is_na,min_cell_count,is_vocabulary_table,never_incremental
 cohort,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
 cohort,cohort_name,varchar,Yes,No,No,Yes,No,No,No
 cohort,metadata,varchar,No,No,Yes,Yes,No,No,No

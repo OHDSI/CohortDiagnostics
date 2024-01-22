@@ -122,7 +122,8 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
           runOrphanConcepts = TRUE,
           incremental = TRUE,
           incrementalFolder = file.path(folder, "incremental"),
-          temporalCovariateSettings = temporalCovariateSettings
+          temporalCovariateSettings = temporalCovariateSettings,
+          runOnSample = TRUE
         )
       },
       "CDM Source table has more than one record while only one is expected."
@@ -147,7 +148,8 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
       runOrphanConcepts = TRUE,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
-      temporalCovariateSettings = temporalCovariateSettings
+      temporalCovariateSettings = temporalCovariateSettings,
+      runOnSample = TRUE
     )
   }
 
@@ -175,7 +177,7 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
       primaryKey <- specifications %>%
         dplyr::filter(tableName == !!tableName &
           primaryKey == "Yes") %>%
-        dplyr::select(columnName) %>%
+        dplyr::select("columnName") %>%
         dplyr::pull()
 
       if ("database_id" %in% primaryKey) {
@@ -211,7 +213,7 @@ test_that("Sqlite results data model", {
       primaryKey <- specifications %>%
         dplyr::filter(tableName == !!tableName &
           primaryKey == "Yes") %>%
-        dplyr::select(columnName) %>%
+        dplyr::select("columnName") %>%
         dplyr::pull()
 
       if ("database_id" %in% primaryKey) {

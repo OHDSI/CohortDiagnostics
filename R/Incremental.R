@@ -29,6 +29,7 @@ isTaskRequired <-
            recordKeepingFile,
            verbose = TRUE) {
     if (file.exists(recordKeepingFile)) {
+      readr::local_edition(1)
       recordKeeping <- readr::read_csv(recordKeepingFile,
         col_types = readr::cols(),
         guess_max = min(1e7),
@@ -64,6 +65,7 @@ isTaskRequired <-
 getRequiredTasks <- function(..., checksum, recordKeepingFile) {
   tasks <- list(...)
   if (file.exists(recordKeepingFile) && length(tasks[[1]]) > 0) {
+    readr::local_edition(1)
     recordKeeping <- readr::read_csv(recordKeepingFile,
       col_types = readr::cols(),
       guess_max = min(1e7),
@@ -112,6 +114,7 @@ recordTasksDone <-
     }
 
     if (file.exists(recordKeepingFile)) {
+      readr::local_edition(1)
       # reading record keeping file into memory
       # prevent lazy loading to avoid lock on file
       recordKeeping <- readr::read_csv(
@@ -125,11 +128,11 @@ recordTasksDone <-
         as.character(recordKeeping$timeStamp)
       if ("cohortId" %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
-          dplyr::mutate(cohortId = as.double(cohortId))
+          dplyr::mutate(cohortId = as.double(.data$cohortId))
       }
       if ("comparatorId" %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
-          dplyr::mutate(comparatorId = as.double(comparatorId))
+          dplyr::mutate(comparatorId = as.double(.data$comparatorId))
       }
       idx <- getKeyIndex(list(...), recordKeeping)
       if (length(idx) > 0) {
@@ -142,6 +145,7 @@ recordTasksDone <-
     newRow$checksum <- checksum
     newRow$timeStamp <- as.character(Sys.time())
     recordKeeping <- dplyr::bind_rows(recordKeeping, newRow)
+    readr::local_edition(1)
     readr::write_csv(x = recordKeeping, file = recordKeepingFile, na = "")
   }
 
@@ -171,6 +175,7 @@ writeToCsv.default <- function(data, fileName, incremental = FALSE, ...) {
     } else {
       ParallelLogger::logDebug("creating ", fileName)
     }
+    readr::local_edition(1)
     readr::write_excel_csv(
       x = data,
       file = fileName,
@@ -194,11 +199,13 @@ writeToCsv.tbl_Andromeda <-
       tempName <- paste0(fileName, "2")
 
       processChunk <- function(chunk, pos) {
+        readr::local_edition(1)
         chunk <- chunk %>%
           dplyr::filter(!.data$cohort_id %in% cohortIds)
         readr::write_csv(chunk, tempName, append = (pos != 1))
       }
 
+      readr::local_edition(1)
       readr::read_csv_chunked(
         file = fileName,
         callback = processChunk,
@@ -246,6 +253,7 @@ writeToCsv.tbl_Andromeda <-
         if (first) {
           colnames(batch) <- SqlRender::camelCaseToSnakeCase(colnames(batch))
         }
+        readr::local_edition(1)
         readr::write_csv(batch, fileName, append = !first)
       }
       Andromeda::batchApply(data, writeToFile)
@@ -259,6 +267,7 @@ saveIncremental <- function(data, fileName, ...) {
     }
   }
   if (file.exists(fileName)) {
+    readr::local_edition(1)
     previousData <- readr::read_csv(fileName,
       col_types = readr::cols(),
       guess_max = min(1e7),

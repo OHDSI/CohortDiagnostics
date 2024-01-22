@@ -138,7 +138,23 @@ getDefaultCovariateSettings <- function() {
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
 #' @param useExternalConceptCountsTable if an external table for the cohort counts should be used.
+#' @param runOnSample                 Logical. If TRUE, the function will operate on a sample of the data.
+#'                                    Default is FALSE, meaning the function will operate on the full data set.
 #'
+#' @param sampleN                     Integer. The number of records to include in the sample if runOnSample is TRUE.
+#'                                    Default is 1000. Ignored if runOnSample is FALSE.
+#'
+#' @param seed                        Integer. The seed for the random number generator used to create the sample.
+#'                                    This ensures that the same sample can be drawn again in future runs. Default is 64374.
+#'
+#' @param seedArgs                    List. Additional arguments to pass to the sampling function.
+#'                                    This can be used to control aspects of the sampling process beyond the seed and sample size.
+#'
+#' @param sampleIdentifierExpression Character. An expression that generates unique identifiers for each sample.
+#'                                   This expression can use the variables 'cohortId' and 'seed'.
+#'                                   Default is "cohortId * 1000 + seed", which ensures unique identifiers
+#'                                   as long as there are fewer than 1000 cohorts.
+
 #' @examples
 #' \dontrun{
 #' # Load cohorts (assumes that they have already been instantiated)
@@ -216,7 +232,12 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                irWashoutPeriod = 0,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental"),
-                               useExternalConceptCountsTable = FALSE) {
+                               useExternalConceptCountsTable = FALSE,
+                               runOnSample = FALSE,
+                               sampleN = 1000,
+                               seed = 64374,
+                               seedArgs = NULL,
+                               sampleIdentifierExpression = "cohortId * 1000 + seed") {
   # collect arguments that were passed to cohort diagnostics at initiation
   callingArgs <- formals(executeDiagnostics)
   callingArgsJson <-
@@ -293,7 +314,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     add = errorMessage
   )
   minCellCount <- utils::type.convert(minCellCount, as.is = TRUE)
-  checkmate::assertInteger(x = minCellCount, lower = 0, add = errorMessage)
+  checkmate::assertInteger(x = minCellCount, len = 1, lower = 0, add = errorMessage)
   minCharacterizationMean <- utils::type.convert(minCharacterizationMean, as.is = TRUE)
   checkmate::assertNumeric(x = minCharacterizationMean, lower = 0, add = errorMessage)
   checkmate::assertLogical(incremental, add = errorMessage)
@@ -448,7 +469,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   checkmate::reportAssertions(collection = errorMessage)
   if (!is.null(cohortIds)) {
-    cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(cohortId %in% cohortIds)
+    cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
 
   if (nrow(cohortDefinitionSet) == 0) {
@@ -531,6 +552,23 @@ executeDiagnostics <- function(cohortDefinitionSet,
     } else {
       stop("No connection or connectionDetails provided.")
     }
+  }
+
+  if (runOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
+    cohortDefinitionSet <-
+      CohortGenerator::sampleCohortDefinitionSet(
+        connection = connection,
+        cohortDefinitionSet = cohortDefinitionSet,
+        tempEmulationSchema = tempEmulationSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTableNames = cohortTableNames,
+        n = sampleN,
+        seed = seed,
+        seedArgs = seedArgs,
+        identifierExpression = sampleIdentifierExpression,
+        incremental = incremental,
+        incrementalFolder = incrementalFolder
+      )
   }
 
   ## CDM source information----
@@ -636,8 +674,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   if (nrow(cohortCounts) > 0) {
     instantiatedCohorts <- cohortCounts %>%
-      dplyr::filter(cohortEntries > 0) %>%
-      dplyr::pull(cohortId)
+      dplyr::filter(.data$cohortEntries > 0) %>%
+      dplyr::pull(.data$cohortId)
     ParallelLogger::logInfo(
       sprintf(
         "Found %s of %s (%1.2f%%) submitted cohorts instantiated. ",
@@ -650,6 +688,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
   } else {
     stop("All cohorts were either not instantiated or all have 0 records.")
   }
+
+  cohortDefinitionSet <- cohortDefinitionSet %>%
+    dplyr::filter(.data$cohortId %in% instantiatedCohorts)
 
   # Inclusion statistics -----------------------------------------------------------------------
   if (runInclusionStatistics) {
@@ -675,7 +716,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
     )
   }
 
-  
   # Defines variables and checks version of external concept counts table -----
   if (useExternalConceptCountsTable == FALSE) {
     conceptCountsTableIsTemp <- TRUE
@@ -707,6 +747,14 @@ executeDiagnostics <- function(cohortDefinitionSet,
     }
   }
   
+  # Always export concept sets to csv
+  exportConceptSets(
+    cohortDefinitionSet = cohortDefinitionSet,
+    exportFolder = exportFolder,
+    minCellCount = minCellCount,
+    databaseId = databaseId
+  )
+
   # Concept set diagnostics -----------------------------------------------
   if (runIncludedSourceConcepts ||
     runOrphanConcepts ||
