@@ -166,7 +166,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     dplyr::mutate(timeId = dplyr::row_number())
 
   ParallelLogger::logTrace(" - Inserting calendar periods")
-  DatabaseConnector::insertTable(
+  insertTable(
     connection = connection,
     tableName = "#calendar_periods",
     data = calendarPeriods,
@@ -372,7 +372,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       )
     }
 
-    DatabaseConnector::querySqlToAndromeda(
+    resultsInAndromeda <- querySqlToAndromeda(
       connection = connection,
       sql = sqlAll,
       snakeCaseToCamelCase = TRUE,

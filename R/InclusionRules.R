@@ -47,14 +47,14 @@ getInclusionStats <- function(connection,
       "getInclusionStatsCohortGenerator",
       parent = "getInclusionStats",
       expr = {
-        CohortGenerator::insertInclusionRuleNames(
+        insertInclusionRuleNames(
           connection = connection,
           cohortDefinitionSet = subset,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortInclusionTable = cohortTableNames$cohortInclusionTable
         )
 
-        stats <- CohortGenerator::getCohortStats(
+        stats <- getCohortStats(
           connection = connection,
           cohortTableNames = cohortTableNames,
           cohortDatabaseSchema = cohortDatabaseSchema

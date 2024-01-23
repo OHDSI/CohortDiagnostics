@@ -63,12 +63,11 @@ getIncidenceRate <- function(connectionDetails = NULL,
       dbms = getDbms(connection),
       cdm_database_schema = cdmDatabaseSchema
     )
-  yearRange <-
-    DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+  yearRange <- querySql(connection, sql, snakeCaseToCamelCase = TRUE)
 
   calendarYears <-
     dplyr::tibble(calendarYear = as.integer(seq(yearRange$startYear, yearRange$endYear, by = 1)))
-  DatabaseConnector::insertTable(
+  insertTable(
     connection = connection,
     tableName = "#calendar_years",
     data = calendarYears,
