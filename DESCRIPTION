@@ -39,7 +39,8 @@ Imports:
   stringr,
   tidyr (>= 1.2.0),
   CohortGenerator (>= 0.8.0),
-  remotes
+  remotes,
+  CDMConnector (>= 1.2.0)
 Suggests:
   Eunomia,
   ROhdsiWebApi (>= 1.2.0),
