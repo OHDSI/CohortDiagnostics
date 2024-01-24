@@ -166,9 +166,10 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     dplyr::mutate(timeId = dplyr::row_number())
 
   ParallelLogger::logTrace(" - Inserting calendar periods")
+  calenderPeriodsTable <- ifelse(dbms(connection) == "duckdb", "calendar_periods", "#calendar_periods")
   insertTable(
     connection = connection,
-    tableName = "#calendar_periods",
+    tableName = calenderPeriodsTable,
     data = calendarPeriods,
     dropTableIfExists = TRUE,
     createTable = TRUE,
@@ -384,7 +385,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     ParallelLogger::logInfo("       Time series without stratification - completed.")
 
     if (stratifyByGender) {
-      DatabaseConnector::querySqlToAndromeda(
+      resultsInAndromeda <- querySqlToAndromeda(
         connection = connection,
         sql = sqlGender,
         snakeCaseToCamelCase = TRUE,
@@ -401,7 +402,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     ParallelLogger::logInfo("       Time series stratified by gender - completed.")
 
     if (stratifyByAgeGroup) {
-      DatabaseConnector::querySqlToAndromeda(
+      resultsInAndromeda <- querySqlToAndromeda(
         connection = connection,
         sql = sqlAgeGroup,
         snakeCaseToCamelCase = TRUE,
@@ -418,7 +419,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     ParallelLogger::logInfo("       Time series stratified by age group - completed.")
 
     if (stratifyByGender && stratifyByAgeGroup) {
-      DatabaseConnector::querySqlToAndromeda(
+      resultsInAndromeda <- querySqlToAndromeda(
         connection = connection,
         sql = sqlAgeGroupGender,
         snakeCaseToCamelCase = TRUE,
@@ -473,7 +474,8 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   ParallelLogger::logTrace(" - Dropping any time_series temporary tables at clean up")
   renderTranslateExecuteSql(
     connection = connection,
-    sql = "DROP TABLE IF EXISTS #calendar_periods;",
+    sql = "DROP TABLE IF EXISTS @table;",
+    table = calenderPeriodsTable,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )

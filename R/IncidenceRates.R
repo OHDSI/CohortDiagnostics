@@ -67,9 +67,10 @@ getIncidenceRate <- function(connectionDetails = NULL,
 
   calendarYears <-
     dplyr::tibble(calendarYear = as.integer(seq(yearRange$startYear, yearRange$endYear, by = 1)))
+  calenderYearsTable <- ifelse(dbms(connection) == "duckdb", "calendar_years", "#calendar_years")
   insertTable(
     connection = connection,
-    tableName = "#calendar_years",
+    tableName = calenderYearsTable,
     data = calendarYears,
     dropTableIfExists = TRUE,
     createTable = TRUE,
