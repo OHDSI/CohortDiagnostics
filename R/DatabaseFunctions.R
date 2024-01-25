@@ -289,7 +289,7 @@ insertTable <- function(connection,
     if (camelCaseToSnakeCase) {
       colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
     }
-    DBI::dbWriteTable(connection, tableName, data, overwrite = TRUE) # temp table gives issues on duckDB: SqlRender just removes "#"?
+    DBI::dbWriteTable(connection, DBI::Id(schema = databaseSchema, table = tableName), data, overwrite = TRUE) # temp table gives issues on duckDB: SqlRender just removes "#"?
   } else {
     DatabaseConnector::insertTable(connection,
                                    databaseSchema,
@@ -305,4 +305,41 @@ insertTable <- function(connection,
                                    progressBar,
                                    camelCaseToSnakeCase)
   }
+}
+
+#' addCohortTables
+#'
+#' @param cdm cdm object
+#' @param cohortDatabaseSchema cohort db schema
+#' @param cohortTableName cohort table name
+#'
+addCohortTables <- function(cdm, cohortDatabaseSchema, cohortTableName) {
+  # inclusion_result
+  inclusionData <- cohortAttrition(cdm[[cohortTableName]]) %>% 
+    dplyr::select(cohort_definition_id, number_records, number_subjects) %>% 
+    filter(number_records > 0) %>% 
+    tidyr::pivot_longer(c("number_records", "number_subjects")) %>%
+    mutate(mode_id = ifelse(name == "number_records", 0, 1)) %>%
+    dplyr::mutate(inclusion_rule_mask = 0) %>%
+    dplyr::rename(person_count = value) %>%
+    dplyr::select(c(cohort_definition_id, inclusion_rule_mask, person_count, mode_id))
+  CohortDiagnostics:::insertTable(connection = attr(cdm, "dbcon"), 
+                                  databaseSchema = cohortDatabaseSchema, 
+                                  tableName = paste0(cohortTableName, "_inclusion_result"), 
+                                  data = inclusionData)
+  # summary stats 
+  summaryData <- cohortAttrition(cdm[[cohortTableName]]) %>% 
+    dplyr::select(cohort_definition_id, number_records, number_subjects) %>% 
+    tidyr::pivot_longer(c("number_records", "number_subjects")) %>%
+    mutate(mode_id = ifelse(name == "number_records", 0, 1)) %>%
+    dplyr::mutate(inclusion_rule_mask = 0) %>%
+    dplyr::rename(base_count = value) %>%
+    dplyr::mutate(final_count = base_count) %>%
+    dplyr::select(c(cohort_definition_id, base_count, final_count, mode_id))
+  
+  CohortDiagnostics:::insertTable(connection = attr(cdm, "dbcon"), 
+                                  databaseSchema = cohortDatabaseSchema, 
+                                  tableName = paste0(cohortTableName, "_summary_stats"), 
+                                  data = summaryData)
+  
 }
