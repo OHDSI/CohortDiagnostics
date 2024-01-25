@@ -111,7 +111,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           "mean",
           "sd"
         )
-      
+
       tidNaCount <- covariates %>%
         dplyr::filter(is.na(timeId)) %>%
         dplyr::count() %>%
@@ -160,7 +160,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           "mean",
           "sd"
         )
-      
+
       tidNaCount <- covariates %>%
         dplyr::filter(is.na(timeId)) %>%
         dplyr::count() %>%

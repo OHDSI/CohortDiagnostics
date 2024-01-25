@@ -7,7 +7,6 @@
 getCdmDataSourceInformation(
   connectionDetails = NULL,
   connection = NULL,
-  cdm = NULL,
   cdmDatabaseSchema
 )
 }
@@ -22,8 +21,6 @@ provided.}
 DatabaseConnector package. Can be left NULL if \code{connectionDetails}
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.}
-
-\item{cdm}{cdm reference object}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and

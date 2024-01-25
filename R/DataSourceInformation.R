@@ -23,7 +23,6 @@
 #' and vocabulary version, where available.
 #'
 #' @template Connection
-#' @param cdm cdm reference object
 #'
 #' @template CdmDatabaseSchema
 #'
@@ -33,7 +32,6 @@
 #' @export
 getCdmDataSourceInformation <- function(connectionDetails = NULL,
                                         connection = NULL,
-                                        cdm = NULL,
                                         cdmDatabaseSchema) {
     if (all(
       is.null(connectionDetails),
@@ -51,7 +49,7 @@ getCdmDataSourceInformation <- function(connectionDetails = NULL,
     }
 
     sourceTableFound <- FALSE
-    if (is.null(cdm)) {
+    if (!isCDMConnection(connection)) {
       if (DatabaseConnector::existsTable(
         connection = connection,
         databaseSchema = cdmDatabaseSchema,

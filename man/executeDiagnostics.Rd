@@ -13,7 +13,6 @@ executeDiagnostics(
   databaseDescription = NULL,
   connectionDetails = NULL,
   connection = NULL,
-  cdm = NULL,
   cdmDatabaseSchema,
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   cohortTable = "cohort",
@@ -71,8 +70,6 @@ provided.}
 DatabaseConnector package. Can be left NULL if \code{connectionDetails}
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.}
-
-\item{cdm}{CDM connection object}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
@@ -173,7 +170,7 @@ The \code{cohortSetReference} argument must be a data frame with at least the fo
 }
 \examples{
 \dontrun{
-Load cohorts (assumes that they have already been instantiated)
+# Load cohorts (assumes that they have already been instantiated)
 cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort")
 cohorts <- CohortGenerator::getCohortDefinitionSet(packageName = "MyGreatPackage")
 connectionDetails <- createConnectionDetails(
