@@ -8,6 +8,7 @@ executeDiagnosticsCdm(
   cdm,
   cohortDefinitionSet,
   cohortTable = "cohort",
+  conceptCountsTable = "#concept_counts",
   exportFolder,
   minCellCount = 5,
   runInclusionStatistics = TRUE,
@@ -18,15 +19,18 @@ executeDiagnosticsCdm(
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
   runCohortRelationship = TRUE,
-  runTemporalCohortCharacterization = TRUE
+  runTemporalCohortCharacterization = TRUE,
+  useExternalConceptCountsTable = TRUE
 )
 }
 \arguments{
-\item{cdm}{cdm reference object}
+\item{cdm}{Cdm reference object}
 
 \item{cohortDefinitionSet}{Data.frame of cohorts must include columns cohortId, cohortName, json, sql}
 
-\item{cohortTable}{cohort table name}
+\item{cohortTable}{Cohort table name}
+
+\item{conceptCountsTable}{Concept counts table name}
 
 \item{exportFolder}{The folder where the output will be exported to. If this folder does not exist it will be created.}
 
@@ -51,25 +55,24 @@ relationship between two or more cohorts.}
 
 \item{runTemporalCohortCharacterization}{Generate and export the temporal cohort characterization?
 Only records with values greater than 0.001 are returned.}
+
+\item{useExternalConceptCountsTable}{if external concept counts table should be used}
 }
 \description{
 executeDiagnosticsCdm
 }
 \examples{
 \dontrun{
-cdmDatabaseSchema <- "main"
-cohortDatabaseSchema <- "main"
 cohortTable <- "mycohort"
-databaseId <- "Eunomia"
 con <- DBI::dbConnect(duckdb::duckdb(), dbdir = CDMConnector::eunomia_dir())
-cdm <- cdmFromCon(con, cdmSchema = cdmDatabaseSchema, writeSchema = cohortDatabaseSchema, cdmName = databaseId)
+cdm <- cdmFromCon(con, cdmSchema = "main", writeSchema = "main", cdmName = "eunomia")
 cohortDefinitionSet <- CDMConnector::readCohortSet(system.file("cohorts", package = "CohortDiagnostics"))
 cdm <- generateCohortSet(cdm, cohortDefinitionSet, name = cohortTable)
 executeDiagnosticsCdm(cdm = cdm,
  cohortDefinitionSet = cohortDefinitionSet,
  cohortTable = cohortTable,
- exportFolder = exportFolder,
- minCellCount = minCellCount,
+ exportFolder = "output",
+ minCellCount = 5,
  runInclusionStatistics = T,
  runIncludedSourceConcepts = T,
  runOrphanConcepts = T,
@@ -78,7 +81,8 @@ executeDiagnosticsCdm(cdm = cdm,
  runBreakdownIndexEvents = T,
  runIncidenceRate = T,
  runCohortRelationship = T,
- runTemporalCohortCharacterization = T)
+ runTemporalCohortCharacterization = T,
+ useExternalConceptCountsTable = F)
 }
 
 }

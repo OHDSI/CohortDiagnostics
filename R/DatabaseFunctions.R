@@ -39,7 +39,7 @@ renderTranslateExecuteSql <- function(connection,
   # renderSQL
   sql <- SqlRender::render(sql = sql, ...)
   # translate
-  sql <- SqlRender::translate(sql = sql, targetDialect = CDMConnector::dbms(connection))
+  sql <- SqlRender::translate(sql = sql, targetDialect = getDbms(connection))
   # execute
   DBI::dbExecute(conn = connection, statement = sql)
 }
@@ -69,7 +69,7 @@ renderTranslateQuerySql <- function(connection,
   # renderSQL
   sql <- SqlRender::render(sql = sql, ...)
   # translate
-  sql <- SqlRender::translate(sql = sql, targetDialect = CDMConnector::dbms(connection))
+  sql <- SqlRender::translate(sql = sql, targetDialect = getDbms(connection))
   # get results
   result <- DBI::dbGetQuery(conn = connection, statement = sql)
   if (snakeCaseToCamelCase) {
@@ -171,7 +171,7 @@ renderTranslateQuerySqlToAndromeda <- function(connection,
                                                                                default = TRUE),
                                                ...) {
   sql <- SqlRender::render(sql = sql, ...)
-  sql <- SqlRender::translate(sql = sql, targetDialect = CDMConnector::dbms(connection))
+  sql <- SqlRender::translate(sql = sql, targetDialect = getDbms(connection))
   querySqlToAndromeda(connection = connection,
                       sql = sql,
                       andromeda = andromeda,

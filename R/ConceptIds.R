@@ -20,7 +20,7 @@ createConceptTable <- function(connection, tempEmulationSchema) {
     SqlRender::loadRenderTranslateSql(
       "CreateConceptIdTable.sql",
       packageName = utils::packageName(),
-      dbms = CDMConnector::dbms(connection),
+      dbms = getDbms(connection),
       tempEmulationSchema = tempEmulationSchema,
       table_name = "#concept_ids"
     )
