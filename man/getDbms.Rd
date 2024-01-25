@@ -7,7 +7,10 @@
 getDbms(connection)
 }
 \arguments{
-\item{connection}{}
+\item{connection}{db connection}
+}
+\value{
+dbms
 }
 \description{
 getDbms

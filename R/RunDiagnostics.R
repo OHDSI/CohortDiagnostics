@@ -155,10 +155,9 @@ getDefaultCovariateSettings <- function() {
 #'                                   This expression can use the variables 'cohortId' and 'seed'.
 #'                                   Default is "cohortId * 1000 + seed", which ensures unique identifiers
 #'                                   as long as there are fewer than 1000 cohorts.
-
 #' @examples
 #' \dontrun{
-#' # Load cohorts (assumes that they have already been instantiated)
+#' Load cohorts (assumes that they have already been instantiated)
 #' cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort")
 #' cohorts <- CohortGenerator::getCohortDefinitionSet(packageName = "MyGreatPackage")
 #' connectionDetails <- createConnectionDetails(
@@ -1138,65 +1137,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
     attr(delta, "units")
   )
 }
-#' executeDiagnosticsCdm
-#'
-#' @param cdm 
-#' @param cohortDefinitionSet 
-#' @param cohortTable 
-#' @param exportFolder 
-#' @param minCellCount 
-#' @param runInclusionStatistics 
-#' @param runIncludedSourceConcepts 
-#' @param runOrphanConcepts 
-#' @param runTimeSeries 
-#' @param runVisitContext 
-#' @param runBreakdownIndexEvents 
-#' @param runIncidenceRate 
-#' @param runCohortRelationship 
-#' @param runTemporalCohortCharacterization 
-#'
-#' @return
-#' @export
-#'
-#' @examples
-executeDiagnosticsCdm <- function(cdm,
-                                  cohortDefinitionSet,
-                                  cohortTable = "cohort",
-                                  exportFolder,
-                                  minCellCount = 5,
-                                  runInclusionStatistics = TRUE,
-                                  runIncludedSourceConcepts = TRUE,
-                                  runOrphanConcepts = TRUE,
-                                  runTimeSeries = TRUE,
-                                  runVisitContext = TRUE,
-                                  runBreakdownIndexEvents = TRUE,
-                                  runIncidenceRate = TRUE,
-                                  runCohortRelationship = TRUE,
-                                  runTemporalCohortCharacterization = TRUE) {
-  
-  executeDiagnostics(cohortDefinitionSet,
-                     connectionDetails = NULL,
-                     connection = NULL,
-                     cdm = cdm,
-                     cdmVersion = floor(as.numeric(CDMConnector::version(cdm))),
-                     cohortTable = cohortTable,
-                     cohortDatabaseSchema = attr(cdm, "write_schema"),
-                     cdmDatabaseSchema = attr(cdm, "cdm_schema"),
-                     exportFolder = exportFolder,
-                     databaseId = attr(cdm, "cdm_name"),
-                     minCellCount = minCellCount,
-                     runInclusionStatistics = runInclusionStatistics,
-                     runIncludedSourceConcepts = runIncludedSourceConcepts,
-                     runOrphanConcepts = runIncludedSourceConcepts,
-                     runTimeSeries = runIncludedSourceConcepts,
-                     runVisitContext = runVisitContext,
-                     runBreakdownIndexEvents = runBreakdownIndexEvents,
-                     runIncidenceRate = runIncidenceRate,
-                     runCohortRelationship = runCohortRelationship,
-                     runTemporalCohortCharacterization = runTemporalCohortCharacterization,
-                     useExternalConceptCountsTable = F)
-}
-
 
 writeResultsZip <- function(exportFolder, databaseId) {
   ParallelLogger::logInfo("Adding results to zip file")

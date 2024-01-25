@@ -21,6 +21,31 @@ getDbDefaultCovariateData(
 )
 }
 \arguments{
+\item{connection}{A connection to the server containing the schema as created using the
+\code{connect} function in the \code{DatabaseConnector} package.
+Either the \code{connection} or \code{connectionDetails} argument
+should be specified.}
+
+\item{oracleTempSchema}{A schema where temp tables can be created in Oracle.}
+
+\item{cdmDatabaseSchema}{The name of the database schema that contains the OMOP CDM instance.
+Requires read permissions to this database. On SQL Server, this should
+specify both the database and the schema, so for example
+'cdm_instance.dbo'.}
+
+\item{cohortTable}{Name of the (temp) table holding the cohort for which we want to
+construct covariates}
+
+\item{cohortIds}{For which cohort ID(s) should covariates be constructed? If set to c(-1),
+covariates will be constructed for all cohorts in the specified cohort
+table.}
+
+\item{cdmVersion}{Define the OMOP CDM version used: currently supported is "5".}
+
+\item{rowIdField}{The name of the field in the cohort table that is to be used as the
+row_id field in the output table. This can be especially usefull if
+there is more than one period per person.}
+
 \item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one
 of the createCovariate functions, or a list of such objects.}
 
@@ -35,6 +60,8 @@ it is a temp table, do not specify \code{targetDatabaseSchema}.}
 \item{targetCovariateRefTable}{(Optional) The name of the table where the covariate reference will be stored.}
 
 \item{targetAnalysisRefTable}{(Optional) The name of the table where the analysis reference will be stored.}
+
+\item{aggregated}{if results should be aggregated}
 }
 \description{
 Constructs a large default set of covariates for one or more cohorts using data in the CDM schema.

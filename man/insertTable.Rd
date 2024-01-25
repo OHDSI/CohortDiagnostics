@@ -21,11 +21,9 @@ insertTable(
 )
 }
 \arguments{
-\item{connection}{An object of type \code{connection} as created using the
-\code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package. Can be left NULL if \code{connectionDetails}
-is provided, in which case a new connection will be opened at the start
-of the function, and closed when the function finishes.}
+\item{connection}{DB connection}
+
+\item{databaseSchema}{db schema}
 
 \item{tableName}{The name of the table where the data should be inserted.}
 
@@ -36,6 +34,8 @@ of the function, and closed when the function finishes.}
 \item{createTable}{Create a new table? If false, will append to existing table.}
 
 \item{tempTable}{Should the table created as a temp table?}
+
+\item{oracleTempSchema}{oracle temp schema name}
 
 \item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
 tables, provide a schema with write privileges where temp tables can be created.}
@@ -50,11 +50,6 @@ requirements for the various platforms.}
 
 \item{camelCaseToSnakeCase}{If TRUE, the data frame column names are assumed to use camelCase and
 are converted to snake_case before uploading.}
-
-\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
-\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is
-provided.}
 }
 \description{
 This function sends the data in a data frame to a table on the server. Either a new table

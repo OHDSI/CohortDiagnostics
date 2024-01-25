@@ -17,23 +17,23 @@ renderTranslateQuerySql(
 )
 }
 \arguments{
-\item{connection}{}
+\item{connection}{db connection}
 
-\item{sql}{}
+\item{sql}{The SQL to be executed}
 
-\item{errorReportFile}{}
+\item{errorReportFile}{error file}
 
-\item{snakeCaseToCamelCase}{}
+\item{snakeCaseToCamelCase}{snake case to camel case boolean}
 
-\item{oracleTempSchema}{}
+\item{oracleTempSchema}{oracle temp schema}
 
-\item{tempEmulationSchema}{}
+\item{tempEmulationSchema}{temp emulation schema}
 
-\item{integerAsNumeric}{}
+\item{integerAsNumeric}{int as numeric boolean}
 
-\item{integer64AsNumeric}{}
+\item{integer64AsNumeric}{int64 as numeric boolean}
 
-\item{...}{}
+\item{...}{parameters that will be used to render the SQL.}
 }
 \value{
 the query results

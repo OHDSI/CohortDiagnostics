@@ -16,16 +16,16 @@
 
 #' renderTranslateExecuteSql
 #'
-#' @param connection 
-#' @param sql 
-#' @param errorReportFile 
-#' @param snakeCaseToCamelCase 
-#' @param oracleTempSchema 
-#' @param tempEmulationSchema 
-#' @param integerAsNumeric 
-#' @param integer64AsNumeric 
-#' @param ... 
-#'
+#' @param connection db connection
+#' @param sql The SQL to be executed
+#' @param errorReportFile error file
+#' @param snakeCaseToCamelCase snake case to camel case boolean
+#' @param oracleTempSchema oracle temp schema
+#' @param tempEmulationSchema temp emulation schema
+#' @param integerAsNumeric int as numeric boolean
+#' @param integer64AsNumeric int64 as numeric boolean
+#' @param ... parameters that will be used to render the SQL.
+#' 
 #' @return NONE
 renderTranslateExecuteSql <- function(connection,
                                       sql,
@@ -46,15 +46,15 @@ renderTranslateExecuteSql <- function(connection,
 
 #' renderTranslateQuerySql
 #'
-#' @param connection 
-#' @param sql 
-#' @param errorReportFile 
-#' @param snakeCaseToCamelCase 
-#' @param oracleTempSchema 
-#' @param tempEmulationSchema 
-#' @param integerAsNumeric 
-#' @param integer64AsNumeric 
-#' @param ... 
+#' @param connection db connection
+#' @param sql The SQL to be executed
+#' @param errorReportFile error file
+#' @param snakeCaseToCamelCase snake case to camel case boolean
+#' @param oracleTempSchema oracle temp schema
+#' @param tempEmulationSchema temp emulation schema
+#' @param integerAsNumeric int as numeric boolean
+#' @param integer64AsNumeric int64 as numeric boolean
+#' @param ... parameters that will be used to render the SQL.
 #'
 #' @return the query results
 renderTranslateQuerySql <- function(connection,
@@ -80,17 +80,15 @@ renderTranslateQuerySql <- function(connection,
 
 #' querySql
 #'
-#' @param connection 
-#' @param sql 
-#' @param errorReportFile 
-#' @param snakeCaseToCamelCase 
-#' @param integerAsNumeric 
-#' @param integer64AsNumeric 
+#' @param connection db connection
+#' @param sql The SQL to be executed
+#' @param errorReportFile error file
+#' @param snakeCaseToCamelCase snake case to camel case boolean
+#' @param integerAsNumeric int as numeric boolean
+#' @param integer64AsNumeric int64 as numeric boolean
 #'
-#' @return
-#' @export
+#' @return query results
 #'
-#' @examples
 querySql <- function(connection,
                      sql,
                      errorReportFile = file.path(getwd(), "errorReportSql.txt"),
@@ -104,6 +102,19 @@ querySql <- function(connection,
   return(result)
 }
 
+#' renderTranslateQuerySql
+#'
+#' @param connection db connection
+#' @param sql The SQL to be executed
+#' @param andromeda andromeda object
+#' @param andromedaTableName table name
+#' @param errorReportFile error file
+#' @param snakeCaseToCamelCase snake case to camel case boolean
+#' @param appendToTable if result should be appended
+#' @param integerAsNumeric int as numeric boolean
+#' @param integer64AsNumeric int64 as numeric boolean
+#'
+#' @return the updated andromeda object
 querySqlToAndromeda <- function(connection,
                                 sql,
                                 andromeda,
@@ -135,18 +146,14 @@ querySqlToAndromeda <- function(connection,
 
 #' executeSql
 #'
-#' @param connection 
-#' @param sql 
-#' @param profile 
-#' @param progressBar 
-#' @param reportOverallTime 
-#' @param errorReportFile 
-#' @param runAsBatch 
+#' @param connection db connection
+#' @param sql The SQL to be executed
+#' @param profile profile
+#' @param progressBar progress bar
+#' @param reportOverallTime if overall time should be reported
+#' @param errorReportFile error report file
+#' @param runAsBatch run as batch?
 #'
-#' @return
-#' @export
-#'
-#' @examples
 executeSql <- function(connection,
                        sql,
                        profile = FALSE,
@@ -159,18 +166,22 @@ executeSql <- function(connection,
 }
 
 
+#' isCDMConnection
+#'
+#' @param connection db connection
+#'
+#' @return if this is CDM connection
+#' 
 isCDMConnection <- function(connection) {
   return(!("dbms" %in% names(attributes(connection))))
 }
 
 #' getDbms
 #'
-#' @param connection 
+#' @param connection db connection
 #'
-#' @return
-#' @export
-#'
-#' @examples
+#' @return dbms
+#' 
 getDbms <- function(connection) {
   result <- NULL
   if (isCDMConnection(connection)) {
@@ -183,13 +194,11 @@ getDbms <- function(connection) {
 
 #' getTableNames
 #'
-#' @param connection 
-#' @param cdmDatabaseSchema 
+#' @param connection db connection
+#' @param cdmDatabaseSchema schema name
 #'
-#' @return
-#' @export
-#'
-#' @examples
+#' @return the table names
+#' 
 getTableNames <- function(connection, cdmDatabaseSchema) {
   result <- NULL
   if (isCDMConnection(connection)) {
@@ -206,12 +215,14 @@ getTableNames <- function(connection, cdmDatabaseSchema) {
 #' This function sends the data in a data frame to a table on the server. Either a new table
 #' is created, or the data is appended to an existing table.
 #'
-#' @template Connection
+#' @param connection          DB connection
+#' @param databaseSchema      db schema
 #' @param tableName           The name of the table where the data should be inserted.
 #' @param data                The data frame containing the data to be inserted.
 #' @param dropTableIfExists   Drop the table if the table already exists before writing?
 #' @param createTable         Create a new table? If false, will append to existing table.
 #' @param tempTable           Should the table created as a temp table?
+#' @param oracleTempSchema    oracle temp schema name
 #' @template TempEmulationSchema 
 #' @param bulkLoad            If using Redshift, PDW, Hive or Postgres, use more performant bulk loading
 #'                            techniques. Does not work for temp tables (except for HIVE). See Details for

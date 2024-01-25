@@ -15,19 +15,19 @@ executeSql(
 )
 }
 \arguments{
-\item{connection}{}
+\item{connection}{db connection}
 
-\item{sql}{}
+\item{sql}{The SQL to be executed}
 
-\item{profile}{}
+\item{profile}{profile}
 
-\item{progressBar}{}
+\item{progressBar}{progress bar}
 
-\item{reportOverallTime}{}
+\item{reportOverallTime}{if overall time should be reported}
 
-\item{errorReportFile}{}
+\item{errorReportFile}{error report file}
 
-\item{runAsBatch}{}
+\item{runAsBatch}{run as batch?}
 }
 \description{
 executeSql

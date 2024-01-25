@@ -14,17 +14,20 @@ querySql(
 )
 }
 \arguments{
-\item{connection}{}
+\item{connection}{db connection}
 
-\item{sql}{}
+\item{sql}{The SQL to be executed}
 
-\item{errorReportFile}{}
+\item{errorReportFile}{error file}
 
-\item{snakeCaseToCamelCase}{}
+\item{snakeCaseToCamelCase}{snake case to camel case boolean}
 
-\item{integerAsNumeric}{}
+\item{integerAsNumeric}{int as numeric boolean}
 
-\item{integer64AsNumeric}{}
+\item{integer64AsNumeric}{int64 as numeric boolean}
+}
+\value{
+query results
 }
 \description{
 querySql

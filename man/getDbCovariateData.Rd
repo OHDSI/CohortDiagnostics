@@ -56,15 +56,6 @@ of the createCovariate functions, or a list of such objects.}
 
 \item{aggregated}{Should aggregate statistics be computed instead of covariates per
 cohort entry?}
-
-\item{connectionDetails}{An R object of type \code{connectionDetails} created using the
-function \code{createConnectionDetails} in the
-\code{DatabaseConnector} package. Either the \code{connection} or
-\code{connectionDetails} argument should be specified.}
-
-\item{cohortId}{DEPRECATED:For which cohort ID(s) should covariates be constructed? If set to -1,
-covariates will be constructed for all cohorts in the specified cohort
-table.}
 }
 \value{
 Returns an object of type \code{covariateData}, containing information on the covariates.

@@ -23,6 +23,7 @@
 #' and vocabulary version, where available.
 #'
 #' @template Connection
+#' @param cdm cdm reference object
 #'
 #' @template CdmDatabaseSchema
 #'

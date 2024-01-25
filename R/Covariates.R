@@ -25,10 +25,6 @@
 #' 'cohort_definition_id', 'cohort_start_date'. Optionally, an extra field can be added containing the
 #' unique identifier that will be used as rowID in the output.
 #'
-#' @param connectionDetails      An R object of type \code{connectionDetails} created using the
-#'                               function \code{createConnectionDetails} in the
-#'                               \code{DatabaseConnector} package. Either the \code{connection} or
-#'                               \code{connectionDetails} argument should be specified.
 #' @param connection             A connection to the server containing the schema as created using the
 #'                               \code{connect} function in the \code{DatabaseConnector} package.
 #'                               Either the \code{connection} or \code{connectionDetails} argument
@@ -46,9 +42,6 @@
 #'                               specify both the database and the schema, so for example
 #'                               'cdm_instance.dbo'.
 #' @param cohortTableIsTemp      Is the cohort table a temp table?
-#' @param cohortId               DEPRECATED:For which cohort ID(s) should covariates be constructed? If set to -1,
-#'                               covariates will be constructed for all cohorts in the specified cohort
-#'                               table.
 #' @param cohortIds              For which cohort ID(s) should covariates be constructed? If set to c(-1),
 #'                               covariates will be constructed for all cohorts in the specified cohort
 #'                               table.
@@ -194,6 +187,24 @@ getDbCovariateData <- function(connection = NULL,
 #' Includes covariates for all drugs, drug classes, condition, condition classes, procedures,
 #' observations, etc.
 #'
+#' @param connection             A connection to the server containing the schema as created using the
+#'                               \code{connect} function in the \code{DatabaseConnector} package.
+#'                               Either the \code{connection} or \code{connectionDetails} argument
+#'                               should be specified.
+#' @param oracleTempSchema       A schema where temp tables can be created in Oracle.
+#' @param cdmDatabaseSchema      The name of the database schema that contains the OMOP CDM instance.
+#'                               Requires read permissions to this database. On SQL Server, this should
+#'                               specify both the database and the schema, so for example
+#'                               'cdm_instance.dbo'.
+#' @param cohortTable            Name of the (temp) table holding the cohort for which we want to
+#'                               construct covariates
+#' @param cohortIds              For which cohort ID(s) should covariates be constructed? If set to c(-1),
+#'                               covariates will be constructed for all cohorts in the specified cohort
+#'                               table.
+#' @param cdmVersion             Define the OMOP CDM version used: currently supported is "5".
+#' @param rowIdField             The name of the field in the cohort table that is to be used as the
+#'                               row_id field in the output table. This can be especially usefull if
+#'                               there is more than one period per person.
 #' @param covariateSettings      Either an object of type \code{covariateSettings} as created using one
 #'                               of the createCovariate functions, or a list of such objects.
 #' @param targetDatabaseSchema   (Optional) The name of the database schema where the resulting covariates
@@ -204,6 +215,7 @@ getDbCovariateData <- function(connection = NULL,
 #'                               it is a temp table, do not specify \code{targetDatabaseSchema}.
 #' @param targetCovariateRefTable (Optional) The name of the table where the covariate reference will be stored.
 #' @param targetAnalysisRefTable (Optional) The name of the table where the analysis reference will be stored.
+#' @param aggregated             if results should be aggregated
 #'
 #' @examples
 #' \dontrun{

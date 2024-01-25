@@ -140,12 +140,12 @@ getInclusionStats <- function(connection,
 #' cohortInclusionTable. This function is only required when generating cohorts
 #' that include cohort statistics.
 #'
-#' @template Connection
-#'
+#' @param connection                  db connection
+#' @param cohortDefinitionSet         cohort definition set
 #' @template CohortDatabaseSchema
 #'
-#' @param cohortInclusionTable         Name of the inclusion table, one of the tables for storing
-#'                                     inclusion rule statistics.
+#' @param cohortInclusionTable        Name of the inclusion table, one of the tables for storing
+#'                                    inclusion rule statistics.
 #'
 #' @returns
 #' A data frame containing the inclusion rules by cohort and sequence ID

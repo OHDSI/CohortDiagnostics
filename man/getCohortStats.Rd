@@ -16,12 +16,20 @@ getCohortStats(
 )
 }
 \arguments{
+\item{connection}{db connection}
+
+\item{cohortDatabaseSchema}{db scheme for cohort}
+
+\item{databaseId}{database identifier}
+
 \item{snakeCaseToCamelCase}{Convert column names from snake case to camel case.}
 
 \item{outputTables}{Character vector. One or more of "cohortInclusionTable", "cohortInclusionResultTable",
 "cohortInclusionStatsTable", "cohortInclusionStatsTable", "cohortSummaryStatsTable"
 or "cohortCensorStatsTable". Output is limited to these tables. Cannot export, for,
 example, the cohort table. Defaults to all stats tables.}
+
+\item{cohortTableNames}{cohort table names}
 }
 \description{
 This function returns a data frame of the data in the Cohort Inclusion Tables.

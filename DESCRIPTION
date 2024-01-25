@@ -40,7 +40,11 @@ Imports:
   tidyr (>= 1.2.0),
   CohortGenerator (>= 0.8.0),
   remotes,
-  CDMConnector (>= 1.2.0)
+  CDMConnector (>= 1.2.0),
+  DBI,
+  bit64,
+  jsonlite,
+  rJava
 Suggests:
   Eunomia,
   ROhdsiWebApi (>= 1.2.0),

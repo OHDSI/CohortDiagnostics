@@ -14,7 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Get stats data
+#' Get stats data
+#'
+#' @param connection db connection
+#' @param cohortDatabaseSchema  cohort db schema
+#' @param table  table name
+#' @param snakeCaseToCamelCase snake case to camel case?
+#' @param databaseId database identifier
+#' @param includeDatabaseId if db id should be included
+#'
+#' @return the stats table
+#'
 getStatsTable <- function(connection,
                           cohortDatabaseSchema,
                           table,
@@ -59,12 +69,15 @@ getStatsTable <- function(connection,
 #'
 #'
 #' These can be optionally specified with the `outputTables`.
-#'
+#' @param connection                  db connection
+#' @param cohortDatabaseSchema        db scheme for cohort
+#' @param databaseId                  database identifier
 #' @param snakeCaseToCamelCase        Convert column names from snake case to camel case.
 #' @param outputTables                Character vector. One or more of "cohortInclusionTable", "cohortInclusionResultTable",
 #'                                    "cohortInclusionStatsTable", "cohortInclusionStatsTable", "cohortSummaryStatsTable"
 #'                                    or "cohortCensorStatsTable". Output is limited to these tables. Cannot export, for,
 #'                                    example, the cohort table. Defaults to all stats tables.
+#' @param cohortTableNames            cohort table names
 getCohortStats <- function(connection,
                            cohortDatabaseSchema,
                            databaseId = NULL,

@@ -13,11 +13,9 @@ insertInclusionRuleNames(
 )
 }
 \arguments{
-\item{connection}{An object of type \code{connection} as created using the
-\code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package. Can be left NULL if \code{connectionDetails}
-is provided, in which case a new connection will be opened at the start
-of the function, and closed when the function finishes.}
+\item{connection}{db connection}
+
+\item{cohortDefinitionSet}{cohort definition set}
 
 \item{cohortDatabaseSchema}{Schema name where your user has write access (has CRUD privileges). This is the location,
 of the cohort tables. This is also the location for the optional table such as 
@@ -33,11 +31,6 @@ mode such as the 'recordKeepingFile'.}
 
 \item{cohortInclusionTable}{Name of the inclusion table, one of the tables for storing
 inclusion rule statistics.}
-
-\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
-\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is
-provided.}
 }
 \value{
 A data frame containing the inclusion rules by cohort and sequence ID
