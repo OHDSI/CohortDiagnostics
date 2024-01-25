@@ -102,7 +102,7 @@ querySql <- function(connection,
   return(result)
 }
 
-#' renderTranslateQuerySql
+#' querySqlToAndromeda
 #'
 #' @param connection db connection
 #' @param sql The SQL to be executed
@@ -142,6 +142,45 @@ querySqlToAndromeda <- function(connection,
     )
   }
   return(andromeda)
+}
+
+#' renderTranslateQuerySqlToAndromeda
+#'
+#' @param connection db connection
+#' @param sql The SQL to be executed
+#' @param andromeda andromeda object
+#' @param andromedaTableName table name
+#' @param errorReportFile error file
+#' @param snakeCaseToCamelCase snake case to camel case boolean
+#' @param appendToTable if result should be appended
+#' @param integerAsNumeric int as numeric boolean
+#' @param integer64AsNumeric int64 as numeric boolean
+#' @param ... parameters that will be used to render the SQL
+#'
+#' @return the updated andromeda object
+renderTranslateQuerySqlToAndromeda <- function(connection,
+                                               sql,
+                                               andromeda,
+                                               andromedaTableName,
+                                               errorReportFile = file.path(getwd(), "errorReportSql.txt"),
+                                               snakeCaseToCamelCase = FALSE,
+                                               appendToTable = FALSE,
+                                               integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric",
+                                                                             default = TRUE),
+                                               integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric",
+                                                                               default = TRUE),
+                                               ...) {
+  sql <- SqlRender::render(sql = sql, ...)
+  sql <- SqlRender::translate(sql = sql, targetDialect = CDMConnector::dbms(connection))
+  querySqlToAndromeda(connection = connection,
+                      sql = sql,
+                      andromeda = andromeda,
+                      andromedaTableName = andromedaTableName,
+                      errorReportFile = errorReportFile,
+                      snakeCaseToCamelCase = snakeCaseToCamelCase,
+                      appendToTable = appendToTable,
+                      integerAsNumeric = integerAsNumeric,
+                      integer64AsNumeric = integer64AsNumeric)
 }
 
 #' executeSql

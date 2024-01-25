@@ -21,11 +21,11 @@ cohortDefinitionSet <-
     sqlFolder = "sql/sql_server",
     packageName = "SkeletonCohortDiagnosticsStudy",
     cohortFileNameValue = "cohortId"
-  ) %>%  dplyr::tibble()
+  ) %>% dplyr::tibble()
 
 con <- DBI::dbConnect(duckdb::duckdb(), dbdir = CDMConnector::eunomia_dir())
-cdm <- cdmFromCon(con, cdmSchema = cdmDatabaseSchema, writeSchema = cohortDatabaseSchema, cdmName = databaseId)
-cdm <- generateCohortSet(cdm, cohortDefinitionSet, name = cohortTable)
+cdm <- CDMConnector::cdmFromCon(con, cdmSchema = cdmDatabaseSchema, writeSchema = cohortDatabaseSchema, cdmName = databaseId)
+cdm <- CDMConnector::generateCohortSet(cdm, cohortDefinitionSet, name = cohortTable)
 
 CohortDiagnostics::executeDiagnosticsCdm(cdm = cdm,
                                          cohortDefinitionSet = cohortDefinitionSet,
