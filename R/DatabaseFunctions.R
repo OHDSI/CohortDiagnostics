@@ -36,11 +36,8 @@ renderTranslateExecuteSql <- function(connection,
                                       integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric", default = TRUE),
                                       integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric", default = TRUE),
                                       ...) {
-  # renderSQL
   sql <- SqlRender::render(sql = sql, ...)
-  # translate
   sql <- SqlRender::translate(sql = sql, targetDialect = getDbms(connection))
-  # execute
   DBI::dbExecute(conn = connection, statement = sql)
 }
 
@@ -66,11 +63,8 @@ renderTranslateQuerySql <- function(connection,
                                     integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric", default = TRUE),
                                     integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric", default = TRUE),
                                     ...) {
-  # renderSQL
   sql <- SqlRender::render(sql = sql, ...)
-  # translate
   sql <- SqlRender::translate(sql = sql, targetDialect = getDbms(connection))
-  # get results
   result <- DBI::dbGetQuery(conn = connection, statement = sql)
   if (snakeCaseToCamelCase) {
     colnames(result) <- SqlRender::snakeCaseToCamelCase(colnames(result))
