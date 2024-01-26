@@ -66,7 +66,7 @@ Remotes:
   ohdsi/CirceR,
   ohdsi/CohortGenerator@random_sample,
   ohdsi/OhdsiShinyModules,
-  darwin-eu-dev/CDMConnector
+  darwin-eu/CDMConnector
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics
