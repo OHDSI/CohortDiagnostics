@@ -65,7 +65,7 @@ Remotes:
   ohdsi/ROhdsiWebApi,
   ohdsi/CirceR,
   ohdsi/CohortGenerator@random_sample,
-  ohdsi/OhdsiShinyModules
+  ohdsi/OhdsiShinyModules,
   darwin-eu-dev/CDMConnector
 License: Apache License
 VignetteBuilder: knitr
