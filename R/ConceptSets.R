@@ -752,7 +752,6 @@ runConceptSetDiagnostics <- function(connection,
                 progressBar = FALSE,
                 reportOverallTime = FALSE
               )
-              
               sql <- "SELECT * FROM @store_table;"
               counts <-
                 renderTranslateQuerySql(

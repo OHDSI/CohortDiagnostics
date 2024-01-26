@@ -77,6 +77,15 @@ executeDiagnosticsCdm <- function(cdm,
                                   runTemporalCohortCharacterization = TRUE,
                                   useExternalConceptCountsTable = TRUE) {
   
+  errorMessage <- checkmate::makeAssertCollection()
+  cdmCheck <- inherits(cdm, "cdm_reference")
+  if (!isTRUE(cdmCheck)) {
+    errorMessage$push(
+      "- cdm must be a CDMConnector CDM reference object"
+    )
+  }
+  checkmate::reportAssertions(collection = errorMessage)
+  
   executeDiagnostics(cohortDefinitionSet,
                      connectionDetails = NULL,
                      connection = attr(cdm, "dbcon"),

@@ -248,6 +248,17 @@ getTableNames <- function(connection, cdmDatabaseSchema) {
   return(result)
 }
 
+#' existsTable
+#'
+#' @param connection db connection
+#' @param databaseSchema db schema name
+#' @param tableName the table name
+#'
+#' @return if given table exists
+existsTable <- function(connection, databaseSchema, tableName) {
+  tableName %in% getTableNames(connection, databaseSchema)
+}
+
 #' Insert a table on the server
 #'
 #' @description

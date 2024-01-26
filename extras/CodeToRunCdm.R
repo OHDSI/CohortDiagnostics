@@ -3,9 +3,8 @@
 library(Eunomia)
 library(CohortDiagnostics)
 library(CohortGenerator)
-library(CDMConnector) # needs 1.3.1
+library(CDMConnector)
 
-useCDMConnection <- FALSE
 cdmDatabaseSchema <- "main"
 cohortDatabaseSchema <- "main"
 cohortTable <- "mycohort"
