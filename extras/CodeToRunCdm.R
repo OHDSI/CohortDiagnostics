@@ -13,14 +13,16 @@ outputFolder <- "export"
 databaseId <- "Eunomia"
 minCellCount <- 5
 
-cohortDefinitionSet <-
-  CohortGenerator::getCohortDefinitionSet(
-    settingsFileName = "settings/CohortsToCreate.csv",
-    jsonFolder = "cohorts",
-    sqlFolder = "sql/sql_server",
-    packageName = "SkeletonCohortDiagnosticsStudy",
-    cohortFileNameValue = "cohortId"
-  ) %>% dplyr::tibble()
+if (!dir.exists(outputFolder)) {
+  dir.create(outputFolder)
+}
+
+cohortDefinitionSet <- CohortGenerator::getCohortDefinitionSet(
+  settingsFileName = "Cohorts.csv",
+  jsonFolder = "cohorts",
+  sqlFolder = "sql/sql_server",
+  packageName = "CohortDiagnostics"
+)
 
 con <- DBI::dbConnect(duckdb::duckdb(), dbdir = CDMConnector::eunomia_dir())
 cdm <- CDMConnector::cdmFromCon(con, cdmSchema = cdmDatabaseSchema, writeSchema = cohortDatabaseSchema, cdmName = databaseId)
