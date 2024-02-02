@@ -49,7 +49,7 @@ getCdmDataSourceInformation <-
       }
     }
 
-    if (!DatabaseConnector::existsTable(
+    if (!existsTable(
       connection = connection,
       databaseSchema = cdmDatabaseSchema,
       tableName = "cdm_source"

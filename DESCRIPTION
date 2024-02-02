@@ -39,7 +39,12 @@ Imports:
   stringr,
   tidyr (>= 1.2.0),
   CohortGenerator (>= 0.8.0),
-  remotes
+  remotes,
+  CDMConnector (>= 1.2.1),
+  DBI,
+  bit64,
+  jsonlite,
+  rJava
 Suggests:
   Eunomia,
   ROhdsiWebApi (>= 1.2.0),
@@ -60,7 +65,8 @@ Remotes:
   ohdsi/ROhdsiWebApi,
   ohdsi/CirceR,
   ohdsi/CohortGenerator@random_sample,
-  ohdsi/OhdsiShinyModules
+  ohdsi/OhdsiShinyModules,
+  darwin-eu/CDMConnector
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics

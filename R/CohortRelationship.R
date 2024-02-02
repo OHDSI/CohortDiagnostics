@@ -123,7 +123,7 @@ runCohortRelationshipDiagnostics <-
           )
         )
 
-      DatabaseConnector::renderTranslateExecuteSql(
+      renderTranslateExecuteSql(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
         sql = cohortRelationshipSql,
@@ -136,15 +136,11 @@ runCohortRelationshipDiagnostics <-
         cohort_table = cohortTable
       )
 
-      DatabaseConnector::renderTranslateQuerySqlToAndromeda(
-        connection = connection,
-        tempEmulationSchema = tempEmulationSchema,
-        sql = "SELECT * FROM #cohort_rel_output;",
-        snakeCaseToCamelCase = TRUE,
-        andromeda = resultsInAndromeda,
-        andromedaTableName = "temp"
-      )
-
+      resultsInAndromeda <- renderTranslateQuerySqlToAndromeda(connection = connection,
+                                                               sql = "SELECT * FROM #cohort_rel_output;",
+                                                               andromeda = resultsInAndromeda,
+                                                               andromedaTableName = "temp",
+                                                               snakeCaseToCamelCase = TRUE)
       if (!"cohortRelationships" %in% names(resultsInAndromeda)) {
         resultsInAndromeda$cohortRelationships <- resultsInAndromeda$temp
       } else {

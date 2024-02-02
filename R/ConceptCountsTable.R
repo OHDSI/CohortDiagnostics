@@ -45,7 +45,7 @@ createConceptCountsTable <- function(connectionDetails = NULL,
     SqlRender::loadRenderTranslateSql(
       "CreateConceptCountTable.sql",
       packageName = utils::packageName(),
-      dbms = connection@dbms,
+      dbms = getDbms(connection),
       tempEmulationSchema = tempEmulationSchema,
       cdm_database_schema = cdmDatabaseSchema,
       work_database_schema = conceptCountsDatabaseSchema,
@@ -53,7 +53,7 @@ createConceptCountsTable <- function(connectionDetails = NULL,
       table_is_temp = conceptCountsTableIsTemp,
       remove_current_table = removeCurrentTable
     )
-  DatabaseConnector::executeSql(connection, sql)
+  executeSql(connection, sql)
 }
 
 #' getConceptCountsTableName

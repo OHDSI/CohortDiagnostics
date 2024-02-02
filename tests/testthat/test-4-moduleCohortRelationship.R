@@ -51,7 +51,7 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
     tableName <- paste0("cr", sysTime)
     observationTableName <- paste0("op", sysTime)
 
-    DatabaseConnector::insertTable(
+    insertTable(
       connection = connectionCohortRelationship,
       databaseSchema = cohortDatabaseSchema,
       tableName = tableName,
@@ -349,7 +349,7 @@ test_that("Testing cohort relationship logic - incremental FALSE", {
     tableName <- paste0("cr", sysTime)
     observationTableName <- paste0("op", sysTime)
 
-    DatabaseConnector::insertTable(
+    insertTable(
       connection = connectionCohortRelationship,
       databaseSchema = cohortDatabaseSchema,
       tableName = tableName,

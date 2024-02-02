@@ -71,7 +71,7 @@ test_that("Testing cohort time series execution", {
         sample(1:100, 1)
       )
 
-    DatabaseConnector::insertTable(
+    insertTable(
       connection = connectionTimeSeries,
       databaseSchema = cohortDatabaseSchema,
       tableName = cohortTable,
@@ -202,7 +202,7 @@ test_that("Testing time series logic", {
     cohortTable <-
       paste0("ct_", Sys.getpid(), format(Sys.time(), "%s"), sample(1:100, 1))
 
-    DatabaseConnector::insertTable(
+    insertTable(
       connection = connectionTimeSeries,
       databaseSchema = cohortDatabaseSchema,
       tableName = cohortTable,

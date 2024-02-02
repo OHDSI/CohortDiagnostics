@@ -46,13 +46,12 @@ getCohortCounts <- function(connectionDetails = NULL,
     SqlRender::loadRenderTranslateSql(
       sqlFilename = "CohortCounts.sql",
       packageName = utils::packageName(),
-      dbms = connection@dbms,
+      dbms = getDbms(connection),
       cohort_database_schema = cohortDatabaseSchema,
       cohort_table = cohortTable,
       cohort_ids = cohortIds
     )
-  counts <-
-    DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>%
+  counts <- querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>%
     tidyr::tibble()
 
   if (length(cohortIds) > 0) {
@@ -77,8 +76,7 @@ checkIfCohortInstantiated <- function(connection,
                                       cohortId) {
   sql <-
     "SELECT COUNT(*) COUNT FROM @cohort_database_schema.@cohort_table WHERE cohort_definition_id = @cohort_id;"
-  count <-
-    DatabaseConnector::renderTranslateQuerySql(
+  count <- renderTranslateQuerySql(
       connection = connection,
       sql,
       cohort_database_schema = cohortDatabaseSchema,

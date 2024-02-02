@@ -60,17 +60,17 @@ getIncidenceRate <- function(connectionDetails = NULL,
     SqlRender::loadRenderTranslateSql(
       sqlFilename = "GetCalendarYearRange.sql",
       packageName = utils::packageName(),
-      dbms = connection@dbms,
+      dbms = getDbms(connection),
       cdm_database_schema = cdmDatabaseSchema
     )
-  yearRange <-
-    DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+  yearRange <- querySql(connection, sql, snakeCaseToCamelCase = TRUE)
 
   calendarYears <-
     dplyr::tibble(calendarYear = as.integer(seq(yearRange$startYear, yearRange$endYear, by = 1)))
-  DatabaseConnector::insertTable(
+  calenderYearsTable <- ifelse(dbms(connection) == "duckdb", "calendar_years", "#calendar_years")
+  insertTable(
     connection = connection,
-    tableName = "#calendar_years",
+    tableName = calenderYearsTable,
     data = calendarYears,
     dropTableIfExists = TRUE,
     createTable = TRUE,
@@ -83,7 +83,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
     SqlRender::loadRenderTranslateSql(
       sqlFilename = "ComputeIncidenceRates.sql",
       packageName = utils::packageName(),
-      dbms = connection@dbms,
+      dbms = getDbms(connection),
       tempEmulationSchema = tempEmulationSchema,
       cohort_database_schema = cohortDatabaseSchema,
       cohort_table = cohortTable,
@@ -93,11 +93,11 @@ getIncidenceRate <- function(connectionDetails = NULL,
       washout_period = washoutPeriod,
       cohort_id = cohortId
     )
-  DatabaseConnector::executeSql(connection, sql)
+  executeSql(connection, sql)
 
   sql <- "SELECT * FROM #rates_summary;"
   ratesSummary <-
-    DatabaseConnector::renderTranslateQuerySql(
+    renderTranslateQuerySql(
       connection = connection,
       sql = sql,
       tempEmulationSchema = tempEmulationSchema,
@@ -106,7 +106,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
     tidyr::tibble()
 
   sql <- "TRUNCATE TABLE #rates_summary; DROP TABLE #rates_summary;"
-  DatabaseConnector::renderTranslateExecuteSql(
+  renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
     progressBar = FALSE,

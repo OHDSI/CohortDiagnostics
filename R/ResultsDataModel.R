@@ -58,12 +58,12 @@ getDefaultVocabularyTableNames <- function() {
       list(
         sqlFilename = "CreateResultsDataModel.sql",
         packageName = utils::packageName(),
-        dbms = connection@dbms,
+        dbms = getDbms(connection),
         results_schema = databaseSchema
       )
     )
   )
-  DatabaseConnector::executeSql(connection, sql)
+  executeSql(connection, sql)
 }
 
 #' Create the results data model tables on a database server.
@@ -173,7 +173,7 @@ migrateDataModel <- function(connectionDetails, databaseSchema, tablePrefix = ""
 
   connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
-  DatabaseConnector::executeSql(connection, updateVersionSql)
+  executeSql(connection, updateVersionSql)
 }
 
 
