@@ -44,7 +44,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cdmVersion = cdmVersion,
           cohortTable = cohortTable,
-          cohortId = cohortIds,
+          cohortIds = cohortIds,
           covariateSettings = covariateSettings,
           aggregated = TRUE
         )
