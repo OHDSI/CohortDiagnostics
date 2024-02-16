@@ -81,12 +81,6 @@ if (FALSE) {
 
 connectionHandler <- ResultModelManager::PooledConnectionHandler$new(shinySettings$connectionDetails)
 
-if (!shinySettings$connectionDetails$dbms %in% c("duckdb", "sqlite")) {
-  DatabaseConnector::downloadJdbcDrivers(dbms = shinySettings$connectionDetails,
-                                         pathToDriver = shinySettings$connectionDetails$pathToDriver)
-
-}
-
 if (packageVersion("OhdsiShinyModules") <= as.numeric_version("2.0.0")) {
   stop("OhdsiShinyModules version no longer supported.
   Update to a newer version with remotes::install_github('OhdsiShinyModules')")
