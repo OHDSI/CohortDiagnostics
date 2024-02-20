@@ -44,7 +44,8 @@ test_that("Cohort diagnostics in incremental mode", {
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
-      temporalCovariateSettings = temporalCovariateSettings
+      temporalCovariateSettings = temporalCovariateSettings,
+      runOnSample = TRUE
     )
   )
 
@@ -74,7 +75,8 @@ test_that("Cohort diagnostics in incremental mode", {
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
-      temporalCovariateSettings = temporalCovariateSettings
+      temporalCovariateSettings = temporalCovariateSettings,
+      runOnSample = TRUE
     )
   )
   # generate sqlite file
@@ -120,7 +122,8 @@ test_that("Cohort diagnostics in incremental mode", {
         minCellCount = minCellCountValue,
         incremental = FALSE,
         incrementalFolder = file.path(folder, "incremental"),
-        temporalCovariateSettings = temporalCovariateSettings
+        temporalCovariateSettings = temporalCovariateSettings,
+        runOnSample = TRUE
       )
     })
 

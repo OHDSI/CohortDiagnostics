@@ -107,7 +107,7 @@ executeVisitContextDiagnostics <- function(connection,
   ParallelLogger::logInfo("Retrieving visit context for index dates")
   subset <- subsetToRequiredCohorts(
     cohorts = cohorts %>%
-      dplyr::filter(cohortId %in% instantiatedCohorts),
+      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
     task = "runVisitContext",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile

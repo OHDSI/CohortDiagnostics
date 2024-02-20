@@ -88,6 +88,12 @@
     <loc>/reference/createResultsDataModel.html</loc>
   </url>
   <url>
+    <loc>/reference/deployPositConnectApp.html</loc>
+  </url>
+  <url>
+    <loc>/reference/deployShinyApp.html</loc>
+  </url>
+  <url>
     <loc>/reference/dropDdl.html</loc>
   </url>
   <url>

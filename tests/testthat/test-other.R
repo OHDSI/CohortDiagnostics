@@ -125,3 +125,35 @@ test_that("timeExecutions function", {
   checkmate::expect_data_frame(result, nrows = 5, ncols = 5)
   expect_false(all(is.na(result$startTime)))
 })
+
+test_that("enforceMinCellValue replaces values below minimum with negative of minimum", {
+  data <- data.frame(a = c(1, 2, 3, 4, 5))
+  minValues <- 3
+  result <- enforceMinCellValue(data, "a", minValues, silent = TRUE)
+
+  expect_equal(result$a, c(-3, -3, 3, 4, 5))
+})
+
+test_that("enforceMinCellValue does not replace NA values", {
+  data <- data.frame(a = c(1, 2, NA, 4, 5))
+  minValues <- 3
+  result <- enforceMinCellValue(data, "a", minValues, silent = TRUE)
+
+  expect_equal(result$a, c(-3, -3, NA, 4, 5))
+})
+
+test_that("enforceMinCellValue does not replace zero values", {
+  data <- data.frame(a = c(0, 2, 3, 4, 5))
+  minValues <- 3
+  result <- enforceMinCellValue(data, "a", minValues, silent = TRUE)
+
+  expect_equal(result$a, c(0, -3, 3, 4, 5))
+})
+
+test_that("enforceMinCellValue works with vector of minimum values", {
+  data <- data.frame(a = c(1, 2, 3, 4, 5))
+  minValues <- c(1, 2, 3, 4, 5)
+  result <- enforceMinCellValue(data, "a", minValues, silent = TRUE)
+
+  expect_equal(result$a, c(1, 2, 3, 4, 5))
+})
