@@ -35,10 +35,14 @@ renderTranslateExecuteSql <- function(connection,
                                       tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                                       integerAsNumeric = getOption("databaseConnectorIntegerAsNumeric", default = TRUE),
                                       integer64AsNumeric = getOption("databaseConnectorInteger64AsNumeric", default = TRUE),
+                                      reportOverallTime = FALSE,
+                                      progressBar = FALSE,
                                       ...) {
+  
   sql <- SqlRender::render(sql = sql, ...)
   sql <- SqlRender::translate(sql = sql, targetDialect = getDbms(connection))
-  DBI::dbExecute(conn = connection, statement = sql)
+  sql <- SqlRender::splitSql(sql)
+  purrr::walk(sql, ~DBI::dbExecute(conn = connection, statement = .))
 }
 
 #' renderTranslateQuerySql
