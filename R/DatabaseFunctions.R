@@ -195,7 +195,7 @@ executeSql <- function(connection,
                        errorReportFile = file.path(getwd(), "errorReportSql.txt"),
                        runAsBatch = FALSE) {
   # execute
-  DBI::dbExecute(conn = connection, statement = sql)
+  purrr::walk(SqlRender::splitSql(sql), ~DBI::dbExecute(conn = connection, statement = .))
 }
 
 
