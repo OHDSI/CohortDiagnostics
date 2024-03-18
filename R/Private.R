@@ -126,7 +126,7 @@ makeDataExportable <- function(x,
   ParallelLogger::logTrace(paste0(" - Ensuring data is exportable: ", tableName))
   if (!hasData(x)) {
     ParallelLogger::logTrace("  - Object has no data.")
-    return(data)
+    return(x)
   }
 
   if ("cohortDefinitionId" %in% colnames(x)) {
