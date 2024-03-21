@@ -117,8 +117,8 @@ getIncidenceRate <- function(connectionDetails = NULL,
   irYearAgeGender <- recode(ratesSummary)
   irOverall <-
     tidyr::tibble(
-      cohortCount = sum(irYearAgeGender$cohortCount),
-      personYears = sum(irYearAgeGender$personYears)
+      cohortCount = as.numeric(sum(irYearAgeGender$cohortCount)),
+      personYears = as.numeric(sum(irYearAgeGender$personYears))
     )
   irGender <-
     aggregateIr(irYearAgeGender, list(gender = irYearAgeGender$gender))
@@ -164,7 +164,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
     irYearAgeGender
   )
   result$incidenceRate <-
-    1000 * result$cohortCount / result$personYears
+    1000 * as.numeric(result$cohortCount) / as.numeric(result$personYears)
   result$incidenceRate[is.nan(result$incidenceRate) |
     is.infinite(result$incidenceRate) |
     is.null(result$incidenceRate)] <- 0
@@ -191,7 +191,7 @@ aggregateIr <- function(ratesSummary, aggregateList) {
     return(aggregate(
       cbind(
         cohortCount = ratesSummary$cohortCount,
-        personYears = ratesSummary$personYears
+        personYears = as.numeric(ratesSummary$personYears)
       ),
       by = aggregateList,
       FUN = sum
@@ -279,7 +279,7 @@ computeIncidenceRates <- function(connection,
         enforceMinCellValue(
           data,
           "incidenceRate",
-          1000 * minCellCount / data$personYears
+          1000 * minCellCount / as.numeric(data$personYears)
         )
     }
 
