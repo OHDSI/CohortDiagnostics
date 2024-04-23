@@ -136,8 +136,8 @@ getDefaultCovariateSettings <- function() {
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
-#' @param runOnSample                 Logical. If TRUE, the function will operate on a sample of the data.
-#'                                    Default is FALSE, meaning the function will operate on the full data set.
+#' @param runFeatureExtractionOnSample Logical. If TRUE, the FeatureExtraction process will operate on a sample of the data.
+#'                                     Default is FALSE, meaning the function will operate on the full data set.
 #'
 #' @param sampleN                     Integer. The number of records to include in the sample if runOnSample is TRUE.
 #'                                    Default is 1000. Ignored if runOnSample is FALSE.
@@ -148,11 +148,6 @@ getDefaultCovariateSettings <- function() {
 #' @param seedArgs                    List. Additional arguments to pass to the sampling function.
 #'                                    This can be used to control aspects of the sampling process beyond the seed and sample size.
 #'
-#' @param sampleIdentifierExpression Character. An expression that generates unique identifiers for each sample.
-#'                                   This expression can use the variables 'cohortId' and 'seed'.
-#'                                   Default is "cohortId * 1000 + seed", which ensures unique identifiers
-#'                                   as long as there are fewer than 1000 cohorts.
-
 #' @examples
 #' \dontrun{
 #' # Load cohorts (assumes that they have already been instantiated)
@@ -209,7 +204,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                cdmDatabaseSchema,
                                tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                                cohortTable = "cohort",
-                               cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
+                               cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable, cohortSampleTable = "cohort_cd_sample"),
                                vocabularyDatabaseSchema = cdmDatabaseSchema,
                                cohortIds = NULL,
                                cdmVersion = 5,
@@ -228,11 +223,10 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                irWashoutPeriod = 0,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental"),
-                               runOnSample = FALSE,
+                               runFeatureExtractionOnSample = FALSE,
                                sampleN = 1000,
                                seed = 64374,
-                               seedArgs = NULL,
-                               sampleIdentifierExpression = "cohortId * 1000 + seed") {
+                               seedArgs = NULL) {
   # collect arguments that were passed to cohort diagnostics at initiation
   callingArgs <- formals(executeDiagnostics)
   callingArgsJson <-
@@ -250,7 +244,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       incremental = callingArgs$incremental,
       temporalCovariateSettings = callingArgs$temporalCovariateSettings
     ) %>%
-    RJSONIO::toJSON(digits = 23, pretty = TRUE)
+      RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
@@ -279,25 +273,25 @@ executeDiagnostics <- function(cohortDefinitionSet,
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertList(cohortTableNames, null.ok = FALSE, types = "character", add = errorMessage, names = "named")
   checkmate::assertNames(names(cohortTableNames),
-    must.include = c(
-      "cohortTable",
-      "cohortInclusionTable",
-      "cohortInclusionResultTable",
-      "cohortInclusionStatsTable",
-      "cohortSummaryStatsTable",
-      "cohortCensorStatsTable"
-    ),
-    add = errorMessage
+                         must.include = c(
+                           "cohortTable",
+                           "cohortInclusionTable",
+                           "cohortInclusionResultTable",
+                           "cohortInclusionStatsTable",
+                           "cohortSummaryStatsTable",
+                           "cohortCensorStatsTable"
+                         ),
+                         add = errorMessage
   )
   checkmate::assertDataFrame(cohortDefinitionSet, add = errorMessage)
   checkmate::assertNames(names(cohortDefinitionSet),
-    must.include = c(
-      "json",
-      "cohortId",
-      "cohortName",
-      "sql"
-    ),
-    add = errorMessage
+                         must.include = c(
+                           "json",
+                           "cohortId",
+                           "cohortName",
+                           "sql"
+                         ),
+                         add = errorMessage
   )
 
   cohortTable <- cohortTableNames$cohortTable
@@ -474,17 +468,17 @@ executeDiagnostics <- function(cohortDefinitionSet,
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(.data$tableName == "cohort") %>%
-    dplyr::pull(.data$columnName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    sort()
+      dplyr::filter(.data$tableName == "cohort") %>%
+      dplyr::pull(.data$columnName) %>%
+      SqlRender::snakeCaseToCamelCase() %>%
+      sort()
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(.data$tableName == "cohort") %>%
-    dplyr::filter(.data$isRequired == "Yes") %>%
-    dplyr::pull(.data$columnName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    sort()
+      dplyr::filter(.data$tableName == "cohort") %>%
+      dplyr::filter(.data$isRequired == "Yes") %>%
+      dplyr::pull(.data$columnName) %>%
+      SqlRender::snakeCaseToCamelCase() %>%
+      sort()
 
   expectedButNotObsevered <-
     setdiff(x = cohortTableColumnNamesExpected, y = cohortTableColumnNamesObserved)
@@ -547,23 +541,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
     } else {
       stop("No connection or connectionDetails provided.")
     }
-  }
-
-  if (runOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
-    cohortDefinitionSet <-
-      CohortGenerator::sampleCohortDefinitionSet(
-        connection = connection,
-        cohortDefinitionSet = cohortDefinitionSet,
-        tempEmulationSchema = tempEmulationSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTableNames = cohortTableNames,
-        n = sampleN,
-        seed = seed,
-        seedArgs = seedArgs,
-        identifierExpression = sampleIdentifierExpression,
-        incremental = incremental,
-        incrementalFolder = incrementalFolder
-      )
   }
 
   ## CDM source information----
@@ -871,17 +848,38 @@ executeDiagnostics <- function(cohortDefinitionSet,
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
+        feCohortDefinitionSet <- cohortDefinitionSet
+        feCohortTable <- cohortTable
+
+        if (runFeatureExtractionOnSample) {
+          feCohortTable <- cohortTableNames$cohortSampleTable
+          feCohortDefinitionSet <-
+            CohortGenerator::sampleCohortDefinitionSet(
+              connection = connection,
+              cohortDefinitionSet = cohortDefinitionSet,
+              tempEmulationSchema = tempEmulationSchema,
+              cohortDatabaseSchema = cohortDatabaseSchema,
+              cohortTableNames = cohortTableNames,
+              n = sampleN,
+              seed = seed,
+              seedArgs = seedArgs,
+              identifierExpression = "cohort",
+              incremental = incremental,
+              incrementalFolder = incrementalFolder
+            )
+        }
+
         executeCohortCharacterization(
           connection = connection,
           databaseId = databaseId,
           exportFolder = exportFolder,
           cdmDatabaseSchema = cdmDatabaseSchema,
           cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
+          cohortTable = feCohortTable,
           covariateSettings = temporalCovariateSettings,
           tempEmulationSchema = tempEmulationSchema,
           cdmVersion = cdmVersion,
-          cohorts = cohortDefinitionSet,
+          cohorts = feCohortDefinitionSet,
           cohortCounts = cohortCounts,
           minCellCount = minCellCount,
           instantiatedCohorts = instantiatedCohorts,

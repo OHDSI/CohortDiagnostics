@@ -45,7 +45,7 @@ test_that("Cohort diagnostics in incremental mode", {
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
       temporalCovariateSettings = temporalCovariateSettings,
-      runOnSample = TRUE
+      runFeatureExtractionOnSample = TRUE
     )
   )
 
@@ -76,7 +76,7 @@ test_that("Cohort diagnostics in incremental mode", {
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
       temporalCovariateSettings = temporalCovariateSettings,
-      runOnSample = TRUE
+      runFeatureExtractionOnSample = TRUE
     )
   )
   # generate sqlite file
@@ -123,7 +123,7 @@ test_that("Cohort diagnostics in incremental mode", {
         incremental = FALSE,
         incrementalFolder = file.path(folder, "incremental"),
         temporalCovariateSettings = temporalCovariateSettings,
-        runOnSample = TRUE
+        runFeatureExtractionOnSample = TRUE
       )
     })
 
