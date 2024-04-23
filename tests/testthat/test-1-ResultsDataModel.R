@@ -123,7 +123,7 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
           incremental = TRUE,
           incrementalFolder = file.path(folder, "incremental"),
           temporalCovariateSettings = temporalCovariateSettings,
-          runOnSample = TRUE
+          runFeatureExtractionOnSample = TRUE
         )
       },
       "CDM Source table has more than one record while only one is expected."
@@ -149,7 +149,7 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
       temporalCovariateSettings = temporalCovariateSettings,
-      runOnSample = TRUE
+      runFeatureExtractionOnSample = TRUE
     )
   }
 
