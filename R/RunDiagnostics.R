@@ -136,6 +136,7 @@ getDefaultCovariateSettings <- function() {
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
+#' @param useExternalConceptCountsTable If TRUE an external table for the cohort concept counts will be used.
 #' @param runOnSample                 Logical. If TRUE, the function will operate on a sample of the data.
 #'                                    Default is FALSE, meaning the function will operate on the full data set.
 #'
@@ -710,6 +711,37 @@ executeDiagnostics <- function(cohortDefinitionSet,
       }
     )
   }
+  
+  # Defines variables and checks version of external concept counts table -----
+  if (useExternalConceptCountsTable == FALSE) {
+    conceptCountsTableIsTemp <- TRUE
+    if (conceptCountsTable != "#concept_counts") {
+      conceptCountsTable <- "#concept_counts"
+    }
+  } else {
+    if (conceptCountsTable == "#concept_counts") {
+      stop("Temporary conceptCountsTable name. Please provide a valid external ConceptCountsTable name")
+    }
+    conceptCountsTableIsTemp <- FALSE
+    conceptCountsTable <- conceptCountsTable
+    dataSourceInfo <- getCdmDataSourceInformation(connection = connection, cdmDatabaseSchema = cdmDatabaseSchema)
+    vocabVersion <- dataSourceInfo$vocabularyVersion
+    vocabVersionExternalConceptCountsTable <- renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT DISTINCT vocabulary_version FROM @work_database_schema.@concept_counts_table;",
+      work_database_schema = cohortDatabaseSchema,
+      concept_counts_table = conceptCountsTable,
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = getOption("sqlRenderTempEmulationSchena")
+    )
+    if (!identical(vocabVersion, vocabVersionExternalConceptCountsTable[1,1])) {
+      stop(paste0("External concept counts table (", 
+                  vocabVersionExternalConceptCountsTable, 
+                  ") does not match database (", 
+                  vocabVersion, 
+                  "). Update concept_counts with createConceptCountsTable()"))
+    }
+  }
 
   # Always export concept sets to csv
   exportConceptSets(
@@ -746,7 +778,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
           conceptCountsTableIsTemp = TRUE,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
-          useExternalConceptCountsTable = FALSE,
+          useExternalConceptCountsTable = useExternalConceptCountsTable,
           incremental = incremental,
           conceptIdTable = "#concept_ids",
           recordKeepingFile = recordKeepingFile

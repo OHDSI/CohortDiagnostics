@@ -143,6 +143,8 @@ This can be used to control aspects of the sampling process beyond the seed and 
 This expression can use the variables 'cohortId' and 'seed'.
 Default is "cohortId * 1000 + seed", which ensures unique identifiers
 as long as there are fewer than 1000 cohorts.}
+
+\item{useExternalConceptCountsTable}{If TRUE an external table for the cohort concept counts will be used.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
