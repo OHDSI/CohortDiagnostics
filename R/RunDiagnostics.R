@@ -110,6 +110,8 @@ getDefaultCovariateSettings <- function() {
 #'                                    diagnostics to.
 #' @param cohortDefinitionSet         Data.frame of cohorts must include columns cohortId, cohortName, json, sql
 #' @param cohortTableNames            Cohort Table names used by CohortGenerator package
+#' @param conceptCountsTable          Concepts count table name. The default is "#concept_counts" to create a temporal concept counts table.
+#'                                    If an external concept counts table is used, provide the name in character, e.g. "concept_counts" without a hash
 #' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf').
 #' @param databaseName                The full name of the database. If NULL, defaults to value in cdm_source table
 #' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table
@@ -211,6 +213,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                                cohortTable = "cohort",
                                cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
+                               conceptCountsTable = "#concept_counts",
                                vocabularyDatabaseSchema = cdmDatabaseSchema,
                                cohortIds = NULL,
                                cdmVersion = 5,
