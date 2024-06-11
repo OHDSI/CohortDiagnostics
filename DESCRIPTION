@@ -57,7 +57,7 @@ Remotes:
   ohdsi/ResultModelManager,
   ohdsi/ROhdsiWebApi,
   ohdsi/CirceR,
-  ohdsi/CohortGenerator@random_sample,
+  ohdsi/CohortGenerator,
   ohdsi/OhdsiShinyModules
 License: Apache License
 VignetteBuilder: knitr
