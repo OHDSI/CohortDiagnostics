@@ -82,12 +82,19 @@ createConceptCountsTable <- function(connectionDetails = NULL,
                                      tempEmulationSchema = NULL,
                                      conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTable = "concept_counts",
-                                     conceptCountsTableIsTemp = FALSE) {
+                                     conceptCountsTableIsTemp = FALSE,
+                                     useAchilles = FALSE,
+                                     resultsDatabaseSchema) {
   ParallelLogger::logInfo("Creating internal concept counts table")
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
+  
+  if (isTRUE(useAchilles)) {
+    checkmate::assert_character(resultsDatabaseSchema, min.chars = 1, len = 1, any.missing = FALSE)
+  }
+  
   sql <-
     SqlRender::loadRenderTranslateSql(
       "CreateConceptCountTable.sql",
@@ -97,7 +104,9 @@ createConceptCountsTable <- function(connectionDetails = NULL,
       cdm_database_schema = cdmDatabaseSchema,
       work_database_schema = conceptCountsDatabaseSchema,
       concept_counts_table = conceptCountsTable,
-      table_is_temp = conceptCountsTableIsTemp
+      table_is_temp = conceptCountsTableIsTemp,
+      use_achilles = useAchilles,
+      results_database_schema = resultsDatabaseSchema
     )
   DatabaseConnector::executeSql(connection, sql)
 }
