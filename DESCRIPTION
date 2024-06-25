@@ -51,12 +51,12 @@ Suggests:
   knitr,
   shiny,
   OhdsiShinyModules
+Extends:
+  rsconnect,
+  yaml
 Remotes:
-  ohdsi/Eunomia,
-  ohdsi/FeatureExtraction,
   ohdsi/ResultModelManager,
   ohdsi/ROhdsiWebApi,
-  ohdsi/CirceR,
   ohdsi/CohortGenerator,
   ohdsi/OhdsiShinyModules
 License: Apache License
