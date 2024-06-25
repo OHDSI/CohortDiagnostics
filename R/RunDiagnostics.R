@@ -373,13 +373,14 @@ executeDiagnostics <- function(cohortDefinitionSet,
         errorMessage = errorMessage
       )
   }
-  if (runTemporalCohortCharacterization) {
-    if (is(temporalCovariateSettings, "covariateSettings")) {
-      temporalCovariateSettings <- list(temporalCovariateSettings)
-    }
-    # All temporal covariate settings objects must be covariateSettings
-    checkmate::assert_true(all(lapply(temporalCovariateSettings, class) == c("covariateSettings")), add = errorMessage)
 
+  if (is(temporalCovariateSettings, "covariateSettings")) {
+    temporalCovariateSettings <- list(temporalCovariateSettings)
+  }
+  # All temporal covariate settings objects must be covariateSettings
+  checkmate::assert_true(all(lapply(temporalCovariateSettings, class) == c("covariateSettings")), add = errorMessage)
+
+  if (runTemporalCohortCharacterization) {
     requiredCharacterisationSettings <- c(
       "DemographicsGender", "DemographicsAgeGroup", "DemographicsRace",
       "DemographicsEthnicity", "DemographicsIndexYear", "DemographicsIndexMonth",

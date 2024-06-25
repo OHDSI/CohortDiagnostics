@@ -50,8 +50,7 @@ Suggests:
   zip,
   knitr,
   shiny,
-  OhdsiShinyModules
-Extends:
+  OhdsiShinyModules,
   rsconnect,
   yaml
 Remotes:
