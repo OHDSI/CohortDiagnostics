@@ -30,6 +30,7 @@
 {DEFAULT @vocabulary = vocabulary}
 {DEFAULT @cd_version = cd_version}
 {DEFAULT @subset_definition = subset_definition}
+{DEFAULT @cohort_summary_stats = cohort_summary_stats}
 
 -- Drop old tables if exist
 DROP TABLE IF EXISTS @results_schema.@cohort;
@@ -43,6 +44,7 @@ DROP TABLE IF EXISTS @results_schema.@concept;
 DROP TABLE IF EXISTS @results_schema.@concept_ancestor;
 DROP TABLE IF EXISTS @results_schema.@concept_relationship;
 DROP TABLE IF EXISTS @results_schema.@concept_sets;
+DROP TABLE IF EXISTS @results_schema.@cohort_summary_stats;
 DROP TABLE IF EXISTS @results_schema.@concept_synonym;
 DROP TABLE IF EXISTS @results_schema.@database;
 DROP TABLE IF EXISTS @results_schema.@domain;
