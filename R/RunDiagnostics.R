@@ -244,7 +244,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       incremental = callingArgs$incremental,
       temporalCovariateSettings = callingArgs$temporalCovariateSettings
     ) %>%
-      RJSONIO::toJSON(digits = 23, pretty = TRUE)
+    RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
@@ -265,25 +265,25 @@ executeDiagnostics <- function(cohortDefinitionSet,
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertList(cohortTableNames, null.ok = FALSE, types = "character", add = errorMessage, names = "named")
   checkmate::assertNames(names(cohortTableNames),
-                         must.include = c(
-                           "cohortTable",
-                           "cohortInclusionTable",
-                           "cohortInclusionResultTable",
-                           "cohortInclusionStatsTable",
-                           "cohortSummaryStatsTable",
-                           "cohortCensorStatsTable"
-                         ),
-                         add = errorMessage
+    must.include = c(
+      "cohortTable",
+      "cohortInclusionTable",
+      "cohortInclusionResultTable",
+      "cohortInclusionStatsTable",
+      "cohortSummaryStatsTable",
+      "cohortCensorStatsTable"
+    ),
+    add = errorMessage
   )
   checkmate::assertDataFrame(cohortDefinitionSet, add = errorMessage)
   checkmate::assertNames(names(cohortDefinitionSet),
-                         must.include = c(
-                           "json",
-                           "cohortId",
-                           "cohortName",
-                           "sql"
-                         ),
-                         add = errorMessage
+    must.include = c(
+      "json",
+      "cohortId",
+      "cohortName",
+      "sql"
+    ),
+    add = errorMessage
   )
 
   cohortTable <- cohortTableNames$cohortTable
@@ -469,17 +469,17 @@ executeDiagnostics <- function(cohortDefinitionSet,
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
-      dplyr::filter(.data$tableName == "cohort") %>%
-      dplyr::pull(.data$columnName) %>%
-      SqlRender::snakeCaseToCamelCase() %>%
-      sort()
+    dplyr::filter(.data$tableName == "cohort") %>%
+    dplyr::pull(.data$columnName) %>%
+    SqlRender::snakeCaseToCamelCase() %>%
+    sort()
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
-      dplyr::filter(.data$tableName == "cohort") %>%
-      dplyr::filter(.data$isRequired == "Yes") %>%
-      dplyr::pull(.data$columnName) %>%
-      SqlRender::snakeCaseToCamelCase() %>%
-      sort()
+    dplyr::filter(.data$tableName == "cohort") %>%
+    dplyr::filter(.data$isRequired == "Yes") %>%
+    dplyr::pull(.data$columnName) %>%
+    SqlRender::snakeCaseToCamelCase() %>%
+    sort()
 
   expectedButNotObsevered <-
     setdiff(x = cohortTableColumnNamesExpected, y = cohortTableColumnNamesObserved)
