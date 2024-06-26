@@ -97,7 +97,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
 
     covariates <- covariates %>%
       dplyr::mutate("sd" = sqrt(.data$p * (1 - .data$p))) %>%
-      dplyr::select(-.data$p) %>%
+      dplyr::select(-"p") %>%
       dplyr::rename("mean" = "averageValue") %>%
       dplyr::select(-populationSize)
 
