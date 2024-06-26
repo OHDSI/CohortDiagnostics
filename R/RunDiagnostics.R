@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -367,13 +367,14 @@ executeDiagnostics <- function(cohortDefinitionSet,
         errorMessage = errorMessage
       )
   }
-  if (runTemporalCohortCharacterization) {
-    if (is(temporalCovariateSettings, "covariateSettings")) {
-      temporalCovariateSettings <- list(temporalCovariateSettings)
-    }
-    # All temporal covariate settings objects must be covariateSettings
-    checkmate::assert_true(all(lapply(temporalCovariateSettings, class) == c("covariateSettings")), add = errorMessage)
 
+  if (is(temporalCovariateSettings, "covariateSettings")) {
+    temporalCovariateSettings <- list(temporalCovariateSettings)
+  }
+  # All temporal covariate settings objects must be covariateSettings
+  checkmate::assert_true(all(lapply(temporalCovariateSettings, class) == c("covariateSettings")), add = errorMessage)
+
+  if (runTemporalCohortCharacterization) {
     requiredCharacterisationSettings <- c(
       "DemographicsGender", "DemographicsAgeGroup", "DemographicsRace",
       "DemographicsEthnicity", "DemographicsIndexYear", "DemographicsIndexMonth",

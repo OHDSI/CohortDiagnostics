@@ -2,7 +2,7 @@ Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Cohorts
 Version: 3.3.0
-Date: 2023-29-11
+Date: 2024-25-06
 Authors@R: c(
     person("Jamie", "Gilbert", email = "gilbert@ohdsi.org", role = c("aut", "cre")),
     person("Gowtham", "Rao", role = c("aut")),
@@ -50,14 +50,13 @@ Suggests:
   zip,
   knitr,
   shiny,
-  OhdsiShinyModules
+  OhdsiShinyModules,
+  rsconnect,
+  yaml
 Remotes:
-  ohdsi/Eunomia,
-  ohdsi/FeatureExtraction,
   ohdsi/ResultModelManager,
   ohdsi/ROhdsiWebApi,
-  ohdsi/CirceR,
-  ohdsi/CohortGenerator@develop,
+  ohdsi/CohortGenerator,
   ohdsi/OhdsiShinyModules
 License: Apache License
 VignetteBuilder: knitr
