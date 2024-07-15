@@ -190,7 +190,7 @@ aggregateIr <- function(ratesSummary, aggregateList) {
   if (nrow(ratesSummary) > 0) {
     return(aggregate(
       cbind(
-        cohortCount = ratesSummary$cohortCount,
+        cohortCount = as.numeric(ratesSummary$cohortCount),
         personYears = as.numeric(ratesSummary$personYears)
       ),
       by = aggregateList,
