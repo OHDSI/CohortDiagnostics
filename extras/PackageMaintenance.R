@@ -1,6 +1,6 @@
 # @file PackageMaintenance
 #
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 # 
@@ -69,9 +69,3 @@ text <- readChar(filePath, file.info(filePath)$size)
 patternRep <- "\\{DEFAULT @version_number = '(\\d+\\.\\d+\\.\\d+)'\\}"
 text <- gsub(patternRep, paste0("\\{DEFAULT @version_number = '", version, "'\\}"), text)
 writeLines(text, con = file(filePath))
-
-
-# Copy data model specs to Shiny app
-file.copy(from = "inst/settings/resultsDataModelSpecification.csv", 
-          to = "inst/shiny/DiagnosticsExplorer/data/resultsDataModelSpecification.csv",
-          overwrite = TRUE)

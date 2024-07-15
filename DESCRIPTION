@@ -1,7 +1,7 @@
 Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Cohorts
-Version: 3.2.5
+Version: 3.3.0
 Date: 2023-29-11
 Authors@R: c(
     person("Jamie", "Gilbert", email = "gilbert@ohdsi.org", role = c("aut", "cre")),
@@ -21,7 +21,7 @@ Description: CohortDiagnostics is an R utility package for the development and e
     definitions across one or more data sources, facilitating reproducible research.
 Depends:
 	DatabaseConnector (>= 5.0.0),
-	FeatureExtraction (>= 3.2.0),
+	FeatureExtraction (>= 3.4.0),
 	R (>= 4.1.0)
 Imports:
   Andromeda (>= 0.6.0),
@@ -39,24 +39,23 @@ Imports:
   stringr,
   tidyr (>= 1.2.0),
   CohortGenerator (>= 0.8.0),
-  remotes
+  remotes,
+  scales
 Suggests:
   Eunomia,
   ROhdsiWebApi (>= 1.2.0),
   RSQLite (>= 2.2.1),
-  scales,
   testthat,
   withr,
   zip,
   knitr,
   shiny,
-  OhdsiShinyModules
+  OhdsiShinyModules,
+  rsconnect,
+  yaml
 Remotes:
-  ohdsi/Eunomia,
-  ohdsi/FeatureExtraction,
   ohdsi/ResultModelManager,
   ohdsi/ROhdsiWebApi,
-  ohdsi/CirceR,
   ohdsi/CohortGenerator,
   ohdsi/OhdsiShinyModules
 License: Apache License

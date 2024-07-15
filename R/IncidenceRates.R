@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -218,7 +218,7 @@ computeIncidenceRates <- function(connection,
   startIncidenceRate <- Sys.time()
   subset <- subsetToRequiredCohorts(
     cohorts = cohorts %>%
-      dplyr::filter(cohortId %in% instantiatedCohorts),
+      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
     task = "runIncidenceRate",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile

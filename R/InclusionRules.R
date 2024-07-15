@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -27,7 +27,7 @@ getInclusionStats <- function(connection,
   ParallelLogger::logInfo("Fetching inclusion statistics from files")
   subset <- subsetToRequiredCohorts(
     cohorts = cohortDefinitionSet %>%
-      dplyr::filter(cohortId %in% instantiatedCohorts),
+      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
     task = "runInclusionStatistics",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile

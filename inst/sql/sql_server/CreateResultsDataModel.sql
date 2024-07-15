@@ -1,6 +1,3 @@
-{DEFAULT @annotation = annotation}
-{DEFAULT @annotation_link = annotation_link}
-{DEFAULT @annotation_attributes = annotation_attributes}
 {DEFAULT @cohort = cohort}
 {DEFAULT @cohort_count = cohort_count}
 {DEFAULT @cohort_inclusion = cohort_inclusion}
@@ -33,11 +30,9 @@
 {DEFAULT @vocabulary = vocabulary}
 {DEFAULT @cd_version = cd_version}
 {DEFAULT @subset_definition = subset_definition}
+{DEFAULT @cohort_summary_stats = cohort_summary_stats}
 
 -- Drop old tables if exist
-DROP TABLE IF EXISTS @results_schema.@annotation;
-DROP TABLE IF EXISTS @results_schema.@annotation_link;
-DROP TABLE IF EXISTS @results_schema.@annotation_attributes;
 DROP TABLE IF EXISTS @results_schema.@cohort;
 DROP TABLE IF EXISTS @results_schema.@cohort_count;
 DROP TABLE IF EXISTS @results_schema.@cohort_inclusion;
@@ -49,6 +44,7 @@ DROP TABLE IF EXISTS @results_schema.@concept;
 DROP TABLE IF EXISTS @results_schema.@concept_ancestor;
 DROP TABLE IF EXISTS @results_schema.@concept_relationship;
 DROP TABLE IF EXISTS @results_schema.@concept_sets;
+DROP TABLE IF EXISTS @results_schema.@cohort_summary_stats;
 DROP TABLE IF EXISTS @results_schema.@concept_synonym;
 DROP TABLE IF EXISTS @results_schema.@database;
 DROP TABLE IF EXISTS @results_schema.@domain;
@@ -70,38 +66,6 @@ DROP TABLE IF EXISTS @results_schema.@visit_context;
 DROP TABLE IF EXISTS @results_schema.@vocabulary;
 
 -- Create tables
---Table annotation
---HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@annotation (
-      annotation_id BIGINT NOT NULL,
-			created_by VARCHAR NOT NULL,
-			created_on BIGINT NOT NULL,
-			modified_last_on BIGINT,
-			deleted_on BIGINT,
-			annotation VARCHAR NOT NULL,
-			PRIMARY KEY(annotation_id)
-);
-
---Table annotation_link
---HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@annotation_link (
-      annotation_id BIGINT NOT NULL DEFAULT 0,
-			diagnostics_id VARCHAR NOT NULL,
-			cohort_id BIGINT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(annotation_id, diagnostics_id, cohort_id, database_id)
-);
-
---Table annotation_attributes
---HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@annotation_attributes (
-      annotation_id BIGINT NOT NULL DEFAULT 0,
-			created_by VARCHAR NOT NULL,
-			annotation_attributes VARCHAR NOT NULL,
-			created_on BIGINT NOT NULL,
-			PRIMARY KEY(annotation_id, created_by)
-);
-
 --Table cohort
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@cohort (
