@@ -110,10 +110,10 @@ SELECT denominator.calendar_year,
 	denominator.age_group,
 	concept_name AS gender,
 	CASE 
-		WHEN numerator.cohort_count IS NOT NULL THEN numerator.cohort_count
-		ELSE CAST(0 AS INT)
+		WHEN numerator.cohort_count IS NOT NULL THEN CAST(numerator.cohort_count as FLOAT)
+		ELSE CAST(0 AS FLOAT)
 	END AS cohort_count,
-	person_years
+	CAST (person_years as FLOAT)
 INTO #rates_summary
 FROM #denominator denominator
 INNER JOIN @vocabulary_database_schema.concept
