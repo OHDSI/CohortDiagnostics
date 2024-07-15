@@ -39,12 +39,12 @@ Imports:
   stringr,
   tidyr (>= 1.2.0),
   CohortGenerator (>= 0.8.0),
-  remotes
+  remotes,
+  scales
 Suggests:
   Eunomia,
   ROhdsiWebApi (>= 1.2.0),
   RSQLite (>= 2.2.1),
-  scales,
   testthat,
   withr,
   zip,
