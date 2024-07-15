@@ -114,7 +114,11 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
   }
 
   if (!"OhdsiShinyModules" %in% as.data.frame(utils::installed.packages())$Package) {
-    remotes::install_github("OHDSI/OhdsiShinyModules")
+    if (!interactive() || isTRUE(utils::askYesNo("OhdsiShinyModules not installed, get from github?"))) {
+      remotes::install_github("OHDSI/OhdsiShinyModules")
+    } else {
+      stop("Cannot continue without OhdsiShinyModulesPackage from github")
+    }
   }
 
   appDir <-
