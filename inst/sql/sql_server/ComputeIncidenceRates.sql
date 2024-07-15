@@ -113,7 +113,7 @@ SELECT denominator.calendar_year,
 		WHEN numerator.cohort_count IS NOT NULL THEN CAST(numerator.cohort_count as FLOAT)
 		ELSE CAST(0 AS FLOAT)
 	END AS cohort_count,
-	CAST (person_years as FLOAT)
+	CAST (person_years as FLOAT) as person_years
 INTO #rates_summary
 FROM #denominator denominator
 INNER JOIN @vocabulary_database_schema.concept
