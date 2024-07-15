@@ -56,7 +56,9 @@ getCohortCounts <- function(connectionDetails = NULL,
     tidyr::tibble()
 
   if (length(cohortIds) > 0) {
-    cohortIdDf <- tidyr::tibble(cohortId = cohortIds)
+    cohortIdDf <- tidyr::tibble(cohortId = as.numeric(cohortIds))
+    counts$cohortId <- as.numeric(counts$cohortId)
+
     counts <- cohortIdDf %>%
       dplyr::left_join(counts, by = "cohortId") %>%
       tidyr::replace_na(list(cohortEntries = 0, cohortSubjects = 0))
