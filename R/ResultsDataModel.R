@@ -162,9 +162,7 @@ migrateDataModel <- function(connectionDetails, databaseSchema, tablePrefix = ""
   migrator <- getDataMigrator(connectionDetails = connectionDetails, databaseSchema = databaseSchema, tablePrefix = tablePrefix)
   migrator$executeMigrations()
 
-  # Workaround for unit tests on github actions mac
-  if (.Platform$OS.type == 'unix' && identical(Sys.getenv('IS_GITHUB_ACTIONS'), 'true'))
-    migrator$finalize()
+  # migrator$finalize()
 
   ParallelLogger::logInfo("Updating version number")
   updateVersionSql <- SqlRender::loadRenderTranslateSql("UpdateVersionNumber.sql",
