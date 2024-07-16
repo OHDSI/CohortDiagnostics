@@ -161,8 +161,7 @@ migrateDataModel <- function(connectionDetails, databaseSchema, tablePrefix = ""
   ParallelLogger::logInfo("Migrating data set")
   migrator <- getDataMigrator(connectionDetails = connectionDetails, databaseSchema = databaseSchema, tablePrefix = tablePrefix)
   migrator$executeMigrations()
-
-  # migrator$finalize()
+  migrator$finalize()
 
   ParallelLogger::logInfo("Updating version number")
   updateVersionSql <- SqlRender::loadRenderTranslateSql("UpdateVersionNumber.sql",
