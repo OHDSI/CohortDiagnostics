@@ -54,7 +54,7 @@ Suggests:
   rsconnect,
   yaml
 Remotes:
-  ohdsi/ResultModelManager,
+  ohdsi/ResultModelManager@develop,
   ohdsi/ROhdsiWebApi,
   ohdsi/CohortGenerator,
   ohdsi/OhdsiShinyModules
