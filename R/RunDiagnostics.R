@@ -717,7 +717,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
   
   # Defines variables and checks version of external concept counts table -----
-  if (useExternalConceptCountsTable == FALSE) {
+  if (!useExternalConceptCountsTable) {
     conceptCountsTableIsTemp <- TRUE
     if (conceptCountsTable != "#concept_counts") {
       conceptCountsTable <- "#concept_counts"
@@ -778,7 +778,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
           exportFolder = exportFolder,
           minCellCount = minCellCount,
           conceptCountsDatabaseSchema = NULL,
-          conceptCountsTable = "#concept_counts",
+          conceptCountsTable = conceptCountsTable,
           conceptCountsTableIsTemp = TRUE,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,

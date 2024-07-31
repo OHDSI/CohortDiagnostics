@@ -16,14 +16,13 @@
 
 #' createConceptCountsTable
 #' 
-#' @description Create a table containing the concept counts.
-#' 
-#' @param connectionDetails database connection details
-#' @param connection database connection
-#' @param cdmDatabaseSchema CDM schema
-#' @param tempEmulationSchema schema to emulate temp table
+#' @description Create a table containing concept counts. 
+#' CohortDiagnostics performs this task in every run and takes a significant amount of time. 
+#' However, with this function, the user can create this table beforehand and 
+#' save it in the writing schema for further use.
+#'  
+#' @inheritParams executeDiagnostics
 #' @param conceptCountsDatabaseSchema schema name for the concept counts table
-#' @param conceptCountsTable table name
 #' @param conceptCountsTableIsTemp boolean to indicate if it should be a temporary table
 #' @param removeCurrentTable if the current table should be removed
 #'
@@ -32,8 +31,8 @@ createConceptCountsTable <- function(connectionDetails = NULL,
                                      connection = NULL,
                                      cdmDatabaseSchema,
                                      tempEmulationSchema = NULL,
-                                     conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTable = "concept_counts",
+                                     conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTableIsTemp = FALSE,
                                      removeCurrentTable = TRUE) {
   ParallelLogger::logInfo("Creating concept counts table")
@@ -71,9 +70,9 @@ getConceptCountsTableName <- function(connection, cdmDatabaseSchema) {
   sql <- paste("SELECT vocabulary_version as version",
                "FROM @cdmDatabaseSchema.VOCABULARY",
                "WHERE vocabulary_id = 'None'")
-  dbVersion <- renderTranslateQuerySql(connection = connection,
-                                       sql = sql,
-                                       cdmDatabaseSchema = cdmDatabaseSchema) %>% 
+  dbVersion <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                          sql = sql,
+                                                          cdmDatabaseSchema = cdmDatabaseSchema) |> 
     dplyr::pull(1)
   if (!identical(dbVersion, character(0))) {
     result <- paste(gsub(" |\\.|-", "_", dbVersion), result, sep = "_")
