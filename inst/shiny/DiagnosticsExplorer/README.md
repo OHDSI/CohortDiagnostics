@@ -17,7 +17,7 @@ The shiny app can now be launched:
 shiny::runApp()
 ```
 
-The default data is file is intended to be placed in `data/MergedCohortDiagnosticsData.sqlite`.
+The default data file is intended to be placed in `data/MergedCohortDiagnosticsData.sqlite`.
 This can be changed to use a different database engine.
 
 ## Configuration using other
@@ -75,7 +75,7 @@ myConnectionDetails <- list(
 keyring::key_set_with_value("KEYNAME", jsonlite::toJSON(myConnectionDetails))
 ```
 
-This list will then be loaded at runtime, meaning that secure credentails don't need to be saved in plain
+This list will then be loaded at runtime, meaning that secure credentials don't need to be saved in plain
 text.
 
 ## OHDSI shiny server instructions
