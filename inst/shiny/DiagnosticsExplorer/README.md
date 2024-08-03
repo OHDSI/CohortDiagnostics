@@ -79,7 +79,7 @@ This list will then be loaded at runtime, meaning that secure credentails don't 
 text.
 
 ## OHDSI shiny server instructions
-To use this shiny app on the (OHDSI ShinyServer)['https://github.com/OHDSI/ShinyDeploy'] use the environment variable
+To use this shiny app on the [OHDSI ShinyServer](https://github.com/OHDSI/ShinyDeploy) use the environment variable
 configuration settings included in the file `config-ohdsi-shiny.yml`.
 The following settings can be reconfigured if environment variables differ:
 
