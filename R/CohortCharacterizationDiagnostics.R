@@ -23,7 +23,8 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                      cohortIds,
                                      cdmVersion = 5,
                                      covariateSettings,
-                                     exportFolder) {
+                                     exportFolder,
+                                     minCharacterizationMean = 0.001) {
   startTime <- Sys.time()
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
@@ -46,7 +47,8 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           cohortTable = cohortTable,
           cohortIds = cohortIds,
           covariateSettings = covariateSettings,
-          aggregated = TRUE
+          aggregated = TRUE,
+          minCharacterizationMean = minCharacterizationMean
         )
     }
   )
@@ -289,7 +291,8 @@ executeCohortCharacterization <- function(connection,
           cohortIds = subset[start:end, ]$cohortId,
           covariateSettings = covariateSettings,
           cdmVersion = cdmVersion,
-          exportFolder = exportFolder
+          exportFolder = exportFolder,
+          minCharacterizationMean = minCharacterizationMean
         )
 
       on.exit(Andromeda::close(characteristics), add = TRUE)
@@ -303,7 +306,6 @@ executeCohortCharacterization <- function(connection,
         analysisRefFileName = analysisRefFileName,
         timeRefFileName = timeRefFileName,
         counts = cohortCounts,
-        minCharacterizationMean = minCharacterizationMean,
         minCellCount = minCellCount
       )
 
