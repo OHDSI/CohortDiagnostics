@@ -3,26 +3,26 @@ The DiagnosticsExplorer Shiny application is designed to be the primary method f
 See the [CohortDiagnostics documentation](https://ohdsi.github.io/CohortDiagnostics/index.html) for guidance on running CohortDiagnostics and generating the required results.
 
 This application directory is designed to be a stand-alone shiny application.
-To install the required packages for this app we recommend using `renv` to create an isolated environment. 
+To install the required packages for this app we recommend using `renv` to create an isolated environment.
 Assuming your working directory is the DiagnosticsExplorer shiny app, run the following:
 
-```{r}
+```R
 install.packages("renv")
 renv::restore()
 ```
 
 The shiny app can now be launched:
 
-```
+```R
 shiny::runApp()
 ```
 
-The default data is file is intended to be placed in `data/MergedCohortDiagnosticsData.sqlite`.
+The default data file is intended to be placed in `data/MergedCohortDiagnosticsData.sqlite`.
 This can be changed to use a different database engine.
 
-## Configuration using other 
+## Configuration using other
 The default YAML file contains the following options
-```{yaml}
+```yaml
 # Alter these configuration settings for usage with remote databases
 connectionDetails:
   dbms: "sqlite"
@@ -64,7 +64,7 @@ userCredentialsFile: UserCredentials.csv
 Connection details should conform to a standard `DatabaseConnector` connection details object, in yaml format.
 Optionally, this object can be saved to a secure secret using the keyring package as follows:
 
-```{r}
+```R
 myConnectionDetails <- list(
     user = "myusername",
     password = "someSecretPassword",
@@ -75,21 +75,21 @@ myConnectionDetails <- list(
 keyring::key_set_with_value("KEYNAME", jsonlite::toJSON(myConnectionDetails))
 ```
 
-This list will then be loaded at runtime, meaning that secure credentails don't need to be saved in plain
+This list will then be loaded at runtime, meaning that secure credentials don't need to be saved in plain
 text.
 
 ## OHDSI shiny server instructions
-To use this shiny app on the (OHDSI ShinyServer)['https://github.com/OHDSI/ShinyDeploy'] use the environment variable
+To use this shiny app on the [OHDSI ShinyServer](https://github.com/OHDSI/ShinyDeploy) use the environment variable
 configuration settings included in the file `config-ohdsi-shiny.yml`.
 The following settings can be reconfigured if environment variables differ:
 
-```{yaml}
+```yaml
 # Alter these configuration settings for usage with remote databases
 
 
 # store connection details with environment variables
 # Note - if dbms and port vars are unset in environment variables they will default to above connectionDetails settings
-# See above for postgresql 
+# See above for postgresql
 connectionEnvironmentVariables:
   dbms: ~
   database: "shinydbDatabase"
