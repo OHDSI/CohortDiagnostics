@@ -1,3 +1,6 @@
 library(testthat)
-options(dbms = "postgresql")
-test_check("CohortDiagnostics")
+
+if (Sys.getenv("CDM5_POSTGRESQL_SERVER") != "") {
+  options(dbms = "postgresql")
+  test_check("CohortDiagnostics")
+}

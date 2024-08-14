@@ -1,3 +1,6 @@
 library(testthat)
-options(dbms = "redshift")
-test_check("CohortDiagnostics")
+
+if (Sys.getenv("CDM5_REDSHIFT_SERVER") != "") {
+  options(dbms = "redshift")
+  test_check("CohortDiagnostics")
+}

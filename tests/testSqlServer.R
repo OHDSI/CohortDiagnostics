@@ -1,3 +1,6 @@
 library(testthat)
-options(dbms = "sql server")
-test_check("CohortDiagnostics")
+
+if (Sys.getenv("CDM5_SQL_SERVER_SERVER") != "") {
+  options(dbms = "sql server")
+  test_check("CohortDiagnostics")
+}
