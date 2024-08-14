@@ -4,9 +4,14 @@ on:
   push:
     branches:
       - '**'
+      - '!develop'
+      - '!main'
   pull_request:
     branches:
-      - '**'
+      - "**"
+      - '!main'
+      - "!develop"
+
 
 name: R-CMD-check
 
