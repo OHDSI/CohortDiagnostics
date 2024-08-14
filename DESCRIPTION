@@ -38,7 +38,7 @@ Imports:
   SqlRender (>= 1.9.0),
   stringr,
   tidyr (>= 1.2.0),
-  CohortGenerator (>= 0.8.0),
+  CohortGenerator (>= 0.10.0),
   remotes,
   scales
 Suggests:
