@@ -1,3 +1,6 @@
 library(testthat)
-options(dbms = "postgresql")
-test_check("CohortDiagnostics")
+
+if (Sys.getenv("SKIP_DB_TESTS") != "TRUE") {
+  options(dbms = "postgresql")
+  test_check("CohortDiagnostics")
+}
