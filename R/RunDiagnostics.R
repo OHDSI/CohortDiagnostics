@@ -226,8 +226,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runFeatureExtractionOnSample = FALSE,
                                sampleN = 1000,
                                seed = 64374,
-                               seedArgs = NULL,
-                               sampleIdentifierExpression = "cohortId * 1000 + seed") {
+                               seedArgs = NULL) {
   # collect arguments that were passed to cohort diagnostics at initiation
   callingArgs <- formals(executeDiagnostics)
   callingArgsJson <-
