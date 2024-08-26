@@ -148,11 +148,6 @@ getDefaultCovariateSettings <- function() {
 #' @param seedArgs                    List. Additional arguments to pass to the sampling function.
 #'                                    This can be used to control aspects of the sampling process beyond the seed and sample size.
 #'
-#' @param sampleIdentifierExpression Character. An expression that generates unique identifiers for each sample.
-#'                                   This expression can use the variables 'cohortId' and 'seed'.
-#'                                   Default is "cohortId * 1000 + seed", which ensures unique identifiers
-#'                                   as long as there are fewer than 1000 cohorts.
-
 #' @examples
 #' \dontrun{
 #' # Load cohorts (assumes that they have already been instantiated)
@@ -857,8 +852,15 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
         feCohortDefinitionSet <- cohortDefinitionSet
         feCohortTable <- cohortTable
+        feCohortCounts <- cohortCounts
 
         if (runFeatureExtractionOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
+          cohortTableNames$cohortSampleTable <- paste0(cohortTableNames$cohortTable, "_cd_sample")
+          CohortGenerator::createCohortTables(connection = connection,
+                                              cohortTableNames = cohortTableNames,
+                                              cohortDatabaseSchema = cohortDatabaseSchema,
+                                              incremental = TRUE)
+
           feCohortTable <- cohortTableNames$cohortSampleTable
           feCohortDefinitionSet <-
             CohortGenerator::sampleCohortDefinitionSet(
@@ -870,10 +872,21 @@ executeDiagnostics <- function(cohortDefinitionSet,
               n = sampleN,
               seed = seed,
               seedArgs = seedArgs,
-              identifierExpression = sampleIdentifierExpression,
+              identifierExpression = "cohortId",
               incremental = incremental,
               incrementalFolder = incrementalFolder
             )
+
+          feCohortCounts <- computeCohortCounts(
+            connection = connection,
+            cohortDatabaseSchema = cohortDatabaseSchema,
+            cohortTable =  cohortTableNames$cohortSampleTable,
+            cohorts = feCohortDefinitionSet,
+            exportFolder = exportFolder,
+            minCellCount = minCellCount,
+            databaseId = databaseId,
+            writeResult = FALSE
+          )
         }
 
 
@@ -888,7 +901,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
           tempEmulationSchema = tempEmulationSchema,
           cdmVersion = cdmVersion,
           cohorts = feCohortDefinitionSet,
-          cohortCounts = cohortCounts,
+          cohortCounts = feCohortCounts,
           minCellCount = minCellCount,
           instantiatedCohorts = instantiatedCohorts,
           incremental = incremental,

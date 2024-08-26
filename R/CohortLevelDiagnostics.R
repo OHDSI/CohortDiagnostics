@@ -53,7 +53,7 @@ getCohortCounts <- function(connectionDetails = NULL,
     )
   counts <-
     DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>%
-    tidyr::tibble()
+      tidyr::tibble()
 
   if (length(cohortIds) > 0) {
     cohortIdDf <- tidyr::tibble(cohortId = as.numeric(cohortIds))
@@ -97,7 +97,8 @@ computeCohortCounts <- function(connection,
                                 cohorts,
                                 exportFolder,
                                 minCellCount,
-                                databaseId) {
+                                databaseId,
+                                writeResult = TRUE) {
   ParallelLogger::logInfo("Counting cohort records and subjects")
   cohortCounts <- getCohortCounts(
     connection = connection,
@@ -117,11 +118,13 @@ computeCohortCounts <- function(connection,
     databaseId = databaseId
   )
 
-  writeToCsv(
-    data = cohortCounts,
-    fileName = file.path(exportFolder, "cohort_count.csv"),
-    incremental = FALSE,
-    cohortId = cohorts$cohortId
-  )
+  if (writeResult) {
+    writeToCsv(
+      data = cohortCounts,
+      fileName = file.path(exportFolder, "cohort_count.csv"),
+      incremental = FALSE,
+      cohortId = cohorts$cohortId
+    )
+  }
   return(cohortCounts)
 }
