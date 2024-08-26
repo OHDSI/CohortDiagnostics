@@ -38,8 +38,7 @@ executeDiagnostics(
   runFeatureExtractionOnSample = FALSE,
   sampleN = 1000,
   seed = 64374,
-  seedArgs = NULL,
-  sampleIdentifierExpression = "cohortId * 1000 + seed"
+  seedArgs = NULL
 )
 }
 \arguments{
