@@ -317,8 +317,9 @@ getPrefixedTableNames <- function(tablePrefix) {
   return(resultList)
 }
 
-#' @noRd
+
 #' Internal utility function for logging execution of variables
+#' @noRd
 timeExecution <- function(exportFolder,
                           taskName,
                           cohortIds = NULL,

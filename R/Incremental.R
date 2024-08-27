@@ -153,7 +153,7 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
   UseMethod("writeToCsv", data)
 }
 
-
+#' @noRd
 writeToCsv.default <- function(data, fileName, incremental = FALSE, ...) {
   colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
   if (incremental) {
@@ -186,6 +186,7 @@ writeToCsv.default <- function(data, fileName, incremental = FALSE, ...) {
   }
 }
 
+#'@noRd
 writeToCsv.tbl_Andromeda <-
   function(data, fileName, incremental = FALSE, ...) {
     if (incremental && file.exists(fileName)) {

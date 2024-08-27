@@ -38,7 +38,7 @@ Imports:
   SqlRender (>= 1.9.0),
   stringr,
   tidyr (>= 1.2.0),
-  CohortGenerator (>= 0.8.0),
+  CohortGenerator (>= 0.10.0),
   remotes,
   scales
 Suggests:
@@ -61,7 +61,7 @@ License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics
 BugReports: https://github.com/OHDSI/CohortDiagnostics/issues
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Encoding: UTF-8
 Language: en-US
 StagedInstall: no
