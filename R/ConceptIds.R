@@ -142,6 +142,7 @@ exportConceptInformation <- function(connection = NULL,
           table = vocabularyTable,
           snakeCaseToCamelCase = TRUE
         )
+
       if (nrow(data) > 0) {
         data <- makeDataExportable(
           x = data,

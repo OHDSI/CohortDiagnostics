@@ -210,7 +210,7 @@ CREATE TABLE @results_schema.@concept (
 			domain_id VARCHAR(20) NOT NULL,
 			vocabulary_id VARCHAR NOT NULL,
 			concept_class_id VARCHAR(20) NOT NULL,
-			standard_concept VARCHAR(1),
+			standard_concept varchar,
 			concept_code VARCHAR NOT NULL,
 			valid_start_date DATE NOT NULL,
 			valid_end_date DATE NOT NULL,
@@ -236,7 +236,7 @@ CREATE TABLE @results_schema.@concept_relationship (
 			relationship_id VARCHAR(20) NOT NULL,
 			valid_start_date DATE NOT NULL,
 			valid_end_date DATE NOT NULL,
-			invalid_reason VARCHAR(1),
+			invalid_reason varchar,
 			PRIMARY KEY(concept_id_1, concept_id_2, relationship_id)
 );
 
@@ -266,7 +266,7 @@ CREATE TABLE @results_schema.@database (
 			database_id VARCHAR NOT NULL,
 			database_name VARCHAR,
 			description VARCHAR,
-			is_meta_analysis VARCHAR(1) NOT NULL,
+			is_meta_analysis varchar NOT NULL,
 			vocabulary_version VARCHAR,
 			vocabulary_version_cdm VARCHAR,
 			PRIMARY KEY(database_id)
@@ -361,8 +361,8 @@ CREATE TABLE @results_schema.@orphan_concept (
 CREATE TABLE @results_schema.@relationship (
 			relationship_id VARCHAR(20) NOT NULL,
 			relationship_name VARCHAR(255) NOT NULL,
-			is_hierarchical VARCHAR(1) NOT NULL,
-			defines_ancestry VARCHAR(1) NOT NULL,
+			is_hierarchical varchar NOT NULL,
+			defines_ancestry varchar NOT NULL,
 			reverse_relationship_id VARCHAR(20) NOT NULL,
 			relationship_concept_id BIGINT NOT NULL,
 			PRIMARY KEY(relationship_id, reverse_relationship_id, relationship_concept_id)
@@ -384,8 +384,8 @@ CREATE TABLE @results_schema.@temporal_analysis_ref (
 			analysis_id INT NOT NULL,
 			analysis_name VARCHAR NOT NULL,
 			domain_id VARCHAR(20) NOT NULL,
-			is_binary VARCHAR(1) NOT NULL,
-			missing_means_zero VARCHAR(1),
+			is_binary varchar NOT NULL,
+			missing_means_zero varchar,
 			PRIMARY KEY(analysis_id, domain_id)
 );
 
