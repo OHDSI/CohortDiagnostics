@@ -157,9 +157,9 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     }
 
     sqlCs <-
-      extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql)
+      extractConceptSetsSqlFromCohortSql(cohortSql = cohortSql)
     jsonCs <-
-      extractConceptSetsJsonFromCohortJson(cohortJson = cohort$json)
+      extractConceptSetsJsonFromCohortJson(cohortJson = cohortJson)
 
     if (nrow(sqlCs) == 0 || nrow(jsonCs) == 0) {
       ParallelLogger::logInfo(
