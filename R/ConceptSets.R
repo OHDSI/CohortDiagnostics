@@ -833,6 +833,18 @@ runConceptSetDiagnostics <- function(connection,
         }
       }
 
+      if (nrow(data) == 0 && ncol(data) == 0) {
+        data <- dplyr::tibble(
+          conceptId = numeric(),
+          conceptCount = numeric(),
+          subjectCount = numeric(),
+          cohortId = numeric(),
+          databaseId = character(),
+          domainField = character(),
+          domainTable = character()
+        )
+      }
+
       data <- makeDataExportable(
         x = data,
         tableName = "index_event_breakdown",
