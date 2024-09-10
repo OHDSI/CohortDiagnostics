@@ -47,8 +47,9 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           cohortTable = cohortTable,
           cohortIds = cohortIds,
           covariateSettings = covariateSettings,
-          aggregated = TRUE,
-          minCharacterizationMean = minCharacterizationMean
+          aggregated = TRUE
+          # Removed until a fix is added to FeatureExtraction https://github.com/OHDSI/FeatureExtraction/issues/274
+          #minCharacterizationMean = minCharacterizationMean
         )
     }
   )
