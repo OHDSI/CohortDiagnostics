@@ -144,21 +144,24 @@ if (dbms == "sqlite") {
 
 # Generate cohorts once only
 cohortDefinitionSet <- loadTestCohortDefinitionSet(cohortIds)
-cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
-# Next create the tables on the database
-CohortGenerator::createCohortTables(
-  connectionDetails = connectionDetails,
-  cohortTableNames = cohortTableNames,
-  cohortDatabaseSchema = cohortDatabaseSchema,
-  incremental = FALSE
-)
 
-# Generate the cohort set
-CohortGenerator::generateCohortSet(
-  connectionDetails = connectionDetails,
-  cdmDatabaseSchema = cdmDatabaseSchema,
-  cohortDatabaseSchema = cohortDatabaseSchema,
-  cohortTableNames = cohortTableNames,
-  cohortDefinitionSet = cohortDefinitionSet,
-  incremental = FALSE
-)
+if (!skipCdmTests) {
+  cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
+  # Next create the tables on the database
+  CohortGenerator::createCohortTables(
+    connectionDetails = connectionDetails,
+    cohortTableNames = cohortTableNames,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    incremental = FALSE
+  )
+
+  # Generate the cohort set
+  CohortGenerator::generateCohortSet(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTableNames = cohortTableNames,
+    cohortDefinitionSet = cohortDefinitionSet,
+    incremental = FALSE
+  )
+}
