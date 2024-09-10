@@ -148,6 +148,12 @@ exportConceptInformation <- function(connection = NULL,
           tableName = vocabularyTable
         )
 
+        # Workaround for sqlite imports that add decimal precision to fields
+        if (vocabularyTable == "relationship" && DatabaseConnector::dbms(connection) == "sqlite") {
+          data$isHierarchical <- as.character(as.numeric(data$isHierarchical))
+          data$definesAncestry <- as.character(as.numeric(data$definesAncestry))
+        }
+
         writeToCsv(
           data = data,
           fileName = file.path(exportFolder, paste(vocabularyTable, "csv", sep = ".")),
