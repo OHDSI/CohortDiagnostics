@@ -24,7 +24,7 @@ if (dbms == "postgresql") {
 
 test_that("Database Migrations execute without error", {
   skip_if_not(dbms %in% c("sqlite", "postgresql"))
-  skip_if(skipCdmTests, "cdm settings not configured")
+  skip_if(dbms == "postgresql" && Sys.getenv("CDM5_POSTGRESQL_SERVER") == "")
 
   connection <- DatabaseConnector::connect(connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
