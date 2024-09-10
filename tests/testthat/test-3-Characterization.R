@@ -8,41 +8,6 @@ test_that("Execute and export characterization", {
     recordKeepingFile <- tempfile(fileext = "csv")
     dir.create(exportFolder)
     on.exit(unlink(exportFolder), add = TRUE)
-    cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
-    # Next create the tables on the database
-    CohortGenerator::createCohortTables(
-      connectionDetails = connectionDetails,
-      cohortTableNames = cohortTableNames,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      incremental = FALSE
-    )
-
-    on.exit(
-      {
-        CohortGenerator::dropCohortStatsTables(
-          connection = tConnection,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTableNames = cohortTableNames
-        )
-
-        DatabaseConnector::renderTranslateExecuteSql(tConnection,
-          "DROP TABLE @cohortDatabaseSchema.@cohortTable",
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable
-        )
-      },
-      add = TRUE
-    )
-
-    # Generate the cohort set
-    CohortGenerator::generateCohortSet(
-      connectionDetails = connectionDetails,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTableNames = cohortTableNames,
-      cohortDefinitionSet = cohortDefinitionSet,
-      incremental = FALSE
-    )
 
     # Required for function use
     cohortCounts <- computeCohortCounts(
