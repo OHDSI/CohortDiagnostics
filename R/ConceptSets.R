@@ -157,9 +157,9 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     }
 
     sqlCs <-
-      extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql)
+      extractConceptSetsSqlFromCohortSql(cohortSql = cohortSql)
     jsonCs <-
-      extractConceptSetsJsonFromCohortJson(cohortJson = cohort$json)
+      extractConceptSetsJsonFromCohortJson(cohortJson = cohortJson)
 
     if (nrow(sqlCs) == 0 || nrow(jsonCs) == 0) {
       ParallelLogger::logInfo(
@@ -831,6 +831,18 @@ runConceptSetDiagnostics <- function(connection,
           data <-
             enforceMinCellValue(data, "subjectCount", minCellCount)
         }
+      }
+
+      if (nrow(data) == 0 && ncol(data) == 0) {
+        data <- dplyr::tibble(
+          conceptId = numeric(),
+          conceptCount = numeric(),
+          subjectCount = numeric(),
+          cohortId = numeric(),
+          databaseId = character(),
+          domainField = character(),
+          domainTable = character()
+        )
       }
 
       data <- makeDataExportable(
