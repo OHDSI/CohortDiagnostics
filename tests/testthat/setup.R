@@ -4,7 +4,7 @@ dbmsToTest <- c(
   # "sqlite",
   "duckdb" #,
   # "postgresql"
-  # "redshift",
+  # "redshift"
   # "sql server",
   # "oracle",
 )
@@ -125,9 +125,9 @@ if ("oracle" %in% dbmsToTest) {
   tempEmulationSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
   cohortDatabaseSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
   
-  testServers[["postgresql"]] <- list(
+  testServers[["oracle"]] <- list(
     connectionDetails = DatabaseConnector::createConnectionDetails(
-      dbms = "postgres",
+      dbms = "oracle",
       user = dbUser,
       password = URLdecode(dbPassword),
       server = dbServer
@@ -151,9 +151,9 @@ if ("redshift" %in% dbmsToTest) {
   tempEmulationSchema <- NULL
   cohortDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_OHDSI_SCHEMA")
   
-  testServers[["postgresql"]] <- list(
+  testServers[["redshift"]] <- list(
     connectionDetails = DatabaseConnector::createConnectionDetails(
-      dbms = "postgres",
+      dbms = "redshift",
       user = dbUser,
       password = URLdecode(dbPassword),
       server = dbServer
@@ -177,9 +177,9 @@ if ("sql server" %in% dbmsToTest) {
   tempEmulationSchema <- NULL
   cohortDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_OHDSI_SCHEMA")
   
-  testServers[["postgresql"]] <- list(
+  testServers[["sql server"]] <- list(
     connectionDetails = DatabaseConnector::createConnectionDetails(
-      dbms = "postgres",
+      dbms = "sql server",
       user = dbUser,
       password = URLdecode(dbPassword),
       server = dbServer
@@ -205,7 +205,7 @@ for (nm in names(testServers)) {
   
   
   if (!(cohortTableName %in% tablesInCohortSchema)) {
-    message(paste("Generating cohorts on test server", nm))
+    message(paste("Generating cohorts on", nm, "test database"))
     cohortDefinitionSet <- loadTestCohortDefinitionSet(server$cohortIds)
     
     cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = server$cohortTable)
