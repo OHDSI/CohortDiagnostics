@@ -14,12 +14,12 @@ test_that("Check function makeDataExportable", {
       tableName = "cohort_count"
     )
   cohortCountTableCorrectNames <-
-    SqlRender::camelCaseToSnakeCase(names(cohortCountTableCorrect)) %>% sort()
+    SqlRender::camelCaseToSnakeCase(names(cohortCountTableCorrect)) |> sort()
 
-  resultsDataModel <- getResultsDataModelSpecifications() %>%
-    dplyr::filter(tableName == "cohort_count") %>%
-    dplyr::select(columnName) %>%
-    dplyr::pull() %>%
+  resultsDataModel <- getResultsDataModelSpecifications() |>
+    dplyr::filter(tableName == "cohort_count") |>
+    dplyr::select(columnName) |>
+    dplyr::pull() |>
     sort()
 
   expect_true(identical(cohortCountTableCorrectNames, resultsDataModel))
