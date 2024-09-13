@@ -386,7 +386,9 @@ runConceptSetDiagnostics <- function(connection,
                                      useExternalConceptCountsTable = FALSE,
                                      incremental = FALSE,
                                      conceptIdTable = NULL,
-                                     recordKeepingFile) {
+                                     recordKeepingFile,
+                                     useAchilles,
+                                     resultsDatabaseSchema) {
   ParallelLogger::logInfo("Starting concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
   subset <- dplyr::tibble()
@@ -476,7 +478,9 @@ runConceptSetDiagnostics <- function(connection,
           tempEmulationSchema = tempEmulationSchema,
           conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
           conceptCountsTable = conceptCountsTable,
-          conceptCountsTableIsTemp = conceptCountsTableIsTemp
+          conceptCountsTableIsTemp = conceptCountsTableIsTemp,
+          useAchilles = useAchilles,
+          resultsDatabaseSchema = resultsDatabaseSchema
         )
       }
     )

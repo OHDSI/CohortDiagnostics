@@ -152,7 +152,11 @@ getDefaultCovariateSettings <- function() {
 #'                                   This expression can use the variables 'cohortId' and 'seed'.
 #'                                   Default is "cohortId * 1000 + seed", which ensures unique identifiers
 #'                                   as long as there are fewer than 1000 cohorts.
-
+#'                                   
+#' @param useAchilles                Logical. Should the pre-computed Achilles analyses be used to get concept counts? TRUE or FALSE (default)
+#'
+#' @param achillesDatabaseSchema     Character. The name of the schema where the Achilles results tables are located. 
+#'                                   Require if `useAchilles` is TRUE and ignored otherwise.
 #' @examples
 #' \dontrun{
 #' # Load cohorts (assumes that they have already been instantiated)
@@ -232,7 +236,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                sampleN = 1000,
                                seed = 64374,
                                seedArgs = NULL,
-                               sampleIdentifierExpression = "cohortId * 1000 + seed") {
+                               sampleIdentifierExpression = "cohortId * 1000 + seed",
+                               useAchilles = FALSE, 
+                               achillesDatabaseSchema) {
   # collect arguments that were passed to cohort diagnostics at initiation
   callingArgs <- formals(executeDiagnostics)
   callingArgsJson <-
@@ -355,6 +361,13 @@ executeDiagnostics <- function(cohortDefinitionSet,
       add = errorMessage
     )
   }
+  
+  checkmate::assertLogical(useAchilles, len = 1, any.missing = FALSE, add = errorMessage)
+  
+  if (isTRUE(useAchilles)) {
+    checkmate::assertCharacter(achillesDatabaseSchema, len = 1, any.missing = FALSE, add = errorMessage)
+  }
+
   checkmate::reportAssertions(collection = errorMessage)
 
   errorMessage <-
@@ -749,7 +762,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
           useExternalConceptCountsTable = FALSE,
           incremental = incremental,
           conceptIdTable = "#concept_ids",
-          recordKeepingFile = recordKeepingFile
+          recordKeepingFile = recordKeepingFile,
+          useAchilles = useAchilles,
+          resultsDatabaseSchema = resultsDatabaseSchema
         )
       }
     )
