@@ -1,145 +1,234 @@
-library(testthat)
 library(CohortDiagnostics)
-library(Eunomia)
-library(dplyr)
 
-dbms <- getOption("dbms", default = "sqlite")
-message("************* Testing on ", dbms, " *************")
+dbmsToTest <- c(
+  # "sqlite",
+  "duckdb" #,
+  # "postgresql"
+  # "redshift",
+  # "sql server",
+  # "oracle",
+)
 
-if (dir.exists(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))) {
-  jdbcDriverFolder <- Sys.getenv("DATABASECONNECTOR_JAR_FOLDER")
-} else {
-  jdbcDriverFolder <- "~/.jdbcDrivers"
-  dir.create(jdbcDriverFolder, showWarnings = FALSE)
-  DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = jdbcDriverFolder)
+# TODO: add remaining dbms
+# "spark",
+# "snowflake"
+# "bigquery"
 
-  if (!dbms %in% c("postgresql", "sqlite")) {
-    DatabaseConnector::downloadJdbcDrivers(dbms, pathToDriver = jdbcDriverFolder)
-  }
+useAllCovariates <- FALSE
 
-  withr::defer(
-    {
-      unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
+# Download the JDBC drivers used in the tests ----------------------------------
+if (Sys.getenv("DATABASECONNECTOR_JAR_FOLDER") == "") stop("set the enviroment variable DATABASECONNECTOR_JAR_FOLDER")
+
+if (Sys.getenv("DONT_DOWNLOAD_JDBC_DRIVERS", "") != "TRUE") {
+  oldJarFolder <- Sys.getenv("DATABASECONNECTOR_JAR_FOLDER")
+  Sys.setenv("DATABASECONNECTOR_JAR_FOLDER" = tempfile("jdbcDrivers"))
+  dir.create(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))
+  
+  if ("postgresql" %in% dbmsToTest) downloadJdbcDrivers("postgresql")
+  if ("sql server" %in% dbmsToTest) downloadJdbcDrivers("sql server")
+  if ("oracle" %in% dbmsToTest) downloadJdbcDrivers("oracle")
+  if ("redshift" %in% dbmsToTest) downloadJdbcDrivers("redshift")
+  if ("spark" %in% dbmsToTest) downloadJdbcDrivers("spark")
+  if ("snowflake" %in% dbmsToTest) downloadJdbcDrivers("snowflake")
+  if ("bigquery" %in% dbmsToTest) downloadJdbcDrivers("snowflake")
+
+  if (testthat::is_testing()) {
+    withr::defer({
+      unlink(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"), recursive = TRUE, force = TRUE)
+      Sys.setenv("DATABASECONNECTOR_JAR_FOLDER" = oldJarFolder)
     },
     testthat::teardown_env()
+    )
+  }
+}
+
+temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(
+  useConditionOccurrence = TRUE,
+  temporalStartDays = c(-365, -30, 0, 1, 31),
+  temporalEndDays = c(-31, -1, 0, 30, 365)
+)
+cohortTableName <- "cohortdiagnostics_v330_cohort"
+
+# minCellCountValue <- 5
+# skipCdmTests <- FALSE
+
+# testServers list contains all the parameters to run each test file on each database
+testServers <- list()
+
+if ("sqlite" %in% dbmsToTest) {
+  
+  testServers[["sqlite"]] <- list(
+    connectionDetails <- Eunomia::getEunomiaConnectionDetails(),
+    cdmDatabaseSchema = "main",
+    cohortDatabaseSchema = "main",
+    vocabularyDatabaseSchema = "main",
+    useAchilles = FALSE,
+    cohortTable = cohortTableName,
+    tempEmulationSchema = NULL,
+    cohortIds = c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906),
+    temporalCovariateSettings = temporalCovariateSettings
+  )
+} 
+
+if ("duckdb" %in% dbmsToTest) {
+  
+  synpufDuckdbPath <- Sys.getenv("SYNPUF_DUCKDB_PATH")
+  
+  # download.file("https://example-data.ohdsi.dev/synpuf-54.duckdb", "synpuf-1k_54.duckdb")
+  if (synpufDuckdbPath == "" || !file.exists(synpufDuckdbPath)) {
+    stop('Please run `download.file("https://example-data.ohdsi.dev/synpuf-54.duckdb", "synpuf-1k_54.duckdb")`,
+          and set the SYNPUF_DUCKDB_PATH to the location of the file.')
+  }
+  
+  testServers$duckdb <- list(
+    connectionDetails = DatabaseConnector::createConnectionDetails(dbms = "duckdb", server = synpufDuckdbPath),
+    cdmDatabaseSchema = "main",
+    cohortDatabaseSchema = "main",
+    vocabularyDatabaseSchema = "main",
+    useAchilles = TRUE,
+    achillesDatabaseSchema = "main",
+    cohortTable = cohortTableName,
+    tempEmulationSchema = NULL,
+    cohortIds = c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906),
+    temporalCovariateSettings = temporalCovariateSettings
+  )
+} 
+
+if ("postgresql" %in% dbmsToTest) {
+  dbUser <- Sys.getenv("CDM5_POSTGRESQL_USER")
+  dbPassword <- Sys.getenv("CDM5_POSTGRESQL_PASSWORD")
+  dbServer <- Sys.getenv("CDM5_POSTGRESQL_SERVER")
+  
+  testServers[["postgresql"]] <- list(
+    connectionDetails = DatabaseConnector::createConnectionDetails(
+      dbms = "postgresql",
+      user = dbUser,
+      password = URLdecode(dbPassword),
+      server = dbServer
+    ),
+    cdmDatabaseSchema = Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA"),
+    vocabularyDatabaseSchema = Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA"),
+    tempEmulationSchema = NULL,
+    cohortDatabaseSchema = Sys.getenv("CDM5_POSTGRESQL_OHDSI_SCHEMA"),
+    cohortIds = c(18345, 17720, 14907),
+    cohortTable = cohortTableName,
+    temporalCovariateSettings = temporalCovariateSettings
   )
 }
 
-folder <- tempfile()
-dir.create(folder, recursive = TRUE)
-minCellCountValue <- 5
-skipCdmTests <- FALSE
-
-if (dbms == "sqlite") {
-  databaseFile <- paste0(Sys.getpid(), "testEunomia.sqlite")
-
-  connectionDetails <- Eunomia::getEunomiaConnectionDetails(databaseFile = databaseFile)
-  withr::defer(
-    {
-      unlink(databaseFile, recursive = TRUE, force = TRUE)
-    },
-    testthat::teardown_env()
+if ("oracle" %in% dbmsToTest) {
+  dbUser <- Sys.getenv("CDM5_ORACLE_USER")
+  dbPassword <- Sys.getenv("CDM5_ORACLE_PASSWORD")
+  dbServer <- Sys.getenv("CDM5_ORACLE_SERVER")
+  cdmDatabaseSchema <- Sys.getenv("CDM5_ORACLE_CDM_SCHEMA")
+  vocabularyDatabaseSchema <- Sys.getenv("CDM5_ORACLE_CDM_SCHEMA")
+  tempEmulationSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
+  cohortDatabaseSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
+  
+  testServers[["postgresql"]] <- list(
+    connectionDetails = DatabaseConnector::createConnectionDetails(
+      dbms = "postgres",
+      user = dbUser,
+      password = URLdecode(dbPassword),
+      server = dbServer
+    ),
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortIds = c(18345, 17720, 14907),
+    cohortTable = cohortTableName,
+    temporalCovariateSettings = temporalCovariateSettings
   )
-  cdmDatabaseSchema <- "main"
-  cohortDatabaseSchema <- "main"
-  vocabularyDatabaseSchema <- cohortDatabaseSchema
-  cohortTable <- "cohort"
+}
+
+if ("redshift" %in% dbmsToTest) {
+  dbUser <- Sys.getenv("CDM5_REDSHIFT_USER")
+  dbPassword <- Sys.getenv("CDM5_REDSHIFT_PASSWORD")
+  dbServer <- Sys.getenv("CDM5_REDSHIFT_SERVER")
+  cdmDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA")
+  vocabularyDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA")
   tempEmulationSchema <- NULL
-  cohortIds <- c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906)
-
-
-  if (getOption("useAllCovariates", default = FALSE)) {
-    temporalCovariateSettings <- getDefaultCovariateSettings()
-  } else {
-    temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(
-      useConditionOccurrence = TRUE,
-      useDrugEraStart = TRUE,
-      useProcedureOccurrence = TRUE,
-      useMeasurement = TRUE,
-      useCharlsonIndex = TRUE,
-      temporalStartDays = c(-365, -30, 0, 1, 31),
-      temporalEndDays = c(-31, -1, 0, 30, 365)
-    )
-  }
-} else {
-  # only test all cohorts in sqlite
-  cohortIds <- c(18345, 17720, 14907) # Celecoxib, Type 2 diabetes, diclofenac (no history of GIH)
-  cohortTable <- paste0("ct_", Sys.getpid(), format(Sys.time(), "%s"), sample(1:100, 1))
-  if (getOption("useAllCovariates", default = FALSE)) {
-    temporalCovariateSettings <- getDefaultCovariateSettings()
-  } else {
-    temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(
-      useConditionOccurrence = TRUE,
-      useCharlsonIndex = TRUE,
-      temporalStartDays = c(-1, 0, 1),
-      temporalEndDays = c(-1, 0, 1)
-    )
-  }
-  if (dbms == "postgresql") {
-    dbUser <- Sys.getenv("CDM5_POSTGRESQL_USER")
-    dbPassword <- Sys.getenv("CDM5_POSTGRESQL_PASSWORD")
-    dbServer <- Sys.getenv("CDM5_POSTGRESQL_SERVER")
-    cdmDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
-    vocabularyDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
-    tempEmulationSchema <- NULL
-    cohortDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_OHDSI_SCHEMA")
-  } else if (dbms == "oracle") {
-    dbUser <- Sys.getenv("CDM5_ORACLE_USER")
-    dbPassword <- Sys.getenv("CDM5_ORACLE_PASSWORD")
-    dbServer <- Sys.getenv("CDM5_ORACLE_SERVER")
-    cdmDatabaseSchema <- Sys.getenv("CDM5_ORACLE_CDM_SCHEMA")
-    vocabularyDatabaseSchema <- Sys.getenv("CDM5_ORACLE_CDM_SCHEMA")
-    tempEmulationSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
-    cohortDatabaseSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
-    options(sqlRenderTempEmulationSchema = tempEmulationSchema)
-  } else if (dbms == "redshift") {
-    dbUser <- Sys.getenv("CDM5_REDSHIFT_USER")
-    dbPassword <- Sys.getenv("CDM5_REDSHIFT_PASSWORD")
-    dbServer <- Sys.getenv("CDM5_REDSHIFT_SERVER")
-    cdmDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA")
-    vocabularyDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA")
-    tempEmulationSchema <- NULL
-    cohortDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_OHDSI_SCHEMA")
-  } else if (dbms == "sql server") {
-    dbUser <- Sys.getenv("CDM5_SQL_SERVER_USER")
-    dbPassword <- Sys.getenv("CDM5_SQL_SERVER_PASSWORD")
-    dbServer <- Sys.getenv("CDM5_SQL_SERVER_SERVER")
-    cdmDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA")
-    vocabularyDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA")
-    tempEmulationSchema <- NULL
-    cohortDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_OHDSI_SCHEMA")
-  }
-
-  connectionDetails <- DatabaseConnector::createConnectionDetails(
-    dbms = dbms,
-    user = dbUser,
-    password = URLdecode(dbPassword),
-    server = dbServer,
-    pathToDriver = jdbcDriverFolder
-  )
-
-  if (cdmDatabaseSchema == "" || dbServer == "") {
-    skipCdmTests <- TRUE
-  }
-
-  # Cleanup
-  sql <- "IF OBJECT_ID('@cohort_database_schema.@cohort_table', 'U') IS NOT NULL
-              DROP TABLE @cohort_database_schema.@cohort_table;"
-
-  withr::defer(
-    {
-      if (!skipCdmTests) {
-        connection <- DatabaseConnector::connect(connectionDetails)
-        DatabaseConnector::renderTranslateExecuteSql(connection,
-          sql,
-          cohort_database_schema = cohortDatabaseSchema,
-          cohort_table = cohortTable
-        )
-        DatabaseConnector::disconnect(connection)
-      }
-    },
-    testthat::teardown_env()
+  cohortDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_OHDSI_SCHEMA")
+  
+  testServers[["postgresql"]] <- list(
+    connectionDetails = DatabaseConnector::createConnectionDetails(
+      dbms = "postgres",
+      user = dbUser,
+      password = URLdecode(dbPassword),
+      server = dbServer
+    ),
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortIds = c(18345, 17720, 14907),
+    cohortTable = cohortTableName,
+    temporalCovariateSettings = temporalCovariateSettings
   )
 }
 
-cohortDefinitionSet <- loadTestCohortDefinitionSet(cohortIds)
+if ("sql server" %in% dbmsToTest) {
+  dbUser <- Sys.getenv("CDM5_SQL_SERVER_USER")
+  dbPassword <- Sys.getenv("CDM5_SQL_SERVER_PASSWORD")
+  dbServer <- Sys.getenv("CDM5_SQL_SERVER_SERVER")
+  cdmDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA")
+  vocabularyDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA")
+  tempEmulationSchema <- NULL
+  cohortDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_OHDSI_SCHEMA")
+  
+  testServers[["postgresql"]] <- list(
+    connectionDetails = DatabaseConnector::createConnectionDetails(
+      dbms = "postgres",
+      user = dbUser,
+      password = URLdecode(dbPassword),
+      server = dbServer
+    ),
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortIds = c(18345, 17720, 14907),
+    cohortTable = cohortTableName,
+    temporalCovariateSettings = temporalCovariateSettings
+  )
+}
+
+# generate cohorts on databases if they don't already exist
+# If they already exist we skip generation and use what is already in the database
+nm = names(testServers)[1]
+for (nm in names(testServers)) {
+  server <- testServers[[nm]]
+  con <- DatabaseConnector::connect(server$connectionDetails)
+  tablesInCohortSchema <- DatabaseConnector::getTableNames(con, databaseSchema = server$cohortDatabaseSchema)
+  DatabaseConnector::disconnect(con)
+  
+  
+  if (!(cohortTableName %in% tablesInCohortSchema)) {
+    message(paste("Generating cohorts on test server", nm))
+    cohortDefinitionSet <- loadTestCohortDefinitionSet(server$cohortIds)
+    
+    cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = server$cohortTable)
+
+    CohortGenerator::createCohortTables(
+      connectionDetails = server$connectionDetails,
+      cohortTableNames = cohortTableNames,
+      cohortDatabaseSchema = server$cohortDatabaseSchema,
+      incremental = FALSE
+    )
+
+    CohortGenerator::generateCohortSet(
+      connectionDetails = server$connectionDetails,
+      cdmDatabaseSchema = server$cdmDatabaseSchema,
+      cohortDatabaseSchema = server$cohortDatabaseSchema,
+      cohortTableNames = cohortTableNames,
+      cohortDefinitionSet = cohortDefinitionSet,
+      incremental = FALSE
+    )
+  } else {
+    message(paste("Skipping cohort generation on test server", nm))
+  }
+}
+
+
+
