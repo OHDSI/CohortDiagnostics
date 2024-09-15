@@ -20,27 +20,28 @@ getIncidenceRate <- function(connectionDetails = NULL,
                              cohortTable,
                              cdmDatabaseSchema,
                              vocabularyDatabaseSchema = cdmDatabaseSchema,
-                             cdmVersion = 5,
                              tempEmulationSchema = tempEmulationSchema,
                              firstOccurrenceOnly = TRUE,
                              washoutPeriod = 365,
                              cohortId) {
   start <- Sys.time()
-  if (!cdmVersion == 5) {
-    stop("Only CDM version 5 is supported. Terminating.")
-  }
 
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-
-  if (!checkIfCohortInstantiated(
-    connection = connection,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    cohortId = cohortId
-  )) {
+  
+  # check that cohort is instantiated
+  cohortCount <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      "SELECT COUNT(*) AS COUNT FROM @cohort_database_schema.@cohort_table WHERE cohort_definition_id = @cohort_id;",
+      cohort_database_schema = cohortDatabaseSchema,
+      cohort_table = cohortTable,
+      cohort_id = cohortId
+    ) %>% dplyr::pull(1)
+  
+  if (!(cohortCount > 0)) {
     warning(
       "Cohort with ID ",
       cohortId,
