@@ -30,7 +30,7 @@ FROM (
 	SELECT 
 		CAST(stratum_1 AS INT) AS concept_id,
 		count_value AS concept_count
-	FROM @results_database_schema.achilles_results
+	FROM @achilles_database_schema.achilles_results
 	WHERE analysis_id IN (401,601,701,801,1801,425,625,725,825,1825) AND stratum_1 != '0'
 ) q1
 LEFT JOIN 
@@ -38,7 +38,7 @@ LEFT JOIN
 	SELECT 
 		CAST(stratum_1 AS INT) AS concept_id,
 		count_value AS concept_subjects
-	FROM  @results_database_schema.achilles_results
+	FROM  @achilles_database_schema.achilles_results
 	WHERE analysis_id IN (400,600,700,800,1800) AND stratum_1 != '0'
 ) q2
 ON q1.concept_id = q2.concept_id
