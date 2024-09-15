@@ -1,4 +1,5 @@
 library(CohortDiagnostics)
+library(testthat)
 
 dbmsToTest <- c(
   # "sqlite",
@@ -80,7 +81,9 @@ if ("duckdb" %in% dbmsToTest) {
           and set the SYNPUF_DUCKDB_PATH to the location of the file.')
   }
   
-  testServers$duckdb <- list(
+  cohortIds <- c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906)
+  
+  testServers[["duckdb"]] <- list(
     connectionDetails = DatabaseConnector::createConnectionDetails(dbms = "duckdb", server = synpufDuckdbPath),
     cdmDatabaseSchema = "main",
     cohortDatabaseSchema = "main",
@@ -89,7 +92,8 @@ if ("duckdb" %in% dbmsToTest) {
     achillesDatabaseSchema = "main",
     cohortTable = cohortTableName,
     tempEmulationSchema = NULL,
-    cohortIds = c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906),
+    cohortIds = cohortIds,
+    cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds),
     temporalCovariateSettings = temporalCovariateSettings
   )
 } 
@@ -98,7 +102,7 @@ if ("postgresql" %in% dbmsToTest) {
   dbUser <- Sys.getenv("CDM5_POSTGRESQL_USER")
   dbPassword <- Sys.getenv("CDM5_POSTGRESQL_PASSWORD")
   dbServer <- Sys.getenv("CDM5_POSTGRESQL_SERVER")
-  
+  cohortIds <- c(18345, 17720, 14907)
   testServers[["postgresql"]] <- list(
     connectionDetails = DatabaseConnector::createConnectionDetails(
       dbms = "postgresql",
@@ -110,7 +114,8 @@ if ("postgresql" %in% dbmsToTest) {
     vocabularyDatabaseSchema = Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA"),
     tempEmulationSchema = NULL,
     cohortDatabaseSchema = Sys.getenv("CDM5_POSTGRESQL_OHDSI_SCHEMA"),
-    cohortIds = c(18345, 17720, 14907),
+    cohortIds = cohortIds,
+    cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds),
     cohortTable = cohortTableName,
     temporalCovariateSettings = temporalCovariateSettings
   )
@@ -124,6 +129,7 @@ if ("oracle" %in% dbmsToTest) {
   vocabularyDatabaseSchema <- Sys.getenv("CDM5_ORACLE_CDM_SCHEMA")
   tempEmulationSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
   cohortDatabaseSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
+  cohortIds <- c(18345, 17720, 14907)
   
   testServers[["oracle"]] <- list(
     connectionDetails = DatabaseConnector::createConnectionDetails(
@@ -136,7 +142,8 @@ if ("oracle" %in% dbmsToTest) {
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortIds = c(18345, 17720, 14907),
+    cohortIds = cohortIds,
+    cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds),
     cohortTable = cohortTableName,
     temporalCovariateSettings = temporalCovariateSettings
   )
@@ -150,6 +157,7 @@ if ("redshift" %in% dbmsToTest) {
   vocabularyDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA")
   tempEmulationSchema <- NULL
   cohortDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_OHDSI_SCHEMA")
+  cohortIds <- c(18345, 17720, 14907)
   
   testServers[["redshift"]] <- list(
     connectionDetails = DatabaseConnector::createConnectionDetails(
@@ -162,7 +170,8 @@ if ("redshift" %in% dbmsToTest) {
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortIds = c(18345, 17720, 14907),
+    cohortIds = cohortIds,
+    cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds),
     cohortTable = cohortTableName,
     temporalCovariateSettings = temporalCovariateSettings
   )
@@ -176,6 +185,7 @@ if ("sql server" %in% dbmsToTest) {
   vocabularyDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA")
   tempEmulationSchema <- NULL
   cohortDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_OHDSI_SCHEMA")
+  cohortIds <- c(18345, 17720, 14907)
   
   testServers[["sql server"]] <- list(
     connectionDetails = DatabaseConnector::createConnectionDetails(
@@ -188,7 +198,8 @@ if ("sql server" %in% dbmsToTest) {
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortIds = c(18345, 17720, 14907),
+    cohortIds = cohortIds,
+    cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds),
     cohortTable = cohortTableName,
     temporalCovariateSettings = temporalCovariateSettings
   )
@@ -196,7 +207,6 @@ if ("sql server" %in% dbmsToTest) {
 
 # generate cohorts on databases if they don't already exist
 # If they already exist we skip generation and use what is already in the database
-nm = names(testServers)[1]
 for (nm in names(testServers)) {
   server <- testServers[[nm]]
   con <- DatabaseConnector::connect(server$connectionDetails)
