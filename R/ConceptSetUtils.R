@@ -80,11 +80,11 @@ createConceptCountsTable <- function(connectionDetails = NULL,
                                      connection = NULL,
                                      cdmDatabaseSchema,
                                      tempEmulationSchema = NULL,
-                                     conceptCountsDatabaseSchema = cdmDatabaseSchema,
+                                     conceptCountsDatabaseSchema = NULL,
                                      conceptCountsTable = "concept_counts",
                                      conceptCountsTableIsTemp = FALSE,
                                      useAchilles = FALSE,
-                                     resultsDatabaseSchema) {
+                                     achillesDatabaseSchema = NULL) {
   ParallelLogger::logInfo("Creating internal concept counts table")
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
@@ -106,7 +106,7 @@ createConceptCountsTable <- function(connectionDetails = NULL,
       concept_counts_table = conceptCountsTable,
       table_is_temp = conceptCountsTableIsTemp,
       use_achilles = useAchilles,
-      results_database_schema = resultsDatabaseSchema
+      achilles_database_schema = achillesDatabaseSchema
     )
   DatabaseConnector::executeSql(connection, sql)
 }
