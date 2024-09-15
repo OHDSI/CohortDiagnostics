@@ -378,7 +378,7 @@ runConceptSetDiagnostics <- function(connection,
                                      runBreakdownIndexEvents,
                                      exportFolder,
                                      minCellCount,
-                                     conceptCountsDatabaseSchema = cdmDatabaseSchema,
+                                     conceptCountsDatabaseSchema = NULL,
                                      conceptCountsTable = "concept_counts",
                                      conceptCountsTableIsTemp = FALSE,
                                      cohortDatabaseSchema,
@@ -825,17 +825,8 @@ runConceptSetDiagnostics <- function(connection,
           split(subsetBreakdown, subsetBreakdown$cohortId),
           getCohortIndexEventBreakdown
         )
+      
       data <- dplyr::bind_rows(data)
-      if (nrow(data) > 0) {
-        data <- data %>%
-          dplyr::mutate(databaseId = !!databaseId)
-        data <-
-          enforceMinCellValue(data, "conceptCount", minCellCount)
-        if ("subjectCount" %in% colnames(data)) {
-          data <-
-            enforceMinCellValue(data, "subjectCount", minCellCount)
-        }
-      }
 
       data <- makeDataExportable(
         x = data,
