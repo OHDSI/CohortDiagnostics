@@ -39,7 +39,9 @@ executeDiagnostics(
   sampleN = 1000,
   seed = 64374,
   seedArgs = NULL,
-  sampleIdentifierExpression = "cohortId * 1000 + seed"
+  sampleIdentifierExpression = "cohortId * 1000 + seed",
+  useAchilles = FALSE,
+  achillesDatabaseSchema
 )
 }
 \arguments{
@@ -143,6 +145,11 @@ This can be used to control aspects of the sampling process beyond the seed and 
 This expression can use the variables 'cohortId' and 'seed'.
 Default is "cohortId * 1000 + seed", which ensures unique identifiers
 as long as there are fewer than 1000 cohorts.}
+
+\item{useAchilles}{Logical. Should the pre-computed Achilles analyses be used to get concept counts? TRUE or FALSE (default)}
+
+\item{achillesDatabaseSchema}{Character. The name of the schema where the Achilles results tables are located. 
+Require if `useAchilles` is TRUE and ignored otherwise.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
