@@ -21,23 +21,21 @@ getInclusionStats <- function(connection,
                               cohortDatabaseSchema,
                               cohortTableNames,
                               incremental,
-                              instantiatedCohorts,
                               minCellCount,
                               recordKeepingFile) {
   ParallelLogger::logInfo("Fetching inclusion statistics from files")
   subset <- subsetToRequiredCohorts(
-    cohorts = cohortDefinitionSet %>%
-      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+    cohorts = cohortDefinitionSet,
     task = "runInclusionStatistics",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile
   )
-
+  
   if (incremental &&
-    (length(instantiatedCohorts) - nrow(subset)) > 0) {
+    (length(cohortDefinitionSet$cohortId) - nrow(subset)) > 0) {
     ParallelLogger::logInfo(sprintf(
       "Skipping %s cohorts in incremental mode.",
-      length(instantiatedCohorts) - nrow(subset)
+      length(cohortDefinitionSet$cohortId) - nrow(subset)
     ))
   }
   if (nrow(subset) > 0) {
