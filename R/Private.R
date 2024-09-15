@@ -14,35 +14,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-createIfNotExist <-
-  function(type,
-           name,
-           recursive = TRUE,
-           errorMessage = NULL) {
-    if (is.null(errorMessage) |
-      !is(errorMessage, "AssertColection")) {
-      errorMessage <- checkmate::makeAssertCollection()
-    }
-    if (!is.null(type)) {
-      if (length(name) == 0) {
-        stop(ParallelLogger::logError("Must specify ", name))
-      }
-      if (type %in% c("folder")) {
-        if (!file.exists(gsub("/$", "", name))) {
-          dir.create(name, recursive = recursive)
-          ParallelLogger::logInfo("Created ", type, " at ", name)
-        } else {
-          # ParallelLogger::logInfo(type, " already exists at ", name)
-        }
-      }
-      checkmate::assertDirectory(
-        x = name,
-        access = "x",
-        add = errorMessage
-      )
-    }
-    invisible(errorMessage)
+hasData <- function(data) {
+  if (is.null(data)) {
+    return(FALSE)
   }
+  if (is.data.frame(data)) {
+    if (nrow(data) == 0) {
+      return(FALSE)
+    }
+  } else {
+    if (length(data) == 0) {
+      return(FALSE)
+    }
+    if (length(data) == 1 && is.na(data)) {
+        return(FALSE)
+    }
+  }
+  return(TRUE)
+}
 
 swapColumnContents <-
   function(df,
@@ -122,54 +111,63 @@ nullToEmpty <- function(x) {
   return(x)
 }
 
+# makeDataExportable is used to validate that the results conform to the output data model
+# and suppress cell counts
 makeDataExportable <- function(x,
                                tableName,
                                minCellCount = 5,
                                databaseId = NULL) {
+  
+  # x can be a dataframe or an Andromeda table (sqlite dplyr::tbl table reference)
+  ## because Andromeda is not handling date consistently -
+  # https://github.com/OHDSI/Andromeda/issues/28
+  ## temporary solution is to collect data into R memory using dplyr::collect()
+  # Note: this means that all data processed ends up fully in memory
+  # This could be changed with batch operations on andromeda objects
+  # If x is an andromeda object dplyr::collect will bring it into R as a dataframe
+  # If x is a dataframe then dplyr::collect has no effect
+  x <- dplyr::collect(x)
+  
+  checkmate::assertClass(x, "data.frame")
+  
   ParallelLogger::logTrace(paste0(" - Ensuring data is exportable: ", tableName))
-  if (!hasData(x)) {
+  
+  if (nrow(x) == 0) {
     ParallelLogger::logTrace("  - Object has no data.")
     return(x)
   }
+  
+  resultsDataModel <- getResultsDataModelSpecifications(tableName = tableName)
+  
+  checkmate::assertIntegerish(minCellCount, len = 1, lower = 0, any.missing = FALSE)
+  checkmate::assertCharacter(databaseId, min.chars = 1, len = 1, any.missing = FALSE, null.ok = TRUE)
 
   if ("cohortDefinitionId" %in% colnames(x)) {
-    x <- x %>%
-      dplyr::rename("cohortId" = "cohortDefinitionId")
+    x <- dplyr::rename(x, "cohortId" = "cohortDefinitionId")
   }
-
-  resultsDataModel <- getResultsDataModelSpecifications()
 
   if (!is.null(databaseId)) {
-    x <- x %>%
-      dplyr::mutate(databaseId = !!databaseId)
+    x <- dplyr::mutate(x, databaseId = .env$databaseId)
   }
 
-  fieldsInDataModel <- resultsDataModel %>%
-    dplyr::filter(.data$tableName == !!tableName) %>%
-    dplyr::pull(.data$columnName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    unique()
+  # column names in results datamodel specification are in snake case but the columns in R are camel case
+  # writeToCsv converts the camel case column names in R to snake case
+  fieldsInDataModel <- SqlRender::snakeCaseToCamelCase(resultsDataModel$columnName)
 
   requiredFieldsInDataModel <- resultsDataModel %>%
-    dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$isRequired == "Yes") %>%
-    dplyr::pull(.data$columnName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    unique()
+    dplyr::pull(.data$columnName) %>% 
+    SqlRender::snakeCaseToCamelCase() 
 
   primaryKeyInDataModel <- resultsDataModel %>%
-    dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$primaryKey == "Yes") %>%
-    dplyr::pull(.data$columnName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    unique()
+    dplyr::pull(.data$columnName) %>% 
+    SqlRender::snakeCaseToCamelCase() 
 
   columnsToApplyMinCellValue <- resultsDataModel %>%
-    dplyr::filter(.data$tableName == !!tableName) %>%
     dplyr::filter(.data$minCellCount == "Yes") %>%
-    dplyr::pull(.data$columnName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    unique()
+    dplyr::pull(.data$columnName) %>% 
+    SqlRender::snakeCaseToCamelCase()
 
   ParallelLogger::logTrace(paste0(
     "  - Found in table ",
@@ -178,12 +176,11 @@ makeDataExportable <- function(x,
     paste0(names(x), collapse = ", ")
   ))
 
-  presentInBoth <-
-    intersect(fieldsInDataModel, names(x))
-  presentInDataOnly <-
-    setdiff(names(x), fieldsInDataModel)
-  missingRequiredFields <-
-    setdiff(requiredFieldsInDataModel, presentInBoth)
+  presentInBoth <- intersect(fieldsInDataModel, names(x))
+  
+  presentInDataOnly <- setdiff(names(x), fieldsInDataModel)
+  
+  missingRequiredFields <- setdiff(requiredFieldsInDataModel, presentInBoth)
 
   if (length(presentInDataOnly) > 0) {
     ParallelLogger::logInfo(
@@ -217,7 +214,7 @@ makeDataExportable <- function(x,
       dplyr::count() %>%
       dplyr::pull()
 
-    if (rowCount > distinctRows) {
+    if (nrow(x) > distinctRows) {
       stop(
         " - duplicates found in primary key for table ",
         tableName,
@@ -226,26 +223,21 @@ makeDataExportable <- function(x,
       )
     }
   }
-  ## because Andromeda is not handling date consistently -
-  # https://github.com/OHDSI/Andromeda/issues/28
-  ## temporary solution is to collect data into R memory using dplyr::collect()
-  # Note: this means that all data processed ends up fully in memory
-  # This could be changed with batch operations on andromeda objects
-  x <- x %>%
-    dplyr::collect()
 
   # limit to fields in data model
-  x <- x %>%
-    dplyr::select(dplyr::all_of(presentInBoth))
+  x <- dplyr::select(x, dplyr::all_of(presentInBoth))
 
   # enforce minimum cell count value
-  if (hasData(x)) {
-    x <- x %>%
-      enforceMinCellValueInDataframe(
-        columnNames = columnsToApplyMinCellValue,
-        minCellCount = minCellCount
-      )
-  }
+    for (column in columnsToApplyMinCellValue) {
+      if (column %in% colnames(data)) {
+        data <-
+          enforceMinCellValue(
+            data = data,
+            columnName = column,
+            minValues = minCellCount
+          )
+      }
+    }
 
   # Ensure that timeId is never NA
   if ("timeId" %in% colnames(x)) {
@@ -255,30 +247,6 @@ makeDataExportable <- function(x,
   }
   return(x)
 }
-
-enforceMinCellValueInDataframe <- function(data,
-                                           columnNames,
-                                           minCellCount = 5) {
-  if (is.null(columnNames)) {
-    return(data)
-  }
-  presentInBoth <- intersect(columnNames, colnames(data))
-  if (length(presentInBoth) == 0) {
-    return(data)
-  }
-  for (i in (1:length(presentInBoth))) {
-    if (presentInBoth[[i]] %in% colnames(data)) {
-      data <-
-        enforceMinCellValue(
-          data = data,
-          columnName = presentInBoth[[i]],
-          minValues = minCellCount
-        )
-    }
-  }
-  return(data)
-}
-
 
 # private function - not exported
 titleCaseToCamelCase <- function(string) {
@@ -317,8 +285,7 @@ getPrefixedTableNames <- function(tablePrefix) {
   return(resultList)
 }
 
-#' @noRd
-#' Internal utility function for logging execution of variables
+# Internal utility function for logging execution of variables
 timeExecution <- function(exportFolder,
                           taskName,
                           cohortIds = NULL,
