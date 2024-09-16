@@ -47,9 +47,8 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           cohortTable = cohortTable,
           cohortIds = cohortIds,
           covariateSettings = covariateSettings,
-          aggregated = TRUE
-          # Removed until a fix is added to FeatureExtraction https://github.com/OHDSI/FeatureExtraction/issues/274
-          #minCharacterizationMean = minCharacterizationMean
+          aggregated = TRUE,
+          minCharacterizationMean = minCharacterizationMean
         )
     }
   )
@@ -233,7 +232,7 @@ executeCohortCharacterization <- function(connection,
                                           analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
                                           timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
                                           minCharacterizationMean = 0.001,
-                                          batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 5)) {
+                                          batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 20)) {
   ParallelLogger::logInfo("Running ", jobName)
   startCohortCharacterization <- Sys.time()
   subset <- subsetToRequiredCohorts(
