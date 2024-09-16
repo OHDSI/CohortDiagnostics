@@ -12,8 +12,7 @@ on:
       - '!main'
       - "!develop"
 
-
-name: R-CMD-check
+name: R-CMD-check-sqlite-only
 
 jobs:
   R-CMD-check:
