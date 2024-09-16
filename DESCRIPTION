@@ -55,7 +55,6 @@ Suggests:
   yaml
 Remotes:
   ohdsi/ROhdsiWebApi,
-  ohdsi/CohortGenerator,
   ohdsi/OhdsiShinyModules
 License: Apache License
 VignetteBuilder: knitr
