@@ -21,7 +21,7 @@ Description: CohortDiagnostics is an R utility package for the development and e
     definitions across one or more data sources, facilitating reproducible research.
 Depends:
 	DatabaseConnector (>= 5.0.0),
-	FeatureExtraction (>= 3.5.0),
+	FeatureExtraction (>= 3.7.1),
 	R (>= 4.1.0)
 Imports:
   Andromeda (>= 0.6.0),
