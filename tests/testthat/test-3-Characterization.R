@@ -38,7 +38,8 @@ test_that("Execute and export characterization", {
       incremental = TRUE,
       recordKeepingFile = recordKeepingFile,
       task = "runTemporalCohortCharacterization",
-      jobName = "Temporal Cohort characterization"
+      jobName = "Temporal Cohort characterization",
+      minCharacterizationMean = 0.3
     )
 
     # Check all files are created
@@ -86,7 +87,8 @@ test_that("Execute and export characterization", {
       incremental = TRUE,
       recordKeepingFile = recordKeepingFile,
       task = "runTemporalCohortCharacterization",
-      jobName = "Temporal Cohort characterization"
+      jobName = "Temporal Cohort characterization",
+      minCharacterizationMean = 0.3
     )
 
     # Check no time ids are NA/NULL
