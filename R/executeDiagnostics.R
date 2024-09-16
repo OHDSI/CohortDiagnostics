@@ -157,6 +157,10 @@ getDefaultCovariateSettings <- function() {
 #'
 #' @param achillesDatabaseSchema     Character. The name of the schema where the Achilles results tables are located. 
 #'                                   Require if `useAchilles` is TRUE and ignored otherwise.
+#'                                   
+#' @param workDatabaseSchema         Character. The name of a schema where the user has write access. Intermediate tables for concept counts 
+#'                                   and orphan concepts will be created in this schema if supplied. If NULL (default) intermediate tables will
+#'                                   be created as temporary tables.                        
 #' @examples
 #' \dontrun{
 #' # Load cohorts (assumes that they have already been instantiated)
@@ -238,23 +242,23 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                seedArgs = NULL,
                                sampleIdentifierExpression = "cohortId * 1000 + seed",
                                useAchilles = FALSE, 
-                               achillesDatabaseSchema) {
+                               achillesDatabaseSchema = NULL,
+                               workDatabaseSchema = NULL) {
   # collect arguments that were passed to cohort diagnostics at initiation
-  callingArgs <- formals(executeDiagnostics)
   callingArgsJson <-
     list(
-      runInclusionStatistics = callingArgs$runInclusionStatistics,
-      runIncludedSourceConcepts = callingArgs$runIncludedSourceConcepts,
-      runOrphanConcepts = callingArgs$runOrphanConcepts,
-      runTimeSeries = callingArgs$runTimeSeries,
-      runVisitContext = callingArgs$runVisitContext,
-      runBreakdownIndexEvents = callingArgs$runBreakdownIndexEvents,
-      runIncidenceRate = callingArgs$runIncidenceRate,
-      runTemporalCohortCharacterization = callingArgs$runTemporalCohortCharacterization,
-      minCellCount = callingArgs$minCellCount,
-      minCharacterizationMean = callingArgs$minCharacterizationMean,
-      incremental = callingArgs$incremental,
-      temporalCovariateSettings = callingArgs$temporalCovariateSettings
+      runInclusionStatistics = runInclusionStatistics,
+      runIncludedSourceConcepts = runIncludedSourceConcepts,
+      runOrphanConcepts = runOrphanConcepts,
+      runTimeSeries = runTimeSeries,
+      runVisitContext = runVisitContext,
+      runBreakdownIndexEvents = runBreakdownIndexEvents,
+      runIncidenceRate = runIncidenceRate,
+      runTemporalCohortCharacterization = runTemporalCohortCharacterization,
+      minCellCount = minCellCount,
+      minCharacterizationMean = minCharacterizationMean,
+      incremental = incremental,
+      temporalCovariateSettings = temporalCovariateSettings
     ) %>%
     RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
