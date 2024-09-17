@@ -53,7 +53,7 @@ getCohortCounts <- function(connectionDetails = NULL,
     )
   counts <-
     DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>%
-      tidyr::tibble()
+    tidyr::tibble()
 
   if (length(cohortIds) > 0) {
     cohortIdDf <- tidyr::tibble(cohortId = as.numeric(cohortIds))

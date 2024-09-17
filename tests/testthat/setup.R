@@ -18,9 +18,9 @@ if (dir.exists(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))) {
   }
 
   withr::defer(
-  {
-    unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
-  },
+    {
+      unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
+    },
     testthat::teardown_env()
   )
 }
@@ -35,9 +35,9 @@ if (dbms == "sqlite") {
 
   connectionDetails <- Eunomia::getEunomiaConnectionDetails(databaseFile = databaseFile)
   withr::defer(
-  {
-    unlink(databaseFile, recursive = TRUE, force = TRUE)
-  },
+    {
+      unlink(databaseFile, recursive = TRUE, force = TRUE)
+    },
     testthat::teardown_env()
   )
   cdmDatabaseSchema <- "main"
@@ -127,17 +127,17 @@ if (dbms == "sqlite") {
               DROP TABLE @cohort_database_schema.@cohort_table;"
 
   withr::defer(
-  {
-    if (!skipCdmTests) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      DatabaseConnector::renderTranslateExecuteSql(connection,
-                                                   sql,
-                                                   cohort_database_schema = cohortDatabaseSchema,
-                                                   cohort_table = cohortTable
-      )
-      DatabaseConnector::disconnect(connection)
-    }
-  },
+    {
+      if (!skipCdmTests) {
+        connection <- DatabaseConnector::connect(connectionDetails)
+        DatabaseConnector::renderTranslateExecuteSql(connection,
+          sql,
+          cohort_database_schema = cohortDatabaseSchema,
+          cohort_table = cohortTable
+        )
+        DatabaseConnector::disconnect(connection)
+      }
+    },
     testthat::teardown_env()
   )
 }

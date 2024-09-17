@@ -149,6 +149,7 @@ recordTasksDone <-
     readr::write_csv(x = recordKeeping, file = recordKeepingFile, na = "")
   }
 
+#' @noRd
 writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
   UseMethod("writeToCsv", data)
 }
@@ -186,7 +187,7 @@ writeToCsv.default <- function(data, fileName, incremental = FALSE, ...) {
   }
 }
 
-#'@noRd
+#' @noRd
 writeToCsv.tbl_Andromeda <-
   function(data, fileName, incremental = FALSE, ...) {
     if (incremental && file.exists(fileName)) {
