@@ -36,9 +36,9 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
   cohort <- dplyr::bind_rows(
     targetCohort,
     comparatorCohort,
-    targetCohort |>
+    targetCohort %>%
       dplyr::mutate(cohortDefinitionId = 2),
-    comparatorCohort |>
+    comparatorCohort %>%
       dplyr::mutate(cohortDefinitionId = 20)
   )
 
@@ -64,11 +64,11 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
     )
 
     cohortDefinitionSet <-
-      cohort |>
-      dplyr::select(cohortDefinitionId) |>
-      dplyr::distinct() |>
-      dplyr::rename("cohortId" = "cohortDefinitionId") |>
-      dplyr::rowwise() |>
+      cohort %>%
+      dplyr::select(cohortDefinitionId) %>%
+      dplyr::distinct() %>%
+      dplyr::rename("cohortId" = "cohortDefinitionId") %>%
+      dplyr::rowwise() %>%
       dplyr::mutate(json = RJSONIO::toJSON(list(
         cohortId = cohortId,
         randomString = c(
@@ -76,8 +76,8 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
           sample(x = LETTERS, 4, replace = TRUE),
           sample(LETTERS, 1, replace = TRUE)
         )
-      ))) |>
-      dplyr::ungroup() |>
+      ))) %>%
+      dplyr::ungroup() %>%
       dplyr::mutate(
         sql = json,
         checksum = CohortDiagnostics:::computeChecksum(json)
@@ -106,7 +106,7 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
       cdmDatabaseSchema = cdmDatabaseSchema,
       cohortTable = tableName,
       tempEmulationSchema = NULL,
-      cohortDefinitionSet = cohortDefinitionSet |>
+      cohortDefinitionSet = cohortDefinitionSet %>%
         dplyr::filter(cohortId %in% c(1, 10)),
       temporalCovariateSettings = list(
         temporalStartDays = c(-365, -30),
@@ -130,45 +130,45 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
     testthat::expect_true("checksum" %in% colnames(recordKeepingFileData))
 
     testthat::expect_equal(
-      object = recordKeepingFileData |>
-        dplyr::filter(cohortId == 1) |>
-        dplyr::filter(comparatorId == 10) |>
-        dplyr::select(checksum) |>
+      object = recordKeepingFileData %>%
+        dplyr::filter(cohortId == 1) %>%
+        dplyr::filter(comparatorId == 10) %>%
+        dplyr::select(checksum) %>%
         dplyr::pull(checksum),
-      expected = recordKeepingFileData |>
-        dplyr::filter(cohortId == 1) |>
-        dplyr::filter(comparatorId == 10) |>
+      expected = recordKeepingFileData %>%
+        dplyr::filter(cohortId == 1) %>%
+        dplyr::filter(comparatorId == 10) %>%
         dplyr::mutate(
           checksum2 = paste0(
             targetChecksum,
             comparatorChecksum
           )
-        ) |>
+        ) %>%
         dplyr::pull(checksum2)
     )
 
 
 
     ## testing if subset works
-    allCohortIds <- cohortDefinitionSet |>
-      dplyr::filter(cohortId %in% c(1, 10, 2)) |>
-      dplyr::select(cohortId, checksum) |>
+    allCohortIds <- cohortDefinitionSet %>%
+      dplyr::filter(cohortId %in% c(1, 10, 2)) %>%
+      dplyr::select(cohortId, checksum) %>%
       dplyr::rename(
         targetCohortId = cohortId,
         targetChecksum = checksum
-      ) |>
+      ) %>%
       dplyr::distinct()
 
-    combinationsOfPossibleCohortRelationships <- allCohortIds |>
+    combinationsOfPossibleCohortRelationships <- allCohortIds %>%
       tidyr::crossing(
-        allCohortIds |>
+        allCohortIds %>%
           dplyr::rename(
             comparatorCohortId = targetCohortId,
             comparatorChecksum = targetChecksum
           )
-      ) |>
-      dplyr::filter(targetCohortId != comparatorCohortId) |>
-      dplyr::arrange(targetCohortId, comparatorCohortId) |>
+      ) %>%
+      dplyr::filter(targetCohortId != comparatorCohortId) %>%
+      dplyr::arrange(targetCohortId, comparatorCohortId) %>%
       dplyr::mutate(checksum = paste0(targetChecksum, comparatorChecksum))
 
     subset <- CohortDiagnostics:::subsetToRequiredCombis(
@@ -176,17 +176,17 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
       task = "runCohortRelationship",
       incremental = TRUE,
       recordKeepingFile = paste0(exportFile, "recordKeeping")
-    ) |> dplyr::tibble()
+    ) %>% dplyr::tibble()
 
     ### subset should not have the combinations in record keeping file
-    shouldBeDfOfZeroRows <- subset |>
+    shouldBeDfOfZeroRows <- subset %>%
       dplyr::inner_join(
-        recordKeepingFileData |>
+        recordKeepingFileData %>%
           dplyr::select(
             "cohortId",
             "comparatorId"
-          ) |>
-          dplyr::distinct() |>
+          ) %>%
+          dplyr::distinct() %>%
           dplyr::rename(
             targetCohortId = "cohortId",
             comparatorCohortId = "comparatorId"
@@ -210,7 +210,7 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
       cdmDatabaseSchema = cdmDatabaseSchema,
       cohortTable = tableName,
       tempEmulationSchema = NULL,
-      cohortDefinitionSet = cohortDefinitionSet |>
+      cohortDefinitionSet = cohortDefinitionSet %>%
         dplyr::filter(cohortId %in% c(1, 10, 2)),
       temporalCovariateSettings = list(
         temporalStartDays = c(-365, -30),
@@ -235,40 +235,40 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
 
     # record keeping file should have 4 additional combinations
     testthat::expect_equal(
-      object = recordKeepingFileData2 |>
+      object = recordKeepingFileData2 %>%
         dplyr::anti_join(
-          recordKeepingFileData |>
+          recordKeepingFileData %>%
             dplyr::select(
               cohortId,
               comparatorId
             ),
           by = c("cohortId", "comparatorId")
-        ) |>
+        ) %>%
         nrow(),
       expected = 4
     )
 
 
     # check what happens for an unrelated cohort combination
-    allCohortIds <- cohortDefinitionSet |>
-      dplyr::filter(cohortId %in% c(2, 20)) |>
-      dplyr::select(cohortId, checksum) |>
+    allCohortIds <- cohortDefinitionSet %>%
+      dplyr::filter(cohortId %in% c(2, 20)) %>%
+      dplyr::select(cohortId, checksum) %>%
       dplyr::rename(
         targetCohortId = cohortId,
         targetChecksum = checksum
-      ) |>
+      ) %>%
       dplyr::distinct()
 
-    combinationsOfPossibleCohortRelationships <- allCohortIds |>
+    combinationsOfPossibleCohortRelationships <- allCohortIds %>%
       tidyr::crossing(
-        allCohortIds |>
+        allCohortIds %>%
           dplyr::rename(
             comparatorCohortId = targetCohortId,
             comparatorChecksum = targetChecksum
           )
-      ) |>
-      dplyr::filter(targetCohortId != comparatorCohortId) |>
-      dplyr::arrange(targetCohortId, comparatorCohortId) |>
+      ) %>%
+      dplyr::filter(targetCohortId != comparatorCohortId) %>%
+      dplyr::arrange(targetCohortId, comparatorCohortId) %>%
       dplyr::mutate(checksum = paste0(targetChecksum, comparatorChecksum))
 
     subset <- CohortDiagnostics:::subsetToRequiredCombis(
@@ -276,16 +276,16 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
       task = "runCohortRelationship",
       incremental = TRUE,
       recordKeepingFile = paste0(exportFile, "recordKeeping")
-    ) |> dplyr::tibble()
+    ) %>% dplyr::tibble()
 
     ### subset should be two rows in subsets that are not in record keeping file
-    shouldBeTwoRows <- subset |>
+    shouldBeTwoRows <- subset %>%
       dplyr::anti_join(
-        recordKeepingFileData2 |>
+        recordKeepingFileData2 %>%
           dplyr::select(
             "cohortId",
             "comparatorId"
-          ) |>
+          ) %>%
           dplyr::rename(
             targetCohortId = cohortId,
             comparatorCohortId = comparatorId
@@ -385,8 +385,8 @@ test_that("Testing cohort relationship logic - incremental FALSE", {
       progressBar = FALSE
     )
 
-    cohortRelationshipT1C10 <- cohortRelationship |>
-      dplyr::filter(cohortId == 1) |>
+    cohortRelationshipT1C10 <- cohortRelationship %>%
+      dplyr::filter(cohortId == 1) %>%
       dplyr::filter(comparatorCohortId == 10)
 
     testthat::expect_equal(

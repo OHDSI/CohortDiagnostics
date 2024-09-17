@@ -96,7 +96,7 @@ test_that("Execute and export characterization", {
 
     # should not have the cohorts that were previously run
     testthat::expect_equal(
-      object = nrow(subset |>
+      object = nrow(subset %>%
         dplyr::filter(
           cohortId %in% c(cohortDefinitionSet[1:3, ]$cohortId)
         )),
