@@ -48,7 +48,7 @@ ON q1.concept_id = q2.concept_id
 FROM (
 	SELECT condition_concept_id AS concept_id,
 		COUNT_BIG(*) AS concept_count,
-		COUNT_BIG(DISTINCT person_id) AS concept_subjects
+		COUNT_BIG(DISTINCT co.person_id) AS concept_subjects
 	FROM @cdm_database_schema.condition_occurrence co
 	JOIN @cdm_database_schema.observation_period op 
   ON co.person_id = op.person_id
@@ -60,7 +60,7 @@ FROM (
 	
 	SELECT condition_source_concept_id AS concept_id,
 		COUNT_BIG(*) AS concept_count,
-		COUNT_BIG(DISTINCT person_id) AS concept_subjects
+		COUNT_BIG(DISTINCT co.person_id) AS concept_subjects
 	FROM @cdm_database_schema.condition_occurrence co
 	JOIN @cdm_database_schema.observation_period op 
   ON co.person_id = op.person_id
@@ -72,7 +72,7 @@ FROM (
 	
 	SELECT drug_concept_id AS concept_id,
 		COUNT_BIG(*) AS concept_count,
-		COUNT_BIG(DISTINCT person_id) AS concept_subjects
+		COUNT_BIG(DISTINCT de.person_id) AS concept_subjects
 	FROM @cdm_database_schema.drug_exposure de
 	JOIN @cdm_database_schema.observation_period op 
   ON de.person_id = op.person_id
@@ -84,7 +84,7 @@ FROM (
 	
 	SELECT drug_source_concept_id AS concept_id,
 		COUNT_BIG(*) AS concept_count,
-		COUNT_BIG(DISTINCT person_id) AS concept_subjects
+		COUNT_BIG(DISTINCT de.person_id) AS concept_subjects
 	FROM @cdm_database_schema.drug_exposure de
 	JOIN @cdm_database_schema.observation_period op 
   ON de.person_id = op.person_id
@@ -96,7 +96,7 @@ FROM (
 	
 	SELECT procedure_concept_id AS concept_id,
 		COUNT_BIG(*) AS concept_count,
-		COUNT_BIG(DISTINCT person_id) AS concept_subjects
+		COUNT_BIG(DISTINCT po.person_id) AS concept_subjects
 	FROM @cdm_database_schema.procedure_occurrence po
 	JOIN @cdm_database_schema.observation_period op 
   ON po.person_id = op.person_id
@@ -108,7 +108,7 @@ FROM (
 	
 	SELECT procedure_source_concept_id AS concept_id,
 		COUNT_BIG(*) AS concept_count,
-		COUNT_BIG(DISTINCT person_id) AS concept_subjects
+		COUNT_BIG(DISTINCT po.person_id) AS concept_subjects
 	FROM @cdm_database_schema.procedure_occurrence po
 	JOIN @cdm_database_schema.observation_period op 
   ON po.person_id = op.person_id
@@ -120,10 +120,10 @@ FROM (
 	
 	SELECT measurement_concept_id AS concept_id,
 		COUNT_BIG(*) AS concept_count,
-		COUNT_BIG(DISTINCT person_id) AS concept_subjects
+		COUNT_BIG(DISTINCT m.person_id) AS concept_subjects
 	FROM @cdm_database_schema.measurement m
 	JOIN @cdm_database_schema.observation_period op 
-  ON co.person_id = op.person_id
+  ON m.person_id = op.person_id
   AND m.measurement_date >= op.observation_period_start_date
   AND m.measurement_date <= op.observation_period_end_date
 	GROUP BY measurement_concept_id
@@ -132,10 +132,10 @@ FROM (
   
 	SELECT measurement_source_concept_id AS concept_id,
 		COUNT_BIG(*) AS concept_count,
-		COUNT_BIG(DISTINCT person_id) AS concept_subjects
+		COUNT_BIG(DISTINCT m.person_id) AS concept_subjects
 	FROM @cdm_database_schema.measurement m
 	JOIN @cdm_database_schema.observation_period op 
-  ON co.person_id = op.person_id
+  ON m.person_id = op.person_id
   AND m.measurement_date >= op.observation_period_start_date
   AND m.measurement_date <= op.observation_period_end_date
 	GROUP BY measurement_source_concept_id
@@ -144,10 +144,10 @@ FROM (
 	
 	SELECT observation_concept_id AS concept_id,
 		COUNT_BIG(*) AS concept_count,
-		COUNT_BIG(DISTINCT person_id) AS concept_subjects
+		COUNT_BIG(DISTINCT o.person_id) AS concept_subjects
 	FROM @cdm_database_schema.observation o
 	JOIN @cdm_database_schema.observation_period op 
-  ON co.person_id = op.person_id
+  ON o.person_id = op.person_id
   AND o.observation_date >= op.observation_period_start_date
   AND o.observation_date <= op.observation_period_end_date
 	GROUP BY observation_concept_id
@@ -156,10 +156,10 @@ FROM (
 	
 	SELECT observation_source_concept_id AS concept_id,
 		COUNT_BIG(*) AS concept_count,
-		COUNT_BIG(DISTINCT person_id) AS concept_subjects
+		COUNT_BIG(DISTINCT o.person_id) AS concept_subjects
 	FROM @cdm_database_schema.observation o
 	JOIN @cdm_database_schema.observation_period op 
-  ON co.person_id = op.person_id
+  ON o.person_id = op.person_id
   AND o.observation_date >= op.observation_period_start_date
   AND o.observation_date <= op.observation_period_end_date
 	GROUP BY observation_source_concept_id
