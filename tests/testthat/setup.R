@@ -89,7 +89,7 @@ if ("duckdb" %in% dbmsToTest) {
     cohortDatabaseSchema = "main",
     vocabularyDatabaseSchema = "main",
     useAchilles = TRUE,
-    achillesDatabaseSchema = "main",
+    achillesDatabaseSchema = "achilles",
     cohortTable = cohortTableName,
     tempEmulationSchema = NULL,
     cohortIds = cohortIds,
@@ -239,6 +239,4 @@ for (nm in names(testServers)) {
     message(paste("Skipping cohort generation on test server", nm))
   }
 }
-
-
 
