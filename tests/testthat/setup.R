@@ -31,8 +31,8 @@ minCellCountValue <- 5
 skipCdmTests <- FALSE
 
 if (dbms == "sqlite") {
-  databaseFile <- Eunomia::getDatabaseFile("GiBleed", overwrite = FALSE)
-  connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = databaseFile)
+  databaseFile <- paste0(Sys.getpid(), "testEunomia.sqlite")
+  connectionDetails <- Eunomia::getEunomiaConnectionDetails(databaseFile = databaseFile)
   withr::defer(
     {
       unlink(databaseFile, recursive = TRUE, force = TRUE)
