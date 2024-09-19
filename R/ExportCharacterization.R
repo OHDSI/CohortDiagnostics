@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -24,14 +24,12 @@ exportCharacterization <- function(characteristics,
                                    analysisRefFileName,
                                    timeRefFileName = NULL,
                                    counts,
-                                   minCharacterizationMean = 0.001,
                                    minCellCount) {
   if (!"covariates" %in% names(characteristics)) {
     warning("No characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
     characteristics$filteredCovariates <-
       characteristics$covariates %>%
-      dplyr::filter(.data$mean >= minCharacterizationMean) %>%
       dplyr::mutate(databaseId = !!databaseId) %>%
       dplyr::left_join(counts,
         by = c("cohortId", "databaseId"),

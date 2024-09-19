@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -139,11 +139,11 @@ getDefaultCovariateSettings <- function() {
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
 #' @param useExternalConceptCountsTable If TRUE an external table for the cohort concept counts will be used.
-#' @param runOnSample                 Logical. If TRUE, the function will operate on a sample of the data.
+#' @param runFeatureExtractionOnSample Logical. If TRUE, the function will operate on a sample of the data.
 #'                                    Default is FALSE, meaning the function will operate on the full data set.
 #'
-#' @param sampleN                     Integer. The number of records to include in the sample if runOnSample is TRUE.
-#'                                    Default is 1000. Ignored if runOnSample is FALSE.
+#' @param sampleN                     Integer. The number of records to include in the sample if runFeatureExtractionOnSample is TRUE.
+#'                                    Default is 1000. Ignored if runFeatureExtractionOnSample is FALSE.
 #'
 #' @param seed                        Integer. The seed for the random number generator used to create the sample.
 #'                                    This ensures that the same sample can be drawn again in future runs. Default is 64374.
@@ -151,11 +151,6 @@ getDefaultCovariateSettings <- function() {
 #' @param seedArgs                    List. Additional arguments to pass to the sampling function.
 #'                                    This can be used to control aspects of the sampling process beyond the seed and sample size.
 #'
-#' @param sampleIdentifierExpression Character. An expression that generates unique identifiers for each sample.
-#'                                   This expression can use the variables 'cohortId' and 'seed'.
-#'                                   Default is "cohortId * 1000 + seed", which ensures unique identifiers
-#'                                   as long as there are fewer than 1000 cohorts.
-
 #' @examples
 #' \dontrun{
 #' # Load cohorts (assumes that they have already been instantiated)
@@ -233,11 +228,10 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental"),
                                useExternalConceptCountsTable = FALSE,
-                               runOnSample = FALSE,
+                               runFeatureExtractionOnSample = FALSE,
                                sampleN = 1000,
                                seed = 64374,
-                               seedArgs = NULL,
-                               sampleIdentifierExpression = "cohortId * 1000 + seed") {
+                               seedArgs = NULL) {
   # collect arguments that were passed to cohort diagnostics at initiation
   callingArgs <- formals(executeDiagnostics)
   callingArgsJson <-
@@ -260,6 +254,14 @@ executeDiagnostics <- function(cohortDefinitionSet,
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
   executionTimePath <- file.path(exportFolder, "taskExecutionTimes.csv")
+
+  ParallelLogger::addDefaultFileLogger(file.path(exportFolder, "log.txt"))
+  ParallelLogger::addDefaultErrorReportLogger(file.path(exportFolder, "errorReportR.txt"))
+  on.exit(ParallelLogger::unregisterLogger("DEFAULT_FILE_LOGGER", silent = TRUE))
+  on.exit(
+    ParallelLogger::unregisterLogger("DEFAULT_ERRORREPORT_LOGGER", silent = TRUE),
+    add = TRUE
+  )
 
   start <- Sys.time()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
@@ -361,15 +363,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
       errorMessage = errorMessage
     )
 
-  ParallelLogger::addDefaultFileLogger(file.path(exportFolder, "log.txt"))
-  ParallelLogger::addDefaultErrorReportLogger(file.path(exportFolder, "errorReportR.txt"))
-  on.exit(ParallelLogger::unregisterLogger("DEFAULT_FILE_LOGGER", silent = TRUE))
-  on.exit(
-    ParallelLogger::unregisterLogger("DEFAULT_ERRORREPORT_LOGGER", silent = TRUE),
-    add = TRUE
-  )
-
-
   if (incremental) {
     errorMessage <-
       createIfNotExist(
@@ -378,13 +371,14 @@ executeDiagnostics <- function(cohortDefinitionSet,
         errorMessage = errorMessage
       )
   }
-  if (runTemporalCohortCharacterization) {
-    if (is(temporalCovariateSettings, "covariateSettings")) {
-      temporalCovariateSettings <- list(temporalCovariateSettings)
-    }
-    # All temporal covariate settings objects must be covariateSettings
-    checkmate::assert_true(all(lapply(temporalCovariateSettings, class) == c("covariateSettings")), add = errorMessage)
 
+  if (is(temporalCovariateSettings, "covariateSettings")) {
+    temporalCovariateSettings <- list(temporalCovariateSettings)
+  }
+  # All temporal covariate settings objects must be covariateSettings
+  checkmate::assert_true(all(lapply(temporalCovariateSettings, class) == c("covariateSettings")), add = errorMessage)
+
+  if (runTemporalCohortCharacterization) {
     requiredCharacterisationSettings <- c(
       "DemographicsGender", "DemographicsAgeGroup", "DemographicsRace",
       "DemographicsEthnicity", "DemographicsIndexYear", "DemographicsIndexMonth",
@@ -552,23 +546,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
     } else {
       stop("No connection or connectionDetails provided.")
     }
-  }
-
-  if (runOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
-    cohortDefinitionSet <-
-      CohortGenerator::sampleCohortDefinitionSet(
-        connection = connection,
-        cohortDefinitionSet = cohortDefinitionSet,
-        tempEmulationSchema = tempEmulationSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTableNames = cohortTableNames,
-        n = sampleN,
-        seed = seed,
-        seedArgs = seedArgs,
-        identifierExpression = sampleIdentifierExpression,
-        incremental = incremental,
-        incrementalFolder = incrementalFolder
-      )
   }
 
   ## CDM source information----
@@ -907,18 +884,60 @@ executeDiagnostics <- function(cohortDefinitionSet,
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
+        feCohortDefinitionSet <- cohortDefinitionSet
+        feCohortTable <- cohortTable
+        feCohortCounts <- cohortCounts
+
+        if (runFeatureExtractionOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
+          cohortTableNames$cohortSampleTable <- paste0(cohortTableNames$cohortTable, "_cd_sample")
+          CohortGenerator::createCohortTables(
+            connection = connection,
+            cohortTableNames = cohortTableNames,
+            cohortDatabaseSchema = cohortDatabaseSchema,
+            incremental = TRUE
+          )
+
+          feCohortTable <- cohortTableNames$cohortSampleTable
+          feCohortDefinitionSet <-
+            CohortGenerator::sampleCohortDefinitionSet(
+              connection = connection,
+              cohortDefinitionSet = cohortDefinitionSet,
+              tempEmulationSchema = tempEmulationSchema,
+              cohortDatabaseSchema = cohortDatabaseSchema,
+              cohortTableNames = cohortTableNames,
+              n = sampleN,
+              seed = seed,
+              seedArgs = seedArgs,
+              identifierExpression = "cohortId",
+              incremental = incremental,
+              incrementalFolder = incrementalFolder
+            )
+
+          feCohortCounts <- computeCohortCounts(
+            connection = connection,
+            cohortDatabaseSchema = cohortDatabaseSchema,
+            cohortTable = cohortTableNames$cohortSampleTable,
+            cohorts = feCohortDefinitionSet,
+            exportFolder = exportFolder,
+            minCellCount = minCellCount,
+            databaseId = databaseId,
+            writeResult = FALSE
+          )
+        }
+
+
         executeCohortCharacterization(
           connection = connection,
           databaseId = databaseId,
           exportFolder = exportFolder,
           cdmDatabaseSchema = cdmDatabaseSchema,
           cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
+          cohortTable = feCohortTable,
           covariateSettings = temporalCovariateSettings,
           tempEmulationSchema = tempEmulationSchema,
           cdmVersion = cdmVersion,
-          cohorts = cohortDefinitionSet,
-          cohortCounts = cohortCounts,
+          cohorts = feCohortDefinitionSet,
+          cohortCounts = feCohortCounts,
           minCellCount = minCellCount,
           instantiatedCohorts = instantiatedCohorts,
           incremental = incremental,

@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -127,8 +127,9 @@ makeDataExportable <- function(x,
                                minCellCount = 5,
                                databaseId = NULL) {
   ParallelLogger::logTrace(paste0(" - Ensuring data is exportable: ", tableName))
-  if (hasData(x)) {
+  if (!hasData(x)) {
     ParallelLogger::logTrace("  - Object has no data.")
+    return(x)
   }
 
   if ("cohortDefinitionId" %in% colnames(x)) {
@@ -316,7 +317,9 @@ getPrefixedTableNames <- function(tablePrefix) {
   return(resultList)
 }
 
-# Internal utility function for logging execution of variables
+
+#' Internal utility function for logging execution of variables
+#' @noRd
 timeExecution <- function(exportFolder,
                           taskName,
                           cohortIds = NULL,

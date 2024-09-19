@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -149,11 +149,12 @@ recordTasksDone <-
     readr::write_csv(x = recordKeeping, file = recordKeepingFile, na = "")
   }
 
+#' @noRd
 writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
   UseMethod("writeToCsv", data)
 }
 
-
+#' @noRd
 writeToCsv.default <- function(data, fileName, incremental = FALSE, ...) {
   colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
   if (incremental) {
@@ -186,6 +187,7 @@ writeToCsv.default <- function(data, fileName, incremental = FALSE, ...) {
   }
 }
 
+#' @noRd
 writeToCsv.tbl_Andromeda <-
   function(data, fileName, incremental = FALSE, ...) {
     if (incremental && file.exists(fileName)) {

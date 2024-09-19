@@ -81,24 +81,6 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
       )
     })
   }
-  cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
-  # Next create the tables on the database
-  CohortGenerator::createCohortTables(
-    connectionDetails = connectionDetails,
-    cohortTableNames = cohortTableNames,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    incremental = FALSE
-  )
-
-  # Generate the cohort set
-  CohortGenerator::generateCohortSet(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTableNames = cohortTableNames,
-    cohortDefinitionSet = cohortDefinitionSet,
-    incremental = FALSE
-  )
 
   if (dbms == "sqlite") {
     expect_warning(
@@ -123,7 +105,7 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
           incremental = TRUE,
           incrementalFolder = file.path(folder, "incremental"),
           temporalCovariateSettings = temporalCovariateSettings,
-          runOnSample = TRUE
+          runFeatureExtractionOnSample = TRUE
         )
       },
       "CDM Source table has more than one record while only one is expected."
@@ -149,7 +131,7 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
       temporalCovariateSettings = temporalCovariateSettings,
-      runOnSample = TRUE
+      runFeatureExtractionOnSample = TRUE
     )
   }
 
