@@ -9,29 +9,43 @@ createConceptCountsTable(
   connection = NULL,
   cdmDatabaseSchema,
   tempEmulationSchema = NULL,
-  conceptCountsDatabaseSchema = cdmDatabaseSchema,
   conceptCountsTable = "concept_counts",
+  conceptCountsDatabaseSchema = cdmDatabaseSchema,
   conceptCountsTableIsTemp = FALSE,
   removeCurrentTable = TRUE
 )
 }
 \arguments{
-\item{connectionDetails}{database connection details}
+\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
+\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+DatabaseConnector package. Can be left NULL if \code{connection} is
+provided.}
 
-\item{connection}{database connection}
+\item{connection}{An object of type \code{connection} as created using the
+\code{\link[DatabaseConnector]{connect}} function in the
+DatabaseConnector package. Can be left NULL if \code{connectionDetails}
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.}
 
-\item{cdmDatabaseSchema}{CDM schema}
+\item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.}
 
-\item{tempEmulationSchema}{schema to emulate temp table}
+\item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
+tables, provide a schema with write privileges where temp tables can be created.}
+
+\item{conceptCountsTable}{Concepts count table name. The default is "#concept_counts" to create a temporal concept counts table.
+If an external concept counts table is used, provide the name in character, e.g. "concept_counts" without a hash}
 
 \item{conceptCountsDatabaseSchema}{schema name for the concept counts table}
-
-\item{conceptCountsTable}{table name}
 
 \item{conceptCountsTableIsTemp}{boolean to indicate if it should be a temporary table}
 
 \item{removeCurrentTable}{if the current table should be removed}
 }
 \description{
-Create a table containing the concept counts.
+Create a table containing concept counts. 
+CohortDiagnostics performs this task in every run and takes a significant amount of time. 
+However, with this function, the user can create this table beforehand and 
+save it in the writing schema for further use.
 }
