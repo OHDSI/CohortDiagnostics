@@ -37,12 +37,12 @@ cohort_relationships,start_day,bigint,No,Yes,No,Yes,No,No,No,start day
 cohort_relationships,end_day,float,No,Yes,No,Yes,No,No,No,end day
 cohort_relationships,subjects,bigint,Yes,No,No,Yes,Yes,No,No,number of subjects total
 cohort_relationships,sub_cs_before_ts,bigint,Yes,No,No,Yes,Yes,No,No,present in both target and comparator
-cohort_relationships,sub_cs_on_ts,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort start date before target start date (offset) [How many subjects in comparator cohort start prior to first target cohort start]
-cohort_relationships,sub_cs_after_ts,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort start date on target start date (offset) [How many subjects in comparator cohort start with first target cohort start]
-cohort_relationships,sub_cs_before_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort start date after target start date (offset) [How many subjects in comparator cohort start after first target cohort start]
-cohort_relationships,sub_cs_on_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort start date before target end date (offset) [How many subjects in comparator cohort start after first target cohort end]
-cohort_relationships,sub_cs_after_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort start date on target end date (offset) [How many subjects in comparator cohort start on first target cohort end]
-cohort_relationships,sub_cs_window_t,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort start date after target end date (offset) [How many subjects in comparator cohort start after first target cohort end]
+cohort_relationships,sub_cs_on_ts,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start prior to first target cohort start
+cohort_relationships,sub_cs_after_ts,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start with first target cohort start
+cohort_relationships,sub_cs_before_te,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start after first target cohort start
+cohort_relationships,sub_cs_on_te,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start after first target cohort end
+cohort_relationships,sub_cs_after_te,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start on first target cohort end
+cohort_relationships,sub_cs_window_t,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start after first target cohort end
 cohort_relationships,sub_ce_window_t,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects start within period (incidence) relative to target start date and end date
 cohort_relationships,sub_cs_window_ts,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects start within period (incidence) relative to target start date and end date
 cohort_relationships,sub_cs_window_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects start within period (incidence) relative to target start date
