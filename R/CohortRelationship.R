@@ -228,8 +228,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
     dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) %>%
     dplyr::arrange(.data$targetCohortId, .data$comparatorCohortId)
 
-  posibleCombinations$checksum <- computeChecksum(paste0(posibleCombinations$targetChecksum,
-                                                        posibleCombinations$comparatorChecksum))
+  posibleCombinations$checksum <- paste0(posibleCombinations$targetChecksum, posibleCombinations$comparatorChecksum)
 
   subset <- subsetToRequiredCombis(
     combis = posibleCombinations,

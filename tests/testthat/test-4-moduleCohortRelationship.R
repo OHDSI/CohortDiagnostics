@@ -139,10 +139,10 @@ test_that("Testing executeCohortRelationshipDiagnostics", {
         dplyr::filter(cohortId == 1) %>%
         dplyr::filter(comparatorId == 10) %>%
         dplyr::mutate(
-          checksum2 = computeChecksum(paste0(
+          checksum2 = paste0(
             targetChecksum,
             comparatorChecksum
-          ))
+          )
         ) %>%
         dplyr::pull(checksum2)
     )
