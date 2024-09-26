@@ -215,18 +215,21 @@ executeCohortRelationshipDiagnostics <- function(connection,
       targetChecksum = "checksum"
     ) %>%
     dplyr::distinct()
-  combinationsOfPossibleCohortRelationships <- allCohortIds %>%
+  
+  posibleCombinations <- allCohortIds %>%
     tidyr::crossing(allCohortIds %>%
       dplyr::rename(
         comparatorCohortId = "targetCohortId",
         comparatorChecksum = "targetChecksum"
       )) %>%
     dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) %>%
-    dplyr::arrange(.data$targetCohortId, .data$comparatorCohortId) %>%
-    dplyr::mutate(checksum = paste0(.data$targetChecksum, .data$comparatorChecksum))
+    dplyr::arrange(.data$targetCohortId, .data$comparatorCohortId)
+
+  posibleCombinations$checksum <- computeChecksum(paste0(posibleCombinations$targetChecksum,
+                                                        posibleCombinations$comparatorChecksum))
 
   subset <- subsetToRequiredCombis(
-    combis = combinationsOfPossibleCohortRelationships,
+    combis = posibleCombinations,
     task = "runCohortRelationship",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile
@@ -244,17 +247,17 @@ executeCohortRelationshipDiagnostics <- function(connection,
     }
 
     if (incremental &&
-      (nrow(combinationsOfPossibleCohortRelationships) - (
+      (nrow(posibleCombinations) - (
         nrow(
-          combinationsOfPossibleCohortRelationships %>%
+          posibleCombinations %>%
             dplyr::filter(.data$targetCohortId %in% c(subset$targetCohortId))
         )
       )) > 0) {
       ParallelLogger::logInfo(
         sprintf(
           " - Skipping %s combinations in incremental mode because these were previously computed.",
-          nrow(combinationsOfPossibleCohortRelationships) - nrow(
-            combinationsOfPossibleCohortRelationships %>%
+          nrow(posibleCombinations) - nrow(
+            posibleCombinations %>%
               dplyr::filter(.data$targetCohortId %in% c(subset$targetCohortId))
           )
         )
