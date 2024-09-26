@@ -33,6 +33,7 @@
 #' @param targetCohortIds              A vector of one or more Cohort Ids for use as target cohorts.
 #'
 #' @param comparatorCohortIds          A vector of one or more Cohort Ids for use as feature/comparator cohorts.
+#' @param targetComparatorPairs          A vector of one or more Cohort Ids for use as feature/comparator cohorts.
 #'
 #' @param relationshipDays             A dataframe with two columns startDay and endDay representing periods of time to compute relationship
 #'
@@ -44,8 +45,9 @@ runCohortRelationshipDiagnostics <-
            cohortDatabaseSchema = NULL,
            tempEmulationSchema = NULL,
            cohortTable = "cohort",
-           targetCohortIds,
-           comparatorCohortIds,
+           targetCohortIds = NULL,
+           comparatorCohortIds = NULL,
+           targetComparatorPairs = NULL,
            relationshipDays) {
     startTime <- Sys.time()
 
@@ -66,7 +68,8 @@ runCohortRelationshipDiagnostics <-
       any.missing = FALSE,
       min.len = 1,
       unique = TRUE,
-      add = errorMessage
+      add = errorMessage,
+      null.ok = TRUE
     )
     checkmate::assertIntegerish(
       x = comparatorCohortIds,
@@ -369,7 +372,11 @@ executeCohortRelationshipDiagnostics <- function(connection,
       writeToCsv(
         data = data,
         fileName = outputFile,
-        incremental = TRUE
+        incremental = TRUE,
+        cohortId = data$cohortId,
+        comparatorCohortId = data$comparatorCohortId,
+        startDay = data$startDay,
+        endDay = data$endDay
       )
 
       recordTasksDone(
