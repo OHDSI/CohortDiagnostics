@@ -3,6 +3,7 @@
 {DEFAULT @cohort_inclusion = cohort_inclusion}
 {DEFAULT @cohort_inc_result = cohort_inc_result}
 {DEFAULT @cohort_inc_stats = cohort_inc_stats}
+{DEFAULT @cohort_overlap = cohort_overlap}
 {DEFAULT @cohort_relationships = cohort_relationships}
 {DEFAULT @concept = concept}
 {DEFAULT @concept_ancestor = concept_ancestor}
@@ -133,6 +134,24 @@ CREATE TABLE @results_schema.@cohort_summary_stats (
 			PRIMARY KEY(cohort_id, database_id, mode_id)
 );
 
+--Table cohort_overlap
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE @results_schema.@cohort_overlap (
+			either_subjects BIGINT NOT NULL,
+			both_subjects BIGINT NOT NULL,
+			t_only_subjects BIGINT NOT NULL,
+			c_only_subjects BIGINT NOT NULL,
+			t_before_c_subjects BIGINT NOT NULL,
+			c_before_t_subjects BIGINT NOT NULL,
+			same_day_subjects BIGINT NOT NULL,
+			t_in_c_subjects BIGINT NOT NULL,
+			c_in_t_subjects BIGINT NOT NULL,
+			target_cohort_id BIGINT NOT NULL,
+			comparator_cohort_id BIGINT NOT NULL,
+			database_id VARCHAR NOT NULL,
+			PRIMARY KEY(target_cohort_id, comparator_cohort_id, database_id)
+);
+
 --Table cohort_relationships
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE @results_schema.@cohort_relationships (
@@ -143,18 +162,31 @@ CREATE TABLE @results_schema.@cohort_relationships (
 			end_day BIGINT NOT NULL,
 			subjects BIGINT NOT NULL,
 			sub_cs_before_ts BIGINT NOT NULL,
+			rec_cs_before_ts BIGINT NOT NULL,
 			sub_cs_on_ts BIGINT NOT NULL,
+			rec_cs_on_ts BIGINT NOT NULL,
 			sub_cs_after_ts BIGINT NOT NULL,
+			rec_cs_after_ts BIGINT NOT NULL,
 			sub_cs_before_te BIGINT NOT NULL,
+			rec_cs_before_te BIGINT NOT NULL,
 			sub_cs_on_te BIGINT NOT NULL,
+			rec_cs_on_te BIGINT NOT NULL,
 			sub_cs_after_te BIGINT NOT NULL,
+			rec_cs_after_te BIGINT NOT NULL,
 			sub_cs_window_t BIGINT NOT NULL,
+			rec_cs_window_t BIGINT NOT NULL,
 			sub_ce_window_t BIGINT NOT NULL,
+			rec_ce_window_t BIGINT NOT NULL,
 			sub_cs_window_ts BIGINT NOT NULL,
+			rec_cs_window_ts BIGINT NOT NULL,
 			sub_cs_window_te BIGINT NOT NULL,
+			rec_cs_window_te BIGINT NOT NULL,
 			sub_ce_window_ts BIGINT NOT NULL,
+			rec_ce_window_ts BIGINT NOT NULL,
 			sub_ce_window_te BIGINT NOT NULL,
+			rec_ce_window_te BIGINT NOT NULL,
 			sub_c_within_t BIGINT NOT NULL,
+			rec_c_within_t BIGINT NOT NULL,
 			c_days_before_ts BIGINT NOT NULL,
 			c_days_before_te BIGINT NOT NULL,
 			c_days_within_t_days BIGINT NOT NULL,
@@ -164,7 +196,6 @@ CREATE TABLE @results_schema.@cohort_relationships (
 			c_days BIGINT NOT NULL,
 			PRIMARY KEY(database_id, cohort_id, comparator_cohort_id, start_day, end_day)
 );
-
 
 
 --Table concept
