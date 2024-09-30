@@ -1,228 +1,203 @@
-table_name,column_name,data_type,is_required,primary_key,optional,empty_is_na,min_cell_count,is_vocabulary_table,never_incremental
-cohort,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-cohort,cohort_name,varchar,Yes,No,No,Yes,No,No,No
-cohort,metadata,varchar,No,No,Yes,Yes,No,No,No
-cohort,json,varchar,No,No,Yes,Yes,No,No,No
-cohort,sql,varchar,Yes,No,No,Yes,No,No,No
-cohort,subset_parent,bigint,No,No,Yes,Yes,No,No,No
-cohort,subset_definition_id,bigint,No,No,Yes,Yes,No,No,No
-cohort,is_subset,int,No,No,Yes,Yes,No,No,No
-subset_definition,subset_definition_id,bigint,Yes,Yes,No,Yes,No,No,No
-subset_definition,json,varchar,Yes,Yes,No,Yes,No,No,No
-cohort_count,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-cohort_count,cohort_entries,float,Yes,No,No,Yes,Yes,No,No
-cohort_count,cohort_subjects,float,Yes,No,No,Yes,Yes,No,No
-cohort_count,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-cohort_inclusion,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-cohort_inclusion,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-cohort_inclusion,rule_sequence,bigint,Yes,Yes,No,Yes,No,No,No
-cohort_inclusion,name,varchar,Yes,No,No,Yes,No,No,No
-cohort_inclusion,description,varchar,No,No,No,Yes,No,No,No
-cohort_inc_result,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-cohort_inc_result,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-cohort_inc_result,mode_id,bigint,Yes,Yes,No,Yes,No,No,No
-cohort_inc_result,inclusion_rule_mask,bigint,Yes,Yes,No,Yes,No,No,No
-cohort_inc_result,person_count,float,Yes,No,No,Yes,Yes,No,No
-cohort_inc_stats,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-cohort_inc_stats,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-cohort_inc_stats,rule_sequence,bigint,Yes,Yes,No,Yes,No,No,No
-cohort_inc_stats,mode_id,bigint,Yes,Yes,No,Yes,No,No,No
-cohort_inc_stats,person_count,float,Yes,No,No,Yes,Yes,No,No
-cohort_inc_stats,gain_count,float,Yes,No,No,Yes,Yes,No,No
-cohort_inc_stats,person_total,float,Yes,No,No,Yes,Yes,No,No
-cohort_overlap,either_subjects,float,Yes,No,No,Yes,Yes,No,No
-cohort_overlap,both_subjects,float,Yes,No,No,Yes,Yes,No,No
-cohort_overlap,t_only_subjects,float,Yes,No,No,Yes,Yes,No,No
-cohort_overlap,c_only_subjects,float,Yes,No,No,Yes,Yes,No,No
-cohort_overlap,t_before_c_subjects,float,Yes,No,No,Yes,Yes,No,No
-cohort_overlap,c_before_t_subjects,float,Yes,No,No,Yes,Yes,No,No
-cohort_overlap,same_day_subjects,float,Yes,No,No,Yes,Yes,No,No
-cohort_overlap,t_in_c_subjects,float,Yes,No,No,Yes,Yes,No,No
-cohort_overlap,c_in_t_subjects,float,Yes,No,No,Yes,Yes,No,No
-cohort_overlap,target_cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-cohort_overlap,comparator_cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-cohort_overlap,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-cohort_relationships,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-cohort_relationships,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-cohort_relationships,comparator_cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-cohort_relationships,start_day,bigint,No,Yes,No,Yes,No,No,No
-cohort_relationships,end_day,float,No,Yes,No,Yes,No,No,No
-cohort_relationships,subjects,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,sub_cs_before_ts,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,rec_cs_before_ts,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,sub_cs_on_ts,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,rec_cs_on_ts,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,sub_cs_after_ts,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,rec_cs_after_ts,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,sub_cs_before_te,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,rec_cs_before_te,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,sub_cs_on_te,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,rec_cs_on_te,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,sub_cs_after_te,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,rec_cs_after_te,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,sub_cs_window_t,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,rec_cs_window_t,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,sub_ce_window_t,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,rec_ce_window_t,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,sub_cs_window_ts,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,rec_cs_window_ts,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,sub_cs_window_te,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,rec_cs_window_te,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,sub_ce_window_ts,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,rec_ce_window_ts,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,sub_ce_window_te,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,rec_ce_window_te,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,sub_c_within_t,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,rec_c_within_t,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,c_days_before_ts,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,c_days_before_te,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,c_days_within_t_days,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,c_days_after_ts,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,c_days_after_te,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,t_days,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_relationships,c_days,bigint,Yes,No,No,Yes,Yes,No,No
-cohort_summary_stats,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-cohort_summary_stats,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-cohort_summary_stats,mode_id,bigint,Yes,Yes,No,Yes,No,No,No
-cohort_summary_stats,base_count,float,Yes,No,No,Yes,Yes,No,No
-cohort_summary_stats,final_count,float,Yes,No,No,Yes,Yes,No,No
-concept,concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No
-concept,concept_name,varchar(255),Yes,No,No,Yes,No,Yes,No
-concept,domain_id,varchar(20),Yes,No,No,Yes,No,Yes,No
-concept,vocabulary_id,varchar(50),Yes,No,No,Yes,No,Yes,No
-concept,concept_class_id,varchar(20),Yes,No,No,Yes,No,Yes,No
-concept,standard_concept,varchar(1),No,No,No,Yes,No,Yes,No
-concept,concept_code,varchar(255),Yes,No,No,Yes,No,Yes,No
-concept,valid_start_date,Date,Yes,No,No,Yes,No,Yes,No
-concept,valid_end_date,Date,Yes,No,No,Yes,No,Yes,No
-concept,invalid_reason,varchar,No,No,No,Yes,No,Yes,No
-concept_ancestor,ancestor_concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No
-concept_ancestor,descendant_concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No
-concept_ancestor,min_levels_of_separation,int,Yes,No,No,Yes,No,Yes,No
-concept_ancestor,max_levels_of_separation,int,Yes,No,No,Yes,No,Yes,No
-concept_relationship,concept_id_1,bigint,Yes,Yes,No,Yes,No,Yes,No
-concept_relationship,concept_id_2,bigint,Yes,Yes,No,Yes,No,Yes,No
-concept_relationship,relationship_id,varchar(20),Yes,Yes,No,Yes,No,Yes,No
-concept_relationship,valid_start_date,Date,Yes,No,No,Yes,No,Yes,No
-concept_relationship,valid_end_date,Date,Yes,No,No,Yes,No,Yes,No
-concept_relationship,invalid_reason,varchar(1),No,No,No,Yes,No,Yes,No
-concept_sets,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-concept_sets,concept_set_id,int,Yes,Yes,No,Yes,No,No,No
-concept_sets,concept_set_sql,varchar,Yes,No,No,Yes,No,No,No
-concept_sets,concept_set_name,varchar(255),Yes,No,No,Yes,No,No,No
-concept_sets,concept_set_expression,varchar,Yes,No,No,Yes,No,No,No
-concept_synonym,concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No
-concept_synonym,concept_synonym_name,varchar,Yes,Yes,No,Yes,No,Yes,No
-concept_synonym,language_concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No
-database,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-database,database_name,varchar,No,No,No,Yes,No,No,No
-database,description,varchar,No,No,No,Yes,No,No,No
-database,is_meta_analysis,varchar(1),Yes,No,No,Yes,No,No,No
-database,vocabulary_version,varchar,No,No,Yes,Yes,No,No,No
-database,vocabulary_version_cdm,varchar,No,No,Yes,Yes,No,No,No
-domain,domain_id,varchar(20),Yes,Yes,No,Yes,No,Yes,Yes
-domain,domain_name,varchar(255),Yes,No,No,Yes,No,Yes,Yes
-domain,domain_concept_id,bigint,Yes,No,No,Yes,No,Yes,Yes
-incidence_rate,cohort_count,float,Yes,No,No,Yes,Yes,No,No
-incidence_rate,person_years,float,Yes,No,No,Yes,Yes,No,No
-incidence_rate,gender,varchar,No,Yes,No,No,No,No,No
-incidence_rate,age_group,varchar,No,Yes,No,No,No,No,No
-incidence_rate,calendar_year,varchar(4),No,Yes,No,No,No,No,No
-incidence_rate,incidence_rate,float,Yes,No,No,Yes,No,No,No
-incidence_rate,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-incidence_rate,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-included_source_concept,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-included_source_concept,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-included_source_concept,concept_set_id,int,Yes,Yes,No,Yes,No,No,No
-included_source_concept,concept_id,bigint,Yes,Yes,No,Yes,No,No,No
-included_source_concept,source_concept_id,bigint,No,Yes,Yes,No,No,No,No
-included_source_concept,concept_subjects,float,Yes,No,No,Yes,Yes,No,No
-included_source_concept,concept_count,float,Yes,No,No,Yes,Yes,No,No
-index_event_breakdown,concept_id,bigint,Yes,Yes,No,Yes,No,No,No
-index_event_breakdown,concept_count,float,Yes,No,No,Yes,Yes,No,No
-index_event_breakdown,subject_count,float,Yes,No,No,Yes,Yes,No,No
-index_event_breakdown,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-index_event_breakdown,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-index_event_breakdown,domain_field,varchar,Yes,Yes,No,Yes,No,No,No
-index_event_breakdown,domain_table,varchar,Yes,Yes,No,Yes,No,No,No
-metadata,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-metadata,start_time,varchar,No,Yes,No,Yes,No,No,No
-metadata,variable_field,varchar,Yes,Yes,No,Yes,No,No,No
-metadata,value_field,varchar,Yes,No,No,Yes,No,No,No
-orphan_concept,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-orphan_concept,concept_set_id,int,Yes,Yes,No,Yes,No,No,No
-orphan_concept,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-orphan_concept,concept_id,bigint,Yes,Yes,No,Yes,No,No,No
-orphan_concept,concept_count,float,Yes,No,No,Yes,Yes,No,No
-orphan_concept,concept_subjects,float,Yes,No,No,Yes,Yes,No,No
-relationship,relationship_id,varchar(20),Yes,Yes,No,Yes,No,Yes,Yes
-relationship,relationship_name,varchar(255),Yes,No,No,Yes,No,Yes,Yes
-relationship,is_hierarchical,varchar(1),Yes,No,No,Yes,No,Yes,Yes
-relationship,defines_ancestry,varchar(1),Yes,No,No,Yes,No,Yes,Yes
-relationship,reverse_relationship_id,varchar(20),Yes,Yes,No,Yes,No,Yes,Yes
-relationship,relationship_concept_id,bigint,Yes,Yes,No,Yes,No,Yes,Yes
-resolved_concepts,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-resolved_concepts,concept_set_id,int,Yes,Yes,No,Yes,No,No,No
-resolved_concepts,concept_id,bigint,Yes,Yes,No,Yes,No,No,No
-resolved_concepts,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-temporal_analysis_ref,analysis_id,int,Yes,Yes,No,Yes,No,No,No
-temporal_analysis_ref,analysis_name,varchar,Yes,No,No,Yes,No,No,No
-temporal_analysis_ref,domain_id,varchar(20),Yes,Yes,No,Yes,No,No,No
-temporal_analysis_ref,is_binary,varchar(1),Yes,No,No,Yes,No,No,No
-temporal_analysis_ref,missing_means_zero,varchar(1),No,No,No,Yes,No,No,No
-temporal_covariate_ref,covariate_id,bigint,Yes,Yes,No,Yes,No,No,No
-temporal_covariate_ref,covariate_name,varchar,Yes,No,No,Yes,No,No,No
-temporal_covariate_ref,analysis_id,int,Yes,No,No,Yes,No,No,No
-temporal_covariate_ref,concept_id,bigint,Yes,No,No,Yes,No,No,No
-temporal_covariate_value,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-temporal_covariate_value,time_id,int,No,Yes,Yes,Yes,No,No,No
-temporal_covariate_value,covariate_id,bigint,Yes,Yes,No,Yes,No,No,No
-temporal_covariate_value,sum_value,float,Yes,No,No,Yes,Yes,No,No
-temporal_covariate_value,mean,float,Yes,No,No,Yes,No,No,No
-temporal_covariate_value,sd,float,No,No,No,Yes,No,No,No
-temporal_covariate_value,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-temporal_covariate_value_dist,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-temporal_covariate_value_dist,time_id,int,No,Yes,Yes,Yes,No,No,No
-temporal_covariate_value_dist,covariate_id,bigint,Yes,Yes,No,Yes,No,No,No
-temporal_covariate_value_dist,count_value,float,Yes,No,No,Yes,Yes,No,No
-temporal_covariate_value_dist,min_value,float,Yes,No,No,Yes,Yes,No,No
-temporal_covariate_value_dist,max_value,float,Yes,No,No,Yes,Yes,No,No
-temporal_covariate_value_dist,mean,float,Yes,No,No,Yes,No,No,No
-temporal_covariate_value_dist,sd,float,Yes,No,No,Yes,No,No,No
-temporal_covariate_value_dist,median_value,float,Yes,No,No,Yes,No,No,No
-temporal_covariate_value_dist,p_10_value,float,Yes,No,No,Yes,No,No,No
-temporal_covariate_value_dist,p_25_value,float,Yes,No,No,Yes,No,No,No
-temporal_covariate_value_dist,p_75_value,float,Yes,No,No,Yes,No,No,No
-temporal_covariate_value_dist,p_90_value,float,Yes,No,No,Yes,No,No,No
-temporal_covariate_value_dist,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-temporal_time_ref,time_id,int,Yes,Yes,No,Yes,No,No,No
-temporal_time_ref,start_day,float,Yes,No,No,Yes,No,No,No
-temporal_time_ref,end_day,float,Yes,No,No,Yes,No,No,No
-time_series,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-time_series,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-time_series,period_begin,Date,Yes,Yes,No,Yes,No,No,No
-time_series,period_end,Date,Yes,Yes,No,Yes,No,No,No
-time_series,series_type,varchar,Yes,Yes,No,Yes,No,No,No
-time_series,calendar_interval,varchar,Yes,Yes,No,Yes,No,No,No
-time_series,gender,varchar,No,Yes,Yes,Yes,No,No,No
-time_series,age_group,varchar,No,Yes,Yes,Yes,No,No,No
-time_series,records,bigint,Yes,No,No,Yes,Yes,No,No
-time_series,subjects,bigint,Yes,No,No,Yes,Yes,No,No
-time_series,person_days,bigint,Yes,No,No,Yes,Yes,No,No
-time_series,person_days_in,bigint,Yes,No,No,Yes,Yes,No,No
-time_series,records_start,bigint,No,No,No,No,Yes,No,No
-time_series,subjects_start,bigint,No,No,No,No,Yes,No,No
-time_series,subjects_start_in,bigint,No,No,No,No,Yes,No,No
-time_series,records_end,bigint,No,No,No,No,Yes,No,No
-time_series,subjects_end,bigint,No,No,No,No,Yes,No,No
-time_series,subjects_end_in,bigint,No,No,No,No,Yes,No,No
-visit_context,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No
-visit_context,visit_concept_id,bigint,Yes,Yes,No,Yes,No,No,No
-visit_context,visit_context,varchar,Yes,Yes,No,Yes,No,No,No
-visit_context,subjects,float,Yes,No,No,Yes,Yes,No,No
-visit_context,database_id,varchar,Yes,Yes,No,Yes,No,No,No
-vocabulary,vocabulary_id,varchar(50),Yes,No,No,Yes,No,Yes,No
-vocabulary,vocabulary_name,varchar(255),Yes,No,No,Yes,No,Yes,No
-vocabulary,vocabulary_reference,varchar,No,No,No,Yes,No,Yes,No
-vocabulary,vocabulary_version,varchar,No,No,No,Yes,No,Yes,No
-vocabulary,vocabulary_concept_id,bigint,Yes,No,No,Yes,No,Yes,No
+table_name,column_name,data_type,is_required,primary_key,optional,empty_is_na,min_cell_count,is_vocabulary_table,never_incremental,description
+cohort,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort id
+cohort,cohort_name,varchar,Yes,No,No,Yes,No,No,No,cohort name
+cohort,metadata,varchar,No,No,Yes,Yes,No,No,No,meta data about the cohort
+cohort,json,varchar,No,No,Yes,Yes,No,No,No,circe json description
+cohort,sql,varchar,Yes,No,No,Yes,No,No,No,sql derrived from circe description
+cohort,subset_parent,bigint,No,No,Yes,Yes,No,No,No,cohort subset parent id (some as if not a subset)
+cohort,subset_definition_id,bigint,No,No,Yes,Yes,No,No,No,subset cohort definition id
+cohort,is_subset,int,No,No,Yes,Yes,No,No,No,is the cohort a subset or not?
+subset_definition,subset_definition_id,bigint,Yes,Yes,No,Yes,No,No,No,subset cohort definition id
+subset_definition,json,varchar,Yes,Yes,No,Yes,No,No,No,subset cohort definition json
+cohort_count,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort id
+cohort_count,cohort_entries,float,Yes,No,No,Yes,Yes,No,No,number of entries in to cohort (an individual can be counted multiple times)
+cohort_count,cohort_subjects,float,Yes,No,No,Yes,Yes,No,No,number of individuals in cohort
+cohort_count,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+cohort_inclusion,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+cohort_inclusion,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort id
+cohort_inclusion,rule_sequence,bigint,Yes,Yes,No,Yes,No,No,No,inclusion rule sequence used to determine rule
+cohort_inclusion,name,varchar,Yes,No,No,Yes,No,No,No,name of inclusion rule
+cohort_inclusion,description,varchar,No,No,No,Yes,No,No,No,description of inclusion rule
+cohort_inc_result,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+cohort_inc_result,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort id
+cohort_inc_result,mode_id,bigint,Yes,Yes,No,Yes,No,No,No,mode of inclusion rule
+cohort_inc_result,inclusion_rule_mask,bigint,Yes,Yes,No,Yes,No,No,No,inclusion rule bit mask
+cohort_inc_result,person_count,float,Yes,No,No,Yes,Yes,No,No,person count following rule application
+cohort_inc_stats,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+cohort_inc_stats,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort id
+cohort_inc_stats,rule_sequence,bigint,Yes,Yes,No,Yes,No,No,No,inclusion rule sequence used to determine rule
+cohort_inc_stats,mode_id,bigint,Yes,Yes,No,Yes,No,No,No,mode of inclusion rule
+cohort_inc_stats,person_count,float,Yes,No,No,Yes,Yes,No,No,person count following rule application
+cohort_inc_stats,gain_count,float,Yes,No,No,Yes,Yes,No,No,number of people gained from rule
+cohort_inc_stats,person_total,float,Yes,No,No,Yes,Yes,No,No,person total
+cohort_relationships,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+cohort_relationships,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,target cohort id
+cohort_relationships,comparator_cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,comparator cohort id
+cohort_relationships,start_day,bigint,No,Yes,No,Yes,No,No,No,start day
+cohort_relationships,end_day,float,No,Yes,No,Yes,No,No,No,end day
+cohort_relationships,subjects,bigint,Yes,No,No,Yes,Yes,No,No,number of subjects total
+cohort_relationships,sub_cs_before_ts,bigint,Yes,No,No,Yes,Yes,No,No,present in both target and comparator
+cohort_relationships,sub_cs_on_ts,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start prior to first target cohort start
+cohort_relationships,sub_cs_after_ts,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start with first target cohort start
+cohort_relationships,sub_cs_before_te,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start after first target cohort start
+cohort_relationships,sub_cs_on_te,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start after first target cohort end
+cohort_relationships,sub_cs_after_te,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start on first target cohort end
+cohort_relationships,sub_cs_window_t,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start after first target cohort end
+cohort_relationships,sub_ce_window_t,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects start within period (incidence) relative to target start date and end date
+cohort_relationships,sub_cs_window_ts,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects start within period (incidence) relative to target start date and end date
+cohort_relationships,sub_cs_window_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects start within period (incidence) relative to target start date
+cohort_relationships,sub_ce_window_ts,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects start within period (incidence) relative to target end date
+cohort_relationships,sub_ce_window_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects end within period (incidence) relative to target start date
+cohort_relationships,sub_c_within_t,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects end within period (incidence) relative to target end date
+cohort_relationships,c_days_before_ts,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort days within target (offset) days
+cohort_relationships,c_days_before_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort days before target start date (offset)
+cohort_relationships,c_days_within_t_days,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort days before target end date (offset)
+cohort_relationships,c_days_after_ts,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort days within target cohort days (offset)
+cohort_relationships,c_days_after_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort days after target start date (offset)
+cohort_relationships,t_days,bigint,Yes,No,No,Yes,Yes,No,No,target days
+cohort_relationships,c_days,bigint,Yes,No,No,Yes,Yes,No,No,comparator days
+cohort_summary_stats,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+cohort_summary_stats,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort id
+cohort_summary_stats,mode_id,bigint,Yes,Yes,No,Yes,No,No,No,mode identifier
+cohort_summary_stats,base_count,float,Yes,No,No,Yes,Yes,No,No,base count of cohort
+cohort_summary_stats,final_count,float,Yes,No,No,Yes,Yes,No,No,final count after rules applied
+concept,concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No,concept id
+concept,concept_name,varchar(255),Yes,No,No,Yes,No,Yes,No,concept name
+concept,domain_id,varchar(20),Yes,No,No,Yes,No,Yes,No,concept domain id
+concept,vocabulary_id,varchar(50),Yes,No,No,Yes,No,Yes,No,vocabulary concept id
+concept,concept_class_id,varchar(20),Yes,No,No,Yes,No,Yes,No,concept class identifier
+concept,standard_concept,varchar(1),No,No,No,Yes,No,Yes,No,is a standard concept?
+concept,concept_code,varchar(255),Yes,No,No,Yes,No,Yes,No,concept source code
+concept,valid_start_date,Date,Yes,No,No,Yes,No,Yes,No,period of validity start
+concept,valid_end_date,Date,Yes,No,No,Yes,No,Yes,No,period of validity end
+concept,invalid_reason,varchar,No,No,No,Yes,No,Yes,No,reason concept is no longer valid
+concept_ancestor,ancestor_concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No,ancestor concept id
+concept_ancestor,descendant_concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No,descendant concept id
+concept_ancestor,min_levels_of_separation,int,Yes,No,No,Yes,No,Yes,No,minimum levels of separation in heirarchy
+concept_ancestor,max_levels_of_separation,int,Yes,No,No,Yes,No,Yes,No,maximum level of separation in heirarchy
+concept_relationship,concept_id_1,bigint,Yes,Yes,No,Yes,No,Yes,No,concept identifier 1
+concept_relationship,concept_id_2,bigint,Yes,Yes,No,Yes,No,Yes,No,concept identifier 2
+concept_relationship,relationship_id,varchar(20),Yes,Yes,No,Yes,No,Yes,No,relationship identifier
+concept_relationship,valid_start_date,Date,Yes,No,No,Yes,No,Yes,No,period of validity start
+concept_relationship,valid_end_date,Date,Yes,No,No,Yes,No,Yes,No,period of validity end
+concept_relationship,invalid_reason,varchar(1),No,No,No,Yes,No,Yes,No,reason relationship is no longer valid
+concept_sets,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,concept id
+concept_sets,concept_set_id,int,Yes,Yes,No,Yes,No,No,No,concept set identifier
+concept_sets,concept_set_sql,varchar,Yes,No,No,Yes,No,No,No,concept set sql
+concept_sets,concept_set_name,varchar(255),Yes,No,No,Yes,No,No,No,concept set name
+concept_sets,concept_set_expression,varchar,Yes,No,No,Yes,No,No,No,concept set expression
+concept_synonym,concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No,concpt id
+concept_synonym,concept_synonym_name,varchar,Yes,Yes,No,Yes,No,Yes,No,concept synonym name
+concept_synonym,language_concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No,lanague id
+database,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+database,database_name,varchar,No,No,No,Yes,No,No,No,cdm name
+database,description,varchar,No,No,No,Yes,No,No,No,description of cdm
+database,is_meta_analysis,varchar(1),Yes,No,No,Yes,No,No,No,is meta analysis?
+database,vocabulary_version,varchar,No,No,Yes,Yes,No,No,No,vocabulary version
+database,vocabulary_version_cdm,varchar,No,No,Yes,Yes,No,No,No,vocabulary_version_cdm
+domain,domain_id,varchar(20),Yes,Yes,No,Yes,No,Yes,Yes,domain identifier
+domain,domain_name,varchar(255),Yes,No,No,Yes,No,Yes,Yes,concept domain name
+domain,domain_concept_id,bigint,Yes,No,No,Yes,No,Yes,Yes,domain concept identifier in concept table
+incidence_rate,cohort_count,float,Yes,No,No,Yes,Yes,No,No,total count in cohort
+incidence_rate,person_years,float,Yes,No,No,Yes,Yes,No,No,sum of total person years
+incidence_rate,gender,varchar,No,Yes,No,No,No,No,No,gender grouping
+incidence_rate,age_group,varchar,No,Yes,No,No,No,No,No,age grouping
+incidence_rate,calendar_year,varchar(4),No,Yes,No,No,No,No,No,calendar year in cohort
+incidence_rate,incidence_rate,float,Yes,No,No,Yes,No,No,No,incidence rate computed
+incidence_rate,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort identifier
+incidence_rate,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+included_source_concept,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+included_source_concept,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort id
+included_source_concept,concept_set_id,int,Yes,Yes,No,Yes,No,No,No,concept set identifier
+included_source_concept,concept_id,bigint,Yes,Yes,No,Yes,No,No,No,concept identifier 1
+included_source_concept,source_concept_id,bigint,No,Yes,Yes,No,No,No,No,source concept id
+included_source_concept,concept_subjects,float,Yes,No,No,Yes,Yes,No,No,subjects with concept
+included_source_concept,concept_count,float,Yes,No,No,Yes,Yes,No,No,total count of concept
+index_event_breakdown,concept_id,bigint,Yes,Yes,No,Yes,No,No,No,concept identifier
+index_event_breakdown,concept_count,float,Yes,No,No,Yes,Yes,No,No,number of concept occurences
+index_event_breakdown,subject_count,float,Yes,No,No,Yes,Yes,No,No,number of distinct people
+index_event_breakdown,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort identifier
+index_event_breakdown,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+index_event_breakdown,domain_field,varchar,Yes,Yes,No,Yes,No,No,No,domain identifier
+index_event_breakdown,domain_table,varchar,Yes,Yes,No,Yes,No,No,No,domain table
+metadata,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+metadata,start_time,varchar,No,Yes,No,Yes,No,No,No,when run started
+metadata,variable_field,varchar,Yes,Yes,No,Yes,No,No,No,variable name
+metadata,value_field,varchar,Yes,No,No,Yes,No,No,No,variable value
+orphan_concept,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort identifier
+orphan_concept,concept_set_id,int,Yes,Yes,No,Yes,No,No,No,concept set identifier
+orphan_concept,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+orphan_concept,concept_id,bigint,Yes,Yes,No,Yes,No,No,No,concept identifier
+orphan_concept,concept_count,float,Yes,No,No,Yes,Yes,No,No,number of concept occurences
+orphan_concept,concept_subjects,float,Yes,No,No,Yes,Yes,No,No,number of distinct people
+relationship,relationship_id,varchar(20),Yes,Yes,No,Yes,No,Yes,Yes,relationship identifier
+relationship,relationship_name,varchar(255),Yes,No,No,Yes,No,Yes,Yes,relationship name
+relationship,is_hierarchical,varchar(1),Yes,No,No,Yes,No,Yes,Yes,is heirarchical relationship?
+relationship,defines_ancestry,varchar(1),Yes,No,No,Yes,No,Yes,Yes,defines ancestory
+relationship,reverse_relationship_id,varchar(20),Yes,Yes,No,Yes,No,Yes,Yes,reverse relationship concept id
+relationship,relationship_concept_id,bigint,Yes,Yes,No,Yes,No,Yes,Yes,relationship concept identifier in concept table
+resolved_concepts,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort identifier
+resolved_concepts,concept_set_id,int,Yes,Yes,No,Yes,No,No,No,concept set identifier
+resolved_concepts,concept_id,bigint,Yes,Yes,No,Yes,No,No,No,concept identifier
+resolved_concepts,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+temporal_analysis_ref,analysis_id,int,Yes,Yes,No,Yes,No,No,No,temporal analysis identifier
+temporal_analysis_ref,analysis_name,varchar,Yes,No,No,Yes,No,No,No,name of temporal analysis
+temporal_analysis_ref,domain_id,varchar(20),Yes,Yes,No,Yes,No,No,No,domain identifier
+temporal_analysis_ref,is_binary,varchar(1),Yes,No,No,Yes,No,No,No,is binary or continuous measure (proportion or average)
+temporal_analysis_ref,missing_means_zero,varchar(1),No,No,No,Yes,No,No,No,missing means no count
+temporal_covariate_ref,covariate_id,bigint,Yes,Yes,No,Yes,No,No,No,covariate identifier
+temporal_covariate_ref,covariate_name,varchar,Yes,No,No,Yes,No,No,No,name of covariate
+temporal_covariate_ref,analysis_id,int,Yes,No,No,Yes,No,No,No,temporal analysis identifier
+temporal_covariate_ref,concept_id,bigint,Yes,No,No,Yes,No,No,No,concept identifier
+temporal_covariate_value,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort identifier
+temporal_covariate_value,time_id,int,No,Yes,Yes,Yes,No,No,No,time identifier
+temporal_covariate_value,covariate_id,bigint,Yes,Yes,No,Yes,No,No,No,covariate identifier
+temporal_covariate_value,sum_value,float,Yes,No,No,Yes,Yes,No,No,sum value
+temporal_covariate_value,mean,float,Yes,No,No,Yes,No,No,No,mean
+temporal_covariate_value,sd,float,No,No,No,Yes,No,No,No,standard deviation
+temporal_covariate_value,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+temporal_covariate_value_dist,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort identifier
+temporal_covariate_value_dist,time_id,int,No,Yes,Yes,Yes,No,No,No,time identifier
+temporal_covariate_value_dist,covariate_id,bigint,Yes,Yes,No,Yes,No,No,No,covariate identifier
+temporal_covariate_value_dist,count_value,float,Yes,No,No,Yes,Yes,No,No,count
+temporal_covariate_value_dist,min_value,float,Yes,No,No,Yes,Yes,No,No,minimum value
+temporal_covariate_value_dist,max_value,float,Yes,No,No,Yes,Yes,No,No,maximum value
+temporal_covariate_value_dist,mean,float,Yes,No,No,Yes,No,No,No,mean value
+temporal_covariate_value_dist,sd,float,Yes,No,No,Yes,No,No,No,standard deviation
+temporal_covariate_value_dist,median_value,float,Yes,No,No,Yes,No,No,No,median (value at 50%)
+temporal_covariate_value_dist,p_10_value,float,Yes,No,No,Yes,No,No,No,value at 10%
+temporal_covariate_value_dist,p_25_value,float,Yes,No,No,Yes,No,No,No,value at 25%
+temporal_covariate_value_dist,p_75_value,float,Yes,No,No,Yes,No,No,No,value at 75%
+temporal_covariate_value_dist,p_90_value,float,Yes,No,No,Yes,No,No,No,value at 90%
+temporal_covariate_value_dist,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+temporal_time_ref,time_id,int,Yes,Yes,No,Yes,No,No,No,time identifier
+temporal_time_ref,start_day,float,Yes,No,No,Yes,No,No,No,start day
+temporal_time_ref,end_day,float,Yes,No,No,Yes,No,No,No,end day
+time_series,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort identifier
+time_series,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+time_series,period_begin,Date,Yes,Yes,No,Yes,No,No,No,peroid start date
+time_series,period_end,Date,Yes,Yes,No,Yes,No,No,No,perioid end date
+time_series,series_type,varchar,Yes,Yes,No,Yes,No,No,No,time series type
+time_series,calendar_interval,varchar,Yes,Yes,No,Yes,No,No,No,calendar interval
+time_series,gender,varchar,No,Yes,Yes,Yes,No,No,No,gender grouping
+time_series,age_group,varchar,No,Yes,Yes,Yes,No,No,No,age grouping
+time_series,records,bigint,Yes,No,No,Yes,Yes,No,No,record count
+time_series,subjects,bigint,Yes,No,No,Yes,Yes,No,No,distinct person count
+time_series,person_days,bigint,Yes,No,No,Yes,Yes,No,No,total person time in days
+time_series,person_days_in,bigint,Yes,No,No,Yes,Yes,No,No,total person time in days
+time_series,records_start,bigint,No,No,No,No,Yes,No,No,records at start
+time_series,subjects_start,bigint,No,No,No,No,Yes,No,No,subject count at start
+time_series,subjects_start_in,bigint,No,No,No,No,Yes,No,No,subject out at start
+time_series,records_end,bigint,No,No,No,No,Yes,No,No,records end
+time_series,subjects_end,bigint,No,No,No,No,Yes,No,No,subjects end
+time_series,subjects_end_in,bigint,No,No,No,No,Yes,No,No,subjects end in
+visit_context,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort identifier
+visit_context,visit_concept_id,bigint,Yes,Yes,No,Yes,No,No,No,visit concept identifier
+visit_context,visit_context,varchar,Yes,Yes,No,Yes,No,No,No,name of visit context
+visit_context,subjects,float,Yes,No,No,Yes,Yes,No,No,number of subjects
+visit_context,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+vocabulary,vocabulary_id,varchar(50),Yes,No,No,Yes,No,Yes,No,vocabulary identifier
+vocabulary,vocabulary_name,varchar(255),Yes,No,No,Yes,No,Yes,No,vocabulary name
+vocabulary,vocabulary_reference,varchar,No,No,No,Yes,No,Yes,No,vocabulary reference
+vocabulary,vocabulary_version,varchar,No,No,No,Yes,No,Yes,No,vocabulary version
+vocabulary,vocabulary_concept_id,bigint,Yes,No,No,Yes,No,Yes,No,vocabulary concept identifier

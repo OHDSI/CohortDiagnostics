@@ -3,10 +3,11 @@
 on:
   push:
     branches:
-      - '**'
+      - 'develop'
+      - 'main'
   pull_request:
     branches:
-      - '**'
+      - 'main'
 
 name: R-CMD-check
 
@@ -50,6 +51,7 @@ jobs:
       CDM5_SPARK_USER: ${{ secrets.CDM5_SPARK_USER }}
       CDM5_SPARK_PASSWORD: ${{ secrets.CDM5_SPARK_PASSWORD }}
       CDM5_SPARK_CONNECTION_STRING: ${{ secrets.CDM5_SPARK_CONNECTION_STRING }}
+      IS_GITHUB_ACTIONS: true
 
     steps:
       - uses: actions/checkout@v3
@@ -85,27 +87,27 @@ jobs:
           check-dir: '"check"'
 
       - name: Upload source package
-        if: success() && runner.os == 'macOS' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v2
+        if: success() && runner.os == 'Windows' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
         with:
           name: package_tarball
           path: check/*.tar.gz
 
       - name: Install covr
-        if: runner.os == 'macOS'
+        if: runner.os == 'Windows'
         run: |
           install.packages("covr")
         shell: Rscript {0}
 
       - name: Test coverage
-        if: runner.os == 'macOS'
+        if: runner.os == 'Windows'
         run: covr::codecov()
         shell: Rscript {0}
 
   Release:
     needs: R-CMD-Check
 
-    runs-on: macOS-latest
+    runs-on: windows-latest
 
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -156,7 +158,7 @@ jobs:
 
       - name: Download package tarball
         if: ${{ env.new_version != '' }}
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.7
         with:
           name: package_tarball
 

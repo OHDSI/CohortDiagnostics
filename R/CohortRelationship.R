@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -73,8 +73,7 @@ runCohortRelationshipDiagnostics <-
       lower = 0,
       any.missing = FALSE,
       min.len = 1,
-      unique = TRUE,
-      add = errorMessage
+      unique = TRUE
     )
     checkmate::reportAssertions(collection = errorMessage)
 
@@ -85,7 +84,7 @@ runCohortRelationshipDiagnostics <-
 
     timePeriods <- relationshipDays %>%
       dplyr::distinct() %>%
-      dplyr::arrange(startDay, endDay) %>%
+      dplyr::arrange(.data$startDay, .data$endDay) %>%
       dplyr::mutate(timeId = dplyr::row_number())
 
     ParallelLogger::logTrace("   - Creating Andromeda object to collect results")
@@ -161,12 +160,12 @@ runCohortRelationshipDiagnostics <-
     resultsInAndromeda$cohortRelationships <-
       resultsInAndromeda$cohortRelationships %>%
       dplyr::inner_join(resultsInAndromeda$timePeriods, by = "timeId") %>%
-      dplyr::select(-timeId) %>%
+      dplyr::select(-"timeId") %>%
       dplyr::arrange(
-        cohortId,
-        comparatorCohortId,
-        startDay,
-        endDay
+        .data$cohortId,
+        .data$comparatorCohortId,
+        .data$startDay,
+        .data$endDay
       )
     resultsInAndromeda$timePeriods <- NULL
 
@@ -209,24 +208,26 @@ executeCohortRelationshipDiagnostics <- function(connection,
   startCohortRelationship <- Sys.time()
 
   allCohortIds <- cohortDefinitionSet %>%
-    dplyr::select(cohortId, checksum) %>%
+    dplyr::select("cohortId", "checksum") %>%
     dplyr::rename(
-      targetCohortId = cohortId,
-      targetChecksum = checksum
+      targetCohortId = "cohortId",
+      targetChecksum = "checksum"
     ) %>%
     dplyr::distinct()
-  combinationsOfPossibleCohortRelationships <- allCohortIds %>%
+
+  posibleCombinations <- allCohortIds %>%
     tidyr::crossing(allCohortIds %>%
       dplyr::rename(
-        comparatorCohortId = targetCohortId,
-        comparatorChecksum = targetChecksum
+        comparatorCohortId = "targetCohortId",
+        comparatorChecksum = "targetChecksum"
       )) %>%
-    dplyr::filter(targetCohortId != comparatorCohortId) %>%
-    dplyr::arrange(targetCohortId, comparatorCohortId) %>%
-    dplyr::mutate(checksum = paste0(targetChecksum, comparatorChecksum))
+    dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) %>%
+    dplyr::arrange(.data$targetCohortId, .data$comparatorCohortId)
+
+  posibleCombinations$checksum <- paste0(posibleCombinations$targetChecksum, posibleCombinations$comparatorChecksum)
 
   subset <- subsetToRequiredCombis(
-    combis = combinationsOfPossibleCohortRelationships,
+    combis = posibleCombinations,
     task = "runCohortRelationship",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile
@@ -244,18 +245,18 @@ executeCohortRelationshipDiagnostics <- function(connection,
     }
 
     if (incremental &&
-      (nrow(combinationsOfPossibleCohortRelationships) - (
+      (nrow(posibleCombinations) - (
         nrow(
-          combinationsOfPossibleCohortRelationships %>%
-            dplyr::filter(targetCohortId %in% c(subset$targetCohortId))
+          posibleCombinations %>%
+            dplyr::filter(.data$targetCohortId %in% c(subset$targetCohortId))
         )
       )) > 0) {
       ParallelLogger::logInfo(
         sprintf(
           " - Skipping %s combinations in incremental mode because these were previously computed.",
-          nrow(combinationsOfPossibleCohortRelationships) - nrow(
-            combinationsOfPossibleCohortRelationships %>%
-              dplyr::filter(targetCohortId %in% c(subset$targetCohortId))
+          nrow(posibleCombinations) - nrow(
+            posibleCombinations %>%
+              dplyr::filter(.data$targetCohortId %in% c(subset$targetCohortId))
           )
         )
       )
@@ -366,7 +367,11 @@ executeCohortRelationshipDiagnostics <- function(connection,
       writeToCsv(
         data = data,
         fileName = outputFile,
-        incremental = TRUE
+        incremental = TRUE,
+        cohortId = data$cohortId,
+        comparatorCohortId = data$comparatorCohortId,
+        startDay = data$startDay,
+        endDay = data$endDay
       )
 
       recordTasksDone(

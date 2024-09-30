@@ -34,7 +34,11 @@ executeDiagnostics(
   minCharacterizationMean = 0.01,
   irWashoutPeriod = 0,
   incremental = FALSE,
-  incrementalFolder = file.path(exportFolder, "incremental")
+  incrementalFolder = file.path(exportFolder, "incremental"),
+  runFeatureExtractionOnSample = FALSE,
+  sampleN = 1000,
+  seed = 64374,
+  seedArgs = NULL
 )
 }
 \arguments{
@@ -121,6 +125,18 @@ on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which cohort diagnostics has been executed.}
+
+\item{runFeatureExtractionOnSample}{Logical. If TRUE, the function will operate on a sample of the data.
+Default is FALSE, meaning the function will operate on the full data set.}
+
+\item{sampleN}{Integer. The number of records to include in the sample if runFeatureExtractionOnSample is TRUE.
+Default is 1000. Ignored if runFeatureExtractionOnSample is FALSE.}
+
+\item{seed}{Integer. The seed for the random number generator used to create the sample.
+This ensures that the same sample can be drawn again in future runs. Default is 64374.}
+
+\item{seedArgs}{List. Additional arguments to pass to the sampling function.
+This can be used to control aspects of the sampling process beyond the seed and sample size.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the

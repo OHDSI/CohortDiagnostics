@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -20,6 +20,9 @@ extractConceptSetsSqlFromCohortSql <- function(cohortSql) {
   }
   sql <- gsub("with primary_events.*", "", cohortSql)
 
+  if (is.null(sql) || length(nchar(sql)) == 0 || is.na(nchar(sql)) || is.nan(nchar(sql))) {
+    return(tidyr::tibble())
+  }
   # Find opening and closing parentheses:
   starts <- stringr::str_locate_all(sql, "\\(")[[1]][, 1]
   ends <- stringr::str_locate_all(sql, "\\)")[[1]][, 1]
@@ -71,8 +74,14 @@ extractConceptSetsSqlFromCohortSql <- function(cohortSql) {
 
 
 extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
-  cohortDefinition <-
-    RJSONIO::fromJSON(content = cohortJson, digits = 23)
+  cohortDefinition <- tryCatch(
+    {
+      RJSONIO::fromJSON(content = cohortJson, digits = 23)
+    },
+    error = function(msg) {
+      return(list())
+    }
+  )
   if ("expression" %in% names(cohortDefinition)) {
     expression <- cohortDefinition$expression
   } else {
@@ -121,10 +130,10 @@ combineConceptSetsFromCohorts <- function(cohorts) {
   checkmate::reportAssertions(errorMessage)
   checkmate::assertDataFrame(
     x = cohorts %>% dplyr::select(
-      cohortId,
-      sql,
-      json,
-      cohortName
+      "cohortId",
+      "sql",
+      "json",
+      "cohortName"
     ),
     any.missing = FALSE,
     min.cols = 4,
@@ -148,9 +157,9 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     }
 
     sqlCs <-
-      extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql)
+      extractConceptSetsSqlFromCohortSql(cohortSql = cohortSql)
     jsonCs <-
-      extractConceptSetsJsonFromCohortJson(cohortJson = cohort$json)
+      extractConceptSetsJsonFromCohortJson(cohortJson = cohortJson)
 
     if (nrow(sqlCs) == 0 || nrow(jsonCs) == 0) {
       ParallelLogger::logInfo(
@@ -176,7 +185,7 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     }
   }
   if (length(conceptSets) == 0) {
-    return(NULL)
+    return(data.frame())
   }
   conceptSets <- dplyr::bind_rows(conceptSets) %>%
     dplyr::arrange(.data$cohortId, .data$conceptSetId)
@@ -187,7 +196,10 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     dplyr::distinct()
 
   conceptSets <- conceptSets %>%
-    dplyr::inner_join(uniqueConceptSets, by = "conceptSetExpression") %>%
+    dplyr::inner_join(uniqueConceptSets,
+      by = "conceptSetExpression",
+      relationship = "many-to-many"
+    ) %>%
     dplyr::distinct() %>%
     dplyr::relocate(
       "uniqueConceptSetId",
@@ -321,7 +333,7 @@ getCodeSetIds <- function(criterionList) {
     return(NULL)
   } else {
     return(dplyr::tibble(domain = names(criterionList), codeSetIds = codeSetIds)
-    %>% dplyr::filter(!is.na(codeSetIds)))
+    %>% dplyr::filter(!is.na(.data$codeSetIds)))
   }
 }
 
@@ -330,11 +342,17 @@ exportConceptSets <- function(cohortDefinitionSet, exportFolder, minCellCount, d
   # We need to get concept sets from all cohorts in case subsets are present and
   # Added incrementally after cohort generation
   conceptSets <- combineConceptSetsFromCohorts(cohortDefinitionSet)
+
+  if (!hasData(conceptSets)) {
+    return(invisible(NULL))
+  }
+
+  conceptSets <- conceptSets %>%
+    dplyr::select(-"uniqueConceptSetId") %>%
+    dplyr::distinct()
   # Save concept set metadata ---------------------------------------
   conceptSetsExport <- makeDataExportable(
-    x = conceptSets %>%
-      dplyr::select(-uniqueConceptSetId) %>%
-      dplyr::distinct(),
+    x = conceptSets,
     tableName = "concept_sets",
     minCellCount = minCellCount,
     databaseId = databaseId
@@ -404,7 +422,7 @@ runConceptSetDiagnostics <- function(connection,
   subset <- dplyr::distinct(subset)
 
   if (nrow(subset) == 0) {
-    return()
+    return(NULL)
   }
 
   # We need to get concept sets from all cohorts in case subsets are present and
@@ -514,7 +532,8 @@ runConceptSetDiagnostics <- function(connection,
                   "cohortId",
                   "conceptSetId"
                 ) %>% dplyr::distinct(),
-                by = "uniqueConceptSetId"
+                by = "uniqueConceptSetId",
+                relationship = "many-to-many"
               ) %>%
               dplyr::select(-"uniqueConceptSetId") %>%
               dplyr::mutate(databaseId = !!databaseId) %>%
@@ -665,7 +684,7 @@ runConceptSetDiagnostics <- function(connection,
               )
               return(tidyr::tibble())
             }
-            primaryCodesetIds <- primaryCodesetIds %>% dplyr::filter(domain %in%
+            primaryCodesetIds <- primaryCodesetIds %>% dplyr::filter(.data$domain %in%
               c(domains$domain %>% unique()))
             if (nrow(primaryCodesetIds) == 0) {
               warning(
@@ -814,6 +833,18 @@ runConceptSetDiagnostics <- function(connection,
         }
       }
 
+      if (nrow(data) == 0 && ncol(data) == 0) {
+        data <- dplyr::tibble(
+          conceptId = numeric(),
+          conceptCount = numeric(),
+          subjectCount = numeric(),
+          cohortId = numeric(),
+          databaseId = character(),
+          domainField = character(),
+          domainTable = character()
+        )
+      }
+
       data <- makeDataExportable(
         x = data,
         tableName = "index_event_breakdown",
@@ -928,7 +959,8 @@ runConceptSetDiagnostics <- function(connection,
               "cohortId",
               "conceptSetId"
             ) %>% dplyr::distinct(),
-          by = "uniqueConceptSetId"
+          by = "uniqueConceptSetId",
+          relationship = "many-to-many"
         ) %>%
         dplyr::select(-"uniqueConceptSetId") %>%
         dplyr::select(
@@ -944,8 +976,8 @@ runConceptSetDiagnostics <- function(connection,
           .data$conceptId
         ) %>%
         dplyr::summarise(
-          conceptCount = max(conceptCount),
-          conceptSubjects = max(conceptSubjects)
+          conceptCount = max(.data$conceptCount),
+          conceptSubjects = max(.data$conceptSubjects)
         ) %>%
         dplyr::ungroup()
       data <- makeDataExportable(
@@ -1013,7 +1045,8 @@ runConceptSetDiagnostics <- function(connection,
     dplyr::tibble() %>%
     dplyr::rename("uniqueConceptSetId" = "codesetId") %>%
     dplyr::inner_join(conceptSets %>% dplyr::distinct(),
-      by = "uniqueConceptSetId"
+      by = "uniqueConceptSetId",
+      relationship = "many-to-many"
     ) %>%
     dplyr::select(
       "cohortId",

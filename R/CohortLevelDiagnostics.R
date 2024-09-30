@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -56,7 +56,9 @@ getCohortCounts <- function(connectionDetails = NULL,
     tidyr::tibble()
 
   if (length(cohortIds) > 0) {
-    cohortIdDf <- tidyr::tibble(cohortId = cohortIds)
+    cohortIdDf <- tidyr::tibble(cohortId = as.numeric(cohortIds))
+    counts$cohortId <- as.numeric(counts$cohortId)
+
     counts <- cohortIdDf %>%
       dplyr::left_join(counts, by = "cohortId") %>%
       tidyr::replace_na(list(cohortEntries = 0, cohortSubjects = 0))
@@ -95,7 +97,8 @@ computeCohortCounts <- function(connection,
                                 cohorts,
                                 exportFolder,
                                 minCellCount,
-                                databaseId) {
+                                databaseId,
+                                writeResult = TRUE) {
   ParallelLogger::logInfo("Counting cohort records and subjects")
   cohortCounts <- getCohortCounts(
     connection = connection,
@@ -115,11 +118,13 @@ computeCohortCounts <- function(connection,
     databaseId = databaseId
   )
 
-  writeToCsv(
-    data = cohortCounts,
-    fileName = file.path(exportFolder, "cohort_count.csv"),
-    incremental = FALSE,
-    cohortId = cohorts$cohortId
-  )
+  if (writeResult) {
+    writeToCsv(
+      data = cohortCounts,
+      fileName = file.path(exportFolder, "cohort_count.csv"),
+      incremental = FALSE,
+      cohortId = cohorts$cohortId
+    )
+  }
   return(cohortCounts)
 }

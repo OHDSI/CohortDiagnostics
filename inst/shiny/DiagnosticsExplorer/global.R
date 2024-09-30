@@ -81,31 +81,30 @@ if (FALSE) {
 
 connectionHandler <- ResultModelManager::PooledConnectionHandler$new(shinySettings$connectionDetails)
 
-
-if (packageVersion("OhdsiShinyModules") >= as.numeric_version("1.2.0")) {
-  resultDatabaseSettings <- list(
-    schema = shinySettings$resultsDatabaseSchema,
-    vocabularyDatabaseSchema = shinySettings$vocabularyDatabaseSchema,
-    cdTablePrefix = shinySettings$tablePrefix,
-    cgTable = shinySettings$cohortTableName,
-    databaseTable = shinySettings$databaseTableName
-  )
-
-  dataSource <-
-    OhdsiShinyModules::createCdDatabaseDataSource(connectionHandler = connectionHandler,
-                                                  resultDatabaseSettings = resultDatabaseSettings)
-} else {
-  dataSource <-
-    OhdsiShinyModules::createCdDatabaseDataSource(
-      connectionHandler = connectionHandler,
-      schema = shinySettings$resultsDatabaseSchema,
-      vocabularyDatabaseSchema = shinySettings$vocabularyDatabaseSchema,
-      tablePrefix = shinySettings$tablePrefix,
-      cohortTableName = shinySettings$cohortTableName,
-      databaseTableName = shinySettings$databaseTableName
-    )
-
+if (packageVersion("OhdsiShinyModules") <= as.numeric_version("2.0.0")) {
+  stop("OhdsiShinyModules version no longer supported.
+  Update to a newer version with remotes::install_github('OhdsiShinyModules')")
 }
+
+resultDatabaseSettings <- list(
+  schema = shinySettings$resultsDatabaseSchema,
+  vocabularyDatabaseSchema = shinySettings$vocabularyDatabaseSchema,
+  cdTablePrefix = shinySettings$tablePrefix,
+  cgTable = shinySettings$cohortTableName,
+  databaseTable = shinySettings$databaseTableName
+)
+
+dataSource <-
+  OhdsiShinyModules::createCdDatabaseDataSource(connectionHandler = connectionHandler,
+                                                resultDatabaseSettings = resultDatabaseSettings)
+
+
+
+
+
+
+
+
 
 
 

@@ -24,66 +24,36 @@ SELECT t.cohort_definition_id cohort_id,
 				THEN c.subject_id
 			ELSE NULL
 			END) sub_cs_before_ts,
-	COUNT_BIG(DISTINCT CASE 
-			WHEN c.cohort_start_date < DATEADD(day, @start_day_offset, t.cohort_start_date)
-				THEN CONCAT(cast(c.subject_id AS VARCHAR(30)), '_', cast(c.cohort_start_date AS VARCHAR(30)))
-			ELSE NULL
-			END) rec_cs_before_ts,
 	-- comparator cohort start date before target start date (offset) [How many subjects in comparator cohort start prior to first target cohort start]
 	COUNT_BIG(DISTINCT CASE 
 			WHEN c.cohort_start_date = DATEADD(day, @start_day_offset, t.cohort_start_date)
 				THEN c.subject_id
 			ELSE NULL
 			END) sub_cs_on_ts,
-	COUNT_BIG(DISTINCT CASE 
-			WHEN c.cohort_start_date = DATEADD(day, @start_day_offset, t.cohort_start_date)
-				THEN CONCAT(cast(c.subject_id AS VARCHAR(30)), '_', cast(c.cohort_start_date AS VARCHAR(30)))
-			ELSE NULL
-			END) rec_cs_on_ts,
 	-- comparator cohort start date on target start date (offset) [How many subjects in comparator cohort start with first target cohort start]
 	COUNT_BIG(DISTINCT CASE 
 			WHEN c.cohort_start_date > DATEADD(day, @start_day_offset, t.cohort_start_date)
 				THEN c.subject_id
 			ELSE NULL
 			END) sub_cs_after_ts,
-	COUNT_BIG(DISTINCT CASE 
-			WHEN c.cohort_start_date > DATEADD(day, @start_day_offset, t.cohort_start_date)
-				THEN CONCAT(cast(c.subject_id AS VARCHAR(30)), '_', cast(c.cohort_start_date AS VARCHAR(30)))
-			ELSE NULL
-			END) rec_cs_after_ts,
 	-- comparator cohort start date after target start date (offset) [How many subjects in comparator cohort start after first target cohort start]
 	COUNT_BIG(DISTINCT CASE 
 			WHEN c.cohort_start_date < DATEADD(day, @start_day_offset, t.cohort_end_date)
 				THEN c.subject_id
 			ELSE NULL
 			END) sub_cs_before_te,
-	COUNT_BIG(DISTINCT CASE 
-			WHEN c.cohort_start_date < DATEADD(day, @start_day_offset, t.cohort_end_date)
-				THEN CONCAT(cast(c.subject_id AS VARCHAR(30)), '_', cast(c.cohort_start_date AS VARCHAR(30)))
-			ELSE NULL
-			END) rec_cs_before_te,
 	-- comparator cohort start date before target end date (offset) [How many subjects in comparator cohort start after first target cohort end]
 	COUNT_BIG(DISTINCT CASE 
 			WHEN c.cohort_start_date = DATEADD(day, @start_day_offset, t.cohort_end_date)
 				THEN c.subject_id
 			ELSE NULL
 			END) sub_cs_on_te,
-	COUNT_BIG(DISTINCT CASE 
-			WHEN c.cohort_start_date = DATEADD(day, @start_day_offset, t.cohort_end_date)
-				THEN CONCAT(cast(c.subject_id AS VARCHAR(30)), '_', cast(c.cohort_start_date AS VARCHAR(30)))
-			ELSE NULL
-			END) rec_cs_on_te,
 	-- comparator cohort start date on target end date (offset) [How many subjects in comparator cohort start on first target cohort end]
 	COUNT_BIG(DISTINCT CASE 
 			WHEN c.cohort_start_date > DATEADD(day, @start_day_offset, t.cohort_end_date)
 				THEN c.subject_id
 			ELSE NULL
 			END) sub_cs_after_te,
-	COUNT_BIG(DISTINCT CASE 
-			WHEN c.cohort_start_date > DATEADD(day, @start_day_offset, t.cohort_end_date)
-				THEN CONCAT(cast(c.subject_id AS VARCHAR(30)), '_', cast(c.cohort_start_date AS VARCHAR(30)))
-			ELSE NULL
-			END) rec_cs_after_te,
 	-- comparator cohort start date after target end date (offset) [How many subjects in comparator cohort start after first target cohort end]
 	COUNT_BIG(DISTINCT CASE 
 			WHEN c.cohort_start_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
@@ -91,12 +61,6 @@ SELECT t.cohort_definition_id cohort_id,
 				THEN c.subject_id
 			ELSE NULL
 			END) sub_cs_window_t,
-	COUNT_BIG(DISTINCT CASE 
-			WHEN c.cohort_start_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
-				AND c.cohort_start_date <= DATEADD(day, @end_day_offset, t.cohort_end_date)
-				THEN CONCAT(cast(c.subject_id AS VARCHAR(30)), '_', cast(c.cohort_start_date AS VARCHAR(30)))
-			ELSE NULL
-			END) rec_cs_window_t,
 	-- comparator cohort subjects start within period (incidence) relative to target start date and end date
 	-- [How many subjects in comparator cohort start within a window of days relative to first target start date and first target end date]
 		COUNT_BIG(DISTINCT CASE 
@@ -105,12 +69,6 @@ SELECT t.cohort_definition_id cohort_id,
 				THEN c.subject_id
 			ELSE NULL
 			END) sub_ce_window_t,
-	COUNT_BIG(DISTINCT CASE 
-			WHEN c.cohort_end_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
-				AND c.cohort_end_date <= DATEADD(day, @end_day_offset, t.cohort_end_date)
-				THEN CONCAT(cast(c.subject_id AS VARCHAR(30)), '_', cast(c.cohort_start_date AS VARCHAR(30)))
-			ELSE NULL
-			END) rec_ce_window_t,
 	-- comparator cohort subjects start within period (incidence) relative to target start date and end date
 	-- [How many subjects in comparator cohort start within a window of days relative to first target start date and first target end date]
 	COUNT_BIG(DISTINCT CASE 
@@ -119,12 +77,6 @@ SELECT t.cohort_definition_id cohort_id,
 				THEN c.subject_id
 			ELSE NULL
 			END) sub_cs_window_ts,
-	COUNT_BIG(DISTINCT CASE 
-			WHEN c.cohort_start_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
-				AND c.cohort_start_date <= DATEADD(day, @end_day_offset, t.cohort_start_date)
-				THEN CONCAT(cast(c.subject_id AS VARCHAR(30)), '_', cast(c.cohort_start_date AS VARCHAR(30)))
-			ELSE NULL
-			END) rec_cs_window_ts,
 	-- comparator cohort subjects start within period (incidence) relative to target start date [How many subjects in comparator cohort start within a 
 	-- window of days relative to first target start date]
 	COUNT_BIG(DISTINCT CASE 
@@ -133,12 +85,6 @@ SELECT t.cohort_definition_id cohort_id,
 				THEN c.subject_id
 			ELSE NULL
 			END) sub_cs_window_te,
-	COUNT_BIG(DISTINCT CASE 
-			WHEN c.cohort_start_date >= DATEADD(day, @start_day_offset, t.cohort_end_date)
-				AND c.cohort_start_date <= DATEADD(day, @end_day_offset, t.cohort_end_date)
-				THEN CONCAT(cast(c.subject_id AS VARCHAR(30)), '_', cast(c.cohort_start_date AS VARCHAR(30)))
-			ELSE NULL
-			END) rec_cs_window_te,
 	-- comparator cohort subjects start within period (incidence) relative to target end date [How many subjects in comparator cohort start within a 
 	-- window of days relative to first target end date]
 	COUNT_BIG(DISTINCT CASE 
@@ -147,12 +93,6 @@ SELECT t.cohort_definition_id cohort_id,
 				THEN c.subject_id
 			ELSE NULL
 			END) sub_ce_window_ts,
-	COUNT_BIG(DISTINCT CASE 
-			WHEN c.cohort_end_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
-				AND c.cohort_end_date <= DATEADD(day, @end_day_offset, t.cohort_start_date)
-				THEN CONCAT(cast(c.subject_id AS VARCHAR(30)), '_', cast(c.cohort_start_date AS VARCHAR(30)))
-			ELSE NULL
-			END) rec_ce_window_ts,
 	-- comparator cohort subjects end within period (incidence) relative to target start date [How many subjects in comparator cohort end within a 
 	-- window of days relative to first target start date]
 	COUNT_BIG(DISTINCT CASE 
@@ -161,12 +101,6 @@ SELECT t.cohort_definition_id cohort_id,
 				THEN c.subject_id
 			ELSE NULL
 			END) sub_ce_window_te,
-	COUNT_BIG(DISTINCT CASE 
-			WHEN c.cohort_end_date >= DATEADD(day, @start_day_offset, t.cohort_end_date)
-				AND c.cohort_end_date <= DATEADD(day, @end_day_offset, t.cohort_end_date)
-				THEN CONCAT(cast(c.subject_id AS VARCHAR(30)), '_', cast(c.cohort_start_date AS VARCHAR(30)))
-			ELSE NULL
-			END) rec_ce_window_te,
 	-- comparator cohort subjects end within period (incidence) relative to target end date [How many subjects in comparator cohort end within a 
 	-- window of days relative to first target end date]
 	COUNT_BIG(DISTINCT CASE 
@@ -177,14 +111,6 @@ SELECT t.cohort_definition_id cohort_id,
 				THEN c.subject_id
 			ELSE NULL
 			END) sub_c_within_t,
-	COUNT_BIG(DISTINCT CASE 
-			WHEN c.cohort_start_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
-				AND c.cohort_start_date <= DATEADD(day, @end_day_offset, t.cohort_end_date)
-				AND c.cohort_end_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
-				AND c.cohort_end_date <= DATEADD(day, @end_day_offset, t.cohort_end_date)
-				THEN CONCAT(cast(c.subject_id AS VARCHAR(30)), '_', cast(c.cohort_start_date AS VARCHAR(30)))
-			ELSE NULL
-			END) rec_c_within_t,
 	-- comparator cohort days within target (offset) days [How many subjects in comparator cohort have their entire cohort period within first target cohort period]
 	SUM((
 			CASE -- comparator cohort start date before target start date (offset)

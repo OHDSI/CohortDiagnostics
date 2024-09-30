@@ -1,3 +1,17 @@
+CohortDiagnostics 3.3.0
+=======================
+
+Changes:
+
+1. Added function to make deployment to posit connect servers easier
+
+2. Added ability to use CohortGenerator sample functionality to executeDiagnostics which speeds up execution for very
+large cohort definitions
+
+3. Requires use of FeatureExtraction 3.4.0 to support new API
+
+4. Removed annotation tables from result schema script
+
 CohortDiagnostics 3.2.5
 =======================
 Bug Fixes:

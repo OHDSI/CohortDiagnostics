@@ -1,8 +1,8 @@
 Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Cohorts
-Version: 3.2.5
-Date: 2023-29-11
+Version: 3.3.0
+Date: 2024-22-10
 Authors@R: c(
     person("Jamie", "Gilbert", email = "gilbert@ohdsi.org", role = c("aut", "cre")),
     person("Gowtham", "Rao", role = c("aut")),
@@ -20,50 +20,45 @@ Description: CohortDiagnostics is an R utility package for the development and e
     Through the identification of errors, CohortDiagnostics enables the comparison of multiple candidate cohort
     definitions across one or more data sources, facilitating reproducible research.
 Depends:
-	DatabaseConnector (>= 5.0.0),
-	FeatureExtraction (>= 3.2.0),
-	R (>= 4.1.0)
+    DatabaseConnector (>= 5.0.0),
+    FeatureExtraction (>= 3.7.1),
+    R (>= 4.1.0)
 Imports:
-  Andromeda (>= 0.6.0),
-  ResultModelManager (>= 0.5.2),
-  checkmate,
-  clock,
-  digest,
-  dplyr (>= 1.0.0),
-  methods,
-  ParallelLogger (>= 3.0.0),
-  readr (>= 2.1.0),
-  RJSONIO,
-  rlang,
-  SqlRender (>= 1.9.0),
-  stringr,
-  tidyr (>= 1.2.0),
-  CohortGenerator (>= 0.8.0),
-  remotes
+    Andromeda (>= 0.6.0),
+    ResultModelManager (>= 0.5.2),
+    checkmate,
+    clock,
+    digest,
+    dplyr (>= 1.0.0),
+    methods,
+    ParallelLogger (>= 3.0.0),
+    readr (>= 2.1.0),
+    RJSONIO,
+    rlang,
+    SqlRender (>= 1.9.0),
+    stringr,
+    tidyr (>= 1.2.0),
+    CohortGenerator (>= 0.10.0),
+    remotes,
+    scales
 Suggests:
-  Eunomia,
-  ROhdsiWebApi (>= 1.2.0),
-  RSQLite (>= 2.2.1),
-  scales,
-  testthat,
-  withr,
-  zip,
-  knitr,
-  shiny,
-  OhdsiShinyModules
+    Eunomia,
+    RSQLite (>= 2.2.1),
+    testthat,
+    withr,
+    zip,
+    knitr,
+    shiny,
+    OhdsiShinyModules,
+    rsconnect,
+    yaml
 Remotes:
-  ohdsi/Eunomia,
-  ohdsi/FeatureExtraction,
-  ohdsi/ResultModelManager,
-  ohdsi/ROhdsiWebApi,
-  ohdsi/CirceR,
-  ohdsi/CohortGenerator,
   ohdsi/OhdsiShinyModules
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics
 BugReports: https://github.com/OHDSI/CohortDiagnostics/issues
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Encoding: UTF-8
 Language: en-US
 StagedInstall: no

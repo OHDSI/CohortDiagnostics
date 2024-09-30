@@ -1,26 +1,6 @@
 test_that("Cohort diagnostics in incremental mode", {
   skip_if(skipCdmTests, "cdm settings not configured")
 
-  cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
-  # Next create the tables on the database
-  CohortGenerator::createCohortTables(
-    connectionDetails = connectionDetails,
-    cohortTableNames = cohortTableNames,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    incremental = FALSE
-  )
-
-  # Generate the cohort set
-  CohortGenerator::generateCohortSet(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTableNames = cohortTableNames,
-    cohortDefinitionSet = cohortDefinitionSet,
-    incremental = FALSE
-  )
-
-
   firstTime <- system.time(
     executeDiagnostics(
       cohortDefinitionSet = cohortDefinitionSet,
@@ -44,7 +24,9 @@ test_that("Cohort diagnostics in incremental mode", {
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
-      temporalCovariateSettings = temporalCovariateSettings
+      temporalCovariateSettings = temporalCovariateSettings,
+      runFeatureExtractionOnSample = TRUE,
+      minCharacterizationMean = 0.8
     )
   )
 
@@ -74,7 +56,9 @@ test_that("Cohort diagnostics in incremental mode", {
       minCellCount = minCellCountValue,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
-      temporalCovariateSettings = temporalCovariateSettings
+      temporalCovariateSettings = temporalCovariateSettings,
+      runFeatureExtractionOnSample = TRUE,
+      minCharacterizationMean = 0.8
     )
   )
   # generate sqlite file
@@ -120,7 +104,9 @@ test_that("Cohort diagnostics in incremental mode", {
         minCellCount = minCellCountValue,
         incremental = FALSE,
         incrementalFolder = file.path(folder, "incremental"),
-        temporalCovariateSettings = temporalCovariateSettings
+        temporalCovariateSettings = temporalCovariateSettings,
+        runFeatureExtractionOnSample = TRUE,
+        minCharacterizationMean = 0.8
       )
     })
 

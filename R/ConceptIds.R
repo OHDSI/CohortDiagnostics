@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -147,6 +147,12 @@ exportConceptInformation <- function(connection = NULL,
           x = data,
           tableName = vocabularyTable
         )
+
+        # Workaround for sqlite imports that add decimal precision to fields
+        if (vocabularyTable == "relationship" && DatabaseConnector::dbms(connection) == "sqlite") {
+          data$isHierarchical <- as.character(as.numeric(data$isHierarchical))
+          data$definesAncestry <- as.character(as.numeric(data$definesAncestry))
+        }
 
         writeToCsv(
           data = data,

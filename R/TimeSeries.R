@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -98,7 +98,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     )
     if (resultsInAndromeda$cohortCount %>%
       dplyr::summarise(n = dplyr::n()) %>%
-      dplyr::pull(n) == 0) {
+      dplyr::pull(.data$n) == 0) {
       warning("Please check if cohorts are instantiated. Exiting cohort time series.")
       return(NULL)
     }
@@ -123,7 +123,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         by = clock::duration_months(3)
       )
     ) %>%
-    dplyr::mutate(periodEnd = clock::add_months(x = periodBegin, n = 3) - 1) %>%
+    dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 3) - 1) %>%
     dplyr::mutate(calendarInterval = "q")
 
   calendarMonth <-
@@ -134,7 +134,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         by = clock::duration_months(1)
       )
     ) %>%
-    dplyr::mutate(periodEnd = clock::add_months(x = periodBegin, n = 1) - 1) %>%
+    dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1) %>%
     dplyr::mutate(calendarInterval = "m")
 
   calendarYear <-
@@ -145,7 +145,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         by = clock::duration_years(1)
       )
     ) %>%
-    dplyr::mutate(periodEnd = clock::add_years(x = periodBegin, n = 1) - 1) %>%
+    dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1) %>%
     dplyr::mutate(calendarInterval = "y")
 
   timeSeriesDateRange <- dplyr::tibble(
@@ -162,7 +162,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       timeSeriesDateRange
     ) %>% # calendarWeek
     dplyr::distinct() %>%
-    dplyr::arrange(periodBegin, periodEnd, calendarInterval) %>%
+    dplyr::arrange(.data$periodBegin, .data$periodEnd, .data$calendarInterval) %>%
     dplyr::mutate(timeId = dplyr::row_number())
 
   ParallelLogger::logTrace(" - Inserting calendar periods")
@@ -454,11 +454,11 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       by = c("timeId")
     ) %>%
     dplyr::arrange(
-      cohortId,
-      periodBegin,
-      calendarInterval,
-      seriesType,
-      periodBegin
+      .data$cohortId,
+      .data$periodBegin,
+      .data$calendarInterval,
+      .data$seriesType,
+      .data$periodBegin
     ) %>%
     dplyr::select(-"timeId") %>%
     dplyr::mutate(ageGroup = dplyr::if_else(
@@ -533,7 +533,7 @@ executeTimeSeriesDiagnostics <- function(connection,
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
     ) %>%
-      dplyr::arrange(cohortId)
+      dplyr::arrange(.data$cohortId)
 
     if (nrow(subset) > 0) {
       if (incremental &&

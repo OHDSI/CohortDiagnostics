@@ -1,4 +1,4 @@
-# Copyright 2023 Observational Health Data Sciences and Informatics
+# Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 #
@@ -128,11 +128,11 @@ recordTasksDone <-
         as.character(recordKeeping$timeStamp)
       if ("cohortId" %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
-          dplyr::mutate(cohortId = as.double(cohortId))
+          dplyr::mutate(cohortId = as.double(.data$cohortId))
       }
       if ("comparatorId" %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
-          dplyr::mutate(comparatorId = as.double(comparatorId))
+          dplyr::mutate(comparatorId = as.double(.data$comparatorId))
       }
       idx <- getKeyIndex(list(...), recordKeeping)
       if (length(idx) > 0) {
@@ -149,11 +149,12 @@ recordTasksDone <-
     readr::write_csv(x = recordKeeping, file = recordKeepingFile, na = "")
   }
 
+#' @noRd
 writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
   UseMethod("writeToCsv", data)
 }
 
-
+#' @noRd
 writeToCsv.default <- function(data, fileName, incremental = FALSE, ...) {
   colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
   if (incremental) {
@@ -186,6 +187,7 @@ writeToCsv.default <- function(data, fileName, incremental = FALSE, ...) {
   }
 }
 
+#' @noRd
 writeToCsv.tbl_Andromeda <-
   function(data, fileName, incremental = FALSE, ...) {
     if (incremental && file.exists(fileName)) {

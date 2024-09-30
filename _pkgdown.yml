@@ -1,5 +1,8 @@
+url: https://ohdsi.github.io/CohortDiagnostics/
+
 template:
-  params:
+  bootstrap: 5
+  bslib:
     bootswatch: cosmo
 
 home:
@@ -8,6 +11,7 @@ home:
     href: http://forums.ohdsi.org
 
 navbar:
+  bg: dark
   structure:
     right: [hades, github]
   components:

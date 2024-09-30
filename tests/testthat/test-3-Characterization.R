@@ -8,41 +8,6 @@ test_that("Execute and export characterization", {
     recordKeepingFile <- tempfile(fileext = "csv")
     dir.create(exportFolder)
     on.exit(unlink(exportFolder), add = TRUE)
-    cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
-    # Next create the tables on the database
-    CohortGenerator::createCohortTables(
-      connectionDetails = connectionDetails,
-      cohortTableNames = cohortTableNames,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      incremental = FALSE
-    )
-
-    on.exit(
-      {
-        CohortGenerator::dropCohortStatsTables(
-          connection = tConnection,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTableNames = cohortTableNames
-        )
-
-        DatabaseConnector::renderTranslateExecuteSql(tConnection,
-          "DROP TABLE @cohortDatabaseSchema.@cohortTable",
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable
-        )
-      },
-      add = TRUE
-    )
-
-    # Generate the cohort set
-    CohortGenerator::generateCohortSet(
-      connectionDetails = connectionDetails,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTableNames = cohortTableNames,
-      cohortDefinitionSet = cohortDefinitionSet,
-      incremental = FALSE
-    )
 
     # Required for function use
     cohortCounts <- computeCohortCounts(
@@ -73,7 +38,8 @@ test_that("Execute and export characterization", {
       incremental = TRUE,
       recordKeepingFile = recordKeepingFile,
       task = "runTemporalCohortCharacterization",
-      jobName = "Temporal Cohort characterization"
+      jobName = "Temporal Cohort characterization",
+      minCharacterizationMean = 0.3
     )
 
     # Check all files are created
@@ -121,7 +87,8 @@ test_that("Execute and export characterization", {
       incremental = TRUE,
       recordKeepingFile = recordKeepingFile,
       task = "runTemporalCohortCharacterization",
-      jobName = "Temporal Cohort characterization"
+      jobName = "Temporal Cohort characterization",
+      minCharacterizationMean = 0.3
     )
 
     # Check no time ids are NA/NULL
