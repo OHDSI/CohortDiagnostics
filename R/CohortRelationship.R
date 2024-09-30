@@ -214,7 +214,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
       targetChecksum = "checksum"
     ) %>%
     dplyr::distinct()
-  
+
   posibleCombinations <- allCohortIds %>%
     tidyr::crossing(allCohortIds %>%
       dplyr::rename(
