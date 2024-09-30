@@ -228,21 +228,20 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                seed = 64374,
                                seedArgs = NULL) {
   # collect arguments that were passed to cohort diagnostics at initiation
-  callingArgs <- formals(executeDiagnostics)
   callingArgsJson <-
     list(
-      runInclusionStatistics = callingArgs$runInclusionStatistics,
-      runIncludedSourceConcepts = callingArgs$runIncludedSourceConcepts,
-      runOrphanConcepts = callingArgs$runOrphanConcepts,
-      runTimeSeries = callingArgs$runTimeSeries,
-      runVisitContext = callingArgs$runVisitContext,
-      runBreakdownIndexEvents = callingArgs$runBreakdownIndexEvents,
-      runIncidenceRate = callingArgs$runIncidenceRate,
-      runTemporalCohortCharacterization = callingArgs$runTemporalCohortCharacterization,
-      minCellCount = callingArgs$minCellCount,
-      minCharacterizationMean = callingArgs$minCharacterizationMean,
-      incremental = callingArgs$incremental,
-      temporalCovariateSettings = callingArgs$temporalCovariateSettings
+      runInclusionStatistics = runInclusionStatistics,
+      runIncludedSourceConcepts = runIncludedSourceConcepts,
+      runOrphanConcepts = runOrphanConcepts,
+      runTimeSeries = runTimeSeries,
+      runVisitContext = runVisitContext,
+      runBreakdownIndexEvents = runBreakdownIndexEvents,
+      runIncidenceRate = runIncidenceRate,
+      runTemporalCohortCharacterization = runTemporalCohortCharacterization,
+      minCellCount = minCellCount,
+      minCharacterizationMean = minCharacterizationMean,
+      incremental = incremental,
+      temporalCovariateSettings = temporalCovariateSettings
     ) %>%
     RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
