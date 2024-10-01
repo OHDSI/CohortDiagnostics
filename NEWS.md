@@ -1,3 +1,8 @@
+CohortDiagnostics 3.3.1
+=======================
+
+* Concept synonym columns now inline with CDM definitions
+
 CohortDiagnostics 3.3.0
 =======================
 
