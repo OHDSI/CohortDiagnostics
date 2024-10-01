@@ -10,7 +10,7 @@ Introduction
 ============
 CohortDiagnostics is an R utility package for the development and evaluation of phenotype algorithms for OMOP CDM compliant data sets.
 This package provides a standard, end to end, set of analytics for understanding patient capture including data generation and result exploration through an R Shiny interface.
-Analytics computed include cohort characteristics, record counts, index event misclassification, captured observation windows and basic incidence proportions for age, gender and calendar year.
+Analytics computed include cohort characteristics, record counts, index event misclassification, captured observation windows and basic incidence rates and proportions for age, gender and calendar year (based crude data set wide metrics).
 Through the identification of errors, CohortDiagnostics enables the comparison of multiple candidate cohort definitions across one or more data sources, facilitating reproducible research.
 
 Features
