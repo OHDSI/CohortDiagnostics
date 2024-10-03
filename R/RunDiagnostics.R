@@ -700,7 +700,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       conceptCountsTable <- "#concept_counts"
     }
   } else {
-    if (conceptCountsTable == "#concept_counts") {
+    if (substr(conceptCountsTable, 1, 1) == "#") {
       stop("Temporary conceptCountsTable name. Please provide a valid external ConceptCountsTable name")
     }
     conceptCountsTableIsTemp <- FALSE
