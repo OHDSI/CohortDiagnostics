@@ -208,7 +208,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
                                cohortTable = "cohort",
                                cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
-                               conceptCountsTable = "#concept_counts",
                                vocabularyDatabaseSchema = cdmDatabaseSchema,
                                cohortIds = NULL,
                                cdmVersion = 5,
@@ -227,7 +226,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                irWashoutPeriod = 0,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental"),
-                               useExternalConceptCountsTable = FALSE,
+                               conceptCountsTable = "concept_counts",
                                runFeatureExtractionOnSample = FALSE,
                                sampleN = 1000,
                                seed = 64374,
@@ -694,7 +693,12 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
   
   # Defines variables and checks version of external concept counts table -----
-  if (!useExternalConceptCountsTable) {
+  checkConceptCountsTableExists <- DatabaseConnector::dbExistsTable(connection,
+                                                                    name = conceptCountsTable,
+                                                                    databaseSchema = cdmDatabaseSchema)
+  
+  
+  if (!checkConceptCountsTableExists) {
     conceptCountsTableIsTemp <- TRUE
     if (conceptCountsTable != "#concept_counts") {
       conceptCountsTable <- "#concept_counts"
@@ -705,7 +709,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
     }
     conceptCountsTableIsTemp <- FALSE
     conceptCountsTable <- conceptCountsTable
-    dataSourceInfo <- getCdmDataSourceInformation(connection = connection, cdmDatabaseSchema = cdmDatabaseSchema)
+    dataSourceInfo <- getCdmDataSourceInformation(connection = connection, 
+                                                  cdmDatabaseSchema = cdmDatabaseSchema)
     vocabVersion <- dataSourceInfo$vocabularyVersion
     vocabVersionExternalConceptCountsTable <- renderTranslateQuerySql(
       connection = connection,
@@ -756,7 +761,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
           minCellCount = minCellCount,
           conceptCountsDatabaseSchema = NULL,
           conceptCountsTable = conceptCountsTable,
-          conceptCountsTableIsTemp = TRUE,
+          conceptCountsTableIsTemp = conceptCountsTableIsTemp,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
           useExternalConceptCountsTable = useExternalConceptCountsTable,

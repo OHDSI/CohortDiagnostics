@@ -5,6 +5,7 @@ test_that("Creating and checking externalConceptCounts table", {
     connectionDetails <- createConnectionDetails(dbms= "sqlite", server = sql_lite_path)
     connection <- connect(connectionDetails)
     cdmDatabaseSchema <- "main"
+    conceptCountsTable <- "concept_counts"
     CohortDiagnostics::createConceptCountsTable(connectionDetails = connectionDetails,
                                                 cdmDatabaseSchema = cdmDatabaseSchema,
                                                 tempEmulationSchema = NULL,
@@ -15,6 +16,10 @@ test_that("Creating and checking externalConceptCounts table", {
     
     concept_counts_info <- querySql(connection, "PRAGMA table_info(concept_counts)")
     expect_equal(concept_counts_info$NAME, c( "concept_id", "concept_count", "concept_subjects", "vocabulary_version"))
+    checkConceptCountsTableExists <- DatabaseConnector::dbExistsTable(connection,
+                                                                      name = conceptCountsTable,
+                                                                      databaseSchema = cdmDatabaseSchema)
+    expect_true(checkConceptCountsTableExists)
     
     # Checking vocab version matches 
     useExternalConceptCountsTable <- TRUE
