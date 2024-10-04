@@ -698,6 +698,68 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                                                     databaseSchema = cdmDatabaseSchema)
   
   
+  if (substr(conceptCountsTable, 1, 1) == "#") {
+    conceptCountsTableIsTemp <- TRUE
+    if (conceptCountsTable != "#concept_counts") {
+      conceptCountsTable <- "#concept_counts"
+    }
+  } else {
+      conceptCountsTableIsTemp <- FALSE
+      conceptCountsTable <- conceptCountsTable
+      dataSourceInfo <- getCdmDataSourceInformation(connection = connection, 
+                                                    cdmDatabaseSchema = cdmDatabaseSchema)
+      vocabVersion <- dataSourceInfo$vocabularyVersion
+      vocabVersionExternalConceptCountsTable <- renderTranslateQuerySql(
+        connection = connection,
+        sql = "SELECT DISTINCT vocabulary_version FROM @work_database_schema.@concept_counts_table;",
+        work_database_schema = cohortDatabaseSchema,
+        concept_counts_table = conceptCountsTable,
+        snakeCaseToCamelCase = TRUE,
+        tempEmulationSchema = getOption("sqlRenderTempEmulationSchena")
+      )
+      if (!identical(vocabVersion, vocabVersionExternalConceptCountsTable[1,1])) {
+        stop(paste0("External concept counts table (", 
+                    vocabVersionExternalConceptCountsTable, 
+                    ") does not match database (", 
+                    vocabVersion, 
+                    "). Update concept_counts with createConceptCountsTable()"))
+      }
+  }
+  
+  
+  if (!checkConceptCountsTableExists) {
+    conceptCountsTableIsTemp <- TRUE
+    if (conceptCountsTable != "#concept_counts") {
+      conceptCountsTable <- "#concept_counts"
+    }
+  } else {
+    if (substr(conceptCountsTable, 1, 1) == "#") {
+      stop("Temporary conceptCountsTable name. Please provide a valid external ConceptCountsTable name")
+    }
+    conceptCountsTableIsTemp <- FALSE
+    conceptCountsTable <- conceptCountsTable
+    dataSourceInfo <- getCdmDataSourceInformation(connection = connection, 
+                                                  cdmDatabaseSchema = cdmDatabaseSchema)
+    vocabVersion <- dataSourceInfo$vocabularyVersion
+    vocabVersionExternalConceptCountsTable <- renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT DISTINCT vocabulary_version FROM @work_database_schema.@concept_counts_table;",
+      work_database_schema = cohortDatabaseSchema,
+      concept_counts_table = conceptCountsTable,
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = getOption("sqlRenderTempEmulationSchena")
+    )
+    if (!identical(vocabVersion, vocabVersionExternalConceptCountsTable[1,1])) {
+      stop(paste0("External concept counts table (", 
+                  vocabVersionExternalConceptCountsTable, 
+                  ") does not match database (", 
+                  vocabVersion, 
+                  "). Update concept_counts with createConceptCountsTable()"))
+    }
+  }
+  
+  # ----
+  
   if (!checkConceptCountsTableExists) {
     conceptCountsTableIsTemp <- TRUE
     if (conceptCountsTable != "#concept_counts") {
