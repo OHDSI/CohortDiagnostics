@@ -321,7 +321,38 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
   return(results)
 }
 
-executeCohortCharacterization <- function(connection,
+#' Title
+#'
+#' @param connection 
+#' @param databaseId 
+#' @param exportFolder 
+#' @param cdmDatabaseSchema 
+#' @param cohortDatabaseSchema 
+#' @param cohortTable 
+#' @param covariateSettings 
+#' @param tempEmulationSchema 
+#' @param cdmVersion 
+#' @param cohorts 
+#' @param cohortCounts 
+#' @param minCellCount 
+#' @param instantiatedCohorts 
+#' @param incremental 
+#' @param recordKeepingFile 
+#' @param task 
+#' @param jobName 
+#' @param covariateValueFileName 
+#' @param covariateValueContFileName 
+#' @param covariateRefFileName 
+#' @param analysisRefFileName 
+#' @param timeRefFileName 
+#' @param minCharacterizationMean 
+#' @param batchSize 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+runTemporalCohortCharacterization <- function(connection,
                                           databaseId,
                                           exportFolder,
                                           cdmDatabaseSchema,

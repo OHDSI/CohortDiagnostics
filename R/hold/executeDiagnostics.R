@@ -739,7 +739,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   # The remainder of the analyses will only run on cohorts with counts
   cohortDefinitionSet <- cohortDefinitionSet %>%
     dplyr::filter(.data$cohortId %in% instantiatedCohorts)
-browser()
+
   # Inclusion statistics -----------------------------------------------------------------------
   if (runInclusionStatistics) {
     timeExecution(
@@ -748,7 +748,7 @@ browser()
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        getInclusionStats(
+        runInclusionStatistics(
           connection = connection,
           exportFolder = exportFolder,
           databaseId = databaseId,

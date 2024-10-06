@@ -14,16 +14,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-getInclusionStats <- function(connection,
-                              exportFolder,
-                              databaseId,
-                              cohortDefinitionSet,
-                              cohortDatabaseSchema,
-                              cohortTableNames,
-                              incremental,
-                              minCellCount,
-                              recordKeepingFile) {
+#' Title
+#'
+#' @param connection 
+#' @param exportFolder 
+#' @param databaseId 
+#' @param cohortDefinitionSet 
+#' @param cohortDatabaseSchema 
+#' @param cohortTableNames 
+#' @param incremental 
+#' @param minCellCount 
+#' @param recordKeepingFile 
+#'
+#' @return
+#' @export
+runInclusionStatistics <- function(connection,
+                                   exportFolder,
+                                   databaseId,
+                                   cohortDefinitionSet,
+                                   cohortDatabaseSchema,
+                                   cohortTableNames,
+                                   incremental,
+                                   minCellCount,
+                                   recordKeepingFile) {
+  
   ParallelLogger::logInfo("Fetching inclusion statistics from files")
+  
   subset <- subsetToRequiredCohorts(
     cohorts = cohortDefinitionSet,
     task = "runInclusionStatistics",
@@ -38,27 +54,23 @@ getInclusionStats <- function(connection,
       length(cohortDefinitionSet$cohortId) - nrow(subset)
     ))
   }
+  
   if (nrow(subset) > 0) {
     ParallelLogger::logInfo("Exporting inclusion rules with CohortGenerator")
 
-    timeExecution(exportFolder,
-      "getInclusionStatsCohortGenerator",
-      parent = "getInclusionStats",
-      expr = {
-        CohortGenerator::insertInclusionRuleNames(
-          connection = connection,
-          cohortDefinitionSet = subset,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortInclusionTable = cohortTableNames$cohortInclusionTable
-        )
-
-        stats <- CohortGenerator::getCohortStats(
-          connection = connection,
-          cohortTableNames = cohortTableNames,
-          cohortDatabaseSchema = cohortDatabaseSchema
-        )
-      }
+    CohortGenerator::insertInclusionRuleNames(
+      connection = connection,
+      cohortDefinitionSet = subset,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortInclusionTable = cohortTableNames$cohortInclusionTable
     )
+
+    stats <- CohortGenerator::getCohortStats(
+      connection = connection,
+      cohortTableNames = cohortTableNames,
+      cohortDatabaseSchema = cohortDatabaseSchema
+    )
+    
     if (!is.null(stats)) {
       if ("cohortInclusionTable" %in% (names(stats))) {
         cohortInclusion <- makeDataExportable(
@@ -74,6 +86,7 @@ getInclusionStats <- function(connection,
           cohortId = subset$cohortId
         )
       }
+      
       if ("cohortInclusionStatsTable" %in% (names(stats))) {
         cohortIncStats <- makeDataExportable(
           x = stats$cohortInclusionStatsTable,
@@ -88,6 +101,7 @@ getInclusionStats <- function(connection,
           cohortId = subset$cohortId
         )
       }
+      
       if ("cohortInclusionResultTable" %in% (names(stats))) {
         cohortIncResult <- makeDataExportable(
           x = stats$cohortInclusionResultTable,
@@ -102,6 +116,7 @@ getInclusionStats <- function(connection,
           cohortId = subset$cohortId
         )
       }
+      
       if ("cohortSummaryStatsTable" %in% (names(stats))) {
         cohortSummaryStats <- makeDataExportable(
           x = stats$cohortSummaryStatsTable,

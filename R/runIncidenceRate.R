@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-getIncidenceRate <- function(connectionDetails = NULL,
-                             connection = NULL,
+getIncidenceRate <- function(connection = NULL,
                              cohortDatabaseSchema,
                              cohortTable,
                              cdmDatabaseSchema,
@@ -25,11 +24,6 @@ getIncidenceRate <- function(connectionDetails = NULL,
                              washoutPeriod = 365,
                              cohortId) {
   start <- Sys.time()
-
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
   
   # check that cohort is instantiated
   cohortCount <-
@@ -202,7 +196,25 @@ aggregateIr <- function(ratesSummary, aggregateList) {
   }
 }
 
-computeIncidenceRates <- function(connection,
+#' Title
+#'
+#' @param connection 
+#' @param tempEmulationSchema 
+#' @param cdmDatabaseSchema 
+#' @param cohortDatabaseSchema 
+#' @param cohortTable 
+#' @param databaseId 
+#' @param exportFolder 
+#' @param minCellCount 
+#' @param cohorts 
+#' @param instantiatedCohorts 
+#' @param recordKeepingFile 
+#' @param washoutPeriod 
+#' @param incremental 
+#'
+#' @return
+#' @export
+runIncidenceRate <- function(connection,
                                   tempEmulationSchema,
                                   cdmDatabaseSchema,
                                   cohortDatabaseSchema,
@@ -264,8 +276,7 @@ computeIncidenceRates <- function(connection,
       return(data)
     }
 
-    data <-
-      lapply(split(subset, subset$cohortId), runIncidenceRate)
+    data <-lapply(split(subset, subset$cohortId), runIncidenceRate)
     data <- dplyr::bind_rows(data)
     data <- makeDataExportable(
       x = data,

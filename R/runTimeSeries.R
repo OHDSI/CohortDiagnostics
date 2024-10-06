@@ -14,60 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-#' Given a set of instantiated cohorts get time series for the cohorts.
-#'
-#' @description
-#' This function first generates a calendar period table, that has
-#' calendar intervals between the \code{timeSeriesMinDate} and \code{timeSeriesMaxDate}.
-#' Calendar Month, Quarter and year are supported.
-#' For each of the calendar interval, time series data are computed. The returned
-#' object is a R dataframe that will need to be converted to a time series object
-#' to perform time series analysis.
-#'
-#' Data Source time series: computes time series at the data source level i.e. observation
-#' period table. This output is NOT limited to individuals in the cohort table
-#' but is for ALL people in the datasource (i.e. present in observation period table)
-#'
-#' @template Connection
-#'
-#' @template CohortDatabaseSchema
-#'
-#' @template CdmDatabaseSchema
-#'
-#' @template TempEmulationSchema
-#'
-#' @template CohortTable
-#'
-#' @param timeSeriesMinDate      (optional) Minimum date for time series. Default value January 1st 1980.
-#'
-#' @param timeSeriesMaxDate      (optional) Maximum date for time series. Default value System date.
-#'
-#' @param stratifyByGender       Do you want to stratify by Gender
-#'
-#' @param stratifyByAgeGroup     Do you want to stratify by Age group
-#'
-#' @param cohortIds              A vector of one or more Cohort Ids to compute time distribution for.
-#'
-#' @param runCohortTimeSeries         Generate and export the cohort level time series?
-#'
-#' @param runDataSourceTimeSeries     Generate and export the Data source level time series? i.e.
-#'                                    using all persons found in observation period table.
-#'
-#' @export
-runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
-                                           connection = NULL,
-                                           tempEmulationSchema = NULL,
-                                           cdmDatabaseSchema,
-                                           cohortDatabaseSchema = cdmDatabaseSchema,
-                                           cohortTable = "cohort",
-                                           runCohortTimeSeries = TRUE,
-                                           runDataSourceTimeSeries = FALSE,
-                                           timeSeriesMinDate = as.Date("1980-01-01"),
-                                           timeSeriesMaxDate = as.Date(Sys.Date()),
-                                           stratifyByGender = TRUE,
-                                           stratifyByAgeGroup = TRUE,
-                                           cohortIds = NULL) {
+getTimeSeries <- function(
+    connectionDetails = NULL,
+    connection = NULL,
+    tempEmulationSchema = NULL,
+    cdmDatabaseSchema,
+    cohortDatabaseSchema = cdmDatabaseSchema,
+    cohortTable = "cohort",
+    runCohortTimeSeries = TRUE,
+    runDataSourceTimeSeries = FALSE,
+    timeSeriesMinDate = as.Date("1980-01-01"),
+    timeSeriesMaxDate = as.Date(Sys.Date()),
+    stratifyByGender = TRUE,
+    stratifyByAgeGroup = TRUE,
+    cohortIds = NULL) {
+  
   if (all(!runCohortTimeSeries, !runDataSourceTimeSeries)) {
     warning(
       " - Both Cohort Time Series and Data Source Time Series are set to FALSE. Exiting time series diagnostics."
@@ -503,22 +464,57 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
 }
 
 
-executeTimeSeriesDiagnostics <- function(connection,
-                                         tempEmulationSchema,
-                                         cdmDatabaseSchema,
-                                         cohortDatabaseSchema,
-                                         cohortTable,
-                                         cohortDefinitionSet,
-                                         runCohortTimeSeries = TRUE,
-                                         runDataSourceTimeSeries = FALSE,
-                                         databaseId,
-                                         exportFolder,
-                                         minCellCount,
-                                         instantiatedCohorts,
-                                         incremental,
-                                         recordKeepingFile,
-                                         observationPeriodDateRange,
-                                         batchSize = getOption("CohortDiagnostics-TimeSeries-batch-size", default = 20)) {
+
+#' Given a set of instantiated cohorts get time series for the cohorts.
+#'
+#' @description
+#' This function first generates a calendar period table, that has
+#' calendar intervals between the \code{timeSeriesMinDate} and \code{timeSeriesMaxDate}.
+#' Calendar Month, Quarter and year are supported.
+#' For each of the calendar interval, time series data are computed. 
+#'
+#' Data Source time series: computes time series at the data source level i.e. observation
+#' period table. This output is NOT limited to individuals in the cohort table
+#' but is for ALL people in the datasource (i.e. present in observation period table)
+#' 
+#' @template Connection
+#' @template CohortDatabaseSchema
+#' @template CdmDatabaseSchema
+#' @template TempEmulationSchema
+#' @template CohortTable
+#' @param cohortDefinitionSet 
+#' @param runCohortTimeSeries         Generate and export the cohort level time series?
+#' @param runDataSourceTimeSeries     Generate and export the Data source level time series? i.e.
+#'                                    using all persons found in observation period table.
+#' @param databaseId 
+#' @param exportFolder 
+#' @param minCellCount 
+#' @param instantiatedCohorts 
+#' @param incremental 
+#' @param recordKeepingFile 
+#' @param observationPeriodDateRange 
+#' @param batchSize 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+runTimeSeries <- function(connection,
+                          tempEmulationSchema,
+                          cdmDatabaseSchema,
+                          cohortDatabaseSchema,
+                          cohortTable,
+                          cohortDefinitionSet,
+                          runCohortTimeSeries = TRUE,
+                          runDataSourceTimeSeries = FALSE,
+                          databaseId,
+                          exportFolder,
+                          minCellCount,
+                          instantiatedCohorts,
+                          incremental,
+                          recordKeepingFile,
+                          observationPeriodDateRange,
+                          batchSize = getOption("CohortDiagnostics-TimeSeries-batch-size", default = 20)) {
   if (all(!runCohortTimeSeries, !runDataSourceTimeSeries)) {
     warning(
       "Both Datasource time series and cohort time series are set to FALSE. Skippping executeTimeSeriesDiagnostics."
@@ -567,12 +563,12 @@ executeTimeSeriesDiagnostics <- function(connection,
         cohortIds <- subset[start:end, ]$cohortId %>% unique()
         timeExecution(
           exportFolder,
-          "runCohortTimeSeriesDiagnostics",
+          "",
           cohortIds,
-          parent = "executeTimeSeriesDiagnostics",
+          parent = "",
           expr = {
             data <-
-              runCohortTimeSeriesDiagnostics(
+              getTimeSeries(
                 connection = connection,
                 tempEmulationSchema = tempEmulationSchema,
                 cohortDatabaseSchema = cohortDatabaseSchema,
@@ -632,12 +628,12 @@ executeTimeSeriesDiagnostics <- function(connection,
 
     timeExecution(
       exportFolder,
-      "runCohortTimeSeriesDiagnostics",
+      "",
       -44819062,
-      parent = "executeTimeSeriesDiagnostics",
+      parent = "",
       expr = {
         data <-
-          runCohortTimeSeriesDiagnostics(
+          getTimeSeries(
             connection = connection,
             tempEmulationSchema = tempEmulationSchema,
             cdmDatabaseSchema = cdmDatabaseSchema,
