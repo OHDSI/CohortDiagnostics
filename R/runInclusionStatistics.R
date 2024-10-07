@@ -41,20 +41,17 @@ runInclusionStatistics <- function(connection,
   
   ParallelLogger::logInfo("Fetching inclusion statistics from files")
   
+  subset <- subsetToRequiredCohorts(
+    cohorts = cohortDefinitionSet,
+    task = "runInclusionStatistics",
+    incremental = incremental,
+    recordKeepingFile = recordKeepingFile
+  )
   if (incremental) {
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohortDefinitionSet,
-      task = "runInclusionStatistics",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    )
-    
     numConceptsToSkip <- length(cohortDefinitionSet$cohortId) - nrow(subset)
     if (numConceptsToSkip > 0) {
       ParallelLogger::logInfo(sprintf("Skipping %s cohorts in incremental mode.", numConceptsToSkip))
     }
-  } else {
-    subset <- cohortDefinitionSet
   }
   
   if (nrow(subset) > 0) {
@@ -74,66 +71,29 @@ runInclusionStatistics <- function(connection,
     )
     
     if (!is.null(stats)) {
-      if ("cohortInclusionTable" %in% (names(stats))) {
-        cohortInclusion <- makeDataExportable(
-          x = stats$cohortInclusionTable,
-          tableName = "cohort_inclusion",
-          databaseId = databaseId,
-          minCellCount = minCellCount
-        )
-        writeToCsv(
-          data = cohortInclusion,
-          fileName = file.path(exportFolder, "cohort_inclusion.csv"),
-          incremental = incremental,
-          cohortId = subset$cohortId
-        )
-      }
+      cohortInclusionList <- list("cohortInclusionTable" = "cohort_inclusion",
+                                  "cohortInclusionStatsTable" = "cohort_inc_stats",
+                                  "cohortInclusionResultTable" = "cohort_inc_result",
+                                  "cohortSummaryStatsTable" = "cohort_summary_stats")
       
-      if ("cohortInclusionStatsTable" %in% (names(stats))) {
-        cohortIncStats <- makeDataExportable(
-          x = stats$cohortInclusionStatsTable,
-          tableName = "cohort_inc_stats",
-          databaseId = databaseId,
-          minCellCount = minCellCount
-        )
-        writeToCsv(
-          data = cohortIncStats,
-          fileName = file.path(exportFolder, "cohort_inc_stats.csv"),
-          incremental = incremental,
-          cohortId = subset$cohortId
-        )
-      }
+      lapply(names(cohortInclusionList), FUN = function(cohortInclusionName) {
+        if (cohortInclusionName %in% (names(stats))) {
+          cohortTableName <- cohortInclusionList[[cohortInclusionName]]
+          data <- makeDataExportable(
+            x = stats[[cohortInclusionName]],
+            tableName = cohortTableName,
+            databaseId = databaseId,
+            minCellCount = minCellCount
+          )
+          writeToCsv(
+            data = data,
+            fileName = file.path(exportFolder, paste0(cohortTableName, ".csv")),
+            incremental = incremental,
+            cohortId = subset$cohortId
+          )
+        }
+      })
       
-      if ("cohortInclusionResultTable" %in% (names(stats))) {
-        cohortIncResult <- makeDataExportable(
-          x = stats$cohortInclusionResultTable,
-          tableName = "cohort_inc_result",
-          databaseId = databaseId,
-          minCellCount = minCellCount
-        )
-        writeToCsv(
-          data = cohortIncResult,
-          fileName = file.path(exportFolder, "cohort_inc_result.csv"),
-          incremental = incremental,
-          cohortId = subset$cohortId
-        )
-      }
-      
-      if ("cohortSummaryStatsTable" %in% (names(stats))) {
-        cohortSummaryStats <- makeDataExportable(
-          x = stats$cohortSummaryStatsTable,
-          tableName = "cohort_summary_stats",
-          databaseId = databaseId,
-          minCellCount = minCellCount
-        )
-        writeToCsv(
-          data = cohortSummaryStats,
-          fileName = file.path(exportFolder, "cohort_summary_stats.csv"),
-          incremental = incremental,
-          cohortId = subset$cohortId
-        )
-      }
-
       recordTasksDone(
         cohortId = subset$cohortId,
         task = "runInclusionStatistics",
