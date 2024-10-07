@@ -76,7 +76,7 @@ loadTestCohortDefinitionSet <- function(cohortIds = NULL, useSubsets = TRUE) {
 
   cohortDefinitionSet$checksum <- CohortGenerator::computeChecksum(cohortDefinitionSet$sql)
 
-  return(cohortDefinitionSet)
+  return(dplyr::tibble(cohortDefinitionSet))
 }
 
 #' Use to create test fixture for shiny tests
