@@ -14,20 +14,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Title
+#' Runs inclusion statistics on given cohort definitions and exports these.
+#' 
+#' @description
+#' This function takes a cohortDefinitionSet that inclusions the JSON
+#' representation of each cohort. If there are inclusion rules in the JSON, it will write these 
+#' to the cohort inclusion table. Next, cohort (inclusion) statistics are requested
+#' from the database and written to csv files on disk. 
+#' These are the files written to disk, if available:
+#'  * cohort_inc_result.csv
+#'  * cohort_inc_stats.csv
+#'  * cohort_inclusion.csv
+#'  * cohort_summary_stats.csv
 #' 
 #' @template Connection
 #' @template CohortDatabaseSchema
 #' 
-#' @param exportFolder 
-#' @param databaseId 
-#' @param cohortDefinitionSet
-#' @param cohortTableNames 
-#' @param incremental 
-#' @param minCellCount 
-#' @param recordKeepingFile 
+#' @param exportFolder The folder where the output will be exported to.
+#' @param databaseId A short string for identifying the database (e.g. 'Synpuf').
+#' @param cohortDefinitionSet Data.frame of cohorts must include columns cohortId, cohortName, json, sql
+#' @param cohortTableNames Cohort Table names used by CohortGenerator package
+#' @param incremental Create only cohort diagnostics that haven't been created before?
+#' @param minCellCount The minimum cell count for fields contains person counts or fractions.
+#' @param recordKeepingFile File that keeps a record of cohorts that have been created previously
 #'
-#' @return
+#' @return None, it will write csv files to disk
 #' @export
 runInclusionStatistics <- function(connection,
                                    exportFolder,
@@ -63,19 +74,20 @@ runInclusionStatistics <- function(connection,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortInclusionTable = cohortTableNames$cohortInclusionTable
     )
+    
+    cohortInclusionList <- list("cohortInclusionTable" = "cohort_inclusion",
+                                "cohortInclusionStatsTable" = "cohort_inc_stats",
+                                "cohortInclusionResultTable" = "cohort_inc_result",
+                                "cohortSummaryStatsTable" = "cohort_summary_stats")
 
     stats <- CohortGenerator::getCohortStats(
       connection = connection,
       cohortTableNames = cohortTableNames,
-      cohortDatabaseSchema = cohortDatabaseSchema
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      outputTables = names(cohortInclusionList)
     )
     
     if (!is.null(stats)) {
-      cohortInclusionList <- list("cohortInclusionTable" = "cohort_inclusion",
-                                  "cohortInclusionStatsTable" = "cohort_inc_stats",
-                                  "cohortInclusionResultTable" = "cohort_inc_result",
-                                  "cohortSummaryStatsTable" = "cohort_summary_stats")
-      
       lapply(names(cohortInclusionList), FUN = function(cohortInclusionName) {
         if (cohortInclusionName %in% (names(stats))) {
           cohortTableName <- cohortInclusionList[[cohortInclusionName]]
