@@ -45,6 +45,7 @@ getVisitContext <- function(connectionDetails = NULL,
     cohort_table = cohortTable,
     cohort_ids = cohortIds
   )
+  
   DatabaseConnector::executeSql(connection, sql)
   sql <- "SELECT * FROM @visit_context_table;"
   visitContext <-
@@ -57,9 +58,24 @@ getVisitContext <- function(connectionDetails = NULL,
     )
 
   if (!is.null(conceptIdTable)) {
+    
+    createTablesql <- "IF OBJECT_ID('@unique_concept_id_table', 'U') IS NULL CREATE TABLE @unique_concept_id_table (concept_id BIGINT);"
+    
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = createTablesql,
+      tempEmulationSchema = tempEmulationSchema,
+      unique_concept_id_table = conceptIdTable,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+    
     sql <- "INSERT INTO @unique_concept_id_table (concept_id)
             SELECT DISTINCT visit_concept_id
-            FROM @visit_context_table;"
+            FROM @visit_context_table
+            LEFT JOIN @unique_concept_id_table ON @unique_concept_id_table.concept_id = @visit_context_table.visit_concept_id
+            WHERE @unique_concept_id_table.concept_id is NULL;"
+            
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sql,
@@ -70,6 +86,7 @@ getVisitContext <- function(connectionDetails = NULL,
       reportOverallTime = FALSE
     )
   }
+  
   sql <-
     "TRUNCATE TABLE @visit_context_table;\nDROP TABLE @visit_context_table;"
   DatabaseConnector::renderTranslateExecuteSql(
@@ -90,6 +107,8 @@ getVisitContext <- function(connectionDetails = NULL,
   )
   return(visitContext)
 }
+
+
 
 executeVisitContextDiagnostics <- function(connection,
                                            tempEmulationSchema,
@@ -120,6 +139,7 @@ executeVisitContextDiagnostics <- function(connection,
       length(instantiatedCohorts) - nrow(subset)
     ))
   }
+  
   if (nrow(subset) > 0) {
     data <- getVisitContext(
       connection = connection,
