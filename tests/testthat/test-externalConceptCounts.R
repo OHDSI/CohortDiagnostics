@@ -15,7 +15,10 @@ test_that("Creating and checking externalConceptCounts table", {
                                                 removeCurrentTable = TRUE)
     
     concept_counts_info <- querySql(connection, "PRAGMA table_info(concept_counts)")
-    expect_equal(concept_counts_info$NAME, c( "concept_id", "concept_count", "concept_subjects", "vocabulary_version"))
+    expect_equal(concept_counts_info$NAME, c("concept_id", 
+                                             "concept_count", 
+                                             "concept_subjects", 
+                                             "vocabulary_version"))
     checkConceptCountsTableExists <- DatabaseConnector::dbExistsTable(connection,
                                                                       name = conceptCountsTable,
                                                                       databaseSchema = cdmDatabaseSchema)

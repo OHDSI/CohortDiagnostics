@@ -732,9 +732,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   )
 
   # Concept set diagnostics -----------------------------------------------
-  if (runIncludedSourceConcepts ||
-    runOrphanConcepts ||
-    runBreakdownIndexEvents) {
+  if (runIncludedSourceConcepts || runOrphanConcepts || runBreakdownIndexEvents) {
     timeExecution(
       exportFolder,
       taskName = "runConceptSetDiagnostics",
