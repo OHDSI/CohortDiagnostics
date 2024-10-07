@@ -2,12 +2,12 @@ library(CohortDiagnostics)
 library(testthat)
 
 dbmsToTest <- c(
-  # "sqlite",
-  "duckdb" #,
-  # "postgresql"
-  # "redshift"
+  "sqlite"#,
+  # "duckdb",
+  # "postgresql",
+  # "redshift",
   # "sql server",
-  # "oracle",
+  # "oracle"
 )
 
 # TODO: add remaining dbms
@@ -59,7 +59,7 @@ testServers <- list()
 if ("sqlite" %in% dbmsToTest) {
   
   testServers[["sqlite"]] <- list(
-    connectionDetails <- Eunomia::getEunomiaConnectionDetails(),
+    connectionDetails = Eunomia::getEunomiaConnectionDetails(),
     cdmDatabaseSchema = "main",
     cohortDatabaseSchema = "main",
     vocabularyDatabaseSchema = "main",
@@ -207,6 +207,7 @@ if ("sql server" %in% dbmsToTest) {
 
 # generate cohorts on databases if they don't already exist
 # If they already exist we skip generation and use what is already in the database
+
 for (nm in names(testServers)) {
   server <- testServers[[nm]]
   con <- DatabaseConnector::connect(server$connectionDetails)
