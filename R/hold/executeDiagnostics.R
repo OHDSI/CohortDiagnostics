@@ -151,6 +151,22 @@ getDefaultCovariateSettings <- function() {
 #' @param seedArgs                    List. Additional arguments to pass to the sampling function.
 #'                                    This can be used to control aspects of the sampling process beyond the seed and sample size.
 #'
+<<<<<<< HEAD:R/RunDiagnostics.R
+=======
+#' @param sampleIdentifierExpression Character. An expression that generates unique identifiers for each sample.
+#'                                   This expression can use the variables 'cohortId' and 'seed'.
+#'                                   Default is "cohortId * 1000 + seed", which ensures unique identifiers
+#'                                   as long as there are fewer than 1000 cohorts.
+#'                                   
+#' @param useAchilles                Logical. Should the pre-computed Achilles analyses be used to get concept counts? TRUE or FALSE (default)
+#'
+#' @param achillesDatabaseSchema     Character. The name of the schema where the Achilles results tables are located. 
+#'                                   Require if `useAchilles` is TRUE and ignored otherwise.
+#'                                   
+#' @param workDatabaseSchema         Character. The name of a schema where the user has write access. Intermediate tables for concept counts 
+#'                                   and orphan concepts will be created in this schema if supplied. If NULL (default) intermediate tables will
+#'                                   be created as temporary tables.                        
+>>>>>>> darwin_sprint:R/hold/executeDiagnostics.R
 #' @examples
 #' \dontrun{
 #' # Load cohorts (assumes that they have already been instantiated)
@@ -230,23 +246,30 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runFeatureExtractionOnSample = FALSE,
                                sampleN = 1000,
                                seed = 64374,
+<<<<<<< HEAD:R/RunDiagnostics.R
                                seedArgs = NULL) {
+=======
+                               seedArgs = NULL,
+                               sampleIdentifierExpression = "cohortId * 1000 + seed",
+                               useAchilles = FALSE, 
+                               achillesDatabaseSchema = NULL,
+                               workDatabaseSchema = NULL) {
+>>>>>>> darwin_sprint:R/hold/executeDiagnostics.R
   # collect arguments that were passed to cohort diagnostics at initiation
-  callingArgs <- formals(executeDiagnostics)
   callingArgsJson <-
     list(
-      runInclusionStatistics = callingArgs$runInclusionStatistics,
-      runIncludedSourceConcepts = callingArgs$runIncludedSourceConcepts,
-      runOrphanConcepts = callingArgs$runOrphanConcepts,
-      runTimeSeries = callingArgs$runTimeSeries,
-      runVisitContext = callingArgs$runVisitContext,
-      runBreakdownIndexEvents = callingArgs$runBreakdownIndexEvents,
-      runIncidenceRate = callingArgs$runIncidenceRate,
-      runTemporalCohortCharacterization = callingArgs$runTemporalCohortCharacterization,
-      minCellCount = callingArgs$minCellCount,
-      minCharacterizationMean = callingArgs$minCharacterizationMean,
-      incremental = callingArgs$incremental,
-      temporalCovariateSettings = callingArgs$temporalCovariateSettings
+      runInclusionStatistics = runInclusionStatistics,
+      runIncludedSourceConcepts = runIncludedSourceConcepts,
+      runOrphanConcepts = runOrphanConcepts,
+      runTimeSeries = runTimeSeries,
+      runVisitContext = runVisitContext,
+      runBreakdownIndexEvents = runBreakdownIndexEvents,
+      runIncidenceRate = runIncidenceRate,
+      runTemporalCohortCharacterization = runTemporalCohortCharacterization,
+      minCellCount = minCellCount,
+      minCharacterizationMean = minCharacterizationMean,
+      incremental = incremental,
+      temporalCovariateSettings = temporalCovariateSettings
     ) %>%
     RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
@@ -297,6 +320,10 @@ executeDiagnostics <- function(cohortDefinitionSet,
     ),
     add = errorMessage
   )
+  cohortDefinitionSet <- dplyr::tibble(cohortDefinitionSet) # for better printing
+  
+  checkmate::assertIntegerish(cohortIds, lower = 0, any.missing = FALSE, null.ok = TRUE, add = errorMessage)
+  checkmate::assertSubset(cohortIds, cohortDefinitionSet$cohortId, add = errorMessage)
 
   cohortTable <- cohortTableNames$cohortTable
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
@@ -353,27 +380,34 @@ executeDiagnostics <- function(cohortDefinitionSet,
       add = errorMessage
     )
   }
-  checkmate::reportAssertions(collection = errorMessage)
-
-  errorMessage <-
-    createIfNotExist(
-      type = "folder",
-      name = exportFolder,
-      errorMessage = errorMessage
-    )
+  
+  checkmate::assertLogical(useAchilles, len = 1, any.missing = FALSE, add = errorMessage)
+  
+  if (isTRUE(useAchilles)) {
+    checkmate::assertCharacter(achillesDatabaseSchema, len = 1, any.missing = FALSE, add = errorMessage)
+  }
+  
+  # Create output and incremental folders. check that we have write access.
+  if (!file.exists(gsub("/$", "", exportFolder))) {
+    dir.create(name, recursive = TRUE)
+    ParallelLogger::logInfo("Created export folder", exportFolder)
+  }
+  checkmate::assertDirectory(exportFolder, access = "w", add = errorMessage)
 
   if (incremental) {
-    errorMessage <-
-      createIfNotExist(
-        type = "folder",
-        name = incrementalFolder,
-        errorMessage = errorMessage
-      )
+    if (!file.exists(gsub("/$", "", exportFolder))) {
+      dir.create(name, recursive = TRUE)
+      ParallelLogger::logInfo("Created incremental folder", incrementalFolder)
+    }
+    checkmate::assertDirectory(incrementalFolder, access = "w", add = errorMessage)
   }
 
   if (is(temporalCovariateSettings, "covariateSettings")) {
     temporalCovariateSettings <- list(temporalCovariateSettings)
   }
+  
+  checkmate::reportAssertions(collection = errorMessage)
+  
   # All temporal covariate settings objects must be covariateSettings
   checkmate::assert_true(all(lapply(temporalCovariateSettings, class) == c("covariateSettings")), add = errorMessage)
 
@@ -439,7 +473,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       )
     for (p1 in requiredTemporalPairs) {
       found <- FALSE
-      for (i in 1:length(temporalCovariateSettings[[1]]$temporalStartDays)) {
+      for (i in seq_along(temporalCovariateSettings[[1]]$temporalStartDays)) {
         p2 <- c(
           temporalCovariateSettings[[1]]$temporalStartDays[i],
           temporalCovariateSettings[[1]]$temporalEndDays[i]
@@ -468,14 +502,16 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (nrow(cohortDefinitionSet) == 0) {
     stop("No cohorts specified")
   }
-  cohortTableColumnNamesObserved <- colnames(cohortDefinitionSet) %>%
-    sort()
+  
+  cohortTableColumnNamesObserved <- sort(colnames(cohortDefinitionSet))
+  
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
     dplyr::filter(.data$tableName == "cohort") %>%
     dplyr::pull(.data$columnName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     sort()
+  
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
     dplyr::filter(.data$tableName == "cohort") %>%
@@ -486,10 +522,12 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   expectedButNotObsevered <-
     setdiff(x = cohortTableColumnNamesExpected, y = cohortTableColumnNamesObserved)
+  
   if (length(expectedButNotObsevered) > 0) {
     requiredButNotObsevered <-
       setdiff(x = cohortTableColumnNamesRequired, y = cohortTableColumnNamesObserved)
   }
+  
   obseveredButNotExpected <-
     setdiff(x = cohortTableColumnNamesObserved, y = cohortTableColumnNamesExpected)
 
@@ -626,24 +664,50 @@ executeDiagnostics <- function(cohortDefinitionSet,
     vocabularyVersionCdm = cdmSourceInformation$vocabularyVersion,
     vocabularyVersion = vocabularyVersion
   )
+  
   # Create concept table ------------------------------------------
-  createConceptTable(connection, tempEmulationSchema)
+  ParallelLogger::logTrace("Creating concept ID table for tracking concepts used in diagnostics")
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = "DROP TABLE IF EXISTS #concept_ids; CREATE TABLE #concept_ids (concept_id BIGINT);",
+    progressBar = FALSE,
+    reportOverallTime = FALSE,
+    tempEmulationSchema = tempEmulationSchema
+  )
 
   # Counting cohorts -----------------------------------------------------------------------
   timeExecution(
     exportFolder,
-    taskName = "getInclusionStats",
+    taskName = "getCohortCounts",
     cohortIds = cohortIds,
     parent = "executeDiagnostics",
     expr = {
-      cohortCounts <- computeCohortCounts(
+      ParallelLogger::logInfo("Counting cohort records and subjects")
+      cohortCounts <- CohortGenerator::getCohortCounts(
         connection = connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
-        cohorts = cohortDefinitionSet,
-        exportFolder = exportFolder,
+        cohortIds = cohortIds,
+        cohortDefinitionSet = cohortDefinitionSet,
+        databaseId = databaseId
+      )
+      
+      if (sum(cohortCounts$cohortEntries) == 0) {
+        stop("Cohort table is empty")
+      }
+      
+      cohortCounts <- makeDataExportable(
+        x = cohortCounts,
+        tableName = "cohort_count",
         minCellCount = minCellCount,
         databaseId = databaseId
+      )
+      
+      writeToCsv(
+        data = cohortCounts,
+        fileName = file.path(exportFolder, "cohort_count.csv"),
+        incremental = FALSE,
+        cohortId = cohorts$cohortId
       )
     }
   )
@@ -665,6 +729,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
     stop("All cohorts were either not instantiated or all have 0 records.")
   }
 
+  # subset the cohortDefinitionSet to only cohorts with entries for the CDM
+  # The remainder of the analyses will only run on cohorts with counts
   cohortDefinitionSet <- cohortDefinitionSet %>%
     dplyr::filter(.data$cohortId %in% instantiatedCohorts)
 
@@ -676,7 +742,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        getInclusionStats(
+        runInclusionStatistics(
           connection = connection,
           exportFolder = exportFolder,
           databaseId = databaseId,
@@ -684,7 +750,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTableNames = cohortTableNames,
           incremental = incremental,
-          instantiatedCohorts = instantiatedCohorts,
           minCellCount = minCellCount,
           recordKeepingFile = recordKeepingFile
         )
@@ -759,7 +824,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
           useExternalConceptCountsTable = useExternalConceptCountsTable,
           incremental = incremental,
           conceptIdTable = "#concept_ids",
-          recordKeepingFile = recordKeepingFile
+          recordKeepingFile = recordKeepingFile,
+          useAchilles = useAchilles,
+          resultsDatabaseSchema = resultsDatabaseSchema
         )
       }
     )

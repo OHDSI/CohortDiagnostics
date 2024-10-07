@@ -26,3 +26,9 @@
 #' @importFrom methods is
 #' @importFrom FeatureExtraction createDefaultCovariateSettings createTemporalCovariateSettings
 NULL
+
+# re-export getCohortCounts from CohortGenerator
+
+#' @importFrom CohortGenerator getCohortCounts
+#' @export
+CohortGenerator::getCohortCounts

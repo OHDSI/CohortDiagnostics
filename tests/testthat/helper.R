@@ -67,14 +67,14 @@ loadTestCohortDefinitionSet <- function(cohortIds = NULL, useSubsets = TRUE) {
     cohortFileNameValue = c("cohortId")
   )
   if (!is.null(cohortIds)) {
-    cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
+    cohortDefinitionSet <- dplyr::filter(cohortDefinitionSet, .data$cohortId %in% cohortIds)
   }
 
   if (useSubsets) {
     cohortDefinitionSet <- CohortGenerator::addCohortSubsetDefinition(cohortDefinitionSet, getDefaultSubsetDefinition(), targetCohortIds = c(18345))
   }
 
-  cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)
+  cohortDefinitionSet$checksum <- CohortGenerator::computeChecksum(cohortDefinitionSet$sql)
 
   return(cohortDefinitionSet)
 }

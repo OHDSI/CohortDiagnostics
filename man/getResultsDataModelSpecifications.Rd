@@ -4,7 +4,11 @@
 \alias{getResultsDataModelSpecifications}
 \title{Get specifications for Cohort Diagnostics results data model}
 \usage{
-getResultsDataModelSpecifications()
+getResultsDataModelSpecifications(tableName = NULL)
+}
+\arguments{
+\item{tableName}{The name of the table in the results data model to return specification for. 
+If NULL (default) then all tables in the results data model will be returned.}
 }
 \value{
 A tibble data frame object with specifications

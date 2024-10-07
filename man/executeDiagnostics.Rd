@@ -39,7 +39,14 @@ executeDiagnostics(
   runFeatureExtractionOnSample = FALSE,
   sampleN = 1000,
   seed = 64374,
+<<<<<<< HEAD
   seedArgs = NULL
+=======
+  seedArgs = NULL,
+  sampleIdentifierExpression = "cohortId * 1000 + seed",
+  useAchilles = FALSE,
+  achillesDatabaseSchema
+>>>>>>> darwin_sprint
 )
 }
 \arguments{
@@ -142,7 +149,19 @@ This ensures that the same sample can be drawn again in future runs. Default is 
 \item{seedArgs}{List. Additional arguments to pass to the sampling function.
 This can be used to control aspects of the sampling process beyond the seed and sample size.}
 
+<<<<<<< HEAD
 \item{useExternalConceptCountsTable}{If TRUE an external table for the cohort concept counts will be used.}
+=======
+\item{sampleIdentifierExpression}{Character. An expression that generates unique identifiers for each sample.
+This expression can use the variables 'cohortId' and 'seed'.
+Default is "cohortId * 1000 + seed", which ensures unique identifiers
+as long as there are fewer than 1000 cohorts.}
+
+\item{useAchilles}{Logical. Should the pre-computed Achilles analyses be used to get concept counts? TRUE or FALSE (default)}
+
+\item{achillesDatabaseSchema}{Character. The name of the schema where the Achilles results tables are located. 
+Require if `useAchilles` is TRUE and ignored otherwise.}
+>>>>>>> darwin_sprint
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the

@@ -16,29 +16,26 @@
 
 
 
-#' Given a set of cohorts get relationships between the cohorts.
-#'
-#' @description
-#' Given a set of cohorts, get temporal relationships between the
-#' cohort_start_date of the cohorts.
-#'
-#' @template Connection
-#'
-#' @template CohortDatabaseSchema
-#'
-#' @template TempEmulationSchema
-#'
-#' @template CohortTable
-#'
-#' @param targetCohortIds              A vector of one or more Cohort Ids for use as target cohorts.
-#'
-#' @param comparatorCohortIds          A vector of one or more Cohort Ids for use as feature/comparator cohorts.
-#'
-#' @param relationshipDays             A dataframe with two columns startDay and endDay representing periods of time to compute relationship
-#'
-#'
-#' @export
-runCohortRelationshipDiagnostics <-
+# Given a set of cohorts get relationships between the cohorts.
+#
+# @description
+# Given a set of cohorts, get temporal relationships between the
+# cohort_start_date of the cohorts.
+#
+# @template Connection
+#
+# @template CohortDatabaseSchema
+#
+# @template TempEmulationSchema
+#
+# @template CohortTable
+#
+# @param targetCohortIds              A vector of one or more Cohort Ids for use as target cohorts.
+#
+# @param comparatorCohortIds          A vector of one or more Cohort Ids for use as feature/comparator cohorts.
+#
+# @param relationshipDays             A dataframe with two columns startDay and endDay representing periods of time to compute relationship
+getCohortRelationship <-
   function(connectionDetails = NULL,
            connection = NULL,
            cohortDatabaseSchema = NULL,
@@ -192,19 +189,41 @@ runCohortRelationshipDiagnostics <-
 
 
 
-executeCohortRelationshipDiagnostics <- function(connection,
-                                                 databaseId,
-                                                 exportFolder,
-                                                 cohortDatabaseSchema,
-                                                 cdmDatabaseSchema,
-                                                 tempEmulationSchema,
-                                                 cohortTable,
-                                                 cohortDefinitionSet,
-                                                 temporalCovariateSettings,
-                                                 minCellCount,
-                                                 recordKeepingFile,
-                                                 incremental,
-                                                 batchSize = getOption("CohortDiagnostics-Relationship-batch-size", default = 500)) {
+#' Title
+#'
+#' @param connection 
+#' @param databaseId 
+#' @param exportFolder 
+#' @param cohortDatabaseSchema 
+#' @param cdmDatabaseSchema 
+#' @param tempEmulationSchema 
+#' @param cohortTable 
+#' @param cohortDefinitionSet 
+#' @param temporalCovariateSettings 
+#' @param minCellCount 
+#' @param recordKeepingFile 
+#' @param incremental 
+#' @param batchSize 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+runCohortRelationship <- function(
+    connection,
+    databaseId,
+    exportFolder,
+    cohortDatabaseSchema,
+    cdmDatabaseSchema,
+    tempEmulationSchema,
+    cohortTable,
+    cohortDefinitionSet,
+    temporalCovariateSettings,
+    minCellCount,
+    recordKeepingFile,
+    incremental,
+    batchSize = getOption("CohortDiagnostics-Relationship-batch-size", default = 500)) {
+  
   ParallelLogger::logInfo("Computing Cohort Relationship")
   startCohortRelationship <- Sys.time()
 
@@ -341,7 +360,7 @@ executeCohortRelationshipDiagnostics <- function(connection,
         parent = "executeCohortRelationshipDiagnostics",
         expr = {
           output <-
-            runCohortRelationshipDiagnostics(
+            getCohortRelationship(
               connection = connection,
               cohortDatabaseSchema = cohortDatabaseSchema,
               tempEmulationSchema = tempEmulationSchema,
