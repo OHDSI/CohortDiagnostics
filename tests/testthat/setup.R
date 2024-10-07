@@ -238,4 +238,3 @@ for (nm in names(testServers)) {
   } else {
     message(paste("Skipping cohort generation on test server", nm))
   }
-}
