@@ -15,12 +15,13 @@
 # limitations under the License.
 
 #' Title
-#'
-#' @param connection 
+#' 
+#' @template Connection
+#' @template CohortDatabaseSchema
+#' 
 #' @param exportFolder 
 #' @param databaseId 
-#' @param cohortDefinitionSet 
-#' @param cohortDatabaseSchema 
+#' @param cohortDefinitionSet
 #' @param cohortTableNames 
 #' @param incremental 
 #' @param minCellCount 
@@ -40,19 +41,20 @@ runInclusionStatistics <- function(connection,
   
   ParallelLogger::logInfo("Fetching inclusion statistics from files")
   
-  subset <- subsetToRequiredCohorts(
-    cohorts = cohortDefinitionSet,
-    task = "runInclusionStatistics",
-    incremental = incremental,
-    recordKeepingFile = recordKeepingFile
-  )
-  
-  if (incremental &&
-    (length(cohortDefinitionSet$cohortId) - nrow(subset)) > 0) {
-    ParallelLogger::logInfo(sprintf(
-      "Skipping %s cohorts in incremental mode.",
-      length(cohortDefinitionSet$cohortId) - nrow(subset)
-    ))
+  if (incremental) {
+    subset <- subsetToRequiredCohorts(
+      cohorts = cohortDefinitionSet,
+      task = "runInclusionStatistics",
+      incremental = incremental,
+      recordKeepingFile = recordKeepingFile
+    )
+    
+    numConceptsToSkip <- length(cohortDefinitionSet$cohortId) - nrow(subset)
+    if (numConceptsToSkip > 0) {
+      ParallelLogger::logInfo(sprintf("Skipping %s cohorts in incremental mode.", numConceptsToSkip))
+    }
+  } else {
+    subset <- cohortDefinitionSet
   }
   
   if (nrow(subset) > 0) {
