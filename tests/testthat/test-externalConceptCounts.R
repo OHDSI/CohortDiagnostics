@@ -1,10 +1,8 @@
 test_that("Creating and checking externalConceptCounts table", {
-  if (dbms == "sqlite") {
-    # Creating externalConceptCounts
-    sql_lite_path <- file.path(test_path(), databaseFile)
-    connectionDetails <- createConnectionDetails(dbms= "sqlite", server = sql_lite_path)
+  if (dbmsToTest == "sqlite") {
+    connectionDetails <- testServers[["sqlite"]]$connectionDetails
     connection <- connect(connectionDetails)
-    cdmDatabaseSchema <- "main"
+    cdmDatabaseSchema <- testServers[["sqlite"]]$cdmDatabaseSchema
     conceptCountsTable <- "concept_counts"
     CohortDiagnostics::createConceptCountsTable(connectionDetails = connectionDetails,
                                                 cdmDatabaseSchema = cdmDatabaseSchema,
@@ -41,5 +39,32 @@ test_that("Creating and checking externalConceptCounts table", {
     
     expect_equal(vocabVersion, vocabVersionExternalConceptCountsTable[1,1])
   }
+  
+})
+
+test_that("Creating and checking externalConceptCounts temp table", {
+  if (dbmsToTest == "sqlite") {
+    # Creating externalConceptCounts
+    # sql_lite_path <- file.path(test_path(), databaseFile)
+    connectionDetails <- testServers[["sqlite"]]$connectionDetails
+    connection <- connect(connectionDetails)
+    cdmDatabaseSchema <- testServers[["sqlite"]]$cdmDatabaseSchema
+    conceptCountsTable <- "concept_counts"
+    CohortDiagnostics::createConceptCountsTable(connectionDetails = connectionDetails,
+                                                cdmDatabaseSchema = cdmDatabaseSchema,
+                                                tempEmulationSchema = NULL,
+                                                conceptCountsTable = conceptCountsTable,
+                                                conceptCountsDatabaseSchema = cdmDatabaseSchema,
+                                                conceptCountsTableIsTemp = TRUE,
+                                                removeCurrentTable = TRUE)
+    
+    concept_counts_info <- querySql(connection, "PRAGMA table_info(concept_counts)")
+    expect_equal(concept_counts_info$NAME, c("concept_id", 
+                                             "concept_count", 
+                                             "concept_subjects"))
+    checkConceptCountsTableExists <- DatabaseConnector::dbExistsTable(connection,
+                                                                      name = conceptCountsTable,
+                                                                      databaseSchema = cdmDatabaseSchema)
+    expect_true(checkConceptCountsTableExists)
   
 })

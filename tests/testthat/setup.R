@@ -3,7 +3,7 @@ library(testthat)
 
 dbmsToTest <- c(
   "sqlite"#,
-  # "duckdb",
+  # "duckdb"#,
   # "postgresql",
   # "redshift",
   # "sql server",
@@ -238,3 +238,5 @@ for (nm in names(testServers)) {
   } else {
     message(paste("Skipping cohort generation on test server", nm))
   }
+  
+}
