@@ -110,6 +110,8 @@ getDefaultCovariateSettings <- function() {
 #'                                    diagnostics to.
 #' @param cohortDefinitionSet         Data.frame of cohorts must include columns cohortId, cohortName, json, sql
 #' @param cohortTableNames            Cohort Table names used by CohortGenerator package
+#' @param conceptCountsTable          Concepts count table name. The default is "#concept_counts" to create a temporal concept counts table.
+#'                                    If an external concept counts table is used, provide the name in character, e.g. "concept_counts" without a hash
 #' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf').
 #' @param databaseName                The full name of the database. If NULL, defaults to value in cdm_source table
 #' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table
@@ -136,11 +138,12 @@ getDefaultCovariateSettings <- function() {
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
-#' @param runOnSample                 Logical. If TRUE, the function will operate on a sample of the data.
+#' @param useExternalConceptCountsTable If TRUE an external table for the cohort concept counts will be used.
+#' @param runFeatureExtractionOnSample Logical. If TRUE, the function will operate on a sample of the data.
 #'                                    Default is FALSE, meaning the function will operate on the full data set.
 #'
-#' @param sampleN                     Integer. The number of records to include in the sample if runOnSample is TRUE.
-#'                                    Default is 1000. Ignored if runOnSample is FALSE.
+#' @param sampleN                     Integer. The number of records to include in the sample if runFeatureExtractionOnSample is TRUE.
+#'                                    Default is 1000. Ignored if runFeatureExtractionOnSample is FALSE.
 #'
 #' @param seed                        Integer. The seed for the random number generator used to create the sample.
 #'                                    This ensures that the same sample can be drawn again in future runs. Default is 64374.
@@ -148,6 +151,8 @@ getDefaultCovariateSettings <- function() {
 #' @param seedArgs                    List. Additional arguments to pass to the sampling function.
 #'                                    This can be used to control aspects of the sampling process beyond the seed and sample size.
 #'
+<<<<<<< HEAD:R/RunDiagnostics.R
+=======
 #' @param sampleIdentifierExpression Character. An expression that generates unique identifiers for each sample.
 #'                                   This expression can use the variables 'cohortId' and 'seed'.
 #'                                   Default is "cohortId * 1000 + seed", which ensures unique identifiers
@@ -161,6 +166,7 @@ getDefaultCovariateSettings <- function() {
 #' @param workDatabaseSchema         Character. The name of a schema where the user has write access. Intermediate tables for concept counts 
 #'                                   and orphan concepts will be created in this schema if supplied. If NULL (default) intermediate tables will
 #'                                   be created as temporary tables.                        
+>>>>>>> darwin_sprint:R/hold/executeDiagnostics.R
 #' @examples
 #' \dontrun{
 #' # Load cohorts (assumes that they have already been instantiated)
@@ -236,14 +242,19 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                irWashoutPeriod = 0,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental"),
-                               runOnSample = FALSE,
+                               conceptCountsTable = "concept_counts",
+                               runFeatureExtractionOnSample = FALSE,
                                sampleN = 1000,
                                seed = 64374,
+<<<<<<< HEAD:R/RunDiagnostics.R
+                               seedArgs = NULL) {
+=======
                                seedArgs = NULL,
                                sampleIdentifierExpression = "cohortId * 1000 + seed",
                                useAchilles = FALSE, 
                                achillesDatabaseSchema = NULL,
                                workDatabaseSchema = NULL) {
+>>>>>>> darwin_sprint:R/hold/executeDiagnostics.R
   # collect arguments that were passed to cohort diagnostics at initiation
   callingArgsJson <-
     list(
@@ -574,23 +585,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
     }
   }
 
-  if (runOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
-    cohortDefinitionSet <-
-      CohortGenerator::sampleCohortDefinitionSet(
-        connection = connection,
-        cohortDefinitionSet = cohortDefinitionSet,
-        tempEmulationSchema = tempEmulationSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTableNames = cohortTableNames,
-        n = sampleN,
-        seed = seed,
-        seedArgs = seedArgs,
-        identifierExpression = sampleIdentifierExpression,
-        incremental = incremental,
-        incrementalFolder = incrementalFolder
-      )
-  }
-
   ## CDM source information----
   timeExecution(
     exportFolder,
@@ -762,6 +756,37 @@ executeDiagnostics <- function(cohortDefinitionSet,
       }
     )
   }
+  
+  # Defines variables and checks version of external concept counts table -----
+  checkConceptCountsTableExists <- DatabaseConnector::dbExistsTable(connection,
+                                                                    name = conceptCountsTable,
+                                                                    databaseSchema = cdmDatabaseSchema)
+  
+  
+  if (substr(conceptCountsTable, 1, 1) == "#") {
+    conceptCountsTableIsTemp <- TRUE
+  } else {
+      conceptCountsTableIsTemp <- FALSE
+      conceptCountsTable <- conceptCountsTable
+      dataSourceInfo <- getCdmDataSourceInformation(connection = connection, 
+                                                    cdmDatabaseSchema = cdmDatabaseSchema)
+      vocabVersion <- dataSourceInfo$vocabularyVersion
+      vocabVersionExternalConceptCountsTable <- renderTranslateQuerySql(
+        connection = connection,
+        sql = "SELECT DISTINCT vocabulary_version FROM @work_database_schema.@concept_counts_table;",
+        work_database_schema = cohortDatabaseSchema,
+        concept_counts_table = conceptCountsTable,
+        snakeCaseToCamelCase = TRUE,
+        tempEmulationSchema = getOption("sqlRenderTempEmulationSchena")
+      )
+      if (!identical(vocabVersion, vocabVersionExternalConceptCountsTable[1,1])) {
+        stop(paste0("External concept counts table (", 
+                    vocabVersionExternalConceptCountsTable, 
+                    ") does not match database (", 
+                    vocabVersion, 
+                    "). Update concept_counts with createConceptCountsTable()"))
+      }
+  }
 
   # Always export concept sets to csv
   exportConceptSets(
@@ -772,9 +797,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   )
 
   # Concept set diagnostics -----------------------------------------------
-  if (runIncludedSourceConcepts ||
-    runOrphanConcepts ||
-    runBreakdownIndexEvents) {
+  if (runIncludedSourceConcepts || runOrphanConcepts || runBreakdownIndexEvents) {
     timeExecution(
       exportFolder,
       taskName = "runConceptSetDiagnostics",
@@ -794,11 +817,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
           exportFolder = exportFolder,
           minCellCount = minCellCount,
           conceptCountsDatabaseSchema = NULL,
-          conceptCountsTable = "#concept_counts",
-          conceptCountsTableIsTemp = TRUE,
+          conceptCountsTable = conceptCountsTable,
+          conceptCountsTableIsTemp = conceptCountsTableIsTemp,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
-          useExternalConceptCountsTable = FALSE,
+          useExternalConceptCountsTable = useExternalConceptCountsTable,
           incremental = incremental,
           conceptIdTable = "#concept_ids",
           recordKeepingFile = recordKeepingFile,
@@ -925,18 +948,60 @@ executeDiagnostics <- function(cohortDefinitionSet,
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
+        feCohortDefinitionSet <- cohortDefinitionSet
+        feCohortTable <- cohortTable
+        feCohortCounts <- cohortCounts
+
+        if (runFeatureExtractionOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
+          cohortTableNames$cohortSampleTable <- paste0(cohortTableNames$cohortTable, "_cd_sample")
+          CohortGenerator::createCohortTables(
+            connection = connection,
+            cohortTableNames = cohortTableNames,
+            cohortDatabaseSchema = cohortDatabaseSchema,
+            incremental = TRUE
+          )
+
+          feCohortTable <- cohortTableNames$cohortSampleTable
+          feCohortDefinitionSet <-
+            CohortGenerator::sampleCohortDefinitionSet(
+              connection = connection,
+              cohortDefinitionSet = cohortDefinitionSet,
+              tempEmulationSchema = tempEmulationSchema,
+              cohortDatabaseSchema = cohortDatabaseSchema,
+              cohortTableNames = cohortTableNames,
+              n = sampleN,
+              seed = seed,
+              seedArgs = seedArgs,
+              identifierExpression = "cohortId",
+              incremental = incremental,
+              incrementalFolder = incrementalFolder
+            )
+
+          feCohortCounts <- computeCohortCounts(
+            connection = connection,
+            cohortDatabaseSchema = cohortDatabaseSchema,
+            cohortTable = cohortTableNames$cohortSampleTable,
+            cohorts = feCohortDefinitionSet,
+            exportFolder = exportFolder,
+            minCellCount = minCellCount,
+            databaseId = databaseId,
+            writeResult = FALSE
+          )
+        }
+
+
         executeCohortCharacterization(
           connection = connection,
           databaseId = databaseId,
           exportFolder = exportFolder,
           cdmDatabaseSchema = cdmDatabaseSchema,
           cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
+          cohortTable = feCohortTable,
           covariateSettings = temporalCovariateSettings,
           tempEmulationSchema = tempEmulationSchema,
           cdmVersion = cdmVersion,
-          cohorts = cohortDefinitionSet,
-          cohortCounts = cohortCounts,
+          cohorts = feCohortDefinitionSet,
+          cohortCounts = feCohortCounts,
           minCellCount = minCellCount,
           instantiatedCohorts = instantiatedCohorts,
           incremental = incremental,

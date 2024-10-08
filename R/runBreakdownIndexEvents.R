@@ -1,3 +1,4 @@
+
 # Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
@@ -45,27 +46,27 @@
 #'
 #' @examples
 runBreakdownIndexEvents <- function(connection,
-                                     tempEmulationSchema,
-                                     cdmDatabaseSchema,
-                                     vocabularyDatabaseSchema = cdmDatabaseSchema,
-                                     databaseId,
-                                     cohorts,
-                                     runIncludedSourceConcepts,
-                                     runOrphanConcepts,
-                                     runBreakdownIndexEvents,
-                                     exportFolder,
-                                     minCellCount,
-                                     conceptCountsDatabaseSchema = NULL,
-                                     conceptCountsTable = "concept_counts",
-                                     conceptCountsTableIsTemp = FALSE,
-                                     cohortDatabaseSchema,
-                                     cohortTable,
-                                     useExternalConceptCountsTable = FALSE,
-                                     incremental = FALSE,
-                                     conceptIdTable = NULL,
-                                     recordKeepingFile,
-                                     useAchilles,
-                                     resultsDatabaseSchema) {
+                                    tempEmulationSchema,
+                                    cdmDatabaseSchema,
+                                    vocabularyDatabaseSchema = cdmDatabaseSchema,
+                                    databaseId,
+                                    cohorts,
+                                    runIncludedSourceConcepts,
+                                    runOrphanConcepts,
+                                    runBreakdownIndexEvents,
+                                    exportFolder,
+                                    minCellCount,
+                                    conceptCountsDatabaseSchema = NULL,
+                                    conceptCountsTable = "concept_counts",
+                                    conceptCountsTableIsTemp = FALSE,
+                                    cohortDatabaseSchema,
+                                    cohortTable,
+                                    useExternalConceptCountsTable = FALSE,
+                                    incremental = FALSE,
+                                    conceptIdTable = NULL,
+                                    recordKeepingFile,
+                                    useAchilles,
+                                    resultsDatabaseSchema) {
   ParallelLogger::logInfo("Starting concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
   subset <- dplyr::tibble()
@@ -155,9 +156,7 @@ runBreakdownIndexEvents <- function(connection,
           tempEmulationSchema = tempEmulationSchema,
           conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
           conceptCountsTable = conceptCountsTable,
-          conceptCountsTableIsTemp = conceptCountsTableIsTemp,
-          useAchilles = useAchilles,
-          resultsDatabaseSchema = resultsDatabaseSchema
+          conceptCountsTableIsTemp = conceptCountsTableIsTemp
         )
       }
     )

@@ -1,5 +1,5 @@
 skipResultsDm <- FALSE
-if (Sys.getenv("CDM5_POSTGRESQL_SERVER") == "") {
+if (Sys.getenv("CDM5_POSTGRESQL_SERVER") == "" || Sys.getenv("SKIP_DB_TESTS") == "TRUE") {
   skipResultsDm <- TRUE
 } else {
   postgresConnectionDetails <- DatabaseConnector::createConnectionDetails(
@@ -81,24 +81,6 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
       )
     })
   }
-  cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
-  # Next create the tables on the database
-  CohortGenerator::createCohortTables(
-    connectionDetails = connectionDetails,
-    cohortTableNames = cohortTableNames,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    incremental = FALSE
-  )
-
-  # Generate the cohort set
-  CohortGenerator::generateCohortSet(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTableNames = cohortTableNames,
-    cohortDefinitionSet = cohortDefinitionSet,
-    incremental = FALSE
-  )
 
   if (dbms == "sqlite") {
     expect_warning(
@@ -123,7 +105,7 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
           incremental = TRUE,
           incrementalFolder = file.path(folder, "incremental"),
           temporalCovariateSettings = temporalCovariateSettings,
-          runOnSample = TRUE
+          runFeatureExtractionOnSample = TRUE
         )
       },
       "CDM Source table has more than one record while only one is expected."
@@ -149,7 +131,7 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental"),
       temporalCovariateSettings = temporalCovariateSettings,
-      runOnSample = TRUE
+      runFeatureExtractionOnSample = TRUE
     )
   }
 
@@ -197,6 +179,7 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
 })
 
 test_that("Sqlite results data model", {
+  skip_if(skipResultsDm)
   dbFile <- tempfile(fileext = ".sqlite")
   createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = dbFile, overwrite = TRUE, tablePrefix = "cd_")
   connectionDetailsSqlite <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = dbFile)

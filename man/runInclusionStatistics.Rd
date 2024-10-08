@@ -48,11 +48,6 @@ mode such as the 'recordKeepingFile'.}
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
 
 \item{recordKeepingFile}{File that keeps a record of cohorts that have been created previously}
-
-\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
-\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is
-provided.}
 }
 \value{
 None, it will write csv files to disk

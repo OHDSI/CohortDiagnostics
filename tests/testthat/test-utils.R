@@ -67,7 +67,7 @@ test_that("timeExecutions function", {
   )
   expectedFilePath <- file.path(temp, "executionTimes.csv")
   checkmate::expect_file_exists(expectedFilePath)
-  result <- readr::read_csv(expectedFilePath)
+  result <- readr::read_csv(expectedFilePath, col_types = readr::cols())
   checkmate::expect_data_frame(result, nrows = 1, ncols = 5)
 
   expect_false(all(is.na(result$startTime)))
@@ -83,7 +83,7 @@ test_that("timeExecutions function", {
     }
   )
 
-  result <- readr::read_csv(expectedFilePath)
+  result <- readr::read_csv(expectedFilePath, col_types = readr::cols())
   checkmate::expect_data_frame(result, nrows = 2, ncols = 5)
 
   # Parent string
@@ -97,7 +97,7 @@ test_that("timeExecutions function", {
     }
   )
 
-  result <- readr::read_csv(expectedFilePath)
+  result <- readr::read_csv(expectedFilePath, col_types = readr::cols())
   checkmate::expect_data_frame(result, nrows = 3, ncols = 5)
 
   # custom start/end times
@@ -110,7 +110,7 @@ test_that("timeExecutions function", {
     execTime = "Foo"
   )
 
-  result <- readr::read_csv(expectedFilePath)
+  result <- readr::read_csv(expectedFilePath, col_types = readr::cols())
   checkmate::expect_data_frame(result, nrows = 4, ncols = 5)
 
   timeExecution(
@@ -121,7 +121,7 @@ test_that("timeExecutions function", {
     start = Sys.time()
   )
 
-  result <- readr::read_csv(expectedFilePath)
+  result <- readr::read_csv(expectedFilePath, col_types = readr::cols())
   checkmate::expect_data_frame(result, nrows = 5, ncols = 5)
   expect_false(all(is.na(result$startTime)))
 })
@@ -157,3 +157,19 @@ test_that("enforceMinCellValue works with vector of minimum values", {
 
   expect_equal(result$a, c(1, 2, 3, 4, 5))
 })
+
+for (server in testServers) {
+  test_that(paste("tempTableExists works on ", server$connectionDetails$dbms), {
+    con <- DatabaseConnector::connect(server$connectionDetails)
+    DatabaseConnector::renderTranslateExecuteSql(con, "create table #tmp110010 (a int);", 
+                                                 progressBar = F, 
+                                                 reportOverallTime = F)
+    expect_false(tempTableExists(con, "tmp98765"))
+    expect_true(tempTableExists(con, "tmp110010"))
+    DatabaseConnector::renderTranslateExecuteSql(con, "drop table #tmp110010;", 
+                                                 progressBar = F, 
+                                                 reportOverallTime = F)
+    DatabaseConnector::disconnect(con)
+  })
+}
+

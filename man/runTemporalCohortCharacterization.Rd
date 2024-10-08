@@ -29,7 +29,7 @@ runTemporalCohortCharacterization(
   analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
   timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
   minCharacterizationMean = 0.001,
-  batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 5)
+  batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 20)
 )
 }
 \arguments{

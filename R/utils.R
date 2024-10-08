@@ -312,6 +312,7 @@ timeExecution <- function(exportFolder,
   return(executionTimes)
 }
 
+# check if a temp table already exists
 tempTableExists <- function(connection, tempTableName) {
   tryCatch(
     is.data.frame(
@@ -321,7 +322,10 @@ tempTableExists <- function(connection, tempTableName) {
          tempTableName = tempTableName)
       ),
     error = function(e) {
-      DatabaseConnector::executeSql(connection, "rollback;", reportOverallTime = F, progressBar = F) 
+      if (DatabaseConnector::dbms(connection) %in% c("postgresql", "redshift") &&
+          methods::is(connection, "DatabaseConnectorJdbcConnection")) {
+        DatabaseConnector::executeSql(connection, "rollback;", reportOverallTime = F, progressBar = F) 
+      }
       return(FALSE)
     }
   )
