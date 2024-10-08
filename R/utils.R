@@ -311,3 +311,18 @@ timeExecution <- function(exportFolder,
   readr::write_csv(executionTimes, file = executionTimePath, append = file.exists(executionTimePath))
   return(executionTimes)
 }
+
+exportDataToCsv <- function(data, tableName, minCellCount, databaseId, exportFolder, incremental, cohortId) {
+  data <- makeDataExportable(
+    x = data,
+    tableName = tableName,
+    minCellCount = minCellCount,
+    databaseId = databaseId
+  )
+  writeToCsv(
+    data = data,
+    fileName = file.path(exportFolder, tableName),
+    incremental = incremental,
+    cohortId = cohortId
+  )
+}

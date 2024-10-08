@@ -36,10 +36,6 @@ getTimeSeries <- function(
   }
   start <- Sys.time()
 
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
   ParallelLogger::logTrace(" - Creating Andromeda object to collect results")
   resultsInAndromeda <- Andromeda::andromeda()
 
@@ -460,6 +456,7 @@ runTimeSeries <- function(connection,
     )
   }
 
+  # Cohort time series
   if (runCohortTimeSeries & nrow(cohortDefinitionSet) > 0) {
     subset <- subsetToRequiredCohorts(
       cohorts = cohortDefinitionSet %>%
@@ -521,18 +518,16 @@ runTimeSeries <- function(connection,
           }
         )
 
-        data <- makeDataExportable(
-          x = data,
+        exportDataToCsv(
+          data = data, 
           tableName = "time_series",
           minCellCount = minCellCount,
-          databaseId = databaseId
-        )
-        writeToCsv(
-          data = data,
-          fileName = outputFile,
-          incremental = TRUE,
+          databaseId = databaseId,
+          exportFolder = exportFolder,
+          incremental = incremental,
           cohortId = subset[start:end, ]$cohortId %>% unique()
         )
+        
         recordTasksDone(
           cohortId = subset[start:end, ]$cohortId %>% unique(),
           task = "runCohortTimeSeries",
@@ -544,7 +539,7 @@ runTimeSeries <- function(connection,
     }
   }
 
-  # separating out data source time series
+  # data source time series
   if (runDataSourceTimeSeries) {
     subset <- subsetToRequiredCohorts(
       cohorts = dplyr::tibble(
@@ -556,10 +551,7 @@ runTimeSeries <- function(connection,
       recordKeepingFile = recordKeepingFile
     )
 
-    if (all(
-      nrow(subset) == 0,
-      incremental
-    )) {
+    if (all(nrow(subset) == 0, incremental)) {
       ParallelLogger::logInfo("Skipping Data Source Time Series in Incremental mode.")
       return(NULL)
     }
@@ -583,18 +575,16 @@ runTimeSeries <- function(connection,
       }
     )
 
-    data <- makeDataExportable(
-      x = data,
+    exportDataToCsv(
+      data = data, 
       tableName = "time_series",
       minCellCount = minCellCount,
-      databaseId = databaseId
-    )
-    writeToCsv(
-      data = data,
-      fileName = file.path(exportFolder, "time_series.csv"),
+      databaseId = databaseId,
+      exportFolder = exportFolder,
       incremental = incremental,
       cohortId = -44819062
     )
+    
     recordTasksDone(
       cohortId = -44819062,
       task = "runDataSourceTimeSeries",
