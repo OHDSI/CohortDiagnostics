@@ -113,9 +113,7 @@ runIncludedSourceConcepts <- function(connection,
         tempEmulationSchema = tempEmulationSchema,
         conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
         conceptCountsTable = conceptCountsTable,
-        conceptCountsTableIsTemp = conceptCountsTableIsTemp,
-        useAchilles = useAchilles,
-        resultsDatabaseSchema = resultsDatabaseSchema
+        conceptCountsTableIsTemp = conceptCountsTableIsTemp
       )
     }
   )

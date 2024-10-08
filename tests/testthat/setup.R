@@ -2,9 +2,9 @@ library(CohortDiagnostics)
 library(testthat)
 
 dbmsToTest <- c(
-  # "sqlite"#,
-  # "duckdb",
-  "postgresql"#,
+  "sqlite"#,
+  # "duckdb"#,
+  # "postgresql",
   # "redshift",
   # "sql server",
   # "oracle"
@@ -55,7 +55,6 @@ cohortTableName <- "cohortdiagnostics_v330_cohort"
 
 # testServers list contains all the parameters to run each test file on each database
 testServers <- list()
-
 if ("sqlite" %in% dbmsToTest) {
   
   cohortIds = c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906)
@@ -242,5 +241,5 @@ for (nm in names(testServers)) {
   } else {
     message(paste("Skipping cohort generation on test server", nm))
   }
+  
 }
-

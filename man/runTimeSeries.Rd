@@ -65,11 +65,6 @@ using all persons found in observation period table.}
 \item{observationPeriodDateRange}{}
 
 \item{batchSize}{}
-
-\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
-\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is
-provided.}
 }
 \description{
 This function first generates a calendar period table, that has
