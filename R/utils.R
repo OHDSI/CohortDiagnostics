@@ -312,6 +312,21 @@ timeExecution <- function(exportFolder,
   return(executionTimes)
 }
 
+tempTableExists <- function(connection, tempTableName) {
+  tryCatch(
+    is.data.frame(
+      DatabaseConnector::renderTranslateQuerySql(
+        connection = connection, 
+        sql = "select top 1 * from  #@tempTableName;",
+        tempTableName = tempTableName)
+    ),
+    error = function(e) {
+      DatabaseConnector::executeSql(connection, "rollback;", reportOverallTime = F, progressBar = F) 
+      return(FALSE)
+    }
+  )
+}
+
 exportDataToCsv <- function(data, tableName, minCellCount, databaseId, exportFolder, incremental, cohortId) {
   data <- makeDataExportable(
     x = data,
