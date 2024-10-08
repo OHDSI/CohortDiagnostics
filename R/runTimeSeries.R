@@ -15,7 +15,6 @@
 # limitations under the License.
 
 getTimeSeries <- function(
-    connectionDetails = NULL,
     connection = NULL,
     tempEmulationSchema = NULL,
     cdmDatabaseSchema,
@@ -179,47 +178,7 @@ getTimeSeries <- function(
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  sqlCohort <- "DROP TABLE IF EXISTS #ts_cohort;
-                DROP TABLE IF EXISTS #ts_cohort_first;
-                DROP TABLE IF EXISTS #ts_output;
-
-                --HINT DISTRIBUTE_ON_KEY(subject_id)
-                SELECT *
-                INTO #ts_cohort
-                FROM @cohort_database_schema.@cohort_table {@cohort_ids != '' } ? {
-                WHERE cohort_definition_id IN (@cohort_ids) };
-
-                --HINT DISTRIBUTE_ON_KEY(subject_id)
-                SELECT cohort_definition_id,
-                	subject_id,
-                	min(cohort_start_date) cohort_start_date,
-                	min(cohort_end_date) cohort_end_date
-                INTO #ts_cohort_first
-                FROM #ts_cohort
-                GROUP BY cohort_definition_id,
-                	subject_id;
-
-
-                SELECT c.*,
-                	CASE
-                		WHEN c.cohort_start_date = cf.cohort_start_date
-                			THEN 'Y'
-                		ELSE 'N'
-                		END first_occurrence {@stratify_by_gender} ? {,
-                	concept.concept_name gender} {@stratify_by_age_group} ? {,
-                	p.year_of_birth}
-                INTO #cohort_ts
-                FROM #ts_cohort c
-                INNER JOIN #ts_cohort_first cf
-                	ON c.cohort_definition_id = cf.cohort_definition_id
-                		AND c.subject_id = cf.subject_id {@stratify_by_gender | @stratify_by_age_group} ? {
-                INNER JOIN @cdm_database_schema.person p
-                	ON c.subject_id = p.person_id} {@stratify_by_gender} ? {
-                INNER JOIN @cdm_database_schema.concept
-                	ON p.gender_concept_id = concept.concept_id};
-
-                DROP TABLE IF EXISTS #ts_cohort;
-                DROP TABLE IF EXISTS #ts_cohort_first;"
+  sqlCohort <- SqlRender::readSql(system.file("sql", "sql_server", "CreateTimeSeriesCohortTable.sql", package = "CohortDiagnostics"))
 
   if (runCohortTimeSeries) {
     ParallelLogger::logTrace("   - Creating cohort table copy for time series")
@@ -241,32 +200,14 @@ getTimeSeries <- function(
   for (i in (1:length(seriesToRun))) {
     ParallelLogger::logTrace(paste0(" - Running ", seriesToRun[[i]]))
     if (seriesToRun[[i]] == "ComputeTimeSeries1.sql") {
-      ParallelLogger::logInfo(
-        paste0(
-          "  - (",
-          scales::percent(i / length(seriesToRun)),
-          ") Running cohort time series T1: subjects in the cohort who have atleast one cohort day in calendar period."
-        )
-      )
+      logMessage <- "Running cohort time series T1: subjects in the cohort who have atleast one cohort day in calendar period."
+    } else if (seriesToRun[[i]] == "ComputeTimeSeries2.sql") {
+      logMessage <- "Running cohort time series T2: subjects in the cohort who have atleast one observation day in calendar period."
+    } else if (seriesToRun[[i]] == "ComputeTimeSeries3.sql") {
+      logMessage <- "Running database time series T3: persons in the data source who have atleast one observation day in calendar period."
     }
-    if (seriesToRun[[i]] == "ComputeTimeSeries2.sql") {
-      ParallelLogger::logInfo(
-        paste0(
-          "  - (",
-          scales::percent(i / length(seriesToRun)),
-          ") Running cohort time series T2: subjects in the cohort who have atleast one observation day in calendar period."
-        )
-      )
-    }
-    if (seriesToRun[[i]] == "ComputeTimeSeries3.sql") {
-      ParallelLogger::logInfo(
-        paste0(
-          "  - (",
-          scales::percent(i / length(seriesToRun)),
-          ") Running database time series T3: persons in the data source who have atleast one observation day in calendar period."
-        )
-      )
-    }
+    ParallelLogger::logInfo(paste0("  - (", scales::percent(i / length(seriesToRun)), ") ", logMessage))
+    
     seriesId <- stringr::str_replace(
       string = seriesToRun[[i]],
       pattern = "ComputeTimeSeries",
@@ -463,8 +404,6 @@ getTimeSeries <- function(
   return(resultsInAndromeda$timeSeries %>% dplyr::collect())
 }
 
-
-
 #' Given a set of instantiated cohorts get time series for the cohorts.
 #'
 #' @description
@@ -532,12 +471,11 @@ runTimeSeries <- function(connection,
       dplyr::arrange(.data$cohortId)
 
     if (nrow(subset) > 0) {
-      if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-        ParallelLogger::logInfo(sprintf(
-          " - Skipping %s cohorts in incremental mode.",
-          length(instantiatedCohorts) - nrow(subset)
-        ))
+      if (incremental) {
+        numSkippedCohorts <- length(instantiatedCohorts) - nrow(subset)
+        if (numSkippedCohorts > 0) {
+          ParallelLogger::logInfo(sprintf(" - Skipping %s cohorts in incremental mode.", numSkippedCohorts))
+        }
       }
 
       outputFile <- file.path(exportFolder, "time_series.csv")
