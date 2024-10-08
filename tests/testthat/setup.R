@@ -2,12 +2,21 @@ library(CohortDiagnostics)
 library(testthat)
 
 dbmsToTest <- c(
+<<<<<<< HEAD
   "sqlite"#,
   # "duckdb"#,
   # "postgresql",
   # "redshift",
   # "sql server",
   # "oracle"
+=======
+  "sqlite",
+  "duckdb",
+  "postgresql",
+  "redshift",
+  "sql server",
+  "oracle"
+>>>>>>> 664d486b (fix setup file.)
 )
 
 # TODO: add remaining dbms
@@ -101,16 +110,13 @@ if ("duckdb" %in% dbmsToTest) {
 } 
 
 if ("postgresql" %in% dbmsToTest) {
-  dbUser <- Sys.getenv("CDM5_POSTGRESQL_USER")
-  dbPassword <- Sys.getenv("CDM5_POSTGRESQL_PASSWORD")
-  dbServer <- Sys.getenv("CDM5_POSTGRESQL_SERVER")
   cohortIds <- c(18345, 17720, 14907)
   testServers[["postgresql"]] <- list(
     connectionDetails = DatabaseConnector::createConnectionDetails(
       dbms = "postgresql",
-      user = dbUser,
-      password = URLdecode(dbPassword),
-      server = dbServer
+      user = Sys.getenv("CDM5_POSTGRESQL_USER"),
+      password = URLdecode(Sys.getenv("CDM5_POSTGRESQL_PASSWORD")),
+      server = Sys.getenv("CDM5_POSTGRESQL_SERVER")
     ),
     cdmDatabaseSchema = Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA"),
     vocabularyDatabaseSchema = Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA"),
@@ -124,26 +130,19 @@ if ("postgresql" %in% dbmsToTest) {
 }
 
 if ("oracle" %in% dbmsToTest) {
-  dbUser <- Sys.getenv("CDM5_ORACLE_USER")
-  dbPassword <- Sys.getenv("CDM5_ORACLE_PASSWORD")
-  dbServer <- Sys.getenv("CDM5_ORACLE_SERVER")
-  cdmDatabaseSchema <- Sys.getenv("CDM5_ORACLE_CDM_SCHEMA")
-  vocabularyDatabaseSchema <- Sys.getenv("CDM5_ORACLE_CDM_SCHEMA")
-  tempEmulationSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
-  cohortDatabaseSchema <- Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA")
   cohortIds <- c(18345, 17720, 14907)
   
   testServers[["oracle"]] <- list(
     connectionDetails = DatabaseConnector::createConnectionDetails(
       dbms = "oracle",
-      user = dbUser,
-      password = URLdecode(dbPassword),
-      server = dbServer
+      user = Sys.getenv("CDM5_ORACLE_USER"),
+      password = URLdecode(Sys.getenv("CDM5_ORACLE_PASSWORD")),
+      server = Sys.getenv("CDM5_ORACLE_SERVER")
     ),
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
+    cdmDatabaseSchema = Sys.getenv("CDM5_ORACLE_CDM_SCHEMA"),
+    vocabularyDatabaseSchema = Sys.getenv("CDM5_ORACLE_CDM_SCHEMA"),
+    tempEmulationSchema = Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA"),
+    cohortDatabaseSchema = Sys.getenv("CDM5_ORACLE_OHDSI_SCHEMA"),
     cohortIds = cohortIds,
     cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds),
     cohortTable = cohortTableName,
@@ -152,26 +151,19 @@ if ("oracle" %in% dbmsToTest) {
 }
 
 if ("redshift" %in% dbmsToTest) {
-  dbUser <- Sys.getenv("CDM5_REDSHIFT_USER")
-  dbPassword <- Sys.getenv("CDM5_REDSHIFT_PASSWORD")
-  dbServer <- Sys.getenv("CDM5_REDSHIFT_SERVER")
-  cdmDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA")
-  vocabularyDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA")
-  tempEmulationSchema <- NULL
-  cohortDatabaseSchema <- Sys.getenv("CDM5_REDSHIFT_OHDSI_SCHEMA")
   cohortIds <- c(18345, 17720, 14907)
   
   testServers[["redshift"]] <- list(
     connectionDetails = DatabaseConnector::createConnectionDetails(
       dbms = "redshift",
-      user = dbUser,
-      password = URLdecode(dbPassword),
-      server = dbServer
+      user = Sys.getenv("CDM5_REDSHIFT_USER"),
+      password = URLdecode(Sys.getenv("CDM5_REDSHIFT_PASSWORD")),
+      server = Sys.getenv("CDM5_REDSHIFT_SERVER")
     ),
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
+    cdmDatabaseSchema = Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA"),
+    vocabularyDatabaseSchema = Sys.getenv("CDM5_REDSHIFT_CDM_SCHEMA"),
+    tempEmulationSchema = NULL,
+    cohortDatabaseSchema = Sys.getenv("CDM5_REDSHIFT_OHDSI_SCHEMA"),
     cohortIds = cohortIds,
     cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds),
     cohortTable = cohortTableName,
@@ -180,26 +172,18 @@ if ("redshift" %in% dbmsToTest) {
 }
 
 if ("sql server" %in% dbmsToTest) {
-  dbUser <- Sys.getenv("CDM5_SQL_SERVER_USER")
-  dbPassword <- Sys.getenv("CDM5_SQL_SERVER_PASSWORD")
-  dbServer <- Sys.getenv("CDM5_SQL_SERVER_SERVER")
-  cdmDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA")
-  vocabularyDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA")
-  tempEmulationSchema <- NULL
-  cohortDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_OHDSI_SCHEMA")
   cohortIds <- c(18345, 17720, 14907)
-  
   testServers[["sql server"]] <- list(
     connectionDetails = DatabaseConnector::createConnectionDetails(
       dbms = "sql server",
-      user = dbUser,
-      password = URLdecode(dbPassword),
-      server = dbServer
+      user = Sys.getenv("CDM5_SQL_SERVER_USER"),
+      password = URLdecode(Sys.getenv("CDM5_SQL_SERVER_PASSWORD")),
+      server = Sys.getenv("CDM5_SQL_SERVER_SERVER")
     ),
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
+    cdmDatabaseSchema = Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA"),
+    vocabularyDatabaseSchema = Sys.getenv("CDM5_SQL_SERVER_CDM_SCHEMA"),
+    tempEmulationSchema = NULL,
+    cohortDatabaseSchema = Sys.getenv("CDM5_SQL_SERVER_OHDSI_SCHEMA"),
     cohortIds = cohortIds,
     cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds),
     cohortTable = cohortTableName,
@@ -208,19 +192,17 @@ if ("sql server" %in% dbmsToTest) {
 }
 
 # generate cohorts on databases if they don't already exist
-# If they already exist we skip generation and use what is already in the database
-
+# If the cohort table already exists then we skip generation and use the cohort table in the database
 for (nm in names(testServers)) {
   server <- testServers[[nm]]
   con <- DatabaseConnector::connect(server$connectionDetails)
   tablesInCohortSchema <- DatabaseConnector::getTableNames(con, databaseSchema = server$cohortDatabaseSchema)
   DatabaseConnector::disconnect(con)
   
-  
   if (!(cohortTableName %in% tablesInCohortSchema)) {
     message(paste("Generating cohorts on", nm, "test database"))
     cohortDefinitionSet <- loadTestCohortDefinitionSet(server$cohortIds)
-    
+
     cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = server$cohortTable)
 
     CohortGenerator::createCohortTables(
