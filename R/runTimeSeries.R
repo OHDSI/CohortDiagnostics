@@ -417,20 +417,21 @@ getTimeSeries <- function(
 #' @template CdmDatabaseSchema
 #' @template TempEmulationSchema
 #' @template CohortTable
-#' @param cohortDefinitionSet 
+#' @template cohortDefinitionSet 
+#' @template databaseId 
+#' @template exportFolder 
+#' @template minCellCount 
+#' @template incremental 
+#' @template recordKeepingFile 
+
 #' @param runCohortTimeSeries         Generate and export the cohort level time series?
 #' @param runDataSourceTimeSeries     Generate and export the Data source level time series? i.e.
 #'                                    using all persons found in observation period table.
-#' @param databaseId 
-#' @param exportFolder 
-#' @param minCellCount 
 #' @param instantiatedCohorts 
-#' @param incremental 
-#' @param recordKeepingFile 
 #' @param observationPeriodDateRange 
 #' @param batchSize 
 #'
-#' @return
+#' @return None, it will write the results to a csv file
 #' @export
 #'
 #' @examples
@@ -541,9 +542,10 @@ runTimeSeries <- function(connection,
 
   # data source time series
   if (runDataSourceTimeSeries) {
+    cohortId <- -44819062 # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
     subset <- subsetToRequiredCohorts(
       cohorts = dplyr::tibble(
-        cohortId = -44819062, # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
+        cohortId = cohortId,
         checksum = computeChecksum(column = "data source time series")
       ),
       task = "runDataSourceTimeSeries",
@@ -559,7 +561,7 @@ runTimeSeries <- function(connection,
     timeExecution(
       exportFolder,
       "",
-      -44819062,
+      cohortId,
       parent = "",
       expr = {
         data <-
@@ -582,11 +584,11 @@ runTimeSeries <- function(connection,
       databaseId = databaseId,
       exportFolder = exportFolder,
       incremental = incremental,
-      cohortId = -44819062
+      cohortId = cohortId
     )
     
     recordTasksDone(
-      cohortId = -44819062,
+      cohortId = cohortId,
       task = "runDataSourceTimeSeries",
       checksum = subset$checksum,
       recordKeepingFile = recordKeepingFile,

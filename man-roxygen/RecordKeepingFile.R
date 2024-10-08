@@ -1,0 +1,1 @@
+#' @template recordKeepingFile File that keeps a record of cohorts that have been created previously

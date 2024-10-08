@@ -1,0 +1,1 @@
+#' @param exportFolder The folder where the results will be exported to
