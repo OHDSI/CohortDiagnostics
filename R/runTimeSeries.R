@@ -488,13 +488,13 @@ getTimeSeries <- function(
 #' @template minCellCount
 #' @template incremental
 #' @template recordKeepingFile
+#' @template BatchSize
+#' @template InstantiatedCohorts
 #' 
 #' @param runCohortTimeSeries         Generate and export the cohort level time series?
 #' @param runDataSourceTimeSeries     Generate and export the Data source level time series? i.e.
 #'                                    using all persons found in observation period table.
-#' @param instantiatedCohorts
 #' @param observationPeriodDateRange 
-#' @param batchSize 
 #'
 #' @return
 #' @export

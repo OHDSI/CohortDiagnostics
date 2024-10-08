@@ -60,11 +60,13 @@ of the results data model.}
 
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions}
 
+\item{instantiatedCohorts}{cohortIds of the cohorts that have been already been instantiated}
+
 \item{incremental}{Create only cohort diagnostics that haven't been created before?}
 
 \item{observationPeriodDateRange}{}
 
-\item{batchSize}{}
+\item{batchSize}{In case of batch processing, this specifies the size of the batch}
 
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
