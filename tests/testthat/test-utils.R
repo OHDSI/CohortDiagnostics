@@ -158,5 +158,18 @@ test_that("enforceMinCellValue works with vector of minimum values", {
   expect_equal(result$a, c(1, 2, 3, 4, 5))
 })
 
-
+for (server in testServers) {
+  test_that(paste("tempTableExists works on ", server$connectionDetails$dbms), {
+    con <- DatabaseConnector::connect(server$connectionDetails)
+    DatabaseConnector::renderTranslateExecuteSql(con, "create table #tmp110010 (a int);", 
+                                                 progressBar = F, 
+                                                 reportOverallTime = F)
+    expect_false(tempTableExists(con, "tmp98765"))
+    expect_true(tempTableExists(con, "tmp110010"))
+    DatabaseConnector::renderTranslateExecuteSql(con, "drop table #tmp110010;", 
+                                                 progressBar = F, 
+                                                 reportOverallTime = F)
+    DatabaseConnector::disconnect(con)
+  })
+}
 
