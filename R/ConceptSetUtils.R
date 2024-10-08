@@ -471,22 +471,15 @@ exportConceptSets <- function(cohortDefinitionSet, exportFolder, minCellCount, d
   conceptSets <- conceptSets %>%
     dplyr::select(-"uniqueConceptSetId") %>%
     dplyr::distinct()
-  # Save concept set metadata ---------------------------------------
-  conceptSetsExport <- makeDataExportable(
-    x = conceptSets,
-    tableName = "concept_sets",
-    minCellCount = minCellCount,
-    databaseId = databaseId
-  )
   
-  # Always write all concept sets for all cohorts as they are always needed
-  writeToCsv(
-    data = conceptSetsExport,
+  # Save concept set metadata ---------------------------------------
+  exportDataToCsv(
+    data = conceptSets,
+    tableName = "concept_sets",
     fileName = file.path(exportFolder, "concept_sets.csv"),
+    minCellCount = minCellCount,
+    databaseId = databaseId,
     incremental = FALSE,
     cohortId = conceptSetsExport$cohortId
   )
 }
-
-
-

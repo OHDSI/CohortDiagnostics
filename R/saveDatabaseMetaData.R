@@ -33,16 +33,15 @@ saveDatabaseMetaData <- function(databaseId,
     vocabularyVersion = !!vocabularyVersion,
     isMetaAnalysis = 0
   )
-  database <- makeDataExportable(
-    x = database,
-    tableName = "database",
-    databaseId = databaseId,
-    minCellCount = minCellCount
-  )
-  writeToCsv(
+  
+  exportDataToCsv(
     data = database,
-    fileName = file.path(exportFolder, "database.csv")
+    tableName = "database",
+    fileName = file.path(exportFolder, "database.csv"),
+    minCellCount = minCellCount,
+    databaseId = databaseId
   )
+  
   delta <- Sys.time() - startMetaData
   writeLines(paste(
     "Saving database metadata took",
