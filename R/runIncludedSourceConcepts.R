@@ -195,16 +195,12 @@ runIncludedSourceConcepts <- function(connection,
             ) %>%
             dplyr::ungroup()
           
-          counts <- makeDataExportable(
-            x = counts,
+          exportDataToCsv(
+            data = counts,
             tableName = "included_source_concept",
+            fileName = file.path(exportFolder, "included_source_concept.csv"),
             minCellCount = minCellCount,
-            databaseId = databaseId
-          )
-          
-          writeToCsv(
-            counts,
-            file.path(exportFolder, "included_source_concept.csv"),
+            databaseId = databaseId,
             incremental = incremental,
             cohortId = subsetIncluded$cohortId
           )
@@ -292,16 +288,12 @@ runIncludedSourceConcepts <- function(connection,
     ) %>%
     dplyr::distinct()
   
-  resolvedConceptIds <- makeDataExportable(
-    x = resolvedConceptIds,
+  exportDataToCsv(
+    data = resolvedConceptIds,
     tableName = "resolved_concepts",
+    fileName = file.path(exportFolder, "resolved_concepts.csv"),
     minCellCount = minCellCount,
-    databaseId = databaseId
-  )
-  
-  writeToCsv(
-    resolvedConceptIds,
-    file.path(exportFolder, "resolved_concepts.csv"),
+    databaseId = databaseId,
     incremental = TRUE
   )
   

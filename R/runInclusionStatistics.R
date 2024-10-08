@@ -91,15 +91,13 @@ runInclusionStatistics <- function(connection,
       lapply(names(cohortInclusionList), FUN = function(cohortInclusionName) {
         if (cohortInclusionName %in% (names(stats))) {
           cohortTableName <- cohortInclusionList[[cohortInclusionName]]
-          data <- makeDataExportable(
-            x = stats[[cohortInclusionName]],
+          
+          exportDataToCsv(
+            data = stats[[cohortInclusionName]],
             tableName = cohortTableName,
-            databaseId = databaseId,
-            minCellCount = minCellCount
-          )
-          writeToCsv(
-            data = data,
             fileName = file.path(exportFolder, paste0(cohortTableName, ".csv")),
+            minCellCount = minCellCount,
+            databaseId = databaseId,
             incremental = incremental,
             cohortId = subset$cohortId
           )
