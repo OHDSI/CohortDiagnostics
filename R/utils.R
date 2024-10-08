@@ -311,3 +311,18 @@ timeExecution <- function(exportFolder,
   readr::write_csv(executionTimes, file = executionTimePath, append = file.exists(executionTimePath))
   return(executionTimes)
 }
+
+tempTableExists <- function(connection, tempTableName) {
+  tryCatch(
+    is.data.frame(
+      DatabaseConnector::renderTranslateQuerySql(
+        connection = connection, 
+        sql = "select top 1 * from  #@tempTableName;",
+         tempTableName = tempTableName)
+      ),
+    error = function(e) {
+      DatabaseConnector::executeSql(connection, "rollback;", reportOverallTime = F, progressBar = F) 
+      return(FALSE)
+    }
+  )
+}

@@ -57,6 +57,8 @@ cohortTableName <- "cohortdiagnostics_v330_cohort"
 testServers <- list()
 if ("sqlite" %in% dbmsToTest) {
   
+  cohortIds = c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906)
+  
   testServers[["sqlite"]] <- list(
     connectionDetails = Eunomia::getEunomiaConnectionDetails(),
     cdmDatabaseSchema = "main",
@@ -65,7 +67,8 @@ if ("sqlite" %in% dbmsToTest) {
     useAchilles = FALSE,
     cohortTable = cohortTableName,
     tempEmulationSchema = NULL,
-    cohortIds = c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906),
+    cohortIds = cohortIds,
+    cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds),
     temporalCovariateSettings = temporalCovariateSettings
   )
 } 
