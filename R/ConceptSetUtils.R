@@ -256,65 +256,7 @@ mergeTempTables <-
     }
   }
 
-instantiateUniqueConceptSets <- function(uniqueConceptSets,
-                                         connection,
-                                         vocabularyDatabaseSchema,
-                                         tempEmulationSchema,
-                                         conceptSetsTable = "#inst_concept_sets") {
-  ParallelLogger::logInfo("Instantiating concept sets")
-  
-  if (nrow(uniqueConceptSets) > 0) {
-    sql <- sapply(
-      split(uniqueConceptSets, 1:nrow(uniqueConceptSets)),
-      function(x) {
-        sub(
-          "SELECT [0-9]+ as codeset_id",
-          sprintf("SELECT %s as codeset_id", x$uniqueConceptSetId),
-          x$conceptSetSql
-        )
-      }
-    )
-    
-    batchSize <- 100
-    tempTables <- c()
-    pb <- utils::txtProgressBar(style = 3)
-    for (start in seq(1, length(sql), by = batchSize)) {
-      utils::setTxtProgressBar(pb, start / length(sql))
-      tempTable <-
-        paste("#", paste(sample(letters, 20, replace = TRUE), collapse = ""), sep = "")
-      tempTables <- c(tempTables, tempTable)
-      end <- min(start + batchSize - 1, length(sql))
-      sqlSubset <- sql[start:end]
-      sqlSubset <- paste(sqlSubset, collapse = "\n\n  UNION ALL\n\n")
-      sqlSubset <-
-        sprintf(
-          "SELECT *\nINTO %s\nFROM (\n %s\n) tmp;",
-          tempTable,
-          sqlSubset
-        )
-      sqlSubset <-
-        SqlRender::render(sqlSubset, vocabulary_database_schema = vocabularyDatabaseSchema)
-      sqlSubset <- SqlRender::translate(sqlSubset,
-                                        targetDialect = connection@dbms,
-                                        tempEmulationSchema = tempEmulationSchema
-      )
-      DatabaseConnector::executeSql(connection,
-                                    sqlSubset,
-                                    progressBar = FALSE,
-                                    reportOverallTime = FALSE
-      )
-    }
-    utils::setTxtProgressBar(pb, 1)
-    close(pb)
-    
-    mergeTempTables(
-      connection = connection,
-      tableName = conceptSetsTable,
-      tempTables = tempTables,
-      tempEmulationSchema = tempEmulationSchema
-    )
-  }
-}
+
 
 getCodeSetId <- function(criterion) {
   if (is.list(criterion)) {
