@@ -7,13 +7,7 @@ dbmsToTest <- c(
   # "postgresql"#,
   # "redshift",
   # "sql server",
-  # "oracle"
 )
-
-# TODO: add remaining dbms
-# "spark",
-# "snowflake"
-# "bigquery"
 
 useAllCovariates <- FALSE
 
