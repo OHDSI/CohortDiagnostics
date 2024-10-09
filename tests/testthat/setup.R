@@ -2,21 +2,12 @@ library(CohortDiagnostics)
 library(testthat)
 
 dbmsToTest <- c(
-<<<<<<< HEAD
-  "sqlite"#,
+   "sqlite"#,
   # "duckdb"#,
-  # "postgresql",
+  # "postgresql"#,
   # "redshift",
   # "sql server",
   # "oracle"
-=======
-  "sqlite",
-  "duckdb",
-  "postgresql",
-  "redshift",
-  "sql server",
-  "oracle"
->>>>>>> 664d486b (fix setup file.)
 )
 
 # TODO: add remaining dbms
