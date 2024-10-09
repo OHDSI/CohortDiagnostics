@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-getVisitContext <- function(connectionDetails = NULL,
-                            connection = NULL,
+getVisitContext <- function(connection = NULL,
                             cdmDatabaseSchema,
                             tempEmulationSchema = NULL,
                             cohortDatabaseSchema = cdmDatabaseSchema,
@@ -30,8 +29,7 @@ getVisitContext <- function(connectionDetails = NULL,
   start <- Sys.time()
 
   if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
+    stop("Connection cannot be null.")
   }
 
   sql <- SqlRender::loadRenderTranslateSql(
@@ -108,30 +106,66 @@ getVisitContext <- function(connectionDetails = NULL,
   return(visitContext)
 }
 
+runVisitContext <- function(connection,
+                           cohortDefinitionSet,
+                           exportFolder,
+                           databaseId,
+                           cohortDatabaseSchema,
+                           cdmDatabaseSchema,
+                           tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
+                           cohortTable  = "cohort",
+                           cdmVersion = 5,
+                           minCellCount,
+                           incremental,
+                           incrementalFolder = file.path(exportFolder, "incremental")){
 
-
-executeVisitContextDiagnostics <- function(connection,
-                                           tempEmulationSchema,
-                                           cdmDatabaseSchema,
-                                           cohortDatabaseSchema,
-                                           cohortTable,
-                                           cdmVersion,
-                                           databaseId,
-                                           exportFolder,
-                                           minCellCount,
-                                           cohorts,
-                                           instantiatedCohorts,
-                                           recordKeepingFile,
-                                           incremental) {
+  
+  if (incremental && !file.exists(incrementalFolder)) {
+    # Create the file if it doesn't exist
+    file.create(incrementalFolder)
+    ParallelLogger::logInfo(
+      sprintf(
+        "Created record keeping file %s.",
+        incrementalFolder
+      )
+    )
+  } 
+  
+  cohortCounts <- CohortGenerator::getCohortCounts(
+    connection = connection,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTable = cohortTable,
+    cohortIds = cohortDefinitionSet$cohortId,
+    cohortDefinitionSet = cohortDefinitionSet,
+    databaseId = databaseId
+  )
+  
+  if (nrow(cohortCounts) > 0) {
+    instantiatedCohorts <- cohortCounts %>%
+      dplyr::filter(.data$cohortEntries > 0) %>%
+      dplyr::pull(.data$cohortId)
+    ParallelLogger::logInfo(
+      sprintf(
+        "Found %s of %s (%1.2f%%) submitted cohorts instantiated. ",
+        length(instantiatedCohorts),
+        nrow(cohortDefinitionSet),
+        100 * (length(instantiatedCohorts) / nrow(cohortDefinitionSet))
+      ),
+      "Beginning cohort diagnostics for instantiated cohorts. "
+    )
+  } else {
+    stop("All cohorts were either not instantiated or all have 0 records.")
+  }
+  
   ParallelLogger::logInfo("Retrieving visit context for index dates")
   subset <- subsetToRequiredCohorts(
-    cohorts = cohorts %>%
+    cohorts = cohortDefinitionSet %>%
       dplyr::filter(.data$cohortId %in% instantiatedCohorts),
     task = "runVisitContext",
     incremental = incremental,
-    recordKeepingFile = recordKeepingFile
+    recordKeepingFile = incrementalFolder
   )
-
+  
   if (incremental &&
     (length(instantiatedCohorts) - nrow(subset)) > 0) {
     ParallelLogger::logInfo(sprintf(
@@ -166,7 +200,7 @@ executeVisitContextDiagnostics <- function(connection,
       cohortId = subset$cohortId,
       task = "runVisitContext",
       checksum = subset$checksum,
-      recordKeepingFile = recordKeepingFile,
+      recordKeepingFile = incrementalFolder,
       incremental = incremental
     )
   }

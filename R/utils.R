@@ -354,3 +354,23 @@ exportDataToCsv <- function(data, tableName, fileName, minCellCount = 5, databas
   )
   return(data)
 }
+
+assertCohortDefinitionSetContainsAllParents <- function(cohortDefinitionSet) {
+  stopifnot(CohortGenerator::isCohortDefinitionSet(cohortDefinitionSet))
+  if ("subsetParent" %in% names(cohortDefinitionSet)) {
+    
+    parentCohortIds <- cohortDefinitionSet %>% 
+      dplyr::filter(!is.na(.data$subsetParent), .data$cohortId != .data$subsetParent) %>% 
+      dplyr::pull(.data$subsetParent) %>% 
+      unique()
+    
+    parentCohortIdsNotInCohortSet <- dplyr::setdiff(parentCohortIds, cohortDefinitionSet$cohortId)
+    
+    if (length(parentCohortIdsNotInCohortSet) > 0) {
+      stop(paste0("The CohortDefinitionSet contains parent cohort IDs (", 
+                 paste(parentCohortIdsNotInCohortSet, collapse = ", "),
+                 ") that are not in the cohortDefinitionSet!"))
+    }
+  }
+  invisible(NULL)
+}
