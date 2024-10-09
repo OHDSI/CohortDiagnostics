@@ -156,7 +156,7 @@ createCustomCdm <- function(jsonDataFilePath){
   for (tableName in names(jsonData)) {
     patientData <- as.data.frame(jsonData[[tableName]]) %>% 
       dplyr::mutate(dplyr::across(dplyr::matches("date$"), ~as.Date(.))) %>% 
-      dplyr::mutate(dplyr::across(dplyr::matches("datetime$"), ~as.POSIXct(., format = "")))
+      dplyr::mutate(dplyr::across(dplyr::matches("datetime$"),  ~as.POSIXct(., format = "%Y-%m-%d %H:%M:%S", tz = "UTC")))
     
     DBI::dbAppendTable(connection, tableName, patientData)
   }
@@ -165,7 +165,22 @@ createCustomCdm <- function(jsonDataFilePath){
   
   return(connectionDetails)
   
-  }
+}
+
+
+addCohortTable <- function(connection, cohortDataFilePath){
+  
+  cohortTableData <- readxl::read_excel(cohortDataFilePath, col_types = c("numeric", "numeric", "date",
+                                                                          "date"))
+  
+  cohortTableData <- cohortTableData %>% mutate(across(ends_with("DATE"), ~ as.Date(.x, format = "%Y-%m-%d")))
+  
+  
+  DatabaseConnector::insertTable(connection = connection,
+                                 tableName = "cohort",
+                                 data = cohortTableData
+  )
+}
 
 
 
