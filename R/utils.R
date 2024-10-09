@@ -300,11 +300,13 @@ timeExecution <- function(exportFolder,
     eval(expr)
     execTime <- Sys.time() - start
   }
+  checkmate::assertClass(execTime, "difftime")
+  checkmate::assertClass(start, "POSIXct")
   executionTimes <- data.frame(
     task = taskName,
     startTime = start,
     cohortIds = paste(cohortIds, collapse = ";"),
-    executionTime = execTime,
+    executionTime = round(as.numeric(execTime, units = "secs")/60, 4),
     parent = paste(parent, collapse = "")
   )
 
@@ -322,8 +324,8 @@ tempTableExists <- function(connection, tempTableName) {
         tempTableName = tempTableName)
     ),
     error = function(e) {
-      if (DatabaseConnector::dbms(connection) %in% c("postgresql", "redshift") &&
-          methods::is(connection, "DatabaseConnectorJdbcConnection")) {
+      if (methods::is(connection, "DatabaseConnectorJdbcConnection") &&
+          DatabaseConnector::dbms(connection) %in% c("postgresql", "redshift")) {
         DatabaseConnector::executeSql(connection, "rollback;", reportOverallTime = F, progressBar = F) 
       }
       return(FALSE)

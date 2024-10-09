@@ -2,7 +2,7 @@ library(CohortDiagnostics)
 library(testthat)
 
 dbmsToTest <- c(
-   "sqlite"#,
+  "sqlite"#,
   # "duckdb"#,
   # "postgresql"#,
   # "redshift",
