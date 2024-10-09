@@ -397,6 +397,7 @@ getTimeSeries <- function(
     " ",
     attr(delta, "units")
   )
+  
   return(resultsInAndromeda$timeSeries %>% dplyr::collect())
 }
 
@@ -406,30 +407,35 @@ getTimeSeries <- function(
 #' This function first generates a calendar period table, that has
 #' calendar intervals between the \code{timeSeriesMinDate} and \code{timeSeriesMaxDate}.
 #' Calendar Month, Quarter and year are supported.
-#' For each of the calendar interval, time series data are computed. 
+#' For each of the calendar interval, time series data are computed. There are 2 different types
+#' of time series: one related to cohorts and one related to the data source.
 #'
+#' Cohort time series: computes time series at the cohort level/table. These have 2 definitions: T1 and T2.
+#' T1: subjects in the cohort who have at least one cohort day in a calendar period. 
+#' T2: subjects in the cohort who have at least one observation day in a calendar period.
+#' 
 #' Data Source time series: computes time series at the data source level i.e. observation
 #' period table. This output is NOT limited to individuals in the cohort table
-#' but is for ALL people in the datasource (i.e. present in observation period table)
+#' but is for ALL people in the data source (i.e. present in observation period table)
+#' 
 #' 
 #' @template Connection
 #' @template CohortDatabaseSchema
 #' @template CdmDatabaseSchema
 #' @template TempEmulationSchema
 #' @template CohortTable
-#' @template cohortDefinitionSet 
+#' @template cohortDefinitionSet
 #' @template databaseIds
-#' @template exportFolder 
-#' @template minCellCount 
-#' @template incremental 
-#' @template recordKeepingFile 
-
-#' @param runCohortTimeSeries         Generate and export the cohort level time series?
-#' @param runDataSourceTimeSeries     Generate and export the Data source level time series? i.e.
-#'                                    using all persons found in observation period table.
-#' @param instantiatedCohorts 
+#' @template exportFolder
+#' @template minCellCount
+#' @template incremental
+#' @template recordKeepingFile
+#' @template BatchSize
+#' @template InstantiatedCohorts
+#' 
+#' @param runCohortTimeSeries.       Generate and export the cohort level time series (T1 and T2)
+#' @param runDataSourceTimeSeries    Generate and export the data source level time series using all persons found in observation period table (T3).
 #' @param observationPeriodDateRange 
-#' @param batchSize 
 #'
 #' @return None, it will write the results to a csv file
 #' @export
