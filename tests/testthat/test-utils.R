@@ -201,3 +201,17 @@ for (server in testServers) {
   })
 }
 
+test_that("assertCohortDefinitionSetContainsAllParents works", {
+  cohorts <- loadTestCohortDefinitionSet() 
+  
+  expect_no_error(
+    CohortDiagnostics:::assertCohortDefinitionSetContainsAllParents(cohorts)
+  )
+  
+  expect_error(
+    CohortDiagnostics:::assertCohortDefinitionSetContainsAllParents(
+      dplyr::filter(cohorts, !(.data$cohortId  %in% cohorts$subsetParent))
+    )
+  )
+})
+
