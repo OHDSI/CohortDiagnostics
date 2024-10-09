@@ -214,3 +214,20 @@ test_that("Sqlite results data model", {
     }
   })
 })
+
+
+test_that("getResultsDataModelSpecifications works", {
+  spec <- getResultsDataModelSpecifications()
+  expectedColumnNames <- c("tableName", "columnName", "dataType", "isRequired", "primaryKey", 
+    "optional", "emptyIsNa", "minCellCount", "isVocabularyTable", 
+    "neverIncremental", "description")
+  expect_true(is.data.frame(spec))
+  expect_named(spec, expectedColumnNames)
+
+  expect_equal(length(unique(spec$tableName)), 30)
+  spec <- getResultsDataModelSpecifications("cohort")
+  expect_equal(length(unique(spec$tableName)), 1)
+ 
+  expect_error(getResultsDataModelSpecifications(c("cohort", "time_series")))
+  expect_error(getResultsDataModelSpecifications(1))
+ })
