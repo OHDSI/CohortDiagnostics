@@ -51,7 +51,7 @@ temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(
 cohortTableName <- "cohortdiagnostics_v330_cohort"
 
 # minCellCountValue <- 5
-# skipCdmTests <- FALSE
+skipCdmTests <- FALSE
 
 # testServers list contains all the parameters to run each test file on each database
 testServers <- list()
