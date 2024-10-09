@@ -418,7 +418,7 @@ getTimeSeries <- function(
 #' @template TempEmulationSchema
 #' @template CohortTable
 #' @template cohortDefinitionSet 
-#' @template databaseId 
+#' @template databaseIds
 #' @template exportFolder 
 #' @template minCellCount 
 #' @template incremental 

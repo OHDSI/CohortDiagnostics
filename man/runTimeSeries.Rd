@@ -43,28 +43,37 @@ this should include both the database and schema name, for example
 
 \item{cohortTable}{Name of the cohort table.}
 
-\item{cohortDefinitionSet}{}
+\item{cohortDefinitionSet}{A data.frame with cohort definitions created by 
+`CohortGenerator::getCohortDefinitionSet` that must include 
+the columns cohortId, cohortName, json, sql.}
 
 \item{runCohortTimeSeries}{Generate and export the cohort level time series?}
 
 \item{runDataSourceTimeSeries}{Generate and export the Data source level time series? i.e.
 using all persons found in observation period table.}
 
-\item{databaseId}{}
+\item{databaseId}{The databaseId to retrieve the results for. This is a 
+character field values from the `databaseId` field of the `database` table 
+of the results data model.}
 
-\item{exportFolder}{}
+\item{exportFolder}{The folder where the results will be exported to}
 
-\item{minCellCount}{}
+\item{minCellCount}{The minimum cell count for fields contains person counts or fractions}
 
 \item{instantiatedCohorts}{}
 
-\item{incremental}{}
-
-\item{recordKeepingFile}{}
+\item{incremental}{Create only cohort diagnostics that haven't been created before?}
 
 \item{observationPeriodDateRange}{}
 
 \item{batchSize}{}
+
+\item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
+character field values from the `databaseId` field of the `database` table 
+of the results data model.}
+}
+\value{
+None, it will write the results to a csv file
 }
 \description{
 This function first generates a calendar period table, that has
