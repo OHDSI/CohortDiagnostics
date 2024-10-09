@@ -128,3 +128,45 @@ createTestShinyDb <- function(connectionDetails = Eunomia::getEunomiaConnectionD
     overwrite = TRUE
   )
 }
+
+
+
+createCustomCdm <- function(jsonDataFilePath){
+  
+  connectionDetails <- Eunomia::getEunomiaConnectionDetails()
+  
+  tablesToTruncate <- c("person", "observation_period", "visit_occurrence", "visit_detail", 
+                        "condition_occurrence", "drug_exposure", "procedure_occurrence", 
+                        "device_exposure", "measurement", "observation", "death", "note", 
+                        "note_nlp", "specimen", "fact_relationship", "location", "care_site", 
+                        "provider", "payer_plan_period", "cost", "drug_era", "dose_era", 
+                        "condition_era", "metadata", "cdm_source", "cohort_definition", 
+                        "attribute_definition")
+  
+  connection <- DatabaseConnector::connect(connectionDetails)
+  
+  # remove tables that are not vocabulary tables
+  for (tbl in tablesToTruncate) {
+    DatabaseConnector::executeSql(connection, paste("delete from ", tbl, ";"), progressBar = FALSE)
+  }
+  
+  jsonData <- jsonlite::fromJSON(system.file(jsonDataFilePath, package = "CohortDiagnostics"))
+  
+  # Convert the JSON data into a data frame and append it to the blank CDM
+  for (tableName in names(jsonData)) {
+    patientData <- as.data.frame(jsonData[[tableName]]) %>% 
+      dplyr::mutate(dplyr::across(dplyr::matches("date$"), ~as.Date(.))) %>% 
+      dplyr::mutate(dplyr::across(dplyr::matches("datetime$"), ~as.POSIXct(., format = "")))
+    
+    DBI::dbAppendTable(connection, tableName, patientData)
+  }
+
+  cli::cli_alert_success("Patients pushed to blank CDM successfully")
+  
+  return(connectionDetails)
+  
+  }
+
+
+
+
