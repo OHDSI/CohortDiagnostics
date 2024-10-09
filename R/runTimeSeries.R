@@ -482,6 +482,7 @@ runTimeSeries <- function(connection,
         unlink(outputFile)
       }
 
+      # process cohorts loop
       for (start in seq(1, nrow(subset), by = batchSize)) {
         end <- min(start + batchSize - 1, nrow(subset))
 
@@ -526,11 +527,11 @@ runTimeSeries <- function(connection,
           minCellCount = minCellCount,
           databaseId = databaseId,
           incremental = TRUE,
-          cohortId = subset[start:end, ]$cohortId %>% unique()
+          cohortId = cohortIds
         )
         
         recordTasksDone(
-          cohortId = subset[start:end, ]$cohortId %>% unique(),
+          cohortId = cohortIds,
           task = "runCohortTimeSeries",
           checksum = subset[start:end, ]$checksum,
           recordKeepingFile = recordKeepingFile,
