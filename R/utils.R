@@ -300,11 +300,13 @@ timeExecution <- function(exportFolder,
     eval(expr)
     execTime <- Sys.time() - start
   }
+  checkmate::assertClass(execTime, "difftime")
+  checkmate::assertClass(start, "POSIXct")
   executionTimes <- data.frame(
     task = taskName,
     startTime = start,
     cohortIds = paste(cohortIds, collapse = ";"),
-    executionTime = execTime,
+    executionTime = round(as.numeric(execTime, units = "secs")/60, 4),
     parent = paste(parent, collapse = "")
   )
 
