@@ -28,7 +28,7 @@ getResultsDataModelSpecifications <- function(tableName = NULL) {
   readr::local_edition(1)
   pathToCsv <- system.file("settings", "resultsDataModelSpecification.csv", package = "CohortDiagnostics")
   
-  resultsDataModelSpecifications <- readr::read_csv(file = pathToCsv, col_types = "cccccccccc")
+  resultsDataModelSpecifications <- readr::read_csv(file = pathToCsv, col_types = "ccccccccccc")
 
   colnames(resultsDataModelSpecifications) <- SqlRender::snakeCaseToCamelCase(colnames(resultsDataModelSpecifications))
   
