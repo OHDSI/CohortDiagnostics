@@ -578,19 +578,11 @@ runTimeSeries <- function(connection,
     )
 
     exportDataToCsv(
-<<<<<<< HEAD
-      data = data, 
-      tableName = "time_series",
-      minCellCount = minCellCount,
-      databaseId = databaseId,
-      exportFolder = exportFolder,
-=======
       data = data,
       tableName = "time_series",
       fileName = file.path(exportFolder, "time_series.csv"),
       minCellCount = minCellCount,
       databaseId = databaseId,
->>>>>>> darwin_sprint
       incremental = incremental,
       cohortId = cohortId
     )
