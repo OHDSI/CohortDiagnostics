@@ -158,6 +158,34 @@ test_that("enforceMinCellValue works with vector of minimum values", {
   expect_equal(result$a, c(1, 2, 3, 4, 5))
 })
 
+test_that("timeExecution uses minutes as unit", {
+  exportFolder <- tempfile()
+  dir.create(exportFolder)
+  timeExecution(exportFolder,
+                taskName = "test 1 second",
+                expr = Sys.sleep(1))
+  
+  start <- as.POSIXct("2024-10-09 03:37:46") 
+  oneMinute <- start - as.POSIXct("2024-10-09 03:36:46")
+  timeExecution(exportFolder,
+                taskName = "test 1 minute",
+                start = start,
+                execTime = oneMinute)
+  
+  start <- as.POSIXct("2024-10-09 03:37:46") 
+  oneHour <- start - as.POSIXct("2024-10-09 02:37:46")
+  timeExecution(exportFolder,
+                taskName = "test 1 hour",
+                start = start,
+                execTime = oneHour)
+  
+  list.files(exportFolder)
+  df <- readr::read_csv(file.path(exportFolder, "executionTimes.csv"), show_col_types = F)
+  
+  expect_equal(df$task, c("test 1 second", "test 1 minute", "test 1 hour"))
+  expect_equal(df$executionTime, c(round(1/60, 4), 1, 60))
+})
+
 for (server in testServers) {
   test_that(paste("tempTableExists works on ", server$connectionDetails$dbms), {
     con <- DatabaseConnector::connect(server$connectionDetails)
