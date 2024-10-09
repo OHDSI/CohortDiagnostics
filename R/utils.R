@@ -312,6 +312,7 @@ timeExecution <- function(exportFolder,
   return(executionTimes)
 }
 
+# check if a temp table already exists
 tempTableExists <- function(connection, tempTableName) {
   tryCatch(
     is.data.frame(
@@ -321,23 +322,33 @@ tempTableExists <- function(connection, tempTableName) {
         tempTableName = tempTableName)
     ),
     error = function(e) {
-      DatabaseConnector::executeSql(connection, "rollback;", reportOverallTime = F, progressBar = F) 
+      if (DatabaseConnector::dbms(connection) %in% c("postgresql", "redshift") &&
+          methods::is(connection, "DatabaseConnectorJdbcConnection")) {
+        DatabaseConnector::executeSql(connection, "rollback;", reportOverallTime = F, progressBar = F) 
+      }
       return(FALSE)
     }
   )
 }
 
-exportDataToCsv <- function(data, tableName, minCellCount, databaseId, exportFolder, incremental, cohortId) {
+exportDataToCsv <- function(data, tableName, fileName, minCellCount = 5, databaseId = NULL, 
+                            incremental = FALSE, enforceMinCellValueFunc = NULL,  ...) {
   data <- makeDataExportable(
     x = data,
     tableName = tableName,
     minCellCount = minCellCount,
     databaseId = databaseId
   )
+
+  if (!is.null(enforceMinCellValueFunc) && nrow(data) > 0) {
+    data <- enforceMinCellValueFunc
+  }
+  
   writeToCsv(
     data = data,
-    fileName = file.path(exportFolder, tableName),
+    fileName = fileName,
     incremental = incremental,
-    cohortId = cohortId
+    ...
   )
+  return(data)
 }

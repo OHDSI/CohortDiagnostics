@@ -181,9 +181,7 @@ runOrphanConcepts <- function(connection,
         tempEmulationSchema = tempEmulationSchema,
         conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
         conceptCountsTable = conceptCountsTable,
-        conceptCountsTableIsTemp = conceptCountsTableIsTemp,
-        useAchilles = useAchilles,
-        resultsDatabaseSchema = resultsDatabaseSchema
+        conceptCountsTableIsTemp = conceptCountsTableIsTemp
       )
     }
   )
@@ -292,20 +290,17 @@ runOrphanConcepts <- function(connection,
         conceptSubjects = max(.data$conceptSubjects)
       ) %>%
       dplyr::ungroup()
-    data <- makeDataExportable(
-      x = data,
-      tableName = "orphan_concept",
-      minCellCount = minCellCount,
-      databaseId = databaseId
-    )
     
-    writeToCsv(
-      data,
-      file.path(exportFolder, "orphan_concept.csv"),
+    exportDataToCsv(
+      data = data,
+      tableName = "orphan_concept",,
+      fileName = file.path(exportFolder, "orphan_concept.csv"),
+      minCellCount = minCellCount,
+      databaseId = databaseId,
       incremental = incremental,
       cohortId = subsetOrphans$cohortId
     )
-    
+
     recordTasksDone(
       cohortId = subsetOrphans$cohortId,
       task = "runOrphanConcepts",
@@ -366,16 +361,12 @@ runOrphanConcepts <- function(connection,
     ) %>%
     dplyr::distinct()
   
-  resolvedConceptIds <- makeDataExportable(
-    x = resolvedConceptIds,
+  exportDataToCsv(
+    data = resolvedConceptIds,
     tableName = "resolved_concepts",
+    fileName = file.path(exportFolder, "resolved_concepts.csv"),
     minCellCount = minCellCount,
-    databaseId = databaseId
-  )
-  
-  writeToCsv(
-    resolvedConceptIds,
-    file.path(exportFolder, "resolved_concepts.csv"),
+    databaseId = databaseId,
     incremental = TRUE
   )
   

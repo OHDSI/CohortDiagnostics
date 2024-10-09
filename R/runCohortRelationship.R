@@ -375,16 +375,12 @@ runCohortRelationship <- function(
         }
       )
 
-      data <- makeDataExportable(
-        x = output,
+      exportDataToCsv(
+        data = output,
         tableName = "cohort_relationships",
-        minCellCount = minCellCount,
-        databaseId = databaseId
-      )
-
-      writeToCsv(
-        data = data,
         fileName = outputFile,
+        minCellCount = minCellCount,
+        databaseId = databaseId,
         incremental = TRUE
       )
 

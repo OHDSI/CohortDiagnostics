@@ -520,12 +520,12 @@ runTimeSeries <- function(connection,
         )
 
         exportDataToCsv(
-          data = data, 
+          data = data,
           tableName = "time_series",
+          fileName = outputFile,
           minCellCount = minCellCount,
           databaseId = databaseId,
-          exportFolder = exportFolder,
-          incremental = incremental,
+          incremental = TRUE,
           cohortId = subset[start:end, ]$cohortId %>% unique()
         )
         
@@ -578,11 +578,19 @@ runTimeSeries <- function(connection,
     )
 
     exportDataToCsv(
+<<<<<<< HEAD
       data = data, 
       tableName = "time_series",
       minCellCount = minCellCount,
       databaseId = databaseId,
       exportFolder = exportFolder,
+=======
+      data = data,
+      tableName = "time_series",
+      fileName = file.path(exportFolder, "time_series.csv"),
+      minCellCount = minCellCount,
+      databaseId = databaseId,
+>>>>>>> darwin_sprint
       incremental = incremental,
       cohortId = cohortId
     )

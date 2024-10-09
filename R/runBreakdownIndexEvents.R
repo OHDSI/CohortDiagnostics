@@ -1,3 +1,4 @@
+
 # Copyright 2024 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
@@ -45,27 +46,27 @@
 #'
 #' @examples
 runBreakdownIndexEvents <- function(connection,
-                                     tempEmulationSchema,
-                                     cdmDatabaseSchema,
-                                     vocabularyDatabaseSchema = cdmDatabaseSchema,
-                                     databaseId,
-                                     cohorts,
-                                     runIncludedSourceConcepts,
-                                     runOrphanConcepts,
-                                     runBreakdownIndexEvents,
-                                     exportFolder,
-                                     minCellCount,
-                                     conceptCountsDatabaseSchema = NULL,
-                                     conceptCountsTable = "concept_counts",
-                                     conceptCountsTableIsTemp = FALSE,
-                                     cohortDatabaseSchema,
-                                     cohortTable,
-                                     useExternalConceptCountsTable = FALSE,
-                                     incremental = FALSE,
-                                     conceptIdTable = NULL,
-                                     recordKeepingFile,
-                                     useAchilles,
-                                     resultsDatabaseSchema) {
+                                    tempEmulationSchema,
+                                    cdmDatabaseSchema,
+                                    vocabularyDatabaseSchema = cdmDatabaseSchema,
+                                    databaseId,
+                                    cohorts,
+                                    runIncludedSourceConcepts,
+                                    runOrphanConcepts,
+                                    runBreakdownIndexEvents,
+                                    exportFolder,
+                                    minCellCount,
+                                    conceptCountsDatabaseSchema = NULL,
+                                    conceptCountsTable = "concept_counts",
+                                    conceptCountsTableIsTemp = FALSE,
+                                    cohortDatabaseSchema,
+                                    cohortTable,
+                                    useExternalConceptCountsTable = FALSE,
+                                    incremental = FALSE,
+                                    conceptIdTable = NULL,
+                                    recordKeepingFile,
+                                    useAchilles,
+                                    resultsDatabaseSchema) {
   ParallelLogger::logInfo("Starting concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
   subset <- dplyr::tibble()
@@ -155,9 +156,7 @@ runBreakdownIndexEvents <- function(connection,
           tempEmulationSchema = tempEmulationSchema,
           conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
           conceptCountsTable = conceptCountsTable,
-          conceptCountsTableIsTemp = conceptCountsTableIsTemp,
-          useAchilles = useAchilles,
-          resultsDatabaseSchema = resultsDatabaseSchema
+          conceptCountsTableIsTemp = conceptCountsTableIsTemp
         )
       }
     )
@@ -240,16 +239,12 @@ runBreakdownIndexEvents <- function(connection,
               ) %>%
               dplyr::ungroup()
             
-            counts <- makeDataExportable(
-              x = counts,
+            exportDataToCsv(
+              data = counts,
               tableName = "included_source_concept",
+              fileName = file.path(exportFolder, "included_source_concept.csv"),
               minCellCount = minCellCount,
-              databaseId = databaseId
-            )
-            
-            writeToCsv(
-              counts,
-              file.path(exportFolder, "included_source_concept.csv"),
+              databaseId = databaseId,
               incremental = incremental,
               cohortId = subsetIncluded$cohortId
             )
@@ -505,19 +500,16 @@ runBreakdownIndexEvents <- function(connection,
       
       data <- dplyr::bind_rows(data)
       
-      data <- makeDataExportable(
-        x = data,
-        tableName = "index_event_breakdown",
-        minCellCount = minCellCount,
-        databaseId = databaseId
-      )
-      
-      writeToCsv(
+      exportDataToCsv(
         data = data,
+        tableName = "index_event_breakdown",
         fileName = file.path(exportFolder, "index_event_breakdown.csv"),
+        minCellCount = minCellCount,
+        databaseId = databaseId,
         incremental = incremental,
         cohortId = subset$cohortId
       )
+      
       recordTasksDone(
         cohortId = subset$cohortId,
         task = "runBreakdownIndexEvents",
@@ -640,16 +632,14 @@ runBreakdownIndexEvents <- function(connection,
           conceptSubjects = max(.data$conceptSubjects)
         ) %>%
         dplyr::ungroup()
-      data <- makeDataExportable(
-        x = data,
-        tableName = "orphan_concept",
-        minCellCount = minCellCount,
-        databaseId = databaseId
-      )
       
-      writeToCsv(
-        data,
-        file.path(exportFolder, "orphan_concept.csv"),
+      
+      exportDataToCsv(
+        data = data,
+        tableName = "orphan_concept",
+        fileName = file.path(exportFolder, "orphan_concept.csv"),
+        minCellCount = minCellCount,
+        databaseId = databaseId,
         incremental = incremental,
         cohortId = subsetOrphans$cohortId
       )
@@ -715,16 +705,12 @@ runBreakdownIndexEvents <- function(connection,
     ) %>%
     dplyr::distinct()
   
-  resolvedConceptIds <- makeDataExportable(
-    x = resolvedConceptIds,
+  exportDataToCsv(
+    data = resolvedConceptIds,
     tableName = "resolved_concepts",
+    fileName = file.path(exportFolder, "resolved_concepts.csv"),
     minCellCount = minCellCount,
-    databaseId = databaseId
-  )
-  
-  writeToCsv(
-    resolvedConceptIds,
-    file.path(exportFolder, "resolved_concepts.csv"),
+    databaseId = databaseId,
     incremental = TRUE
   )
   

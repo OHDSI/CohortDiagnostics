@@ -24,6 +24,7 @@ if (dbms == "postgresql") {
 
 test_that("Database Migrations execute without error", {
   skip_if_not(dbms %in% c("sqlite", "postgresql"))
+  skip_if(dbms == "postgresql" && Sys.getenv("CDM5_POSTGRESQL_SERVER") == "")
 
   connection <- DatabaseConnector::connect(connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
@@ -44,6 +45,8 @@ test_that("Database Migrations execute without error", {
     databaseSchema = resultsDatabaseSchema,
     tablePrefix = "cd_"
   )
+
+  on.exit(migrator$finalize())
   expect_true(migrator$check())
 
   .createDataModel(
@@ -53,7 +56,7 @@ test_that("Database Migrations execute without error", {
   )
 
   expect_false(all(migrator$getStatus()$executed))
-
+  migrator$finalize()
 
   migrateDataModel(
     connectionDetails = connectionDetails,
