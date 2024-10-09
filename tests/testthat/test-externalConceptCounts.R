@@ -66,5 +66,5 @@ test_that("Creating and checking externalConceptCounts temp table", {
                                                                       name = conceptCountsTable,
                                                                       databaseSchema = cdmDatabaseSchema)
     expect_true(checkConceptCountsTableExists)
-  
+  }
 })

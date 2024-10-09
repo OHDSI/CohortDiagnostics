@@ -278,27 +278,20 @@ runIncidenceRate <- function(connection,
 
     data <-lapply(split(subset, subset$cohortId), runIncidenceRate)
     data <- dplyr::bind_rows(data)
-    data <- makeDataExportable(
-      x = data,
-      tableName = "incidence_rate",
-      minCellCount = minCellCount,
-      databaseId = databaseId
-    )
-
-    # incidenceRate field is a calculated field that does not follow the same pattern as others for minCellValue
-    if (nrow(data) > 0) {
-      data <-
-        enforceMinCellValue(
-          data,
-          "incidenceRate",
-          1000 * minCellCount / as.numeric(data$personYears)
-        )
-    }
-
-    writeToCsv(
+    
+    exportDataToCsv(
       data = data,
+      tableName = "incidence_rate",
       fileName = file.path(exportFolder, "incidence_rate.csv"),
+      minCellCount = minCellCount,
+      databaseId = databaseId,
       incremental = incremental,
+      # incidenceRate field is a calculated field that does not follow the same pattern as others for minCellValue
+      enforceMinCellValueFunc = enforceMinCellValue(
+        data,
+        "incidenceRate",
+        1000 * minCellCount / as.numeric(data$personYears)
+      ),
       cohortId = subset$cohortId
     )
   }

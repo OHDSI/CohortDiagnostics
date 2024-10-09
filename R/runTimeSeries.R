@@ -584,18 +584,16 @@ runTimeSeries <- function(connection,
           }
         )
 
-        data <- makeDataExportable(
-          x = data,
-          tableName = "time_series",
-          minCellCount = minCellCount,
-          databaseId = databaseId
-        )
-        writeToCsv(
+        exportDataToCsv(
           data = data,
+          tableName = "time_series",
           fileName = outputFile,
+          minCellCount = minCellCount,
+          databaseId = databaseId,
           incremental = TRUE,
           cohortId = subset[start:end, ]$cohortId %>% unique()
         )
+        
         recordTasksDone(
           cohortId = subset[start:end, ]$cohortId %>% unique(),
           task = "runCohortTimeSeries",
@@ -646,18 +644,16 @@ runTimeSeries <- function(connection,
       }
     )
 
-    data <- makeDataExportable(
-      x = data,
-      tableName = "time_series",
-      minCellCount = minCellCount,
-      databaseId = databaseId
-    )
-    writeToCsv(
+    exportDataToCsv(
       data = data,
+      tableName = "time_series",
       fileName = file.path(exportFolder, "time_series.csv"),
+      minCellCount = minCellCount,
+      databaseId = databaseId,
       incremental = incremental,
       cohortId = -44819062
     )
+    
     recordTasksDone(
       cohortId = -44819062,
       task = "runDataSourceTimeSeries",

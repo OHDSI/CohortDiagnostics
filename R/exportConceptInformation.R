@@ -96,14 +96,10 @@ exportConceptInformation <- function(connection = NULL,
           snakeCaseToCamelCase = TRUE
         )
       if (nrow(data) > 0) {
-        data <- makeDataExportable(
-          x = data,
-          tableName = vocabularyTable
-        )
-
-        writeToCsv(
+        exportDataToCsv(
           data = data,
-          fileName = file.path(exportFolder, paste(vocabularyTable, "csv", sep = ".")),
+          tableName = vocabularyTable,
+          fileName = file.path(exportFolder, paste0(vocabularyTable, ".csv")),
           incremental = incremental,
           conceptId = uniqueConceptIds
         )

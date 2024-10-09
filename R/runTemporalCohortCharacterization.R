@@ -61,42 +61,34 @@ exportCharacterization <- function(characteristics,
       )
     
     if (dplyr::pull(dplyr::count(characteristics$filteredCovariates)) > 0) {
-      covariateRef <- makeDataExportable(
-        x = characteristics$covariateRef,
+      
+      exportDataToCsv(
+        data = characteristics$covariateRef,
         tableName = "temporal_covariate_ref",
-        minCellCount = minCellCount
-      )
-      writeToCsv(
-        data = covariateRef,
         fileName = covariateRefFileName,
+        minCellCount = minCellCount,
         incremental = TRUE,
         covariateId = covariateRef$covariateId
       )
-      
-      analysisRef <- makeDataExportable(
-        x = characteristics$analysisRef,
+
+      exportDataToCsv(
+        data = characteristics$analysisRef,
         tableName = "temporal_analysis_ref",
-        minCellCount = minCellCount
-      )
-      writeToCsv(
-        data = analysisRef,
         fileName = analysisRefFileName,
+        minCellCount = minCellCount,
         incremental = TRUE,
         analysisId = analysisRef$analysisId
       )
       
-      timeRef <- makeDataExportable(
-        x = characteristics$timeRef,
+      exportDataToCsv(
+        data = characteristics$timeRef,
         tableName = "temporal_time_ref",
-        minCellCount = minCellCount
-      )
-      writeToCsv(
-        data = timeRef,
         fileName = timeRefFileName,
+        minCellCount = minCellCount,
         incremental = TRUE,
         analysisId = timeRef$timeId
       )
-      
+
       writeToCsv(
         data = characteristics$filteredCovariates,
         fileName = covariateValueFileName,

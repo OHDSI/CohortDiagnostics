@@ -330,3 +330,25 @@ tempTableExists <- function(connection, tempTableName) {
     }
   )
 }
+
+exportDataToCsv <- function(data, tableName, fileName, minCellCount = 5, databaseId = NULL, 
+                            incremental = FALSE, enforceMinCellValueFunc = NULL,  ...) {
+  data <- makeDataExportable(
+    x = data,
+    tableName = tableName,
+    minCellCount = minCellCount,
+    databaseId = databaseId
+  )
+  
+  if (!is.null(enforceMinCellValueFunc) && nrow(data) > 0) {
+    data <- enforceMinCellValueFunc
+  }
+  
+  writeToCsv(
+    data = data,
+    fileName = fileName,
+    incremental = incremental,
+    ...
+  )
+  return(data)
+}

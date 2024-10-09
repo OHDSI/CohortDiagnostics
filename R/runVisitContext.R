@@ -151,18 +151,17 @@ executeVisitContextDiagnostics <- function(connection,
       cohortIds = subset$cohortId,
       conceptIdTable = "#concept_ids"
     )
-    data <- makeDataExportable(
-      x = data,
-      tableName = "visit_context",
-      minCellCount = minCellCount,
-      databaseId = databaseId
-    )
-    writeToCsv(
+    
+    exportDataToCsv(
       data = data,
+      tableName = "visit_context",
       fileName = file.path(exportFolder, "visit_context.csv"),
+      minCellCount = minCellCount,
+      databaseId = databaseId,
       incremental = incremental,
       cohortId = subset$cohortId
     )
+    
     recordTasksDone(
       cohortId = subset$cohortId,
       task = "runVisitContext",
