@@ -26,9 +26,7 @@ runTimeSeries(
 \arguments{
 \item{connection}{An object of type \code{connection} as created using the
 \code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package. Can be left NULL if \code{connectionDetails}
-is provided, in which case a new connection will be opened at the start
-of the function, and closed when the function finishes.}
+DatabaseConnector package.}
 
 \item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
 tables, provide a schema with write privileges where temp tables can be created.}
@@ -62,7 +60,10 @@ of the results data model.}
 
 \item{instantiatedCohorts}{cohortIds of the cohorts that have been already been instantiated}
 
-\item{incremental}{Create only cohort diagnostics that haven't been created before?}
+\item{incremental}{`TRUE` or `FALSE` (default). If TRUE diagnostics for cohorts in the 
+cohort definition set that have not changed will be skipped and existing results 
+csv files will be updated. If FALSE then diagnostics for all cohorts in the cohort 
+definition set will be executed and pre-existing results files will be deleted.}
 
 \item{observationPeriodDateRange}{}
 
@@ -71,6 +72,9 @@ of the results data model.}
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
+
+\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
+of which cohort diagnostics has been executed.}
 }
 \description{
 This function first generates a calendar period table, that has

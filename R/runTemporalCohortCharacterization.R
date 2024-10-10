@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+# export characteristics to csv files
 exportCharacterization <- function(characteristics,
                                    databaseId,
                                    incremental,
@@ -54,11 +54,13 @@ exportCharacterization <- function(characteristics,
       ) %>%
       dplyr::select(-"cohortEntries", -"cohortSubjects") %>%
       dplyr::distinct() %>%
-      makeDataExportable(
+      exportDataToCsv(
+        data = characteristics$filteredCovariates,
         tableName = "temporal_covariate_value",
+        fileName = covariateValueFileName,
         minCellCount = minCellCount,
-        databaseId = databaseId
-      )
+        databaseId = databaseId,
+        incremental = TRUE)
     
     if (dplyr::pull(dplyr::count(characteristics$filteredCovariates)) > 0) {
       
@@ -88,32 +90,20 @@ exportCharacterization <- function(characteristics,
         incremental = TRUE,
         analysisId = timeRef$timeId
       )
-
-      writeToCsv(
-        data = characteristics$filteredCovariates,
-        fileName = covariateValueFileName,
-        incremental = TRUE
-      )
     }
   }
   
   if (!"covariatesContinuous" %in% names(characteristics)) {
     ParallelLogger::logInfo("No continuous characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
-    characteristics$filteredCovariatesContinous <- makeDataExportable(
-      x = characteristics$covariatesContinuous,
+    exportDataToCsv(
+      data = characteristics$covariatesContinuous,
       tableName = "temporal_covariate_value_dist",
+      fileName = covariateValueContFileName,
       minCellCount = minCellCount,
-      databaseId = databaseId
+      databaseId = databaseId,
+      incremental = TRUE
     )
-    
-    if (dplyr::pull(dplyr::count(characteristics$filteredCovariatesContinous)) > 0) {
-      writeToCsv(
-        data = characteristics$filteredCovariatesContinous,
-        fileName = covariateValueContFileName,
-        incremental = TRUE
-      )
-    }
   }
 }
 
@@ -345,29 +335,29 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
 #'
 #' @examples
 runTemporalCohortCharacterization <- function(connection,
-                                          databaseId,
-                                          exportFolder,
-                                          cdmDatabaseSchema,
-                                          cohortDatabaseSchema,
-                                          cohortTable,
-                                          covariateSettings,
-                                          tempEmulationSchema,
-                                          cdmVersion,
-                                          cohorts,
-                                          cohortCounts,
-                                          minCellCount,
-                                          instantiatedCohorts,
-                                          incremental,
-                                          recordKeepingFile,
-                                          task = "runTemporalCohortCharacterization",
-                                          jobName = "Temporal Cohort characterization",
-                                          covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
-                                          covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
-                                          covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
-                                          analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
-                                          timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
-                                          minCharacterizationMean = 0.001,
-                                          batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 20)) {
+                                              databaseId,
+                                              exportFolder,
+                                              cdmDatabaseSchema,
+                                              cohortDatabaseSchema,
+                                              cohortTable,
+                                              covariateSettings,
+                                              tempEmulationSchema,
+                                              cdmVersion,
+                                              cohorts,
+                                              cohortCounts,
+                                              minCellCount,
+                                              instantiatedCohorts,
+                                              incremental,
+                                              recordKeepingFile,
+                                              task = "runTemporalCohortCharacterization",
+                                              jobName = "Temporal Cohort characterization",
+                                              covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
+                                              covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
+                                              covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
+                                              analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
+                                              timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
+                                              minCharacterizationMean = 0.001,
+                                              batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 20)) {
   ParallelLogger::logInfo("Running ", jobName)
   startCohortCharacterization <- Sys.time()
   subset <- subsetToRequiredCohorts(

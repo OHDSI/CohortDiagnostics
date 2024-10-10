@@ -1,7 +1,9 @@
 test_that("Execute and export characterization", {
   skip_if(skipCdmTests, "cdm settings not configured")
-  tConnection <-
-    DatabaseConnector::connect(connectionDetails)
+  skip_if_not("sqlite" %in% names(testServers))
+  server <- testServers[["sqlite"]]
+
+  tConnection <- DatabaseConnector::connect(server$connectionDetails)
 
   with_dbc_connection(tConnection, {
     exportFolder <- tempfile()
@@ -10,31 +12,36 @@ test_that("Execute and export characterization", {
     on.exit(unlink(exportFolder), add = TRUE)
 
     # Required for function use
-    cohortCounts <- computeCohortCounts(
+    cohortCounts <- CohortGenerator::getCohortCounts(
       connection = tConnection,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      cohorts = cohortDefinitionSet,
-      exportFolder = exportFolder,
+      cohortDatabaseSchema = server$cohortDatabaseSchema,
+      cohortTable = server$cohortTable,
+      cohortDefinitionSet = server$cohortDefinitionSet,
+      databaseId = "Testdb"
+    )
+    exportDataToCsv(
+      data = cohortCounts,
+      tableName = "cohort_count",
+      fileName = file.path(exportFolder, "cohort_count.csv"),
       minCellCount = 5,
       databaseId = "Testdb"
     )
     checkmate::expect_file_exists(file.path(exportFolder, "cohort_count.csv"))
 
-    executeCohortCharacterization(
+    runTemporalCohortCharacterization(
       connection = tConnection,
       databaseId = "Testdb",
       exportFolder = exportFolder,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
+      cdmDatabaseSchema = server$cdmDatabaseSchema,
+      cohortDatabaseSchema = server$cohortDatabaseSchema,
+      cohortTable = server$cohortTable,
       covariateSettings = temporalCovariateSettings,
-      tempEmulationSchema = tempEmulationSchema,
+      tempEmulationSchema = server$tempEmulationSchema,
       cdmVersion = 5,
       cohorts = cohortDefinitionSet[1:3, ],
       cohortCounts = cohortCounts,
       minCellCount = 5,
-      instantiatedCohorts = cohortDefinitionSet$cohortId,
+      instantiatedCohorts = server$cohortDefinitionSet$cohortId,
       incremental = TRUE,
       recordKeepingFile = recordKeepingFile,
       task = "runTemporalCohortCharacterization",
@@ -70,20 +77,20 @@ test_that("Execute and export characterization", {
     )
 
     # finish the rest of characterization
-    executeCohortCharacterization(
+    runTemporalCohortCharacterization(
       connection = tConnection,
       databaseId = "Testdb",
       exportFolder = exportFolder,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
+      cdmDatabaseSchema = server$cdmDatabaseSchema,
+      cohortDatabaseSchema = server$cohortDatabaseSchema,
+      cohortTable = server$cohortTable,
       covariateSettings = temporalCovariateSettings,
-      tempEmulationSchema = tempEmulationSchema,
+      tempEmulationSchema = server$tempEmulationSchema,
       cdmVersion = 5,
-      cohorts = cohortDefinitionSet,
+      cohorts = server$cohortDefinitionSet,
       cohortCounts = cohortCounts,
       minCellCount = 5,
-      instantiatedCohorts = cohortDefinitionSet$cohortId,
+      instantiatedCohorts = server$cohortDefinitionSet$cohortId,
       incremental = TRUE,
       recordKeepingFile = recordKeepingFile,
       task = "runTemporalCohortCharacterization",
@@ -92,6 +99,7 @@ test_that("Execute and export characterization", {
     )
 
     # Check no time ids are NA/NULL
+    readr::local_edition(1)
     tdata <- readr::read_csv(file.path(exportFolder, "temporal_covariate_value_dist.csv"))
     expect_false(any(is.na(tdata$time_id) | is.null(tdata$time_id)))
 

@@ -2,10 +2,11 @@
 % Please edit documentation in R/runIncidenceRate.R
 \name{runIncidenceRate}
 \alias{runIncidenceRate}
-\title{Title}
+\title{Run the incidence rate cohort diagnostic}
 \usage{
 runIncidenceRate(
   connection,
+  cohortDefinitionSet,
   tempEmulationSchema,
   cdmDatabaseSchema,
   cohortDatabaseSchema,
@@ -13,40 +14,51 @@ runIncidenceRate(
   databaseId,
   exportFolder,
   minCellCount,
-  cohorts,
-  instantiatedCohorts,
-  recordKeepingFile,
-  washoutPeriod,
-  incremental
+  washoutPeriod = 0,
+  incremental,
+  recordKeepingFile
 )
 }
 \arguments{
-\item{connection}{}
+\item{connection}{An object of type \code{connection} as created using the
+\code{\link[DatabaseConnector]{connect}} function in the
+DatabaseConnector package.}
 
-\item{tempEmulationSchema}{}
+\item{cohortDefinitionSet}{A data.frame with cohort definitions created by 
+`CohortGenerator::getCohortDefinitionSet` that must include 
+the columns cohortId, cohortName, json, sql.}
 
-\item{cdmDatabaseSchema}{}
+\item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
+tables, provide a schema with write privileges where temp tables can be created.}
 
-\item{cohortDatabaseSchema}{}
+\item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.}
 
-\item{cohortTable}{}
+\item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
+this should include both the database and schema name, for example
+'scratch.dbo'.}
 
-\item{databaseId}{}
+\item{cohortTable}{Name of the cohort table.}
 
-\item{exportFolder}{}
+\item{databaseId}{A short string for identifying the database (e.g. 'Synpuf').}
 
-\item{minCellCount}{}
+\item{exportFolder}{The folder where the results will be exported to}
 
-\item{cohorts}{}
+\item{minCellCount}{The minimum cell count for fields contains person counts or fractions}
 
-\item{instantiatedCohorts}{}
+\item{washoutPeriod}{Then minimum number of required observation days prior to 
+cohort index to be included in the numerator of the incidence rate}
 
-\item{recordKeepingFile}{}
+\item{incremental}{`TRUE` or `FALSE` (default). If TRUE diagnostics for cohorts in the 
+cohort definition set that have not changed will be skipped and existing results 
+csv files will be updated. If FALSE then diagnostics for all cohorts in the cohort 
+definition set will be executed and pre-existing results files will be deleted.}
 
-\item{washoutPeriod}{}
-
-\item{incremental}{}
+\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
+of which cohort diagnostics has been executed.}
 }
 \description{
-Title
+runIncidenceRate computes incidence rates for cohorts in the CDM population stratified
+by age, sex, and calendar year.
 }
