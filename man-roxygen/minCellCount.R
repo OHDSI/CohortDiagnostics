@@ -1,0 +1,1 @@
+#' @param minCellCount The minimum cell count for fields contains person counts or fractions.
