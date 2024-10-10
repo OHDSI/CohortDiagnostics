@@ -60,12 +60,15 @@ loadTestCohortDefinitionSet <- function(cohortIds = NULL, useSubsets = TRUE) {
   }
 
   creationFile <- file.path(cohortPath, "CohortsToCreate.csv")
-  cohortDefinitionSet <- CohortGenerator::getCohortDefinitionSet(
-    settingsFileName = creationFile,
-    sqlFolder = cohortPath,
-    jsonFolder = cohortPath,
-    cohortFileNameValue = c("cohortId")
-  )
+  suppressMessages({
+    cohortDefinitionSet <- CohortGenerator::getCohortDefinitionSet(
+      settingsFileName = creationFile,
+      sqlFolder = cohortPath,
+      jsonFolder = cohortPath,
+      cohortFileNameValue = c("cohortId")
+    )
+  })
+ 
   if (!is.null(cohortIds)) {
     cohortDefinitionSet <- dplyr::filter(cohortDefinitionSet, .data$cohortId %in% cohortIds)
   }
