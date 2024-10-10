@@ -38,7 +38,7 @@ test_that("Execute and export characterization", {
       covariateSettings = temporalCovariateSettings,
       tempEmulationSchema = server$tempEmulationSchema,
       cdmVersion = 5,
-      cohorts = cohortDefinitionSet[1:3, ],
+      cohorts = server$cohortDefinitionSet[1:3, ],
       cohortCounts = cohortCounts,
       minCellCount = 5,
       instantiatedCohorts = server$cohortDefinitionSet$cohortId,
@@ -61,7 +61,7 @@ test_that("Execute and export characterization", {
 
     # check if subset works
     subset <- subsetToRequiredCohorts(
-      cohorts = cohortDefinitionSet,
+      cohorts = server$cohortDefinitionSet,
       task = "runTemporalCohortCharacterization",
       incremental = TRUE,
       recordKeepingFile = recordKeepingFile
@@ -71,7 +71,7 @@ test_that("Execute and export characterization", {
     testthat::expect_equal(
       object = nrow(subset %>%
         dplyr::filter(
-          cohortId %in% c(cohortDefinitionSet[1:3, ]$cohortId)
+          cohortId %in% c(server$cohortDefinitionSet[1:3, ]$cohortId)
         )),
       expected = 0
     )
