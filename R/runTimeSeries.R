@@ -88,6 +88,7 @@ createCalendarPeriodsTable <- function(connection, tempEmulationSchema, timeSeri
     tempEmulationSchema = tempEmulationSchema,
     camelCaseToSnakeCase = TRUE
   )
+  return(calendarPeriods)
 }
 
 getTimeSeries <- function(
@@ -137,10 +138,10 @@ getTimeSeries <- function(
   }
   
   ## Create calendar periods table
-  createCalendarPeriodsTable(connection, 
-                             tempEmulationSchema, 
-                             timeSeriesMinDate, 
-                             timeSeriesMaxDate)
+  calendarPeriods <- createCalendarPeriodsTable(connection, 
+                                                tempEmulationSchema, 
+                                                timeSeriesMinDate, 
+                                                timeSeriesMaxDate)
   
   tsSetUpSql <- "-- #time_series
                 DROP TABLE IF EXISTS #time_series;
