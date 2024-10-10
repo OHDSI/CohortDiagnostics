@@ -15,7 +15,7 @@
 # limitations under the License.
 
 for (nm in names(testServers)) {
-  # nm <- "sqlite"
+  nm <- "sqlite"
   server <- testServers[[nm]]
   
   # Params
@@ -30,11 +30,11 @@ for (nm in names(testServers)) {
   conceptCountsDatabaseSchema <- "main"
   conceptCountsTable <- "concept_counts"
   conceptCountsTableIsTemp <- FALSE
-  recordKeepingFile <- file.path(exportFolder, "record.csv")
   cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = server$cohortTable)
   cohortDatabaseSchema <- server$cohortDatabaseSchema
   cohortTable <- server$cohortTable
-  incremental <- TRUE
+  incremental <- FALSE
+  # incremental <- TRUE
   conceptIdTable <- "#concept_ids"
   
   # Tests
@@ -43,7 +43,7 @@ for (nm in names(testServers)) {
     connection <- DatabaseConnector::connect(server$connectionDetails)
     exportFolder <- file.path(tempdir(), paste0(nm, "no_concept"))
     dir.create(exportFolder)
-    
+    recordKeepingFile <- file.path(exportFolder, "record.csv")
     # CreateConceptcounts table
     
     CohortDiagnostics::createConceptCountsTable(connection = connection,
@@ -102,7 +102,7 @@ for (nm in names(testServers)) {
     expect_true(file.exists(recordKeepingFile))
     recordKeeping <- read.csv(recordKeepingFile)
     expect_equal(colnames(recordKeeping), c("cohortId", "task", "checksum" , "timeStamp"))
-    expect_equal(unique(recordKeeping$task), "runInclusionStatistics")
+    expect_equal(unique(recordKeeping$task), "runOrphanConcepts")
     expect_true(all(recordKeeping$cohortId %in% server$cohortDefinitionSet$cohortId))
     
     unlink(exportFolder)
@@ -175,7 +175,7 @@ for (nm in names(testServers)) {
     expect_true(file.exists(recordKeepingFile))
     recordKeeping <- read.csv(recordKeepingFile)
     expect_equal(colnames(recordKeeping), c("cohortId", "task", "checksum" , "timeStamp"))
-    expect_equal(unique(recordKeeping$task), "runInclusionStatistics")
+    expect_equal(unique(recordKeeping$task), "runOrphanConcepts")
     expect_true(all(recordKeeping$cohortId %in% server$cohortDefinitionSet$cohortId))
     
     unlink(exportFolder)

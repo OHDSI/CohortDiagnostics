@@ -397,8 +397,7 @@ runOrphanConcepts <- function(connection,
     reportOverallTime = FALSE
   )
   
-  if ((runIncludedSourceConcepts && nrow(subsetIncluded) > 0) ||
-      (runOrphanConcepts && nrow(subsetOrphans) > 0)) {
+  if  (nrow(subsetOrphans) > 0) {
     ParallelLogger::logTrace("Dropping temp concept count table")
     if (conceptCountsTableIsTemp) {
       countTable <- conceptCountsTable
