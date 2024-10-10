@@ -2,11 +2,11 @@ library(CohortDiagnostics)
 library(testthat)
 
 dbmsToTest <- c(
-  "sqlite"#,
-  # "duckdb"#,
-  # "postgresql"#,
-  # "redshift",
-  # "sql server",
+  "sqlite",
+  "duckdb",
+  "postgresql",
+  "redshift",
+  "sql server"
 )
 
 useAllCovariates <- FALSE
@@ -193,22 +193,28 @@ for (nm in names(testServers)) {
     cohortDefinitionSet <- loadTestCohortDefinitionSet(server$cohortIds)
 
     cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = server$cohortTable)
-
-    CohortGenerator::createCohortTables(
-      connectionDetails = server$connectionDetails,
-      cohortTableNames = cohortTableNames,
-      cohortDatabaseSchema = server$cohortDatabaseSchema,
-      incremental = FALSE
+    
+    suppressMessages(
+      CohortGenerator::createCohortTables(
+        connectionDetails = server$connectionDetails,
+        cohortTableNames = cohortTableNames,
+        cohortDatabaseSchema = server$cohortDatabaseSchema,
+        incremental = FALSE
+      )
     )
 
-    CohortGenerator::generateCohortSet(
-      connectionDetails = server$connectionDetails,
-      cdmDatabaseSchema = server$cdmDatabaseSchema,
-      cohortDatabaseSchema = server$cohortDatabaseSchema,
-      cohortTableNames = cohortTableNames,
-      cohortDefinitionSet = cohortDefinitionSet,
-      incremental = FALSE
+    suppressMessages(
+      CohortGenerator::generateCohortSet(
+        connectionDetails = server$connectionDetails,
+        cdmDatabaseSchema = server$cdmDatabaseSchema,
+        cohortDatabaseSchema = server$cohortDatabaseSchema,
+        cohortTableNames = cohortTableNames,
+        cohortDefinitionSet = cohortDefinitionSet,
+        incremental = FALSE
+      )
     )
+
+   
   } else {
     message(paste("Skipping cohort generation on test server", nm))
   }

@@ -151,8 +151,6 @@ getDefaultCovariateSettings <- function() {
 #' @param seedArgs                    List. Additional arguments to pass to the sampling function.
 #'                                    This can be used to control aspects of the sampling process beyond the seed and sample size.
 #'
-<<<<<<< HEAD:R/RunDiagnostics.R
-=======
 #' @param sampleIdentifierExpression Character. An expression that generates unique identifiers for each sample.
 #'                                   This expression can use the variables 'cohortId' and 'seed'.
 #'                                   Default is "cohortId * 1000 + seed", which ensures unique identifiers
@@ -166,7 +164,6 @@ getDefaultCovariateSettings <- function() {
 #' @param workDatabaseSchema         Character. The name of a schema where the user has write access. Intermediate tables for concept counts 
 #'                                   and orphan concepts will be created in this schema if supplied. If NULL (default) intermediate tables will
 #'                                   be created as temporary tables.                        
->>>>>>> darwin_sprint:R/hold/executeDiagnostics.R
 #' @examples
 #' \dontrun{
 #' # Load cohorts (assumes that they have already been instantiated)

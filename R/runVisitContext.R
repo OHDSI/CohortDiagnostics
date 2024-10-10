@@ -57,16 +57,16 @@ getVisitContext <- function(connection = NULL,
 
   if (!is.null(conceptIdTable)) {
     
-    createTablesql <- "IF OBJECT_ID('@unique_concept_id_table', 'U') IS NULL CREATE TABLE @unique_concept_id_table (concept_id BIGINT);"
-    
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = createTablesql,
-      tempEmulationSchema = tempEmulationSchema,
-      unique_concept_id_table = conceptIdTable,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
+    # add concepts to #concept_ids if they don't already exist
+    if (!tempTableExists(connection, "concept_ids")) {
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection = connection,
+        sql = "CREATE TABLE #concept_ids (concept_id BIGINT);",
+        tempEmulationSchema = tempEmulationSchema,
+        progressBar = FALSE,
+        reportOverallTime = FALSE
+      )
+    }
     
     sql <- "INSERT INTO @unique_concept_id_table (concept_id)
             SELECT DISTINCT visit_concept_id
@@ -106,6 +106,33 @@ getVisitContext <- function(connection = NULL,
   return(visitContext)
 }
 
+
+
+#' runVisitContext
+#' 
+#' @description
+#' Generates the `visit_context.csv` which contains the counts for the subjects by `cohort_id`,
+#' `visit_concept_id` and `visit_context`. The `visit_context` categorizes visit occurrences of
+#' subjects based on how each the start and end date of each visit related to the cohort start date
+#' to which each subject belongs. No output will be generated for cohorts with no subjects.If there
+#' is no cohort with subjects execution will halt and `visit_context.csv` will not be generated. 
+#'  
+#' @template Connection 
+#' @template cohortDefinitionSet 
+#' @template ExportFolder
+#' @param databaseId  A short string for identifying the database (e.g. 'Synpuf').
+#' @template CohortDatabaseSchema   
+#' @template CdmDatabaseSchema
+#' @template TempEmulationSchema
+#' @template CohortTable
+#' @template cdmVersion
+#' @template MinCellCount
+#' @template Incremental
+#' @param incrementalFolder If \code{incremental = TRUE}, specify a folder where records are kept
+#'                                    of which cohort diagnostics has been executed. If not specified, a file named `incremental`  will be created inside the 
+#'                                    \code{export_folder} directory.
+#'
+#' @export
 runVisitContext <- function(connection,
                            cohortDefinitionSet,
                            exportFolder,
@@ -118,7 +145,12 @@ runVisitContext <- function(connection,
                            minCellCount,
                            incremental,
                            incrementalFolder = file.path(exportFolder, "incremental")){
-
+  
+  # Create export file if it doesn't exist
+  if (!file.exists(gsub("/$", "", exportFolder))) {
+    dir.create(exportFolder, recursive = TRUE)
+    ParallelLogger::logInfo("Created export folder", exportFolder)
+  }
   
   if (incremental && !file.exists(incrementalFolder)) {
     # Create the file if it doesn't exist
