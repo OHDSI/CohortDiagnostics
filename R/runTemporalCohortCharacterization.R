@@ -25,6 +25,7 @@ exportCharacterization <- function(characteristics,
                                    timeRefFileName = NULL,
                                    counts,
                                    minCellCount) {
+  
   if (!"covariates" %in% names(characteristics)) {
     warning("No characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
@@ -55,7 +56,6 @@ exportCharacterization <- function(characteristics,
       dplyr::select(-"cohortEntries", -"cohortSubjects") %>%
       dplyr::distinct() %>%
       exportDataToCsv(
-        data = characteristics$filteredCovariates,
         tableName = "temporal_covariate_value",
         fileName = covariateValueFileName,
         minCellCount = minCellCount,
@@ -64,31 +64,34 @@ exportCharacterization <- function(characteristics,
     
     if (dplyr::pull(dplyr::count(characteristics$filteredCovariates)) > 0) {
       
+      covariateRef <- characteristics$covariateRef
       exportDataToCsv(
         data = characteristics$covariateRef,
         tableName = "temporal_covariate_ref",
         fileName = covariateRefFileName,
         minCellCount = minCellCount,
         incremental = TRUE,
-        covariateId = covariateRef$covariateId
+        covariateId = covariateRef %>% dplyr::pull(covariateId)
       )
 
+      analysisRef <- characteristics$analysisRef
       exportDataToCsv(
-        data = characteristics$analysisRef,
+        data = analysisRef,
         tableName = "temporal_analysis_ref",
         fileName = analysisRefFileName,
         minCellCount = minCellCount,
         incremental = TRUE,
-        analysisId = analysisRef$analysisId
+        analysisId = analysisRef %>% dplyr::pull(analysisId)
       )
       
+      timeRef <- characteristics$timeRef
       exportDataToCsv(
         data = characteristics$timeRef,
         tableName = "temporal_time_ref",
         fileName = timeRefFileName,
         minCellCount = minCellCount,
         incremental = TRUE,
-        analysisId = timeRef$timeId
+        analysisId = timeRef %>% dplyr::pull(timeId)
       )
     }
   }
