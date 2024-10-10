@@ -21,6 +21,8 @@ getResolvedConceptSets <- function(connection,
   
   ParallelLogger::logInfo("Instantiating concept sets")
   
+  assertCohortDefinitionSetContainsAllParents(cohortDefinitionSet)
+  
   # We need to get concept sets from all cohorts in case subsets are present and
   # Added incrementally after cohort generation
   conceptSets <- combineConceptSetsFromCohorts(cohortDefinitionSet)

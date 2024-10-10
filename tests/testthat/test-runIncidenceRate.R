@@ -5,25 +5,58 @@ for (nm in names(testServers)) {
   
   test_that(paste("getIncidenceRate works on", nm), {
     
-    # add tests. check not only that the function runs but gives the correct result
+    connection <- DatabaseConnector::connect(server$connectionDetails)
+    result <- getIncidenceRate(
+      connection = connection,
+      cohortDatabaseSchema = server$cohortDatabaseSchema,
+      cohortTable = server$cohortTable,
+      cdmDatabaseSchema = server$cdmDatabaseSchema,
+      vocabularyDatabaseSchema = server$vocabularyDatabaseSchema,
+      tempEmulationSchema = server$tempEmulationSchema,
+      firstOccurrenceOnly = TRUE,
+      washoutPeriod = 365,
+      cohortId = server$cohortDefinitionSet$cohortId[1]) 
     
+    expect_true(is.data.frame(result))
+    
+    # getResultsDataModelSpecifications("incidence_rate")$columnName
+    expect_equal(
+      names(result), 
+      c("cohortCount", "personYears", "gender", "ageGroup", "calendarYear", "incidenceRate")
+    )
+    
+    DatabaseConnector::disconnect(connection)
   })
 }
 
 
-
-# test runIncidenceRate on eunomia
-
+# only test runIncidenceRate on sqlite (or duckdb)
 test_that("runIncidenceRate", {
-  server <- testServers[[nm]]
+  skip_if_not("sqlite" %in% names(testServers))
+  
+  server <- testServers[["sqlite"]]
   exportFolder <- tempfile()
   dir.create(exportFolder)
   
   incrementalFolder <- tempfile()
   dir.create(incrementalFolder)
   
-  # add tests
+  connection <- DatabaseConnector::connect(server$connectionDetails)
   
+  runIncidenceRate(
+    connection,
+    cohortDefinitionSet = server$cohortDefinitionSet[1:2,],
+    tempEmulationSchema = server$tempEmulationSchema,
+    cdmDatabaseSchema = server$cdmDatabaseSchema,
+    cohortDatabaseSchema = server$cohortDatabaseSchema,
+    cohortTable = server$cohortTable,
+    databaseId = "GiBleed",
+    exportFolder = exportFolder,
+    minCellCount = 1,
+    washoutPeriod = 0,
+    incremental =  F)
+  DatabaseConnector::disconnect(connection)
+  expect_true(file.exists(file.path(exportFolder, "incidence_rate.csv")))
 })
 
 

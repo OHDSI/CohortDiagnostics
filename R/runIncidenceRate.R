@@ -51,6 +51,8 @@ getIncidenceRate <- function(connection = NULL,
   }
 
   ParallelLogger::logInfo("Calculating incidence rate per year by age and gender")
+  # optimization idea - only run this sql once since the result does not depend on the cohort
+  # Also look into adding this into the sql file an not using insertTable
   sql <-
     SqlRender::loadRenderTranslateSql(
       sqlFilename = "GetCalendarYearRange.sql",
@@ -62,7 +64,7 @@ getIncidenceRate <- function(connection = NULL,
     DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
 
   calendarYears <-
-    dplyr::tibble(calendarYear = as.integer(seq(yearRange$startYear, yearRange$endYear, by = 1)))
+    data.frame(calendarYear = as.integer(seq(yearRange$startYear, yearRange$endYear, by = 1)))
   DatabaseConnector::insertTable(
     connection = connection,
     tableName = "#calendar_years",
@@ -196,56 +198,58 @@ aggregateIr <- function(ratesSummary, aggregateList) {
   }
 }
 
-#' Title
+#' Run the incidence rate cohort diagnostic
+#' 
+#' runIncidenceRate computes incidence rates for cohorts in the CDM population stratified
+#' by age, sex, and calendar year.
 #'
-#' @param connection 
-#' @param tempEmulationSchema 
-#' @param cdmDatabaseSchema 
-#' @param cohortDatabaseSchema 
-#' @param cohortTable 
-#' @param databaseId 
-#' @param exportFolder 
-#' @param minCellCount 
-#' @param cohorts 
-#' @param instantiatedCohorts 
-#' @param recordKeepingFile 
-#' @param washoutPeriod 
-#' @param incremental 
+#' @template connection 
+#' @template cohortDefinitionSet 
+#' @param washoutPeriod Then minimum number of required observation days prior to 
+#'                      cohort index to be included in the numerator of the incidence rate
+#' @template tempEmulationSchema 
+#' @template cdmDatabaseSchema 
+#' @template CohortTable 
+#' @template databaseId 
+#' @template exportFolder 
+#' @template minCellCount 
+#' @template Incremental 
 #'
 #' @return
 #' @export
 runIncidenceRate <- function(connection,
-                                  tempEmulationSchema,
-                                  cdmDatabaseSchema,
-                                  cohortDatabaseSchema,
-                                  cohortTable,
-                                  databaseId,
-                                  exportFolder,
-                                  minCellCount,
-                                  cohorts,
-                                  instantiatedCohorts,
-                                  recordKeepingFile,
-                                  washoutPeriod,
-                                  incremental) {
+                             cohortDefinitionSet,
+                             tempEmulationSchema,
+                             cdmDatabaseSchema,
+                             cohortDatabaseSchema,
+                             cohortTable,
+                             databaseId,
+                             exportFolder,
+                             minCellCount,
+                             washoutPeriod = 0,
+                             incremental,
+                             recordKeepingFile) {
+  
+  checkmate::assertIntegerish(washoutPeriod, len = 1, lower = 0)
+  
   ParallelLogger::logInfo("Computing incidence rates")
   startIncidenceRate <- Sys.time()
   subset <- subsetToRequiredCohorts(
-    cohorts = cohorts %>%
-      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+    cohorts = cohorts,
     task = "runIncidenceRate",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile
   )
 
-  if (incremental &&
-    (length(instantiatedCohorts) - nrow(subset)) > 0) {
+  if (incremental && (nrow(subset) > 0)) {
     ParallelLogger::logInfo(sprintf(
       "Skipping %s cohorts in incremental mode.",
-      length(instantiatedCohorts) - nrow(subset)
+      nrow(cohortDefinitionSet) - nrow(subset)
     ))
   }
+  
   if (nrow(subset) > 0) {
-    runIncidenceRate <- function(row) {
+    runOneIncidenceRate <- function(row) {
       ParallelLogger::logInfo(
         "  Computing incidence rate for cohort '",
         row$cohortName,
@@ -255,7 +259,7 @@ runIncidenceRate <- function(connection,
       timeExecution(
         exportFolder,
         taskName = "getIncidenceRate",
-        parent = "computeIncidenceRates",
+        parent = "runIncidenceRate",
         cohortIds = row$cohortId,
         expr = {
           data <- getIncidenceRate(
@@ -276,7 +280,7 @@ runIncidenceRate <- function(connection,
       return(data)
     }
 
-    data <-lapply(split(subset, subset$cohortId), runIncidenceRate)
+    data <- lapply(split(subset, subset$cohortId), runOneIncidenceRate)
     data <- dplyr::bind_rows(data)
     
     exportDataToCsv(
