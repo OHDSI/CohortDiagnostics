@@ -864,11 +864,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runVisitContext) {
     timeExecution(
       exportFolder,
-      "executeVisitContextDiagnostics",
+      "runVisitContext",
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        executeVisitContextDiagnostics(
+        runVisitContext(
           connection = connection,
           tempEmulationSchema = tempEmulationSchema,
           cdmDatabaseSchema = cdmDatabaseSchema,

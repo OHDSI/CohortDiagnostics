@@ -482,18 +482,19 @@ getTimeSeries <- function(
 #' @template CdmDatabaseSchema
 #' @template TempEmulationSchema
 #' @template CohortTable
-#' @param cohortDefinitionSet 
+#' @template cohortDefinitionSet
+#' @template databaseIds
+#' @template exportFolder
+#' @template minCellCount
+#' @template incremental
+#' @template recordKeepingFile
+#' @template BatchSize
+#' @template InstantiatedCohorts
+#' 
 #' @param runCohortTimeSeries         Generate and export the cohort level time series?
 #' @param runDataSourceTimeSeries     Generate and export the Data source level time series? i.e.
 #'                                    using all persons found in observation period table.
-#' @param databaseId 
-#' @param exportFolder 
-#' @param minCellCount 
-#' @param instantiatedCohorts 
-#' @param incremental 
-#' @param recordKeepingFile 
 #' @param observationPeriodDateRange 
-#' @param batchSize 
 #'
 #' @return
 #' @export

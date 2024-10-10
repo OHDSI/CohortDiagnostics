@@ -2,7 +2,11 @@
 % Please edit documentation in R/runInclusionStatistics.R
 \name{runInclusionStatistics}
 \alias{runInclusionStatistics}
+<<<<<<< HEAD
 \title{Runs inclusion statistics on given cohort definitions and exports these.}
+=======
+\title{Title}
+>>>>>>> 4f31d45 (fix unmerged paths. update docs.)
 \usage{
 runInclusionStatistics(
   connection,
@@ -17,6 +21,7 @@ runInclusionStatistics(
 )
 }
 \arguments{
+<<<<<<< HEAD
 \item{connection}{An object of type \code{connection} as created using the
 \code{\link[DatabaseConnector]{connect}} function in the
 DatabaseConnector package. Can be left NULL if \code{connectionDetails}
@@ -62,4 +67,26 @@ These are the files written to disk, if available:
  * cohort_inc_stats.csv
  * cohort_inclusion.csv
  * cohort_summary_stats.csv
+=======
+\item{connection}{}
+
+\item{exportFolder}{}
+
+\item{databaseId}{}
+
+\item{cohortDefinitionSet}{}
+
+\item{cohortDatabaseSchema}{}
+
+\item{cohortTableNames}{}
+
+\item{incremental}{}
+
+\item{minCellCount}{}
+
+\item{recordKeepingFile}{}
+}
+\description{
+Title
+>>>>>>> 4f31d45 (fix unmerged paths. update docs.)
 }
