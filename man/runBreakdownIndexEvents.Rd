@@ -11,9 +11,6 @@ runBreakdownIndexEvents(
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   databaseId,
   cohorts,
-  runIncludedSourceConcepts,
-  runOrphanConcepts,
-  runBreakdownIndexEvents,
   exportFolder,
   minCellCount,
   conceptCountsDatabaseSchema = NULL,
@@ -42,12 +39,6 @@ runBreakdownIndexEvents(
 
 \item{cohorts}{}
 
-\item{runIncludedSourceConcepts}{}
-
-\item{runOrphanConcepts}{}
-
-\item{runBreakdownIndexEvents}{}
-
 \item{exportFolder}{}
 
 \item{minCellCount}{}
@@ -73,6 +64,12 @@ runBreakdownIndexEvents(
 \item{useAchilles}{}
 
 \item{resultsDatabaseSchema}{}
+
+\item{runIncludedSourceConcepts}{}
+
+\item{runOrphanConcepts}{}
+
+\item{runBreakdownIndexEvents}{}
 }
 \description{
 Title
