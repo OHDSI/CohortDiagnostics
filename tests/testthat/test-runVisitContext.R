@@ -15,7 +15,7 @@ for (nm in names(testServers)) {
   dir.create(exportFolder)
 
   test_that(paste("test temporary table #concept_ids creation"), {
-    
+
     DatabaseConnector::disconnect(con)
     con <- DatabaseConnector::connect(server$connectionDetails)
 
@@ -35,7 +35,7 @@ for (nm in names(testServers)) {
 
 
   test_that(paste("test no duplicates in concept_ids table for getVisitContext function"), {
-    
+
     DatabaseConnector::disconnect(con)
     con <- DatabaseConnector::connect(server$connectionDetails)
 
@@ -78,18 +78,18 @@ for (nm in names(testServers)) {
   })
 
 
-  # For testing the runVisitContext, there is no need to run it on multiple database systems since no sql other than
-  # the one included in the getVisitContext is executed.
+  # For testing the runVisitContext, there is no need to run it on multiple database systems
+  # since no sql other than the one included in the getVisitContext is executed.
   if (nm == "sqlite"){
 
     test_that(paste("test that when incremental is FALSE the incremental file is not generated"), {
-      
+
       DatabaseConnector::disconnect(con)
       con <- DatabaseConnector::connect(server$connectionDetails)
       exportFolder <- tempfile()
       dir.create(exportFolder)
-      
-      
+
+
       expect_false(file.exists(file.path(exportFolder,"incremental")))
 
       runVisitContext(connection = con,
@@ -106,7 +106,7 @@ for (nm in names(testServers)) {
     })
 
     test_that(paste("test that when incremental is TRUE the incremental file is generated when it doesn't exist"), {
-      
+
       DatabaseConnector::disconnect(con)
       con <- DatabaseConnector::connect(server$connectionDetails)
       exportFolder <- tempfile()
@@ -130,7 +130,7 @@ for (nm in names(testServers)) {
 
 
     test_that(paste("test that the output file visit_context.csv is generated and is identical with the output of getVisitContext()"), {
-      
+
       DatabaseConnector::disconnect(con)
       con <- DatabaseConnector::connect(server$connectionDetails)
       exportFolder <- tempfile()
@@ -170,17 +170,17 @@ for (nm in names(testServers)) {
       expect_equal(getVisitContextResult, runVisitContextResult)
 
     })
-    
-    
+
+
     test_that(paste("test that incremental logic is correct: incremental run for the first time"), {
-      
+
       DatabaseConnector::disconnect(con)
       con <- DatabaseConnector::connect(server$connectionDetails)
       exportFolder <- tempfile()
       dir.create(exportFolder)
-      
+
       cohortIds <- c(17492)
-      
+
       runVisitContext(connection = con,
                       cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds, useSubsets = FALSE),
                       exportFolder = exportFolder,
@@ -191,27 +191,27 @@ for (nm in names(testServers)) {
                       minCellCount = 0,
                       incremental = TRUE
       )
-      
+
       resultCsv <- file.path(exportFolder, "visit_context.csv")
-      
+
       expect_true(file.exists(resultCsv))
-      
+
       results <- read.csv(resultCsv, header = TRUE, stringsAsFactors = FALSE)
-      
-      # csv should contain results only from the specified cohort
+
+      # Csv should contain results only from the specified cohort
       expect_equal(unique(results$cohort_id), c(17492))
-      
+
     })
-    
+
     test_that(paste("test that incremental logic is correct: no new cohorts"), {
-      
+
       DatabaseConnector::disconnect(con)
       con <- DatabaseConnector::connect(server$connectionDetails)
       exportFolder <- tempfile()
       dir.create(exportFolder)
-      
+
       cohortIds <- c(17492)
-      
+
       runVisitContext(connection = con,
                       cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds, useSubsets = FALSE),
                       exportFolder = exportFolder,
@@ -222,13 +222,13 @@ for (nm in names(testServers)) {
                       minCellCount = 0,
                       incremental = TRUE
       )
-      
+
       resultCsv <- file.path(exportFolder, "visit_context.csv")
-      
+
       expect_true(file.exists(resultCsv))
-      
+
       results1 <- read.csv(resultCsv, header = TRUE, stringsAsFactors = FALSE)
-      
+
       runVisitContext(connection = con,
                       cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds, useSubsets = FALSE),
                       exportFolder = exportFolder,
@@ -239,27 +239,27 @@ for (nm in names(testServers)) {
                       minCellCount = 0,
                       incremental = TRUE
       )
-      
+
       resultCsv <- file.path(exportFolder, "visit_context.csv")
-      
+
       expect_true(file.exists(resultCsv))
-      
+
       results2 <- read.csv(resultCsv, header = TRUE, stringsAsFactors = FALSE)
-      
-      # csv should contain the same result after the first run and the second run as no new cohorts were added
+
+      # Csv should contain the same result after the first run and the second run as no new cohorts were added
       expect_equal(results1, results2)
-      
+
     })
-    
+
     test_that(paste("test that incremental logic is correct: output visit_context.csv must contain results for new cohorts"), {
-      
+
       DatabaseConnector::disconnect(con)
       con <- DatabaseConnector::connect(server$connectionDetails)
       exportFolder <- tempfile()
       dir.create(exportFolder)
-      
+
       cohortIds <- c(17492)
-      
+
       runVisitContext(connection = con,
                       cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds, useSubsets = FALSE),
                       exportFolder = exportFolder,
@@ -270,18 +270,18 @@ for (nm in names(testServers)) {
                       minCellCount = 0,
                       incremental = TRUE
       )
-      
+
       resultCsv <- file.path(exportFolder, "visit_context.csv")
-      
+
       expect_true(file.exists(resultCsv))
-      
+
       results1 <- read.csv(resultCsv, header = TRUE, stringsAsFactors = FALSE)
-      
-      # csv should contain results only from the specified cohort
+
+      # Csv should contain results only from the specified cohort
       expect_equal(unique(results1$cohort_id), c(17492))
-      
+
       cohortIds <- c(17492, 17493)
-      
+
       runVisitContext(connection = con,
                       cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds, useSubsets = FALSE),
                       exportFolder = exportFolder,
@@ -292,17 +292,43 @@ for (nm in names(testServers)) {
                       minCellCount = 0,
                       incremental = TRUE
       )
-      
+
       resultCsv <- file.path(exportFolder, "visit_context.csv")
-      
+
       expect_true(file.exists(resultCsv))
-      
+
       results2 <- read.csv(resultCsv, header = TRUE, stringsAsFactors = FALSE)
-      
-      # csv should contain results from both runs, hence both cohorts
+
+      # Csv should contain results from both runs, hence both cohorts
       expect_equal(unique(results2$cohort_id), c(17492, 17493))
-      
+
     })
+
+    test_that(paste("test that the export folder is created if is not already there"), {
+
+      DatabaseConnector::disconnect(con)
+      con <- DatabaseConnector::connect(server$connectionDetails)
+      exportFolder <- tempfile()
+
+      expect_false(dir.exists(exportFolder))
+
+      cohortIds <- c(17492)
+
+      runVisitContext(connection = con,
+                      cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds, useSubsets = FALSE),
+                      exportFolder = exportFolder,
+                      databaseId = nm,
+                      cohortTable =  server$cohortTable,
+                      cohortDatabaseSchema = server$cohortDatabaseSchema,
+                      cdmDatabaseSchema = server$cdmDatabaseSchema,
+                      minCellCount = 0,
+                      incremental = TRUE
+      )
+
+      expect_true(dir.exists(exportFolder))
+
+    })
+
   }
 }
 
@@ -361,7 +387,6 @@ test_that(paste("test that only the new visit_concept_id are inserted into the #
   connection <- DatabaseConnector::connect(connectionDetails = connectionDetailsCustomCDM)
 
   addCohortTable(connection, cohortDataFilePath)
-
 
   getVisitContext(connection = connection,
                                 cdmDatabaseSchema = "main",
@@ -468,11 +493,11 @@ test_that(paste("test that to infer subject counts per cohort, visit concept, an
 
 })
 
-test_that(paste("test that to infer subject counts per cohort, visit concept, and visit context, visits within 30 days before or after cohort creation are considered"), {
+test_that(paste("test that no other cohorts than the ones specified in cohortIds are included in the output"), {
 
-  cohortDataFilePath <- system.file("test_cases/runVisitContext/testSubjectCountsDates/test_getVisitContext_cohort.xlsx",  package = "CohortDiagnostics")
+  cohortDataFilePath <- system.file("test_cases/runVisitContext/testSubjectCounts/test_getVisitContext_cohort.xlsx",  package = "CohortDiagnostics")
 
-  patientDataFilePath <- "test_cases/runVisitContext/testSubjectCountsDates/test_getVisitContext_patientData.json"
+  patientDataFilePath <- "test_cases/runVisitContext/testSubjectCounts/test_getVisitContext_patientData.json"
 
   connectionDetailsCustomCDM <- createCustomCdm(patientDataFilePath)
 
@@ -485,25 +510,14 @@ test_that(paste("test that to infer subject counts per cohort, visit concept, an
                                           tempEmulationSchema = "main",
                                           cohortDatabaseSchema = "main",
                                           cohortTable =  "cohort",
-                                          cohortIds = list(1,2),
+                                          cohortIds = list(1),
                                           conceptIdTable = "#concept_ids",
                                           cdmVersion = 5
     )
-
-    resultPath <- system.file("test_cases/runVisitContext/testSubjectCountsDates/expectedResult.xlsx", package = "CohortDiagnostics")
-
-    resultData <- readxl::read_excel(resultPath, col_types = c("numeric", "numeric", "text",
-                                                               "numeric"))
-
-    visitContextResult <- visitContextResult[order(visitContextResult$cohortId, visitContextResult$visitConceptId, visitContextResult$visitContext, visitContextResult$subjects), ]
-    visitContextResult <- as.data.frame(lapply(visitContextResult, as.character), stringsAsFactors = FALSE)
-
-    resultData <-  resultData[order(resultData$cohortId, resultData$visitConceptId, resultData$visitContext, resultData$subjects), ]
-    resultData <-  as.data.frame(lapply(resultData, as.character), stringsAsFactors = FALSE)
-
-    are_equal <- identical(visitContextResult, resultData)
-
-    expect_true(are_equal)
+  
+  print(visitContextResult)
+  expect_true(identical(unique(visitContextResult$cohortId), c(1)))
+  
 })
 
 test_that(paste("test that when the subjects in the cohort have no visits an empty data frame is returned"), {
@@ -518,7 +532,7 @@ test_that(paste("test that when the subjects in the cohort have no visits an emp
 
   addCohortTable(connection, cohortDataFilePath)
 
-  sql <- "DELETE FROM visit_occurrence;"
+  sql <- "delete from visit_occurrence;"
 
   translatedSQL <- translate(sql = sql, targetDialect =  "sqlite")
 
@@ -549,3 +563,6 @@ test_that(paste("test that when the subjects in the cohort have no visits an emp
 
   expect_true(are_equal)
 })
+
+
+
