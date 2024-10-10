@@ -16,27 +16,20 @@
 
 
 
-# Given a set of cohorts get relationships between the cohorts.
-#
-# @description
-# Given a set of cohorts, get temporal relationships between the
-# cohort_start_date of the cohorts.
-#
-# @template Connection
-#
-# @template CohortDatabaseSchema
-#
-# @template TempEmulationSchema
-#
-# @template CohortTable
-#
-# @param targetCohortIds              A vector of one or more Cohort Ids for use as target cohorts.
-#
-# @param comparatorCohortIds          A vector of one or more Cohort Ids for use as feature/comparator cohorts.
-#
-# @param relationshipDays             A dataframe with two columns startDay and endDay representing periods of time to compute relationship
-getCohortRelationship <-
-  function(connectionDetails = NULL,
+#' getCohortRelationship
+#'
+#' @description
+#' Given a set of cohorts, get temporal relationships between the cohort_start_date of the cohorts.
+#'
+#' @template Connection
+#' @template CohortDatabaseSchema
+#' @template TempEmulationSchema
+#' @template CohortTable
+#' @param targetCohortIds              A vector of one or more Cohort Ids for use as target cohorts.
+#' @param comparatorCohortIds          A vector of one or more Cohort Ids for use as feature/comparator cohorts.
+#' @param relationshipDays             A dataframe with two columns startDay and endDay representing periods of time to compute relationship.
+#' 
+getCohortRelationship <- function(
            connection = NULL,
            cohortDatabaseSchema = NULL,
            tempEmulationSchema = NULL,
@@ -74,11 +67,6 @@ getCohortRelationship <-
       add = errorMessage
     )
     checkmate::reportAssertions(collection = errorMessage)
-
-    if (is.null(connection)) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection))
-    }
 
     timePeriods <- relationshipDays %>%
       dplyr::distinct() %>%
@@ -186,43 +174,39 @@ getCohortRelationship <-
   }
 
 
-
-
-
-#' Title
+#' runCohortRelationship
 #'
-#' @param connection 
-#' @param databaseId 
-#' @param exportFolder 
-#' @param cohortDatabaseSchema 
-#' @param cdmDatabaseSchema 
-#' @param tempEmulationSchema 
-#' @param cohortTable 
-#' @param cohortDefinitionSet 
-#' @param temporalCovariateSettings 
-#' @param minCellCount 
-#' @param recordKeepingFile 
-#' @param incremental 
-#' @param batchSize 
+#' @template Connection
+#' @template cohortDefinitionSet
+#' @template ExportFolder
+#' @template databaseId 
+#' @template CohortDatabaseSchema 
+#' @template CdmDatabaseSchema 
+#' @template TempEmulationSchema
+#' @template CohortTable
+#' @param temporalCovariateSettings Either an object of type covariateSettings as created using one of the createTemporalCovariateSettings function in the FeatureExtraction package, or a list of such objects.
+#' @template MinCellCount 
+#' @template Incremental 
+#' @template Incremental
+#' @template BatchSize 
 #'
-#' @return
 #' @export
-#'
-#' @examples
 runCohortRelationship <- function(
     connection,
-    databaseId,
+    cohortDefinitionSet,
     exportFolder,
+    databaseId,
     cohortDatabaseSchema,
     cdmDatabaseSchema,
     tempEmulationSchema,
     cohortTable,
-    cohortDefinitionSet,
     temporalCovariateSettings,
     minCellCount,
-    recordKeepingFile,
     incremental,
+    incrementalFolder,
     batchSize = getOption("CohortDiagnostics-Relationship-batch-size", default = 500)) {
+  
+  cohortDefinitionSet$checksum <- CohortGenerator::computeChecksum(cohortDefinitionSet$sql)
   
   ParallelLogger::logInfo("Computing Cohort Relationship")
   startCohortRelationship <- Sys.time()
@@ -248,9 +232,9 @@ runCohortRelationship <- function(
     combis = combinationsOfPossibleCohortRelationships,
     task = "runCohortRelationship",
     incremental = incremental,
-    recordKeepingFile = recordKeepingFile
+    recordKeepingFile = incrementalFolder
   )
-
+  
   if (nrow(subset) > 0) {
     if (incremental &&
       (nrow(cohortDefinitionSet) - (length(subset$targetCohortId %>% unique()))) > 0) {
@@ -335,6 +319,7 @@ runCohortRelationship <- function(
     }
 
     outputFile <- file.path(exportFolder, "cohort_relationships.csv")
+    
     if (!incremental & file.exists(outputFile)) {
       ParallelLogger::logInfo("Time series file exists, removing before batch operations")
       unlink(outputFile)
@@ -351,7 +336,6 @@ runCohortRelationship <- function(
           nrow(subset)
         ))
       }
-
 
       timeExecution(
         exportFolder,
@@ -391,9 +375,10 @@ runCohortRelationship <- function(
         comparatorChecksum = subset[start:end, ]$comparatorChecksum,
         task = "runCohortRelationship",
         checksum = subset[start:end, ]$checksum,
-        recordKeepingFile = recordKeepingFile,
+        recordKeepingFile = incrementalFolder,
         incremental = incremental
       )
+      
       deltaIteration <- Sys.time() - startCohortRelationship
       ParallelLogger::logInfo(
         "    - Running Cohort Relationship iteration with batchsize ",
@@ -411,6 +396,7 @@ runCohortRelationship <- function(
   } else {
     ParallelLogger::logInfo("    - Skipping in incremental mode.")
   }
+  
   delta <- Sys.time() - startCohortRelationship
   ParallelLogger::logInfo(
     " - Computing cohort relationships took ",
@@ -418,4 +404,5 @@ runCohortRelationship <- function(
     " ",
     attr(delta, "units")
   )
+  
 }
