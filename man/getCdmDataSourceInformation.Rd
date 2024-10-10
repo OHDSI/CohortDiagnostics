@@ -13,9 +13,7 @@ getCdmDataSourceInformation(
 \arguments{
 \item{connection}{An object of type \code{connection} as created using the
 \code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package. Can be left NULL if \code{connectionDetails}
-is provided, in which case a new connection will be opened at the start
-of the function, and closed when the function finishes.}
+DatabaseConnector package.}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
