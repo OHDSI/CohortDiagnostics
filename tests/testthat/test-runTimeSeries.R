@@ -96,7 +96,7 @@ for (nm in names(testServers)) {
 }
 
 test_that("Testing cohort time series execution, incremental = FALSE", {
-  testServer <- "duckdb"
+  testServer <- "sqlite"
   skip_if_not(testServer %in% names(testServers))
   server <- testServers[[testServer]]
   con <- DatabaseConnector::connect(server$connectionDetails)
@@ -230,7 +230,7 @@ test_that("Testing cohort time series execution, incremental = FALSE", {
 })
 
 test_that("Testing cohort time series execution, incremental = TRUE", {
-  testServer <- "duckdb"
+  testServer <- "sqlite"
   skip_if_not(testServer %in% names(testServers))
   server <- testServers[[testServer]]
   con <- DatabaseConnector::connect(server$connectionDetails)
@@ -407,7 +407,7 @@ test_that("Testing cohort time series execution, incremental = TRUE", {
 })
 
 test_that("Testing Data source time series execution, incremental = FALSE ", {
-  testServer <- "duckdb"
+  testServer <- "sqlite"
   skip_if_not(testServer %in% names(testServers))
   server <- testServers[[testServer]]
   con <- DatabaseConnector::connect(server$connectionDetails)
@@ -470,7 +470,7 @@ test_that("Testing Data source time series execution, incremental = FALSE ", {
 })
 
 test_that("Testing Data source time series execution, incremental = TRUE ", {
-  testServer <- "duckdb"
+  testServer <- "sqlite"
   skip_if_not(testServer %in% names(testServers))
   server <- testServers[[testServer]]
   con <- DatabaseConnector::connect(server$connectionDetails)
