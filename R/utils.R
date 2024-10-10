@@ -316,6 +316,9 @@ timeExecution <- function(exportFolder,
 
 # check if a temp table already exists
 tempTableExists <- function(connection, tempTableName) {
+  stopifnot(methods::is(connection, "DatabaseConnectorConnection"), 
+            is.character(tempTableName),
+            length(tempTableName) == 1)
   tryCatch(
     is.data.frame(
       DatabaseConnector::renderTranslateQuerySql(
