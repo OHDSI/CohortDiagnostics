@@ -22,7 +22,7 @@ exportCharacterization <- function(characteristics,
                                    covariateValueContFileName,
                                    covariateRefFileName,
                                    analysisRefFileName,
-                                   timeRefFileName = NULL,
+                                   timeRefFileName,
                                    counts,
                                    minCellCount) {
   
@@ -111,8 +111,7 @@ exportCharacterization <- function(characteristics,
 }
 
 
-getCohortCharacteristics <- function(connectionDetails = NULL,
-                                     connection = NULL,
+getCohortCharacteristics <- function(connection = NULL,
                                      cdmDatabaseSchema,
                                      tempEmulationSchema = NULL,
                                      cohortDatabaseSchema = cdmDatabaseSchema,
@@ -123,10 +122,6 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                      exportFolder,
                                      minCharacterizationMean = 0.001) {
   startTime <- Sys.time()
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
   results <- Andromeda::andromeda()
   timeExecution(
     exportFolder,
@@ -306,34 +301,43 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
   return(results)
 }
 
-#' Title
+#' TODO: explain runTemporalCohortCharacterization
+#' 
+#' @description
+#' A short description...
+#' 
 #'
-#' @param connection 
-#' @param databaseId 
-#' @param exportFolder 
-#' @param cdmDatabaseSchema 
-#' @param cohortDatabaseSchema 
-#' @param cohortTable 
-#' @param covariateSettings 
-#' @param tempEmulationSchema 
-#' @param cdmVersion 
-#' @param cohorts 
-#' @param cohortCounts 
-#' @param minCellCount 
-#' @param instantiatedCohorts 
-#' @param incremental 
-#' @param recordKeepingFile 
-#' @param task 
-#' @param jobName 
-#' @param covariateValueFileName 
-#' @param covariateValueContFileName 
-#' @param covariateRefFileName 
-#' @param analysisRefFileName 
-#' @param timeRefFileName 
-#' @param minCharacterizationMean 
-#' @param batchSize 
+#' @template connection 
+#' @template databaseId 
+#' @template exportFolder 
+#' @template cdmDatabaseSchema 
+#' @template cohortDatabaseSchema 
+#' @template cohortTable 
+#' @template tempEmulationSchema 
+#' @template cdmVersion 
+#' @template minCellCount 
+#' @template instantiatedCohorts 
+#' @template incremental 
+#' @template recordKeepingFile 
+#' @template batchSize 
 #'
-#' @return
+#' @param cohorts           cohorts
+#' @param cohortCounts      A dataframe with the cohort counts
+#' @param covariateSettings Either an object of type \code{covariateSettings} as created using one of
+#'                          the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
+#'                          of such objects.
+#' @param task              Name of this task
+#' @param jobName           Name of this job
+#' @param covariateValueFileName Filename of the covariate value output
+#' @param covariateValueContFileName Filename of the contineous covariate output
+#' @param covariateRefFileName Filename of the covariate reference
+#' @param analysisRefFileName  Filename of the analysis reference
+#' @param timeRefFileName      Filename of the time reference
+#' @param minCharacterizationMean The minimum mean value for characterization output. Values below this will be cut off from output. This
+#'                                will help reduce the file size of the characterization output, but will remove information
+#'                                on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)
+#'
+#' @return None, it will write results to disk
 #' @export
 #'
 #' @examples

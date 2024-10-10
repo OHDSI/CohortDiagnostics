@@ -2,7 +2,7 @@
 % Please edit documentation in R/runTemporalCohortCharacterization.R
 \name{runTemporalCohortCharacterization}
 \alias{runTemporalCohortCharacterization}
-\title{Title}
+\title{TODO: explain runTemporalCohortCharacterization}
 \usage{
 runTemporalCohortCharacterization(
   connection,
@@ -33,35 +33,41 @@ runTemporalCohortCharacterization(
 )
 }
 \arguments{
-\item{connection}{}
+\item{connection}{An object of type \code{connection} as created using the
+\code{\link[DatabaseConnector]{connect}} function in the
+DatabaseConnector package.}
 
-\item{databaseId}{}
+\item{databaseId}{A short string for identifying the database (e.g. 'Synpuf').}
 
-\item{exportFolder}{}
+\item{exportFolder}{The folder where the results will be exported to}
 
-\item{cdmDatabaseSchema}{}
+\item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.}
 
-\item{cohortDatabaseSchema}{}
+\item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
+this should include both the database and schema name, for example
+'scratch.dbo'.}
 
-\item{cohortTable}{}
+\item{cohortTable}{Name of the cohort table.}
 
-\item{covariateSettings}{}
+\item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
+tables, provide a schema with write privileges where temp tables can be created.}
 
-\item{tempEmulationSchema}{}
-
-\item{cdmVersion}{}
+\item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
 
 \item{cohorts}{}
 
 \item{cohortCounts}{}
 
-\item{minCellCount}{}
+\item{minCellCount}{The minimum cell count for fields contains person counts or fractions}
 
-\item{instantiatedCohorts}{}
+\item{instantiatedCohorts}{cohortIds of the cohorts that have been already been instantiated}
 
-\item{incremental}{}
-
-\item{recordKeepingFile}{}
+\item{incremental}{`TRUE` or `FALSE` (default). If TRUE diagnostics for cohorts in the 
+cohort definition set that have not changed will be skipped and existing results 
+csv files will be updated. If FALSE then diagnostics for all cohorts in the cohort 
+definition set will be executed and pre-existing results files will be deleted.}
 
 \item{task}{}
 
@@ -79,8 +85,11 @@ runTemporalCohortCharacterization(
 
 \item{minCharacterizationMean}{}
 
-\item{batchSize}{}
+\item{batchSize}{In case of batch processing, this specifies the size of the batch}
+
+\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
+of which cohort diagnostics has been executed.}
 }
 \description{
-Title
+A short description...
 }
