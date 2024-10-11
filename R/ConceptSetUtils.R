@@ -304,3 +304,36 @@ exportConceptSets <- function(cohortDefinitionSet, exportFolder, minCellCount, d
     cohortId = conceptSetsExport$cohortId
   )
 }
+
+addConceptIdsToConceptTempTable <- function(
+    connection,
+    copyFromTempTable,
+    conceptIdFieldName = "concept_id",
+    tempEmulationSchema) {
+  
+  if (!tempTableExists("concept_ids")) {
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = "CREATE TABLE #concept_ids (concept_id BIGINT);",
+      tempEmulationSchema = tempEmulationSchema,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+  }
+  
+  sql <- "INSERT INTO #concept_ids (concept_id)
+          SELECT DISTINCT a.concept_id
+          FROM @copyFromTempTable a
+          LEFT JOIN #concept_ids b ON a.@conceptIdFieldName = b.concept_id
+          WHERE a.@conceptIdFieldName is not NULL AND b.concept_id is NULL;"
+  
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sql,
+    tempEmulationSchema = tempEmulationSchema,
+    copyFromTempTable = copyFromTempTable,
+    conceptIdFieldName = conceptIdFieldName,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+}
