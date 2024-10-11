@@ -1,19 +1,3 @@
-# Copyright 2024 Observational Health Data Sciences and Informatics
-#
-# This file is part of CohortDiagnostics
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 # Test getTimeSeries on all testServers
 for (nm in names(testServers)) {
 
@@ -255,13 +239,13 @@ test_that("Testing cohort time series execution, incremental = TRUE", {
         as.Date("2005-09-15")
       )
     )
-    
+
     cohort <- dplyr::bind_rows(
       cohort,
       cohort %>%
         dplyr::mutate(cohortDefinitionId = cohortDefinitionId * 1000)
     )
-    
+
     cohortDefinitionSet <-
       cohort %>%
       dplyr::select(cohortDefinitionId) %>%
@@ -282,7 +266,7 @@ test_that("Testing cohort time series execution, incremental = TRUE", {
         checksum = as.character(CohortDiagnostics:::computeChecksum(json))
       ) %>%
       dplyr::ungroup()
-    
+
     unlink(
       x = exportFolder,
       recursive = TRUE,
@@ -293,14 +277,14 @@ test_that("Testing cohort time series execution, incremental = TRUE", {
       showWarnings = FALSE,
       recursive = TRUE
     )
-    
+
     cohortTable <-
       paste0(
         "ct_",
         format(Sys.time(), "%s"),
         sample(1:100, 1)
       )
-    
+
     DatabaseConnector::insertTable(
       connection = con,
       databaseSchema = server$cohortDatabaseSchema,
@@ -312,7 +296,7 @@ test_that("Testing cohort time series execution, incremental = TRUE", {
       camelCaseToSnakeCase = TRUE,
       progressBar = FALSE
     )
-    
+
     CohortDiagnostics::runTimeSeries(
       connection = con,
       tempEmulationSchema = server$tempEmulationSchema,
@@ -335,23 +319,23 @@ test_that("Testing cohort time series execution, incremental = TRUE", {
       ),
       batchSize = 1
     )
-    
+
     recordKeepingFileData <-
       readr::read_csv(
         file = recordKeepingFile,
         col_types = readr::cols()
       )
-    
+
     # testing if check sum is written
     testthat::expect_true("checksum" %in% colnames(recordKeepingFileData))
-    
+
     # result
     timeSeriesResults1 <-
       readr::read_csv(
         file = file.path(exportFolder, "time_series.csv"),
         col_types = readr::cols()
       )
-    
+
     subset <- CohortDiagnostics:::subsetToRequiredCohorts(
       cohorts = cohortDefinitionSet,
       task = "runCohortTimeSeries",
@@ -359,19 +343,19 @@ test_that("Testing cohort time series execution, incremental = TRUE", {
       recordKeepingFile = recordKeepingFile
     ) %>%
       dplyr::arrange(cohortId)
-    
+
     testthat::expect_equal(
       object = subset$cohortId,
       expected = c(1000, 2000)
     )
-    
+
     # delete the previously written results file. To see if the previously executed cohorts will have results after deletion
     unlink(
       x = file.path(exportFolder, "time_series.csv"),
       recursive = TRUE,
       force = TRUE
     )
-    
+
     CohortDiagnostics::runTimeSeries(
       connection = con,
       tempEmulationSchema = server$tempEmulationSchema,
@@ -398,7 +382,7 @@ test_that("Testing cohort time series execution, incremental = TRUE", {
         file = file.path(exportFolder, "time_series.csv"),
         col_types = readr::cols()
       )
-    
+
     testthat::expect_equal(
       object = resultsNew$cohort_id %>% unique() %>% sort(),
       expected = c(1000, 2000)
