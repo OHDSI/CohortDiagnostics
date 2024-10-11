@@ -175,7 +175,11 @@ getCohortRelationship <- function(
 
 
 #' runCohortRelationship
-#'
+#' 
+#' @description
+#' Generate and export the cohort relationship. Cohort relationship checks the temporal relationship between two or more cohorts
+#' and derives subject counts for cohorts with different temporal relationships.
+#' 
 #' @template Connection
 #' @template cohortDefinitionSet
 #' @template ExportFolder
@@ -339,7 +343,7 @@ runCohortRelationship <- function(
 
       timeExecution(
         exportFolder,
-        "runCohortRelationshipDiagnostics",
+        "runCohortRelationship",
         c(subset[start:end, ]$targetCohortId %>% unique(), subset[start:end, ]$comparatorCohortId %>% unique()),
         parent = "executeCohortRelationshipDiagnostics",
         expr = {
