@@ -311,7 +311,7 @@ addConceptIdsToConceptTempTable <- function(
     conceptIdFieldName = "concept_id",
     tempEmulationSchema) {
   
-  if (!tempTableExists("concept_ids")) {
+  if (!tempTableExists(connection, "concept_ids")) {
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = "CREATE TABLE #concept_ids (concept_id BIGINT);",
