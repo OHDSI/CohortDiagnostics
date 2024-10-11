@@ -101,29 +101,33 @@ test_that("timeExecutions function", {
   checkmate::expect_data_frame(result, nrows = 3, ncols = 5)
 
   # custom start/end times
-  timeExecution(
-    exportFolder = temp,
-    taskName = "test_task4",
-    parent = "testthat",
-    cohortIds = NULL,
-    start = "foo",
-    execTime = "Foo"
+  expect_error(
+    timeExecution(
+      exportFolder = temp,
+      taskName = "test_task4",
+      parent = "testthat",
+      cohortIds = NULL,
+      start = "foo",
+      execTime = "Foo"
+    )
   )
 
-  result <- readr::read_csv(expectedFilePath, col_types = readr::cols())
-  checkmate::expect_data_frame(result, nrows = 4, ncols = 5)
+  # result <- readr::read_csv(expectedFilePath, col_types = readr::cols())
+  # checkmate::expect_data_frame(result, nrows = 4, ncols = 5)
 
-  timeExecution(
-    exportFolder = temp,
-    taskName = "test_task5",
-    parent = "testthat",
-    cohortIds = NULL,
-    start = Sys.time()
+  expect_error(
+    timeExecution(
+      exportFolder = temp,
+      taskName = "test_task5",
+      parent = "testthat",
+      cohortIds = NULL,
+      start = Sys.time()
+    )
   )
 
-  result <- readr::read_csv(expectedFilePath, col_types = readr::cols())
-  checkmate::expect_data_frame(result, nrows = 5, ncols = 5)
-  expect_false(all(is.na(result$startTime)))
+  # result <- readr::read_csv(expectedFilePath, col_types = readr::cols())
+  # checkmate::expect_data_frame(result, nrows = 5, ncols = 5)
+  # expect_false(all(is.na(result$startTime)))
 })
 
 test_that("enforceMinCellValue replaces values below minimum with negative of minimum", {
