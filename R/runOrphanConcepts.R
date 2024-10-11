@@ -386,32 +386,27 @@ runOrphanConcepts <- function(connection,
     incremental = TRUE
   )
   
-  ParallelLogger::logTrace("Dropping temp concept set table")
-  sql <-
-    "TRUNCATE TABLE #inst_concept_sets; DROP TABLE #inst_concept_sets;"
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection,
-    sql,
-    tempEmulationSchema = tempEmulationSchema,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
+  # TODO eliminate inst_concept_sets after three analysis complete in executeDiagnostics
+  # if (tempTableExists(connection, "inst_concept_sets")) {
+  #   ParallelLogger::logTrace("Dropping Unique ConceptSets table")
+  #   sql <-
+  #     "TRUNCATE TABLE #inst_concept_sets; DROP TABLE #inst_concept_sets;"
+  #   DatabaseConnector::renderTranslateExecuteSql(
+  #     connection,
+  #     sql,
+  #     tempEmulationSchema = tempEmulationSchema,
+  #     progressBar = FALSE,
+  #     reportOverallTime = FALSE
+  #   )
+  # }
   
-  if  (nrow(subsetOrphans) > 0) {
-    ParallelLogger::logTrace("Dropping temp concept count table")
-    if (conceptCountsTableIsTemp) {
-      countTable <- conceptCountsTable
-    } else {
-      countTable <-
-        paste(conceptCountsDatabaseSchema, conceptCountsTable, sep = ".")
-    }
-    
+  if (conceptCountsTableIsTemp) {
     sql <- "TRUNCATE TABLE @count_table; DROP TABLE @count_table;"
     DatabaseConnector::renderTranslateExecuteSql(
       connection,
       sql,
       tempEmulationSchema = tempEmulationSchema,
-      count_table = countTable,
+      count_table = conceptCountsTable,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )

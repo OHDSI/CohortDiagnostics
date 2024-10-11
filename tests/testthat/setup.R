@@ -1,10 +1,7 @@
-library(CohortDiagnostics)
-library(testthat)
-
 dbmsToTest <- c(
-  "sqlite"#,
+  # "sqlite"#,
   # "duckdb"#,
-  # "postgresql"#,
+  "postgresql"#,
   # "redshift",
   # "sql server",
 )

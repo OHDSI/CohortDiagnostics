@@ -15,7 +15,7 @@
 # limitations under the License.
 
 for (nm in names(testServers)) {
-  nm <- "sqlite"
+  # nm <- "duckdb"
   server <- testServers[[nm]]
   
   # Params
@@ -33,17 +33,18 @@ for (nm in names(testServers)) {
   cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = server$cohortTable)
   cohortDatabaseSchema <- server$cohortDatabaseSchema
   cohortTable <- server$cohortTable
-  incremental <- FALSE
-  # incremental <- TRUE
+  # incremental <- FALSE
+  incremental <- TRUE
   conceptIdTable <- "#concept_ids"
+  recordKeepingFile <- file.path(exportFolder, "record.csv")
   
   # Tests
   
   test_that(paste("test run inclusion statistics output", nm), {
     connection <- DatabaseConnector::connect(server$connectionDetails)
-    exportFolder <- file.path(tempdir(), paste0(nm, "no_concept"))
-    dir.create(exportFolder)
+    exportFolder <- file.path(tempdir(), paste0(nm, "_no_concept"))
     recordKeepingFile <- file.path(exportFolder, "record.csv")
+    dir.create(exportFolder)
     # CreateConceptcounts table
     
     CohortDiagnostics::createConceptCountsTable(connection = connection,
@@ -125,6 +126,7 @@ for (nm in names(testServers)) {
   test_that(paste("test run inclusion statistics output", nm), {
     connection <- DatabaseConnector::connect(server$connectionDetails)
     exportFolder <- file.path(tempdir(), paste0(nm, "_no_concept"))
+    recordKeepingFile <- file.path(exportFolder, "record.csv")
     dir.create(exportFolder)
     
     # Instantiate Unique ConceptSets
@@ -178,6 +180,6 @@ for (nm in names(testServers)) {
     expect_equal(unique(recordKeeping$task), "runOrphanConcepts")
     expect_true(all(recordKeeping$cohortId %in% server$cohortDefinitionSet$cohortId))
     
-    unlink(exportFolder)
+    unlink(exportFolder, recursive = TRUE)
   })
 }
