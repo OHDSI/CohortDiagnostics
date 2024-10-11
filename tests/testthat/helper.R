@@ -173,8 +173,7 @@ createCustomCdm <- function(jsonDataFilePath){
 
 addCohortTable <- function(connection, cohortDataFilePath){
   
-  cohortTableData <- readr::read_csv(cohortDataFilePath, 
-                                     col_types = c("numeric", "numeric", "date", "date"))
+  cohortTableData <- readr::read_csv(cohortDataFilePath, col_types = c("iiDD"))
   
   cohortTableData <- cohortTableData %>% 
     mutate(across(ends_with("DATE"), ~ as.Date(.x, format = "%Y-%m-%d")))

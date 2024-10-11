@@ -120,7 +120,7 @@ recordTasksDone <-
       recordKeeping <- readr::read_csv(
         file = recordKeepingFile,
         col_types = readr::cols(),
-        guess_max = min(1e7),
+        guess_max = 1e7,
         lazy = FALSE
       )
 

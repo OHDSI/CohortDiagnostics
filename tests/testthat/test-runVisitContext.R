@@ -316,7 +316,7 @@ test_that(paste("test that the subject counts per cohort, visit concept and visi
 
   resultPath <- system.file("test_cases/runVisitContext/testSubjectCounts/expectedResult.csv", package = "CohortDiagnostics")
 
-  resultData <- readr::read_csv(resultPath, col_types = c("numeric", "numeric", "text", "numeric"))
+  resultData <- readr::read_csv(resultPath, col_types = c("ddcd"))
 
   visitContextResult <- visitContextResult[order(visitContextResult$cohortId, visitContextResult$visitConceptId, visitContextResult$visitContext, visitContextResult$subjects), ]
   visitContextResult <- as.data.frame(lapply(visitContextResult, as.character), stringsAsFactors = FALSE)
@@ -436,7 +436,7 @@ test_that(paste("test that to infer subject counts per cohort, visit concept, an
                               package = "CohortDiagnostics", 
                               mustWork = T)
 
-    resultData <- readr::read_csv(resultPath, col_types = c("numeric", "numeric", "text", "numeric"))
+    resultData <- readr::read_csv(resultPath, col_types = c("ddcd"))
 
     visitContextResult <- visitContextResult[order(visitContextResult$cohortId, visitContextResult$visitConceptId, visitContextResult$visitContext, visitContextResult$subjects), ]
     visitContextResult <- as.data.frame(lapply(visitContextResult, as.character), stringsAsFactors = FALSE)
@@ -452,7 +452,9 @@ test_that(paste("test that to infer subject counts per cohort, visit concept, an
 
 test_that(paste("test that no other cohorts than the ones specified in cohortIds are included in the output"), {
 
-  cohortDataFilePath <- system.file("test_cases/runVisitContext/testSubjectCounts/test_getVisitContext_cohort.xlsx",  package = "CohortDiagnostics")
+  cohortDataFilePath <- system.file("test_cases/runVisitContext/testSubjectCounts/test_getVisitContext_cohort.csv",  
+                                    package = "CohortDiagnostics",
+                                    mustWork = TRUE)
 
   patientDataFilePath <- "test_cases/runVisitContext/testSubjectCounts/test_getVisitContext_patientData.json"
 
@@ -479,7 +481,9 @@ test_that(paste("test that no other cohorts than the ones specified in cohortIds
 
 test_that(paste("test that when the subjects in the cohort have no visits an empty data frame is returned"), {
 
-  cohortDataFilePath <- system.file("test_cases/runVisitContext/testSubjectCountsNoVisits/test_getVisitContext_cohort.xlsx",  package = "CohortDiagnostics")
+  cohortDataFilePath <- system.file("test_cases/runVisitContext/testSubjectCountsNoVisits/test_getVisitContext_cohort.csv",  
+                                    package = "CohortDiagnostics",
+                                    mustWork = TRUE)
 
   patientDataFilePath <- "test_cases/runVisitContext/testSubjectCountsNoVisits/test_getVisitContext_patientData.json"
 
@@ -509,7 +513,7 @@ test_that(paste("test that when the subjects in the cohort have no visits an emp
                             package = "CohortDiagnostics",
                             mustWork = TRUE)
 
-  resultData <- readr::read_csv(resultPath, col_types = c("numeric", "numeric", "text", "numeric"))
+  resultData <- readr::read_csv(resultPath, col_types = c("ddcd"))
 
   visitContextResult <- visitContextResult[order(visitContextResult$cohortId, visitContextResult$visitConceptId, visitContextResult$visitContext, visitContextResult$subjects), ]
   visitContextResult <- as.data.frame(lapply(visitContextResult, as.character), stringsAsFactors = FALSE)

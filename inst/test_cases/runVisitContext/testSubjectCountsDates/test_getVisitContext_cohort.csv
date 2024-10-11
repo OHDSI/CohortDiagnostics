@@ -1,5 +1,5 @@
-﻿cohort_definition_id,subject_id,cohort_start_date,cohort_end_date
-1,1,1/1/15,1/9/15
-1,2,1/1/15,1/9/15
-2,1,1/10/15,1/20/15
-2,2,1/10/15,1/20/15
+cohort_definition_id,subject_id,cohort_start_date,cohort_end_date
+1,1,2015-01-01,2015-01-09
+1,2,2015-01-01,2015-01-09
+2,1,2015-01-10,2015-01-20
+2,2,2015-01-10,2015-01-20
