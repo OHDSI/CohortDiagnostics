@@ -609,16 +609,12 @@ executeDiagnostics <- function(cohortDefinitionSet,
         stop("Cohort table is empty")
       }
       
-      cohortCounts <- makeDataExportable(
-        x = cohortCounts,
-        tableName = "cohort_count",
-        minCellCount = minCellCount,
-        databaseId = databaseId
-      )
-      
-      writeToCsv(
+      cohortCounts <- exportDataToCsv(
         data = cohortCounts,
+        tableName = "cohort_count",
         fileName = file.path(exportFolder, "cohort_count.csv"),
+        minCellCount = minCellCount,
+        databaseId = databaseId,
         incremental = FALSE,
         cohortId = cohorts$cohortId
       )
@@ -713,11 +709,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runIncludedSourceConcepts || runOrphanConcepts || runBreakdownIndexEvents) {
     timeExecution(
       exportFolder,
-      taskName = "runConceptSetDiagnostics",
+      taskName = "runIncludedSourceConcepts",
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        runConceptSetDiagnostics(
+        runIncludedSourceConcepts(
           connection = connection,
           tempEmulationSchema = tempEmulationSchema,
           cdmDatabaseSchema = cdmDatabaseSchema,
@@ -749,11 +745,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runTimeSeries) {
     timeExecution(
       exportFolder,
-      "executeTimeSeriesDiagnostics",
+      "runTimeSeries",
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        executeTimeSeriesDiagnostics(
+        runTimeSeries(
           connection = connection,
           tempEmulationSchema = tempEmulationSchema,
           cdmDatabaseSchema = cdmDatabaseSchema,
@@ -804,11 +800,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runIncidenceRate) {
     timeExecution(
       exportFolder,
-      "computeIncidenceRates",
+      "runIncidenceRate",
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        computeIncidenceRates(
+        runIncidenceRate(
           connection = connection,
           tempEmulationSchema = tempEmulationSchema,
           cdmDatabaseSchema = cdmDatabaseSchema,
@@ -831,11 +827,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (runCohortRelationship) {
     timeExecution(
       exportFolder,
-      "executeCohortRelationshipDiagnostics",
+      "runCohortRelationship",
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        executeCohortRelationshipDiagnostics(
+        runCohortRelationship(
           connection = connection,
           databaseId = databaseId,
           exportFolder = exportFolder,
