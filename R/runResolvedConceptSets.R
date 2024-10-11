@@ -97,29 +97,10 @@ getResolvedConceptSets <- function(connection,
     tempEmulationSchema = tempEmulationSchema
   )
   
-  # add concepts to #concept_ids if they don't already exist
-  if (!tempTableExists(connection, "concept_ids")) {
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = "CREATE TABLE #concept_ids (concept_id BIGINT);",
-      tempEmulationSchema = tempEmulationSchema,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
-  }
-    
-  sql <- "INSERT INTO #concept_ids (concept_id)
-          SELECT DISTINCT a.concept_id
-          FROM #inst_concept_sets a
-          LEFT JOIN #concept_ids b ON a.concept_id = b.concept_id
-          WHERE b.concept_id is NULL;"
-    
-  DatabaseConnector::renderTranslateExecuteSql(
+  addConceptIdsToConceptTempTable(
     connection = connection,
-    sql = sql,
-    tempEmulationSchema = tempEmulationSchema,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
+    copyFromTempTable = "#inst_concept_sets",
+    tempEmulationSchema = tempEmulationSchema
   )
   
   resolvedConceptIds <-
@@ -133,8 +114,7 @@ getResolvedConceptSets <- function(connection,
     dplyr::rename("uniqueConceptSetId" = "codesetId") %>%
     dplyr::inner_join(dplyr::distinct(conceptSets),
                       by = "uniqueConceptSetId",
-                      relationship = "many-to-many"
-    ) %>%
+                      relationship = "many-to-many") %>%
     dplyr::select(
       "cohortId",
       "conceptSetId",

@@ -29,11 +29,9 @@ getBreakdownIndexEvents <- function(connection,
     stop("cohortDefinitionSet must have one row")
   }
   
-  if(!tempTableExists(connection, "inst_concept_sets")) {
+  if (!tempTableExists(connection, "inst_concept_sets")) {
     stop("Execute the function runResolvedConceptSets() first.")
   }
-  
-  
   
   domains <- 
     readr::read_csv(
@@ -162,19 +160,11 @@ getBreakdownIndexEvents <- function(connection,
       ) %>%
       tidyr::tibble()
     
-    sql <- "INSERT INTO #concept_ids (concept_id)
-            SELECT DISTINCT a.concept_id
-            FROM #breakdown a
-            LEFT JOIN #concept_ids b ON a.concept_id = b.concept_id
-            WHERE a.concept_id is not NULL AND b.concept_id is NULL;"
-    
-    DatabaseConnector::renderTranslateExecuteSql(
+    addConceptIdsToConceptTempTable(
       connection = connection,
-      sql = sql,
-      tempEmulationSchema = tempEmulationSchema,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
+      copyFromTempTable = "#breakdown",
+      conceptIdFieldName = "concept_id",
+      tempEmulationSchema = tempEmulationSchema)
     
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,

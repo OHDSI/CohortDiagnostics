@@ -1,5 +1,4 @@
 
-server <- testServers[[1]]
 
 for (server in testServers) {
   test_that(paste("getResolvedConceptSets works on", server$connectionDetails$dbms), {
@@ -14,8 +13,8 @@ for (server in testServers) {
 
     expect_true(is.data.frame(result))
     expect_named(result, c("cohortId", "conceptSetId", "conceptId"))
-    expect_true(tempTableExists("concept_ids"))
-    expect_true(tempTableExists("inst_concept_sets"))
+    expect_true(tempTableExists(connection, "concept_ids"))
+    expect_true(tempTableExists(connection, "inst_concept_sets"))
     DatabaseConnector::disconnect(connection)
   })
 }

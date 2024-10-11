@@ -3,10 +3,10 @@ library(testthat)
 
 dbmsToTest <- c(
   "sqlite"#,
-  #"duckdb",
-  #"postgresql",
-  #"redshift",
-  #"sql server"
+  # "duckdb",
+  # "postgresql",
+  # "redshift",
+  # "sql server"
 )
 
 useAllCovariates <- FALSE

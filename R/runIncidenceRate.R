@@ -235,7 +235,7 @@ runIncidenceRate <- function(connection,
   ParallelLogger::logInfo("Computing incidence rates")
   startIncidenceRate <- Sys.time()
   subset <- subsetToRequiredCohorts(
-    cohorts = cohorts,
+    cohorts = cohortDefinitionSet,
     task = "runIncidenceRate",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile
