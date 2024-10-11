@@ -1,6 +1,4 @@
-library(SqlRender)
 library(dplyr)
-library(readr)
 
 
 for (nm in names(testServers)) {
@@ -291,7 +289,9 @@ if ("sqlite" %in% names(testServers)) {
 
 test_that(paste("test that the subject counts per cohort, visit concept and visit context are correct"), {
 
-  cohortDataFilePath <- system.file("test_cases/runVisitContext/testSubjectCounts/test_getVisitContext_cohort.xlsx",  package = "CohortDiagnostics")
+  cohortDataFilePath <- system.file("test_cases/runVisitContext/testSubjectCounts/test_getVisitContext_cohort.csv",  
+                                    package = "CohortDiagnostics",
+                                    mustWork = TRUE)
 
   patientDataFilePath <- "test_cases/runVisitContext/testSubjectCounts/test_getVisitContext_patientData.json"
 
@@ -313,7 +313,9 @@ test_that(paste("test that the subject counts per cohort, visit concept and visi
                                         cdmVersion = 5
   )
 
-  resultPath <- system.file("test_cases/runVisitContext/testSubjectCounts/expectedResult.csv", package = "CohortDiagnostics")
+  resultPath <- system.file("test_cases/runVisitContext/testSubjectCounts/expectedResult.csv", 
+                            package = "CohortDiagnostics",
+                            mustWork = TRUE)
 
   resultData <- readr::read_csv(resultPath, col_types = c("ddcd"))
 
@@ -355,7 +357,7 @@ test_that(paste("test that only the new visit_concept_id are inserted into the #
 
   sql <- "select * from #concept_ids"
 
-  translatedSQL <- translate(sql, targetDialect = "sqlite")
+  translatedSQL <- SqlRender::translate(sql, targetDialect = "sqlite")
 
   res1 <- querySql(connection = connection, sql = translatedSQL)
 
@@ -398,7 +400,7 @@ test_that(paste("test that only the new visit_concept_id are inserted into the #
 
   sql <- "select * from #concept_ids"
 
-  translatedSQL <- translate(sql, targetDialect = "sqlite")
+  translatedSQL <- SqlRender::translate(sql, targetDialect = "sqlite")
 
   res2 <- querySql(connection = connection, sql = translatedSQL)
 
@@ -411,7 +413,9 @@ test_that(paste("test that only the new visit_concept_id are inserted into the #
 
 test_that(paste("test that to infer subject counts per cohort, visit concept, and visit context, visits within 30 days before or after cohort creation are considered"), {
 
-  cohortDataFilePath <- system.file("test_cases/runVisitContext/testSubjectCountsDates/test_getVisitContext_cohort.xlsx",  package = "CohortDiagnostics")
+  cohortDataFilePath <- system.file("test_cases/runVisitContext/testSubjectCountsDates/test_getVisitContext_cohort.csv", 
+                                    package = "CohortDiagnostics",
+                                    mustWork = TRUE)
 
   patientDataFilePath <- "test_cases/runVisitContext/testSubjectCountsDates/test_getVisitContext_patientData.json"
 
@@ -494,7 +498,7 @@ test_that(paste("test that when the subjects in the cohort have no visits an emp
 
   sql <- "delete from visit_occurrence;"
 
-  translatedSQL <- translate(sql = sql, targetDialect =  "sqlite")
+  translatedSQL <- SqlRender::translate(sql = sql, targetDialect =  "sqlite")
 
   executeSql(connection = connection, sql = translatedSQL)
 
