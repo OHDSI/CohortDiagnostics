@@ -358,11 +358,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
       )
     }
 
-    # forcefully set ConditionEraGroupStart and drugEraGroupStart to NULL
-    # because of known bug in FeatureExtraction. https://github.com/OHDSI/FeatureExtraction/issues/144
-    temporalCovariateSettings[[1]]$ConditionEraGroupStart <- NULL
-    temporalCovariateSettings[[1]]$DrugEraGroupStart <- NULL
-
     checkmate::assert_integerish(
       x = temporalCovariateSettings[[1]]$temporalStartDays,
       any.missing = FALSE,
