@@ -1,7 +1,7 @@
 test_that("Creating and checking externalConceptCounts table", {
   if (dbmsToTest == "sqlite") {
     connectionDetails <- testServers[["sqlite"]]$connectionDetails
-    connection <- connect(connectionDetails)
+    connection <- DatabaseConnector::connect(connectionDetails)
     cdmDatabaseSchema <- testServers[["sqlite"]]$cdmDatabaseSchema
     conceptCountsTable <- "concept_counts"
     CohortDiagnostics::createConceptCountsTable(connectionDetails = connectionDetails,
@@ -38,6 +38,7 @@ test_that("Creating and checking externalConceptCounts table", {
     )
     
     expect_equal(vocabVersion, vocabVersionExternalConceptCountsTable[1,1])
+    DatabaseConnector::disconnect(connection)
   }
   
 })
@@ -47,7 +48,7 @@ test_that("Creating and checking externalConceptCounts temp table", {
     # Creating externalConceptCounts
     # sql_lite_path <- file.path(test_path(), databaseFile)
     connectionDetails <- testServers[["sqlite"]]$connectionDetails
-    connection <- connect(connectionDetails)
+    connection <- DatabaseConnector::connect(connectionDetails)
     cdmDatabaseSchema <- testServers[["sqlite"]]$cdmDatabaseSchema
     conceptCountsTable <- "concept_counts"
     CohortDiagnostics::createConceptCountsTable(connectionDetails = connectionDetails,
@@ -66,5 +67,6 @@ test_that("Creating and checking externalConceptCounts temp table", {
                                                                       name = conceptCountsTable,
                                                                       databaseSchema = cdmDatabaseSchema)
     expect_true(checkConceptCountsTableExists)
+    DatabaseConnector::disconnect(connection)
   }
 })
