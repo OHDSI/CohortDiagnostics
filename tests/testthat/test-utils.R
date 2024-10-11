@@ -168,24 +168,24 @@ test_that("timeExecution uses minutes as unit", {
   timeExecution(exportFolder,
                 taskName = "test 1 second",
                 expr = Sys.sleep(1))
-  
-  start <- as.POSIXct("2024-10-09 03:37:46") 
+
+  start <- as.POSIXct("2024-10-09 03:37:46")
   oneMinute <- start - as.POSIXct("2024-10-09 03:36:46")
   timeExecution(exportFolder,
                 taskName = "test 1 minute",
                 start = start,
                 execTime = oneMinute)
-  
-  start <- as.POSIXct("2024-10-09 03:37:46") 
+
+  start <- as.POSIXct("2024-10-09 03:37:46")
   oneHour <- start - as.POSIXct("2024-10-09 02:37:46")
   timeExecution(exportFolder,
                 taskName = "test 1 hour",
                 start = start,
                 execTime = oneHour)
-  
+
   list.files(exportFolder)
   df <- readr::read_csv(file.path(exportFolder, "executionTimes.csv"), show_col_types = F)
-  
+
   expect_equal(df$task, c("test 1 second", "test 1 minute", "test 1 hour"))
   expect_equal(df$executionTime, c(0.0168, 1, 60))
 })
@@ -193,25 +193,25 @@ test_that("timeExecution uses minutes as unit", {
 for (server in testServers) {
   test_that(paste("tempTableExists works on ", server$connectionDetails$dbms), {
     con <- DatabaseConnector::connect(server$connectionDetails)
-    DatabaseConnector::renderTranslateExecuteSql(con, "create table #tmp110010 (a int);", 
-                                                 progressBar = F, 
+    DatabaseConnector::renderTranslateExecuteSql(con, "create table #tmp110010 (a int);",
+                                                 progressBar = F,
                                                  reportOverallTime = F)
     expect_false(tempTableExists(con, "tmp98765"))
     expect_true(tempTableExists(con, "tmp110010"))
-    DatabaseConnector::renderTranslateExecuteSql(con, "drop table #tmp110010;", 
-                                                 progressBar = F, 
+    DatabaseConnector::renderTranslateExecuteSql(con, "drop table #tmp110010;",
+                                                 progressBar = F,
                                                  reportOverallTime = F)
     DatabaseConnector::disconnect(con)
   })
 }
 
 test_that("assertCohortDefinitionSetContainsAllParents works", {
-  cohorts <- loadTestCohortDefinitionSet() 
-  
+  cohorts <- loadTestCohortDefinitionSet()
+
   expect_no_error(
     CohortDiagnostics:::assertCohortDefinitionSetContainsAllParents(cohorts)
   )
-  
+
   expect_error(
     CohortDiagnostics:::assertCohortDefinitionSetContainsAllParents(
       dplyr::filter(cohorts, !(.data$cohortId  %in% cohorts$subsetParent))
