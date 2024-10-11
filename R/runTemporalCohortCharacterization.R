@@ -110,6 +110,124 @@ exportCharacterization <- function(characteristics,
   }
 }
 
+mutateCovariateOutput <- function(results, featureExtractionOutput, populationSize, binary) {
+  if (binary) {
+    covariates <- featureExtractionOutput$covariates %>%
+      dplyr::rename("cohortId" = "cohortDefinitionId") %>%
+      dplyr::left_join(populationSize, by = "cohortId", copy = TRUE) %>%
+      dplyr::mutate("p" = .data$sumValue / populationSize)
+    
+    if (nrow(covariates %>%
+             dplyr::filter(.data$p > 1) %>%
+             dplyr::collect()) > 0) {
+      stop(
+        paste0(
+          "During characterization, population size (denominator) was found to be smaller than features Value (numerator).",
+          "- this may have happened because of an error in Feature generation process. Please contact the package developer."
+        )
+      )
+    }
+    
+    covariates <- covariates %>%
+      dplyr::mutate("sd" = sqrt(.data$p * (1 - .data$p))) %>%
+      dplyr::select(-"p") %>%
+      dplyr::rename("mean" = "averageValue") %>%
+      dplyr::select(-populationSize)
+    
+    if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
+      covariates <- covariates %>%
+        dplyr::select(
+          "cohortId",
+          "timeId",
+          "covariateId",
+          "sumValue",
+          "mean",
+          "sd"
+        )
+      
+      tidNaCount <- covariates %>%
+        dplyr::filter(is.na(.data$timeId)) %>%
+        dplyr::count() %>%
+        dplyr::pull()
+      
+      if (tidNaCount > 0) {
+        covariates <- covariates %>%
+          dplyr::mutate(timeId = dplyr::if_else(is.na(.data$timeId), -1, .data$timeId))
+      }
+    } else {
+      covariates <- covariates %>%
+        dplyr::mutate(timeId = 0) %>%
+        dplyr::select(
+          "cohortId",
+          "timeId",
+          "covariateId",
+          "sumValue",
+          "mean",
+          "sd"
+        )
+    }
+    if ("covariates" %in% names(results)) {
+      Andromeda::appendToTable(results$covariates, covariates)
+    } else {
+      results$covariates <- covariates
+    }
+  } else {
+    covariates <- featureExtractionOutput$covariatesContinuous %>%
+      dplyr::rename(
+        "mean" = "averageValue",
+        "sd" = "standardDeviation",
+        "cohortId" = "cohortDefinitionId"
+      )
+    covariatesContinuous <- covariates
+    if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
+      covariates <- covariates %>%
+        dplyr::mutate(sumValue = -1) %>%
+        dplyr::select(
+          "cohortId",
+          "timeId",
+          "covariateId",
+          "sumValue",
+          "mean",
+          "sd"
+        )
+      
+      tidNaCount <- covariates %>%
+        dplyr::filter(is.na(.data$timeId)) %>%
+        dplyr::count() %>%
+        dplyr::pull()
+      
+      if (tidNaCount > 0) {
+        covariates <- covariates %>%
+          dplyr::mutate("timeId" = dplyr::if_else(is.na(.data$timeId), -1, .data$timeId))
+      }
+    } else {
+      covariates <- covariates %>%
+        dplyr::mutate(
+          sumValue = -1,
+          timeId = 0
+        ) %>%
+        dplyr::select(
+          "cohortId",
+          "timeId",
+          "covariateId",
+          "sumValue",
+          "mean",
+          "sd"
+        )
+    }
+    if ("covariates" %in% names(results)) {
+      Andromeda::appendToTable(results$covariates, covariates)
+    } else {
+      results$covariates <- covariates
+    }
+    if ("covariatesContinuous" %in% names(results)) {
+      Andromeda::appendToTable(results$covariatesContinuous, covariatesContinuous)
+    } else {
+      results$covariatesContinuous <- covariatesContinuous
+    }
+  }
+  return(results)
+}
 
 getCohortCharacteristics <- function(connection = NULL,
                                      cdmDatabaseSchema,
@@ -173,122 +291,14 @@ getCohortCharacteristics <- function(connection = NULL,
 
   if ("covariates" %in% names(featureExtractionOutput) &&
     dplyr::pull(dplyr::count(featureExtractionOutput$covariates)) > 0) {
-    covariates <- featureExtractionOutput$covariates %>%
-      dplyr::rename("cohortId" = "cohortDefinitionId") %>%
-      dplyr::left_join(populationSize, by = "cohortId", copy = TRUE) %>%
-      dplyr::mutate("p" = .data$sumValue / populationSize)
-
-    if (nrow(covariates %>%
-      dplyr::filter(.data$p > 1) %>%
-      dplyr::collect()) > 0) {
-      stop(
-        paste0(
-          "During characterization, population size (denominator) was found to be smaller than features Value (numerator).",
-          "- this may have happened because of an error in Feature generation process. Please contact the package developer."
-        )
-      )
-    }
-
-    covariates <- covariates %>%
-      dplyr::mutate("sd" = sqrt(.data$p * (1 - .data$p))) %>%
-      dplyr::select(-"p") %>%
-      dplyr::rename("mean" = "averageValue") %>%
-      dplyr::select(-populationSize)
-
-    if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
-      covariates <- covariates %>%
-        dplyr::select(
-          "cohortId",
-          "timeId",
-          "covariateId",
-          "sumValue",
-          "mean",
-          "sd"
-        )
-
-      tidNaCount <- covariates %>%
-        dplyr::filter(is.na(.data$timeId)) %>%
-        dplyr::count() %>%
-        dplyr::pull()
-
-      if (tidNaCount > 0) {
-        covariates <- covariates %>%
-          dplyr::mutate(timeId = dplyr::if_else(is.na(.data$timeId), -1, .data$timeId))
-      }
-    } else {
-      covariates <- covariates %>%
-        dplyr::mutate(timeId = 0) %>%
-        dplyr::select(
-          "cohortId",
-          "timeId",
-          "covariateId",
-          "sumValue",
-          "mean",
-          "sd"
-        )
-    }
-    if ("covariates" %in% names(results)) {
-      Andromeda::appendToTable(results$covariates, covariates)
-    } else {
-      results$covariates <- covariates
-    }
+    
+    results <- mutateCovariateOutput(results, featureExtractionOutput, populationSize, binary = TRUE)
   }
 
   if ("covariatesContinuous" %in% names(featureExtractionOutput) &&
     dplyr::pull(dplyr::count(featureExtractionOutput$covariatesContinuous)) > 0) {
-    covariates <- featureExtractionOutput$covariatesContinuous %>%
-      dplyr::rename(
-        "mean" = "averageValue",
-        "sd" = "standardDeviation",
-        "cohortId" = "cohortDefinitionId"
-      )
-    covariatesContinuous <- covariates
-    if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
-      covariates <- covariates %>%
-        dplyr::mutate(sumValue = -1) %>%
-        dplyr::select(
-          "cohortId",
-          "timeId",
-          "covariateId",
-          "sumValue",
-          "mean",
-          "sd"
-        )
-
-      tidNaCount <- covariates %>%
-        dplyr::filter(is.na(.data$timeId)) %>%
-        dplyr::count() %>%
-        dplyr::pull()
-
-      if (tidNaCount > 0) {
-        covariates <- covariates %>%
-          dplyr::mutate("timeId" = dplyr::if_else(is.na(.data$timeId), -1, .data$timeId))
-      }
-    } else {
-      covariates <- covariates %>%
-        dplyr::mutate(
-          sumValue = -1,
-          timeId = 0
-        ) %>%
-        dplyr::select(
-          "cohortId",
-          "timeId",
-          "covariateId",
-          "sumValue",
-          "mean",
-          "sd"
-        )
-    }
-    if ("covariates" %in% names(results)) {
-      Andromeda::appendToTable(results$covariates, covariates)
-    } else {
-      results$covariates <- covariates
-    }
-    if ("covariatesContinuous" %in% names(results)) {
-      Andromeda::appendToTable(results$covariatesContinuous, covariatesContinuous)
-    } else {
-      results$covariatesContinuous <- covariatesContinuous
-    }
+    
+    results <- mutateCovariateOutput(results, featureExtractionOutput, populationSize, binary = FALSE)
   }
 
   delta <- Sys.time() - startTime
