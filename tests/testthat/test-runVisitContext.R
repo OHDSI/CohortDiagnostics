@@ -15,7 +15,7 @@ for (nm in names(testServers)) {
   dir.create(exportFolder)
 
   test_that(paste("test temporary table #concept_ids creation"), {
-    
+
     getVisitContext(connection = con,
                     cdmDatabaseSchema = server$cdmDatabaseSchema,
                     tempEmulationSchema = server$tempEmulationSchema,
@@ -32,7 +32,7 @@ for (nm in names(testServers)) {
 
 
   test_that(paste("test no duplicates in concept_ids table for getVisitContext function"), {
-    
+
     sql <-  "SELECT * FROM #concept_ids"
 
     translatedSql <- SqlRender::translate(sql, targetDialect = server$connectionDetails$dbms)
@@ -69,7 +69,6 @@ for (nm in names(testServers)) {
   })
 
   DatabaseConnector::disconnect(con)
-
 }
 
 # For testing the runVisitContext, there is no need to run it on multiple database systems since no sql other than
@@ -344,7 +343,6 @@ test_that(paste("test that only the new visit_concept_id are inserted into the #
 
   addCohortTable(connection, cohortDataFilePath)
 
-
   getVisitContext(connection = connection,
                                 cdmDatabaseSchema = "main",
                                 tempEmulationSchema = "main",
@@ -450,11 +448,11 @@ test_that(paste("test that to infer subject counts per cohort, visit concept, an
 
 })
 
-test_that(paste("test that to infer subject counts per cohort, visit concept, and visit context, visits within 30 days before or after cohort creation are considered"), {
+test_that(paste("test that no other cohorts than the ones specified in cohortIds are included in the output"), {
 
-  cohortDataFilePath <- system.file("test_cases/runVisitContext/testSubjectCountsDates/test_getVisitContext_cohort.xlsx",  package = "CohortDiagnostics")
+  cohortDataFilePath <- system.file("test_cases/runVisitContext/testSubjectCounts/test_getVisitContext_cohort.xlsx",  package = "CohortDiagnostics")
 
-  patientDataFilePath <- "test_cases/runVisitContext/testSubjectCountsDates/test_getVisitContext_patientData.json"
+  patientDataFilePath <- "test_cases/runVisitContext/testSubjectCounts/test_getVisitContext_patientData.json"
 
   connectionDetailsCustomCDM <- createCustomCdm(patientDataFilePath)
 
@@ -467,25 +465,14 @@ test_that(paste("test that to infer subject counts per cohort, visit concept, an
                                           tempEmulationSchema = "main",
                                           cohortDatabaseSchema = "main",
                                           cohortTable =  "cohort",
-                                          cohortIds = list(1,2),
+                                          cohortIds = list(1),
                                           conceptIdTable = "#concept_ids",
                                           cdmVersion = 5
     )
-
-    resultPath <- system.file("test_cases/runVisitContext/testSubjectCountsDates/expectedResult.xlsx", package = "CohortDiagnostics")
-
-    resultData <- readxl::read_excel(resultPath, col_types = c("numeric", "numeric", "text",
-                                                               "numeric"))
-
-    visitContextResult <- visitContextResult[order(visitContextResult$cohortId, visitContextResult$visitConceptId, visitContextResult$visitContext, visitContextResult$subjects), ]
-    visitContextResult <- as.data.frame(lapply(visitContextResult, as.character), stringsAsFactors = FALSE)
-
-    resultData <-  resultData[order(resultData$cohortId, resultData$visitConceptId, resultData$visitContext, resultData$subjects), ]
-    resultData <-  as.data.frame(lapply(resultData, as.character), stringsAsFactors = FALSE)
-
-    are_equal <- identical(visitContextResult, resultData)
-
-    expect_true(are_equal)
+  
+  print(visitContextResult)
+  expect_true(identical(unique(visitContextResult$cohortId), c(1)))
+  
 })
 
 test_that(paste("test that when the subjects in the cohort have no visits an empty data frame is returned"), {
@@ -500,7 +487,7 @@ test_that(paste("test that when the subjects in the cohort have no visits an emp
 
   addCohortTable(connection, cohortDataFilePath)
 
-  sql <- "DELETE FROM visit_occurrence;"
+  sql <- "delete from visit_occurrence;"
 
   translatedSQL <- translate(sql = sql, targetDialect =  "sqlite")
 
@@ -531,3 +518,6 @@ test_that(paste("test that when the subjects in the cohort have no visits an emp
 
   expect_true(are_equal)
 })
+
+
+

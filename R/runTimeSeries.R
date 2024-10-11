@@ -14,8 +14,84 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+createCalendarPeriodsTable <- function(connection, tempEmulationSchema, timeSeriesMinDate, timeSeriesMaxDate) {
+  ParallelLogger::logTrace(" - Preparing calendar table for time series computation.")
+  # note calendar span is created based on all dates in observation period table,
+  # with 1980 cut off/left censor (arbitrary choice)
+  minYear <-
+    (max(
+      clock::get_year(timeSeriesMinDate),
+      1980
+    ) %>% as.integer())
+  maxYear <-
+    clock::get_year(timeSeriesMaxDate) %>% as.integer()
+  
+  calendarQuarter <-
+    dplyr::tibble(
+      periodBegin = clock::date_seq(
+        from = clock::date_build(year = minYear),
+        to = clock::date_build(year = maxYear + 1),
+        by = clock::duration_months(3)
+      )
+    ) %>%
+    dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 3) - 1) %>%
+    dplyr::mutate(calendarInterval = "q")
+  
+  calendarMonth <-
+    dplyr::tibble(
+      periodBegin = clock::date_seq(
+        from = clock::date_build(year = minYear),
+        to = clock::date_build(year = maxYear + 1),
+        by = clock::duration_months(1)
+      )
+    ) %>%
+    dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1) %>%
+    dplyr::mutate(calendarInterval = "m")
+  
+  calendarYear <-
+    dplyr::tibble(
+      periodBegin = clock::date_seq(
+        from = clock::date_build(year = minYear),
+        to = clock::date_build(year = maxYear + 1 + 1),
+        by = clock::duration_years(1)
+      )
+    ) %>%
+    dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1) %>%
+    dplyr::mutate(calendarInterval = "y")
+  
+  timeSeriesDateRange <- dplyr::tibble(
+    periodBegin = timeSeriesMinDate,
+    periodEnd = timeSeriesMaxDate,
+    calendarInterval = "c"
+  )
+  
+  calendarPeriods <-
+    dplyr::bind_rows(
+      calendarMonth,
+      calendarQuarter,
+      calendarYear,
+      timeSeriesDateRange
+    ) %>% # calendarWeek
+    dplyr::distinct() %>%
+    dplyr::arrange(.data$periodBegin, .data$periodEnd, .data$calendarInterval) %>%
+    dplyr::mutate(timeId = dplyr::row_number())
+  
+  ParallelLogger::logTrace(" - Inserting calendar periods")
+  DatabaseConnector::insertTable(
+    connection = connection,
+    tableName = "#calendar_periods",
+    data = calendarPeriods,
+    dropTableIfExists = TRUE,
+    createTable = TRUE,
+    progressBar = FALSE,
+    tempTable = TRUE,
+    tempEmulationSchema = tempEmulationSchema,
+    camelCaseToSnakeCase = TRUE
+  )
+  return(calendarPeriods)
+}
+
 getTimeSeries <- function(
-    connectionDetails = NULL,
     connection = NULL,
     tempEmulationSchema = NULL,
     cdmDatabaseSchema,
@@ -37,10 +113,6 @@ getTimeSeries <- function(
   }
   start <- Sys.time()
 
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
   ParallelLogger::logTrace(" - Creating Andromeda object to collect results")
   resultsInAndromeda <- Andromeda::andromeda()
 
@@ -64,81 +136,13 @@ getTimeSeries <- function(
       return(NULL)
     }
   }
-  ## Calendar period----
-  ParallelLogger::logTrace(" - Preparing calendar table for time series computation.")
-  # note calendar span is created based on all dates in observation period table,
-  # with 1980 cut off/left censor (arbitrary choice)
-  minYear <-
-    (max(
-      clock::get_year(timeSeriesMinDate),
-      1980
-    ) %>% as.integer())
-  maxYear <-
-    clock::get_year(timeSeriesMaxDate) %>% as.integer()
-
-  calendarQuarter <-
-    dplyr::tibble(
-      periodBegin = clock::date_seq(
-        from = clock::date_build(year = minYear),
-        to = clock::date_build(year = maxYear + 1),
-        by = clock::duration_months(3)
-      )
-    ) %>%
-    dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 3) - 1) %>%
-    dplyr::mutate(calendarInterval = "q")
-
-  calendarMonth <-
-    dplyr::tibble(
-      periodBegin = clock::date_seq(
-        from = clock::date_build(year = minYear),
-        to = clock::date_build(year = maxYear + 1),
-        by = clock::duration_months(1)
-      )
-    ) %>%
-    dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1) %>%
-    dplyr::mutate(calendarInterval = "m")
-
-  calendarYear <-
-    dplyr::tibble(
-      periodBegin = clock::date_seq(
-        from = clock::date_build(year = minYear),
-        to = clock::date_build(year = maxYear + 1 + 1),
-        by = clock::duration_years(1)
-      )
-    ) %>%
-    dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1) %>%
-    dplyr::mutate(calendarInterval = "y")
-
-  timeSeriesDateRange <- dplyr::tibble(
-    periodBegin = timeSeriesMinDate,
-    periodEnd = timeSeriesMaxDate,
-    calendarInterval = "c"
-  )
-
-  calendarPeriods <-
-    dplyr::bind_rows(
-      calendarMonth,
-      calendarQuarter,
-      calendarYear,
-      timeSeriesDateRange
-    ) %>% # calendarWeek
-    dplyr::distinct() %>%
-    dplyr::arrange(.data$periodBegin, .data$periodEnd, .data$calendarInterval) %>%
-    dplyr::mutate(timeId = dplyr::row_number())
-
-  ParallelLogger::logTrace(" - Inserting calendar periods")
-  DatabaseConnector::insertTable(
-    connection = connection,
-    tableName = "#calendar_periods",
-    data = calendarPeriods,
-    dropTableIfExists = TRUE,
-    createTable = TRUE,
-    progressBar = FALSE,
-    tempTable = TRUE,
-    tempEmulationSchema = tempEmulationSchema,
-    camelCaseToSnakeCase = TRUE
-  )
-
+  
+  ## Create calendar periods table
+  calendarPeriods <- createCalendarPeriodsTable(connection, 
+                                                tempEmulationSchema, 
+                                                timeSeriesMinDate, 
+                                                timeSeriesMaxDate)
+  
   tsSetUpSql <- "-- #time_series
                 DROP TABLE IF EXISTS #time_series;
                 DROP TABLE IF EXISTS #c_time_series1;
@@ -179,47 +183,7 @@ getTimeSeries <- function(
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  sqlCohort <- "DROP TABLE IF EXISTS #ts_cohort;
-                DROP TABLE IF EXISTS #ts_cohort_first;
-                DROP TABLE IF EXISTS #ts_output;
-
-                --HINT DISTRIBUTE_ON_KEY(subject_id)
-                SELECT *
-                INTO #ts_cohort
-                FROM @cohort_database_schema.@cohort_table {@cohort_ids != '' } ? {
-                WHERE cohort_definition_id IN (@cohort_ids) };
-
-                --HINT DISTRIBUTE_ON_KEY(subject_id)
-                SELECT cohort_definition_id,
-                	subject_id,
-                	min(cohort_start_date) cohort_start_date,
-                	min(cohort_end_date) cohort_end_date
-                INTO #ts_cohort_first
-                FROM #ts_cohort
-                GROUP BY cohort_definition_id,
-                	subject_id;
-
-
-                SELECT c.*,
-                	CASE
-                		WHEN c.cohort_start_date = cf.cohort_start_date
-                			THEN 'Y'
-                		ELSE 'N'
-                		END first_occurrence {@stratify_by_gender} ? {,
-                	concept.concept_name gender} {@stratify_by_age_group} ? {,
-                	p.year_of_birth}
-                INTO #cohort_ts
-                FROM #ts_cohort c
-                INNER JOIN #ts_cohort_first cf
-                	ON c.cohort_definition_id = cf.cohort_definition_id
-                		AND c.subject_id = cf.subject_id {@stratify_by_gender | @stratify_by_age_group} ? {
-                INNER JOIN @cdm_database_schema.person p
-                	ON c.subject_id = p.person_id} {@stratify_by_gender} ? {
-                INNER JOIN @cdm_database_schema.concept
-                	ON p.gender_concept_id = concept.concept_id};
-
-                DROP TABLE IF EXISTS #ts_cohort;
-                DROP TABLE IF EXISTS #ts_cohort_first;"
+  sqlCohort <- SqlRender::readSql(system.file("sql", "sql_server", "CreateTimeSeriesCohortTable.sql", package = "CohortDiagnostics"))
 
   if (runCohortTimeSeries) {
     ParallelLogger::logTrace("   - Creating cohort table copy for time series")
@@ -241,32 +205,14 @@ getTimeSeries <- function(
   for (i in (1:length(seriesToRun))) {
     ParallelLogger::logTrace(paste0(" - Running ", seriesToRun[[i]]))
     if (seriesToRun[[i]] == "ComputeTimeSeries1.sql") {
-      ParallelLogger::logInfo(
-        paste0(
-          "  - (",
-          scales::percent(i / length(seriesToRun)),
-          ") Running cohort time series T1: subjects in the cohort who have atleast one cohort day in calendar period."
-        )
-      )
+      logMessage <- "Running cohort time series T1: subjects in the cohort who have atleast one cohort day in calendar period."
+    } else if (seriesToRun[[i]] == "ComputeTimeSeries2.sql") {
+      logMessage <- "Running cohort time series T2: subjects in the cohort who have atleast one observation day in calendar period."
+    } else if (seriesToRun[[i]] == "ComputeTimeSeries3.sql") {
+      logMessage <- "Running database time series T3: persons in the data source who have atleast one observation day in calendar period."
     }
-    if (seriesToRun[[i]] == "ComputeTimeSeries2.sql") {
-      ParallelLogger::logInfo(
-        paste0(
-          "  - (",
-          scales::percent(i / length(seriesToRun)),
-          ") Running cohort time series T2: subjects in the cohort who have atleast one observation day in calendar period."
-        )
-      )
-    }
-    if (seriesToRun[[i]] == "ComputeTimeSeries3.sql") {
-      ParallelLogger::logInfo(
-        paste0(
-          "  - (",
-          scales::percent(i / length(seriesToRun)),
-          ") Running database time series T3: persons in the data source who have atleast one observation day in calendar period."
-        )
-      )
-    }
+    ParallelLogger::logInfo(paste0("  - (", scales::percent(i / length(seriesToRun)), ") ", logMessage))
+    
     seriesId <- stringr::str_replace(
       string = seriesToRun[[i]],
       pattern = "ComputeTimeSeries",
@@ -460,10 +406,9 @@ getTimeSeries <- function(
     " ",
     attr(delta, "units")
   )
+  
   return(resultsInAndromeda$timeSeries %>% dplyr::collect())
 }
-
-
 
 #' Given a set of instantiated cohorts get time series for the cohorts.
 #'
@@ -471,11 +416,17 @@ getTimeSeries <- function(
 #' This function first generates a calendar period table, that has
 #' calendar intervals between the \code{timeSeriesMinDate} and \code{timeSeriesMaxDate}.
 #' Calendar Month, Quarter and year are supported.
-#' For each of the calendar interval, time series data are computed. 
+#' For each of the calendar interval, time series data are computed. There are 2 different types
+#' of time series: one related to cohorts and one related to the data source.
 #'
+#' Cohort time series: computes time series at the cohort level/table. These have 2 definitions: T1 and T2.
+#' T1: subjects in the cohort who have at least one cohort day in a calendar period. 
+#' T2: subjects in the cohort who have at least one observation day in a calendar period.
+#' 
 #' Data Source time series: computes time series at the data source level i.e. observation
 #' period table. This output is NOT limited to individuals in the cohort table
-#' but is for ALL people in the datasource (i.e. present in observation period table)
+#' but is for ALL people in the data source (i.e. present in observation period table)
+#' 
 #' 
 #' @template Connection
 #' @template CohortDatabaseSchema
@@ -491,12 +442,11 @@ getTimeSeries <- function(
 #' @template BatchSize
 #' @template InstantiatedCohorts
 #' 
-#' @param runCohortTimeSeries         Generate and export the cohort level time series?
-#' @param runDataSourceTimeSeries     Generate and export the Data source level time series? i.e.
-#'                                    using all persons found in observation period table.
+#' @param runCohortTimeSeries.       Generate and export the cohort level time series (T1 and T2)
+#' @param runDataSourceTimeSeries    Generate and export the data source level time series using all persons found in observation period table (T3).
 #' @param observationPeriodDateRange 
 #'
-#' @return
+#' @return None, it will write the results to a csv file
 #' @export
 #'
 #' @examples
@@ -522,6 +472,7 @@ runTimeSeries <- function(connection,
     )
   }
 
+  # Cohort time series
   if (runCohortTimeSeries & nrow(cohortDefinitionSet) > 0) {
     subset <- subsetToRequiredCohorts(
       cohorts = cohortDefinitionSet %>%
@@ -533,12 +484,11 @@ runTimeSeries <- function(connection,
       dplyr::arrange(.data$cohortId)
 
     if (nrow(subset) > 0) {
-      if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-        ParallelLogger::logInfo(sprintf(
-          " - Skipping %s cohorts in incremental mode.",
-          length(instantiatedCohorts) - nrow(subset)
-        ))
+      if (incremental) {
+        numSkippedCohorts <- length(instantiatedCohorts) - nrow(subset)
+        if (numSkippedCohorts > 0) {
+          ParallelLogger::logInfo(sprintf(" - Skipping %s cohorts in incremental mode.", numSkippedCohorts))
+        }
       }
 
       outputFile <- file.path(exportFolder, "time_series.csv")
@@ -547,6 +497,7 @@ runTimeSeries <- function(connection,
         unlink(outputFile)
       }
 
+      # process cohorts loop
       for (start in seq(1, nrow(subset), by = batchSize)) {
         end <- min(start + batchSize - 1, nrow(subset))
 
@@ -591,11 +542,11 @@ runTimeSeries <- function(connection,
           minCellCount = minCellCount,
           databaseId = databaseId,
           incremental = TRUE,
-          cohortId = subset[start:end, ]$cohortId %>% unique()
+          cohortId = cohortIds
         )
         
         recordTasksDone(
-          cohortId = subset[start:end, ]$cohortId %>% unique(),
+          cohortId = cohortIds,
           task = "runCohortTimeSeries",
           checksum = subset[start:end, ]$checksum,
           recordKeepingFile = recordKeepingFile,
@@ -605,11 +556,12 @@ runTimeSeries <- function(connection,
     }
   }
 
-  # separating out data source time series
+  # data source time series
   if (runDataSourceTimeSeries) {
+    cohortId <- -44819062 # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
     subset <- subsetToRequiredCohorts(
       cohorts = dplyr::tibble(
-        cohortId = -44819062, # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
+        cohortId = cohortId,
         checksum = computeChecksum(column = "data source time series")
       ),
       task = "runDataSourceTimeSeries",
@@ -617,10 +569,7 @@ runTimeSeries <- function(connection,
       recordKeepingFile = recordKeepingFile
     )
 
-    if (all(
-      nrow(subset) == 0,
-      incremental
-    )) {
+    if (all(nrow(subset) == 0, incremental)) {
       ParallelLogger::logInfo("Skipping Data Source Time Series in Incremental mode.")
       return(NULL)
     }
@@ -628,7 +577,7 @@ runTimeSeries <- function(connection,
     timeExecution(
       exportFolder,
       "",
-      -44819062,
+      cohortId,
       parent = "",
       expr = {
         data <-
@@ -651,11 +600,11 @@ runTimeSeries <- function(connection,
       minCellCount = minCellCount,
       databaseId = databaseId,
       incremental = incremental,
-      cohortId = -44819062
+      cohortId = cohortId
     )
     
     recordTasksDone(
-      cohortId = -44819062,
+      cohortId = cohortId,
       task = "runDataSourceTimeSeries",
       checksum = subset$checksum,
       recordKeepingFile = recordKeepingFile,

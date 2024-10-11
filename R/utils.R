@@ -324,8 +324,8 @@ tempTableExists <- function(connection, tempTableName) {
       DatabaseConnector::renderTranslateQuerySql(
         connection = connection, 
         sql = "select top 1 * from  #@tempTableName;",
-         tempTableName = tempTableName)
-      ),
+        tempTableName = tempTableName)
+    ),
     error = function(e) {
       if (methods::is(connection, "DatabaseConnectorJdbcConnection") &&
           DatabaseConnector::dbms(connection) %in% c("postgresql", "redshift")) {
@@ -344,7 +344,7 @@ exportDataToCsv <- function(data, tableName, fileName, minCellCount = 5, databas
     minCellCount = minCellCount,
     databaseId = databaseId
   )
-  
+
   if (!is.null(enforceMinCellValueFunc) && nrow(data) > 0) {
     data <- enforceMinCellValueFunc
   }
@@ -357,7 +357,6 @@ exportDataToCsv <- function(data, tableName, fileName, minCellCount = 5, databas
   )
   return(data)
 }
-
 
 assertCohortDefinitionSetContainsAllParents <- function(cohortDefinitionSet) {
   stopifnot(CohortGenerator::isCohortDefinitionSet(cohortDefinitionSet))

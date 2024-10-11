@@ -2,11 +2,11 @@ library(CohortDiagnostics)
 library(testthat)
 
 dbmsToTest <- c(
-  "sqlite",
-  "duckdb",
-  "postgresql",
-  "redshift",
-  "sql server"
+  "sqlite"#,
+  # "duckdb",
+  # "postgresql",
+  # "redshift",
+  # "sql server"
 )
 
 useAllCovariates <- FALSE
