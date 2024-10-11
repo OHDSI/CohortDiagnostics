@@ -60,7 +60,7 @@ test_that("Execute and export characterization", {
     # check if subset works
     subset <- subsetToRequiredCohorts(
       cohorts = server$cohortDefinitionSet,
-      task = "runTemporalCohortCharacterization",
+      task = "runCohortCharacterization",
       incremental = TRUE,
       recordKeepingFile = recordKeepingFile
     )
