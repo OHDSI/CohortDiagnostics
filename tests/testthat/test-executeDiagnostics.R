@@ -10,9 +10,8 @@ for (nm in names(testServers)) {
 
     incrementalFolder <- tempfile()
     dir.create(incrementalFolder)
-    debugonce(executeDiagnostics)
+    
     firstTime <- system.time(
-
       executeDiagnostics(
         cohortDefinitionSet = server$cohortDefinitionSet,
         connectionDetails = server$connectionDetails,
@@ -36,7 +35,7 @@ for (nm in names(testServers)) {
         incremental = TRUE,
         incrementalFolder = incrementalFolder,
         temporalCovariateSettings = server$temporalCovariateSettings,
-        runOnSample = FALSE
+        runFeatureExtractionOnSample = FALSE
       )
     )
 

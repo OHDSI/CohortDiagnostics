@@ -898,8 +898,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
           )
         }
 
-
-        executeCohortCharacterization(
+        runCohortCharacterization(
           connection = connection,
           databaseId = databaseId,
           exportFolder = exportFolder,
@@ -915,8 +914,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
           instantiatedCohorts = instantiatedCohorts,
           incremental = incremental,
           recordKeepingFile = recordKeepingFile,
-          task = "runTemporalCohortCharacterization",
-          jobName = "Temporal Cohort characterization",
           covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
           covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
           covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
