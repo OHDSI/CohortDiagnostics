@@ -324,7 +324,6 @@ getCohortCharacteristics <- function(connection = NULL,
 #'  * temporal_covariate_value_dist.csv
 #'  * temporal_time_ref.csv
 #' 
-#'
 #' @template connection 
 #' @template databaseId 
 #' @template exportFolder 

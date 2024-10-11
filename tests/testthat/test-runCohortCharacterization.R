@@ -1,3 +1,52 @@
+# test getCohortCharacteristics on all databases
+for (nm in names(testServers)) {
+
+  server <- testServers[[nm]]
+  con <- connect(server$connectionDetails)
+  exportFolder <- file.path(tempdir(), paste0(nm, "exp"))
+  recordKeepingFile <- file.path(exportFolder, "record.csv")
+  minCharacterizationMean <- 0.001
+
+  test_that("Testing getCohortCharacteristics", {
+    skip_if(skipCdmTests, "cdm settings not configured")
+    
+    results <- getCohortCharacteristics(
+      connection = con,
+      cdmDatabaseSchema = server$cdmDatabaseSchema,
+      tempEmulationSchema = server$tempEmulationSchema,
+      cohortDatabaseSchema = server$cohortDatabaseSchema,
+      cohortTable = server$cohortTable,
+      cohortIds = server$cohortIds,
+      covariateSettings = temporalCovariateSettings,
+      exportFolder = exportFolder,
+      minCharacterizationMean = minCharacterizationMean
+    )
+    
+    # check characteristics
+    expect_equal(class(results), "Andromeda")
+    expect_equal(names(results), c("analysisRef", "covariateRef", "covariates", "covariatesContinuous", "timeRef"))
+    
+    analysisRef <- results$analysisRef
+    analysisIds <- analysisRef %>% pull(analysisId)
+    expect_true(analysisRef %>% pull(analysisName) %in% c("Measurement", "ConditionOccurence", "DrugEraStart", "CharlsonIndex", "ProcedureOccurence"))
+    
+    covariateRef <- results$covariateRef
+    expect_true(covariateRef %>% pull(analysisId) %in% analysisIds)
+    
+    covariates <- results$covariates
+    expect_true(covariates %>% pull(cohortId) %in% server$cohortIds)
+    expect_true(covariates %>% pull(mean) %>% min() >= minCharacterizationMean)
+    
+    covariatesCont <- results$covariatesContinuous
+    expect_true(covariatesCont %>% pull(cohortId) %in% server$cohortIds)
+    
+    timeRef <- results$timeRef
+    expect_true(timeRef %>% pull(startDay), c(-365, -30, 0, 1, 31))
+    expect_true(timeRef %>% pull(endDay), c(-31, -1, 0, 30, 365))
+  })
+}
+
+
 test_that("Execute and export characterization", {
   skip_if(skipCdmTests, "cdm settings not configured")
   skip_if_not("sqlite" %in% names(testServers))
