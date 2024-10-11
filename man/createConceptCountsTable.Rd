@@ -16,6 +16,20 @@ createConceptCountsTable(
 )
 }
 \arguments{
+\item{connection}{An object of type \code{connection} as created using the
+\code{\link[DatabaseConnector]{connect}} function in the
+DatabaseConnector package.}
+
+\item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.}
+
+\item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
+tables, provide a schema with write privileges where temp tables can be created.}
+
+\item{conceptCountsTable}{Concepts count table name. The default is "#concept_counts" to create a temporal concept counts table.
+If an external concept counts table is used, provide the name in character, e.g. "concept_counts" without a hash}
+
 \item{conceptCountsDatabaseSchema}{schema name for the concept counts table}
 
 \item{conceptCountsTableIsTemp}{boolean to indicate if it should be a temporary table}

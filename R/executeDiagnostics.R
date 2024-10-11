@@ -14,79 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Get default covariate settings
-#' @description
-#' Default covariate settings for cohort diagnostics execution
-#' @export
-getDefaultCovariateSettings <- function() {
-  FeatureExtraction::createTemporalCovariateSettings(
-    useDemographicsGender = TRUE,
-    useDemographicsAge = TRUE,
-    useDemographicsAgeGroup = TRUE,
-    useDemographicsRace = TRUE,
-    useDemographicsEthnicity = TRUE,
-    useDemographicsIndexYear = TRUE,
-    useDemographicsIndexMonth = TRUE,
-    useDemographicsIndexYearMonth = TRUE,
-    useDemographicsPriorObservationTime = TRUE,
-    useDemographicsPostObservationTime = TRUE,
-    useDemographicsTimeInCohort = TRUE,
-    useConditionOccurrence = TRUE,
-    useProcedureOccurrence = TRUE,
-    useDrugEraStart = TRUE,
-    useMeasurement = TRUE,
-    useConditionEraStart = TRUE,
-    useConditionEraOverlap = TRUE,
-    useConditionEraGroupStart = FALSE, # do not use because https://github.com/OHDSI/FeatureExtraction/issues/144
-    useConditionEraGroupOverlap = TRUE,
-    useDrugExposure = FALSE, # leads to too many concept id
-    useDrugEraOverlap = FALSE,
-    useDrugEraGroupStart = FALSE, # do not use because https://github.com/OHDSI/FeatureExtraction/issues/144
-    useDrugEraGroupOverlap = TRUE,
-    useObservation = TRUE,
-    useDeviceExposure = TRUE,
-    useCharlsonIndex = TRUE,
-    useDcsi = TRUE,
-    useChads2 = TRUE,
-    useChads2Vasc = TRUE,
-    useHfrs = FALSE,
-    temporalStartDays = c(
-      # components displayed in cohort characterization
-      -9999, # anytime prior
-      -365, # long term prior
-      -180, # medium term prior
-      -30, # short term prior
-
-      # components displayed in temporal characterization
-      -365, # one year prior to -31
-      -30, # 30 day prior not including day 0
-      0, # index date only
-      1, # 1 day after to day 30
-      31,
-      -9999 # Any time prior to any time future
-    ),
-    temporalEndDays = c(
-      0, # anytime prior
-      0, # long term prior
-      0, # medium term prior
-      0, # short term prior
-
-      # components displayed in temporal characterization
-      -31, # one year prior to -31
-      -1, # 30 day prior not including day 0
-      0, # index date only
-      30, # 1 day after to day 30
-      365,
-      9999 # Any time prior to any time future
-    )
-  )
-}
-
 #' Execute cohort diagnostics
 #'
 #' @description
-#' Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
-#' Assumes the cohorts have already been instantiated. with the CohortGenerator package
+#' Runs the cohort diagnostics on all (or a subset of) the cohorts.
+#' Assumes the cohorts have already been instantiated with the CohortGenerator package.
 #'
 #' Characterization:
 #' If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
@@ -94,28 +26,26 @@ getDefaultCovariateSettings <- function() {
 #' Alternatively, a covariate setting object may be created using the above as an example.
 #'
 #' @template Connection
-#'
 #' @template CdmDatabaseSchema
 #' @template VocabularyDatabaseSchema
 #' @template CohortDatabaseSchema
 #' @template TempEmulationSchema
-#'
 #' @template CohortTable
-#'
-#'
 #' @template CohortSetReference
-#' @param exportFolder                The folder where the output will be exported to. If this folder
-#'                                    does not exist it will be created.
-#' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
-#'                                    diagnostics to.
-#' @param cohortDefinitionSet         Data.frame of cohorts must include columns cohortId, cohortName, json, sql
+#' @template exportFolder              
+#' @template cohortIds
+#' @template cohortDefinitionSet
+#' @template MinCellCount
+#' @template Incremental
+#' @template cdmVersion
+#' @template databaseId
+#' @template minCharacterizationMean     
+#' 
 #' @param cohortTableNames            Cohort Table names used by CohortGenerator package
 #' @param conceptCountsTable          Concepts count table name. The default is "#concept_counts" to create a temporal concept counts table.
 #'                                    If an external concept counts table is used, provide the name in character, e.g. "concept_counts" without a hash
-#' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf').
 #' @param databaseName                The full name of the database. If NULL, defaults to value in cdm_source table
 #' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table
-#' @template cdmVersion
 #' @param runInclusionStatistics      Generate and export statistic on the cohort inclusion rules?
 #' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
 #' @param runOrphanConcepts           Generate and export potential orphan concepts?
@@ -130,12 +60,7 @@ getDefaultCovariateSettings <- function() {
 #' @param temporalCovariateSettings   Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 #'                                    of such objects.
-#' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
-#' @param minCharacterizationMean     The minimum mean value for characterization output. Values below this will be cut off from output. This
-#'                                    will help reduce the file size of the characterization output, but will remove information
-#'                                    on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)
 #' @param irWashoutPeriod             Number of days washout to include in calculation of incidence rates - default is 0
-#' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
 #' @param useExternalConceptCountsTable If TRUE an external table for the cohort concept counts will be used.
@@ -243,15 +168,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runFeatureExtractionOnSample = FALSE,
                                sampleN = 1000,
                                seed = 64374,
-<<<<<<< HEAD:R/RunDiagnostics.R
-                               seedArgs = NULL) {
-=======
                                seedArgs = NULL,
                                sampleIdentifierExpression = "cohortId * 1000 + seed",
                                useAchilles = FALSE, 
                                achillesDatabaseSchema = NULL,
                                workDatabaseSchema = NULL) {
->>>>>>> darwin_sprint:R/hold/executeDiagnostics.R
   # collect arguments that were passed to cohort diagnostics at initiation
   callingArgsJson <-
     list(
