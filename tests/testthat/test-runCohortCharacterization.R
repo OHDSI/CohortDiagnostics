@@ -3,12 +3,14 @@ for (nm in names(testServers)) {
 
   server <- testServers[[nm]]
   con <- connect(server$connectionDetails)
-  exportFolder <- file.path(tempdir(), paste0(nm, "exp"))
-  recordKeepingFile <- file.path(exportFolder, "record.csv")
   minCharacterizationMean <- 0.001
 
   test_that("Testing getCohortCharacteristics", {
     skip_if(skipCdmTests, "cdm settings not configured")
+    exportFolder <- file.path(tempdir(), paste0(nm, "exp"))
+    dir.create(exportFolder)
+    recordKeepingFile <- file.path(exportFolder, "record.csv")
+    on.exit(unlink(exportFolder))
     
     results <- getCohortCharacteristics(
       connection = con,
