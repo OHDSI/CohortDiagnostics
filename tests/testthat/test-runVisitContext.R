@@ -1,5 +1,4 @@
 library(SqlRender)
-library(readxl)
 library(dplyr)
 library(readr)
 

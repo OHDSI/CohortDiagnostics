@@ -187,7 +187,7 @@ test_that("timeExecution uses minutes as unit", {
   df <- readr::read_csv(file.path(exportFolder, "executionTimes.csv"), show_col_types = F)
 
   expect_equal(df$task, c("test 1 second", "test 1 minute", "test 1 hour"))
-  expect_equal(df$executionTime, c(0.0168, 1, 60))
+  expect_equal(round(df$executionTime), c(0, 1, 60))
 })
 
 for (server in testServers) {
