@@ -107,17 +107,17 @@ getVisitContext <- function(connection = NULL,
 }
 
 runVisitContext <- function(connection,
-                           cohortDefinitionSet,
-                           exportFolder,
-                           databaseId,
-                           cohortDatabaseSchema,
-                           cdmDatabaseSchema,
-                           tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-                           cohortTable  = "cohort",
-                           cdmVersion = 5,
-                           minCellCount,
-                           incremental,
-                           incrementalFolder = file.path(exportFolder, "incremental")){
+                            cohortDefinitionSet,
+                            exportFolder,
+                            databaseId,
+                            cohortDatabaseSchema,
+                            cdmDatabaseSchema,
+                            tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
+                            cohortTable  = "cohort",
+                            cdmVersion = 5,
+                            minCellCount,
+                            incremental,
+                            incrementalFolder = file.path(exportFolder, "incremental")){
 
   
   if (incremental && !file.exists(incrementalFolder)) {
@@ -185,23 +185,31 @@ runVisitContext <- function(connection,
       cohortIds = subset$cohortId,
       conceptIdTable = "#concept_ids"
     )
-    
-    exportDataToCsv(
-      data = data,
-      tableName = "visit_context",
-      fileName = file.path(exportFolder, "visit_context.csv"),
-      minCellCount = minCellCount,
-      databaseId = databaseId,
-      incremental = incremental,
-      cohortId = subset$cohortId
-    )
-    
-    recordTasksDone(
-      cohortId = subset$cohortId,
-      task = "runVisitContext",
-      checksum = subset$checksum,
-      recordKeepingFile = incrementalFolder,
-      incremental = incremental
+  } else {
+    getResultsDataModelSpecifications("visit_context")
+    data <- dplyr::tibble(
+      cohortId = integer(),
+      visitConceptId = integer(),
+      visitContext = character(),
+      subjects = double()
     )
   }
+  
+  exportDataToCsv(
+    data = data,
+    tableName = "visit_context",
+    fileName = file.path(exportFolder, "visit_context.csv"),
+    minCellCount = minCellCount,
+    databaseId = databaseId,
+    incremental = incremental,
+    cohortId = subset$cohortId
+  )
+    
+  recordTasksDone(
+    cohortId = subset$cohortId,
+    task = "runVisitContext",
+    checksum = subset$checksum,
+    recordKeepingFile = incrementalFolder,
+    incremental = incremental
+  )
 }
