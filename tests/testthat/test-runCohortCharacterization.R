@@ -28,7 +28,7 @@ test_that("Execute and export characterization", {
     )
     checkmate::expect_file_exists(file.path(exportFolder, "cohort_count.csv"))
 
-    runTemporalCohortCharacterization(
+    runCohortCharacterization(
       connection = tConnection,
       databaseId = "Testdb",
       exportFolder = exportFolder,
@@ -44,8 +44,6 @@ test_that("Execute and export characterization", {
       instantiatedCohorts = server$cohortDefinitionSet$cohortId,
       incremental = TRUE,
       recordKeepingFile = recordKeepingFile,
-      task = "runTemporalCohortCharacterization",
-      jobName = "Temporal Cohort characterization",
       minCharacterizationMean = 0.3
     )
 
@@ -77,7 +75,7 @@ test_that("Execute and export characterization", {
     )
 
     # finish the rest of characterization
-    runTemporalCohortCharacterization(
+    runCohortCharacterization(
       connection = tConnection,
       databaseId = "Testdb",
       exportFolder = exportFolder,
@@ -93,8 +91,6 @@ test_that("Execute and export characterization", {
       instantiatedCohorts = server$cohortDefinitionSet$cohortId,
       incremental = TRUE,
       recordKeepingFile = recordKeepingFile,
-      task = "runTemporalCohortCharacterization",
-      jobName = "Temporal Cohort characterization",
       minCharacterizationMean = 0.3
     )
 
