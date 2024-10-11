@@ -321,21 +321,19 @@ getCohortCharacteristics <- function(connection = NULL,
 #' @template recordKeepingFile 
 #' @template batchSize 
 #'
-#' @param cohorts           cohorts
-#' @param cohortCounts      A dataframe with the cohort counts
-#' @param covariateSettings Either an object of type \code{covariateSettings} as created using one of
-#'                          the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
-#'                          of such objects.
-#' @param task              Name of this task
-#' @param jobName           Name of this job
-#' @param covariateValueFileName Filename of the covariate value output
-#' @param covariateValueContFileName Filename of the contineous covariate output
-#' @param covariateRefFileName Filename of the covariate reference
-#' @param analysisRefFileName  Filename of the analysis reference
-#' @param timeRefFileName      Filename of the time reference
-#' @param minCharacterizationMean The minimum mean value for characterization output. Values below this will be cut off from output. This
-#'                                will help reduce the file size of the characterization output, but will remove information
-#'                                on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)
+#' @param cohorts                    The cohorts for which the covariates need to be obtained
+#' @param cohortCounts               A dataframe with the cohort counts
+#' @param covariateSettings          Either an object of type \code{covariateSettings} as created using one of
+#'                                   the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
+#'                                   of such objects.
+#' @param covariateValueFileName     Filename of the binary covariates output
+#' @param covariateValueContFileName Filename of the continuous covariate output
+#' @param covariateRefFileName       Filename of the covariate reference output
+#' @param analysisRefFileName        Filename of the analysis reference output
+#' @param timeRefFileName            Filename of the time reference output
+#' @param minCharacterizationMean    The minimum mean value for characterization output. Values below this will be cut off from output. This
+#'                                   will help reduce the file size of the characterization output, but will remove information
+#'                                   on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)
 #'
 #' @return None, it will write results to disk
 #' @export
@@ -356,8 +354,6 @@ runTemporalCohortCharacterization <- function(connection,
                                               instantiatedCohorts,
                                               incremental,
                                               recordKeepingFile,
-                                              task = "runTemporalCohortCharacterization",
-                                              jobName = "Temporal Cohort characterization",
                                               covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
                                               covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
                                               covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
@@ -365,8 +361,11 @@ runTemporalCohortCharacterization <- function(connection,
                                               timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
                                               minCharacterizationMean = 0.001,
                                               batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 20)) {
+  jobName <- "Temporal Cohort characterization"
+  task <- "runTemporalCohortCharacterization"
   ParallelLogger::logInfo("Running ", jobName)
   startCohortCharacterization <- Sys.time()
+  
   subset <- subsetToRequiredCohorts(
     cohorts = cohorts %>%
       dplyr::filter(.data$cohortId %in% instantiatedCohorts),
@@ -400,6 +399,7 @@ runTemporalCohortCharacterization <- function(connection,
       nrow(subset)
     ))
 
+    # Processing cohorts loop
     for (start in seq(1, nrow(subset), by = batchSize)) {
       end <- min(start + batchSize - 1, nrow(subset))
       if (nrow(subset) > batchSize) {
@@ -413,8 +413,7 @@ runTemporalCohortCharacterization <- function(connection,
         )
       }
 
-      characteristics <-
-        getCohortCharacteristics(
+      characteristics <- getCohortCharacteristics(
           connection = connection,
           cdmDatabaseSchema = cdmDatabaseSchema,
           tempEmulationSchema = tempEmulationSchema,
