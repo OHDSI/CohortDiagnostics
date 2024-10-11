@@ -39,6 +39,10 @@ if (Sys.getenv("DONT_DOWNLOAD_JDBC_DRIVERS", "") != "TRUE") {
 
 temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(
   useConditionOccurrence = TRUE,
+  useDrugEraStart = TRUE,
+  useProcedureOccurrence = TRUE,
+  useMeasurement = TRUE,
+  useCharlsonIndex = TRUE,
   temporalStartDays = c(-365, -30, 0, 1, 31),
   temporalEndDays = c(-31, -1, 0, 30, 365)
 )

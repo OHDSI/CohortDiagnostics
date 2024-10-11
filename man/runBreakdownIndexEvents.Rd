@@ -2,75 +2,64 @@
 % Please edit documentation in R/runBreakdownIndexEvents.R
 \name{runBreakdownIndexEvents}
 \alias{runBreakdownIndexEvents}
-\title{Title}
+\title{runBreakdownIndexEvents}
 \usage{
 runBreakdownIndexEvents(
   connection,
+  cohortDefinitionSet,
   tempEmulationSchema,
   cdmDatabaseSchema,
-  vocabularyDatabaseSchema = cdmDatabaseSchema,
+  vocabularyDatabaseSchema,
+  cohortDatabaseSchema,
   databaseId,
-  cohorts,
   exportFolder,
   minCellCount,
-  conceptCountsDatabaseSchema = NULL,
-  conceptCountsTable = "concept_counts",
-  conceptCountsTableIsTemp = FALSE,
-  cohortDatabaseSchema,
   cohortTable,
-  useExternalConceptCountsTable = FALSE,
   incremental = FALSE,
-  conceptIdTable = NULL,
-  recordKeepingFile,
-  useAchilles,
-  resultsDatabaseSchema
+  incrementalFolder
 )
 }
 \arguments{
-\item{connection}{}
+\item{connection}{An object of type \code{connection} as created using the
+\code{\link[DatabaseConnector]{connect}} function in the
+DatabaseConnector package.}
 
-\item{tempEmulationSchema}{}
+\item{cohortDefinitionSet}{A data.frame with cohort definitions created by 
+`CohortGenerator::getCohortDefinitionSet` that must include 
+the columns cohortId, cohortName, json, sql.}
 
-\item{cdmDatabaseSchema}{}
+\item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
+tables, provide a schema with write privileges where temp tables can be created.}
 
-\item{vocabularyDatabaseSchema}{}
+\item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.}
 
-\item{databaseId}{}
+\item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
+commonly the same as cdmDatabaseSchema. Note that for 
+SQL Server, this should include both the database and
+schema name, for example 'vocabulary.dbo'.}
 
-\item{cohorts}{}
+\item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
+this should include both the database and schema name, for example
+'scratch.dbo'.}
 
-\item{exportFolder}{}
+\item{databaseId}{A short string for identifying the database (e.g. 'Synpuf').}
 
-\item{minCellCount}{}
+\item{exportFolder}{The folder where the results will be exported to}
 
-\item{conceptCountsDatabaseSchema}{}
+\item{minCellCount}{The minimum cell count for fields contains person counts or fractions}
 
-\item{conceptCountsTable}{}
+\item{cohortTable}{Name of the cohort table.}
 
-\item{conceptCountsTableIsTemp}{}
+\item{incremental}{`TRUE` or `FALSE` (default). If TRUE diagnostics for cohorts in the 
+cohort definition set that have not changed will be skipped and existing results 
+csv files will be updated. If FALSE then diagnostics for all cohorts in the cohort 
+definition set will be executed and pre-existing results files will be deleted.}
 
-\item{cohortDatabaseSchema}{}
-
-\item{cohortTable}{}
-
-\item{useExternalConceptCountsTable}{}
-
-\item{incremental}{}
-
-\item{conceptIdTable}{}
-
-\item{recordKeepingFile}{}
-
-\item{useAchilles}{}
-
-\item{resultsDatabaseSchema}{}
-
-\item{runIncludedSourceConcepts}{}
-
-\item{runOrphanConcepts}{}
-
-\item{runBreakdownIndexEvents}{}
+\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
+of which cohort diagnostics has been executed.}
 }
 \description{
-Title
+runBreakdownIndexEvents
 }

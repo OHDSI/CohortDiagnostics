@@ -471,10 +471,10 @@ test_that(paste("test that no other cohorts than the ones specified in cohortIds
                                           conceptIdTable = "#concept_ids",
                                           cdmVersion = 5
     )
-  
+
   print(visitContextResult)
   expect_true(identical(unique(visitContextResult$cohortId), c(1)))
-  
+
 })
 
 test_that(paste("test that when the subjects in the cohort have no visits an empty data frame is returned"), {
@@ -521,6 +521,3 @@ test_that(paste("test that when the subjects in the cohort have no visits an emp
 
   expect_true(are_equal)
 })
-
-
-
