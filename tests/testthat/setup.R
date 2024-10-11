@@ -1,9 +1,10 @@
 dbmsToTest <- c(
-  # "sqlite"#,
+  "sqlite",
   # "duckdb"#,
-  "postgresql"#,
-  # "redshift",
-  # "sql server",
+  # "postgresql"#,
+  # "redshift"#,
+  # "sql_server"#,
+  # "oracle"
 )
 
 useAllCovariates <- FALSE
@@ -17,7 +18,7 @@ if (Sys.getenv("DONT_DOWNLOAD_JDBC_DRIVERS", "") != "TRUE") {
   dir.create(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))
   
   if ("postgresql" %in% dbmsToTest) downloadJdbcDrivers("postgresql")
-  if ("sql server" %in% dbmsToTest) downloadJdbcDrivers("sql server")
+  if ("sql_server" %in% dbmsToTest) downloadJdbcDrivers("sql server")
   if ("oracle" %in% dbmsToTest) downloadJdbcDrivers("oracle")
   if ("redshift" %in% dbmsToTest) downloadJdbcDrivers("redshift")
   if ("spark" %in% dbmsToTest) downloadJdbcDrivers("spark")
@@ -105,7 +106,8 @@ if ("postgresql" %in% dbmsToTest) {
     cohortIds = cohortIds,
     cohortDefinitionSet = loadTestCohortDefinitionSet(cohortIds),
     cohortTable = cohortTableName,
-    temporalCovariateSettings = temporalCovariateSettings
+    temporalCovariateSettings = temporalCovariateSettings,
+    conceptCountsDatabaseSchema = "public"
   )
 }
 
@@ -151,9 +153,9 @@ if ("redshift" %in% dbmsToTest) {
   )
 }
 
-if ("sql server" %in% dbmsToTest) {
+if ("sql_server" %in% dbmsToTest) {
   cohortIds <- c(18345, 17720, 14907)
-  testServers[["sql server"]] <- list(
+  testServers[["sql_server"]] <- list(
     connectionDetails = DatabaseConnector::createConnectionDetails(
       dbms = "sql server",
       user = Sys.getenv("CDM5_SQL_SERVER_USER"),

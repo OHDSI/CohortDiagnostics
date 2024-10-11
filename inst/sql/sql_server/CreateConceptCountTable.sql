@@ -15,7 +15,7 @@ SELECT concept_id,
 	concept_count,
 	concept_subjects
 {@table_is_temp} ? {
-INTO @concept_counts_table
+INTO @work_database_schema.@concept_counts_table
 } : { 
 INTO @work_database_schema.@concept_counts_table
 }

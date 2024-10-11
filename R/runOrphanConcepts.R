@@ -160,11 +160,14 @@ runOrphanConcepts <- function(connection,
   # Defines variables and checks version of external concept counts table -----
   checkConceptCountsTableExists <- DatabaseConnector::dbExistsTable(connection,
                                                                     name = conceptCountsTable,
-                                                                    databaseSchema = cdmDatabaseSchema)
+                                                                    databaseSchema = conceptCountsDatabaseSchema)
   
   # Creates temp conceptCountsTable if name has # or doesn´t exists ------------
   if (substr(conceptCountsTable, 1, 1) == "#" || !checkConceptCountsTableExists) {
     conceptCountsTableIsTemp <- TRUE
+    if (!substr(conceptCountsTable, 1, 1) == "#") {
+      conceptCountsTable <- paste0("#", conceptCountsTable)
+    }
     timeExecution(
       exportFolder,
       taskName = "createConceptCountsTable",

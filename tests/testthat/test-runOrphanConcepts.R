@@ -15,7 +15,11 @@
 # limitations under the License.
 
 for (nm in names(testServers)) {
+  # nm <- "sqlite"
   # nm <- "duckdb"
+  # nm <- "postgresql"
+  # nm <- "sql_server"
+  # nm <- "oracle"
   server <- testServers[[nm]]
   
   # Params
@@ -27,7 +31,7 @@ for (nm in names(testServers)) {
   exportFolder <- file.path(tempdir(), paste0(nm, "_concept"))
   minCellCount <- 5
   databaseId <- "myDB"
-  conceptCountsDatabaseSchema <- "main"
+  conceptCountsDatabaseSchema <- server$cohortDatabaseSchema
   conceptCountsTable <- "concept_counts"
   conceptCountsTableIsTemp <- FALSE
   cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = server$cohortTable)
@@ -40,7 +44,7 @@ for (nm in names(testServers)) {
   
   # Tests
   
-  test_that(paste("test run inclusion statistics output", nm), {
+  test_that(paste("test run orphan codes concept table", nm), {
     connection <- DatabaseConnector::connect(server$connectionDetails)
     exportFolder <- file.path(tempdir(), paste0(nm, "_no_concept"))
     recordKeepingFile <- file.path(exportFolder, "record.csv")
@@ -51,7 +55,7 @@ for (nm in names(testServers)) {
                                                 cdmDatabaseSchema = cdmDatabaseSchema,
                                                 tempEmulationSchema = NULL,
                                                 conceptCountsTable = "concept_counts",
-                                                conceptCountsDatabaseSchema = cdmDatabaseSchema,
+                                                conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
                                                 conceptCountsTableIsTemp = FALSE,
                                                 removeCurrentTable = TRUE)
     
@@ -106,16 +110,37 @@ for (nm in names(testServers)) {
     expect_equal(unique(recordKeeping$task), "runOrphanConcepts")
     expect_true(all(recordKeeping$cohortId %in% server$cohortDefinitionSet$cohortId))
     
-    unlink(exportFolder)
+    unlink(exportFolder, recursive = TRUE)
     
     checkConceptCountsTableExists <- DatabaseConnector::dbExistsTable(connection,
                                                                       name = conceptCountsTable,
-                                                                      databaseSchema = cdmDatabaseSchema)
+                                                                      databaseSchema = conceptCountsDatabaseSchema)
     # always recreate the inst_concept_sets table
-    if (checkConceptCountsTableExists) {
+    sql <- "TRUNCATE TABLE @work_database_schema.@concept_counts_table; DROP TABLE @work_database_schema.@concept_counts_table;"
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection,
+      sql,
+      tempEmulationSchema = tempEmulationSchema,
+      concept_counts_table = conceptCountsTable,
+      work_database_schema  = conceptCountsDatabaseSchema,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+    
+    if (nm == "oracle") {
+      sql <- "TRUNCATE TABLE #inst_concept_sets; DROP TABLE #inst_concept_sets;"
       DatabaseConnector::renderTranslateExecuteSql(
-        connection = connection,
-        sql = "TRUNCATE TABLE concept_counts; DROP TABLE concept_counts;",
+        connection,
+        sql,
+        tempEmulationSchema = tempEmulationSchema,
+        progressBar = FALSE,
+        reportOverallTime = FALSE
+      )
+      
+      sql <- "TRUNCATE TABLE #concept_ids; DROP TABLE #concept_ids;"
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection,
+        sql,
         tempEmulationSchema = tempEmulationSchema,
         progressBar = FALSE,
         reportOverallTime = FALSE
@@ -123,7 +148,7 @@ for (nm in names(testServers)) {
     }
   })
   
-  test_that(paste("test run inclusion statistics output", nm), {
+  test_that(paste("test run orphan codes temp concept counts", nm), {
     connection <- DatabaseConnector::connect(server$connectionDetails)
     exportFolder <- file.path(tempdir(), paste0(nm, "_no_concept"))
     recordKeepingFile <- file.path(exportFolder, "record.csv")
@@ -172,7 +197,7 @@ for (nm in names(testServers)) {
     expect_true(file.exists(file.path(exportFolder, "resolved_concepts.csv")))
     resolvedResult <- read.csv(file.path(exportFolder, "resolved_concepts.csv"))
     expect_equal(colnames(resolvedResult), c("cohort_id", "concept_set_id", "concept_id", "database_id" ))
-    
+     
     # Check recordKeepingFile
     expect_true(file.exists(recordKeepingFile))
     recordKeeping <- read.csv(recordKeepingFile)
