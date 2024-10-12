@@ -342,3 +342,23 @@ test_that("Incremental save with empty key", {
   )
   unlink(tmpFile)
 })
+
+
+test_that("subsetToRequiredCohorts adds checksum and parent json", {
+  
+  cohorts <- loadTestCohortDefinitionSet()
+  cohorts$checksum <- NULL
+
+  cohorts2 <- subsetToRequiredCohorts(
+    cohorts,
+    incremental = F
+  )
+  
+  expect_named(
+    cohorts2,
+    c("cohortId", "cohortName", "json", "sql", "subsetParent", "isSubset", 
+      "subsetDefinitionId", "checksum", "parentJson")
+  )
+  
+})
+
