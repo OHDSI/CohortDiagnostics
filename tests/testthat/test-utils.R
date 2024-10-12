@@ -1,4 +1,5 @@
 library(testthat)
+timeExecution <- CohortDiagnostics:::timeExecution
 
 # check makeDataExportable function
 test_that("Check function makeDataExportable", {
@@ -50,7 +51,7 @@ test_that("Check function makeDataExportable", {
   )
 })
 
-test_that("timeExecutions function", {
+test_that("timeExecution function", {
   readr::local_edition(1)
   temp <- tempfile()
   on.exit(unlink(temp, force = TRUE, recursive = TRUE))
@@ -128,6 +129,7 @@ test_that("timeExecutions function", {
   # result <- readr::read_csv(expectedFilePath, col_types = readr::cols())
   # checkmate::expect_data_frame(result, nrows = 5, ncols = 5)
   # expect_false(all(is.na(result$startTime)))
+  
 })
 
 test_that("enforceMinCellValue replaces values below minimum with negative of minimum", {
@@ -216,6 +218,16 @@ test_that("assertCohortDefinitionSetContainsAllParents works", {
     CohortDiagnostics:::assertCohortDefinitionSetContainsAllParents(
       dplyr::filter(cohorts, !(.data$cohortId  %in% cohorts$subsetParent))
     )
+  )
+})
+
+test_that("emptyResult works", {
+  result <- emptyResult("resolved_concepts")
+  expect_named(result, c("cohort_id", "concept_set_id", "concept_id", "database_id"))
+  checkmate::expect_data_frame(
+    result,
+    nrows = 0,
+    types = c("integer", "integer", "integer", "character")
   )
 })
 
