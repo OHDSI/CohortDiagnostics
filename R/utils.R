@@ -377,3 +377,30 @@ assertCohortDefinitionSetContainsAllParents <- function(cohortDefinitionSet) {
   }
   invisible(NULL)
 }
+
+# returns an empty result dataframe from the result data model
+emptyResult <- function(tableName = NULL) {
+  allSpecs <- getResultsDataModelSpecifications()
+  checkmate::assertChoice(tableName, unique(allSpecs$tableName))
+  
+  unique(allSpecs$dataType)
+  unique(allSpecs$tableName)
+  
+  spec <- dplyr::filter(allSpecs, .data$tableName == .env$tableName) %>% 
+    dplyr::select(columnName, dataType) %>% 
+    dplyr::mutate(rDataType = dplyr::case_when(
+      grepl("varchar", dataType) ~ "character()",
+      dataType == "float" ~ "double()",
+      dataType == "int" ~ "integer()",
+      dataType == "bigint" ~ "integer()",
+      dataType == "Date" ~ "as.Date(integer())",
+      TRUE ~ "character()")
+    )
+  
+  result <- dplyr::tibble()
+  for (row in split(spec, seq_len(nrow(spec)))) {
+    result[[row$columnName]] <- eval(parse(text = row$rDataType))
+  }
+  return(result)
+}
+
