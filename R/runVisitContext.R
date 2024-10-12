@@ -146,6 +146,8 @@ runVisitContext <- function(connection,
                             incremental,
                             incrementalFolder = file.path(exportFolder, "incremental")){
   
+  cohortDefinitionSet$checksum <- CohortGenerator::computeChecksum(cohortDefinitionSet$sql)
+  
   # Create export file if it doesn't exist
   if (!file.exists(gsub("/$", "", exportFolder))) {
     dir.create(exportFolder, recursive = TRUE)
