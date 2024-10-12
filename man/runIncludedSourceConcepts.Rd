@@ -6,41 +6,38 @@
 \usage{
 runIncludedSourceConcepts(
   connection,
+  cohortDefinitionSet,
   tempEmulationSchema,
   cdmDatabaseSchema,
-  vocabularyDatabaseSchema = cdmDatabaseSchema,
   databaseId,
-  cohorts,
   exportFolder,
   minCellCount,
-  conceptCountsDatabaseSchema = NULL,
-  conceptCountsTable = "concept_counts",
-  conceptCountsTableIsTemp = FALSE,
-  cohortDatabaseSchema,
-  cohortTable,
-  useExternalConceptCountsTable = FALSE,
   incremental = FALSE,
-  conceptIdTable = NULL,
-  recordKeepingFile,
-  resultsDatabaseSchema
+  recordKeepingFile
 )
 }
 \arguments{
 \item{connection}{}
 
+\item{cohortDefinitionSet}{A data.frame with cohort definitions created by 
+`CohortGenerator::getCohortDefinitionSet` that must include 
+the columns cohortId, cohortName, json, sql.}
+
 \item{tempEmulationSchema}{}
 
 \item{cdmDatabaseSchema}{}
 
-\item{vocabularyDatabaseSchema}{}
-
 \item{databaseId}{}
-
-\item{cohorts}{}
 
 \item{exportFolder}{}
 
 \item{minCellCount}{}
+
+\item{incremental}{}
+
+\item{recordKeepingFile}{}
+
+\item{vocabularyDatabaseSchema}{}
 
 \item{conceptCountsDatabaseSchema}{}
 
@@ -54,11 +51,7 @@ runIncludedSourceConcepts(
 
 \item{useExternalConceptCountsTable}{}
 
-\item{incremental}{}
-
 \item{conceptIdTable}{}
-
-\item{recordKeepingFile}{}
 
 \item{resultsDatabaseSchema}{}
 }

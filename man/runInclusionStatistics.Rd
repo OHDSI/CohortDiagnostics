@@ -11,8 +11,8 @@ runInclusionStatistics(
   cohortDefinitionSet,
   cohortDatabaseSchema,
   cohortTableNames,
-  incremental,
   minCellCount,
+  incremental,
   recordKeepingFile
 )
 }
@@ -41,9 +41,9 @@ mode such as the 'recordKeepingFile'.}
 
 \item{cohortTableNames}{Cohort Table names used by CohortGenerator package}
 
-\item{incremental}{Create only cohort diagnostics that haven't been created before?}
-
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
+
+\item{incremental}{Create only cohort diagnostics that haven't been created before?}
 
 \item{recordKeepingFile}{File that keeps a record of cohorts that have been created previously}
 }
