@@ -305,6 +305,14 @@ subsetToRequiredCohorts <-
            task,
            incremental,
            recordKeepingFile) {
+    
+    cohorts$checksum <- computeChecksum(cohorts$sql)
+    cohorts$parentJson <- vapply(
+      split(cohorts, cohorts$cohortId), 
+      FUN = function(.) getParentCohort(., cohorts)$json,
+      FUN.VALUE = character(1L)
+    )
+    
     if (incremental) {
       tasks <- getRequiredTasks(
         cohortId = cohorts$cohortId,
@@ -312,10 +320,10 @@ subsetToRequiredCohorts <-
         checksum = cohorts$checksum,
         recordKeepingFile = recordKeepingFile
       )
-      return(cohorts[cohorts$cohortId %in% tasks$cohortId, ])
-    } else {
-      return(cohorts)
-    }
+      
+      cohorts <- cohorts[cohorts$cohortId %in% tasks$cohortId, ]
+    } 
+    return(cohorts)
   }
 
 subsetToRequiredCombis <-
