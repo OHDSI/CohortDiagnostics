@@ -46,8 +46,8 @@ runInclusionStatistics <- function(connection,
                                    cohortDefinitionSet,
                                    cohortDatabaseSchema,
                                    cohortTableNames,
-                                   incremental,
                                    minCellCount,
+                                   incremental,
                                    recordKeepingFile) {
   
   ParallelLogger::logInfo("Fetching inclusion statistics from files")
