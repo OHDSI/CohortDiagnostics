@@ -153,7 +153,7 @@ createCustomCdm <- function(jsonDataFilePath){
     DatabaseConnector::executeSql(connection, paste("delete from ", tbl, ";"), progressBar = FALSE)
   }
   
-  jsonData <- jsonlite::fromJSON(system.file(jsonDataFilePath, package = "CohortDiagnostics"))
+  jsonData <- RJSONIO::fromJSON(system.file(jsonDataFilePath, package = "CohortDiagnostics"))
   
   # Convert the JSON data into a data frame and append it to the blank CDM
   for (tableName in names(jsonData)) {
@@ -161,10 +161,10 @@ createCustomCdm <- function(jsonDataFilePath){
       dplyr::mutate(dplyr::across(dplyr::matches("date$"), ~as.Date(.))) %>% 
       dplyr::mutate(dplyr::across(dplyr::matches("datetime$"),  ~as.POSIXct(., format = "%Y-%m-%d %H:%M:%S", tz = "UTC")))
     
-    DBI::dbAppendTable(connection, tableName, patientData)
+    DatabaseConnector::dbAppendTable(connection, tableName, patientData)
   }
 
-  cli::cli_alert_success("Patients pushed to blank CDM successfully")
+  message("Patients pushed to blank CDM successfully")
   
   return(connectionDetails)
   
