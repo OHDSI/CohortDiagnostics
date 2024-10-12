@@ -1,21 +1,28 @@
 
 
 getIncludedSourceConcepts <- function(connection,
-                                      cohort,
-                                      conceptSets, 
-                                      tempEmulationSchema,
+                                      cohortDefinitionSet,
                                       cdmDatabaseSchema,
-                                      vocabularyDatabaseSchema,
-                                      cohortDatabaseSchema,
-                                      cohortTable) {
-  
-  if (nrow(subsetIncluded) == 0) {
-    return(emptyResult)
-  }
+                                      tempEmulationSchema) {
   
   if (!tempTableExists(connection, "inst_concept_sets")) {
     stop("Execute the function runResolvedConceptSets() first.")
   }
+  
+  if (nrow(cohortDefinitionSet) == 0) {
+    return(
+      dplyr::tibble(
+        cohortId = double(), 
+        conceptSetId = double(),
+        conceptId = double(),
+        sourceConceptId = double(),
+        conceptCount = double(),
+        conceptSubjects = double()
+      )
+    )
+  }
+  
+  conceptSets <- combineConceptSetsFromCohorts(cohortDefinitionSet)
   
   sql <- SqlRender::loadRenderTranslateSql(
     "includedSourceConcepts.sql",
@@ -39,72 +46,71 @@ getIncludedSourceConcepts <- function(connection,
     ) %>%
     dplyr::tibble()
     
-    counts <- counts %>%
-      dplyr::distinct() %>%
-      dplyr::rename("uniqueConceptSetId" = "conceptSetId") %>%
-      dplyr::inner_join(
-        conceptSets %>% dplyr::select(
-          "uniqueConceptSetId",
-          "cohortId",
-          "conceptSetId"
-        ) %>% dplyr::distinct(),
-        by = "uniqueConceptSetId",
-        relationship = "many-to-many"
-      ) %>%
-      dplyr::select(-"uniqueConceptSetId") %>%
-      dplyr::relocate(
+  counts <- counts %>%
+    dplyr::distinct() %>%
+    dplyr::rename("uniqueConceptSetId" = "conceptSetId") %>%
+    dplyr::inner_join(
+      conceptSets %>% dplyr::select(
+        "uniqueConceptSetId",
         "cohortId",
-        "conceptSetId",
-        "conceptId"
-      ) %>%
-      dplyr::distinct() %>%
-      dplyr::group_by(
-        .data$cohortId,
-        .data$conceptSetId,
-        .data$conceptId,
-        .data$sourceConceptId
-      ) %>%
-      dplyr::summarise(
-        conceptCount = max(.data$conceptCount),
-        conceptSubjects = max(.data$conceptSubjects)
-      ) %>%
-      dplyr::ungroup()
-      
-      addConceptIdsToConceptTempTable(
-        connection = connection,
-        copyFromTempTable = "#inc_src_concepts",
-        conceptIdFieldName = "concept_id",
-        tempEmulationSchema = tempEmulationSchema
-      )
-      
-      addConceptIdsToConceptTempTable(
-        connection = connection,
-        copyFromTempTable = "#inc_src_concepts",
-        conceptIdFieldName = "source_concept_id",
-        tempEmulationSchema = tempEmulationSchema
-      )
-      
-      DatabaseConnector::renderTranslateExecuteSql(
-        connection = connection,
-        sql = "TRUNCATE TABLE #inc_src_concepts; DROP TABLE #inc_src_concepts;",
-        tempEmulationSchema = tempEmulationSchema,
-        progressBar = FALSE,
-        reportOverallTime = FALSE
-      )
-      
-    return(counts)
-  
+        "conceptSetId"
+      ) %>% dplyr::distinct(),
+      by = "uniqueConceptSetId",
+      relationship = "many-to-many"
+    ) %>%
+    dplyr::select(-"uniqueConceptSetId") %>%
+    dplyr::relocate(
+      "cohortId",
+      "conceptSetId",
+      "conceptId"
+    ) %>%
+    dplyr::distinct() %>%
+    dplyr::group_by(
+      .data$cohortId,
+      .data$conceptSetId,
+      .data$conceptId,
+      .data$sourceConceptId
+    ) %>%
+    dplyr::summarise(
+      conceptCount = max(.data$conceptCount),
+      conceptSubjects = max(.data$conceptSubjects)
+    ) %>%
+    dplyr::ungroup()
+    
+    addConceptIdsToConceptTempTable(
+      connection = connection,
+      copyFromTempTable = "#inc_src_concepts",
+      conceptIdFieldName = "concept_id",
+      tempEmulationSchema = tempEmulationSchema
+    )
+    
+    addConceptIdsToConceptTempTable(
+      connection = connection,
+      copyFromTempTable = "#inc_src_concepts",
+      conceptIdFieldName = "source_concept_id",
+      tempEmulationSchema = tempEmulationSchema
+    )
+    
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = "TRUNCATE TABLE #inc_src_concepts; DROP TABLE #inc_src_concepts;",
+      tempEmulationSchema = tempEmulationSchema,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+    
+  return(counts)
 }
 
 
 #' Title
 #'
 #' @param connection 
+#' @template cohortDefinitionSet
 #' @param tempEmulationSchema 
 #' @param cdmDatabaseSchema 
 #' @param vocabularyDatabaseSchema 
 #' @param databaseId 
-#' @param cohorts 
 #' @param exportFolder 
 #' @param minCellCount 
 #' @param conceptCountsDatabaseSchema 
@@ -123,43 +129,35 @@ getIncludedSourceConcepts <- function(connection,
 #'
 #' @examples
 runIncludedSourceConcepts <- function(connection,
+                                     cohortDefinitionSet,
                                      tempEmulationSchema,
                                      cdmDatabaseSchema,
-                                     vocabularyDatabaseSchema = cdmDatabaseSchema,
                                      databaseId,
-                                     cohorts,
                                      exportFolder,
                                      minCellCount,
-                                     conceptCountsDatabaseSchema = NULL,
-                                     conceptCountsTable = "concept_counts",
-                                     conceptCountsTableIsTemp = FALSE,
-                                     cohortDatabaseSchema,
-                                     cohortTable,
-                                     useExternalConceptCountsTable = FALSE,
                                      incremental = FALSE,
-                                     conceptIdTable = NULL,
-                                     recordKeepingFile,
-                                     resultsDatabaseSchema) {
+                                     recordKeepingFile) {
   
   ParallelLogger::logInfo("Starting concept set diagnostics")
-  startConceptSetDiagnostics <- Sys.time()
+  start <- Sys.time()
   subset <- dplyr::tibble()
   
   ParallelLogger::logInfo("Fetching included source concepts")
-  # TODO: Disregard empty cohorts in tally:
-  if (incremental && (nrow(cohorts) - nrow(subsetIncluded)) > 0) {
-    ParallelLogger::logInfo(sprintf(
-      "Skipping %s cohorts in incremental mode.",
-      nrow(cohorts) - nrow(subsetIncluded)
-    ))
-  }
   
   subset <- subsetToRequiredCohorts(
-    cohorts = cohorts,
+    cohorts = cohortDefinitionSet,
     task = "runIncludedSourceConcepts",
     incremental = incremental,
     recordKeepingFile = recordKeepingFile
   )
+  
+  # TODO: Disregard empty cohorts in tally:
+  if (incremental && (nrow(cohortDefinitionSet) - nrow(subsetIncluded)) > 0) {
+    ParallelLogger::logInfo(sprintf(
+      "Skipping %s cohorts in incremental mode.",
+      nrow(cohortDefinitionSet) - nrow(subsetIncluded)
+    ))
+  }
   
   if (nrow(subset) == 0) {
     # TODO write/append an empty result
@@ -168,7 +166,7 @@ runIncludedSourceConcepts <- function(connection,
   
   # We need to get concept sets from all cohorts in case subsets are present and
   # Added incrementally after cohort generation
-  conceptSets <- combineConceptSetsFromCohorts(cohorts)
+  conceptSets <- combineConceptSetsFromCohorts(cohortDefinitionSet)
   conceptSets <- conceptSets %>% dplyr::filter(.data$cohortId %in% subset$cohortId)
   
   if (is.null(conceptSets)) {
@@ -191,26 +189,31 @@ runIncludedSourceConcepts <- function(connection,
     exportFolder,
     taskName = "runIncludedSourceConcepts",
     cohortIds = NULL,
-    parent = "runIncludedSourceConcepts",
+    parent = "executeDiagnostics",
     expr = {
-      
+      data <- getIncludedSourceConcepts(
+        connection,
+        cohortDefinitionSet,
+        cdmDatabaseSchema,
+        tempEmulationSchema
+      )
     }
   )
   
   exportDataToCsv(
-    data = counts,
+    data = data,
     tableName = "included_source_concept",
     fileName = file.path(exportFolder, "included_source_concept.csv"),
     minCellCount = minCellCount,
     databaseId = databaseId,
     incremental = incremental,
-    cohortId = subsetIncluded$cohortId
+    cohortId = subset$cohortId
   )
   
   recordTasksDone(
-    cohortId = subsetIncluded$cohortId,
+    cohortId = subset$cohortId,
     task = "runIncludedSourceConcepts",
-    checksum = subsetIncluded$checksum,
+    checksum = subset$checksum,
     recordKeepingFile = recordKeepingFile,
     incremental = incremental
   )
