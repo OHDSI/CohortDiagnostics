@@ -386,7 +386,7 @@ test_that(paste("test that only the new visit_concept_id are inserted into the #
     preceding_visit_occurrence_id = 0
   )
 
-  DBI::dbAppendTable(connection, "visit_occurrence", new_row)
+  DatabaseConnector::dbAppendTable(connection, "visit_occurrence", new_row)
 
   getVisitContext(connection = connection,
                   cdmDatabaseSchema = "main",

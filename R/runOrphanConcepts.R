@@ -25,7 +25,7 @@
                                 conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                 conceptCountsTable = "concept_counts",
                                 conceptCountsTableIsTemp = FALSE,
-                                instantiatedCodeSets = "#InstConceptSets",
+                                instantiatedCodeSets = "#inst_concept_sets",
                                 orphanConceptTable = "#recommended_concepts") {
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
@@ -76,23 +76,26 @@
   return(orphanConcepts)
 }
 
-#' Title
-#'
-#' @param connection 
-#' @param tempEmulationSchema 
-#' @param cdmDatabaseSchema 
-#' @param vocabularyDatabaseSchema 
-#' @param databaseId 
-#' @param cohorts 
-#' @param exportFolder 
-#' @param minCellCount 
-#' @param conceptCountsDatabaseSchema 
-#' @param conceptCountsTable 
-#' @param cohortDatabaseSchema 
-#' @param cohortTable 
-#' @param incremental 
+#' Generate and export potential orphan concepts. 
+#' 
+#' @description
+#' Runs the required code to find orphan codes, codes that should be, but are not included in a particular concept set.
+#' 
+#' @template Connection
+#' @template TempEmulationSchema
+#' @template CdmDatabaseSchema
+#' @template VocabularyDatabaseSchema
+#' @template DatabaseId
+#' @template ExportFolder
+#' @template MinCellCount
+#' @template CohortTable
+#' @template Incremental
+#' @template RecordKeepingFile
+#' @template CohortDatabaseSchema
+#' 
+#' @param conceptCountsDatabaseSchema Schema where the concept_counts table is located.
+#' @param conceptCountsTable Name of the concept_counts table.
 #' @param conceptIdTable 
-#' @param recordKeepingFile 
 #' @param resultsDatabaseSchema 
 #'
 #' @return
@@ -108,7 +111,8 @@ runOrphanConcepts <- function(connection,
                               exportFolder,
                               minCellCount,
                               conceptCountsDatabaseSchema = NULL,
-                              conceptCountsTable = "concept_counts",
+                              conceptCountsTable = "#concept_counts",
+                              instantiatedCodeSets = "#inst_concept_sets",
                               cohortDatabaseSchema,
                               cohortTable,
                               incremental = FALSE,
@@ -117,9 +121,9 @@ runOrphanConcepts <- function(connection,
                               resultsDatabaseSchema) {
   ParallelLogger::logInfo("Starting concept set diagnostics")
   startTime <- Sys.time()
-  subset <- dplyr::tibble()
+  subsetOrphans <- dplyr::tibble()
   
-  subset <- subsetToRequiredCohorts(
+  subsetOrphans <- subsetToRequiredCohorts(
       cohorts = cohorts,
       task = "runOrphanConcepts",
       incremental = incremental,
@@ -128,14 +132,14 @@ runOrphanConcepts <- function(connection,
     dplyr::distinct()
   
   # Make sure an empty result file is written to the export folder
-  if (nrow(subset) == 0) {
+  if (nrow(subsetOrphans) == 0) {
     return(NULL)
   }
   
-  # We need to get concept sets from all cohorts in case subsets are present and
+  # We need to get concept sets from all cohorts in case subsetOrphans are present and
   # Added incrementally after cohort generation
   conceptSets <- combineConceptSetsFromCohorts(cohorts)
-  conceptSets <- conceptSets %>% dplyr::filter(.data$cohortId %in% subset$cohortId)
+  conceptSets <- conceptSets %>% dplyr::filter(.data$cohortId %in% subsetOrphans$cohortId)
   
   if (is.null(conceptSets)) {
     ParallelLogger::logInfo(
@@ -152,39 +156,60 @@ runOrphanConcepts <- function(connection,
     ParallelLogger::logInfo("No concept sets found - skipping")
     return(NULL)
   }
-  
-  timeExecution(
-    exportFolder,
-    taskName = "instantiateUniqueConceptSets",
-    cohortIds = NULL,
-    parent = "runConceptSetDiagnostics",
-    expr = {
-      instantiateUniqueConceptSets(
-        uniqueConceptSets = uniqueConceptSets,
-        connection = connection,
-        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-        tempEmulationSchema = tempEmulationSchema,
-        conceptSetsTable = "#inst_concept_sets"
-      )
-    }
-  )
 
-  timeExecution(
-    exportFolder,
-    taskName = "createConceptCountsTable",
-    cohortIds = NULL,
-    parent = "runConceptSetDiagnostics",
-    expr = {
-      createConceptCountsTable(
-        connection = connection,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        tempEmulationSchema = tempEmulationSchema,
-        conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
-        conceptCountsTable = conceptCountsTable,
-        conceptCountsTableIsTemp = conceptCountsTableIsTemp
-      )
+  # Defines variables and checks version of external concept counts table -----
+  checkConceptCountsTableExists <- DatabaseConnector::dbExistsTable(connection,
+                                                                    name = conceptCountsTable,
+                                                                    databaseSchema = conceptCountsDatabaseSchema)
+  
+  # Creates temp conceptCountsTable if name has # or doesn´t exists ------------
+  if (substr(conceptCountsTable, 1, 1) == "#" || !checkConceptCountsTableExists) {
+    conceptCountsTableIsTemp <- TRUE
+    if (!substr(conceptCountsTable, 1, 1) == "#") {
+      conceptCountsTable <- paste0("#", conceptCountsTable)
     }
-  )
+    timeExecution(
+      exportFolder,
+      taskName = "createConceptCountsTable",
+      cohortIds = NULL,
+      parent = "runConceptSetDiagnostics",
+      expr = {
+        createConceptCountsTable(
+          connection = connection,
+          cdmDatabaseSchema = cdmDatabaseSchema,
+          tempEmulationSchema = tempEmulationSchema,
+          conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
+          conceptCountsTable = conceptCountsTable,
+          conceptCountsTableIsTemp = conceptCountsTableIsTemp
+        )
+      }
+    )
+    
+  } else {
+    conceptCountsTableIsTemp <- FALSE
+    conceptCountsTable <- conceptCountsTable
+    dataSourceInfo <- getCdmDataSourceInformation(connection = connection, 
+                                                  cdmDatabaseSchema = cdmDatabaseSchema)
+    
+    # If conceptCountsTable exists, check the vocabVersion
+    
+    vocabVersion <- dataSourceInfo$vocabularyVersion
+    vocabVersionExternalConceptCountsTable <- renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT DISTINCT vocabulary_version FROM @work_database_schema.@concept_counts_table;",
+      work_database_schema = cohortDatabaseSchema,
+      concept_counts_table = conceptCountsTable,
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = getOption("sqlRenderTempEmulationSchena")
+    )
+    if (!identical(vocabVersion, vocabVersionExternalConceptCountsTable[1,1])) {
+      stop(paste0("External concept counts table (", 
+                  vocabVersionExternalConceptCountsTable, 
+                  ") does not match database (", 
+                  vocabVersion, 
+                  "). Update concept_counts with createConceptCountsTable()"))
+    }
+  }
   
   ParallelLogger::logInfo("Finding orphan concepts")
   if (incremental && (nrow(cohorts) - nrow(subsetOrphans)) > 0) {
@@ -195,12 +220,6 @@ runOrphanConcepts <- function(connection,
   }
   if (nrow(subsetOrphans > 0)) {
     start <- Sys.time()
-    
-    if (!useExternalConceptCountsTable) {
-      ParallelLogger::logTrace("Using internal concept count table.")
-    } else {
-      stop("Use of external concept count table is not supported")
-    }
     
     # [OPTIMIZATION idea] can we modify the sql to do this for all uniqueConceptSetId in one query using group by?
     data <- list()
@@ -227,7 +246,7 @@ runOrphanConcepts <- function(connection,
             conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
             conceptCountsTable = conceptCountsTable,
             conceptCountsTableIsTemp = conceptCountsTableIsTemp,
-            instantiatedCodeSets = "#inst_concept_sets",
+            instantiatedCodeSets = instantiatedCodeSets,
             orphanConceptTable = "#orphan_concepts"
           )
           
@@ -370,33 +389,27 @@ runOrphanConcepts <- function(connection,
     incremental = TRUE
   )
   
-  ParallelLogger::logTrace("Dropping temp concept set table")
-  sql <-
-    "TRUNCATE TABLE #inst_concept_sets; DROP TABLE #inst_concept_sets;"
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection,
-    sql,
-    tempEmulationSchema = tempEmulationSchema,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
+  # TODO eliminate inst_concept_sets after three analysis complete in executeDiagnostics
+  # if (tempTableExists(connection, "inst_concept_sets")) {
+  #   ParallelLogger::logTrace("Dropping Unique ConceptSets table")
+  #   sql <-
+  #     "TRUNCATE TABLE #inst_concept_sets; DROP TABLE #inst_concept_sets;"
+  #   DatabaseConnector::renderTranslateExecuteSql(
+  #     connection,
+  #     sql,
+  #     tempEmulationSchema = tempEmulationSchema,
+  #     progressBar = FALSE,
+  #     reportOverallTime = FALSE
+  #   )
+  # }
   
-  if ((runIncludedSourceConcepts && nrow(subsetIncluded) > 0) ||
-      (runOrphanConcepts && nrow(subsetOrphans) > 0)) {
-    ParallelLogger::logTrace("Dropping temp concept count table")
-    if (conceptCountsTableIsTemp) {
-      countTable <- conceptCountsTable
-    } else {
-      countTable <-
-        paste(conceptCountsDatabaseSchema, conceptCountsTable, sep = ".")
-    }
-    
+  if (conceptCountsTableIsTemp) {
     sql <- "TRUNCATE TABLE @count_table; DROP TABLE @count_table;"
     DatabaseConnector::renderTranslateExecuteSql(
       connection,
       sql,
       tempEmulationSchema = tempEmulationSchema,
-      count_table = countTable,
+      count_table = conceptCountsTable,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )

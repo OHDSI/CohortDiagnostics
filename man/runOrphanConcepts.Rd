@@ -2,7 +2,7 @@
 % Please edit documentation in R/runOrphanConcepts.R
 \name{runOrphanConcepts}
 \alias{runOrphanConcepts}
-\title{Title}
+\title{Generate and export potential orphan concepts.}
 \usage{
 runOrphanConcepts(
   connection,
@@ -14,7 +14,8 @@ runOrphanConcepts(
   exportFolder,
   minCellCount,
   conceptCountsDatabaseSchema = NULL,
-  conceptCountsTable = "concept_counts",
+  conceptCountsTable = "#concept_counts",
+  instantiatedCodeSets = "#inst_concept_sets",
   cohortDatabaseSchema,
   cohortTable,
   incremental = FALSE,
@@ -24,38 +25,58 @@ runOrphanConcepts(
 )
 }
 \arguments{
-\item{connection}{}
+\item{connection}{An object of type \code{connection} as created using the
+\code{\link[DatabaseConnector]{connect}} function in the
+DatabaseConnector package.}
 
-\item{tempEmulationSchema}{}
+\item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
+tables, provide a schema with write privileges where temp tables can be created.}
 
-\item{cdmDatabaseSchema}{}
+\item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.}
 
-\item{vocabularyDatabaseSchema}{}
+\item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
+commonly the same as cdmDatabaseSchema. Note that for 
+SQL Server, this should include both the database and
+schema name, for example 'vocabulary.dbo'.}
 
-\item{databaseId}{}
+\item{databaseId}{A short string for identifying the database (e.g. 'Synpuf').}
 
-\item{cohorts}{}
+\item{exportFolder}{The folder where the results will be exported to}
 
-\item{exportFolder}{}
+\item{minCellCount}{The minimum cell count for fields contains person counts or fractions}
 
-\item{minCellCount}{}
+\item{conceptCountsDatabaseSchema}{Schema where the concept_counts table is located.}
 
-\item{conceptCountsDatabaseSchema}{}
+\item{conceptCountsTable}{Name of the concept_counts table.}
 
-\item{conceptCountsTable}{}
+\item{cohortDatabaseSchema}{Schema name where your user has write access (has CRUD privileges). This is the location,
+of the cohort tables. This is also the location for the optional table such as 
+the unique_concept_id table. 
+In incremental mode: It is assumed that the tables in this location have not been modified 
+outside this application, and the content was written by this application for current 
+project only. A good practice would be to ensure that the database table names are unique 
+for the project. e.g. 'EPI101_COHORT', 'EPI101_UNIQUE_CONCEPT_ID' (please try to keep 
+length < 22). Another assumption: the content of these tables were written by this application
+(i.e. they were not altered outside of this application) and the tables are available during the
+life cycle of this project. The local files that are created by the application during incremental
+mode such as the 'recordKeepingFile'.}
 
-\item{cohortDatabaseSchema}{}
+\item{cohortTable}{Name of the cohort table.}
 
-\item{cohortTable}{}
-
-\item{incremental}{}
+\item{incremental}{`TRUE` or `FALSE` (default). If TRUE diagnostics for cohorts in the 
+cohort definition set that have not changed will be skipped and existing results 
+csv files will be updated. If FALSE then diagnostics for all cohorts in the cohort 
+definition set will be executed and pre-existing results files will be deleted.}
 
 \item{conceptIdTable}{}
 
-\item{recordKeepingFile}{}
-
 \item{resultsDatabaseSchema}{}
+
+\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
+of which cohort diagnostics has been executed.}
 }
 \description{
-Title
+Runs the required code to find orphan codes, codes that should be, but are not included in a particular concept set.
 }
