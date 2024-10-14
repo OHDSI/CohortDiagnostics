@@ -1,6 +1,0 @@
-﻿cohortId,visitConceptId,visitContext,subjects
-1,9201,On visit start,1
-1,262,After,2
-2,9201,Before,1
-2,262,On visit start,2
-2,262,During visit,1
