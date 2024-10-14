@@ -104,7 +104,7 @@ extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
 }
 
 getParentCohort <- function(cohort, cohortDefinitionSet) {
-  if (is.null(cohort$subsetParent) || cohort$cohortId == cohort$subsetParent) {
+  if (!("subsetParent" %in% colnames(cohort)) || is.null(cohort$subsetParent) || cohort$cohortId == cohort$subsetParent) {
     return(cohort)
   }
   
