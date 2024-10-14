@@ -123,9 +123,10 @@ recordTasksDone <-
         guess_max = 1e7,
         lazy = FALSE
       )
-
-      recordKeeping$timeStamp <-
-        as.character(recordKeeping$timeStamp)
+      if ("timeStamp" %in% colnames(recordKeeping)){
+        recordKeeping$timeStamp <-
+          as.character(recordKeeping$timeStamp)
+      }
       if ("cohortId" %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
           dplyr::mutate(cohortId = as.double(.data$cohortId))
