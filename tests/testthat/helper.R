@@ -157,10 +157,11 @@ createCustomCdm <- function(jsonDataFilePath){
   
   # Convert the JSON data into a data frame and append it to the blank CDM
   for (tableName in names(jsonData)) {
-    patientData <- as.data.frame(jsonData[[tableName]]) %>% 
-      dplyr::mutate(dplyr::across(dplyr::matches("date$"), ~as.Date(.))) %>% 
-      dplyr::mutate(dplyr::across(dplyr::matches("datetime$"),  ~as.POSIXct(., format = "%Y-%m-%d %H:%M:%S", tz = "UTC")))
     
+    patientData <- dplyr::bind_rows(lapply(jsonData[[tableName]], as.data.frame)) %>%
+      dplyr::mutate(dplyr::across(dplyr::matches("date$"), ~as.Date(.))) %>%
+      dplyr::mutate(dplyr::across(dplyr::matches("datetime$"),  ~as.POSIXct(., format = "%Y-%m-%d %H:%M:%S", tz = "UTC")))
+
     DatabaseConnector::dbAppendTable(connection, tableName, patientData)
   }
 
