@@ -466,6 +466,23 @@ runTimeSeries <- function(connection,
                           recordKeepingFile,
                           observationPeriodDateRange,
                           batchSize = getOption("CohortDiagnostics-TimeSeries-batch-size", default = 20)) {
+  
+  errorMessage <- checkmate::makeAssertCollection()
+  checkArg(connection, add = errorMessage)
+  checkArg(tempEmulationSchema, add = errorMessage)
+  checkArg(cdmDatabaseSchema, add = errorMessage)
+  checkArg(cohortDatabaseSchema, add = errorMessage)
+  checkArg(cohortTable, add = errorMessage)
+  checkArg(cohortDefinitionSet, add = errorMessage)
+  checkmate::assertLogical(runCohortTimeSeries, len = 1, any.missing = FALSE)
+  checkmate::assertLogical(runDataSourceTimeSeries, len = 1, any.missing = FALSE)
+  checkArg(databaseId, add = errorMessage)
+  checkArg(exportFolder, add = errorMessage)
+  checkArg(minCellCount, add = errorMessage)
+  checkArg(incremental, add = errorMessage)
+  checkArg(recordKeepingFile, add = errorMessage)
+  checkmate::reportAssertions(errorMessage)
+  
   if (all(!runCohortTimeSeries, !runDataSourceTimeSeries)) {
     warning(
       "Both Datasource time series and cohort time series are set to FALSE. Skippping executeTimeSeriesDiagnostics."
@@ -515,9 +532,9 @@ runTimeSeries <- function(connection,
         cohortIds <- subset[start:end, ]$cohortId %>% unique()
         timeExecution(
           exportFolder,
-          "",
+          "runTimeSeries",
           cohortIds,
-          parent = "",
+          parent = "runTimeSeries",
           expr = {
             data <-
               getTimeSeries(
@@ -558,27 +575,21 @@ runTimeSeries <- function(connection,
 
   # data source time series
   if (runDataSourceTimeSeries) {
-    cohortId <- -44819062 # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
-    subset <- subsetToRequiredCohorts(
-      cohorts = dplyr::tibble(
-        cohortId = cohortId,
-        checksum = computeChecksum(column = "data source time series")
-      ),
-      task = "runDataSourceTimeSeries",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    )
-
-    if (all(nrow(subset) == 0, incremental)) {
+    
+    if (incremental && !isTaskRequired(
+          task = "runDataSourceTimeSeries", 
+          checksum = computeChecksum(paste("runDatSourceTimeSeries - ", databaseId)),
+          recordKeepingFile = recordKeepingFile)) {
+      
       ParallelLogger::logInfo("Skipping Data Source Time Series in Incremental mode.")
       return(NULL)
     }
 
     timeExecution(
       exportFolder,
-      "",
+      "DataSourceTimeSeries",
       cohortId,
-      parent = "",
+      parent = "TimeSeries",
       expr = {
         data <-
           getTimeSeries(
@@ -606,7 +617,7 @@ runTimeSeries <- function(connection,
     recordTasksDone(
       cohortId = cohortId,
       task = "runDataSourceTimeSeries",
-      checksum = subset$checksum,
+      checksum = computeChecksum(paste("runDatSourceTimeSeries - ", databaseId)),
       recordKeepingFile = recordKeepingFile,
       incremental = incremental
     )
