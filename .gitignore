@@ -18,12 +18,13 @@ tests/testthat/testthat-problems.rds
 /doc/
 /Meta/
 /renv/.gitignore
-/sql/
+/sql
+!/sql/
 .Rprofile
 /renv/
 renv.lock
 *.sqlite
 MergedCohortDiagnosticsData.7z
 inst/shiny/DiagnosticsExplorer/UserCredentials.csv
-sql
 /work/*
+inst/doc
