@@ -90,7 +90,6 @@
 #' @template MinCellCount
 #' @template CohortTable
 #' @template Incremental
-#' @template RecordKeepingFile
 #' @template CohortDatabaseSchema
 #' 
 #' @param conceptCountsDatabaseSchema Schema where the concept_counts table is located.
@@ -115,10 +114,33 @@ runOrphanConcepts <- function(connection,
                               instantiatedCodeSets = "#inst_concept_sets",
                               cohortDatabaseSchema,
                               cohortTable,
-                              incremental = FALSE,
                               conceptIdTable = NULL,
-                              recordKeepingFile,
+                              incremental = FALSE,
+                              incrementalFolder = exportFolder,
                               resultsDatabaseSchema) {
+  
+  errorMessage <- checkmate::makeAssertCollection()
+  checkArg(connection, add = errorMessage)
+  checkArg(tempEmulationSchema, add = errorMessage)
+  checkArg(cdmDatabaseSchema, add = errorMessage)
+  checkArg(vocabularyDatabaseSchema, add = errorMessage)
+  checkArg(databaseId, add = errorMessage)
+  # checkArg(cohorts, add = errorMessage) # no argument check currently available
+  checkArg(exportFolder, add = errorMessage)
+  checkArg(minCellCount, add = errorMessage)
+  # checkArg(conceptCountsDatabaseSchema, add = errorMessage) # no argument check currently available
+  # checkArg(conceptCountsTable, add = errorMessage) # no argument check currently available
+  # checkArg(instantiatedCodeSets, add = errorMessage) # no argument check currently available
+  checkArg(cohortDatabaseSchema, add = errorMessage)
+  checkArg(cohortTable, add = errorMessage)
+  # checkArg(conceptIdTable, add = errorMessage) # no argument check currently available
+  checkArg(incremental, add = errorMessage)
+  checkArg(incrementalFolder, add = errorMessage)
+  # checkArg(resultsDatabaseSchema, add = errorMessage) # no argument check currently available
+  checkmate::reportAssertions(errorMessage)
+
+  recordKeepingFile <- file.path(incrementalFolder, "incremental")
+  
   ParallelLogger::logInfo("Starting concept set diagnostics")
   startTime <- Sys.time()
   subsetOrphans <- dplyr::tibble()

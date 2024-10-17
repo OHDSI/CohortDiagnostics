@@ -40,14 +40,14 @@ for (nm in names(testServers)) {
   # incremental <- FALSE
   incremental <- TRUE
   conceptIdTable <- "#concept_ids"
-  recordKeepingFile <- file.path(exportFolder, "record.csv")
+  recordKeepingFile <- file.path(exportFolder, "incremental")
   
   # Tests
   
   test_that(paste("test run orphan codes concept table", nm), {
     connection <- DatabaseConnector::connect(server$connectionDetails)
     exportFolder <- file.path(tempdir(), paste0(nm, "_no_concept"))
-    recordKeepingFile <- file.path(exportFolder, "record.csv")
+    recordKeepingFile <- file.path(exportFolder, "incremental")
     dir.create(exportFolder)
     # CreateConceptcounts table
     
@@ -83,7 +83,6 @@ for (nm in names(testServers)) {
                       cohortTable = cohortTable,
                       incremental = incremental,
                       conceptIdTable = conceptIdTable,
-                      recordKeepingFile = recordKeepingFile,
                       resultsDatabaseSchema = resultsDatabaseSchema)
     
     # Check cohort_inc_result
@@ -151,7 +150,7 @@ for (nm in names(testServers)) {
   test_that(paste("test run orphan codes temp concept counts", nm), {
     connection <- DatabaseConnector::connect(server$connectionDetails)
     exportFolder <- file.path(tempdir(), paste0(nm, "_no_concept"))
-    recordKeepingFile <- file.path(exportFolder, "record.csv")
+    recordKeepingFile <- file.path(exportFolder, "incremental")
     dir.create(exportFolder)
     
     # Instantiate Unique ConceptSets
@@ -178,7 +177,6 @@ for (nm in names(testServers)) {
                       cohortTable = cohortTable,
                       incremental = incremental,
                       conceptIdTable = conceptIdTable,
-                      recordKeepingFile = recordKeepingFile,
                       resultsDatabaseSchema = resultsDatabaseSchema)
     
     # Check cohort_inc_result
