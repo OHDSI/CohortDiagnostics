@@ -7,7 +7,7 @@ for (nm in names(testServers)) {
   exportFolder <- file.path(tempdir(), paste0(nm, "exp"))
   databaseId <- "myDB"
   minCellCount <- 5
-  recordKeepingFile <- file.path(exportFolder, "record.csv")
+  recordKeepingFile <- file.path(exportFolder, "incremental")
   cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = server$cohortTable)
 
   test_that(paste("test run inclusion statistics output", nm), {
@@ -20,8 +20,7 @@ for (nm in names(testServers)) {
                            cohortDatabaseSchema = server$cohortDatabaseSchema,
                            cohortTableNames = cohortTableNames,
                            incremental = TRUE,
-                           minCellCount = minCellCount,
-                           recordKeepingFile = recordKeepingFile)
+                           minCellCount = minCellCount)
 
     # Check cohort_inc_result
     expect_true(file.exists(file.path(exportFolder, "cohort_inc_result.csv")))

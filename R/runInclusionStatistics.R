@@ -29,14 +29,13 @@
 #' 
 #' @template Connection
 #' @template CohortDatabaseSchema
+#' @template Incremental
 #' 
 #' @param exportFolder The folder where the output will be exported to.
 #' @param databaseId A short string for identifying the database (e.g. 'Synpuf').
 #' @param cohortDefinitionSet Data.frame of cohorts must include columns cohortId, cohortName, json, sql
 #' @param cohortTableNames Cohort Table names used by CohortGenerator package
-#' @param incremental Create only cohort diagnostics that haven't been created before?
 #' @param minCellCount The minimum cell count for fields contains person counts or fractions.
-#' @param recordKeepingFile File that keeps a record of cohorts that have been created previously
 #'
 #' @return None, it will write csv files to disk
 #' @export
@@ -48,7 +47,21 @@ runInclusionStatistics <- function(connection,
                                    cohortTableNames,
                                    minCellCount,
                                    incremental,
-                                   recordKeepingFile) {
+                                   incrementalFolder = exportFolder) {
+  
+  errorMessage <- checkmate::makeAssertCollection()
+  checkArg(connection, add = errorMessage)
+  checkArg(exportFolder, add = errorMessage)
+  checkArg(databaseId, add = errorMessage)
+  checkArg(cohortDefinitionSet, add = errorMessage)
+  checkArg(cohortDatabaseSchema, add = errorMessage)
+  checkArg(cohortTableNames, add = errorMessage)
+  checkArg(minCellCount, add = errorMessage)
+  checkArg(incremental, add = errorMessage)
+  checkArg(incrementalFolder, add = errorMessage)
+  checkmate::reportAssertions(errorMessage)
+  
+  recordKeepingFile <- file.path(incrementalFolder, "incremental")
   
   ParallelLogger::logInfo("Fetching inclusion statistics from files")
   
