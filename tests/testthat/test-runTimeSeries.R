@@ -85,7 +85,6 @@ test_that("Testing cohort time series execution, incremental = FALSE", {
   server <- testServers[[testServer]]
   con <- DatabaseConnector::connect(server$connectionDetails)
   exportFolder <- file.path(tempdir(), paste0(testServer, "exp"))
-  recordKeepingFile <- file.path(exportFolder, "record.csv")
   incremental <- FALSE
 
   with_dbc_connection(con, {
@@ -133,6 +132,8 @@ test_that("Testing cohort time series execution, incremental = FALSE", {
       ) %>%
       dplyr::ungroup()
 
+    cohortDefinitionSet$cohortName <- c("1", "1", "2", "2")
+
     unlink(
       x = exportFolder,
       recursive = TRUE,
@@ -178,7 +179,6 @@ test_that("Testing cohort time series execution, incremental = FALSE", {
       minCellCount = 0,
       instantiatedCohorts = cohort$cohortDefinitionId,
       incremental = incremental,
-      recordKeepingFile = recordKeepingFile,
       observationPeriodDateRange = dplyr::tibble(
         observationPeriodMinDate = as.Date("2004-01-01"),
         observationPeriodMaxDate = as.Date("2007-12-31")
@@ -192,8 +192,7 @@ test_that("Testing cohort time series execution, incremental = FALSE", {
         file = file.path(exportFolder, "time_series.csv"),
         col_types = readr::cols()
       )
-    print(timeSeriesResults)
-
+    
     testthat::expect_equal(
       object = timeSeriesResults$cohort_id %>% unique() %>% sort(),
       expected = c(1, 2)
@@ -219,7 +218,8 @@ test_that("Testing cohort time series execution, incremental = TRUE", {
   server <- testServers[[testServer]]
   con <- DatabaseConnector::connect(server$connectionDetails)
   exportFolder <- file.path(tempdir(), paste0(testServer, "exp"))
-  recordKeepingFile <- file.path(exportFolder, "record.csv")
+  recordKeepingFile <- file.path(exportFolder, "incremental")
+  incrementalFolder <- exportFolder
   incremental <- TRUE
 
   with_dbc_connection(con, {
@@ -267,6 +267,8 @@ test_that("Testing cohort time series execution, incremental = TRUE", {
       ) %>%
       dplyr::ungroup()
 
+    cohortDefinitionSet$cohortName <- c("1", "1", "2", "2")
+
     unlink(
       x = exportFolder,
       recursive = TRUE,
@@ -312,7 +314,6 @@ test_that("Testing cohort time series execution, incremental = TRUE", {
       minCellCount = 0,
       instantiatedCohorts = cohort$cohortDefinitionId,
       incremental = incremental,
-      recordKeepingFile = recordKeepingFile,
       observationPeriodDateRange = dplyr::tibble(
         observationPeriodMinDate = as.Date("2004-01-01"),
         observationPeriodMaxDate = as.Date("2007-12-31")
@@ -370,7 +371,6 @@ test_that("Testing cohort time series execution, incremental = TRUE", {
       minCellCount = 0,
       instantiatedCohorts = cohort$cohortDefinitionId,
       incremental = incremental,
-      recordKeepingFile = recordKeepingFile,
       observationPeriodDateRange = dplyr::tibble(
         observationPeriodMinDate = as.Date("2004-01-01"),
         observationPeriodMaxDate = as.Date("2007-12-31")
@@ -390,21 +390,18 @@ test_that("Testing cohort time series execution, incremental = TRUE", {
   })
 })
 
+
 test_that("Testing Data source time series execution, incremental = FALSE ", {
   testServer <- "sqlite"
   skip_if_not(testServer %in% names(testServers))
   server <- testServers[[testServer]]
   con <- DatabaseConnector::connect(server$connectionDetails)
   exportFolder <- file.path(tempdir(), paste0(testServer, "exp"))
-  recordKeepingFile <- file.path(exportFolder, "record.csv")
+  recordKeepingFile <- file.path(exportFolder, "incremental")
   incremental <- FALSE
+  cohortId = -44819062 # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
 
   with_dbc_connection(con, {
-    cohortDefinitionSet <- dplyr::tibble(
-      cohortId = -44819062,
-      # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
-      checksum = CohortDiagnostics:::computeChecksum(column = "data source time series")
-    )
 
     unlink(
       x = exportFolder,
@@ -422,7 +419,8 @@ test_that("Testing Data source time series execution, incremental = FALSE ", {
       tempEmulationSchema = server$tempEmulationSchema,
       cdmDatabaseSchema = server$cdmDatabaseSchema,
       cohortDatabaseSchema = server$cohortDatabaseSchema,
-      cohortDefinitionSet = data.frame(),
+      cohortDefinitionSet = server$cohortDefinitionSet,
+      cohortTable = server$cohortTable,
       runCohortTimeSeries = FALSE,
       runDataSourceTimeSeries = TRUE,
       databaseId = "testDatabaseId",
@@ -435,21 +433,26 @@ test_that("Testing Data source time series execution, incremental = FALSE ", {
       )
     )
 
-    # result
-    dataSourceTimeSeriesResult <- readr::read_csv(file = file.path(exportFolder, "time_series.csv"),
-                                                  col_types = readr::cols())
+    # test that the output file is generated
+    expect_true(file.exists(file.path(exportFolder, "time_series.csv")))
 
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohortDefinitionSet,
-      task = "runDataSourceTimeSeries",
-      incremental = incremental
-    ) %>%
-      dplyr::arrange(cohortId)
+    # test that even though the task has been done, because of incremental mode, is still required.
+    requiredTasks <- getRequiredTasks(cohortId = cohortId,
+                     task = "runDataSourceTimeSeries",
+                     checksum = computeChecksum(paste("runDatSourceTimeSeries - ", databaseId)),
+                     recordKeepingFile = recordKeepingFile
+    )
 
     testthat::expect_equal(
-      object = nrow(subset),
-      expected = 1
+      object = requiredTasks$cohortId,
+      expected = cohortId
     )
+
+    testthat::expect_equal(
+      object = requiredTasks$task,
+      expected = "runDataSourceTimeSeries"
+    )
+
   })
 })
 
@@ -459,15 +462,12 @@ test_that("Testing Data source time series execution, incremental = TRUE ", {
   server <- testServers[[testServer]]
   con <- DatabaseConnector::connect(server$connectionDetails)
   exportFolder <- file.path(tempdir(), paste0(testServer, "exp"))
-  recordKeepingFile <- file.path(exportFolder, "record.csv")
+  recordKeepingFile <- file.path(exportFolder, "incremental")
   incremental <- TRUE
+  databaseId <-"testDatabaseId"
+  cohortId <- -44819062 # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
 
   with_dbc_connection(con, {
-    cohortDefinitionSet <- dplyr::tibble(
-      cohortId = -44819062,
-      # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
-      checksum = CohortDiagnostics:::computeChecksum(column = "data source time series")
-    )
 
     unlink(
       x = exportFolder,
@@ -485,14 +485,14 @@ test_that("Testing Data source time series execution, incremental = TRUE ", {
       tempEmulationSchema = server$tempEmulationSchema,
       cdmDatabaseSchema = server$cdmDatabaseSchema,
       cohortDatabaseSchema = server$cohortDatabaseSchema,
-      cohortDefinitionSet = data.frame(),
+      cohortDefinitionSet = server$cohortDefinitionSet,
+      cohortTable = server$cohortTable,
       runCohortTimeSeries = FALSE,
       runDataSourceTimeSeries = TRUE,
-      databaseId = "testDatabaseId",
+      databaseId = databaseId,
       exportFolder = exportFolder,
       minCellCount = 0,
       incremental = incremental,
-      recordKeepingFile = recordKeepingFile,
       observationPeriodDateRange = dplyr::tibble(
         observationPeriodMinDate = as.Date("2004-01-01"),
         observationPeriodMaxDate = as.Date("2007-12-31")
@@ -504,23 +504,45 @@ test_that("Testing Data source time series execution, incremental = TRUE ", {
 
     # testing if check sum is written
     testthat::expect_true("checksum" %in% colnames(recordKeepingFileData))
-    testthat::expect_equal(object = recordKeepingFileData$cohortId, expected = -44819062)
+    testthat::expect_equal(object = recordKeepingFileData$cohortId, expected = cohortId)
 
-    # result
-    dataSourceTimeSeriesResult <- readr::read_csv(file = file.path(exportFolder, "time_series.csv"),
-                                                  col_types = readr::cols())
+    # test that the output file is generated
+    expect_true(file.exists(file.path(exportFolder, "time_series.csv")))
 
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohortDefinitionSet,
-      task = "runDataSourceTimeSeries",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    ) %>%
-      dplyr::arrange(cohortId)
+    # test that no tasks are left to be completed in incremental mode
+    requiredTasks <- getRequiredTasks(cohortId = cohortId,
+                     task = "runDataSourceTimeSeries",
+                     checksum = computeChecksum(paste("runDatSourceTimeSeries - ", databaseId)),
+                     recordKeepingFile = recordKeepingFile
+    )
 
     testthat::expect_equal(
-      object = nrow(subset),
+      object = nrow(requiredTasks),
       expected = 0
     )
+
+  # test that when in incremental mode and the task has been done and runDataSourceTimeSeries = True, then NULL is returned
+  output2 <- CohortDiagnostics::runTimeSeries(
+    connection = con,
+    tempEmulationSchema = server$tempEmulationSchema,
+    cdmDatabaseSchema = server$cdmDatabaseSchema,
+    cohortDatabaseSchema = server$cohortDatabaseSchema,
+    cohortDefinitionSet = server$cohortDefinitionSet,
+    cohortTable = server$cohortTable,
+    runCohortTimeSeries = FALSE,
+    runDataSourceTimeSeries = TRUE,
+    databaseId = databaseId,
+    exportFolder = exportFolder,
+    minCellCount = 0,
+    incremental = incremental,
+    observationPeriodDateRange = dplyr::tibble(
+      observationPeriodMinDate = as.Date("2004-01-01"),
+      observationPeriodMaxDate = as.Date("2007-12-31")
+    )
+  )
+
+  expect_null(output2)
+
   })
+
 })
