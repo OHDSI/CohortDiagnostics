@@ -438,7 +438,7 @@ getTimeSeries <- function(
 #' @template exportFolder
 #' @template minCellCount
 #' @template incremental
-#' @template recordKeepingFile
+#' @template IncrementalFolder
 #' @template BatchSize
 #' @template InstantiatedCohorts
 #' 
@@ -463,7 +463,7 @@ runTimeSeries <- function(connection,
                           minCellCount,
                           instantiatedCohorts,
                           incremental,
-                          recordKeepingFile,
+                          incrementalFolder = exportFolder,
                           observationPeriodDateRange,
                           batchSize = getOption("CohortDiagnostics-TimeSeries-batch-size", default = 20)) {
   
@@ -480,8 +480,10 @@ runTimeSeries <- function(connection,
   checkArg(exportFolder, add = errorMessage)
   checkArg(minCellCount, add = errorMessage)
   checkArg(incremental, add = errorMessage)
-  checkArg(recordKeepingFile, add = errorMessage)
+  checkArg(incrementalFolder, add = errorMessage)
   checkmate::reportAssertions(errorMessage)
+  
+  recordKeepingFile <- file.path(incrementalFolder, "incremental")
   
   if (all(!runCohortTimeSeries, !runDataSourceTimeSeries)) {
     warning(
@@ -576,6 +578,8 @@ runTimeSeries <- function(connection,
   # data source time series
   if (runDataSourceTimeSeries) {
     
+    cohortId <- -44819062 # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
+    
     if (incremental && !isTaskRequired(
           task = "runDataSourceTimeSeries", 
           checksum = computeChecksum(paste("runDatSourceTimeSeries - ", databaseId)),
@@ -584,11 +588,11 @@ runTimeSeries <- function(connection,
       ParallelLogger::logInfo("Skipping Data Source Time Series in Incremental mode.")
       return(NULL)
     }
-
+    
     timeExecution(
-      exportFolder,
-      "DataSourceTimeSeries",
-      cohortId,
+      exportFolder = exportFolder,
+      taskName = "DataSourceTimeSeries",
+      cohortIds = cohortId,
       parent = "TimeSeries",
       expr = {
         data <-
