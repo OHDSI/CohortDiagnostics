@@ -228,7 +228,24 @@ runIncidenceRate <- function(connection,
                              minCellCount,
                              washoutPeriod = 0,
                              incremental,
-                             recordKeepingFile) {
+                             incrementalFolder = exportFolder) {
+  
+  errorMessage <- checkmate::makeAssertCollection()
+  checkArg(connection, add = errorMessage)
+  checkArg(cohortDefinitionSet, add = errorMessage)
+  checkArg(tempEmulationSchema, add = errorMessage)
+  checkArg(cdmDatabaseSchema, add = errorMessage)
+  checkArg(cohortDatabaseSchema, add = errorMessage)
+  checkArg(cohortTable, add = errorMessage)
+  checkArg(databaseId, add = errorMessage)
+  checkArg(exportFolder, add = errorMessage)
+  checkArg(minCellCount, add = errorMessage)
+  # checkArg(washoutPeriod, add = errorMessage) # check not yet implemented
+  checkArg(incremental, add = errorMessage)
+  checkArg(incrementalFolder, add = errorMessage)
+  checkmate::reportAssertions(errorMessage)
+  
+  recordKeepingFile <- file.path(incrementalFolder, "incremental")
   
   checkmate::assertIntegerish(washoutPeriod, len = 1, lower = 0)
   
