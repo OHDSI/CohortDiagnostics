@@ -10,10 +10,10 @@
 checkArg <- function(arg, add) {
   
   argName <- deparse(substitute(arg))
-  
+
   if (argName == "connection") {
     checkmate::assertClass(arg, "DatabaseConnectorConnection")
-    checkmate::assertTRUE(DatabaseConnector::dbIsValid(connection))
+    checkmate::assertTRUE(DatabaseConnector::dbIsValid(arg))
     
   } else if (argName %in% c("tempEmulationSchema", "cdmDatabaseSchema", "vocabularyDatabaseSchema", "cohortDatabaseSchema")) {
     checkmate::assertCharacter(arg, len = 1, pattern = "^[A-Za-z][A-Za-z0-9_]*$", null.ok = TRUE)
@@ -56,7 +56,7 @@ checkArg <- function(arg, add) {
     checkmate::assertNumeric(x = arg, lower = 0, add = add, any.missing = FALSE)
     
   } else if (argName == "incremental") {
-    checkmate::assertLogical(arg, add = add, len = 1, add = add, any.missing = FALSE)
+    checkmate::assertLogical(arg, add = add, len = 1, any.missing = FALSE)
     
   } else if (argName == "cohortTable") {
     checkmate::assertCharacter(x = arg, min.len = 1, pattern = "^[A-Za-z][A-Za-z0-9_]*$", add = add, any.missing = FALSE)
