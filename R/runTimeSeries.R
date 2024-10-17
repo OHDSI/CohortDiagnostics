@@ -437,8 +437,7 @@ getTimeSeries <- function(
 #' @template databaseIds
 #' @template exportFolder
 #' @template minCellCount
-#' @template incremental
-#' @template IncrementalFolder
+#' @template Incremental
 #' @template BatchSize
 #' @template InstantiatedCohorts
 #' 

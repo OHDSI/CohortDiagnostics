@@ -128,9 +128,6 @@ getVisitContext <- function(connection = NULL,
 #' @template cdmVersion
 #' @template MinCellCount
 #' @template Incremental
-#' @param incrementalFolder If \code{incremental = TRUE}, specify a folder where records are kept
-#'                                    of which cohort diagnostics has been executed. If not specified, a file named `incremental`  will be created inside the 
-#'                                    \code{export_folder} directory.
 #'
 #' @export
 runVisitContext <- function(connection,
