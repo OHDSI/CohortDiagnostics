@@ -225,6 +225,20 @@ runBreakdownIndexEvents <- function(connection,
                                     incremental = FALSE,
                                     incrementalFolder) {
   
+  errorMessage <- checkmate::makeAssertCollection()
+  checkArg(connection, add = errorMessage)
+  checkArg(cohortDefinitionSet, add = errorMessage)
+  checkArg(tempEmulationSchema, add = errorMessage)
+  checkArg(cdmDatabaseSchema, add = errorMessage)
+  checkArg(vocabularyDatabaseSchema, add = errorMessage)
+  checkArg(databaseId, add = errorMessage)
+  checkArg(exportFolder, add = errorMessage)
+  checkArg(minCellCount, add = errorMessage)
+  checkArg(cohortTable, add = errorMessage)
+  checkArg(incremental, add = errorMessage)
+  checkArg(incrementalFolder, add = errorMessage)
+  checkmate::reportAssertions(errorMessage)
+  
   ParallelLogger::logInfo("Breaking down index events")
   start <- Sys.time()
   
