@@ -334,8 +334,7 @@ getCohortCharacteristics <- function(connection = NULL,
 #' @template cdmVersion 
 #' @template minCellCount 
 #' @template instantiatedCohorts 
-#' @template incremental 
-#' @template recordKeepingFile 
+#' @template Incremental
 #' @template batchSize 
 #'
 #' @param cohorts                    The cohorts for which the covariates need to be obtained
@@ -365,9 +364,30 @@ runCohortCharacterization <- function(connection,
                                       minCellCount,
                                       instantiatedCohorts,
                                       incremental,
-                                      recordKeepingFile,
+                                      incrementalFolder = exportFolder,
                                       minCharacterizationMean = 0.001,
                                       batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 20)) {
+  
+  errorMessage <- checkmate::makeAssertCollection()
+  checkArg(connection, add = errorMessage)
+  checkArg(databaseId, add = errorMessage)
+  checkArg(exportFolder, add = errorMessage)
+  checkArg(cdmDatabaseSchema, add = errorMessage)
+  checkArg(cohortDatabaseSchema, add = errorMessage)
+  checkArg(cohortTable, add = errorMessage)
+  # checkArg(cohortTable, add = errorMessage) not available
+  checkArg(tempEmulationSchema, add = errorMessage)
+  # checkArg(cohorts, add = errorMessage) not available
+  # checkArg(cohortCounts, add = errorMessage) not available
+  checkArg(minCellCount, add = errorMessage)
+  # checkArg(instantiatedCohorts, add = errorMessage) not available
+  checkArg(incremental, add = errorMessage)
+  checkArg(incrementalFolder, add = errorMessage)
+  checkArg(minCharacterizationMean, add = errorMessage)
+  # checkArg(batchSize, add = errorMessage) not available
+  checkmate::reportAssertions(errorMessage)
+  
+  recordKeepingFile <- file.path(incrementalFolder, "incremental")
   
   # Filename of the binary covariates output
   covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv")
