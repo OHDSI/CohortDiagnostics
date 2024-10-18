@@ -9,7 +9,6 @@ for (nm in names(testServers)) {
     skip_if(skipCdmTests, "cdm settings not configured")
     exportFolder <- file.path(tempdir(), paste0(nm, "exp"))
     dir.create(exportFolder)
-    recordKeepingFile <- file.path(exportFolder, "record.csv")
     on.exit(unlink(exportFolder))
     
     results <- getCohortCharacteristics(
@@ -58,7 +57,7 @@ test_that("Execute and export characterization", {
 
   with_dbc_connection(tConnection, {
     exportFolder <- tempfile()
-    recordKeepingFile <- tempfile(fileext = "csv")
+    recordKeepingFile <- file.path(exportFolder, "incremental")
     dir.create(exportFolder)
     on.exit(unlink(exportFolder), add = TRUE)
 
@@ -94,7 +93,6 @@ test_that("Execute and export characterization", {
       minCellCount = 5,
       instantiatedCohorts = server$cohortDefinitionSet$cohortId,
       incremental = TRUE,
-      recordKeepingFile = recordKeepingFile,
       minCharacterizationMean = 0.3
     )
 
@@ -141,7 +139,6 @@ test_that("Execute and export characterization", {
       minCellCount = 5,
       instantiatedCohorts = server$cohortDefinitionSet$cohortId,
       incremental = TRUE,
-      recordKeepingFile = recordKeepingFile,
       minCharacterizationMean = 0.3
     )
 

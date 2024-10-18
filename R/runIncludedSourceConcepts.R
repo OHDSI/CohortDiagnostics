@@ -119,7 +119,7 @@ getIncludedSourceConcepts <- function(connection,
 #' @param cohortDatabaseSchema 
 #' @param cohortTable 
 #' @param useExternalConceptCountsTable 
-#' @param incremental 
+#' @template Incremental
 #' @param conceptIdTable 
 #' @param recordKeepingFile 
 #' @param resultsDatabaseSchema 
@@ -136,7 +136,21 @@ runIncludedSourceConcepts <- function(connection,
                                      exportFolder,
                                      minCellCount,
                                      incremental = FALSE,
-                                     recordKeepingFile) {
+                                     incrementalFolder = exportFolder) {
+  
+  errorMessage <- checkmate::makeAssertCollection()
+  checkArg(connection, add = errorMessage)
+  checkArg(cohortDefinitionSet, add = errorMessage)
+  checkArg(tempEmulationSchema, add = errorMessage)
+  checkArg(cdmDatabaseSchema, add = errorMessage)
+  checkArg(databaseId, add = errorMessage)
+  checkArg(exportFolder, add = errorMessage)
+  checkArg(minCellCount, add = errorMessage)
+  checkArg(incremental, add = errorMessage)
+  checkArg(incrementalFolder, add = errorMessage)
+  checkmate::reportAssertions(errorMessage)
+  
+  recordKeepingFile <- file.path(incrementalFolder, "incremental")
   
   ParallelLogger::logInfo("Starting concept set diagnostics")
   start <- Sys.time()

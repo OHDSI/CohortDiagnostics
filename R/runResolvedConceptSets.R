@@ -134,6 +134,16 @@ runResolvedConceptSets <- function(connection,
                                    vocabularyDatabaseSchema,
                                    tempEmulationSchema) {
   
+  errorMessage <- checkmate::makeAssertCollection()
+  checkArg(connection, add = errorMessage)
+  checkArg(cohortDefinitionSet, add = errorMessage)
+  checkArg(databaseId, add = errorMessage)
+  checkArg(exportFolder, add = errorMessage)
+  checkArg(minCellCount, add = errorMessage)
+  checkArg(vocabularyDatabaseSchema, add = errorMessage)
+  checkArg(tempEmulationSchema, add = errorMessage)
+  checkmate::reportAssertions(errorMessage)
+  
   # TODO: how should this work in incremental mode
   
   timeExecution(

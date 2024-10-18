@@ -334,8 +334,7 @@ getCohortCharacteristics <- function(connection = NULL,
 #' @template cdmVersion 
 #' @template minCellCount 
 #' @template instantiatedCohorts 
-#' @template incremental 
-#' @template recordKeepingFile 
+#' @template Incremental
 #' @template batchSize 
 #'
 #' @param cohorts                    The cohorts for which the covariates need to be obtained
@@ -343,11 +342,6 @@ getCohortCharacteristics <- function(connection = NULL,
 #' @param covariateSettings          Either an object of type \code{covariateSettings} as created using one of
 #'                                   the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 #'                                   of such objects.
-#' @param covariateValueFileName     Filename of the binary covariates output
-#' @param covariateValueContFileName Filename of the continuous covariate output
-#' @param covariateRefFileName       Filename of the covariate reference output
-#' @param analysisRefFileName        Filename of the analysis reference output
-#' @param timeRefFileName            Filename of the time reference output
 #' @param minCharacterizationMean    The minimum mean value for characterization output. Values below this will be cut off from output. This
 #'                                   will help reduce the file size of the characterization output, but will remove information
 #'                                   on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)
@@ -370,9 +364,42 @@ runCohortCharacterization <- function(connection,
                                       minCellCount,
                                       instantiatedCohorts,
                                       incremental,
-                                      recordKeepingFile,
+                                      incrementalFolder = exportFolder,
                                       minCharacterizationMean = 0.001,
                                       batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 20)) {
+  
+  errorMessage <- checkmate::makeAssertCollection()
+  checkArg(connection, add = errorMessage)
+  checkArg(databaseId, add = errorMessage)
+  checkArg(exportFolder, add = errorMessage)
+  checkArg(cdmDatabaseSchema, add = errorMessage)
+  checkArg(cohortDatabaseSchema, add = errorMessage)
+  checkArg(cohortTable, add = errorMessage)
+  # checkArg(cohortTable, add = errorMessage) not available
+  checkArg(tempEmulationSchema, add = errorMessage)
+  # checkArg(cohorts, add = errorMessage) not available
+  # checkArg(cohortCounts, add = errorMessage) not available
+  checkArg(minCellCount, add = errorMessage)
+  # checkArg(instantiatedCohorts, add = errorMessage) not available
+  checkArg(incremental, add = errorMessage)
+  checkArg(incrementalFolder, add = errorMessage)
+  checkArg(minCharacterizationMean, add = errorMessage)
+  # checkArg(batchSize, add = errorMessage) not available
+  checkmate::reportAssertions(errorMessage)
+  
+  recordKeepingFile <- file.path(incrementalFolder, "incremental")
+  
+  # Filename of the binary covariates output
+  covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv")
+  # Filename of the covariate reference output
+  covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv")
+  # Filename of the continuous covariate output
+  covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv")
+  # Filename of the analysis reference output
+  analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv")
+  # Filename of the time reference output
+  timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv")
+  
   jobName <- "Cohort characterization"
   task <- "runCohortCharacterization"
   ParallelLogger::logInfo("Running ", jobName)

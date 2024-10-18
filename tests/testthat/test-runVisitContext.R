@@ -78,7 +78,6 @@ if ("sqlite" %in% names(testServers)) {
   test_that(paste("test that when incremental is FALSE the incremental file is not generated"), {
 
     exportFolder <- tempfile()
-    dir.create(exportFolder)
 
     expect_false(file.exists(file.path(exportFolder,"incremental")))
 
@@ -98,7 +97,6 @@ if ("sqlite" %in% names(testServers)) {
   test_that(paste("test that when incremental is TRUE the incremental file is generated when it doesn't exist"), {
 
     exportFolder <- tempfile()
-    dir.create(exportFolder)
 
     expect_false(file.exists(file.path(exportFolder, "incremental")))
 
@@ -120,7 +118,6 @@ if ("sqlite" %in% names(testServers)) {
   test_that(paste("test that the output file visit_context.csv is generated and is identical with the output of getVisitContext()"), {
 
     exportFolder <- tempfile()
-    dir.create(exportFolder)
 
     getVisitContextResult <- getVisitContext(connection = con,
                                              cdmDatabaseSchema = server$cdmDatabaseSchema,
@@ -161,7 +158,6 @@ if ("sqlite" %in% names(testServers)) {
   test_that(paste("test that incremental logic is correct: incremental run for the first time"), {
 
     exportFolder <- tempfile()
-    dir.create(exportFolder)
 
     cohortIds <- c(17492)
 
@@ -190,7 +186,6 @@ if ("sqlite" %in% names(testServers)) {
   test_that(paste("test that incremental logic is correct: no new cohorts"), {
 
     exportFolder <- tempfile()
-    dir.create(exportFolder)
 
     cohortIds <- c(17492)
 
@@ -236,7 +231,6 @@ if ("sqlite" %in% names(testServers)) {
   test_that(paste("test that incremental logic is correct: output visit_context.csv must contain results for new cohorts"), {
 
     exportFolder <- tempfile()
-    dir.create(exportFolder)
 
     cohortIds <- c(17492)
 
@@ -478,7 +472,6 @@ test_that(paste("test that no other cohorts than the ones specified in cohortIds
                                           cdmVersion = 5
     )
 
-  print(visitContextResult)
   expect_true(identical(unique(visitContextResult$cohortId), c(1)))
 
 })

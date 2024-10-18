@@ -191,7 +191,6 @@ getCohortRelationship <- function(
 #' @param temporalCovariateSettings Either an object of type covariateSettings as created using one of the createTemporalCovariateSettings function in the FeatureExtraction package, or a list of such objects.
 #' @template MinCellCount 
 #' @template Incremental 
-#' @template Incremental
 #' @template BatchSize 
 #'
 #' @export
@@ -207,8 +206,26 @@ runCohortRelationship <- function(
     temporalCovariateSettings,
     minCellCount,
     incremental,
-    incrementalFolder,
+    incrementalFolder = exportFolder,
     batchSize = getOption("CohortDiagnostics-Relationship-batch-size", default = 500)) {
+  
+  
+  errorMessage <- checkmate::makeAssertCollection()
+  checkArg(connection, add = errorMessage)
+  checkArg(cohortDefinitionSet, add = errorMessage)
+  checkArg(exportFolder, add = errorMessage)
+  checkArg(databaseId, add = errorMessage)
+  checkArg(cohortDatabaseSchema, add = errorMessage)
+  checkArg(cdmDatabaseSchema, add = errorMessage)
+  checkArg(tempEmulationSchema, add = errorMessage)
+  checkArg(cohortTable, add = errorMessage)
+  # checkArg(temporalCovariateSettings, add = errorMessage) # not needed for this function as default is passed and only temporalStartDays and temporalEndDays are required from an object given.
+  checkArg(minCellCount, add = errorMessage)
+  checkArg(incremental, add = errorMessage)
+  checkArg(incrementalFolder, add = errorMessage)
+  checkmate::reportAssertions(errorMessage)
+  
+  recordKeepingFile <- file.path(incrementalFolder, "incremental")
   
   cohortDefinitionSet$checksum <- CohortGenerator::computeChecksum(cohortDefinitionSet$sql)
   
@@ -236,7 +253,7 @@ runCohortRelationship <- function(
     combis = combinationsOfPossibleCohortRelationships,
     task = "runCohortRelationship",
     incremental = incremental,
-    recordKeepingFile = incrementalFolder
+    recordKeepingFile = recordKeepingFile
   )
   
   if (nrow(subset) > 0) {
@@ -379,7 +396,7 @@ runCohortRelationship <- function(
         comparatorChecksum = subset[start:end, ]$comparatorChecksum,
         task = "runCohortRelationship",
         checksum = subset[start:end, ]$checksum,
-        recordKeepingFile = incrementalFolder,
+        recordKeepingFile = recordKeepingFile,
         incremental = incremental
       )
       

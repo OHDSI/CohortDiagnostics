@@ -128,9 +128,6 @@ getVisitContext <- function(connection = NULL,
 #' @template cdmVersion
 #' @template MinCellCount
 #' @template Incremental
-#' @param incrementalFolder If \code{incremental = TRUE}, specify a folder where records are kept
-#'                                    of which cohort diagnostics has been executed. If not specified, a file named `incremental`  will be created inside the 
-#'                                    \code{export_folder} directory.
 #'
 #' @export
 runVisitContext <- function(connection,
@@ -144,26 +141,36 @@ runVisitContext <- function(connection,
                             cdmVersion = 5,
                             minCellCount,
                             incremental,
-                            incrementalFolder = file.path(exportFolder, "incremental")){
+                            incrementalFolder = exportFolder){
+  
+  errorMessage <- checkmate::makeAssertCollection()
+  checkArg(connection, add = errorMessage)
+  checkArg(cohortDefinitionSet, add = errorMessage)
+  checkArg(exportFolder, add = errorMessage)
+  checkArg(databaseId, add = errorMessage)
+  checkArg(cohortDatabaseSchema, add = errorMessage)
+  checkArg(cdmDatabaseSchema, add = errorMessage)
+  checkArg(tempEmulationSchema, add = errorMessage)
+  checkArg(cohortTable, add = errorMessage)
+  checkArg(minCellCount, add = errorMessage)
+  checkArg(incremental, add = errorMessage)
+  checkArg(incrementalFolder, add = errorMessage)
+  checkmate::reportAssertions(errorMessage)
+  
+  recordKeepingFile <- file.path(incrementalFolder, "incremental")
   
   cohortDefinitionSet$checksum <- CohortGenerator::computeChecksum(cohortDefinitionSet$sql)
   
-  # Create export file if it doesn't exist
-  if (!file.exists(gsub("/$", "", exportFolder))) {
-    dir.create(exportFolder, recursive = TRUE)
-    ParallelLogger::logInfo("Created export folder", exportFolder)
-  }
-  
-  if (incremental && !file.exists(incrementalFolder)) {
+  if (incremental && !file.exists(recordKeepingFile)) {
     # Create the file if it doesn't exist
-    file.create(incrementalFolder)
+    file.create(recordKeepingFile)
     ParallelLogger::logInfo(
       sprintf(
         "Created record keeping file %s.",
-        incrementalFolder
+        recordKeepingFile
       )
     )
-  } 
+  }
   
   cohortCounts <- CohortGenerator::getCohortCounts(
     connection = connection,
@@ -197,7 +204,7 @@ runVisitContext <- function(connection,
       dplyr::filter(.data$cohortId %in% instantiatedCohorts),
     task = "runVisitContext",
     incremental = incremental,
-    recordKeepingFile = incrementalFolder
+    recordKeepingFile = recordKeepingFile
   )
   
   if (incremental &&
@@ -242,7 +249,7 @@ runVisitContext <- function(connection,
     cohortId = subset$cohortId,
     task = "runVisitContext",
     checksum = subset$checksum,
-    recordKeepingFile = incrementalFolder,
+    recordKeepingFile = recordKeepingFile,
     incremental = incremental
   )
 }
