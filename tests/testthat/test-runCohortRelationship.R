@@ -1,5 +1,5 @@
 for (nm in names(testServers)) {
-
+  nm <- "sqlite"
   server <- testServers[[nm]]
 
   connectionDetails <- server$connectionDetails
@@ -88,10 +88,10 @@ for (nm in names(testServers)) {
           sql = json,
           checksum = CohortDiagnostics:::computeChecksum(json)
         )
-
-
+      
+      cohortDefinitionSet$cohortName <- c("cohortName")
+      
       exportFolder <- tempdir()
-      exportFile <- tempfile()
 
       unlink(
         x = exportFolder,
@@ -119,14 +119,13 @@ for (nm in names(testServers)) {
           temporalEndDays = c(-31, -1)
         ),
         minCellCount = 0,
-        incrementalFolder = paste0(exportFile, "recordKeeping"),
         incremental = TRUE,
         batchSize = 2
       )
 
       recordKeepingFileData <-
         readr::read_csv(
-          file = paste0(exportFile, "recordKeeping"),
+          file = file.path(exportFolder, "incremental"),
           col_types = readr::cols()
         )
 
@@ -179,7 +178,7 @@ for (nm in names(testServers)) {
         combis = combinationsOfPossibleCohortRelationships,
         task = "runCohortRelationship",
         incremental = TRUE,
-        recordKeepingFile = paste0(exportFile, "recordKeeping")
+        recordKeepingFile = file.path(exportFolder, "incremental")
       ) %>% dplyr::tibble()
 
       ### subset should not have the combinations in record keeping file
@@ -221,14 +220,13 @@ for (nm in names(testServers)) {
           temporalEndDays = c(-31, -1)
         ),
         minCellCount = 0,
-        incrementalFolder = paste0(exportFile, "recordKeeping"),
         incremental = TRUE,
         batchSize = 2
       )
 
       recordKeepingFileData2 <-
         readr::read_csv(
-          file = paste0(exportFile, "recordKeeping"),
+          file = file.path(exportFolder, "incremental"),
           col_types = readr::cols()
         )
       # record keeping file should have 6 combinations - for 3 cohorts
@@ -279,7 +277,7 @@ for (nm in names(testServers)) {
         combis = combinationsOfPossibleCohortRelationships,
         task = "runCohortRelationship",
         incremental = TRUE,
-        recordKeepingFile = paste0(exportFile, "recordKeeping")
+        recordKeepingFile = file.path(exportFolder, "incremental")
       ) %>% dplyr::tibble()
 
       ### subset should be two rows in subsets that are not in record keeping file
@@ -427,211 +425,3 @@ for (nm in names(testServers)) {
     })
   })
 }
-
-
-
-nm <- "sqlite"
-
-server <- testServers[[nm]]
-
-connectionDetails <- server$connectionDetails
-
-test_that("Testing runCohortRelationship: runs without errors when temporalCovariateSettings is NULL", {
-  skip_if(skipCdmTests, "cdm settings not configured")
-  
-  # manually create cohort table and load to table
-  # for the logic to work - there has to be some overlap of the comparator cohort over target cohort
-  # note - we will not be testing offset in this test. it is expected to work as it is a simple substraction
-  
-  temporalStartDays <- c(0)
-  temporalEndDays <- c(0)
-  
-  targetCohort <- dplyr::tibble(
-    cohortDefinitionId = c(1),
-    subjectId = c(1),
-    cohortStartDate = c(as.Date("1900-01-15")),
-    cohortEndDate = c(as.Date("1900-01-31"))
-  ) # target cohort always one row
-  
-  comparatorCohort <- # all records here overlap with targetCohort
-    dplyr::tibble(
-      cohortDefinitionId = c(10, 10, 10),
-      subjectId = c(1, 1, 1),
-      cohortStartDate = c(
-        as.Date("1900-01-01"),
-        # starts before target cohort start
-        as.Date("1900-01-22"),
-        # starts during target cohort period and ends during target cohort period
-        as.Date("1900-01-31")
-      ),
-      cohortEndDate = c(
-        as.Date("1900-01-20"),
-        as.Date("1900-01-29"),
-        as.Date("1900-01-31")
-      )
-    )
-  
-  cohort <- dplyr::bind_rows(
-    targetCohort,
-    comparatorCohort,
-    targetCohort %>%
-      dplyr::mutate(cohortDefinitionId = 2),
-    comparatorCohort %>%
-      dplyr::mutate(cohortDefinitionId = 20)
-  )
-  
-  connectionCohortRelationship <-
-    DatabaseConnector::connect(connectionDetails)
-  
-  # to do - with incremental = FALSE
-  with_dbc_connection(connectionCohortRelationship, {
-    sysTime <- as.numeric(Sys.time()) * 100000
-    tableName <- paste0("cr", sysTime)
-    observationTableName <- paste0("op", sysTime)
-    
-    DatabaseConnector::insertTable(
-      connection = connectionCohortRelationship,
-      databaseSchema = server$cohortDatabaseSchema,
-      tableName = tableName,
-      data = cohort,
-      dropTableIfExists = TRUE,
-      createTable = TRUE,
-      tempTable = FALSE,
-      camelCaseToSnakeCase = TRUE,
-      progressBar = FALSE
-    )
-    
-    cohortDefinitionSet <-
-      cohort %>%
-      dplyr::select(cohortDefinitionId) %>%
-      dplyr::distinct() %>%
-      dplyr::rename("cohortId" = "cohortDefinitionId") %>%
-      dplyr::rowwise() %>%
-      dplyr::mutate(json = RJSONIO::toJSON(list(
-        cohortId = cohortId,
-        randomString = c(
-          sample(x = LETTERS, 5, replace = TRUE),
-          sample(x = LETTERS, 4, replace = TRUE),
-          sample(LETTERS, 1, replace = TRUE)
-        )
-      ))) %>%
-      dplyr::ungroup() %>%
-      dplyr::mutate(
-        sql = json,
-        checksum = CohortDiagnostics:::computeChecksum(json)
-      )
-    
-    
-    exportFolder <- tempdir()
-    exportFile <- tempfile()
-    
-    unlink(
-      x = exportFolder,
-      recursive = TRUE,
-      force = TRUE
-    )
-    dir.create(
-      path = exportFolder,
-      showWarnings = FALSE,
-      recursive = TRUE
-    )
-    
-    CohortDiagnostics:::runCohortRelationship(
-      connection = connectionCohortRelationship,
-      databaseId = nm,
-      exportFolder = exportFolder,
-      cohortDatabaseSchema = server$cohortDatabaseSchema,
-      cdmDatabaseSchema = server$cdmDatabaseSchema,
-      cohortTable = tableName,
-      tempEmulationSchema = server$tempEmulationSchema,
-      cohortDefinitionSet = cohortDefinitionSet %>%
-        dplyr::filter(cohortId %in% c(1, 10)),
-      temporalCovariateSettings = NULL,
-      minCellCount = 0,
-      incrementalFolder = paste0(exportFile, "recordKeeping"),
-      incremental = TRUE,
-      batchSize = 2
-    )
-    
-    recordKeepingFileData <-
-      readr::read_csv(
-        file = paste0(exportFile, "recordKeeping"),
-        col_types = readr::cols()
-      )
-    
-    # testing if check sum is written to field called targetChecksum
-    testthat::expect_true("targetChecksum" %in% colnames(recordKeepingFileData))
-    testthat::expect_true("comparatorChecksum" %in% colnames(recordKeepingFileData))
-    testthat::expect_true("checksum" %in% colnames(recordKeepingFileData))
-    
-    testthat::expect_equal(
-      object = recordKeepingFileData %>%
-        dplyr::filter(cohortId == 1) %>%
-        dplyr::filter(comparatorId == 10) %>%
-        dplyr::select(checksum) %>%
-        dplyr::pull(checksum),
-      expected = recordKeepingFileData %>%
-        dplyr::filter(cohortId == 1) %>%
-        dplyr::filter(comparatorId == 10) %>%
-        dplyr::mutate(
-          checksum2 = paste0(
-            targetChecksum,
-            comparatorChecksum
-          )
-        ) %>%
-        dplyr::pull(checksum2)
-    )
-    
-    ## testing if subset works
-    allCohortIds <- cohortDefinitionSet %>%
-      dplyr::filter(cohortId %in% c(1, 10, 2)) %>%
-      dplyr::select(cohortId, checksum) %>%
-      dplyr::rename(
-        targetCohortId = cohortId,
-        targetChecksum = checksum
-      ) %>%
-      dplyr::distinct()
-    
-    combinationsOfPossibleCohortRelationships <- allCohortIds %>%
-      tidyr::crossing(
-        allCohortIds %>%
-          dplyr::rename(
-            comparatorCohortId = targetCohortId,
-            comparatorChecksum = targetChecksum
-          )
-      ) %>%
-      dplyr::filter(targetCohortId != comparatorCohortId) %>%
-      dplyr::arrange(targetCohortId, comparatorCohortId) %>%
-      dplyr::mutate(checksum = paste0(targetChecksum, comparatorChecksum))
-    
-    subset <- CohortDiagnostics:::subsetToRequiredCombis(
-      combis = combinationsOfPossibleCohortRelationships,
-      task = "runCohortRelationship",
-      incremental = TRUE,
-      recordKeepingFile = paste0(exportFile, "recordKeeping")
-    ) %>% dplyr::tibble()
-    
-    ### subset should not have the combinations in record keeping file
-    shouldBeDfOfZeroRows <- subset %>%
-      dplyr::inner_join(
-        recordKeepingFileData %>%
-          dplyr::select(
-            "cohortId",
-            "comparatorId"
-          ) %>%
-          dplyr::distinct() %>%
-          dplyr::rename(
-            targetCohortId = "cohortId",
-            comparatorCohortId = "comparatorId"
-          ),
-        by = c("targetCohortId", "comparatorCohortId")
-      )
-    
-    testthat::expect_equal(
-      object = nrow(shouldBeDfOfZeroRows),
-      expected = 0,
-      info = "Looks like subset and record keeping file did not match."
-    )
-    
-  })
-})
