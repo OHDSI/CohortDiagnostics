@@ -145,6 +145,8 @@ for (nm in names(testServers)) {
         reportOverallTime = FALSE
       )
     }
+    unlink(exportFolder, recursive = TRUE)
+    DatabaseConnector::disconnect(connection)
   })
   
   test_that(paste("test run orphan codes temp concept counts", nm), {
@@ -154,7 +156,6 @@ for (nm in names(testServers)) {
     dir.create(exportFolder)
     
     # Instantiate Unique ConceptSets
-    
     runResolvedConceptSets(connection = connection,
                            cohortDefinitionSet = cohortDefinitionSet,
                            databaseId = databaseId,
@@ -204,5 +205,6 @@ for (nm in names(testServers)) {
     expect_true(all(recordKeeping$cohortId %in% server$cohortDefinitionSet$cohortId))
     
     unlink(exportFolder, recursive = TRUE)
+    DatabaseConnector::disconnect(connection)
   })
 }
