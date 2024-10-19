@@ -129,14 +129,14 @@ getIncludedSourceConcepts <- function(connection,
 #'
 #' @examples
 runIncludedSourceConcepts <- function(connection,
-                                     cohortDefinitionSet,
-                                     tempEmulationSchema,
-                                     cdmDatabaseSchema,
-                                     databaseId,
-                                     exportFolder,
-                                     minCellCount,
-                                     incremental = FALSE,
-                                     incrementalFolder = exportFolder) {
+                                      cohortDefinitionSet,
+                                      tempEmulationSchema,
+                                      cdmDatabaseSchema,
+                                      databaseId,
+                                      exportFolder,
+                                      minCellCount,
+                                      incremental = FALSE,
+                                      incrementalFolder = exportFolder) {
   
   errorMessage <- checkmate::makeAssertCollection()
   checkArg(connection, add = errorMessage)
@@ -150,11 +150,10 @@ runIncludedSourceConcepts <- function(connection,
   checkArg(incrementalFolder, add = errorMessage)
   checkmate::reportAssertions(errorMessage)
   
-  recordKeepingFile <- file.path(incrementalFolder, "incremental")
+  recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
   
   ParallelLogger::logInfo("Starting concept set diagnostics")
   start <- Sys.time()
-  subset <- dplyr::tibble()
   
   ParallelLogger::logInfo("Fetching included source concepts")
   
@@ -166,10 +165,10 @@ runIncludedSourceConcepts <- function(connection,
   )
   
   # TODO: Disregard empty cohorts in tally:
-  if (incremental && (nrow(cohortDefinitionSet) - nrow(subsetIncluded)) > 0) {
+  if (incremental && (nrow(cohortDefinitionSet) - nrow(subset)) > 0) {
     ParallelLogger::logInfo(sprintf(
       "Skipping %s cohorts in incremental mode.",
-      nrow(cohortDefinitionSet) - nrow(subsetIncluded)
+      nrow(cohortDefinitionSet) - nrow(subset)
     ))
   }
   
@@ -185,7 +184,7 @@ runIncludedSourceConcepts <- function(connection,
   
   if (is.null(conceptSets)) {
     ParallelLogger::logInfo(
-      "Cohorts being diagnosed does not have concept ids. Skipping concept set diagnostics."
+      "Cohorts being diagnosed does not have concept ids. Skipping included source concepts."
     )
     return(NULL)
   }

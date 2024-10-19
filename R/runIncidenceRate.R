@@ -245,7 +245,7 @@ runIncidenceRate <- function(connection,
   checkArg(incrementalFolder, add = errorMessage)
   checkmate::reportAssertions(errorMessage)
   
-  recordKeepingFile <- file.path(incrementalFolder, "incremental")
+  recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
   
   checkmate::assertIntegerish(washoutPeriod, len = 1, lower = 0)
   

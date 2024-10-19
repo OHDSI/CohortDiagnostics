@@ -139,7 +139,7 @@ runOrphanConcepts <- function(connection,
   # checkArg(resultsDatabaseSchema, add = errorMessage) # no argument check currently available
   checkmate::reportAssertions(errorMessage)
 
-  recordKeepingFile <- file.path(incrementalFolder, "incremental")
+  recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
   
   ParallelLogger::logInfo("Starting concept set diagnostics")
   startTime <- Sys.time()

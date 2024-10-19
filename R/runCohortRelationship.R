@@ -225,7 +225,7 @@ runCohortRelationship <- function(
   checkArg(incrementalFolder, add = errorMessage)
   checkmate::reportAssertions(errorMessage)
   
-  recordKeepingFile <- file.path(incrementalFolder, "incremental")
+  recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
   
   cohortDefinitionSet$checksum <- CohortGenerator::computeChecksum(cohortDefinitionSet$sql)
   

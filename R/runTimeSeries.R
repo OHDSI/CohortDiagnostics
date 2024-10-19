@@ -482,7 +482,7 @@ runTimeSeries <- function(connection,
   checkArg(incrementalFolder, add = errorMessage)
   checkmate::reportAssertions(errorMessage)
   
-  recordKeepingFile <- file.path(incrementalFolder, "incremental")
+  recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
   
   if (all(!runCohortTimeSeries, !runDataSourceTimeSeries)) {
     warning(
@@ -501,6 +501,7 @@ runTimeSeries <- function(connection,
     ) %>%
       dplyr::arrange(.data$cohortId)
 
+    #TODO print a message if we skip all cohorts in incremental mode. Make sure the code is the same in all runAnalysis functions
     if (nrow(subset) > 0) {
       if (incremental) {
         numSkippedCohorts <- length(instantiatedCohorts) - nrow(subset)

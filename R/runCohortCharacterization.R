@@ -387,7 +387,7 @@ runCohortCharacterization <- function(connection,
   # checkArg(batchSize, add = errorMessage) not available
   checkmate::reportAssertions(errorMessage)
   
-  recordKeepingFile <- file.path(incrementalFolder, "incremental")
+  recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
   
   # Filename of the binary covariates output
   covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv")

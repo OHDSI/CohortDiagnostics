@@ -61,7 +61,7 @@ runInclusionStatistics <- function(connection,
   checkArg(incrementalFolder, add = errorMessage)
   checkmate::reportAssertions(errorMessage)
   
-  recordKeepingFile <- file.path(incrementalFolder, "incremental")
+  recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
   
   ParallelLogger::logInfo("Fetching inclusion statistics from files")
   
