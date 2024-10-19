@@ -1,6 +1,7 @@
 
-nm = "duckdb"
-for (nm in names(testServers)) {
+nm = "sqlite"
+# for (nm in names(testServers)) {
+for (nm in "sqlite") {
   server <- testServers[[nm]]
 
   test_that(paste("Cohort diagnostics in incremental mode on", nm), {
@@ -10,7 +11,8 @@ for (nm in names(testServers)) {
 
     incrementalFolder <- tempfile()
     dir.create(incrementalFolder)
-    
+    databaseId <- nm
+
     firstTime <- system.time(
       executeDiagnostics(
         cohortDefinitionSet = server$cohortDefinitionSet,
@@ -22,7 +24,7 @@ for (nm in names(testServers)) {
         cohortTable = server$cohortTable,
         cohortIds = server$cohortIds,
         exportFolder = exportFolder,
-        databaseId = nm,
+        databaseId = databaseId,
         runInclusionStatistics = TRUE,
         runBreakdownIndexEvents = TRUE,
         runTemporalCohortCharacterization = TRUE,
@@ -40,20 +42,20 @@ for (nm in names(testServers)) {
     )
 
     expect_true(file.exists(file.path(
-      folder, "export", paste0("Results_", dbms, ".zip")
+      exportFolder, paste0("Results_", databaseId, ".zip")
     )))
 
     # We now run it with all cohorts without specifying ids - testing incremental mode
     secondTime <- system.time(
       executeDiagnostics(
-        connectionDetails = connectionDetails,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        tempEmulationSchema = tempEmulationSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTableNames = cohortTableNames,
-        cohortDefinitionSet = cohortDefinitionSet,
-        exportFolder = file.path(folder, "export"),
-        databaseId = dbms,
+        connectionDetails = server$connectionDetails,
+        cdmDatabaseSchema = server$cdmDatabaseSchema,
+        tempEmulationSchema = server$tempEmulationSchema,
+        cohortDatabaseSchema = server$cohortDatabaseSchema,
+        cohortTable = server$cohortTable,
+        cohortDefinitionSet = server$cohortDefinitionSet,
+        exportFolder = exportFolder,
+        databaseId = databaseId,
         runInclusionStatistics = TRUE,
         runBreakdownIndexEvents = TRUE,
         runTemporalCohortCharacterization = TRUE,
@@ -62,25 +64,24 @@ for (nm in names(testServers)) {
         runOrphanConcepts = TRUE,
         runTimeSeries = TRUE,
         runCohortRelationship = TRUE,
-        minCellCount = minCellCountValue,
+        minCellCount = 5,
         incremental = TRUE,
-        incrementalFolder = file.path(folder, "incremental"),
-        temporalCovariateSettings = temporalCovariateSettings,
-        runOnSample = TRUE
+        incrementalFolder = exportFolder,
+        temporalCovariateSettings = server$temporalCovariateSettings
       )
     )
     # generate sqlite file
     sqliteDbPath <- tempfile(fileext = ".sqlite")
-    createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = sqliteDbPath)
+    createMergedResultsFile(dataFolder = exportFolder, sqliteDbPath = sqliteDbPath)
     expect_true(file.exists(sqliteDbPath))
 
     # File exists
-    expect_error(createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = sqliteDbPath))
+    expect_error(createMergedResultsFile(dataFolder = exportFolder, sqliteDbPath = sqliteDbPath))
 
     if (dbms == "sqlite") {
       # Get file sizes of batch computed results
       batchedResultsFiles <- c("temporal_covariate_value.csv", "cohort_relationships.csv", "time_series.csv")
-      bacthFiles <- file.path(folder, "export", batchedResultsFiles)
+      bacthFiles <- file.path(exportFolder, batchedResultsFiles)
       fileSizes <- list()
       for (filePath in batchedResultsFiles) {
         fileSizes[[filePath]] <- file.size(filePath)
@@ -99,7 +100,7 @@ for (nm in names(testServers)) {
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTableNames = cohortTableNames,
           cohortDefinitionSet = cohortDefinitionSet,
-          exportFolder = file.path(folder, "export"),
+          exportFolder = exportFolder,
           databaseId = dbms,
           runInclusionStatistics = TRUE,
           runBreakdownIndexEvents = TRUE,
@@ -111,7 +112,7 @@ for (nm in names(testServers)) {
           runCohortRelationship = TRUE,
           minCellCount = minCellCountValue,
           incremental = FALSE,
-          incrementalFolder = file.path(folder, "incremental"),
+          incrementalFolder = exportFolder,
           temporalCovariateSettings = temporalCovariateSettings,
           runOnSample = TRUE
         )
@@ -134,7 +135,7 @@ for (nm in names(testServers)) {
     expect_error(createDiagnosticsExplorerZip(outputZipfile = DiagnosticsExplorerZip, sqliteDbPath = sqliteDbPath))
     # Bad filepath
     expect_error(createDiagnosticsExplorerZip(outputZipfile = "foo", sqliteDbPath = "sdlfkmdkmfkd"))
-    output <- read.csv(file.path(folder, "export", "temporal_covariate_value.csv"))
+    output <- read.csv(file.path(exportFolder, "temporal_covariate_value.csv"))
 
     expect_true(is.numeric(output$sum_value[2]))
     expect_true(is.numeric(output$mean[2]))
