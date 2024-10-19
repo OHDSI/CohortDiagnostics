@@ -184,12 +184,14 @@ runOrphanConcepts <- function(connection,
                                                                     name = conceptCountsTable,
                                                                     databaseSchema = conceptCountsDatabaseSchema)
   
-  # Creates temp conceptCountsTable if name has # or doesn´t exists ------------
-  if (substr(conceptCountsTable, 1, 1) == "#" || !checkConceptCountsTableExists) {
-    conceptCountsTableIsTemp <- TRUE
-    if (!substr(conceptCountsTable, 1, 1) == "#") {
-      conceptCountsTable <- paste0("#", conceptCountsTable)
-    }
+  conceptCountsTableIsTemp <- (substr(conceptCountsTable, 1, 1) == "#") 
+  
+  # Create conceptCountsTable if name has # or doesn´t exists ------------
+  if (conceptCountsTableIsTemp || !checkConceptCountsTableExists) {
+    
+    ParallelLogger::logInfo(paste(
+      "Creating", ifelse(conceptCountsTableIsTemp, "temp", "") ,"concept counts table"
+    ))
     timeExecution(
       exportFolder,
       taskName = "createConceptCountsTable",
