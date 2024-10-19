@@ -110,7 +110,7 @@ if ("sqlite" %in% names(testServers)) {
                     incremental = TRUE
     )
 
-    expect_true(file.exists(file.path(exportFolder, "incremental")))
+    expect_true(file.exists(file.path(exportFolder, "CreatedDiagnostics.csv")))
 
   })
 
@@ -277,6 +277,7 @@ if ("sqlite" %in% names(testServers)) {
     expect_equal(unique(results2$cohort_id), c(17492, 17493))
 
   })
+  DatabaseConnector::disconnect(con)
 }
 
 # ##### Test cases with custom data #####
@@ -288,7 +289,7 @@ test_that(paste("test that the subject counts per cohort, visit concept and visi
                                     mustWork = TRUE)
 
   patientDataFilePath <- file.path("testCases", "runVisitContext", "testSubjectCounts", "test-getVisitContext-patientData.json")
-                                     
+
 
   connectionDetailsCustomCDM <- createCustomCdm(patientDataFilePath)
 
@@ -305,8 +306,8 @@ test_that(paste("test that the subject counts per cohort, visit concept and visi
                                         cohortTable =  "cohort",
                                         cohortIds = list(1,2),
                                         conceptIdTable = "#concept_ids",
-                                        cdmVersion = 5
-  )
+                                        cdmVersion = 5)
+  DatabaseConnector::disconnect(connection)
 
   resultPath <- system.file(file.path("testCases", "runVisitContext", "testSubjectCounts", "expectedResult.csv"),
                             package = "CohortDiagnostics",
@@ -317,8 +318,8 @@ test_that(paste("test that the subject counts per cohort, visit concept and visi
   visitContextResult <- visitContextResult[order(visitContextResult$cohortId, visitContextResult$visitConceptId, visitContextResult$visitContext, visitContextResult$subjects), ]
   visitContextResult <- as.data.frame(lapply(visitContextResult, as.character), stringsAsFactors = FALSE)
 
-  resultData <-  resultData[order(resultData$cohortId, resultData$visitConceptId, resultData$visitContext, resultData$subjects), ]
-  resultData <-  as.data.frame(lapply(resultData, as.character), stringsAsFactors = FALSE)
+  resultData <- resultData[order(resultData$cohortId, resultData$visitConceptId, resultData$visitContext, resultData$subjects), ]
+  resultData <- as.data.frame(lapply(resultData, as.character), stringsAsFactors = FALSE)
 
   are_equal <- identical(visitContextResult, resultData)
 
@@ -402,6 +403,7 @@ test_that(paste("test that only the new visit_concept_id are inserted into the #
   are_equal <- all(sort(unlist(list(262, 9201, 261))) == sort(unlist(res2$CONCEPT_ID)))
 
   expect_true(are_equal)
+  DatabaseConnector::disconnect(connection)
 })
 
 
@@ -445,7 +447,7 @@ test_that(paste("test that to infer subject counts per cohort, visit concept, an
     are_equal <- identical(visitContextResult, resultData)
 
     expect_true(are_equal)
-
+    DatabaseConnector::disconnect(connection)
 })
 
 test_that(paste("test that no other cohorts than the ones specified in cohortIds are included in the output"), {
@@ -473,7 +475,7 @@ test_that(paste("test that no other cohorts than the ones specified in cohortIds
     )
 
   expect_true(identical(unique(visitContextResult$cohortId), c(1)))
-
+  DatabaseConnector::disconnect(connection)
 })
 
 test_that(paste("test that when the subjects in the cohort have no visits an empty data frame is returned"), {
@@ -521,4 +523,5 @@ test_that(paste("test that when the subjects in the cohort have no visits an emp
   are_equal <- identical(visitContextResult, resultData)
 
   expect_true(are_equal)
+  DatabaseConnector::disconnect(connection)
 })

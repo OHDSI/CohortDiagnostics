@@ -404,3 +404,44 @@ emptyResult <- function(tableName = NULL) {
   return(result)
 }
 
+
+processTemporalCovariateSettings <- function(temporalCovariateSettings) {
+  
+  stopifnot(methods::is(temporalCovariateSettings[[1]], "covariateSettings"))
+  
+  # Adding required temporal windows required in results viewer
+  requiredTemporalPairs <-
+    list(
+      c(-365, 0),
+      c(-30, 0),
+      c(-365, -31),
+      c(-30, -1),
+      c(0, 0),
+      c(1, 30),
+      c(31, 365),
+      c(-9999, 9999)
+    )
+  for (p1 in requiredTemporalPairs) {
+    found <- FALSE
+    for (i in seq_along(temporalCovariateSettings[[1]]$temporalStartDays)) {
+      p2 <- c(
+        temporalCovariateSettings[[1]]$temporalStartDays[i],
+        temporalCovariateSettings[[1]]$temporalEndDays[i]
+      )
+      
+      if (p2[1] == p1[1] & p2[2] == p1[2]) {
+        found <- TRUE
+        break
+      }
+    }
+    
+    if (!found) {
+      temporalCovariateSettings[[1]]$temporalStartDays <-
+        c(temporalCovariateSettings[[1]]$temporalStartDays, p1[1])
+      temporalCovariateSettings[[1]]$temporalEndDays <-
+        c(temporalCovariateSettings[[1]]$temporalEndDays, p1[2])
+    }
+  }
+}
+
+

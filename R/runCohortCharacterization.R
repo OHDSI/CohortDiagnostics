@@ -506,7 +506,7 @@ runCohortCharacterization <- function(connection,
   ParallelLogger::logInfo(
     "Running ",
     jobName,
-    " took",
+    " took ",
     signif(delta, 3),
     " ",
     attr(delta, "units")

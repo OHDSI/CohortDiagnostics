@@ -192,7 +192,7 @@ test_that("Testing cohort time series execution, incremental = FALSE", {
         file = file.path(exportFolder, "time_series.csv"),
         col_types = readr::cols()
       )
-    
+
     testthat::expect_equal(
       object = timeSeriesResults$cohort_id %>% unique() %>% sort(),
       expected = c(1, 2)
@@ -218,7 +218,7 @@ test_that("Testing cohort time series execution, incremental = TRUE", {
   server <- testServers[[testServer]]
   con <- DatabaseConnector::connect(server$connectionDetails)
   exportFolder <- file.path(tempdir(), paste0(testServer, "exp"))
-  recordKeepingFile <- file.path(exportFolder, "incremental")
+  recordKeepingFile <- file.path(exportFolder, "CreatedDiagnostics.csv")
   incrementalFolder <- exportFolder
   incremental <- TRUE
 
@@ -397,7 +397,7 @@ test_that("Testing Data source time series execution, incremental = FALSE ", {
   server <- testServers[[testServer]]
   con <- DatabaseConnector::connect(server$connectionDetails)
   exportFolder <- file.path(tempdir(), paste0(testServer, "exp"))
-  recordKeepingFile <- file.path(exportFolder, "incremental")
+  recordKeepingFile <- file.path(exportFolder, "CreatedDiagnostics.csv")
   incremental <- FALSE
   cohortId = -44819062 # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
 
@@ -462,7 +462,7 @@ test_that("Testing Data source time series execution, incremental = TRUE ", {
   server <- testServers[[testServer]]
   con <- DatabaseConnector::connect(server$connectionDetails)
   exportFolder <- file.path(tempdir(), paste0(testServer, "exp"))
-  recordKeepingFile <- file.path(exportFolder, "incremental")
+  recordKeepingFile <- file.path(exportFolder, "CreatedDiagnostics.csv")
   incremental <- TRUE
   databaseId <-"testDatabaseId"
   cohortId <- -44819062 # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
@@ -498,6 +498,7 @@ test_that("Testing Data source time series execution, incremental = TRUE ", {
         observationPeriodMaxDate = as.Date("2007-12-31")
       )
     )
+   
 
     recordKeepingFileData <- readr::read_csv(file = recordKeepingFile,
                                              col_types = readr::cols())
@@ -540,9 +541,6 @@ test_that("Testing Data source time series execution, incremental = TRUE ", {
       observationPeriodMaxDate = as.Date("2007-12-31")
     )
   )
-
   expect_null(output2)
-
   })
-
 })

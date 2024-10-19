@@ -125,7 +125,7 @@ for (nm in names(testServers)) {
 
       recordKeepingFileData <-
         readr::read_csv(
-          file = file.path(exportFolder, "incremental"),
+          file = file.path(exportFolder, "CreatedDiagnostics.csv"),
           col_types = readr::cols()
         )
 
@@ -178,7 +178,7 @@ for (nm in names(testServers)) {
         combis = combinationsOfPossibleCohortRelationships,
         task = "runCohortRelationship",
         incremental = TRUE,
-        recordKeepingFile = file.path(exportFolder, "incremental")
+        recordKeepingFile = file.path(exportFolder, "CreatedDiagnostics.csv")
       ) %>% dplyr::tibble()
 
       ### subset should not have the combinations in record keeping file
@@ -226,7 +226,7 @@ for (nm in names(testServers)) {
 
       recordKeepingFileData2 <-
         readr::read_csv(
-          file = file.path(exportFolder, "incremental"),
+          file = file.path(exportFolder, "CreatedDiagnostics.csv"),
           col_types = readr::cols()
         )
       # record keeping file should have 6 combinations - for 3 cohorts
@@ -277,7 +277,7 @@ for (nm in names(testServers)) {
         combis = combinationsOfPossibleCohortRelationships,
         task = "runCohortRelationship",
         incremental = TRUE,
-        recordKeepingFile = file.path(exportFolder, "incremental")
+        recordKeepingFile = file.path(exportFolder, "CreatedDiagnostics.csv")
       ) %>% dplyr::tibble()
 
       ### subset should be two rows in subsets that are not in record keeping file

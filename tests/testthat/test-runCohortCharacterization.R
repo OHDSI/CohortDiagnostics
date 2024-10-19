@@ -10,7 +10,7 @@ for (nm in names(testServers)) {
     exportFolder <- file.path(tempdir(), paste0(nm, "exp"))
     dir.create(exportFolder)
     on.exit(unlink(exportFolder))
-    
+
     results <- getCohortCharacteristics(
       connection = con,
       cdmDatabaseSchema = server$cdmDatabaseSchema,
@@ -22,25 +22,25 @@ for (nm in names(testServers)) {
       exportFolder = exportFolder,
       minCharacterizationMean = minCharacterizationMean
     )
-    
+
     # check characteristics
     expect_equal(class(results)[1], "Andromeda")
     expect_equal(names(results), c("analysisRef", "covariateRef", "covariates", "covariatesContinuous", "timeRef"))
-    
+
     analysisRef <- results$analysisRef
     analysisIds <- analysisRef %>% dplyr::pull(analysisId)
     expect_equal(analysisRef %>% dplyr::pull(analysisName), c("Measurement", "ConditionOccurrence", "DrugEraStart", "CharlsonIndex", "ProcedureOccurrence"))
-    
+
     covariateRef <- results$covariateRef
     expect_true(all(covariateRef %>% dplyr::pull(analysisId) %>% unique() %in% analysisIds))
-    
+
     covariates <- results$covariates
     expect_true(all(covariates %>% dplyr::pull(cohortId) %in% server$cohortIds))
     expect_true(covariates %>% dplyr::pull(mean) %>% min() >= minCharacterizationMean)
-    
+
     covariatesCont <- results$covariatesContinuous
     expect_true(all(covariatesCont %>% dplyr::pull(cohortId) %in% server$cohortIds))
-    
+
     timeRef <- results$timeRef
     expect_equal(timeRef %>% dplyr::pull(startDay), c(-365, -30, 0, 1, 31))
     expect_equal(timeRef %>% dplyr::pull(endDay), c(-31, -1, 0, 30, 365))
@@ -57,7 +57,7 @@ test_that("Execute and export characterization", {
 
   with_dbc_connection(tConnection, {
     exportFolder <- tempfile()
-    recordKeepingFile <- file.path(exportFolder, "incremental")
+    recordKeepingFile <- file.path(exportFolder, "CreatedDiagnostics.csv")
     dir.create(exportFolder)
     on.exit(unlink(exportFolder), add = TRUE)
 
@@ -144,14 +144,14 @@ test_that("Execute and export characterization", {
 
     # Check no time ids are NA/NULL
     readr::local_edition(1)
-    tdata <- readr::read_csv(file.path(exportFolder, "temporal_covariate_value_dist.csv"))
+    tdata <- readr::read_csv(file.path(exportFolder, "temporal_covariate_value_dist.csv"), show_col_types = FALSE)
     expect_false(any(is.na(tdata$time_id) | is.null(tdata$time_id)))
 
-    tdata <- readr::read_csv(file.path(exportFolder, "temporal_covariate_value.csv"))
+    tdata <- readr::read_csv(file.path(exportFolder, "temporal_covariate_value.csv"), show_col_types = FALSE)
     expect_false(any(is.na(tdata$time_id) | is.null(tdata$time_id)))
 
     # It would make no sense if there were NA values here
-    tdata <- readr::read_csv(file.path(exportFolder, "temporal_time_ref.csv"))
+    tdata <- readr::read_csv(file.path(exportFolder, "temporal_time_ref.csv"), show_col_types = FALSE)
     expect_false(any(is.na(tdata$time_id) | is.null(tdata$time_id)))
   })
 })
