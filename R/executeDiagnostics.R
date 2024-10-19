@@ -168,11 +168,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                runFeatureExtractionOnSample = FALSE,
                                sampleN = 1000,
                                seed = 64374,
-                               seedArgs = NULL,
-                               sampleIdentifierExpression = "cohortId * 1000 + seed",
-                               useAchilles = FALSE, 
-                               achillesDatabaseSchema = NULL,
-                               workDatabaseSchema = NULL) {
+                               seedArgs = NULL) {
   # collect arguments that were passed to cohort diagnostics at initiation
   callingArgsJson <-
     list(
@@ -238,7 +234,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
     ),
     add = errorMessage
   )
-  cohortDefinitionSet <- dplyr::tibble(cohortDefinitionSet) # for better printing
   
   checkmate::assertIntegerish(cohortIds, lower = 0, any.missing = FALSE, null.ok = TRUE, add = errorMessage)
   checkmate::assertSubset(cohortIds, cohortDefinitionSet$cohortId, add = errorMessage)
@@ -299,12 +294,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
     )
   }
   
-  checkmate::assertLogical(useAchilles, len = 1, any.missing = FALSE, add = errorMessage)
-  
-  if (isTRUE(useAchilles)) {
-    checkmate::assertCharacter(achillesDatabaseSchema, len = 1, any.missing = FALSE, add = errorMessage)
-  }
-  
   # Create output and incremental folders. check that we have write access.
   if (!file.exists(gsub("/$", "", exportFolder))) {
     dir.create(name, recursive = TRUE)
@@ -323,6 +312,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (is(temporalCovariateSettings, "covariateSettings")) {
     temporalCovariateSettings <- list(temporalCovariateSettings)
   }
+  
+  checkmate::assertIntegerish(irWashoutPeriod, lower = 0, len = 1, any.missing = FALSE)
   
   checkmate::reportAssertions(collection = errorMessage)
   
@@ -660,7 +651,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
           cohortTableNames = cohortTableNames,
           incremental = incremental,
           minCellCount = minCellCount,
-          recordKeepingFile = recordKeepingFile
+          incrementalFolder = incrementalFolder
         )
       }
     )
@@ -676,7 +667,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
       conceptCountsTableIsTemp <- TRUE
     } else {
         conceptCountsTableIsTemp <- FALSE
-        conceptCountsTable <- conceptCountsTable
         dataSourceInfo <- getCdmDataSourceInformation(connection = connection, 
                                                       cdmDatabaseSchema = cdmDatabaseSchema)
         vocabVersion <- dataSourceInfo$vocabularyVersion
@@ -708,6 +698,16 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   # Concept set diagnostics -----------------------------------------------
   if (runIncludedSourceConcepts || runOrphanConcepts || runBreakdownIndexEvents) {
+    
+    runResolvedConceptSets(
+      connection = connection,
+      cohortDefinitionSet = cohortDefinitionSet,
+      databaseId = databaseId,
+      exportFolder = exportFolder,
+      minCellCount = minCellCount,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema) 
+      
     timeExecution(
       exportFolder,
       taskName = "runIncludedSourceConcepts",
@@ -716,23 +716,14 @@ executeDiagnostics <- function(cohortDefinitionSet,
       expr = {
         runIncludedSourceConcepts(
           connection = connection,
+          cohortDefinitionSet = cohortDefinitionSet,
           tempEmulationSchema = tempEmulationSchema,
           cdmDatabaseSchema = cdmDatabaseSchema,
-          vocabularyDatabaseSchema = vocabularyDatabaseSchema,
           databaseId = databaseId,
-          cohorts = cohortDefinitionSet,
           exportFolder = exportFolder,
           minCellCount = minCellCount,
-          conceptCountsDatabaseSchema = NULL,
-          conceptCountsTable = conceptCountsTable,
-          conceptCountsTableIsTemp = conceptCountsTableIsTemp,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
-          useExternalConceptCountsTable = useExternalConceptCountsTable,
           incremental = incremental,
-          conceptIdTable = "#concept_ids",
-          recordKeepingFile = recordKeepingFile,
-          resultsDatabaseSchema = resultsDatabaseSchema
+          incrementalFolder = incrementalFolder
         )
       }
     )
@@ -758,7 +749,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
           minCellCount = minCellCount,
           instantiatedCohorts = instantiatedCohorts,
           incremental = incremental,
-          recordKeepingFile = recordKeepingFile,
+          incrementalFolder = incrementalFolder,
           observationPeriodDateRange = observationPeriodDateRange
         )
       }
@@ -775,24 +766,23 @@ executeDiagnostics <- function(cohortDefinitionSet,
       parent = "executeDiagnostics",
       expr = {
         runVisitContext(
-          connection = connection,
-          tempEmulationSchema = tempEmulationSchema,
-          cdmDatabaseSchema = cdmDatabaseSchema,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
-          cdmVersion = cdmVersion,
-          databaseId = databaseId,
-          exportFolder = exportFolder,
-          minCellCount = minCellCount,
-          cohorts = cohortDefinitionSet,
-          instantiatedCohorts = instantiatedCohorts,
-          recordKeepingFile = recordKeepingFile,
-          incremental = incremental
+          connection = connection, 
+          cohortDefinitionSet = cohortDefinitionSet, 
+          exportFolder = exportFolder, 
+          databaseId = databaseId, 
+          cohortDatabaseSchema = cohortDatabaseSchema, 
+          cdmDatabaseSchema = cdmDatabaseSchema, 
+          tempEmulationSchema = tempEmulationSchema, 
+          cohortTable = cohortTable, 
+          cdmVersion = cdmVersion, 
+          minCellCount = minCellCount, 
+          incremental = incremental, 
+          incrementalFolder = incrementalFolder 
         )
       }
     )
   }
-
+  
   # Incidence rates --------------------------------------------------------------------------------------
   if (runIncidenceRate) {
     timeExecution(
@@ -802,19 +792,18 @@ executeDiagnostics <- function(cohortDefinitionSet,
       parent = "executeDiagnostics",
       expr = {
         runIncidenceRate(
-          connection = connection,
-          tempEmulationSchema = tempEmulationSchema,
-          cdmDatabaseSchema = cdmDatabaseSchema,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
-          databaseId = databaseId,
-          exportFolder = exportFolder,
-          minCellCount = minCellCount,
-          cohorts = cohortDefinitionSet,
-          washoutPeriod = irWashoutPeriod,
-          instantiatedCohorts = instantiatedCohorts,
-          recordKeepingFile = recordKeepingFile,
-          incremental = incremental
+          connection = connection, 
+          cohortDefinitionSet = cohortDefinitionSet, 
+          tempEmulationSchema = tempEmulationSchema, 
+          cdmDatabaseSchema = cdmDatabaseSchema, 
+          cohortDatabaseSchema = cohortDatabaseSchema, 
+          cohortTable = cohortTable, 
+          databaseId = databaseId, 
+          exportFolder = exportFolder, 
+          minCellCount = minCellCount, 
+          washoutPeriod = irWashoutPeriod, 
+          incremental = incremental, 
+          incrementalFolder = incrementalFolder 
         )
       }
     )
@@ -839,8 +828,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
           cohortDefinitionSet = cohortDefinitionSet,
           temporalCovariateSettings = temporalCovariateSettings[[1]],
           minCellCount = minCellCount,
-          recordKeepingFile = recordKeepingFile,
-          incremental = incremental
+          incremental = incremental,
+          incrementalFolder = incrementalFolder
         )
       }
     )
@@ -910,12 +899,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
           minCellCount = minCellCount,
           instantiatedCohorts = instantiatedCohorts,
           incremental = incremental,
-          recordKeepingFile = recordKeepingFile,
-          covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
-          covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
-          covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
-          analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
-          timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
+          incrementalFolder = incrementalFolder,
           minCharacterizationMean = minCharacterizationMean
         )
       }
