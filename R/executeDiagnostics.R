@@ -941,15 +941,13 @@ executeDiagnostics <- function(cohortDefinitionSet,
               incrementalFolder = incrementalFolder
             )
 
-          feCohortCounts <- computeCohortCounts(
+          feCohortCounts <- CohortGenerator::getCohortCounts(
             connection = connection,
             cohortDatabaseSchema = cohortDatabaseSchema,
             cohortTable = cohortTableNames$cohortSampleTable,
-            cohorts = feCohortDefinitionSet,
-            exportFolder = exportFolder,
-            minCellCount = minCellCount,
-            databaseId = databaseId,
-            writeResult = FALSE
+            cohortDefinitionSet = feCohortDefinitionSet,
+            cohortIds = cohortDefinitionSet$cohortId,
+            databaseId = databaseId
           )
         }
 

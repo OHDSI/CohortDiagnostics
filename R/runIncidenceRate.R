@@ -299,7 +299,10 @@ runIncidenceRate <- function(connection,
 
     data <- lapply(split(subset, subset$cohortId), runOneIncidenceRate)
     data <- dplyr::bind_rows(data)
-    
+    data <- dplyr::mutate(data, databaseId = databaseId)
+
+    data <- data %>% dplyr::select("cohortCount", "personYears", "gender", "gender", "ageGroup",
+                                  "calendarYear", "incidenceRate", "cohortId", "databaseId")
     exportDataToCsv(
       data = data,
       tableName = "incidence_rate",
