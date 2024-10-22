@@ -9,7 +9,7 @@ for (nm in names(testServers)) {
     skip_if(skipCdmTests, "cdm settings not configured")
     exportFolder <- getUniqueTempDir()
     dir.create(exportFolder, recursive = TRUE)
-    on.exit(unlink(exportFolder, force = TRUE, recursive = TRUE))
+    on.exit(unlink(exportFolder), add = TRUE)
 
     results <- getCohortCharacteristics(
       connection = con,
@@ -59,7 +59,7 @@ test_that("Execute and export characterization", {
     exportFolder <- getUniqueTempDir()
     recordKeepingFile <- file.path(exportFolder, "CreatedDiagnostics.csv")
     dir.create(exportFolder, recursive = TRUE)
-    on.exit(unlink(exportFolder, force = TRUE, recursive = TRUE), add = TRUE)
+    on.exit(unlink(exportFolder))
 
     # Required for function use
     cohortCounts <- CohortGenerator::getCohortCounts(
