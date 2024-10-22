@@ -3,7 +3,7 @@ for (nm in names(testServers)) {
 
   server <- testServers[[nm]]
   con <- connect(server$connectionDetails)
-  exportFolder <- file.path(tempdir(), paste0(nm, "exp"))
+  exportFolder <- getUniqueTempDir()
   recordKeepingFile <- file.path(exportFolder, "record.csv")
 
   test_that("Testing time series logic", {
@@ -84,7 +84,7 @@ test_that("Testing cohort time series execution, incremental = FALSE", {
   skip_if_not(testServer %in% names(testServers))
   server <- testServers[[testServer]]
   con <- DatabaseConnector::connect(server$connectionDetails)
-  exportFolder <- file.path(tempdir(), paste0(testServer, "exp"))
+  exportFolder <- getUniqueTempDir()
   incremental <- FALSE
 
   with_dbc_connection(con, {
@@ -217,7 +217,7 @@ test_that("Testing cohort time series execution, incremental = TRUE", {
   skip_if_not(testServer %in% names(testServers))
   server <- testServers[[testServer]]
   con <- DatabaseConnector::connect(server$connectionDetails)
-  exportFolder <- file.path(tempdir(), paste0(testServer, "exp"))
+  exportFolder <- getUniqueTempDir()
   recordKeepingFile <- file.path(exportFolder, "CreatedDiagnostics.csv")
   incrementalFolder <- exportFolder
   incremental <- TRUE
@@ -396,7 +396,7 @@ test_that("Testing Data source time series execution, incremental = FALSE ", {
   skip_if_not(testServer %in% names(testServers))
   server <- testServers[[testServer]]
   con <- DatabaseConnector::connect(server$connectionDetails)
-  exportFolder <- file.path(tempdir(), paste0(testServer, "exp"))
+  exportFolder <- getUniqueTempDir()
   recordKeepingFile <- file.path(exportFolder, "CreatedDiagnostics.csv")
   incremental <- FALSE
   cohortId = -44819062 # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
@@ -461,7 +461,7 @@ test_that("Testing Data source time series execution, incremental = TRUE ", {
   skip_if_not(testServer %in% names(testServers))
   server <- testServers[[testServer]]
   con <- DatabaseConnector::connect(server$connectionDetails)
-  exportFolder <- file.path(tempdir(), paste0(testServer, "exp"))
+  exportFolder <- getUniqueTempDir()
   recordKeepingFile <- file.path(exportFolder, "CreatedDiagnostics.csv")
   incremental <- TRUE
   databaseId <-"testDatabaseId"

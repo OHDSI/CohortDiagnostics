@@ -53,9 +53,9 @@ test_that("Check function makeDataExportable", {
 
 test_that("timeExecution function", {
   readr::local_edition(1)
-  temp <- tempfile()
+  temp <- getUniqueTempDir()
   on.exit(unlink(temp, force = TRUE, recursive = TRUE))
-  dir.create(temp)
+  dir.create(temp, recursive = TRUE)
 
   # Basic test
   timeExecution(
@@ -165,8 +165,8 @@ test_that("enforceMinCellValue works with vector of minimum values", {
 })
 
 test_that("timeExecution uses minutes as unit", {
-  exportFolder <- tempfile()
-  dir.create(exportFolder)
+  exportFolder <- getUniqueTempDir()
+  dir.create(exportFolder, recursive = TRUE)
   timeExecution(exportFolder,
                 taskName = "test 1 second",
                 expr = Sys.sleep(1))

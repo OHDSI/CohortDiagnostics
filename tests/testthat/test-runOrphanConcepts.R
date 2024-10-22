@@ -28,7 +28,7 @@ for (nm in names(testServers)) {
   tempEmulationSchema <- server$cdmDatabaseSchema
   vocabularyDatabaseSchema <- server$cdmDatabaseSchema
   cohorts <- server$cohortDefinitionSet
-  exportFolder <- file.path(tempdir(), paste0(nm, "_concept"))
+  exportFolder <- getUniqueTempDir()
   minCellCount <- 5
   databaseId <- "myDB"
   conceptCountsDatabaseSchema <- server$cohortDatabaseSchema
@@ -46,7 +46,7 @@ for (nm in names(testServers)) {
 
   test_that(paste("test run orphan codes concept table", nm), {
     connection <- DatabaseConnector::connect(server$connectionDetails)
-    exportFolder <- file.path(tempdir(), paste0(nm, "_no_concept"))
+    exportFolder <- getUniqueTempDir()
     recordKeepingFile <- file.path(exportFolder, "CreatedDiagnostics.csv")
     dir.create(exportFolder)
     # CreateConceptcounts table
@@ -151,7 +151,7 @@ for (nm in names(testServers)) {
 
   test_that(paste("test run orphan codes temp concept counts", nm), {
     connection <- DatabaseConnector::connect(server$connectionDetails)
-    exportFolder <- file.path(tempdir(), paste0(nm, "_no_concept"))
+    exportFolder <- getUniqueTempDir()
     recordKeepingFile <- file.path(exportFolder, "CreatedDiagnostics.csv")
     dir.create(exportFolder)
 

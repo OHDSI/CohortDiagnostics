@@ -91,7 +91,7 @@ for (nm in names(testServers)) {
       
       cohortDefinitionSet$cohortName <- c("cohortName")
       
-      exportFolder <- file.path(tempdir(), paste0(tempdir(), Sys.time(), "exp"))
+      exportFolder <- getUniqueTempDir()
 
       unlink(
         x = exportFolder,

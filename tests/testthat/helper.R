@@ -185,6 +185,14 @@ addCohortTable <- function(connection, cohortDataFilePath){
   )
 }
 
+getUniqueTempDir <- function(){
+  random_string <- paste(sample(c(letters, LETTERS, 0:9), 10, replace = TRUE), collapse = "")
+  uniqueComponent <- as.integer(Sys.time()) %% 10000
+  tempDir <- file.path(tempdir(), paste0(uniqueComponent, random_string, "exp"))
+  
+  return(tempDir)
+}
+
 
 
 

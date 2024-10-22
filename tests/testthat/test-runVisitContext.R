@@ -7,9 +7,9 @@ for (nm in names(testServers)) {
 
   con <- DatabaseConnector::connect(server$connectionDetails)
 
-  exportFolder <- tempfile()
+  exportFolder <- getUniqueTempDir()
 
-  dir.create(exportFolder)
+  dir.create(exportFolder, recursive = TRUE)
 
   test_that(paste("test temporary table #concept_ids creation"), {
 
@@ -77,7 +77,7 @@ if ("sqlite" %in% names(testServers)) {
 
   test_that(paste("test that when incremental is FALSE the incremental file is not generated"), {
 
-    exportFolder <- tempfile()
+    exportFolder <- getUniqueTempDir()
 
     expect_false(file.exists(file.path(exportFolder,"incremental")))
 
@@ -96,7 +96,7 @@ if ("sqlite" %in% names(testServers)) {
 
   test_that(paste("test that when incremental is TRUE the incremental file is generated when it doesn't exist"), {
 
-    exportFolder <- tempfile()
+    exportFolder <- getUniqueTempDir()
 
     expect_false(file.exists(file.path(exportFolder, "incremental")))
 
@@ -117,7 +117,7 @@ if ("sqlite" %in% names(testServers)) {
 
   test_that(paste("test that the output file visit_context.csv is generated and is identical with the output of getVisitContext()"), {
 
-    exportFolder <- tempfile()
+    exportFolder <- getUniqueTempDir()
 
     getVisitContextResult <- getVisitContext(connection = con,
                                              cdmDatabaseSchema = server$cdmDatabaseSchema,
@@ -157,7 +157,7 @@ if ("sqlite" %in% names(testServers)) {
 
   test_that(paste("test that incremental logic is correct: incremental run for the first time"), {
 
-    exportFolder <- tempfile()
+    exportFolder <- getUniqueTempDir()
 
     cohortIds <- c(17492)
 
@@ -185,7 +185,7 @@ if ("sqlite" %in% names(testServers)) {
 
   test_that(paste("test that incremental logic is correct: no new cohorts"), {
 
-    exportFolder <- tempfile()
+    exportFolder <- getUniqueTempDir()
 
     cohortIds <- c(17492)
 
@@ -230,7 +230,7 @@ if ("sqlite" %in% names(testServers)) {
 
   test_that(paste("test that incremental logic is correct: output visit_context.csv must contain results for new cohorts"), {
 
-    exportFolder <- tempfile()
+    exportFolder <- getUniqueTempDir()
 
     cohortIds <- c(17492)
 

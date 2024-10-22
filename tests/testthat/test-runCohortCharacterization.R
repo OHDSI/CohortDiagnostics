@@ -7,9 +7,9 @@ for (nm in names(testServers)) {
 
   test_that("Testing getCohortCharacteristics", {
     skip_if(skipCdmTests, "cdm settings not configured")
-    exportFolder <- file.path(tempdir(), paste0(nm, "exp"))
-    dir.create(exportFolder)
-    on.exit(unlink(exportFolder))
+    exportFolder <- getUniqueTempDir()
+    dir.create(exportFolder, recursive = TRUE)
+    on.exit(unlink(exportFolder, force = TRUE, recursive = TRUE))
 
     results <- getCohortCharacteristics(
       connection = con,
@@ -56,10 +56,10 @@ test_that("Execute and export characterization", {
   tConnection <- DatabaseConnector::connect(server$connectionDetails)
 
   with_dbc_connection(tConnection, {
-    exportFolder <- tempfile()
+    exportFolder <- getUniqueTempDir()
     recordKeepingFile <- file.path(exportFolder, "CreatedDiagnostics.csv")
-    dir.create(exportFolder)
-    on.exit(unlink(exportFolder), add = TRUE)
+    dir.create(exportFolder, recursive = TRUE)
+    on.exit(unlink(exportFolder, force = TRUE, recursive = TRUE), add = TRUE)
 
     # Required for function use
     cohortCounts <- CohortGenerator::getCohortCounts(

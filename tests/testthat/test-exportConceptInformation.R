@@ -4,8 +4,8 @@ for (nm in names(testServers)) {
     
     server <- testServers[[nm]]
     
-    exportFolder <- tempfile()
-    dir.create(exportFolder)
+    exportFolder <- getUniqueTempDir()
+    dir.create(exportFolder, recursive = TRUE)
     
     connection <- DatabaseConnector::connect(server$connectionDetails)
     

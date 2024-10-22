@@ -43,10 +43,9 @@ test_that("runIncludedSourceConcepts works", {
   skip_if_not("sqlite" %in% names(testServers))
   server <- testServers[["sqlite"]]
   connection <- DatabaseConnector::connect(server$connectionDetails)
-  exportFolder <- tempfile()
-  dir.create(exportFolder)
+  exportFolder <- getUniqueTempDir()
+  dir.create(exportFolder, recursive = TRUE)
 
-  
   invisible(
     runResolvedConceptSets(
       connection = connection,
