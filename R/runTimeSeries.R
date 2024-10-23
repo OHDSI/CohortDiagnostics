@@ -414,7 +414,7 @@ getTimeSeries <- function(
 #'
 #' @description
 #' This function first generates a calendar period table, that has
-#' calendar intervals between the \code{timeSeriesMinDate} and \code{timeSeriesMaxDate}.
+#' calendar intervals between the \code{observationPeriodMinDate} and \code{observationPeriodMaxDate}.
 #' Calendar Month, Quarter and year are supported.
 #' For each of the calendar interval, time series data are computed. There are 2 different types
 #' of time series: one related to cohorts and one related to the data source.
@@ -429,26 +429,24 @@ getTimeSeries <- function(
 #' 
 #' 
 #' @template Connection
-#' @template CohortDatabaseSchema
-#' @template CdmDatabaseSchema
 #' @template TempEmulationSchema
+#' @template CdmDatabaseSchema
+#' @template CohortDatabaseSchema
 #' @template CohortTable
 #' @template cohortDefinitionSet
 #' @template databaseIds
 #' @template exportFolder
 #' @template minCellCount
+#' @template InstantiatedCohorts
 #' @template Incremental
 #' @template BatchSize
-#' @template InstantiatedCohorts
 #' 
-#' @param runCohortTimeSeries.       Generate and export the cohort level time series (T1 and T2)
-#' @param runDataSourceTimeSeries    Generate and export the data source level time series using all persons found in observation period table (T3).
-#' @param observationPeriodDateRange 
+#' @param runCohortTimeSeries.        (TRUE OR FALSE) Generate and export the cohort level time series (T1 and T2)
+#' @param runDataSourceTimeSeries     (TRUE OR FALSE) Generate and export the data source level time series using all persons found in observation period table (T3).
+#' @param observationPeriodDateRange  Object that contains the attributes observationPeriodMinDate and observationPeriodMaxDate. For example, observationPeriodMinDate could be defined as Date("2004-01-01") and observationPeriodMaxDate as Date("2007-12-31").
 #'
 #' @return None, it will write the results to a csv file
 #' @export
-#'
-#' @examples
 runTimeSeries <- function(connection,
                           tempEmulationSchema,
                           cdmDatabaseSchema,
