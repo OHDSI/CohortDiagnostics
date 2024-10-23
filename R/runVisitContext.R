@@ -113,14 +113,14 @@ getVisitContext <- function(connection = NULL,
 #' @description
 #' Generates the `visit_context.csv` which contains the counts for the subjects by `cohort_id`,
 #' `visit_concept_id` and `visit_context`. The `visit_context` categorizes visit occurrences of
-#' subjects based on how each the start and end date of each visit related to the cohort start date
-#' to which each subject belongs. No output will be generated for cohorts with no subjects.If there
+#' subjects based on how the start and end date of each of their visits relates to the cohort start date
+#' to which each subject belongs. No output will be generated for cohorts with no subjects. If there
 #' is no cohort with subjects execution will halt and `visit_context.csv` will not be generated. 
 #'  
 #' @template Connection 
 #' @template cohortDefinitionSet 
 #' @template ExportFolder
-#' @param databaseId  A short string for identifying the database (e.g. 'Synpuf').
+#' @template databaseId
 #' @template CohortDatabaseSchema   
 #' @template CdmDatabaseSchema
 #' @template TempEmulationSchema
@@ -128,7 +128,7 @@ getVisitContext <- function(connection = NULL,
 #' @template cdmVersion
 #' @template MinCellCount
 #' @template Incremental
-#'
+#' 
 #' @export
 runVisitContext <- function(connection,
                             cohortDefinitionSet,
