@@ -916,6 +916,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
           )
 
           feCohortTable <- cohortTableNames$cohortSampleTable
+          # work around for cohortGenerator 0.11.1
+          cohortDefinitionSet$cohortIds <-  cohortDefinitionSet$cohortId
           feCohortDefinitionSet <-
             CohortGenerator::sampleCohortDefinitionSet(
               connection = connection,
