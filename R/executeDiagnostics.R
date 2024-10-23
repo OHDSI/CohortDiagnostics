@@ -364,19 +364,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
   
   # Create output and incremental folders. check that we have write access.
-  if (!file.exists(gsub("/$", "", exportFolder))) {
-    dir.create(name, recursive = TRUE)
-    ParallelLogger::logInfo("Created export folder", exportFolder)
-  }
-  checkmate::assertDirectory(exportFolder, access = "w", add = errorMessage)
-
-  if (incremental) {
-    if (!file.exists(gsub("/$", "", exportFolder))) {
-      dir.create(name, recursive = TRUE)
-      ParallelLogger::logInfo("Created incremental folder", incrementalFolder)
-    }
-    checkmate::assertDirectory(incrementalFolder, access = "w", add = errorMessage)
-  }
+  checkArg(exportFolder, add = errorMessage)
+  checkArg(incremental, add = errorMessage)
+  checkArg(incrementalFolder, add = errorMessage)
 
   if (is(temporalCovariateSettings, "covariateSettings")) {
     temporalCovariateSettings <- list(temporalCovariateSettings)
