@@ -129,6 +129,7 @@ getVisitContext <- function(connection = NULL,
 #' @template MinCellCount
 #' @template Incremental
 #' 
+#' @return None, it will write the results to a csv file
 #' @export
 runVisitContext <- function(connection,
                             cohortDefinitionSet,
