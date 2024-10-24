@@ -311,7 +311,7 @@ getCohortCharacteristics <- function(connection = NULL,
   return(results)
 }
 
-#' runCohortCharacterization
+#' Generate and export the temporal cohort characterization
 #' 
 #' @description
 #' This function takes cohorts as input and generates the covariates for these cohorts.
@@ -324,18 +324,18 @@ getCohortCharacteristics <- function(connection = NULL,
 #'  * temporal_covariate_value_dist.csv
 #'  * temporal_time_ref.csv
 #' 
-#' @template connection 
+#' @template Connection 
 #' @template databaseId 
-#' @template exportFolder 
-#' @template cdmDatabaseSchema 
-#' @template cohortDatabaseSchema 
-#' @template cohortTable 
-#' @template tempEmulationSchema 
+#' @template ExportFolder 
+#' @template CdmDatabaseSchema 
+#' @template CohortDatabaseSchema 
+#' @template CohortTable 
+#' @template TempEmulationSchema 
 #' @template cdmVersion 
-#' @template minCellCount 
-#' @template instantiatedCohorts 
+#' @template MinCellCount 
+#' @template InstantiatedCohorts 
 #' @template Incremental
-#' @template batchSize 
+#' @template BatchSize 
 #'
 #' @param cohorts                    The cohorts for which the covariates need to be obtained
 #' @param cohortCounts               A dataframe with the cohort counts
@@ -347,9 +347,6 @@ getCohortCharacteristics <- function(connection = NULL,
 #'                                   on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)
 #'
 #' @return None, it will write results to disk
-#' @export
-#'
-#' @examples
 runCohortCharacterization <- function(connection,
                                       databaseId,
                                       exportFolder,
