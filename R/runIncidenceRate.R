@@ -199,23 +199,23 @@ aggregateIr <- function(ratesSummary, aggregateList) {
 }
 
 #' Run the incidence rate cohort diagnostic
-#' 
+#' @description
 #' runIncidenceRate computes incidence rates for cohorts in the CDM population stratified
 #' by age, sex, and calendar year.
 #'
-#' @template connection 
-#' @template cohortDefinitionSet 
+#' @template Connection 
+#' @template CohortDefinitionSet 
 #' @param washoutPeriod Then minimum number of required observation days prior to 
 #'                      cohort index to be included in the numerator of the incidence rate
-#' @template tempEmulationSchema 
-#' @template cdmDatabaseSchema 
+#' @template TempEmulationSchema 
+#' @template CdmDatabaseSchema 
 #' @template CohortTable 
 #' @template databaseId 
-#' @template exportFolder 
-#' @template minCellCount 
+#' @template ExportFolder 
+#' @template MinCellCount 
 #' @template Incremental 
 #'
-#' @return
+#' @return None, it will write the results to a csv file
 #' @export
 runIncidenceRate <- function(connection,
                              cohortDefinitionSet,
