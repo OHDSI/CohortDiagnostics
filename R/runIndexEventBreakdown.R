@@ -196,21 +196,24 @@ getBreakdownIndexEvents <- function(connection,
 
 
 
-#' runBreakdownIndexEvents
-#'
-#' @template connection 
-#' @template cohortDefinitionSet 
-#' @template tempEmulationSchema 
-#' @template cdmDatabaseSchema 
-#' @template vocabularyDatabaseSchema 
-#' @template cohortDatabaseSchema 
+#' Generate and export the breakdown of index events
+#' @description
+#' Provides the amount of distinct subjects and the frequency of the concept ids listed in the cohorts table, for which the start date of the cohort the subjects and concept ids belong to coincides with the start date of a certain domain. Results are organised per domain, domain field and domain concept id.
+#' 
+#' @template Connection 
+#' @template CohortDefinitionSet 
+#' @template TempEmulationSchema 
+#' @template CdmDatabaseSchema 
+#' @template VocabularyDatabaseSchema 
+#' @template CohortDatabaseSchema 
 #' @template databaseId 
-#' @template exportFolder 
-#' @template minCellCount 
-#' @template cohortTable 
+#' @template ExportFolder 
+#' @template MinCellCount 
+#' @template CohortTable 
 #' @template Incremental 
 #'
-#' @return NULL
+#'
+#' @return NULL if the subset of cohorts the code runs on is empty (e.g. in incremental mode). Otherwise,it will write csv files to disk.
 #' @export
 runBreakdownIndexEvents <- function(connection,
                                     cohortDefinitionSet,
