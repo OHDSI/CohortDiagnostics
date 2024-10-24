@@ -92,15 +92,14 @@
 #' @template Incremental
 #' @template CohortDatabaseSchema
 #' 
+#' @param cohorts  The cohorts for which to find the orphan concepts
+#' @param instantiatedCodeSets Table created by runResolvedConcepts, contains all unique conceptSetIds from all cohorts and has the following columns: codesetId conceptId. 
 #' @param conceptCountsDatabaseSchema Schema where the concept_counts table is located.
 #' @param conceptCountsTable Name of the concept_counts table.
-#' @param conceptIdTable 
-#' @param resultsDatabaseSchema 
+#' @param conceptIdTable Table where the orphan concepts will be written.
 #'
-#' @return
+#' @return None, it will write the results to a csv file
 #' @export
-#'
-#' @examples
 runOrphanConcepts <- function(connection,
                               tempEmulationSchema,
                               cdmDatabaseSchema,
@@ -116,8 +115,8 @@ runOrphanConcepts <- function(connection,
                               cohortTable,
                               conceptIdTable = NULL,
                               incremental = FALSE,
-                              incrementalFolder = exportFolder,
-                              resultsDatabaseSchema) {
+                              incrementalFolder = exportFolder
+                              ) {
   
   errorMessage <- checkmate::makeAssertCollection()
   checkArg(connection, add = errorMessage)
@@ -136,7 +135,6 @@ runOrphanConcepts <- function(connection,
   # checkArg(conceptIdTable, add = errorMessage) # no argument check currently available
   checkArg(incremental, add = errorMessage)
   checkArg(incrementalFolder, add = errorMessage)
-  # checkArg(resultsDatabaseSchema, add = errorMessage) # no argument check currently available
   checkmate::reportAssertions(errorMessage)
 
   recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
