@@ -2,7 +2,7 @@
 % Please edit documentation in R/runIndexEventBreakdown.R
 \name{runBreakdownIndexEvents}
 \alias{runBreakdownIndexEvents}
-\title{runBreakdownIndexEvents}
+\title{Generate and export the breakdown of index events}
 \usage{
 runBreakdownIndexEvents(
   connection,
@@ -60,6 +60,12 @@ definition set will be executed and pre-existing results files will be deleted.}
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which cohort diagnostics has been executed.}
 }
+\value{
+NULL if the subset of cohorts to be processed is empty (e.g. in incremental mode,
+ if all cohorts have already been processed). Otherwise,it will write csv files to disk.
+}
 \description{
-runBreakdownIndexEvents
+Provides the amount of distinct subjects and the frequency of the concept ids listed in the cohorts table,
+for which the start date of the cohort the subjects and concept ids belong to coincides with the start date
+of a certain domain. Results are organised per domain, domain field, domain concept id and cohort id.
 }

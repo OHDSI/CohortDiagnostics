@@ -2,7 +2,7 @@
 % Please edit documentation in R/runCohortCharacterization.R
 \name{runCohortCharacterization}
 \alias{runCohortCharacterization}
-\title{runCohortCharacterization}
+\title{Generate and export the temporal cohort characterization}
 \usage{
 runCohortCharacterization(
   connection,
@@ -19,13 +19,7 @@ runCohortCharacterization(
   minCellCount,
   instantiatedCohorts,
   incremental,
-  recordKeepingFile,
-  covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
-  covariateValueContFileName = file.path(exportFolder,
-    "temporal_covariate_value_dist.csv"),
-  covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
-  analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
-  timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
+  incrementalFolder = exportFolder,
   minCharacterizationMean = 0.001,
   batchSize = getOption("CohortDiagnostics-FE-batch-size", default = 20)
 )
@@ -58,9 +52,9 @@ tables, provide a schema with write privileges where temp tables can be created.
 
 \item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
 
-\item{cohorts}{The cohorts for which the covariates need to be obtained}
+\item{cohorts}{The cohorts for which the covariates need to be obtained.}
 
-\item{cohortCounts}{A dataframe with the cohort counts}
+\item{cohortCounts}{A dataframe with the cohort counts.}
 
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions}
 
@@ -71,27 +65,17 @@ cohort definition set that have not changed will be skipped and existing results
 csv files will be updated. If FALSE then diagnostics for all cohorts in the cohort 
 definition set will be executed and pre-existing results files will be deleted.}
 
-\item{covariateValueFileName}{Filename of the binary covariates output}
-
-\item{covariateValueContFileName}{Filename of the continuous covariate output}
-
-\item{covariateRefFileName}{Filename of the covariate reference output}
-
-\item{analysisRefFileName}{Filename of the analysis reference output}
-
-\item{timeRefFileName}{Filename of the time reference output}
+\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
+of which cohort diagnostics has been executed.}
 
 \item{minCharacterizationMean}{The minimum mean value for characterization output. Values below this will be cut off from output. This
 will help reduce the file size of the characterization output, but will remove information
-on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)}
+on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent).}
 
 \item{batchSize}{In case of batch processing, this specifies the size of the batch}
-
-\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
-of which cohort diagnostics has been executed.}
 }
 \value{
-None, it will write results to disk
+None, it will write results to disk.
 }
 \description{
 This function takes cohorts as input and generates the covariates for these cohorts.

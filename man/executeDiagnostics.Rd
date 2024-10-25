@@ -34,16 +34,12 @@ executeDiagnostics(
   minCharacterizationMean = 0.01,
   irWashoutPeriod = 0,
   incremental = FALSE,
-  incrementalFolder = file.path(exportFolder, "incremental"),
+  incrementalFolder = exportFolder,
   conceptCountsTable = "concept_counts",
   runFeatureExtractionOnSample = FALSE,
   sampleN = 1000,
   seed = 64374,
-  seedArgs = NULL,
-  sampleIdentifierExpression = "cohortId * 1000 + seed",
-  useAchilles = FALSE,
-  achillesDatabaseSchema = NULL,
-  workDatabaseSchema = NULL
+  seedArgs = NULL
 )
 }
 \arguments{
@@ -59,13 +55,20 @@ the columns cohortId, cohortName, json, sql.}
 this should include both the database and schema name, for example
 'scratch.dbo'.}
 
-\item{databaseName}{The full name of the database. If NULL, defaults to value in cdm_source table}
+\item{databaseName}{The full name of the database. If NULL, defaults to value in cdm_source table.}
 
-\item{databaseDescription}{A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table}
+\item{databaseDescription}{A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table.}
+
+\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
+\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+DatabaseConnector package. Can be left NULL if \code{connection} is
+provided.}
 
 \item{connection}{An object of type \code{connection} as created using the
 \code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package.}
+DatabaseConnector package. Can be left NULL if \code{connectionDetails}
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
@@ -76,7 +79,7 @@ tables, provide a schema with write privileges where temp tables can be created.
 
 \item{cohortTable}{Name of the cohort table.}
 
-\item{cohortTableNames}{Cohort Table names used by CohortGenerator package}
+\item{cohortTableNames}{Cohort Table names used by CohortGenerator package.}
 
 \item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
 commonly the same as cdmDatabaseSchema. Note that for 
@@ -128,7 +131,7 @@ definition set will be executed and pre-existing results files will be deleted.}
 of which cohort diagnostics has been executed.}
 
 \item{conceptCountsTable}{Concepts count table name. The default is "#concept_counts" to create a temporal concept counts table.
-If an external concept counts table is used, provide the name in character, e.g. "concept_counts" without a hash}
+If an external concept counts table is used, provide the name in character, e.g. "concept_counts" without a hash.}
 
 \item{runFeatureExtractionOnSample}{Logical. If TRUE, the function will operate on a sample of the data.
 Default is FALSE, meaning the function will operate on the full data set.}
@@ -141,22 +144,6 @@ This ensures that the same sample can be drawn again in future runs. Default is 
 
 \item{seedArgs}{List. Additional arguments to pass to the sampling function.
 This can be used to control aspects of the sampling process beyond the seed and sample size.}
-
-\item{sampleIdentifierExpression}{Character. An expression that generates unique identifiers for each sample.
-This expression can use the variables 'cohortId' and 'seed'.
-Default is "cohortId * 1000 + seed", which ensures unique identifiers
-as long as there are fewer than 1000 cohorts.}
-
-\item{useAchilles}{Logical. Should the pre-computed Achilles analyses be used to get concept counts? TRUE or FALSE (default)}
-
-\item{achillesDatabaseSchema}{Character. The name of the schema where the Achilles results tables are located. 
-Require if `useAchilles` is TRUE and ignored otherwise.}
-
-\item{workDatabaseSchema}{Character. The name of a schema where the user has write access. Intermediate tables for concept counts 
-and orphan concepts will be created in this schema if supplied. If NULL (default) intermediate tables will
-be created as temporary tables.}
-
-\item{useExternalConceptCountsTable}{If TRUE an external table for the cohort concept counts will be used.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts.

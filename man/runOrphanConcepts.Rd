@@ -18,10 +18,9 @@ runOrphanConcepts(
   instantiatedCodeSets = "#inst_concept_sets",
   cohortDatabaseSchema,
   cohortTable,
-  incremental = FALSE,
   conceptIdTable = NULL,
-  recordKeepingFile,
-  resultsDatabaseSchema
+  incremental = FALSE,
+  incrementalFolder = exportFolder
 )
 }
 \arguments{
@@ -43,6 +42,8 @@ schema name, for example 'vocabulary.dbo'.}
 
 \item{databaseId}{A short string for identifying the database (e.g. 'Synpuf').}
 
+\item{cohorts}{The cohorts for which to find the orphan concepts.}
+
 \item{exportFolder}{The folder where the results will be exported to}
 
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions}
@@ -50,6 +51,8 @@ schema name, for example 'vocabulary.dbo'.}
 \item{conceptCountsDatabaseSchema}{Schema where the concept_counts table is located.}
 
 \item{conceptCountsTable}{Name of the concept_counts table.}
+
+\item{instantiatedCodeSets}{Table created by runResolvedConcepts, contains all unique conceptSetIds from all cohorts and has the following columns: codesetId conceptId.}
 
 \item{cohortDatabaseSchema}{Schema name where your user has write access (has CRUD privileges). This is the location,
 of the cohort tables. This is also the location for the optional table such as 
@@ -65,17 +68,18 @@ mode such as the 'recordKeepingFile'.}
 
 \item{cohortTable}{Name of the cohort table.}
 
+\item{conceptIdTable}{Table where the orphan concepts will be written.}
+
 \item{incremental}{`TRUE` or `FALSE` (default). If TRUE diagnostics for cohorts in the 
 cohort definition set that have not changed will be skipped and existing results 
 csv files will be updated. If FALSE then diagnostics for all cohorts in the cohort 
 definition set will be executed and pre-existing results files will be deleted.}
 
-\item{conceptIdTable}{}
-
-\item{resultsDatabaseSchema}{}
-
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which cohort diagnostics has been executed.}
+}
+\value{
+None, it will write the results to a csv file.
 }
 \description{
 Runs the required code to find orphan codes, codes that should be, but are not included in a particular concept set.
