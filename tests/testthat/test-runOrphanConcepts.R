@@ -82,8 +82,8 @@ for (nm in names(testServers)) {
                       cohortDatabaseSchema = cohortDatabaseSchema,
                       cohortTable = cohortTable,
                       incremental = incremental,
-                      conceptIdTable = conceptIdTable,
-                      resultsDatabaseSchema = resultsDatabaseSchema)
+                      conceptIdTable = conceptIdTable
+                      )
 
     # Check cohort_inc_result
     expect_true(file.exists(file.path(exportFolder, "orphan_concept.csv")))
@@ -177,8 +177,8 @@ for (nm in names(testServers)) {
                       cohortDatabaseSchema = cohortDatabaseSchema,
                       cohortTable = cohortTable,
                       incremental = incremental,
-                      conceptIdTable = conceptIdTable,
-                      resultsDatabaseSchema = resultsDatabaseSchema)
+                      conceptIdTable = conceptIdTable
+                      )
 
     # Check cohort_inc_result
     expect_true(file.exists(file.path(exportFolder, "orphan_concept.csv")))
