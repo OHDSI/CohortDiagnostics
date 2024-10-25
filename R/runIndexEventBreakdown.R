@@ -270,10 +270,10 @@ runBreakdownIndexEvents <- function(connection,
     return(NULL)
   }
   
-  if (incremental && (nrow(cohorts) - nrow(subset)) > 0) {
+  if (incremental && (nrow(cohortDefinitionSet) - nrow(subset)) > 0) {
     ParallelLogger::logInfo(sprintf(
       "Skipping %s cohorts in incremental mode.",
-      nrow(cohorts) - nrow(subset)
+      nrow(cohortDefinitionSet) - nrow(subset)
     ))
   }
   

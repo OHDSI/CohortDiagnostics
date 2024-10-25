@@ -17,6 +17,8 @@
 #' Get default covariate settings
 #' @description
 #' Default covariate settings for cohort diagnostics execution
+#' 
+#' @return Default covariate settings
 #' @export
 getDefaultCovariateSettings <- function() {
   FeatureExtraction::createTemporalCovariateSettings(
@@ -649,7 +651,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
         minCellCount = minCellCount,
         databaseId = databaseId,
         incremental = FALSE,
-        cohortId = cohorts$cohortId
+        cohortId = cohortDefinitionSet$cohortId
       )
     }
   )

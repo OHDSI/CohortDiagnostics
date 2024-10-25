@@ -51,7 +51,8 @@ Suggests:
     shiny,
     OhdsiShinyModules,
     rsconnect,
-    yaml
+    yaml,
+    ggplot2
 Remotes:
   ohdsi/OhdsiShinyModules
 License: Apache License
