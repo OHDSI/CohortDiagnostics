@@ -126,9 +126,9 @@ getResolvedConceptSets <- function(connection,
 }
 
 
-#' runResolvedConceptSets
+#' Generates and exports the uniqu conceptSetIds from all cohorts
 #'
-#'@description
+#' @description
 #' Combines the unique conceptSetIds from all cohorts.
 #'
 #' @template Connection 
@@ -139,8 +139,7 @@ getResolvedConceptSets <- function(connection,
 #' @template VocabularyDatabaseSchema 
 #' @template TempEmulationSchema 
 #'
-#' @return None, it will write the results to a csv file
-#' 
+#' @return None, it will write the results to a csv file.
 #' @export
 runResolvedConceptSets <- function(connection,
                                    cohortDefinitionSet,

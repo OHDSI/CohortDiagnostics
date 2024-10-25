@@ -92,13 +92,13 @@
 #' @template Incremental
 #' @template CohortDatabaseSchema
 #' 
-#' @param cohorts  The cohorts for which to find the orphan concepts
+#' @param cohorts  The cohorts for which to find the orphan concepts.
 #' @param instantiatedCodeSets Table created by runResolvedConcepts, contains all unique conceptSetIds from all cohorts and has the following columns: codesetId conceptId. 
 #' @param conceptCountsDatabaseSchema Schema where the concept_counts table is located.
 #' @param conceptCountsTable Name of the concept_counts table.
 #' @param conceptIdTable Table where the orphan concepts will be written.
 #'
-#' @return None, it will write the results to a csv file
+#' @return None, it will write the results to a csv file.
 #' @export
 runOrphanConcepts <- function(connection,
                               tempEmulationSchema,

@@ -206,7 +206,7 @@ aggregateIr <- function(ratesSummary, aggregateList) {
 #' @template Connection 
 #' @template CohortDefinitionSet 
 #' @param washoutPeriod Then minimum number of required observation days prior to 
-#'                      cohort index to be included in the numerator of the incidence rate
+#'                      cohort index to be included in the numerator of the incidence rate.
 #' @template TempEmulationSchema 
 #' @template CdmDatabaseSchema 
 #' @template CohortTable 
@@ -215,7 +215,7 @@ aggregateIr <- function(ratesSummary, aggregateList) {
 #' @template MinCellCount 
 #' @template Incremental 
 #'
-#' @return None, it will write the results to a csv file
+#' @return None, it will write the results to a csv file.
 #' @export
 runIncidenceRate <- function(connection,
                              cohortDefinitionSet,

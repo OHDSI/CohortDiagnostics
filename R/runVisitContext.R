@@ -108,7 +108,7 @@ getVisitContext <- function(connection = NULL,
 
 
 
-#' runVisitContext
+#' Generates and exports the temporal relationship of subject visits to the cohort start date
 #' 
 #' @description
 #' Generates the `visit_context.csv` which contains the counts for the subjects by `cohort_id`,
@@ -129,7 +129,7 @@ getVisitContext <- function(connection = NULL,
 #' @template MinCellCount
 #' @template Incremental
 #' 
-#' @return None, it will write the results to a csv file
+#' @return None, it will write the results to a csv file.
 #' @export
 runVisitContext <- function(connection,
                             cohortDefinitionSet,

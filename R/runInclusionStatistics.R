@@ -35,9 +35,9 @@
 #' @template databaseId
 #' @template ExportFolder
 #' 
-#' @param cohortTableNames Cohort Table names used by CohortGenerator package
+#' @param cohortTableNames Cohort Table names used by CohortGenerator package.
 #'
-#' @return None, it will write csv files to disk
+#' @return None, it will write csv files to disk.
 #' @export
 runInclusionStatistics <- function(connection,
                                    exportFolder,
