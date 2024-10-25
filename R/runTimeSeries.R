@@ -434,14 +434,14 @@ getTimeSeries <- function(
 #' @template CohortDatabaseSchema
 #' @template CohortTable
 #' @template cohortDefinitionSet
-#' @template databaseIds
+#' @template databaseId
 #' @template exportFolder
 #' @template minCellCount
 #' @template InstantiatedCohorts
 #' @template Incremental
 #' @template BatchSize
 #' 
-#' @param runCohortTimeSeries.        (TRUE OR FALSE) Generate and export the cohort level time series (T1 and T2).
+#' @param runCohortTimeSeries        (TRUE OR FALSE) Generate and export the cohort level time series (T1 and T2).
 #' @param runDataSourceTimeSeries     (TRUE OR FALSE) Generate and export the data source level time series using all persons found in observation period table (T3).
 #' @param observationPeriodDateRange  Object that contains the attributes observationPeriodMinDate and observationPeriodMaxDate. For example, observationPeriodMinDate could be defined as Date("2004-01-01") and observationPeriodMaxDate as Date("2007-12-31").
 #'

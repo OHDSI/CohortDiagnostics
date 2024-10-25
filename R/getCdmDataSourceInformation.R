@@ -22,7 +22,7 @@
 #' Returns CDM source name, description, release date, CDM release date, version
 #' and vocabulary version, where available.
 #'
-#' @template Connection
+#' @template connectionDetails
 #'
 #' @template CdmDatabaseSchema
 #'

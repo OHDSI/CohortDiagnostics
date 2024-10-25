@@ -114,9 +114,9 @@ getIncludedSourceConcepts <- function(connection,
 #' @template Connection 
 #' @template cohortDefinitionSet
 #' @template TempEmulationSchema 
-#' @param CdmDatabaseSchema 
-#' @param databaseId 
-#' @param ExportFolder 
+#' @template CdmDatabaseSchema 
+#' @template databaseId 
+#' @template ExportFolder 
 #' @template MinCellCount
 #' @template Incremental
 #'
