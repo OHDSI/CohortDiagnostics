@@ -41,11 +41,11 @@ test_that("runBreakdownIndexEvents", {
   skip_if_not("sqlite" %in% names(testServers))
 
   server <- testServers[["sqlite"]]
-  exportFolder <- tempfile()
-  dir.create(exportFolder)
+  exportFolder <- getUniqueTempDir()
+  dir.create(exportFolder, recursive = TRUE)
 
   incrementalFolder <- tempfile()
-  dir.create(incrementalFolder)
+  dir.create(incrementalFolder, recursive = TRUE)
 
   connection <- DatabaseConnector::connect(server$connectionDetails)
 

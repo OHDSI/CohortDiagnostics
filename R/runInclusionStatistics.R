@@ -30,14 +30,14 @@
 #' @template Connection
 #' @template CohortDatabaseSchema
 #' @template Incremental
+#' @template cohortDefinitionSet
+#' @template MinCellCount
+#' @template databaseId
+#' @template ExportFolder
 #' 
-#' @param exportFolder The folder where the output will be exported to.
-#' @param databaseId A short string for identifying the database (e.g. 'Synpuf').
-#' @param cohortDefinitionSet Data.frame of cohorts must include columns cohortId, cohortName, json, sql
-#' @param cohortTableNames Cohort Table names used by CohortGenerator package
-#' @param minCellCount The minimum cell count for fields contains person counts or fractions.
+#' @param cohortTableNames Cohort Table names used by CohortGenerator package.
 #'
-#' @return None, it will write csv files to disk
+#' @return None, it will write csv files to disk.
 #' @export
 runInclusionStatistics <- function(connection,
                                    exportFolder,

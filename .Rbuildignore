@@ -31,4 +31,4 @@ compare_versions
 ^Meta$
 inst/shiny/DiagnosticsExplorer/renv
 work/
-sql/
+^sql/$

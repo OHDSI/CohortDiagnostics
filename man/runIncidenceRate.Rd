@@ -16,7 +16,7 @@ runIncidenceRate(
   minCellCount,
   washoutPeriod = 0,
   incremental,
-  recordKeepingFile
+  incrementalFolder = exportFolder
 )
 }
 \arguments{
@@ -48,7 +48,7 @@ this should include both the database and schema name, for example
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions}
 
 \item{washoutPeriod}{Then minimum number of required observation days prior to 
-cohort index to be included in the numerator of the incidence rate}
+cohort index to be included in the numerator of the incidence rate.}
 
 \item{incremental}{`TRUE` or `FALSE` (default). If TRUE diagnostics for cohorts in the 
 cohort definition set that have not changed will be skipped and existing results 
@@ -57,6 +57,9 @@ definition set will be executed and pre-existing results files will be deleted.}
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which cohort diagnostics has been executed.}
+}
+\value{
+None, it will write the results to a csv file.
 }
 \description{
 runIncidenceRate computes incidence rates for cohorts in the CDM population stratified

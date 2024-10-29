@@ -35,11 +35,8 @@ test_that("runIncidenceRate", {
   skip_if_not("sqlite" %in% names(testServers))
 
   server <- testServers[["sqlite"]]
-  exportFolder <- tempfile()
-  dir.create(exportFolder)
-
-  incrementalFolder <- tempfile()
-  dir.create(incrementalFolder)
+  exportFolder <- getUniqueTempDir()
+  dir.create(exportFolder, recursive = TRUE)
 
   connection <- DatabaseConnector::connect(server$connectionDetails)
 

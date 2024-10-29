@@ -17,6 +17,8 @@
 #' Get default covariate settings
 #' @description
 #' Default covariate settings for cohort diagnostics execution
+#' 
+#' @return Default covariate settings
 #' @export
 getDefaultCovariateSettings <- function() {
   FeatureExtraction::createTemporalCovariateSettings(
@@ -94,7 +96,7 @@ getDefaultCovariateSettings <- function() {
 #' using \code{RFeatureExtraction::createTemporalCovariateSettings}
 #' Alternatively, a covariate setting object may be created using the above as an example.
 #'
-#' @template Connection
+#' @template connectionDetails
 #' @template CdmDatabaseSchema
 #' @template VocabularyDatabaseSchema
 #' @template CohortDatabaseSchema
@@ -102,7 +104,7 @@ getDefaultCovariateSettings <- function() {
 #' @template CohortTable
 #' @template CohortSetReference
 #' @template exportFolder              
-#' @template cohortIds
+#' @template CohortIds
 #' @template cohortDefinitionSet
 #' @template MinCellCount
 #' @template Incremental
@@ -110,11 +112,11 @@ getDefaultCovariateSettings <- function() {
 #' @template databaseId
 #' @template minCharacterizationMean     
 #' 
-#' @param cohortTableNames            Cohort Table names used by CohortGenerator package
+#' @param cohortTableNames            Cohort Table names used by CohortGenerator package.
 #' @param conceptCountsTable          Concepts count table name. The default is "#concept_counts" to create a temporal concept counts table.
-#'                                    If an external concept counts table is used, provide the name in character, e.g. "concept_counts" without a hash
-#' @param databaseName                The full name of the database. If NULL, defaults to value in cdm_source table
-#' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table
+#'                                    If an external concept counts table is used, provide the name in character, e.g. "concept_counts" without a hash.
+#' @param databaseName                The full name of the database. If NULL, defaults to value in cdm_source table.
+#' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table.
 #' @param runInclusionStatistics      Generate and export statistic on the cohort inclusion rules?
 #' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
 #' @param runOrphanConcepts           Generate and export potential orphan concepts?
@@ -130,9 +132,6 @@ getDefaultCovariateSettings <- function() {
 #'                                    the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 #'                                    of such objects.
 #' @param irWashoutPeriod             Number of days washout to include in calculation of incidence rates - default is 0
-#' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
-#'                                    of which cohort diagnostics has been executed.
-#' @param useExternalConceptCountsTable If TRUE an external table for the cohort concept counts will be used.
 #' @param runFeatureExtractionOnSample Logical. If TRUE, the function will operate on a sample of the data.
 #'                                    Default is FALSE, meaning the function will operate on the full data set.
 #'
@@ -144,20 +143,6 @@ getDefaultCovariateSettings <- function() {
 #'
 #' @param seedArgs                    List. Additional arguments to pass to the sampling function.
 #'                                    This can be used to control aspects of the sampling process beyond the seed and sample size.
-#'
-#' @param sampleIdentifierExpression Character. An expression that generates unique identifiers for each sample.
-#'                                   This expression can use the variables 'cohortId' and 'seed'.
-#'                                   Default is "cohortId * 1000 + seed", which ensures unique identifiers
-#'                                   as long as there are fewer than 1000 cohorts.
-#'                                   
-#' @param useAchilles                Logical. Should the pre-computed Achilles analyses be used to get concept counts? TRUE or FALSE (default)
-#'
-#' @param achillesDatabaseSchema     Character. The name of the schema where the Achilles results tables are located. 
-#'                                   Require if `useAchilles` is TRUE and ignored otherwise.
-#'                                   
-#' @param workDatabaseSchema         Character. The name of a schema where the user has write access. Intermediate tables for concept counts 
-#'                                   and orphan concepts will be created in this schema if supplied. If NULL (default) intermediate tables will
-#'                                   be created as temporary tables.                        
 #' @examples
 #' \dontrun{
 #' # Load cohorts (assumes that they have already been instantiated)
@@ -364,19 +349,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
   
   # Create output and incremental folders. check that we have write access.
-  if (!file.exists(gsub("/$", "", exportFolder))) {
-    dir.create(name, recursive = TRUE)
-    ParallelLogger::logInfo("Created export folder", exportFolder)
-  }
-  checkmate::assertDirectory(exportFolder, access = "w", add = errorMessage)
-
-  if (incremental) {
-    if (!file.exists(gsub("/$", "", exportFolder))) {
-      dir.create(name, recursive = TRUE)
-      ParallelLogger::logInfo("Created incremental folder", incrementalFolder)
-    }
-    checkmate::assertDirectory(incrementalFolder, access = "w", add = errorMessage)
-  }
+  checkArg(exportFolder, add = errorMessage)
+  checkArg(incremental, add = errorMessage)
+  checkArg(incrementalFolder, add = errorMessage)
 
   if (is(temporalCovariateSettings, "covariateSettings")) {
     temporalCovariateSettings <- list(temporalCovariateSettings)
@@ -676,7 +651,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
         minCellCount = minCellCount,
         databaseId = databaseId,
         incremental = FALSE,
-        cohortId = cohorts$cohortId
+        cohortId = cohortDefinitionSet$cohortId
       )
     }
   )
@@ -926,6 +901,8 @@ executeDiagnostics <- function(cohortDefinitionSet,
           )
 
           feCohortTable <- cohortTableNames$cohortSampleTable
+          # work around for cohortGenerator 0.11.1
+          cohortDefinitionSet$cohortIds <-  cohortDefinitionSet$cohortId
           feCohortDefinitionSet <-
             CohortGenerator::sampleCohortDefinitionSet(
               connection = connection,
@@ -941,15 +918,13 @@ executeDiagnostics <- function(cohortDefinitionSet,
               incrementalFolder = incrementalFolder
             )
 
-          feCohortCounts <- computeCohortCounts(
+          feCohortCounts <- CohortGenerator::getCohortCounts(
             connection = connection,
             cohortDatabaseSchema = cohortDatabaseSchema,
             cohortTable = cohortTableNames$cohortSampleTable,
-            cohorts = feCohortDefinitionSet,
-            exportFolder = exportFolder,
-            minCellCount = minCellCount,
-            databaseId = databaseId,
-            writeResult = FALSE
+            cohortDefinitionSet = feCohortDefinitionSet,
+            cohortIds = cohortDefinitionSet$cohortId,
+            databaseId = databaseId
           )
         }
 

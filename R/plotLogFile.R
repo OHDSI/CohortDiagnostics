@@ -1,5 +1,5 @@
 readLog <- function(path) {
-  df <- read.csv(path, sep = "\t", header = FALSE)
+  df <- utils::read.csv(path, sep = "\t", header = FALSE)
   names(df) <- c("time", "thread", "level", "package", "task", "message")
   
   df %>%

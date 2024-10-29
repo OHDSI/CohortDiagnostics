@@ -155,7 +155,7 @@ getBreakdownIndexEvents <- function(connection,
       DatabaseConnector::renderTranslateQuerySql(
         connection = connection,
         sql = "SELECT * FROM #breakdown;",
-        tempEmulationSchema = tempEmulationSchema,
+        tempEmulationSchema = "main", #tempEmulationSchema,
         snakeCaseToCamelCase = TRUE
       ) %>%
       tidyr::tibble()
@@ -196,21 +196,28 @@ getBreakdownIndexEvents <- function(connection,
 
 
 
-#' runBreakdownIndexEvents
-#'
-#' @template connection 
-#' @template cohortDefinitionSet 
-#' @template tempEmulationSchema 
-#' @template cdmDatabaseSchema 
-#' @template vocabularyDatabaseSchema 
-#' @template cohortDatabaseSchema 
+#' Generate and export the breakdown of index events
+#' 
+#' @description
+#' Provides the amount of distinct subjects and the frequency of the concept ids listed in the cohorts table,
+#' for which the start date of the cohort the subjects and concept ids belong to coincides with the start date
+#' of a certain domain. Results are organised per domain, domain field, domain concept id and cohort id. 
+#' 
+#' @template Connection 
+#' @template CohortDefinitionSet 
+#' @template TempEmulationSchema 
+#' @template CdmDatabaseSchema 
+#' @template VocabularyDatabaseSchema 
+#' @template CohortDatabaseSchema 
 #' @template databaseId 
-#' @template exportFolder 
-#' @template minCellCount 
-#' @template cohortTable 
+#' @template ExportFolder 
+#' @template MinCellCount 
+#' @template CohortTable 
 #' @template Incremental 
 #'
-#' @return NULL
+#'
+#' @return NULL if the subset of cohorts to be processed is empty (e.g. in incremental mode,
+#'  if all cohorts have already been processed). Otherwise,it will write csv files to disk.
 #' @export
 runBreakdownIndexEvents <- function(connection,
                                     cohortDefinitionSet,
@@ -263,10 +270,10 @@ runBreakdownIndexEvents <- function(connection,
     return(NULL)
   }
   
-  if (incremental && (nrow(cohorts) - nrow(subset)) > 0) {
+  if (incremental && (nrow(cohortDefinitionSet) - nrow(subset)) > 0) {
     ParallelLogger::logInfo(sprintf(
       "Skipping %s cohorts in incremental mode.",
-      nrow(cohorts) - nrow(subset)
+      nrow(cohortDefinitionSet) - nrow(subset)
     ))
   }
   

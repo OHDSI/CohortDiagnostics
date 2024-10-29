@@ -1,5 +1,7 @@
 test_that("multiplication works", {
-  tempLog <- file.path(tempdir(), "tempLog.txt")
+  outdir <- getUniqueTempDir()
+  dir.create(outdir, recursive = TRUE)
+  tempLog <- file.path(outdir, "tempLog.txt")
   on.exit(unlink(tempLog))
   writeLines(
     text = c(

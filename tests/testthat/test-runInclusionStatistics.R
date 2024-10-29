@@ -7,13 +7,13 @@ test_that("test runRnclusionStatistics on sqlite", {
   server <- testServers[["sqlite"]]
   con <- connect(server$connectionDetails)
   
-  exportFolder <- file.path(tempdir(), paste0(nm, "exp"))
+  exportFolder <- getUniqueTempDir()
   databaseId <- "myDB"
   minCellCount <- 5
   recordKeepingFile <- file.path(exportFolder, "CreatedDiagnostics.csv")
   cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = server$cohortTable)
 
-  dir.create(exportFolder)
+  dir.create(exportFolder, recursive = TRUE)
   runInclusionStatistics(connection = con,
                          exportFolder = exportFolder,
                          databaseId = databaseId,

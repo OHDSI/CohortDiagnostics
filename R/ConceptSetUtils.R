@@ -301,7 +301,7 @@ exportConceptSets <- function(cohortDefinitionSet, exportFolder, minCellCount, d
     minCellCount = minCellCount,
     databaseId = databaseId,
     incremental = FALSE,
-    cohortId = conceptSetsExport$cohortId
+    cohortId = cohortDefinitionSet$cohortId
   )
 }
 

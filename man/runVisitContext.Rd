@@ -2,7 +2,7 @@
 % Please edit documentation in R/runVisitContext.R
 \name{runVisitContext}
 \alias{runVisitContext}
-\title{runVisitContext}
+\title{Generates and exports the temporal relationship of subject visits to the cohort start date}
 \usage{
 runVisitContext(
   connection,
@@ -16,7 +16,7 @@ runVisitContext(
   cdmVersion = 5,
   minCellCount,
   incremental,
-  incrementalFolder = file.path(exportFolder, "incremental")
+  incrementalFolder = exportFolder
 )
 }
 \arguments{
@@ -55,13 +55,15 @@ csv files will be updated. If FALSE then diagnostics for all cohorts in the coho
 definition set will be executed and pre-existing results files will be deleted.}
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
-of which cohort diagnostics has been executed. If not specified, a file named `incremental`  will be created inside the 
-\code{export_folder} directory.}
+of which cohort diagnostics has been executed.}
+}
+\value{
+None, it will write the results to a csv file.
 }
 \description{
 Generates the `visit_context.csv` which contains the counts for the subjects by `cohort_id`,
 `visit_concept_id` and `visit_context`. The `visit_context` categorizes visit occurrences of
-subjects based on how each the start and end date of each visit related to the cohort start date
-to which each subject belongs. No output will be generated for cohorts with no subjects.If there
+subjects based on how the start and end date of each of their visits relates to the cohort start date
+to which each subject belongs. No output will be generated for cohorts with no subjects. If there
 is no cohort with subjects execution will halt and `visit_context.csv` will not be generated.
 }

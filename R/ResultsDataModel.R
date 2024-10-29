@@ -141,19 +141,22 @@ uploadResults <- function(connectionDetails,
 
   ParallelLogger::logInfo("Unzipping ", zipFileName)
   zip::unzip(zipFileName, exdir = unzipFolder)
-
-  ResultModelManager::uploadResults(
-    connectionDetails = connectionDetails,
-    schema = schema,
-    resultsFolder = unzipFolder,
-    tablePrefix = tablePrefix,
-    forceOverWriteOfSpecifications = forceOverWriteOfSpecifications,
-    purgeSiteDataBeforeUploading = purgeSiteDataBeforeUploading,
-    runCheckAndFixCommands = TRUE,
-    databaseIdentifierFile = "database.csv",
-    specifications = getResultsDataModelSpecifications(),
-    warnOnMissingTable = FALSE,
-    ...
+  
+  # suppressing warning for reserved keywords in SQL
+  suppressWarnings(
+    ResultModelManager::uploadResults(
+      connectionDetails = connectionDetails,
+      schema = schema,
+      resultsFolder = unzipFolder,
+      tablePrefix = tablePrefix,
+      forceOverWriteOfSpecifications = forceOverWriteOfSpecifications,
+      purgeSiteDataBeforeUploading = purgeSiteDataBeforeUploading,
+      runCheckAndFixCommands = TRUE,
+      databaseIdentifierFile = "database.csv",
+      specifications = getResultsDataModelSpecifications(),
+      warnOnMissingTable = FALSE,
+      ...
+    )
   )
 }
 

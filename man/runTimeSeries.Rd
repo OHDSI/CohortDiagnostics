@@ -18,7 +18,7 @@ runTimeSeries(
   minCellCount,
   instantiatedCohorts,
   incremental,
-  recordKeepingFile,
+  incrementalFolder = exportFolder,
   observationPeriodDateRange,
   batchSize = getOption("CohortDiagnostics-TimeSeries-batch-size", default = 20)
 )
@@ -45,11 +45,11 @@ this should include both the database and schema name, for example
 `CohortGenerator::getCohortDefinitionSet` that must include 
 the columns cohortId, cohortName, json, sql.}
 
-\item{runDataSourceTimeSeries}{Generate and export the data source level time series using all persons found in observation period table (T3).}
+\item{runCohortTimeSeries}{(TRUE OR FALSE) Generate and export the cohort level time series (T1 and T2).}
 
-\item{databaseId}{The databaseId to retrieve the results for. This is a 
-character field values from the `databaseId` field of the `database` table 
-of the results data model.}
+\item{runDataSourceTimeSeries}{(TRUE OR FALSE) Generate and export the data source level time series using all persons found in observation period table (T3).}
+
+\item{databaseId}{A short string for identifying the database (e.g. 'Synpuf').}
 
 \item{exportFolder}{The folder where the results will be exported to}
 
@@ -62,25 +62,19 @@ cohort definition set that have not changed will be skipped and existing results
 csv files will be updated. If FALSE then diagnostics for all cohorts in the cohort 
 definition set will be executed and pre-existing results files will be deleted.}
 
-\item{observationPeriodDateRange}{}
-
-\item{batchSize}{In case of batch processing, this specifies the size of the batch}
-
-\item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
-character field values from the `databaseId` field of the `database` table 
-of the results data model.}
-
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which cohort diagnostics has been executed.}
 
-\item{runCohortTimeSeries.}{Generate and export the cohort level time series (T1 and T2)}
+\item{observationPeriodDateRange}{Object that contains the attributes observationPeriodMinDate and observationPeriodMaxDate. For example, observationPeriodMinDate could be defined as Date("2004-01-01") and observationPeriodMaxDate as Date("2007-12-31").}
+
+\item{batchSize}{In case of batch processing, this specifies the size of the batch}
 }
 \value{
-None, it will write the results to a csv file
+None, it will write the results to a csv file.
 }
 \description{
 This function first generates a calendar period table, that has
-calendar intervals between the \code{timeSeriesMinDate} and \code{timeSeriesMaxDate}.
+calendar intervals between the \code{observationPeriodMinDate} and \code{observationPeriodMaxDate}.
 Calendar Month, Quarter and year are supported.
 For each of the calendar interval, time series data are computed. There are 2 different types
 of time series: one related to cohorts and one related to the data source.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/runCohortRelationship.R
 \name{runCohortRelationship}
 \alias{runCohortRelationship}
-\title{runCohortRelationship}
+\title{Generate and export the cohort temporal relationships}
 \usage{
 runCohortRelationship(
   connection,
@@ -16,7 +16,7 @@ runCohortRelationship(
   temporalCovariateSettings,
   minCellCount,
   incremental,
-  incrementalFolder,
+  incrementalFolder = exportFolder,
   batchSize = getOption("CohortDiagnostics-Relationship-batch-size", default = 500)
 )
 }
@@ -60,7 +60,10 @@ of which cohort diagnostics has been executed.}
 
 \item{batchSize}{In case of batch processing, this specifies the size of the batch}
 }
+\value{
+None, it will write the results to a csv file.
+}
 \description{
-Generate and export the cohort relationship. Cohort relationship checks the temporal relationship between two or more cohorts
-and derives subject counts for cohorts with different temporal relationships.
+Generate and export the cohort relationship. Cohort relationship checks the temporal relationship
+between two or more cohorts and derives subject counts for cohorts with different temporal relationships.
 }

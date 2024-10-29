@@ -13,7 +13,7 @@ runInclusionStatistics(
   cohortTableNames,
   minCellCount,
   incremental,
-  recordKeepingFile
+  incrementalFolder = exportFolder
 )
 }
 \arguments{
@@ -21,11 +21,13 @@ runInclusionStatistics(
 \code{\link[DatabaseConnector]{connect}} function in the
 DatabaseConnector package.}
 
-\item{exportFolder}{The folder where the output will be exported to.}
+\item{exportFolder}{The folder where the results will be exported to}
 
 \item{databaseId}{A short string for identifying the database (e.g. 'Synpuf').}
 
-\item{cohortDefinitionSet}{Data.frame of cohorts must include columns cohortId, cohortName, json, sql}
+\item{cohortDefinitionSet}{A data.frame with cohort definitions created by 
+`CohortGenerator::getCohortDefinitionSet` that must include 
+the columns cohortId, cohortName, json, sql.}
 
 \item{cohortDatabaseSchema}{Schema name where your user has write access (has CRUD privileges). This is the location,
 of the cohort tables. This is also the location for the optional table such as 
@@ -39,16 +41,20 @@ length < 22). Another assumption: the content of these tables were written by th
 life cycle of this project. The local files that are created by the application during incremental
 mode such as the 'recordKeepingFile'.}
 
-\item{cohortTableNames}{Cohort Table names used by CohortGenerator package}
+\item{cohortTableNames}{Cohort Table names used by CohortGenerator package.}
 
-\item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
+\item{minCellCount}{The minimum cell count for fields contains person counts or fractions}
 
-\item{incremental}{Create only cohort diagnostics that haven't been created before?}
+\item{incremental}{`TRUE` or `FALSE` (default). If TRUE diagnostics for cohorts in the 
+cohort definition set that have not changed will be skipped and existing results 
+csv files will be updated. If FALSE then diagnostics for all cohorts in the cohort 
+definition set will be executed and pre-existing results files will be deleted.}
 
-\item{recordKeepingFile}{File that keeps a record of cohorts that have been created previously}
+\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
+of which cohort diagnostics has been executed.}
 }
 \value{
-None, it will write csv files to disk
+None, it will write csv files to disk.
 }
 \description{
 This function takes a cohortDefinitionSet that inclusions the JSON

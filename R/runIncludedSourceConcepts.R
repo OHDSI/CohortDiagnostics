@@ -102,32 +102,26 @@ getIncludedSourceConcepts <- function(connection,
   return(counts)
 }
 
-
-#' Title
-#'
-#' @param connection 
+#' Generate and export the source concepts included in the cohorts 
+#' 
+#' @description
+#' Provides the amount of distinct subjects and the frequency of the combination
+#' of source concept ids and concept ids listed in the cohorts table,
+#' for which the start and end of the relevant event that occurred to the subjects,
+#' is within their defined observation period. Results are organised per cohort id,
+#' concept set id, concept id and source concept id. 
+#' 
+#' @template Connection 
 #' @template cohortDefinitionSet
-#' @param tempEmulationSchema 
-#' @param cdmDatabaseSchema 
-#' @param vocabularyDatabaseSchema 
-#' @param databaseId 
-#' @param exportFolder 
-#' @param minCellCount 
-#' @param conceptCountsDatabaseSchema 
-#' @param conceptCountsTable 
-#' @param conceptCountsTableIsTemp 
-#' @param cohortDatabaseSchema 
-#' @param cohortTable 
-#' @param useExternalConceptCountsTable 
+#' @template TempEmulationSchema 
+#' @template CdmDatabaseSchema 
+#' @template databaseId 
+#' @template ExportFolder 
+#' @template MinCellCount
 #' @template Incremental
-#' @param conceptIdTable 
-#' @param recordKeepingFile 
-#' @param resultsDatabaseSchema 
 #'
-#' @return
+#' @return None, it will write csv files to disk.
 #' @export
-#'
-#' @examples
 runIncludedSourceConcepts <- function(connection,
                                       cohortDefinitionSet,
                                       tempEmulationSchema,

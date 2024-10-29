@@ -174,11 +174,11 @@ getCohortRelationship <- function(
   }
 
 
-#' runCohortRelationship
+#' Generate and export the cohort temporal relationships
 #' 
 #' @description
-#' Generate and export the cohort relationship. Cohort relationship checks the temporal relationship between two or more cohorts
-#' and derives subject counts for cohorts with different temporal relationships.
+#' Generate and export the cohort relationship. Cohort relationship checks the temporal relationship
+#' between two or more cohorts and derives subject counts for cohorts with different temporal relationships.
 #' 
 #' @template Connection
 #' @template cohortDefinitionSet
@@ -192,7 +192,8 @@ getCohortRelationship <- function(
 #' @template MinCellCount 
 #' @template Incremental 
 #' @template BatchSize 
-#'
+#' 
+#' @return None, it will write the results to a csv file.
 #' @export
 runCohortRelationship <- function(
     connection,
