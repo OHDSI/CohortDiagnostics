@@ -92,10 +92,6 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
       cohortTableName <- paste0(tablePrefix, cohortTableName)
     }
 
-    if (databaseTableName == "database") {
-      databaseTableName <- paste0(tablePrefix, databaseTableName)
-    }
-
     .GlobalEnv$shinySettings <- list(
       connectionDetails = connectionDetails,
       resultsDatabaseSchema = resultsDatabaseSchema,
