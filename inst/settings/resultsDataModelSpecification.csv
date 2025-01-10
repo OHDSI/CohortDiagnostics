@@ -86,7 +86,7 @@ concept_sets,concept_set_id,int,Yes,Yes,No,Yes,No,No,No,concept set identifier
 concept_sets,concept_set_sql,varchar,Yes,No,No,Yes,No,No,No,concept set sql
 concept_sets,concept_set_name,varchar(255),Yes,No,No,Yes,No,No,No,concept set name
 concept_sets,concept_set_expression,varchar,Yes,No,No,Yes,No,No,No,concept set expression
-concept_synonym,concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No,concpt id
+concept_synonym,concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No,concept id
 concept_synonym,concept_synonym_name,varchar,Yes,Yes,No,Yes,No,Yes,No,concept synonym name
 concept_synonym,language_concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No,lanague id
 database,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
