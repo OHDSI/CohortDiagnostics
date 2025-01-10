@@ -5,7 +5,7 @@ SELECT cohort_definition_id cohort_id,
 	time_id,
 	COUNT_BIG(DISTINCT CONCAT(cast(subject_id AS VARCHAR(30)), '_', cast(cohort_start_date AS VARCHAR(30)))) records, -- records in calendar month
 	COUNT_BIG(DISTINCT subject_id) subjects, -- unique subjects
-	SUM(datediff(dd, CASE 
+	SUM(CAST(DATEDIFF(dd, CASE
 				WHEN cohort_start_date >= period_begin
 					THEN cohort_start_date
 				ELSE period_begin
@@ -13,9 +13,9 @@ SELECT cohort_definition_id cohort_id,
 				WHEN cohort_end_date >= period_end
 					THEN period_end
 				ELSE cohort_end_date
-				END) + 1) person_days,
+				END) AS BIGINT) + 1) person_days,
 	SUM(CASE WHEN first_occurrence = 'Y' -- incident
-	    THEN datediff(dd, CASE 
+	    THEN CAST(DATEDIFF(dd, CASE
                 				WHEN cohort_start_date >= period_begin
 					                THEN cohort_start_date
                 				ELSE period_begin
@@ -25,7 +25,7 @@ SELECT cohort_definition_id cohort_id,
                 					THEN period_end
                 				ELSE cohort_end_date
                 				END
-                		) + 1
+                		) AS BIGINT) + 1
       ELSE 0 
       END) person_days_in,
 	COUNT_BIG(CASE 
