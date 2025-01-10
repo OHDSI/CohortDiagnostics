@@ -112,39 +112,46 @@ SELECT t.cohort_definition_id cohort_id,
 			ELSE NULL
 			END) sub_c_within_t,
 	-- comparator cohort days within target (offset) days [How many subjects in comparator cohort have their entire cohort period within first target cohort period]
-	SUM((
+	    SUM(
 			CASE -- comparator cohort start date before target start date (offset)
 				WHEN c.cohort_start_date < DATEADD(day, @start_day_offset, t.cohort_start_date)
-					THEN CAST(DATEDIFF(dd,
+					THEN CAST(
+			                DATEDIFF(dd,
 					              c.cohort_start_date, 
 					              CASE --min of comparator end date/target start dates (offset)
-          								WHEN c.cohort_end_date < DATEADD(day, @start_day_offset, t.cohort_start_date)
-          									THEN c.cohort_end_date
-          								ELSE DATEADD(day, @start_day_offset, t.cohort_start_date)
-								          END) AS BIGINT)
+                                    WHEN c.cohort_end_date < DATEADD(day, @start_day_offset, t.cohort_start_date)
+                                        THEN c.cohort_end_date
+                                    ELSE DATEADD(day, @start_day_offset, t.cohort_start_date)
+                                  END
+                                )
+							   AS BIGINT
+					        )
 				ELSE 0
 				END
-			) + 1) c_days_before_ts,
+			) + 1 c_days_before_ts,
 	-- comparator cohort days before target start date (offset)
-	SUM((
+	    SUM(
 			CASE -- comparator cohort start date before target end date (offset)
 				WHEN c.cohort_start_date < DATEADD(day, @start_day_offset, t.cohort_end_date)
-					THEN CAST(DATEDIFF(dd,
+					THEN CAST(
+					    DATEDIFF(dd,
 					              c.cohort_start_date, 
 					              CASE --min of comparator end date/target end dates (offset)
-								          WHEN c.cohort_end_date < DATEADD(day, @start_day_offset, t.cohort_end_date)
-									          THEN c.cohort_end_date
-								          ELSE DATEADD(day, @start_day_offset, t.cohort_end_date)
-								          END) AS bigint)
+                                    WHEN c.cohort_end_date < DATEADD(day, @start_day_offset, t.cohort_end_date)
+                                    THEN c.cohort_end_date
+                                  ELSE DATEADD(day, @start_day_offset, t.cohort_end_date)
+                      END) AS BIGINT
+                     )
 				ELSE 0
 				END
-			) + 1) c_days_before_te,
+			) + 1 as c_days_before_te,
 	-- comparator cohort days before target end date (offset)
-	SUM((
+	SUM(
 			CASE -- comparator cohort days within target days (offset)
 				WHEN  c.cohort_end_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
 					    AND c.cohort_start_date <= DATEADD(day, @end_day_offset, t.cohort_end_date)
-					THEN CAST(DATEDIFF(dd,
+					THEN CAST(
+					        DATEDIFF(dd,
 					              CASE --min of comparator start date/target start dates (offset)
 								            WHEN c.cohort_start_date < DATEADD(day, @start_day_offset, t.cohort_start_date)
 									          THEN DATEADD(day, @start_day_offset, t.cohort_start_date)
@@ -154,42 +161,62 @@ SELECT t.cohort_definition_id cohort_id,
 								            WHEN c.cohort_end_date > DATEADD(day, @end_day_offset, t.cohort_end_date)
 									          THEN DATEADD(day, @end_day_offset, t.cohort_end_date)
 								          ELSE c.cohort_end_date
-								          END)) AS BIGINT
+								          END)
+						    AS BIGINT
+		                )
 				ELSE 0
 				END
-			) + 1) c_days_within_t_days,
+		) + 1 as c_days_within_t_days,
 	-- comparator cohort days within target cohort days (offset)
-		SUM((
+		SUM(
 			CASE -- comparator cohort end date after target start date (offset)
 				WHEN c.cohort_end_date > DATEADD(day, @start_day_offset, t.cohort_start_date)
-					THEN CAST(DATEDIFF(dd,
+					THEN CAST(
+					    DATEDIFF(dd,
 					              CASE --max of comparator start date/target start dates (offset)
 								            WHEN c.cohort_start_date < DATEADD(day, @start_day_offset, t.cohort_start_date)
 									          THEN DATEADD(day, @start_day_offset, t.cohort_start_date)
 								          ELSE c.cohort_start_date
 								          END,
-								          c.cohort_end_date) AS BIGINT)
+								          c.cohort_end_date
+					    ) AS BIGINT
+					)
 				ELSE 0
 				END
-			) + 1) c_days_after_ts,
+			) + 1 as c_days_after_ts,
 	-- comparator cohort days after target start date (offset)
-		SUM((
+		SUM(
 			CASE -- comparator cohort end date after target end date (offset)
 				WHEN c.cohort_end_date > DATEADD(day, @start_day_offset, t.cohort_end_date)
-					THEN CAST(DATEDIFF(dd,
+					THEN CAST(
+					    DATEDIFF(dd,
 					              CASE --max of comparator start date/target start dates (offset)
 								            WHEN c.cohort_start_date < DATEADD(day, @start_day_offset, t.cohort_end_date)
 									          THEN DATEADD(day, @start_day_offset, t.cohort_end_date)
 								          ELSE c.cohort_start_date
 								          END,
-								          c.cohort_end_date) AS BIGINT)
+								          c.cohort_end_date)
+				        AS BIGINT
+				    )
 				ELSE 0
 				END
-			) + 1) c_days_after_te,
+			) + 1 as c_days_after_te,
 	-- comparator cohort days after target end date (offset)
-	SUM(CAST(DATEDIFF(dd, DATEADD(day, @start_day_offset, t.cohort_start_date), DATEADD(day, @end_day_offset, t.cohort_end_date)) AS BIGINT) + 1) t_days,
+	SUM(
+	    CAST(
+	        DATEDIFF(
+	            dd, DATEADD(day, @start_day_offset, t.cohort_start_date), DATEADD(day, @end_day_offset, t.cohort_end_date)
+	        )
+	        AS BIGINT
+	    )
+	) + 1 as t_days,
 	-- target cohort days (no offset)
-	SUM(CAST(DATEDIFF(dd, c.cohort_start_date, c.cohort_end_date)) AS BIGINT + 1) c_days
+	SUM(
+	    CAST(
+	        DATEDIFF(dd, c.cohort_start_date, c.cohort_end_date)
+	     AS BIGINT
+	    )
+	) + 1 as c_days
 -- comparator cohort days (offset)
 INTO #cohort_rel_output
 FROM #target_cohort_table t
