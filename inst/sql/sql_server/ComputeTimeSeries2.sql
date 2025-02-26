@@ -6,13 +6,16 @@
 {DEFAULT @stratify_by_gender = FALSE}
 {DEFAULT @stratify_by_age_group = FALSE}
 
-SELECT cohort_definition_id cohort_id,
+SELECT cohort_definition_id as cohort_id,
 	time_id,
 	{@stratify_by_gender} ? {CASE WHEN gender IS NULL THEN 'NULL' ELSE gender END} : {'NULL'} gender,
 	{@stratify_by_age_group} ? {FLOOR((YEAR(period_begin) - year_of_birth) / 10) AS age_group,} : {CAST(NULL AS INT) age_group, }
 	COUNT_BIG(DISTINCT CONCAT(cast(subject_id AS VARCHAR(30)), '_', cast(observation_period_start_date AS VARCHAR(30)))) records, -- records in calendar month
 	COUNT_BIG(DISTINCT subject_id) subjects, -- unique subjects
-	SUM(datediff(dd, CASE 
+	SUM(
+	    CAST(
+	    DATEDIFF(
+	        dd, CASE
 				WHEN observation_period_start_date >= period_begin
 					THEN observation_period_start_date
 				ELSE period_begin
@@ -20,7 +23,10 @@ SELECT cohort_definition_id cohort_id,
 				WHEN observation_period_end_date >= period_end
 					THEN period_end
 				ELSE observation_period_end_date
-				END) + 1) person_days, -- person days within period
+				END
+			    )
+		 AS BIGINT)
+	) + 1 person_days, -- person days within period
 	0 person_days_in, -- person days within period - incident
 	COUNT_BIG(CASE 
 			WHEN observation_period_start_date >= period_begin

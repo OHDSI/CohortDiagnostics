@@ -1,3 +1,10 @@
+CohortDiagnostics 3.3.1
+=======================
+Bug fixes:
+
+1. Attempted fix of issue with DATEDIFF overflowing integer on some databse platforms
+
+
 CohortDiagnostics 3.3.0
 =======================
 
