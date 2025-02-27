@@ -121,7 +121,7 @@ getDefaultCovariateSettings <- function() {
 #' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
-#' @param runCohortRelationship       Generate and export the cohort relationship? Cohort relationship checks the temporal
+#' @param runCohortRelationship       Compute cohort relationships. Overlap is now computed with FeaturExtraction, time paramters are derived from temporalCovariateSettings
 #'                                    relationship between two or more cohorts.
 #' @param runTemporalCohortCharacterization   Generate and export the temporal cohort characterization?
 #'                                            Only records with values greater than 0.001 are returned.
@@ -815,28 +815,45 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   # Cohort relationship ---------------------------------------------------------------------------------
   if (runCohortRelationship) {
-    timeExecution(
-      exportFolder,
-      "executeCohortRelationshipDiagnostics",
-      cohortIds,
-      parent = "executeDiagnostics",
-      expr = {
-        executeCohortRelationshipDiagnostics(
+    covariateCohorts <- cohortDefinitionSet |> dplyr::select(cohortId, cohortName)
+    cohortFeSettings <-
+      FeatureExtraction::createCohortBasedTemporalCovariateSettings(
+          analysisId = Sys.getenv("OHDSI_CD_CF_ANALYSIS_ID", unset = 64374), # TODO: how to assign this uniquely?
+          covariateCohortDatabaseSchema = cohortDatabaseSchema,
+          covariateCohortTable = cohortTableNames$cohortTable,
+          covariateCohorts = covariateCohorts,
+          valueType = "binary",
+          temporalStartDays = temporalCovariateSettings$temporalStartDays,
+          temporalEndDays = temporalCovariateSettings$temporalEndDays
+      )
+
+    characteristics <-
+        getCohortCharacteristics(
           connection = connection,
-          databaseId = databaseId,
-          exportFolder = exportFolder,
-          cohortDatabaseSchema = cohortDatabaseSchema,
           cdmDatabaseSchema = cdmDatabaseSchema,
           tempEmulationSchema = tempEmulationSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
-          cohortDefinitionSet = cohortDefinitionSet,
-          temporalCovariateSettings = temporalCovariateSettings[[1]],
-          minCellCount = minCellCount,
-          recordKeepingFile = recordKeepingFile,
-          incremental = incremental
+          cohortIds = covariateCohorts$cohortId,
+          covariateSettings = cohortFeSettings,
+          cdmVersion = cdmVersion,
+          exportFolder = exportFolder,
+          minCharacterizationMean = 0
         )
-      }
-    )
+
+      on.exit(Andromeda::close(characteristics), add = TRUE)
+      exportCharacterization(
+        characteristics = characteristics,
+        databaseId = databaseId,
+        incremental = incremental,
+        covariateValueFileName = file.path(exportFolder, "overlap_covariate_value.csv"),
+        covariateValueContFileName = file.path(exportFolder, "overlap_covariate_value_dist.csv"),
+        covariateRefFileName = file.path(exportFolder, "overlap_covariate_ref.csv"),
+        analysisRefFileName = file.path(exportFolder, "overlap_analysis_ref.csv"),
+        timeRefFileName = file.path(exportFolder, "overlap_time_ref.csv"),
+        counts = cohortCounts,
+        minCellCount = minCellCount
+      )
   }
 
   # Temporal Cohort characterization ---------------------------------------------------------------
