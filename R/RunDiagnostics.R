@@ -243,7 +243,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       incremental = incremental,
       temporalCovariateSettings = temporalCovariateSettings
     ) %>%
-    RJSONIO::toJSON(digits = 23, pretty = TRUE)
+      RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
@@ -272,25 +272,25 @@ executeDiagnostics <- function(cohortDefinitionSet,
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertList(cohortTableNames, null.ok = FALSE, types = "character", add = errorMessage, names = "named")
   checkmate::assertNames(names(cohortTableNames),
-    must.include = c(
-      "cohortTable",
-      "cohortInclusionTable",
-      "cohortInclusionResultTable",
-      "cohortInclusionStatsTable",
-      "cohortSummaryStatsTable",
-      "cohortCensorStatsTable"
-    ),
-    add = errorMessage
+                         must.include = c(
+                           "cohortTable",
+                           "cohortInclusionTable",
+                           "cohortInclusionResultTable",
+                           "cohortInclusionStatsTable",
+                           "cohortSummaryStatsTable",
+                           "cohortCensorStatsTable"
+                         ),
+                         add = errorMessage
   )
   checkmate::assertDataFrame(cohortDefinitionSet, add = errorMessage)
   checkmate::assertNames(names(cohortDefinitionSet),
-    must.include = c(
-      "json",
-      "cohortId",
-      "cohortName",
-      "sql"
-    ),
-    add = errorMessage
+                         must.include = c(
+                           "json",
+                           "cohortId",
+                           "cohortName",
+                           "sql"
+                         ),
+                         add = errorMessage
   )
 
   cohortTable <- cohortTableNames$cohortTable
@@ -467,17 +467,17 @@ executeDiagnostics <- function(cohortDefinitionSet,
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(.data$tableName == "cohort") %>%
-    dplyr::pull(.data$columnName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    sort()
+      dplyr::filter(.data$tableName == "cohort") %>%
+      dplyr::pull(.data$columnName) %>%
+      SqlRender::snakeCaseToCamelCase() %>%
+      sort()
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(.data$tableName == "cohort") %>%
-    dplyr::filter(.data$isRequired == "Yes") %>%
-    dplyr::pull(.data$columnName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    sort()
+      dplyr::filter(.data$tableName == "cohort") %>%
+      dplyr::filter(.data$isRequired == "Yes") %>%
+      dplyr::pull(.data$columnName) %>%
+      SqlRender::snakeCaseToCamelCase() %>%
+      sort()
 
   expectedButNotObsevered <-
     setdiff(x = cohortTableColumnNamesExpected, y = cohortTableColumnNamesObserved)
@@ -816,44 +816,46 @@ executeDiagnostics <- function(cohortDefinitionSet,
   # Cohort relationship ---------------------------------------------------------------------------------
   if (runCohortRelationship) {
     covariateCohorts <- cohortDefinitionSet |> dplyr::select(cohortId, cohortName)
+    analysisId <- as.integer(Sys.getenv("OHDSI_CD_CF_ANALYSIS_ID", unset = 173))
+
     cohortFeSettings <-
       FeatureExtraction::createCohortBasedTemporalCovariateSettings(
-          analysisId = Sys.getenv("OHDSI_CD_CF_ANALYSIS_ID", unset = 64374), # TODO: how to assign this uniquely?
-          covariateCohortDatabaseSchema = cohortDatabaseSchema,
-          covariateCohortTable = cohortTableNames$cohortTable,
-          covariateCohorts = covariateCohorts,
-          valueType = "binary",
-          temporalStartDays = temporalCovariateSettings$temporalStartDays,
-          temporalEndDays = temporalCovariateSettings$temporalEndDays
+        analysisId = analysisId, # TODO: how to assign this uniquely?
+        covariateCohortDatabaseSchema = cohortDatabaseSchema,
+        covariateCohortTable = cohortTableNames$cohortTable,
+        covariateCohorts = covariateCohorts,
+        valueType = "binary",
+        temporalStartDays = temporalCovariateSettings[[1]]$temporalStartDays,
+        temporalEndDays = temporalCovariateSettings[[1]]$temporalEndDays
       )
 
     characteristics <-
-        getCohortCharacteristics(
-          connection = connection,
-          cdmDatabaseSchema = cdmDatabaseSchema,
-          tempEmulationSchema = tempEmulationSchema,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
-          cohortIds = covariateCohorts$cohortId,
-          covariateSettings = cohortFeSettings,
-          cdmVersion = cdmVersion,
-          exportFolder = exportFolder,
-          minCharacterizationMean = 0
-        )
-
-      on.exit(Andromeda::close(characteristics), add = TRUE)
-      exportCharacterization(
-        characteristics = characteristics,
-        databaseId = databaseId,
-        incremental = incremental,
-        covariateValueFileName = file.path(exportFolder, "overlap_covariate_value.csv"),
-        covariateValueContFileName = file.path(exportFolder, "overlap_covariate_value_dist.csv"),
-        covariateRefFileName = file.path(exportFolder, "overlap_covariate_ref.csv"),
-        analysisRefFileName = file.path(exportFolder, "overlap_analysis_ref.csv"),
-        timeRefFileName = file.path(exportFolder, "overlap_time_ref.csv"),
-        counts = cohortCounts,
-        minCellCount = minCellCount
+      getCohortCharacteristics(
+        connection = connection,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        cohortIds = covariateCohorts$cohortId,
+        covariateSettings = cohortFeSettings,
+        cdmVersion = cdmVersion,
+        exportFolder = exportFolder,
+        minCharacterizationMean = 0
       )
+
+    on.exit(Andromeda::close(characteristics), add = TRUE)
+    exportCharacterization(
+      characteristics = characteristics,
+      databaseId = databaseId,
+      incremental = incremental,
+      covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
+      covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
+      covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
+      analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
+      timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
+      counts = cohortCounts,
+      minCellCount = minCellCount
+    )
   }
 
   # Temporal Cohort characterization ---------------------------------------------------------------
