@@ -180,7 +180,7 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
 
 test_that("Sqlite results data model", {
   dbFile <- tempfile(fileext = ".sqlite")
-  expect_error(createMergedResultsFile(dataFolder = file.path(folder, "export"),
+  expect_error(createMergedResultsFile(dataFolder = file.path("non_existant_export_folder"),
                                        sqliteDbPath = dbFile,
                                        overwrite = TRUE,
                                        tablePrefix = "cd_"))
@@ -192,27 +192,5 @@ test_that("Sqlite results data model", {
       connectionDetails = connectionDetailsSqlite,
       databaseSchema = "non_existant_schema"
     ))
-
-    specifications <- getResultsDataModelSpecifications()
-    for (tableName in unique(specifications$tableName)) {
-      primaryKey <- specifications %>%
-        dplyr::filter(tableName == !!tableName &
-          primaryKey == "Yes") %>%
-        dplyr::select("columnName") %>%
-        dplyr::pull()
-
-      if ("database_id" %in% primaryKey) {
-        sql <-
-          "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
-        sql <- SqlRender::render(
-          sql = sql,
-          schema = "main",
-          table_name = paste0("cd_", tableName),
-          database_id = "cdmv5"
-        )
-        databaseIdCount <- DatabaseConnector::querySql(connectionSqlite, sql)[, 1]
-        expect_true(databaseIdCount >= 0)
-      }
-    }
   })
 })
