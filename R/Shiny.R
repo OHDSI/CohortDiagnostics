@@ -198,6 +198,10 @@ createMergedResultsFile <-
         recursive = TRUE
       )
 
+    if (length(listOfZipFilesToUpload) == 0) {
+      cli::cli_abort("No result files found in folder", dataFolder)
+    }
+
     for (zipFileName in listOfZipFilesToUpload) {
       uploadResults(
         connectionDetails = connectionDetails,
