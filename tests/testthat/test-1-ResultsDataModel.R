@@ -180,7 +180,10 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
 
 test_that("Sqlite results data model", {
   dbFile <- tempfile(fileext = ".sqlite")
-  createMergedResultsFile(dataFolder = file.path(folder, "export"), sqliteDbPath = dbFile, overwrite = TRUE, tablePrefix = "cd_")
+  expect_error(createMergedResultsFile(dataFolder = file.path(folder, "export"),
+                                       sqliteDbPath = dbFile,
+                                       overwrite = TRUE,
+                                       tablePrefix = "cd_"))
   connectionDetailsSqlite <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = dbFile)
   connectionSqlite <- DatabaseConnector::connect(connectionDetails = connectionDetailsSqlite)
   with_dbc_connection(connectionSqlite, {
