@@ -17,6 +17,7 @@ executeDiagnostics(
   tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
   cohortTable = "cohort",
   cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
+  conceptCountsTable = "#concept_counts",
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortIds = NULL,
   cdmVersion = 5,
@@ -35,6 +36,7 @@ executeDiagnostics(
   irWashoutPeriod = 0,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental"),
+  useExternalConceptCountsTable = FALSE,
   runFeatureExtractionOnSample = FALSE,
   sampleN = 1000,
   seed = 64374,
@@ -78,6 +80,9 @@ tables, provide a schema with write privileges where temp tables can be created.
 \item{cohortTable}{Name of the cohort table.}
 
 \item{cohortTableNames}{Cohort Table names used by CohortGenerator package}
+
+\item{conceptCountsTable}{Concepts count table name. The default is "#concept_counts" to create a temporal concept counts table.
+If an external concept counts table is used, provide the name in character, e.g. "concept_counts" without a hash}
 
 \item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
 commonly the same as cdmDatabaseSchema. Note that for 
@@ -125,6 +130,8 @@ on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which cohort diagnostics has been executed.}
+
+\item{useExternalConceptCountsTable}{If TRUE an external table for the cohort concept counts will be used.}
 
 \item{runFeatureExtractionOnSample}{Logical. If TRUE, the function will operate on a sample of the data.
 Default is FALSE, meaning the function will operate on the full data set.}
