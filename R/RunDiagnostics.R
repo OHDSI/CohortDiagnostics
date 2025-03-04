@@ -820,7 +820,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
     cohortFeSettings <-
       FeatureExtraction::createCohortBasedTemporalCovariateSettings(
-        analysisId = analysisId, # TODO: how to assign this uniquely?
+        analysisId = analysisId, # problem - how to assign this uniquely?
         covariateCohortDatabaseSchema = cohortDatabaseSchema,
         covariateCohortTable = cohortTableNames$cohortTable,
         covariateCohorts = covariateCohorts,
@@ -828,85 +828,63 @@ executeDiagnostics <- function(cohortDefinitionSet,
         temporalStartDays = temporalCovariateSettings[[1]]$temporalStartDays,
         temporalEndDays = temporalCovariateSettings[[1]]$temporalEndDays
       )
-
-    characteristics <-
-      getCohortCharacteristics(
-        connection = connection,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        tempEmulationSchema = tempEmulationSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable,
-        cohortIds = covariateCohorts$cohortId,
-        covariateSettings = cohortFeSettings,
-        cdmVersion = cdmVersion,
-        exportFolder = exportFolder,
-        minCharacterizationMean = 0
-      )
-
-    on.exit(Andromeda::close(characteristics), add = TRUE)
-    exportCharacterization(
-      characteristics = characteristics,
-      databaseId = databaseId,
-      incremental = incremental,
-      covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
-      covariateValueContFileName = file.path(exportFolder, "temporal_covariate_value_dist.csv"),
-      covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
-      analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
-      timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
-      counts = cohortCounts,
-      minCellCount = minCellCount
-    )
+    # Add feature set
+    temporalCovariateSettings[[length(temporalCovariateSettings) + 1]] <- cohortFeSettings
   }
 
+
+  feCohortDefinitionSet <- cohortDefinitionSet
+  feCohortTable <- cohortTable
+  feCohortCounts <- cohortCounts
   # Temporal Cohort characterization ---------------------------------------------------------------
   if (runTemporalCohortCharacterization) {
+    if (runFeatureExtractionOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
+      cohortTableNames$cohortSampleTable <- paste0(cohortTableNames$cohortTable, "_cd_sample")
+      CohortGenerator::createCohortTables(
+        connection = connection,
+        cohortTableNames = cohortTableNames,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        incremental = TRUE
+      )
+
+      feCohortTable <- cohortTableNames$cohortSampleTable
+      feCohortDefinitionSet <-
+        CohortGenerator::sampleCohortDefinitionSet(
+          connection = connection,
+          cohortDefinitionSet = cohortDefinitionSet,
+          tempEmulationSchema = tempEmulationSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cohortTableNames = cohortTableNames,
+          n = sampleN,
+          seed = seed,
+          seedArgs = seedArgs,
+          identifierExpression = "cohortId",
+          incremental = incremental,
+          incrementalFolder = incrementalFolder
+        )
+
+      feCohortCounts <- computeCohortCounts(
+        connection = connection,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTableNames$cohortSampleTable,
+        cohorts = feCohortDefinitionSet,
+        exportFolder = exportFolder,
+        minCellCount = minCellCount,
+        databaseId = databaseId,
+        writeResult = FALSE
+      )
+    }
+  } else {
+    temporalCovariateSettings <- temporalCovariateSettings[-1]
+  }
+
+  if (length(temporalCovariateSettings)) {
     timeExecution(
       exportFolder,
       "executeCohortCharacterization",
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        feCohortDefinitionSet <- cohortDefinitionSet
-        feCohortTable <- cohortTable
-        feCohortCounts <- cohortCounts
-
-        if (runFeatureExtractionOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
-          cohortTableNames$cohortSampleTable <- paste0(cohortTableNames$cohortTable, "_cd_sample")
-          CohortGenerator::createCohortTables(
-            connection = connection,
-            cohortTableNames = cohortTableNames,
-            cohortDatabaseSchema = cohortDatabaseSchema,
-            incremental = TRUE
-          )
-
-          feCohortTable <- cohortTableNames$cohortSampleTable
-          feCohortDefinitionSet <-
-            CohortGenerator::sampleCohortDefinitionSet(
-              connection = connection,
-              cohortDefinitionSet = cohortDefinitionSet,
-              tempEmulationSchema = tempEmulationSchema,
-              cohortDatabaseSchema = cohortDatabaseSchema,
-              cohortTableNames = cohortTableNames,
-              n = sampleN,
-              seed = seed,
-              seedArgs = seedArgs,
-              identifierExpression = "cohortId",
-              incremental = incremental,
-              incrementalFolder = incrementalFolder
-            )
-
-          feCohortCounts <- computeCohortCounts(
-            connection = connection,
-            cohortDatabaseSchema = cohortDatabaseSchema,
-            cohortTable = cohortTableNames$cohortSampleTable,
-            cohorts = feCohortDefinitionSet,
-            exportFolder = exportFolder,
-            minCellCount = minCellCount,
-            databaseId = databaseId,
-            writeResult = FALSE
-          )
-        }
-
 
         executeCohortCharacterization(
           connection = connection,
