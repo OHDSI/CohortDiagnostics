@@ -49,7 +49,7 @@ Suggests:
     zip,
     knitr,
     shiny,
-    OhdsiShinyModules@overlap-network-vis,
+    OhdsiShinyModules,
     rsconnect,
     yaml
 Remotes:
