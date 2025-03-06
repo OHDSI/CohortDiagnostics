@@ -11,7 +11,7 @@
 -- Migrate data to FeatureExtraction output
 INSERT INTO @database_schema.@table_prefix@temporal_covariate_ref
 SELECT DISTINCT
-       CONCAT(CAST(cr.cohort_id AS varchar), '@analysis_id') AS covariate_id,
+       CAST ( CONCAT(CAST(cr.cohort_id AS varchar), '@analysis_id') AS bigint)  AS covariate_id,
        CONCAT('cohort:', c.cohort_name) AS covariate_name,
        @analysis_id as analysis_id,
        0 as concept_id
@@ -34,7 +34,7 @@ WHERE (SELECT COUNT(*) FROM @database_schema.@table_prefix@cohort_relationships)
 
 INSERT INTO @database_schema.@table_prefix@temporal_covariate_value
 SELECT
-    CONCAT(CAST(cr.comparator_cohort_id AS varchar), '@analysis_id') AS covariate_id,
+    CAST (CONCAT(CAST(cr.comparator_cohort_id AS varchar), '@analysis_id') AS bigint) AS covariate_id,
     cr.database_id,
     cr.cohort_id,
     cr.subjects as sum_value, -- total in both cohorts
