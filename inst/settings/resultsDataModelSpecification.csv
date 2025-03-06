@@ -30,32 +30,6 @@ cohort_inc_stats,mode_id,bigint,Yes,Yes,No,Yes,No,No,No,mode of inclusion rule
 cohort_inc_stats,person_count,float,Yes,No,No,Yes,Yes,No,No,person count following rule application
 cohort_inc_stats,gain_count,float,Yes,No,No,Yes,Yes,No,No,number of people gained from rule
 cohort_inc_stats,person_total,float,Yes,No,No,Yes,Yes,No,No,person total
-cohort_relationships,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
-cohort_relationships,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,target cohort id
-cohort_relationships,comparator_cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,comparator cohort id
-cohort_relationships,start_day,bigint,No,Yes,No,Yes,No,No,No,start day
-cohort_relationships,end_day,float,No,Yes,No,Yes,No,No,No,end day
-cohort_relationships,subjects,bigint,Yes,No,No,Yes,Yes,No,No,number of subjects total
-cohort_relationships,sub_cs_before_ts,bigint,Yes,No,No,Yes,Yes,No,No,present in both target and comparator
-cohort_relationships,sub_cs_on_ts,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start prior to first target cohort start
-cohort_relationships,sub_cs_after_ts,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start with first target cohort start
-cohort_relationships,sub_cs_before_te,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start after first target cohort start
-cohort_relationships,sub_cs_on_te,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start after first target cohort end
-cohort_relationships,sub_cs_after_te,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start on first target cohort end
-cohort_relationships,sub_cs_window_t,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start after first target cohort end
-cohort_relationships,sub_ce_window_t,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects start within period (incidence) relative to target start date and end date
-cohort_relationships,sub_cs_window_ts,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects start within period (incidence) relative to target start date and end date
-cohort_relationships,sub_cs_window_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects start within period (incidence) relative to target start date
-cohort_relationships,sub_ce_window_ts,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects start within period (incidence) relative to target end date
-cohort_relationships,sub_ce_window_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects end within period (incidence) relative to target start date
-cohort_relationships,sub_c_within_t,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects end within period (incidence) relative to target end date
-cohort_relationships,c_days_before_ts,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort days within target (offset) days
-cohort_relationships,c_days_before_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort days before target start date (offset)
-cohort_relationships,c_days_within_t_days,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort days before target end date (offset)
-cohort_relationships,c_days_after_ts,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort days within target cohort days (offset)
-cohort_relationships,c_days_after_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort days after target start date (offset)
-cohort_relationships,t_days,bigint,Yes,No,No,Yes,Yes,No,No,target days
-cohort_relationships,c_days,bigint,Yes,No,No,Yes,Yes,No,No,comparator days
 cohort_summary_stats,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
 cohort_summary_stats,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort id
 cohort_summary_stats,mode_id,bigint,Yes,Yes,No,Yes,No,No,No,mode identifier
