@@ -31,43 +31,44 @@
 {DEFAULT @cd_version = cd_version}
 {DEFAULT @subset_definition = subset_definition}
 {DEFAULT @cohort_summary_stats = cohort_summary_stats}
+{DEFAULT @table_prefix = ""}
 
 -- Drop old tables if exist
-DROP TABLE IF EXISTS @results_schema.@cohort;
-DROP TABLE IF EXISTS @results_schema.@cohort_count;
-DROP TABLE IF EXISTS @results_schema.@cohort_inclusion;
-DROP TABLE IF EXISTS @results_schema.@cohort_inc_result;
-DROP TABLE IF EXISTS @results_schema.@cohort_inc_stats;
-DROP TABLE IF EXISTS @results_schema.@cohort_relationships;
-DROP TABLE IF EXISTS @results_schema.@concept;
-DROP TABLE IF EXISTS @results_schema.@concept_ancestor;
-DROP TABLE IF EXISTS @results_schema.@concept_relationship;
-DROP TABLE IF EXISTS @results_schema.@concept_sets;
-DROP TABLE IF EXISTS @results_schema.@cohort_summary_stats;
-DROP TABLE IF EXISTS @results_schema.@concept_synonym;
-DROP TABLE IF EXISTS @results_schema.@database;
-DROP TABLE IF EXISTS @results_schema.@domain;
-DROP TABLE IF EXISTS @results_schema.@incidence_rate;
-DROP TABLE IF EXISTS @results_schema.@included_source_concept;
-DROP TABLE IF EXISTS @results_schema.@inclusion_rule_stats;
-DROP TABLE IF EXISTS @results_schema.@index_event_breakdown;
-DROP TABLE IF EXISTS @results_schema.@metadata;
-DROP TABLE IF EXISTS @results_schema.@orphan_concept;
-DROP TABLE IF EXISTS @results_schema.@relationship;
-DROP TABLE IF EXISTS @results_schema.@resolved_concepts;
-DROP TABLE IF EXISTS @results_schema.@temporal_analysis_ref;
-DROP TABLE IF EXISTS @results_schema.@temporal_covariate_ref;
-DROP TABLE IF EXISTS @results_schema.@temporal_covariate_value;
-DROP TABLE IF EXISTS @results_schema.@temporal_covariate_value_dist;
-DROP TABLE IF EXISTS @results_schema.@temporal_time_ref;
-DROP TABLE IF EXISTS @results_schema.@time_series;
-DROP TABLE IF EXISTS @results_schema.@visit_context;
-DROP TABLE IF EXISTS @results_schema.@vocabulary;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@cohort;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@cohort_count;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@cohort_inclusion;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@cohort_inc_result;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@cohort_inc_stats;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@cohort_relationships;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@concept;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@concept_ancestor;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@concept_relationship;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@concept_sets;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@cohort_summary_stats;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@concept_synonym;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@database;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@domain;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@incidence_rate;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@included_source_concept;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@inclusion_rule_stats;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@index_event_breakdown;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@metadata;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@orphan_concept;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@relationship;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@resolved_concepts;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@temporal_analysis_ref;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@temporal_covariate_ref;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@temporal_covariate_value;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@temporal_covariate_value_dist;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@temporal_time_ref;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@time_series;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@visit_context;
+DROP TABLE IF EXISTS @results_schema.@table_prefix@vocabulary;
 
 -- Create tables
 --Table cohort
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@cohort (
+CREATE TABLE @results_schema.@table_prefix@cohort (
 			cohort_id BIGINT NOT NULL,
 			cohort_name VARCHAR(255) NOT NULL,
 			metadata VARCHAR,
@@ -79,7 +80,7 @@ CREATE TABLE @results_schema.@cohort (
 
 --Table cohort_count
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@cohort_count (
+CREATE TABLE @results_schema.@table_prefix@cohort_count (
 			cohort_id BIGINT NOT NULL,
 			cohort_entries BIGINT NOT NULL,
 			cohort_subjects BIGINT NOT NULL,
@@ -89,7 +90,7 @@ CREATE TABLE @results_schema.@cohort_count (
 
 --Table cohort_inclusion
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@cohort_inclusion (
+CREATE TABLE @results_schema.@table_prefix@cohort_inclusion (
 			cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			rule_sequence INT NOT NULL,
@@ -100,7 +101,7 @@ CREATE TABLE @results_schema.@cohort_inclusion (
 
 --Table cohort_inc_result
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@cohort_inc_result (
+CREATE TABLE @results_schema.@table_prefix@cohort_inc_result (
 			cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			mode_id BIGINT NOT NULL,
@@ -111,7 +112,7 @@ CREATE TABLE @results_schema.@cohort_inc_result (
 
 --Table cohort_inc_stats
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@cohort_inc_stats (
+CREATE TABLE @results_schema.@table_prefix@cohort_inc_stats (
 			cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			rule_sequence INT NOT NULL,
@@ -125,7 +126,7 @@ CREATE TABLE @results_schema.@cohort_inc_stats (
 
 --Table cohort_summary_stats
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@cohort_summary_stats (
+CREATE TABLE @results_schema.@table_prefix@cohort_summary_stats (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
 			mode_id BIGINT NOT NULL,
@@ -136,7 +137,7 @@ CREATE TABLE @results_schema.@cohort_summary_stats (
 
 --Table cohort_overlap
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@cohort_overlap (
+CREATE TABLE @results_schema.@table_prefix@cohort_overlap (
 			either_subjects BIGINT NOT NULL,
 			both_subjects BIGINT NOT NULL,
 			t_only_subjects BIGINT NOT NULL,
@@ -154,7 +155,7 @@ CREATE TABLE @results_schema.@cohort_overlap (
 
 --Table cohort_relationships
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@cohort_relationships (
+CREATE TABLE @results_schema.@table_prefix@cohort_relationships (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
 			comparator_cohort_id BIGINT NOT NULL,
@@ -200,7 +201,7 @@ CREATE TABLE @results_schema.@cohort_relationships (
 
 --Table concept
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@concept (
+CREATE TABLE @results_schema.@table_prefix@concept (
 			concept_id BIGINT NOT NULL,
 			concept_name VARCHAR(255) NOT NULL,
 			domain_id VARCHAR(20) NOT NULL,
@@ -216,7 +217,7 @@ CREATE TABLE @results_schema.@concept (
 
 --Table concept_ancestor
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@concept_ancestor (
+CREATE TABLE @results_schema.@table_prefix@concept_ancestor (
 			ancestor_concept_id BIGINT NOT NULL,
 			descendant_concept_id BIGINT NOT NULL,
 			min_levels_of_separation INT NOT NULL,
@@ -226,7 +227,7 @@ CREATE TABLE @results_schema.@concept_ancestor (
 
 --Table concept_relationship
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@concept_relationship (
+CREATE TABLE @results_schema.@table_prefix@concept_relationship (
 			concept_id_1 BIGINT NOT NULL,
 			concept_id_2 BIGINT NOT NULL,
 			relationship_id VARCHAR(20) NOT NULL,
@@ -238,7 +239,7 @@ CREATE TABLE @results_schema.@concept_relationship (
 
 --Table concept_sets
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@concept_sets (
+CREATE TABLE @results_schema.@table_prefix@concept_sets (
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
 			concept_set_sql VARCHAR NOT NULL,
@@ -249,7 +250,7 @@ CREATE TABLE @results_schema.@concept_sets (
 
 --Table concept_synonym
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@concept_synonym (
+CREATE TABLE @results_schema.@table_prefix@concept_synonym (
 			concept_id BIGINT NOT NULL,
 			concept_synonym_name VARCHAR NOT NULL,
 			language_concept_id BIGINT NOT NULL,
@@ -258,7 +259,7 @@ CREATE TABLE @results_schema.@concept_synonym (
 
 --Table database
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@database (
+CREATE TABLE @results_schema.@table_prefix@database (
 			database_id VARCHAR NOT NULL,
 			database_name VARCHAR,
 			description VARCHAR,
@@ -270,7 +271,7 @@ CREATE TABLE @results_schema.@database (
 
 --Table domain
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@domain (
+CREATE TABLE @results_schema.@table_prefix@domain (
 			domain_id VARCHAR(20) NOT NULL,
 			domain_name VARCHAR(255) NOT NULL,
 			domain_concept_id BIGINT NOT NULL,
@@ -279,7 +280,7 @@ CREATE TABLE @results_schema.@domain (
 
 --Table incidence_rate
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@incidence_rate (
+CREATE TABLE @results_schema.@table_prefix@incidence_rate (
 			cohort_count BIGINT NOT NULL,
 			person_years BIGINT,
 			gender VARCHAR,
@@ -292,7 +293,7 @@ CREATE TABLE @results_schema.@incidence_rate (
 
 --Table included_source_concept
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@included_source_concept (
+CREATE TABLE @results_schema.@table_prefix@included_source_concept (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
@@ -305,7 +306,7 @@ CREATE TABLE @results_schema.@included_source_concept (
 
 --Table inclusion_rule_stats
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@inclusion_rule_stats (
+CREATE TABLE @results_schema.@table_prefix@inclusion_rule_stats (
 			rule_sequence_id INT NOT NULL,
 			rule_name VARCHAR NOT NULL,
 			meet_subjects BIGINT NOT NULL,
@@ -319,7 +320,7 @@ CREATE TABLE @results_schema.@inclusion_rule_stats (
 
 --Table index_event_breakdown
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@index_event_breakdown (
+CREATE TABLE @results_schema.@table_prefix@index_event_breakdown (
 			concept_id BIGINT NOT NULL,
 			concept_count BIGINT NOT NULL,
 			subject_count BIGINT NOT NULL,
@@ -332,7 +333,7 @@ CREATE TABLE @results_schema.@index_event_breakdown (
 
 --Table metadata
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@metadata (
+CREATE TABLE @results_schema.@table_prefix@metadata (
 			database_id VARCHAR NOT NULL,
 			start_time VARCHAR DEFAULT '0:0:0',
 			variable_field VARCHAR NOT NULL,
@@ -342,7 +343,7 @@ CREATE TABLE @results_schema.@metadata (
 
 --Table orphan_concept
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@orphan_concept (
+CREATE TABLE @results_schema.@table_prefix@orphan_concept (
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
 			database_id VARCHAR NOT NULL,
@@ -354,7 +355,7 @@ CREATE TABLE @results_schema.@orphan_concept (
 
 --Table relationship
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@relationship (
+CREATE TABLE @results_schema.@table_prefix@relationship (
 			relationship_id VARCHAR(20) NOT NULL,
 			relationship_name VARCHAR(255) NOT NULL,
 			is_hierarchical VARCHAR(1) NOT NULL,
@@ -366,7 +367,7 @@ CREATE TABLE @results_schema.@relationship (
 
 --Table resolved_concepts
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@resolved_concepts (
+CREATE TABLE @results_schema.@table_prefix@resolved_concepts (
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
 			concept_id BIGINT NOT NULL,
@@ -376,7 +377,7 @@ CREATE TABLE @results_schema.@resolved_concepts (
 
 --Table temporal_analysis_ref
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@temporal_analysis_ref (
+CREATE TABLE @results_schema.@table_prefix@temporal_analysis_ref (
 			analysis_id INT NOT NULL,
 			analysis_name VARCHAR NOT NULL,
 			domain_id VARCHAR(20) NOT NULL,
@@ -387,7 +388,7 @@ CREATE TABLE @results_schema.@temporal_analysis_ref (
 
 --Table temporal_covariate_ref
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@temporal_covariate_ref (
+CREATE TABLE @results_schema.@table_prefix@temporal_covariate_ref (
 			covariate_id BIGINT NOT NULL,
 			covariate_name VARCHAR NOT NULL,
 			analysis_id INT NOT NULL,
@@ -397,7 +398,7 @@ CREATE TABLE @results_schema.@temporal_covariate_ref (
 
 --Table temporal_covariate_value
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@temporal_covariate_value (
+CREATE TABLE @results_schema.@table_prefix@temporal_covariate_value (
 			cohort_id BIGINT NOT NULL,
 			time_id INT NOT NULL,
 			covariate_id BIGINT NOT NULL,
@@ -410,7 +411,7 @@ CREATE TABLE @results_schema.@temporal_covariate_value (
 
 --Table temporal_covariate_value_dist
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@temporal_covariate_value_dist (
+CREATE TABLE @results_schema.@table_prefix@temporal_covariate_value_dist (
 			cohort_id BIGINT NOT NULL,
 			time_id INT NOT NULL,
 			covariate_id BIGINT NOT NULL,
@@ -430,7 +431,7 @@ CREATE TABLE @results_schema.@temporal_covariate_value_dist (
 
 --Table temporal_time_ref
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@temporal_time_ref (
+CREATE TABLE @results_schema.@table_prefix@temporal_time_ref (
 			time_id INT NOT NULL,
 			start_day BIGINT NOT NULL,
 			end_day BIGINT NOT NULL,
@@ -439,7 +440,7 @@ CREATE TABLE @results_schema.@temporal_time_ref (
 
 --Table time_series
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@time_series (
+CREATE TABLE @results_schema.@table_prefix@time_series (
 			cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			period_begin DATE NOT NULL,
@@ -462,7 +463,7 @@ CREATE TABLE @results_schema.@time_series (
 
 --Table visit_context
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@visit_context (
+CREATE TABLE @results_schema.@table_prefix@visit_context (
 			cohort_id BIGINT NOT NULL,
 			visit_concept_id BIGINT NOT NULL,
 			visit_context VARCHAR NOT NULL,
@@ -473,7 +474,7 @@ CREATE TABLE @results_schema.@visit_context (
 
 --Table vocabulary
 --HINT DISTRIBUTE ON RANDOM
-CREATE TABLE @results_schema.@vocabulary (
+CREATE TABLE @results_schema.@table_prefix@vocabulary (
 			vocabulary_id VARCHAR NOT NULL,
 			vocabulary_name VARCHAR(255) NOT NULL,
 			vocabulary_reference VARCHAR,
