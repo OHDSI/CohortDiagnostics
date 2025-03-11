@@ -17,6 +17,18 @@
 #' Get default covariate settings
 #' @description
 #' Default covariate settings for cohort diagnostics execution
+#'
+#' Overriding this behaviour is possible, however, certain time windows are requirement of other diagnostics.
+#' For this reason, the time windows will be included, regardless of user specifications:
+#' 
+#' (-365, 0),
+#' (-30, 0),
+#' (-365, -31),
+#' (-30, -1),
+#' (0, 0),
+#' (1, 30),
+#' (31, 365),
+#' (-9999, 9999)
 #' @export
 getDefaultCovariateSettings <- function() {
   FeatureExtraction::createTemporalCovariateSettings(
@@ -128,7 +140,9 @@ getDefaultCovariateSettings <- function() {
 #'                                            Only records with values greater than 0.001 are returned.
 #' @param temporalCovariateSettings   Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
-#'                                    of such objects.
+#'                                    of such objects. This can be anythin accepted by FeatureExtraction (including
+#'                                    custom covariates). However, it should be noted that certain time windows will be
+#'                                    included by default. \seealso(getDefaultCovariateSettings)
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #' @param minCharacterizationMean     The minimum mean value for characterization output. Values below this will be cut off from output. This
 #'                                    will help reduce the file size of the characterization output, but will remove information
