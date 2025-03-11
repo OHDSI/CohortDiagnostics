@@ -1,3 +1,11 @@
+CohortDiagnostics 3.4.0
+=======================
+
+Bug Fixes:
+
+1. Exporting concept information now uses the vocabulary database schema, which may be different from the cdm schema
+
+
 CohortDiagnostics 3.3.1
 =======================
 Bug fixes:
