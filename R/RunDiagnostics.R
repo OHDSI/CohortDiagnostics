@@ -926,7 +926,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     expr = {
       exportConceptInformation(
         connection = connection,
-        cdmDatabaseSchema = cdmDatabaseSchema,
+        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
         tempEmulationSchema = tempEmulationSchema,
         conceptIdTable = "#concept_ids",
         incremental = incremental,
