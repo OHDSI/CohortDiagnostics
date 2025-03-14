@@ -23,7 +23,9 @@ createTestShinyDb(connectionDetails = connectionDetails,
 
 devtools::load_all("../OhdsiShinyModules/")
 
-#CohortDiagnostics::launchDiagnosticsExplorer(sqliteDbPath = resFile)
+CohortDiagnostics::launchDiagnosticsExplorer(sqliteDbPath = resFile)
+
+
 shinyCd <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = resFile)
 connectionHandler <- ResultModelManager::ConnectionHandler$new(connectionDetails = shinyCd)
 resultDatabaseSettings <- list(
