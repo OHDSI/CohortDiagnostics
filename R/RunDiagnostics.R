@@ -47,7 +47,6 @@ getDefaultCovariateSettings <- function() {
     useProcedureOccurrence = TRUE,
     useDrugEraStart = TRUE,
     useMeasurement = TRUE,
-    useMeasurementValue = TRUE,
     useMeasurementValueAsConcept = TRUE,
     useMeasurementRangeGroup = TRUE,
     useConditionEraStart = TRUE,
