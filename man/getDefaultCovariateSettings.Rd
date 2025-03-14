@@ -8,4 +8,16 @@ getDefaultCovariateSettings()
 }
 \description{
 Default covariate settings for cohort diagnostics execution
+
+Overriding this behaviour is possible, however, certain time windows are requirement of other diagnostics.
+For this reason, the time windows will be included, regardless of user specifications:
+
+(-365, 0),
+(-30, 0),
+(-365, -31),
+(-30, -1),
+(0, 0),
+(1, 30),
+(31, 365),
+(-9999, 9999)
 }

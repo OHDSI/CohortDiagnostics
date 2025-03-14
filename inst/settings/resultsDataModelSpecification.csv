@@ -149,6 +149,7 @@ temporal_covariate_ref,covariate_id,bigint,Yes,Yes,No,Yes,No,No,No,covariate ide
 temporal_covariate_ref,covariate_name,varchar,Yes,No,No,Yes,No,No,No,name of covariate
 temporal_covariate_ref,analysis_id,int,Yes,No,No,Yes,No,No,No,temporal analysis identifier
 temporal_covariate_ref,concept_id,bigint,Yes,No,No,Yes,No,No,No,concept identifier
+temporal_covariate_ref,value_as_concept_id,bigint,No,No,No,Yes,No,No,No,maps to a concept id for categorical variables (where present)
 temporal_covariate_value,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort identifier
 temporal_covariate_value,time_id,int,No,Yes,Yes,Yes,No,No,No,time identifier
 temporal_covariate_value,covariate_id,bigint,Yes,Yes,No,Yes,No,No,No,covariate identifier

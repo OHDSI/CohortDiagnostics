@@ -8,6 +8,11 @@ Bug Fixes:
 
 CohortDiagnostics 3.3.1
 =======================
+Changes:
+
+1. Added support for different measurements from FeatureExtraction - measurement as value, measurement value as concept id
+and measurement range groups (above range, in normal range, below normal)
+
 Bug fixes:
 
 1. Attempted fix of issue with DATEDIFF overflowing integer on some databse platforms
