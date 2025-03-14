@@ -58,6 +58,7 @@ getDefaultCovariateSettings <- function() {
     useDrugEraGroupStart = FALSE, # do not use because https://github.com/OHDSI/FeatureExtraction/issues/144
     useDrugEraGroupOverlap = TRUE,
     useObservation = TRUE,
+    useObservationValueAsConcept = TRUE,
     useDeviceExposure = TRUE,
     useCharlsonIndex = TRUE,
     useDcsi = TRUE,
