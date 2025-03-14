@@ -113,7 +113,7 @@ Only records with values greater than 0.001 are returned.}
 the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 of such objects. This can be anythin accepted by FeatureExtraction (including
 custom covariates). However, it should be noted that certain time windows will be
-included by default. \seealso(getDefaultCovariateSettings)}
+included by default. @seealso[getDefaultCovariateSettings]}
 
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
 
