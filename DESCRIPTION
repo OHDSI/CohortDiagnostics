@@ -40,7 +40,8 @@ Imports:
     tidyr (>= 1.2.0),
     CohortGenerator (>= 0.10.0),
     remotes,
-    scales
+    scales,
+    cli
 Suggests:
     Eunomia,
     RSQLite (>= 2.2.1),

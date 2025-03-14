@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+.REQUIRED_OSM_VERION <- base::package_version("3.1.2")
+
 #' Launch the Diagnostics Explorer Shiny app
 #' @param connectionDetails An object of type \code{connectionDetails} as created using the
 #'                          \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
@@ -117,6 +119,11 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     }
   }
 
+  osmVersion <- utils::packageVersion("OhdsiShinyModules")
+  if (osmVersion < .REQ_OSM_VERSION) {
+    cli::cli_warn("OhdsiShinyModules version {osmVersion} is out of date. It is suggested you update to at least {.REQUIRED_OSM_VERION}")
+  }
+
   appDir <-
     system.file("shiny", "DiagnosticsExplorer", package = utils::packageName())
 
@@ -197,6 +204,10 @@ createMergedResultsFile <-
         full.names = TRUE,
         recursive = TRUE
       )
+
+    if (length(listOfZipFilesToUpload) == 0) {
+      cli::cli_abort("No result files found in folder", dataFolder)
+    }
 
     for (zipFileName in listOfZipFilesToUpload) {
       uploadResults(
