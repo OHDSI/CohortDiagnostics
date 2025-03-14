@@ -144,7 +144,7 @@ getDefaultCovariateSettings <- function() {
 #'                                    the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 #'                                    of such objects. This can be anythin accepted by FeatureExtraction (including
 #'                                    custom covariates). However, it should be noted that certain time windows will be
-#'                                    included by default. \seealso(getDefaultCovariateSettings)
+#'                                    included by default. @seealso[getDefaultCovariateSettings]
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #' @param minCharacterizationMean     The minimum mean value for characterization output. Values below this will be cut off from output. This
 #'                                    will help reduce the file size of the characterization output, but will remove information
