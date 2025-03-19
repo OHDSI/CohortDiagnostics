@@ -39,11 +39,11 @@ SELECT
     cr.cohort_id,
     cr.subjects as sum_value, -- total in both cohorts
     cr.subjects / cc.cohort_subjects as mean,  -- fraction that overlap, can be used in characterization view
-    0 as sd, -- not sure how we get this value and it isn't used in the main report
-    1 as time_id
+    sqrt(cr.subjects * (cr.subjects / cc.cohort_subjects) * (1 - (cr.subjects / cc.cohort_subjects)) as sd, -- not sure how we get this value and it isn't used in the main report
+    ttr.time_id
 FROM @database_schema.@table_prefix@cohort_relationships cr
 INNER JOIN @database_schema.@table_prefix@cohort_count cc on cr.cohort_id = cc.cohort_id
-WHERE start_day = -9999 AND end_day = 0 -- Until now, this is the only time window that has actually been used
+INNER JOIN @database_schema.@table_prefix@temporal_time_ref ttr ON ttr.start_day = cr.start_day and ttr.end_day = cr.end_day
 ;
 
 -- Remove old table
