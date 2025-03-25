@@ -5,6 +5,7 @@
 {DEFAULT @temporal_covariate_ref = temporal_covariate_ref}
 {DEFAULT @temporal_analysis_ref = temporal_analysis_ref}
 {DEFAULT @temporal_covariate_value = temporal_covariate_value}
+{DEFAULT @temporal_time_ref = temporal_time_ref}
 {DEFAULT @table_prefix = ''}
 {DEFAULT @analysis_id = 173} --TODO HARD CODING IS HARD TO SOLVE
 
@@ -39,7 +40,7 @@ SELECT
     cr.cohort_id,
     cr.subjects as sum_value, -- total in both cohorts
     cr.subjects / cc.cohort_subjects as mean,  -- fraction that overlap, can be used in characterization view
-    sqrt(cr.subjects * (cr.subjects / cc.cohort_subjects) * (1 - (cr.subjects / cc.cohort_subjects)) as sd, -- not sure how we get this value and it isn't used in the main report
+    sqrt(cr.subjects * (cr.subjects / cc.cohort_subjects) * (1 - (cr.subjects / cc.cohort_subjects))) as sd, -- not sure how we get this value and it isn't used in the main report
     ttr.time_id
 FROM @database_schema.@table_prefix@cohort_relationships cr
 INNER JOIN @database_schema.@table_prefix@cohort_count cc on cr.cohort_id = cc.cohort_id
