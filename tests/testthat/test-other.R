@@ -159,26 +159,27 @@ test_that("enforceMinCellValue works with vector of minimum values", {
 })
 
 test_that("Creating and checking externalConceptCounts table", {
-  if (dbms == "sqlite") {
-    # Creating externalConceptCounts
-    sql_lite_path <- file.path(test_path(), databaseFile)
-    connectionDetails <- createConnectionDetails(dbms= "sqlite", server = sql_lite_path)
-    connection <- connect(connectionDetails)
-    cdmDatabaseSchema <- "main"
-    CohortDiagnostics::createConceptCountsTable(connectionDetails = connectionDetails,
-                                                cdmDatabaseSchema = cdmDatabaseSchema,
-                                                tempEmulationSchema = NULL,
-                                                conceptCountsTable = "concept_counts",
-                                                conceptCountsDatabaseSchema = cdmDatabaseSchema,
-                                                conceptCountsTableIsTemp = FALSE,
-                                                removeCurrentTable = TRUE)
+  message(paste("testing createConceptCountsTable on", dbms))
+  
+    conceptCountsTable <- "concept_counts"
     
-    concept_counts_info <- querySql(connection, "PRAGMA table_info(concept_counts)")
-    expect_equal(concept_counts_info$NAME, c( "concept_id", "concept_count", "concept_subjects", "vocabulary_version"))
+    createConceptCountsTable(connectionDetails = connectionDetails,
+                             cdmDatabaseSchema = cdmDatabaseSchema,
+                             tempEmulationSchema = NULL,
+                             conceptCountsTable = conceptCountsTable,
+                             conceptCountsDatabaseSchema = cdmDatabaseSchema,
+                             conceptCountsTableIsTemp = FALSE,
+                             removeCurrentTable = TRUE)
+    
+    connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+    conceptCounts <- renderTranslateQuerySql(connection, "SELECT * FROM @cdmDatabaseSchema.@conceptCountsTable limit 1;",
+                                             cdmDatabaseSchema = cdmDatabaseSchema,
+                                             conceptCountsTable = conceptCountsTable)
+    
+    expect_equal(tolower(colnames(conceptCounts)), c( "concept_id", "concept_count", "concept_subjects", "vocabulary_version"))
   
     # Checking vocab version matches 
     useExternalConceptCountsTable <- TRUE
-    conceptCountsTable <- "concept_counts"
     conceptCountsTable <- conceptCountsTable
     dataSourceInfo <- getCdmDataSourceInformation(connection = connection, cdmDatabaseSchema = cdmDatabaseSchema)
     vocabVersion <- dataSourceInfo$vocabularyVersion
@@ -190,10 +191,8 @@ test_that("Creating and checking externalConceptCounts table", {
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = getOption("sqlRenderTempEmulationSchena")
       )
-    
+    DatabaseConnector::disconnect(connection)
     expect_equal(vocabVersion, vocabVersionExternalConceptCountsTable[1,1])
-  }
-    
 })
 
 

@@ -24,7 +24,7 @@
 #' @inheritParams executeDiagnostics
 #' @param conceptCountsDatabaseSchema schema name for the concept counts table
 #' @param conceptCountsTableIsTemp boolean to indicate if it should be a temporary table
-#' @param removeCurrentTable if the current table should be removed
+#' @param removeCurrentTable Should the current table should be removed? TRUE (default) or FALSE
 #'
 #' @export
 createConceptCountsTable <- function(connectionDetails = NULL,
