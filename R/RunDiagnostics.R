@@ -701,8 +701,9 @@ executeDiagnostics <- function(cohortDefinitionSet,
   if (substr(conceptCountsTable, 1, 1) == "#") {
     conceptCountsTableIsTemp <- TRUE
   } else {
-      conceptCountsTableIsTemp <- FALSE
-      conceptCountsTable <- conceptCountsTable
+    conceptCountsTableIsTemp <- FALSE
+      
+    if (isTRUE(checkConceptCountsTableExists)) {
       dataSourceInfo <- getCdmDataSourceInformation(connection = connection, 
                                                     cdmDatabaseSchema = cdmDatabaseSchema)
       vocabVersion <- dataSourceInfo$vocabularyVersion
@@ -721,6 +722,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                     vocabVersion, 
                     "). Update concept_counts with createConceptCountsTable()"))
       }
+    }
   }
 
   # Always export concept sets to csv
