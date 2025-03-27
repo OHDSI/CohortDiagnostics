@@ -758,7 +758,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
           conceptCountsTableIsTemp = conceptCountsTableIsTemp,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
-          useExternalConceptCountsTable = useExternalConceptCountsTable,
+          useExternalConceptCountsTable = !conceptCountsTableIsTemp,
           incremental = incremental,
           conceptIdTable = "#concept_ids",
           recordKeepingFile = recordKeepingFile
