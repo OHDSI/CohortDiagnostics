@@ -136,7 +136,7 @@ getDefaultCovariateSettings <- function() {
 #' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
-#' @param runCohortRelationship       Generate and export the cohort relationship? Cohort relationship checks the temporal
+#' @param runCohortRelationship       Compute cohort relationships. Overlap is now computed with FeaturExtraction, time paramters are derived from temporalCovariateSettings
 #'                                    relationship between two or more cohorts.
 #' @param runTemporalCohortCharacterization   Generate and export the temporal cohort characterization?
 #'                                            Only records with values greater than 0.001 are returned.
@@ -260,7 +260,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       incremental = incremental,
       temporalCovariateSettings = temporalCovariateSettings
     ) %>%
-    RJSONIO::toJSON(digits = 23, pretty = TRUE)
+      RJSONIO::toJSON(digits = 23, pretty = TRUE)
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
@@ -289,25 +289,25 @@ executeDiagnostics <- function(cohortDefinitionSet,
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertList(cohortTableNames, null.ok = FALSE, types = "character", add = errorMessage, names = "named")
   checkmate::assertNames(names(cohortTableNames),
-    must.include = c(
-      "cohortTable",
-      "cohortInclusionTable",
-      "cohortInclusionResultTable",
-      "cohortInclusionStatsTable",
-      "cohortSummaryStatsTable",
-      "cohortCensorStatsTable"
-    ),
-    add = errorMessage
+                         must.include = c(
+                           "cohortTable",
+                           "cohortInclusionTable",
+                           "cohortInclusionResultTable",
+                           "cohortInclusionStatsTable",
+                           "cohortSummaryStatsTable",
+                           "cohortCensorStatsTable"
+                         ),
+                         add = errorMessage
   )
   checkmate::assertDataFrame(cohortDefinitionSet, add = errorMessage)
   checkmate::assertNames(names(cohortDefinitionSet),
-    must.include = c(
-      "json",
-      "cohortId",
-      "cohortName",
-      "sql"
-    ),
-    add = errorMessage
+                         must.include = c(
+                           "json",
+                           "cohortId",
+                           "cohortName",
+                           "sql"
+                         ),
+                         add = errorMessage
   )
 
   cohortTable <- cohortTableNames$cohortTable
@@ -484,17 +484,17 @@ executeDiagnostics <- function(cohortDefinitionSet,
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(.data$tableName == "cohort") %>%
-    dplyr::pull(.data$columnName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    sort()
+      dplyr::filter(.data$tableName == "cohort") %>%
+      dplyr::pull(.data$columnName) %>%
+      SqlRender::snakeCaseToCamelCase() %>%
+      sort()
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
-    dplyr::filter(.data$tableName == "cohort") %>%
-    dplyr::filter(.data$isRequired == "Yes") %>%
-    dplyr::pull(.data$columnName) %>%
-    SqlRender::snakeCaseToCamelCase() %>%
-    sort()
+      dplyr::filter(.data$tableName == "cohort") %>%
+      dplyr::filter(.data$isRequired == "Yes") %>%
+      dplyr::pull(.data$columnName) %>%
+      SqlRender::snakeCaseToCamelCase() %>%
+      sort()
 
   expectedButNotObsevered <-
     setdiff(x = cohortTableColumnNamesExpected, y = cohortTableColumnNamesObserved)
@@ -832,79 +832,76 @@ executeDiagnostics <- function(cohortDefinitionSet,
 
   # Cohort relationship ---------------------------------------------------------------------------------
   if (runCohortRelationship) {
-    timeExecution(
-      exportFolder,
-      "executeCohortRelationshipDiagnostics",
-      cohortIds,
-      parent = "executeDiagnostics",
-      expr = {
-        executeCohortRelationshipDiagnostics(
-          connection = connection,
-          databaseId = databaseId,
-          exportFolder = exportFolder,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cdmDatabaseSchema = cdmDatabaseSchema,
-          tempEmulationSchema = tempEmulationSchema,
-          cohortTable = cohortTable,
-          cohortDefinitionSet = cohortDefinitionSet,
-          temporalCovariateSettings = temporalCovariateSettings[[1]],
-          minCellCount = minCellCount,
-          recordKeepingFile = recordKeepingFile,
-          incremental = incremental
-        )
-      }
-    )
+    covariateCohorts <- cohortDefinitionSet |> dplyr::select(cohortId, cohortName)
+    analysisId <- as.integer(Sys.getenv("OHDSI_CD_CF_ANALYSIS_ID", unset = 173))
+
+    cohortFeSettings <-
+      FeatureExtraction::createCohortBasedTemporalCovariateSettings(
+        analysisId = analysisId, # problem - how to assign this uniquely?
+        covariateCohortDatabaseSchema = cohortDatabaseSchema,
+        covariateCohortTable = cohortTableNames$cohortTable,
+        covariateCohorts = covariateCohorts,
+        valueType = "binary",
+        temporalStartDays = temporalCovariateSettings[[1]]$temporalStartDays,
+        temporalEndDays = temporalCovariateSettings[[1]]$temporalEndDays
+      )
+    # Add feature set
+    temporalCovariateSettings[[length(temporalCovariateSettings) + 1]] <- cohortFeSettings
   }
 
+
+  feCohortDefinitionSet <- cohortDefinitionSet
+  feCohortTable <- cohortTable
+  feCohortCounts <- cohortCounts
   # Temporal Cohort characterization ---------------------------------------------------------------
   if (runTemporalCohortCharacterization) {
+    if (runFeatureExtractionOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
+      cohortTableNames$cohortSampleTable <- paste0(cohortTableNames$cohortTable, "_cd_sample")
+      CohortGenerator::createCohortTables(
+        connection = connection,
+        cohortTableNames = cohortTableNames,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        incremental = TRUE
+      )
+
+      feCohortTable <- cohortTableNames$cohortSampleTable
+      feCohortDefinitionSet <-
+        CohortGenerator::sampleCohortDefinitionSet(
+          connection = connection,
+          cohortDefinitionSet = cohortDefinitionSet,
+          tempEmulationSchema = tempEmulationSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cohortTableNames = cohortTableNames,
+          n = sampleN,
+          seed = seed,
+          seedArgs = seedArgs,
+          identifierExpression = "cohortId",
+          incremental = incremental,
+          incrementalFolder = incrementalFolder
+        )
+
+      feCohortCounts <- computeCohortCounts(
+        connection = connection,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTableNames$cohortSampleTable,
+        cohorts = feCohortDefinitionSet,
+        exportFolder = exportFolder,
+        minCellCount = minCellCount,
+        databaseId = databaseId,
+        writeResult = FALSE
+      )
+    }
+  } else {
+    temporalCovariateSettings <- temporalCovariateSettings[-1]
+  }
+
+  if (length(temporalCovariateSettings)) {
     timeExecution(
       exportFolder,
       "executeCohortCharacterization",
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        feCohortDefinitionSet <- cohortDefinitionSet
-        feCohortTable <- cohortTable
-        feCohortCounts <- cohortCounts
-
-        if (runFeatureExtractionOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
-          cohortTableNames$cohortSampleTable <- paste0(cohortTableNames$cohortTable, "_cd_sample")
-          CohortGenerator::createCohortTables(
-            connection = connection,
-            cohortTableNames = cohortTableNames,
-            cohortDatabaseSchema = cohortDatabaseSchema,
-            incremental = TRUE
-          )
-
-          feCohortTable <- cohortTableNames$cohortSampleTable
-          feCohortDefinitionSet <-
-            CohortGenerator::sampleCohortDefinitionSet(
-              connection = connection,
-              cohortDefinitionSet = cohortDefinitionSet,
-              tempEmulationSchema = tempEmulationSchema,
-              cohortDatabaseSchema = cohortDatabaseSchema,
-              cohortTableNames = cohortTableNames,
-              n = sampleN,
-              seed = seed,
-              seedArgs = seedArgs,
-              identifierExpression = "cohortId",
-              incremental = incremental,
-              incrementalFolder = incrementalFolder
-            )
-
-          feCohortCounts <- computeCohortCounts(
-            connection = connection,
-            cohortDatabaseSchema = cohortDatabaseSchema,
-            cohortTable = cohortTableNames$cohortSampleTable,
-            cohorts = feCohortDefinitionSet,
-            exportFolder = exportFolder,
-            minCellCount = minCellCount,
-            databaseId = databaseId,
-            writeResult = FALSE
-          )
-        }
-
 
         executeCohortCharacterization(
           connection = connection,

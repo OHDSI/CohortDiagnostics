@@ -103,7 +103,7 @@ diagnostics to.}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
-\item{runCohortRelationship}{Generate and export the cohort relationship? Cohort relationship checks the temporal
+\item{runCohortRelationship}{Compute cohort relationships. Overlap is now computed with FeaturExtraction, time paramters are derived from temporalCovariateSettings
 relationship between two or more cohorts.}
 
 \item{runTemporalCohortCharacterization}{Generate and export the temporal cohort characterization?

@@ -120,6 +120,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
   }
 
   osmVersion <- utils::packageVersion("OhdsiShinyModules")
+
   if (osmVersion < .REQUIRED_OSM_VERSION) {
     cli::cli_warn("OhdsiShinyModules version {osmVersion} is out of date. It is suggested you update to at least {.REQUIRED_OSM_VERION}")
   }
