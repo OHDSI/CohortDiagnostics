@@ -4,7 +4,9 @@ devtools::load_all()
 
 cohortDefinitionSet <- loadTestCohortDefinitionSet()
 connectionDetails <- Eunomia::getEunomiaConnectionDetails()
-resFile <- tempfile(fileext = ".sqlite")
+
+gitHeadSha <- system("git rev-parse --short HEAD")
+resFile <- glue::glue("cd-test-dataset-{gitHeadSha}.sqlite")
 
 cohortTable <- "cohort"
 vocabularyDatabaseSchema <- "main"
@@ -19,23 +21,3 @@ createTestShinyDb(connectionDetails = connectionDetails,
                   cdmDatabaseSchema = "main",
                   cohortDefinitionSet = cohortDefinitionSet, 
                   runTemporalCohortCharacterization = FALSE)
-
-
-devtools::load_all("../OhdsiShinyModules/")
-
-CohortDiagnostics::launchDiagnosticsExplorer(sqliteDbPath = resFile)
-
-
-shinyCd <- DatabaseConnector::createConnectionDetails(dbms = "sqlite", server = resFile)
-connectionHandler <- ResultModelManager::ConnectionHandler$new(connectionDetails = shinyCd)
-resultDatabaseSettings <- list(
-  dbms = 'sqlite',
-  cdTablePrefix = '',
-  schema = "main",
-  vocabularyDatabaseSchema = "main"
-)
-
-
-dataSource <- OhdsiShinyModules::createCdDatabaseDataSource(connectionHandler, resultDatabaseSettings)
-
-res <- getResultsCohortOverlapFe(dataSource = dataSource, cohortIds = 14906)
