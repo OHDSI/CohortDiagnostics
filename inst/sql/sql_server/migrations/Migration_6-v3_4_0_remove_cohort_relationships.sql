@@ -42,7 +42,7 @@ SELECT
     cr.cohort_id,
     cr.subjects as sum_value, -- total in both cohorts
     CAST(cr.subjects as FLOAT) / CAST(cc.cohort_subjects as FLOAT) as mean,  -- fraction that overlap, can be used in characterization view
-    sqrt(cr.subjects * (CAST(cr.subjects as FLOAT) / CAST(cc.cohort_subjects as FLOAT)) * (1 - (CAST(cr.subjects as FLOAT) / CAST(cc.cohort_subjects as FLOAT)))) as sd,
+    sqrt((CAST(cr.subjects as FLOAT) / CAST(cc.cohort_subjects as FLOAT)) * (1 - (CAST(cr.subjects as FLOAT) / CAST(cc.cohort_subjects as FLOAT)))) as sd,
     ttr.time_id
 FROM @database_schema.@table_prefix@cohort_relationships cr
 INNER JOIN @database_schema.@table_prefix@cohort_count cc on cr.cohort_id = cc.cohort_id
