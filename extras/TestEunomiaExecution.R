@@ -20,3 +20,6 @@ createTestShinyDb(connectionDetails = connectionDetails,
                   cohortDatabaseSchema = "main",
                   cdmDatabaseSchema = "main",
                   cohortDefinitionSet = cohortDefinitionSet)
+
+#devtools::load_all("../OhdsiShinyModules/")
+#launchDiagnosticsExplorer(sqliteDbPath = resFile)
