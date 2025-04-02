@@ -50,4 +50,4 @@ INNER JOIN @database_schema.@table_prefix@temporal_time_ref ttr ON ttr.start_day
 ;
 
 -- Remove old table
---DROP TABLE IF EXISTS @database_schema.@table_prefix@cohort_relationships;
+DROP TABLE IF EXISTS @database_schema.@table_prefix@cohort_relationships;
