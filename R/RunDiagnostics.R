@@ -310,6 +310,10 @@ executeDiagnostics <- function(cohortDefinitionSet,
                          add = errorMessage
   )
 
+  if (!"isSubset" %in% colnames(cohortDefinitionSet)) {
+    cohortDefinitionSet$isSubset <- FALSE
+  }
+
   cohortTable <- cohortTableNames$cohortTable
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
   checkmate::assertLogical(runIncludedSourceConcepts, add = errorMessage)
@@ -831,7 +835,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
 
   # Cohort relationship ---------------------------------------------------------------------------------
-  if (runCohortRelationship) {
+  if (runCohortRelationship && nrow(cohortDefinitionSet) > 1) {
     covariateCohorts <- cohortDefinitionSet |> dplyr::select(cohortId, cohortName)
     analysisId <- as.integer(Sys.getenv("OHDSI_CD_CF_ANALYSIS_ID", unset = 173))
 

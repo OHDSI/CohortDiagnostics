@@ -391,6 +391,17 @@ runConceptSetDiagnostics <- function(connection,
   startConceptSetDiagnostics <- Sys.time()
   subset <- dplyr::tibble()
 
+  # We need to get concept sets from all cohorts in case subsets are present and
+  # Added incrementally after cohort generation
+  conceptSets <- combineConceptSetsFromCohorts(cohorts)
+  if (is.null(conceptSets) || nrow(conceptSets) == 0) {
+    ParallelLogger::logInfo(
+      "Cohorts being diagnosed does not have concept ids. Skipping concept set diagnostics."
+    )
+    return(NULL)
+  }
+
+
   if (runIncludedSourceConcepts) {
     subsetIncluded <- subsetToRequiredCohorts(
       cohorts = cohorts,
@@ -425,17 +436,7 @@ runConceptSetDiagnostics <- function(connection,
     return(NULL)
   }
 
-  # We need to get concept sets from all cohorts in case subsets are present and
-  # Added incrementally after cohort generation
-  conceptSets <- combineConceptSetsFromCohorts(cohorts)
   conceptSets <- conceptSets %>% dplyr::filter(.data$cohortId %in% subset$cohortId)
-
-  if (is.null(conceptSets)) {
-    ParallelLogger::logInfo(
-      "Cohorts being diagnosed does not have concept ids. Skipping concept set diagnostics."
-    )
-    return(NULL)
-  }
 
   uniqueConceptSets <-
     conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ] %>%
