@@ -260,7 +260,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
       incremental = incremental,
       temporalCovariateSettings = temporalCovariateSettings
     ) %>%
-      RJSONIO::toJSON(digits = 23, pretty = TRUE)
+      ParallelLogger::convertSettingsToJson()
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
