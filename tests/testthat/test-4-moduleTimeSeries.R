@@ -35,7 +35,7 @@ test_that("Testing cohort time series execution", {
       dplyr::distinct() %>%
       dplyr::rename("cohortId" = "cohortDefinitionId") %>%
       dplyr::rowwise() %>%
-      dplyr::mutate(json = RJSONIO::toJSON(list(
+      dplyr::mutate(json = jsonlite::toJSON(list(
         cohortId = cohortId,
         randomString = c(
           sample(x = LETTERS, 5, replace = TRUE),
