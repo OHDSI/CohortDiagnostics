@@ -31,8 +31,6 @@ createIfNotExist <-
         if (!file.exists(gsub("/$", "", name))) {
           dir.create(name, recursive = recursive)
           ParallelLogger::logInfo("Created ", type, " at ", name)
-        } else {
-          # ParallelLogger::logInfo(type, " already exists at ", name)
         }
       }
       checkmate::assertDirectory(

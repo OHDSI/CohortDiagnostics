@@ -265,14 +265,12 @@ executeDiagnostics <- function(cohortDefinitionSet,
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
   executionTimePath <- file.path(exportFolder, "taskExecutionTimes.csv")
-
-  ParallelLogger::addDefaultFileLogger(file.path(exportFolder, "log.txt"))
-  ParallelLogger::addDefaultErrorReportLogger(file.path(exportFolder, "errorReportR.txt"))
-  on.exit(ParallelLogger::unregisterLogger("DEFAULT_FILE_LOGGER", silent = TRUE))
-  on.exit(
-    ParallelLogger::unregisterLogger("DEFAULT_ERRORREPORT_LOGGER", silent = TRUE),
-    add = TRUE
-  )
+  ParallelLogger::addDefaultFileLogger(file.path(exportFolder, "log.txt"), name = "CD_LOGGER")
+  ParallelLogger::addDefaultErrorReportLogger(file.path(exportFolder, "errorReportR.txt"), name = "CD_ERROR_LOGGER")
+  on.exit({
+    ParallelLogger::unregisterLogger("CD_LOGGER", silent = TRUE)
+    ParallelLogger::unregisterLogger("CD_ERROR_LOGGER", silent = TRUE)
+  }, add = TRUE)
 
   start <- Sys.time()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
