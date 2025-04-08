@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.REQUIRED_OSM_VERSION <- base::package_version("3.1.2")
+.REQUIRED_OSM_VERSION <- base::package_version("3.2.0")
 
 #' Launch the Diagnostics Explorer Shiny app
 #' @param connectionDetails An object of type \code{connectionDetails} as created using the

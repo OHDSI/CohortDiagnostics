@@ -20,7 +20,7 @@
 #'
 #' Overriding this behaviour is possible, however, certain time windows are requirement of other diagnostics.
 #' For this reason, the time windows will be included, regardless of user specifications:
-#' 
+#'
 #' (-365, 0),
 #' (-30, 0),
 #' (-365, -31),
@@ -260,17 +260,20 @@ executeDiagnostics <- function(cohortDefinitionSet,
       incremental = incremental,
       temporalCovariateSettings = temporalCovariateSettings
     ) %>%
-      ParallelLogger::convertSettingsToJson()
+    ParallelLogger::convertSettingsToJson()
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
   executionTimePath <- file.path(exportFolder, "taskExecutionTimes.csv")
   ParallelLogger::addDefaultFileLogger(file.path(exportFolder, "log.txt"), name = "CD_LOGGER")
   ParallelLogger::addDefaultErrorReportLogger(file.path(exportFolder, "errorReportR.txt"), name = "CD_ERROR_LOGGER")
-  on.exit({
-    ParallelLogger::unregisterLogger("CD_LOGGER", silent = TRUE)
-    ParallelLogger::unregisterLogger("CD_ERROR_LOGGER", silent = TRUE)
-  }, add = TRUE)
+  on.exit(
+    {
+      ParallelLogger::unregisterLogger("CD_LOGGER", silent = TRUE)
+      ParallelLogger::unregisterLogger("CD_ERROR_LOGGER", silent = TRUE)
+    },
+    add = TRUE
+  )
 
   start <- Sys.time()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
@@ -287,25 +290,25 @@ executeDiagnostics <- function(cohortDefinitionSet,
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertList(cohortTableNames, null.ok = FALSE, types = "character", add = errorMessage, names = "named")
   checkmate::assertNames(names(cohortTableNames),
-                         must.include = c(
-                           "cohortTable",
-                           "cohortInclusionTable",
-                           "cohortInclusionResultTable",
-                           "cohortInclusionStatsTable",
-                           "cohortSummaryStatsTable",
-                           "cohortCensorStatsTable"
-                         ),
-                         add = errorMessage
+    must.include = c(
+      "cohortTable",
+      "cohortInclusionTable",
+      "cohortInclusionResultTable",
+      "cohortInclusionStatsTable",
+      "cohortSummaryStatsTable",
+      "cohortCensorStatsTable"
+    ),
+    add = errorMessage
   )
   checkmate::assertDataFrame(cohortDefinitionSet, add = errorMessage)
   checkmate::assertNames(names(cohortDefinitionSet),
-                         must.include = c(
-                           "json",
-                           "cohortId",
-                           "cohortName",
-                           "sql"
-                         ),
-                         add = errorMessage
+    must.include = c(
+      "json",
+      "cohortId",
+      "cohortName",
+      "sql"
+    ),
+    add = errorMessage
   )
 
   if (!"isSubset" %in% colnames(cohortDefinitionSet)) {
@@ -486,17 +489,17 @@ executeDiagnostics <- function(cohortDefinitionSet,
     sort()
   cohortTableColumnNamesExpected <-
     getResultsDataModelSpecifications() %>%
-      dplyr::filter(.data$tableName == "cohort") %>%
-      dplyr::pull(.data$columnName) %>%
-      SqlRender::snakeCaseToCamelCase() %>%
-      sort()
+    dplyr::filter(.data$tableName == "cohort") %>%
+    dplyr::pull(.data$columnName) %>%
+    SqlRender::snakeCaseToCamelCase() %>%
+    sort()
   cohortTableColumnNamesRequired <-
     getResultsDataModelSpecifications() %>%
-      dplyr::filter(.data$tableName == "cohort") %>%
-      dplyr::filter(.data$isRequired == "Yes") %>%
-      dplyr::pull(.data$columnName) %>%
-      SqlRender::snakeCaseToCamelCase() %>%
-      sort()
+    dplyr::filter(.data$tableName == "cohort") %>%
+    dplyr::filter(.data$isRequired == "Yes") %>%
+    dplyr::pull(.data$columnName) %>%
+    SqlRender::snakeCaseToCamelCase() %>%
+    sort()
 
   expectedButNotObsevered <-
     setdiff(x = cohortTableColumnNamesExpected, y = cohortTableColumnNamesObserved)
@@ -904,7 +907,6 @@ executeDiagnostics <- function(cohortDefinitionSet,
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-
         executeCohortCharacterization(
           connection = connection,
           databaseId = databaseId,
