@@ -36,3 +36,20 @@
 #' @author Luisa Martínez (10SEP2024)
 #' Johnson and Johnson R&D Data Science and Digital Health, Barcelona, Spain  
 "GetPatientsByConcept"
+
+#' @title Query to create a table with concept frequency in the general population
+#'
+#' @description Query to create a table with concept_id and frequency of the general 
+#' population for specific given concepts.
+#'  
+#' - @domain_table Name of the domain table from the OMOP CDM.
+#' - @domain_concept_id Name of the field matching to concept_id from the OMOP CDM.
+#' - @input_concepts Concept IDs from table concepts of OMOP CDM to retrieve. 
+#'                        Should be a comma-separated string of IDs.
+#' - @cdm_schema CDM schema name from the dataset.
+#' 
+#' @format Plain text SQl file
+#' 
+#' @author Luisa Martínez (15SEP2024)
+#'  Johnson and Johnson R&D Data Science and Digital Health, Barcelona, Spain 
+"CreateConceptFrequencyTable"
