@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.REQUIRED_OSM_VERSION <- base::package_version("3.1.2")
+REQUIRED_OSM_VERSION <- base::package_version("3.2.0")
 
 #' Launch the Diagnostics Explorer Shiny app
 #' @param connectionDetails An object of type \code{connectionDetails} as created using the
@@ -121,8 +121,8 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
 
   osmVersion <- utils::packageVersion("OhdsiShinyModules")
 
-  if (osmVersion < .REQUIRED_OSM_VERSION) {
-    cli::cli_warn("OhdsiShinyModules version {osmVersion} is out of date. It is suggested you update to at least {.REQUIRED_OSM_VERION}")
+  if (osmVersion < REQUIRED_OSM_VERSION) {
+    cli::cli_warn("OhdsiShinyModules version {osmVersion} is out of date. It is suggested you update to at least {REQUIRED_OSM_VERSION}")
   }
 
   appDir <-

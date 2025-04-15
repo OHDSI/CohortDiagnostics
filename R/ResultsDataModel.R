@@ -52,13 +52,13 @@ getDefaultVocabularyTableNames <- function() {
 .createDataModel <- function(connection, databaseSchema, tablePrefix) {
   sql <- do.call(
     SqlRender::loadRenderTranslateSql,
-      list(
-        sqlFilename = "CreateResultsDataModel.sql",
-        packageName = utils::packageName(),
-        dbms = connection@dbms,
-        results_schema = databaseSchema,
-        table_prefix = tablePrefix
-      )
+    list(
+      sqlFilename = "CreateResultsDataModel.sql",
+      packageName = utils::packageName(),
+      dbms = connection@dbms,
+      results_schema = databaseSchema,
+      table_prefix = tablePrefix
+    )
   )
   DatabaseConnector::executeSql(connection, sql)
 }
