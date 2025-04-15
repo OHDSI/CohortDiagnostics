@@ -166,7 +166,7 @@ cohortDiagnosticsUi <- function(id = "DiagnosticsExplorer",
       if ("visitContext" %in% enabledReports) {
         shinydashboard::menuItem(text = "Visit Context", tabName = "visitContext", icon = shiny::icon("building"))
       },
-      if ("relationship" %in% enabledReports) {
+      if ("temporalCovariateValue" %in% enabledReports) {
         shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap", icon = shiny::icon("circle"))
       },
       if ("temporalCovariateValue" %in% enabledReports) {

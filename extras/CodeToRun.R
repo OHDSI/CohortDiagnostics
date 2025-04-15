@@ -36,7 +36,7 @@ cdmDatabaseSchema <- "cdm_synpuf"
 vocabularyDatabaseSchema <-
   cdmDatabaseSchema # maybe different in some instances. Please check with your administrator
 cohortDatabaseSchema <- "scratch.dbo"
-cohortTables <- CohortGenerator::getCohortTableNames()
+cohortTableNames <- CohortGenerator::getCohortTableNames()
 databaseId <- "synpuf"
 databaseName <-
   "Medicare Claims Synthetic Public Use Files (SynPUFs)"

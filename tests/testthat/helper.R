@@ -87,7 +87,8 @@ createTestShinyDb <- function(connectionDetails = Eunomia::getEunomiaConnectionD
                               cohortTable = "cohort",
                               vocabularyDatabaseSchema = "main",
                               cohortDatabaseSchema = "main",
-                              cdmDatabaseSchema = "main") {
+                              cdmDatabaseSchema = "main",
+                              ...) {
   folder <- tempfile()
   dir.create(folder)
   on.exit(unlink(folder, recursive = TRUE, force = TRUE))
@@ -119,7 +120,8 @@ createTestShinyDb <- function(connectionDetails = Eunomia::getEunomiaConnectionD
     cohortDatabaseSchema = cohortDatabaseSchema,
     exportFolder = file.path(folder, "export"),
     databaseId = "Eunomia",
-    incremental = FALSE
+    incremental = FALSE,
+    ...
   )
 
   createMergedResultsFile(

@@ -31,8 +31,6 @@ createIfNotExist <-
         if (!file.exists(gsub("/$", "", name))) {
           dir.create(name, recursive = recursive)
           ParallelLogger::logInfo("Created ", type, " at ", name)
-        } else {
-          # ParallelLogger::logInfo(type, " already exists at ", name)
         }
       }
       checkmate::assertDirectory(
@@ -295,28 +293,6 @@ getTimeAsInteger <- function(time = Sys.time(),
                              tz = "UTC") {
   return(as.numeric(as.POSIXlt(time, tz = tz)))
 }
-
-
-getPrefixedTableNames <- function(tablePrefix) {
-  if (is.null(tablePrefix)) {
-    tablePrefix <- ""
-  }
-
-  if (grepl(" ", tablePrefix)) {
-    stop("Table prefix cannot include spaces")
-  }
-
-  dataModel <- getResultsDataModelSpecifications()
-  tableNames <- dataModel$tableName %>% unique()
-  resultList <- list()
-
-  for (tableName in tableNames) {
-    resultList[tableName] <- paste0(tablePrefix, tableName)
-  }
-
-  return(resultList)
-}
-
 
 #' Internal utility function for logging execution of variables
 #' @noRd

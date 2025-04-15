@@ -50,17 +50,14 @@ getDefaultVocabularyTableNames <- function() {
 
 # Private function for testing migrations in isolation
 .createDataModel <- function(connection, databaseSchema, tablePrefix) {
-  sqlParams <- getPrefixedTableNames(tablePrefix)
   sql <- do.call(
     SqlRender::loadRenderTranslateSql,
-    c(
-      sqlParams,
-      list(
-        sqlFilename = "CreateResultsDataModel.sql",
-        packageName = utils::packageName(),
-        dbms = connection@dbms,
-        results_schema = databaseSchema
-      )
+    list(
+      sqlFilename = "CreateResultsDataModel.sql",
+      packageName = utils::packageName(),
+      dbms = connection@dbms,
+      results_schema = databaseSchema,
+      table_prefix = tablePrefix
     )
   )
   DatabaseConnector::executeSql(connection, sql)

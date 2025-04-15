@@ -103,7 +103,7 @@ diagnostics to.}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
-\item{runCohortRelationship}{Generate and export the cohort relationship? Cohort relationship checks the temporal
+\item{runCohortRelationship}{Compute cohort relationships. Overlap is now computed with FeaturExtraction, time paramters are derived from temporalCovariateSettings
 relationship between two or more cohorts.}
 
 \item{runTemporalCohortCharacterization}{Generate and export the temporal cohort characterization?
@@ -111,7 +111,9 @@ Only records with values greater than 0.001 are returned.}
 
 \item{temporalCovariateSettings}{Either an object of type \code{covariateSettings} as created using one of
 the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
-of such objects.}
+of such objects. This can be anythin accepted by FeatureExtraction (including
+custom covariates). However, it should be noted that certain time windows will be
+included by default. @seealso[getDefaultCovariateSettings]}
 
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
 

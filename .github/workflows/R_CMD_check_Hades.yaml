@@ -107,7 +107,7 @@ jobs:
   Release:
     needs: R-CMD-Check
 
-    runs-on: windows-latest
+    runs-on: macOS-latest
 
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}

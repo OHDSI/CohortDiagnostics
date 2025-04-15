@@ -17,6 +17,18 @@
 #' Get default covariate settings
 #' @description
 #' Default covariate settings for cohort diagnostics execution
+#'
+#' Overriding this behaviour is possible, however, certain time windows are requirement of other diagnostics.
+#' For this reason, the time windows will be included, regardless of user specifications:
+#'
+#' (-365, 0),
+#' (-30, 0),
+#' (-365, -31),
+#' (-30, -1),
+#' (0, 0),
+#' (1, 30),
+#' (31, 365),
+#' (-9999, 9999)
 #' @export
 getDefaultCovariateSettings <- function() {
   FeatureExtraction::createTemporalCovariateSettings(
@@ -35,6 +47,8 @@ getDefaultCovariateSettings <- function() {
     useProcedureOccurrence = TRUE,
     useDrugEraStart = TRUE,
     useMeasurement = TRUE,
+    useMeasurementValueAsConcept = TRUE,
+    useMeasurementRangeGroup = TRUE,
     useConditionEraStart = TRUE,
     useConditionEraOverlap = TRUE,
     useConditionEraGroupStart = FALSE, # do not use because https://github.com/OHDSI/FeatureExtraction/issues/144
@@ -44,6 +58,7 @@ getDefaultCovariateSettings <- function() {
     useDrugEraGroupStart = FALSE, # do not use because https://github.com/OHDSI/FeatureExtraction/issues/144
     useDrugEraGroupOverlap = TRUE,
     useObservation = TRUE,
+    useObservationValueAsConcept = TRUE,
     useDeviceExposure = TRUE,
     useCharlsonIndex = TRUE,
     useDcsi = TRUE,
@@ -121,13 +136,15 @@ getDefaultCovariateSettings <- function() {
 #' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
-#' @param runCohortRelationship       Generate and export the cohort relationship? Cohort relationship checks the temporal
+#' @param runCohortRelationship       Compute cohort relationships. Overlap is now computed with FeaturExtraction, time paramters are derived from temporalCovariateSettings
 #'                                    relationship between two or more cohorts.
 #' @param runTemporalCohortCharacterization   Generate and export the temporal cohort characterization?
 #'                                            Only records with values greater than 0.001 are returned.
 #' @param temporalCovariateSettings   Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
-#'                                    of such objects.
+#'                                    of such objects. This can be anythin accepted by FeatureExtraction (including
+#'                                    custom covariates). However, it should be noted that certain time windows will be
+#'                                    included by default. @seealso[getDefaultCovariateSettings]
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #' @param minCharacterizationMean     The minimum mean value for characterization output. Values below this will be cut off from output. This
 #'                                    will help reduce the file size of the characterization output, but will remove information
@@ -243,17 +260,18 @@ executeDiagnostics <- function(cohortDefinitionSet,
       incremental = incremental,
       temporalCovariateSettings = temporalCovariateSettings
     ) %>%
-    RJSONIO::toJSON(digits = 23, pretty = TRUE)
+    ParallelLogger::convertSettingsToJson()
 
   exportFolder <- normalizePath(exportFolder, mustWork = FALSE)
   incrementalFolder <- normalizePath(incrementalFolder, mustWork = FALSE)
   executionTimePath <- file.path(exportFolder, "taskExecutionTimes.csv")
-
-  ParallelLogger::addDefaultFileLogger(file.path(exportFolder, "log.txt"))
-  ParallelLogger::addDefaultErrorReportLogger(file.path(exportFolder, "errorReportR.txt"))
-  on.exit(ParallelLogger::unregisterLogger("DEFAULT_FILE_LOGGER", silent = TRUE))
+  ParallelLogger::addDefaultFileLogger(file.path(exportFolder, "log.txt"), name = "CD_LOGGER")
+  ParallelLogger::addDefaultErrorReportLogger(file.path(exportFolder, "errorReportR.txt"), name = "CD_ERROR_LOGGER")
   on.exit(
-    ParallelLogger::unregisterLogger("DEFAULT_ERRORREPORT_LOGGER", silent = TRUE),
+    {
+      ParallelLogger::unregisterLogger("CD_LOGGER", silent = TRUE)
+      ParallelLogger::unregisterLogger("CD_ERROR_LOGGER", silent = TRUE)
+    },
     add = TRUE
   )
 
@@ -292,6 +310,10 @@ executeDiagnostics <- function(cohortDefinitionSet,
     ),
     add = errorMessage
   )
+
+  if (!"isSubset" %in% colnames(cohortDefinitionSet)) {
+    cohortDefinitionSet$isSubset <- FALSE
+  }
 
   cohortTable <- cohortTableNames$cohortTable
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
@@ -814,81 +836,77 @@ executeDiagnostics <- function(cohortDefinitionSet,
   }
 
   # Cohort relationship ---------------------------------------------------------------------------------
-  if (runCohortRelationship) {
-    timeExecution(
-      exportFolder,
-      "executeCohortRelationshipDiagnostics",
-      cohortIds,
-      parent = "executeDiagnostics",
-      expr = {
-        executeCohortRelationshipDiagnostics(
-          connection = connection,
-          databaseId = databaseId,
-          exportFolder = exportFolder,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cdmDatabaseSchema = cdmDatabaseSchema,
-          tempEmulationSchema = tempEmulationSchema,
-          cohortTable = cohortTable,
-          cohortDefinitionSet = cohortDefinitionSet,
-          temporalCovariateSettings = temporalCovariateSettings[[1]],
-          minCellCount = minCellCount,
-          recordKeepingFile = recordKeepingFile,
-          incremental = incremental
-        )
-      }
-    )
+  if (runCohortRelationship && nrow(cohortDefinitionSet) > 1) {
+    covariateCohorts <- cohortDefinitionSet |> dplyr::select(cohortId, cohortName)
+    analysisId <- as.integer(Sys.getenv("OHDSI_CD_CF_ANALYSIS_ID", unset = 173))
+
+    cohortFeSettings <-
+      FeatureExtraction::createCohortBasedTemporalCovariateSettings(
+        analysisId = analysisId, # problem - how to assign this uniquely?
+        covariateCohortDatabaseSchema = cohortDatabaseSchema,
+        covariateCohortTable = cohortTableNames$cohortTable,
+        covariateCohorts = covariateCohorts,
+        valueType = "binary",
+        temporalStartDays = temporalCovariateSettings[[1]]$temporalStartDays,
+        temporalEndDays = temporalCovariateSettings[[1]]$temporalEndDays
+      )
+    # Add feature set
+    temporalCovariateSettings[[length(temporalCovariateSettings) + 1]] <- cohortFeSettings
   }
 
+
+  feCohortDefinitionSet <- cohortDefinitionSet
+  feCohortTable <- cohortTable
+  feCohortCounts <- cohortCounts
   # Temporal Cohort characterization ---------------------------------------------------------------
   if (runTemporalCohortCharacterization) {
+    if (runFeatureExtractionOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
+      cohortTableNames$cohortSampleTable <- paste0(cohortTableNames$cohortTable, "_cd_sample")
+      CohortGenerator::createCohortTables(
+        connection = connection,
+        cohortTableNames = cohortTableNames,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        incremental = TRUE
+      )
+
+      feCohortTable <- cohortTableNames$cohortSampleTable
+      feCohortDefinitionSet <-
+        CohortGenerator::sampleCohortDefinitionSet(
+          connection = connection,
+          cohortDefinitionSet = cohortDefinitionSet,
+          tempEmulationSchema = tempEmulationSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cohortTableNames = cohortTableNames,
+          n = sampleN,
+          seed = seed,
+          seedArgs = seedArgs,
+          identifierExpression = "cohortId",
+          incremental = incremental,
+          incrementalFolder = incrementalFolder
+        )
+
+      feCohortCounts <- computeCohortCounts(
+        connection = connection,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTableNames$cohortSampleTable,
+        cohorts = feCohortDefinitionSet,
+        exportFolder = exportFolder,
+        minCellCount = minCellCount,
+        databaseId = databaseId,
+        writeResult = FALSE
+      )
+    }
+  } else {
+    temporalCovariateSettings <- temporalCovariateSettings[-1]
+  }
+
+  if (length(temporalCovariateSettings)) {
     timeExecution(
       exportFolder,
       "executeCohortCharacterization",
       cohortIds,
       parent = "executeDiagnostics",
       expr = {
-        feCohortDefinitionSet <- cohortDefinitionSet
-        feCohortTable <- cohortTable
-        feCohortCounts <- cohortCounts
-
-        if (runFeatureExtractionOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
-          cohortTableNames$cohortSampleTable <- paste0(cohortTableNames$cohortTable, "_cd_sample")
-          CohortGenerator::createCohortTables(
-            connection = connection,
-            cohortTableNames = cohortTableNames,
-            cohortDatabaseSchema = cohortDatabaseSchema,
-            incremental = TRUE
-          )
-
-          feCohortTable <- cohortTableNames$cohortSampleTable
-          feCohortDefinitionSet <-
-            CohortGenerator::sampleCohortDefinitionSet(
-              connection = connection,
-              cohortDefinitionSet = cohortDefinitionSet,
-              tempEmulationSchema = tempEmulationSchema,
-              cohortDatabaseSchema = cohortDatabaseSchema,
-              cohortTableNames = cohortTableNames,
-              n = sampleN,
-              seed = seed,
-              seedArgs = seedArgs,
-              identifierExpression = "cohortId",
-              incremental = incremental,
-              incrementalFolder = incrementalFolder
-            )
-
-          feCohortCounts <- computeCohortCounts(
-            connection = connection,
-            cohortDatabaseSchema = cohortDatabaseSchema,
-            cohortTable = cohortTableNames$cohortSampleTable,
-            cohorts = feCohortDefinitionSet,
-            exportFolder = exportFolder,
-            minCellCount = minCellCount,
-            databaseId = databaseId,
-            writeResult = FALSE
-          )
-        }
-
-
         executeCohortCharacterization(
           connection = connection,
           databaseId = databaseId,
@@ -926,7 +944,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
     expr = {
       exportConceptInformation(
         connection = connection,
-        cdmDatabaseSchema = cdmDatabaseSchema,
+        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
         tempEmulationSchema = tempEmulationSchema,
         conceptIdTable = "#concept_ids",
         incremental = incremental,

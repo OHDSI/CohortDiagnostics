@@ -30,32 +30,6 @@ cohort_inc_stats,mode_id,bigint,Yes,Yes,No,Yes,No,No,No,mode of inclusion rule
 cohort_inc_stats,person_count,float,Yes,No,No,Yes,Yes,No,No,person count following rule application
 cohort_inc_stats,gain_count,float,Yes,No,No,Yes,Yes,No,No,number of people gained from rule
 cohort_inc_stats,person_total,float,Yes,No,No,Yes,Yes,No,No,person total
-cohort_relationships,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
-cohort_relationships,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,target cohort id
-cohort_relationships,comparator_cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,comparator cohort id
-cohort_relationships,start_day,bigint,No,Yes,No,Yes,No,No,No,start day
-cohort_relationships,end_day,float,No,Yes,No,Yes,No,No,No,end day
-cohort_relationships,subjects,bigint,Yes,No,No,Yes,Yes,No,No,number of subjects total
-cohort_relationships,sub_cs_before_ts,bigint,Yes,No,No,Yes,Yes,No,No,present in both target and comparator
-cohort_relationships,sub_cs_on_ts,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start prior to first target cohort start
-cohort_relationships,sub_cs_after_ts,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start with first target cohort start
-cohort_relationships,sub_cs_before_te,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start after first target cohort start
-cohort_relationships,sub_cs_on_te,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start after first target cohort end
-cohort_relationships,sub_cs_after_te,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start on first target cohort end
-cohort_relationships,sub_cs_window_t,bigint,Yes,No,No,Yes,Yes,No,No,How many subjects in comparator cohort start after first target cohort end
-cohort_relationships,sub_ce_window_t,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects start within period (incidence) relative to target start date and end date
-cohort_relationships,sub_cs_window_ts,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects start within period (incidence) relative to target start date and end date
-cohort_relationships,sub_cs_window_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects start within period (incidence) relative to target start date
-cohort_relationships,sub_ce_window_ts,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects start within period (incidence) relative to target end date
-cohort_relationships,sub_ce_window_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects end within period (incidence) relative to target start date
-cohort_relationships,sub_c_within_t,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort subjects end within period (incidence) relative to target end date
-cohort_relationships,c_days_before_ts,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort days within target (offset) days
-cohort_relationships,c_days_before_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort days before target start date (offset)
-cohort_relationships,c_days_within_t_days,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort days before target end date (offset)
-cohort_relationships,c_days_after_ts,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort days within target cohort days (offset)
-cohort_relationships,c_days_after_te,bigint,Yes,No,No,Yes,Yes,No,No,comparator cohort days after target start date (offset)
-cohort_relationships,t_days,bigint,Yes,No,No,Yes,Yes,No,No,target days
-cohort_relationships,c_days,bigint,Yes,No,No,Yes,Yes,No,No,comparator days
 cohort_summary_stats,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
 cohort_summary_stats,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort id
 cohort_summary_stats,mode_id,bigint,Yes,Yes,No,Yes,No,No,No,mode identifier
@@ -86,7 +60,7 @@ concept_sets,concept_set_id,int,Yes,Yes,No,Yes,No,No,No,concept set identifier
 concept_sets,concept_set_sql,varchar,Yes,No,No,Yes,No,No,No,concept set sql
 concept_sets,concept_set_name,varchar(255),Yes,No,No,Yes,No,No,No,concept set name
 concept_sets,concept_set_expression,varchar,Yes,No,No,Yes,No,No,No,concept set expression
-concept_synonym,concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No,concpt id
+concept_synonym,concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No,concept id
 concept_synonym,concept_synonym_name,varchar,Yes,Yes,No,Yes,No,Yes,No,concept synonym name
 concept_synonym,language_concept_id,bigint,Yes,Yes,No,Yes,No,Yes,No,lanague id
 database,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
@@ -149,6 +123,7 @@ temporal_covariate_ref,covariate_id,bigint,Yes,Yes,No,Yes,No,No,No,covariate ide
 temporal_covariate_ref,covariate_name,varchar,Yes,No,No,Yes,No,No,No,name of covariate
 temporal_covariate_ref,analysis_id,int,Yes,No,No,Yes,No,No,No,temporal analysis identifier
 temporal_covariate_ref,concept_id,bigint,Yes,No,No,Yes,No,No,No,concept identifier
+temporal_covariate_ref,value_as_concept_id,bigint,No,No,No,Yes,No,No,No,maps to a concept id for categorical variables (where present)
 temporal_covariate_value,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort identifier
 temporal_covariate_value,time_id,int,No,Yes,Yes,Yes,No,No,No,time identifier
 temporal_covariate_value,covariate_id,bigint,Yes,Yes,No,Yes,No,No,No,covariate identifier

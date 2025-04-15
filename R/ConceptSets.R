@@ -76,7 +76,7 @@ extractConceptSetsSqlFromCohortSql <- function(cohortSql) {
 extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
   cohortDefinition <- tryCatch(
     {
-      RJSONIO::fromJSON(content = cohortJson, digits = 23)
+      jsonlite::fromJSON(cohortJson, simplifyDataFrame = FALSE)
     },
     error = function(msg) {
       return(list())
@@ -90,11 +90,14 @@ extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
   conceptSetExpression <- list()
   if (length(expression$ConceptSets) > 0) {
     for (i in (1:length(expression$ConceptSets))) {
+      jsonExpr <- expression$ConceptSets[[i]]$expression$items |>
+        jsonlite::toJSON(digits = 23) |>
+        as.character()
       conceptSetExpression[[i]] <-
         tidyr::tibble(
           conceptSetId = expression$ConceptSets[[i]]$id,
           conceptSetName = expression$ConceptSets[[i]]$name,
-          conceptSetExpression = expression$ConceptSets[[i]]$expression$items %>% RJSONIO::toJSON(digits = 23)
+          conceptSetExpression = jsonExpr
         )
     }
   } else {
@@ -391,6 +394,17 @@ runConceptSetDiagnostics <- function(connection,
   startConceptSetDiagnostics <- Sys.time()
   subset <- dplyr::tibble()
 
+  # We need to get concept sets from all cohorts in case subsets are present and
+  # Added incrementally after cohort generation
+  conceptSets <- combineConceptSetsFromCohorts(cohorts)
+  if (is.null(conceptSets) || nrow(conceptSets) == 0) {
+    ParallelLogger::logInfo(
+      "Cohorts being diagnosed does not have concept ids. Skipping concept set diagnostics."
+    )
+    return(NULL)
+  }
+
+
   if (runIncludedSourceConcepts) {
     subsetIncluded <- subsetToRequiredCohorts(
       cohorts = cohorts,
@@ -425,17 +439,7 @@ runConceptSetDiagnostics <- function(connection,
     return(NULL)
   }
 
-  # We need to get concept sets from all cohorts in case subsets are present and
-  # Added incrementally after cohort generation
-  conceptSets <- combineConceptSetsFromCohorts(cohorts)
   conceptSets <- conceptSets %>% dplyr::filter(.data$cohortId %in% subset$cohortId)
-
-  if (is.null(conceptSets)) {
-    ParallelLogger::logInfo(
-      "Cohorts being diagnosed does not have concept ids. Skipping concept set diagnostics."
-    )
-    return(NULL)
-  }
 
   uniqueConceptSets <-
     conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ] %>%
@@ -663,7 +667,7 @@ runConceptSetDiagnostics <- function(connection,
             }
 
             cohortDefinition <-
-              RJSONIO::fromJSON(jsonDef, digits = 23)
+              jsonlite::fromJSON(jsonDef)
 
             primaryCodesetIds <-
               lapply(
