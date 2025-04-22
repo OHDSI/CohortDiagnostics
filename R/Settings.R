@@ -10,11 +10,12 @@ CohortDiagnosticsSettings <- R6::R6Class(
   public = list(
     errorMessage = NULL,
     cohortTable = NULL,
-
     # Initalize
     initialize = function(settings, connection = NULL, connectionDetails = NULL) {
       #ParallelLogger::addDefaultFileLogger(file.path(exportFolder, "log.txt"), name = "CD_LOGGER")
       #ParallelLogger::addDefaultErrorReportLogger(file.path(exportFolder, "errorReportR.txt"), name = "CD_ERROR_LOGGER")
+      if (is.null(connection) && is.null(connectionDetails))
+        stop("Connection or ConnectionDetails for a CDM must be provided")
 
       self$errorMessage <- checkmate::makeAssertCollection()
 
@@ -24,7 +25,21 @@ CohortDiagnosticsSettings <- R6::R6Class(
 
       checkmate::reportAssertions(collection = self$errorMessage)
       private$.executionTimePath <- file.path(exportFolder, "taskExecutionTimes.csv")
-      private$setConnection()
+      private$setConnection(connection, connectionDetails)
+    },
+
+    # to list
+    toList = function() {
+      idList <- list()
+      for (name in names(CohortDiagnosticsSettings)) {
+        idList[[name]] <- self[[name]]
+      }
+      return(idList)
+    },
+
+    # to json
+    toJson = function() {
+      self$toList() |> ParallelLogger::convertSettingsToJson()
     },
 
     # get database connection.
@@ -33,13 +48,12 @@ CohortDiagnosticsSettings <- R6::R6Class(
       if (!is.null(private$.connection) && DatabaseConnector::dbIsValid(private$.connection)) {
         return(private$.connection)
       }
-      private$setConnection()
-      return(private$.connection)
+      stop("Connection is no longer valid")
     },
 
     # Check a set of default temporal covariate settings
     # This is required for default behaviour in shiny apps and if all reporting is required
-    checkDefaultTemporalCovariateSettings = function(temporalCovariateSettings, errorMessage = self$errorMessage) {
+    checkDefaultTemporalCovariateSettings = function(temporalCovariateSettings = self$temporalCovariateSettings, errorMessage = self$errorMessage) {
       if (is(temporalCovariateSettings, "covariateSettings")) {
         temporalCovariateSettings <- list(temporalCovariateSettings)
       }
@@ -342,9 +356,9 @@ CohortDiagnosticsSettings <- R6::R6Class(
     # @field seedArgs                    List. Additional arguments to pass to the sampling function.
     #                                    This can be used to control aspects of the sampling process beyond the seed and sample size.
     seedArgs = function(seedArgs) {
-      if (missing(seedArgs)) return(private$.temporalCovariateSettings)
+      if (missing(seedArgs)) return(private$.seedArgs)
       checkmate::assertList(seedArgs, null.ok = TRUE, add = self$errorMessage)
-      private$.temporalCovariateSettings <- seedArgs
+      private$.seedArgs <- seedArgs
     }
   ),
   private = list(
@@ -363,7 +377,7 @@ CohortDiagnosticsSettings <- R6::R6Class(
     .vocabularyDatabaseSchema = cdmDatabaseSchema,
     .cohortIds = NULL,
     .cdmVersion = 5,
-    .temporalCovariateSettings = getDefaultCovariateSettings(),
+    .temporalCovariateSettings = NULL,
     .minCellCount = 5,
     .minCharacterizationMean = 0.01,
     .irWashoutPeriod = 0,
@@ -374,9 +388,13 @@ CohortDiagnosticsSettings <- R6::R6Class(
     .seed = 64374,
     .seedArgs = NULL,
     .executionTimePath = NULL,
-    setConnection = function() {
-      if (is.null(private$.connection) && !is.null(self$connectionDetails))
-        private$.connection <- DatabaseConnector::connect(self$connectionDetails)
+    setConnection = function(connection, connectionDetails) {
+      if (is.null(connection))
+        private$.connection <- DatabaseConnector::connect(connectionDetails)
+      else if (DatabaseConnector::dbIsValid(connection))
+        private$.connection <- connection
+      else
+        stop("Connection is not valid")
     }
   )
 )
@@ -482,5 +500,5 @@ createCohortDiagnosticsSettings <- function(cohortDefinitionSet,
   )
 
   # Create an instance of the R6 class
-  return(CohortDiagnosticsSettings$new(settings))
+  return(CohortDiagnosticsSettings$new(settings, connection = connection, connectionDetails = connectionDetails))
 }
