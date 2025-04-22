@@ -76,7 +76,7 @@ extractConceptSetsSqlFromCohortSql <- function(cohortSql) {
 extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
   cohortDefinition <- tryCatch(
     {
-      jsonlite::fromJSON(content = cohortJson)
+      jsonlite::fromJSON(cohortJson, simplifyDataFrame = FALSE)
     },
     error = function(msg) {
       return(list())
@@ -90,11 +90,14 @@ extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
   conceptSetExpression <- list()
   if (length(expression$ConceptSets) > 0) {
     for (i in (1:length(expression$ConceptSets))) {
+      jsonExpr <- expression$ConceptSets[[i]]$expression$items |>
+        jsonlite::toJSON(digits = 23) |>
+        as.character()
       conceptSetExpression[[i]] <-
         tidyr::tibble(
           conceptSetId = expression$ConceptSets[[i]]$id,
           conceptSetName = expression$ConceptSets[[i]]$name,
-          conceptSetExpression = expression$ConceptSets[[i]]$expression$items %>% jsonlite::toJSON(digits = 23)
+          conceptSetExpression = jsonExpr
         )
     }
   } else {

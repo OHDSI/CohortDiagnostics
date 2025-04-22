@@ -87,7 +87,7 @@ createTestShinyDb <- function(connectionDetails = Eunomia::getEunomiaConnectionD
                               cohortTable = "cohort",
                               vocabularyDatabaseSchema = "main",
                               cohortDatabaseSchema = "main",
-                              cdmDatabaseSchema = "main", 
+                              cdmDatabaseSchema = "main",
                               ...) {
   folder <- tempfile()
   dir.create(folder)
