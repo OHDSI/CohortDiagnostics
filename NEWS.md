@@ -1,3 +1,10 @@
+CohortDiagnostics 3.4.1
+=======================
+
+Bug fixes:
+
+1. Fixed issue loading concept sets in index event breakdown - caused by change to jsonlite parser.
+
 CohortDiagnostics 3.4.0
 =======================
 
