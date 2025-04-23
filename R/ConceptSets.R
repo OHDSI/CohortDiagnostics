@@ -667,7 +667,7 @@ runConceptSetDiagnostics <- function(connection,
             }
 
             cohortDefinition <-
-              jsonlite::fromJSON(jsonDef)
+              jsonlite::fromJSON(jsonDef, simplifyDataFrame = FALSE)
 
             primaryCodesetIds <-
               lapply(

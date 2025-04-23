@@ -1,3 +1,11 @@
+CohortDiagnostics 4.0.0
+=======================
+
+Change:
+
+1. Created new settings R6 object to allow simplified API and ability to support calling package independently
+
+
 CohortDiagnostics 3.4.0
 =======================
 

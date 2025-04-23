@@ -14,34 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-createIfNotExist <-
-  function(type,
-           name,
-           recursive = TRUE,
-           errorMessage = NULL) {
-    if (is.null(errorMessage) |
-      !is(errorMessage, "AssertColection")) {
-      errorMessage <- checkmate::makeAssertCollection()
-    }
-    if (!is.null(type)) {
-      if (length(name) == 0) {
-        stop(ParallelLogger::logError("Must specify ", name))
-      }
-      if (type %in% c("folder")) {
-        if (!file.exists(gsub("/$", "", name))) {
-          dir.create(name, recursive = recursive)
-          ParallelLogger::logInfo("Created ", type, " at ", name)
-        }
-      }
-      checkmate::assertDirectory(
-        x = name,
-        access = "x",
-        add = errorMessage
-      )
-    }
-    invisible(errorMessage)
-  }
-
 swapColumnContents <-
   function(df,
            column1 = "targetId",
