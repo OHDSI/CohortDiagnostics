@@ -468,22 +468,24 @@ runConceptSetDiagnostics <- function(connection,
 
   if ((runIncludedSourceConcepts && nrow(subsetIncluded) > 0) ||
     (runOrphanConcepts && nrow(subsetOrphans) > 0)) {
-    timeExecution(
-      exportFolder,
-      taskName = "createConceptCountsTable",
-      cohortIds = NULL,
-      parent = "runConceptSetDiagnostics",
-      expr = {
-        createConceptCountsTable(
-          connection = connection,
-          cdmDatabaseSchema = cdmDatabaseSchema,
-          tempEmulationSchema = tempEmulationSchema,
-          conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
-          conceptCountsTable = conceptCountsTable,
-          conceptCountsTableIsTemp = conceptCountsTableIsTemp
+    if (!useExternalConceptCountsTable) {
+      timeExecution(
+        exportFolder,
+        taskName = "createConceptCountsTable",
+        cohortIds = NULL,
+        parent = "runConceptSetDiagnostics",
+        expr = {
+          createConceptCountsTable(
+            connection = connection,
+            cdmDatabaseSchema = cdmDatabaseSchema,
+            tempEmulationSchema = tempEmulationSchema,
+            conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
+            conceptCountsTable = conceptCountsTable,
+            conceptCountsTableIsTemp = conceptCountsTableIsTemp
+            )
+          }
         )
       }
-    )
   }
   if (runIncludedSourceConcepts) {
     timeExecution(
@@ -503,9 +505,6 @@ runConceptSetDiagnostics <- function(connection,
         }
         if (nrow(subsetIncluded) > 0) {
           start <- Sys.time()
-          if (useExternalConceptCountsTable) {
-            stop("Use of external concept count table is not supported")
-          } else {
             sql <- SqlRender::loadRenderTranslateSql(
               "CohortSourceCodes.sql",
               packageName = utils::packageName(),
@@ -620,7 +619,6 @@ runConceptSetDiagnostics <- function(connection,
               signif(delta, 3),
               attr(delta, "units")
             ))
-          }
         }
       }
     )
@@ -893,7 +891,7 @@ runConceptSetDiagnostics <- function(connection,
       if (!useExternalConceptCountsTable) {
         ParallelLogger::logTrace("Using internal concept count table.")
       } else {
-        stop("Use of external concept count table is not supported")
+        ParallelLogger::logTrace("Using external concept count table.")
       }
 
       # [OPTIMIZATION idea] can we modify the sql to do this for all uniqueConceptSetId in one query using group by?
@@ -1085,23 +1083,25 @@ runConceptSetDiagnostics <- function(connection,
 
   if ((runIncludedSourceConcepts && nrow(subsetIncluded) > 0) ||
     (runOrphanConcepts && nrow(subsetOrphans) > 0)) {
-    ParallelLogger::logTrace("Dropping temp concept count table")
-    if (conceptCountsTableIsTemp) {
-      countTable <- conceptCountsTable
-    } else {
-      countTable <-
-        paste(conceptCountsDatabaseSchema, conceptCountsTable, sep = ".")
-    }
-
-    sql <- "TRUNCATE TABLE @count_table; DROP TABLE @count_table;"
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection,
-      sql,
-      tempEmulationSchema = tempEmulationSchema,
-      count_table = countTable,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
+    if (!useExternalConceptCountsTable) {
+      ParallelLogger::logTrace("Dropping temp concept count table")
+      if (conceptCountsTableIsTemp) {
+        countTable <- conceptCountsTable
+      } else {
+        countTable <-
+          paste(conceptCountsDatabaseSchema, conceptCountsTable, sep = ".")
+      }
+  
+      sql <- "TRUNCATE TABLE @count_table; DROP TABLE @count_table;"
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection,
+        sql,
+        tempEmulationSchema = tempEmulationSchema,
+        count_table = countTable,
+        progressBar = FALSE,
+        reportOverallTime = FALSE
+      )
+      }
   }
 
   delta <- Sys.time() - startConceptSetDiagnostics

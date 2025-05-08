@@ -125,6 +125,8 @@ getDefaultCovariateSettings <- function() {
 #'                                    diagnostics to.
 #' @param cohortDefinitionSet         Data.frame of cohorts must include columns cohortId, cohortName, json, sql
 #' @param cohortTableNames            Cohort Table names used by CohortGenerator package
+#' @param conceptCountsTable          Concepts count table name. The default is "#concept_counts" to create a temporal concept counts table.
+#'                                    If an external concept counts table is used, provide the name in character, e.g. "concept_counts" without a hash
 #' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf').
 #' @param databaseName                The full name of the database. If NULL, defaults to value in cdm_source table
 #' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table
@@ -153,6 +155,7 @@ getDefaultCovariateSettings <- function() {
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
+#' @param useExternalConceptCountsTable If TRUE an external table for the cohort concept counts will be used.
 #' @param runFeatureExtractionOnSample Logical. If TRUE, the function will operate on a sample of the data.
 #'                                    Default is FALSE, meaning the function will operate on the full data set.
 #'
@@ -240,6 +243,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                irWashoutPeriod = 0,
                                incremental = FALSE,
                                incrementalFolder = file.path(exportFolder, "incremental"),
+                               conceptCountsTable = "concept_counts",
                                runFeatureExtractionOnSample = FALSE,
                                sampleN = 1000,
                                seed = 64374,
@@ -708,6 +712,37 @@ executeDiagnostics <- function(cohortDefinitionSet,
       }
     )
   }
+  
+  # Defines variables and checks version of external concept counts table -----
+  checkConceptCountsTableExists <- DatabaseConnector::dbExistsTable(connection,
+                                                                    name = conceptCountsTable,
+                                                                    databaseSchema = cdmDatabaseSchema)
+  
+  
+  if (substr(conceptCountsTable, 1, 1) == "#") {
+    conceptCountsTableIsTemp <- TRUE
+  } else {
+      conceptCountsTableIsTemp <- FALSE
+      conceptCountsTable <- conceptCountsTable
+      dataSourceInfo <- getCdmDataSourceInformation(connection = connection, 
+                                                    cdmDatabaseSchema = cdmDatabaseSchema)
+      vocabVersion <- dataSourceInfo$vocabularyVersion
+      vocabVersionExternalConceptCountsTable <- renderTranslateQuerySql(
+        connection = connection,
+        sql = "SELECT DISTINCT vocabulary_version FROM @work_database_schema.@concept_counts_table;",
+        work_database_schema = cohortDatabaseSchema,
+        concept_counts_table = conceptCountsTable,
+        snakeCaseToCamelCase = TRUE,
+        tempEmulationSchema = getOption("sqlRenderTempEmulationSchena")
+      )
+      if (!identical(vocabVersion, vocabVersionExternalConceptCountsTable[1,1])) {
+        stop(paste0("External concept counts table (", 
+                    vocabVersionExternalConceptCountsTable, 
+                    ") does not match database (", 
+                    vocabVersion, 
+                    "). Update concept_counts with createConceptCountsTable()"))
+      }
+  }
 
   # Always export concept sets to csv
   exportConceptSets(
@@ -718,9 +753,7 @@ executeDiagnostics <- function(cohortDefinitionSet,
   )
 
   # Concept set diagnostics -----------------------------------------------
-  if (runIncludedSourceConcepts ||
-    runOrphanConcepts ||
-    runBreakdownIndexEvents) {
+  if (runIncludedSourceConcepts || runOrphanConcepts || runBreakdownIndexEvents) {
     timeExecution(
       exportFolder,
       taskName = "runConceptSetDiagnostics",
@@ -740,11 +773,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
           exportFolder = exportFolder,
           minCellCount = minCellCount,
           conceptCountsDatabaseSchema = NULL,
-          conceptCountsTable = "#concept_counts",
-          conceptCountsTableIsTemp = TRUE,
+          conceptCountsTable = conceptCountsTable,
+          conceptCountsTableIsTemp = conceptCountsTableIsTemp,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
-          useExternalConceptCountsTable = FALSE,
+          useExternalConceptCountsTable = useExternalConceptCountsTable,
           incremental = incremental,
           conceptIdTable = "#concept_ids",
           recordKeepingFile = recordKeepingFile

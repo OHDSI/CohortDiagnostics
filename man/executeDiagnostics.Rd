@@ -35,6 +35,7 @@ executeDiagnostics(
   irWashoutPeriod = 0,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental"),
+  conceptCountsTable = "concept_counts",
   runFeatureExtractionOnSample = FALSE,
   sampleN = 1000,
   seed = 64374,
@@ -128,6 +129,9 @@ on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which cohort diagnostics has been executed.}
 
+\item{conceptCountsTable}{Concepts count table name. The default is "#concept_counts" to create a temporal concept counts table.
+If an external concept counts table is used, provide the name in character, e.g. "concept_counts" without a hash}
+
 \item{runFeatureExtractionOnSample}{Logical. If TRUE, the function will operate on a sample of the data.
 Default is FALSE, meaning the function will operate on the full data set.}
 
@@ -139,6 +143,8 @@ This ensures that the same sample can be drawn again in future runs. Default is 
 
 \item{seedArgs}{List. Additional arguments to pass to the sampling function.
 This can be used to control aspects of the sampling process beyond the seed and sample size.}
+
+\item{useExternalConceptCountsTable}{If TRUE an external table for the cohort concept counts will be used.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
