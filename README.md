@@ -24,6 +24,12 @@ Features
 - Characterize cohorts, and compare these characterizations. Perform cohort comparison and temporal comparisons. 
 - Explore patient profiles of a random sample of subjects in a cohort.
 
+Citation
+========
+We request that you cite use of this tool:
+
+Rao, G. A., Shoaibi, A., Makadia, R., Hardin, J., Swerdel, J., Weaver, J., ... & Ryan, P. B. (2025). CohortDiagnostics: phenotype evaluation across a network of observational data sources using population-level characterization. PloS one, 20(1), e0310634.
+
 Screenshot
 ==========
 ![The Diagnostics Explorer Shiny app](vignettes/shiny.png)
