@@ -8,7 +8,7 @@ cohort,subset_parent,bigint,No,No,Yes,Yes,No,No,No,cohort subset parent id (some
 cohort,subset_definition_id,bigint,No,No,Yes,Yes,No,No,No,subset cohort definition id
 cohort,is_subset,int,No,No,Yes,Yes,No,No,No,is the cohort a subset or not?
 subset_definition,subset_definition_id,bigint,Yes,Yes,No,Yes,No,No,No,subset cohort definition id
-subset_definition,json,varchar,Yes,Yes,No,Yes,No,No,No,subset cohort definition json
+subset_definition,json,varchar,Yes,No,No,Yes,No,No,No,subset cohort definition json
 cohort_count,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort id
 cohort_count,cohort_entries,float,Yes,No,No,Yes,Yes,No,No,number of entries in to cohort (an individual can be counted multiple times)
 cohort_count,cohort_subjects,float,Yes,No,No,Yes,Yes,No,No,number of individuals in cohort
