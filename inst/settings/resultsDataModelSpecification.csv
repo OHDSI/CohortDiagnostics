@@ -74,12 +74,12 @@ domain,domain_name,varchar(255),Yes,No,No,Yes,No,Yes,Yes,concept domain name
 domain,domain_concept_id,bigint,Yes,No,No,Yes,No,Yes,Yes,domain concept identifier in concept table
 incidence_rate,cohort_count,float,Yes,No,No,Yes,Yes,No,No,total count in cohort
 incidence_rate,person_years,float,Yes,No,No,Yes,Yes,No,No,sum of total person years
-incidence_rate,gender,varchar,No,Yes,No,No,No,No,No,gender grouping
-incidence_rate,age_group,varchar,No,Yes,No,No,No,No,No,age grouping
-incidence_rate,calendar_year,varchar(4),No,Yes,No,No,No,No,No,calendar year in cohort
+incidence_rate,gender,varchar,No,No,No,No,No,No,No,gender grouping
+incidence_rate,age_group,varchar,No,No,No,No,No,No,No,age grouping
+incidence_rate,calendar_year,varchar(4),No,No,No,No,No,No,No,calendar year in cohort
 incidence_rate,incidence_rate,float,Yes,No,No,Yes,No,No,No,incidence rate computed
-incidence_rate,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort identifier
-incidence_rate,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+incidence_rate,cohort_id,bigint,Yes,No,No,Yes,No,No,No,cohort identifier
+incidence_rate,database_id,varchar,Yes,No,No,Yes,No,No,No,database identifier
 included_source_concept,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
 included_source_concept,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort id
 included_source_concept,concept_set_id,int,Yes,Yes,No,Yes,No,No,No,concept set identifier
