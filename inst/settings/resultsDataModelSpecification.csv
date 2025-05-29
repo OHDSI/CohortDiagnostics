@@ -148,14 +148,14 @@ temporal_covariate_value_dist,database_id,varchar,Yes,Yes,No,Yes,No,No,No,databa
 temporal_time_ref,time_id,int,Yes,Yes,No,Yes,No,No,No,time identifier
 temporal_time_ref,start_day,float,Yes,No,No,Yes,No,No,No,start day
 temporal_time_ref,end_day,float,Yes,No,No,Yes,No,No,No,end day
-time_series,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort identifier
-time_series,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
-time_series,period_begin,Date,Yes,Yes,No,Yes,No,No,No,peroid start date
-time_series,period_end,Date,Yes,Yes,No,Yes,No,No,No,perioid end date
-time_series,series_type,varchar,Yes,Yes,No,Yes,No,No,No,time series type
-time_series,calendar_interval,varchar,Yes,Yes,No,Yes,No,No,No,calendar interval
-time_series,gender,varchar,No,Yes,Yes,Yes,No,No,No,gender grouping
-time_series,age_group,varchar,No,Yes,Yes,Yes,No,No,No,age grouping
+time_series,cohort_id,bigint,Yes,No,No,Yes,No,No,No,cohort identifier
+time_series,database_id,varchar,Yes,No,No,Yes,No,No,No,database identifier
+time_series,period_begin,Date,Yes,No,No,Yes,No,No,No,peroid start date
+time_series,period_end,Date,Yes,No,No,Yes,No,No,No,perioid end date
+time_series,series_type,varchar,Yes,No,No,Yes,No,No,No,time series type
+time_series,calendar_interval,varchar,Yes,No,No,Yes,No,No,No,calendar interval
+time_series,gender,varchar,No,No,Yes,Yes,No,No,No,gender grouping
+time_series,age_group,varchar,No,No,Yes,Yes,No,No,No,age grouping
 time_series,records,bigint,Yes,No,No,Yes,Yes,No,No,record count
 time_series,subjects,bigint,Yes,No,No,Yes,Yes,No,No,distinct person count
 time_series,person_days,bigint,Yes,No,No,Yes,Yes,No,No,total person time in days
