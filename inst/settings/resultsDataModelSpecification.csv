@@ -8,7 +8,7 @@ cohort,subset_parent,bigint,No,No,Yes,Yes,No,No,No,cohort subset parent id (some
 cohort,subset_definition_id,bigint,No,No,Yes,Yes,No,No,No,subset cohort definition id
 cohort,is_subset,int,No,No,Yes,Yes,No,No,No,is the cohort a subset or not?
 subset_definition,subset_definition_id,bigint,Yes,Yes,No,Yes,No,No,No,subset cohort definition id
-subset_definition,json,varchar,Yes,Yes,No,Yes,No,No,No,subset cohort definition json
+subset_definition,json,varchar,Yes,No,No,Yes,No,No,No,subset cohort definition json
 cohort_count,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort id
 cohort_count,cohort_entries,float,Yes,No,No,Yes,Yes,No,No,number of entries in to cohort (an individual can be counted multiple times)
 cohort_count,cohort_subjects,float,Yes,No,No,Yes,Yes,No,No,number of individuals in cohort
@@ -74,12 +74,12 @@ domain,domain_name,varchar(255),Yes,No,No,Yes,No,Yes,Yes,concept domain name
 domain,domain_concept_id,bigint,Yes,No,No,Yes,No,Yes,Yes,domain concept identifier in concept table
 incidence_rate,cohort_count,float,Yes,No,No,Yes,Yes,No,No,total count in cohort
 incidence_rate,person_years,float,Yes,No,No,Yes,Yes,No,No,sum of total person years
-incidence_rate,gender,varchar,No,Yes,No,No,No,No,No,gender grouping
-incidence_rate,age_group,varchar,No,Yes,No,No,No,No,No,age grouping
-incidence_rate,calendar_year,varchar(4),No,Yes,No,No,No,No,No,calendar year in cohort
+incidence_rate,gender,varchar,No,No,No,No,No,No,No,gender grouping
+incidence_rate,age_group,varchar,No,No,No,No,No,No,No,age grouping
+incidence_rate,calendar_year,varchar(4),No,No,No,No,No,No,No,calendar year in cohort
 incidence_rate,incidence_rate,float,Yes,No,No,Yes,No,No,No,incidence rate computed
-incidence_rate,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort identifier
-incidence_rate,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
+incidence_rate,cohort_id,bigint,Yes,No,No,Yes,No,No,No,cohort identifier
+incidence_rate,database_id,varchar,Yes,No,No,Yes,No,No,No,database identifier
 included_source_concept,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
 included_source_concept,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort id
 included_source_concept,concept_set_id,int,Yes,Yes,No,Yes,No,No,No,concept set identifier
@@ -148,14 +148,14 @@ temporal_covariate_value_dist,database_id,varchar,Yes,Yes,No,Yes,No,No,No,databa
 temporal_time_ref,time_id,int,Yes,Yes,No,Yes,No,No,No,time identifier
 temporal_time_ref,start_day,float,Yes,No,No,Yes,No,No,No,start day
 temporal_time_ref,end_day,float,Yes,No,No,Yes,No,No,No,end day
-time_series,cohort_id,bigint,Yes,Yes,No,Yes,No,No,No,cohort identifier
-time_series,database_id,varchar,Yes,Yes,No,Yes,No,No,No,database identifier
-time_series,period_begin,Date,Yes,Yes,No,Yes,No,No,No,peroid start date
-time_series,period_end,Date,Yes,Yes,No,Yes,No,No,No,perioid end date
-time_series,series_type,varchar,Yes,Yes,No,Yes,No,No,No,time series type
-time_series,calendar_interval,varchar,Yes,Yes,No,Yes,No,No,No,calendar interval
-time_series,gender,varchar,No,Yes,Yes,Yes,No,No,No,gender grouping
-time_series,age_group,varchar,No,Yes,Yes,Yes,No,No,No,age grouping
+time_series,cohort_id,bigint,Yes,No,No,Yes,No,No,No,cohort identifier
+time_series,database_id,varchar,Yes,No,No,Yes,No,No,No,database identifier
+time_series,period_begin,Date,Yes,No,No,Yes,No,No,No,peroid start date
+time_series,period_end,Date,Yes,No,No,Yes,No,No,No,perioid end date
+time_series,series_type,varchar,Yes,No,No,Yes,No,No,No,time series type
+time_series,calendar_interval,varchar,Yes,No,No,Yes,No,No,No,calendar interval
+time_series,gender,varchar,No,No,Yes,Yes,No,No,No,gender grouping
+time_series,age_group,varchar,No,No,Yes,Yes,No,No,No,age grouping
 time_series,records,bigint,Yes,No,No,Yes,Yes,No,No,record count
 time_series,subjects,bigint,Yes,No,No,Yes,Yes,No,No,distinct person count
 time_series,person_days,bigint,Yes,No,No,Yes,Yes,No,No,total person time in days
