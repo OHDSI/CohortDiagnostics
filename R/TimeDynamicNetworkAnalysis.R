@@ -44,7 +44,8 @@ runTimeDynamicNetworkAnalysis <- function (...,
   # TODO: this is a quick logic hack - this will not be released
   writeCallback <- function(csvFile) {
     callback <- function(x, pos) {
-      writeCsv(x, file.path(cdSettings$exportFolder, csvFile), incremental = pos == 1)
+      readr::write_csv(x, file.path(cdSettings$exportFolder, csvFile), append = pos != 1)
+      NULL
     }
     return(callback)
   }
