@@ -94,13 +94,13 @@ SELECT
     t1.time_bin,
     t1.concept_id AS concept_id_1,
     t2.concept_id AS concept_id_2,
-    COUNT(*) AS cooccurrence_count  -- Number of times a concept is shared by individuals within the same time bin
+    1 AS cooccurrence_count  -- Number of times a concept is shared by individuals within the same time bin
 FROM #time_bin_data t1
 JOIN #time_bin_data t2 ON t1.person_id = t2.person_id
     AND t1.time_bin = t2.time_bin
     AND t1.concept_id < t2.concept_id -- Prevent self-loop or duplicate edges
     AND t1.cohort_definition_id = t2.cohort_definition_id
-GROUP BY t1.time_bin, t1.concept_id, t2.concept_id, t1.cohort_definition_id
+GROUP BY t1.time_bin, t1.concept_id, t2.concept_id, t1.cohort_definition_id, t1.person_id
 ;
 
 DROP TABLE IF EXISTS @co_occurrence_result_table;
