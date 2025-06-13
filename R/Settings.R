@@ -2,9 +2,7 @@
 #' @description R6Class Generator for working within the CohortDiagnostics package.
 #' Exposes results model and icremental exectution API.
 #' Should be used to execute all diagnostics functions within cohort diagnostics
-#'
-#' @export
-#'
+#' @noRd
 CohortDiagnosticsSettings <- R6::R6Class(
   classname = "CohortDiagnosticsSettings",
   public = list(

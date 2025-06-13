@@ -5,21 +5,7 @@
 \title{Execute cohort diagnostics}
 \usage{
 executeDiagnostics(
-  cohortDefinitionSet,
-  exportFolder,
-  databaseId,
-  cohortDatabaseSchema,
-  databaseName = NULL,
-  databaseDescription = NULL,
-  connectionDetails = NULL,
-  connection = NULL,
-  cdmDatabaseSchema,
-  tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
-  cohortTable = "cohort",
-  cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
-  vocabularyDatabaseSchema = cdmDatabaseSchema,
-  cohortIds = NULL,
-  cdmVersion = 5,
+  ...,
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
   runOrphanConcepts = TRUE,
@@ -28,34 +14,23 @@ executeDiagnostics(
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
   runCohortRelationship = TRUE,
-  runTemporalCohortCharacterization = TRUE,
-  temporalCovariateSettings = getDefaultCovariateSettings(),
-  minCellCount = 5,
-  minCharacterizationMean = 0.01,
-  irWashoutPeriod = 0,
-  incremental = FALSE,
-  incrementalFolder = file.path(exportFolder, "incremental"),
-  runFeatureExtractionOnSample = FALSE,
-  sampleN = 1000,
-  seed = 64374,
-  seedArgs = NULL
+  runTemporalCohortCharacterization = TRUE
 )
 }
 \arguments{
-\item{cohortDefinitionSet}{Data.frame of cohorts must include columns cohortId, cohortName, json, sql}
+\item{runInclusionStatistics}{Generate and export statistic on the cohort inclusion rules?}
 
-\item{exportFolder}{The folder where the output will be exported to. If this folder
-does not exist it will be created.}
+\item{runIncludedSourceConcepts}{Generate and export the source concepts included in the cohorts?}
 
-\item{databaseId}{A short string for identifying the database (e.g. 'Synpuf').}
+\item{runOrphanConcepts}{Generate and export potential orphan concepts?}
 
-\item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
-this should include both the database and schema name, for example
-'scratch.dbo'.}
+\item{runTimeSeries}{Generate and export the time series diagnostics?}
 
-\item{databaseName}{The full name of the database. If NULL, defaults to value in cdm_source table}
+\item{runVisitContext}{Generate and export index-date visit context?}
 
-\item{databaseDescription}{A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table}
+\item{runBreakdownIndexEvents}{Generate and export the breakdown of index events?}
+
+\item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
@@ -72,73 +47,21 @@ of the function, and closed when the function finishes.}
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.}
 
-\item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
-tables, provide a schema with write privileges where temp tables can be created.}
-
-\item{cohortTable}{Name of the cohort table.}
-
-\item{cohortTableNames}{Cohort Table names used by CohortGenerator package}
-
 \item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
 commonly the same as cdmDatabaseSchema. Note that for 
 SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
 
-\item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
-diagnostics to.}
+\item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
+tables, provide a schema with write privileges where temp tables can be created.}
+
+\item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
+this should include both the database and schema name, for example
+'scratch.dbo'.}
+
+\item{cohortTable}{Name of the cohort table.}
 
 \item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
-
-\item{runInclusionStatistics}{Generate and export statistic on the cohort inclusion rules?}
-
-\item{runIncludedSourceConcepts}{Generate and export the source concepts included in the cohorts?}
-
-\item{runOrphanConcepts}{Generate and export potential orphan concepts?}
-
-\item{runTimeSeries}{Generate and export the time series diagnostics?}
-
-\item{runVisitContext}{Generate and export index-date visit context?}
-
-\item{runBreakdownIndexEvents}{Generate and export the breakdown of index events?}
-
-\item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
-
-\item{runCohortRelationship}{Compute cohort relationships. Overlap is now computed with FeaturExtraction, time paramters are derived from temporalCovariateSettings
-relationship between two or more cohorts.}
-
-\item{runTemporalCohortCharacterization}{Generate and export the temporal cohort characterization?
-Only records with values greater than 0.001 are returned.}
-
-\item{temporalCovariateSettings}{Either an object of type \code{covariateSettings} as created using one of
-the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
-of such objects. This can be anythin accepted by FeatureExtraction (including
-custom covariates). However, it should be noted that certain time windows will be
-included by default. @seealso[getDefaultCovariateSettings]}
-
-\item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
-
-\item{minCharacterizationMean}{The minimum mean value for characterization output. Values below this will be cut off from output. This
-will help reduce the file size of the characterization output, but will remove information
-on covariates that have very low values. The default is 0.001 (i.e. 0.1 percent)}
-
-\item{irWashoutPeriod}{Number of days washout to include in calculation of incidence rates - default is 0}
-
-\item{incremental}{Create only cohort diagnostics that haven't been created before?}
-
-\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
-of which cohort diagnostics has been executed.}
-
-\item{runFeatureExtractionOnSample}{Logical. If TRUE, the function will operate on a sample of the data.
-Default is FALSE, meaning the function will operate on the full data set.}
-
-\item{sampleN}{Integer. The number of records to include in the sample if runFeatureExtractionOnSample is TRUE.
-Default is 1000. Ignored if runFeatureExtractionOnSample is FALSE.}
-
-\item{seed}{Integer. The seed for the random number generator used to create the sample.
-This ensures that the same sample can be drawn again in future runs. Default is 64374.}
-
-\item{seedArgs}{List. Additional arguments to pass to the sampling function.
-This can be used to control aspects of the sampling process beyond the seed and sample size.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
