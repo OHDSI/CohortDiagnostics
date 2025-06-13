@@ -22,7 +22,7 @@ CohortDiagnosticsSettings <- R6::R6Class(
       }
 
       checkmate::reportAssertions(collection = self$errorMessage)
-      private$.executionTimePath <- file.path(exportFolder, "taskExecutionTimes.csv")
+      private$.executionTimePath <- file.path(self$exportFolder, "taskExecutionTimes.csv")
       private$setConnection(connection, connectionDetails)
     },
 
