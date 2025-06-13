@@ -371,7 +371,7 @@ CohortDiagnosticsSettings <- R6::R6Class(
     .tempEmulationSchema = getOption("sqlRenderTempEmulationSchema"),
     .cohortDatabaseSchema = NULL,
     .cohortTable = "cohort",
-    .cohortTableNames = CohortGenerator::getCohortTableNames(cohortTable = cohortTable),
+    .cohortTableNames = NULL,
     .vocabularyDatabaseSchema = cdmDatabaseSchema,
     .cohortIds = NULL,
     .cdmVersion = 5,
