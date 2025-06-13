@@ -54,7 +54,7 @@ Suggests:
     rsconnect,
     yaml
 Remotes:
-  ohdsi/OhdsiShinyModules
+  ohdsi/OhdsiShinyModules,
   ohdsi/CohortGenerator@db_cohort_checksums
 License: Apache License
 VignetteBuilder: knitr
