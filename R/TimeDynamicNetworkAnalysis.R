@@ -53,10 +53,8 @@ runTimeDynamicNetworkAnalysis <- function (...,
 
   # {DEFAULT @result_table = #time_dynamic_network}
   # {DEFAULT @co_occurrence_result_table = #co_occurrence_network}
-  coNetworkRes <- DatabaseConnector::renderTranslateQuerySql(connection, "SELECT * FROM #co_occurrence_network")
-  tdNetworkRes <- DatabaseConnector::renderTranslateQuerySql(connection, "SELECT * FROM #time_dynamic_network")
   DatabaseConnector::renderTranslateQueryApplyBatched(connection,
-                                                      "SELECT * FROM #co_occurrence_network",
+                                                      "SELECT * FROM #time_dynamic_network",
                                                       fun = writeCallback("cd_time_dynamic_network.csv"))
 
   DatabaseConnector::renderTranslateQueryApplyBatched(connection,
