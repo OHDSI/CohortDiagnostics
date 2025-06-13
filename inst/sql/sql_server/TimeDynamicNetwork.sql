@@ -95,8 +95,8 @@ SELECT
     t1.concept_id AS concept_id_1,
     t2.concept_id AS concept_id_2,
     COUNT(*) AS cooccurrence_count  -- Number of times a concept is shared by individuals within the same time bin
-FROM time_bin_data t1
-JOIN time_bin_data t2 ON t1.person_id = t2.person_id
+FROM #time_bin_data t1
+JOIN #time_bin_data t2 ON t1.person_id = t2.person_id
     AND t1.time_bin = t2.time_bin
     AND t1.concept_id < t2.concept_id -- Prevent self-loop or duplicate edges
     AND t1.cohort_definition_id = t2.cohort_definition_id
@@ -146,8 +146,8 @@ SELECT
     t1.concept_id AS concept_id_1,
     t2.time_bin AS time_bin_2,
     t2.concept_id AS concept_id_2
-FROM time_bin_data t1
-JOIN time_bin_data t2
+FROM #time_bin_data t1
+JOIN #time_bin_data t2
     ON t1.person_id = t2.person_id  -- Same individual
     AND t2.time_bin = t1.time_bin + 1 -- Events in consecutive time bins
     AND t1.cohort_definition_id = t2.cohort_definition_id
@@ -176,3 +176,7 @@ SELECT
 FROM #time_edges
 GROUP BY time_bin_1, concept_id_1, time_bin_2, concept_id_2, cohort_definition_id
 ORDER BY time_bin_1, edge_weight;
+
+DROP TABLE IF EXISTS #time_bin_data;
+DROP TABLE IF EXISTS #time_edges;
+DROP TABLE IF EXISTS #node_co_occurrences;
