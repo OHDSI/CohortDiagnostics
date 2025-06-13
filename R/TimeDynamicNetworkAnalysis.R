@@ -64,6 +64,7 @@ runTimeDynamicNetworkAnalysis <- function (...,
                                                     fun = writeCallback("cd_occurrence_network.csv"))
 
   DatabaseConnector::renderTranslateExecuteSql(connection,
-                                               "DROP TABLE #co_occurrence_network; DROP TABLE #co_occurrence_network;")
+                                               "DROP TABLE IF EXISTS #co_occurrence_network;
+                                               DROP TABLE IF EXISTS #time_dynamic_network;")
   return(cdSettings)
 }
