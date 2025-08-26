@@ -51,11 +51,11 @@ getDefaultCovariateSettings <- function() {
     useMeasurementRangeGroup = TRUE,
     useConditionEraStart = TRUE,
     useConditionEraOverlap = TRUE,
-    useConditionEraGroupStart = FALSE, # do not use because https://github.com/OHDSI/FeatureExtraction/issues/144
+    useConditionEraGroupStart = TRUE,
     useConditionEraGroupOverlap = TRUE,
     useDrugExposure = FALSE, # leads to too many concept id
     useDrugEraOverlap = FALSE,
-    useDrugEraGroupStart = FALSE, # do not use because https://github.com/OHDSI/FeatureExtraction/issues/144
+    useDrugEraGroupStart = TRUE,
     useDrugEraGroupOverlap = TRUE,
     useObservation = TRUE,
     useObservationValueAsConcept = TRUE,
