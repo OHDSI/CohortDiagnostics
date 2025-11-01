@@ -32,7 +32,6 @@ skipCdmTests <- FALSE
 
 if (dbms == "sqlite") {
   databaseFile <- paste0(Sys.getpid(), "testEunomia.sqlite")
-
   connectionDetails <- Eunomia::getEunomiaConnectionDetails(databaseFile = databaseFile)
   withr::defer(
     {

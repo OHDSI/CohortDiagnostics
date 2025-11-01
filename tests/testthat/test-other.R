@@ -157,3 +157,43 @@ test_that("enforceMinCellValue works with vector of minimum values", {
 
   expect_equal(result$a, c(1, 2, 3, 4, 5))
 })
+
+test_that("Creating and checking externalConceptCounts table", {
+  message(paste("testing createConceptCountsTable on", dbms))
+  
+    conceptCountsTable <- "concept_counts"
+    
+    createConceptCountsTable(connectionDetails = connectionDetails,
+                             cdmDatabaseSchema = cdmDatabaseSchema,
+                             tempEmulationSchema = NULL,
+                             conceptCountsTable = conceptCountsTable,
+                             conceptCountsDatabaseSchema = cdmDatabaseSchema,
+                             conceptCountsTableIsTemp = FALSE,
+                             removeCurrentTable = TRUE)
+    
+    connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+    conceptCounts <- renderTranslateQuerySql(connection, "SELECT * FROM @cdmDatabaseSchema.@conceptCountsTable limit 1;",
+                                             cdmDatabaseSchema = cdmDatabaseSchema,
+                                             conceptCountsTable = conceptCountsTable)
+    
+    expect_equal(tolower(colnames(conceptCounts)), c( "concept_id", "concept_count", "concept_subjects", "vocabulary_version"))
+  
+    # Checking vocab version matches 
+    useExternalConceptCountsTable <- TRUE
+    conceptCountsTable <- conceptCountsTable
+    dataSourceInfo <- getCdmDataSourceInformation(connection = connection, cdmDatabaseSchema = cdmDatabaseSchema)
+    vocabVersion <- dataSourceInfo$vocabularyVersion
+    vocabVersionExternalConceptCountsTable <- renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT DISTINCT vocabulary_version FROM @work_database_schema.@concept_counts_table;",
+      work_database_schema = cdmDatabaseSchema,
+      concept_counts_table = conceptCountsTable,
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = getOption("sqlRenderTempEmulationSchena")
+      )
+    DatabaseConnector::disconnect(connection)
+    expect_equal(vocabVersion, vocabVersionExternalConceptCountsTable[1,1])
+})
+
+
+

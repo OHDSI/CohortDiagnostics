@@ -1,11 +1,14 @@
 {DEFAULT @table_is_temp = FALSE}
+{DEFAULT @remove_current_table = TRUE}
 
-{@table_is_temp} ? {
-IF OBJECT_ID('tempdb..@concept_counts_table', 'U') IS NOT NULL
-  DROP TABLE @concept_counts_table;
-} : {
-IF OBJECT_ID('@work_database_schema.@concept_counts_table', 'U') IS NOT NULL
-	DROP TABLE @work_database_schema.@concept_counts_table;
+{@remove_current_table} ? {
+  {@table_is_temp} ? {
+  IF OBJECT_ID('tempdb..@concept_counts_table', 'U') IS NOT NULL
+    DROP TABLE @concept_counts_table;
+  } : {
+  IF OBJECT_ID('@work_database_schema.@concept_counts_table', 'U') IS NOT NULL
+  	DROP TABLE @work_database_schema.@concept_counts_table;
+  }
 }
 
 SELECT concept_id,
@@ -95,3 +98,9 @@ FROM (
 	FROM @cdm_database_schema.observation
 	GROUP BY observation_source_concept_id
 	) tmp;
+	
+{@table_is_temp} ? {} : { 
+ALTER TABLE @work_database_schema.@concept_counts_table
+ADD vocabulary_version VARCHAR(20) NULL;
+UPDATE @work_database_schema.@concept_counts_table SET vocabulary_version = (SELECT vocabulary_version FROM @cdm_database_schema.vocabulary WHERE vocabulary_id = 'None');
+}
