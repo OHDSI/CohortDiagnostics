@@ -107,7 +107,7 @@ extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
 }
 
 getParentCohort <- function(cohort, cohortDefinitionSet) {
-  if (is.null(cohort$subsetParent) || cohort$cohortId == cohort$subsetParent) {
+  if (is.null(cohort$subsetParent) || is.na(cohort$subsetParent) || cohort$cohortId == cohort$subsetParent) {
     return(cohort)
   }
 
@@ -171,13 +171,13 @@ combineConceptSetsFromCohorts <- function(cohorts) {
         cohort$cohortName
       )
     } else {
-      if (!length(sqlCs$conceptSetId %>% unique()) == length(jsonCs$conceptSetId %>% unique())) {
+      if (!setequal(sqlCs$conceptSetId, jsonCs$conceptSetId)) {
         stop(
           "Mismatch in concept set IDs between SQL and JSON for cohort ",
-          cohort$cohortFullName
+          cohort$cohortName
         )
       }
-      if (length(sqlCs) > 0 && length(jsonCs) > 0) {
+      if (nrow(sqlCs) > 0 && nrow(jsonCs) > 0) {
         conceptSetCounter <- conceptSetCounter + 1
         conceptSets[[conceptSetCounter]] <-
           tidyr::tibble(
@@ -195,13 +195,12 @@ combineConceptSetsFromCohorts <- function(cohorts) {
 
   uniqueConceptSets <- conceptSets %>%
     dplyr::select("conceptSetExpression") %>%
-    dplyr::mutate(uniqueConceptSetId = dplyr::row_number()) %>%
-    dplyr::distinct()
+    dplyr::distinct() %>%
+    dplyr::mutate(uniqueConceptSetId = dplyr::row_number())
 
   conceptSets <- conceptSets %>%
     dplyr::inner_join(uniqueConceptSets,
-      by = "conceptSetExpression",
-      relationship = "many-to-many"
+      by = "conceptSetExpression"
     ) %>%
     dplyr::distinct() %>%
     dplyr::relocate(

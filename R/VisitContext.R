@@ -152,3 +152,39 @@ executeVisitContextDiagnostics <- function(connection,
     )
   }
 }
+
+aggregateVisitContext <- function(data, minCellCount = 5) {
+  if (is.null(data) || nrow(data) == 0) {
+    return(dplyr::tibble())
+  }
+
+  result <- data %>%
+    dplyr::group_by(.data$cohortId, .data$visitType) %>%
+    dplyr::summarize(visitCount = sum(.data$visitCount), .groups = "drop") %>%
+    dplyr::group_by(.data$cohortId) %>%
+    dplyr::mutate(totalCount = sum(.data$visitCount)) %>%
+    dplyr::mutate(proportion = .data$visitCount / .data$totalCount) %>%
+    dplyr::ungroup()
+
+  if (!is.null(minCellCount)) {
+    result <- enforceMinCellValue(result, "visitCount", minCellCount)
+  }
+
+  return(result)
+}
+
+classifyVisitType <- function(visitConceptId) {
+  visitConceptId <- as.numeric(visitConceptId)
+  result <- dplyr::case_when(
+    visitConceptId == 9201 ~ "Inpatient",
+    visitConceptId == 9202 ~ "Outpatient",
+    visitConceptId == 9203 ~ "Emergency Room",
+    visitConceptId == 9204 ~ "Long-term care",
+    TRUE ~ "Other"
+  )
+  return(result)
+}
+
+calculateVisitDuration <- function(startDate, endDate) {
+  return(as.numeric(as.Date(endDate) - as.Date(startDate)))
+}

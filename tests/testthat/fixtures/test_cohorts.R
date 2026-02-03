@@ -11,7 +11,7 @@ getMinimalCohortDefinitionSet <- function() {
     sql = "SELECT 1 as cohort_definition_id, 1 as subject_id, 
            CAST('2020-01-01' AS DATE) as cohort_start_date,
            CAST('2020-12-31' AS DATE) as cohort_end_date;",
-    json = jsonlite::toJSON(list(
+    json = as.character(jsonlite::toJSON(list(
       ConceptSets = list(),
       PrimaryCriteria = list(
         CriteriaList = list(),
@@ -19,7 +19,7 @@ getMinimalCohortDefinitionSet <- function() {
         PrimaryCriteriaLimit = list(Type = "First")
       ),
       cdmVersionRange = ">=5.0.0"
-    ), auto_unbox = TRUE),
+    ), auto_unbox = TRUE)),
     checksum = digest::digest("minimal_cohort_1")
   )
 }
@@ -40,7 +40,7 @@ getSingleCohortDefinition <- function(cohortId = 1L) {
       FROM @cohort_database_schema.@cohort_table
       WHERE cohort_definition_id = %d;
     ", cohortId, cohortId),
-    json = jsonlite::toJSON(list(
+    json = as.character(jsonlite::toJSON(list(
       ConceptSets = list(
         list(
           id = 0,
@@ -86,7 +86,7 @@ getSingleCohortDefinition <- function(cohortId = 1L) {
       ),
       CensorWindow = list(),
       cdmVersionRange = ">=5.0.0"
-    ), auto_unbox = TRUE),
+    ), auto_unbox = TRUE)),
     checksum = digest::digest(paste0("cohort_", cohortId))
   )
 }
@@ -155,7 +155,7 @@ getCohortDefinitionWithConceptSets <- function(numConceptSets = 2L) {
     cohortId = 1L,
     cohortName = "Cohort with Concept Sets",
     sql = "SELECT * FROM cohort WHERE cohort_definition_id = 1;",
-    json = jsonlite::toJSON(list(
+    json = as.character(jsonlite::toJSON(list(
       ConceptSets = conceptSets,
       PrimaryCriteria = list(
         CriteriaList = list(
@@ -170,7 +170,7 @@ getCohortDefinitionWithConceptSets <- function(numConceptSets = 2L) {
         PrimaryCriteriaLimit = list(Type = "First")
       ),
       cdmVersionRange = ">=5.0.0"
-    ), auto_unbox = TRUE),
+    ), auto_unbox = TRUE)),
     checksum = digest::digest("cohort_with_concept_sets")
   )
 }
