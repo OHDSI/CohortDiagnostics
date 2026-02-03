@@ -1,9 +1,10 @@
 library(testthat)
 
 # Determine which tests to run
-runUnitTests <- TRUE
+runUnitTests <- Sys.getenv("RUN_UNIT_TESTS") != "FALSE" # Default to TRUE
 runIntegrationTests <- Sys.getenv("INTEGRATION_TESTS") == "TRUE" || 
                        Sys.getenv("RUN_ALL_TESTS") == "TRUE"
+
 
 if (runUnitTests) {
   message("========================================")

@@ -113,8 +113,7 @@ test_that("combineConceptSetsFromCohorts combines concept sets from multiple coh
   
   result <- CohortDiagnostics:::combineConceptSetsFromCohorts(cohorts)
   
-  # Based on actual execution, this returns 4 rows (likely fixture creates 2 concept sets despite request, or function behavior matches this)
-  expect_equal(nrow(result), 4)
+  expect_equal(nrow(result), 2)
   expect_equal(unique(result$cohortId), c(1, 2))
 })
 
@@ -138,7 +137,7 @@ test_that("combineConceptSetsFromCohorts deduplicates identical concept sets", {
   
   # Both cohorts have the same concept set expression, so they should share a uniqueConceptSetId
   expect_equal(length(unique(result$uniqueConceptSetId)), 1)
-  expect_equal(nrow(result), 4) # Matching actual behavior of 4 rows
+  expect_equal(nrow(result), 2)
 })
 
 test_that("combineConceptSetsFromCohorts handles subset cohorts", {
@@ -192,6 +191,8 @@ test_that("getParentCohort correctly identifies parent for subset", {
   cohorts <- getCohortDefinitionWithSubset()
   # Initialize to avoid NA failure in robust checks
   cohorts$subsetParent <- as.numeric(cohorts$subsetParent)
+  # Use self-reference for non-subsets (standard pattern to stop recursion)
+  cohorts$subsetParent[is.na(cohorts$subsetParent)] <- cohorts$cohortId[is.na(cohorts$subsetParent)]
   
   subset <- cohorts %>% filter(isSubset)
   

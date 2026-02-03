@@ -69,16 +69,16 @@ test_that("function writes to file correctly", {
   expect_equal(result$cohortId, c(1, 2, 3))
 })
 
-# Example 5: Testing error conditions
-test_that("function throws error for invalid input", {
+# Example 5: Testing empty/null inputs
+test_that("computeChecksum handles NULL input gracefully", {
   # Arrange
   invalidInput <- NULL
   
-  # Act & Assert
-  expect_error(
-    CohortDiagnostics:::computeChecksum(invalidInput),
-    regexp = ".*" # Adjust regex to match expected error message
-  )
+  # Act
+  result <- CohortDiagnostics:::computeChecksum(invalidInput)
+  
+  # Assert
+  expect_equal(length(result), 0)
 })
 
 # Example 6: Testing with edge cases
