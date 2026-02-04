@@ -81,7 +81,7 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     if (is.null(resultsDatabaseSchema)) {
       stop("resultsDatabaseSchema is required to connect to the database.")
     }
-    if (!is.null(vocabularyDatabaseSchema) &
+    if (!is.null(vocabularyDatabaseSchema) &&
       is.null(vocabularyDatabaseSchemas)) {
       vocabularyDatabaseSchemas <- vocabularyDatabaseSchema
       warning(
@@ -169,7 +169,7 @@ createMergedResultsFile <-
            sqliteDbPath = "MergedCohortDiagnosticsData.sqlite",
            overwrite = FALSE,
            tablePrefix = "") {
-    if (file.exists(sqliteDbPath) & !overwrite) {
+    if (file.exists(sqliteDbPath) && !overwrite) {
       stop("File ", sqliteDbPath, " already exists. Set overwrite = TRUE to replace")
     } else if (file.exists(sqliteDbPath)) {
       unlink(sqliteDbPath)
@@ -230,7 +230,7 @@ createDiagnosticsExplorerZip <- function(outputZipfile = file.path(getwd(), "Dia
                                          overwrite = FALSE) {
   outputZipfile <- normalizePath(outputZipfile, mustWork = FALSE)
 
-  if (file.exists(outputZipfile) & !overwrite) {
+  if (file.exists(outputZipfile) && !overwrite) {
     stop(outputZipfile, " already exists. Set overwrite = TRUE to continue")
   }
   stopifnot(dir.exists(shinyDirectory))
@@ -317,7 +317,7 @@ shinydbPort=5432
 DATABASECONNECTOR_JAR_FOLDER='.'
 "
       writeLines(outputText, file.path(appDir, ".Renviron"))
-      res <- utils::edit(file = file.path(appDir, ".Renviron"))
+      utils::edit(file = file.path(appDir, ".Renviron"))
       # File should always be deleted
       on.exit(unlink(file.path(appDir, ".Renviron"), force = TRUE))
     } else {

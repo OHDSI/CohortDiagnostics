@@ -15,5 +15,4 @@ if (dir.exists(testthat::test_path("unit"))) {
         testthat::test_that(paste("Sourcing", basename(test_file)), {
             source(test_file, local = TRUE)
         })
-    }
-}
+    }}

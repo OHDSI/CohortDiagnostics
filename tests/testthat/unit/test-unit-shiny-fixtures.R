@@ -13,7 +13,18 @@ createMockDataSource <- function(enabledReports = c("all")) {
     dataSource <- list(
         enabledReports = enabledReports,
         hasData = function(table) TRUE,
-        queryData = function(sql, ...) data.frame(),
+        queryData = function(sql, ...) {
+            params <- list(...)
+            if (grepl("metadata", sql, ignore.case = TRUE) || (any(grepl("metadata", as.character(params))))) {
+                return(data.frame(
+                    databaseId = "test",
+                    startTime = "2023-01-01 00:00:00",
+                    variableField = c("timeZone", "runTime", "cdmVersion"),
+                    valueField = c("UTC", "10", "5.4")
+                ))
+            }
+            data.frame()
+        },
         connectionHandler = createMockConnectionHandler(),
         schema = "main",
         cdTablePrefix = "",
@@ -31,7 +42,19 @@ createMockDataSource <- function(enabledReports = c("all")) {
 createMockConnectionHandler <- function() {
     handler <- new.env()
     handler$dbms <- function() "sqlite"
-    handler$queryDb <- function(sql, ...) data.frame()
+    handler$queryDb <- function(sql, ...) {
+        params <- list(...)
+        if (grepl("metadata|database", sql, ignore.case = TRUE) || (any(grepl("metadata|database", as.character(params))))) {
+            return(data.frame(
+                databaseId = "test",
+                databaseName = "Test Database",
+                startTime = "2023-01-01 00:00:00",
+                variableField = c("timeZone", "runTime", "cdmVersion"),
+                valueField = c("UTC", "10", "5.4")
+            ))
+        }
+        data.frame()
+    }
 
     # Use a real in-memory connection to satisfy DBI checks
     conn <- DatabaseConnector::connect(dbms = "sqlite", server = ":memory:")
