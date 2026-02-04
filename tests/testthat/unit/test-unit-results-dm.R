@@ -128,16 +128,18 @@ test_that("uploadResults calls ResultModelManager with correct arguments", {
           testthat::with_mocked_bindings(
             {
               testthat::expect_no_error(
-                uploadResults(
+                CohortDiagnostics::uploadResults(
                   connectionDetails = list(dbms = "sqlite"),
                   schema = "main",
                   zipFileName = "test.zip"
                 )
               )
             },
-            uploadResults = function(connectionDetails, schema, resultsFolder, tablePrefix, forceOverWriteOfSpecifications, purgeSiteDataBeforeUploading, runCheckAndFixCommands, databaseIdentifierFile, specifications, warnOnMissingTable, ...) {
-              expect_equal(schema, "main")
-              expect_equal(databaseIdentifierFile, "database.csv")
+            uploadResults = function(...) {
+              args <- list(...)
+              expect_equal(args$schema, "main")
+              expect_true("databaseIdentifierFile" %in% names(args))
+              expect_equal(args$databaseIdentifierFile, "database.csv")
             },
             .package = "ResultModelManager"
           )
