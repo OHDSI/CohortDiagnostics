@@ -42,7 +42,20 @@ Imports:
     CohortGenerator (>= 0.10.0),
     remotes,
     scales,
-    cli
+    cli,
+    shiny,
+    shinydashboard,
+    shinyWidgets,
+    plotly,
+    reactable,
+    shinycssloaders,
+    CirceR,
+    ggplot2,
+    gridExtra,
+    tibble,
+    tippy,
+    markdown,
+    RColorBrewer
 Suggests:
     Eunomia,
     RSQLite (>= 2.2.1),
@@ -50,17 +63,13 @@ Suggests:
     withr,
     zip,
     knitr,
-    shiny,
-    OhdsiShinyModules,
     rsconnect,
     yaml
-Remotes:
-  ohdsi/OhdsiShinyModules
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics
 BugReports: https://github.com/OHDSI/CohortDiagnostics/issues
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Encoding: UTF-8
 Language: en-US
 StagedInstall: no

@@ -1,0 +1,25 @@
+<h4>Description</h4>
+<p>A graph showing the incidence rate, optionally stratified by age (in 10-year bins), gender, and calendar year.</p>
+
+<p>The incidence rate is computed as 1000 * the number of people <em>first</em> entering the cohort / the number of years people were eligible to enter the cohort for the first time. The eligible person time is defined as the time when
+<ul>
+  <li>A person was observed in the data source (based on the observation_period table).</li>
+  <li>Had the required amount of prior observation time as specified in the cohort entry event criteria. For example, if the cohort definition requires 365 days of observation prior to cohort entry, patients are not eligible to enter the cohort in the first 365 days of their observation period, and this time is not counted in the eligible time.</li>
+  <li>If the person enters the cohort, then only the time up to cohort entry. Because we only consider the first cohort entry, persons are no longer eligible to enter to cohort after their first entry.</li>
+</ul>
+
+<p> <em>Note:</em> If your cohort definition has an inclusion rule that restricts persons based on prior observation time, then this might lead to underestimation of incidence rate as the same prior observation time restriction would not be applied to the denominator. We recommend that you revise the cohort definition to make prior observation time rule part of entry event criteria. </p>
+
+<h4>Options</h4>
+<p>You can select multiple data sources in the side bar to see graphs from different data sources in the same plot.</p>
+<p>Select the cohort to explore in the side bar.</p>
+<p>At the top left of the plot, you can choose whether to stratify the data by age, gender, or calendar year.</p>
+<p>At the top right of the plot, you can choose whether to use the same y-axis for all data sources.</p>
+<p>If you move the mouse over the plot, you can see the precise value.</p>
+
+<h4>What to look for</h4>
+<ul>
+<li>Are the observed incidence rates in line with expectations? For example, if we have an estimate of the population incidence based on an external source, is the incidence rate comparable to that estimate?</li>
+<li>Are the age and gender distributions in line with expectations? For example, are contraceptives only prescribed in women?</li>
+<li>Is the incidence rate stable over time? If there are sudden peaks or drops, this may indicate coding issues.</li>
+</ul>

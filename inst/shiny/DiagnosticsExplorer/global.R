@@ -1,6 +1,7 @@
 # fix for linux systems with weird rJava behaviour
-if (is.null(getOption("java.parameters")))
-    options(java.parameters = "-Xss100m")
+if (is.null(getOption("java.parameters"))) {
+  options(java.parameters = "-Xss100m")
+}
 
 loadShinySettings <- function(configPath) {
   stopifnot(file.exists(configPath))
@@ -31,8 +32,7 @@ loadShinySettings <- function(configPath) {
 
   if (!is.null(shinySettings$connectionDetailsSecureKey)) {
     shinySettings$connectionDetails <- jsonlite::fromJSON(keyring::key_get(shinySettings$connectionDetailsSecureKey))
-  } else if(!is.null(shinySettings$connectionEnvironmentVariables$server)) {
-
+  } else if (!is.null(shinySettings$connectionEnvironmentVariables$server)) {
     defaultValues <- list(
       dbms = "",
       user = "",
@@ -61,8 +61,10 @@ loadShinySettings <- function(configPath) {
       extraSettings = Sys.getenv(shinySettings$connectionEnvironmentVariables$extraSettings)
     )
   }
-  shinySettings$connectionDetails <- do.call(DatabaseConnector::createConnectionDetails,
-                                             shinySettings$connectionDetails)
+  shinySettings$connectionDetails <- do.call(
+    DatabaseConnector::createConnectionDetails,
+    shinySettings$connectionDetails
+  )
 
   return(shinySettings)
 }
@@ -81,11 +83,6 @@ if (FALSE) {
 
 connectionHandler <- ResultModelManager::PooledConnectionHandler$new(shinySettings$connectionDetails)
 
-if (packageVersion("OhdsiShinyModules") <= as.numeric_version("2.0.0")) {
-  stop("OhdsiShinyModules version no longer supported.
-  Update to a newer version with remotes::install_github('OhdsiShinyModules')")
-}
-
 resultDatabaseSettings <- list(
   schema = shinySettings$resultsDatabaseSchema,
   vocabularyDatabaseSchema = shinySettings$vocabularyDatabaseSchema,
@@ -95,20 +92,7 @@ resultDatabaseSettings <- list(
 )
 
 dataSource <-
-  OhdsiShinyModules::createCdDatabaseDataSource(connectionHandler = connectionHandler,
-                                                resultDatabaseSettings = resultDatabaseSettings)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  CohortDiagnostics::createCdDatabaseDataSource(
+    connectionHandler = connectionHandler,
+    resultDatabaseSettings = resultDatabaseSettings
+  )

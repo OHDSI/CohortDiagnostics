@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-REQUIRED_OSM_VERSION <- base::package_version("3.2.0")
 
 #' Launch the Diagnostics Explorer Shiny app
 #' @param connectionDetails An object of type \code{connectionDetails} as created using the
@@ -111,19 +110,6 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     on.exit(options("CD-shiny-config" = NULL))
   }
 
-  if (!"OhdsiShinyModules" %in% as.data.frame(utils::installed.packages())$Package) {
-    if (!interactive() || isTRUE(utils::askYesNo("OhdsiShinyModules not installed, get from github?"))) {
-      remotes::install_github("OHDSI/OhdsiShinyModules")
-    } else {
-      stop("Cannot continue without OhdsiShinyModulesPackage from github")
-    }
-  }
-
-  osmVersion <- utils::packageVersion("OhdsiShinyModules")
-
-  if (osmVersion < REQUIRED_OSM_VERSION) {
-    cli::cli_warn("OhdsiShinyModules version {osmVersion} is out of date. It is suggested you update to at least {REQUIRED_OSM_VERSION}")
-  }
 
   appDir <-
     system.file("shiny", "DiagnosticsExplorer", package = utils::packageName())
@@ -302,9 +288,6 @@ deployPositConnectApp <- function(appName,
     install.packages("yaml")
   }
 
-  if (!"OhdsiShinyModules" %in% as.data.frame(utils::installed.packages())$Package) {
-    remotes::install_github("OHDSI/OhdsiShinyModules")
-  }
 
   checkmate::assertDirectory(appDir, access = "w")
 
