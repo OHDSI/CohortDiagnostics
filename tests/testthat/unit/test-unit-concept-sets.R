@@ -3,20 +3,6 @@ library(CohortDiagnostics)
 library(dplyr)
 
 
-# Load fixtures
-# Using base source with relative paths for direct file execution
-if (file.exists("../fixtures/mock_data.R")) {
-  source("../fixtures/mock_data.R")
-  source("../fixtures/test_cohorts.R")
-} else if (file.exists("tests/testthat/fixtures/mock_data.R")) {
-  source("tests/testthat/fixtures/mock_data.R")
-  source("tests/testthat/fixtures/test_cohorts.R")
-} else {
-  # Fallback for when running via test_file which might set path
-  source(testthat::test_path("fixtures/mock_data.R"))
-  source(testthat::test_path("fixtures/test_cohorts.R"))
-}
-
 test_that("extractConceptSetsSqlFromCohortSql extracts single concept set from SQL", {
   sql <- "SELECT 0 as codeset_id (SELECT 123 as concept_id) C with primary_events"
   result <- CohortDiagnostics:::extractConceptSetsSqlFromCohortSql(sql)
@@ -219,4 +205,52 @@ test_that("instantiateUniqueConceptSets performs no action for empty input", {
 
   # Should not error
   expect_invisible(CohortDiagnostics:::instantiateUniqueConceptSets(uniqueConceptSets, connection, "main", NULL))
+})
+
+test_that("runConceptSetDiagnostic orchestrates sub-functions correctly", {
+  skip_if_not_installed("testthat", "3.0.0")
+
+  exportFolder <- tempfile("export")
+  dir.create(exportFolder)
+  on.exit(unlink(exportFolder, recursive = TRUE))
+
+  # Create a minimal context
+  context <- createDiagnosticsContext(
+    connectionDetails = list(dbms = "sqlite"),
+    cdmDatabaseSchema = "cdm",
+    cohortDatabaseSchema = "cohort",
+    databaseId = "test",
+    exportFolder = exportFolder
+  )
+  context$isInitialized <- TRUE
+  # Set incremental folder
+  context$incrementalFolder <- file.path(exportFolder, "incremental")
+  dir.create(context$incrementalFolder, showWarnings = FALSE)
+
+  cohortDefinitionSet <- createMockCohortDefinitionSet(numCohorts = 1)
+  cohortDefinitionSet$sql <- "SELECT 0 as codeset_id (SELECT 1) C with primary_events"
+
+  # Track calls
+  calls <- list()
+
+  local_mocked_bindings(
+    exportConceptSets = function(...) {
+      calls <<- c(calls, "exportConceptSets")
+    },
+    runConceptSetDiagnostics = function(...) {
+      calls <<- c(calls, "runConceptSetDiagnostics")
+    },
+    timeExecution = function(folder, taskName, ...) {
+      calls <<- c(calls, taskName)
+      # eval the expression passed as 'expr'
+      args <- list(...)
+      eval(args$expr)
+    },
+    .package = "CohortDiagnostics"
+  )
+
+  runConceptSetDiagnostic(context, cohortDefinitionSet = cohortDefinitionSet)
+
+  expect_true("exportConceptSets" %in% calls)
+  expect_true("runConceptSetDiagnostics" %in% calls)
 })

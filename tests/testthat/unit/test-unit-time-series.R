@@ -1,9 +1,6 @@
 # Unit tests for Time Series module
 # These tests are isolated and require no database connections
 
-source(testthat::test_path( "fixtures", "mock_data.R"))
-source(testthat::test_path( "mocks", "database_mocks.R"))
-
 library(CohortDiagnostics)
 
 # Helper for creating sample data
@@ -191,9 +188,9 @@ test_that("aggregateTimeSeriesData handles missing periods by padding with zeros
   )
   # Jan to March
   result <- CohortDiagnostics:::aggregateTimeSeriesData(
-    data, 
-    "month", 
-    startDate = as.Date("2020-01-01"), 
+    data,
+    "month",
+    startDate = as.Date("2020-01-01"),
     endDate = as.Date("2020-03-01")
   )
   expect_equal(nrow(result), 3)
@@ -245,7 +242,7 @@ test_that("aggregateTimeSeriesData handles NA dates", {
 # test_that("getTimeSeriesData returns expected structure (mocked)", {
 #   mockConn <- mockDatabaseConnection()
 #   mockData <- dplyr::tibble(cohortId = 1, date = as.Date("2020-01-15"), count = 10)
-#   
+#
 #   testthat::with_mocked_bindings(
 #     {
 #       result <- CohortDiagnostics:::getTimeSeriesData(
@@ -261,6 +258,46 @@ test_that("aggregateTimeSeriesData handles NA dates", {
 #     renderTranslateQuerySql = function(...) mockData,
 #     .package = "DatabaseConnector"
 #   )
-#   
+#
 #   expect_equal(result, mockData)
 # })
+
+test_that("runTimeSeriesDiagnostic orchestrates sub-functions correctly", {
+  skip_if_not_installed("testthat", "3.0.0")
+
+  exportFolder <- tempfile("export")
+  dir.create(exportFolder)
+  on.exit(unlink(exportFolder, recursive = TRUE))
+
+  context <- createDiagnosticsContext(
+    connectionDetails = list(dbms = "sqlite"),
+    cdmDatabaseSchema = "cdm",
+    cohortDatabaseSchema = "cohort",
+    databaseId = "test",
+    exportFolder = exportFolder
+  )
+  context$isInitialized <- TRUE
+  context$incrementalFolder <- file.path(exportFolder, "incremental")
+  dir.create(context$incrementalFolder, showWarnings = FALSE)
+
+  cohortDefinitionSet <- createMockCohortDefinitionSet(numCohorts = 1)
+
+  # Track calls
+  calls <- list()
+
+  local_mocked_bindings(
+    executeTimeSeriesDiagnostics = function(...) {
+      calls <<- c(calls, "executeTimeSeriesDiagnostics")
+    },
+    timeExecution = function(folder, taskName, ...) {
+      calls <<- c(calls, taskName)
+      args <- list(...)
+      eval(args$expr)
+    },
+    .package = "CohortDiagnostics"
+  )
+
+  runTimeSeriesDiagnostic(context, cohortDefinitionSet = cohortDefinitionSet)
+
+  expect_true("executeTimeSeriesDiagnostics" %in% calls)
+})

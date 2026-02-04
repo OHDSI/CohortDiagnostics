@@ -1,8 +1,20 @@
 test_that("cohortDefinitionsModule renders without errors", {
     # Arrange
-    if (!exists("createMockDataSource")) {
-        source(testthat::test_path("unit", "test-unit-shiny-fixtures.R"), local = TRUE)
+    # Arrange
+    if (!"CohortDiagnostics" %in% loadedNamespaces()) {
+        devtools::load_all(".")
     }
+
+    # Debugging path
+    fixturePath <- "test-unit-shiny-fixtures.R"
+    if (file.exists(fixturePath)) {
+        source(fixturePath, local = TRUE)
+    } else if (file.exists(file.path("unit", fixturePath))) {
+        source(file.path("unit", fixturePath), local = TRUE)
+    } else {
+        source("tests/testthat/unit/test-unit-shiny-fixtures.R", local = TRUE)
+    }
+
     mockDataSource <- createMockDataSource()
     mockConnectionHandler <- createMockConnectionHandler()
 
@@ -18,7 +30,7 @@ test_that("cohortDefinitionsModule renders without errors", {
 
     # Act & Assert
     shiny::testServer(
-        cohortDefinitionsModule,
+        CohortDiagnostics:::cohortDefinitionsModule,
         args = list(
             dataSource = mockDataSource,
             cohortDefinitions = shiny::reactive(mockDataSource$cohortTable)
@@ -36,20 +48,36 @@ test_that("cohortDefinitionsModule renders without errors", {
 
 test_that("cohortDefinitionsModule handles empty data", {
     # Arrange
-    if (!exists("createMockDataSource")) {
-        source(testthat::test_path("unit", "test-unit-shiny-fixtures.R"), local = TRUE)
+    # Arrange
+    if (!"CohortDiagnostics" %in% loadedNamespaces()) {
+        devtools::load_all(".")
     }
+
+    # Debugging path
+    fixturePath <- "test-unit-shiny-fixtures.R"
+    if (file.exists(fixturePath)) {
+        source(fixturePath, local = TRUE)
+    } else if (file.exists(file.path("unit", fixturePath))) {
+        source(file.path("unit", fixturePath), local = TRUE)
+    } else {
+        source("tests/testthat/unit/test-unit-shiny-fixtures.R", local = TRUE)
+    }
+
+    # modulePath source removed
+
     mockDataSource <- createMockDataSource()
     mockDataSource$queryData <- function(sql, ...) data.frame()
 
     # Act & Assert
     shiny::testServer(
-        cohortDiagnosticsServer,
+        CohortDiagnostics:::cohortDefinitionsModule,
         args = list(
+            # id is not needed for moduleServer unless passed as arg? no moduleServer takes id as first arg
+            # shiny::testServer(module, args, ...)
+            # But cohortDefinitionsModule signature: function(id, dataSource, cohortDefinitions)
             id = "test",
             dataSource = mockDataSource,
-            connectionHandler = mockDataSource$connectionHandler,
-            resultDatabaseSettings = createMockResultDatabaseSettings()
+            cohortDefinitions = shiny::reactive(data.frame()) # Empty definitions
         ),
         {
             # Test that it loads

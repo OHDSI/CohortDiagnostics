@@ -1,13 +1,11 @@
 # Unit tests for Cohort Characterization module
 # These tests are isolated and require no database connections
 
-source(testthat::test_path( "fixtures", "mock_data.R"))
-source(testthat::test_path( "mocks", "feature_extraction_mocks.R"))
-source(testthat::test_path( "mocks", "database_mocks.R"))
-
 # Helper for writeToCsv mock
 safeWriteToCsv <- function(data, fileName, ...) {
-  if (is.null(data)) return()
+  if (is.null(data)) {
+    return()
+  }
   df <- if (is.data.frame(data)) data else dplyr::collect(data)
   if (!is.null(df) && nrow(df) > 0) {
     readr::write_csv(df, fileName)
@@ -21,10 +19,10 @@ test_that("getCohortCharacteristics processes temporal covariates", {
   cohortIds <- c(1)
   mockData <- createMockTemporalCovariateData(cohortIds = cohortIds)
   attr(mockData, "metaData") <- list(populationSize = c("1" = 100))
-  
+
   mockConn <- mockDatabaseConnection()
   covariateSettings <- mockCreateTemporalCovariateSettings()
-  
+
   # Act
   testthat::with_mocked_bindings(
     {
@@ -43,15 +41,17 @@ test_that("getCohortCharacteristics processes temporal covariates", {
         .package = "FeatureExtraction"
       )
     },
-    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) { expr },
+    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) {
+      expr
+    },
     .package = "CohortDiagnostics"
   )
-  
+
   # Assert
   expect_s4_class(results, "Andromeda")
   expect_true("covariates" %in% names(results))
   expect_true("timeRef" %in% names(results))
-  
+
   covariates <- results$covariates %>% dplyr::collect()
   expect_true(all(covariates$timeId != 0))
   expect_true(all(c("cohortId", "timeId", "covariateId", "sumValue", "mean", "sd") %in% names(covariates)))
@@ -85,11 +85,11 @@ test_that("getCohortCharacteristics processes non-temporal binary covariates", {
     class = "CovariateData"
   )
   attr(mockData, "metaData") <- list(populationSize = c("1" = 100))
-  
+
   mockConn <- mockDatabaseConnection()
   covariateSettings <- list(temporal = FALSE)
   class(covariateSettings) <- "covariateSettings"
-  
+
   # Act
   testthat::with_mocked_bindings(
     {
@@ -109,10 +109,12 @@ test_that("getCohortCharacteristics processes non-temporal binary covariates", {
         .package = "FeatureExtraction"
       )
     },
-    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) { expr },
+    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) {
+      expr
+    },
     .package = "CohortDiagnostics"
   )
-  
+
   # Assert
   expect_s4_class(results, "Andromeda")
   covariates_result <- results$covariates %>% dplyr::collect()
@@ -148,9 +150,9 @@ test_that("getCohortCharacteristics processes continuous covariates", {
     class = "CovariateData"
   )
   attr(mockData, "metaData") <- list(populationSize = c("1" = 100))
-  
+
   mockConn <- mockDatabaseConnection()
-  
+
   # Act
   testthat::with_mocked_bindings(
     {
@@ -169,10 +171,12 @@ test_that("getCohortCharacteristics processes continuous covariates", {
         .package = "FeatureExtraction"
       )
     },
-    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) { expr },
+    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) {
+      expr
+    },
     .package = "CohortDiagnostics"
   )
-  
+
   # Assert
   expect_true("covariatesContinuous" %in% names(results))
   cont <- results$covariatesContinuous %>% dplyr::collect()
@@ -191,9 +195,9 @@ test_that("getCohortCharacteristics handles empty covariate data", {
     class = "CovariateData"
   )
   attr(mockData, "metaData") <- list(populationSize = c("1" = 100))
-  
+
   mockConn <- mockDatabaseConnection()
-  
+
   # Act
   testthat::with_mocked_bindings(
     {
@@ -212,10 +216,12 @@ test_that("getCohortCharacteristics handles empty covariate data", {
         .package = "FeatureExtraction"
       )
     },
-    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) { expr },
+    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) {
+      expr
+    },
     .package = "CohortDiagnostics"
   )
-  
+
   # Assert
   expect_s4_class(results, "Andromeda")
   expect_false("covariates" %in% names(results))
@@ -227,9 +233,9 @@ test_that("getCohortCharacteristics processes multiple cohorts", {
   cohortIds <- c(1, 2)
   mockData <- createMockTemporalCovariateData(cohortIds = cohortIds)
   attr(mockData, "metaData") <- list(populationSize = c("1" = 100, "2" = 200))
-  
+
   mockConn <- mockDatabaseConnection()
-  
+
   # Act
   testthat::with_mocked_bindings(
     {
@@ -248,10 +254,12 @@ test_that("getCohortCharacteristics processes multiple cohorts", {
         .package = "FeatureExtraction"
       )
     },
-    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) { expr },
+    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) {
+      expr
+    },
     .package = "CohortDiagnostics"
   )
-  
+
   # Assert
   covariates <- results$covariates %>% dplyr::collect()
   expect_true(all(cohortIds %in% covariates$cohortId))
@@ -280,22 +288,22 @@ test_that("exportCharacterization enforces min cell count", {
     analysisName = "Test"
   )
   withr::defer(Andromeda::close(andro))
-  
+
   counts <- dplyr::tibble(
     cohortId = 1,
     cohortEntries = 100,
     cohortSubjects = 100,
     databaseId = "test"
   )
-  
+
   exportFolder <- tempfile()
   dir.create(exportFolder)
   withr::defer(unlink(exportFolder, recursive = TRUE))
-  
+
   # Act
   testthat::with_mocked_bindings(
     {
-       CohortDiagnostics:::exportCharacterization(
+      CohortDiagnostics:::exportCharacterization(
         characteristics = andro,
         databaseId = "test",
         incremental = FALSE,
@@ -308,11 +316,15 @@ test_that("exportCharacterization enforces min cell count", {
         minCellCount = 5
       )
     },
-    makeDataExportable = function(x, ...) if (is.null(x)) return(NULL) else dplyr::collect(x),
+    makeDataExportable = function(x, ...) if (is.null(x)) {
+      return(NULL)
+    } else {
+      dplyr::collect(x)
+    },
     writeToCsv = safeWriteToCsv,
     .package = "CohortDiagnostics"
   )
-  
+
   # Assert
   val <- readr::read_csv(file.path(exportFolder, "val.csv"), col_types = readr::cols())
   expect_equal(val$sumValue[1], -5)
@@ -332,11 +344,11 @@ test_that("exportCharacterization filters zero values correctly", {
   andro$covariateRef <- dplyr::tibble(covariateId = 1)
   andro$analysisRef <- dplyr::tibble(analysisId = 1)
   withr::defer(Andromeda::close(andro))
-  
+
   # Act
   testthat::with_mocked_bindings(
     {
-       CohortDiagnostics:::exportCharacterization(
+      CohortDiagnostics:::exportCharacterization(
         characteristics = andro,
         databaseId = "test",
         incremental = FALSE,
@@ -348,11 +360,15 @@ test_that("exportCharacterization filters zero values correctly", {
         minCellCount = 5
       )
     },
-    makeDataExportable = function(x, ...) if (is.null(x)) return(NULL) else dplyr::collect(x),
+    makeDataExportable = function(x, ...) if (is.null(x)) {
+      return(NULL)
+    } else {
+      dplyr::collect(x)
+    },
     writeToCsv = safeWriteToCsv,
     .package = "CohortDiagnostics"
   )
-  
+
   # Assert
   expect_true(TRUE)
 })
@@ -367,9 +383,9 @@ test_that("executeCohortCharacterization processes small batches", {
   exportFolder <- tempfile()
   dir.create(exportFolder)
   withr::defer(unlink(exportFolder, recursive = TRUE))
-  
+
   mockConn <- mockDatabaseConnection()
-  
+
   # Act
   testthat::with_mocked_bindings(
     {
@@ -393,18 +409,18 @@ test_that("executeCohortCharacterization processes small batches", {
       )
     },
     getCohortCharacteristics = function(...) {
-        andro <- Andromeda::andromeda()
-        andro$covariates <- dplyr::tibble(cohortId = 1, covariateId = 1, sumValue = 10, mean = 0.1, sd = 0.1, timeId = 0)
-        andro$covariateRef <- dplyr::tibble(covariateId = 1)
-        andro$analysisRef <- dplyr::tibble(analysisId = 1)
-        return(andro)
+      andro <- Andromeda::andromeda()
+      andro$covariates <- dplyr::tibble(cohortId = 1, covariateId = 1, sumValue = 10, mean = 0.1, sd = 0.1, timeId = 0)
+      andro$covariateRef <- dplyr::tibble(covariateId = 1)
+      andro$analysisRef <- dplyr::tibble(analysisId = 1)
+      return(andro)
     },
-    exportCharacterization = function(...) { },
+    exportCharacterization = function(...) {},
     subsetToRequiredCohorts = function(cohorts, ...) cohorts,
-    recordTasksDone = function(...) { },
+    recordTasksDone = function(...) {},
     .package = "CohortDiagnostics"
   )
-  
+
   # Assert
   expect_true(dir.exists(exportFolder))
 })
@@ -417,7 +433,7 @@ test_that("executeCohortCharacterization handles empty cohort definition set", {
   exportFolder <- tempfile()
   dir.create(exportFolder)
   withr::defer(unlink(exportFolder, recursive = TRUE))
-  
+
   # Act & Assert
   testthat::with_mocked_bindings(
     {
@@ -452,7 +468,7 @@ test_that("getCohortCharacteristics throws error for population size mismatch", 
       covariates = dplyr::tibble(
         cohortDefinitionId = 1,
         covariateId = 1,
-        sumValue = 200, 
+        sumValue = 200,
         averageValue = 2.0
       ),
       covariateRef = dplyr::tibble(covariateId = 1),
@@ -461,7 +477,7 @@ test_that("getCohortCharacteristics throws error for population size mismatch", 
     class = "CovariateData"
   )
   attr(mockData, "metaData") <- list(populationSize = c("1" = 100))
-  
+
   # Act & Assert
   testthat::with_mocked_bindings(
     {
@@ -483,7 +499,9 @@ test_that("getCohortCharacteristics throws error for population size mismatch", 
         .package = "FeatureExtraction"
       )
     },
-    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) { expr },
+    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) {
+      expr
+    },
     .package = "CohortDiagnostics"
   )
 })
@@ -494,7 +512,7 @@ test_that("getCohortCharacteristics handles NA timeId", {
   mockData <- createMockTemporalCovariateData(cohortIds = cohortIds)
   mockData$covariates$timeId[1] <- NA
   attr(mockData, "metaData") <- list(populationSize = c("1" = 100))
-  
+
   # Act
   testthat::with_mocked_bindings(
     {
@@ -513,10 +531,12 @@ test_that("getCohortCharacteristics handles NA timeId", {
         .package = "FeatureExtraction"
       )
     },
-    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) { expr },
+    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) {
+      expr
+    },
     .package = "CohortDiagnostics"
   )
-  
+
   # Assert
   covariates <- results$covariates %>% dplyr::collect()
   expect_true(any(covariates$timeId == -1))
@@ -529,7 +549,7 @@ test_that("executeCohortCharacterization handles incremental mode skipping", {
   cohorts$checksum <- "abc"
   instantiatedCohorts <- cohorts$cohortId
   subset <- cohorts[1, ]
-  
+
   # Act
   testthat::with_mocked_bindings(
     {
@@ -551,11 +571,11 @@ test_that("executeCohortCharacterization handles incremental mode skipping", {
     },
     subsetToRequiredCohorts = function(...) subset,
     getCohortCharacteristics = function(...) Andromeda::andromeda(),
-    exportCharacterization = function(...) { },
-    recordTasksDone = function(...) { },
+    exportCharacterization = function(...) {},
+    recordTasksDone = function(...) {},
     .package = "CohortDiagnostics"
   )
-  
+
   expect_true(TRUE)
 })
 
@@ -563,7 +583,7 @@ test_that("exportCharacterization handles missing covariate data", {
   # Arrange
   andro <- Andromeda::andromeda()
   withr::defer(Andromeda::close(andro))
-  
+
   # Act & Assert
   testthat::with_mocked_bindings(
     {
@@ -582,7 +602,11 @@ test_that("exportCharacterization handles missing covariate data", {
         regexp = "No characterization output"
       )
     },
-    makeDataExportable = function(x, ...) if (is.null(x)) return(NULL) else x,
+    makeDataExportable = function(x, ...) if (is.null(x)) {
+      return(NULL)
+    } else {
+      x
+    },
     .package = "CohortDiagnostics"
   )
 })
@@ -592,12 +616,12 @@ test_that("executeCohortCharacterization cleans up files in non-incremental mode
   exportFolder <- tempfile()
   dir.create(exportFolder)
   withr::defer(unlink(exportFolder, recursive = TRUE))
-  
+
   testFile <- file.path(exportFolder, "temporal_covariate_value.csv")
-  write.csv(data.frame(a=1), testFile)
-  
+  write.csv(data.frame(a = 1), testFile)
+
   cohorts <- createMockCohortDefinitionSet(numCohorts = 0)
-  
+
   # Act
   testthat::with_mocked_bindings(
     {
@@ -620,7 +644,7 @@ test_that("executeCohortCharacterization cleans up files in non-incremental mode
     subsetToRequiredCohorts = function(cohorts, ...) cohorts,
     .package = "CohortDiagnostics"
   )
-  
+
   # Assert
   expect_false(file.exists(testFile))
 })
@@ -630,7 +654,7 @@ test_that("getCohortCharacteristics reinforces minCharacterizationMean in binary
   cohortIds <- c(1)
   mockData <- createMockTemporalCovariateData(cohortIds = cohortIds)
   attr(mockData, "metaData") <- list(populationSize = c("1" = 100))
-  
+
   # Act & Assert
   expect_no_error(
     testthat::with_mocked_bindings(
@@ -652,7 +676,9 @@ test_that("getCohortCharacteristics reinforces minCharacterizationMean in binary
           .package = "FeatureExtraction"
         )
       },
-      timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) { expr },
+      timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) {
+        expr
+      },
       .package = "CohortDiagnostics"
     )
   )
@@ -671,11 +697,11 @@ test_that("exportCharacterization suppresses continuous covariates with low coun
   )
   andro$covariateRef <- dplyr::tibble(covariateId = 1)
   withr::defer(Andromeda::close(andro))
-  
+
   # Act
   testthat::with_mocked_bindings(
     {
-       CohortDiagnostics:::exportCharacterization(
+      CohortDiagnostics:::exportCharacterization(
         characteristics = andro,
         databaseId = "test",
         incremental = FALSE,
@@ -688,16 +714,58 @@ test_that("exportCharacterization suppresses continuous covariates with low coun
       )
     },
     makeDataExportable = function(x, tableName, ...) {
-        if (is.null(x)) return(NULL)
-        if (tableName == "temporal_covariate_value_dist") {
-            df <- dplyr::collect(x)
-            return(df %>% dplyr::filter(countValue >= 5))
-        }
-        return(dplyr::collect(x))
+      if (is.null(x)) {
+        return(NULL)
+      }
+      if (tableName == "temporal_covariate_value_dist") {
+        df <- dplyr::collect(x)
+        return(df %>% dplyr::filter(countValue >= 5))
+      }
+      return(dplyr::collect(x))
     },
     writeToCsv = safeWriteToCsv,
     .package = "CohortDiagnostics"
   )
-  
+
   expect_true(TRUE)
+})
+
+test_that("runTemporalCharacterizationDiagnostic orchestrates sub-functions correctly", {
+  skip_if_not_installed("testthat", "3.0.0")
+
+  exportFolder <- tempfile("export")
+  dir.create(exportFolder)
+  on.exit(unlink(exportFolder, recursive = TRUE))
+
+  context <- createDiagnosticsContext(
+    connectionDetails = list(dbms = "sqlite"),
+    cdmDatabaseSchema = "cdm",
+    cohortDatabaseSchema = "cohort",
+    databaseId = "test",
+    exportFolder = exportFolder
+  )
+  context$isInitialized <- TRUE
+  context$incrementalFolder <- file.path(exportFolder, "incremental")
+  dir.create(context$incrementalFolder, showWarnings = FALSE)
+
+  cohortDefinitionSet <- createMockCohortDefinitionSet(numCohorts = 1)
+
+  # Track calls
+  calls <- list()
+
+  local_mocked_bindings(
+    executeCohortCharacterization = function(...) {
+      calls <<- c(calls, "executeCohortCharacterization")
+    },
+    timeExecution = function(folder, taskName, ...) {
+      calls <<- c(calls, taskName)
+      args <- list(...)
+      eval(args$expr)
+    },
+    .package = "CohortDiagnostics"
+  )
+
+  runTemporalCharacterizationDiagnostic(context, cohortDefinitionSet = cohortDefinitionSet)
+
+  expect_true("executeCohortCharacterization" %in% calls)
 })

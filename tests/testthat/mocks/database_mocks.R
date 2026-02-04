@@ -1,18 +1,15 @@
 # Database Mocking Functions
 # Mock database connections and queries for unit testing
 
+# Define S4 class for MockConnection to support @dbms
+try(methods::setClass("MockConnection", slots = c(dbms = "character", mock = "logical")), silent = TRUE)
+
 #' Mock a database connection
 #'
 #' @param dbms Database management system (default: "sqlite")
 #' @return A mock connection object
 mockDatabaseConnection <- function(dbms = "sqlite") {
-  structure(
-    list(
-      dbms = dbms,
-      mock = TRUE
-    ),
-    class = c("MockConnection", "DatabaseConnectorConnection")
-  )
+  methods::new("MockConnection", dbms = dbms, mock = TRUE)
 }
 
 #' Mock query result
@@ -63,7 +60,7 @@ createTrackingMockConnection <- function() {
   env <- new.env()
   env$calls <- list()
   env$dbms <- "sqlite"
-  
+
   structure(
     env,
     class = c("TrackingMockConnection", "MockConnection", "DatabaseConnectorConnection")
@@ -130,13 +127,13 @@ mockInsertTable <- function(connection, ...) {
 withMockedDatabase <- function(code) {
   # This is a template - actual implementation would use testthat::with_mocked_bindings
   # or mockery package
-  
+
   # Example usage:
   # withMockedDatabase({
   #   result <- myFunction()
   #   expect_equal(result, expectedValue)
   # })
-  
+
   warning("withMockedDatabase is a template - implement with actual mocking framework")
   eval(code, envir = parent.frame())
 }

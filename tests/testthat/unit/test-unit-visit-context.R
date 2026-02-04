@@ -2,11 +2,6 @@ library(testthat)
 library(dplyr)
 
 
-# Source fixtures and mocks
-source(testthat::test_path("fixtures", "mock_data.R"))
-source(testthat::test_path("mocks", "database_mocks.R"))
-
-
 # --- Visit Type Classification Tests ---
 
 test_that("classifyVisitType correctly classifies Inpatient visits", {
@@ -151,4 +146,45 @@ test_that("Proportions sum to 1.0 even with many small categories", {
 
   result <- CohortDiagnostics:::aggregateVisitContext(mockData, minCellCount = 0)
   expect_equal(sum(result$proportion), 1.0, tolerance = 0.0001)
+})
+
+test_that("runVisitContextDiagnostic orchestrates sub-functions correctly", {
+  skip_if_not_installed("testthat", "3.0.0")
+
+  exportFolder <- tempfile("export")
+  dir.create(exportFolder)
+  on.exit(unlink(exportFolder, recursive = TRUE))
+
+  context <- createDiagnosticsContext(
+    connectionDetails = list(dbms = "sqlite"),
+    cdmDatabaseSchema = "cdm",
+    cohortDatabaseSchema = "cohort",
+    databaseId = "test",
+    exportFolder = exportFolder
+  )
+  context$isInitialized <- TRUE
+  # Set incremental folder
+  context$incrementalFolder <- file.path(exportFolder, "incremental")
+  dir.create(context$incrementalFolder, showWarnings = FALSE)
+
+  cohortDefinitionSet <- createMockCohortDefinitionSet(numCohorts = 1)
+
+  # Track calls
+  calls <- list()
+
+  local_mocked_bindings(
+    executeVisitContextDiagnostics = function(...) {
+      calls <<- c(calls, "executeVisitContextDiagnostics")
+    },
+    timeExecution = function(folder, taskName, ...) {
+      calls <<- c(calls, taskName)
+      args <- list(...)
+      eval(args$expr)
+    },
+    .package = "CohortDiagnostics"
+  )
+
+  runVisitContextDiagnostic(context, cohortDefinitionSet = cohortDefinitionSet)
+
+  expect_true("executeVisitContextDiagnostics" %in% calls)
 })

@@ -2,10 +2,6 @@ library(testthat)
 library(dplyr)
 library(tidyr)
 
-# Source fixtures and mocks
-source(testthat::test_path( "fixtures", "mock_data.R"))
-source(testthat::test_path( "mocks", "database_mocks.R"))
-
 test_that("recode correctly formats age groups and gender", {
   ratesSummary <- dplyr::tibble(
     ageGroup = c(0, 1, 2),
@@ -13,9 +9,9 @@ test_that("recode correctly formats age groups and gender", {
     cohortCount = c(10, 20, 30),
     personYears = c(100, 200, 300)
   )
-  
+
   result <- CohortDiagnostics:::recode(ratesSummary)
-  
+
   expect_equal(result$ageGroup, c("0-9", "10-19", "20-29"))
   expect_equal(result$gender, c("Male", "Female", "Unknown"))
 })
@@ -27,7 +23,7 @@ test_that("aggregateIr sums values correctly", {
     cohortCount = c(10, 5, 20),
     personYears = c(100, 50, 200)
   )
-  
+
   # Aggregate by ageGroup
   resultAge <- CohortDiagnostics:::aggregateIr(ratesSummary, list(ageGroup = ratesSummary$ageGroup))
   expect_equal(nrow(resultAge), 2)
@@ -42,12 +38,12 @@ test_that("aggregateIr handles empty data", {
     cohortCount = numeric(),
     personYears = numeric()
   )
-  
+
   result <- CohortDiagnostics:::aggregateIr(ratesSummary, list(ageGroup = ratesSummary$ageGroup))
   expect_equal(nrow(result), 0)
 })
 
-# Test skipped due to mocking infrastructure issues. 
+# Test skipped due to mocking infrastructure issues.
 # Logic covered by aggregateIr tests and integration tests.
 # test_that("getIncidenceRate calculates rates correctly for mock data", {
 #   ...
@@ -170,4 +166,39 @@ test_that("enforceMinCellValue handles zero personYears in suppression logic", {
   # Should not error with division by zero if handled
   result <- CohortDiagnostics:::enforceMinCellValue(data, "incidenceRate", 0)
   expect_equal(nrow(result), 1)
+})
+
+test_that("runIncidenceRateDiagnostic orchestrates sub-functions correctly", {
+  skip_if_not_installed("testthat", "3.0.0")
+
+  exportFolder <- tempfile("export")
+  dir.create(exportFolder)
+  on.exit(unlink(exportFolder, recursive = TRUE))
+
+  context <- createDiagnosticsContext(
+    connectionDetails = list(dbms = "sqlite"),
+    cdmDatabaseSchema = "cdm",
+    cohortDatabaseSchema = "cohort",
+    databaseId = "test",
+    exportFolder = exportFolder
+  )
+  context$isInitialized <- TRUE
+  context$incrementalFolder <- file.path(exportFolder, "incremental")
+  dir.create(context$incrementalFolder, showWarnings = FALSE)
+
+  cohortDefinitionSet <- createMockCohortDefinitionSet(numCohorts = 1)
+
+  # Track calls
+  calls <- list()
+
+  local_mocked_bindings(
+    computeIncidenceRates = function(...) {
+      calls <<- c(calls, "computeIncidenceRates")
+    },
+    .package = "CohortDiagnostics"
+  )
+
+  runIncidenceRateDiagnostic(context, cohortDefinitionSet = cohortDefinitionSet)
+
+  expect_true("computeIncidenceRates" %in% calls)
 })
