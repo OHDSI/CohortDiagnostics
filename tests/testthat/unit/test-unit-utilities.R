@@ -18,8 +18,8 @@ library(testthat)
 library(dplyr)
 
 # Source fixtures
-source(testthat::test_path("..", "fixtures", "mock_data.R"))
-source(testthat::test_path("..", "fixtures", "test_cohorts.R"))
+source(testthat::test_path( "fixtures", "mock_data.R"))
+source(testthat::test_path( "fixtures", "test_cohorts.R"))
 
 # --- Min Cell Count Tests ---
 

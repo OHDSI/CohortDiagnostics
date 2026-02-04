@@ -18,8 +18,8 @@ library(testthat)
 library(dplyr)
 
 # Source fixtures and mocks
-source(testthat::test_path("..", "fixtures", "mock_data.R"))
-source(testthat::test_path("..", "mocks", "database_mocks.R"))
+source(testthat::test_path( "fixtures", "mock_data.R"))
+source(testthat::test_path( "mocks", "database_mocks.R"))
 
 ################################################################################
 # Concept ID Handling (4 tests)

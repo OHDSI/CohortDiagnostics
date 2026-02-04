@@ -18,7 +18,7 @@ library(testthat)
 library(dplyr)
 
 # Load mock data generators
-source(testthat::test_path("..", "fixtures", "mock_data.R"))
+source(testthat::test_path("fixtures", "mock_data.R"))
 
 
 # --- Schema Specifications Tests ---
@@ -67,7 +67,7 @@ test_that("makeDataExportable detects missing required columns", {
   invalidData <- dplyr::tibble(
     cohortId = c(1, 2)
   )
-  
+
   expect_error(
     CohortDiagnostics:::makeDataExportable(invalidData, "cohort"),
     regexp = "Cannot find required field"
@@ -81,7 +81,7 @@ test_that("makeDataExportable detects primary key violations", {
     cohortName = c("Test 1", "Test 1"),
     sql = c("SELECT 1", "SELECT 1")
   )
-  
+
   expect_error(
     CohortDiagnostics:::makeDataExportable(invalidData, "cohort"),
     regexp = "duplicates found in primary key"
@@ -95,7 +95,7 @@ test_that("makeDataExportable filters out unexpected columns", {
     sql = "SELECT 1",
     extraColumn = "Ignore me"
   )
-  
+
   exportable <- CohortDiagnostics:::makeDataExportable(data, "cohort")
   expect_false("extraColumn" %in% colnames(exportable))
   expect_true("cohortId" %in% colnames(exportable))
@@ -108,7 +108,7 @@ test_that("makeDataExportable enforces min cell count", {
     cohortEntries = 3, # Below default 5
     cohortSubjects = 3
   )
-  
+
   # Mocking loggers to avoid output clutter
   withr::with_options(list(ParallelLogger.suppressMessages = TRUE), {
     exportable <- CohortDiagnostics:::makeDataExportable(data, "cohort_count", minCellCount = 5)
@@ -135,10 +135,9 @@ test_that("uploadResults calls ResultModelManager with correct arguments", {
                 )
               )
             },
-            uploadResults = function(...) {
-              args <- list(...)
-              expect_equal(args$schema, "main")
-              expect_equal(args$databaseIdentifierFile, "database.csv")
+            uploadResults = function(connectionDetails, schema, resultsFolder, tablePrefix, forceOverWriteOfSpecifications, purgeSiteDataBeforeUploading, runCheckAndFixCommands, databaseIdentifierFile, specifications, warnOnMissingTable, ...) {
+              expect_equal(schema, "main")
+              expect_equal(databaseIdentifierFile, "database.csv")
             },
             .package = "ResultModelManager"
           )
@@ -226,7 +225,7 @@ test_that("createMergedResultsFile fails if file exists without overwrite", {
   tempSqlite <- tempfile(fileext = ".sqlite")
   writeLines("", tempSqlite)
   on.exit(unlink(tempSqlite))
-  
+
   expect_error(
     createMergedResultsFile(dataFolder = "test", sqliteDbPath = tempSqlite, overwrite = FALSE),
     regexp = "already exists"
@@ -275,7 +274,7 @@ test_that("makeDataExportable handles empty data frames", {
     cohortName = character(),
     sql = character()
   )
-  
+
   exportable <- CohortDiagnostics:::makeDataExportable(data, "cohort")
   expect_equal(nrow(exportable), 0)
   expect_equal(ncol(exportable), 3)

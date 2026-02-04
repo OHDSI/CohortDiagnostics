@@ -1,8 +1,8 @@
 # Unit tests for Time Series module
 # These tests are isolated and require no database connections
 
-source(testthat::test_path("..", "fixtures", "mock_data.R"))
-source(testthat::test_path("..", "mocks", "database_mocks.R"))
+source(testthat::test_path( "fixtures", "mock_data.R"))
+source(testthat::test_path( "mocks", "database_mocks.R"))
 
 library(CohortDiagnostics)
 

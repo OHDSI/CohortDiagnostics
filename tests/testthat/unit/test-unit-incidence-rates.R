@@ -3,8 +3,8 @@ library(dplyr)
 library(tidyr)
 
 # Source fixtures and mocks
-source(testthat::test_path("..", "fixtures", "mock_data.R"))
-source(testthat::test_path("..", "mocks", "database_mocks.R"))
+source(testthat::test_path( "fixtures", "mock_data.R"))
+source(testthat::test_path( "mocks", "database_mocks.R"))
 
 test_that("recode correctly formats age groups and gender", {
   ratesSummary <- dplyr::tibble(

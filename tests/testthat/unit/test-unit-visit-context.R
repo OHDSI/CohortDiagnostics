@@ -3,13 +3,13 @@ library(dplyr)
 
 # Source the R files to test
 # We use relative paths from the test file location
-source(testthat::test_path("..", "..", "..", "R", "Private.R"))
-source(testthat::test_path("..", "..", "..", "R", "Shared.R"))
-source(testthat::test_path("..", "..", "..", "R", "VisitContext.R"))
+source(testthat::test_path( "..", "..", "R", "Private.R"))
+source(testthat::test_path( "..", "..", "R", "Shared.R"))
+source(testthat::test_path( "..", "..", "R", "VisitContext.R"))
 
 # Source fixtures and mocks
-source(testthat::test_path("..", "fixtures", "mock_data.R"))
-source(testthat::test_path("..", "mocks", "database_mocks.R"))
+source(testthat::test_path( "fixtures", "mock_data.R"))
+source(testthat::test_path( "mocks", "database_mocks.R"))
 
 
 # --- Visit Type Classification Tests ---

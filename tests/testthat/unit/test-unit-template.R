@@ -2,8 +2,8 @@
 # This file demonstrates the pattern for writing isolated unit tests
 
 # Source fixtures and mocks
-source(testthat::test_path("..", "fixtures", "mock_data.R"))
-source(testthat::test_path("..", "fixtures", "test_cohorts.R"))
+source(testthat::test_path( "fixtures", "mock_data.R"))
+source(testthat::test_path( "fixtures", "test_cohorts.R"))
 
 # Example 1: Testing a pure function with no dependencies
 test_that("computeChecksum returns consistent hash for same input", {

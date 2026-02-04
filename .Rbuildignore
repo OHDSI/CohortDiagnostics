@@ -30,3 +30,5 @@ compare_versions
 ^doc$
 ^Meta$
 inst/shiny/DiagnosticsExplorer/renv
+inst/shiny/DiagnosticsExplorer/tests
+tests/testthat/unit/_snaps
