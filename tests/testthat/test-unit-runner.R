@@ -12,6 +12,8 @@ if (dir.exists(testthat::test_path("unit"))) {
     # Source each file to run the tests
     # We use source() to preserve the testthat environment (helpers, setup)
     for (test_file in unit_tests) {
-        source(test_file, local = TRUE)
+        testthat::test_that(paste("Sourcing", basename(test_file)), {
+            source(test_file, local = TRUE)
+        })
     }
 }

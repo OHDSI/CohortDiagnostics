@@ -13,6 +13,12 @@ if (Sys.getenv("INTEGRATION_TESTS") == "TRUE" && dir.exists(testthat::test_path(
     # Source each file to run the tests
     # We use source() to preserve the environment
     for (test_file in integration_tests) {
-        source(test_file, local = TRUE)
+        testthat::test_that(paste("Sourcing", basename(test_file)), {
+            source(test_file, local = TRUE)
+        })
     }
+} else {
+    testthat::test_that("Integration tests status", {
+        testthat::skip("Integration tests not enabled - skipping.")
+    })
 }
