@@ -32,3 +32,4 @@ compare_versions
 inst/shiny/DiagnosticsExplorer/renv
 inst/shiny/DiagnosticsExplorer/tests
 tests/testthat/unit/_snaps
+^sql$
