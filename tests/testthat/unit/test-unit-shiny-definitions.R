@@ -1,7 +1,7 @@
 test_that("cohortDefinitionsModule renders without errors", {
     # Arrange
     # Arrange
-    if (!"CohortDiagnostics" %in% loadedNamespaces()) {
+    if (Sys.getenv("R_COVR") != "true" && !"CohortDiagnostics" %in% loadedNamespaces()) {
         devtools::load_all(".")
     }
 
@@ -49,7 +49,7 @@ test_that("cohortDefinitionsModule renders without errors", {
 test_that("cohortDefinitionsModule handles empty data", {
     # Arrange
     # Arrange
-    if (!"CohortDiagnostics" %in% loadedNamespaces()) {
+    if (Sys.getenv("R_COVR") != "true" && !"CohortDiagnostics" %in% loadedNamespaces()) {
         devtools::load_all(".")
     }
 

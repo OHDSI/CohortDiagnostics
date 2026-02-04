@@ -18,8 +18,6 @@ library(testthat)
 library(dplyr)
 
 # Source fixtures
-source(testthat::test_path( "fixtures", "mock_data.R"))
-source(testthat::test_path( "fixtures", "test_cohorts.R"))
 
 # --- Min Cell Count Tests ---
 
@@ -29,7 +27,7 @@ test_that("enforceMinCellValue suppresses values below threshold", {
     count = c(3, 10, 25)
   )
   minCellCount <- 5
-  
+
   # Act
   result <- CohortDiagnostics:::enforceMinCellValue(
     data,
@@ -37,7 +35,7 @@ test_that("enforceMinCellValue suppresses values below threshold", {
     minValues = minCellCount,
     silent = TRUE
   )
-  
+
   # Assert
   expect_equal(result$count[1], -5)
   expect_equal(result$count[2], 10)
@@ -49,7 +47,7 @@ test_that("enforceMinCellValue preserves zero values", {
   data <- dplyr::tibble(
     count = c(0, 10)
   )
-  
+
   # Act
   result <- CohortDiagnostics:::enforceMinCellValue(
     data,
@@ -57,7 +55,7 @@ test_that("enforceMinCellValue preserves zero values", {
     minValues = 5,
     silent = TRUE
   )
-  
+
   # Assert
   expect_equal(result$count[1], 0)
 })
@@ -67,7 +65,7 @@ test_that("enforceMinCellValue preserves NA values", {
   data <- dplyr::tibble(
     count = c(NA_real_, 10)
   )
-  
+
   # Act
   result <- CohortDiagnostics:::enforceMinCellValue(
     data,
@@ -75,7 +73,7 @@ test_that("enforceMinCellValue preserves NA values", {
     minValues = 5,
     silent = TRUE
   )
-  
+
   # Assert
   expect_true(is.na(result$count[1]))
 })
@@ -86,7 +84,7 @@ test_that("enforceMinCellValue handles vector of minValues", {
     count = c(3, 7)
   )
   minCellCounts <- c(5, 10)
-  
+
   # Act
   result <- CohortDiagnostics:::enforceMinCellValue(
     data,
@@ -94,7 +92,7 @@ test_that("enforceMinCellValue handles vector of minValues", {
     minValues = minCellCounts,
     silent = TRUE
   )
-  
+
   # Assert
   expect_equal(result$count[1], -5)
   expect_equal(result$count[2], -10)
@@ -110,10 +108,10 @@ test_that("writeToCsv writes a new file correctly with snake_case columns", {
     cohortId = 1:3,
     cohortName = c("A", "B", "C")
   )
-  
+
   # Act - calling default method directly due to S3 dispatch issues in test environment
   CohortDiagnostics:::writeToCsv.default(data, tmpFile)
-  
+
   # Assert
   expect_true(file.exists(tmpFile))
   result <- readr::read_csv(tmpFile, col_types = readr::cols())
@@ -126,14 +124,14 @@ test_that("writeToCsv appends in incremental mode", {
   # Arrange
   tmpFile <- tempfile(fileext = ".csv")
   withr::defer(unlink(tmpFile))
-  
+
   data1 <- dplyr::tibble(cohortId = 1, count = 100)
   data2 <- dplyr::tibble(cohortId = 2, count = 200)
-  
+
   # Act
   CohortDiagnostics:::writeToCsv.default(data1, tmpFile, incremental = TRUE, cohortId = 1)
   CohortDiagnostics:::writeToCsv.default(data2, tmpFile, incremental = TRUE, cohortId = 2)
-  
+
   # Assert
   result <- readr::read_csv(tmpFile, col_types = readr::cols())
   expect_equal(nrow(result), 2)
@@ -144,13 +142,13 @@ test_that("writeToCsv overwrites existing file when incremental = FALSE", {
   # Arrange
   tmpFile <- tempfile(fileext = ".csv")
   withr::defer(unlink(tmpFile))
-  
+
   writeLines("header1,header2\nold,data", tmpFile)
   data <- dplyr::tibble(cohortId = 1, count = 100)
-  
+
   # Act
   CohortDiagnostics:::writeToCsv.default(data, tmpFile, incremental = FALSE)
-  
+
   # Assert
   result <- readr::read_csv(tmpFile, col_types = readr::cols())
   expect_equal(nrow(result), 1)
@@ -163,10 +161,10 @@ test_that("writeToCsv handles empty data frame", {
   tmpFile <- tempfile(fileext = ".csv")
   withr::defer(unlink(tmpFile))
   data <- dplyr::tibble(cohortId = numeric(), count = numeric())
-  
+
   # Act
   CohortDiagnostics:::writeToCsv.default(data, tmpFile)
-  
+
   # Assert
   result <- readr::read_csv(tmpFile, col_types = readr::cols())
   expect_equal(nrow(result), 0)
@@ -197,7 +195,7 @@ test_that("Validation detects missing required columns", {
     cohortId = 1,
     cohortName = "Test"
   )
-  
+
   expect_error(
     CohortDiagnostics:::makeDataExportable(invalidData, "cohort"),
     regexp = "Cannot find required field"
@@ -211,7 +209,7 @@ test_that("Validation detects duplicate cohort IDs", {
     sql = c("S1", "S2"),
     json = c("J1", "J2")
   )
-  
+
   expect_error(
     CohortDiagnostics:::makeDataExportable(duplicateData, "cohort"),
     regexp = "duplicates found in primary key"
@@ -220,10 +218,10 @@ test_that("Validation detects duplicate cohort IDs", {
 
 test_that("Validation accepts valid cohort definition set", {
   validData <- createMockCohortDefinitionSet(numCohorts = 3)
-  
+
   # Act
   result <- CohortDiagnostics:::makeDataExportable(validData, "cohort")
-  
+
   # Assert
   expect_equal(nrow(result), 3)
   expect_true(all(c("cohortId", "cohortName", "sql", "json") %in% names(result)))

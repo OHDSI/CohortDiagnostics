@@ -11,27 +11,27 @@ if (Sys.getenv("INTEGRATION_TESTS") == "TRUE") {
   # INTEGRATION TEST SETUP
   # ============================================================================
   # This section only runs for integration tests that require database connections
-  
+
   library(Eunomia)
   library(dplyr)
-  
+
   # Source integration test helpers
   source(testthat::test_path("integration/helpers-integration.R"))
-  
+
   dbms <- getOption("dbms", default = "sqlite")
   message("************* Testing on ", dbms, " *************")
-  
+
   if (dir.exists(Sys.getenv("DATABASECONNECTOR_JAR_FOLDER"))) {
     jdbcDriverFolder <- Sys.getenv("DATABASECONNECTOR_JAR_FOLDER")
   } else {
     jdbcDriverFolder <- "~/.jdbcDrivers"
     dir.create(jdbcDriverFolder, showWarnings = FALSE)
     DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = jdbcDriverFolder)
-    
+
     if (!dbms %in% c("postgresql", "sqlite")) {
       DatabaseConnector::downloadJdbcDrivers(dbms, pathToDriver = jdbcDriverFolder)
     }
-    
+
     withr::defer(
       {
         unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
@@ -39,15 +39,15 @@ if (Sys.getenv("INTEGRATION_TESTS") == "TRUE") {
       testthat::teardown_env()
     )
   }
-  
+
   folder <- tempfile()
   dir.create(folder, recursive = TRUE)
   minCellCountValue <- 5
   skipCdmTests <- FALSE
-  
+
   if (dbms == "sqlite") {
     databaseFile <- paste0(Sys.getpid(), "testEunomia.sqlite")
-    
+
     connectionDetails <- Eunomia::getEunomiaConnectionDetails(databaseFile = databaseFile)
     withr::defer(
       {
@@ -61,8 +61,8 @@ if (Sys.getenv("INTEGRATION_TESTS") == "TRUE") {
     cohortTable <- "cohort"
     tempEmulationSchema <- NULL
     cohortIds <- c(17492, 17493, 17720, 14909, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 14906)
-    
-    
+
+
     if (getOption("useAllCovariates", default = FALSE)) {
       temporalCovariateSettings <- getDefaultCovariateSettings()
     } else {
@@ -124,7 +124,7 @@ if (Sys.getenv("INTEGRATION_TESTS") == "TRUE") {
       tempEmulationSchema <- NULL
       cohortDatabaseSchema <- Sys.getenv("CDM5_SQL_SERVER_OHDSI_SCHEMA")
     }
-    
+
     connectionDetails <- DatabaseConnector::createConnectionDetails(
       dbms = dbms,
       user = dbUser,
@@ -132,23 +132,23 @@ if (Sys.getenv("INTEGRATION_TESTS") == "TRUE") {
       server = dbServer,
       pathToDriver = jdbcDriverFolder
     )
-    
+
     if (cdmDatabaseSchema == "" || dbServer == "") {
       skipCdmTests <- TRUE
     }
-    
+
     # Cleanup
     sql <- "IF OBJECT_ID('@cohort_database_schema.@cohort_table', 'U') IS NOT NULL
                 DROP TABLE @cohort_database_schema.@cohort_table;"
-    
+
     withr::defer(
       {
         if (!skipCdmTests) {
           connection <- DatabaseConnector::connect(connectionDetails)
           DatabaseConnector::renderTranslateExecuteSql(connection,
-                                                       sql,
-                                                       cohort_database_schema = cohortDatabaseSchema,
-                                                       cohort_table = cohortTable
+            sql,
+            cohort_database_schema = cohortDatabaseSchema,
+            cohort_table = cohortTable
           )
           DatabaseConnector::disconnect(connection)
         }
@@ -156,10 +156,10 @@ if (Sys.getenv("INTEGRATION_TESTS") == "TRUE") {
       testthat::teardown_env()
     )
   }
-  
+
   # Generate cohorts once only
   cohortDefinitionSet <- loadTestCohortDefinitionSet(cohortIds)
-  
+
   if (!skipCdmTests) {
     cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
     # Next create the tables on the database
@@ -169,7 +169,7 @@ if (Sys.getenv("INTEGRATION_TESTS") == "TRUE") {
       cohortDatabaseSchema = cohortDatabaseSchema,
       incremental = FALSE
     )
-    
+
     # Generate the cohort set
     CohortGenerator::generateCohortSet(
       connectionDetails = connectionDetails,
@@ -180,28 +180,49 @@ if (Sys.getenv("INTEGRATION_TESTS") == "TRUE") {
       incremental = FALSE
     )
   }
-  
+
   message("************* Integration test setup complete *************")
-  
 } else {
   # ============================================================================
   # UNIT TEST SETUP
   # ============================================================================
   # Minimal setup for unit tests - no database connections required
-  
+
   message("************* Running unit tests (no database setup) *************")
-  
+
+  # Ensure the package is loaded from source to pick up latest changes
+  # But skip if running under covr to avoid overwriting instrumented code
+  if (Sys.getenv("R_COVR") != "true") {
+    if (!"devtools" %in% loadedNamespaces()) library(devtools)
+    devtools::load_all(".")
+  }
+
   # Source fixtures and mocks for unit tests
-  fixtureDir <- testthat::test_path("fixtures")
-  if (dir.exists(fixtureDir)) {
+  # Try multiple possible locations for fixture and mock directories
+  find_dir <- function(name) {
+    paths <- c(
+      testthat::test_path(name), # tests/testthat/name or tests/testthat/unit/name
+      testthat::test_path("..", name), # tests/testthat/name when run from unit/
+      file.path("tests", "testthat", name) # from package root
+    )
+    for (p in paths) {
+      if (dir.exists(p)) {
+        return(p)
+      }
+    }
+    return(NULL)
+  }
+
+  fixtureDir <- find_dir("fixtures")
+  if (!is.null(fixtureDir)) {
     fixtureFiles <- list.files(fixtureDir, pattern = "\\.R$", full.names = TRUE)
     for (file in fixtureFiles) {
       source(file)
     }
   }
-  
-  mockDir <- testthat::test_path("mocks")
-  if (dir.exists(mockDir)) {
+
+  mockDir <- find_dir("mocks")
+  if (!is.null(mockDir)) {
     mockFiles <- list.files(mockDir, pattern = "\\.R$", full.names = TRUE)
     for (file in mockFiles) {
       source(file)

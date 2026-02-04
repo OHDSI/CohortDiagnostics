@@ -4,7 +4,7 @@ library(shiny)
 test_that("cohortDiagCharacterizationModule initializes", {
     # Arrange
     # Arrange
-    if (!"CohortDiagnostics" %in% loadedNamespaces()) {
+    if (Sys.getenv("R_COVR") != "true" && !"CohortDiagnostics" %in% loadedNamespaces()) {
         devtools::load_all(".")
     }
 
@@ -67,6 +67,9 @@ test_that("cohortDiagCharacterizationModule initializes", {
 
             # Explicitly trigger the main data reactive to ensure logic runs
             res <- cohortCharacterizationPrettyTable()
+            if (is.null(res)) {
+                message("Debug: cohortCharacterizationPrettyTable returned NULL")
+            }
             expect_true(!is.null(res))
 
             # output$characterizationTable is the main result
@@ -79,7 +82,7 @@ test_that("cohortDiagCharacterizationModule initializes", {
 test_that("cohortDiagCharacterizationModule handles concept sets", {
     # Arrange
     # Arrange
-    if (!"CohortDiagnostics" %in% loadedNamespaces()) {
+    if (Sys.getenv("R_COVR") != "true" && !"CohortDiagnostics" %in% loadedNamespaces()) {
         devtools::load_all(".")
     }
 
@@ -131,7 +134,7 @@ test_that("cohortDiagCharacterizationModule handles concept sets", {
 
 test_that("cohortDiagCharacterizationModule handles Raw mode", {
     # Arrange
-    if (!"CohortDiagnostics" %in% loadedNamespaces()) {
+    if (Sys.getenv("R_COVR") != "true" && !"CohortDiagnostics" %in% loadedNamespaces()) {
         devtools::load_all(".")
     }
 

@@ -17,8 +17,7 @@
 library(testthat)
 library(dplyr)
 
-# Load mock data generators
-source(testthat::test_path("fixtures", "mock_data.R"))
+# Unit tests for results data model functions
 
 
 # --- Schema Specifications Tests ---

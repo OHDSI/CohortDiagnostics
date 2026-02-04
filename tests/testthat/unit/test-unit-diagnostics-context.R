@@ -1,5 +1,4 @@
 # Tests for DiagnosticsContext
-source(testthat::test_path( "fixtures", "mock_data.R"))
 
 test_that("createDiagnosticsContext initializes correctly with minimal arguments", {
     exportFolder <- tempfile("export")
