@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-REQUIRED_OSM_VERSION <- base::package_version("3.2.0")
-
 #' Launch the Diagnostics Explorer Shiny app
 #' @param connectionDetails An object of type \code{connectionDetails} as created using the
 #'                          \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
@@ -24,7 +22,6 @@ REQUIRED_OSM_VERSION <- base::package_version("3.2.0")
 #'                          \code{\link{uploadResults}} function.
 #' @param resultsDatabaseSchema  The schema on the database server where the CohortDiagnostics results
 #'                               have been uploaded.
-#' @param vocabularyDatabaseSchema (Deprecated) Please use vocabularyDatabaseSchemas.
 #' @param vocabularyDatabaseSchemas  (optional) A list of one or more schemas on the database server where the vocabulary tables are located.
 #'                                   The default value is the value of the resultsDatabaseSchema. We can provide a list of vocabulary schema
 #'                                   that might represent different versions of the OMOP vocabulary tables. It allows us to compare the impact
@@ -53,7 +50,6 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
                                       connectionDetails = NULL,
                                       shinyConfigPath = NULL,
                                       resultsDatabaseSchema = NULL,
-                                      vocabularyDatabaseSchema = NULL,
                                       vocabularyDatabaseSchemas = resultsDatabaseSchema,
                                       tablePrefix = "",
                                       cohortTableName = "cohort",
@@ -82,14 +78,6 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     if (is.null(resultsDatabaseSchema)) {
       stop("resultsDatabaseSchema is required to connect to the database.")
     }
-    if (!is.null(vocabularyDatabaseSchema) &
-      is.null(vocabularyDatabaseSchemas)) {
-      vocabularyDatabaseSchemas <- vocabularyDatabaseSchema
-      warning(
-        "vocabularyDatabaseSchema option is deprecated. Please use vocabularyDatabaseSchemas."
-      )
-    }
-
     if (cohortTableName == "cohort") {
       cohortTableName <- paste0(tablePrefix, cohortTableName)
     }
@@ -109,20 +97,6 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     checkmate::assertFileExists(shinyConfigPath)
     options("CD-shiny-config" = normalizePath(shinyConfigPath))
     on.exit(options("CD-shiny-config" = NULL))
-  }
-
-  if (!"OhdsiShinyModules" %in% as.data.frame(utils::installed.packages())$Package) {
-    if (!interactive() || isTRUE(utils::askYesNo("OhdsiShinyModules not installed, get from github?"))) {
-      remotes::install_github("OHDSI/OhdsiShinyModules")
-    } else {
-      stop("Cannot continue without OhdsiShinyModulesPackage from github")
-    }
-  }
-
-  osmVersion <- utils::packageVersion("OhdsiShinyModules")
-
-  if (osmVersion < REQUIRED_OSM_VERSION) {
-    cli::cli_warn("OhdsiShinyModules version {osmVersion} is out of date. It is suggested you update to at least {REQUIRED_OSM_VERSION}")
   }
 
   appDir <-
@@ -218,6 +192,38 @@ createMergedResultsFile <-
         tablePrefix = tablePrefix
       )
     }
+
+    # Create indexes on SQLite to improve Diagnostics Explorer query performance
+    if (connectionDetails$dbms == "sqlite") {
+      resolvedConceptsTable <- paste0(tablePrefix, "resolved_concepts")
+      conceptRelationshipTable <- paste0(tablePrefix, "concept_relationship")
+      conceptTable <- paste0(tablePrefix, "concept")
+      DatabaseConnector::executeSql(
+        connection,
+        paste0(
+          "CREATE INDEX IF NOT EXISTS idx_resolved_concepts ON ",
+          resolvedConceptsTable,
+          " (concept_id, database_id, cohort_id, concept_set_id);"
+        )
+      )
+      DatabaseConnector::executeSql(
+        connection,
+        paste0(
+          "CREATE INDEX IF NOT EXISTS idx_concept_relationship ON ",
+          conceptRelationshipTable,
+          " (concept_id_2, relationship_id);"
+        )
+      )
+      DatabaseConnector::executeSql(
+        connection,
+        paste0(
+          "CREATE INDEX IF NOT EXISTS idx_concept_main ON ",
+          conceptTable,
+          " (concept_id, standard_concept);"
+        )
+      )
+    }
+
     DatabaseConnector::renderTranslateExecuteSql(connection, "VACUUM;")
   }
 
@@ -300,10 +306,6 @@ deployPositConnectApp <- function(appName,
 
   if (!"yaml" %in% as.data.frame(utils::installed.packages())$Package) {
     install.packages("yaml")
-  }
-
-  if (!"OhdsiShinyModules" %in% as.data.frame(utils::installed.packages())$Package) {
-    remotes::install_github("OHDSI/OhdsiShinyModules")
   }
 
   checkmate::assertDirectory(appDir, access = "w")

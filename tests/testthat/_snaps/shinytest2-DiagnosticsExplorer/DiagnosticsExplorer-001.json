@@ -1,0 +1,222 @@
+{
+  "input": {
+    "DiagnosticsExplorer-characterization-charType": "Pretty",
+    "DiagnosticsExplorer-characterization-characterizationColumnFilters": "Mean only",
+    "DiagnosticsExplorer-characterization-characterizationDomainIdFilter": "",
+    "DiagnosticsExplorer-characterization-generalSearchString": "",
+    "DiagnosticsExplorer-characterization-generalSearchStringTemporal": "",
+    "DiagnosticsExplorer-characterization-generateRaw": 0,
+    "DiagnosticsExplorer-characterization-generateReport": 0,
+    "DiagnosticsExplorer-characterization-proportionOrContinuous": "All",
+    "DiagnosticsExplorer-characterization-rawCharTbl-pageSize": "100",
+    "DiagnosticsExplorer-characterization-rawCharTblTemporal-pageSize": "100",
+    "DiagnosticsExplorer-characterization-selectedConceptSet": null,
+    "DiagnosticsExplorer-characterization-selectedRawAnalysisIds": "",
+    "DiagnosticsExplorer-characterization-shortByRawAsc": "DESC",
+    "DiagnosticsExplorer-characterization-shortByRawAscTemporal": "DESC",
+    "DiagnosticsExplorer-characterization-sortByRaw": "",
+    "DiagnosticsExplorer-characterization-sortByRawTemporal": "",
+    "DiagnosticsExplorer-characterization-targetCohort": null,
+    "DiagnosticsExplorer-characterization-targetDatabase": null,
+    "DiagnosticsExplorer-characterization-timeIdChoices": null,
+    "DiagnosticsExplorer-cohortCounts-cohortCountInclusionRuleTableFilters": "All",
+    "DiagnosticsExplorer-cohortCounts-cohortCountsTableColumnFilter": "Both",
+    "DiagnosticsExplorer-cohortCounts-showAsPercent": true,
+    "DiagnosticsExplorer-cohortCounts-showPersonOrEvents": "Persons",
+    "DiagnosticsExplorer-cohortDefinitions-cohortDefinitionTable__reactable__page": 1,
+    "DiagnosticsExplorer-cohortDefinitions-cohortDefinitionTable__reactable__pageSize": 20,
+    "DiagnosticsExplorer-cohortDefinitions-cohortDefinitionTable__reactable__pages": 1,
+    "DiagnosticsExplorer-cohortDefinitions-cohortDefinitionTable__reactable__selected": null,
+    "DiagnosticsExplorer-cohortDefinitions-cohortDefinitionTable__reactable__sorted": null,
+    "DiagnosticsExplorer-cohortDefinitions-conceptSetsType": "Concept Set Expression",
+    "DiagnosticsExplorer-cohortDefinitions-vocabularySelection": "Eunomia (NA)",
+    "DiagnosticsExplorer-cohortOverlap-overlapPlotType": "Percentages",
+    "DiagnosticsExplorer-cohortOverlap-showAsPercentage": true,
+    "DiagnosticsExplorer-cohortOverlap-showCohortIds": true,
+    "DiagnosticsExplorer-cohortOverlap-timeId": "1",
+    "DiagnosticsExplorer-cohorts": "C1: Test cohort",
+    "DiagnosticsExplorer-compareCohortCharacterization-analysisNameFilter": "",
+    "DiagnosticsExplorer-compareCohortCharacterization-comparatorCohort": null,
+    "DiagnosticsExplorer-compareCohortCharacterization-comparatorDatabase": null,
+    "DiagnosticsExplorer-compareCohortCharacterization-compareCharacterizationColumnFilters": "Mean",
+    "DiagnosticsExplorer-compareCohortCharacterization-domainIdFilter": "",
+    "DiagnosticsExplorer-compareCohortCharacterization-generatePlot": 0,
+    "DiagnosticsExplorer-compareCohortCharacterization-minMeanFilterVal": 0.005,
+    "DiagnosticsExplorer-compareCohortCharacterization-proportionOrContinuous": "Proportion",
+    "DiagnosticsExplorer-compareCohortCharacterization-showOnlyMutualCovariates": false,
+    "DiagnosticsExplorer-compareCohortCharacterization-targetCohort": null,
+    "DiagnosticsExplorer-compareCohortCharacterization-targetDatabase": null,
+    "DiagnosticsExplorer-compareCohortCharacterization-timeIdChoices": null,
+    "DiagnosticsExplorer-compareCohortCharacterization-timeIdChoicesSingle": null,
+    "DiagnosticsExplorer-conceptSetsSelected": "",
+    "DiagnosticsExplorer-conceptsInDataSource-conceptsInDataSourceTableColumnFilter": "Persons",
+    "DiagnosticsExplorer-conceptsInDataSource-includedType": "Standard fields",
+    "DiagnosticsExplorer-database": "Eunomia",
+    "DiagnosticsExplorer-databases": "Eunomia",
+    "DiagnosticsExplorer-incidenceRates-YscaleMinAndMax": [
+      0,
+      0
+    ],
+    "DiagnosticsExplorer-incidenceRates-generatePlot": 0,
+    "DiagnosticsExplorer-incidenceRates-groupColumns": false,
+    "DiagnosticsExplorer-incidenceRates-incidenceRateAgeFilter": "All",
+    "DiagnosticsExplorer-incidenceRates-incidenceRateCalenderFilter": [
+      0,
+      0
+    ],
+    "DiagnosticsExplorer-incidenceRates-incidenceRateGenderFilter": "All",
+    "DiagnosticsExplorer-incidenceRates-irPlotTabsetPanel": "Plot",
+    "DiagnosticsExplorer-incidenceRates-irStratification": [
+      "Age",
+      "Sex",
+      "Calendar Year"
+    ],
+    "DiagnosticsExplorer-incidenceRates-irYscaleFixed": false,
+    "DiagnosticsExplorer-incidenceRates-minPersonYear": 1000,
+    "DiagnosticsExplorer-incidenceRates-minSubjectCount": null,
+    "DiagnosticsExplorer-incidenceRates-plotRowHeight": 200,
+    "DiagnosticsExplorer-indexEvents-indexEventBreakdownTableFilter": "Persons",
+    "DiagnosticsExplorer-indexEvents-indexEventBreakdownTableRadioButton": "All",
+    "DiagnosticsExplorer-indexEvents-showAsPercent": true,
+    "DiagnosticsExplorer-orphanConcepts-generalSearchString": "",
+    "DiagnosticsExplorer-orphanConcepts-orphanConceptsColumFilterType": "0",
+    "DiagnosticsExplorer-orphanConcepts-orphanConceptsTable-pageSize": "50",
+    "DiagnosticsExplorer-orphanConcepts-orphanConceptsType": "0",
+    "DiagnosticsExplorer-orphanConcepts-shortByAsc": "DESC",
+    "DiagnosticsExplorer-orphanConcepts-sortBy": "",
+    "DiagnosticsExplorer-tabs": "cohortDefinition",
+    "DiagnosticsExplorer-targetCohort": "C1: Test cohort",
+    "DiagnosticsExplorer-timeDistributions-plotRowHeight": 400,
+    "DiagnosticsExplorer-timeDistributions-selecatableCols": [
+      "Average",
+      "SD",
+      "Min",
+      "P10",
+      "P25",
+      "Median",
+      "P75",
+      "P90",
+      "Max"
+    ],
+    "DiagnosticsExplorer-timeDistributions-selecatableTimeMeasures": [
+      "observation time (days) prior to index",
+      "observation time (days) after index",
+      "time (days) between cohort start and end"
+    ],
+    "DiagnosticsExplorer-timeDistributions-showMaxValues": false,
+    "DiagnosticsExplorer-timeDistributions-timeDistributionType": "Plot",
+    "DiagnosticsExplorer-visitContext-visitContextPersonOrRecords": "Persons",
+    "DiagnosticsExplorer-visitContext-visitContextTableFilters": "All",
+    "sidebarCollapsed": false,
+    "sidebarItemExpanded": null
+  },
+  "output": {
+    "DiagnosticsExplorer-cohortCounts-cohortCountRowIsSelected": false,
+    "DiagnosticsExplorer-cohortDefinitions-cohortDefinitionConceptSetExpressionRowIsSelected": false,
+    "DiagnosticsExplorer-cohortDefinitions-cohortDefinitionRowIsSelected": false,
+    "DiagnosticsExplorer-cohortDefinitions-cohortDefinitionTable": {
+      "x": {
+        "tag": {
+          "name": "Reactable",
+          "attribs": {
+            "data": {
+              "Cohort Id": [
+                "1"
+              ],
+              "Cohort Name": [
+                "Test cohort"
+              ]
+            },
+            "columns": [
+              {
+                "id": ".selection",
+                "name": "",
+                "type": null,
+                "resizable": false,
+                "width": 45,
+                "selectable": true
+              },
+              {
+                "id": "Cohort Id",
+                "name": "Cohort Id",
+                "type": "character",
+                "sortable": true,
+                "resizable": true,
+                "filterable": true,
+                "show": true,
+                "html": true,
+                "na": "",
+                "minWidth": 115,
+                "maxWidth": 115,
+                "align": "left"
+              },
+              {
+                "id": "Cohort Name",
+                "name": "Cohort Name",
+                "type": "character",
+                "sortable": true,
+                "resizable": true,
+                "filterable": true,
+                "show": true,
+                "html": true,
+                "na": "",
+                "minWidth": 135,
+                "maxWidth": 135,
+                "align": "left"
+              }
+            ],
+            "resizable": true,
+            "filterable": true,
+            "searchable": true,
+            "defaultPageSize": 20,
+            "showPageSizeOptions": true,
+            "pageSizeOptions": [
+              10,
+              20,
+              50,
+              100,
+              1000
+            ],
+            "showPagination": true,
+            "showPageInfo": true,
+            "selection": "single",
+            "onClick": "select",
+            "highlight": true,
+            "bordered": true,
+            "striped": true,
+            "compact": true,
+            "nowrap": true,
+            "showSortable": true,
+            "theme": {
+              "rowSelectedStyle": {
+                "backgroundColor": "#eee",
+                "boxShadow": "inset 2px 0 0 0 #ffa62d"
+              }
+            },
+            "dataKey": "8ffbd37e42288b700c3ac90e1da6d4b4",
+            "static": false
+          },
+          "children": [
+
+          ]
+        },
+        "class": "reactR_markup"
+      },
+      "evals": [
+
+      ],
+      "jsHooks": [
+
+      ],
+      "deps": [
+
+      ]
+    },
+    "DiagnosticsExplorer-cohortDefinitions-cohortDetailsText": null,
+    "DiagnosticsExplorer-cohortDefinitions-isDataSourceEnvironment": false,
+    "DiagnosticsExplorer-databaseInformation-databaseInformationTableIsSelected": false
+  },
+  "export": {
+
+  }
+}

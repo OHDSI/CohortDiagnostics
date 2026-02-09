@@ -14,64 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Count the cohort(s)
-#'
-#' @description
-#' Computes the subject and entry count per cohort
-#'
-#' @template Connection
-#'
-#' @template CohortTable
-#'
-#' @param cohortIds            The cohort Id(s) used to reference the cohort in the cohort
-#'                             table. If left empty, all cohorts in the table will be included.
-#'
-#' @return
-#' A tibble with cohort counts
-#'
+# re-export getCohortCounts from CohortGenerator
+
+#' @importFrom CohortGenerator getCohortCounts
 #' @export
-getCohortCounts <- function(connectionDetails = NULL,
-                            connection = NULL,
-                            cohortDatabaseSchema,
-                            cohortTable = "cohort",
-                            cohortIds = c()) {
-  start <- Sys.time()
-
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
-
-  sql <-
-    SqlRender::loadRenderTranslateSql(
-      sqlFilename = "CohortCounts.sql",
-      packageName = utils::packageName(),
-      dbms = connection@dbms,
-      cohort_database_schema = cohortDatabaseSchema,
-      cohort_table = cohortTable,
-      cohort_ids = cohortIds
-    )
-  counts <-
-    DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>%
-    tidyr::tibble()
-
-  if (length(cohortIds) > 0) {
-    cohortIdDf <- tidyr::tibble(cohortId = as.numeric(cohortIds))
-    counts$cohortId <- as.numeric(counts$cohortId)
-
-    counts <- cohortIdDf %>%
-      dplyr::left_join(counts, by = "cohortId") %>%
-      tidyr::replace_na(list(cohortEntries = 0, cohortSubjects = 0))
-  }
-
-  delta <- Sys.time() - start
-  ParallelLogger::logInfo(paste(
-    "Counting cohorts took",
-    signif(delta, 3),
-    attr(delta, "units")
-  ))
-  return(counts)
-}
+CohortGenerator::getCohortCounts
 
 checkIfCohortInstantiated <- function(connection,
                                       cohortDatabaseSchema,

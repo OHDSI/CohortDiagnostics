@@ -26,6 +26,11 @@ Authors:
   \item Martijn Schuemie
   \item Patrick Ryan
   \item James Weaver
+  \item James Weaver
+  \item Ioanna Nika \email{i.nika@darwin-eu.org}
+  \item Maarten van Kessel \email{m.l.vankessel@erasmusmc.nl} (\href{https://orcid.org/0009-0006-8832-6030}{ORCID})
+  \item Ger Inberg \email{g.inberg@erasmusmc.nl} (\href{https://orcid.org/0000-0001-8993-8748}{ORCID})
+  \item Adam Black \email{black@ohdsi.org} (\href{https://orcid.org/0000-0001-5576-8701}{ORCID})
 }
 
 Other contributors:

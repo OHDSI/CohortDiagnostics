@@ -9,7 +9,6 @@ launchDiagnosticsExplorer(
   connectionDetails = NULL,
   shinyConfigPath = NULL,
   resultsDatabaseSchema = NULL,
-  vocabularyDatabaseSchema = NULL,
   vocabularyDatabaseSchemas = resultsDatabaseSchema,
   tablePrefix = "",
   cohortTableName = "cohort",
@@ -36,8 +35,6 @@ the CohortDiagnostics results have been uploaded using the
 
 \item{resultsDatabaseSchema}{The schema on the database server where the CohortDiagnostics results
 have been uploaded.}
-
-\item{vocabularyDatabaseSchema}{(Deprecated) Please use vocabularyDatabaseSchemas.}
 
 \item{vocabularyDatabaseSchemas}{(optional) A list of one or more schemas on the database server where the vocabulary tables are located.
 The default value is the value of the resultsDatabaseSchema. We can provide a list of vocabulary schema

@@ -1,4 +1,8 @@
-if (dbms == "postgresql") {
+# Use first available test server (e.g. sqlite from testServers)
+dbms <- if (length(testServers) > 0) names(testServers)[1] else NULL
+connectionDetails <- if (length(testServers) > 0) testServers[[1]]$connectionDetails else NULL
+
+if (!is.null(dbms) && dbms == "postgresql") {
   resultsDatabaseSchema <- paste0(
     "r",
     format(Sys.time(), "%s"),
@@ -23,6 +27,7 @@ if (dbms == "postgresql") {
 
 
 test_that("Database Migrations execute without error", {
+  skip_if(is.null(dbms), "No test server available (Eunomia data not loaded)")
   skip_if_not(dbms %in% c("sqlite", "postgresql"))
   skip_if(dbms == "postgresql" && Sys.getenv("CDM5_POSTGRESQL_SERVER") == "")
 

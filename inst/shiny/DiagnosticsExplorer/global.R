@@ -2,6 +2,10 @@
 if (is.null(getOption("java.parameters")))
     options(java.parameters = "-Xss100m")
 
+# Ensure dplyr (pipe) is available when app is run from a copy (e.g. shinytest2)
+if (!requireNamespace("dplyr", quietly = TRUE)) stop("dplyr is required")
+suppressPackageStartupMessages(library("dplyr", character.only = TRUE))
+
 loadShinySettings <- function(configPath) {
   stopifnot(file.exists(configPath))
   shinySettings <- yaml::read_yaml(configPath)
@@ -81,22 +85,57 @@ if (FALSE) {
 
 connectionHandler <- ResultModelManager::PooledConnectionHandler$new(shinySettings$connectionDetails)
 
-if (packageVersion("OhdsiShinyModules") <= as.numeric_version("2.0.0")) {
-  stop("OhdsiShinyModules version no longer supported.
-  Update to a newer version with remotes::install_github('OhdsiShinyModules')")
+# Path to HTML help (fallback when app run from a copy, e.g. shinytest2)
+cdWwwPath <- system.file("cohort-diagnostics-www", package = "CohortDiagnostics")
+if (cdWwwPath == "" && dir.exists(file.path(getwd(), "cohort-diagnostics-www"))) {
+  cdWwwPath <- file.path(getwd(), "cohort-diagnostics-www")
+}
+
+# Source embedded cohort diagnostics modules (order: helpers, components, shared, views, main)
+modulesDir <- system.file("shiny", "DiagnosticsExplorer", "modules", package = "CohortDiagnostics")
+if (!dir.exists(modulesDir) && dir.exists("modules")) {
+  # App run from a copy (e.g. shinytest2): use modules next to app dir
+  modulesDir <- "modules"
+}
+if (dir.exists(modulesDir)) {
+  moduleFiles <- c(
+    "helpers-elements.R", "helpers-emptyPlotly.R", "helpers-getHelp.R", "helpers-logo.R", "helpers-migrations.R",
+    "component-tableSelect.R", "components-data-viewer.R", "components-helpInfo.R", "components-inputselection.R", "components-largeTableViewer.R",
+    "cohort-diagnostics-shared.R",
+    "cohort-diagnostics-definition.R", "cohort-diagnostics-counts.R", "cohort-diagnostics-databaseInformation.R",
+    "cohort-diagnostics-conceptsInDataSource.R", "cohort-diagnostics-orphanConcepts.R", "cohort-diagnostics-indexEventBreakdown.R",
+    "cohort-diagnostics-visitContext.R", "cohort-diagnostics-cohort-overlap.R", "cohort-diagnostics-timeDistributions.R",
+    "cohort-diagnostics-characterization.R", "cohort-diagnostics-compareCharacterization.R", "cohort-diagnostics-inclusionRules.R",
+    "cohort-diagnostics-incidenceRates.R", "cohort-diagnostics-main-ui.R", "cohort-diagnostics-main.R"
+  )
+  for (f in moduleFiles) {
+    fpath <- file.path(modulesDir, f)
+    if (file.exists(fpath)) source(fpath, local = FALSE)
+  }
 }
 
 resultDatabaseSettings <- list(
   schema = shinySettings$resultsDatabaseSchema,
-  vocabularyDatabaseSchema = shinySettings$vocabularyDatabaseSchema,
+  vocabularyDatabaseSchemas = shinySettings$vocabularyDatabaseSchemas,
   cdTablePrefix = shinySettings$tablePrefix,
   cgTable = shinySettings$cohortTableName,
   databaseTable = shinySettings$databaseTableName
 )
 
-dataSource <-
-  OhdsiShinyModules::createCdDatabaseDataSource(connectionHandler = connectionHandler,
-                                                resultDatabaseSettings = resultDatabaseSettings)
+# Paths to ref files (fallback to app dir when app run from a copy, e.g. shinytest2)
+dataModelSpecPath <- system.file("cohort-diagnostics-ref", "resultsDataModelSpecification.csv", package = "CohortDiagnostics")
+migrationsRefPath <- system.file("cohort-diagnostics-ref", "migrations.csv", package = "CohortDiagnostics")
+if (dataModelSpecPath == "" && file.exists(file.path(getwd(), "cohort-diagnostics-ref", "resultsDataModelSpecification.csv"))) {
+  dataModelSpecPath <- file.path(getwd(), "cohort-diagnostics-ref", "resultsDataModelSpecification.csv")
+  migrationsRefPath <- file.path(getwd(), "cohort-diagnostics-ref", "migrations.csv")
+}
+
+dataSource <- createCdDatabaseDataSource(
+  connectionHandler = connectionHandler,
+  resultDatabaseSettings = resultDatabaseSettings,
+  dataModelSpecificationsPath = dataModelSpecPath,
+  dataMigrationsRef = migrationsRefPath
+)
 
 
 

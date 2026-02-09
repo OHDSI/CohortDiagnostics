@@ -16,19 +16,28 @@
 #
 
 #' Get specifications for Cohort Diagnostics results data model
+#' 
+#' @param tableName The name of the table in the results data model to return specification for. 
+#'                  If NULL (default) then all tables in the results data model will be returned.
 #'
 #' @return
 #' A tibble data frame object with specifications
-#'
+#' 
 #' @export
-getResultsDataModelSpecifications <- function() {
+getResultsDataModelSpecifications <- function(tableName = NULL) {
   readr::local_edition(1)
-  pathToCsv <-
-    system.file("settings", "resultsDataModelSpecification.csv", package = utils::packageName())
-  resultsDataModelSpecifications <-
-    readr::read_csv(file = pathToCsv, col_types = readr::cols())
+  pathToCsv <- system.file("settings", "resultsDataModelSpecification.csv", package = "CohortDiagnostics")
+  
+  resultsDataModelSpecifications <- readr::read_csv(file = pathToCsv, col_types = "ccccccccccc")
 
   colnames(resultsDataModelSpecifications) <- SqlRender::snakeCaseToCamelCase(colnames(resultsDataModelSpecifications))
+  
+  if (!is.null(tableName)) {
+    # table name must be one of the tables in the output data model
+    checkmate::assertChoice(tableName, unique(resultsDataModelSpecifications$tableName))
+    resultsDataModelSpecifications <- dplyr::filter(resultsDataModelSpecifications, tableName == .env$tableName)
+  }
+  
   return(resultsDataModelSpecifications)
 }
 
@@ -75,7 +84,10 @@ getDefaultVocabularyTableNames <- function() {
 createResultsDataModel <- function(connectionDetails = NULL,
                                    databaseSchema,
                                    tablePrefix = "") {
-  if (connectionDetails$dbms == "sqlite" & databaseSchema != "main") {
+  if (is.null(connectionDetails)) {
+    stop("connectionDetails cannot be NULL")
+  }
+  if (connectionDetails$dbms == "sqlite" && databaseSchema != "main") {
     stop("Invalid schema for sqlite, use databaseSchema = 'main'")
   }
 
@@ -129,19 +141,22 @@ uploadResults <- function(connectionDetails,
 
   ParallelLogger::logInfo("Unzipping ", zipFileName)
   zip::unzip(zipFileName, exdir = unzipFolder)
-
-  ResultModelManager::uploadResults(
-    connectionDetails = connectionDetails,
-    schema = schema,
-    resultsFolder = unzipFolder,
-    tablePrefix = tablePrefix,
-    forceOverWriteOfSpecifications = forceOverWriteOfSpecifications,
-    purgeSiteDataBeforeUploading = purgeSiteDataBeforeUploading,
-    runCheckAndFixCommands = TRUE,
-    databaseIdentifierFile = "database.csv",
-    specifications = getResultsDataModelSpecifications(),
-    warnOnMissingTable = FALSE,
-    ...
+  
+  # suppressing warning for reserved keywords in SQL
+  suppressWarnings(
+    ResultModelManager::uploadResults(
+      connectionDetails = connectionDetails,
+      schema = schema,
+      resultsFolder = unzipFolder,
+      tablePrefix = tablePrefix,
+      forceOverWriteOfSpecifications = forceOverWriteOfSpecifications,
+      purgeSiteDataBeforeUploading = purgeSiteDataBeforeUploading,
+      runCheckAndFixCommands = TRUE,
+      databaseIdentifierFile = "database.csv",
+      specifications = getResultsDataModelSpecifications(),
+      warnOnMissingTable = FALSE,
+      ...
+    )
   )
 }
 
@@ -157,7 +172,11 @@ uploadResults <- function(connectionDetails,
 migrateDataModel <- function(connectionDetails, databaseSchema, tablePrefix = "") {
   ParallelLogger::logInfo("Migrating data set")
   migrator <- getDataMigrator(connectionDetails = connectionDetails, databaseSchema = databaseSchema, tablePrefix = tablePrefix)
-  migrator$executeMigrations()
+  if (isTRUE(getOption("CohortDiagnostics.suppressMigrationMessages", FALSE))) {
+    suppressMessages(migrator$executeMigrations())
+  } else {
+    migrator$executeMigrations()
+  }
   migrator$finalize()
 
   ParallelLogger::logInfo("Updating version number")

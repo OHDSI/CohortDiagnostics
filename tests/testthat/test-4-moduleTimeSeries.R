@@ -83,7 +83,7 @@ test_that("Testing cohort time series execution", {
       progressBar = FALSE
     )
 
-    CohortDiagnostics:::executeTimeSeriesDiagnostics(
+    CohortDiagnostics::runTimeSeries(
       connection = connectionTimeSeries,
       tempEmulationSchema = tempEmulationSchema,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -98,7 +98,7 @@ test_that("Testing cohort time series execution", {
       minCellCount = 0,
       instantiatedCohorts = cohort$cohortDefinitionId,
       incremental = TRUE,
-      recordKeepingFile = paste0(exportFile, "recordKeeping"),
+      incrementalFolder = exportFolder,
       observationPeriodDateRange = dplyr::tibble(
         observationPeriodMinDate = as.Date("2004-01-01"),
         observationPeriodMaxDate = as.Date("2007-12-31")
@@ -108,7 +108,7 @@ test_that("Testing cohort time series execution", {
 
     recordKeepingFileData <-
       readr::read_csv(
-        file = paste0(exportFile, "recordKeeping"),
+        file = file.path(exportFolder, "CreatedDiagnostics.csv"),
         col_types = readr::cols()
       )
 
@@ -126,7 +126,7 @@ test_that("Testing cohort time series execution", {
       cohorts = cohortDefinitionSet,
       task = "runCohortTimeSeries",
       incremental = TRUE,
-      recordKeepingFile = paste0(exportFile, "recordKeeping")
+      recordKeepingFile = file.path(exportFolder, "CreatedDiagnostics.csv")
     ) %>%
       dplyr::arrange(cohortId)
 
@@ -143,7 +143,7 @@ test_that("Testing cohort time series execution", {
       force = TRUE
     )
 
-    CohortDiagnostics:::executeTimeSeriesDiagnostics(
+    CohortDiagnostics::runTimeSeries(
       connection = connectionTimeSeries,
       tempEmulationSchema = tempEmulationSchema,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -157,7 +157,7 @@ test_that("Testing cohort time series execution", {
       minCellCount = 0,
       instantiatedCohorts = cohort$cohortDefinitionId,
       incremental = TRUE,
-      recordKeepingFile = paste0(exportFile, "recordKeeping"),
+      incrementalFolder = exportFolder,
       observationPeriodDateRange = dplyr::tibble(
         observationPeriodMinDate = as.Date("2004-01-01"),
         observationPeriodMaxDate = as.Date("2007-12-31")
@@ -186,7 +186,6 @@ test_that("Testing time series logic", {
   connectionTimeSeries <-
     DatabaseConnector::connect(connectionDetails)
 
-  # to do - with incremental = FALSE
   with_dbc_connection(connectionTimeSeries, {
     # manually create cohort table and load to table
     #   Cohort table has a total of four records, with each cohort id having two each
@@ -199,8 +198,17 @@ test_that("Testing time series logic", {
       cohortEndDate = c(as.Date("2005-05-15"), as.Date("2005-09-15"), as.Date("2005-05-15"), as.Date("2005-09-15"))
     )
 
+    cohortDefinitionSet <- dplyr::tibble(
+      cohortId = c(1L, 2L),
+      checksum = c("a", "b")
+    )
+
     cohortTable <-
       paste0("ct_", Sys.getpid(), format(Sys.time(), "%s"), sample(1:100, 1))
+
+    exportFolderTs <- tempfile()
+    dir.create(exportFolderTs, showWarnings = FALSE, recursive = TRUE)
+    on.exit(unlink(exportFolderTs, recursive = TRUE), add = TRUE)
 
     DatabaseConnector::insertTable(
       connection = connectionTimeSeries,
@@ -214,27 +222,37 @@ test_that("Testing time series logic", {
       progressBar = FALSE
     )
 
-    timeSeries <-
-      runCohortTimeSeriesDiagnostics(
-        connection = connectionTimeSeries,
-        tempEmulationSchema = tempEmulationSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable,
-        runCohortTimeSeries = TRUE,
-        runDataSourceTimeSeries = FALSE, # cannot test data source time series because we are using simulated cohort table
-        timeSeriesMinDate = as.Date("2004-01-01"),
-        timeSeriesMaxDate = as.Date("2006-12-31"),
-        cohortIds = c(1, 2),
-        stratifyByGender = FALSE, # cannot test stratification because it will require cohort table to be built from cdm
-        stratifyByAgeGroup = FALSE # this test is using simulated cohort table
+    CohortDiagnostics::runTimeSeries(
+      connection = connectionTimeSeries,
+      tempEmulationSchema = tempEmulationSchema,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      cohortDefinitionSet = cohortDefinitionSet,
+      runCohortTimeSeries = TRUE,
+      runDataSourceTimeSeries = FALSE,
+      databaseId = "testDatabaseId",
+      exportFolder = exportFolderTs,
+      minCellCount = 0,
+      instantiatedCohorts = c(1L, 2L),
+      incremental = FALSE,
+      incrementalFolder = exportFolderTs,
+      observationPeriodDateRange = dplyr::tibble(
+        observationPeriodMinDate = as.Date("2004-01-01"),
+        observationPeriodMaxDate = as.Date("2006-12-31")
       )
+    )
 
-    # testing if values returned for cohort 1 is as expected
+    timeSeries <- readr::read_csv(
+      file.path(exportFolderTs, "time_series.csv"),
+      col_types = readr::cols()
+    )
+
+    # testing if values returned for cohort 1 is as expected (csv uses snake_case)
     timeSeriesCohort <- timeSeries %>%
-      dplyr::filter(.data$cohortId == 1) %>%
-      dplyr::filter(.data$seriesType == "T1") %>%
-      dplyr::filter(.data$calendarInterval == "m")
+      dplyr::filter(.data$cohort_id == 1) %>%
+      dplyr::filter(.data$series_type == "T1") %>%
+      dplyr::filter(.data$calendar_interval == "m")
 
     # there should be 8 records in this data frame, representing 8 months for the one subject in the cohort id  = 1
     testthat::expect_equal(
@@ -244,13 +262,13 @@ test_that("Testing time series logic", {
 
     # there should be 2 records in this data frame, representing the 2 starts for the one subject in the cohort id  = 1
     testthat::expect_equal(
-      object = nrow(timeSeriesCohort %>% dplyr::filter(.data$recordsStart == 1)),
+      object = nrow(timeSeriesCohort %>% dplyr::filter(.data$records_start == 1)),
       expected = 2
     )
 
     # there should be 1 records in this data frame, representing the 1 incident start for the one subject in the cohort id  = 1
     testthat::expect_equal(
-      object = nrow(timeSeriesCohort %>% dplyr::filter(.data$subjectsStartIn == 1)),
+      object = nrow(timeSeriesCohort %>% dplyr::filter(.data$subjects_start_in == 1)),
       expected = 1
     )
   })
@@ -285,19 +303,21 @@ test_that("Testing Data source time series execution", {
       recursive = TRUE
     )
 
-    executeTimeSeriesDiagnostics(
+    CohortDiagnostics::runTimeSeries(
       connection = connectionTimeSeries,
       tempEmulationSchema = tempEmulationSchema,
       cdmDatabaseSchema = cdmDatabaseSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTableName,
       cohortDefinitionSet = data.frame(),
       runCohortTimeSeries = FALSE,
       runDataSourceTimeSeries = TRUE,
       databaseId = "testDatabaseId",
       exportFolder = exportFolder,
       minCellCount = 0,
+      instantiatedCohorts = integer(),
       incremental = TRUE,
-      recordKeepingFile = paste0(exportFile, "recordKeeping"),
+      incrementalFolder = exportFolder,
       observationPeriodDateRange = dplyr::tibble(
         observationPeriodMinDate = as.Date("2004-01-01"),
         observationPeriodMaxDate = as.Date("2007-12-31")
@@ -306,7 +326,7 @@ test_that("Testing Data source time series execution", {
 
     recordKeepingFileData <-
       readr::read_csv(
-        file = paste0(exportFile, "recordKeeping"),
+        file = file.path(exportFolder, "CreatedDiagnostics.csv"),
         col_types = readr::cols()
       )
 
@@ -325,7 +345,7 @@ test_that("Testing Data source time series execution", {
       cohorts = cohortDefinitionSet,
       task = "runDataSourceTimeSeries",
       incremental = TRUE,
-      recordKeepingFile = paste0(exportFile, "recordKeeping")
+      recordKeepingFile = file.path(exportFolder, "CreatedDiagnostics.csv")
     ) %>%
       dplyr::arrange(cohortId)
 

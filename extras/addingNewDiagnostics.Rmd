@@ -1,0 +1,76 @@
+---
+title: "Adding new diagnostics"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{addingNewDiagnostics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Each diagnostic function follows a pattern. To add a new diagnostics follow these steps.
+
+1. Name your diagnostic, preferably a noun with two or three words
+2. Write a function called `get{DiagnosticName}` in a file called `run{DiagnosticName}.R`
+that contains all the SQL logic and returns a dataframe, list of dataframes, or Andromeda object
+3. Write a function called `run{DiagnosticName}` in the `run{DiagnosticName}.R` file that 
+subsets to required cohorts, times the execution of `get{DiagnosticName}`, and exports the results to 
+csv
+4. Write a test for `get{DiagnosticName}` in a file called `tests/that/test-run{DiagnosticName}.R`
+that runs on all database servers and checks the correctness of the SQL code
+4. Write a test for `run{DiagnosticName}` in a file called `tests/that/test-run{DiagnosticName}.R`
+that runs on all database servers that only runs on SQLite
+5. Use standard argument names and ordering
+
+
+# Distribution of number of events per person
+
+This diagnostics will summarize the count and proportion of subjects in the cohort with 1,2,3... events.
+
+We need a short name to describe the diagnostic. Let's call it "eventDistribution". 
+
+Output specification:
+
+
+
+
+
+Time distribution diagnostic: Given an event cohort what is the distribution (mean, sd, median, p1, p5, p10, p25, p50 median, p75, p90, p95, p99) of time in days between event end date of previous event and event start date of next event for the same subject.
+
+distribution between any consecutive events
+distribution between 1st and 2nd event
+distribution between 2nd and 3rd event
+distribution between 3rd and 4th event
+distribution between 4th and 5th event
+
+Washout impact diagnostic:
+
+If no two events were allowed to occur within 30 days of each other, what would be the events per person (including proportion of subjects in cohorts with 1/2/3/4/5>5 events
+If no two events were allowed to occur within 90 days of each other, what would be the events per person (including proportion of subjects in cohorts with 1/2/3/4/5>5 events
+If no two events were allowed to occur within 365 days of each other, what would be the events per person (including proportion of subjects in cohorts with 1/2/3/4/5>5 events
+
+Start by writing the OHDSI-SQL to compute the r
+```{r}
+
+```
+
+
+```{r}
+getEventReoccurrence <- function(
+    connection,
+    cohortTable)
+```
+
+
+```{r}
+runEventReoccurrence <- function(){}
+```
+
+
+

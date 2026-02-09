@@ -1,0 +1,129 @@
+# Copyright 2024 Observational Health Data Sciences and Informatics
+#
+# This file is part of CohortDiagnostics
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#' Runs inclusion statistics on given cohort definitions and exports these.
+#' 
+#' @description
+#' This function takes a cohortDefinitionSet that inclusions the JSON
+#' representation of each cohort. If there are inclusion rules in the JSON, it will write these 
+#' to the cohort inclusion table. Next, cohort (inclusion) statistics are requested
+#' from the database and written to csv files on disk. 
+#' These are the files written to disk, if available:
+#'  * cohort_inc_result.csv
+#'  * cohort_inc_stats.csv
+#'  * cohort_inclusion.csv
+#'  * cohort_summary_stats.csv
+#' 
+#' @template Connection
+#' @template CohortDatabaseSchema
+#' @template Incremental
+#' @template cohortDefinitionSet
+#' @template MinCellCount
+#' @template databaseId
+#' @template ExportFolder
+#' 
+#' @param cohortTableNames Cohort Table names used by CohortGenerator package.
+#'
+#' @return None, it will write csv files to disk.
+#' @export
+runInclusionStatistics <- function(connection,
+                                   exportFolder,
+                                   databaseId,
+                                   cohortDefinitionSet,
+                                   cohortDatabaseSchema,
+                                   cohortTableNames,
+                                   minCellCount,
+                                   incremental,
+                                   incrementalFolder = exportFolder) {
+  
+  errorMessage <- checkmate::makeAssertCollection()
+  checkArg(connection, add = errorMessage)
+  checkArg(exportFolder, add = errorMessage)
+  checkArg(databaseId, add = errorMessage)
+  checkArg(cohortDefinitionSet, add = errorMessage)
+  checkArg(cohortDatabaseSchema, add = errorMessage)
+  checkArg(cohortTableNames, add = errorMessage)
+  checkArg(minCellCount, add = errorMessage)
+  checkArg(incremental, add = errorMessage)
+  checkArg(incrementalFolder, add = errorMessage)
+  checkmate::reportAssertions(errorMessage)
+  
+  recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
+  
+  ParallelLogger::logInfo("Fetching inclusion statistics from files")
+  
+  subset <- subsetToRequiredCohorts(
+    cohorts = cohortDefinitionSet,
+    task = "runInclusionStatistics",
+    incremental = incremental,
+    recordKeepingFile = recordKeepingFile
+  )
+  if (incremental) {
+    numConceptsToSkip <- length(cohortDefinitionSet$cohortId) - nrow(subset)
+    if (numConceptsToSkip > 0) {
+      ParallelLogger::logInfo(sprintf("Skipping %s cohorts in incremental mode.", numConceptsToSkip))
+    }
+  }
+  
+  if (nrow(subset) > 0) {
+    ParallelLogger::logInfo("Exporting inclusion rules with CohortGenerator")
+
+    CohortGenerator::insertInclusionRuleNames(
+      connection = connection,
+      cohortDefinitionSet = subset,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortInclusionTable = cohortTableNames$cohortInclusionTable
+    )
+    
+    cohortInclusionList <- list("cohortInclusionTable" = "cohort_inclusion",
+                                "cohortInclusionStatsTable" = "cohort_inc_stats",
+                                "cohortInclusionResultTable" = "cohort_inc_result",
+                                "cohortSummaryStatsTable" = "cohort_summary_stats")
+
+    stats <- CohortGenerator::getCohortStats(
+      connection = connection,
+      cohortTableNames = cohortTableNames,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      outputTables = names(cohortInclusionList)
+    )
+    
+    if (!is.null(stats)) {
+      lapply(names(cohortInclusionList), FUN = function(cohortInclusionName) {
+        if (cohortInclusionName %in% (names(stats))) {
+          cohortTableName <- cohortInclusionList[[cohortInclusionName]]
+          
+          exportDataToCsv(
+            data = stats[[cohortInclusionName]],
+            tableName = cohortTableName,
+            fileName = file.path(exportFolder, paste0(cohortTableName, ".csv")),
+            minCellCount = minCellCount,
+            databaseId = databaseId,
+            incremental = incremental,
+            cohortId = subset$cohortId
+          )
+        }
+      })
+      
+      recordTasksDone(
+        cohortId = subset$cohortId,
+        task = "runInclusionStatistics",
+        checksum = subset$checksum,
+        recordKeepingFile = recordKeepingFile,
+        incremental = incremental
+      )
+    }
+  }
+}

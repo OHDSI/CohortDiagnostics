@@ -1,0 +1,240 @@
+
+
+getIncludedSourceConcepts <- function(connection,
+                                      cohortDefinitionSet,
+                                      cdmDatabaseSchema,
+                                      tempEmulationSchema) {
+  
+  if (!tempTableExists(connection, "inst_concept_sets")) {
+    stop("Execute the function runResolvedConceptSets() first.")
+  }
+  
+  if (nrow(cohortDefinitionSet) == 0) {
+    return(
+      dplyr::tibble(
+        cohortId = double(), 
+        conceptSetId = double(),
+        conceptId = double(),
+        sourceConceptId = double(),
+        conceptCount = double(),
+        conceptSubjects = double()
+      )
+    )
+  }
+  
+  conceptSets <- combineConceptSetsFromCohorts(cohortDefinitionSet)
+  
+  sql <- SqlRender::loadRenderTranslateSql(
+    "includedSourceConcepts.sql",
+    packageName = utils::packageName(),
+    dbms = connection@dbms,
+    tempEmulationSchema = tempEmulationSchema,
+    cdm_database_schema = cdmDatabaseSchema,
+    instantiated_concept_sets = "#inst_concept_sets",
+    include_source_concept_table = "#inc_src_concepts",
+    by_month = FALSE
+  )
+    
+  DatabaseConnector::executeSql(connection = connection, sql = sql)
+    
+  counts <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT * FROM #inc_src_concepts",
+      tempEmulationSchema = tempEmulationSchema,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+    dplyr::tibble()
+    
+  counts <- counts %>%
+    dplyr::distinct() %>%
+    dplyr::rename("uniqueConceptSetId" = "conceptSetId") %>%
+    dplyr::inner_join(
+      conceptSets %>% dplyr::select(
+        "uniqueConceptSetId",
+        "cohortId",
+        "conceptSetId"
+      ) %>% dplyr::distinct(),
+      by = "uniqueConceptSetId",
+      relationship = "many-to-many"
+    ) %>%
+    dplyr::select(-"uniqueConceptSetId") %>%
+    dplyr::relocate(
+      "cohortId",
+      "conceptSetId",
+      "conceptId"
+    ) %>%
+    dplyr::distinct() %>%
+    dplyr::group_by(
+      .data$cohortId,
+      .data$conceptSetId,
+      .data$conceptId,
+      .data$sourceConceptId
+    ) %>%
+    dplyr::summarise(
+      conceptCount = safeMax(.data$conceptCount),
+      conceptSubjects = safeMax(.data$conceptSubjects)
+    ) %>%
+    dplyr::ungroup()
+    
+    addConceptIdsToConceptTempTable(
+      connection = connection,
+      copyFromTempTable = "#inc_src_concepts",
+      conceptIdFieldName = "concept_id",
+      tempEmulationSchema = tempEmulationSchema
+    )
+    
+    addConceptIdsToConceptTempTable(
+      connection = connection,
+      copyFromTempTable = "#inc_src_concepts",
+      conceptIdFieldName = "source_concept_id",
+      tempEmulationSchema = tempEmulationSchema
+    )
+    
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = "TRUNCATE TABLE #inc_src_concepts; DROP TABLE #inc_src_concepts;",
+      tempEmulationSchema = tempEmulationSchema,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+    
+  return(counts)
+}
+
+#' Generate and export the source concepts included in the cohorts 
+#' 
+#' @description
+#' Provides the amount of distinct subjects and the frequency of the combination
+#' of source concept ids and concept ids listed in the cohorts table,
+#' for which the start and end of the relevant event that occurred to the subjects,
+#' is within their defined observation period. Results are organised per cohort id,
+#' concept set id, concept id and source concept id. 
+#' 
+#' @template Connection 
+#' @template cohortDefinitionSet
+#' @template TempEmulationSchema 
+#' @template CdmDatabaseSchema 
+#' @template databaseId 
+#' @template ExportFolder 
+#' @template MinCellCount
+#' @template Incremental
+#'
+#' @return None, it will write csv files to disk.
+#' @export
+runIncludedSourceConcepts <- function(connection,
+                                      cohortDefinitionSet,
+                                      tempEmulationSchema,
+                                      cdmDatabaseSchema,
+                                      databaseId,
+                                      exportFolder,
+                                      minCellCount,
+                                      incremental = FALSE,
+                                      incrementalFolder = exportFolder) {
+  
+  errorMessage <- checkmate::makeAssertCollection()
+  checkArg(connection, add = errorMessage)
+  checkArg(cohortDefinitionSet, add = errorMessage)
+  checkArg(tempEmulationSchema, add = errorMessage)
+  checkArg(cdmDatabaseSchema, add = errorMessage)
+  checkArg(databaseId, add = errorMessage)
+  checkArg(exportFolder, add = errorMessage)
+  checkArg(minCellCount, add = errorMessage)
+  checkArg(incremental, add = errorMessage)
+  checkArg(incrementalFolder, add = errorMessage)
+  checkmate::reportAssertions(errorMessage)
+  
+  recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
+  
+  ParallelLogger::logInfo("Starting concept set diagnostics")
+  start <- Sys.time()
+  
+  ParallelLogger::logInfo("Fetching included source concepts")
+  
+  subset <- subsetToRequiredCohorts(
+    cohorts = cohortDefinitionSet,
+    task = "runIncludedSourceConcepts",
+    incremental = incremental,
+    recordKeepingFile = recordKeepingFile
+  )
+  
+  if (incremental && (nrow(cohortDefinitionSet) - nrow(subset)) > 0) {
+    ParallelLogger::logInfo(sprintf(
+      "Skipping %s cohorts in incremental mode.",
+      nrow(cohortDefinitionSet) - nrow(subset)
+    ))
+  }
+  
+  if (nrow(subset) == 0) {
+    emptyTable <- emptyResult("included_source_concept")
+    colnames(emptyTable) <- SqlRender::snakeCaseToCamelCase(colnames(emptyTable))
+    writeToCsv(
+      data = emptyTable,
+      fileName = file.path(exportFolder, "included_source_concept.csv"),
+      incremental = FALSE
+    )
+    ParallelLogger::logInfo("No cohorts to process for included source concepts; wrote empty result.")
+    return(invisible(NULL))
+  }
+  
+  # We need to get concept sets from all cohorts in case subsets are present and
+  # Added incrementally after cohort generation
+  conceptSets <- combineConceptSetsFromCohorts(cohortDefinitionSet)
+  conceptSets <- conceptSets %>% dplyr::filter(.data$cohortId %in% subset$cohortId)
+  
+  if (is.null(conceptSets)) {
+    ParallelLogger::logInfo(
+      "Cohorts being diagnosed does not have concept ids. Skipping included source concepts."
+    )
+    return(NULL)
+  }
+  
+  uniqueConceptSets <-
+    conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ] %>%
+    dplyr::select(-"cohortId", -"conceptSetId")
+  
+  if (nrow(uniqueConceptSets) == 0) {
+    ParallelLogger::logInfo("No concept sets found - skipping")
+    return(NULL)
+  }
+
+  timeExecution(
+    exportFolder,
+    taskName = "runIncludedSourceConcepts",
+    cohortIds = NULL,
+    parent = "executeDiagnostics",
+    expr = {
+      data <- getIncludedSourceConcepts(
+        connection,
+        cohortDefinitionSet,
+        cdmDatabaseSchema,
+        tempEmulationSchema
+      )
+    }
+  )
+  
+  exportDataToCsv(
+    data = data,
+    tableName = "included_source_concept",
+    fileName = file.path(exportFolder, "included_source_concept.csv"),
+    minCellCount = minCellCount,
+    databaseId = databaseId,
+    incremental = incremental,
+    cohortId = subset$cohortId
+  )
+  
+  recordTasksDone(
+    cohortId = subset$cohortId,
+    task = "runIncludedSourceConcepts",
+    checksum = subset$checksum,
+    recordKeepingFile = recordKeepingFile,
+    incremental = incremental
+  )
+  
+  delta <- Sys.time() - start
+  ParallelLogger::logInfo(paste(
+    "Finding source codes took",
+    signif(delta, 3),
+    attr(delta, "units")
+  ))
+}

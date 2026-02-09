@@ -26,3 +26,5 @@
 #' @importFrom methods is
 #' @importFrom FeatureExtraction createDefaultCovariateSettings createTemporalCovariateSettings
 NULL
+
+

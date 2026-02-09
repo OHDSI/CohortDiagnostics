@@ -1,14 +1,18 @@
 Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Cohorts
-Version: 3.4.2
-Date: 2024-22-10
+Version: 4.0.0
+Date: 2024-10-22
 Authors@R: c(
     person("Jamie", "Gilbert", email = "gilbert@ohdsi.org", role = c("aut", "cre")),
     person("Gowtham", "Rao", role = c("aut")),
     person("Martijn", "Schuemie", role = c("aut")),
     person("Patrick", "Ryan", role = c("aut")),
     person("James", "Weaver", role = c("aut")),
+    person("Ioanna", "Nika", , "i.nika@darwin-eu.org", role = "aut"),
+    person("Maarten", "van Kessel", email = "m.l.vankessel@erasmusmc.nl", role = c("aut"), comment = c(ORCID = "0009-0006-8832-6030")),
+    person("Ger", "Inberg", email = "g.inberg@erasmusmc.nl", role = c("aut"), comment = c(ORCID = "0000-0001-8993-8748")),
+    person("Adam", "Black", , "black@ohdsi.org", role = c("aut"), comment = c(ORCID = "0000-0001-5576-8701")),
     person("Observational Health Data Science and Informatics", role = c("cph"))
   )
 Maintainer: Jamie Gilbert <gilbert@ohdsi.org>
@@ -20,10 +24,10 @@ Description: CohortDiagnostics is an R utility package for the development and e
     Through the identification of errors, CohortDiagnostics enables the comparison of multiple candidate cohort
     definitions across one or more data sources, facilitating reproducible research.
 Depends:
-    DatabaseConnector (>= 5.0.0),
-    FeatureExtraction (>= 3.7.1),
-    R (>= 4.1.0)
+	R (>= 4.1.0)
 Imports:
+   	DatabaseConnector (>= 5.0.0),
+	  FeatureExtraction (>= 3.7.1),
     Andromeda (>= 0.6.0),
     ResultModelManager (>= 0.5.2),
     checkmate,
@@ -41,26 +45,34 @@ Imports:
     CohortGenerator (>= 0.10.0),
     remotes,
     scales,
-    cli
-Suggests:
+    cli,
     Eunomia,
     RSQLite (>= 2.2.1),
+    duckdb
+Suggests:
     testthat,
     withr,
     zip,
     knitr,
     shiny,
-    OhdsiShinyModules,
     rsconnect,
-    yaml
-Remotes:
-  ohdsi/OhdsiShinyModules
+    yaml,
+    ggplot2,
+    reactable,
+    tippy,
+    shinyWidgets,
+    shinydashboard,
+    plotly,
+    markdown,
+    CirceR,
+    shinytest2
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics
 BugReports: https://github.com/OHDSI/CohortDiagnostics/issues
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Encoding: UTF-8
 Language: en-US
 StagedInstall: no
 Config/testthat/edition: 3
+Config/testthat/parallel: true
