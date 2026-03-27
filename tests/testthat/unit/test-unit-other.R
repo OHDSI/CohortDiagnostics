@@ -157,3 +157,14 @@ test_that("enforceMinCellValue works with vector of minimum values", {
 
   expect_equal(result$a, c(1, 2, 3, 4, 5))
 })
+
+test_that("hasData utility function works correctly", {
+  expect_false(hasData(NULL))
+  expect_false(hasData(data.frame()))
+  expect_false(hasData(c()))
+  expect_false(hasData(NA))
+  
+  expect_true(hasData(data.frame(a = 1)))
+  expect_true(hasData(c(1, 2)))
+  expect_true(hasData("test"))
+})

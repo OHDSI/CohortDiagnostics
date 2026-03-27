@@ -64,6 +64,9 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
                                       publishDir = file.path(getwd(), "DiagnosticsExplorer"),
                                       overwritePublishDir = FALSE,
                                       launch.browser = FALSE) {
+  if (!requireNamespace("OhdsiShinyModules", quietly = TRUE)) {
+    stop("OhdsiShinyModules must be installed to use this Shiny app. Please install it using `remotes::install_github('OHDSI/OhdsiShinyModules')`")
+  }
   useShinyPublishFile <- FALSE
   if (is.null(shinyConfigPath)) {
     if (is.null(connectionDetails)) {

@@ -136,3 +136,29 @@ test_that("executeDiagnostics skips diagnostics when flags are FALSE", {
     expect_false("runIncidenceRate" %in% calls)
     expect_false("runCharacterization" %in% calls)
 })
+
+test_that("writeResultsZip collections CSV files", {
+    exportFolder <- tempfile("export")
+    dir.create(exportFolder)
+    on.exit(unlink(exportFolder, recursive = TRUE))
+    
+    # Create some dummy csv files
+    cat("a,b\n1,2", file = file.path(exportFolder, "test1.csv"))
+    cat("c,d\n3,4", file = file.path(exportFolder, "test2.csv"))
+    
+    # Mock DatabaseConnector::createZipFile
+    zipFileCalled <- NULL
+    filesZipped <- NULL
+    local_mocked_bindings(
+        createZipFile = function(zipFile, files) {
+            zipFileCalled <<- zipFile
+            filesZipped <<- files
+        },
+        .package = "DatabaseConnector"
+    )
+    
+    writeResultsZip(exportFolder, "testDb")
+    
+    expect_match(zipFileCalled, "Results_testDb.zip")
+    expect_true(all(c("test1.csv", "test2.csv") %in% filesZipped))
+})

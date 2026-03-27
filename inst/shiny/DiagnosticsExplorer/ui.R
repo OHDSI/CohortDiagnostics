@@ -198,51 +198,51 @@ cohortDiagnosticsUi <- function(id = "DiagnosticsExplorer",
     ),
     shinydashboard::tabItem(
       tabName = "cohortDefinition",
-      CohortDiagnostics::cohortDefinitionsView(ns("cohortDefinitions"))
+      OhdsiShinyModules::cohortDefinitionsView(ns("cohortDefinitions"))
     ),
     shinydashboard::tabItem(
       tabName = "cohortCounts",
-      CohortDiagnostics::cohortCountsView(ns("cohortCounts"))
+      OhdsiShinyModules::cohortCountsView(ns("cohortCounts"))
     ),
     shinydashboard::tabItem(
       tabName = "incidenceRate",
-      CohortDiagnostics::incidenceRatesView(ns("incidenceRates"))
+      OhdsiShinyModules::incidenceRatesView(ns("incidenceRates"))
     ),
     shinydashboard::tabItem(
       tabName = "timeDistribution",
-      CohortDiagnostics::timeDistributionsView(ns("timeDistributions"))
+      OhdsiShinyModules::timeDistributionsView(ns("timeDistributions"))
     ),
     shinydashboard::tabItem(
       tabName = "conceptsInDataSource",
-      CohortDiagnostics::conceptsInDataSourceView(ns("conceptsInDataSource"))
+      OhdsiShinyModules::conceptsInDataSourceView(ns("conceptsInDataSource"))
     ),
     shinydashboard::tabItem(
       tabName = "orphanConcepts",
-      CohortDiagnostics::orpahanConceptsView(ns("orphanConcepts"))
+      OhdsiShinyModules::orpahanConceptsView(ns("orphanConcepts"))
     ),
     shinydashboard::tabItem(
       tabName = "indexEventBreakdown",
-      CohortDiagnostics::indexEventBreakdownView(ns("indexEvents"))
+      OhdsiShinyModules::indexEventBreakdownView(ns("indexEvents"))
     ),
     shinydashboard::tabItem(
       tabName = "visitContext",
-      CohortDiagnostics::visitContextView(ns("visitContext"))
+      OhdsiShinyModules::visitContextView(ns("visitContext"))
     ),
     shinydashboard::tabItem(
       tabName = "cohortOverlap",
-      CohortDiagnostics::cohortOverlapView(ns("cohortOverlap"))
+      OhdsiShinyModules::cohortOverlapView(ns("cohortOverlap"))
     ),
     shinydashboard::tabItem(
       tabName = "cohortCharacterization",
-      CohortDiagnostics::cohortDiagCharacterizationView(ns("characterization"))
+      OhdsiShinyModules::cohortDiagCharacterizationView(ns("characterization"))
     ),
     shinydashboard::tabItem(
       tabName = "compareCohortCharacterization",
-      CohortDiagnostics::compareCohortCharacterizationView(ns("compareCohortCharacterization"))
+      OhdsiShinyModules::compareCohortCharacterizationView(ns("compareCohortCharacterization"))
     ),
     shinydashboard::tabItem(
       tabName = "databaseInformation",
-      CohortDiagnostics::databaseInformationView(ns("databaseInformation")),
+      OhdsiShinyModules::databaseInformationView(ns("databaseInformation")),
     )
   )
 

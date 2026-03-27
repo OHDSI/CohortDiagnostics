@@ -92,7 +92,7 @@ resultDatabaseSettings <- list(
 )
 
 dataSource <-
-  CohortDiagnostics::createCdDatabaseDataSource(
+  OhdsiShinyModules::createCdDatabaseDataSource(
     connectionHandler = connectionHandler,
     resultDatabaseSettings = resultDatabaseSettings
   )

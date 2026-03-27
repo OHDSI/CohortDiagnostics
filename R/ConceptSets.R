@@ -34,7 +34,7 @@ extractConceptSetsSqlFromCohortSql <- function(cohortSql) {
   level0 <- which(level == 0)
 
   subQueryLocations <-
-    stringr::str_locate_all(sql, "SELECT [0-9]+ as codeset_id")[[1]]
+    stringr::str_locate_all(sql, stringr::regex("SELECT [0-9]+ as codeset_id", ignore_case = TRUE))[[1]]
   subQueryCount <- nrow(subQueryLocations)
   conceptsetSqls <- vector("character", subQueryCount)
   conceptSetIds <- vector("integer", subQueryCount)
@@ -295,7 +295,10 @@ instantiateUniqueConceptSets <- function(uniqueConceptSets,
           sqlSubset
         )
       sqlSubset <-
-        SqlRender::render(sqlSubset, vocabulary_database_schema = vocabularyDatabaseSchema)
+        SqlRender::render(sqlSubset,
+          vocabulary_database_schema = vocabularyDatabaseSchema,
+          warnOnMissingParameters = FALSE
+        )
       sqlSubset <- SqlRender::translate(sqlSubset,
         targetDialect = connection@dbms,
         tempEmulationSchema = tempEmulationSchema

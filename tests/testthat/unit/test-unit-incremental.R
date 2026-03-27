@@ -225,7 +225,6 @@ test_that("getRequiredTasks excludes completed tasks", {
 
 
 test_that("recordTasksDone handles multiple cohorts", {
-  # Arrange
   rkf <- tempfile()
   withr::defer(unlink(rkf))
   
@@ -234,14 +233,12 @@ test_that("recordTasksDone handles multiple cohorts", {
     CohortDiagnostics:::computeChecksum(paste0("cohort_", id))
   })
   
-  # Act
   CohortDiagnostics:::recordTasksDone(
     cohortId = cohortIds,
     checksum = checksums,
     recordKeepingFile = rkf
   )
   
-  # Assert
   for (i in seq_along(cohortIds)) {
     result <- CohortDiagnostics:::isTaskRequired(
       cohortId = cohortIds[i],
@@ -250,4 +247,98 @@ test_that("recordTasksDone handles multiple cohorts", {
     )
     expect_false(result)
   }
+})
+
+test_that("getKeyIndex finds indices correctly", {
+  recordKeeping <- dplyr::tibble(
+    cohortId = c(1, 2, 3),
+    task = c("A", "B", "C"),
+    idxCol = 1:3
+  )
+  
+  key <- list(cohortId = 2, task = "B")
+  expect_equal(CohortDiagnostics:::getKeyIndex(key, recordKeeping), 2)
+  
+  key_none <- list(cohortId = 4, task = "A")
+  expect_equal(length(CohortDiagnostics:::getKeyIndex(key_none, recordKeeping)), 0)
+})
+
+test_that("subsetToRequiredCohorts filters correctly", {
+  rkf <- tempfile()
+  withr::defer(unlink(rkf))
+  
+  cohorts <- dplyr::tibble(
+    cohortId = c(1, 2),
+    checksum = c("sum1", "sum2")
+  )
+  
+  CohortDiagnostics:::recordTasksDone(
+    cohortId = 1,
+    task = "testTask",
+    checksum = "sum1",
+    recordKeepingFile = rkf
+  )
+  
+  # When incremental is FALSE, returns all
+  result_all <- CohortDiagnostics:::subsetToRequiredCohorts(cohorts, "testTask", FALSE, rkf)
+  expect_equal(nrow(result_all), 2)
+  
+  # When incremental is TRUE, returns only required (cohort 2)
+  result_inc <- CohortDiagnostics:::subsetToRequiredCohorts(cohorts, "testTask", TRUE, rkf)
+  expect_equal(nrow(result_inc), 1)
+  expect_equal(result_inc$cohortId, 2)
+})
+
+test_that("subsetToRequiredCombis filters correctly", {
+  rkf <- tempfile()
+  withr::defer(unlink(rkf))
+  
+  combis <- dplyr::tibble(
+    targetCohortId = c(1, 1),
+    comparatorCohortId = c(2, 3),
+    targetChecksum = c("t1", "t1"),
+    comparatorChecksum = c("c2", "c3"),
+    checksum = c("sum12", "sum13")
+  )
+  
+  CohortDiagnostics:::recordTasksDone(
+    cohortId = 1,
+    comparatorId = 2,
+    targetChecksum = "t1",
+    comparatorChecksum = "c2",
+    task = "testTask",
+    checksum = "sum12",
+    recordKeepingFile = rkf
+  )
+  
+  result_inc <- CohortDiagnostics:::subsetToRequiredCombis(combis, "testTask", TRUE, rkf)
+  expect_equal(nrow(result_inc), 1)
+  expect_equal(result_inc$comparatorCohortId[1], 3)
+})
+
+test_that("writeToCsv.tbl_Andromeda handles incremental mode", {
+  data <- dplyr::tibble(cohortId = 1, value = 10)
+  
+  tmpFile <- tempfile(fileext = ".csv")
+  withr::defer(unlink(tmpFile))
+  
+  # Mock Andromeda::batchApply to work with data.frame
+  local_mocked_bindings(
+    batchApply = function(data, fun, ...) {
+      fun(data)
+    },
+    .package = "Andromeda"
+  )
+
+  # First write non-incremental
+  CohortDiagnostics:::writeToCsv.tbl_Andromeda(data, tmpFile, incremental = FALSE)
+  expect_true(file.exists(tmpFile))
+  
+  # Update and write incremental
+  data2 <- dplyr::tibble(cohortId = 2, value = 20)
+  CohortDiagnostics:::writeToCsv.tbl_Andromeda(data2, tmpFile, incremental = TRUE)
+  
+  result <- readr::read_csv(tmpFile, col_types = readr::cols())
+  expect_equal(nrow(result), 2)
+  expect_true(all(c(1, 2) %in% result$cohort_id))
 })
