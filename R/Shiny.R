@@ -70,10 +70,10 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
   useShinyPublishFile <- FALSE
   if (is.null(shinyConfigPath)) {
     if (is.null(connectionDetails)) {
-      sqliteDbPath <- normalizePath(sqliteDbPath)
       if (!file.exists(sqliteDbPath)) {
         stop("Sqlite database", sqliteDbPath, "not found. Please see createMergedSqliteResults")
       }
+      sqliteDbPath <- normalizePath(sqliteDbPath)
 
       resultsDatabaseSchema <- "main"
       vocabularyDatabaseSchemas <- "main"
@@ -148,6 +148,9 @@ launchDiagnosticsExplorer <- function(sqliteDbPath = "MergedCohortDiagnosticsDat
     options(shiny.host = "0.0.0.0")
   }
 
+  if (!requireNamespace("shiny", quietly = TRUE)) {
+    stop("shiny must be installed to run the Diagnostics Explorer app. Please install it using install.packages('shiny')")
+  }
   shiny::runApp(appDir = appDir)
 }
 

@@ -560,8 +560,8 @@ runConceptSetDiagnostics <- function(connection,
                 .data$sourceConceptId
               ) %>%
               dplyr::summarise(
-                conceptCount = max(.data$conceptCount),
-                conceptSubjects = max(.data$conceptSubjects)
+                conceptCount = if (dplyr::n() > 0) max(.data$conceptCount, na.rm = TRUE) else 0,
+                conceptSubjects = if (dplyr::n() > 0) max(.data$conceptSubjects, na.rm = TRUE) else 0
               ) %>%
               dplyr::ungroup()
 
@@ -982,8 +982,8 @@ runConceptSetDiagnostics <- function(connection,
           .data$conceptId
         ) %>%
         dplyr::summarise(
-          conceptCount = max(.data$conceptCount),
-          conceptSubjects = max(.data$conceptSubjects)
+          conceptCount = if (dplyr::n() > 0) max(.data$conceptCount, na.rm = TRUE) else 0,
+          conceptSubjects = if (dplyr::n() > 0) max(.data$conceptSubjects, na.rm = TRUE) else 0
         ) %>%
         dplyr::ungroup()
       data <- makeDataExportable(

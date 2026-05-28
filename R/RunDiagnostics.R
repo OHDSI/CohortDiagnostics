@@ -166,7 +166,7 @@ getDefaultCovariateSettings <- function() {
 #'                                    This can be used to control aspects of the sampling process beyond the seed and sample size.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Load cohorts (assumes that they have already been instantiated)
 #' cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort")
 #' cohorts <- CohortGenerator::getCohortDefinitionSet(packageName = "MyGreatPackage")

@@ -14,7 +14,7 @@ test_that("launchDiagnosticsExplorer stops if OhdsiShinyModules is missing", {
     .package = "base"
   )
   
-  expect_error(launchDiagnosticsExplorer(), "OhdsiShinyModules must be installed")
+  expect_error(suppressWarnings(launchDiagnosticsExplorer()), "OhdsiShinyModules must be installed")
 })
 
 test_that("launchDiagnosticsExplorer stops if sqliteDbPath does not exist", {
@@ -27,7 +27,7 @@ test_that("launchDiagnosticsExplorer stops if sqliteDbPath does not exist", {
     .package = "base"
   )
   
-  expect_error(launchDiagnosticsExplorer(sqliteDbPath = "non_existent.sqlite"), "not found")
+  expect_error(suppressWarnings(launchDiagnosticsExplorer(sqliteDbPath = "non_existent.sqlite")), "not found")
 })
 
 test_that("launchDiagnosticsExplorer sets up global settings and calls runApp", {
@@ -131,6 +131,6 @@ test_that("createDiagnosticsExplorerZip works with mocks", {
     .package = "base"
   )
 
-  createDiagnosticsExplorerZip(outputZipfile = tmpZip, sqliteDbPath = tmpSqlite, overwrite = TRUE)
+  suppressWarnings(createDiagnosticsExplorerZip(outputZipfile = tmpZip, sqliteDbPath = tmpSqlite, overwrite = TRUE))
   expect_true(zipCalled)
 })

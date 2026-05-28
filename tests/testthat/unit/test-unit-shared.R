@@ -8,6 +8,7 @@ test_that("hasData works as expected", {
   # Data frame
   expect_true(hasData(data.frame(a = 1)))
   expect_false(hasData(data.frame()))
+  expect_false(hasData(data.frame(a = logical()))) # Added from instruction
   
   # Vector/List
   expect_true(hasData(c(1, 2)))

@@ -71,6 +71,8 @@ test_that("initializeDiagnostics initializes context correctly using mocks", {
     exportFolder <- tempfile("export")
     dir.create(exportFolder)
     on.exit(unlink(exportFolder, recursive = TRUE))
+    on.exit(ParallelLogger::unregisterLogger("CD_LOGGER", silent = TRUE), add = TRUE)
+    on.exit(ParallelLogger::unregisterLogger("CD_ERROR_LOGGER", silent = TRUE), add = TRUE)
 
     # Mock data
     mockCdmSource <- list(
@@ -118,6 +120,16 @@ test_that("initializeDiagnostics initializes context correctly using mocks", {
         .package = "CohortDiagnostics"
     )
 
+    # Mock ParallelLogger to prevent file logger setup
+    local_mocked_bindings(
+        addDefaultFileLogger = function(...) NULL,
+        addDefaultErrorReportLogger = function(...) NULL,
+        logInfo = function(...) NULL,
+        logTrace = function(...) NULL,
+        logWarn = function(...) NULL,
+        .package = "ParallelLogger"
+    )
+
     # Create context
     context <- createDiagnosticsContext(
         connectionDetails = list(), # Mocked connection implies this won't be used to connect
@@ -147,6 +159,8 @@ test_that("finalizeDiagnostics cleans up and exports metadata using mocks", {
     exportFolder <- tempfile("export")
     dir.create(exportFolder)
     on.exit(unlink(exportFolder, recursive = TRUE))
+    on.exit(ParallelLogger::unregisterLogger("CD_LOGGER", silent = TRUE), add = TRUE)
+    on.exit(ParallelLogger::unregisterLogger("CD_ERROR_LOGGER", silent = TRUE), add = TRUE)
 
     # Create an initialized context mock state
     context <- createDiagnosticsContext(
@@ -186,6 +200,16 @@ test_that("finalizeDiagnostics cleans up and exports metadata using mocks", {
         makeDataExportable = function(x, ...) x,
         writeToCsv = function(...) NULL,
         .package = "CohortDiagnostics"
+    )
+
+    # Mock ParallelLogger to prevent file logger setup
+    local_mocked_bindings(
+        addDefaultFileLogger = function(...) NULL,
+        addDefaultErrorReportLogger = function(...) NULL,
+        logInfo = function(...) NULL,
+        logTrace = function(...) NULL,
+        logWarn = function(...) NULL,
+        .package = "ParallelLogger"
     )
 
     # Mock DatabaseConnector functions in initialized context if possible,
