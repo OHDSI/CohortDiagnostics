@@ -191,12 +191,8 @@ if (Sys.getenv("INTEGRATION_TESTS") == "TRUE") {
   message("************* Running unit tests (no database setup) *************")
 
   # During R CMD check and devtools::test(), the package is already loaded.
-  # We only load from source when running interactively outside of check.
-  if (Sys.getenv("R_CMD_CHECK") == "" && Sys.getenv("R_COVR") != "true") {
-    if (interactive() && requireNamespace("devtools", quietly = TRUE)) {
-      devtools::load_all(".")
-    }
-  }
+  # To load from source outside of those contexts, use devtools::load_all(".")
+  # from the package root directory before running tests.
 
   # Source fixtures and mocks for unit tests
   # Try multiple possible locations for fixture and mock directories
