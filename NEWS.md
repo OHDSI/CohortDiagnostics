@@ -1,3 +1,18 @@
+CohortDiagnostics 4.0.0
+=======================
+
+Changes:
+
+1. First CRAN submission. Package has been extensively refactored for CRAN compliance including:
+
+   - Reorganized test suite into unit and integration test directories with proper testthat 3 edition support
+   - Unit tests use mocked database connections and require no external database setup
+   - Integration tests are gated behind `INTEGRATION_TESTS=TRUE` environment variable
+   - Removed `StagedInstall: no` from DESCRIPTION
+   - Removed `devtools` and `remotes` from Suggests
+   - Migrated diagnostic execution to a context-based pattern with `createDiagnosticsContext()`, `initializeDiagnostics()`, and `finalizeDiagnostics()`
+   - All examples use `\dontrun{}` instead of `\donttest{}` for CRAN compliance
+
 CohortDiagnostics 3.4.2
 =======================
 

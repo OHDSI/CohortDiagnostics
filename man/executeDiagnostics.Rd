@@ -159,7 +159,7 @@ The \code{cohortSetReference} argument must be a data frame with at least the fo
 }
 }
 \examples{
-\dontrun{
+if (interactive()) {
 # Load cohorts (assumes that they have already been instantiated)
 cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort")
 cohorts <- CohortGenerator::getCohortDefinitionSet(packageName = "MyGreatPackage")
