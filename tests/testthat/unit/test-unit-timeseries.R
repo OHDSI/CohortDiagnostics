@@ -146,7 +146,7 @@ test_that("executeTimeSeriesDiagnostics works with mocks", {
     .package = "CohortDiagnostics"
   )
   
-  executeTimeSeriesDiagnostics(
+  CohortDiagnostics:::executeTimeSeriesDiagnostics(
     connection = connection,
     tempEmulationSchema = "temp",
     cdmDatabaseSchema = "cdm",

@@ -157,7 +157,7 @@ test_that("writeResultsZip collections CSV files", {
         .package = "DatabaseConnector"
     )
     
-    writeResultsZip(exportFolder, "testDb")
+    CohortDiagnostics:::writeResultsZip(exportFolder, "testDb")
     
     expect_match(zipFileCalled, "Results_testDb.zip")
     expect_true(all(c("test1.csv", "test2.csv") %in% filesZipped))

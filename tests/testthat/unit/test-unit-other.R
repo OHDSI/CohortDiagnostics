@@ -57,7 +57,7 @@ test_that("timeExecutions function", {
   dir.create(temp)
 
   # Basic test
-  timeExecution(
+CohortDiagnostics:::timeExecution(
     exportFolder = temp,
     taskName = "test_task1",
     cohortIds = c(1, 2, 3, 4),
@@ -74,7 +74,7 @@ test_that("timeExecutions function", {
   expect_false(all(is.na(result$executionTime)))
 
   # Test append
-  timeExecution(
+CohortDiagnostics:::timeExecution(
     exportFolder = temp,
     taskName = "test_task2",
     cohortIds = NULL,
@@ -87,7 +87,7 @@ test_that("timeExecutions function", {
   checkmate::expect_data_frame(result, nrows = 2, ncols = 5)
 
   # Parent string
-  timeExecution(
+CohortDiagnostics:::timeExecution(
     exportFolder = temp,
     taskName = "test_task3",
     parent = "testthat",
@@ -101,7 +101,7 @@ test_that("timeExecutions function", {
   checkmate::expect_data_frame(result, nrows = 3, ncols = 5)
 
   # custom start/end times
-  timeExecution(
+CohortDiagnostics:::timeExecution(
     exportFolder = temp,
     taskName = "test_task4",
     parent = "testthat",
@@ -113,7 +113,7 @@ test_that("timeExecutions function", {
   result <- readr::read_csv(expectedFilePath, col_types = readr::cols())
   checkmate::expect_data_frame(result, nrows = 4, ncols = 5)
 
-  timeExecution(
+CohortDiagnostics:::timeExecution(
     exportFolder = temp,
     taskName = "test_task5",
     parent = "testthat",
@@ -129,7 +129,7 @@ test_that("timeExecutions function", {
 test_that("enforceMinCellValue replaces values below minimum with negative of minimum", {
   data <- data.frame(a = c(1, 2, 3, 4, 5))
   minValues <- 3
-  result <- enforceMinCellValue(data, "a", minValues, silent = TRUE)
+  result <- CohortDiagnostics:::enforceMinCellValue(data, "a", minValues, silent = TRUE)
 
   expect_equal(result$a, c(-3, -3, 3, 4, 5))
 })
@@ -137,7 +137,7 @@ test_that("enforceMinCellValue replaces values below minimum with negative of mi
 test_that("enforceMinCellValue does not replace NA values", {
   data <- data.frame(a = c(1, 2, NA, 4, 5))
   minValues <- 3
-  result <- enforceMinCellValue(data, "a", minValues, silent = TRUE)
+  result <- CohortDiagnostics:::enforceMinCellValue(data, "a", minValues, silent = TRUE)
 
   expect_equal(result$a, c(-3, -3, NA, 4, 5))
 })
@@ -145,7 +145,7 @@ test_that("enforceMinCellValue does not replace NA values", {
 test_that("enforceMinCellValue does not replace zero values", {
   data <- data.frame(a = c(0, 2, 3, 4, 5))
   minValues <- 3
-  result <- enforceMinCellValue(data, "a", minValues, silent = TRUE)
+  result <- CohortDiagnostics:::enforceMinCellValue(data, "a", minValues, silent = TRUE)
 
   expect_equal(result$a, c(0, -3, 3, 4, 5))
 })
@@ -153,18 +153,18 @@ test_that("enforceMinCellValue does not replace zero values", {
 test_that("enforceMinCellValue works with vector of minimum values", {
   data <- data.frame(a = c(1, 2, 3, 4, 5))
   minValues <- c(1, 2, 3, 4, 5)
-  result <- enforceMinCellValue(data, "a", minValues, silent = TRUE)
+  result <- CohortDiagnostics:::enforceMinCellValue(data, "a", minValues, silent = TRUE)
 
   expect_equal(result$a, c(1, 2, 3, 4, 5))
 })
 
 test_that("hasData utility function works correctly", {
-  expect_false(hasData(NULL))
-  expect_false(hasData(data.frame()))
-  expect_false(hasData(c()))
-  expect_false(hasData(NA))
+  expect_false(CohortDiagnostics:::hasData(NULL))
+  expect_false(CohortDiagnostics:::hasData(data.frame()))
+  expect_false(CohortDiagnostics:::hasData(c()))
+  expect_false(CohortDiagnostics:::hasData(NA))
   
-  expect_true(hasData(data.frame(a = 1)))
-  expect_true(hasData(c(1, 2)))
-  expect_true(hasData("test"))
+  expect_true(CohortDiagnostics:::hasData(data.frame(a = 1)))
+  expect_true(CohortDiagnostics:::hasData(c(1, 2)))
+  expect_true(CohortDiagnostics:::hasData("test"))
 })

@@ -232,6 +232,11 @@ test_that("runConceptSetDiagnostics works with mocks", {
     .package = "readr"
   )
   
+  local_mocked_bindings(
+    loadRenderTranslateSql = function(...) "SELECT 1;",
+    .package = "SqlRender"
+  )
+  
   CohortDiagnostics:::runConceptSetDiagnostics(
     connection = connection,
     tempEmulationSchema = "temp",

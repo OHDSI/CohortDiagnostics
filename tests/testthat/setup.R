@@ -190,11 +190,12 @@ if (Sys.getenv("INTEGRATION_TESTS") == "TRUE") {
 
   message("************* Running unit tests (no database setup) *************")
 
-  # Ensure the package is loaded from source to pick up latest changes
-  # But skip if running under covr to avoid overwriting instrumented code
-  if (Sys.getenv("R_COVR") != "true") {
-    if (!"devtools" %in% loadedNamespaces()) library(devtools)
-    devtools::load_all(".")
+  # During R CMD check and devtools::test(), the package is already loaded.
+  # We only load from source when running interactively outside of check.
+  if (Sys.getenv("R_CMD_CHECK") == "" && Sys.getenv("R_COVR") != "true") {
+    if (interactive() && requireNamespace("devtools", quietly = TRUE)) {
+      devtools::load_all(".")
+    }
   }
 
   # Source fixtures and mocks for unit tests
@@ -221,11 +222,13 @@ if (Sys.getenv("INTEGRATION_TESTS") == "TRUE") {
     }
   }
 
-  mockDir <- find_dir("mocks")
-  if (!is.null(mockDir)) {
-    mockFiles <- list.files(mockDir, pattern = "\\.R$", full.names = TRUE)
-    for (file in mockFiles) {
-      source(file)
-    }
+  # Source helper-* files (testthat convention for test helpers and mocks)
+  helperFiles <- list.files(
+    testthat::test_path(),
+    pattern = "^helper.*\\.R$",
+    full.names = TRUE
+  )
+  for (file in helperFiles) {
+    source(file)
   }
 }

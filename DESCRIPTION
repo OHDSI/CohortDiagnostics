@@ -45,7 +45,7 @@ Imports:
 Suggests:
     Eunomia,
     RSQLite (>= 2.2.1),
-    testthat,
+    testthat (>= 3.0.0),
     withr,
     zip,
     knitr,
@@ -60,7 +60,6 @@ Suggests:
     plotly,
     RColorBrewer,
     reactable,
-    remotes,
     shinydashboard,
     shinyWidgets,
     shinycssloaders,
@@ -74,5 +73,4 @@ RoxygenNote: 7.3.3
 Encoding: UTF-8
 Language: en-US
 LazyData: false
-StagedInstall: no
 Config/testthat/edition: 3

@@ -13,6 +13,10 @@ test_that("createConceptTable executes SQL correctly", {
     },
     .package = "DatabaseConnector"
   )
+  local_mocked_bindings(
+    loadRenderTranslateSql = function(...) "CREATE TEMP TABLE concept_ids (concept_id INT);",
+    .package = "SqlRender"
+  )
   
   CohortDiagnostics:::createConceptTable(connection, tempEmulationSchema = "temp")
   

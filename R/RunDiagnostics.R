@@ -166,7 +166,7 @@ getDefaultCovariateSettings <- function() {
 #'                                    This can be used to control aspects of the sampling process beyond the seed and sample size.
 #'
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' # Load cohorts (assumes that they have already been instantiated)
 #' cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort")
 #' cohorts <- CohortGenerator::getCohortDefinitionSet(packageName = "MyGreatPackage")
@@ -182,24 +182,6 @@ getDefaultCovariateSettings <- function() {
 #'   cohorts = cohorts,
 #'   exportFolder = "export",
 #'   cohortTableNames = cohortTableNames,
-#'   cohortDatabaseSchema = "results",
-#'   cdmDatabaseSchema = "cdm",
-#'   databaseId = "mySpecialCdm",
-#'   connectionDetails = connectionDetails
-#' )
-#'
-#' # Use a custom set of cohorts defined in a data.frame
-#' cohorts <- data.frame(
-#'   cohortId = c(100),
-#'   cohortName = c("Cohort Name"),
-#'   logicDescription = c("My Cohort"),
-#'   sql = c(readLines("path_to.sql")),
-#'   json = c(readLines("path_to.json"))
-#' )
-#' executeDiagnostics(
-#'   cohorts = cohorts,
-#'   exportFolder = "export",
-#'   cohortTable = "cohort",
 #'   cohortDatabaseSchema = "results",
 #'   cdmDatabaseSchema = "cdm",
 #'   databaseId = "mySpecialCdm",

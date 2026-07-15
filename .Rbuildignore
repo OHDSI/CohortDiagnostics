@@ -36,3 +36,6 @@ tests/testthat/unit/_snaps
 ^coverage_report.*\.html$
 ^coverage_results_unit\.rds$
 ^lib$
+^test_output\.txt$
+^\.Rhistory$
+^CohortDiagnostics\.Rcheck$
