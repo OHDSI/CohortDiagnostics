@@ -769,3 +769,614 @@ test_that("runTemporalCharacterizationDiagnostic orchestrates sub-functions corr
 
   expect_true("executeCohortCharacterization" %in% calls)
 })
+
+# --- Extended characterization tests ---
+
+# Robust writeToCsv mock for exportCharacterization tests
+safeExportWriteMock <- function(data, fileName, ...) {
+  if (is.null(data)) return(invisible(NULL))
+  tryCatch({
+    df <- if (inherits(data, "tbl_Andromeda")) dplyr::collect(data) else data
+    if (is.data.frame(df) && nrow(df) > 0 && !is.null(fileName)) {
+      readr::write_csv(df, fileName)
+    }
+  }, error = function(e) invisible(NULL))
+  invisible(NULL)
+}
+
+test_that("getCohortCharacteristics uses connectionDetails when connection is NULL", {
+  cohortIds <- c(1)
+  covariateSettings <- list(temporal = FALSE)
+  class(covariateSettings) <- "covariateSettings"
+
+  covariates <- dplyr::tibble(
+    cohortDefinitionId = 1,
+    covariateId = 1:3,
+    sumValue = c(10, 20, 30),
+    averageValue = c(0.1, 0.2, 0.3)
+  )
+  mockData <- structure(
+    list(
+      covariates = covariates,
+      covariateRef = dplyr::tibble(covariateId = 1:3, covariateName = letters[1:3], analysisId = 1),
+      analysisRef = dplyr::tibble(analysisId = 1, analysisName = "Test", isBinary = "Y", missingMeansZero = "Y", domainId = "Condition")
+    ),
+    class = "CovariateData"
+  )
+  attr(mockData, "metaData") <- list(populationSize = c("1" = 100))
+
+  local_mocked_bindings(
+    connect = function(...) mockDatabaseConnection(),
+    disconnect = function(...) NULL,
+    .package = "DatabaseConnector"
+  )
+  local_mocked_bindings(
+    getDbCovariateData = function(...) mockData,
+    isTemporalCovariateData = function(...) FALSE,
+    .package = "FeatureExtraction"
+  )
+  local_mocked_bindings(
+    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) expr,
+    .package = "CohortDiagnostics"
+  )
+
+  results <- CohortDiagnostics:::getCohortCharacteristics(
+    connectionDetails = list(dbms = "sqlite"),
+    cdmDatabaseSchema = "main",
+    cohortIds = cohortIds,
+    covariateSettings = covariateSettings,
+    exportFolder = tempdir()
+  )
+
+  expect_s4_class(results, "Andromeda")
+  expect_true("covariates" %in% names(results))
+  Andromeda::close(results)
+})
+
+test_that("getCohortCharacteristics processes both covariates and covariatesContinuous simultaneously", {
+  cohortIds <- c(1)
+  covariates <- dplyr::tibble(
+    cohortDefinitionId = 1,
+    covariateId = 1:5,
+    sumValue = c(10, 20, 30, 40, 50),
+    averageValue = c(0.1, 0.2, 0.3, 0.4, 0.5)
+  )
+  covariatesContinuous <- dplyr::tibble(
+    cohortDefinitionId = 1,
+    covariateId = 10,
+    averageValue = 50,
+    standardDeviation = 10
+  )
+  mockData <- structure(
+    list(
+      covariates = covariates,
+      covariatesContinuous = covariatesContinuous,
+      covariateRef = dplyr::tibble(covariateId = c(1:5, 10), covariateName = letters[1:6], analysisId = 1),
+      analysisRef = dplyr::tibble(analysisId = 1, analysisName = "Test", isBinary = "Y", missingMeansZero = "Y", domainId = "Condition")
+    ),
+    class = "CovariateData"
+  )
+  attr(mockData, "metaData") <- list(populationSize = c("1" = 100))
+
+  local_mocked_bindings(
+    getDbCovariateData = function(...) mockData,
+    isTemporalCovariateData = function(...) FALSE,
+    .package = "FeatureExtraction"
+  )
+  local_mocked_bindings(
+    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) expr,
+    .package = "CohortDiagnostics"
+  )
+
+  results <- CohortDiagnostics:::getCohortCharacteristics(
+    connection = mockDatabaseConnection(),
+    cdmDatabaseSchema = "main",
+    cohortIds = cohortIds,
+    covariateSettings = list(),
+    exportFolder = tempdir()
+  )
+
+  expect_true("covariates" %in% names(results))
+  expect_true("covariatesContinuous" %in% names(results))
+
+  cont <- results$covariatesContinuous %>% dplyr::collect()
+  expect_equal(cont$mean, 50)
+
+  Andromeda::close(results)
+})
+
+test_that("getCohortCharacteristics handles continuous covariates in temporal context", {
+  cohortIds <- c(1)
+  covariatesContinuous <- dplyr::tibble(
+    cohortDefinitionId = 1,
+    covariateId = 1,
+    averageValue = 75,
+    standardDeviation = 15,
+    timeId = c(1, 2, 3)
+  )
+  mockData <- structure(
+    list(
+      covariatesContinuous = covariatesContinuous,
+      covariateRef = dplyr::tibble(covariateId = 1, covariateName = "TestCont", analysisId = 1),
+      analysisRef = dplyr::tibble(analysisId = 1, analysisName = "Test", isBinary = "N", missingMeansZero = "N", domainId = "Measurement"),
+      timeRef = dplyr::tibble(timeId = 1:3, startDay = c(-365, -30, 0), endDay = c(-31, -1, 0))
+    ),
+    class = "CovariateData"
+  )
+  attr(mockData, "metaData") <- list(populationSize = c("1" = 100))
+
+  local_mocked_bindings(
+    getDbCovariateData = function(...) mockData,
+    isTemporalCovariateData = function(...) TRUE,
+    .package = "FeatureExtraction"
+  )
+  local_mocked_bindings(
+    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) expr,
+    .package = "CohortDiagnostics"
+  )
+
+  results <- CohortDiagnostics:::getCohortCharacteristics(
+    connection = mockDatabaseConnection(),
+    cdmDatabaseSchema = "main",
+    cohortIds = cohortIds,
+    covariateSettings = list(),
+    exportFolder = tempdir()
+  )
+
+  expect_true("covariates" %in% names(results))
+  covs <- results$covariates %>% dplyr::collect()
+  expect_true(all(covs$sumValue == -1))
+  expect_true(all(c("cohortId", "timeId", "covariateId", "sumValue", "mean", "sd") %in% names(covs)))
+
+  Andromeda::close(results)
+})
+
+test_that("getCohortCharacteristics appends covariateRef when it already exists in results", {
+  cohortIds <- c(1, 2)
+  mockData <- createMockTemporalCovariateData(cohortIds = cohortIds)
+  attr(mockData, "metaData") <- list(populationSize = c("1" = 100, "2" = 200))
+
+  local_mocked_bindings(
+    getDbCovariateData = function(...) mockData,
+    isTemporalCovariateData = function(...) TRUE,
+    .package = "FeatureExtraction"
+  )
+  local_mocked_bindings(
+    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) expr,
+    .package = "CohortDiagnostics"
+  )
+
+  results <- CohortDiagnostics:::getCohortCharacteristics(
+    connection = mockDatabaseConnection(),
+    cdmDatabaseSchema = "main",
+    cohortIds = cohortIds,
+    covariateSettings = list(),
+    exportFolder = tempdir()
+  )
+
+  expect_s4_class(results, "Andromeda")
+  expect_true("covariateRef" %in% names(results))
+  expect_true("analysisRef" %in% names(results))
+
+  Andromeda::close(results)
+})
+
+test_that("exportCharacterization writes covariatesContinuous when present", {
+  andro <- Andromeda::andromeda()
+  andro$covariates <- dplyr::tibble(
+    cohortId = 1, covariateId = 1, sumValue = 10, mean = 0.1, sd = 0.05, timeId = 0
+  )
+  andro$covariatesContinuous <- dplyr::tibble(
+    cohortId = 1, covariateId = 2,
+    mean = 55, sd = 12, countValue = 50,
+    minValue = 20, p10Value = 35, p25Value = 40,
+    medianValue = 55, p75Value = 60, p90Value = 70, maxValue = 100
+  )
+  andro$covariateRef <- dplyr::tibble(covariateId = c(1, 2))
+  andro$analysisRef <- dplyr::tibble(analysisId = 1)
+  withr::defer(Andromeda::close(andro))
+
+  exportFolder <- tempfile()
+  dir.create(exportFolder)
+  withr::defer(unlink(exportFolder, recursive = TRUE))
+
+  covariateValueContFile <- file.path(exportFolder, "cont.csv")
+
+  local_mocked_bindings(
+    makeDataExportable = function(x, tableName, ...) {
+      if (is.null(x)) return(NULL)
+      dplyr::collect(x)
+    },
+    writeToCsv = safeExportWriteMock,
+    .package = "CohortDiagnostics"
+  )
+
+  CohortDiagnostics:::exportCharacterization(
+    characteristics = andro,
+    databaseId = "test",
+    incremental = FALSE,
+    covariateValueFileName = file.path(exportFolder, "val.csv"),
+    covariateValueContFileName = covariateValueContFile,
+    covariateRefFileName = file.path(exportFolder, "ref.csv"),
+    analysisRefFileName = file.path(exportFolder, "ana.csv"),
+    counts = dplyr::tibble(cohortId = 1, databaseId = "test", cohortEntries = 100, cohortSubjects = 90),
+    minCellCount = 5
+  )
+
+  expect_true(file.exists(covariateValueContFile))
+})
+
+test_that("exportCharacterization handles NULL timeRef gracefully", {
+  andro <- Andromeda::andromeda()
+  andro$covariates <- dplyr::tibble(
+    cohortId = 1, covariateId = 1, sumValue = 8, mean = 0.08, sd = 0.03, timeId = 0
+  )
+  andro$covariateRef <- dplyr::tibble(covariateId = 1)
+  andro$analysisRef <- dplyr::tibble(analysisId = 1)
+  withr::defer(Andromeda::close(andro))
+
+  local_mocked_bindings(
+    makeDataExportable = function(x, tableName, ...) {
+      if (is.null(x)) return(NULL)
+      dplyr::collect(x)
+    },
+    writeToCsv = safeExportWriteMock,
+    .package = "CohortDiagnostics"
+  )
+
+  expect_no_error(
+    CohortDiagnostics:::exportCharacterization(
+      characteristics = andro,
+      databaseId = "test",
+      incremental = FALSE,
+      covariateValueFileName = tempfile(),
+      covariateValueContFileName = tempfile(),
+      covariateRefFileName = tempfile(),
+      analysisRefFileName = tempfile(),
+      timeRefFileName = NULL,
+      counts = dplyr::tibble(cohortId = 1, databaseId = "test", cohortEntries = 100, cohortSubjects = 90),
+      minCellCount = 5
+    )
+  )
+})
+
+test_that("exportCharacterization handles only covariatesContinuous without covariates", {
+  andro <- Andromeda::andromeda()
+  andro$covariatesContinuous <- dplyr::tibble(
+    cohortId = 1, covariateId = 1, averageValue = 50, standardDeviation = 10, countValue = 30
+  )
+  andro$covariateRef <- dplyr::tibble(covariateId = 1)
+  withr::defer(Andromeda::close(andro))
+
+  local_mocked_bindings(
+    makeDataExportable = function(x, tableName, ...) {
+      if (is.null(x)) return(NULL)
+      dplyr::collect(x)
+    },
+    writeToCsv = safeExportWriteMock,
+    .package = "CohortDiagnostics"
+  )
+
+  expect_warning(
+    CohortDiagnostics:::exportCharacterization(
+      characteristics = andro,
+      databaseId = "test",
+      incremental = FALSE,
+      covariateValueFileName = tempfile(),
+      covariateValueContFileName = tempfile(),
+      covariateRefFileName = tempfile(),
+      analysisRefFileName = tempfile(),
+      counts = dplyr::tibble(cohortId = 1, databaseId = "test", cohortEntries = 100, cohortSubjects = 90),
+      minCellCount = 5
+    ),
+    regexp = "No characterization output"
+  )
+})
+
+test_that("runTemporalCharacterizationDiagnostic errors on uninitialized context", {
+  context <- list(isInitialized = FALSE)
+  class(context) <- "DiagnosticsContext"
+
+  expect_error(
+    runTemporalCharacterizationDiagnostic(context),
+    regexp = "not initialized"
+  )
+})
+
+test_that("runTemporalCharacterizationDiagnostic wraps single covariateSettings into list", {
+  exportFolder <- tempfile("export")
+  dir.create(exportFolder)
+  on.exit(unlink(exportFolder, recursive = TRUE))
+
+  cohortDefinitionSet <- createMockCohortDefinitionSet(numCohorts = 1)
+  context <- createDiagnosticsContext(
+    connectionDetails = list(dbms = "sqlite"),
+    cdmDatabaseSchema = "cdm",
+    cohortDatabaseSchema = "cohort",
+    databaseId = "test",
+    exportFolder = exportFolder
+  )
+  context$isInitialized <- TRUE
+  context$cohortCounts <- dplyr::tibble(cohortId = 1, cohortEntries = 10, cohortSubjects = 10, databaseId = "test")
+  context$incrementalFolder <- file.path(exportFolder, "inc")
+  context$cohortTableNames <- list(cohortTable = "cohort")
+  dir.create(context$incrementalFolder, showWarnings = FALSE)
+
+  singleCovariateSetting <- mockCreateTemporalCovariateSettings()
+
+  local_mocked_bindings(
+    executeCohortCharacterization = function(...) NULL,
+    timeExecution = function(folder, task, expr, ...) eval(expr),
+    computeCohortCounts = function(...) context$cohortCounts,
+    .package = "CohortDiagnostics"
+  )
+  local_mocked_bindings(
+    createCohortBasedTemporalCovariateSettings = function(...) list(),
+    .package = "FeatureExtraction"
+  )
+
+  expect_no_error(
+    runTemporalCharacterizationDiagnostic(
+      context = context,
+      cohortDefinitionSet = cohortDefinitionSet,
+      temporalCovariateSettings = singleCovariateSetting,
+      runCohortRelationship = FALSE
+    )
+  )
+})
+
+test_that("runTemporalCharacterizationDiagnostic skips re-sampling when cohort already sampled", {
+  exportFolder <- tempfile("export")
+  dir.create(exportFolder)
+  on.exit(unlink(exportFolder, recursive = TRUE))
+
+  cohortDefinitionSet <- createMockCohortDefinitionSet(numCohorts = 1)
+  attr(cohortDefinitionSet, "isSampledCohortDefinition") <- TRUE
+
+  context <- createDiagnosticsContext(
+    connectionDetails = list(dbms = "sqlite"),
+    cdmDatabaseSchema = "cdm",
+    cohortDatabaseSchema = "cohort",
+    databaseId = "test",
+    exportFolder = exportFolder
+  )
+  context$isInitialized <- TRUE
+  context$cohortCounts <- dplyr::tibble(cohortId = 1, cohortEntries = 10, cohortSubjects = 10, databaseId = "test")
+  context$incrementalFolder <- file.path(exportFolder, "inc")
+  context$cohortTableNames <- list(cohortTable = "cohort")
+  dir.create(context$incrementalFolder, showWarnings = FALSE)
+
+  samplingCalled <- FALSE
+  local_mocked_bindings(
+    executeCohortCharacterization = function(...) NULL,
+    timeExecution = function(folder, task, expr, ...) eval(expr),
+    computeCohortCounts = function(...) context$cohortCounts,
+    .package = "CohortDiagnostics"
+  )
+  local_mocked_bindings(
+    createCohortTables = function(...) { samplingCalled <<- TRUE },
+    sampleCohortDefinitionSet = function(...) { samplingCalled <<- TRUE },
+    .package = "CohortGenerator"
+  )
+
+  runTemporalCharacterizationDiagnostic(
+    context = context,
+    cohortDefinitionSet = cohortDefinitionSet,
+    runFeatureExtractionOnSample = TRUE,
+    runCohortRelationship = FALSE
+  )
+
+  expect_false(samplingCalled)
+})
+
+test_that("executeCohortCharacterization processes batches correctly when nrow exceeds batchSize", {
+  exportFolder <- tempfile()
+  dir.create(exportFolder)
+  withr::defer(unlink(exportFolder, recursive = TRUE))
+
+  cohorts <- createMockCohortDefinitionSet(numCohorts = 5)
+  cohorts$checksum <- "abc"
+
+  processedIds <- c()
+  getCharacteristicsCalled <- 0
+
+  local_mocked_bindings(
+    getCohortCharacteristics = function(...) {
+      getCharacteristicsCalled <<- getCharacteristicsCalled + 1
+      args <- list(...)
+      processedIds <<- c(processedIds, args$cohortIds)
+      andro <- Andromeda::andromeda()
+      andro$covariates <- dplyr::tibble(cohortId = 1, covariateId = 1, sumValue = 10, mean = 0.1, sd = 0.1, timeId = 0)
+      andro$covariateRef <- dplyr::tibble(covariateId = 1)
+      andro$analysisRef <- dplyr::tibble(analysisId = 1)
+      andro
+    },
+    exportCharacterization = function(...) NULL,
+    subsetToRequiredCohorts = function(cohorts, ...) cohorts,
+    recordTasksDone = function(...) NULL,
+    .package = "CohortDiagnostics"
+  )
+
+  CohortDiagnostics:::executeCohortCharacterization(
+    connection = mockDatabaseConnection(),
+    databaseId = "test",
+    exportFolder = exportFolder,
+    cdmDatabaseSchema = "main",
+    cohortDatabaseSchema = "main",
+    cohortTable = "cohort",
+    covariateSettings = list(),
+    tempEmulationSchema = NULL,
+    cdmVersion = 5,
+    cohorts = cohorts,
+    cohortCounts = createMockCohortCounts(cohortIds = cohorts$cohortId),
+    minCellCount = 5,
+    instantiatedCohorts = cohorts$cohortId,
+    incremental = FALSE,
+    recordKeepingFile = tempfile(),
+    batchSize = 2
+  )
+
+  expect_gt(getCharacteristicsCalled, 1)
+  expect_equal(length(unique(processedIds)), 5)
+})
+
+test_that("runTemporalCharacterizationDiagnostic handles zero-length covariateSettings", {
+  exportFolder <- tempfile("export")
+  dir.create(exportFolder)
+  on.exit(unlink(exportFolder, recursive = TRUE))
+
+  cohortDefinitionSet <- createMockCohortDefinitionSet(numCohorts = 1)
+  context <- createDiagnosticsContext(
+    connectionDetails = list(dbms = "sqlite"),
+    cdmDatabaseSchema = "cdm",
+    cohortDatabaseSchema = "cohort",
+    databaseId = "test",
+    exportFolder = exportFolder
+  )
+  context$isInitialized <- TRUE
+  context$cohortCounts <- dplyr::tibble()
+  context$incrementalFolder <- file.path(exportFolder, "inc")
+  context$cohortTableNames <- list(cohortTable = "cohort")
+  dir.create(context$incrementalFolder, showWarnings = FALSE)
+
+  executionCalled <- FALSE
+  local_mocked_bindings(
+    executeCohortCharacterization = function(...) { executionCalled <<- TRUE },
+    timeExecution = function(folder, task, expr, ...) eval(expr),
+    .package = "CohortDiagnostics"
+  )
+
+  runTemporalCharacterizationDiagnostic(
+    context = context,
+    cohortDefinitionSet = cohortDefinitionSet,
+    temporalCovariateSettings = list(),
+    runCohortRelationship = FALSE
+  )
+
+  expect_false(executionCalled)
+})
+
+test_that("getCohortCharacteristics handles NA timeId in continuous temporal covariates", {
+  cohortIds <- c(1)
+  covariatesContinuous <- dplyr::tibble(
+    cohortDefinitionId = 1,
+    covariateId = c(1, 2),
+    averageValue = c(50, 60),
+    standardDeviation = c(10, 8),
+    timeId = c(1, NA)
+  )
+  mockData <- structure(
+    list(
+      covariatesContinuous = covariatesContinuous,
+      covariateRef = dplyr::tibble(covariateId = 1:2, covariateName = c("A", "B"), analysisId = 1),
+      analysisRef = dplyr::tibble(analysisId = 1, analysisName = "Test", isBinary = "N", missingMeansZero = "N", domainId = "Measurement"),
+      timeRef = dplyr::tibble(timeId = 1, startDay = -365, endDay = -31)
+    ),
+    class = "CovariateData"
+  )
+  attr(mockData, "metaData") <- list(populationSize = c("1" = 100))
+
+  local_mocked_bindings(
+    getDbCovariateData = function(...) mockData,
+    isTemporalCovariateData = function(...) TRUE,
+    .package = "FeatureExtraction"
+  )
+  local_mocked_bindings(
+    timeExecution = function(exportFolder, taskName, parent, cohortIds, expr) expr,
+    .package = "CohortDiagnostics"
+  )
+
+  results <- CohortDiagnostics:::getCohortCharacteristics(
+    connection = mockDatabaseConnection(),
+    cdmDatabaseSchema = "main",
+    cohortIds = cohortIds,
+    covariateSettings = list(),
+    exportFolder = tempdir()
+  )
+
+  covs <- results$covariates %>% dplyr::collect()
+  expect_true(any(covs$timeId == -1))
+  expect_equal(nrow(covs), 2)
+
+  Andromeda::close(results)
+})
+
+test_that("exportCharacterization skips export when covariateRef has no rows", {
+  andro <- Andromeda::andromeda()
+  andro$covariates <- dplyr::tibble(cohortId = 1, covariateId = 1, sumValue = 10, mean = 0.1, sd = 0.05, timeId = 0)
+  andro$covariateRef <- dplyr::tibble(covariateId = integer())
+  andro$analysisRef <- dplyr::tibble(analysisId = integer())
+  withr::defer(Andromeda::close(andro))
+
+  exportFolder <- tempfile()
+  dir.create(exportFolder)
+  withr::defer(unlink(exportFolder, recursive = TRUE))
+
+  valFile <- file.path(exportFolder, "val.csv")
+
+  local_mocked_bindings(
+    makeDataExportable = function(x, tableName, ...) {
+      if (is.null(x)) return(NULL)
+      dplyr::collect(x)
+    },
+    writeToCsv = safeExportWriteMock,
+    .package = "CohortDiagnostics"
+  )
+
+  CohortDiagnostics:::exportCharacterization(
+    characteristics = andro,
+    databaseId = "test",
+    incremental = FALSE,
+    covariateValueFileName = valFile,
+    covariateValueContFileName = file.path(exportFolder, "cont.csv"),
+    covariateRefFileName = file.path(exportFolder, "ref.csv"),
+    analysisRefFileName = file.path(exportFolder, "ana.csv"),
+    counts = dplyr::tibble(cohortId = 1, databaseId = "test", cohortEntries = 100, cohortSubjects = 90),
+    minCellCount = 5
+  )
+
+  expect_false(file.exists(valFile))
+})
+
+test_that("executeCohortCharacterization uses default file paths from exportFolder", {
+  exportFolder <- tempfile()
+  dir.create(exportFolder)
+  withr::defer(unlink(exportFolder, recursive = TRUE))
+
+  cohorts <- createMockCohortDefinitionSet(numCohorts = 1)
+  cohorts$checksum <- "abc"
+
+  local_mocked_bindings(
+    getCohortCharacteristics = function(...) {
+      andro <- Andromeda::andromeda()
+      andro$covariates <- dplyr::tibble(cohortId = 1, covariateId = 1, sumValue = 10, mean = 0.1, sd = 0.1, timeId = 0)
+      andro$covariateRef <- dplyr::tibble(covariateId = 1)
+      andro$analysisRef <- dplyr::tibble(analysisId = 1)
+      andro
+    },
+    exportCharacterization = function(...) NULL,
+    subsetToRequiredCohorts = function(cohorts, ...) cohorts,
+    recordTasksDone = function(...) NULL,
+    .package = "CohortDiagnostics"
+  )
+
+  expect_no_error(
+    CohortDiagnostics:::executeCohortCharacterization(
+      connection = mockDatabaseConnection(),
+      databaseId = "test",
+      exportFolder = exportFolder,
+      cdmDatabaseSchema = "main",
+      cohortDatabaseSchema = "main",
+      cohortTable = "cohort",
+      covariateSettings = list(),
+      tempEmulationSchema = NULL,
+      cdmVersion = 5,
+      cohorts = cohorts,
+      cohortCounts = createMockCohortCounts(cohortIds = cohorts$cohortId),
+      minCellCount = 5,
+      instantiatedCohorts = cohorts$cohortId,
+      incremental = FALSE,
+      recordKeepingFile = tempfile()
+    )
+  )
+})
