@@ -10,7 +10,9 @@ The CohortDiagnostics test suite is organized into two types of tests:
 ## Test Structure
 
 ```
-tests/testthat/
+tests/
+├── testthat.R            # Standard testthat entrypoint (used by R CMD check / CRAN)
+└── testthat/
 ├── fixtures/              # Test data generators and fixtures
 │   ├── README.md
 │   ├── mock_data.R       # Mock data generators
@@ -73,6 +75,8 @@ Integration tests:
 - Require database setup (Eunomia for SQLite)
 - Test end-to-end functionality
 - Run on PR merge or nightly
+- Are always skipped on CRAN via `testthat::skip_on_cran()`
+  in `test-integration-runner.R`
 
 ### All Tests
 
@@ -80,6 +84,20 @@ Integration tests:
 # Run both unit and integration tests
 INTEGRATION_TESTS=TRUE RUN_ALL_TESTS=TRUE Rscript tests/testSqlite.R
 ```
+
+### R CMD check / CRAN
+
+`tests/testthat.R` is the standard testthat entrypoint used by `R CMD check`:
+
+```r
+library(testthat)
+library(CohortDiagnostics)
+test_check("CohortDiagnostics")
+```
+
+On CRAN this runs unit tests and skips integration tests (via
+`skip_on_cran()`). Integration tests only run when `INTEGRATION_TESTS=TRUE`
+and `NOT_CRAN=true` are set.
 
 ## Writing Tests
 

@@ -2,6 +2,8 @@
 # This allows devtools::test() and test_check() to find tests in tests/testthat/integration/
 # These tests run ONLY if INTEGRATION_TESTS environment variable is "TRUE"
 
+testthat::skip_on_cran()
+
 if (Sys.getenv("INTEGRATION_TESTS") == "TRUE" && dir.exists(testthat::test_path("integration"))) {
     # List all test files in the integration directory
     integration_tests <- list.files(

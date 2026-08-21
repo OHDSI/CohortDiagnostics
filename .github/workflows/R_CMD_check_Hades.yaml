@@ -56,6 +56,7 @@ jobs:
       IS_GITHUB_ACTIONS: true
       INTEGRATION_TESTS: "TRUE"
       RUN_ALL_TESTS: "TRUE"
+      NOT_CRAN: "true"
       DATABASECONNECTOR_JAR_FOLDER: ${{ github.workspace }}/jdbc_drivers
 
 
