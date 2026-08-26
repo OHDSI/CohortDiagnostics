@@ -1,0 +1,21 @@
+<h4>Description</h4>
+<p>A table showing the concept(s) observed in the datasource that are <em>not</em> included in a concept set of a cohort, but maybe considered. The following logic is used to identify concepts that might be relevant:</p>
+<ol>
+<li>Given a concept set expression, find all included concepts.
+<li>Find all names of those concepts, including synonyms, and the names of source concepts that map to them.</li>
+<li>Search for concepts (standard and source) that contain any of those names as substring.</li>
+<li>Filter those concepts to those that are not in the original set of concepts (i.e. orphans).</li>
+<li>Restrict the set of orphan concepts to those that appear in the CDM data source as either source concept or standard concept.</li>
+</ol>
+
+<p>The Subjects column contains the number of subjects in the entire data source that have the specific concept, i.e. it is <em>not</em> restricted to people in the cohort. This is a data source level characterization. Source concepts are identified in the _source_concept_id fields of the Common Data Model, (e.g. drug_source_concept_id) and are used to identify the specific source codes used in a data source. Standard concepts are found using the _concept_id fields (e.g. drug_concept_id), and use the same coding system across all databases.</p>
+
+<h4>Options</h4>
+<p>You can select a data source in the side bar to see the concepts and counts observed in that data source.</p>
+<p>Select the cohort and the specific concept set within that cohort to explore in the side bar.</p>
+
+<h4>What to look for</h4>
+<ul>
+<li>Are there concepts that are not included in the concept but should be? Note that the provided list likely contains many false positives.</li>
+</ul>
+

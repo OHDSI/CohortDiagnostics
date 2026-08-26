@@ -34,7 +34,7 @@ extractConceptSetsSqlFromCohortSql <- function(cohortSql) {
   level0 <- which(level == 0)
 
   subQueryLocations <-
-    stringr::str_locate_all(sql, "SELECT [0-9]+ as codeset_id")[[1]]
+    stringr::str_locate_all(sql, stringr::regex("SELECT [0-9]+ as codeset_id", ignore_case = TRUE))[[1]]
   subQueryCount <- nrow(subQueryLocations)
   conceptsetSqls <- vector("character", subQueryCount)
   conceptSetIds <- vector("integer", subQueryCount)
@@ -107,7 +107,7 @@ extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
 }
 
 getParentCohort <- function(cohort, cohortDefinitionSet) {
-  if (is.null(cohort$subsetParent) || cohort$cohortId == cohort$subsetParent) {
+  if (is.null(cohort$subsetParent) || is.na(cohort$subsetParent) || cohort$cohortId == cohort$subsetParent) {
     return(cohort)
   }
 
@@ -171,13 +171,13 @@ combineConceptSetsFromCohorts <- function(cohorts) {
         cohort$cohortName
       )
     } else {
-      if (!length(sqlCs$conceptSetId %>% unique()) == length(jsonCs$conceptSetId %>% unique())) {
+      if (!setequal(sqlCs$conceptSetId, jsonCs$conceptSetId)) {
         stop(
           "Mismatch in concept set IDs between SQL and JSON for cohort ",
-          cohort$cohortFullName
+          cohort$cohortName
         )
       }
-      if (length(sqlCs) > 0 && length(jsonCs) > 0) {
+      if (nrow(sqlCs) > 0 && nrow(jsonCs) > 0) {
         conceptSetCounter <- conceptSetCounter + 1
         conceptSets[[conceptSetCounter]] <-
           tidyr::tibble(
@@ -195,13 +195,12 @@ combineConceptSetsFromCohorts <- function(cohorts) {
 
   uniqueConceptSets <- conceptSets %>%
     dplyr::select("conceptSetExpression") %>%
-    dplyr::mutate(uniqueConceptSetId = dplyr::row_number()) %>%
-    dplyr::distinct()
+    dplyr::distinct() %>%
+    dplyr::mutate(uniqueConceptSetId = dplyr::row_number())
 
   conceptSets <- conceptSets %>%
     dplyr::inner_join(uniqueConceptSets,
-      by = "conceptSetExpression",
-      relationship = "many-to-many"
+      by = "conceptSetExpression"
     ) %>%
     dplyr::distinct() %>%
     dplyr::relocate(
@@ -296,7 +295,10 @@ instantiateUniqueConceptSets <- function(uniqueConceptSets,
           sqlSubset
         )
       sqlSubset <-
-        SqlRender::render(sqlSubset, vocabulary_database_schema = vocabularyDatabaseSchema)
+        SqlRender::render(sqlSubset,
+          vocabulary_database_schema = vocabularyDatabaseSchema,
+          warnOnMissingParameters = FALSE
+        )
       sqlSubset <- SqlRender::translate(sqlSubset,
         targetDialect = connection@dbms,
         tempEmulationSchema = tempEmulationSchema
@@ -558,8 +560,8 @@ runConceptSetDiagnostics <- function(connection,
                 .data$sourceConceptId
               ) %>%
               dplyr::summarise(
-                conceptCount = max(.data$conceptCount),
-                conceptSubjects = max(.data$conceptSubjects)
+                conceptCount = if (dplyr::n() > 0) max(.data$conceptCount, na.rm = TRUE) else 0,
+                conceptSubjects = if (dplyr::n() > 0) max(.data$conceptSubjects, na.rm = TRUE) else 0
               ) %>%
               dplyr::ungroup()
 
@@ -980,8 +982,8 @@ runConceptSetDiagnostics <- function(connection,
           .data$conceptId
         ) %>%
         dplyr::summarise(
-          conceptCount = max(.data$conceptCount),
-          conceptSubjects = max(.data$conceptSubjects)
+          conceptCount = if (dplyr::n() > 0) max(.data$conceptCount, na.rm = TRUE) else 0,
+          conceptSubjects = if (dplyr::n() > 0) max(.data$conceptSubjects, na.rm = TRUE) else 0
         ) %>%
         dplyr::ungroup()
       data <- makeDataExportable(

@@ -1,0 +1,60 @@
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+name: unit-tests
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {r: 'release'}
+
+    env:
+      GITHUB_PAT: ${{ secrets.GH_TOKEN }}
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      # Run only unit tests
+      RUN_UNIT_TESTS: "TRUE"
+      SKIP_DB_TESTS: "TRUE"
+      INTEGRATION_TESTS: "FALSE"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - name: Install system requirements
+        run: |
+          sudo apt-get install -y libssh-dev
+          Rscript -e 'install.packages("remotes")'
+          while read -r cmd
+          do
+            eval sudo $cmd
+          done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "22.04"))')
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::rcmdcheck
+            OHDSI/OhdsiShinyModules
+          needs: check
+
+      - name: Run Unit Tests
+        run: |
+          # Use test_check but only for unit tests
+          # We use a custom script to avoid running the full R CMD check
+          # which is slower and might fail on non-test things (vignettes etc)
+          Rscript -e 'testthat::test_local(filter = "unit-", stop_on_failure = TRUE)'
+        shell: bash

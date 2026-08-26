@@ -1,8 +1,8 @@
 Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Cohorts
-Version: 3.4.2
-Date: 2024-22-10
+Version: 4.0.0
+Date: 2026-07-15
 Authors@R: c(
     person("Jamie", "Gilbert", email = "gilbert@ohdsi.org", role = c("aut", "cre")),
     person("Gowtham", "Rao", role = c("aut")),
@@ -34,33 +34,43 @@ Imports:
     ParallelLogger (>= 3.0.0),
     readr (>= 2.1.0),
     jsonlite,
+    lubridate,
     rlang,
     SqlRender (>= 1.9.0),
     stringr,
     tidyr (>= 1.2.0),
     CohortGenerator (>= 0.10.0),
-    remotes,
     scales,
     cli
 Suggests:
     Eunomia,
     RSQLite (>= 2.2.1),
-    testthat,
+    testthat (>= 3.0.0),
     withr,
     zip,
     knitr,
-    shiny,
-    OhdsiShinyModules,
     rsconnect,
-    yaml
-Remotes:
-  ohdsi/OhdsiShinyModules
-License: Apache License
+    yaml,
+    OhdsiShinyModules,
+    shiny,
+    CirceR,
+    ggplot2,
+    gridExtra,
+    markdown,
+    plotly,
+    RColorBrewer,
+    reactable,
+    shinydashboard,
+    shinyWidgets,
+    shinycssloaders,
+    tibble,
+    tippy
+License: Apache License (>= 2.0) | file LICENSE
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics
 BugReports: https://github.com/OHDSI/CohortDiagnostics/issues
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Encoding: UTF-8
 Language: en-US
-StagedInstall: no
+LazyData: false
 Config/testthat/edition: 3

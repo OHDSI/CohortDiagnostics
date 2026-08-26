@@ -64,27 +64,31 @@ isTaskRequired <-
 
 getRequiredTasks <- function(..., checksum, recordKeepingFile) {
   tasks <- list(...)
-  if (file.exists(recordKeepingFile) && length(tasks[[1]]) > 0) {
+  if (length(tasks) == 0 || length(tasks[[1]]) == 0) {
+    return(dplyr::tibble())
+  }
+  tasks <- dplyr::as_tibble(tasks)
+  tasks$checksum <- checksum
+  
+  if (file.exists(recordKeepingFile)) {
     readr::local_edition(1)
     recordKeeping <- readr::read_csv(recordKeepingFile,
       col_types = readr::cols(),
       guess_max = min(1e7),
       lazy = FALSE
     )
-    tasks$checksum <- checksum
-    tasks <- dplyr::as_tibble(tasks)
+    
     if (all(names(tasks) %in% names(recordKeeping))) {
       idx <- getKeyIndex(recordKeeping[, names(tasks)], tasks)
     } else {
       idx <- c()
     }
-    tasks$checksum <- NULL
+    
     if (length(idx) > 0) {
-      # text <- paste(sprintf("%s = %s", names(tasks), tasks[idx,]), collapse = ", ")
-      # ParallelLogger::logInfo("Skipping ", text, " because unchanged from earlier run")
       tasks <- tasks[-idx, ]
     }
   }
+  tasks$checksum <- NULL
   return(tasks)
 }
 
