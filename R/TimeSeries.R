@@ -518,6 +518,7 @@ executeTimeSeriesDiagnostics <- function(connection,
                                          incremental,
                                          recordKeepingFile,
                                          observationPeriodDateRange,
+                                         runFingerprint = "",
                                          batchSize = getOption("CohortDiagnostics-TimeSeries-batch-size", default = 20)) {
   if (all(!runCohortTimeSeries, !runDataSourceTimeSeries)) {
     warning(
@@ -615,7 +616,15 @@ executeTimeSeriesDiagnostics <- function(connection,
     subset <- subsetToRequiredCohorts(
       cohorts = dplyr::tibble(
         cohortId = -44819062, # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
-        checksum = computeChecksum(column = "data source time series")
+        checksum = computeCohortChecksums(
+          cohortDefinitionSet = dplyr::tibble(
+            cohortId = -44819062,
+            cohortName = "Data source time series",
+            sql = "",
+            json = ""
+          ),
+          runFingerprint = runFingerprint
+        )
       ),
       task = "runDataSourceTimeSeries",
       incremental = incremental,

@@ -32,6 +32,9 @@ initializeDiagnostics <- function(context,
 
   start <- Sys.time()
   context$startTime <- start
+  # Retain the cohort subset used for this run so that incremental pruning is
+  # only performed for full (non-subset) runs.
+  context$cohortIds <- cohortIds
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
 
   # Set up loggers if not already present
@@ -58,6 +61,7 @@ initializeDiagnostics <- function(context,
   if (!is.null(cohortIds)) {
     cohortDefinitionSet <- cohortDefinitionSet %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
+  context$requestedCohortIds <- cohortDefinitionSet$cohortId
 
   if (nrow(cohortDefinitionSet) == 0) {
     stop("No cohorts specified")
@@ -160,8 +164,10 @@ initializeDiagnostics <- function(context,
     }
   )
 
-  # Checksums for incremental
-  cohortDefinitionSet$checksum <- computeChecksum(cohortDefinitionSet$sql)
+  # Checksums for incremental - combine the cohort definition with a run-level
+  # fingerprint so that changes to settings also invalidate prior results.
+  context$runFingerprint <- computeRunFingerprint(context)
+  cohortDefinitionSet$checksum <- computeCohortChecksums(cohortDefinitionSet, context$runFingerprint)
 
   # Observation Period Date Range
   ParallelLogger::logTrace(" - Collecting date range from Observational period table.")

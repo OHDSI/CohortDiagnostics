@@ -239,6 +239,12 @@ executeDiagnostics <- function(cohortDefinitionSet,
       runTemporalCohortCharacterization = runTemporalCohortCharacterization,
       minCellCount = minCellCount,
       minCharacterizationMean = minCharacterizationMean,
+      irWashoutPeriod = irWashoutPeriod,
+      runCohortRelationship = runCohortRelationship,
+      runFeatureExtractionOnSample = runFeatureExtractionOnSample,
+      sampleN = sampleN,
+      seed = seed,
+      seedArgs = seedArgs,
       incremental = incremental,
       temporalCovariateSettings = temporalCovariateSettings
     ) %>%

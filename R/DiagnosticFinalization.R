@@ -131,8 +131,26 @@ finalizeDiagnostics <- function(context) {
     data = metadata,
     fileName = file.path(context$exportFolder, "metadata.csv"),
     incremental = TRUE,
-    start_time = as.character(context$startTime)
+    start_time = metadata$startTime
   )
+
+  # Prune stale incremental records for cohorts no longer part of a full run.
+  # Only safe when the run was not restricted to a subset of cohorts.
+  if (context$incremental &&
+    is.null(context$cohortIds) &&
+    !is.null(context$requestedCohortIds)) {
+    timeExecution(
+      context$exportFolder,
+      "pruneRecordKeeping",
+      parent = "finalizeDiagnostics",
+      expr = {
+        pruneRecordKeeping(
+          recordKeepingFile = file.path(context$incrementalFolder, "CreatedDiagnostics.csv"),
+          cohortIds = context$requestedCohortIds
+        )
+      }
+    )
+  }
 
   # Zip results
   timeExecution(
