@@ -319,13 +319,12 @@ saveIncremental <- function(data, fileName, ...) {
     return(invisible(NULL))
   }
 
+  primaryKey <- intersect(getTablePrimaryKey(fileName), colnames(data))
+
   # Fallback: derive the merge key from the results data model primary key.
-  if (length(key) == 0) {
-    primaryKey <- intersect(getTablePrimaryKey(fileName), colnames(data))
-    if (length(primaryKey) > 0) {
-      key <- lapply(primaryKey, function(column) unique(data[[column]]))
-      names(key) <- primaryKey
-    }
+  if (length(key) == 0 && length(primaryKey) > 0) {
+    key <- lapply(primaryKey, function(column) unique(data[[column]]))
+    names(key) <- primaryKey
   }
 
   if (file.exists(fileName) && file.size(fileName) > 0) {
@@ -354,6 +353,16 @@ saveIncremental <- function(data, fileName, ...) {
       }
     }
   }
+
+  # Safety net: enforce primary key uniqueness in the merged output. This guards
+  # against duplicate result rows (e.g. duplicated cohort overlap covariate
+  # values) even if a caller supplies a merge key narrower than the primary key.
+  # Incoming rows take precedence because they were bound first.
+  if (length(primaryKey) > 0) {
+    data <- data %>%
+      dplyr::distinct(dplyr::across(dplyr::all_of(primaryKey)), .keep_all = TRUE)
+  }
+
   writeCsvAtomic(data = data, fileName = fileName)
   return(invisible(NULL))
 }

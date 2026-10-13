@@ -20,6 +20,9 @@ Changes:
    - Record-keeping and result files are written atomically (temp file + rename) and consistently use empty strings for missing values
    - Corrected the `temporal_time_ref` and `metadata` merge keys
    - Stale incremental records are pruned for cohorts removed from a full run
+   - Added a primary-key deduplication safety net so repeated runs can no longer
+     produce duplicate rows (e.g. cohort overlap covariate values that appeared as
+     >100% overlap in the diagnostics explorer)
    - Removed unused `subsetToRequiredCombis` and `writeToCsv.tbl_Andromeda` code
 
 CohortDiagnostics 3.4.2

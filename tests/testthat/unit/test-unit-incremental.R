@@ -342,6 +342,33 @@ test_that("saveIncremental writes NA without corrupting subsequent reads", {
   expect_true(is.na(result$value[result$cohortId == 2]))
 })
 
+test_that("saveIncremental collapses duplicate primary keys in the merged output", {
+  # Guards the cohort overlap view: duplicated rows for the same
+  # (cohort_id, time_id, covariate_id, database_id) stack in the Shiny plot and
+  # can appear as >100% overlap.
+  tmpDir <- tempfile()
+  dir.create(tmpDir)
+  withr::defer(unlink(tmpDir, recursive = TRUE))
+  tmpFile <- file.path(tmpDir, "temporal_covariate_value.csv")
+
+  firstRun <- dplyr::tibble(
+    cohort_id = 1, time_id = 0, covariate_id = 10,
+    database_id = "db", mean = 0.1
+  )
+  secondRun <- dplyr::tibble(
+    cohort_id = 1, time_id = 0, covariate_id = 10,
+    database_id = "db", mean = 0.9
+  )
+
+  CohortDiagnostics:::saveIncremental(firstRun, tmpFile, cohort_id = 1)
+  # A key that misses the existing row, so both rows would otherwise persist.
+  CohortDiagnostics:::saveIncremental(secondRun, tmpFile, cohort_id = 999)
+
+  result <- readr::read_csv(tmpFile, col_types = readr::cols())
+  expect_equal(nrow(result), 1)
+  expect_equal(result$mean, 0.9)
+})
+
 test_that("getKeyIndex returns indices into the recordKeeping argument", {
   recordKeeping <- dplyr::tibble(
     cohortId = c(1, 2, 3),
