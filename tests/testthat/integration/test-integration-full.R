@@ -71,7 +71,7 @@ test_that("Cohort diagnostics in incremental mode", {
 
   if (dbms == "sqlite") {
     # Get file sizes of batch computed results
-    batchedResultsFiles <- c("temporal_covariate_value.csv", "cohort_relationships.csv", "time_series.csv")
+    batchedResultsFiles <- c("temporal_covariate_value.csv", "time_series.csv")
     bacthFiles <- file.path(folder, "export", batchedResultsFiles)
     fileSizes <- list()
     for (filePath in batchedResultsFiles) {

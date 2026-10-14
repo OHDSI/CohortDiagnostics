@@ -13,6 +13,18 @@ Changes:
    - Migrated diagnostic execution to a context-based pattern with `createDiagnosticsContext()`, `initializeDiagnostics()`, and `finalizeDiagnostics()`
    - All examples use `\dontrun{}` instead of `\donttest{}` for CRAN compliance
 
+2. Incremental mode re-design to fix incorrect results on repeat runs:
+
+   - Result files are now merged using the primary key declared in the results data model, so re-running a cohort replaces (rather than duplicates) its prior rows, including characterization covariate values that previously had no merge key
+   - Task checksums now combine the cohort definition (sql, json, name) with a run-level fingerprint of the settings and package version, so changing settings invalidates prior results
+   - Record-keeping and result files are written atomically (temp file + rename) and consistently use empty strings for missing values
+   - Corrected the `temporal_time_ref` and `metadata` merge keys
+   - Stale incremental records are pruned for cohorts removed from a full run
+   - Added a primary-key deduplication safety net so repeated runs can no longer
+     produce duplicate rows (e.g. cohort overlap covariate values that appeared as
+     >100% overlap in the diagnostics explorer)
+   - Removed unused `subsetToRequiredCombis` and `writeToCsv.tbl_Andromeda` code
+
 CohortDiagnostics 3.4.2
 =======================
 

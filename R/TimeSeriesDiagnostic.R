@@ -68,7 +68,8 @@ runTimeSeriesDiagnostic <- function(context,
                 instantiatedCohorts = context$instantiatedCohorts,
                 incremental = context$incremental,
                 recordKeepingFile = recordKeepingFile,
-                observationPeriodDateRange = context$observationPeriodDateRange
+                observationPeriodDateRange = context$observationPeriodDateRange,
+                runFingerprint = context$runFingerprint
             )
         }
     )

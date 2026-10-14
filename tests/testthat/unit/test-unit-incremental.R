@@ -289,56 +289,137 @@ test_that("subsetToRequiredCohorts filters correctly", {
   expect_equal(result_inc$cohortId, 2)
 })
 
-test_that("subsetToRequiredCombis filters correctly", {
-  rkf <- tempfile()
-  withr::defer(unlink(rkf))
-  
-  combis <- dplyr::tibble(
-    targetCohortId = c(1, 1),
-    comparatorCohortId = c(2, 3),
-    targetChecksum = c("t1", "t1"),
-    comparatorChecksum = c("c2", "c3"),
-    checksum = c("sum12", "sum13")
-  )
-  
-  CohortDiagnostics:::recordTasksDone(
-    cohortId = 1,
-    comparatorId = 2,
-    targetChecksum = "t1",
-    comparatorChecksum = "c2",
-    task = "testTask",
-    checksum = "sum12",
-    recordKeepingFile = rkf
-  )
-  
-  result_inc <- CohortDiagnostics:::subsetToRequiredCombis(combis, "testTask", TRUE, rkf)
-  expect_equal(nrow(result_inc), 1)
-  expect_equal(result_inc$comparatorCohortId[1], 3)
-})
-
-test_that("writeToCsv.tbl_Andromeda handles incremental mode", {
-  data <- dplyr::tibble(cohortId = 1, value = 10)
-  
+test_that("saveIncremental replaces all rows for a re-run cohort", {
+  # Simulates characterization: a cohort is recomputed and now has a different
+  # set of secondary keys (e.g. covariate ids). All old rows for that cohort
+  # should be removed, not just exact duplicates.
   tmpFile <- tempfile(fileext = ".csv")
   withr::defer(unlink(tmpFile))
-  
-  # Mock Andromeda::batchApply to work with data.frame
-  local_mocked_bindings(
-    batchApply = function(data, fun, ...) {
-      fun(data)
-    },
-    .package = "Andromeda"
+
+  firstRun <- dplyr::tibble(
+    cohortId = c(1, 1, 2),
+    timeId = c(1, 2, 1),
+    covariateId = c(10, 20, 30),
+    mean = c(0.1, 0.2, 0.3)
+  )
+  CohortDiagnostics:::saveIncremental(firstRun, tmpFile, cohortId = c(1, 2))
+
+  secondRun <- dplyr::tibble(
+    cohortId = c(1, 1),
+    timeId = c(1, 3),
+    covariateId = c(10, 99),
+    mean = c(0.5, 0.6)
+  )
+  CohortDiagnostics:::saveIncremental(secondRun, tmpFile, cohortId = 1)
+
+  result <- readr::read_csv(tmpFile, col_types = readr::cols())
+  expect_equal(nrow(result), 3)
+  # old cohort 1 row (timeId 2) replaced by new cohort 1 rows (timeId 1, 3)
+  expect_false(any(result$cohortId == 1 & result$timeId == 2))
+  expect_true(any(result$cohortId == 1 & result$covariateId == 99))
+  # cohort 2 is untouched
+  expect_true(any(result$cohortId == 2))
+})
+
+test_that("saveIncremental writes NA without corrupting subsequent reads", {
+  tmpFile <- tempfile(fileext = ".csv")
+  withr::defer(unlink(tmpFile))
+
+  firstRun <- dplyr::tibble(
+    cohortId = c(1, 2),
+    value = c(1, NA)
+  )
+  CohortDiagnostics:::saveIncremental(firstRun, tmpFile, cohortId = c(1, 2))
+
+  secondRun <- dplyr::tibble(
+    cohortId = c(3),
+    value = c(3)
+  )
+  CohortDiagnostics:::saveIncremental(secondRun, tmpFile, cohortId = 3)
+
+  result <- readr::read_csv(tmpFile, col_types = readr::cols())
+  expect_equal(nrow(result), 3)
+  expect_true(is.na(result$value[result$cohortId == 2]))
+})
+
+test_that("saveIncremental collapses duplicate primary keys in the merged output", {
+  # Guards the cohort overlap view: duplicated rows for the same
+  # (cohort_id, time_id, covariate_id, database_id) stack in the Shiny plot and
+  # can appear as >100% overlap.
+  tmpDir <- tempfile()
+  dir.create(tmpDir)
+  withr::defer(unlink(tmpDir, recursive = TRUE))
+  tmpFile <- file.path(tmpDir, "temporal_covariate_value.csv")
+
+  firstRun <- dplyr::tibble(
+    cohort_id = 1, time_id = 0, covariate_id = 10,
+    database_id = "db", mean = 0.1
+  )
+  secondRun <- dplyr::tibble(
+    cohort_id = 1, time_id = 0, covariate_id = 10,
+    database_id = "db", mean = 0.9
   )
 
-  # First write non-incremental
-  CohortDiagnostics:::writeToCsv.tbl_Andromeda(data, tmpFile, incremental = FALSE)
-  expect_true(file.exists(tmpFile))
-  
-  # Update and write incremental
-  data2 <- dplyr::tibble(cohortId = 2, value = 20)
-  CohortDiagnostics:::writeToCsv.tbl_Andromeda(data2, tmpFile, incremental = TRUE)
-  
+  CohortDiagnostics:::saveIncremental(firstRun, tmpFile, cohort_id = 1)
+  # A key that misses the existing row, so both rows would otherwise persist.
+  CohortDiagnostics:::saveIncremental(secondRun, tmpFile, cohort_id = 999)
+
   result <- readr::read_csv(tmpFile, col_types = readr::cols())
-  expect_equal(nrow(result), 2)
-  expect_true(all(c(1, 2) %in% result$cohort_id))
+  expect_equal(nrow(result), 1)
+  expect_equal(result$mean, 0.9)
+})
+
+test_that("getKeyIndex returns indices into the recordKeeping argument", {
+  recordKeeping <- dplyr::tibble(
+    cohortId = c(1, 2, 3),
+    task = c("A", "B", "C")
+  )
+  key <- dplyr::tibble(cohortId = c(2, 3), task = c("B", "C"))
+  expect_equal(CohortDiagnostics:::getKeyIndex(key, recordKeeping), c(2L, 3L))
+})
+
+test_that("computeCohortChecksums invalidates when the run fingerprint changes", {
+  cohorts <- dplyr::tibble(
+    cohortId = 1,
+    cohortName = "test",
+    sql = "SELECT 1;",
+    json = "{}"
+  )
+  checksumA <- CohortDiagnostics:::computeCohortChecksums(cohorts, runFingerprint = "fpA")
+  checksumB <- CohortDiagnostics:::computeCohortChecksums(cohorts, runFingerprint = "fpB")
+  expect_false(checksumA == checksumB)
+
+  # stable for the same inputs
+  checksumA2 <- CohortDiagnostics:::computeCohortChecksums(cohorts, runFingerprint = "fpA")
+  expect_equal(checksumA, checksumA2)
+})
+
+test_that("computeRunFingerprint depends on settings", {
+  baseContext <- list(
+    callingArgsJson = "{}",
+    cdmVersion = 5,
+    databaseId = "db"
+  )
+  fp1 <- CohortDiagnostics:::computeRunFingerprint(baseContext)
+
+  changedContext <- baseContext
+  changedContext$callingArgsJson <- '{"minCellCount":10}'
+  fp2 <- CohortDiagnostics:::computeRunFingerprint(changedContext)
+  expect_false(fp1 == fp2)
+})
+
+test_that("pruneRecordKeeping drops records for cohorts no longer present", {
+  rkf <- tempfile()
+  withr::defer(unlink(rkf))
+
+  CohortDiagnostics:::recordTasksDone(
+    cohortId = c(1, 2, 3),
+    task = "testTask",
+    checksum = c("a", "b", "c"),
+    recordKeepingFile = rkf
+  )
+
+  CohortDiagnostics:::pruneRecordKeeping(rkf, cohortIds = c(1, 3))
+  result <- readr::read_csv(rkf, col_types = readr::cols())
+  expect_equal(sort(result$cohortId), c(1, 3))
 })
