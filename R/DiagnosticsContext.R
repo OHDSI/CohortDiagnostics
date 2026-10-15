@@ -73,6 +73,7 @@ createDiagnosticsContext <- function(connectionDetails = NULL,
   checkmate::assertList(cohortTableNames, null.ok = FALSE, types = "character", add = errorMessage, names = "named")
   checkmate::assertCharacter(cdmDatabaseSchema, min.len = 1, add = errorMessage)
   checkmate::assertCharacter(cohortDatabaseSchema, min.len = 1, add = errorMessage)
+  databaseId <- as.character(databaseId)
   checkmate::assertCharacter(databaseId, min.len = 1, add = errorMessage)
   checkmate::assertInt(cdmVersion, lower = 5, upper = 5, add = errorMessage)
   checkmate::assertInt(minCellCount, lower = 0, add = errorMessage)

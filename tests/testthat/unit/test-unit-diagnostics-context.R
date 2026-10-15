@@ -23,6 +23,23 @@ test_that("createDiagnosticsContext initializes correctly with minimal arguments
     expect_equal(context$minCellCount, 5) # Default
 })
 
+test_that("createDiagnosticsContext coerces non-character databaseId to character", {
+    exportFolder <- tempfile("export")
+    dir.create(exportFolder)
+    on.exit(unlink(exportFolder, recursive = TRUE))
+
+    context <- createDiagnosticsContext(
+        connectionDetails = list(),
+        cdmDatabaseSchema = "cdm_schema",
+        cohortDatabaseSchema = "cohort_schema",
+        databaseId = 123,
+        exportFolder = exportFolder
+    )
+
+    expect_type(context$databaseId, "character")
+    expect_equal(context$databaseId, "123")
+})
+
 test_that("createDiagnosticsContext validation allows missing connection (validation happens at initialization)", {
     exportFolder <- tempfile("export")
 
