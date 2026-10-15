@@ -64,7 +64,10 @@ Suggests:
     shinyWidgets,
     shinycssloaders,
     tibble,
-    tippy
+    tippy,
+    lintr,
+    precommit,
+    styler
 License: Apache License (>= 2.0) | file LICENSE
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics

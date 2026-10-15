@@ -316,10 +316,12 @@ test_that("exportCharacterization enforces min cell count", {
         minCellCount = 5
       )
     },
-    makeDataExportable = function(x, ...) if (is.null(x)) {
-      return(NULL)
-    } else {
-      dplyr::collect(x)
+    makeDataExportable = function(x, ...) {
+      if (is.null(x)) {
+        return(NULL)
+      } else {
+        dplyr::collect(x)
+      }
     },
     writeToCsv = safeWriteToCsv,
     .package = "CohortDiagnostics"
@@ -360,10 +362,12 @@ test_that("exportCharacterization filters zero values correctly", {
         minCellCount = 5
       )
     },
-    makeDataExportable = function(x, ...) if (is.null(x)) {
-      return(NULL)
-    } else {
-      dplyr::collect(x)
+    makeDataExportable = function(x, ...) {
+      if (is.null(x)) {
+        return(NULL)
+      } else {
+        dplyr::collect(x)
+      }
     },
     writeToCsv = safeWriteToCsv,
     .package = "CohortDiagnostics"
@@ -602,10 +606,12 @@ test_that("exportCharacterization handles missing covariate data", {
         regexp = "No characterization output"
       )
     },
-    makeDataExportable = function(x, ...) if (is.null(x)) {
-      return(NULL)
-    } else {
-      x
+    makeDataExportable = function(x, ...) {
+      if (is.null(x)) {
+        return(NULL)
+      } else {
+        x
+      }
     },
     .package = "CohortDiagnostics"
   )
@@ -774,13 +780,18 @@ test_that("runTemporalCharacterizationDiagnostic orchestrates sub-functions corr
 
 # Robust writeToCsv mock for exportCharacterization tests
 safeExportWriteMock <- function(data, fileName, ...) {
-  if (is.null(data)) return(invisible(NULL))
-  tryCatch({
-    df <- if (inherits(data, "tbl_Andromeda")) dplyr::collect(data) else data
-    if (is.data.frame(df) && nrow(df) > 0 && !is.null(fileName)) {
-      readr::write_csv(df, fileName)
-    }
-  }, error = function(e) invisible(NULL))
+  if (is.null(data)) {
+    return(invisible(NULL))
+  }
+  tryCatch(
+    {
+      df <- if (inherits(data, "tbl_Andromeda")) dplyr::collect(data) else data
+      if (is.data.frame(df) && nrow(df) > 0 && !is.null(fileName)) {
+        readr::write_csv(df, fileName)
+      }
+    },
+    error = function(e) invisible(NULL)
+  )
   invisible(NULL)
 }
 
@@ -984,7 +995,9 @@ test_that("exportCharacterization writes covariatesContinuous when present", {
 
   local_mocked_bindings(
     makeDataExportable = function(x, tableName, ...) {
-      if (is.null(x)) return(NULL)
+      if (is.null(x)) {
+        return(NULL)
+      }
       dplyr::collect(x)
     },
     writeToCsv = safeExportWriteMock,
@@ -1017,7 +1030,9 @@ test_that("exportCharacterization handles NULL timeRef gracefully", {
 
   local_mocked_bindings(
     makeDataExportable = function(x, tableName, ...) {
-      if (is.null(x)) return(NULL)
+      if (is.null(x)) {
+        return(NULL)
+      }
       dplyr::collect(x)
     },
     writeToCsv = safeExportWriteMock,
@@ -1050,7 +1065,9 @@ test_that("exportCharacterization handles only covariatesContinuous without cova
 
   local_mocked_bindings(
     makeDataExportable = function(x, tableName, ...) {
-      if (is.null(x)) return(NULL)
+      if (is.null(x)) {
+        return(NULL)
+      }
       dplyr::collect(x)
     },
     writeToCsv = safeExportWriteMock,
@@ -1154,8 +1171,12 @@ test_that("runTemporalCharacterizationDiagnostic skips re-sampling when cohort a
     .package = "CohortDiagnostics"
   )
   local_mocked_bindings(
-    createCohortTables = function(...) { samplingCalled <<- TRUE },
-    sampleCohortDefinitionSet = function(...) { samplingCalled <<- TRUE },
+    createCohortTables = function(...) {
+      samplingCalled <<- TRUE
+    },
+    sampleCohortDefinitionSet = function(...) {
+      samplingCalled <<- TRUE
+    },
     .package = "CohortGenerator"
   )
 
@@ -1241,7 +1262,9 @@ test_that("runTemporalCharacterizationDiagnostic handles zero-length covariateSe
 
   executionCalled <- FALSE
   local_mocked_bindings(
-    executeCohortCharacterization = function(...) { executionCalled <<- TRUE },
+    executeCohortCharacterization = function(...) {
+      executionCalled <<- TRUE
+    },
     timeExecution = function(folder, task, expr, ...) eval(expr),
     .package = "CohortDiagnostics"
   )
@@ -1316,7 +1339,9 @@ test_that("exportCharacterization skips export when covariateRef has no rows", {
 
   local_mocked_bindings(
     makeDataExportable = function(x, tableName, ...) {
-      if (is.null(x)) return(NULL)
+      if (is.null(x)) {
+        return(NULL)
+      }
       dplyr::collect(x)
     },
     writeToCsv = safeExportWriteMock,

@@ -5,7 +5,7 @@ library(dplyr)
 test_with_mock_context <- function() {
   exportFolder <- tempfile("export")
   dir.create(exportFolder)
-  
+
   context <- createDiagnosticsContext(
     databaseId = "test",
     cdmDatabaseSchema = "cdm",
@@ -39,7 +39,7 @@ test_with_mock_context <- function() {
   )
   context$databaseName <- "TestDB"
   context$databaseDescription <- "TestDesc"
-  
+
   return(context)
 }
 
@@ -53,19 +53,19 @@ test_that("finalizeDiagnostics works as expected", {
     disconnect = function(...) NULL,
     .package = "DatabaseConnector"
   )
-  
+
   local_mocked_bindings(
     renderTranslateExecuteSql = function(...) NULL,
     disconnect = function(...) NULL,
     .package = "CohortDiagnostics"
   )
-  
+
   local_mocked_bindings(
     exportConceptInformation = function(...) NULL,
     writeResultsZip = function(...) NULL,
     .package = "CohortDiagnostics"
   )
-  
+
   # Silent ParallelLogger
   local_mocked_bindings(
     logInfo = function(...) NULL,
@@ -74,15 +74,15 @@ test_that("finalizeDiagnostics works as expected", {
   )
 
   result <- finalizeDiagnostics(context)
-  
+
   expect_true(file.exists(file.path(context$exportFolder, "metadata.csv")))
   expect_invisible(finalizeDiagnostics(context))
 })
 
 test_that("finalizeDiagnostics fails if not initialized", {
   context <- createDiagnosticsContext(
-    databaseId = "test", 
-    cdmDatabaseSchema = "cdm", 
+    databaseId = "test",
+    cdmDatabaseSchema = "cdm",
     cohortDatabaseSchema = "results",
     exportFolder = tempfile()
   )

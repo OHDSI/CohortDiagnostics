@@ -18,7 +18,7 @@ mockGetDbCovariateData <- function(connection,
                                    aggregated = TRUE) {
   # Determine if temporal
   isTemporal <- inherits(covariateSettings, "temporalCovariateSettings")
-  
+
   if (isTemporal) {
     # Return temporal covariate data
     source(testthat::test_path("fixtures/mock_data.R"))
@@ -26,21 +26,21 @@ mockGetDbCovariateData <- function(connection,
   } else {
     # Return regular covariate data
     covariateIds <- 1:10
-    
+
     covariates <- dplyr::tibble(
       cohortDefinitionId = cohortId,
       covariateId = covariateIds,
       sumValue = runif(length(covariateIds), 0, 100),
       averageValue = runif(length(covariateIds), 0, 1)
     )
-    
+
     covariateRef <- dplyr::tibble(
       covariateId = covariateIds,
       covariateName = paste0("Covariate ", covariateIds),
       analysisId = 1,
       conceptId = covariateIds * 1000
     )
-    
+
     analysisRef <- dplyr::tibble(
       analysisId = 1,
       analysisName = "Mock Analysis",
@@ -48,7 +48,7 @@ mockGetDbCovariateData <- function(connection,
       isBinary = "Y",
       missingMeansZero = "Y"
     )
-    
+
     structure(
       list(
         covariates = covariates,

@@ -30,50 +30,50 @@ runIncidenceRateDiagnostic <- function(context,
                                        cohortDefinitionSet = NULL,
                                        cohortIds = NULL,
                                        irWashoutPeriod = 0) {
-    checkmate::assertClass(context, "DiagnosticsContext")
-    if (!context$isInitialized) {
-        stop("Diagnostics context not initialized. Call initializeDiagnostics() first.")
-    }
+  checkmate::assertClass(context, "DiagnosticsContext")
+  if (!context$isInitialized) {
+    stop("Diagnostics context not initialized. Call initializeDiagnostics() first.")
+  }
 
-    if (is.null(cohortDefinitionSet)) {
-        cohortDefinitionSet <- context$cohortDefinitionSet
-    }
+  if (is.null(cohortDefinitionSet)) {
+    cohortDefinitionSet <- context$cohortDefinitionSet
+  }
 
-    if (!is.null(cohortIds)) {
-        cohortDefinitionSet <- cohortDefinitionSet %>%
-            dplyr::filter(.data$cohortId %in% cohortIds)
-    }
+  if (!is.null(cohortIds)) {
+    cohortDefinitionSet <- cohortDefinitionSet %>%
+      dplyr::filter(.data$cohortId %in% cohortIds)
+  }
 
-    if (nrow(cohortDefinitionSet) == 0) {
-        ParallelLogger::logWarn("No cohorts to run incidence rate diagnostic for.")
-        return(invisible(NULL))
-    }
-
-    recordKeepingFile <- file.path(context$incrementalFolder, "CreatedDiagnostics.csv")
-
-    timeExecution(
-        context$exportFolder,
-        "computeIncidenceRates",
-        cohortIds = cohortDefinitionSet$cohortId,
-        parent = "runIncidenceRateDiagnostic",
-        expr = {
-            computeIncidenceRates(
-                connection = context$connection,
-                tempEmulationSchema = context$tempEmulationSchema,
-                cdmDatabaseSchema = context$cdmDatabaseSchema,
-                cohortDatabaseSchema = context$cohortDatabaseSchema,
-                cohortTable = context$cohortTable,
-                databaseId = context$databaseId,
-                exportFolder = context$exportFolder,
-                minCellCount = context$minCellCount,
-                cohorts = cohortDefinitionSet,
-                washoutPeriod = irWashoutPeriod,
-                instantiatedCohorts = context$instantiatedCohorts,
-                recordKeepingFile = recordKeepingFile,
-                incremental = context$incremental
-            )
-        }
-    )
-
+  if (nrow(cohortDefinitionSet) == 0) {
+    ParallelLogger::logWarn("No cohorts to run incidence rate diagnostic for.")
     return(invisible(NULL))
+  }
+
+  recordKeepingFile <- file.path(context$incrementalFolder, "CreatedDiagnostics.csv")
+
+  timeExecution(
+    context$exportFolder,
+    "computeIncidenceRates",
+    cohortIds = cohortDefinitionSet$cohortId,
+    parent = "runIncidenceRateDiagnostic",
+    expr = {
+      computeIncidenceRates(
+        connection = context$connection,
+        tempEmulationSchema = context$tempEmulationSchema,
+        cdmDatabaseSchema = context$cdmDatabaseSchema,
+        cohortDatabaseSchema = context$cohortDatabaseSchema,
+        cohortTable = context$cohortTable,
+        databaseId = context$databaseId,
+        exportFolder = context$exportFolder,
+        minCellCount = context$minCellCount,
+        cohorts = cohortDefinitionSet,
+        washoutPeriod = irWashoutPeriod,
+        instantiatedCohorts = context$instantiatedCohorts,
+        recordKeepingFile = recordKeepingFile,
+        incremental = context$incremental
+      )
+    }
+  )
+
+  return(invisible(NULL))
 }

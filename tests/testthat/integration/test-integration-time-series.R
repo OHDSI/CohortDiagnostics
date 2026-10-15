@@ -178,8 +178,6 @@ test_that("Testing cohort time series execution", {
 })
 
 
-
-
 test_that("Testing time series logic", {
   skip_if(skipCdmTests, "cdm settings not configured")
 

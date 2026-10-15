@@ -117,14 +117,14 @@ test_that("Cohort diagnostics in incremental mode", {
   }
 
   # Test zip works
-  DiagnosticsExplorerZip <- tempfile(fileext = "de.zip")
-  unlink(DiagnosticsExplorerZip)
-  on.exit(unlink(DiagnosticsExplorerZip))
-  createDiagnosticsExplorerZip(outputZipfile = DiagnosticsExplorerZip, sqliteDbPath = sqliteDbPath)
+  diagnosticsExplorerZip <- tempfile(fileext = "de.zip")
+  unlink(diagnosticsExplorerZip)
+  on.exit(unlink(diagnosticsExplorerZip))
+  createDiagnosticsExplorerZip(outputZipfile = diagnosticsExplorerZip, sqliteDbPath = sqliteDbPath)
 
-  expect_true(file.exists(DiagnosticsExplorerZip))
+  expect_true(file.exists(diagnosticsExplorerZip))
   # already exists
-  expect_error(createDiagnosticsExplorerZip(outputZipfile = DiagnosticsExplorerZip, sqliteDbPath = sqliteDbPath))
+  expect_error(createDiagnosticsExplorerZip(outputZipfile = diagnosticsExplorerZip, sqliteDbPath = sqliteDbPath))
   # Bad filepath
   expect_error(createDiagnosticsExplorerZip(outputZipfile = "foo", sqliteDbPath = "sdlfkmdkmfkd"))
   output <- read.csv(file.path(folder, "export", "temporal_covariate_value.csv"))

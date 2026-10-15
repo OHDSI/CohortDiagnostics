@@ -9,7 +9,7 @@ createInMemorySqliteDb <- function() {
     dbms = "sqlite",
     server = ":memory:"
   )
-  
+
   connection <- DatabaseConnector::connect(connectionDetails)
   return(connection)
 }
@@ -20,7 +20,7 @@ createInMemorySqliteDb <- function() {
 #' @return NULL (modifies database in place)
 populateMinimalCdmSchema <- function(connection) {
   # Create minimal CDM tables needed for testing
-  
+
   # Person table
   DatabaseConnector::executeSql(connection, "
     CREATE TABLE person (
@@ -34,15 +34,15 @@ populateMinimalCdmSchema <- function(connection) {
       ethnicity_concept_id INTEGER
     );
   ")
-  
+
   # Insert sample persons
   DatabaseConnector::executeSql(connection, "
-    INSERT INTO person VALUES 
+    INSERT INTO person VALUES
       (1, 8507, 1950, 1, 1, '1950-01-01', 8527, 0),
       (2, 8532, 1960, 6, 15, '1960-06-15', 8527, 0),
       (3, 8507, 1970, 12, 31, '1970-12-31', 8527, 0);
   ")
-  
+
   # Observation period table
   DatabaseConnector::executeSql(connection, "
     CREATE TABLE observation_period (
@@ -53,14 +53,14 @@ populateMinimalCdmSchema <- function(connection) {
       period_type_concept_id INTEGER
     );
   ")
-  
+
   DatabaseConnector::executeSql(connection, "
     INSERT INTO observation_period VALUES
       (1, 1, '2000-01-01', '2020-12-31', 0),
       (2, 2, '2005-01-01', '2020-12-31', 0),
       (3, 3, '2010-01-01', '2020-12-31', 0);
   ")
-  
+
   # Vocabulary table
   DatabaseConnector::executeSql(connection, "
     CREATE TABLE vocabulary (
@@ -71,12 +71,12 @@ populateMinimalCdmSchema <- function(connection) {
       vocabulary_concept_id INTEGER
     );
   ")
-  
+
   DatabaseConnector::executeSql(connection, "
     INSERT INTO vocabulary VALUES
       ('None', 'OMOP Standardized Vocabularies', 'OMOP generated', 'v5.0', 44819096);
   ")
-  
+
   # CDM Source table
   DatabaseConnector::executeSql(connection, "
     CREATE TABLE cdm_source (
@@ -92,12 +92,12 @@ populateMinimalCdmSchema <- function(connection) {
       vocabulary_version TEXT
     );
   ")
-  
+
   DatabaseConnector::executeSql(connection, "
     INSERT INTO cdm_source VALUES
       ('Test CDM', 'TEST', 'Test', 'Test database', '', '', '2020-01-01', '2020-01-01', '5.4', 'v5.0');
   ")
-  
+
   # Concept table (minimal)
   DatabaseConnector::executeSql(connection, "
     CREATE TABLE concept (
@@ -113,14 +113,14 @@ populateMinimalCdmSchema <- function(connection) {
       invalid_reason TEXT
     );
   ")
-  
+
   DatabaseConnector::executeSql(connection, "
     INSERT INTO concept VALUES
       (313217, 'Atrial fibrillation', 'Condition', 'SNOMED', 'Clinical Finding', 'S', '49436004', '1970-01-01', '2099-12-31', NULL),
       (8507, 'MALE', 'Gender', 'Gender', 'Gender', 'S', 'M', '1970-01-01', '2099-12-31', NULL),
       (8532, 'FEMALE', 'Gender', 'Gender', 'Gender', 'S', 'F', '1970-01-01', '2099-12-31', NULL);
   ")
-  
+
   invisible(NULL)
 }
 
@@ -131,8 +131,8 @@ populateMinimalCdmSchema <- function(connection) {
 #' @param tableName Table name (default: "cohort")
 #' @param cohortData Optional data frame with cohort data. If NULL, creates sample data.
 #' @return NULL (modifies database in place)
-createMockCohortTable <- function(connection, 
-                                  schema = "main", 
+createMockCohortTable <- function(connection,
+                                  schema = "main",
                                   tableName = "cohort",
                                   cohortData = NULL) {
   # Create cohort table
@@ -144,9 +144,9 @@ createMockCohortTable <- function(connection,
       cohort_end_date TEXT
     );
   ", schema, tableName)
-  
+
   DatabaseConnector::executeSql(connection, sql)
-  
+
   # Insert data
   if (is.null(cohortData)) {
     # Create sample cohort data
@@ -157,7 +157,7 @@ createMockCohortTable <- function(connection,
         (2, 1, '2016-06-10', '2016-12-10'),
         (2, 3, '2016-09-05', '2017-01-05');
     ", schema, tableName)
-    
+
     DatabaseConnector::executeSql(connection, sql)
   } else {
     # Insert provided data
@@ -171,7 +171,7 @@ createMockCohortTable <- function(connection,
       camelCaseToSnakeCase = TRUE
     )
   }
-  
+
   invisible(NULL)
 }
 
@@ -183,10 +183,10 @@ createMockCohortTable <- function(connection,
 #' @return Cohort table names list
 createCohortTables <- function(connection, schema = "main", cohortTable = "cohort") {
   cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = cohortTable)
-  
+
   # Create main cohort table
   createMockCohortTable(connection, schema, cohortTableNames$cohortTable)
-  
+
   # Create inclusion tables
   DatabaseConnector::executeSql(connection, sprintf("
     CREATE TABLE %s.%s (
@@ -196,7 +196,7 @@ createCohortTables <- function(connection, schema = "main", cohortTable = "cohor
       description TEXT
     );
   ", schema, cohortTableNames$cohortInclusionTable))
-  
+
   DatabaseConnector::executeSql(connection, sprintf("
     CREATE TABLE %s.%s (
       cohort_definition_id INTEGER,
@@ -206,7 +206,7 @@ createCohortTables <- function(connection, schema = "main", cohortTable = "cohor
       person_total INTEGER
     );
   ", schema, cohortTableNames$cohortInclusionResultTable))
-  
+
   DatabaseConnector::executeSql(connection, sprintf("
     CREATE TABLE %s.%s (
       cohort_definition_id INTEGER,
@@ -217,7 +217,7 @@ createCohortTables <- function(connection, schema = "main", cohortTable = "cohor
       person_total INTEGER
     );
   ", schema, cohortTableNames$cohortInclusionStatsTable))
-  
+
   DatabaseConnector::executeSql(connection, sprintf("
     CREATE TABLE %s.%s (
       cohort_definition_id INTEGER,
@@ -225,14 +225,14 @@ createCohortTables <- function(connection, schema = "main", cohortTable = "cohor
       final_count INTEGER
     );
   ", schema, cohortTableNames$cohortSummaryStatsTable))
-  
+
   DatabaseConnector::executeSql(connection, sprintf("
     CREATE TABLE %s.%s (
       cohort_definition_id INTEGER,
       lost_count INTEGER
     );
   ", schema, cohortTableNames$cohortCensorStatsTable))
-  
+
   return(cohortTableNames)
 }
 
@@ -243,7 +243,7 @@ setupTestDatabase <- function() {
   connection <- createInMemorySqliteDb()
   populateMinimalCdmSchema(connection)
   cohortTableNames <- createCohortTables(connection, schema = "main", cohortTable = "cohort")
-  
+
   list(
     connection = connection,
     cdmDatabaseSchema = "main",

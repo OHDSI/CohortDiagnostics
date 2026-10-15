@@ -26,8 +26,8 @@
 #' @return Invisible NULL
 #' @export
 runInclusionStatisticsDiagnostic <- function(context,
-                                              cohortDefinitionSet = NULL,
-                                              cohortIds = NULL) {
+                                             cohortDefinitionSet = NULL,
+                                             cohortIds = NULL) {
   checkmate::assertClass(context, "DiagnosticsContext")
   if (!context$isInitialized) {
     stop("Diagnostics context not initialized. Call initializeDiagnostics() first.")
@@ -36,9 +36,9 @@ runInclusionStatisticsDiagnostic <- function(context,
   if (is.null(cohortDefinitionSet)) {
     cohortDefinitionSet <- context$cohortDefinitionSet
   }
-  
+
   if (!is.null(cohortIds)) {
-    cohortDefinitionSet <- cohortDefinitionSet %>% 
+    cohortDefinitionSet <- cohortDefinitionSet %>%
       dplyr::filter(.data$cohortId %in% cohortIds)
   }
 

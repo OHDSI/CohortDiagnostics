@@ -57,7 +57,7 @@ test_that("timeExecutions function", {
   dir.create(temp)
 
   # Basic test
-CohortDiagnostics:::timeExecution(
+  CohortDiagnostics:::timeExecution(
     exportFolder = temp,
     taskName = "test_task1",
     cohortIds = c(1, 2, 3, 4),
@@ -74,7 +74,7 @@ CohortDiagnostics:::timeExecution(
   expect_false(all(is.na(result$executionTime)))
 
   # Test append
-CohortDiagnostics:::timeExecution(
+  CohortDiagnostics:::timeExecution(
     exportFolder = temp,
     taskName = "test_task2",
     cohortIds = NULL,
@@ -87,7 +87,7 @@ CohortDiagnostics:::timeExecution(
   checkmate::expect_data_frame(result, nrows = 2, ncols = 5)
 
   # Parent string
-CohortDiagnostics:::timeExecution(
+  CohortDiagnostics:::timeExecution(
     exportFolder = temp,
     taskName = "test_task3",
     parent = "testthat",
@@ -101,7 +101,7 @@ CohortDiagnostics:::timeExecution(
   checkmate::expect_data_frame(result, nrows = 3, ncols = 5)
 
   # custom start/end times
-CohortDiagnostics:::timeExecution(
+  CohortDiagnostics:::timeExecution(
     exportFolder = temp,
     taskName = "test_task4",
     parent = "testthat",
@@ -113,7 +113,7 @@ CohortDiagnostics:::timeExecution(
   result <- readr::read_csv(expectedFilePath, col_types = readr::cols())
   checkmate::expect_data_frame(result, nrows = 4, ncols = 5)
 
-CohortDiagnostics:::timeExecution(
+  CohortDiagnostics:::timeExecution(
     exportFolder = temp,
     taskName = "test_task5",
     parent = "testthat",
@@ -163,7 +163,7 @@ test_that("hasData utility function works correctly", {
   expect_false(CohortDiagnostics:::hasData(data.frame()))
   expect_false(CohortDiagnostics:::hasData(c()))
   expect_false(CohortDiagnostics:::hasData(NA))
-  
+
   expect_true(CohortDiagnostics:::hasData(data.frame(a = 1)))
   expect_true(CohortDiagnostics:::hasData(c(1, 2)))
   expect_true(CohortDiagnostics:::hasData("test"))

@@ -277,7 +277,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     )
   }
 
-  for (i in (1:length(seriesToRun))) {
+  for (i in seq_along(seriesToRun)) {
     ParallelLogger::logTrace(paste0(" - Running ", seriesToRun[[i]]))
     if (seriesToRun[[i]] == "ComputeTimeSeries1.sql") {
       ParallelLogger::logInfo(
@@ -526,7 +526,7 @@ executeTimeSeriesDiagnostics <- function(connection,
     )
   }
 
-  if (runCohortTimeSeries & nrow(cohortDefinitionSet) > 0) {
+  if (runCohortTimeSeries && nrow(cohortDefinitionSet) > 0) {
     subset <- subsetToRequiredCohorts(
       cohorts = cohortDefinitionSet %>%
         dplyr::filter(.data$cohortId %in% instantiatedCohorts),
@@ -546,7 +546,7 @@ executeTimeSeriesDiagnostics <- function(connection,
       }
 
       outputFile <- file.path(exportFolder, "time_series.csv")
-      if (!incremental & file.exists(outputFile)) {
+      if (!incremental && file.exists(outputFile)) {
         ParallelLogger::logInfo("Time series file exists, removing before batch operations")
         unlink(outputFile)
       }
@@ -742,7 +742,7 @@ aggregateTimeSeriesData <- function(data,
   if (nrow(data) == 0 && (is.null(startDate) || is.null(endDate))) {
     return(data)
   }
-  
+
   # Binning logic using lubridate as requested
   data <- data %>%
     dplyr::mutate(
@@ -752,7 +752,7 @@ aggregateTimeSeriesData <- function(data,
         lubridate::floor_date(as.Date(.data$date), unit = calendarInterval)
       }
     )
-  
+
   # Grouping columns
   groupVars <- c("periodBegin")
   if ("cohortId" %in% colnames(data)) {
@@ -764,7 +764,7 @@ aggregateTimeSeriesData <- function(data,
   if (stratifyByGender && "gender" %in% colnames(data)) {
     groupVars <- c(groupVars, "gender")
   }
-  
+
   # Aggregation
   aggregated <- data %>%
     dplyr::group_by(dplyr::across(dplyr::all_of(groupVars))) %>%
@@ -773,7 +773,7 @@ aggregateTimeSeriesData <- function(data,
       personDays = if ("personDays" %in% colnames(data)) sum(.data$personDays, na.rm = TRUE) else 0,
       .groups = "drop"
     )
-  
+
   # Padding logic
   if (!is.null(startDate) && !is.null(endDate)) {
     allPeriods <- tidyr::expand_grid(
@@ -783,7 +783,7 @@ aggregateTimeSeriesData <- function(data,
         by = calendarInterval
       )
     )
-    
+
     # If we have cohorts, we should pad per cohort
     if ("cohortId" %in% colnames(data)) {
       allPeriods <- tidyr::expand_grid(
@@ -791,7 +791,7 @@ aggregateTimeSeriesData <- function(data,
         periodBegin = allPeriods$periodBegin
       )
     }
-    
+
     aggregated <- allPeriods %>%
       dplyr::left_join(aggregated, by = intersect(names(allPeriods), names(aggregated))) %>%
       dplyr::mutate(
@@ -799,13 +799,13 @@ aggregateTimeSeriesData <- function(data,
         personDays = tidyr::replace_na(.data$personDays, 0)
       )
   }
-  
+
   aggregated <- aggregated %>%
     dplyr::mutate(
       personYears = .data$personDays / 365.25,
       incidenceRate = dplyr::if_else(.data$personYears > 0, 1000 * .data$recordsCount / .data$personYears, 0)
     )
-  
+
   # Min cell count enforcement
   if (minCellCount > 0) {
     aggregated <- aggregated %>%
@@ -817,6 +817,6 @@ aggregateTimeSeriesData <- function(data,
         )
       )
   }
-  
+
   return(aggregated)
 }

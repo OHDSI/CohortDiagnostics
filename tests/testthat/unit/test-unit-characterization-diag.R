@@ -6,7 +6,7 @@ test_that("runTemporalCharacterizationDiagnostic works as expected with mocks", 
   exportFolder <- tempfile("export")
   dir.create(exportFolder)
   on.exit(unlink(exportFolder, recursive = TRUE))
-  
+
   context <- list(
     connection = mockDatabaseConnection(),
     cdmDatabaseSchema = "cdm",
@@ -37,7 +37,7 @@ test_that("runTemporalCharacterizationDiagnostic works as expected with mocks", 
     createCohortBasedTemporalCovariateSettings = function(...) list(),
     .package = "FeatureExtraction"
   )
-  
+
   # Mock CohortGenerator
   local_mocked_bindings(
     createCohortTables = function(...) NULL,
@@ -54,12 +54,12 @@ test_that("runTemporalCharacterizationDiagnostic works as expected with mocks", 
     executeCohortCharacterization = function(...) NULL,
     computeCohortCounts = function(...) context$cohortCounts,
     timeExecution = function(folder, task, expr, ...) {
-        eval(expr)
-        return(NULL)
+      eval(expr)
+      return(NULL)
     },
     .package = "CohortDiagnostics"
   )
-  
+
   # Silent ParallelLogger
   local_mocked_bindings(
     logInfo = function(...) NULL,
@@ -95,7 +95,7 @@ test_that("runTemporalCharacterizationDiagnostic works as expected with mocks", 
     runCohortRelationship = TRUE
   )
   expect_true(TRUE)
-  
+
   # 4. Test with empty cohortIds
   runTemporalCharacterizationDiagnostic(
     context = context,

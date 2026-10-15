@@ -28,51 +28,51 @@
 runTimeSeriesDiagnostic <- function(context,
                                     cohortDefinitionSet = NULL,
                                     cohortIds = NULL) {
-    checkmate::assertClass(context, "DiagnosticsContext")
-    if (!context$isInitialized) {
-        stop("Diagnostics context not initialized. Call initializeDiagnostics() first.")
-    }
+  checkmate::assertClass(context, "DiagnosticsContext")
+  if (!context$isInitialized) {
+    stop("Diagnostics context not initialized. Call initializeDiagnostics() first.")
+  }
 
-    if (is.null(cohortDefinitionSet)) {
-        cohortDefinitionSet <- context$cohortDefinitionSet
-    }
+  if (is.null(cohortDefinitionSet)) {
+    cohortDefinitionSet <- context$cohortDefinitionSet
+  }
 
-    if (!is.null(cohortIds)) {
-        cohortDefinitionSet <- cohortDefinitionSet %>%
-            dplyr::filter(.data$cohortId %in% cohortIds)
-    }
+  if (!is.null(cohortIds)) {
+    cohortDefinitionSet <- cohortDefinitionSet %>%
+      dplyr::filter(.data$cohortId %in% cohortIds)
+  }
 
-    if (nrow(cohortDefinitionSet) == 0) {
-        ParallelLogger::logWarn("No cohorts to run time series diagnostic for.")
-        return(invisible(NULL))
-    }
-
-    recordKeepingFile <- file.path(context$incrementalFolder, "CreatedDiagnostics.csv")
-
-    timeExecution(
-        context$exportFolder,
-        "executeTimeSeriesDiagnostics",
-        cohortIds = cohortDefinitionSet$cohortId,
-        parent = "runTimeSeriesDiagnostic",
-        expr = {
-            executeTimeSeriesDiagnostics(
-                connection = context$connection,
-                tempEmulationSchema = context$tempEmulationSchema,
-                cdmDatabaseSchema = context$cdmDatabaseSchema,
-                cohortDatabaseSchema = context$cohortDatabaseSchema,
-                cohortTable = context$cohortTable,
-                cohortDefinitionSet = cohortDefinitionSet,
-                databaseId = context$databaseId,
-                exportFolder = context$exportFolder,
-                minCellCount = context$minCellCount,
-                instantiatedCohorts = context$instantiatedCohorts,
-                incremental = context$incremental,
-                recordKeepingFile = recordKeepingFile,
-                observationPeriodDateRange = context$observationPeriodDateRange,
-                runFingerprint = context$runFingerprint
-            )
-        }
-    )
-
+  if (nrow(cohortDefinitionSet) == 0) {
+    ParallelLogger::logWarn("No cohorts to run time series diagnostic for.")
     return(invisible(NULL))
+  }
+
+  recordKeepingFile <- file.path(context$incrementalFolder, "CreatedDiagnostics.csv")
+
+  timeExecution(
+    context$exportFolder,
+    "executeTimeSeriesDiagnostics",
+    cohortIds = cohortDefinitionSet$cohortId,
+    parent = "runTimeSeriesDiagnostic",
+    expr = {
+      executeTimeSeriesDiagnostics(
+        connection = context$connection,
+        tempEmulationSchema = context$tempEmulationSchema,
+        cdmDatabaseSchema = context$cdmDatabaseSchema,
+        cohortDatabaseSchema = context$cohortDatabaseSchema,
+        cohortTable = context$cohortTable,
+        cohortDefinitionSet = cohortDefinitionSet,
+        databaseId = context$databaseId,
+        exportFolder = context$exportFolder,
+        minCellCount = context$minCellCount,
+        instantiatedCohorts = context$instantiatedCohorts,
+        incremental = context$incremental,
+        recordKeepingFile = recordKeepingFile,
+        observationPeriodDateRange = context$observationPeriodDateRange,
+        runFingerprint = context$runFingerprint
+      )
+    }
+  )
+
+  return(invisible(NULL))
 }

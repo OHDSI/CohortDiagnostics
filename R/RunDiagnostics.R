@@ -167,26 +167,26 @@ getDefaultCovariateSettings <- function() {
 #'
 #' @examples
 #' if (interactive()) {
-#' # Load cohorts (assumes that they have already been instantiated)
-#' cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort")
-#' cohorts <- CohortGenerator::getCohortDefinitionSet(packageName = "MyGreatPackage")
-#' connectionDetails <- createConnectionDetails(
-#'   dbms = "postgresql",
-#'   server = "ohdsi.com",
-#'   port = 5432,
-#'   user = "me",
-#'   password = "secure"
-#' )
+#'   # Load cohorts (assumes that they have already been instantiated)
+#'   cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort")
+#'   cohorts <- CohortGenerator::getCohortDefinitionSet(packageName = "MyGreatPackage")
+#'   connectionDetails <- createConnectionDetails(
+#'     dbms = "postgresql",
+#'     server = "ohdsi.com",
+#'     port = 5432,
+#'     user = "me",
+#'     password = "secure"
+#'   )
 #'
-#' executeDiagnostics(
-#'   cohorts = cohorts,
-#'   exportFolder = "export",
-#'   cohortTableNames = cohortTableNames,
-#'   cohortDatabaseSchema = "results",
-#'   cdmDatabaseSchema = "cdm",
-#'   databaseId = "mySpecialCdm",
-#'   connectionDetails = connectionDetails
-#' )
+#'   executeDiagnostics(
+#'     cohorts = cohorts,
+#'     exportFolder = "export",
+#'     cohortTableNames = cohortTableNames,
+#'     cohortDatabaseSchema = "results",
+#'     cdmDatabaseSchema = "cdm",
+#'     databaseId = "mySpecialCdm",
+#'     connectionDetails = connectionDetails
+#'   )
 #' }
 #'
 #' @importFrom CohortGenerator getCohortTableNames
