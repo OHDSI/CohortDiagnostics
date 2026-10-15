@@ -30,3 +30,14 @@ compare_versions
 ^doc$
 ^Meta$
 inst/shiny/DiagnosticsExplorer/renv
+inst/shiny/DiagnosticsExplorer/tests
+tests/testthat/unit/_snaps
+^sql$
+^coverage_report.*\.html$
+^coverage_results_unit\.rds$
+^lib$
+^\.Rhistory$
+^CohortDiagnostics\.Rcheck$
+^\.lintr$
+^\.pre-commit-config\.yaml$
+^AGENTS\.md$

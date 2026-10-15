@@ -27,6 +27,7 @@ jobs:
 
     env:
       GITHUB_PAT: ${{ secrets.GH_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       RSPM: ${{ matrix.config.rspm }}
       CDM5_ORACLE_CDM_SCHEMA: ${{ secrets.CDM5_ORACLE_CDMCDM54_SCHEMA }}
@@ -53,11 +54,17 @@ jobs:
       CDM5_SPARK_PASSWORD: ${{ secrets.CDM5_SPARK_PASSWORD }}
       CDM5_SPARK_CONNECTION_STRING: ${{ secrets.CDM5_SPARK_CONNECTION_STRING }}
       IS_GITHUB_ACTIONS: true
+      INTEGRATION_TESTS: "TRUE"
+      RUN_ALL_TESTS: "TRUE"
+      NOT_CRAN: "true"
+      DATABASECONNECTOR_JAR_FOLDER: ${{ github.workspace }}/jdbc_drivers
+
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: r-lib/actions/setup-r@v2
+
         with:
           r-version: ${{ matrix.config.r }}
 
@@ -77,7 +84,9 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck
+          extra-packages: |
+            any::rcmdcheck
+            OHDSI/OhdsiShinyModules
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2
@@ -91,8 +100,9 @@ jobs:
         if: success() && runner.os == 'Windows' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
-          name: package_tarball
+          name: package_tarball-${{ matrix.config.os }}-${{ matrix.config.r }}
           path: check/*.tar.gz
+
 
       - name: Install covr
         if: runner.os == 'Linux'
@@ -112,16 +122,16 @@ jobs:
           covr::to_cobertura(cov)
         shell: Rscript {0}
 
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         if: runner.os == 'Linux'
         with:
-          file: ./cobertura.xml
-          plugin: noop
+          files: ./cobertura.xml
+          plugins: noop
           disable_search: true
           token: ${{ secrets.CODECOV_TOKEN }}
 
   Release:
-    needs: R-CMD-Check
+    needs: R-CMD-check
 
     runs-on: macOS-latest
 
@@ -132,9 +142,10 @@ jobs:
 
     steps:
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
 
       - name: Check if version has increased
         run: |
@@ -174,9 +185,10 @@ jobs:
 
       - name: Download package tarball
         if: ${{ env.new_version != '' }}
-        uses: actions/download-artifact@v4.1.7
+        uses: actions/download-artifact@v4
         with:
-          name: package_tarball
+          name: package_tarball-windows-latest-release
+
 
       - name: Push to drat
         if: ${{ env.new_version != '' }}

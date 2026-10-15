@@ -75,7 +75,7 @@ getDefaultVocabularyTableNames <- function() {
 createResultsDataModel <- function(connectionDetails = NULL,
                                    databaseSchema,
                                    tablePrefix = "") {
-  if (connectionDetails$dbms == "sqlite" & databaseSchema != "main") {
+  if (connectionDetails$dbms == "sqlite" && databaseSchema != "main") {
     stop("Invalid schema for sqlite, use databaseSchema = 'main'")
   }
 
