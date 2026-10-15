@@ -42,9 +42,9 @@ runConceptSetDiagnostic <- function(context,
   if (is.null(cohortDefinitionSet)) {
     cohortDefinitionSet <- context$cohortDefinitionSet
   }
-  
+
   if (!is.null(cohortIds)) {
-    cohortDefinitionSet <- cohortDefinitionSet %>% 
+    cohortDefinitionSet <- cohortDefinitionSet %>%
       dplyr::filter(.data$cohortId %in% cohortIds)
   }
 

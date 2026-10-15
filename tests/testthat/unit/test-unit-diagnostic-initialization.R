@@ -6,7 +6,7 @@ test_that("initializeDiagnostics sets up context correctly", {
   exportFolder <- tempfile("export")
   dir.create(exportFolder)
   on.exit(unlink(exportFolder, recursive = TRUE))
-  
+
   context <- createDiagnosticsContext(
     databaseId = "test",
     cdmDatabaseSchema = "cdm",
@@ -18,9 +18,9 @@ test_that("initializeDiagnostics sets up context correctly", {
   )
   # Set connectionDetails to avoid initializeDiagnostics stopping
   context$connectionDetails <- list(dbms = "sqlite")
-  
+
   cohortDefinitionSet <- createMockCohortDefinitionSet(numCohorts = 1)
-  
+
   # Mock all dependencies in DatabaseConnector specifically
   local_mocked_bindings(
     connect = function(...) mockDatabaseConnection(),
@@ -52,7 +52,7 @@ test_that("initializeDiagnostics sets up context correctly", {
     },
     .package = "CohortDiagnostics"
   )
-  
+
   local_mocked_bindings(
     getCdmDataSourceInformation = function(...) {
       dplyr::tibble(
@@ -76,7 +76,7 @@ test_that("initializeDiagnostics sets up context correctly", {
     },
     .package = "CohortDiagnostics"
   )
-  
+
   # Silent ParallelLogger
   local_mocked_bindings(
     logInfo = function(...) NULL,
@@ -88,7 +88,7 @@ test_that("initializeDiagnostics sets up context correctly", {
   )
 
   updatedContext <- initializeDiagnostics(context, cohortDefinitionSet)
-  
+
   expect_true(updatedContext$isInitialized)
   expect_equal(updatedContext$databaseName, "TestDB")
   expect_equal(length(updatedContext$instantiatedCohorts), 1)
@@ -104,8 +104,8 @@ test_that("extractConceptSetsSqlFromCohortSql handles different casing", {
 
 test_that("initializeDiagnostics fails with no cohorts", {
   context <- createDiagnosticsContext(
-    databaseId = "test", 
-    cdmDatabaseSchema = "cdm", 
+    databaseId = "test",
+    cdmDatabaseSchema = "cdm",
     cohortDatabaseSchema = "results",
     exportFolder = tempfile()
   )

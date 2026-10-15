@@ -28,50 +28,50 @@
 runVisitContextDiagnostic <- function(context,
                                       cohortDefinitionSet = NULL,
                                       cohortIds = NULL) {
-    checkmate::assertClass(context, "DiagnosticsContext")
-    if (!context$isInitialized) {
-        stop("Diagnostics context not initialized. Call initializeDiagnostics() first.")
-    }
+  checkmate::assertClass(context, "DiagnosticsContext")
+  if (!context$isInitialized) {
+    stop("Diagnostics context not initialized. Call initializeDiagnostics() first.")
+  }
 
-    if (is.null(cohortDefinitionSet)) {
-        cohortDefinitionSet <- context$cohortDefinitionSet
-    }
+  if (is.null(cohortDefinitionSet)) {
+    cohortDefinitionSet <- context$cohortDefinitionSet
+  }
 
-    if (!is.null(cohortIds)) {
-        cohortDefinitionSet <- cohortDefinitionSet %>%
-            dplyr::filter(.data$cohortId %in% cohortIds)
-    }
+  if (!is.null(cohortIds)) {
+    cohortDefinitionSet <- cohortDefinitionSet %>%
+      dplyr::filter(.data$cohortId %in% cohortIds)
+  }
 
-    if (nrow(cohortDefinitionSet) == 0) {
-        ParallelLogger::logWarn("No cohorts to run visit context diagnostic for.")
-        return(invisible(NULL))
-    }
-
-    recordKeepingFile <- file.path(context$incrementalFolder, "CreatedDiagnostics.csv")
-
-    timeExecution(
-        context$exportFolder,
-        "executeVisitContextDiagnostics",
-        cohortIds = cohortDefinitionSet$cohortId,
-        parent = "runVisitContextDiagnostic",
-        expr = {
-            executeVisitContextDiagnostics(
-                connection = context$connection,
-                tempEmulationSchema = context$tempEmulationSchema,
-                cdmDatabaseSchema = context$cdmDatabaseSchema,
-                cohortDatabaseSchema = context$cohortDatabaseSchema,
-                cohortTable = context$cohortTable,
-                cdmVersion = context$cdmVersion,
-                databaseId = context$databaseId,
-                exportFolder = context$exportFolder,
-                minCellCount = context$minCellCount,
-                cohorts = cohortDefinitionSet,
-                instantiatedCohorts = context$instantiatedCohorts,
-                recordKeepingFile = recordKeepingFile,
-                incremental = context$incremental
-            )
-        }
-    )
-
+  if (nrow(cohortDefinitionSet) == 0) {
+    ParallelLogger::logWarn("No cohorts to run visit context diagnostic for.")
     return(invisible(NULL))
+  }
+
+  recordKeepingFile <- file.path(context$incrementalFolder, "CreatedDiagnostics.csv")
+
+  timeExecution(
+    context$exportFolder,
+    "executeVisitContextDiagnostics",
+    cohortIds = cohortDefinitionSet$cohortId,
+    parent = "runVisitContextDiagnostic",
+    expr = {
+      executeVisitContextDiagnostics(
+        connection = context$connection,
+        tempEmulationSchema = context$tempEmulationSchema,
+        cdmDatabaseSchema = context$cdmDatabaseSchema,
+        cohortDatabaseSchema = context$cohortDatabaseSchema,
+        cohortTable = context$cohortTable,
+        cdmVersion = context$cdmVersion,
+        databaseId = context$databaseId,
+        exportFolder = context$exportFolder,
+        minCellCount = context$minCellCount,
+        cohorts = cohortDefinitionSet,
+        instantiatedCohorts = context$instantiatedCohorts,
+        recordKeepingFile = recordKeepingFile,
+        incremental = context$incremental
+      )
+    }
+  )
+
+  return(invisible(NULL))
 }

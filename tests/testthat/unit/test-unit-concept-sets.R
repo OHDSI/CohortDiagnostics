@@ -36,13 +36,13 @@ getCohortDefinitionWithSubset <- function() {
   parent$cohortId <- 1
   parent$isSubset <- FALSE
   parent$subsetParent <- 1
-  
+
   subset <- parent
   subset$cohortId <- 2
   subset$isSubset <- TRUE
   subset$subsetParent <- 1
   subset$sql <- ""
-  
+
   dplyr::bind_rows(parent, subset)
 }
 
@@ -201,10 +201,10 @@ test_that("runConceptSetDiagnostics works with mocks", {
   dir.create(exportFolder)
   on.exit(unlink(exportFolder, recursive = TRUE))
   recordKeepingFile <- file.path(exportFolder, "record.csv")
-  
+
   cohorts <- getCohortDefinitionWithConceptSets(1)
   cohorts$checksum <- "123"
-  
+
   local_mocked_bindings(
     renderTranslateExecuteSql = function(...) NULL,
     makeDataExportable = function(x, ...) x,
@@ -212,31 +212,31 @@ test_that("runConceptSetDiagnostics works with mocks", {
     recordTasksDone = function(...) NULL,
     .package = "CohortDiagnostics"
   )
-  
+
   local_mocked_bindings(
     executeSql = function(...) NULL,
     renderTranslateQuerySql = function(connection, sql, ...) {
-       if (grepl("SourceConcepts|include_source_concept_table", sql, ignore.case = TRUE) || grepl("conceptSetId", sql)) {
-         return(data.frame(conceptSetId = 0, conceptId = 1, sourceConceptId = 2, conceptCount = 10, conceptSubjects = 10))
-       } else if (grepl("inst_concept_sets", sql)) {
-         return(data.frame(codesetId = 0, conceptId = 1))
-       }
-       return(data.frame())
+      if (grepl("SourceConcepts|include_source_concept_table", sql, ignore.case = TRUE) || grepl("conceptSetId", sql)) {
+        return(data.frame(conceptSetId = 0, conceptId = 1, sourceConceptId = 2, conceptCount = 10, conceptSubjects = 10))
+      } else if (grepl("inst_concept_sets", sql)) {
+        return(data.frame(codesetId = 0, conceptId = 1))
+      }
+      return(data.frame())
     },
     .package = "DatabaseConnector"
   )
-  
+
   # Mock read_csv for breakdown
   local_mocked_bindings(
-    read_csv = function(...) data.frame(domain = "Condition", domainTable = "condition_occurrence", domainStartDate="condition_start_date", domainConceptId="condition_concept_id", domainSourceConceptId="condition_source_concept_id"),
+    read_csv = function(...) data.frame(domain = "Condition", domainTable = "condition_occurrence", domainStartDate = "condition_start_date", domainConceptId = "condition_concept_id", domainSourceConceptId = "condition_source_concept_id"),
     .package = "readr"
   )
-  
+
   local_mocked_bindings(
     loadRenderTranslateSql = function(...) "SELECT 1;",
     .package = "SqlRender"
   )
-  
+
   CohortDiagnostics:::runConceptSetDiagnostics(
     connection = connection,
     tempEmulationSchema = "temp",
@@ -253,7 +253,7 @@ test_that("runConceptSetDiagnostics works with mocks", {
     incremental = FALSE,
     recordKeepingFile = recordKeepingFile
   )
-  
+
   expect_true(TRUE)
 })
 
@@ -262,10 +262,10 @@ test_that("getInclusionStats works with mocks", {
   exportFolder <- tempfile("export")
   dir.create(exportFolder)
   on.exit(unlink(exportFolder, recursive = TRUE))
-  
+
   cohortDefinitionSet <- getMinimalCohortDefinitionSet()
   cohortDefinitionSet$checksum <- "123"
-  
+
   local_mocked_bindings(
     insertInclusionRuleNames = function(...) NULL,
     getCohortStats = function(...) {
@@ -278,7 +278,7 @@ test_that("getInclusionStats works with mocks", {
     },
     .package = "CohortGenerator"
   )
-  
+
   local_mocked_bindings(
     makeDataExportable = function(x, ...) x,
     writeToCsv = function(...) NULL,
@@ -289,7 +289,7 @@ test_that("getInclusionStats works with mocks", {
     },
     .package = "CohortDiagnostics"
   )
-  
+
   CohortDiagnostics:::getInclusionStats(
     connection = connection,
     exportFolder = exportFolder,
@@ -302,19 +302,19 @@ test_that("getInclusionStats works with mocks", {
     minCellCount = 5,
     recordKeepingFile = file.path(exportFolder, "record.csv")
   )
-  
+
   expect_true(TRUE)
 })
 
 test_that("getCodeSetId and getCodeSetIds work", {
   criterion_list <- list(CodesetId = 123)
   expect_equal(CohortDiagnostics:::getCodeSetId(criterion_list), 123)
-  
+
   criterion_vec <- c(CodesetId = 456)
   expect_equal(as.numeric(CohortDiagnostics:::getCodeSetId(criterion_vec)), 456)
-  
+
   expect_true(is.na(CohortDiagnostics:::getCodeSetId("not a list or vector")))
-  
+
   criterionList <- list(
     Condition = list(CodesetId = 1),
     Drug = list(CodesetId = 2)
@@ -328,53 +328,53 @@ test_that("exportConceptSets works with mocks", {
   exportFolder <- tempfile("export")
   dir.create(exportFolder)
   on.exit(unlink(exportFolder, recursive = TRUE))
-  
+
   cohortDefinitionSet <- getCohortDefinitionWithConceptSets(1)
-  
+
   local_mocked_bindings(
     combineConceptSetsFromCohorts = function(...) {
-       data.frame(cohortId = 1, uniqueConceptSetId = 1, conceptSetId = 0)
+      data.frame(cohortId = 1, uniqueConceptSetId = 1, conceptSetId = 0)
     },
     makeDataExportable = function(x, ...) x,
     writeToCsv = function(...) NULL,
     .package = "CohortDiagnostics"
   )
-  
+
   CohortDiagnostics:::exportConceptSets(
     cohortDefinitionSet = cohortDefinitionSet,
     exportFolder = exportFolder,
     minCellCount = 5,
     databaseId = "test"
   )
-  
+
   expect_true(TRUE)
 })
 
 test_that("mergeTempTables works as expected", {
   connection <- mockDatabaseConnection()
   tempTables <- c("#temp1", "#temp2")
-  
+
   local_mocked_bindings(
     executeSql = function(connection, sql, ...) {
       # No-op for test
     },
     .package = "DatabaseConnector"
   )
-  
+
   CohortDiagnostics:::mergeTempTables(
     connection = connection,
     tableName = "#final_table",
     tempTables = tempTables,
     tempEmulationSchema = NULL
   )
-  
+
   expect_true(TRUE)
 })
 
 test_that("instantiateUniqueConceptSets works with zero rows", {
   connection <- mockDatabaseConnection()
   uniqueConceptSets <- data.frame()
-  
+
   # Should just return without error
   expect_error(
     CohortDiagnostics:::instantiateUniqueConceptSets(
@@ -393,17 +393,17 @@ test_that("instantiateUniqueConceptSets works with data", {
     uniqueConceptSetId = 1,
     conceptSetSql = "SELECT 0 as codeset_id (SELECT 123) C"
   )
-  
+
   local_mocked_bindings(
     executeSql = function(...) NULL,
     .package = "DatabaseConnector"
   )
-  
+
   local_mocked_bindings(
     mergeTempTables = function(...) NULL,
     .package = "CohortDiagnostics"
   )
-  
+
   expect_error(
     CohortDiagnostics:::instantiateUniqueConceptSets(
       uniqueConceptSets = uniqueConceptSets,

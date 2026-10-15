@@ -8,7 +8,7 @@ getMinimalCohortDefinitionSet <- function() {
   dplyr::tibble(
     cohortId = 1L,
     cohortName = "Minimal Test Cohort",
-    sql = "SELECT 1 as cohort_definition_id, 1 as subject_id, 
+    sql = "SELECT 1 as cohort_definition_id, 1 as subject_id,
            CAST('2020-01-01' AS DATE) as cohort_start_date,
            CAST('2020-12-31' AS DATE) as cohort_end_date;",
     json = as.character(jsonlite::toJSON(list(
@@ -33,8 +33,8 @@ getSingleCohortDefinition <- function(cohortId = 1L) {
     cohortId = cohortId,
     cohortName = paste0("Test Cohort ", cohortId),
     sql = sprintf("
-      SELECT %d as cohort_definition_id, 
-             subject_id, 
+      SELECT %d as cohort_definition_id,
+             subject_id,
              cohort_start_date,
              cohort_end_date
       FROM @cohort_database_schema.@cohort_table
@@ -97,7 +97,7 @@ getSingleCohortDefinition <- function(cohortId = 1L) {
 #' @return A data frame with multiple cohort definitions
 getMultipleCohortDefinitions <- function(numCohorts = 3L) {
   cohortIds <- seq_len(numCohorts)
-  
+
   purrr::map_dfr(cohortIds, function(id) {
     getSingleCohortDefinition(cohortId = id)
   })
@@ -108,7 +108,7 @@ getMultipleCohortDefinitions <- function(numCohorts = 3L) {
 #' @return A data frame with parent and subset cohort definitions
 getCohortDefinitionWithSubset <- function() {
   parent <- getSingleCohortDefinition(cohortId = 1L)
-  
+
   subset <- dplyr::tibble(
     cohortId = 2L,
     cohortName = "Test Cohort 1 - Subset",
@@ -118,10 +118,10 @@ getCohortDefinitionWithSubset <- function() {
     isSubset = TRUE,
     subsetParent = 1L
   )
-  
+
   parent$isSubset <- FALSE
   parent$subsetParent <- NA_integer_
-  
+
   dplyr::bind_rows(parent, subset)
 }
 
@@ -150,7 +150,7 @@ getCohortDefinitionWithConceptSets <- function(numConceptSets = 2L) {
       )
     )
   })
-  
+
   dplyr::tibble(
     cohortId = 1L,
     cohortName = "Cohort with Concept Sets",

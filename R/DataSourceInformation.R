@@ -15,7 +15,6 @@
 # limitations under the License.
 
 
-
 #' Returns information from CDM source table.
 #'
 #' @description

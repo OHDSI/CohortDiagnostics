@@ -6,7 +6,7 @@ test_that("runConceptSetDiagnostics works with mocks", {
   exportFolder <- tempfile("export")
   dir.create(exportFolder)
   on.exit(unlink(exportFolder, recursive = TRUE))
-  
+
   context <- list(
     connection = mockDatabaseConnection(),
     cdmDatabaseSchema = "cdm",
@@ -31,13 +31,13 @@ test_that("runConceptSetDiagnostics works with mocks", {
   )
   class(context) <- "DiagnosticsContext"
   dir.create(context$incrementalFolder)
-  
+
   # Mock all internal calls
   local_mocked_bindings(
     loadRenderTranslateSql = function(...) "SELECT 1;",
     .package = "SqlRender"
   )
-  
+
   local_mocked_bindings(
     executeSql = function(...) NULL,
     renderTranslateQuerySql = function(connection, sql, ...) {
@@ -57,25 +57,25 @@ test_that("runConceptSetDiagnostics works with mocks", {
           conceptSubjects = 10
         ))
       } else if (grepl("orphan_concepts", sql)) {
-          return(dplyr::tibble(
-              conceptId = 200,
-              conceptCount = 5,
-              conceptSubjects = 5
-          ))
+        return(dplyr::tibble(
+          conceptId = 200,
+          conceptCount = 5,
+          conceptSubjects = 5
+        ))
       }
       return(dplyr::tibble(dummy = 1)[0, ])
     },
     renderTranslateExecuteSql = function(...) NULL,
     .package = "DatabaseConnector"
   )
-  
+
   local_mocked_bindings(
     makeDataExportable = function(x, ...) x,
     writeToCsv = function(...) NULL,
     recordTasksDone = function(...) NULL,
     .package = "CohortDiagnostics"
   )
-  
+
   # Silent ParallelLogger
   local_mocked_bindings(
     logInfo = function(...) NULL,
@@ -90,6 +90,6 @@ test_that("runConceptSetDiagnostics works with mocks", {
     runOrphanConcepts = TRUE,
     runBreakdownIndexEvents = TRUE
   )
-  
+
   expect_true(TRUE)
 })

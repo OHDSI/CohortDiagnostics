@@ -23,26 +23,26 @@ test_that("createResultsDataModel works with mocks", {
     executeSql = function(...) NULL,
     .package = "DatabaseConnector"
   )
-  
+
   # Mock SqlRender
   local_mocked_bindings(
     loadRenderTranslateSql = function(...) "CREATE TABLE test;",
     .package = "SqlRender"
   )
-  
+
   # Mock internal migrateDataModel (to avoid deep nesting)
   local_mocked_bindings(
     migrateDataModel = function(...) NULL,
     .package = "CohortDiagnostics"
   )
-  
+
   # SQLite main
   createResultsDataModel(
     connectionDetails = list(dbms = "sqlite"),
     databaseSchema = "main"
   )
   expect_true(TRUE)
-  
+
   # SQLite invalid schema
   expect_error(
     createResultsDataModel(
@@ -58,13 +58,13 @@ test_that("uploadResults works with mocks", {
     unzip = function(...) NULL,
     .package = "zip"
   )
-  
+
   # Mock ResultModelManager::uploadResults
   local_mocked_bindings(
     uploadResults = function(...) NULL,
     .package = "ResultModelManager"
   )
-  
+
   # Mock ParallelLogger
   local_mocked_bindings(
     logInfo = function(...) NULL,
@@ -75,7 +75,7 @@ test_that("uploadResults works with mocks", {
   zipFile <- tempfile(fileext = ".zip")
   writeLines("", zipFile)
   on.exit(unlink(zipFile))
-  
+
   uploadResults(
     connectionDetails = list(dbms = "sqlite"),
     schema = "main",
@@ -95,13 +95,13 @@ test_that("migrateDataModel and getDataMigrator work with mocks", {
     },
     .package = "CohortDiagnostics"
   )
-  
+
   # Mock SqlRender
   local_mocked_bindings(
     loadRenderTranslateSql = function(...) "UPDATE version SET version = 1;",
     .package = "SqlRender"
   )
-  
+
   # Mock DatabaseConnector
   local_mocked_bindings(
     connect = function(...) mockDatabaseConnection(),
@@ -109,7 +109,7 @@ test_that("migrateDataModel and getDataMigrator work with mocks", {
     executeSql = function(...) NULL,
     .package = "DatabaseConnector"
   )
-  
+
   # Mock ParallelLogger
   local_mocked_bindings(
     logInfo = function(...) NULL,
@@ -127,14 +127,14 @@ test_that("migrateDataModel and getDataMigrator work with mocks", {
     getDataMigrator = CohortDiagnostics:::getDataMigrator,
     .package = "CohortDiagnostics"
   )
-  
+
   # Mock ResultModelManager::DataMigrationManager
   mockRMM <- list(new = function(...) list())
   local_mocked_bindings(
     DataMigrationManager = mockRMM,
     .package = "ResultModelManager"
   )
-  
+
   migrator <- getDataMigrator(
     connectionDetails = list(dbms = "sqlite"),
     databaseSchema = "main"

@@ -8,7 +8,7 @@
 #' @return A data frame with cohort definitions
 createMockCohortDefinitionSet <- function(numCohorts = 1, includeSubsets = FALSE) {
   cohortIds <- seq_len(numCohorts)
-  
+
   cohortDefs <- dplyr::tibble(
     cohortId = cohortIds,
     cohortName = paste0("Test Cohort ", cohortIds),
@@ -31,12 +31,12 @@ createMockCohortDefinitionSet <- function(numCohorts = 1, includeSubsets = FALSE
       digest::digest(paste0("cohort_", id))
     })
   )
-  
+
   if (includeSubsets) {
     cohortDefs$isSubset <- FALSE
     cohortDefs$subsetParent <- NA_integer_
   }
-  
+
   return(cohortDefs)
 }
 
@@ -68,7 +68,7 @@ createMockCohortCounts <- function(cohortIds = c(1, 2, 3), counts = NULL) {
   if (is.null(counts)) {
     counts <- sample(100:1000, length(cohortIds))
   }
-  
+
   dplyr::tibble(
     cohortId = cohortIds,
     cohortEntries = counts,
@@ -84,7 +84,7 @@ createMockCohortCounts <- function(cohortIds = c(1, 2, 3), counts = NULL) {
 createMockTemporalCovariateData <- function(cohortIds = c(1), numCovariates = 10) {
   # Create mock covariates
   covariateIds <- seq_len(numCovariates)
-  
+
   covariates <- expand.grid(
     cohortDefinitionId = cohortIds,
     timeId = 1:3,
@@ -95,14 +95,14 @@ createMockTemporalCovariateData <- function(cohortIds = c(1), numCovariates = 10
       sumValue = runif(dplyr::n(), 0, 100),
       averageValue = runif(dplyr::n(), 0, 1)
     )
-  
+
   covariateRef <- dplyr::tibble(
     covariateId = covariateIds,
     covariateName = paste0("Covariate ", covariateIds),
     analysisId = 1,
     conceptId = covariateIds * 1000
   )
-  
+
   analysisRef <- dplyr::tibble(
     analysisId = 1,
     analysisName = "Mock Analysis",
@@ -110,13 +110,13 @@ createMockTemporalCovariateData <- function(cohortIds = c(1), numCovariates = 10
     isBinary = "Y",
     missingMeansZero = "Y"
   )
-  
+
   timeRef <- dplyr::tibble(
     timeId = 1:3,
     startDay = c(-365, -30, 0),
     endDay = c(-31, -1, 0)
   )
-  
+
   # Return structure similar to FeatureExtraction output
   structure(
     list(
@@ -155,11 +155,11 @@ createMockIncidenceRateData <- function(cohortId = 1, numRows = 10) {
 #' @param startDate Start date for time series
 #' @param endDate End date for time series
 #' @return A data frame with time series data
-createMockTimeSeriesData <- function(cohortIds = c(1), 
+createMockTimeSeriesData <- function(cohortIds = c(1),
                                      startDate = as.Date("2015-01-01"),
                                      endDate = as.Date("2019-12-31")) {
   dates <- seq(startDate, endDate, by = "month")
-  
+
   expand.grid(
     cohortId = cohortIds,
     periodBegin = dates

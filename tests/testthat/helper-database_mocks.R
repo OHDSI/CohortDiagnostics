@@ -2,9 +2,10 @@
 # Mock database connections and queries for unit testing
 
 # Define S4 class for MockConnection to support @dbms
-try(methods::setClass("MockConnection", 
-                  slots = c(dbms = "character", mock = "logical"),
-                  contains = "DatabaseConnectorConnection"), silent = TRUE)
+try(methods::setClass("MockConnection",
+  slots = c(dbms = "character", mock = "logical"),
+  contains = "DatabaseConnectorConnection"
+), silent = TRUE)
 
 # Register DBI methods for MockConnection
 if (!isGeneric("dbIsValid")) {
@@ -30,9 +31,10 @@ try(methods::setMethod("dbSendQuery", "MockConnection", function(conn, statement
 if (!isGeneric("dbClearResult")) {
   try(setGeneric("dbClearResult", function(res, ...) standardGeneric("dbClearResult")), silent = TRUE)
 }
-try(methods::setClass("MockResult", 
-                  slots = c(dummy = "logical"),
-                  contains = "DBIResult"), silent = TRUE)
+try(methods::setClass("MockResult",
+  slots = c(dummy = "logical"),
+  contains = "DBIResult"
+), silent = TRUE)
 try(methods::setMethod("dbClearResult", "MockResult", function(res, ...) TRUE), silent = TRUE)
 
 if (!isGeneric("dbFetch")) {

@@ -6,11 +6,11 @@ library(Andromeda)
 test_that("runCohortTimeSeriesDiagnostics works as expected with mocks", {
   # Mock database connection
   connection <- mockDatabaseConnection()
-  
+
   # Mock result from the first query to avoid exiting
   # TimeSeries.R expects cohort_definition_id and count (or cohortDefinitionId and count after camelCase)
   testCohortCount <- data.frame(cohortDefinitionId = 1, count = 10)
-  
+
   # Mock calendar periods
   calendarPeriods <- data.frame(
     timeId = 1,
@@ -18,7 +18,7 @@ test_that("runCohortTimeSeriesDiagnostics works as expected with mocks", {
     periodEnd = as.Date("2020-03-31"),
     calendarInterval = "q"
   )
-  
+
   local_mocked_bindings(
     connect = function(...) connection,
     disconnect = function(...) NULL,
@@ -31,7 +31,7 @@ test_that("runCohortTimeSeriesDiagnostics works as expected with mocks", {
           timeId = 1,
           recordsCount = 5,
           personDays = 100,
-          personYears = 100/365.25,
+          personYears = 100 / 365.25,
           ageGroup = NA_integer_,
           gender = NA_character_
         )
@@ -42,7 +42,7 @@ test_that("runCohortTimeSeriesDiagnostics works as expected with mocks", {
           gender = "MALE",
           recordsCount = 3,
           personDays = 60,
-          personYears = 60/365.25,
+          personYears = 60 / 365.25,
           ageGroup = NA_integer_
         )
       } else if (andromedaTableName == "ageGroup") {
@@ -52,7 +52,7 @@ test_that("runCohortTimeSeriesDiagnostics works as expected with mocks", {
           ageGroup = 3,
           recordsCount = 2,
           personDays = 40,
-          personYears = 40/365.25,
+          personYears = 40 / 365.25,
           gender = NA_character_
         )
       } else if (andromedaTableName == "ageGroupGender") {
@@ -63,7 +63,7 @@ test_that("runCohortTimeSeriesDiagnostics works as expected with mocks", {
           ageGroup = 3,
           recordsCount = 1,
           personDays = 20,
-          personYears = 20/365.25
+          personYears = 20 / 365.25
         )
       }
       return(NULL)
@@ -71,18 +71,18 @@ test_that("runCohortTimeSeriesDiagnostics works as expected with mocks", {
     renderTranslateQuerySql = function(...) testCohortCount,
     .package = "DatabaseConnector"
   )
-  
+
   local_mocked_bindings(
     renderTranslateQuerySql = function(...) testCohortCount,
     .package = "CohortDiagnostics"
   )
-  
+
   local_mocked_bindings(
     loadRenderTranslateSql = function(...) "SELECT 1;",
     render = function(sql, ...) sql,
     .package = "SqlRender"
   )
-  
+
   # Silent ParallelLogger
   local_mocked_bindings(
     logInfo = function(...) NULL,
@@ -105,7 +105,7 @@ test_that("runCohortTimeSeriesDiagnostics works as expected with mocks", {
     stratifyByAgeGroup = TRUE,
     cohortIds = 1
   )
-  
+
   expect_true(is.data.frame(result))
   expect_true(nrow(result) > 0)
   expect_true("ageGroup" %in% colnames(result))
@@ -118,7 +118,7 @@ test_that("executeTimeSeriesDiagnostics works with mocks", {
   dir.create(exportFolder)
   on.exit(unlink(exportFolder, recursive = TRUE))
   recordKeepingFile <- file.path(exportFolder, "record.csv")
-  
+
   cohortDefinitionSet <- dplyr::tibble(
     cohortId = 1,
     cohortName = "Test",
@@ -126,12 +126,12 @@ test_that("executeTimeSeriesDiagnostics works with mocks", {
     sql = "SELECT 1;",
     checksum = "123"
   )
-  
+
   observationPeriodDateRange <- list(
     observationPeriodMinDate = as.Date("2020-01-01"),
     observationPeriodMaxDate = as.Date("2020-12-31")
   )
-  
+
   local_mocked_bindings(
     runCohortTimeSeriesDiagnostics = function(...) {
       data.frame(cohortId = 1, date = as.Date("2020-01-01"), count = 10, personDays = 100)
@@ -145,7 +145,7 @@ test_that("executeTimeSeriesDiagnostics works with mocks", {
     },
     .package = "CohortDiagnostics"
   )
-  
+
   CohortDiagnostics:::executeTimeSeriesDiagnostics(
     connection = connection,
     tempEmulationSchema = "temp",
@@ -163,7 +163,7 @@ test_that("executeTimeSeriesDiagnostics works with mocks", {
     recordKeepingFile = recordKeepingFile,
     observationPeriodDateRange = observationPeriodDateRange
   )
-  
+
   expect_true(TRUE)
 })
 
@@ -174,7 +174,7 @@ test_that("aggregateTimeSeriesData works", {
     cohortId = 1,
     personDays = c(100, 200, 300)
   )
-  
+
   # Monthly
   agg <- CohortDiagnostics:::aggregateTimeSeriesData(
     data = data,
@@ -182,27 +182,27 @@ test_that("aggregateTimeSeriesData works", {
     startDate = as.Date("2020-01-01"),
     endDate = as.Date("2020-03-01")
   )
-  
+
   expect_equal(nrow(agg), 3) # Jan, Feb, Mar (padded)
   expect_equal(agg$recordsCount[1], 30) # Jan (10+20)
   expect_equal(agg$recordsCount[2], 30) # Feb (30)
-  expect_equal(agg$recordsCount[3], 0)  # Mar (padded)
+  expect_equal(agg$recordsCount[3], 0) # Mar (padded)
 })
 
 test_that("runCohortTimeSeriesDiagnostics exits when no cohorts provide rows", {
   connection <- mockDatabaseConnection()
   emptyCohortCount <- data.frame(cohortDefinitionId = numeric(), count = numeric())
-  
+
   local_mocked_bindings(
     renderTranslateQuerySql = function(...) emptyCohortCount,
     .package = "DatabaseConnector"
   )
-  
+
   local_mocked_bindings(
     renderTranslateQuerySql = function(...) emptyCohortCount,
     .package = "CohortDiagnostics"
   )
-  
+
   # The warning actually comes from line 102 of TimeSeries.R
   expect_warning(
     runCohortTimeSeriesDiagnostics(

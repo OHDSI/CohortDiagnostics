@@ -5,22 +5,22 @@
 testthat::skip_on_cran()
 
 if (Sys.getenv("INTEGRATION_TESTS") == "TRUE" && dir.exists(testthat::test_path("integration"))) {
-    # List all test files in the integration directory
-    integration_tests <- list.files(
-        testthat::test_path("integration"),
-        pattern = "^test.*\\.R$",
-        full.names = TRUE
-    )
+  # List all test files in the integration directory
+  integration_tests <- list.files(
+    testthat::test_path("integration"),
+    pattern = "^test.*\\.R$",
+    full.names = TRUE
+  )
 
-    # Source each file to run the tests
-    # We use source() to preserve the environment
-    for (test_file in integration_tests) {
-        testthat::test_that(paste("Sourcing", basename(test_file)), {
-            source(test_file, local = TRUE)
-        })
-    }
-} else {
-    testthat::test_that("Integration tests status", {
-        testthat::skip("Integration tests not enabled - skipping.")
+  # Source each file to run the tests
+  # We use source() to preserve the environment
+  for (test_file in integration_tests) {
+    testthat::test_that(paste("Sourcing", basename(test_file)), {
+      source(test_file, local = TRUE)
     })
+  }
+} else {
+  testthat::test_that("Integration tests status", {
+    testthat::skip("Integration tests not enabled - skipping.")
+  })
 }
