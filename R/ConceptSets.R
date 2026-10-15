@@ -89,9 +89,9 @@ extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
   }
   conceptSetExpression <- list()
   if (length(expression$ConceptSets) > 0) {
-    for (i in (1:length(expression$ConceptSets))) {
-      jsonExpr <- expression$ConceptSets[[i]]$expression$items |>
-        jsonlite::toJSON(digits = 23) |>
+    for (i in seq_along(expression$ConceptSets)) {
+      jsonExpr <- expression$ConceptSets[[i]]$expression$items %>%
+        jsonlite::toJSON(digits = 23) %>%
         as.character()
       conceptSetExpression[[i]] <-
         tidyr::tibble(
@@ -147,7 +147,7 @@ combineConceptSetsFromCohorts <- function(cohorts) {
   conceptSets <- list()
   conceptSetCounter <- 0
 
-  for (i in (1:nrow(cohorts))) {
+  for (i in seq_len(nrow(cohorts))) {
     cohort <- cohorts[i, ]
 
     if (isTRUE(cohort$isSubset)) {
@@ -267,7 +267,7 @@ instantiateUniqueConceptSets <- function(uniqueConceptSets,
 
   if (nrow(uniqueConceptSets) > 0) {
     sql <- sapply(
-      split(uniqueConceptSets, 1:nrow(uniqueConceptSets)),
+      split(uniqueConceptSets, seq_len(nrow(uniqueConceptSets))),
       function(x) {
         sub(
           "SELECT [0-9]+ as codeset_id",
@@ -800,7 +800,7 @@ runConceptSetDiagnostics <- function(connection,
 
             if (nrow(primaryCodesetIds) > 0) {
               counts <-
-                lapply(split(primaryCodesetIds, 1:nrow(primaryCodesetIds)), getCounts) %>%
+                lapply(split(primaryCodesetIds, seq_len(nrow(primaryCodesetIds))), getCounts) %>%
                 dplyr::bind_rows() %>%
                 dplyr::arrange(.data$conceptCount)
             } else {
@@ -900,7 +900,7 @@ runConceptSetDiagnostics <- function(connection,
 
       # [OPTIMIZATION idea] can we modify the sql to do this for all uniqueConceptSetId in one query using group by?
       data <- list()
-      for (i in (1:nrow(uniqueConceptSets))) {
+      for (i in seq_len(nrow(uniqueConceptSets))) {
         conceptSet <- uniqueConceptSets[i, ]
         ParallelLogger::logInfo(
           "- Finding orphan concepts for concept set '",

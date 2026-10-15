@@ -1,15 +1,23 @@
 linters: linters_with_defaults(
-    # Line length is relaxed from the 80 character default to accommodate
-    # SQL strings and long argument lists common in this package.
-    line_length_linter = line_length_linter(120L),
-    # The package uses camelCase names alongside snake_case.
-    object_name_linter = object_name_linter(styles = c("snake_case", "camelCase", "symbols")),
+    # The package uses camelCase and dotted.case names alongside snake_case.
+    object_name_linter = object_name_linter(
+      styles = c("snake_case", "camelCase", "dotted.case", "symbols"),
+      regexes = c("base environment" = "^[.]GlobalEnv$")
+    ),
+    # The package uses the magrittr pipe throughout.
+    pipe_consistency_linter = pipe_consistency_linter(pipe = "%>%"),
+    # Formatting is delegated to styler. The linters below conflict with
+    # styler's output or flag unavoidable constructs (long SQL strings,
+    # commented examples, long descriptive names) and are therefore disabled.
+    line_length_linter = NULL,
+    indentation_linter = NULL,
+    object_length_linter = NULL,
+    commented_code_linter = NULL,
+    pipe_continuation_linter = NULL,
     # object_usage_linter produces false positives with tidy-evaluation (NSE).
     object_usage_linter = NULL,
     # Explicit return() statements are an accepted style in this package.
-    return_linter = NULL,
-    # The package uses the magrittr pipe throughout.
-    pipe_consistency_linter = pipe_consistency_linter(pipe = "%>%")
+    return_linter = NULL
   )
 encoding: "UTF-8"
 exclusions: list(

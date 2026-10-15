@@ -277,7 +277,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     )
   }
 
-  for (i in (1:length(seriesToRun))) {
+  for (i in seq_along(seriesToRun)) {
     ParallelLogger::logTrace(paste0(" - Running ", seriesToRun[[i]]))
     if (seriesToRun[[i]] == "ComputeTimeSeries1.sql") {
       ParallelLogger::logInfo(
@@ -526,7 +526,7 @@ executeTimeSeriesDiagnostics <- function(connection,
     )
   }
 
-  if (runCohortTimeSeries & nrow(cohortDefinitionSet) > 0) {
+  if (runCohortTimeSeries && nrow(cohortDefinitionSet) > 0) {
     subset <- subsetToRequiredCohorts(
       cohorts = cohortDefinitionSet %>%
         dplyr::filter(.data$cohortId %in% instantiatedCohorts),
@@ -546,7 +546,7 @@ executeTimeSeriesDiagnostics <- function(connection,
       }
 
       outputFile <- file.path(exportFolder, "time_series.csv")
-      if (!incremental & file.exists(outputFile)) {
+      if (!incremental && file.exists(outputFile)) {
         ParallelLogger::logInfo("Time series file exists, removing before batch operations")
         unlink(outputFile)
       }

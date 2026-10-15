@@ -143,7 +143,7 @@ VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient 
       recursive = TRUE
     )
 
-  for (i in (1:length(listOfZipFilesToUpload))) {
+  for (i in seq_along(listOfZipFilesToUpload)) {
     uploadResults(
       connectionDetails = postgresConnectionDetails,
       schema = resultsDatabaseSchema,

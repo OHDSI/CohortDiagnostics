@@ -76,7 +76,7 @@ runTemporalCharacterizationDiagnostic <- function(context,
 
   # Cohort relationship logic
   if (runCohortRelationship && nrow(cohortDefinitionSet) > 1) {
-    covariateCohorts <- cohortDefinitionSet |> dplyr::select("cohortId", "cohortName")
+    covariateCohorts <- cohortDefinitionSet %>% dplyr::select("cohortId", "cohortName")
     analysisId <- as.integer(Sys.getenv("OHDSI_CD_CF_ANALYSIS_ID", unset = 173))
 
     cohortFeSettings <-
@@ -97,7 +97,7 @@ runTemporalCharacterizationDiagnostic <- function(context,
   feCohortTable <- context$cohortTable
   feCohortCounts <- context$cohortCounts
 
-  if (runFeatureExtractionOnSample & !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
+  if (runFeatureExtractionOnSample && !isTRUE(attr(cohortDefinitionSet, "isSampledCohortDefinition"))) {
     # Sampling logic
     cohortTableNames <- context$cohortTableNames
     cohortTableNames$cohortSampleTable <- paste0(cohortTableNames$cohortTable, "_cd_sample")

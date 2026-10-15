@@ -2,7 +2,7 @@ library(testthat)
 library(CohortDiagnostics)
 
 # To avoid infinite recursion when mocking base functions
-orig_requireNamespace <- base::requireNamespace
+origRequireNamespace <- base::requireNamespace
 
 test_that("launchDiagnosticsExplorer stops if OhdsiShinyModules is missing", {
   # Mock requireNamespace to return FALSE for OhdsiShinyModules
@@ -11,7 +11,7 @@ test_that("launchDiagnosticsExplorer stops if OhdsiShinyModules is missing", {
       if (package == "OhdsiShinyModules") {
         return(FALSE)
       }
-      orig_requireNamespace(package, ...)
+      origRequireNamespace(package, ...)
     },
     .package = "base"
   )
@@ -26,7 +26,7 @@ test_that("launchDiagnosticsExplorer stops if sqliteDbPath does not exist", {
       if (package == "OhdsiShinyModules") {
         return(TRUE)
       }
-      orig_requireNamespace(package, ...)
+      origRequireNamespace(package, ...)
     },
     .package = "base"
   )
@@ -41,7 +41,7 @@ test_that("launchDiagnosticsExplorer sets up global settings and calls runApp", 
       if (package == "OhdsiShinyModules") {
         return(TRUE)
       }
-      orig_requireNamespace(package, ...)
+      origRequireNamespace(package, ...)
     },
     .package = "base"
   )
@@ -82,7 +82,7 @@ test_that("launchDiagnosticsExplorer handles shinyConfigPath", {
       if (package == "OhdsiShinyModules") {
         return(TRUE)
       }
-      orig_requireNamespace(package, ...)
+      origRequireNamespace(package, ...)
     },
     .package = "base"
   )
