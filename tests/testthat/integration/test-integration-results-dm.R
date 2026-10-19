@@ -71,8 +71,8 @@ INSERT INTO main.vocabulary
 ('None','OMOP Standardized Vocabularies','OMOP generated','v5.5 17-FEB-22',44819096);
 
 INSERT INTO CDM_SOURCE
-(CDM_SOURCE_NAME,CDM_SOURCE_ABBREVIATION,CDM_HOLDER,SOURCE_DESCRIPTION,SOURCE_DOCUMENTATION_REFERENCE,CDM_ETL_REFERENCE,SOURCE_RELEASE_DATE,CDM_RELEASE_DATE,CDM_VERSION,VOCABULARY_VERSION)
-VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient Population Simulator.','https://synthetichealth.github.io/synthea/','https://github.com/OHDSI/ETL-Synthea',1558742400,1558742400,'v5.4','v5.0 22-JAN-22');")
+(CDM_SOURCE_NAME,CDM_SOURCE_ABBREVIATION,CDM_HOLDER,SOURCE_DESCRIPTION,SOURCE_DOCUMENTATION_REFERENCE,CDM_ETL_REFERENCE,SOURCE_RELEASE_DATE,CDM_RELEASE_DATE,CDM_VERSION,CDM_VERSION_CONCEPT_ID,VOCABULARY_VERSION)
+VALUES ('Synthea','Synthea','OHDSI Community','SyntheaTM is a Synthetic Patient Population Simulator.','https://synthetichealth.github.io/synthea/','https://github.com/OHDSI/ETL-Synthea',1558742400,1558742400,'v5.4',756265,'v5.0 22-JAN-22');")
 
       # Check to see if non-standard extra columns are handled
       DatabaseConnector::renderTranslateExecuteSql(

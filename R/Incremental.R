@@ -263,6 +263,16 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
 }
 
 #' @noRd
+writeToCsv.tbl_Andromeda <- function(data, fileName, incremental = FALSE, ...) {
+  writeToCsv.default(
+    data = dplyr::collect(data),
+    fileName = fileName,
+    incremental = incremental,
+    ...
+  )
+}
+
+#' @noRd
 writeToCsv.default <- function(data, fileName, incremental = FALSE, ...) {
   colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
   if (incremental) {

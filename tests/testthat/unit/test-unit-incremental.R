@@ -423,3 +423,21 @@ test_that("pruneRecordKeeping drops records for cohorts no longer present", {
   result <- readr::read_csv(rkf, col_types = readr::cols())
   expect_equal(sort(result$cohortId), c(1, 3))
 })
+
+test_that("writeToCsv writes tbl_Andromeda data and replaces rows incrementally", {
+  tmpFile <- tempfile(fileext = ".csv")
+  withr::defer(unlink(tmpFile))
+  andromeda <- Andromeda::andromeda(
+    values = dplyr::tibble(cohortId = c(1, 2), someValue = c(10, 20))
+  )
+  withr::defer(Andromeda::close(andromeda))
+
+  CohortDiagnostics:::writeToCsv(andromeda$values, tmpFile, incremental = TRUE, cohortId = c(1, 2))
+  andromeda$values2 <- dplyr::tibble(cohortId = 1, someValue = 99)
+  CohortDiagnostics:::writeToCsv(andromeda$values2, tmpFile, incremental = TRUE, cohortId = 1)
+
+  result <- readr::read_csv(tmpFile, col_types = readr::cols())
+  expect_true("some_value" %in% colnames(result))
+  expect_equal(result$some_value[result$cohort_id == 1], 99)
+  expect_equal(nrow(result), 2)
+})
