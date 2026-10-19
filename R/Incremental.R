@@ -262,6 +262,7 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
   UseMethod("writeToCsv", data)
 }
 
+#' @exportS3Method writeToCsv tbl_Andromeda
 #' @noRd
 writeToCsv.tbl_Andromeda <- function(data, fileName, incremental = FALSE, ...) {
   writeToCsv.default(
