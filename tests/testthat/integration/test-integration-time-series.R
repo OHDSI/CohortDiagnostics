@@ -45,10 +45,12 @@ test_that("Testing cohort time series execution", {
       ))) %>%
       dplyr::ungroup() %>%
       dplyr::mutate(
-        sql = json,
-        checksum = as.character(CohortDiagnostics:::computeChecksum(json))
+        sql = json
       ) %>%
       dplyr::ungroup()
+
+    cohortDefinitionSet$checksum <-
+      CohortDiagnostics:::computeCohortChecksums(cohortDefinitionSet)
 
     exportFolder <- tempdir()
     exportFile <- tempfile()
@@ -266,8 +268,12 @@ test_that("Testing Data source time series execution", {
     cohortDefinitionSet <- dplyr::tibble(
       cohortId = -44819062,
       # cohort id is identified by an omop concept id https://athena.ohdsi.org/search-terms/terms/44819062
-      checksum = CohortDiagnostics:::computeChecksum(column = "data source time series")
+      cohortName = "Data source time series",
+      sql = "",
+      json = ""
     )
+    cohortDefinitionSet$checksum <-
+      CohortDiagnostics:::computeCohortChecksums(cohortDefinitionSet)
 
     exportFolder <- tempdir()
     exportFile <- tempfile()
