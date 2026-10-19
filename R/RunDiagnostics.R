@@ -124,7 +124,9 @@ getDefaultCovariateSettings <- function() {
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
 #'                                    diagnostics to.
 #' @param cohortDefinitionSet         Data.frame of cohorts must include columns cohortId, cohortName, json, sql
-#' @param cohortTableNames            Cohort Table names used by CohortGenerator package
+#' @param cohortTableNames            Cohort Table names used by CohortGenerator package. If
+#'                                    \code{cohortTable} is not specified it defaults to
+#'                                    \code{cohortTableNames$cohortTable}.
 #' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf').
 #' @param databaseName                The full name of the database. If NULL, defaults to value in cdm_source table
 #' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to value in cdm_source table
@@ -226,6 +228,11 @@ executeDiagnostics <- function(cohortDefinitionSet,
                                sampleN = 1000,
                                seed = 64374,
                                seedArgs = NULL) {
+  # Callers such as Strategus supply only cohortTableNames
+  if (missing(cohortTable) && !missing(cohortTableNames) && !is.null(cohortTableNames$cohortTable)) {
+    cohortTable <- cohortTableNames$cohortTable
+  }
+
   # collect arguments that were passed to cohort diagnostics at initiation
   callingArgsJson <-
     list(

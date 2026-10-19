@@ -230,12 +230,15 @@ initializeDiagnostics <- function(context,
     }
   )
 
-  if (nrow(cohortCounts) > 0) {
-    instantiatedCohorts <- cohortCounts %>%
-      dplyr::filter(.data$cohortEntries > 0) %>%
-      dplyr::pull(.data$cohortId)
-  } else {
-    stop("All cohorts were either not instantiated or all have 0 records.")
+  instantiatedCohorts <- cohortCounts %>%
+    dplyr::filter(.data$cohortEntries > 0) %>%
+    dplyr::pull(.data$cohortId)
+  if (length(instantiatedCohorts) == 0) {
+    stop(sprintf(
+      "All cohorts were either not instantiated or all have 0 records in %s.%s.",
+      context$cohortDatabaseSchema,
+      context$cohortTable
+    ))
   }
 
   context$cohortDefinitionSet <- cohortDefinitionSet %>%

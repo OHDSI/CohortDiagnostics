@@ -32,7 +32,9 @@
 #' @param cohortDatabaseSchema     Schema name where intermediate data can be stored. Will be used to read
 #'                                 cohorts from. For SQL Server, this should include both the database
 #'                                 and schema name, for example 'scratch.dbo'.
-#' @param cohortTable              The name of the table that contains the cohort definitions.
+#' @param cohortTable              The name of the table that contains the cohort definitions. If not
+#'                                 specified but \code{cohortTableNames} is, defaults to
+#'                                 \code{cohortTableNames$cohortTable}.
 #' @param cohortTableNames         An optional list of cohort table names used by CohortGenerator.
 #' @param vocabularyDatabaseSchema Schema name where your OMOP vocabulary resides. This is commonly the
 #'                                 same as cdmDatabaseSchema. Note that for SQL Server, this should
@@ -68,6 +70,11 @@ createDiagnosticsContext <- function(connectionDetails = NULL,
                                      incremental = FALSE,
                                      incrementalFolder = file.path(exportFolder, "incremental"),
                                      cdmVersion = 5) {
+  # Callers such as Strategus supply only cohortTableNames
+  if (missing(cohortTable) && !missing(cohortTableNames) && !is.null(cohortTableNames$cohortTable)) {
+    cohortTable <- cohortTableNames$cohortTable
+  }
+
   # Argument validation
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertList(cohortTableNames, null.ok = FALSE, types = "character", add = errorMessage, names = "named")
