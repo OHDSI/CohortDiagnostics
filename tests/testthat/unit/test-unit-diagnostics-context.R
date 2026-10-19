@@ -81,6 +81,34 @@ test_that("createDiagnosticsContext accepts custom parameters", {
   expect_true(context$incremental)
 })
 
+test_that("createDiagnosticsContext derives cohortTable from cohortTableNames when not supplied", {
+  exportFolder <- tempfile("export")
+  dir.create(exportFolder)
+  on.exit(unlink(exportFolder, recursive = TRUE))
+
+  cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "cohort_strategus")
+  context <- createDiagnosticsContext(
+    connectionDetails = list(),
+    cdmDatabaseSchema = "cdm_schema",
+    cohortDatabaseSchema = "cohort_schema",
+    cohortTableNames = cohortTableNames,
+    databaseId = "test_db",
+    exportFolder = exportFolder
+  )
+  expect_equal(context$cohortTable, "cohort_strategus")
+
+  context <- createDiagnosticsContext(
+    connectionDetails = list(),
+    cdmDatabaseSchema = "cdm_schema",
+    cohortDatabaseSchema = "cohort_schema",
+    cohortTable = "explicit_table",
+    cohortTableNames = cohortTableNames,
+    databaseId = "test_db",
+    exportFolder = exportFolder
+  )
+  expect_equal(context$cohortTable, "explicit_table")
+})
+
 test_that("initializeDiagnostics initializes context correctly using mocks", {
   # Skip if testthat version is too old for local_mocked_bindings
   skip_if_not_installed("testthat", "3.0.0")
