@@ -139,9 +139,10 @@ cdUiControls <- function(ns) {
 #' @param id        Namespace id "DiagnosticsExplorer"
 #' @param enabledReports   enabled reports
 cohortDiagnosticsUi <- function(id = "DiagnosticsExplorer",
-                                enabledReports) {
+                                enabledReports,
+                                aboutText = NULL) {
   ns <- shiny::NS(id)
-  headerContent <- tags$li(
+  headerContent <- shiny::tags$li(
     class = "dropdown",
     style = "margin-top: 8px !important; margin-right : 5px !important"
   )
@@ -183,8 +184,8 @@ cohortDiagnosticsUi <- function(id = "DiagnosticsExplorer",
   # Side bar code
   sidebar <-
     shinydashboard::dashboardSidebar(sidebarMenu,
-                                     width = NULL,
-                                     collapsed = FALSE
+      width = NULL,
+      collapsed = FALSE
     )
 
   # Body - items in tabs --------------------------------------------------
@@ -192,7 +193,7 @@ cohortDiagnosticsUi <- function(id = "DiagnosticsExplorer",
     shinydashboard::tabItem(
       tabName = "about",
       if ("aboutText" %in% enabledReports) {
-        HTML(aboutText)
+        shiny::HTML(aboutText)
       }
     ),
     shinydashboard::tabItem(
@@ -252,7 +253,7 @@ cohortDiagnosticsUi <- function(id = "DiagnosticsExplorer",
 
   # main
   ui <- shinydashboard::dashboardPage(
-    tags$head(tags$style(HTML(
+    shiny::tags$head(shiny::tags$style(shiny::HTML(
       "
         th, td {
           padding-right: 10px;
@@ -268,5 +269,9 @@ cohortDiagnosticsUi <- function(id = "DiagnosticsExplorer",
   return(ui)
 }
 
-#OhdsiShinyModules::cohortDiagnosticsExplorerUi(id = "DiagnosticsExplorer")
-cohortDiagnosticsUi(id = "DiagnosticsExplorer", dataSource$enabledReports)
+# OhdsiShinyModules::cohortDiagnosticsExplorerUi(id = "DiagnosticsExplorer")
+cohortDiagnosticsUi(
+  id = "DiagnosticsExplorer",
+  enabledReports = dataSource$enabledReports,
+  aboutText = shinySettings$aboutText
+)

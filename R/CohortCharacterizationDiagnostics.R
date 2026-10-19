@@ -306,7 +306,8 @@ executeCohortCharacterization <- function(connection,
         analysisRefFileName = analysisRefFileName,
         timeRefFileName = timeRefFileName,
         counts = cohortCounts,
-        minCellCount = minCellCount
+        minCellCount = minCellCount,
+        cohortIds = subset[start:end, ]$cohortId
       )
 
       recordTasksDone(

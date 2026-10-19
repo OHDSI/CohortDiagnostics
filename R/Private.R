@@ -19,7 +19,7 @@ createIfNotExist <-
            name,
            recursive = TRUE,
            errorMessage = NULL) {
-    if (is.null(errorMessage) |
+    if (is.null(errorMessage) ||
       !is(errorMessage, "AssertColection")) {
       errorMessage <- checkmate::makeAssertCollection()
     }
@@ -264,7 +264,7 @@ enforceMinCellValueInDataframe <- function(data,
   if (length(presentInBoth) == 0) {
     return(data)
   }
-  for (i in (1:length(presentInBoth))) {
+  for (i in seq_along(presentInBoth)) {
     if (presentInBoth[[i]] %in% colnames(data)) {
       data <-
         enforceMinCellValue(
