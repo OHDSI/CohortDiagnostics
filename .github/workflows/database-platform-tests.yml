@@ -1,10 +1,23 @@
 name: Database platform tests
 
-# Manual only until the protected GitHub environments and secrets are provisioned.
-# Add the pull_request trigger once they exist.
+# One job per database platform; jobs run concurrently (the Panoptes pattern).
+# Secrets are the existing CDM5_* repository secrets, mapped onto HADES_* names.
+# Run manually with sequential=true to measure the same platforms one at a time.
 
 on:
+  push:
+    branches:
+      - 'features/panoptes-database-testing'
+  pull_request:
+    branches:
+      - '**'
+      - '!main'
   workflow_dispatch:
+    inputs:
+      sequential:
+        description: "Run platforms one at a time (for timing comparison)"
+        type: boolean
+        default: false
 
 jobs:
   database-test:
@@ -13,34 +26,34 @@ jobs:
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ${{ matrix.runner }}
-    environment: ${{ matrix.environment }}
     strategy:
       fail-fast: false
+      max-parallel: ${{ inputs.sequential && 1 || 4 }}
       matrix:
         include:
           - dbms: postgresql
             runner: ubuntu-latest
             environment: test-postgresql
+            prefix: CDM5_POSTGRESQL
+            cdmSchemaSecret: CDM5_POSTGRESQL_CDM54_SCHEMA
           - dbms: sql server
             runner: ubuntu-latest
             environment: test-sql-server
+            prefix: CDM5_SQL_SERVER
+            cdmSchemaSecret: CDM5_SQL_SERVER_CDM54_SCHEMA
           - dbms: oracle
             runner: ubuntu-latest
             environment: test-oracle
-          - dbms: redshift
-            runner: ubuntu-latest
-            environment: test-redshift
+            prefix: CDM5_ORACLE
+            cdmSchemaSecret: CDM5_ORACLE_CDMCDM54_SCHEMA
     env:
       HADES_DATABASE_TEST: "true"
       HADES_TEST_DBMS: ${{ matrix.dbms }}
-      HADES_DB_USER: ${{ secrets.HADES_DB_USER }}
-      HADES_DB_PASSWORD: ${{ secrets.HADES_DB_PASSWORD }}
-      HADES_DB_SERVER: ${{ secrets.HADES_DB_SERVER }}
-      HADES_DB_CONNECTION_STRING: ${{ secrets.HADES_DB_CONNECTION_STRING }}
-      HADES_DB_KEY_FILE: ${{ secrets.HADES_DB_KEY_FILE }}
-      HADES_CDM_SCHEMA: ${{ secrets.HADES_CDM_SCHEMA }}
-      HADES_VOCABULARY_SCHEMA: ${{ secrets.HADES_VOCABULARY_SCHEMA }}
-      HADES_WORK_SCHEMA: ${{ secrets.HADES_WORK_SCHEMA }}
+      HADES_DB_USER: ${{ secrets[format('{0}_USER', matrix.prefix)] }}
+      HADES_DB_PASSWORD: ${{ secrets[format('{0}_PASSWORD', matrix.prefix)] }}
+      HADES_DB_SERVER: ${{ secrets[format('{0}_SERVER', matrix.prefix)] }}
+      HADES_CDM_SCHEMA: ${{ secrets[matrix.cdmSchemaSecret] }}
+      HADES_WORK_SCHEMA: ${{ secrets[format('{0}_OHDSI_SCHEMA', matrix.prefix)] }}
     steps:
       - uses: actions/checkout@v4
       - name: Set JDBC driver folder
@@ -53,7 +66,7 @@ jobs:
       - uses: r-lib/actions/setup-r@v2
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgload, any::testthat, github::OHDSI/Panoptes
+          extra-packages: any::pkgload, any::testthat
       - name: Validate database matrix
         run: |
           config <- Panoptes::readDatabaseTestConfig(

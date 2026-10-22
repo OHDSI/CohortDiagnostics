@@ -43,8 +43,9 @@ platforms:
     os: any
     githubEnvironment: test-oracle
   - dbms: redshift
-    enabled: true
-    required: true
+    enabled: false
+    required: false
+    reason: "No redshift credentials are configured in CI."
     cdmVersion: "5.4"
     connectionMode: server
     credentialMode: password

@@ -338,7 +338,10 @@ testthat::test_local(filter = "integration-database-platform")
 The legacy `CDM5_<DBMS>_*` variables are still accepted as fallbacks. When
 `HADES_TEST_DBMS` is unset the test skips. `test-integration-panoptes-config.R`
 checks that the declaration and `.github/workflows/database-platform-tests.yml`
-agree; update both together when adding or removing a platform. The workflow is
-`workflow_dispatch` only until the protected GitHub environments
-(`test-postgresql`, `test-sql-server`, `test-oracle`, `test-redshift`) and
-their `HADES_*` secrets exist.
+agree; update both together when adding or removing a platform.
+
+In CI, `database-platform-tests.yml` runs one job per platform (postgresql,
+sql server, oracle) concurrently, mapping the existing `CDM5_*` repository
+secrets onto the `HADES_*` names. Trigger it manually with `sequential = true`
+to run the same platforms one at a time and compare wall-clock time. Redshift is
+declared but disabled until credentials exist.
