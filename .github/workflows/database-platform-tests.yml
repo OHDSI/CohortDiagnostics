@@ -45,7 +45,7 @@ jobs:
             runner: ubuntu-latest
             environment: test-oracle
             prefix: CDM5_ORACLE
-            cdmSchemaSecret: CDM5_ORACLE_CDMCDM54_SCHEMA
+            cdmSchemaSecret: CDM5_ORACLE_CDM54_SCHEMA
     env:
       HADES_DATABASE_TEST: "true"
       HADES_TEST_DBMS: ${{ matrix.dbms }}
@@ -72,6 +72,9 @@ jobs:
             OHDSI/OhdsiShinyModules
             OHDSI/Panoptes
           needs: check
+      - name: Link inst/sql so SqlRender can find SQL files under load_all()
+        run: ln -s inst/sql sql
+        shell: bash
       - name: Validate database matrix
         run: |
           config <- Panoptes::readDatabaseTestConfig(
