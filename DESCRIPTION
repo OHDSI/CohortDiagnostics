@@ -78,3 +78,5 @@ Encoding: UTF-8
 Language: en-US
 LazyData: false
 Config/testthat/edition: 3
+Remotes:
+    OHDSI/Panoptes

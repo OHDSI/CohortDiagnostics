@@ -41,9 +41,11 @@ jobs:
       HADES_CDM_SCHEMA: ${{ secrets.HADES_CDM_SCHEMA }}
       HADES_VOCABULARY_SCHEMA: ${{ secrets.HADES_VOCABULARY_SCHEMA }}
       HADES_WORK_SCHEMA: ${{ secrets.HADES_WORK_SCHEMA }}
-      DATABASECONNECTOR_JAR_FOLDER: ${{ runner.temp }}/jdbcDrivers
     steps:
       - uses: actions/checkout@v4
+      - name: Set JDBC driver folder
+        run: echo "DATABASECONNECTOR_JAR_FOLDER=${{ runner.temp }}/jdbcDrivers" >> "$GITHUB_ENV"
+        shell: bash
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
