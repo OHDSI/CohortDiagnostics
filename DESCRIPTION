@@ -44,6 +44,7 @@ Imports:
     cli
 Suggests:
     Eunomia,
+    Panoptes (>= 0.1.0),
     RSQLite (>= 2.2.1),
     testthat (>= 3.0.0),
     withr,
@@ -77,3 +78,5 @@ Encoding: UTF-8
 Language: en-US
 LazyData: false
 Config/testthat/edition: 3
+Remotes:
+    OHDSI/Panoptes

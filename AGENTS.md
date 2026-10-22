@@ -73,6 +73,30 @@ Rscript -e 'pkgload::load_all(quiet = TRUE); testthat::test_local(filter = "unit
 
 See `tests/testthat/TESTING.md` for the full testing guide, fixtures, and mocking helpers.
 
+### Do not run integration tests locally
+
+Integration tests are slow (the full suite takes over an hour per OS in CI) and the
+server-database credentials only exist as GitHub secrets. Run only the unit tests
+locally; run integration and live-database tests through GitHub Actions and read
+timings and results from the workflow runs (`gh run view`).
+
+### SqlRender and `load_all()` / `devtools::test()`
+
+`SqlRender::loadRenderTranslateSql()` locates the package's SQL files with
+`system.file()`, which does not resolve `inst/` under `devtools::load_all()` or
+`devtools::test()`. Tests that run diagnostics then fail with
+`Cannot find '<file>.sql' in the 'sql' or 'sql/sql_server' folder`.
+
+Work around it with a symbolic link at the package root (already ignored via
+`/sql/` in `.gitignore`, so it is never committed):
+
+```bash
+ln -s inst/sql sql      # macOS/Linux; on Windows use a shortcut/junction to inst\sql
+```
+
+In CI, where the package is not installed from the working tree, create the same
+link (or install the package and test the installed copy) before running tests.
+
 ### Regression snapshot workflow (required)
 
 Before starting a feature or bug fix, take a **testing snapshot** to establish a baseline:

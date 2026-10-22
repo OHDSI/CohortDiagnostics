@@ -1,0 +1,64 @@
+schemaVersion: 1
+package: CohortDiagnostics
+databaseConnection: subset
+platforms:
+  - dbms: sqlite
+    enabled: true
+    required: false
+    cdmVersion: "5.3"
+    connectionMode: local
+    credentialMode: none
+    tempEmulationSchema: false
+    runner: ubuntu-latest
+    os: any
+    githubEnvironment: test-sqlite
+  - dbms: postgresql
+    enabled: true
+    required: true
+    cdmVersion: "5.4"
+    connectionMode: server
+    credentialMode: password
+    tempEmulationSchema: false
+    runner: ubuntu-latest
+    os: any
+    githubEnvironment: test-postgresql
+  - dbms: sql server
+    enabled: true
+    required: true
+    cdmVersion: "5.4"
+    connectionMode: server
+    credentialMode: password
+    tempEmulationSchema: false
+    runner: ubuntu-latest
+    os: any
+    githubEnvironment: test-sql-server
+  - dbms: oracle
+    enabled: true
+    required: true
+    cdmVersion: "5.4"
+    connectionMode: server
+    credentialMode: password
+    tempEmulationSchema: true
+    runner: ubuntu-latest
+    os: any
+    githubEnvironment: test-oracle
+  - dbms: redshift
+    enabled: true
+    required: true
+    cdmVersion: "5.4"
+    connectionMode: server
+    credentialMode: password
+    tempEmulationSchema: false
+    runner: ubuntu-latest
+    os: any
+    githubEnvironment: test-redshift
+  - dbms: snowflake
+    enabled: true
+    required: true
+    cdmVersion: "5.4"
+    connectionMode: connectionString
+    credentialMode: password
+    tempEmulationSchema: true
+    runner: ubuntu-latest
+    os: any
+    githubEnvironment: test-snowflake

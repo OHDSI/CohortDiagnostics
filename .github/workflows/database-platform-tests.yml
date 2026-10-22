@@ -1,0 +1,117 @@
+name: Database platform tests
+
+# One job per database platform; jobs run concurrently (the Panoptes pattern).
+# Secrets follow the CDM5_<DBMS>_* naming of the existing CDM5_* repository secrets, mapped onto HADES_* names.
+# Run manually with sequential=true to measure the same platforms one at a time.
+
+on:
+  pull_request:
+    branches:
+      - '**'
+      - '!main'
+    # ready_for_review makes the jobs start when a draft is marked ready
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      sequential:
+        description: "Run platforms one at a time (for timing comparison)"
+        type: boolean
+        default: false
+
+jobs:
+  database-test:
+    name: Database test (${{ matrix.dbms }})
+    # Skip draft pull requests and fork pull requests (no access to secrets)
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ${{ matrix.runner }}
+    # Cohort tables persist between runs, so only one run may use a database at a time
+    concurrency:
+      group: database-platform-${{ matrix.dbms }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ inputs.sequential && 1 || 8 }}
+      matrix:
+        include:
+          - dbms: postgresql
+            runner: ubuntu-latest
+            environment: test-postgresql
+            prefix: CDM5_POSTGRESQL
+            cdmSchemaSecret: CDM5_POSTGRESQL_CDM54_SCHEMA
+          - dbms: sql server
+            runner: ubuntu-latest
+            environment: test-sql-server
+            prefix: CDM5_SQL_SERVER
+            cdmSchemaSecret: CDM5_SQL_SERVER_CDM54_SCHEMA
+          - dbms: oracle
+            runner: ubuntu-latest
+            environment: test-oracle
+            prefix: CDM5_ORACLE
+            cdmSchemaSecret: CDM5_ORACLE_CDM54_SCHEMA
+          - dbms: redshift
+            runner: ubuntu-latest
+            environment: test-redshift
+            prefix: CDM5_REDSHIFT
+            cdmSchemaSecret: CDM5_REDSHIFT_CDM54_SCHEMA
+          - dbms: snowflake
+            runner: ubuntu-latest
+            environment: test-snowflake
+            prefix: CDM5_SNOWFLAKE
+            cdmSchemaSecret: CDM5_SNOWFLAKE_CDM54_SCHEMA
+    env:
+      HADES_DATABASE_TEST: "true"
+      HADES_TEST_DBMS: ${{ matrix.dbms }}
+      HADES_DB_USER: ${{ secrets[format('{0}_USER', matrix.prefix)] }}
+      HADES_DB_PASSWORD: ${{ secrets[format('{0}_PASSWORD', matrix.prefix)] }}
+      HADES_DB_SERVER: ${{ secrets[format('{0}_SERVER', matrix.prefix)] }}
+      HADES_DB_CONNECTION_STRING: ${{ secrets[format('{0}_CONNECTION_STRING', matrix.prefix)] }}
+      HADES_CDM_SCHEMA: ${{ secrets[matrix.cdmSchemaSecret] }}
+      HADES_WORK_SCHEMA: ${{ secrets[format('{0}_OHDSI_SCHEMA', matrix.prefix)] }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set JDBC driver folder
+        run: echo "DATABASECONNECTOR_JAR_FOLDER=${{ runner.temp }}/jdbcDrivers" >> "$GITHUB_ENV"
+        shell: bash
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: r-lib/actions/setup-r@v2
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::pkgload
+            any::testthat
+            OHDSI/OhdsiShinyModules
+            OHDSI/Panoptes
+          needs: check
+      - name: Link inst/sql so SqlRender can find SQL files under load_all()
+        run: ln -s inst/sql sql
+        shell: bash
+      - name: Validate database matrix
+        run: |
+          config <- Panoptes::readDatabaseTestConfig(
+            path = "inst/test-config/hades-database-platforms.yml"
+          )
+          Panoptes::validateDatabaseTestWorkflow(
+            config,
+            ".github/workflows/database-platform-tests.yml"
+          )
+        shell: Rscript {0}
+      - name: Download JDBC driver
+        run: |
+          driverFolder <- Sys.getenv("DATABASECONNECTOR_JAR_FOLDER")
+          dir.create(driverFolder, recursive = TRUE, showWarnings = FALSE)
+          DatabaseConnector::downloadJdbcDrivers(
+            dbms = Sys.getenv("HADES_TEST_DBMS"),
+            pathToDriver = driverFolder
+          )
+        shell: Rscript {0}
+      - name: Run database platform test
+        run: |
+          pkgload::load_all(quiet = TRUE)
+          testthat::test_local(filter = "integration-database-platform", stop_on_failure = TRUE)
+        shell: Rscript {0}
