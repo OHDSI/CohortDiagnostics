@@ -5,13 +5,12 @@ name: Database platform tests
 # Run manually with sequential=true to measure the same platforms one at a time.
 
 on:
-  push:
-    branches:
-      - 'features/panoptes-database-testing'
   pull_request:
     branches:
       - '**'
       - '!main'
+    # ready_for_review makes the jobs start when a draft is marked ready
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       sequential:
@@ -22,9 +21,11 @@ on:
 jobs:
   database-test:
     name: Database test (${{ matrix.dbms }})
+    # Skip draft pull requests and fork pull requests (no access to secrets)
     if: >-
       github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name == github.repository
+      (github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ${{ matrix.runner }}
     # Cohort tables persist between runs, so only one run may use a database at a time
     concurrency:
