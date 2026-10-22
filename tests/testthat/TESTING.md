@@ -311,3 +311,34 @@ Phase 2 will add comprehensive unit tests for:
 - And more...
 
 See `test_refactoring_plan.md` for details.
+
+## Live database platform tests (Panoptes)
+
+`test-integration-database-platform.R` runs one package-owned behavior test
+(`generateCohortSet()` + `executeDiagnostics()` with assertions on the exported
+results) against the DBMS selected by `HADES_TEST_DBMS`. Connection details,
+schemas and temp-table emulation come from [Panoptes](https://github.com/OHDSI/Panoptes)
+and the committed declaration `inst/test-config/hades-database-platforms.yml`.
+
+```r
+# SQLite/Eunomia, no server needed (Eunomia is provisioned automatically)
+Sys.setenv(HADES_TEST_DBMS = "sqlite")
+testthat::test_local(filter = "integration-database-platform")
+
+# Server platform (postgresql, sql server, oracle, redshift)
+Sys.setenv(
+  HADES_TEST_DBMS = "postgresql",
+  DATABASECONNECTOR_JAR_FOLDER = "~/.jdbcDrivers",
+  HADES_DB_USER = "...", HADES_DB_PASSWORD = "...", HADES_DB_SERVER = "host/db",
+  HADES_CDM_SCHEMA = "cdm", HADES_WORK_SCHEMA = "scratch"
+)
+testthat::test_local(filter = "integration-database-platform")
+```
+
+The legacy `CDM5_<DBMS>_*` variables are still accepted as fallbacks. When
+`HADES_TEST_DBMS` is unset the test skips. `test-integration-panoptes-config.R`
+checks that the declaration and `.github/workflows/database-platform-tests.yml`
+agree; update both together when adding or removing a platform. The workflow is
+`workflow_dispatch` only until the protected GitHub environments
+(`test-postgresql`, `test-sql-server`, `test-oracle`, `test-redshift`) and
+their `HADES_*` secrets exist.

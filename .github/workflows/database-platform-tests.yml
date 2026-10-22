@@ -1,0 +1,78 @@
+name: Database platform tests
+
+# Manual only until the protected GitHub environments and secrets are provisioned.
+# Add the pull_request trigger once they exist.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  database-test:
+    name: Database test (${{ matrix.dbms }})
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ matrix.runner }}
+    environment: ${{ matrix.environment }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dbms: postgresql
+            runner: ubuntu-latest
+            environment: test-postgresql
+          - dbms: sql server
+            runner: ubuntu-latest
+            environment: test-sql-server
+          - dbms: oracle
+            runner: ubuntu-latest
+            environment: test-oracle
+          - dbms: redshift
+            runner: ubuntu-latest
+            environment: test-redshift
+    env:
+      HADES_DATABASE_TEST: "true"
+      HADES_TEST_DBMS: ${{ matrix.dbms }}
+      HADES_DB_USER: ${{ secrets.HADES_DB_USER }}
+      HADES_DB_PASSWORD: ${{ secrets.HADES_DB_PASSWORD }}
+      HADES_DB_SERVER: ${{ secrets.HADES_DB_SERVER }}
+      HADES_DB_CONNECTION_STRING: ${{ secrets.HADES_DB_CONNECTION_STRING }}
+      HADES_DB_KEY_FILE: ${{ secrets.HADES_DB_KEY_FILE }}
+      HADES_CDM_SCHEMA: ${{ secrets.HADES_CDM_SCHEMA }}
+      HADES_VOCABULARY_SCHEMA: ${{ secrets.HADES_VOCABULARY_SCHEMA }}
+      HADES_WORK_SCHEMA: ${{ secrets.HADES_WORK_SCHEMA }}
+      DATABASECONNECTOR_JAR_FOLDER: ${{ runner.temp }}/jdbcDrivers
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: r-lib/actions/setup-r@v2
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::pkgload, any::testthat, github::OHDSI/Panoptes
+      - name: Validate database matrix
+        run: |
+          config <- Panoptes::readDatabaseTestConfig(
+            path = "inst/test-config/hades-database-platforms.yml"
+          )
+          Panoptes::validateDatabaseTestWorkflow(
+            config,
+            ".github/workflows/database-platform-tests.yml"
+          )
+        shell: Rscript {0}
+      - name: Download JDBC driver
+        run: |
+          driverFolder <- Sys.getenv("DATABASECONNECTOR_JAR_FOLDER")
+          dir.create(driverFolder, recursive = TRUE, showWarnings = FALSE)
+          DatabaseConnector::downloadJdbcDrivers(
+            dbms = Sys.getenv("HADES_TEST_DBMS"),
+            pathToDriver = driverFolder
+          )
+        shell: Rscript {0}
+      - name: Run database platform test
+        run: |
+          pkgload::load_all(quiet = TRUE)
+          testthat::test_local(filter = "integration-database-platform", stop_on_failure = TRUE)
+        shell: Rscript {0}

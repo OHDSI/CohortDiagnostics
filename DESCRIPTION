@@ -44,6 +44,7 @@ Imports:
     cli
 Suggests:
     Eunomia,
+    Panoptes (>= 0.1.0),
     RSQLite (>= 2.2.1),
     testthat (>= 3.0.0),
     withr,
