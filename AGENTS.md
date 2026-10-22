@@ -73,6 +73,13 @@ Rscript -e 'pkgload::load_all(quiet = TRUE); testthat::test_local(filter = "unit
 
 See `tests/testthat/TESTING.md` for the full testing guide, fixtures, and mocking helpers.
 
+### Do not run integration tests locally
+
+Integration tests are slow (the full suite takes over an hour per OS in CI) and the
+server-database credentials only exist as GitHub secrets. Run only the unit tests
+locally; run integration and live-database tests through GitHub Actions and read
+timings and results from the workflow runs (`gh run view`).
+
 ### SqlRender and `load_all()` / `devtools::test()`
 
 `SqlRender::loadRenderTranslateSql()` locates the package's SQL files with
