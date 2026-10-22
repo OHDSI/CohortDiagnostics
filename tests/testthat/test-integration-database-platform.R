@@ -11,8 +11,9 @@ test_that("executeDiagnostics works on the selected database", {
 
   dbms <- Panoptes::getSelectedTestDbms(config)
   Panoptes::withDatabaseTestContext(config, verify = TRUE, legacyAliases = panoptesLegacyAliases(dbms), {
-    # Short derived names keep every table within Oracle's 30 character limit
-    base <- Panoptes::createUniqueDatabaseObjectName("cd", 16)
+    # Panoptes' generated names are too long to carry derived table suffixes on
+    # Oracle (30 characters), so build a short unique base that starts with a letter.
+    base <- sprintf("cd%s%04d", format(Sys.time(), "%d%H%M%S"), sample(0:9999, 1))
     cohortTableNames <- CohortGenerator::getCohortTableNames(
       cohortTable = base,
       cohortSampleTable = paste0(base, "_smp"),
