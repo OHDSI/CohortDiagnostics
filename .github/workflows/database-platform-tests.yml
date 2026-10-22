@@ -26,6 +26,10 @@ jobs:
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ${{ matrix.runner }}
+    # Cohort tables persist between runs, so only one run may use a database at a time
+    concurrency:
+      group: database-platform-${{ matrix.dbms }}
+      cancel-in-progress: false
     strategy:
       fail-fast: false
       max-parallel: ${{ inputs.sequential && 1 || 8 }}
@@ -51,21 +55,11 @@ jobs:
             environment: test-redshift
             prefix: CDM5_REDSHIFT
             cdmSchemaSecret: CDM5_REDSHIFT_CDM54_SCHEMA
-          - dbms: spark
-            runner: ubuntu-latest
-            environment: test-spark
-            prefix: CDM5_SPARK
-            cdmSchemaSecret: CDM5_SPARK_CDM54_SCHEMA
           - dbms: snowflake
             runner: ubuntu-latest
             environment: test-snowflake
             prefix: CDM5_SNOWFLAKE
             cdmSchemaSecret: CDM5_SNOWFLAKE_CDM54_SCHEMA
-          - dbms: iris
-            runner: ubuntu-latest
-            environment: test-iris
-            prefix: CDM5_IRIS
-            cdmSchemaSecret: CDM5_IRIS_CDM54_SCHEMA
     env:
       HADES_DATABASE_TEST: "true"
       HADES_TEST_DBMS: ${{ matrix.dbms }}

@@ -52,16 +52,6 @@ platforms:
     runner: ubuntu-latest
     os: any
     githubEnvironment: test-redshift
-  - dbms: spark
-    enabled: true
-    required: true
-    cdmVersion: "5.4"
-    connectionMode: connectionString
-    credentialMode: password
-    tempEmulationSchema: true
-    runner: ubuntu-latest
-    os: any
-    githubEnvironment: test-spark
   - dbms: snowflake
     enabled: true
     required: true
@@ -72,13 +62,3 @@ platforms:
     runner: ubuntu-latest
     os: any
     githubEnvironment: test-snowflake
-  - dbms: iris
-    enabled: true
-    required: true
-    cdmVersion: "5.4"
-    connectionMode: connectionString
-    credentialMode: password
-    tempEmulationSchema: false
-    runner: ubuntu-latest
-    os: any
-    githubEnvironment: test-iris

@@ -8,9 +8,7 @@ panoptesLegacyAliases <- function(dbms) {
     "sql server" = "CDM5_SQL_SERVER",
     "oracle" = "CDM5_ORACLE",
     "redshift" = "CDM5_REDSHIFT",
-    "spark" = "CDM5_SPARK",
     "snowflake" = "CDM5_SNOWFLAKE",
-    "iris" = "CDM5_IRIS",
     NULL
   )
   if (is.null(prefix)) {

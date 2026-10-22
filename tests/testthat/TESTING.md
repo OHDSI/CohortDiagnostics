@@ -325,7 +325,7 @@ and the committed declaration `inst/test-config/hades-database-platforms.yml`.
 Sys.setenv(HADES_TEST_DBMS = "sqlite")
 testthat::test_local(filter = "integration-database-platform")
 
-# Server platform (postgresql, sql server, oracle, redshift; spark, snowflake and iris use HADES_DB_CONNECTION_STRING)
+# Server platform (postgresql, sql server, oracle, redshift; snowflake uses HADES_DB_CONNECTION_STRING)
 Sys.setenv(
   HADES_TEST_DBMS = "postgresql",
   DATABASECONNECTOR_JAR_FOLDER = "~/.jdbcDrivers",
@@ -341,6 +341,15 @@ checks that the declaration and `.github/workflows/database-platform-tests.yml`
 agree; update both together when adding or removing a platform.
 
 In CI, `database-platform-tests.yml` runs one job per platform (postgresql,
-sql server, oracle, redshift, spark, snowflake, iris) concurrently, mapping the existing `CDM5_*` repository
+sql server, oracle, redshift, snowflake) concurrently, mapping the existing `CDM5_*` repository
 secrets onto the `HADES_*` names. Trigger it manually with `sequential = true`
 to run the same platforms one at a time and compare wall-clock time.
+
+### Persistent cohort tables
+
+The platform test does not drop its cohort tables. It uses fixed names
+(`cd_panoptes`, `cd_panoptes_ck`, ...) in the work schema with
+`incremental = TRUE`, so `CohortGenerator` records a checksum per cohort in the
+checksum table and regenerates only cohorts whose definition changed. To force a
+full regeneration, drop the `cd_panoptes*` tables in that schema. The workflow's
+per-DBMS `concurrency` group prevents two runs from using the same tables at once.

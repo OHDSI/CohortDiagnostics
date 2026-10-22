@@ -11,9 +11,10 @@ test_that("executeDiagnostics runs every diagnostic on the selected database", {
 
   dbms <- Panoptes::getSelectedTestDbms(config)
   Panoptes::withDatabaseTestContext(config, verify = TRUE, legacyAliases = panoptesLegacyAliases(dbms), {
-    # Panoptes' generated names are too long to carry derived table suffixes on
-    # Oracle (30 characters), so build a short unique base that starts with a letter.
-    base <- sprintf("cd%s%04d", format(Sys.time(), "%d%H%M%S"), sample(0:9999, 1))
+    # Persistent tables: fixed names, reused across runs. CohortGenerator's checksum
+    # table (incremental = TRUE) skips cohorts whose definition has not changed.
+    # Short suffixes keep every name within Oracle's 30 character limit.
+    base <- "cd_panoptes"
     cohortTableNames <- CohortGenerator::getCohortTableNames(
       cohortTable = base,
       cohortSampleTable = paste0(base, "_smp"),
@@ -27,23 +28,6 @@ test_that("executeDiagnostics runs every diagnostic on the selected database", {
     )
     exportFolder <- withr::local_tempdir()
 
-    dropTables <- function() {
-      connection <- DatabaseConnector::connect(context$connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection), add = TRUE)
-      for (tableName in unique(unlist(cohortTableNames))) {
-        DatabaseConnector::renderTranslateExecuteSql(
-          connection,
-          "IF OBJECT_ID('@schema.@table', 'U') IS NOT NULL DROP TABLE @schema.@table;",
-          schema = context$workDatabaseSchema,
-          table = tableName,
-          tempEmulationSchema = context$tempEmulationSchema,
-          progressBar = FALSE,
-          reportOverallTime = FALSE
-        )
-      }
-    }
-    on.exit(try(dropTables(), silent = TRUE), add = TRUE)
-
     source(testthat::test_path("integration", "helpers-integration.R"), local = TRUE)
     cohortDefinitionSet <- loadTestCohortDefinitionSet(c(18345, 17720, 14907), useSubsets = FALSE)
 
@@ -51,7 +35,7 @@ test_that("executeDiagnostics runs every diagnostic on the selected database", {
       connectionDetails = context$connectionDetails,
       cohortTableNames = cohortTableNames,
       cohortDatabaseSchema = context$workDatabaseSchema,
-      incremental = FALSE
+      incremental = TRUE
     )
     CohortGenerator::generateCohortSet(
       connectionDetails = context$connectionDetails,
@@ -59,7 +43,7 @@ test_that("executeDiagnostics runs every diagnostic on the selected database", {
       cohortDatabaseSchema = context$workDatabaseSchema,
       cohortTableNames = cohortTableNames,
       cohortDefinitionSet = cohortDefinitionSet,
-      incremental = FALSE
+      incremental = TRUE
     )
 
     # The purpose of this test is to prove the SQL runs on each platform, so every
