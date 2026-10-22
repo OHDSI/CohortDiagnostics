@@ -10,7 +10,7 @@ test_that("Panoptes finds the package declaration", {
   expect_equal(config$databaseConnection, "subset")
   expect_setequal(
     vapply(config$platforms, `[[`, character(1), "dbms"),
-    c("sqlite", "postgresql", "sql server", "oracle", "redshift")
+    c("sqlite", "postgresql", "sql server", "oracle", "redshift", "spark", "snowflake", "iris")
   )
 })
 

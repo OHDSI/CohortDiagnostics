@@ -8,6 +8,9 @@ panoptesLegacyAliases <- function(dbms) {
     "sql server" = "CDM5_SQL_SERVER",
     "oracle" = "CDM5_ORACLE",
     "redshift" = "CDM5_REDSHIFT",
+    "spark" = "CDM5_SPARK",
+    "snowflake" = "CDM5_SNOWFLAKE",
+    "iris" = "CDM5_IRIS",
     NULL
   )
   if (is.null(prefix)) {
@@ -17,6 +20,7 @@ panoptesLegacyAliases <- function(dbms) {
     HADES_DB_USER = paste0(prefix, "_USER"),
     HADES_DB_PASSWORD = paste0(prefix, "_PASSWORD"),
     HADES_DB_SERVER = paste0(prefix, "_SERVER"),
+    HADES_DB_CONNECTION_STRING = paste0(prefix, "_CONNECTION_STRING"),
     HADES_CDM_SCHEMA = paste0(prefix, "_CDM_SCHEMA"),
     HADES_WORK_SCHEMA = paste0(prefix, "_OHDSI_SCHEMA")
   )

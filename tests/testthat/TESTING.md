@@ -325,7 +325,7 @@ and the committed declaration `inst/test-config/hades-database-platforms.yml`.
 Sys.setenv(HADES_TEST_DBMS = "sqlite")
 testthat::test_local(filter = "integration-database-platform")
 
-# Server platform (postgresql, sql server, oracle, redshift)
+# Server platform (postgresql, sql server, oracle, redshift; spark, snowflake and iris use HADES_DB_CONNECTION_STRING)
 Sys.setenv(
   HADES_TEST_DBMS = "postgresql",
   DATABASECONNECTOR_JAR_FOLDER = "~/.jdbcDrivers",
@@ -341,7 +341,6 @@ checks that the declaration and `.github/workflows/database-platform-tests.yml`
 agree; update both together when adding or removing a platform.
 
 In CI, `database-platform-tests.yml` runs one job per platform (postgresql,
-sql server, oracle) concurrently, mapping the existing `CDM5_*` repository
+sql server, oracle, redshift, spark, snowflake, iris) concurrently, mapping the existing `CDM5_*` repository
 secrets onto the `HADES_*` names. Trigger it manually with `sequential = true`
-to run the same platforms one at a time and compare wall-clock time. Redshift is
-declared but disabled until credentials exist.
+to run the same platforms one at a time and compare wall-clock time.

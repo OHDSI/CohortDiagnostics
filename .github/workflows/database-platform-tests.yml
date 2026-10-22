@@ -1,7 +1,7 @@
 name: Database platform tests
 
 # One job per database platform; jobs run concurrently (the Panoptes pattern).
-# Secrets are the existing CDM5_* repository secrets, mapped onto HADES_* names.
+# Secrets follow the CDM5_<DBMS>_* naming of the existing CDM5_* repository secrets, mapped onto HADES_* names.
 # Run manually with sequential=true to measure the same platforms one at a time.
 
 on:
@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
-      max-parallel: ${{ inputs.sequential && 1 || 4 }}
+      max-parallel: ${{ inputs.sequential && 1 || 8 }}
       matrix:
         include:
           - dbms: postgresql
@@ -46,12 +46,33 @@ jobs:
             environment: test-oracle
             prefix: CDM5_ORACLE
             cdmSchemaSecret: CDM5_ORACLE_CDM54_SCHEMA
+          - dbms: redshift
+            runner: ubuntu-latest
+            environment: test-redshift
+            prefix: CDM5_REDSHIFT
+            cdmSchemaSecret: CDM5_REDSHIFT_CDM54_SCHEMA
+          - dbms: spark
+            runner: ubuntu-latest
+            environment: test-spark
+            prefix: CDM5_SPARK
+            cdmSchemaSecret: CDM5_SPARK_CDM54_SCHEMA
+          - dbms: snowflake
+            runner: ubuntu-latest
+            environment: test-snowflake
+            prefix: CDM5_SNOWFLAKE
+            cdmSchemaSecret: CDM5_SNOWFLAKE_CDM54_SCHEMA
+          - dbms: iris
+            runner: ubuntu-latest
+            environment: test-iris
+            prefix: CDM5_IRIS
+            cdmSchemaSecret: CDM5_IRIS_CDM54_SCHEMA
     env:
       HADES_DATABASE_TEST: "true"
       HADES_TEST_DBMS: ${{ matrix.dbms }}
       HADES_DB_USER: ${{ secrets[format('{0}_USER', matrix.prefix)] }}
       HADES_DB_PASSWORD: ${{ secrets[format('{0}_PASSWORD', matrix.prefix)] }}
       HADES_DB_SERVER: ${{ secrets[format('{0}_SERVER', matrix.prefix)] }}
+      HADES_DB_CONNECTION_STRING: ${{ secrets[format('{0}_CONNECTION_STRING', matrix.prefix)] }}
       HADES_CDM_SCHEMA: ${{ secrets[matrix.cdmSchemaSecret] }}
       HADES_WORK_SCHEMA: ${{ secrets[format('{0}_OHDSI_SCHEMA', matrix.prefix)] }}
     steps:
