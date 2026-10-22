@@ -2,7 +2,7 @@
 # The assertions are identical for every platform declared in
 # inst/test-config/hades-database-platforms.yml.
 
-test_that("executeDiagnostics works on the selected database", {
+test_that("executeDiagnostics runs every diagnostic on the selected database", {
   skip_on_cran()
 
   config <- Panoptes::readDatabaseTestConfig(package = "CohortDiagnostics")
@@ -45,7 +45,7 @@ test_that("executeDiagnostics works on the selected database", {
     on.exit(try(dropTables(), silent = TRUE), add = TRUE)
 
     source(testthat::test_path("integration", "helpers-integration.R"), local = TRUE)
-    cohortDefinitionSet <- loadTestCohortDefinitionSet(c(18345, 17720), useSubsets = FALSE)
+    cohortDefinitionSet <- loadTestCohortDefinitionSet(c(18345, 17720, 14907), useSubsets = FALSE)
 
     CohortGenerator::createCohortTables(
       connectionDetails = context$connectionDetails,
@@ -62,6 +62,15 @@ test_that("executeDiagnostics works on the selected database", {
       incremental = FALSE
     )
 
+    # The purpose of this test is to prove the SQL runs on each platform, so every
+    # diagnostic is enabled. Compact covariate settings keep runtime reasonable.
+    temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(
+      useConditionOccurrence = TRUE,
+      useCharlsonIndex = TRUE,
+      temporalStartDays = c(-1, 0, 1),
+      temporalEndDays = c(-1, 0, 1)
+    )
+
     executeDiagnostics(
       cohortDefinitionSet = cohortDefinitionSet,
       connectionDetails = context$connectionDetails,
@@ -75,11 +84,15 @@ test_that("executeDiagnostics works on the selected database", {
       runInclusionStatistics = TRUE,
       runIncludedSourceConcepts = TRUE,
       runOrphanConcepts = TRUE,
+      runTimeSeries = TRUE,
+      runVisitContext = TRUE,
       runBreakdownIndexEvents = TRUE,
       runIncidenceRate = TRUE,
-      runTimeSeries = FALSE,
-      runCohortRelationship = FALSE,
-      runTemporalCohortCharacterization = FALSE,
+      runCohortRelationship = TRUE,
+      runTemporalCohortCharacterization = TRUE,
+      temporalCovariateSettings = temporalCovariateSettings,
+      runFeatureExtractionOnSample = TRUE,
+      minCharacterizationMean = 0.8,
       minCellCount = 5,
       incremental = FALSE
     )
@@ -87,13 +100,17 @@ test_that("executeDiagnostics works on the selected database", {
     zipFile <- file.path(exportFolder, "Results_panoptes.zip")
     expect_true(file.exists(zipFile))
     exported <- utils::unzip(zipFile, list = TRUE)$Name
-    expect_true("cohort.csv" %in% exported)
-    expect_true("database.csv" %in% exported)
+    expectedFiles <- c(
+      "cohort.csv", "database.csv", "cohort_count.csv", "concept_sets.csv",
+      "incidence_rate.csv", "index_event_breakdown.csv", "time_series.csv",
+      "visit_context.csv", "temporal_covariate_ref.csv", "temporal_covariate_value.csv"
+    )
+    expect_setequal(intersect(expectedFiles, exported), expectedFiles)
 
     unzipFolder <- withr::local_tempdir()
     utils::unzip(zipFile, exdir = unzipFolder)
     cohorts <- readr::read_csv(file.path(unzipFolder, "cohort.csv"), show_col_types = FALSE)
-    expect_setequal(cohorts$cohort_id, c(18345, 17720))
+    expect_setequal(cohorts$cohort_id, c(18345, 17720, 14907))
 
     Panoptes::requireDatabaseTestConnectionAttempted(context)
   })
