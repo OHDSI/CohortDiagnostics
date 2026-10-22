@@ -5,6 +5,7 @@ on:
     branches:
       - 'develop'
       - 'main'
+      - 'features/panoptes-database-testing' # temporary: compare integration test timing with develop
   pull_request:
     branches:
       - 'main'
